@@ -6,7 +6,7 @@ describe('Calculate Delay Service', function () {
     const calculateDelayService = new CalculateDelayService();
 
     it('should convert seconds to milliseconds', function () {
-      const result = calculateDelayService.toMilliseconds(
+      const result = (calculateDelayService as any).toMilliseconds(
         5,
         DigestUnitEnum.SECONDS
       );
@@ -14,7 +14,7 @@ describe('Calculate Delay Service', function () {
     });
 
     it('should convert minutes to milliseconds', function () {
-      const result = calculateDelayService.toMilliseconds(
+      const result = (calculateDelayService as any).toMilliseconds(
         5,
         DigestUnitEnum.MINUTES
       );
@@ -22,7 +22,7 @@ describe('Calculate Delay Service', function () {
     });
 
     it('should convert hours to milliseconds', function () {
-      const result = calculateDelayService.toMilliseconds(
+      const result = (calculateDelayService as any).toMilliseconds(
         5,
         DigestUnitEnum.HOURS
       );
@@ -30,7 +30,7 @@ describe('Calculate Delay Service', function () {
     });
 
     it('should convert days to milliseconds', function () {
-      const result = calculateDelayService.toMilliseconds(
+      const result = (calculateDelayService as any).toMilliseconds(
         1,
         DigestUnitEnum.DAYS
       );

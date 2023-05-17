@@ -39,14 +39,14 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
   it('should deactivate other providers on the same channel', async function () {
     const firstProviderPayload = {
       providerId: 'sendgrid',
-      channel: 'EMAIL',
+      channel: ChannelTypeEnum.EMAIL,
       credentials: { apiKey: '123', secretKey: 'abc' },
       active: true,
       check: false,
     };
     const secondProviderPayload = {
       providerId: 'mailgun',
-      channel: 'EMAIL',
+      channel: ChannelTypeEnum.EMAIL,
       credentials: { apiKey: '123', secretKey: 'abc' },
       active: false,
       check: false,
@@ -58,7 +58,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
       .data._id;
 
     // create irrelevant channel -> should not be affected by the update
-    firstProviderPayload.channel = 'SMS';
+    firstProviderPayload.channel = ChannelTypeEnum.SMS;
     await session.testAgent.post('/v1/integrations').send(firstProviderPayload);
 
     // update second integration
@@ -68,11 +68,11 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
     const integrations = await integrationRepository.findByEnvironmentId(session.environment._id);
 
     const firstProviderIntegration = integrations.find(
-      (i) => i.providerId.toString() === 'sendgrid' && i.channel.toString() === 'EMAIL'
+      (i) => i.providerId.toString() === 'sendgrid' && i.channel.toString() === ChannelTypeEnum.EMAIL
     );
     const secondProviderIntegration = integrations.find((i) => i.providerId.toString() === 'mailgun');
     const irrelevantProviderIntegration = integrations.find(
-      (i) => i.providerId.toString() === 'sendgrid' && i.channel.toString() === 'SMS'
+      (i) => i.providerId.toString() === 'sendgrid' && i.channel.toString() === ChannelTypeEnum.SMS
     );
 
     expect(firstProviderIntegration.active).to.equal(false);

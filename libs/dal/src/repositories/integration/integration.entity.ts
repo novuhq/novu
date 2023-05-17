@@ -24,11 +24,13 @@ export interface ICredentials {
   projectName?: string;
   serviceAccount?: string;
   baseUrl?: string;
+  webhookUrl?: string;
   ipPoolName?: string;
   requireTls?: boolean;
   ignoreTls?: boolean;
   tlsOptions?: Record<string, unknown>;
   redirectUrl?: string;
+  hmac?: boolean;
 }
 
 export class IntegrationEntity {

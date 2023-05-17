@@ -439,7 +439,12 @@
     "vishnudxb",
     "autopipelining",
     "maxtimeout",
-    "clsx"
+    "clsx",
+    "africastalking",
+    "africas",
+    "supertest",
+    "superagent",
+    "INAPP"
   ],
   "flagWords": [],
   "patterns": [

@@ -14,6 +14,8 @@ import { UpdatePreference } from './update-preference/update-preference.usecase'
 import { UpdateSubscriberChannel } from './update-subscriber-channel';
 import { UpdateSubscriberPreference } from './update-subscriber-preference';
 import { UpdateSubscriberOnlineFlag } from './update-subscriber-online-flag';
+import { ChatOauth } from './chat-oauth/chat-oauth.usecase';
+import { ChatOauthCallback } from './chat-oauth-callback/chat-oauth-callback.usecase';
 
 export {
   SearchByExternalSubscriberIds,
@@ -34,4 +36,6 @@ export const USE_CASES = [
   UpdateSubscriberChannel,
   UpdateSubscriberPreference,
   UpdateSubscriberOnlineFlag,
+  ChatOauthCallback,
+  ChatOauth,
 ];

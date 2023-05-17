@@ -2,10 +2,12 @@ import { Badge, Card, Container, Group, Space, useMantineTheme } from '@mantine/
 import { useState } from 'react';
 import { formatDistanceToNow, subMinutes } from 'date-fns';
 import { IMessageAction } from '@novu/shared';
-import { colors, shadows, Text, Title } from '../../../../../design-system';
-import { ButtonsTemplatesPopover } from '../../in-app-editor/ButtonsTemplatesPopover';
+
 import { ActionBlockContainer } from './ActionBlockContainer';
 import AvatarContainer from './AvatarContainer';
+
+import { colors, shadows, Text, Title } from '../../../../../design-system';
+import { ButtonsTemplatesPopover } from '../ButtonsTemplatesPopover';
 
 function minutesAgo(num: number): string {
   return formatDistanceToNow(subMinutes(new Date(), num), { addSuffix: true });

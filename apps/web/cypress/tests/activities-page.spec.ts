@@ -49,7 +49,7 @@ describe('Activity Feed Screen', function () {
       .and('eq', 'rgb(229, 69, 69)');
   });
 
-  it.only('should filter by email channel', function () {
+  it('should filter by email channel', function () {
     cy.visit('/activities');
     cy.waitForNetworkIdle(500);
 

@@ -23,7 +23,7 @@ import ChannelNode from './node-types/ChannelNode';
 import { colors } from '../../../../design-system';
 import TriggerNode from './node-types/TriggerNode';
 import { getChannel } from '../../shared/channels';
-import type { IForm, IStepEntity } from '../../components/formTypes';
+import type { IForm, IFormStep } from '../../components/formTypes';
 import AddNode from './node-types/AddNode';
 import { useEnvController } from '../../../../hooks';
 import { getFormattedStepErrors } from '../../shared/errors';
@@ -58,7 +58,7 @@ export function FlowEditor({
   onDelete,
 }: {
   onDelete: (id: string) => void;
-  steps: IStepEntity[];
+  steps: IFormStep[];
   addStep: (channelType: StepTypeEnum, id: string, index?: number) => void;
   dragging: boolean;
   errors: any;
@@ -204,7 +204,7 @@ export function FlowEditor({
     newId: string,
     oldNode: { position: { x: number; y: number } },
     parentId: string,
-    step: IStepEntity,
+    step: IFormStep,
     i: number
   ): Node {
     const channel = getChannel(step.template.type);

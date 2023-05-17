@@ -64,7 +64,7 @@ describe('Digest Playground Workflow Page', function () {
     cy.getByTestId('node-digestSelector').should('be.visible');
     // check if digest step settings opened
     cy.getByTestId('step-page-wrapper').should('be.visible');
-    cy.getByTestId('step-page-wrapper').contains('Digest');
+    cy.getByTestId('step-page-wrapper').contains('All events');
 
     // click next on hint
     cy.getByTestId('digest-workflow-tooltip-primary-button').contains('Next').click();

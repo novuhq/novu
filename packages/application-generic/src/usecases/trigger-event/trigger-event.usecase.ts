@@ -5,6 +5,7 @@ import {
   JobRepository,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
+  IntegrationRepository,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -13,16 +14,13 @@ import {
 } from '@novu/shared';
 
 import { PinoLogger } from '../../logging';
-import { InstrumentUsecase } from '../../instrumentation';
-import { EventsPerformanceService } from '../../services/performance';
-import {
-  GetDecryptedIntegrations,
-  GetDecryptedIntegrationsCommand,
-} from '../get-decrypted-integrations';
+import { Instrument, InstrumentUsecase } from '../../instrumentation';
+
 import {
   buildNotificationTemplateIdentifierKey,
   CachedEntity,
-} from '../../services/cache';
+  EventsPerformanceService,
+} from '../../services';
 import { TriggerEventCommand } from './trigger-event.command';
 import {
   StoreSubscriberJobs,
@@ -37,6 +35,10 @@ import {
   ProcessSubscriberCommand,
 } from '../process-subscriber';
 import { ApiException } from '../../utils/exceptions';
+import {
+  GetNovuIntegration,
+  GetNovuIntegrationCommand,
+} from '../get-novu-integration';
 
 const LOG_CONTEXT = 'TriggerEventUseCase';
 
@@ -46,7 +48,8 @@ export class TriggerEvent {
     private storeSubscriberJobs: StoreSubscriberJobs,
     private createNotificationJobs: CreateNotificationJobs,
     private processSubscriber: ProcessSubscriber,
-    private getDecryptedIntegrations: GetDecryptedIntegrations,
+    private integrationRepository: IntegrationRepository,
+    private getNovuIntegration: GetNovuIntegration,
     protected performanceService: EventsPerformanceService,
     private jobRepository: JobRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
@@ -177,6 +180,7 @@ export class TriggerEvent {
     );
   }
 
+  @Instrument()
   private async validateTransactionIdProperty(
     transactionId: string,
     environmentId: string
@@ -211,16 +215,19 @@ export class TriggerEvent {
         const channelType = STEP_TYPE_TO_CHANNEL_TYPE.get(type);
 
         if (channelType) {
-          const provider = await this.getProviderId(
-            userId,
-            organizationId,
-            environmentId,
-            channelType
-          );
-          if (provider) {
-            providers.set(channelType, provider);
-          } else {
+          if (providers.has(channelType)) continue;
+          if (channelType === ChannelTypeEnum.IN_APP) {
             providers.set(channelType, InAppProviderIdEnum.Novu);
+          } else {
+            const provider = await this.getProviderId(
+              userId,
+              organizationId,
+              environmentId,
+              channelType
+            );
+            if (provider) {
+              providers.set(channelType, provider);
+            }
           }
         }
       }
@@ -229,23 +236,32 @@ export class TriggerEvent {
     return providers;
   }
 
+  @Instrument()
   private async getProviderId(
     userId: string,
     organizationId: string,
     environmentId: string,
     channelType: ChannelTypeEnum
   ): Promise<string> {
-    const integrations = await this.getDecryptedIntegrations.execute(
-      GetDecryptedIntegrationsCommand.create({
-        channelType,
+    let integration = await this.integrationRepository.findOne(
+      {
+        _environmentId: environmentId,
         active: true,
-        organizationId,
-        environmentId,
-        userId,
-      })
+        channel: channelType,
+      },
+      'providerId'
     );
 
-    const integration = integrations[0];
+    if (!integration) {
+      integration = await this.getNovuIntegration.execute(
+        GetNovuIntegrationCommand.create({
+          channelType: channelType,
+          organizationId: organizationId,
+          environmentId: environmentId,
+          userId: userId,
+        })
+      );
+    }
 
     return integration?.providerId;
   }

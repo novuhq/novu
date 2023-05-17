@@ -1,14 +1,24 @@
 import {
   JobsOptions,
+  Metrics,
+  MetricsTime,
   Processor,
   Queue,
   QueueOptions,
   Worker,
   WorkerOptions,
 } from 'bullmq';
-import { Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
-export class BullmqService {
+interface IQueueMetrics {
+  completed: Metrics;
+  failed: Metrics;
+}
+
+const LOG_CONTEXT = 'BullMqService';
+
+@Injectable()
+export class BullMqService {
   private _queue: Queue;
   private _worker: Worker;
   public static readonly pro: boolean =
@@ -23,7 +33,7 @@ export class BullmqService {
   }
 
   public static haveProInstalled(): boolean {
-    if (!BullmqService.pro) {
+    if (!BullMqService.pro) {
       return false;
     }
 
@@ -33,12 +43,19 @@ export class BullmqService {
   }
 
   private runningWithProQueue() {
-    return BullmqService.pro && BullmqService.haveProInstalled();
+    return BullMqService.pro && BullMqService.haveProInstalled();
+  }
+
+  public async getQueueMetrics(): Promise<IQueueMetrics> {
+    return {
+      completed: await this._queue.getMetrics('completed'),
+      failed: await this._queue.getMetrics('failed'),
+    };
   }
 
   public createQueue(name: string, config: QueueOptions) {
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    const QueueClass = !BullmqService.pro
+    const QueueClass = !BullMqService.pro
       ? Queue
       : require('@taskforcesh/bullmq-pro').QueuePro;
 
@@ -57,16 +74,23 @@ export class BullmqService {
 
   public createWorker(
     name: string,
-    processor?: string | Processor<any, any, any>,
+    processor?: string | Processor<any, unknown | void, string>,
     options?: WorkerOptions
   ) {
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    const WorkerClass = !BullmqService.pro
+    const WorkerClass = !BullMqService.pro
       ? Worker
       : require('@taskforcesh/bullmq-pro').WorkerPro;
+
+    let internalOptions: WorkerOptions = {};
+    if (options) {
+      internalOptions = options;
+    }
+    internalOptions.metrics = { maxDataPoints: MetricsTime.ONE_MONTH };
+
     this._worker = new WorkerClass(name, processor, {
-      ...options,
-      ...(BullmqService.pro
+      ...internalOptions,
+      ...(BullMqService.pro
         ? {
             group: {},
           }
@@ -84,7 +108,7 @@ export class BullmqService {
   ) {
     this._queue.add(id, data, {
       ...options,
-      ...(BullmqService.pro && groupId
+      ...(BullMqService.pro && groupId
         ? {
             group: {
               id: groupId,
@@ -92,5 +116,57 @@ export class BullmqService {
           }
         : {}),
     });
+  }
+
+  public async gracefulShutdown(): Promise<void> {
+    Logger.log('Shutting the BullMQ service down', LOG_CONTEXT);
+
+    if (this._queue) {
+      await this._queue.close();
+    }
+    if (this._worker) {
+      await this._worker.close();
+    }
+
+    Logger.log('Shutting down the BullMQ service has finished', LOG_CONTEXT);
+  }
+
+  public async getRunningStatus(): Promise<{
+    queueIsPaused: boolean | undefined;
+    queueName: string | undefined;
+    workerIsRunning: boolean | undefined;
+    workerName: string | undefined;
+  }> {
+    const queueIsPaused = this._queue
+      ? await this._queue.isPaused()
+      : undefined;
+    const workerIsRunning = this._worker
+      ? await this._worker.isRunning()
+      : undefined;
+
+    return {
+      queueIsPaused,
+      queueName: this._queue?.name,
+      workerIsRunning,
+      workerName: this._worker?.name,
+    };
+  }
+
+  private async pauseBullMqService(): Promise<void> {
+    if (this._queue) {
+      await this._queue.pause();
+    }
+    if (this._worker) {
+      await this._worker.pause();
+    }
+  }
+
+  private async resumeBullMqService(): Promise<void> {
+    if (this._queue) {
+      await this._queue.resume();
+    }
+    if (this._worker) {
+      await this._worker.resume();
+    }
   }
 }

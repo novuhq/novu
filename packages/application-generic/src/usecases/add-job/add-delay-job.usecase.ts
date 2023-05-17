@@ -28,15 +28,15 @@ export class AddDelayJob {
     }
 
     await this.jobRepository.updateStatus(
-      command.organizationId,
+      command.environmentId,
       data._id,
       JobStatusEnum.DELAYED
     );
 
-    return this.calculateDelayService.calculateDelay(
-      data.step,
-      data.payload,
-      data.overrides
-    );
+    return this.calculateDelayService.calculateDelay({
+      stepMetadata: data.step.metadata,
+      payload: data.payload,
+      overrides: data.overrides,
+    });
   }
 }

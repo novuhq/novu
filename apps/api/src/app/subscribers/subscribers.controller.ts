@@ -10,6 +10,7 @@ import {
   Post,
   Put,
   Query,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -18,11 +19,15 @@ import {
   UpdateSubscriber,
   UpdateSubscriberCommand,
 } from '@novu/application-generic';
+import { ApiOperation, ApiTags, ApiExcludeEndpoint } from '@nestjs/swagger';
+
+import { ButtonTypeEnum, ChatProviderIdEnum, IJwtPayload } from '@novu/shared';
+import { MessageEntity } from '@novu/dal';
+
 import { RemoveSubscriber, RemoveSubscriberCommand } from './usecases/remove-subscriber';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
-import { ButtonTypeEnum, IJwtPayload } from '@novu/shared';
 import {
   CreateSubscriberRequestDto,
   DeleteSubscriberResponseDto,
@@ -33,16 +38,14 @@ import {
 import { UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from './usecases/update-subscriber-channel';
 import { GetSubscribers, GetSubscribersCommand } from './usecases/get-subscribers';
 import { GetSubscriber, GetSubscriberCommand } from './usecases/get-subscriber';
-import { ApiOperation, ApiTags, ApiExcludeEndpoint } from '@nestjs/swagger';
 import { GetPreferencesCommand } from './usecases/get-preferences/get-preferences.command';
 import { GetPreferences } from './usecases/get-preferences/get-preferences.usecase';
 import { UpdatePreference } from './usecases/update-preference/update-preference.usecase';
 import { UpdateSubscriberPreferenceCommand } from './usecases/update-subscriber-preference';
 import { UpdateSubscriberPreferenceResponseDto } from '../widgets/dtos/update-subscriber-preference-response.dto';
 import { UpdateSubscriberPreferenceRequestDto } from '../widgets/dtos/update-subscriber-preference-request.dto';
-import { MessageResponseDto, MessagesResponseDto } from '../widgets/dtos/message-response.dto';
+import { MessageResponseDto } from '../widgets/dtos/message-response.dto';
 import { UnseenCountResponse } from '../widgets/dtos/unseen-count-response.dto';
-import { MessageEntity } from '@novu/dal';
 import { MarkEnum, MarkMessageAsCommand } from '../widgets/usecases/mark-message-as/mark-message-as.command';
 import { UpdateMessageActionsCommand } from '../widgets/usecases/mark-action-as-done/update-message-actions.command';
 import { GetNotificationsFeedCommand } from '../widgets/usecases/get-notifications-feed/get-notifications-feed.command';
@@ -63,7 +66,13 @@ import { PaginatedResponseDto } from '../shared/dtos/pagination-response';
 import { GetSubscribersDto } from './dtos/get-subscribers.dto';
 import { GetInAppNotificationsFeedForSubscriberDto } from './dtos/get-in-app-notification-feed-for-subscriber.dto';
 import { ApiResponse } from '../shared/framework/response.decorator';
+import { ChatOauthCallbackRequestDto, ChatOauthRequestDto } from './dtos/chat-oauth-request.dto';
 import { LimitPipe } from '../widgets/pipes/limit-pipe/limit-pipe';
+import { OAuthHandlerEnum } from './types';
+import { ChatOauthCallback } from './usecases/chat-oauth-callback/chat-oauth-callback.usecase';
+import { ChatOauthCallbackCommand } from './usecases/chat-oauth-callback/chat-oauth-callback.command';
+import { ChatOauth } from './usecases/chat-oauth/chat-oauth.usecase';
+import { ChatOauthCommand } from './usecases/chat-oauth/chat-oauth.command';
 
 @Controller('/subscribers')
 @ApiTags('Subscribers')
@@ -81,7 +90,9 @@ export class SubscribersController {
     private getFeedCountUsecase: GetFeedCount,
     private markMessageAsUsecase: MarkMessageAs,
     private updateMessageActionsUsecase: UpdateMessageActions,
-    private updateSubscriberOnlineFlagUsecase: UpdateSubscriberOnlineFlag
+    private updateSubscriberOnlineFlagUsecase: UpdateSubscriberOnlineFlag,
+    private chatOauthCallbackUsecase: ChatOauthCallback,
+    private chatOauthUsecase: ChatOauth
   ) {}
 
   @Get('')
@@ -207,6 +218,7 @@ export class SubscribersController {
         subscriberId,
         providerId: body.providerId,
         credentials: body.credentials,
+        oauthHandler: OAuthHandlerEnum.EXTERNAL,
       })
     );
   }
@@ -444,6 +456,59 @@ export class SubscribersController {
         status: body.status,
       })
     );
+  }
+
+  @ExternalApiAccessible()
+  @Get('/:subscriberId/credentials/:providerId/oauth/callback')
+  @ApiOperation({
+    summary: 'Handle providers oauth redirect',
+  })
+  async chatOauthCallback(
+    @Param('subscriberId') subscriberId: string,
+    @Param('providerId') providerId: ChatProviderIdEnum,
+    @Query() query: ChatOauthCallbackRequestDto,
+    @Res() res
+  ): Promise<any> {
+    const data = await this.chatOauthCallbackUsecase.execute(
+      ChatOauthCallbackCommand.create({
+        providerCode: query?.code,
+        hmacHash: query?.hmacHash,
+        environmentId: query?.environmentId,
+        subscriberId,
+        providerId,
+      })
+    );
+
+    if (data.redirect) {
+      res.redirect(data.action);
+    } else {
+      res.setHeader('Content-Type', 'text/html');
+      res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'");
+      res.send(data.action);
+    }
+  }
+
+  @ExternalApiAccessible()
+  @Get('/:subscriberId/credentials/:providerId/oauth')
+  @ApiOperation({
+    summary: 'Handle chat oauth',
+  })
+  async chatAccessOauth(
+    @Param('subscriberId') subscriberId: string,
+    @Param('providerId') providerId: ChatProviderIdEnum,
+    @Res() res,
+    @Query() query: ChatOauthRequestDto
+  ): Promise<void> {
+    const data = await this.chatOauthUsecase.execute(
+      ChatOauthCommand.create({
+        hmacHash: query?.hmacHash,
+        environmentId: query?.environmentId,
+        subscriberId,
+        providerId,
+      })
+    );
+
+    res.redirect(data);
   }
 
   private toArray(param: string[] | string): string[] | undefined {

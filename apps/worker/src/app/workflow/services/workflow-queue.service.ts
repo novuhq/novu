@@ -43,6 +43,7 @@ export class WorkflowQueueService extends QueueService<IJobData> {
     @Inject(forwardRef(() => CreateExecutionDetails)) private createExecutionDetails: CreateExecutionDetails
   ) {
     super();
+    Logger.warn('Workflow queue service created');
     this.bullMqService.createWorker(this.name, this.getWorkerProcessor(), this.getWorkerOpts());
 
     this.bullMqService.worker.on('completed', async (job) => {
@@ -52,14 +53,6 @@ export class WorkflowQueueService extends QueueService<IJobData> {
     this.bullMqService.worker.on('failed', async (job, error) => {
       await this.jobHasFailed(job, error);
     });
-  }
-
-  public async gracefulShutdown() {
-    // Right now we only want this for testing purposes
-    if (process.env.NODE_ENV === 'test') {
-      await this.bullMqService.queue.drain();
-      await this.bullMqService.worker.close();
-    }
   }
 
   private getWorkerOpts(): WorkerOptions {

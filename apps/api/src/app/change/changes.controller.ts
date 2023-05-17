@@ -25,6 +25,7 @@ import { ChangesRequestDto } from './dtos/change-request.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ApiResponse } from '../shared/framework/response.decorator';
 import { DataNumberDto } from '../shared/dtos/data-wrapper-dto';
+import { BulkApplyChangeDto } from './dtos/bulk-apply-change.dto';
 
 @Controller('/changes')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -50,8 +51,8 @@ export class ChangesController {
     return await this.getChangesUsecase.execute(
       GetChangesCommand.create({
         promoted: query.promoted === 'true',
-        page: query.page ? Number(query.page) : 0,
-        limit: query.limit ? Number(query.limit) : 10,
+        page: query.page ? query.page : 0,
+        limit: query.limit ? query.limit : 10,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
@@ -85,11 +86,11 @@ export class ChangesController {
   @ExternalApiAccessible()
   async bulkApplyDiff(
     @UserSession() user: IJwtPayload,
-    @Body('changeIds') changeIds: string[]
+    @Body() body: BulkApplyChangeDto
   ): Promise<ChangeResponseDto[][]> {
     return this.bulkApplyChange.execute(
       BulkApplyChangeCommand.create({
-        changeIds,
+        changeIds: body.changeIds,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,

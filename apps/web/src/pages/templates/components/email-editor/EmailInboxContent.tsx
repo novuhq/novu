@@ -49,6 +49,7 @@ export const EmailInboxContent = ({
         <Grid.Col span={3}>
           <Controller
             name={`steps.${index}.template.senderName`}
+            defaultValue=""
             control={control}
             render={({ field }) => {
               return (
