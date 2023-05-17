@@ -3,7 +3,6 @@ describe('Settings Screen', function () {
     cy.initializeSession().as('session');
     cy.visit('/settings');
     cy.intercept('*/channels/email/settings').as('updateEmailSettings');
-    cy.intercept('*/channels/sms/settings').as('updateSmsSettings');
     cy.intercept('*/organizations/branding').as('updateBrandingSettings');
   });
 

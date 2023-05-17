@@ -20,14 +20,6 @@ export function updateDnsSettings(payload: { inboundParseDomain: string | undefi
   return api.put(`/v1/environments/${environmentId}`, { dns: payload });
 }
 
-export function updateEmailSettings(payload: { senderEmail: string; senderName: string }) {
-  return api.put(`/v1/channels/email/settings`, payload);
-}
-
-export function updateSmsSettings(payload: { authToken: string; accountSid: string; phoneNumber: string }) {
-  return api.put(`/v1/channels/sms/settings`, { twillio: payload });
-}
-
 export function updateWidgetSettings(payload: { notificationCenterEncryption: boolean | undefined }) {
   return api.put(`/v1/environments/widget/settings`, payload);
 }
