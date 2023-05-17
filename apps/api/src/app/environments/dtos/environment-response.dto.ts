@@ -23,6 +23,7 @@ export class EnvironmentResponseDto {
 
   @ApiProperty({
     type: WidgetSettings,
+    deprecated: true,
   })
   widget: IWidgetSettings;
 

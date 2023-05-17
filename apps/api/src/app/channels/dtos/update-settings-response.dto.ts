@@ -22,6 +22,7 @@ export class UpdateSettingsResponseDto {
 
   @ApiProperty({
     type: WidgetSettings,
+    deprecated: true,
   })
   widget: WidgetSettings;
 

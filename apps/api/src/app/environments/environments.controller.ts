@@ -20,9 +20,6 @@ import { GetEnvironment, GetEnvironmentCommand } from './usecases/get-environmen
 import { GetMyEnvironments } from './usecases/get-my-environments/get-my-environments.usecase';
 import { GetMyEnvironmentsCommand } from './usecases/get-my-environments/get-my-environments.command';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
-import { UpdateWidgetSettingsRequestDto } from './dtos/update-widget-settings-request.dto';
-import { UpdateWidgetSettings } from './usecases/update-widget-settings/update-widget-settings.usecase';
-import { UpdateWidgetSettingsCommand } from './usecases/update-widget-settings/update-widget-settings.command';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ApiKey } from '../shared/dtos/api-key';
 import { EnvironmentResponseDto } from './dtos/environment-response.dto';
@@ -44,8 +41,7 @@ export class EnvironmentsController {
     private getApiKeysUsecase: GetApiKeys,
     private regenerateApiKeysUsecase: RegenerateApiKeys,
     private getEnvironmentUsecase: GetEnvironment,
-    private getMyEnvironmentsUsecase: GetMyEnvironments,
-    private updateWidgetSettingsUsecase: UpdateWidgetSettings
+    private getMyEnvironmentsUsecase: GetMyEnvironments
   ) {}
 
   @Get('/me')
@@ -151,24 +147,5 @@ export class EnvironmentsController {
     });
 
     return await this.regenerateApiKeysUsecase.execute(command);
-  }
-
-  @Put('/widget/settings')
-  @ApiOperation({
-    summary: 'Update widget settings',
-  })
-  @ApiResponse(EnvironmentResponseDto)
-  @ExternalApiAccessible()
-  async updateWidgetSettings(
-    @UserSession() user: IJwtPayload,
-    @Body() body: UpdateWidgetSettingsRequestDto
-  ): Promise<EnvironmentResponseDto> {
-    const command = UpdateWidgetSettingsCommand.create({
-      organizationId: user.organizationId,
-      environmentId: user.environmentId,
-      notificationCenterEncryption: body.notificationCenterEncryption,
-    });
-
-    return await this.updateWidgetSettingsUsecase.execute(command);
   }
 }
