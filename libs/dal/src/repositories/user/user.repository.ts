@@ -47,6 +47,15 @@ export class UserRepository extends BaseRepository<UserDBModel, UserEntity> {
     });
   }
 
+  async findByEmailOrLoginProvider(
+    email: string,
+    { profileId, provider }: { profileId: string; provider: AuthProviderEnum }
+  ): Promise<UserEntity | null> {
+    return this.findOne({
+      $or: [{ email }, { 'tokens.providerId': profileId, 'tokens.provider': provider }],
+    });
+  }
+
   async userExists(userId: string) {
     return !!(await this.findOne(
       {
