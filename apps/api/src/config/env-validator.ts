@@ -64,6 +64,9 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   STORE_NOTIFICATION_CONTENT: str({
     default: 'false',
   }),
+  LAUNCH_DARKLY_SDK_KEY: str({
+    default: '',
+  }),
 };
 
 if (process.env.STORAGE_SERVICE === 'AZURE') {
