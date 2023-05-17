@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { EnvironmentRepository } from '@novu/dal';
+import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import {
   AnalyticsService,
   LogDecorator,
@@ -41,6 +42,8 @@ export class InitializeSession {
         environmentId: environment._id,
         organizationId: environment._organizationId,
         userId: command.subscriberId,
+        channelType: ChannelTypeEnum.IN_APP,
+        providerId: InAppProviderIdEnum.Novu,
       })
     );
 

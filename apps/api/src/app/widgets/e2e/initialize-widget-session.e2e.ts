@@ -1,28 +1,13 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { IntegrationRepository } from '@novu/dal';
 import { createHash } from '../../shared/helpers/hmac.service';
-import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
-import { encryptCredentials } from '@novu/application-generic';
 
 describe('Initialize Session - /widgets/session/initialize (POST)', async () => {
   let session: UserSession;
-  const integrationRepository = new IntegrationRepository();
 
   before(async () => {
     session = new UserSession();
     await session.initialize();
-
-    await integrationRepository.create({
-      _environmentId: session.environment._id,
-      _organizationId: session.organization._id,
-      providerId: InAppProviderIdEnum.Novu,
-      channel: ChannelTypeEnum.IN_APP,
-      credentials: encryptCredentials({
-        hmac: true,
-      }),
-      active: true,
-    });
   });
 
   it('should create a valid app session for current widget user', async function () {
