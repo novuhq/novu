@@ -1,4 +1,5 @@
 /* eslint-disable max-len */
+/* cSpell:disable */
 import { useState } from 'react';
 import { ActionIcon, Modal, useMantineTheme } from '@mantine/core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
