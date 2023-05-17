@@ -88,21 +88,20 @@ async function initWidgetSession(subscriberId: string, session, hmacHash?: strin
   });
 }
 
-async function setHmacConfig(session) {
+async function setHmacConfig(session: UserSession) {
   const integrationRepository = new IntegrationRepository();
 
   await integrationRepository.update(
     {
-      _environmentId: this.environment._id,
-      _organizationId: this.environment._organizationId,
+      _environmentId: session.environment._id,
+      _organizationId: session.environment._organizationId,
       providerId: InAppProviderIdEnum.Novu,
       channel: ChannelTypeEnum.IN_APP,
-
       active: true,
     },
     {
       $set: {
-        'credentials.hmac': false,
+        'credentials.hmac': true,
       },
     }
   );
