@@ -2,7 +2,6 @@ import { useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
 
 import type { Socket, ISession } from '../shared/interfaces';
-import { useSetQueryKey } from './useSetQueryKey';
 
 type IUseInitializeSocket = (args: { socketUrl: string }) => {
   socket: Socket | undefined;
@@ -12,7 +11,6 @@ type IUseInitializeSocket = (args: { socketUrl: string }) => {
 
 export const useInitializeSocket: IUseInitializeSocket = ({ socketUrl }) => {
   const socketRef = useRef<Socket | null>(null);
-  const setQueryKey = useSetQueryKey();
 
   const disconnectSocket = useCallback(() => {
     if (socketRef.current) {
@@ -45,7 +43,7 @@ export const useInitializeSocket: IUseInitializeSocket = ({ socketUrl }) => {
         });
       }
     },
-    [socketRef, disconnectSocket, setQueryKey]
+    [socketRef, disconnectSocket]
   );
 
   return {
