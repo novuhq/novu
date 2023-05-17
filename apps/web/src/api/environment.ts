@@ -19,7 +19,3 @@ export function regenerateApiKeys() {
 export function updateDnsSettings(payload: { inboundParseDomain: string | undefined }, environmentId: string) {
   return api.put(`/v1/environments/${environmentId}`, { dns: payload });
 }
-
-export function updateWidgetSettings(payload: { notificationCenterEncryption: boolean | undefined }) {
-  return api.put(`/v1/environments/widget/settings`, payload);
-}
