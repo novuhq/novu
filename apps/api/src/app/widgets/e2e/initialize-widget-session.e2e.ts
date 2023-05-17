@@ -12,6 +12,17 @@ describe('Initialize Session - /widgets/session/initialize (POST)', async () => 
   before(async () => {
     session = new UserSession();
     await session.initialize();
+
+    await integrationRepository.create({
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+      providerId: InAppProviderIdEnum.Novu,
+      channel: ChannelTypeEnum.IN_APP,
+      credentials: encryptCredentials({
+        hmac: true,
+      }),
+      active: true,
+    });
   });
 
   it('should create a valid app session for current widget user', async function () {
@@ -51,8 +62,6 @@ describe('Initialize Session - /widgets/session/initialize (POST)', async () => 
     const subscriberId = '12345';
     const secretKey = session.environment.apiKeys[0].key;
 
-    await enableWidgetSecurityEncryption(integrationRepository, session);
-
     const hmacHash = createHash(secretKey, subscriberId);
     const response = await initWidgetSession(subscriberId, session, hmacHash);
 
@@ -63,8 +72,6 @@ describe('Initialize Session - /widgets/session/initialize (POST)', async () => 
     const validSubscriberId = '12345';
     const validSecretKey = session.environment.apiKeys[0].key;
     let hmacHash;
-
-    await enableWidgetSecurityEncryption(integrationRepository, session);
 
     const invalidSubscriberId = validSubscriberId + '0';
     hmacHash = createHash(validSecretKey, invalidSubscriberId);
@@ -79,19 +86,6 @@ describe('Initialize Session - /widgets/session/initialize (POST)', async () => 
     expect(responseInvalidSecretKey.body.message).to.contain('Please provide a valid HMAC hash');
   });
 });
-
-async function enableWidgetSecurityEncryption(integrationRepository, session) {
-  await integrationRepository.create({
-    _environmentId: session.environment._id,
-    _organizationId: session.organization._id,
-    providerId: InAppProviderIdEnum.Novu,
-    channel: ChannelTypeEnum.IN_APP,
-    credentials: encryptCredentials({
-      hmac: true,
-    }),
-    active: true,
-  });
-}
 
 async function initWidgetSession(subscriberId: string, session, hmacHash?: string) {
   return await session.testAgent.post('/v1/widgets/session/initialize').send({
