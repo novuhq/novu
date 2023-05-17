@@ -33,7 +33,7 @@ export class BlueprintController {
     );
   }
 
-  @Post('/:templateId/blueprint')
+  @Post('/:templateId')
   createNotificationTemplateFromBlueprintById(
     @UserSession() user: IJwtPayload,
     @Param('templateId') templateId: string
