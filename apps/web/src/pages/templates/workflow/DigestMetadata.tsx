@@ -1,5 +1,6 @@
 import { Accordion, Group, useMantineColorScheme } from '@mantine/core';
 import { Controller, useFormContext } from 'react-hook-form';
+import styled from '@emotion/styled';
 import { DigestTypeEnum } from '@novu/shared';
 
 import { When } from '../../../components/utils/When';
@@ -10,6 +11,10 @@ import { WillBeSentHeader } from './digest/WillBeSentHeader';
 import { RegularInfo } from './digest/icons/RegularInfo';
 import { TimedDigestMetadata } from './TimedDigestMetadata';
 import { RegularDigestMetadata } from './RegularDigestMetadata';
+
+const GroupStyled = styled(Group)`
+  gap: 18px;
+`;
 
 export const DigestMetadata = ({ index, readonly }: { index: number; readonly: boolean }) => {
   const { control, watch } = useFormContext();
@@ -30,7 +35,7 @@ export const DigestMetadata = ({ index, readonly }: { index: number; readonly: b
         >
           <Accordion.Item value="events-selection" data-test-id="digest-events-selection-options">
             <Accordion.Control>
-              <Group>
+              <GroupStyled>
                 <Bell color={colors.B60} />
                 <div>
                   <div>
@@ -44,7 +49,7 @@ export const DigestMetadata = ({ index, readonly }: { index: number; readonly: b
                   </div>
                   <div>since previous digest</div>
                 </div>
-              </Group>
+              </GroupStyled>
             </Accordion.Control>
             <Accordion.Panel>
               <Select mt={-5} mb={-5} data={[{ value: 'all', label: 'All events' }]} value={'all'} />
@@ -64,7 +69,7 @@ export const DigestMetadata = ({ index, readonly }: { index: number; readonly: b
         >
           <Accordion.Item value="group-by" data-test-id="digest-group-by-options">
             <Accordion.Control>
-              <Group>
+              <GroupStyled>
                 <div style={{ width: 26 }}>
                   <Digest color={colors.B60} />
                 </div>
@@ -88,7 +93,7 @@ export const DigestMetadata = ({ index, readonly }: { index: number; readonly: b
                     </div>
                   </When>
                 </div>
-              </Group>
+              </GroupStyled>
             </Accordion.Control>
             <Accordion.Panel>
               <Controller
@@ -116,7 +121,7 @@ export const DigestMetadata = ({ index, readonly }: { index: number; readonly: b
         </Tooltip>
         <Accordion.Item value="send" data-test-id="digest-send-options">
           <Accordion.Control>
-            <Group>
+            <GroupStyled>
               <Timer width="30" height="30" color={colors.B60} />
               <div>
                 <div>
@@ -126,7 +131,7 @@ export const DigestMetadata = ({ index, readonly }: { index: number; readonly: b
                   <WillBeSentHeader index={index} />
                 </div>
               </div>
-            </Group>
+            </GroupStyled>
           </Accordion.Control>
           <Accordion.Panel>
             <Controller
