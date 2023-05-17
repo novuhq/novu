@@ -144,7 +144,7 @@ export class UserSession {
       providerId: InAppProviderIdEnum.Novu,
       channel: ChannelTypeEnum.IN_APP,
       credentials: {
-        hmac: true,
+        hmac: false,
       },
       active: true,
     });
