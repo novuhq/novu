@@ -1,4 +1,4 @@
-import { ComponentType, MouseEvent as ReactMouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ComponentType, MouseEvent as ReactMouseEvent, useCallback, useEffect, useRef, useState } from 'react';
 import ReactFlow, {
   addEdge,
   Background,
@@ -20,12 +20,10 @@ import styled from '@emotion/styled';
 import { v4 as uuid4 } from 'uuid';
 import { StepTypeEnum } from '@novu/shared';
 
-import { colors } from '../../../../design-system';
-import { getChannel } from '../../shared/channels';
-import type { IFormStep } from '../../components/formTypes';
-import { useEnvController } from '../../../../hooks';
-import { getFormattedStepErrors } from '../../shared/errors';
-import { IAddNodeEdge } from './edge-types/AddNodeEdge';
+import { colors } from '../../design-system';
+import { getChannel } from '../../utils/channels';
+import { useEnvController } from '../../hooks';
+import type { IEdge, IFlowStep } from './types';
 
 const initialNodes: Node[] = [
   {
@@ -47,7 +45,7 @@ const DEFAULT_WRAPPER_STYLES = {
 };
 
 interface IFlowEditorProps extends ReactFlowProps {
-  steps: IFormStep[];
+  steps: IFlowStep[];
   dragging?: boolean;
   errors?: any;
   nodeTypes: {
@@ -59,7 +57,8 @@ interface IFlowEditorProps extends ReactFlowProps {
   withControls?: boolean;
   wrapperStyles?: React.CSSProperties;
   onDelete?: (id: string) => void;
-  onStepInit?: (step: IFormStep) => Promise<void>;
+  onStepInit?: (step: IFlowStep) => Promise<void>;
+  onGetStepError?: (i: number, errors: any) => string;
   addStep?: (channelType: StepTypeEnum, id: string, index?: number) => void;
 }
 
@@ -82,6 +81,7 @@ export function FlowEditor({
   withControls = true,
   wrapperStyles = DEFAULT_WRAPPER_STYLES,
   onStepInit,
+  onGetStepError,
   addStep,
   onDelete,
   ...restProps
@@ -89,7 +89,7 @@ export function FlowEditor({
   const { colorScheme } = useMantineColorScheme();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<IAddNodeEdge>(initialEdges);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<IEdge>(initialEdges);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance>();
   const { setViewport } = useReactFlow();
   const { readonly } = useEnvController();
@@ -209,7 +209,7 @@ export function FlowEditor({
     newId: string,
     oldNode: { position: { x: number; y: number } },
     parentId: string,
-    step: IFormStep,
+    step: IFlowStep,
     i: number
   ): Node {
     const channel = getChannel(step.template.type);
@@ -223,7 +223,7 @@ export function FlowEditor({
         ...channel,
         active: step.active,
         index: i,
-        error: getFormattedStepErrors(i, errors),
+        error: onGetStepError?.(i, errors) ?? '',
         onDelete,
         uuid: step.uuid,
         name: step.name,

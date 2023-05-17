@@ -1,7 +1,7 @@
 import { NodeProps, Handle, Position, getOutgoers, useReactFlow } from 'react-flow-renderer';
 import styled from '@emotion/styled';
 
-import { NodeStep } from '../../../../components/workflow-nodes';
+import { NodeStep } from '../../../../components/workflow';
 
 const NodeStepStyled = styled(NodeStep)`
   width: 200px;

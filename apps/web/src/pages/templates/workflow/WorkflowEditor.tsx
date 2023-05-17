@@ -1,15 +1,16 @@
 import { useCallback, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import styled from '@emotion/styled';
-import { FilterPartTypeEnum, StepTypeEnum } from '@novu/shared';
+import { Link, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Container, Group, Stack } from '@mantine/core';
 import { showNotification } from '@mantine/notifications';
-import FlowEditor from './workflow/FlowEditor';
-import { channels } from '../shared/channels';
+import { FilterPartTypeEnum, StepTypeEnum } from '@novu/shared';
+
+import { FlowEditor } from '../../../components/workflow';
+import { channels } from '../../../utils/channels';
 import type { IForm } from '../components/formTypes';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import { useTemplateEditorForm } from '../components/TemplateEditorFormProvider';
-import { Link, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { Container, Group, Stack } from '@mantine/core';
 import { useEnvController } from '../../../hooks';
 import { When } from '../../../components/utils/When';
 import { useBasePath } from '../hooks/useBasePath';
@@ -21,6 +22,7 @@ import ChannelNode from './workflow/node-types/ChannelNode';
 import TriggerNode from './workflow/node-types/TriggerNode';
 import AddNode from './workflow/node-types/AddNode';
 import { AddNodeEdge } from './workflow/edge-types/AddNodeEdge';
+import { getFormattedStepErrors } from '../shared/errors';
 
 const nodeTypes = {
   channelNode: ChannelNode,
@@ -117,6 +119,8 @@ const WorkflowEditor = () => {
     await trigger('steps');
   };
 
+  const onGetStepError = (i: number) => getFormattedStepErrors(i, errors);
+
   if (readonly && pathname === basePath) {
     return (
       <div style={{ minHeight: '600px', display: 'flex', flexFlow: 'row' }}>
@@ -160,6 +164,7 @@ const WorkflowEditor = () => {
             edgeTypes={edgeTypes}
             addStep={addStep}
             onStepInit={onStepInit}
+            onGetStepError={onGetStepError}
             onNodeClick={onNodeClick}
           />
         </div>
@@ -211,6 +216,7 @@ const WorkflowEditor = () => {
               edgeTypes={edgeTypes}
               addStep={addStep}
               onStepInit={onStepInit}
+              onGetStepError={onGetStepError}
               onNodeClick={onNodeClick}
             />
           </div>

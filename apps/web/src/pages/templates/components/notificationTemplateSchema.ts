@@ -11,7 +11,7 @@ import {
   OrdinalValueEnum,
 } from '@novu/shared';
 
-import { getChannel } from '../shared/channels';
+import { getChannel } from '../../../utils/channels';
 
 const validateAmount = ({
   ctx,

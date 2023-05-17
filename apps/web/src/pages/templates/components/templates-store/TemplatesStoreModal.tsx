@@ -24,7 +24,7 @@ import {
   TemplateDescription,
   useStyles,
 } from './templateStoreStyles';
-import FlowEditor from '../../workflow/workflow/FlowEditor';
+import { FlowEditor } from '../../../../components/workflow';
 import { StepTypeEnum } from '@novu/shared';
 import { TriggerNode } from './TriggerNode';
 import { ChannelNode } from './ChannelNode';
