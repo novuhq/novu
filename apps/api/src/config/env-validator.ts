@@ -32,7 +32,7 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   }),
   MONGO_URL: str(),
   MONGO_MAX_POOL_SIZE: num({
-    default: 700,
+    default: 500,
   }),
   NOVU_API_KEY: str({
     default: '',
