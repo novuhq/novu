@@ -9,7 +9,7 @@ describe('Blueprint Modal', () => {
   it('should render and create template from blueprint', () => {
     window.localStorage.setItem('blueprintId', 'test');
 
-    cy.intercept('GET', '/v1/notification-templates/test/blueprint', {
+    cy.intercept('GET', '/v1/blueprints/test', {
       body: {
         data: {
           name: 'test name',
@@ -18,7 +18,7 @@ describe('Blueprint Modal', () => {
       },
     }).as('getTemplate');
 
-    cy.intercept('POST', `/v1/notification-templates/test/blueprint`, {
+    cy.intercept('POST', `/v1/blueprints/test`, {
       body: {
         _id: 'test',
       },
@@ -44,7 +44,7 @@ describe('Blueprint Modal', () => {
   it('should render and remove blueprintId on close', () => {
     window.localStorage.setItem('blueprintId', 'test');
 
-    cy.intercept('GET', '/v1/notification-templates/test/blueprint', {
+    cy.intercept('GET', '/v1/blueprints/test', {
       body: {
         data: {
           name: 'test name',
