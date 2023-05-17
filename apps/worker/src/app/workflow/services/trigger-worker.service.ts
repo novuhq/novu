@@ -22,6 +22,7 @@ export class TriggerWorkerService extends TriggerQueueService implements INovuWo
   private getWorkerOpts() {
     return {
       ...this.bullConfig,
+      autorun: false,
       lockDuration: 90000,
       concurrency: 200,
     };

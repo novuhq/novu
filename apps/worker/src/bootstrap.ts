@@ -41,13 +41,6 @@ const getWorkers = (app: INestApplication): INovuWorker[] => {
   return [workflowWorker, triggerWorker];
 };
 
-const prepareAppInfra = async (app: INestApplication): Promise<void> => {
-  const readinessService = app.get(ReadinessService);
-  const workers = getWorkers(app);
-
-  await readinessService.pauseWorkers(workers);
-};
-
 const startAppInfra = async (app: INestApplication): Promise<void> => {
   const readinessService = app.get(ReadinessService);
   const workers = getWorkers(app);
@@ -61,8 +54,6 @@ export async function bootstrap(): Promise<INestApplication> {
 
   app.useLogger(app.get(PinoLogger));
   app.flushLogs();
-
-  await prepareAppInfra(app);
 
   if (process.env.SENTRY_DSN) {
     app.use(Sentry.Handlers.requestHandler());

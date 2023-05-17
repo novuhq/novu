@@ -48,6 +48,11 @@ export class ReadinessService {
     }
   }
 
+  /**
+   * When the workers are created with autorun to true (default value if not set)
+   * this method would allow to pause them.
+   * Reference: https://api.docs.bullmq.io/interfaces/WorkerOptions.html#autorun
+   */
   async pauseWorkers(workers: INovuWorker[]): Promise<void> {
     for (const worker of workers) {
       Logger.log(`Pausing worker ${worker.name}...`, LOG_CONTEXT);
