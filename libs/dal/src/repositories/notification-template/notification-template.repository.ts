@@ -3,7 +3,7 @@ import { SoftDeleteModel } from 'mongoose-delete';
 
 import { BaseRepository } from '../base-repository';
 import { NotificationTemplate } from './notification-template.schema';
-import { NotificationTemplateEntity, NotificationTemplateDBModel } from './notification-template.entity';
+import { NotificationTemplateDBModel, NotificationTemplateEntity } from './notification-template.entity';
 import { DalException } from '../../shared';
 import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 
@@ -46,7 +46,7 @@ export class NotificationTemplateRepository extends BaseRepository<
     const requestQuery: NotificationTemplateQuery = {
       _id: id,
       isBlueprint: true,
-      _organizationId: NotificationTemplateRepository.getBlueprintOrganizationId() as string,
+      _environmentId: NotificationTemplateRepository.getBlueprintEnvironmentId() as string,
     };
 
     const item = await this.MongooseModel.findOne(requestQuery).populate('steps.template');
@@ -54,14 +54,48 @@ export class NotificationTemplateRepository extends BaseRepository<
     return this.mapEntity(item);
   }
 
+  async findAllGroupedByCategory(): Promise<{ name: string; blueprints: NotificationTemplateEntity[] }[]> {
+    if (!NotificationTemplateRepository.getBlueprintEnvironmentId()) {
+      return {} as { name: string; blueprints: NotificationTemplateEntity[] }[];
+    }
+
+    const requestQuery: NotificationTemplateQuery = {
+      isBlueprint: true,
+      _environmentId: NotificationTemplateRepository.getBlueprintEnvironmentId() as string,
+    };
+
+    const items = await this.MongooseModel.find(requestQuery)
+      .populate('steps.template')
+      .populate('notificationGroup')
+      .lean();
+
+    const groupedItems = items.reduce((acc, item) => {
+      const notificationGroupId = item._notificationGroupId;
+      const notificationGroupName = item.notificationGroup?.name;
+
+      if (!acc[notificationGroupId as unknown as string]) {
+        acc[notificationGroupId as unknown as string] = {
+          name: notificationGroupName,
+          blueprints: [],
+        };
+      }
+
+      acc[notificationGroupId as unknown as string].blueprints.push(item);
+
+      return acc;
+    }, {});
+
+    return Object.values(groupedItems);
+  }
+
   async getBlueprintList(skip = 0, limit = 10) {
-    if (!NotificationTemplateRepository.getBlueprintOrganizationId()) {
+    if (!NotificationTemplateRepository.getBlueprintEnvironmentId()) {
       return { totalCount: 0, data: [] };
     }
 
     const requestQuery: NotificationTemplateQuery = {
       isBlueprint: true,
-      _organizationId: NotificationTemplateRepository.getBlueprintOrganizationId() as string,
+      _environmentId: NotificationTemplateRepository.getBlueprintEnvironmentId() as string,
     };
 
     const totalItemsCount = await this.count(requestQuery);
@@ -115,7 +149,7 @@ export class NotificationTemplateRepository extends BaseRepository<
     return this.mapEntity(res);
   }
 
-  public static getBlueprintOrganizationId(): string | undefined {
+  public static getBlueprintEnvironmentId(): string | undefined {
     return process.env.BLUEPRINT_CREATOR;
   }
 }
