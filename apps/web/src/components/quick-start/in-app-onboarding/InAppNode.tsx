@@ -1,8 +1,7 @@
 import { Handle, Position } from 'react-flow-renderer';
 
 import { TurnOnGradient } from '../../../design-system/icons/gradient/TurnOnGradient';
-
-import { NodeStep } from '../common';
+import { NodeStep } from '../../workflow-nodes';
 
 export function InAppNode({ data }: { data: { label: string; email?: string } }) {
   return (

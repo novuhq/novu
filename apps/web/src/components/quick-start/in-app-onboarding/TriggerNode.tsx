@@ -16,7 +16,7 @@ import {
   notificationTemplateName,
   OnBoardingAnalyticsEnum,
 } from '../../../pages/quick-start/consts';
-import { NodeStep } from '../common';
+import { NodeStep } from '../../workflow-nodes';
 import { useSegment } from '../../providers/SegmentProvider';
 import { errorMessage } from '../../../utils/notifications';
 import { Playground } from '../../../design-system/icons';

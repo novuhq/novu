@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { FilterPartTypeEnum, StepTypeEnum } from '@novu/shared';
@@ -17,6 +17,18 @@ import { UpdateButton } from '../components/UpdateButton';
 import { NameInput } from './NameInput';
 import { Settings } from '../../../design-system/icons';
 import { Button } from '../../../design-system';
+import ChannelNode from './workflow/node-types/ChannelNode';
+import TriggerNode from './workflow/node-types/TriggerNode';
+import AddNode from './workflow/node-types/AddNode';
+import { AddNodeEdge } from './workflow/edge-types/AddNodeEdge';
+
+const nodeTypes = {
+  channelNode: ChannelNode,
+  triggerNode: TriggerNode,
+  addNode: AddNode,
+};
+
+const edgeTypes = { special: AddNodeEdge };
 
 const WorkflowEditor = () => {
   const { addStep, deleteStep } = useTemplateEditorForm();
@@ -26,6 +38,7 @@ const WorkflowEditor = () => {
   const [dragging, setDragging] = useState(false);
 
   const {
+    trigger,
     watch,
     formState: { errors },
   } = useFormContext<IForm>();
@@ -36,6 +49,20 @@ const WorkflowEditor = () => {
   const basePath = useBasePath();
   const { pathname } = useLocation();
   const navigate = useNavigate();
+
+  const onNodeClick = useCallback(
+    (event, node) => {
+      event.preventDefault();
+
+      if (node.type === 'channelNode') {
+        navigate(basePath + `/${node.data.channelType}/${node.data.uuid}`);
+      }
+      if (node.type === 'triggerNode') {
+        navigate(basePath + '/test-workflow');
+      }
+    },
+    [basePath]
+  );
 
   const confirmDelete = () => {
     const index = steps.findIndex((item) => item.uuid === toDelete);
@@ -86,6 +113,10 @@ const WorkflowEditor = () => {
     setToDelete(uuid);
   };
 
+  const onStepInit = async () => {
+    await trigger('steps');
+  };
+
   if (readonly && pathname === basePath) {
     return (
       <div style={{ minHeight: '600px', display: 'flex', flexFlow: 'row' }}>
@@ -120,7 +151,17 @@ const WorkflowEditor = () => {
               </Group>
             </Stack>
           </Container>
-          <FlowEditor onDelete={onDelete} dragging={dragging} errors={errors} steps={steps} addStep={addStep} />
+          <FlowEditor
+            onDelete={onDelete}
+            dragging={dragging}
+            errors={errors}
+            steps={steps}
+            nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
+            addStep={addStep}
+            onStepInit={onStepInit}
+            onNodeClick={onNodeClick}
+          />
         </div>
       </div>
     );
@@ -161,7 +202,17 @@ const WorkflowEditor = () => {
                 </Group>
               </Stack>
             </Container>
-            <FlowEditor onDelete={onDelete} dragging={dragging} errors={errors} steps={steps} addStep={addStep} />
+            <FlowEditor
+              onDelete={onDelete}
+              dragging={dragging}
+              errors={errors}
+              steps={steps}
+              nodeTypes={nodeTypes}
+              edgeTypes={edgeTypes}
+              addStep={addStep}
+              onStepInit={onStepInit}
+              onNodeClick={onNodeClick}
+            />
           </div>
           <div
             style={{
