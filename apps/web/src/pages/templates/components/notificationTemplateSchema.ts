@@ -173,22 +173,15 @@ export const schema = z
                   .object({
                     amount: z.string(),
                     unit: z.enum([
+                      DigestUnitEnum.SECONDS,
                       DigestUnitEnum.MINUTES,
                       DigestUnitEnum.HOURS,
                       DigestUnitEnum.DAYS,
-                      DigestUnitEnum.WEEKS,
-                      DigestUnitEnum.MONTHS,
                     ]),
                     backoff: z.boolean().optional(),
-                    backoffAmount: z.number().optional(),
+                    backoffAmount: z.string().optional(),
                     backoffUnit: z
-                      .enum([
-                        DigestUnitEnum.MINUTES,
-                        DigestUnitEnum.HOURS,
-                        DigestUnitEnum.DAYS,
-                        DigestUnitEnum.WEEKS,
-                        DigestUnitEnum.MONTHS,
-                      ])
+                      .enum([DigestUnitEnum.SECONDS, DigestUnitEnum.MINUTES, DigestUnitEnum.HOURS, DigestUnitEnum.DAYS])
                       .optional(),
                   })
                   .passthrough()
