@@ -1,11 +1,13 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { EnvironmentRepository } from '@novu/dal';
+import { IntegrationRepository } from '@novu/dal';
 import { createHash } from '../../shared/helpers/hmac.service';
+import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
+import { encryptCredentials } from '@novu/application-generic';
 
 describe('Initialize Session - /widgets/session/initialize (POST)', async () => {
   let session: UserSession;
-  const environmentRepository = new EnvironmentRepository();
+  const integrationRepository = new IntegrationRepository();
 
   before(async () => {
     session = new UserSession();
@@ -49,7 +51,7 @@ describe('Initialize Session - /widgets/session/initialize (POST)', async () => 
     const subscriberId = '12345';
     const secretKey = session.environment.apiKeys[0].key;
 
-    await enableWidgetSecurityEncryption(environmentRepository, session);
+    await enableWidgetSecurityEncryption(integrationRepository, session);
 
     const hmacHash = createHash(secretKey, subscriberId);
     const response = await initWidgetSession(subscriberId, session, hmacHash);
@@ -62,7 +64,7 @@ describe('Initialize Session - /widgets/session/initialize (POST)', async () => 
     const validSecretKey = session.environment.apiKeys[0].key;
     let hmacHash;
 
-    await enableWidgetSecurityEncryption(environmentRepository, session);
+    await enableWidgetSecurityEncryption(integrationRepository, session);
 
     const invalidSubscriberId = validSubscriberId + '0';
     hmacHash = createHash(validSecretKey, invalidSubscriberId);
@@ -78,14 +80,17 @@ describe('Initialize Session - /widgets/session/initialize (POST)', async () => 
   });
 });
 
-async function enableWidgetSecurityEncryption(environmentRepository, session) {
-  await environmentRepository.update(
-    {
-      _organizationId: session.organization._id,
-      _id: session.environment._id,
-    },
-    { $set: { widget: { notificationCenterEncryption: true } } }
-  );
+async function enableWidgetSecurityEncryption(integrationRepository, session) {
+  await integrationRepository.create({
+    _environmentId: session.environment._id,
+    _organizationId: session.organization._id,
+    providerId: InAppProviderIdEnum.Novu,
+    channel: ChannelTypeEnum.IN_APP,
+    credentials: encryptCredentials({
+      hmac: true,
+    }),
+    active: true,
+  });
 }
 
 async function initWidgetSession(subscriberId: string, session, hmacHash?: string) {
