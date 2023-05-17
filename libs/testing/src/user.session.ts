@@ -5,7 +5,7 @@ import * as request from 'supertest';
 import * as defaults from 'superagent-defaults';
 import { v4 as uuid } from 'uuid';
 import { Novu, TriggerRecipientsPayload } from '@novu/node';
-import { EmailBlockTypeEnum, IEmailBlock, StepTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, EmailBlockTypeEnum, IEmailBlock, InAppProviderIdEnum, StepTypeEnum } from '@novu/shared';
 import {
   UserEntity,
   EnvironmentEntity,
@@ -18,6 +18,7 @@ import {
   ChangeEntity,
   SubscriberRepository,
   LayoutRepository,
+  IntegrationRepository,
 } from '@novu/dal';
 
 import { NotificationTemplateService } from './notification-template.service';
@@ -41,6 +42,7 @@ export class UserSession {
   private notificationGroupRepository = new NotificationGroupRepository();
   private feedRepository = new FeedRepository();
   private layoutRepository = new LayoutRepository();
+  private integrationRepository = new IntegrationRepository();
   private changeRepository: ChangeRepository = new ChangeRepository();
   private jobsService: JobsService;
 
@@ -135,6 +137,17 @@ export class UserSession {
 
   private async initializeWidgetSession() {
     this.subscriberId = SubscriberRepository.createObjectId();
+
+    await this.integrationRepository.create({
+      _environmentId: this.environment._id,
+      _organizationId: this.environment._organizationId,
+      providerId: InAppProviderIdEnum.Novu,
+      channel: ChannelTypeEnum.IN_APP,
+      credentials: {
+        hmac: true,
+      },
+      active: true,
+    });
 
     const { body } = await this.testAgent
       .post('/v1/widgets/session/initialize')
