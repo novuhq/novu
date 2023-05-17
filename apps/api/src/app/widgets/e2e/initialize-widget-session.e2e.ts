@@ -1,3 +1,5 @@
+import { IntegrationRepository } from '@novu/dal';
+import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { createHash } from '../../shared/helpers/hmac.service';
@@ -44,6 +46,7 @@ describe('Initialize Session - /widgets/session/initialize (POST)', async () => 
   });
 
   it('should pass the test with valid HMAC hash', async function () {
+    await setHmacConfig(session);
     const subscriberId = '12345';
     const secretKey = session.environment.apiKeys[0].key;
 
@@ -54,6 +57,7 @@ describe('Initialize Session - /widgets/session/initialize (POST)', async () => 
   });
 
   it('should fail the test with invalid subscriber id or invalid secret key', async function () {
+    await setHmacConfig(session);
     const validSubscriberId = '12345';
     const validSecretKey = session.environment.apiKeys[0].key;
     let hmacHash;
@@ -82,4 +86,24 @@ async function initWidgetSession(subscriberId: string, session, hmacHash?: strin
     phone: '054777777',
     hmacHash: hmacHash,
   });
+}
+
+async function setHmacConfig(session) {
+  const integrationRepository = new IntegrationRepository();
+
+  await integrationRepository.update(
+    {
+      _environmentId: this.environment._id,
+      _organizationId: this.environment._organizationId,
+      providerId: InAppProviderIdEnum.Novu,
+      channel: ChannelTypeEnum.IN_APP,
+
+      active: true,
+    },
+    {
+      $set: {
+        'credentials.hmac': false,
+      },
+    }
+  );
 }
