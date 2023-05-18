@@ -51,6 +51,12 @@ const getOrdinal = (num: string | number) => {
   return num + nth;
 };
 
+const WEEKDAYS_ORDER: string[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
+const sortWeekdays = (weekdays: string[]): string[] => {
+  return weekdays.sort((a, b) => WEEKDAYS_ORDER.indexOf(a) - WEEKDAYS_ORDER.indexOf(b));
+};
+
 export const TimedDigestWillBeSentHeader = ({ index }: { index: number }) => {
   const { watch } = useFormContext();
 
@@ -111,11 +117,21 @@ export const TimedDigestWillBeSentHeader = ({ index }: { index: number }) => {
     const atTime = watch(`steps.${index}.digestMetadata.timed.weeks.atTime`);
     const weekDays = watch(`steps.${index}.digestMetadata.timed.weeks.weekDays`) || [];
 
+    const weekDaysString =
+      weekDays?.length > 2
+        ? sortWeekdays(weekDays)
+            ?.slice(0, 2)
+            .map((item) => capitalize(item))
+            .join(', ')
+            .concat('...')
+        : sortWeekdays(weekDays)
+            ?.map((item) => capitalize(item))
+            .join(', ');
+
     if (amount !== '' && amount !== '1') {
       return (
         <>
-          Every <Highlight>{getOrdinal(amount)} </Highlight> week on{' '}
-          <Highlight>{weekDays?.map((item) => capitalize(item)).join(', ')}</Highlight>
+          Every <Highlight>{getOrdinal(amount)} </Highlight> week on <Highlight>{weekDaysString}</Highlight>
           {atTime && (
             <>
               {' '}
@@ -128,7 +144,7 @@ export const TimedDigestWillBeSentHeader = ({ index }: { index: number }) => {
 
     return (
       <>
-        <Highlight>Weekly</Highlight> on <Highlight>{weekDays?.map((item) => capitalize(item)).join(', ')}</Highlight>
+        <Highlight>Weekly</Highlight> on <Highlight>{weekDaysString}</Highlight>
         {atTime && (
           <>
             {' '}
@@ -185,11 +201,23 @@ export const TimedDigestWillBeSentHeader = ({ index }: { index: number }) => {
     );
   }
 
+  const monthDaysString =
+    monthDays?.length > 3
+      ? monthDays
+          .sort()
+          ?.slice(0, 3)
+          .map((item) => getOrdinal(item))
+          .join(', ')
+          .concat('...')
+      : monthDays
+          .sort()
+          ?.map((item) => getOrdinal(item))
+          .join(', ');
+
   if (amount !== '' && amount !== '1') {
     return (
       <>
-        Every <Highlight>{getOrdinal(amount)} </Highlight> month on{' '}
-        <Highlight>{monthDays?.map((item) => getOrdinal(item)).join(', ')}</Highlight>
+        Every <Highlight>{getOrdinal(amount)} </Highlight> month on <Highlight>{monthDaysString}</Highlight>
         {atTime && (
           <>
             {' '}
@@ -202,7 +230,7 @@ export const TimedDigestWillBeSentHeader = ({ index }: { index: number }) => {
 
   return (
     <>
-      <Highlight>Monthly</Highlight> on <Highlight>{monthDays?.map((item) => getOrdinal(item)).join(', ')}</Highlight>
+      <Highlight>Monthly</Highlight> on <Highlight>{monthDaysString}</Highlight>
       {atTime && (
         <>
           {' '}

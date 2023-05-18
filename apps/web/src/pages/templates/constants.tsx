@@ -67,3 +67,20 @@ export const stepIcon: Record<StepTypeEnum | ChannelTypeEnum, (...args: any[]) =
   delay: TimerGradient,
   trigger: () => <></>,
 };
+
+export enum StartFromScratchTourAnalyticsEnum {
+  FIRST_HINT_NEXT_CLICK = 'First Hint Next Click - [Start From Scratch Tour]',
+  SECOND_HINT_NEXT_CLICK = 'Second Hint Next Click - [Start From Scratch Tour]',
+  THIRD_HINT_NEXT_CLICK = 'Third Hint Next Click - [Start From Scratch Tour]',
+  FOURTH_HINT_NEXT_CLICK = 'Fourth Hint Next Click - [Start From Scratch Tour]',
+  FIFTH_HINT_GOT_IT_CLICK = 'Fifth Hint Got It Click - [Start From Scratch Tour]',
+  WATCH_LATER_TOUR_CLICK = 'Watch Later Tour Click - [Start From Scratch Tour]',
+}
+
+export const SCRATCH_HINT_INDEX_TO_CLICK_ANALYTICS = {
+  0: StartFromScratchTourAnalyticsEnum.FIRST_HINT_NEXT_CLICK,
+  1: StartFromScratchTourAnalyticsEnum.SECOND_HINT_NEXT_CLICK,
+  2: StartFromScratchTourAnalyticsEnum.THIRD_HINT_NEXT_CLICK,
+  3: StartFromScratchTourAnalyticsEnum.FOURTH_HINT_NEXT_CLICK,
+  4: StartFromScratchTourAnalyticsEnum.FIFTH_HINT_GOT_IT_CLICK,
+};
