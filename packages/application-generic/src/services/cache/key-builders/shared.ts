@@ -31,6 +31,7 @@ export enum CacheKeyPrefixEnum {
   USER = 'user',
   INTEGRATION = 'integration',
   ENVIRONMENT_BY_API_KEY = 'environment_by_api_key',
+  GROUPED_BLUEPRINTS = 'grouped-blueprints',
 }
 
 export enum CacheKeyTypeEnum {
@@ -43,6 +44,7 @@ export enum IdentifierPrefixEnum {
   SUBSCRIBER_ID = 's',
   TEMPLATE_IDENTIFIER = 't_i',
   API_KEY = 'a_k',
+  GROUPED_BLUEPRINT = 'g_b',
 }
 
 export enum OrgScopePrefixEnum {
