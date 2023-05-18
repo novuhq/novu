@@ -3,7 +3,6 @@ import { Bell, Chat, DigestGradient, Mail, Mobile, Sms, TimerGradient } from '..
 
 export enum TemplateAnalyticsEnum {
   CREATE_TEMPLATE_CLICK = 'Create Template Click - [Templates]',
-  TRY_DIGEST_CLICK = 'Try Digest Click - [Templates]',
 }
 
 export enum TemplateEditorAnalyticsEnum {

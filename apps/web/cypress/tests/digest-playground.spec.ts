@@ -4,12 +4,13 @@ describe('Digest Playground Workflow Page', function () {
   });
 
   it('should have a link to the docs', function () {
-    cy.intercept('**/notification-templates**').as('notificationTemplates');
-    cy.visit('/templates');
+    cy.intercept('GET', '**/notification-templates**').as('notificationTemplates');
+    cy.visit('/get-started');
+
+    cy.getByTestId('get-started-footer-left-side').click();
     cy.wait('@notificationTemplates');
 
-    cy.getByTestId('no-workflow-templates-placeholder').should('be.visible');
-    cy.getByTestId('try-digest-playground-tile').click();
+    cy.getByTestId('try-digest-playground-btn').click();
 
     cy.url().should('include', '/digest-playground');
     cy.contains('Digest Workflow Playground');
@@ -18,35 +19,41 @@ describe('Digest Playground Workflow Page', function () {
   });
 
   it('the set up digest workflow should redirec to template edit page', function () {
-    cy.intercept('**/notification-templates**').as('notificationTemplates');
-    cy.visit('/templates');
+    cy.intercept('GET', '**/notification-templates**').as('notificationTemplates');
+    cy.intercept('GET', '**/notification-templates/**').as('getNotificationTemplate');
+    cy.visit('/get-started');
+
+    cy.getByTestId('get-started-footer-left-side').click();
     cy.wait('@notificationTemplates');
 
-    cy.getByTestId('no-workflow-templates-placeholder').should('be.visible');
-    cy.getByTestId('try-digest-playground-tile').click();
+    cy.getByTestId('try-digest-playground-btn').click();
 
     cy.url().should('include', '/digest-playground');
     cy.contains('Digest Workflow Playground');
 
     cy.get('button').contains('Set Up Digest Workflow').click();
+    cy.wait('@getNotificationTemplate');
 
     cy.url().should('include', '/templates/edit');
   });
 
   it('should show the digest workflow hints', () => {
-    cy.intercept('**/notification-templates**').as('notificationTemplates');
-    cy.visit('/templates');
-    cy.wait('@notificationTemplates');
+    cy.intercept('GET', '**/notification-templates**').as('notificationTemplates');
+    cy.intercept('GET', '**/notification-templates/**').as('getNotificationTemplate');
+    cy.visit('/get-started');
 
     // click try digest playground
-    cy.getByTestId('no-workflow-templates-placeholder').should('be.visible');
-    cy.getByTestId('try-digest-playground-tile').click();
+    cy.getByTestId('get-started-footer-left-side').click();
+    cy.wait('@notificationTemplates');
+
+    cy.getByTestId('try-digest-playground-btn').click();
 
     cy.url().should('include', '/digest-playground');
     cy.contains('Digest Workflow Playground');
 
     // click set up digest workflow
     cy.get('button').contains('Set Up Digest Workflow').click();
+    cy.wait('@getNotificationTemplate');
 
     // in the template workflow editor
     cy.url().should('include', '/templates/edit');
@@ -105,19 +112,22 @@ describe('Digest Playground Workflow Page', function () {
   });
 
   it('should hide the digest workflow hints when clicking on skip tour button', () => {
-    cy.intercept('**/notification-templates**').as('notificationTemplates');
-    cy.visit('/templates');
-    cy.wait('@notificationTemplates');
+    cy.intercept('GET', '**/notification-templates**').as('notificationTemplates');
+    cy.intercept('GET', '**/notification-templates/**').as('getNotificationTemplate');
+    cy.visit('/get-started');
 
     // click try digest playground
-    cy.getByTestId('no-workflow-templates-placeholder').should('be.visible');
-    cy.getByTestId('try-digest-playground-tile').click();
+    cy.getByTestId('get-started-footer-left-side').click();
+    cy.wait('@notificationTemplates');
+
+    cy.getByTestId('try-digest-playground-btn').click();
 
     cy.url().should('include', '/digest-playground');
     cy.contains('Digest Workflow Playground');
 
     // click set up digest workflow
     cy.get('button').contains('Set Up Digest Workflow').click();
+    cy.wait('@getNotificationTemplate');
 
     // in the template workflow editor
     cy.url().should('include', '/templates/edit');
@@ -127,5 +137,24 @@ describe('Digest Playground Workflow Page', function () {
     cy.getByTestId('digest-workflow-tooltip-skip-button').contains('Skip tour').click();
 
     cy.getByTestId('digest-workflow-tooltip').should('not.exist');
+  });
+
+  it('when clicking on the back button from the playground it should redirect to /get-started/preview', function () {
+    cy.intercept('GET', '**/notification-templates**').as('notificationTemplates');
+    cy.intercept('GET', '**/notification-templates/**').as('getNotificationTemplate');
+    cy.visit('/get-started');
+
+    // click try digest playground
+    cy.getByTestId('get-started-footer-left-side').click();
+    cy.wait('@notificationTemplates');
+
+    cy.getByTestId('try-digest-playground-btn').click();
+
+    cy.url().should('include', '/digest-playground');
+    cy.contains('Digest Workflow Playground');
+
+    cy.contains('Go Back').click();
+
+    cy.url().should('include', '/get-started/preview');
   });
 });
