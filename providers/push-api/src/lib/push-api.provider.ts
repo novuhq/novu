@@ -7,6 +7,27 @@ import {
 import webpush from 'web-push';
 import crypto from 'crypto';
 
+class ErrorBase extends Error {
+  constructor(message?: string) {
+    super(message);
+
+    this.name = this.constructor.name;
+    Error.captureStackTrace(this, this.constructor);
+  }
+}
+
+class PushError extends ErrorBase {
+  constructor(public readonly failures: webpush.SendResult[], message: string) {
+    super();
+    Object.setPrototypeOf(this, new.target.prototype);
+    this.failures = failures;
+    this.message =
+      message +
+      '\nFailures:\n' +
+      failures.map((failure) => failure.statusCode).join('\n');
+  }
+}
+
 export class PushApiPushProvider implements IPushProvider {
   channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
   id: 'push-api';
@@ -41,47 +62,26 @@ export class PushApiPushProvider implements IPushProvider {
     );
   }
 
-  getId() {
-    try {
-      console.log('generating crypto');
-      const randomBytes = crypto?.randomBytes(20);
-      console.log('bytes', randomBytes);
-      const hex = randomBytes?.toString('hex');
-      console.log('tohex', hex);
-
-      return hex;
-    } catch (err) {
-      console.log(err);
-    }
-  }
+  getId = () => crypto.randomBytes(20).toString('hex');
 
   async sendMessage(
     options: IPushOptions
   ): Promise<ISendMessageSuccessResponse> {
     const subscriptions = options.target;
-    console.log(options, subscriptions);
 
     const failures: webpush.SendResult[] = [];
-    console.log('random crypto');
-    let id = this.getId();
-    if (id === undefined) {
-      id = 'non-random-id';
-    }
-    console.log('id', id);
+    const id = this.getId();
+
     for (const subscriptionString of subscriptions) {
       try {
-        console.log('decoding subscription...');
         const decodedSubscription = Buffer.from(
           subscriptionString,
           'base64'
         ).toString('ascii');
-        console.log('deecoded', decodedSubscription);
 
         const subscription = JSON.parse(
           decodedSubscription
         ) as webpush.PushSubscription;
-
-        console.log(subscription);
 
         const result = await this.sendPush(
           options.title,
@@ -89,20 +89,19 @@ export class PushApiPushProvider implements IPushProvider {
           subscription
         );
 
-        if (result.statusCode >= 200 && result.statusCode < 300) {
-          console.log(result);
+        if (result.statusCode < 200 || result.statusCode >= 300) {
           failures.push(result);
-          console.log('bad status');
         }
-        console.log('good status');
       } catch (err) {
-        console.log('err occurred', err);
-        failures.push(err);
+        failures.push({
+          statusCode: -1,
+          body: err,
+        } as webpush.SendResult);
       }
     }
 
     if (failures.length > 0) {
-      throw new Error(`Sending message ${id} failed.`);
+      throw new PushError(failures, `Sending message ${id} failed.`);
     }
 
     return {
