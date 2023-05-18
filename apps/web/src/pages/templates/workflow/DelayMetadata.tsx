@@ -16,7 +16,7 @@ export const DelayMetadata = ({ control, index }) => {
     watch,
     trigger,
   } = useFormContext();
-  const type = watch(`steps.${index}.metadata.type`);
+  const type = watch(`steps.${index}.delayMetadata.type`);
   const showErrors = isSubmitted && errors?.steps;
 
   return (
@@ -29,7 +29,7 @@ export const DelayMetadata = ({ control, index }) => {
         <Controller
           control={control}
           defaultValue={DelayTypeEnum.REGULAR}
-          name={`steps.${index}.metadata.type`}
+          name={`steps.${index}.delayMetadata.type`}
           render={({ field }) => {
             return (
               <SegmentedControl
@@ -45,7 +45,7 @@ export const DelayMetadata = ({ control, index }) => {
                 ]}
                 onChange={async (segmentValue) => {
                   field.onChange(segmentValue);
-                  await trigger(`steps.${index}.metadata`);
+                  await trigger(`steps.${index}.delayMetadata`);
                 }}
                 data-test-id="delay-type"
               />
@@ -66,7 +66,7 @@ export const DelayMetadata = ({ control, index }) => {
           <Grid.Col span={4}>
             <Controller
               control={control}
-              name={`steps.${index}.metadata.amount`}
+              name={`steps.${index}.delayMetadata.${DelayTypeEnum.REGULAR}.amount`}
               defaultValue=""
               render={({ field, fieldState }) => {
                 return (
@@ -93,7 +93,11 @@ export const DelayMetadata = ({ control, index }) => {
             />
           </Grid.Col>
           <Grid.Col span={8}>
-            <IntervalRadios control={control} name={`steps.${index}.metadata.unit`} showErrors={showErrors} />
+            <IntervalRadios
+              control={control}
+              name={`steps.${index}.delayMetadata.${DelayTypeEnum.REGULAR}.unit`}
+              showErrors={showErrors}
+            />
           </Grid.Col>
         </Grid>
       </When>
@@ -101,7 +105,7 @@ export const DelayMetadata = ({ control, index }) => {
       <When truthy={type === DelayTypeEnum.SCHEDULED}>
         <Controller
           control={control}
-          name={`steps.${index}.metadata.delayPath`}
+          name={`steps.${index}.delayMetadata.${DelayTypeEnum.SCHEDULED}.delayPath`}
           defaultValue=""
           render={({ field, fieldState }) => {
             return (

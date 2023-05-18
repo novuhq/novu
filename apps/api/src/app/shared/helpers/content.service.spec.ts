@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { DelayTypeEnum, DigestTypeEnum, FilterPartTypeEnum, StepTypeEnum } from '@novu/shared';
+import { DelayTypeEnum, DigestTypeEnum, DigestUnitEnum, FilterPartTypeEnum, StepTypeEnum } from '@novu/shared';
 import { ContentService } from './content.service';
 import { INotificationTemplateStep } from '@novu/shared';
 
@@ -244,7 +244,7 @@ describe('ContentService', function () {
             type: StepTypeEnum.DIGEST,
             content: '',
           },
-          metadata: { type: DigestTypeEnum.REGULAR, digestKey: 'path' },
+          metadata: { type: DigestTypeEnum.REGULAR, digestKey: 'path', unit: DigestUnitEnum.SECONDS, amount: 1 },
         },
       ]);
 

@@ -55,7 +55,7 @@ export class ChatOauth {
   }
 
   private getOAuthUrl(subscriberId: string, environmentId: string, clientId: string): string {
-    const redirectUri = `${process.env.API_ROOT_URL}/v1/subscribers/${subscriberId}/credentials/slack/${environmentId}/callback`;
+    const redirectUri = `${process.env.API_ROOT_URL}/v1/subscribers/${subscriberId}/credentials/slack/oauth/callback?environmentId=${environmentId}`;
 
     return `${this.SLACK_OAUTH_URL}client_id=${clientId}&scope=incoming-webhook&user_scope=&redirect_uri=${redirectUri}`;
   }

@@ -1,4 +1,10 @@
-import { IsDefined, IsMongoId, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsDefined,
+  IsMongoId,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { NotificationStepEntity } from '@novu/dal';
 import { DigestTypeEnum } from '@novu/shared';
 
@@ -25,4 +31,8 @@ export class DigestFilterStepsCommand extends EnvironmentWithUserCommand {
 
   @IsString()
   type: DigestTypeEnum;
+
+  @IsBoolean()
+  @IsOptional()
+  backoff?: boolean;
 }
