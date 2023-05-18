@@ -19,6 +19,11 @@ export class BlueprintController {
     private createBlueprintUsecase: CreateBlueprint
   ) {}
 
+  @Get('/group-by-category')
+  getGroupedBlueprints(): Promise<GroupedBlueprintResponse[]> {
+    return this.getGroupedBlueprintsUsecase.execute();
+  }
+
   @Get('/:templateId')
   getBlueprintById(@Param('templateId') templateId: string): Promise<GetBlueprintResponse> {
     return this.getBlueprintUsecase.execute(
@@ -26,11 +31,6 @@ export class BlueprintController {
         templateId,
       })
     );
-  }
-
-  @Get('/group-by-category')
-  getGroupedBlueprints(@UserSession() user: IJwtPayload): Promise<GroupedBlueprintResponse[]> {
-    return this.getGroupedBlueprintsUsecase.execute();
   }
 
   @Post('/:templateId')

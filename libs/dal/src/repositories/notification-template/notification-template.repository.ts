@@ -15,12 +15,10 @@ export class NotificationTemplateRepository extends BaseRepository<
   EnforceEnvOrOrgIds
 > {
   private notificationTemplate: SoftDeleteModel;
-  private blueprintEnvironmentId: string | undefined;
 
   constructor() {
     super(NotificationTemplate, NotificationTemplateEntity);
     this.notificationTemplate = NotificationTemplate;
-    this.blueprintEnvironmentId = NotificationTemplateRepository.getBlueprintEnvironmentId();
   }
 
   async findByTriggerIdentifier(environmentId: string, identifier: string) {
@@ -46,12 +44,12 @@ export class NotificationTemplateRepository extends BaseRepository<
   }
 
   async findBlueprint(id: string) {
-    if (!this.blueprintEnvironmentId) throw new DalException('blueprintEnvironmentId was not found');
+    if (!this.blueprintOrganizationId) throw new DalException('blueprintEnvironmentId was not found');
 
     const requestQuery: NotificationTemplateQuery = {
       _id: id,
       isBlueprint: true,
-      _environmentId: this.blueprintEnvironmentId,
+      _organizationId: this.blueprintOrganizationId,
     };
 
     const item = await this.MongooseModel.findOne(requestQuery).populate('steps.template');
@@ -60,13 +58,13 @@ export class NotificationTemplateRepository extends BaseRepository<
   }
 
   async findAllGroupedByCategory(): Promise<{ name: string; blueprints: NotificationTemplateEntity[] }[]> {
-    if (!this.blueprintEnvironmentId) {
+    if (!this.blueprintOrganizationId) {
       return [];
     }
 
     const requestQuery: NotificationTemplateQuery = {
       isBlueprint: true,
-      _environmentId: this.blueprintEnvironmentId,
+      _organizationId: this.blueprintOrganizationId,
     };
 
     const items = await this.MongooseModel.find(requestQuery)
@@ -94,13 +92,13 @@ export class NotificationTemplateRepository extends BaseRepository<
   }
 
   async getBlueprintList(skip = 0, limit = 10) {
-    if (!this.blueprintEnvironmentId) {
+    if (!this.blueprintOrganizationId) {
       return { totalCount: 0, data: [] };
     }
 
     const requestQuery: NotificationTemplateQuery = {
       isBlueprint: true,
-      _environmentId: this.blueprintEnvironmentId,
+      _organizationId: this.blueprintOrganizationId,
     };
 
     const totalItemsCount = await this.count(requestQuery);
@@ -154,7 +152,11 @@ export class NotificationTemplateRepository extends BaseRepository<
     return this.mapEntity(res);
   }
 
-  public static getBlueprintEnvironmentId(): string | undefined {
+  private get blueprintOrganizationId(): string | undefined {
+    return process.env.BLUEPRINT_CREATOR;
+  }
+
+  public static getBlueprintOrganizationId(): string | undefined {
     return process.env.BLUEPRINT_CREATOR;
   }
 }

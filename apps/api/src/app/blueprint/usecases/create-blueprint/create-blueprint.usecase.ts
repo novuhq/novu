@@ -72,7 +72,7 @@ export class CreateBlueprint {
       }
 
       const originalFeed = await this.feedRepository.findOne({
-        _environmentId: this.getBlueprintEnvironmentId(),
+        _organizationId: this.getBlueprintOrganizationId,
         id: step.template._feedId,
       });
 
@@ -119,7 +119,7 @@ export class CreateBlueprint {
 
     const originalGroup = await this.notificationGroupRepository.findOne({
       _id: notificationGroupId,
-      _environmentId: this.getBlueprintEnvironmentId(),
+      _organizationId: this.getBlueprintOrganizationId,
     });
     if (!originalGroup) throw new NotFoundException(`Notification group with id ${notificationGroupId} is not found`);
 
@@ -141,7 +141,7 @@ export class CreateBlueprint {
     return group;
   }
 
-  private getBlueprintEnvironmentId(): string {
-    return NotificationTemplateRepository.getBlueprintEnvironmentId() as string;
+  private get getBlueprintOrganizationId(): string {
+    return NotificationTemplateRepository.getBlueprintOrganizationId() as string;
   }
 }
