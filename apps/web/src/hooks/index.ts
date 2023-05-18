@@ -19,3 +19,5 @@ export * from './useVariablesManager';
 export * from './useVercelIntegration';
 export * from './useVercelParams';
 export * from './useEffectOnce';
+export * from './useDataRef';
+export * from './useInlineComponent';

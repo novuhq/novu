@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { INotificationTemplate } from '@novu/shared';
 
-import { useEnvController } from '../hooks';
+import { useEnvController } from './useEnvController';
+
 import { getNotificationsList } from '../api/notification-templates';
 
 export function useTemplates(page = 0, limit = 10) {

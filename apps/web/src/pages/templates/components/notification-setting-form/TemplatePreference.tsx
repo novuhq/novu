@@ -92,7 +92,7 @@ export function CriticalPreference() {
               label="Users will be able to manage subscriptions"
               tooltip="Allow opting out of the specific channel. Users will receive notifications in the active channels."
             />
-            <Switch {...field} checked={field.value || false} disabled={readonly} data-test-id="critical" />
+            <Switch {...field} checked={!field.value || false} disabled={readonly} data-test-id="critical" />
           </Group>
         );
       }}

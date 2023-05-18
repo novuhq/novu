@@ -9,6 +9,7 @@ export interface IUserEntity {
   profilePicture?: string | null;
   createdAt: string;
   showOnBoarding?: boolean;
+  showOnBoardingTour?: number;
   servicesHashes?: IServicesHashes;
 }
 

@@ -20,6 +20,7 @@ interface IButtonProps extends JSX.ElementChildrenAttribute, SpacingProps {
   inherit?: boolean;
   pulse?: boolean;
   sx?: Sx;
+  iconPosition?: 'left' | 'right';
 }
 
 /**
@@ -38,10 +39,11 @@ export function Button({
   onClick,
   variant = 'gradient',
   pulse,
+  iconPosition = 'left',
   ...props
 }: IButtonProps) {
   const { classes } = useStyles({ disabled, inherit, variant, pulse });
-  const withIconProps = icon ? { leftIcon: icon } : {};
+  const withIconProps = icon ? (iconPosition === 'left' ? { leftIcon: icon } : { rightIcon: icon }) : {};
 
   return (
     <MantineButton

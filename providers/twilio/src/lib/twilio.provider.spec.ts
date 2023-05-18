@@ -8,7 +8,7 @@ test('should trigger Twilio correctly', async () => {
   });
   const spy = jest
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
+    // @ts-expect-error
     .spyOn(provider.twilioClient.messages, 'create')
     .mockImplementation(async () => {
       return {

@@ -1,14 +1,16 @@
 import { Controller, Get } from '@nestjs/common';
-import { HealthCheck, HealthCheckService } from '@nestjs/terminus';
+import { HealthCheck, HealthCheckResult, HealthCheckService } from '@nestjs/terminus';
+import { DalServiceHealthIndicator } from '@novu/application-generic';
+
 import { version } from '../../package.json';
 
 @Controller('v1/health-check')
 export class HealthController {
-  constructor(private healthCheckService: HealthCheckService) {}
+  constructor(private healthCheckService: HealthCheckService, private dalHealthIndicator: DalServiceHealthIndicator) {}
 
   @Get()
   @HealthCheck()
-  async healthCheck() {
+  async healthCheck(): Promise<HealthCheckResult> {
     const result = await this.healthCheckService.check([
       async () => {
         return {
@@ -18,6 +20,7 @@ export class HealthController {
           },
         };
       },
+      () => this.dalHealthIndicator.isHealthy(),
     ]);
 
     return result;

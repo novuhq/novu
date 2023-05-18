@@ -8,7 +8,7 @@ test('should trigger infobip library correctly - SMS', async () => {
 
   const spy = jest
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
+    // @ts-expect-error
     .spyOn(provider.infobipClient.channels.sms, 'send')
     .mockImplementation(async () => {
       return {
@@ -49,7 +49,7 @@ test('should trigger infobip library correctly - E-mail', async () => {
 
   const spy = jest
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
+    // @ts-expect-error
     .spyOn(provider.infobipClient.channels.email, 'send')
     .mockImplementation(async () => {
       return {
