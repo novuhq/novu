@@ -8,6 +8,7 @@ import { GroupedBlueprintResponse } from './dto/grouped-blueprint.response.dto';
 import { GetBlueprint, GetBlueprintCommand } from './usecases/get-blueprint';
 import { CreateBlueprintCommand, CreateBlueprint } from './usecases/create-blueprint';
 import { GetGroupedBlueprints } from './usecases/get-blueprints';
+import { GetBlueprintResponse } from './dto/get-blueprint.response.dto';
 
 @Controller('/blueprints')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -19,7 +20,7 @@ export class BlueprintController {
   ) {}
 
   @Get('/:templateId')
-  getBlueprintById(@Param('templateId') templateId: string): Promise<NotificationTemplateEntity> {
+  getBlueprintById(@Param('templateId') templateId: string): Promise<GetBlueprintResponse> {
     return this.getBlueprintUsecase.execute(
       GetBlueprintCommand.create({
         templateId,

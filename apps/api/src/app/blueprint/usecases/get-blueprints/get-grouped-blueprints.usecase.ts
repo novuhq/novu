@@ -11,7 +11,7 @@ export class GetGroupedBlueprints {
     const blueprints = await this.notificationTemplateRepository.findAllGroupedByCategory();
     if (!blueprints) {
       throw new NotFoundException(
-        `Blueprints with id ${NotificationTemplateRepository.getBlueprintEnvironmentId()} was not found`
+        `Blueprints for environment id ${NotificationTemplateRepository.getBlueprintEnvironmentId()} were not found`
       );
     }
 

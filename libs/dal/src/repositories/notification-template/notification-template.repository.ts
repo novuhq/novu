@@ -15,9 +15,12 @@ export class NotificationTemplateRepository extends BaseRepository<
   EnforceEnvOrOrgIds
 > {
   private notificationTemplate: SoftDeleteModel;
+  private blueprintEnvironmentId: string | undefined;
+
   constructor() {
     super(NotificationTemplate, NotificationTemplateEntity);
     this.notificationTemplate = NotificationTemplate;
+    this.blueprintEnvironmentId = NotificationTemplateRepository.getBlueprintEnvironmentId();
   }
 
   async findByTriggerIdentifier(environmentId: string, identifier: string) {
@@ -43,10 +46,12 @@ export class NotificationTemplateRepository extends BaseRepository<
   }
 
   async findBlueprint(id: string) {
+    if (!this.blueprintEnvironmentId) throw new DalException('blueprintEnvironmentId was not found');
+
     const requestQuery: NotificationTemplateQuery = {
       _id: id,
       isBlueprint: true,
-      _environmentId: NotificationTemplateRepository.getBlueprintEnvironmentId() as string,
+      _environmentId: this.blueprintEnvironmentId,
     };
 
     const item = await this.MongooseModel.findOne(requestQuery).populate('steps.template');
@@ -55,13 +60,13 @@ export class NotificationTemplateRepository extends BaseRepository<
   }
 
   async findAllGroupedByCategory(): Promise<{ name: string; blueprints: NotificationTemplateEntity[] }[]> {
-    if (!NotificationTemplateRepository.getBlueprintEnvironmentId()) {
-      return {} as { name: string; blueprints: NotificationTemplateEntity[] }[];
+    if (!this.blueprintEnvironmentId) {
+      return [];
     }
 
     const requestQuery: NotificationTemplateQuery = {
       isBlueprint: true,
-      _environmentId: NotificationTemplateRepository.getBlueprintEnvironmentId() as string,
+      _environmentId: this.blueprintEnvironmentId,
     };
 
     const items = await this.MongooseModel.find(requestQuery)
@@ -73,8 +78,8 @@ export class NotificationTemplateRepository extends BaseRepository<
       const notificationGroupId = item._notificationGroupId;
       const notificationGroupName = item.notificationGroup?.name;
 
-      if (!acc[notificationGroupId as unknown as string]) {
-        acc[notificationGroupId as unknown as string] = {
+      if (!acc[notificationGroupId.toString()]) {
+        acc[notificationGroupId.toString()] = {
           name: notificationGroupName,
           blueprints: [],
         };
@@ -89,13 +94,13 @@ export class NotificationTemplateRepository extends BaseRepository<
   }
 
   async getBlueprintList(skip = 0, limit = 10) {
-    if (!NotificationTemplateRepository.getBlueprintEnvironmentId()) {
+    if (!this.blueprintEnvironmentId) {
       return { totalCount: 0, data: [] };
     }
 
     const requestQuery: NotificationTemplateQuery = {
       isBlueprint: true,
-      _environmentId: NotificationTemplateRepository.getBlueprintEnvironmentId() as string,
+      _environmentId: this.blueprintEnvironmentId,
     };
 
     const totalItemsCount = await this.count(requestQuery);
