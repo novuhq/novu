@@ -1,4 +1,5 @@
 import {
+  BLUEPRINT_IDENTIFIER,
   buildCommonKey,
   CacheKeyPrefixEnum,
   CacheKeyTypeEnum,
@@ -80,18 +81,14 @@ const buildKeyById = ({
 }): string =>
   prefixWrapper(`${type}:${keyEntity}:${identifierPrefix}=${identifier}`);
 
-const buildGroupedBlueprintsKey = ({
-  identifier,
-}: {
-  identifier: string;
-}): string =>
+const buildGroupedBlueprintsKey = (): string =>
   buildCommonKey({
     type: CacheKeyTypeEnum.ENTITY,
     keyEntity: CacheKeyPrefixEnum.GROUPED_BLUEPRINTS,
     environmentIdPrefix: OrgScopePrefixEnum.ORGANIZATION_ID,
     environmentId: process.env.BLUEPRINT_CREATOR,
     identifierPrefix: IdentifierPrefixEnum.GROUPED_BLUEPRINT,
-    identifier: identifier,
+    identifier: BLUEPRINT_IDENTIFIER,
   });
 
 export {
