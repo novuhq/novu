@@ -2,7 +2,7 @@ import { clickWorkflow, dragAndDrop, editChannel, goBack } from '.';
 
 describe('Workflow Editor - Steps Actions', function () {
   beforeEach(function () {
-    cy.initializeSession().as('session');
+    cy.initializeSession({ showOnBoardingTour: false }).as('session');
   });
 
   const interceptEditTemplateRequests = () => {
