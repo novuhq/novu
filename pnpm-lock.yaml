@@ -382,11 +382,7 @@ importers:
       nodemon: 2.0.22
       prettier: 2.8.7
       ts-jest: 27.1.5_cnngzrja2umb46xxazlucyx2qu
-<<<<<<< HEAD
-      ts-loader: 9.4.2_odl7p537j6zjcy4b5gf5bruiye
-=======
       ts-loader: 9.4.2_lj5zgxrzaejsnoobor62tojvse
->>>>>>> remote/next
       ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
       tsconfig-paths: 3.14.2
       typescript: 4.9.5
