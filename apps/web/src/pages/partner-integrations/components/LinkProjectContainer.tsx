@@ -14,7 +14,7 @@ import { LinkMoreProjectRow } from './LinkMoreProjectRow';
 import { ProjectRow } from './ProjectRow';
 import { Text, colors, Button } from '../../../design-system';
 import { errorMessage, successMessage } from '../../../utils/notifications';
-import SetupLoader from '../../../pages/auth/components/SetupLoader';
+import SetupLoader from '../../auth/components/SetupLoader';
 
 export type ProjectLinkFormValues = {
   projectLinkState: {
@@ -115,12 +115,12 @@ export function LinkProjectContainer({ type }: { type: 'edit' | 'create' }) {
   };
 
   const submitProjectLink = (data: ProjectLinkFormValues) => {
-    const payload = data.projectLinkState.reduce((acc, curr) => {
+    const payload = data.projectLinkState.reduce<Record<string, string[]>>((acc, curr) => {
       const { organizationId, projectIds } = curr;
       acc[organizationId] = projectIds;
 
       return acc;
-    }, {} as Record<string, string[]>);
+    }, {});
 
     if (configurationId) {
       if (type === 'create') {

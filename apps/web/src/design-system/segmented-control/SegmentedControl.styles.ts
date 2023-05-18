@@ -1,8 +1,8 @@
-import { createStyles, MantineTheme } from '@mantine/core';
+import { createStyles, MantineSize, MantineTheme } from '@mantine/core';
 import { colors, shadows } from '../config';
 import { getGradient } from '../config/helper';
 
-export default createStyles((theme: MantineTheme, _params, getRef) => {
+export default createStyles<string, { size: MantineSize }>((theme: MantineTheme, _params, getRef) => {
   const dark = theme.colorScheme === 'dark';
   const label = getRef('label');
 
@@ -24,7 +24,7 @@ export default createStyles((theme: MantineTheme, _params, getRef) => {
       ref: label,
       fontSize: '14px',
       fontWeight: 700,
-      padding: '12px 18px',
+      padding: `12px ${_params.size === 'md' ? '18' : '14'}px`,
       color: theme.colors.gray[8],
     },
     labelActive: {

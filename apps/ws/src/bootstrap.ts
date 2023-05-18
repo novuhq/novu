@@ -7,7 +7,7 @@ import { RedisIoAdapter } from './shared/framework/redis.adapter';
 import { AppModule } from './app.module';
 import { CONTEXT_PATH } from './config';
 import helmet from 'helmet';
-import { BullmqService } from '@novu/application-generic';
+import { BullMqService } from '@novu/application-generic';
 import { version } from '../package.json';
 import { getErrorInterceptor, Logger } from '@novu/application-generic';
 
@@ -20,7 +20,7 @@ if (process.env.SENTRY_DSN) {
 }
 
 export async function bootstrap() {
-  BullmqService.haveProInstalled();
+  BullMqService.haveProInstalled();
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   const redisIoAdapter = new RedisIoAdapter(app);
 

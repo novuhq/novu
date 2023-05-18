@@ -27,6 +27,7 @@ export enum CredentialsKeyEnum {
   RedirectUrl = 'redirectUrl',
   PublicKey = 'publicKey',
   PrivateKey = 'privateKey',
+  Hmac = 'hmac',
 }
 
 export enum EmailProviderIdEnum {
@@ -88,3 +89,10 @@ export enum PushProviderIdEnum {
 export enum InAppProviderIdEnum {
   Novu = 'novu',
 }
+
+export type ProvidersIdEnum =
+  | EmailProviderIdEnum
+  | SmsProviderIdEnum
+  | PushProviderIdEnum
+  | InAppProviderIdEnum
+  | ChatProviderIdEnum;

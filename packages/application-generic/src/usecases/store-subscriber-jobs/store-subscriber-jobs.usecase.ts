@@ -1,7 +1,6 @@
-import { JobRepository, NotificationRepository, JobEntity } from '@novu/dal';
+import { JobRepository, JobEntity, DalException } from '@novu/dal';
 import { Injectable } from '@nestjs/common';
 import {
-  StepTypeEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
 } from '@novu/shared';
@@ -18,54 +17,38 @@ import {
   BulkCreateExecutionDetails,
   BulkCreateExecutionDetailsCommand,
 } from '../bulk-create-execution-details';
+import { PlatformException } from '../../utils/exceptions';
 
 @Injectable()
 export class StoreSubscriberJobs {
   constructor(
     private addJob: AddJob,
     private jobRepository: JobRepository,
-    private notificationRepository: NotificationRepository,
     protected bulkCreateExecutionDetails: BulkCreateExecutionDetails
   ) {}
 
   @InstrumentUsecase()
   async execute(command: StoreSubscriberJobsCommand) {
-    const storedJobs = await this.jobRepository.storeJobs(command.jobs);
+    let storedJobs;
+    try {
+      storedJobs = await this.jobRepository.storeJobs(command.jobs);
+    } catch (e) {
+      if (e instanceof DalException) {
+        throw new PlatformException(e.message);
+      }
+      throw e;
+    }
 
     this.createJobsExecutionDetails(storedJobs);
     const firstJob = storedJobs[0];
 
-    const channels = storedJobs
-      .map((item) => item.type as StepTypeEnum)
-      .reduce<StepTypeEnum[]>((list, channel) => {
-        if (list.includes(channel) || channel === StepTypeEnum.TRIGGER) {
-          return list;
-        }
-        list.push(channel);
-
-        return list;
-      }, []);
-
-    await Promise.all([
-      this.notificationRepository._model.updateOne(
-        {
-          _organizationId: firstJob._organizationId,
-          _id: firstJob._notificationId,
-        },
-        {
-          $set: {
-            channels: channels,
-          },
-        }
-      ),
-      this.addJob.execute({
-        userId: firstJob._userId,
-        environmentId: firstJob._environmentId,
-        organizationId: firstJob._organizationId,
-        jobId: firstJob._id,
-        job: firstJob,
-      }),
-    ]);
+    await this.addJob.execute({
+      userId: firstJob._userId,
+      environmentId: firstJob._environmentId,
+      organizationId: firstJob._organizationId,
+      jobId: firstJob._id,
+      job: firstJob,
+    });
   }
 
   @Instrument()

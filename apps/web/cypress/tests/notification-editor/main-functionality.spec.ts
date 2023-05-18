@@ -311,11 +311,11 @@ describe('Workflow Editor - Main Functionality', function () {
         cy.getByTestId('environment-switch').find(`input[value="Production"]`).click({ force: true });
         cy.getByTestId('notifications-template').find('tbody tr').first().click();
 
-        cy.location('pathname').should('not.equal', `/templates/edit/${res.response?.body.data._id}`);
+        cy.location('pathname').should('not.equal', `/templates`);
 
         cy.getByTestId('environment-switch').find(`input[value="Development"]`).click({ force: true });
 
-        cy.location('pathname').should('equal', `/templates/edit/${res.response?.body.data._id}`);
+        cy.location('pathname').should('equal', `/templates`);
       });
     });
   });

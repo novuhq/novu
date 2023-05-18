@@ -13,13 +13,13 @@ import * as dns from 'dns';
 import logger from './logger';
 import * as extend from 'extend';
 import { QueueService } from './queue-service';
-import { BullmqService } from '@novu/application-generic';
+import { BullMqService } from '@novu/application-generic';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const LanguageDetect = require('languagedetect');
 const mailUtilities = Promise.promisifyAll(require('./mailUtilities'));
 const queueService = new QueueService();
-BullmqService.haveProInstalled();
+BullMqService.haveProInstalled();
 
 class Mailin extends events.EventEmitter {
   public configuration: IConfiguration;

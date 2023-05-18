@@ -45,6 +45,7 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       redirectUrl: Schema.Types.String,
       privateKey: Schema.Types.String,
       publicKey: Schema.Types.String,
+      hmac: Schema.Types.Boolean,
     },
 
     active: {

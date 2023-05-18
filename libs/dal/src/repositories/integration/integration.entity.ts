@@ -32,6 +32,7 @@ export interface ICredentials {
   redirectUrl?: string;
   privateKey?: string;
   publicKey?: string;
+  hmac?: boolean;
 }
 
 export class IntegrationEntity {

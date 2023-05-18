@@ -13,14 +13,14 @@ export const useRemoveNotification = ({
   ...options
 }: UseMutationOptions<IMessage, Error, IRemoveNotificationVariables> = {}) => {
   const queryClient = useQueryClient();
-  const { apiService } = useNovuContext();
+  const { apiService, subscriberId } = useNovuContext();
 
   const { mutate, ...result } = useMutation<IMessage, Error, IRemoveNotificationVariables>(
     ({ messageId }) => apiService.removeMessage(messageId),
     {
       ...options,
       onSuccess: (data, variables, context) => {
-        queryClient.refetchQueries(INFINITE_NOTIFICATIONS_QUERY_KEY, { exact: false });
+        queryClient.refetchQueries([...INFINITE_NOTIFICATIONS_QUERY_KEY, subscriberId], { exact: false });
         onSuccess?.(data, variables, context);
       },
     }

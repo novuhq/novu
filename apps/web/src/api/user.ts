@@ -7,3 +7,7 @@ export async function getUser() {
 export async function updateUserOnBoarding(showOnBoarding: boolean) {
   return api.put('/v1/users/onboarding', { showOnBoarding });
 }
+
+export async function updateUserOnBoardingTour(showOnBoardingTour: number) {
+  return api.put('/v1/users/onboarding-tour', { showOnBoardingTour });
+}
