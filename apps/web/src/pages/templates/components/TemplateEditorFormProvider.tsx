@@ -132,11 +132,7 @@ const TemplateEditorFormProvider = ({ children }) => {
   });
   const [trigger, setTrigger] = useState<INotificationTrigger>();
 
-  const {
-    reset,
-    formState: { isDirty: isDirtyForm, isValid },
-    watch,
-  } = methods;
+  const { reset, watch } = methods;
 
   const name = watch('name');
   const identifier = watch('identifier');
