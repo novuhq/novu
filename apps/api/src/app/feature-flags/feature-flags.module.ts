@@ -7,14 +7,7 @@ import { FeatureFlagsService, LaunchDarklyService } from './services';
 import { SharedModule } from '../shared/shared.module';
 import { AuthModule } from '../auth/auth.module';
 
-const featureFlagsService = {
-  provide: FeatureFlagsService,
-  useFactory: async () => {
-    return new FeatureFlagsService();
-  },
-};
-
-const providers = [LaunchDarklyService, featureFlagsService];
+const providers = [LaunchDarklyService, FeatureFlagsService];
 
 @Module({
   imports: [SharedModule, AuthModule],
