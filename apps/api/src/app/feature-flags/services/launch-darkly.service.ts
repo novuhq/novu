@@ -1,7 +1,7 @@
-import { init, LDClient } from 'launchdarkly-node-server-sdk';
+import { init, LDClient, LDContext, LDFlagValue, LDUser } from 'launchdarkly-node-server-sdk';
 import { Injectable, Logger } from '@nestjs/common';
 
-import { IFeatureFlagsService } from '../types';
+import { FeatureFlagKey, IFeatureFlagContext, IFeatureFlagsService } from '../types';
 
 const LOG_CONTEXT = 'LaunchDarklyService';
 
@@ -17,14 +17,12 @@ export class LaunchDarklyService implements IFeatureFlagsService {
     }
   }
 
-  public async initialize(): Promise<void> {
-    try {
-      await this.client.waitForInitialization();
-      Logger.log('Launch Darkly SDK has been successfully initialized', LOG_CONTEXT);
-    } catch (error) {
-      Logger.error('Launch Darkly SDK has failed when initialized', LOG_CONTEXT, error);
-      throw error;
-    }
+  public async get<T>(key: FeatureFlagKey, context: IFeatureFlagContext, defaultValue: T): Promise<T> {
+    const launchDarklyContext = this.mapToLaunchDarklyContext(key, context);
+
+    const value = await this.client.variation(key, launchDarklyContext, defaultValue);
+
+    return value satisfies T;
   }
 
   public async gracefullyShutdown(): Promise<void> {
@@ -38,5 +36,24 @@ export class LaunchDarklyService implements IFeatureFlagsService {
         throw error;
       }
     }
+  }
+
+  public async initialize(): Promise<void> {
+    try {
+      await this.client.waitForInitialization();
+      Logger.log('Launch Darkly SDK has been successfully initialized', LOG_CONTEXT);
+    } catch (error) {
+      Logger.error('Launch Darkly SDK has failed when initialized', LOG_CONTEXT, error);
+      throw error;
+    }
+  }
+
+  private mapToLaunchDarklyContext(key: FeatureFlagKey, context: IFeatureFlagContext): LDContext {
+    const launchDarklyContext: LDUser = {
+      ...context,
+      key,
+    };
+
+    return launchDarklyContext;
   }
 }
