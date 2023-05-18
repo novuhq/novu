@@ -26,7 +26,7 @@ describe('Get grouped notification template blueprints - /blueprints/group-by-ca
 
     const groupedBlueprints = data.body.data as GroupedBlueprintResponse[];
 
-    expect(groupedBlueprints[0]).to.equal('General');
+    expect(groupedBlueprints[0].name).to.equal('General');
 
     for (const grouped of groupedBlueprints) {
       for (const blueprint of grouped.blueprints) {
