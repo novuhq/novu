@@ -2,7 +2,7 @@ import { addAndEditChannel, clickWorkflow, dragAndDrop, editChannel, fillBasicNo
 
 describe('Creation functionality', function () {
   beforeEach(function () {
-    cy.initializeSession().as('session');
+    cy.initializeSession({ showOnBoardingTour: false }).as('session');
   });
 
   it('should create in-app notification', function () {
@@ -350,7 +350,7 @@ describe('Creation functionality', function () {
     cy.waitLoadTemplatePage(() => {
       cy.visit('/templates/create');
     });
-    cy.getByTestId('scratch-workflow-tooltip-skip-button').should('have.text', 'Watch later').click();
+
     fillBasicNotificationDetails('Test 15 Nodes');
     goBack();
     cy.waitForNetworkIdle(500);
