@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { JobStatusEnum, JobRepository } from '@novu/dal';
+import { isBefore } from 'date-fns';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { ResumeDelayedCommand } from './resume-delayed.command';
 
@@ -7,7 +8,7 @@ import { ResumeDelayedCommand } from './resume-delayed.command';
 export class ResumeDelayed {
   constructor(private jobRepository: JobRepository) {}
 
-  public async execute(command: ResumeDelayedCommand): Promise<boolean> {
+  public async execute(command: ResumeDelayedCommand): Promise<void> {
     const job = await this.jobRepository.findOne({
       _environmentId: command.environmentId,
       transactionId: command.transactionId,
@@ -15,14 +16,14 @@ export class ResumeDelayed {
     });
 
     if (!job) {
-      return false;
+      throw new NotFoundException(`Job with transactionId ${command.transactionId} was not found`);
     }
 
-    if (new Date(job?.expireAt as string) < new Date()) {
+    if (isBefore(new Date(job?.expireAt as string), new Date())) {
       throw new ApiException(`Job ${command.transactionId} can not be resumed as it has expired`);
     }
 
-    await this.jobRepository.update(
+    const { matched, modified } = await this.jobRepository.update(
       {
         _environmentId: command.environmentId,
         _id: job._id,
@@ -34,6 +35,10 @@ export class ResumeDelayed {
       }
     );
 
-    return true;
+    if (matched === 0 || modified === 0) {
+      throw new ApiException(`Something went wrong resuming Job with transactionId ${command.transactionId}`);
+    }
+
+    return;
   }
 }

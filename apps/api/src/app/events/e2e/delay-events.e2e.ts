@@ -12,9 +12,10 @@ import {
 import { UserSession, SubscribersService } from '@novu/testing';
 import { StepTypeEnum, DelayTypeEnum, DigestUnitEnum, DigestTypeEnum } from '@novu/shared';
 import { QueueService } from '@novu/application-generic';
+import { setTimeout } from 'timers/promises';
 
 const axiosInstance = axios.create();
-const promiseResolveTimeout = (ms: number, arg: unknown = {}) => new Promise((resolve) => setTimeout(resolve, ms, arg));
+const promiseResolveTimeout = (ms: number) => setTimeout(ms);
 
 describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', function () {
   let session: UserSession;
@@ -445,7 +446,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     expect(canceledJobs).to.equal(1);
     expect(delayedJobs).to.equal(0);
 
-    await axiosInstance.patch(`${session.serverUrl}/v1/events/trigger/${id}/resume`, {
+    await axiosInstance.post(`${session.serverUrl}/v1/events/trigger/${id}/resume`, {
       headers: {
         authorization: `ApiKey ${session.apiKey}`,
       },
@@ -506,7 +507,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
 
     await promiseResolveTimeout(100);
     expect(async () => {
-      await axiosInstance.patch(`${session.serverUrl}/v1/events/trigger/${id}/resume`, {
+      await axiosInstance.post(`${session.serverUrl}/v1/events/trigger/${id}/resume`, {
         headers: {
           authorization: `ApiKey ${session.apiKey}`,
         },

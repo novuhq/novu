@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Param, Patch, Post, Scope, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Param, Post, Scope, UseGuards } from '@nestjs/common';
 import { ApiOkResponse, ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { v4 as uuidv4 } from 'uuid';
 import { IJwtPayload, ISubscribersDefine } from '@novu/shared';
@@ -25,6 +25,7 @@ import { ResumeDelayedCommand } from './usecases/resume-delayed';
 import { ApiResponse } from '../shared/framework/response.decorator';
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 import { ResumeDelayed } from 'apps/api/dist/src/app/events/usecases/resume-delayed';
+import { ApiNoContentResponse } from '@nestjs/swagger';
 @Controller({
   path: 'events',
   scope: Scope.REQUEST,
@@ -183,10 +184,8 @@ export class EventsController {
 
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  @Patch('/trigger/:transactionId/resume')
-  @ApiOkResponse({
-    type: Boolean,
-  })
+  @Post('/trigger/:transactionId/resume')
+  @ApiNoContentResponse()
   @ApiOperation({
     summary: 'Resume canceled event',
     description: ` 
