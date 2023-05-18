@@ -25,7 +25,6 @@ describe('Notification Templates Screen', function () {
     cy.getByTestId('category-label').contains('General');
   });
 
-  // TODO refactor no try-digest-playground-tile
   it('when no workflow templates created it should show the page placeholder', function () {
     cy.initializeSession({ noTemplates: true }).as('session');
     cy.intercept('**/notification-templates**').as('notificationTemplates');
