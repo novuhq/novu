@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { LaunchDarklyService } from './launch-darkly.service';
 
-import { IFeatureFlagsService } from '../types';
+import { FeatureFlagKey, IFeatureFlagContext, IFeatureFlagsService } from '../types';
 
 const LOG_CONTEXT = 'FeatureFlagsService';
 
@@ -47,5 +47,9 @@ export class FeatureFlagsService {
         Logger.error('Feature Flags service has failed when shutted down', LOG_CONTEXT, error);
       }
     }
+  }
+
+  public async get<T>(key: FeatureFlagKey, context: IFeatureFlagContext, defaultValue: T): Promise<T> {
+    return await this.service.get(key, context, defaultValue);
   }
 }
