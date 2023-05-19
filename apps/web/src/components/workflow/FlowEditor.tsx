@@ -170,7 +170,8 @@ export function FlowEditor({
         const newNode = buildNewNode(newId, oldNode, parentId, step, i);
         setNodes((nds) => nds.concat(newNode));
 
-        const newEdge = buildNewEdge(parentId, newId, edgeTypes ? 'special' : 'default');
+        const edgeType = edgeTypes ? 'special' : 'default';
+        const newEdge = buildNewEdge(parentId, newId, edgeType);
         setEdges((eds) => addEdge(newEdge, eds));
 
         parentId = newId;

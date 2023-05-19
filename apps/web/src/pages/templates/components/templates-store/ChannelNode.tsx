@@ -20,8 +20,8 @@ export const ChannelNode = ({ id, data }: NodeProps) => {
       Handlers={() => {
         return (
           <>
-            <Handle type="target" id="b" position={Position.Top} />
-            <Handle style={noChildStyle} type="source" id="a" position={Position.Bottom} />
+            <Handle type="target" position={Position.Top} />
+            <Handle style={noChildStyle} type="source" position={Position.Bottom} />
           </>
         );
       }}

@@ -16,7 +16,7 @@ export const TriggerNode = ({ data }: NodeProps) => {
       Handlers={() => {
         return (
           <>
-            <Handle type="source" id="a" position={Position.Bottom} />
+            <Handle type="source" position={Position.Bottom} />
           </>
         );
       }}
