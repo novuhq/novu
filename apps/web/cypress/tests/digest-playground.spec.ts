@@ -18,7 +18,7 @@ describe('Digest Playground Workflow Page', function () {
     cy.get('a[href="https://docs.novu.co/platform/digest"]').contains('Learn more in docs');
   });
 
-  it('the set up digest workflow should redirec to template edit page', function () {
+  it('the set up digest workflow should redirect to template edit page', function () {
     cy.intercept('GET', '**/notification-templates**').as('notificationTemplates');
     cy.intercept('GET', '**/notification-templates/**').as('getNotificationTemplate');
     cy.visit('/get-started');

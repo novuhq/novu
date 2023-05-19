@@ -94,7 +94,7 @@ const TEMPLATES_GROUPED = [
 ];
 
 const getTemplateDetails = (templateName: string): { name: string; iconName: IconName } => {
-  const regexResult = /^:.{1,}: /.exec(templateName);
+  const regexResult = /^:.{1,}:/.exec(templateName);
   let name = '';
   let iconName = 'fa-solid fa-question';
   if (regexResult !== null) {
