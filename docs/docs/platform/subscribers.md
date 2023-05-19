@@ -33,20 +33,43 @@ Before triggering any notification, first create the subscriber and then trigger
 <Tabs groupId="language" queryString>
   <TabItem value="js" label="Node.js">
 
-```typescript
+```javascript
 import { Novu } from '@novu/node';
 
-const novu = new Novu(process.env.NOVU_API_KEY);
+const novu = new Novu('<NOVU_API_KEY>');
 
-await novu.subscribers.identify(user.id, {
-  email: user.email,
-  firstName: user.firstName,
-  lastName: user.lastName,
-  phone: user.phone,
-  avatar: user.profile_avatar,
-  locale: user.locale,
-  data: { custom1: 'customval1', custom2: 'customval2' },
+await novu.subscribers.identify('111', {
+  email: 'john.doe@domain.com',
+  firstName: 'John',
+  lastName: 'Doe',
+  phone: '+13603963366',
+  avatar: 'https://example.com/images/avatar.jpg',
+  locale: 'en',
+  data: { customKey1: 'customVal1', customKey2: 'customVal2' },
 });
+```
+
+  </TabItem>
+    <TabItem value="php" label="PHP">
+
+```php
+use Novu\SDK\Novu;
+
+$novu = new Novu('<NOVU_API_KEY>');
+
+$novu->createSubscriber([
+    'subscriberId' => '111',
+    'email' => 'john.doe@domain.com',
+    'firstName' => 'John',
+    'lastName' => 'Doe',
+    'phone' => '+13603963366',
+    'avatar' => 'https://example.com/images/avatar.jpg',
+    'locale' => 'en',
+    'data' => [
+      'customKey1' => 'customVal1',
+      'customKey2' => 'customVal2'
+    ]
+]);
 ```
 
   </TabItem>
@@ -63,18 +86,18 @@ A non-existing subscriber can be added by sending subscriber data in `to` field 
 ```javascript
 import { Novu } from '@novu/node';
 
-const novu = new Novu(process.env.NOVU_API_KEY);
+const novu = new Novu('<NOVU_API_KEY>');
 
 await novu.trigger('<TEMPLATE_IDENTIFIER>', {
   to: {
-    subscriberId: '<USER_IDENTIFIER>',
-    email: 'test@email.com',
+    subscriberId: '111',
+    email: 'john.doe@domain.com',
     firstName: 'John',
     lastName: 'Doe',
-    phone: '+9876543210',
+    phone: '+13603963366',
   },
   payload: {
-    customVariables: 'Test',
+    customVariable: 'variableValue',
     organization: {
       logo: 'https://organisation.com/logo.png',
     },
@@ -83,7 +106,46 @@ await novu.trigger('<TEMPLATE_IDENTIFIER>', {
 ```
 
   </TabItem>
+  <TabItem value="php" label="PHP">
+
+```php
+use Novu\SDK\Novu;
+
+$novu = new Novu('<NOVU_API_KEY>');
+
+$novu->triggerEvent([
+    'name' => '<TEMPLATE_IDENTIFIER>',
+    'to' => [
+        'subscriberId' => '111',
+        'email' => 'john.doe@domain.com',
+        'firstName' => 'John',
+        'lastName'  => 'Doe',
+        'phone' => '+13603963366'
+    ]
+    'payload' => [
+       'customVariable' => 'variableValue',
+       'organization' => [
+         'logo' => 'https://organisation.com/logo.png',
+       ]
+     ],
+]);
+```
+
+  </TabItem>
 </Tabs>
+
+## Subscriber attributes
+
+| Field        | Type     | Required | Example                               |
+| ------------ | -------- | -------- | ------------------------------------- |
+| subscriberId | `string` | true     | b0bea066-f5fe-11ed-b67e-0242ac120002  |
+| firstName    | `string` | false    | John                                  |
+| lastName     | `string` | false    | Doe                                   |
+| email        | `string` | false    | john.doe@domain.org                   |
+| phone        | `string` | false    | +13603963366                          |
+| locale       | `string` | false    | en                                    |
+| avatar       | `string` | false    | <https://example.com/images/avatar.jpg> |
+| data         | `object` | false    | {"key" : "value"}                     |
 
 ## Find a subscriber
 
@@ -95,9 +157,20 @@ Any subscriber can be retrieved using a unique subscriber identifier `subscriber
 ```javascript
 import { Novu } from '@novu/node';
 
-const novu = new Novu(process.env.NOVU_API_KEY);
+const novu = new Novu('<NOVU_API_KEY>');
 
-await novu.subscribers.update('subscriberId');
+await novu.subscribers.get('111');
+```
+
+  </TabItem>
+  <TabItem value="php" label="PHP">
+
+```php
+use Novu\SDK\Novu;
+
+$novu = new Novu('<NOVU_API_KEY>');
+
+$novu->getSubscriber('111')->toArray();
 ```
 
   </TabItem>
@@ -113,12 +186,30 @@ In some cases, you want to access a subscriber to update a specific user data fi
 ```javascript
 import { Novu } from '@novu/node';
 
-const novu = new Novu(process.env.NOVU_API_KEY);
+const novu = new Novu('<NOVU_API_KEY>');
 
-await novu.subscribers.update(user.id, {
+await novu.subscribers.update('111', {
   // new email
-  email: user.email,
+  email: 'john@domain.com',
+  // new phone
+  phone: '+19874567832',
 });
+```
+
+  </TabItem>
+  <TabItem value="php" label="PHP">
+
+```php
+use Novu\SDK\Novu;
+
+$novu = new Novu('<NOVU_API_KEY>');
+
+$novu->updateSubscriber('111', [
+    // new email
+    'email' => 'john@domain.com',
+    // new phone
+    'phone' => '+19874567832',
+])->toArray();
 ```
 
   </TabItem>
@@ -134,9 +225,20 @@ To stop a subscriber from receiving notifications, you can delete the subscriber
 ```javascript
 import { Novu } from '@novu/node';
 
-const novu = new Novu(process.env.NOVU_API_KEY);
+const novu = new Novu('<NOVU_API_KEY>');
 
-await novu.subscribers.delete(user.id);
+await novu.subscribers.delete('111');
+```
+
+  </TabItem>
+    <TabItem value="php" label="PHP">
+
+```php
+use Novu\SDK\Novu;
+
+$novu = new Novu('<NOVU_API_KEY>');
+
+$novu->deleteSubscriber('111');
 ```
 
   </TabItem>
@@ -155,9 +257,21 @@ import { Novu } from '@novu/node';
 const novu = new Novu(process.env.NOVU_API_KEY);
 
 const page = 0;
-const limit = 5;
 
-await novu.subscribers.list(page, limit);
+await novu.subscribers.list(page);
+```
+
+  </TabItem>
+  <TabItem value="php" label="PHP">
+
+```php
+use Novu\SDK\Novu;
+
+$novu = new Novu('<NOVU_API_KEY>');
+
+$page = 0;
+
+$novu->getSubscriberList($page)->toArray();
 ```
 
   </TabItem>
@@ -173,17 +287,41 @@ Channel-specific credentials of subscribers can be added or updated using the `
 ```javascript
 import { Novu, ChatProviderIdEnum } from '@novu/node';
 
-const novu = new Novu(process.env.NOVU_API_KEY);
+const novu = new Novu('<NOVU_API_KEY>');
 
-// Updating slack webhookUrl
-await novu.subscribers.setCredentials('subscriberId', 'slack', {
+// Update slack webhookUrl
+await novu.subscribers.setCredentials('111', 'slack', {
   webhookUrl: 'webhookUrl',
 });
 
-// Updating FCM deviceTokens
-await novu.subscribers.setCredentials('subscriberId', 'fcm', {
+// Update FCM deviceTokens
+await novu.subscribers.setCredentials('111', 'fcm', {
   deviceTokens: ['token1', 'token2'],
 });
+```
+
+  </TabItem>
+  <TabItem value="php" label="PHP">
+
+```php
+use Novu\SDK\Novu;
+
+$novu = new Novu('<NOVU_API_KEY>');
+
+// Update Slack webhookUrl
+$novu->updateSubscriberCredentials('111', [
+    'providerId'  => 'slack',
+    'credentials' => [
+       'webhookUrl' => 'webhookUrl',
+     ]
+]);
+
+// Update FCM deviceTokens
+$novu->updateSubscriberCredentials('111', [
+    'providerId'  => 'fcm',
+    'credentials' => [
+       'deviceTokens' => ['token1', 'token2']
+]);
 ```
 
   </TabItem>

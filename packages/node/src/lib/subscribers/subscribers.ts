@@ -12,11 +12,10 @@ interface IChannelCredentials {
 }
 
 export class Subscribers extends WithHttp implements ISubscribers {
-  async list(page: number, limit: number) {
+  async list(page: number) {
     return await this.http.get(`/subscribers`, {
       params: {
         page,
-        limit,
       },
     });
   }
