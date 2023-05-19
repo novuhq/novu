@@ -136,16 +136,16 @@ $novu->triggerEvent([
 
 ## Subscriber attributes
 
-| Field        | Type     | Required | Example                               |
-| ------------ | -------- | -------- | ------------------------------------- |
-| subscriberId | `string` | true     | b0bea066-f5fe-11ed-b67e-0242ac120002  |
-| firstName    | `string` | false    | John                                  |
-| lastName     | `string` | false    | Doe                                   |
-| email        | `string` | false    | john.doe@domain.org                   |
-| phone        | `string` | false    | +13603963366                          |
-| locale       | `string` | false    | en                                    |
+| Field        | Type     | Required | Example                                 |
+| ------------ | -------- | -------- | --------------------------------------- |
+| subscriberId | `string` | true     | b0bea066-f5fe-11ed-b67e-0242ac120002    |
+| firstName    | `string` | false    | John                                    |
+| lastName     | `string` | false    | Doe                                     |
+| email        | `string` | false    | john.doe@domain.org                     |
+| phone        | `string` | false    | +13603963366                            |
+| locale       | `string` | false    | en                                      |
 | avatar       | `string` | false    | <https://example.com/images/avatar.jpg> |
-| data         | `object` | false    | {"key" : "value"}                     |
+| data         | `object` | false    | {"key" : "value"}                       |
 
 ## Find a subscriber
 
