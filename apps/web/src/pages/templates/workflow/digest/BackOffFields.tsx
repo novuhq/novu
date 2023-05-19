@@ -69,7 +69,6 @@ export const BackOffFields = ({ index, control, readonly }) => {
                     type="number"
                     data-test-id="backoff-amount"
                     placeholder="0"
-                    required
                     disabled={readonly}
                     styles={(theme) => ({
                       ...inputStyles(theme),
