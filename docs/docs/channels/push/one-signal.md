@@ -1,6 +1,6 @@
 ---
 sidebar_label: One Signal
-sidebar_position: 1
+sidebar_position: 4
 ---
 
 # One Signal
@@ -11,7 +11,13 @@ To configure the OneSignal integration, you will need an active account which ha
 
 ## Set Device Token
 
-Before triggering the notification to a subscriber(user) with push as a step in the workflow, make sure you have added the subscriber's `userId` from OneSignal as their device token. This is also referred to as the `Player ID` within the OneSignal web console:
+Once OneSignal has been configured with your credentials for APNs/FCM, and the OneSignal SDK has been [setup and configured](https://documentation.onesignal.com/docs/onboarding-with-onesignal#step-1-setup-onesignal-sdk) for your application, your users will begin to be automatically assigned a unique OneSignal [player_id](https://documentation.onesignal.com/docs/users#player-id) identifier by the SDK.
+
+This identifier allows targeting your user when sending push notifications without having to retrieve the specific Android or iOS device tokens - which are managed by OneSignal.
+
+In order to target the OneSignal user from Novu, you must register the OneSignal `player_id` as the `deviceToken` for your Novu subscriber. This value can be retrieved via the [OneSignal SDK](https://documentation.onesignal.com/docs/users-and-devices#finding-users) for your platform.
+
+Once you have the user's `player_id` value, the `deviceToken` for your Novu subscriber can be set via:
 
 ```ts
 import { Novu, PushProviderIdEnum } from '@novu/node';
@@ -19,7 +25,8 @@ import { Novu, PushProviderIdEnum } from '@novu/node';
 const novu = new Novu(process.env.NOVU_API_KEY);
 
 await novu.subscribers.setCredentials('subscriberId', PushProviderIdEnum.OneSignal, {
-  deviceTokens: ['token1', 'token2'],
+  // Your user's unique 'player_id' from OneSignal
+  deviceTokens: ['ad0452ca-3ca7-43b5-bf9b-fa93fd322035'],
 });
 ```
 
