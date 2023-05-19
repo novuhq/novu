@@ -9,6 +9,7 @@ describe('Digest Playground Workflow Page', function () {
 
     cy.getByTestId('get-started-footer-left-side').click();
     cy.wait('@notificationTemplates');
+    cy.waitForNetworkIdle(500);
 
     cy.getByTestId('try-digest-playground-btn').click();
 
@@ -25,6 +26,7 @@ describe('Digest Playground Workflow Page', function () {
 
     cy.getByTestId('get-started-footer-left-side').click();
     cy.wait('@notificationTemplates');
+    cy.waitForNetworkIdle(500);
 
     cy.getByTestId('try-digest-playground-btn').click();
 
@@ -45,6 +47,7 @@ describe('Digest Playground Workflow Page', function () {
     // click try digest playground
     cy.getByTestId('get-started-footer-left-side').click();
     cy.wait('@notificationTemplates');
+    cy.waitForNetworkIdle(500);
 
     cy.getByTestId('try-digest-playground-btn').click();
 
@@ -119,6 +122,7 @@ describe('Digest Playground Workflow Page', function () {
     // click try digest playground
     cy.getByTestId('get-started-footer-left-side').click();
     cy.wait('@notificationTemplates');
+    cy.waitForNetworkIdle(500);
 
     cy.getByTestId('try-digest-playground-btn').click();
 
@@ -147,6 +151,7 @@ describe('Digest Playground Workflow Page', function () {
     // click try digest playground
     cy.getByTestId('get-started-footer-left-side').click();
     cy.wait('@notificationTemplates');
+    cy.waitForNetworkIdle(500);
 
     cy.getByTestId('try-digest-playground-btn').click();
 
