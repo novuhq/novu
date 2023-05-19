@@ -288,7 +288,13 @@ interface INotificationCenterProps {
   onUrlChange?: (url: string) => void;
   onNotificationClick?: (notification: IMessage) => void;
   onUnseenCountChanged?: (unseenCount: number) => void;
-  header?: () => JSX.Element;
+  header?: ({
+    setScreen,
+    screen,
+  }: {
+    setScreen: (screen: ScreensEnum) => void;
+    screen: ScreensEnum;
+  }) => JSX.Element;
   footer?: () => JSX.Element;
   emptyState?: JSX.Element;
   onActionClick?: (templateIdentifier: string, type: ButtonTypeEnum, message: IMessage) => void;

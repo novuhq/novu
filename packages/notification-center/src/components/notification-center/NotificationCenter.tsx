@@ -4,7 +4,7 @@ import { IMessage, IMessageAction, ButtonTypeEnum } from '@novu/shared';
 import { AppContent } from './components';
 import { useNotifications, useNovuContext } from '../../hooks';
 import { NotificationCenterContext } from '../../store/notification-center.context';
-import { ITab, ListItem } from '../../shared/interfaces';
+import { ITab, ListItem, ScreensEnum } from '../../shared/interfaces';
 import { ColorScheme } from '../../shared/config/colors';
 import { INovuThemeProvider, NovuThemeProvider } from '../../store/novu-theme-provider.context';
 
@@ -12,7 +12,7 @@ export interface INotificationCenterProps {
   onUrlChange?: (url: string) => void;
   onNotificationClick?: (notification: IMessage) => void;
   onUnseenCountChanged?: (unseenCount: number) => void;
-  header?: () => JSX.Element;
+  header?: ({ setScreen, screen }: { setScreen: (screen: ScreensEnum) => void; screen: ScreensEnum }) => JSX.Element;
   footer?: () => JSX.Element;
   emptyState?: JSX.Element;
   listItem?: ListItem;
