@@ -1,6 +1,5 @@
-import React from 'react';
 import { Stack, Title } from '@mantine/core';
-import { colors, DragButton, Text } from '../../../../design-system';
+import { colors, DragButton } from '../../../../design-system';
 import { channels, NodeTypeEnum } from '../../../../utils/channels';
 import { useEnvController } from '../../../../hooks';
 import { When } from '../../../../components/utils/When';
