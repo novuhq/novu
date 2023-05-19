@@ -29,15 +29,17 @@ const novu = new Novu(process.env.NOVU_API_KEY);
 
 // request access to notifications API and get subscription
 const subscriptionJSON = JSON.stringify(subscription);
+const subscriptionBase64 = btoa(subscriptionJSON) // browser
+// const subscriptionBase64 = Buffer.from(subscriptionJSON, 'ascii').toString('base64') // nodejs
 
 await novu.subscribers.setCredentials('subscriberId', PushProviderIdEnum.FCM, {
-  deviceTokens: [subscriptionJSON],
+  deviceTokens: [subscriptionBase64], // for multiple devices store each new subscription in your own API
 });
 ```
 
 :::info
 
-Note that `endpoint1` is a string encoded JSON object containing the push subscription received from the browser by requesting permission for receiving notifications. It will look something like:
+Note that `subscriptionBase64` is a base64 encoded JSON object containing the push subscription received from the browser by requesting permission for receiving notifications. It will look something like:
 
 ```json
 {
