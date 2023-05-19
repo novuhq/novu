@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ReactFlowProvider } from 'react-flow-renderer';
 import { ActionIcon, Modal, useMantineTheme } from '@mantine/core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
@@ -21,6 +22,14 @@ import {
   useStyles,
 } from './templateStoreStyles';
 import { IBlueprintsGrouped } from '../../../../api/hooks';
+import { TriggerNode } from './TriggerNode';
+import { ChannelNode } from './ChannelNode';
+import { FlowEditor } from '../../../../components/workflow';
+
+const nodeTypes = {
+  triggerNode: TriggerNode,
+  channelNode: ChannelNode,
+};
 
 export interface ITemplatesStoreModalProps {
   groupedBlueprints: IBlueprintsGrouped[];
@@ -80,7 +89,27 @@ export const TemplatesStoreModal = ({ groupedBlueprints, isOpened, onClose }: IT
             </ActionIcon>
           </TemplateHeader>
           <CanvasHolder>
-            <div>Canvas</div>
+            <ReactFlowProvider>
+              <FlowEditor
+                steps={selectedTemplate.steps}
+                nodeTypes={nodeTypes}
+                zoomOnScroll={false}
+                zoomOnPinch={false}
+                zoomOnDoubleClick={false}
+                panOnDrag={false}
+                panOnScroll
+                preventScrolling={false}
+                nodesDraggable={false}
+                elementsSelectable={false}
+                nodesConnectable={false}
+                selectNodesOnDrag={false}
+                wrapperStyles={{
+                  height: '100%',
+                  width: '100%',
+                  minHeight: '300px',
+                }}
+              />
+            </ReactFlowProvider>
             <NovuButtonHolder>
               <MadeByNovuStyled width={104} height={20} />
               <Button>Use template</Button>

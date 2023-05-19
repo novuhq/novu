@@ -9,6 +9,7 @@ describe('Digest Playground Workflow Page', function () {
 
     cy.getByTestId('get-started-footer-left-side').click();
     cy.wait('@notificationTemplates');
+    cy.waitForNetworkIdle(500);
 
     cy.getByTestId('try-digest-playground-btn').click();
 
@@ -18,13 +19,14 @@ describe('Digest Playground Workflow Page', function () {
     cy.get('a[href="https://docs.novu.co/platform/digest"]').contains('Learn more in docs');
   });
 
-  it('the set up digest workflow should redirec to template edit page', function () {
+  it('the set up digest workflow should redirect to template edit page', function () {
     cy.intercept('GET', '**/notification-templates**').as('notificationTemplates');
     cy.intercept('GET', '**/notification-templates/**').as('getNotificationTemplate');
     cy.visit('/get-started');
 
     cy.getByTestId('get-started-footer-left-side').click();
     cy.wait('@notificationTemplates');
+    cy.waitForNetworkIdle(500);
 
     cy.getByTestId('try-digest-playground-btn').click();
 
@@ -45,6 +47,7 @@ describe('Digest Playground Workflow Page', function () {
     // click try digest playground
     cy.getByTestId('get-started-footer-left-side').click();
     cy.wait('@notificationTemplates');
+    cy.waitForNetworkIdle(500);
 
     cy.getByTestId('try-digest-playground-btn').click();
 
@@ -119,6 +122,7 @@ describe('Digest Playground Workflow Page', function () {
     // click try digest playground
     cy.getByTestId('get-started-footer-left-side').click();
     cy.wait('@notificationTemplates');
+    cy.waitForNetworkIdle(500);
 
     cy.getByTestId('try-digest-playground-btn').click();
 
@@ -147,6 +151,7 @@ describe('Digest Playground Workflow Page', function () {
     // click try digest playground
     cy.getByTestId('get-started-footer-left-side').click();
     cy.wait('@notificationTemplates');
+    cy.waitForNetworkIdle(500);
 
     cy.getByTestId('try-digest-playground-btn').click();
 

@@ -1,8 +1,9 @@
 import styled from '@emotion/styled';
 import React from 'react';
-import { colors, shadows, Text } from '../../../design-system';
+import { colors, shadows, Text } from '../../design-system';
 
 type NodeStepProps = {
+  className?: string;
   data: { label: string; email?: string };
   Handlers: React.FC<any>;
   Icon: React.FC<any>;
@@ -10,12 +11,12 @@ type NodeStepProps = {
   ContentItem?: React.ReactNode;
 };
 
-export function NodeStep({ Handlers, Icon, data, ActionItem, ContentItem }: NodeStepProps) {
+export function NodeStep({ className, Handlers, Icon, data, ActionItem, ContentItem }: NodeStepProps) {
   const labelLowerCase = data.label.toLowerCase();
 
   return (
     <>
-      <StepCard data-test-id={`data-test-id-${labelLowerCase}`}>
+      <StepCard className={className} data-test-id={`data-test-id-${labelLowerCase}`}>
         <ContentContainer>
           <LeftContent>
             <Icon />
