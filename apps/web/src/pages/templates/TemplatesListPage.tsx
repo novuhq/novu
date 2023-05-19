@@ -156,7 +156,7 @@ function NotificationList() {
             isLoading={areBlueprintsLoading}
             allTemplatesDisabled={areBlueprintsLoading || !hasGroups}
             onBlankWorkflowClick={() => handleRedirectToCreateTemplate(false)}
-            onTemplateClick={console.log}
+            onTemplateClick={() => {}}
             onAllTemplatesClick={openModal}
           />
         )}

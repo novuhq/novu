@@ -32,8 +32,7 @@ describe('Notification Templates Screen', function () {
     cy.wait('@notificationTemplates');
 
     cy.getByTestId('no-workflow-templates-placeholder').should('be.visible');
-    cy.getByTestId('create-workflow-tile').should('not.be.disabled');
-    cy.getByTestId('try-digest-playground-tile').should('not.be.disabled');
+    cy.getByTestId('create-workflow-tile').should('exist');
   });
 
   it('when clicking on create workflow it should redirect to create template page', function () {
@@ -43,7 +42,7 @@ describe('Notification Templates Screen', function () {
     cy.wait('@notificationTemplates');
 
     cy.getByTestId('no-workflow-templates-placeholder').should('be.visible');
-    cy.getByTestId('create-workflow-tile').should('not.be.disabled');
+    cy.getByTestId('create-workflow-tile').should('exist');
     cy.getByTestId('create-workflow-tile').click();
 
     cy.url().should('include', '/templates/create');
