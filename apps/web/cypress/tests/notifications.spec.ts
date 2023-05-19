@@ -31,8 +31,8 @@ describe('Notification Templates Screen', function () {
     cy.wait('@notificationTemplates');
 
     cy.getByTestId('create-template-btn').should('not.be.disabled').click();
-    cy.getByTestId('create-workfolow-all-templates').contains('All templates');
-    cy.getByTestId('create-workfolow-blank').contains('Blank workflow');
+    cy.getByTestId('create-workflow-all-templates').contains('All templates');
+    cy.getByTestId('create-workflow-blank').contains('Blank workflow');
   });
 
   it('when no workflow templates created it should show the page placeholder', function () {

@@ -92,7 +92,7 @@ export const CreateWorkflowDropdown = ({
         disabled={allTemplatesDisabled}
         icon={<FontAwesomeIcon icon={faDiagramNext} />}
         onClick={onAllTemplatesClick}
-        data-test-id="create-workfolow-all-templates"
+        data-test-id="create-workflow-all-templates"
       >
         All templates
       </Dropdown.Item>
@@ -100,7 +100,7 @@ export const CreateWorkflowDropdown = ({
       <Dropdown.Item
         icon={<FontAwesomeIcon icon={faFile} />}
         onClick={onBlankWorkflowClick}
-        data-test-id="create-workfolow-blank"
+        data-test-id="create-workflow-blank"
       >
         Blank workflow
       </Dropdown.Item>
