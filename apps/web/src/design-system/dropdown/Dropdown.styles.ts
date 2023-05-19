@@ -12,7 +12,6 @@ export default createStyles((theme: MantineTheme) => {
       border: 'none',
     },
     dropdown: {
-      minWidth: 220,
       backgroundColor: dark ? colors.B20 : colors.white,
       color: dark ? theme.white : colors.B40,
       border: 'none',
@@ -25,6 +24,10 @@ export default createStyles((theme: MantineTheme) => {
     },
     itemHovered: {
       backgroundColor: dark ? colors.B30 : colors.B98,
+    },
+    divider: {
+      margin: '10px',
+      borderTop: `0.0625rem solid ${colors.B30}`,
     },
   };
 });
