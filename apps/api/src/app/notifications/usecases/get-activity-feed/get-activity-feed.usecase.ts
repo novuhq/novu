@@ -16,7 +16,7 @@ export class GetActivityFeed {
 
     let subscriberIds: string[] = [];
 
-    if (command.search || command.emails) {
+    if (command.search || command.emails?.length) {
       const foundSubscribers = await this.findSubscribers(command);
 
       subscriberIds = foundSubscribers.map((subscriber) => subscriber._id);
