@@ -44,7 +44,7 @@ function findMessages(obj: object): string[] {
   return messages;
 }
 
-export function getStepErrors(index: number | string, errors: FieldErrors<IForm>): string[] {
+export function getStepErrors(index: number | string, errors?: FieldErrors<IForm>): string[] {
   if (errors?.steps) {
     const stepErrors = errors.steps[index]?.template;
 
@@ -74,7 +74,7 @@ export function getStepErrors(index: number | string, errors: FieldErrors<IForm>
   return [];
 }
 
-export function getFormattedStepErrors(index: number, errors: FieldErrors<IForm>): string {
+export function getFormattedStepErrors(index: number, errors?: FieldErrors<IForm>): string {
   return formatErrorMessage(getStepErrors(index, errors));
 }
 

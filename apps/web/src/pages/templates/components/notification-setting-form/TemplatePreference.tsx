@@ -5,7 +5,7 @@ import { useFormContext, Controller } from 'react-hook-form';
 
 import { useEnvController } from '../../../../hooks';
 import { Checkbox, colors, Switch } from '../../../../design-system';
-import { channels } from '../../shared/channels';
+import { channels } from '../../../../utils/channels';
 import type { IForm } from '../formTypes';
 import { LabelWithTooltip } from '../../workflow/LabelWithTooltip';
 import { ChannelTitle } from '../ChannelTitle';
