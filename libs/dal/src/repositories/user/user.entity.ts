@@ -43,6 +43,7 @@ export class UserEntity {
   createdAt: string;
 
   showOnBoarding?: boolean;
+  showOnBoardingTour?: number;
 
   failedLogin?: {
     times: number;

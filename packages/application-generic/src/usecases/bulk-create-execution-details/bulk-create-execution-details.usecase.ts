@@ -1,9 +1,14 @@
 import { InstrumentUsecase } from '../../instrumentation';
 import { Injectable } from '@nestjs/common';
-import { ExecutionDetailsRepository, ExecutionDetailsEntity } from '@novu/dal';
+import {
+  ExecutionDetailsRepository,
+  ExecutionDetailsEntity,
+  DalException,
+} from '@novu/dal';
 
 import { BulkCreateExecutionDetailsCommand } from './bulk-create-execution-details.command';
 import { mapExecutionDetailsCommandToEntity } from '../create-execution-details';
+import { PlatformException } from '../../utils/exceptions';
 
 @Injectable()
 export class BulkCreateExecutionDetails {
@@ -19,9 +24,15 @@ export class BulkCreateExecutionDetails {
 
       entities.push(entity);
     });
-    // TODO: Which checks to do? If the notification and job belong to the environment and organization provided?
 
-    await this.executionDetailsRepository.insertMany(entities);
+    try {
+      await this.executionDetailsRepository.insertMany(entities);
+    } catch (e) {
+      if (e instanceof DalException) {
+        throw new PlatformException(e.message);
+      }
+      throw e;
+    }
   }
 
   private cleanFromNulls(

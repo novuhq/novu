@@ -443,7 +443,10 @@
     "africastalking",
     "africas",
     "supertest",
-    "superagent"
+    "superagent",
+    "INAPP",
+    "fortawesome",
+    "fontawesome"
   ],
   "flagWords": [],
   "patterns": [

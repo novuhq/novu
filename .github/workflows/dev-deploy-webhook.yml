@@ -111,4 +111,3 @@ jobs:
           service: ${{ env.webhook_ecs_service }}
           cluster: ${{ env.webhook_ecs_cluster }}
           wait-for-service-stability: true
-

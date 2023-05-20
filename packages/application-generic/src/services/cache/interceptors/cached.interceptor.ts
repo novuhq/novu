@@ -11,7 +11,7 @@ import { CacheKeyPrefixEnum } from '../key-builders';
 const LOG_CONTEXT = 'CachedInterceptor';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-function Cached(storeKeyPrefix: CacheKeyPrefixEnum) {
+export function Cached(storeKeyPrefix: CacheKeyPrefixEnum) {
   const injectCache = Inject(CacheService);
 
   return (target: any, key: string, descriptor: any) => {
