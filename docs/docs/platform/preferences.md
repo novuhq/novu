@@ -41,7 +41,7 @@ Only channels with a matched step will be returned from the API in notification 
 
 In some cases, you don't want the subscriber to be able to unsubscribe from mandatory notifications such as Account Verification, Password Reset, etc...
 
-In those cases you can turn off the toggle `Users will be able to manage subscriptions` in channel settings. Template will become `critical`, once this toggle is turned `OFF`. By default every template is `non-critical` and subscribers can manage channel subscription preferences irrespective of template-level channel preferences. Critical template will not show on the subscriber preferences page.
+In those cases you can turn off the toggle `Users will be able to manage subscriptions` in channel settings. Template will become `critical`, once this toggle is turned `OFF`. By default, every template is `non-critical` and subscribers can manage channel subscription preferences irrespective of template-level channel preferences. Critical template will not show on the subscriber preferences page.
 
 ## Get subscriber preferences
 
@@ -128,11 +128,11 @@ $novu->updateSubscriberPreference('subscriberId', 'templateIdentfier', [
 
 `Example`
 
-1. For `First Template`, `critical` is false, `enabled` is true, in_app, email, push channels are true and sms, chat channels are false. As per above order of priority of preferences, notification will be filtered as per subscriber preferences. Subscriber will receive in-app, email and push notifications, but not receive sms and chat notifications.
+1. For `First Template`, `critical` is false, `enabled` is true, in_app, email, push channels are true and sms, chat channels are false. As per above order of priority of preferences, notification will be filtered as per the subscriber preferences. The subscriber will receive in-app, email and push notifications, but not receive sms and chat notifications.
 
-2. For `Second Template`, `critical` is false, `enabled` is false, all channels are true. As per above order of priority of preferences, subscriber will not receive any type of notification because all channels becomne disable due to false value of `enabled` field.
+2. For `Second Template`, `critical` is false, `enabled` is false, all channels are true. As per above order of priority of preferences, subscriber will not receive any type of notification because all channels become disabled due to false value of `enabled` field.
 
-3. For `Third Template`. `critical` is true, `enabled` is false, email, chat channels are false and rest three channels are true. As per above order of priority of preferences, subscriber will receive all type of notifications as this template is `critical`.
+3. For `Third Template`. `critical` is true, `enabled` is false, email, chat channels are false and the other three channels are true. As per above order of priority of preferences, subscriber will receive all type of notifications as this template is `critical`.
 
 ```json title="Subscriber preference example for three templates"
 [
@@ -204,6 +204,6 @@ $novu->updateSubscriberPreference('subscriberId', 'templateIdentfier', [
 </details>
 
 <details>
-  <summary>What preferences are applied to subscriber when we create a new template?</summary>
-  <p>Subscriber will inherit all preferences from template in case of new template. After subsequent preferences update, subscriber preferences will not inherit template-level preferences.</p>
+  <summary>What preferences are applied to a subscriber when we create a new template?</summary>
+  <p>In the case of a new template, the subscriber will inherit all preferences from the template. However, after subsequent preference updates, the subscriber's preferences will not inherit template-level preferences.</p>
 </details>
