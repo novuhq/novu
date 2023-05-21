@@ -12,10 +12,10 @@ import {
   CreateNotificationTemplate,
   CreateNotificationTemplateCommand,
 } from '../../../notification-template/usecases/create-notification-template';
-import { CreateBlueprintNotificationTemplateCommand } from './create-blueprint-notification-template.command';
+import { CreateBlueprintCommand } from './create-blueprint.command';
 
 @Injectable()
-export class CreateBlueprintNotificationTemplate {
+export class CreateBlueprint {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
     private createNotificationTemplateUsecase: CreateNotificationTemplate,
@@ -24,7 +24,7 @@ export class CreateBlueprintNotificationTemplate {
     private analyticsService: AnalyticsService
   ) {}
 
-  async execute(command: CreateBlueprintNotificationTemplateCommand): Promise<NotificationTemplateEntity> {
+  async execute(command: CreateBlueprintCommand): Promise<NotificationTemplateEntity> {
     const template = await this.notificationTemplateRepository.findBlueprint(command.templateId);
     if (!template) {
       throw new NotFoundException(`Template with id ${command.templateId} not found`);
@@ -62,7 +62,7 @@ export class CreateBlueprintNotificationTemplate {
 
   private async handleFeeds(
     steps: NotificationStepEntity[],
-    command: CreateBlueprintNotificationTemplateCommand
+    command: CreateBlueprintCommand
   ): Promise<NotificationStepEntity[]> {
     for (let i = 0; i < steps.length; i++) {
       const step = steps[i];
@@ -72,7 +72,7 @@ export class CreateBlueprintNotificationTemplate {
       }
 
       const originalFeed = await this.feedRepository.findOne({
-        _organizationId: this.getBlueprintOrganizationId(),
+        _organizationId: this.getBlueprintOrganizationId,
         id: step.template._feedId,
       });
 
@@ -105,7 +105,7 @@ export class CreateBlueprintNotificationTemplate {
 
   private async handleGroup(
     notificationGroupId: string,
-    command: CreateBlueprintNotificationTemplateCommand
+    command: CreateBlueprintCommand
   ): Promise<NotificationGroupEntity> {
     let group = await this.notificationGroupRepository.findOne({
       name: 'General',
@@ -119,7 +119,7 @@ export class CreateBlueprintNotificationTemplate {
 
     const originalGroup = await this.notificationGroupRepository.findOne({
       _id: notificationGroupId,
-      _organizationId: this.getBlueprintOrganizationId(),
+      _organizationId: this.getBlueprintOrganizationId,
     });
     if (!originalGroup) throw new NotFoundException(`Notification group with id ${notificationGroupId} is not found`);
 
@@ -141,7 +141,7 @@ export class CreateBlueprintNotificationTemplate {
     return group;
   }
 
-  private getBlueprintOrganizationId(): string {
+  private get getBlueprintOrganizationId(): string {
     return NotificationTemplateRepository.getBlueprintOrganizationId() as string;
   }
 }

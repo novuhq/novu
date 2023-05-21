@@ -1,8 +1,10 @@
-import { CreateBlueprintNotificationTemplate } from './create-blueprint-notification-template';
-import { GetBlueprintNotificationTemplate } from './get-blueprint-notification-template';
+import { CreateBlueprint } from './create-blueprint';
+import { GetBlueprint } from './get-blueprint';
+import { GetGroupedBlueprints } from './get-blueprints';
 
 export const USE_CASES = [
   //
-  CreateBlueprintNotificationTemplate,
-  GetBlueprintNotificationTemplate,
+  CreateBlueprint,
+  GetBlueprint,
+  GetGroupedBlueprints,
 ];
