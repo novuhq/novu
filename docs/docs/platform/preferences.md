@@ -52,9 +52,22 @@ In those cases you can turn off the toggle `Users will be able to manage subscri
 ```javascript
 import { Novu } from '@novu/node';
 
-const novu = new Novu(process.env.NOVU_API_KEY);
+const novu = new Novu('<NOVU_API_KEY>');
 
-await novu.subscribers.getPreference('subscriberId');
+// 111 is subscriberId
+await novu.subscribers.getPreference('111');
+```
+
+  </TabItem>
+    <TabItem value="php" label="PHP">
+
+```php
+use Novu\SDK\Novu;
+
+$novu = new Novu('<NOVU_API_KEY>');
+
+// 111 is subscriberId
+$novu->getSubscriberPreferences('111')->toArray();
 ```
 
   </TabItem>
@@ -69,9 +82,9 @@ await novu.subscribers.getPreference('subscriberId');
 ```javascript
 import { Novu } from '@novu/node';
 
-const novu = new Novu(process.env.NOVU_API_KEY);
+const novu = new Novu('<NOVU_API_KEY>');
 
-await novu.subscribers.updatePreference('subscriberId', 'templateId', {
+await novu.subscribers.updatePreference('subscriberId', 'templateIdentfier', {
   enabled: true,
   channel: {
     in_app: true,
@@ -81,6 +94,26 @@ await novu.subscribers.updatePreference('subscriberId', 'templateId', {
     chat: false,
   },
 });
+```
+
+  </TabItem>
+    <TabItem value="php" label="PHP">
+
+```php
+use Novu\SDK\Novu;
+
+$novu = new Novu('<NOVU_API_KEY>');
+
+$novu->updateSubscriberPreference('subscriberId', 'templateIdentfier', [
+    'enabled' => true
+    'channel' => [
+    'in_app' => true,
+       'email' => true,
+       'push' => true,
+       'sms'  => false,
+       'chat' => false,
+    ]
+]);
 ```
 
   </TabItem>
@@ -167,10 +200,10 @@ await novu.subscribers.updatePreference('subscriberId', 'templateId', {
 
 <details>
   <summary>How to change <code>enable</code> field from UI?</summary>
-  <p>This filed can only be changed using API.</p>
+  <p>This field can only be changed using API.</p>
 </details>
 
 <details>
-  <summary>What preferenes are applied to subscriber when we create a new template?</summary>
+  <summary>What preferences are applied to subscriber when we create a new template?</summary>
   <p>Subscriber will inherit all preferences from template in case of new template. After subsequent preferences update, subscriber preferences will not inherit template-level preferences.</p>
 </details>
