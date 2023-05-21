@@ -13,7 +13,7 @@ This allows subscribers to specify and manage their preferences, without your in
 Novu allows two levels of preferences:-
 
 - Template level channel preferences
-- Subscriber level channel subscription preferences
+- Subscriber level channel preferences
 
 ## Template level channel preferences
 
@@ -25,9 +25,9 @@ This will allow you to create sensible defaults but still provide the user with 
 
 ![Template level channel preferences](/img/platform/preferences/template-level-channel-preferences.png)
 
-## Subscriber level channel subscription preferences
+## Subscriber level channel preferences
 
-Our notification center component will show a user the available preferences, user will be able to modify on the channel level. Critical templates will be excluded from the list. Click on cog (setting) icon on notification center component to open subscriber channel subscription preferences page.
+Our notification center component will show a user the available preferences, user will be able to modify on the channel level. Critical templates will be excluded from the list. Click on cog (setting) icon on notification center component to open subscriber channel preferences page.
 
 ![User preference in the component](/img/platform/preferences/user-preference.png)
 
@@ -41,7 +41,7 @@ Only channels with a matched step will be returned from the API in notification 
 
 In some cases, you don't want the subscriber to be able to unsubscribe from mandatory notifications such as Account Verification, Password Reset, etc...
 
-In those cases you can turn off the toggle `Users will be able to manage subscriptions` in channel settings. Template will become `critical`, once this toggle is turned `OFF`. By default, every template is `non-critical` and subscribers can manage channel subscription preferences irrespective of template-level channel preferences. Critical template will not show on the subscriber preferences page.
+In those cases you can turn off the toggle `Users will be able to manage subscriptions` in channel settings. Template will become `critical`, once this toggle is turned `OFF`. By default, every template is `non-critical` and subscribers can manage channel preferences irrespective of template-level channel preferences. Critical template will not show on the subscriber preferences page.
 
 ## Get subscriber preferences
 
