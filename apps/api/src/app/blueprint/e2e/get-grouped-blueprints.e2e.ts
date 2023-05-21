@@ -2,8 +2,9 @@ import { expect } from 'chai';
 
 import { UserSession } from '@novu/testing';
 import { NotificationTemplateRepository, EnvironmentRepository } from '@novu/dal';
-import { createTemplateFromBlueprint } from './create-blueprint.e2e';
 import { GroupedBlueprintResponse } from '../dto/grouped-blueprint.response.dto';
+import { CreateNotificationTemplateRequestDto } from '../../notification-template/dto';
+import { EmailBlockTypeEnum, FilterPartTypeEnum, StepTypeEnum } from '@novu/shared';
 
 describe('Get grouped notification template blueprints - /blueprints/group-by-category (GET)', async () => {
   let session: UserSession;
@@ -38,7 +39,7 @@ describe('Get grouped notification template blueprints - /blueprints/group-by-ca
   it('should get the updated grouped blueprints (after invalidation)', async function () {
     const prodEnv = await getProductionEnvironment();
 
-    const { testEnvBluePrintTemplate } = await createTemplateFromBlueprint({
+    await createTemplateFromBlueprint({
       session,
       notificationTemplateRepository,
       prodEnv,
@@ -53,7 +54,8 @@ describe('Get grouped notification template blueprints - /blueprints/group-by-ca
     expect(groupedBlueprints.length).to.equal(1);
     expect(groupedBlueprints[0].name).to.equal('General');
 
-    await updateBlueprintCategory();
+    const categoryName = 'Life Style';
+    await updateBlueprintCategory({ categoryName });
 
     let updatedGroupedBluePrints = await session.testAgent.get(`/v1/blueprints/group-by-category`).send();
 
@@ -61,15 +63,15 @@ describe('Get grouped notification template blueprints - /blueprints/group-by-ca
 
     expect(updatedGroupedBluePrints.length).to.equal(2);
     expect(updatedGroupedBluePrints[0].name).to.equal('General');
-    expect(updatedGroupedBluePrints[1].name).to.equal('Life Style');
+    expect(updatedGroupedBluePrints[1].name).to.equal(categoryName);
   });
 
-  async function updateBlueprintCategory() {
+  async function updateBlueprintCategory({ categoryName }: { categoryName: string }) {
     const { body: notificationGroupsResult } = await session.testAgent
       .post(`/v1/notification-groups`)
-      .send({ name: 'Life Style' });
+      .send({ name: categoryName });
 
-    const { body } = await session.testAgent
+    await session.testAgent
       .post(`/v1/notification-templates`)
       .send({ notificationGroupId: notificationGroupsResult.data._id, name: 'test email template', steps: [] });
 
@@ -84,3 +86,86 @@ describe('Get grouped notification template blueprints - /blueprints/group-by-ca
     });
   }
 });
+
+export async function createTemplateFromBlueprint({
+  session,
+  notificationTemplateRepository,
+  prodEnv,
+}: {
+  session: UserSession;
+  notificationTemplateRepository: NotificationTemplateRepository;
+  prodEnv;
+}) {
+  const testTemplateRequestDto: Partial<CreateNotificationTemplateRequestDto> = {
+    name: 'test email template',
+    description: 'This is a test description',
+    tags: ['test-tag'],
+    notificationGroupId: session.notificationGroups[0]._id,
+    steps: [
+      {
+        template: {
+          name: 'Message Name',
+          subject: 'Test email subject',
+          preheader: 'Test email preheader',
+          content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
+          type: StepTypeEnum.EMAIL,
+        },
+        filters: [
+          {
+            isNegated: false,
+            type: 'GROUP',
+            value: 'AND',
+            children: [
+              {
+                on: FilterPartTypeEnum.SUBSCRIBER,
+                field: 'firstName',
+                value: 'test value',
+                operator: 'EQUAL',
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+
+  const testTemplate = (await session.testAgent.post(`/v1/notification-templates`).send(testTemplateRequestDto)).body
+    .data;
+
+  process.env.BLUEPRINT_CREATOR = session.organization._id;
+
+  const testEnvBlueprintTemplate = (
+    await session.testAgent.post(`/v1/notification-templates`).send(testTemplateRequestDto)
+  ).body.data;
+
+  expect(testEnvBlueprintTemplate).to.be.ok;
+
+  await session.applyChanges({
+    enabled: false,
+  });
+
+  if (!prodEnv) throw new Error('production environment was not found');
+
+  const blueprintId = (
+    await notificationTemplateRepository.findOne({
+      _environmentId: prodEnv._id,
+      _parentId: testEnvBlueprintTemplate._id,
+    })
+  )?._id;
+
+  if (!blueprintId) throw new Error('blueprintId was not found');
+
+  const blueprint = (await session.testAgent.get(`/v1/blueprints/${blueprintId}`).send()).body.data;
+
+  blueprint.notificationGroupId = blueprint._notificationGroupId;
+  blueprint.blueprintId = blueprint._id;
+
+  const createdTemplate = (await session.testAgent.post(`/v1/notification-templates`).send({ ...blueprint })).body.data;
+
+  return {
+    testTemplateRequestDto,
+    testTemplate,
+    blueprintId,
+    createdTemplate,
+  };
+}
