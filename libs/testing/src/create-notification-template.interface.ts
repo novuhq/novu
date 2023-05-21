@@ -37,6 +37,7 @@ export interface CreateTemplatePayload extends Omit<NotificationTemplateEntity, 
       unit?: DigestUnitEnum;
       digestKey?: string;
       type: DigestTypeEnum | DelayTypeEnum;
+      backoff?: boolean;
       delayPath?: string;
       backoffUnit?: DigestUnitEnum;
       backoffAmount?: number;

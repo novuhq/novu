@@ -215,9 +215,10 @@ async function chatOauthCallback(
   providerId: ChatProviderIdEnum | null = ChatProviderIdEnum.Slack,
   hmacHash = ''
 ) {
+  const environmentIdQuery = `&environmentId=${environmentId}`;
   const hmacHashQuery = hmacHash ? `&hmacHash=${hmacHash}` : '';
 
   return await axiosInstance.get(
-    `${serverUrl}/v1/subscribers/${subscriberId}/credentials/${providerId}/${environmentId}/callback?code=code_123${hmacHashQuery}`
+    `${serverUrl}/v1/subscribers/${subscriberId}/credentials/${providerId}/oauth/callback?code=code_123${environmentIdQuery}${hmacHashQuery}`
   );
 }

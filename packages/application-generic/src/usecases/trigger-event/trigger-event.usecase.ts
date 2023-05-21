@@ -17,6 +17,7 @@ import { PinoLogger } from '../../logging';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 
 import {
+  AnalyticsService,
   buildNotificationTemplateIdentifierKey,
   CachedEntity,
   EventsPerformanceService,
@@ -53,7 +54,8 @@ export class TriggerEvent {
     protected performanceService: EventsPerformanceService,
     private jobRepository: JobRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private logger: PinoLogger
+    private logger: PinoLogger,
+    private analyticsService: AnalyticsService
   ) {}
 
   @InstrumentUsecase()
@@ -120,6 +122,19 @@ export class TriggerEvent {
     }
 
     for (const subscriber of to) {
+      this.analyticsService.track(
+        'Notification event trigger - [Triggers]',
+        command.userId,
+        {
+          _subscriber: subscriber._id,
+          transactionId: command.transactionId,
+          _template: template._id,
+          _organization: command.organizationId,
+          channels: template?.steps.map((step) => step.template?.type),
+          source: command.payload.__source || 'api',
+        }
+      );
+
       const subscriberProcessed = await this.processSubscriber.execute(
         ProcessSubscriberCommand.create({
           environmentId,

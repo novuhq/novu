@@ -57,7 +57,7 @@ runs:
       shell: bash
       run: |
         echo "BULL_MQ_PRO_NPM_TOKEN=${{ inputs.bullmq_secret }}" >> $GITHUB_ENV
-      if: contains( inputs.docker_name  , 'ee')
+      if: contains(inputs.docker_name , 'ee')
 
     # - name: Build with Depot, tag, and test - Regular
     #   if: ${{ inputs.fork == 'false' }} # Use buildx for forks as they can't access secrets

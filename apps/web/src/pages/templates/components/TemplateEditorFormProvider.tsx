@@ -3,11 +3,17 @@ import slugify from 'slugify';
 import { FormProvider, useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useParams } from 'react-router-dom';
-import { DigestTypeEnum, INotificationTemplate, INotificationTrigger } from '@novu/shared';
+import {
+  DelayTypeEnum,
+  DigestTypeEnum,
+  DigestUnitEnum,
+  INotificationTemplate,
+  INotificationTrigger,
+} from '@novu/shared';
 import * as Sentry from '@sentry/react';
 import { StepTypeEnum, ActorTypeEnum, EmailBlockTypeEnum, IEmailBlock, TextAlignEnum } from '@novu/shared';
 
-import type { IForm, IStepEntity } from './formTypes';
+import type { IForm, IFormStep } from './formTypes';
 import { useTemplateController } from './useTemplateController';
 import { mapNotificationTemplateToForm, mapFormToCreateNotificationTemplate } from './templateToFormMappers';
 import { errorMessage, successMessage } from '../../../utils/notifications';
@@ -27,7 +33,7 @@ const defaultEmailBlocks: IEmailBlock[] = [
   },
 ];
 
-const makeStep = (channelType: StepTypeEnum, id: string): IStepEntity => {
+const makeStep = (channelType: StepTypeEnum, id: string): IFormStep => {
   return {
     _id: id,
     uuid: uuid4(),
@@ -55,13 +61,23 @@ const makeStep = (channelType: StepTypeEnum, id: string): IStepEntity => {
       },
     }),
     ...(channelType === StepTypeEnum.DIGEST && {
-      metadata: {
+      digestMetadata: {
+        digestKey: '',
         type: DigestTypeEnum.REGULAR,
+        regular: {
+          unit: DigestUnitEnum.MINUTES,
+          amount: '5',
+          backoff: false,
+        },
       },
     }),
     ...(channelType === StepTypeEnum.DELAY && {
-      metadata: {
-        type: DigestTypeEnum.REGULAR,
+      delayMetadata: {
+        type: DelayTypeEnum.REGULAR,
+        regular: {
+          unit: DigestUnitEnum.MINUTES,
+          amount: '5',
+        },
       },
     }),
   };
@@ -116,11 +132,7 @@ const TemplateEditorFormProvider = ({ children }) => {
   });
   const [trigger, setTrigger] = useState<INotificationTrigger>();
 
-  const {
-    reset,
-    formState: { isDirty: isDirtyForm, isValid },
-    watch,
-  } = methods;
+  const { reset, watch } = methods;
 
   const name = watch('name');
   const identifier = watch('identifier');
@@ -152,28 +164,23 @@ const TemplateEditorFormProvider = ({ children }) => {
     }
   }, [name]);
 
-  const { template, isLoading, isCreating, isUpdating, isDeleting, updateNotificationTemplate } =
-    useTemplateController(templateId);
+  const { template, isLoading, isCreating, isUpdating, isDeleting, updateNotificationTemplate } = useTemplateController(
+    templateId,
+    {
+      onFetchSuccess: (fetchedTemplate) => {
+        setTrigger(fetchedTemplate.triggers[0]);
+        const form = mapNotificationTemplateToForm(fetchedTemplate);
+        reset(form);
+      },
+    }
+  );
   const { groups, loading: loadingGroups } = useNotificationGroup();
-
-  useEffect(() => {
-    if (isDirtyForm) {
-      return;
-    }
-
-    if (template && template.steps) {
-      setTrigger(template.triggers[0]);
-      const form = mapNotificationTemplateToForm(template);
-      reset(form);
-    }
-  }, [isDirtyForm, template]);
 
   useCreate(templateId, groups, setTrigger, methods.getValues);
 
   const onSubmit = useCallback(
     async (form: IForm, showMessage = true) => {
       const payloadToCreate = mapFormToCreateNotificationTemplate(form);
-
       try {
         const response = await updateNotificationTemplate({
           id: templateId,
@@ -183,7 +190,7 @@ const TemplateEditorFormProvider = ({ children }) => {
           },
         });
         setTrigger(response.triggers[0]);
-        reset(payloadToCreate);
+        reset(form);
         if (showMessage) {
           successMessage('Trigger code is updated successfully', 'workflowSaved');
         }
@@ -198,7 +205,7 @@ const TemplateEditorFormProvider = ({ children }) => {
 
   const addStep = useCallback(
     (channelType: StepTypeEnum, id: string, stepIndex?: number) => {
-      const newStep: IStepEntity = makeStep(channelType, id);
+      const newStep: IFormStep = makeStep(channelType, id);
 
       if (stepIndex != null) {
         steps.insert(stepIndex, newStep);
