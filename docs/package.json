@@ -26,6 +26,7 @@
     "prepare": "cd .. && husky install docs/.husky"
   },
   "dependencies": {
+    "@codesandbox/sandpack-react": "^2.6.3",
     "@docusaurus/core": "2.3.1",
     "@docusaurus/plugin-google-gtag": "2.3.1",
     "@docusaurus/preset-classic": "2.3.1",
