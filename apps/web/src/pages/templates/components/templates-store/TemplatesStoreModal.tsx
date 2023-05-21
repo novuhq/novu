@@ -1,9 +1,7 @@
-/* eslint-disable max-len */
-/* cSpell:disable */
 import { useState } from 'react';
+import { ReactFlowProvider } from 'react-flow-renderer';
 import { ActionIcon, Modal, useMantineTheme } from '@mantine/core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { IconName } from '@fortawesome/fontawesome-svg-core';
 
 import { Button, colors, shadows } from '../../../../design-system';
 import { Close } from '../../../../design-system/icons/actions/Close';
@@ -23,97 +21,26 @@ import {
   TemplateDescription,
   useStyles,
 } from './templateStoreStyles';
+import { IBlueprintsGrouped } from '../../../../api/hooks';
+import { TriggerNode } from './TriggerNode';
+import { ChannelNode } from './ChannelNode';
+import { FlowEditor } from '../../../../components/workflow';
 
-const TEMPLATES_GROUPED = [
-  {
-    name: 'Collaboration',
-    templates: [
-      {
-        name: ':fa-regular fa-message: Comments',
-        description:
-          'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
-      },
-      {
-        name: ':fa-solid fa-user-check: Mentions',
-        description:
-          'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
-      },
-      {
-        name: ':fa-solid fa-reply: Reply',
-        description:
-          'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
-      },
-    ],
-  },
-  {
-    name: 'Growth',
-    templates: [
-      {
-        name: ':fa-regular fa-hand: Welcome message',
-        description:
-          'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
-      },
-      {
-        name: ':fa-solid fa-envelope-open-text: Invite message',
-        description:
-          'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
-      },
-      {
-        name: ':fa-solid fa-gift: Refferal link',
-        description:
-          'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
-      },
-    ],
-  },
-  {
-    name: 'Authentification',
-    templates: [
-      {
-        name: ':fa-solid fa-wand-magic-sparkles: Magic link',
-        description:
-          'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
-      },
-      {
-        name: ':fa-solid fa-unlock: Password change',
-        description:
-          'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
-      },
-      {
-        name: ':fa-solid fa-unlock: Password change2',
-        description:
-          'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
-      },
-      {
-        name: ':fa-solid fa-unlock: Password change3',
-        description:
-          'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
-      },
-    ],
-  },
-];
-
-const getTemplateDetails = (templateName: string): { name: string; iconName: IconName } => {
-  const regexResult = /^:.{1,}: /.exec(templateName);
-  let name = '';
-  let iconName = 'fa-solid fa-question';
-  if (regexResult !== null) {
-    name = templateName.replace(regexResult[0], '').trim();
-    iconName = regexResult[0].replace(/:/g, '').trim();
-  }
-
-  return { name, iconName: iconName as IconName };
+const nodeTypes = {
+  triggerNode: TriggerNode,
+  channelNode: ChannelNode,
 };
 
 export interface ITemplatesStoreModalProps {
+  groupedBlueprints: IBlueprintsGrouped[];
   isOpened: boolean;
   onClose: () => void;
 }
 
-export const TemplatesStoreModal = ({ isOpened, onClose }: ITemplatesStoreModalProps) => {
+export const TemplatesStoreModal = ({ groupedBlueprints, isOpened, onClose }: ITemplatesStoreModalProps) => {
   const theme = useMantineTheme();
   const { classes: modalClasses } = useStyles();
-  const [selectedTemplate, setTemplate] = useState(TEMPLATES_GROUPED[0].templates[0]);
-  const { name: selectedTemplateName, iconName: selectedTemplateIconName } = getTemplateDetails(selectedTemplate.name);
+  const [selectedTemplate, setTemplate] = useState(groupedBlueprints[0].templates[0]);
 
   return (
     <Modal
@@ -134,16 +61,14 @@ export const TemplatesStoreModal = ({ isOpened, onClose }: ITemplatesStoreModalP
     >
       <ModalBodyHolder>
         <TemplatesSidebarHolder>
-          {TEMPLATES_GROUPED.map((group) => (
+          {groupedBlueprints.map((group) => (
             <TemplatesGroup key={group.name}>
               <GroupName>{group.name}</GroupName>
               {group.templates.map((template) => {
-                const { name, iconName } = getTemplateDetails(template.name);
-
                 return (
                   <TemplateItem key={template.name} onClick={() => setTemplate(template)}>
-                    <FontAwesomeIcon icon={iconName} />
-                    <span>{name}</span>
+                    <FontAwesomeIcon icon={template.iconName} />
+                    <span>{template.name}</span>
                   </TemplateItem>
                 );
               })}
@@ -153,9 +78,9 @@ export const TemplatesStoreModal = ({ isOpened, onClose }: ITemplatesStoreModalP
         <TemplatesDetailsHolder>
           <TemplateHeader>
             <TemplateDetails>
-              <TemplateName key={selectedTemplateName}>
-                <FontAwesomeIcon icon={selectedTemplateIconName} />
-                <span>{selectedTemplateName}</span>
+              <TemplateName key={selectedTemplate.name}>
+                <FontAwesomeIcon icon={selectedTemplate.iconName} />
+                <span>{selectedTemplate.name}</span>
               </TemplateName>
               <TemplateDescription>{selectedTemplate.description}</TemplateDescription>
             </TemplateDetails>
@@ -164,7 +89,27 @@ export const TemplatesStoreModal = ({ isOpened, onClose }: ITemplatesStoreModalP
             </ActionIcon>
           </TemplateHeader>
           <CanvasHolder>
-            <div>Canvas</div>
+            <ReactFlowProvider>
+              <FlowEditor
+                steps={selectedTemplate.steps}
+                nodeTypes={nodeTypes}
+                zoomOnScroll={false}
+                zoomOnPinch={false}
+                zoomOnDoubleClick={false}
+                panOnDrag={false}
+                panOnScroll
+                preventScrolling={false}
+                nodesDraggable={false}
+                elementsSelectable={false}
+                nodesConnectable={false}
+                selectNodesOnDrag={false}
+                wrapperStyles={{
+                  height: '100%',
+                  width: '100%',
+                  minHeight: '300px',
+                }}
+              />
+            </ReactFlowProvider>
             <NovuButtonHolder>
               <MadeByNovuStyled width={104} height={20} />
               <Button>Use template</Button>

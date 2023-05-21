@@ -1,6 +1,6 @@
 describe('Start from scratch tour hints', function () {
   beforeEach(function () {
-    cy.initializeSession().as('session');
+    cy.initializeSession({ showOnBoardingTour: true }).as('session');
   });
 
   it('should show the start from scratch intro step', function () {

@@ -1,41 +1,29 @@
-import { MouseEvent as ReactMouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ComponentType, MouseEvent as ReactMouseEvent, useCallback, useEffect, useRef, useState } from 'react';
 import ReactFlow, {
   addEdge,
   Background,
   BackgroundVariant,
   Controls,
   Edge,
+  EdgeProps,
   getOutgoers,
   Node,
+  NodeProps,
   ReactFlowInstance,
   ReactFlowProps,
   useEdgesState,
   useNodesState,
   useReactFlow,
 } from 'react-flow-renderer';
-import { useFormContext } from 'react-hook-form';
 import { useMantineColorScheme } from '@mantine/core';
 import styled from '@emotion/styled';
 import { v4 as uuid4 } from 'uuid';
 import { StepTypeEnum } from '@novu/shared';
 
-import ChannelNode from './node-types/ChannelNode';
-import { colors } from '../../../../design-system';
-import TriggerNode from './node-types/TriggerNode';
-import { getChannel } from '../../shared/channels';
-import type { IForm, IFormStep } from '../../components/formTypes';
-import AddNode from './node-types/AddNode';
-import { useEnvController } from '../../../../hooks';
-import { getFormattedStepErrors } from '../../shared/errors';
-import { AddNodeEdge, IAddNodeEdge } from './edge-types/AddNodeEdge';
-import { useBasePath } from '../../hooks/useBasePath';
-import { useNavigate } from 'react-router-dom';
-
-const nodeTypes = {
-  channelNode: ChannelNode,
-  triggerNode: TriggerNode,
-  addNode: AddNode,
-};
+import { colors } from '../../design-system';
+import { getChannel } from '../../utils/channels';
+import { useEnvController } from '../../hooks';
+import type { IEdge, IFlowStep } from './types';
 
 const initialNodes: Node[] = [
   {
@@ -50,27 +38,61 @@ const initialNodes: Node[] = [
 
 const initialEdges: Edge[] = [];
 
+const DEFAULT_WRAPPER_STYLES = {
+  height: '100%',
+  width: '100%',
+  minHeight: '600px',
+};
+
+interface IFlowEditorProps extends ReactFlowProps {
+  steps: IFlowStep[];
+  dragging?: boolean;
+  errors?: any;
+  nodeTypes: {
+    triggerNode: ComponentType<NodeProps>;
+    channelNode: ComponentType<NodeProps>;
+    addNode?: ComponentType<NodeProps>;
+  };
+  edgeTypes?: { special: ComponentType<EdgeProps> };
+  withControls?: boolean;
+  wrapperStyles?: React.CSSProperties;
+  onDelete?: (id: string) => void;
+  onStepInit?: (step: IFlowStep) => Promise<void>;
+  onGetStepError?: (i: number, errors: any) => string;
+  addStep?: (channelType: StepTypeEnum, id: string, index?: number) => void;
+}
+
 export function FlowEditor({
   steps,
-  addStep,
   dragging,
   errors,
+  defaultEdgeOptions = {
+    type: 'smoothstep',
+  },
+  zoomOnScroll = false,
+  preventScrolling = true,
+  nodesConnectable = false,
+  nodesDraggable = true,
+  minZoom = 0.5,
+  maxZoom = 1.5,
+  defaultZoom = 1,
+  nodeTypes,
+  edgeTypes,
+  withControls = true,
+  wrapperStyles = DEFAULT_WRAPPER_STYLES,
+  onStepInit,
+  onGetStepError,
+  addStep,
   onDelete,
-}: {
-  onDelete: (id: string) => void;
-  steps: IFormStep[];
-  addStep: (channelType: StepTypeEnum, id: string, index?: number) => void;
-  dragging: boolean;
-  errors: any;
-}) {
+  ...restProps
+}: IFlowEditorProps) {
   const { colorScheme } = useMantineColorScheme();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<IAddNodeEdge>(initialEdges);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<IEdge>(initialEdges);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance>();
   const { setViewport } = useReactFlow();
   const { readonly } = useEnvController();
-  const { trigger: triggerErrors } = useFormContext<IForm>();
   const [displayEdgeTimeout, setDisplayEdgeTimeout] = useState<Map<string, NodeJS.Timeout | null>>(new Map());
 
   useEffect(() => {
@@ -87,8 +109,9 @@ export function FlowEditor({
 
   const addNewNode = useCallback(
     (parentNodeId: string, channelType: string, childId?: string) => {
-      const channel = getChannel(channelType);
+      if (!addStep) return;
 
+      const channel = getChannel(channelType);
       if (!channel) return;
 
       const newId = uuid4();
@@ -97,23 +120,6 @@ export function FlowEditor({
       addStep(channel.channelType, newId, nodeIndex);
     },
     [steps]
-  );
-
-  const basePath = useBasePath();
-  const navigate = useNavigate();
-
-  const onNodeClick = useCallback(
-    (event, node) => {
-      event.preventDefault();
-
-      if (node.type === 'channelNode') {
-        navigate(basePath + `/${node.data.channelType}/${node.data.uuid}`);
-      }
-      if (node.type === 'triggerNode') {
-        navigate(basePath + '/test-workflow');
-      }
-    },
-    [basePath]
   );
 
   const onDragOver = useCallback((event) => {
@@ -159,19 +165,19 @@ export function FlowEditor({
         const oldNode = nodes[i + 1] || { position: { x: 0, y: 120 } };
         const newId = (step._id || step.id) as string;
 
-        await triggerErrors('steps');
+        await onStepInit?.(step);
 
         const newNode = buildNewNode(newId, oldNode, parentId, step, i);
-
-        const newEdge = buildNewEdge(parentId, newId);
-
         setNodes((nds) => nds.concat(newNode));
+
+        const edgeType = edgeTypes ? 'special' : 'default';
+        const newEdge = buildNewEdge(parentId, newId, edgeType);
         setEdges((eds) => addEdge(newEdge, eds));
 
         parentId = newId;
       }
     }
-    if (!readonly) {
+    if (!readonly && nodeTypes.addNode) {
       const addNodeButton = buildAddNodeButton(parentId);
       setNodes((nds) => nds.concat(addNodeButton));
     }
@@ -204,7 +210,7 @@ export function FlowEditor({
     newId: string,
     oldNode: { position: { x: number; y: number } },
     parentId: string,
-    step: IFormStep,
+    step: IFlowStep,
     i: number
   ): Node {
     const channel = getChannel(step.template.type);
@@ -218,7 +224,7 @@ export function FlowEditor({
         ...channel,
         active: step.active,
         index: i,
-        error: getFormattedStepErrors(i, errors),
+        error: onGetStepError?.(i, errors) ?? '',
         onDelete,
         uuid: step.uuid,
         name: step.name,
@@ -226,14 +232,14 @@ export function FlowEditor({
     };
   }
 
-  function buildNewEdge(parentId: string, newId: string): Edge {
+  function buildNewEdge(parentId: string, newId: string, type: string): Edge {
     return {
       id: `e-${parentId}-${newId}`,
       source: parentId,
       sourceHandle: 'a',
       targetHandle: 'b',
       target: newId,
-      type: 'special',
+      type,
       data: { addNewNode: addNewNode, parentId: parentId, childId: newId, readonly: readonly },
     };
   }
@@ -291,30 +297,20 @@ export function FlowEditor({
     }
   };
 
-  const edgeTypes = useMemo(() => ({ special: AddNodeEdge }), []);
-
   return (
     <>
       <Wrapper dark={colorScheme === 'dark'}>
-        <div
-          style={{
-            height: '100%',
-            width: '100%',
-            minHeight: '600px',
-          }}
-          ref={reactFlowWrapper}
-        >
+        <div style={wrapperStyles} ref={reactFlowWrapper}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
+            nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onInit={setReactFlowInstance}
-            nodeTypes={nodeTypes}
             onDrop={onDrop}
             onDragOver={onDragOver}
-            onNodeClick={onNodeClick}
-            edgeTypes={edgeTypes}
             onNodeMouseMove={(event, node) => {
               if (!readonly) {
                 handleDisplayAddNodeOnEdge(`edge-button-${node.id}`);
@@ -332,9 +328,17 @@ export function FlowEditor({
              * Remove this line once we tackle the workflow state handling
              */
             deleteKeyCode={null}
-            {...reactFlowDefaultProps}
+            defaultEdgeOptions={defaultEdgeOptions}
+            zoomOnScroll={zoomOnScroll}
+            preventScrolling={preventScrolling}
+            nodesConnectable={nodesConnectable}
+            nodesDraggable={nodesDraggable}
+            minZoom={minZoom}
+            maxZoom={maxZoom}
+            defaultZoom={defaultZoom}
+            {...restProps}
           >
-            <Controls />
+            {withControls && <Controls />}
             <Background
               size={1}
               gap={10}
@@ -403,16 +407,3 @@ const Wrapper = styled.div<{ dark: boolean }>`
     }
   }
 `;
-
-const reactFlowDefaultProps: ReactFlowProps = {
-  defaultEdgeOptions: {
-    type: 'smoothstep',
-  },
-  zoomOnScroll: false,
-  preventScrolling: true,
-  nodesConnectable: false,
-  nodesDraggable: true,
-  minZoom: 0.5,
-  maxZoom: 1.5,
-  defaultZoom: 1,
-};

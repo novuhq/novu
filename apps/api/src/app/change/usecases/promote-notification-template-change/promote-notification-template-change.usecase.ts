@@ -181,7 +181,6 @@ export class PromoteNotificationTemplateChange {
       }
     );
   }
-
   private get blueprintOrganizationId() {
     return NotificationTemplateRepository.getBlueprintOrganizationId();
   }
