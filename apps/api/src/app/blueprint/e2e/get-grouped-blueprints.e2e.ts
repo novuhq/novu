@@ -31,6 +31,15 @@ describe('Get grouped notification template blueprints - /blueprints/group-by-ca
     for (const grouped of groupedBlueprints) {
       for (const blueprint of grouped.blueprints) {
         expect(blueprint.isBlueprint).to.equal(true);
+        expect(blueprint.name).to.equal('test email template');
+        expect(blueprint.description).to.equal('This is a test description');
+        expect(blueprint.active).to.equal(false);
+        expect(blueprint.critical).to.equal(false);
+        expect(blueprint.steps).to.be.exist;
+        expect(blueprint.steps[0].active).to.equal(true);
+        expect(blueprint.steps[0].template).to.exist;
+        expect(blueprint.steps[0].template?.name).to.be.equal('Message Name');
+        expect(blueprint.steps[0].template?.subject).to.be.equal('Test email subject');
       }
     }
   });
