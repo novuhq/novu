@@ -1,11 +1,12 @@
 import { expect } from 'chai';
+
 import { UserSession } from '@novu/testing';
 import { EmailBlockTypeEnum, StepTypeEnum, INotificationTemplate, FilterPartTypeEnum } from '@novu/shared';
 import { NotificationTemplateRepository, EnvironmentRepository } from '@novu/dal';
 
-import { CreateNotificationTemplateRequestDto } from '../dto';
+import { CreateNotificationTemplateRequestDto } from '../../notification-template/dto';
 
-describe('Create Notification template from blueprint - /notification-templates/:templateId/blueprint (POST)', async () => {
+describe('Create Notification template from blueprint - /blueprints/:templateId (POST)', async () => {
   let session: UserSession;
   const notificationTemplateRepository: NotificationTemplateRepository = new NotificationTemplateRepository();
   const environmentRepository: EnvironmentRepository = new EnvironmentRepository();
@@ -64,21 +65,21 @@ describe('Create Notification template from blueprint - /notification-templates/
 
     const prodEnv = await getProductionEnvironment();
 
+    if (!prodEnv) throw new Error('production environment was not found');
+
     const prodVersionNotification = await notificationTemplateRepository.findOne({
       _environmentId: prodEnv._id,
       _parentId: template._id,
     });
 
-    const { body: data } = await session.testAgent
-      .post(`/v1/notification-templates/${prodVersionNotification._id}/blueprint`)
-      .send();
+    if (!prodVersionNotification) throw new Error('production environment notification was not found');
+
+    const { body: data } = await session.testAgent.post(`/v1/blueprints/${prodVersionNotification._id}`).send();
 
     expect(data.data.blueprintId).to.equal(prodVersionNotification._id);
     expect(testTemplate.name).to.equal(data.data.name);
 
-    let response = await session.testAgent
-      .get(`/v1/notification-templates/${prodVersionNotification._id}/blueprint`)
-      .send();
+    let response = await session.testAgent.get(`/v1/blueprints/${prodVersionNotification._id}`).send();
 
     const fetchedTemplate = response.body.data;
 
@@ -86,7 +87,7 @@ describe('Create Notification template from blueprint - /notification-templates/
     expect(testTemplate.name).to.equal(fetchedTemplate.name);
     expect(data.data.blueprintId).to.equal(fetchedTemplate.id);
 
-    response = await session.testAgent.get(`/v1/notification-templates/${normalTemplate.data._id}/blueprint`).send();
+    response = await session.testAgent.get(`/v1/blueprints/${normalTemplate.data._id}`).send();
 
     expect(response.body.statusCode).to.equal(404);
   });
