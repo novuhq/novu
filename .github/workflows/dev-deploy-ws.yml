@@ -23,9 +23,7 @@ jobs:
     if: "!contains(github.event.head_commit.message, 'ci skip')"
     strategy:
       matrix:
-        # Only should be deploying inbound-mail-ee to dev
-        #name: ['novu/ws', 'novu/ws-ee']
-        name: ['novu/ws-ee']
+        name: ['novu/ws', 'novu/ws-ee']
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:

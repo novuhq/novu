@@ -17,7 +17,7 @@ export class NotificationTemplates
    */
   async getAll(page?: number, limit?: number) {
     if (page === undefined && limit === undefined) {
-      return await this.http.get(`/notification-templates`);
+      return await this.http.get(`/notification-templates`, {});
     } else if (page === undefined) {
       return await this.http.get(`/notification-templates`, {
         params: {

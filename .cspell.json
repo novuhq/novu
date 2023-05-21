@@ -446,7 +446,8 @@
     "Sandpack",
     "codesandbox",
     "supertest",
-    "superagent"
+    "superagent",
+    "INAPP"
   ],
   "flagWords": [],
   "patterns": [

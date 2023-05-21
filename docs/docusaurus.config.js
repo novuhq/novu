@@ -177,7 +177,7 @@ const codeTheme = require('./src/utils/prism');
         },
         prism: {
           theme: codeTheme,
-          additionalLanguages: ['php', 'ruby', 'java'],
+          additionalLanguages: ['php', 'ruby', 'java', 'csharp', 'go', 'kotlin', 'python'],
         },
       }),
   }

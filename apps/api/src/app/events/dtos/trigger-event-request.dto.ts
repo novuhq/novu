@@ -46,7 +46,8 @@ export class TriggerEventRequestDto {
     },
   })
   @IsObject()
-  payload: Record<string, unknown>;
+  @IsOptional()
+  payload?: Record<string, unknown>;
 
   @ApiPropertyOptional({
     description: 'This could be used to override provider specific configurations',

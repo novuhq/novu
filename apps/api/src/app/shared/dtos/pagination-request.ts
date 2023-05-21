@@ -1,4 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { IsInt, Max, Min } from 'class-validator';
 
 export type Constructor<I> = new (...args: any[]) => I;
 
@@ -9,6 +11,8 @@ export function PaginationRequestDto(defaultLimit = 10, maxLimit = 100): Constru
       type: Number,
       required: false,
     })
+    @Type(() => Number)
+    @IsInt()
     page?: number = 0;
 
     @ApiPropertyOptional({
@@ -17,7 +21,11 @@ export function PaginationRequestDto(defaultLimit = 10, maxLimit = 100): Constru
       default: defaultLimit,
       maximum: maxLimit,
     })
-    limit?: number = 10;
+    @Type(() => Number)
+    @IsInt()
+    @Min(1)
+    @Max(maxLimit)
+    limit?: number = defaultLimit;
   }
 
   return PaginationRequest;
