@@ -74,7 +74,14 @@ export class UserSession {
     this.jobsService = new JobsService();
   }
 
-  async initialize(options: { noOrganization?: boolean; noEnvironment?: boolean; noIntegrations?: boolean } = {}) {
+  async initialize(
+    options: {
+      noOrganization?: boolean;
+      noEnvironment?: boolean;
+      noIntegrations?: boolean;
+      showOnBoardingTour?: boolean;
+    } = {}
+  ) {
     const card = {
       firstName: faker.name.firstName(),
       lastName: faker.name.lastName(),
@@ -89,6 +96,7 @@ export class UserSession {
       tokens: [],
       password: '123Qwe!@#',
       showOnBoarding: true,
+      showOnBoardingTour: options.showOnBoardingTour ? 0 : 2,
     };
 
     this.user = await userService.createUser(userEntity);
