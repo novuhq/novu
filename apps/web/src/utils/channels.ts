@@ -5,9 +5,9 @@ import {
   MobileGradient,
   SmsGradient,
   TimerGradient,
-} from '../../../design-system/icons';
+} from '../design-system/icons';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
-import { DigestGradient } from '../../../design-system/icons/general/DigestGradient';
+import { DigestGradient } from '../design-system/icons/general/DigestGradient';
 import React from 'react';
 
 export enum NodeTypeEnum {

@@ -16,7 +16,7 @@ import { parseUrl } from '../../../utils/routeUtils';
 import { OnBoardingAnalyticsEnum } from '../../../pages/quick-start/consts';
 import { useSegment } from '../../providers/SegmentProvider';
 import { useDigestDemoFlowContext } from './DigestDemoFlowProvider';
-import { NodeStep } from '../common';
+import { NodeStep } from '../../workflow';
 
 const getOpacity = (id: string, hoveredHintId?: string, sequence?: { opacity: number }): number => {
   if (hoveredHintId) {

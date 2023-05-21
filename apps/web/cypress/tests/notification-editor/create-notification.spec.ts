@@ -350,12 +350,13 @@ describe('Creation functionality', function () {
     cy.waitLoadTemplatePage(() => {
       cy.visit('/templates/create');
     });
+    cy.getByTestId('scratch-workflow-tooltip-skip-button').should('have.text', 'Watch later').click();
     fillBasicNotificationDetails('Test 15 Nodes');
     goBack();
     cy.waitForNetworkIdle(500);
 
     for (let i = 0; i < 15; i++) {
-      cy.getByTestId('button-add').last().click();
+      cy.getByTestId('button-add').last().click({ force: true });
       cy.getByTestId('add-email-node').click();
     }
 
