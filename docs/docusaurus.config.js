@@ -21,24 +21,6 @@ const codeTheme = require('./src/utils/prism');
           domain: 'docs.novu.co',
         },
       ],
-      // custom webpack config to make @codesandbox/sandpack-react work
-      () => ({
-        name: 'custom-webpack-config-for-sandpack',
-        configureWebpack: () => {
-          return {
-            module: {
-              rules: [
-                {
-                  test: /\.m?js/,
-                  resolve: {
-                    fullySpecified: false,
-                  },
-                },
-              ],
-            },
-          };
-        },
-      }),
     ],
     presets: [
       [

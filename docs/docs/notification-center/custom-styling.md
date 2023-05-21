@@ -2,9 +2,6 @@
 sidebar_position: 8
 ---
 
-import ReactCustomStyling from "@site/src/components/NotificationCenter/CustomStyling/React"
-import VueCustomStyling from "@site/src/components/NotificationCenter/CustomStyling/Vue"
-
 # Custom styling
 
 The Notification Center Component allows you to customize the look of the component. You can do that by using the `styles` property, but depending on the wrapper UI library we support, the styles prop will be applied to different components, check the [examples](#example-usage). The styles object interface and all the props can be found [here](./react/api-reference#styles-interface).
@@ -75,11 +72,42 @@ const styles = {
 
 ### React component
 
-<ReactCustomStyling />
+```tsx
+<NovuProvider
+  styles={{
+    header: {
+      root: { backgroundColor: 'red' },
+    }
+  }}
+>...
+```
 
 ### Vue component
 
-<VueCustomStyling />
+```html
+<script lang="ts">
+  import { NotificationCenterComponent } from '@novu/notification-center-vue';
+
+  export default {
+    components: {
+      NotificationCenterComponent,
+    },
+    data() {
+      return {
+        styles: {
+          header: {
+            root: { backgroundColor: 'red' },
+          },
+        },
+      };
+    },
+  };
+</script>
+
+<template>
+  <NotificationCenterComponent :styles="styles" ... />
+</template>
+```
 
 ### Angular component
 
