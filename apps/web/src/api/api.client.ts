@@ -2,9 +2,9 @@ import axios from 'axios';
 import { API_ROOT } from '../config';
 
 export const api = {
-  get(url: string) {
+  get(url: string, absoluteUrl = false) {
     return axios
-      .get(`${API_ROOT}${url}`)
+      .get(buildUrl(url, absoluteUrl))
       .then((response) => {
         return response.data?.data;
       })
@@ -61,3 +61,7 @@ export const api = {
       });
   },
 };
+
+function buildUrl(url: string, absoluteUrl: boolean) {
+  return absoluteUrl ? url : `${API_ROOT}${url}`;
+}
