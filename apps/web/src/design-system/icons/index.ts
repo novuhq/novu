@@ -76,7 +76,7 @@ export { ChevronDown } from './arrows/ChevronDown';
 export { ChevronLeft } from './arrows/ChevronLeft';
 export { ChevronRight } from './arrows/ChevronRight';
 export { ChevronUp } from './arrows/ChevronUp';
-export { DoubleArrowRight as CircleArrowRight } from './arrows/CircleArrowRight';
+export { CircleArrowRight } from './arrows/CircleArrowRight';
 
 export { ArrowLeftGradient } from './gradient/ArrowLeftGradient';
 export { BellGradient } from './gradient/BellGradient';
