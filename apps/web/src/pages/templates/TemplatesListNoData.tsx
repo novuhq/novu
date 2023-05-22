@@ -103,6 +103,7 @@ const SkeletonIcon = styled(Skeleton)`
 `;
 
 export const TemplatesListNoData = ({
+  readonly,
   blueprints,
   isLoading,
   allTemplatesDisabled,
@@ -110,6 +111,7 @@ export const TemplatesListNoData = ({
   onTemplateClick,
   onAllTemplatesClick,
 }: {
+  readonly?: boolean;
   blueprints?: { id: string; name: string; description: string; iconName: IconName }[];
   isLoading?: boolean;
   allTemplatesDisabled?: boolean;
@@ -123,7 +125,7 @@ export const TemplatesListNoData = ({
     <NoDataHolder data-test-id="no-workflow-templates-placeholder">
       <NoDataSubHeading>Start from a blank workflow or use a template</NoDataSubHeading>
       <CardsContainer>
-        <Card data-test-id="create-workflow-tile" onClick={onBlankWorkflowClick}>
+        <Card disabled={readonly} data-test-id="create-workflow-tile" onClick={onBlankWorkflowClick}>
           <FontAwesomeIcon icon={faFile} />
           <span>Blank Workflow</span>
         </Card>
@@ -148,6 +150,7 @@ export const TemplatesListNoData = ({
                   <Card
                     data-can-be-hidden={index === 2}
                     data-test-id="second-workflow-tile"
+                    disabled={readonly}
                     onClick={() => onTemplateClick(template)}
                     onMouseEnter={() => {
                       setTemplateId(template.id);
@@ -163,7 +166,11 @@ export const TemplatesListNoData = ({
                 content={template.description}
               />
             ))}
-        <Card data-test-id="all-workflow-tile" onClick={onAllTemplatesClick} disabled={allTemplatesDisabled}>
+        <Card
+          data-test-id="all-workflow-tile"
+          onClick={onAllTemplatesClick}
+          disabled={allTemplatesDisabled || readonly}
+        >
           <FontAwesomeIcon icon={faDiagramNext} />
           <span>All templates</span>
         </Card>
