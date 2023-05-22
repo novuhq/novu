@@ -63,7 +63,7 @@ export class EventsController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         identifier: body.name,
-        payload: body.payload,
+        payload: body.payload || {},
         overrides: body.overrides || {},
         to: body.to,
         actor: body.actor,

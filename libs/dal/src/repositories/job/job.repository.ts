@@ -30,11 +30,12 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
         jobs[index]._parentId = stored[index - 1]._id;
       }
 
-      const created = new this.MongooseModel(jobs[index]);
+      const created = new this.MongooseModel({ ...jobs[index], createdAt: Date.now() });
+
       stored.push(this.mapEntity(created));
     }
 
-    await this.MongooseModel.insertMany(stored, { ordered: true });
+    await this.insertMany(stored, true);
 
     return stored;
   }
@@ -58,7 +59,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
   }
 
   public async setError(organizationId: string, jobId: string, error: any): Promise<void> {
-    const result = await this._model.update(
+    const result = await this._model.updateOne(
       {
         _organizationId: this.convertStringToObjectId(organizationId),
         _id: this.convertStringToObjectId(jobId),

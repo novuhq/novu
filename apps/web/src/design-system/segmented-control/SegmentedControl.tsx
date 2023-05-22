@@ -19,6 +19,7 @@ interface ISegmentedControlProps {
   fullWidth?: boolean;
   sx?: Sx | (Sx | undefined)[];
   disabled?: boolean;
+  size?: 'md' | 'sm';
 }
 
 /**
@@ -27,7 +28,9 @@ interface ISegmentedControlProps {
  */
 export const SegmentedControl = React.forwardRef<HTMLDivElement, ISegmentedControlProps>(
   ({ onChange, loading = false, ...props }, ref) => {
-    const { classes, theme } = useStyles();
+    const { classes, theme } = useStyles({
+      size: props.size || 'md',
+    });
     const defaultDesign = {
       radius: 'xl',
       size: 'md',

@@ -5,7 +5,7 @@ import {
   NotificationStepEntity,
   NotificationRepository,
 } from '@novu/dal';
-import { StepTypeEnum } from '@novu/shared';
+import { IDigestRegularMetadata, StepTypeEnum } from '@novu/shared';
 import { sub } from 'date-fns';
 
 import { DigestFilterStepsCommand } from './digest-filter-steps.command';
@@ -29,12 +29,13 @@ export class DigestFilterStepsBackoff {
         continue;
       }
 
-      const trigger = await this.getTrigger(command, step);
+      const metadata = step.metadata as IDigestRegularMetadata | undefined;
+      const trigger = await this.getTrigger(command, metadata);
       if (!trigger) {
         continue;
       }
 
-      const haveDigest = await this.alreadyHaveDigest(command, step);
+      const haveDigest = await this.alreadyHaveDigest(command, metadata);
       if (haveDigest) {
         return steps;
       }
@@ -45,19 +46,19 @@ export class DigestFilterStepsBackoff {
     return steps;
   }
 
-  private getBackoffDate(step: NotificationStepEntity) {
+  private getBackoffDate(metadata: IDigestRegularMetadata | undefined) {
     return sub(new Date(), {
-      [step.metadata?.backoffUnit as string]: step.metadata?.backoffAmount,
+      [metadata?.backoffUnit as string]: metadata?.backoffAmount,
     });
   }
 
   private getTrigger(
     command: DigestFilterStepsCommand,
-    step: NotificationStepEntity
+    metadata: IDigestRegularMetadata | undefined
   ) {
     const query = {
       updatedAt: {
-        $gte: this.getBackoffDate(step),
+        $gte: this.getBackoffDate(metadata),
       },
       _templateId: command.templateId,
       status: JobStatusEnum.COMPLETED,
@@ -66,7 +67,7 @@ export class DigestFilterStepsBackoff {
       _subscriberId: command._subscriberId,
     };
 
-    const digestKey = step?.metadata?.digestKey;
+    const digestKey = metadata?.digestKey;
     if (digestKey) {
       query['payload.' + digestKey] = DigestFilterSteps.getNestedValue(
         command.payload,
@@ -79,11 +80,11 @@ export class DigestFilterStepsBackoff {
 
   private async alreadyHaveDigest(
     command: DigestFilterStepsCommand,
-    step: NotificationStepEntity
+    metadata: IDigestRegularMetadata | undefined
   ): Promise<boolean> {
     const query = {
       updatedAt: {
-        $gte: this.getBackoffDate(step),
+        $gte: this.getBackoffDate(metadata),
       },
       _templateId: command.templateId,
       type: StepTypeEnum.DIGEST,
@@ -91,9 +92,9 @@ export class DigestFilterStepsBackoff {
       _subscriberId: command._subscriberId,
     };
 
-    if (step.metadata?.digestKey) {
-      query['payload.' + step.metadata.digestKey] =
-        command.payload[step.metadata.digestKey];
+    if (metadata?.digestKey) {
+      query['payload.' + metadata.digestKey] =
+        command.payload[metadata.digestKey];
     }
 
     const digest = await this.jobRepository.findOne(query);

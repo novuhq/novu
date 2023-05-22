@@ -28,6 +28,22 @@ export function getSettingsErrors(errors) {
   return errorsArray;
 }
 
+function findMessages(obj: object): string[] {
+  let messages: string[] = [];
+
+  for (const key in obj) {
+    const value = obj[key];
+
+    if (typeof value === 'object' && value !== null) {
+      messages = messages.concat(findMessages(value));
+    } else if (key === 'message' && typeof value === 'string') {
+      messages.push(value);
+    }
+  }
+
+  return messages;
+}
+
 export function getStepErrors(index: number | string, errors: FieldErrors<IForm>): string[] {
   if (errors?.steps) {
     const stepErrors = errors.steps[index]?.template;
@@ -37,12 +53,15 @@ export function getStepErrors(index: number | string, errors: FieldErrors<IForm>
 
       return keys.map((key) => stepErrors[key]?.message);
     }
-    const actionErrors = errors.steps[index]?.metadata;
 
-    if (actionErrors) {
-      const keys = Object.keys(actionErrors);
+    const digestMetadataErrors = errors.steps[index]?.digestMetadata;
+    if (digestMetadataErrors) {
+      return findMessages(digestMetadataErrors);
+    }
 
-      return keys.map((key) => actionErrors[key]?.message);
+    const delayMetadataErrors = errors.steps[index]?.digestMetadata;
+    if (delayMetadataErrors) {
+      return findMessages(delayMetadataErrors);
     }
 
     const nameError = errors.steps[index]?.name;

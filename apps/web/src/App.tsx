@@ -112,7 +112,7 @@ if (SENTRY_DSN) {
          * can not be null because of the check in the if statement above.
          */
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
+        // @ts-expect-error
         event.extra.LogRocket = logRocketSession;
 
         return event;

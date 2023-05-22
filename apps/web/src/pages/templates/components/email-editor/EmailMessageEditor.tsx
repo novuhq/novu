@@ -11,9 +11,9 @@ import { ContentRow } from './ContentRow';
 import { ControlBar } from './ControlBar';
 import { ButtonRowContent } from './ButtonRowContent';
 import { TextRowContent } from './TextRowContent';
-import type { IForm, IStepEntity, ITemplates } from '../formTypes';
+import type { IForm, IFormStep, ITemplates } from '../formTypes';
 
-interface IStepEntityExtended extends IStepEntity {
+interface IStepEntityExtended extends IFormStep {
   template: ITemplates & {
     content: IEmailBlock[];
   };

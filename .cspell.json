@@ -442,7 +442,10 @@
     "clsx",
     "africastalking",
     "africas",
-    "Shortcodes"
+    "Shortcodes",
+    "supertest",
+    "superagent",
+    "INAPP"
   ],
   "flagWords": [],
   "patterns": [

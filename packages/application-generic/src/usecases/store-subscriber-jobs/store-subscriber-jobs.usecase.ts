@@ -1,4 +1,4 @@
-import { JobRepository, JobEntity } from '@novu/dal';
+import { JobRepository, JobEntity, DalException } from '@novu/dal';
 import { Injectable } from '@nestjs/common';
 import {
   ExecutionDetailsSourceEnum,
@@ -17,6 +17,7 @@ import {
   BulkCreateExecutionDetails,
   BulkCreateExecutionDetailsCommand,
 } from '../bulk-create-execution-details';
+import { PlatformException } from '../../utils/exceptions';
 
 @Injectable()
 export class StoreSubscriberJobs {
@@ -28,7 +29,15 @@ export class StoreSubscriberJobs {
 
   @InstrumentUsecase()
   async execute(command: StoreSubscriberJobsCommand) {
-    const storedJobs = await this.jobRepository.storeJobs(command.jobs);
+    let storedJobs;
+    try {
+      storedJobs = await this.jobRepository.storeJobs(command.jobs);
+    } catch (e) {
+      if (e instanceof DalException) {
+        throw new PlatformException(e.message);
+      }
+      throw e;
+    }
 
     this.createJobsExecutionDetails(storedJobs);
     const firstJob = storedJobs[0];
