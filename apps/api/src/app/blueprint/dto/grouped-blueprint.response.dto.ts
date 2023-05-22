@@ -1,6 +1,11 @@
-import { NotificationTemplateEntity } from '@novu/dal';
+import { INotificationTemplate } from '@novu/shared';
+
+export class GroupedBlueprint {
+  name: string;
+  blueprints: INotificationTemplate[];
+}
 
 export class GroupedBlueprintResponse {
-  name: string;
-  blueprints: NotificationTemplateEntity[];
+  general: GroupedBlueprint[];
+  popular: GroupedBlueprint;
 }
