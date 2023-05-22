@@ -46,7 +46,7 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
     });
   }
 
-  async searchSubscribers(environmentId: string, search?: string | null, emails: string[] | null = []) {
+  async searchSubscribers(environmentId: string, search?: string | null, emails: string[] = []) {
     const filters: any = [
       {
         email: {
@@ -64,7 +64,7 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
           },
         },
         {
-          subscriberId: search,
+          subscriberId: { $eq: search },
         }
       );
     }
