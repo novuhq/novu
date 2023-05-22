@@ -19,7 +19,7 @@ import { mapNotificationTemplateToForm, mapFormToCreateNotificationTemplate } fr
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { schema } from './notificationTemplateSchema';
 import { v4 as uuid4 } from 'uuid';
-import { useNotificationGroup } from '../../../hooks';
+import { useEffectOnce, useNotificationGroup } from '../../../hooks';
 import { useCreate } from '../hooks/useCreate';
 import { stepNames } from '../constants';
 
@@ -132,11 +132,7 @@ const TemplateEditorFormProvider = ({ children }) => {
   });
   const [trigger, setTrigger] = useState<INotificationTrigger>();
 
-  const {
-    reset,
-    formState: { isDirty: isDirtyForm, isValid },
-    watch,
-  } = methods;
+  const { reset, watch } = methods;
 
   const name = watch('name');
   const identifier = watch('identifier');
@@ -168,16 +164,18 @@ const TemplateEditorFormProvider = ({ children }) => {
     }
   }, [name]);
 
-  const { template, isLoading, isCreating, isUpdating, isDeleting, updateNotificationTemplate } = useTemplateController(
-    templateId,
-    {
-      onFetchSuccess: (fetchedTemplate) => {
-        setTrigger(fetchedTemplate.triggers[0]);
-        const form = mapNotificationTemplateToForm(fetchedTemplate);
-        reset(form);
-      },
-    }
-  );
+  const { template, isLoading, isCreating, isUpdating, isDeleting, updateNotificationTemplate } =
+    useTemplateController(templateId);
+
+  useEffectOnce(() => {
+    if (!template) return;
+
+    // we don't call this on success because the templates might be fetched before
+    setTrigger(template.triggers[0]);
+    const form = mapNotificationTemplateToForm(template);
+    reset(form);
+  }, !!template);
+
   const { groups, loading: loadingGroups } = useNotificationGroup();
 
   useCreate(templateId, groups, setTrigger, methods.getValues);

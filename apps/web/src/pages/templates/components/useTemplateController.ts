@@ -9,7 +9,11 @@ export function useTemplateController(
   templateId?: string,
   { onFetchSuccess }: { onFetchSuccess?: (template: INotificationTemplate) => void } = {}
 ) {
-  const { template, isInitialLoading: isLoading } = useTemplateFetcher({ templateId }, { onSuccess: onFetchSuccess });
+  const {
+    template,
+    refetch,
+    isInitialLoading: isLoading,
+  } = useTemplateFetcher({ templateId }, { onSuccess: onFetchSuccess });
   const client = useQueryClient();
 
   const { isLoading: isCreating, mutateAsync: createNotificationTemplate } = useMutation<
@@ -28,6 +32,7 @@ export function useTemplateController(
     { id: string; data: Partial<IUpdateNotificationTemplateDto> }
   >(({ id, data }) => updateTemplate(id, data), {
     onSuccess: async () => {
+      refetch();
       await client.refetchQueries([QueryKeys.changesCount]);
     },
   });

@@ -13,7 +13,6 @@ export const RegularDigestMetadata = ({ index, readonly }: { index: number; read
   const {
     control,
     formState: { errors, isSubmitted },
-    watch,
     setValue,
   } = useFormContext();
   const showErrors = isSubmitted && errors?.steps;
@@ -27,12 +26,11 @@ export const RegularDigestMetadata = ({ index, readonly }: { index: number; read
           control={control}
           name={amountFieldName}
           defaultValue={amountDefaultValue}
-          render={({ field, fieldState }) => {
+          render={({ field }) => {
             return (
               <Input
                 {...field}
                 value={field.value || ''}
-                error={showErrors && fieldState.error?.message}
                 min={0}
                 max={100}
                 type="number"
