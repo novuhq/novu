@@ -15,8 +15,8 @@ export const API_ROOT =
     : window._env_.REACT_APP_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:3000';
 
 export const CMS_ROOT_URL =
-  window._env_.REACT_APP_CMS_ROOT_URL || isCypress
-    ? window._env_.REACT_APP_CMS_ROOT_URL || process.env.REACT_APP_CMS_ROOT_URL || 'http://localhost:1336'
+  window._env_.REACT_APP_BLUEPRINTS_API_URL || isCypress
+    ? window._env_.REACT_APP_BLUEPRINTS_API_URL || process.env.REACT_APP_BLUEPRINTS_API_URL || 'http://localhost:1336'
     : 'https://api.novu.co';
 
 export const WS_URL = isCypress

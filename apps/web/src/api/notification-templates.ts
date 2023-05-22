@@ -18,11 +18,11 @@ export async function getTemplateById(id: string) {
 }
 
 export async function getBlueprintsGroupedByCategory() {
-  return api.get(`${CMS_ROOT_URL}/v1/blueprints/group-by-category`, true);
+  return api.get(`${CMS_ROOT_URL}/v1/blueprints/group-by-category`, { absoluteUrl: true });
 }
 
 export async function getBlueprintTemplateById(id: string) {
-  return api.get(`${CMS_ROOT_URL}/v1/blueprints/${id}`, true);
+  return api.get(`${CMS_ROOT_URL}/v1/blueprints/${id}`, { absoluteUrl: true });
 }
 
 export async function updateTemplateStatus(templateId: string, active: boolean) {

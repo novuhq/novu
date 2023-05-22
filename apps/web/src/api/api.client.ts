@@ -1,10 +1,13 @@
 import axios from 'axios';
 import { API_ROOT } from '../config';
 
+interface IOptions {
+  absoluteUrl: boolean;
+}
 export const api = {
-  get(url: string, absoluteUrl = false) {
+  get(url: string, options: IOptions = { absoluteUrl: false }) {
     return axios
-      .get(buildUrl(url, absoluteUrl))
+      .get(buildUrl(url, options.absoluteUrl))
       .then((response) => {
         return response.data?.data;
       })
