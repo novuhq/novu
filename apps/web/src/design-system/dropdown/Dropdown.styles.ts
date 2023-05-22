@@ -1,5 +1,5 @@
 import { createStyles, MantineTheme } from '@mantine/core';
-import { colors } from '../config';
+import { colors, shadows } from '../config';
 
 export default createStyles((theme: MantineTheme) => {
   const dark = theme.colorScheme === 'dark';
@@ -15,6 +15,7 @@ export default createStyles((theme: MantineTheme) => {
       backgroundColor: dark ? colors.B20 : colors.white,
       color: dark ? theme.white : colors.B40,
       border: 'none',
+      boxShadow: shadows.dark,
     },
     item: {
       borerRadius: '5px',
@@ -27,7 +28,7 @@ export default createStyles((theme: MantineTheme) => {
     },
     divider: {
       margin: '10px',
-      borderTop: `0.0625rem solid ${colors.B30}`,
+      borderTop: `0.0625rem solid ${dark ? colors.B30 : colors.BGLight}`,
     },
   };
 });
