@@ -40,7 +40,6 @@ export class UserService {
       password: passwordHash,
       profilePicture: `https://randomuser.me/api/portraits/men/${Math.floor(Math.random() * 60) + 1}.jpg`,
       tokens: [],
-      showOnBoardingTour: userEntity.showOnBoardingTour,
     });
 
     return user;

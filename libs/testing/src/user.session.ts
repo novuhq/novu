@@ -96,7 +96,6 @@ export class UserSession {
       tokens: [],
       password: '123Qwe!@#',
       showOnBoarding: true,
-      showOnBoardingTour: options.showOnBoardingTour ? 0 : 2,
     };
 
     this.user = await userService.createUser(userEntity);
