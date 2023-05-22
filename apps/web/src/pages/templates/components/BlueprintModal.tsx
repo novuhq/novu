@@ -51,23 +51,31 @@ export function BlueprintModal() {
     }
   );
 
-  const { mutate, isLoading: isCreating } = useMutation(createTemplate, {
-    onSuccess: (template) => {
-      if (template) {
-        disableOnboarding();
-        navigate(`/templates/edit/${template?._id}`, {
-          replace: true,
-        });
-      }
-      localStorage.removeItem('blueprintId');
+  // const { mutate, isLoading: isCreating } = useMutation(createTemplate, {
+  const { mutate: createTemplateMutation, isLoading: isCreating } = useMutation(
+    () => {
+      const templatePayload = mapBlueprintToTemplateCreatePayload();
+
+      return createTemplate(templatePayload);
     },
-    onError: (err: any) => {
-      if (err?.message) {
-        errorMessage(err?.message);
-      }
-      onClose();
-    },
-  });
+    {
+      onSuccess: (template) => {
+        if (template) {
+          disableOnboarding();
+          navigate(`/templates/edit/${template?._id}`, {
+            replace: true,
+          });
+        }
+        localStorage.removeItem('blueprintId');
+      },
+      onError: (err: any) => {
+        if (err?.message) {
+          errorMessage(err?.message);
+        }
+        onClose();
+      },
+    }
+  );
 
   const isLoading = isBluePrintLoading || isCreating;
 
@@ -126,8 +134,7 @@ export function BlueprintModal() {
             data-test-id="create-from-blueprint"
             onClick={() => {
               if (blueprintId) {
-                const templatePayload = mapBlueprintToTemplateCreatePayload();
-                mutate(templatePayload);
+                createTemplateMutation(blueprint);
               }
             }}
           >

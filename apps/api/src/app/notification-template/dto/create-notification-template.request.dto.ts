@@ -58,7 +58,8 @@ export class CreateNotificationTemplateRequestDto implements ICreateNotification
   @IsOptional()
   preferenceSettings?: IPreferenceChannels;
 
-  @ApiPropertyOptional({})
+  @ApiPropertyOptional()
   @IsOptional()
+  @IsString()
   blueprintId?: string;
 }
