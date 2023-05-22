@@ -9,6 +9,7 @@ import {
 } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 import {
+  buildGroupedBlueprintsKey,
   buildNotificationTemplateIdentifierKey,
   buildNotificationTemplateKey,
   InvalidateCacheService,
@@ -29,6 +30,8 @@ export class PromoteNotificationTemplateChange {
   ) {}
 
   async execute(command: PromoteTypeChangeCommand) {
+    await this.invalidateBlueprints(command);
+
     const item = await this.notificationTemplateRepository.findOne({
       _environmentId: command.environmentId,
       _parentId: command.item._id,
@@ -180,6 +183,14 @@ export class PromoteNotificationTemplateChange {
         isBlueprint: command.organizationId === this.blueprintOrganizationId,
       }
     );
+  }
+
+  private async invalidateBlueprints(command: PromoteTypeChangeCommand) {
+    if (command.organizationId === this.blueprintOrganizationId) {
+      await this.invalidateCache.invalidateByKey({
+        key: buildGroupedBlueprintsKey(),
+      });
+    }
   }
 
   private get blueprintOrganizationId() {
