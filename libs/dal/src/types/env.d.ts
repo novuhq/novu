@@ -4,5 +4,6 @@ declare namespace NodeJS {
     REDIS_URL: string;
     REDIS_ARENA_PORT: string;
     NODE_ENV: 'test' | 'production' | 'dev';
+    MONGO_MAX_POOL_SIZE: number;
   }
 }
