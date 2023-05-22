@@ -13,6 +13,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { CircleArrowRight } from '../../../design-system/icons/arrows/CircleArrowRight';
 import { When } from '../../../components/utils/When';
 import { showNotification } from '@mantine/notifications';
+import { Link } from 'react-router-dom';
 
 export const NovuInAppProviderModal = ({
   onClose,
@@ -187,7 +188,7 @@ export const NovuInAppProviderModal = ({
         </Button>
         <Text color={colors.B60}>
           <Text display="inline" color={colors.error}>
-            Discover a guide
+            <Link to="/quickstart/notification-center/set-up">Discover a guide</Link>
           </Text>{' '}
           of how to Integrate In-App using any framework
         </Text>
