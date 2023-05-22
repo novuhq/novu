@@ -22,7 +22,6 @@ import { isSameDay } from 'date-fns';
 import { CreateNotificationTemplateRequestDto } from '../dto';
 
 import axios from 'axios';
-// import { SendMessageEmail } from '../../events/usecases/send-message';
 
 describe('Create Notification template - /notification-templates (POST)', async () => {
   let session: UserSession;
@@ -136,6 +135,8 @@ describe('Create Notification template - /notification-templates (POST)', async 
     await session.testAgent.post(`/v1/changes/${change?._id}/apply`);
 
     const prodEnv = await getProductionEnvironment();
+
+    if (!prodEnv) throw new Error('prodEnv was not found');
 
     const prodVersionNotification = await notificationTemplateRepository.findOne({
       _environmentId: prodEnv._id,
@@ -419,6 +420,8 @@ describe('Create Notification template - /notification-templates (POST)', async 
 
     const prodEnv = await getProductionEnvironment();
 
+    if (!prodEnv) throw new Error('prodEnv was not found');
+
     const prodVersionNotification = await notificationTemplateRepository.findOne({
       _environmentId: prodEnv._id,
       _parentId: template._id,
@@ -433,3 +436,126 @@ describe('Create Notification template - /notification-templates (POST)', async 
     });
   }
 });
+
+describe('Create Notification template from blueprint - /notification-templates (POST)', async () => {
+  let session: UserSession;
+  const notificationTemplateRepository: NotificationTemplateRepository = new NotificationTemplateRepository();
+  const environmentRepository: EnvironmentRepository = new EnvironmentRepository();
+
+  before(async () => {
+    session = new UserSession();
+    await session.initialize();
+  });
+
+  it('should create template from blueprint', async function () {
+    const prodEnv = await getProductionEnvironment();
+
+    const { testTemplateRequestDto, testTemplate, blueprintId, createdTemplate } = await createTemplateFromBlueprint({
+      session,
+      notificationTemplateRepository,
+      prodEnv,
+    });
+
+    expect(createdTemplate.blueprintId).to.equal(blueprintId);
+    expect(testTemplateRequestDto.name).to.equal(createdTemplate.name);
+
+    const fetchedTemplate = (await session.testAgent.get(`/v1/blueprints/${blueprintId}`).send()).body.data;
+
+    expect(fetchedTemplate.isBlueprint).to.equal(true);
+    expect(testTemplateRequestDto.name).to.equal(fetchedTemplate.name);
+    expect(createdTemplate.blueprintId).to.equal(fetchedTemplate._id);
+
+    const response = await session.testAgent.get(`/v1/blueprints/${testTemplate._id}`).send();
+
+    expect(response.body.statusCode).to.equal(404);
+  });
+
+  async function getProductionEnvironment() {
+    return await environmentRepository.findOne({
+      _parentId: session.environment._id,
+    });
+  }
+});
+
+export async function createTemplateFromBlueprint({
+  session,
+  notificationTemplateRepository,
+  prodEnv,
+}: {
+  session: UserSession;
+  notificationTemplateRepository: NotificationTemplateRepository;
+  prodEnv;
+}) {
+  const testTemplateRequestDto: Partial<CreateNotificationTemplateRequestDto> = {
+    name: 'test email template',
+    description: 'This is a test description',
+    tags: ['test-tag'],
+    notificationGroupId: session.notificationGroups[0]._id,
+    steps: [
+      {
+        template: {
+          name: 'Message Name',
+          subject: 'Test email subject',
+          preheader: 'Test email preheader',
+          content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
+          type: StepTypeEnum.EMAIL,
+        },
+        filters: [
+          {
+            isNegated: false,
+            type: 'GROUP',
+            value: 'AND',
+            children: [
+              {
+                on: FilterPartTypeEnum.SUBSCRIBER,
+                field: 'firstName',
+                value: 'test value',
+                operator: 'EQUAL',
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+
+  const testTemplate = (await session.testAgent.post(`/v1/notification-templates`).send(testTemplateRequestDto)).body
+    .data;
+
+  process.env.BLUEPRINT_CREATOR = session.organization._id;
+
+  const testEnvBlueprintTemplate = (
+    await session.testAgent.post(`/v1/notification-templates`).send(testTemplateRequestDto)
+  ).body.data;
+
+  expect(testEnvBlueprintTemplate).to.be.ok;
+
+  await session.applyChanges({
+    enabled: false,
+  });
+
+  if (!prodEnv) throw new Error('production environment was not found');
+
+  const blueprintId = (
+    await notificationTemplateRepository.findOne({
+      _environmentId: prodEnv._id,
+      _parentId: testEnvBlueprintTemplate._id,
+    })
+  )?._id;
+
+  if (!blueprintId) throw new Error('blueprintId was not found');
+
+  const blueprint = (await session.testAgent.get(`/v1/blueprints/${blueprintId}`).send()).body.data;
+
+  blueprint.notificationGroupId = blueprint._notificationGroupId;
+  blueprint.blueprintId = blueprint._id;
+
+  const createdTemplate = (await session.testAgent.post(`/v1/notification-templates`).send({ ...blueprint })).body.data;
+
+  return {
+    testTemplateRequestDto,
+    testTemplate,
+    blueprintId,
+    createdTemplate,
+  };
+}
