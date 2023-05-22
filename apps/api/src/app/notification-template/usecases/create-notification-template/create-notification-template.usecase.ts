@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import slugify from 'slugify';
 import * as shortid from 'shortid';
 
@@ -8,8 +8,7 @@ import { AnalyticsService } from '@novu/application-generic';
 
 import { CreateNotificationTemplateCommand } from './create-notification-template.command';
 import { ContentService } from '../../../shared/helpers/content.service';
-import { CreateMessageTemplate } from '../../../message-template/usecases/create-message-template/create-message-template.usecase';
-import { CreateMessageTemplateCommand } from '../../../message-template/usecases/create-message-template/create-message-template.command';
+import { CreateMessageTemplate, CreateMessageTemplateCommand } from '../../../message-template/usecases';
 import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
 
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -64,6 +63,7 @@ export class CreateNotificationTemplate {
           type: message.template.type,
           name: message.template.name,
           content: message.template.content,
+          variables: message.template.variables,
           contentType: message.template.contentType,
           organizationId: command.organizationId,
           environmentId: command.environmentId,
