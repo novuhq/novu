@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import styled from '@emotion/styled';
 import {
   ChannelTypeEnum,
@@ -21,13 +21,11 @@ import { useIntegrations } from '../../hooks';
 import { When } from '../../components/utils/When';
 import { NovuEmailProviderModal } from './components/NovuEmailProviderModal';
 import { NovuInAppProviderModal } from './components/NovuInAppProviderModal';
+import { useProviders } from './useProviders';
 
 export function IntegrationsStore() {
-  const { integrations, loading: isLoading, refetch } = useIntegrations();
-  const [emailProviders, setEmailProviders] = useState<IIntegratedProvider[]>([]);
-  const [smsProvider, setSmsProvider] = useState<IIntegratedProvider[]>([]);
-  const [chatProvider, setChatProvider] = useState<IIntegratedProvider[]>([]);
-  const [pushProvider, setPushProvider] = useState<IIntegratedProvider[]>([]);
+  const { loading: isLoading, refetch } = useIntegrations();
+  const { emailProviders, smsProvider, chatProvider, pushProvider, inAppProvider } = useProviders();
   const [isModalOpened, setModalIsOpened] = useState(false);
   const [isCreateIntegrationModal, setIsCreateIntegrationModal] = useState(false);
   const [provider, setProvider] = useState<IIntegratedProvider | null>(null);
@@ -49,27 +47,6 @@ export function IntegrationsStore() {
     }
   }
 
-  useEffect(() => {
-    if (integrations) {
-      const initializedProviders = initializeProviders(integrations);
-
-      setEmailProviders(
-        sortProviders(initializedProviders.filter((providerItem) => providerItem.channel === ChannelTypeEnum.EMAIL))
-      );
-      setSmsProvider(
-        sortProviders(initializedProviders.filter((providerItem) => providerItem.channel === ChannelTypeEnum.SMS))
-      );
-
-      setChatProvider(
-        sortProviders(initializedProviders.filter((providerItem) => providerItem.channel === ChannelTypeEnum.CHAT))
-      );
-
-      setPushProvider(
-        sortProviders(initializedProviders.filter((providerItem) => providerItem.channel === ChannelTypeEnum.PUSH))
-      );
-    }
-  }, [integrations]);
-
   return (
     <>
       <PageMeta title="Integrations" />
@@ -85,7 +62,7 @@ export function IntegrationsStore() {
             opened={isModalOpened}
             onClose={() => setModalIsOpened(false)}
           >
-            <When truthy={!provider?.novu}>
+            <When truthy={!provider?.novu && provider?.providerId !== InAppProviderIdEnum.Novu}>
               <ConnectIntegrationForm
                 onClose={() => setModalIsOpened(false)}
                 provider={provider}
@@ -97,11 +74,21 @@ export function IntegrationsStore() {
               <NovuEmailProviderModal onClose={() => setModalIsOpened(false)} />
             </When>
             <When truthy={provider?.providerId === InAppProviderIdEnum.Novu}>
-              <NovuInAppProviderModal onClose={() => setModalIsOpened(false)} />
+              <NovuInAppProviderModal
+                showModal={handlerShowModal}
+                provider={provider}
+                onClose={() => setModalIsOpened(false)}
+              />
             </When>
           </Modal>
 
           <ContentWrapper>
+            <ChannelGroup
+              channel={ChannelTypeEnum.IN_APP}
+              providers={inAppProvider}
+              title="In-App"
+              onProviderClick={handlerVisible}
+            />
             <ChannelGroup
               channel={ChannelTypeEnum.EMAIL}
               providers={emailProviders}
@@ -136,20 +123,6 @@ export function IntegrationsStore() {
 const ContentWrapper = styled.div`
   padding: 0 30px;
 `;
-
-const sortProviders = (unsortedProviders: IIntegratedProvider[]) => {
-  return unsortedProviders
-    .sort((a, b) => Number(b.active) - Number(a.active))
-    .sort((a, b) => Number(isConnected(b)) - Number(isConnected(a)));
-};
-
-function isConnected(provider: IIntegratedProvider) {
-  if (!provider.credentials.length) return false;
-
-  return provider.credentials?.some((cred) => {
-    return cred.value;
-  });
-}
 
 export interface IIntegratedProvider {
   providerId: ProvidersIdEnum;

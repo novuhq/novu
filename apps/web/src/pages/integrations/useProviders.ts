@@ -88,6 +88,9 @@ export const useProviders = () => {
         pushProvider: sortProviders(
           initializedProviders.filter((providerItem) => providerItem.channel === ChannelTypeEnum.PUSH)
         ),
+        inAppProvider: sortProviders(
+          initializedProviders.filter((providerItem) => providerItem.channel === ChannelTypeEnum.IN_APP)
+        ),
       };
     }
 
@@ -96,6 +99,7 @@ export const useProviders = () => {
       smsProvider: [],
       chatProvider: [],
       pushProvider: [],
+      inAppProvider: [],
     };
   }, [integrations]);
 };

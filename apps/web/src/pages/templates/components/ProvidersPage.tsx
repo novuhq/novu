@@ -11,7 +11,7 @@ import { WorkflowSettingsTabs } from './WorkflowSettingsTabs';
 
 export function ProvidersPage() {
   const { loading: isLoading } = useIntegrations({ refetchOnMount: false });
-  const { emailProviders, smsProvider, chatProvider, pushProvider } = useProviders();
+  const { emailProviders, smsProvider, chatProvider, pushProvider, inAppProvider } = useProviders();
   const [configureChannel, setConfigureChannel] = useState<ChannelTypeEnum | undefined>(undefined);
   const [provider, setProvider] = useState<IIntegratedProvider | null>(null);
 
@@ -27,6 +27,7 @@ export function ProvidersPage() {
     <>
       <SubPageWrapper title="Workflow Settings">
         <WorkflowSettingsTabs />
+        <ListProviders setProvider={setProvider} setConfigureChannel={setConfigureChannel} providers={inAppProvider} />
         <ListProviders setProvider={setProvider} setConfigureChannel={setConfigureChannel} providers={emailProviders} />
         <ListProviders setProvider={setProvider} setConfigureChannel={setConfigureChannel} providers={chatProvider} />
         <ListProviders setProvider={setProvider} setConfigureChannel={setConfigureChannel} providers={pushProvider} />
