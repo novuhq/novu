@@ -1,1 +1,1 @@
-export { GetFeatureFlag, GetFeatureFlagCommand } from './get-feature-flag';
+export { FeatureFlagCommand, GetFeatureFlag, GetFeatureFlagCommand } from './get-feature-flag';
