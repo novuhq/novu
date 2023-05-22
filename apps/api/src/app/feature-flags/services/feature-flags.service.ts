@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { LaunchDarklyService } from './launch-darkly.service';
 
-import { FeatureFlagKey, IFeatureFlagContext, IFeatureFlagsService } from '../types';
+import { FeatureFlagsKeysEnum, IFeatureFlagContext, IFeatureFlagsService } from '../types';
 
 const LOG_CONTEXT = 'FeatureFlagsService';
 
@@ -49,8 +49,8 @@ export class FeatureFlagsService {
     }
   }
 
-  public async get<T>(key: FeatureFlagKey, defaultValue: T, context: IFeatureFlagContext): Promise<T> {
+  public async get<T>(key: FeatureFlagsKeysEnum, defaultValue: T, context: IFeatureFlagContext): Promise<T> {
     // TODO: Select here which context we will need in the future
-    return await this.service.getWithUserContext(key, defaultValue, context.userId);
+    return (await this.service.getWithUserContext(key, defaultValue, context.userId)) satisfies T;
   }
 }
