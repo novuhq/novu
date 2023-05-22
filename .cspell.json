@@ -444,7 +444,9 @@
     "africas",
     "supertest",
     "superagent",
-    "INAPP"
+    "INAPP",
+    "fortawesome",
+    "fontawesome"
   ],
   "flagWords": [],
   "patterns": [

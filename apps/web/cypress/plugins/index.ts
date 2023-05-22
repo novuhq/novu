@@ -95,6 +95,7 @@ module.exports = (on, config) => {
         noEnvironment?: boolean;
         partialTemplate?: Partial<NotificationTemplateEntity>;
         noTemplates?: boolean;
+        showOnBoardingTour?: boolean;
       } = {}
     ) {
       const dal = new DalService();
@@ -103,6 +104,7 @@ module.exports = (on, config) => {
       const session = new UserSession('http://localhost:1336');
       await session.initialize({
         noEnvironment: settings?.noEnvironment,
+        showOnBoardingTour: settings?.showOnBoardingTour,
       });
 
       const notificationTemplateService = new NotificationTemplateService(

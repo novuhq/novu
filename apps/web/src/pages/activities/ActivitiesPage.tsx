@@ -180,7 +180,7 @@ export function ActivitiesPage() {
                   {...field}
                   error={fieldState.error?.message}
                   label="Search"
-                  placeholder="Select Email or ID"
+                  placeholder="Search by subscriberId or email"
                   value={field.value || ''}
                   onChange={(e) => {
                     field.onChange(e);

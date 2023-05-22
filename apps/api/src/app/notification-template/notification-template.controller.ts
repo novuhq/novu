@@ -36,9 +36,6 @@ import { NotificationTemplatesResponseDto } from './dto/notification-templates.r
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { NotificationTemplatesRequestDto } from './dto/notification-templates-request.dto';
 import { Roles } from '../auth/framework/roles.decorator';
-import { GetBlueprintNotificationTemplate } from './usecases/get-blueprint-notification-template/get-blueprint-notification-template.usecase';
-import { GetBlueprintNotificationTemplateCommand } from './usecases/get-blueprint-notification-template/get-blueprint-notification-template.command';
-import { CreateBlueprintNotificationTemplate } from './usecases/create-blueprint-notification-template/create-blueprint-notification-template.usecase';
 import { ApiResponse } from '../shared/framework/response.decorator';
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 
@@ -53,9 +50,7 @@ export class NotificationTemplateController {
     private getNotificationTemplateUsecase: GetNotificationTemplate,
     private updateTemplateByIdUsecase: UpdateNotificationTemplate,
     private deleteTemplateByIdUsecase: DeleteNotificationTemplate,
-    private changeTemplateActiveStatusUsecase: ChangeTemplateActiveStatus,
-    private getBlueprintNotificationTemplate: GetBlueprintNotificationTemplate,
-    private createBlueprintNotificationTemplate: CreateBlueprintNotificationTemplate
+    private changeTemplateActiveStatusUsecase: ChangeTemplateActiveStatus
   ) {}
 
   @Get('')
@@ -141,36 +136,6 @@ export class NotificationTemplateController {
   ): Promise<NotificationTemplateResponse> {
     return this.getNotificationTemplateUsecase.execute(
       GetNotificationTemplateCommand.create({
-        environmentId: user.environmentId,
-        organizationId: user.organizationId,
-        userId: user._id,
-        templateId,
-      })
-    );
-  }
-
-  @Get('/:templateId/blueprint')
-  getNotificationTemplateBlueprintById(
-    @UserSession() user: IJwtPayload,
-    @Param('templateId') templateId: string
-  ): Promise<NotificationTemplateResponse> {
-    return this.getBlueprintNotificationTemplate.execute(
-      GetBlueprintNotificationTemplateCommand.create({
-        environmentId: user.environmentId,
-        organizationId: user.organizationId,
-        userId: user._id,
-        templateId,
-      })
-    );
-  }
-
-  @Post('/:templateId/blueprint')
-  createNotificationTemplateFromBlueprintById(
-    @UserSession() user: IJwtPayload,
-    @Param('templateId') templateId: string
-  ): Promise<NotificationTemplateResponse> {
-    return this.createBlueprintNotificationTemplate.execute(
-      GetBlueprintNotificationTemplateCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
