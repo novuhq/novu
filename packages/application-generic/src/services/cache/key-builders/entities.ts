@@ -3,6 +3,7 @@ import {
   CacheKeyPrefixEnum,
   CacheKeyTypeEnum,
   IdentifierPrefixEnum,
+  OrgScopePrefixEnum,
   prefixWrapper,
 } from './shared';
 
@@ -79,6 +80,20 @@ const buildKeyById = ({
 }): string =>
   prefixWrapper(`${type}:${keyEntity}:${identifierPrefix}=${identifier}`);
 
+const buildGroupedBlueprintsKey = ({
+  identifier,
+}: {
+  identifier: string;
+}): string =>
+  buildCommonKey({
+    type: CacheKeyTypeEnum.ENTITY,
+    keyEntity: CacheKeyPrefixEnum.GROUPED_BLUEPRINTS,
+    environmentIdPrefix: OrgScopePrefixEnum.ORGANIZATION_ID,
+    environmentId: process.env.BLUEPRINT_CREATOR,
+    identifierPrefix: IdentifierPrefixEnum.GROUPED_BLUEPRINT,
+    identifier: identifier,
+  });
+
 export {
   buildUserKey,
   buildSubscriberKey,
@@ -86,4 +101,5 @@ export {
   buildNotificationTemplateIdentifierKey,
   buildEnvironmentByApiKey,
   buildKeyById,
+  buildGroupedBlueprintsKey,
 };
