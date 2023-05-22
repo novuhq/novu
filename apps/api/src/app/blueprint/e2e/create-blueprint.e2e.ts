@@ -94,7 +94,7 @@ export async function createTemplateFromBlueprint({
   const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
 
   expect(body.data).to.be.ok;
-  const template: INotificationTemplate = body.data;
+  const testEnvBluePrintTemplate: INotificationTemplate = body.data;
 
   await session.applyChanges({
     enabled: false,
@@ -104,12 +104,18 @@ export async function createTemplateFromBlueprint({
 
   const prodVersionNotification = await notificationTemplateRepository.findOne({
     _environmentId: prodEnv._id,
-    _parentId: template._id,
+    _parentId: testEnvBluePrintTemplate._id,
   });
 
   if (!prodVersionNotification) throw new Error('production environment notification was not found');
 
   const { body: data } = await session.testAgent.post(`/v1/blueprints/${prodVersionNotification._id}`).send();
 
-  return { testTemplate, normalTemplate, prodVersionNotification, createdTemplate: data.data };
+  return {
+    testTemplate,
+    normalTemplate,
+    prodVersionNotification,
+    createdTemplate: data.data,
+    testEnvBluePrintTemplate,
+  };
 }

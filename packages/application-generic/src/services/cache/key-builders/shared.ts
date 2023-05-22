@@ -51,3 +51,5 @@ export enum OrgScopePrefixEnum {
   ENVIRONMENT_ID = 'e',
   ORGANIZATION_ID = 'o',
 }
+
+export const BLUEPRINT_IDENTIFIER = 'blueprints/group-by-category';

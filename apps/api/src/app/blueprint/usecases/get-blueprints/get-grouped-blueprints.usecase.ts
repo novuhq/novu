@@ -11,7 +11,7 @@ export class GetGroupedBlueprints {
   constructor(private notificationTemplateRepository: NotificationTemplateRepository) {}
 
   @CachedEntity({
-    builder: () => buildGroupedBlueprintsKey({ identifier: 'blueprints/group-by-category' }),
+    builder: () => buildGroupedBlueprintsKey(),
     options: { ttl: WEEK_IN_SECONDS },
   })
   async execute(): Promise<GroupedBlueprintResponse[]> {
