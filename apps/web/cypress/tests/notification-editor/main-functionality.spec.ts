@@ -394,6 +394,7 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.wait('@getNotificationTemplates');
 
     cy.getByTestId('create-template-btn').click();
+    cy.getByTestId('create-workflow-blank').click();
     cy.wait('@getNotificationTemplate');
 
     fillBasicNotificationDetails('Test notification');

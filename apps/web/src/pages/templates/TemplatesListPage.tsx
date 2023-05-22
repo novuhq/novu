@@ -9,8 +9,8 @@ import { useTemplates, useEnvController, useNotificationGroup } from '../../hook
 import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
-import { Tag, Button, Table, colors, Text } from '../../design-system';
-import { Edit, PlusCircle } from '../../design-system/icons';
+import { Tag, Table, colors, Text } from '../../design-system';
+import { Edit } from '../../design-system/icons';
 import { Tooltip } from '../../design-system';
 import { Data } from '../../design-system/table/Table';
 import { ROUTES } from '../../constants/routes.enum';
@@ -20,6 +20,7 @@ import { useSegment } from '../../components/providers/SegmentProvider';
 import { TemplateAnalyticsEnum } from './constants';
 import { useTemplatesStoreModal } from './hooks/useTemplatesStoreModal';
 import { useFetchBlueprints } from '../../api/hooks/notification-templates/useFetchBlueprints';
+import { CreateWorkflowDropdown } from './components/CreateWorkflowDropdown';
 
 function NotificationList() {
   const segment = useSegment();
@@ -125,14 +126,15 @@ function NotificationList() {
       <PageHeader
         title="Notification Template"
         actions={
-          <Button
-            disabled={readonly}
-            onClick={() => handleRedirectToCreateTemplate(true)}
-            icon={<PlusCircle />}
-            data-test-id="create-template-btn"
-          >
-            Create Workflow
-          </Button>
+          <CreateWorkflowDropdown
+            readonly={readonly}
+            blueprints={popularBlueprints}
+            isLoading={areBlueprintsLoading}
+            allTemplatesDisabled={areBlueprintsLoading || !hasGroups}
+            onBlankWorkflowClick={() => handleRedirectToCreateTemplate(false)}
+            onTemplateClick={() => {}}
+            onAllTemplatesClick={openModal}
+          />
         }
       />
       <TemplateListTableWrapper>
@@ -152,6 +154,7 @@ function NotificationList() {
           />
         ) : (
           <TemplatesListNoData
+            readonly={readonly}
             blueprints={popularBlueprints}
             isLoading={areBlueprintsLoading}
             allTemplatesDisabled={areBlueprintsLoading || !hasGroups}
