@@ -170,6 +170,7 @@ export class NotificationTemplateController {
         draft: body.draft ?? true,
         critical: body.critical ?? false,
         preferenceSettings: body.preferenceSettings,
+        blueprintId: body.blueprintId,
       })
     );
   }
