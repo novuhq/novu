@@ -150,9 +150,19 @@ export const NovuInAppProviderModal = ({
                 <Controller
                   control={control}
                   name="hmac"
-                  render={({ field }) => <Switch checked={field.value} onChange={field.onChange} />}
+                  render={({ field }) => (
+                    <Switch
+                      data-test-id="connect-integration-in-app-hmac"
+                      checked={field.value}
+                      onChange={field.onChange}
+                    />
+                  )}
                 />
-                <Text ml={10} color={hmac ? colors.error : colors.B60}>
+                <Text
+                  data-test-id="connect-integration-in-app-hmac-text"
+                  ml={10}
+                  color={hmac ? colors.error : colors.B60}
+                >
                   {hmac ? 'Active' : 'Not Active'}
                 </Text>
               </SideElementBase>
@@ -183,7 +193,7 @@ export const NovuInAppProviderModal = ({
             {isActive ? 'Active' : 'Disabled'}
           </StyledText>
         </ActiveWrapper>
-        <Button submit mb={32} fullWidth loading={isLoadingUpdate}>
+        <Button data-test-id="connect-integration-form-submit" submit mb={32} fullWidth loading={isLoadingUpdate}>
           Update
         </Button>
         <Text color={colors.B60}>
