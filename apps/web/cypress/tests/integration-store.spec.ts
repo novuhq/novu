@@ -5,6 +5,67 @@ describe('Integration store page', function () {
     cy.initializeSession().as('session');
   });
 
+  describe('In App', () => {
+    it('should display in app card for connection', function () {
+      cy.intercept('*/integrations', {
+        data: [],
+      });
+      cy.visit('/integrations');
+      cy.location('pathname').should('equal', '/integrations');
+
+      cy.getByTestId('integration-group-in-app')
+        .getByTestId('integration-provider-card-novu')
+        .eq(0)
+        .get('[data-test-id="integration-provider-card-novu"] button')
+        .contains('Connect');
+    });
+
+    it('should create integration on clicking connect', function () {
+      cy.intercept('*/integrations', {
+        data: [],
+      });
+      cy.visit('/integrations');
+      cy.location('pathname').should('equal', '/integrations');
+
+      cy.intercept(
+        { url: '*/integrations', method: 'post' },
+        {
+          data: {
+            active: true,
+          },
+        }
+      ).as('create-integration');
+
+      cy.getByTestId('integration-group-in-app')
+        .getByTestId('integration-provider-card-novu')
+        .eq(0)
+        .get('[data-test-id="integration-provider-card-novu"] button')
+        .click();
+
+      cy.wait('@create-integration');
+      cy.getByTestId('connect-integration-form-active-text').contains('Active');
+      cy.getByTestId('connect-integration-in-app-hmac-text').contains('Not Active');
+    });
+
+    it('should display in app modal', function () {
+      cy.visit('/integrations');
+      cy.location('pathname').should('equal', '/integrations');
+
+      cy.getByTestId('integration-group-in-app').getByTestId('integration-provider-card-novu').eq(0).click();
+
+      cy.getByTestId('connect-integration-form-active-text').contains('Active');
+      cy.getByTestId('connect-integration-in-app-hmac-text').contains('Not Active');
+      cy.getByTestId('connect-integration-in-app-hmac').click({ force: true });
+      cy.getByTestId('connect-integration-in-app-hmac-text').contains('Active');
+
+      cy.getByTestId('connect-integration-form-submit').click();
+      cy.visit('/integrations');
+      cy.getByTestId('integration-group-in-app').getByTestId('integration-provider-card-novu').eq(0).click();
+      cy.getByTestId('connect-integration-form-active-text').contains('Active');
+      cy.getByTestId('connect-integration-in-app-hmac-text').contains('Active');
+    });
+  });
+
   describe('Sendgrid', () => {
     it('should display email available for connection', function () {
       cy.visit('/integrations');

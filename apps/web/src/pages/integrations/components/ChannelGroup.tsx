@@ -43,8 +43,8 @@ export function ChannelGroup({
                 0,
               connected: true,
               logoFileName: {
-                light: CONTEXT_PATH + '/static/images/logo-formerly-light-bg.png',
-                dark: CONTEXT_PATH + '/static/images/logo-formerly-dark-bg.png',
+                light: CONTEXT_PATH + '/static/images/logo.png',
+                dark: CONTEXT_PATH + '/static/images/logo-light.png',
               },
               betaVersion: false,
               novu: true,

@@ -37,7 +37,7 @@ export function IntegrationsStoreModal({
   const { environment } = useEnvController();
   const { organization } = useAuthController();
   const { loading: isLoading } = useIntegrations({ refetchOnMount: false });
-  const { emailProviders, smsProvider, chatProvider, pushProvider } = useProviders();
+  const { emailProviders, smsProvider, chatProvider, pushProvider, inAppProvider } = useProviders();
   const [isFormOpened, setFormIsOpened] = useState(false);
   const [isCreateIntegrationModal, setIsCreateIntegrationModal] = useState(false);
   const [provider, setProvider] = useState<IIntegratedProvider | null>(null);
@@ -136,6 +136,13 @@ export function IntegrationsStoreModal({
             <>
               <ChannelGroup
                 selectedProvider={provider?.providerId}
+                channel={ChannelTypeEnum.IN_APP}
+                providers={inAppProvider}
+                title="In-App"
+                onProviderClick={handleOnProviderClick}
+              />
+              <ChannelGroup
+                selectedProvider={provider?.providerId}
                 channel={ChannelTypeEnum.EMAIL}
                 providers={emailProviders}
                 title="Email"
@@ -175,7 +182,7 @@ export function IntegrationsStoreModal({
           classNames={drawerClasses}
         >
           <IntegrationCardWrapper>
-            <When truthy={!provider?.novu}>
+            <When truthy={!provider?.novu && provider?.providerId !== InAppProviderIdEnum.Novu}>
               <ConnectIntegrationForm
                 onClose={handleCloseForm}
                 onSuccessFormSubmit={closeIntegration}
@@ -193,7 +200,7 @@ export function IntegrationsStoreModal({
             </When>
             <When truthy={provider?.providerId === InAppProviderIdEnum.Novu}>
               <div style={{ padding: '30px' }}>
-                <NovuInAppProviderModal onClose={handleCloseForm} />
+                <NovuInAppProviderModal showModal={closeIntegration} provider={provider} onClose={handleCloseForm} />
               </div>
             </When>
           </IntegrationCardWrapper>
