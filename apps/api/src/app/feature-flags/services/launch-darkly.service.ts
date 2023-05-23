@@ -15,12 +15,16 @@ const LOG_CONTEXT = 'LaunchDarklyService';
 @Injectable()
 export class LaunchDarklyService implements IFeatureFlagsService {
   private client: LDClient;
+  public isEnabled: boolean;
 
   constructor() {
     const launchDarklySdkKey = process.env.LAUNCH_DARKLY_SDK_KEY;
 
     if (launchDarklySdkKey) {
       this.client = init(launchDarklySdkKey);
+      this.isEnabled = true;
+    } else {
+      this.isEnabled = false;
     }
   }
 

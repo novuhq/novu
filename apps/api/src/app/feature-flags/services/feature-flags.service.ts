@@ -27,19 +27,8 @@ export class FeatureFlagsService {
     }
   }
 
-  public async onModuleInit(): Promise<void> {
-    if (this.service) {
-      try {
-        await this.service.initialize();
-        Logger.log('Feature Flags service has been successfully initialized', LOG_CONTEXT);
-      } catch (error) {
-        Logger.error('Feature Flags service has failed when initialized', LOG_CONTEXT, error);
-      }
-    }
-  }
-
   public async gracefullyShutdown(): Promise<void> {
-    if (this.service) {
+    if (this.isServiceEnabled()) {
       try {
         await this.service.gracefullyShutdown();
         Logger.log('Feature Flags service has been gracefully shutted down', LOG_CONTEXT);
@@ -49,8 +38,34 @@ export class FeatureFlagsService {
     }
   }
 
+  /**
+   *  Feature Flags precedence will be this way:
+   *  - Feature Flag service defined value
+   *  - Feature Flag service cache stored value
+   *  - Default value with the value provided by Novu's environment variable if set
+   *  - Default value with the value provided by the hardcoded fallback
+   */
   public async get<T>(key: FeatureFlagsKeysEnum, defaultValue: T, context: IFeatureFlagContext): Promise<T> {
+    if (!this.isServiceEnabled()) {
+      return defaultValue;
+    }
+
     // TODO: Select here which context we will need in the future
     return (await this.service.getWithUserContext(key, defaultValue, context.userId)) satisfies T;
+  }
+
+  private isServiceEnabled(): boolean {
+    return this.service && this.service.isEnabled;
+  }
+
+  public async onModuleInit(): Promise<void> {
+    if (this.isServiceEnabled()) {
+      try {
+        await this.service.initialize();
+        Logger.log('Feature Flags service has been successfully initialized', LOG_CONTEXT);
+      } catch (error) {
+        Logger.error('Feature Flags service has failed when initialized', LOG_CONTEXT, error);
+      }
+    }
   }
 }

@@ -24,7 +24,7 @@ export class GetFeatureFlag {
 
   async isTemplateStoreEnabled(featureFlagCommand: FeatureFlagCommand): Promise<boolean> {
     const value = process.env.IS_TEMPLATE_STORE_ENABLED;
-    const fallbackValue = true;
+    const fallbackValue = false;
     const defaultValue = this.prepareBooleanStringFeatureFlag(value, fallbackValue);
     const key = FeatureFlagsKeysEnum.IS_TEMPLATE_STORE_ENABLED;
 
