@@ -99,5 +99,10 @@ export { TurnOnGradient } from './gradient/TurnOnGradient';
 export { LevelsGradient } from './gradient/LevelsGradient';
 export { TimerGradient } from './gradient/TimerGradient';
 export { PageGradient } from './gradient/PageGradient';
+export { ReactGradient } from './gradient/ReactGradient';
+export { AngularGradient } from './gradient/AngularGradient';
+export { VueGradient } from './gradient/VueGradient';
+export { JsGradient } from './gradient/JsGradient';
+export { CodeGradient } from './gradient/CodeGradient';
 
 export { GitHub } from './social/GitHub';
