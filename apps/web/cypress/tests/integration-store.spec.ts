@@ -46,6 +46,36 @@ describe('Integration store page', function () {
       cy.contains('Select a framework');
     });
 
+    it('should show guide on clicking connect', function () {
+      cy.intercept('*/integrations', {
+        data: [],
+      });
+      cy.visit('/integrations');
+      cy.location('pathname').should('equal', '/integrations');
+
+      cy.intercept(
+        { url: '*/integrations', method: 'post' },
+        {
+          data: {
+            active: true,
+          },
+        }
+      ).as('create-integration');
+
+      cy.getByTestId('integration-group-in-app')
+        .getByTestId('integration-provider-card-novu')
+        .eq(0)
+        .get('[data-test-id="integration-provider-card-novu"] button')
+        .click();
+
+      cy.wait('@create-integration');
+      cy.contains('Select a framework');
+      cy.getByTestId('in-app-select-framework-react').click();
+      cy.contains('React integration guide');
+      cy.contains('Configure Later').click();
+      cy.contains('In-App notification center');
+    });
+
     it('should display in app modal', function () {
       cy.visit('/integrations');
       cy.location('pathname').should('equal', '/integrations');

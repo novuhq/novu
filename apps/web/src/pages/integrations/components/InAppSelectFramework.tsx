@@ -67,6 +67,7 @@ export const InAppSelectFramework = ({ setFramework }: { setFramework: (framewor
           onClick={() => {
             setFramework('react');
           }}
+          data-test-id="in-app-select-framework-react"
         >
           <Group spacing={12}>
             <ReactGradient /> React
@@ -77,6 +78,7 @@ export const InAppSelectFramework = ({ setFramework }: { setFramework: (framewor
             setFramework('angular');
           }}
           sx={itemStyle}
+          data-test-id="in-app-select-framework-angular"
         >
           <Group spacing={12}>
             <AngularGradient /> Angular
@@ -86,6 +88,7 @@ export const InAppSelectFramework = ({ setFramework }: { setFramework: (framewor
           onClick={() => {
             setFramework('vue');
           }}
+          data-test-id="in-app-select-framework-vue"
           sx={itemStyle}
         >
           <Group spacing={12}>
@@ -100,6 +103,7 @@ export const InAppSelectFramework = ({ setFramework }: { setFramework: (framewor
             setFramework('');
           }}
           sx={itemStyle}
+          data-test-id="in-app-select-framework-web-component"
         >
           <Group spacing={12}>
             <JsGradient /> Web Component
@@ -111,6 +115,7 @@ export const InAppSelectFramework = ({ setFramework }: { setFramework: (framewor
             setFramework('');
           }}
           sx={itemStyle}
+          data-test-id="in-app-select-framework-headless"
         >
           <Group spacing={12}>
             <JsGradient /> Headless
@@ -120,6 +125,7 @@ export const InAppSelectFramework = ({ setFramework }: { setFramework: (framewor
           onClick={() => {
             setFramework('js');
           }}
+          data-test-id="in-app-select-framework-iframe"
           sx={itemStyle}
         >
           <Group spacing={12}>
