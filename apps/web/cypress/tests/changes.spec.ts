@@ -19,7 +19,7 @@ describe('Changes Screen', function () {
     promoteNotification();
 
     switchEnvironment('Production');
-    cy.location('pathname').should('equal', ROUTES.TEMPLATES);
+    cy.location('pathname').should('equal', ROUTES.WORKFLOWS);
 
     cy.getByTestId('create-template-btn').get('button').should('be.disabled');
     cy.getByTestId('notifications-template').find('tbody tr').first().click({ force: true });
@@ -88,7 +88,7 @@ function switchEnvironment(environment: 'Production' | 'Development') {
 
 function createNotification() {
   cy.intercept('**/notification-groups').as('getNotificationGroups');
-  cy.visit(ROUTES.TEMPLATES_CREATE);
+  cy.visit(ROUTES.WORKFLOWS_CREATE);
   cy.waitForNetworkIdle(500);
 
   cy.getByTestId('title').clear().type('Test Notification Title');

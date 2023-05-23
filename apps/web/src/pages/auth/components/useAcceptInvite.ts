@@ -34,7 +34,7 @@ export function useAcceptInvite() {
         });
       }
 
-      navigate(ROUTES.TEMPLATES);
+      navigate(ROUTES.WORKFLOWS);
     } catch (e: unknown) {
       errorMessage('Failed to accept an invite.');
 

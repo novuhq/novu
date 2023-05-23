@@ -56,7 +56,7 @@ function ActionItem() {
     <Button
       variant="gradient"
       onClick={() => {
-        navigate(ROUTES.TEMPLATES_CREATE);
+        navigate(ROUTES.WORKFLOWS_CREATE);
       }}
     >
       Create a Workflow

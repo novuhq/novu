@@ -16,7 +16,7 @@ export const useBlueprint = () => {
     const token = getToken();
 
     if (id && token !== null) {
-      navigate(ROUTES.TEMPLATES_CREATE, {
+      navigate(ROUTES.WORKFLOWS_CREATE, {
         replace: true,
       });
     }

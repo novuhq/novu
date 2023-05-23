@@ -20,7 +20,7 @@ export function BlueprintModal() {
     segment.track('Blueprint canceled', {
       blueprintId: localStorage.getItem('blueprintId'),
     });
-    navigate(ROUTES.TEMPLATES, {
+    navigate(ROUTES.WORKFLOWS, {
       replace: true,
     });
     localStorage.removeItem('blueprintId');

@@ -14,7 +14,7 @@ export const SpotLight = ({ children }) => {
       {
         id: 'navigate-templates',
         title: 'Go to Workflows',
-        onTrigger: () => navigate(ROUTES.TEMPLATES),
+        onTrigger: () => navigate(ROUTES.WORKFLOWS),
         icon: <Bolt />,
       },
       {
