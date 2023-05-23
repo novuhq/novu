@@ -43,8 +43,7 @@ describe('Integration store page', function () {
         .click();
 
       cy.wait('@create-integration');
-      cy.getByTestId('connect-integration-form-active-text').contains('Active');
-      cy.getByTestId('connect-integration-in-app-hmac-text').contains('Not Active');
+      cy.contains('Select a framework');
     });
 
     it('should display in app modal', function () {
