@@ -16,12 +16,7 @@ export function useIntegrationLimit(type: ChannelTypeEnum) {
     data = { limit: 0, count: 0 },
     isLoading,
     refetch,
-  } = useQuery(['integrationLimit', type], () => getIntegrationLimit(type), {
-    enabled: isLimitFetchingEnabled,
-    refetchInterval: 10000,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-  });
+  } = useQuery(['integrationLimit', type], () => getIntegrationLimit(type));
 
   const isLimitReached = isLimitFetchingEnabled && data.limit === data.count;
 
