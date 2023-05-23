@@ -3,7 +3,7 @@ import { SoftDeleteModel } from 'mongoose-delete';
 
 import { BaseRepository } from '../base-repository';
 import { NotificationTemplate } from './notification-template.schema';
-import { NotificationTemplateEntity, NotificationTemplateDBModel } from './notification-template.entity';
+import { NotificationTemplateDBModel, NotificationTemplateEntity } from './notification-template.entity';
 import { DalException } from '../../shared';
 import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 
@@ -15,6 +15,7 @@ export class NotificationTemplateRepository extends BaseRepository<
   EnforceEnvOrOrgIds
 > {
   private notificationTemplate: SoftDeleteModel;
+
   constructor() {
     super(NotificationTemplate, NotificationTemplateEntity);
     this.notificationTemplate = NotificationTemplate;
@@ -43,25 +44,61 @@ export class NotificationTemplateRepository extends BaseRepository<
   }
 
   async findBlueprint(id: string) {
+    if (!this.blueprintOrganizationId) throw new DalException('Blueprint environment id was not found');
+
     const requestQuery: NotificationTemplateQuery = {
       _id: id,
       isBlueprint: true,
-      _organizationId: NotificationTemplateRepository.getBlueprintOrganizationId() as string,
+      _organizationId: this.blueprintOrganizationId,
     };
 
-    const item = await this.MongooseModel.findOne(requestQuery).populate('steps.template');
+    const item = await this.MongooseModel.findOne(requestQuery).populate('steps.template').lean();
 
     return this.mapEntity(item);
   }
 
+  async findAllGroupedByCategory(): Promise<{ name: string; blueprints: NotificationTemplateEntity[] }[]> {
+    if (!this.blueprintOrganizationId) {
+      return [];
+    }
+
+    const requestQuery: NotificationTemplateQuery = {
+      isBlueprint: true,
+      _organizationId: this.blueprintOrganizationId,
+    };
+
+    const items = await this.MongooseModel.find(requestQuery)
+      .populate('steps.template')
+      .populate('notificationGroup')
+      .lean();
+
+    const groupedItems = items.reduce((acc, item) => {
+      const notificationGroupId = item._notificationGroupId;
+      const notificationGroupName = item.notificationGroup?.name;
+
+      if (!acc[notificationGroupId.toString()]) {
+        acc[notificationGroupId.toString()] = {
+          name: notificationGroupName,
+          blueprints: [],
+        };
+      }
+
+      acc[notificationGroupId as unknown as string].blueprints.push(item);
+
+      return acc;
+    }, {});
+
+    return Object.values(groupedItems);
+  }
+
   async getBlueprintList(skip = 0, limit = 10) {
-    if (!NotificationTemplateRepository.getBlueprintOrganizationId()) {
+    if (!this.blueprintOrganizationId) {
       return { totalCount: 0, data: [] };
     }
 
     const requestQuery: NotificationTemplateQuery = {
       isBlueprint: true,
-      _organizationId: NotificationTemplateRepository.getBlueprintOrganizationId() as string,
+      _organizationId: this.blueprintOrganizationId,
     };
 
     const totalItemsCount = await this.count(requestQuery);
@@ -113,6 +150,10 @@ export class NotificationTemplateRepository extends BaseRepository<
     const res: NotificationTemplateEntity = await this.notificationTemplate.findDeleted(query);
 
     return this.mapEntity(res);
+  }
+
+  private get blueprintOrganizationId(): string | undefined {
+    return process.env.BLUEPRINT_CREATOR;
   }
 
   public static getBlueprintOrganizationId(): string | undefined {

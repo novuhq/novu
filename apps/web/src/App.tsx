@@ -5,6 +5,9 @@ import { Route, Routes, BrowserRouter } from 'react-router-dom';
 import LogRocket from 'logrocket';
 import setupLogRocketReact from 'logrocket-react';
 import { Integrations } from '@sentry/tracing';
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { far } from '@fortawesome/free-regular-svg-icons';
+import { fas } from '@fortawesome/free-solid-svg-icons';
 
 import packageJson from '../package.json';
 import { AuthProvider } from './components/providers/AuthProvider';
@@ -33,7 +36,6 @@ import { SegmentProvider } from './components/providers/SegmentProvider';
 import { NotificationCenter } from './pages/quick-start/steps/NotificationCenter';
 import { FrameworkSetup } from './pages/quick-start/steps/FrameworkSetup';
 import { Setup } from './pages/quick-start/steps/Setup';
-import { Trigger } from './pages/quick-start/steps/Trigger';
 import { RequiredAuth } from './components/layout/RequiredAuth';
 import { GetStarted } from './pages/quick-start/steps/GetStarted';
 import { DigestPreview } from './pages/quick-start/steps/DigestPreview';
@@ -45,6 +47,9 @@ import { TestWorkflowPage } from './pages/templates/components/TestWorkflowPage'
 import { SnippetPage } from './pages/templates/components/SnippetPage';
 import { TemplateEditor } from './pages/templates/components/TemplateEditor';
 import { ProvidersPage } from './pages/templates/components/ProvidersPage';
+import { InAppSuccess } from './pages/quick-start/steps/InAppSuccess';
+
+library.add(far, fas);
 
 if (LOGROCKET_ID && window !== undefined) {
   LogRocket.init(LOGROCKET_ID, {
@@ -112,7 +117,7 @@ if (SENTRY_DSN) {
          * can not be null because of the check in the if statement above.
          */
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
+        // @ts-expect-error
         event.extra.LogRocket = logRocketSession;
 
         return event;
@@ -196,7 +201,7 @@ function App() {
                   <Route path={ROUTES.QUICK_START_NOTIFICATION_CENTER} element={<NotificationCenter />} />
                   <Route path={ROUTES.QUICK_START_SETUP} element={<FrameworkSetup />} />
                   <Route path={ROUTES.QUICK_START_SETUP_FRAMEWORK} element={<Setup />} />
-                  <Route path={ROUTES.QUICK_START_SETUP_TRIGGER} element={<Trigger />} />
+                  <Route path={ROUTES.QUICK_START_SETUP_SUCCESS} element={<InAppSuccess />} />
                   <Route path={ROUTES.ACTIVITIES} element={<ActivitiesPage />} />
                   <Route path={ROUTES.SETTINGS} element={<SettingsPage />} />
                   <Route path={ROUTES.INTEGRATIONS} element={<IntegrationsStore />} />

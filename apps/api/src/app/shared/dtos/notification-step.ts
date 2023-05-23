@@ -1,41 +1,109 @@
-import { DigestUnitEnum, DigestTypeEnum, DelayTypeEnum } from '@novu/shared';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
+import {
+  DigestUnitEnum,
+  DigestTypeEnum,
+  DelayTypeEnum,
+  INotificationTemplateStepMetadata,
+  IDigestBaseMetadata,
+  IDigestRegularMetadata,
+  IDigestTimedMetadata,
+  IDelayRegularMetadata,
+  IDelayScheduledMetadata,
+  ITimedConfig,
+  DaysEnum,
+  MonthlyTypeEnum,
+  OrdinalEnum,
+  OrdinalValueEnum,
+} from '@novu/shared';
+import { IsBoolean, ValidateNested } from 'class-validator';
 
 import { MessageTemplate } from './message-template';
 import { StepFilter } from './step-filter';
 
-class NotificationStepMetadata {
+class TimedConfig implements ITimedConfig {
   @ApiPropertyOptional()
-  amount?: number;
+  atTime?: string;
+
+  @ApiPropertyOptional({ enum: [...Object.values(DaysEnum)], isArray: true })
+  weekDays?: DaysEnum[];
+
+  @ApiPropertyOptional()
+  monthDays?: number[];
+
+  @ApiPropertyOptional({ enum: [...Object.values(OrdinalEnum)] })
+  ordinal?: OrdinalEnum;
+
+  @ApiPropertyOptional({ enum: [...Object.values(OrdinalValueEnum)] })
+  ordinalValue?: OrdinalValueEnum;
+
+  @ApiPropertyOptional({ enum: [...Object.values(MonthlyTypeEnum)] })
+  monthlyType?: MonthlyTypeEnum;
+}
+
+class AmountAndUnit {
+  @ApiPropertyOptional()
+  amount: number;
 
   @ApiPropertyOptional({
-    enum: DigestUnitEnum,
+    enum: [...Object.values(DigestUnitEnum)],
   })
-  unit?: DigestUnitEnum;
+  unit: DigestUnitEnum;
+}
 
+class DigestBaseMetadata extends AmountAndUnit implements IDigestBaseMetadata {
   @ApiPropertyOptional()
   digestKey?: string;
+}
+
+class DigestRegularMetadata extends DigestBaseMetadata implements IDigestRegularMetadata {
+  @ApiProperty({ enum: [DigestTypeEnum.REGULAR, DigestTypeEnum.BACKOFF] })
+  type: DigestTypeEnum.REGULAR | DigestTypeEnum.BACKOFF;
 
   @ApiPropertyOptional()
-  delayPath?: string;
-
-  @ApiProperty({
-    enum: { ...DigestTypeEnum, ...DelayTypeEnum },
-  })
-  type: DigestTypeEnum | DelayTypeEnum;
-
-  @ApiPropertyOptional({
-    enum: DigestUnitEnum,
-  })
-  backoffUnit?: DigestUnitEnum;
+  backoff?: boolean;
 
   @ApiPropertyOptional()
   backoffAmount?: number;
+
+  @ApiPropertyOptional({
+    enum: [...Object.values(DigestUnitEnum)],
+  })
+  backoffUnit?: DigestUnitEnum;
 
   @ApiPropertyOptional()
   updateMode?: boolean;
 }
 
+@ApiExtraModels(TimedConfig)
+class DigestTimedMetadata extends DigestBaseMetadata implements IDigestTimedMetadata {
+  @ApiProperty({
+    enum: [DigestTypeEnum.TIMED],
+  })
+  type: DigestTypeEnum.TIMED;
+
+  @ApiPropertyOptional()
+  @ValidateNested()
+  timed?: TimedConfig;
+}
+
+class DelayRegularMetadata extends AmountAndUnit implements IDelayRegularMetadata {
+  @ApiProperty({
+    enum: [DelayTypeEnum.REGULAR],
+  })
+  type: DelayTypeEnum.REGULAR;
+}
+
+class DelayScheduledMetadata implements IDelayScheduledMetadata {
+  @ApiProperty({
+    enum: [DelayTypeEnum.SCHEDULED],
+  })
+  type: DelayTypeEnum.SCHEDULED;
+
+  @ApiProperty()
+  delayPath: string;
+}
+
+@ApiExtraModels(DigestRegularMetadata, DigestTimedMetadata, DelayRegularMetadata, DelayScheduledMetadata)
 export class NotificationStep {
   @ApiPropertyOptional()
   _id?: string;
@@ -51,6 +119,7 @@ export class NotificationStep {
   _templateId?: string;
 
   @ApiPropertyOptional()
+  @IsBoolean()
   active?: boolean;
 
   @ApiPropertyOptional()
@@ -59,20 +128,27 @@ export class NotificationStep {
   @ApiPropertyOptional({
     type: MessageTemplate,
   })
+  @ValidateNested()
   template?: MessageTemplate;
 
   @ApiPropertyOptional({
     type: [StepFilter],
   })
+  @ValidateNested({ each: true })
   filters?: StepFilter[];
 
   @ApiPropertyOptional()
   _parentId?: string | null;
 
   @ApiPropertyOptional({
-    type: NotificationStepMetadata,
+    oneOf: [
+      { $ref: getSchemaPath(DigestRegularMetadata) },
+      { $ref: getSchemaPath(DigestTimedMetadata) },
+      { $ref: getSchemaPath(DelayRegularMetadata) },
+      { $ref: getSchemaPath(DelayScheduledMetadata) },
+    ],
   })
-  metadata?: NotificationStepMetadata;
+  metadata?: INotificationTemplateStepMetadata;
 
   @ApiPropertyOptional()
   replyCallback?: {

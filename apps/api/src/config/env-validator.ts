@@ -1,4 +1,4 @@
-import { bool, json, makeValidator, port, str, url, ValidatorSpec } from 'envalid';
+import { bool, json, makeValidator, port, str, num, url, ValidatorSpec } from 'envalid';
 import * as envalid from 'envalid';
 
 const str32 = makeValidator((variable) => {
@@ -31,6 +31,9 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
     default: '',
   }),
   MONGO_URL: str(),
+  MONGO_MAX_POOL_SIZE: num({
+    default: 500,
+  }),
   NOVU_API_KEY: str({
     default: '',
   }),
@@ -63,6 +66,9 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   }),
   STORE_NOTIFICATION_CONTENT: str({
     default: 'false',
+  }),
+  LAUNCH_DARKLY_SDK_KEY: str({
+    default: '',
   }),
 };
 

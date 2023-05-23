@@ -311,11 +311,11 @@ describe('Workflow Editor - Main Functionality', function () {
         cy.getByTestId('environment-switch').find(`input[value="Production"]`).click({ force: true });
         cy.getByTestId('notifications-template').find('tbody tr').first().click();
 
-        cy.location('pathname').should('not.equal', `/templates/edit/${res.response?.body.data._id}`);
+        cy.location('pathname').should('not.equal', `/templates`);
 
         cy.getByTestId('environment-switch').find(`input[value="Development"]`).click({ force: true });
 
-        cy.location('pathname').should('equal', `/templates/edit/${res.response?.body.data._id}`);
+        cy.location('pathname').should('equal', `/templates`);
       });
     });
   });
@@ -385,5 +385,78 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.waitForNetworkIdle(500);
 
     cy.getByTestId('control-add').first();
+  });
+
+  it('should load successfully the recently created notification template, when going back from editor -> templates list -> editor', function () {
+    cy.intercept('GET', '*/notification-templates**').as('getNotificationTemplates');
+    cy.intercept('GET', '*/notification-templates/*').as('getNotificationTemplate');
+    cy.visit('/templates');
+    cy.wait('@getNotificationTemplates');
+
+    cy.getByTestId('create-template-btn').click();
+    cy.getByTestId('create-workflow-blank').click();
+    cy.wait('@getNotificationTemplate');
+
+    fillBasicNotificationDetails('Test notification');
+
+    addAndEditChannel('inApp');
+    cy.get('.ace_text-input').first().type('Test in-app', {
+      force: true,
+    });
+
+    addAndEditChannel('email');
+    cy.getByTestId('editable-text-content').clear().type('Test email');
+    cy.getByTestId('emailSubject').type('this is email subject');
+    cy.getByTestId('emailPreheader').type('this is email preheader');
+    goBack();
+
+    cy.getByTestId('notification-template-submit-btn').click();
+
+    cy.getByTestId('side-nav-templates-link').click();
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('template-edit-link');
+    cy.getByTestId('notifications-template')
+      .get('tbody tr td')
+      .contains('Test notification', {
+        matchCase: false,
+      })
+      .click();
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId(`node-inAppSelector`).should('exist');
+    cy.getByTestId(`node-emailSelector`).should('exist');
+  });
+
+  it('should load successfully the same notification template, when going back from templates list -> editor -> templates list -> editor', function () {
+    cy.intercept('GET', '*/notification-templates**').as('getNotificationTemplates');
+    cy.intercept('GET', '*/notification-templates/*').as('getNotificationTemplate');
+    cy.visit('/templates');
+    cy.wait('@getNotificationTemplates');
+
+    const template = this.session.templates[0];
+    cy.getByTestId('notifications-template')
+      .get('tbody tr td')
+      .contains(template.name, {
+        matchCase: false,
+      })
+      .click();
+    cy.wait('@getNotificationTemplate');
+    cy.getByTestId(`node-inAppSelector`).should('exist');
+    cy.getByTestId(`node-emailSelector`).should('exist');
+
+    cy.getByTestId('side-nav-templates-link').click();
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('notifications-template')
+      .get('tbody tr td')
+      .contains(template.name, {
+        matchCase: false,
+      })
+      .click();
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId(`node-inAppSelector`).should('exist');
+    cy.getByTestId(`node-emailSelector`).should('exist');
   });
 });

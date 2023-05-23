@@ -9,7 +9,7 @@ test('should trigger nexmo library correctly', async () => {
 
   const spy = jest
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
+    // @ts-expect-error
     .spyOn(provider.vonageClient.message, 'sendSms')
     .mockImplementation(async (_a, _b, _c, _d, cb) => {
       cb(null, {

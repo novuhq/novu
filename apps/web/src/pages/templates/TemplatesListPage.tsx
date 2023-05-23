@@ -9,27 +9,35 @@ import { useTemplates, useEnvController, useNotificationGroup } from '../../hook
 import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
-import { Tag, Button, Table, colors, Text } from '../../design-system';
-import { Edit, PlusCircle } from '../../design-system/icons';
+import { Tag, Table, colors, Text } from '../../design-system';
+import { Edit } from '../../design-system/icons';
 import { Tooltip } from '../../design-system';
 import { Data } from '../../design-system/table/Table';
 import { ROUTES } from '../../constants/routes.enum';
 import { parseUrl } from '../../utils/routeUtils';
 import { TemplatesListNoData } from './TemplatesListNoData';
-import { useCreateDigestDemoWorkflow } from '../../api/hooks/notification-templates/useCreateDigestDemoWorkflow';
 import { useSegment } from '../../components/providers/SegmentProvider';
 import { TemplateAnalyticsEnum } from './constants';
+import { useTemplatesStoreModal } from './hooks/useTemplatesStoreModal';
+import { useFetchBlueprints } from '../../api/hooks/notification-templates/useFetchBlueprints';
+import { CreateWorkflowDropdown } from './components/CreateWorkflowDropdown';
 
 function NotificationList() {
   const segment = useSegment();
   const { readonly } = useEnvController();
   const [page, setPage] = useState<number>(0);
-  const { groups, loading: areNotificationGroupLoading } = useNotificationGroup();
+  const { loading: areNotificationGroupLoading } = useNotificationGroup();
   const { templates, loading: isLoading, totalCount: totalTemplatesCount, pageSize } = useTemplates(page);
   const theme = useMantineTheme();
   const navigate = useNavigate();
+  const {
+    blueprintsGroupedAndPopular: { groupedBlueprints, popularBlueprints } = {},
+    isLoading: areBlueprintsLoading,
+  } = useFetchBlueprints();
+  const hasGroups = groupedBlueprints && groupedBlueprints.length > 0;
+  const hasTemplates = templates && templates.length > 0;
 
-  const { createDigestDemoWorkflow, isDisabled: isTryDigestDisabled } = useCreateDigestDemoWorkflow();
+  const { TemplatesStoreModal, openModal } = useTemplatesStoreModal({ groupedBlueprints });
 
   function handleTableChange(pageIndex) {
     setPage(pageIndex);
@@ -38,11 +46,6 @@ function NotificationList() {
   const handleRedirectToCreateTemplate = (isFromHeader: boolean) => {
     segment.track(TemplateAnalyticsEnum.CREATE_TEMPLATE_CLICK, { isFromHeader });
     navigate(ROUTES.TEMPLATES_CREATE);
-  };
-
-  const handleCreateDigestDemoWorkflow = () => {
-    segment.track(TemplateAnalyticsEnum.TRY_DIGEST_CLICK);
-    createDigestDemoWorkflow();
   };
 
   const columns: ColumnWithStrictAccessor<Data>[] = [
@@ -123,37 +126,44 @@ function NotificationList() {
       <PageHeader
         title="Notification Template"
         actions={
-          <Button
-            disabled={readonly}
-            onClick={() => handleRedirectToCreateTemplate(true)}
-            icon={<PlusCircle />}
-            data-test-id="create-template-btn"
-          >
-            Create Workflow
-          </Button>
+          <CreateWorkflowDropdown
+            readonly={readonly}
+            blueprints={popularBlueprints}
+            isLoading={areBlueprintsLoading}
+            allTemplatesDisabled={areBlueprintsLoading || !hasGroups}
+            onBlankWorkflowClick={() => handleRedirectToCreateTemplate(false)}
+            onTemplateClick={() => {}}
+            onAllTemplatesClick={openModal}
+          />
         }
       />
       <TemplateListTableWrapper>
-        <Table
-          onRowClick={onRowClick}
-          loading={isLoading || areNotificationGroupLoading}
-          data-test-id="notifications-template"
-          columns={columns}
-          data={templates || []}
-          pagination={{
-            pageSize: pageSize,
-            current: page,
-            total: totalTemplatesCount,
-            onPageChange: handleTableChange,
-          }}
-          noDataPlaceholder={
-            <TemplatesListNoData
-              onCreateClick={() => handleRedirectToCreateTemplate(false)}
-              onTryDigestClick={handleCreateDigestDemoWorkflow}
-              tryDigestDisabled={isTryDigestDisabled}
-            />
-          }
-        />
+        {hasTemplates ? (
+          <Table
+            onRowClick={onRowClick}
+            loading={isLoading || areNotificationGroupLoading}
+            data-test-id="notifications-template"
+            columns={columns}
+            data={templates}
+            pagination={{
+              pageSize: pageSize,
+              current: page,
+              total: totalTemplatesCount,
+              onPageChange: handleTableChange,
+            }}
+          />
+        ) : (
+          <TemplatesListNoData
+            readonly={readonly}
+            blueprints={popularBlueprints}
+            isLoading={areBlueprintsLoading}
+            allTemplatesDisabled={areBlueprintsLoading || !hasGroups}
+            onBlankWorkflowClick={() => handleRedirectToCreateTemplate(false)}
+            onTemplateClick={() => {}}
+            onAllTemplatesClick={openModal}
+          />
+        )}
+        <TemplatesStoreModal />
       </TemplateListTableWrapper>
     </PageContainer>
   );

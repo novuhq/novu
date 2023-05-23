@@ -3,7 +3,9 @@ import { QueueBaseOptions } from 'bullmq';
 import { getRedisPrefix } from '@novu/shared';
 import { ConnectionOptions } from 'tls';
 
-import { BullmqService } from './bull-mq.service';
+const LOG_CONTEXT = 'TriggerQueueService';
+
+import { BullMqService } from './bull-mq.service';
 
 export class TriggerQueueService {
   public readonly name = 'trigger-handler';
@@ -20,10 +22,10 @@ export class TriggerQueueService {
       tls: process.env.REDIS_TLS as ConnectionOptions,
     },
   };
-  public readonly bullMqService: BullmqService;
+  public readonly bullMqService: BullMqService;
 
   constructor() {
-    this.bullMqService = new BullmqService();
+    this.bullMqService = new BullMqService();
 
     this.bullMqService.createQueue(this.name, {
       ...this.bullConfig,
@@ -34,7 +36,10 @@ export class TriggerQueueService {
   }
 
   public add(id: string, data: any, organizationId: string) {
-    Logger.log(`TriggerQueueService.add: ${id} Group: ${organizationId}`);
+    Logger.log(
+      `TriggerQueueService.add: ${id} Group: ${organizationId}`,
+      LOG_CONTEXT
+    );
 
     this.bullMqService.add(
       id,
@@ -45,5 +50,20 @@ export class TriggerQueueService {
       },
       organizationId
     );
+  }
+
+  public async gracefulShutdown() {
+    Logger.log('Shutting the Trigger Queue service down', LOG_CONTEXT);
+
+    await this.bullMqService.gracefulShutdown();
+
+    Logger.log(
+      'Shutting down the Trigger Queue service has finished',
+      LOG_CONTEXT
+    );
+  }
+
+  async onModuleDestroy(): Promise<void> {
+    await this.gracefulShutdown();
   }
 }

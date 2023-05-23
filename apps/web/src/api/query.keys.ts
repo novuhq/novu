@@ -9,6 +9,7 @@ interface IQueryKeys {
   getLayoutById: string;
   activeNotificationsList: string;
   integrationsList: string;
+  blueprintsList: string;
   getTemplateById: (templateId?: string) => string;
 }
 
@@ -23,5 +24,6 @@ export const QueryKeys: IQueryKeys = Object.freeze({
   getLayoutById: 'getLayoutById',
   activeNotificationsList: 'activeNotificationsList',
   integrationsList: 'integrationsList',
+  blueprintsList: 'blueprintsList',
   getTemplateById: (templateId?: string) => `notificationById:${templateId}`,
 });
