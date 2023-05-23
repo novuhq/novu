@@ -1,5 +1,6 @@
 import { ICreateNotificationTemplateDto } from '@novu/shared';
 import { api } from './api.client';
+import { CMS_ROOT_URL } from '../config';
 
 export function getNotificationsList(page = 0, limit = 10) {
   return api.getFullResponse(`/v1/notification-templates`, { page, limit });
@@ -16,12 +17,12 @@ export async function getTemplateById(id: string) {
   return api.get(`/v1/notification-templates/${id}`);
 }
 
-export async function getBlueprintTemplateById(id: string) {
-  return api.get(`/v1/notification-templates/${id}/blueprint`);
+export async function getBlueprintsGroupedByCategory() {
+  return api.get(`${CMS_ROOT_URL}/v1/blueprints/group-by-category`, { absoluteUrl: true });
 }
 
-export async function createTemplateFromBluePrintId(id: string) {
-  return api.post(`/v1/notification-templates/${id}/blueprint`, {});
+export async function getBlueprintTemplateById(id: string) {
+  return api.get(`${CMS_ROOT_URL}/v1/blueprints/${id}`, { absoluteUrl: true });
 }
 
 export async function updateTemplateStatus(templateId: string, active: boolean) {

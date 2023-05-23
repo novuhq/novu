@@ -78,7 +78,7 @@ const mapToDigestFormStep = (item: INotificationTemplateStep): IFormStep => {
           amount: `${metadata.amount}`,
           unit: metadata.unit,
           backoff: metadata.backoff,
-          backoffAmount: metadata.backoffAmount,
+          backoffAmount: `${metadata.backoffAmount}`,
           backoffUnit: metadata.backoffUnit,
         },
       },
@@ -295,6 +295,9 @@ const mapFormStepDigestMetadata = (formStep: IFormStep): INotificationTemplateSt
       digestKey: formStep.digestMetadata.digestKey,
       ...formStep.digestMetadata.regular,
       amount: parseInt(formStep.digestMetadata.regular.amount, 10),
+      backoffAmount: formStep.digestMetadata.regular.backoffAmount
+        ? parseInt(formStep.digestMetadata.regular.backoffAmount, 10)
+        : undefined,
     };
   }
 

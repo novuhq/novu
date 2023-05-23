@@ -9,7 +9,7 @@ sidebar_position: 3
 
 Apple provides two authentication methods to make a secure connection to APNs. The first is Certificate-Based Authentication (using a .p12 certificate). The second is Token-Based Authentication (using a .p8 key). We'll make use of the **.p8** key.
 
-To enable APNS integration, you need to create an [Apple Developer](https://developer.apple.com.) account with [Admin role](https://appstoreconnect.apple.com/access/users).
+To enable APNS integration, you need to create an [Apple Developer](https://developer.apple.com) account with [Admin role](https://appstoreconnect.apple.com/access/users).
 
 To generate the p8 key for your account:
 <br />
