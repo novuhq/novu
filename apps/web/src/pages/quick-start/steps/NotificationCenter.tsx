@@ -34,10 +34,10 @@ export function NotificationCenter() {
     if (!integrations || integrations?.length === 0) {
       return;
     }
-    const integaration = integrations.find((item) => {
+    const integration = integrations.find((item) => {
       return item.channel === ChannelTypeEnum.IN_APP && item.providerId === InAppProviderIdEnum.Novu;
     });
-    if (integaration) {
+    if (integration) {
       return;
     }
     createIntegrationApi({
