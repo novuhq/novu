@@ -6,12 +6,12 @@ import { ITemplatesStoreModalProps, TemplatesStoreModal } from '../components/te
 
 const NULL_COMPONENT = () => null;
 
-export const useTemplatesStoreModal = ({ groupedBlueprints = [] }: { groupedBlueprints?: IBlueprintsGrouped[] }) => {
+export const useTemplatesStoreModal = ({ general = [] }: { general?: IBlueprintsGrouped[] }) => {
   const [isOpened, { open, close }] = useDisclosure(false);
-  const hasGroups = groupedBlueprints && groupedBlueprints.length > 0;
+  const hasGroups = general && general.length > 0;
 
   const Component = useInlineComponent<ITemplatesStoreModalProps>(TemplatesStoreModal, {
-    groupedBlueprints,
+    general,
     isOpened,
     onClose: close,
   });

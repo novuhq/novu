@@ -13,7 +13,7 @@ export interface IFlowStep {
   name?: string;
   uuid?: string;
   active?: boolean;
-  template: {
+  template?: {
     type: StepTypeEnum;
   };
 }
