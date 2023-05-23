@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import { Box, Group, useMantineColorScheme } from '@mantine/core';
+import { Box, createStyles, Group, useMantineColorScheme } from '@mantine/core';
 import { ChannelTypeEnum, IConfigCredentials } from '@novu/shared';
 import { colors, shadows, Text, Tooltip } from '../../../design-system';
 import { useIntegrationLimit } from '../../../hooks';
@@ -27,12 +27,17 @@ export function NovuIntegrationCard({
   const {
     data: { limit, count },
     loading,
+    isLimitReached,
   } = useIntegrationLimit(provider.channel);
 
   const unit = provider.channel === ChannelTypeEnum.EMAIL ? 'emails' : 'messages';
+  const { classes } = useStyles({ isLimitReached });
 
   return (
-    <Tooltip label={<TooltipLabel limit={limit} unit={unit} channel={provider.channel} />}>
+    <Tooltip
+      classNames={classes}
+      label={<TooltipLabel limit={limit} unit={unit} channel={provider.channel} isLimitReached={isLimitReached} />}
+    >
       <StyledCard
         dark={colorScheme === 'dark'}
         active={brightCard}
@@ -68,14 +73,26 @@ export function NovuIntegrationCard({
   );
 }
 
-function TooltipLabel({ channel, limit, unit }: { limit: number; unit: string; channel: ChannelTypeEnum }) {
+function TooltipLabel({
+  channel,
+  limit,
+  unit,
+  isLimitReached,
+}: {
+  limit: number;
+  unit: string;
+  channel: ChannelTypeEnum;
+  isLimitReached: boolean;
+}) {
+  const label = isLimitReached
+    ? `You have run out of available ${unit} for this month. Configure a different ${channel} provider to send more.`
+    : // eslint-disable-next-line max-len
+      `The predefined free Novu provider allows sending ${limit} ${unit} per month. Configure a different ${channel} provider to send more.`;
+
   return (
-    <Box w={300}>
-      <StyledLabel>
-        The predefined free Novu provider allows sending {limit} {unit} per month. Configure a different {channel}{' '}
-        provider to send more.
-      </StyledLabel>
-    </Box>
+    <StyledLabelContainer>
+      <StyledLabel isLimitReached={isLimitReached}>{label}</StyledLabel>
+    </StyledLabelContainer>
   );
 }
 
@@ -164,9 +181,35 @@ const StyledCard = styled.div<{ dark: boolean; active: boolean; clickable: boole
   }
 `;
 
-const StyledLabel = styled(Text)`
+const StyledLabelContainer = styled.div`
+  width: 300px;
+`;
+
+const StyledLabel = styled(Text)<{ isLimitReached: boolean }>`
   word-wrap: break-word;
   white-space: pre-wrap;
   word-break: break-word;
   color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B60 : colors.B40)};
+
+  ${({ isLimitReached }) => {
+    if (isLimitReached) {
+      return `
+      color: ${colors.white};
+      `;
+    }
+  }}
 `;
+
+const useStyles = createStyles((theme, { isLimitReached }: { isLimitReached: boolean }) => ({
+  tooltip: {
+    backgroundColor: isLimitReached ? colors.error : theme.colorScheme === 'dark' ? colors.B20 : colors.BGLight,
+    color: colors.B60,
+    boxShadow: theme.colorScheme === 'dark' ? shadows.dark : shadows.medium,
+    padding: '12px 15px',
+    fontSize: '14px',
+    fontWeight: 400,
+  },
+  arrow: {
+    backgroundColor: isLimitReached ? colors.error : theme.colorScheme === 'dark' ? colors.B20 : theme.white,
+  },
+}));
