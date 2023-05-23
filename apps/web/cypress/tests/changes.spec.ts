@@ -1,5 +1,6 @@
 import { dragAndDrop } from './notification-editor';
 import { goBack } from './notification-editor/index';
+import { ROUTES } from '../../src/constants/routes.enum';
 
 describe('Changes Screen', function () {
   beforeEach(function () {
@@ -18,7 +19,7 @@ describe('Changes Screen', function () {
     promoteNotification();
 
     switchEnvironment('Production');
-    cy.location('pathname').should('equal', '/templates');
+    cy.location('pathname').should('equal', ROUTES.TEMPLATES);
 
     cy.getByTestId('create-template-btn').get('button').should('be.disabled');
     cy.getByTestId('notifications-template').find('tbody tr').first().click({ force: true });
@@ -38,7 +39,7 @@ describe('Changes Screen', function () {
   it('should show correct type and description of change', function () {
     createNotification();
     cy.visit('/changes');
-    cy.getByTestId('change-type').contains('Template Change');
+    cy.getByTestId('change-type').contains('Workflow Change');
     cy.getByTestId('change-content').contains('Test Notification Title');
   });
 
@@ -87,7 +88,7 @@ function switchEnvironment(environment: 'Production' | 'Development') {
 
 function createNotification() {
   cy.intercept('**/notification-groups').as('getNotificationGroups');
-  cy.visit('/templates/create');
+  cy.visit(ROUTES.TEMPLATES_CREATE);
   cy.waitForNetworkIdle(500);
 
   cy.getByTestId('title').clear().type('Test Notification Title');

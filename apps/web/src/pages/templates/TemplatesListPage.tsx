@@ -122,9 +122,9 @@ function NotificationList() {
 
   return (
     <PageContainer>
-      <PageMeta title="Templates" />
+      <PageMeta title="Workflows" />
       <PageHeader
-        title="Notification Template"
+        title="Workflows"
         actions={
           <CreateWorkflowDropdown
             readonly={readonly}

@@ -7,7 +7,7 @@ describe('Workflow Editor - Drag and Drop', function () {
 
   it('should drag and drop channel', function () {
     cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
+      cy.visit('/workflows/create');
     });
     fillBasicNotificationDetails('Test drag and drop channel');
     goBack();
@@ -19,7 +19,7 @@ describe('Workflow Editor - Drag and Drop', function () {
 
   it('should not be able to drop when not on last node', function () {
     cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
+      cy.visit('/workflows/create');
     });
     fillBasicNotificationDetails('Test only drop on last node');
     goBack();
@@ -31,7 +31,7 @@ describe('Workflow Editor - Drag and Drop', function () {
 
   it('should add a step with plus button', function () {
     cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
+      cy.visit('/workflows/create');
     });
     fillBasicNotificationDetails('Test Plus Button');
     goBack();
