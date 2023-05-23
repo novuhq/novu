@@ -2,7 +2,7 @@ import { addAndEditChannel, clickWorkflow, dragAndDrop, editChannel, fillBasicNo
 
 describe('Creation functionality', function () {
   beforeEach(function () {
-    cy.initializeSession().as('session');
+    cy.initializeSession({ showOnBoardingTour: false }).as('session');
   });
 
   it('should create in-app notification', function () {
@@ -350,12 +350,13 @@ describe('Creation functionality', function () {
     cy.waitLoadTemplatePage(() => {
       cy.visit('/templates/create');
     });
+
     fillBasicNotificationDetails('Test 15 Nodes');
     goBack();
     cy.waitForNetworkIdle(500);
 
     for (let i = 0; i < 15; i++) {
-      cy.getByTestId('button-add').last().click();
+      cy.getByTestId('button-add').last().click({ force: true });
       cy.getByTestId('add-email-node').click();
     }
 

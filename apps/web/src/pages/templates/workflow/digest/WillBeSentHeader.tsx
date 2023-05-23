@@ -1,10 +1,19 @@
 import { useFormContext } from 'react-hook-form';
 import { useMantineColorScheme } from '@mantine/core';
-import { DigestTypeEnum } from '@novu/shared';
+import { DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
 
 import { colors } from '../../../../design-system';
 import { pluralizeTime } from '../../../../utils';
 import { TimedDigestWillBeSentHeader } from './TimedDigestWillBeSentHeader';
+
+const DIGEST_UNIT_TYPE_TO_SINGULAR = {
+  [DigestUnitEnum.SECONDS]: 'second',
+  [DigestUnitEnum.MINUTES]: 'minute',
+  [DigestUnitEnum.HOURS]: 'hour',
+  [DigestUnitEnum.DAYS]: 'day',
+  [DigestUnitEnum.WEEKS]: 'week',
+  [DigestUnitEnum.MONTHS]: 'month',
+};
 
 const Highlight = ({ children }) => {
   const { colorScheme } = useMantineColorScheme();
@@ -35,10 +44,10 @@ export const WillBeSentHeader = ({ index }: { index: number }) => {
 
   return (
     <>
-      after <Highlight>{pluralizeTime(amount, unit)}</Highlight>
+      after <Highlight>{pluralizeTime(amount, DIGEST_UNIT_TYPE_TO_SINGULAR[unit])}</Highlight>
       {backoff ? (
         <>
-          only if <Highlight>frequent events</Highlight> occur
+          <br /> only if <Highlight>frequent events</Highlight> occur
         </>
       ) : (
         ' occur on'
