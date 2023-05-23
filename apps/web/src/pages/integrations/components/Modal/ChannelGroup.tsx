@@ -47,8 +47,8 @@ export function ChannelGroup({
                     .length === 0,
                 connected: true,
                 logoFileName: {
-                  light: CONTEXT_PATH + '/static/images/logo-formerly-light-bg.png',
-                  dark: CONTEXT_PATH + '/static/images/logo-formerly-dark-bg.png',
+                  dark: CONTEXT_PATH + '/static/images/logo-light.png',
+                  light: CONTEXT_PATH + '/static/images/logo.png',
                 },
                 betaVersion: false,
                 novu: true,
@@ -74,8 +74,8 @@ export function ChannelGroup({
                   0,
                 connected: true,
                 logoFileName: {
-                  light: CONTEXT_PATH + '/static/images/logo-formerly-light-bg.png',
-                  dark: CONTEXT_PATH + '/static/images/logo-formerly-dark-bg.png',
+                  dark: CONTEXT_PATH + '/static/images/logo-light.png',
+                  light: CONTEXT_PATH + '/static/images/logo.png',
                 },
                 betaVersion: false,
                 novu: true,
