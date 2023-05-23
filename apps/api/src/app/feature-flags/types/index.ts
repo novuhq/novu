@@ -26,4 +26,5 @@ export interface IFeatureFlagsService {
   getWithUserContext: <T>(key: FeatureFlagsKeysEnum, defaultValue: T, userId: UserId) => Promise<T>;
   gracefullyShutdown: () => Promise<void>;
   initialize: () => Promise<void>;
+  isEnabled: boolean;
 }
