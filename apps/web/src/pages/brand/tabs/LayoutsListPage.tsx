@@ -111,6 +111,11 @@ export function LayoutsListPage({ handleLayoutAnalytics }: LayoutsListPageProps)
       Cell: ({ updatedAt }: any) => format(new Date(updatedAt), 'dd/MM/yyyy HH:mm'),
     },
     {
+      accessor: 'isDefault',
+      Header: 'default',
+      Cell: ({ isDefault }: any) => (isDefault ? 'Yes' : ''),
+    },
+    {
       accessor: '_id',
       Header: '',
       maxWidth: 50,

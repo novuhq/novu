@@ -38,6 +38,13 @@ export class UpdateLayoutUseCase {
 
     const updatedEntity = await this.layoutRepository.updateLayout(patchedEntity);
 
+    /*
+     * if (databaseEntity.isDefault === command.isDefault) {
+     *   await this.createChange(command);
+     * } else {
+     * }
+     */
+
     const dto = this.mapFromEntity(updatedEntity);
 
     if (dto._id && dto.isDefault === true) {
@@ -48,7 +55,17 @@ export class UpdateLayoutUseCase {
         userId: dto._creatorId,
       });
       await this.setDefaultLayout.execute(setDefaultLayoutCommand);
+      // await this.createChange(command);
     } else {
+      await this.createChange(command);
+    }
+
+    if (
+      dto.name !== databaseEntity.name ||
+      dto.content !== databaseEntity.content ||
+      dto.description !== databaseEntity.description ||
+      dto.variables !== databaseEntity.variables
+    ) {
       await this.createChange(command);
     }
 

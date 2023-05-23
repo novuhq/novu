@@ -10,6 +10,7 @@ import { PromoteNotificationTemplateChange } from '../promote-notification-templ
 import { PromoteMessageTemplateChange } from '../promote-message-template-change/promote-message-template-change';
 import { PromoteNotificationGroupChange } from '../promote-notification-group-change/promote-notification-group-change';
 import { PromoteFeedChange } from '../promote-feed-change/promote-feed-change';
+import { PromoteDefaultLayoutChange } from '../promote-default-layout-change';
 
 @Injectable()
 export class PromoteChangeToEnvironment {
@@ -17,6 +18,7 @@ export class PromoteChangeToEnvironment {
     private changeRepository: ChangeRepository,
     private environmentRepository: EnvironmentRepository,
     private promoteLayoutChange: PromoteLayoutChange,
+    private promoteDefaultLayoutChange: PromoteDefaultLayoutChange,
     @Inject(forwardRef(() => PromoteNotificationTemplateChange))
     private promoteNotificationTemplateChange: PromoteNotificationTemplateChange,
     private promoteMessageTemplateChange: PromoteMessageTemplateChange,
@@ -31,7 +33,6 @@ export class PromoteChangeToEnvironment {
       .reduce((prev, change) => {
         return applyDiff(prev, change.change);
       }, {});
-
     const environment = await this.environmentRepository.findOne({
       _parentId: command.environmentId,
     });
@@ -58,8 +59,10 @@ export class PromoteChangeToEnvironment {
         await this.promoteFeedChange.execute(typeCommand);
         break;
       case ChangeEntityTypeEnum.LAYOUT:
-      case ChangeEntityTypeEnum.DEFAULT_LAYOUT:
         await this.promoteLayoutChange.execute(typeCommand);
+        break;
+      case ChangeEntityTypeEnum.DEFAULT_LAYOUT:
+        await this.promoteDefaultLayoutChange.execute(typeCommand);
         break;
       default:
         Logger.error(`Change with type ${command.type} could not be enabled from environment ${command.environmentId}`);

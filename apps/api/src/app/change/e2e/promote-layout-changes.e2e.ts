@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { expect } from 'chai';
-import { ChangeRepository, EnvironmentRepository, LayoutRepository } from '@novu/dal';
+import { ChangeRepository, EnvironmentRepository, LayoutRepository, EnvironmentEntity } from '@novu/dal';
 import {
   ChangeEntityTypeEnum,
   ITemplateVariable,
@@ -13,6 +13,7 @@ import { UserSession } from '@novu/testing';
 
 describe('Promote Layout Changes', () => {
   let session: UserSession;
+  let prodEnv: EnvironmentEntity;
   const changeRepository: ChangeRepository = new ChangeRepository();
   const layoutRepository = new LayoutRepository();
   const environmentRepository: EnvironmentRepository = new EnvironmentRepository();
@@ -20,6 +21,7 @@ describe('Promote Layout Changes', () => {
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
+    prodEnv = await getProductionEnvironment();
   });
 
   it('should promote a new layout created to production', async () => {
@@ -73,8 +75,6 @@ describe('Promote Layout Changes', () => {
     await session.applyChanges({
       enabled: false,
     });
-
-    const prodEnv = await getProductionEnvironment();
 
     const prodLayout = await layoutRepository.findOne({
       _environmentId: prodEnv._id,
@@ -198,26 +198,42 @@ describe('Promote Layout Changes', () => {
       enabled: false,
     });
 
-    const prodEnv = await getProductionEnvironment();
-
     const prodLayout = await layoutRepository.findOne({
       _environmentId: prodEnv._id,
       _parentId: layoutId,
     });
 
     expect(prodLayout).to.be.ok;
-    expect(prodLayout._parentId).to.eql(patchedLayout._id);
-    expect(prodLayout._environmentId).to.eql(prodEnv._id);
-    expect(prodLayout._organizationId).to.eql(session.organization._id);
-    expect(prodLayout._creatorId).to.eql(session.user._id);
-    expect(prodLayout.name).to.eql(updatedLayoutName);
-    expect(prodLayout.content).to.eql(updatedContent);
+    expect(prodLayout?._parentId).to.eql(patchedLayout._id);
+    expect(prodLayout?._environmentId).to.eql(prodEnv._id);
+    expect(prodLayout?._organizationId).to.eql(session.organization._id);
+    expect(prodLayout?._creatorId).to.eql(session.user._id);
+    expect(prodLayout?.name).to.eql(updatedLayoutName);
+    expect(prodLayout?.content).to.eql(updatedContent);
     // TODO: Awful but it comes from the repository directly.
-    const { _id, ...prodVariables } = prodLayout.variables?.[0] as any;
+    const { _id, ...prodVariables } = prodLayout?.variables?.[0] as any;
     expect(prodVariables).to.deep.include(updatedVariables[0]);
-    expect(prodLayout.contentType).to.eql(patchedLayout.contentType);
-    expect(prodLayout.isDefault).to.eql(updatedIsDefault);
-    expect(prodLayout.channel).to.eql(patchedLayout.channel);
+    expect(prodLayout?.contentType).to.eql(patchedLayout.contentType);
+    expect(prodLayout?.isDefault).to.eql(updatedIsDefault);
+    expect(prodLayout?.channel).to.eql(patchedLayout.channel);
+  });
+
+  it('should not create layout in production after un-promoted create and then delete', async () => {
+    const layoutId = await createBasicLayout();
+
+    const { status } = await session.testAgent.delete(`/v1/layouts/${layoutId}`);
+
+    expect(status).to.eql(204);
+    await session.applyChanges({
+      enabled: false,
+    });
+
+    const prodLayout = await layoutRepository.findOne({
+      _environmentId: prodEnv._id,
+      _parentId: layoutId,
+    });
+
+    expect(prodLayout).to.not.be.ok;
   });
 
   it('should promote the deletion of a layout to production', async () => {
@@ -299,8 +315,6 @@ describe('Promote Layout Changes', () => {
       enabled: false,
     });
 
-    const prodEnv = await getProductionEnvironment();
-
     const prodLayout = await layoutRepository.findOne({
       _environmentId: prodEnv._id,
       _parentId: layoutId,
@@ -331,6 +345,19 @@ describe('Promote Layout Changes', () => {
     } = await session.testAgent.post('/v1/layouts').send(createLayoutPayload);
 
     expect(layoutId).to.be.ok;
+
+    return layoutId;
+  }
+
+  async function createBasicLayout(isDefault = false) {
+    const layoutName = 'layout-name';
+    const layoutDescription = 'Amazing new layout';
+    const content = '<html><body><div>Hello {{organizationName}} {{{body}}}</div></body></html>';
+    const variables = [
+      { name: 'organizationName', type: TemplateVariableTypeEnum.STRING, defaultValue: 'Company', required: false },
+    ];
+
+    const layoutId = await createLayout(layoutName, layoutDescription, content, variables, isDefault);
 
     return layoutId;
   }

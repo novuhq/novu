@@ -40,6 +40,7 @@ export class CreateLayoutUseCase {
         userId: dto._creatorId,
       });
       await this.setDefaultLayout.execute(setDefaultLayoutCommand);
+      await this.createChange(command, dto._id);
     } else {
       await this.createChange(command, dto._id);
     }

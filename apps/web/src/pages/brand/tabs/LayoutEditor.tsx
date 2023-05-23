@@ -6,6 +6,7 @@ import { useEnvController, useLayoutsEditor, usePrompt } from '../../../hooks';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
+import isEqual from 'lodash.isequal';
 import { parse } from '@handlebars/parser';
 import { getTemplateVariables, ITemplateVariable, isReservedVariableName, LayoutId } from '@novu/shared';
 
@@ -110,8 +111,11 @@ export function LayoutEditor({
         delete arrayFields[ind];
       }
     });
+    const newVariablesArray = arrayFields.filter((field) => !!field);
 
-    variablesArray.replace(arrayFields.filter((field) => !!field));
+    if (!isEqual(variableArray, newVariablesArray)) {
+      variablesArray.replace(newVariablesArray);
+    }
   }, [ast]);
 
   useEffect(() => {
@@ -154,6 +158,7 @@ export function LayoutEditor({
                 <Controller
                   control={control}
                   name="name"
+                  defaultValue=""
                   render={({ field }) => (
                     <Input
                       {...field}
@@ -172,6 +177,7 @@ export function LayoutEditor({
                 <Controller
                   name="description"
                   control={control}
+                  defaultValue=""
                   render={({ field }) => (
                     <Input
                       {...field}
@@ -190,6 +196,7 @@ export function LayoutEditor({
             <Controller
               name="content"
               data-test-id="layout-content"
+              defaultValue=""
               control={control}
               render={({ field }) => {
                 return <EmailCustomCodeEditor onChange={field.onChange} value={field.value} />;
@@ -216,6 +223,7 @@ export function LayoutEditor({
           <Controller
             name="isDefault"
             control={control}
+            defaultValue={false}
             render={({ field }) => {
               return (
                 <Checkbox
@@ -229,7 +237,7 @@ export function LayoutEditor({
             }}
           />
 
-          <Button disabled={readonly} submit data-test-id="submit-layout">
+          <Button disabled={readonly || !isDirty} submit data-test-id="submit-layout">
             {editMode ? 'Update' : 'Create'}
           </Button>
         </Group>

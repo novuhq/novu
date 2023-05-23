@@ -7,6 +7,7 @@ import { EnvironmentId, LayoutId, OrganizationId } from '../../types';
 import { CreateDefaultLayoutChangeCommand } from '../create-default-layout-change/create-default-layout-change.command';
 import { CreateDefaultLayoutChangeUseCase } from '../create-default-layout-change/create-default-layout-change.usecase';
 import { SetDefaultLayoutCommand } from './set-default-layout.command';
+import { CreateLayoutChangeCommand, CreateLayoutChangeUseCase } from '../create-layout-change';
 
 @Injectable()
 export class SetDefaultLayoutUseCase {
@@ -15,6 +16,7 @@ export class SetDefaultLayoutUseCase {
     private createDefaultLayoutChange: CreateDefaultLayoutChangeUseCase,
     private layoutRepository: LayoutRepository,
     private changeRepository: ChangeRepository,
+    private createLayoutChange: CreateLayoutChangeUseCase,
     private analyticsService: AnalyticsService
   ) {}
 
@@ -28,7 +30,17 @@ export class SetDefaultLayoutUseCase {
     );
 
     if (!existingDefaultLayoutId) {
-      await this.createDefaultChange(command);
+      // await this.createDefaultChange(command);
+
+      /*
+       * const createLayoutChangeCommand = CreateLayoutChangeCommand.create({
+       *   environmentId: command.environmentId,
+       *   layoutId: layout._id as string,
+       *   organizationId: command.organizationId,
+       *   userId: command.userId,
+       * });
+       * await this.createLayoutChange.execute(createLayoutChangeCommand);
+       */
 
       return;
     }
