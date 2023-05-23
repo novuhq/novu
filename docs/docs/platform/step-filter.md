@@ -32,7 +32,7 @@ improving the efficiency and effectiveness of your communication.
 
 ### Steps to set filter
 
-1. Create a step in your notification workflow. This step will be the location where
+1. Create a step in your workflow. This step will be the location where
    you will apply your filter.
 
 2. Add a filter to the step. This will allow you to specify the criteria that must be

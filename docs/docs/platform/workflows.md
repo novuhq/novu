@@ -2,27 +2,27 @@
 sidebar_position: 1
 ---
 
-# Templates
+# Workflows
 
-A template holds the entire flow of messages sent to the subscriber. This is where all the different channels are tied together under a single entity.
+A workflow holds the entire flow of messages sent to the subscriber. This is where all the different channels are tied together under a single entity.
 
 Let's explore the different parts of a notification template.
 
-## Global template metadata
+## Global workflow metadata
 
 This will contain general information regarding the notification itself. Let's explore the different aspects of it.
 
-### Notification name
+### Workflow name
 
-The name will be used to identify the notification template when triggering it. A slugified version of the name will be generated after the notification was created. For example, a notification template with the name of "Test Notification" will be converted to "test-notification" as the trigger key.
+The name will be used to identify the workflow when triggering it. A slugified version of the name will be generated after the workflow was created. For example, a workflow with the name of "Test Notification" will be converted to "test-notification" as the trigger key.
 
 ### Notification Group
 
-The notification group is used to group multiple notification templates into a single group, currently only used behind the scenes for organizational purposes. But, in the upcoming subscriber preferences management, it will be used to group multiple notifications for the subscriber.
+The notification group is used to group multiple workflows into a single group, currently only used behind the scenes for organizational purposes. But, in the upcoming subscriber preferences management, it will be used to group multiple notifications for the subscriber.
 
-## Template steps
+## Workflow steps
 
-The template steps are used to organize the different messages in a particular flow. You can add messages for multiple channels and in the upcoming workflow editor release you will be able to configure custom flows that include actions like Delay, Digest and other conditional steps.
+The workflow steps are used to organize the different messages in a particular flow. You can add messages for multiple channels and in the upcoming workflow editor release you will be able to configure custom flows that include actions like Delay, Digest and other conditional steps.
 
 ## Messages
 
@@ -56,7 +56,7 @@ Can be accessed in a template directly:
 To iterate over an array passed to the trigger endpoint you can use the following syntax:
 
 ```typescript
-novu.trigger('template-name', {
+novu.trigger('workflow-name', {
   payload: {
     people: [
       {
@@ -95,7 +95,7 @@ To render a specific block conditionally you can use `#if`:
 To render a date in a specific format you can use the `dateFormat` helper, which formats the date using `format` function from [date-fns](https://date-fns.org).
 
 ```typescript
-novu.trigger('template-name', {
+novu.trigger('workflow-name', {
   payload: {
     date: '2021-01-01',
   },
@@ -110,7 +110,7 @@ novu.trigger('template-name', {
 
 ## Trigger
 
-After a notification template is created, a trigger key will be automatically generated for it. To use the trigger you can install the server side SDK with:
+After a workflow is created, a trigger key will be automatically generated for it. To use the trigger you can install the server side SDK with:
 
 ```bash
   npm install @novu/node

@@ -13,7 +13,7 @@ npx novu init
 After creating your cloud or self-hosted account, the next steps to sending your first notification are outlined in this guide:
 
 - Connect your providers
-- Create a notification template
+- Create a workflow
 - Send a trigger
 - Integrate the [Notification Center](../notification-center/getting-started.md) within your app _(optional)_
 
@@ -21,17 +21,17 @@ After creating your cloud or self-hosted account, the next steps to sending your
 
 On the “**Integration Store**” page, you can configure the different providers and their respective credentials. During the alpha phase only a **single provider** is allowed **per channel,** adding a second email provider will de-activate the previously added email provider.
 
-## Create a notification template
+## Create a workflow
 
-After configuring the designated channel provider, you can create your notification template. You can think of the notification template as the blueprint for the notifications that will be sent. The template includes:
+After configuring the designated channel provider, you can create your notification workflow. You can think of the workflow as the blueprint for the notifications that will be sent. The workflow includes:
 
-- Notification details
+- Workflow details
 - Channel specific content
 - Trigger definition
 
 ### Notification Details
 
-The **name** of the notifications is converted to a slug that is used as the trigger identifier which is used when sending the trigger from the back-end.
+The **name** of the workflow is converted to a slug that is used as the trigger identifier which is used when sending the trigger from the back-end.
 
 ### Channel specific content
 
@@ -61,9 +61,9 @@ In addition to the integration, any subscriber needs to set credentials to have 
 
 The credentials can be saved through our @novu/node package.
 
-## Trigger the notification
+## Trigger the workflow
 
-After creating the template, Novu generates the trigger. Use the server SDK in your application in the appropriate place for the specific trigger.
+After creating the workflow, Novu generates the trigger. Use the server SDK in your application in the appropriate place for the specific trigger.
 
 ```typescript
 await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
