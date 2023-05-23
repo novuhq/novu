@@ -292,10 +292,11 @@ export function ConnectIntegrationForm({
           />
           <Center inline>
             <Text>
-              Read our guide on where to get the credentials{' '}
+              Take a look at{' '}
               <a href={provider?.docReference} target="_blank" rel="noreferrer" style={{ color: '#DD2476 ' }}>
-                here.
-              </a>
+                our guide
+              </a>{' '}
+              for how to connect <strong>{provider?.displayName}</strong>.
             </Text>
           </Center>
         </Stack>
