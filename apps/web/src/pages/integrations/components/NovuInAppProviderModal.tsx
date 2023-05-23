@@ -13,6 +13,7 @@ import { NovuInAppForm } from './NovuInAppForm';
 import { When } from '../../../components/utils/When';
 import { InAppSelectFramework } from './InAppSelectFramework';
 import { Faq } from '../../quick-start/components/QuickStartWrapper';
+import { SetupFrameworkHeader } from './SetupFrameworkHeader';
 
 export const NovuInAppProviderModal = ({
   onClose,
@@ -113,6 +114,13 @@ export const NovuInAppProviderModal = ({
           </Text>
         </When>
         <When truthy={page === 'setup'}>
+          <SetupFrameworkHeader
+            onGoBack={() => {
+              setPage('framework');
+              setFramework('');
+            }}
+            framework={framework}
+          />
           <SetupTimeline
             framework={framework}
             onDone={() => {
