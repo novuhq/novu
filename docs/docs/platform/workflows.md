@@ -6,7 +6,11 @@ sidebar_position: 1
 
 A workflow holds the entire flow of messages sent to the subscriber. This is where all the different channels are tied together under a single entity.
 
-Let's explore the different parts of a notification template.
+:::info
+Please notice notification template has been renamed to workflow. Previously, workflow has been referred to as notification template.
+:::
+
+Let's explore the different parts of a workflow.
 
 ## Global workflow metadata
 
@@ -18,7 +22,7 @@ The name will be used to identify the workflow when triggering it. A slugified v
 
 ### Workflow Group
 
-The notification group is used to group multiple workflows into a single group, currently only used behind the scenes for organizational purposes. But, in the upcoming subscriber preferences management, it will be used to group multiple notifications for the subscriber.
+The workflow group is used to group multiple workflows into a single group, currently only used behind the scenes for organizational purposes. But, in the upcoming subscriber preferences management, it will be used to group multiple notifications for the subscriber.
 
 ## Workflow steps
 
