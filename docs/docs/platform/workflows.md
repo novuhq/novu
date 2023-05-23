@@ -16,7 +16,7 @@ This will contain general information regarding the notification itself. Let's e
 
 The name will be used to identify the workflow when triggering it. A slugified version of the name will be generated after the workflow was created. For example, a workflow with the name of "Test Notification" will be converted to "test-notification" as the trigger key.
 
-### Notification Group
+### Workflow Group
 
 The notification group is used to group multiple workflows into a single group, currently only used behind the scenes for organizational purposes. But, in the upcoming subscriber preferences management, it will be used to group multiple notifications for the subscriber.
 
@@ -35,7 +35,7 @@ For email channel, you can either use our basic visual editor or a fully custom 
 To use custom payload variables passed to the template you can use the `{{curly}}` syntax. For example:
 
 ```typescript
-novu.trigger('template-name', {
+novu.trigger('workflow-name', {
   payload: {
     name: 'Hello',
     customObject: {
@@ -45,7 +45,7 @@ novu.trigger('template-name', {
 });
 ```
 
-Can be accessed in a template directly:
+Can be accessed in a workflow directly:
 
 ```handlebars
 {{name}}! This is our {{customObject.world}}
