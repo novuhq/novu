@@ -447,7 +447,8 @@
     "INAPP",
     "fortawesome",
     "fontawesome",
-    "middlewares"
+    "middlewares",
+    "localforage"
   ],
   "flagWords": [],
   "patterns": [

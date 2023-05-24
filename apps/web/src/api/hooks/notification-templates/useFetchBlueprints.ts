@@ -1,5 +1,7 @@
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { IconName } from '@fortawesome/fontawesome-svg-core';
+import localforage from 'localforage';
+import { addWeeks } from 'date-fns';
 import { IGroupedBlueprint } from '@novu/shared';
 
 import { getBlueprintsGroupedByCategory } from '../../notification-templates';
@@ -41,18 +43,41 @@ const mapGroup = (group: IGroupedBlueprint): IBlueprintsGrouped => ({
   }),
 });
 
+const BLUEPRINTS_CACHE_KEY = 'blueprints';
+const BLUEPRINTS_CACHE_VALID_BY = 'blueprints_valid_by';
+
+const getCachedBlueprints = async (): Promise<IBlueprintsGroupedAndPopular | null> => {
+  const validByTimestamp = (await localforage.getItem<number>(BLUEPRINTS_CACHE_VALID_BY)) || 0;
+  const now = Date.now();
+
+  if (now <= validByTimestamp) {
+    return await localforage.getItem<IBlueprintsGroupedAndPopular>(BLUEPRINTS_CACHE_KEY);
+  }
+
+  return null;
+};
+
 export function useFetchBlueprints(
   options: UseQueryOptions<IBlueprintsGroupedAndPopular, any, IBlueprintsGroupedAndPopular> = {}
 ) {
   const { data, ...rest } = useQuery<IBlueprintsGroupedAndPopular>(
     [QueryKeys.blueprintsList],
     async () => {
-      const { general, popular } = await getBlueprintsGroupedByCategory();
+      const cachedBlueprints = await getCachedBlueprints();
+      if (cachedBlueprints) {
+        return cachedBlueprints;
+      }
 
-      return {
+      const { general, popular } = await getBlueprintsGroupedByCategory();
+      const blueprints = {
         general: general.map<IBlueprintsGrouped>((group) => mapGroup(group)),
         popular: mapGroup(popular),
       };
+
+      await localforage.setItem(BLUEPRINTS_CACHE_KEY, blueprints);
+      await localforage.setItem(BLUEPRINTS_CACHE_VALID_BY, +addWeeks(new Date(), 1));
+
+      return blueprints;
     },
     {
       refetchOnWindowFocus: false,
