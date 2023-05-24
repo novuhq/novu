@@ -21,7 +21,7 @@ export class APNSHandler extends BasePushHandler {
       keyId: credentials.apiKey,
       teamId: credentials.projectName,
       bundleId: credentials.applicationId as string,
-      production: credentials.secure as boolean,
+      production: credentials.secure ?? false,
     });
   }
 }

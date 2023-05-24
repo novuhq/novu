@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { FeedRepository, DalException } from '@novu/dal';
+import { FeedRepository, ChangeRepository, DalException } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 
 import { DeleteFeedCommand } from './delete-feed.command';
@@ -8,7 +8,11 @@ import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
 
 @Injectable()
 export class DeleteFeed {
-  constructor(private feedRepository: FeedRepository, private createChange: CreateChange) {}
+  constructor(
+    private feedRepository: FeedRepository,
+    private createChange: CreateChange,
+    private changeRepository: ChangeRepository
+  ) {}
 
   async execute(command: DeleteFeedCommand) {
     try {
@@ -22,6 +26,13 @@ export class DeleteFeed {
         _id: command.feedId,
       });
       const item = items[0];
+
+      const parentChangeId: string = await this.changeRepository.getChangeId(
+        command.environmentId,
+        ChangeEntityTypeEnum.FEED,
+        command.feedId
+      );
+
       await this.createChange.execute(
         CreateChangeCommand.create({
           organizationId: command.organizationId,
@@ -29,7 +40,7 @@ export class DeleteFeed {
           userId: command.userId,
           item,
           type: ChangeEntityTypeEnum.FEED,
-          changeId: FeedRepository.createObjectId(),
+          changeId: parentChangeId,
         })
       );
     } catch (e) {

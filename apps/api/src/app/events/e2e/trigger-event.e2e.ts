@@ -864,7 +864,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
 
     expect(body).to.eql({
       statusCode: 422,
-      message: 'template_not_found',
+      message: 'workflow_not_found',
       error: 'Unprocessable Entity',
     });
   });

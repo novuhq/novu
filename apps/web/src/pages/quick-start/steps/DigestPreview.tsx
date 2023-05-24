@@ -77,7 +77,7 @@ function FooterRightSide() {
 
   return (
     <ButtonsHolder>
-      <NavButton navigateTo={ROUTES.TEMPLATES_CREATE} handleOnClick={handlerBuildWorkflowClick}>
+      <NavButton navigateTo={ROUTES.WORKFLOWS_CREATE} handleOnClick={handlerBuildWorkflowClick}>
         <ButtonText>Build a Workflow</ButtonText>
       </NavButton>
       <StyledButton
