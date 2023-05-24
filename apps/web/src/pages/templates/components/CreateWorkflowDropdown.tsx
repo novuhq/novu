@@ -1,6 +1,4 @@
-import { useState } from 'react';
 import { Skeleton } from '@mantine/core';
-import { IconName } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFile } from '@fortawesome/free-regular-svg-icons';
 import { faDiagramNext } from '@fortawesome/free-solid-svg-icons';
@@ -9,6 +7,7 @@ import styled from '@emotion/styled';
 import { Button, Dropdown, Popover } from '../../../design-system';
 import { PlusCircle } from '../../../design-system/icons';
 import { IBlueprintTemplate } from '../../../api/types';
+import { useHoverOverTemplate } from '../hooks/useHoverOverTemplate';
 
 const WIDTH = 172;
 
@@ -41,7 +40,7 @@ export const CreateWorkflowDropdown = ({
   onTemplateClick: (template: IBlueprintTemplate) => void;
   onAllTemplatesClick: React.MouseEventHandler<HTMLButtonElement>;
 }) => {
-  const [templateId, setTemplateId] = useState<string | undefined>(undefined);
+  const { templateId, onMouseEnter, onMouseLeave } = useHoverOverTemplate();
 
   return (
     <Dropdown
@@ -80,11 +79,9 @@ export const CreateWorkflowDropdown = ({
                   icon={<FontAwesomeIcon icon={template.iconName} />}
                   onClick={() => onTemplateClick(template)}
                   onMouseEnter={() => {
-                    setTemplateId(template._id);
+                    onMouseEnter(template._id);
                   }}
-                  onMouseLeave={() => {
-                    setTemplateId(undefined);
-                  }}
+                  onMouseLeave={onMouseLeave}
                   data-test-id="logout-button"
                 >
                   {template.name}
