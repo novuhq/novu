@@ -9,7 +9,6 @@ import ReactFlow, {
   getOutgoers,
   Node,
   NodeProps,
-  ReactFlowInstance,
   ReactFlowProps,
   useEdgesState,
   useNodesState,
@@ -18,6 +17,7 @@ import ReactFlow, {
 import { useMantineColorScheme } from '@mantine/core';
 import styled from '@emotion/styled';
 import { v4 as uuid4 } from 'uuid';
+import cloneDeep from 'lodash.clonedeep';
 import { StepTypeEnum } from '@novu/shared';
 
 import { colors } from '../../design-system';
@@ -25,18 +25,14 @@ import { getChannel } from '../../utils/channels';
 import { useEnvController } from '../../hooks';
 import type { IEdge, IFlowStep } from './types';
 
-const initialNodes: Node[] = [
-  {
-    id: '1',
-    type: 'triggerNode',
-    data: {
-      label: 'Trigger',
-    },
-    position: { x: 0, y: 10 },
+const triggerNode: Node = {
+  id: '1',
+  type: 'triggerNode',
+  data: {
+    label: 'Trigger',
   },
-];
-
-const initialEdges: Edge[] = [];
+  position: { x: 0, y: 10 },
+};
 
 const DEFAULT_WRAPPER_STYLES = {
   height: '100%',
@@ -88,10 +84,9 @@ export function FlowEditor({
 }: IFlowEditorProps) {
   const { colorScheme } = useMantineColorScheme();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<IEdge>(initialEdges);
-  const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance>();
-  const { setViewport } = useReactFlow();
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<IEdge>([]);
+  const reactFlowInstance = useReactFlow();
   const { readonly } = useEnvController();
   const [displayEdgeTimeout, setDisplayEdgeTimeout] = useState<Map<string, NodeJS.Timeout | null>>(new Map());
 
@@ -99,12 +94,14 @@ export function FlowEditor({
     const clientWidth = reactFlowWrapper.current?.clientWidth;
     const middle = clientWidth ? clientWidth / 2 - 100 : 0;
     const zoomView = 1;
-    reactFlowInstance?.project({ x: middle, y: 10 });
-    setViewport({ x: middle, y: 10, zoom: zoomView });
+
+    reactFlowInstance.setViewport({ x: middle, y: 10, zoom: zoomView });
   }, [reactFlowInstance]);
 
   useEffect(() => {
-    initializeWorkflowTree();
+    setTimeout(() => {
+      initializeWorkflowTree();
+    }, 0);
   }, [steps, dragging, errors, readonly]);
 
   const addNewNode = useCallback(
@@ -138,8 +135,7 @@ export function FlowEditor({
         return;
       }
 
-      const parentNode = reactFlowInstance?.getNode(parentId);
-
+      const parentNode = reactFlowInstance.getNode(parentId);
       if (typeof parentNode === 'undefined') {
         return;
       }
@@ -157,58 +153,40 @@ export function FlowEditor({
 
   async function initializeWorkflowTree() {
     let parentId = '1';
-    initWorkflowTreeState();
+    const finalNodes = [cloneDeep(triggerNode)];
+    let finalEdges: Edge<any>[] = [];
 
     if (steps.length) {
       for (let i = 0; i < steps.length; i++) {
         const step = steps[i];
-        const oldNode = nodes[i + 1] || { position: { x: 0, y: 120 } };
+        const oldNode = nodes[i + 1];
+        const position = oldNode && oldNode.type !== 'addNode' ? oldNode.position : { x: 0, y: 120 };
         const newId = (step._id || step.id) as string;
 
         await onStepInit?.(step);
 
-        const newNode = buildNewNode(newId, oldNode, parentId, step, i);
-        setNodes((nds) => nds.concat(newNode));
+        const newNode = buildNewNode(newId, position, parentId, step, i);
+        finalNodes.push(newNode);
 
         const edgeType = edgeTypes ? 'special' : 'default';
         const newEdge = buildNewEdge(parentId, newId, edgeType);
-        setEdges((eds) => addEdge(newEdge, eds));
+        finalEdges = addEdge(newEdge, finalEdges);
 
         parentId = newId;
       }
     }
     if (!readonly && nodeTypes.addNode) {
       const addNodeButton = buildAddNodeButton(parentId);
-      setNodes((nds) => nds.concat(addNodeButton));
+      finalNodes.push(addNodeButton);
     }
-  }
 
-  function initWorkflowTreeState() {
-    if (nodes.length === 1) {
-      setNodes([
-        {
-          ...initialNodes[0],
-        },
-      ]);
-      setEdges(initialEdges);
-    } else {
-      if (nodes.length > 1) {
-        setNodes([
-          {
-            ...initialNodes[0],
-            position: {
-              ...nodes[0].position,
-            },
-          },
-        ]);
-        setEdges(initialEdges);
-      }
-    }
+    setNodes(finalNodes);
+    setEdges(finalEdges);
   }
 
   function buildNewNode(
     newId: string,
-    oldNode: { position: { x: number; y: number } },
+    position: { x: number; y: number },
     parentId: string,
     step: IFlowStep,
     i: number
@@ -218,7 +196,7 @@ export function FlowEditor({
     return {
       id: newId,
       type: 'channelNode',
-      position: { x: oldNode.position.x, y: oldNode.position.y },
+      position: { x: position.x, y: position.y },
       parentNode: parentId,
       data: {
         ...channel,
@@ -308,7 +286,6 @@ export function FlowEditor({
             edgeTypes={edgeTypes}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
-            onInit={setReactFlowInstance}
             onDrop={onDrop}
             onDragOver={onDragOver}
             onNodeMouseMove={(event, node) => {
