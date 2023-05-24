@@ -29,7 +29,7 @@ After configuring the designated channel provider, you can create your notificat
 - Channel specific content
 - Trigger definition
 
-### Notification Details
+### Workflow Details
 
 The **name** of the workflow is converted to a slug that is used as the trigger identifier which is used when sending the trigger from the back-end.
 
@@ -39,7 +39,7 @@ The **name** of the workflow is converted to a slug that is used as the trigger 
 
 You can specify the content for emails in two ways:
 
-**Visual template builder** - For simple use cases, you can use our visual template editor. The visual template builder has limited control over design but is easier to get-started with.
+**Visual workflow builder** - For simple use cases, you can use our visual workflow editor. The visual workflow builder has limited control over design but is easier to get-started with.
 
 **Custom Code** - You can use the custom code section to specify custom html for the email.
 
