@@ -7,6 +7,7 @@ import {
   NotificationGroupRepository,
   NotificationTemplateRepository,
   EnvironmentEntity,
+  FeedRepository,
 } from '@novu/dal';
 import {
   ChangeEntityTypeEnum,
@@ -31,6 +32,7 @@ describe('Promote changes', () => {
   const messageTemplateRepository: MessageTemplateRepository = new MessageTemplateRepository();
   const notificationGroupRepository: NotificationGroupRepository = new NotificationGroupRepository();
   const environmentRepository: EnvironmentRepository = new EnvironmentRepository();
+  const feedRepository: FeedRepository = new FeedRepository();
 
   beforeEach(async () => {
     session = new UserSession();
@@ -700,6 +702,34 @@ describe('Promote changes', () => {
       );
 
       expect(changes.length).to.eq(1);
+    });
+
+    it('should not have feed in production after feed delete', async () => {
+      const testFeed = {
+        name: 'Test delete feed in message',
+      };
+
+      const {
+        body: { data: feed },
+      } = await session.testAgent.post(`/v1/feeds`).send(testFeed);
+
+      await session.testAgent.delete(`/v1/feeds/${feed._id}`).send();
+
+      await session.applyChanges({
+        enabled: false,
+      });
+
+      const devFeeds = await feedRepository.find({
+        _environmentId: session.environment._id,
+        name: feed.name,
+      });
+      expect(devFeeds.length).to.equal(0);
+
+      const prodFeeds = await feedRepository.find({
+        _environmentId: prodEnv._id,
+        name: feed.name,
+      });
+      expect(prodFeeds.length).to.equal(0);
     });
   });
 

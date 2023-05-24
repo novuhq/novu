@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import styled from '@emotion/styled';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { IconName } from '@fortawesome/fontawesome-svg-core';
 import { faDiagramNext } from '@fortawesome/free-solid-svg-icons';
 import { faFile } from '@fortawesome/free-regular-svg-icons';
+import { Skeleton } from '@mantine/core';
 
 import { colors, Popover, shadows } from '../../design-system';
-import { Skeleton } from '@mantine/core';
+import { IBlueprintTemplate } from '../../api/types';
 
 const NoDataHolder = styled.div`
   display: flex;
@@ -106,20 +106,22 @@ export const TemplatesListNoData = ({
   readonly,
   blueprints,
   isLoading,
+  isCreating,
   allTemplatesDisabled,
   onBlankWorkflowClick,
   onTemplateClick,
   onAllTemplatesClick,
 }: {
   readonly?: boolean;
-  blueprints?: { id: string; name: string; description: string; iconName: IconName }[];
+  blueprints?: IBlueprintTemplate[];
   isLoading?: boolean;
+  isCreating?: boolean;
   allTemplatesDisabled?: boolean;
   onBlankWorkflowClick: React.MouseEventHandler<HTMLButtonElement>;
-  onTemplateClick: (template: { id: string; name: string; description: string; iconName: IconName }) => void;
+  onTemplateClick: (template: IBlueprintTemplate) => void;
   onAllTemplatesClick: React.MouseEventHandler<HTMLButtonElement>;
 }) => {
-  const [templateId, setTemplateId] = useState<string | null>(null);
+  const [templateId, setTemplateId] = useState<string | undefined>(undefined);
 
   return (
     <NoDataHolder data-test-id="no-workflow-templates-placeholder">
@@ -139,24 +141,25 @@ export const TemplatesListNoData = ({
           : blueprints?.map((template, index) => (
               <Popover
                 key={template.name}
-                opened={template.id === templateId}
+                opened={template._id === templateId && !!template.description}
                 withArrow
                 withinPortal
                 offset={5}
                 transitionDuration={300}
                 position="top"
                 width={300}
+                styles={{ dropdown: { minHeight: 'auto !important' } }}
                 target={
                   <Card
                     data-can-be-hidden={index === 2}
                     data-test-id="second-workflow-tile"
-                    disabled={readonly}
+                    disabled={readonly || isCreating}
                     onClick={() => onTemplateClick(template)}
                     onMouseEnter={() => {
-                      setTemplateId(template.id);
+                      setTemplateId(template._id);
                     }}
                     onMouseLeave={() => {
-                      setTemplateId(null);
+                      setTemplateId(undefined);
                     }}
                   >
                     <FontAwesomeIcon icon={template.iconName} />

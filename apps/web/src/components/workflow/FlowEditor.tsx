@@ -213,7 +213,7 @@ export function FlowEditor({
     step: IFlowStep,
     i: number
   ): Node {
-    const channel = getChannel(step.template.type);
+    const channel = getChannel(step.template?.type);
 
     return {
       id: newId,

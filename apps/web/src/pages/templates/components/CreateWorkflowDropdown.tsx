@@ -8,6 +8,7 @@ import styled from '@emotion/styled';
 
 import { Button, Dropdown, Popover } from '../../../design-system';
 import { PlusCircle } from '../../../design-system/icons';
+import { IBlueprintTemplate } from '../../../api/types';
 
 const WIDTH = 172;
 
@@ -25,20 +26,22 @@ export const CreateWorkflowDropdown = ({
   readonly,
   blueprints,
   isLoading,
+  isCreating,
   allTemplatesDisabled,
   onBlankWorkflowClick,
   onTemplateClick,
   onAllTemplatesClick,
 }: {
   readonly?: boolean;
-  blueprints?: { id: string; name: string; description: string; iconName: IconName }[];
+  blueprints?: IBlueprintTemplate[];
   isLoading?: boolean;
+  isCreating?: boolean;
   allTemplatesDisabled?: boolean;
   onBlankWorkflowClick: React.MouseEventHandler<HTMLButtonElement>;
-  onTemplateClick: (template: { id: string; name: string; description: string; iconName: IconName }) => void;
+  onTemplateClick: (template: IBlueprintTemplate) => void;
   onAllTemplatesClick: React.MouseEventHandler<HTMLButtonElement>;
 }) => {
-  const [templateId, setTemplateId] = useState<string | null>(null);
+  const [templateId, setTemplateId] = useState<string | undefined>(undefined);
 
   return (
     <Dropdown
@@ -63,22 +66,24 @@ export const CreateWorkflowDropdown = ({
         : blueprints?.map((template, index) => (
             <Popover
               key={template.name}
-              opened={template.id === templateId}
+              opened={template._id === templateId && !!template.description}
               withArrow
               withinPortal
               offset={5}
               transitionDuration={300}
               position="left"
               width={300}
+              styles={{ dropdown: { minHeight: 'auto !important' } }}
               target={
                 <Dropdown.Item
+                  disabled={isCreating}
                   icon={<FontAwesomeIcon icon={template.iconName} />}
                   onClick={() => onTemplateClick(template)}
                   onMouseEnter={() => {
-                    setTemplateId(template.id);
+                    setTemplateId(template._id);
                   }}
                   onMouseLeave={() => {
-                    setTemplateId(null);
+                    setTemplateId(undefined);
                   }}
                   data-test-id="logout-button"
                 >
