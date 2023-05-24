@@ -34,7 +34,7 @@ import { ApiResponse } from '../shared/framework/response.decorator';
 @Controller('/notification-groups')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
-@ApiTags('Notification groups')
+@ApiTags('Workflow groups')
 export class NotificationGroupsController {
   constructor(
     private createNotificationGroupUsecase: CreateNotificationGroup,
@@ -48,7 +48,8 @@ export class NotificationGroupsController {
   @ExternalApiAccessible()
   @ApiResponse(NotificationGroupResponseDto, 201)
   @ApiOperation({
-    summary: 'Create notification group',
+    summary: 'Create workflow group',
+    description: `workflow group was previously named notification group`,
   })
   createNotificationGroup(
     @UserSession() user: IJwtPayload,
@@ -68,7 +69,8 @@ export class NotificationGroupsController {
   @ExternalApiAccessible()
   @ApiResponse(NotificationGroupResponseDto, 200, true)
   @ApiOperation({
-    summary: 'Get notification groups',
+    summary: 'Get workflow groups',
+    description: `workflow group was previously named notification group`,
   })
   getNotificationGroups(@UserSession() user: IJwtPayload): Promise<NotificationGroupResponseDto[]> {
     return this.getNotificationGroupsUsecase.execute(
@@ -84,7 +86,8 @@ export class NotificationGroupsController {
   @ExternalApiAccessible()
   @ApiResponse(NotificationGroupResponseDto, 200)
   @ApiOperation({
-    summary: 'Get notification group',
+    summary: 'Get workflow group',
+    description: `workflow group was previously named notification group`,
   })
   getNotificationGroup(
     @UserSession() user: IJwtPayload,
@@ -104,7 +107,8 @@ export class NotificationGroupsController {
   @ExternalApiAccessible()
   @ApiResponse(NotificationGroupResponseDto, 200)
   @ApiOperation({
-    summary: 'Update notification group',
+    summary: 'Update workflow group',
+    description: `workflow group was previously named notification group`,
   })
   updateNotificationGroup(
     @UserSession() user: IJwtPayload,
@@ -126,7 +130,8 @@ export class NotificationGroupsController {
   @ExternalApiAccessible()
   @ApiResponse(DeleteNotificationGroupResponseDto, 200)
   @ApiOperation({
-    summary: 'Delete notification group',
+    summary: 'Delete workflow group',
+    description: `workflow group was previously named notification group`,
   })
   deleteNotificationGroup(
     @UserSession() user: IJwtPayload,
