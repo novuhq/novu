@@ -29,7 +29,7 @@ export const useCreate = (
       const payloadToCreate = mapFormToCreateNotificationTemplate(values);
       const response = await createNotificationTemplate({ ...payloadToCreate, active: true, draft: false });
       setTrigger(response.triggers[0]);
-      navigate(`/templates/edit/${response._id || ''}`);
+      navigate(`/workflows/edit/${response._id || ''}`);
     };
 
     submit();

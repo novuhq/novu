@@ -22,7 +22,7 @@ export function SetupStatus({
   const segment = useSegment();
 
   function handleConfigureLater() {
-    navigate(ROUTES.TEMPLATES);
+    navigate(ROUTES.WORKFLOWS);
     segment.track(OnBoardingAnalyticsEnum.CONFIGURE_LATER_CLICK, { screen: 'framework instructions', framework });
   }
 

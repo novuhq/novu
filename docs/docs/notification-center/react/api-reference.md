@@ -982,8 +982,8 @@ color badge you can use a string of the color and not the object in order to cre
 | `seen`                      | `boolean`                 | Whether the notification item was read by the user, changed when the user clicks on the notification |
 | `lastSeenDate`              | `ISODate`                 | When the user has last seen the notification                                                         |
 | `content`                   | `string`                  | An HTML string of the generated notification content with parsed and replaced variables              |
-| `templateIdentifier`        | `string`                  | A unique Novu template identifier                                                                    |
-| `payload`                   | `Record<string, unknown>` | The `payload` object that was passed the notification template was triggered.                        |
+| `templateIdentifier`        | `string`                  | A unique Novu workflow identifier                                                                    |
+| `payload`                   | `Record<string, unknown>` | The `payload` object that was passed to the trigger even of the workflow.                            |
 | `createdAt`                 | `ISODate`                 | The creation date of the message                                                                     |
 | `cta.type`                  | `ChannelCTATypeEnum`      | The type of the CTA specified in the admin panel                                                     |
 | `cta.data.url`              | `string`                  | The redirect URL set in the admin panel, can be used to navigate on notification click               |

@@ -136,11 +136,11 @@ export function ActivitiesPage() {
             <Controller
               render={({ field }) => (
                 <Select
-                  label="Templates"
+                  label="Workflows"
                   type="multiselect"
                   data-test-id="templates-filter"
                   loading={loadingTemplates}
-                  placeholder="Select template"
+                  placeholder="Select workflow"
                   data={(templates || []).map((template) => ({ value: template._id as string, label: template.name }))}
                   value={field.value}
                   onChange={(value) => {
