@@ -54,7 +54,7 @@ For example:
 ![Workflow Photo](/img/scheduled-delay.png)
 
 ```typescript
-novu.trigger('template-name', {
+novu.trigger('workflow-name', {
   to: {
     subscriberId: '123',
   },

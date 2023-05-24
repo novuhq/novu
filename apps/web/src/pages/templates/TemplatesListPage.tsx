@@ -45,7 +45,7 @@ function NotificationList() {
 
   const handleRedirectToCreateTemplate = (isFromHeader: boolean) => {
     segment.track(TemplateAnalyticsEnum.CREATE_TEMPLATE_CLICK, { isFromHeader });
-    navigate(ROUTES.TEMPLATES_CREATE);
+    navigate(ROUTES.WORKFLOWS_CREATE);
   };
 
   const columns: ColumnWithStrictAccessor<Data>[] = [
@@ -106,7 +106,7 @@ function NotificationList() {
           <ActionIcon
             variant="transparent"
             component={Link}
-            to={parseUrl(ROUTES.TEMPLATES_EDIT_TEMPLATEID, { templateId: _id })}
+            to={parseUrl(ROUTES.WORKFLOWS_EDIT_TEMPLATEID, { templateId: _id })}
             data-test-id="template-edit-link"
           >
             <Edit color={theme.colorScheme === 'dark' ? colors.B40 : colors.B80} />
@@ -117,14 +117,14 @@ function NotificationList() {
   ];
 
   function onRowClick(row) {
-    navigate(parseUrl(ROUTES.TEMPLATES_EDIT_TEMPLATEID, { templateId: row.values._id }));
+    navigate(parseUrl(ROUTES.WORKFLOWS_EDIT_TEMPLATEID, { templateId: row.values._id }));
   }
 
   return (
     <PageContainer>
-      <PageMeta title="Templates" />
+      <PageMeta title="Workflows" />
       <PageHeader
-        title="Notification Template"
+        title="Workflows"
         actions={
           <CreateWorkflowDropdown
             readonly={readonly}

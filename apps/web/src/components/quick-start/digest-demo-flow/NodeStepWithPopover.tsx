@@ -47,7 +47,7 @@ export function NodeStepWithPopover({
   const [sequence, setSequence] = useState<IBeat>();
   const { pathname } = useLocation();
   const { templateId = '' } = useParams<{ templateId: string }>();
-  const digestPlaygroundPathname = parseUrl(ROUTES.TEMPLATES_DIGEST_PLAYGROUND, { templateId });
+  const digestPlaygroundPathname = parseUrl(ROUTES.WORKFLOWS_DIGEST_PLAYGROUND, { templateId });
   const isDigestPlayground = pathname === digestPlaygroundPathname;
 
   const label = data.label.toLowerCase();

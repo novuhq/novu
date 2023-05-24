@@ -45,6 +45,7 @@ export class PromoteMessageTemplateChange {
         cta: newItem.cta,
         active: newItem.active,
         actor: newItem.actor,
+        variables: newItem.variables,
         _parentId: newItem._id,
         _feedId: feed?._id,
         _layoutId: layout?._id,
@@ -69,6 +70,7 @@ export class PromoteMessageTemplateChange {
         cta: newItem.cta,
         active: newItem.active,
         actor: newItem.actor,
+        variables: newItem.variables,
         _feedId: feed?._id,
         _layoutId: layout?._id,
       }

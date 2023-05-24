@@ -10,7 +10,7 @@ export function SandboxFooter() {
   const segment = useSegment();
 
   function handleConfigureLater() {
-    navigate(ROUTES.TEMPLATES);
+    navigate(ROUTES.WORKFLOWS);
     segment.track(OnBoardingAnalyticsEnum.CONFIGURE_LATER_CLICK, { screen: 'in-app sandbox' });
   }
 
