@@ -235,7 +235,7 @@ export class CreateNotificationTemplate {
     });
 
     if (!blueprintNotificationGroup)
-      throw new NotFoundException(`Blueprint notification group with id ${notificationGroupId} is not found`);
+      throw new NotFoundException(`Blueprint workflow group with id ${notificationGroupId} is not found`);
 
     let group = await this.notificationGroupRepository.findOne({
       name: blueprintNotificationGroup.name,

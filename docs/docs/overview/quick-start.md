@@ -123,4 +123,4 @@ In this approach, you only pass the `subscriberId` as part of the trigger, howev
 
 ### `payload` object
 
-The `payload` object can pass any serializable JSON object to be used in the notification templates.
+The `payload` object can pass any serializable JSON object to be used in the workflows.

@@ -100,7 +100,7 @@ to receive object the following parameters:
   the notification is being sent to.
 - payload - This is an object containing the payload of the trigger that initiated
   the notification.
-- identifier - notification template identifier is a unique identifier for the notification
+- identifier - workflow identifier is a unique identifier for the notification
   template being used.
 - providerId - provider identifier is a unique identifier for the communication provider you used
   on this notification.

@@ -32,7 +32,7 @@ The apps folder contains high-level applications and APIs. The app's outputs usu
 
 ### API
 
-The API package is our main service for handling backend logic. It handles anything from authentication, authorization, notification template management, triggering events, etc... This is where the Novu business logic is handled.
+The API package is our main service for handling backend logic. It handles anything from authentication, authorization, workflow management, triggering events, etc... This is where the Novu business logic is handled.
 
 ### WS aka Web-Socket
 
