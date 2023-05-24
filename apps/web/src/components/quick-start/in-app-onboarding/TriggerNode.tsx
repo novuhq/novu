@@ -108,7 +108,7 @@ function TriggerButton({ setOpened }: { setOpened: (value: boolean) => void }) {
   async function handleRunTrigger() {
     setOpened(false);
     if (!onboardingNotificationTemplate) {
-      errorMessage('No onboarding notification template found, Try again later.');
+      errorMessage('No onboarding workflow found, Try again later.');
     }
     await testTrigger({
       name: onboardingNotificationTemplate?.triggers[0].identifier,
