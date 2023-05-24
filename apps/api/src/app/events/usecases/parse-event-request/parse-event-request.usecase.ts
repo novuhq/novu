@@ -53,7 +53,7 @@ export class ParseEventRequest {
     });
 
     if (!template) {
-      throw new UnprocessableEntityException('template_not_found');
+      throw new UnprocessableEntityException('workflow_not_found');
     }
 
     if (!template.active || template.draft) {

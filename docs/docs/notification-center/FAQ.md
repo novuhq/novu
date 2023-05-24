@@ -40,7 +40,7 @@ Redirect URL is for entire notification, When user will click notification user 
 <details>
  <summary>How to create a new feed and add notification to that feed?</summary>
 
-Add a in-app step in template workflow. Click on this step and then click on edit template in sidebar. A new edit notification template page will appear. Scroll down. There you will find an option <b>Add New Feed</b>. You can either create new feed or add this template to existing feeds.
+Add an in-app step in a workflow. Click on the step to edit. A new workflow editor page will appear. Scroll down. There you will find an option <b>Add New Feed</b>. You can either create new feed or add this template to existing feeds.
 
 </details>
 

@@ -36,7 +36,7 @@ describe('Digest Playground Workflow Page', function () {
     cy.get('button').contains('Set Up Digest Workflow').click();
     cy.wait('@getNotificationTemplate');
 
-    cy.url().should('include', '/templates/edit');
+    cy.url().should('include', '/workflows/edit');
   });
 
   it('should show the digest workflow hints', () => {
@@ -59,7 +59,7 @@ describe('Digest Playground Workflow Page', function () {
     cy.wait('@getNotificationTemplate');
 
     // in the template workflow editor
-    cy.url().should('include', '/templates/edit');
+    cy.url().should('include', '/workflows/edit');
 
     // check the digest hint
     cy.getByTestId('digest-workflow-tooltip').contains('Set-up time interval');
@@ -134,7 +134,7 @@ describe('Digest Playground Workflow Page', function () {
     cy.wait('@getNotificationTemplate');
 
     // in the template workflow editor
-    cy.url().should('include', '/templates/edit');
+    cy.url().should('include', '/workflows/edit');
 
     // check the digest hint
     cy.getByTestId('digest-workflow-tooltip').contains('Set-up time interval');

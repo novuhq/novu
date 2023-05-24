@@ -211,6 +211,7 @@ importers:
       helmet: ^6.0.1
       ioredis: 5.3.2
       jsonwebtoken: 9.0.0
+      launchdarkly-node-server-sdk: ^7.0.1
       lodash: ^4.17.15
       mocha: ^8.4.0
       nanoid: ^3.1.20
@@ -279,6 +280,7 @@ importers:
       helmet: 6.1.4
       ioredis: 5.3.2
       jsonwebtoken: 9.0.0
+      launchdarkly-node-server-sdk: 7.0.1
       lodash: 4.17.21
       nanoid: 3.3.6
       nest-raven: 9.2.0_uihfglb4mjux3kkp222vo5hzku
@@ -26021,7 +26023,6 @@ packages:
   /clone/2.1.2:
     resolution: {integrity: sha512-3Pe/CF1Nn94hyhIYpjtiLhdCoEoz0DqQ+988E9gmeEdQZlojxnOb74wctFyuwWQHzqyf9X7C7MG8juUpqBJT8w==}
     engines: {node: '>=0.8'}
-    dev: true
 
   /clsx/1.1.0:
     resolution: {integrity: sha512-3avwM37fSK5oP6M5rQ9CNe99lwxhXDOeSWVPAOYF6OazUTgZCMb0yWlJpmdD74REy1gkEaFiub2ULv4fq9GUhA==}
@@ -36312,6 +36313,24 @@ packages:
       package-json: 6.5.0
     dev: false
 
+  /launchdarkly-eventsource/1.4.4:
+    resolution: {integrity: sha512-GL+r2Y3WccJlhFyL2buNKel+9VaMnYpbE/FfCkOST5jSNSFodahlxtGyrE8o7R+Qhobyq0Ree4a7iafJDQi9VQ==}
+    engines: {node: '>=0.12.0'}
+    dev: false
+
+  /launchdarkly-node-server-sdk/7.0.1:
+    resolution: {integrity: sha512-vliVBgoO3eZVBXl7LWE3hsB+8WEeyYS2Hf0BzgNx5yYrlFDHSAB2Ug+GEawgQEd9kxWESc3n5WyCn1sdMhG1xA==}
+    engines: {node: '>= 12.0.0'}
+    dependencies:
+      async: 3.2.4
+      launchdarkly-eventsource: 1.4.4
+      lru-cache: 6.0.0
+      node-cache: 5.1.2
+      semver: 7.4.0
+      tunnel: 0.0.6
+      uuid: 8.3.2
+    dev: false
+
   /lazy-ass/1.6.0:
     resolution: {integrity: sha512-cc8oEVoctTvsFZ/Oje/kGnHbpWHYBe8IAJe4C0QNc3t8uM/0Y8+erSz/7Y1ALuXTEZTMvxXwO6YbX1ey3ujiZw==}
     engines: {node: '> 0.8'}
@@ -38791,6 +38810,13 @@ packages:
       verror: 1.10.1
     transitivePeerDependencies:
       - supports-color
+    dev: false
+
+  /node-cache/5.1.2:
+    resolution: {integrity: sha512-t1QzWwnk4sjLWaQAS8CHgOJ+RAfmHpxFWmc36IWTiWHQfs0w5JDMBS1b1ZxQteo0vVVuWJvIUKHDkkeK7vIGCg==}
+    engines: {node: '>= 8.0.0'}
+    dependencies:
+      clone: 2.1.2
     dev: false
 
   /node-dir/0.1.17:

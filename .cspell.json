@@ -446,7 +446,9 @@
     "superagent",
     "INAPP",
     "fortawesome",
-    "fontawesome"
+    "fontawesome",
+    "middlewares",
+    "localforage"
   ],
   "flagWords": [],
   "patterns": [
