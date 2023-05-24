@@ -38,8 +38,8 @@ export class GetGroupedBlueprints {
     return groups;
   }
 
-  private extractStoredBlueprints(groupes: { name: string; blueprints: NotificationTemplateEntity[] }[]) {
-    return groupes
+  private extractStoredBlueprints(groups: { name: string; blueprints: NotificationTemplateEntity[] }[]) {
+    return groups
       .map((group) => group.blueprints)
       .reduce((acc, curr) => {
         acc.push(...curr);
@@ -53,7 +53,7 @@ export class GetGroupedBlueprints {
   ): INotificationTemplate[] {
     const storedBlueprints = this.extractStoredBlueprints(groups);
 
-    const localPopularBlueprints = Object.assign({}, POPULAR_TEMPLATES_GROUPED);
+    const localPopularBlueprints = { ...POPULAR_TEMPLATES_GROUPED };
 
     return localPopularBlueprints.blueprints.map((localBlueprint) => {
       const storedBlueprint = storedBlueprints.find((blueprint) => blueprint._id === localBlueprint._id);

@@ -8,7 +8,6 @@ import { CreateNotificationTemplateRequestDto } from '../../notification-templat
 import { EmailBlockTypeEnum, FilterPartTypeEnum, INotificationTemplate, StepTypeEnum } from '@novu/shared';
 import { GetGroupedBlueprints, POPULAR_TEMPLATES_GROUPED } from '../usecases/get-grouped-blueprints';
 import * as blueprintStaticModule from '../usecases/get-grouped-blueprints/consts';
-import { MOCK_POPULAR_TEMPLATES_GROUPED } from './consts';
 import {
   buildGroupedBlueprintsKey,
   CacheService,
@@ -133,7 +132,7 @@ describe('Get grouped notification template blueprints - /blueprints/group-by-ca
   it('should return mocked POPULAR_TEMPLATES_GROUPED', async () => {
     process.env.BLUEPRINT_CREATOR = session.organization._id;
 
-    const mockedValue = MOCK_POPULAR_TEMPLATES_GROUPED;
+    const mockedValue = POPULAR_TEMPLATES_GROUPED;
     indexModuleStub.value(mockedValue);
 
     const data = await session.testAgent.get(`/v1/blueprints/group-by-category`).send();
@@ -157,7 +156,7 @@ describe('Get grouped notification template blueprints - /blueprints/group-by-ca
 
     // switch id from db store - to mock blueprint id
     const storeBlueprintTemplateId = blueprintFromDb._id?.toString();
-    const mockedValue = MOCK_POPULAR_TEMPLATES_GROUPED;
+    const mockedValue = POPULAR_TEMPLATES_GROUPED;
     mockedValue.blueprints[0]._id = storeBlueprintTemplateId;
 
     indexModuleStub.value(mockedValue);
