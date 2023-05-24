@@ -10,7 +10,7 @@ export const chatProviders: IProviderConfig[] = [
     displayName: 'Slack',
     channel: ChannelTypeEnum.CHAT,
     credentials: slackConfig,
-    docReference: 'https://api.slack.com/docs',
+    docReference: 'https://docs.novu.co/channels/chat/slack',
     logoFileName: { light: 'slack.svg', dark: 'slack.svg' },
   },
   {
@@ -18,7 +18,7 @@ export const chatProviders: IProviderConfig[] = [
     displayName: 'Discord',
     channel: ChannelTypeEnum.CHAT,
     credentials: [] as IConfigCredentials[],
-    docReference: 'https://discord.com/developers/docs/intro',
+    docReference: 'https://docs.novu.co/channels/chat/discord',
     logoFileName: { light: 'discord.svg', dark: 'discord.svg' },
   },
   {
@@ -26,8 +26,7 @@ export const chatProviders: IProviderConfig[] = [
     displayName: 'MSTeams',
     channel: ChannelTypeEnum.CHAT,
     credentials: [] as IConfigCredentials[],
-    docReference:
-      'https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook',
+    docReference: 'https://docs.novu.co/channels/chat/msteams',
     logoFileName: { light: 'msteams.svg', dark: 'msteams.svg' },
   },
   {
