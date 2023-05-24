@@ -1,3 +1,5 @@
+/* eslint-disable max-len */
+/* cSpell:disable */
 import { expect } from 'chai';
 import * as sinon from 'sinon';
 
@@ -117,8 +119,6 @@ describe('Get grouped notification template blueprints - /blueprints/group-by-ca
 
     // validate blueprint have valid params
     expect(groupedPopularBlueprints.blueprints[0].name).to.equal(':fa-regular fa-message: Comments');
-    /* eslint-disable-next-line max-len */
-    /* cSpell: disable-next-line */
     expect(groupedPopularBlueprints.blueprints[0].description).to.equal(
       'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!'
     );
