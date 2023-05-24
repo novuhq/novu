@@ -38,6 +38,7 @@ import { NotificationTemplatesRequestDto } from './dto/notification-templates-re
 import { Roles } from '../auth/framework/roles.decorator';
 import { ApiResponse } from '../shared/framework/response.decorator';
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
+import { CreateNotificationTemplateQuery } from './queries';
 
 @Controller('/notification-templates')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -159,6 +160,7 @@ export class NotificationTemplateController {
   @Roles(MemberRoleEnum.ADMIN)
   createNotificationTemplates(
     @UserSession() user: IJwtPayload,
+    @Query() query: CreateNotificationTemplateQuery,
     @Body() body: CreateNotificationTemplateRequestDto
   ): Promise<NotificationTemplateResponse> {
     return this.createNotificationTemplateUsecase.execute(
@@ -176,7 +178,7 @@ export class NotificationTemplateController {
         critical: body.critical ?? false,
         preferenceSettings: body.preferenceSettings,
         blueprintId: body.blueprintId,
-        __source: body.__source,
+        __source: query?.__source,
       })
     );
   }

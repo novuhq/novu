@@ -58,7 +58,10 @@ function NotificationList() {
   };
 
   const handleOnBlueprintClick = (blueprint: IBlueprintTemplate) => {
-    createTemplateFromBlueprint({ blueprint: { ...blueprint, __source: TemplateCreationSourceEnum.TEMPLATE_STORE } });
+    createTemplateFromBlueprint({
+      blueprint: { ...blueprint },
+      params: { __source: TemplateCreationSourceEnum.TEMPLATE_STORE },
+    });
   };
 
   const columns: ColumnWithStrictAccessor<Data>[] = [

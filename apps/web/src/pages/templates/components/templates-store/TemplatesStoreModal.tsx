@@ -77,7 +77,10 @@ export const TemplatesStoreModal = ({ general, isOpened, onClose }: ITemplatesSt
       location: TemplateCreationSourceEnum.TEMPLATE_STORE,
     });
 
-    createTemplateFromBlueprint({ blueprint: blueprint });
+    createTemplateFromBlueprint({
+      blueprint: blueprint,
+      params: { __source: TemplateCreationSourceEnum.TEMPLATE_STORE },
+    });
   };
 
   return (
@@ -154,10 +157,7 @@ export const TemplatesStoreModal = ({ general, isOpened, onClose }: ITemplatesSt
                 disabled={isCreatingTemplateFromBlueprint}
                 loading={isCreatingTemplateFromBlueprint}
                 onClick={() => {
-                  handleCreateTemplateClick({
-                    ...selectedTemplate,
-                    __source: TemplateCreationSourceEnum.TEMPLATE_STORE,
-                  });
+                  handleCreateTemplateClick(selectedTemplate);
                 }}
               >
                 Use template

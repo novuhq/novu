@@ -20,7 +20,6 @@ export interface INotificationTemplate {
   steps: INotificationTemplateStep[];
   triggers: INotificationTrigger[];
   isBlueprint?: boolean;
-  __source?: string;
 }
 
 export class IGroupedBlueprint {

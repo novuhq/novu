@@ -66,10 +66,10 @@ function TriggerButton({ setOpened }: { setOpened: (value: boolean) => void }) {
   const { groups, loading: notificationGroupLoading } = useNotificationGroup();
 
   const { mutateAsync: createNotificationTemplate, isLoading: createTemplateLoading } = useMutation<
-    INotificationTemplate,
+    INotificationTemplate & { __source?: string },
     { error: string; message: string; statusCode: number },
-    ICreateNotificationTemplateDto
-  >(createTemplate, {
+    { template: ICreateNotificationTemplateDto; params: { __source?: string } }
+  >((data) => createTemplate(data.template, data.params), {
     onError: (error) => {
       errorMessage(error?.message);
     },
@@ -97,10 +97,12 @@ function TriggerButton({ setOpened }: { setOpened: (value: boolean) => void }) {
             },
           },
         ],
-        __source: TemplateCreationSourceEnum.ONBOARDING_IN_APP,
       };
 
-      await createNotificationTemplate(payloadToCreate as unknown as ICreateNotificationTemplateDto);
+      await createNotificationTemplate({
+        template: payloadToCreate as unknown as ICreateNotificationTemplateDto,
+        params: { __source: TemplateCreationSourceEnum.ONBOARDING_IN_APP },
+      });
     }
 
     if (!templatesLoading && !notificationGroupLoading && !createTemplateLoading && !onboardingNotificationTemplate) {

@@ -15,10 +15,10 @@ export const useCreateDigestDemoWorkflow = () => {
   const navigate = useNavigate();
   const { groups, loading: areNotificationGroupLoading } = useNotificationGroup();
   const { mutateAsync: createNotificationTemplate, isLoading: isCreating } = useMutation<
-    INotificationTemplate,
+    INotificationTemplate & { __source?: string },
     { error: string; message: string; statusCode: number },
-    ICreateNotificationTemplateDto
-  >(createTemplate, {
+    { template: ICreateNotificationTemplateDto; params: { __source?: string } }
+  >((data) => createTemplate(data.template, data.params), {
     onSuccess: (template) => {
       navigate(parseUrl(ROUTES.WORKFLOWS_DIGEST_PLAYGROUND, { templateId: template._id as string }));
     },
@@ -66,10 +66,12 @@ export const useCreateDigestDemoWorkflow = () => {
             active: true,
           },
         ],
-        __source: TemplateCreationSourceEnum.ONBOARDING_DIGEST_DEMO,
       };
 
-      createNotificationTemplate(payload as any);
+      createNotificationTemplate({
+        template: payload as any,
+        params: { __source: TemplateCreationSourceEnum.ONBOARDING_DIGEST_DEMO },
+      });
     }
   }, [createNotificationTemplate, groups, templates]);
 

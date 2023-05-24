@@ -29,10 +29,14 @@ export const useCreate = (
     const submit = async () => {
       const payloadToCreate = mapFormToCreateNotificationTemplate(values);
       const response = await createNotificationTemplate({
-        ...payloadToCreate,
-        active: true,
-        draft: false,
-        __source: TemplateCreationSourceEnum.EDITOR,
+        template: {
+          ...payloadToCreate,
+          active: true,
+          draft: false,
+        },
+        params: {
+          __source: TemplateCreationSourceEnum.EDITOR,
+        },
       });
       setTrigger(response.triggers[0]);
       navigate(`/workflows/edit/${response._id || ''}`);

@@ -123,10 +123,8 @@ export function BlueprintModal() {
             onClick={() => {
               if (blueprint) {
                 createTemplateFromBlueprint({
-                  blueprint: {
-                    ...blueprint,
-                    __source: TemplateCreationSourceEnum.NOTIFICATION_DIRECTORY,
-                  },
+                  blueprint,
+                  params: { __source: TemplateCreationSourceEnum.NOTIFICATION_DIRECTORY },
                 });
               }
             }}
