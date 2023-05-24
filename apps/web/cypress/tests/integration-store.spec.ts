@@ -83,7 +83,7 @@ describe('Integration store page', function () {
       cy.getByTestId('integration-group-in-app').getByTestId('integration-provider-card-novu').eq(0).click();
 
       cy.getByTestId('connect-integration-form-active-text').contains('Active');
-      cy.getByTestId('connect-integration-in-app-hmac-text').contains('Not Active');
+      cy.getByTestId('connect-integration-in-app-hmac-text').contains('Disabled');
       cy.getByTestId('connect-integration-in-app-hmac').click({ force: true });
       cy.getByTestId('connect-integration-in-app-hmac-text').contains('Active');
 
@@ -116,7 +116,7 @@ describe('Integration store page', function () {
 
       cy.visit('/integrations');
 
-      getFirstIntegrationCard().getByTestId('card-status-bar-active').contains('Not Active');
+      getFirstIntegrationCard().getByTestId('card-status-bar-active').contains('Disabled');
     });
 
     it('should display use credentials on settings modal', function () {
@@ -152,7 +152,7 @@ describe('Integration store page', function () {
 
       cy.visit('/integrations');
 
-      getFirstIntegrationCard().getByTestId('card-status-bar-active').contains('Not Active');
+      getFirstIntegrationCard().getByTestId('card-status-bar-active').contains('Disabled');
     });
 
     it('should display use credentials on settings modal', function () {

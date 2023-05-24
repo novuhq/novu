@@ -120,7 +120,7 @@ export const NovuInAppForm = ({
                 ml={10}
                 color={hmac ? colors.error : colors.B60}
               >
-                {hmac ? 'Active' : 'Not Active'}
+                {hmac ? 'Active' : 'Disabled'}
               </Text>
             </SideElementBase>
           </Stack>
@@ -132,6 +132,7 @@ export const NovuInAppForm = ({
             To finish security enabling, follow the step-by-step guide in our docs
           </Text>
           <CircleArrowRightStyled
+            backgroundColor={colors.white}
             onClick={() => {
               window.open('https://docs.novu.co/notification-center/iframe-embed/#enabling-hmac-encryption');
             }}
@@ -185,10 +186,10 @@ const WarningMessage = styled.div`
   justify-content: space-between;
   align-items: center;
   padding: 15px;
-  color: #e54545;
+  color: ${colors.white};
   margin-top: 16px;
 
-  background: rgba(230, 69, 69, 0.15);
+  background: ${colors.B17};
   border-radius: 7px;
 `;
 

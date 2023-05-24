@@ -1,6 +1,6 @@
 import styled from '@emotion/styled/macro';
 import { colors } from '../../../design-system';
-import { Center, Loader, Text, UnstyledButton } from '@mantine/core';
+import { Box, Center, Group, Loader, Text, UnstyledButton } from '@mantine/core';
 import { Close } from '../../../design-system/icons/actions/Close';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
 import { useEffect, useState } from 'react';
@@ -14,6 +14,7 @@ import { When } from '../../../components/utils/When';
 import { InAppSelectFramework } from './InAppSelectFramework';
 import { Faq } from '../../quick-start/components/QuickStartWrapper';
 import { SetupFrameworkHeader } from './SetupFrameworkHeader';
+import { ArrowLeft } from '../../../design-system/icons';
 
 export const NovuInAppProviderModal = ({
   onClose,
@@ -29,6 +30,7 @@ export const NovuInAppProviderModal = ({
   const [isActive, setIsActive] = useState<boolean>(!!provider?.active);
   const [framework, setFramework] = useState('');
   const [page, setPage] = useState<'setup' | 'form' | 'framework'>('form');
+  const [created, setCreated] = useState(false);
 
   const { mutateAsync: createIntegrationApi, isLoading } = useMutation<
     { _id: string; active: boolean },
@@ -42,6 +44,7 @@ export const NovuInAppProviderModal = ({
     }
   >(createIntegration, {
     onSuccess: (data) => {
+      setCreated(true);
       setPage('framework');
       setProvider({
         ...(provider as IIntegratedProvider),
@@ -73,9 +76,6 @@ export const NovuInAppProviderModal = ({
         position: 'relative',
       }}
     >
-      <CloseButton data-test-id="connection-integration-close" type="button" onClick={onClose}>
-        <Close />
-      </CloseButton>
       <When truthy={isLoading}>
         <Center>
           <Loader color={colors.error} size={32} />
@@ -83,6 +83,27 @@ export const NovuInAppProviderModal = ({
       </When>
       <When truthy={!isLoading}>
         <When truthy={page === 'framework'}>
+          <When truthy={!created}>
+            <UnstyledButton
+              mb={16}
+              onClick={() => {
+                setPage('form');
+              }}
+            >
+              <Group
+                spacing={8}
+                sx={{
+                  color: colors.B60,
+                }}
+              >
+                <ArrowLeft />
+                Go Back
+              </Group>
+            </UnstyledButton>
+          </When>
+          <CloseButton data-test-id="connection-integration-close" type="button" onClick={onClose}>
+            <Close />
+          </CloseButton>
           <InAppSelectFramework
             setFramework={(newFramework) => {
               if (newFramework.length === 0) {
@@ -96,6 +117,9 @@ export const NovuInAppProviderModal = ({
           />
         </When>
         <When truthy={page === 'form'}>
+          <CloseButton data-test-id="connection-integration-close" type="button" onClick={onClose}>
+            <Close />
+          </CloseButton>
           <NovuInAppForm isActive={isActive} setIsActive={setIsActive} provider={provider} showModal={showModal} />
           <Text color={colors.B60}>
             <UnstyledButton
@@ -119,18 +143,29 @@ export const NovuInAppProviderModal = ({
               setPage('framework');
               setFramework('');
             }}
+            onClose={onClose}
             framework={framework}
           />
-          <SetupTimeline
-            framework={framework}
-            onDone={() => {
-              setPage('form');
+          <div
+            style={{
+              marginTop: 97,
             }}
-            onConfigureLater={() => {
-              setPage('form');
-            }}
-          />
-          <Faq />
+          >
+            <SetupTimeline
+              framework={framework}
+              onDone={() => {
+                setCreated(false);
+                setPage('form');
+              }}
+              onConfigureLater={() => {
+                setCreated(false);
+                setPage('form');
+              }}
+            />
+          </div>
+          <Box ml={70}>
+            <Faq />
+          </Box>
         </When>
       </When>
     </div>
