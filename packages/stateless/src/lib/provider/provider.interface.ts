@@ -65,7 +65,7 @@ export interface IPushOptions {
     };
     fcmOptions?: { analyticsLabel?: string };
     'one-signal'?: {
-      externalIds?: string[];
+      externalUserIds?: string[];
     };
   };
 }
