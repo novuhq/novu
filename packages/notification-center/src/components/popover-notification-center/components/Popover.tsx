@@ -45,6 +45,7 @@ export function Popover({ children, bell, theme, offset = 0, position = 'bottom-
       withArrow
       classNames={overrideClasses}
       offset={offset}
+      withinPortal
     >
       <MantinePopover.Target>
         <BellContainer onClick={handlerBellClick}> {bell({})}</BellContainer>
