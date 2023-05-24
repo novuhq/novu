@@ -25,6 +25,16 @@ describe('Notification Templates Screen', function () {
     cy.getByTestId('category-label').contains('General');
   });
 
+  it('should show the create template dropdown', function () {
+    cy.intercept('**/notification-templates**').as('notificationTemplates');
+    cy.visit('/templates');
+    cy.wait('@notificationTemplates');
+
+    cy.getByTestId('create-template-btn').should('not.be.disabled').click();
+    cy.getByTestId('create-workflow-all-templates').contains('All templates');
+    cy.getByTestId('create-workflow-blank').contains('Blank workflow');
+  });
+
   it('when no workflow templates created it should show the page placeholder', function () {
     cy.initializeSession({ noTemplates: true }).as('session');
     cy.intercept('**/notification-templates**').as('notificationTemplates');

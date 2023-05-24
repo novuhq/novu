@@ -183,6 +183,7 @@ export function HeaderNav({}: Props) {
           <NotificationCenterWidget user={currentUser} />
           <Dropdown
             position="bottom-end"
+            styles={{ dropdown: { minWidth: 220 } }}
             control={
               <ActionIcon variant="transparent">
                 <Avatar
