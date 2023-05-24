@@ -46,7 +46,7 @@ describe('Changes Screen', function () {
   it('should show one change for status change and template update', function () {
     const template = this.session.templates[0];
 
-    cy.visit('/templates/edit/' + template._id);
+    cy.visit('/workflows/edit/' + template._id);
     cy.waitForNetworkIdle(500);
 
     cy.getByTestId('settings-page').click();
@@ -62,7 +62,7 @@ describe('Changes Screen', function () {
 
     promoteNotification();
     switchEnvironment('Production');
-    cy.location('pathname').should('equal', '/templates');
+    cy.location('pathname').should('equal', '/workflows');
 
     cy.getByTestId('notifications-template').find('tbody tr').first().click({ force: true });
 
