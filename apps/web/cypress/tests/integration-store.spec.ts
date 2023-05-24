@@ -43,8 +43,37 @@ describe('Integration store page', function () {
         .click();
 
       cy.wait('@create-integration');
-      cy.getByTestId('connect-integration-form-active-text').contains('Active');
-      cy.getByTestId('connect-integration-in-app-hmac-text').contains('Not Active');
+      cy.contains('Select a framework');
+    });
+
+    it('should show guide on clicking connect', function () {
+      cy.intercept('*/integrations', {
+        data: [],
+      });
+      cy.visit('/integrations');
+      cy.location('pathname').should('equal', '/integrations');
+
+      cy.intercept(
+        { url: '*/integrations', method: 'post' },
+        {
+          data: {
+            active: true,
+          },
+        }
+      ).as('create-integration');
+
+      cy.getByTestId('integration-group-in-app')
+        .getByTestId('integration-provider-card-novu')
+        .eq(0)
+        .get('[data-test-id="integration-provider-card-novu"] button')
+        .click();
+
+      cy.wait('@create-integration');
+      cy.contains('Select a framework');
+      cy.getByTestId('in-app-select-framework-react').click();
+      cy.contains('React integration guide');
+      cy.contains('Configure Later').click();
+      cy.contains('In-App notification center');
     });
 
     it('should display in app modal', function () {
@@ -54,7 +83,7 @@ describe('Integration store page', function () {
       cy.getByTestId('integration-group-in-app').getByTestId('integration-provider-card-novu').eq(0).click();
 
       cy.getByTestId('connect-integration-form-active-text').contains('Active');
-      cy.getByTestId('connect-integration-in-app-hmac-text').contains('Not Active');
+      cy.getByTestId('connect-integration-in-app-hmac-text').contains('Disabled');
       cy.getByTestId('connect-integration-in-app-hmac').click({ force: true });
       cy.getByTestId('connect-integration-in-app-hmac-text').contains('Active');
 
@@ -87,7 +116,7 @@ describe('Integration store page', function () {
 
       cy.visit('/integrations');
 
-      getFirstIntegrationCard().getByTestId('card-status-bar-active').contains('Not Active');
+      getFirstIntegrationCard().getByTestId('card-status-bar-active').contains('Disabled');
     });
 
     it('should display use credentials on settings modal', function () {
@@ -123,7 +152,7 @@ describe('Integration store page', function () {
 
       cy.visit('/integrations');
 
-      getFirstIntegrationCard().getByTestId('card-status-bar-active').contains('Not Active');
+      getFirstIntegrationCard().getByTestId('card-status-bar-active').contains('Disabled');
     });
 
     it('should display use credentials on settings modal', function () {

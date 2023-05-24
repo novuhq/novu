@@ -57,7 +57,7 @@ export function IntegrationsStore() {
           <Modal
             withCloseButton={false}
             centered
-            size="lg"
+            size={provider?.providerId === InAppProviderIdEnum.Novu ? 1000 : 'lg'}
             overflow="inside"
             opened={isModalOpened}
             onClose={() => setModalIsOpened(false)}
