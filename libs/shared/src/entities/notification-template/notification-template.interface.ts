@@ -22,6 +22,11 @@ export interface INotificationTemplate {
   isBlueprint?: boolean;
 }
 
+export class IGroupedBlueprint {
+  name: string;
+  blueprints: INotificationTemplate[];
+}
+
 export enum TriggerTypeEnum {
   EVENT = 'event',
 }

@@ -78,6 +78,7 @@
     "html-webpack-plugin": "5.5.1",
     "jwt-decode": "^3.1.2",
     "less": "^4.1.0",
+    "localforage": "^1.10.0",
     "lodash.capitalize": "^4.2.1",
     "lodash.clonedeep": "^4.5.0",
     "lodash.debounce": "^4.0.8",
