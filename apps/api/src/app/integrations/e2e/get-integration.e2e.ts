@@ -31,7 +31,7 @@ describe('Get Integrations - /integrations (GET)', function () {
       credentials: {
         host: 'smtp.example.com',
         port: '587',
-        secure: 'true',
+        secure: true,
         requireTls: true,
         tlsOptions: { rejectUnauthorized: false },
       },
