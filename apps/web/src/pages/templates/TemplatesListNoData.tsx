@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import styled from '@emotion/styled';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDiagramNext } from '@fortawesome/free-solid-svg-icons';
@@ -9,6 +8,7 @@ import { useSegment } from '../../components/providers/SegmentProvider';
 import { colors, Popover, shadows } from '../../design-system';
 import { IBlueprintTemplate } from '../../api/types';
 import { TemplateCreationSourceEnum } from './shared';
+import { useHoverOverTemplate } from './hooks/useHoverOverTemplate';
 
 const NoDataHolder = styled.div`
   display: flex;
@@ -123,8 +123,8 @@ export const TemplatesListNoData = ({
   onTemplateClick: (template: IBlueprintTemplate) => void;
   onAllTemplatesClick: React.MouseEventHandler<HTMLButtonElement>;
 }) => {
-  const [templateId, setTemplateId] = useState<string | undefined>(undefined);
   const segment = useSegment();
+  const { templateId, onMouseEnter, onMouseLeave } = useHoverOverTemplate();
 
   return (
     <NoDataHolder data-test-id="no-workflow-templates-placeholder">
@@ -177,11 +177,9 @@ export const TemplatesListNoData = ({
                       onTemplateClick(template);
                     }}
                     onMouseEnter={() => {
-                      setTemplateId(template._id);
+                      onMouseEnter(template._id);
                     }}
-                    onMouseLeave={() => {
-                      setTemplateId(undefined);
-                    }}
+                    onMouseLeave={onMouseLeave}
                   >
                     <FontAwesomeIcon icon={template.iconName} />
                     <span>{template.name}</span>
