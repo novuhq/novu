@@ -73,6 +73,8 @@ export function BlueprintModal() {
 
   const isLoading = isBluePrintLoading || isCreating;
 
+  console.log({ blueprint });
+
   return (
     <>
       <Modal
@@ -120,7 +122,7 @@ export function BlueprintModal() {
             data-test-id="create-from-blueprint"
             onClick={() => {
               if (blueprint) {
-                createTemplateFromBlueprint(blueprint);
+                createTemplateFromBlueprint({ blueprint });
               }
             }}
           >
