@@ -1,7 +1,7 @@
 import { ICreateNotificationTemplateDto, INotificationTemplate, IGroupedBlueprint } from '@novu/shared';
 
 import { api } from './api.client';
-import { CMS_ROOT_URL } from '../config';
+import { BLUEPRINTS_API_URL } from '../config';
 
 export function getNotificationsList(page = 0, limit = 10) {
   return api.getFullResponse(`/v1/notification-templates`, { page, limit });
@@ -22,11 +22,11 @@ export async function getBlueprintsGroupedByCategory(): Promise<{
   general: IGroupedBlueprint[];
   popular: IGroupedBlueprint;
 }> {
-  return api.get(`${CMS_ROOT_URL}/v1/blueprints/group-by-category`, { absoluteUrl: true });
+  return api.get(`${BLUEPRINTS_API_URL}/v1/blueprints/group-by-category`, { absoluteUrl: true });
 }
 
 export async function getBlueprintTemplateById(id: string) {
-  return api.get(`${CMS_ROOT_URL}/v1/blueprints/${id}`, { absoluteUrl: true });
+  return api.get(`${BLUEPRINTS_API_URL}/v1/blueprints/${id}`, { absoluteUrl: true });
 }
 
 export async function updateTemplateStatus(templateId: string, active: boolean) {
