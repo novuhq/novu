@@ -61,6 +61,8 @@ export type ITriggerOverrides = {
 } & {
   [key in 'apns']?: ITriggerOverrideAPNS;
 } & {
+  [key in 'onesignal']?: ITriggerOverrideOneSignal;
+} & {
   [key in 'delay']?: ITriggerOverrideDelayAction;
 } & {
   [key in 'email']?: IEmailOverrides;
@@ -127,6 +129,10 @@ export type ITriggerOverrideAPNS = {
   mutableContent?: boolean;
   mdm?: string | Record<string, unknown>;
   urlArgs?: string[];
+};
+
+export type ITriggerOverrideOneSignal = {
+  externalIds?: string[];
 };
 
 export interface IBulkEvents extends ITriggerPayloadOptions {

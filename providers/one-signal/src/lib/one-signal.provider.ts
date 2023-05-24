@@ -1,8 +1,8 @@
 import {
   ChannelTypeEnum,
-  ISendMessageSuccessResponse,
   IPushOptions,
   IPushProvider,
+  ISendMessageSuccessResponse,
 } from '@novu/stateless';
 import * as OneSignal from 'onesignal-node';
 
@@ -27,9 +27,15 @@ export class OneSignalPushProvider implements IPushProvider {
     options: IPushOptions
   ): Promise<ISendMessageSuccessResponse> {
     const { sound, badge, ...overrides } = options.overrides ?? {};
+    const overridesData = options.overrides || ({} as any);
 
     const res = await this.oneSignal.createNotification({
-      include_player_ids: options.target,
+      ...(overridesData.externalIds !== undefined
+        ? {
+            include_external_user_ids: overridesData.externalIds,
+            channel_for_external_user_ids: 'push',
+          }
+        : { include_player_ids: options.target }),
       headings: { en: options.title },
       contents: { en: options.content },
       subtitle: { en: overrides.subtitle },
@@ -45,6 +51,7 @@ export class OneSignalPushProvider implements IPushProvider {
       chrome_icon: overrides.icon,
       firefox_icon: overrides.icon,
       ios_category: overrides.categoryId,
+      ttl: overrides.ttl,
     });
 
     return {
