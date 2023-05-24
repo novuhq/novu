@@ -83,7 +83,7 @@ export class NotificationTemplateRepository extends BaseRepository<
         };
       }
 
-      acc[notificationGroupId as unknown as string].blueprints.push(item);
+      acc[notificationGroupId as unknown as string].blueprints.push(this.mapEntity(item));
 
       return acc;
     }, {});
