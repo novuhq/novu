@@ -1,15 +1,17 @@
 import { Modal, useMantineTheme } from '@mantine/core';
-import { colors, shadows, Title, Text, Button } from '../../../design-system';
 import { Center, Loader } from '@mantine/core';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import { IUserEntity } from '@novu/shared';
+
+import { colors, shadows, Title, Text, Button } from '../../../design-system';
 import { updateUserOnBoarding } from '../../../api/user';
-import { ICreateNotificationTemplateDto, IUserEntity } from '@novu/shared';
-import { createTemplate, getBlueprintTemplateById } from '../../../api/notification-templates';
+import { getBlueprintTemplateById } from '../../../api/notification-templates';
 import { errorMessage } from '../../../utils/notifications';
 import { When } from '../../../components/utils/When';
 import { useSegment } from '../../../components/providers/SegmentProvider';
+import { useCreateTemplateFromBlueprint } from '../../../api/hooks';
 import { ROUTES } from '../../../constants/routes.enum';
 
 export function BlueprintModal() {
@@ -52,41 +54,25 @@ export function BlueprintModal() {
     }
   );
 
-  // const { mutate, isLoading: isCreating } = useMutation(createTemplate, {
-  const { mutate: createTemplateMutation, isLoading: isCreating } = useMutation(
-    () => {
-      const templatePayload = mapBlueprintToTemplateCreatePayload();
-
-      return createTemplate(templatePayload);
+  const { createTemplateFromBlueprint, isLoading: isCreating } = useCreateTemplateFromBlueprint({
+    onSuccess: (template) => {
+      if (template) {
+        disableOnboarding();
+        navigate(`/workflows/edit/${template?._id}`, {
+          replace: true,
+        });
+      }
+      localStorage.removeItem('blueprintId');
     },
-    {
-      onSuccess: (template) => {
-        if (template) {
-          disableOnboarding();
-          navigate(`/workflows/edit/${template?._id}`, {
-            replace: true,
-          });
-        }
-        localStorage.removeItem('blueprintId');
-      },
-      onError: (err: any) => {
-        if (err?.message) {
-          errorMessage(err?.message);
-        }
-        onClose();
-      },
-    }
-  );
+    onError: (err: any) => {
+      if (err?.message) {
+        errorMessage(err?.message);
+      }
+      onClose();
+    },
+  });
 
   const isLoading = isBluePrintLoading || isCreating;
-
-  function mapBlueprintToTemplateCreatePayload(): ICreateNotificationTemplateDto {
-    const templatePayload = Object.assign({}, blueprint);
-    templatePayload.notificationGroupId = templatePayload._notificationGroupId;
-    templatePayload.blueprintId = templatePayload._id;
-
-    return templatePayload;
-  }
 
   return (
     <>
@@ -129,13 +115,13 @@ export function BlueprintModal() {
             {blueprint?.name}:
           </Text>
           <Text data-test-id="blueprint-description" mb={16}>
-            {blueprint?.description}
+            {blueprint?.description ?? ''}
           </Text>
           <Button
             data-test-id="create-from-blueprint"
             onClick={() => {
-              if (blueprintId) {
-                createTemplateMutation(blueprint);
+              if (blueprint) {
+                createTemplateFromBlueprint({ blueprint });
               }
             }}
           >

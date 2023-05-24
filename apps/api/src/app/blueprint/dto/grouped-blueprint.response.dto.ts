@@ -1,11 +1,5 @@
-import { INotificationTemplate } from '@novu/shared';
-
-export class GroupedBlueprint {
-  name: string;
-  blueprints: INotificationTemplate[];
-}
-
+import { IGroupedBlueprint } from '@novu/shared';
 export class GroupedBlueprintResponse {
-  general: GroupedBlueprint[];
-  popular: GroupedBlueprint;
+  general: IGroupedBlueprint[];
+  popular: IGroupedBlueprint;
 }
