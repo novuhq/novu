@@ -227,10 +227,13 @@ export function ConnectIntegrationForm({
       <ColumnDiv>
         <CenterDiv>
           <InlineDiv>
-            <span>Read our guide on where to get the credentials </span>
-            <a href={provider?.docReference} target="_blank" rel="noreferrer" style={{ color: '#DD2476 ' }}>
-              here.
-            </a>
+            <span>
+              Take a look at{' '}
+              <a href={provider?.docReference} target="_blank" rel="noreferrer" style={{ color: '#DD2476 ' }}>
+                our guide
+              </a>{' '}
+              for how to connect <strong>{provider?.displayName}</strong>.
+            </span>
           </InlineDiv>
           {provider?.credentials.map((credential: IConfigCredentials) => (
             <InputWrapper key={credential.key}>

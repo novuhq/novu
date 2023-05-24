@@ -14,7 +14,7 @@ export class CreateNotificationTemplateRequestDto implements ICreateNotification
   @ApiProperty()
   @IsString()
   @IsDefined({
-    message: 'Notification group must be provided',
+    message: 'Notification group must be provided ',
   })
   notificationGroupId: string;
 
@@ -57,4 +57,9 @@ export class CreateNotificationTemplateRequestDto implements ICreateNotification
   })
   @IsOptional()
   preferenceSettings?: IPreferenceChannels;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  blueprintId?: string;
 }

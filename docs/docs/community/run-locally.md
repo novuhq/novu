@@ -86,6 +86,7 @@ However, if you want to test certain parts of Novu or run it in production mode,
         <li><code>JWT_SECRET</code><br />The secret keybase which is used to encrypt / verify the tokens issued for authentication</li>
         <li><code>SENDGRID_API_KEY</code><br />The api key of the Sendgrid account used to send various emails</li>
         <li><code>MONGO_URL</code><br />The URL of your MongoDB instance</li>
+        <li><code>MONGO_MAX_POOL_SIZE</code><br />The max pool size of the MongoDB connection</li>
         <li><code>NOVU_API_KEY</code><br />The api key of web.novu.co used to send various emails</li>
         <li><code>SENTRY_DSN</code><br />The DSN of sentry.io used to report errors happening in production</li>
       </ul>
@@ -139,6 +140,7 @@ However, if you want to test certain parts of Novu or run it in production mode,
         <li><code>REDIS_CLUSTER_FAMILY</code><br />Redis cluster IP stack version</li>
         <li><code>REDIS_CLUSTER_KEY_PREFIX</code><br />Redis cluster prefix prepend to all keys</li>
         <li><code>MONGO_URL</code><br />The URL of your MongoDB instance</li>
+        <li><code>MONGO_MAX_POOL_SIZE</code><br />The max pool size of the MongoDB connection</li>
         <li><code>NEW_RELIC_APP_NAME</code><br />The New Relic app name</li>
         <li><code>NEW_RELIC_LICENSE_KEY</code><br />The New Relic license key</li>
         <li><code>SEGMENT_TOKEN</code><br />The Segment Analytics token</li>
@@ -178,6 +180,7 @@ This will generate a file called `env-config.js` that will be copied inside of t
         <li><code>REDIS_PASSWORD</code><br />Optional password of your redis instance</li>
         <li><code>JWT_SECRET</code><br />The secret keybase which is used to encrypt / verify the tokens issued for authentication</li>
         <li><code>MONGO_URL</code><br />The URL of your MongoDB instance</li>
+        <li><code>MONGO_MAX_POOL_SIZE</code><br />The max pool size of the MongoDB connection</li>
         <li><code>PORT</code><br />The port on which the WebSocket service should listen on</li>
       </ul>
     </div>
