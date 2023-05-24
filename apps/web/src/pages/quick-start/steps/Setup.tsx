@@ -33,11 +33,8 @@ export function Setup() {
         }}
         onCopy={handleOnCopy}
         onConfigureLater={() => {
-          navigate(ROUTES.TEMPLATES);
-          segment.track(OnBoardingAnalyticsEnum.CONFIGURE_LATER_CLICK, {
-            screen: 'framework instructions',
-            framework,
-          });
+          navigate(ROUTES.WORKFLOWS);
+          segment.track(OnBoardingAnalyticsEnum.CONFIGURE_LATER_CLICK, { screen: 'framework instructions', framework });
         }}
       />
     </QuickStartWrapper>
