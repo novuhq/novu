@@ -5,11 +5,12 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { updateUserOnBoarding } from '../../../api/user';
-import { IUserEntity } from '@novu/shared';
-import { createTemplateFromBluePrintId, getBlueprintTemplateById } from '../../../api/notification-templates';
+import { ICreateNotificationTemplateDto, IUserEntity } from '@novu/shared';
+import { createTemplate, getBlueprintTemplateById } from '../../../api/notification-templates';
 import { errorMessage } from '../../../utils/notifications';
 import { When } from '../../../components/utils/When';
 import { useSegment } from '../../../components/providers/SegmentProvider';
+import { ROUTES } from '../../../constants/routes.enum';
 
 export function BlueprintModal() {
   const theme = useMantineTheme();
@@ -19,7 +20,7 @@ export function BlueprintModal() {
     segment.track('Blueprint canceled', {
       blueprintId: localStorage.getItem('blueprintId'),
     });
-    navigate('/templates', {
+    navigate(ROUTES.WORKFLOWS, {
       replace: true,
     });
     localStorage.removeItem('blueprintId');
@@ -51,25 +52,41 @@ export function BlueprintModal() {
     }
   );
 
-  const { mutate, isLoading: isCreating } = useMutation(createTemplateFromBluePrintId, {
-    onSuccess: (template) => {
-      if (template) {
-        disableOnboarding();
-        navigate(`/templates/edit/${template?._id}`, {
-          replace: true,
-        });
-      }
-      localStorage.removeItem('blueprintId');
+  // const { mutate, isLoading: isCreating } = useMutation(createTemplate, {
+  const { mutate: createTemplateMutation, isLoading: isCreating } = useMutation(
+    () => {
+      const templatePayload = mapBlueprintToTemplateCreatePayload();
+
+      return createTemplate(templatePayload);
     },
-    onError: (err: any) => {
-      if (err?.message) {
-        errorMessage(err?.message);
-      }
-      onClose();
-    },
-  });
+    {
+      onSuccess: (template) => {
+        if (template) {
+          disableOnboarding();
+          navigate(`/workflows/edit/${template?._id}`, {
+            replace: true,
+          });
+        }
+        localStorage.removeItem('blueprintId');
+      },
+      onError: (err: any) => {
+        if (err?.message) {
+          errorMessage(err?.message);
+        }
+        onClose();
+      },
+    }
+  );
 
   const isLoading = isBluePrintLoading || isCreating;
+
+  function mapBlueprintToTemplateCreatePayload(): ICreateNotificationTemplateDto {
+    const templatePayload = Object.assign({}, blueprint);
+    templatePayload.notificationGroupId = templatePayload._notificationGroupId;
+    templatePayload.blueprintId = templatePayload._id;
+
+    return templatePayload;
+  }
 
   return (
     <>
@@ -118,7 +135,7 @@ export function BlueprintModal() {
             data-test-id="create-from-blueprint"
             onClick={() => {
               if (blueprintId) {
-                mutate(blueprintId);
+                createTemplateMutation(blueprint);
               }
             }}
           >
