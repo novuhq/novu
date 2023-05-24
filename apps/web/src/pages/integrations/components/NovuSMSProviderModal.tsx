@@ -1,6 +1,6 @@
 import { ChannelTypeEnum } from '@novu/shared';
 import { NovuProviderBase } from './NovuProviderBase';
 
-export function NovuSMSProviderModal({ onClose }: { onClose: () => void }) {
+export function NovuSmsProviderModal({ onClose }: { onClose: () => void }) {
   return <NovuProviderBase onClose={onClose} channel={ChannelTypeEnum.SMS} />;
 }

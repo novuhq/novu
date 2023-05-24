@@ -56,9 +56,8 @@ const LimitBarBase = ({
   channel?: ChannelTypeEnum;
   showDescription?: boolean;
 }) => {
-  const unit = useMemo<string>(() => {
-    return channel === ChannelTypeEnum.EMAIL ? 'emails' : 'messages';
-  }, [channel]);
+  const unit = channel === ChannelTypeEnum.EMAIL ? 'emails' : 'messages';
+
   const { colorScheme } = useMantineColorScheme();
 
   const isDark = colorScheme === 'dark';

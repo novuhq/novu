@@ -22,7 +22,7 @@ import { useIntegrations } from '../../hooks';
 import { When } from '../../components/utils/When';
 import { NovuEmailProviderModal } from './components/NovuEmailProviderModal';
 import { NovuInAppProviderModal } from './components/NovuInAppProviderModal';
-import { NovuSMSProviderModal } from './components/NovuSMSProviderModal';
+import { NovuSmsProviderModal } from './components/NovuSmsProviderModal';
 
 export function IntegrationsStore() {
   const { integrations, loading: isLoading, refetch } = useIntegrations();
@@ -102,7 +102,7 @@ export function IntegrationsStore() {
               <NovuInAppProviderModal onClose={() => setModalIsOpened(false)} />
             </When>
             <When truthy={provider?.providerId === SmsProviderIdEnum.Novu}>
-              <NovuSMSProviderModal onClose={() => setModalIsOpened(false)} />
+              <NovuSmsProviderModal onClose={() => setModalIsOpened(false)} />
             </When>
           </Modal>
 

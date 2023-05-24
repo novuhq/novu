@@ -22,7 +22,7 @@ import { Close } from '../../design-system/icons/actions/Close';
 import { useProviders } from './useProviders';
 import { useSegment } from '../../components/providers/SegmentProvider';
 import { IntegrationsStoreModalAnalytics } from './constants';
-import { NovuSMSProviderModal } from './components/NovuSMSProviderModal';
+import { NovuSmsProviderModal } from './components/NovuSmsProviderModal';
 
 export function IntegrationsStoreModal({
   scrollTo,
@@ -200,7 +200,7 @@ export function IntegrationsStoreModal({
             </When>
             <When truthy={provider?.providerId === SmsProviderIdEnum.Novu}>
               <div style={{ padding: '30px' }}>
-                <NovuSMSProviderModal onClose={handleCloseForm} />
+                <NovuSmsProviderModal onClose={handleCloseForm} />
               </div>
             </When>
           </IntegrationCardWrapper>
