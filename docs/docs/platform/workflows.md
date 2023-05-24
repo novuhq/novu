@@ -2,6 +2,9 @@
 sidebar_position: 1
 ---
 
+import FAQ from '@site/src/components/FAQ';
+import FAQItem from '@site/src/components/FAQItem';
+
 # Workflows
 
 A workflow holds the entire flow of messages sent to the subscriber. This is where all the different channels are tied together under a single entity.
@@ -145,7 +148,10 @@ await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
 
 ## FAQ
 
-<details>
- <summary>How to send dynamic HTML content as value of variable?</summary>
- Use triple curly braces variable like <code>&#123;&#123;&#123;htmlVariable&#125;&#125;&#125;</code> .
-</details>
+<FAQ>
+<FAQItem title="How to send dynamic HTML content as value of variable?">
+
+ Use triple curly braces variable like `{{{htmlVariable}}}`.
+ 
+</FAQItem>
+</FAQ>

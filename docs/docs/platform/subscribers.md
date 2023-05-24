@@ -2,6 +2,9 @@
 sidebar_position: 2
 ---
 
+import FAQ from '@site/src/components/FAQ';
+import FAQItem from '@site/src/components/FAQItem';
+
 # Subscribers
 
 Novu manages your users in a specific subscribers data model, that allows the Novu API to manage different aspects of the notification flow while providing an easy interface for triggering notifications.
@@ -88,12 +91,15 @@ Novu manages a data model to help your users configure their preferences in an e
 
 ## Frequently Asked Questions
 
-<details>
-  <summary>How to store custom properties in subscriber</summary>
-  <p>Subscribers have fixed schema. Storing custom properties is not supported but here is a work around, you can store that property in your database and send those values in payload option of trigger using variables. Read more about variables <a href="./workflows#variable-usage"> here </a>.</p>
-</details>
+<FAQ>
+<FAQItem title="How to store custom properties in subscriber">
 
-<details>
-  <summary>How to get subscriber properties before step execution in workflow</summary>
-  <p>Workflow has access to all existing properties of subscriber as well as payload variables. So no extra steps are needed</p>
-</details>
+Subscribers have fixed schema. Storing custom properties is not supported but here is a work around, you can store that property in your database and send those values in payload option of trigger using variables. Read more about variables [here](./workflows#variable-usage).
+
+</FAQItem>
+<FAQItem title="How to get subscriber properties before step execution in workflow">
+
+Workflow has access to all existing properties of subscriber as well as payload variables. So no extra steps are needed
+
+</FAQItem>
+</FAQ>

@@ -2,6 +2,9 @@
 sidebar_position: 1
 ---
 
+import FAQ from '@site/src/components/FAQ';
+import FAQItem from '@site/src/components/FAQItem';
+
 # Run Novu locally
 
 ## ⚡ Immediate working space with Gitpod
@@ -46,118 +49,107 @@ If you have used Jarvis CLI tool from the previous step you don't need to setup 
 The command `npm run setup:project` creates default environment variables that are required to run Novu in a development environment.
 However, if you want to test certain parts of Novu or run it in production mode, you need to change some of them. These are all the available environment variables:
 
-<details>
-    <summary>API Backend</summary>
-    <div>
-      <ul>
-        <li><code>NODE_ENV</code> (default: local)<br />The environment of the app. Possible values are: dev, test, prod, ci, local</li>
-        <li><code>S3_LOCAL_STACK</code><br />The AWS endpoint for the S3 Bucket required for storing various media</li>
-        <li><code>S3_BUCKET_NAME</code><br />The name of the S3 Bucket</li>
-        <li><code>S3_REGION</code><br />The AWS region of the S3 Bucket</li>
-        <li><code>PORT</code><br />The port on which the API backend should listen on</li>
-        <li><code>FRONT_BASE_URL</code><br />The base url on which your frontend is accessible for the user. (e.g. web.novu.co)</li>
-        <li><code>DISABLE_USER_REGISTRATION</code> (default: false)<br />If users should not be able to create new accounts. Possible values are: true, false</li>
-        <li><code>REDIS_HOST</code><br />The domain / IP of your redis instance</li>
-        <li><code>REDIS_PORT</code><br />The port of your redis instance</li>
-        <li><code>REDIS_PASSWORD</code><br />Optional password of your redis instance</li>
-        <li><code>REDIS_DB_INDEX</code><br />The Redis database index</li>
-        <li><code>REDIS_CACHE_SERVICE_HOST</code><br />The domain / IP of your redis instance for caching</li>
-        <li><code>REDIS_CACHE_SERVICE_PORT</code><br />The port of your redis instance for caching</li>
-        <li><code>REDIS_DB_INDEX</code><br />The Redis cache database index</li>
-        <li><code>REDIS_CACHE_TTL</code><br />The Redis cache ttl</li>
-        <li><code>REDIS_CACHE_PASSWORD</code><br />The Redis cache password</li>
-        <li><code>REDIS_CACHE_CONNECTION_TIMEOUT</code><br />The Redis cache connection timeout</li>
-        <li><code>REDIS_CACHE_KEEP_ALIVE</code><br />The Redis cache TCP keep alive on the socket timeout</li>
-        <li><code>REDIS_CACHE_FAMILY</code><br />The Redis cache IP stack version</li>
-        <li><code>REDIS_CACHE_KEY_PREFIX</code><br />The Redis cache prefix prepend to all keys</li>
-        <li><code>REDIS_CACHE_SERVICE_TLS</code><br />The Redis cache TLS connection support</li>
-        <li><code>IN_MEMORY_CLUSTER_MODE_ENABLED</code><br />The flag that enables the cluster mode. It might be Redis or ElastiCache cluster, depending on the env variables set for either service.</li>
-        <li><code>ELASTICACHE_CLUSTER_SERVICE_HOST</code><br />ElastiCache cluster host</li>
-        <li><code>ELASTICACHE_CLUSTER_SERVICE_PORT</code><br />ElastiCache cluster port</li>
-        <li><code>REDIS_CLUSTER_SERVICE_HOST</code><br />Redis cluster host</li>
-        <li><code>REDIS_CLUSTER_SERVICE_PORTS</code><br />Redis cluster ports</li>
-        <li><code>REDIS_CLUSTER_DB_INDEX</code><br />Redis cluster database index</li>
-        <li><code>REDIS_CLUSTER_TTL</code><br />Redis cluster ttl</li>
-        <li><code>REDIS_CLUSTER_PASSWORD</code><br />Redis cluster password</li>
-        <li><code>REDIS_CLUSTER_CONNECTION_TIMEOUT</code><br />Redis cluster connection timeout</li>
-        <li><code>REDIS_CLUSTER_KEEP_ALIVE</code><br />Redis cluster TCP keep alive on the socket timeout</li>
-        <li><code>REDIS_CLUSTER_FAMILY</code><br />Redis cluster IP stack version</li>
-        <li><code>REDIS_CLUSTER_KEY_PREFIX</code><br />Redis cluster prefix prepend to all keys</li>
-        <li><code>JWT_SECRET</code><br />The secret keybase which is used to encrypt / verify the tokens issued for authentication</li>
-        <li><code>SENDGRID_API_KEY</code><br />The api key of the Sendgrid account used to send various emails</li>
-        <li><code>MONGO_URL</code><br />The URL of your MongoDB instance</li>
-        <li><code>MONGO_MAX_POOL_SIZE</code><br />The max pool size of the MongoDB connection</li>
-        <li><code>NOVU_API_KEY</code><br />The api key of web.novu.co used to send various emails</li>
-        <li><code>SENTRY_DSN</code><br />The DSN of sentry.io used to report errors happening in production</li>
-      </ul>
-    </div>
-</details>
+<FAQ>
+<FAQItem title="API Backend">
 
-<details>
-    <summary>Worker</summary>
-    <div>
-      <ul>
-        <li><code>NODE_ENV</code> (default: local)<br />The environment of the app. Possible values are: dev, test, prod, ci, local</li>
-        <li><code>PORT</code><br />The port on which the Worker app should listen on</li>
-        <li><code>STORE_ENCRYPTION_KEY</code><br />The encryption key used to encrypt/decrypt provider credentials</li>
-        <li><code>MAX_NOVU_INTEGRATION_MAIL_REQUESTS</code><br />The number of free emails that can be sent with the Novu email provider</li>
-        <li><code>NOVU_EMAIL_INTEGRATION_API_KEY</code><br />The Novu email provider Sentry API key</li>
-        <li><code>STORAGE_SERVICE</code><br />The storage service name: AWS, GCS, or AZURE</li>
-        <li><code>S3_LOCAL_STACK</code><br />The LocalStack service URL</li>
-        <li><code>S3_BUCKET_NAME</code><br />The name of the S3 Bucket</li>
-        <li><code>S3_REGION</code><br />The AWS region of the S3 Bucket</li>
-        <li><code>GCS_BUCKET_NAME</code><br />The name of the GCS Bucket</li>
-        <li><code>AZURE_ACCOUNT_NAME</code><br />The name of the Azure account</li>
-        <li><code>AZURE_ACCOUNT_KEY</code><br />The Azure account key</li>
-        <li><code>AZURE_HOST_NAME</code><br />The Azure host name</li>
-        <li><code>AZURE_CONTAINER_NAME</code><br />The Azure container name</li>
-        <li><code>AWS_ACCESS_KEY_ID</code><br />The AWS access key</li>
-        <li><code>AWS_SECRET_ACCESS_KEY</code><br />The AWS secret access key</li>
-        <li><code>REDIS_HOST</code><br />The domain / IP of your redis instance</li>
-        <li><code>REDIS_PORT</code><br />The port of your redis instance</li>
-        <li><code>REDIS_PASSWORD</code><br />Optional password of your redis instance</li>
-        <li><code>REDIS_DB_INDEX</code><br />The Redis database index</li>
-        <li><code>REDIS_CACHE_SERVICE_HOST</code><br />The domain / IP of your redis instance for caching</li>
-        <li><code>REDIS_CACHE_SERVICE_PORT</code><br />The port of your redis instance for caching</li>
-        <li><code>REDIS_DB_INDEX</code><br />The Redis cache database index</li>
-        <li><code>REDIS_CACHE_TTL</code><br />The Redis cache ttl</li>
-        <li><code>REDIS_CACHE_PASSWORD</code><br />The Redis cache password</li>
-        <li><code>REDIS_CACHE_CONNECTION_TIMEOUT</code><br />The Redis cache connection timeout</li>
-        <li><code>REDIS_CACHE_KEEP_ALIVE</code><br />The Redis cache TCP keep alive on the socket timeout</li>
-        <li><code>REDIS_CACHE_FAMILY</code><br />The Redis cache IP stack version</li>
-        <li><code>REDIS_CACHE_KEY_PREFIX</code><br />The Redis cache prefix prepend to all keys</li>
-        <li><code>REDIS_CACHE_SERVICE_TLS</code><br />The Redis cache TLS connection support</li>
-        <li><code>IN_MEMORY_CLUSTER_MODE_ENABLED</code><br />The flag that enables the cluster mode. It might be Redis or ElastiCache cluster, depending on the env variables set for either service.</li>
-        <li><code>ELASTICACHE_CLUSTER_SERVICE_HOST</code><br />ElastiCache cluster host</li>
-        <li><code>ELASTICACHE_CLUSTER_SERVICE_PORT</code><br />ElastiCache cluster port</li>
-        <li><code>REDIS_CLUSTER_SERVICE_HOST</code><br />Redis cluster host</li>
-        <li><code>REDIS_CLUSTER_SERVICE_PORTS</code><br />Redis cluster ports</li>
-        <li><code>REDIS_CLUSTER_DB_INDEX</code><br />Redis cluster database index</li>
-        <li><code>REDIS_CLUSTER_TTL</code><br />Redis cluster ttl</li>
-        <li><code>REDIS_CLUSTER_PASSWORD</code><br />Redis cluster password</li>
-        <li><code>REDIS_CLUSTER_CONNECTION_TIMEOUT</code><br />Redis cluster connection timeout</li>
-        <li><code>REDIS_CLUSTER_KEEP_ALIVE</code><br />Redis cluster TCP keep alive on the socket timeout</li>
-        <li><code>REDIS_CLUSTER_FAMILY</code><br />Redis cluster IP stack version</li>
-        <li><code>REDIS_CLUSTER_KEY_PREFIX</code><br />Redis cluster prefix prepend to all keys</li>
-        <li><code>MONGO_URL</code><br />The URL of your MongoDB instance</li>
-        <li><code>MONGO_MAX_POOL_SIZE</code><br />The max pool size of the MongoDB connection</li>
-        <li><code>NEW_RELIC_APP_NAME</code><br />The New Relic app name</li>
-        <li><code>NEW_RELIC_LICENSE_KEY</code><br />The New Relic license key</li>
-        <li><code>SEGMENT_TOKEN</code><br />The Segment Analytics token</li>
-      </ul>
-    </div>
-</details>
+- `NODE_ENV` (default: local)<br />The environment of the app. Possible values are: dev, test, prod, ci, local
+- `S3_LOCAL_STACK`<br />The AWS endpoint for the S3 Bucket required for storing various media
+- `S3_BUCKET_NAME`<br />The name of the S3 Bucket
+- `S3_REGION`<br />The AWS region of the S3 Bucket
+- `PORT`<br />The port on which the API backend should listen on
+- `FRONT_BASE_URL`<br />The base url on which your frontend is accessible for the user. (e.g. web.novu.co)
+- `DISABLE_USER_REGISTRATION` (default: false)<br />If users should not be able to create new accounts. Possible values are: true, false
+- `REDIS_HOST`<br />The domain / IP of your redis instance
+- `REDIS_PORT`<br />The port of your redis instance
+- `REDIS_PASSWORD`<br />Optional password of your redis instance
+- `REDIS_DB_INDEX`<br />The Redis database index
+- `REDIS_CACHE_SERVICE_HOST`<br />The domain / IP of your redis instance for caching
+- `REDIS_CACHE_SERVICE_PORT`<br />The port of your redis instance for caching
+- `REDIS_DB_INDEX`<br />The Redis cache database index
+- `REDIS_CACHE_TTL`<br />The Redis cache ttl
+- `REDIS_CACHE_PASSWORD`<br />The Redis cache password
+- `REDIS_CACHE_CONNECTION_TIMEOUT`<br />The Redis cache connection timeout
+- `REDIS_CACHE_KEEP_ALIVE`<br />The Redis cache TCP keep alive on the socket timeout
+- `REDIS_CACHE_FAMILY`<br />The Redis cache IP stack version
+- `REDIS_CACHE_KEY_PREFIX`<br />The Redis cache prefix prepend to all keys
+- `REDIS_CACHE_SERVICE_TLS`<br />The Redis cache TLS connection support
+- `IN_MEMORY_CLUSTER_MODE_ENABLED`<br />The flag that enables the cluster mode. It might be Redis or ElastiCache cluster, depending on the env variables set for either service.
+- `ELASTICACHE_CLUSTER_SERVICE_HOST`<br />ElastiCache cluster host
+- `ELASTICACHE_CLUSTER_SERVICE_PORT`<br />ElastiCache cluster port
+- `REDIS_CLUSTER_SERVICE_HOST`<br />Redis cluster host
+- `REDIS_CLUSTER_SERVICE_PORTS`<br />Redis cluster ports
+- `REDIS_CLUSTER_DB_INDEX`<br />Redis cluster database index
+- `REDIS_CLUSTER_TTL`<br />Redis cluster ttl
+- `REDIS_CLUSTER_PASSWORD`<br />Redis cluster password
+- `REDIS_CLUSTER_CONNECTION_TIMEOUT`<br />Redis cluster connection timeout
+- `REDIS_CLUSTER_KEEP_ALIVE`<br />Redis cluster TCP keep alive on the socket timeout
+- `REDIS_CLUSTER_FAMILY`<br />Redis cluster IP stack version
+- `REDIS_CLUSTER_KEY_PREFIX`<br />Redis cluster prefix prepend to all keys
+- `JWT_SECRET`<br />The secret keybase which is used to encrypt / verify the tokens issued for authentication
+- `SENDGRID_API_KEY`<br />The api key of the Sendgrid account used to send various emails
+- `MONGO_URL`<br />The URL of your MongoDB instance
+- `MONGO_MAX_POOL_SIZE`<br />The max pool size of the MongoDB connection
+- `NOVU_API_KEY`<br />The api key of web.novu.co used to send various emails
+- `SENTRY_DSN`<br />The DSN of sentry.io used to report errors happening in production
 
-<details>
-    <summary>Web client</summary>
-    <div>
-      <ul>
-        <li><code>REACT_APP_ENVIRONMENT</code> <br />The environment of the app. Possible values are: dev, test, prod, ci, local</li>
-        <li><code>REACT_APP_API_URL</code> <br />The base url on which your API backend would be accessible</li>
-        <li><code>REACT_APP_WS_URL</code> <br />The base url on which your WebSocket service would be accessible</li>
-        <li><code>SKIP_PREFLIGHT_CHECK</code> (default: true)<br />Solves a problem with React App dependency tree.</li>
-      </ul>
-    </div>
+</FAQItem>
+<FAQItem title="Worker">
+
+- `NODE_ENV` (default: local)<br />The environment of the app. Possible values are: dev, test, prod, ci, local
+- `PORT`<br />The port on which the Worker app should listen on
+- `STORE_ENCRYPTION_KEY`<br />The encryption key used to encrypt/decrypt provider credentials
+- `MAX_NOVU_INTEGRATION_MAIL_REQUESTS`<br />The number of free emails that can be sent with the Novu email provider
+- `NOVU_EMAIL_INTEGRATION_API_KEY`<br />The Novu email provider Sentry API key
+- `STORAGE_SERVICE`<br />The storage service name: AWS, GCS, or AZURE
+- `S3_LOCAL_STACK`<br />The LocalStack service URL
+- `S3_BUCKET_NAME`<br />The name of the S3 Bucket
+- `S3_REGION`<br />The AWS region of the S3 Bucket
+- `GCS_BUCKET_NAME`<br />The name of the GCS Bucket
+- `AZURE_ACCOUNT_NAME`<br />The name of the Azure account
+- `AZURE_ACCOUNT_KEY`<br />The Azure account key
+- `AZURE_HOST_NAME`<br />The Azure host name
+- `AZURE_CONTAINER_NAME`<br />The Azure container name
+- `AWS_ACCESS_KEY_ID`<br />The AWS access key
+- `AWS_SECRET_ACCESS_KEY`<br />The AWS secret access key
+- `REDIS_HOST`<br />The domain / IP of your redis instance
+- `REDIS_PORT`<br />The port of your redis instance
+- `REDIS_PASSWORD`<br />Optional password of your redis instance
+- `REDIS_DB_INDEX`<br />The Redis database index
+- `REDIS_CACHE_SERVICE_HOST`<br />The domain / IP of your redis instance for caching
+- `REDIS_CACHE_SERVICE_PORT`<br />The port of your redis instance for caching
+- `REDIS_DB_INDEX`<br />The Redis cache database index
+- `REDIS_CACHE_TTL`<br />The Redis cache ttl
+- `REDIS_CACHE_PASSWORD`<br />The Redis cache password
+- `REDIS_CACHE_CONNECTION_TIMEOUT`<br />The Redis cache connection timeout
+- `REDIS_CACHE_KEEP_ALIVE`<br />The Redis cache TCP keep alive on the socket timeout
+- `REDIS_CACHE_FAMILY`<br />The Redis cache IP stack version
+- `REDIS_CACHE_KEY_PREFIX`<br />The Redis cache prefix prepend to all keys
+- `REDIS_CACHE_SERVICE_TLS`<br />The Redis cache TLS connection support
+- `IN_MEMORY_CLUSTER_MODE_ENABLED`<br />The flag that enables the cluster mode. It might be Redis or ElastiCache cluster, depending on the env variables set for either service.
+- `ELASTICACHE_CLUSTER_SERVICE_HOST`<br />ElastiCache cluster host
+- `ELASTICACHE_CLUSTER_SERVICE_PORT`<br />ElastiCache cluster port
+- `REDIS_CLUSTER_SERVICE_HOST`<br />Redis cluster host
+- `REDIS_CLUSTER_SERVICE_PORTS`<br />Redis cluster ports
+- `REDIS_CLUSTER_DB_INDEX`<br />Redis cluster database index
+- `REDIS_CLUSTER_TTL`<br />Redis cluster ttl
+- `REDIS_CLUSTER_PASSWORD`<br />Redis cluster password
+- `REDIS_CLUSTER_CONNECTION_TIMEOUT`<br />Redis cluster connection timeout
+- `REDIS_CLUSTER_KEEP_ALIVE`<br />Redis cluster TCP keep alive on the socket timeout
+- `REDIS_CLUSTER_FAMILY`<br />Redis cluster IP stack version
+- `REDIS_CLUSTER_KEY_PREFIX`<br />Redis cluster prefix prepend to all keys
+- `MONGO_URL`<br />The URL of your MongoDB instance
+- `MONGO_MAX_POOL_SIZE`<br />The max pool size of the MongoDB connection
+- `NEW_RELIC_APP_NAME`<br />The New Relic app name
+- `NEW_RELIC_LICENSE_KEY`<br />The New Relic license key
+- `SEGMENT_TOKEN`<br />The Segment Analytics token
+
+</FAQItem>
+<FAQItem title="Web client">
+
+- `REACT_APP_ENVIRONMENT` <br />The environment of the app. Possible values are: dev, test, prod, ci, local
+- `REACT_APP_API_URL` <br />The base url on which your API backend would be accessible
+- `REACT_APP_WS_URL` <br />The base url on which your WebSocket service would be accessible
+- `SKIP_PREFLIGHT_CHECK` (default: true)<br />Solves a problem with React App dependency tree.
 
 :::warning
 
@@ -166,25 +158,22 @@ This will generate a file called `env-config.js` that will be copied inside of t
 
 :::
 
-</details>
+</FAQItem>
+<FAQItem title="Worker">
 
-<details>
-    <summary>WebSocket Service</summary>
-    <div>
-      <ul>
-        <li><code>NODE_ENV</code> (default: local)<br />The environment of the app. Possible values are: dev, test, prod, ci, local</li>
-        <li><code>SENTRY_DSN</code><br />The DSN of sentry.io used to report errors happening in production</li>
-        <li><code>REDIS_HOST</code><br />The domain / IP of your redis instance</li>
-        <li><code>REDIS_PORT</code><br />The port of your redis instance</li>
-        <li><code>REDIS_DB_INDEX</code><br />The database index of your redis instance</li>
-        <li><code>REDIS_PASSWORD</code><br />Optional password of your redis instance</li>
-        <li><code>JWT_SECRET</code><br />The secret keybase which is used to encrypt / verify the tokens issued for authentication</li>
-        <li><code>MONGO_URL</code><br />The URL of your MongoDB instance</li>
-        <li><code>MONGO_MAX_POOL_SIZE</code><br />The max pool size of the MongoDB connection</li>
-        <li><code>PORT</code><br />The port on which the WebSocket service should listen on</li>
-      </ul>
-    </div>
-</details>
+- `NODE_ENV` (default: local)<br />The environment of the app. Possible values are: dev, test, prod, ci, local
+- `SENTRY_DSN`<br />The DSN of sentry.io used to report errors happening in production
+- `REDIS_HOST`<br />The domain / IP of your redis instance
+- `REDIS_PORT`<br />The port of your redis instance
+- `REDIS_DB_INDEX`<br />The database index of your redis instance
+- `REDIS_PASSWORD`<br />Optional password of your redis instance
+- `JWT_SECRET`<br />The secret keybase which is used to encrypt / verify the tokens issued for authentication
+- `MONGO_URL`<br />The URL of your MongoDB instance
+- `MONGO_MAX_POOL_SIZE`<br />The max pool size of the MongoDB connection
+- `PORT`<br />The port on which the WebSocket service should listen on
+
+</FAQItem>
+</FAQ>
 
 ## Running tests
 
