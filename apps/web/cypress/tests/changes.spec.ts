@@ -1,5 +1,6 @@
 import { dragAndDrop } from './notification-editor';
-import { goBack } from './notification-editor/index';
+import { goBack } from './notification-editor';
+import { ROUTES } from '../../src/constants/routes.enum';
 
 describe('Changes Screen', function () {
   beforeEach(function () {
@@ -18,7 +19,7 @@ describe('Changes Screen', function () {
     promoteNotification();
 
     switchEnvironment('Production');
-    cy.location('pathname').should('equal', '/templates');
+    cy.location('pathname').should('equal', ROUTES.WORKFLOWS);
 
     cy.getByTestId('create-template-btn').get('button').should('be.disabled');
     cy.getByTestId('notifications-template').find('tbody tr').first().click({ force: true });
@@ -38,8 +39,38 @@ describe('Changes Screen', function () {
   it('should show correct type and description of change', function () {
     createNotification();
     cy.visit('/changes');
-    cy.getByTestId('change-type').contains('Template Change');
+    cy.getByTestId('change-type').contains('Workflow Change');
     cy.getByTestId('change-content').contains('Test Notification Title');
+  });
+
+  it('should show one change for status change and template update', function () {
+    const template = this.session.templates[0];
+
+    cy.visit('/workflows/edit/' + template._id);
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('settings-page').click();
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('title').first().clear().type('Updated Title');
+    cy.getByTestId('notification-template-submit-btn').click();
+
+    cy.getByTestId('side-nav-changes-count').contains('1');
+
+    cy.getByTestId('active-toggle-switch').click({ force: true });
+    cy.getByTestId('side-nav-changes-count').contains('1');
+
+    promoteNotification();
+    switchEnvironment('Production');
+    cy.location('pathname').should('equal', '/workflows');
+
+    cy.getByTestId('notifications-template').find('tbody tr').first().click({ force: true });
+
+    cy.getByTestId('settings-page').click();
+    cy.waitForNetworkIdle(500);
+    cy.getByTestId('title').first().should('have.value', 'Updated Title');
+
+    cy.getByTestId('active-toggle-switch').get('label').contains('Inactive');
   });
 
   it('should show history of changes', function () {
@@ -87,7 +118,7 @@ function switchEnvironment(environment: 'Production' | 'Development') {
 
 function createNotification() {
   cy.intercept('**/notification-groups').as('getNotificationGroups');
-  cy.visit('/templates/create');
+  cy.visit(ROUTES.WORKFLOWS_CREATE);
   cy.waitForNetworkIdle(500);
 
   cy.getByTestId('title').clear().type('Test Notification Title');
