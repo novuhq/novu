@@ -14,6 +14,7 @@ const mapBlueprintToTemplate = (blueprint: INotificationTemplate): ICreateNotifi
   critical: blueprint.critical,
   preferenceSettings: blueprint.preferenceSettings,
   blueprintId: blueprint._id,
+  __source: blueprint.__source,
 });
 
 export const useCreateTemplateFromBlueprint = (

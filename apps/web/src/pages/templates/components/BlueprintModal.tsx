@@ -12,6 +12,7 @@ import { errorMessage } from '../../../utils/notifications';
 import { When } from '../../../components/utils/When';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { useCreateTemplateFromBlueprint } from '../../../api/hooks';
+import { TemplateCreationSourceEnum } from '../shared';
 
 export function BlueprintModal() {
   const theme = useMantineTheme();
@@ -120,7 +121,10 @@ export function BlueprintModal() {
             data-test-id="create-from-blueprint"
             onClick={() => {
               if (blueprint) {
-                createTemplateFromBlueprint(blueprint);
+                createTemplateFromBlueprint({
+                  ...blueprint,
+                  __source: TemplateCreationSourceEnum.NOTIFICATION_DIRECTORY,
+                });
               }
             }}
           >

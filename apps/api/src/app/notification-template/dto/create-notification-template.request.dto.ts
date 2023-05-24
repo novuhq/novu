@@ -62,4 +62,9 @@ export class CreateNotificationTemplateRequestDto implements ICreateNotification
   @IsOptional()
   @IsString()
   blueprintId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  __source: string;
 }

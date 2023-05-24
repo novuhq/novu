@@ -9,6 +9,7 @@ import { ROUTES } from '../../../constants/routes.enum';
 import { errorMessage } from '../../../utils/notifications';
 import { useNotificationGroup, useTemplates } from '../../../hooks';
 import { v4 as uuid4 } from 'uuid';
+import { TemplateCreationSourceEnum } from '../../../pages/templates/shared';
 
 export const useCreateDigestDemoWorkflow = () => {
   const navigate = useNavigate();
@@ -65,6 +66,7 @@ export const useCreateDigestDemoWorkflow = () => {
             active: true,
           },
         ],
+        __source: TemplateCreationSourceEnum.ONBOARDING_DIGEST_DEMO,
       };
 
       createNotificationTemplate(payload as any);

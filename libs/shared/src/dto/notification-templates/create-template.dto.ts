@@ -21,4 +21,6 @@ export interface ICreateNotificationTemplateDto {
   preferenceSettings?: IPreferenceChannels;
 
   blueprintId?: string;
+
+  __source?: string;
 }
