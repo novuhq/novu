@@ -17,7 +17,7 @@ describe('Blueprint Modal', () => {
       },
     }).as('getTemplate');
 
-    cy.intercept('POST', `/v1/notification-templates`, {
+    cy.intercept('POST', `/v1/notification-templates?__source=notification_directory`, {
       body: {
         _id: 'test',
       },
