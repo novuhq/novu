@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import slugify from 'slugify';
 import * as shortid from 'shortid';
 
@@ -75,6 +75,7 @@ export class CreateNotificationTemplate {
           type: message.template.type,
           name: message.template.name,
           content: message.template.content,
+          variables: message.template.variables,
           contentType: message.template.contentType,
           organizationId: command.organizationId,
           environmentId: command.environmentId,
@@ -231,7 +232,7 @@ export class CreateNotificationTemplate {
     });
 
     if (!blueprintNotificationGroup)
-      throw new NotFoundException(`Blueprint notification group with id ${notificationGroupId} is not found`);
+      throw new NotFoundException(`Blueprint workflow group with id ${notificationGroupId} is not found`);
 
     let group = await this.notificationGroupRepository.findOne({
       name: blueprintNotificationGroup.name,

@@ -13,6 +13,7 @@ import { When } from '../../../components/utils/When';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { useCreateTemplateFromBlueprint } from '../../../api/hooks';
 import { TemplateCreationSourceEnum } from '../shared';
+import { ROUTES } from '../../../constants/routes.enum';
 
 export function BlueprintModal() {
   const theme = useMantineTheme();
@@ -22,7 +23,7 @@ export function BlueprintModal() {
     segment.track('Blueprint canceled', {
       blueprintId: localStorage.getItem('blueprintId'),
     });
-    navigate('/templates', {
+    navigate(ROUTES.WORKFLOWS, {
       replace: true,
     });
     localStorage.removeItem('blueprintId');
@@ -58,7 +59,7 @@ export function BlueprintModal() {
     onSuccess: (template) => {
       if (template) {
         disableOnboarding();
-        navigate(`/templates/edit/${template?._id}`, {
+        navigate(`/workflows/edit/${template?._id}`, {
           replace: true,
         });
       }
@@ -122,8 +123,10 @@ export function BlueprintModal() {
             onClick={() => {
               if (blueprint) {
                 createTemplateFromBlueprint({
-                  ...blueprint,
-                  __source: TemplateCreationSourceEnum.NOTIFICATION_DIRECTORY,
+                  blueprint: {
+                    ...blueprint,
+                    __source: TemplateCreationSourceEnum.NOTIFICATION_DIRECTORY,
+                  },
                 });
               }
             }}

@@ -53,7 +53,7 @@ export const TemplatesStoreModal = ({ general, isOpened, onClose }: ITemplatesSt
 
   const { createTemplateFromBlueprint, isLoading: isCreatingTemplateFromBlueprint } = useCreateTemplateFromBlueprint({
     onSuccess: (template) => {
-      navigate(`${parseUrl(ROUTES.TEMPLATES_EDIT_TEMPLATEID, { templateId: template._id ?? '' })}`);
+      navigate(`${parseUrl(ROUTES.WORKFLOWS_EDIT_TEMPLATEID, { templateId: template._id ?? '' })}`);
     },
     onError: () => {
       errorMessage('Something went wrong while creating template from blueprint, please try again later.');

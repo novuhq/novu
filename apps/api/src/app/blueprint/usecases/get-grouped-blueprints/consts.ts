@@ -1,3 +1,5 @@
+/* eslint-disable max-len */
+/* cSpell:disable */
 import { INotificationTemplate, StepTypeEnum } from '@novu/shared';
 
 const STEPS = [

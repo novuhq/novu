@@ -20,7 +20,7 @@ export const useCreateDigestDemoWorkflow = () => {
     ICreateNotificationTemplateDto
   >(createTemplate, {
     onSuccess: (template) => {
-      navigate(parseUrl(ROUTES.TEMPLATES_DIGEST_PLAYGROUND, { templateId: template._id as string }));
+      navigate(parseUrl(ROUTES.WORKFLOWS_DIGEST_PLAYGROUND, { templateId: template._id as string }));
     },
     onError: () => {
       errorMessage('Failed to create Digest Workflow');
@@ -35,7 +35,7 @@ export const useCreateDigestDemoWorkflow = () => {
     const digestTemplateExists = templates.find((template) => template.name.includes(digestOnboardingTemplate));
 
     if (digestTemplateExists) {
-      navigate(parseUrl(ROUTES.TEMPLATES_DIGEST_PLAYGROUND, { templateId: digestTemplateExists._id as string }));
+      navigate(parseUrl(ROUTES.WORKFLOWS_DIGEST_PLAYGROUND, { templateId: digestTemplateExists._id as string }));
     } else {
       const payload = {
         name: digestOnboardingTemplate,

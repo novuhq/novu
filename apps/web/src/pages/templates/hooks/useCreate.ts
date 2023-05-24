@@ -35,7 +35,7 @@ export const useCreate = (
         __source: TemplateCreationSourceEnum.EDITOR,
       });
       setTrigger(response.triggers[0]);
-      navigate(`/templates/edit/${response._id || ''}`);
+      navigate(`/workflows/edit/${response._id || ''}`);
     };
 
     submit();
