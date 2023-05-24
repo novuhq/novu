@@ -73,8 +73,6 @@ export function BlueprintModal() {
 
   const isLoading = isBluePrintLoading || isCreating;
 
-  console.log({ blueprint });
-
   return (
     <>
       <Modal
