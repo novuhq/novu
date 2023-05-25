@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import { Group, Stack, Title, UnstyledButton, useMantineTheme } from '@mantine/core';
+import { Group, Stack, Title, UnstyledButton, useMantineColorScheme } from '@mantine/core';
 import { colors } from '@novu/notification-center';
 import * as capitalize from 'lodash.capitalize';
 import { shadows } from '../../../design-system';
@@ -37,26 +37,10 @@ export const SetupFrameworkHeader = ({
   onGoBack: () => void;
   onClose: () => void;
 }) => {
-  const theme = useMantineTheme();
+  const { colorScheme } = useMantineColorScheme();
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        left: 0,
-        right: 0,
-        paddingLeft: 41,
-        paddingRight: 20,
-        paddingTop: 16,
-        paddingBottom: 24,
-        background: colors.B15,
-        top: 0,
-        borderTopLeftRadius: 4,
-        borderTopRightRadius: 4,
-        zIndex: 9999,
-        boxShadow: shadows.dark,
-      }}
-    >
+    <Header isDark={colorScheme === 'dark'}>
       <Group position="apart">
         <UnstyledButton mb={8} onClick={onGoBack}>
           <Group
@@ -81,7 +65,7 @@ export const SetupFrameworkHeader = ({
           </Title>
         </Group>
       </Stack>
-    </div>
+    </Header>
   );
 };
 
@@ -94,4 +78,25 @@ const CloseButton = styled.button`
   &:hover {
     cursor: pointer;
   }
+`;
+
+const Header = styled.button<{ isDark: boolean }>`
+  position: fixed;
+  left: 0;
+  right: 0;
+  padding-left: 41px;
+  padding-right: 20px;
+  padding-top: 16px;
+  padding-bottom: 24px;
+  background: ${({ isDark }) => {
+    return isDark ? colors.B15 : colors.white;
+  }};
+  top: 0;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+  z-index: 9999;
+  border: none;
+  box-shadow: ${({ isDark }) => {
+    return isDark ? shadows.dark : shadows.light;
+  }};
 `;

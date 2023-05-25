@@ -1,6 +1,6 @@
 import styled from '@emotion/styled/macro';
 import { colors } from '../../../design-system';
-import { Accordion, Box, Center, Loader } from '@mantine/core';
+import { Accordion, Box, Center, Loader, useMantineTheme } from '@mantine/core';
 import { Close } from '../../../design-system/icons/actions/Close';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
 import { useEffect, useState } from 'react';
@@ -31,6 +31,7 @@ export const NovuInAppProviderModal = ({
   const [framework, setFramework] = useState('');
   const [page, setPage] = useState<'setup' | 'form' | 'framework'>('form');
   const [created, setCreated] = useState(false);
+  const theme = useMantineTheme();
 
   const { mutateAsync: createIntegrationApi, isLoading } = useMutation<
     { _id: string; active: boolean },
@@ -109,6 +110,7 @@ export const NovuInAppProviderModal = ({
               sx={{
                 borderBottom: 0,
                 marginBottom: 0,
+                background: theme.colorScheme === 'dark' ? undefined : colors.white,
               }}
             >
               <Accordion.Control>Discover a guide of how to Integrate In-App using any framework</Accordion.Control>
