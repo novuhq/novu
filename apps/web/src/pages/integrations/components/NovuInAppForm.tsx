@@ -1,13 +1,12 @@
+import { useEffect, useMemo } from 'react';
 import styled from '@emotion/styled/macro';
-import { Button, colors } from '../../../design-system';
 import { Title, Text, Grid, Stack, useMantineColorScheme } from '@mantine/core';
-import { IIntegratedProvider } from '../IntegrationsStorePage';
-import { useEffect } from 'react';
-import { updateIntegration } from '../../../api/integration';
 import { useMutation } from '@tanstack/react-query';
-import { ICredentialsDto } from '@novu/shared';
-import { Switch } from '../../../design-system';
 import { Controller, useForm } from 'react-hook-form';
+import { ICredentialsDto } from '@novu/shared';
+import { IIntegratedProvider } from '../IntegrationsStorePage';
+import { updateIntegration } from '../../../api/integration';
+import { Switch, Button, colors } from '../../../design-system';
 import { CircleArrowRight } from '../../../design-system/icons/arrows/CircleArrowRight';
 import { When } from '../../../components/utils/When';
 import { errorMessage, successMessage } from '../../../utils/notifications';
@@ -38,34 +37,29 @@ export const NovuInAppForm = ({
     }
   >(({ integrationId, data }) => updateIntegration(integrationId, data));
 
+  const hmacdefaultValue = useMemo(() => {
+    const credential = provider?.credentials?.find((item) => item.key === 'hmac');
+
+    if (!credential) {
+      return false;
+    }
+
+    return credential.value === 'true';
+  }, [provider?.credentials]);
+
   const onSubmit = async (credentials) => {
     try {
       await updateIntegrationApi({
-        integrationId: provider?.integrationId ? provider?.integrationId : '',
+        integrationId: provider?.integrationId ?? '',
         data: { credentials, active: isActive, check: false },
       });
+      successMessage('Successfully updated integration');
+
+      showModal(false);
     } catch (e: any) {
       errorMessage(e.message || 'Unexpected error occurred');
-
-      return;
     }
-
-    successMessage('Successfully updated integration');
-
-    showModal(false);
   };
-
-  useEffect(() => {
-    if (provider?.credentials) {
-      for (const credential of provider.credentials) {
-        if (credential.key === 'hmac') {
-          setValue(credential.key, credential.value === 'true');
-          continue;
-        }
-        setValue(credential.key, credential.value);
-      }
-    }
-  }, [provider]);
 
   return (
     <form
@@ -76,9 +70,9 @@ export const NovuInAppForm = ({
       }}
     >
       <Title
-        sx={(theme) => ({
+        sx={() => ({
           fontWeight: 700,
-          color: theme.colorScheme === 'dark' ? colors.white : colors.B40,
+          color: colorScheme === 'dark' ? colors.white : colors.B40,
         })}
         order={2}
         mb={24}
@@ -106,7 +100,7 @@ export const NovuInAppForm = ({
               <Controller
                 control={control}
                 name="hmac"
-                defaultValue={false}
+                defaultValue={hmacdefaultValue}
                 render={({ field }) => (
                   <Switch
                     data-test-id="connect-integration-in-app-hmac"

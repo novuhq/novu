@@ -1,12 +1,12 @@
-import styled from '@emotion/styled/macro';
-import { colors } from '../../../design-system';
-import { Accordion, Box, Center, Loader, useMantineTheme } from '@mantine/core';
-import { Close } from '../../../design-system/icons/actions/Close';
-import { IIntegratedProvider } from '../IntegrationsStorePage';
 import { useEffect, useState } from 'react';
-import { createIntegration } from '../../../api/integration';
+import styled from '@emotion/styled/macro';
+import { Accordion, Box, Center, Loader, useMantineTheme } from '@mantine/core';
 import { useMutation } from '@tanstack/react-query';
 import { ChannelTypeEnum, ICredentialsDto } from '@novu/shared';
+import { colors } from '../../../design-system';
+import { Close } from '../../../design-system/icons/actions/Close';
+import { IIntegratedProvider } from '../IntegrationsStorePage';
+import { createIntegration } from '../../../api/integration';
 import { useIntegrations } from '../../../hooks';
 import { SetupTimeline } from '../../quick-start/components/SetupTimeline';
 import { NovuInAppForm } from './NovuInAppForm';

@@ -40,7 +40,7 @@ export const SetupFrameworkHeader = ({
   const { colorScheme } = useMantineColorScheme();
 
   return (
-    <Header isDark={colorScheme === 'dark'}>
+    <Header>
       <Group position="apart">
         <UnstyledButton mb={8} onClick={onGoBack}>
           <Group
@@ -80,7 +80,7 @@ const CloseButton = styled.button`
   }
 `;
 
-const Header = styled.button<{ isDark: boolean }>`
+const Header = styled.button`
   position: fixed;
   left: 0;
   right: 0;
@@ -88,15 +88,15 @@ const Header = styled.button<{ isDark: boolean }>`
   padding-right: 20px;
   padding-top: 16px;
   padding-bottom: 24px;
-  background: ${({ isDark }) => {
-    return isDark ? colors.B15 : colors.white;
+  background: ${({ theme }) => {
+    return theme.colorScheme === 'dark' ? colors.B15 : colors.white;
   }};
   top: 0;
   border-top-left-radius: 4px;
   border-top-right-radius: 4px;
   z-index: 9999;
   border: none;
-  box-shadow: ${({ isDark }) => {
-    return isDark ? shadows.dark : shadows.light;
+  box-shadow: ${({ theme }) => {
+    return theme.colorScheme === 'dark' ? shadows.dark : shadows.light;
   }};
 `;

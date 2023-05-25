@@ -35,7 +35,7 @@ export class InitializeSession {
       throw new ApiException('Please provide a valid app identifier');
     }
 
-    const response = await this.getDecryptedIntegrations.execute(
+    const inAppIntegration = await this.getDecryptedIntegrations.execute(
       GetDecryptedIntegrationsCommand.create({
         findOne: true,
         active: true,
@@ -47,7 +47,7 @@ export class InitializeSession {
       })
     );
 
-    const item = Array.isArray(response) ? response[0] : response;
+    const item = Array.isArray(inAppIntegration) ? inAppIntegration[0] : inAppIntegration;
 
     if (!item) {
       throw new NotFoundException('In app integration could not be found');

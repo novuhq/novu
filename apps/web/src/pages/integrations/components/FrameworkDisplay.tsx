@@ -10,6 +10,7 @@ import {
   CodeGradient,
 } from '../../../design-system/icons';
 import { useEnvController } from '../../../hooks';
+import { FrameworkEnum } from '../../quick-start/consts';
 
 export const FrameworkDisplay = ({ setFramework }: { setFramework: (framework: string) => void }) => {
   const { environment } = useEnvController();
@@ -55,7 +56,7 @@ export const FrameworkDisplay = ({ setFramework }: { setFramework: (framework: s
         <UnstyledButton
           sx={itemStyle}
           onClick={() => {
-            setFramework('react');
+            setFramework(FrameworkEnum.REACT);
           }}
           data-test-id="in-app-select-framework-react"
         >
@@ -65,7 +66,7 @@ export const FrameworkDisplay = ({ setFramework }: { setFramework: (framework: s
         </UnstyledButton>
         <UnstyledButton
           onClick={() => {
-            setFramework('angular');
+            setFramework(FrameworkEnum.ANGULAR);
           }}
           sx={itemStyle}
           data-test-id="in-app-select-framework-angular"
@@ -76,7 +77,7 @@ export const FrameworkDisplay = ({ setFramework }: { setFramework: (framework: s
         </UnstyledButton>
         <UnstyledButton
           onClick={() => {
-            setFramework('vue');
+            setFramework(FrameworkEnum.VUE);
           }}
           data-test-id="in-app-select-framework-vue"
           sx={itemStyle}
@@ -113,7 +114,7 @@ export const FrameworkDisplay = ({ setFramework }: { setFramework: (framework: s
         </UnstyledButton>
         <UnstyledButton
           onClick={() => {
-            setFramework('js');
+            setFramework(FrameworkEnum.JS);
           }}
           data-test-id="in-app-select-framework-iframe"
           sx={itemStyle}

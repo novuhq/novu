@@ -1,7 +1,6 @@
 import styled from '@emotion/styled';
 import { Stack, Timeline, useMantineColorScheme } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
-
 import { getApiKeys } from '../../../api/environment';
 import { getInAppActivated } from '../../../api/integration';
 import { When } from '../../../components/utils/When';
@@ -11,6 +10,7 @@ import { useEnvController } from '../../../hooks';
 import { PrismOnCopy } from '../../settings/tabs/components/Prism';
 import { SetupStatus } from '../components/SetupStatus';
 import { API_KEY, APPLICATION_IDENTIFIER, BACKEND_API_URL, BACKEND_SOCKET_URL, frameworkInstructions } from '../consts';
+import { QueryKeys } from '../../../api/query.keys';
 
 export const SetupTimeline = ({
   framework,
@@ -24,15 +24,19 @@ export const SetupTimeline = ({
   onConfigureLater?: () => void;
 }) => {
   const { environment } = useEnvController();
-  const { data: apiKeys } = useQuery<{ key: string }[]>(['getApiKeys'], getApiKeys);
+  const { data: apiKeys } = useQuery<{ key: string }[]>([QueryKeys.getApiKeys], getApiKeys);
   const apiKey = apiKeys?.length ? apiKeys[0].key : '';
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
 
-  const { data: inAppData } = useQuery<IGetInAppActivatedResponse>(['inAppActive'], async () => getInAppActivated(), {
-    refetchInterval: (data) => (data?.active ? false : 3000),
-    initialData: { active: false },
-  });
+  const { data: inAppData } = useQuery<IGetInAppActivatedResponse>(
+    [QueryKeys.getInAppActive],
+    async () => getInAppActivated(),
+    {
+      refetchInterval: (data) => (data?.active ? false : 3000),
+      initialData: { active: false },
+    }
+  );
 
   const instructions = frameworkInstructions.find((instruction) => instruction.key === framework)?.value ?? [];
   const environmentIdentifier = environment?.identifier ? environment.identifier : '';
