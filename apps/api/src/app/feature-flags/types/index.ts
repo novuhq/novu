@@ -1,10 +1,6 @@
-import { EnvironmentId, OrganizationId, UserId } from '@novu/shared';
+import { EnvironmentId, FeatureFlagsKeysEnum, OrganizationId, UserId } from '@novu/shared';
 
-export { EnvironmentId, OrganizationId, UserId };
-
-export enum FeatureFlagsKeysEnum {
-  IS_TEMPLATE_STORE_ENABLED = 'IS_TEMPLATE_STORE_ENABLED',
-}
+export { EnvironmentId, FeatureFlagsKeysEnum, OrganizationId, UserId };
 
 export interface IFeatureFlagContext {
   environmentId: EnvironmentId;
