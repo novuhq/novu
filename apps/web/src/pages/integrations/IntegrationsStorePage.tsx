@@ -9,6 +9,7 @@ import {
   EmailProviderIdEnum,
   InAppProviderIdEnum,
   ProvidersIdEnum,
+  SmsProviderIdEnum,
 } from '@novu/shared';
 import { Modal } from '@mantine/core';
 import * as cloneDeep from 'lodash.clonedeep';
@@ -22,6 +23,7 @@ import { When } from '../../components/utils/When';
 import { NovuEmailProviderModal } from './components/NovuEmailProviderModal';
 import { NovuInAppProviderModal } from './components/NovuInAppProviderModal';
 import { useProviders } from './useProviders';
+import { NovuSmsProviderModal } from './components/NovuSmsProviderModal';
 
 export function IntegrationsStore() {
   const { loading: isLoading, refetch } = useIntegrations();
@@ -79,6 +81,9 @@ export function IntegrationsStore() {
                 provider={provider}
                 onClose={() => setModalIsOpened(false)}
               />
+            </When>
+            <When truthy={provider?.providerId === SmsProviderIdEnum.Novu}>
+              <NovuSmsProviderModal onClose={() => setModalIsOpened(false)} />
             </When>
           </Modal>
 

@@ -316,7 +316,7 @@ export class UserSession {
   }
 
   async triggerEvent(triggerName: string, to: TriggerRecipientsPayload, payload = {}) {
-    await this.testAgent.post('/v1/events/trigger').send({
+    return await this.testAgent.post('/v1/events/trigger').send({
       name: triggerName,
       to: to,
       payload,

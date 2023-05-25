@@ -8,6 +8,7 @@ import {
   EmailProviderIdEnum,
   InAppProviderIdEnum,
   ProvidersIdEnum,
+  SmsProviderIdEnum,
 } from '@novu/shared';
 
 import { useAuthController, useEnvController, useIntegrations } from '../../hooks';
@@ -21,6 +22,7 @@ import { Close } from '../../design-system/icons/actions/Close';
 import { useProviders } from './useProviders';
 import { useSegment } from '../../components/providers/SegmentProvider';
 import { IntegrationsStoreModalAnalytics } from './constants';
+import { NovuSmsProviderModal } from './components/NovuSmsProviderModal';
 
 export function IntegrationsStoreModal({
   scrollTo,
@@ -201,6 +203,11 @@ export function IntegrationsStoreModal({
             <When truthy={provider?.providerId === InAppProviderIdEnum.Novu}>
               <div style={{ padding: '30px' }}>
                 <NovuInAppProviderModal showModal={closeIntegration} provider={provider} onClose={handleCloseForm} />
+              </div>
+            </When>
+            <When truthy={provider?.providerId === SmsProviderIdEnum.Novu}>
+              <div style={{ padding: '30px' }}>
+                <NovuSmsProviderModal onClose={handleCloseForm} />
               </div>
             </When>
           </IntegrationCardWrapper>

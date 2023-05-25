@@ -1,7 +1,7 @@
 import { Grid } from '@mantine/core';
 import { ProviderCard } from './ProviderCard';
 import { Title } from '../../../design-system';
-import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
+import { ChannelTypeEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
 import { NovuIntegrationCard } from './NovuIntegrationCard';
 import { When } from '../../../components/utils/When';
@@ -43,8 +43,35 @@ export function ChannelGroup({
                 0,
               connected: true,
               logoFileName: {
-                light: CONTEXT_PATH + '/static/images/logo.png',
                 dark: CONTEXT_PATH + '/static/images/logo-light.png',
+                light: CONTEXT_PATH + '/static/images/logo.png',
+              },
+              betaVersion: false,
+              novu: true,
+            }}
+            onConnectClick={handlerOnConnectClick}
+          />
+        </Grid.Col>
+      </When>
+
+      <When truthy={channel === ChannelTypeEnum.SMS && !IS_DOCKER_HOSTED}>
+        <Grid.Col sm={12} xs={6} md={4} lg={3}>
+          <NovuIntegrationCard
+            provider={{
+              providerId: SmsProviderIdEnum.Novu,
+              integrationId: '',
+              displayName: 'Novu SMS Provider',
+              channel: ChannelTypeEnum.SMS,
+              credentials: [],
+              docReference: '',
+              comingSoon: false,
+              active:
+                providers.filter((provider) => provider.active && provider.channel === ChannelTypeEnum.SMS).length ===
+                0,
+              connected: true,
+              logoFileName: {
+                dark: CONTEXT_PATH + '/static/images/logo-light.png',
+                light: CONTEXT_PATH + '/static/images/logo.png',
               },
               betaVersion: false,
               novu: true,

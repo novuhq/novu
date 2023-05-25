@@ -106,6 +106,7 @@ export const TemplatesStoreModal = ({ general, isOpened, onClose }: ITemplatesSt
           <CanvasHolder>
             <ReactFlowProvider>
               <FlowEditor
+                key={selectedTemplate._id}
                 steps={selectedTemplate.steps}
                 nodeTypes={nodeTypes}
                 zoomOnScroll={false}
