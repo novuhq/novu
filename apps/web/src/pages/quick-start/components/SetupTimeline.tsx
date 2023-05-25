@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getApiKeys } from '../../../api/environment';
 import { getInAppActivated } from '../../../api/integration';
 import { When } from '../../../components/utils/When';
-import { API_ROOT, WS_URL } from '../../../config';
+import { API_ROOT, ENV, IS_DOCKER_HOSTED, WS_URL } from '../../../config';
 import { colors, shadows, Text } from '../../../design-system';
 import { useEnvController } from '../../../hooks';
 import { PrismOnCopy } from '../../settings/tabs/components/Prism';
@@ -39,7 +39,7 @@ export const SetupTimeline = ({
   );
 
   const instructions = frameworkInstructions.find((instruction) => instruction.key === framework)?.value ?? [];
-  const environmentIdentifier = environment?.identifier ? environment.identifier : '';
+  const environmentIdentifier = environment?.identifier ?? '';
 
   return (
     <Stack align="center" sx={{ width: '100%' }}>
@@ -106,7 +106,7 @@ const LoaderWrapper = styled.div`
 `;
 
 function updateCodeSnippet(codeSnippet: string, environmentIdentifier: string, apiKey: string) {
-  const concatUrls = process.env.REACT_APP_ENVIRONMENT !== 'production' || !!process.env.REACT_APP_DOCKER_HOSTED_ENV;
+  const concatUrls = ENV !== 'production' || !!IS_DOCKER_HOSTED;
 
   return codeSnippet
     .replace(APPLICATION_IDENTIFIER, environmentIdentifier)

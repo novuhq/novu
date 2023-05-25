@@ -2,7 +2,7 @@ import { useMantineColorScheme } from '@mantine/core';
 import { IUserEntity, IMessage, MessageActionStatusEnum, ButtonTypeEnum } from '@novu/shared';
 import { NotificationBell, NovuProvider, PopoverNotificationCenter, useUpdateAction } from '@novu/notification-center';
 
-import { API_ROOT, WS_URL } from '../../../config';
+import { API_ROOT, APP_ID, WS_URL } from '../../../config';
 import { useEnvController } from '../../../hooks';
 
 export function NotificationCenterWidget({ user }: { user: IUserEntity | undefined }) {
@@ -14,7 +14,7 @@ export function NotificationCenterWidget({ user }: { user: IUserEntity | undefin
         backendUrl={API_ROOT}
         socketUrl={WS_URL}
         subscriberId={user?._id as string}
-        applicationIdentifier={process.env.REACT_APP_NOVU_APP_ID || (environment?.identifier as string)}
+        applicationIdentifier={APP_ID || (environment?.identifier as string)}
       >
         <PopoverWrapper />
       </NovuProvider>

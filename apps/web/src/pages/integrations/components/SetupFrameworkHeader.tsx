@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import { Group, Stack, Title, UnstyledButton, useMantineColorScheme } from '@mantine/core';
+import { Group, Stack, Title, UnstyledButton } from '@mantine/core';
 import { colors } from '@novu/notification-center';
 import * as capitalize from 'lodash.capitalize';
 import { shadows } from '../../../design-system';
@@ -12,16 +12,17 @@ import {
   ReactGradient,
   VueGradient,
 } from '../../../design-system/icons';
+import { FrameworkEnum } from '../../quick-start/consts';
 
 const Icon = ({ framework }: { framework: string }) => {
   switch (framework) {
-    case 'react':
+    case FrameworkEnum.REACT:
       return <ReactGradient />;
-    case 'angular':
+    case FrameworkEnum.ANGULAR:
       return <AngularGradient />;
-    case 'vue':
+    case FrameworkEnum.VUE:
       return <VueGradient />;
-    case 'js':
+    case FrameworkEnum.JS:
       return <CodeGradient />;
     default:
       return <JsGradient />;
@@ -37,8 +38,6 @@ export const SetupFrameworkHeader = ({
   onGoBack: () => void;
   onClose: () => void;
 }) => {
-  const { colorScheme } = useMantineColorScheme();
-
   return (
     <Header>
       <Group position="apart">

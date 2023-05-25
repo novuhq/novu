@@ -44,7 +44,7 @@ export function SetupStatus({
         </TextStyled>
       </Stack>
 
-      <When truthy={onConfigureLater !== undefined}>
+      <When truthy={onConfigureLater !== undefined && typeof onConfigureLater === 'function'}>
         <Group spacing={128}>
           <Stack spacing={8}>
             <TextStyled>Don't want to configure the In-App center now?</TextStyled>

@@ -94,7 +94,7 @@ async function setHmacConfig(session: UserSession) {
   await integrationRepository.update(
     {
       _environmentId: session.environment._id,
-      _organizationId: session.environment._organizationId,
+      _organizationId: session.organization._id,
       providerId: InAppProviderIdEnum.Novu,
       channel: ChannelTypeEnum.IN_APP,
       active: true,
