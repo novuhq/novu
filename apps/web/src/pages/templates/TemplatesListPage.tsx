@@ -23,6 +23,7 @@ import { useFetchBlueprints, useCreateTemplateFromBlueprint } from '../../api/ho
 import { CreateWorkflowDropdown } from './components/CreateWorkflowDropdown';
 import { IBlueprintTemplate } from '../../api/types';
 import { errorMessage } from '../../utils/notifications';
+import { TemplateCreationSourceEnum } from './shared';
 
 function NotificationList() {
   const segment = useSegment();
@@ -57,7 +58,10 @@ function NotificationList() {
   };
 
   const handleOnBlueprintClick = (blueprint: IBlueprintTemplate) => {
-    createTemplateFromBlueprint({ blueprint });
+    createTemplateFromBlueprint({
+      blueprint: { ...blueprint },
+      params: { __source: TemplateCreationSourceEnum.TEMPLATE_STORE },
+    });
   };
 
   const columns: ColumnWithStrictAccessor<Data>[] = [

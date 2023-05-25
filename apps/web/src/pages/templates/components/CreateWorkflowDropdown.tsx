@@ -7,6 +7,8 @@ import styled from '@emotion/styled';
 import { Button, Dropdown, Popover } from '../../../design-system';
 import { PlusCircle } from '../../../design-system/icons';
 import { IBlueprintTemplate } from '../../../api/types';
+import { useSegment } from '../../../components/providers/SegmentProvider';
+import { TemplateCreationSourceEnum } from '../shared';
 import { useHoverOverTemplate } from '../hooks/useHoverOverTemplate';
 
 const WIDTH = 172;
@@ -40,6 +42,7 @@ export const CreateWorkflowDropdown = ({
   onTemplateClick: (template: IBlueprintTemplate) => void;
   onAllTemplatesClick: React.MouseEventHandler<HTMLButtonElement>;
 }) => {
+  const segment = useSegment();
   const { templateId, onMouseEnter, onMouseLeave } = useHoverOverTemplate();
 
   return (
@@ -77,7 +80,14 @@ export const CreateWorkflowDropdown = ({
                 <Dropdown.Item
                   disabled={isCreating}
                   icon={<FontAwesomeIcon icon={template.iconName} />}
-                  onClick={() => onTemplateClick(template)}
+                  onClick={() => {
+                    segment.track('[Template Store] Click Create Notification Template', {
+                      templateIdentifier: template?.triggers[0]?.identifier || '',
+                      location: TemplateCreationSourceEnum.DROPDOWN,
+                    });
+
+                    onTemplateClick(template);
+                  }}
                   onMouseEnter={() => {
                     onMouseEnter(template._id);
                   }}
@@ -93,7 +103,13 @@ export const CreateWorkflowDropdown = ({
       <Dropdown.Item
         disabled={allTemplatesDisabled}
         icon={<FontAwesomeIcon icon={faDiagramNext} />}
-        onClick={onAllTemplatesClick}
+        onClick={(event) => {
+          segment.track('[Template Store] Click Open Template Store', {
+            location: TemplateCreationSourceEnum.DROPDOWN,
+          });
+
+          onAllTemplatesClick(event);
+        }}
         data-test-id="create-workflow-all-templates"
       >
         All templates
@@ -101,7 +117,14 @@ export const CreateWorkflowDropdown = ({
       <Dropdown.Divider />
       <Dropdown.Item
         icon={<FontAwesomeIcon icon={faFile} />}
-        onClick={onBlankWorkflowClick}
+        onClick={(event) => {
+          segment.track('[Template Store] Click Create Notification Template', {
+            templateIdentifier: 'Blank Workflow',
+            location: TemplateCreationSourceEnum.DROPDOWN,
+          });
+
+          onBlankWorkflowClick(event);
+        }}
         data-test-id="create-workflow-blank"
       >
         Blank workflow

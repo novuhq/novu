@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { IParamObject } from '@novu/shared';
 import { API_ROOT } from '../config';
 
 interface IOptions {
@@ -36,9 +37,9 @@ export const api = {
         return Promise.reject(error?.response?.data || error?.response || error);
       });
   },
-  post(url: string, payload) {
+  post(url: string, payload, params?: IParamObject) {
     return axios
-      .post(`${API_ROOT}${url}`, payload)
+      .post(`${API_ROOT}${url}`, payload, { params })
       .then((response) => response.data?.data)
       .catch((error) => {
         // eslint-disable-next-line promise/no-return-wrap

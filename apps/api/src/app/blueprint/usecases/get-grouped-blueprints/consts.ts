@@ -69,6 +69,12 @@ export const POPULAR_TEMPLATES_GROUPED = {
       description:
         'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
       steps: STEPS,
+      triggers: [
+        {
+          type: 'event',
+          identifier: 'template_identifier_1',
+        },
+      ],
       isBlueprint: true,
     },
     {
@@ -77,6 +83,12 @@ export const POPULAR_TEMPLATES_GROUPED = {
       description:
         'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
       steps: STEPS2,
+      triggers: [
+        {
+          type: 'event',
+          identifier: 'template_identifier_2',
+        },
+      ],
       isBlueprint: true,
     },
     {
@@ -85,6 +97,12 @@ export const POPULAR_TEMPLATES_GROUPED = {
       description:
         'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
       steps: STEPS,
+      triggers: [
+        {
+          type: 'event',
+          identifier: 'template_identifier_3',
+        },
+      ],
       isBlueprint: true,
     },
   ] as INotificationTemplate[],

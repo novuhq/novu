@@ -28,7 +28,7 @@ export class GetGroupedBlueprints {
 
   private async fetchGroupedBlueprints() {
     const groups = await this.notificationTemplateRepository.findAllGroupedByCategory();
-    if (!groups) {
+    if (!groups?.length) {
       throw new NotFoundException(
         `Blueprints for organization id ${NotificationTemplateRepository.getBlueprintOrganizationId()} were not found`
       );
