@@ -1,5 +1,3 @@
-/* eslint-disable max-len */
-/* cSpell:disable */
 import { expect } from 'chai';
 import * as sinon from 'sinon';
 
@@ -8,7 +6,7 @@ import { NotificationTemplateRepository, EnvironmentRepository } from '@novu/dal
 import { GroupedBlueprintResponse } from '../dto/grouped-blueprint.response.dto';
 import { CreateNotificationTemplateRequestDto } from '../../notification-template/dto';
 import { EmailBlockTypeEnum, FilterPartTypeEnum, INotificationTemplate, StepTypeEnum } from '@novu/shared';
-import { GetGroupedBlueprints, POPULAR_TEMPLATES_GROUPED } from '../usecases/get-grouped-blueprints';
+import { GetGroupedBlueprints, POPULAR_TEMPLATES_ID_LIST } from '../usecases/get-grouped-blueprints';
 import * as blueprintStaticModule from '../usecases/get-grouped-blueprints/consts';
 import {
   buildGroupedBlueprintsKey,
@@ -33,7 +31,7 @@ describe('Get grouped notification template blueprints - /blueprints/group-by-ca
     await session.initialize();
 
     getGroupedBlueprints = new GetGroupedBlueprints(new NotificationTemplateRepository());
-    indexModuleStub = sinon.stub(blueprintStaticModule, 'POPULAR_TEMPLATES_GROUPED');
+    indexModuleStub = sinon.stub(blueprintStaticModule, 'POPULAR_TEMPLATES_ID_LIST');
   });
 
   afterEach(() => {
@@ -99,53 +97,6 @@ describe('Get grouped notification template blueprints - /blueprints/group-by-ca
     expect(updatedGroupedBluePrints[1].name).to.equal(categoryName);
   });
 
-  it('should get the popular blueprints', async function () {
-    const prodEnv = await getProductionEnvironment();
-
-    await createTemplateFromBlueprint({ session, notificationTemplateRepository, prodEnv });
-
-    const data = await session.testAgent.get(`/v1/blueprints/group-by-category`).send();
-
-    expect(data.statusCode).to.equal(200);
-
-    const groupedPopularBlueprints = (data.body.data as GroupedBlueprintResponse).popular;
-
-    expect(groupedPopularBlueprints.name).to.equal('Popular');
-
-    // validate all templates are blueprint
-    for (const blueprint of groupedPopularBlueprints.blueprints) {
-      expect(blueprint.isBlueprint).to.equal(true);
-    }
-
-    // validate blueprint have valid params
-    expect(groupedPopularBlueprints.blueprints[0].name).to.equal(':fa-regular fa-message: Comments');
-    expect(groupedPopularBlueprints.blueprints[0].description).to.equal(
-      'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!'
-    );
-    expect(groupedPopularBlueprints.blueprints[0].steps).to.exist;
-
-    // validate blueprint step have valid params
-    expect(groupedPopularBlueprints.blueprints[0].steps[0].name).to.equal('Digest');
-    expect(groupedPopularBlueprints.blueprints[0].steps[0].template).to.exist;
-    expect(groupedPopularBlueprints.blueprints[0].steps[0].template?.type).to.equal(StepTypeEnum.DIGEST);
-    expect(groupedPopularBlueprints.blueprints[0].steps[0].template?.content).to.equal('');
-  });
-
-  it('should return mocked POPULAR_TEMPLATES_GROUPED', async () => {
-    process.env.BLUEPRINT_CREATOR = session.organization._id;
-
-    const mockedValue = POPULAR_TEMPLATES_GROUPED;
-    indexModuleStub.value(mockedValue);
-
-    const data = await session.testAgent.get(`/v1/blueprints/group-by-category`).send();
-
-    expect(data.statusCode).to.equal(200);
-
-    const groupedPopularBlueprints = (data.body.data as GroupedBlueprintResponse).popular;
-
-    expect(groupedPopularBlueprints).to.deep.equal(mockedValue);
-  });
-
   it('should update the static POPULAR_TEMPLATES_GROUPED with fresh data', async () => {
     const prodEnv = await getProductionEnvironment();
     await createTemplateFromBlueprint({ session, notificationTemplateRepository, prodEnv });
@@ -158,8 +109,8 @@ describe('Get grouped notification template blueprints - /blueprints/group-by-ca
 
     // switch id from db store - to mock blueprint id
     const storeBlueprintTemplateId = blueprintFromDb._id?.toString();
-    const mockedValue = POPULAR_TEMPLATES_GROUPED;
-    mockedValue.blueprints[0]._id = storeBlueprintTemplateId;
+    const mockedValue = POPULAR_TEMPLATES_ID_LIST;
+    mockedValue[0] = storeBlueprintTemplateId || '';
 
     indexModuleStub.value(mockedValue);
 

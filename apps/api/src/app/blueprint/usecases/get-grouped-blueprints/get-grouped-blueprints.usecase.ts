@@ -4,7 +4,7 @@ import { buildGroupedBlueprintsKey, CachedEntity } from '@novu/application-gener
 import { INotificationTemplate, IGroupedBlueprint } from '@novu/shared';
 
 import { GroupedBlueprintResponse } from '../../dto/grouped-blueprint.response.dto';
-import { POPULAR_TEMPLATES_GROUPED } from './index';
+import { POPULAR_GROUPED_NAME, POPULAR_TEMPLATES_ID_LIST } from './index';
 
 const WEEK_IN_SECONDS = 60 * 60 * 24 * 7;
 
@@ -21,7 +21,7 @@ export class GetGroupedBlueprints {
 
     const updatePopularBlueprints = this.updatePopularBlueprints(groups);
 
-    const popular = { name: POPULAR_TEMPLATES_GROUPED.name, blueprints: updatePopularBlueprints };
+    const popular = { name: POPULAR_GROUPED_NAME, blueprints: updatePopularBlueprints };
 
     return { general: groups as IGroupedBlueprint[], popular };
   }
@@ -52,12 +52,12 @@ export class GetGroupedBlueprints {
   ): INotificationTemplate[] {
     const storedBlueprints = this.extractStoredBlueprints(groups);
 
-    const localPopularBlueprints = { ...POPULAR_TEMPLATES_GROUPED };
+    const localPopularIds = [...POPULAR_TEMPLATES_ID_LIST];
 
-    return localPopularBlueprints.blueprints.map((localBlueprint) => {
-      const storedBlueprint = storedBlueprints.find((blueprint) => blueprint._id === localBlueprint._id);
+    return localPopularIds.map((localBlueprintId) => {
+      const storedBlueprint = storedBlueprints.find((blueprint) => blueprint._id === localBlueprintId);
 
-      return (storedBlueprint ? storedBlueprint : localBlueprint) as INotificationTemplate;
+      return (storedBlueprint ? storedBlueprint : localBlueprintId) as INotificationTemplate;
     });
   }
 }
