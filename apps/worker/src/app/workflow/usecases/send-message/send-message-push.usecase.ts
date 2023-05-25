@@ -1,35 +1,35 @@
 import { Injectable } from '@nestjs/common';
-import * as Sentry from '@sentry/node';
 import {
+  CompileTemplate,
+  CompileTemplateCommand,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+  DetailEnum,
+  GetDecryptedIntegrations,
+  GetDecryptedIntegrationsCommand,
+  InstrumentUsecase,
+  PushFactory,
+} from '@novu/application-generic';
+import {
+  IntegrationEntity,
+  MessageEntity,
   MessageRepository,
   NotificationStepEntity,
   SubscriberRepository,
-  MessageEntity,
-  IntegrationEntity,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
-  LogCodeEnum,
-  PushProviderIdEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  LogCodeEnum,
+  PushProviderIdEnum,
 } from '@novu/shared';
-import {
-  InstrumentUsecase,
-  DetailEnum,
-  CreateExecutionDetails,
-  CreateExecutionDetailsCommand,
-  GetDecryptedIntegrations,
-  GetDecryptedIntegrationsCommand,
-  CompileTemplate,
-  CompileTemplateCommand,
-  PushFactory,
-} from '@novu/application-generic';
+import * as Sentry from '@sentry/node';
 
 import { CreateLog } from '../../../shared/logs';
-import { SendMessageCommand } from './send-message.command';
-import { SendMessageBase } from './send-message.base';
 import { PlatformException } from '../../../shared/utils';
+import { SendMessageBase } from './send-message.base';
+import { SendMessageCommand } from './send-message.command';
 
 @Injectable()
 export class SendMessagePush extends SendMessageBase {
@@ -155,7 +155,7 @@ export class SendMessagePush extends SendMessageBase {
         continue;
       }
 
-      const overrides = command.overrides[integration.providerId] || {};
+      const overrides = Object.assign(command.overrides, command.overrides[integration.providerId]);
 
       await this.sendMessage(
         integration,

@@ -30,6 +30,8 @@ await novu.subscribers.setCredentials('subscriberId', PushProviderIdEnum.OneSign
 });
 ```
 
+If your user have multiple devices and you want to leave the device-to-user relationship to OneSignal, you can use `externalUserIds` override to send push notifications to target [external_user_ids](https://documentation.onesignal.com/docs/external-user-ids) and skip the registration of [player_id](https://documentation.onesignal.com/docs/users#player-id) as `deviceToken` in Novu. You must set `external_user_ids` with OneSignal [setExternalUserId](https://documentation.onesignal.com/docs/external-user-ids#setexternaluserid-method) method to associate multiple `player_id` with `external_user_id` in your client first.
+
 ## SDK Trigger Example
 
 ```ts
@@ -43,6 +45,28 @@ novu.trigger('event-name', {
   },
   payload: {
     abc: 'def', // If the notification is a data notification, the payload will be sent as the data
+  },
+});
+```
+
+### SDK Trigger with `externalUserIds` override Example
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu(process.env.NOVU_API_KEY);
+
+novu.trigger('event-name', {
+  to: {
+    subscriberId: '...',
+  },
+  payload: {
+    abc: 'def', // If the notification is a data notification, the payload will be sent as the data
+  },
+  overrides: {
+    'one-signal': {
+      externalUserIds: ['external_user_ids'],
+    },
   },
 });
 ```

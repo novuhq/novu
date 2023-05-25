@@ -61,7 +61,7 @@ export type ITriggerOverrides = {
 } & {
   [key in 'apns']?: ITriggerOverrideAPNS;
 } & {
-  [key in 'onesignal']?: ITriggerOverrideOneSignal;
+  [key in 'one-signal']?: ITriggerOverrideOneSignal;
 } & {
   [key in 'delay']?: ITriggerOverrideDelayAction;
 } & {
@@ -132,7 +132,7 @@ export type ITriggerOverrideAPNS = {
 };
 
 export type ITriggerOverrideOneSignal = {
-  externalIds?: string[];
+  externalUserIds?: string[];
 };
 
 export interface IBulkEvents extends ITriggerPayloadOptions {
