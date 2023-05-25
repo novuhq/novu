@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import styled from '@emotion/styled/macro';
 import { Title, Text, Grid, Stack, useMantineColorScheme } from '@mantine/core';
 import { useMutation } from '@tanstack/react-query';
@@ -14,19 +14,16 @@ import { errorMessage, successMessage } from '../../../utils/notifications';
 export const NovuInAppForm = ({
   provider,
   showModal,
-  isActive,
-  setIsActive,
 }: {
   provider: IIntegratedProvider | null;
   showModal: (visible: boolean) => void;
-  isActive: boolean;
-  setIsActive: any;
 }) => {
   const { colorScheme } = useMantineColorScheme();
-  const { handleSubmit, setValue, control, watch } = useForm({
+  const { handleSubmit, control, watch } = useForm({
     shouldUseNativeValidation: false,
   });
   const hmac = watch('hmac');
+  const isActive = watch('active');
 
   const { mutateAsync: updateIntegrationApi, isLoading: isLoadingUpdate } = useMutation<
     { res: string },
@@ -51,11 +48,11 @@ export const NovuInAppForm = ({
     return credential.value === 'true';
   }, [provider?.credentials]);
 
-  const onSubmit = async (credentials) => {
+  const onSubmit = async (values) => {
     try {
       await updateIntegrationApi({
         integrationId: provider?.integrationId ?? '',
-        data: { credentials, active: isActive, check: false },
+        data: { credentials: { hmac: values.hmac }, active: values.active, check: false },
       });
       successMessage('Successfully updated integration');
 
@@ -138,12 +135,11 @@ export const NovuInAppForm = ({
         </WarningMessage>
       </When>
       <ActiveWrapper active={isActive}>
-        <Switch
-          checked={isActive}
-          data-test-id="is_active_id"
-          onChange={() => {
-            setIsActive((prev) => !prev);
-          }}
+        <Controller
+          control={control}
+          name="active"
+          defaultValue={!!provider?.active}
+          render={({ field }) => <Switch checked={field.value} data-test-id="is_active_id" onChange={field.onChange} />}
         />
         <StyledText data-test-id="connect-integration-form-active-text">{isActive ? 'Active' : 'Disabled'}</StyledText>
       </ActiveWrapper>

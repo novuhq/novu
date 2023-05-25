@@ -2,7 +2,6 @@ import { Center, Loader } from '@mantine/core';
 import { ChannelTypeEnum } from '@novu/shared';
 import { useState } from 'react';
 import { colors } from '../../../design-system';
-import { useIntegrations } from '../../../hooks';
 import { IIntegratedProvider, IntegrationsStoreModal } from '../../integrations/IntegrationsStoreModal';
 import { useProviders } from '../../integrations/useProviders';
 import { ListProviders } from './ListProviders';
@@ -10,8 +9,7 @@ import { SubPageWrapper } from './SubPageWrapper';
 import { WorkflowSettingsTabs } from './WorkflowSettingsTabs';
 
 export function ProvidersPage() {
-  const { loading: isLoading } = useIntegrations({ refetchOnMount: false });
-  const { emailProviders, smsProvider, chatProvider, pushProvider, inAppProvider } = useProviders();
+  const { emailProviders, smsProvider, chatProvider, pushProvider, inAppProvider, isLoading } = useProviders();
   const [configureChannel, setConfigureChannel] = useState<ChannelTypeEnum | undefined>(undefined);
   const [provider, setProvider] = useState<IIntegratedProvider | null>(null);
 

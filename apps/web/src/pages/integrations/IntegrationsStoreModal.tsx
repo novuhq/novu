@@ -11,7 +11,7 @@ import {
   SmsProviderIdEnum,
 } from '@novu/shared';
 
-import { useAuthController, useEnvController, useIntegrations } from '../../hooks';
+import { useAuthController, useEnvController } from '../../hooks';
 import { When } from '../../components/utils/When';
 import { NovuEmailProviderModal } from './components/NovuEmailProviderModal';
 import { NovuInAppProviderModal } from './components/NovuInAppProviderModal';
@@ -38,8 +38,7 @@ export function IntegrationsStoreModal({
   const segment = useSegment();
   const { environment } = useEnvController();
   const { organization } = useAuthController();
-  const { loading: isLoading } = useIntegrations({ refetchOnMount: false });
-  const { emailProviders, smsProvider, chatProvider, pushProvider, inAppProvider } = useProviders();
+  const { emailProviders, smsProvider, chatProvider, pushProvider, inAppProvider, isLoading } = useProviders();
   const [isFormOpened, setFormIsOpened] = useState(false);
   const [isCreateIntegrationModal, setIsCreateIntegrationModal] = useState(false);
   const [provider, setProvider] = useState<IIntegratedProvider | null>(null);

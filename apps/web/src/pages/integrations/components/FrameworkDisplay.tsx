@@ -88,30 +88,32 @@ export const FrameworkDisplay = ({ setFramework }: { setFramework: (framework: s
         </UnstyledButton>
       </Group>
       <Group spacing={16} mt={16} grow>
-        <UnstyledButton
+        <a
+          href="https://docs.novu.co/notification-center/web-component/"
           onClick={() => {
-            window.open('https://docs.novu.co/notification-center/web-component/');
             setFramework('');
           }}
-          sx={itemStyle}
+          target="_blank"
+          style={itemStyle}
           data-test-id="in-app-select-framework-web-component"
         >
           <Group noWrap spacing={12}>
             <JsGradient /> <Text truncate="end">Web Component</Text>
           </Group>
-        </UnstyledButton>
-        <UnstyledButton
+        </a>
+        <a
+          href="https://docs.novu.co/notification-center/headless/headless-service/"
           onClick={() => {
-            window.open('https://docs.novu.co/notification-center/headless/headless-service/');
             setFramework('');
           }}
-          sx={itemStyle}
+          target="_blank"
+          style={itemStyle}
           data-test-id="in-app-select-framework-headless"
         >
           <Group spacing={12}>
             <JsGradient /> Headless
           </Group>
-        </UnstyledButton>
+        </a>
         <UnstyledButton
           onClick={() => {
             setFramework(FrameworkEnum.JS);

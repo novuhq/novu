@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react';
 import styled from '@emotion/styled/macro';
 import { Accordion, Box, Center, Loader, useMantineTheme } from '@mantine/core';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ChannelTypeEnum, ICredentialsDto } from '@novu/shared';
 import { colors } from '../../../design-system';
 import { Close } from '../../../design-system/icons/actions/Close';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
 import { createIntegration } from '../../../api/integration';
-import { useIntegrations } from '../../../hooks';
 import { SetupTimeline } from '../../quick-start/components/SetupTimeline';
 import { NovuInAppForm } from './NovuInAppForm';
 import { When } from '../../../components/utils/When';
@@ -15,6 +14,7 @@ import { InAppSelectFramework } from './InAppSelectFramework';
 import { Faq } from '../../quick-start/components/QuickStartWrapper';
 import { SetupFrameworkHeader } from './SetupFrameworkHeader';
 import { FrameworkDisplay } from './FrameworkDisplay';
+import { QueryKeys } from '../../../api/query.keys';
 
 export const NovuInAppProviderModal = ({
   onClose,
@@ -25,13 +25,12 @@ export const NovuInAppProviderModal = ({
   provider: IIntegratedProvider | null;
   showModal: (visible: boolean) => void;
 }) => {
-  const { refetch } = useIntegrations();
   const [provider, setProvider] = useState<IIntegratedProvider | null>(defaultProvider);
-  const [isActive, setIsActive] = useState<boolean>(!!provider?.active);
   const [framework, setFramework] = useState('');
   const [page, setPage] = useState<'setup' | 'form' | 'framework'>('form');
   const [created, setCreated] = useState(false);
   const theme = useMantineTheme();
+  const queryClient = useQueryClient();
 
   const { mutateAsync: createIntegrationApi, isLoading } = useMutation<
     { _id: string; active: boolean },
@@ -50,9 +49,11 @@ export const NovuInAppProviderModal = ({
       setProvider({
         ...(provider as IIntegratedProvider),
         integrationId: data._id,
+        active: data.active,
       });
-      setIsActive(data.active);
-      refetch();
+      queryClient.setQueryData([QueryKeys.integrationsList], (oldData: any[] | undefined) => {
+        return [...(oldData || []), data];
+      });
     },
   });
 
@@ -103,7 +104,7 @@ export const NovuInAppProviderModal = ({
           <CloseButton data-test-id="connection-integration-close" type="button" onClick={onClose}>
             <Close />
           </CloseButton>
-          <NovuInAppForm isActive={isActive} setIsActive={setIsActive} provider={provider} showModal={showModal} />
+          <NovuInAppForm provider={provider} showModal={showModal} />
           <Accordion mt={-24}>
             <Accordion.Item
               value="framework-selection"
