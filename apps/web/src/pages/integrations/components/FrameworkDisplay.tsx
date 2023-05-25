@@ -15,7 +15,7 @@ export const FrameworkDisplay = ({ setFramework }: { setFramework: (framework: s
   const { environment } = useEnvController();
   const theme = useMantineTheme();
   const clipboardEnvironmentIdentifier = useClipboard({ timeout: 1000 });
-  const environmentIdentifier = environment?.identifier ? environment.identifier : '';
+  const environmentIdentifier = environment?.identifier ?? '';
 
   const itemStyle = {
     background: theme.colorScheme === 'dark' ? colors.B17 : colors.B98,
