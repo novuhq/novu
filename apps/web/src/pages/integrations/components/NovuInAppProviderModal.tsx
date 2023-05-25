@@ -1,6 +1,6 @@
 import styled from '@emotion/styled/macro';
 import { colors } from '../../../design-system';
-import { Box, Center, Group, Loader, Text, UnstyledButton } from '@mantine/core';
+import { Accordion, Box, Center, Loader } from '@mantine/core';
 import { Close } from '../../../design-system/icons/actions/Close';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
 import { useEffect, useState } from 'react';
@@ -14,7 +14,7 @@ import { When } from '../../../components/utils/When';
 import { InAppSelectFramework } from './InAppSelectFramework';
 import { Faq } from '../../quick-start/components/QuickStartWrapper';
 import { SetupFrameworkHeader } from './SetupFrameworkHeader';
-import { ArrowLeft } from '../../../design-system/icons';
+import { FrameworkDisplay } from './FrameworkDisplay';
 
 export const NovuInAppProviderModal = ({
   onClose,
@@ -83,24 +83,6 @@ export const NovuInAppProviderModal = ({
       </When>
       <When truthy={!isLoading}>
         <When truthy={page === 'framework'}>
-          <When truthy={!created}>
-            <UnstyledButton
-              mb={16}
-              onClick={() => {
-                setPage('form');
-              }}
-            >
-              <Group
-                spacing={8}
-                sx={{
-                  color: colors.B60,
-                }}
-              >
-                <ArrowLeft />
-                Go Back
-              </Group>
-            </UnstyledButton>
-          </When>
           <CloseButton data-test-id="connection-integration-close" type="button" onClick={onClose}>
             <Close />
           </CloseButton>
@@ -121,26 +103,36 @@ export const NovuInAppProviderModal = ({
             <Close />
           </CloseButton>
           <NovuInAppForm isActive={isActive} setIsActive={setIsActive} provider={provider} showModal={showModal} />
-          <Text color={colors.B60}>
-            <UnstyledButton
+          <Accordion mt={-24}>
+            <Accordion.Item
+              value="framework-selection"
               sx={{
-                color: colors.error,
-                lineHeight: 1,
-              }}
-              onClick={() => {
-                setPage('framework');
-                setFramework('');
+                borderBottom: 0,
+                marginBottom: 0,
               }}
             >
-              Discover a guide
-            </UnstyledButton>{' '}
-            of how to Integrate In-App using any framework
-          </Text>
+              <Accordion.Control>Discover a guide of how to Integrate In-App using any framework</Accordion.Control>
+              <Accordion.Panel>
+                <FrameworkDisplay
+                  setFramework={(newFramework) => {
+                    if (newFramework.length === 0) {
+                      return;
+                    }
+                    setFramework(newFramework);
+                    setPage('setup');
+                  }}
+                />
+                <Box mt={24}>
+                  <Faq />
+                </Box>
+              </Accordion.Panel>
+            </Accordion.Item>
+          </Accordion>
         </When>
         <When truthy={page === 'setup'}>
           <SetupFrameworkHeader
             onGoBack={() => {
-              setPage('framework');
+              setPage(created ? 'framework' : 'form');
               setFramework('');
             }}
             onClose={onClose}
