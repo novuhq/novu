@@ -1,23 +1,10 @@
 import { Title, Text, UnstyledButton, useMantineTheme } from '@mantine/core';
-import { useClipboard } from '@mantine/hooks';
 import { colors } from '@novu/notification-center';
-import { useEnvController } from '../../../hooks';
 import { Faq } from '../../quick-start/components/QuickStartWrapper';
 import { FrameworkDisplay } from './FrameworkDisplay';
 
 export const InAppSelectFramework = ({ setFramework }: { setFramework: (framework: string) => void }) => {
-  const { environment } = useEnvController();
   const theme = useMantineTheme();
-  const clipboardEnvironmentIdentifier = useClipboard({ timeout: 1000 });
-  const environmentIdentifier = environment?.identifier ? environment.identifier : '';
-
-  const itemStyle = {
-    background: theme.colorScheme === 'dark' ? colors.B17 : colors.B98,
-    borderRadius: 8,
-    padding: 16,
-    lineHeight: '20px',
-    fontSize: '14px',
-  };
 
   return (
     <>
