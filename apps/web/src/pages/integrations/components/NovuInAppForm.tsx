@@ -37,11 +37,15 @@ export const NovuInAppForm = ({
     }
   >(({ integrationId, data }) => updateIntegration(integrationId, data));
 
-  const hmacdefaultValue = useMemo(() => {
+  const hmacDefaultValue = useMemo(() => {
     const credential = provider?.credentials?.find((item) => item.key === 'hmac');
 
     if (!credential) {
       return false;
+    }
+
+    if (typeof credential.value === 'boolean') {
+      return credential.value;
     }
 
     return credential.value === 'true';
@@ -100,7 +104,7 @@ export const NovuInAppForm = ({
               <Controller
                 control={control}
                 name="hmac"
-                defaultValue={hmacdefaultValue}
+                defaultValue={hmacDefaultValue}
                 render={({ field }) => (
                   <Switch
                     data-test-id="connect-integration-in-app-hmac"

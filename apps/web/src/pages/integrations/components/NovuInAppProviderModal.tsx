@@ -142,21 +142,21 @@ export const NovuInAppProviderModal = ({
           />
           <div
             style={{
-              marginTop: 97,
+              height: 97,
             }}
-          >
-            <SetupTimeline
-              framework={framework}
-              onDone={() => {
-                setCreated(false);
-                setPage('form');
-              }}
-              onConfigureLater={() => {
-                setCreated(false);
-                setPage('form');
-              }}
-            />
-          </div>
+          />
+          <SetupTimeline
+            framework={framework}
+            onDone={() => {
+              setCreated(false);
+              setPage('form');
+            }}
+            onConfigureLater={() => {
+              setCreated(false);
+              setPage('form');
+            }}
+          />
+
           <Box ml={70}>
             <Faq />
           </Box>

@@ -96,8 +96,8 @@ export const FrameworkDisplay = ({ setFramework }: { setFramework: (framework: s
           sx={itemStyle}
           data-test-id="in-app-select-framework-web-component"
         >
-          <Group spacing={12}>
-            <JsGradient /> Web Component
+          <Group noWrap spacing={12}>
+            <JsGradient /> <Text truncate="end">Web Component</Text>
           </Group>
         </UnstyledButton>
         <UnstyledButton
