@@ -14,7 +14,7 @@ export function NotificationCenterWidget({ user }: { user: IUserEntity | undefin
         backendUrl={API_ROOT}
         socketUrl={WS_URL}
         subscriberId={user?._id as string}
-        applicationIdentifier={environment?.identifier as string}
+        applicationIdentifier={process.env.REACT_APP_NOVU_APP_ID || (environment?.identifier as string)}
       >
         <PopoverWrapper />
       </NovuProvider>
