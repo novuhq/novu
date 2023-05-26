@@ -2,7 +2,7 @@ import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useFlags } from 'launchdarkly-react-client-sdk';
 
 const prepareBooleanStringFeatureFlag = (value: string | undefined, defaultValue: boolean): boolean => {
-  const preparedValue = value == 'true';
+  const preparedValue = value === 'true';
 
   return preparedValue || defaultValue;
 };
