@@ -10,6 +10,8 @@ interface IQueryKeys {
   activeNotificationsList: string;
   integrationsList: string;
   blueprintsList: string;
+  getApiKeys: string;
+  getInAppActive: string;
   getTemplateById: (templateId?: string) => string;
 }
 
@@ -25,5 +27,7 @@ export const QueryKeys: IQueryKeys = Object.freeze({
   activeNotificationsList: 'activeNotificationsList',
   integrationsList: 'integrationsList',
   blueprintsList: 'blueprintsList',
+  getApiKeys: 'getApiKeys',
+  getInAppActive: 'inAppActive',
   getTemplateById: (templateId?: string) => `notificationById:${templateId}`,
 });

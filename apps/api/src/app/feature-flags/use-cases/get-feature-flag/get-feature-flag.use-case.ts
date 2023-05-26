@@ -1,15 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { EnvironmentWithUserCommand } from '@novu/application-generic';
 
-import { GetFeatureFlagCommand } from './get-feature-flag.command';
+import { GetFeatureFlagCommand, FeatureFlagCommand } from './get-feature-flag.command';
 
 import { FeatureFlagsService } from '../../services';
+import { FeatureFlagsKeysEnum } from '../../types';
 
 @Injectable()
 export class GetFeatureFlag {
   constructor(private featureFlagsService: FeatureFlagsService) {}
 
-  async execute(command: GetFeatureFlagCommand): Promise<void> {
-    const { key, environmentId, organizationId, userId } = command;
+  async execute<T>(command: GetFeatureFlagCommand<T>): Promise<T> {
+    const { defaultValue, key, environmentId, organizationId, userId } = command;
 
     const context = {
       environmentId,
@@ -17,7 +19,35 @@ export class GetFeatureFlag {
       userId,
     };
 
-    // TODO: The type needs to be dynamic. String so far by default
-    await this.featureFlagsService.get(key, context, '');
+    return await this.featureFlagsService.get(key, defaultValue, context);
+  }
+
+  async isTemplateStoreEnabled(featureFlagCommand: FeatureFlagCommand): Promise<boolean> {
+    const value = process.env.IS_TEMPLATE_STORE_ENABLED;
+    const fallbackValue = false;
+    const defaultValue = this.prepareBooleanStringFeatureFlag(value, fallbackValue);
+    const key = FeatureFlagsKeysEnum.IS_TEMPLATE_STORE_ENABLED;
+
+    const command = this.buildCommand(featureFlagCommand, key, defaultValue);
+
+    return await this.execute(command);
+  }
+
+  private buildCommand<T>(
+    command: FeatureFlagCommand,
+    key: FeatureFlagsKeysEnum,
+    defaultValue: T
+  ): GetFeatureFlagCommand<T> {
+    return {
+      ...command,
+      defaultValue,
+      key,
+    };
+  }
+
+  private prepareBooleanStringFeatureFlag(value: string | undefined, defaultValue: boolean): boolean {
+    const preparedValue = value == 'true';
+
+    return preparedValue || defaultValue;
   }
 }

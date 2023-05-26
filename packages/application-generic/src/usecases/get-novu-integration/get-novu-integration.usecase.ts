@@ -98,7 +98,7 @@ export class GetNovuIntegration {
       case ChannelTypeEnum.EMAIL:
         return this.createNovuEmailIntegration(organization);
       case ChannelTypeEnum.SMS:
-        return this.createNovuSMSIntegration(organization);
+        return this.createNovuSMSIntegration();
       default:
         return undefined;
     }
@@ -122,9 +122,7 @@ export class GetNovuIntegration {
     return item;
   }
 
-  private createNovuSMSIntegration(
-    organization: OrganizationEntity | null
-  ): IntegrationEntity {
+  private createNovuSMSIntegration(): IntegrationEntity {
     const item = new IntegrationEntity();
     item.providerId = SmsProviderIdEnum.Novu;
     item.active = true;
@@ -140,7 +138,12 @@ export class GetNovuIntegration {
   }
 
   public static mapProviders(type: ChannelTypeEnum, providerId: string) {
-    if (![EmailProviderIdEnum.Novu.toString()].includes(providerId)) {
+    if (
+      ![
+        EmailProviderIdEnum.Novu.toString(),
+        SmsProviderIdEnum.Novu.toString(),
+      ].includes(providerId)
+    ) {
       return providerId;
     }
 
