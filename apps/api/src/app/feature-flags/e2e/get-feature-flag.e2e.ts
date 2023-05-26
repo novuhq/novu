@@ -76,7 +76,6 @@ describe('Get Feature Flag', () => {
          when the SDK key env variable is set regardless of the feature flag set`, async () => {
         process.env.IS_TEMPLATE_STORE_ENABLED = 'false';
 
-        console.log(originalLaunchDarklySdkKey.startsWith('sdk-c66'));
         const result = await getFeatureFlag.isTemplateStoreEnabled(featureFlagCommand);
 
         expect(result).to.equal(true);
