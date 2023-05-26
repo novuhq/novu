@@ -15,10 +15,12 @@ export const AngularGradient = () => {
           fill="url(#paint1_linear_263_2791)"
         />
         <path
+          // eslint-disable-next-line max-len
           d="M15.0773 12.7L12.2713 14.0182H9.31387L7.92367 17.5114L5.33789 17.5594L12.2713 2.06421L15.0773 12.7001V12.7ZM14.806 12.0363L12.29 7.03241L10.2261 11.9502H12.2712L14.806 12.0364V12.0363Z"
           fill="white"
         />
         <path
+          // eslint-disable-next-line max-len
           d="M12.2711 2.06396L12.2897 7.03225L14.6315 11.9539H12.2764L12.2711 14.0148L15.5277 14.0179L17.0497 17.5598L19.5239 17.6058L12.2711 2.06396Z"
           fill="#BEBECC"
         />
