@@ -683,3 +683,12 @@ export const africasTalkingConfig: IConfigCredentials[] = [
   },
   ...smsConfigBase,
 ];
+
+export const novuInAppConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.Hmac,
+    displayName: 'Security HMAC encryption',
+    type: 'switch',
+    required: false,
+  },
+];

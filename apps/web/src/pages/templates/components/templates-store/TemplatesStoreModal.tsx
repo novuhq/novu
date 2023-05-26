@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { ReactFlowProvider } from 'react-flow-renderer';
 import { ActionIcon, Modal, useMantineTheme } from '@mantine/core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useNavigate } from 'react-router-dom';
 
 import { Button, colors, shadows } from '../../../../design-system';
-import { Close } from '../../../../design-system/icons/actions/Close';
+import { Close } from '../../../../design-system/icons';
 import {
   CanvasHolder,
   GroupName,
@@ -25,6 +26,13 @@ import { IBlueprintsGrouped } from '../../../../api/hooks';
 import { TriggerNode } from './TriggerNode';
 import { ChannelNode } from './ChannelNode';
 import { FlowEditor } from '../../../../components/workflow';
+import { useCreateTemplateFromBlueprint } from '../../../../api/hooks';
+import { errorMessage } from '../../../../utils/notifications';
+import { parseUrl } from '../../../../utils/routeUtils';
+import { ROUTES } from '../../../../constants/routes.enum';
+import { TemplateCreationSourceEnum } from '../../shared';
+import { useSegment } from '../../../../components/providers/SegmentProvider';
+import { IBlueprintTemplate } from '../../../../api/types';
 
 const nodeTypes = {
   triggerNode: TriggerNode,
@@ -32,15 +40,48 @@ const nodeTypes = {
 };
 
 export interface ITemplatesStoreModalProps {
-  groupedBlueprints: IBlueprintsGrouped[];
+  general: IBlueprintsGrouped[];
   isOpened: boolean;
   onClose: () => void;
 }
 
-export const TemplatesStoreModal = ({ groupedBlueprints, isOpened, onClose }: ITemplatesStoreModalProps) => {
+export const TemplatesStoreModal = ({ general, isOpened, onClose }: ITemplatesStoreModalProps) => {
   const theme = useMantineTheme();
   const { classes: modalClasses } = useStyles();
-  const [selectedTemplate, setTemplate] = useState(groupedBlueprints[0].templates[0]);
+  const navigate = useNavigate();
+  const [selectedTemplate, setTemplate] = useState(general[0].blueprints[0]);
+
+  const { createTemplateFromBlueprint, isLoading: isCreatingTemplateFromBlueprint } = useCreateTemplateFromBlueprint({
+    onSuccess: (template) => {
+      navigate(`${parseUrl(ROUTES.WORKFLOWS_EDIT_TEMPLATEID, { templateId: template._id ?? '' })}`);
+    },
+    onError: () => {
+      errorMessage('Something went wrong while creating template from blueprint, please try again later.');
+    },
+  });
+
+  const segment = useSegment();
+
+  const handleTemplateClick = (template: IBlueprintTemplate) => {
+    segment.track('[Template Store] Click Notification Template', {
+      templateIdentifier: template.triggers[0]?.identifier,
+      location: TemplateCreationSourceEnum.TEMPLATE_STORE,
+    });
+
+    setTemplate(template);
+  };
+
+  const handleCreateTemplateClick = (blueprint: IBlueprintTemplate) => {
+    segment.track('[Template Store] Click Create Notification Template', {
+      templateIdentifier: blueprint.triggers[0]?.identifier,
+      location: TemplateCreationSourceEnum.TEMPLATE_STORE,
+    });
+
+    createTemplateFromBlueprint({
+      blueprint: blueprint,
+      params: { __source: TemplateCreationSourceEnum.TEMPLATE_STORE },
+    });
+  };
 
   return (
     <Modal
@@ -61,12 +102,12 @@ export const TemplatesStoreModal = ({ groupedBlueprints, isOpened, onClose }: IT
     >
       <ModalBodyHolder>
         <TemplatesSidebarHolder>
-          {groupedBlueprints.map((group) => (
+          {general.map((group) => (
             <TemplatesGroup key={group.name}>
               <GroupName>{group.name}</GroupName>
-              {group.templates.map((template) => {
+              {group.blueprints.map((template) => {
                 return (
-                  <TemplateItem key={template.name} onClick={() => setTemplate(template)}>
+                  <TemplateItem key={template.name} onClick={() => handleTemplateClick(template)}>
                     <FontAwesomeIcon icon={template.iconName} />
                     <span>{template.name}</span>
                   </TemplateItem>
@@ -84,13 +125,14 @@ export const TemplatesStoreModal = ({ groupedBlueprints, isOpened, onClose }: IT
               </TemplateName>
               <TemplateDescription>{selectedTemplate.description}</TemplateDescription>
             </TemplateDetails>
-            <ActionIcon variant="transparent" onClick={onClose}>
+            <ActionIcon variant="transparent" onClick={onClose} sx={{ marginLeft: 'auto' }}>
               <Close />
             </ActionIcon>
           </TemplateHeader>
           <CanvasHolder>
             <ReactFlowProvider>
               <FlowEditor
+                key={selectedTemplate._id}
                 steps={selectedTemplate.steps}
                 nodeTypes={nodeTypes}
                 zoomOnScroll={false}
@@ -112,7 +154,15 @@ export const TemplatesStoreModal = ({ groupedBlueprints, isOpened, onClose }: IT
             </ReactFlowProvider>
             <NovuButtonHolder>
               <MadeByNovuStyled width={104} height={20} />
-              <Button>Use template</Button>
+              <Button
+                disabled={isCreatingTemplateFromBlueprint}
+                loading={isCreatingTemplateFromBlueprint}
+                onClick={() => {
+                  handleCreateTemplateClick(selectedTemplate);
+                }}
+              >
+                Use template
+              </Button>
             </NovuButtonHolder>
           </CanvasHolder>
         </TemplatesDetailsHolder>

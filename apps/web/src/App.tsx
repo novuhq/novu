@@ -185,9 +185,9 @@ function App() {
                 />
                 <Route element={<AppLayout />}>
                   <Route path={ROUTES.ANY} element={<HomePage />} />
-                  <Route path={ROUTES.TEMPLATES_DIGEST_PLAYGROUND} element={<TemplatesDigestPlaygroundPage />} />
-                  <Route path={ROUTES.TEMPLATES_CREATE} element={<TemplateEditorPage />} />
-                  <Route path={ROUTES.TEMPLATES_EDIT_TEMPLATEID} element={<TemplateEditorPage />}>
+                  <Route path={ROUTES.WORKFLOWS_DIGEST_PLAYGROUND} element={<TemplatesDigestPlaygroundPage />} />
+                  <Route path={ROUTES.WORKFLOWS_CREATE} element={<TemplateEditorPage />} />
+                  <Route path={ROUTES.WORKFLOWS_EDIT_TEMPLATEID} element={<TemplateEditorPage />}>
                     <Route path="" element={<Sidebar />} />
                     <Route path="settings" element={<TemplateSettings />} />
                     <Route path="channels" element={<UserPreference />} />
@@ -196,7 +196,7 @@ function App() {
                     <Route path="providers" element={<ProvidersPage />} />
                     <Route path=":channel/:stepUuid" element={<TemplateEditor />} />
                   </Route>
-                  <Route path={ROUTES.TEMPLATES} element={<NotificationList />} />
+                  <Route path={ROUTES.WORKFLOWS} element={<NotificationList />} />
                   <Route path={ROUTES.GET_STARTED} element={<GetStarted />} />
                   <Route path={ROUTES.GET_STARTED_PREVIEW} element={<DigestPreview />} />
                   <Route path={ROUTES.QUICK_START_NOTIFICATION_CENTER} element={<NotificationCenter />} />

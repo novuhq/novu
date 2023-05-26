@@ -6,13 +6,13 @@ import { ChannelPreference } from '../../shared/dtos/channel-preference';
 export class UpdateSubscriberPreferenceRequestDto {
   @ApiProperty({
     type: ChannelPreference,
-    description: 'The subscriber preferences for every ChannelTypeEnum for the notification template assigned.',
+    description: 'The subscriber preferences for every ChannelTypeEnum for the workflow assigned.',
   })
   @ValidateNested()
   channel?: ChannelPreference;
 
   @ApiPropertyOptional({
-    description: 'Sets if the notification template is fully enabled for all channels or not for the subscriber.',
+    description: 'Sets if the workflow is fully enabled for all channels or not for the subscriber.',
     type: Boolean,
   })
   @IsBoolean()

@@ -1,12 +1,16 @@
-import { ICreateNotificationTemplateDto } from '@novu/shared';
+import { ICreateNotificationTemplateDto, INotificationTemplate, IGroupedBlueprint } from '@novu/shared';
+
 import { api } from './api.client';
 import { CMS_ROOT_URL } from '../config';
 
 export function getNotificationsList(page = 0, limit = 10) {
   return api.getFullResponse(`/v1/notification-templates`, { page, limit });
 }
-export async function createTemplate(data: ICreateNotificationTemplateDto) {
-  return api.post(`/v1/notification-templates`, data);
+export async function createTemplate(
+  data: ICreateNotificationTemplateDto,
+  params?: { __source?: string }
+): Promise<INotificationTemplate> {
+  return api.post(`/v1/notification-templates`, data, params);
 }
 
 export async function updateTemplate(templateId: string, data: Partial<ICreateNotificationTemplateDto>) {
@@ -17,7 +21,10 @@ export async function getTemplateById(id: string) {
   return api.get(`/v1/notification-templates/${id}`);
 }
 
-export async function getBlueprintsGroupedByCategory() {
+export async function getBlueprintsGroupedByCategory(): Promise<{
+  general: IGroupedBlueprint[];
+  popular: IGroupedBlueprint;
+}> {
   return api.get(`${CMS_ROOT_URL}/v1/blueprints/group-by-category`, { absoluteUrl: true });
 }
 

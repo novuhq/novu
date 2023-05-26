@@ -6,6 +6,7 @@ import { CardStatusBar } from '../CardStatusBar';
 import { IIntegratedProvider } from '../../IntegrationsStorePage';
 import { LimitBar } from '../LimitBar';
 import { getGradient } from '../../../../design-system/config/helper';
+import { useIntegrationLimit } from '../../../../hooks';
 
 export function NovuIntegrationCard({
   provider,
@@ -25,6 +26,11 @@ export function NovuIntegrationCard({
     provider.credentials.some((cred: IConfigCredentials) => {
       return !cred.value;
     });
+
+  const {
+    data: { limit, count },
+    loading,
+  } = useIntegrationLimit(provider.channel);
 
   return (
     <StyledCard
@@ -47,10 +53,8 @@ export function NovuIntegrationCard({
           <Logo src={logoSrc} alt={provider.displayName} />
         </CardHeader>
         <CardFooter>
-          <LimitBar
-            channel={provider.channel}
-            label={`${provider.channel === ChannelTypeEnum.EMAIL ? 'Email' : 'Sms'} credits used`}
-          />
+          <LimitBar channel={provider.channel} limit={limit} count={count} loading={loading} />
+
           <div
             style={{
               marginTop: '10px',

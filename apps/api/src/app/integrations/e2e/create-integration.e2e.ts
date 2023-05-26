@@ -38,7 +38,7 @@ describe('Create Integration - /integration (POST)', function () {
   it('should create the sms and email integration successfully', async function () {
     const integrations = (await session.testAgent.get(`/v1/integrations`)).body.data;
 
-    expect(integrations.length).to.equal(5);
+    expect(integrations.length).to.equal(6);
 
     const emailIntegration = integrations.find((i) => i.channel.toString() === 'email');
     const smsIntegration = integrations.find((i) => i.channel.toString() === 'sms');
@@ -103,7 +103,7 @@ describe('Create Integration - /integration (POST)', function () {
       credentials: {
         host: 'smtp.example.com',
         port: '587',
-        secure: 'true',
+        secure: true,
         requireTls: true,
         tlsOptions: { rejectUnauthorized: false },
       },

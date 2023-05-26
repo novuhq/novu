@@ -19,8 +19,11 @@ import { TemplatesListNoData } from './TemplatesListNoData';
 import { useSegment } from '../../components/providers/SegmentProvider';
 import { TemplateAnalyticsEnum } from './constants';
 import { useTemplatesStoreModal } from './hooks/useTemplatesStoreModal';
-import { useFetchBlueprints } from '../../api/hooks/notification-templates/useFetchBlueprints';
+import { useFetchBlueprints, useCreateTemplateFromBlueprint } from '../../api/hooks';
 import { CreateWorkflowDropdown } from './components/CreateWorkflowDropdown';
+import { IBlueprintTemplate } from '../../api/types';
+import { errorMessage } from '../../utils/notifications';
+import { TemplateCreationSourceEnum } from './shared';
 
 function NotificationList() {
   const segment = useSegment();
@@ -30,14 +33,20 @@ function NotificationList() {
   const { templates, loading: isLoading, totalCount: totalTemplatesCount, pageSize } = useTemplates(page);
   const theme = useMantineTheme();
   const navigate = useNavigate();
-  const {
-    blueprintsGroupedAndPopular: { groupedBlueprints, popularBlueprints } = {},
-    isLoading: areBlueprintsLoading,
-  } = useFetchBlueprints();
-  const hasGroups = groupedBlueprints && groupedBlueprints.length > 0;
+  const { blueprintsGroupedAndPopular: { general, popular } = {}, isLoading: areBlueprintsLoading } =
+    useFetchBlueprints();
+  const { createTemplateFromBlueprint, isLoading: isCreatingTemplateFromBlueprint } = useCreateTemplateFromBlueprint({
+    onSuccess: (template) => {
+      navigate(`${parseUrl(ROUTES.WORKFLOWS_EDIT_TEMPLATEID, { templateId: template._id ?? '' })}`);
+    },
+    onError: () => {
+      errorMessage('Something went wrong while creating template from blueprint, please try again later.');
+    },
+  });
+  const hasGroups = general && general.length > 0;
   const hasTemplates = templates && templates.length > 0;
 
-  const { TemplatesStoreModal, openModal } = useTemplatesStoreModal({ groupedBlueprints });
+  const { TemplatesStoreModal, openModal } = useTemplatesStoreModal({ general });
 
   function handleTableChange(pageIndex) {
     setPage(pageIndex);
@@ -45,7 +54,14 @@ function NotificationList() {
 
   const handleRedirectToCreateTemplate = (isFromHeader: boolean) => {
     segment.track(TemplateAnalyticsEnum.CREATE_TEMPLATE_CLICK, { isFromHeader });
-    navigate(ROUTES.TEMPLATES_CREATE);
+    navigate(ROUTES.WORKFLOWS_CREATE);
+  };
+
+  const handleOnBlueprintClick = (blueprint: IBlueprintTemplate) => {
+    createTemplateFromBlueprint({
+      blueprint: { ...blueprint },
+      params: { __source: TemplateCreationSourceEnum.TEMPLATE_STORE },
+    });
   };
 
   const columns: ColumnWithStrictAccessor<Data>[] = [
@@ -106,7 +122,7 @@ function NotificationList() {
           <ActionIcon
             variant="transparent"
             component={Link}
-            to={parseUrl(ROUTES.TEMPLATES_EDIT_TEMPLATEID, { templateId: _id })}
+            to={parseUrl(ROUTES.WORKFLOWS_EDIT_TEMPLATEID, { templateId: _id })}
             data-test-id="template-edit-link"
           >
             <Edit color={theme.colorScheme === 'dark' ? colors.B40 : colors.B80} />
@@ -117,22 +133,23 @@ function NotificationList() {
   ];
 
   function onRowClick(row) {
-    navigate(parseUrl(ROUTES.TEMPLATES_EDIT_TEMPLATEID, { templateId: row.values._id }));
+    navigate(parseUrl(ROUTES.WORKFLOWS_EDIT_TEMPLATEID, { templateId: row.values._id }));
   }
 
   return (
     <PageContainer>
-      <PageMeta title="Templates" />
+      <PageMeta title="Workflows" />
       <PageHeader
-        title="Notification Template"
+        title="Workflows"
         actions={
           <CreateWorkflowDropdown
             readonly={readonly}
-            blueprints={popularBlueprints}
+            blueprints={popular?.blueprints}
             isLoading={areBlueprintsLoading}
+            isCreating={isCreatingTemplateFromBlueprint}
             allTemplatesDisabled={areBlueprintsLoading || !hasGroups}
             onBlankWorkflowClick={() => handleRedirectToCreateTemplate(false)}
-            onTemplateClick={() => {}}
+            onTemplateClick={handleOnBlueprintClick}
             onAllTemplatesClick={openModal}
           />
         }
@@ -155,11 +172,12 @@ function NotificationList() {
         ) : (
           <TemplatesListNoData
             readonly={readonly}
-            blueprints={popularBlueprints}
+            blueprints={popular?.blueprints}
             isLoading={areBlueprintsLoading}
+            isCreating={isCreatingTemplateFromBlueprint}
             allTemplatesDisabled={areBlueprintsLoading || !hasGroups}
             onBlankWorkflowClick={() => handleRedirectToCreateTemplate(false)}
-            onTemplateClick={() => {}}
+            onTemplateClick={handleOnBlueprintClick}
             onAllTemplatesClick={openModal}
           />
         )}
