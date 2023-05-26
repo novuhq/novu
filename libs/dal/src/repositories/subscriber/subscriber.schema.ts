@@ -156,7 +156,7 @@ subscriberSchema.index({
  *     _environmentId,
  *   });
  *
- * Path: apps/api/src/app/integrations/usecases/get-In-app-activated/get-In-app-activated.usecase.ts
+ * Path: apps/api/src/app/integrations/usecases/get-in-app-activated/get-in-app-activated.usecase.ts
  * Context: execute()
  * Query: count({
  *    _organizationId: command.organizationId,
