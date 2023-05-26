@@ -8,7 +8,7 @@ import { API_ROOT, ENV, IS_DOCKER_HOSTED, WS_URL } from '../../../config';
 import { colors, shadows, Text } from '../../../design-system';
 import { useEnvController } from '../../../hooks';
 import { PrismOnCopy } from '../../settings/tabs/components/Prism';
-import { SetupStatus } from '../components/SetupStatus';
+import { SetupStatus } from './SetupStatus';
 import { API_KEY, APPLICATION_IDENTIFIER, BACKEND_API_URL, BACKEND_SOCKET_URL, frameworkInstructions } from '../consts';
 import { QueryKeys } from '../../../api/query.keys';
 

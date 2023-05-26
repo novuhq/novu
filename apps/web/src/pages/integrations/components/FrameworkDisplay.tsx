@@ -93,6 +93,7 @@ export const FrameworkDisplay = ({ setFramework }: { setFramework: (framework: s
           onClick={() => {
             setFramework('');
           }}
+          rel="noreferrer"
           target="_blank"
           style={itemStyle}
           data-test-id="in-app-select-framework-web-component"
@@ -106,6 +107,7 @@ export const FrameworkDisplay = ({ setFramework }: { setFramework: (framework: s
           onClick={() => {
             setFramework('');
           }}
+          rel="noreferrer"
           target="_blank"
           style={itemStyle}
           data-test-id="in-app-select-framework-headless"
