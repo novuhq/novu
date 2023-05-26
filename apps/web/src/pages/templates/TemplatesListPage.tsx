@@ -49,7 +49,7 @@ function NotificationList() {
   const hasGroups = general && general.length > 0;
   const hasTemplates = templates && templates.length > 0;
 
-  const { TemplatesStoreModal, openModal } = useTemplatesStoreModal({ general });
+  const { TemplatesStoreModal, openModal } = useTemplatesStoreModal({ general, popular });
   const { createDigestDemoWorkflow, isDisabled: isTryDigestDisabled } = useCreateDigestDemoWorkflow();
   const isTemplateStoreEnabled = useIsTemplateStoreEnabled();
 

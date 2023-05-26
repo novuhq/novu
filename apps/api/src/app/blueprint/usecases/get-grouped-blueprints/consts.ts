@@ -1,14 +1,25 @@
 /* eslint-disable max-len */
 /* cSpell:disable */
-import { INotificationTemplate, StepTypeEnum } from '@novu/shared';
+import {
+  DigestTypeEnum,
+  DigestUnitEnum,
+  INotificationTemplate,
+  INotificationTemplateStep,
+  StepTypeEnum,
+} from '@novu/shared';
 
-const STEPS = [
+const STEPS: INotificationTemplateStep[] = [
   {
     _id: 'digest',
     name: 'Digest',
     template: {
       type: StepTypeEnum.DIGEST,
       content: '',
+    },
+    metadata: {
+      type: DigestTypeEnum.REGULAR,
+      amount: 5,
+      unit: DigestUnitEnum.MINUTES,
     },
   },
   {
@@ -19,18 +30,18 @@ const STEPS = [
       subject: 'Test subject',
       title: 'Test title',
       type: StepTypeEnum.EMAIL,
-      content: 'adsf',
+      content: 'Test content',
     },
   },
 ];
 
-const STEPS2 = [
+const STEPS2: INotificationTemplateStep[] = [
   {
     _id: 'in-app',
     name: 'In-App',
     template: {
       type: StepTypeEnum.IN_APP,
-      content: '',
+      content: 'Test content',
     },
   },
   {
@@ -40,14 +51,21 @@ const STEPS2 = [
       type: StepTypeEnum.DIGEST,
       content: '',
     },
+    metadata: {
+      type: DigestTypeEnum.REGULAR,
+      amount: 5,
+      unit: DigestUnitEnum.MINUTES,
+    },
   },
   {
     _id: 'email',
     name: 'Email',
     template: {
       name: 'Test email',
+      subject: 'Test subject',
+      title: 'Test title',
       type: StepTypeEnum.EMAIL,
-      content: 'adsf',
+      content: 'Test content',
     },
   },
   {
@@ -55,7 +73,7 @@ const STEPS2 = [
     name: 'Push',
     template: {
       type: StepTypeEnum.PUSH,
-      content: 'Test push',
+      content: 'Test content',
     },
   },
 ];

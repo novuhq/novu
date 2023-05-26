@@ -6,14 +6,23 @@ import { ITemplatesStoreModalProps, TemplatesStoreModal } from '../components/te
 
 const NULL_COMPONENT = () => null;
 
-export const useTemplatesStoreModal = ({ general = [] }: { general?: IBlueprintsGrouped[] }) => {
+export const useTemplatesStoreModal = ({
+  general = [],
+  popular,
+}: {
+  general?: IBlueprintsGrouped[];
+  popular?: IBlueprintsGrouped;
+}) => {
   const [opened, { open, close }] = useDisclosure(false);
   const isTemplateStoreEnabled = useIsTemplateStoreEnabled();
   const hasGroups = general && general.length > 0;
-  const isOpened = opened && hasGroups && isTemplateStoreEnabled;
+  const hasPopular = !!(popular && popular?.blueprints.length > 0);
+  const hasGroupsOrPopular = hasGroups || hasPopular;
+  const isOpened = opened && hasGroupsOrPopular && isTemplateStoreEnabled;
 
   const Component = useInlineComponent<ITemplatesStoreModalProps>(TemplatesStoreModal, {
     general,
+    popular: popular ? [popular] : [],
     isOpened,
     onClose: close,
   });
