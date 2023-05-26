@@ -1,12 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import styled from '@emotion/styled/macro';
 import { Accordion, Box, Center, Loader, useMantineTheme } from '@mantine/core';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ChannelTypeEnum, ICredentialsDto } from '@novu/shared';
 import { colors } from '../../../design-system';
 import { Close } from '../../../design-system/icons/actions/Close';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
-import { createIntegration } from '../../../api/integration';
 import { SetupTimeline } from '../../quick-start/components/SetupTimeline';
 import { NovuInAppForm } from './NovuInAppForm';
 import { When } from '../../../components/utils/When';
@@ -14,63 +11,22 @@ import { InAppSelectFramework } from './InAppSelectFramework';
 import { Faq } from '../../quick-start/components/QuickStartWrapper';
 import { SetupFrameworkHeader } from './SetupFrameworkHeader';
 import { FrameworkDisplay } from './FrameworkDisplay';
-import { QueryKeys } from '../../../api/query.keys';
 
 export const NovuInAppProviderModal = ({
   onClose,
-  provider: defaultProvider,
+  provider,
   showModal,
 }: {
   onClose: () => void;
   provider: IIntegratedProvider | null;
   showModal: (visible: boolean) => void;
 }) => {
-  const [provider, setProvider] = useState<IIntegratedProvider | null>(defaultProvider);
   const [framework, setFramework] = useState('');
-  const [page, setPage] = useState<'setup' | 'form' | 'framework'>('form');
-  const [created, setCreated] = useState(false);
+  const [page, setPage] = useState<'setup' | 'form' | 'framework'>(
+    provider?.integrationId === '' ? 'framework' : 'form'
+  );
+  const [created, setCreated] = useState(provider?.integrationId === '');
   const theme = useMantineTheme();
-  const queryClient = useQueryClient();
-
-  const { mutateAsync: createIntegrationApi, isLoading } = useMutation<
-    { _id: string; active: boolean },
-    { error: string; message: string; statusCode: number },
-    {
-      providerId: string;
-      channel: ChannelTypeEnum | null;
-      credentials: ICredentialsDto;
-      active: boolean;
-      check: boolean;
-    }
-  >(createIntegration, {
-    onSuccess: (data) => {
-      setCreated(true);
-      setPage('framework');
-      setProvider({
-        ...(provider as IIntegratedProvider),
-        integrationId: data._id,
-        active: data.active,
-      });
-      queryClient.setQueryData([QueryKeys.integrationsList], (oldData: any[] | undefined) => {
-        return [...(oldData || []), data];
-      });
-    },
-  });
-
-  useEffect(() => {
-    if (!provider || provider?.connected) {
-      return;
-    }
-    createIntegrationApi({
-      providerId: provider?.providerId ? provider?.providerId : '',
-      channel: provider?.channel ? provider?.channel : null,
-      credentials: {
-        hmac: false,
-      },
-      active: true,
-      check: false,
-    });
-  }, [provider?.connected]);
 
   return (
     <div
@@ -78,12 +34,12 @@ export const NovuInAppProviderModal = ({
         position: 'relative',
       }}
     >
-      <When truthy={isLoading}>
+      <When truthy={provider?.integrationId === ''}>
         <Center>
           <Loader color={colors.error} size={32} />
         </Center>
       </When>
-      <When truthy={!isLoading}>
+      <When truthy={provider?.integrationId !== ''}>
         <When truthy={page === 'framework'}>
           <CloseButton data-test-id="connection-integration-close" type="button" onClick={onClose}>
             <Close />

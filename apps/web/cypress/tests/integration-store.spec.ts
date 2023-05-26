@@ -1,4 +1,4 @@
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 
 describe('Integration store page', function () {
   beforeEach(function () {
@@ -31,7 +31,11 @@ describe('Integration store page', function () {
         { url: '*/integrations', method: 'post' },
         {
           data: {
+            integrationId: 'test',
+            createdAt: new Date().toISOString(),
             active: true,
+            channel: ChannelTypeEnum.IN_APP,
+            providerId: InAppProviderIdEnum.Novu,
           },
         }
       ).as('create-integration');
@@ -57,7 +61,11 @@ describe('Integration store page', function () {
         { url: '*/integrations', method: 'post' },
         {
           data: {
+            integrationId: 'test',
+            createdAt: new Date().toISOString(),
             active: true,
+            channel: ChannelTypeEnum.IN_APP,
+            providerId: InAppProviderIdEnum.Novu,
           },
         }
       ).as('create-integration');

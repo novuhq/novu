@@ -23,12 +23,20 @@ import { NovuEmailProviderModal } from './components/NovuEmailProviderModal';
 import { NovuInAppProviderModal } from './components/NovuInAppProviderModal';
 import { useProviders } from './useProviders';
 import { NovuSmsProviderModal } from './components/NovuSmsProviderModal';
+import { useCreateInAppIntegration } from '../../hooks/useCreateInAppIntegration';
 
 export function IntegrationsStore() {
   const { emailProviders, smsProvider, chatProvider, pushProvider, inAppProvider, isLoading, refetch } = useProviders();
   const [isModalOpened, setModalIsOpened] = useState(false);
   const [isCreateIntegrationModal, setIsCreateIntegrationModal] = useState(false);
   const [provider, setProvider] = useState<IIntegratedProvider | null>(null);
+  const { create } = useCreateInAppIntegration((data: any) => {
+    setProvider({
+      ...(provider as IIntegratedProvider),
+      integrationId: data._id,
+      active: data.active,
+    });
+  });
 
   async function handlerVisible(
     visible: boolean,
@@ -36,6 +44,9 @@ export function IntegrationsStore() {
     providerConfig: IIntegratedProvider
   ) {
     setModalIsOpened(visible);
+    if (providerConfig.providerId === InAppProviderIdEnum.Novu && providerConfig.channel === ChannelTypeEnum.IN_APP) {
+      create();
+    }
     setProvider(providerConfig);
     setIsCreateIntegrationModal(createIntegrationModal);
   }

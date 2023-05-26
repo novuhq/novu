@@ -23,6 +23,7 @@ import { useProviders } from './useProviders';
 import { useSegment } from '../../components/providers/SegmentProvider';
 import { IntegrationsStoreModalAnalytics } from './constants';
 import { NovuSmsProviderModal } from './components/NovuSmsProviderModal';
+import { useCreateInAppIntegration } from '../../hooks/useCreateInAppIntegration';
 
 export function IntegrationsStoreModal({
   scrollTo,
@@ -42,6 +43,13 @@ export function IntegrationsStoreModal({
   const [isFormOpened, setFormIsOpened] = useState(false);
   const [isCreateIntegrationModal, setIsCreateIntegrationModal] = useState(false);
   const [provider, setProvider] = useState<IIntegratedProvider | null>(null);
+  const { create } = useCreateInAppIntegration((data: any) => {
+    setProvider({
+      ...(provider as IIntegratedProvider),
+      integrationId: data._id,
+      active: data.active,
+    });
+  });
 
   const { classes } = useModalStyles();
   const { classes: drawerClasses } = useDrawerStyles();
@@ -57,6 +65,9 @@ export function IntegrationsStoreModal({
     providerConfig: IIntegratedProvider
   ) {
     setFormIsOpened(visible);
+    if (providerConfig.providerId === InAppProviderIdEnum.Novu && providerConfig.channel === ChannelTypeEnum.IN_APP) {
+      create();
+    }
     setProvider(providerConfig);
     setIsCreateIntegrationModal(createIntegrationModal);
     segment.track(IntegrationsStoreModalAnalytics.SELECT_PROVIDER_CLICK, {
