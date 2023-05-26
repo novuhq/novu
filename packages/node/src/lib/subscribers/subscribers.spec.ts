@@ -56,6 +56,17 @@ describe('test use of novus node package - Subscribers class', () => {
     );
   });
 
+  test('should delete subscriber provider credentials correctly', async () => {
+    mockedAxios.put.mockResolvedValue({});
+
+    await novu.subscribers.deleteCredentials('test-update-subscriber', 'slack');
+
+    expect(mockedAxios.delete).toHaveBeenCalled();
+    expect(mockedAxios.delete).toHaveBeenCalledWith(
+      `/subscribers/test-update-subscriber/credentials/slack`
+    );
+  });
+
   test('should unset subscriber channel credentials correctly', async () => {
     mockedAxios.put.mockResolvedValue({});
 

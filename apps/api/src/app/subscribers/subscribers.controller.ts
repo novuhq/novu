@@ -73,6 +73,10 @@ import { ChatOauthCallback } from './usecases/chat-oauth-callback/chat-oauth-cal
 import { ChatOauthCallbackCommand } from './usecases/chat-oauth-callback/chat-oauth-callback.command';
 import { ChatOauth } from './usecases/chat-oauth/chat-oauth.usecase';
 import { ChatOauthCommand } from './usecases/chat-oauth/chat-oauth.command';
+import {
+  DeleteSubscriberCredentialsCommand,
+  DeleteSubscriberCredentials,
+} from './usecases/delete-subscriber-credentials';
 
 @Controller('/subscribers')
 @ApiTags('Subscribers')
@@ -92,7 +96,8 @@ export class SubscribersController {
     private updateMessageActionsUsecase: UpdateMessageActions,
     private updateSubscriberOnlineFlagUsecase: UpdateSubscriberOnlineFlag,
     private chatOauthCallbackUsecase: ChatOauthCallback,
-    private chatOauthUsecase: ChatOauth
+    private chatOauthUsecase: ChatOauth,
+    private deleteSubscriberCredentialsUsecase: DeleteSubscriberCredentials
   ) {}
 
   @Get('')
@@ -219,6 +224,29 @@ export class SubscribersController {
         providerId: body.providerId,
         credentials: body.credentials,
         oauthHandler: OAuthHandlerEnum.EXTERNAL,
+      })
+    );
+  }
+
+  @Delete('/:subscriberId/credentials/:providerId')
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  @ApiResponse(SubscriberResponseDto)
+  @ApiOperation({
+    summary: 'Delete subscriber credentials by providerId',
+    description: 'Delete subscriber credentials such as slack and expo tokens.',
+  })
+  async deleteSubscriberCredentials(
+    @UserSession() user: IJwtPayload,
+    @Param('subscriberId') subscriberId: string,
+    @Param('providerId') providerId: string
+  ): Promise<SubscriberResponseDto> {
+    return await this.deleteSubscriberCredentialsUsecase.execute(
+      DeleteSubscriberCredentialsCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        subscriberId,
+        providerId,
       })
     );
   }

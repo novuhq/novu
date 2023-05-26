@@ -1,4 +1,8 @@
-export { ChatProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
+export {
+  ChatProviderIdEnum,
+  PushProviderIdEnum,
+  ChannelTypeEnum,
+} from '@novu/shared';
 
 export * from './lib/novu';
 export * from './lib/subscribers/subscriber.interface';

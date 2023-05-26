@@ -12,10 +12,11 @@ interface IChannelCredentials {
 }
 
 export class Subscribers extends WithHttp implements ISubscribers {
-  async list(page: number) {
+  async list(page = 0, limit = 10) {
     return await this.http.get(`/subscribers`, {
       params: {
         page,
+        limit,
       },
     });
   }
@@ -66,10 +67,16 @@ export class Subscribers extends WithHttp implements ISubscribers {
     });
   }
 
+  async deleteCredentials(subscriberId: string, providerId: string) {
+    return await this.http.delete(
+      `/subscribers/${subscriberId}/credentials/${providerId}`
+    );
+  }
+
   async unsetCredentials(subscriberId: string, providerId: string) {
     return await this.http.put(`/subscribers/${subscriberId}/credentials`, {
       providerId,
-      credentials: { webhookUrl: undefined },
+      credentials: { webhookUrl: undefined, deviceTokens: [] },
     });
   }
 
