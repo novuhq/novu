@@ -7,7 +7,7 @@ const prepareBooleanStringFeatureFlag = (value: string | undefined, defaultValue
   return preparedValue || defaultValue;
 };
 
-export const useIsTemplateStoreEnabled = (): Promise<boolean> => {
+export const useIsTemplateStoreEnabled = (): boolean => {
   const value = process.env.IS_TEMPLATE_STORE_ENABLED;
   const fallbackValue = false;
   const defaultValue = prepareBooleanStringFeatureFlag(value, fallbackValue);
@@ -17,7 +17,7 @@ export const useIsTemplateStoreEnabled = (): Promise<boolean> => {
   return isTemplateStoreEnabled ?? defaultValue;
 };
 
-const useGetFlagByKey = <T>(key: FeatureFlagsKeysEnum): Promise<T> => {
+const useGetFlagByKey = <T>(key: FeatureFlagsKeysEnum): T => {
   const { [key]: featureFlag } = useFlags();
 
   return featureFlag;

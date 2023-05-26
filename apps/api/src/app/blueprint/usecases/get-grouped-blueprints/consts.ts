@@ -66,8 +66,7 @@ export const POPULAR_TEMPLATES_GROUPED = {
     {
       _id: '1',
       name: ':fa-regular fa-message: Comments',
-      description:
-        'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
+      description: 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae.',
       steps: STEPS,
       triggers: [
         {
@@ -76,12 +75,21 @@ export const POPULAR_TEMPLATES_GROUPED = {
         },
       ],
       isBlueprint: true,
+      active: true,
+      draft: false,
+      critical: false,
+      preferenceSettings: {
+        chat: true,
+        email: true,
+        in_app: true,
+        push: true,
+        sms: true,
+      },
     },
     {
       _id: '2',
       name: ':fa-solid fa-user-check: Mentions',
-      description:
-        'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
+      description: 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae.',
       steps: STEPS2,
       triggers: [
         {
@@ -90,12 +98,21 @@ export const POPULAR_TEMPLATES_GROUPED = {
         },
       ],
       isBlueprint: true,
+      active: true,
+      draft: false,
+      critical: false,
+      preferenceSettings: {
+        chat: true,
+        email: true,
+        in_app: true,
+        push: true,
+        sms: true,
+      },
     },
     {
       _id: '3',
       name: ':fa-solid fa-reply: Reply',
-      description:
-        'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
+      description: 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae.',
       steps: STEPS,
       triggers: [
         {
@@ -104,6 +121,16 @@ export const POPULAR_TEMPLATES_GROUPED = {
         },
       ],
       isBlueprint: true,
+      active: true,
+      draft: false,
+      critical: false,
+      preferenceSettings: {
+        chat: true,
+        email: true,
+        in_app: true,
+        push: true,
+        sms: true,
+      },
     },
   ] as INotificationTemplate[],
 };
