@@ -8,8 +8,8 @@ import { FeatureFlagsService } from '../../services';
 export class GetFeatureFlag {
   constructor(private featureFlagsService: FeatureFlagsService) {}
 
-  async execute(command: GetFeatureFlagCommand): Promise<void> {
-    const { key, environmentId, organizationId, userId } = command;
+  async execute<T>(command: GetFeatureFlagCommand<T>): Promise<T> {
+    const { defaultValue, key, environmentId, organizationId, userId } = command;
 
     const context = {
       environmentId,
@@ -17,7 +17,6 @@ export class GetFeatureFlag {
       userId,
     };
 
-    // TODO: The type needs to be dynamic. String so far by default
-    await this.featureFlagsService.get(key, context, '');
+    return await this.featureFlagsService.get(key, defaultValue, context);
   }
 }

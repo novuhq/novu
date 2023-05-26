@@ -49,7 +49,8 @@ export class FeatureFlagsService {
     }
   }
 
-  public async get<T>(key: FeatureFlagKey, context: IFeatureFlagContext, defaultValue: T): Promise<T> {
-    return await this.service.get(key, context, defaultValue);
+  public async get<T>(key: FeatureFlagKey, defaultValue: T, context: IFeatureFlagContext): Promise<T> {
+    // TODO: Select here which context we will need in the future
+    return await this.service.getWithUserContext(key, defaultValue, context.userId);
   }
 }

@@ -3,7 +3,10 @@ import { IsDefined } from 'class-validator';
 
 import { FeatureFlagKey } from '../../types';
 
-export class GetFeatureFlagCommand extends EnvironmentWithUserCommand {
+export class GetFeatureFlagCommand<T> extends EnvironmentWithUserCommand {
   @IsDefined()
   key: FeatureFlagKey;
+
+  @IsDefined()
+  defaultValue: T;
 }
