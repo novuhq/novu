@@ -2,12 +2,19 @@ import '../../src/config';
 import { OrganizationRepository, EnvironmentRepository, IntegrationRepository, ChannelTypeEnum } from '@novu/dal';
 import { InAppProviderIdEnum } from '@novu/shared';
 import { encryptCredentials } from '@novu/application-generic';
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from '../../src/app.module';
 
 const organizationRepository = new OrganizationRepository();
 const environmentRepository = new EnvironmentRepository();
 const integrationRepository = new IntegrationRepository();
 
 export async function createInAppIntegration() {
+  // Init the mongodb connection
+  const app = await NestFactory.create(AppModule, {
+    logger: false,
+  });
+
   // eslint-disable-next-line no-console
   console.log('start migration - in app integration');
 
