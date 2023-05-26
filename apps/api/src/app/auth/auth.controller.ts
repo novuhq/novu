@@ -91,7 +91,12 @@ export class AuthController {
      * Make sure we only allow localhost redirects for CLI use and our own success route
      * https://github.com/novuhq/novu/security/code-scanning/3
      */
-    if (redirectUrl && redirectUrl.startsWith('http://localhost:')) {
+    if (
+      redirectUrl &&
+      redirectUrl.startsWith('http://localhost:') &&
+      !redirectUrl.includes('@') &&
+      !redirectUrl.includes('?')
+    ) {
       url = redirectUrl;
     }
 
