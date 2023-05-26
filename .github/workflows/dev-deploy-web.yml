@@ -77,7 +77,6 @@ jobs:
           REACT_APP_ENVIRONMENT: dev
           REACT_APP_MAIL_SERVER_DOMAIN: dev.inbound-mail.novu.co
           REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID: ${{ secrets.LAUNCH_DARKLY_CLIENT_SIDE_ID }}
-
         working-directory: apps/web
         run: npm run build
 
