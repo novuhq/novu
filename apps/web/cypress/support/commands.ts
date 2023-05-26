@@ -86,6 +86,10 @@ Cypress.Commands.add(
   }
 );
 
+Cypress.Commands.add('makeBlueprints', () => {
+  return cy.task('makeBlueprints');
+});
+
 Cypress.Commands.add('inviteUser', (email: string) => {
   return cy
     .initializeSession()

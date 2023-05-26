@@ -21,7 +21,7 @@ describe('Changes Screen', function () {
     switchEnvironment('Production');
     cy.location('pathname').should('equal', ROUTES.WORKFLOWS);
 
-    cy.getByTestId('create-template-btn').get('button').should('be.disabled');
+    cy.getByTestId('create-workflow-btn').get('button').should('be.disabled');
     cy.getByTestId('notifications-template').find('tbody tr').first().click({ force: true });
   });
 

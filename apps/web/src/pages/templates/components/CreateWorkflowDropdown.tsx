@@ -56,12 +56,12 @@ export const CreateWorkflowDropdown = ({
       }}
       control={
         <div>
-          <ButtonStyled disabled={readonly} icon={<PlusCircle />} data-test-id="create-template-btn">
+          <ButtonStyled disabled={readonly} icon={<PlusCircle />} data-test-id="create-workflow-btn">
             Create Workflow
           </ButtonStyled>
         </div>
       }
-      data-test-id="create-template-dropdown"
+      data-test-id="create-workflow-dropdown"
     >
       {isLoading
         ? Array.from({ length: 3 }).map((_, index) => <DropdownItemSkeleton key={index} />)
@@ -92,7 +92,7 @@ export const CreateWorkflowDropdown = ({
                     onMouseEnter(template._id);
                   }}
                   onMouseLeave={onMouseLeave}
-                  data-test-id="logout-button"
+                  data-test-id="create-template-dropdown-item"
                 >
                   {template.name}
                 </Dropdown.Item>

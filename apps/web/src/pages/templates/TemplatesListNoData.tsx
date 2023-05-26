@@ -166,7 +166,7 @@ export const TemplatesListNoData = ({
                 target={
                   <Card
                     data-can-be-hidden={index === 2}
-                    data-test-id="second-workflow-tile"
+                    data-test-id="popular-workflow-tile"
                     disabled={readonly || isCreating}
                     onClick={() => {
                       segment.track('[Template Store] Click Create Notification Template', {
