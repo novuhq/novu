@@ -20,6 +20,7 @@ import { NodeStep } from '../../workflow';
 import { useSegment } from '../../providers/SegmentProvider';
 import { errorMessage } from '../../../utils/notifications';
 import { Playground } from '../../../design-system/icons';
+import { TemplateCreationSourceEnum } from '../../../pages/templates/shared';
 
 const useStyles = createStyles((theme) => ({
   dropdown: {
@@ -65,10 +66,10 @@ function TriggerButton({ setOpened }: { setOpened: (value: boolean) => void }) {
   const { groups, loading: notificationGroupLoading } = useNotificationGroup();
 
   const { mutateAsync: createNotificationTemplate, isLoading: createTemplateLoading } = useMutation<
-    INotificationTemplate,
+    INotificationTemplate & { __source?: string },
     { error: string; message: string; statusCode: number },
-    ICreateNotificationTemplateDto
-  >(createTemplate, {
+    { template: ICreateNotificationTemplateDto; params: { __source?: string } }
+  >((data) => createTemplate(data.template, data.params), {
     onError: (error) => {
       errorMessage(error?.message);
     },
@@ -80,6 +81,7 @@ function TriggerButton({ setOpened }: { setOpened: (value: boolean) => void }) {
     async function createOnBoardingTemplate() {
       const payloadToCreate = {
         notificationGroupId: groups[0]._id,
+        isBlueprint: false,
         name: notificationTemplateName,
         active: true,
         draft: false,
@@ -97,7 +99,10 @@ function TriggerButton({ setOpened }: { setOpened: (value: boolean) => void }) {
         ],
       };
 
-      await createNotificationTemplate(payloadToCreate as unknown as ICreateNotificationTemplateDto);
+      await createNotificationTemplate({
+        template: payloadToCreate as unknown as ICreateNotificationTemplateDto,
+        params: { __source: TemplateCreationSourceEnum.ONBOARDING_IN_APP },
+      });
     }
 
     if (!templatesLoading && !notificationGroupLoading && !createTemplateLoading && !onboardingNotificationTemplate) {

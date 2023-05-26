@@ -31,7 +31,6 @@ export class CreateNotificationTemplate {
 
   async execute(usecaseCommand: CreateNotificationTemplateCommand) {
     const blueprintCommand = await this.processBlueprint(usecaseCommand);
-
     const command = blueprintCommand ?? usecaseCommand;
 
     const contentService = new ContentService();
@@ -42,10 +41,12 @@ export class CreateNotificationTemplate {
       lower: true,
       strict: true,
     })}`;
+
     const templateCheckIdentifier = await this.notificationTemplateRepository.findByTriggerIdentifier(
       command.environmentId,
       triggerIdentifier
     );
+
     const trigger: INotificationTrigger = {
       type: TriggerTypeEnum.EVENT,
       identifier: `${triggerIdentifier}${!templateCheckIdentifier ? '' : '-' + shortid.generate()}`,
@@ -141,19 +142,13 @@ export class CreateNotificationTemplate {
       })
     );
 
-    if (command.name !== 'On-boarding notification') {
+    if (command.name !== 'On-boarding notification' && !command.__source?.startsWith('onboarding_')) {
       this.analyticsService.track('Create Notification Template - [Platform]', command.userId, {
         _organization: command.organizationId,
         steps: command.steps?.length,
         channels: command.steps?.map((i) => i.template?.type),
-      });
-    }
-
-    if (command.blueprintId) {
-      await this.analyticsService.track('[Notification directory] - Template created from blueprint', command.userId, {
-        blueprintId: command.blueprintId,
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
+        __source: command.__source,
+        triggerIdentifier,
       });
     }
 
@@ -180,6 +175,7 @@ export class CreateNotificationTemplate {
       critical: command.critical ?? false,
       preferenceSettings: command.preferenceSettings,
       blueprintId: command.blueprintId,
+      __source: command.__source,
     });
   }
 

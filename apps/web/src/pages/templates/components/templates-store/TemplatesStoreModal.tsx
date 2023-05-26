@@ -5,7 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useNavigate } from 'react-router-dom';
 
 import { Button, colors, shadows } from '../../../../design-system';
-import { Close } from '../../../../design-system/icons/actions/Close';
+import { Close } from '../../../../design-system/icons';
 import {
   CanvasHolder,
   GroupName,
@@ -26,10 +26,13 @@ import { IBlueprintsGrouped } from '../../../../api/hooks';
 import { TriggerNode } from './TriggerNode';
 import { ChannelNode } from './ChannelNode';
 import { FlowEditor } from '../../../../components/workflow';
-import { useCreateTemplateFromBlueprint } from '../../../../api/hooks/notification-templates/useCreateTemplateFromBlueprint';
+import { useCreateTemplateFromBlueprint } from '../../../../api/hooks';
 import { errorMessage } from '../../../../utils/notifications';
 import { parseUrl } from '../../../../utils/routeUtils';
 import { ROUTES } from '../../../../constants/routes.enum';
+import { TemplateCreationSourceEnum } from '../../shared';
+import { useSegment } from '../../../../components/providers/SegmentProvider';
+import { IBlueprintTemplate } from '../../../../api/types';
 
 const nodeTypes = {
   triggerNode: TriggerNode,
@@ -57,6 +60,29 @@ export const TemplatesStoreModal = ({ general, isOpened, onClose }: ITemplatesSt
     },
   });
 
+  const segment = useSegment();
+
+  const handleTemplateClick = (template: IBlueprintTemplate) => {
+    segment.track('[Template Store] Click Notification Template', {
+      templateIdentifier: template.triggers[0]?.identifier,
+      location: TemplateCreationSourceEnum.TEMPLATE_STORE,
+    });
+
+    setTemplate(template);
+  };
+
+  const handleCreateTemplateClick = (blueprint: IBlueprintTemplate) => {
+    segment.track('[Template Store] Click Create Notification Template', {
+      templateIdentifier: blueprint.triggers[0]?.identifier,
+      location: TemplateCreationSourceEnum.TEMPLATE_STORE,
+    });
+
+    createTemplateFromBlueprint({
+      blueprint: blueprint,
+      params: { __source: TemplateCreationSourceEnum.TEMPLATE_STORE },
+    });
+  };
+
   return (
     <Modal
       opened={isOpened}
@@ -81,7 +107,7 @@ export const TemplatesStoreModal = ({ general, isOpened, onClose }: ITemplatesSt
               <GroupName>{group.name}</GroupName>
               {group.blueprints.map((template) => {
                 return (
-                  <TemplateItem key={template.name} onClick={() => setTemplate(template)}>
+                  <TemplateItem key={template.name} onClick={() => handleTemplateClick(template)}>
                     <FontAwesomeIcon icon={template.iconName} />
                     <span>{template.name}</span>
                   </TemplateItem>
@@ -132,7 +158,7 @@ export const TemplatesStoreModal = ({ general, isOpened, onClose }: ITemplatesSt
                 disabled={isCreatingTemplateFromBlueprint}
                 loading={isCreatingTemplateFromBlueprint}
                 onClick={() => {
-                  createTemplateFromBlueprint({ blueprint: selectedTemplate });
+                  handleCreateTemplateClick(selectedTemplate);
                 }}
               >
                 Use template
