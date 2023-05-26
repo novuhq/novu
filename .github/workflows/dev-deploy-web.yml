@@ -57,6 +57,7 @@ jobs:
           echo REACT_APP_SENTRY_DSN="https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907" >> .env
           echo REACT_APP_ENVIRONMENT=dev >> .env
           echo REACT_APP_MAIL_SERVER_DOMAIN="dev.inbound-mail.novu.co" >> .env
+          echo REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID=${{ secrets.LAUNCH_DARKLY_CLIENT_SIDE_ID }} >> .env
 
       - name: Envsetup
         working-directory: apps/web
@@ -75,6 +76,7 @@ jobs:
           REACT_APP_SENTRY_DSN: https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907
           REACT_APP_ENVIRONMENT: dev
           REACT_APP_MAIL_SERVER_DOMAIN: dev.inbound-mail.novu.co
+          REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID: ${{ secrets.LAUNCH_DARKLY_CLIENT_SIDE_ID }}
         working-directory: apps/web
         run: npm run build
 
