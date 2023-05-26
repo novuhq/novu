@@ -32,8 +32,8 @@ import { IntegrationResponseDto } from './dtos/integration-response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { GetWebhookSupportStatus } from './usecases/get-webhook-support-status/get-webhook-support-status.usecase';
 import { GetWebhookSupportStatusCommand } from './usecases/get-webhook-support-status/get-webhook-support-status.command';
-import { GetInAppActivatedCommand } from './usecases/get-In-app-activated/get-In-app-activated.command';
-import { GetInAppActivated } from './usecases/get-In-app-activated/get-In-app-activated.usecase';
+import { GetInAppActivatedCommand } from './usecases/get-in-app-activated/get-in-app-activated.command';
+import { GetInAppActivated } from './usecases/get-in-app-activated/get-in-app-activated.usecase';
 import { ApiResponse } from '../shared/framework/response.decorator';
 import { ChannelTypeLimitDto } from './dtos/get-channel-type-limit.sto';
 
