@@ -3,7 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import {
   EnvironmentId,
-  FeatureFlagKey,
+  FeatureFlagsKeysEnum,
   IFeatureFlagContext,
   IFeatureFlagsService,
   OrganizationId,
@@ -15,21 +15,25 @@ const LOG_CONTEXT = 'LaunchDarklyService';
 @Injectable()
 export class LaunchDarklyService implements IFeatureFlagsService {
   private client: LDClient;
+  public isEnabled: boolean;
 
   constructor() {
     const launchDarklySdkKey = process.env.LAUNCH_DARKLY_SDK_KEY;
 
     if (launchDarklySdkKey) {
       this.client = init(launchDarklySdkKey);
+      this.isEnabled = true;
+    } else {
+      this.isEnabled = false;
     }
   }
 
-  private async get<T>(key: FeatureFlagKey, context: LDSingleKindContext, defaultValue: T): Promise<T> {
+  private async get<T>(key: FeatureFlagsKeysEnum, context: LDSingleKindContext, defaultValue: T): Promise<T> {
     return await this.client.variation(key, context, defaultValue);
   }
 
   public async getWithEnvironmentContext<T>(
-    key: FeatureFlagKey,
+    key: FeatureFlagsKeysEnum,
     defaultValue: T,
     environmentId: EnvironmentId
   ): Promise<T> {
@@ -39,7 +43,7 @@ export class LaunchDarklyService implements IFeatureFlagsService {
   }
 
   public async getWithOrganizationContext<T>(
-    key: FeatureFlagKey,
+    key: FeatureFlagsKeysEnum,
     defaultValue: T,
     organizationId: OrganizationId
   ): Promise<T> {
@@ -48,7 +52,7 @@ export class LaunchDarklyService implements IFeatureFlagsService {
     return await this.get(key, context, defaultValue);
   }
 
-  public async getWithUserContext<T>(key: FeatureFlagKey, defaultValue: T, userId: UserId): Promise<T> {
+  public async getWithUserContext<T>(key: FeatureFlagsKeysEnum, defaultValue: T, userId: UserId): Promise<T> {
     const context = this.mapToUserContext(userId);
 
     return await this.get(key, context, defaultValue);

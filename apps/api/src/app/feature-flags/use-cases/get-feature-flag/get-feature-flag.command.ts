@@ -1,11 +1,13 @@
 import { EnvironmentWithUserCommand } from '@novu/application-generic';
 import { IsDefined } from 'class-validator';
 
-import { FeatureFlagKey } from '../../types';
+import { FeatureFlagsKeysEnum } from '../../types';
 
-export class GetFeatureFlagCommand<T> extends EnvironmentWithUserCommand {
+export class FeatureFlagCommand extends EnvironmentWithUserCommand {}
+
+export class GetFeatureFlagCommand<T> extends FeatureFlagCommand {
   @IsDefined()
-  key: FeatureFlagKey;
+  key: FeatureFlagsKeysEnum;
 
   @IsDefined()
   defaultValue: T;
