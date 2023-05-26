@@ -4,6 +4,7 @@ export * from './useBlueprint';
 export * from './useDebounce';
 export * from './useEnvController';
 export * from './useEnvironmentChanges';
+export * from './useFeatureFlags';
 export * from './useIsMounted';
 export * from './useLayouts';
 export * from './useLayoutsEditor';
