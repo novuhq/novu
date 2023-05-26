@@ -23,7 +23,6 @@ export const NovuInAppForm = ({
     shouldUseNativeValidation: false,
   });
   const hmac = watch('hmac');
-  const isActive = watch('active');
 
   const { mutateAsync: updateIntegrationApi, isLoading: isLoadingUpdate } = useMutation<
     { res: string },
@@ -103,20 +102,22 @@ export const NovuInAppForm = ({
                 name="hmac"
                 defaultValue={hmacDefaultValue}
                 render={({ field }) => (
-                  <Switch
-                    data-test-id="connect-integration-in-app-hmac"
-                    checked={field.value}
-                    onChange={field.onChange}
-                  />
+                  <>
+                    <Switch
+                      data-test-id="connect-integration-in-app-hmac"
+                      checked={field.value}
+                      onChange={field.onChange}
+                    />
+                    <Text
+                      data-test-id="connect-integration-in-app-hmac-text"
+                      ml={10}
+                      color={field.value ? colors.error : colors.B60}
+                    >
+                      {field.value ? 'Active' : 'Disabled'}
+                    </Text>
+                  </>
                 )}
               />
-              <Text
-                data-test-id="connect-integration-in-app-hmac-text"
-                ml={10}
-                color={hmac ? colors.error : colors.B60}
-              >
-                {hmac ? 'Active' : 'Disabled'}
-              </Text>
             </SideElementBase>
           </Stack>
         </Grid.Col>
@@ -134,15 +135,19 @@ export const NovuInAppForm = ({
           />
         </WarningMessage>
       </When>
-      <ActiveWrapper active={isActive}>
-        <Controller
-          control={control}
-          name="active"
-          defaultValue={!!provider?.active}
-          render={({ field }) => <Switch checked={field.value} data-test-id="is_active_id" onChange={field.onChange} />}
-        />
-        <StyledText data-test-id="connect-integration-form-active-text">{isActive ? 'Active' : 'Disabled'}</StyledText>
-      </ActiveWrapper>
+      <Controller
+        control={control}
+        name="active"
+        defaultValue={!!provider?.active}
+        render={({ field }) => (
+          <ActiveWrapper active={field.value}>
+            <Switch checked={field.value} data-test-id="is_active_id" onChange={field.onChange} />
+            <StyledText data-test-id="connect-integration-form-active-text">
+              {field.value ? 'Active' : 'Disabled'}
+            </StyledText>
+          </ActiveWrapper>
+        )}
+      />
       <Button data-test-id="connect-integration-form-submit" submit mb={32} fullWidth loading={isLoadingUpdate}>
         Update
       </Button>
