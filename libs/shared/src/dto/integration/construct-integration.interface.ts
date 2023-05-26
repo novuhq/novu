@@ -7,6 +7,7 @@ export interface ICredentialsDto {
   host?: string;
   port?: string;
   secure?: boolean;
+  hmac?: boolean;
   region?: string;
   accountSid?: string;
   messageProfileId?: string;
