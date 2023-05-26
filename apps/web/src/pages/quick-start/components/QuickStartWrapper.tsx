@@ -110,7 +110,9 @@ export function QuickStartWrapper({
           <ChildrenWrapper>{children}</ChildrenWrapper>
           <When truthy={footer}>{footer}</When>
           <When truthy={faq}>
-            <Faq />
+            <Box mt={25} ml={100} pb={30}>
+              <Faq />
+            </Box>
           </When>
         </PageWrapper>
       </PageContainer>
@@ -137,31 +139,29 @@ export function Faq() {
   }
 
   return (
-    <Box mt={25} ml={100} pb={30}>
-      <Text color={isDark ? colors.B70 : colors.B60}>
-        <span style={{ fontWeight: 800 }}>Got stuck? </span>
-        <span>Please send us a </span>
+    <Text color={isDark ? colors.B70 : colors.B60}>
+      <span style={{ fontWeight: 800 }}>Got stuck? </span>
+      <span>Please send us a </span>
 
-        {INTERCOM_APP_ID ? (
-          <HelpRequestWithIntercom handleClick={handleOnHelpRequestClick} />
-        ) : (
-          <GradientSpan>help request, </GradientSpan>
-        )}
+      {INTERCOM_APP_ID ? (
+        <HelpRequestWithIntercom handleClick={handleOnHelpRequestClick} />
+      ) : (
+        <GradientSpan>help request, </GradientSpan>
+      )}
 
-        <span>ask the </span>
-        <GradientSpan onClick={handleOnCommunityClick}>
-          <a href={discordInviteUrl} target="_blank" rel="noreferrer">
-            <Discord /> <span>community </span>
-          </a>
-        </GradientSpan>
-        <span>or discover </span>
-        <GradientSpan>
-          <a href={notificationCenterDocsUrl} onClick={handleOnDocsClick} target="_blank" rel="noreferrer">
-            our docs.
-          </a>
-        </GradientSpan>
-      </Text>
-    </Box>
+      <span>ask the </span>
+      <GradientSpan onClick={handleOnCommunityClick}>
+        <a href={discordInviteUrl} target="_blank" rel="noreferrer">
+          <Discord /> <span>community </span>
+        </a>
+      </GradientSpan>
+      <span>or discover </span>
+      <GradientSpan>
+        <a href={notificationCenterDocsUrl} onClick={handleOnDocsClick} target="_blank" rel="noreferrer">
+          our docs.
+        </a>
+      </GradientSpan>
+    </Text>
   );
 }
 
