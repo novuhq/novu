@@ -3,14 +3,14 @@ import { SubscribersService, UserSession } from '@novu/testing';
 import { Test } from '@nestjs/testing';
 import { expect } from 'chai';
 import { SharedModule } from '../../../shared/shared.module';
-import { ChatProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
 import { DeleteSubscriberCredentials } from './delete-subscriber-credentials.usecase';
 import { DeleteSubscriberCredentialsCommand } from './delete-subscriber-credentials.command';
 import { UpdateSubscriberChannel } from '../update-subscriber-channel/update-subscriber-channel.usecase';
 import { UpdateSubscriberChannelCommand } from '../update-subscriber-channel/update-subscriber-channel.command';
 import { OAuthHandlerEnum } from '../../types';
 
-describe('Update subscriber provider credentials', function () {
+describe('Delete subscriber provider credentials', function () {
   let updateSubscriberChannelUsecase: UpdateSubscriberChannel;
   let deleteSubscriberCredentialsUsecase: DeleteSubscriberCredentials;
   let session: UserSession;
@@ -32,28 +32,35 @@ describe('Update subscriber provider credentials', function () {
     const subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     const subscriber = await subscriberService.createSubscriber();
 
-    const subscriberChannel = {
-      providerId: ChatProviderIdEnum.Discord,
-      credentials: { webhookUrl: 'newWebhookUrl' },
-    };
     await updateSubscriberChannelUsecase.execute(
       UpdateSubscriberChannelCommand.create({
         organizationId: subscriber._organizationId,
         subscriberId: subscriber.subscriberId,
         environmentId: session.environment._id,
-        providerId: subscriberChannel.providerId,
-        credentials: subscriberChannel.credentials,
+        providerId: ChatProviderIdEnum.Discord,
+        credentials: { webhookUrl: 'newWebhookUrl' },
+        oauthHandler: OAuthHandlerEnum.NOVU,
+      })
+    );
+
+    await updateSubscriberChannelUsecase.execute(
+      UpdateSubscriberChannelCommand.create({
+        organizationId: subscriber._organizationId,
+        subscriberId: subscriber.subscriberId,
+        environmentId: session.environment._id,
+        providerId: PushProviderIdEnum.FCM,
+        credentials: { deviceTokens: ['token1', 'token2'] },
         oauthHandler: OAuthHandlerEnum.NOVU,
       })
     );
 
     let updatedSubscriber = await subscriberRepository.findById(subscriber._id);
 
-    const newProvider = updatedSubscriber?.channels?.find(
-      (channel) => channel.providerId === subscriberChannel.providerId
+    const newDiscordProvider = updatedSubscriber?.channels?.find(
+      (channel) => channel.providerId === ChatProviderIdEnum.Discord
     );
 
-    expect(newProvider?.credentials.webhookUrl).to.equal(subscriberChannel.credentials.webhookUrl);
+    expect(newDiscordProvider?.credentials.webhookUrl).to.equal('newWebhookUrl');
 
     await deleteSubscriberCredentialsUsecase.execute(
       DeleteSubscriberCredentialsCommand.create({
@@ -69,6 +76,10 @@ describe('Update subscriber provider credentials', function () {
     const isDiscordProviderDeleted = updatedSubscriber?.channels?.find(
       (channel) => channel.providerId === ChatProviderIdEnum.Discord
     );
+    const fcmCredentials = updatedSubscriber?.channels?.find(
+      (channel) => channel.providerId === PushProviderIdEnum.FCM
+    );
     expect(isDiscordProviderDeleted).to.equal(undefined);
+    expect(fcmCredentials?.credentials.deviceTokens).to.equal(['token1', 'token2']);
   });
 });

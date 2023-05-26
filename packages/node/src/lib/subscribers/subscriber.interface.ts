@@ -19,6 +19,9 @@ export interface ISubscribers {
     credentials: IChannelCredentials
   );
   deleteCredentials(subscriberId: string, providerId: string);
+  /**
+   * @deprecated Use deleteCredentials instead
+   */
   unsetCredentials(subscriberId: string, providerId: string);
   getPreference(subscriberId: string);
   updatePreference(

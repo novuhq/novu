@@ -4,6 +4,7 @@ import { AnalyticsService, buildSubscriberKey, InvalidateCacheService } from '@n
 
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { DeleteSubscriberCredentialsCommand } from './delete-subscriber-credentials.command';
+import { GetSubscriberCommand, GetSubscriber } from '../get-subscriber';
 
 @Injectable()
 export class DeleteSubscriberCredentials {
@@ -11,13 +12,15 @@ export class DeleteSubscriberCredentials {
     private invalidateCache: InvalidateCacheService,
     private subscriberRepository: SubscriberRepository,
     private integrationRepository: IntegrationRepository,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private getSubscriberUseCase: GetSubscriber
   ) {}
 
   async execute(command: DeleteSubscriberCredentialsCommand) {
-    const foundSubscriber = await this.subscriberRepository.findBySubscriberId(
-      command.environmentId,
-      command.subscriberId
+    const foundSubscriber = await this.getSubscriberUseCase.execute(
+      GetSubscriberCommand.create({
+        ...command,
+      })
     );
 
     if (!foundSubscriber) {
@@ -35,7 +38,15 @@ export class DeleteSubscriberCredentials {
       );
     }
 
-    await this.deleteSubscriberCredentials(foundSubscriber.subscriberId, command.environmentId, foundIntegration._id);
+    const subscriber = await this.deleteSubscriberCredentials(
+      foundSubscriber.subscriberId,
+      command.environmentId,
+      foundIntegration._id
+    );
+
+    if (!subscriber) {
+      return false;
+    }
 
     this.analyticsService.track('Delete Subscriber Credentials - [Subscribers]', command.organizationId, {
       providerId: command.providerId,
@@ -43,10 +54,7 @@ export class DeleteSubscriberCredentials {
       _subscriberId: foundSubscriber._id,
     });
 
-    return (await this.subscriberRepository.findBySubscriberId(
-      command.environmentId,
-      command.subscriberId
-    )) as SubscriberEntity;
+    return true;
   }
 
   private async deleteSubscriberCredentials(subscriberId: string, environmentId: string, integrationId: string) {
@@ -57,7 +65,7 @@ export class DeleteSubscriberCredentials {
       }),
     });
 
-    const subscriber = await this.subscriberRepository.update(
+    return await this.subscriberRepository.update(
       {
         _environmentId: environmentId,
         subscriberId: subscriberId,

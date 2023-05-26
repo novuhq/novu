@@ -73,6 +73,9 @@ export class Subscribers extends WithHttp implements ISubscribers {
     );
   }
 
+  /**
+   * @deprecated Use deleteCredentials instead
+   */
   async unsetCredentials(subscriberId: string, providerId: string) {
     return await this.http.put(`/subscribers/${subscriberId}/credentials`, {
       providerId,
