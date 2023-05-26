@@ -89,7 +89,7 @@ export class FcmPushProvider implements IPushProvider {
       });
     }
 
-    if (res.failureCount > 0) {
+    if (res.successCount === 0) {
       throw new Error(
         `Sending message failed due to "${
           res.responses.find((i) => i.success === false).error.message
@@ -101,7 +101,9 @@ export class FcmPushProvider implements IPushProvider {
     await deleteApp(app);
 
     return {
-      ids: res?.responses?.map((response) => response.messageId),
+      ids: res?.responses?.map((response) =>
+        response.success ? response.messageId : response.error.message
+      ),
       date: new Date().toISOString(),
     };
   }
