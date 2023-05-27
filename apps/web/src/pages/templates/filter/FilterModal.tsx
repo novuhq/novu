@@ -16,12 +16,14 @@ export function FilterModal({
   confirm,
   control,
   stepIndex,
+  setValue,
 }: {
   isOpen: boolean;
   cancel: () => void;
   confirm: () => void;
   control: any;
   stepIndex: number;
+  setValue: any;
 }) {
   const theme = useMantineTheme();
 
@@ -181,6 +183,7 @@ export function FilterModal({
                   stepIndex={stepIndex}
                   index={index}
                   remove={remove}
+                  setValue={setValue}
                 />
               </When>
 
@@ -207,6 +210,7 @@ export function FilterModal({
                   stepIndex={stepIndex}
                   index={index}
                   remove={remove}
+                  setValue={setValue}
                 />
               </When>
               <When truthy={filterFieldOn === FilterPartTypeEnum.PREVIOUS_STEP}>
@@ -263,12 +267,14 @@ function EqualityForm({
   stepIndex,
   index,
   remove,
+  setValue,
 }: {
   fieldOn: string;
   control;
   stepIndex: number;
   index: number;
   remove: (index?: number | number[]) => void;
+  setValue;
 }) {
   const spaSize = fieldOn === 'webhook' ? 3 : 2;
   const operator = useWatch({
@@ -312,6 +318,10 @@ function EqualityForm({
                 ]}
                 {...field}
                 data-test-id="filter-operator-dropdown"
+                onChange={(value) => {
+                  field.onChange(value);
+                  value === 'IS_DEFINED' && setValue(`steps.${stepIndex}.filters.0.children.${index}.value`, '');
+                }}
               />
             );
           }}
