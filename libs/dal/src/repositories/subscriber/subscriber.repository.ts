@@ -69,10 +69,13 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
       );
     }
 
-    return await this.find({
-      _environmentId: environmentId,
-      $or: filters,
-    });
+    return await this.find(
+      {
+        _environmentId: environmentId,
+        $or: filters,
+      },
+      '_id'
+    );
   }
 
   async delete(query: SubscriberQuery) {

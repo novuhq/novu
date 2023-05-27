@@ -6,6 +6,7 @@ import { NotificationTemplate } from './notification-template.schema';
 import { NotificationTemplateDBModel, NotificationTemplateEntity } from './notification-template.entity';
 import { DalException } from '../../shared';
 import type { EnforceEnvOrOrgIds } from '../../types/enforce';
+import { EnvironmentRepository } from '../environment';
 
 type NotificationTemplateQuery = FilterQuery<NotificationTemplateDBModel> & EnforceEnvOrOrgIds;
 
@@ -15,6 +16,7 @@ export class NotificationTemplateRepository extends BaseRepository<
   EnforceEnvOrOrgIds
 > {
   private notificationTemplate: SoftDeleteModel;
+  private environmentRepository = new EnvironmentRepository();
 
   constructor() {
     super(NotificationTemplate, NotificationTemplateEntity);
@@ -44,7 +46,7 @@ export class NotificationTemplateRepository extends BaseRepository<
   }
 
   async findBlueprint(id: string) {
-    if (!this.blueprintOrganizationId) throw new DalException('blueprintEnvironmentId was not found');
+    if (!this.blueprintOrganizationId) throw new DalException('Blueprint environment id was not found');
 
     const requestQuery: NotificationTemplateQuery = {
       _id: id,
@@ -52,38 +54,50 @@ export class NotificationTemplateRepository extends BaseRepository<
       _organizationId: this.blueprintOrganizationId,
     };
 
-    const item = await this.MongooseModel.findOne(requestQuery).populate('steps.template');
+    const item = await this.MongooseModel.findOne(requestQuery).populate('steps.template').lean();
 
     return this.mapEntity(item);
   }
 
   async findAllGroupedByCategory(): Promise<{ name: string; blueprints: NotificationTemplateEntity[] }[]> {
-    if (!this.blueprintOrganizationId) {
+    const organizationId = this.blueprintOrganizationId;
+
+    if (!organizationId) {
       return [];
+    }
+
+    const productionEnvironmentId = (
+      await this.environmentRepository.findOrganizationEnvironments(organizationId)
+    )?.find((env) => env.name === 'Production')?._id;
+
+    if (!productionEnvironmentId) {
+      throw new DalException(
+        `Production environment id for BLUEPRINT_CREATOR ${process.env.BLUEPRINT_CREATOR} was not found`
+      );
     }
 
     const requestQuery: NotificationTemplateQuery = {
       isBlueprint: true,
-      _organizationId: this.blueprintOrganizationId,
+      _environmentId: productionEnvironmentId,
+      _organizationId: organizationId,
     };
 
-    const items = await this.MongooseModel.find(requestQuery)
-      .populate('steps.template')
-      .populate('notificationGroup')
-      .lean();
+    const items = (
+      await this.MongooseModel.find(requestQuery).populate('steps.template').populate('notificationGroup').lean()
+    )?.map((item) => this.mapEntity(item));
 
     const groupedItems = items.reduce((acc, item) => {
       const notificationGroupId = item._notificationGroupId;
       const notificationGroupName = item.notificationGroup?.name;
 
-      if (!acc[notificationGroupId.toString()]) {
-        acc[notificationGroupId.toString()] = {
+      if (!acc[notificationGroupId]) {
+        acc[notificationGroupId] = {
           name: notificationGroupName,
           blueprints: [],
         };
       }
 
-      acc[notificationGroupId as unknown as string].blueprints.push(item);
+      acc[notificationGroupId].blueprints.push(item);
 
       return acc;
     }, {});
@@ -142,7 +156,7 @@ export class NotificationTemplateRepository extends BaseRepository<
 
   async delete(query: NotificationTemplateQuery) {
     const item = await this.findOne({ _id: query._id, _environmentId: query._environmentId });
-    if (!item) throw new DalException(`Could not find notification template with id ${query._id}`);
+    if (!item) throw new DalException(`Could not find workflow with id ${query._id}`);
     await this.notificationTemplate.delete({ _id: item._id, _environmentId: item._environmentId });
   }
 

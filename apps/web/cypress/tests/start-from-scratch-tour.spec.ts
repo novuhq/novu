@@ -5,7 +5,7 @@ describe('Start from scratch tour hints', function () {
 
   it('should show the start from scratch intro step', function () {
     cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
+      cy.visit('/workflows/create');
     });
 
     cy.getByTestId('scratch-workflow-tooltip').should('be.visible');
@@ -21,7 +21,7 @@ describe('Start from scratch tour hints', function () {
 
   it('should hide the start from scratch intro step after clicking on watch later', function () {
     cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
+      cy.visit('/workflows/create');
     });
 
     cy.getByTestId('scratch-workflow-tooltip').should('be.visible');
@@ -38,7 +38,7 @@ describe('Start from scratch tour hints', function () {
 
   it('should show the start from scratch tour hints', function () {
     cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
+      cy.visit('/workflows/create');
     });
 
     cy.getByTestId('scratch-workflow-tooltip').should('be.visible');
@@ -88,7 +88,7 @@ describe('Start from scratch tour hints', function () {
 
   it('should show the dots navigation after the intro step', () => {
     cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
+      cy.visit('/workflows/create');
     });
 
     cy.getByTestId('scratch-workflow-tooltip').should('be.visible');
@@ -105,7 +105,7 @@ describe('Start from scratch tour hints', function () {
 
   it('should show not show the start from scratch tour hints after it is shown twice', () => {
     cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
+      cy.visit('/workflows/create');
     });
 
     cy.getByTestId('scratch-workflow-tooltip').should('be.visible');

@@ -39,6 +39,7 @@ export function HeaderNav({}: Props) {
     useEffect(() => {
       if (currentUser && currentOrganization) {
         boot({
+          userId: currentUser._id,
           email: currentUser?.email ?? '',
           name: currentUser?.firstName + ' ' + currentUser?.lastName,
           createdAt: currentUser?.createdAt,
@@ -183,6 +184,7 @@ export function HeaderNav({}: Props) {
           <NotificationCenterWidget user={currentUser} />
           <Dropdown
             position="bottom-end"
+            styles={{ dropdown: { minWidth: 220 } }}
             control={
               <ActionIcon variant="transparent">
                 <Avatar

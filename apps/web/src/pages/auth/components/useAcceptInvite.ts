@@ -1,12 +1,13 @@
 import { useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { showNotification } from '@mantine/notifications';
 import * as Sentry from '@sentry/react';
 
 import { api } from '../../../api/api.client';
 import { useAuthContext } from '../../../components/providers/AuthProvider';
 import { applyToken } from '../../../hooks';
+import { ROUTES } from '../../../constants/routes.enum';
+import { errorMessage } from '../../../utils/notifications';
 
 export function useAcceptInvite() {
   const { setToken } = useAuthContext();
@@ -33,12 +34,10 @@ export function useAcceptInvite() {
         });
       }
 
-      navigate('/templates');
+      navigate(ROUTES.WORKFLOWS);
     } catch (e: unknown) {
-      showNotification({
-        message: 'Failed to accept an invite.',
-        color: 'red',
-      });
+      errorMessage('Failed to accept an invite.');
+
       Sentry.captureException(e);
     }
   }, []);

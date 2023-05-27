@@ -1,5 +1,4 @@
 import { TestWrapper } from '../../../testing';
-import { BrowserRouter as Router } from 'react-router-dom';
 import { BlueprintModal } from './BlueprintModal';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -18,7 +17,7 @@ describe('Blueprint Modal', () => {
       },
     }).as('getTemplate');
 
-    cy.intercept('POST', `/v1/blueprints/test`, {
+    cy.intercept('POST', `/v1/notification-templates?__source=notification_directory`, {
       body: {
         _id: 'test',
       },

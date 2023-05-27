@@ -27,7 +27,7 @@ export const pushProviders: IProviderConfig[] = [
     displayName: 'Expo Push',
     channel: ChannelTypeEnum.PUSH,
     credentials: expoConfig,
-    docReference: 'https://docs.expo.dev/push-notifications/overview/',
+    docReference: 'https://docs.novu.co/channels/push/expo',
     logoFileName: { light: 'expo.svg', dark: 'expo.svg' },
   },
   {
