@@ -314,13 +314,15 @@ function EqualityForm({
                   { value: 'SMALLER_EQUAL', label: 'Smaller or equal' },
                   { value: 'IN', label: 'Contains' },
                   { value: 'NOT_IN', label: 'Not contains' },
-                  { value: 'IS_DEFINED', label: 'isDefined' },
+                  { value: 'IS_DEFINED', label: 'Is Defined' },
                 ]}
                 {...field}
                 data-test-id="filter-operator-dropdown"
                 onChange={(value) => {
                   field.onChange(value);
-                  value === 'IS_DEFINED' && setValue(`steps.${stepIndex}.filters.0.children.${index}.value`, '');
+                  if (value === 'IS_DEFINED') {
+                    setValue(`steps.${stepIndex}.filters.0.children.${index}.value`, '');
+                  }
                 }}
               />
             );
