@@ -326,7 +326,7 @@ describe('Workflow Editor - Main Functionality', function () {
 
     cy.getByTestId('environment-switch').find(`input[value="Production"] ~ label`).click();
 
-    cy.getByTestId('create-template-btn').should('be.disabled');
+    cy.getByTestId('create-workflow-btn').should('be.disabled');
   });
 
   it('Should not allow to go to New Template page in Production', function () {
@@ -393,7 +393,7 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.visit('/workflows');
     cy.wait('@getNotificationTemplates');
 
-    cy.getByTestId('create-template-btn').click();
+    cy.getByTestId('create-workflow-btn').click();
     cy.getByTestId('create-workflow-blank').click();
     cy.wait('@getNotificationTemplate');
 

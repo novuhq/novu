@@ -100,14 +100,18 @@ export const TemplatesStoreModal = ({ general, isOpened, onClose }: ITemplatesSt
       size="lg"
       onClose={onClose}
     >
-      <ModalBodyHolder>
-        <TemplatesSidebarHolder>
+      <ModalBodyHolder data-test-id="templates-store-modal">
+        <TemplatesSidebarHolder data-test-id="templates-store-modal-sidebar">
           {general.map((group) => (
             <TemplatesGroup key={group.name}>
               <GroupName>{group.name}</GroupName>
               {group.blueprints.map((template) => {
                 return (
-                  <TemplateItem key={template.name} onClick={() => handleTemplateClick(template)}>
+                  <TemplateItem
+                    key={template.name}
+                    onClick={() => handleTemplateClick(template)}
+                    data-test-id="templates-store-modal-blueprint-item"
+                  >
                     <FontAwesomeIcon icon={template.iconName} />
                     <span>{template.name}</span>
                   </TemplateItem>
@@ -119,11 +123,13 @@ export const TemplatesStoreModal = ({ general, isOpened, onClose }: ITemplatesSt
         <TemplatesDetailsHolder>
           <TemplateHeader>
             <TemplateDetails>
-              <TemplateName key={selectedTemplate.name}>
+              <TemplateName key={selectedTemplate.name} data-test-id="templates-store-modal-blueprint-name">
                 <FontAwesomeIcon icon={selectedTemplate.iconName} />
                 <span>{selectedTemplate.name}</span>
               </TemplateName>
-              <TemplateDescription>{selectedTemplate.description}</TemplateDescription>
+              <TemplateDescription data-test-id="templates-store-modal-blueprint-description">
+                {selectedTemplate.description}
+              </TemplateDescription>
             </TemplateDetails>
             <ActionIcon variant="transparent" onClick={onClose} sx={{ marginLeft: 'auto' }}>
               <Close />
@@ -160,6 +166,7 @@ export const TemplatesStoreModal = ({ general, isOpened, onClose }: ITemplatesSt
                 onClick={() => {
                   handleCreateTemplateClick(selectedTemplate);
                 }}
+                data-test-id="templates-store-modal-use-template"
               >
                 Use template
               </Button>
