@@ -1,5 +1,5 @@
 import { SubscriberRepository } from '@novu/dal';
-import { GetInAppActivatedCommand } from './get-In-app-activated.command';
+import { GetInAppActivatedCommand } from './get-in-app-activated.command';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
@@ -10,7 +10,7 @@ export class GetInAppActivated {
     const inAppSubscriberCount = await this.subscriberRepository.count({
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
-      isOnline: { $exists: true },
+      isOnline: true,
       subscriberId: /on-boarding-subscriber/i,
     });
 
