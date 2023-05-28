@@ -40,7 +40,7 @@ describe('Templates Store', function () {
 
     cy.wait('@getBlueprints');
     cy.getByTestId('all-workflow-tile').should('exist').should('not.be.disabled');
-    cy.getByTestId('popular-workflow-tile').should('have.length', 3);
+    cy.getByTestId('popular-workflow-tile').should('have.length', 2);
     cy.getByTestId('popular-workflow-tile').should('be.visible', 2);
   });
 
@@ -61,7 +61,7 @@ describe('Templates Store', function () {
       const { name } = getTemplateDetails(firstPopular.name);
 
       cy.getByTestId('no-workflow-templates-placeholder').should('be.visible');
-      cy.getByTestId('popular-workflow-tile').should('have.length', 3);
+      cy.getByTestId('popular-workflow-tile').should('have.length', 2);
       cy.getByTestId('popular-workflow-tile').should('be.visible', 2);
       cy.getByTestId('popular-workflow-tile').contains(name).trigger('mouseover');
       cy.get('.mantine-Popover-dropdown').should('be.visible').contains(firstPopular.description);
@@ -86,16 +86,42 @@ describe('Templates Store', function () {
     }).then(({ body }) => {
       const { blueprints: popularBlueprints } = body.data.popular;
       const firstPopular = popularBlueprints[0];
-      const secondPopular = popularBlueprints[0];
-      const thirdPopular = popularBlueprints[0];
+      const secondPopular = popularBlueprints[1];
       const { name: firstName } = getTemplateDetails(firstPopular.name);
       const { name: secondName } = getTemplateDetails(secondPopular.name);
-      const { name: thirdName } = getTemplateDetails(thirdPopular.name);
 
-      cy.getByTestId('create-template-dropdown-item').should('have.length', 3);
+      cy.getByTestId('create-template-dropdown-item').should('have.length', 2);
       cy.getByTestId('create-template-dropdown-item').contains(firstName);
       cy.getByTestId('create-template-dropdown-item').contains(secondName);
-      cy.getByTestId('create-template-dropdown-item').contains(thirdName);
+    });
+  });
+
+  it('should create template from the popular dropdown items', function () {
+    cy.makeBlueprints();
+    cy.intercept('**/notification-templates**').as('getTemplates');
+    cy.intercept('**/blueprints/group-by-category').as('getBlueprints');
+    cy.intercept('POST', '**/notification-templates**').as('createTemplate');
+    cy.visit('/workflows');
+    cy.wait('@getTemplates');
+    cy.wait('@getBlueprints');
+
+    cy.getByTestId('create-workflow-dropdown').should('be.visible').click();
+    cy.getByTestId('create-workflow-btn').should('be.visible');
+    cy.getByTestId('create-workflow-all-templates').should('be.visible');
+
+    cy.request({
+      method: 'GET',
+      url: `${Cypress.env('apiUrl')}/v1/blueprints/group-by-category`,
+    }).then(({ body }) => {
+      const { blueprints: popularBlueprints } = body.data.popular;
+      const firstPopular = popularBlueprints[0];
+      const { name: firstName } = getTemplateDetails(firstPopular.name);
+
+      cy.getByTestId('create-template-dropdown-item').contains(firstName).click();
+
+      cy.wait('@createTemplate');
+
+      cy.location('pathname').should('contain', `/workflows/edit`);
     });
   });
 
@@ -119,9 +145,34 @@ describe('Templates Store', function () {
       const firstPopular = popularBlueprints[0];
       const { name: firstName } = getTemplateDetails(firstPopular.name);
 
-      cy.getByTestId('create-template-dropdown-item').should('have.length', 3);
+      cy.getByTestId('create-template-dropdown-item').should('have.length', 2);
       cy.getByTestId('create-template-dropdown-item').contains(firstName).trigger('mouseover');
       cy.get('.mantine-Popover-dropdown').should('be.visible').contains(firstPopular.description);
+    });
+  });
+
+  it('should create template from the popular tile items', function () {
+    cy.makeBlueprints().as('blueprints');
+    cy.intercept('**/notification-templates**').as('getTemplates');
+    cy.intercept('**/blueprints/group-by-category').as('getBlueprints');
+    cy.intercept('POST', '**/notification-templates**').as('createTemplate');
+    cy.visit('/workflows');
+    cy.wait('@getTemplates');
+    cy.wait('@getBlueprints');
+
+    cy.request({
+      method: 'GET',
+      url: `${Cypress.env('apiUrl')}/v1/blueprints/group-by-category`,
+    }).then(({ body }) => {
+      const { blueprints: popularBlueprints } = body.data.popular;
+      const firstPopular = popularBlueprints[0];
+      const { name: firstName } = getTemplateDetails(firstPopular.name);
+
+      cy.getByTestId('no-workflow-templates-placeholder').contains(firstName).click();
+
+      cy.wait('@createTemplate');
+
+      cy.location('pathname').should('contain', `/workflows/edit`);
     });
   });
 
