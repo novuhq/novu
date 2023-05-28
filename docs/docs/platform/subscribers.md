@@ -2,6 +2,9 @@
 sidebar_position: 2
 ---
 
+import FAQ from '@site/src/components/FAQ';
+import FAQItem from '@site/src/components/FAQItem';
+
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
@@ -392,28 +395,30 @@ Novu manages a data model to help your users configure their preferences in an e
 
 ## Frequently Asked Questions
 
-<details>
-  <summary>How to store custom properties in subscriber?</summary>
-  <p>To store custom properties, use <code>data</code> field of subscriber.</p>
-</details>
+<FAQ>
+<FAQItem title="How to store custom properties in subscriber?">
 
-<details>
-  <summary>Why Novu stores user's PII?</summary>
-  
-  <p>Novu stores user personal information like first name, last name, email, phone, locale, avatar, etc to provide a multichannel notification experience to users. Once these values are stored, Novu automatically configures these values required as per different channels.</p>
-</details>
+To store custom properties, use <code>data</code> field of subscriber.
 
-<details>
-  <summary> How to create new subscribers in bulk at once?</summary>
-  <p>We don't support adding bulk subscribers at once as of now. Workaround for this is to create a custom script to call create single subscriber method or API multiple times to add bulk subscribers.</p>
-</details>
+</FAQItem>
+<FAQItem title="Why Novu stores user's PII?">
 
-<details>
-  <summary>How to get subscriber properties before step execution in workflow.</summary>
-  <p>Workflow has access to all existing properties of subscriber as well as payload variables. So no extra steps are needed.</p>
-</details>
+Novu stores user personal information like first name, last name, email, phone, locale, avatar, etc to provide a multichannel notification experience to users. Once these values are stored, Novu automatically configures these values required as per different channels.
 
-<details>
-  <summary>How to create list of subscribers?</summary>
-  <p>You can use <a href="./topics">topics</a> to create list of subscribers.</p>
-</details>
+</FAQItem>
+<FAQItem title="How to create new subscribers in bulk at once?">
+
+We don't support adding bulk subscribers at once as of now. Workaround for this is to create a custom script to call create single subscriber method or API multiple times to add bulk subscribers.
+
+</FAQItem>
+<FAQItem title="How to get subscriber properties before step execution in workflow.">
+
+Workflow has access to all existing properties of subscriber as well as payload variables. So no extra steps are needed.
+
+</FAQItem>
+<FAQItem title="How to create list of subscribers?">
+
+You can use [topics](./topics) to create list of subscribers.
+
+</FAQItem>
+</FAQ>

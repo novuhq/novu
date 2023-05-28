@@ -6,6 +6,7 @@ import { NotificationTemplate } from './notification-template.schema';
 import { NotificationTemplateDBModel, NotificationTemplateEntity } from './notification-template.entity';
 import { DalException } from '../../shared';
 import type { EnforceEnvOrOrgIds } from '../../types/enforce';
+import { EnvironmentRepository } from '../environment';
 
 type NotificationTemplateQuery = FilterQuery<NotificationTemplateDBModel> & EnforceEnvOrOrgIds;
 
@@ -15,6 +16,7 @@ export class NotificationTemplateRepository extends BaseRepository<
   EnforceEnvOrOrgIds
 > {
   private notificationTemplate: SoftDeleteModel;
+  private environmentRepository = new EnvironmentRepository();
 
   constructor() {
     super(NotificationTemplate, NotificationTemplateEntity);
@@ -58,32 +60,44 @@ export class NotificationTemplateRepository extends BaseRepository<
   }
 
   async findAllGroupedByCategory(): Promise<{ name: string; blueprints: NotificationTemplateEntity[] }[]> {
-    if (!this.blueprintOrganizationId) {
+    const organizationId = this.blueprintOrganizationId;
+
+    if (!organizationId) {
       return [];
+    }
+
+    const productionEnvironmentId = (
+      await this.environmentRepository.findOrganizationEnvironments(organizationId)
+    )?.find((env) => env.name === 'Production')?._id;
+
+    if (!productionEnvironmentId) {
+      throw new DalException(
+        `Production environment id for BLUEPRINT_CREATOR ${process.env.BLUEPRINT_CREATOR} was not found`
+      );
     }
 
     const requestQuery: NotificationTemplateQuery = {
       isBlueprint: true,
-      _organizationId: this.blueprintOrganizationId,
+      _environmentId: productionEnvironmentId,
+      _organizationId: organizationId,
     };
 
-    const items = await this.MongooseModel.find(requestQuery)
-      .populate('steps.template')
-      .populate('notificationGroup')
-      .lean();
+    const items = (
+      await this.MongooseModel.find(requestQuery).populate('steps.template').populate('notificationGroup').lean()
+    )?.map((item) => this.mapEntity(item));
 
     const groupedItems = items.reduce((acc, item) => {
       const notificationGroupId = item._notificationGroupId;
       const notificationGroupName = item.notificationGroup?.name;
 
-      if (!acc[notificationGroupId.toString()]) {
-        acc[notificationGroupId.toString()] = {
+      if (!acc[notificationGroupId]) {
+        acc[notificationGroupId] = {
           name: notificationGroupName,
           blueprints: [],
         };
       }
 
-      acc[notificationGroupId as unknown as string].blueprints.push(this.mapEntity(item));
+      acc[notificationGroupId].blueprints.push(item);
 
       return acc;
     }, {});

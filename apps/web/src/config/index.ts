@@ -51,3 +51,6 @@ export const WEBHOOK_URL = isCypress
 
 export const MAIL_SERVER_DOMAIN =
   window._env_.REACT_APP_MAIL_SERVER_DOMAIN || process.env.REACT_APP_MAIL_SERVER_DOMAIN || 'dev.inbound-mail.novu.co';
+
+export const LAUNCH_DARKLY_CLIENT_SIDE_ID =
+  window._env_.REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID || process.env.REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID;

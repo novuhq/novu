@@ -9,7 +9,7 @@ export function CardStatusBar({ active }: { active: boolean }) {
     <Wrapper>
       <ActiveWrapper active={active}>
         <BoltGradient {...iconProps} />
-        <StyledText data-test-id="card-status-bar-active">{active ? 'Active' : 'Not Active'}</StyledText>
+        <StyledText data-test-id="card-status-bar-active">{active ? 'Active' : 'Disabled'}</StyledText>
       </ActiveWrapper>
     </Wrapper>
   );

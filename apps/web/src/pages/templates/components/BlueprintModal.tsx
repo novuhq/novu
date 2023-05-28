@@ -12,6 +12,7 @@ import { errorMessage } from '../../../utils/notifications';
 import { When } from '../../../components/utils/When';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { useCreateTemplateFromBlueprint } from '../../../api/hooks';
+import { TemplateCreationSourceEnum } from '../shared';
 import { ROUTES } from '../../../constants/routes.enum';
 
 export function BlueprintModal() {
@@ -121,7 +122,10 @@ export function BlueprintModal() {
             data-test-id="create-from-blueprint"
             onClick={() => {
               if (blueprint) {
-                createTemplateFromBlueprint({ blueprint });
+                createTemplateFromBlueprint({
+                  blueprint,
+                  params: { __source: TemplateCreationSourceEnum.NOTIFICATION_DIRECTORY },
+                });
               }
             }}
           >

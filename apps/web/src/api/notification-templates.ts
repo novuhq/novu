@@ -6,8 +6,11 @@ import { BLUEPRINTS_API_URL } from '../config';
 export function getNotificationsList(page = 0, limit = 10) {
   return api.getFullResponse(`/v1/notification-templates`, { page, limit });
 }
-export async function createTemplate(data: ICreateNotificationTemplateDto): Promise<INotificationTemplate> {
-  return api.post(`/v1/notification-templates`, data);
+export async function createTemplate(
+  data: ICreateNotificationTemplateDto,
+  params?: { __source?: string }
+): Promise<INotificationTemplate> {
+  return api.post(`/v1/notification-templates`, data, params);
 }
 
 export async function updateTemplate(templateId: string, data: Partial<ICreateNotificationTemplateDto>) {
