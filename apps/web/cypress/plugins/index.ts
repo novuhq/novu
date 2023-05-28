@@ -12,6 +12,7 @@ import {
   EnvironmentService,
 } from '@novu/testing';
 import { JobsService } from '@novu/testing';
+import { getPopularTemplateIds } from '@novu/shared';
 
 const jobsService = new JobsService();
 
@@ -177,16 +178,20 @@ module.exports = (on, config) => {
         productionEnvironment._id
       );
 
+      const popularTemplateIds = getPopularTemplateIds({ production: false });
+
       const templatesCount = await notificationTemplateService.countTemplates();
       if (templatesCount === 0) {
         return await Promise.all([
           notificationTemplateService.createTemplate({
+            _id: popularTemplateIds[0],
             noFeedId: true,
             noLayoutId: true,
             name: ':fa-solid fa-star: Super cool workflow',
             isBlueprint: true,
           }),
           notificationTemplateService.createTemplate({
+            _id: popularTemplateIds[1],
             noFeedId: true,
             noLayoutId: true,
             name: ':fa-solid fa-lock: Password reset',
