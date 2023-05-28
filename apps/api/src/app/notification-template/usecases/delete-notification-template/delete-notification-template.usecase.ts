@@ -1,6 +1,6 @@
 // eslint-ignore max-len
 
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { NotificationTemplateRepository, DalException, ChangeRepository, NotificationTemplateEntity } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
@@ -12,6 +12,8 @@ import {
   buildNotificationTemplateKey,
   InvalidateCacheService,
 } from '@novu/application-generic';
+import { DeleteMessageTemplate } from '../../../message-template/usecases/delete-message-template/delete-message-template.usecase';
+import { DeleteMessageTemplateCommand } from '../../../message-template/usecases/delete-message-template/delete-message-template.command';
 
 @Injectable()
 export class DeleteNotificationTemplate {
@@ -19,7 +21,8 @@ export class DeleteNotificationTemplate {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private createChange: CreateChange,
     private changeRepository: ChangeRepository,
-    private invalidateCache: InvalidateCacheService
+    private invalidateCache: InvalidateCacheService,
+    private deleteMessageTemplate: DeleteMessageTemplate
   ) {}
 
   async execute(command: GetNotificationTemplateCommand) {
@@ -65,6 +68,18 @@ export class DeleteNotificationTemplate {
           changeId: parentChangeId,
         })
       );
+
+      for (const step of item.steps) {
+        await this.deleteMessageTemplate.execute(
+          DeleteMessageTemplateCommand.create({
+            organizationId: command.organizationId,
+            environmentId: command.environmentId,
+            userId: command.userId,
+            messageTemplateId: step._templateId,
+            parentChangeId: parentChangeId,
+          })
+        );
+      }
     } catch (e) {
       if (e instanceof DalException) {
         throw new ApiException(e.message);
