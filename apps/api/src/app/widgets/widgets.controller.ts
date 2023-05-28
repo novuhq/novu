@@ -50,6 +50,8 @@ import { MarkAllMessagesAsCommand } from './usecases/mark-all-messages-as/mark-a
 import { MarkAllMessagesAs } from './usecases/mark-all-messages-as/mark-all-messages-as.usecase';
 import { GetNotificationsFeedDto } from './dtos/get-notifications-feed-request.dto';
 import { LimitPipe } from './pipes/limit-pipe/limit-pipe';
+import { RemoveMessagesCommand } from './usecases/remove-messages/remove-messages.command';
+import { RemoveMessages } from './usecases/remove-messages/remove-messages.usecase';
 
 @Controller('/widgets')
 @ApiExcludeController()
@@ -60,6 +62,7 @@ export class WidgetsController {
     private getFeedCountUsecase: GetFeedCount,
     private markMessageAsUsecase: MarkMessageAs,
     private removeMessageUsecase: RemoveMessage,
+    private removeMessagesUsecase: RemoveMessages,
     private updateMessageActionsUsecase: UpdateMessageActions,
     private getOrganizationUsecase: GetOrganizationData,
     private getSubscriberPreferenceUsecase: GetSubscriberPreference,
@@ -277,6 +280,25 @@ export class WidgetsController {
     });
 
     return await this.removeMessageUsecase.execute(command);
+  }
+
+  @ApiOperation({
+    summary: 'Remove a subscriber feed messages',
+  })
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Delete('/messages')
+  async removeMessages(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Query('feedId') feedId: string
+  ): Promise<MessageEntity[]> {
+    const command = RemoveMessagesCommand.create({
+      organizationId: subscriberSession._organizationId,
+      subscriberId: subscriberSession.subscriberId,
+      environmentId: subscriberSession._environmentId,
+      feedId: feedId,
+    });
+
+    return await this.removeMessagesUsecase.execute(command);
   }
 
   @ApiOperation({
