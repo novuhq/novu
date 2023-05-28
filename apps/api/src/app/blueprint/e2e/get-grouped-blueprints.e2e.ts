@@ -3,17 +3,18 @@ import * as sinon from 'sinon';
 
 import { UserSession } from '@novu/testing';
 import { NotificationTemplateRepository, EnvironmentRepository } from '@novu/dal';
-import { GroupedBlueprintResponse } from '../dto/grouped-blueprint.response.dto';
-import { CreateNotificationTemplateRequestDto } from '../../notification-template/dto';
 import { EmailBlockTypeEnum, FilterPartTypeEnum, INotificationTemplate, StepTypeEnum } from '@novu/shared';
-import { GetGroupedBlueprints, POPULAR_TEMPLATES_ID_LIST } from '../usecases/get-grouped-blueprints';
-import * as blueprintStaticModule from '../usecases/get-grouped-blueprints/consts';
 import {
   buildGroupedBlueprintsKey,
   CacheService,
   InMemoryProviderService,
   InvalidateCacheService,
 } from '@novu/application-generic';
+
+import { GroupedBlueprintResponse } from '../dto/grouped-blueprint.response.dto';
+import { CreateNotificationTemplateRequestDto } from '../../notification-template/dto';
+import { GetGroupedBlueprints, POPULAR_TEMPLATES_ID_LIST } from '../usecases/get-grouped-blueprints';
+import * as blueprintStaticModule from '../usecases/get-grouped-blueprints/consts';
 
 describe('Get grouped notification template blueprints - /blueprints/group-by-category (GET)', async () => {
   let session: UserSession;
