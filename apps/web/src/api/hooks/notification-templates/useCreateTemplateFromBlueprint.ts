@@ -17,12 +17,19 @@ const mapBlueprintToTemplate = (blueprint: INotificationTemplate): ICreateNotifi
 });
 
 export const useCreateTemplateFromBlueprint = (
-  options: UseMutationOptions<INotificationTemplate, any, { blueprint: INotificationTemplate }> = {}
+  options: UseMutationOptions<
+    INotificationTemplate & { __source?: string },
+    any,
+    { blueprint: INotificationTemplate; params: { __source?: string } }
+  > = {}
 ) => {
-  const { mutate, ...rest } = useMutation<INotificationTemplate, any, { blueprint: INotificationTemplate }>(
-    ({ blueprint }) => createTemplate(mapBlueprintToTemplate(blueprint)),
-    { ...options }
-  );
+  const { mutate, ...rest } = useMutation<
+    INotificationTemplate,
+    any,
+    { blueprint: INotificationTemplate; params: { __source?: string } }
+  >((data) => createTemplate(mapBlueprintToTemplate(data.blueprint), data.params), {
+    ...options,
+  });
 
   return {
     createTemplateFromBlueprint: mutate,

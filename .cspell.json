@@ -442,12 +442,14 @@
     "clsx",
     "africastalking",
     "africas",
+    "Shortcodes",
     "supertest",
     "superagent",
     "INAPP",
     "fortawesome",
     "fontawesome",
-    "middlewares"
+    "middlewares",
+    "localforage"
   ],
   "flagWords": [],
   "patterns": [

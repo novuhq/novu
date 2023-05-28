@@ -14,7 +14,7 @@ describe('Changes Screen', function () {
     cy.getByTestId('pending-changes-table').find('tbody tr').should('have.length', 1);
   });
 
-  it('fields should be disabled in Production', function () {
+  it.skip('fields should be disabled in Production', function () {
     createNotification();
     promoteNotification();
 

@@ -1,12 +1,14 @@
-import { useState } from 'react';
 import styled from '@emotion/styled';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDiagramNext } from '@fortawesome/free-solid-svg-icons';
 import { faFile } from '@fortawesome/free-regular-svg-icons';
 import { Skeleton } from '@mantine/core';
+import { useSegment } from '../../components/providers/SegmentProvider';
 
 import { colors, Popover, shadows } from '../../design-system';
 import { IBlueprintTemplate } from '../../api/types';
+import { TemplateCreationSourceEnum } from './shared';
+import { useHoverOverTemplate } from './hooks/useHoverOverTemplate';
 
 const NoDataHolder = styled.div`
   display: flex;
@@ -121,13 +123,25 @@ export const TemplatesListNoData = ({
   onTemplateClick: (template: IBlueprintTemplate) => void;
   onAllTemplatesClick: React.MouseEventHandler<HTMLButtonElement>;
 }) => {
-  const [templateId, setTemplateId] = useState<string | undefined>(undefined);
+  const segment = useSegment();
+  const { templateId, onMouseEnter, onMouseLeave } = useHoverOverTemplate();
 
   return (
     <NoDataHolder data-test-id="no-workflow-templates-placeholder">
       <NoDataSubHeading>Start from a blank workflow or use a template</NoDataSubHeading>
       <CardsContainer>
-        <Card disabled={readonly} data-test-id="create-workflow-tile" onClick={onBlankWorkflowClick}>
+        <Card
+          disabled={readonly}
+          data-test-id="create-workflow-tile"
+          onClick={(event) => {
+            segment.track('[Template Store] Click Create Notification Template', {
+              templateIdentifier: 'Blank Workflow',
+              location: TemplateCreationSourceEnum.EMPTY_STATE,
+            });
+
+            onBlankWorkflowClick(event);
+          }}
+        >
           <FontAwesomeIcon icon={faFile} />
           <span>Blank Workflow</span>
         </Card>
@@ -154,13 +168,18 @@ export const TemplatesListNoData = ({
                     data-can-be-hidden={index === 2}
                     data-test-id="second-workflow-tile"
                     disabled={readonly || isCreating}
-                    onClick={() => onTemplateClick(template)}
+                    onClick={() => {
+                      segment.track('[Template Store] Click Create Notification Template', {
+                        templateIdentifier: template?.triggers[0]?.identifier || '',
+                        location: TemplateCreationSourceEnum.EMPTY_STATE,
+                      });
+
+                      onTemplateClick(template);
+                    }}
                     onMouseEnter={() => {
-                      setTemplateId(template._id);
+                      onMouseEnter(template._id);
                     }}
-                    onMouseLeave={() => {
-                      setTemplateId(undefined);
-                    }}
+                    onMouseLeave={onMouseLeave}
                   >
                     <FontAwesomeIcon icon={template.iconName} />
                     <span>{template.name}</span>
@@ -171,7 +190,13 @@ export const TemplatesListNoData = ({
             ))}
         <Card
           data-test-id="all-workflow-tile"
-          onClick={onAllTemplatesClick}
+          onClick={(event) => {
+            segment.track('[Template Store] Click Open Template Store', {
+              location: TemplateCreationSourceEnum.EMPTY_STATE,
+            });
+
+            onAllTemplatesClick(event);
+          }}
           disabled={allTemplatesDisabled || readonly}
         >
           <FontAwesomeIcon icon={faDiagramNext} />

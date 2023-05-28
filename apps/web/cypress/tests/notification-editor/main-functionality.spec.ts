@@ -295,7 +295,7 @@ describe('Workflow Editor - Main Functionality', function () {
   });
 
   it('should redirect to dev env for edit template', function () {
-    cy.intercept('POST', '*/notification-templates').as('createTemplate');
+    cy.intercept('POST', '*/notification-templates?__source=editor').as('createTemplate');
     cy.waitLoadTemplatePage(() => {
       cy.visit('/workflows/create');
     });

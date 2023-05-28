@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { IForm } from '../components/formTypes';
 import { INotificationTrigger } from '@novu/shared';
 import { useTemplateController } from '../components/useTemplateController';
+import { TemplateCreationSourceEnum } from '../shared';
 
 export const useCreate = (
   templateId: string,
@@ -27,7 +28,16 @@ export const useCreate = (
 
     const submit = async () => {
       const payloadToCreate = mapFormToCreateNotificationTemplate(values);
-      const response = await createNotificationTemplate({ ...payloadToCreate, active: true, draft: false });
+      const response = await createNotificationTemplate({
+        template: {
+          ...payloadToCreate,
+          active: true,
+          draft: false,
+        },
+        params: {
+          __source: TemplateCreationSourceEnum.EDITOR,
+        },
+      });
       setTrigger(response.triggers[0]);
       navigate(`/workflows/edit/${response._id || ''}`);
     };
