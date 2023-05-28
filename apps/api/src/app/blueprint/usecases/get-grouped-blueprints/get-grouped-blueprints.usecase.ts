@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { NotificationTemplateRepository, NotificationTemplateEntity } from '@novu/dal';
 import { buildGroupedBlueprintsKey, CachedEntity } from '@novu/application-generic';
 import { INotificationTemplate, IGroupedBlueprint } from '@novu/shared';
@@ -37,27 +37,27 @@ export class GetGroupedBlueprints {
     return groups;
   }
 
-  private extractStoredBlueprints(groups: { name: string; blueprints: NotificationTemplateEntity[] }[]) {
-    return groups
-      .map((group) => group.blueprints)
-      .reduce((acc, curr) => {
-        acc.push(...curr);
-
-        return acc;
-      });
+  private groupedToBlueprintsArray(groups: { name: string; blueprints: NotificationTemplateEntity[] }[]) {
+    return groups.map((group) => group.blueprints).flat();
   }
 
   private updatePopularBlueprints(
     groups: { name: string; blueprints: NotificationTemplateEntity[] }[]
   ): INotificationTemplate[] {
-    const storedBlueprints = this.extractStoredBlueprints(groups);
+    const storedBlueprints = this.groupedToBlueprintsArray(groups);
 
     const localPopularIds = [...POPULAR_TEMPLATES_ID_LIST];
 
     return localPopularIds.map((localBlueprintId) => {
       const storedBlueprint = storedBlueprints.find((blueprint) => blueprint._id === localBlueprintId);
 
-      return (storedBlueprint ? storedBlueprint : localBlueprintId) as INotificationTemplate;
+      if (!storedBlueprint) {
+        Logger.warn(
+          `Could not find stored popular blueprint id: ${localBlueprintId}, BLUEPRINT_CREATOR: ${NotificationTemplateRepository.getBlueprintOrganizationId()}`
+        );
+      }
+
+      return storedBlueprint as INotificationTemplate;
     });
   }
 }
