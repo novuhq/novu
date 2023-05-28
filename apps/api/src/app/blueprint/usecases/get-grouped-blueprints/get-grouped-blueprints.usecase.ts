@@ -1,10 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { NotificationTemplateRepository, NotificationTemplateEntity } from '@novu/dal';
 import { buildGroupedBlueprintsKey, CachedEntity } from '@novu/application-generic';
 import { INotificationTemplate, IGroupedBlueprint } from '@novu/shared';
 
 import { GroupedBlueprintResponse } from '../../dto/grouped-blueprint.response.dto';
-import { POPULAR_TEMPLATES_GROUPED } from './index';
+import { POPULAR_GROUPED_NAME, POPULAR_TEMPLATES_ID_LIST } from './index';
 
 const WEEK_IN_SECONDS = 60 * 60 * 24 * 7;
 
@@ -21,7 +21,7 @@ export class GetGroupedBlueprints {
 
     const updatePopularBlueprints = this.updatePopularBlueprints(groups);
 
-    const popular = { name: POPULAR_TEMPLATES_GROUPED.name, blueprints: updatePopularBlueprints };
+    const popular = { name: POPULAR_GROUPED_NAME, blueprints: updatePopularBlueprints };
 
     return { general: groups as IGroupedBlueprint[], popular };
   }
@@ -37,27 +37,27 @@ export class GetGroupedBlueprints {
     return groups;
   }
 
-  private extractStoredBlueprints(groups: { name: string; blueprints: NotificationTemplateEntity[] }[]) {
-    return groups
-      .map((group) => group.blueprints)
-      .reduce((acc, curr) => {
-        acc.push(...curr);
-
-        return acc;
-      });
+  private groupedToBlueprintsArray(groups: { name: string; blueprints: NotificationTemplateEntity[] }[]) {
+    return groups.map((group) => group.blueprints).flat();
   }
 
   private updatePopularBlueprints(
     groups: { name: string; blueprints: NotificationTemplateEntity[] }[]
   ): INotificationTemplate[] {
-    const storedBlueprints = this.extractStoredBlueprints(groups);
+    const storedBlueprints = this.groupedToBlueprintsArray(groups);
 
-    const localPopularBlueprints = { ...POPULAR_TEMPLATES_GROUPED };
+    const localPopularIds = [...POPULAR_TEMPLATES_ID_LIST];
 
-    return localPopularBlueprints.blueprints.map((localBlueprint) => {
-      const storedBlueprint = storedBlueprints.find((blueprint) => blueprint._id === localBlueprint._id);
+    return localPopularIds.map((localBlueprintId) => {
+      const storedBlueprint = storedBlueprints.find((blueprint) => blueprint._id === localBlueprintId);
 
-      return (storedBlueprint ? storedBlueprint : localBlueprint) as INotificationTemplate;
+      if (!storedBlueprint) {
+        Logger.warn(
+          `Could not find stored popular blueprint id: ${localBlueprintId}, BLUEPRINT_CREATOR: ${NotificationTemplateRepository.getBlueprintOrganizationId()}`
+        );
+      }
+
+      return storedBlueprint as INotificationTemplate;
     });
   }
 }
