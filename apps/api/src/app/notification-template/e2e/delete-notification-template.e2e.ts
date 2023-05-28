@@ -1,12 +1,18 @@
 import { expect } from 'chai';
 import { UserSession, NotificationTemplateService } from '@novu/testing';
-import { NotificationGroupRepository, NotificationTemplateRepository, EnvironmentRepository } from '@novu/dal';
+import {
+  NotificationGroupRepository,
+  NotificationTemplateRepository,
+  EnvironmentRepository,
+  MessageTemplateRepository,
+} from '@novu/dal';
 
 describe('Delete notification template by id - /notification-templates/:templateId (DELETE)', async () => {
   let session: UserSession;
   const notificationTemplateRepository = new NotificationTemplateRepository();
   const notificationGroupRepository: NotificationGroupRepository = new NotificationGroupRepository();
   const environmentRepository: EnvironmentRepository = new EnvironmentRepository();
+  const messageTemplateRepository: MessageTemplateRepository = new MessageTemplateRepository();
 
   before(async () => {
     session = new UserSession();
@@ -139,6 +145,47 @@ describe('Delete notification template by id - /notification-templates/:template
 
     expect(response.body.message).to.contains('Could not find workflow with id');
   });
+
+  it('should delete the notification template along with the message templates', async function () {
+    const notificationTemplateService = new NotificationTemplateService(
+      session.user._id,
+      session.organization._id,
+      session.environment._id
+    );
+    const template = await notificationTemplateService.createTemplate();
+
+    const messageTemplateIds = template.steps.map((step) => step._templateId);
+
+    const messageTemplates = await messageTemplateRepository.find({
+      _environmentId: session.environment._id,
+      _id: { $in: messageTemplateIds },
+    });
+
+    expect(messageTemplates.length).to.equal(2);
+
+    await session.testAgent.delete(`/v1/notification-templates/${template._id}`).send();
+
+    const deletedNotificationTemplate = await notificationTemplateRepository.findOne({
+      _environmentId: session.environment._id,
+      _id: template._id,
+    });
+
+    expect(deletedNotificationTemplate).to.equal(null);
+
+    const deletedIntegration = (
+      await notificationTemplateRepository.findDeleted({ _environmentId: session.environment._id, _id: template._id })
+    )[0];
+
+    expect(deletedIntegration.deleted).to.equal(true);
+
+    const deletedMessageTemplates = await messageTemplateRepository.find({
+      _environmentId: session.environment._id,
+      _id: { $in: messageTemplateIds },
+    });
+
+    expect(deletedMessageTemplates.length).to.equal(0);
+  });
+
   async function getProductionEnvironment() {
     return await environmentRepository.findOne({
       _parentId: session.environment._id,
