@@ -151,7 +151,7 @@ await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
 <FAQ>
 <FAQItem title="How to send dynamic HTML content as value of variable?">
 
- Use triple curly braces variable like `{{{htmlVariable}}}`.
- 
+Use triple curly braces variable like `{{{htmlVariable}}}`.
+
 </FAQItem>
 </FAQ>

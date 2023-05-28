@@ -21,7 +21,7 @@ describe('Notification Templates Screen', function () {
       .getByTestId('active-status-label')
       .should('be.visible');
 
-    cy.getByTestId('create-template-btn').should('not.be.disabled');
+    cy.getByTestId('create-workflow-btn').should('not.be.disabled');
     cy.getByTestId('category-label').contains('General');
   });
 
@@ -30,7 +30,7 @@ describe('Notification Templates Screen', function () {
     cy.visit('/workflows');
     cy.wait('@notificationTemplates');
 
-    cy.getByTestId('create-template-btn').should('not.be.disabled').click();
+    cy.getByTestId('create-workflow-btn').should('not.be.disabled').click();
     cy.getByTestId('create-workflow-all-templates').contains('All templates');
     cy.getByTestId('create-workflow-blank').contains('Blank workflow');
   });
