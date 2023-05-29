@@ -17,9 +17,6 @@ import { useNotifications } from './useNotifications';
 
 const promiseResolveTimeout = (ms: number, arg: unknown = {}) => new Promise((resolve) => setTimeout(resolve, ms, arg));
 
-const promiseRejectTimeout = (ms: number, arg: unknown = {}) =>
-  new Promise((resolve, reject) => setTimeout(reject, ms, arg));
-
 const templateId = 'templateId';
 const notificationId = 'notificationId';
 const mockSession: ISession = {
@@ -76,6 +73,7 @@ const mockNotificationsList: IPaginatedResponse<IMessage> = {
   totalCount: 1,
   pageSize: 10,
   page: 0,
+  hasMore: false,
 };
 const mockUserPreferenceSetting: IUserPreferenceSettings = {
   template: { _id: templateId, name: 'mock template', critical: false },
@@ -398,7 +396,7 @@ describe('useNotifications', () => {
     expect(firstNotification.seen).toBeTruthy();
   });
 
-  it('mark all notification as read', async () => {
+  it('mark fetched notifications as read', async () => {
     const mockNotification1 = { ...mockNotification, _id: 'mockNotification1' };
     const mockNotification2 = { ...mockNotification, _id: 'mockNotification2' };
     const mockNotificationsResponse1 = {
@@ -422,7 +420,7 @@ describe('useNotifications', () => {
     rerender();
 
     act(() => {
-      result.current.markAllNotificationsAsRead();
+      result.current.markFetchedNotificationsAsRead();
     });
 
     await promiseResolveTimeout(100);
@@ -468,7 +466,7 @@ describe('useNotifications', () => {
     expect(firstNotification.seen).toBeTruthy();
   });
 
-  it('mark all notification as seen', async () => {
+  it('mark fetched notifications as seen', async () => {
     const mockNotification1 = { ...mockNotification, _id: 'mockNotification1' };
     const mockNotification2 = { ...mockNotification, _id: 'mockNotification2' };
     const mockNotificationsResponse1 = {
@@ -492,7 +490,7 @@ describe('useNotifications', () => {
     rerender();
 
     act(() => {
-      result.current.markAllNotificationsAsSeen();
+      result.current.markFetchedNotificationsAsSeen();
     });
 
     await promiseResolveTimeout(100);

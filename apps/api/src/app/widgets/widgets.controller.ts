@@ -301,7 +301,7 @@ export class WidgetsController {
   }
 
   @ApiOperation({
-    summary: "Mark subscriber's all unread messages as seen",
+    summary: "Mark subscriber's all unseen messages as seen",
   })
   @UseGuards(AuthGuard('subscriberJwt'))
   @Post('/messages/seen')

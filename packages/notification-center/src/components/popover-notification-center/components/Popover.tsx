@@ -23,18 +23,18 @@ export function Popover({ children, bell, theme, offset = 0, position = 'bottom-
     arrow: cx(classes.arrow, css(popoverArrowStyles)),
     dropdown: cx(classes.dropdown, css(popoverDropdownStyles)),
   };
-  const { markAllNotificationsAsSeen } = useNotifications();
+  const { markFetchedNotificationsAsSeen } = useNotifications();
 
   function handlerBellClick() {
     if (isVisible) {
-      markAllNotificationsAsSeen();
+      markFetchedNotificationsAsSeen();
     }
     setIsVisible(!isVisible);
   }
 
   function handlerOnClose() {
     setIsVisible(false);
-    markAllNotificationsAsSeen();
+    markFetchedNotificationsAsSeen();
   }
 
   return (
