@@ -5,12 +5,12 @@ import { ColumnWithStrictAccessor } from 'react-table';
 import styled from '@emotion/styled';
 import { format } from 'date-fns';
 
-import { useTemplates, useEnvController, useNotificationGroup } from '../../hooks';
+import { useTemplates, useEnvController, useNotificationGroup, useIsTemplateStoreEnabled } from '../../hooks';
 import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
-import { Tag, Table, colors, Text, LoadingOverlay } from '../../design-system';
-import { Edit } from '../../design-system/icons';
+import { Tag, Table, colors, Text, Button, LoadingOverlay } from '../../design-system';
+import { Edit, PlusCircle } from '../../design-system/icons';
 import { Tooltip } from '../../design-system';
 import { Data } from '../../design-system/table/Table';
 import { ROUTES } from '../../constants/routes.enum';
@@ -24,6 +24,8 @@ import { CreateWorkflowDropdown } from './components/CreateWorkflowDropdown';
 import { IBlueprintTemplate } from '../../api/types';
 import { errorMessage } from '../../utils/notifications';
 import { TemplateCreationSourceEnum } from './shared';
+import { TemplatesListNoDataOld } from './TemplatesListNoDataOld';
+import { useCreateDigestDemoWorkflow } from '../../api/hooks/notification-templates/useCreateDigestDemoWorkflow';
 import { When } from '../../components/utils/When';
 
 function NotificationList() {
@@ -47,7 +49,9 @@ function NotificationList() {
   const hasGroups = general && general.length > 0;
   const hasTemplates = templates && templates.length > 0;
 
-  const { TemplatesStoreModal, openModal } = useTemplatesStoreModal({ general });
+  const { TemplatesStoreModal, openModal } = useTemplatesStoreModal({ general, popular });
+  const { createDigestDemoWorkflow, isDisabled: isTryDigestDisabled } = useCreateDigestDemoWorkflow();
+  const isTemplateStoreEnabled = useIsTemplateStoreEnabled();
 
   function handleTableChange(pageIndex) {
     setPage(pageIndex);
@@ -63,6 +67,11 @@ function NotificationList() {
       blueprint: { ...blueprint },
       params: { __source: TemplateCreationSourceEnum.TEMPLATE_STORE },
     });
+  };
+
+  const handleCreateDigestDemoWorkflow = () => {
+    segment.track(TemplateAnalyticsEnum.TRY_DIGEST_CLICK);
+    createDigestDemoWorkflow();
   };
 
   const columns: ColumnWithStrictAccessor<Data>[] = [
@@ -143,26 +152,67 @@ function NotificationList() {
       <PageHeader
         title="Workflows"
         actions={
-          <CreateWorkflowDropdown
-            readonly={readonly}
-            blueprints={popular?.blueprints}
-            isLoading={areBlueprintsLoading}
-            isCreating={isCreatingTemplateFromBlueprint}
-            allTemplatesDisabled={areBlueprintsLoading || !hasGroups}
-            onBlankWorkflowClick={() => handleRedirectToCreateTemplate(false)}
-            onTemplateClick={handleOnBlueprintClick}
-            onAllTemplatesClick={openModal}
-          />
+          isTemplateStoreEnabled ? (
+            <CreateWorkflowDropdown
+              readonly={readonly}
+              blueprints={popular?.blueprints}
+              isLoading={areBlueprintsLoading}
+              isCreating={isCreatingTemplateFromBlueprint}
+              allTemplatesDisabled={areBlueprintsLoading || !hasGroups}
+              onBlankWorkflowClick={() => handleRedirectToCreateTemplate(false)}
+              onTemplateClick={handleOnBlueprintClick}
+              onAllTemplatesClick={openModal}
+            />
+          ) : (
+            <Button
+              disabled={readonly}
+              onClick={() => handleRedirectToCreateTemplate(true)}
+              icon={<PlusCircle />}
+              data-test-id="create-template-btn"
+            >
+              Create Workflow
+            </Button>
+          )
         }
       />
 
       <TemplateListTableWrapper>
         <LoadingOverlay visible={isLoading}>
           <When truthy={!isLoading}>
-            {hasTemplates ? (
+            {isTemplateStoreEnabled ? (
+              <>
+                <When truthy={hasTemplates}>
+                  <Table
+                    onRowClick={onRowClick}
+                    loading={areNotificationGroupLoading}
+                    data-test-id="notifications-template"
+                    columns={columns}
+                    data={templates}
+                    pagination={{
+                      pageSize: pageSize,
+                      current: page,
+                      total: totalTemplatesCount,
+                      onPageChange: handleTableChange,
+                    }}
+                  />
+                </When>
+                <When truthy={!hasTemplates}>
+                  <TemplatesListNoData
+                    readonly={readonly}
+                    blueprints={popular?.blueprints}
+                    isLoading={areBlueprintsLoading}
+                    isCreating={isCreatingTemplateFromBlueprint}
+                    allTemplatesDisabled={areBlueprintsLoading || !hasGroups}
+                    onBlankWorkflowClick={() => handleRedirectToCreateTemplate(false)}
+                    onTemplateClick={handleOnBlueprintClick}
+                    onAllTemplatesClick={openModal}
+                  />
+                </When>
+              </>
+            ) : (
               <Table
                 onRowClick={onRowClick}
-                loading={isLoading || areNotificationGroupLoading}
+                loading={areNotificationGroupLoading}
                 data-test-id="notifications-template"
                 columns={columns}
                 data={templates}
@@ -172,17 +222,13 @@ function NotificationList() {
                   total: totalTemplatesCount,
                   onPageChange: handleTableChange,
                 }}
-              />
-            ) : (
-              <TemplatesListNoData
-                readonly={readonly}
-                blueprints={popular?.blueprints}
-                isLoading={areBlueprintsLoading}
-                isCreating={isCreatingTemplateFromBlueprint}
-                allTemplatesDisabled={areBlueprintsLoading || !hasGroups}
-                onBlankWorkflowClick={() => handleRedirectToCreateTemplate(false)}
-                onTemplateClick={handleOnBlueprintClick}
-                onAllTemplatesClick={openModal}
+                noDataPlaceholder={
+                  <TemplatesListNoDataOld
+                    onCreateClick={() => handleRedirectToCreateTemplate(false)}
+                    onTryDigestClick={handleCreateDigestDemoWorkflow}
+                    tryDigestDisabled={isTryDigestDisabled}
+                  />
+                }
               />
             )}
           </When>
