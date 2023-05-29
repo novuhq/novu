@@ -2,6 +2,7 @@ import * as Sentry from '@sentry/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
 import { Route, Routes, BrowserRouter } from 'react-router-dom';
+import { withLDProvider } from 'launchdarkly-react-client-sdk';
 import LogRocket from 'logrocket';
 import setupLogRocketReact from 'logrocket-react';
 import { Integrations } from '@sentry/tracing';
@@ -27,7 +28,7 @@ import { AppLayout } from './components/layout/AppLayout';
 import { MembersInvitePage } from './pages/invites/MembersInvitePage';
 import { IntegrationsStore } from './pages/integrations/IntegrationsStorePage';
 import CreateOrganizationPage from './pages/auth/CreateOrganizationPage';
-import { ENV, SENTRY_DSN, CONTEXT_PATH, LOGROCKET_ID } from './config';
+import { ENV, LAUNCH_DARKLY_CLIENT_SIDE_ID, SENTRY_DSN, CONTEXT_PATH, LOGROCKET_ID } from './config';
 import { PromoteChangesPage } from './pages/changes/PromoteChangesPage';
 import { LinkVercelProjectPage } from './pages/partner-integrations/LinkVercelProjectPage';
 import { ROUTES } from './constants/routes.enum';
@@ -219,4 +220,11 @@ function App() {
   );
 }
 
-export default Sentry.withProfiler(App);
+export default Sentry.withProfiler(
+  withLDProvider({
+    clientSideID: LAUNCH_DARKLY_CLIENT_SIDE_ID,
+    reactOptions: {
+      useCamelCaseFlagKeys: false,
+    },
+  })(App)
+);

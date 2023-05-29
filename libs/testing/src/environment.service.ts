@@ -5,9 +5,9 @@ export class EnvironmentService {
   private environmentRepository = new EnvironmentRepository();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async createEnvironment(organizationId: any) {
+  async createEnvironment(organizationId: any, name?: string) {
     return await this.environmentRepository.create({
-      name: faker.name.jobTitle(),
+      name: name ?? faker.name.jobTitle(),
       _organizationId: organizationId,
     });
   }
@@ -25,6 +25,15 @@ export class EnvironmentService {
   async getEnvironment(environmentId: any) {
     const environment = await this.environmentRepository.findOne({
       _id: environmentId,
+    });
+
+    return environment;
+  }
+
+  async getProductionEnvironment(organizationId: any) {
+    const environment = await this.environmentRepository.findOne({
+      _organizationId: organizationId,
+      name: 'Production',
     });
 
     return environment;

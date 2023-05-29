@@ -65,24 +65,25 @@ const LimitBarBase = ({
   const descriptionColor = isDark ? colors.B60 : colors.B40;
 
   const warningLimit = WARNING_LIMIT[channel];
+  const limitLeft = limit - count;
 
   return (
     <Stack spacing={2} sx={{ color: colors.B60 }}>
       <div>
         <Text>
-          {count}
+          {limitLeft}
           <span
             style={{
               color: descriptionColor,
             }}
           >
             {' '}
-            {unit} left
+            {limitLeft === limit ? `${unit} per month` : `${unit} left`}
           </span>
         </Text>
 
         <ProgressContainer>
-          <ProgressBar count={count} limit={limit} warningLimit={warningLimit} />
+          <ProgressBar limitLeft={limitLeft} limit={limit} warningLimit={warningLimit} />
         </ProgressContainer>
         <When truthy={showDescription}>
           <Text color={descriptionColor}>
@@ -105,9 +106,9 @@ const ProgressContainer = styled.div`
   overflow: hidden;
 `;
 
-const ProgressBar = styled.div<{ count: number; limit: number; warningLimit: number }>`
+const ProgressBar = styled.div<{ limitLeft: number; limit: number; warningLimit: number }>`
   border-radius: '3px';
-  background: ${({ count, warningLimit }) => (count > warningLimit ? colors.success : colors.error)};
+  background: ${({ limitLeft, warningLimit }) => (limitLeft > warningLimit ? colors.success : colors.error)};
   height: 2px;
-  width: ${({ count, limit }) => (100 * count) / limit}%;
+  width: ${({ limitLeft, limit }) => (100 * limitLeft) / limit}%;
 `;
