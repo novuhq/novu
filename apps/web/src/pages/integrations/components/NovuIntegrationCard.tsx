@@ -64,7 +64,7 @@ export function NovuIntegrationCard({
                 marginTop: '12px',
               }}
             >
-              <CardStatusBar active={count > 0 && provider.active} />
+              <CardStatusBar active={limit - count > 0 && provider.active} />
             </div>
           </CardFooter>
         </StyledGroup>
