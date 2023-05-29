@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Badge, ActionIcon, useMantineTheme } from '@mantine/core';
+import { Badge, ActionIcon, useMantineTheme, LoadingOverlay } from '@mantine/core';
 import { Link, useNavigate } from 'react-router-dom';
 import { ColumnWithStrictAccessor } from 'react-table';
 import styled from '@emotion/styled';
@@ -24,6 +24,7 @@ import { CreateWorkflowDropdown } from './components/CreateWorkflowDropdown';
 import { IBlueprintTemplate } from '../../api/types';
 import { errorMessage } from '../../utils/notifications';
 import { TemplateCreationSourceEnum } from './shared';
+import { When } from '../../components/utils/When';
 
 function NotificationList() {
   const segment = useSegment();
@@ -154,33 +155,45 @@ function NotificationList() {
           />
         }
       />
+
       <TemplateListTableWrapper>
-        {hasTemplates ? (
-          <Table
-            onRowClick={onRowClick}
-            loading={isLoading || areNotificationGroupLoading}
-            data-test-id="notifications-template"
-            columns={columns}
-            data={templates}
-            pagination={{
-              pageSize: pageSize,
-              current: page,
-              total: totalTemplatesCount,
-              onPageChange: handleTableChange,
-            }}
-          />
-        ) : (
-          <TemplatesListNoData
-            readonly={readonly}
-            blueprints={popular?.blueprints}
-            isLoading={areBlueprintsLoading}
-            isCreating={isCreatingTemplateFromBlueprint}
-            allTemplatesDisabled={areBlueprintsLoading || !hasGroups}
-            onBlankWorkflowClick={() => handleRedirectToCreateTemplate(false)}
-            onTemplateClick={handleOnBlueprintClick}
-            onAllTemplatesClick={openModal}
-          />
-        )}
+        <LoadingOverlay
+          visible={isLoading}
+          zIndex={1}
+          overlayColor={theme.colorScheme === 'dark' ? colors.B30 : colors.B98}
+          loaderProps={{
+            color: colors.error,
+          }}
+          style={{ position: 'relative', minHeight: 500 }}
+        />
+        <When truthy={!isLoading}>
+          {hasTemplates ? (
+            <Table
+              onRowClick={onRowClick}
+              loading={isLoading || areNotificationGroupLoading}
+              data-test-id="notifications-template"
+              columns={columns}
+              data={templates}
+              pagination={{
+                pageSize: pageSize,
+                current: page,
+                total: totalTemplatesCount,
+                onPageChange: handleTableChange,
+              }}
+            />
+          ) : (
+            <TemplatesListNoData
+              readonly={readonly}
+              blueprints={popular?.blueprints}
+              isLoading={areBlueprintsLoading}
+              isCreating={isCreatingTemplateFromBlueprint}
+              allTemplatesDisabled={areBlueprintsLoading || !hasGroups}
+              onBlankWorkflowClick={() => handleRedirectToCreateTemplate(false)}
+              onTemplateClick={handleOnBlueprintClick}
+              onAllTemplatesClick={openModal}
+            />
+          )}
+        </When>
         <TemplatesStoreModal />
       </TemplateListTableWrapper>
     </PageContainer>
