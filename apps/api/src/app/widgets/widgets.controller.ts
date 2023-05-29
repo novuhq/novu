@@ -289,8 +289,8 @@ export class WidgetsController {
   @Delete('/messages')
   async removeMessages(
     @SubscriberSession() subscriberSession: SubscriberEntity,
-    @Query('feedId') feedId: string
-  ): Promise<MessageEntity[]> {
+    @Query('feedId') feedId?: string
+  ): Promise<number> {
     const command = RemoveMessagesCommand.create({
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession.subscriberId,

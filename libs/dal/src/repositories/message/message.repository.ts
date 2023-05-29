@@ -246,17 +246,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
   }
 
   async deleteMany(query: MessageQuery) {
-    const deleteQuery: Partial<MessageEntity> & EnforceEnvId = {
-      _subscriberId: query._subscriberId,
-      _environmentId: query._environmentId,
-      _organizationId: query._organizationId,
-    };
-
-    if (query._feedId) {
-      deleteQuery._feedId;
-    }
-
-    return await this.message.delete(deleteQuery);
+    return await this.message.delete({ ...query, deleted: false });
   }
 
   async findDeleted(query: MessageQuery): Promise<MessageEntity> {
