@@ -202,9 +202,11 @@ Before you begin coding and collaborating, please read our [Code of Conduct](htt
 
 We are more than happy to help you. If you are getting any errors or facing problems while working on this project, join our [Discord server](https://discord.novu.co) and ask for help. We are open to discussing anything related to the project.
 
-## ⚡ Immediate working space with Gitpod
+## ⚡ Immediate working spaces
 
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/novuhq/novu)
+| Gitpod | GitHub Codespaces |
+|--------|------------------|
+| [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/novuhq/novu) | [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/novuhq/novu) |
 
 ## 🔗 Links
 
