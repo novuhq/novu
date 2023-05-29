@@ -100,7 +100,7 @@ export const NotificationSettingsForm = ({ trigger }: { trigger?: INotificationT
                       <div data-test-id="submit-category-btn">+ Create group {newGroup}</div>
                     )}
                     onCreate={addGroupItem}
-                    placeholder="Attach notification to group"
+                    placeholder="Attach workflow to group"
                     data={(groups || []).map((item) => ({ label: item.name, value: item._id }))}
                   />
                 </>
@@ -121,7 +121,7 @@ export const NotificationSettingsForm = ({ trigger }: { trigger?: INotificationT
             value={field.value || ''}
             error={errors.name?.message}
             label="Name"
-            placeholder="Notification name goes here..."
+            placeholder="Workflow name goes here..."
           />
         )}
       />
@@ -161,7 +161,7 @@ export const NotificationSettingsForm = ({ trigger }: { trigger?: INotificationT
             disabled={readonly}
             data-test-id="description"
             label="Description"
-            placeholder="Describe your notification..."
+            placeholder="Describe your workflow..."
           />
         )}
       />

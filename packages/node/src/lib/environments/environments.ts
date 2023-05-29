@@ -4,7 +4,6 @@ import {
   IEnvironmentCreatePayload,
   IEnvironments,
   IEnvironmentUpdatePayload,
-  IWidgetUpdatePayload,
 } from './environments.interface';
 
 export class Environments extends WithHttp implements IEnvironments {
@@ -30,9 +29,5 @@ export class Environments extends WithHttp implements IEnvironments {
 
   async regenerateApiKeys() {
     return await this.http.post('/environments/api-keys/regenerate');
-  }
-
-  async updateWidget(payload: IWidgetUpdatePayload) {
-    return await this.http.put('/environments/widget/settings', payload);
   }
 }

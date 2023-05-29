@@ -5,8 +5,6 @@ import { TestWrapper } from '../../../testing';
 import { VariableManager } from './VariableManager';
 import { TemplateEditorFormProvider } from './TemplateEditorFormProvider';
 import { useVariablesManager } from '../../../hooks';
-import { BrowserRouter } from 'react-router-dom';
-import { CONTEXT_PATH } from '../../../config';
 
 it('should show available variables - string', function () {
   mount(

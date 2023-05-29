@@ -2,6 +2,7 @@ import * as Sentry from '@sentry/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
 import { Route, Routes, BrowserRouter } from 'react-router-dom';
+import { withLDProvider } from 'launchdarkly-react-client-sdk';
 import LogRocket from 'logrocket';
 import setupLogRocketReact from 'logrocket-react';
 import { Integrations } from '@sentry/tracing';
@@ -27,7 +28,7 @@ import { AppLayout } from './components/layout/AppLayout';
 import { MembersInvitePage } from './pages/invites/MembersInvitePage';
 import { IntegrationsStore } from './pages/integrations/IntegrationsStorePage';
 import CreateOrganizationPage from './pages/auth/CreateOrganizationPage';
-import { ENV, SENTRY_DSN, CONTEXT_PATH, LOGROCKET_ID } from './config';
+import { ENV, LAUNCH_DARKLY_CLIENT_SIDE_ID, SENTRY_DSN, CONTEXT_PATH, LOGROCKET_ID } from './config';
 import { PromoteChangesPage } from './pages/changes/PromoteChangesPage';
 import { LinkVercelProjectPage } from './pages/partner-integrations/LinkVercelProjectPage';
 import { ROUTES } from './constants/routes.enum';
@@ -184,9 +185,9 @@ function App() {
                 />
                 <Route element={<AppLayout />}>
                   <Route path={ROUTES.ANY} element={<HomePage />} />
-                  <Route path={ROUTES.TEMPLATES_DIGEST_PLAYGROUND} element={<TemplatesDigestPlaygroundPage />} />
-                  <Route path={ROUTES.TEMPLATES_CREATE} element={<TemplateEditorPage />} />
-                  <Route path={ROUTES.TEMPLATES_EDIT_TEMPLATEID} element={<TemplateEditorPage />}>
+                  <Route path={ROUTES.WORKFLOWS_DIGEST_PLAYGROUND} element={<TemplatesDigestPlaygroundPage />} />
+                  <Route path={ROUTES.WORKFLOWS_CREATE} element={<TemplateEditorPage />} />
+                  <Route path={ROUTES.WORKFLOWS_EDIT_TEMPLATEID} element={<TemplateEditorPage />}>
                     <Route path="" element={<Sidebar />} />
                     <Route path="settings" element={<TemplateSettings />} />
                     <Route path="channels" element={<UserPreference />} />
@@ -195,7 +196,7 @@ function App() {
                     <Route path="providers" element={<ProvidersPage />} />
                     <Route path=":channel/:stepUuid" element={<TemplateEditor />} />
                   </Route>
-                  <Route path={ROUTES.TEMPLATES} element={<NotificationList />} />
+                  <Route path={ROUTES.WORKFLOWS} element={<NotificationList />} />
                   <Route path={ROUTES.GET_STARTED} element={<GetStarted />} />
                   <Route path={ROUTES.GET_STARTED_PREVIEW} element={<DigestPreview />} />
                   <Route path={ROUTES.QUICK_START_NOTIFICATION_CENTER} element={<NotificationCenter />} />
@@ -219,4 +220,11 @@ function App() {
   );
 }
 
-export default Sentry.withProfiler(App);
+export default Sentry.withProfiler(
+  withLDProvider({
+    clientSideID: LAUNCH_DARKLY_CLIENT_SIDE_ID,
+    reactOptions: {
+      useCamelCaseFlagKeys: false,
+    },
+  })(App)
+);

@@ -74,6 +74,7 @@ jobs:
           REACT_APP_API_URL: http://localhost:1336
           REACT_APP_WS_URL: http://localhost:1340
           REACT_APP_WEBHOOK_URL: http://localhost:1341
+          REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID: ${{ secrets.TEST_LAUNCH_DARKLY_CLIENT_SIDE_ID }}
         run: pnpm start:static:build &
 
       - name: Start WS

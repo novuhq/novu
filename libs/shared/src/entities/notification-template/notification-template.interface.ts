@@ -19,6 +19,12 @@ export interface INotificationTemplate {
   updatedAt?: string;
   steps: INotificationTemplateStep[];
   triggers: INotificationTrigger[];
+  isBlueprint?: boolean;
+}
+
+export class IGroupedBlueprint {
+  name: string;
+  blueprints: INotificationTemplate[];
 }
 
 export enum TriggerTypeEnum {

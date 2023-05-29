@@ -5,7 +5,11 @@ import {
   OrganizationEntity,
   OrganizationRepository,
 } from '@novu/dal';
-import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  EmailProviderIdEnum,
+  SmsProviderIdEnum,
+} from '@novu/shared';
 
 import {
   CalculateLimitNovuIntegration,
@@ -26,14 +30,28 @@ export class GetNovuIntegration {
   async execute(
     command: GetNovuIntegrationCommand
   ): Promise<IntegrationEntity | undefined> {
-    if (!process.env.NOVU_EMAIL_INTEGRATION_API_KEY || !command.channelType) {
+    const channelType = command.channelType;
+
+    if (
+      channelType === ChannelTypeEnum.EMAIL &&
+      !process.env.NOVU_EMAIL_INTEGRATION_API_KEY
+    ) {
+      return;
+    }
+
+    if (
+      channelType === ChannelTypeEnum.SMS &&
+      !process.env.NOVU_SMS_INTEGRATION_ACCOUNT_SID &&
+      !process.env.NOVU_SMS_INTEGRATION_TOKEN &&
+      !process.env.NOVU_SMS_INTEGRATION_SENDER
+    ) {
       return;
     }
 
     const activeIntegrationsCount = await this.integrationRepository.count({
       _organizationId: command.organizationId,
       active: true,
-      channel: command.channelType,
+      channel: channelType,
       _environmentId: command.environmentId,
     });
 
@@ -43,7 +61,7 @@ export class GetNovuIntegration {
 
     const limit = await this.calculateLimitNovuIntegration.execute(
       CalculateLimitNovuIntegrationCommand.create({
-        channelType: command.channelType,
+        channelType: channelType,
         organizationId: command.organizationId,
         environmentId: command.environmentId,
       })
@@ -58,7 +76,7 @@ export class GetNovuIntegration {
         '[Novu Integration] - Limit reached',
         command.userId,
         {
-          channelType: command.channelType,
+          channelType,
           organizationId: command.organizationId,
           environmentId: command.environmentId,
           providerId: CalculateLimitNovuIntegration.getProviderId(
@@ -68,7 +86,7 @@ export class GetNovuIntegration {
         }
       );
       throw new ConflictException(
-        `Limit for Novus ${command.channelType.toLowerCase()} provider was reached.`
+        `Limit for Novus ${channelType.toLowerCase()} provider was reached.`
       );
     }
 
@@ -79,6 +97,8 @@ export class GetNovuIntegration {
     switch (command.channelType) {
       case ChannelTypeEnum.EMAIL:
         return this.createNovuEmailIntegration(organization);
+      case ChannelTypeEnum.SMS:
+        return this.createNovuSMSIntegration();
       default:
         return undefined;
     }
@@ -102,14 +122,36 @@ export class GetNovuIntegration {
     return item;
   }
 
+  private createNovuSMSIntegration(): IntegrationEntity {
+    const item = new IntegrationEntity();
+    item.providerId = SmsProviderIdEnum.Novu;
+    item.active = true;
+    item.channel = ChannelTypeEnum.SMS;
+
+    item.credentials = {
+      accountSid: process.env.NOVU_SMS_INTEGRATION_ACCOUNT_SID,
+      token: process.env.NOVU_SMS_INTEGRATION_TOKEN,
+      from: process.env.NOVU_SMS_INTEGRATION_SENDER,
+    };
+
+    return item;
+  }
+
   public static mapProviders(type: ChannelTypeEnum, providerId: string) {
-    if (![EmailProviderIdEnum.Novu.toString()].includes(providerId)) {
+    if (
+      ![
+        EmailProviderIdEnum.Novu.toString(),
+        SmsProviderIdEnum.Novu.toString(),
+      ].includes(providerId)
+    ) {
       return providerId;
     }
 
     switch (type) {
       case ChannelTypeEnum.EMAIL:
         return EmailProviderIdEnum.SendGrid;
+      case ChannelTypeEnum.SMS:
+        return SmsProviderIdEnum.Twilio;
       default:
         return providerId;
     }
