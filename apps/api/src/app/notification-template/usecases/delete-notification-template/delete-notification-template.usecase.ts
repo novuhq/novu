@@ -1,19 +1,19 @@
 // eslint-ignore max-len
 
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { NotificationTemplateRepository, DalException, ChangeRepository, NotificationTemplateEntity } from '@novu/dal';
+import { Injectable } from '@nestjs/common';
+import { ChangeRepository, DalException, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
-import { GetNotificationTemplateCommand } from '../get-notification-template/get-notification-template.command';
 import {
   buildNotificationTemplateIdentifierKey,
   buildNotificationTemplateKey,
   InvalidateCacheService,
 } from '@novu/application-generic';
-import { DeleteMessageTemplate } from '../../../message-template/usecases/delete-message-template/delete-message-template.usecase';
 import { DeleteMessageTemplateCommand } from '../../../message-template/usecases/delete-message-template/delete-message-template.command';
+import { DeleteMessageTemplate } from '../../../message-template/usecases/delete-message-template/delete-message-template.usecase';
+import { GetNotificationTemplateCommand } from '../get-notification-template/get-notification-template.command';
 
 @Injectable()
 export class DeleteNotificationTemplate {
