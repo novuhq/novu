@@ -110,7 +110,7 @@ it('shows the configuration for the selected provider', () => {
   cy.get(`img[alt="emailjs image"]`)
     .then((e) => e.attr('src'))
     .should('match', /.*emailjs\.svg$/);
-  cy.get('a').should('have.text', 'here.').and('have.attr', 'href', 'https://www.emailjs.com/docs');
+  cy.get('a').should('have.text', 'our guide').and('have.attr', 'href', 'https://www.emailjs.com/docs');
 
   // We may use a for-loop here since order of checks is not important
   for (const cred of credentials) {

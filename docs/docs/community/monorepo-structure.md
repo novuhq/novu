@@ -32,7 +32,7 @@ The apps folder contains high-level applications and APIs. The app's outputs usu
 
 ### API
 
-The API package is our main service for handling backend logic. It handles anything from authentication, authorization, notification template management, triggering events, etc... This is where the Novu business logic is handled.
+The API package is our main service for handling backend logic. It handles anything from authentication, authorization, workflow management, triggering events, etc... This is where the Novu business logic is handled.
 
 ### WS aka Web-Socket
 
@@ -40,7 +40,7 @@ This is the WebSocket NestJs server which connects to the widget and provides re
 
 ### WEB aka Admin Panel
 
-This is the Novu admin panel which is used to visually communicate with the API. You can configure templates, manage content, enable or disable notifications, visually track the notification activity feed, etc...
+This is the Novu admin panel which is used to visually communicate with the API. You can configure workflows, manage content, enable or disable notifications, visually track the notification activity feed, etc...
 
 The `WEB` project is a create-react-app built, well, with React. 😄
 

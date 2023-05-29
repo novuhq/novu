@@ -11,7 +11,7 @@ export class BlueprintController {
   constructor(private getBlueprintUsecase: GetBlueprint, private getGroupedBlueprintsUsecase: GetGroupedBlueprints) {}
 
   @Get('/group-by-category')
-  getGroupedBlueprints(): Promise<GroupedBlueprintResponse[]> {
+  getGroupedBlueprints(): Promise<GroupedBlueprintResponse> {
     return this.getGroupedBlueprintsUsecase.execute();
   }
 

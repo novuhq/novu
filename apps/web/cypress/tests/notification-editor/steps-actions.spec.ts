@@ -19,7 +19,7 @@ describe('Workflow Editor - Steps Actions', function () {
     interceptEditTemplateRequests();
     const template = this.session.templates[0];
 
-    cy.visit('/templates/edit/' + template._id);
+    cy.visit('/workflows/edit/' + template._id);
     waitForEditTemplateRequests();
 
     cy.get('.react-flow__node').should('have.length', 4);
@@ -32,7 +32,7 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.get('.react-flow__node').first().should('contain', 'Trigger').next().should('contain', 'Email');
     cy.getByTestId('notification-template-submit-btn').click();
 
-    cy.visit('/templates/edit/' + template._id);
+    cy.visit('/workflows/edit/' + template._id);
     cy.waitForNetworkIdle(500);
 
     cy.get('.react-flow__node').should('have.length', 3);
@@ -42,7 +42,7 @@ describe('Workflow Editor - Steps Actions', function () {
     interceptEditTemplateRequests();
     const template = this.session.templates[0];
 
-    cy.visit('/templates/edit/' + template._id);
+    cy.visit('/workflows/edit/' + template._id);
     waitForEditTemplateRequests();
 
     cy.get('.react-flow__node').should('have.length', 4);
@@ -62,7 +62,7 @@ describe('Workflow Editor - Steps Actions', function () {
     interceptEditTemplateRequests();
     const template = this.session.templates[0];
 
-    cy.visit('/templates/edit/' + template._id);
+    cy.visit('/workflows/edit/' + template._id);
     waitForEditTemplateRequests();
 
     dragAndDrop('sms');
@@ -71,7 +71,7 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.getByTestId('smsNotificationContent').type('new content for sms');
     cy.getByTestId('notification-template-submit-btn').click();
 
-    cy.visit('/templates/edit/' + template._id);
+    cy.visit('/workflows/edit/' + template._id);
     cy.waitForNetworkIdle(500);
 
     cy.get('.react-flow__node').should('have.length', 5);
@@ -89,7 +89,7 @@ describe('Workflow Editor - Steps Actions', function () {
   it('should be able to disable step', function () {
     const template = this.session.templates[0];
 
-    cy.visit('/templates/edit/' + template._id);
+    cy.visit('/workflows/edit/' + template._id);
 
     cy.waitForNetworkIdle(500);
 
@@ -105,7 +105,7 @@ describe('Workflow Editor - Steps Actions', function () {
   it('should be able to toggle ShouldStopOnFailSwitch', function () {
     const template = this.session.templates[0];
 
-    cy.visit('/templates/edit/' + template._id);
+    cy.visit('/workflows/edit/' + template._id);
 
     cy.waitForNetworkIdle(500);
 
@@ -121,7 +121,7 @@ describe('Workflow Editor - Steps Actions', function () {
   it('should be able to add filters to a particular step', function () {
     const template = this.session.templates[0];
 
-    cy.visit('/templates/edit/' + template._id);
+    cy.visit('/workflows/edit/' + template._id);
 
     cy.waitForNetworkIdle(500);
 
@@ -148,7 +148,7 @@ describe('Workflow Editor - Steps Actions', function () {
   it('should be able to add read/seen filters to a particular step', function () {
     const template = this.session.templates[0];
 
-    cy.visit('/templates/edit/' + template._id);
+    cy.visit('/workflows/edit/' + template._id);
 
     cy.waitForNetworkIdle(500);
 
@@ -175,7 +175,7 @@ describe('Workflow Editor - Steps Actions', function () {
   it('should be able to not add read/seen filters to first step', function () {
     const template = this.session.templates[0];
 
-    cy.visit('/templates/edit/' + template._id);
+    cy.visit('/workflows/edit/' + template._id);
 
     cy.waitForNetworkIdle(500);
 
@@ -193,7 +193,7 @@ describe('Workflow Editor - Steps Actions', function () {
   it('should be able to remove filters for a particular step', function () {
     const template = this.session.templates[0];
 
-    cy.visit('/templates/edit/' + template._id);
+    cy.visit('/workflows/edit/' + template._id);
 
     cy.waitForNetworkIdle(500);
 
@@ -224,7 +224,7 @@ describe('Workflow Editor - Steps Actions', function () {
   it('should be able to add webhook filter for a particular step', function () {
     const template = this.session.templates[0];
 
-    cy.visit('/templates/edit/' + template._id);
+    cy.visit('/workflows/edit/' + template._id);
 
     cy.waitForNetworkIdle(500);
 
@@ -253,7 +253,7 @@ describe('Workflow Editor - Steps Actions', function () {
   it('should be able to add online right now filter for a particular step', function () {
     const template = this.session.templates[0];
 
-    cy.visit('/templates/edit/' + template._id);
+    cy.visit('/workflows/edit/' + template._id);
 
     cy.waitForNetworkIdle(500);
 
@@ -278,7 +278,7 @@ describe('Workflow Editor - Steps Actions', function () {
   it('should be able to add online in the last X time period filter for a particular step', function () {
     const template = this.session.templates[0];
 
-    cy.visit('/templates/edit/' + template._id);
+    cy.visit('/workflows/edit/' + template._id);
 
     cy.waitForNetworkIdle(500);
 
@@ -304,7 +304,7 @@ describe('Workflow Editor - Steps Actions', function () {
   it('should be able to add multiple filters to a particular step', function () {
     const template = this.session.templates[0];
 
-    cy.visit('/templates/edit/' + template._id);
+    cy.visit('/workflows/edit/' + template._id);
 
     cy.waitForNetworkIdle(500);
 
