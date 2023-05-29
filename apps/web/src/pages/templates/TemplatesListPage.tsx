@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Badge, ActionIcon, useMantineTheme, LoadingOverlay } from '@mantine/core';
+import { Badge, ActionIcon, useMantineTheme } from '@mantine/core';
 import { Link, useNavigate } from 'react-router-dom';
 import { ColumnWithStrictAccessor } from 'react-table';
 import styled from '@emotion/styled';
@@ -9,7 +9,7 @@ import { useTemplates, useEnvController, useNotificationGroup } from '../../hook
 import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
-import { Tag, Table, colors, Text } from '../../design-system';
+import { Tag, Table, colors, Text, LoadingOverlay } from '../../design-system';
 import { Edit } from '../../design-system/icons';
 import { Tooltip } from '../../design-system';
 import { Data } from '../../design-system/table/Table';
@@ -157,43 +157,36 @@ function NotificationList() {
       />
 
       <TemplateListTableWrapper>
-        <LoadingOverlay
-          visible={isLoading}
-          zIndex={1}
-          overlayColor={theme.colorScheme === 'dark' ? colors.B30 : colors.B98}
-          loaderProps={{
-            color: colors.error,
-          }}
-          style={{ position: 'relative', minHeight: 500 }}
-        />
-        <When truthy={!isLoading}>
-          {hasTemplates ? (
-            <Table
-              onRowClick={onRowClick}
-              loading={isLoading || areNotificationGroupLoading}
-              data-test-id="notifications-template"
-              columns={columns}
-              data={templates}
-              pagination={{
-                pageSize: pageSize,
-                current: page,
-                total: totalTemplatesCount,
-                onPageChange: handleTableChange,
-              }}
-            />
-          ) : (
-            <TemplatesListNoData
-              readonly={readonly}
-              blueprints={popular?.blueprints}
-              isLoading={areBlueprintsLoading}
-              isCreating={isCreatingTemplateFromBlueprint}
-              allTemplatesDisabled={areBlueprintsLoading || !hasGroups}
-              onBlankWorkflowClick={() => handleRedirectToCreateTemplate(false)}
-              onTemplateClick={handleOnBlueprintClick}
-              onAllTemplatesClick={openModal}
-            />
-          )}
-        </When>
+        <LoadingOverlay visible={isLoading}>
+          <When truthy={!isLoading}>
+            {hasTemplates ? (
+              <Table
+                onRowClick={onRowClick}
+                loading={isLoading || areNotificationGroupLoading}
+                data-test-id="notifications-template"
+                columns={columns}
+                data={templates}
+                pagination={{
+                  pageSize: pageSize,
+                  current: page,
+                  total: totalTemplatesCount,
+                  onPageChange: handleTableChange,
+                }}
+              />
+            ) : (
+              <TemplatesListNoData
+                readonly={readonly}
+                blueprints={popular?.blueprints}
+                isLoading={areBlueprintsLoading}
+                isCreating={isCreatingTemplateFromBlueprint}
+                allTemplatesDisabled={areBlueprintsLoading || !hasGroups}
+                onBlankWorkflowClick={() => handleRedirectToCreateTemplate(false)}
+                onTemplateClick={handleOnBlueprintClick}
+                onAllTemplatesClick={openModal}
+              />
+            )}
+          </When>
+        </LoadingOverlay>
         <TemplatesStoreModal />
       </TemplateListTableWrapper>
     </PageContainer>
