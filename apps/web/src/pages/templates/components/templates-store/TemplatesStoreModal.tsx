@@ -41,11 +41,12 @@ const nodeTypes = {
 
 export interface ITemplatesStoreModalProps {
   general: IBlueprintsGrouped[];
+  popular: IBlueprintsGrouped[];
   isOpened: boolean;
   onClose: () => void;
 }
 
-export const TemplatesStoreModal = ({ general, isOpened, onClose }: ITemplatesStoreModalProps) => {
+export const TemplatesStoreModal = ({ general, popular, isOpened, onClose }: ITemplatesStoreModalProps) => {
   const theme = useMantineTheme();
   const { classes: modalClasses } = useStyles();
   const navigate = useNavigate();
@@ -102,6 +103,19 @@ export const TemplatesStoreModal = ({ general, isOpened, onClose }: ITemplatesSt
     >
       <ModalBodyHolder data-test-id="templates-store-modal">
         <TemplatesSidebarHolder data-test-id="templates-store-modal-sidebar">
+          {popular.map((group) => (
+            <TemplatesGroup key={group.name}>
+              <GroupName>{group.name}</GroupName>
+              {group.blueprints.map((template) => {
+                return (
+                  <TemplateItem key={template.name} onClick={() => handleTemplateClick(template)}>
+                    <FontAwesomeIcon icon={template.iconName} />
+                    <span>{template.name}</span>
+                  </TemplateItem>
+                );
+              })}
+            </TemplatesGroup>
+          ))}
           {general.map((group) => (
             <TemplatesGroup key={group.name}>
               <GroupName>{group.name}</GroupName>
