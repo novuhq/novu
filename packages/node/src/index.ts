@@ -2,6 +2,16 @@ export {
   ChatProviderIdEnum,
   PushProviderIdEnum,
   ChannelTypeEnum,
+  ChannelCTATypeEnum,
+  TemplateVariableTypeEnum,
+  IMessageTemplate,
+  SystemAvatarIconEnum,
+  INotificationTemplate,
+  INotificationTemplateStep,
+  ITemplateVariable,
+  IEmailBlock,
+  TextAlignEnum,
+  EmailBlockTypeEnum,
 } from '@novu/shared';
 
 export * from './lib/novu';

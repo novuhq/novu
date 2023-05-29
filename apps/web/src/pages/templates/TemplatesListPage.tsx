@@ -9,7 +9,7 @@ import { useTemplates, useEnvController, useNotificationGroup } from '../../hook
 import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
-import { Tag, Table, colors, Text } from '../../design-system';
+import { Tag, Table, colors, Text, LoadingOverlay } from '../../design-system';
 import { Edit } from '../../design-system/icons';
 import { Tooltip } from '../../design-system';
 import { Data } from '../../design-system/table/Table';
@@ -24,6 +24,7 @@ import { CreateWorkflowDropdown } from './components/CreateWorkflowDropdown';
 import { IBlueprintTemplate } from '../../api/types';
 import { errorMessage } from '../../utils/notifications';
 import { TemplateCreationSourceEnum } from './shared';
+import { When } from '../../components/utils/When';
 
 function NotificationList() {
   const segment = useSegment();
@@ -154,33 +155,38 @@ function NotificationList() {
           />
         }
       />
+
       <TemplateListTableWrapper>
-        {hasTemplates ? (
-          <Table
-            onRowClick={onRowClick}
-            loading={isLoading || areNotificationGroupLoading}
-            data-test-id="notifications-template"
-            columns={columns}
-            data={templates}
-            pagination={{
-              pageSize: pageSize,
-              current: page,
-              total: totalTemplatesCount,
-              onPageChange: handleTableChange,
-            }}
-          />
-        ) : (
-          <TemplatesListNoData
-            readonly={readonly}
-            blueprints={popular?.blueprints}
-            isLoading={areBlueprintsLoading}
-            isCreating={isCreatingTemplateFromBlueprint}
-            allTemplatesDisabled={areBlueprintsLoading || !hasGroups}
-            onBlankWorkflowClick={() => handleRedirectToCreateTemplate(false)}
-            onTemplateClick={handleOnBlueprintClick}
-            onAllTemplatesClick={openModal}
-          />
-        )}
+        <LoadingOverlay visible={isLoading}>
+          <When truthy={!isLoading}>
+            {hasTemplates ? (
+              <Table
+                onRowClick={onRowClick}
+                loading={isLoading || areNotificationGroupLoading}
+                data-test-id="notifications-template"
+                columns={columns}
+                data={templates}
+                pagination={{
+                  pageSize: pageSize,
+                  current: page,
+                  total: totalTemplatesCount,
+                  onPageChange: handleTableChange,
+                }}
+              />
+            ) : (
+              <TemplatesListNoData
+                readonly={readonly}
+                blueprints={popular?.blueprints}
+                isLoading={areBlueprintsLoading}
+                isCreating={isCreatingTemplateFromBlueprint}
+                allTemplatesDisabled={areBlueprintsLoading || !hasGroups}
+                onBlankWorkflowClick={() => handleRedirectToCreateTemplate(false)}
+                onTemplateClick={handleOnBlueprintClick}
+                onAllTemplatesClick={openModal}
+              />
+            )}
+          </When>
+        </LoadingOverlay>
         <TemplatesStoreModal />
       </TemplateListTableWrapper>
     </PageContainer>
