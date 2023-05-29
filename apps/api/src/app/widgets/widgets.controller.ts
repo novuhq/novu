@@ -38,13 +38,12 @@ import { InitializeSession } from './usecases/initialize-session/initialize-sess
 import { UpdateMessageActionsCommand } from './usecases/mark-action-as-done/update-message-actions.command';
 import { UpdateMessageActions } from './usecases/mark-action-as-done/update-message-actions.usecase';
 import { UpdateSubscriberPreferenceRequestDto } from './dtos/update-subscriber-preference-request.dto';
-import { StoreQuery } from './queries/store.query';
 import { GetFeedCountCommand } from './usecases/get-feed-count/get-feed-count.command';
 import { GetFeedCount } from './usecases/get-feed-count/get-feed-count.usecase';
 import { GetCountQuery } from './queries/get-count.query';
 import { RemoveMessageCommand } from './usecases/remove-message/remove-message.command';
 import { RemoveMessage } from './usecases/remove-message/remove-message.usecase';
-import { MarkEnum, MarkMessageAsCommand } from './usecases/mark-message-as/mark-message-as.command';
+import { MarkMessageAsCommand } from './usecases/mark-message-as/mark-message-as.command';
 import { MarkMessageAs } from './usecases/mark-message-as/mark-message-as.usecase';
 import { MarkAllMessagesAsCommand } from './usecases/mark-all-messages-as/mark-all-messages-as.command';
 import { MarkAllMessagesAs } from './usecases/mark-all-messages-as/mark-all-messages-as.usecase';
@@ -183,56 +182,6 @@ export class WidgetsController {
     });
 
     return await this.getFeedCountUsecase.execute(command);
-  }
-
-  @ApiOperation({
-    summary: 'Mark a subscriber feed message as seen',
-    description: 'This endpoint is deprecated please address /messages/markAs instead',
-    deprecated: true,
-  })
-  @UseGuards(AuthGuard('subscriberJwt'))
-  @Post('/messages/:messageId/seen')
-  async markMessageAsSeen(
-    @SubscriberSession() subscriberSession: SubscriberEntity,
-    @Param('messageId') messageId: string
-  ): Promise<MessageEntity> {
-    const messageIds = this.toArray(messageId);
-    if (!messageIds) throw new BadRequestException('messageId is required');
-
-    const command = MarkMessageAsCommand.create({
-      organizationId: subscriberSession._organizationId,
-      subscriberId: subscriberSession.subscriberId,
-      environmentId: subscriberSession._environmentId,
-      messageIds,
-      mark: { [MarkEnum.SEEN]: true },
-    });
-
-    return (await this.markMessageAsUsecase.execute(command))[0];
-  }
-
-  @ApiOperation({
-    summary: 'Mark a subscriber feed message as read',
-    description: 'This endpoint is deprecated please address /messages/markAs instead',
-    deprecated: true,
-  })
-  @UseGuards(AuthGuard('subscriberJwt'))
-  @Post('/messages/:messageId/read')
-  async markMessageAsRead(
-    @SubscriberSession() subscriberSession: SubscriberEntity,
-    @Param('messageId') messageId: string | string[]
-  ): Promise<MessageEntity[]> {
-    const messageIds = this.toArray(messageId);
-    if (!messageIds) throw new BadRequestException('messageId is required');
-
-    const command = MarkMessageAsCommand.create({
-      organizationId: subscriberSession._organizationId,
-      subscriberId: subscriberSession.subscriberId,
-      environmentId: subscriberSession._environmentId,
-      messageIds,
-      mark: { [MarkEnum.READ]: true },
-    });
-
-    return await this.markMessageAsUsecase.execute(command);
   }
 
   @ApiOperation({
