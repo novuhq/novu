@@ -53,7 +53,7 @@ export class RemoveMessages {
 
     let deletedMessages;
     let feed;
-    if (command.feedId !== '' || command.feedId !== null || command.feedId !== undefined) {
+    if (command.feedId !== '' && command.feedId !== null && command.feedId !== undefined) {
       feed = await this.feedRepository.findById(command.feedId);
       if (!feed) {
         throw new NotFoundException(`Feed with ${command.feedId} not found`);
@@ -64,6 +64,7 @@ export class RemoveMessages {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
         _subscriberId: command.subscriberId,
+        channel: ChannelTypeEnum.IN_APP,
       };
 
       if (feed) {
