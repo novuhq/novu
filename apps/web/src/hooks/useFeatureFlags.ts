@@ -1,6 +1,8 @@
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useFlags } from 'launchdarkly-react-client-sdk';
 
+import { IS_TEMPLATE_STORE_ENABLED } from '../config';
+
 const prepareBooleanStringFeatureFlag = (value: string | undefined, defaultValue: boolean): boolean => {
   const preparedValue = value === 'true';
 
@@ -8,7 +10,7 @@ const prepareBooleanStringFeatureFlag = (value: string | undefined, defaultValue
 };
 
 export const useIsTemplateStoreEnabled = (): boolean => {
-  const value = process.env.IS_TEMPLATE_STORE_ENABLED;
+  const value = IS_TEMPLATE_STORE_ENABLED;
   const fallbackValue = false;
   const defaultValue = prepareBooleanStringFeatureFlag(value, fallbackValue);
 

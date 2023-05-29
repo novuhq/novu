@@ -54,3 +54,7 @@ export const MAIL_SERVER_DOMAIN =
 
 export const LAUNCH_DARKLY_CLIENT_SIDE_ID =
   window._env_.REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID || process.env.REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID;
+
+export const IS_TEMPLATE_STORE_ENABLED = isCypress
+  ? window._env_.IS_TEMPLATE_STORE_ENABLED || process.env.IS_TEMPLATE_STORE_ENABLED || 'true'
+  : window._env_.IS_TEMPLATE_STORE_ENABLED || process.env.IS_TEMPLATE_STORE_ENABLED || 'false';
