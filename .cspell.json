@@ -3,6 +3,8 @@
   "version": "0.2",
   "language": "en",
   "words": [
+    "metatype",
+    "Paramtype",
     "Millis",
     "maqsam",
     "sadd",
@@ -438,7 +440,17 @@
     "autopipelining",
     "reactflow",
     "maxtimeout",
-    "clsx"
+    "clsx",
+    "africastalking",
+    "africas",
+    "Shortcodes",
+    "supertest",
+    "superagent",
+    "INAPP",
+    "fortawesome",
+    "fontawesome",
+    "middlewares",
+    "localforage"
   ],
   "flagWords": [],
   "patterns": [
@@ -480,6 +492,10 @@
       "name": "HTML Tags",
       "pattern": "<[^>]*>",
       "description": "Reference: https://stackoverflow.com/questions/11229831/regular-expression-to-remove-html-tags-from-a-string"
+    },
+    {
+      "name": "projectIds",
+      "pattern": "/projectId.*/"
     }
   ],
   "ignoreRegExpList": [
@@ -490,7 +506,8 @@
     "Snippet references",
     "Snippet references 2",
     "Multi-line code blocks",
-    "HTML Tags"
+    "HTML Tags",
+    "projectIds"
   ],
   "ignorePaths": [
     "apps/api/src/.env.test",

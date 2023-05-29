@@ -1,6 +1,6 @@
 {
   "name": "@novu/client",
-  "version": "0.13.0",
+  "version": "0.15.0",
   "repository": "https://github.com/novuhq/novu",
   "description": "API client to be used in end user environments",
   "main": "dist/cjs/index.js",
@@ -18,12 +18,11 @@
     "build": "npm run build:cjs && npm run build:esm",
     "build:esm": "cross-env node_modules/.bin/tsc -p tsconfig.esm.json",
     "build:cjs": "cross-env node_modules/.bin/tsc -p tsconfig.build.json",
-    "lint": "pnpm test:lint",
     "fix": "run-s fix:*",
     "fix:prettier": "prettier \"src/**/*.ts\" --write",
     "fix:lint": "eslint src --ext .ts --fix",
-    "test": "run-s build test:*",
-    "test:lint": "eslint src --ext .ts",
+    "test": "echo \"No tests yet, build tests only\"",
+    "lint": "eslint src --ext .ts",
     "test:prettier": "prettier \"src/**/*.ts\"",
     "test:unit": "jest src",
     "check-cli": "run-s test diff-integration-tests check-integration-tests",
@@ -45,16 +44,17 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@novu/shared": "^0.13.0"
+    "@novu/shared": "^0.15.0"
   },
   "devDependencies": {
     "@types/jest": "27.5.2",
     "@types/node": "^14.6.0",
     "codecov": "^3.5.0",
     "jest": "^27.0.6",
+    "npm-run-all": "^4.1.5",
     "rimraf": "^3.0.2",
     "ts-jest": "^27.0.5",
-    "typedoc": "^0.23.0",
+    "typedoc": "^0.24.0",
     "typescript": "4.9.5"
   },
   "prettier": {

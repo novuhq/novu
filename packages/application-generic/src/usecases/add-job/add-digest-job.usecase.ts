@@ -3,7 +3,8 @@ import { JobEntity, JobRepository } from '@novu/dal';
 import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-  StepTypeEnum,
+  IDigestBaseMetadata,
+  IDigestRegularMetadata,
 } from '@novu/shared';
 
 import { AddDigestJobCommand } from './add-digest-job.command';
@@ -18,6 +19,8 @@ import {
   CreateExecutionDetailsCommand,
   CreateExecutionDetails,
 } from '../create-execution-details';
+import { Instrument, InstrumentUsecase } from '../../instrumentation';
+import { validateDigest } from './validation';
 
 interface IFindAndUpdateResponse {
   matched: number;
@@ -35,37 +38,26 @@ export class AddDigestJob {
     private calculateDelayService: CalculateDelayService
   ) {}
 
+  @InstrumentUsecase()
   public async execute(
     command: AddDigestJobCommand
   ): Promise<AddDigestJobResult> {
     const { job } = command;
 
-    this.validateDigest(job);
+    validateDigest(job);
 
     return await this.shouldDelayDigestOrMerge(job);
   }
 
-  private validateDigest(job: JobEntity): void {
-    if (job.type !== StepTypeEnum.DIGEST) {
-      throw new ApiException('Job is not a digest type');
-    }
-
-    if (!job.digest?.amount) {
-      throw new ApiException('Invalid digest amount');
-    }
-
-    if (!job.digest?.unit) {
-      throw new ApiException('Invalid digest unit');
-    }
-  }
-
+  @Instrument()
   private async shouldDelayDigestOrMerge(
     job: JobEntity
   ): Promise<AddDigestJobResult> {
-    const digestKey = job.step.metadata?.digestKey;
+    const digestMeta = job.digest as IDigestBaseMetadata | undefined;
+    const digestKey = digestMeta?.digestKey;
     const digestValue = DigestFilterSteps.getNestedValue(
       job.payload,
-      job.step.metadata?.digestKey
+      digestKey
     );
 
     const { matched, modified } = await this.shouldDelayDigestOrMergeWithLock(
@@ -83,18 +75,20 @@ export class AddDigestJob {
 
     // We delayed the job and created the digest
     if (matched === 0 && modified === 1) {
-      const { digest } = job;
-
-      if (!digest?.amount || !digest?.unit) {
+      const regularDigestMeta = digestMeta as
+        | IDigestRegularMetadata
+        | undefined;
+      if (!regularDigestMeta?.amount || !regularDigestMeta?.unit) {
         throw new ApiException(
           `Somehow ${job._id} had wrong digest settings and escaped validation`
         );
       }
 
-      return this.calculateDelayService.toMilliseconds(
-        digest.amount,
-        digest.unit
-      );
+      return this.calculateDelayService.calculateDelay({
+        stepMetadata: job.digest,
+        payload: job.payload,
+        overrides: job.overrides,
+      });
     }
 
     return undefined;

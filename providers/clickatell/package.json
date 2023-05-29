@@ -1,6 +1,6 @@
 {
   "name": "@novu/clickatell",
-  "version": "0.13.0",
+  "version": "0.15.0",
   "description": "A clickatell SMS provider wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -16,8 +16,8 @@
     "fix": "run-s fix:*",
     "fix:prettier": "prettier \"src/**/*.ts\" --write",
     "fix:lint": "eslint src --ext .ts --fix",
-    "test": "run-s build test:*",
-    "test:lint": "eslint src --ext .ts",
+    "test": "run-s test:*",
+    "lint": "eslint src --ext .ts",
     "test:unit": "jest src",
     "watch:build": "tsc -p tsconfig.json -w",
     "watch:test": "jest src --watch",
@@ -31,7 +31,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@novu/stateless": "^0.13.0",
+    "@novu/stateless": "^0.15.0",
     "axios": "^1.3.3"
   },
   "devDependencies": {
@@ -48,7 +48,7 @@
     "prettier": "~2.8.0",
     "ts-jest": "^27.0.5",
     "ts-node": "~10.9.1",
-    "typedoc": "^0.23.0",
+    "typedoc": "^0.24.0",
     "typescript": "4.9.5"
   },
   "files": [

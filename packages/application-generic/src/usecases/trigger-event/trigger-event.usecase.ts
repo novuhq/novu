@@ -5,6 +5,7 @@ import {
   JobRepository,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
+  IntegrationRepository,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -13,16 +14,14 @@ import {
 } from '@novu/shared';
 
 import { PinoLogger } from '../../logging';
-import { InstrumentUsecase } from '../../instrumentation';
-import { EventsPerformanceService } from '../../services/performance';
+import { Instrument, InstrumentUsecase } from '../../instrumentation';
+
 import {
-  GetDecryptedIntegrations,
-  GetDecryptedIntegrationsCommand,
-} from '../get-decrypted-integrations';
-import {
+  AnalyticsService,
   buildNotificationTemplateIdentifierKey,
   CachedEntity,
-} from '../../services/cache';
+  EventsPerformanceService,
+} from '../../services';
 import { TriggerEventCommand } from './trigger-event.command';
 import {
   StoreSubscriberJobs,
@@ -37,6 +36,10 @@ import {
   ProcessSubscriberCommand,
 } from '../process-subscriber';
 import { ApiException } from '../../utils/exceptions';
+import {
+  GetNovuIntegration,
+  GetNovuIntegrationCommand,
+} from '../get-novu-integration';
 
 const LOG_CONTEXT = 'TriggerEventUseCase';
 
@@ -46,13 +49,16 @@ export class TriggerEvent {
     private storeSubscriberJobs: StoreSubscriberJobs,
     private createNotificationJobs: CreateNotificationJobs,
     private processSubscriber: ProcessSubscriber,
-    private getDecryptedIntegrations: GetDecryptedIntegrations,
+    private integrationRepository: IntegrationRepository,
+    private getNovuIntegration: GetNovuIntegration,
     protected performanceService: EventsPerformanceService,
     private jobRepository: JobRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private logger: PinoLogger
+    private logger: PinoLogger,
+    private analyticsService: AnalyticsService
   ) {}
 
+  @InstrumentUsecase()
   async execute(command: TriggerEventCommand) {
     const mark = this.performanceService.buildTriggerEventMark(
       command.identifier,
@@ -102,11 +108,6 @@ export class TriggerEvent {
       template
     );
 
-    const subscribersJobs: Omit<
-      JobEntity,
-      '_id' | 'createdAt' | 'updatedAt'
-    >[][] = [];
-
     // We might have a single actor for every trigger, so we only need to check for it once
     let actorProcessed;
     if (actor) {
@@ -121,6 +122,19 @@ export class TriggerEvent {
     }
 
     for (const subscriber of to) {
+      this.analyticsService.track(
+        'Notification event trigger - [Triggers]',
+        command.userId,
+        {
+          _subscriber: subscriber._id,
+          transactionId: command.transactionId,
+          _template: template._id,
+          _organization: command.organizationId,
+          channels: template?.steps.map((step) => step.template?.type),
+          source: command.payload.__source || 'api',
+        }
+      );
+
       const subscriberProcessed = await this.processSubscriber.execute(
         ProcessSubscriberCommand.create({
           environmentId,
@@ -152,17 +166,13 @@ export class TriggerEvent {
           createNotificationJobsCommand
         );
 
-        subscribersJobs.push(notificationJobs);
+        const storeSubscriberJobsCommand = StoreSubscriberJobsCommand.create({
+          environmentId: command.environmentId,
+          jobs: notificationJobs,
+          organizationId: command.organizationId,
+        });
+        await this.storeSubscriberJobs.execute(storeSubscriberJobsCommand);
       }
-    }
-
-    for (const subscriberJobs of subscribersJobs) {
-      const storeSubscriberJobsCommand = StoreSubscriberJobsCommand.create({
-        environmentId: command.environmentId,
-        jobs: subscriberJobs,
-        organizationId: command.organizationId,
-      });
-      await this.storeSubscriberJobs.execute(storeSubscriberJobsCommand);
     }
 
     this.performanceService.setEnd(mark);
@@ -185,6 +195,7 @@ export class TriggerEvent {
     );
   }
 
+  @Instrument()
   private async validateTransactionIdProperty(
     transactionId: string,
     environmentId: string
@@ -219,16 +230,19 @@ export class TriggerEvent {
         const channelType = STEP_TYPE_TO_CHANNEL_TYPE.get(type);
 
         if (channelType) {
-          const provider = await this.getProviderId(
-            userId,
-            organizationId,
-            environmentId,
-            channelType
-          );
-          if (provider) {
-            providers.set(channelType, provider);
-          } else {
+          if (providers.has(channelType)) continue;
+          if (channelType === ChannelTypeEnum.IN_APP) {
             providers.set(channelType, InAppProviderIdEnum.Novu);
+          } else {
+            const provider = await this.getProviderId(
+              userId,
+              organizationId,
+              environmentId,
+              channelType
+            );
+            if (provider) {
+              providers.set(channelType, provider);
+            }
           }
         }
       }
@@ -237,23 +251,32 @@ export class TriggerEvent {
     return providers;
   }
 
+  @Instrument()
   private async getProviderId(
     userId: string,
     organizationId: string,
     environmentId: string,
     channelType: ChannelTypeEnum
   ): Promise<string> {
-    const integrations = await this.getDecryptedIntegrations.execute(
-      GetDecryptedIntegrationsCommand.create({
-        channelType,
+    let integration = await this.integrationRepository.findOne(
+      {
+        _environmentId: environmentId,
         active: true,
-        organizationId,
-        environmentId,
-        userId,
-      })
+        channel: channelType,
+      },
+      'providerId'
     );
 
-    const integration = integrations[0];
+    if (!integration) {
+      integration = await this.getNovuIntegration.execute(
+        GetNovuIntegrationCommand.create({
+          channelType: channelType,
+          organizationId: organizationId,
+          environmentId: environmentId,
+          userId: userId,
+        })
+      );
+    }
 
     return integration?.providerId;
   }

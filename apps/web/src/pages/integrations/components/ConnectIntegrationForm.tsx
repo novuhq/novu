@@ -17,6 +17,7 @@ import { IS_DOCKER_HOSTED, WEBHOOK_URL } from '../../../config';
 import { useEnvController, useAuthController } from '../../../hooks';
 import { Check, Copy } from '../../../design-system/icons';
 import { CONTEXT_PATH } from '../../../config';
+import { ShareableUrl } from './Modal/ConnectIntegrationForm';
 
 enum ACTION_TYPE_ENUM {
   HANDLE_SHOW_SWITCH = 'handle_show_switch',
@@ -88,6 +89,7 @@ export function ConnectIntegrationForm({
     setValue,
     formState: { errors },
     control,
+    watch,
   } = useForm({ shouldUseNativeValidation: false });
 
   const { colorScheme } = useMantineColorScheme();
@@ -225,10 +227,13 @@ export function ConnectIntegrationForm({
       <ColumnDiv>
         <CenterDiv>
           <InlineDiv>
-            <span>Read our guide on where to get the credentials </span>
-            <a href={provider?.docReference} target="_blank" rel="noreferrer" style={{ color: '#DD2476 ' }}>
-              here.
-            </a>
+            <span>
+              Take a look at{' '}
+              <a href={provider?.docReference} target="_blank" rel="noreferrer" style={{ color: '#DD2476 ' }}>
+                our guide
+              </a>{' '}
+              for how to connect <strong>{provider?.displayName}</strong>.
+            </span>
           </InlineDiv>
           {provider?.credentials.map((credential: IConfigCredentials) => (
             <InputWrapper key={credential.key}>
@@ -255,6 +260,9 @@ export function ConnectIntegrationForm({
               />
             </InputWrapper>
           )}
+
+          <ShareableUrl provider={provider?.providerId} control={control} />
+
           <Stack my={30}>
             <ActiveWrapper active={isActive}>
               <Controller

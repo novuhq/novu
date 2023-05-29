@@ -7,7 +7,7 @@ test('should trigger expo correctly', async () => {
 
   const spy = jest
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
+    // @ts-expect-error
     .spyOn(provider.expo, 'sendPushNotificationsAsync')
     .mockImplementation(async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -23,7 +23,7 @@ test('should trigger expo correctly', async () => {
     },
   });
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
+  // @ts-expect-error
   expect(provider.expo).toBeDefined();
   expect(spy).toHaveBeenCalled();
   expect(spy).toHaveBeenCalledWith([

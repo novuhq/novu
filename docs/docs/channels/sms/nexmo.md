@@ -4,7 +4,7 @@ You can use the [Nexmo By Vonage](https://www.vonage.com/) provider to send SMS 
 
 ## Getting Started
 
-To use the Nexmo channel, the first step is to create a Nexmo account and add the API key and API Secret to the Nexmo integration on the Novu platform.
+To use the Nexmo provider in the SMS channel, the first step is to create a Nexmo account and add the API key and API Secret to the Nexmo integration on the Novu platform.
 
 ## Find the API key and secret
 

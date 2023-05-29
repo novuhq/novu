@@ -7,6 +7,7 @@ import { Bell, Chat, Mail, Mobile, Sms } from '../../design-system/icons';
 import { ROUTES } from '../../constants/routes.enum';
 
 export const onBoardingSubscriberId = 'on-boarding-subscriber-id-123';
+export const inAppSandboxSubscriberId = 'in-app-sandbox-subscriber-id-123';
 export const notificationTemplateName = 'On-boarding notification';
 export const cloneDemoRepo = 'git clone https://github.com/novuhq/notification-center-demo.git';
 export const APPLICATION_IDENTIFIER = '<APPLICATION_IDENTIFIER>';
@@ -16,8 +17,12 @@ export const BACKEND_SOCKET_URL = '<BACKEND_SOCKET_URL>';
 // eslint-disable-next-line max-len
 export const setupProject = `cd notification-center-demo && npm run setup:onboarding -- ${APPLICATION_IDENTIFIER} ${API_KEY} ${BACKEND_API_URL} ${BACKEND_SOCKET_URL}`;
 export const npmRunCommand = 'npm run dev';
-export const welcomeDescription = 'Welcome to Novu, let’s get started';
+export const frameworkSetupTitle = 'Choose your go-to framework';
 export const faqUrl = 'https://docs.novu.co/notification-center/FAQ';
+export const notificationCenterDocsUrl = 'https://docs.novu.co/notification-center/getting-started';
+export const discordInviteUrl = 'https://discord.novu.co';
+export const demoSetupSecondaryTitle = 'Follow the installation steps to connect your app';
+
 export const getStartedSteps = { first: ROUTES.GET_STARTED, second: ROUTES.GET_STARTED_PREVIEW };
 
 interface ISnippetInstructions {
@@ -27,6 +32,8 @@ interface ISnippetInstructions {
 }
 
 const installReactNotificationCenter = 'npm install @novu/notification-center';
+const installAngularNotificationCenter = 'npm install @novu/notification-center-angular';
+const installVueNotificationCenter = 'npm install @novu/notification-center-vue';
 
 export const reactStarterSnippet = `import React from 'react';
 import {
@@ -147,9 +154,17 @@ const embedBellSelector = `<nav>
   </div>
 </nav>`;
 
+export enum FrameworkEnum {
+  REACT = 'react',
+  ANGULAR = 'angular',
+  VUE = 'vue',
+  JS = 'js',
+  DEMO = 'demo',
+}
+
 export const frameworkInstructions: { key: string; value: ISnippetInstructions[] }[] = [
   {
-    key: 'react',
+    key: FrameworkEnum.REACT,
     value: [
       {
         instruction: 'First you have to install the package:',
@@ -160,8 +175,13 @@ export const frameworkInstructions: { key: string; value: ISnippetInstructions[]
     ],
   },
   {
-    key: 'angular',
+    key: FrameworkEnum.ANGULAR,
     value: [
+      {
+        instruction: 'First you have to install the package:',
+        snippet: installAngularNotificationCenter,
+        language: 'bash',
+      },
       {
         instruction: angularInteractions,
         snippet: angularAppSnippet,
@@ -177,8 +197,13 @@ export const frameworkInstructions: { key: string; value: ISnippetInstructions[]
     ],
   },
   {
-    key: 'vue',
+    key: FrameworkEnum.VUE,
     value: [
+      {
+        instruction: 'First you have to install the package:',
+        snippet: installVueNotificationCenter,
+        language: 'bash',
+      },
       {
         instruction: 'In the main.ts file import the plugin and styles and then use that plugin.',
         snippet: vuePluginSnippet,
@@ -190,7 +215,7 @@ export const frameworkInstructions: { key: string; value: ISnippetInstructions[]
     ],
   },
   {
-    key: 'js',
+    key: FrameworkEnum.JS,
     value: [
       {
         instruction: 'Add the following script into your code.',
@@ -205,7 +230,7 @@ export const frameworkInstructions: { key: string; value: ISnippetInstructions[]
     ],
   },
   {
-    key: 'demo',
+    key: FrameworkEnum.DEMO,
     value: [
       {
         instruction: 'Clone the project to your local machine',
@@ -232,6 +257,9 @@ export enum OnBoardingAnalyticsEnum {
   FLOW_SELECTED = 'Quick Start Flow Select',
   TRIGGER_VISIT = 'Trigger Page Visit',
   CLICKED_FAQ = 'Clicked On FAQ',
+  CLICKED_DOCS = 'Clicked On Our Docs',
+  CLICKED_HELP_REQUEST = 'Clicked On Help Request',
+  CLICKED_ASK_COMMUNITY = 'Clicked On Ask Community',
   CLICKED_CREATE_TEMPLATE = 'Clicked On Create Template',
   CLICKED_TRIGGER_EVENT = 'Clicked On Trigger Event',
   COPIED_STEP = 'Copied Snippet',
@@ -247,6 +275,9 @@ export enum OnBoardingAnalyticsEnum {
   BUILD_WORKFLOW_CLICK = 'Build Workflow Click - [Get Started - Build WorkFlow]',
   BUILD_WORKFLOW_TRY_DIGEST_PLAYGROUND_CLICK = 'Try Digest Playground Click - [Get Started - Build WorkFlow]',
   BUILD_WORKFLOW_NODE_POPOVER_LEARN_MORE_CLICK = 'Node Popover Learn More Click - [Get Started - Build WorkFlow]',
+  IN_APP_SANDBOX_SUCCESS_VISIT = 'Success Page Visit - [In-App Sandbox - Success]',
+  IN_APP_SANDBOX_RUN_TRIGGER_CLICK = 'Run Trigger Clicked - [In-App Sandbox]',
+  CONFIGURE_LATER_CLICK = 'Configure Later Click',
 }
 
 export enum FlowTypeEnum {

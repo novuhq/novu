@@ -7,7 +7,6 @@ import {
   UseGuards,
   UseInterceptors,
   Logger,
-  ExecutionContext,
 } from '@nestjs/common';
 import { IJwtPayload } from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -23,6 +22,10 @@ import { ExternalApiAccessible } from '../auth/framework/external-api.decorator'
 import { ChangeProfileEmailDto } from './dtos/change-profile-email.dto';
 import { UpdateProfileEmail } from './usecases/update-profile-email/update-profile-email.usecase';
 import { UpdateProfileEmailCommand } from './usecases/update-profile-email/update-profile-email.command';
+import { ApiResponse } from '../shared/framework/response.decorator';
+import { UserOnboardingTourRequestDto } from './dtos/user-onboarding-tour-request.dto';
+import { UpdateOnBoardingTourUsecase } from './usecases/update-on-boarding-tour/update-on-boarding-tour.usecase';
+import { UpdateOnBoardingTourCommand } from './usecases/update-on-boarding-tour/update-on-boarding-tour.command';
 
 @Controller('/users')
 @ApiTags('Users')
@@ -33,13 +36,12 @@ export class UsersController {
   constructor(
     private getMyProfileUsecase: GetMyProfileUsecase,
     private updateOnBoardingUsecase: UpdateOnBoardingUsecase,
+    private updateOnBoardingTourUsecase: UpdateOnBoardingTourUsecase,
     private updateProfileEmailUsecase: UpdateProfileEmail
   ) {}
 
   @Get('/me')
-  @ApiOkResponse({
-    type: UserResponseDto,
-  })
+  @ApiResponse(UserResponseDto)
   @ApiOperation({
     summary: 'Get User',
   })
@@ -70,9 +72,7 @@ export class UsersController {
   }
 
   @Put('/onboarding')
-  @ApiOkResponse({
-    type: UserResponseDto,
-  })
+  @ApiResponse(UserResponseDto)
   @ApiOperation({
     summary: 'Update onboarding',
   })
@@ -85,6 +85,19 @@ export class UsersController {
       UpdateOnBoardingCommand.create({
         userId: user._id,
         showOnBoarding: body.showOnBoarding,
+      })
+    );
+  }
+
+  @Put('/onboarding-tour')
+  async updateOnBoardingTour(
+    @UserSession() user: IJwtPayload,
+    @Body() body: UserOnboardingTourRequestDto
+  ): Promise<UserResponseDto> {
+    return await this.updateOnBoardingTourUsecase.execute(
+      UpdateOnBoardingTourCommand.create({
+        userId: user._id,
+        showOnBoardingTour: body.showOnBoardingTour,
       })
     );
   }

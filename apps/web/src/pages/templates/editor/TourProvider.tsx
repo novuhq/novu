@@ -4,6 +4,7 @@ import Joyride from 'react-joyride';
 import { colors } from '../../../design-system';
 
 import { useDigestWorkflowTour } from './useDigestWorkflowTour';
+import { useStartFromScratchTour } from './useStartFromScratchTour';
 
 const TourContext = React.createContext({
   startTour: () => {},
@@ -43,8 +44,11 @@ export const TourProvider = React.memo(() => {
   );
 
   const { digestTourSteps } = useDigestWorkflowTour({ startTour });
-  const hasSteps = digestTourSteps.length > 0;
+  const { startFromScratchTourSteps } = useStartFromScratchTour({ startTour });
 
+  const steps = digestTourSteps.length > 0 ? digestTourSteps : startFromScratchTourSteps;
+
+  const hasSteps = steps.length > 0;
   const shouldRun = run && hasSteps;
 
   return (
@@ -52,7 +56,7 @@ export const TourProvider = React.memo(() => {
       <Joyride
         run={shouldRun}
         stepIndex={stepTourIndex}
-        steps={digestTourSteps}
+        steps={steps}
         continuous
         showSkipButton
         disableOverlay={false}

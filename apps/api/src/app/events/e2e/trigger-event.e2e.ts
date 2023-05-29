@@ -31,7 +31,7 @@ import {
 } from '@novu/shared';
 import { EmailEventStatusEnum } from '@novu/stateless';
 
-const IN_APP_MESSAGE_EXPIRE_MONTHS = 6;
+const IN_APP_MESSAGE_EXPIRE_MONTHS = 12;
 const MESSAGE_EXPIRE_MONTHS = 1;
 
 const axiosInstance = axios.create();
@@ -864,7 +864,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
 
     expect(body).to.eql({
       statusCode: 422,
-      message: 'template_not_found',
+      message: 'workflow_not_found',
       error: 'Unprocessable Entity',
     });
   });
@@ -1568,6 +1568,7 @@ export async function sendTrigger(
       to: [{ subscriberId: newSubscriberIdInAppNotification, lastName: 'Smith', email: 'test@email.novu' }],
       payload: {
         organizationName: 'Umbrella Corp',
+        compiledVariable: 'test-env',
         ...payload,
       },
     },

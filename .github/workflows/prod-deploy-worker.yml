@@ -14,6 +14,8 @@ jobs:
     uses: ./.github/workflows/reusable-worker-e2e.yml
     with:
       ee: ${{ contains (matrix.name,'ee') }}
+      submodules: ${{ contains (matrix.name,'ee') }}
+    secrets: inherit
 
   build_prod_image:
     if: "!contains(github.event.head_commit.message, 'ci skip')"
@@ -35,6 +37,9 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: ${{ contains (matrix.name,'ee') }}
+          token: ${{ secrets.SUBMODULES_TOKEN }}
       - uses: ./.github/actions/setup-project
 
       - name: build worker
@@ -80,6 +85,7 @@ jobs:
     uses: ./.github/workflows/reusable-app-service-deploy.yml
     secrets: inherit
     with:
+      environment: Production
       service_name: worker
       terraform_workspace: novu-prod-eu
       # This is a workaround to an issue with matrix outputs
@@ -92,6 +98,7 @@ jobs:
     uses: ./.github/workflows/reusable-app-service-deploy.yml
     secrets: inherit
     with:
+      environment: Production
       service_name: worker
       terraform_workspace: novu-prod
       # This is a workaround to an issue with matrix outputs

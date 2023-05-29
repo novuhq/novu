@@ -1,6 +1,6 @@
 {
   "name": "@novu/mandrill",
-  "version": "0.13.0",
+  "version": "0.15.0",
   "description": "A mandrill wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -17,14 +17,15 @@
     "fix": "run-s fix:*",
     "fix:prettier": "prettier \"src/**/*.ts\" --write",
     "fix:lint": "eslint src --ext .ts --fix",
-    "test": "run-s build test:*",
+    "test": "run-s test:*",
     "test:unit": "jest src",
+    "lint": "eslint src --ext .ts",
     "check-cli": "run-s test diff-integration-tests check-integration-tests",
     "check-integration-tests": "run-s check-integration-test:*",
     "diff-integration-tests": "mkdir -p diff && rm -rf diff/test && cp -r test diff/test && rm -rf diff/test/test-*/.git && cd diff && git init --quiet && git add -A && git commit --quiet --no-verify --allow-empty -m 'WIP' && echo '\\n\\nCommitted most recent integration test output in the \"diff\" directory. Review the changes with \"cd diff && git diff HEAD\" or your preferred git diff viewer.'",
     "watch:build": "tsc -p tsconfig.json -w",
     "watch:test": "jest src --watch",
-    "cov": "run-s build test:unit cov:html cov:lcov && open-cli coverage/index.html",
+    "cov": "run-s test:unit cov:html cov:lcov && open-cli coverage/index.html",
     "cov:html": "nyc report --reporter=html",
     "cov:lcov": "nyc report --reporter=lcov",
     "cov:send": "run-s cov:lcov && codecov",
@@ -41,7 +42,7 @@
   },
   "dependencies": {
     "@mailchimp/mailchimp_transactional": "^1.0.46",
-    "@novu/stateless": "^0.13.0"
+    "@novu/stateless": "^0.15.0"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "1.0.2",
@@ -60,7 +61,7 @@
     "rimraf": "^3.0.2",
     "ts-jest": "^27.0.5",
     "ts-node": "~10.9.1",
-    "typedoc": "^0.23.0",
+    "typedoc": "^0.24.0",
     "typescript": "4.9.5"
   },
   "files": [

@@ -109,6 +109,10 @@ executionDetailsSchema.index({
   _notificationId: 1,
 });
 
+executionDetailsSchema.index({
+  _environmentId: 1,
+});
+
 executionDetailsSchema.index({ expireAt: 1 }, getTTLOptions());
 
 // eslint-disable-next-line @typescript-eslint/naming-convention

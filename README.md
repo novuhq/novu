@@ -25,7 +25,7 @@ The ultimate service for managing multi-channel notifications with a single API.
     ·
   <a href="https://discord.novu.co">Join Our Discord</a>
     ·
-    <a href="https://github.com/orgs/novuhq/projects/10">Roadmap</a>
+    <a href="https://roadmap.novu.co">Roadmap</a>
     ·
     <a href="https://twitter.com/novuhq">Twitter</a>
     ·
@@ -40,6 +40,7 @@ The ultimate service for managing multi-channel notifications with a single API.
   · <a href="https://github.com/novuhq/novu-kotlin">Kotlin</a>
   · <a href="https://github.com/novuhq/elixir">Elixir</a>
   · <a href="https://github.com/novuhq/rust">Rust</a>
+  · <a href="https://github.com/novuhq/novu-python">Python</a>
   </p>
 
 ## ⭐️ Why Novu?
@@ -174,7 +175,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [x] [FCM](https://github.com/novuhq/novu/tree/main/providers/fcm)
 - [x] [Expo](https://github.com/novuhq/novu/tree/main/providers/expo)
 - [x] [APNS](https://github.com/novuhq/novu/tree/main/providers/apns)
-- [ ] OneSignal
+- [x] [OneSignal](https://github.com/novuhq/novu/tree/main/providers/one-signal)
 - [ ] Pushwoosh
 
 #### 👇 Chat

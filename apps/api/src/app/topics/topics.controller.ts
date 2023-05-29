@@ -13,7 +13,6 @@ import {
 } from '@nestjs/common';
 import {
   ApiConflictResponse,
-  ApiCreatedResponse,
   ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -56,6 +55,7 @@ import {
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
+import { ApiResponse } from '../shared/framework/response.decorator';
 
 @Controller('/topics')
 @ApiTags('Topics')
@@ -74,9 +74,7 @@ export class TopicsController {
 
   @Post('')
   @ExternalApiAccessible()
-  @ApiCreatedResponse({
-    type: CreateTopicResponseDto,
-  })
+  @ApiResponse(CreateTopicResponseDto, 201)
   @ApiOperation({ summary: 'Topic creation', description: 'Create a topic' })
   async createTopic(
     @UserSession() user: IJwtPayload,
@@ -239,9 +237,7 @@ export class TopicsController {
 
   @Get('/:topicKey')
   @ExternalApiAccessible()
-  @ApiOkResponse({
-    type: GetTopicResponseDto,
-  })
+  @ApiResponse(GetTopicResponseDto)
   @ApiOperation({ summary: 'Get topic', description: 'Get a topic by its topic key' })
   async getTopic(
     @UserSession() user: IJwtPayload,
@@ -258,9 +254,7 @@ export class TopicsController {
 
   @Patch('/:topicKey')
   @ExternalApiAccessible()
-  @ApiOkResponse({
-    type: RenameTopicResponseDto,
-  })
+  @ApiResponse(RenameTopicResponseDto)
   @ApiOperation({ summary: 'Rename a topic', description: 'Rename a topic by providing a new name' })
   async renameTopic(
     @UserSession() user: IJwtPayload,

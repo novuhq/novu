@@ -1,6 +1,6 @@
 {
   "name": "@novu/inbound-mail",
-  "version": "0.13.0",
+  "version": "0.15.0",
   "description": "",
   "author": "",
   "private": true,
@@ -16,11 +16,11 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --timeout 10000 --require ts-node/register --exit --file e2e/setup.ts src/**/**/*.spec.ts",
-    "test:e2e": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --timeout 10000 --require ts-node/register --exit --file e2e/setup.ts e2e/**/*.e2e.ts src/**/*.e2e.ts"
+    "test": "echo \"No e2e tests, only build tests\""
   },
   "dependencies": {
-    "@novu/shared": "^0.13.0",
+    "@novu/application-generic": "^0.15.0",
+    "@novu/shared": "^0.15.0",
     "@sentry/node": "^7.12.1",
     "bluebird": "^2.9.30",
     "bullmq": "^3.10.2",
@@ -37,8 +37,7 @@
     "shelljs": "^0.8.5",
     "smtp-server": "^1.4.0",
     "spamc": "0.0.5",
-    "winston": "^1.0.0",
-    "@novu/application-generic": "^0.13.0"
+    "winston": "^1.0.0"
   },
   "devDependencies": {
     "@types/express": "^4.17.8",

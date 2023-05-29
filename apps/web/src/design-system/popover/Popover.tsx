@@ -17,7 +17,7 @@ type PopoverProps = {
   url?: string;
   urlText?: string;
   onUrlClick?: MouseEventHandler<HTMLAnchorElement>;
-  titleGradient: 'red' | 'blue' | 'none';
+  titleGradient?: 'red' | 'blue' | 'none';
   className?: string;
   opacity?: string | number;
   onDropdownMouseEnter?: MouseEventHandler<HTMLDivElement>;

@@ -1,6 +1,6 @@
 {
   "name": "@novu/shared",
-  "version": "0.13.0",
+  "version": "0.15.0",
   "description": "",
   "scripts": {
     "start": "npm run start:dev",
@@ -14,7 +14,7 @@
     "precommit": "lint-staged",
     "lint": "eslint src",
     "lint:fix": "pnpm lint -- --fix",
-    "test": "",
+    "test": "echo \"No test specified\"",
     "test:watch": ""
   },
   "author": "",

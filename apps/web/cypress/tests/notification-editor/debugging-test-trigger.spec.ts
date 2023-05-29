@@ -10,7 +10,7 @@ describe('Debugging - test trigger', function () {
     cy.intercept('GET', 'http://localhost:1336/v1/notification-templates/*').as('notification-templates');
 
     cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/edit/' + template._id);
+      cy.visit('/workflows/edit/' + template._id);
     });
 
     cy.wait('@notification-templates');
@@ -22,7 +22,7 @@ describe('Debugging - test trigger', function () {
 
   it('should not test trigger on error ', function () {
     const template = this.session.templates[0];
-    cy.visit('/templates/edit/' + template._id);
+    cy.visit('/workflows/edit/' + template._id);
     cy.waitForNetworkIdle(500);
     cy.getByTestId('node-triggerSelector').click({ force: true });
 

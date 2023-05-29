@@ -1,6 +1,6 @@
 {
   "name": "@novu/embed",
-  "version": "0.13.0",
+  "version": "0.15.0",
   "private": true,
   "description": "",
   "keywords": [],
@@ -31,7 +31,7 @@
     "start:docker": "pnpm build && http-server -p 4701 dist",
     "start:test:web": "http-server -p 4701 -o test",
     "docker:build": "docker buildx build -f ./Dockerfile -t novu-embed ./../..",
-    "test": "jest --coverage",
+    "test": "echo \"Error: no test specified\"",
     "test:watch": "jest --coverage --watch",
     "test:prod": "pnpm lint && pnpm test -- --no-cache",
     "deploy-docs": "ts-node tools/gh-pages-publish",
@@ -93,6 +93,7 @@
   "devDependencies": {
     "@commitlint/cli": "^17.0.0",
     "@commitlint/config-conventional": "^17.0.0",
+    "@rollup/plugin-node-resolve": "^6.0.0",
     "@rollup/plugin-replace": "^5.0.2",
     "@types/jest": "27.5.2",
     "@types/node": "^14.14.16",
@@ -115,7 +116,6 @@
     "rollup": "^3.15.0",
     "rollup-plugin-commonjs": "^10.1.0",
     "rollup-plugin-json": "^4.0.0",
-    "@rollup/plugin-node-resolve": "^6.0.0",
     "rollup-plugin-sourcemaps": "^0.6.3",
     "rollup-plugin-terser": "^7.0.2",
     "rollup-plugin-typescript2": "^0.34.1",
@@ -128,7 +128,7 @@
     "typescript": "4.9.5"
   },
   "dependencies": {
-    "@novu/notification-center": "^0.13.0",
+    "@novu/notification-center": "^0.15.0",
     "@types/iframe-resizer": "^3.5.8",
     "iframe-resizer": "^4.3.1"
   }

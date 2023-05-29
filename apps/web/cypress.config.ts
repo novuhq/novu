@@ -20,12 +20,12 @@ const webpack = overrideBabel(webpackOverride());
 webpack.output.devtoolModuleFilenameTemplate = '[name].js';
 
 export default defineConfig({
-  viewportHeight: 700,
+  viewportHeight: 900,
   viewportWidth: 1280,
   video: false,
 
   retries: {
-    runMode: 2,
+    runMode: 3,
     openMode: 0,
   },
 
@@ -43,6 +43,7 @@ export default defineConfig({
     apiUrl: 'http://localhost:1336',
     GITHUB_USER_EMAIL: '',
     GITHUB_USER_PASSWORD: '',
+    BLUEPRINT_CREATOR: '645b648b36dd6d25f8650d37',
     IS_CI: false,
     coverage: false,
   },

@@ -2,13 +2,16 @@
 sidebar_position: 2
 ---
 
+import FAQ from '@site/src/components/FAQ';
+import FAQItem from '@site/src/components/FAQItem';
+
 # Amazon SES
 
 You can use the [Amazon SES](https://aws.amazon.com/ses/) provider to send transactional emails to your customers using the Novu Platform with a single API to create multi-channel experiences.
 
 ## Getting Started
 
-To use the Amazon SES provider, you will need to create a SES account and add your credentials to the Amazon SES integration on the Novu platform.
+To use the Amazon SES provider in the email channel, you will need to create a SES account and add your credentials to the Amazon SES integration on the Novu platform.
 
 ## How to set up SES in AWS?
 
@@ -34,13 +37,14 @@ To use the Amazon SES provider, you will need to create a SES account and add yo
 
 ## FAQ
 
-<details>
-<summary>Trigger from novu is successful but subscriber is not receiving email. </summary>
+<FAQ>
+<FAQItem title="Trigger from novu is successful but subscriber is not receiving email.">
 
-Possible reasons:-
+Possible reasons:
 
 - You have not verified subscriber's email address in SES (if you are in sandbox environment).
 - Your daily sending limit has reached (if you are in sandbox environment).
 - You have entered wrong aws region in integration form.
 
-</details>
+</FAQItem>
+</FAQ>

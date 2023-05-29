@@ -10,8 +10,15 @@
 // ***********************************************************
 
 import { DalService, EnvironmentEntity } from '@novu/dal';
-import { EnvironmentService, NotificationsService, NotificationTemplateService, UserSession } from '@novu/testing';
+import {
+  EnvironmentService,
+  NotificationsService,
+  NotificationTemplateService,
+  UserSession,
+  JobsService,
+} from '@novu/testing';
 
+const jobsService = new JobsService();
 /**
  * @type {Cypress.PluginConfig}
  */
@@ -25,15 +32,24 @@ module.exports = (on, config) => {
   });
 
   on('task', {
-    async createNotifications({ identifier, templateId, token, subscriberId, count = 1, organizationId }) {
+    async createNotifications({
+      identifier,
+      templateId,
+      token,
+      subscriberId,
+      count = 1,
+      organizationId,
+      enumerate = false,
+    }) {
       const triggerIdentifier = identifier;
       const service = new NotificationsService(token);
       const session = new UserSession(config.env.API_URL);
 
       // eslint-disable-next-line no-plusplus
       for (let i = 0; i < count; i++) {
+        const num = enumerate ? ` ${i}` : '';
         await service.triggerEvent(triggerIdentifier, subscriberId, {
-          firstName: 'John',
+          firstName: 'John' + num,
         });
       }
 
@@ -43,6 +59,7 @@ module.exports = (on, config) => {
 
       return 'ok';
     },
+
     async clearDatabase() {
       const dal = new DalService();
       await dal.connect('mongodb://localhost:27017/novu-test');

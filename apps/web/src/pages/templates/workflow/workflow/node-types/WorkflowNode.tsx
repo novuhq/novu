@@ -96,7 +96,8 @@ export function WorkflowNode({
   const { classes: popoverClasses } = usePopoverStyles();
   const viewport = useViewport();
   const channelKey = tabKey ?? '';
-  const { isLimitReached } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
+  const { isLimitReached: isEmailLimitReached } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
+  const { isLimitReached: isSmsLimitReached } = useIntegrationLimit(ChannelTypeEnum.SMS);
   const [hover, setHover] = useState(false);
 
   const hasActiveIntegration = useMemo(() => {
@@ -104,15 +105,18 @@ export function WorkflowNode({
       channelType
     );
     const isEmailStep = channelType === StepTypeEnum.EMAIL;
+    const isSmsStep = channelType === StepTypeEnum.SMS;
 
     if (isChannelStep) {
       const isActive = !!integrations?.some((integration) => integration.channel === tabKey);
+      const isEmailStepActive = isEmailStep && !isEmailLimitReached;
+      const isSmsStepActive = isSmsStep && !isSmsLimitReached;
 
-      return isActive || (isEmailStep && !isLimitReached);
+      return isActive || isEmailStepActive || isSmsStepActive;
     }
 
     return true;
-  }, [integrations, tabKey, isLimitReached]);
+  }, [integrations, tabKey, isEmailLimitReached, isSmsLimitReached]);
 
   const {
     watch,

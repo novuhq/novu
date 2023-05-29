@@ -398,21 +398,34 @@ export const twilioConfig: IConfigCredentials[] = [
 
 export const slackConfig: IConfigCredentials[] = [
   {
+    key: CredentialsKeyEnum.ApplicationId,
+    displayName: 'Application Id',
+    type: 'string',
+    required: true,
+  },
+  {
     key: CredentialsKeyEnum.ClientId,
     displayName: 'Client ID',
     type: 'string',
-    required: false,
+    required: true,
   },
   {
     key: CredentialsKeyEnum.SecretKey,
     displayName: 'Client Secret',
     type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.RedirectUrl,
+    displayName: 'Redirect URL',
+    description: 'Redirect after Slack OAuth flow finished (default behaviour will close the tab)',
+    type: 'string',
     required: false,
   },
   {
-    key: CredentialsKeyEnum.ApplicationId,
-    displayName: 'Application Id',
-    type: 'string',
+    key: CredentialsKeyEnum.Hmac,
+    displayName: 'HMAC',
+    type: 'switch',
     required: false,
   },
 ];
@@ -431,6 +444,40 @@ export const expoConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'Access Token',
+    type: 'text',
+    required: true,
+  },
+  ...pushConfigBase,
+];
+
+export const pushWebhookConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.WebhookUrl,
+    displayName: 'Webhook URL',
+    type: 'string',
+    description: 'the webhook URL to call to trigger push notifications',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Secret Hmac Key',
+    type: 'string',
+    description: 'the secret used to sign webhooks calls',
+    required: true,
+  },
+  ...pushConfigBase,
+];
+
+export const oneSignalConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApplicationId,
+    displayName: 'Application ID',
+    type: 'text',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
     type: 'text',
     required: true,
   },
@@ -619,4 +666,29 @@ export const smsCentralConfig: IConfigCredentials[] = [
     required: false,
   },
   ...smsConfigBase,
+];
+
+export const africasTalkingConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.User,
+    displayName: 'Username',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+];
+
+export const novuInAppConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.Hmac,
+    displayName: 'Security HMAC encryption',
+    type: 'switch',
+    required: false,
+  },
 ];

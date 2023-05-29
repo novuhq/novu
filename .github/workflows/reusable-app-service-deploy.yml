@@ -4,6 +4,9 @@ name: Deploy Service Job
 on:
   workflow_call:
     inputs:
+      environment:
+        required: true
+        type: string
       terraform_workspace:
         required: true
         type: string
@@ -26,7 +29,7 @@ jobs:
   deploy_service:
     runs-on: ubuntu-latest
     timeout-minutes: 80
-    environment: Production
+    environment: ${{ inputs.environment }}
     env:
       TF_WORKSPACE: ${{ inputs.terraform_workspace }}
     permissions:
@@ -45,7 +48,7 @@ jobs:
         uses: hashicorp/setup-terraform@v1
         with:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
-          terraform_version: 1.3.4
+          terraform_version: 1.4.4
           terraform_wrapper: false
 
       - name: Terraform Init

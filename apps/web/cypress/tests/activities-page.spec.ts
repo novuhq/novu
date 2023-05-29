@@ -11,6 +11,7 @@ describe('Activity Feed Screen', function () {
           count: 25,
           organizationId: session.organization._id,
           environmentId: session.environment._id,
+          templateId: session.templates[0]._id,
         });
       });
   });
@@ -38,6 +39,7 @@ describe('Activity Feed Screen', function () {
     });
     cy.visit('/activities');
 
+    cy.waitForNetworkIdle(500);
     cy.getByTestId('activities-table')
       .find('button')
       .first()
@@ -49,6 +51,8 @@ describe('Activity Feed Screen', function () {
 
   it('should filter by email channel', function () {
     cy.visit('/activities');
+    cy.waitForNetworkIdle(500);
+
     cy.getByTestId('email-step').should('have.length', 10);
     cy.getByTestId('activities-filter').click();
     cy.get('.mantine-MultiSelect-item').contains('SMS').click();
@@ -57,10 +61,12 @@ describe('Activity Feed Screen', function () {
 
   it('should show the clear filters button when template is selected', function () {
     cy.visit('/activities');
+    cy.waitForNetworkIdle(500);
+
     cy.getByTestId('email-step').should('have.length', 10);
 
-    cy.getByTestId('templates-filter').click();
-    cy.get('.mantine-MultiSelect-item').contains(this.session.templates[0].name).click();
+    cy.getByTestId('templates-filter').click({ force: true });
+    cy.get('.mantine-MultiSelect-item').contains(this.session.templates[0].name).click({ force: true });
 
     cy.getByTestId('activities-table')
       .find('button')
@@ -69,7 +75,7 @@ describe('Activity Feed Screen', function () {
       .contains(this.session.templates[0].name);
 
     cy.getByTestId('clear-filters').should('exist');
-    cy.getByTestId('clear-filters').click();
+    cy.getByTestId('clear-filters').click({ force: true });
 
     cy.getByTestId('templates-filter').find('.mantine-Text-root').should('not.exist');
     cy.getByTestId('email-step').should('have.length', 10);
@@ -77,6 +83,8 @@ describe('Activity Feed Screen', function () {
 
   it('should clear all filters', function () {
     cy.visit('/activities');
+    cy.waitForNetworkIdle(500);
+
     cy.getByTestId('email-step').should('have.length', 10);
 
     cy.getByTestId('activities-filter').click();

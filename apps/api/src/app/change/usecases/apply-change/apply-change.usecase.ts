@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+
 import { ChangeEntity, ChangeRepository } from '@novu/dal';
-import { PromoteChangeToEnvironmentCommand } from '../promote-change-to-environment/promote-change-to-environment.command';
-import { PromoteChangeToEnvironment } from '../promote-change-to-environment/promote-change-to-environment.usecase';
+
+import { PromoteChangeToEnvironmentCommand, PromoteChangeToEnvironment } from '../promote-change-to-environment';
 import { ApplyChangeCommand } from './apply-change.command';
 
 @Injectable()
@@ -42,26 +43,41 @@ export class ApplyChange {
       throw new NotFoundException();
     }
 
-    await this.changeRepository.update(
-      {
-        _id: change._id,
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-      },
-      {
-        enabled: true,
-      }
-    );
+    try {
+      await this.changeRepository.update(
+        {
+          _id: change._id,
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+        },
+        {
+          enabled: true,
+        }
+      );
 
-    await this.promoteChangeToEnvironment.execute(
-      PromoteChangeToEnvironmentCommand.create({
-        itemId: change._entityId,
-        type: change.type,
-        environmentId: change._environmentId,
-        organizationId: change._organizationId,
-        userId: command.userId,
-      })
-    );
+      await this.promoteChangeToEnvironment.execute(
+        PromoteChangeToEnvironmentCommand.create({
+          itemId: change._entityId,
+          type: change.type,
+          environmentId: change._environmentId,
+          organizationId: change._organizationId,
+          userId: command.userId,
+        })
+      );
+    } catch (e) {
+      await this.changeRepository.update(
+        {
+          _id: change._id,
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+        },
+        {
+          enabled: false,
+        }
+      );
+
+      throw e;
+    }
 
     return change;
   }

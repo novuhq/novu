@@ -6,7 +6,7 @@ import { INestApplication, Logger, NestInterceptor, ValidationPipe } from '@nest
 import { NestFactory } from '@nestjs/core';
 import * as bodyParser from 'body-parser';
 import * as Sentry from '@sentry/node';
-import { BullmqService } from '@novu/application-generic';
+import { BullMqService } from '@novu/application-generic';
 import { getErrorInterceptor, Logger as PinoLogger } from '@novu/application-generic';
 
 import { AppModule } from './app.module';
@@ -33,7 +33,7 @@ if (process.env.SENTRY_DSN) {
 validateEnv();
 
 export async function bootstrap(): Promise<INestApplication> {
-  BullmqService.haveProInstalled();
+  BullMqService.haveProInstalled();
 
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
 
@@ -63,6 +63,9 @@ export async function bootstrap(): Promise<INestApplication> {
   app.use(extendedBodySizeRoutes, bodyParser.urlencoded({ limit: '20mb', extended: true }));
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: true }));
+
+  // Starts listening for shutdown hooks
+  app.enableShutdownHooks();
 
   Logger.log('BOOTSTRAPPED SUCCESSFULLY');
 

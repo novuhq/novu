@@ -86,6 +86,25 @@ const jobSchema = new Schema<JobDBModel>(
       updateMode: {
         type: Schema.Types.Boolean,
       },
+      backoff: {
+        type: Schema.Types.Boolean,
+      },
+      timed: {
+        atTime: {
+          type: Schema.Types.String,
+        },
+        weekDays: [Schema.Types.String],
+        monthDays: [Schema.Types.Number],
+        ordinal: {
+          type: Schema.Types.String,
+        },
+        ordinalValue: {
+          type: Schema.Types.String,
+        },
+        monthlyType: {
+          type: Schema.Types.String,
+        },
+      },
     },
     type: {
       type: Schema.Types.String,
@@ -352,6 +371,10 @@ jobSchema.index({
  */
 jobSchema.index({
   _notificationId: 1,
+});
+
+jobSchema.index({
+  _environmentId: 1,
 });
 
 // eslint-disable-next-line @typescript-eslint/naming-convention

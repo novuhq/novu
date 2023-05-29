@@ -5,6 +5,6 @@ describe('Just launch the app for exploration', function () {
 
   it('should launch the app', function () {
     cy.visit('/');
-    cy.location('pathname').should('equal', '/templates');
+    cy.location('pathname').should('equal', '/workflows');
   });
 });

@@ -71,9 +71,3 @@ const NodeWrapper = styled.foreignObject<{ size: number }>`
     opacity: 1;
   }
 `;
-
-export interface IAddNodeEdge extends EdgeProps {
-  parentId: string;
-  childId?: string;
-  addNewNode: (parentNodeId: string, channelType: string, childId?: string) => void;
-}

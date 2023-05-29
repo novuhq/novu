@@ -69,9 +69,9 @@ const sortProviders = (unsortedProviders: IIntegratedProvider[]) => {
 };
 
 export const useProviders = () => {
-  const { integrations } = useIntegrations({ refetchOnMount: false });
+  const { integrations, loading: isLoading, refetch } = useIntegrations({ refetchOnMount: false });
 
-  return useMemo(() => {
+  const sortedProviders = useMemo(() => {
     if (integrations) {
       const initializedProviders = initializeProviders(integrations);
 
@@ -88,6 +88,9 @@ export const useProviders = () => {
         pushProvider: sortProviders(
           initializedProviders.filter((providerItem) => providerItem.channel === ChannelTypeEnum.PUSH)
         ),
+        inAppProvider: sortProviders(
+          initializedProviders.filter((providerItem) => providerItem.channel === ChannelTypeEnum.IN_APP)
+        ),
       };
     }
 
@@ -96,6 +99,13 @@ export const useProviders = () => {
       smsProvider: [],
       chatProvider: [],
       pushProvider: [],
+      inAppProvider: [],
     };
   }, [integrations]);
+
+  return {
+    ...sortedProviders,
+    isLoading,
+    refetch,
+  };
 };

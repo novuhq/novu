@@ -5,6 +5,7 @@ import { StepTypeEnum } from '@novu/shared';
 import { ApiException } from '../../utils/exceptions';
 import { AddJobCommand } from './add-job.command';
 import { CalculateDelayService } from '../../services';
+import { InstrumentUsecase } from '../../instrumentation';
 
 @Injectable()
 export class AddDelayJob {
@@ -13,8 +14,11 @@ export class AddDelayJob {
     private calculateDelayService: CalculateDelayService
   ) {}
 
+  @InstrumentUsecase()
   public async execute(command: AddJobCommand): Promise<number | undefined> {
-    const data = await this.jobRepository.findById(command.jobId);
+    const data =
+      command.job ?? (await this.jobRepository.findById(command.jobId));
+
     if (!data) throw new ApiException(`Job with id ${command.jobId} not found`);
 
     const isDelayStep = data.type === StepTypeEnum.DELAY;
@@ -24,15 +28,15 @@ export class AddDelayJob {
     }
 
     await this.jobRepository.updateStatus(
-      command.organizationId,
+      command.environmentId,
       data._id,
       JobStatusEnum.DELAYED
     );
 
-    return this.calculateDelayService.calculateDelay(
-      data.step,
-      data.payload,
-      data.overrides
-    );
+    return this.calculateDelayService.calculateDelay({
+      stepMetadata: data.step.metadata,
+      payload: data.payload,
+      overrides: data.overrides,
+    });
   }
 }

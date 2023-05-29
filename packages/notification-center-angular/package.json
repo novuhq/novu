@@ -1,12 +1,13 @@
 {
   "name": "@novu/notification-center-angular",
-  "version": "0.13.0",
+  "version": "0.15.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "echo \"no tests\""
+    "test": "echo \"no tests\"",
+    "lint": "echo \"No linting configured\""
   },
   "module": "dist/notification-center-angular/fesm2015/novu-notification-center-angular.mjs",
   "es2020": "dist/notification-center-angular/fesm2020/novu-notification-center-angular.mjs",
@@ -36,7 +37,7 @@
     "@angular/core": "~15.2.0",
     "@angular/platform-browser": "~15.2.0",
     "@angular/platform-browser-dynamic": "~15.2.0",
-    "@novu/notification-center": "^0.13.0",
+    "@novu/notification-center": "^0.15.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "tslib": "^2.3.0",

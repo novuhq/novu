@@ -7,18 +7,25 @@ export interface ICredentialsDto {
   host?: string;
   port?: string;
   secure?: boolean;
+  hmac?: boolean;
   region?: string;
   accountSid?: string;
   messageProfileId?: string;
   token?: string;
   from?: string;
   senderName?: string;
+  applicationId?: string;
+  clientId?: string;
   projectName?: string;
+  serviceAccount?: string;
+  baseUrl?: string;
   requireTls?: boolean;
   ignoreTls?: boolean;
   tlsOptions?: Record<string, unknown>;
-  baseUrl?: string;
+  webhookUrl?: string;
+  redirectUrl?: string;
 }
+
 export interface IConstructIntegrationDto {
   credentials: ICredentialsDto;
 

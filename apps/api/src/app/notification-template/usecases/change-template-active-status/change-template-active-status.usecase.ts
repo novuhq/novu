@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
+import { NotificationTemplateEntity, NotificationTemplateRepository, ChangeRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 import {
   buildNotificationTemplateIdentifierKey,
@@ -15,7 +15,8 @@ export class ChangeTemplateActiveStatus {
   constructor(
     private invalidateCache: InvalidateCacheService,
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private createChange: CreateChange
+    private createChange: CreateChange,
+    private changeRepository: ChangeRepository
   ) {}
 
   async execute(command: ChangeTemplateActiveStatusCommand): Promise<NotificationTemplateEntity> {
@@ -62,6 +63,12 @@ export class ChangeTemplateActiveStatus {
     const item = await this.notificationTemplateRepository.findById(command.templateId, command.environmentId);
     if (!item) throw new NotFoundException(`Notification template ${command.templateId} is not found`);
 
+    const parentChangeId: string = await this.changeRepository.getChangeId(
+      command.environmentId,
+      ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
+      command.templateId
+    );
+
     await this.createChange.execute(
       CreateChangeCommand.create({
         organizationId: command.organizationId,
@@ -69,7 +76,7 @@ export class ChangeTemplateActiveStatus {
         userId: command.userId,
         type: ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
         item,
-        changeId: NotificationTemplateRepository.createObjectId(),
+        changeId: parentChangeId,
       })
     );
 
