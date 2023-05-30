@@ -246,7 +246,11 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
   }
 
   async deleteMany(query: MessageQuery) {
-    return await this.message.delete({ ...query, deleted: false });
+    try {
+      return await this.message.delete({ ...query, deleted: false });
+    } catch (e) {
+      throw new DalException(e);
+    }
   }
 
   async findDeleted(query: MessageQuery): Promise<MessageEntity> {
