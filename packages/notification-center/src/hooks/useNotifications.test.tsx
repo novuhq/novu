@@ -174,6 +174,7 @@ describe('useNotifications', () => {
       totalCount: 12,
       pageSize: 10,
       page: 0,
+      hasMore: true,
     };
     mockServiceInstance.getNotificationsList.mockImplementationOnce(() =>
       promiseResolveTimeout(0, mockNotificationsResponse)
@@ -284,12 +285,14 @@ describe('useNotifications', () => {
       totalCount: 3,
       pageSize: 2,
       page: 0,
+      hasMore: true,
     };
     const mockNotificationsResponse2 = {
       data: [mockNotification3],
       totalCount: 3,
       pageSize: 2,
       page: 1,
+      hasMore: false,
     };
     mockServiceInstance.getNotificationsList
       .mockImplementationOnce(() => promiseResolveTimeout(0, mockNotificationsResponse1))
@@ -448,6 +451,7 @@ describe('useNotifications', () => {
       totalCount: 10,
       pageSize: 10,
       page: 0,
+      hasMore: false,
     };
     mockServiceInstance.getNotificationsList.mockImplementationOnce(() =>
       promiseResolveTimeout(0, mockNotificationsResponse1)

@@ -95,6 +95,7 @@ export interface INovuProviderContext {
 }
 
 export interface INotificationsContext {
+  storeQuery: IStoreQuery;
   storeId: string;
   stores: IStore[];
   unseenCount: number;

@@ -6,7 +6,7 @@ import { PopoverNotificationCenter } from '../popover-notification-center';
 import { NotificationBell } from '../notification-bell';
 import { reactToWebComponent } from '../../utils';
 import type { NotificationCenterComponentProps, PopoverWrapperProps } from './notification-center-component.types';
-import { useUpdateAction } from '../../hooks';
+import { useNotifications, useUpdateAction } from '../../hooks';
 
 /*
  * This array represents the public API of the web component.
@@ -107,7 +107,8 @@ function PopoverWrapper({
   unseenBadgeColor,
   unseenBadgeBackgroundColor,
 }: PopoverWrapperProps) {
-  const { updateAction } = useUpdateAction();
+  const { storeQuery } = useNotifications();
+  const { updateAction } = useUpdateAction({ query: storeQuery });
 
   function handlerOnActionClick(templateIdentifier: string, type: ButtonTypeEnum, message: IMessage) {
     updateAction({ messageId: message._id, actionButtonType: type, status: MessageActionStatusEnum.DONE });

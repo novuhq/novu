@@ -2,6 +2,8 @@ import { useEffect } from 'react';
 import { useQuery, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
 import debounce from 'lodash.debounce';
 
+import { IStoreQuery } from '@novu/client';
+
 import type { ICountData } from '../shared/interfaces';
 import { FEED_UNSEEN_COUNT_QUERY_KEY, INFINITE_NOTIFICATIONS_QUERY_KEY, UNSEEN_COUNT_QUERY_KEY } from './queryKeys';
 import { useNovuContext } from './useNovuContext';
@@ -20,7 +22,11 @@ const dispatchUnseenCountEvent = (count: number) => {
  */
 const DEBOUNCE_TIME = typeof window !== 'undefined' && (window as any)?.Cypress ? 1000 : 100;
 
-export const useUnseenCount = ({ onSuccess, ...restOptions }: UseQueryOptions<ICountData, Error, ICountData> = {}) => {
+export const useUnseenCount = ({
+  query,
+  onSuccess,
+  ...restOptions
+}: { query?: IStoreQuery } & UseQueryOptions<ICountData, Error, ICountData> = {}) => {
   const { apiService, socket, isSessionInitialized, fetchingStrategy, subscriberId } = useNovuContext();
 
   const queryClient = useQueryClient();
@@ -35,17 +41,17 @@ export const useUnseenCount = ({ onSuccess, ...restOptions }: UseQueryOptions<IC
       'unseen_count_changed',
       debounce((data?: { unseenCount: number }) => {
         if (Number.isInteger(data?.unseenCount)) {
-          queryClient.setQueryData<{ count: number }>(setQueryKey(UNSEEN_COUNT_QUERY_KEY), (oldData) => ({
+          queryClient.setQueryData<{ count: number }>(setQueryKey([UNSEEN_COUNT_QUERY_KEY, query]), (oldData) => ({
             count: data?.unseenCount ?? oldData.count,
           }));
 
-          queryClient.refetchQueries(UNSEEN_COUNT_QUERY_KEY, {
+          queryClient.refetchQueries(setQueryKey([UNSEEN_COUNT_QUERY_KEY, query]), {
             exact: false,
           });
-          queryClient.refetchQueries(INFINITE_NOTIFICATIONS_QUERY_KEY, {
+          queryClient.refetchQueries(setQueryKey([INFINITE_NOTIFICATIONS_QUERY_KEY, query]), {
             exact: false,
           });
-          queryClient.refetchQueries([...FEED_UNSEEN_COUNT_QUERY_KEY, subscriberId], {
+          queryClient.refetchQueries(setQueryKey([...FEED_UNSEEN_COUNT_QUERY_KEY, query]), {
             exact: false,
           });
 
@@ -60,7 +66,7 @@ export const useUnseenCount = ({ onSuccess, ...restOptions }: UseQueryOptions<IC
   }, [socket, queryClient, setQueryKey]);
 
   const result = useQuery<ICountData, Error, ICountData>(
-    setQueryKey(UNSEEN_COUNT_QUERY_KEY),
+    setQueryKey([UNSEEN_COUNT_QUERY_KEY, query]),
     () => apiService.getUnseenCount({ limit: 100 }),
     {
       ...restOptions,

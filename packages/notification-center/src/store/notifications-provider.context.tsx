@@ -38,11 +38,11 @@ export function NotificationsProvider({
     fetchNextPage,
     refetch,
   } = useFetchNotifications({ query: storeQuery });
-  const { data: unseenCountData } = useUnseenCount();
-  const { markNotificationsAs } = useMarkNotificationsAs();
-  const { removeNotification } = useRemoveNotification();
-  const { markNotificationsAsRead } = useMarkNotificationsAsRead();
-  const { markNotificationsAsSeen } = useMarkNotificationsAsSeen();
+  const { data: unseenCountData } = useUnseenCount({ query: storeQuery });
+  const { markNotificationsAs } = useMarkNotificationsAs({ query: storeQuery });
+  const { removeNotification } = useRemoveNotification({ query: storeQuery });
+  const { markNotificationsAsRead } = useMarkNotificationsAsRead({ query: storeQuery });
+  const { markNotificationsAsSeen } = useMarkNotificationsAsSeen({ query: storeQuery });
 
   const markNotificationAsRead = useCallback(
     (messageId: string) => markNotificationsAs({ messageId, seen: true, read: true }),
@@ -109,6 +109,7 @@ export function NotificationsProvider({
 
   const contextValue = useMemo(
     () => ({
+      storeQuery,
       storeId,
       stores,
       unseenCount: unseenCountData?.count ?? 0,
@@ -130,6 +131,7 @@ export function NotificationsProvider({
       markAllNotificationsAsSeen,
     }),
     [
+      storeQuery,
       storeId,
       stores,
       unseenCountData?.count,
