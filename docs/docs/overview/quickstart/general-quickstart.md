@@ -1,8 +1,9 @@
 ---
 sidebar_position: 2
+sidebar_label: General Quickstart
 ---
 
-# Quick Start
+# General Quickstart
 
 To create your free managed, or docker-based Novu environment use our CLI tool:
 
