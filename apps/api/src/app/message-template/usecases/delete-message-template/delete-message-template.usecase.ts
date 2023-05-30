@@ -1,5 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { DalException, MessageTemplateRepository } from '@novu/dal';
+import { Injectable } from '@nestjs/common';
+import { ChangeRepository, DalException, MessageTemplateRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 
 import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
@@ -8,16 +8,20 @@ import { DeleteMessageTemplateCommand } from './delete-message-template.command'
 
 @Injectable()
 export class DeleteMessageTemplate {
-  constructor(private messageTemplateRepository: MessageTemplateRepository, private createChange: CreateChange) {}
+  constructor(
+    private messageTemplateRepository: MessageTemplateRepository,
+    private createChange: CreateChange,
+    private changeRepository: ChangeRepository
+  ) {}
 
   async execute(command: DeleteMessageTemplateCommand): Promise<boolean> {
     try {
-      const template = await this.messageTemplateRepository.findById(command.messageTemplateId, command.environmentId);
-      if (!template) {
-        throw new NotFoundException(`Message Template with id ${command.messageTemplateId} not found`);
-      }
-
       await this.messageTemplateRepository.delete({
+        _environmentId: command.environmentId,
+        _id: command.messageTemplateId,
+      });
+
+      const deletedMessageTemplate = await this.messageTemplateRepository.findDeleted({
         _environmentId: command.environmentId,
         _id: command.messageTemplateId,
       });
@@ -27,10 +31,14 @@ export class DeleteMessageTemplate {
           organizationId: command.organizationId,
           environmentId: command.environmentId,
           userId: command.userId,
-          item: template,
+          item: deletedMessageTemplate,
           type: ChangeEntityTypeEnum.MESSAGE_TEMPLATE,
           parentChangeId: command.parentChangeId,
-          changeId: MessageTemplateRepository.createObjectId(),
+          changeId: await this.changeRepository.getChangeId(
+            command.environmentId,
+            ChangeEntityTypeEnum.MESSAGE_TEMPLATE,
+            command.messageTemplateId
+          ),
         })
       );
 
