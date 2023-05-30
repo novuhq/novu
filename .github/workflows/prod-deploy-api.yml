@@ -66,7 +66,7 @@ jobs:
           DEPOT_PROJECT_ID: 6sj0jfv0n7
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
-          cd apps/api && pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | depot build --build-arg BULL_MQ_PRO_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} --build-arg PACKAGE_PATH=apps/api - -t novu-api --load
+          cd apps/api && pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | depot build --platform=linux/amd64,linux/arm64 --build-arg BULL_MQ_PRO_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} --build-arg PACKAGE_PATH=apps/api - -t novu-api --load
           docker tag novu-api ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest
           docker tag novu-api ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:prod
           docker tag novu-api ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
