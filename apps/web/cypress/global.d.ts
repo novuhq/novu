@@ -47,6 +47,8 @@ declare namespace Cypress {
 
     loginWithGitHub(): Chainable<any>;
 
+    makeBlueprints(): Chainable<any>;
+
     mount: typeof IMountType;
   }
 }

@@ -48,16 +48,22 @@ export class GetGroupedBlueprints {
 
     const localPopularIds = [...POPULAR_TEMPLATES_ID_LIST];
 
-    return localPopularIds.map((localBlueprintId) => {
-      const storedBlueprint = storedBlueprints.find((blueprint) => blueprint._id === localBlueprintId);
+    const result: INotificationTemplate[] = [];
+
+    for (const localPopularId of localPopularIds) {
+      const storedBlueprint = storedBlueprints.find((blueprint) => blueprint._id === localPopularId);
 
       if (!storedBlueprint) {
         Logger.warn(
-          `Could not find stored popular blueprint id: ${localBlueprintId}, BLUEPRINT_CREATOR: ${NotificationTemplateRepository.getBlueprintOrganizationId()}`
+          `Could not find stored popular blueprint id: ${localPopularId}, BLUEPRINT_CREATOR: ${NotificationTemplateRepository.getBlueprintOrganizationId()}`
         );
+
+        continue;
       }
 
-      return storedBlueprint as INotificationTemplate;
-    });
+      result.push(storedBlueprint as INotificationTemplate);
+    }
+
+    return result;
   }
 }

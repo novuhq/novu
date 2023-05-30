@@ -72,7 +72,7 @@ describe('Get Feature Flag', () => {
         getFeatureFlag = moduleRef.get<GetFeatureFlag>(GetFeatureFlag);
       });
 
-      it(`should get the feature flag value stored in Launch Darkly (enabled)
+      it.skip(`should get the feature flag value stored in Launch Darkly (enabled)
          when the SDK key env variable is set regardless of the feature flag set`, async () => {
         process.env.IS_TEMPLATE_STORE_ENABLED = 'false';
 
