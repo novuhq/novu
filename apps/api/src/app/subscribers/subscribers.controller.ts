@@ -19,8 +19,7 @@ import {
   UpdateSubscriber,
   UpdateSubscriberCommand,
 } from '@novu/application-generic';
-import { ApiOperation, ApiTags, ApiExcludeEndpoint, ApiOkResponse } from '@nestjs/swagger';
-
+import { ApiOperation, ApiTags, ApiOkResponse } from '@nestjs/swagger';
 import { ButtonTypeEnum, ChatProviderIdEnum, IJwtPayload } from '@novu/shared';
 import { MessageEntity } from '@novu/dal';
 
@@ -46,7 +45,7 @@ import { UpdateSubscriberPreferenceResponseDto } from '../widgets/dtos/update-su
 import { UpdateSubscriberPreferenceRequestDto } from '../widgets/dtos/update-subscriber-preference-request.dto';
 import { MessageResponseDto } from '../widgets/dtos/message-response.dto';
 import { UnseenCountResponse } from '../widgets/dtos/unseen-count-response.dto';
-import { MarkEnum, MarkMessageAsCommand } from '../widgets/usecases/mark-message-as/mark-message-as.command';
+import { MarkMessageAsCommand } from '../widgets/usecases/mark-message-as/mark-message-as.command';
 import { UpdateMessageActionsCommand } from '../widgets/usecases/mark-action-as-done/update-message-actions.command';
 import { GetNotificationsFeedCommand } from '../widgets/usecases/get-notifications-feed/get-notifications-feed.command';
 import { GetNotificationsFeed } from '../widgets/usecases/get-notifications-feed/get-notifications-feed.usecase';
@@ -403,35 +402,6 @@ export class SubscribersController {
     });
 
     return await this.getFeedCountUsecase.execute(command);
-  }
-
-  @ExternalApiAccessible()
-  @ApiExcludeEndpoint()
-  @UseGuards(JwtAuthGuard)
-  @Post('/:subscriberId/messages/:messageId/seen')
-  @ApiOperation({
-    summary: 'Mark a subscriber feed message as seen',
-    description: 'This endpoint is deprecated please address /:subscriberId/messages/markAs instead',
-    deprecated: true,
-  })
-  @ApiResponse(MessageResponseDto, 201)
-  async markMessageAsSeen(
-    @UserSession() user: IJwtPayload,
-    @Param('messageId') messageId: string,
-    @Param('subscriberId') subscriberId: string
-  ): Promise<MessageEntity> {
-    const messageIds = this.toArray(messageId);
-    if (!messageIds) throw new BadRequestException('messageId is required');
-
-    const command = MarkMessageAsCommand.create({
-      organizationId: user.organizationId,
-      environmentId: user.environmentId,
-      subscriberId: subscriberId,
-      messageIds,
-      mark: { [MarkEnum.SEEN]: true },
-    });
-
-    return (await this.markMessageAsUsecase.execute(command))[0];
   }
 
   @ExternalApiAccessible()
