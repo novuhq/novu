@@ -1,5 +1,10 @@
 import { Novu } from '../novu';
 import axios from 'axios';
+import {
+  TemplateVariableTypeEnum,
+  ChannelCTATypeEnum,
+  StepTypeEnum,
+} from '../..';
 
 const mockConfig = {
   apiKey: '1234',
@@ -79,6 +84,67 @@ describe('test use of novus node package - NotificationTemplates class', () => {
       name: 'test1',
       notificationGroupId: '63b99e83598f5625a96c4b97',
       steps: [],
+    });
+  });
+
+  test('should create a template with feedId & layoutId as a parameter', async () => {
+    mockedAxios.post.mockResolvedValue({});
+
+    const result = await novu.notificationTemplates.create({
+      name: 'test1',
+      notificationGroupId: '63b99e83598f5625a96c4b97',
+      steps: [
+        {
+          name: 'the_name_of_my_step',
+          template: {
+            feedId: '646f716b0663687df4da4672',
+            content: 'Something very cool',
+            type: StepTypeEnum.IN_APP,
+            variables: [
+              {
+                type: TemplateVariableTypeEnum.STRING,
+                name: 'organizationId',
+                required: true,
+              },
+            ],
+            cta: {
+              type: ChannelCTATypeEnum.REDIRECT,
+              data: {
+                url: 'http://localhost',
+              },
+            },
+          },
+        },
+      ],
+    });
+
+    expect(mockedAxios.post).toHaveBeenCalled();
+    expect(mockedAxios.post).toHaveBeenCalledWith('/notification-templates', {
+      name: 'test1',
+      notificationGroupId: '63b99e83598f5625a96c4b97',
+      steps: [
+        {
+          name: 'the_name_of_my_step',
+          template: {
+            feedId: '646f716b0663687df4da4672',
+            content: 'Something very cool',
+            type: StepTypeEnum.IN_APP,
+            variables: [
+              {
+                type: TemplateVariableTypeEnum.STRING,
+                name: 'organizationId',
+                required: true,
+              },
+            ],
+            cta: {
+              type: ChannelCTATypeEnum.REDIRECT,
+              data: {
+                url: 'http://localhost',
+              },
+            },
+          },
+        },
+      ],
     });
   });
 
