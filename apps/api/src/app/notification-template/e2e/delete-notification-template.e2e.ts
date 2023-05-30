@@ -6,6 +6,7 @@ import {
   EnvironmentRepository,
   MessageTemplateRepository,
 } from '@novu/dal';
+import { ChannelCTATypeEnum, StepTypeEnum } from '@novu/shared';
 
 describe('Delete notification template by id - /notification-templates/:templateId (DELETE)', async () => {
   let session: UserSession;
@@ -63,7 +64,7 @@ describe('Delete notification template by id - /notification-templates/:template
       enabled: false,
     });
 
-    const prodEvn = await getProductionEnvironment();
+    const prodEvn = await getProductionEnvironment(session.environment._id);
 
     const isCreated = await notificationTemplateRepository.findOne({
       _environmentId: prodEvn._id,
@@ -186,9 +187,89 @@ describe('Delete notification template by id - /notification-templates/:template
     expect(deletedMessageTemplates.length).to.equal(0);
   });
 
-  async function getProductionEnvironment() {
+  it('should delete the production message templates', async function () {
+    const groups = await notificationGroupRepository.find({
+      _environmentId: session.environment._id,
+    });
+
+    const testTemplate = {
+      name: 'test email template',
+      description: 'This is a test description',
+      tags: ['test-tag'],
+      notificationGroupId: groups[0]._id,
+      steps: [
+        {
+          template: {
+            name: 'Message Name',
+            content: 'Test Template',
+            type: StepTypeEnum.IN_APP,
+            cta: {
+              type: ChannelCTATypeEnum.REDIRECT,
+              data: {
+                url: 'https://example.org/profile',
+              },
+            },
+          },
+        },
+      ],
+    };
+
+    const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+    const notificationTemplateId = body.data._id;
+
+    const messageTemplateIds = body.data.steps.map((step) => step._templateId);
+
+    const messageTemplates = await messageTemplateRepository.find({
+      _environmentId: session.environment._id,
+      _id: { $in: messageTemplateIds },
+    });
+
+    expect(messageTemplates.length).to.equal(1);
+
+    await session.applyChanges({
+      enabled: false,
+    });
+
+    const prodEnv = await getProductionEnvironment(session.environment._id);
+
+    const isNotificationTemplateCreated = await notificationTemplateRepository.findOne({
+      _environmentId: prodEnv._id,
+      _parentId: notificationTemplateId,
+    });
+
+    expect(isNotificationTemplateCreated).to.exist;
+
+    await session.testAgent.delete(`/v1/notification-templates/${notificationTemplateId}`).send();
+
+    await session.applyChanges({
+      enabled: false,
+    });
+
+    const prodNotificationTemplateExists = await notificationTemplateRepository.findOne({
+      _environmentId: prodEnv._id,
+      _parentId: notificationTemplateId,
+    });
+
+    expect(prodNotificationTemplateExists).to.equal(null);
+
+    const deletedMessageTemplates = await messageTemplateRepository.find({
+      _environmentId: session.environment._id,
+      _id: { $in: messageTemplateIds },
+    });
+
+    expect(deletedMessageTemplates.length).to.equal(0);
+
+    const prodMessageTemplateExists = await messageTemplateRepository.find({
+      _environmentId: prodEnv._id,
+      _parentId: messageTemplateIds[0],
+    });
+
+    expect(prodMessageTemplateExists.length).to.equal(0);
+  });
+
+  async function getProductionEnvironment(currentEnvId: string) {
     return await environmentRepository.findOne({
-      _parentId: session.environment._id,
+      _parentId: currentEnvId,
     });
   }
 });
