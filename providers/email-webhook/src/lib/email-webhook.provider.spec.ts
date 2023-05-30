@@ -31,16 +31,12 @@ test('should trigger email-webhook-provider library correctly', async () => {
   expect(fakePost).toHaveBeenCalled();
   expect(fakePost).toHaveBeenCalledWith(
     'http://localhost:8080/webhook',
-    {
-      templateId: 2,
-      subscriber_email: testTo,
-      from_email: testFrom,
-    },
+    '{"to":["johndoe@example.com"],"from":"janedoe@example.com","subject":"test","html":"<h1>test</h1>","text":"test"}',
     {
       headers: {
         'content-type': 'application/json',
         'X-Novu-Signature':
-          '77e213e0d31711be9153a724f521c4d7d050fcfdcecf84a53bbc6d478932ed2a',
+          'd1e94cd19eeceec2e0717e36f7edacaa93612b311bde8756ee35b89d4a994767',
       },
     }
   );
