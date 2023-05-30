@@ -12,7 +12,8 @@ export interface INotificationTemplates {
   updateStatus(templateId: string, active: boolean);
 }
 
-interface IMessageTemplateModified extends IMessageTemplate {
+interface IMessageTemplateModified
+  extends Omit<IMessageTemplate, '_feedId' | '_layoutId'> {
   feedId?: string;
   layoutId?: string;
 }
