@@ -16,16 +16,16 @@ describe('Getting Started Screen', function () {
       });
     });
     cy.visit('/quickstart');
-    cy.getByTestId('create-template-btn').should('exist').click({ force: true });
+    cy.getByTestId('create-workflow-btn').should('exist').click({ force: true });
 
-    cy.location('pathname').should('equal', '/templates/create');
+    cy.location('pathname').should('equal', '/workflows/create');
     cy.getByTestId('title').type('Test Notification Title');
     cy.getByTestId('description').type('This is a test description for a test title');
     cy.getByTestId('notification-template-submit-btn').click({ force: true });
     cy.get('.mantine-Notification-root').contains('Template saved successfully');
 
     cy.getByTestId('side-nav-quickstart-link').click({ force: true });
-    cy.getByTestId('create-template-btn').should('not.exist');
+    cy.getByTestId('create-workflow-btn').should('not.exist');
     cy.getByTestId('template-created').contains('Created');
   });
 });

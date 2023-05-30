@@ -16,7 +16,7 @@ import { parseUrl } from '../../../utils/routeUtils';
 import { OnBoardingAnalyticsEnum } from '../../../pages/quick-start/consts';
 import { useSegment } from '../../providers/SegmentProvider';
 import { useDigestDemoFlowContext } from './DigestDemoFlowProvider';
-import { NodeStep } from '../common';
+import { NodeStep } from '../../workflow';
 
 const getOpacity = (id: string, hoveredHintId?: string, sequence?: { opacity: number }): number => {
   if (hoveredHintId) {
@@ -47,7 +47,7 @@ export function NodeStepWithPopover({
   const [sequence, setSequence] = useState<IBeat>();
   const { pathname } = useLocation();
   const { templateId = '' } = useParams<{ templateId: string }>();
-  const digestPlaygroundPathname = parseUrl(ROUTES.TEMPLATES_DIGEST_PLAYGROUND, { templateId });
+  const digestPlaygroundPathname = parseUrl(ROUTES.WORKFLOWS_DIGEST_PLAYGROUND, { templateId });
   const isDigestPlayground = pathname === digestPlaygroundPathname;
 
   const label = data.label.toLowerCase();

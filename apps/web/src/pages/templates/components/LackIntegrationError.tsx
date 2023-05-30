@@ -3,12 +3,12 @@ import styled from '@emotion/styled';
 import { ChannelTypeEnum } from '@novu/shared';
 
 import { Text } from '../../../design-system';
-import { DoubleArrowRight } from '../../../design-system/icons/arrows/CircleArrowRight';
+import { CircleArrowRight } from '../../../design-system/icons/arrows/CircleArrowRight';
 import { IntegrationsStoreModal } from '../../integrations/IntegrationsStoreModal';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { stepNames, TemplateEditorAnalyticsEnum } from '../constants';
 
-const DoubleArrowRightStyled = styled(DoubleArrowRight)`
+const DoubleArrowRightStyled = styled(CircleArrowRight)`
   cursor: pointer;
 `;
 

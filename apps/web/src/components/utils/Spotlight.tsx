@@ -13,8 +13,8 @@ export const SpotLight = ({ children }) => {
     addItem([
       {
         id: 'navigate-templates',
-        title: 'Go to Notification Template',
-        onTrigger: () => navigate(ROUTES.TEMPLATES),
+        title: 'Go to Workflows',
+        onTrigger: () => navigate(ROUTES.WORKFLOWS),
         icon: <Bolt />,
       },
       {

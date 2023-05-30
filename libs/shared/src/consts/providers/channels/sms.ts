@@ -28,7 +28,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'Nexmo',
     channel: ChannelTypeEnum.SMS,
     credentials: nexmoConfig,
-    docReference: 'https://developer.nexmo.com/api/sms?theme=dark',
+    docReference: 'https://docs.novu.co/channels/sms/nexmo',
     logoFileName: { light: 'nexmo.png', dark: 'nexmo.png' },
   },
   {
@@ -45,7 +45,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'sms77',
     channel: ChannelTypeEnum.SMS,
     credentials: sms77Config,
-    docReference: 'https://www.sms77.io/de/docs/gateway/http-api/',
+    docReference: 'https://docs.novu.co/channels/sms/SMS77',
     logoFileName: { light: 'sms77.svg', dark: 'sms77.svg' },
   },
   {
@@ -53,7 +53,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'SNS',
     channel: ChannelTypeEnum.SMS,
     credentials: snsConfig,
-    docReference: 'https://docs.aws.amazon.com/sns/index.html',
+    docReference: 'https://docs.novu.co/channels/sms/sns',
     logoFileName: { light: 'sns.svg', dark: 'sns.svg' },
   },
   {
@@ -61,7 +61,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'Telnyx',
     channel: ChannelTypeEnum.SMS,
     credentials: telnyxConfig,
-    docReference: 'https://developers.telnyx.com/',
+    docReference: 'https://docs.novu.co/channels/sms/telnyx',
     logoFileName: { light: 'telnyx.png', dark: 'telnyx.png' },
   },
   {
@@ -69,7 +69,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'Twilio',
     channel: ChannelTypeEnum.SMS,
     credentials: twilioConfig,
-    docReference: 'https://www.twilio.com/docs',
+    docReference: 'https://docs.novu.co/channels/sms/twilio',
     logoFileName: { light: 'twilio.png', dark: 'twilio.png' },
   },
   {
@@ -159,7 +159,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: `Africa's Talking`,
     channel: ChannelTypeEnum.SMS,
     credentials: africasTalkingConfig,
-    docReference: 'https://developers.africastalking.com/',
+    docReference: 'https://docs.novu.co/channels/sms/africas-talking',
     logoFileName: { light: 'africas-talking.svg', dark: 'africas-talking.svg' },
   },
 ];

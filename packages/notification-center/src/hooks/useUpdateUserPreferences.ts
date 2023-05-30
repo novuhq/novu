@@ -4,6 +4,7 @@ import type { IUserPreferenceSettings } from '@novu/client';
 
 import { useNovuContext } from './useNovuContext';
 import { USER_PREFERENCES_QUERY_KEY } from './queryKeys';
+import { useSetQueryKey } from './useSetQueryKey';
 
 interface IUpdateUserPreferencesVariables {
   templateId: string;
@@ -18,26 +19,29 @@ export const useUpdateUserPreferences = ({
 }: UseMutationOptions<IUserPreferenceSettings, Error, IUpdateUserPreferencesVariables> = {}) => {
   const queryClient = useQueryClient();
   const { apiService } = useNovuContext();
+  const setQueryKey = useSetQueryKey();
 
   const updatePreferenceChecked = useCallback(
     ({ templateId, checked, channelType }: IUpdateUserPreferencesVariables) => {
-      queryClient.setQueryData<IUserPreferenceSettings[]>(USER_PREFERENCES_QUERY_KEY, (oldUserPreferences) =>
-        oldUserPreferences.map((setting) => {
-          if (setting.template._id === templateId) {
-            return {
-              ...setting,
-              preference: {
-                ...setting.preference,
-                channels: {
-                  ...setting.preference.channels,
-                  [channelType]: checked,
+      queryClient.setQueryData<IUserPreferenceSettings[]>(
+        setQueryKey(USER_PREFERENCES_QUERY_KEY),
+        (oldUserPreferences) =>
+          oldUserPreferences.map((setting) => {
+            if (setting.template._id === templateId) {
+              return {
+                ...setting,
+                preference: {
+                  ...setting.preference,
+                  channels: {
+                    ...setting.preference.channels,
+                    [channelType]: checked,
+                  },
                 },
-              },
-            };
-          }
+              };
+            }
 
-          return setting;
-        })
+            return setting;
+          })
       );
     },
     [queryClient]
@@ -49,14 +53,16 @@ export const useUpdateUserPreferences = ({
     {
       ...options,
       onSuccess: (data, variables, context) => {
-        queryClient.setQueryData<IUserPreferenceSettings[]>(USER_PREFERENCES_QUERY_KEY, (oldUserPreferences) =>
-          oldUserPreferences.map((setting) => {
-            if (setting.template._id === data.template._id) {
-              return data;
-            }
+        queryClient.setQueryData<IUserPreferenceSettings[]>(
+          setQueryKey(USER_PREFERENCES_QUERY_KEY),
+          (oldUserPreferences) =>
+            oldUserPreferences.map((setting) => {
+              if (setting.template._id === data.template._id) {
+                return data;
+              }
 
-            return setting;
-          })
+              return setting;
+            })
         );
         onSuccess?.(data, variables, context);
       },

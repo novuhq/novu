@@ -62,6 +62,7 @@ export const TemplateItem = styled(GroupItem)`
 export const TemplatesDetailsHolder = styled.div`
   display: flex;
   flex-direction: column;
+  gap: 20px;
   width: 100%;
   padding: 16px;
 `;
@@ -91,6 +92,10 @@ export const TemplateName = styled.div`
 
 export const CanvasHolder = styled.div`
   position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  width: 100%;
   height: 100%;
 `;
 
@@ -98,6 +103,7 @@ export const NovuButtonHolder = styled.div`
   position: absolute;
   bottom: 4px;
   right: 4px;
+  z-index: 10000;
   display: flex;
   flex-direction: column;
   align-items: center;

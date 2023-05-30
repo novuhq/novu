@@ -11,6 +11,7 @@ To read a provider specific documentation:
 - [Firebase Cloud Messages](/channels/push/fcm)
 - [Expo Push](/channels/push/expo)
 - [Apple Push Notification Service](/channels/push/apns)
+- [OneSignal](/channels/push/one-signal)
 
 :::info
 Novu supports multiple active providers for push channel.
