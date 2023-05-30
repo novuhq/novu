@@ -29,9 +29,11 @@ export class OneSignalPushProvider implements IPushProvider {
     const { sound, badge, ...overrides } = options.overrides ?? {};
 
     const res = await this.oneSignal.createNotification({
-      ...(overrides['one-signal']?.externalUserIds !== undefined
+   const { externalUserIds } =  overrides['one-signal'] || {};
+   const res = await this.oneSignal.createNotification({ 
+      ...(externalUserIds !== undefined
         ? {
-            include_external_user_ids: overrides['one-signal'].externalUserIds,
+            include_external_user_ids: externalUserIds,
             channel_for_external_user_ids: 'push',
           }
         : { include_player_ids: options.target }),
