@@ -66,8 +66,8 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
     expect(messages[0].seen).to.equal(false);
 
     await axios.post(
-      `http://localhost:${process.env.PORT}/v1/widgets/messages/${messageId}/seen`,
-      {},
+      `http://localhost:${process.env.PORT}/v1/widgets/messages/markAs`,
+      { messageId, mark: { seen: true } },
       {
         headers: {
           Authorization: `Bearer ${subscriberToken}`,
@@ -97,8 +97,8 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
     expect(messages[0].read).to.equal(false);
 
     await axios.post(
-      `http://localhost:${process.env.PORT}/v1/widgets/messages/${messageId}/read`,
-      {},
+      `http://localhost:${process.env.PORT}/v1/widgets/messages/markAs`,
+      { messageId, mark: { seen: true, read: true } },
       {
         headers: {
           Authorization: `Bearer ${subscriberToken}`,
