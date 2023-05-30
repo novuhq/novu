@@ -7,9 +7,9 @@ const LOG_CONTEXT = 'MetricQueueService';
 const METRIC_JOB_ID = 'metric-job';
 
 @Injectable()
-export class MetricQueueService extends QueueService<Record<string, never>> {
+export class MetricQueueCompletedService extends QueueService<Record<string, never>> {
   constructor(@Inject('BULLMQ_LIST') private token_list: QueueService[]) {
-    super('metric');
+    super('metric-completed');
 
     this.bullMqService.createWorker(this.name, this.getWorkerProcessor(), this.getWorkerOpts());
 
@@ -64,7 +64,7 @@ export class MetricQueueService extends QueueService<Record<string, never>> {
   private getWorkerOpts(): WorkerOptions {
     return {
       ...this.bullConfig,
-      lockDuration: 500,
+      lockDuration: 750,
       concurrency: 1,
       settings: {},
     } as WorkerOptions;
@@ -83,36 +83,23 @@ export class MetricQueueService extends QueueService<Record<string, never>> {
             const completeNumber = metrics.completed.count;
             const failNumber = metrics.failed.count;
 
-            const waitCount = await queueService.bullMqService.queue.getWaitingCount();
-            const delayedCount = await queueService.bullMqService.queue.getDelayedCount();
-            const activeCount = await queueService.bullMqService.queue.getActiveCount();
-
             if (process.env.NOVU_MANAGED_SERVICE === 'true') {
               Logger.log('Recording metrics');
 
               nr.recordMetric(`Queue/${deploymentName}/${queueService.name}/completed`, completeNumber);
               nr.recordMetric(`Queue/${deploymentName}/${queueService.name}/failed`, failNumber);
-              nr.recordMetric(`Queue/${deploymentName}/${queueService.name}/waiting`, waitCount);
-              nr.recordMetric(`Queue/${deploymentName}/${queueService.name}/delayed`, delayedCount);
-              nr.recordMetric(`Queue/${deploymentName}/${queueService.name}/active`, activeCount);
 
               Logger.verbose(`Queue/${deploymentName}/${queueService.name}/completed`, completeNumber);
               Logger.verbose(`Queue/${deploymentName}/${queueService.name}/failed`, failNumber);
-              Logger.verbose(`Queue/${deploymentName}/${queueService.name}/waiting`, waitCount);
-              Logger.verbose(`Queue/${deploymentName}/${queueService.name}/delayed`, delayedCount);
-              Logger.verbose(`Queue/${deploymentName}/${queueService.name}/active`, activeCount);
             } else {
               Logger.debug(`Queue/${deploymentName}/${queueService.name}/completed`, completeNumber);
               Logger.debug(`Queue/${deploymentName}/${queueService.name}/failed`, failNumber);
-              Logger.debug(`Queue/${deploymentName}/${queueService.name}/waiting`, waitCount);
-              Logger.debug(`Queue/${deploymentName}/${queueService.name}/delayed`, delayedCount);
-              Logger.debug(`Queue/${deploymentName}/${queueService.name}/active`, activeCount);
             }
           }
 
           return resolve();
         } catch (error) {
-          console.error('Error occured while processing metrics', { error });
+          Logger.error('Error occurred while processing metrics', { error });
 
           return reject(error);
         }
