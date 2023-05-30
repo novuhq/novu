@@ -15,7 +15,6 @@ import { QueueService } from '@novu/application-generic';
 import { setTimeout } from 'timers/promises';
 
 const axiosInstance = axios.create();
-const promiseResolveTimeout = (ms: number) => setTimeout(ms);
 
 describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', function () {
   let session: UserSession;
@@ -505,7 +504,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
       },
     });
 
-    await promiseResolveTimeout(100);
+    await setTimeout(100);
     expect(async () => {
       await axiosInstance.post(`${session.serverUrl}/v1/events/trigger/${id}/resume`, {
         headers: {
