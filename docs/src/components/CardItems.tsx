@@ -12,7 +12,7 @@ type cardItem = {
 
 const cardsItems: cardItem[] = [
   {
-    title: 'Create template',
+    title: 'Create workflow',
     imageDark: '/img/card-items/create-template.svg',
     imageLight: '/img/card-items/create-template-light.svg',
   },

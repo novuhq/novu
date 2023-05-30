@@ -10,7 +10,7 @@ Novu provides you with a set of APIs and components to create rich customized no
 
 ## React component
 
-After creating your Novu Platform account and creating your first notification template, it's time to connect the In-app channel to your application.
+After creating your Novu Platform account and creating your first workflow, it's time to connect the In-app channel to your application.
 
 ```bash
 npm install @novu/notification-center
