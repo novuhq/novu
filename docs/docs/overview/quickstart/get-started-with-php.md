@@ -93,13 +93,13 @@ The template includes the following:
 
 - Notification template name and Identifier
 - Channel tailored content:
-  | Channel | Content Style                                                                                 |
+  | Channel | Content Style |
   | ------- | --------------------------------------------------------------------------------------------- |
-  | Email   | 1. Custom Code (HTML) with option to use custom variables via the handlebars , {{ }}, syntax. |
-  |         | 2. Click and place UI items with the visual template editor.                                  |
-  | SMS     | Text with the option to use handlebars syntax, {{ }} to inject custom variables.              |
-  | Chat    | Text with the option to use handlebars syntax, {{ }} to inject custom variables.              |
-  | In-App  | Text                                                                                          |
+  | Email | 1. Custom Code (HTML) with option to use custom variables via the handlebars , {{ }}, syntax. |
+  | | 2. Click and place UI items with the visual template editor. |
+  | SMS | Text with the option to use handlebars syntax, {{ }} to inject custom variables. |
+  | Chat | Text with the option to use handlebars syntax, {{ }} to inject custom variables. |
+  | In-App | Text |
 
 :::info
 Proper authorization needs to be set for the Chat channel for subscribers.
@@ -111,10 +111,12 @@ Please proceed to create a notification template.
 2. Click the **Create Workflow** button on the top right.
 3. The name of a new notification template is currently **Untitled.** Rename it to a more suitable title.
 4. Select **Email** as the channel you want to add.
-
+   ![Select Email as Channel](https://res.cloudinary.com/dxc6bnman/image/upload/f_auto,q_auto/v1685466071/guides/set-email_1_aisoz4.png)
 5. Click on the recently added channel, fill the email subject and click **Update**.
-
+   ![Update](https://res.cloudinary.com/dxc6bnman/image/upload/f_auto,q_auto/v1685466074/guides/update_email_template_1_exxybg.png)
 6. Click on the **Test** tab and send a test email to verify your notification template.
+
+![Test](https://res.cloudinary.com/dxc6bnman/image/upload/f_auto,q_auto/v1685466786/guides/send_test_email_1_goyknt.png)
 
 You should get an email within seconds. Yaaay, you have successfully sent your first notification via the Novu dashboard!
 
@@ -125,6 +127,8 @@ Now, let’s take it a step further to trigger notifications via code.
 The recipients of a triggered notification are called subscribers.
 
 Click **Subscribers** on the left sidebar of the Novu dashboard to see all subscribers. By default, the dashboard will display a subscriber, as you were added automatically during sign-up.
+
+![Subscribers](https://res.cloudinary.com/dxc6bnman/image/upload/f_auto,q_auto/v1685466791/guides/subscriber_id_1_hitnrk.png)
 
 Now, let's create a subscriber on Novu. Copy and paste the following code to do so:
 
@@ -145,6 +149,8 @@ php index.php
 ```
 
 You should see the subscriber on your Novu dashboard.
+
+![Recently created subscriber](https://res.cloudinary.com/dxc6bnman/image/upload/f_auto,q_auto/v1685466979/guides/Screenshot_2023-05-14_at_11.06.38_ugvmc0.png)
 
 I’d like to publicly announce that `abc@gmail.com` is a random unlikely email your users will have. To update this to an alternative email, you can call the `updateSubscriber` method like so:
 
@@ -181,6 +187,8 @@ $novu->triggerEvent([
 Before running the code, make sure you understand the following:
 
 - The value of `name` should be the notification template’s trigger ID/slug.
+
+![Notification Template](https://res.cloudinary.com/dxc6bnman/image/upload/f_auto,q_auto/v1685466980/guides/trigger_id_1_ur1azh.png)
 
 - The value of `payload` is an array of the data that you want to be dynamically injected into the notification template content.
 - The value of `subscriberId` is the id of the subscriber on Novu. Replace `7789` with your subscriber ID.
