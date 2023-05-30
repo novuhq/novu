@@ -50,8 +50,8 @@ import { MarkAllMessagesAsCommand } from './usecases/mark-all-messages-as/mark-a
 import { MarkAllMessagesAs } from './usecases/mark-all-messages-as/mark-all-messages-as.usecase';
 import { GetNotificationsFeedDto } from './dtos/get-notifications-feed-request.dto';
 import { LimitPipe } from './pipes/limit-pipe/limit-pipe';
-import { RemoveMessagesCommand } from './usecases/remove-messages/remove-messages.command';
-import { RemoveMessages } from './usecases/remove-messages/remove-messages.usecase';
+import { RemoveAllMessagesCommand } from './usecases/remove-messages/remove-all-messages.command';
+import { RemoveAllMessages } from './usecases/remove-messages/remove-all-messages.usecase';
 
 @Controller('/widgets')
 @ApiExcludeController()
@@ -62,7 +62,7 @@ export class WidgetsController {
     private getFeedCountUsecase: GetFeedCount,
     private markMessageAsUsecase: MarkMessageAs,
     private removeMessageUsecase: RemoveMessage,
-    private removeMessagesUsecase: RemoveMessages,
+    private removeAllMessagesUsecase: RemoveAllMessages,
     private updateMessageActionsUsecase: UpdateMessageActions,
     private getOrganizationUsecase: GetOrganizationData,
     private getSubscriberPreferenceUsecase: GetSubscriberPreference,
@@ -283,22 +283,22 @@ export class WidgetsController {
   }
 
   @ApiOperation({
-    summary: 'Remove a subscriber feed messages',
+    summary: `Remove a subscriber's feed messages`,
   })
   @UseGuards(AuthGuard('subscriberJwt'))
   @Delete('/messages')
-  async removeMessages(
+  async removeAllMessages(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Query('feedId') feedId?: string
   ): Promise<number> {
-    const command = RemoveMessagesCommand.create({
+    const command = RemoveAllMessagesCommand.create({
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,
       feedId: feedId,
     });
 
-    return await this.removeMessagesUsecase.execute(command);
+    return await this.removeAllMessagesUsecase.execute(command);
   }
 
   @ApiOperation({

@@ -17,12 +17,12 @@ import {
   buildMessageCountKey,
 } from '@novu/application-generic';
 
-import { RemoveMessagesCommand } from './remove-messages.command';
+import { RemoveAllMessagesCommand } from './remove-all-messages.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { MarkEnum } from '../mark-message-as/mark-message-as.command';
 
 @Injectable()
-export class RemoveMessages {
+export class RemoveAllMessages {
   constructor(
     private invalidateCache: InvalidateCacheService,
     private messageRepository: MessageRepository,
@@ -33,7 +33,7 @@ export class RemoveMessages {
     private feedRepository: FeedRepository
   ) {}
 
-  async execute(command: RemoveMessagesCommand): Promise<number> {
+  async execute(command: RemoveAllMessagesCommand): Promise<number> {
     await this.invalidateCache.invalidateQuery({
       key: buildFeedKey().invalidate({
         subscriberId: command.subscriberId,
@@ -73,9 +73,8 @@ export class RemoveMessages {
 
       deletedMessages = await this.messageRepository.deleteMany(deleteMessageQuery);
 
-      // count is 0 because all messages are deleted
-      await this.updateSocketCount(subscriber, 0, MarkEnum.SEEN);
-      await this.updateSocketCount(subscriber, 0, MarkEnum.READ);
+      await this.updateServices(command, subscriber, MarkEnum.SEEN);
+      await this.updateServices(command, subscriber, MarkEnum.READ);
 
       const admin = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
       if (admin) {
@@ -93,6 +92,29 @@ export class RemoveMessages {
     }
 
     return deletedMessages.modifiedCount;
+  }
+
+  private async updateServices(command: RemoveAllMessagesCommand, subscriber, marked: string) {
+    const admin = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
+    const count = await this.messageRepository.getCount(
+      command.environmentId,
+      subscriber._id,
+      ChannelTypeEnum.IN_APP,
+      {
+        [marked]: false,
+      },
+      { limit: 1000 }
+    );
+
+    this.updateSocketCount(subscriber, count, marked);
+
+    if (admin) {
+      this.analyticsService.track(`Removed All Messages - [Notification Center]`, admin._userId, {
+        _subscriber: subscriber._id,
+        _organization: command.organizationId,
+        _environment: command.environmentId,
+      });
+    }
   }
 
   private updateSocketCount(subscriber: SubscriberEntity, count: number, mark: string) {
