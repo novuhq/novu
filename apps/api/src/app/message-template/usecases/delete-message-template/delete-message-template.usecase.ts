@@ -26,19 +26,21 @@ export class DeleteMessageTemplate {
         _id: command.messageTemplateId,
       });
 
+      const changeId = await this.changeRepository.getChangeId(
+        command.environmentId,
+        ChangeEntityTypeEnum.MESSAGE_TEMPLATE,
+        command.messageTemplateId
+      );
+
       await this.createChange.execute(
         CreateChangeCommand.create({
+          changeId,
           organizationId: command.organizationId,
           environmentId: command.environmentId,
           userId: command.userId,
           item: deletedMessageTemplate,
           type: ChangeEntityTypeEnum.MESSAGE_TEMPLATE,
           parentChangeId: command.parentChangeId,
-          changeId: await this.changeRepository.getChangeId(
-            command.environmentId,
-            ChangeEntityTypeEnum.MESSAGE_TEMPLATE,
-            command.messageTemplateId
-          ),
         })
       );
 
