@@ -7,9 +7,11 @@ import FAQItem from '@site/src/components/FAQItem';
 
 # Run Novu locally
 
-## ⚡ Immediate working space with Gitpod
+## ⚡ Immediate working spaces
 
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/novuhq/novu)
+| Gitpod                                                                                                              | GitHub Codespaces                                                                                           |
+| ------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/novuhq/novu) | [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/novuhq/novu) |
 
 ## Requirements
 
