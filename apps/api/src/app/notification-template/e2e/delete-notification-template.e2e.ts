@@ -188,43 +188,21 @@ describe('Delete notification template by id - /notification-templates/:template
   });
 
   it('should delete the production message templates', async function () {
-    const groups = await notificationGroupRepository.find({
-      _environmentId: session.environment._id,
-    });
+    const notificationTemplateService = new NotificationTemplateService(
+      session.user._id,
+      session.organization._id,
+      session.environment._id
+    );
+    const template = await notificationTemplateService.createTemplate();
 
-    const testTemplate = {
-      name: 'test email template',
-      description: 'This is a test description',
-      tags: ['test-tag'],
-      notificationGroupId: groups[0]._id,
-      steps: [
-        {
-          template: {
-            name: 'Message Name',
-            content: 'Test Template',
-            type: StepTypeEnum.IN_APP,
-            cta: {
-              type: ChannelCTATypeEnum.REDIRECT,
-              data: {
-                url: 'https://example.org/profile',
-              },
-            },
-          },
-        },
-      ],
-    };
-
-    const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
-    const notificationTemplateId = body.data._id;
-
-    const messageTemplateIds = body.data.steps.map((step) => step._templateId);
+    const messageTemplateIds = template.steps.map((step) => step._templateId);
 
     const messageTemplates = await messageTemplateRepository.find({
       _environmentId: session.environment._id,
       _id: { $in: messageTemplateIds },
     });
 
-    expect(messageTemplates.length).to.equal(1);
+    expect(messageTemplates.length).to.equal(2);
 
     await session.applyChanges({
       enabled: false,
@@ -234,12 +212,12 @@ describe('Delete notification template by id - /notification-templates/:template
 
     const isNotificationTemplateCreated = await notificationTemplateRepository.findOne({
       _environmentId: prodEnv._id,
-      _parentId: notificationTemplateId,
+      _parentId: template._id,
     });
 
     expect(isNotificationTemplateCreated).to.exist;
 
-    await session.testAgent.delete(`/v1/notification-templates/${notificationTemplateId}`).send();
+    await session.testAgent.delete(`/v1/notification-templates/${template._id}`).send();
 
     await session.applyChanges({
       enabled: false,
@@ -247,7 +225,7 @@ describe('Delete notification template by id - /notification-templates/:template
 
     const prodNotificationTemplateExists = await notificationTemplateRepository.findOne({
       _environmentId: prodEnv._id,
-      _parentId: notificationTemplateId,
+      _parentId: template._id,
     });
 
     expect(prodNotificationTemplateExists).to.equal(null);
