@@ -76,7 +76,7 @@ api:
   image:
     registry: ghcr.io
     repository: novuhq/novu/api
-    tag: 0.14.0
+    tag: .0.15.0
     digest: ""
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -483,7 +483,7 @@ worker:
   image:
     registry: ghcr.io
     repository: novuhq/novu/worker
-    tag: 0.14.0
+    tag: 0.15.0
     digest: ""
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -770,7 +770,7 @@ ws:
   image:
     registry: ghcr.io
     repository: novuhq/novu/ws
-    tag: 0.14.0
+    tag: 0.15.0
     digest: ""
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -1162,7 +1162,7 @@ web:
   image:
     registry: ghcr.io
     repository: novuhq/novu/web
-    tag: 0.14.0
+    tag: 0.15.0
     digest: ""
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
