@@ -8,9 +8,9 @@ metadata:
     {{- if .Values.commonLabels }}
     {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
     {{- end }}
-  {{- if or .Values.service.annotations .Values.commonAnnotations }}
+  {{- if or .Values.worker.service.annotations .Values.commonAnnotations }}
   annotations:
-    {{- if .Values.service.annotations }}
+    {{- if .Values.worker.service.annotations }}
     {{- include "common.tplvalues.render" ( dict "value" .Values.service.annotations "context" $) | nindent 4 }}
     {{- end }}
     {{- if .Values.commonAnnotations }}
@@ -23,8 +23,8 @@ spec:
     - name: http
       port: {{ .Values.worker.port }}
       protocol: TCP
-    {{- if .Values.service.extraPorts }}
-    {{- include "common.tplvalues.render" (dict "value" .Values.service.extraPorts "context" $) | nindent 4 }}
+    {{- if .Values.worker.extraPorts }}
+    {{- include "common.tplvalues.render" (dict "value" .Values.worker.service.extraPorts "context" $) | nindent 4 }}
     {{- end }}
   selector: {{- include "common.labels.matchLabels" . | nindent 4 }}
     app.kubernetes.io/component: {{ printf "%s-%s" .Release.Name "worker"  }}

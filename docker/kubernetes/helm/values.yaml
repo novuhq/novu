@@ -340,7 +340,15 @@ api:
   ##    command: ['sh', '-c', 'echo "hello world"']
   ##
   initContainers: []
-  
+
+  service:
+    ## @param api.service.annotations Additional custom annotations for api service
+    ##
+    annotations: {}
+    ## @param api.service.extraPorts Extra port to expose on api service
+    ##
+    extraPorts: []
+
   ## @param api.port The port on which the API backend should listen on
   ## 
   port: 3000
@@ -749,7 +757,15 @@ worker:
   ##    command: ['sh', '-c', 'echo "hello world"']
   ##
   initContainers: []
-  
+
+  service:
+    ## @param worker.service.annotations Additional custom annotations for worker service
+    ##
+    annotations: {}
+    ## @param worker.service.extraPorts Extra port to expose on worker service
+    ##
+    extraPorts: []
+
   ## @param worker.port The port on which the Worker app should listen on
   ## 
   port: 3004
@@ -1036,6 +1052,15 @@ ws:
   ##    command: ['sh', '-c', 'echo "hello world"']
   ##
   initContainers: []
+
+
+  service:
+    ## @param ws.service.annotations Additional custom annotations for ws service
+    ##
+    annotations: {}
+    ## @param ws.service.extraPorts Extra port to expose on ws service
+    ##
+    extraPorts: []
 
   ## novu ws ingress parameters
   ## ref: http://kubernetes.io/docs/user-guide/ingress/
@@ -1422,6 +1447,15 @@ web:
   ##    command: ['sh', '-c', 'echo "hello world"']
   ##
   initContainers: []
+
+
+  service:
+    ## @param web.service.annotations Additional custom annotations for web service
+    ##
+    annotations: {}
+    ## @param web.service.extraPorts Extra port to expose on web service
+    ##
+    extraPorts: []
 
   ## novu web ingress parameters
   ## ref: http://kubernetes.io/docs/user-guide/ingress/
