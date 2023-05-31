@@ -77,7 +77,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
 | `api.image.registry`                                  | Novu image registry                                                                                                                             | `ghcr.io`                |
 | `api.image.repository`                                | Novu image repository                                                                                                                           | `novuhq/novu/api`        |
-| `api.image.tag`                                       | Novu image tag (immutable tags are recommended)                                                                                                 | `.0.15.0`                |
+| `api.image.tag`                                       | Novu image tag (immutable tags are recommended)                                                                                                 | `0.15.0`                 |
 | `api.image.digest`                                    | Novu image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag image tag (immutable tags are recommended) | `""`                     |
 | `api.image.pullPolicy`                                | Novu image pull policy                                                                                                                          | `IfNotPresent`           |
 | `api.image.pullSecrets`                               | Novu image pull secrets                                                                                                                         | `[]`                     |
@@ -511,6 +511,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | -------------------------- | ----------------------------------------------------------- | ------- |
 | `localstack.enabled`       | Switch to enable or disable the localstack helm chart       | `false` |
 | `localstack.startServices` | List of comma separated services to start in the localstack | `s3`    |
+| `localstack.image.tag`     | the version of localstack docker image to use               | `2.1.0` |
 
 ### External mongoDB database configuration
 

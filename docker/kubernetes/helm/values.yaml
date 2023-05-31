@@ -1742,9 +1742,12 @@ redis:
 
 ## @param localstack.enabled Switch to enable or disable the localstack helm chart
 ## @param localstack.startServices List of comma separated services to start in the localstack
+## @param localstack.image.tag the version of localstack docker image to use
 localstack:
   enabled: false
   startServices: s3
+  image:
+    tag: 2.1.0
 
 ## @section External mongoDB database configuration
 ##
