@@ -150,7 +150,7 @@ Return the Redis(TM) Secret Name
 */}}
 {{- define "novu.redis.secretName" -}}
 {{- if .Values.redis.enabled -}}
-    {{- print (include "novu.redis.fullname" .) -}}
+    {{- print (include "novu.redis.fullname" .) "-password" -}}
 {{- else if .Values.externalRedis.existingSecret -}}
     {{- print .Values.externalRedis.existingSecret -}}
 {{- else -}}
