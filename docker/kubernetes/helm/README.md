@@ -537,6 +537,6 @@ The command removes all the Kubernetes components associated with the chart and 
 | ----------------------- | --------------------------------------------- | ------------------------ |
 | `externalS3.endpoint`   | Endpoint for external S3 storage access       | `http://localstack:4566` |
 | `externalS3.bucketName` | Bucket name for external S3 storage access    | `novu-local`             |
-| `externalS3.region`     | UserRegionname for external S3 storage access | `us-east-1`              |
+| `externalS3.region`     | Region name for external S3 storage access | `us-east-1`              |
 | `externalS3.accessKey`  | access Key for external S3 storage access     | `test`                   |
 | `externalS3.secretKey`  | secret Key for external S3 storage access     | `test`                   |

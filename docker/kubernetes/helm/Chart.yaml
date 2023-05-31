@@ -1,6 +1,6 @@
 name: novu
 description: A Helm Chart for novu
-version: 0.1.5
+version: 0.1.6
 apiVersion: v2
 appVersion: 0.15.0
 keywords:
