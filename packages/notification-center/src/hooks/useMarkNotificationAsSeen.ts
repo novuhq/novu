@@ -8,7 +8,7 @@ interface IMarkNotificationsAsReadVariables {
   feedId?: string | string[];
 }
 
-export const useMarkNotificationsAsReadByFeed = ({
+export const useMarkNotificationsAsSeen = ({
   onSuccess,
   ...options
 }: UseMutationOptions<IMessage[], Error, IMarkNotificationsAsReadVariables> = {}) => {
@@ -16,7 +16,7 @@ export const useMarkNotificationsAsReadByFeed = ({
   const { apiService, subscriberId } = useNovuContext();
 
   const { mutate, ...result } = useMutation<IMessage[], Error, IMarkNotificationsAsReadVariables>(
-    ({ feedId }) => apiService.markAllMessagesAsRead(feedId),
+    ({ feedId }) => apiService.markAllMessagesAsSeen(feedId),
     {
       ...options,
       onSuccess: (responseData, variables, context) => {
@@ -25,7 +25,7 @@ export const useMarkNotificationsAsReadByFeed = ({
           (infiniteData) => {
             const pages = infiniteData.pages.map((page) => {
               const data = page.data.map((message) => {
-                return { ...message, read: true, seen: true };
+                return { ...message, read: false, seen: true };
               });
 
               return {
@@ -45,5 +45,5 @@ export const useMarkNotificationsAsReadByFeed = ({
     }
   );
 
-  return { ...result, markNotificationsAsReadByFeed: mutate };
+  return { ...result, markNotificationsAsSeen: mutate };
 };
