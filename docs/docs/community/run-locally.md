@@ -65,6 +65,7 @@ However, if you want to test certain parts of Novu or run it in production mode,
 - `REDIS_DB_INDEX`<br />The Redis database index
 - `REDIS_CACHE_SERVICE_HOST`<br />The domain / IP of your redis instance for caching
 - `REDIS_CACHE_SERVICE_PORT`<br />The port of your redis instance for caching
+- `REDIS_CACHE_DB_INDEX`<br />The Redis cache database index
 - `REDIS_CACHE_TTL`<br />The Redis cache ttl
 - `REDIS_CACHE_PASSWORD`<br />The Redis cache password
 - `REDIS_CACHE_CONNECTION_TIMEOUT`<br />The Redis cache connection timeout
