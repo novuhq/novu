@@ -114,6 +114,24 @@ describe('Filter topics - /topics (GET)', async () => {
     expect(topic.subscribers).to.have.members([firstSubscriber.subscriberId, secondSubscriber.subscriberId]);
   });
 
+  it('should retrieve the topic filtered by the query param subscriber ID for the user', async () => {
+    const url = `${BASE_PATH}?subscriberId=${firstSubscriber.subscriberId}`;
+    const response = await session.testAgent.get(url);
+
+    expect(response.statusCode).to.eql(200);
+
+    const { data, totalCount, page, pageSize } = response.body;
+    const [topic] = data;
+
+    expect(data.length).to.eql(1);
+    expect(totalCount).to.eql(1);
+    expect(page).to.eql(0);
+    expect(pageSize).to.eql(10);
+    expect(topic._environmentId).to.eql(session.environment._id);
+    expect(topic._organizationId).to.eql(session.organization._id);
+    expect(topic.subscribers).to.have.members([firstSubscriber.subscriberId, secondSubscriber.subscriberId]);
+  });
+
   it('should retrieve an empty response if filtering by a key that is not in the database for the user', async () => {
     const topicKey = 'topic-key-not-existing';
     const url = `${BASE_PATH}?key=${topicKey}`;

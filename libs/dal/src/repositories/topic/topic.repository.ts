@@ -54,8 +54,9 @@ export class TopicRepository extends BaseRepository<TopicDBModel, TopicEntity, E
 
   async filterTopics(
     query: FilterQuery<TopicDBModel>,
-    pagination: { limit: number; skip: number }
-  ): Promise<TopicEntity & { subscribers: ExternalSubscriberId[] }[]> {
+    pagination: { limit: number; skip: number },
+    subscriberId?: string
+  ): Promise<{ data: TopicEntity & { subscribers: ExternalSubscriberId[] }[]; totalCount: number }> {
     const parsedQuery = { ...query };
     if (query._id) {
       parsedQuery._id = this.convertStringToObjectId(query._id);
@@ -63,22 +64,30 @@ export class TopicRepository extends BaseRepository<TopicDBModel, TopicEntity, E
 
     parsedQuery._environmentId = this.convertStringToObjectId(query._environmentId);
     parsedQuery._organizationId = this.convertStringToObjectId(query._organizationId);
+    const subscriberFilter = subscriberId && {
+      $match: {
+        $expr: {
+          $in: [subscriberId, '$topicSubscribers.externalSubscriberId'],
+        },
+      },
+    };
+    const commonAggQuery = [{ $match: parsedQuery }, lookup, ...(subscriberFilter ? [subscriberFilter] : [])];
 
-    const data = await this.aggregate([
-      {
-        $match: parsedQuery,
-      },
-      lookup,
-      topicWithSubscribersProjection,
-      {
-        $skip: pagination.skip,
-      },
-      {
-        $limit: pagination.limit,
-      },
+    const [data, totalCount] = await Promise.all([
+      this.aggregate([
+        ...commonAggQuery,
+        topicWithSubscribersProjection,
+        {
+          $skip: pagination.skip,
+        },
+        {
+          $limit: pagination.limit,
+        },
+      ]),
+      this.aggregate([...commonAggQuery, { $count: 'count' }]),
     ]);
 
-    return data;
+    return { data, totalCount: totalCount[0]?.count ?? 0 };
   }
 
   async findTopic(

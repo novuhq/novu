@@ -1,6 +1,6 @@
 import { IsNumber, IsOptional, IsString } from 'class-validator';
 
-import { TopicKey } from '../../types';
+import { SubscriberId, TopicKey } from '../../types';
 
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
@@ -12,6 +12,10 @@ export class FilterTopicsCommand extends EnvironmentCommand {
   @IsNumber()
   @IsOptional()
   page?: number;
+
+  @IsString()
+  @IsOptional()
+  subscriberId?: SubscriberId;
 
   @IsNumber()
   @IsOptional()

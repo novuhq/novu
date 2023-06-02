@@ -177,6 +177,12 @@ export class TopicsController {
     required: false,
   })
   @ApiQuery({
+    name: 'subscriberId',
+    type: String,
+    description: 'Subscriber ID',
+    required: false,
+  })
+  @ApiQuery({
     name: 'page',
     type: Number,
     description: 'Number of page for the pagination',
@@ -204,6 +210,7 @@ export class TopicsController {
       FilterTopicsCommand.create({
         environmentId: user.environmentId,
         key: query?.key,
+        subscriberId: query?.subscriberId,
         organizationId: user.organizationId,
         page: query?.page,
         pageSize: query?.pageSize,

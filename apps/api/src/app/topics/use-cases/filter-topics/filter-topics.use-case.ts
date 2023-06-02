@@ -21,21 +21,19 @@ export class FilterTopicsUseCase {
 
     const query = this.mapFromCommandToEntity(command);
 
-    const totalCount = await this.topicRepository.count(query);
-
     const skipTimes = page <= 0 ? 0 : page;
     const pagination = {
       limit: pageSize,
       skip: skipTimes * pageSize,
     };
 
-    const filteredTopics = await this.topicRepository.filterTopics(query, pagination);
+    const { data, totalCount } = await this.topicRepository.filterTopics(query, pagination, command.subscriberId);
 
     return {
       page,
       totalCount,
       pageSize,
-      data: filteredTopics.map(this.mapFromEntityToDto),
+      data: data.map(this.mapFromEntityToDto),
     };
   }
 
