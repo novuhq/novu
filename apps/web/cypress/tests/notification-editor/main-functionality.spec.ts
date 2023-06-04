@@ -104,6 +104,33 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.getByTestId('feed-button-2-checked');
   });
 
+  it('should unset feedId for in app step', function () {
+    const template = this.session.templates[0];
+
+    cy.visit('/workflows/edit/' + template._id);
+    cy.waitForNetworkIdle(500);
+
+    editChannel('inApp');
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('use-feeds-checkbox').should('be.checked');
+    cy.getByTestId('use-feeds-checkbox').click();
+    cy.getByTestId('notification-template-submit-btn').click();
+    cy.visit('/workflows');
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('notifications-template').get('tbody tr td').contains(template.name, {
+      matchCase: false,
+    });
+    cy.waitLoadTemplatePage(() => {
+      cy.visit('/workflows/edit/' + template._id);
+    });
+
+    cy.waitForNetworkIdle(500);
+    editChannel('inApp');
+    cy.getByTestId('use-feeds-checkbox').should('be.checked');
+  });
+
   it('should edit email notification', function () {
     const template = this.session.templates[0];
 
@@ -326,7 +353,7 @@ describe('Workflow Editor - Main Functionality', function () {
 
     cy.getByTestId('environment-switch').find(`input[value="Production"] ~ label`).click();
 
-    cy.getByTestId('create-template-btn').should('be.disabled');
+    cy.getByTestId('create-workflow-btn').should('be.disabled');
   });
 
   it('Should not allow to go to New Template page in Production', function () {
@@ -393,7 +420,7 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.visit('/workflows');
     cy.wait('@getNotificationTemplates');
 
-    cy.getByTestId('create-template-btn').click();
+    cy.getByTestId('create-workflow-btn').click();
     cy.getByTestId('create-workflow-blank').click();
     cy.wait('@getNotificationTemplate');
 

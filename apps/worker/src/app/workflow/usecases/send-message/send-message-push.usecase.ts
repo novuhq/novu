@@ -157,15 +157,7 @@ export class SendMessagePush extends SendMessageBase {
 
       const overrides = Object.assign(command.overrides, command.overrides[integration.providerId]);
 
-      await this.sendMessage(
-        integration,
-        channel.credentials.deviceTokens,
-        title,
-        content,
-        command,
-        command.payload,
-        overrides
-      );
+      await this.sendMessage(integration, channel.credentials.deviceTokens, title, content, command, data, overrides);
     }
   }
 
