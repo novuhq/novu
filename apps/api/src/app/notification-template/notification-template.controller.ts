@@ -209,7 +209,7 @@ export class NotificationTemplateController {
     );
   }
 
-  @Get('/test/ai')
+  @Get('/ai/test')
   async test() {
     try {
       const result = this.openAiService.createCompletion(
