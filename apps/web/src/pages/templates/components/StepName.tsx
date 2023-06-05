@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { Group } from '@mantine/core';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
+
 import { When } from '../../../components/utils/When';
 import { GenerateContentButton } from './GenerateContentButton';
 import { UpdateButton } from './UpdateButton';
 import { StepNameInput } from './StepNameInput';
 import { stepIcon, stepNames } from '../constants';
 import { GenerateContentContextModal } from './GenerateContentContextModal';
+import { useGenerateContentWithAI } from './useGenerateContentWithAI';
+import { usePrepareAIContext } from './usePrepareAIContext';
 
 export const StepName = ({
   channel,
@@ -17,10 +20,21 @@ export const StepName = ({
   index: number;
   color?: any;
 }) => {
-  const [context, setContext] = useState('');
   const [generateContentInChatGpt, setGenerateContentInChatGpt] = useState(false);
   const [isGeneratingContentInChatGpt, setIsGeneratingContentInChatGpt] = useState(false);
-  const [isError, setIsError] = useState<string | undefined>(undefined);
+  const { context, setContext, workflow } = usePrepareAIContext(index);
+
+  const { fetchingError, setFetchingError, fetchGenerateContentWithAI } = useGenerateContentWithAI(
+    channel,
+    context,
+    workflow
+  );
+
+  const workflowContext = {
+    channel,
+    context,
+    workflow,
+  };
 
   const onContextChange = (event) => {
     const { value } = event.target;
@@ -28,16 +42,15 @@ export const StepName = ({
   };
 
   const confirmGenerateContentInChatGpt = async () => {
-    setIsGeneratingContentInChatGpt(true);
-    setIsError(undefined);
     try {
-      // call to chat gpt
-      console.log({ context });
+      setIsGeneratingContentInChatGpt(true);
+      setFetchingError(undefined);
+      const result = await fetchGenerateContentWithAI();
       setIsGeneratingContentInChatGpt(false);
       setGenerateContentInChatGpt(false);
     } catch (e: any) {
       setIsGeneratingContentInChatGpt(false);
-      setIsError(e?.message || 'Unknown error');
+      setFetchingError(e?.message || 'Unknown error');
     }
   };
 
@@ -47,7 +60,7 @@ export const StepName = ({
   };
 
   const onGenerateContent = () => {
-    setIsError(undefined);
+    setFetchingError(undefined);
     setGenerateContentInChatGpt(true);
   };
 
@@ -70,11 +83,10 @@ export const StepName = ({
         </When>
       </Group>
       <GenerateContentContextModal
-        description={'Please provide more context, so we can generate content for you.'}
-        stepIndex={index}
+        workflowContext={workflowContext}
         isOpen={generateContentInChatGpt}
         isLoading={isGeneratingContentInChatGpt}
-        error={isError}
+        error={fetchingError}
         onChange={onContextChange}
         confirm={confirmGenerateContentInChatGpt}
         cancel={cancelGenerateContentInChatGpt}

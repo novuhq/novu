@@ -52,7 +52,7 @@ export enum SystemAvatarIconEnum {
 }
 
 export interface IWorkflowProperties {
-  workflowName: string;
+  name: string;
   templateName: string;
   emailSubject: string;
 }

@@ -1,21 +1,9 @@
 import { Alert, Container, Group, MantineTheme, Modal, Space, useMantineTheme, TextInput } from '@mantine/core';
 import { IEmailBlock } from '@novu/shared';
-import { useFormContext, useFieldArray } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 import { WarningOutlined } from '@ant-design/icons';
 
-import { useTemplateEditorForm } from '../components/TemplateEditorFormProvider';
 import { Button, colors, shadows, Text, Title } from '../../../design-system';
-import type { IForm, IFormStep, ITemplates } from './formTypes';
-
-interface IStepEntityExtended extends IFormStep {
-  template: ITemplates & {
-    content: IEmailBlock[];
-  };
-}
-
-interface IFormExtended extends IForm {
-  steps: IStepEntityExtended[];
-}
 
 const TextItalics = ({ children }) => (
   <i>
@@ -30,20 +18,16 @@ const Description = () => (
   </Container>
 );
 
-const PreContextMessage = ({ colorScheme, stepIndex, template }) => {
-  const { watch } = useFormContext<IFormExtended>();
-  const stepName = watch(`steps.${stepIndex}.name`);
-  const channel = watch(`steps.${stepIndex}.template.type`);
-  const subject = watch(`steps.${stepIndex}.template.subject`);
-
-  const workflowName = template?.name;
+const PreContextMessage = ({ colorScheme, workflowContext }) => {
+  const { channel, workflow } = workflowContext;
+  const { name, emailSubject, templateName } = workflow;
 
   return (
     <Container styles={(theme) => ({ color: colorScheme === 'dark' ? theme.colors.dark[3] : theme.colors.gray[6] })}>
       <Text>
-        We are creating <TextItalics>{stepName}</TextItalics> template with the title{' '}
-        <TextItalics>{subject}</TextItalics> for our workflow <TextItalics>{workflowName}</TextItalics> to be delivered
-        as <TextItalics>{channel}</TextItalics>
+        We are creating <TextItalics>{templateName}</TextItalics> template with the title{' '}
+        <TextItalics>{emailSubject}</TextItalics> for our workflow <TextItalics>{name}</TextItalics> to be delivered as{' '}
+        <TextItalics>{channel}</TextItalics>
       </Text>
       <Space h="sm" />
     </Container>
@@ -103,8 +87,8 @@ const ContextMessage = ({ colorScheme, onChange }) => {
 };
 
 export function GenerateContentContextModal({
+  workflowContext,
   target,
-  stepIndex,
   isOpen,
   cancel,
   confirm,
@@ -114,7 +98,7 @@ export function GenerateContentContextModal({
   onChange,
   error,
 }: {
-  stepIndex: number;
+  workflowContext: any;
   target?: string;
   isOpen: boolean;
   cancel: () => void;
@@ -125,12 +109,9 @@ export function GenerateContentContextModal({
   confirmButtonText?: string;
   cancelButtonText?: string;
 }) {
-  const { template } = useTemplateEditorForm();
   const theme = useMantineTheme();
   const colorScheme = theme.colorScheme;
   const targetText = target ? ' ' + target : '';
-
-  const workflowName = template?.name;
 
   return (
     <>
@@ -170,7 +151,7 @@ export function GenerateContentContextModal({
             </Alert>
           )}
           <Description />
-          <PreContextMessage colorScheme={colorScheme} stepIndex={stepIndex} template={template} />
+          <PreContextMessage colorScheme={colorScheme} workflowContext={workflowContext} />
           <ContextMessage onChange={onChange} colorScheme={colorScheme} />
           <Group position="right">
             <Button variant="outline" size="md" mt={30} onClick={() => cancel()}>
