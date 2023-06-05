@@ -1,5 +1,5 @@
 import React, { ChangeEvent } from 'react';
-import { Textarea as MantineTextarea } from '@mantine/core';
+import { Textarea as MantineTextarea, TextareaProps } from '@mantine/core';
 import { SpacingProps } from '../shared/spacing.props';
 import { textareaStyles } from './textarea.styles';
 
@@ -14,6 +14,7 @@ interface ITextareaProps extends SpacingProps {
   onChange?: (event: ChangeEvent<HTMLTextAreaElement>) => void;
   minRows?: number;
   maxRows?: number;
+  inputContainer?: (children: React.ReactNode) => React.ReactNode;
 }
 
 /**

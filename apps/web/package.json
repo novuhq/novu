@@ -109,6 +109,7 @@
     "react-scripts": "^5.0.1",
     "react-syntax-highlighter": "^15.4.3",
     "react-table": "^7.7.0",
+    "react-type-animation": "^3.0.1",
     "react-use-intercom": "^2.0.0",
     "rimraf": "^3.0.2",
     "slugify": "^1.4.6",
