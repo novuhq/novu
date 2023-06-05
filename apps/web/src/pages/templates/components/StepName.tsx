@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Group } from '@mantine/core';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 
@@ -24,10 +24,11 @@ export const StepName = ({
   const [isGeneratingContentInChatGpt, setIsGeneratingContentInChatGpt] = useState(false);
   const { context, setContext, workflow } = usePrepareAIContext(index);
 
-  const { fetchingError, setFetchingError, fetchGenerateContentWithAI } = useGenerateContentWithAI(
+  const { fetchingError, setFetchingError, fetchGenerateContentWithAI, isFetching } = useGenerateContentWithAI(
     channel,
     context,
-    workflow
+    workflow,
+    index
   );
 
   const workflowContext = {
@@ -45,9 +46,8 @@ export const StepName = ({
     try {
       setIsGeneratingContentInChatGpt(true);
       setFetchingError(undefined);
-      const result = await fetchGenerateContentWithAI();
+      await fetchGenerateContentWithAI();
       setIsGeneratingContentInChatGpt(false);
-      setGenerateContentInChatGpt(false);
     } catch (e: any) {
       setIsGeneratingContentInChatGpt(false);
       setFetchingError(e?.message || 'Unknown error');
@@ -65,6 +65,13 @@ export const StepName = ({
   };
 
   const Icon = stepIcon[channel];
+
+  useEffect(() => {
+    if (isFetching) {
+      return;
+    }
+    setGenerateContentInChatGpt(false);
+  }, [isFetching]);
 
   return (
     <>
@@ -85,7 +92,7 @@ export const StepName = ({
       <GenerateContentContextModal
         workflowContext={workflowContext}
         isOpen={generateContentInChatGpt}
-        isLoading={isGeneratingContentInChatGpt}
+        isLoading={isFetching}
         error={fetchingError}
         onChange={onContextChange}
         confirm={confirmGenerateContentInChatGpt}
