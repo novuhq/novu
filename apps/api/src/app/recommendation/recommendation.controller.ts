@@ -30,6 +30,7 @@ import {
   GetNodeContentCommand,
   GetNotificationPromptSuggestionUseCase,
   GetNotificationPromptSuggestionCommand,
+  GetAdvancedNodeContentCommand,
 } from './use-cases';
 import { UseChatGptWithLanguageDto } from './dtos';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
@@ -47,7 +48,6 @@ import { GetTranslationUseCase } from './use-cases/get-translation/get-internati
 export class RecommendationController {
   constructor(
     private useChatGptUseCase: UseChatGptUseCase,
-
     private getNodeContentUseCase: GetNodeContentUseCase,
     private getNotificationPromptSuggestionUseCase: GetNotificationPromptSuggestionUseCase,
     private getTranslationUseCase: GetTranslationUseCase
@@ -94,7 +94,7 @@ export class RecommendationController {
     };
   }
 
-  @Post('/get-node-contet')
+  @Post('/get-node-content')
   @ExternalApiAccessible()
   @ApiResponse(GetModuleTestDto)
   @ApiOperation({ summary: 'Get an Open AI text', description: 'Get an Open AI text' })
@@ -106,6 +106,45 @@ export class RecommendationController {
       GetNodeContentCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
+        ...body,
+      })
+    );
+
+    return {
+      answer,
+    };
+  }
+
+  @Post('/get-advanced-node-contet')
+  @ExternalApiAccessible()
+  @ApiResponse(GetModuleTestDto)
+  @ApiOperation({ summary: 'Get an Open AI text', description: 'Get an Open AI text' })
+  async getAdvancedNodeContent(
+    @UserSession() user: IJwtPayload,
+    @Body() body: GetNodeContentDto
+  ): Promise<GetNodeContentResponseDto> {
+    const answer = await this.getNodeContentUseCase.execute(
+      GetNodeContentCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        ...body,
+      })
+    );
+    // query
+    const messages = await this.getNotificationPromptSuggestionUseCase.execute(
+      GetNotificationPromptSuggestionCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        prompt: answer,
+        limit: 3,
+      })
+    );
+
+    const returnValue = await this.getNodeContentUseCase.execute(
+      GetAdvancedNodeContentCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        messages: [],
         ...body,
       })
     );
