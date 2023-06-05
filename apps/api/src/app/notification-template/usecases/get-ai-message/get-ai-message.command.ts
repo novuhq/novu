@@ -1,5 +1,5 @@
 import { ChannelTypeEnum } from '@novu/shared';
-import { IsEnum, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class GetAiMessageCommand extends EnvironmentWithUserCommand {
@@ -8,4 +8,14 @@ export class GetAiMessageCommand extends EnvironmentWithUserCommand {
 
   @IsEnum(ChannelTypeEnum)
   channel: ChannelTypeEnum;
+
+  @IsString()
+  workflowName: string;
+
+  @IsString()
+  templateName: string;
+
+  @IsString()
+  @IsOptional()
+  emailSubject: string;
 }

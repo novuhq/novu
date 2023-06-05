@@ -196,6 +196,9 @@ export class NotificationTemplateController {
     body: {
       prompt: string;
       channel: ChannelTypeEnum;
+      workflowName: string;
+      templateName: string;
+      emailSubject: string;
     }
   ): Promise<any> {
     return this.getAiMessage.execute(
@@ -203,8 +206,7 @@ export class NotificationTemplateController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
-        prompt: body.prompt,
-        channel: body.channel,
+        ...body,
       })
     );
   }
