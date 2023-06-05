@@ -41,11 +41,10 @@ import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 import { CreateNotificationTemplateQuery } from './queries';
 import { GetAiMessage } from './usecases/get-ai-message/get-ai-message.usecase';
 import { GetAiMessageCommand } from './usecases/get-ai-message/get-ai-message.command';
-import { OpenAiService } from '../shared/services/openai/openai.service';
 
 @Controller('/notification-templates')
 @UseInterceptors(ClassSerializerInterceptor)
-// @UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard)
 @ApiTags('Workflows')
 export class NotificationTemplateController {
   constructor(
@@ -55,8 +54,7 @@ export class NotificationTemplateController {
     private updateTemplateByIdUsecase: UpdateNotificationTemplate,
     private deleteTemplateByIdUsecase: DeleteNotificationTemplate,
     private changeTemplateActiveStatusUsecase: ChangeTemplateActiveStatus,
-    private getAiMessage: GetAiMessage,
-    private openAiService: OpenAiService
+    private getAiMessage: GetAiMessage
   ) {}
 
   @Get('')
@@ -198,7 +196,7 @@ export class NotificationTemplateController {
       channel: ChannelTypeEnum;
       workflow: IWorkflowProperties;
     }
-  ): Promise<any> {
+  ): Promise<string> {
     return this.getAiMessage.execute(
       GetAiMessageCommand.create({
         environmentId: user.environmentId,
@@ -209,22 +207,6 @@ export class NotificationTemplateController {
         ...body.workflow,
       })
     );
-  }
-
-  @Get('/ai/test')
-  async test() {
-    try {
-      const result = await this.openAiService.createCompletion(
-        `Please generate an informal text in a div element (inline-style) for an email notification with  the context: "insurance payment confirmation with the subject Payment Confirmed!"
-use variables (use "{{" and "}}" without space) and subscriber.firstName , subscriber.lastName, organization.name, organization.logo, organization.brandingColor, and other variables. no javascript.`
-      );
-
-      return result.text;
-    } catch (e) {
-      console.log(e);
-    }
-
-    return {};
   }
 
   @Put('/:templateId/status')
