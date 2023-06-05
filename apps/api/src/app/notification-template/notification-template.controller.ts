@@ -11,7 +11,7 @@ import {
   UseInterceptors,
   Query,
 } from '@nestjs/common';
-import { ChannelTypeEnum, IJwtPayload, MemberRoleEnum } from '@novu/shared';
+import { ChannelTypeEnum, IJwtPayload, IWorkflowProperties, MemberRoleEnum } from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
 import { GetNotificationTemplates } from './usecases/get-notification-templates/get-notification-templates.usecase';
 import { GetNotificationTemplatesCommand } from './usecases/get-notification-templates/get-notification-templates.command';
@@ -196,6 +196,7 @@ export class NotificationTemplateController {
     body: {
       prompt: string;
       channel: ChannelTypeEnum;
+      workflow: IWorkflowProperties;
     }
   ): Promise<any> {
     return this.getAiMessage.execute(
@@ -205,6 +206,7 @@ export class NotificationTemplateController {
         userId: user._id,
         prompt: body.prompt,
         channel: body.channel,
+        ...body.workflow,
       })
     );
   }
