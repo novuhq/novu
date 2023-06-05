@@ -9,12 +9,6 @@ export class GetAiMessage {
   async execute(command: GetAiMessageCommand): Promise<any> {
     const message = command.prompt;
 
-    let format = `Put the answer in the following JSON structure\n`;
-    format += `{
-      "title": "string",
-      "message": "string",
-    }\n`;
-
-    return this.openAiService.createCompletion(message + '\n' + format);
+    return this.openAiService.createCompletion(message);
   }
 }
