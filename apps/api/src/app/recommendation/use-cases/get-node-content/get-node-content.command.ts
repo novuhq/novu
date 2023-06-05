@@ -6,3 +6,11 @@ export class GetNodeContentCommand extends EnvironmentCommand {
   prompt?: string;
   channel: string;
 }
+
+export class GetAdvancedNodeContentCommand extends EnvironmentCommand {
+  title?: string;
+  description?: string;
+  prompt?: string;
+  channel: string;
+  messages: string[];
+}
