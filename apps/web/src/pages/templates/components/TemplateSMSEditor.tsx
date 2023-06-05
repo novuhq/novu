@@ -1,4 +1,4 @@
-import { Control, Controller, useFormContext } from 'react-hook-form';
+import { Control, Controller, useFormContext, useWatch } from 'react-hook-form';
 import { ChannelTypeEnum } from '@novu/shared';
 
 import { LackIntegrationError } from './LackIntegrationError';
@@ -7,6 +7,7 @@ import { Textarea } from '../../../design-system';
 import { useEnvController, useVariablesManager } from '../../../hooks';
 import { VariableManager } from './VariableManager';
 import { StepSettings } from '../workflow/SideBar/StepSettings';
+import { AIAutocomplete } from './ai-autocomplete/AiAutocomplete';
 
 const templateFields = ['content'];
 
@@ -23,7 +24,10 @@ export function TemplateSMSEditor({
   const { readonly } = useEnvController();
   const {
     formState: { errors },
+    watch,
   } = useFormContext();
+  const title = watch(`steps.${index}.name`);
+  const channel = watch(`steps.${index}.template.type`);
   const variablesArray = useVariablesManager(index, templateFields);
 
   return (
@@ -37,19 +41,19 @@ export function TemplateSMSEditor({
         defaultValue=""
         control={control}
         render={({ field }) => (
-          <Textarea
-            {...field}
-            data-test-id="smsNotificationContent"
-            error={errors?.steps ? errors.steps[index]?.template?.content?.message : undefined}
+          <AIAutocomplete
+            title={title}
+            channel={channel}
+            type="textarea"
             disabled={readonly}
-            minRows={4}
-            mt={24}
-            value={field.value || ''}
             label="SMS message content"
-            placeholder="Add notification content here..."
+            placeholder="Write a message content here..."
+            error={errors?.steps ? errors.steps[index]?.template?.content?.message : undefined}
+            {...field}
           />
         )}
       />
+
       <VariableManager index={index} variablesArray={variablesArray} />
     </>
   );
