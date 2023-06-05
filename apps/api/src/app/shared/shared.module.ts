@@ -37,6 +37,7 @@ import {
   DistributedLockService,
   PerformanceService,
   TriggerQueueService,
+  OpenAiService,
 } from '@novu/application-generic';
 
 import * as packageJson from '../../../package.json';
@@ -143,6 +144,7 @@ const PROVIDERS = [
     },
   },
   TriggerQueueService,
+  OpenAiService,
 ];
 
 @Module({
