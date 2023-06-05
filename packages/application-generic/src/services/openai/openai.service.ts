@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Configuration, OpenAIApi } from 'openai';
-import { ApiException } from '../../exceptions/api.exception';
+import { ApiException } from '../../utils/exceptions';
 
 @Injectable()
 export class OpenAiService implements OnModuleInit {
@@ -27,7 +27,7 @@ export class OpenAiService implements OnModuleInit {
       });
 
       return completion.data.choices[0].text;
-    } catch (error) {
+    } catch (error: any) {
       if (error.response) {
         throw new ApiException(error.response.data);
       } else {

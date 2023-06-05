@@ -37,10 +37,10 @@ import {
   DistributedLockService,
   PerformanceService,
   TriggerQueueService,
+  OpenAiService,
 } from '@novu/application-generic';
 
 import * as packageJson from '../../../package.json';
-import { OpenAiService } from './services/openai/openai.service';
 
 const DAL_MODELS = [
   UserRepository,
