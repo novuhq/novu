@@ -23,7 +23,14 @@ import {
 import { ExternalSubscriberId, IJwtPayload, TopicKey } from '@novu/shared';
 
 import {} from './dtos';
-import { UseChatGptUseCase, UseChatGptCommand, GetNodeContentUseCase, GetNodeContentCommand } from './use-cases';
+import {
+  UseChatGptUseCase,
+  UseChatGptCommand,
+  GetNodeContentUseCase,
+  GetNodeContentCommand,
+  GetNotificationPromptSuggestionUseCase,
+  GetNotificationPromptSuggestionCommand,
+} from './use-cases';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -36,7 +43,12 @@ import { GetNodeContentDto, GetNodeContentResponseDto } from './dtos/get-node-co
 @ApiTags('Recommendation')
 @UseGuards(JwtAuthGuard)
 export class RecommendationController {
-  constructor(private useChatGptUseCase: UseChatGptUseCase, private getNodeContentUseCase: GetNodeContentUseCase) {}
+  constructor(
+    private useChatGptUseCase: UseChatGptUseCase,
+
+    private getNodeContentUseCase: GetNodeContentUseCase,
+    private getNotificationPromptSuggestionUseCase: GetNotificationPromptSuggestionUseCase
+  ) {}
 
   @Post('/open-ai')
   @ExternalApiAccessible()
@@ -70,6 +82,28 @@ export class RecommendationController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         ...body,
+      })
+    );
+
+    return {
+      answer,
+    };
+  }
+
+  @Post('/notification-prompt-suggestion')
+  @ExternalApiAccessible()
+  @ApiResponse(GetModuleTestDto)
+  @ApiOperation({ summary: 'Get an Open AI text', description: 'Get an Open AI text' })
+  async notificationPromptSuggestion(
+    @UserSession() user: IJwtPayload,
+    @Body() body: UseChatGptDto
+  ): Promise<GetNodeContentResponseDto> {
+    const answer = await this.getNotificationPromptSuggestionUseCase.execute(
+      GetNotificationPromptSuggestionCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        prompt: body.prompt,
+        limit: 10,
       })
     );
 
