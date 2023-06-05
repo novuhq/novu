@@ -4,13 +4,14 @@ import { GetNotificationTemplates } from './get-notification-templates/get-notif
 import { CreateNotificationTemplate } from './create-notification-template';
 import { GetNotificationTemplate } from './get-notification-template/get-notification-template.usecase';
 import { DeleteNotificationTemplate } from './delete-notification-template/delete-notification-template.usecase';
+import { GetAiMessage } from './get-ai-message/get-ai-message.usecase';
 
 export const USE_CASES = [
-  //
   ChangeTemplateActiveStatus,
   UpdateNotificationTemplate,
   GetNotificationTemplates,
   CreateNotificationTemplate,
   GetNotificationTemplate,
   DeleteNotificationTemplate,
+  GetAiMessage,
 ];
