@@ -3,7 +3,7 @@ import { IForm } from './formTypes';
 import { useFormContext } from 'react-hook-form';
 import { useEnvController } from '../../../hooks';
 
-export const GenerateContentButton = () => {
+export const GenerateContentButton = ({ onClick }) => {
   const { formState } = useFormContext<IForm>();
   const { readonly } = useEnvController();
 
@@ -11,7 +11,7 @@ export const GenerateContentButton = () => {
     <Button
       data-test-id="notification-template-generate-content-btn"
       disabled={readonly || !formState.isDirty}
-      submit={true}
+      onClick={onClick}
     >
       Generate Content
     </Button>
