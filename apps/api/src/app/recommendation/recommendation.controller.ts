@@ -31,13 +31,15 @@ import {
   GetNotificationPromptSuggestionUseCase,
   GetNotificationPromptSuggestionCommand,
 } from './use-cases';
+import { UseChatGptWithLanguageDto } from './dtos';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import { ApiResponse } from '../shared/framework/response.decorator';
-import { GetModuleTestDto } from './dtos/get-module-test.dto';
-import { UseChatGptDto, UseChatGptResponseDto } from './dtos/use-chat-gpt.dto';
-import { GetNodeContentDto, GetNodeContentResponseDto } from './dtos/get-node-content.dto';
+import { GetModuleTestDto } from './dtos';
+import { UseChatGptDto, UseChatGptResponseDto } from './dtos';
+import { GetNodeContentDto, GetNodeContentResponseDto } from './dtos';
+import { GetTranslationUseCase } from './use-cases/get-translation/get-internationalization-translation.use-case';
 
 @Controller('/recommend')
 @ApiTags('Recommendation')
@@ -47,7 +49,8 @@ export class RecommendationController {
     private useChatGptUseCase: UseChatGptUseCase,
 
     private getNodeContentUseCase: GetNodeContentUseCase,
-    private getNotificationPromptSuggestionUseCase: GetNotificationPromptSuggestionUseCase
+    private getNotificationPromptSuggestionUseCase: GetNotificationPromptSuggestionUseCase,
+    private getTranslationUseCase: GetTranslationUseCase
   ) {}
 
   @Post('/open-ai')
@@ -59,6 +62,28 @@ export class RecommendationController {
     const answer = await this.useChatGptUseCase.execute(
       UseChatGptCommand.create({
         environmentId: user.environmentId,
+        prompt: body.prompt,
+        organizationId: user.organizationId,
+      })
+    );
+
+    return {
+      answer,
+    };
+  }
+
+  @Post('/get-translation')
+  @ExternalApiAccessible()
+  @ApiResponse(GetModuleTestDto)
+  @ApiOperation({ summary: 'Get an Open AI text', description: 'Get an Open AI text' })
+  async getTranslation(
+    @UserSession() user: IJwtPayload,
+    @Body() body: UseChatGptWithLanguageDto
+  ): Promise<UseChatGptResponseDto> {
+    const answer = await this.useChatGptUseCase.execute(
+      await this.getTranslationUseCase.create({
+        environmentId: user.environmentId,
+        language: body.language,
         prompt: body.prompt,
         organizationId: user.organizationId,
       })
