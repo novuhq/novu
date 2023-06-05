@@ -19,6 +19,7 @@ import {
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
   Instrument,
+  ISubscriberPreferenceResponse,
 } from '@novu/application-generic';
 import {
   JobEntity,
@@ -62,6 +63,7 @@ export class SendMessage {
   public async execute(command: SendMessageCommand) {
     const shouldRun = await this.filter(command);
     const preferred = await this.filterPreferredChannels(command.job);
+    const preferences = await this.findSubsciberPreference(command.job);
 
     const stepType = command.step?.template?.type;
 
@@ -129,7 +131,7 @@ export class SendMessage {
       case StepTypeEnum.SMS:
         return await this.sendMessageSms.execute(command);
       case StepTypeEnum.IN_APP:
-        return await this.sendMessageInApp.execute(command);
+        return await this.sendMessageInApp.execute({ ...command, locale: preferences.preference.locale });
       case StepTypeEnum.EMAIL:
         return await this.sendMessageEmail.execute(command);
       case StepTypeEnum.CHAT:
@@ -166,6 +168,30 @@ export class SendMessage {
     }
 
     return shouldRun;
+  }
+
+  private async findSubsciberPreference(job: JobEntity): Promise<ISubscriberPreferenceResponse> {
+    const template = await this.getNotificationTemplate({
+      _id: job._templateId,
+      environmentId: job._environmentId,
+    });
+    if (!template) throw new PlatformException(`Notification template ${job._templateId} is not found`);
+
+    const subscriber = await this.getSubscriberBySubscriberId({
+      _environmentId: job._environmentId,
+      subscriberId: job.subscriberId,
+    });
+    if (!subscriber) throw new PlatformException('Subscriber not found with id ' + job._subscriberId);
+
+    const buildCommand = GetSubscriberTemplatePreferenceCommand.create({
+      organizationId: job._organizationId,
+      subscriberId: subscriber.subscriberId,
+      environmentId: job._environmentId,
+      template,
+      subscriber,
+    });
+
+    return this.getSubscriberTemplatePreferenceUsecase.execute(buildCommand);
   }
 
   @Instrument()
@@ -268,7 +294,10 @@ export class SendMessage {
   }
 
   @Instrument()
-  private stepPreferred(preference: { enabled: boolean; channels: IPreferenceChannels }, job: JobEntity) {
+  private stepPreferred(
+    preference: { enabled: boolean; channels: IPreferenceChannels; locale?: string },
+    job: JobEntity
+  ) {
     const templatePreferred = preference.enabled;
 
     const channelPreferred = Object.keys(preference.channels).some(

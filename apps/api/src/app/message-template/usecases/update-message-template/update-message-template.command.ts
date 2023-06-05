@@ -57,4 +57,7 @@ export class UpdateMessageTemplateCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   actor?: IActor;
+
+  @IsOptional()
+  translate?: boolean;
 }

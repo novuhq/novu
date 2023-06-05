@@ -77,6 +77,10 @@ const messageTemplateSchema = new Schema<MessageTemplateDBModel>(
       },
       data: Schema.Types.Mixed,
     },
+    translate: {
+      type: Schema.Types.Boolean,
+      default: false,
+    },
   },
   schemaOptions
 );

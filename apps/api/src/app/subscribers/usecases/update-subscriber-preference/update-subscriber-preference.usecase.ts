@@ -91,6 +91,7 @@ export class UpdateSubscriberPreference {
        */
       enabled: command.enabled !== false,
       channels: command.channel?.type ? channelObj : null,
+      locale: command.locale,
     });
   }
 
@@ -106,6 +107,10 @@ export class UpdateSubscriberPreference {
 
     if (command.channel?.type) {
       updatePayload[`channels.${command.channel.type}`] = command.channel.enabled;
+    }
+
+    if (command.locale != null) {
+      updatePayload.locale = command.locale;
     }
 
     if (Object.keys(updatePayload).length === 0) {

@@ -18,6 +18,8 @@ export class SubscriberPreferenceEntity {
   enabled: boolean;
 
   channels: IPreferenceChannels;
+
+  locale?: string;
 }
 
 export type SubscriberPreferenceDBModel = ChangePropsValueType<

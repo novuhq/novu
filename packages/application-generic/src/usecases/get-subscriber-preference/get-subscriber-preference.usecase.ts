@@ -76,6 +76,7 @@ export interface ISubscriberPreferenceResponse {
   preference: {
     enabled: boolean;
     channels: IPreferenceChannels;
+    locale?: string;
   };
 }
 

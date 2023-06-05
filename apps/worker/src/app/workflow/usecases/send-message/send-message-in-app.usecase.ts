@@ -110,13 +110,17 @@ export class SendMessageInApp extends SendMessageBase {
 
     const organization = await this.organizationRepository.findById(command.organizationId, 'branding');
 
+    const subscriberLocale = command.locale || subscriber.locale;
+
     try {
       content = await this.compileInAppTemplate(
         inAppChannel.template.content,
         command.payload,
         subscriber,
         command,
-        organization
+        organization,
+        inAppChannel.template.translate,
+        subscriberLocale
       );
 
       if (inAppChannel.template.cta?.data?.url) {
@@ -125,7 +129,9 @@ export class SendMessageInApp extends SendMessageBase {
           command.payload,
           subscriber,
           command,
-          organization
+          organization,
+          inAppChannel.template.translate,
+          subscriberLocale
         );
       }
 
@@ -138,7 +144,9 @@ export class SendMessageInApp extends SendMessageBase {
             command.payload,
             subscriber,
             command,
-            organization
+            organization,
+            inAppChannel.template.translate,
+            subscriberLocale
           );
           ctaButtons.push({ type: action.type, content: buttonContent });
         }
@@ -311,8 +319,14 @@ export class SendMessageInApp extends SendMessageBase {
     payload: any,
     subscriber: SubscriberEntity,
     command: SendMessageCommand,
-    organization: OrganizationEntity | null
+    organization: OrganizationEntity | null,
+    translate?: boolean,
+    locale?: string
   ): Promise<string> {
+    console.log('translate -->', translate);
+
+    console.log('locale -->', locale);
+
     return await this.compileTemplate.execute(
       CompileTemplateCommand.create({
         template: content as string,
@@ -329,6 +343,8 @@ export class SendMessageInApp extends SendMessageBase {
           },
           ...payload,
         },
+        translate,
+        locale,
       })
     );
   }

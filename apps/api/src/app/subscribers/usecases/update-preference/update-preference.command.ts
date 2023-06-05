@@ -19,4 +19,8 @@ export class UpdatePreferenceCommand extends EnvironmentCommand {
   @ValidateNested()
   @IsOptional()
   channel?: ChannelPreference;
+
+  @IsOptional()
+  @IsString()
+  locale?: string;
 }

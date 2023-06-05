@@ -162,6 +162,7 @@ export class UpdateNotificationTemplate {
               senderName: message.template.senderName,
               actor: message.template.actor,
               parentChangeId,
+              translate: message.template.translate,
             })
           );
           stepId = template._id;
@@ -185,6 +186,7 @@ export class UpdateNotificationTemplate {
               title: message.template.title,
               preheader: message.template.preheader,
               senderName: message.template.senderName,
+              translate: message.template.translate,
               parentChangeId,
             })
           );

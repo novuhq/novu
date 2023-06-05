@@ -89,6 +89,7 @@ export class CreateNotificationTemplate {
           senderName: message.template.senderName,
           parentChangeId,
           actor: message.template.actor,
+          translate: message.template?.translate,
         })
       );
 

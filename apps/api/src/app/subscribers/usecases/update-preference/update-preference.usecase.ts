@@ -14,6 +14,7 @@ export class UpdatePreference {
       templateId: command.templateId,
       channel: command.channel,
       enabled: command.enabled,
+      locale: command.locale,
     });
 
     return await this.updateSubscriberPreferenceUsecase.execute(updateCommand);

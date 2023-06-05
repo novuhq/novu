@@ -4,7 +4,10 @@ import { format } from 'date-fns';
 import { HandlebarHelpersEnum } from '@novu/shared';
 
 import { CompileTemplateCommand } from './compile-template.command';
-
+import {
+  TranslateMessage,
+  TranslateMessageCommand,
+} from '../translate-message/';
 Handlebars.registerHelper(
   HandlebarHelpersEnum.EQUALS,
   function (arg1, arg2, options) {
@@ -52,13 +55,36 @@ Handlebars.registerHelper(
 
 @Injectable()
 export class CompileTemplate {
+  constructor(private translateMessage: TranslateMessage) {}
   async execute(command: CompileTemplateCommand): Promise<string> {
     const templateContent = command.template;
 
     const template = Handlebars.compile(templateContent);
 
-    const result = template(command.data, {});
+    let result = template(command.data, {});
+    console.log('command -->', command);
+
+    if (command.translate && command.locale) {
+      result = await this.translate(result, command.locale);
+    }
 
     return result.replace(/&#x27;/g, "'");
+  }
+
+  private async translate(content: string, locale: string): Promise<string> {
+    try {
+      const command: TranslateMessageCommand = {
+        messageContent: content,
+        language: locale,
+      };
+      const translatedResult = await this.translateMessage.execute(command);
+      console.log('translatedResult -->', translatedResult);
+
+      return translatedResult;
+    } catch (err) {
+      console.log('transation error -->', err);
+
+      return content;
+    }
   }
 }

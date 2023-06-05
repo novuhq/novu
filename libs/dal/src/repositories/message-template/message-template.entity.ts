@@ -44,6 +44,8 @@ export class MessageTemplateEntity {
   _parentId?: string;
 
   actor?: IActor;
+
+  translate?: boolean;
 }
 
 export type MessageTemplateDBModel = ChangePropsValueType<

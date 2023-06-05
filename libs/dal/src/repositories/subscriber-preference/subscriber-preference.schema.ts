@@ -47,6 +47,9 @@ const subscriberPreferenceSchema = new Schema<SubscriberPreferenceDBModel>(
         type: Schema.Types.Boolean,
       },
     },
+    locale: {
+      type: Schema.Types.String,
+    },
   },
   schemaOptions
 );

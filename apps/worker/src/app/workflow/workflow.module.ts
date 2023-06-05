@@ -32,6 +32,8 @@ import {
   StoreSubscriberJobs,
   CalculateDelayService,
   WsQueueService,
+  TranslateMessage,
+  OpenAiService,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
@@ -103,6 +105,7 @@ const USE_CASES = [
   ProcessSubscriber,
   CreateSubscriber,
   UpdateSubscriber,
+  TranslateMessage,
 ];
 
 const REPOSITORIES = [JobRepository];
@@ -134,6 +137,7 @@ const SERVICES: Provider[] = [
   EventsDistributedLockService,
   EventsPerformanceService,
   CalculateDelayService,
+  OpenAiService,
 ];
 
 @Module({

@@ -14,4 +14,7 @@ export class UpdateSubscriberPreferenceCommand extends EnvironmentWithSubscriber
   @ValidateNested()
   @IsOptional()
   channel?: ChannelPreference;
+
+  @IsOptional()
+  locale?: string;
 }

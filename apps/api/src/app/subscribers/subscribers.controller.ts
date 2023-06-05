@@ -307,6 +307,7 @@ export class SubscribersController {
       templateId: templateId,
       ...(typeof body.enabled === 'boolean' && { enabled: body.enabled }),
       ...(body.channel && { channel: body.channel }),
+      locale: body.locale,
     });
 
     return await this.updatePreferenceUsecase.execute(command);

@@ -87,6 +87,10 @@ export class UpdateMessageTemplate {
       updatePayload.actor = command.actor;
     }
 
+    if (command.translate) {
+      updatePayload.translate = command.translate;
+    }
+
     if (!Object.keys(updatePayload).length) {
       throw new BadRequestException('No properties found for update');
     }

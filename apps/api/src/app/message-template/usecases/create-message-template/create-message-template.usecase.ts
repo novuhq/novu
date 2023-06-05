@@ -35,6 +35,7 @@ export class CreateMessageTemplate {
       preheader: command.preheader,
       senderName: command.senderName,
       actor: command.actor,
+      translate: command.translate,
     });
 
     if (item?._id) {

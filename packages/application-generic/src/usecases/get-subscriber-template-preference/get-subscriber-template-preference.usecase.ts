@@ -59,7 +59,8 @@ export class GetSubscriberTemplatePreference {
         responseTemplate,
         subscriberPreferenceEnabled,
         subscriberPreference?.channels,
-        activeChannels
+        activeChannels,
+        subscriberPreference?.locale
       );
     }
 
@@ -71,7 +72,8 @@ export class GetSubscriberTemplatePreference {
           responseTemplate,
           subscriberPreferenceEnabled,
           templatePreference,
-          activeChannels
+          activeChannels,
+          subscriberPreference?.locale
         );
       }
 
@@ -85,11 +87,16 @@ export class GetSubscriberTemplatePreference {
         responseTemplate,
         subscriberPreferenceEnabled,
         mergedPreference,
-        activeChannels
+        activeChannels,
+        subscriberPreference?.locale
       );
     }
 
-    return getNoSettingFallback(responseTemplate, activeChannels);
+    return getNoSettingFallback(
+      responseTemplate,
+      activeChannels,
+      subscriberPreference?.locale
+    );
   }
 
   private async queryActiveChannels(
@@ -169,7 +176,8 @@ function filterActiveChannels(
 
 function getNoSettingFallback(
   template: IGetSubscriberPreferenceTemplateResponse,
-  activeChannels: ChannelTypeEnum[]
+  activeChannels: ChannelTypeEnum[],
+  locale: string | undefined
 ): ISubscriberPreferenceResponse {
   return getResponse(
     template,
@@ -181,7 +189,8 @@ function getNoSettingFallback(
       chat: true,
       push: true,
     },
-    activeChannels
+    activeChannels,
+    locale
   );
 }
 
@@ -208,7 +217,8 @@ function getResponse(
   responseTemplate: IGetSubscriberPreferenceTemplateResponse,
   subscriberPreferenceEnabled: boolean,
   subscriberPreferenceChannels: IPreferenceChannels | undefined,
-  activeChannels: ChannelTypeEnum[]
+  activeChannels: ChannelTypeEnum[],
+  locale: string
 ): ISubscriberPreferenceResponse {
   return {
     template: responseTemplate,
@@ -218,6 +228,7 @@ function getResponse(
         activeChannels,
         subscriberPreferenceChannels
       ),
+      locale: locale,
     },
   };
 }

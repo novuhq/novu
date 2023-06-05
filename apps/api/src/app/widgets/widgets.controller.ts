@@ -331,6 +331,7 @@ export class WidgetsController {
       templateId: templateId,
       channel: body.channel,
       enabled: body.enabled,
+      locale: body.locale,
     });
 
     return await this.updateSubscriberPreferenceUsecase.execute(command);

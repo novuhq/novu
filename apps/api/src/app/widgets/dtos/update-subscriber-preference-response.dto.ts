@@ -34,6 +34,12 @@ class Preference {
     description: 'Subscriber preferences for the different channels regarding this workflow',
   })
   channels: PreferenceChannels;
+
+  @ApiProperty({
+    description: 'Locale',
+    type: String,
+  })
+  locale?: string;
 }
 
 export class UpdateSubscriberPreferenceResponseDto {

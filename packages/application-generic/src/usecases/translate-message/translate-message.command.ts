@@ -1,7 +1,7 @@
 import { IsString, IsIn } from 'class-validator';
 import { EnvironmentCommand } from '../../commands';
 
-export class TranslateMessageCommand extends EnvironmentCommand {
+export class TranslateMessageCommand {
   @IsString()
   messageContent: string;
 

@@ -1,4 +1,4 @@
-import { IsBoolean, IsOptional, ValidateNested } from 'class-validator';
+import { IsBoolean, IsOptional, ValidateNested, IsString } from 'class-validator';
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ChannelPreference } from '../../shared/dtos/channel-preference';
 
@@ -18,4 +18,12 @@ export class UpdateSubscriberPreferenceRequestDto {
   @IsBoolean()
   @IsOptional()
   enabled?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Subscriber locale',
+    type: String,
+  })
+  @IsString()
+  @IsOptional()
+  locale?: string;
 }

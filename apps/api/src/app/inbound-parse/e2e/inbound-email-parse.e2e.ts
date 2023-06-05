@@ -10,7 +10,7 @@ import { CreateTemplatePayload } from '@novu/testing/src/create-notification-tem
 import { SubscribersService } from '@novu/testing/src';
 import axios from 'axios';
 import * as sinon from 'sinon';
-import { CompileTemplate } from '@novu/application-generic';
+import { CompileTemplate, TranslateMessage } from '@novu/application-generic';
 
 const USER_MAIL_DOMAIN = 'mail.domain.com';
 const USER_PARSE_WEBHOOK = 'user-parse.com/webhook/{{compiledVariable}}';
@@ -36,7 +36,7 @@ describe('Should handler the new arrived mail', () => {
     subscriber = await subscriberService.createSubscriber();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [InboundEmailParse, JobRepository, MessageRepository, CompileTemplate],
+      providers: [InboundEmailParse, JobRepository, MessageRepository, CompileTemplate, TranslateMessage],
     }).compile();
 
     inboundEmailParseUsecase = module.get<InboundEmailParse>(InboundEmailParse);
