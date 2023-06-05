@@ -70,6 +70,7 @@ export const StepName = ({
         </When>
       </Group>
       <GenerateContentContextModal
+        description={'Please provide more context, so we can generate content for you.'}
         stepIndex={index}
         isOpen={generateContentInChatGpt}
         isLoading={isGeneratingContentInChatGpt}
