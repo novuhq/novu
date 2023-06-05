@@ -8,11 +8,7 @@ export const GenerateContentButton = ({ onClick }) => {
   const { readonly } = useEnvController();
 
   return (
-    <Button
-      data-test-id="notification-template-generate-content-btn"
-      disabled={readonly || !formState.isDirty}
-      onClick={onClick}
-    >
+    <Button data-test-id="notification-template-generate-content-btn" disabled={readonly} onClick={onClick}>
       Generate Content
     </Button>
   );

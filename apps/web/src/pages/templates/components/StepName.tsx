@@ -17,15 +17,22 @@ export const StepName = ({
   index: number;
   color?: any;
 }) => {
+  const [context, setContext] = useState('');
   const [generateContentInChatGpt, setGenerateContentInChatGpt] = useState(false);
   const [isGeneratingContentInChatGpt, setIsGeneratingContentInChatGpt] = useState(false);
   const [isError, setIsError] = useState<string | undefined>(undefined);
+
+  const onContextChange = (event) => {
+    const { value } = event.target;
+    setContext(value);
+  };
 
   const confirmGenerateContentInChatGpt = async () => {
     setIsGeneratingContentInChatGpt(true);
     setIsError(undefined);
     try {
       // call to chat gpt
+      console.log({ context });
       setIsGeneratingContentInChatGpt(false);
       setGenerateContentInChatGpt(false);
     } catch (e: any) {
@@ -64,9 +71,11 @@ export const StepName = ({
       </Group>
       <GenerateContentContextModal
         description={'Please provide more context, so we can generate content for you.'}
+        stepIndex={index}
         isOpen={generateContentInChatGpt}
         isLoading={isGeneratingContentInChatGpt}
         error={isError}
+        onChange={onContextChange}
         confirm={confirmGenerateContentInChatGpt}
         cancel={cancelGenerateContentInChatGpt}
         confirmButtonText="Generate Content"

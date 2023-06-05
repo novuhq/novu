@@ -50,3 +50,9 @@ export enum SystemAvatarIconEnum {
   UP = 'up',
   QUESTION = 'question',
 }
+
+export interface IWorkflowProperties {
+  workflowName: string;
+  templateName: string;
+  emailSubject: string;
+}

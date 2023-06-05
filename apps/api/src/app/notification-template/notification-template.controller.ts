@@ -11,7 +11,7 @@ import {
   UseInterceptors,
   Query,
 } from '@nestjs/common';
-import { ChannelTypeEnum, IJwtPayload, MemberRoleEnum } from '@novu/shared';
+import { ChannelTypeEnum, IJwtPayload, IWorkflowProperties, MemberRoleEnum } from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
 import { GetNotificationTemplates } from './usecases/get-notification-templates/get-notification-templates.usecase';
 import { GetNotificationTemplatesCommand } from './usecases/get-notification-templates/get-notification-templates.command';
@@ -196,6 +196,7 @@ export class NotificationTemplateController {
     body: {
       prompt: string;
       channel: ChannelTypeEnum;
+      workflow: IWorkflowProperties;
     }
   ): Promise<any> {
     return this.getAiMessage.execute(
@@ -205,6 +206,7 @@ export class NotificationTemplateController {
         userId: user._id,
         prompt: body.prompt,
         channel: body.channel,
+        ...body.workflow,
       })
     );
   }
@@ -212,11 +214,12 @@ export class NotificationTemplateController {
   @Get('/ai/test')
   async test() {
     try {
-      const result = this.openAiService.createCompletion(
-        `Please generate an html notification that welcomes a new user, use handlebars, give me only the html content without the html and body and don't use javascript, give me only the code`
+      const result = await this.openAiService.createCompletion(
+        `Please generate an informal text in a div element (inline-style) for an email notification with  the context: "insurance payment confirmation with the subject Payment Confirmed!"
+use variables (use "{{" and "}}" without space) and subscriber.firstName , subscriber.lastName, organization.name, organization.logo, organization.brandingColor, and other variables. no javascript.`
       );
 
-      return result;
+      return result.text;
     } catch (e) {
       console.log(e);
     }

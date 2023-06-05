@@ -20,6 +20,6 @@ export class OpenAiService implements OnModuleInit {
   async createCompletion<T>(prompt: string): Promise<any> {
     const req = await this._api.sendMessage(prompt);
 
-    return JSON.stringify(req, null, 2);
+    return req;
   }
 }
