@@ -28,7 +28,7 @@ runs:
     - uses: actions/setup-node@v3
       name: ⚙️ Setup Node Version
       with:
-        node-version: '16.15.1'
+        node-version: '18.16.0'
         cache: 'pnpm'
 
     - name: 💵 Start Redis
