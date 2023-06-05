@@ -1,6 +1,7 @@
 import { Group } from '@mantine/core';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 import { When } from '../../../components/utils/When';
+import { GenerateContentButton } from './GenerateContentButton';
 import { UpdateButton } from './UpdateButton';
 import { StepNameInput } from './StepNameInput';
 import { stepIcon, stepNames } from '../constants';
@@ -25,6 +26,8 @@ export const StepName = ({
             marginRight: 32,
           }}
         >
+          <GenerateContentButton />
+          &nbsp;
           <UpdateButton />
         </div>
       </When>
