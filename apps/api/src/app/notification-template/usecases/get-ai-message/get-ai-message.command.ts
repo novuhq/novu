@@ -10,7 +10,7 @@ export class GetAiMessageCommand extends EnvironmentWithUserCommand {
   channel: ChannelTypeEnum;
 
   @IsString()
-  workflowName: string;
+  name: string;
 
   @IsString()
   templateName: string;

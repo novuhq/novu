@@ -8,7 +8,7 @@ export class GetAiMessage {
 
   async execute(command: GetAiMessageCommand): Promise<string> {
     const text = `Please generate an informal text in a div element (inline-style) for an ${command.channel.toLowerCase()} notification with  the context: "${
-      command.workflowName
+      command.name
     }, ${command.templateName} with the subject ${command.emailSubject}"
 use variables (use "{{" and "}}" without space between them) and subscriber.firstName , subscriber.lastName, organization.name, branding.logo, branding.color, and other variables. no javascript, don't explain what you are doing.`;
 

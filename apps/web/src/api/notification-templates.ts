@@ -47,3 +47,7 @@ export async function testTrigger(data: Record<string, unknown>) {
 export async function testSendEmailMessage(data: Record<string, unknown>) {
   return api.post(`/v1/events/test/email`, data);
 }
+
+export async function generateTemplateContentWithAI(data: Record<string, unknown>) {
+  return api.post(`/v1/notification-templates/ai`, data);
+}
