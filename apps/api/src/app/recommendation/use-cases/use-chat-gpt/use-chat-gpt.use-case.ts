@@ -20,8 +20,21 @@ export class UseChatGptUseCase {
         messages: [{ role: 'user', content: command.prompt }],
       });
       console.log(completion.data);
+      const answer = completion.data?.choices;
 
-      return completion.data?.choices;
+      if (answer[0].message.content) {
+        console.log('parsing');
+
+        try {
+          const jsonArrayAnswer = JSON.parse(answer[0].message.content);
+
+          return jsonArrayAnswer;
+        } catch (error) {
+          console.log('parse error', error);
+
+          return answer;
+        }
+      }
     } catch (error) {
       if (error.response) {
         console.log(error.response.status);

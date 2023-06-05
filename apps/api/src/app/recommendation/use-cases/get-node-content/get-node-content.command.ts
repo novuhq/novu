@@ -4,5 +4,5 @@ export class GetNodeContentCommand extends EnvironmentCommand {
   title?: string;
   description?: string;
   prompt?: string;
-  channel?: string;
+  channel: string;
 }
