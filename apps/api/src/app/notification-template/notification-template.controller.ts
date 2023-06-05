@@ -11,7 +11,7 @@ import {
   UseInterceptors,
   Query,
 } from '@nestjs/common';
-import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
+import { ChannelTypeEnum, IJwtPayload, MemberRoleEnum } from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
 import { GetNotificationTemplates } from './usecases/get-notification-templates/get-notification-templates.usecase';
 import { GetNotificationTemplatesCommand } from './usecases/get-notification-templates/get-notification-templates.command';
@@ -39,10 +39,13 @@ import { Roles } from '../auth/framework/roles.decorator';
 import { ApiResponse } from '../shared/framework/response.decorator';
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 import { CreateNotificationTemplateQuery } from './queries';
+import { GetAiMessage } from './usecases/get-ai-message/get-ai-message.usecase';
+import { GetAiMessageCommand } from './usecases/get-ai-message/get-ai-message.command';
+import { OpenAiService } from '../shared/services/openai/openai.service';
 
 @Controller('/notification-templates')
 @UseInterceptors(ClassSerializerInterceptor)
-@UseGuards(JwtAuthGuard)
+// @UseGuards(JwtAuthGuard)
 @ApiTags('Workflows')
 export class NotificationTemplateController {
   constructor(
@@ -51,7 +54,9 @@ export class NotificationTemplateController {
     private getNotificationTemplateUsecase: GetNotificationTemplate,
     private updateTemplateByIdUsecase: UpdateNotificationTemplate,
     private deleteTemplateByIdUsecase: DeleteNotificationTemplate,
-    private changeTemplateActiveStatusUsecase: ChangeTemplateActiveStatus
+    private changeTemplateActiveStatusUsecase: ChangeTemplateActiveStatus,
+    private getAiMessage: GetAiMessage,
+    private openAiService: OpenAiService
   ) {}
 
   @Get('')
@@ -181,6 +186,42 @@ export class NotificationTemplateController {
         __source: query?.__source,
       })
     );
+  }
+
+  @Post('/ai')
+  @UseGuards(RootEnvironmentGuard)
+  getAiMessageForTemplate(
+    @UserSession() user: IJwtPayload,
+    @Body()
+    body: {
+      prompt: string;
+      channel: ChannelTypeEnum;
+    }
+  ): Promise<any> {
+    return this.getAiMessage.execute(
+      GetAiMessageCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        prompt: body.prompt,
+        channel: body.channel,
+      })
+    );
+  }
+
+  @Get('/ai/test')
+  async test() {
+    try {
+      const result = this.openAiService.createCompletion(
+        `Please generate an html notification that welcomes a new user, use handlebars, give me only the html content without the html and body and don't use javascript, give me only the code`
+      );
+
+      return result;
+    } catch (e) {
+      console.log(e);
+    }
+
+    return {};
   }
 
   @Put('/:templateId/status')

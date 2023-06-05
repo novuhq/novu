@@ -449,7 +449,9 @@
     "fortawesome",
     "fontawesome",
     "middlewares",
-    "localforage"
+    "localforage",
+    "openai",
+    "ChatGPTAPI"
   ],
   "flagWords": [],
   "patterns": [

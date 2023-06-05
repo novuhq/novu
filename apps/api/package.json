@@ -56,6 +56,7 @@
     "body-parser": "^1.20.0",
     "bull": "^4.2.1",
     "bullmq": "^3.10.2",
+    "chatgpt": "^5.2.5",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "compression": "^1.7.4",
