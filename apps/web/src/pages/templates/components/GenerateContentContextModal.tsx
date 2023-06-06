@@ -13,7 +13,7 @@ const TextItalics = ({ children }) => (
 
 const Description = () => (
   <Container>
-    <Text size={'lg'}>Provide us with more context so we can help you to redact your content</Text>
+    <Text size={'lg'}>Please provide some context so we can generate content tailored to your template!</Text>
     <Space h="sm" />
   </Container>
 );
