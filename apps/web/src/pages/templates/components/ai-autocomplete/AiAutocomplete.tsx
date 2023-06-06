@@ -144,7 +144,7 @@ export const AIAutocomplete = React.forwardRef(
     const { colorScheme } = useTheme();
 
     const { aiSuggestions, isLoading: areAutosuggestionsLoading } = useAiAutosuggestions({
-      isEnabled: opened,
+      isEnabled: opened && dropdownType === DropdownType.SUGGESTIONS,
       title,
       channel,
       value,
