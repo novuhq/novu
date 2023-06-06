@@ -54,7 +54,7 @@ export function TemplateSMSEditor({
         )}
       />
 
-      <VariableManager index={index} variablesArray={variablesArray} />
+      {/* <VariableManager index={index} variablesArray={variablesArray} /> */}
     </>
   );
 }

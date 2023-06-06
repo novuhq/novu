@@ -9,5 +9,9 @@ export async function getAiAutosuggestions({
   channel: string;
   title?: string;
 }) {
-  return api.post('/v1/recommend/get-node-contet', { description, channel, title });
+  return api.post('/v1/recommend/get-node-content', { description, channel, title });
+}
+
+export async function getAiTranslation({ prompt, dstLanguage }: { prompt: string; dstLanguage: string }) {
+  return api.post('/v1/recommend/get-node-translation', { prompt, dstLanguage });
 }

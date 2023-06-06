@@ -18,6 +18,7 @@ interface IDropdownProps
     | 'disabled'
     | 'width'
     | 'styles'
+    | 'closeOnClickOutside'
   > {
   control: React.ReactNode;
   children: React.ReactNode;

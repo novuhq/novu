@@ -1,11 +1,8 @@
-import { TypeAnimation } from 'react-type-animation';
 import styled from '@emotion/styled';
 import { Skeleton } from '@mantine/core';
-import { useQuery } from '@tanstack/react-query';
 
 import { colors, Dropdown } from '../../../../design-system';
 import { EditIcon } from './EditIcon';
-import { getAiAutosuggestions } from '../../../../api/auto-suggestions';
 
 const PanelHolder = styled(Skeleton)`
   width: 100%;
@@ -32,23 +29,13 @@ const SuggestionText = styled.span`
 `;
 
 interface AIAutocompleteContentProps {
-  title: string;
-  channel: string;
-  value: string;
+  isLoading: boolean;
+  suggestions?: Array<{ content: string }>;
   onSuggestionClick: (value: string) => void;
 }
 
-export const AiAutocompleteContent = ({ title, channel, value, onSuggestionClick }: AIAutocompleteContentProps) => {
-  const { data, isLoading } = useQuery<{ answer: Array<{ content: string }> }>(
-    ['get-ai-suggestions', value],
-    () => getAiAutosuggestions({ description: value, channel, title }),
-    {
-      refetchOnMount: false,
-      refetchOnWindowFocus: false,
-    }
-  );
-
-  if (isLoading || !data || data.answer.length === 0) {
+export const AiAutocompleteContent = ({ isLoading, suggestions, onSuggestionClick }: AIAutocompleteContentProps) => {
+  if (isLoading || !suggestions || suggestions.length === 0) {
     return (
       <>
         <PanelHolder />
@@ -60,11 +47,11 @@ export const AiAutocompleteContent = ({ title, channel, value, onSuggestionClick
 
   return (
     <>
-      {data.answer.map((suggestion) => (
+      {suggestions.map((suggestion) => (
         <Dropdown.Item key={suggestion.content} onClick={() => onSuggestionClick(suggestion.content)}>
           <ItemHolder>
             <EditIcon style={{ minWidth: 16 }} />
-            <SuggestionText>{suggestion.content}</SuggestionText>
+            <SuggestionText title={suggestion.content}>{suggestion.content}</SuggestionText>
           </ItemHolder>
         </Dropdown.Item>
       ))}

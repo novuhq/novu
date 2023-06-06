@@ -1,2 +1,2 @@
-export * from './get-node-content.command';
-export * from './get-node-content.use-case';
+export * from './get-title-suggestion.command';
+export * from './get-title-suggestion.use-case';

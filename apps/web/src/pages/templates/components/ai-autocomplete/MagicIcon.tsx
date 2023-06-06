@@ -1,6 +1,8 @@
-export const MagicIcon = (props: React.ComponentPropsWithoutRef<'svg'>) => {
+import React from 'react';
+
+export const MagicIcon = React.forwardRef<any, React.ComponentPropsWithoutRef<'svg'>>((props, ref) => {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" {...props}>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" ref={ref} {...props}>
       <rect width="24" height="24" rx="4" />
       <mask id="a" width="16" height="16" x="4" y="4" maskUnits="userSpaceOnUse" style={{ maskType: 'alpha' }}>
         <path fill="#D9D9D9" d="M4 4h16v16H4z" />
@@ -14,4 +16,4 @@ export const MagicIcon = (props: React.ComponentPropsWithoutRef<'svg'>) => {
       </g>
     </svg>
   );
-};
+});
