@@ -1,4 +1,4 @@
-import { ClassSerializerInterceptor, Controller, Get, Query, UseGuards, UseInterceptors } from '@nestjs/common';
+import { ClassSerializerInterceptor, Controller, Get, Param, Query, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { IJwtPayload } from '@novu/shared';
 import { ExecutionDetailsResponseDto } from '@novu/application-generic';
@@ -8,13 +8,23 @@ import { ExternalApiAccessible } from '../auth/framework/external-api.decorator'
 import { GetExecutionDetails, GetExecutionDetailsCommand } from './usecases/get-execution-details';
 import { ApiResponse } from '../shared/framework/response.decorator';
 import { ExecutionDetailsRequestDto } from './dtos/execution-details-request.dto';
+import { ExecutionDetailsFilterResponseDto } from './dtos/execution-details-response.dto';
+
+import { GetExecutionDetailsByTransactionRequestDto } from './dtos/execution-details-transaction-request.dto';
+import {
+  GetExecutionDetailsByTransactionId,
+  GetExecutionDetailsByTransactionIdCommand,
+} from './usecases/get-execution-details-transactionId';
 
 @Controller('/execution-details')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
 @ApiTags('Execution Details')
 export class ExecutionDetailsController {
-  constructor(private getExecutionDetails: GetExecutionDetails) {}
+  constructor(
+    private getExecutionDetails: GetExecutionDetails,
+    private getExecutionDetailsByTransactionId: GetExecutionDetailsByTransactionId
+  ) {}
 
   @Get('/')
   @ApiOperation({
@@ -33,6 +43,29 @@ export class ExecutionDetailsController {
         userId: user._id,
         notificationId: query.notificationId,
         subscriberId: query.subscriberId,
+      })
+    );
+  }
+
+  @Get('/transaction/:transactionId')
+  @ApiResponse(ExecutionDetailsFilterResponseDto)
+  @ApiOperation({
+    summary: 'Get execution details by transaction id',
+  })
+  @ExternalApiAccessible()
+  getNotificationTemplates(
+    @UserSession() user: IJwtPayload,
+    @Param('transactionId') transactionId: string,
+    @Query() query: GetExecutionDetailsByTransactionRequestDto
+  ): Promise<ExecutionDetailsFilterResponseDto> {
+    return this.getExecutionDetailsByTransactionId.execute(
+      GetExecutionDetailsByTransactionIdCommand.create({
+        transactionId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        environmentId: user.environmentId,
+        page: query.page ? query.page : 0,
+        limit: query.limit ? query.limit : 1,
       })
     );
   }

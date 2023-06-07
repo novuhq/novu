@@ -44,4 +44,26 @@ export class ExecutionDetailsRepository extends BaseRepository<
       _notificationId: notificationId,
     });
   }
+
+  /**
+   * Activity feed might need to retrieve all the executions of a notification by transactionId.
+   */
+  public async findAllNofitificationExecutionsByTransactionId(
+    transactionId: string,
+    environmentId: string,
+    skip = 0,
+    limit = 10
+  ) {
+    const requestQuery = {
+      _environmentId: environmentId,
+      transactionId: transactionId,
+    };
+
+    const [items, totalCount] = await Promise.all([
+      this.find(requestQuery, '', { sort: { createdAt: -1 }, skip, limit }),
+      this.count(requestQuery),
+    ]);
+
+    return { totalCount, data: this.mapEntities(items) };
+  }
 }
