@@ -251,6 +251,61 @@ describe('Message filter matcher', function () {
 
     expect(matchedMessage.passed).to.equal(true);
   });
+  it('should check if value is defined in payload', async function () {
+    const matchedMessage = await messageMatcher.filter(
+      sendMessageCommand({
+        step: makeStep('Correct Match', 'AND', [
+          {
+            operator: 'IS_DEFINED',
+            value: '',
+            field: 'emailMessage',
+            on: FilterPartTypeEnum.PAYLOAD,
+          },
+        ]),
+      }),
+      {
+        payload: {
+          emailMessage: '<b>This works</b>',
+        },
+      }
+    );
+
+    expect(matchedMessage.passed).to.equal(true);
+  });
+
+  it('should check if key is defined or not in subscriber data', async function () {
+    const matchedMessage = await messageMatcher.filter(
+      sendMessageCommand({
+        step: makeStep('Correct Match', 'AND', [
+          {
+            operator: 'IS_DEFINED',
+            value: '',
+            field: 'data.nestedKey',
+            on: FilterPartTypeEnum.SUBSCRIBER,
+          },
+        ]),
+      }),
+      {
+        subscriber: {
+          firstName: '',
+          lastName: '',
+          email: '',
+          subscriberId: '',
+          deleted: false,
+          createdAt: '',
+          updatedAt: '',
+          _id: '',
+          _organizationId: '',
+          _environmentId: '',
+          data: {
+            nested_Key: 'nestedValue',
+          },
+        },
+      }
+    );
+
+    expect(matchedMessage.passed).to.equal(false);
+  });
 
   it('should get nested custom subscriber data', async function () {
     const matchedMessage = await messageMatcher.filter(

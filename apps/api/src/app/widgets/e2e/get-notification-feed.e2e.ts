@@ -173,8 +173,8 @@ describe('GET /widget/notifications/feed', function () {
 
   async function markMessageAsSeen(messageId: string) {
     return await axios.post(
-      `http://localhost:${process.env.PORT}/v1/widgets/messages/${messageId}/seen`,
-      {},
+      `http://localhost:${process.env.PORT}/v1/widgets/messages/markAs`,
+      { messageId, mark: { seen: true } },
       {
         headers: {
           Authorization: `Bearer ${subscriberToken}`,

@@ -55,7 +55,7 @@
     "@nestjs/testing": "^9.2.1",
     "@types/chai": "^4.3.4",
     "@types/express": "^4.17.8",
-    "@types/jest": "^27.0.2",
+    "@types/jest": "^29.5.0",
     "@types/mocha": "^8.0.1",
     "@types/node": "^14.14.6",
     "@types/sinon": "^9.0.0",
