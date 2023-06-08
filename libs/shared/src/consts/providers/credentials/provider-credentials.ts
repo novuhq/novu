@@ -684,6 +684,27 @@ export const africasTalkingConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
+export const whatsAppBusinessConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ApplicationId,
+    displayName: 'ApplicationId',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ApiVersion,
+    displayName: 'Api Version',
+    type: 'string',
+    required: true,
+  },
+];
+
 export const novuInAppConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.Hmac,

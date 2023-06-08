@@ -89,6 +89,7 @@
     "@novu/termii": "^0.15.0",
     "@novu/testing": "^0.15.0",
     "@novu/twilio": "^0.15.0",
+    "@novu/whatsapp-business": "^0.15.0",
     "@sentry/node": "^7.12.1",
     "analytics-node": "^6.2.0",
     "bullmq": "^3.10.2",

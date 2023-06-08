@@ -26,6 +26,7 @@ export enum CredentialsKeyEnum {
   TlsOptions = 'tlsOptions',
   RedirectUrl = 'redirectUrl',
   Hmac = 'hmac',
+  ApiVersion = 'apiVersion',
 }
 
 export enum EmailProviderIdEnum {
@@ -74,6 +75,7 @@ export enum ChatProviderIdEnum {
   Discord = 'discord',
   MsTeams = 'msteams',
   Mattermost = 'mattermost',
+  WhatsApp = 'whatsApp',
 }
 
 export enum PushProviderIdEnum {

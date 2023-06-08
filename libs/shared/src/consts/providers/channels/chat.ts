@@ -37,4 +37,12 @@ export const chatProviders: IProviderConfig[] = [
     docReference: 'https://developers.mattermost.com/integrate/webhooks/incoming/',
     logoFileName: { light: 'mattermost.svg', dark: 'mattermost.svg' },
   },
+  {
+    id: ChatProviderIdEnum.WhatsApp,
+    displayName: 'WhatsApp Business',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: [] as IConfigCredentials[],
+    docReference: 'https://developers.facebook.com/docs/whatsapp',
+    logoFileName: { light: 'whatsApp.svg', dark: 'whatsApp.svg' },
+  },
 ];
