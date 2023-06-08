@@ -49,7 +49,7 @@ jobs:
           echo REACT_APP_ENVIRONMENT=production >> .env
           echo REACT_APP_SEGMENT_KEY=${{ secrets.WEB_SEGMENT_KEY }} >> .env
           echo REACT_APP_LOGROCKET_ID=${{ secrets.LOGROCKET_ID }} >> .env
-          echo REACT_APP_MAIL_SERVER_DOMAIN="inbound-mail.novu.co" >> .env
+          echo REACT_APP_MAIL_SERVER_DOMAIN="eu.inbound-mail.novu.co" >> .env
           echo REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID=${{ secrets.PROD_LAUNCH_DARKLY_CLIENT_SIDE_ID }} >> .env
 
       - name: Envsetup
@@ -68,7 +68,7 @@ jobs:
           REACT_APP_LOGROCKET_ID: ${{ secrets.LOGROCKET_ID }}
           REACT_APP_SENTRY_DSN: https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907
           REACT_APP_ENVIRONMENT: production
-          REACT_APP_MAIL_SERVER_DOMAIN: inbound-mail.novu.co
+          REACT_APP_MAIL_SERVER_DOMAIN: eu.inbound-mail.novu.co
           REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID: ${{ secrets.PROD_LAUNCH_DARKLY_CLIENT_SIDE_ID }}
 
         working-directory: apps/web
