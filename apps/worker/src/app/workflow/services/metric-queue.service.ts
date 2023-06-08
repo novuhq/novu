@@ -124,11 +124,11 @@ export class MetricQueueService extends QueueService<Record<string, never>> {
               nr.recordMetric(`MetricQueueService/${queueService.name}/delayed`, delayedCount);
               nr.recordMetric(`MetricQueueService/${queueService.name}/active`, activeCount);
             } else {
-              Logger.log(`MetricQueueService/${queueService.name}/completed`, JSON.stringify(successMetric));
-              Logger.log(`MetricQueueService/${queueService.name}/failed`, JSON.stringify(failMetric));
-              Logger.log(`MetricQueueService/${queueService.name}/waiting`, waitCount);
-              Logger.log(`MetricQueueService/${queueService.name}/delayed`, delayedCount);
-              Logger.log(`MetricQueueService/${queueService.name}/active`, activeCount);
+              Logger.debug(`MetricQueueService/${queueService.name}/completed`, JSON.stringify(successMetric));
+              Logger.debug(`MetricQueueService/${queueService.name}/failed`, JSON.stringify(failMetric));
+              Logger.debug(`MetricQueueService/${queueService.name}/waiting`, waitCount);
+              Logger.debug(`MetricQueueService/${queueService.name}/delayed`, delayedCount);
+              Logger.debug(`MetricQueueService/${queueService.name}/active`, activeCount);
             }
           }
 
