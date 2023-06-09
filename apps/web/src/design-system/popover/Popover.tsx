@@ -48,6 +48,7 @@ export const Popover = ({
       radius="md"
       shadow={colorScheme === 'dark' ? shadows.dark : shadows.medium}
       offset={30}
+      middlewares={{ flip: false, shift: false }}
       {...rest}
     >
       <MantinePopover.Target>{target}</MantinePopover.Target>
