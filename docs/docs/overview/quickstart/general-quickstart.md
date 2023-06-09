@@ -1,8 +1,9 @@
 ---
 sidebar_position: 2
+sidebar_label: General Quickstart
 ---
 
-# Quick Start
+# General Quickstart
 
 To create your free managed, or docker-based Novu environment use our CLI tool:
 
@@ -15,7 +16,7 @@ After creating your cloud or self-hosted account, the next steps to sending your
 - Connect your providers
 - Create a workflow
 - Send a trigger
-- Integrate the [Notification Center](../notification-center/getting-started.md) within your app _(optional)_
+- Integrate the [Notification Center](../../notification-center/getting-started.md) within your app _(optional)_
 
 ## Connect providers
 
