@@ -9,11 +9,11 @@ import { useNotificationCenter, useNotifications, useFeedUnseenCount, useNovuCon
 
 export function FeedsTabs() {
   const { tabs, onTabClick } = useNotificationCenter();
-  const { storeId, setStore, markAllNotificationsAsSeen } = useNotifications();
+  const { storeId, setStore, markFetchedNotificationsAsSeen } = useNotifications();
   const { setFetchingStrategy } = useNovuContext();
 
   async function handleOnTabChange(newStoreId: string) {
-    markAllNotificationsAsSeen();
+    markFetchedNotificationsAsSeen();
     setStore(newStoreId);
   }
 

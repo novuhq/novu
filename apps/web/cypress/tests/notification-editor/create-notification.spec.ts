@@ -7,7 +7,7 @@ describe('Creation functionality', function () {
 
   it('should create in-app notification', function () {
     cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
+      cy.visit('/workflows/create');
     });
     cy.getByTestId('settings-page').click();
     cy.waitForNetworkIdle(500);
@@ -40,7 +40,7 @@ describe('Creation functionality', function () {
 
   it('should create multiline in-app notification, send it and receive', function () {
     cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
+      cy.visit('/workflows/create');
     });
 
     cy.getByTestId('settings-page').click();
@@ -88,7 +88,7 @@ describe('Creation functionality', function () {
 
   it('should manage variables', function () {
     cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
+      cy.visit('/workflows/create');
     });
     cy.getByTestId('settings-page').click();
     cy.getByTestId('title').clear().first().type('Test Notification Title');
@@ -178,7 +178,7 @@ describe('Creation functionality', function () {
 
   it('should create email notification', function () {
     cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
+      cy.visit('/workflows/create');
     });
     cy.getByTestId('settings-page').click();
 
@@ -227,7 +227,7 @@ describe('Creation functionality', function () {
 
   it('should add digest node', function () {
     cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
+      cy.visit('/workflows/create');
     });
 
     cy.getByTestId('settings-page').click();
@@ -309,7 +309,7 @@ describe('Creation functionality', function () {
 
   it('should create and edit group id', function () {
     const template = this.session.templates[0];
-    cy.visit('/templates/edit/' + template._id);
+    cy.visit('/workflows/edit/' + template._id);
     cy.waitForNetworkIdle(500);
     cy.getByTestId('settings-page').click();
     cy.waitForNetworkIdle(500);
@@ -325,9 +325,9 @@ describe('Creation functionality', function () {
     cy.getByTestId('notification-template-submit-btn').click();
     cy.waitForNetworkIdle(500);
 
-    cy.visit('/templates');
+    cy.visit('/workflows');
     cy.getByTestId('template-edit-link');
-    cy.visit('/templates/edit/' + template._id);
+    cy.visit('/workflows/edit/' + template._id);
     cy.waitForNetworkIdle(500);
     cy.getByTestId('settings-page').click();
     cy.getByTestId('groupSelector').should('have.value', 'New Test Category');
@@ -335,7 +335,7 @@ describe('Creation functionality', function () {
 
   it('should show delay settings in side menu', function () {
     cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
+      cy.visit('/workflows/create');
     });
     fillBasicNotificationDetails('Test Added Delay');
     goBack();
@@ -348,7 +348,7 @@ describe('Creation functionality', function () {
 
   it('should be able to add huge amount of nodes.', function () {
     cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
+      cy.visit('/workflows/create');
     });
 
     fillBasicNotificationDetails('Test 15 Nodes');
@@ -356,7 +356,7 @@ describe('Creation functionality', function () {
     cy.waitForNetworkIdle(500);
 
     for (let i = 0; i < 15; i++) {
-      cy.getByTestId('button-add').last().click();
+      cy.getByTestId('button-add').last().click({ force: true });
       cy.getByTestId('add-email-node').click();
     }
 

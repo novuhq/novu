@@ -57,7 +57,14 @@ export function PasswordRequirementPopover({ control, children }) {
 
   return (
     <div>
-      <Popover opened={popoverOpened} position="bottom" width="target" transition="pop" classNames={classes}>
+      <Popover
+        opened={popoverOpened}
+        position="bottom"
+        width="target"
+        transition="pop"
+        classNames={classes}
+        middlewares={{ flip: false, shift: false }}
+      >
         <Popover.Target>
           <div onFocusCapture={() => setPopoverOpened(true)} onBlurCapture={() => setPopoverOpened(false)}>
             {children}

@@ -22,6 +22,13 @@ export const SENTRY_DSN = window._env_.REACT_APP_SENTRY_DSN || process.env.REACT
 
 export const ENV = window._env_.REACT_APP_ENVIRONMENT || process.env.REACT_APP_ENVIRONMENT;
 
+const blueprintApiUrlByEnv = ENV === 'production' || ENV === 'prod' ? 'https://api.novu.co' : 'https://dev.api.novu.co';
+
+export const BLUEPRINTS_API_URL =
+  window._env_.REACT_APP_BLUEPRINTS_API_URL || isCypress
+    ? window._env_.REACT_APP_BLUEPRINTS_API_URL || process.env.REACT_APP_BLUEPRINTS_API_URL || 'http://localhost:1336'
+    : blueprintApiUrlByEnv;
+
 export const APP_ID = window._env_.REACT_APP_NOVU_APP_ID || process.env.REACT_APP_NOVU_APP_ID;
 
 export const WIDGET_EMBED_PATH =
@@ -44,3 +51,10 @@ export const WEBHOOK_URL = isCypress
 
 export const MAIL_SERVER_DOMAIN =
   window._env_.REACT_APP_MAIL_SERVER_DOMAIN || process.env.REACT_APP_MAIL_SERVER_DOMAIN || 'dev.inbound-mail.novu.co';
+
+export const LAUNCH_DARKLY_CLIENT_SIDE_ID =
+  window._env_.REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID || process.env.REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID;
+
+export const IS_TEMPLATE_STORE_ENABLED = isCypress
+  ? window._env_.IS_TEMPLATE_STORE_ENABLED || process.env.IS_TEMPLATE_STORE_ENABLED || 'true'
+  : window._env_.IS_TEMPLATE_STORE_ENABLED || process.env.IS_TEMPLATE_STORE_ENABLED || 'false';

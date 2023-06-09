@@ -445,7 +445,11 @@
     "Shortcodes",
     "supertest",
     "superagent",
-    "INAPP"
+    "INAPP",
+    "fortawesome",
+    "fontawesome",
+    "middlewares",
+    "localforage"
   ],
   "flagWords": [],
   "patterns": [

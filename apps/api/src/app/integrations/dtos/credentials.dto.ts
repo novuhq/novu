@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsObject, IsOptional, IsString } from 'class-validator';
-import { IsBooleanAny } from '../../shared/validators/is-boolean-any.validator';
+import { IsBoolean, IsObject, IsOptional, IsString } from 'class-validator';
+import { TransformToBoolean } from '../../shared/transformers/to-boolean';
 
 export class CredentialsDto {
   @ApiPropertyOptional()
@@ -39,8 +39,9 @@ export class CredentialsDto {
   port?: string;
 
   @ApiPropertyOptional()
+  @TransformToBoolean()
+  @IsBoolean()
   @IsOptional()
-  @IsBooleanAny()
   secure?: boolean;
 
   @ApiPropertyOptional()
@@ -89,21 +90,29 @@ export class CredentialsDto {
   clientId?: string;
 
   @ApiPropertyOptional()
+  @TransformToBoolean()
+  @IsBoolean()
   @IsOptional()
-  @IsBooleanAny()
   requireTls?: boolean;
 
   @ApiPropertyOptional()
+  @TransformToBoolean()
+  @IsBoolean()
   @IsOptional()
-  @IsBooleanAny()
   ignoreTls?: boolean;
 
   @ApiPropertyOptional()
   @IsObject()
   @IsOptional()
   tlsOptions?: Record<string, unknown>;
+
   @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
   baseUrl?: string;
+
   @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
   webhookUrl?: string;
 }

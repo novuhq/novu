@@ -11,7 +11,7 @@ import {
   OrdinalValueEnum,
 } from '@novu/shared';
 
-import { getChannel } from '../shared/channels';
+import { getChannel } from '../../../utils/channels';
 
 const validateAmount = ({
   ctx,
@@ -83,7 +83,7 @@ export const schema = z
   .object({
     name: z
       .string({
-        required_error: 'Required - Notification Name',
+        required_error: 'Required - Workflow Name',
       })
       .superRefine((data, ctx) => {
         if (data.replaceAll(/\s/g, '').length === 0) {
@@ -92,13 +92,13 @@ export const schema = z
             minimum: 1,
             type: 'string',
             inclusive: true,
-            message: 'Required - Notification Name',
+            message: 'Required - Workflow Name',
           });
         }
       }),
     notificationGroupId: z
       .string({
-        invalid_type_error: 'Required - Notification Group',
+        invalid_type_error: 'Required - Workflow Group',
       })
       .superRefine((data, ctx) => {
         if (data.length === 0) {
@@ -107,7 +107,7 @@ export const schema = z
             minimum: 1,
             type: 'string',
             inclusive: true,
-            message: 'Required - Notification Group',
+            message: 'Required - Workflow Group',
           });
         }
       }),
