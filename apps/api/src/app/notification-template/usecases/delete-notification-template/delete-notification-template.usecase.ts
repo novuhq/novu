@@ -27,11 +27,11 @@ export class DeleteNotificationTemplate {
 
   async execute(command: GetNotificationTemplateCommand) {
     try {
-      const notificationTemlate = await this.notificationTemplateRepository.findOne({
+      const notificationTemplate = await this.notificationTemplateRepository.findOne({
         _environmentId: command.environmentId,
         _id: command.templateId,
       });
-      if (!notificationTemlate) {
+      if (!notificationTemplate) {
         throw new DalException(`Could not find workflow with id ${command.templateId}`);
       }
 
@@ -41,7 +41,7 @@ export class DeleteNotificationTemplate {
         command.templateId
       );
 
-      for (const step of notificationTemlate.steps) {
+      for (const step of notificationTemplate.steps) {
         await this.deleteMessageTemplate.execute(
           DeleteMessageTemplateCommand.create({
             organizationId: command.organizationId,
