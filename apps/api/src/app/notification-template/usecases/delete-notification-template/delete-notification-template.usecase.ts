@@ -27,10 +27,37 @@ export class DeleteNotificationTemplate {
 
   async execute(command: GetNotificationTemplateCommand) {
     try {
+      const notificationTemlate = await this.notificationTemplateRepository.findOne({
+        _environmentId: command.environmentId,
+        _id: command.templateId,
+      });
+      if (!notificationTemlate) {
+        throw new DalException(`Could not find workflow with id ${command.templateId}`);
+      }
+
+      const parentChangeId: string = await this.changeRepository.getChangeId(
+        command.environmentId,
+        ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
+        command.templateId
+      );
+
+      for (const step of notificationTemlate.steps) {
+        await this.deleteMessageTemplate.execute(
+          DeleteMessageTemplateCommand.create({
+            organizationId: command.organizationId,
+            environmentId: command.environmentId,
+            userId: command.userId,
+            messageTemplateId: step._templateId,
+            parentChangeId: parentChangeId,
+          })
+        );
+      }
+
       await this.notificationTemplateRepository.delete({
         _environmentId: command.environmentId,
         _id: command.templateId,
       });
+
       const item: NotificationTemplateEntity = (
         await this.notificationTemplateRepository.findDeleted({
           _environmentId: command.environmentId,
@@ -52,12 +79,6 @@ export class DeleteNotificationTemplate {
         }),
       });
 
-      const parentChangeId: string = await this.changeRepository.getChangeId(
-        command.environmentId,
-        ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
-        command.templateId
-      );
-
       await this.createChange.execute(
         CreateChangeCommand.create({
           organizationId: command.organizationId,
@@ -68,18 +89,6 @@ export class DeleteNotificationTemplate {
           changeId: parentChangeId,
         })
       );
-
-      for (const step of item.steps) {
-        await this.deleteMessageTemplate.execute(
-          DeleteMessageTemplateCommand.create({
-            organizationId: command.organizationId,
-            environmentId: command.environmentId,
-            userId: command.userId,
-            messageTemplateId: step._templateId,
-            parentChangeId: parentChangeId,
-          })
-        );
-      }
     } catch (e) {
       if (e instanceof DalException) {
         throw new ApiException(e.message);

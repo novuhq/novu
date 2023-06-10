@@ -5,8 +5,9 @@ import {
   NotificationTemplateRepository,
   EnvironmentRepository,
   MessageTemplateRepository,
+  ChannelTypeEnum,
 } from '@novu/dal';
-import { ChannelCTATypeEnum, StepTypeEnum } from '@novu/shared';
+import { ChannelCTATypeEnum } from '@novu/shared';
 
 describe('Delete notification template by id - /notification-templates/:templateId (DELETE)', async () => {
   let session: UserSession;
@@ -188,61 +189,91 @@ describe('Delete notification template by id - /notification-templates/:template
   });
 
   it('should delete the production message templates', async function () {
-    const notificationTemplateService = new NotificationTemplateService(
-      session.user._id,
-      session.organization._id,
-      session.environment._id
-    );
-    const template = await notificationTemplateService.createTemplate();
-
-    const messageTemplateIds = template.steps.map((step) => step._templateId);
-
-    const messageTemplates = await messageTemplateRepository.find({
+    const groups = await notificationGroupRepository.find({
       _environmentId: session.environment._id,
-      _id: { $in: messageTemplateIds },
     });
 
-    expect(messageTemplates.length).to.equal(2);
+    const testTemplate = {
+      name: 'test email template',
+      description: 'This is a test description',
+      tags: ['test-tag'],
+      notificationGroupId: groups[0]._id,
+      steps: [
+        {
+          template: {
+            type: ChannelTypeEnum.IN_APP,
+            content: 'Test content for <b>{{firstName}}</b>',
+            cta: {
+              type: ChannelCTATypeEnum.REDIRECT,
+              data: {
+                url: '/cypress/test-shell/example/test?test-param=true',
+              },
+            },
+            variables: [
+              {
+                defaultValue: '',
+                name: 'firstName',
+                required: false,
+                type: 'String',
+              },
+            ],
+          },
+        },
+      ],
+    };
+
+    const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+    const notificationTemplate = body.data;
+
+    const notificationTemplateId = body.data._id;
+
+    const messageTemplateId = notificationTemplate.steps[0]._templateId;
 
     await session.applyChanges({
       enabled: false,
     });
 
-    const prodEnv = await getProductionEnvironment(session.environment._id);
+    const prodEvn = await getProductionEnvironment(session.environment._id);
 
-    const isNotificationTemplateCreated = await notificationTemplateRepository.findOne({
-      _environmentId: prodEnv._id,
-      _parentId: template._id,
+    const isNotificationTemplatePromoted = await notificationTemplateRepository.findOne({
+      _environmentId: prodEvn._id,
+      _parentId: notificationTemplateId,
     });
 
-    expect(isNotificationTemplateCreated).to.exist;
+    expect(isNotificationTemplatePromoted).to.exist;
 
-    await session.testAgent.delete(`/v1/notification-templates/${template._id}`).send();
+    const isMessageTemplatePromoted = await messageTemplateRepository.findOne({
+      _environmentId: prodEvn._id,
+      _parentId: messageTemplateId,
+    });
+
+    expect(isMessageTemplatePromoted).to.exist;
+
+    await session.testAgent.delete(`/v1/notification-templates/${notificationTemplateId}`).send();
+
+    const {
+      body: { data },
+    } = await session.testAgent.get(`/v1/changes?promoted=false`);
+
+    expect(data[0].templateName).to.eq(body.data.name);
 
     await session.applyChanges({
       enabled: false,
     });
 
-    const prodNotificationTemplateExists = await notificationTemplateRepository.findOne({
-      _environmentId: prodEnv._id,
-      _parentId: template._id,
+    const isNotificationTemplateExists = await notificationTemplateRepository.findOne({
+      _environmentId: prodEvn._id,
+      _parentId: notificationTemplateId,
     });
 
-    expect(prodNotificationTemplateExists).to.equal(null);
+    expect(isNotificationTemplateExists).to.not.exist;
 
-    const deletedMessageTemplates = await messageTemplateRepository.find({
-      _environmentId: session.environment._id,
-      _id: { $in: messageTemplateIds },
+    const isMessageTemplateExists = await notificationTemplateRepository.findOne({
+      _environmentId: prodEvn._id,
+      _parentId: messageTemplateId,
     });
 
-    expect(deletedMessageTemplates.length).to.equal(0);
-
-    const prodMessageTemplateExists = await messageTemplateRepository.find({
-      _environmentId: prodEnv._id,
-      _parentId: messageTemplateIds[0],
-    });
-
-    expect(prodMessageTemplateExists.length).to.equal(0);
+    expect(isMessageTemplateExists).to.not.exist;
   });
 
   async function getProductionEnvironment(currentEnvId: string) {
