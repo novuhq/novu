@@ -55,6 +55,7 @@
     "@novu/expo": "^0.16.0",
     "@novu/fcm": "^0.16.0",
     "@novu/firetext": "^0.16.0",
+    "@novu/email-webhook": "^0.15.0",
     "@novu/forty-six-elks": "^0.16.0",
     "@novu/gupshup": "^0.16.0",
     "@novu/infobip": "^0.16.0",
