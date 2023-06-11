@@ -44,7 +44,7 @@ export async function createInAppIntegration() {
           providerId: InAppProviderIdEnum.Novu,
           channel: ChannelTypeEnum.IN_APP,
           credentials: encryptCredentials({
-            hmac: environment.widget.notificationCenterEncryption,
+            hmac: environment.widget?.notificationCenterEncryption,
           }),
           active: true,
         });
