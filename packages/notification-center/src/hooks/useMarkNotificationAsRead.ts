@@ -1,10 +1,8 @@
 import type { IMessage, IPaginatedResponse } from '@novu/shared';
 import { InfiniteData, useMutation, UseMutationOptions, useQueryClient } from '@tanstack/react-query';
-import { IStoreQuery } from '@novu/client';
 
-import { INFINITE_NOTIFICATIONS_QUERY_KEY } from './queryKeys';
 import { useNovuContext } from './useNovuContext';
-import { useSetQueryKey } from './useSetQueryKey';
+import { useFetchNotificationsQueryKey } from './useFetchNotificationsQueryKey';
 
 interface IMarkNotificationsAsReadVariables {
   feedId?: string | string[];
@@ -12,15 +10,13 @@ interface IMarkNotificationsAsReadVariables {
 
 export const useMarkNotificationsAsRead = ({
   onSuccess,
-  query,
   ...options
 }: {
   onSuccess?: () => void;
-  query?: IStoreQuery;
 } & UseMutationOptions<IMessage[], Error, IMarkNotificationsAsReadVariables> = {}) => {
   const queryClient = useQueryClient();
   const { apiService } = useNovuContext();
-  const setQueryKey = useSetQueryKey();
+  const fetchNotificationsQueryKey = useFetchNotificationsQueryKey();
 
   const { mutate, ...result } = useMutation<IMessage[], Error, IMarkNotificationsAsReadVariables>(
     ({ feedId }) => apiService.markAllMessagesAsRead(feedId),
@@ -28,7 +24,7 @@ export const useMarkNotificationsAsRead = ({
       ...options,
       onSuccess: (responseData, variables, context) => {
         queryClient.setQueriesData<InfiniteData<IPaginatedResponse<IMessage>>>(
-          { queryKey: setQueryKey([...INFINITE_NOTIFICATIONS_QUERY_KEY, query]), exact: false },
+          { queryKey: fetchNotificationsQueryKey, exact: false },
           (infiniteData) => {
             const pages = infiniteData.pages.map((page) => {
               const data = page.data.map((message) => {
