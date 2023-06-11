@@ -23,15 +23,12 @@ export class SubscriberOnlineService {
   }
 
   private async trackIsOnlineUpdate(updatePayload: IUpdateSubscriberPayload, subscriber: ISubscriberJwt) {
-    const admin = await this.memberRepository.getOrganizationAdminAccount(subscriber.organizationId);
-    if (admin?._userId) {
-      this.analyticsService.track('Update online flag - [Subscriber]', admin._userId, {
-        _organizationId: subscriber.organizationId,
-        _environmentId: subscriber.environmentId,
-        _subscriberId: subscriber._id,
-        ...updatePayload,
-      });
-    }
+    this.analyticsService.track('Update online flag - [Subscriber]', subscriber.organizationId, {
+      _organization: subscriber.organizationId,
+      _environment: subscriber.environmentId,
+      _subscriber: subscriber._id,
+      ...updatePayload,
+    });
   }
 
   async handleDisconnection(subscriber: ISubscriberJwt, activeConnections: number) {

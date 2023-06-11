@@ -357,31 +357,35 @@ interface INotificationsContext {
   markNotificationAsRead: (messageId: string) => void;
   markNotificationAsUnRead: (messageId: string) => void;
   markNotificationAsSeen: (messageId: string) => void;
+  markFetchedNotificationsAsRead: () => void;
+  markFetchedNotificationsAsSeen: () => void;
   markAllNotificationsAsRead: () => void;
   markAllNotificationsAsSeen: () => void;
   removeMessage: (messageId: string) => void;
 }
 ```
 
-| Prop                       | Type                                                        | Description                                                                                                                   |
-| -------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| storeId                    | string                                                      | The active [storeId](./api-reference#novuprovider).                                                                           |
-| stores                     | object[]                                                    | The array of [stores](./api-reference#novuprovider) passed to the `NovuProvider`.                                             |
-| unseenCount                | number                                                      | The unseen notifications count.                                                                                               |
-| notifications              | [object[]](./api-reference#the-notification-imessage-model) | The feed notifications array.                                                                                                 |
-| hasNextPage                | boolean                                                     | The flag indicating if the next notifications page to fetch is available.                                                     |
-| isLoading                  | boolean                                                     | The flag indicating if the initial notifications fetch request is on the fly.                                                 |
-| isFetching                 | boolean                                                     | The flag indicating if the notifications are fetching including initial fetch.                                                |
-| isFetchingNextPage         | boolean                                                     | The flag indicating if the next notifications page request in on the fly.                                                     |
-| setStore                   | function                                                    | The function allowing to change the current notifications [store/feed](./api-reference#novuprovider).                         |
-| fetchNextPage              | function                                                    | The function that fires the fetch request for the next notifications page.                                                    |
-| refetch                    | function                                                    | The function that allows to refetch all the notifications, when multiple page requests were made it will refetch all of them. |
-| markNotificationAsRead     | function                                                    | The function takes the notification message id as argument and allows to mark that notification as read.                      |
-| markNotificationAsUnRead   | function                                                    | The function takes the notification message id as argument and allows to mark that notification as unread.                    |
-| markNotificationAsSeen     | function                                                    | The function takes the notification message id as argument and allows to mark that notification as seen.                      |
-| markAllNotificationsAsRead | function                                                    | The function allowing you to mark all the fetched notifications as read.                                                      |
-| markAllNotificationsAsSeen | function                                                    | The function allowing you to mark all the fetched notifications as seen.                                                      |
-| removeMessage              | function                                                    | The function allowing you to delete a notification.                                                                           |
+| Prop                           | Type                                                        | Description                                                                                                                   |
+| ------------------------------ | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| storeId                        | string                                                      | The active [storeId](./api-reference#novuprovider).                                                                           |
+| stores                         | object[]                                                    | The array of [stores](./api-reference#novuprovider) passed to the `NovuProvider`.                                             |
+| unseenCount                    | number                                                      | The unseen notifications count.                                                                                               |
+| notifications                  | [object[]](./api-reference#the-notification-imessage-model) | The feed notifications array.                                                                                                 |
+| hasNextPage                    | boolean                                                     | The flag indicating if the next notifications page to fetch is available.                                                     |
+| isLoading                      | boolean                                                     | The flag indicating if the initial notifications fetch request is on the fly.                                                 |
+| isFetching                     | boolean                                                     | The flag indicating if the notifications are fetching including initial fetch.                                                |
+| isFetchingNextPage             | boolean                                                     | The flag indicating if the next notifications page request in on the fly.                                                     |
+| setStore                       | function                                                    | The function allowing to change the current notifications [store/feed](./api-reference#novuprovider).                         |
+| fetchNextPage                  | function                                                    | The function that fires the fetch request for the next notifications page.                                                    |
+| refetch                        | function                                                    | The function that allows to refetch all the notifications, when multiple page requests were made it will refetch all of them. |
+| markNotificationAsRead         | function                                                    | The function takes the notification message id as argument and allows to mark that notification as read.                      |
+| markNotificationAsUnRead       | function                                                    | The function takes the notification message id as argument and allows to mark that notification as unread.                    |
+| markNotificationAsSeen         | function                                                    | The function takes the notification message id as argument and allows to mark that notification as seen.                      |
+| markFetchedNotificationsAsRead | function                                                    | The function allowing you to mark all the fetched notifications as read.                                                      |
+| markFetchedNotificationsAsSeen | function                                                    | The function allowing you to mark all the fetched notifications as seen.                                                      |
+| markAllNotificationsAsRead     | function                                                    | The function allowing you to mark all notifications as read.                                                                  |
+| markAllNotificationsAsSeen     | function                                                    | The function allowing you to mark notifications as seen.                                                                      |
+| removeMessage                  | function                                                    | The function allowing you to delete a notification.                                                                           |
 
 You can find more information about the `IMessage` interface [here](./api-reference#the-notification-imessage-model).
 
@@ -982,8 +986,8 @@ color badge you can use a string of the color and not the object in order to cre
 | `seen`                      | `boolean`                 | Whether the notification item was read by the user, changed when the user clicks on the notification |
 | `lastSeenDate`              | `ISODate`                 | When the user has last seen the notification                                                         |
 | `content`                   | `string`                  | An HTML string of the generated notification content with parsed and replaced variables              |
-| `templateIdentifier`        | `string`                  | A unique Novu template identifier                                                                    |
-| `payload`                   | `Record<string, unknown>` | The `payload` object that was passed the notification template was triggered.                        |
+| `templateIdentifier`        | `string`                  | A unique Novu workflow identifier                                                                    |
+| `payload`                   | `Record<string, unknown>` | The `payload` object that was passed to the trigger even of the workflow.                            |
 | `createdAt`                 | `ISODate`                 | The creation date of the message                                                                     |
 | `cta.type`                  | `ChannelCTATypeEnum`      | The type of the CTA specified in the admin panel                                                     |
 | `cta.data.url`              | `string`                  | The redirect URL set in the admin panel, can be used to navigate on notification click               |

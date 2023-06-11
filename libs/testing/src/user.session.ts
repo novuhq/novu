@@ -5,7 +5,7 @@ import * as request from 'supertest';
 import * as defaults from 'superagent-defaults';
 import { v4 as uuid } from 'uuid';
 import { Novu, TriggerRecipientsPayload } from '@novu/node';
-import { EmailBlockTypeEnum, IEmailBlock, StepTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, EmailBlockTypeEnum, IEmailBlock, InAppProviderIdEnum, StepTypeEnum } from '@novu/shared';
 import {
   UserEntity,
   EnvironmentEntity,
@@ -18,6 +18,7 @@ import {
   ChangeEntity,
   SubscriberRepository,
   LayoutRepository,
+  IntegrationRepository,
 } from '@novu/dal';
 
 import { NotificationTemplateService } from './notification-template.service';
@@ -41,6 +42,7 @@ export class UserSession {
   private notificationGroupRepository = new NotificationGroupRepository();
   private feedRepository = new FeedRepository();
   private layoutRepository = new LayoutRepository();
+  private integrationRepository = new IntegrationRepository();
   private changeRepository: ChangeRepository = new ChangeRepository();
   private jobsService: JobsService;
 
@@ -74,7 +76,14 @@ export class UserSession {
     this.jobsService = new JobsService();
   }
 
-  async initialize(options: { noOrganization?: boolean; noEnvironment?: boolean; noIntegrations?: boolean } = {}) {
+  async initialize(
+    options: {
+      noOrganization?: boolean;
+      noEnvironment?: boolean;
+      noIntegrations?: boolean;
+      showOnBoardingTour?: boolean;
+    } = {}
+  ) {
     const card = {
       firstName: faker.name.firstName(),
       lastName: faker.name.lastName(),
@@ -89,6 +98,7 @@ export class UserSession {
       tokens: [],
       password: '123Qwe!@#',
       showOnBoarding: true,
+      showOnBoardingTour: options.showOnBoardingTour ? 0 : 2,
     };
 
     this.user = await userService.createUser(userEntity);
@@ -135,6 +145,17 @@ export class UserSession {
 
   private async initializeWidgetSession() {
     this.subscriberId = SubscriberRepository.createObjectId();
+
+    await this.integrationRepository.create({
+      _environmentId: this.environment._id,
+      _organizationId: this.environment._organizationId,
+      providerId: InAppProviderIdEnum.Novu,
+      channel: ChannelTypeEnum.IN_APP,
+      credentials: {
+        hmac: false,
+      },
+      active: true,
+    });
 
     const { body } = await this.testAgent
       .post('/v1/widgets/session/initialize')
@@ -295,7 +316,7 @@ export class UserSession {
   }
 
   async triggerEvent(triggerName: string, to: TriggerRecipientsPayload, payload = {}) {
-    await this.testAgent.post('/v1/events/trigger').send({
+    return await this.testAgent.post('/v1/events/trigger').send({
       name: triggerName,
       to: to,
       payload,

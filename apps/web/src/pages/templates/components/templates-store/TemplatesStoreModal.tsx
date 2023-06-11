@@ -1,12 +1,11 @@
-/* eslint-disable max-len */
-/* cSpell:disable */
 import { useState } from 'react';
+import { ReactFlowProvider } from 'react-flow-renderer';
 import { ActionIcon, Modal, useMantineTheme } from '@mantine/core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { IconName } from '@fortawesome/fontawesome-svg-core';
+import { useNavigate } from 'react-router-dom';
 
 import { Button, colors, shadows } from '../../../../design-system';
-import { Close } from '../../../../design-system/icons/actions/Close';
+import { Close } from '../../../../design-system/icons';
 import {
   CanvasHolder,
   GroupName,
@@ -23,97 +22,67 @@ import {
   TemplateDescription,
   useStyles,
 } from './templateStoreStyles';
+import { IBlueprintsGrouped } from '../../../../api/hooks';
+import { TriggerNode } from './TriggerNode';
+import { ChannelNode } from './ChannelNode';
+import { FlowEditor } from '../../../../components/workflow';
+import { useCreateTemplateFromBlueprint } from '../../../../api/hooks';
+import { errorMessage } from '../../../../utils/notifications';
+import { parseUrl } from '../../../../utils/routeUtils';
+import { ROUTES } from '../../../../constants/routes.enum';
+import { TemplateCreationSourceEnum } from '../../shared';
+import { useSegment } from '../../../../components/providers/SegmentProvider';
+import { IBlueprintTemplate } from '../../../../api/types';
 
-const TEMPLATES_GROUPED = [
-  {
-    name: 'Collaboration',
-    templates: [
-      {
-        name: ':fa-regular fa-message: Comments',
-        description:
-          'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
-      },
-      {
-        name: ':fa-solid fa-user-check: Mentions',
-        description:
-          'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
-      },
-      {
-        name: ':fa-solid fa-reply: Reply',
-        description:
-          'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
-      },
-    ],
-  },
-  {
-    name: 'Growth',
-    templates: [
-      {
-        name: ':fa-regular fa-hand: Welcome message',
-        description:
-          'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
-      },
-      {
-        name: ':fa-solid fa-envelope-open-text: Invite message',
-        description:
-          'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
-      },
-      {
-        name: ':fa-solid fa-gift: Refferal link',
-        description:
-          'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
-      },
-    ],
-  },
-  {
-    name: 'Authentification',
-    templates: [
-      {
-        name: ':fa-solid fa-wand-magic-sparkles: Magic link',
-        description:
-          'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
-      },
-      {
-        name: ':fa-solid fa-unlock: Password change',
-        description:
-          'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
-      },
-      {
-        name: ':fa-solid fa-unlock: Password change2',
-        description:
-          'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
-      },
-      {
-        name: ':fa-solid fa-unlock: Password change3',
-        description:
-          'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
-      },
-    ],
-  },
-];
-
-const getTemplateDetails = (templateName: string): { name: string; iconName: IconName } => {
-  const regexResult = /^:.{1,}: /.exec(templateName);
-  let name = '';
-  let iconName = 'fa-solid fa-question';
-  if (regexResult !== null) {
-    name = templateName.replace(regexResult[0], '').trim();
-    iconName = regexResult[0].replace(/:/g, '').trim();
-  }
-
-  return { name, iconName: iconName as IconName };
+const nodeTypes = {
+  triggerNode: TriggerNode,
+  channelNode: ChannelNode,
 };
 
 export interface ITemplatesStoreModalProps {
+  general: IBlueprintsGrouped[];
+  popular: IBlueprintsGrouped[];
   isOpened: boolean;
   onClose: () => void;
 }
 
-export const TemplatesStoreModal = ({ isOpened, onClose }: ITemplatesStoreModalProps) => {
+export const TemplatesStoreModal = ({ general, popular, isOpened, onClose }: ITemplatesStoreModalProps) => {
   const theme = useMantineTheme();
   const { classes: modalClasses } = useStyles();
-  const [selectedTemplate, setTemplate] = useState(TEMPLATES_GROUPED[0].templates[0]);
-  const { name: selectedTemplateName, iconName: selectedTemplateIconName } = getTemplateDetails(selectedTemplate.name);
+  const navigate = useNavigate();
+  const [selectedTemplate, setTemplate] = useState(general[0].blueprints[0]);
+
+  const { createTemplateFromBlueprint, isLoading: isCreatingTemplateFromBlueprint } = useCreateTemplateFromBlueprint({
+    onSuccess: (template) => {
+      navigate(`${parseUrl(ROUTES.WORKFLOWS_EDIT_TEMPLATEID, { templateId: template._id ?? '' })}`);
+    },
+    onError: () => {
+      errorMessage('Something went wrong while creating template from blueprint, please try again later.');
+    },
+  });
+
+  const segment = useSegment();
+
+  const handleTemplateClick = (template: IBlueprintTemplate) => {
+    segment.track('[Template Store] Click Notification Template', {
+      templateIdentifier: template.triggers[0]?.identifier,
+      location: TemplateCreationSourceEnum.TEMPLATE_STORE,
+    });
+
+    setTemplate(template);
+  };
+
+  const handleCreateTemplateClick = (blueprint: IBlueprintTemplate) => {
+    segment.track('[Template Store] Click Create Notification Template', {
+      templateIdentifier: blueprint.triggers[0]?.identifier,
+      location: TemplateCreationSourceEnum.TEMPLATE_STORE,
+    });
+
+    createTemplateFromBlueprint({
+      blueprint: blueprint,
+      params: { __source: TemplateCreationSourceEnum.TEMPLATE_STORE },
+    });
+  };
 
   return (
     <Modal
@@ -132,18 +101,33 @@ export const TemplatesStoreModal = ({ isOpened, onClose }: ITemplatesStoreModalP
       size="lg"
       onClose={onClose}
     >
-      <ModalBodyHolder>
-        <TemplatesSidebarHolder>
-          {TEMPLATES_GROUPED.map((group) => (
+      <ModalBodyHolder data-test-id="templates-store-modal">
+        <TemplatesSidebarHolder data-test-id="templates-store-modal-sidebar">
+          {popular.map((group) => (
             <TemplatesGroup key={group.name}>
               <GroupName>{group.name}</GroupName>
-              {group.templates.map((template) => {
-                const { name, iconName } = getTemplateDetails(template.name);
-
+              {group.blueprints.map((template) => {
                 return (
-                  <TemplateItem key={template.name} onClick={() => setTemplate(template)}>
-                    <FontAwesomeIcon icon={iconName} />
-                    <span>{name}</span>
+                  <TemplateItem key={template.name} onClick={() => handleTemplateClick(template)}>
+                    <FontAwesomeIcon icon={template.iconName} />
+                    <span>{template.name}</span>
+                  </TemplateItem>
+                );
+              })}
+            </TemplatesGroup>
+          ))}
+          {general.map((group) => (
+            <TemplatesGroup key={group.name}>
+              <GroupName>{group.name}</GroupName>
+              {group.blueprints.map((template) => {
+                return (
+                  <TemplateItem
+                    key={template.name}
+                    onClick={() => handleTemplateClick(template)}
+                    data-test-id="templates-store-modal-blueprint-item"
+                  >
+                    <FontAwesomeIcon icon={template.iconName} />
+                    <span>{template.name}</span>
                   </TemplateItem>
                 );
               })}
@@ -153,21 +137,53 @@ export const TemplatesStoreModal = ({ isOpened, onClose }: ITemplatesStoreModalP
         <TemplatesDetailsHolder>
           <TemplateHeader>
             <TemplateDetails>
-              <TemplateName key={selectedTemplateName}>
-                <FontAwesomeIcon icon={selectedTemplateIconName} />
-                <span>{selectedTemplateName}</span>
+              <TemplateName key={selectedTemplate.name} data-test-id="templates-store-modal-blueprint-name">
+                <FontAwesomeIcon icon={selectedTemplate.iconName} />
+                <span>{selectedTemplate.name}</span>
               </TemplateName>
-              <TemplateDescription>{selectedTemplate.description}</TemplateDescription>
+              <TemplateDescription data-test-id="templates-store-modal-blueprint-description">
+                {selectedTemplate.description}
+              </TemplateDescription>
             </TemplateDetails>
-            <ActionIcon variant="transparent" onClick={onClose}>
+            <ActionIcon variant="transparent" onClick={onClose} sx={{ marginLeft: 'auto' }}>
               <Close />
             </ActionIcon>
           </TemplateHeader>
           <CanvasHolder>
-            <div>Canvas</div>
+            <ReactFlowProvider>
+              <FlowEditor
+                key={selectedTemplate._id}
+                steps={selectedTemplate.steps}
+                nodeTypes={nodeTypes}
+                zoomOnScroll={false}
+                zoomOnPinch={false}
+                zoomOnDoubleClick={false}
+                panOnDrag={false}
+                panOnScroll
+                preventScrolling={false}
+                nodesDraggable={false}
+                elementsSelectable={false}
+                nodesConnectable={false}
+                selectNodesOnDrag={false}
+                wrapperStyles={{
+                  height: '100%',
+                  width: '100%',
+                  minHeight: '300px',
+                }}
+              />
+            </ReactFlowProvider>
             <NovuButtonHolder>
               <MadeByNovuStyled width={104} height={20} />
-              <Button>Use template</Button>
+              <Button
+                disabled={isCreatingTemplateFromBlueprint}
+                loading={isCreatingTemplateFromBlueprint}
+                onClick={() => {
+                  handleCreateTemplateClick(selectedTemplate);
+                }}
+                data-test-id="templates-store-modal-use-template"
+              >
+                Use template
+              </Button>
             </NovuButtonHolder>
           </CanvasHolder>
         </TemplatesDetailsHolder>

@@ -46,7 +46,7 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
     });
   }
 
-  async searchSubscribers(environmentId: string, search?: string | null, emails: string[] | null = []) {
+  async searchSubscribers(environmentId: string, search?: string | null, emails: string[] = []) {
     const filters: any = [
       {
         email: {
@@ -64,15 +64,18 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
           },
         },
         {
-          subscriberId: search,
+          subscriberId: { $eq: search },
         }
       );
     }
 
-    return await this.find({
-      _environmentId: environmentId,
-      $or: filters,
-    });
+    return await this.find(
+      {
+        _environmentId: environmentId,
+        $or: filters,
+      },
+      '_id'
+    );
   }
 
   async delete(query: SubscriberQuery) {

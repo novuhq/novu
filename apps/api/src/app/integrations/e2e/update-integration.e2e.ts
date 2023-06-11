@@ -87,7 +87,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
       credentials: {
         host: 'smtp.example.com',
         port: '587',
-        secure: 'true',
+        secure: true,
         requireTls: true,
         tlsOptions: { rejectUnauthorized: false },
       },
@@ -106,7 +106,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
       credentials: {
         host: 'smtp.example.com',
         port: '587',
-        secure: 'true',
+        secure: true,
         requireTls: false,
         tlsOptions: { rejectUnauthorized: false, enableTrace: true },
       },

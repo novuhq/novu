@@ -77,10 +77,16 @@ function FooterRightSide() {
 
   return (
     <ButtonsHolder>
-      <NavButton navigateTo={ROUTES.TEMPLATES_CREATE} handleOnClick={handlerBuildWorkflowClick}>
+      <NavButton navigateTo={ROUTES.WORKFLOWS_CREATE} handleOnClick={handlerBuildWorkflowClick}>
         <ButtonText>Build a Workflow</ButtonText>
       </NavButton>
-      <StyledButton fullWidth pulse onClick={handlerTryDigestClick} loading={isCreating}>
+      <StyledButton
+        fullWidth
+        pulse
+        onClick={handlerTryDigestClick}
+        loading={isCreating}
+        data-test-id="try-digest-playground-btn"
+      >
         <ButtonText>Try the Digest Playground</ButtonText>
       </StyledButton>
     </ButtonsHolder>

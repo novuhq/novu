@@ -18,6 +18,7 @@ import {
   CompileTemplate,
   CompileTemplateCommand,
   SmsFactory,
+  GetNovuIntegration,
 } from '@novu/application-generic';
 
 import { CreateLog } from '../../../shared/logs';
@@ -247,7 +248,7 @@ export class SendMessageSms extends SendMessageBase {
   ) {
     try {
       const smsFactory = new SmsFactory();
-      const smsHandler = smsFactory.getHandler(integration);
+      const smsHandler = smsFactory.getHandler(this.buildFactoryIntegration(integration));
       if (!smsHandler) {
         throw new PlatformException(`Sms handler for provider ${integration.providerId} is  not found`);
       }
@@ -308,5 +309,12 @@ export class SendMessageSms extends SendMessageBase {
         })
       );
     }
+  }
+
+  public buildFactoryIntegration(integration: IntegrationEntity, senderName?: string) {
+    return {
+      ...integration,
+      providerId: GetNovuIntegration.mapProviders(ChannelTypeEnum.SMS, integration.providerId),
+    };
   }
 }

@@ -3,13 +3,13 @@ import { PreferenceChannels } from '../../shared/dtos/preference-channels';
 
 class TemplateResponse {
   @ApiProperty({
-    description: 'Unique identifier of the notification template',
+    description: 'Unique identifier of the workflow',
     type: String,
   })
   _id: string;
 
   @ApiProperty({
-    description: 'Name of the notification template',
+    description: 'Name of the workflow',
     type: String,
   })
   name: string;
@@ -24,14 +24,14 @@ class TemplateResponse {
 
 class Preference {
   @ApiProperty({
-    description: 'Sets if the notification template is fully enabled for all channels or not for the subscriber.',
+    description: 'Sets if the workflow is fully enabled for all channels or not for the subscriber.',
     type: Boolean,
   })
   enabled: boolean;
 
   @ApiProperty({
     type: PreferenceChannels,
-    description: 'Subscriber preferences for the different channels regarding this notification template',
+    description: 'Subscriber preferences for the different channels regarding this workflow',
   })
   channels: PreferenceChannels;
 }
@@ -39,13 +39,13 @@ class Preference {
 export class UpdateSubscriberPreferenceResponseDto {
   @ApiProperty({
     type: TemplateResponse,
-    description: 'The notification template information and if it is critical or not',
+    description: 'The workflow information and if it is critical or not',
   })
   template: TemplateResponse;
 
   @ApiProperty({
     type: Preference,
-    description: 'The preferences of the subscriber regarding the related notification template',
+    description: 'The preferences of the subscriber regarding the related workflow',
   })
   preference: Preference;
 }
