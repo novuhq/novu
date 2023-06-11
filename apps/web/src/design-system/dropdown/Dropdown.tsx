@@ -35,6 +35,7 @@ export function Dropdown({ control, withArrow = true, offset = 10, children, ...
       shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.light}
       classNames={classes}
       clickOutsideEvents={['click', 'mousedown', 'touchstart']}
+      middlewares={{ flip: false, shift: false }}
       {...props}
     >
       <Menu.Target>{control}</Menu.Target>
