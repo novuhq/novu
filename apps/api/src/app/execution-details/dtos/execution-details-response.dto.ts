@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ExecutionDetailsEntity } from '@novu/dal';
 
-export class ExecutionDetailsFilterResponseDto {
+export class ExecutionDetailsPaginatedResponseDto {
   @ApiProperty()
   totalCount: number;
 

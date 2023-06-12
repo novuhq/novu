@@ -8,9 +8,9 @@ import { ExternalApiAccessible } from '../auth/framework/external-api.decorator'
 import { GetExecutionDetails, GetExecutionDetailsCommand } from './usecases/get-execution-details';
 import { ApiResponse } from '../shared/framework/response.decorator';
 import { ExecutionDetailsRequestDto } from './dtos/execution-details-request.dto';
-import { ExecutionDetailsFilterResponseDto } from './dtos/execution-details-response.dto';
+import { ExecutionDetailsPaginatedResponseDto } from './dtos/execution-details-response.dto';
 
-import { GetExecutionDetailsByTransactionRequestDto } from './dtos/execution-details-transaction-request.dto';
+import { GetExecutionDetailsForTransactionIdRequestDto } from './dtos/execution-details-transaction-request.dto';
 import {
   GetExecutionDetailsByTransactionId,
   GetExecutionDetailsByTransactionIdCommand,
@@ -47,25 +47,25 @@ export class ExecutionDetailsController {
     );
   }
 
-  @Get('/transaction/:transactionId')
-  @ApiResponse(ExecutionDetailsFilterResponseDto)
+  @Get('/:transactionId')
+  @ApiResponse(ExecutionDetailsPaginatedResponseDto)
   @ApiOperation({
     summary: 'Get execution details by transaction id',
   })
   @ExternalApiAccessible()
-  getNotificationTemplates(
+  async getExecutionDetailsFilterByTransactionId(
     @UserSession() user: IJwtPayload,
     @Param('transactionId') transactionId: string,
-    @Query() query: GetExecutionDetailsByTransactionRequestDto
-  ): Promise<ExecutionDetailsFilterResponseDto> {
+    @Query() query: GetExecutionDetailsForTransactionIdRequestDto
+  ): Promise<ExecutionDetailsPaginatedResponseDto> {
     return this.getExecutionDetailsByTransactionId.execute(
       GetExecutionDetailsByTransactionIdCommand.create({
         transactionId,
         organizationId: user.organizationId,
         userId: user._id,
         environmentId: user.environmentId,
-        page: query.page ? query.page : 0,
-        limit: query.limit ? query.limit : 1,
+        page: query.page ?? 0,
+        limit: query.limit ?? 10,
       })
     );
   }
