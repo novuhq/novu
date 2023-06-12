@@ -2,6 +2,9 @@
 sidebar_position: 1
 ---
 
+import FAQ from '@site/src/components/FAQ';
+import FAQItem from '@site/src/components/FAQItem';
+
 # React Component
 
 Novu provides the `@novu/notification-center` a React library that helps to add a fully functioning notification center to your web application in minutes. Let's do a quick recap on how we can easily use it in your application.
@@ -186,85 +189,84 @@ The `i18n` prop can accept 2 different types of values
   i18n = 'en';
   ```
 
-    <details>
-      <summary>Supported languages</summary>
-      <div>
-        <ul>
-          <li><code>af</code> (Afrikaans)</li>
-          <li><code>am</code> (Amharic)</li>
-          <li><code>ar</code> (Arabic)</li>
-          <li><code>as</code> (Assamese)</li>
-          <li><code>az</code> (Azerbaijani)</li>
-          <li><code>ba</code> (Bashkir)</li>
-          <li><code>be</code> (Belarusian)</li>
-          <li><code>bg</code> (Bulgarian)</li>
-          <li><code>bh</code> (Bihari)</li>
-          <li><code>bn</code> (Bengali)</li>
-          <li><code>bs</code> (Bosnian)</li>
-          <li><code>ca</code> (Catalan)</li>
-          <li><code>cs</code> (Czech)</li>
-          <li><code>da</code> (Danish)</li>
-          <li><code>de</code> (German)</li>
-          <li><code>el</code> (Greek)</li>
-          <li><code>en</code> (English)</li>
-          <li><code>es</code> (Spanish)</li>
-          <li><code>eu</code> (Basque)</li>
-          <li><code>fa</code> (Farsi)</li>
-          <li><code>fi</code> (Finnish)</li>
-          <li><code>fr</code> (French)</li>
-          <li><code>ga</code> (Irish)</li>
-          <li><code>gl</code> (Galician)</li>
-          <li><code>gu</code> (Gujarati)</li>
-          <li><code>he</code> (Hebrew)</li>
-          <li><code>hi</code> (Hindi)</li>
-          <li><code>hr</code> (Croatian)</li>
-          <li><code>hu</code> (Hungarian)</li>
-          <li><code>hy</code> (Armenian)</li>
-          <li><code>id</code> (Indonesian)</li>
-          <li><code>ig</code> (Igbo)</li>
-          <li><code>it</code> (Italian)</li>
-          <li><code>ja</code> (Japanese)</li>
-          <li><code>ka</code> (Kannada)</li>
-          <li><code>kk</code> (Kazakh)</li>
-          <li><code>km</code> (Khmer)</li>
-          <li><code>ko</code> (Korean)</li>
-          <li><code>ku</code> (Kurdish)</li>
-          <li><code>lo</code> (Lao)</li>
-          <li><code>lt</code> (Lithuanian)</li>
-          <li><code>lv</code> (Latvian)</li>
-          <li><code>ml</code> (Malayalam)</li>
-          <li><code>mr</code> (Marathi)</li>
-          <li><code>ms</code> (Malay)</li>
-          <li><code>nb</code> (Norwegian)</li>
-          <li><code>ne</code> (Nepali)</li>
-          <li><code>nl</code> (Dutch)</li>
-          <li><code>or</code> (Odia)</li>
-          <li><code>pa</code> (Punjabi)</li>
-          <li><code>pl</code> (Polish)</li>
-          <li><code>pt</code> (Portuguese)</li>
-          <li><code>ro</code> (Romanian)</li>
-          <li><code>ru</code> (Russian)</li>
-          <li><code>sa</code> (Sanskrit)</li>
-          <li><code>sd</code> (Sindhi)</li>
-          <li><code>si</code> (Sinhala)</li>
-          <li><code>sm</code> (Samoan)</li>
-          <li><code>sq</code> (Albanian)</li>
-          <li><code>sv</code> (Swedish)</li>
-          <li><code>sq</code> (Albanian)</li>
-          <li><code>ta</code> (Tamil)</li>
-          <li><code>te</code> (Telugu)</li>
-          <li><code>th</code> (Thai)</li>
-          <li><code>tl</code> (Tagalog)</li>
-          <li><code>tr</code> (Turkish)</li>
-          <li><code>uk</code> (Ukrainian)</li>
-          <li><code>ur</code> (Urdu)</li>
-          <li><code>uz</code> (Uzbek)</li>
-          <li><code>vi</code> (Vietnamese)</li>
-          <li><code>zh</code> (Chinese)</li>
-          <li><code>zu</code> (Zulu)</li>
-        </ul>
-      </div>
-  </details>
+  <FAQ>
+  <FAQItem title="Supported languages">
+
+  - `af` (Afrikaans)
+  - `am` (Amharic)
+  - `ar` (Arabic)
+  - `as` (Assamese)
+  - `az` (Azerbaijani)
+  - `ba` (Bashkir)
+  - `be` (Belarusian)
+  - `bg` (Bulgarian)
+  - `bh` (Bihari)
+  - `bn` (Bengali)
+  - `bs` (Bosnian)
+  - `ca` (Catalan)
+  - `cs` (Czech)
+  - `da` (Danish)
+  - `de` (German)
+  - `el` (Greek)
+  - `en` (English)
+  - `es` (Spanish)
+  - `eu` (Basque)
+  - `fa` (Farsi)
+  - `fi` (Finnish)
+  - `fr` (French)
+  - `ga` (Irish)
+  - `gl` (Galician)
+  - `gu` (Gujarati)
+  - `he` (Hebrew)
+  - `hi` (Hindi)
+  - `hr` (Croatian)
+  - `hu` (Hungarian)
+  - `hy` (Armenian)
+  - `id` (Indonesian)
+  - `ig` (Igbo)
+  - `it` (Italian)
+  - `ja` (Japanese)
+  - `ka` (Kannada)
+  - `kk` (Kazakh)
+  - `km` (Khmer)
+  - `ko` (Korean)
+  - `ku` (Kurdish)
+  - `lo` (Lao)
+  - `lt` (Lithuanian)
+  - `lv` (Latvian)
+  - `ml` (Malayalam)
+  - `mr` (Marathi)
+  - `ms` (Malay)
+  - `nb` (Norwegian)
+  - `ne` (Nepali)
+  - `nl` (Dutch)
+  - `or` (Odia)
+  - `pa` (Punjabi)
+  - `pl` (Polish)
+  - `pt` (Portuguese)
+  - `ro` (Romanian)
+  - `ru` (Russian)
+  - `sa` (Sanskrit)
+  - `sd` (Sindhi)
+  - `si` (Sinhala)
+  - `sm` (Samoan)
+  - `sq` (Albanian)
+  - `sv` (Swedish)
+  - `sq` (Albanian)
+  - `ta` (Tamil)
+  - `te` (Telugu)
+  - `th` (Thai)
+  - `tl` (Tagalog)
+  - `tr` (Turkish)
+  - `uk` (Ukrainian)
+  - `ur` (Urdu)
+  - `uz` (Uzbek)
+  - `vi` (Vietnamese)
+  - `zh` (Chinese)
+  - `zu` (Zulu)
+
+  </FAQItem>
+  </FAQ>
 
 - Translation object
 

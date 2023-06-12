@@ -71,7 +71,11 @@ Cypress.Commands.add('clickNodeButton', (selector: string) => {
 
 Cypress.Commands.add(
   'initializeSession',
-  (settings: { disableLocalStorage?: boolean; noTemplates?: boolean } = { disableLocalStorage: false }) => {
+  (
+    settings: { disableLocalStorage?: boolean; noTemplates?: boolean; showOnBoardingTour?: boolean } = {
+      disableLocalStorage: false,
+    }
+  ) => {
     return cy.task('getSession', settings).then((response: any) => {
       if (!settings.disableLocalStorage) {
         window.localStorage.setItem('auth_token', response.token);
@@ -81,6 +85,10 @@ Cypress.Commands.add(
     });
   }
 );
+
+Cypress.Commands.add('makeBlueprints', () => {
+  return cy.task('makeBlueprints');
+});
 
 Cypress.Commands.add('inviteUser', (email: string) => {
   return cy

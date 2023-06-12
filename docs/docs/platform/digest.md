@@ -62,18 +62,18 @@ As part of the digested template, you will have access to a few properties:
 Let's look at a handlebars syntax example for the following triggers:
 
 ```typescript
-novu.trigger('template-name', {
-  to: '123'
+novu.trigger('workflow-name', {
+  to: '123',
   payload: {
-    name: 'Hello'
-  }
+    name: 'Hello',
+  },
 });
 
-novu.trigger('template-name', {
-  to: '123'
+novu.trigger('workflow-name', {
+  to: '123',
   payload: {
-    name: 'World'
-  }
+    name: 'World',
+  },
 });
 ```
 

@@ -83,7 +83,7 @@ export function SideNav({}: Props) {
       label: 'Get Started',
       testId: 'side-nav-quickstart-link',
     },
-    { icon: <Bolt />, link: ROUTES.TEMPLATES, label: 'Notifications', testId: 'side-nav-templates-link' },
+    { icon: <Bolt />, link: ROUTES.WORKFLOWS, label: 'Workflows', testId: 'side-nav-templates-link' },
     {
       icon: <Team />,
       link: ROUTES.SUBSCRIBERS,
@@ -174,9 +174,6 @@ export function SideNav({}: Props) {
           </Popover.Dropdown>
         </Popover>
         <NavMenu menuItems={menuItems} />
-      </Navbar.Section>
-      <Navbar.Section mt={15}>
-        <LimitBar withLink={true} label="Novu email credits used" />
       </Navbar.Section>
       <Navbar.Section mt={15}>
         <Navbar.Section>
