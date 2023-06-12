@@ -147,6 +147,10 @@ jobs:
     needs: [get-affected]
     if: ${{ fromJson(needs.get-affected.outputs.test-packages)[0] }}
     timeout-minutes: 80
+    strategy:
+      # One job for each different project and node version
+      matrix:
+        projectName: ${{ fromJson(needs.get-affected.outputs.test-packages) }}
     permissions:
       contents: read
       packages: write

@@ -36,6 +36,10 @@ export const useMarkNotificationsAs = ({
         queryClient.setQueriesData<InfiniteData<IPaginatedResponse<IMessage>>>(
           { queryKey: fetchNotificationsQueryKey, exact: false },
           (infiniteData) => {
+            if (!infiniteData) {
+              return;
+            }
+
             const pages = infiniteData.pages.map((page) => {
               const data = page.data.map((message) => {
                 const newMessage = newMessages.find((item) => item._id === message._id);
