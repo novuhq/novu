@@ -18,7 +18,7 @@ import { FilterOutlined } from '../../../../design-system/icons/gradient/FilterO
 
 export function StepSettings({ index }: { index: number }) {
   const { readonly } = useEnvController();
-  const { control, watch } = useFormContext<IForm>();
+  const { control, watch, setValue } = useFormContext<IForm>();
   const [filterOpen, setFilterOpen] = useState(false);
   const { channel } = useParams<{
     channel: StepTypeEnum;
@@ -89,6 +89,7 @@ export function StepSettings({ index }: { index: number }) {
         }}
         control={control}
         stepIndex={index}
+        setValue={setValue}
       />
     </>
   );

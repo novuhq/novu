@@ -176,7 +176,7 @@ export const mapNotificationTemplateToForm = (template: INotificationTemplate): 
     description: template.description ?? '',
     tags: template.tags,
     identifier: template.triggers[0].identifier,
-    critical: template.critical,
+    critical: !template.critical,
     preferenceSettings: template.preferenceSettings,
     steps: [],
   };
@@ -252,7 +252,7 @@ export const mapFormToCreateNotificationTemplate = (form: IForm): ICreateNotific
     notificationGroupId: form.notificationGroupId,
     description: form.description !== '' ? form.description : undefined,
     tags: form.tags,
-    critical: form.critical,
+    critical: !form.critical,
     preferenceSettings: form.preferenceSettings,
     steps,
   };

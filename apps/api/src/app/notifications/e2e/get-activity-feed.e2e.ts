@@ -3,7 +3,7 @@ import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { ChannelTypeEnum, StepTypeEnum, IMessage } from '@novu/shared';
 
-describe('Get activity feed - /activity (GET)', async () => {
+describe('Get activity feed - /notifications (GET)', async () => {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let smsOnlyTemplate: NotificationTemplateEntity;
@@ -37,7 +37,7 @@ describe('Get activity feed - /activity (GET)', async () => {
     });
 
     await session.awaitRunningJobs(template._id);
-    const { body } = await session.testAgent.get('/v1/activity?page=0');
+    const { body } = await session.testAgent.get('/v1/notifications?page=0');
 
     const activities = body.data;
 
@@ -64,7 +64,7 @@ describe('Get activity feed - /activity (GET)', async () => {
 
     await session.awaitRunningJobs([template._id, smsOnlyTemplate._id]);
 
-    const { body } = await session.testAgent.get(`/v1/activity?page=0&channels=${ChannelTypeEnum.SMS}`);
+    const { body } = await session.testAgent.get(`/v1/notifications?page=0&channels=${ChannelTypeEnum.SMS}`);
     const activities: NotificationEntity[] = body.data;
 
     expect(activities.length).to.equal(2);
@@ -91,7 +91,7 @@ describe('Get activity feed - /activity (GET)', async () => {
     });
 
     await session.awaitRunningJobs(template._id);
-    const { body } = await session.testAgent.get(`/v1/activity?page=0&templates=${template._id}`);
+    const { body } = await session.testAgent.get(`/v1/notifications?page=0&templates=${template._id}`);
     const activities: IMessage[] = body.data;
 
     expect(activities.length).to.equal(2);
@@ -137,7 +137,7 @@ describe('Get activity feed - /activity (GET)', async () => {
 
     await session.awaitRunningJobs(template._id);
 
-    const { body } = await session.testAgent.get(`/v1/activity?page=0&emails=test@email.coms`);
+    const { body } = await session.testAgent.get(`/v1/notifications?page=0&emails=test@email.coms`);
     const activities: IMessage[] = body.data;
 
     expect(activities.length).to.equal(1);
