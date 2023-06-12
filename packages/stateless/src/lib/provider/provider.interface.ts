@@ -20,6 +20,8 @@ export interface IEmailOptions {
   replyTo?: string;
   cc?: string[];
   bcc?: string[];
+  payloadDetails?: any;
+  notificationDetails?: any;
 }
 
 export interface ISmsOptions {
