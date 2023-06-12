@@ -53,7 +53,12 @@ export function NovuProviderBase({ onClose, senderInformation, channel }: NovuPr
           <When truthy={senderInformation}>{senderInformation}</When>
           <InlineDiv>
             <span>Read more about Integrations in</span>
-            <a href="#" target="_blank" rel="noreferrer" style={{ color: '#DD2476 ', textDecoration: 'underline' }}>
+            <a
+              href="https://docs.novu.co/platform/integrations"
+              target="_blank"
+              rel="noreferrer"
+              style={{ color: '#DD2476 ', textDecoration: 'underline' }}
+            >
               our docs
             </a>
           </InlineDiv>
