@@ -1,3 +1,5 @@
+/* eslint-disable max-len */
+
 import { useMantineTheme } from '@mantine/core';
 import { colors } from '../../config';
 

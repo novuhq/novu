@@ -35,7 +35,7 @@ export const TemplateSettings = () => {
       await deleteTemplateById(templateId);
       setIsDeleting(false);
       setToDelete(false);
-      navigate(ROUTES.TEMPLATES);
+      navigate(ROUTES.WORKFLOWS);
     } catch (e: any) {
       setIsDeleting(false);
       setIsError(e?.message || 'Unknown error');

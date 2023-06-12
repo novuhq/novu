@@ -5,8 +5,8 @@ sidebar_position: 11
 # Layouts
 
 Novu allows the creation of layouts - a specific HTML design or structure to wrap content of email notifications.
-Layouts can be manipulated and assigned to new and existing templates within the Novu platform,
-allowing users to create, manage, and assign these layouts to templates, so they can be reused to structure the appearance of notifications sent through the platform.
+Layouts can be manipulated and assigned to new or existing workflows within the Novu platform,
+allowing users to create, manage, and assign these layouts to workflows, so they can be reused to structure the appearance of notifications sent through the platform.
 
 By default, Novu will create a default layout and assign it as the organization's default layout. At any time, you can choose any of your layouts as the default for your organization.
 All new email templates will be assigned the default layout unless assigned a different one through the email editor.
@@ -43,7 +43,7 @@ Layout content must include `{{{body}}}`, to indicate where the email editor con
 
 :::
 
-## Assign layout to template
+## Assign layout to workflow
 
 To assign, choose a layout through the email editor.
 You can preview your layout combined with your email content through the `Preview` tab.
@@ -123,7 +123,7 @@ await novu.layouts.setDefault(layoutId);
 
 ### Delete an existing layout
 
-Layouts can also be deleted. The condition to be able to delete a layout is that it is not a default layout and is not assigned to a notification template.
+Layouts can also be deleted. The condition to be able to delete a layout is that it is not a default layout and is not assigned in any existing workflow.
 
 ```typescript
 const layoutId: LayoutId = '<LAYOUT_ID>'; // The unique identifier of the layout to be deleted.

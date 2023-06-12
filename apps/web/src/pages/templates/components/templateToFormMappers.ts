@@ -78,7 +78,7 @@ const mapToDigestFormStep = (item: INotificationTemplateStep): IFormStep => {
           amount: `${metadata.amount}`,
           unit: metadata.unit,
           backoff: metadata.backoff,
-          backoffAmount: metadata.backoffAmount,
+          backoffAmount: `${metadata.backoffAmount}`,
           backoffUnit: metadata.backoffUnit,
         },
       },
@@ -176,7 +176,7 @@ export const mapNotificationTemplateToForm = (template: INotificationTemplate): 
     description: template.description ?? '',
     tags: template.tags,
     identifier: template.triggers[0].identifier,
-    critical: template.critical,
+    critical: !template.critical,
     preferenceSettings: template.preferenceSettings,
     steps: [],
   };
@@ -252,7 +252,7 @@ export const mapFormToCreateNotificationTemplate = (form: IForm): ICreateNotific
     notificationGroupId: form.notificationGroupId,
     description: form.description !== '' ? form.description : undefined,
     tags: form.tags,
-    critical: form.critical,
+    critical: !form.critical,
     preferenceSettings: form.preferenceSettings,
     steps,
   };
@@ -295,6 +295,9 @@ const mapFormStepDigestMetadata = (formStep: IFormStep): INotificationTemplateSt
       digestKey: formStep.digestMetadata.digestKey,
       ...formStep.digestMetadata.regular,
       amount: parseInt(formStep.digestMetadata.regular.amount, 10),
+      backoffAmount: formStep.digestMetadata.regular.backoffAmount
+        ? parseInt(formStep.digestMetadata.regular.backoffAmount, 10)
+        : undefined,
     };
   }
 

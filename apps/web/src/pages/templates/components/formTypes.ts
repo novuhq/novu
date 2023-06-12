@@ -46,7 +46,7 @@ export interface IFormStep {
       amount: string;
       unit: DigestUnitEnum;
       backoff?: boolean;
-      backoffAmount?: number;
+      backoffAmount?: string;
       backoffUnit?: DigestUnitEnum;
     };
     [DigestTypeEnum.TIMED]?: {

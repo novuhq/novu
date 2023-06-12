@@ -30,6 +30,7 @@ import {
   WsQueueService,
   buildFeedKey,
   buildMessageCountKey,
+  GetDecryptedIntegrationsCommand,
 } from '@novu/application-generic';
 
 import { CreateLog } from '../../../shared/logs';
@@ -73,6 +74,32 @@ export class SendMessageInApp extends SendMessageBase {
     Sentry.addBreadcrumb({
       message: 'Sending In App',
     });
+
+    const integration = await this.getIntegration(
+      GetDecryptedIntegrationsCommand.create({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        channelType: ChannelTypeEnum.IN_APP,
+        findOne: true,
+        active: true,
+        userId: command.userId,
+      })
+    );
+
+    if (!integration) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
+      return;
+    }
 
     const inAppChannel: NotificationStepEntity = command.step;
     if (!inAppChannel.template) throw new PlatformException('Template not found');
@@ -135,7 +162,7 @@ export class SendMessageInApp extends SendMessageBase {
       _messageTemplateId: inAppChannel.template._id,
       channel: ChannelTypeEnum.IN_APP,
       transactionId: command.transactionId,
-      providerId: InAppProviderIdEnum.Novu,
+      providerId: integration.providerId,
       _feedId: inAppChannel.template._feedId,
     });
 

@@ -2,10 +2,13 @@
 sidebar_position: 9
 ---
 
+import FAQ from '@site/src/components/FAQ';
+import FAQItem from '@site/src/components/FAQItem';
+
 # FAQs
 
-<details>
- <summary> Notification center is not loading properly.</summary>
+<FAQ>
+<FAQItem title="Notification center is not loading properly.">
 
 Possible causes for the notification center not loading properly:
 
@@ -14,45 +17,33 @@ Possible causes for the notification center not loading properly:
 - Invalid backendUrl (in case of self hosted)
 - Invalid socketUrl (in case of self hosted)
 
-</details>
+</FAQItem>
+<FAQItem title="There is a render error due to notification center in react.">
 
-<details>
- <summary>There is a render error due to notification center in react.</summary>
+Notification center should be wrapped in **NovuProvider**.
 
-Notification center should be wrapped in <b>NovuProvider</b>.
+</FAQItem>
+<FAQItem title="What socket events are supported in useSocket hook?">
 
-</details>
+There are two events. **unread_count_changed** and **unseen_count_changed**.
 
-<details>
- <summary>What socket events are supported in <b>useSocket</b> hook?</summary>
+</FAQItem>
+<FAQItem title="What is the difference between redirect URL and CTA?">
 
-There are two events. <b>unread_count_changed</b> and <b>unseen_count_changed</b>.
+Redirect URL is for entire notification, When user will click notification user will route to that url. CTA are two call to action buttons. **onNotificationClick** function props is used for redirect url and **onActionClick** function props is used for CTA. Read more about actions [here](./react/react-components#notification-actions).
 
-</details>
+</FAQItem>
+<FAQItem title="How to create a new feed and add notification to that feed?">
 
-<details>
- <summary>What is the difference between redirect URL and CTA?</summary>
+Add an in-app step in a workflow. Click on the step to edit. A new workflow editor page will appear. Scroll down. There you will find an option **Add New Feed**. You can either create new feed or add this template to existing feeds.
 
-Redirect URL is for entire notification, When user will click notification user will route to that url. CTA are two call to action buttons. <b>onNotificationClick</b> function props is used for redirect url and <b>onActionClick</b> function props is used for CTA. Read more about actions [here](./react/react-components#notification-actions).
+</FAQItem>
+<FAQItem title="How to customize notification center?">
 
-</details>
+Everything can be customized in Novu. **useNotification** hook in react component provides few functions to customize. **Header**, **Footer**, **Bell** etc can also be customized. Read more about customization [here](./react/react-components#custom-ui)
 
-<details>
- <summary>How to create a new feed and add notification to that feed?</summary>
-
-Add a in-app step in template workflow. Click on this step and then click on edit template in sidebar. A new edit notification template page will appear. Scroll down. There you will find an option <b>Add New Feed</b>. You can either create new feed or add this template to existing feeds.
-
-</details>
-
-<details>
- <summary>How to customize notification center?</summary>
-
-Everything can be customized in Novu. <b>useNotification</b> hook in react component provides few functions to customize. <b>Header</b>, <b>Footer</b>, <b>Bell</b> etc can also be customized. Read more about customization [here](./react/react-components#custom-ui)
-
-</details>
-
-<details>
- <summary>Notification bell is not showing in iframe</summary>
+</FAQItem>
+<FAQItem title="Notification bell is not showing in iframe">
 
 We use font awesome bell icon. Make sure you have added font awesome css cdn link in head tag.
 
@@ -66,4 +57,5 @@ We use font awesome bell icon. Make sure you have added font awesome css cdn lin
 />
 ```
 
-</details>
+</FAQItem>
+</FAQ>

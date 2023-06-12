@@ -88,6 +88,7 @@ export function MembersTable({
                       <DotsHorizontal />
                     </div>
                   }
+                  middlewares={{ flip: false, shift: false }}
                 >
                   <Dropdown.Item
                     key="removeBtn"

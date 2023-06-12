@@ -1,6 +1,6 @@
 {
   "name": "@novu/sendgrid",
-  "version": "0.14.0",
+  "version": "0.16.0",
   "description": "A sendgrid wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -45,12 +45,12 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@novu/stateless": "^0.14.0",
+    "@novu/stateless": "^0.16.0",
     "@sendgrid/mail": "^7.4.6"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "1.0.2",
-    "@types/jest": "27.5.2",
+    "@types/jest": "29.5.1",
     "codecov": "^3.5.0",
     "cspell": "^4.1.0",
     "cz-conventional-changelog": "^3.3.0",

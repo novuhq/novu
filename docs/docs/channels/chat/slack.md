@@ -1,3 +1,6 @@
+import FAQ from '@site/src/components/FAQ';
+import FAQItem from '@site/src/components/FAQItem';
+
 # Slack
 
 When using Slack you will have to save the integration credentials on the subscriber entity.
@@ -30,8 +33,8 @@ Novu will manage the OAuth flow and store the credentials
 
 ### Manual Management
 
-<details>
-<summary>Instructions on configuring https server</summary>
+<FAQ>
+<FAQItem title="Instructions on configuring https server">
 
 Create a new endpoint on your server that will handle the following steps (you can use Request Bin for an easy HTTPS service for redirects):
 
@@ -66,7 +69,8 @@ Create a new endpoint on your server that will handle the following steps (you c
 6. After the end-user finishes the authorization you will get the webhookUrl from the response of the OAuth under `body.incoming_webhook.url`, that you will use in step 3.
 7. You are all set up and ready to send your first chat message via our @novu/node package or directly using the REST API.
 
-</details>
+</FAQItem>
+</FAQ>
 
 ## Slack Application Configuration
 

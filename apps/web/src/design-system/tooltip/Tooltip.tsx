@@ -13,7 +13,17 @@ export function Tooltip({
   ...props
 }: Pick<
   TooltipProps,
-  'multiline' | 'width' | 'label' | 'opened' | 'position' | 'disabled' | 'children' | 'sx' | 'withinPortal' | 'offset'
+  | 'multiline'
+  | 'width'
+  | 'label'
+  | 'opened'
+  | 'position'
+  | 'disabled'
+  | 'children'
+  | 'sx'
+  | 'withinPortal'
+  | 'offset'
+  | 'classNames'
 >) {
   const { classes } = useStyles();
 
