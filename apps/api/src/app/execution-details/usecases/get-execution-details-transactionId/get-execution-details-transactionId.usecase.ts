@@ -8,7 +8,7 @@ export class GetExecutionDetailsByTransactionId {
   constructor(private executionDetailsRepository: ExecutionDetailsRepository) {}
 
   async execute(command: GetExecutionDetailsByTransactionIdCommand): Promise<ExecutionDetailsFilterResponseDto> {
-    const { data, totalCount } = await this.executionDetailsRepository.findAllNofitificationExecutionsByTransactionId(
+    const { data, totalCount } = await this.executionDetailsRepository.findAllNotificationExecutionsByTransactionId(
       command.transactionId,
       command.environmentId,
       command.page * command.limit,

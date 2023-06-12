@@ -48,7 +48,7 @@ export class ExecutionDetailsRepository extends BaseRepository<
   /**
    * Activity feed might need to retrieve all the executions of a notification by transactionId.
    */
-  public async findAllNofitificationExecutionsByTransactionId(
+  public async findAllNotificationExecutionsByTransactionId(
     transactionId: string,
     environmentId: string,
     skip = 0,
