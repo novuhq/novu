@@ -34,6 +34,7 @@ describe('In-memory Provider Service', () => {
         expect(inMemoryProviderConfig.keyPrefix).toEqual('');
         expect(inMemoryProviderConfig.password).toEqual('');
         expect(inMemoryProviderConfig.ttl).toEqual(7_200);
+        expect(inMemoryProviderConfig.tls).toEqual(undefined);
       });
 
       it('should instantiate the provider properly', async () => {
