@@ -8,9 +8,10 @@ import {
   EmailProviderIdEnum,
   InAppProviderIdEnum,
   ProvidersIdEnum,
+  SmsProviderIdEnum,
 } from '@novu/shared';
 
-import { useAuthController, useEnvController, useIntegrations } from '../../hooks';
+import { useAuthController, useEnvController } from '../../hooks';
 import { When } from '../../components/utils/When';
 import { NovuEmailProviderModal } from './components/NovuEmailProviderModal';
 import { NovuInAppProviderModal } from './components/NovuInAppProviderModal';
@@ -21,6 +22,8 @@ import { Close } from '../../design-system/icons/actions/Close';
 import { useProviders } from './useProviders';
 import { useSegment } from '../../components/providers/SegmentProvider';
 import { IntegrationsStoreModalAnalytics } from './constants';
+import { NovuSmsProviderModal } from './components/NovuSmsProviderModal';
+import { useCreateInAppIntegration } from '../../hooks/useCreateInAppIntegration';
 
 export function IntegrationsStoreModal({
   scrollTo,
@@ -36,11 +39,17 @@ export function IntegrationsStoreModal({
   const segment = useSegment();
   const { environment } = useEnvController();
   const { organization } = useAuthController();
-  const { loading: isLoading } = useIntegrations({ refetchOnMount: false });
-  const { emailProviders, smsProvider, chatProvider, pushProvider } = useProviders();
+  const { emailProviders, smsProvider, chatProvider, pushProvider, inAppProvider, isLoading } = useProviders();
   const [isFormOpened, setFormIsOpened] = useState(false);
   const [isCreateIntegrationModal, setIsCreateIntegrationModal] = useState(false);
   const [provider, setProvider] = useState<IIntegratedProvider | null>(null);
+  const { create } = useCreateInAppIntegration((data: any) => {
+    setProvider({
+      ...(provider as IIntegratedProvider),
+      integrationId: data._id,
+      active: data.active,
+    });
+  });
 
   const { classes } = useModalStyles();
   const { classes: drawerClasses } = useDrawerStyles();
@@ -56,6 +65,9 @@ export function IntegrationsStoreModal({
     providerConfig: IIntegratedProvider
   ) {
     setFormIsOpened(visible);
+    if (providerConfig.providerId === InAppProviderIdEnum.Novu && providerConfig.channel === ChannelTypeEnum.IN_APP) {
+      create();
+    }
     setProvider(providerConfig);
     setIsCreateIntegrationModal(createIntegrationModal);
     segment.track(IntegrationsStoreModalAnalytics.SELECT_PROVIDER_CLICK, {
@@ -136,6 +148,13 @@ export function IntegrationsStoreModal({
             <>
               <ChannelGroup
                 selectedProvider={provider?.providerId}
+                channel={ChannelTypeEnum.IN_APP}
+                providers={inAppProvider}
+                title="In-App"
+                onProviderClick={handleOnProviderClick}
+              />
+              <ChannelGroup
+                selectedProvider={provider?.providerId}
                 channel={ChannelTypeEnum.EMAIL}
                 providers={emailProviders}
                 title="Email"
@@ -175,7 +194,7 @@ export function IntegrationsStoreModal({
           classNames={drawerClasses}
         >
           <IntegrationCardWrapper>
-            <When truthy={!provider?.novu}>
+            <When truthy={!provider?.novu && provider?.providerId !== InAppProviderIdEnum.Novu}>
               <ConnectIntegrationForm
                 onClose={handleCloseForm}
                 onSuccessFormSubmit={closeIntegration}
@@ -193,7 +212,12 @@ export function IntegrationsStoreModal({
             </When>
             <When truthy={provider?.providerId === InAppProviderIdEnum.Novu}>
               <div style={{ padding: '30px' }}>
-                <NovuInAppProviderModal onClose={handleCloseForm} />
+                <NovuInAppProviderModal showModal={closeIntegration} provider={provider} onClose={handleCloseForm} />
+              </div>
+            </When>
+            <When truthy={provider?.providerId === SmsProviderIdEnum.Novu}>
+              <div style={{ padding: '30px' }}>
+                <NovuSmsProviderModal onClose={handleCloseForm} />
               </div>
             </When>
           </IntegrationCardWrapper>

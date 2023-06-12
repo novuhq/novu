@@ -21,11 +21,6 @@ export class EnvironmentResponseDto {
   })
   apiKeys: IApiKey[];
 
-  @ApiProperty({
-    type: WidgetSettings,
-  })
-  widget: IWidgetSettings;
-
   @ApiProperty()
   _parentId: string;
 }

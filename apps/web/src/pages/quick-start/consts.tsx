@@ -154,9 +154,17 @@ const embedBellSelector = `<nav>
   </div>
 </nav>`;
 
+export enum FrameworkEnum {
+  REACT = 'react',
+  ANGULAR = 'angular',
+  VUE = 'vue',
+  JS = 'js',
+  DEMO = 'demo',
+}
+
 export const frameworkInstructions: { key: string; value: ISnippetInstructions[] }[] = [
   {
-    key: 'react',
+    key: FrameworkEnum.REACT,
     value: [
       {
         instruction: 'First you have to install the package:',
@@ -167,7 +175,7 @@ export const frameworkInstructions: { key: string; value: ISnippetInstructions[]
     ],
   },
   {
-    key: 'angular',
+    key: FrameworkEnum.ANGULAR,
     value: [
       {
         instruction: 'First you have to install the package:',
@@ -189,7 +197,7 @@ export const frameworkInstructions: { key: string; value: ISnippetInstructions[]
     ],
   },
   {
-    key: 'vue',
+    key: FrameworkEnum.VUE,
     value: [
       {
         instruction: 'First you have to install the package:',
@@ -207,7 +215,7 @@ export const frameworkInstructions: { key: string; value: ISnippetInstructions[]
     ],
   },
   {
-    key: 'js',
+    key: FrameworkEnum.JS,
     value: [
       {
         instruction: 'Add the following script into your code.',
@@ -222,7 +230,7 @@ export const frameworkInstructions: { key: string; value: ISnippetInstructions[]
     ],
   },
   {
-    key: 'demo',
+    key: FrameworkEnum.DEMO,
     value: [
       {
         instruction: 'Clone the project to your local machine',

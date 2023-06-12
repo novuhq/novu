@@ -57,6 +57,10 @@ export class CreateNotificationTemplateCommand extends EnvironmentWithUserComman
 
   @IsOptional()
   blueprintId?: string;
+
+  @IsOptional()
+  @IsString()
+  __source?: string;
 }
 
 export class ChannelCTACommand {
