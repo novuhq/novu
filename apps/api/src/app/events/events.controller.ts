@@ -21,10 +21,9 @@ import { TriggerEventToAll, TriggerEventToAllCommand } from './usecases/trigger-
 import { UserSession } from '../shared/framework/user.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
-import { ResumeDelayedCommand } from './usecases/resume-delayed';
+import { ResumeDelayedCommand, ResumeDelayed } from './usecases/resume-delayed';
 import { ApiResponse } from '../shared/framework/response.decorator';
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
-import { ResumeDelayed } from 'apps/api/dist/src/app/events/usecases/resume-delayed';
 import { ApiNoContentResponse } from '@nestjs/swagger';
 @Controller({
   path: 'events',
@@ -193,10 +192,7 @@ export class EventsController {
       This is especially useful when a canceled message, is meant to be sent afterall.
     `,
   })
-  async resumeDelayed(
-    @UserSession() user: IJwtPayload,
-    @Param('transactionId') transactionId: string
-  ): Promise<boolean> {
+  async resumeDelayed(@UserSession() user: IJwtPayload, @Param('transactionId') transactionId: string): Promise<void> {
     return await this.resumeDelayedUsecase.execute(
       ResumeDelayedCommand.create({
         userId: user._id,
