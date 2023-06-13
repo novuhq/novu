@@ -112,11 +112,11 @@ export class AnalyticsService {
         });
       } catch (error: any) {
         Logger.error(
-          JSON.stringify({
-            name: name,
+          {
+            eventName: name,
             usedId: userId,
             message: error.message,
-          }),
+          },
           LOG_CONTEXT
         );
       }
