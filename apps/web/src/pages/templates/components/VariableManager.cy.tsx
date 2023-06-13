@@ -5,19 +5,15 @@ import { TestWrapper } from '../../../testing';
 import { VariableManager } from './VariableManager';
 import { TemplateEditorFormProvider } from './TemplateEditorFormProvider';
 import { useVariablesManager } from '../../../hooks';
-import { BrowserRouter } from 'react-router-dom';
-import { CONTEXT_PATH } from '../../../config';
 
 it('should show available variables - string', function () {
   mount(
-    <BrowserRouter basename={CONTEXT_PATH}>
-      <TestWrapper>
-        <TemplateEditorFormProvider>
-          <FormTester content={'Hello, {{ name }}'} />
-          <VariableManagerTester />
-        </TemplateEditorFormProvider>
-      </TestWrapper>
-    </BrowserRouter>
+    <TestWrapper>
+      <TemplateEditorFormProvider>
+        <FormTester content={'Hello, {{ name }}'} />
+        <VariableManagerTester />
+      </TemplateEditorFormProvider>
+    </TestWrapper>
   );
 
   cy.getByTestId('template-variable-row').should('have.length', 1);
@@ -27,14 +23,12 @@ it('should show available variables - string', function () {
 
 it('should show available variables - array', function () {
   mount(
-    <BrowserRouter basename={CONTEXT_PATH}>
-      <TestWrapper>
-        <TemplateEditorFormProvider>
-          <VariableManagerTester />
-          <FormTester content={'Hello, {{#each name}} {{/each}}'} />
-        </TemplateEditorFormProvider>
-      </TestWrapper>
-    </BrowserRouter>
+    <TestWrapper>
+      <TemplateEditorFormProvider>
+        <VariableManagerTester />
+        <FormTester content={'Hello, {{#each name}} {{/each}}'} />
+      </TemplateEditorFormProvider>
+    </TestWrapper>
   );
 
   cy.getByTestId('template-variable-row').should('have.length', 1);
@@ -45,12 +39,10 @@ it('should show available variables - array', function () {
 it('should show available variables including nested - array', function () {
   mount(
     <TestWrapper>
-      <BrowserRouter basename={CONTEXT_PATH}>
-        <TemplateEditorFormProvider>
-          <VariableManagerTester />
-          <FormTester content={'Hello, {{#each name}} {{nested_variable}} {{/each}}'} />
-        </TemplateEditorFormProvider>
-      </BrowserRouter>
+      <TemplateEditorFormProvider>
+        <VariableManagerTester />
+        <FormTester content={'Hello, {{#each name}} {{nested_variable}} {{/each}}'} />
+      </TemplateEditorFormProvider>
     </TestWrapper>
   );
 
@@ -64,12 +56,10 @@ it('should show available variables including nested - array', function () {
 it('should show available variables - boolean', function () {
   mount(
     <TestWrapper>
-      <BrowserRouter basename={CONTEXT_PATH}>
-        <TemplateEditorFormProvider>
-          <VariableManagerTester />
-          <FormTester content={'Hello, {{#if name}} {{/if}}'} />
-        </TemplateEditorFormProvider>
-      </BrowserRouter>
+      <TemplateEditorFormProvider>
+        <VariableManagerTester />
+        <FormTester content={'Hello, {{#if name}} {{/if}}'} />
+      </TemplateEditorFormProvider>
     </TestWrapper>
   );
 
@@ -81,12 +71,10 @@ it('should show available variables - boolean', function () {
 it('should show available variables including nested - boolean', function () {
   mount(
     <TestWrapper>
-      <BrowserRouter basename={CONTEXT_PATH}>
-        <TemplateEditorFormProvider>
-          <VariableManagerTester />
-          <FormTester content={'Hello, {{#if name}} {{nested_variable}} {{/if}}'} />
-        </TemplateEditorFormProvider>
-      </BrowserRouter>
+      <TemplateEditorFormProvider>
+        <VariableManagerTester />
+        <FormTester content={'Hello, {{#if name}} {{nested_variable}} {{/if}}'} />
+      </TemplateEditorFormProvider>
     </TestWrapper>
   );
 
@@ -100,16 +88,14 @@ it('should show available variables including nested - boolean', function () {
 it('should show available variables including deeply nested', function () {
   mount(
     <TestWrapper>
-      <BrowserRouter basename={CONTEXT_PATH}>
-        <TemplateEditorFormProvider>
-          <VariableManagerTester />
-          <FormTester
-            content={
-              'Hello, {{#if name}} {{nested_variable}} {{#each nested_name}} {{deeply_nested_variable}} {{/each}} {{/if}}'
-            }
-          />
-        </TemplateEditorFormProvider>
-      </BrowserRouter>
+      <TemplateEditorFormProvider>
+        <VariableManagerTester />
+        <FormTester
+          content={
+            'Hello, {{#if name}} {{nested_variable}} {{#each nested_name}} {{deeply_nested_variable}} {{/each}} {{/if}}'
+          }
+        />
+      </TemplateEditorFormProvider>
     </TestWrapper>
   );
 
@@ -127,12 +113,10 @@ it('should show available variables including deeply nested', function () {
 it('should show reserved variables', function () {
   mount(
     <TestWrapper>
-      <BrowserRouter basename={CONTEXT_PATH}>
-        <TemplateEditorFormProvider>
-          <VariableManagerTester />
-          <FormTester content={'Hello, {{ subscriber }}'} />
-        </TemplateEditorFormProvider>
-      </BrowserRouter>
+      <TemplateEditorFormProvider>
+        <VariableManagerTester />
+        <FormTester content={'Hello, {{ subscriber }}'} />
+      </TemplateEditorFormProvider>
     </TestWrapper>
   );
 

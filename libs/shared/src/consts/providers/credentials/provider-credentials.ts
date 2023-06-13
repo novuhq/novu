@@ -398,28 +398,34 @@ export const twilioConfig: IConfigCredentials[] = [
 
 export const slackConfig: IConfigCredentials[] = [
   {
+    key: CredentialsKeyEnum.ApplicationId,
+    displayName: 'Application Id',
+    type: 'string',
+    required: true,
+  },
+  {
     key: CredentialsKeyEnum.ClientId,
     displayName: 'Client ID',
     type: 'string',
-    required: false,
+    required: true,
   },
   {
     key: CredentialsKeyEnum.SecretKey,
     displayName: 'Client Secret',
     type: 'string',
-    required: false,
-  },
-  {
-    key: CredentialsKeyEnum.ApplicationId,
-    displayName: 'Application Id',
-    type: 'string',
-    required: false,
+    required: true,
   },
   {
     key: CredentialsKeyEnum.RedirectUrl,
     displayName: 'Redirect URL',
     description: 'Redirect after Slack OAuth flow finished (default behaviour will close the tab)',
     type: 'string',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.Hmac,
+    displayName: 'HMAC',
+    type: 'switch',
     required: false,
   },
 ];
@@ -662,6 +668,24 @@ export const smsCentralConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
+export const emailWebhookConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.WebhookUrl,
+    displayName: 'Webhook URL',
+    type: 'string',
+    description: 'the webhook URL to call instead of sending the email',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Secret Hmac Key',
+    type: 'string',
+    description: 'the secret used to sign webhooks calls',
+    required: true,
+  },
+  ...mailConfigBase,
+];
+
 export const africasTalkingConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
@@ -676,4 +700,13 @@ export const africasTalkingConfig: IConfigCredentials[] = [
     required: true,
   },
   ...smsConfigBase,
+];
+
+export const novuInAppConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.Hmac,
+    displayName: 'Security HMAC encryption',
+    type: 'switch',
+    required: false,
+  },
 ];

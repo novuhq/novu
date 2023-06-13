@@ -27,7 +27,7 @@ export class BulkTriggerEventDto {
 export class TriggerEventRequestDto {
   @ApiProperty({
     description:
-      'The trigger identifier of the template you wish to send. This identifier can be found on the template page.',
+      'The trigger identifier of the workflow you wish to send. This identifier can be found on the workflow page.',
   })
   @IsString()
   @IsDefined()
@@ -36,7 +36,7 @@ export class TriggerEventRequestDto {
   @ApiProperty({
     description:
       // eslint-disable-next-line max-len
-      `The payload object is used to pass additional custom information that could be used to render the template, or perform routing rules based on it. 
+      `The payload object is used to pass additional custom information that could be used to render the workflow, or perform routing rules based on it. 
       This data will also be available when fetching the notifications feed from the API to display certain parts of the UI.`,
     example: {
       comment_id: 'string',
@@ -46,7 +46,8 @@ export class TriggerEventRequestDto {
     },
   })
   @IsObject()
-  payload: Record<string, unknown>;
+  @IsOptional()
+  payload?: Record<string, unknown>;
 
   @ApiPropertyOptional({
     description: 'This could be used to override provider specific configurations',

@@ -6,7 +6,7 @@ import { Grid } from '@mantine/core';
 import { Input, Switch, Text } from '../../../design-system';
 import { useEnvController } from '../../../hooks';
 import { When } from '../../../components/utils/When';
-import { DoubleArrowRight } from '../../../design-system/icons/arrows/CircleArrowRight';
+import { CircleArrowRight } from '../../../design-system/icons/arrows/CircleArrowRight';
 
 export const ReplyCallback = ({ control, index }) => {
   const { environment } = useEnvController();
@@ -100,7 +100,7 @@ export function LackConfigurationError({ text, redirectTo }: { text: string; red
             <Text>{text}</Text>
           </Grid.Col>
           <Grid.Col p={0} span={'content'}>
-            <DoubleArrowRight onClick={() => navigate(redirectTo)} />
+            <CircleArrowRight onClick={() => navigate(redirectTo)} />
           </Grid.Col>
         </WarningMessage>
       </Grid>

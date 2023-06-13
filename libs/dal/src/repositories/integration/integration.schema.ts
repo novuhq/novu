@@ -26,7 +26,7 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       password: Schema.Types.String,
       host: Schema.Types.String,
       port: Schema.Types.String,
-      secure: Schema.Types.String,
+      secure: Schema.Types.Boolean,
       region: Schema.Types.String,
       accountSid: Schema.Types.String,
       messageProfileId: Schema.Types.String,
@@ -43,6 +43,7 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       ignoreTls: Schema.Types.Boolean,
       tlsOptions: Schema.Types.Mixed,
       redirectUrl: Schema.Types.String,
+      hmac: Schema.Types.Boolean,
     },
 
     active: {

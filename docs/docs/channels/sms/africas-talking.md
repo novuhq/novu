@@ -1,10 +1,10 @@
 # Africa's Talking
 
-You can use [Africa's Talking](https://africastalking.com/) provider to send SMS messages to your customers using the Novu Platform with a single API to create multi-channel experiences.
+You can use [Africa's Talking](https://africastalking.com/) provider to send SMS messages to your customers using the Novu platform with a single API to create multi-channel experiences.
 
 ## Getting Started
 
-To use Africa's Talking provider in the SMS channel, the first step is to create an Africa's Talking account and add your API key, username and Sender's ID to Africa's Talking integration on the Novu platform.
+To use Africa's Talking provider in the SMS channel, the first step is to create an Africa's Talking account and add your `API Key`, `username` and `Sender's ID` to Africa's Talking integration on the Novu platform.
 
 ## Create a username
 
@@ -64,13 +64,13 @@ To create a Short Code:
 
 - On your app dashboard, click on SMS (on the menu on your left). This will display a dropdown. Click on `Shortcodes` from the dropdown options. This will also display a dropdown from which you can then click on `My Shortcodes` to view your codes.
 
-![Image showing Africa’s Talking dashboard page where you create shortcodes for sending SMS](/img/providers/sms/africas-talking/short-codes.png)
+![Image showing Africa’s Talking dashboard page where you can create Shortcodes for sending SMS](/img/providers/sms/africas-talking/short-codes.png)
 
 If you have not created one yet, on the `Shortcodes` dropdown option, click on `Request`.
 
 On the page that appears, fill in the form and submit
 
-![Image showing the dashboard page that allows you to request for shortcodes on Africa’s Talking](/img/providers/sms/africas-talking/request-short-codes.png)
+![Image showing the dashboard page that allows you to request for Shortcodes on Africa’s Talking](/img/providers/sms/africas-talking/request-short-codes.png)
 
 To create an Alphanumeric:
 

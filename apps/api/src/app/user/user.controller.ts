@@ -23,6 +23,9 @@ import { ChangeProfileEmailDto } from './dtos/change-profile-email.dto';
 import { UpdateProfileEmail } from './usecases/update-profile-email/update-profile-email.usecase';
 import { UpdateProfileEmailCommand } from './usecases/update-profile-email/update-profile-email.command';
 import { ApiResponse } from '../shared/framework/response.decorator';
+import { UserOnboardingTourRequestDto } from './dtos/user-onboarding-tour-request.dto';
+import { UpdateOnBoardingTourUsecase } from './usecases/update-on-boarding-tour/update-on-boarding-tour.usecase';
+import { UpdateOnBoardingTourCommand } from './usecases/update-on-boarding-tour/update-on-boarding-tour.command';
 
 @Controller('/users')
 @ApiTags('Users')
@@ -33,6 +36,7 @@ export class UsersController {
   constructor(
     private getMyProfileUsecase: GetMyProfileUsecase,
     private updateOnBoardingUsecase: UpdateOnBoardingUsecase,
+    private updateOnBoardingTourUsecase: UpdateOnBoardingTourUsecase,
     private updateProfileEmailUsecase: UpdateProfileEmail
   ) {}
 
@@ -81,6 +85,19 @@ export class UsersController {
       UpdateOnBoardingCommand.create({
         userId: user._id,
         showOnBoarding: body.showOnBoarding,
+      })
+    );
+  }
+
+  @Put('/onboarding-tour')
+  async updateOnBoardingTour(
+    @UserSession() user: IJwtPayload,
+    @Body() body: UserOnboardingTourRequestDto
+  ): Promise<UserResponseDto> {
+    return await this.updateOnBoardingTourUsecase.execute(
+      UpdateOnBoardingTourCommand.create({
+        userId: user._id,
+        showOnBoardingTour: body.showOnBoardingTour,
       })
     );
   }

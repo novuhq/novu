@@ -7,6 +7,7 @@ import {
 } from '@novu/dal';
 import { StepTypeEnum, DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
 import { UserSession, SubscribersService } from '@novu/testing';
+import { Logger } from '@nestjs/common';
 import axios from 'axios';
 import { expect } from 'chai';
 import { v4 as uuid } from 'uuid';
@@ -47,7 +48,7 @@ describe('Performance - Events', () => {
         }
       );
     } catch (error) {
-      //console.log({ error });
+      Logger.error(error);
     }
   };
 

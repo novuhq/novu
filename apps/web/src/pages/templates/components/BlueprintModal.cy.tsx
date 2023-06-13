@@ -1,5 +1,4 @@
 import { TestWrapper } from '../../../testing';
-import { BrowserRouter as Router } from 'react-router-dom';
 import { BlueprintModal } from './BlueprintModal';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -9,7 +8,7 @@ describe('Blueprint Modal', () => {
   it('should render and create template from blueprint', () => {
     window.localStorage.setItem('blueprintId', 'test');
 
-    cy.intercept('GET', '/v1/notification-templates/test/blueprint', {
+    cy.intercept('GET', '/v1/blueprints/test', {
       body: {
         data: {
           name: 'test name',
@@ -18,7 +17,7 @@ describe('Blueprint Modal', () => {
       },
     }).as('getTemplate');
 
-    cy.intercept('POST', `/v1/notification-templates/test/blueprint`, {
+    cy.intercept('POST', `/v1/notification-templates?__source=notification_directory`, {
       body: {
         _id: 'test',
       },
@@ -27,9 +26,7 @@ describe('Blueprint Modal', () => {
     cy.mount(
       <TestWrapper>
         <QueryClientProvider client={queryClient}>
-          <Router>
-            <BlueprintModal />
-          </Router>
+          <BlueprintModal />
         </QueryClientProvider>
       </TestWrapper>
     );
@@ -46,7 +43,7 @@ describe('Blueprint Modal', () => {
   it('should render and remove blueprintId on close', () => {
     window.localStorage.setItem('blueprintId', 'test');
 
-    cy.intercept('GET', '/v1/notification-templates/test/blueprint', {
+    cy.intercept('GET', '/v1/blueprints/test', {
       body: {
         data: {
           name: 'test name',
@@ -58,9 +55,7 @@ describe('Blueprint Modal', () => {
     cy.mount(
       <TestWrapper>
         <QueryClientProvider client={queryClient}>
-          <Router>
-            <BlueprintModal />
-          </Router>
+          <BlueprintModal />
         </QueryClientProvider>
       </TestWrapper>
     );

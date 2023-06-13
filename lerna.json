@@ -2,11 +2,11 @@
   "npmClient": "pnpm",
   "useNx": true,
   "useWorkspaces": true,
-  "packages": ["apps/*", "libs/*", "packages/*", "providers/*"],
+  "packages": ["apps/*", "libs/*", "packages/*", "enterprise/packages/*", "providers/*"],
   "command": {
     "publish": {
       "message": "chore(release): publish - ci skip"
     }
   },
-  "version": "0.14.0"
+  "version": "0.16.0"
 }

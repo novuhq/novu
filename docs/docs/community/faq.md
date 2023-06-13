@@ -1,9 +1,12 @@
+import FAQ from '@site/src/components/FAQ';
+import FAQItem from '@site/src/components/FAQItem';
+
 # FAQ
 
 Here we will outline some of the most common questions we get asked about the project. Missing a question? Feel free to open an [issue](https://github.com/novuhq/novu/issues) or PR to add it to the list.
 
-<details>
-<summary> What are the dependencies required to run Novu. </summary>
+<FAQ>
+<FAQItem title="What are the dependencies required to run Novu.">
 
 Novu consists of multiple services written in Node.js and Typescript. The following are the dependencies required to run the project fully:
 
@@ -12,51 +15,44 @@ Novu consists of multiple services written in Node.js and Typescript. The follow
 - Redis
 - File storage (S3/GCP/Azure) - Optional
 
-</details>
-
-<details>
-<summary>How do I customize messages on Novu?</summary>
+</FAQItem>
+<FAQItem title="How do I customize messages on Novu?">
 
 In Novu, [handlebar variables](https://handlebarsjs.com/guide/) (variables enclosed within double curly brackets) are used to customize messages. Using this, one can take advantage of the following tools:
 
-- **Custom Variables:** You can create [custom variables](https://docs.novu.co/platform/templates#variable-usage) by defining it in the payload and accessing its value using the following syntax:
+- **Custom Variables:** You can create [custom variables](https://docs.novu.co/platform/workflows#variable-usage) by defining it in the payload and accessing its value using the following syntax:
 
   ```html
   {{variable_name}}
   ```
 
-- **Iteration/Looping:** You can iterate through a list of variables using [each](https://docs.novu.co/platform/templates#iteration) keyword. The code within the block will loop once for each element that is present in the iterable variable. The syntax is as follows:
+- **Iteration/Looping:** You can iterate through a list of variables using [each](https://docs.novu.co/platform/workflows#iteration) keyword. The code within the block will loop once for each element that is present in the iterable variable. The syntax is as follows:
 
   ```html
   {{#each iterable}} ... {{/each}}
   ```
 
 - **Conditional Block:**
-  You can render a block conditionally using the [if](https://docs.novu.co/platform/templates#conditional) keyword. The block is defined similar to the iteration block:
+  You can render a block conditionally using the [if](https://docs.novu.co/platform/workflows#conditional) keyword. The block is defined similar to the iteration block:
 
   ```html
   {{#if condition}} ... {{/if}}
   ```
 
-For an in-depth explanation with examples, check out [Templates](https://docs.novu.co/platform/templates#messages).
+For an in-depth explanation with examples, check out [Templates](https://docs.novu.co/platform/workflows#messages).
 
-</details>
+</FAQItem>
+<FAQItem title="Is creating and switching to a new organization deactivates the other organizations?">
 
-<details>
-<summary>Is creating and switching to a new organization deactivates the other organizations?</summary>
+No, switching organization will only switch organization in UI, from API side all organizations are still active. Each organization has different api keys, subscribers and workflows. Notification template of one organization can not be used with other organization's subscriber.
 
-No, switching organization will only switch organization in UI, from API side all organizations are still active. Each organization has different api keys, subscribers and notification templates. Notification template of one organization can not be used with other organization's subscriber.
-
-</details>
-
-<details>
-<summary>Is is possible to have multiple active providers per channel</summary>
+</FAQItem>
+<FAQItem title="Is is possible to have multiple active providers per channel">
 
 Multiple active providers are only supported in [push](../channels/push) and [chat](../channels/chat) channels.
 
-</details>
-<details>
-<summary>Does Novu have expiration dates for records? (TTL)</summary>
+</FAQItem>
+<FAQItem title="Does Novu have expiration dates for records? (TTL)">
 
 For Novu cloud users - notifications and activity feed data will be saved for 1 month.
 In-app messages will be saved for 6 months.
@@ -72,4 +68,5 @@ Affected schemes:
 - Message (in app - 1 year, all others - 1 month)
 - ExecutionDetails (1 month)
 
-</details>
+</FAQItem>
+</FAQ>

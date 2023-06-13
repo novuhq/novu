@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { act, renderHook, RenderHookResult } from '@testing-library/react-hooks';
 import {
   ChannelCTATypeEnum,
@@ -16,9 +16,6 @@ import { NovuProvider } from '../components';
 import { useNotifications } from './useNotifications';
 
 const promiseResolveTimeout = (ms: number, arg: unknown = {}) => new Promise((resolve) => setTimeout(resolve, ms, arg));
-
-const promiseRejectTimeout = (ms: number, arg: unknown = {}) =>
-  new Promise((resolve, reject) => setTimeout(reject, ms, arg));
 
 const templateId = 'templateId';
 const notificationId = 'notificationId';
@@ -76,6 +73,7 @@ const mockNotificationsList: IPaginatedResponse<IMessage> = {
   totalCount: 1,
   pageSize: 10,
   page: 0,
+  hasMore: false,
 };
 const mockUserPreferenceSetting: IUserPreferenceSettings = {
   template: { _id: templateId, name: 'mock template', critical: false },
@@ -233,6 +231,50 @@ describe('useNotifications', () => {
     expect(mockServiceInstance.getNotificationsList).toHaveBeenNthCalledWith(2, 0, stores[1].query);
   });
 
+  it('refetch organization payloads when `subscriberId` or `applicationIdentifier` changes', async () => {
+    const payloads = [
+      { applicationIdentifier: 'mock_app', subscriberId: 'mock_subscriber_id' },
+      { applicationIdentifier: 'mock_app_1', subscriberId: 'mock_subscriber_id_1' },
+    ];
+
+    const wrapper = ({ children }) => {
+      const [payload, setPayload] = useState(payloads[0]);
+
+      useEffect(() => {
+        const timeout = setTimeout(() => {
+          act(() => {
+            setPayload(payloads[1]);
+          });
+        }, 200);
+
+        return () => clearTimeout(timeout);
+      }, []);
+
+      return (
+        <NovuProvider
+          backendUrl="https://mock_url.com"
+          applicationIdentifier={payload.applicationIdentifier}
+          subscriberId={payload.subscriberId}
+          initialFetchingStrategy={{ fetchNotifications: true }}
+        >
+          {children}
+        </NovuProvider>
+      );
+    };
+    const innerHook = renderHook(() => useNotifications(), { wrapper });
+    const { result } = innerHook;
+
+    expect(result.current.isLoading).toBeTruthy();
+
+    await promiseResolveTimeout(100);
+    expect(mockServiceInstance.getOrganization).toBeCalledTimes(1);
+    expect(mockServiceInstance.getUnseenCount).toBeCalledTimes(1);
+
+    await promiseResolveTimeout(100);
+    expect(mockServiceInstance.getOrganization).toBeCalledTimes(2);
+    expect(mockServiceInstance.getUnseenCount).toBeCalledTimes(2);
+  });
+
   it('fetch next page', async () => {
     const mockNotification1 = { ...mockNotification, _id: 'mockNotification1' };
     const mockNotification2 = { ...mockNotification, _id: 'mockNotification2' };
@@ -326,6 +368,51 @@ describe('useNotifications', () => {
     expect(result.current.notifications).toStrictEqual([mockNotification1, mockNotification2, mockNotification3]);
   });
 
+  it('refetch will fetch notifications from a specified page number', async () => {
+    const mockNotification1 = { ...mockNotification, _id: 'mockNotification1' };
+    const mockNotification2 = { ...mockNotification, _id: 'mockNotification2' };
+    const mockNotification3 = { ...mockNotification, _id: 'mockNotification3' };
+    const mockNotificationsResponse1 = {
+      data: [mockNotification1],
+      totalCount: 1,
+      pageSize: 10,
+      page: 0,
+    };
+    const mockNotificationsResponse2 = {
+      data: [mockNotification2, mockNotification3],
+      totalCount: 3,
+      pageSize: 10,
+      page: 1,
+    };
+    mockServiceInstance.getNotificationsList
+      .mockImplementationOnce(() => promiseResolveTimeout(0, mockNotificationsResponse1))
+      .mockImplementationOnce(() => promiseResolveTimeout(0, mockNotificationsResponse2));
+
+    const { rerender, result } = hook;
+
+    expect(result.current.isLoading).toBeTruthy();
+
+    await promiseResolveTimeout(100);
+    rerender();
+
+    expect(mockServiceInstance.getNotificationsList).toHaveBeenNthCalledWith(1, 0, {});
+    expect(result.current.notifications).toStrictEqual([mockNotification1]);
+
+    act(() => {
+      result.current.refetch({ page: 1 });
+    });
+    rerender();
+
+    expect(result.current.isLoading).toBeFalsy();
+    expect(result.current.isFetching).toBeTruthy();
+
+    await promiseResolveTimeout(100);
+    rerender();
+
+    expect(mockServiceInstance.getNotificationsList).toHaveBeenNthCalledWith(2, 1, {});
+    expect(result.current.notifications).toStrictEqual([mockNotification1, mockNotification2, mockNotification3]);
+  });
+
   it('mark notification as read', async () => {
     mockServiceInstance.markMessageAs.mockImplementationOnce(() =>
       promiseResolveTimeout(0, [{ ...mockNotification, read: true, seen: true }])
@@ -353,7 +440,7 @@ describe('useNotifications', () => {
     expect(firstNotification.seen).toBeTruthy();
   });
 
-  it('mark all notification as read', async () => {
+  it('mark fetched notifications as read', async () => {
     const mockNotification1 = { ...mockNotification, _id: 'mockNotification1' };
     const mockNotification2 = { ...mockNotification, _id: 'mockNotification2' };
     const mockNotificationsResponse1 = {
@@ -377,7 +464,7 @@ describe('useNotifications', () => {
     rerender();
 
     act(() => {
-      result.current.markAllNotificationsAsRead();
+      result.current.markFetchedNotificationsAsRead();
     });
 
     await promiseResolveTimeout(100);
@@ -423,7 +510,7 @@ describe('useNotifications', () => {
     expect(firstNotification.seen).toBeTruthy();
   });
 
-  it('mark all notification as seen', async () => {
+  it('mark fetched notifications as seen', async () => {
     const mockNotification1 = { ...mockNotification, _id: 'mockNotification1' };
     const mockNotification2 = { ...mockNotification, _id: 'mockNotification2' };
     const mockNotificationsResponse1 = {
@@ -447,7 +534,7 @@ describe('useNotifications', () => {
     rerender();
 
     act(() => {
-      result.current.markAllNotificationsAsSeen();
+      result.current.markFetchedNotificationsAsSeen();
     });
 
     await promiseResolveTimeout(100);

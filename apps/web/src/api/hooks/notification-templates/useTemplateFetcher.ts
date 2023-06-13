@@ -13,6 +13,7 @@ export function useTemplateFetcher(
     () => getTemplateById(templateId as string),
     {
       enabled: !!templateId,
+      refetchOnWindowFocus: false,
       refetchOnMount: false,
       refetchInterval: false,
       ...options,

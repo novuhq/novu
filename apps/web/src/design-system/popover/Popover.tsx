@@ -17,7 +17,7 @@ type PopoverProps = {
   url?: string;
   urlText?: string;
   onUrlClick?: MouseEventHandler<HTMLAnchorElement>;
-  titleGradient: 'red' | 'blue' | 'none';
+  titleGradient?: 'red' | 'blue' | 'none';
   className?: string;
   opacity?: string | number;
   onDropdownMouseEnter?: MouseEventHandler<HTMLDivElement>;
@@ -48,6 +48,7 @@ export const Popover = ({
       radius="md"
       shadow={colorScheme === 'dark' ? shadows.dark : shadows.medium}
       offset={30}
+      middlewares={{ flip: false, shift: false }}
       {...rest}
     >
       <MantinePopover.Target>{target}</MantinePopover.Target>

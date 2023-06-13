@@ -1,6 +1,7 @@
 export * from './builder';
 export * from './channel';
 export * from './environment';
+export * from './feature-flags';
 export * from './layout';
 export * from './message-template';
 export * from './organization';

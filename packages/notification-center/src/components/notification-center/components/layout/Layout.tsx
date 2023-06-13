@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import styled from '@emotion/styled';
 import { css, cx } from '@emotion/css';
 
-import { Loader } from '../Loader';
-import { Header } from '../layout/header/Header';
-import { FooterContainer as Footer } from './footer/FooterContainer';
-import { useNotificationCenter, useNovuContext, useNovuTheme } from '../../../../hooks';
+import { Header } from './header/Header';
 import { UserPreferenceHeader } from './header/UserPreferenceHeader';
+import { FooterContainer as Footer } from './footer/FooterContainer';
+
+import { Loader } from '../Loader';
+import { useNotificationCenter, useNovuContext, useNovuTheme } from '../../../../hooks';
 import { SubscriberPreference } from '../user-preference/SubscriberPreference';
 import { FeedsTabs } from '../FeedsTabs';
 import { INovuTheme } from '../../../../store/novu-theme.context';

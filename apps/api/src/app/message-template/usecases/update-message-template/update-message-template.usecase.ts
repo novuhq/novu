@@ -19,7 +19,10 @@ export class UpdateMessageTemplate {
   ) {}
 
   async execute(command: UpdateMessageTemplateCommand): Promise<MessageTemplateEntity> {
-    const existingTemplate = await this.messageTemplateRepository.findById(command.templateId);
+    const existingTemplate = await this.messageTemplateRepository.findOne({
+      _id: command.templateId,
+      _environmentId: command.environmentId,
+    });
     if (!existingTemplate) throw new NotFoundException(`Message template with id ${command.templateId} not found`);
 
     const updatePayload: Partial<MessageTemplateEntity> = {};
@@ -57,7 +60,7 @@ export class UpdateMessageTemplate {
     }
 
     if (!command.feedId && existingTemplate._feedId) {
-      updatePayload._feedId = undefined;
+      unsetPayload._feedId = '';
     }
 
     if (command.layoutId) {
@@ -92,6 +95,7 @@ export class UpdateMessageTemplate {
       {
         _id: command.templateId,
         _organizationId: command.organizationId,
+        _environmentId: command.environmentId,
       },
       {
         $set: updatePayload,

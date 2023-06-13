@@ -46,8 +46,8 @@ export class EventsController {
   @ApiOperation({
     summary: 'Trigger event',
     description: `
-    Trigger event is the main (and the only) way to send notification to subscribers. 
-    The trigger identifier is used to match the particular template associated with it. 
+    Trigger event is the main (and only) way to send notifications to subscribers. 
+    The trigger identifier is used to match the particular workflow associated with it. 
     Additional information can be passed according the body interface below.
     `,
   })
@@ -63,7 +63,7 @@ export class EventsController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         identifier: body.name,
-        payload: body.payload,
+        payload: body.payload || {},
         overrides: body.overrides || {},
         to: body.to,
         actor: body.actor,

@@ -13,12 +13,14 @@ import { Regenerate } from './components/Regenerate';
 export const ApiKeysCard = () => {
   const clipboardApiKey = useClipboard({ timeout: 1000 });
   const clipboardEnvironmentIdentifier = useClipboard({ timeout: 1000 });
+  const clipboardEnvironmentId = useClipboard({ timeout: 1000 });
   const { data: apiKeys, refetch: refetchApiKeys } = useQuery<{ key: string }[]>(['getApiKeys'], getApiKeys);
 
   const { environment } = useEnvController();
 
   const apiKey = apiKeys?.length ? apiKeys[0].key : '';
   const environmentIdentifier = environment?.identifier ? environment.identifier : '';
+  const environmentId = environment?._id ? environment._id : '';
 
   return (
     <>
@@ -68,6 +70,26 @@ export const ApiKeysCard = () => {
             }
             value={environmentIdentifier}
             data-test-id="api-identifier"
+          />
+        </MantineInput.Wrapper>
+      </ParamContainer>
+      <ParamContainer>
+        <MantineInput.Wrapper label="Environment ID" styles={inputStyles}>
+          <Input
+            readOnly
+            rightSection={
+              <Tooltip label={clipboardEnvironmentId.copied ? 'Copied!' : 'Copy Key'}>
+                <ActionIcon
+                  variant="transparent"
+                  data-test-id={'environment-id-copy'}
+                  onClick={() => clipboardEnvironmentId.copy(environmentId)}
+                >
+                  {clipboardEnvironmentId.copied ? <Check /> : <Copy />}
+                </ActionIcon>
+              </Tooltip>
+            }
+            value={environmentId}
+            data-test-id="environment-id"
           />
         </MantineInput.Wrapper>
       </ParamContainer>
