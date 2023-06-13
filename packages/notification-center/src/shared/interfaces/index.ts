@@ -116,9 +116,10 @@ export interface INotificationsContext {
   markNotificationAsUnRead: (messageId: string) => void;
   markNotificationAsSeen: (messageId: string) => void;
   removeMessage: (messageId: string) => void;
+  markFetchedNotificationsAsRead: () => void;
+  markFetchedNotificationsAsSeen: () => void;
   markAllNotificationsAsRead: () => void;
   markAllNotificationsAsSeen: () => void;
-  markAllNotificationsAsReadByFeed: () => void;
 }
 
 export interface ITab {
