@@ -18,6 +18,7 @@ export class LaunchDarklyService implements IFeatureFlagsService {
   public isEnabled: boolean;
 
   constructor() {
+    Logger.verbose('Launch Darkly service initialized', LOG_CONTEXT);
     const launchDarklySdkKey = process.env.LAUNCH_DARKLY_SDK_KEY;
 
     if (launchDarklySdkKey) {
