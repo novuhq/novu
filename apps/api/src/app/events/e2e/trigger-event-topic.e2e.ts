@@ -28,6 +28,8 @@ const axiosInstance = axios.create();
 const TOPIC_PATH = '/v1/topics';
 const TRIGGER_ENDPOINT = '/v1/events/trigger';
 
+const originalLaunchDarklySdkKey = process.env.LAUNCH_DARKLY_SDK_KEY;
+
 describe('Topic Trigger Event', () => {
   describe('Trigger event for a topic - /v1/events/trigger (POST)', () => {
     let session: UserSession;
@@ -43,6 +45,7 @@ describe('Topic Trigger Event', () => {
     const messageRepository = new MessageRepository();
 
     beforeEach(async () => {
+      process.env.LAUNCH_DARKLY_SDK_KEY = '';
       process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'true';
       session = new UserSession();
       await session.initialize();
@@ -63,6 +66,7 @@ describe('Topic Trigger Event', () => {
     });
 
     afterEach(() => {
+      process.env.LAUNCH_DARKLY_SDK_KEY = originalLaunchDarklySdkKey;
       process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'false';
     });
 
@@ -288,8 +292,8 @@ describe('Topic Trigger Event', () => {
           channel: ChannelTypeEnum.SMS,
         });
 
-        expect(message._subscriberId.toString()).to.be.eql(subscriber._id);
-        expect(message.phone).to.equal(subscriber.phone);
+        expect(message?._subscriberId.toString()).to.be.eql(subscriber._id);
+        expect(message?.phone).to.equal(subscriber.phone);
       }
     });
   });
@@ -314,6 +318,7 @@ describe('Topic Trigger Event', () => {
     const logRepository = new LogRepository();
 
     beforeEach(async () => {
+      process.env.LAUNCH_DARKLY_SDK_KEY = '';
       process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'true';
       session = new UserSession();
       await session.initialize();
@@ -367,6 +372,7 @@ describe('Topic Trigger Event', () => {
     });
 
     afterEach(() => {
+      process.env.LAUNCH_DARKLY_SDK_KEY = originalLaunchDarklySdkKey;
       process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'false';
     });
 
@@ -480,8 +486,8 @@ describe('Topic Trigger Event', () => {
           channel: ChannelTypeEnum.SMS,
         });
 
-        expect(message._subscriberId.toString()).to.be.eql(subscriber._id);
-        expect(message.phone).to.equal(subscriber.phone);
+        expect(message?._subscriberId.toString()).to.be.eql(subscriber._id);
+        expect(message?.phone).to.equal(subscriber.phone);
       }
     });
   });
