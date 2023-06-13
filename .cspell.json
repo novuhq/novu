@@ -473,7 +473,8 @@
     "bitnamicharts",
     "bitnami",
     "portname",
-    "externalredis"
+    "externalredis",
+    "autorun"
   ],
   "flagWords": [],
   "patterns": [

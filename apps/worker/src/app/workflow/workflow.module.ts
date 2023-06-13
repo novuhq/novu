@@ -108,14 +108,10 @@ const USE_CASES = [
 const REPOSITORIES = [JobRepository];
 
 const SERVICES: Provider[] = [
-  {
-    provide: MetricQueueService,
-    useClass: MetricQueueService,
-  },
-  {
-    provide: WsQueueService,
-    useClass: WsQueueService,
-  },
+  QueueService,
+  TriggerQueueService,
+  MetricQueueService,
+  WsQueueService,
   {
     provide: 'BULLMQ_LIST',
     useFactory: (workflowQueue: QueueService, triggerQueue: TriggerQueueService, wsQueue: WsQueueService) => {
