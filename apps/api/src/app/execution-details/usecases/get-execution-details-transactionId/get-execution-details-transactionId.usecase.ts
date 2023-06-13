@@ -14,7 +14,7 @@ export class GetExecutionDetailsByTransactionId {
       throw new Error(`Limit cannot be greater than ${COUNT_LIMIT}`);
     }
 
-    const { data, totalCount } = await this.executionDetailsRepository.findAllNofitificationExecutionsByTransactionId(
+    const { data, totalCount } = await this.executionDetailsRepository.findAllNotificationExecutionsByTransactionId(
       command.transactionId,
       command.environmentId,
       command.page * command.limit,

@@ -47,7 +47,7 @@ export class ExecutionDetailsController {
     );
   }
 
-  @Get('/:transactionId')
+  @Get('/transactions/:transactionId')
   @ApiResponse(ExecutionDetailsPaginatedResponseDto)
   @ApiOperation({
     summary: 'Get execution details by transaction id',
