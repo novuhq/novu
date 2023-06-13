@@ -19,6 +19,8 @@ export class FeatureFlagsService {
   private service: IFeatureFlagsService;
 
   constructor() {
+    Logger.verbose('Feature Flags service initialized', LOG_CONTEXT);
+
     // TODO: In the future we can replace the object key here for an environment variable
     const service = featureFlagsProviders[FeatureFlagsProvidersEnum.LAUNCH_DARKLY];
 
