@@ -101,8 +101,10 @@ export class FcmPushProvider implements IPushProvider {
     await deleteApp(app);
 
     return {
-      ids: res?.responses?.map((response) =>
-        response.success ? response.messageId : response.error.message
+      ids: res?.responses?.map((response, index) =>
+        response.success
+          ? response.messageId
+          : `${response.error.message}. Invalid token:- ${options.target[index]}`
       ),
       date: new Date().toISOString(),
     };
