@@ -42,11 +42,27 @@ describe('Get Feature Flag', () => {
           expect(result).to.equal(false);
         });
 
-        it('should return default hardcoded value when no SDK env is set but the feature flag is set', async () => {
+        it('should return env variable value when no SDK env is set but the feature flag is set', async () => {
           process.env.IS_TEMPLATE_STORE_ENABLED = 'true';
 
           const result = await getFeatureFlag.isTemplateStoreEnabled(featureFlagCommand);
           expect(result).to.equal(true);
+        });
+      });
+
+      describe('IS_TOPIC_NOTIFICATION_ENABLED', () => {
+        it('should return default hardcoded value when no SDK env is set and no feature flag is set', async () => {
+          process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = '';
+
+          const result = await getFeatureFlag.isTopicNotificationEnabled(featureFlagCommand);
+          expect(result).to.equal(true);
+        });
+
+        it('should return env variable value when no SDK env is set but the feature flag is set', async () => {
+          process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'false';
+
+          const result = await getFeatureFlag.isTopicNotificationEnabled(featureFlagCommand);
+          expect(result).to.equal(false);
         });
       });
     });
@@ -72,13 +88,26 @@ describe('Get Feature Flag', () => {
         getFeatureFlag = moduleRef.get<GetFeatureFlag>(GetFeatureFlag);
       });
 
-      it.skip(`should get the feature flag value stored in Launch Darkly (enabled)
-         when the SDK key env variable is set regardless of the feature flag set`, async () => {
-        process.env.IS_TEMPLATE_STORE_ENABLED = 'false';
+      describe('IS_TEMPLATE_STORE_ENABLED', () => {
+        it(`should get the feature flag value stored in Launch Darkly (enabled)
+           when the SDK key env variable is set regardless of the feature flag set`, async () => {
+          process.env.IS_TEMPLATE_STORE_ENABLED = 'false';
 
-        const result = await getFeatureFlag.isTemplateStoreEnabled(featureFlagCommand);
+          const result = await getFeatureFlag.isTemplateStoreEnabled(featureFlagCommand);
 
-        expect(result).to.equal(true);
+          expect(result).to.equal(true);
+        });
+      });
+
+      describe('IS_TOPIC_NOTIFICATION_ENABLED', () => {
+        it(`should get the feature flag value stored in Launch Darkly (enabled)
+           when the SDK key env variable is set regardless of the feature flag set`, async () => {
+          process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'false';
+
+          const result = await getFeatureFlag.isTopicNotificationEnabled(featureFlagCommand);
+
+          expect(result).to.equal(true);
+        });
       });
     });
   });
