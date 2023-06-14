@@ -462,7 +462,7 @@ importers:
       eslint-plugin-cypress: ^2.12.1
       graphql: ^15.4.0
       handlebars: ^4.7.7
-      html-webpack-plugin: 5.5.1
+      html-webpack-plugin: 5.5.3
       http-server: ^0.13.0
       jwt-decode: ^3.1.2
       launchdarkly-react-client-sdk: ^3.0.6
@@ -564,7 +564,7 @@ importers:
       date-fns: 2.29.3
       graphql: 15.8.0
       handlebars: 4.7.7
-      html-webpack-plugin: 5.5.1_webpack@5.78.0
+      html-webpack-plugin: 5.5.3_webpack@5.78.0
       jwt-decode: 3.1.2
       launchdarkly-react-client-sdk: 3.0.6_sfoxds7t5ydpegc3knd667wn6m
       less: 4.1.3
@@ -776,7 +776,7 @@ importers:
       cypress-intellij-reporter: ^0.0.7
       cypress-network-idle: ^1.10.0
       eslint-plugin-cypress: ^2.12.1
-      html-webpack-plugin: 5.5.1
+      html-webpack-plugin: 5.5.3
       http-server: ^0.13.0
       iframe-resizer: ^4.3.1
       jest: 27.5.1
@@ -844,7 +844,7 @@ importers:
       cypress: 12.9.0
       cypress-intellij-reporter: 0.0.7
       cypress-network-idle: 1.14.2
-      html-webpack-plugin: 5.5.1_webpack@5.78.0
+      html-webpack-plugin: 5.5.3_webpack@5.78.0
       http-server: 0.13.0
       jest: 27.5.1
       less: 4.1.3
@@ -9761,7 +9761,7 @@ packages:
       find-up: 6.3.0
       fs-extra: 9.1.0
       html-webpack-plugin-4: /html-webpack-plugin/4.5.2_webpack@5.78.0
-      html-webpack-plugin-5: /html-webpack-plugin/5.5.1_webpack@5.78.0
+      html-webpack-plugin-5: /html-webpack-plugin/5.5.3_webpack@5.78.0
       local-pkg: 0.4.1
       speed-measure-webpack-plugin: 1.4.2_webpack@5.78.0
       tslib: 2.5.0
@@ -12175,7 +12175,7 @@ packages:
       '@jest/test-result': 27.5.1
       '@jest/transform': 27.5.1
       '@jest/types': 27.5.1
-      '@types/node': 18.15.11
+      '@types/node': 14.18.42
       ansi-escapes: 4.3.2
       chalk: 4.1.2
       emittery: 0.8.1
@@ -12254,7 +12254,7 @@ packages:
     dependencies:
       '@jest/fake-timers': 27.5.1
       '@jest/types': 27.5.1
-      '@types/node': 18.15.11
+      '@types/node': 14.18.42
       jest-mock: 27.5.1
 
   /@jest/environment/28.1.3:
@@ -19386,7 +19386,7 @@ packages:
       fork-ts-checker-webpack-plugin: 6.5.3_fejcc7gjbwtmwzggoernzojija
       glob: 7.2.3
       glob-promise: 3.4.0_glob@7.2.3
-      html-webpack-plugin: 5.5.1_webpack@5.78.0
+      html-webpack-plugin: 5.5.3_webpack@5.78.0
       path-browserify: 1.0.1
       process: 0.11.10
       react: 17.0.2
@@ -20191,7 +20191,7 @@ packages:
       express: 4.18.2
       find-up: 5.0.0
       fs-extra: 9.1.0
-      html-webpack-plugin: 5.5.1_webpack@5.78.0
+      html-webpack-plugin: 5.5.3_webpack@5.78.0
       node-fetch: 2.6.9
       process: 0.11.10
       react: 17.0.2
@@ -21457,7 +21457,7 @@ packages:
   /@types/cors/2.8.13:
     resolution: {integrity: sha512-RG8AStHlUiV5ysZQKq97copd2UmVYw3/pRMLefISZ3S1hK104Cwm7iLQ3fTKx+lsUH2CE8FlLaYeEA2LSeqYUA==}
     dependencies:
-      '@types/node': 18.15.11
+      '@types/node': 14.18.42
 
   /@types/d3-array/3.0.4:
     resolution: {integrity: sha512-nwvEkG9vYOc0Ic7G7kwgviY4AQlTfYGIZ0fqB7CQHXGyYM6nO7kJh5EguSNA3jfh4rq7Sb7eMVq8isuvg2/miQ==}
@@ -22120,7 +22120,7 @@ packages:
   /@types/sax/1.2.4:
     resolution: {integrity: sha512-pSAff4IAxJjfAXUG6tFkO7dsSbTmf8CtUpfhhZ5VhkRpC4628tJhh3+V6H1E+/Gs9piSzYKT5yzHO5M4GG9jkw==}
     dependencies:
-      '@types/node': 18.15.11
+      '@types/node': 14.18.42
     dev: false
 
   /@types/scheduler/0.16.3:
@@ -23077,7 +23077,7 @@ packages:
   /@wry/context/0.4.4:
     resolution: {integrity: sha512-LrKVLove/zw6h2Md/KZyWxIkFM6AoyKp71OqpH9Hiip1csjPVoD3tPxlbQUNxEnHENks3UGgNpSBCAfq9KWuag==}
     dependencies:
-      '@types/node': 18.15.11
+      '@types/node': 14.18.42
       tslib: 1.14.1
     dev: true
 
@@ -32737,8 +32737,8 @@ packages:
       webpack: 5.78.0
     dev: false
 
-  /html-webpack-plugin/5.5.1_webpack@5.78.0:
-    resolution: {integrity: sha512-cTUzZ1+NqjGEKjmVgZKLMdiFg3m9MdRXkZW2OEe69WYVi5ONLMmlnSZdXzGGMOq0C8jGDrL6EWyEDDUioHO/pA==}
+  /html-webpack-plugin/5.5.3_webpack@5.78.0:
+    resolution: {integrity: sha512-6YrDKTuqaP/TquFH7h4srYWsZx+x6k6+FbsTm0ziCwGHDP78Unr1r9F/H4+sGmMbX08GQcJ+K64x55b+7VM/jg==}
     engines: {node: '>=10.13.0'}
     peerDependencies:
       webpack: ^5.20.0
@@ -34226,7 +34226,7 @@ packages:
       '@jest/environment': 27.5.1
       '@jest/test-result': 27.5.1
       '@jest/types': 27.5.1
-      '@types/node': 18.15.11
+      '@types/node': 14.18.42
       chalk: 4.1.2
       co: 4.6.0
       dedent: 0.7.0
@@ -34788,7 +34788,7 @@ packages:
       '@jest/environment': 27.5.1
       '@jest/fake-timers': 27.5.1
       '@jest/types': 27.5.1
-      '@types/node': 18.15.11
+      '@types/node': 14.18.42
       jest-mock: 27.5.1
       jest-util: 27.5.1
 
@@ -42169,7 +42169,7 @@ packages:
       '@protobufjs/path': 1.1.2
       '@protobufjs/pool': 1.1.0
       '@protobufjs/utf8': 1.1.0
-      '@types/node': 18.15.11
+      '@types/node': 14.18.42
       long: 5.2.1
     dev: false
 
@@ -43482,7 +43482,7 @@ packages:
       eslint-webpack-plugin: 3.2.0_rdwvrfvhmsyfoxui6a22qliowu
       file-loader: 6.2.0_webpack@5.78.0
       fs-extra: 10.1.0
-      html-webpack-plugin: 5.5.1_webpack@5.78.0
+      html-webpack-plugin: 5.5.3_webpack@5.78.0
       identity-obj-proxy: 3.0.0
       jest: 27.5.1
       jest-resolve: 27.5.1
