@@ -68,7 +68,6 @@
     "@novu/mattermost": "^0.16.0",
     "@novu/ms-teams": "^0.16.0",
     "@novu/netcore": "^0.16.0",
-    "@novu/node": "^0.16.0",
     "@novu/nodemailer": "^0.16.0",
     "@novu/one-signal": "^0.16.0",
     "@novu/outlook365": "^0.16.0",
@@ -113,7 +112,7 @@
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
     "@types/analytics-node": "^3.1.9",
-    "@types/jest": "29.5.1",
+    "@types/jest": "29.5.2",
     "@types/sinon": "^9.0.0",
     "codecov": "^3.5.0",
     "cpx": "^1.5.0",
