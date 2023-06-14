@@ -16,19 +16,7 @@ To follow the steps in this quickstart, you'll need:
 
 You can find the code for this project [here](https://github.com/novuhq/react-quickstart)
 
-## Create a new React app
-
-If you already have a working React app, please feel free to skip this section.
-
-Create a new React app by running the following command in your terminal:
-
-```bash
-npx create-react-app notifications-app
-```
-
-Wait a couple of minutes for all the packages and dependencies to get installed. Then `cd` into the `notifications-app` folder and now let's install the notification centre component.
-
-## Install Novu React Notification Center Package
+## Install Novu React Notification Center Package in your React app
 
 The Novu React package provides a React component library that you can use to add a fully functioning notification center into your React application.
 
