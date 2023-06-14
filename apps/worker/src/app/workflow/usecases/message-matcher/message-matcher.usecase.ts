@@ -406,7 +406,9 @@ export class MessageMatcher {
     if (fieldFilter.operator === 'IN') {
       result = actualValue.includes(filterValue);
     }
-
+    if (fieldFilter.operator === 'IS_DEFINED') {
+      result = actualValue !== undefined;
+    }
     const actualValueString: string = Array.isArray(actualValue) ? JSON.stringify(actualValue) : `${actualValue ?? ''}`;
 
     filterProcessingDetails.addCondition({

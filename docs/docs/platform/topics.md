@@ -148,7 +148,7 @@ A topic can only be deleted if it doesn't have any subscriber added. When trying
 
 ## Sending a notification to a topic
 
-In the section [Quick Start](/overview/quick-start#trigger-the-notification) it is explained how to trigger a notification for a single subscriber either by passing the subscribers identifier or by passing the full subscriber information if user wants to skip the identify step.
+In the section [Quick Start](/overview/quickstart/general-quickstart#trigger-the-notification) it is explained how to trigger a notification for a single subscriber either by passing the subscribers identifier or by passing the full subscriber information if user wants to skip the identify step.
 Thanks to the topics feature, now it is possible to trigger a notification to all the subscribers assigned to a topic, which helps to have to avoid to list all the subscriber identifiers in the `to` field of the notification trigger.
 To trigger a notification to all the subscribers of a topic, Novu's API allows it by doing this:
 

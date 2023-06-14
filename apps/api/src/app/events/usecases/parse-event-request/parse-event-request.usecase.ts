@@ -53,7 +53,7 @@ export class ParseEventRequest {
     });
 
     if (!template) {
-      throw new UnprocessableEntityException('template_not_found');
+      throw new UnprocessableEntityException('workflow_not_found');
     }
 
     if (!template.active || template.draft) {
@@ -110,17 +110,6 @@ export class ParseEventRequest {
       },
       command.organizationId
     );
-
-    const steps = template.steps;
-
-    if (!command.payload.$on_boarding_trigger) {
-      this.analyticsService.track('Notification event trigger - [Triggers]', command.userId, {
-        _template: template._id,
-        _organization: command.organizationId,
-        channels: steps.map((step) => step.template?.type),
-        source: command.payload.__source || 'api',
-      });
-    }
 
     return {
       acknowledged: true,

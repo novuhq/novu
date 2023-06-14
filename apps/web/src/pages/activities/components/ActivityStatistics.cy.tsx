@@ -25,7 +25,7 @@ describe('Activity Statistics Component Test', () => {
         </QueryClientProvider>
       </TestWrapper>
     );
-    cy.intercept('GET', '/v1/activity', {
+    cy.intercept('GET', '/v1/notifications/stats', {
       body: {
         yearlySent: 1,
         monthlySent: 12,

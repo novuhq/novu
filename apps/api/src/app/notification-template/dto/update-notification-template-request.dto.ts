@@ -18,7 +18,7 @@ export class UpdateNotificationTemplateRequestDto implements ICreateNotification
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
-  @MaxLength(100)
+  @MaxLength(300)
   description: string;
 
   @ApiPropertyOptional()

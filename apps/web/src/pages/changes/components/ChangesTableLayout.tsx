@@ -56,7 +56,7 @@ export const ChangesTable = ({
       Cell: ({ type, templateName, messageType, previousDefaultLayout }: any) => (
         <div data-test-id="change-type">
           {type === ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE && (
-            <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Template Change</Text>
+            <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Workflow Change</Text>
           )}
           {type === ChangeEntityTypeEnum.MESSAGE_TEMPLATE && (
             <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Message Change</Text>

@@ -157,15 +157,7 @@ export class SendMessagePush extends SendMessageBase {
 
       const overrides = command.overrides[integration.providerId] || {};
 
-      await this.sendMessage(
-        integration,
-        channel.credentials.deviceTokens,
-        title,
-        content,
-        command,
-        command.payload,
-        overrides
-      );
+      await this.sendMessage(integration, channel.credentials.deviceTokens, title, content, command, data, overrides);
     }
   }
 
@@ -269,7 +261,7 @@ export class SendMessagePush extends SendMessageBase {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-          raw: JSON.stringify(e),
+          raw: JSON.stringify(e) !== JSON.stringify({}) ? JSON.stringify(e) : JSON.stringify(e.message),
         })
       );
 

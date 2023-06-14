@@ -38,11 +38,12 @@ import { NotificationTemplatesRequestDto } from './dto/notification-templates-re
 import { Roles } from '../auth/framework/roles.decorator';
 import { ApiResponse } from '../shared/framework/response.decorator';
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
+import { CreateNotificationTemplateQuery } from './queries';
 
 @Controller('/notification-templates')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
-@ApiTags('Notification templates')
+@ApiTags('Workflows')
 export class NotificationTemplateController {
   constructor(
     private getNotificationTemplatesUsecase: GetNotificationTemplates,
@@ -56,7 +57,8 @@ export class NotificationTemplateController {
   @Get('')
   @ApiResponse(NotificationTemplateResponse)
   @ApiOperation({
-    summary: 'Get notification templates',
+    summary: 'Get workflows',
+    description: `Workflows were previously named notification templates`,
   })
   @ExternalApiAccessible()
   getNotificationTemplates(
@@ -77,7 +79,8 @@ export class NotificationTemplateController {
   @Put('/:templateId')
   @ApiResponse(NotificationTemplateResponse)
   @ApiOperation({
-    summary: 'Update notification template',
+    summary: 'Update workflow',
+    description: `Workflow was previously named notification template`,
   })
   @ExternalApiAccessible()
   async updateTemplateById(
@@ -110,7 +113,8 @@ export class NotificationTemplateController {
     type: DataBooleanDto,
   })
   @ApiOperation({
-    summary: 'Delete notification template',
+    summary: 'Delete workflow',
+    description: `Workflow was previously named notification template`,
   })
   @ExternalApiAccessible()
   deleteTemplateById(@UserSession() user: IJwtPayload, @Param('templateId') templateId: string): Promise<boolean> {
@@ -127,7 +131,8 @@ export class NotificationTemplateController {
   @Get('/:templateId')
   @ApiResponse(NotificationTemplateResponse)
   @ApiOperation({
-    summary: 'Get notification template',
+    summary: 'Get workflow',
+    description: `Workflow was previously named notification template`,
   })
   @ExternalApiAccessible()
   getNotificationTemplateById(
@@ -149,11 +154,13 @@ export class NotificationTemplateController {
   @UseGuards(RootEnvironmentGuard)
   @ApiResponse(NotificationTemplateResponse, 201)
   @ApiOperation({
-    summary: 'Create notification template',
+    summary: 'Create workflow',
+    description: `Workflow was previously named notification template`,
   })
   @Roles(MemberRoleEnum.ADMIN)
   createNotificationTemplates(
     @UserSession() user: IJwtPayload,
+    @Query() query: CreateNotificationTemplateQuery,
     @Body() body: CreateNotificationTemplateRequestDto
   ): Promise<NotificationTemplateResponse> {
     return this.createNotificationTemplateUsecase.execute(
@@ -171,6 +178,7 @@ export class NotificationTemplateController {
         critical: body.critical ?? false,
         preferenceSettings: body.preferenceSettings,
         blueprintId: body.blueprintId,
+        __source: query?.__source,
       })
     );
   }
@@ -180,7 +188,8 @@ export class NotificationTemplateController {
   @Roles(MemberRoleEnum.ADMIN)
   @ApiResponse(NotificationTemplateResponse)
   @ApiOperation({
-    summary: 'Update notification template status',
+    summary: 'Update workflow status',
+    description: `Workflow was previously named notification template`,
   })
   @ExternalApiAccessible()
   changeActiveStatus(

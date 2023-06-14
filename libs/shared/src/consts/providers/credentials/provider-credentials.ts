@@ -668,6 +668,24 @@ export const smsCentralConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
+export const emailWebhookConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.WebhookUrl,
+    displayName: 'Webhook URL',
+    type: 'string',
+    description: 'the webhook URL to call instead of sending the email',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Secret Hmac Key',
+    type: 'string',
+    description: 'the secret used to sign webhooks calls',
+    required: true,
+  },
+  ...mailConfigBase,
+];
+
 export const africasTalkingConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
@@ -682,4 +700,13 @@ export const africasTalkingConfig: IConfigCredentials[] = [
     required: true,
   },
   ...smsConfigBase,
+];
+
+export const novuInAppConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.Hmac,
+    displayName: 'Security HMAC encryption',
+    type: 'switch',
+    required: false,
+  },
 ];

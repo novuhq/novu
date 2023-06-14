@@ -133,4 +133,18 @@ export class NotificationTemplateService {
       notificationTemplate._environmentId
     );
   }
+
+  async countTemplates() {
+    return await this.notificationTemplateRepository.count({
+      _organizationId: this.organizationId,
+      _environmentId: this.environmentId,
+    });
+  }
+
+  async getTemplates() {
+    return await this.notificationTemplateRepository.find({
+      _organizationId: this.organizationId,
+      _environmentId: this.environmentId,
+    });
+  }
 }
