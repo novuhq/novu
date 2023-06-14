@@ -9,29 +9,29 @@
 ## @param global.storageClass Global StorageClass for Persistent Volume(s)
 ##
 global:
-  imageRegistry: ""
+  imageRegistry: ''
   ## E.g.
   ## imagePullSecrets:
   ##   - myRegistryKeySecretName
   ##
   imagePullSecrets: []
-  storageClass: ""
+  storageClass: ''
 
 ## @section Common parameters
 ##
 
 ## @param kubeVersion Override Kubernetes version
 ##
-kubeVersion: ""
+kubeVersion: ''
 ## @param nameOverride String to partially override common.names.name
 ##
-nameOverride: ""
+nameOverride: ''
 ## @param fullnameOverride String to fully override common.names.fullname
 ##
-fullnameOverride: ""
+fullnameOverride: ''
 ## @param namespaceOverride String to fully override common.names.namespace
 ##
-namespaceOverride: ""
+namespaceOverride: ''
 ## @param commonLabels Labels to add to all deployed objects
 ##
 commonLabels: {}
@@ -77,7 +77,7 @@ api:
     registry: ghcr.io
     repository: novuhq/novu/api
     tag: 0.15.0
-    digest: ""
+    digest: ''
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -183,7 +183,6 @@ api:
     runAsNonRoot: true
     readOnlyRootFilesystem: false
 
-
   ## @param api.existingConfigmap The name of an existing ConfigMap with your custom configuration for novu api
   ##
   existingConfigmap:
@@ -208,7 +207,7 @@ api:
   ## @param api.podAffinityPreset Pod affinity preset. Ignored if `api.affinity` is set. Allowed values: `soft` or `hard`
   ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
   ##
-  podAffinityPreset: ""
+  podAffinityPreset: ''
   ## @param api.podAntiAffinityPreset Pod anti-affinity preset. Ignored if `api.affinity` is set. Allowed values: `soft` or `hard`
   ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
   ##
@@ -222,7 +221,7 @@ api:
   pdb:
     create: false
     minAvailable: 1
-    maxUnavailable: ""
+    maxUnavailable: ''
   ## Autoscaling configuration
   ## ref: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/
   ## @param api.autoscaling.enabled Enable autoscaling for api
@@ -233,20 +232,20 @@ api:
   ##
   autoscaling:
     enabled: false
-    minReplicas: ""
-    maxReplicas: ""
-    targetCPU: ""
-    targetMemory: ""
+    minReplicas: ''
+    maxReplicas: ''
+    targetCPU: ''
+    targetMemory: ''
   ## Node api.affinity preset
   ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
   ##
   nodeAffinityPreset:
     ## @param api.nodeAffinityPreset.type Node affinity preset type. Ignored if `api.affinity` is set. Allowed values: `soft` or `hard`
     ##
-    type: ""
+    type: ''
     ## @param api.nodeAffinityPreset.key Node label key to match. Ignored if `api.affinity` is set
     ##
-    key: ""
+    key: ''
     ## @param api.nodeAffinityPreset.values Node label values to match. Ignored if `api.affinity` is set
     ## E.g.
     ## values:
@@ -284,7 +283,7 @@ api:
 
   ## @param api.priorityClassName novu api pods' priorityClassName
   ##
-  priorityClassName: ""
+  priorityClassName: ''
   ## @param api.topologySpreadConstraints Topology Spread Constraints for pod assignment spread across your cluster among failure-domains. Evaluated as a template
   ## Ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/#spread-constraints-for-pods
   ##
@@ -292,11 +291,11 @@ api:
   ## @param api.schedulerName Name of the k8s scheduler (other than default) for novu api pods
   ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
   ##
-  schedulerName: ""
+  schedulerName: ''
   ## @param api.terminationGracePeriodSeconds Seconds Redmine pod needs to terminate gracefully
   ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod/#termination-of-pods
   ##
-  terminationGracePeriodSeconds: ""
+  terminationGracePeriodSeconds: ''
   ## @param api.lifecycleHooks for the novu api container(s) to automate configuration before or after startup
   ##
   lifecycleHooks: {}
@@ -309,10 +308,10 @@ api:
   extraEnvVars: []
   ## @param api.extraEnvVarsCM Name of existing ConfigMap containing extra env vars for novu api nodes
   ##
-  extraEnvVarsCM: ""
+  extraEnvVarsCM: ''
   ## @param api.extraEnvVarsSecret Name of existing Secret containing extra env vars for novu api nodes
   ##
-  extraEnvVarsSecret: ""
+  extraEnvVarsSecret: ''
   ## @param api.extraVolumes Optionally specify extra list of additional volumes for the novu api pod(s)
   ##
   extraVolumes: []
@@ -350,24 +349,24 @@ api:
     extraPorts: []
 
   ## @param api.port The port on which the API backend should listen on
-  ## 
+  ##
   port: 3000
 
   env:
     ## @param api.env.NODE_ENV The environment of the app.
-    ## 
+    ##
     NODE_ENV: production
     ## @param api.env.API_ROOT_URL Define the required env for novu
-    ## 
+    ##
     API_ROOT_URL: http://novu-api:3000
     ## @param api.env.DISABLE_USER_REGISTRATION If users should not be able to create new accounts. Possible values are: true, false
-    ## 
+    ##
     DISABLE_USER_REGISTRATION: true
     ## @param api.env.FRONT_BASE_URL The base url on which your frontend is accessible for the user. (e.g. web.novu.co)
-    ## 
+    ##
     FRONT_BASE_URL: http://novu-web:4200
     ## @param api.env.MONGO_MAX_POOL_SIZE The max pool size of the MongoDB connection
-    ## 
+    ##
     MONGO_MAX_POOL_SIZE: 50
 
   ## novu api ingress parameters
@@ -382,7 +381,7 @@ api:
     pathType: ImplementationSpecific
     ## @param api.ingress.apiVersion Force Ingress API version (automatically detected if not set)
     ##
-    apiVersion: ""
+    apiVersion: ''
     ## @param api.ingress.hostname Default host for the ingress record
     ##
     hostname: novu-api.local
@@ -390,7 +389,7 @@ api:
     ## This is supported in Kubernetes 1.18+ and required if you have more than one IngressClass marked as the default for your cluster .
     ## ref: https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/
     ##
-    ingressClassName: ""
+    ingressClassName: ''
     ## @param api.ingress.path Default path for the ingress record
     ## NOTE: You may need to set this to '/*' in order to use this with ALB ingress controllers
     ##
@@ -492,7 +491,7 @@ worker:
     registry: ghcr.io
     repository: novuhq/novu/worker
     tag: 0.15.0
-    digest: ""
+    digest: ''
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -600,7 +599,6 @@ worker:
     runAsNonRoot: true
     readOnlyRootFilesystem: false
 
-
   ## @param worker.existingConfigmap The name of an existing ConfigMap with your custom configuration for novu worker
   ##
   existingConfigmap:
@@ -625,7 +623,7 @@ worker:
   ## @param worker.podAffinityPreset Pod affinity preset. Ignored if `worker.affinity` is set. Allowed values: `soft` or `hard`
   ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
   ##
-  podAffinityPreset: ""
+  podAffinityPreset: ''
   ## @param worker.podAntiAffinityPreset Pod anti-affinity preset. Ignored if `worker.affinity` is set. Allowed values: `soft` or `hard`
   ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
   ##
@@ -639,7 +637,7 @@ worker:
   pdb:
     create: false
     minAvailable: 1
-    maxUnavailable: ""
+    maxUnavailable: ''
   ## Autoscaling configuration
   ## ref: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/
   ## @param worker.autoscaling.enabled Enable autoscaling for worker
@@ -650,20 +648,20 @@ worker:
   ##
   autoscaling:
     enabled: false
-    minReplicas: ""
-    maxReplicas: ""
-    targetCPU: ""
-    targetMemory: ""
+    minReplicas: ''
+    maxReplicas: ''
+    targetCPU: ''
+    targetMemory: ''
   ## Node worker.affinity preset
   ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
   ##
   nodeAffinityPreset:
     ## @param worker.nodeAffinityPreset.type Node affinity preset type. Ignored if `worker.affinity` is set. Allowed values: `soft` or `hard`
     ##
-    type: ""
+    type: ''
     ## @param worker.nodeAffinityPreset.key Node label key to match. Ignored if `worker.affinity` is set
     ##
-    key: ""
+    key: ''
     ## @param worker.nodeAffinityPreset.values Node label values to match. Ignored if `worker.affinity` is set
     ## E.g.
     ## values:
@@ -701,7 +699,7 @@ worker:
 
   ## @param worker.priorityClassName novu worker pods' priorityClassName
   ##
-  priorityClassName: ""
+  priorityClassName: ''
   ## @param worker.topologySpreadConstraints Topology Spread Constraints for pod assignment spread across your cluster among failure-domains. Evaluated as a template
   ## Ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/#spread-constraints-for-pods
   ##
@@ -709,11 +707,11 @@ worker:
   ## @param worker.schedulerName Name of the k8s scheduler (other than default) for novu worker pods
   ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
   ##
-  schedulerName: ""
+  schedulerName: ''
   ## @param worker.terminationGracePeriodSeconds Seconds Redmine pod needs to terminate gracefully
   ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod/#termination-of-pods
   ##
-  terminationGracePeriodSeconds: ""
+  terminationGracePeriodSeconds: ''
   ## @param worker.lifecycleHooks for the novu worker container(s) to automate configuration before or after startup
   ##
   lifecycleHooks: {}
@@ -726,10 +724,10 @@ worker:
   extraEnvVars: []
   ## @param worker.extraEnvVarsCM Name of existing ConfigMap containing extra env vars for novu worker nodes
   ##
-  extraEnvVarsCM: ""
+  extraEnvVarsCM: ''
   ## @param worker.extraEnvVarsSecret Name of existing Secret containing extra env vars for novu worker nodes
   ##
-  extraEnvVarsSecret: ""
+  extraEnvVarsSecret: ''
   ## @param worker.extraVolumes Optionally specify extra list of additional volumes for the novu worker pod(s)
   ##
   extraVolumes: []
@@ -767,7 +765,7 @@ worker:
     extraPorts: []
 
   ## @param worker.port The port on which the Worker app should listen on
-  ## 
+  ##
   port: 3004
 
 ## @section Novu Websocket Parameters
@@ -787,7 +785,7 @@ ws:
     registry: ghcr.io
     repository: novuhq/novu/ws
     tag: 0.15.0
-    digest: ""
+    digest: ''
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -895,7 +893,6 @@ ws:
     runAsNonRoot: true
     readOnlyRootFilesystem: false
 
-
   ## @param ws.existingConfigmap The name of an existing ConfigMap with your custom configuration for novu ws
   ##
   existingConfigmap:
@@ -920,7 +917,7 @@ ws:
   ## @param ws.podAffinityPreset Pod affinity preset. Ignored if `ws.affinity` is set. Allowed values: `soft` or `hard`
   ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
   ##
-  podAffinityPreset: ""
+  podAffinityPreset: ''
   ## @param ws.podAntiAffinityPreset Pod anti-affinity preset. Ignored if `ws.affinity` is set. Allowed values: `soft` or `hard`
   ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
   ##
@@ -934,7 +931,7 @@ ws:
   pdb:
     create: false
     minAvailable: 1
-    maxUnavailable: ""
+    maxUnavailable: ''
   ## Autoscaling configuration
   ## ref: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/
   ## @param ws.autoscaling.enabled Enable autoscaling for ws
@@ -945,20 +942,20 @@ ws:
   ##
   autoscaling:
     enabled: false
-    minReplicas: ""
-    maxReplicas: ""
-    targetCPU: ""
-    targetMemory: ""
+    minReplicas: ''
+    maxReplicas: ''
+    targetCPU: ''
+    targetMemory: ''
   ## Node ws.affinity preset
   ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
   ##
   nodeAffinityPreset:
     ## @param ws.nodeAffinityPreset.type Node affinity preset type. Ignored if `ws.affinity` is set. Allowed values: `soft` or `hard`
     ##
-    type: ""
+    type: ''
     ## @param ws.nodeAffinityPreset.key Node label key to match. Ignored if `ws.affinity` is set
     ##
-    key: ""
+    key: ''
     ## @param ws.nodeAffinityPreset.values Node label values to match. Ignored if `ws.affinity` is set
     ## E.g.
     ## values:
@@ -996,7 +993,7 @@ ws:
 
   ## @param ws.priorityClassName novu ws pods' priorityClassName
   ##
-  priorityClassName: ""
+  priorityClassName: ''
   ## @param ws.topologySpreadConstraints Topology Spread Constraints for pod assignment spread across your cluster among failure-domains. Evaluated as a template
   ## Ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/#spread-constraints-for-pods
   ##
@@ -1004,11 +1001,11 @@ ws:
   ## @param ws.schedulerName Name of the k8s scheduler (other than default) for novu ws pods
   ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
   ##
-  schedulerName: ""
+  schedulerName: ''
   ## @param ws.terminationGracePeriodSeconds Seconds Redmine pod needs to terminate gracefully
   ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod/#termination-of-pods
   ##
-  terminationGracePeriodSeconds: ""
+  terminationGracePeriodSeconds: ''
   ## @param ws.lifecycleHooks for the novu ws container(s) to automate configuration before or after startup
   ##
   lifecycleHooks: {}
@@ -1021,10 +1018,10 @@ ws:
   extraEnvVars: []
   ## @param ws.extraEnvVarsCM Name of existing ConfigMap containing extra env vars for novu ws nodes
   ##
-  extraEnvVarsCM: ""
+  extraEnvVarsCM: ''
   ## @param ws.extraEnvVarsSecret Name of existing Secret containing extra env vars for novu ws nodes
   ##
-  extraEnvVarsSecret: ""
+  extraEnvVarsSecret: ''
   ## @param ws.extraVolumes Optionally specify extra list of additional volumes for the novu ws pod(s)
   ##
   extraVolumes: []
@@ -1053,7 +1050,6 @@ ws:
   ##
   initContainers: []
 
-
   service:
     ## @param ws.service.annotations Additional custom annotations for ws service
     ##
@@ -1074,7 +1070,7 @@ ws:
     pathType: ImplementationSpecific
     ## @param ws.ingress.apiVersion Force Ingress API version (automatically detected if not set)
     ##
-    apiVersion: ""
+    apiVersion: ''
     ## @param ws.ingress.hostname Default host for the ingress record
     ##
     hostname: novu-ws.local
@@ -1082,7 +1078,7 @@ ws:
     ## This is supported in Kubernetes 1.18+ and required if you have more than one IngressClass marked as the default for your cluster .
     ## ref: https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/
     ##
-    ingressClassName: ""
+    ingressClassName: ''
     ## @param ws.ingress.path Default path for the ingress record
     ## NOTE: You may need to set this to '/*' in order to use this with ALB ingress controllers
     ##
@@ -1168,7 +1164,7 @@ ws:
     extraRules: []
 
   ## @param ws.port The port on which the Websocket app should listen on
-  ## 
+  ##
   port: 3002
 
 ## @section Novu Web Parameters
@@ -1188,7 +1184,7 @@ web:
     registry: ghcr.io
     repository: novuhq/novu/web
     tag: 0.15.0
-    digest: ""
+    digest: ''
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
     ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -1290,7 +1286,6 @@ web:
     runAsNonRoot: true
     readOnlyRootFilesystem: false
 
-
   ## @param web.existingConfigmap The name of an existing ConfigMap with your custom configuration for novu web
   ##
   existingConfigmap:
@@ -1315,7 +1310,7 @@ web:
   ## @param web.podAffinityPreset Pod affinity preset. Ignored if `web.affinity` is set. Allowed values: `soft` or `hard`
   ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
   ##
-  podAffinityPreset: ""
+  podAffinityPreset: ''
   ## @param web.podAntiAffinityPreset Pod anti-affinity preset. Ignored if `web.affinity` is set. Allowed values: `soft` or `hard`
   ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
   ##
@@ -1329,7 +1324,7 @@ web:
   pdb:
     create: false
     minAvailable: 1
-    maxUnavailable: ""
+    maxUnavailable: ''
   ## Autoscaling configuration
   ## ref: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/
   ## @param web.autoscaling.enabled Enable autoscaling for web
@@ -1340,20 +1335,20 @@ web:
   ##
   autoscaling:
     enabled: false
-    minReplicas: ""
-    maxReplicas: ""
-    targetCPU: ""
-    targetMemory: ""
+    minReplicas: ''
+    maxReplicas: ''
+    targetCPU: ''
+    targetMemory: ''
   ## Node web.affinity preset
   ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
   ##
   nodeAffinityPreset:
     ## @param web.nodeAffinityPreset.type Node affinity preset type. Ignored if `web.affinity` is set. Allowed values: `soft` or `hard`
     ##
-    type: ""
+    type: ''
     ## @param web.nodeAffinityPreset.key Node label key to match. Ignored if `web.affinity` is set
     ##
-    key: ""
+    key: ''
     ## @param web.nodeAffinityPreset.values Node label values to match. Ignored if `web.affinity` is set
     ## E.g.
     ## values:
@@ -1391,7 +1386,7 @@ web:
 
   ## @param web.priorityClassName novu web pods' priorityClassName
   ##
-  priorityClassName: ""
+  priorityClassName: ''
   ## @param web.topologySpreadConstraints Topology Spread Constraints for pod assignment spread across your cluster among failure-domains. Evaluated as a template
   ## Ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/#spread-constraints-for-pods
   ##
@@ -1399,11 +1394,11 @@ web:
   ## @param web.schedulerName Name of the k8s scheduler (other than default) for novu web pods
   ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
   ##
-  schedulerName: ""
+  schedulerName: ''
   ## @param web.terminationGracePeriodSeconds Seconds Redmine pod needs to terminate gracefully
   ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod/#termination-of-pods
   ##
-  terminationGracePeriodSeconds: ""
+  terminationGracePeriodSeconds: ''
   ## @param web.lifecycleHooks for the novu web container(s) to automate configuration before or after startup
   ##
   lifecycleHooks: {}
@@ -1416,10 +1411,10 @@ web:
   extraEnvVars: []
   ## @param web.extraEnvVarsCM Name of existing ConfigMap containing extra env vars for novu web nodes
   ##
-  extraEnvVarsCM: ""
+  extraEnvVarsCM: ''
   ## @param web.extraEnvVarsSecret Name of existing Secret containing extra env vars for novu web nodes
   ##
-  extraEnvVarsSecret: ""
+  extraEnvVarsSecret: ''
   ## @param web.extraVolumes Optionally specify extra list of additional volumes for the novu web pod(s)
   ##
   extraVolumes: []
@@ -1448,7 +1443,6 @@ web:
   ##
   initContainers: []
 
-
   service:
     ## @param web.service.annotations Additional custom annotations for web service
     ##
@@ -1469,7 +1463,7 @@ web:
     pathType: ImplementationSpecific
     ## @param web.ingress.apiVersion Force Ingress API version (automatically detected if not set)
     ##
-    apiVersion: ""
+    apiVersion: ''
     ## @param web.ingress.hostname Default host for the ingress record
     ##
     hostname: novu-web.local
@@ -1477,7 +1471,7 @@ web:
     ## This is supported in Kubernetes 1.18+ and required if you have more than one IngressClass marked as the default for your cluster .
     ## ref: https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/
     ##
-    ingressClassName: ""
+    ingressClassName: ''
     ## @param web.ingress.path Default path for the ingress record
     ## NOTE: You may need to set this to '/*' in order to use this with ALB ingress controllers
     ##
@@ -1563,9 +1557,8 @@ web:
     extraRules: []
 
   ## @param web.port The port on which the Web app should listen on
-  ## 
+  ##
   port: 4200
-
 
 ## @section Persistence Parameters
 ##
@@ -1582,7 +1575,7 @@ persistence:
   mountPath: /novu/data
   ## @param persistence.subPath The subdirectory of the volume to mount to, useful in dev environments and one PV for multiple services
   ##
-  subPath: ""
+  subPath: ''
   ## @param persistence.storageClass Storage class of backing PVC
   ## If defined, storageClassName: <storageClass>
   ## If set to "-", storageClassName: "", which disables dynamic provisioning
@@ -1590,7 +1583,7 @@ persistence:
   ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
   ##   GKE, AWS & OpenStack)
   ##
-  storageClass: ""
+  storageClass: ''
   ## @param persistence.annotations Persistent Volume Claim annotations
   ##
   annotations: {}
@@ -1603,7 +1596,7 @@ persistence:
   size: 8Gi
   ## @param persistence.existingClaim The name of an existing PVC to use for persistence
   ##
-  existingClaim: ""
+  existingClaim: ''
   ## @param persistence.selector Selector to match an existing Persistent Volume for WordPress data PVC
   ## If set, the PVC can't have a PV dynamically provisioned for it
   ## E.g.
@@ -1625,7 +1618,7 @@ serviceAccount:
   ## @param serviceAccount.name The name of the ServiceAccount to use.
   ## If not set and create is true, a name is generated using the common.names.fullname template
   ##
-  name: ""
+  name: ''
   ## @param serviceAccount.annotations Additional Service Account annotations (evaluated as a template)
   ##
   annotations: {}
@@ -1647,7 +1640,7 @@ metrics:
     enabled: false
     ## @param metrics.serviceMonitor.namespace Namespace in which Prometheus is running
     ##
-    namespace: ""
+    namespace: ''
     ## @param metrics.serviceMonitor.annotations Additional custom annotations for the ServiceMonitor
     ##
     annotations: {}
@@ -1656,7 +1649,7 @@ metrics:
     labels: {}
     ## @param metrics.serviceMonitor.jobLabel The name of the label on the target service to use as the job name in Prometheus
     ##
-    jobLabel: ""
+    jobLabel: ''
     ## @param metrics.serviceMonitor.honorLabels honorLabels chooses the metric's labels on collisions with target labels
     ##
     honorLabels: false
@@ -1665,13 +1658,13 @@ metrics:
     ## e.g:
     ## interval: 10s
     ##
-    interval: ""
+    interval: ''
     ## @param metrics.serviceMonitor.scrapeTimeout Timeout after which the scrape is ended
     ## ref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#endpoint
     ## e.g:
     ## scrapeTimeout: 10s
     ##
-    scrapeTimeout: ""
+    scrapeTimeout: ''
     ## @param metrics.serviceMonitor.metricRelabelings Specify additional relabeling of metrics
     ##
     metricRelabelings: []
@@ -1734,8 +1727,8 @@ redis:
   enabled: false
   architecture: standalone
   auth:
-    enabled	: true
-    password: novu_password  # you need to change this !
+    enabled: true
+    password: novu_password # you need to change this !
 
 ## @section Localstack (S3) configuration
 ##
@@ -1757,7 +1750,7 @@ localstack:
 ## @param externalDatabase.username Username for external mongoDB database
 ## @param externalDatabase.password Password for external mongoDB database
 ## @param externalDatabase.database Database name for external mongoDB database
-externalDatabase :
+externalDatabase:
   host: mongodb.local
   port: 27017
   username: 'novu'
@@ -1770,7 +1763,7 @@ externalDatabase :
 ## @param externalRedis.host Host for external Redis database
 ## @param externalRedis.port Port for external Redis database
 ## @param externalRedis.password Password for external Redis database
-externalRedis :
+externalRedis:
   host: redis
   port: 6379
   password: ''
@@ -1783,9 +1776,9 @@ externalRedis :
 ## @param externalS3.region Region name for external S3 storage access
 ## @param externalS3.accessKey access Key for external S3 storage access
 ## @param externalS3.secretKey secret Key for external S3 storage access
-externalS3: 
+externalS3:
   endpoint: http://localstack:4566
   bucketName: novu-local
-  region:  us-east-1
+  region: us-east-1
   accessKey: test
   secretKey: test
