@@ -24,6 +24,7 @@ export interface IMessage {
 }
 
 export enum ChannelTypeEnum {
+  IN_APP = 'in-app',
   EMAIL = 'email',
   SMS = 'sms',
   CHAT = 'chat',

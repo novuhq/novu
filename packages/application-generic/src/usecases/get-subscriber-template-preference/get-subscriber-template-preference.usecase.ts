@@ -6,12 +6,16 @@ import {
   SubscriberEntity,
   MessageTemplateRepository,
 } from '@novu/dal';
-import { ChannelTypeEnum } from '@novu/stateless';
-import { IPreferenceChannels, StepTypeEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  IPreferenceChannels,
+  StepTypeEnum,
+} from '@novu/shared';
 
 import {
-  IGetSubscriberPreferenceTemplateResponse,
+  ITemplateConfiguration,
   ISubscriberPreferenceResponse,
+  IPreferenceOverride,
 } from '../get-subscriber-preference';
 import { GetSubscriberTemplatePreferenceCommand } from './get-subscriber-template-preference.command';
 import { ApiException } from '../../utils/exceptions';
@@ -31,10 +35,11 @@ export class GetSubscriberTemplatePreference {
     const activeChannels = await this.queryActiveChannels(command);
     const subscriber =
       command.subscriber ??
-      (await this.subscriberRepository.findBySubscriberId(
-        command.environmentId,
-        command.subscriberId
-      ));
+      (await this.fetchSubscriber({
+        subscriberId: command.subscriberId,
+        _environmentId: command.environmentId,
+      }));
+
     if (!subscriber) {
       throw new ApiException(`Subscriber ${command.subscriberId} not found`);
     }
@@ -46,50 +51,47 @@ export class GetSubscriberTemplatePreference {
         _templateId: command.template._id,
       });
 
-    const responseTemplate = mapResponseTemplate(command.template);
-    const subscriberPreferenceEnabled = subscriberPreference?.enabled ?? true;
-
-    if (
-      subscriberPreferenceIsWhole(
-        subscriberPreference?.channels,
-        activeChannels
-      )
-    ) {
-      return getResponse(
-        responseTemplate,
-        subscriberPreferenceEnabled,
-        subscriberPreference?.channels,
+    const templateConfiguration = mapTemplateConfiguration(command.template);
+    const templatePreferred = subscriberPreference?.enabled ?? true;
+    const subscriberChannelPreference = subscriberPreference?.channels;
+    const templateChannelPreference = command.template.preferenceSettings;
+    const { channelPreferences, overrides } =
+      this.getChannelPreferenceAndOverrides(
+        templateChannelPreference,
+        subscriberChannelPreference,
         activeChannels
       );
-    }
 
-    const templatePreference = command.template.preferenceSettings;
+    return {
+      template: templateConfiguration,
+      preference: {
+        enabled: templatePreferred,
+        channels: channelPreferences,
+        overrides: overrides,
+      },
+    };
+  }
 
-    if (templatePreference) {
-      if (!subscriberPreference?.channels) {
-        return getResponse(
-          responseTemplate,
-          subscriberPreferenceEnabled,
-          templatePreference,
-          activeChannels
-        );
-      }
+  private getChannelPreferenceAndOverrides(
+    templateChannelPreference,
+    subscriberChannelPreference,
+    activeChannels: ChannelTypeEnum[]
+  ) {
+    const preferenceOverrideResult = determineOverrides({
+      template: templateChannelPreference,
+      subscriber: subscriberChannelPreference,
+    });
 
-      const mergedPreference = Object.assign(
-        {},
-        templatePreference,
-        subscriberPreference.channels
-      );
+    const channelPreferences = filterActiveChannels(
+      activeChannels,
+      preferenceOverrideResult.preferences
+    );
+    const overrides = filterActiveOverrides(
+      activeChannels,
+      preferenceOverrideResult.overrides
+    );
 
-      return getResponse(
-        responseTemplate,
-        subscriberPreferenceEnabled,
-        mergedPreference,
-        activeChannels
-      );
-    }
-
-    return getNoSettingFallback(responseTemplate, activeChannels);
+    return { channelPreferences, overrides };
   }
 
   private async queryActiveChannels(
@@ -99,7 +101,9 @@ export class GetSubscriberTemplatePreference {
       (step) => step.active === true
     );
 
-    if (activeSteps.some((step) => !step.template)) {
+    const stepMissingTemplate = activeSteps.some((step) => !step.template);
+
+    if (stepMissingTemplate) {
       const messageIds = activeSteps.map((step) => step._templateId);
 
       const messageTemplates = await this.messageTemplateRepository.find({
@@ -153,12 +157,74 @@ export class GetSubscriberTemplatePreference {
   }
 }
 
-function filterActiveChannels(
+function updateOverrideReasons(
+  channelName,
+  sourceName: string,
+  index: number,
+  overrideReasons: IPreferenceOverride[]
+) {
+  const currOverride: IPreferenceOverride = {
+    channel: channelName as ChannelTypeEnum,
+    source: sourceName as 'template' | 'subscriber',
+  };
+
+  const notFoundFlag = -1;
+  const existsInOverrideReasons = index !== notFoundFlag;
+  if (existsInOverrideReasons) {
+    overrideReasons[index] = currOverride;
+  } else {
+    overrideReasons.push(currOverride);
+  }
+}
+
+export function determineOverrides(
+  preferenceSources: Record<'template' | 'subscriber', IPreferenceChannels>
+) {
+  const priorityOrder = ['template', 'subscriber'];
+  const resultPreferences: IPreferenceChannels = {
+    email: true,
+    sms: true,
+    in_app: true,
+    chat: true,
+    push: true,
+  };
+  const overrideReasons: IPreferenceOverride[] = [];
+
+  // iterate over preference sources, the smallest priority first
+  for (const sourceName of priorityOrder) {
+    const preference = preferenceSources[sourceName] as IPreferenceChannels;
+    const missingPreferenceObject = !preference;
+
+    // subscriber may miss preference if he did not toggle his preferences
+    if (missingPreferenceObject) continue;
+
+    // iterate over preferences and override overrideReasons if there is a diff
+    for (const [channelName, channelValue] of Object.entries(preference)) {
+      const index = overrideReasons.findIndex(
+        (overrideReason) => overrideReason.channel === channelName
+      );
+
+      const diff = overrideReasons[index]?.source !== channelValue;
+
+      if (!diff) continue;
+
+      resultPreferences[channelName] = channelValue;
+      updateOverrideReasons(channelName, sourceName, index, overrideReasons);
+    }
+  }
+
+  return {
+    preferences: resultPreferences,
+    overrides: overrideReasons,
+  };
+}
+
+export function filterActiveChannels(
   activeChannels: ChannelTypeEnum[],
-  preference?: IPreferenceChannels
+  preferences: IPreferenceChannels
 ): IPreferenceChannels {
-  const filteredChannels = Object.assign({}, preference);
-  for (const key in preference) {
+  const filteredChannels = { ...preferences };
+  for (const key in preferences) {
     if (!activeChannels.some((channel) => channel === key)) {
       delete filteredChannels[key];
     }
@@ -167,57 +233,26 @@ function filterActiveChannels(
   return filteredChannels;
 }
 
-function getNoSettingFallback(
-  template: IGetSubscriberPreferenceTemplateResponse,
-  activeChannels: ChannelTypeEnum[]
-): ISubscriberPreferenceResponse {
-  return getResponse(
-    template,
-    true,
-    {
-      email: true,
-      sms: true,
-      in_app: true,
-      chat: true,
-      push: true,
-    },
-    activeChannels
-  );
+export function filterActiveOverrides(
+  activeChannels: ChannelTypeEnum[],
+  overrides: IPreferenceOverride[]
+): IPreferenceOverride[] {
+  const preferenceOverrides: IPreferenceOverride[] = [];
+  for (const override of overrides) {
+    if (activeChannels.some((channel) => channel === override.channel)) {
+      preferenceOverrides.push(override);
+    }
+  }
+
+  return preferenceOverrides;
 }
 
-function mapResponseTemplate(
+function mapTemplateConfiguration(
   template: NotificationTemplateEntity
-): IGetSubscriberPreferenceTemplateResponse {
+): ITemplateConfiguration {
   return {
     _id: template._id,
     name: template.name,
     critical: template.critical != null ? template.critical : true,
-  };
-}
-
-function subscriberPreferenceIsWhole(
-  preference?: IPreferenceChannels | null,
-  activeChannels?: ChannelTypeEnum[] | null
-): boolean {
-  if (!preference || !activeChannels) return false;
-
-  return Object.keys(preference).length === activeChannels.length;
-}
-
-function getResponse(
-  responseTemplate: IGetSubscriberPreferenceTemplateResponse,
-  subscriberPreferenceEnabled: boolean,
-  subscriberPreferenceChannels: IPreferenceChannels | undefined,
-  activeChannels: ChannelTypeEnum[]
-): ISubscriberPreferenceResponse {
-  return {
-    template: responseTemplate,
-    preference: {
-      enabled: subscriberPreferenceEnabled,
-      channels: filterActiveChannels(
-        activeChannels,
-        subscriberPreferenceChannels
-      ),
-    },
   };
 }
