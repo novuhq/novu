@@ -56,18 +56,29 @@ export class UpdateLayoutUseCase {
       });
       await this.setDefaultLayout.execute(setDefaultLayoutCommand);
       // await this.createChange(command);
-    } else {
+    }
+    /*
+     * else {
+     *   await this.createChange(command);
+     * }
+     */
+    if (command.name || command.description || command.content || command.variables) {
       await this.createChange(command);
     }
-
-    if (
-      dto.name !== databaseEntity.name ||
-      dto.content !== databaseEntity.content ||
-      dto.description !== databaseEntity.description ||
-      dto.variables !== databaseEntity.variables
-    ) {
-      await this.createChange(command);
-    }
+    /*
+     * if (
+     *   dto.name !== databaseEntity.name ||
+     *   dto.content !== databaseEntity.content ||
+     *   dto.description !== databaseEntity.description ||
+     *   dto.variables !== databaseEntity.variables
+     * ) {
+     *   console.log('name', dto.name !== databaseEntity.name);
+     *   console.log('content', dto.content !== databaseEntity.content);
+     *   console.log('description', dto.description !== databaseEntity.description);
+     *   console.log('variables', dto.variables !== databaseEntity.variables);
+     *   await this.createChange(command);
+     * }
+     */
 
     this.analyticsService.track('[Layout] - Update', command.userId, {
       _organizationId: command.organizationId,

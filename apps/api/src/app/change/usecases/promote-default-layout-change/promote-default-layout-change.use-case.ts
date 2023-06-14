@@ -22,17 +22,15 @@ export class PromoteDefaultLayoutChange {
     // For the scenario where the layout is deleted and an active default layout change was pending
     if (!item) {
       item = await this.layoutRepository.findDeletedByParentId(command.item._id, command.environmentId);
-      console.log(`deleted default layout change parent: ${command.item._id} item: ${item?._id}`);
     }
 
     const newItem = command.item as LayoutEntity;
 
     if (!item) {
-      /*
-       * if (newItem.deleted) {
-       *   return;
-       * }
-       */
+      if (newItem.deleted) {
+        return;
+      }
+
       const changes = await this.changeRepository.getEntityChanges(
         command.organizationId,
         ChangeEntityTypeEnum.LAYOUT,
@@ -49,26 +47,6 @@ export class PromoteDefaultLayoutChange {
           })
         );
       }
-      /*
-       * if (newItem.deleted) {
-       *   return;
-       * }
-       * const layoutEntity = {
-       *   name: newItem.name,
-       *   content: newItem.content,
-       *   description: newItem.description,
-       *   contentType: newItem.contentType,
-       *   variables: newItem.variables,
-       *   // isDefault: newItem.isDefault,
-       *   channel: newItem.channel,
-       *   _creatorId: command.userId,
-       *   _environmentId: command.environmentId,
-       *   _organizationId: command.organizationId,
-       *   _parentId: newItem._id,
-       * };
-       *
-       * return await this.layoutRepository.create(layoutEntity);
-       */
 
       item = await this.layoutRepository.findOne({
         _environmentId: command.environmentId,
@@ -76,27 +54,9 @@ export class PromoteDefaultLayoutChange {
       });
 
       if (!item) {
-        console.log(`Not found layout with parent ${command.item._id}`);
-
         return;
-        // throw new NotFoundException(`Not found layout with parent ${command.item._id}`);
       }
     }
-
-    /*
-     * const count = await this.layoutRepository.count({
-     *   _organizationId: command.organizationId,
-     *   _id: command.item._id,
-     * });
-     *
-     * if (count === 0) {
-     *   await this.layoutRepository.deleteLayout(item._id, command.environmentId, command.organizationId);
-     *
-     *   return;
-     * }
-     */
-
-    console.log('update default');
 
     return await this.layoutRepository.update(
       {

@@ -2,10 +2,10 @@ import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { Center, Grid, Group, Modal, Title, useMantineTheme } from '@mantine/core';
 import { ArrowLeft } from '../../../design-system/icons';
 import { Button, Checkbox, colors, Input, Text, LoadingOverlay, shadows } from '../../../design-system';
-import { useEnvController, useLayoutsEditor, usePrompt } from '../../../hooks';
+import { useEffectOnce, useEnvController, useLayoutsEditor, usePrompt } from '../../../hooks';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import isEqual from 'lodash.isequal';
 import { parse } from '@handlebars/parser';
 import { getTemplateVariables, ITemplateVariable, isReservedVariableName, LayoutId } from '@novu/shared';
@@ -15,6 +15,9 @@ import { VariablesManagement } from '../../templates/components/email-editor/var
 import { UnsavedChangesModal } from '../../templates/components/UnsavedChangesModal';
 import { VariableManager } from '../../templates/components/VariableManager';
 import { EmailCustomCodeEditor } from '../../templates/components/email-editor/EmailCustomCodeEditor';
+import { useVariablesManager } from './use-variables';
+const strArray = ['content'];
+type UnknownArrayOrObject = unknown[] | Record<string, unknown>;
 
 interface ILayoutForm {
   content: string;
@@ -42,7 +45,7 @@ export function LayoutEditor({
   const { readonly, environment } = useEnvController();
   const theme = useMantineTheme();
   const queryClient = useQueryClient();
-  const [ast, setAst] = useState<any>({ body: [] });
+  // const [ast, setAst] = useState<any>({ body: [] });
   const [modalOpen, setModalOpen] = useState(false);
   const [layoutId, setLayoutId] = useState<LayoutId>(id);
 
@@ -52,36 +55,140 @@ export function LayoutEditor({
     handleSubmit,
     watch,
     control,
+    getValues,
+    reset,
     setValue,
-    formState: { isDirty },
+    formState: { isDirty, dirtyFields: formDirtyFields },
   } = useForm<ILayoutForm>({
-    defaultValues: defaultFormValues,
+    defaultValues: { content: '', name: '', description: '', isDefault: false, variables: [] },
+    // mode: 'onChange',
   });
   const [showModal, confirmNavigation, cancelNavigation] = usePrompt(isDirty);
+  console.log(layoutId, isDirty);
+  // const layoutContent = watch('content');
 
-  const layoutContent = watch('content');
+  // const variablesArray = useVariablesManager(0, strArray);
+
   const variablesArray = useFieldArray({ control, name: `variables` });
   const variableArray = watch(`variables`, []);
 
-  useEffect(() => {
-    if (layout) {
-      if (layout.content) {
-        setValue('content', layout?.content);
+  const getTextContent = useCallback((templateToParse?: any): string => {
+    return strArray
+      .map((con) => con.split('.').reduce((a, b) => a && a[b], templateToParse ?? {}))
+      .map((con) => (Array.isArray(con) ? con.map((innerCon) => innerCon.content).join(' ') : con))
+      .join(' ');
+  }, []);
+
+  const [textContent, setTextContent] = useState<string>(() => getTextContent(getValues(`content`)));
+
+  useLayoutEffect(() => {
+    const subscription = watch((values) => {
+      const steps = values.content ?? '';
+
+      if (!steps.length) return;
+      // const step = steps[index];
+      setTextContent(getTextContent(values));
+    });
+
+    return () => subscription.unsubscribe();
+  }, [watch, setTextContent, getTextContent]);
+
+  useLayoutEffect(() => {
+    try {
+      const ast = parse(textContent);
+      const variables = getTemplateVariables(ast.body).filter(
+        ({ name }) => !isReservedVariableName(name)
+      ) as ITemplateVariable[];
+      const arrayFields = [...(variableArray || [])];
+
+      variables.forEach((vari) => {
+        if (!arrayFields.find((field) => field.name === vari.name)) {
+          arrayFields.push(vari);
+        }
+      });
+
+      arrayFields.forEach((vari, ind) => {
+        if (!variables.find((field) => field.name === vari.name)) {
+          delete arrayFields[ind];
+        }
+      });
+
+      const newVariablesArray = arrayFields.filter((field) => !!field);
+
+      if (!isEqual(variableArray, newVariablesArray)) {
+        variablesArray.replace(newVariablesArray);
       }
-      if (layout.name) {
-        setValue('name', layout?.name);
-      }
-      if (layout.description) {
-        setValue('description', layout?.description);
-      }
-      if (layout.variables) {
-        setValue('variables', layout?.variables);
-      }
-      if (layout.isDefault != null) {
-        setValue('isDefault', layout?.isDefault);
-      }
+    } catch (e) {
+      return;
     }
-  }, [layout]);
+  }, [textContent, variableArray]);
+
+  const dirtyValues = (
+    dirtyFields: UnknownArrayOrObject | boolean,
+    allValues: UnknownArrayOrObject
+  ): UnknownArrayOrObject => {
+    console.log('dirtyFields', dirtyFields);
+    if (dirtyFields === true || Array.isArray(dirtyFields)) {
+      console.log('allValues', allValues);
+
+      return allValues;
+    }
+
+    console.log('keys', Object.keys(dirtyFields));
+    console.log(Object.keys(dirtyFields).map((key) => [key, dirtyValues(dirtyFields[key], allValues[key])]));
+
+    // Here, we have an object.
+    return Object.fromEntries(
+      Object.keys(dirtyFields)
+        .filter((field) => dirtyFields[field] !== false)
+        .map((key) => [key, dirtyValues(dirtyFields[key], allValues[key])])
+    );
+  };
+  // const variablesArray = useFieldArray({ control, name: `variables` });
+
+  // const variableArray = watch(`variables`, []);
+
+  /*
+   * useEffect(() => {
+   *   if (layout) {
+   *     if (layout.content) {
+   *       setValue('content', layout?.content);
+   *     }
+   *     if (layout.name) {
+   *       console.log('here');
+   *       setValue('name', layout?.name);
+   *     }
+   *
+   *     if (layout.description) {
+   *       setValue('description', layout?.description);
+   *     }
+   *
+   *     if (layout.variables) {
+   *       setValue('variables', layout?.variables);
+   *     }
+   *     if (layout.isDefault != null) {
+   *       setValue('isDefault', layout?.isDefault);
+   *     }
+   *   }
+   * }, [layout]);
+   */
+  const mapNotificationTemplateToForm = (layoutForm) => {
+    return {
+      content: layoutForm.content ?? '',
+      name: layoutForm.name ?? '',
+      description: layoutForm.description ?? '',
+      variables: layoutForm.variables ?? [],
+      isDefault: layoutForm.isDefault || false,
+    };
+  };
+
+  useEffectOnce(() => {
+    if (!layout) return;
+
+    const form = mapNotificationTemplateToForm(layout);
+    console.log(form);
+    reset(form);
+  }, !!layout);
 
   useEffect(() => {
     if (environment && layout) {
@@ -95,48 +202,54 @@ export function LayoutEditor({
     }
   }, [environment, layout]);
 
-  useMemo(() => {
-    const variables = getTemplateVariables(ast.body).filter(
-      ({ name }) => !isReservedVariableName(name)
-    ) as ITemplateVariable[];
-    const arrayFields = [...(variableArray || [])];
-
-    variables.forEach((vari) => {
-      if (!arrayFields.find((field) => field.name === vari.name)) {
-        arrayFields.push(vari);
-      }
-    });
-    arrayFields.forEach((vari, ind) => {
-      if (!variables.find((field) => field.name === vari.name)) {
-        delete arrayFields[ind];
-      }
-    });
-    const newVariablesArray = arrayFields.filter((field) => !!field);
-
-    if (!isEqual(variableArray, newVariablesArray)) {
-      variablesArray.replace(newVariablesArray);
-    }
-  }, [ast]);
-
-  useEffect(() => {
-    try {
-      setAst(parse(layoutContent));
-    } catch (e) {
-      return;
-    }
-  }, [layoutContent]);
+  /*
+   * useMemo(() => {
+   *   const variables = getTemplateVariables(ast.body).filter(
+   *     ({ name }) => !isReservedVariableName(name)
+   *   ) as ITemplateVariable[];
+   *   const arrayFields = [...(variableArray || [])];
+   *
+   *   variables.forEach((vari) => {
+   *     if (!arrayFields.find((field) => field.name === vari.name)) {
+   *       arrayFields.push(vari);
+   *     }
+   *   });
+   *   arrayFields.forEach((vari, ind) => {
+   *     if (!variables.find((field) => field.name === vari.name)) {
+   *       delete arrayFields[ind];
+   *     }
+   *   });
+   *   const newVariablesArray = arrayFields.filter((field) => !!field);
+   *
+   *   if (!isEqual(variableArray, newVariablesArray)) {
+   *     variablesArray.replace(newVariablesArray);
+   *   }
+   * }, [ast]);
+   *
+   * useEffect(() => {
+   *   try {
+   *     setAst(parse(layoutContent));
+   *   } catch (e) {
+   *     return;
+   *   }
+   * }, [layoutContent]);
+   */
 
   async function onSubmitLayout(data) {
+    console.log(data);
+    console.log('formDirtyFields', formDirtyFields);
+    console.log('bllls', dirtyValues(formDirtyFields, data));
     try {
       if (editMode) {
-        await updateLayout({ layoutId: id, data });
+        await updateLayout({ layoutId: id, data: dirtyValues(formDirtyFields, data) });
+        reset(data);
       } else {
         await createNewLayout(data);
       }
-      await queryClient.refetchQueries([QueryKeys.getLayoutsList]);
 
       successMessage(`Layout ${editMode ? 'Updated' : 'Created'}!`);
       goBack();
+      await queryClient.refetchQueries([QueryKeys.getLayoutsList]);
     } catch (e: any) {
       errorMessage(e.message || 'Unexpected error occurred');
     }
@@ -237,7 +350,7 @@ export function LayoutEditor({
             }}
           />
 
-          <Button disabled={readonly || !isDirty} submit data-test-id="submit-layout">
+          <Button disabled={readonly || isLoading || !isDirty} submit data-test-id="submit-layout">
             {editMode ? 'Update' : 'Create'}
           </Button>
         </Group>

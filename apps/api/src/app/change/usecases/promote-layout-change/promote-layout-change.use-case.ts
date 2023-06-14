@@ -22,7 +22,6 @@ export class PromoteLayoutChange {
     // For the scenario where the layout is deleted and an active default layout change was pending
     if (!item) {
       item = await this.layoutRepository.findDeletedByParentId(command.item._id, command.environmentId);
-      console.log(`deleted layout change parent: ${command.item._id} item: ${item?._id}`);
     }
 
     const newItem = command.item as LayoutEntity;
@@ -38,7 +37,6 @@ export class PromoteLayoutChange {
         description: newItem.description,
         contentType: newItem.contentType,
         variables: newItem.variables,
-        // isDefault: newItem.isDefault,
         channel: newItem.channel,
         _creatorId: command.userId,
         _environmentId: command.environmentId,
@@ -76,8 +74,6 @@ export class PromoteLayoutChange {
       return;
     }
 
-    console.log('in update');
-
     return await this.layoutRepository.update(
       {
         _environmentId: command.environmentId,
@@ -89,7 +85,6 @@ export class PromoteLayoutChange {
         description: newItem.description,
         contentType: newItem.contentType,
         variables: newItem.variables,
-        // isDefault: newItem.isDefault,
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
       }
