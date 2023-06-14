@@ -164,7 +164,7 @@ jobs:
         if: ${{matrix.projectName == '@novu/application-generic' || matrix.projectName == '@novu/notification-center'}}
         with:
           targets: lint,build,test
-          projects: ${{join(fromJson(needs.get-affected.outputs.test-providers), ',')}}
+          projects: ${{join(fromJson(needs.get-affected.outputs.test-packages), ',')}}
 
   test_libs:
     name: Unit Test Libs
