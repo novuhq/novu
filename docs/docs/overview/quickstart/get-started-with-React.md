@@ -145,7 +145,6 @@ function App() {
     e.preventDefault();
     const response = await axios.post('http://localhost:3000/sendNotif/create', { description });
     setDescription('');
-    // console.log(response);
   };
 
   return (
