@@ -1,5 +1,6 @@
+/* cSpell:disable */
 import React from 'react';
-import { configure, fireEvent, prettyDOM, render, screen, waitFor } from '@testing-library/react';
+import { configure, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import {
   ChannelCTATypeEnum,

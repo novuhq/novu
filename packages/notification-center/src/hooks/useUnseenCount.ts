@@ -7,7 +7,8 @@ import { useNovuContext } from './useNovuContext';
 import { useSetQueryKey } from './useSetQueryKey';
 import { useFetchNotificationsQueryKey } from './useFetchNotificationsQueryKey';
 import { useUnseenCountQueryKey } from './useUnseenCountQueryKey';
-import { useFeedUnseenCountQueryKey } from './useFeedUnseenCountQueryKey';
+import { useDataRef } from './useDataRef';
+import { FEED_UNSEEN_COUNT_QUERY_KEY } from './queryKeys';
 
 const dispatchUnseenCountEvent = (count: number) => {
   document.dispatchEvent(new CustomEvent('novu:unseen_count_changed', { detail: count }));
@@ -29,7 +30,7 @@ export const useUnseenCount = ({ onSuccess, ...restOptions }: UseQueryOptions<IC
   const setQueryKey = useSetQueryKey();
   const fetchNotificationsQueryKey = useFetchNotificationsQueryKey();
   const unseenCountQueryKey = useUnseenCountQueryKey();
-  const feedUnseenCountQueryKey = useFeedUnseenCountQueryKey();
+  const queryKeysRef = useDataRef({ fetchNotificationsQueryKey, unseenCountQueryKey });
 
   useEffect(() => {
     if (!socket) {
@@ -44,13 +45,14 @@ export const useUnseenCount = ({ onSuccess, ...restOptions }: UseQueryOptions<IC
             count: data?.unseenCount ?? oldData.count,
           }));
 
-          queryClient.refetchQueries(unseenCountQueryKey, {
+          queryClient.refetchQueries(queryKeysRef.current.unseenCountQueryKey, {
             exact: false,
           });
-          queryClient.refetchQueries(fetchNotificationsQueryKey, {
+          queryClient.refetchQueries(queryKeysRef.current.fetchNotificationsQueryKey, {
             exact: false,
           });
-          queryClient.refetchQueries(feedUnseenCountQueryKey, {
+          // refetch all feeds unseen count that is shown on the tabs
+          queryClient.refetchQueries([...FEED_UNSEEN_COUNT_QUERY_KEY], {
             exact: false,
           });
 
