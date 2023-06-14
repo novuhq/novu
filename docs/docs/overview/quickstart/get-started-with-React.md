@@ -14,7 +14,7 @@ To follow the steps in this quickstart, you'll need:
 - A Novu account. [Sign up for free](http://web.novu.co) if you don’t have one yet.
 - A working React development environment.
 
-You can find the code for this project [here](https://github.com/sumitsaurabh927/react-fe-for-quickstart)
+You can find the code for this project [here](https://github.com/novuhq/react-quickstart)
 
 ## Create a new React app
 
