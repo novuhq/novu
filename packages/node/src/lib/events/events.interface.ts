@@ -1,19 +1,10 @@
-import { DigestUnitEnum, ISubscribersDefine } from '@novu/shared';
-
-import { IAttachmentOptions } from '../novu.interface';
-import { ITopic } from '../topics/topic.interface';
-
-export type TriggerRecipientSubscriber = string | ISubscribersDefine;
-export type TriggerRecipientTopics = ITopic[];
-
-export type TriggerRecipient = TriggerRecipientSubscriber | ITopic;
-
-export type TriggerRecipients = TriggerRecipient[];
-
-// string | ISubscribersDefine | (string | ISubscribersDefine | ITopic)[]
-export type TriggerRecipientsPayload =
-  | TriggerRecipientSubscriber
-  | TriggerRecipients;
+import {
+  DigestUnitEnum,
+  IAttachmentOptions,
+  ITriggerPayload,
+  TriggerRecipientSubscriber,
+  TriggerRecipientsPayload,
+} from '@novu/shared';
 
 export interface IBroadcastPayloadOptions {
   payload: ITriggerPayload;
@@ -24,19 +15,6 @@ export interface ITriggerPayloadOptions extends IBroadcastPayloadOptions {
   to: TriggerRecipientsPayload;
   actor?: TriggerRecipientSubscriber;
   transactionId?: string;
-}
-
-export interface ITriggerPayload {
-  attachments?: IAttachmentOptions[];
-  [key: string]:
-    | string
-    | string[]
-    | boolean
-    | number
-    | undefined
-    | IAttachmentOptions
-    | IAttachmentOptions[]
-    | Record<string, unknown>;
 }
 
 export interface IEmailOverrides {
