@@ -16,8 +16,5 @@
     "source.fixAll": true
   },
   "cSpell.words": ["mantine"],
-  "vsicons.presets.nestjs": true,
-  "[markdown]": {
-    "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
-  }
+  "vsicons.presets.nestjs": true
 }
