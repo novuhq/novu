@@ -8,8 +8,15 @@ import {
   CreateTopicSubscribersEntity,
   TopicSubscribersRepository,
 } from '@novu/dal';
-import { ITopic, TriggerRecipientsPayload } from '@novu/node';
-import { ISubscribersDefine, TopicId, TopicKey, TopicName, TriggerRecipientsTypeEnum } from '@novu/shared';
+import {
+  ISubscribersDefine,
+  ITopic,
+  TopicId,
+  TopicKey,
+  TopicName,
+  TriggerRecipientsPayload,
+  TriggerRecipientsTypeEnum,
+} from '@novu/shared';
 import { expect } from 'chai';
 import { v4 as uuid } from 'uuid';
 
