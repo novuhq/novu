@@ -35,6 +35,10 @@ export class PromoteMessageTemplateChange {
     });
 
     if (!item) {
+      if (newItem.deleted) {
+        return;
+      }
+
       return this.messageTemplateRepository.create({
         type: newItem.type,
         name: newItem.name,
@@ -53,6 +57,21 @@ export class PromoteMessageTemplateChange {
         _creatorId: command.userId,
         _organizationId: command.organizationId,
       });
+    }
+
+    const count = await this.messageTemplateRepository.count({
+      _organizationId: command.organizationId,
+      _id: command.item._id,
+    });
+
+    if (count === 0) {
+      await this.messageTemplateRepository.delete({
+        _id: item._id,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+      });
+
+      return;
     }
 
     return this.messageTemplateRepository.update(

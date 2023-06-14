@@ -1,5 +1,5 @@
+import { IEmailOptions } from '@novu/shared';
 import {
-  IEmailOptions,
   IEmailProvider,
   ISendMessageSuccessResponse,
   ICheckIntegrationResponse,

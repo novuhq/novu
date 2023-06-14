@@ -33,6 +33,17 @@ export class GetFeatureFlag {
     return await this.execute(command);
   }
 
+  async isTopicNotificationEnabled(featureFlagCommand: FeatureFlagCommand): Promise<boolean> {
+    const value = process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED;
+    const fallbackValue = true; // It is a permanent feature now
+    const defaultValue = this.prepareBooleanStringFeatureFlag(value, fallbackValue);
+    const key = FeatureFlagsKeysEnum.IS_TOPIC_NOTIFICATION_ENABLED;
+
+    const command = this.buildCommand(featureFlagCommand, key, defaultValue);
+
+    return await this.execute(command);
+  }
+
   private buildCommand<T>(
     command: FeatureFlagCommand,
     key: FeatureFlagsKeysEnum,
@@ -46,8 +57,10 @@ export class GetFeatureFlag {
   }
 
   private prepareBooleanStringFeatureFlag(value: string | undefined, defaultValue: boolean): boolean {
-    const preparedValue = value == 'true';
+    if (!value) {
+      return defaultValue;
+    }
 
-    return preparedValue || defaultValue;
+    return value === 'true';
   }
 }
