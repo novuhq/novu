@@ -30,7 +30,7 @@ Wait a couple of minutes for all the packages and dependencies to get installed.
 
 ## Install Novu React Notification Center Package
 
-The Novu Vue package provides a React component library that you can use to add a fully functioning notification center into your React application.
+The Novu React package provides a React component library that you can use to add a fully functioning notification center into your React application.
 
 To use it, first install the React Notification Center package by running the following command in your terminal:
 
