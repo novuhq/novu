@@ -68,7 +68,6 @@
     "@novu/mattermost": "^0.16.0",
     "@novu/ms-teams": "^0.16.0",
     "@novu/netcore": "^0.16.0",
-    "@novu/node": "^0.16.0",
     "@novu/nodemailer": "^0.16.0",
     "@novu/one-signal": "^0.16.0",
     "@novu/outlook365": "^0.16.0",
