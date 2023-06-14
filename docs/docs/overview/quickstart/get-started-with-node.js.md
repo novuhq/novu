@@ -25,7 +25,7 @@ npm install @novu/node
 Once installed, you can import Novu into your app and initialize it using your Novu account credentials. This step establishes a connection between your app and the Novu notification service.
 
 ```jsx
-import { Novu } from '@novu/node'; 
+import { Novu } from '@novu/node';
 
 const novu = new Novu('<YOUR_NOVU_API_KEY>');
 ```
@@ -41,12 +41,12 @@ Replace the `<YOUR_NOVU_API_KEY>` value with the authentic key from the **API Ke
 
 A channel provider is a service that provides one or more notification functionality such as sending an email, SMS, push notification etc. Our [integration store](https://web.novu.co/integrations) includes four channels: Email, SMS, Chat, and Push. These channels have multiple providers associated with them.
 
-| Channel | Providers |
-| --- | --- |
-| Email | MailGun, Mandrill, MailJet, Amazon SES, Sendgrid, Postmark, Netcore |
-| SMS | Twilio, Amazon SNS, Plivo, SMS, SMSCentral, Kannel, Infobip, Termii |
-| Chat | Mattermost, Slack, Microsoft Teams, Discord |
-| Push | FCM, APNS, Expo |
+| Channel | Providers                                                           |
+| ------- | ------------------------------------------------------------------- |
+| Email   | MailGun, Mandrill, MailJet, Amazon SES, Sendgrid, Postmark, Netcore |
+| SMS     | Twilio, Amazon SNS, Plivo, SMS, SMSCentral, Kannel, Infobip, Termii |
+| Chat    | Mattermost, Slack, Microsoft Teams, Discord                         |
+| Push    | FCM, APNS, Expo                                                     |
 
 Only one provider can be **active** per **channel**. Connect any of your favorite providers to get started. The email channel comes with Novu's email provider, which is active by default and includes 300 credits.
 
@@ -58,15 +58,13 @@ The template includes the following:
 
 - Notification template name and Identifier
 - Channel tailored content:
-    
-    
-    | Channel  | Content Style |
-    | --- | --- |
-    | Email | 1. Custom Code (HTML) with option to use custom variables via the handlebars , {{ }}, syntax.
-    2. Click and place UI items with the visual template editor. |
-    | SMS | Text with the option to use handlebars syntax, {{ }} to inject custom variables. |
-    | Chat | Text with the option to use handlebars syntax, {{ }} to inject custom variables. |
-    | In-App | Text |
+  | Channel | Content Style |
+  | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+  | Email | 1. Custom Code (HTML) with option to use custom variables via the handlebars , {{ }}, syntax. |
+  | 2. Click and place UI items with the visual template editor. |
+  | SMS | Text with the option to use handlebars syntax, {{ }} to inject custom variables. |
+  | Chat | Text with the option to use handlebars syntax, {{ }} to inject custom variables. |
+  | In-App | Text |
 
 <aside>
 🔑 **Note:** Proper authorization needs to be set for the Chat channel for subscribers.
@@ -90,11 +88,11 @@ Please proceed to create a notification template.
 
 ![send_test_email.png](novu/docs/docs/overview/quickstart/media_assets/send_test_email.png)
 
-You should get an email within seconds. Yaaay, you have successfully sent your first notification via the Novu dashboard!  Now, let’s take it a step further to trigger notifications via code.
+You should get an email within seconds. Yaaay, you have successfully sent your first notification via the Novu dashboard! Now, let’s take it a step further to trigger notifications via code.
 
 ## Create A Subscriber
 
-The recipients of a triggered notification are called subscribers. 
+The recipients of a triggered notification are called subscribers.
 
 Click “Subscribers” on the left sidebar of the Novu dashboard to see all subscribers. By default, the dashboard will display a subscriber, as you were added automatically during sign-up.
 
@@ -104,7 +102,7 @@ Now, let's create a subscriber on Novu. Copy and paste the following code to do 
 
 ```jsx
 // Create a subscriber
-const subscriberId= '7789'; // Replace this with a unique user ID that matches your database.
+const subscriberId = '7789'; // Replace this with a unique user ID that matches your database.
 await novu.subscribers.identify(subscriberId, {
   email: 'abc@gmail.com', // optional
   firstName: 'John', // optional
@@ -122,7 +120,7 @@ Run the code in your terminal like so:
 node index.js
 ```
 
-You should see the subscriber on your Novu dashboard. 
+You should see the subscriber on your Novu dashboard.
 
 ![Screenshot 2023-05-14 at 11.06.38.png](novu/docs/docs/overview/quickstart/media_assets/Screenshot_2023-05-14_at_11.06.38.png)
 
@@ -153,11 +151,11 @@ Copy and paste the following code into your app to trigger a notification:
 const notificationTemplateId = 'first-email';
 
 novu.trigger(notificationTemplateId, {
-    to: {
-      subscriberId: '7789'
-    },
-    payload: {}
-  });
+  to: {
+    subscriberId: '7789',
+  },
+  payload: {},
+});
 ```
 
 Before running the code, make sure you understand the following:
@@ -222,7 +220,7 @@ const response = await novu.topics.addSubscribers(topicKey, {
 
 ## **Sending a notification to a topic[](https://docs.novu.co/platform/topics#sending-a-notification-to-a-topic)**
 
-Thanks to the topics feature, it is possible to trigger a notification to all subscribers assigned to a topic. This helps avoid listing all subscriber identifiers in the `to` field of the notification trigger. 
+Thanks to the topics feature, it is possible to trigger a notification to all subscribers assigned to a topic. This helps avoid listing all subscriber identifiers in the `to` field of the notification trigger.
 
 To trigger a notification to all subscribers of a topic, use Novu's API as follows:
 
@@ -238,7 +236,7 @@ await novu.trigger(notificationTemplateId, {
 
 ## **Next Steps**
 
-Great job! If you've reached this point, you should now have successfully created a subscriber, notification template, configured a channel provider,  triggered a single notification, created a topic, added a subscriber to a topic and even triggered a notification to a topic in your application. 
+Great job! If you've reached this point, you should now have successfully created a subscriber, notification template, configured a channel provider, triggered a single notification, created a topic, added a subscriber to a topic and even triggered a notification to a topic in your application.
 
 To learn more about notifications and explore Novu's features and capabilities, check out:
 

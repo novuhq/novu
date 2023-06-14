@@ -15,7 +15,7 @@ To follow the steps in this quickstart, you'll need:
 - Angular CLI (Command Line Interface) installed on your machine
 - Angular version > 0.15.0
 
-You can also [view the completed code](https://github.com/novuhq/angular-quickstart) of this quick start in a GitHub repo. 
+You can also [view the completed code](https://github.com/novuhq/angular-quickstart) of this quick start in a GitHub repo.
 
 ## Create a new Angular app
 
@@ -79,9 +79,9 @@ and add the following variables: `subscriberId`, `applicationIdentifier`
 
 ```tsx
 export const environment = {
-    production: false,
-    subscriberId: "",
-    applicationIdentifier: ""
+  production: false,
+  subscriberId: '',
+  applicationIdentifier: '',
 };
 ```
 
@@ -91,7 +91,7 @@ These variables are needed for the `GET` request our notification cent
 
 ## **Adding Novu Module**
 
-Now, navigate to the `app.module.ts` ****file (my-app/src/app/app.module.ts)**:**
+Now, navigate to the `app.module.ts` \***\*file (my-app/src/app/app.module.ts)**:\*\*
 
 - Import `CUSTOM_ELEMENTS_SCHEMA` from `'@angular/core'`
 - Add Novu’s notification center module
@@ -103,18 +103,13 @@ import { AppComponent } from './app.component';
 import { NotificationCenterModule } from '@novu/notification-center-angular';
 
 @NgModule({
-  declarations: [
-    AppComponent
-  ],
-  imports: [
-    BrowserModule,
-    NotificationCenterModule
-  ],
+  declarations: [AppComponent],
+  imports: [BrowserModule, NotificationCenterModule],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   providers: [],
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent],
 })
-export class AppModule { }
+export class AppModule {}
 ```
 
 Head to `my-app/src/app/app.component.ts` file.
@@ -135,7 +130,7 @@ import { environment } from '../environments/environment';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  styleUrls: ['./app.component.css'],
 })
 export class AppComponent {
   title = 'my-app';
@@ -143,7 +138,7 @@ export class AppComponent {
   subscriberId = environment.subscriberId;
   applicationIdentifier = environment.applicationIdentifier;
 
-styles = {
+  styles = {
     bellButton: {
       root: {
         svg: {
@@ -231,10 +226,7 @@ And we’re going to add `"allowSyntheticDefaultImports": true` to the 
     "target": "ES2022",
     "module": "ES2022",
     "useDefineForClassFields": false,
-    "lib": [
-      "ES2022",
-      "dom"
-    ]
+    "lib": ["ES2022", "dom"]
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
@@ -270,8 +262,8 @@ And in the `<style>` tag, we also want to add some margin to our `
 
 ```css
 .toolbar #bell-icon {
-    height: '';
-    margin: 0 16px;
+  height: '';
+  margin: 0 16px;
 }
 ```
 
@@ -302,13 +294,13 @@ The template includes the following:
 - Notification template name and Identifier
 - Channel tailored content:
 
-| Channel  | Content Style |
-| --- | --- |
-| Email | 1. Custom Code (HTML) with option to use custom variables via the handlebars , {{ }}, syntax.
-2. Click and place UI items with the visual template editor. |
-| SMS | Text with the option to use handlebars syntax, {{ }} to inject custom variables. |
-| Chat | Text with the option to use handlebars syntax, {{ }} to inject custom variables. |
-| In-App | Text |
+| Channel                                                      | Content Style                                                                                 |
+| ------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| Email                                                        | 1. Custom Code (HTML) with option to use custom variables via the handlebars , {{ }}, syntax. |
+| 2. Click and place UI items with the visual template editor. |
+| SMS                                                          | Text with the option to use handlebars syntax, {{ }} to inject custom variables.              |
+| Chat                                                         | Text with the option to use handlebars syntax, {{ }} to inject custom variables.              |
+| In-App                                                       | Text                                                                                          |
 
 Please proceed to create a notification template.
 
@@ -323,7 +315,7 @@ Please proceed to create a notification template.
 
 ![in-app-configuration.png](novu/docs/docs/overview/quickstart/media_assets/in-app-configuration.png)
 
-I’ll briefly explain the function of each label in the image above. 
+I’ll briefly explain the function of each label in the image above.
 
 - **1 - Preview**: Shows you a glimpse of how each notification item will look like in the Notification Center UI.
 - **2 - Avatar:** If turned on, each notification item will show the avatar of the subscriber.
@@ -331,7 +323,7 @@ I’ll briefly explain the function of each label in the image above.
 - **4 - Notification Feeds:** This displays a stream of specific notifications. You can have multiple feeds to show specific notifications in multiple tabs.
 - **5 - Redirect URL** - This is the URL to which a subscriber can be directed when they click on a notification item.
 - **6 - Filter** - This feature allows you to configure the criteria for delivering notifications. For instance, you can apply a filter based on a subscriber's online status to send them an email if they were online within the last hour. Read [more about filters](https://docs.novu.co/platform/step-filter/#subscriber-seen--read-filters).
-- **Editor** -  You can add text that you want displayed in each notification item. Additionally, you can specify custom variables using `{{ }}`. This means you can inject variables from your code into a notification item's text via a payload.
+- **Editor** - You can add text that you want displayed in each notification item. Additionally, you can specify custom variables using `{{ }}`. This means you can inject variables from your code into a notification item's text via a payload.
 
 1. Feel free to add only text for now and rename the notification template to `Onboarding In App`. It automatically creates a slug-like Identifier that will be needed in later steps to trigger a notification.
 
@@ -339,7 +331,7 @@ I’ll briefly explain the function of each label in the image above.
 
 ![Screenshot 2023-05-21 at 09.20.51.png](novu/docs/docs/overview/quickstart/media_assets/Screenshot_2023-05-21_at_09.20.51.png)
 
-Next, we’ll learn how to create subscribers on Novu - *Recipients of Notifications*
+Next, we’ll learn how to create subscribers on Novu - _Recipients of Notifications_
 
 ## Create A Subscriber
 
@@ -347,11 +339,11 @@ Click **“Subscribers”** on the left sidebar of the [Novu dashboard](https://
 
 ![subscribers.png](novu/docs/docs/overview/quickstart/media_assets/subscribers.png)
 
-Now, let's create a subscriber on Novu. 
+Now, let's create a subscriber on Novu.
 
 Novu has a plethora of backend SDKs (Node.js, PHP, .NET, Go, Ruby, Python and Kotlin) to choose from to create a subscriber programmatically. This is the recommended method.
 
-*<insert docusaurus multi-language component code to create a subscriber here>*
+_<insert docusaurus multi-language component code to create a subscriber here>_
 
 ```jsx
 import { Novu } from '@novu/node';
@@ -376,16 +368,16 @@ Now check your Novu dashboard. You should see the recently created subscriber.
 
 You can also update the subscriber info like so:
 
-*<insert docusaurus multi-language component code to create a subscriber here>*
+_<insert docusaurus multi-language component code to create a subscriber here>_
 
 ```jsx
 import { Novu } from '@novu/node';
 
 const novu = new Novu('<YOUR_NOVU_API_KEY>');
 
-await novu.subscribers.update("132", {
-  email: "janedoe@domain.com", // new email
-  phone: "+19874567832", // new phone
+await novu.subscribers.update('132', {
+  email: 'janedoe@domain.com', // new email
+  phone: '+19874567832', // new phone
 });
 ```
 
@@ -393,16 +385,16 @@ await novu.subscribers.update("132", {
 
 To trigger a notification, simply run the codesandbox below with the correct credentials.
 
-*<insert docusaurus multi-language component code to trigger a notification here>*
+_<insert docusaurus multi-language component code to trigger a notification here>_
 
 ```jsx
-import { Novu } from "@novu/node";
+import { Novu } from '@novu/node';
 
-const novu = new Novu("<YOUR_NOVU_API_KEY>");
+const novu = new Novu('<YOUR_NOVU_API_KEY>');
 
-await novu.trigger("onboarding-in-app", {
+await novu.trigger('onboarding-in-app', {
   to: {
-    subscriberId: "132",
+    subscriberId: '132',
   },
 });
 ```
@@ -411,21 +403,21 @@ await novu.trigger("onboarding-in-app", {
 
 `onboarding-in-app` is the Notification template identifier we created earlier.
 
-Ensure the `subscriberId` value in the backend code that triggers the notification matches the `subscriberId` in your `my-app/src/environments/environment.ts` code. 
+Ensure the `subscriberId` value in the backend code that triggers the notification matches the `subscriberId` in your `my-app/src/environments/environment.ts` code.
 
 ```jsx
 export const environment = {
-    production: false,
-    subscriberId: "",
-    applicationIdentifier: ""
+  production: false,
+  subscriberId: '',
+  applicationIdentifier: '',
 };
 ```
 
-Check your app again. You should see the recently triggered notification! 
+Check your app again. You should see the recently triggered notification!
 
 ## **Next Steps**
 
-Great job! If you've reached this point, you should now have successfully set up the notification center, created a subscriber, notification template, configured a channel provider and triggered a notification in your Angular application. 
+Great job! If you've reached this point, you should now have successfully set up the notification center, created a subscriber, notification template, configured a channel provider and triggered a notification in your Angular application.
 
 To learn more about the Notification Center and explore Novu's features and capabilities, check out, check out:
 
