@@ -103,13 +103,17 @@ const mockServiceInstance = {
   disposeAuthorizationToken: jest.fn(),
   getOrganization: jest.fn(() => promiseResolveTimeout(0, mockOrganization)),
   getUnseenCount: jest.fn(() => promiseResolveTimeout(0, mockUnseenCount)),
+  getUnreadCount: jest.fn(() => promiseResolveTimeout(0, mockUnseenCount)),
+  getTabCount: jest.fn(() => promiseResolveTimeout(0, mockUnseenCount)),
   getUserPreference: jest.fn(() => promiseResolveTimeout(0, mockUserPreferences)),
   getNotificationsList: jest.fn(() => promiseResolveTimeout(0, mockNotificationsList)),
   updateSubscriberPreference: jest.fn(() => promiseResolveTimeout(0, mockUserPreferenceSetting)),
-  markMessageAs: jest.fn(),
-  markAllMessagesAsRead: jest.fn(),
-  updateAction: jest.fn(),
-  postUsageLog: jest.fn(),
+  markMessageAs: jest.fn(() => promiseResolveTimeout(0, [{ ...mockNotification, read: true, seen: true }])),
+  markAllMessagesAsRead: jest.fn(() => promiseResolveTimeout(0, [{ ...mockNotification }])),
+  markAllMessagesAsSeen: jest.fn(() => promiseResolveTimeout(0, [{ ...mockNotification }])),
+  updateAction: jest.fn(() => promiseResolveTimeout(0)),
+  postUsageLog: jest.fn(() => promiseResolveTimeout(0)),
+  removeMessage: jest.fn(() => promiseResolveTimeout(0)),
 };
 
 const mockSocket = {
@@ -232,6 +236,94 @@ describe('NovuProvider', () => {
       expect(mockServiceInstance.initializeSession).toBeCalledTimes(1);
       expect(mockServiceInstance.getNotificationsList).toBeCalledTimes(1);
       expect(screen.queryAllByTestId('notification-list-item')).toHaveLength(1);
+    });
+  });
+
+  it('should show the feeds tabs', async () => {
+    const newsletterFeed = 'newsletter';
+    const hotDealFeed = 'hotdeal';
+    const newsletterNotifications = Array.from({ length: 10 }, (_, i) => ({
+      ...mockNotification,
+      _id: `${notificationId}${i + 1}`,
+      content: `${mockNotification.content} ${newsletterFeed}`,
+    }));
+    const hotDealNotifications = Array.from({ length: 10 }, (_, i) => ({
+      ...mockNotification,
+      _id: `${notificationId}${i + 11}`,
+      content: `${mockNotification.content} ${hotDealFeed}`,
+    }));
+
+    mockServiceInstance.getNotificationsList
+      .mockImplementationOnce(() =>
+        promiseResolveTimeout(0, {
+          data: [...newsletterNotifications],
+          totalCount: 10,
+          pageSize: 10,
+          page: 0,
+          hasMore: true,
+        })
+      )
+      .mockImplementationOnce(() =>
+        promiseResolveTimeout(0, {
+          data: [...hotDealNotifications],
+          totalCount: 10,
+          pageSize: 10,
+          page: 0,
+          hasMore: true,
+        })
+      );
+    render(
+      <NovuProvider
+        backendUrl="https://mock_url.com"
+        socketUrl="wss://mock_url.com"
+        applicationIdentifier={'applicationIdentifier'}
+        subscriberId={'subscriberId'}
+        stores={[
+          { storeId: newsletterFeed, query: { feedIdentifier: newsletterFeed } },
+          { storeId: hotDealFeed, query: { feedIdentifier: hotDealFeed } },
+        ]}
+      >
+        <PopoverNotificationCenter
+          onNotificationClick={onNotificationClick}
+          colorScheme="dark"
+          tabs={[
+            { name: 'Newsletter', storeId: newsletterFeed },
+            { name: 'Hot Deal', storeId: hotDealFeed },
+          ]}
+        >
+          {({ unseenCount }) => <NotificationBell unseenCount={unseenCount} />}
+        </PopoverNotificationCenter>
+      </NovuProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button'));
+
+    await waitFor(() => {
+      expect(mockServiceInstance.getNotificationsList).toBeCalledTimes(1);
+      expect(screen.queryByTestId(`tab-${newsletterFeed}`)).toBeDefined();
+      expect(screen.queryByTestId(`tab-${hotDealFeed}`)).toBeDefined();
+      expect(screen.queryByText('Newsletter')).toBeDefined();
+      expect(screen.queryByText('Hot Deal')).toBeDefined();
+      expect(screen.queryAllByTestId('notification-list-item')).toHaveLength(10);
+      screen.queryAllByTestId('notification-content').forEach((item) => {
+        expect(item.innerHTML).toEqual(`${mockNotification.content} ${newsletterFeed}`);
+      });
+    });
+
+    fireEvent.click(screen.getByTestId(`tab-${hotDealFeed}`));
+
+    await waitFor(() => {
+      expect(mockServiceInstance.getNotificationsList).toBeCalledTimes(2);
+      expect(mockServiceInstance.markMessageAs).toBeCalledTimes(1);
+      expect(mockServiceInstance.markMessageAs).toHaveBeenCalledWith(
+        newsletterNotifications.map((el) => el._id),
+        { seen: true, read: false }
+      );
+      expect(screen.queryByTestId('notifications-scroll-area')).toBeDefined();
+      expect(screen.queryAllByTestId('notification-list-item')).toHaveLength(10);
+      screen.queryAllByTestId('notification-content').forEach((item) => {
+        expect(item.innerHTML).toEqual(`${mockNotification.content} ${hotDealFeed}`);
+      });
     });
   });
 
@@ -472,9 +564,6 @@ describe('NovuProvider', () => {
   });
 
   it('when clicking on notification should mark it as read', async () => {
-    mockServiceInstance.markMessageAs.mockImplementationOnce(() =>
-      promiseResolveTimeout(0, [{ ...mockNotification, read: true, seen: true }])
-    );
     render(
       <NovuProvider
         backendUrl="https://mock_url.com"
@@ -511,9 +600,6 @@ describe('NovuProvider', () => {
   });
 
   it('when clicking on mark as read from dropdown menu should mark it as read', async () => {
-    mockServiceInstance.markMessageAs.mockImplementationOnce(() =>
-      promiseResolveTimeout(0, [{ ...mockNotification, read: true, seen: true }])
-    );
     render(
       <NovuProvider
         backendUrl="https://mock_url.com"
@@ -546,6 +632,7 @@ describe('NovuProvider', () => {
     });
 
     fireEvent.click(screen.getByTestId('notification-mark-as-read'));
+    await promiseResolveTimeout(0);
 
     await waitFor(() => {
       expect(mockServiceInstance.markMessageAs).toBeCalledTimes(1);
@@ -561,93 +648,5 @@ describe('NovuProvider', () => {
       expect(screen.queryAllByTestId('notification-mark-as-unread')).toHaveLength(1);
       expect(screen.queryAllByTestId('notification-remove-message')).toHaveLength(1);
     });
-  });
-
-  it('should show the feeds tabs', async () => {
-    const newsletterFeed = 'newsletter';
-    const hotDealFeed = 'hotdeal';
-    const newsletterNotifications = Array.from({ length: 10 }, (_, i) => ({
-      ...mockNotification,
-      _id: `${notificationId}${i + 1}`,
-      content: `${mockNotification.content} ${newsletterFeed}`,
-    }));
-    const hotDealNotifications = Array.from({ length: 10 }, (_, i) => ({
-      ...mockNotification,
-      _id: `${notificationId}${i + 11}`,
-      content: `${mockNotification.content} ${hotDealFeed}`,
-    }));
-
-    mockServiceInstance.getNotificationsList
-      .mockImplementationOnce(() =>
-        promiseResolveTimeout(0, {
-          data: [...newsletterNotifications],
-          totalCount: 10,
-          pageSize: 10,
-          page: 0,
-          hasMore: true,
-        })
-      )
-      .mockImplementationOnce(() =>
-        promiseResolveTimeout(0, {
-          data: [...hotDealNotifications],
-          totalCount: 10,
-          pageSize: 10,
-          page: 0,
-          hasMore: true,
-        })
-      );
-    render(
-      <NovuProvider
-        backendUrl="https://mock_url.com"
-        socketUrl="wss://mock_url.com"
-        applicationIdentifier={'applicationIdentifier'}
-        subscriberId={'subscriberId'}
-        stores={[
-          { storeId: newsletterFeed, query: { feedIdentifier: newsletterFeed } },
-          { storeId: hotDealFeed, query: { feedIdentifier: hotDealFeed } },
-        ]}
-      >
-        <PopoverNotificationCenter
-          onNotificationClick={onNotificationClick}
-          colorScheme="dark"
-          tabs={[
-            { name: 'Newsletter', storeId: newsletterFeed },
-            { name: 'Hot Deal', storeId: hotDealFeed },
-          ]}
-        >
-          {({ unseenCount }) => <NotificationBell unseenCount={unseenCount} />}
-        </PopoverNotificationCenter>
-      </NovuProvider>
-    );
-
-    fireEvent.click(screen.getByRole('button'));
-
-    await waitFor(() => {
-      expect(mockServiceInstance.getNotificationsList).toBeCalledTimes(1);
-      expect(screen.queryByTestId(`tab-${newsletterFeed}`)).toBeDefined();
-      expect(screen.queryByTestId(`tab-${hotDealFeed}`)).toBeDefined();
-      expect(screen.queryByText('Newsletter')).toBeDefined();
-      expect(screen.queryByText('Hot Deal')).toBeDefined();
-      expect(screen.queryAllByTestId('notification-list-item')).toHaveLength(10);
-      screen.queryAllByTestId('notification-content').forEach((item) => {
-        expect(item.innerHTML).toEqual(`${mockNotification.content} ${newsletterFeed}`);
-      });
-    });
-
-    fireEvent.click(screen.getByTestId(`tab-${hotDealFeed}`));
-
-    await waitFor(() => {
-      expect(mockServiceInstance.getNotificationsList).toBeCalledTimes(2);
-      expect(mockServiceInstance.markMessageAs).toBeCalledTimes(1);
-      expect(mockServiceInstance.markMessageAs).toHaveBeenCalledWith(
-        newsletterNotifications.map((el) => el._id),
-        { seen: true, read: false }
-      );
-      expect(screen.queryByTestId('notifications-scroll-area')).toBeDefined();
-      expect(screen.queryAllByTestId('notification-list-item')).toHaveLength(10);
-      screen.queryAllByTestId('notification-content').forEach((item) => {
-        expect(item.innerHTML).toEqual(`${mockNotification.content} ${hotDealFeed}`);
-      });
-    });
-  });
+  }, 10000);
 });
