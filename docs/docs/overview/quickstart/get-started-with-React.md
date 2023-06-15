@@ -3,6 +3,9 @@ sidebar_position: 4
 sidebar_label: Get started with React
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 # React Quickstart
 
 Learn how to integrate Novu into your React.js app on the fly. Send notifications across channels (SMS, Email, Chat, Push) with the help of a rich, customizable, real-time In-App notification center
@@ -93,7 +96,11 @@ Now, let’s create a subscriber on Novu. After creating a subscriber, we’ll t
 
 With Novu, you can create a subscriber using any of its SDKs (Node.js, PHP, .NET, Go, Ruby, Python and Kotlin). The code to create a subscriber in Novu is:
 
-```jsx
+<Tabs groupId="language" queryString>
+
+  <TabItem value="js" label="Node.js">
+
+```javascript
 import { Novu } from '@novu/node';
 
 const novu = new Novu('<YOUR_NOVU_API_KEY>');
@@ -105,11 +112,40 @@ await novu.subscribers.identify('123', {
 });
 ```
 
+  </TabItem>
+  <TabItem value="php" label="PHP">
+
+```php
+use Novu\SDK\Novu;
+
+$novu = new Novu('<NOVU_API_KEY>');
+
+$novu->createSubscriber([
+    'subscriberId' => '123',
+    'firstName' => 'Sumit',
+    'lastName' => 'Saurabh',
+    'phone' => '+13603963366',
+    'avatar' => 'https://example.com/images/avatar.jpg',
+    'locale' => 'en',
+    'data' => [
+      'customKey1' => 'customVal1',
+      'customKey2' => 'customVal2'
+    ]
+]);
+```
+
+  </TabItem>
+</Tabs>
+
 You can get your API key from the Novu dashboard. Replace `YOUR_NOVU_API_KEY_HERE` with it. Now, if you’ll go to the Novu dashboard, you shall see the subscriber we created above with `subscriberId` of `123`.
 
 You can also update information about an already existing subscriber using the `subscriber.update` method as shown below:
 
-```jsx
+<Tabs groupId="language" queryString>
+
+  <TabItem value="js" label="Node.js">
+
+```javascript
 import { Novu } from '@novu/node';
 
 const novu = new Novu('<YOUR_NOVU_API_KEY>');
@@ -119,6 +155,25 @@ await novu.subscribers.update('123', {
   lastName: 'Sumit', // new last name
 });
 ```
+
+  </TabItem>
+  <TabItem value="php" label="PHP">
+
+```php
+use Novu\SDK\Novu;
+
+$novu = new Novu('<NOVU_API_KEY>');
+
+$novu->updateSubscriber('111', [
+    // new email
+    'email' => 'john@domain.com',
+    // new phone
+    'phone' => '+19874567832',
+])->toArray();
+```
+
+</TabItem>
+</Tabs>
 
 ## Using Novu in a React app
 
