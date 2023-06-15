@@ -141,11 +141,6 @@ function App() {
       window.location.href = message.cta.data.url;
     }
   }
-  const onClickHandler = async (e) => {
-    e.preventDefault();
-    const response = await axios.post('http://localhost:3000/sendNotif/create', { description });
-    setDescription('');
-  };
 
   return (
     <>
@@ -164,15 +159,6 @@ function App() {
           {({ unseenCount }) => <NotificationBell unseenCount={unseenCount} />}
         </PopoverNotificationCenter>
       </NovuProvider>
-
-      <form onSubmit={onClickHandler}>
-        <input
-          placeholder="Enter notification text"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
-        <button type="submit">Send</button>
-      </form>
     </>
   );
 }
@@ -188,24 +174,13 @@ And subscribers are users to which notifications will be sent. They are identifi
 
 ## Trigger a notification
 
-We can trigger a notification by simply using Novu’s trigger method as shown below:
+We can trigger a notification by simply running the codesandbox below with the correct credentials.
 
-```jsx
-import { Novu } from '@novu/node';
+<iframe width="800" height="450" src="https://codesandbox.io/p/sandbox/exciting-violet-4k6234?embed=1" allowfullscreen></iframe>
 
-const novu = new Novu('<YOUR_NOVU_API_KEY>');
+This will take the template we created above with the identifier `quickstart` and send notification to the subscriber with `subscriberId` of `123`.
 
-await novu.trigger('quickstart', {
-  to: {
-    subscriberId: '123',
-  },
-  payload: {
-    description: description,
-  },
-});
-```
-
-This will take the template we created above with the identifier `quickstart` and send notification to the subscriber with `subscriberId` of `123`. Make sure you're executing this code with the correct credentials.
+> Make sure you're executing this code with the correct credentials.
 
 ## Next Steps
 
