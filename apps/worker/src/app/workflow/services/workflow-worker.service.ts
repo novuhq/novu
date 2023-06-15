@@ -61,7 +61,6 @@ export class WorkflowWorkerService extends QueueService<IJobData> implements INo
   private getWorkerOpts(): WorkerOptions {
     return {
       ...this.bullConfig,
-      autorun: false,
       lockDuration: 90000,
       concurrency: 200,
       settings: {
