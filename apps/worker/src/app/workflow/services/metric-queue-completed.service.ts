@@ -1,4 +1,3 @@
-const nr = require('newrelic');
 import { WorkerOptions } from 'bullmq';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { QueueService } from '@novu/application-generic';
@@ -14,11 +13,11 @@ export class MetricQueueCompletedService extends QueueService<Record<string, nev
     this.bullMqService.createWorker(this.name, this.getWorkerProcessor(), this.getWorkerOpts());
 
     this.bullMqService.worker.on('completed', async (job) => {
-      await this.jobHasCompleted(job);
+      Logger.verbose(`metric job succeeded`);
     });
 
     this.bullMqService.worker.on('failed', async (job, error) => {
-      await this.jobHasFailed(job, error);
+      Logger.error(`job failed to start: ${error}`, job);
     });
 
     this.addToQueueIfMetricJobExists();
@@ -83,9 +82,11 @@ export class MetricQueueCompletedService extends QueueService<Record<string, nev
             const completeNumber = metrics.completed.count;
             const failNumber = metrics.failed.count;
 
-            if (process.env.NOVU_MANAGED_SERVICE === 'true') {
+            if (process.env.NOVU_MANAGED_SERVICE === 'true' && process.env.NEW_RELIC_LICENSE_KEY.length !== 0) {
+              Logger.verbose('completed length', process.env.NEW_RELIC_LICENSE_KEY.length);
               Logger.log('Recording metrics');
 
+              const nr = require('newrelic');
               nr.recordMetric(`Queue/${deploymentName}/${queueService.name}/completed`, completeNumber);
               nr.recordMetric(`Queue/${deploymentName}/${queueService.name}/failed`, failNumber);
 

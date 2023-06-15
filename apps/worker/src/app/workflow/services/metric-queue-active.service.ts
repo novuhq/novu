@@ -1,4 +1,3 @@
-const nr = require('newrelic');
 import { WorkerOptions } from 'bullmq';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { QueueService } from '@novu/application-generic';
@@ -48,7 +47,7 @@ export class MetricQueueActiveService extends QueueService<Record<string, never>
             repeatJobKey: METRIC_JOB_ID,
             repeat: {
               immediately: true,
-              pattern: '* * * * *',
+              pattern: '* * * * * *',
             },
             removeOnFail: true,
             removeOnComplete: true,
@@ -82,9 +81,11 @@ export class MetricQueueActiveService extends QueueService<Record<string, never>
             const delayedCount = await queueService.bullMqService.queue.getDelayedCount();
             const activeCount = await queueService.bullMqService.queue.getActiveCount();
 
-            if (process.env.NOVU_MANAGED_SERVICE === 'true') {
+            if (process.env.NOVU_MANAGED_SERVICE === 'true' && process.env.NEW_RELIC_LICENSE_KEY.length !== 0) {
+              Logger.verbose('active length', process.env.NEW_RELIC_LICENSE_KEY.length);
               Logger.log('Recording active, waiting, and delayed metrics');
 
+              const nr = require('newrelic');
               nr.recordMetric(`Queue/${deploymentName}/${queueService.name}/waiting`, waitCount);
               nr.recordMetric(`Queue/${deploymentName}/${queueService.name}/delayed`, delayedCount);
               nr.recordMetric(`Queue/${deploymentName}/${queueService.name}/active`, activeCount);
