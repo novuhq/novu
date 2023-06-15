@@ -32,7 +32,6 @@ export class GetSubscriberTemplatePreference {
   async execute(
     command: GetSubscriberTemplatePreferenceCommand
   ): Promise<ISubscriberPreferenceResponse> {
-    const activeChannels = await this.queryActiveChannels(command);
     const subscriber =
       command.subscriber ??
       (await this.fetchSubscriber({
@@ -43,7 +42,7 @@ export class GetSubscriberTemplatePreference {
     if (!subscriber) {
       throw new ApiException(`Subscriber ${command.subscriberId} not found`);
     }
-
+    const initialActiveChannels = await this.getActiveChannels(command);
     const subscriberPreference =
       await this.subscriberPreferenceRepository.findOne({
         _environmentId: command.environmentId,
@@ -55,11 +54,12 @@ export class GetSubscriberTemplatePreference {
     const templatePreferred = subscriberPreference?.enabled ?? true;
     const subscriberChannelPreference = subscriberPreference?.channels;
     const templateChannelPreference = command.template.preferenceSettings;
+
     const { channelPreferences, overrides } =
       this.getChannelPreferenceAndOverrides(
         templateChannelPreference,
         subscriberChannelPreference,
-        activeChannels
+        initialActiveChannels
       );
 
     return {
@@ -72,26 +72,38 @@ export class GetSubscriberTemplatePreference {
     };
   }
 
+  private async getActiveChannels(
+    command: GetSubscriberTemplatePreferenceCommand
+  ) {
+    const activeChannels = await this.queryActiveChannels(command);
+    const initialActiveChannels: IPreferenceChannels = filteredPreference(
+      {
+        email: true,
+        sms: true,
+        in_app: true,
+        chat: true,
+        push: true,
+      },
+      activeChannels
+    );
+
+    return initialActiveChannels;
+  }
+
   private getChannelPreferenceAndOverrides(
     templateChannelPreference,
     subscriberChannelPreference,
-    activeChannels: ChannelTypeEnum[]
+    initialActiveChannels: IPreferenceChannels
   ) {
-    const preferenceOverrideResult = determineOverrides({
-      template: templateChannelPreference,
-      subscriber: subscriberChannelPreference,
-    });
-
-    const channelPreferences = filterActiveChannels(
-      activeChannels,
-      preferenceOverrideResult.preferences
-    );
-    const overrides = filterActiveOverrides(
-      activeChannels,
-      preferenceOverrideResult.overrides
+    const { preferences, overrides } = determineOverrides(
+      {
+        template: templateChannelPreference,
+        subscriber: subscriberChannelPreference,
+      },
+      initialActiveChannels
     );
 
-    return { channelPreferences, overrides };
+    return { channelPreferences: preferences, overrides };
   }
 
   private async queryActiveChannels(
@@ -178,17 +190,12 @@ function updateOverrideReasons(
 }
 
 export function determineOverrides(
-  preferenceSources: Record<'template' | 'subscriber', IPreferenceChannels>
+  preferenceSources: Record<'template' | 'subscriber', IPreferenceChannels>,
+  initialActiveChannels: IPreferenceChannels
 ) {
   const priorityOrder = ['template', 'subscriber'];
-  const resultPreferences: IPreferenceChannels = {
-    email: true,
-    sms: true,
-    in_app: true,
-    chat: true,
-    push: true,
-  };
   const overrideReasons: IPreferenceOverride[] = [];
+  const resultPreferences = { ...initialActiveChannels };
 
   // iterate over preference sources, the smallest priority first
   for (const sourceName of priorityOrder) {
@@ -200,6 +207,8 @@ export function determineOverrides(
 
     // iterate over preferences and override overrideReasons if there is a diff
     for (const [channelName, channelValue] of Object.entries(preference)) {
+      if (!(resultPreferences[channelName] != null)) continue;
+
       const index = overrideReasons.findIndex(
         (overrideReason) => overrideReason.channel === channelName
       );
@@ -219,33 +228,15 @@ export function determineOverrides(
   };
 }
 
-export function filterActiveChannels(
-  activeChannels: ChannelTypeEnum[],
-  preferences: IPreferenceChannels
-): IPreferenceChannels {
-  const filteredChannels = { ...preferences };
-  for (const key in preferences) {
-    if (!activeChannels.some((channel) => channel === key)) {
-      delete filteredChannels[key];
-    }
-  }
-
-  return filteredChannels;
-}
-
-export function filterActiveOverrides(
-  activeChannels: ChannelTypeEnum[],
-  overrides: IPreferenceOverride[]
-): IPreferenceOverride[] {
-  const preferenceOverrides: IPreferenceOverride[] = [];
-  for (const override of overrides) {
-    if (activeChannels.some((channel) => channel === override.channel)) {
-      preferenceOverrides.push(override);
-    }
-  }
-
-  return preferenceOverrides;
-}
+export const filteredPreference = (
+  preferences: IPreferenceChannels,
+  filterKeys: string[]
+) =>
+  Object.entries(preferences).reduce(
+    (obj, [key, value]) =>
+      filterKeys.includes(key) ? { ...obj, [key]: value } : obj,
+    {}
+  );
 
 function mapTemplateConfiguration(
   template: NotificationTemplateEntity
