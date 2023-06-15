@@ -70,7 +70,7 @@
     "cypress": "^12.3.0",
     "cypress-intellij-reporter": "^0.0.7",
     "cypress-network-idle": "^1.10.0",
-    "html-webpack-plugin": "5.5.1",
+    "html-webpack-plugin": "5.5.3",
     "http-server": "^0.13.0",
     "jest": "27.5.1",
     "less": "^4.1.0",

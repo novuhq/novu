@@ -75,7 +75,7 @@
     "date-fns": "^2.29.2",
     "graphql": "^15.4.0",
     "handlebars": "^4.7.7",
-    "html-webpack-plugin": "5.5.1",
+    "html-webpack-plugin": "5.5.3",
     "jwt-decode": "^3.1.2",
     "launchdarkly-react-client-sdk": "^3.0.6",
     "less": "^4.1.0",
