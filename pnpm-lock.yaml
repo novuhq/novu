@@ -462,7 +462,7 @@ importers:
       eslint-plugin-cypress: ^2.12.1
       graphql: ^15.4.0
       handlebars: ^4.7.7
-      html-webpack-plugin: 5.5.1
+      html-webpack-plugin: 5.5.3
       http-server: ^0.13.0
       jwt-decode: ^3.1.2
       launchdarkly-react-client-sdk: ^3.0.6
@@ -548,7 +548,7 @@ importers:
       '@tanstack/react-query': 4.29.1_sfoxds7t5ydpegc3knd667wn6m
       '@tanstack/react-query-devtools': 4.29.1_fc767x2zeowb6djszczb2347uq
       '@testing-library/react': 11.2.7_sfoxds7t5ydpegc3knd667wn6m
-      '@testing-library/user-event': 12.8.3_@testing-library+dom@9.2.0
+      '@testing-library/user-event': 12.8.3_@testing-library+dom@9.3.0
       '@types/jest': 29.5.1
       '@types/node': 12.20.55
       '@types/react': 17.0.53
@@ -564,7 +564,7 @@ importers:
       date-fns: 2.29.3
       graphql: 15.8.0
       handlebars: 4.7.7
-      html-webpack-plugin: 5.5.1_webpack@5.78.0
+      html-webpack-plugin: 5.5.3_webpack@5.78.0
       jwt-decode: 3.1.2
       launchdarkly-react-client-sdk: 3.0.6_sfoxds7t5ydpegc3knd667wn6m
       less: 4.1.3
@@ -776,7 +776,7 @@ importers:
       cypress-intellij-reporter: ^0.0.7
       cypress-network-idle: ^1.10.0
       eslint-plugin-cypress: ^2.12.1
-      html-webpack-plugin: 5.5.1
+      html-webpack-plugin: 5.5.3
       http-server: ^0.13.0
       iframe-resizer: ^4.3.1
       jest: 27.5.1
@@ -808,7 +808,7 @@ importers:
       '@novu/shared': link:../../libs/shared
       '@testing-library/jest-dom': 5.16.5
       '@testing-library/react': 11.2.7_sfoxds7t5ydpegc3knd667wn6m
-      '@testing-library/user-event': 12.8.3_@testing-library+dom@9.2.0
+      '@testing-library/user-event': 12.8.3_@testing-library+dom@9.3.0
       antd: 4.24.8_sfoxds7t5ydpegc3knd667wn6m
       babel-plugin-import: 1.13.6
       chroma-js: 2.4.2
@@ -844,7 +844,7 @@ importers:
       cypress: 12.9.0
       cypress-intellij-reporter: 0.0.7
       cypress-network-idle: 1.14.2
-      html-webpack-plugin: 5.5.1_webpack@5.78.0
+      html-webpack-plugin: 5.5.3_webpack@5.78.0
       http-server: 0.13.0
       jest: 27.5.1
       less: 4.1.3
@@ -1799,7 +1799,11 @@ importers:
       '@storybook/react': ^6.4.19
       '@storybook/testing-library': 0.1.0
       '@tanstack/react-query': ^4.20.4
+      '@testing-library/dom': ^9.3.0
+      '@testing-library/jest-dom': ^4.2.4
+      '@testing-library/react': ^11.1.0
       '@testing-library/react-hooks': ^8.0.1
+      '@testing-library/user-event': ^12.1.10
       '@types/jest': ^29.2.3
       '@types/node': ^18.11.12
       '@types/react': ^17.0.0
@@ -1867,7 +1871,11 @@ importers:
       '@storybook/manager-webpack5': 6.5.16_jgxnvbe4faw3ohf4h6p42qq6oy
       '@storybook/react': 6.5.16_ycedalklg5lpvqnebsb3widmuu
       '@storybook/testing-library': 0.1.0
+      '@testing-library/dom': 9.3.0
+      '@testing-library/jest-dom': 4.2.4
+      '@testing-library/react': 11.2.7_sfoxds7t5ydpegc3knd667wn6m
       '@testing-library/react-hooks': 8.0.1_zsjcj4gvi24ks76nprapl4hsmq
+      '@testing-library/user-event': 12.8.3_@testing-library+dom@9.3.0
       '@types/jest': 29.5.0
       '@types/node': 18.15.11
       '@types/react': 17.0.53
@@ -8658,7 +8666,6 @@ packages:
     dependencies:
       core-js-pure: 3.30.0
       regenerator-runtime: 0.13.11
-    dev: false
 
   /@babel/runtime/7.20.13:
     resolution: {integrity: sha512-gt3PKXs0DBoL9xCvOIIZ2NEqAGZqHjAnmVbfQtB620V0uReIQutpel14KcneZuer7UioY8ALKZ7iocavvzTNFA==}
@@ -9761,7 +9768,7 @@ packages:
       find-up: 6.3.0
       fs-extra: 9.1.0
       html-webpack-plugin-4: /html-webpack-plugin/4.5.2_webpack@5.78.0
-      html-webpack-plugin-5: /html-webpack-plugin/5.5.1_webpack@5.78.0
+      html-webpack-plugin-5: /html-webpack-plugin/5.5.3_webpack@5.78.0
       local-pkg: 0.4.1
       speed-measure-webpack-plugin: 1.4.2_webpack@5.78.0
       tslib: 2.5.0
@@ -12175,7 +12182,7 @@ packages:
       '@jest/test-result': 27.5.1
       '@jest/transform': 27.5.1
       '@jest/types': 27.5.1
-      '@types/node': 18.15.11
+      '@types/node': 14.18.42
       ansi-escapes: 4.3.2
       chalk: 4.1.2
       emittery: 0.8.1
@@ -12254,7 +12261,7 @@ packages:
     dependencies:
       '@jest/fake-timers': 27.5.1
       '@jest/types': 27.5.1
-      '@types/node': 18.15.11
+      '@types/node': 14.18.42
       jest-mock: 27.5.1
 
   /@jest/environment/28.1.3:
@@ -14377,7 +14384,7 @@ packages:
     peerDependencies:
       '@nestjs/common': ^8.0.0 || ^9.0.0
     dependencies:
-      '@nestjs/common': 9.3.12_welcnyot5bzd5wa2aovbkxpi4i
+      '@nestjs/common': 9.3.12_ew7gazwbjf4vlpfvmmn4v2vvei
       '@types/jsonwebtoken': 8.5.8
       jsonwebtoken: 8.5.1
     dev: false
@@ -19386,7 +19393,7 @@ packages:
       fork-ts-checker-webpack-plugin: 6.5.3_fejcc7gjbwtmwzggoernzojija
       glob: 7.2.3
       glob-promise: 3.4.0_glob@7.2.3
-      html-webpack-plugin: 5.5.1_webpack@5.78.0
+      html-webpack-plugin: 5.5.3_webpack@5.78.0
       path-browserify: 1.0.1
       process: 0.11.10
       react: 17.0.2
@@ -20191,7 +20198,7 @@ packages:
       express: 4.18.2
       find-up: 5.0.0
       fs-extra: 9.1.0
-      html-webpack-plugin: 5.5.1_webpack@5.78.0
+      html-webpack-plugin: 5.5.3_webpack@5.78.0
       node-fetch: 2.6.9
       process: 0.11.10
       react: 17.0.2
@@ -21191,7 +21198,6 @@ packages:
       dom-accessibility-api: 0.5.16
       lz-string: 1.5.0
       pretty-format: 26.6.2
-    dev: false
 
   /@testing-library/dom/8.20.0:
     resolution: {integrity: sha512-d9ULIT+a4EXLX3UU8FBjauG9NnsZHkHztXoIcTsOKoOw030fyjheN9svkTULjJxtYag9DZz5Jz5qkWZDPxTFwA==}
@@ -21207,8 +21213,8 @@ packages:
       pretty-format: 27.5.1
     dev: true
 
-  /@testing-library/dom/9.2.0:
-    resolution: {integrity: sha512-xTEnpUKiV/bMyEsE5bT4oYA0x0Z/colMtxzUY8bKyPXBNLn/e0V4ZjBZkEhms0xE4pv9QsPfSRu9AWS4y5wGvA==}
+  /@testing-library/dom/9.3.0:
+    resolution: {integrity: sha512-Dffe68pGwI6WlLRYR2I0piIkyole9cSBH5jGQKCGMRpHW5RHCqAUaqc2Kv0tUyd4dU4DLPKhJIjyKOnjv4tuUw==}
     engines: {node: '>=14'}
     dependencies:
       '@babel/code-frame': 7.21.4
@@ -21219,7 +21225,6 @@ packages:
       dom-accessibility-api: 0.5.16
       lz-string: 1.5.0
       pretty-format: 27.5.1
-    dev: false
 
   /@testing-library/jest-dom/4.2.4:
     resolution: {integrity: sha512-j31Bn0rQo12fhCWOUWy9fl7wtqkp7In/YP2p5ZFyRuiiB9Qs3g+hS4gAmDWONbAHcRmVooNJ5eOHQDCOmUFXHg==}
@@ -21285,17 +21290,15 @@ packages:
       '@testing-library/dom': 7.31.2
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
-    dev: false
 
-  /@testing-library/user-event/12.8.3_@testing-library+dom@9.2.0:
+  /@testing-library/user-event/12.8.3_@testing-library+dom@9.3.0:
     resolution: {integrity: sha512-IR0iWbFkgd56Bu5ZI/ej8yQwrkCv8Qydx6RzwbKz9faXazR/+5tvYKsZQgyXJiwgpcva127YO6JcWy7YlCfofQ==}
     engines: {node: '>=10', npm: '>=6'}
     peerDependencies:
       '@testing-library/dom': '>=7.21.4'
     dependencies:
       '@babel/runtime': 7.21.0
-      '@testing-library/dom': 9.2.0
-    dev: false
+      '@testing-library/dom': 9.3.0
 
   /@testing-library/user-event/13.5.0_yxlyej73nftwmh2fiao7paxmlm:
     resolution: {integrity: sha512-5Kwtbo3Y/NowpkbRuSepbyMFkZmHgD+vPzYB/RJ4oxt5Gj/avFFBYjhw27cqSVPVw/3a67NK1PbiIr9k4Gwmdg==}
@@ -21356,7 +21359,6 @@ packages:
 
   /@types/aria-query/4.2.2:
     resolution: {integrity: sha512-HnYpAE1Y6kRyKM/XkEuiRQhTHvkzMBurTHnpFLYLBGPIylZNPs9jJcuOOYWxPLJCSEtmZT0Y8rHDokKN7rRTig==}
-    dev: false
 
   /@types/aria-query/5.0.1:
     resolution: {integrity: sha512-XTIieEY+gvJ39ChLcB4If5zHtPxt3Syj5rgZR+e1ctpmK8NjPf0zFqsz4JpLJT0xla9GFDKjy8Cpu331nrmE1Q==}
@@ -21457,7 +21459,7 @@ packages:
   /@types/cors/2.8.13:
     resolution: {integrity: sha512-RG8AStHlUiV5ysZQKq97copd2UmVYw3/pRMLefISZ3S1hK104Cwm7iLQ3fTKx+lsUH2CE8FlLaYeEA2LSeqYUA==}
     dependencies:
-      '@types/node': 18.15.11
+      '@types/node': 14.18.42
 
   /@types/d3-array/3.0.4:
     resolution: {integrity: sha512-nwvEkG9vYOc0Ic7G7kwgviY4AQlTfYGIZ0fqB7CQHXGyYM6nO7kJh5EguSNA3jfh4rq7Sb7eMVq8isuvg2/miQ==}
@@ -21930,6 +21932,7 @@ packages:
 
   /@types/node/18.15.11:
     resolution: {integrity: sha512-E5Kwq2n4SbMzQOn6wnmBjuK9ouqlURrcZDVfbo9ftDDTFt3nk7ZKK4GMOzoYgnpQJKcxwQw+lGaBvvlMo0qN/Q==}
+    dev: true
 
   /@types/nodemailer/6.4.7:
     resolution: {integrity: sha512-f5qCBGAn/f0qtRcd4SEn88c8Fp3Swct1731X4ryPKqS61/A3LmmzN8zaEz7hneJvpjFbUUgY7lru/B/7ODTazg==}
@@ -22120,7 +22123,7 @@ packages:
   /@types/sax/1.2.4:
     resolution: {integrity: sha512-pSAff4IAxJjfAXUG6tFkO7dsSbTmf8CtUpfhhZ5VhkRpC4628tJhh3+V6H1E+/Gs9piSzYKT5yzHO5M4GG9jkw==}
     dependencies:
-      '@types/node': 18.15.11
+      '@types/node': 14.18.42
     dev: false
 
   /@types/scheduler/0.16.3:
@@ -23077,7 +23080,7 @@ packages:
   /@wry/context/0.4.4:
     resolution: {integrity: sha512-LrKVLove/zw6h2Md/KZyWxIkFM6AoyKp71OqpH9Hiip1csjPVoD3tPxlbQUNxEnHENks3UGgNpSBCAfq9KWuag==}
     dependencies:
-      '@types/node': 18.15.11
+      '@types/node': 14.18.42
       tslib: 1.14.1
     dev: true
 
@@ -23852,7 +23855,6 @@ packages:
     dependencies:
       '@babel/runtime': 7.21.0
       '@babel/runtime-corejs3': 7.21.0
-    dev: false
 
   /aria-query/5.1.3:
     resolution: {integrity: sha512-R5iJ5lkuHybztUfuOAznmboyjWq8O6sqNqtK7CLOqdydi54VNbORp49mb14KbWgG1QD3JFO9hJdZ+y4KutfdOQ==}
@@ -32737,8 +32739,8 @@ packages:
       webpack: 5.78.0
     dev: false
 
-  /html-webpack-plugin/5.5.1_webpack@5.78.0:
-    resolution: {integrity: sha512-cTUzZ1+NqjGEKjmVgZKLMdiFg3m9MdRXkZW2OEe69WYVi5ONLMmlnSZdXzGGMOq0C8jGDrL6EWyEDDUioHO/pA==}
+  /html-webpack-plugin/5.5.3_webpack@5.78.0:
+    resolution: {integrity: sha512-6YrDKTuqaP/TquFH7h4srYWsZx+x6k6+FbsTm0ziCwGHDP78Unr1r9F/H4+sGmMbX08GQcJ+K64x55b+7VM/jg==}
     engines: {node: '>=10.13.0'}
     peerDependencies:
       webpack: ^5.20.0
@@ -34226,7 +34228,7 @@ packages:
       '@jest/environment': 27.5.1
       '@jest/test-result': 27.5.1
       '@jest/types': 27.5.1
-      '@types/node': 18.15.11
+      '@types/node': 14.18.42
       chalk: 4.1.2
       co: 4.6.0
       dedent: 0.7.0
@@ -34788,7 +34790,7 @@ packages:
       '@jest/environment': 27.5.1
       '@jest/fake-timers': 27.5.1
       '@jest/types': 27.5.1
-      '@types/node': 18.15.11
+      '@types/node': 14.18.42
       jest-mock: 27.5.1
       jest-util: 27.5.1
 
@@ -41901,7 +41903,6 @@ packages:
       ansi-regex: 5.0.1
       ansi-styles: 4.3.0
       react-is: 17.0.2
-    dev: false
 
   /pretty-format/27.5.1:
     resolution: {integrity: sha512-Qb1gy5OrP5+zDf2Bvnzdl3jsTf1qXVMazbvCoKhtKqVs4/YK4ozX4gKQJJVyNe+cajNPn0KoC0MC3FUmaHWEmQ==}
@@ -42169,7 +42170,7 @@ packages:
       '@protobufjs/path': 1.1.2
       '@protobufjs/pool': 1.1.0
       '@protobufjs/utf8': 1.1.0
-      '@types/node': 18.15.11
+      '@types/node': 14.18.42
       long: 5.2.1
     dev: false
 
@@ -43482,7 +43483,7 @@ packages:
       eslint-webpack-plugin: 3.2.0_rdwvrfvhmsyfoxui6a22qliowu
       file-loader: 6.2.0_webpack@5.78.0
       fs-extra: 10.1.0
-      html-webpack-plugin: 5.5.1_webpack@5.78.0
+      html-webpack-plugin: 5.5.3_webpack@5.78.0
       identity-obj-proxy: 3.0.0
       jest: 27.5.1
       jest-resolve: 27.5.1

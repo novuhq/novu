@@ -7,3 +7,4 @@ export * from './logging/index';
 export * from './usecases';
 export * from './instrumentation/index';
 export * from './utils/subscriber';
+export * from './resilience';
