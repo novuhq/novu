@@ -47,7 +47,7 @@ export class MetricQueueCompletedService extends QueueService<Record<string, nev
             repeatJobKey: METRIC_JOB_ID,
             repeat: {
               immediately: true,
-              pattern: '* * * * * *',
+              pattern: '* * * * *',
             },
             removeOnFail: true,
             removeOnComplete: true,
@@ -63,7 +63,7 @@ export class MetricQueueCompletedService extends QueueService<Record<string, nev
   private getWorkerOpts(): WorkerOptions {
     return {
       ...this.bullConfig,
-      lockDuration: 750,
+      lockDuration: 900,
       concurrency: 1,
       settings: {},
     } as WorkerOptions;

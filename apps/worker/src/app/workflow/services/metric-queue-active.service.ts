@@ -63,7 +63,7 @@ export class MetricQueueActiveService extends QueueService<Record<string, never>
   private getWorkerOpts(): WorkerOptions {
     return {
       ...this.bullConfig,
-      lockDuration: 750,
+      lockDuration: 900,
       concurrency: 1,
       settings: {},
     } as WorkerOptions;
