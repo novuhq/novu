@@ -20,7 +20,7 @@ export enum ViewEnum {
   PREVIEW = 'Preview',
   TEST = 'Test',
 }
-const templateFields = ['content', 'htmlContent', 'subject', 'preheader'];
+const templateFields = ['content', 'htmlContent', 'subject', 'preheader', 'senderName'];
 
 export function EmailMessagesCards({ index, isIntegrationActive }: { index: number; isIntegrationActive: boolean }) {
   const { currentOrganization } = useAuthContext();
