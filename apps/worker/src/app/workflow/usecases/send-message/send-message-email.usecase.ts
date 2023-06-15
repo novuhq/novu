@@ -13,10 +13,11 @@ import {
   EmailProviderIdEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  IAttachmentOptions,
+  IEmailOptions,
   LogCodeEnum,
 } from '@novu/shared';
 import * as Sentry from '@sentry/node';
-import { IAttachmentOptions, IEmailOptions } from '@novu/stateless';
 import {
   InstrumentUsecase,
   DetailEnum,

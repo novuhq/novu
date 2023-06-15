@@ -1,13 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { ITopic, TriggerRecipientSubscriber, TriggerRecipientTopics, TriggerRecipients } from '@novu/node';
 import {
   EnvironmentId,
   ISubscribersDefine,
+  ITopic,
   LogCodeEnum,
   LogStatusEnum,
   OrganizationId,
   TopicKey,
   TopicSubscribersDto,
+  TriggerRecipients,
+  TriggerRecipientSubscriber,
+  TriggerRecipientTopics,
   TriggerRecipientsTypeEnum,
   UserId,
 } from '@novu/shared';
@@ -17,6 +20,7 @@ import { MapTriggerRecipientsCommand } from './map-trigger-recipients.command';
 import { CreateLog, CreateLogCommand } from '../../../logs/usecases/create-log';
 import { GetTopicSubscribersCommand, GetTopicSubscribersUseCase } from '../../../topics/use-cases';
 import { InstrumentUsecase } from '@novu/application-generic';
+import { FeatureFlagCommand, GetFeatureFlag } from '../../../feature-flags/use-cases';
 
 interface ILogTopicSubscribersPayload {
   environmentId: EnvironmentId;
@@ -33,7 +37,11 @@ const isTopic = (recipient: ITopic): recipient is ITopic => recipient?.type === 
 
 @Injectable()
 export class MapTriggerRecipients {
-  constructor(private createLog: CreateLog, private getTopicSubscribers: GetTopicSubscribersUseCase) {}
+  constructor(
+    private createLog: CreateLog,
+    private getTopicSubscribers: GetTopicSubscribersUseCase,
+    private getFeatureFlag: GetFeatureFlag
+  ) {}
 
   @InstrumentUsecase()
   async execute(command: MapTriggerRecipientsCommand): Promise<ISubscribersDefine[]> {
@@ -86,11 +94,14 @@ export class MapTriggerRecipients {
     userId: UserId,
     recipients: TriggerRecipients
   ): Promise<ISubscribersDefine[]> {
-    /*
-     * TODO: We should manage the env variables from the config and not process.env
-     * https://github.com/motdotla/dotenv/issues/51
-     */
-    if (process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED === 'true') {
+    const featureFlagCommand = FeatureFlagCommand.create({
+      environmentId,
+      organizationId,
+      userId,
+    });
+    const isEnabled = await this.getFeatureFlag.isTopicNotificationEnabled(featureFlagCommand);
+
+    if (isEnabled) {
       const topics = this.findTopics(recipients);
 
       const subscribers: ISubscribersDefine[] = [];
