@@ -548,7 +548,7 @@ importers:
       '@tanstack/react-query': 4.29.1_sfoxds7t5ydpegc3knd667wn6m
       '@tanstack/react-query-devtools': 4.29.1_fc767x2zeowb6djszczb2347uq
       '@testing-library/react': 11.2.7_sfoxds7t5ydpegc3knd667wn6m
-      '@testing-library/user-event': 12.8.3_@testing-library+dom@9.2.0
+      '@testing-library/user-event': 12.8.3_@testing-library+dom@9.3.0
       '@types/jest': 29.5.1
       '@types/node': 12.20.55
       '@types/react': 17.0.53
@@ -808,7 +808,7 @@ importers:
       '@novu/shared': link:../../libs/shared
       '@testing-library/jest-dom': 5.16.5
       '@testing-library/react': 11.2.7_sfoxds7t5ydpegc3knd667wn6m
-      '@testing-library/user-event': 12.8.3_@testing-library+dom@9.2.0
+      '@testing-library/user-event': 12.8.3_@testing-library+dom@9.3.0
       antd: 4.24.8_sfoxds7t5ydpegc3knd667wn6m
       babel-plugin-import: 1.13.6
       chroma-js: 2.4.2
@@ -1799,7 +1799,11 @@ importers:
       '@storybook/react': ^6.4.19
       '@storybook/testing-library': 0.1.0
       '@tanstack/react-query': ^4.20.4
+      '@testing-library/dom': ^9.3.0
+      '@testing-library/jest-dom': ^4.2.4
+      '@testing-library/react': ^11.1.0
       '@testing-library/react-hooks': ^8.0.1
+      '@testing-library/user-event': ^12.1.10
       '@types/jest': ^29.2.3
       '@types/node': ^18.11.12
       '@types/react': ^17.0.0
@@ -1867,7 +1871,11 @@ importers:
       '@storybook/manager-webpack5': 6.5.16_jgxnvbe4faw3ohf4h6p42qq6oy
       '@storybook/react': 6.5.16_ycedalklg5lpvqnebsb3widmuu
       '@storybook/testing-library': 0.1.0
+      '@testing-library/dom': 9.3.0
+      '@testing-library/jest-dom': 4.2.4
+      '@testing-library/react': 11.2.7_sfoxds7t5ydpegc3knd667wn6m
       '@testing-library/react-hooks': 8.0.1_zsjcj4gvi24ks76nprapl4hsmq
+      '@testing-library/user-event': 12.8.3_@testing-library+dom@9.3.0
       '@types/jest': 29.5.0
       '@types/node': 18.15.11
       '@types/react': 17.0.53
@@ -8658,7 +8666,6 @@ packages:
     dependencies:
       core-js-pure: 3.30.0
       regenerator-runtime: 0.13.11
-    dev: false
 
   /@babel/runtime/7.20.13:
     resolution: {integrity: sha512-gt3PKXs0DBoL9xCvOIIZ2NEqAGZqHjAnmVbfQtB620V0uReIQutpel14KcneZuer7UioY8ALKZ7iocavvzTNFA==}
@@ -14377,7 +14384,7 @@ packages:
     peerDependencies:
       '@nestjs/common': ^8.0.0 || ^9.0.0
     dependencies:
-      '@nestjs/common': 9.3.12_welcnyot5bzd5wa2aovbkxpi4i
+      '@nestjs/common': 9.3.12_ew7gazwbjf4vlpfvmmn4v2vvei
       '@types/jsonwebtoken': 8.5.8
       jsonwebtoken: 8.5.1
     dev: false
@@ -21191,7 +21198,6 @@ packages:
       dom-accessibility-api: 0.5.16
       lz-string: 1.5.0
       pretty-format: 26.6.2
-    dev: false
 
   /@testing-library/dom/8.20.0:
     resolution: {integrity: sha512-d9ULIT+a4EXLX3UU8FBjauG9NnsZHkHztXoIcTsOKoOw030fyjheN9svkTULjJxtYag9DZz5Jz5qkWZDPxTFwA==}
@@ -21207,8 +21213,8 @@ packages:
       pretty-format: 27.5.1
     dev: true
 
-  /@testing-library/dom/9.2.0:
-    resolution: {integrity: sha512-xTEnpUKiV/bMyEsE5bT4oYA0x0Z/colMtxzUY8bKyPXBNLn/e0V4ZjBZkEhms0xE4pv9QsPfSRu9AWS4y5wGvA==}
+  /@testing-library/dom/9.3.0:
+    resolution: {integrity: sha512-Dffe68pGwI6WlLRYR2I0piIkyole9cSBH5jGQKCGMRpHW5RHCqAUaqc2Kv0tUyd4dU4DLPKhJIjyKOnjv4tuUw==}
     engines: {node: '>=14'}
     dependencies:
       '@babel/code-frame': 7.21.4
@@ -21219,7 +21225,6 @@ packages:
       dom-accessibility-api: 0.5.16
       lz-string: 1.5.0
       pretty-format: 27.5.1
-    dev: false
 
   /@testing-library/jest-dom/4.2.4:
     resolution: {integrity: sha512-j31Bn0rQo12fhCWOUWy9fl7wtqkp7In/YP2p5ZFyRuiiB9Qs3g+hS4gAmDWONbAHcRmVooNJ5eOHQDCOmUFXHg==}
@@ -21285,17 +21290,15 @@ packages:
       '@testing-library/dom': 7.31.2
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
-    dev: false
 
-  /@testing-library/user-event/12.8.3_@testing-library+dom@9.2.0:
+  /@testing-library/user-event/12.8.3_@testing-library+dom@9.3.0:
     resolution: {integrity: sha512-IR0iWbFkgd56Bu5ZI/ej8yQwrkCv8Qydx6RzwbKz9faXazR/+5tvYKsZQgyXJiwgpcva127YO6JcWy7YlCfofQ==}
     engines: {node: '>=10', npm: '>=6'}
     peerDependencies:
       '@testing-library/dom': '>=7.21.4'
     dependencies:
       '@babel/runtime': 7.21.0
-      '@testing-library/dom': 9.2.0
-    dev: false
+      '@testing-library/dom': 9.3.0
 
   /@testing-library/user-event/13.5.0_yxlyej73nftwmh2fiao7paxmlm:
     resolution: {integrity: sha512-5Kwtbo3Y/NowpkbRuSepbyMFkZmHgD+vPzYB/RJ4oxt5Gj/avFFBYjhw27cqSVPVw/3a67NK1PbiIr9k4Gwmdg==}
@@ -21356,7 +21359,6 @@ packages:
 
   /@types/aria-query/4.2.2:
     resolution: {integrity: sha512-HnYpAE1Y6kRyKM/XkEuiRQhTHvkzMBurTHnpFLYLBGPIylZNPs9jJcuOOYWxPLJCSEtmZT0Y8rHDokKN7rRTig==}
-    dev: false
 
   /@types/aria-query/5.0.1:
     resolution: {integrity: sha512-XTIieEY+gvJ39ChLcB4If5zHtPxt3Syj5rgZR+e1ctpmK8NjPf0zFqsz4JpLJT0xla9GFDKjy8Cpu331nrmE1Q==}
@@ -21930,6 +21932,7 @@ packages:
 
   /@types/node/18.15.11:
     resolution: {integrity: sha512-E5Kwq2n4SbMzQOn6wnmBjuK9ouqlURrcZDVfbo9ftDDTFt3nk7ZKK4GMOzoYgnpQJKcxwQw+lGaBvvlMo0qN/Q==}
+    dev: true
 
   /@types/nodemailer/6.4.7:
     resolution: {integrity: sha512-f5qCBGAn/f0qtRcd4SEn88c8Fp3Swct1731X4ryPKqS61/A3LmmzN8zaEz7hneJvpjFbUUgY7lru/B/7ODTazg==}
@@ -23852,7 +23855,6 @@ packages:
     dependencies:
       '@babel/runtime': 7.21.0
       '@babel/runtime-corejs3': 7.21.0
-    dev: false
 
   /aria-query/5.1.3:
     resolution: {integrity: sha512-R5iJ5lkuHybztUfuOAznmboyjWq8O6sqNqtK7CLOqdydi54VNbORp49mb14KbWgG1QD3JFO9hJdZ+y4KutfdOQ==}
@@ -41901,7 +41903,6 @@ packages:
       ansi-regex: 5.0.1
       ansi-styles: 4.3.0
       react-is: 17.0.2
-    dev: false
 
   /pretty-format/27.5.1:
     resolution: {integrity: sha512-Qb1gy5OrP5+zDf2Bvnzdl3jsTf1qXVMazbvCoKhtKqVs4/YK4ozX4gKQJJVyNe+cajNPn0KoC0MC3FUmaHWEmQ==}
