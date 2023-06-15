@@ -1,8 +1,7 @@
-import ReactFlow, { Background, BackgroundVariant, Edge, Node } from 'react-flow-renderer';
+import ReactFlow, { Background, BackgroundVariant, Edge, Node } from 'reactflow';
 
 import { useMantineColorScheme } from '@mantine/core';
 
-import styled from '@emotion/styled';
 import { colors } from '../../../design-system';
 import { InAppNode } from './InAppNode';
 import { TriggerNode } from './TriggerNode';

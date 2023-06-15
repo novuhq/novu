@@ -71,7 +71,7 @@ export function FlowEditor({
   nodesDraggable = true,
   minZoom = 0.5,
   maxZoom = 1.5,
-  defaultZoom = 1,
+  defaultViewport = { x: 0, y: 120, zoom: 1 },
   nodeTypes,
   edgeTypes,
   withControls = true,
@@ -312,7 +312,7 @@ export function FlowEditor({
             nodesDraggable={nodesDraggable}
             minZoom={minZoom}
             maxZoom={maxZoom}
-            defaultZoom={defaultZoom}
+            defaultViewport={defaultViewport}
             {...restProps}
           >
             {withControls && <Controls />}

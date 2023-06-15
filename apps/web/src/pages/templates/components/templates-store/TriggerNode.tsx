@@ -1,4 +1,5 @@
-import { Handle, NodeProps, Position } from 'react-flow-renderer';
+import { Handle, NodeProps, Position } from 'reactflow';
+
 import styled from '@emotion/styled';
 
 import { NodeStep } from '../../../../components/workflow';

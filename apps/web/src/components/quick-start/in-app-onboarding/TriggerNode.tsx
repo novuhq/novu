@@ -1,14 +1,14 @@
-import { Handle, Position } from 'react-flow-renderer';
-
-import { Button, colors, shadows, Text, Title } from '../../../design-system';
-import { TurnOnGradient } from '../../../design-system/icons/gradient/TurnOnGradient';
-
-import styled from '@emotion/styled';
-import { createStyles, Group, Popover, Stack, useMantineColorScheme } from '@mantine/core';
-import { ActorTypeEnum, INotificationTemplate, StepTypeEnum, SystemAvatarIconEnum } from '@novu/shared';
-import { useMutation } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { useMutation } from '@tanstack/react-query';
+import { Handle, Position } from 'reactflow';
+import { createStyles, Group, Popover, Stack, useMantineColorScheme } from '@mantine/core';
+import styled from '@emotion/styled';
+
+import { ActorTypeEnum, INotificationTemplate, StepTypeEnum, SystemAvatarIconEnum } from '@novu/shared';
+
+import { Button, colors, shadows, Text, Title } from '../../../design-system';
+import { TurnOnGradient } from '../../../design-system/icons';
 import { createTemplate, testTrigger } from '../../../api/notification-templates';
 import { useNotificationGroup, useTemplates } from '../../../hooks';
 import {

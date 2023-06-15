@@ -1,4 +1,4 @@
-import { EdgeProps } from 'react-flow-renderer';
+import { EdgeProps } from 'reactflow';
 import { StepTypeEnum } from '@novu/shared';
 
 export interface IEdge extends EdgeProps {
