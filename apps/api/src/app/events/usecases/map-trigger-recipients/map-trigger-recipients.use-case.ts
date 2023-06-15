@@ -1,13 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { ITopic, TriggerRecipientSubscriber, TriggerRecipientTopics, TriggerRecipients } from '@novu/node';
 import {
   EnvironmentId,
   ISubscribersDefine,
+  ITopic,
   LogCodeEnum,
   LogStatusEnum,
   OrganizationId,
   TopicKey,
   TopicSubscribersDto,
+  TriggerRecipients,
+  TriggerRecipientSubscriber,
+  TriggerRecipientTopics,
   TriggerRecipientsTypeEnum,
   UserId,
 } from '@novu/shared';
