@@ -1,5 +1,5 @@
 import { Divider, Grid, Group, Modal, useMantineTheme } from '@mantine/core';
-import { Controller, useFieldArray } from 'react-hook-form';
+import { Controller, useFieldArray, useWatch } from 'react-hook-form';
 import { FILTER_TO_LABEL, FilterPartTypeEnum, ChannelTypeEnum } from '@novu/shared';
 
 import { When } from '../../../components/utils/When';
@@ -16,12 +16,14 @@ export function FilterModal({
   confirm,
   control,
   stepIndex,
+  setValue,
 }: {
   isOpen: boolean;
   cancel: () => void;
   confirm: () => void;
   control: any;
   stepIndex: number;
+  setValue: any;
 }) {
   const theme = useMantineTheme();
 
@@ -181,6 +183,7 @@ export function FilterModal({
                   stepIndex={stepIndex}
                   index={index}
                   remove={remove}
+                  setValue={setValue}
                 />
               </When>
 
@@ -207,6 +210,7 @@ export function FilterModal({
                   stepIndex={stepIndex}
                   index={index}
                   remove={remove}
+                  setValue={setValue}
                 />
               </When>
               <When truthy={filterFieldOn === FilterPartTypeEnum.PREVIOUS_STEP}>
@@ -263,14 +267,20 @@ function EqualityForm({
   stepIndex,
   index,
   remove,
+  setValue,
 }: {
   fieldOn: string;
   control;
   stepIndex: number;
   index: number;
   remove: (index?: number | number[]) => void;
+  setValue;
 }) {
   const spaSize = fieldOn === 'webhook' ? 3 : 2;
+  const operator = useWatch({
+    control,
+    name: `steps.${stepIndex}.filters.0.children.${index}.operator`,
+  });
 
   return (
     <>
@@ -304,30 +314,40 @@ function EqualityForm({
                   { value: 'SMALLER_EQUAL', label: 'Smaller or equal' },
                   { value: 'IN', label: 'Contains' },
                   { value: 'NOT_IN', label: 'Not contains' },
+                  { value: 'IS_DEFINED', label: 'Is Defined' },
                 ]}
                 {...field}
                 data-test-id="filter-operator-dropdown"
+                onChange={(value) => {
+                  field.onChange(value);
+                  if (value === 'IS_DEFINED') {
+                    setValue(`steps.${stepIndex}.filters.0.children.${index}.value`, '');
+                  }
+                }}
               />
             );
           }}
         />
       </Grid.Col>
+
       <Grid.Col span={spaSize}>
-        <Controller
-          control={control}
-          name={`steps.${stepIndex}.filters.0.children.${index}.value`}
-          defaultValue=""
-          render={({ field, fieldState }) => {
-            return (
-              <Input
-                {...field}
-                error={fieldState.error?.message}
-                placeholder="Value"
-                data-test-id="filter-value-input"
-              />
-            );
-          }}
-        />
+        {operator !== 'IS_DEFINED' && (
+          <Controller
+            control={control}
+            name={`steps.${stepIndex}.filters.0.children.${index}.value`}
+            defaultValue=""
+            render={({ field, fieldState }) => {
+              return (
+                <Input
+                  {...field}
+                  error={fieldState.error?.message}
+                  placeholder="Value"
+                  data-test-id="filter-value-input"
+                />
+              );
+            }}
+          />
+        )}
       </Grid.Col>
       <Grid.Col span={1}>
         <DeleteStepButton

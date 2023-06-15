@@ -1,6 +1,6 @@
 {
   "name": "@novu/emailjs",
-  "version": "0.15.0",
+  "version": "0.16.0",
   "description": "An emailjs provider for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -45,12 +45,12 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@novu/stateless": "^0.15.0",
+    "@novu/stateless": "^0.16.0",
     "emailjs": "^3.6.0"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "1.0.2",
-    "@types/jest": "27.5.2",
+    "@types/jest": "29.5.2",
     "codecov": "^3.5.0",
     "cspell": "^4.1.0",
     "cz-conventional-changelog": "^3.3.0",
