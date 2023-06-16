@@ -1,6 +1,7 @@
 /* cSpell:disable */
 import React from 'react';
-import { configure, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, configure, render, screen, waitFor, act } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import {
   ChannelCTATypeEnum,
@@ -206,7 +207,7 @@ describe('NovuProvider', () => {
         expect(mockServiceInstance.getNotificationsList).toBeCalledTimes(fetchNotifications ? 1 : 0);
       });
 
-      fireEvent.click(screen.getByRole('button'));
+      await userEvent.click(screen.getByRole('button'));
 
       await waitFor(() => {
         expect(mockServiceInstance.initializeSession).toBeCalledTimes(1);
@@ -230,7 +231,7 @@ describe('NovuProvider', () => {
       </NovuProvider>
     );
 
-    fireEvent.click(screen.getByRole('button'));
+    await userEvent.click(screen.getByRole('button'));
 
     await waitFor(() => {
       expect(mockServiceInstance.initializeSession).toBeCalledTimes(1);
@@ -296,7 +297,7 @@ describe('NovuProvider', () => {
       </NovuProvider>
     );
 
-    fireEvent.click(screen.getByRole('button'));
+    await userEvent.click(screen.getByRole('button'));
 
     await waitFor(() => {
       expect(mockServiceInstance.getNotificationsList).toBeCalledTimes(1);
@@ -310,7 +311,7 @@ describe('NovuProvider', () => {
       });
     });
 
-    fireEvent.click(screen.getByTestId(`tab-${hotDealFeed}`));
+    await userEvent.click(screen.getByTestId(`tab-${hotDealFeed}`));
 
     await waitFor(() => {
       expect(mockServiceInstance.getNotificationsList).toBeCalledTimes(2);
@@ -376,7 +377,7 @@ describe('NovuProvider', () => {
       </NovuProvider>
     );
 
-    fireEvent.click(screen.getByRole('button'));
+    await userEvent.click(screen.getByRole('button'));
 
     await waitFor(() => {
       expect(mockServiceInstance.initializeSession).toBeCalledTimes(1);
@@ -505,7 +506,7 @@ describe('NovuProvider', () => {
       </NovuProvider>
     );
 
-    fireEvent.click(screen.getByRole('button'));
+    await userEvent.click(screen.getByRole('button'));
 
     await waitFor(() => {
       expect(mockServiceInstance.getNotificationsList).toBeCalledTimes(1);
@@ -542,7 +543,7 @@ describe('NovuProvider', () => {
       </NovuProvider>
     );
 
-    fireEvent.click(screen.getByRole('button'));
+    await userEvent.click(screen.getByRole('button'));
 
     await waitFor(() => {
       expect(screen.queryAllByTestId('notification-list-item')).toHaveLength(1);
@@ -553,7 +554,9 @@ describe('NovuProvider', () => {
       expect(screen.getByTestId('unseen-count-label').firstElementChild?.textContent).toEqual('1');
     });
 
-    fireEvent.click(screen.getByTestId('notifications-header-mark-all-as-read'));
+    await act(async () => {
+      await userEvent.click(screen.getByTestId('notifications-header-mark-all-as-read'));
+    });
 
     await waitFor(() => {
       expect(mockServiceInstance.markAllMessagesAsRead).toBeCalledTimes(1);
@@ -577,7 +580,7 @@ describe('NovuProvider', () => {
       </NovuProvider>
     );
 
-    fireEvent.click(screen.getByRole('button'));
+    await userEvent.click(screen.getByRole('button'));
 
     await waitFor(() => {
       expect(screen.queryAllByTestId('notification-list-item')).toHaveLength(1);
@@ -588,7 +591,9 @@ describe('NovuProvider', () => {
       expect(screen.getByTestId('unseen-count-label').firstElementChild?.textContent).toEqual('1');
     });
 
-    fireEvent.click(screen.getByTestId('notification-list-item'));
+    await act(async () => {
+      await userEvent.click(screen.getByTestId('notification-list-item'));
+    });
 
     await waitFor(() => {
       expect(mockServiceInstance.markMessageAs).toBeCalledTimes(1);
@@ -613,7 +618,7 @@ describe('NovuProvider', () => {
       </NovuProvider>
     );
 
-    fireEvent.click(screen.getByRole('button'));
+    await userEvent.click(screen.getByRole('button'));
 
     await waitFor(() => {
       expect(screen.queryAllByTestId('notification-list-item')).toHaveLength(1);
@@ -624,15 +629,19 @@ describe('NovuProvider', () => {
       expect(screen.getByTestId('unseen-count-label').firstElementChild?.textContent).toEqual('1');
     });
 
-    fireEvent.click(screen.getByTestId('notification-dots-button'));
+    await act(async () => {
+      await userEvent.click(screen.getByTestId('notification-dots-button'));
+    });
 
     await waitFor(() => {
       expect(screen.queryAllByTestId('notification-mark-as-read')).toHaveLength(1);
       expect(screen.queryAllByTestId('notification-remove-message')).toHaveLength(1);
     });
 
-    fireEvent.click(screen.getByTestId('notification-mark-as-read'));
-    await promiseResolveTimeout(0);
+    await act(async () => {
+      await userEvent.click(screen.getByTestId('notification-mark-as-read'));
+      await promiseResolveTimeout(0);
+    });
 
     await waitFor(() => {
       expect(mockServiceInstance.markMessageAs).toBeCalledTimes(1);
@@ -642,7 +651,9 @@ describe('NovuProvider', () => {
       );
     });
 
-    fireEvent.click(screen.getByTestId('notification-dots-button'));
+    await act(async () => {
+      await userEvent.click(screen.getByTestId('notification-dots-button'));
+    });
 
     await waitFor(() => {
       expect(screen.queryAllByTestId('notification-mark-as-unread')).toHaveLength(1);
