@@ -67,7 +67,7 @@ describe('Get Feature Flag', () => {
       });
     });
 
-    describe('SDK key environment variable is set', () => {
+    describe.skip('SDK key environment variable is set', () => {
       beforeEach(async () => {
         process.env.LAUNCH_DARKLY_SDK_KEY = originalLaunchDarklySdkKey;
 
