@@ -36,8 +36,8 @@ import {
 import { JobRepository } from '@novu/dal';
 
 import { SharedModule } from '../shared/shared.module';
-import { WorkflowWorkerService } from './services/workflow-worker.service';
-import { TriggerWorkerService } from './services/trigger-worker.service';
+import { WorkflowQueueService } from './services/workflow-queue.service';
+import { TriggerProcessorQueueService } from './services/trigger-processor-queue.service';
 import {
   MessageMatcher,
   SendMessage,
@@ -108,10 +108,22 @@ const USE_CASES = [
 const REPOSITORIES = [JobRepository];
 
 const SERVICES: Provider[] = [
-  QueueService,
-  TriggerQueueService,
-  MetricQueueService,
-  WsQueueService,
+  {
+    provide: MetricQueueService,
+    useClass: MetricQueueService,
+  },
+  {
+    provide: QueueService,
+    useClass: WorkflowQueueService,
+  },
+  {
+    provide: TriggerQueueService,
+    useClass: TriggerProcessorQueueService,
+  },
+  {
+    provide: WsQueueService,
+    useClass: WsQueueService,
+  },
   {
     provide: 'BULLMQ_LIST',
     useFactory: (workflowQueue: QueueService, triggerQueue: TriggerQueueService, wsQueue: WsQueueService) => {
@@ -122,8 +134,8 @@ const SERVICES: Provider[] = [
   EventsDistributedLockService,
   EventsPerformanceService,
   CalculateDelayService,
-  TriggerWorkerService,
-  WorkflowWorkerService,
+  TriggerProcessorQueueService,
+  WorkflowQueueService,
 ];
 
 @Module({

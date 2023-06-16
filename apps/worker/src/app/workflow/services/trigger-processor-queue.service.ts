@@ -10,10 +10,10 @@ import {
   TriggerQueueService,
 } from '@novu/application-generic';
 
-const LOG_CONTEXT = 'TriggerWorkerService';
+const LOG_CONTEXT = 'TriggerProcessorQueueService';
 
 @Injectable()
-export class TriggerWorkerService extends TriggerQueueService implements INovuWorker {
+export class TriggerProcessorQueueService extends TriggerQueueService implements INovuWorker {
   constructor(private triggerEventUsecase: TriggerEvent) {
     super();
     this.bullMqService.createWorker(this.name, this.getWorkerProcessor(), this.getWorkerOpts());

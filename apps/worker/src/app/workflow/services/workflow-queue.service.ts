@@ -32,10 +32,10 @@ interface IJobData {
   _userId: string;
 }
 
-const LOG_CONTEXT = 'WorkflowWorkerService';
+const LOG_CONTEXT = 'WorkflowQueueService';
 
 @Injectable()
-export class WorkflowWorkerService extends QueueService<IJobData> implements INovuWorker {
+export class WorkflowQueueService extends QueueService<IJobData> implements INovuWorker {
   constructor(
     @Inject(forwardRef(() => QueueNextJob)) private queueNextJob: QueueNextJob,
     @Inject(forwardRef(() => RunJob)) private runJob: RunJob,
@@ -46,7 +46,7 @@ export class WorkflowWorkerService extends QueueService<IJobData> implements INo
     @Inject(forwardRef(() => CreateExecutionDetails)) private createExecutionDetails: CreateExecutionDetails
   ) {
     super();
-    Logger.warn('Workflow worker service created');
+    Logger.warn('Workflow queue service created');
     this.bullMqService.createWorker(this.name, this.getWorkerProcessor(), this.getWorkerOpts());
 
     this.bullMqService.worker.on('completed', async (job) => {

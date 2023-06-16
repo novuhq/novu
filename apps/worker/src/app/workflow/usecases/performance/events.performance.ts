@@ -13,7 +13,7 @@ import { expect } from 'chai';
 import { v4 as uuid } from 'uuid';
 import { EventsPerformanceService, StorageHelperService } from '@novu/application-generic';
 
-import { WorkflowWorkerService } from '../../services/workflow-worker.service';
+import { WorkflowQueueService } from '../../services/workflow-queue.service';
 import { SendMessage } from '../send-message/send-message.usecase';
 import { QueueNextJob } from '../queue-next-job/queue-next-job.usecase';
 import { RunJob } from '../run-job/run-job.usecase';
@@ -27,7 +27,7 @@ describe('Performance - Events', () => {
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
   const jobRepository = new JobRepository();
-  let workflowWorkerService: WorkflowWorkerService;
+  let workflowQueueService: WorkflowQueueService;
   const messageRepository = new MessageRepository();
   let runJob: RunJob;
 
@@ -58,7 +58,7 @@ describe('Performance - Events', () => {
     template = await session.createTemplate();
     subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     subscriber = await subscriberService.createSubscriber();
-    workflowWorkerService = session.testServer?.getService(WorkflowWorkerService);
+    workflowQueueService = session.testServer?.getService(WorkflowQueueService);
 
     runJob = new RunJob(
       jobRepository,

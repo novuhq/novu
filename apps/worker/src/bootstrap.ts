@@ -13,8 +13,8 @@ import { AppModule } from './app.module';
 import { ResponseInterceptor } from './app/shared/response.interceptor';
 import { validateEnv } from './config/env-validator';
 import * as packageJson from '../package.json';
-import { WorkflowWorkerService } from './app/workflow/services/workflow-worker.service';
-import { TriggerWorkerService } from './app/workflow/services/trigger-worker.service';
+import { WorkflowQueueService } from './app/workflow/services/workflow-queue.service';
+import { TriggerProcessorQueueService } from './app/workflow/services/trigger-processor-queue.service';
 
 const extendedBodySizeRoutes = ['/v1/events', '/v1/notification-templates', '/v1/layouts'];
 
@@ -35,10 +35,10 @@ if (process.env.SENTRY_DSN) {
 validateEnv();
 
 const getWorkers = (app: INestApplication): INovuWorker[] => {
-  const workflowWorker = app.get(WorkflowWorkerService, { strict: false });
-  const triggerWorker = app.get(TriggerWorkerService, { strict: false });
+  const workflowQueueService = app.get(WorkflowQueueService, { strict: false });
+  const triggerQueueService = app.get(TriggerProcessorQueueService, { strict: false });
 
-  return [workflowWorker, triggerWorker];
+  return [workflowQueueService, triggerQueueService];
 };
 
 const prepareAppInfra = async (app: INestApplication): Promise<void> => {
