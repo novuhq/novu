@@ -52,7 +52,7 @@ export class TriggerQueueService {
     );
   }
 
-  public async gracefulShutdown() {
+  public async gracefulShutdown(): Promise<void> {
     Logger.log('Shutting the Trigger Queue service down', LOG_CONTEXT);
 
     await this.bullMqService.gracefulShutdown();

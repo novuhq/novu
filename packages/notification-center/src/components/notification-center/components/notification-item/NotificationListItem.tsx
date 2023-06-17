@@ -151,6 +151,7 @@ export function NotificationListItem({
     <div
       className={cx(
         'nc-notifications-list-item',
+        unread ? 'nc-notifications-list-item-unread' : 'nc-notifications-list-item-read',
         listItemClassName,
         unread ? unreadNotificationStyles(novuTheme) : readNotificationStyles(novuTheme),
         unread ? css(listItemUnreadStyles) : css(listItemReadStyles)
@@ -207,7 +208,11 @@ export function NotificationListItem({
           classNames={overrideClasses}
         >
           <Menu.Target>
-            <ActionIcon onClick={(e) => e.stopPropagation()} variant="transparent">
+            <ActionIcon
+              onClick={(e) => e.stopPropagation()}
+              variant="transparent"
+              data-test-id="notification-dots-button"
+            >
               <DotsHorizontal
                 className={cx(
                   'nc-notifications-list-item-dots-button',
@@ -218,10 +223,14 @@ export function NotificationListItem({
             </ActionIcon>
           </Menu.Target>
           <Menu.Dropdown>
-            <Menu.Item icon={<Read />} onClick={handleToggleReadMessage}>
+            <Menu.Item
+              icon={<Read />}
+              onClick={handleToggleReadMessage}
+              data-test-id={unread ? 'notification-mark-as-read' : 'notification-mark-as-unread'}
+            >
               {unread ? t('markAsRead') : t('markAsUnRead')}
             </Menu.Item>
-            <Menu.Item icon={<Trash />} onClick={handleRemoveMessage}>
+            <Menu.Item icon={<Trash />} onClick={handleRemoveMessage} data-test-id={'notification-remove-message'}>
               {t('removeMessage')}
             </Menu.Item>
           </Menu.Dropdown>

@@ -81,7 +81,7 @@
     "redlock": "4.2.0",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
-    "rxjs": "7.8.0",
+    "rxjs": "7.8.1",
     "sanitize-html": "^2.4.0",
     "shortid": "^2.2.16",
     "slugify": "^1.4.6",

@@ -4,8 +4,14 @@ import { SuperTest, Test } from 'supertest';
 import * as request from 'supertest';
 import * as defaults from 'superagent-defaults';
 import { v4 as uuid } from 'uuid';
-import { Novu, TriggerRecipientsPayload } from '@novu/node';
-import { ChannelTypeEnum, EmailBlockTypeEnum, IEmailBlock, InAppProviderIdEnum, StepTypeEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  EmailBlockTypeEnum,
+  IEmailBlock,
+  InAppProviderIdEnum,
+  StepTypeEnum,
+  TriggerRecipientsPayload,
+} from '@novu/shared';
 import {
   UserEntity,
   EnvironmentEntity,
@@ -69,8 +75,6 @@ export class UserSession {
   testServer: null | TestServer = testServer;
 
   apiKey: string;
-
-  serverSdk: Novu;
 
   constructor(public serverUrl = `http://localhost:${process.env.PORT}`) {
     this.jobsService = new JobsService();
@@ -137,10 +141,6 @@ export class UserSession {
       this.subscriberToken = token;
       this.subscriberProfile = profile;
     }
-
-    this.serverSdk = new Novu(this.apiKey, {
-      backendUrl: this.serverUrl,
-    });
   }
 
   private async initializeWidgetSession() {
