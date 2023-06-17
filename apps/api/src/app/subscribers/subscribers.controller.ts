@@ -5,6 +5,8 @@ import {
   DefaultValuePipe,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Patch,
   Post,
@@ -19,7 +21,7 @@ import {
   UpdateSubscriber,
   UpdateSubscriberCommand,
 } from '@novu/application-generic';
-import { ApiOperation, ApiTags, ApiOkResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiTags, ApiOkResponse, ApiNoContentResponse } from '@nestjs/swagger';
 import { ButtonTypeEnum, ChatProviderIdEnum, IJwtPayload } from '@novu/shared';
 import { MessageEntity } from '@novu/dal';
 
@@ -231,9 +233,8 @@ export class SubscribersController {
   @Delete('/:subscriberId/credentials/:providerId')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  @ApiOkResponse({
-    type: DataBooleanDto,
-  })
+  @ApiNoContentResponse()
+  @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Delete subscriber credentials by providerId',
     description: 'Delete subscriber credentials such as slack and expo tokens.',
@@ -242,7 +243,7 @@ export class SubscribersController {
     @UserSession() user: IJwtPayload,
     @Param('subscriberId') subscriberId: string,
     @Param('providerId') providerId: string
-  ): Promise<boolean> {
+  ): Promise<void> {
     return await this.deleteSubscriberCredentialsUsecase.execute(
       DeleteSubscriberCredentialsCommand.create({
         environmentId: user.environmentId,

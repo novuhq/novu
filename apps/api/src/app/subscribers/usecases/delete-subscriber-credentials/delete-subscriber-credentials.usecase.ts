@@ -16,7 +16,7 @@ export class DeleteSubscriberCredentials {
     private getSubscriberUseCase: GetSubscriber
   ) {}
 
-  async execute(command: DeleteSubscriberCredentialsCommand) {
+  async execute(command: DeleteSubscriberCredentialsCommand): Promise<void> {
     const foundSubscriber = await this.getSubscriberUseCase.execute(
       GetSubscriberCommand.create({
         ...command,
@@ -38,23 +38,13 @@ export class DeleteSubscriberCredentials {
       );
     }
 
-    const subscriber = await this.deleteSubscriberCredentials(
-      foundSubscriber.subscriberId,
-      command.environmentId,
-      foundIntegration._id
-    );
-
-    if (!subscriber) {
-      return false;
-    }
+    await this.deleteSubscriberCredentials(foundSubscriber.subscriberId, command.environmentId, foundIntegration._id);
 
     this.analyticsService.track('Delete Subscriber Credentials - [Subscribers]', command.organizationId, {
       providerId: command.providerId,
       _organization: command.organizationId,
       _subscriberId: foundSubscriber._id,
     });
-
-    return true;
   }
 
   private async deleteSubscriberCredentials(subscriberId: string, environmentId: string, integrationId: string) {
