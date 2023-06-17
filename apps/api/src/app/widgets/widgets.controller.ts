@@ -5,6 +5,8 @@ import {
   DefaultValuePipe,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Patch,
   Post,
@@ -12,7 +14,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiExcludeController, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { ApiExcludeController, ApiNoContentResponse, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { AnalyticsService, GetSubscriberPreference, GetSubscriberPreferenceCommand } from '@novu/application-generic';
 import { MessageEntity, SubscriberEntity } from '@novu/dal';
 import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
@@ -51,9 +53,10 @@ import { GetNotificationsFeedDto } from './dtos/get-notifications-feed-request.d
 import { LimitPipe } from './pipes/limit-pipe/limit-pipe';
 import { RemoveAllMessagesCommand } from './usecases/remove-messages/remove-all-messages.command';
 import { RemoveAllMessages } from './usecases/remove-messages/remove-all-messages.usecase';
+import { RemoveAllMessagesDto } from './dtos/remove-all-messages.dto';
 
 @Controller('/widgets')
-@ApiExcludeController()
+// @ApiExcludeController()
 export class WidgetsController {
   constructor(
     private initializeSessionUsecase: InitializeSession,
@@ -236,18 +239,20 @@ export class WidgetsController {
   })
   @UseGuards(AuthGuard('subscriberJwt'))
   @Delete('/messages')
+  @ApiNoContentResponse({ description: 'Messages removed' })
+  @HttpCode(HttpStatus.NO_CONTENT)
   async removeAllMessages(
     @SubscriberSession() subscriberSession: SubscriberEntity,
-    @Query('feedId') feedId?: string
-  ): Promise<number> {
+    @Query() query: RemoveAllMessagesDto
+  ): Promise<void> {
     const command = RemoveAllMessagesCommand.create({
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,
-      feedId: feedId,
+      feedId: query.feedId,
     });
 
-    return await this.removeAllMessagesUsecase.execute(command);
+    await this.removeAllMessagesUsecase.execute(command);
   }
 
   @ApiOperation({
