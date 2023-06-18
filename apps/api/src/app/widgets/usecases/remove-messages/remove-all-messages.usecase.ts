@@ -69,6 +69,7 @@ export class RemoveAllMessages {
           _subscriber: subscriber._id,
           _organization: command.organizationId,
           _environment: command.environmentId,
+          _feedId: command.feedId,
         });
       }
 
