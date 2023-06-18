@@ -1,8 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { SubscriberRepository, IntegrationRepository, SubscriberEntity } from '@novu/dal';
 import { AnalyticsService, buildSubscriberKey, InvalidateCacheService } from '@novu/application-generic';
 
-import { ApiException } from '../../../shared/exceptions/api.exception';
 import { DeleteSubscriberCredentialsCommand } from './delete-subscriber-credentials.command';
 import { GetSubscriberCommand, GetSubscriber } from '../get-subscriber';
 
@@ -24,7 +23,7 @@ export class DeleteSubscriberCredentials {
     );
 
     if (!foundSubscriber) {
-      throw new ApiException(`SubscriberId: ${command.subscriberId} not found`);
+      throw new NotFoundException(`SubscriberId: ${command.subscriberId} not found`);
     }
 
     const foundIntegration = await this.integrationRepository.findOne({
@@ -33,7 +32,7 @@ export class DeleteSubscriberCredentials {
     });
 
     if (!foundIntegration) {
-      throw new ApiException(
+      throw new NotFoundException(
         `Subscribers environment (${command.environmentId}) do not have ${command.providerId} integration.`
       );
     }
