@@ -79,6 +79,7 @@ describe('test use of novus node package - Subscribers class', () => {
         providerId: 'slack',
         credentials: {
           webhookUrl: undefined,
+          deviceTokens: [],
         },
       }
     );
