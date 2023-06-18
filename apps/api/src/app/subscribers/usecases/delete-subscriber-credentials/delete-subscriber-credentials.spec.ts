@@ -9,6 +9,7 @@ import { DeleteSubscriberCredentialsCommand } from './delete-subscriber-credenti
 import { UpdateSubscriberChannel } from '../update-subscriber-channel/update-subscriber-channel.usecase';
 import { UpdateSubscriberChannelCommand } from '../update-subscriber-channel/update-subscriber-channel.command';
 import { OAuthHandlerEnum } from '../../types';
+import { GetSubscriber } from '../get-subscriber/get-subscriber.usecase';
 
 describe('Delete subscriber provider credentials', function () {
   let updateSubscriberChannelUsecase: UpdateSubscriberChannel;
@@ -18,7 +19,7 @@ describe('Delete subscriber provider credentials', function () {
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
       imports: [SharedModule],
-      providers: [DeleteSubscriberCredentials, UpdateSubscriberChannel],
+      providers: [DeleteSubscriberCredentials, UpdateSubscriberChannel, GetSubscriber],
     }).compile();
 
     session = new UserSession();
@@ -31,7 +32,7 @@ describe('Delete subscriber provider credentials', function () {
   it('should delete subscriber discord provider credentials', async function () {
     const subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     const subscriber = await subscriberService.createSubscriber();
-
+    const fcmTokens = ['token1', 'token2'];
     await updateSubscriberChannelUsecase.execute(
       UpdateSubscriberChannelCommand.create({
         organizationId: subscriber._organizationId,
@@ -49,7 +50,7 @@ describe('Delete subscriber provider credentials', function () {
         subscriberId: subscriber.subscriberId,
         environmentId: session.environment._id,
         providerId: PushProviderIdEnum.FCM,
-        credentials: { deviceTokens: ['token1', 'token2'] },
+        credentials: { deviceTokens: fcmTokens },
         oauthHandler: OAuthHandlerEnum.NOVU,
       })
     );
@@ -80,6 +81,6 @@ describe('Delete subscriber provider credentials', function () {
       (channel) => channel.providerId === PushProviderIdEnum.FCM
     );
     expect(isDiscordProviderDeleted).to.equal(undefined);
-    expect(fcmCredentials?.credentials.deviceTokens).to.equal(['token1', 'token2']);
+    expect(fcmCredentials?.credentials.deviceTokens).to.deep.equal(fcmTokens);
   });
 });
