@@ -134,6 +134,8 @@ const SERVICES: Provider[] = [
   EventsDistributedLockService,
   EventsPerformanceService,
   CalculateDelayService,
+  TriggerProcessorQueueService,
+  WorkflowQueueService,
 ];
 
 @Module({
