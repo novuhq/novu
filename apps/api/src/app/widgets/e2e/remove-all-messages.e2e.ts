@@ -49,7 +49,7 @@ describe('Remove all messages - /widgets/messages (DELETE)', function () {
 
     const messagesBefore = await messageRepository.find({
       _environmentId: session.environment._id,
-      _subscriberId: subscriberId,
+      _subscriberId: subscriberProfile?._id,
       channel: ChannelTypeEnum.IN_APP,
     });
 
