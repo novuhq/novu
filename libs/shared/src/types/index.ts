@@ -1,3 +1,4 @@
+export * from './shared';
 export * from './builder';
 export * from './channel';
 export * from './environment';
@@ -11,3 +12,4 @@ export * from './subscriber';
 export * from './topic';
 export * from './analytics';
 export * from './user';
+export * from './tenant';
