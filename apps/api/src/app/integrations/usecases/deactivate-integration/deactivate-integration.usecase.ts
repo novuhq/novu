@@ -11,7 +11,7 @@ export class DeactivateSimilarChannelIntegrations {
       FeatureFlagCommand.create({
         environmentId: command.environmentId,
         organizationId: command.organizationId,
-        userId: '',
+        userId: command.userId,
       })
     );
 
