@@ -188,7 +188,7 @@ export class EventsController {
     summary: 'Resume canceled event',
     description: ` 
       Using this endpoint, you can resume canceled workflows that are yet to expire.
-      This is especially useful when a canceled message, is meant to be sent after all.
+      This is especially useful when a canceled message, is meant to be sent afterall.
     `,
   })
   async resumeDelayed(@UserSession() user: IJwtPayload, @Param('transactionId') transactionId: string): Promise<void> {

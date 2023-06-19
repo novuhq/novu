@@ -445,11 +445,11 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     expect(canceledJobs).to.equal(1);
     expect(delayedJobs).to.equal(0);
 
-    await axiosInstance.post(`${session.serverUrl}/v1/events/trigger/${id}/resume`, {
-      headers: {
-        authorization: `ApiKey ${session.apiKey}`,
-      },
-    });
+    await axiosInstance.post(
+      `${session.serverUrl}/v1/events/trigger/${id}/resume`,
+      {},
+      { headers: { authorization: `ApiKey ${session.apiKey}` } }
+    );
 
     canceledJobs = await jobRepository.count({
       ...jobPayload,
@@ -492,7 +492,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     await triggerEvent(
       {
         customVar: 'Testing of User Name',
-        sendAt: addSeconds(new Date(), 0.1),
+        sendAt: addSeconds(new Date(), 1),
       },
       id
     );
@@ -504,16 +504,22 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
       },
     });
 
-    await setTimeout(100);
-    expect(async () => {
-      await axiosInstance.post(`${session.serverUrl}/v1/events/trigger/${id}/resume`, {
-        headers: {
-          authorization: `ApiKey ${session.apiKey}`,
-        },
-      });
-    }).to.throw();
+    await setTimeout(1500);
 
-    const delayedJob = await jobRepository.findOne({
+    let response: any = null;
+    try {
+      response = await axiosInstance.post(
+        `${session.serverUrl}/v1/events/trigger/${id}/resume`,
+        {},
+        { headers: { authorization: `ApiKey ${session.apiKey}` } }
+      );
+    } catch (e) {
+      const { response: errorReponse } = e;
+      response = errorReponse?.data.message;
+    }
+    expect(response).to.equal(`Job with transactionId ${id} was not found`);
+
+    const delayedJob = await jobRepository.count({
       ...jobPayload,
       status: JobStatusEnum.DELAYED,
     });
@@ -522,8 +528,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
       ...jobPayload,
       status: JobStatusEnum.CANCELED,
     });
-
     expect(delayedJob).to.equal(0);
-    expect(canceledJobs).to.equal(1);
+    expect(canceledJobs).to.equal(0);
   });
 });
