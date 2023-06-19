@@ -7,7 +7,7 @@ import { DeactivateSimilarChannelIntegrationsCommand } from './deactivate-integr
 export class DeactivateSimilarChannelIntegrations {
   constructor(private integrationRepository: IntegrationRepository, private getFeatureFlag: GetFeatureFlag) {}
   async execute(command: DeactivateSimilarChannelIntegrationsCommand): Promise<void> {
-    const shouldKeepActive = await this.getFeatureFlag.isMultiProviderConfigurationEnabled(
+    const shouldKeepIntegrationsActive = await this.getFeatureFlag.isMultiProviderConfigurationEnabled(
       FeatureFlagCommand.create({
         environmentId: command.environmentId,
         organizationId: command.organizationId,
@@ -15,7 +15,7 @@ export class DeactivateSimilarChannelIntegrations {
       })
     );
 
-    if (shouldKeepActive) {
+    if (shouldKeepIntegrationsActive) {
       return;
     }
 
