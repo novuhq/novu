@@ -17,9 +17,10 @@ export class GetMessages {
       throw new BadRequestException('Limit can not be larger then 1000');
     }
 
-    const query: Partial<MessageEntity> & { _environmentId: string } = {
-      _environmentId: command.environmentId,
-    };
+    const query: Partial<Omit<MessageEntity, 'transactionId'>> & { _environmentId: string; transactionId?: string[] } =
+      {
+        _environmentId: command.environmentId,
+      };
 
     if (command.subscriberId) {
       const subscriber = await this.fetchSubscriber({
@@ -34,6 +35,10 @@ export class GetMessages {
 
     if (command.channel) {
       query.channel = command.channel;
+    }
+
+    if (command.transactionId) {
+      query.transactionId = command.transactionId;
     }
 
     const data = await this.messageRepository.getMessages(query, '', {
