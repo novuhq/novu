@@ -31,7 +31,6 @@ import { LayoutsModule } from '../layouts/layouts.module';
     TerminusModule,
     WidgetsModule,
     AuthModule,
-    FeatureFlagsModule,
     SubscribersModule,
     LogsModule,
     ContentTemplatesModule,

@@ -40,6 +40,7 @@ import {
 } from '@novu/application-generic';
 
 import * as packageJson from '../../../package.json';
+import { FeatureFlagsModule } from '../feature-flags/feature-flags.module';
 
 const DAL_MODELS = [
   UserRepository,
@@ -153,8 +154,9 @@ const PROVIDERS = [
         version: packageJson.version,
       })
     ),
+    FeatureFlagsModule,
   ],
   providers: [...PROVIDERS],
-  exports: [...PROVIDERS, LoggerModule],
+  exports: [...PROVIDERS, LoggerModule, FeatureFlagsModule],
 })
 export class SharedModule {}
