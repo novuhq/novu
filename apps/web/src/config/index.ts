@@ -58,3 +58,7 @@ export const LAUNCH_DARKLY_CLIENT_SIDE_ID =
 export const IS_TEMPLATE_STORE_ENABLED = isCypress
   ? window._env_.IS_TEMPLATE_STORE_ENABLED || process.env.IS_TEMPLATE_STORE_ENABLED || 'true'
   : window._env_.IS_TEMPLATE_STORE_ENABLED || process.env.IS_TEMPLATE_STORE_ENABLED || 'false';
+
+export const IS_MULTI_PROVIDER_CONFIGURATION = isCypress
+  ? window._env_.IS_MULTI_PROVIDER_CONFIGURATION || process.env.IS_MULTI_PROVIDER_CONFIGURATION || 'true'
+  : window._env_.IS_MULTI_PROVIDER_CONFIGURATION || process.env.IS_MULTI_PROVIDER_CONFIGURATION || 'false';

@@ -1,5 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { EnvironmentWithUserCommand } from '@novu/application-generic';
+import { Injectable } from '@nestjs/common';
 
 import { GetFeatureFlagCommand, FeatureFlagCommand } from './get-feature-flag.command';
 
@@ -27,6 +26,17 @@ export class GetFeatureFlag {
     const fallbackValue = false;
     const defaultValue = this.prepareBooleanStringFeatureFlag(value, fallbackValue);
     const key = FeatureFlagsKeysEnum.IS_TEMPLATE_STORE_ENABLED;
+
+    const command = this.buildCommand(featureFlagCommand, key, defaultValue);
+
+    return await this.execute(command);
+  }
+
+  async isMultiProviderConfigurationEnabled(featureFlagCommand: FeatureFlagCommand): Promise<boolean> {
+    const value = process.env.IS_MULTI_PROVIDER_CONFIGURATION;
+    const fallbackValue = false;
+    const defaultValue = this.prepareBooleanStringFeatureFlag(value, fallbackValue);
+    const key = FeatureFlagsKeysEnum.IS_MULTI_PROVIDER_CONFIGURATION;
 
     const command = this.buildCommand(featureFlagCommand, key, defaultValue);
 
