@@ -5,9 +5,6 @@ import { FeatureFlagsController } from './feature-flags.controller';
 import { FeatureFlagsService, LaunchDarklyService } from './services';
 import { USE_CASES } from './use-cases';
 
-import { SharedModule } from '../shared/shared.module';
-import { AuthModule } from '../auth/auth.module';
-
 const services = [LaunchDarklyService, FeatureFlagsService];
 const providers = [...USE_CASES, ...services];
 
