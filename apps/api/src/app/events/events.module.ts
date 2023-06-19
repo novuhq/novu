@@ -16,7 +16,6 @@ import { USE_CASES } from './usecases';
 import { SharedModule } from '../shared/shared.module';
 import { WidgetsModule } from '../widgets/widgets.module';
 import { AuthModule } from '../auth/auth.module';
-import { FeatureFlagsModule } from '../feature-flags/feature-flags.module';
 import { SubscribersModule } from '../subscribers/subscribers.module';
 import { LogsModule } from '../logs/logs.module';
 import { ContentTemplatesModule } from '../content-templates/content-templates.module';

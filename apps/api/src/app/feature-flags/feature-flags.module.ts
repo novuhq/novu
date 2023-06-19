@@ -12,7 +12,7 @@ const services = [LaunchDarklyService, FeatureFlagsService];
 const providers = [...USE_CASES, ...services];
 
 @Module({
-  imports: [SharedModule, AuthModule],
+  imports: [],
   providers,
   exports: providers,
   controllers: [FeatureFlagsController],
