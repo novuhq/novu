@@ -7,6 +7,7 @@ import {
   SubscriberEntity,
   MemberRepository,
   FeedRepository,
+  FeedEntity,
 } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
 import {
@@ -33,33 +34,19 @@ export class RemoveAllMessages {
     private feedRepository: FeedRepository
   ) {}
 
-  async execute(command: RemoveAllMessagesCommand): Promise<number> {
-    await this.invalidateCache.invalidateQuery({
-      key: buildFeedKey().invalidate({
-        subscriberId: command.subscriberId,
-        _environmentId: command.environmentId,
-      }),
-    });
-
-    await this.invalidateCache.invalidateQuery({
-      key: buildMessageCountKey().invalidate({
-        subscriberId: command.subscriberId,
-        _environmentId: command.environmentId,
-      }),
-    });
-
+  async execute(command: RemoveAllMessagesCommand): Promise<void> {
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
     if (!subscriber) throw new NotFoundException(`Subscriber ${command.subscriberId} not found`);
 
-    let deletedMessages;
-    let feed;
-    if (command.feedId !== '' && command.feedId !== null && command.feedId !== undefined) {
-      feed = await this.feedRepository.findById(command.feedId);
-      if (!feed) {
-        throw new NotFoundException(`Feed with ${command.feedId} not found`);
-      }
-    }
     try {
+      let feed;
+      if (command.feedId) {
+        feed = await this.feedRepository.findById(command.feedId);
+        if (!feed) {
+          throw new NotFoundException(`Feed with ${command.feedId} not found`);
+        }
+      }
+
       const deleteMessageQuery: Partial<MessageEntity> = {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
@@ -71,7 +58,7 @@ export class RemoveAllMessages {
         deleteMessageQuery._feedId = feed._id;
       }
 
-      deletedMessages = await this.messageRepository.deleteMany(deleteMessageQuery);
+      await this.messageRepository.deleteMany(deleteMessageQuery);
 
       await this.updateServices(command, subscriber, MarkEnum.SEEN);
       await this.updateServices(command, subscriber, MarkEnum.READ);
@@ -82,39 +69,45 @@ export class RemoveAllMessages {
           _subscriber: subscriber._id,
           _organization: command.organizationId,
           _environment: command.environmentId,
+          _feedId: command.feedId,
         });
       }
+
+      await this.invalidateCache.invalidateQuery({
+        key: buildFeedKey().invalidate({
+          subscriberId: command.subscriberId,
+          _environmentId: command.environmentId,
+        }),
+      });
+
+      await this.invalidateCache.invalidateQuery({
+        key: buildMessageCountKey().invalidate({
+          subscriberId: command.subscriberId,
+          _environmentId: command.environmentId,
+        }),
+      });
     } catch (e) {
       if (e instanceof DalException) {
         throw new ApiException(e.message);
       }
       throw e;
     }
-
-    return deletedMessages.modifiedCount;
   }
 
-  private async updateServices(command: RemoveAllMessagesCommand, subscriber, marked: string) {
-    const admin = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
-    const count = await this.messageRepository.getCount(
-      command.environmentId,
-      subscriber._id,
-      ChannelTypeEnum.IN_APP,
-      {
-        [marked]: false,
-      },
-      { limit: 1000 }
-    );
-
-    this.updateSocketCount(subscriber, count, marked);
-
-    if (admin) {
-      this.analyticsService.track(`Removed All Messages - [Notification Center]`, admin._userId, {
-        _subscriber: subscriber._id,
-        _organization: command.organizationId,
-        _environment: command.environmentId,
-      });
+  private async updateServices(command: RemoveAllMessagesCommand, subscriber, marked: string, feed?: FeedEntity) {
+    let count = 0;
+    if (feed) {
+      count = await this.messageRepository.getCount(
+        command.environmentId,
+        subscriber._id,
+        ChannelTypeEnum.IN_APP,
+        {
+          [marked]: false,
+        },
+        { limit: 1000 }
+      );
     }
+    this.updateSocketCount(subscriber, count, marked);
   }
 
   private updateSocketCount(subscriber: SubscriberEntity, count: number, mark: string) {

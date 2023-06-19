@@ -70,6 +70,7 @@ const WorkflowEditor = () => {
     const index = steps.findIndex((item) => item.uuid === toDelete);
     deleteStep(index);
     setToDelete('');
+    navigate(basePath);
   };
 
   const cancelDelete = () => {
