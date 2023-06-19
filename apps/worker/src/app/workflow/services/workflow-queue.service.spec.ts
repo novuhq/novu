@@ -92,19 +92,7 @@ describe('Workflow Queue service', () => {
 
   it('should be initialised properly', async () => {
     expect(queueService).to.be.ok;
-    expect(queueService).to.have.all.keys(
-      'DEFAULT_ATTEMPTS',
-      'bullConfig',
-      'bullMqService',
-      'createExecutionDetails',
-      'getBackoffStrategies',
-      'name',
-      'queueNextJob',
-      'runJob',
-      'setJobAsCompleted',
-      'setJobAsFailed',
-      'webhookFilterWebhookFilterBackoffStrategy'
-    );
+    expect(queueService).to.have.all.keys('DEFAULT_ATTEMPTS', 'bullConfig', 'bullMqService', 'name');
     expect(queueService.DEFAULT_ATTEMPTS).to.eql(3);
     expect(queueService.bullMqService.queue).to.deep.include({
       _events: {},
@@ -222,7 +210,10 @@ describe('Workflow Queue service', () => {
       organizationId: organization._id,
       delay: false,
     });
-    // We pause the worker as little trick to allow the `failed` status to be updated in the callback of the worker and not having a race condition.
+    /**
+     * We pause the worker as little trick to allow the `failed` status to be updated
+     * in the callback of the worker and not having a race condition.
+     */
     await queueService.gracefulShutdown();
 
     let failedTrigger: JobEntity | null = null;
@@ -235,7 +226,7 @@ describe('Workflow Queue service', () => {
       });
     } while (!failedTrigger || !failedTrigger.error);
 
-    expect(failedTrigger!.error).to.deep.include({
+    expect(failedTrigger.error).to.deep.include({
       message: `Notification template ${_templateId} is not found`,
     });
   });
