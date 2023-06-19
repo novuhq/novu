@@ -22,10 +22,6 @@ export class DeleteSubscriberCredentials {
       })
     );
 
-    if (!foundSubscriber) {
-      throw new NotFoundException(`SubscriberId: ${command.subscriberId} not found`);
-    }
-
     const foundIntegration = await this.integrationRepository.findOne({
       _environmentId: command.environmentId,
       providerId: command.providerId,
