@@ -45,7 +45,7 @@ describe('Novu Node.js package - Messages class', () => {
       data: {
         totalCount: 1,
         pageSize: 10,
-        hasmore: false,
+        hasMore: false,
         page: 0,
         data: [
           {
