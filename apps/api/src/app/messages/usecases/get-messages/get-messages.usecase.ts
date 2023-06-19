@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { MessageEntity, MessageRepository, SubscriberRepository, SubscriberEntity } from '@novu/dal';
 import { CachedEntity, buildSubscriberKey } from '@novu/application-generic';
 import { ActorTypeEnum } from '@novu/shared';
@@ -28,9 +28,9 @@ export class GetMessages {
         subscriberId: command.subscriberId,
       });
 
-      if (subscriber) {
-        query._subscriberId = subscriber._id;
-      }
+      if (!subscriber) throw new NotFoundException(`Subscriber ${command.subscriberId} not found`);
+
+      query._subscriberId = subscriber._id;
     }
 
     if (command.channel) {
