@@ -9,6 +9,9 @@ export class ExecutionDetailsPaginatedResponseDto {
   data: ExecutionDetailsEntity[];
 
   @ApiProperty()
+  hasMore: boolean;
+
+  @ApiProperty()
   pageSize: number;
 
   @ApiProperty()

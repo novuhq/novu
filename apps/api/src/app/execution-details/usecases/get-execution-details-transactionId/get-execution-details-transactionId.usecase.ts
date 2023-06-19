@@ -21,6 +21,20 @@ export class GetExecutionDetailsByTransactionId {
       command.limit
     );
 
-    return { page: command.page, data, totalCount, pageSize: command.limit };
+    const hasMore = this.getHasMore(command.page, command.limit, data, totalCount);
+
+    return {
+      data: data || [],
+      totalCount: totalCount || 0,
+      hasMore,
+      pageSize: command.limit,
+      page: command.page,
+    };
+  }
+
+  private getHasMore(page: number, LIMIT: number, data, totalCount) {
+    const currentPaginationTotal = page * LIMIT + data.length;
+
+    return currentPaginationTotal < totalCount;
   }
 }
