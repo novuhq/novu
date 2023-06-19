@@ -68,4 +68,41 @@ describe('Remove all messages - /widgets/messages (DELETE)', function () {
 
     expect(messagesAfter.length).to.equal(0);
   });
+
+  it('should remove all messages of a specific feed', async function () {
+    const templateWithFeed = await session.createTemplate({ noFeedId: false });
+
+    const _feedId = templateWithFeed?.steps[0]?.template?._feedId;
+
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await session.triggerEvent(templateWithFeed.triggers[0].identifier, subscriberId);
+    await session.triggerEvent(templateWithFeed.triggers[0].identifier, subscriberId);
+
+    await session.awaitRunningJobs(templateWithFeed._id);
+    await session.awaitRunningJobs(template._id);
+
+    const messagesBefore = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: subscriberProfile?._id,
+      channel: ChannelTypeEnum.IN_APP,
+    });
+
+    expect(messagesBefore.length).to.equal(5);
+
+    await axios.delete(`http://localhost:${process.env.PORT}/v1/widgets/messages?feedId=${_feedId}`, {
+      headers: {
+        Authorization: `Bearer ${subscriberToken}`,
+      },
+    });
+
+    const messagesAfter = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: subscriberProfile?._id,
+      channel: ChannelTypeEnum.IN_APP,
+    });
+
+    expect(messagesAfter.length).to.equal(3);
+  });
 });
