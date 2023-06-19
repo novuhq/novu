@@ -115,6 +115,17 @@ describe('Get Feature Flag', () => {
         });
       });
 
+      describe('IS_MULTI_PROVIDER_CONFIGURATION_ENABLED', () => {
+        it(`should get the feature flag value stored in Launch Darkly (enabled)
+           when the SDK key env variable is set regardless of the feature flag set`, async () => {
+          process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = 'false';
+
+          const result = await getFeatureFlag.isMultiProviderConfigurationEnabled(featureFlagCommand);
+
+          expect(result).to.equal(true);
+        });
+      });
+
       describe('IS_TOPIC_NOTIFICATION_ENABLED', () => {
         it(`should get the feature flag value stored in Launch Darkly (enabled)
            when the SDK key env variable is set regardless of the feature flag set`, async () => {
