@@ -33,10 +33,10 @@ export class GetFeatureFlag {
   }
 
   async isMultiProviderConfigurationEnabled(featureFlagCommand: FeatureFlagCommand): Promise<boolean> {
-    const value = process.env.IS_MULTI_PROVIDER_CONFIGURATION;
+    const value = process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
     const fallbackValue = false;
     const defaultValue = this.prepareBooleanStringFeatureFlag(value, fallbackValue);
-    const key = FeatureFlagsKeysEnum.IS_MULTI_PROVIDER_CONFIGURATION;
+    const key = FeatureFlagsKeysEnum.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
 
     const command = this.buildCommand(featureFlagCommand, key, defaultValue);
 

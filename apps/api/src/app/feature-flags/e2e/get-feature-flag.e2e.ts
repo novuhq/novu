@@ -50,16 +50,16 @@ describe('Get Feature Flag', () => {
         });
       });
 
-      describe('IS_MULTI_PROVIDER_CONFIGURATION', () => {
+      describe('IS_MULTI_PROVIDER_CONFIGURATION_ENABLED', () => {
         it('should return default hardcoded value when no SDK env is set and no feature flag is set', async () => {
-          process.env.IS_MULTI_PROVIDER_CONFIGURATION = '';
+          process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = '';
 
           const result = await getFeatureFlag.isMultiProviderConfigurationEnabled(featureFlagCommand);
           expect(result).to.equal(false);
         });
 
         it('should return env variable value when no SDK env is set but the feature flag is set', async () => {
-          process.env.IS_MULTI_PROVIDER_CONFIGURATION = 'true';
+          process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = 'true';
 
           const result = await getFeatureFlag.isMultiProviderConfigurationEnabled(featureFlagCommand);
           expect(result).to.equal(true);
