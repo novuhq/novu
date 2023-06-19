@@ -49,7 +49,7 @@
     "newrelic": "9.10.2",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
-    "rxjs": "7.8.0",
+    "rxjs": "7.8.1",
     "socket.io": "^4.5.4"
   },
   "devDependencies": {
