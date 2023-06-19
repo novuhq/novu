@@ -19,7 +19,7 @@ export const useIsTemplateStoreEnabled = (): boolean => {
   return isTemplateStoreEnabled ?? defaultValue;
 };
 
-export const useisMultiProviderConfigurationEnabled = (): boolean => {
+export const useIsMultiProviderConfigurationEnabled = (): boolean => {
   const value = IS_MULTI_PROVIDER_CONFIGURATION;
   const fallbackValue = false;
   const defaultValue = prepareBooleanStringFeatureFlag(value, fallbackValue);
