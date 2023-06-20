@@ -74,9 +74,9 @@ export class GetSubscriberTemplatePreference {
 
   private async getActiveChannels(
     command: GetSubscriberTemplatePreferenceCommand
-  ) {
+  ): Promise<IPreferenceChannels> {
     const activeChannels = await this.queryActiveChannels(command);
-    const initialActiveChannels: IPreferenceChannels = filteredPreference(
+    const initialActiveChannels = filteredPreference(
       {
         email: true,
         sms: true,
@@ -194,44 +194,92 @@ export function determineOverrides(
   initialActiveChannels: IPreferenceChannels
 ) {
   const priorityOrder = ['template', 'subscriber'];
-  const overrideReasons: IPreferenceOverride[] = [];
-  const resultPreferences = { ...initialActiveChannels };
 
-  // iterate over preference sources, the smallest priority first
-  for (const sourceName of priorityOrder) {
-    const preference = preferenceSources[sourceName] as IPreferenceChannels;
-    const missingPreferenceObject = !preference;
+  let result: {
+    overrideReasons: IPreferenceOverride[];
+    preferences: IPreferenceChannels;
+  } = {
+    overrideReasons: [],
+    preferences: { ...initialActiveChannels },
+  };
 
-    // subscriber may miss preference if he did not toggle his preferences
-    if (missingPreferenceObject) continue;
+  result = overridePreferenceBySourcePriority(
+    priorityOrder,
+    preferenceSources,
+    result
+  );
 
-    // iterate over preferences and override overrideReasons if there is a diff
-    for (const [channelName, channelValue] of Object.entries(preference)) {
-      if (!(resultPreferences[channelName] != null)) continue;
+  return {
+    preferences: result.preferences,
+    overrides: result.overrideReasons,
+  };
+}
 
-      const index = overrideReasons.findIndex(
-        (overrideReason) => overrideReason.channel === channelName
-      );
+function overridePreference(
+  oldPreferenceState: {
+    overrideReasons: IPreferenceOverride[];
+    preferences: IPreferenceChannels;
+  },
+  sourcePreference: IPreferenceChannels,
+  sourceName: string
+) {
+  const resultPreferences = { ...oldPreferenceState.preferences };
+  const resultOverrideReasons = [...oldPreferenceState.overrideReasons];
 
-      const diff = overrideReasons[index]?.source !== channelValue;
+  for (const [channelName, channelValue] of Object.entries(sourcePreference)) {
+    if (typeof resultPreferences[channelName] !== 'boolean') continue;
 
-      if (!diff) continue;
+    const index = resultOverrideReasons.findIndex(
+      (overrideReason) => overrideReason.channel === channelName
+    );
 
-      resultPreferences[channelName] = channelValue;
-      updateOverrideReasons(channelName, sourceName, index, overrideReasons);
-    }
+    const isSameReason = resultOverrideReasons[index]?.source !== channelValue;
+
+    if (!isSameReason) continue;
+
+    resultPreferences[channelName] = channelValue;
+    updateOverrideReasons(
+      channelName,
+      sourceName,
+      index,
+      resultOverrideReasons
+    );
   }
 
   return {
     preferences: resultPreferences,
-    overrides: overrideReasons,
+    overrideReasons: resultOverrideReasons,
   };
+}
+
+function overridePreferenceBySourcePriority(
+  priorityOrder: string[],
+  preferenceSources: Record<'template' | 'subscriber', IPreferenceChannels>,
+  oldPreferenceState: {
+    overrideReasons: IPreferenceOverride[];
+    preferences: IPreferenceChannels;
+  }
+) {
+  let result = { ...oldPreferenceState };
+
+  for (const sourceName of priorityOrder) {
+    const sourcePreference = preferenceSources[
+      sourceName
+    ] as IPreferenceChannels;
+
+    // subscriber may miss preference if he did not toggle his preferences
+    if (!sourcePreference) continue;
+
+    result = overridePreference(result, sourcePreference, sourceName);
+  }
+
+  return result;
 }
 
 export const filteredPreference = (
   preferences: IPreferenceChannels,
   filterKeys: string[]
-) =>
+): IPreferenceChannels =>
   Object.entries(preferences).reduce(
     (obj, [key, value]) =>
       filterKeys.includes(key) ? { ...obj, [key]: value } : obj,
