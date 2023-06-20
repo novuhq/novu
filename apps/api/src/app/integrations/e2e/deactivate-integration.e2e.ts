@@ -7,13 +7,16 @@ describe('Deactivate Integration', function () {
   const integrationRepository = new IntegrationRepository();
 
   beforeEach(async () => {
+    process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = 'true';
     session = new UserSession();
     await session.initialize();
   });
 
-  it('should not deactivated old providers when feature flag is active', async function () {
-    process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = 'true';
+  afterEach(() => {
+    process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = 'false';
+  });
 
+  it('should not deactivated old providers when feature flag is active', async function () {
     const payload = {
       providerId: 'mailgun',
       channel: 'email',
@@ -33,7 +36,5 @@ describe('Deactivate Integration', function () {
 
     expect(firstIntegration?.active).to.equal(true);
     expect(secondIntegration?.active).to.equal(true);
-
-    process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = 'false';
   });
 });
