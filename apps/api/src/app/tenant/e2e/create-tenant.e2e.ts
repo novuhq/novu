@@ -1,10 +1,8 @@
 import { expect } from 'chai';
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
 
 import { UserSession } from '@novu/testing';
 import { TenantRepository } from '@novu/dal';
-
-const axiosInstance = axios.create();
 
 describe('Create Tenant - /tenants (POST)', function () {
   let session: UserSession;
@@ -70,7 +68,7 @@ describe('Create Tenant - /tenants (POST)', function () {
   });
 });
 
-async function createTenant({
+export async function createTenant({
   session,
   identifier,
   name,
@@ -80,7 +78,9 @@ async function createTenant({
   identifier?: string;
   name?: string;
   data?: any;
-}) {
+}): Promise<AxiosResponse> {
+  const axiosInstance = axios.create();
+
   return await axiosInstance.post(
     `${session.serverUrl}/v1/tenants`,
     {

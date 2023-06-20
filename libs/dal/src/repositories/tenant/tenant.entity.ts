@@ -14,6 +14,8 @@ export class TenantEntity {
 
   createdAt: string;
 
+  updatedAt: string;
+
   data?: TenantCustomData;
 
   _environmentId: EnvironmentId;

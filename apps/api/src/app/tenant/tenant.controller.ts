@@ -1,4 +1,13 @@
-import { Body, ClassSerializerInterceptor, Controller, Post, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  ClassSerializerInterceptor,
+  Controller,
+  Get,
+  Param,
+  Post,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { IJwtPayload } from '@novu/shared';
@@ -11,6 +20,9 @@ import { CreateTenantCommand } from './usecases/create-tenant/create-tenant.comm
 import { CreateTenantRequestDto } from './dtos/create-tenant-request.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ApiResponse } from '../shared/framework/response.decorator';
+import { GetTenantResponseDto } from './dtos/get-tenant.response';
+import { GetTenant } from './usecases/get-tenant/get-tenant.usecase';
+import { GetTenantCommand } from './usecases/get-tenant/get-tenant.command';
 
 @Controller('/tenants')
 @ApiTags('Tenants')
@@ -18,7 +30,24 @@ import { ApiResponse } from '../shared/framework/response.decorator';
 @UseGuards(JwtAuthGuard)
 @ApiExcludeController()
 export class TenantController {
-  constructor(private CreateTenantUsecase: CreateTenant) {}
+  constructor(private CreateTenantUsecase: CreateTenant, private getTenantUsecase: GetTenant) {}
+
+  @Get('/:tenantId')
+  @ApiResponse(GetTenantResponseDto)
+  @ApiOperation({
+    summary: 'Get tenant',
+    description: `Get tenant by your internal id used to identify the tenant`,
+  })
+  @ExternalApiAccessible()
+  getTenantById(@UserSession() user: IJwtPayload, @Param('tenantId') tenantId: string): Promise<GetTenantResponseDto> {
+    return this.getTenantUsecase.execute(
+      GetTenantCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        id: tenantId,
+      })
+    );
+  }
 
   @Post('/')
   @ExternalApiAccessible()
