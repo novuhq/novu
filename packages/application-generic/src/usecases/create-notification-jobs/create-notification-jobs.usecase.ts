@@ -87,9 +87,7 @@ export class CreateNotificationJobs {
       if (!step.template)
         throw new PlatformException('Step template was not found');
 
-      const channel = STEP_TYPE_TO_CHANNEL_TYPE.get(
-        step.template.type
-      ) as ChannelTypeEnum;
+      const channel = STEP_TYPE_TO_CHANNEL_TYPE.get(step.template.type);
       const providerId = command.templateProviderIds[channel];
 
       const job = {

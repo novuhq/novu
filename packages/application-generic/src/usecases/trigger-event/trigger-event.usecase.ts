@@ -223,7 +223,7 @@ export class TriggerEvent {
     environmentId: string,
     template: NotificationTemplateEntity
   ): Promise<Record<ChannelTypeEnum, ProvidersIdEnum>> {
-    const providers: Partial<Record<ChannelTypeEnum, ProvidersIdEnum>> = {};
+    const providers = {} as Record<ChannelTypeEnum, ProvidersIdEnum>;
 
     for (const step of template?.steps) {
       const type = step.template?.type;
@@ -249,7 +249,7 @@ export class TriggerEvent {
       }
     }
 
-    return providers as Record<ChannelTypeEnum, ProvidersIdEnum>;
+    return providers;
   }
 
   @Instrument()
