@@ -10,5 +10,5 @@ export interface IMessagesPayload {
   limit?: number;
   subscriberId?: string;
   channel?: ChannelTypeEnum;
-  transactionId?: string[];
+  transactionIds?: string[];
 }

@@ -4,18 +4,16 @@ import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
 export class GetMessagesCommand extends EnvironmentCommand {
   @IsOptional()
-  subscriberId: string;
+  subscriberId?: string;
 
   @IsOptional()
-  channel: ChannelTypeEnum;
-
-  @IsNumber()
-  @IsOptional()
-  page: number;
+  channel?: ChannelTypeEnum;
 
   @IsNumber()
-  @IsOptional()
-  limit: number;
+  page = 0;
+
+  @IsNumber()
+  limit = 10;
 
   @IsOptional()
   @IsArray()

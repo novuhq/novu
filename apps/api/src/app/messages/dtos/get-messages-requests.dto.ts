@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { ChannelTypeEnum } from '@novu/shared';
 import { IsNumber } from 'class-validator';
 import { Transform } from 'class-transformer';
@@ -7,12 +7,12 @@ export class GetMessagesRequestDto {
   @ApiPropertyOptional({
     enum: ChannelTypeEnum,
   })
-  channel: ChannelTypeEnum;
+  channel?: ChannelTypeEnum;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     type: String,
   })
-  subscriberId: string;
+  subscriberId?: string;
 
   @ApiPropertyOptional({
     type: String,

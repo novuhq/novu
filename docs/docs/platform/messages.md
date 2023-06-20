@@ -31,7 +31,7 @@ await novu.messages.list({
   limit: 30,
   channel: ChannelTypeEnum.IN_APP,
   subscriberId: '123',
-  transactionId: ['transactionId1', 'transactionId2'],
+  transactionIds: ['transactionId1', 'transactionId2'],
 });
 ```
 
@@ -89,7 +89,7 @@ await novu.messages.list({
           "subscriberId": "subscriberId",
           "id": "_subscriberId"
       },
-      "actorSubscriber": null,
+      "actorSubscriber": 'actorSubscriberId',
       "id": "messageId"
     }
     ....
