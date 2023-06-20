@@ -3,7 +3,7 @@ import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
 import { FeatureFlagCommand, GetFeatureFlag, GetFeatureFlagCommand } from '../use-cases';
-import { FeatureFlagsModule } from '../feature-flags.module';
+import { SharedModule } from '../shared.module';
 
 const originalLaunchDarklySdkKey = process.env.LAUNCH_DARKLY_SDK_KEY;
 
@@ -18,7 +18,7 @@ describe('Get Feature Flag', () => {
         process.env.LAUNCH_DARKLY_SDK_KEY = '';
 
         const moduleRef = await Test.createTestingModule({
-          imports: [FeatureFlagsModule],
+          imports: [SharedModule],
           providers: [],
         }).compile();
 
@@ -88,7 +88,7 @@ describe('Get Feature Flag', () => {
         process.env.LAUNCH_DARKLY_SDK_KEY = originalLaunchDarklySdkKey;
 
         const moduleRef = await Test.createTestingModule({
-          imports: [FeatureFlagsModule],
+          imports: [SharedModule],
           providers: [],
         }).compile();
 

@@ -40,7 +40,9 @@ import {
 } from '@novu/application-generic';
 
 import * as packageJson from '../../../package.json';
-import { FeatureFlagsModule } from '../feature-flags/feature-flags.module';
+import { LaunchDarklyService } from './services/launch-darkly.service';
+import { FeatureFlagsService } from './services/feature-flags.service';
+import { GetFeatureFlag } from './use-cases';
 
 const DAL_MODELS = [
   UserRepository,
@@ -144,6 +146,9 @@ const PROVIDERS = [
     },
   },
   TriggerQueueService,
+  LaunchDarklyService,
+  FeatureFlagsService,
+  GetFeatureFlag,
 ];
 
 @Module({
@@ -154,9 +159,8 @@ const PROVIDERS = [
         version: packageJson.version,
       })
     ),
-    FeatureFlagsModule,
   ],
   providers: [...PROVIDERS],
-  exports: [...PROVIDERS, LoggerModule, FeatureFlagsModule],
+  exports: [...PROVIDERS, LoggerModule],
 })
 export class SharedModule {}

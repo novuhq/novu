@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { GetFeatureFlagCommand, FeatureFlagCommand } from './get-feature-flag.command';
 
-import { FeatureFlagsService } from '../../services';
+import { FeatureFlagsService } from '../../services/feature-flags.service';
 import { FeatureFlagsKeysEnum } from '../../types';
 
 @Injectable()

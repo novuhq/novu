@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { IntegrationRepository } from '@novu/dal';
-import { FeatureFlagCommand, GetFeatureFlag } from '../../../feature-flags/use-cases';
+import { FeatureFlagCommand, GetFeatureFlag } from '../../../shared/use-cases';
 import { DeactivateSimilarChannelIntegrationsCommand } from './deactivate-integration.command';
 
 @Injectable()
