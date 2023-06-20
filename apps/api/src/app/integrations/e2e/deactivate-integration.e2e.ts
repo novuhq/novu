@@ -1,19 +1,26 @@
 import { IntegrationRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
+import * as sinon from 'sinon';
+import { GetFeatureFlag } from '../../shared/use-cases';
 
 describe('Deactivate Integration', function () {
   let session: UserSession;
   const integrationRepository = new IntegrationRepository();
+  let stub: sinon.SinonStub;
 
   beforeEach(async () => {
-    process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = 'true';
     session = new UserSession();
+    const service = session.testServer?.getService(GetFeatureFlag);
+    stub = sinon.stub(service, 'isMultiProviderConfigurationEnabled');
+    stub.callsFake(() => {
+      return true;
+    });
     await session.initialize();
   });
 
   afterEach(() => {
-    process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = 'false';
+    stub.restore();
   });
 
   it('should not deactivated old providers when feature flag is active', async function () {
