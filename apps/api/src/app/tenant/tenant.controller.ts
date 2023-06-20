@@ -22,12 +22,12 @@ export class TenantController {
 
   @Post('/')
   @ExternalApiAccessible()
-  @ApiResponse(CreateTenantRequestDto)
+  @ApiResponse(CreateTenantResponseDto)
   @ApiOperation({
     summary: 'Create tenant',
     description: 'Create tenant under the current environment',
   })
-  async createOrganization(
+  async createTenant(
     @UserSession() user: IJwtPayload,
     @Body() body: CreateTenantRequestDto
   ): Promise<CreateTenantResponseDto> {
