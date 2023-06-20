@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import styled from '@emotion/styled';
+import { Modal } from '@mantine/core';
+import * as cloneDeep from 'lodash.clonedeep';
 import {
   ChannelTypeEnum,
   IConfigCredentials,
@@ -11,9 +13,7 @@ import {
   ProvidersIdEnum,
   SmsProviderIdEnum,
 } from '@novu/shared';
-import { Modal } from '@mantine/core';
-import * as cloneDeep from 'lodash.clonedeep';
-import PageMeta from '../../components/layout/components/PageMeta';
+
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { ChannelGroup } from './components/ChannelGroup';
@@ -58,79 +58,78 @@ export function IntegrationsStore() {
     }
   }
 
+  if (isLoading) {
+    return null;
+  }
+
   return (
-    <>
-      <PageMeta title="Integrations" />
-      {!isLoading ? (
-        <PageContainer>
-          <PageHeader title="Integration Store" />
+    <PageContainer title="Integrations">
+      <PageHeader title="Integration Store" />
 
-          <Modal
-            withCloseButton={false}
-            centered
-            size={provider?.providerId === InAppProviderIdEnum.Novu ? 1000 : 'lg'}
-            overflow="inside"
-            opened={isModalOpened}
+      <Modal
+        withCloseButton={false}
+        centered
+        size={provider?.providerId === InAppProviderIdEnum.Novu ? 1000 : 'lg'}
+        overflow="inside"
+        opened={isModalOpened}
+        onClose={() => setModalIsOpened(false)}
+      >
+        <When truthy={!provider?.novu && provider?.providerId !== InAppProviderIdEnum.Novu}>
+          <ConnectIntegrationForm
             onClose={() => setModalIsOpened(false)}
-          >
-            <When truthy={!provider?.novu && provider?.providerId !== InAppProviderIdEnum.Novu}>
-              <ConnectIntegrationForm
-                onClose={() => setModalIsOpened(false)}
-                provider={provider}
-                showModal={handlerShowModal}
-                createModel={isCreateIntegrationModal}
-              />
-            </When>
-            <When truthy={provider?.providerId === EmailProviderIdEnum.Novu}>
-              <NovuEmailProviderModal onClose={() => setModalIsOpened(false)} />
-            </When>
-            <When truthy={provider?.providerId === InAppProviderIdEnum.Novu}>
-              <NovuInAppProviderModal
-                showModal={handlerShowModal}
-                provider={provider}
-                onClose={() => setModalIsOpened(false)}
-              />
-            </When>
-            <When truthy={provider?.providerId === SmsProviderIdEnum.Novu}>
-              <NovuSmsProviderModal onClose={() => setModalIsOpened(false)} />
-            </When>
-          </Modal>
+            provider={provider}
+            showModal={handlerShowModal}
+            createModel={isCreateIntegrationModal}
+          />
+        </When>
+        <When truthy={provider?.providerId === EmailProviderIdEnum.Novu}>
+          <NovuEmailProviderModal onClose={() => setModalIsOpened(false)} />
+        </When>
+        <When truthy={provider?.providerId === InAppProviderIdEnum.Novu}>
+          <NovuInAppProviderModal
+            showModal={handlerShowModal}
+            provider={provider}
+            onClose={() => setModalIsOpened(false)}
+          />
+        </When>
+        <When truthy={provider?.providerId === SmsProviderIdEnum.Novu}>
+          <NovuSmsProviderModal onClose={() => setModalIsOpened(false)} />
+        </When>
+      </Modal>
 
-          <ContentWrapper>
-            <ChannelGroup
-              channel={ChannelTypeEnum.IN_APP}
-              providers={inAppProvider}
-              title="In-App"
-              onProviderClick={handlerVisible}
-            />
-            <ChannelGroup
-              channel={ChannelTypeEnum.EMAIL}
-              providers={emailProviders}
-              title="Email"
-              onProviderClick={handlerVisible}
-            />
-            <ChannelGroup
-              channel={ChannelTypeEnum.SMS}
-              providers={smsProvider}
-              title="SMS"
-              onProviderClick={handlerVisible}
-            />
-            <ChannelGroup
-              channel={ChannelTypeEnum.CHAT}
-              providers={chatProvider}
-              title="Chat"
-              onProviderClick={handlerVisible}
-            />
-            <ChannelGroup
-              channel={ChannelTypeEnum.PUSH}
-              providers={pushProvider}
-              title="Push"
-              onProviderClick={handlerVisible}
-            />
-          </ContentWrapper>
-        </PageContainer>
-      ) : null}
-    </>
+      <ContentWrapper>
+        <ChannelGroup
+          channel={ChannelTypeEnum.IN_APP}
+          providers={inAppProvider}
+          title="In-App"
+          onProviderClick={handlerVisible}
+        />
+        <ChannelGroup
+          channel={ChannelTypeEnum.EMAIL}
+          providers={emailProviders}
+          title="Email"
+          onProviderClick={handlerVisible}
+        />
+        <ChannelGroup
+          channel={ChannelTypeEnum.SMS}
+          providers={smsProvider}
+          title="SMS"
+          onProviderClick={handlerVisible}
+        />
+        <ChannelGroup
+          channel={ChannelTypeEnum.CHAT}
+          providers={chatProvider}
+          title="Chat"
+          onProviderClick={handlerVisible}
+        />
+        <ChannelGroup
+          channel={ChannelTypeEnum.PUSH}
+          providers={pushProvider}
+          title="Push"
+          onProviderClick={handlerVisible}
+        />
+      </ContentWrapper>
+    </PageContainer>
   );
 }
 
