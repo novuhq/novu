@@ -474,7 +474,8 @@
     "bitnami",
     "portname",
     "externalredis",
-    "autorun"
+    "autorun",
+    "webp"
   ],
   "flagWords": [],
   "patterns": [
@@ -548,6 +549,7 @@
     "novu.code-workspace",
     "packages/application-generic/src/.env.test",
     "packages/notification-center/src/i18n/languages/**",
+    "packages/notification-center/rollup.config.mjs",
     "apps/widget/public/iframeResizer.contentWindow.js",
     ".eslintrc.js",
     ".vscode/settings.json",
