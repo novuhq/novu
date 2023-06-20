@@ -96,7 +96,9 @@ function NotificationList() {
     {
       accessor: 'notificationGroup.name',
       Header: 'Category',
-      Cell: ({ notificationGroup }: any) => <Tag data-test-id="category-label"> {notificationGroup?.name}</Tag>,
+      Cell: ({ notificationGroup }: any) => (
+        <StyledTag data-test-id="category-label">{notificationGroup?.name}</StyledTag>
+      ),
     },
     {
       accessor: 'createdAt',
@@ -260,5 +262,13 @@ const TemplateListTableWrapper = styled.div`
         opacity: 1;
       }
     }
+  }
+`;
+
+const StyledTag = styled(Tag)`
+  max-width: 100%;
+  
+  span {
+    max-width: 100%;
   }
 `;
