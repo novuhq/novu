@@ -23,7 +23,7 @@ describe('Get Tenant - /:tenantId (GET)', function () {
     const getTenantResult = await getTenant({ session, id: res.data._id });
 
     expect(getTenantResult.data.identifier).to.equal('identifier_123');
-    expect(getTenantResult.data.namd).to.equal('name_123');
+    expect(getTenantResult.data.name).to.equal('name_123');
     expect(getTenantResult.data.data).to.deep.equal({ test1: 'test value1', test2: 'test value2' });
   });
 
