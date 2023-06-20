@@ -77,7 +77,7 @@ describe('Novu Node.js package - Messages class', () => {
             __v: 0,
             content: [Array],
             subscriber: [Object],
-            actorSubscriber: null,
+            actorSubscriber: 'actorSubscriberId',
             id: '649070afaa9e50289df42134',
           },
         ],
@@ -89,7 +89,7 @@ describe('Novu Node.js package - Messages class', () => {
       page: 1,
       limit: 5,
       channel: ChannelTypeEnum.EMAIL,
-      transactionId: ['transactionId1', 'transactionId2'],
+      transactionIds: ['transactionId1', 'transactionId2'],
     });
 
     expect(mockedAxios.get).toHaveBeenCalled();

@@ -1,13 +1,13 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { MessageEntity, MessageRepository, SubscriberRepository, SubscriberEntity } from '@novu/dal';
-import { CachedEntity, buildSubscriberKey } from '@novu/application-generic';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { MessageEntity, MessageRepository, SubscriberEntity } from '@novu/dal';
 import { ActorTypeEnum } from '@novu/shared';
 
 import { GetMessagesCommand } from './get-messages.command';
+import { GetSubscriber, GetSubscriberCommand } from '../../../subscribers/usecases/get-subscriber';
 
 @Injectable()
 export class GetMessages {
-  constructor(private messageRepository: MessageRepository, private subscriberRepository: SubscriberRepository) {}
+  constructor(private messageRepository: MessageRepository, private getSubscriberUseCase: GetSubscriber) {}
 
   async execute(command: GetMessagesCommand) {
     const LIMIT = command.limit;
@@ -23,12 +23,13 @@ export class GetMessages {
       };
 
     if (command.subscriberId) {
-      const subscriber = await this.fetchSubscriber({
-        _environmentId: command.environmentId,
-        subscriberId: command.subscriberId,
-      });
-
-      if (!subscriber) throw new NotFoundException(`Subscriber ${command.subscriberId} not found`);
+      const subscriber = await this.getSubscriberUseCase.execute(
+        GetSubscriberCommand.create({
+          subscriberId: command.subscriberId,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+        })
+      );
 
       query._subscriberId = subscriber._id;
     }
@@ -79,23 +80,6 @@ export class GetMessages {
     const currentPaginationTotal = page * limit + feedLength;
 
     return currentPaginationTotal < totalCount;
-  }
-
-  @CachedEntity({
-    builder: (command: { subscriberId: string; _environmentId: string }) =>
-      buildSubscriberKey({
-        _environmentId: command._environmentId,
-        subscriberId: command.subscriberId,
-      }),
-  })
-  private async fetchSubscriber({
-    subscriberId,
-    _environmentId,
-  }: {
-    subscriberId: string;
-    _environmentId: string;
-  }): Promise<SubscriberEntity | null> {
-    return await this.subscriberRepository.findBySubscriberId(_environmentId, subscriberId);
   }
 
   private processUserAvatar(actorSubscriber?: SubscriberEntity): string | null {
