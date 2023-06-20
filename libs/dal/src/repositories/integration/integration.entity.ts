@@ -1,5 +1,7 @@
 import { ChannelTypeEnum } from '@novu/shared';
 
+import { KindId, ProviderKindEnum } from './types';
+
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
 import { ChangePropsValueType } from '../../types/helpers';
@@ -47,6 +49,14 @@ export class IntegrationEntity {
   credentials: ICredentials;
 
   active: boolean;
+
+  name?: string;
+
+  identifier?: string;
+
+  kind?: ProviderKindEnum;
+
+  kindId?: KindId;
 
   deleted: boolean;
 

@@ -45,11 +45,14 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       redirectUrl: Schema.Types.String,
       hmac: Schema.Types.Boolean,
     },
-
     active: {
       type: Schema.Types.Boolean,
       default: false,
     },
+    name: Schema.Types.String,
+    identifier: Schema.Types.String,
+    kind: Schema.Types.String,
+    kindId: Schema.Types.ObjectId,
   },
   schemaOptions
 );
