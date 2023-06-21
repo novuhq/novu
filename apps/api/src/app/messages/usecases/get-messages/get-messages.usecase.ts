@@ -38,8 +38,8 @@ export class GetMessages {
       query.channel = command.channel;
     }
 
-    if (command.transactionId) {
-      query.transactionId = command.transactionId;
+    if (command.transactionIds) {
+      query.transactionId = command.transactionIds;
     }
 
     const data = await this.messageRepository.getMessages(query, '', {
