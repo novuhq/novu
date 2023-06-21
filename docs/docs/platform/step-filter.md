@@ -137,7 +137,7 @@ if (hmacHash === hmac) {
 > **NOVU_API_KEY** can be found in the settings section of the Novu client.
 
 The webhook should return a one-level object containing any information that you want to use
-to filter the notification flow. For example, you might include a field called `isOnline` having value `true` or `false` that sepcifies whether the subscriber is currently online or not.
+to filter the notification flow. For example, you might include a field called `isOnline` having value `true` or `false` that specifies whether the subscriber is currently online or not.
 
 ## Subscriber online filters
 
@@ -213,7 +213,7 @@ Is Defined filter checks whether specified `key` exists or not. It is different 
 </div>
 
 :::note
-This filter can be used with subsciber, payload and webhook. It can be applied on all channels
+This filter can be used with subscriber, payload and webhook. It can be applied on all channels.
 :::
 
 ## Monitoring the filter's status inside Activity Feed
