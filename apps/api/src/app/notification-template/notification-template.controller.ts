@@ -174,7 +174,7 @@ export class NotificationTemplateController {
         steps: body.steps,
         notificationGroupId: body.notificationGroupId,
         active: body.active ?? false,
-        draft: body.draft ?? true,
+        draft: !body.active,
         critical: body.critical ?? false,
         preferenceSettings: body.preferenceSettings,
         blueprintId: body.blueprintId,
