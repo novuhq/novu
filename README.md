@@ -211,6 +211,7 @@ We are more than happy to help you. If you are getting any errors or facing prob
 - [Home page](https://novu.co/)
 - [Contribution Guidelines](https://github.com/novuhq/novu/blob/main/CONTRIBUTING.md)
 - [Run Novu Locally](https://docs.novu.co/community/run-locally)
+- [Symfony Notifier](https://github.com/symfony/novu-notifier)
 
 ## 🛡️ License
 
