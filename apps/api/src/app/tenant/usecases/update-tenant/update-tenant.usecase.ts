@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { TenantRepository } from '@novu/dal';
 import { UpdateTenantCommand } from './update-tenant.command';
 import { TenantEntity } from '@novu/dal';
@@ -14,7 +14,7 @@ export class UpdateTenant {
     });
 
     if (!tenant) {
-      throw new BadRequestException(
+      throw new NotFoundException(
         `Tenant with identifier: ${command.identifier} is not exists under environment ${command.environmentId}`
       );
     }

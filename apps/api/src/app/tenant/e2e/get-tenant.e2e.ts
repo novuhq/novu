@@ -4,7 +4,7 @@ import axios, { AxiosResponse } from 'axios';
 import { UserSession } from '@novu/testing';
 import { TenantRepository } from '@novu/dal';
 
-describe('Get Tenant - /:tenantId (GET)', function () {
+describe('Get Tenant - /tenants/:identifier (GET)', function () {
   let session: UserSession;
   const tenantRepository = new TenantRepository();
 

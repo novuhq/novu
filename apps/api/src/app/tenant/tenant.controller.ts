@@ -2,6 +2,7 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -27,6 +28,9 @@ import { GetTenantCommand } from './usecases/get-tenant/get-tenant.command';
 import { UpdateTenantResponseDto } from './dtos/update-tenant-response.dto';
 import { UpdateTenantRequestDto } from './dtos/update-tenant-request.dto';
 import { UpdateTenant } from './usecases/update-tenant/update-tenant.usecase';
+import { DeleteTenantCommand } from './usecases/delete-tenant/delete-tenant.command';
+import { DeleteTenantResponseDto } from './dtos/delete-tenant.response.dto';
+import { DeleteTenant } from './usecases/delete-tenant/delete-tenant.usecase';
 import { UpdateTenantCommand } from './usecases/update-tenant/update-tenant.command';
 
 @Controller('/tenants')
@@ -38,7 +42,8 @@ export class TenantController {
   constructor(
     private createTenantUsecase: CreateTenant,
     private updateTenantUsecase: UpdateTenant,
-    private getTenantUsecase: GetTenant
+    private getTenantUsecase: GetTenant,
+    private deleteTenantUsecase: DeleteTenant
   ) {}
 
   @Get('/:identifier')
@@ -83,26 +88,47 @@ export class TenantController {
     );
   }
 
-  @Put('/:tenantId')
+  @Put('/:identifier')
   @ExternalApiAccessible()
   @ApiResponse(UpdateTenantResponseDto)
   @ApiOperation({
     summary: 'Update tenant',
-    description: 'Update tenant under the current environment',
+    description: 'Update tenant by your internal id used to identify the tenant',
   })
   async updateTenant(
     @UserSession() user: IJwtPayload,
-    @Param('tenantId') tenantId: string,
+    @Param('identifier') identifier: string,
     @Body() body: UpdateTenantRequestDto
   ): Promise<UpdateTenantResponseDto> {
     return await this.updateTenantUsecase.execute(
       UpdateTenantCommand.create({
-        identifier: tenantId,
+        identifier: identifier,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         name: body.name,
         data: body.data,
         newIdentifier: body.identifier,
+      })
+    );
+  }
+
+  @Delete('/:identifier')
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  @ApiResponse(DeleteTenantResponseDto)
+  @ApiOperation({
+    summary: 'Delete tenant',
+    description: 'Deletes a tenant entity from the Novu platform',
+  })
+  async removeTenant(
+    @UserSession() user: IJwtPayload,
+    @Param('identifier') identifier: string
+  ): Promise<DeleteTenantResponseDto> {
+    return await this.deleteTenantUsecase.execute(
+      DeleteTenantCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        identifier: identifier,
       })
     );
   }
