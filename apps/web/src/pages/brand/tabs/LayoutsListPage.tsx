@@ -1,15 +1,16 @@
-import { ColumnWithStrictAccessor } from 'react-table';
-import { Data, Table } from '../../../design-system/table/Table';
-import { colors, LoadingOverlay, Text, Tooltip } from '../../../design-system';
-import { format } from 'date-fns';
-import { ActionIcon, useMantineTheme, UnstyledButton } from '@mantine/core';
-import { Edit, Trash } from '../../../design-system/icons';
-import styled from '@emotion/styled';
 import { useState } from 'react';
+import styled from '@emotion/styled';
+import { format } from 'date-fns';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { ActionIcon, useMantineTheme, UnstyledButton } from '@mantine/core';
+import type { ILayoutEntity } from '@novu/shared';
+
+import { IExtendedColumn, Table } from '../../../design-system/table/Table';
+import { colors, LoadingOverlay, Text, Tooltip, withCellLoading } from '../../../design-system';
+import { Edit, Trash } from '../../../design-system/icons';
 import { LayoutEditor } from './LayoutEditor';
 import { When } from '../../../components/utils/When';
 import { useLayouts, useEnvController } from '../../../hooks';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { deleteLayoutById } from '../../../api/layouts';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { QueryKeys } from '../../../api/query.keys';
@@ -71,52 +72,54 @@ export function LayoutsListPage({ handleLayoutAnalytics }: LayoutsListPageProps)
     setActiveScreen(ActivePageEnum.LAYOUTS_LIST);
   };
 
-  const editLayout = (id: string) => {
+  const editLayout = (id?: string) => {
+    if (typeof id === 'undefined') return;
+
     setEditId(id);
     setActiveScreen(ActivePageEnum.EDIT_LAYOUT);
     handleLayoutAnalytics('Edit screen opened', { layoutId: id });
   };
 
-  const columns: ColumnWithStrictAccessor<Data>[] = [
+  const columns: IExtendedColumn<ILayoutEntity>[] = [
     {
       accessor: 'name',
       Header: 'Name',
-      Cell: ({ name }: any) => (
-        <Tooltip label={name}>
+      Cell: withCellLoading(({ row: { original } }) => (
+        <Tooltip label={original.name}>
           <div>
-            <Text rows={1}>{name}</Text>
+            <Text rows={1}>{original.name}</Text>
           </div>
         </Tooltip>
-      ),
+      )),
     },
     {
       accessor: 'description',
       Header: 'Description',
-      Cell: ({ description }: any) => (
-        <Tooltip label={description}>
+      Cell: withCellLoading(({ row: { original } }) => (
+        <Tooltip label={original.description}>
           <div>
-            <Text rows={1}>{description}</Text>
+            <Text rows={1}>{original.description ?? ''}</Text>
           </div>
         </Tooltip>
-      ),
+      )),
     },
     {
       accessor: 'createdAt',
       Header: 'Created At',
-      Cell: ({ createdAt }: any) => format(new Date(createdAt), 'dd/MM/yyyy HH:mm'),
+      Cell: withCellLoading(({ row: { original } }) => format(new Date(original.createdAt ?? ''), 'dd/MM/yyyy HH:mm')),
     },
     {
       accessor: 'updatedAt',
       Header: 'Last Updated',
-      Cell: ({ updatedAt }: any) => format(new Date(updatedAt), 'dd/MM/yyyy HH:mm'),
+      Cell: withCellLoading(({ row: { original } }) => format(new Date(original.updatedAt ?? ''), 'dd/MM/yyyy HH:mm')),
     },
     {
       accessor: '_id',
       Header: '',
       maxWidth: 50,
-      Cell: ({ _id }: any) => (
+      Cell: withCellLoading(({ row: { original } }) => (
         <ActionButtonWrapper>
-          <ActionIcon variant="transparent" onClick={() => editLayout(_id)}>
+          <ActionIcon variant="transparent" onClick={() => editLayout(original._id)}>
             <Edit
               style={{
                 width: '20px',
@@ -130,14 +133,14 @@ export function LayoutsListPage({ handleLayoutAnalytics }: LayoutsListPageProps)
               variant="transparent"
               onClick={(e) => {
                 e.stopPropagation();
-                onDelete(_id);
+                onDelete(original._id);
               }}
             >
               <Trash color={theme.colorScheme === 'dark' ? colors.B40 : colors.B80} />
             </ActionIcon>
           )}
         </ActionButtonWrapper>
-      ),
+      )),
     },
   ];
 
@@ -154,40 +157,39 @@ export function LayoutsListPage({ handleLayoutAnalytics }: LayoutsListPageProps)
         <LayoutEditor goBack={goBack} />
       </When>
       <When truthy={activeScreen === ActivePageEnum.LAYOUTS_LIST}>
-        <LoadingOverlay visible={isLoading || isLoadingDelete}>
-          <div
-            style={{
-              textAlign: 'right',
-              marginBottom: '10px',
+        <div
+          style={{
+            textAlign: 'right',
+            marginBottom: '10px',
+          }}
+        >
+          <UnstyledButton
+            disabled={readonly || isLoading || isLoadingDelete}
+            onClick={() => {
+              setActiveScreen(ActivePageEnum.CREATE_LAYOUT);
+              handleLayoutAnalytics('Create new layout btn clicked');
             }}
           >
-            <UnstyledButton
-              disabled={readonly}
-              onClick={() => {
-                setActiveScreen(ActivePageEnum.CREATE_LAYOUT);
-                handleLayoutAnalytics('Create new layout btn clicked');
-              }}
-            >
-              <Text gradient={!readonly} color={colors.B60}>
-                + Create New Layout
-              </Text>
-            </UnstyledButton>
-          </div>
+            <Text gradient={!readonly} color={colors.B60}>
+              + Create New Layout
+            </Text>
+          </UnstyledButton>
+        </div>
 
-          <TemplateListTableWrapper>
-            <Table
-              columns={columns}
-              data={layouts || []}
-              onRowClick={onRowClick}
-              pagination={{
-                pageSize: pageSize,
-                current: page,
-                total: totalCount,
-                onPageChange: handleTableChange,
-              }}
-            />
-          </TemplateListTableWrapper>
-        </LoadingOverlay>
+        <TemplateListTableWrapper>
+          <Table
+            loading={isLoading || isLoadingDelete}
+            columns={columns}
+            data={layouts || []}
+            onRowClick={onRowClick}
+            pagination={{
+              pageSize: pageSize,
+              current: page,
+              total: totalCount,
+              onPageChange: handleTableChange,
+            }}
+          />
+        </TemplateListTableWrapper>
       </When>
 
       <DeleteConfirmModal target="layout" isOpen={toDelete.length > 0} confirm={confirmDelete} cancel={cancelDelete} />
