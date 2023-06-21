@@ -8,7 +8,7 @@ export function useIntegrations(options: UseQueryOptions<IntegrationEntity[], an
   const { data, isLoading, ...rest } = useQuery<IntegrationEntity[], any, IntegrationEntity[]>(
     [QueryKeys.integrationsList],
     getIntegrations,
-    { ...options }
+    { refetchOnMount: false, ...options }
   );
 
   return {

@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import styled from '@emotion/styled';
+import { Modal } from '@mantine/core';
+import * as cloneDeep from 'lodash.clonedeep';
 import {
   ChannelTypeEnum,
   IConfigCredentials,
@@ -11,9 +13,7 @@ import {
   ProvidersIdEnum,
   SmsProviderIdEnum,
 } from '@novu/shared';
-import { Modal } from '@mantine/core';
-import * as cloneDeep from 'lodash.clonedeep';
-import PageMeta from '../../components/layout/components/PageMeta';
+
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { ChannelGroup } from './components/ChannelGroup';
@@ -24,6 +24,7 @@ import { NovuInAppProviderModal } from './components/NovuInAppProviderModal';
 import { useProviders } from './useProviders';
 import { NovuSmsProviderModal } from './components/NovuSmsProviderModal';
 import { useCreateInAppIntegration } from '../../hooks/useCreateInAppIntegration';
+import { LoadingOverlay } from '../../design-system';
 
 export function IntegrationsStore() {
   const { emailProviders, smsProvider, chatProvider, pushProvider, inAppProvider, isLoading, refetch } = useProviders();
@@ -59,12 +60,10 @@ export function IntegrationsStore() {
   }
 
   return (
-    <>
-      <PageMeta title="Integrations" />
-      {!isLoading ? (
-        <PageContainer>
-          <PageHeader title="Integration Store" />
-
+    <PageContainer title="Integrations">
+      <PageHeader title="Integration Store" />
+      <LoadingOverlay visible={isLoading}>
+        <When truthy={!isLoading}>
           <Modal
             withCloseButton={false}
             centered
@@ -128,9 +127,9 @@ export function IntegrationsStore() {
               onProviderClick={handlerVisible}
             />
           </ContentWrapper>
-        </PageContainer>
-      ) : null}
-    </>
+        </When>
+      </LoadingOverlay>
+    </PageContainer>
   );
 }
 

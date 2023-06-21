@@ -445,7 +445,7 @@ importers:
       '@types/node': ^12.0.0
       '@types/react': ^17.0.0
       '@types/react-dom': ^17.0.0
-      '@types/react-table': ^7.7.9
+      '@types/react-table': ^7.7.12
       '@types/testing-library__jest-dom': ^5.14.5
       ace-builds: ^1.4.12
       antd: ^4.10.0
@@ -500,7 +500,7 @@ importers:
       react-router-dom: ^6.2.2
       react-scripts: ^5.0.1
       react-syntax-highlighter: ^15.4.3
-      react-table: ^7.7.0
+      react-table: ^7.8.0
       react-use-intercom: ^2.0.0
       rimraf: ^3.0.2
       slugify: ^1.4.6
@@ -22120,7 +22120,7 @@ packages:
   /@types/react-table/7.7.14:
     resolution: {integrity: sha512-TYrv7onCiakaG1uAu/UpQ9FojNEt/4/ht87EgJQaEGFoWV606ZLWUZAcUHzMxgc3v1mywP1cDyz3qB4ho3hWOw==}
     dependencies:
-      '@types/react': 17.0.53
+      '@types/react': 17.0.62
     dev: false
 
   /@types/react/17.0.53:
