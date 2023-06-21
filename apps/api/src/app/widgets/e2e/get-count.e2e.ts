@@ -175,8 +175,7 @@ describe('Count - GET /widget/notifications/count', function () {
     }
   });
 
-  // todo NV-2161 in version 0.16 remove skip
-  it.skip('should return unseen count by default limit 100', async function () {
+  it('should return unseen count by default limit 100', async function () {
     for (let i = 0; i < 102; i++) {
       await session.triggerEvent(template.triggers[0].identifier, subscriberId);
     }

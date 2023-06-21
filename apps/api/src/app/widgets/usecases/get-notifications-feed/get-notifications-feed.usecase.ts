@@ -30,7 +30,7 @@ export class GetNotificationsFeed {
       }),
   })
   async execute(command: GetNotificationsFeedCommand): Promise<MessagesResponseDto> {
-    const COUNT_LIMIT = 1000;
+    const COUNT_LIMIT = 100;
 
     const subscriber = await this.fetchSubscriber({
       _environmentId: command.environmentId,
@@ -70,6 +70,8 @@ export class GetNotificationsFeed {
       }
     }
 
+    const skip = command.page * command.limit;
+
     const totalCount = await this.messageRepository.getCount(
       command.environmentId,
       subscriber._id,
@@ -79,22 +81,13 @@ export class GetNotificationsFeed {
         seen: command.query.seen,
         read: command.query.read,
       },
-      { limit: COUNT_LIMIT }
-      /*
-       * todo NV-2161 in version 0.16
-       *  update option as below,
-       *  update below:  hasMore = feed.length < totalCount
-       *  remove totalCount
-       * { skip: command.page * command.limit, limit: command.limit + 1 }
-       */
+      { limit: COUNT_LIMIT, skip }
     );
-
-    const hasMore = this.getHasMore(command.page, command.limit, feed, totalCount);
 
     return {
       data: feed || [],
-      totalCount: totalCount || 0,
-      hasMore,
+      totalCount: Math.min(skip + totalCount, 100),
+      hasMore: feed.length < totalCount,
       pageSize: command.limit,
       page: command.page,
     };
