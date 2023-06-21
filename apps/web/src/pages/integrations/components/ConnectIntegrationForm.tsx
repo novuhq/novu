@@ -389,7 +389,6 @@ const CopyWrapper = styled.div`
 `;
 
 const CenterDiv = styled.div`
-  max-height: 500px;
   overflow: auto;
   margin-top: 10px;
   margin-bottom: 10px;
