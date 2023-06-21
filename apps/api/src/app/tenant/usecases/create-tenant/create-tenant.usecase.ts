@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { TenantRepository } from '@novu/dal';
 import { CreateTenantCommand } from './create-tenant.command';
 
@@ -13,7 +13,7 @@ export class CreateTenant {
     });
 
     if (tenantExist) {
-      throw new BadRequestException(
+      throw new ConflictException(
         `Tenant with identifier: ${command.identifier} already exists under environment ${command.environmentId}`
       );
     }
