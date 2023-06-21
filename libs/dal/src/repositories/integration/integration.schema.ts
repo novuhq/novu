@@ -51,8 +51,6 @@ const integrationSchema = new Schema<IntegrationDBModel>(
     },
     name: Schema.Types.String,
     identifier: Schema.Types.String,
-    kind: Schema.Types.String,
-    kindId: Schema.Types.ObjectId,
   },
   schemaOptions
 );
