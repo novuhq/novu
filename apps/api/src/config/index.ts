@@ -14,7 +14,7 @@ const envFileMapper = {
 };
 const selectedEnvFile = envFileMapper[process.env.NODE_ENV as any] || '.env';
 
-let pathToDotEnv = `${__dirname}/${process.env.E2E_RUNNER ? '..' : 'src'}/${selectedEnvFile}`;
+let pathToDotEnv = `${__dirname}/${process.env.E2E_RUNNER ? '..' : '../../src'}/${selectedEnvFile}`;
 if (process.env.MIGRATION) {
   pathToDotEnv = path.join(__dirname, `../${selectedEnvFile}`);
 }

@@ -2,6 +2,8 @@
   "collection": "@nestjs/schematics",
   "sourceRoot": "src",
   "compilerOptions": {
+    "builder": "swc",
+    "typeCheck": true,
     "assets": [
       {
         "include": ".env",
@@ -28,8 +30,7 @@
           "introspectComments": true
         }
       }
-    ],
-    "webpack": true
+    ]
   },
   "projects": {
     "dal": {
