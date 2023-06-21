@@ -30,21 +30,24 @@ import { GetTenantCommand } from './usecases/get-tenant/get-tenant.command';
 @UseGuards(JwtAuthGuard)
 @ApiExcludeController()
 export class TenantController {
-  constructor(private CreateTenantUsecase: CreateTenant, private getTenantUsecase: GetTenant) {}
+  constructor(private createTenantUsecase: CreateTenant, private getTenantUsecase: GetTenant) {}
 
-  @Get('/:tenantId')
+  @Get('/:identifier')
   @ApiResponse(GetTenantResponseDto)
   @ApiOperation({
     summary: 'Get tenant',
     description: `Get tenant by your internal id used to identify the tenant`,
   })
   @ExternalApiAccessible()
-  getTenantById(@UserSession() user: IJwtPayload, @Param('tenantId') tenantId: string): Promise<GetTenantResponseDto> {
+  getTenantById(
+    @UserSession() user: IJwtPayload,
+    @Param('identifier') identifier: string
+  ): Promise<GetTenantResponseDto> {
     return this.getTenantUsecase.execute(
       GetTenantCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
-        id: tenantId,
+        identifier: identifier,
       })
     );
   }
@@ -60,14 +63,14 @@ export class TenantController {
     @UserSession() user: IJwtPayload,
     @Body() body: CreateTenantRequestDto
   ): Promise<CreateTenantResponseDto> {
-    const command = CreateTenantCommand.create({
-      environmentId: user.environmentId,
-      organizationId: user.organizationId,
-      identifier: body.identifier,
-      name: body.name,
-      data: body.data,
-    });
-
-    return await this.CreateTenantUsecase.execute(command);
+    return await this.createTenantUsecase.execute(
+      CreateTenantCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        identifier: body.identifier,
+        name: body.name,
+        data: body.data,
+      })
+    );
   }
 }
