@@ -8,7 +8,6 @@ const tenantSchema = new Schema<TenantDBModel>(
   {
     identifier: Schema.Types.String,
     name: Schema.Types.String,
-    deleted: Schema.Types.Boolean,
     data: Schema.Types.Mixed,
     _environmentId: {
       type: Schema.Types.ObjectId,
@@ -32,10 +31,13 @@ tenantSchema.index({
  *    identifier: command.identifier,
  *  });
  */
-tenantSchema.index({
-  identifier: 1,
-  _environmentId: 1,
-});
+tenantSchema.index(
+  {
+    identifier: 1,
+    _environmentId: 1,
+  },
+  { unique: true }
+);
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const Tenant =
