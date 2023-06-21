@@ -12,6 +12,7 @@ export {
   IEmailBlock,
   TextAlignEnum,
   EmailBlockTypeEnum,
+  StepTypeEnum,
 } from '@novu/shared';
 
 export * from './lib/novu';

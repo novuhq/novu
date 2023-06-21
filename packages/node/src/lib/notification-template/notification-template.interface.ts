@@ -1,4 +1,8 @@
-import { INotificationTemplateStep, IPreferenceChannels } from '@novu/shared';
+import {
+  IMessageTemplate,
+  INotificationTemplateStep,
+  IPreferenceChannels,
+} from '@novu/shared';
 
 export interface INotificationTemplates {
   create(data: INotificationTemplatePayload);
@@ -8,12 +12,22 @@ export interface INotificationTemplates {
   updateStatus(templateId: string, active: boolean);
 }
 
+interface IMessageTemplateModified
+  extends Omit<IMessageTemplate, '_feedId' | '_layoutId'> {
+  feedId?: string;
+  layoutId?: string;
+}
+
+interface INotificationTemplateStepModified extends INotificationTemplateStep {
+  template: IMessageTemplateModified;
+}
+
 export interface INotificationTemplatePayload {
   name: string;
   notificationGroupId: string;
   tags?: string[];
   description?: string;
-  steps?: INotificationTemplateStep[];
+  steps?: INotificationTemplateStepModified[];
   active?: boolean;
   draft?: boolean;
   critical?: boolean;
