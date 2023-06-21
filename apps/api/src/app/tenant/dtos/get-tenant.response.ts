@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { TenantCustomData } from '@novu/shared';
 
-export class CreateTenantResponseDto {
+export class GetTenantResponseDto {
   @ApiProperty()
   _id: string;
 

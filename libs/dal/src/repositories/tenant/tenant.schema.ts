@@ -8,8 +8,6 @@ const tenantSchema = new Schema<TenantDBModel>(
   {
     identifier: Schema.Types.String,
     name: Schema.Types.String,
-    deleted: Schema.Types.Boolean,
-    createdAt: Schema.Types.String,
     data: Schema.Types.Mixed,
     _environmentId: {
       type: Schema.Types.ObjectId,
