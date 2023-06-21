@@ -1,0 +1,101 @@
+import { expect } from 'chai';
+import axios, { AxiosResponse } from 'axios';
+
+import { UserSession } from '@novu/testing';
+import { TenantRepository } from '@novu/dal';
+
+describe('Update Tenant - /tenants/:tenantId (PUT)', function () {
+  let session: UserSession;
+  const tenantRepository = new TenantRepository();
+
+  beforeEach(async () => {
+    session = new UserSession();
+    await session.initialize();
+  });
+
+  it('should update tenant', async function () {
+    await tenantRepository.create({
+      _environmentId: session.environment._id,
+      identifier: 'identifier_123',
+      name: 'name_123',
+      data: { test1: 'test value1', test2: 'test value2' },
+    });
+
+    await updateTenant({
+      session,
+      identifier: 'identifier_123',
+      newIdentifier: 'newIdentifier',
+      name: 'new_name',
+      data: { test1: 'new value', test2: 'new value2' },
+    });
+
+    const updatedTenant = await tenantRepository.findOne({
+      _environmentId: session.environment._id,
+      identifier: 'newIdentifier',
+    });
+
+    expect(updatedTenant?.name).to.equal('new_name');
+    expect(updatedTenant?.identifier).to.equal('newIdentifier');
+    expect(updatedTenant?.data).to.deep.equal({ test1: 'new value', test2: 'new value2' });
+  });
+
+  it('should not be able to update to already existing identifier (in the same environment)', async function () {
+    await tenantRepository.create({
+      _environmentId: session.environment._id,
+      identifier: 'identifier_123',
+    });
+
+    await tenantRepository.create({
+      _environmentId: session.environment._id,
+      identifier: 'identifier_456',
+    });
+
+    try {
+      await updateTenant({
+        session,
+        identifier: 'identifier_123',
+        newIdentifier: 'identifier_456',
+      });
+
+      expectedException();
+    } catch (e) {
+      expect(e?.response?.data?.message || e?.message).to.contains(
+        `Tenant with identifier: identifier_456 already exists under environment ${session.environment._id}`
+      );
+    }
+  });
+});
+
+const expectedException = () => {
+  throw new Error('missing exception in the try/catch block');
+};
+
+export async function updateTenant({
+  session,
+  identifier,
+  newIdentifier,
+  name,
+  data,
+}: {
+  session;
+  identifier?: string;
+  newIdentifier?: string;
+  name?: string;
+  data?: any;
+}): Promise<AxiosResponse> {
+  const axiosInstance = axios.create();
+
+  return await axiosInstance.put(
+    `${session.serverUrl}/v1/tenants/${identifier}`,
+    {
+      identifier: newIdentifier,
+      name: name,
+      data: data,
+    },
+    {
+      headers: {
+        authorization: `ApiKey ${session.apiKey}`,
+      },
+    }
+  );
+}
