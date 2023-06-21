@@ -7,6 +7,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -32,6 +33,11 @@ import { DeleteTenantCommand } from './usecases/delete-tenant/delete-tenant.comm
 import { DeleteTenantResponseDto } from './dtos/delete-tenant.response.dto';
 import { DeleteTenant } from './usecases/delete-tenant/delete-tenant.usecase';
 import { UpdateTenantCommand } from './usecases/update-tenant/update-tenant.command';
+import { ApiOkPaginatedResponse } from '../shared/framework/paginated-ok-response.decorator';
+import { PaginatedResponseDto } from '../shared/dtos/pagination-response';
+import { GetTenantsRequestDto } from './dtos/get-tenants.request.dto';
+import { GetTenants } from './usecases/get-tenants/get-tenants.usecase';
+import { GetTenantsCommand } from './usecases/get-tenants/get-tenants.command';
 
 @Controller('/tenants')
 @ApiTags('Tenants')
@@ -43,8 +49,31 @@ export class TenantController {
     private createTenantUsecase: CreateTenant,
     private updateTenantUsecase: UpdateTenant,
     private getTenantUsecase: GetTenant,
-    private deleteTenantUsecase: DeleteTenant
+    private deleteTenantUsecase: DeleteTenant,
+    private getTenantsUsecase: GetTenants
   ) {}
+
+  @Get('')
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  @ApiOkPaginatedResponse(GetTenantResponseDto)
+  @ApiOperation({
+    summary: 'Get tenants',
+    description: 'Returns a list of tenants, could paginated using the `page` and `limit` query parameter',
+  })
+  async getTenants(
+    @UserSession() user: IJwtPayload,
+    @Query() query: GetTenantsRequestDto
+  ): Promise<PaginatedResponseDto<GetTenantResponseDto>> {
+    return await this.getTenantsUsecase.execute(
+      GetTenantsCommand.create({
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+        page: query.page ? Number(query.page) : 0,
+        limit: query.limit ? Number(query.limit) : 10,
+      })
+    );
+  }
 
   @Get('/:identifier')
   @ApiResponse(GetTenantResponseDto)
