@@ -808,6 +808,12 @@ interface ISocket {
 }
 ```
 
+| Event                 | Description                                              |
+| --------------------- | -------------------------------------------------------- |
+| notification_received | Triggered when a new notification is received            |
+| unseen_count_changed  | Triggered when the count of unseen notifications changes |
+| unread_count_changed  | Triggered when the count of unread notifications changes |
+
 ## useNovuContext
 
 The hook that allows you to get the reference to the `NovuProvider` context.
