@@ -18,10 +18,9 @@ export class GetMyEnvironments {
         return environment;
       }
 
-      return {
-        ...environment,
-        apiKeys: [],
-      };
+      environment.apiKeys = [];
+
+      return environment;
     });
   }
 }
