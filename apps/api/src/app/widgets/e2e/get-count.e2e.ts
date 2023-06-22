@@ -137,12 +137,6 @@ describe('Count - GET /widget/notifications/count', function () {
 
     await session.awaitRunningJobs(template._id);
 
-    const messages = await messageRepository.findBySubscriberChannel(
-      session.environment._id,
-      subscriberProfile!._id,
-      ChannelTypeEnum.IN_APP
-    );
-
     try {
       await getFeedCount({ seen: false, limit: 0 });
       throw new Error('Exception should have been thrown');
@@ -160,18 +154,18 @@ describe('Count - GET /widget/notifications/count', function () {
     unseenCount = (await getFeedCount({ seen: false, limit: 4 })).data.count;
     expect(unseenCount).to.equal(3);
 
-    unseenCount = (await getFeedCount({ seen: false, limit: 999 })).data.count;
+    unseenCount = (await getFeedCount({ seen: false, limit: 99 })).data.count;
     expect(unseenCount).to.equal(3);
 
-    unseenCount = (await getFeedCount({ seen: false, limit: 1000 })).data.count;
+    unseenCount = (await getFeedCount({ seen: false, limit: 100 })).data.count;
     expect(unseenCount).to.equal(3);
 
     try {
-      await getFeedCount({ seen: false, limit: 1001 });
+      await getFeedCount({ seen: false, limit: 101 });
       throw new Error('Exception should have been thrown');
     } catch (e) {
       const message = Array.isArray(e.response.data.message) ? e.response.data.message[0] : e.response.data.message;
-      expect(message).to.equal('limit must not be greater than 1000');
+      expect(message).to.equal('limit must not be greater than 100');
     }
   });
 
@@ -216,18 +210,18 @@ describe('Count - GET /widget/notifications/count', function () {
     unseenCount = (await getFeedCount({ seen: false, limit: '2' })).data.count;
     expect(unseenCount).to.equal(2);
 
-    unseenCount = (await getFeedCount({ seen: false, limit: '999' })).data.count;
+    unseenCount = (await getFeedCount({ seen: false, limit: '99' })).data.count;
     expect(unseenCount).to.equal(2);
 
-    unseenCount = (await getFeedCount({ seen: false, limit: '1000' })).data.count;
+    unseenCount = (await getFeedCount({ seen: false, limit: '100' })).data.count;
     expect(unseenCount).to.equal(2);
 
     try {
-      await getFeedCount({ seen: false, limit: '1001' });
+      await getFeedCount({ seen: false, limit: '101' });
       throw new Error('Exception should have been thrown');
     } catch (e) {
       const message = Array.isArray(e.response.data.message) ? e.response.data.message[0] : e.response.data.message;
-      expect(message).to.equal('limit must not be greater than 1000');
+      expect(message).to.equal('limit must not be greater than 100');
     }
   });
 
