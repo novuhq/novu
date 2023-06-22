@@ -81,7 +81,7 @@ export class MetricQueueActiveService extends QueueService<Record<string, never>
             const delayedCount = await queueService.bullMqService.queue.getDelayedCount();
             const activeCount = await queueService.bullMqService.queue.getActiveCount();
 
-            if (process.env.NOVU_MANAGED_SERVICE === 'true' && process.env.NEW_RELIC_LICENSE_KEY.length !== 0) {
+            if (process.env.NOVU_MANAGED_SERVICE === 'true' && process.env.NEW_RELIC_LICENSE_KEY) {
               Logger.verbose('active length', process.env.NEW_RELIC_LICENSE_KEY.length);
               Logger.log('Recording active, waiting, and delayed metrics');
 
