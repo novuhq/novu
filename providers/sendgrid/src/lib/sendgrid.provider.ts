@@ -77,6 +77,7 @@ export class SendgridEmailProvider implements IEmailProvider {
       html: options.html,
       subject: options.subject,
       substitutions: {},
+      category: options.notificationDetails?.workflowIdentifier,
       customArgs: {
         id: options.id,
         novuTransactionId: options.notificationDetails?.transactionId,
