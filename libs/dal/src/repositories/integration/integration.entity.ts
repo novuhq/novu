@@ -48,6 +48,10 @@ export class IntegrationEntity {
 
   active: boolean;
 
+  name?: string;
+
+  identifier?: string;
+
   deleted: boolean;
 
   deletedAt: string;
