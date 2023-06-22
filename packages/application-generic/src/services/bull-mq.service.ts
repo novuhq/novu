@@ -155,19 +155,13 @@ export class BullMqService {
     };
   }
 
-  private async pauseBullMqService(): Promise<void> {
-    if (this._queue) {
-      await this._queue.pause();
-    }
+  public async pauseWorker(): Promise<void> {
     if (this._worker) {
       await this._worker.pause();
     }
   }
 
-  private async resumeBullMqService(): Promise<void> {
-    if (this._queue) {
-      await this._queue.resume();
-    }
+  public async resumeWorker(): Promise<void> {
     if (this._worker) {
       await this._worker.resume();
     }

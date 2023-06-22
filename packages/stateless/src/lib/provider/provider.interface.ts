@@ -22,6 +22,7 @@ export interface IEmailOptions {
   bcc?: string[];
   payloadDetails?: any;
   notificationDetails?: any;
+  ipPoolName?: string;
 }
 
 export interface ISmsOptions {

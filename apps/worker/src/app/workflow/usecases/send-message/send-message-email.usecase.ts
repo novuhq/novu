@@ -244,7 +244,7 @@ export class SendMessageEmail extends SendMessageBase {
         id: message._id,
         replyTo: replyToAddress,
       },
-      command.overrides?.email || {}
+      overrides || {}
     );
 
     if (command.overrides?.email?.replyTo) {
@@ -468,6 +468,7 @@ export const createMailData = (options: IEmailOptions, overrides: Record<string,
     text: overrides?.text,
     cc: overrides?.cc || [],
     bcc: overrides?.bcc || [],
+    ipPoolName: overrides?.ipPoolName,
   };
 };
 
