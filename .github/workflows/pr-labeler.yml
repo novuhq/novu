@@ -12,6 +12,7 @@ jobs:
       - uses: actions/labeler@v4
         with:
           repo-token: "${{ secrets.GITHUB_TOKEN }}"
+
       - name: Run pull request stats
         uses: flowwer-dev/pull-request-stats@master
 
@@ -24,18 +25,3 @@ jobs:
           growth-rate: 2.0
           test-factor: 0.5
         continue-on-error: true
-
-#      - uses: "pascalgn/size-label-action@v0.4.2"
-#        env:
-#          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-#        with:
-#          sizes: >
-#            {
-#              "0": "XS",
-#              "50": "S",
-#              "100": "M",
-#              "250": "L",
-#              "500": "XL",
-#              "1000": "XXL"
-#            }
-
