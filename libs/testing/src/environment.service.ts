@@ -1,14 +1,27 @@
 import { faker } from '@faker-js/faker';
 import { EnvironmentRepository, EnvironmentEntity } from '@novu/dal';
+import { v4 as uuid } from 'uuid';
 
 export class EnvironmentService {
   private environmentRepository = new EnvironmentRepository();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async createEnvironment(organizationId: any, name?: string) {
+  async createEnvironment(
+    organizationId: string,
+    userId: string,
+    name?: string,
+    parentId?: string
+  ): Promise<EnvironmentEntity> {
     return await this.environmentRepository.create({
+      identifier: uuid(),
       name: name ?? faker.name.jobTitle(),
       _organizationId: organizationId,
+      ...(parentId && { _parentId: parentId }),
+      apiKeys: [
+        {
+          key: uuid(),
+          _userId: userId,
+        },
+      ],
     });
   }
 
@@ -30,7 +43,7 @@ export class EnvironmentService {
     return environment;
   }
 
-  async getProductionEnvironment(organizationId: any) {
+  async getProductionEnvironment(organizationId: string) {
     const environment = await this.environmentRepository.findOne({
       _organizationId: organizationId,
       name: 'Production',
