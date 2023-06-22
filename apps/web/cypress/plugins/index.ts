@@ -69,7 +69,7 @@ module.exports = (on, config) => {
       await dal.connect('mongodb://localhost:27017/novu-test');
 
       const userService = new UserService();
-      await userService.createTestUser();
+      await userService.createCypressTestUser();
 
       return true;
     },

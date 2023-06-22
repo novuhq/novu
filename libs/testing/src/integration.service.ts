@@ -1,10 +1,10 @@
-import { IntegrationRepository } from '@novu/dal';
-import { ChannelTypeEnum } from '@novu/shared';
+import { EnvironmentEntity, IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 
 export class IntegrationService {
   private integrationRepository = new IntegrationRepository();
 
-  async createIntegration(environmentId: string, organizationId: string) {
+  async createChannelIntegrations(environmentId: string, organizationId: string) {
     const mailPayload = {
       _environmentId: environmentId,
       _organizationId: organizationId,
@@ -58,5 +58,18 @@ export class IntegrationService {
     };
 
     await this.integrationRepository.create(pushFcmPayload);
+
+    const inAppPayload = {
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      providerId: InAppProviderIdEnum.Novu,
+      channel: ChannelTypeEnum.IN_APP,
+      credentials: {
+        hmac: false,
+      },
+      active: true,
+    };
+
+    await this.integrationRepository.create(inAppPayload);
   }
 }
