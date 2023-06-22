@@ -6,7 +6,7 @@ import PageContainer from '../../components/layout/components/PageContainer';
 import PageHeader from '../../components/layout/components/PageHeader';
 import { colors, Table, withCellLoading } from '../../design-system';
 import { IExtendedColumn } from '../../design-system/table/Table';
-import { useIntegrations } from '../../hooks';
+import { useIntegrations, useIsIntegrationsListPageEnabled } from '../../hooks';
 import { IntegrationsListToolbar } from './components/IntegrationsListToolbar';
 import { useFetchEnvironments } from '../../hooks/useFetchEnvironments';
 import { IntegrationNameCell } from './components/IntegrationNameCell';
@@ -17,6 +17,7 @@ import { IntegrationStatusCell } from './components/IntegrationStatusCell';
 import { When } from '../../components/utils/When';
 import { IntegrationsListNoData } from './components/IntegrationsListNoData';
 import { mapToTableIntegration } from './utils';
+import { IntegrationsStore } from './IntegrationsStorePage';
 
 const Text = styled.span`
   color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.white : colors.B40)};
@@ -35,9 +36,12 @@ const columns: IExtendedColumn<ITableIntegration>[] = [
   {
     accessor: 'provider',
     Header: 'Provider',
-    Cell: withCellLoading(({ row: { original } }) => {
-      return <Text>{original.provider}</Text>;
-    }),
+    Cell: withCellLoading(
+      ({ row: { original } }) => {
+        return <Text data-test-id="integration-provider-cell">{original.provider}</Text>;
+      },
+      { loadingTestId: 'integration-provider-cell-loading' }
+    ),
   },
   {
     accessor: 'channel',
@@ -58,7 +62,7 @@ const columns: IExtendedColumn<ITableIntegration>[] = [
   },
 ];
 
-export const IntegrationsListPage = () => {
+const IntegrationsList = () => {
   const { environments, isLoading: areEnvironmentsLoading } = useFetchEnvironments();
   const { integrations, loading: areIntegrationsLoading } = useIntegrations();
   const isLoading = areEnvironmentsLoading || areIntegrationsLoading;
@@ -69,10 +73,12 @@ export const IntegrationsListPage = () => {
   );
 
   const onRowClickCallback = useCallback((item) => {
+    // eslint-disable-next-line no-console
     console.log('onRowClickCallback', item);
   }, []);
 
   const onChannelClickCallback = useCallback((item) => {
+    // eslint-disable-next-line no-console
     console.log('onChannelClickCallback', item);
   }, []);
 
@@ -96,4 +102,10 @@ export const IntegrationsListPage = () => {
       </When>
     </PageContainer>
   );
+};
+
+export const IntegrationsListPage = () => {
+  const isIntegrationsListPageEnabled = useIsIntegrationsListPageEnabled();
+
+  return isIntegrationsListPageEnabled ? <IntegrationsList /> : <IntegrationsStore />;
 };

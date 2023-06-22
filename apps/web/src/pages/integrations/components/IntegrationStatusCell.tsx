@@ -33,11 +33,13 @@ const IntegrationStatus = ({ row: { original } }: IExtendedCellProps<ITableInteg
   const status = original.active ? 'Active' : 'Disabled';
 
   return (
-    <StatusHolder data-disabled={status === 'Disabled'}>
+    <StatusHolder data-disabled={status === 'Disabled'} data-test-id="integration-status-cell">
       <StatusIcon icon={STATUS_TO_ICON[status] as any} />
       <StatusName>{status}</StatusName>
     </StatusHolder>
   );
 };
 
-export const IntegrationStatusCell = withCellLoading(IntegrationStatus);
+export const IntegrationStatusCell = withCellLoading(IntegrationStatus, {
+  loadingTestId: 'integration-status-cell-loading',
+});

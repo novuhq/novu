@@ -12,7 +12,7 @@ const ButtonHolder = styled.div`
   gap: 8px;
 `;
 
-const ReactangleButton = styled(Button)`
+const RectangleButton = styled(Button)`
   width: 24px;
   max-width: 24px;
   height: 24px;
@@ -44,10 +44,10 @@ export const IntegrationsListToolbar = ({ areIntegrationsLoading }: { areIntegra
   return (
     <IntegrationsListToolbarHolder>
       <ButtonHolder>
-        <ReactangleButton id="add-provider" disabled={areIntegrationsLoading}>
+        <RectangleButton id="add-provider" disabled={areIntegrationsLoading} data-test-id="add-provider">
           +
-        </ReactangleButton>
-        <Label htmlFor="add-provider">
+        </RectangleButton>
+        <Label htmlFor="add-provider" data-test-id="add-provider-label">
           <Text gradient>Add a provider</Text>
         </Label>
       </ButtonHolder>

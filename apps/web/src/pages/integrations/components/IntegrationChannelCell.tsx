@@ -23,11 +23,13 @@ const Text = styled.span`
 
 const IntegrationChannel = ({ row: { original } }: IExtendedCellProps<ITableIntegration>) => {
   return (
-    <ChannelCellHolder>
+    <ChannelCellHolder data-test-id="integration-channel-cell">
       <IconStyled icon={CHANNEL_TYPE_TO_ICON[original.channelType] as any} />
       <Text>{original.channel}</Text>
     </ChannelCellHolder>
   );
 };
 
-export const IntegrationChannelCell = withCellLoading(IntegrationChannel);
+export const IntegrationChannelCell = withCellLoading(IntegrationChannel, {
+  loadingTestId: 'integration-channel-cell-loading',
+});

@@ -3,8 +3,12 @@ import { IEnvironment, providers } from '@novu/shared';
 import { IntegrationEntity } from './IntegrationsStorePage';
 import { CONTEXT_PATH } from '../../config';
 import { CHANNEL_TYPE_TO_STRING } from '../../utils/channels';
+import type { ITableIntegration } from './types';
 
-export const mapToTableIntegration = (integration: IntegrationEntity, environments?: IEnvironment[]) => {
+export const mapToTableIntegration = (
+  integration: IntegrationEntity,
+  environments?: IEnvironment[]
+): ITableIntegration => {
   const provider = providers.find((el) => el.id === integration.providerId);
   const logoFileName = provider?.logoFileName
     ? {
@@ -19,8 +23,8 @@ export const mapToTableIntegration = (integration: IntegrationEntity, environmen
 
   return {
     name: `${integration.providerId.charAt(0).toUpperCase()}${integration.providerId.slice(1)}`,
-    // TODO: change to identyficator when it will be available
-    identyficator: integration._id ?? '',
+    // TODO: change to identifier when it will be available
+    identifier: integration._id ?? '',
     provider: `${integration.providerId.charAt(0).toUpperCase()}${integration.providerId.slice(1)}`,
     channel: CHANNEL_TYPE_TO_STRING[integration.channel],
     channelType: integration.channel,

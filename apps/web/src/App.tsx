@@ -48,7 +48,6 @@ import { SnippetPage } from './pages/templates/components/SnippetPage';
 import { TemplateEditor } from './pages/templates/components/TemplateEditor';
 import { ProvidersPage } from './pages/templates/components/ProvidersPage';
 import { InAppSuccess } from './pages/quick-start/steps/InAppSuccess';
-// import { IntegrationsStore } from './pages/integrations/IntegrationsStorePage';
 import { IntegrationsListPage } from './pages/integrations/IntegrationsListPage';
 
 library.add(far, fas);
@@ -206,7 +205,6 @@ function App() {
                   <Route path={ROUTES.QUICK_START_SETUP_SUCCESS} element={<InAppSuccess />} />
                   <Route path={ROUTES.ACTIVITIES} element={<ActivitiesPage />} />
                   <Route path={ROUTES.SETTINGS} element={<SettingsPage />} />
-                  {/* <Route path={ROUTES.INTEGRATIONS} element={<IntegrationsStore />} /> */}
                   <Route path={ROUTES.INTEGRATIONS} element={<IntegrationsListPage />} />
                   <Route path={ROUTES.TEAM} element={<MembersInvitePage />} />
                   <Route path={ROUTES.CHANGES} element={<PromoteChangesPage />} />

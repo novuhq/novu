@@ -35,9 +35,12 @@ const Free = styled.span`
   min-width: fit-content;
 `;
 
-const Identyficator = styled.span`
+const Identifier = styled.span`
   color: ${colors.B40};
   font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
 `;
 
 const Image = styled.img`
@@ -50,7 +53,7 @@ export const IntegrationNameCell = ({ row: { original }, isLoading }: IExtendedC
   const { colorScheme } = useMantineColorScheme();
   if (isLoading) {
     return (
-      <CellHolder>
+      <CellHolder data-test-id="integration-name-cell-loading">
         <Skeleton width={24} height={24} />
         <DetailsHolder>
           <NameHolder>
@@ -63,14 +66,14 @@ export const IntegrationNameCell = ({ row: { original }, isLoading }: IExtendedC
   }
 
   return (
-    <CellHolder>
+    <CellHolder data-test-id="integration-name-cell">
       <Image src={original.logoFileName[`${colorScheme}`]} alt={original.name} />
       <DetailsHolder>
         <NameHolder>
           <Text>{original.name}</Text>
           {original.provider.toLowerCase().includes('novu') && <Free>🎉 Free</Free>}
         </NameHolder>
-        <Identyficator>Key: {original.name}</Identyficator>
+        <Identifier>Key: {original.identifier}</Identifier>
       </DetailsHolder>
     </CellHolder>
   );

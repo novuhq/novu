@@ -26,11 +26,13 @@ const EnvironmentIcon = styled(FontAwesomeIcon)`
 
 const IntegrationEnvironment = ({ row: { original } }: IExtendedCellProps<ITableIntegration>) => {
   return (
-    <EnvironmentPillHolder>
+    <EnvironmentPillHolder data-test-id="integration-environment-cell">
       <EnvironmentIcon icon={original.environment.toLowerCase() === 'production' ? 'rocket' : 'tools'} />
       <EnvironmentName>{original.environment}</EnvironmentName>
     </EnvironmentPillHolder>
   );
 };
 
-export const IntegrationEnvironmentCell = withCellLoading(IntegrationEnvironment);
+export const IntegrationEnvironmentCell = withCellLoading(IntegrationEnvironment, {
+  loadingTestId: 'integration-environment-cell-loading',
+});

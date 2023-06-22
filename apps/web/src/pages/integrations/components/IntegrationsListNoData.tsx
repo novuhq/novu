@@ -51,7 +51,8 @@ export const IntegrationsListNoData = ({ onChannelClick }: IntegrationsListNoDat
       <CardsContainer>
         {CHANNELS_ORDER.map((channel) => (
           <CardTile
-            data-test-id="integration-channel-card"
+            key={channel}
+            data-test-id={`integration-channel-card-${channel}`}
             onClick={() => {
               onChannelClick(channel);
             }}

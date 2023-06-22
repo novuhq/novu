@@ -2,7 +2,7 @@ import type { ChannelTypeEnum, IProviderConfig } from '@novu/shared';
 
 export interface ITableIntegration {
   name: string;
-  identyficator: string;
+  identifier: string;
   provider: string;
   channel: string;
   channelType: ChannelTypeEnum;
