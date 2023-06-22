@@ -123,7 +123,7 @@ export class CredentialsDto implements ICredentials {
   redirectUrl?: string;
 
   @ApiPropertyOptional()
-  @IsString()
+  @IsBoolean()
   @IsOptional()
   hmac?: boolean;
 
