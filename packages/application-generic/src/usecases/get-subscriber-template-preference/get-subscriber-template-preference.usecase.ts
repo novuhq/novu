@@ -21,6 +21,8 @@ import { GetSubscriberTemplatePreferenceCommand } from './get-subscriber-templat
 import { ApiException } from '../../utils/exceptions';
 import { CachedEntity, buildSubscriberKey } from '../../services';
 
+const PRIORITY_ORDER = ['template', 'subscriber'];
+
 @Injectable()
 export class GetSubscriberTemplatePreference {
   constructor(
@@ -50,24 +52,23 @@ export class GetSubscriberTemplatePreference {
         _templateId: command.template._id,
       });
 
-    const templateConfiguration = mapTemplateConfiguration(command.template);
-    const templatePreferred = subscriberPreference?.enabled ?? true;
     const subscriberChannelPreference = subscriberPreference?.channels;
     const templateChannelPreference = command.template.preferenceSettings;
 
-    const { channelPreferences, overrides } =
-      this.getChannelPreferenceAndOverrides(
-        templateChannelPreference,
-        subscriberChannelPreference,
-        initialActiveChannels
-      );
+    const { channels, overrides } = overridePreferences(
+      {
+        template: templateChannelPreference,
+        subscriber: subscriberChannelPreference,
+      },
+      initialActiveChannels
+    );
 
     return {
-      template: templateConfiguration,
+      template: mapTemplateConfiguration(command.template),
       preference: {
-        enabled: templatePreferred,
-        channels: channelPreferences,
-        overrides: overrides,
+        enabled: subscriberPreference?.enabled ?? true,
+        channels,
+        overrides,
       },
     };
   }
@@ -88,22 +89,6 @@ export class GetSubscriberTemplatePreference {
     );
 
     return initialActiveChannels;
-  }
-
-  private getChannelPreferenceAndOverrides(
-    templateChannelPreference,
-    subscriberChannelPreference,
-    initialActiveChannels: IPreferenceChannels
-  ) {
-    const { preferences, overrides } = determineOverrides(
-      {
-        template: templateChannelPreference,
-        subscriber: subscriberChannelPreference,
-      },
-      initialActiveChannels
-    );
-
-    return { channelPreferences: preferences, overrides };
   }
 
   private async queryActiveChannels(
@@ -189,80 +174,51 @@ function updateOverrideReasons(
   }
 }
 
-export function determineOverrides(
-  preferenceSources: Record<'template' | 'subscriber', IPreferenceChannels>,
-  initialActiveChannels: IPreferenceChannels
-) {
-  const priorityOrder = ['template', 'subscriber'];
-
-  let result: {
-    overrideReasons: IPreferenceOverride[];
-    preferences: IPreferenceChannels;
-  } = {
-    overrideReasons: [],
-    preferences: { ...initialActiveChannels },
-  };
-
-  result = overridePreferenceBySourcePriority(
-    priorityOrder,
-    preferenceSources,
-    result
-  );
-
-  return {
-    preferences: result.preferences,
-    overrides: result.overrideReasons,
-  };
-}
-
 function overridePreference(
   oldPreferenceState: {
-    overrideReasons: IPreferenceOverride[];
-    preferences: IPreferenceChannels;
+    overrides: IPreferenceOverride[];
+    channels: IPreferenceChannels;
   },
   sourcePreference: IPreferenceChannels,
   sourceName: string
 ) {
-  const resultPreferences = { ...oldPreferenceState.preferences };
-  const resultOverrideReasons = [...oldPreferenceState.overrideReasons];
+  const channels = { ...oldPreferenceState.channels };
+  const overrides = [...oldPreferenceState.overrides];
 
   for (const [channelName, channelValue] of Object.entries(sourcePreference)) {
-    if (typeof resultPreferences[channelName] !== 'boolean') continue;
+    if (typeof channels[channelName] !== 'boolean') continue;
 
-    const index = resultOverrideReasons.findIndex(
+    const index = overrides.findIndex(
       (overrideReason) => overrideReason.channel === channelName
     );
 
-    const isSameReason = resultOverrideReasons[index]?.source !== channelValue;
+    const isSameReason = overrides[index]?.source !== channelValue;
 
     if (!isSameReason) continue;
 
-    resultPreferences[channelName] = channelValue;
-    updateOverrideReasons(
-      channelName,
-      sourceName,
-      index,
-      resultOverrideReasons
-    );
+    channels[channelName] = channelValue;
+    updateOverrideReasons(channelName, sourceName, index, overrides);
   }
 
   return {
-    preferences: resultPreferences,
-    overrideReasons: resultOverrideReasons,
+    channels,
+    overrides,
   };
 }
 
-function overridePreferenceBySourcePriority(
-  priorityOrder: string[],
+export function overridePreferences(
   preferenceSources: Record<'template' | 'subscriber', IPreferenceChannels>,
-  oldPreferenceState: {
-    overrideReasons: IPreferenceOverride[];
-    preferences: IPreferenceChannels;
-  }
+  initialActiveChannels: IPreferenceChannels
 ) {
-  let result = { ...oldPreferenceState };
+  let result: {
+    overrides: IPreferenceOverride[];
+    channels: IPreferenceChannels;
+  } = {
+    overrides: [],
+    channels: { ...initialActiveChannels },
+  };
 
-  for (const sourceName of priorityOrder) {
+  for (const sourceName of PRIORITY_ORDER) {
     const sourcePreference = preferenceSources[
       sourceName
     ] as IPreferenceChannels;

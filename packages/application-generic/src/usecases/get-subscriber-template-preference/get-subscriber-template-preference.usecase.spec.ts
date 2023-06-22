@@ -1,10 +1,10 @@
 import {
-  determineOverrides,
+  overridePreferences,
   filteredPreference,
 } from './get-subscriber-template-preference.usecase';
 import { ChannelTypeEnum } from '@novu/shared';
 
-describe('determineOverrides', function () {
+describe('overridePreferences', function () {
   beforeEach(function () {});
 
   it('should be overridden by the subscribers preference', async function () {
@@ -21,7 +21,7 @@ describe('determineOverrides', function () {
       push: false,
     };
 
-    const { preferences, overrides } = determineOverrides(
+    const { channels, overrides } = overridePreferences(
       {
         template: templateChannelPreference,
         subscriber: subscriberChannelPreference,
@@ -43,7 +43,7 @@ describe('determineOverrides', function () {
       push: false,
     };
 
-    expect(preferences).toEqual(expectedPreferenceResult);
+    expect(channels).toEqual(expectedPreferenceResult);
     expect(
       overrides.find((override) => override.channel === 'email').source
     ).toEqual('subscriber');
@@ -71,7 +71,7 @@ describe('determineOverrides', function () {
     };
     const subscriberChannelPreference = {};
 
-    const { preferences, overrides } = determineOverrides(
+    const { channels, overrides } = overridePreferences(
       {
         template: templateChannelPreference,
         subscriber: subscriberChannelPreference,
@@ -93,7 +93,7 @@ describe('determineOverrides', function () {
       push: true,
     };
 
-    expect(preferences).toEqual(expectedPreferenceResult);
+    expect(channels).toEqual(expectedPreferenceResult);
     expect(
       overrides.find((override) => override.channel === 'email').source
     ).toEqual('template');
