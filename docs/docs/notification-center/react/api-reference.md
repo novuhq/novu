@@ -363,6 +363,7 @@ interface INotificationsContext {
   markAllNotificationsAsRead: () => void;
   markAllNotificationsAsSeen: () => void;
   removeMessage: (messageId: string) => void;
+  removeAllMessages: (feedId?: string) => void;
 }
 ```
 
@@ -387,6 +388,7 @@ interface INotificationsContext {
 | markAllNotificationsAsRead     | function                                                    | The function allowing you to mark all notifications as read.                                                                  |
 | markAllNotificationsAsSeen     | function                                                    | The function allowing you to mark notifications as seen.                                                                      |
 | removeMessage                  | function                                                    | The function allowing you to delete a notification.                                                                           |
+| removeAllMessages              | function                                                    | The function allowing you to delete all feeds notifications or specific feed's all notification at once.                      |
 
 You can find more information about the `IMessage` interface [here](./api-reference#the-notification-imessage-model).
 
@@ -784,6 +786,47 @@ interface IRemoveNotificationVariables {
 
 interface IUseRemoveNotificationResult {
   removeNotification: (args: IRemoveNotificationVariables) => void;
+  isLoading: boolean;
+  isError: boolean;
+  error?: Error;
+  // ... many more from the react-query useMutation hook result
+}
+```
+
+## useRemoveAllNotifications
+
+The hook that allows you to remove all messages of all feeds. feedId can be used as param to delete only specific feed's messages.
+
+```ts
+const onSuccess = (data: IMessage) => {};
+
+const onError = (error: Error) => {};
+
+const { removeAllNotifications, isLoading, isError, error } = useRemoveAllNotifications({
+  onSuccess,
+  onError,
+});
+```
+
+### The hook args interface
+
+```ts
+interface IUseRemoveAllNotificationsArgs {
+  onSuccess?: (data: IMessage) => void;
+  onError?: (error: Error) => void;
+  // ... many more from the react-query useMutation hook
+}
+```
+
+### The hook return interface
+
+```ts
+interface IRemoveAllNotificationsVariables {
+  feedId?: string;
+}
+
+interface IUseRemoveAllNotificationsResult {
+  removeAllNotifications: (args: IRemoveAllNotificationsVariables) => void;
   isLoading: boolean;
   isError: boolean;
   error?: Error;
