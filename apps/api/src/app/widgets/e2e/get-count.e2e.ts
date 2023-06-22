@@ -226,16 +226,24 @@ describe('Count - GET /widget/notifications/count', function () {
   });
 
   async function getFeedCount(query = {}) {
-    const response = await axios.get(`http://localhost:${process.env.PORT}/v1/widgets/notifications/count`, {
-      params: {
-        ...query,
-      },
-      headers: {
-        Authorization: `Bearer ${subscriberToken}`,
-      },
-    });
+    try {
+      const response = await axios.get(`http://localhost:${process.env.PORT}/v1/widgets/notifications/count`, {
+        params: {
+          ...query,
+        },
+        headers: {
+          Authorization: `Bearer ${subscriberToken}`,
+        },
+      });
 
-    return response.data;
+      return response.data;
+    } catch (e) {
+      console.log(e);
+    }
+
+    return {
+      count: -1,
+    };
   }
 });
 
