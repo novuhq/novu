@@ -1,6 +1,6 @@
 {
   "name": "@novu/node",
-  "version": "0.16.0",
+  "version": "0.16.1",
   "description": "Notification Management Framework",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -42,14 +42,14 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@novu/shared": "^0.16.0",
+    "@novu/shared": "^0.16.1",
     "handlebars": "^4.7.7",
     "lodash.get": "^4.4.2",
     "lodash.merge": "^4.6.2"
   },
   "devDependencies": {
     "@sendgrid/mail": "^7.4.6",
-    "@types/jest": "29.5.1",
+    "@types/jest": "29.5.2",
     "@types/lodash.get": "^4.4.6",
     "@types/lodash.merge": "^4.6.6",
     "@types/node": "^14.6.0",

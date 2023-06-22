@@ -267,13 +267,20 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
   }
 
   async getMessages(
-    query: Partial<MessageEntity> & { _environmentId: string },
+    query: Partial<Omit<MessageEntity, 'transactionId'>> & {
+      _environmentId: string;
+      transactionId?: string[];
+    },
     select = '',
     options?: {
       limit?: number;
       skip?: number;
     }
   ) {
+    const filterQuery: FilterQuery<MessageEntity> = { ...query };
+    if (query.transactionId) {
+      filterQuery.transactionId = { $in: query.transactionId };
+    }
     const data = await this.MongooseModel.find(query, select, {
       limit: options?.limit,
       skip: options?.skip,

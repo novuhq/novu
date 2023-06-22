@@ -1,6 +1,6 @@
 {
   "name": "@novu/mailjet",
-  "version": "0.16.0",
+  "version": "0.16.1",
   "description": "A mailjet wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -32,12 +32,12 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@novu/stateless": "^0.16.0",
+    "@novu/stateless": "^0.16.1",
     "node-mailjet": "^3.3.4"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
-    "@types/jest": "29.5.1",
+    "@types/jest": "29.5.2",
     "@types/node-mailjet": "^3.3.7",
     "codecov": "^3.5.0",
     "cspell": "^4.1.0",

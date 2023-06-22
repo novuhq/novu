@@ -52,7 +52,7 @@ However, if you want to test certain parts of Novu or run it in production mode,
 <FAQ>
 <FAQItem title="API Backend">
 
-- `NODE_ENV` (default: local)<br />The environment of the app. Possible values are: dev, test, prod, ci, local
+- `NODE_ENV` (default: local)<br />The environment of the app. Possible values are: dev, test, production, ci, local
 - `S3_LOCAL_STACK`<br />The AWS endpoint for the S3 Bucket required for storing various media
 - `S3_BUCKET_NAME`<br />The name of the S3 Bucket
 - `S3_REGION`<br />The AWS region of the S3 Bucket
@@ -95,7 +95,7 @@ However, if you want to test certain parts of Novu or run it in production mode,
 </FAQItem>
 <FAQItem title="Worker">
 
-- `NODE_ENV` (default: local)<br />The environment of the app. Possible values are: dev, test, prod, ci, local
+- `NODE_ENV` (default: local)<br />The environment of the app. Possible values are: dev, test, production, ci, local
 - `PORT`<br />The port on which the Worker app should listen on
 - `STORE_ENCRYPTION_KEY`<br />The encryption key used to encrypt/decrypt provider credentials
 - `MAX_NOVU_INTEGRATION_MAIL_REQUESTS`<br />The number of free emails that can be sent with the Novu email provider
@@ -146,7 +146,7 @@ However, if you want to test certain parts of Novu or run it in production mode,
 </FAQItem>
 <FAQItem title="Web client">
 
-- `REACT_APP_ENVIRONMENT` <br />The environment of the app. Possible values are: dev, test, prod, ci, local
+- `REACT_APP_ENVIRONMENT` <br />The environment of the app. Possible values are: dev, test, production, ci, local
 - `REACT_APP_API_URL` <br />The base url on which your API backend would be accessible
 - `REACT_APP_WS_URL` <br />The base url on which your WebSocket service would be accessible
 - `SKIP_PREFLIGHT_CHECK` (default: true)<br />Solves a problem with React App dependency tree.
@@ -161,7 +161,7 @@ This will generate a file called `env-config.js` that will be copied inside of t
 </FAQItem>
 <FAQItem title="Worker">
 
-- `NODE_ENV` (default: local)<br />The environment of the app. Possible values are: dev, test, prod, ci, local
+- `NODE_ENV` (default: local)<br />The environment of the app. Possible values are: dev, test, production, ci, local
 - `SENTRY_DSN`<br />The DSN of sentry.io used to report errors happening in production
 - `REDIS_HOST`<br />The domain / IP of your redis instance
 - `REDIS_PORT`<br />The port of your redis instance
