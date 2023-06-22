@@ -79,6 +79,10 @@ export class SendgridEmailProvider implements IEmailProvider {
       substitutions: {},
       customArgs: {
         id: options.id,
+        novuTransactionId: options.notificationDetails?.transactionId,
+        novuMessageId: options.id,
+        novuWorkflowIdentifier: options.notificationDetails?.workflowIdentifier,
+        novuSubscriberId: options.notificationDetails?.subscriberId,
       },
       attachments: options.attachments?.map((attachment) => {
         return {
