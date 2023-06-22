@@ -475,7 +475,9 @@
     "portname",
     "externalredis",
     "autorun",
-    "webp"
+    "webp",
+    "devs",
+    "flowwer"
   ],
   "flagWords": [],
   "patterns": [
