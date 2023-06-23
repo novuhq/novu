@@ -7,6 +7,7 @@ import type { ITableIntegration } from '../types';
 
 const CellHolder = styled.div`
   display: flex;
+  align-items: center;
   gap: 16px;
 `;
 
