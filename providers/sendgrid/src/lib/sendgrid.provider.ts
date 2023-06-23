@@ -70,7 +70,7 @@ export class SendgridEmailProvider implements IEmailProvider {
         email: options.from || this.config.from,
         name: this.config.senderName,
       },
-      ipPoolName: this.config.ipPoolName,
+      ipPoolName: options.ipPoolName || this.config.ipPoolName,
       to: options.to.map((email) => ({ email })),
       cc: options.cc?.map((ccItem) => ({ email: ccItem })),
       bcc: options.bcc?.map((ccItem) => ({ email: ccItem })),

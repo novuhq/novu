@@ -6,7 +6,7 @@ import PageContainer from '../../components/layout/components/PageContainer';
 import PageHeader from '../../components/layout/components/PageHeader';
 import { colors, Table, withCellLoading } from '../../design-system';
 import { IExtendedColumn } from '../../design-system/table/Table';
-import { useIntegrations, useIsIntegrationsListPageEnabled } from '../../hooks';
+import { useIntegrations, useIsMultiProviderConfigurationEnabled } from '../../hooks';
 import { IntegrationsListToolbar } from './components/IntegrationsListToolbar';
 import { useFetchEnvironments } from '../../hooks/useFetchEnvironments';
 import { IntegrationNameCell } from './components/IntegrationNameCell';
@@ -105,7 +105,7 @@ const IntegrationsList = () => {
 };
 
 export const IntegrationsListPage = () => {
-  const isIntegrationsListPageEnabled = useIsIntegrationsListPageEnabled();
+  const isIntegrationsListPageEnabled = useIsMultiProviderConfigurationEnabled();
 
   return isIntegrationsListPageEnabled ? <IntegrationsList /> : <IntegrationsStore />;
 };

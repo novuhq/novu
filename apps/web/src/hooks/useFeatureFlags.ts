@@ -1,8 +1,8 @@
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useFlags } from 'launchdarkly-react-client-sdk';
 
-import { IS_TEMPLATE_STORE_ENABLED } from '../config';
 import { isBrowser } from '../utils';
+import { IS_TEMPLATE_STORE_ENABLED, IS_MULTI_PROVIDER_CONFIGURATION_ENABLED } from '../config';
 
 const prepareBooleanStringFeatureFlag = (value: string | undefined, defaultValue: boolean): boolean => {
   const preparedValue = value === 'true';
@@ -26,11 +26,14 @@ export const useIsTemplateStoreEnabled = (): boolean => {
   return isTemplateStoreEnabled ?? defaultValue;
 };
 
-export const useIsIntegrationsListPageEnabled = (): boolean => {
-  // TODO refactor this when the feature flag is enabled for all environments, temporary solution for Cypress
-  const isCypress = (isBrowser() && (window as any).Cypress) || (isBrowser() && (window as any).parent.Cypress);
+export const useIsMultiProviderConfigurationEnabled = (): boolean => {
+  const value = IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
+  const fallbackValue = false;
+  const defaultValue = prepareBooleanStringFeatureFlag(value, fallbackValue);
 
-  return isCypress && typeof window._cypress.IS_INTEGRATIONS_LIST_PAGE_ENABLED !== 'undefined'
-    ? window._cypress.IS_INTEGRATIONS_LIST_PAGE_ENABLED === 'true'
-    : true;
+  const isMultiProviderConfigurationEnabled = useGetFlagByKey<boolean>(
+    FeatureFlagsKeysEnum.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED
+  );
+
+  return isMultiProviderConfigurationEnabled ?? defaultValue;
 };
