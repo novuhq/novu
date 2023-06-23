@@ -1,14 +1,6 @@
-// @ts-nocheck
 import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 
-Cypress.on('window:before:load', (win) => {
-  win._cypress = {
-    ...win._cypress,
-    IS_INTEGRATIONS_LIST_PAGE_ENABLED: 'false',
-  };
-});
-
-describe('Integration store page', function () {
+describe.skip('Integration store page', function () {
   beforeEach(function () {
     cy.initializeSession().as('session');
   });

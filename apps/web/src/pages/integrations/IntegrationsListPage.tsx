@@ -6,7 +6,7 @@ import PageContainer from '../../components/layout/components/PageContainer';
 import PageHeader from '../../components/layout/components/PageHeader';
 import { colors, Table, withCellLoading } from '../../design-system';
 import { IExtendedColumn } from '../../design-system/table/Table';
-import { useIntegrations, useIsMultiProviderConfigurationEnabled } from '../../hooks';
+import { useIntegrations } from '../../hooks';
 import { IntegrationsListToolbar } from './components/IntegrationsListToolbar';
 import { useFetchEnvironments } from '../../hooks/useFetchEnvironments';
 import { IntegrationNameCell } from './components/IntegrationNameCell';
@@ -17,7 +17,6 @@ import { IntegrationStatusCell } from './components/IntegrationStatusCell';
 import { When } from '../../components/utils/When';
 import { IntegrationsListNoData } from './components/IntegrationsListNoData';
 import { mapToTableIntegration } from './utils';
-import { IntegrationsStore } from './IntegrationsStorePage';
 
 const Text = styled.span`
   color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.white : colors.B40)};
@@ -105,7 +104,5 @@ const IntegrationsList = () => {
 };
 
 export const IntegrationsListPage = () => {
-  const isIntegrationsListPageEnabled = useIsMultiProviderConfigurationEnabled();
-
-  return isIntegrationsListPageEnabled ? <IntegrationsList /> : <IntegrationsStore />;
+  return <IntegrationsList />;
 };

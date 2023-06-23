@@ -1,7 +1,6 @@
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useFlags } from 'launchdarkly-react-client-sdk';
 
-import { isBrowser } from '../utils';
 import { IS_TEMPLATE_STORE_ENABLED, IS_MULTI_PROVIDER_CONFIGURATION_ENABLED } from '../config';
 
 const prepareBooleanStringFeatureFlag = (value: string | undefined, defaultValue: boolean): boolean => {

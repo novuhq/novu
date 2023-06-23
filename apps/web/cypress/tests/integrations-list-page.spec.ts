@@ -1,12 +1,3 @@
-// @ts-nocheck
-
-Cypress.on('window:before:load', (win) => {
-  win._cypress = {
-    ...win._cypress,
-    IS_INTEGRATIONS_LIST_PAGE_ENABLED: 'true',
-  };
-});
-
 describe('Integrations List Page', function () {
   beforeEach(function () {
     cy.initializeSession().as('session');
