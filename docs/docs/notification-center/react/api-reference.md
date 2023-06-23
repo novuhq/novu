@@ -344,6 +344,7 @@ const result = useNotifications();
 ```ts
 interface INotificationsContext {
   storeId: string;
+  storeQuery: IStoreQuery;
   stores: IStore[];
   unseenCount: number;
   notifications: IMessage[];

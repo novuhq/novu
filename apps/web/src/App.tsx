@@ -18,7 +18,7 @@ import LoginPage from './pages/auth/LoginPage';
 import SignUpPage from './pages/auth/SignUpPage';
 import HomePage from './pages/HomePage';
 import TemplateEditorPage from './pages/templates/editor/TemplateEditorPage';
-import NotificationList from './pages/templates/TemplatesListPage';
+import WorkflowListPage from './pages/templates/WorkflowListPage';
 import SubscribersList from './pages/subscribers/SubscribersListPage';
 import { SettingsPage } from './pages/settings/SettingsPage';
 import InvitationPage from './pages/auth/InvitationPage';
@@ -196,7 +196,7 @@ function App() {
                     <Route path="providers" element={<ProvidersPage />} />
                     <Route path=":channel/:stepUuid" element={<TemplateEditor />} />
                   </Route>
-                  <Route path={ROUTES.WORKFLOWS} element={<NotificationList />} />
+                  <Route path={ROUTES.WORKFLOWS} element={<WorkflowListPage />} />
                   <Route path={ROUTES.GET_STARTED} element={<GetStarted />} />
                   <Route path={ROUTES.GET_STARTED_PREVIEW} element={<DigestPreview />} />
                   <Route path={ROUTES.QUICK_START_NOTIFICATION_CENTER} element={<NotificationCenter />} />
