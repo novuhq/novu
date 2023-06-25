@@ -201,6 +201,12 @@ export const sendgridConfig: IConfigCredentials[] = [
     type: 'string',
     required: true,
   },
+  {
+    key: CredentialsKeyEnum.IpPoolName,
+    displayName: 'IP Pool Name',
+    type: 'string',
+    required: false,
+  },
   ...mailConfigBase,
 ];
 
