@@ -1,6 +1,6 @@
 ---
 sidebar_position: 8
-sidebar_label: Get started with vanills JS
+sidebar_label: Get started with vanilla JS
 ---
 
 import Tabs from '@theme/Tabs';
