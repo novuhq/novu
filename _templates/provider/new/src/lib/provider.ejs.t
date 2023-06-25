@@ -13,6 +13,7 @@ import {
 } from '@novu/stateless';
 
 export class <%= PascalName %><%= PascalType %>Provider implements I<%= PascalType %>Provider {
+  id = '<%= name %>';
   channelType = ChannelTypeEnum.<%= UpperType %> as ChannelTypeEnum.<%= UpperType %>;
 
   constructor(
@@ -28,8 +29,8 @@ export class <%= PascalName %><%= PascalType %>Provider implements I<%= PascalTy
 
 
     return {
-      id: 'PLACEHOLDER',
-      date: 'PLACEHOLDER'
+      id: 'id_returned_by_provider',
+      date: 'current_time'
     };
   }
 }
