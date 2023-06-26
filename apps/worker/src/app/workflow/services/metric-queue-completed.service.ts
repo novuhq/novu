@@ -107,12 +107,4 @@ export class MetricQueueCompletedService extends QueueService<Record<string, nev
       });
     };
   }
-
-  private async jobHasCompleted(job): Promise<void> {
-    Logger.verbose('Metric job Completed', job.id, LOG_CONTEXT);
-  }
-
-  private async jobHasFailed(job, error): Promise<void> {
-    Logger.verbose('Metric job failed', LOG_CONTEXT, error);
-  }
 }

@@ -49,6 +49,7 @@ import { SnippetPage } from './pages/templates/components/SnippetPage';
 import { TemplateEditor } from './pages/templates/components/TemplateEditor';
 import { ProvidersPage } from './pages/templates/components/ProvidersPage';
 import { InAppSuccess } from './pages/quick-start/steps/InAppSuccess';
+import { useEffect } from 'react';
 
 library.add(far, fas);
 
@@ -154,6 +155,8 @@ const tokenStoredToken: string = getToken();
 applyToken(tokenStoredToken);
 
 function App() {
+  useEffect(() => {}, []);
+
   return (
     <SegmentProvider>
       <HelmetProvider>
