@@ -13,11 +13,11 @@ export class MetricQueueActiveService extends QueueService<Record<string, never>
     this.bullMqService.createWorker(this.name, this.getWorkerProcessor(), this.getWorkerOpts());
 
     this.bullMqService.worker.on('completed', async (job) => {
-      await this.jobHasCompleted(job);
+      Logger.verbose('Metric job Completed', job.id, LOG_CONTEXT);
     });
 
     this.bullMqService.worker.on('failed', async (job, error) => {
-      await this.jobHasFailed(job, error);
+      Logger.verbose('Metric job failed', LOG_CONTEXT, error);
     });
 
     this.addToQueueIfMetricJobExists();
@@ -108,13 +108,5 @@ export class MetricQueueActiveService extends QueueService<Record<string, never>
         }
       });
     };
-  }
-
-  private async jobHasCompleted(job): Promise<void> {
-    Logger.verbose('Metric job Completed', job.id, LOG_CONTEXT);
-  }
-
-  private async jobHasFailed(job, error): Promise<void> {
-    Logger.verbose('Metric job failed', LOG_CONTEXT, error);
   }
 }
