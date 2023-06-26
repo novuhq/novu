@@ -1,6 +1,8 @@
 import { WorkerOptions } from 'bullmq';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { QueueService } from '@novu/application-generic';
+import { checkinForCronJob } from '../../shared/utils/cronHealth';
+import * as process from 'process';
 
 const LOG_CONTEXT = 'MetricQueueService';
 const METRIC_JOB_ID = 'metric-job';
@@ -13,6 +15,7 @@ export class MetricQueueActiveService extends QueueService<Record<string, never>
     this.bullMqService.createWorker(this.name, this.getWorkerProcessor(), this.getWorkerOpts());
 
     this.bullMqService.worker.on('completed', async (job) => {
+      checkinForCronJob(process.env.ACTIVE_CRON_ID);
       Logger.verbose('Metric job Completed', job.id, LOG_CONTEXT);
     });
 
