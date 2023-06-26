@@ -14,4 +14,7 @@ export class SelectIntegrationCommand extends EnvironmentCommand {
   @IsOptional()
   @IsString()
   workflowName?: string;
+
+  @IsOptional()
+  active?: boolean;
 }

@@ -23,6 +23,10 @@ export class SelectIntegration {
       query.name = command.workflowName;
     }
 
+    if (command.active !== undefined) {
+      query.active = command.active;
+    }
+
     // TODO: update this to use conditions to query integrations
     const integrations = await this.integrationRepository.find(query);
 
