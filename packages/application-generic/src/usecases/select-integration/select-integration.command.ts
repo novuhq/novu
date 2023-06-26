@@ -1,20 +1,12 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsDefined, IsOptional } from 'class-validator';
+import { ChannelTypeEnum, ProvidersIdEnum } from '@novu/shared';
 
-import { EnvironmentCommand } from '../../commands/project.command';
+import { EnvironmentWithUserCommand } from '../../commands/project.command';
 
-export class SelectIntegrationCommand extends EnvironmentCommand {
-  @IsOptional()
-  @IsString()
-  tenantId?: string;
-
-  @IsOptional()
-  @IsString()
-  workflowIdentifier?: string;
+export class SelectIntegrationCommand extends EnvironmentWithUserCommand {
+  @IsDefined()
+  channelType: ChannelTypeEnum;
 
   @IsOptional()
-  @IsString()
-  workflowName?: string;
-
-  @IsOptional()
-  active?: boolean;
+  providerId?: ProvidersIdEnum;
 }
