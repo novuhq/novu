@@ -30,8 +30,6 @@ export class GetNotificationsFeed {
       }),
   })
   async execute(command: GetNotificationsFeedCommand): Promise<MessagesResponseDto> {
-    const COUNT_LIMIT = 100;
-
     const subscriber = await this.fetchSubscriber({
       _environmentId: command.environmentId,
       subscriberId: command.subscriberId,
@@ -71,18 +69,21 @@ export class GetNotificationsFeed {
     }
 
     const skip = command.page * command.limit;
+    let totalCount = 0;
 
-    const totalCount = await this.messageRepository.getCount(
-      command.environmentId,
-      subscriber._id,
-      ChannelTypeEnum.IN_APP,
-      {
-        feedId: command.feedId,
-        seen: command.query.seen,
-        read: command.query.read,
-      },
-      { limit: COUNT_LIMIT, skip }
-    );
+    if (feed.length) {
+      totalCount = await this.messageRepository.getCount(
+        command.environmentId,
+        subscriber._id,
+        ChannelTypeEnum.IN_APP,
+        {
+          feedId: command.feedId,
+          seen: command.query.seen,
+          read: command.query.read,
+        },
+        { limit: command.limit, skip }
+      );
+    }
 
     return {
       data: feed || [],
