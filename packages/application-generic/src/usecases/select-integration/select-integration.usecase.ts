@@ -22,7 +22,7 @@ export class SelectIntegration {
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
       channel: command.channelType,
-      providerId: command.providerId,
+      ...(command.providerId ? { providerId: command.providerId } : {}),
       active: true,
     };
 
@@ -31,9 +31,10 @@ export class SelectIntegration {
       undefined,
       { query: { sort: { createdAt: -1 } } }
     );
-    integration.credentials = decryptCredentials(integration.credentials);
 
     if (integration) {
+      integration.credentials = decryptCredentials(integration.credentials);
+
       return integration;
     }
 
