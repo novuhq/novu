@@ -3,13 +3,15 @@ import { format } from 'date-fns';
 import { useMantineColorScheme } from '@mantine/core';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ChangeEntityTypeEnum } from '@novu/shared';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { showNotification } from '@mantine/notifications';
+import styled from '@emotion/styled';
 
+import { promoteChange, discardChange } from '../../../api/changes';
 import { IExtendedColumn, Table } from '../../../design-system/table/Table';
 import { Button, colors, Text, withCellLoading } from '../../../design-system';
-import { promoteChange } from '../../../api/changes';
 import { QueryKeys } from '../../../api/query.keys';
+import { DeleteConfirmModal } from '../../templates/components/DeleteConfirmModal';
 
 export const ChangesTable = ({
   changes,
@@ -30,7 +32,21 @@ export const ChangesTable = ({
 }) => {
   const queryClient = useQueryClient();
   const { colorScheme } = useMantineColorScheme();
+  const [deletionData, setDeletionData] = useState({ id: '', isDeleting: false });
+
   const { mutate, isLoading, error } = useMutation(promoteChange, {
+    onSuccess: () => {
+      queryClient.refetchQueries([QueryKeys.currentUnpromotedChanges]);
+      queryClient.refetchQueries([QueryKeys.currentPromotedChanges]);
+      queryClient.refetchQueries([QueryKeys.changesCount]);
+    },
+  });
+
+  const {
+    mutateAsync: deleteChange,
+    isLoading: isLoadingDelete,
+    error: errorDeleting,
+  } = useMutation(discardChange, {
     onSuccess: () => {
       queryClient.refetchQueries([QueryKeys.currentUnpromotedChanges]);
       queryClient.refetchQueries([QueryKeys.currentPromotedChanges]);
@@ -47,6 +63,26 @@ export const ChangesTable = ({
       color: 'red',
     });
   }, [error]);
+
+  useEffect(() => {
+    if (!isLoadingDelete) {
+      return;
+    }
+    setDeletionData((prevData) => ({ ...prevData, isDeleting: true }));
+  }, [isLoadingDelete]);
+
+  const confirmDelete = async () => {
+    await deleteChange(deletionData.id);
+    setDeletionData({ id: '', isDeleting: false });
+  };
+
+  const cancelDelete = () => {
+    setDeletionData({ id: '', isDeleting: false });
+  };
+
+  const onDelete = (id: string) => {
+    setDeletionData((prevData) => ({ ...prevData, id }));
+  };
 
   const columns: IExtendedColumn<any>[] = [
     {
@@ -109,21 +145,36 @@ export const ChangesTable = ({
     {
       accessor: '_id',
       Header: '',
-      maxWidth: 50,
+      maxWidth: 150,
       Cell: withCellLoading(({ row: { original } }) => {
         return (
           <div style={{ textAlign: 'right' }}>
-            <Button
-              variant="outline"
-              data-test-id="promote-btn"
-              onClick={() => {
-                mutate(original._id);
-              }}
-              disabled={original.enabled}
-              loading={isLoading}
-            >
-              Promote
-            </Button>
+            <StyledButtons>
+              <Button
+                variant="outline"
+                data-test-id="promote-btn"
+                onClick={() => {
+                  mutate(original._id);
+                }}
+                disabled={original.enabled}
+                loading={isLoading}
+                mr={10}
+              >
+                Promote
+              </Button>
+
+              <DeleteButton
+                variant="outline"
+                data-test-id="delete-btn"
+                onClick={() => {
+                  onDelete(original._id);
+                }}
+                disabled={original.enabled}
+                loading={isLoadingDelete}
+              >
+                Discard
+              </DeleteButton>
+            </StyledButtons>
           </div>
         );
       }),
@@ -131,17 +182,44 @@ export const ChangesTable = ({
   ];
 
   return (
-    <Table
-      data-test-id={dataTestId}
-      loading={loading}
-      data={changes || []}
-      columns={columns}
-      pagination={{
-        pageSize: pageSize,
-        current: page,
-        total: totalCount,
-        onPageChange: handleTableChange,
-      }}
-    />
+    <>
+      <Table
+        data-test-id={dataTestId}
+        loading={loading}
+        data={changes || []}
+        columns={columns}
+        pagination={{
+          pageSize: pageSize,
+          current: page,
+          total: totalCount,
+          onPageChange: handleTableChange,
+        }}
+      />
+
+      <DeleteConfirmModal
+        title="Discard Change"
+        description="Are you sure you want to discard this change?"
+        isOpen={deletionData.id.length > 0}
+        error={(errorDeleting as Error)?.message ?? ''}
+        isLoading={deletionData.isDeleting}
+        confirm={confirmDelete}
+        cancel={cancelDelete}
+        confirmButtonText="Discard Change"
+        cancelButtonText="Cancel"
+      />
+    </>
   );
 };
+
+const StyledButtons = styled.div`
+  display: flex;
+`;
+
+const DeleteButton = styled(Button)`
+  background: rgba(229, 69, 69, 0.15);
+  color: ${colors.error};
+  box-shadow: none;
+  :hover {
+    background: rgba(229, 69, 69, 0.15);
+  }
+`;

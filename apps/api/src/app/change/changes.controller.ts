@@ -8,6 +8,7 @@ import {
   Query,
   UseGuards,
   UseInterceptors,
+  Delete,
 } from '@nestjs/common';
 import { IJwtPayload } from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -24,8 +25,10 @@ import { ChangesResponseDto, ChangeResponseDto } from './dtos/change-response.dt
 import { ChangesRequestDto } from './dtos/change-request.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ApiResponse } from '../shared/framework/response.decorator';
-import { DataNumberDto } from '../shared/dtos/data-wrapper-dto';
+import { DataBooleanDto, DataNumberDto } from '../shared/dtos/data-wrapper-dto';
 import { BulkApplyChangeDto } from './dtos/bulk-apply-change.dto';
+import { DeleteChange } from './usecases/delete-change/delete-change.usecase';
+import { DeleteChangeCommand } from './usecases/delete-change/delete-change.command';
 
 @Controller('/changes')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -36,7 +39,8 @@ export class ChangesController {
     private applyChange: ApplyChange,
     private getChangesUsecase: GetChanges,
     private bulkApplyChange: BulkApplyChange,
-    private countChanges: CountChanges
+    private countChanges: CountChanges,
+    private deleteChange: DeleteChange
   ) {}
 
   @Get('/')
@@ -107,6 +111,26 @@ export class ChangesController {
   async applyDiff(@UserSession() user: IJwtPayload, @Param('changeId') changeId: string): Promise<ChangeResponseDto[]> {
     return this.applyChange.execute(
       ApplyChangeCommand.create({
+        changeId: changeId,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+      })
+    );
+  }
+
+  @Delete('/:changeId')
+  @UseGuards(JwtAuthGuard)
+  @ApiOkResponse({
+    type: DataBooleanDto,
+  })
+  @ApiOperation({
+    summary: 'Delete change',
+  })
+  @ExternalApiAccessible()
+  deleteTemplateById(@UserSession() user: IJwtPayload, @Param('changeId') changeId: string): Promise<void> {
+    return this.deleteChange.execute(
+      DeleteChangeCommand.create({
         changeId: changeId,
         environmentId: user.environmentId,
         organizationId: user.organizationId,

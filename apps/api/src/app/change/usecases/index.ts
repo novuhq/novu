@@ -10,6 +10,7 @@ import { PromoteNotificationGroupChange } from './promote-notification-group-cha
 import { UpdateChange } from './update-change/update-change';
 import { PromoteFeedChange } from './promote-feed-change/promote-feed-change';
 import { PromoteLayoutChange } from './promote-layout-change/promote-layout-change.use-case';
+import { DeleteChange } from './delete-change/delete-change.usecase';
 
 export * from './apply-change';
 export * from './create-change';
@@ -29,4 +30,5 @@ export const USE_CASES = [
   BulkApplyChange,
   CountChanges,
   UpdateChange,
+  DeleteChange,
 ];
