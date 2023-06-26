@@ -15,7 +15,7 @@ jobs:
         with:
           issue-processing: false
           pull-request-days-before-stale: 14
-          pull-request-days-before-close: 365
+          pull-request-days-before-close: 180
           pull-request-ignore-draft: true
           pull-request-ignore-all-milestones: true
           pull-request-stale-label: 'stale'
