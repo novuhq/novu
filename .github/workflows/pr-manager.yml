@@ -10,7 +10,7 @@ jobs:
       pull-requests: write
     runs-on: ubuntu-latest
     steps:
-      - name: Process stale issues and PRs
+      - name: Process stale PRs
         uses: Sonia-corporation/stale@2.5.0
         with:
           issue-processing: false
