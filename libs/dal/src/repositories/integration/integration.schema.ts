@@ -44,6 +44,7 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       tlsOptions: Schema.Types.Mixed,
       redirectUrl: Schema.Types.String,
       hmac: Schema.Types.Boolean,
+      ipPoolName: Schema.Types.String,
     },
     active: {
       type: Schema.Types.Boolean,
