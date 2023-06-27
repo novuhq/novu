@@ -1,17 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import styled from '@emotion/styled';
-import {
-  ActionIcon,
-  createStyles,
-  Group,
-  MantineTheme,
-  Space,
-  Stack,
-  Tabs,
-  TabsValue,
-  Text,
-  useMantineColorScheme,
-} from '@mantine/core';
+import { ActionIcon, Group, Space, Stack, Tabs, TabsValue, Text, useMantineColorScheme } from '@mantine/core';
 import { ChannelTypeEnum, providers } from '@novu/shared';
 import { CONTEXT_PATH } from '../../../../config';
 import { colors } from '../../../../design-system';
@@ -64,9 +53,7 @@ export function SidebarCreateProvider({ open, onClose }: { open: boolean; onClos
     ),
   });
   const [selectedProvider, setSelectedProvider] = useState<IIntegratedProvider | null>(null);
-  const [scrollTo, setScrollTo] = useState<string | null>(ChannelTypeEnum.IN_APP);
   const [stepShown, setStepShown] = useState<'selectProvider' | 'createInstance' | 'updateInstance'>(SELECT_PROVIDER);
-  const { classes: drawerClasses } = useDrawerStyles();
   const { classes: tabsClasses } = useStyles(false);
   const filterSearch = (list, search: string) =>
     list.filter((prov) => prov.displayName.toLowerCase().includes(search.toLowerCase()));
@@ -78,26 +65,22 @@ export function SidebarCreateProvider({ open, onClose }: { open: boolean; onClos
       inAppProviders: filterSearch(inAppProviders, search),
       chatProviders: filterSearch(chatProviders, search),
     });
-    // console.log(temp);
   }, 500);
 
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
 
-  useEffect(() => {
-    if (!scrollTo) return;
+  const onTabChange = (scrollTo: TabsValue) => {
+    if (scrollTo === null) {
+      return;
+    }
 
-    setTimeout(() => {
-      const channelSection = document.getElementById(scrollTo);
-      const modalContainer = document.querySelector('.mantine-Drawer-drawer');
-      if (channelSection && modalContainer) {
-        modalContainer.scrollBy({
-          top: channelSection.getBoundingClientRect().top - HEADER_HEIGHT - HEADER_MARGIN,
-          behavior: 'smooth',
-        });
-      }
-    }, 0);
-  }, [scrollTo]);
+    document.getElementById(scrollTo)?.scrollIntoView({
+      behavior: 'smooth',
+      inline: 'nearest',
+      block: 'nearest',
+    });
+  };
 
   if (!open) {
     return null;
@@ -145,11 +128,7 @@ export function SidebarCreateProvider({ open, onClose }: { open: boolean; onClos
             placeholder={'Search a provider...'}
             rightSection={<Search />}
           />
-          <Tabs
-            defaultValue={ChannelTypeEnum.IN_APP}
-            classNames={tabsClasses}
-            onTabChange={(value: TabsValue) => setScrollTo(value)}
-          >
+          <Tabs defaultValue={ChannelTypeEnum.IN_APP} classNames={tabsClasses} onTabChange={onTabChange}>
             <Tabs.List>
               <Tabs.Tab value={ChannelTypeEnum.IN_APP}>
                 <Group spacing={5}>
@@ -180,148 +159,138 @@ export function SidebarCreateProvider({ open, onClose }: { open: boolean; onClos
             </Tabs.List>
           </Tabs>
           <Space h={20} />
-
           <CenterDiv>
-            <div
-              style={{
-                color: colors.B60,
-                // marginBottom: 12,
-                fontSize: 14,
-                lineHeight: '20px',
-              }}
-            >
-              <Stack pb={20} spacing={10} id={ChannelTypeEnum.IN_APP}>
-                <ChannelTitle spacing={8} channel={ChannelTypeEnum.IN_APP} />
-                <div>
-                  {inAppProviders?.map((providerEx) => {
-                    return (
-                      <StyledButton
-                        key={providerEx.providerId}
-                        onClick={() => setSelectedProvider(providerEx)}
-                        selected={providerEx.providerId === selectedProvider?.providerId}
-                      >
-                        <Group>
-                          <img
-                            src={providerEx.logoFileName[`${colorScheme}`]}
-                            alt={providerEx.displayName}
-                            style={{
-                              height: '24px',
-                              maxWidth: '140px',
-                            }}
-                          />
-                          <Text>{providerEx.displayName}</Text>
-                        </Group>
-                      </StyledButton>
-                    );
-                  })}
-                </div>
-              </Stack>
-              <Stack pb={20} spacing={10} id={ChannelTypeEnum.EMAIL}>
-                <ChannelTitle spacing={8} channel={ChannelTypeEnum.EMAIL} />
-                <div>
-                  {emailProviders.map((providerEx) => {
-                    return (
-                      <StyledButton
-                        key={providerEx.providerId}
-                        onClick={() => setSelectedProvider(providerEx)}
-                        selected={providerEx.providerId === selectedProvider?.providerId}
-                      >
-                        <Group>
-                          <img
-                            src={providerEx.logoFileName[`${colorScheme}`]}
-                            alt={providerEx.displayName}
-                            style={{
-                              height: '24px',
-                              maxWidth: '140px',
-                              // opacity: providerEx.active ? 1 : colorScheme === 'dark' ? 0.4 : 1,
-                            }}
-                          />
-                          <Text>{providerEx.displayName}</Text>
-                        </Group>
-                      </StyledButton>
-                    );
-                  })}
-                </div>
-              </Stack>
-              <Stack id={'chat'} py={20} spacing={10}>
-                <ChannelTitle spacing={8} channel={ChannelTypeEnum.CHAT} />
-                <div>
-                  {chatProviders.map((providerEx) => {
-                    return (
-                      <StyledButton
-                        key={providerEx.providerId}
-                        onClick={() => setSelectedProvider(providerEx)}
-                        selected={providerEx.providerId === selectedProvider?.providerId}
-                      >
-                        <Group>
-                          <img
-                            src={providerEx.logoFileName[`${colorScheme}`]}
-                            alt={providerEx.displayName}
-                            style={{
-                              height: '24px',
-                              maxWidth: '140px',
-                            }}
-                          />
-                          <Text>{providerEx.displayName}</Text>
-                        </Group>
-                      </StyledButton>
-                    );
-                  })}
-                </div>
-              </Stack>
-              <Stack py={20} spacing={10} id={ChannelTypeEnum.SMS}>
-                <ChannelTitle spacing={8} channel={ChannelTypeEnum.SMS} />
-                <div>
-                  {smsProviders.map((providerEx) => {
-                    return (
-                      <StyledButton
-                        key={providerEx.providerId}
-                        onClick={() => setSelectedProvider(providerEx)}
-                        selected={providerEx.providerId === selectedProvider?.providerId}
-                      >
-                        <Group>
-                          <img
-                            src={providerEx.logoFileName[`${colorScheme}`]}
-                            alt={providerEx.displayName}
-                            style={{
-                              height: '24px',
-                              maxWidth: '140px',
-                            }}
-                          />
-                          <Text>{providerEx.displayName}</Text>
-                        </Group>
-                      </StyledButton>
-                    );
-                  })}
-                </div>
-              </Stack>
-              <Stack py={20} spacing={10} id={ChannelTypeEnum.PUSH}>
-                <ChannelTitle spacing={8} channel={ChannelTypeEnum.PUSH} />
-                <div>
-                  {pushProviders.map((providerEx) => {
-                    return (
-                      <StyledButton
-                        key={providerEx.providerId}
-                        onClick={() => setSelectedProvider(providerEx)}
-                        selected={providerEx.providerId === selectedProvider?.providerId}
-                      >
-                        <Group>
-                          <img
-                            src={providerEx.logoFileName[`${colorScheme}`]}
-                            alt={providerEx.displayName}
-                            style={{
-                              height: '24px',
-                              maxWidth: '140px',
-                            }}
-                          />
-                          <Text>{providerEx.displayName}</Text>
-                        </Group>
-                      </StyledButton>
-                    );
-                  })}
-                </div>
-              </Stack>
-            </div>
+            <Stack pb={20} spacing={10} id={ChannelTypeEnum.IN_APP}>
+              <ChannelTitle spacing={8} channel={ChannelTypeEnum.IN_APP} />
+              <div>
+                {inAppProviders?.map((providerEx) => {
+                  return (
+                    <StyledButton
+                      key={providerEx.providerId}
+                      onClick={() => setSelectedProvider(providerEx)}
+                      selected={providerEx.providerId === selectedProvider?.providerId}
+                    >
+                      <Group>
+                        <img
+                          src={providerEx.logoFileName[`${colorScheme}`]}
+                          alt={providerEx.displayName}
+                          style={{
+                            height: '24px',
+                            maxWidth: '140px',
+                          }}
+                        />
+                        <Text>{providerEx.displayName}</Text>
+                      </Group>
+                    </StyledButton>
+                  );
+                })}
+              </div>
+            </Stack>
+            <Stack pb={20} spacing={10} id={ChannelTypeEnum.EMAIL}>
+              <ChannelTitle spacing={8} channel={ChannelTypeEnum.EMAIL} />
+              <div>
+                {emailProviders.map((providerEx) => {
+                  return (
+                    <StyledButton
+                      key={providerEx.providerId}
+                      onClick={() => setSelectedProvider(providerEx)}
+                      selected={providerEx.providerId === selectedProvider?.providerId}
+                    >
+                      <Group>
+                        <img
+                          src={providerEx.logoFileName[`${colorScheme}`]}
+                          alt={providerEx.displayName}
+                          style={{
+                            height: '24px',
+                            maxWidth: '140px',
+                            // opacity: providerEx.active ? 1 : colorScheme === 'dark' ? 0.4 : 1,
+                          }}
+                        />
+                        <Text>{providerEx.displayName}</Text>
+                      </Group>
+                    </StyledButton>
+                  );
+                })}
+              </div>
+            </Stack>
+            <Stack py={20} spacing={10} id={ChannelTypeEnum.CHAT}>
+              <ChannelTitle spacing={8} channel={ChannelTypeEnum.CHAT} />
+              <div>
+                {chatProviders.map((providerEx) => {
+                  return (
+                    <StyledButton
+                      key={providerEx.providerId}
+                      onClick={() => setSelectedProvider(providerEx)}
+                      selected={providerEx.providerId === selectedProvider?.providerId}
+                    >
+                      <Group>
+                        <img
+                          src={providerEx.logoFileName[`${colorScheme}`]}
+                          alt={providerEx.displayName}
+                          style={{
+                            height: '24px',
+                            maxWidth: '140px',
+                          }}
+                        />
+                        <Text>{providerEx.displayName}</Text>
+                      </Group>
+                    </StyledButton>
+                  );
+                })}
+              </div>
+            </Stack>
+            <Stack py={20} spacing={10} id={ChannelTypeEnum.SMS}>
+              <ChannelTitle spacing={8} channel={ChannelTypeEnum.SMS} />
+              <div>
+                {smsProviders.map((providerEx) => {
+                  return (
+                    <StyledButton
+                      key={providerEx.providerId}
+                      onClick={() => setSelectedProvider(providerEx)}
+                      selected={providerEx.providerId === selectedProvider?.providerId}
+                    >
+                      <Group>
+                        <img
+                          src={providerEx.logoFileName[`${colorScheme}`]}
+                          alt={providerEx.displayName}
+                          style={{
+                            height: '24px',
+                            maxWidth: '140px',
+                          }}
+                        />
+                        <Text>{providerEx.displayName}</Text>
+                      </Group>
+                    </StyledButton>
+                  );
+                })}
+              </div>
+            </Stack>
+            <Stack py={20} spacing={10} id={ChannelTypeEnum.PUSH}>
+              <ChannelTitle spacing={8} channel={ChannelTypeEnum.PUSH} />
+              <div>
+                {pushProviders.map((providerEx) => {
+                  return (
+                    <StyledButton
+                      key={providerEx.providerId}
+                      onClick={() => setSelectedProvider(providerEx)}
+                      selected={providerEx.providerId === selectedProvider?.providerId}
+                    >
+                      <Group>
+                        <img
+                          src={providerEx.logoFileName[`${colorScheme}`]}
+                          alt={providerEx.displayName}
+                          style={{
+                            height: '24px',
+                            maxWidth: '140px',
+                          }}
+                        />
+                        <Text>{providerEx.displayName}</Text>
+                      </Group>
+                    </StyledButton>
+                  );
+                })}
+              </div>
+            </Stack>
           </CenterDiv>
           <Footer>
             <Group>
@@ -367,56 +336,12 @@ const Footer = styled.div`
 `;
 
 const CenterDiv = styled.div`
-  //overflow: hidden;
   overflow: auto;
   color: ${colors.white};
-  //padding: 30px;
-  //padding: 30px;
-
-  //height: 80%;
+  color: ${colors.B60};
+  font-size: 14px;
+  line-height: 20px;
 `;
-
-const DRAWER_PADDING = 30;
-const DRAWER_PADDING_SMALL = 20;
-const HEADER_HEIGHT_SMALL = 70;
-// const HEADER_HEIGHT = 90;
-const HEADER_HEIGHT = 65;
-const HEADER_MARGIN = 10;
-const DISTANCE_FROM_HEADER = 64;
-const INTEGRATION_SETTING_TOP_SMALL = HEADER_HEIGHT_SMALL + HEADER_MARGIN;
-const INTEGRATION_SETTING_TOP = HEADER_HEIGHT + HEADER_MARGIN + DISTANCE_FROM_HEADER;
-
-const useDrawerStyles = createStyles((theme: MantineTheme) => {
-  return {
-    drawer: {
-      // top: 0,
-      top: `${HEADER_HEIGHT + DRAWER_PADDING}px`,
-      // top: `${INTEGRATION_SETTING_TOP_SMALL - DRAWER_PADDING_SMALL}px`,
-      display: 'flex',
-      flexDirection: 'column',
-      marginRight: '30px',
-      // justifyContent: 'end',
-      height: `calc(100vh - ${INTEGRATION_SETTING_TOP_SMALL + DRAWER_PADDING_SMALL}px)`,
-
-      overflow: 'auto',
-      borderRadius: '0 7px 7px 0 ',
-      // overflow: 'hidden',
-      background: colors.B17,
-      width: 480,
-      // height: 800,
-      padding: `${DRAWER_PADDING_SMALL}px !important`,
-      boxShadow: 'none',
-
-      '@media screen and (min-width: 1367px)': {
-        top: `${HEADER_HEIGHT + DRAWER_PADDING}px`,
-        // top: `${INTEGRATION_SETTING_TOP - DRAWER_PADDING}px`,
-        height: `calc(100vh - ${INTEGRATION_SETTING_TOP + DRAWER_PADDING}px)`,
-
-        padding: `${DRAWER_PADDING}px !important`,
-      },
-    },
-  };
-});
 
 const FormStyled = styled.div`
   flex: 1;
