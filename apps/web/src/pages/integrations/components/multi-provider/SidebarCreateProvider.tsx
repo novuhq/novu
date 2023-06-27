@@ -1,10 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import styled from '@emotion/styled';
 import {
   ActionIcon,
-  Container,
   createStyles,
-  Drawer,
   Group,
   MantineTheme,
   Space,
@@ -12,10 +10,9 @@ import {
   Tabs,
   TabsValue,
   Text,
-  UnstyledButton,
   useMantineColorScheme,
 } from '@mantine/core';
-import { ChannelTypeEnum, IProviderConfig, providers } from '@novu/shared';
+import { ChannelTypeEnum, providers } from '@novu/shared';
 import { CONTEXT_PATH } from '../../../../config';
 import { colors } from '../../../../design-system';
 import { useDebounce } from '../../../../hooks';
@@ -102,19 +99,15 @@ export function SidebarCreateProvider({ open, onClose }: { open: boolean; onClos
     }, 0);
   }, [scrollTo]);
 
+  if (!open) {
+    return null;
+  }
+
   return (
-    <Drawer
-      opened={open}
-      position="right"
-      withOverlay={false}
-      withCloseButton={false}
-      closeOnEscape={false}
-      onClose={onClose}
-      classNames={drawerClasses}
-    >
+    <SideBarWrapper dark={isDark}>
       <When truthy={stepShown === SELECT_PROVIDER}>
         <FormStyled>
-          <Group style={{ width: '100%' }} position={'apart'}>
+          <Group style={{ width: '100%' }} align="start" position="apart">
             <Stack>
               {selectedProvider !== null ? (
                 <>
@@ -360,7 +353,7 @@ export function SidebarCreateProvider({ open, onClose }: { open: boolean; onClos
           provider={selectedProvider as IIntegratedProvider}
         />
       </When>
-    </Drawer>
+    </SideBarWrapper>
   );
 }
 
@@ -455,4 +448,15 @@ const StyledButton = styled.div<{ selected: boolean }>`
       `
       : undefined;
   }};
+`;
+
+const SideBarWrapper = styled.div<{ dark: boolean }>`
+  background-color: ${({ dark }) => (dark ? colors.B17 : colors.white)} !important;
+  position: absolute;
+  z-index: 1;
+  width: 480px;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  padding: 24px;
 `;

@@ -85,7 +85,13 @@ const IntegrationsList = () => {
   }, []);
 
   return (
-    <PageContainer title="Integrations">
+    <PageContainer
+      style={{
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+      title="Integrations"
+    >
       <PageHeader title="Integrations Store" />
       <Container fluid sx={{ padding: '0 30px 8px 30px' }}>
         <IntegrationsListToolbar openCreateIntegration={open} areIntegrationsLoading={isLoading} />
