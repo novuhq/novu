@@ -4,13 +4,22 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Post,
   Put,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiConflictResponse,
+  ApiExcludeController,
+  ApiNoContentResponse,
+  ApiNotFoundResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 
 import { IJwtPayload } from '@novu/shared';
 
@@ -73,6 +82,9 @@ export class TenantController {
     summary: 'Create tenant',
     description: 'Create tenant under the current environment',
   })
+  @ApiConflictResponse({
+    description: 'A tenant with the same identifier is already exist.',
+  })
   async createTenant(
     @UserSession() user: IJwtPayload,
     @Body() body: CreateTenantRequestDto
@@ -120,6 +132,13 @@ export class TenantController {
     summary: 'Delete tenant',
     description: 'Deletes a tenant entity from the Novu platform',
   })
+  @ApiNoContentResponse({
+    description: 'The tenant has been deleted correctly',
+  })
+  @ApiNotFoundResponse({
+    description: 'The tenant with the identifier provided does not exist in the database so it can not be deleted.',
+  })
+  @HttpCode(HttpStatus.NO_CONTENT)
   async removeTenant(
     @UserSession() user: IJwtPayload,
     @Param('identifier') identifier: string
