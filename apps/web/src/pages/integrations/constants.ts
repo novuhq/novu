@@ -7,7 +7,7 @@ export enum IntegrationsStoreModalAnalytics {
   CLOSE_MODAL = 'Close Modal - [Integrations Store Modal]',
 }
 
-export const CHANNEL_TYPE_TO_ICON = {
+export const CHANNEL_TYPE_TO_ICON_NAME = {
   [ChannelTypeEnum.EMAIL]: 'envelope',
   [ChannelTypeEnum.SMS]: 'message',
   [ChannelTypeEnum.PUSH]: 'mobile',
