@@ -17,6 +17,8 @@ import { IntegrationStatusCell } from './components/IntegrationStatusCell';
 import { When } from '../../components/utils/When';
 import { IntegrationsListNoData } from './components/IntegrationsListNoData';
 import { mapToTableIntegration } from './utils';
+import { SidebarCreateProvider } from './components/multi-provider/SidebarCreateProvider';
+import { useDisclosure } from '@mantine/hooks';
 
 const Text = styled.span`
   color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.white : colors.B40)};
@@ -64,6 +66,7 @@ const columns: IExtendedColumn<ITableIntegration>[] = [
 const IntegrationsList = () => {
   const { environments, isLoading: areEnvironmentsLoading } = useFetchEnvironments();
   const { integrations, loading: areIntegrationsLoading } = useIntegrations();
+  const [opened, { open, close }] = useDisclosure(false);
   const isLoading = areEnvironmentsLoading || areIntegrationsLoading;
   const hasIntegrations = integrations && integrations?.length > 0;
   const data = useMemo<ITableIntegration[] | undefined>(
@@ -85,7 +88,7 @@ const IntegrationsList = () => {
     <PageContainer title="Integrations">
       <PageHeader title="Integrations Store" />
       <Container fluid sx={{ padding: '0 30px 8px 30px' }}>
-        <IntegrationsListToolbar areIntegrationsLoading={isLoading} />
+        <IntegrationsListToolbar openCreateIntegration={open} areIntegrationsLoading={isLoading} />
       </Container>
       <When truthy={hasIntegrations || isLoading}>
         <Table
@@ -95,6 +98,7 @@ const IntegrationsList = () => {
           columns={columns}
           data={data}
         />
+        <SidebarCreateProvider open={opened} onClose={close} />
       </When>
       <When truthy={!hasIntegrations && !isLoading}>
         <IntegrationsListNoData onChannelClick={onChannelClickCallback} />

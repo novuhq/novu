@@ -40,10 +40,16 @@ const Label = styled.label`
   cursor: pointer;
 `;
 
-export const IntegrationsListToolbar = ({ areIntegrationsLoading }: { areIntegrationsLoading: boolean }) => {
+export const IntegrationsListToolbar = ({
+  areIntegrationsLoading,
+  openCreateIntegration,
+}: {
+  areIntegrationsLoading: boolean;
+  openCreateIntegration: () => void;
+}) => {
   return (
     <IntegrationsListToolbarHolder>
-      <ButtonHolder>
+      <ButtonHolder onClick={openCreateIntegration}>
         <RectangleButton id="add-provider" disabled={areIntegrationsLoading} data-test-id="add-provider">
           +
         </RectangleButton>
