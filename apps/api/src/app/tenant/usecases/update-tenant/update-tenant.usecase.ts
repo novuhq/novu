@@ -29,7 +29,7 @@ export class UpdateTenant {
       updatePayload.data = command.data;
     }
 
-    if (command?.newIdentifier && command?.newIdentifier !== command?.identifier) {
+    if (command?.newIdentifier && command?.newIdentifier !== tenant?.identifier) {
       await this.validateIdentifierDuplication({
         environmentId: command.environmentId,
         identifier: command.newIdentifier,
