@@ -12,7 +12,7 @@ Welcome to the Node.js Quickstart guide for Novu, a powerful notification servic
 Before diving into the Quickstart, make sure you have the following:
 
 - Node.js installed on your development machine.
-- A Novu account. If you don't have one, sign up for free at web.novu.co
+- A Novu account. If you don't have one, sign up for free at "https://web.novu.co"
 
 ### **Install and Set Up Novu in your Node.js App**
 
@@ -73,20 +73,20 @@ The template includes the following:
 
 Please proceed to create a notification template.
 
-1. Click “Notifications” on the left sidebar of your Novu dashboard.
+1. Click “Workflows” on the left sidebar of your Novu dashboard.
 2. Click the “Create Workflow” button on the top right.
-3. The name of a new notification template is currently "Untitled." Rename it to a more suitable title.
+3. The name of a new workflow is currently "Untitled." Rename it to a more suitable title.
 4. Select "Email" as the channel you want to add.
 
-![set-email.png](novu/docs/docs/overview/quickstart/media_assets/set-email.png)
+![set-email.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1686776583/set-email_wavtrn.png)
 
 1. Click on the recently added channel, fill the email subject and click “Update”.
 
-![update_email_template.png](novu/docs/docs/overview/quickstart/media_assets/update_email_template.png)
+![update_email_template.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1686776583/update_email_template_ivn0jv.png)
 
 1. Click on the “Test” tab and send a test email to verify your notification template.
 
-![send_test_email.png](novu/docs/docs/overview/quickstart/media_assets/send_test_email.png)
+![send_test_email.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1686776583/send_test_email_ngzmth.png)
 
 You should get an email within seconds. Yaaay, you have successfully sent your first notification via the Novu dashboard! Now, let’s take it a step further to trigger notifications via code.
 
@@ -96,7 +96,7 @@ The recipients of a triggered notification are called subscribers.
 
 Click “Subscribers” on the left sidebar of the Novu dashboard to see all subscribers. By default, the dashboard will display a subscriber, as you were added automatically during sign-up.
 
-![subscriber_id.png](novu/docs/docs/overview/quickstart/media_assets/subscriber_id.png)
+![subscriber_id.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1686776584/subscriber_id_tzkwjh.png)
 
 Now, let's create a subscriber on Novu. Copy and paste the following code to do so:
 
@@ -122,7 +122,7 @@ node index.js
 
 You should see the subscriber on your Novu dashboard.
 
-![Screenshot 2023-05-14 at 11.06.38.png](novu/docs/docs/overview/quickstart/media_assets/Screenshot_2023-05-14_at_11.06.38.png)
+![Screenshot 2023-05-14 at 11.06.38.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1685466979/guides/Screenshot_2023-05-14_at_11.06.38_ugvmc0.png)
 
 I’d like to publicly announce that `abc@gmail.com` is a random unlikely email your users will have. To update this to an alternative email, you can call the `updateSubscriber` method like so:
 
@@ -162,7 +162,7 @@ Before running the code, make sure you understand the following:
 
 - The value of `notificationTemplateId` should be the notification template’s trigger ID/slug.
 
-![trigger_id.png](novu/docs/docs/overview/quickstart/media_assets/trigger_id.png)
+![trigger_id.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1686776585/trigger_id_xkhsx7.png)
 
 - The value of `payload` is an array of the data that you want to be dynamically injected into the notification template content.
 - The value of `subscriberId` is the id of the subscriber on Novu. Replace `7789`
@@ -204,9 +204,9 @@ Before running the code, make sure you understand the following:
 - When creating a `key`, ensure it is unique and accurately identifies the topic. Document naming conventions and communicate them to team members to avoid confusion and ensure a smooth workflow.
 - The value of `name` should be a descriptive topic name.
 
-## Add s**ubscribers to a topic**
+## Add subscribers to a topic\*\*
 
-Copy and paste the following code into your app to add subscribers a topic:
+Copy and paste the following code into your app to add subscribers to a topic.
 
 ```jsx
 const topicKey = '<YOUR TOPIC KEY>';

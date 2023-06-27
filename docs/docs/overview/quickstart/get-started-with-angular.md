@@ -7,7 +7,7 @@ sidebar_label: Get started with Angular
 
 Learn how to use Novu to quickly send multi-channel (SMS, Email, Chat, Push) notifications and integrate a rich, customizable and ready-to-use real-time UI In-App notification center in Angular apps.
 
-### Requirements
+## Requirements
 
 To follow the steps in this quickstart, you'll need:
 
@@ -22,7 +22,7 @@ You can also [view the completed code](https://github.com/novuhq/angular-quickst
 To create a new Angular app, open a terminal or command prompt and 
 run the following command:
 
-```
+```console
 ng new my-app
 ```
 
@@ -31,19 +31,19 @@ This command will create a new Angular app with a basic file structu
 
 Navigate to the app directory by running the following command:
 
-```
+```console
 cd my-app
 ```
 
 Once you are in the app directory, you can start the development server by running the following command:
 
-```
+```console
 ng serve
 ```
 
 This command will start the development server and launch your app in the default browser. You can access your app by navigating to `http://localhost:4200/`.
 
-![go9ch8vqvatmroiiz8c5.png](novu/docs/docs/overview/quickstart/media_assets/go9ch8vqvatmroiiz8c5.png)
+![go9ch8vqvatmroiiz8c5.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1686776582/go9ch8vqvatmroiiz8c5_okfqai.png)
 
 ## Install Novu Angular Notification Center Package
 
@@ -51,10 +51,10 @@ The Novu Angular package provides a Angular component wrapper over the web com
 
 Navigate to the root directory of your Angular application. Now install the Angular Notification Center package by running the following command in your terminal:
 
-```jsx
+```console
 npm install @novu/notification-center-angular
 
-or
+// or
 
 yarn add @novu/notification-center-angular
 ```
@@ -66,7 +66,7 @@ Using the Angular CLI, start by running the [generate environments comma
 shown here to create the `src/environments/`directory and configure the 
 project to use these files.
 
-```
+```console
 ng generate environments
 ```
 
@@ -191,12 +191,12 @@ We need to add `@types/react` as dev dependency for the angular compo
 
 Open your terminal and navigate to the app root directory and type the following:
 
-```
-npm i @types/react
+```console
+npm i [@types/react](https://github.com/types/react)
 
-or
+// or
 
-yarn add @types/react
+yarn add [@types/react](https://github.com/types/react)
 ```
 
 Now head to the `my-app/tsconfig.json` file
@@ -271,9 +271,9 @@ Run your app again. Now you should see the bell icon (the notification center) i
 
 You should now see a **bell button** that opens the notification center when clicked. This bell can be customized to your preference.
 
-![rmovxzn2ktdizdsldgsl.png](novu/docs/docs/overview/quickstart/media_assets/rmovxzn2ktdizdsldgsl.png)
+![rmovxzn2ktdizdsldgsl.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1686776582/rmovxzn2ktdizdsldgsl_cbcmf5.png)
 
-![uv7tvfo08i8a0h2ppulr.png](novu/docs/docs/overview/quickstart/media_assets/uv7tvfo08i8a0h2ppulr.png)
+![uv7tvfo08i8a0h2ppulr.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1686776584/uv7tvfo08i8a0h2ppulr_ukyj5c.png)
 
 <aside>
 📌 **Note:** There are no notifications because none has been triggered yet. When notifications are sent to a subscriber, it will show up in the UI. Next, we'll learn how to trigger notifications.
@@ -309,11 +309,11 @@ Please proceed to create a notification template.
 3. The name of a new notification template is currently "Untitled." Rename it to a more suitable title.
 4. Select **"In-App"** as the channel you want to add.
 
-![untitled-in-app-notification-template.png](novu/docs/docs/overview/quickstart/media_assets/untitled-in-app-notification-template.png)
+![untitled-in-app-notification-template.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1686776583/untitled-in-app-notification-template_ya7yd4.png)
 
 1. Click on the recently added **"In-App"** channel and configure it according to your preferences. Once you’re done, click “Update” to save your configuration.
 
-![in-app-configuration.png](novu/docs/docs/overview/quickstart/media_assets/in-app-configuration.png)
+![in-app-configuration.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1686776583/in-app-configuration_mmzx98.png)
 
 I’ll briefly explain the function of each label in the image above.
 
@@ -325,25 +325,25 @@ I’ll briefly explain the function of each label in the image above.
 - **6 - Filter** - This feature allows you to configure the criteria for delivering notifications. For instance, you can apply a filter based on a subscriber's online status to send them an email if they were online within the last hour. Read [more about filters](https://docs.novu.co/platform/step-filter/#subscriber-seen--read-filters).
 - **Editor** - You can add text that you want displayed in each notification item. Additionally, you can specify custom variables using `{{ }}`. This means you can inject variables from your code into a notification item's text via a payload.
 
-1. Feel free to add only text for now and rename the notification template to `Onboarding In App`. It automatically creates a slug-like Identifier that will be needed in later steps to trigger a notification.
+1. Feel free to add only text for now and rename the notification template to `Onboarding In App`. It automatically creates a slug-like identifier that will be needed in later steps to trigger a notification.
 
-![Screenshot 2023-05-21 at 09.33.43.png](novu/docs/docs/overview/quickstart/media_assets/Screenshot_2023-05-21_at_09.33.43.png)
+![Screenshot 2023-05-21 at 09.33.43.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1686776584/Screenshot_2023-05-21_at_09.33.43_ujx2td.png)
 
-![Screenshot 2023-05-21 at 09.20.51.png](novu/docs/docs/overview/quickstart/media_assets/Screenshot_2023-05-21_at_09.20.51.png)
+![Screenshot 2023-05-21 at 09.20.51.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1686776585/Screenshot_2023-05-21_at_09.20.51_cueewk.png)
 
 Next, we’ll learn how to create subscribers on Novu - _Recipients of Notifications_
 
 ## Create A Subscriber
 
-Click **“Subscribers”** on the left sidebar of the [Novu dashboard](https://web.novu.co/subscribers) to see all subscribers. By default, the dashboard will display a subscriber, as you were added automatically during sign-up.
+Click **Subscribers** on the left sidebar of the [Novu dashboard](https://web.novu.co/subscribers) to see all subscribers. By default, the dashboard will display a subscriber, as you were added automatically during sign up.
 
-![subscribers.png](novu/docs/docs/overview/quickstart/media_assets/subscribers.png)
+![subscribers.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1686776584/subscribers_ppir3w.png)
 
 Now, let's create a subscriber on Novu.
 
 Novu has a plethora of backend SDKs (Node.js, PHP, .NET, Go, Ruby, Python and Kotlin) to choose from to create a subscriber programmatically. This is the recommended method.
 
-_<insert docusaurus multi-language component code to create a subscriber here>_
+<iframe width="800" height="450" src="https://codesandbox.io/p/sandbox/create-subscriber-m5uibf?file=%2Findex.js%3A1%2C1&embed=1" allowfullscreen></iframe>
 
 ```jsx
 import { Novu } from '@novu/node';
@@ -358,9 +358,7 @@ await novu.subscribers.identify('132', {
 });
 ```
 
-<insert codesandbox with the sample Node.js code to create a subscriber link>
-
-<iframe style="border: 1px solid rgba(0, 0, 0, 0.1);border-radius:2px;" width="800" height="450" src="[https://codesandbox.io/p/sandbox/clever-matan-m5uibf?embed=1](https://codesandbox.io/p/sandbox/clever-matan-m5uibf?embed=1)" allowfullscreen></iframe>
+<iframe width="800" height="450" src="[https://codesandbox.io/p/sandbox/clever-matan-m5uibf?embed=1](https://codesandbox.io/p/sandbox/clever-matan-m5uibf?embed=1)" allowfullscreen></iframe>
 
 Obtain your API key from your [Novu dashboard.](https://web.novu.co/settings) Replace `YOUR_NOVU_API_KEY_HERE` with it.
 
@@ -368,7 +366,7 @@ Now check your Novu dashboard. You should see the recently created subscriber.
 
 You can also update the subscriber info like so:
 
-_<insert docusaurus multi-language component code to create a subscriber here>_
+<iframe width="800" height="450" src="https://codesandbox.io/p/sandbox/create-subscriber-forked-r625n3?file=%2Findex.js%3A21%2C1&embed=1" allowfullscreen></iframe>
 
 ```jsx
 import { Novu } from '@novu/node';
@@ -385,8 +383,6 @@ await novu.subscribers.update('132', {
 
 To trigger a notification, simply run the codesandbox below with the correct credentials.
 
-_<insert docusaurus multi-language component code to trigger a notification here>_
-
 ```jsx
 import { Novu } from '@novu/node';
 
@@ -398,8 +394,6 @@ await novu.trigger('onboarding-in-app', {
   },
 });
 ```
-
-<iframe style="border: 1px solid rgba(0, 0, 0, 0.1);border-radius:2px;" width="800" height="450" src="[https://codesandbox.io/p/sandbox/trigger-notification-rzluxk?file=%2Findex.js%3A3%2C24-3%2C55&embed=1](https://codesandbox.io/p/sandbox/trigger-notification-rzluxk?file=%2Findex.js%3A3%2C24-3%2C55&embed=1)" allowfullscreen></iframe>
 
 `onboarding-in-app` is the Notification template identifier we created earlier.
 
