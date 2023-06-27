@@ -18,7 +18,7 @@ const mockNovuMessage = {
   ],
 };
 
-test('should trigger sendinblue library correctly', async () => {
+test('should trigger brevo library correctly', async () => {
   const provider = new SparkPostEmailProvider(mockConfig);
   const spy = jest
     .spyOn(provider, 'sendMessage')

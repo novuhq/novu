@@ -247,7 +247,7 @@ export const netCoreConfig: IConfigCredentials[] = [
   ...mailConfigBase,
 ];
 
-export const sendinblueConfig: IConfigCredentials[] = [
+export const brevoConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',

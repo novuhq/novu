@@ -98,7 +98,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [Custom SMTP](https://github.com/novuhq/novu/tree/main/providers/nodemailer)
 - [Mailjet](https://github.com/novuhq/novu/tree/main/providers/mailjet)
 - [Mandrill](https://github.com/novuhq/novu/tree/main/providers/mandrill)
-- [SendinBlue](https://github.com/novuhq/novu/tree/main/providers/sendinblue)
+- [Brevo](https://github.com/novuhq/novu/tree/main/providers/sendinblue)
 
 ### 📞 SMS
 

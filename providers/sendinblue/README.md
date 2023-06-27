@@ -1,13 +1,13 @@
-# Novu Sendinblue Provider
+# Novu Brevo Provider
 
-A Sendinblue email provider library for [@novu/stateless](https://github.com/novuhq/novu)
+A Brevo email provider library for [@novu/stateless](https://github.com/novuhq/novu)
 
 ## Usage
 
 ```javascript
-import { SendinblueEmailProvider } from './sendinblue.provider';
+import { BrevoEmailProvider } from './sendinblue.provider';
 
-const provider = new SendinblueEmailProvider({
-  apiKey: process.env.SENDINBLUE_API_KEY
+const provider = new BrevoEmailProvider({
+  apiKey: process.env.BREVO_API_KEY
 });
 ```

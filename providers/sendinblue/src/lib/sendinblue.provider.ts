@@ -15,8 +15,8 @@ import {
   TransactionalEmailsApiApiKeys,
 } from '@sendinblue/client';
 
-export class SendinblueEmailProvider implements IEmailProvider {
-  id = 'sendinblue';
+export class BrevoEmailProvider implements IEmailProvider {
+  id = 'brevo';
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private transactionalEmailsApi: TransactionalEmailsApi;
 
