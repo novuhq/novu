@@ -32,6 +32,6 @@ To get your provider specific webhook URL, follow the below steps:
 - Mandrill
 - Postmark
 - Sendgrid
-- Brevo formally sendinblue
+- Brevo formerly sendinblue
 - Telnyx
 - Twilio

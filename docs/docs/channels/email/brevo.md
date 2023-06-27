@@ -4,7 +4,7 @@ sidebar_position: 3
 
 # Brevo
 
-You can use the [Brevo](https://www.brevo.com/) (formally Sendinblue) provider to send transactional emails to your customers using the Novu Platform with a single API.
+You can use the [Brevo](https://www.brevo.com/) (formerly Sendinblue) provider to send transactional emails to your customers using the Novu Platform with a single API.
 
 ## Getting Started
 
