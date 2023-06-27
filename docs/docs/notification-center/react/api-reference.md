@@ -388,7 +388,7 @@ interface INotificationsContext {
 | markAllNotificationsAsRead     | function                                                    | The function allowing you to mark all notifications as read.                                                                  |
 | markAllNotificationsAsSeen     | function                                                    | The function allowing you to mark notifications as seen.                                                                      |
 | removeMessage                  | function                                                    | The function allowing you to delete a notification.                                                                           |
-| removeAllMessages              | function                                                    | The function allowing you to delete all notifications or a specific feed's notifications at once.                      |
+| removeAllMessages              | function                                                    | The function allowing you to delete all notifications or a specific feed's notifications at once.                             |
 
 You can find more information about the `IMessage` interface [here](./api-reference#the-notification-imessage-model).
 
