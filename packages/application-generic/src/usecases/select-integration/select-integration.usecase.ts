@@ -7,6 +7,7 @@ import {
 } from '../get-novu-integration';
 import { SelectIntegrationCommand } from './select-integration.command';
 import { decryptCredentials } from '../../encryption';
+import { buildIntegrationKey, CachedQuery } from '../../services';
 
 @Injectable()
 export class SelectIntegration {
@@ -15,6 +16,13 @@ export class SelectIntegration {
     private getNovuIntegration: GetNovuIntegration
   ) {}
 
+  @CachedQuery({
+    builder: ({ organizationId, ...command }: SelectIntegrationCommand) =>
+      buildIntegrationKey().cache({
+        _organizationId: organizationId,
+        ...command,
+      }),
+  })
   async execute(
     command: SelectIntegrationCommand
   ): Promise<IntegrationEntity | undefined> {

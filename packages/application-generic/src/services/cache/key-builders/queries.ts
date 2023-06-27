@@ -84,22 +84,26 @@ const buildMessageCountKey = () => {
 
 const buildIntegrationKey = () => {
   const cache = (
-    command: Record<string, unknown> & { _environmentId: string }
+    command: Record<string, unknown> & { _organizationId: string }
   ): string =>
-    buildQueryByEnvironmentKey({
+    buildQueryByOrganizationKey({
       type: CacheKeyTypeEnum.QUERY,
       keyEntity: CacheKeyPrefixEnum.INTEGRATION,
-      environmentId: command._environmentId,
-      environmentIdPrefix: OrgScopePrefixEnum.ENVIRONMENT_ID,
+      organizationId: command._organizationId,
+      organizationIdPrefix: OrgScopePrefixEnum.ORGANIZATION_ID,
       query: command,
     });
 
-  const invalidate = ({ _environmentId }: { _environmentId: string }): string =>
-    buildKeyByEnvironment({
+  const invalidate = ({
+    _organizationId,
+  }: {
+    _organizationId: string;
+  }): string =>
+    buildKeyByOrganization({
       type: CacheKeyTypeEnum.QUERY,
       keyEntity: CacheKeyPrefixEnum.INTEGRATION,
-      environmentId: _environmentId,
-      environmentIdPrefix: OrgScopePrefixEnum.ENVIRONMENT_ID,
+      organizationId: _organizationId,
+      organizationIdPrefix: OrgScopePrefixEnum.ORGANIZATION_ID,
     });
 
   return {
@@ -134,38 +138,40 @@ export const buildQueryKey = ({
     identifier,
   })}:${QUERY_PREFIX}=${JSON.stringify(query)}`;
 
-export const buildQueryByEnvironmentKey = ({
+export const buildQueryByOrganizationKey = ({
   type,
   keyEntity,
-  environmentIdPrefix = OrgScopePrefixEnum.ENVIRONMENT_ID,
-  environmentId,
+  organizationIdPrefix = OrgScopePrefixEnum.ORGANIZATION_ID,
+  organizationId,
   query,
 }: {
   type: CacheKeyTypeEnum;
   keyEntity: CacheKeyPrefixEnum;
-  environmentIdPrefix?: OrgScopePrefixEnum;
-  environmentId: string;
+  organizationIdPrefix?: OrgScopePrefixEnum;
+  organizationId: string;
   query: Record<string, unknown>;
 }): string =>
-  `${buildKeyByEnvironment({
+  `${buildKeyByOrganization({
     type,
     keyEntity,
-    environmentIdPrefix,
-    environmentId,
+    organizationIdPrefix,
+    organizationId,
   })}:${QUERY_PREFIX}=${JSON.stringify(query)}`;
 
-const buildKeyByEnvironment = ({
+const buildKeyByOrganization = ({
   type,
   keyEntity,
-  environmentIdPrefix = OrgScopePrefixEnum.ENVIRONMENT_ID,
-  environmentId,
+  organizationIdPrefix = OrgScopePrefixEnum.ORGANIZATION_ID,
+  organizationId,
 }: {
   type: CacheKeyTypeEnum;
   keyEntity: CacheKeyPrefixEnum;
-  environmentIdPrefix?: OrgScopePrefixEnum;
-  environmentId: string;
+  organizationIdPrefix?: OrgScopePrefixEnum;
+  organizationId: string;
 }): string =>
-  prefixWrapper(`${type}:${keyEntity}:${environmentIdPrefix}=${environmentId}`);
+  prefixWrapper(
+    `${type}:${keyEntity}:${organizationIdPrefix}=${organizationId}`
+  );
 
 export interface IBuildNotificationTemplateByIdentifier {
   _environmentId: string;
