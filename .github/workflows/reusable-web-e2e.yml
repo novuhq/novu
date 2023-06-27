@@ -124,7 +124,6 @@ jobs:
           CYPRESS_IS_CI: true
         with:
           working-directory: apps/web
-          browser: "${{ env.BROWSER_PATH }}"
           record: true
           parallel: true
           install: false
