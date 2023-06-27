@@ -110,6 +110,8 @@ jobs:
         run: pnpm cypress install
 
       - uses: browser-actions/setup-chrome@latest
+        with:
+          chrome-version: "113"
       - run: |
           echo "BROWSER_PATH=$(which chrome)" >> $GITHUB_ENV
 
@@ -124,6 +126,7 @@ jobs:
           CYPRESS_IS_CI: true
         with:
           working-directory: apps/web
+          browser: "${{ env.BROWSER_PATH }}"
           record: true
           parallel: true
           install: false
