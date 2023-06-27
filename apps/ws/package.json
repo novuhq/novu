@@ -70,7 +70,7 @@
     "ts-jest": "^27.0.7",
     "ts-loader": "~9.4.0",
     "ts-node": "~10.9.1",
-    "tsconfig-paths": "^3.9.0",
+    "tsconfig-paths": "~4.1.0",
     "typescript": "4.9.5"
   },
   "workspaces": {
