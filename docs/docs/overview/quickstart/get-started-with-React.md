@@ -31,34 +31,34 @@ npm install @novu/notification-center
 
 Before you can use Novu in your react app, you'll need two things:
 
-1. Create a notification template to use for sending notifications, and
-2. Create a subscriber - recipients of Notifications.
+1. Create a notification workflow to use for sending notifications, and
+2. Create a subscriber - recipients of notifications.
 
-## Create a notification template
+## Create a notification workflow
 
-Before triggering a notification, we need to create a notification template. A template is like a blueprint that all the notifications are supposed to follow.
+Before triggering a notification, we need to create a notification workflow. A workflow is like a blueprint that all the notifications are supposed to follow.
 
 > The recipients of a triggered notification are called **subscribers**.
 
-The template includes the following:
+The workflow includes the following:
 
-- Notification template name and Identifier
+- Notification workflow name and Identifier
 - Channel tailored content:
 
 | Channel | Content Style                                                                                 |
 | ------- | --------------------------------------------------------------------------------------------- |
 | Email   | 1. Custom Code (HTML) with option to use custom variables via the handlebars , {{ }}, syntax. |
-|         | 2. Click and place UI items with the visual template editor.                                  |
+|         | 2. Click and place UI items with the visual workflow editor.                                  |
 | SMS     | Text with the option to use handlebars syntax, {{ }} to inject custom variables.              |
 | Chat    | Text with the option to use handlebars syntax, {{ }} to inject custom variables.              |
 | In-App  | Text                                                                                          |
 
-These are the steps to create a notification template:
+These are the steps to create a notification workflow:
 
-1. Click **Notifications** on the left sidebar of your Novu dashboard.
-2. Click the **"Create Workflow"** button on the top right.
-3. The name of a new notification template is currently **"Untitled"**. Rename it to a more suitable title.
-4. Select **"In-App"** as the channel you want to add.
+1. Click **Workflow** on the left sidebar of your Novu dashboard.
+2. Click the **Create Workflow** button on the top right.
+3. The name of a new notification workflow is currently **"Untitled"**. Rename it to a more suitable title.
+4. Select **In-App** as the channel you want to add.
 
    ![Selecting 'In-App' channel in Novu dashboard](https://res.cloudinary.com/dxc6bnman/image/upload/v1685465591/guides/untitled-in-app-notification-template_1_ctkdtw.png)
 
@@ -80,9 +80,9 @@ In our case, we'll use the custom variables functionality, as shown below:
 
 ![Using custom variables in Novu](https://res.cloudinary.com/dxc6bnman/image/upload/v1686742931/guides/Screenshot_2023-05-28_at_3.36.10_AM_o6oosa.png)
 
-Feel free to add only text for now and rename the notification template to `quickstart`. It automatically creates a slug-like Identifier that will be needed in later steps to trigger a notification.
+Feel free to add only text for now and rename the notification workflow to `quickstart`. It automatically creates a slug-like Identifier that will be needed in later steps to trigger a notification.
 
-![Creating a notification template from Novu dashboard](https://res.cloudinary.com/dxc6bnman/image/upload/v1686743094/guides/Screenshot_2023-05-28_at_3.40.01_AM_ulmqvm.png)
+![Creating a notification workflow from Novu dashboard](https://res.cloudinary.com/dxc6bnman/image/upload/v1686743094/guides/Screenshot_2023-05-28_at_3.40.01_AM_ulmqvm.png)
 
 Now, we’ll learn how to create subscribers on Novu - Recipients of Notifications!
 
@@ -233,13 +233,13 @@ We can trigger a notification by simply running the code sandbox below with the 
 
 <iframe width="800" height="450" src="https://codesandbox.io/p/sandbox/exciting-violet-4k6234?embed=1" allowfullscreen></iframe>
 
-This will take the template we created above with the identifier `quickstart` and send notification to the subscriber with `subscriberId` of `123`.
+This will take the workflow we created above with the identifier `quickstart` and send notification to the subscriber with `subscriberId` of `123`.
 
 > Make sure you're executing this code with the correct credentials.
 
 ## Next Steps
 
-Great job! If you've reached this point, you should now have successfully set up the notification center, created a subscriber, notification template, configured a channel provider and triggered a notification in your React application.
+Great job! If you've reached this point, you should now have successfully set up the notification center, created a subscriber, notification workflow, configured a channel provider and triggered a notification in your React application.
 
 To learn more about the Notification Center and explore Novu's features and capabilities, check out, check out:
 
