@@ -36,8 +36,12 @@ test('should trigger sendgrid correctly', async () => {
         email: mockNovuMessage.to[0],
       },
     ],
+    bcc: undefined,
+    category: undefined,
+    cc: undefined,
     subject: mockNovuMessage.subject,
     html: mockNovuMessage.html,
+    ipPoolName: undefined,
     from: { email: mockNovuMessage.from, name: mockConfig.senderName },
     substitutions: {},
     attachments: [
@@ -49,6 +53,10 @@ test('should trigger sendgrid correctly', async () => {
     ],
     customArgs: {
       id: 'message_id',
+      novuMessageId: 'message_id',
+      novuSubscriberId: undefined,
+      novuTransactionId: undefined,
+      novuWorkflowIdentifier: undefined,
     },
   });
 });
