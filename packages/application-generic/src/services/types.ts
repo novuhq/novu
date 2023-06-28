@@ -1,4 +1,9 @@
-import { EnvironmentId, FeatureFlagsKeysEnum, OrganizationId, UserId } from '@novu/shared';
+import {
+  EnvironmentId,
+  FeatureFlagsKeysEnum,
+  OrganizationId,
+  UserId,
+} from '@novu/shared';
 
 export { EnvironmentId, FeatureFlagsKeysEnum, OrganizationId, UserId };
 
@@ -19,7 +24,11 @@ export interface IFeatureFlagsService {
     defaultValue: T,
     organizationId: OrganizationId
   ) => Promise<T>;
-  getWithUserContext: <T>(key: FeatureFlagsKeysEnum, defaultValue: T, userId: UserId) => Promise<T>;
+  getWithUserContext: <T>(
+    key: FeatureFlagsKeysEnum,
+    defaultValue: T,
+    userId: UserId
+  ) => Promise<T>;
   gracefullyShutdown: () => Promise<void>;
   initialize: () => Promise<void>;
   isEnabled: boolean;

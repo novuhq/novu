@@ -2,13 +2,10 @@ import { IntegrationEntity, JobEntity, MessageRepository, SubscriberRepository }
 import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import {
   buildSubscriberKey,
-  buildIntegrationKey,
   CachedEntity,
-  CachedQuery,
   DetailEnum,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-  GetDecryptedIntegrationsCommand,
   SelectIntegration,
   SelectIntegrationCommand,
 } from '@novu/application-generic';
@@ -53,6 +50,7 @@ export abstract class SendMessageBase extends SendMessageType {
   ): Promise<IntegrationEntity | undefined> {
     return this.selectIntegration.execute(SelectIntegrationCommand.create(selectIntegrationCommand));
   }
+
   protected storeContent(): boolean {
     return this.channelType === ChannelTypeEnum.IN_APP || process.env.STORE_NOTIFICATION_CONTENT === 'true';
   }
