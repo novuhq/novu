@@ -42,16 +42,18 @@ describe('Delete Tenant - /tenants/:identifier (DELETE)', function () {
   });
 
   it('should throw exception while trying to delete not existing tenant', async function () {
+    const identifier = '4f3c4146-e471-4fe8-b23d-e3411689db00';
+
     try {
       await deleteTenant({
         session,
-        identifier: 'identifier_123',
+        identifier: identifier,
       });
 
       throw new Error('');
     } catch (e) {
       expect(e?.response?.data?.message || e?.message).to.contains(
-        `Tenant with identifier: identifier_123 is not exists under environment ${session.environment._id}`
+        `Tenant with identifier: ${identifier} is not exists under environment ${session.environment._id}`
       );
     }
   });
