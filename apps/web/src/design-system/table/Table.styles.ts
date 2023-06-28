@@ -41,6 +41,9 @@ export default createStyles((theme: MantineTheme, _params, getRef) => {
         borderBottomColor: dark ? colors.BGDark : colors.BGLight,
         height: '80px',
       },
+      '& tbody tr[data-disabled="true"]:hover': {
+        cursor: 'default',
+      },
       '& tbody tr:last-of-type td': {
         borderBottom: `1px solid ${dark ? colors.B20 : colors.B98}`,
       },

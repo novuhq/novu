@@ -11,6 +11,7 @@ import { Environments } from './environments/environments';
 import { Feeds } from './feeds/feeds';
 import { Topics } from './topics/topics';
 import { Integrations } from './integrations/integrations';
+import { Messages } from './messages/messages';
 
 export class Novu extends EventEmitter {
   private readonly apiKey?: string;
@@ -25,6 +26,7 @@ export class Novu extends EventEmitter {
   readonly feeds: Feeds;
   readonly topics: Topics;
   readonly integrations: Integrations;
+  readonly messages: Messages;
 
   constructor(apiKey: string, config?: INovuConfiguration) {
     super();
@@ -50,6 +52,7 @@ export class Novu extends EventEmitter {
     this.feeds = new Feeds(this.http);
     this.topics = new Topics(this.http);
     this.integrations = new Integrations(this.http);
+    this.messages = new Messages(this.http);
   }
 
   public trigger: typeof Events.prototype.trigger;

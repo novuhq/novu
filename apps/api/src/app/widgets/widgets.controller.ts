@@ -5,6 +5,8 @@ import {
   DefaultValuePipe,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Patch,
   Post,
@@ -12,7 +14,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiExcludeController, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { ApiExcludeController, ApiNoContentResponse, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { AnalyticsService, GetSubscriberPreference, GetSubscriberPreferenceCommand } from '@novu/application-generic';
 import { MessageEntity, SubscriberEntity } from '@novu/dal';
 import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
@@ -49,6 +51,9 @@ import { MarkAllMessagesAsCommand } from './usecases/mark-all-messages-as/mark-a
 import { MarkAllMessagesAs } from './usecases/mark-all-messages-as/mark-all-messages-as.usecase';
 import { GetNotificationsFeedDto } from './dtos/get-notifications-feed-request.dto';
 import { LimitPipe } from './pipes/limit-pipe/limit-pipe';
+import { RemoveAllMessagesCommand } from './usecases/remove-messages/remove-all-messages.command';
+import { RemoveAllMessages } from './usecases/remove-messages/remove-all-messages.usecase';
+import { RemoveAllMessagesDto } from './dtos/remove-all-messages.dto';
 
 @Controller('/widgets')
 @ApiExcludeController()
@@ -59,6 +64,7 @@ export class WidgetsController {
     private getFeedCountUsecase: GetFeedCount,
     private markMessageAsUsecase: MarkMessageAs,
     private removeMessageUsecase: RemoveMessage,
+    private removeAllMessagesUsecase: RemoveAllMessages,
     private updateMessageActionsUsecase: UpdateMessageActions,
     private getOrganizationUsecase: GetOrganizationData,
     private getSubscriberPreferenceUsecase: GetSubscriberPreference,
@@ -223,6 +229,27 @@ export class WidgetsController {
     });
 
     return await this.removeMessageUsecase.execute(command);
+  }
+
+  @ApiOperation({
+    summary: `Remove a subscriber's feed messages`,
+  })
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Delete('/messages')
+  @ApiNoContentResponse({ description: 'Messages removed' })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async removeAllMessages(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Query() query: RemoveAllMessagesDto
+  ): Promise<void> {
+    const command = RemoveAllMessagesCommand.create({
+      organizationId: subscriberSession._organizationId,
+      subscriberId: subscriberSession.subscriberId,
+      environmentId: subscriberSession._environmentId,
+      feedId: query.feedId,
+    });
+
+    await this.removeAllMessagesUsecase.execute(command);
   }
 
   @ApiOperation({
