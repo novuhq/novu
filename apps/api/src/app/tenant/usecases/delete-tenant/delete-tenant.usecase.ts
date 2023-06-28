@@ -23,7 +23,7 @@ export class DeleteTenant {
     }
 
     try {
-      await this.tenantRepository.delete({
+      return await this.tenantRepository.delete({
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
         identifier: command.identifier,
@@ -34,10 +34,5 @@ export class DeleteTenant {
       }
       throw e;
     }
-
-    return {
-      acknowledged: true,
-      status: 'deleted',
-    };
   }
 }

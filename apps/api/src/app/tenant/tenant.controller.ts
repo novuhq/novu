@@ -38,7 +38,6 @@ import { UpdateTenantResponseDto } from './dtos/update-tenant-response.dto';
 import { UpdateTenantRequestDto } from './dtos/update-tenant-request.dto';
 import { UpdateTenant } from './usecases/update-tenant/update-tenant.usecase';
 import { DeleteTenantCommand } from './usecases/delete-tenant/delete-tenant.command';
-import { DeleteTenantResponseDto } from './dtos/delete-tenant.response.dto';
 import { DeleteTenant } from './usecases/delete-tenant/delete-tenant.usecase';
 import { UpdateTenantCommand } from './usecases/update-tenant/update-tenant.command';
 
@@ -127,7 +126,6 @@ export class TenantController {
   @Delete('/:identifier')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  @ApiResponse(DeleteTenantResponseDto)
   @ApiOperation({
     summary: 'Delete tenant',
     description: 'Deletes a tenant entity from the Novu platform',
@@ -139,10 +137,7 @@ export class TenantController {
     description: 'The tenant with the identifier provided does not exist in the database so it can not be deleted.',
   })
   @HttpCode(HttpStatus.NO_CONTENT)
-  async removeTenant(
-    @UserSession() user: IJwtPayload,
-    @Param('identifier') identifier: string
-  ): Promise<DeleteTenantResponseDto> {
+  async removeTenant(@UserSession() user: IJwtPayload, @Param('identifier') identifier: string): Promise<void> {
     return await this.deleteTenantUsecase.execute(
       DeleteTenantCommand.create({
         environmentId: user.environmentId,
