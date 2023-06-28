@@ -134,13 +134,15 @@ export class IntegrationsController {
     return await this.createIntegrationUsecase.execute(
       CreateIntegrationCommand.create({
         userId: user._id,
-        environmentId: user.environmentId,
+        name: body.name,
+        identifier: body.identifier,
+        environmentId: body._environmentId ?? user.environmentId,
         organizationId: user.organizationId,
         providerId: body.providerId,
         channel: body.channel,
         credentials: body.credentials,
-        active: body.active,
-        check: body.check,
+        active: body.active ?? false,
+        check: body.check ?? true,
       })
     );
   }
@@ -163,12 +165,14 @@ export class IntegrationsController {
     return this.updateIntegrationUsecase.execute(
       UpdateIntegrationCommand.create({
         userId: user._id,
-        environmentId: user.environmentId,
+        name: body.name,
+        identifier: body.identifier,
+        environmentId: body._environmentId,
         organizationId: user.organizationId,
         integrationId,
         credentials: body.credentials,
         active: body.active,
-        check: body.check,
+        check: body.check ?? true,
       })
     );
   }

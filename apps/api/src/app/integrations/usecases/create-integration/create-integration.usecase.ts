@@ -1,6 +1,8 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import * as shortid from 'shortid';
+import slugify from 'slugify';
 import { IntegrationEntity, IntegrationRepository, DalException } from '@novu/dal';
-import { ChannelTypeEnum } from '@novu/shared';
+import { providers } from '@novu/shared';
 import {
   AnalyticsService,
   encryptCredentials,
@@ -26,7 +28,20 @@ export class CreateIntegration {
   ) {}
 
   async execute(command: CreateIntegrationCommand): Promise<IntegrationEntity> {
-    let response: IntegrationEntity;
+    if (command.identifier) {
+      const existingIntegrationWithIdentifier = await this.integrationRepository.findOne({
+        _organizationId: command.organizationId,
+        identifier: command.identifier,
+      });
+
+      if (existingIntegrationWithIdentifier) {
+        throw new BadRequestException('Integration with identifier already exists');
+      }
+    }
+
+    if (command.active && Object.keys(command.credentials ?? {}).length === 0) {
+      throw new BadRequestException('The credentials are required to activate the integration');
+    }
 
     this.analyticsService.track('Create Integration - [Integrations]', command.userId, {
       providerId: command.providerId,
@@ -53,31 +68,29 @@ export class CreateIntegration {
         }),
       });
 
-      response = await this.integrationRepository.create({
+      const providerIdCapitalized = `${command.providerId.charAt(0).toUpperCase()}${command.providerId.slice(1)}`;
+      const defaultName =
+        providers.find((provider) => provider.id === command.providerId)?.displayName ?? providerIdCapitalized;
+      const name = command.name ?? defaultName;
+      const identifier = command.identifier ?? `${slugify(name, { lower: true, strict: true })}-${shortid.generate()}`;
+
+      const integrationEntity = await this.integrationRepository.create({
+        name,
+        identifier,
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
         providerId: command.providerId,
         channel: command.channel,
-        credentials: encryptCredentials(command.credentials),
+        credentials: encryptCredentials(command.credentials ?? {}),
         active: command.active,
       });
 
-      if (command.active && ![ChannelTypeEnum.CHAT, ChannelTypeEnum.PUSH].includes(command.channel)) {
-        await this.deactivateSimilarChannelIntegrations.execute({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          integrationId: response._id,
-          channel: command.channel,
-          userId: command.userId,
-        });
-      }
+      return integrationEntity;
     } catch (e) {
       if (e instanceof DalException) {
         throw new ApiException(e.message);
       }
       throw e;
     }
-
-    return response;
   }
 }
