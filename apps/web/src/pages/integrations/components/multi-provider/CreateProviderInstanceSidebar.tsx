@@ -11,10 +11,10 @@ import { createIntegration } from '../../../../api/integration';
 import { IntegrationsStoreModalAnalytics } from '../../constants';
 import { errorMessage, successMessage } from '../../../../utils/notifications';
 import { QueryKeys } from '../../../../api/query.keys';
-import { ProviderImage, Footer, FormStyled } from './SidebarCreateProvider';
+import { ProviderImage, Footer, FormStyled } from './SelectProviderSidebar';
 import { CHANNEL_TYPE_TO_STRING } from '../../../../utils/channels';
 
-export function SidebarCreateProviderInstance({
+export function CreateProviderInstanceSidebar({
   onClose,
   provider,
   goBack,

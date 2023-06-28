@@ -31,7 +31,7 @@ const getLogoFileName = (id, schema: ColorScheme): string => {
   return `${CONTEXT_PATH}/static/images/providers/light/square/${id}.svg`;
 };
 
-export function SidebarCreateProvider() {
+export function SelectProviderSidebar() {
   const [{ emailProviders, smsProviders, chatProviders, pushProviders, inAppProviders }, setProviders] = useState({
     emailProviders: mapStructure(
       providers.filter((providerItem) => providerItem.channel === ChannelTypeEnum.EMAIL) || []

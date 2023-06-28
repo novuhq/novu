@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEffectOnce } from '../../hooks';
 import { IProviderConfig, providers } from '@novu/shared';
-import { SidebarCreateProviderInstance } from './components/multi-provider/SidebarCreateProviderInstance';
-import { SideBarWrapper } from './components/multi-provider/SidebarCreateProvider';
+import { CreateProviderInstanceSidebar } from './components/multi-provider/CreateProviderInstanceSidebar';
+import { SideBarWrapper } from './components/multi-provider/SelectProviderSidebar';
 
 export function CreateProviderPage() {
   const [selectedProvider, setSelectedProvider] = useState<IProviderConfig | null>(null);
@@ -24,7 +24,7 @@ export function CreateProviderPage() {
 
   return (
     <SideBarWrapper>
-      <SidebarCreateProviderInstance
+      <CreateProviderInstanceSidebar
         goBack={() => {
           navigate('/integrations/create');
         }}

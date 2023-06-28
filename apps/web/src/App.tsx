@@ -49,7 +49,7 @@ import { TemplateEditor } from './pages/templates/components/TemplateEditor';
 import { ProvidersPage } from './pages/templates/components/ProvidersPage';
 import { InAppSuccess } from './pages/quick-start/steps/InAppSuccess';
 import { IntegrationsListPage } from './pages/integrations/IntegrationsListPage';
-import { SidebarCreateProvider } from './pages/integrations/components/multi-provider/SidebarCreateProvider';
+import { SelectProviderSidebar } from './pages/integrations/components/multi-provider/SelectProviderSidebar';
 import { CreateProviderPage } from './pages/integrations/CreateProviderPage';
 import { UpdateProviderPage } from './pages/integrations/UpdateProviderPage';
 
@@ -209,7 +209,7 @@ function App() {
                   <Route path={ROUTES.ACTIVITIES} element={<ActivitiesPage />} />
                   <Route path={ROUTES.SETTINGS} element={<SettingsPage />} />
                   <Route path={ROUTES.INTEGRATIONS} element={<IntegrationsListPage />}>
-                    <Route path="create" element={<SidebarCreateProvider />} />
+                    <Route path="create" element={<SelectProviderSidebar />} />
                     <Route path="create/:channel/:providerId" element={<CreateProviderPage />} />
                     <Route path=":integrationId" element={<UpdateProviderPage />} />
                   </Route>
