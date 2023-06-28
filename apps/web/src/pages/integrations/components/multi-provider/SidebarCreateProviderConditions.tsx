@@ -1,32 +1,22 @@
-import React, { useEffect, useState } from 'react';
 import styled from '@emotion/styled';
-import {
-  ActionIcon,
-  Container,
-  createStyles,
-  Drawer,
-  Group,
-  Image,
-  MantineTheme,
-  Radio,
-  Input as MantineInput,
-  Space,
-  Stack,
-  Tabs,
-  TabsValue,
-  Text,
-  TextInput,
-  UnstyledButton,
-  useMantineColorScheme,
-} from '@mantine/core';
+import { ActionIcon, ColorScheme, Group, Radio, Text, TextInput, useMantineColorScheme } from '@mantine/core';
 import { colors } from '../../../../design-system';
 import { Close } from '../../../../design-system/icons/actions/Close';
-import { Button, Input, shadows, Title } from '../../../../design-system';
+import { Button } from '../../../../design-system';
 import { ArrowLeft } from '../../../../design-system/icons';
-import { IIntegratedProvider } from '../../IntegrationsStoreModal';
 import { Controller, useForm } from 'react-hook-form';
 import { inputStyles } from '../../../../design-system/config/inputs.styles';
 import { useFetchEnvironments } from '../../../../hooks/useFetchEnvironments';
+import { CONTEXT_PATH } from '../../../../config';
+import { IProviderConfig } from '@novu/shared';
+
+const getLogoFileName = (id, schema: ColorScheme) => {
+  if (schema === 'dark') {
+    return `${CONTEXT_PATH}/static/images/providers/dark/square/${id}.svg`;
+  }
+
+  return `${CONTEXT_PATH}/static/images/providers/light/square/${id}.svg`;
+};
 
 export function SidebarCreateProviderConditions({
   onClose,
@@ -35,7 +25,7 @@ export function SidebarCreateProviderConditions({
 }: {
   onClose: () => void;
   goBack: () => void;
-  provider: IIntegratedProvider;
+  provider: IProviderConfig;
 }) {
   const { environments, isLoading: areEnvironmentsLoading } = useFetchEnvironments();
   const {
@@ -62,7 +52,7 @@ export function SidebarCreateProviderConditions({
           <ArrowLeft color={colors.B80} />
         </ActionIcon>
         <img
-          src={provider.logoFileName[`${colorScheme}`]}
+          src={getLogoFileName(provider.id, colorScheme)}
           alt={provider.displayName}
           style={{
             height: '24px',
