@@ -39,6 +39,41 @@ describe('Update Tenant - /tenants/:tenantId (PUT)', function () {
     expect(updatedTenant?.data).to.deep.equal({ test1: 'new value', test2: 'new value2' });
   });
 
+  it('should not update identifier with null/undefined', async function () {
+    await tenantRepository.create({
+      _environmentId: session.environment._id,
+      identifier: 'identifier_123',
+      name: 'name_123',
+      data: { test1: 'test value1', test2: 'test value2' },
+    });
+
+    await updateTenant({
+      session,
+      identifier: 'identifier_123',
+      newIdentifier: null,
+    });
+
+    const tenantNotUpdatedWithNull = await tenantRepository.findOne({
+      _environmentId: session.environment._id,
+      identifier: 'identifier_123',
+    });
+
+    expect(tenantNotUpdatedWithNull?.identifier).to.equal('identifier_123');
+
+    await updateTenant({
+      session,
+      identifier: 'identifier_123',
+      newIdentifier: undefined,
+    });
+
+    const tenantNotUpdatedWithUndefined = await tenantRepository.findOne({
+      _environmentId: session.environment._id,
+      identifier: 'identifier_123',
+    });
+
+    expect(tenantNotUpdatedWithUndefined?.identifier).to.equal('identifier_123');
+  });
+
   it('should not be able to update to already existing identifier (in the same environment)', async function () {
     await tenantRepository.create({
       _environmentId: session.environment._id,
@@ -79,7 +114,7 @@ export async function updateTenant({
 }: {
   session;
   identifier?: string;
-  newIdentifier?: string;
+  newIdentifier?: string | null | undefined;
   name?: string;
   data?: any;
 }): Promise<AxiosResponse> {
