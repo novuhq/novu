@@ -476,7 +476,15 @@
     "externalredis",
     "autorun",
     "webp",
-    "nocheck"
+    "nocheck",
+    "webp",
+    "devs",
+    "flowwer",
+    "Grossman",
+    "Dima",
+    "orcid",
+    "Barnea",
+    "Tomer"
   ],
   "flagWords": [],
   "patterns": [
