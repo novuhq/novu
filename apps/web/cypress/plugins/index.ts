@@ -153,17 +153,31 @@ module.exports = (on, config) => {
       const environmentService = new EnvironmentService();
 
       let organization = await organizationService.getOrganization(config.env.BLUEPRINT_CREATOR);
+
       if (!organization) {
         organization = await organizationService.createOrganization({ _id: config.env.BLUEPRINT_CREATOR });
-        await environmentService.createEnvironment(organization._id, 'Production');
       }
-      const productionEnvironment = await environmentService.getProductionEnvironment(organization._id);
+
+      let developmentEnvironment = await environmentService.getDevelopmentEnvironment(organization._id);
+      if (!developmentEnvironment) {
+        developmentEnvironment = await environmentService.createDevelopmentEnvironment(organization._id, user._id);
+      }
+
+      let productionEnvironment = await environmentService.getProductionEnvironment(organization._id);
+      if (!productionEnvironment) {
+        productionEnvironment = await environmentService.createEnvironment(
+          organization._id,
+          user._id,
+          developmentEnvironment._id
+        );
+      }
 
       const generalGroup = await notificationGroupRepository.findOne({
         name: 'General',
         _environmentId: productionEnvironment._id,
         _organizationId: organization._id,
       });
+
       if (!generalGroup) {
         await notificationGroupRepository.create({
           name: 'General',
@@ -180,7 +194,10 @@ module.exports = (on, config) => {
 
       const popularTemplateIds = getPopularTemplateIds({ production: false });
 
+      console.log({ popularTemplateIds });
+
       const templatesCount = await notificationTemplateService.countTemplates();
+      console.log({ templatesCount });
       if (templatesCount === 0) {
         return await Promise.all([
           notificationTemplateService.createTemplate({
