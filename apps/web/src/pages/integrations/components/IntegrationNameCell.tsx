@@ -72,7 +72,7 @@ export const IntegrationNameCell = ({ row: { original }, isLoading }: IExtendedC
       <DetailsHolder>
         <NameHolder>
           <Text>{original.name}</Text>
-          {original.provider.toLowerCase().includes('novu') && <Free>🎉 Free</Free>}
+          {original.name.toLowerCase().includes('novu') && <Free>🎉 Free</Free>}
         </NameHolder>
         <Identifier>Key: {original.identifier}</Identifier>
       </DetailsHolder>
