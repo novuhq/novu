@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react';
 import styled from '@emotion/styled';
-import { ActionIcon, ColorScheme, Group, TextInput, useMantineColorScheme } from '@mantine/core';
-import { colors } from '../../design-system';
+import { ActionIcon, ColorScheme, Group, TextInput, useMantineColorScheme, Text, Loader } from '@mantine/core';
+import { Button, colors, Input, Switch } from '../../design-system';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useProviders } from './useProviders';
 import { IIntegratedProvider } from './IntegrationsStoreModal';
-import { Close } from '../../design-system/icons';
+import { Check, Close, Copy } from '../../design-system/icons';
 import { Controller, useForm } from 'react-hook-form';
 import { CONTEXT_PATH } from '../../config';
 import { IConfigCredentials } from '@novu/shared';
 import { IntegrationInput } from './components/IntegrationInput';
+import { useClipboard } from '@mantine/hooks';
+import slugify from 'slugify';
 
 const getLogoFileName = (id, schema: ColorScheme) => {
   if (schema === 'dark') {
@@ -19,9 +21,16 @@ const getLogoFileName = (id, schema: ColorScheme) => {
   return `${CONTEXT_PATH}/static/images/providers/light/square/${id}.svg`;
 };
 
+interface IProviderForm {
+  name: string;
+  credentials: Record<string, string>;
+  active: boolean;
+  identifier: string;
+}
+
 export function UpdateProviderPage() {
   const [selectedProvider, setSelectedProvider] = useState<IIntegratedProvider | null>(null);
-  const { providers } = useProviders();
+  const { providers, refetch, isLoading } = useProviders();
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
   const { integrationId } = useParams();
@@ -29,20 +38,44 @@ export function UpdateProviderPage() {
 
   const {
     control,
-    setValue,
-    register,
     handleSubmit,
     reset,
-    formState: { errors },
-  } = useForm({
+    watch,
+    setValue,
+    formState: { errors, isDirty },
+  } = useForm<IProviderForm>({
     shouldUseNativeValidation: false,
+    defaultValues: {
+      name: '',
+      credentials: {},
+      active: false,
+      identifier: '',
+    },
   });
+
+  const isActive = watch('active');
+  const name = watch('name');
+  const identifier = watch('identifier');
+  const identifierClipboard = useClipboard({ timeout: 1000 });
+
+  useEffect(() => {
+    if (!selectedProvider?.displayName.includes(name)) {
+      return;
+    }
+    const newIdentifier = slugify(name, {
+      lower: true,
+      strict: true,
+    });
+
+    if (newIdentifier === identifier) {
+      return;
+    }
+
+    setValue('identifier', newIdentifier);
+  }, [name]);
 
   useEffect(() => {
     if (integrationId === undefined || providers.length === 0) {
-      return;
-    }
-    if (selectedProvider !== null && selectedProvider.integrationId === integrationId) {
       return;
     }
     const foundProvider = providers.find((provider) => provider.integrationId === integrationId);
@@ -53,14 +86,23 @@ export function UpdateProviderPage() {
 
     setSelectedProvider(foundProvider);
     reset({
-      ...foundProvider,
+      name: foundProvider.displayName,
       credentials: foundProvider.credentials.reduce((prev, credential) => {
         prev[credential.key] = credential.value;
 
         return prev;
       }, {} as any),
+      active: foundProvider.active,
     });
   }, [integrationId, providers]);
+
+  if (isLoading) {
+    return (
+      <SideBarWrapper dark={isDark}>
+        <Loader color={colors.error} size={32} />
+      </SideBarWrapper>
+    );
+  }
 
   if (selectedProvider === null) {
     return null;
@@ -72,7 +114,9 @@ export function UpdateProviderPage() {
         name={'connect-integration-form'}
         noValidate
         onSubmit={(e) => {
-          handleSubmit((values) => {});
+          handleSubmit((values) => {
+            refetch();
+          });
           e.preventDefault();
         }}
       >
@@ -89,7 +133,7 @@ export function UpdateProviderPage() {
             control={control}
             name="name"
             defaultValue=""
-            render={({ field, fieldState }) => {
+            render={({ field }) => {
               return (
                 <TextInput
                   styles={(theme) => ({
@@ -148,17 +192,62 @@ export function UpdateProviderPage() {
             <Close color={colors.B40} />
           </ActionIcon>
         </Group>
-        {selectedProvider?.credentials.map((credential: IConfigCredentials) => (
-          <InputWrapper key={credential.key}>
+        <CenterDiv>
+          <ActiveWrapper active={isActive}>
             <Controller
-              name={`credentials.${credential.key}`}
               control={control}
-              render={({ field }) => (
-                <IntegrationInput credential={credential} errors={errors} field={field} register={register} />
-              )}
+              name="active"
+              render={({ field }) => <Switch checked={isActive} data-test-id="is_active_id" {...field} />}
             />
-          </InputWrapper>
-        ))}
+            <StyledText data-test-id="connect-integration-form-active-text">
+              {isActive ? 'Active' : 'Disabled'}
+            </StyledText>
+          </ActiveWrapper>
+          <Controller
+            control={control}
+            name="identifier"
+            render={({ field }) => (
+              <InputWrapper>
+                <Input
+                  label="Instance key"
+                  error={errors.identifier?.message}
+                  rightSection={
+                    <CopyWrapper onClick={() => identifierClipboard.copy(field.value)}>
+                      {identifierClipboard.copied ? <Check /> : <Copy />}
+                    </CopyWrapper>
+                  }
+                  {...field}
+                />
+              </InputWrapper>
+            )}
+          />
+          {selectedProvider?.credentials.map((credential: IConfigCredentials) => (
+            <InputWrapper key={credential.key}>
+              <Controller
+                name={`credentials.${credential.key}`}
+                control={control}
+                render={({ field }) => <IntegrationInput credential={credential} errors={errors} field={field} />}
+              />
+            </InputWrapper>
+          ))}
+        </CenterDiv>
+        <Group position="apart">
+          <Text>
+            Explore our{' '}
+            <a
+              style={{
+                color: colors.error,
+              }}
+              href={selectedProvider.docReference}
+              target="_blank"
+            >
+              set-up guide
+            </a>
+          </Text>
+          <Button disabled={!isDirty} submit={true}>
+            Update
+          </Button>
+        </Group>
       </form>
     </SideBarWrapper>
   );
@@ -169,6 +258,8 @@ const SideBarWrapper = styled.div<{ dark: boolean }>`
   position: absolute;
   z-index: 1;
   width: 480px;
+  height: 100%;
+  display: flex;
   top: 0;
   bottom: 0;
   right: 0;
@@ -181,5 +272,45 @@ const InputWrapper = styled.div`
     font-weight: bold;
     margin-bottom: 10px;
     font-size: 14px;
+  }
+`;
+
+const StyledText = styled(Text)`
+  display: inline-block;
+  word-break: normal;
+  margin: 0 10px;
+`;
+
+const SideElementBase = styled.div`
+  display: flex;
+  justify-content: flex-start;
+  & > :first-of-type {
+    width: auto;
+  }
+`;
+
+const ActiveWrapper = styled(SideElementBase)<{ active: boolean }>`
+  align-items: center;
+  margin-bottom: 30px;
+  margin-top: 16px;
+
+  ${StyledText} {
+    color: ${({ active }) => (active ? colors.success : colors.error)};
+  }
+`;
+
+const CenterDiv = styled.div`
+  overflow: scroll;
+  color: ${colors.B60};
+  font-size: 14px;
+  line-height: 20px;
+  max-height: calc(100% - 90px);
+  height: calc(100% - 90px);
+`;
+
+const CopyWrapper = styled.div`
+  cursor: pointer;
+  &:hover {
+    opacity: 0.8;
   }
 `;
