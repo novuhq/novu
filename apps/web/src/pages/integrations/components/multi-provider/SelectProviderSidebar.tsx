@@ -36,13 +36,17 @@ export function SelectProviderSidebar() {
     emailProviders: mapStructure(
       providers.filter((providerItem) => providerItem.channel === ChannelTypeEnum.EMAIL) || []
     ),
+
     smsProviders: mapStructure(providers.filter((providerItem) => providerItem.channel === ChannelTypeEnum.SMS) || []),
+
     pushProviders: mapStructure(
       providers.filter((providerItem) => providerItem.channel === ChannelTypeEnum.PUSH) || []
     ),
+
     inAppProviders: mapStructure(
       providers.filter((providerItem) => providerItem.channel === ChannelTypeEnum.IN_APP) || []
     ),
+
     chatProviders: mapStructure(
       providers.filter((providerItem) => providerItem.channel === ChannelTypeEnum.CHAT) || []
     ),
@@ -52,6 +56,7 @@ export function SelectProviderSidebar() {
 
   const filterSearch = (list, search: string) =>
     list.filter((prov) => prov.displayName.toLowerCase().includes(search.toLowerCase()));
+
   const debouncedSearchChange = useDebounce((search: string) => {
     setProviders({
       emailProviders: filterSearch(emailProviders, search),
@@ -130,46 +135,36 @@ export function SelectProviderSidebar() {
         </Tabs>
         <Space h={20} />
         <CenterDiv>
-          <Stack pb={20} spacing={10} id={ChannelTypeEnum.IN_APP}>
-            <ChannelTitle spacing={8} channel={ChannelTypeEnum.IN_APP} />
-            <ChannelProviders
-              channelProviders={inAppProviders}
-              onProviderClick={onProviderClick}
-              selectedProvider={selectedProvider}
-            />
-          </Stack>
-          <Stack pb={20} spacing={10} id={ChannelTypeEnum.EMAIL}>
-            <ChannelTitle spacing={8} channel={ChannelTypeEnum.EMAIL} />
-            <ChannelProviders
-              channelProviders={emailProviders}
-              onProviderClick={onProviderClick}
-              selectedProvider={selectedProvider}
-            />
-          </Stack>
-          <Stack pb={20} spacing={10} id={ChannelTypeEnum.CHAT}>
-            <ChannelTitle spacing={8} channel={ChannelTypeEnum.CHAT} />
-            <ChannelProviders
-              channelProviders={chatProviders}
-              onProviderClick={onProviderClick}
-              selectedProvider={selectedProvider}
-            />
-          </Stack>
-          <Stack pb={20} spacing={10} id={ChannelTypeEnum.PUSH}>
-            <ChannelTitle spacing={8} channel={ChannelTypeEnum.PUSH} />
-            <ChannelProviders
-              channelProviders={pushProviders}
-              onProviderClick={onProviderClick}
-              selectedProvider={selectedProvider}
-            />
-          </Stack>
-          <Stack pb={20} spacing={10} id={ChannelTypeEnum.SMS}>
-            <ChannelTitle spacing={8} channel={ChannelTypeEnum.SMS} />
-            <ChannelProviders
-              channelProviders={smsProviders}
-              onProviderClick={onProviderClick}
-              selectedProvider={selectedProvider}
-            />
-          </Stack>
+          <ListProviders
+            selectedProvider={selectedProvider}
+            onProviderClick={onProviderClick}
+            channelProviders={inAppProviders}
+            channelType={ChannelTypeEnum.IN_APP}
+          />
+          <ListProviders
+            selectedProvider={selectedProvider}
+            onProviderClick={onProviderClick}
+            channelProviders={emailProviders}
+            channelType={ChannelTypeEnum.EMAIL}
+          />
+          <ListProviders
+            selectedProvider={selectedProvider}
+            onProviderClick={onProviderClick}
+            channelProviders={chatProviders}
+            channelType={ChannelTypeEnum.CHAT}
+          />
+          <ListProviders
+            selectedProvider={selectedProvider}
+            onProviderClick={onProviderClick}
+            channelProviders={pushProviders}
+            channelType={ChannelTypeEnum.PUSH}
+          />
+          <ListProviders
+            selectedProvider={selectedProvider}
+            onProviderClick={onProviderClick}
+            channelProviders={smsProviders}
+            channelType={ChannelTypeEnum.SMS}
+          />
         </CenterDiv>
         <Footer>
           <Group>
@@ -212,24 +207,38 @@ export const ProviderImage = ({ providerId }) => {
     />
   );
 };
-const ChannelProviders = ({ channelProviders, onProviderClick, selectedProvider }) => {
+
+const ListProviders = ({
+  channelProviders,
+  channelType,
+  onProviderClick,
+  selectedProvider,
+}: {
+  channelProviders: IIntegratedProvider[];
+  channelType: ChannelTypeEnum;
+  onProviderClick: (provider: IIntegratedProvider) => () => void;
+  selectedProvider: IIntegratedProvider | null;
+}) => {
   return (
-    <div>
-      {channelProviders.map((provider) => {
-        return (
-          <StyledButton
-            key={provider.providerId}
-            onClick={onProviderClick(provider)}
-            selected={provider.providerId === selectedProvider?.providerId}
-          >
-            <Group>
-              <ProviderImage providerId={provider.providerId} />
-              <Text>{provider.displayName}</Text>
-            </Group>
-          </StyledButton>
-        );
-      })}
-    </div>
+    <Stack pb={20} spacing={10} id={channelType}>
+      <ChannelTitle spacing={8} channel={channelType} />
+      <div>
+        {channelProviders.map((provider) => {
+          return (
+            <StyledButton
+              key={provider.providerId}
+              onClick={onProviderClick(provider)}
+              selected={provider.providerId === selectedProvider?.providerId}
+            >
+              <Group>
+                <ProviderImage providerId={provider.providerId} />
+                <Text>{provider.displayName}</Text>
+              </Group>
+            </StyledButton>
+          );
+        })}
+      </div>
+    </Stack>
   );
 };
 export const Footer = styled.div`

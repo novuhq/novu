@@ -38,6 +38,7 @@ export function CreateProviderInstanceSidebar({
       check: boolean;
     }
   >(createIntegration);
+
   const { handleSubmit, control } = useForm({
     shouldUseNativeValidation: false,
     defaultValues: {
