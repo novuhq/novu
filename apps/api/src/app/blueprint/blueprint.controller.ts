@@ -12,6 +12,8 @@ export class BlueprintController {
 
   @Get('/group-by-category')
   getGroupedBlueprints(): Promise<GroupedBlueprintResponse> {
+    console.log('HHHHOOOO');
+
     return this.getGroupedBlueprintsUsecase.execute();
   }
 

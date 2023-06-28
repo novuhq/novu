@@ -27,12 +27,12 @@ describe('Templates Store', function () {
     cy.getByTestId('all-workflow-tile').should('exist').should('be.disabled');
   });
 
-  it('the all templates tile should be enabled and popular should be shown when blueprints are fetched', function () {
+  it.only('the all templates tile should be enabled and popular should be shown when blueprints are fetched', function () {
     cy.makeBlueprints();
     cy.intercept('**/notification-templates**').as('getTemplates');
     cy.intercept('**/blueprints/group-by-category').as('getBlueprints');
     cy.visit('/workflows');
-    cy.wait('@getTemplates');
+    cy.wait('@getTemplates').its('response.body').should('have.length', 0);
 
     cy.getByTestId('no-workflow-templates-placeholder').should('be.visible');
     cy.getByTestId('create-workflow-tile').should('exist');

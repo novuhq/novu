@@ -78,6 +78,8 @@ export class NotificationTemplateService {
 
     const templateSteps: NotificationStepEntity[] = [];
 
+    console.log('asdadsa');
+
     for (const message of steps) {
       const saved = await this.messageTemplateRepository.create({
         type: message.type,
@@ -94,6 +96,8 @@ export class NotificationTemplateService {
         _environmentId: this.environmentId,
       });
 
+      console.log('this');
+
       templateSteps.push({
         filters: message.filters,
         _templateId: saved._id,
@@ -103,6 +107,8 @@ export class NotificationTemplateService {
         uuid: message.uuid,
       });
     }
+
+    console.log({ groups });
 
     const data = {
       _notificationGroupId: override.noGroupId ? undefined : groups[0]._id,
@@ -126,6 +132,8 @@ export class NotificationTemplateService {
       steps: templateSteps,
     } as NotificationTemplateEntity;
 
+    console.log('create template', { data });
+
     const notificationTemplate = await this.notificationTemplateRepository.create(data);
 
     return await this.notificationTemplateRepository.findById(
@@ -135,6 +143,12 @@ export class NotificationTemplateService {
   }
 
   async countTemplates() {
+    console.log('count templates', { org: this.organizationId, env: this.environmentId });
+
+    const templates = await this.notificationTemplateRepository.count({ _organizationId: this.organizationId });
+
+    console.log('count', { templates });
+
     return await this.notificationTemplateRepository.count({
       _organizationId: this.organizationId,
       _environmentId: this.environmentId,
@@ -142,6 +156,8 @@ export class NotificationTemplateService {
   }
 
   async getTemplates() {
+    console.log('get templates', { org: this.organizationId, env: this.environmentId });
+
     return await this.notificationTemplateRepository.find({
       _organizationId: this.organizationId,
       _environmentId: this.environmentId,

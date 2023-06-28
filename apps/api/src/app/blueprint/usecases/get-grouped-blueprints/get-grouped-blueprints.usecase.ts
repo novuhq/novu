@@ -12,12 +12,11 @@ const WEEK_IN_SECONDS = 60 * 60 * 24 * 7;
 export class GetGroupedBlueprints {
   constructor(private notificationTemplateRepository: NotificationTemplateRepository) {}
 
-  @CachedEntity({
-    builder: () => buildGroupedBlueprintsKey(),
-    options: { ttl: WEEK_IN_SECONDS },
-  })
   async execute(): Promise<GroupedBlueprintResponse> {
+    console.log('herrrrr');
     const groups = await this.fetchGroupedBlueprints();
+
+    console.log({ groups });
 
     const updatePopularBlueprints = this.updatePopularBlueprints(groups);
 
@@ -27,7 +26,9 @@ export class GetGroupedBlueprints {
   }
 
   private async fetchGroupedBlueprints() {
+    console.log('fetch grouped');
     const groups = await this.notificationTemplateRepository.findAllGroupedByCategory();
+    console.log('fetch', { groups });
     if (!groups?.length) {
       throw new NotFoundException(
         `Blueprints for organization id ${NotificationTemplateRepository.getBlueprintOrganizationId()} were not found`
@@ -45,6 +46,8 @@ export class GetGroupedBlueprints {
     groups: { name: string; blueprints: NotificationTemplateEntity[] }[]
   ): INotificationTemplate[] {
     const storedBlueprints = this.groupedToBlueprintsArray(groups);
+
+    console.log({ storedBlueprints });
 
     const localPopularIds = [...POPULAR_TEMPLATES_ID_LIST];
 
