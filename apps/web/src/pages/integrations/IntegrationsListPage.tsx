@@ -17,8 +17,7 @@ import { IntegrationStatusCell } from './components/IntegrationStatusCell';
 import { When } from '../../components/utils/When';
 import { IntegrationsListNoData } from './components/IntegrationsListNoData';
 import { mapToTableIntegration } from './utils';
-import { SidebarCreateProvider } from './components/multi-provider/SidebarCreateProvider';
-import { useDisclosure } from '@mantine/hooks';
+import { Outlet, useNavigate } from 'react-router-dom';
 
 const Text = styled.span`
   color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.white : colors.B40)};
@@ -66,7 +65,6 @@ const columns: IExtendedColumn<ITableIntegration>[] = [
 const IntegrationsList = () => {
   const { environments, isLoading: areEnvironmentsLoading } = useFetchEnvironments();
   const { integrations, loading: areIntegrationsLoading } = useIntegrations();
-  const [opened, { open, close }] = useDisclosure(false);
   const isLoading = areEnvironmentsLoading || areIntegrationsLoading;
   const hasIntegrations = integrations && integrations?.length > 0;
   const data = useMemo<ITableIntegration[] | undefined>(
@@ -74,9 +72,10 @@ const IntegrationsList = () => {
     [integrations, environments]
   );
 
+  const navigate = useNavigate();
+
   const onRowClickCallback = useCallback((item) => {
-    // eslint-disable-next-line no-console
-    console.log('onRowClickCallback', item);
+    navigate(`/integrations/${item.original.identifier}`);
   }, []);
 
   const onChannelClickCallback = useCallback((item) => {
@@ -94,7 +93,12 @@ const IntegrationsList = () => {
     >
       <PageHeader title="Integrations Store" />
       <Container fluid sx={{ padding: '0 30px 8px 30px' }}>
-        <IntegrationsListToolbar openCreateIntegration={open} areIntegrationsLoading={isLoading} />
+        <IntegrationsListToolbar
+          openCreateIntegration={() => {
+            navigate('create');
+          }}
+          areIntegrationsLoading={isLoading}
+        />
       </Container>
       <When truthy={hasIntegrations || isLoading}>
         <Table
@@ -104,7 +108,7 @@ const IntegrationsList = () => {
           columns={columns}
           data={data}
         />
-        <SidebarCreateProvider open={opened} onClose={close} />
+        <Outlet />
       </When>
       <When truthy={!hasIntegrations && !isLoading}>
         <IntegrationsListNoData onChannelClick={onChannelClickCallback} />
