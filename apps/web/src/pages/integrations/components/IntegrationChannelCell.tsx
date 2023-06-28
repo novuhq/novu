@@ -1,35 +1,11 @@
-import styled from '@emotion/styled';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-
-import { colors, IExtendedCellProps, withCellLoading } from '../../../design-system';
-import { CHANNEL_TYPE_TO_ICON_NAME } from '../constants';
+import { IExtendedCellProps, withCellLoading } from '../../../design-system';
 import type { ITableIntegration } from '../types';
+import { IntegrationChannel } from './IntegrationChannel';
 
-const ChannelCellHolder = styled.div`
-  display: flex;
-  align-items: flex-end;
-  gap: 8px;
-`;
-
-const IconStyled = styled(FontAwesomeIcon)`
-  font-size: 16px;
-  color: ${colors.B40};
-`;
-
-const Text = styled.span`
-  color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.white : colors.B40)};
-  font-size: 14px;
-`;
-
-const IntegrationChannel = ({ row: { original } }: IExtendedCellProps<ITableIntegration>) => {
-  return (
-    <ChannelCellHolder data-test-id="integration-channel-cell">
-      <IconStyled icon={CHANNEL_TYPE_TO_ICON_NAME[original.channelType] as any} />
-      <Text>{original.channel}</Text>
-    </ChannelCellHolder>
-  );
+const IntegrationChannelBase = ({ row: { original } }: IExtendedCellProps<ITableIntegration>) => {
+  return <IntegrationChannel name={original.channel} testId="integration-channel-cell" type={original.channelType} />;
 };
 
-export const IntegrationChannelCell = withCellLoading(IntegrationChannel, {
+export const IntegrationChannelCell = withCellLoading(IntegrationChannelBase, {
   loadingTestId: 'integration-channel-cell-loading',
 });

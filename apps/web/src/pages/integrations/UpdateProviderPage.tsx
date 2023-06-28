@@ -12,6 +12,10 @@ import { IConfigCredentials } from '@novu/shared';
 import { IntegrationInput } from './components/IntegrationInput';
 import { useClipboard } from '@mantine/hooks';
 import slugify from 'slugify';
+import { IntegrationChannel } from './components/IntegrationChannel';
+import { CHANNEL_TYPE_TO_STRING } from '../../utils/channels';
+import { IntegrationEnvironmentPill } from './components/IntegrationEnvironmentPill';
+import { useFetchEnvironments } from '../../hooks/useFetchEnvironments';
 
 const getLogoFileName = (id, schema: ColorScheme) => {
   if (schema === 'dark') {
@@ -29,6 +33,7 @@ interface IProviderForm {
 }
 
 export function UpdateProviderPage() {
+  const { environments, isLoading: areEnvironmentsLoading } = useFetchEnvironments();
   const [selectedProvider, setSelectedProvider] = useState<IIntegratedProvider | null>(null);
   const { providers, refetch, isLoading } = useProviders();
   const { colorScheme } = useMantineColorScheme();
@@ -96,7 +101,7 @@ export function UpdateProviderPage() {
     });
   }, [integrationId, providers]);
 
-  if (isLoading) {
+  if (isLoading || areEnvironmentsLoading) {
     return (
       <SideBarWrapper dark={isDark}>
         <Loader color={colors.error} size={32} />
@@ -191,6 +196,15 @@ export function UpdateProviderPage() {
           >
             <Close color={colors.B40} />
           </ActionIcon>
+        </Group>
+        <Group spacing={16}>
+          <IntegrationChannel name={CHANNEL_TYPE_TO_STRING[selectedProvider.channel]} type={selectedProvider.channel} />
+          <IntegrationEnvironmentPill
+            name={
+              environments?.find((environment) => environment._id === selectedProvider.environmentId)?.name ||
+              'Development'
+            }
+          />
         </Group>
         <CenterDiv>
           <ActiveWrapper active={isActive}>

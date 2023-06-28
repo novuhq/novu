@@ -50,6 +50,7 @@ function initializeProviders(integrations: IntegrationEntity[]): IIntegratedProv
       active: integration?.active ?? false,
       connected: !!integration,
       logoFileName: providerItem.logoFileName,
+      environmentId: integration?._environmentId,
     };
   });
 }
