@@ -15,7 +15,7 @@ export class RemoveIntegration {
     try {
       await this.invalidateCache.invalidateQuery({
         key: buildIntegrationKey().invalidate({
-          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
         }),
       });
 

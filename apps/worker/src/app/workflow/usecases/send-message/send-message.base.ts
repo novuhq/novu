@@ -48,13 +48,6 @@ export abstract class SendMessageBase extends SendMessageType {
     });
   }
 
-  @CachedQuery({
-    builder: ({ environmentId, ...command }: GetDecryptedIntegrationsCommand) =>
-      buildIntegrationKey().cache({
-        _environmentId: environmentId,
-        ...command,
-      }),
-  })
   protected async getIntegration(
     selectIntegrationCommand: SelectIntegrationCommand
   ): Promise<IntegrationEntity | undefined> {
