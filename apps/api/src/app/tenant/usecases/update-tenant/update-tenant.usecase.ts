@@ -15,21 +15,21 @@ export class UpdateTenant {
 
     if (!tenant) {
       throw new NotFoundException(
-        `Tenant with identifier: ${command.identifier} is not exists under environment ${command.environmentId}`
+        `Tenant with identifier: ${command.identifier} doesn't exist under environment ${command.environmentId}`
       );
     }
 
     const updatePayload: Partial<TenantEntity> = {};
 
-    if (command.name != null) {
+    if (command.name) {
       updatePayload.name = command.name;
     }
 
-    if (command.data != null) {
+    if (command.data) {
       updatePayload.data = command.data;
     }
 
-    if (command.newIdentifier != null && command.newIdentifier !== command.identifier) {
+    if (command?.newIdentifier && command?.newIdentifier !== tenant?.identifier) {
       await this.validateIdentifierDuplication({
         environmentId: command.environmentId,
         identifier: command.newIdentifier,

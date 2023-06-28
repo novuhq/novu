@@ -4,6 +4,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Post,
   Put,
@@ -11,7 +13,14 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiConflictResponse,
+  ApiExcludeController,
+  ApiNoContentResponse,
+  ApiNotFoundResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 
 import { IJwtPayload } from '@novu/shared';
 
@@ -30,7 +39,6 @@ import { UpdateTenantResponseDto } from './dtos/update-tenant-response.dto';
 import { UpdateTenantRequestDto } from './dtos/update-tenant-request.dto';
 import { UpdateTenant } from './usecases/update-tenant/update-tenant.usecase';
 import { DeleteTenantCommand } from './usecases/delete-tenant/delete-tenant.command';
-import { DeleteTenantResponseDto } from './dtos/delete-tenant.response.dto';
 import { DeleteTenant } from './usecases/delete-tenant/delete-tenant.usecase';
 import { UpdateTenantCommand } from './usecases/update-tenant/update-tenant.command';
 import { ApiOkPaginatedResponse } from '../shared/framework/paginated-ok-response.decorator';
@@ -102,6 +110,9 @@ export class TenantController {
     summary: 'Create tenant',
     description: 'Create tenant under the current environment',
   })
+  @ApiConflictResponse({
+    description: 'A tenant with the same identifier is already exist.',
+  })
   async createTenant(
     @UserSession() user: IJwtPayload,
     @Body() body: CreateTenantRequestDto
@@ -144,15 +155,18 @@ export class TenantController {
   @Delete('/:identifier')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  @ApiResponse(DeleteTenantResponseDto)
   @ApiOperation({
     summary: 'Delete tenant',
     description: 'Deletes a tenant entity from the Novu platform',
   })
-  async removeTenant(
-    @UserSession() user: IJwtPayload,
-    @Param('identifier') identifier: string
-  ): Promise<DeleteTenantResponseDto> {
+  @ApiNoContentResponse({
+    description: 'The tenant has been deleted correctly',
+  })
+  @ApiNotFoundResponse({
+    description: 'The tenant with the identifier provided does not exist in the database so it can not be deleted.',
+  })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async removeTenant(@UserSession() user: IJwtPayload, @Param('identifier') identifier: string): Promise<void> {
     return await this.deleteTenantUsecase.execute(
       DeleteTenantCommand.create({
         environmentId: user.environmentId,
