@@ -243,6 +243,11 @@ export class SendMessageEmail extends SendMessageBase {
         attachments,
         id: message._id,
         replyTo: replyToAddress,
+        notificationDetails: {
+          transactionId: command.transactionId,
+          workflowIdentifier: command.identifier,
+          subscriberId: subscriber.subscriberId,
+        },
       },
       overrides || {}
     );
