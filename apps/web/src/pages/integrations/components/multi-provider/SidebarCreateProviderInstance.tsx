@@ -1,13 +1,9 @@
-import styled from '@emotion/styled';
-import { ActionIcon, ColorScheme, Group, Radio, Text, TextInput, useMantineColorScheme } from '@mantine/core';
-import { colors } from '../../../../design-system';
-import { Close } from '../../../../design-system/icons/actions/Close';
-import { Button } from '../../../../design-system';
-import { ArrowLeft } from '../../../../design-system/icons';
+import { ActionIcon, Group, Radio, Text } from '@mantine/core';
+import { colors, NameInput, Button } from '../../../../design-system';
+import { ArrowLeft, Close } from '../../../../design-system/icons';
 import { Controller, useForm } from 'react-hook-form';
 import { inputStyles } from '../../../../design-system/config/inputs.styles';
 import { useFetchEnvironments } from '../../../../hooks/useFetchEnvironments';
-import { CONTEXT_PATH } from '../../../../config';
 import { ChannelTypeEnum, ICredentialsDto, IProviderConfig } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSegment } from '../../../../components/providers/SegmentProvider';
@@ -15,14 +11,8 @@ import { createIntegration } from '../../../../api/integration';
 import { IntegrationsStoreModalAnalytics } from '../../constants';
 import { errorMessage, successMessage } from '../../../../utils/notifications';
 import { QueryKeys } from '../../../../api/query.keys';
-
-const getLogoFileName = (id, schema: ColorScheme) => {
-  if (schema === 'dark') {
-    return `${CONTEXT_PATH}/static/images/providers/dark/square/${id}.svg`;
-  }
-
-  return `${CONTEXT_PATH}/static/images/providers/light/square/${id}.svg`;
-};
+import { ProviderImage, Footer, FormStyled } from './SidebarCreateProvider';
+import { CHANNEL_TYPE_TO_STRING } from '../../../../utils/channels';
 
 export function SidebarCreateProviderInstance({
   onClose,
@@ -56,8 +46,6 @@ export function SidebarCreateProviderInstance({
     },
   });
 
-  const { colorScheme } = useMantineColorScheme();
-
   const onCreateIntegrationInstance = async (data) => {
     try {
       await createIntegrationApi({
@@ -89,62 +77,18 @@ export function SidebarCreateProviderInstance({
         <ActionIcon onClick={goBack} variant={'transparent'}>
           <ArrowLeft color={colors.B80} />
         </ActionIcon>
-        <img
-          src={getLogoFileName(provider.id, colorScheme)}
-          alt={provider.displayName}
-          style={{
-            height: '24px',
-            maxWidth: '140px',
-          }}
-        />
+        <ProviderImage providerId={provider.id} />
         <Controller
           control={control}
           name="name"
           defaultValue=""
           render={({ field }) => {
             return (
-              <TextInput
-                styles={(theme) => ({
-                  root: {
-                    flex: '1 1 auto',
-                  },
-                  wrapper: {
-                    background: 'transparent',
-                    width: '100%',
-                  },
-                  input: {
-                    background: 'transparent',
-                    borderStyle: 'solid',
-                    borderColor: colorScheme === 'dark' ? theme.colors.dark[5] : theme.colors.gray[5],
-                    borderWidth: '1px',
-                    fontSize: '20px',
-                    fontWeight: 'bolder',
-                    padding: 9,
-                    lineHeight: '28px',
-                    minHeight: 'auto',
-                    height: 'auto',
-                    width: '100%',
-                    textOverflow: 'ellipsis',
-                    '&:not(:placeholder-shown)': {
-                      borderStyle: 'none',
-                      padding: 10,
-                    },
-                    '&:hover, &:focus': {
-                      borderStyle: 'solid',
-                      padding: 9,
-                    },
-                    '&:disabled': {
-                      backgroundColor: colorScheme === 'dark' ? colors.B15 : theme.white,
-                      color: colorScheme === 'dark' ? theme.white : theme.black,
-                      opacity: 1,
-                    },
-                  },
-                })}
+              <NameInput
                 {...field}
                 value={field.value !== undefined ? field.value : provider.displayName}
-                type="text"
-                data-test-id="title"
-                placeholder="Enter workflow name"
+                data-test-id="provider-instance-name"
+                placeholder="Enter instance name"
               />
             );
           }}
@@ -154,8 +98,8 @@ export function SidebarCreateProviderInstance({
         </ActionIcon>
       </Group>
       <Text py={24} color={colors.B40}>
-        Specify assignment preferences to automatically allocate the provider instance to the {provider.channel}{' '}
-        channel.
+        Specify assignment preferences to automatically allocate the provider instance to the{' '}
+        {CHANNEL_TYPE_TO_STRING[provider.channel]} channel.
       </Text>
       <Controller
         control={control}
@@ -216,23 +160,3 @@ export function SidebarCreateProviderInstance({
     </FormStyled>
   );
 }
-
-const Footer = styled.div`
-  padding: 15px;
-  height: 80px;
-  display: flex;
-  justify-content: right;
-  align-items: center;
-  gap: 20px;
-`;
-
-const FormStyled = styled.form`
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-
-  > *:last-child {
-    margin-top: auto;
-  }
-`;

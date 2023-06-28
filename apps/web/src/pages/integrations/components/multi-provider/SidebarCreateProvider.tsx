@@ -1,28 +1,19 @@
 import { useState } from 'react';
 import styled from '@emotion/styled';
-import {
-  ActionIcon,
-  ColorScheme,
-  Group,
-  Space,
-  Stack,
-  Tabs,
-  TabsValue,
-  Text,
-  useMantineColorScheme,
-} from '@mantine/core';
+import { ActionIcon, ColorScheme, Group, Space, Stack, Tabs, TabsValue, useMantineColorScheme } from '@mantine/core';
 import { ChannelTypeEnum, providers } from '@novu/shared';
 import { CONTEXT_PATH } from '../../../../config';
 import { colors } from '../../../../design-system';
 import { useDebounce } from '../../../../hooks';
-import { Button, Input, Title, Tooltip } from '../../../../design-system';
-import { Chat, InApp, Mail, Mobile, Search, Sms, Close } from '../../../../design-system/icons';
+import { Button, Input, Title, Tooltip, Text } from '../../../../design-system';
+import { Search, Close } from '../../../../design-system/icons';
 import { ChannelTitle } from '../../../templates/components/ChannelTitle';
 import useStyles from '../../../../design-system/tabs/Tabs.styles';
 import { IIntegratedProvider } from '../../IntegrationsStoreModal';
 import { getGradient } from '../../../../design-system/config/helper';
 import { useNavigate } from 'react-router-dom';
 import { CHANNELS_ORDER } from '../IntegrationsListNoData';
+import { CHANNEL_TYPE_TO_STRING } from '../../../../utils/channels';
 
 const mapStructure = (listProv): IIntegratedProvider[] =>
   listProv.map((providerItem) => ({
@@ -58,6 +49,7 @@ export function SidebarCreateProvider() {
   });
   const [selectedProvider, setSelectedProvider] = useState<IIntegratedProvider | null>(null);
   const { classes: tabsClasses } = useStyles(false);
+
   const filterSearch = (list, search: string) =>
     list.filter((prov) => prov.displayName.toLowerCase().includes(search.toLowerCase()));
   const debouncedSearchChange = useDebounce((search: string) => {
@@ -70,11 +62,9 @@ export function SidebarCreateProvider() {
     });
   }, 500);
 
-  const { colorScheme } = useMantineColorScheme();
-  const isDark = colorScheme === 'dark';
   const navigate = useNavigate();
 
-  const onProviderClick = (providerEx) => () => setSelectedProvider(providerEx);
+  const onProviderClick = (provider) => () => setSelectedProvider(provider);
 
   const onTabChange = (scrollTo: TabsValue) => {
     if (scrollTo === null) {
@@ -88,40 +78,33 @@ export function SidebarCreateProvider() {
     });
   };
 
+  const onCloseSidebar = () => {
+    navigate('/integrations');
+  };
+
   return (
-    <SideBarWrapper dark={isDark}>
+    <SideBarWrapper>
       <FormStyled>
         <Group style={{ width: '100%' }} align="start" position="apart">
           <Stack>
             {selectedProvider !== null ? (
               <>
                 <Group>
-                  <img
-                    src={getLogoFileName(selectedProvider.providerId, colorScheme)}
-                    alt={selectedProvider.displayName}
-                    style={{
-                      height: '24px',
-                      maxWidth: '140px',
-                    }}
-                  />
-
-                  <Title>{selectedProvider.displayName}</Title>
+                  <ProviderImage providerId={selectedProvider.providerId} />
+                  <Title size={2}>{selectedProvider.displayName}</Title>
                 </Group>
-                <Text color={colors.B40}>A provider instance for {selectedProvider.channel} channel</Text>
+                <Text color={colors.B40}>
+                  A provider instance for {CHANNEL_TYPE_TO_STRING[selectedProvider.channel]} channel
+                </Text>
               </>
             ) : (
               <>
-                <Title>Select a provider</Title>
+                <Title size={2}>Select a provider</Title>
                 <Text color={colors.B40}>Select a provider to create instance for a channel</Text>
               </>
             )}
           </Stack>
-          <ActionIcon
-            variant={'transparent'}
-            onClick={() => {
-              navigate('/integrations');
-            }}
-          >
+          <ActionIcon variant={'transparent'} onClick={onCloseSidebar}>
             <Close color={colors.B40} />
           </ActionIcon>
         </Group>
@@ -149,138 +132,48 @@ export function SidebarCreateProvider() {
         <CenterDiv>
           <Stack pb={20} spacing={10} id={ChannelTypeEnum.IN_APP}>
             <ChannelTitle spacing={8} channel={ChannelTypeEnum.IN_APP} />
-            <div>
-              {inAppProviders.map((providerEx) => {
-                return (
-                  <StyledButton
-                    key={providerEx.providerId}
-                    onClick={onProviderClick(providerEx)}
-                    selected={providerEx.providerId === selectedProvider?.providerId}
-                  >
-                    <Group>
-                      <img
-                        src={getLogoFileName(providerEx.providerId, colorScheme)}
-                        alt={providerEx.displayName}
-                        style={{
-                          height: '24px',
-                          maxWidth: '140px',
-                        }}
-                      />
-                      <Text>{providerEx.displayName}</Text>
-                    </Group>
-                  </StyledButton>
-                );
-              })}
-            </div>
+            <ChannelProviders
+              channelProviders={inAppProviders}
+              onProviderClick={onProviderClick}
+              selectedProvider={selectedProvider}
+            />
           </Stack>
           <Stack pb={20} spacing={10} id={ChannelTypeEnum.EMAIL}>
             <ChannelTitle spacing={8} channel={ChannelTypeEnum.EMAIL} />
-            <div>
-              {emailProviders.map((providerEx) => {
-                return (
-                  <StyledButton
-                    key={providerEx.providerId}
-                    onClick={onProviderClick(providerEx)}
-                    selected={providerEx.providerId === selectedProvider?.providerId}
-                  >
-                    <Group>
-                      <img
-                        src={getLogoFileName(providerEx.providerId, colorScheme)}
-                        alt={providerEx.displayName}
-                        style={{
-                          height: '24px',
-                          maxWidth: '140px',
-                        }}
-                      />
-                      <Text>{providerEx.displayName}</Text>
-                    </Group>
-                  </StyledButton>
-                );
-              })}
-            </div>
+            <ChannelProviders
+              channelProviders={emailProviders}
+              onProviderClick={onProviderClick}
+              selectedProvider={selectedProvider}
+            />
           </Stack>
-          <Stack py={20} spacing={10} id={ChannelTypeEnum.CHAT}>
+          <Stack pb={20} spacing={10} id={ChannelTypeEnum.CHAT}>
             <ChannelTitle spacing={8} channel={ChannelTypeEnum.CHAT} />
-            <div>
-              {chatProviders.map((providerEx) => {
-                return (
-                  <StyledButton
-                    key={providerEx.providerId}
-                    onClick={onProviderClick(providerEx)}
-                    selected={providerEx.providerId === selectedProvider?.providerId}
-                  >
-                    <Group>
-                      <img
-                        src={getLogoFileName(providerEx.providerId, colorScheme)}
-                        alt={providerEx.displayName}
-                        style={{
-                          height: '24px',
-                          maxWidth: '140px',
-                        }}
-                      />
-                      <Text>{providerEx.displayName}</Text>
-                    </Group>
-                  </StyledButton>
-                );
-              })}
-            </div>
+            <ChannelProviders
+              channelProviders={chatProviders}
+              onProviderClick={onProviderClick}
+              selectedProvider={selectedProvider}
+            />
           </Stack>
-          <Stack py={20} spacing={10} id={ChannelTypeEnum.SMS}>
-            <ChannelTitle spacing={8} channel={ChannelTypeEnum.SMS} />
-            <div>
-              {smsProviders.map((providerEx) => {
-                return (
-                  <StyledButton
-                    key={providerEx.providerId}
-                    onClick={onProviderClick(providerEx)}
-                    selected={providerEx.providerId === selectedProvider?.providerId}
-                  >
-                    <Group>
-                      <img
-                        src={getLogoFileName(providerEx.providerId, colorScheme)}
-                        alt={providerEx.displayName}
-                        style={{
-                          height: '24px',
-                          maxWidth: '140px',
-                        }}
-                      />
-                      <Text>{providerEx.displayName}</Text>
-                    </Group>
-                  </StyledButton>
-                );
-              })}
-            </div>
-          </Stack>
-          <Stack py={20} spacing={10} id={ChannelTypeEnum.PUSH}>
+          <Stack pb={20} spacing={10} id={ChannelTypeEnum.PUSH}>
             <ChannelTitle spacing={8} channel={ChannelTypeEnum.PUSH} />
-            <div>
-              {pushProviders.map((providerEx) => {
-                return (
-                  <StyledButton
-                    key={providerEx.providerId}
-                    onClick={onProviderClick(providerEx)}
-                    selected={providerEx.providerId === selectedProvider?.providerId}
-                  >
-                    <Group>
-                      <img
-                        src={getLogoFileName(providerEx.providerId, colorScheme)}
-                        alt={providerEx.displayName}
-                        style={{
-                          height: '24px',
-                          maxWidth: '140px',
-                        }}
-                      />
-                      <Text>{providerEx.displayName}</Text>
-                    </Group>
-                  </StyledButton>
-                );
-              })}
-            </div>
+            <ChannelProviders
+              channelProviders={pushProviders}
+              onProviderClick={onProviderClick}
+              selectedProvider={selectedProvider}
+            />
+          </Stack>
+          <Stack pb={20} spacing={10} id={ChannelTypeEnum.SMS}>
+            <ChannelTitle spacing={8} channel={ChannelTypeEnum.SMS} />
+            <ChannelProviders
+              channelProviders={smsProviders}
+              onProviderClick={onProviderClick}
+              selectedProvider={selectedProvider}
+            />
           </Stack>
         </CenterDiv>
         <Footer>
           <Group>
-            <Button variant={'outline'} onClick={() => {}}>
+            <Button variant={'outline'} onClick={onCloseSidebar}>
               Cancel
             </Button>
             <Tooltip sx={{ position: 'absolute' }} disabled={selectedProvider !== null} label={'Select a provider'}>
@@ -305,27 +198,32 @@ export function SidebarCreateProvider() {
   );
 }
 
-const ChannelProviders = ({ channelProviders, selectProvider, selectedProvider }) => {
+export const ProviderImage = ({ providerId }) => {
   const { colorScheme } = useMantineColorScheme();
 
+  return (
+    <img
+      src={getLogoFileName(providerId, colorScheme)}
+      alt={providerId}
+      style={{
+        height: '24px',
+        maxWidth: '140px',
+      }}
+    />
+  );
+};
+const ChannelProviders = ({ channelProviders, onProviderClick, selectedProvider }) => {
   return (
     <div>
       {channelProviders.map((provider) => {
         return (
           <StyledButton
             key={provider.providerId}
-            onClick={() => selectProvider(provider)}
+            onClick={onProviderClick(provider)}
             selected={provider.providerId === selectedProvider?.providerId}
           >
             <Group>
-              <img
-                src={provider.logoFileName[`${colorScheme}`]}
-                alt={provider.displayName}
-                style={{
-                  height: '24px',
-                  maxWidth: '140px',
-                }}
-              />
+              <ProviderImage providerId={provider.providerId} />
               <Text>{provider.displayName}</Text>
             </Group>
           </StyledButton>
@@ -334,7 +232,7 @@ const ChannelProviders = ({ channelProviders, selectProvider, selectedProvider }
     </div>
   );
 };
-const Footer = styled.div`
+export const Footer = styled.div`
   padding: 15px;
   height: 80px;
   display: flex;
@@ -350,7 +248,7 @@ const CenterDiv = styled.div`
   line-height: 20px;
 `;
 
-const FormStyled = styled.div`
+export const FormStyled = styled.form`
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -373,17 +271,19 @@ const StyledButton = styled.div<{ selected: boolean }>`
   margin-bottom: 12px;
   line-height: 1;
 
-  ${({ selected }) => {
+  ${({ selected, theme }) => {
     return selected
       ? `
-           background: ${getGradient(colors.B20)} padding-box, ${colors.horizontal} border-box;
+           background: ${
+             theme.colorScheme === 'dark' ? getGradient(colors.B20) : getGradient(colors.B98)
+           } padding-box, ${colors.horizontal} border-box;
       `
       : undefined;
   }};
 `;
 
-const SideBarWrapper = styled.div<{ dark: boolean }>`
-  background-color: ${({ dark }) => (dark ? colors.B17 : colors.white)} !important;
+export const SideBarWrapper = styled.div`
+  background-color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B17 : colors.white)} !important;
   position: absolute;
   z-index: 1;
   width: 480px;
