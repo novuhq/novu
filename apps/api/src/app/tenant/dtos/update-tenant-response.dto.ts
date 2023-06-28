@@ -1,25 +1,32 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { TenantCustomData } from '@novu/shared';
+import { IsString } from 'class-validator';
 
 export class UpdateTenantResponseDto {
-  @ApiProperty()
+  @ApiProperty({ type: String })
+  @IsString()
   _id: string;
 
-  @ApiProperty()
+  @ApiProperty({ type: String })
+  @IsString()
   identifier: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional({ type: String })
+  @IsString()
   name?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   data?: TenantCustomData;
 
-  @ApiProperty()
+  @ApiProperty({ type: String })
+  @IsString()
   _environmentId: string;
 
-  @ApiProperty()
+  @ApiProperty({ type: String })
+  @IsString()
   createdAt: string;
 
-  @ApiProperty()
+  @ApiProperty({ type: String })
+  @IsString()
   updatedAt: string;
 }
