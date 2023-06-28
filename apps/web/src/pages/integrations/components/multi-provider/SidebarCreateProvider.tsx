@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import styled from '@emotion/styled';
 import {
   ActionIcon,
@@ -11,7 +11,7 @@ import {
   Text,
   useMantineColorScheme,
 } from '@mantine/core';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, providers } from '@novu/shared';
 import { CONTEXT_PATH } from '../../../../config';
 import { colors } from '../../../../design-system';
 import { useDebounce } from '../../../../hooks';
@@ -21,11 +21,18 @@ import { ChannelTitle } from '../../../templates/components/ChannelTitle';
 import useStyles from '../../../../design-system/tabs/Tabs.styles';
 import { IIntegratedProvider } from '../../IntegrationsStoreModal';
 import { getGradient } from '../../../../design-system/config/helper';
-import { useProviders } from '../../useProviders';
 import { useNavigate } from 'react-router-dom';
 import { CHANNELS_ORDER } from '../IntegrationsListNoData';
 
-export const getLogoFileName = (id, schema: ColorScheme) => {
+const mapStructure = (listProv): IIntegratedProvider[] =>
+  listProv.map((providerItem) => ({
+    providerId: providerItem.id,
+    displayName: providerItem.displayName,
+    channel: providerItem.channel,
+    docReference: providerItem.docReference,
+  }));
+
+const getLogoFileName = (id, schema: ColorScheme): string => {
   if (schema === 'dark') {
     return `${CONTEXT_PATH}/static/images/providers/dark/square/${id}.svg`;
   }
@@ -34,17 +41,34 @@ export const getLogoFileName = (id, schema: ColorScheme) => {
 };
 
 export function SidebarCreateProvider() {
-  const { emailProviders: emailProvider, smsProvider, chatProvider, pushProvider, inAppProvider } = useProviders();
+  const [{ emailProviders, smsProviders, chatProviders, pushProviders, inAppProviders }, setProviders] = useState({
+    emailProviders: mapStructure(
+      providers.filter((providerItem) => providerItem.channel === ChannelTypeEnum.EMAIL) || []
+    ),
+    smsProviders: mapStructure(providers.filter((providerItem) => providerItem.channel === ChannelTypeEnum.SMS) || []),
+    pushProviders: mapStructure(
+      providers.filter((providerItem) => providerItem.channel === ChannelTypeEnum.PUSH) || []
+    ),
+    inAppProviders: mapStructure(
+      providers.filter((providerItem) => providerItem.channel === ChannelTypeEnum.IN_APP) || []
+    ),
+    chatProviders: mapStructure(
+      providers.filter((providerItem) => providerItem.channel === ChannelTypeEnum.CHAT) || []
+    ),
+  });
   const [selectedProvider, setSelectedProvider] = useState<IIntegratedProvider | null>(null);
   const { classes: tabsClasses } = useStyles(false);
-  const [search, setSearch] = useState<string | undefined>();
-  const filterSearch = useCallback(
-    (prov) => (search ? prov.displayName.toLowerCase().includes(search.toLowerCase()) : true),
-    [search]
-  );
-  const debouncedSearchChange = useDebounce((value: string) => {
-    setSearch(value);
-  }, 250);
+  const filterSearch = (list, search: string) =>
+    list.filter((prov) => prov.displayName.toLowerCase().includes(search.toLowerCase()));
+  const debouncedSearchChange = useDebounce((search: string) => {
+    setProviders({
+      emailProviders: filterSearch(emailProviders, search),
+      smsProviders: filterSearch(smsProviders, search),
+      pushProviders: filterSearch(pushProviders, search),
+      inAppProviders: filterSearch(inAppProviders, search),
+      chatProviders: filterSearch(chatProviders, search),
+    });
+  }, 500);
 
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
@@ -126,7 +150,7 @@ export function SidebarCreateProvider() {
           <Stack pb={20} spacing={10} id={ChannelTypeEnum.IN_APP}>
             <ChannelTitle spacing={8} channel={ChannelTypeEnum.IN_APP} />
             <div>
-              {inAppProvider?.filter(filterSearch).map((providerEx) => {
+              {inAppProviders.map((providerEx) => {
                 return (
                   <StyledButton
                     key={providerEx.providerId}
@@ -152,7 +176,7 @@ export function SidebarCreateProvider() {
           <Stack pb={20} spacing={10} id={ChannelTypeEnum.EMAIL}>
             <ChannelTitle spacing={8} channel={ChannelTypeEnum.EMAIL} />
             <div>
-              {emailProvider.filter(filterSearch).map((providerEx) => {
+              {emailProviders.map((providerEx) => {
                 return (
                   <StyledButton
                     key={providerEx.providerId}
@@ -178,7 +202,7 @@ export function SidebarCreateProvider() {
           <Stack py={20} spacing={10} id={ChannelTypeEnum.CHAT}>
             <ChannelTitle spacing={8} channel={ChannelTypeEnum.CHAT} />
             <div>
-              {chatProvider.filter(filterSearch).map((providerEx) => {
+              {chatProviders.map((providerEx) => {
                 return (
                   <StyledButton
                     key={providerEx.providerId}
@@ -204,7 +228,7 @@ export function SidebarCreateProvider() {
           <Stack py={20} spacing={10} id={ChannelTypeEnum.SMS}>
             <ChannelTitle spacing={8} channel={ChannelTypeEnum.SMS} />
             <div>
-              {smsProvider.filter(filterSearch).map((providerEx) => {
+              {smsProviders.map((providerEx) => {
                 return (
                   <StyledButton
                     key={providerEx.providerId}
@@ -230,7 +254,7 @@ export function SidebarCreateProvider() {
           <Stack py={20} spacing={10} id={ChannelTypeEnum.PUSH}>
             <ChannelTitle spacing={8} channel={ChannelTypeEnum.PUSH} />
             <div>
-              {pushProvider.filter(filterSearch).map((providerEx) => {
+              {pushProviders.map((providerEx) => {
                 return (
                   <StyledButton
                     key={providerEx.providerId}
