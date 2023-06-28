@@ -32,7 +32,7 @@ const CardsContainer = styled.div`
   }
 `;
 
-const CHANNELS_ORDER = [
+export const CHANNELS_ORDER = [
   ChannelTypeEnum.IN_APP,
   ChannelTypeEnum.EMAIL,
   ChannelTypeEnum.CHAT,

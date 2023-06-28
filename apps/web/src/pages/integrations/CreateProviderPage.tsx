@@ -2,10 +2,10 @@ import { useState } from 'react';
 import styled from '@emotion/styled';
 import { useMantineColorScheme } from '@mantine/core';
 import { colors } from '../../design-system';
-import { SidebarCreateProviderConditions } from './components/multi-provider/SidebarCreateProviderConditions';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEffectOnce } from '../../hooks';
 import { IProviderConfig, providers } from '@novu/shared';
+import { SidebarCreateProviderInstance } from './components/multi-provider/SidebarCreateProviderInstance';
 
 export function CreateProviderPage() {
   const [selectedProvider, setSelectedProvider] = useState<IProviderConfig | null>(null);
@@ -28,7 +28,7 @@ export function CreateProviderPage() {
 
   return (
     <SideBarWrapper dark={isDark}>
-      <SidebarCreateProviderConditions
+      <SidebarCreateProviderInstance
         goBack={() => {
           navigate('/integrations/create');
         }}

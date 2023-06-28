@@ -23,8 +23,9 @@ import { IIntegratedProvider } from '../../IntegrationsStoreModal';
 import { getGradient } from '../../../../design-system/config/helper';
 import { useProviders } from '../../useProviders';
 import { useNavigate } from 'react-router-dom';
+import { CHANNELS_ORDER } from '../IntegrationsListNoData';
 
-const getLogoFileName = (id, schema: ColorScheme) => {
+export const getLogoFileName = (id, schema: ColorScheme) => {
   if (schema === 'dark') {
     return `${CONTEXT_PATH}/static/images/providers/dark/square/${id}.svg`;
   }
@@ -111,32 +112,13 @@ export function SidebarCreateProvider() {
         />
         <Tabs defaultValue={ChannelTypeEnum.IN_APP} classNames={tabsClasses} onTabChange={onTabChange}>
           <Tabs.List>
-            <Tabs.Tab value={ChannelTypeEnum.IN_APP}>
-              <Group spacing={5}>
-                <InApp /> <span>In-App</span>
-              </Group>
-            </Tabs.Tab>
-            <Tabs.Tab value={ChannelTypeEnum.EMAIL}>
-              <Group spacing={5}>
-                <Mail /> <span>Email</span>
-              </Group>
-            </Tabs.Tab>
-
-            <Tabs.Tab value={ChannelTypeEnum.SMS}>
-              <Group spacing={5}>
-                <Sms /> <span>SMS</span>
-              </Group>
-            </Tabs.Tab>
-            <Tabs.Tab value={ChannelTypeEnum.CHAT}>
-              <Group spacing={5}>
-                <Chat /> <span>Chat</span>
-              </Group>
-            </Tabs.Tab>
-            <Tabs.Tab value={ChannelTypeEnum.PUSH}>
-              <Group spacing={5}>
-                <Mobile /> <span>Push</span>
-              </Group>
-            </Tabs.Tab>
+            {CHANNELS_ORDER.map((channelType) => {
+              return (
+                <Tabs.Tab key={channelType} value={channelType}>
+                  <ChannelTitle spacing={5} channel={channelType} />
+                </Tabs.Tab>
+              );
+            })}
           </Tabs.List>
         </Tabs>
         <Space h={20} />
@@ -299,6 +281,35 @@ export function SidebarCreateProvider() {
   );
 }
 
+const ChannelProviders = ({ channelProviders, selectProvider, selectedProvider }) => {
+  const { colorScheme } = useMantineColorScheme();
+
+  return (
+    <div>
+      {channelProviders.map((provider) => {
+        return (
+          <StyledButton
+            key={provider.providerId}
+            onClick={() => selectProvider(provider)}
+            selected={provider.providerId === selectedProvider?.providerId}
+          >
+            <Group>
+              <img
+                src={provider.logoFileName[`${colorScheme}`]}
+                alt={provider.displayName}
+                style={{
+                  height: '24px',
+                  maxWidth: '140px',
+                }}
+              />
+              <Text>{provider.displayName}</Text>
+            </Group>
+          </StyledButton>
+        );
+      })}
+    </div>
+  );
+};
 const Footer = styled.div`
   padding: 15px;
   height: 80px;
@@ -310,7 +321,6 @@ const Footer = styled.div`
 
 const CenterDiv = styled.div`
   overflow: auto;
-  color: ${colors.white};
   color: ${colors.B60};
   font-size: 14px;
   line-height: 20px;

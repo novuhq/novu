@@ -5,6 +5,7 @@ export enum IntegrationsStoreModalAnalytics {
   UPDATE_INTEGRATION_FORM_SUBMIT = 'Update Integration Form Submit - [Integrations Store Modal]',
   SELECT_PROVIDER_CLICK = 'Select Provider Click - [Integrations Store Modal]',
   CLOSE_MODAL = 'Close Modal - [Integrations Store Modal]',
+  CREATE_INTEGRATION_INSTANCE = 'Create Integration Instance - [Integrations Multi Provider]',
 }
 
 export const CHANNEL_TYPE_TO_ICON_NAME = {

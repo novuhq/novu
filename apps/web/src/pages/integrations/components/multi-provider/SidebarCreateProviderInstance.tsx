@@ -8,7 +8,13 @@ import { Controller, useForm } from 'react-hook-form';
 import { inputStyles } from '../../../../design-system/config/inputs.styles';
 import { useFetchEnvironments } from '../../../../hooks/useFetchEnvironments';
 import { CONTEXT_PATH } from '../../../../config';
-import { IProviderConfig } from '@novu/shared';
+import { ChannelTypeEnum, ICredentialsDto, IProviderConfig } from '@novu/shared';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSegment } from '../../../../components/providers/SegmentProvider';
+import { createIntegration } from '../../../../api/integration';
+import { IntegrationsStoreModalAnalytics } from '../../constants';
+import { errorMessage, successMessage } from '../../../../utils/notifications';
+import { QueryKeys } from '../../../../api/query.keys';
 
 const getLogoFileName = (id, schema: ColorScheme) => {
   if (schema === 'dark') {
@@ -18,7 +24,7 @@ const getLogoFileName = (id, schema: ColorScheme) => {
   return `${CONTEXT_PATH}/static/images/providers/light/square/${id}.svg`;
 };
 
-export function SidebarCreateProviderConditions({
+export function SidebarCreateProviderInstance({
   onClose,
   provider,
   goBack,
@@ -28,25 +34,57 @@ export function SidebarCreateProviderConditions({
   provider: IProviderConfig;
 }) {
   const { environments, isLoading: areEnvironmentsLoading } = useFetchEnvironments();
-  const {
-    register,
-    handleSubmit: handleSubmitIntegration,
-    setValue,
-    formState: { errors },
-    control,
-    watch,
-  } = useForm({
+  const queryClient = useQueryClient();
+  const segment = useSegment();
+
+  const { mutateAsync: createIntegrationApi, isLoading: isLoadingCreate } = useMutation<
+    { res: string },
+    { error: string; message: string; statusCode: number },
+    {
+      providerId: string;
+      channel: ChannelTypeEnum | null;
+      credentials: ICredentialsDto;
+      active: boolean;
+      check: boolean;
+    }
+  >(createIntegration);
+  const { handleSubmit, control } = useForm({
     shouldUseNativeValidation: false,
     defaultValues: {
       name: provider.displayName,
-      env: environments?.find((env) => env.name === 'Development')?._id || '',
+      environmentId: environments?.find((env) => env.name === 'Development')?._id || '',
     },
   });
 
   const { colorScheme } = useMantineColorScheme();
 
+  const onCreateIntegrationInstance = async (data) => {
+    try {
+      await createIntegrationApi({
+        providerId: provider?.id,
+        channel: provider?.channel,
+        credentials: {},
+        active: false,
+        check: false,
+      });
+      segment.track(IntegrationsStoreModalAnalytics.CREATE_INTEGRATION_INSTANCE, {
+        providerId: provider?.id,
+        channel: provider?.channel,
+        name: data.name,
+        environmentId: data.environmentId,
+      });
+      await queryClient.refetchQueries({
+        predicate: ({ queryKey }) => queryKey.includes(QueryKeys.integrationsList),
+      });
+      successMessage('Instance configuration is created');
+      onClose();
+    } catch (e: any) {
+      errorMessage(e.message || 'Unexpected error');
+    }
+  };
+
   return (
-    <FormStyled>
+    <FormStyled onSubmit={handleSubmit(onCreateIntegrationInstance)}>
       <Group spacing={5}>
         <ActionIcon onClick={goBack} variant={'transparent'}>
           <ArrowLeft color={colors.B80} />
@@ -63,7 +101,7 @@ export function SidebarCreateProviderConditions({
           control={control}
           name="name"
           defaultValue=""
-          render={({ field, fieldState }) => {
+          render={({ field }) => {
             return (
               <TextInput
                 styles={(theme) => ({
@@ -104,11 +142,9 @@ export function SidebarCreateProviderConditions({
                 })}
                 {...field}
                 value={field.value !== undefined ? field.value : provider.displayName}
-                // error={showErrors && fieldState.error?.message}
                 type="text"
                 data-test-id="title"
                 placeholder="Enter workflow name"
-                // disabled={readonly}
               />
             );
           }}
@@ -123,9 +159,9 @@ export function SidebarCreateProviderConditions({
       </Text>
       <Controller
         control={control}
-        name={'env'}
+        name={'environmentId'}
         defaultValue=""
-        render={({ field, fieldState }) => {
+        render={({ field }) => {
           return (
             <Radio.Group
               styles={inputStyles}
@@ -159,7 +195,6 @@ export function SidebarCreateProviderConditions({
                       },
                     })}
                     key={option.value}
-                    // data-test-id={`${testId}-${option.value}`}
                     value={option.value}
                     label={option.label}
                   />
@@ -169,15 +204,15 @@ export function SidebarCreateProviderConditions({
         }}
       />
       <Footer>
-        {/*<div>*/}
         <Group>
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button submit>Create</Button>
+          <Button loading={isLoadingCreate} submit>
+            Create
+          </Button>
         </Group>
       </Footer>
-      {/*</div>*/}
     </FormStyled>
   );
 }
