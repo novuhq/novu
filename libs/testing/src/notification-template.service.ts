@@ -22,7 +22,7 @@ export class NotificationTemplateService {
 
   async createTemplate(override: Partial<CreateTemplatePayload> = {}) {
     const groups = await this.notificationGroupRepository.find({
-      _environmentId: this.environmentId,
+      _environmentId: override._environmentId || this.environmentId,
     });
     const feeds = await this.feedRepository.find({
       _environmentId: this.environmentId,
@@ -89,7 +89,7 @@ export class NotificationTemplateService {
         subject: message.subject,
         title: message.title,
         name: message.name,
-        _feedId: override.noFeedId ? undefined : feeds[0]._id,
+        ...{ _feedId: override.noFeedId ? undefined : feeds[0]?._id || undefined },
         _layoutId: override.noLayoutId ? undefined : layouts[0]._id,
         _creatorId: this.userId,
         _organizationId: this.organizationId,

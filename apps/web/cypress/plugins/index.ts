@@ -167,6 +167,7 @@ module.exports = (on, config) => {
         productionEnvironment = await environmentService.createEnvironment(
           organization._id,
           user._id,
+          'Production',
           developmentEnvironment._id
         );
       }
@@ -181,6 +182,12 @@ module.exports = (on, config) => {
         await notificationGroupRepository.create({
           name: 'General',
           _environmentId: productionEnvironment._id,
+          _organizationId: organization._id,
+        });
+
+        await notificationGroupRepository.create({
+          name: 'General',
+          _environmentId: developmentEnvironment._id,
           _organizationId: organization._id,
         });
       }
@@ -200,6 +207,7 @@ module.exports = (on, config) => {
         try {
           const blueprints = await Promise.all([
             developmentNotificationTemplateService.createTemplate({
+              _environmentId: productionEnvironment._id,
               _id: popularTemplateIds[0],
               noFeedId: true,
               noLayoutId: true,
@@ -207,6 +215,7 @@ module.exports = (on, config) => {
               isBlueprint: true,
             }),
             developmentNotificationTemplateService.createTemplate({
+              _environmentId: productionEnvironment._id,
               _id: popularTemplateIds[1],
               noFeedId: true,
               noLayoutId: true,
