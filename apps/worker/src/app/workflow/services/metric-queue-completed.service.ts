@@ -40,9 +40,9 @@ export class MetricQueueCompletedService extends QueueService<Record<string, nev
       })
     )
       .then(async (exists): Promise<void> => {
-        Logger.debug('metric job exists: ' + exists, LOG_CONTEXT);
-
-        if (!exists) {
+        if (exists) {
+          Logger.debug('metric job exists: ' + exists, LOG_CONTEXT);
+        } else {
           Logger.debug(`metricJob doesn't exist, creating it`, LOG_CONTEXT);
 
           return await this.addToQueue(METRIC_JOB_ID, {}, '', {
