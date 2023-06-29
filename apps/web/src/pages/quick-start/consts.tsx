@@ -5,6 +5,7 @@ import { ChannelTypeEnum } from '@novu/shared';
 
 import { Bell, Chat, Mail, Mobile, Sms } from '../../design-system/icons';
 import { ROUTES } from '../../constants/routes.enum';
+import { WIDGET_EMBED_PATH } from '../../config';
 
 export const onBoardingSubscriberId = 'on-boarding-subscriber-id-123';
 export const inAppSandboxSubscriberId = 'in-app-sandbox-subscriber-id-123';
@@ -140,7 +141,7 @@ const embedScript = `<script>
     n[i] = {}; var m = ['init', 'on']; n[i]._c = [];m.forEach(me => n[i][me] = function() {n[i]._c.push([me, arguments])});
     var elt = o.createElement(f); elt.type = "text/javascript"; elt.async = true; elt.src = t;
     var before = o.getElementsByTagName(f)[0]; before.parentNode.insertBefore(elt, before);
-  })(window, document, 'http://localhost:4701/embed.umd.min.js', 'novu', 'script');
+  })(window, document, '${WIDGET_EMBED_PATH}', 'novu', 'script');
 
   novu.init('${APPLICATION_IDENTIFIER}', '#notification-bell', {
     subscriberId: "${onBoardingSubscriberId}",

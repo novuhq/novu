@@ -1,6 +1,6 @@
 {
   "name": "@novu/stateless",
-  "version": "0.15.0",
+  "version": "0.16.2",
   "description": "Notification Management Framework",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -48,7 +48,7 @@
   },
   "devDependencies": {
     "@sendgrid/mail": "^7.4.6",
-    "@types/jest": "27.5.2",
+    "@types/jest": "29.5.2",
     "@types/lodash.get": "^4.4.6",
     "@types/lodash.merge": "^4.6.6",
     "@types/node": "^14.6.0",
