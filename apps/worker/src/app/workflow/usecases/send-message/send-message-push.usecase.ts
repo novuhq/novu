@@ -20,7 +20,7 @@ import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   GetDecryptedIntegrations,
-  GetDecryptedIntegrationsCommand,
+  GetEnvironmentDecryptedIntegrationsCommand,
   CompileTemplate,
   CompileTemplateCommand,
   PushFactory,
@@ -129,7 +129,7 @@ export class SendMessagePush extends SendMessageBase {
       }
 
       const integration = await this.getIntegration(
-        GetDecryptedIntegrationsCommand.create({
+        GetEnvironmentDecryptedIntegrationsCommand.create({
           organizationId: command.organizationId,
           environmentId: command.environmentId,
           channelType: ChannelTypeEnum.PUSH,
