@@ -254,6 +254,7 @@ export function UpdateProviderPage() {
               }}
               href={selectedProvider.docReference}
               target="_blank"
+              rel="noopener noreferrer"
             >
               set-up guide
             </a>
