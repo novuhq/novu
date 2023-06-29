@@ -262,7 +262,7 @@ If you see the code above closely, you’ll see that we first establish a connec
 
 This adds the subscriber with the `subscriberID` we’d passed to the array of subscribers, which in the above case contains just one subscriber.
 
-If you check this on Postman, the array returned will contain the `subsriberID` (highlighted in the result) we’d passed in the request body signaling that it was added, as shown below:
+If you check this on Postman, the array returned will contain the `subscriberID` (highlighted in the result) we’d passed in the request body signaling that it was added, as shown below:
 
 ![The returned array contains 'subscriberID'](https://res.cloudinary.com/dxc6bnman/image/upload/v1686780607/guides/Untitled_2_za1uqr.png)
 
