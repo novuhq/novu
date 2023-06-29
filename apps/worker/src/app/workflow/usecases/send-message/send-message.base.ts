@@ -53,6 +53,7 @@ export abstract class SendMessageBase extends SendMessageType {
   ): Promise<IntegrationEntity | undefined> {
     return this.selectIntegration.execute(SelectIntegrationCommand.create(selectIntegrationCommand));
   }
+
   protected storeContent(): boolean {
     return this.channelType === ChannelTypeEnum.IN_APP || process.env.STORE_NOTIFICATION_CONTENT === 'true';
   }

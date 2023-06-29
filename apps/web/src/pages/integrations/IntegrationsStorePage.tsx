@@ -160,6 +160,10 @@ export interface IntegrationEntity {
 
   _organizationId: string;
 
+  name: string;
+
+  identifier: string;
+
   providerId: ProvidersIdEnum;
 
   channel: ChannelTypeEnum;
