@@ -122,14 +122,7 @@ $novu = new Novu('<NOVU_API_KEY>');
 $novu->createSubscriber([
     'subscriberId' => '123',
     'firstName' => 'Sumit',
-    'lastName' => 'Saurabh',
-    'phone' => '+13603963366',
-    'avatar' => 'https://example.com/images/avatar.jpg',
-    'locale' => 'en',
-    'data' => [
-      'customKey1' => 'customVal1',
-      'customKey2' => 'customVal2'
-    ]
+    'lastName' => 'Saurabh'
 ]);
 ```
 
