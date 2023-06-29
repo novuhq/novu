@@ -44,6 +44,7 @@ export class GetActiveIntegrations {
           return await this.selectIntegration.execute(
             SelectIntegrationCommand.create({
               organizationId: command.organizationId,
+              environmentId: command.environmentId,
               userId: command.userId,
               channelType: channelType as ChannelTypeEnum,
               providerId: command.providerId,
