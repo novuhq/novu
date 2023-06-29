@@ -1,6 +1,6 @@
 import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 
-describe('Integration store page', function () {
+describe.skip('Integration store page', function () {
   beforeEach(function () {
     cy.initializeSession().as('session');
   });

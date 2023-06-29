@@ -98,7 +98,6 @@ module.exports = (on, config) => {
         partialTemplate?: Partial<NotificationTemplateEntity>;
         noTemplates?: boolean;
         showOnBoardingTour?: boolean;
-        withBlueprints?: boolean;
       } = {}
     ) {
       const dal = new DalService();
@@ -158,56 +157,61 @@ module.exports = (on, config) => {
         organization = await organizationService.createOrganization({ _id: config.env.BLUEPRINT_CREATOR });
       }
 
-      let developmentEnvironment = await environmentService.getDevelopmentEnvironment(organization._id);
+      const organizationId = organization._id;
+
+      let developmentEnvironment = await environmentService.getDevelopmentEnvironment(organizationId);
       if (!developmentEnvironment) {
-        developmentEnvironment = await environmentService.createDevelopmentEnvironment(organization._id, user._id);
+        developmentEnvironment = await environmentService.createDevelopmentEnvironment(organizationId, user._id);
       }
 
-      let productionEnvironment = await environmentService.getProductionEnvironment(organization._id);
+      let productionEnvironment = await environmentService.getProductionEnvironment(organizationId);
       if (!productionEnvironment) {
-        productionEnvironment = await environmentService.createEnvironment(
-          organization._id,
+        productionEnvironment = await environmentService.createProductionEnvironment(
+          organizationId,
           user._id,
           developmentEnvironment._id
         );
       }
 
-      const generalGroup = await notificationGroupRepository.findOne({
+      const productionEnvironmentId = productionEnvironment._id;
+
+      const productionGeneralGroup = await notificationGroupRepository.findOne({
         name: 'General',
-        _environmentId: productionEnvironment._id,
-        _organizationId: organization._id,
+        _environmentId: productionEnvironmentId,
+        _organizationId: organizationId,
       });
 
-      if (!generalGroup) {
+      if (!productionGeneralGroup) {
         await notificationGroupRepository.create({
           name: 'General',
-          _environmentId: productionEnvironment._id,
-          _organizationId: organization._id,
+          _environmentId: productionEnvironmentId,
+          _organizationId: organizationId,
         });
       }
 
-      const notificationTemplateService = new NotificationTemplateService(
+      const productionNotificationTemplateService = new NotificationTemplateService(
         user._id,
-        organization._id,
-        productionEnvironment._id
+        organizationId,
+        productionEnvironmentId
       );
 
       const popularTemplateIds = getPopularTemplateIds({ production: false });
 
-      console.log({ popularTemplateIds });
+      const blueprintTemplates = await productionNotificationTemplateService.getBlueprintTemplates(
+        organizationId,
+        productionEnvironmentId
+      );
 
-      const templatesCount = await notificationTemplateService.countTemplates();
-      console.log({ templatesCount });
-      if (templatesCount === 0) {
+      if (blueprintTemplates.length === 0) {
         return await Promise.all([
-          notificationTemplateService.createTemplate({
+          productionNotificationTemplateService.createTemplate({
             _id: popularTemplateIds[0],
             noFeedId: true,
             noLayoutId: true,
             name: ':fa-solid fa-star: Super cool workflow',
             isBlueprint: true,
           }),
-          notificationTemplateService.createTemplate({
+          productionNotificationTemplateService.createTemplate({
             _id: popularTemplateIds[1],
             noFeedId: true,
             noLayoutId: true,
@@ -217,7 +221,7 @@ module.exports = (on, config) => {
         ]);
       }
 
-      return await notificationTemplateService.getTemplates();
+      return blueprintTemplates;
     },
   });
 };

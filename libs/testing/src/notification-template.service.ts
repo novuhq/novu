@@ -12,7 +12,7 @@ import {
 import { CreateTemplatePayload } from './create-notification-template.interface';
 
 export class NotificationTemplateService {
-  constructor(private userId: string, private organizationId: string | undefined, private environmentId: string) {}
+  constructor(private userId: string, private organizationId: string, private environmentId: string) {}
 
   private notificationTemplateRepository = new NotificationTemplateRepository();
   private notificationGroupRepository = new NotificationGroupRepository();
@@ -96,14 +96,16 @@ export class NotificationTemplateService {
         _environmentId: this.environmentId,
       });
 
-      templateSteps.push({
-        filters: message.filters,
-        _templateId: saved._id,
-        active: message.active,
-        metadata: message.metadata,
-        replyCallback: message.replyCallback,
-        uuid: message.uuid,
-      });
+      if (saved?._id) {
+        templateSteps.push({
+          filters: message.filters,
+          _templateId: saved._id,
+          active: message.active,
+          metadata: message.metadata,
+          replyCallback: message.replyCallback,
+          uuid: message.uuid,
+        });
+      }
     }
 
     const data = {
@@ -136,17 +138,12 @@ export class NotificationTemplateService {
     );
   }
 
-  async countTemplates() {
-    return await this.notificationTemplateRepository.count({
-      _organizationId: this.organizationId,
-      _environmentId: this.environmentId,
-    });
-  }
+  async getBlueprintTemplates(organizationId: string, environmentId: string): Promise<NotificationTemplateEntity[]> {
+    const blueprintTemplates = await this.notificationTemplateRepository.findBlueprintTemplates(
+      organizationId,
+      environmentId
+    );
 
-  async getTemplates() {
-    return await this.notificationTemplateRepository.find({
-      _organizationId: this.organizationId,
-      _environmentId: this.environmentId,
-    });
+    return blueprintTemplates;
   }
 }
