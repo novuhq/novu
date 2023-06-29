@@ -126,11 +126,11 @@ use Novu\SDK\Novu;
 
 $novu = new Novu('<NOVU_API_KEY>');
 
-$novu->updateSubscriber('111', [
-    // new email
-    'email' => 'john@domain.com',
-    // new phone
-    'phone' => '+19874567832',
+$novu->updateSubscriber('123', [
+    // new firstName
+    'firstName' => 'Saurabh',
+    // new lastName
+    'lastName' => 'Sumit',
 ])->toArray();
 ```
 
