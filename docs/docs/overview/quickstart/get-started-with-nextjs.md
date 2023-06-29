@@ -5,7 +5,7 @@ sidebar_label: Get started with NextJS
 
 # NextJS Quickstart
 
-This quickstart guide is written with the intention of helping you integrate Novu into your NextJS app in no time. Novu is an open-source notifications infrastructure that you can use in your app to deliver rich notifications across channels like sms, email, in-app, push, chat, etc. In this quick start, you’ll learn how to integrate email notifications into your NextJS app.
+This quickstart guide is written with the intention of helping you integrate Novu into your NextJS app in no time. Novu is an open-source notifications infrastructure that you can use in your app to deliver rich notifications across channels like sms, email, in-app, push, chat, etc. In this guide, you’ll learn how to integrate email notifications into your NextJS app.
 
 You can find the code for this app [here](https://github.com/novuhq/nextjs-quickstart/)
 
