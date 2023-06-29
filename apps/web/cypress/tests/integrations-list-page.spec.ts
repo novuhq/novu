@@ -82,9 +82,9 @@ describe('Integrations List Page', function () {
 
     checkTableRow(
       {
-        name: 'Sendgrid',
+        name: 'SendGrid',
         key: '',
-        provider: 'Sendgrid',
+        provider: 'SendGrid',
         channel: 'Email',
         environment: 'Development',
         status: 'Active',
@@ -126,9 +126,9 @@ describe('Integrations List Page', function () {
     );
     checkTableRow(
       {
-        name: 'Fcm',
+        name: 'Firebase Cloud Messaging',
         key: '',
-        provider: 'Fcm',
+        provider: 'Firebase Cloud Messaging',
         channel: 'Push',
         environment: 'Development',
         status: 'Active',
@@ -137,10 +137,10 @@ describe('Integrations List Page', function () {
     );
     checkTableRow(
       {
-        name: 'Novu',
+        name: 'Novu In-App',
         isFree: true,
         key: '',
-        provider: 'Novu',
+        provider: 'Novu In-App',
         channel: 'In-App',
         environment: 'Development',
         status: 'Active',
