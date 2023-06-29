@@ -4,6 +4,7 @@ import { getContextPath, NovuComponentEnum } from '@novu/shared';
 declare global {
   interface Window {
     _env_: any;
+    _cypress: any;
   }
 }
 

@@ -1,15 +1,15 @@
 import React, { MouseEventHandler } from 'react';
-import { Button as MantineButton, Sx } from '@mantine/core';
+import { Button as MantineButton, ButtonProps, Sx } from '@mantine/core';
 
 import useStyles from './Button.styles';
-import { SpacingProps } from '../shared/spacing.props';
 
 export type Size = 'md' | 'lg' | undefined;
 
-interface IButtonProps extends JSX.ElementChildrenAttribute, SpacingProps {
+interface IButtonProps extends ButtonProps {
+  id?: string;
   loading?: boolean;
   size?: Size;
-  variant?: 'outline' | 'gradient';
+  variant?: 'outline' | 'gradient' | 'subtle';
   disabled?: boolean;
   icon?: React.ReactNode;
   fullWidth?: boolean;
@@ -28,6 +28,7 @@ interface IButtonProps extends JSX.ElementChildrenAttribute, SpacingProps {
  *
  */
 export function Button({
+  id,
   loading,
   children,
   submit = false,
@@ -47,6 +48,7 @@ export function Button({
 
   return (
     <MantineButton
+      id={id}
       radius="md"
       classNames={classes}
       {...withIconProps}
