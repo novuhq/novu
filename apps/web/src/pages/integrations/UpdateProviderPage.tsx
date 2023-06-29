@@ -1,16 +1,18 @@
 import { useEffect, useState } from 'react';
-import styled from '@emotion/styled';
+import { ChannelTypeEnum, IConfigCredentials } from '@novu/shared';
 import { ActionIcon, Group, useMantineColorScheme, Loader, Center, Stack } from '@mantine/core';
-import { Button, colors, Input, NameInput, Switch, Text } from '../../design-system';
+import { useClipboard } from '@mantine/hooks';
+import styled from '@emotion/styled';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import slugify from 'slugify';
 import { useNavigate, useParams } from 'react-router-dom';
+import { Controller, useForm } from 'react-hook-form';
+import { Button, colors, Input, NameInput, Switch, Text } from '../../design-system';
+import { Check, Close, Copy } from '../../design-system/icons';
 import { useProviders } from './useProviders';
 import { IIntegratedProvider } from './IntegrationsStoreModal';
-import { Check, Close, Copy } from '../../design-system/icons';
-import { Controller, useForm } from 'react-hook-form';
-import { ChannelTypeEnum, IConfigCredentials } from '@novu/shared';
 import { IntegrationInput } from './components/IntegrationInput';
-import { useClipboard } from '@mantine/hooks';
-import slugify from 'slugify';
 import { IntegrationChannel } from './components/IntegrationChannel';
 import { CHANNEL_TYPE_TO_STRING } from '../../utils/channels';
 import { IntegrationEnvironmentPill } from './components/IntegrationEnvironmentPill';
@@ -23,6 +25,24 @@ interface IProviderForm {
   active: boolean;
   identifier: string;
 }
+
+const schema = z
+  .object({
+    identifier: z
+      .string({
+        required_error: 'Required - Instance key',
+      })
+      .superRefine((data, ctx) => {
+        if (!data.match(/^[A-Za-z_-]+$/)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.invalid_string,
+            validation: 'regex',
+            message: 'Instance key must only contains alphabetical, dash and underscore characters',
+          });
+        }
+      }),
+  })
+  .passthrough();
 
 export function UpdateProviderPage() {
   const { environments, isLoading: areEnvironmentsLoading } = useFetchEnvironments();
@@ -42,6 +62,7 @@ export function UpdateProviderPage() {
     formState: { errors, isDirty },
   } = useForm<IProviderForm>({
     shouldUseNativeValidation: false,
+    resolver: zodResolver(schema),
     defaultValues: {
       name: '',
       credentials: {},
