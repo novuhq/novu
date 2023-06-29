@@ -1,56 +1,35 @@
 import styled from '@emotion/styled';
-import { Button, Text, colors } from '../../../design-system';
+import { Button, Text } from '../../../design-system';
 
 const IntegrationsListToolbarHolder = styled.div`
   display: flex;
   justify-content: space-between;
 `;
 
-const ButtonHolder = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
+const ButtonStyled = styled(Button)`
+  margin-left: -8px;
 `;
 
-const RectangleButton = styled(Button)`
+const PlusSquare = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 24px;
   max-width: 24px;
   height: 24px;
   padding: 0;
-  font-size: 14px;
-
-  &:disabled ~ label {
-    cursor: default;
-  }
-
-  &:disabled ~ label > div {
-    color: ${colors.B40};
-    background-image: none !important;
-    background-clip: initial !important;
-    -webkit-text-fill-color: initial !important;
-  }
-`;
-
-const Label = styled.label`
-  display: flex;
-  align-items: center;
-  height: 100%;
-  color: ${colors.horizontal};
-  user-select: none;
-  cursor: pointer;
+  font-size: 18px;
+  font-weight: 700;
+  border-radius: 4px;
 `;
 
 export const IntegrationsListToolbar = ({ areIntegrationsLoading }: { areIntegrationsLoading: boolean }) => {
   return (
     <IntegrationsListToolbarHolder>
-      <ButtonHolder>
-        <RectangleButton id="add-provider" disabled={areIntegrationsLoading} data-test-id="add-provider">
-          +
-        </RectangleButton>
-        <Label htmlFor="add-provider" data-test-id="add-provider-label">
-          <Text gradient>Add a provider</Text>
-        </Label>
-      </ButtonHolder>
+      <ButtonStyled id="add-provider" disabled={areIntegrationsLoading} data-test-id="add-provider" variant="subtle">
+        <PlusSquare data-square>+</PlusSquare>
+        <Text gradient>Add a provider</Text>
+      </ButtonStyled>
     </IntegrationsListToolbarHolder>
   );
 };

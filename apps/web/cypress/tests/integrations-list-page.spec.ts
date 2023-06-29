@@ -51,8 +51,7 @@ describe('Integrations List Page', function () {
     cy.visit('/integrations');
     cy.location('pathname').should('equal', '/integrations');
 
-    cy.getByTestId('add-provider').should('be.disabled');
-    cy.getByTestId('add-provider-label').should('be.visible').contains('Add a provider');
+    cy.getByTestId('add-provider').should('be.disabled').contains('Add a provider');
     checkTableLoading();
 
     cy.wait('@getIntegrations');
@@ -76,8 +75,7 @@ describe('Integrations List Page', function () {
     cy.visit('/integrations');
     cy.location('pathname').should('equal', '/integrations');
 
-    cy.getByTestId('add-provider').should('be.disabled');
-    cy.getByTestId('add-provider-label').should('be.visible').contains('Add a provider');
+    cy.getByTestId('add-provider').should('be.disabled').contains('Add a provider');
     checkTableLoading();
 
     cy.wait('@getIntegrations');
