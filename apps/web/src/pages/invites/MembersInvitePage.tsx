@@ -7,7 +7,6 @@ import { Container, Group } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
 import { MemberRoleEnum } from '@novu/shared';
 
-import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
 import {
@@ -172,8 +171,7 @@ export function MembersInvitePage() {
   }
 
   return (
-    <PageContainer>
-      <PageMeta title="Team" />
+    <PageContainer title="Team">
       <PageHeader
         title="Team Members"
         actions={
