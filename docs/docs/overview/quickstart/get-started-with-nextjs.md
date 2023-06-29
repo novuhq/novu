@@ -270,7 +270,7 @@ After creating a topic and adding subscribers to the topic, we’ll now proceed 
 
 ## Sending notifications to a topic
 
-Sending notifications to a topic is pretty straightforward. You just need to extract the topic key to which you want to send notifications and trigger Novu’s method on that topic key with the message in the payload:
+Sending notifications to a topic is not a complex task. You need to extract the topic key to which you want to send notifications and trigger Novu’s method on that topic key with the message in the payload:
 
 ```jsx
 import { Novu } from '@novu/node';
