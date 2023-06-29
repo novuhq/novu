@@ -37,6 +37,7 @@ import { GetInAppActivated } from './usecases/get-in-app-activated/get-in-app-ac
 import { ApiResponse } from '../shared/framework/response.decorator';
 import { ChannelTypeLimitDto } from './dtos/get-channel-type-limit.sto';
 import { GetActiveIntegrationsCommand } from './usecases/get-active-integration/get-active-integration.command';
+import { GetActiveIntegrationResponseDto } from './dtos/get-active-integration-response.dto';
 
 @Controller('/integrations')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -74,7 +75,7 @@ export class IntegrationsController {
   @ApiResponse(IntegrationResponseDto, 200, true)
   @ApiOperation({ summary: 'Get active integrations', description: 'Get active selected integration per channel' })
   @ExternalApiAccessible()
-  async getActiveIntegrations(@UserSession() user: IJwtPayload): Promise<IntegrationResponseDto[]> {
+  async getActiveIntegrations(@UserSession() user: IJwtPayload): Promise<GetActiveIntegrationResponseDto[]> {
     return await this.getActiveIntegrationsUsecase.execute(
       GetActiveIntegrationsCommand.create({
         environmentId: user.environmentId,
