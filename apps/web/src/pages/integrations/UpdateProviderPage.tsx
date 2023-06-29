@@ -115,7 +115,7 @@ export function UpdateProviderPage() {
 
   return (
     <SideBarWrapper dark={isDark}>
-      <form
+      <Form
         name={'connect-integration-form'}
         noValidate
         onSubmit={(e) => {
@@ -263,7 +263,7 @@ export function UpdateProviderPage() {
             Update
           </Button>
         </Group>
-      </form>
+      </Form>
     </SideBarWrapper>
   );
 }
@@ -274,7 +274,6 @@ const SideBarWrapper = styled.div<{ dark: boolean }>`
   z-index: 1;
   width: 480px;
   height: 100%;
-  display: flex;
   top: 0;
   bottom: 0;
   right: 0;
@@ -327,4 +326,8 @@ const CopyWrapper = styled.div`
   &:hover {
     opacity: 0.8;
   }
+`;
+
+const Form = styled.form`
+  height: 100%;
 `;
