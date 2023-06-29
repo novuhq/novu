@@ -203,7 +203,7 @@ export function UpdateProviderPage() {
           />
         </Group>
         <CenterDiv>
-          <When truthy={haveAllCredentials}>
+          <When truthy={!haveAllCredentials}>
             <WarningMessage spacing={12}>
               <DisconnectGradient />
               <div>
