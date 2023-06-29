@@ -60,8 +60,7 @@ describe('Integrations List Page', function () {
     cy.visit('/integrations');
     cy.location('pathname').should('equal', '/integrations');
 
-    cy.getByTestId('add-provider').should('be.disabled');
-    cy.getByTestId('add-provider-label').should('be.visible').contains('Add a provider');
+    cy.getByTestId('add-provider').should('be.disabled').contains('Add a provider');
     checkTableLoading();
 
     cy.wait('@getIntegrations');
@@ -85,17 +84,16 @@ describe('Integrations List Page', function () {
     cy.visit('/integrations');
     cy.location('pathname').should('equal', '/integrations');
 
-    cy.getByTestId('add-provider').should('be.disabled');
-    cy.getByTestId('add-provider-label').should('be.visible').contains('Add a provider');
+    cy.getByTestId('add-provider').should('be.disabled').contains('Add a provider');
     checkTableLoading();
 
     cy.wait('@getIntegrations');
 
     checkTableRow(
       {
-        name: 'Sendgrid',
+        name: 'SendGrid',
         key: '',
-        provider: 'Sendgrid',
+        provider: 'SendGrid',
         channel: 'Email',
         environment: 'Development',
         status: 'Active',
@@ -137,9 +135,9 @@ describe('Integrations List Page', function () {
     );
     checkTableRow(
       {
-        name: 'Fcm',
+        name: 'Firebase Cloud Messaging',
         key: '',
-        provider: 'Fcm',
+        provider: 'Firebase Cloud Messaging',
         channel: 'Push',
         environment: 'Development',
         status: 'Active',
@@ -148,10 +146,10 @@ describe('Integrations List Page', function () {
     );
     checkTableRow(
       {
-        name: 'Novu',
+        name: 'Novu In-App',
         isFree: true,
         key: '',
-        provider: 'Novu',
+        provider: 'Novu In-App',
         channel: 'In-App',
         environment: 'Development',
         status: 'Active',

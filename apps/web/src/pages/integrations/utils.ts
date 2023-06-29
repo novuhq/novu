@@ -9,23 +9,18 @@ export const mapToTableIntegration = (
   integration: IntegrationEntity,
   environments?: IEnvironment[]
 ): ITableIntegration => {
-  const provider = providers.find((el) => el.id === integration.providerId);
-  const logoFileName = provider?.logoFileName
-    ? {
-        light: `${CONTEXT_PATH}/static/images/providers/light/${provider.logoFileName.light}`,
-        dark: `${CONTEXT_PATH}/static/images/providers/dark/${provider.logoFileName.dark}`,
-      }
-    : {
-        light: `${CONTEXT_PATH}/static/images/logo.png`,
-        dark: `${CONTEXT_PATH}/static/images/logo-light.png`,
-      };
+  const logoFileName = {
+    light: `${CONTEXT_PATH}/static/images/providers/light/square/${integration.providerId}.svg`,
+    dark: `${CONTEXT_PATH}/static/images/providers/dark/square/${integration.providerId}.svg`,
+  };
   const environment = environments?.find((env) => env._id === integration._environmentId);
+  const provider = providers.find((el) => el.id === integration.providerId);
 
   return {
-    name: `${integration.providerId.charAt(0).toUpperCase()}${integration.providerId.slice(1)}`,
-    // TODO: change to identifier when it will be available
-    identifier: integration._id ?? '',
-    provider: `${integration.providerId.charAt(0).toUpperCase()}${integration.providerId.slice(1)}`,
+    name: integration.name ?? provider?.displayName,
+    identifier: integration.identifier,
+    provider:
+      provider?.displayName ?? `${integration.providerId.charAt(0).toUpperCase()}${integration.providerId.slice(1)}`,
     channel: CHANNEL_TYPE_TO_STRING[integration.channel],
     channelType: integration.channel,
     environment: environment?.name ?? '',

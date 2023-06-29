@@ -2,11 +2,12 @@ import styled from '@emotion/styled';
 import { Skeleton } from '@mantine/core';
 import { useMantineColorScheme } from '@mantine/core';
 
-import { colors, IExtendedCellProps } from '../../../design-system';
+import { colors, IExtendedCellProps, Text } from '../../../design-system';
 import type { ITableIntegration } from '../types';
 
 const CellHolder = styled.div`
   display: flex;
+  align-items: center;
   gap: 16px;
 `;
 
@@ -19,14 +20,6 @@ const DetailsHolder = styled.div`
   display: flex;
   flex-direction: column;
   gap: 4px;
-`;
-
-const Text = styled.span`
-  color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.white : colors.B40)};
-  font-size: 14px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  overflow: hidden;
 `;
 
 const Free = styled.span`
@@ -70,8 +63,8 @@ export const IntegrationNameCell = ({ row: { original }, isLoading }: IExtendedC
       <Image src={original.logoFileName[`${colorScheme}`]} alt={original.name} />
       <DetailsHolder>
         <NameHolder>
-          <Text>{original.name}</Text>
-          {original.provider.toLowerCase().includes('novu') && <Free>🎉 Free</Free>}
+          <Text rows={1}>{original.name}</Text>
+          {original.name.toLowerCase().includes('novu') && <Free>🎉 Free</Free>}
         </NameHolder>
         <Identifier>Key: {original.identifier}</Identifier>
       </DetailsHolder>

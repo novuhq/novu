@@ -3,7 +3,7 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 import { CardTile, colors } from '../../../design-system';
-import { CHANNEL_TYPE_TO_ICON } from '../constants';
+import { CHANNEL_TYPE_TO_ICON_NAME } from '../constants';
 import { CHANNEL_TYPE_TO_STRING } from '../../../utils/channels';
 
 const NoDataHolder = styled.div`
@@ -57,7 +57,7 @@ export const IntegrationsListNoData = ({ onChannelClick }: IntegrationsListNoDat
               onChannelClick(channel);
             }}
           >
-            <FontAwesomeIcon icon={CHANNEL_TYPE_TO_ICON[channel] as any} />
+            <FontAwesomeIcon icon={CHANNEL_TYPE_TO_ICON_NAME[channel] as any} />
             <span>{CHANNEL_TYPE_TO_STRING[channel]}</span>
           </CardTile>
         ))}

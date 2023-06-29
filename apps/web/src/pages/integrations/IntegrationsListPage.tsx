@@ -1,10 +1,9 @@
 import { Container } from '@mantine/core';
 import { useCallback, useMemo } from 'react';
-import styled from '@emotion/styled';
 
 import PageContainer from '../../components/layout/components/PageContainer';
 import PageHeader from '../../components/layout/components/PageHeader';
-import { colors, Table, withCellLoading } from '../../design-system';
+import { Table, Text, withCellLoading } from '../../design-system';
 import { IExtendedColumn } from '../../design-system/table/Table';
 import { useIntegrations, useIsMultiProviderConfigurationEnabled } from '../../hooks';
 import { IntegrationsListToolbar } from './components/IntegrationsListToolbar';
@@ -19,14 +18,6 @@ import { IntegrationsListNoData } from './components/IntegrationsListNoData';
 import { mapToTableIntegration } from './utils';
 import { IntegrationsStore } from './IntegrationsStorePage';
 
-const Text = styled.span`
-  color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.white : colors.B40)};
-  font-size: 14px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  overflow: hidden;
-`;
-
 const columns: IExtendedColumn<ITableIntegration>[] = [
   {
     accessor: 'name',
@@ -38,7 +29,11 @@ const columns: IExtendedColumn<ITableIntegration>[] = [
     Header: 'Provider',
     Cell: withCellLoading(
       ({ row: { original } }) => {
-        return <Text data-test-id="integration-provider-cell">{original.provider}</Text>;
+        return (
+          <Text data-test-id="integration-provider-cell" rows={1}>
+            {original.provider}
+          </Text>
+        );
       },
       { loadingTestId: 'integration-provider-cell-loading' }
     ),

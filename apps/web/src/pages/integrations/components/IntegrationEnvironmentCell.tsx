@@ -9,7 +9,7 @@ const EnvironmentPillHolder = styled.div`
   display: flex;
   align-items: flex-end;
   gap: 8px;
-  background-color: ${colors.B30};
+  background-color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B30 : colors.B85)};
   border-radius: 16px;
   padding: 6px 8px;
 `;
@@ -21,7 +21,7 @@ const EnvironmentName = styled.span`
 
 const EnvironmentIcon = styled(FontAwesomeIcon)`
   font-size: 16px;
-  color: ${colors.B60};
+  color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B60 : colors.B40)};
 `;
 
 const IntegrationEnvironment = ({ row: { original } }: IExtendedCellProps<ITableIntegration>) => {

@@ -14,8 +14,6 @@ body:
       label: "📜 Description"
       description: "A clear and concise description of what the bug is."
       placeholder: "It bugs out when ..."
-    validations:
-      required: true
   - type: textarea
     id: steps-to-reproduce
     validations:
@@ -64,7 +62,7 @@ body:
       label: "🏢 Have you read the Contributing Guidelines?"
       options:
         - label: "I have read the [Contributing Guidelines](https://github.com/novuhq/novu/blob/main/CONTRIBUTING.md)"
-          required: true 
+          required: true
   - type: dropdown
     attributes:
       label: Are you willing to submit PR?
