@@ -21,7 +21,7 @@ You can find the code for this project [here](https://github.com/novuhq/vanillaj
 
 ## Loading Notification center component from the CDN
 
-The Notification Center Web Component is a custom element that can be used in any web application. It is built by wrapping the React components and consists from its core the three pieces: NovuProvider, PopoverNotificationCenter, and NotificationBell combined together into one.
+The Notification Center Web Component is a custom element that can be used in any web application.
 
 You can find out more about the web component [here](https://docs.novu.co/notification-center/web-component/).
 
