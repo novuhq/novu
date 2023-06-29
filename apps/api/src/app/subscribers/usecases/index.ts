@@ -16,6 +16,7 @@ import { UpdateSubscriberPreference } from './update-subscriber-preference';
 import { UpdateSubscriberOnlineFlag } from './update-subscriber-online-flag';
 import { ChatOauth } from './chat-oauth/chat-oauth.usecase';
 import { ChatOauthCallback } from './chat-oauth-callback/chat-oauth-callback.usecase';
+import { DeleteSubscriberCredentials } from './delete-subscriber-credentials/delete-subscriber-credentials.usecase';
 
 export {
   SearchByExternalSubscriberIds,
@@ -38,4 +39,5 @@ export const USE_CASES = [
   UpdateSubscriberOnlineFlag,
   ChatOauthCallback,
   ChatOauth,
+  DeleteSubscriberCredentials,
 ];
