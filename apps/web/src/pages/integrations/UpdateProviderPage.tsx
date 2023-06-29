@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ChannelTypeEnum, IConfigCredentials } from '@novu/shared';
 import { ActionIcon, Group, useMantineColorScheme, Loader, Center, Stack } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
@@ -9,7 +9,7 @@ import slugify from 'slugify';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Controller, useForm } from 'react-hook-form';
 import { Button, colors, Input, NameInput, Switch, Text } from '../../design-system';
-import { Check, Close, Copy } from '../../design-system/icons';
+import { Check, Close, Copy, DisconnectGradient } from '../../design-system/icons';
 import { useProviders } from './useProviders';
 import { IIntegratedProvider } from './IntegrationsStoreModal';
 import { IntegrationInput } from './components/IntegrationInput';
@@ -18,6 +18,7 @@ import { CHANNEL_TYPE_TO_STRING } from '../../utils/channels';
 import { IntegrationEnvironmentPill } from './components/IntegrationEnvironmentPill';
 import { useFetchEnvironments } from '../../hooks/useFetchEnvironments';
 import { ProviderImage } from './components/multi-provider/SelectProviderSidebar';
+import { When } from '../../components/utils/When';
 
 interface IProviderForm {
   name: string;
@@ -33,7 +34,8 @@ const schema = z
         required_error: 'Required - Instance key',
       })
       .superRefine((data, ctx) => {
-        if (!data.match(/^[A-Za-z_-]+$/)) {
+        const regexp = new RegExp(/^[A-Za-z_-]+$/);
+        if (!regexp.test(data)) {
           ctx.addIssue({
             code: z.ZodIssueCode.invalid_string,
             validation: 'regex',
@@ -70,6 +72,22 @@ export function UpdateProviderPage() {
       identifier: '',
     },
   });
+
+  const credentials = watch('credentials');
+  const haveAllCredentials = useMemo(() => {
+    if (selectedProvider === null) {
+      return false;
+    }
+    const missingCredentials = selectedProvider.credentials
+      .filter((credential) => credential.required)
+      .filter((credential) => {
+        const value = credentials[credential.key];
+
+        return value === undefined || value === null || value.length === 0;
+      });
+
+    return missingCredentials.length === 0;
+  }, [credentials, selectedProvider]);
 
   const isActive = watch('active');
   const name = watch('name');
@@ -172,7 +190,7 @@ export function UpdateProviderPage() {
             <Close color={colors.B40} />
           </ActionIcon>
         </Group>
-        <Group mb={16} spacing={16}>
+        <Group mb={16} mt={16} spacing={16}>
           <IntegrationChannel
             name={CHANNEL_TYPE_TO_STRING[selectedProvider?.channel || ChannelTypeEnum.EMAIL]}
             type={selectedProvider?.channel || ChannelTypeEnum.EMAIL}
@@ -185,6 +203,18 @@ export function UpdateProviderPage() {
           />
         </Group>
         <CenterDiv>
+          <When truthy={haveAllCredentials}>
+            <WarningMessage spacing={12}>
+              <DisconnectGradient />
+              <div>
+                Set up credentials to start sending notifications
+                <br />
+                <a href={selectedProvider?.docReference} target="_blank" rel="noopener noreferrer">
+                  Explore set-up guide
+                </a>
+              </div>
+            </WarningMessage>
+          </When>
           <ActiveWrapper active={isActive}>
             <Controller
               control={control}
@@ -258,7 +288,7 @@ const SideBarWrapper = styled.div<{ dark: boolean }>`
 `;
 
 const InputWrapper = styled.div`
-  margin-top: 30px;
+  margin-top: 32px;
   label {
     font-weight: bold;
     margin-bottom: 10px;
@@ -307,4 +337,19 @@ const CopyWrapper = styled.div`
 
 const Form = styled.form`
   height: 100%;
+`;
+
+const WarningMessage = styled(Group)`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 15px;
+  margin-bottom: 24px;
+  color: #e54545;
+
+  background: rgba(230, 69, 69, 0.15);
+  border-radius: 7px;
+  a {
+    text-decoration: underline;
+  }
 `;
