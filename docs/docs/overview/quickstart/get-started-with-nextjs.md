@@ -16,7 +16,7 @@ You can find the code for this app [here](https://github.com/novuhq/nextjs-quick
 
 ## Create a NextJS app to get started
 
-The first step here would be to create a NextJS app. We’ll later play with Novu in this app itself. To get started, open your terminal and create a NextJS app using the following command:
+The first step here would be to create a NextJS app. We will play with Novu in this app later. To get started, open your terminal and create a NextJS app using the following command:
 
 ```bash
 npx create-next-app@latest
