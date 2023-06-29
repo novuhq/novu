@@ -178,7 +178,6 @@ import {
   PopoverNotificationCenter,
   NotificationBell,
 } from '@novu/notification-center';
-import axios from 'axios';
 
 function App() {
   const [description, setDescription] = useState('');
