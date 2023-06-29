@@ -1,11 +1,12 @@
 import { Container } from '@mantine/core';
+import { Outlet, useNavigate } from 'react-router-dom';
 import { useCallback, useMemo } from 'react';
 
 import PageContainer from '../../components/layout/components/PageContainer';
 import PageHeader from '../../components/layout/components/PageHeader';
 import { Table, Text, withCellLoading } from '../../design-system';
 import { IExtendedColumn } from '../../design-system/table/Table';
-import { useIntegrations } from '../../hooks';
+import { useIntegrations, useIsMultiProviderConfigurationEnabled } from '../../hooks';
 import { IntegrationsListToolbar } from './components/IntegrationsListToolbar';
 import { useFetchEnvironments } from '../../hooks/useFetchEnvironments';
 import { IntegrationNameCell } from './components/IntegrationNameCell';
@@ -16,7 +17,7 @@ import { IntegrationStatusCell } from './components/IntegrationStatusCell';
 import { When } from '../../components/utils/When';
 import { IntegrationsListNoData } from './components/IntegrationsListNoData';
 import { mapToTableIntegration } from './utils';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { IntegrationsStore } from './IntegrationsStorePage';
 
 const columns: IExtendedColumn<ITableIntegration>[] = [
   {
@@ -113,5 +114,7 @@ const IntegrationsList = () => {
 };
 
 export const IntegrationsListPage = () => {
-  return <IntegrationsList />;
+  const isIntegrationsListPageEnabled = useIsMultiProviderConfigurationEnabled();
+
+  return isIntegrationsListPageEnabled ? <IntegrationsList /> : <IntegrationsStore />;
 };
