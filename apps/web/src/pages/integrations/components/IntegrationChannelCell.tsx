@@ -1,7 +1,7 @@
 import styled from '@emotion/styled';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
-import { colors, IExtendedCellProps, withCellLoading } from '../../../design-system';
+import { colors, IExtendedCellProps, Text, withCellLoading } from '../../../design-system';
 import { CHANNEL_TYPE_TO_ICON_NAME } from '../constants';
 import type { ITableIntegration } from '../types';
 
@@ -14,11 +14,6 @@ const ChannelCellHolder = styled.div`
 const IconStyled = styled(FontAwesomeIcon)`
   font-size: 16px;
   color: ${colors.B40};
-`;
-
-const Text = styled.span`
-  color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.white : colors.B40)};
-  font-size: 14px;
 `;
 
 const IntegrationChannel = ({ row: { original } }: IExtendedCellProps<ITableIntegration>) => {

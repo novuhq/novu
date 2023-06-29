@@ -1,4 +1,4 @@
-import { IEnvironment } from '@novu/shared';
+import { IEnvironment, providers } from '@novu/shared';
 
 import { IntegrationEntity } from './IntegrationsStorePage';
 import { CONTEXT_PATH } from '../../config';
@@ -14,12 +14,13 @@ export const mapToTableIntegration = (
     dark: `${CONTEXT_PATH}/static/images/providers/dark/square/${integration.providerId}.svg`,
   };
   const environment = environments?.find((env) => env._id === integration._environmentId);
+  const provider = providers.find((el) => el.id === integration.providerId);
 
   return {
-    name: `${integration.providerId.charAt(0).toUpperCase()}${integration.providerId.slice(1)}`,
-    // TODO: change to identifier when it will be available
-    identifier: integration._id ?? '',
-    provider: `${integration.providerId.charAt(0).toUpperCase()}${integration.providerId.slice(1)}`,
+    name: integration.name ?? provider?.displayName,
+    identifier: integration.identifier,
+    provider:
+      provider?.displayName ?? `${integration.providerId.charAt(0).toUpperCase()}${integration.providerId.slice(1)}`,
     channel: CHANNEL_TYPE_TO_STRING[integration.channel],
     channelType: integration.channel,
     environment: environment?.name ?? '',
