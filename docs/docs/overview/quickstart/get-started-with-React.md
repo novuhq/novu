@@ -163,7 +163,7 @@ use Novu\SDK\Novu;
 
 $novu = new Novu('<NOVU_API_KEY>');
 
-$novu->updateSubscriber('111', {
+$novu->updateSubscriber('123', {
   // new firstName
   firstName: 'Saurabh',
   // new lastName
