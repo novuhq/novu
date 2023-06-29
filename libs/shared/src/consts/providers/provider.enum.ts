@@ -26,7 +26,6 @@ export enum CredentialsKeyEnum {
   TlsOptions = 'tlsOptions',
   RedirectUrl = 'redirectUrl',
   Hmac = 'hmac',
-  IpPoolName = 'ipPoolName',
 }
 
 export enum EmailProviderIdEnum {

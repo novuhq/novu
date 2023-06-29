@@ -1,8 +1,8 @@
 import { IsDefined } from 'class-validator';
 import { ChannelTypeEnum } from '@novu/shared';
-import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
+import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
-export class DeactivateSimilarChannelIntegrationsCommand extends EnvironmentWithUserCommand {
+export class DeactivateSimilarChannelIntegrationsCommand extends EnvironmentCommand {
   @IsDefined()
   integrationId: string;
 

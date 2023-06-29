@@ -13,18 +13,17 @@ import {
   EmailProviderIdEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-  IAttachmentOptions,
-  IEmailOptions,
   LogCodeEnum,
 } from '@novu/shared';
 import * as Sentry from '@sentry/node';
+import { IAttachmentOptions, IEmailOptions } from '@novu/stateless';
 import {
   InstrumentUsecase,
   DetailEnum,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   GetDecryptedIntegrations,
-  GetEnvironmentDecryptedIntegrationsCommand,
+  GetDecryptedIntegrationsCommand,
   GetNovuIntegration,
   CompileEmailTemplate,
   CompileEmailTemplateCommand,
@@ -71,7 +70,7 @@ export class SendMessageEmail extends SendMessageBase {
 
     try {
       integration = await this.getIntegration(
-        GetEnvironmentDecryptedIntegrationsCommand.create({
+        GetDecryptedIntegrationsCommand.create({
           organizationId: command.organizationId,
           environmentId: command.environmentId,
           channelType: ChannelTypeEnum.EMAIL,
@@ -243,13 +242,8 @@ export class SendMessageEmail extends SendMessageBase {
         attachments,
         id: message._id,
         replyTo: replyToAddress,
-        notificationDetails: {
-          transactionId: command.transactionId,
-          workflowIdentifier: command.identifier,
-          subscriberId: subscriber.subscriberId,
-        },
       },
-      overrides || {}
+      command.overrides?.email || {}
     );
 
     if (command.overrides?.email?.replyTo) {
@@ -473,7 +467,6 @@ export const createMailData = (options: IEmailOptions, overrides: Record<string,
     text: overrides?.text,
     cc: overrides?.cc || [],
     bcc: overrides?.bcc || [],
-    ipPoolName: overrides?.ipPoolName,
   };
 };
 

@@ -1,16 +1,18 @@
 import { useState } from 'react';
+import { ColumnWithStrictAccessor } from 'react-table';
 import { format } from 'date-fns';
-import { Code, Button } from '@mantine/core';
-import type { ISubscriber } from '@novu/shared';
-
 import { useSubscribers } from '../../hooks';
+import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
-import { Table, withCellLoading, IExtendedColumn } from '../../design-system';
+import { Table } from '../../design-system';
+import { Data } from '../../design-system/table/Table';
 import { ViewportWide } from '../../design-system/icons/general/ViewportWide';
 import { HoverCard } from '../../design-system/hover-card/HoverCard';
 
-const columns: IExtendedColumn<ISubscriber>[] = [
+import { Code, Button } from '@mantine/core';
+
+const columns: ColumnWithStrictAccessor<Data>[] = [
   {
     accessor: 'subscriberId',
     Header: 'Subscriber Id',
@@ -34,13 +36,13 @@ const columns: IExtendedColumn<ISubscriber>[] = [
   {
     accessor: 'createdAt',
     Header: 'Created At',
-    Cell: withCellLoading(({ row: { original } }) => format(new Date(original.createdAt), 'dd/MM/yyyy HH:mm')),
+    Cell: ({ createdAt }: any) => format(new Date(createdAt), 'dd/MM/yyyy HH:mm'),
   },
   {
     accessor: 'data',
     Header: 'Data',
-    Cell: withCellLoading(({ row: { original } }) =>
-      original.data ? (
+    Cell: ({ data }: any) =>
+      data ? (
         <HoverCard width={200} position="bottom" shadow="md" withArrow arrowSize={3.5}>
           <HoverCard.Target>
             <Button>
@@ -48,13 +50,12 @@ const columns: IExtendedColumn<ISubscriber>[] = [
             </Button>
           </HoverCard.Target>
           <HoverCard.Dropdown>
-            <Code>{JSON.stringify(original.data, null, 2)}</Code>
+            <Code>{JSON.stringify(data, null, 2)}</Code>
           </HoverCard.Dropdown>
         </HoverCard>
       ) : (
         ''
-      )
-    ),
+      ),
   },
 ];
 
@@ -67,7 +68,8 @@ function SubscribersList() {
   }
 
   return (
-    <PageContainer title="Subscribers">
+    <PageContainer>
+      <PageMeta title="Subscribers" />
       <PageHeader title="Subscribers" />
       <Table
         loading={isLoading}

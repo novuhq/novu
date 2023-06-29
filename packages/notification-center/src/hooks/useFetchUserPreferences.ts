@@ -2,16 +2,17 @@ import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import type { IUserPreferenceSettings } from '@novu/client';
 
 import { useNovuContext } from './useNovuContext';
-import { useFetchUserPreferencesQueryKey } from './useFetchUserPreferencesQueryKey';
+import { USER_PREFERENCES_QUERY_KEY } from './queryKeys';
+import { useSetQueryKey } from './useSetQueryKey';
 
 export const useFetchUserPreferences = (
   options: UseQueryOptions<IUserPreferenceSettings[], Error, IUserPreferenceSettings[]> = {}
 ) => {
   const { apiService, isSessionInitialized, fetchingStrategy } = useNovuContext();
-  const userPreferencesQueryKey = useFetchUserPreferencesQueryKey();
+  const setQueryKey = useSetQueryKey();
 
   const result = useQuery<IUserPreferenceSettings[], Error, IUserPreferenceSettings[]>(
-    userPreferencesQueryKey,
+    setQueryKey(USER_PREFERENCES_QUERY_KEY),
     () => apiService.getUserPreference(),
     {
       ...options,

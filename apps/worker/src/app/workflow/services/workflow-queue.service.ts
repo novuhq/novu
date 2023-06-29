@@ -10,7 +10,6 @@ import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   DetailEnum,
-  INovuWorker,
 } from '@novu/application-generic';
 
 import {
@@ -32,10 +31,8 @@ interface IJobData {
   _userId: string;
 }
 
-const LOG_CONTEXT = 'WorkflowQueueService';
-
 @Injectable()
-export class WorkflowQueueService extends QueueService<IJobData> implements INovuWorker {
+export class WorkflowQueueService extends QueueService<IJobData> {
   constructor(
     @Inject(forwardRef(() => QueueNextJob)) private queueNextJob: QueueNextJob,
     @Inject(forwardRef(() => RunJob)) private runJob: RunJob,
@@ -109,7 +106,7 @@ export class WorkflowQueueService extends QueueService<IJobData> implements INov
         })
       );
     } catch (error) {
-      Logger.error('Failed to set job as completed', LOG_CONTEXT, error);
+      Logger.error('Failed to set job as completed', error);
     }
   }
 
@@ -133,7 +130,7 @@ export class WorkflowQueueService extends QueueService<IJobData> implements INov
         await this.handleLastFailedWebhookFilter(job, error);
       }
     } catch (anotherError) {
-      Logger.error('Failed to set job as failed', LOG_CONTEXT, anotherError);
+      Logger.error('Failed to set job as failed', anotherError);
     }
   }
 
@@ -186,14 +183,4 @@ export class WorkflowQueueService extends QueueService<IJobData> implements INov
       return await this.webhookFilterWebhookFilterBackoffStrategy.execute(command);
     };
   };
-
-  public async pauseWorker(): Promise<void> {
-    Logger.log('Pausing worker', LOG_CONTEXT);
-    await this.bullMqService.pauseWorker();
-  }
-
-  public async resumeWorker(): Promise<void> {
-    Logger.log('Resuming worker', LOG_CONTEXT);
-    await this.bullMqService.resumeWorker();
-  }
 }

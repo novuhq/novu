@@ -13,7 +13,6 @@ export class RemoveIntegration {
 
   async execute(command: RemoveIntegrationCommand) {
     try {
-      // TODO: We should check first if the Integration exists in the database
       await this.invalidateCache.invalidateQuery({
         key: buildIntegrationKey().invalidate({
           _environmentId: command.environmentId,

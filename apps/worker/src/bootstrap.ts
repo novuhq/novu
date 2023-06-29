@@ -6,15 +6,13 @@ import { INestApplication, Logger, NestInterceptor, ValidationPipe } from '@nest
 import { NestFactory } from '@nestjs/core';
 import * as bodyParser from 'body-parser';
 import * as Sentry from '@sentry/node';
-import { BullMqService, INovuWorker, ReadinessService } from '@novu/application-generic';
+import { BullMqService } from '@novu/application-generic';
 import { getErrorInterceptor, Logger as PinoLogger } from '@novu/application-generic';
 
 import { AppModule } from './app.module';
 import { ResponseInterceptor } from './app/shared/response.interceptor';
 import { validateEnv } from './config/env-validator';
 import * as packageJson from '../package.json';
-import { WorkflowQueueService } from './app/workflow/services/workflow-queue.service';
-import { TriggerProcessorQueueService } from './app/workflow/services/trigger-processor-queue.service';
 
 const extendedBodySizeRoutes = ['/v1/events', '/v1/notification-templates', '/v1/layouts'];
 
@@ -34,26 +32,6 @@ if (process.env.SENTRY_DSN) {
 // Validate the ENV variables after launching SENTRY, so missing variables will report to sentry
 validateEnv();
 
-const getWorkers = (app: INestApplication): INovuWorker[] => {
-  const workflowQueueService = app.get(WorkflowQueueService, { strict: false });
-  const triggerQueueService = app.get(TriggerProcessorQueueService, { strict: false });
-
-  return [workflowQueueService, triggerQueueService];
-};
-
-const prepareAppInfra = async (app: INestApplication): Promise<void> => {
-  const readinessService = app.get(ReadinessService);
-  const workers = getWorkers(app);
-
-  await readinessService.pauseWorkers(workers);
-};
-
-const startAppInfra = async (app: INestApplication): Promise<void> => {
-  const readinessService = app.get(ReadinessService);
-  const workers = getWorkers(app);
-  await readinessService.enableWorkers(workers);
-};
-
 export async function bootstrap(): Promise<INestApplication> {
   BullMqService.haveProInstalled();
 
@@ -61,8 +39,6 @@ export async function bootstrap(): Promise<INestApplication> {
 
   app.useLogger(app.get(PinoLogger));
   app.flushLogs();
-
-  await prepareAppInfra(app);
 
   if (process.env.SENTRY_DSN) {
     app.use(Sentry.Handlers.requestHandler());
@@ -94,8 +70,6 @@ export async function bootstrap(): Promise<INestApplication> {
   Logger.log('BOOTSTRAPPED SUCCESSFULLY');
 
   await app.listen(process.env.PORT);
-
-  await startAppInfra(app);
 
   Logger.log(`Started application in NODE_ENV=${process.env.NODE_ENV} on port ${process.env.PORT}`);
 

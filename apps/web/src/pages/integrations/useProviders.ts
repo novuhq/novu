@@ -69,7 +69,7 @@ const sortProviders = (unsortedProviders: IIntegratedProvider[]) => {
 };
 
 export const useProviders = () => {
-  const { integrations, loading: isLoading, refetch } = useIntegrations();
+  const { integrations, loading: isLoading, refetch } = useIntegrations({ refetchOnMount: false });
 
   const sortedProviders = useMemo(() => {
     if (integrations) {

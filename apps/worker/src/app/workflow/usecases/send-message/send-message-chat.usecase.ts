@@ -21,7 +21,7 @@ import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   GetDecryptedIntegrations,
-  GetEnvironmentDecryptedIntegrationsCommand,
+  GetDecryptedIntegrationsCommand,
   CompileTemplate,
   CompileTemplateCommand,
   ChatFactory,
@@ -148,7 +148,7 @@ export class SendMessageChat extends SendMessageBase {
     content: string
   ) {
     const integration = await this.getIntegration(
-      GetEnvironmentDecryptedIntegrationsCommand.create({
+      GetDecryptedIntegrationsCommand.create({
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         providerId: subscriberChannel.providerId,

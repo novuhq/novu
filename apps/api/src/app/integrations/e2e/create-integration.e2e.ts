@@ -1,6 +1,5 @@
 import { IntegrationRepository, IntegrationEntity } from '@novu/dal';
 import { UserSession } from '@novu/testing';
-import { ChannelTypeEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
 import { expect } from 'chai';
 
 describe('Create Integration - /integration (POST)', function () {
@@ -13,39 +12,39 @@ describe('Create Integration - /integration (POST)', function () {
   });
 
   it('should create the email integration successfully', async function () {
-    const integrations = (await session.testAgent.get(`/v1/integrations`)).body.data;
-
-    const emailIntegrations = integrations.filter(
-      (searchIntegration) => searchIntegration.channel === ChannelTypeEnum.EMAIL
+    const integration = (await session.testAgent.get(`/v1/integrations`)).body.data.find(
+      (searchIntegration) => searchIntegration.channel === 'email'
     );
 
-    expect(emailIntegrations.length).to.eql(2);
-
-    for (const emailIntegration of emailIntegrations) {
-      expect(emailIntegration.providerId).to.equal(EmailProviderIdEnum.SendGrid);
-      expect(emailIntegration.channel).to.equal(ChannelTypeEnum.EMAIL);
-      expect(emailIntegration.credentials.apiKey).to.equal('SG.123');
-      expect(emailIntegration.credentials.secretKey).to.equal('abc');
-      expect(emailIntegration.active).to.equal(true);
-    }
+    expect(integration.providerId).to.equal('sendgrid');
+    expect(integration.channel).to.equal('email');
+    expect(integration.credentials.apiKey).to.equal('SG.123');
+    expect(integration.credentials.secretKey).to.equal('abc');
+    expect(integration.active).to.equal(true);
   });
 
   it('should create the sms integration successfully', async function () {
-    const integrations = (await session.testAgent.get(`/v1/integrations`)).body.data;
-
-    const smsIntegrations = integrations.filter(
-      (searchIntegration) => searchIntegration.channel === ChannelTypeEnum.SMS
+    const integration = (await session.testAgent.get(`/v1/integrations`)).body.data.find(
+      (searchIntegration) => searchIntegration.channel === 'sms'
     );
 
-    expect(smsIntegrations.length).to.eql(2);
+    expect(integration.providerId).to.equal('twilio');
+    expect(integration.channel).to.equal('sms');
+    expect(integration.credentials.accountSid).to.equal('AC123');
+    expect(integration.credentials.token).to.equal('123');
+    expect(integration.active).to.equal(true);
+  });
 
-    for (const smsIntegration of smsIntegrations) {
-      expect(smsIntegration.providerId).to.equal(SmsProviderIdEnum.Twilio);
-      expect(smsIntegration.channel).to.equal(ChannelTypeEnum.SMS);
-      expect(smsIntegration.credentials.accountSid).to.equal('AC123');
-      expect(smsIntegration.credentials.token).to.equal('123');
-      expect(smsIntegration.active).to.equal(true);
-    }
+  it('should create the sms and email integration successfully', async function () {
+    const integrations = (await session.testAgent.get(`/v1/integrations`)).body.data;
+
+    expect(integrations.length).to.equal(6);
+
+    const emailIntegration = integrations.find((i) => i.channel.toString() === 'email');
+    const smsIntegration = integrations.find((i) => i.channel.toString() === 'sms');
+
+    expect(emailIntegration).to.be.ok;
+    expect(smsIntegration).to.be.ok;
   });
 
   it('should return error on creation of same provider on same environment twice', async function () {
@@ -90,21 +89,17 @@ describe('Create Integration - /integration (POST)', function () {
 
     const integrations = await integrationRepository.findByEnvironmentId(environmentId);
 
-    const firstIntegration = integrations.find(
-      (i) => i.providerId.toString() === EmailProviderIdEnum.SendGrid && i._environmentId === session.environment._id
-    );
-    const secondIntegration = integrations.find(
-      (i) => i.providerId.toString() === EmailProviderIdEnum.Mailgun && i._environmentId === session.environment._id
-    );
+    const firstIntegration = integrations.find((i) => i.providerId.toString() === 'sendgrid');
+    const secondIntegration = integrations.find((i) => i.providerId.toString() === 'mailgun');
 
-    expect(firstIntegration?.active).to.equal(false);
-    expect(secondIntegration?.active).to.equal(true);
+    expect(firstIntegration.active).to.equal(false);
+    expect(secondIntegration.active).to.equal(true);
   });
 
   it('should create custom SMTP integration with TLS options successfully', async function () {
     const payload = {
-      providerId: EmailProviderIdEnum.CustomSMTP,
-      channel: ChannelTypeEnum.EMAIL,
+      providerId: 'nodemailer',
+      channel: 'email',
       credentials: {
         host: 'smtp.example.com',
         port: '587',
@@ -122,12 +117,8 @@ describe('Create Integration - /integration (POST)', function () {
 
     const integrations = await integrationRepository.findByEnvironmentId(environmentId);
 
-    const sendGridIntegration = integrations.find(
-      (i) => i.providerId.toString() === EmailProviderIdEnum.SendGrid && i._environmentId === session.environment._id
-    );
-    const nodeMailerIntegration = integrations.find(
-      (i) => i.providerId.toString() === EmailProviderIdEnum.CustomSMTP && i._environmentId === session.environment._id
-    );
+    const sendGridIntegration = integrations.find((i) => i.providerId.toString() === 'sendgrid');
+    const nodeMailerIntegration = integrations.find((i) => i.providerId.toString() === 'nodemailer');
 
     expect(sendGridIntegration?.active).to.equal(false);
     expect(nodeMailerIntegration?.credentials?.host).to.equal(payload.credentials.host);
@@ -149,7 +140,7 @@ async function insertIntegrationTwice(
 
   if (createDiffChannels) {
     // eslint-disable-next-line no-param-reassign
-    payload.channel = ChannelTypeEnum.SMS;
+    payload.channel = 'sms';
   }
 
   return await session.testAgent.post('/v1/integrations').send(payload);

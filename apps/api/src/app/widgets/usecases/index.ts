@@ -6,7 +6,6 @@ import { UpdateMessageActions } from './mark-action-as-done/update-message-actio
 import { GetFeedCount } from './get-feed-count/get-feed-count.usecase';
 import { RemoveMessage } from './remove-message/remove-message.usecase';
 import { MarkAllMessagesAs } from './mark-all-messages-as/mark-all-messages-as.usecase';
-import { RemoveAllMessages } from './remove-messages/remove-all-messages.usecase';
 
 export const USE_CASES = [
   GetOrganizationData,
@@ -16,7 +15,6 @@ export const USE_CASES = [
   GetNotificationsFeed,
   InitializeSession,
   RemoveMessage,
-  RemoveAllMessages,
   MarkAllMessagesAs,
   //
 ];

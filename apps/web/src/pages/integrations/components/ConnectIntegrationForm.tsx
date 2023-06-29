@@ -11,7 +11,7 @@ import { ChannelTypeEnum, ICredentialsDto, IConfigCredentials } from '@novu/shar
 import { Button, colors, Input, Switch, Text } from '../../../design-system';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
 import { createIntegration, getWebhookSupportStatus, updateIntegration } from '../../../api/integration';
-import { Close } from '../../../design-system/icons';
+import { Close } from '../../../design-system/icons/actions/Close';
 import { IntegrationInput } from './IntegrationInput';
 import { IS_DOCKER_HOSTED, WEBHOOK_URL } from '../../../config';
 import { useEnvController, useAuthController } from '../../../hooks';
@@ -389,6 +389,7 @@ const CopyWrapper = styled.div`
 `;
 
 const CenterDiv = styled.div`
+  max-height: 500px;
   overflow: auto;
   margin-top: 10px;
   margin-bottom: 10px;

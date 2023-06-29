@@ -94,20 +94,16 @@ export interface INovuProviderContext {
   logout: VoidFunction;
 }
 
-export interface IStoreContext {
-  storeQuery: IStoreQuery;
+export interface INotificationsContext {
   storeId: string;
   stores: IStore[];
-  setStore: (storeId?: string) => void;
-}
-
-export interface INotificationsContext extends IStoreContext {
   unseenCount: number;
   notifications: IMessage[];
   hasNextPage: boolean;
   isLoading: boolean;
   isFetching: boolean;
   isFetchingNextPage: boolean;
+  setStore: (storeId?: string) => void;
   fetchNextPage: () => void;
   refetch: <TPageData>({
     page,
@@ -120,7 +116,6 @@ export interface INotificationsContext extends IStoreContext {
   markNotificationAsUnRead: (messageId: string) => void;
   markNotificationAsSeen: (messageId: string) => void;
   removeMessage: (messageId: string) => void;
-  removeAllMessages: (feedId?: string) => void;
   markFetchedNotificationsAsRead: () => void;
   markFetchedNotificationsAsSeen: () => void;
   markAllNotificationsAsRead: () => void;

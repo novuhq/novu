@@ -8,7 +8,7 @@ import { NotificationTemplateEntity } from '../notification-template';
 import { SubscriberEntity } from '../subscriber';
 import { NotificationEntity } from '../notification';
 import { EnvironmentEntity } from '../environment';
-import type { EnforceEnvOrOrgIds, IUpdateResult } from '../../types';
+import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 import { DalException } from '../../shared';
 
 type JobEntityPopulated = JobEntity & {
@@ -40,7 +40,11 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     return stored;
   }
 
-  public async updateStatus(environmentId: string, jobId: string, status: JobStatusEnum): Promise<IUpdateResult> {
+  public async updateStatus(
+    environmentId: string,
+    jobId: string,
+    status: JobStatusEnum
+  ): Promise<{ matchedCount: number; modifiedCount: number }> {
     return this.MongooseModel.updateOne(
       {
         _environmentId: environmentId,

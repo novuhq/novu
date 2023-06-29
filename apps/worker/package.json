@@ -1,6 +1,6 @@
 {
   "name": "@novu/worker",
-  "version": "0.16.2",
+  "version": "0.16.0",
   "description": "description",
   "author": "",
   "private": "true",
@@ -30,11 +30,12 @@
     "@nestjs/platform-express": "9.3.12",
     "@nestjs/swagger": "^6.3.0",
     "@nestjs/terminus": "9.2.1",
-    "@novu/application-generic": "^0.16.2",
-    "@novu/dal": "^0.16.2",
-    "@novu/shared": "^0.16.2",
-    "@novu/stateless": "^0.16.2",
-    "@novu/testing": "^0.16.2",
+    "@novu/application-generic": "^0.16.0",
+    "@novu/dal": "^0.16.0",
+    "@novu/node": "^0.16.0",
+    "@novu/shared": "^0.16.0",
+    "@novu/stateless": "^0.16.0",
+    "@novu/testing": "^0.16.0",
     "@sentry/node": "^7.40.0",
     "@sentry/tracing": "^7.40.0",
     "@types/newrelic": "^9.13.0",
@@ -55,7 +56,7 @@
     "newrelic": "9.13.0",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
-    "rxjs": "7.8.1",
+    "rxjs": "7.8.0",
     "shortid": "^2.2.16",
     "simple-statistics": "^7.8.3",
     "uuid": "^8.3.2"
@@ -81,7 +82,7 @@
     "supertest": "^5.0.0",
     "ts-loader": "~9.4.0",
     "ts-node": "~10.9.1",
-    "tsconfig-paths": "~4.1.0",
+    "tsconfig-paths": "3.14.2",
     "typescript": "4.9.5"
   },
   "lint-staged": {

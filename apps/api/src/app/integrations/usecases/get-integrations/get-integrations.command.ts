@@ -1,3 +1,3 @@
-import { OrganizationLevelWithUserCommand } from '@novu/application-generic';
+import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
-export class GetIntegrationsCommand extends OrganizationLevelWithUserCommand {}
+export class GetIntegrationsCommand extends EnvironmentWithUserCommand {}

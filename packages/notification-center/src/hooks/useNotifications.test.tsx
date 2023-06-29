@@ -14,9 +14,7 @@ import { IUserPreferenceSettings } from '@novu/client';
 import { ISession, INotificationsContext } from '../shared/interfaces';
 import { NovuProvider } from '../components';
 import { useNotifications } from './useNotifications';
-import { queryClient } from '../components/novu-provider/NovuProvider';
 
-const PROMISE_TIMEOUT = 150;
 const promiseResolveTimeout = (ms: number, arg: unknown = {}) => new Promise((resolve) => setTimeout(resolve, ms, arg));
 
 const templateId = 'templateId';
@@ -142,17 +140,13 @@ describe('useNotifications', () => {
       </NovuProvider>
     );
     hook = renderHook(() => useNotifications(), { wrapper });
-  });
-
-  afterEach(() => {
     jest.clearAllMocks();
-    queryClient.clear();
   });
 
   it('unseen count', async () => {
     const { rerender, result } = hook;
 
-    await promiseResolveTimeout(PROMISE_TIMEOUT);
+    await promiseResolveTimeout(100);
     rerender();
 
     expect(mockServiceInstance.getUnseenCount).toBeCalledTimes(1);
@@ -164,7 +158,7 @@ describe('useNotifications', () => {
 
     expect(result.current.isLoading).toBeTruthy();
 
-    await promiseResolveTimeout(PROMISE_TIMEOUT);
+    await promiseResolveTimeout(100);
     rerender();
 
     const { notifications, isLoading, hasNextPage } = result.current;
@@ -180,7 +174,6 @@ describe('useNotifications', () => {
       totalCount: 12,
       pageSize: 10,
       page: 0,
-      hasMore: true,
     };
     mockServiceInstance.getNotificationsList.mockImplementationOnce(() =>
       promiseResolveTimeout(0, mockNotificationsResponse)
@@ -189,7 +182,7 @@ describe('useNotifications', () => {
 
     expect(result.current.isLoading).toBeTruthy();
 
-    await promiseResolveTimeout(PROMISE_TIMEOUT);
+    await promiseResolveTimeout(100);
     rerender();
 
     const { notifications, isLoading, hasNextPage } = result.current;
@@ -221,7 +214,7 @@ describe('useNotifications', () => {
 
     expect(result.current.isLoading).toBeTruthy();
 
-    await promiseResolveTimeout(PROMISE_TIMEOUT);
+    await promiseResolveTimeout(100);
     rerender();
 
     expect(mockServiceInstance.getNotificationsList).toHaveBeenNthCalledWith(1, 0, stores[0].query);
@@ -232,37 +225,17 @@ describe('useNotifications', () => {
 
     expect(result.current.isLoading).toBeTruthy();
 
-    await promiseResolveTimeout(PROMISE_TIMEOUT);
+    await promiseResolveTimeout(100);
     rerender();
 
     expect(mockServiceInstance.getNotificationsList).toHaveBeenNthCalledWith(2, 0, stores[1].query);
   });
 
-  const props = {
-    applicationIdentifier: 'applicationIdentifier',
-    subscriberId: 'subscriberId',
-    subscriberHash: 'subscriberHash',
-  };
-  const applicationIdentifierChanged = {
-    ...props,
-    applicationIdentifier: 'applicationIdentifier1',
-  };
-  const subscriberIdChanged = {
-    ...props,
-    subscriberId: 'subscriberId1',
-  };
-  const subscriberHashChanged = {
-    ...props,
-    subscriberHash: 'subscriberHash1',
-  };
-
-  it.each`
-    theChangeObject                 | change
-    ${applicationIdentifierChanged} | ${`applicationIdentifier`}
-    ${subscriberHashChanged}        | ${`subscriberHash`}
-    ${subscriberIdChanged}          | ${`subscriberId`}
-  `('refetches the notifications, unseen count, organization when $change changes', async ({ theChangeObject }) => {
-    const payloads = [props, { ...theChangeObject }];
+  it('refetch organization payloads when `subscriberId` or `applicationIdentifier` changes', async () => {
+    const payloads = [
+      { applicationIdentifier: 'mock_app', subscriberId: 'mock_subscriber_id' },
+      { applicationIdentifier: 'mock_app_1', subscriberId: 'mock_subscriber_id_1' },
+    ];
 
     const wrapper = ({ children }) => {
       const [payload, setPayload] = useState(payloads[0]);
@@ -282,7 +255,6 @@ describe('useNotifications', () => {
           backendUrl="https://mock_url.com"
           applicationIdentifier={payload.applicationIdentifier}
           subscriberId={payload.subscriberId}
-          subscriberHash={payload.subscriberHash}
           initialFetchingStrategy={{ fetchNotifications: true }}
         >
           {children}
@@ -290,23 +262,17 @@ describe('useNotifications', () => {
       );
     };
     const innerHook = renderHook(() => useNotifications(), { wrapper });
-    const { rerender, result } = innerHook;
+    const { result } = innerHook;
 
     expect(result.current.isLoading).toBeTruthy();
 
-    await promiseResolveTimeout(PROMISE_TIMEOUT);
-    rerender();
-
-    expect(mockServiceInstance.getNotificationsList).toBeCalledTimes(1);
-    expect(mockServiceInstance.getUnseenCount).toBeCalledTimes(1);
+    await promiseResolveTimeout(100);
     expect(mockServiceInstance.getOrganization).toBeCalledTimes(1);
+    expect(mockServiceInstance.getUnseenCount).toBeCalledTimes(1);
 
-    await promiseResolveTimeout(PROMISE_TIMEOUT);
-    rerender();
-
-    expect(mockServiceInstance.getNotificationsList).toBeCalledTimes(2);
-    expect(mockServiceInstance.getUnseenCount).toBeCalledTimes(2);
+    await promiseResolveTimeout(100);
     expect(mockServiceInstance.getOrganization).toBeCalledTimes(2);
+    expect(mockServiceInstance.getUnseenCount).toBeCalledTimes(2);
   });
 
   it('fetch next page', async () => {
@@ -318,14 +284,12 @@ describe('useNotifications', () => {
       totalCount: 3,
       pageSize: 2,
       page: 0,
-      hasMore: true,
     };
     const mockNotificationsResponse2 = {
       data: [mockNotification3],
       totalCount: 3,
       pageSize: 2,
       page: 1,
-      hasMore: false,
     };
     mockServiceInstance.getNotificationsList
       .mockImplementationOnce(() => promiseResolveTimeout(0, mockNotificationsResponse1))
@@ -335,7 +299,7 @@ describe('useNotifications', () => {
 
     expect(result.current.isLoading).toBeTruthy();
 
-    await promiseResolveTimeout(PROMISE_TIMEOUT);
+    await promiseResolveTimeout(100);
     rerender();
 
     expect(result.current.isLoading).toBeFalsy();
@@ -349,7 +313,7 @@ describe('useNotifications', () => {
     expect(result.current.isFetching).toBeTruthy();
     expect(result.current.isFetchingNextPage).toBeTruthy();
 
-    await promiseResolveTimeout(PROMISE_TIMEOUT);
+    await promiseResolveTimeout(100);
     rerender();
 
     expect(result.current.isLoading).toBeFalsy();
@@ -383,7 +347,7 @@ describe('useNotifications', () => {
 
     expect(result.current.isLoading).toBeTruthy();
 
-    await promiseResolveTimeout(PROMISE_TIMEOUT);
+    await promiseResolveTimeout(100);
     rerender();
 
     expect(mockServiceInstance.getNotificationsList).toHaveBeenNthCalledWith(1, 0, {});
@@ -397,7 +361,7 @@ describe('useNotifications', () => {
     expect(result.current.isLoading).toBeFalsy();
     expect(result.current.isFetching).toBeTruthy();
 
-    await promiseResolveTimeout(PROMISE_TIMEOUT);
+    await promiseResolveTimeout(100);
     rerender();
 
     expect(mockServiceInstance.getNotificationsList).toHaveBeenNthCalledWith(2, 0, {});
@@ -428,7 +392,7 @@ describe('useNotifications', () => {
 
     expect(result.current.isLoading).toBeTruthy();
 
-    await promiseResolveTimeout(PROMISE_TIMEOUT);
+    await promiseResolveTimeout(100);
     rerender();
 
     expect(mockServiceInstance.getNotificationsList).toHaveBeenNthCalledWith(1, 0, {});
@@ -442,7 +406,7 @@ describe('useNotifications', () => {
     expect(result.current.isLoading).toBeFalsy();
     expect(result.current.isFetching).toBeTruthy();
 
-    await promiseResolveTimeout(PROMISE_TIMEOUT);
+    await promiseResolveTimeout(100);
     rerender();
 
     expect(mockServiceInstance.getNotificationsList).toHaveBeenNthCalledWith(2, 1, {});
@@ -455,14 +419,14 @@ describe('useNotifications', () => {
     );
     const { rerender, result } = hook;
 
-    await promiseResolveTimeout(PROMISE_TIMEOUT);
+    await promiseResolveTimeout(100);
     rerender();
 
     act(() => {
       result.current.markNotificationAsRead(result.current.notifications[0]._id);
     });
 
-    await promiseResolveTimeout(PROMISE_TIMEOUT);
+    await promiseResolveTimeout(100);
     rerender();
 
     const { notifications } = result.current;
@@ -484,7 +448,6 @@ describe('useNotifications', () => {
       totalCount: 10,
       pageSize: 10,
       page: 0,
-      hasMore: false,
     };
     mockServiceInstance.getNotificationsList.mockImplementationOnce(() =>
       promiseResolveTimeout(0, mockNotificationsResponse1)
@@ -497,14 +460,14 @@ describe('useNotifications', () => {
     );
     const { rerender, result } = hook;
 
-    await promiseResolveTimeout(PROMISE_TIMEOUT);
+    await promiseResolveTimeout(100);
     rerender();
 
     act(() => {
       result.current.markFetchedNotificationsAsRead();
     });
 
-    await promiseResolveTimeout(PROMISE_TIMEOUT);
+    await promiseResolveTimeout(100);
     rerender();
 
     const { notifications } = result.current;
@@ -526,14 +489,14 @@ describe('useNotifications', () => {
     );
     const { rerender, result } = hook;
 
-    await promiseResolveTimeout(PROMISE_TIMEOUT);
+    await promiseResolveTimeout(100);
     rerender();
 
     act(() => {
       result.current.markNotificationAsSeen(result.current.notifications[0]._id);
     });
 
-    await promiseResolveTimeout(PROMISE_TIMEOUT);
+    await promiseResolveTimeout(100);
     rerender();
 
     const { notifications } = result.current;
@@ -567,14 +530,14 @@ describe('useNotifications', () => {
     );
     const { rerender, result } = hook;
 
-    await promiseResolveTimeout(PROMISE_TIMEOUT);
+    await promiseResolveTimeout(100);
     rerender();
 
     act(() => {
       result.current.markFetchedNotificationsAsSeen();
     });
 
-    await promiseResolveTimeout(PROMISE_TIMEOUT);
+    await promiseResolveTimeout(100);
     rerender();
 
     const { notifications } = result.current;

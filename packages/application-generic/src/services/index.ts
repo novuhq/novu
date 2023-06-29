@@ -5,7 +5,6 @@ export { WsQueueService } from './ws-queue.service';
 export { TriggerQueueService } from './trigger-queue.service';
 export { VerifyPayloadService } from './verify-payload.service';
 export { EventsDistributedLockService } from './events-distributed-lock.service';
-export { INovuWorker, ReadinessService } from './readiness.service';
 export * from './cache';
 export * from './calculate-delay';
 export * from './performance';

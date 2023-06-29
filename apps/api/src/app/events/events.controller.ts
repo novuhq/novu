@@ -1,7 +1,8 @@
 import { Body, Controller, Delete, Param, Post, Scope, UseGuards } from '@nestjs/common';
 import { ApiOkResponse, ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { v4 as uuidv4 } from 'uuid';
-import { IJwtPayload, ISubscribersDefine, TriggerRecipientSubscriber } from '@novu/shared';
+import { IJwtPayload, ISubscribersDefine } from '@novu/shared';
+import { TriggerRecipientSubscriber } from '@novu/node';
 import { EventsPerformanceService, SendTestEmail, SendTestEmailCommand } from '@novu/application-generic';
 
 import {

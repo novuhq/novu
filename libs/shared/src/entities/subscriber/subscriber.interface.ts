@@ -1,5 +1,4 @@
 import { ChatProviderIdEnum, PushProviderIdEnum } from '../../consts';
-import { SubscriberCustomData } from '../../types';
 
 export interface ISubscriber {
   _id?: string;
@@ -30,3 +29,5 @@ export interface IChannelCredentials {
   webhookUrl?: string;
   deviceTokens?: string[];
 }
+
+export type SubscriberCustomData = { [key: string]: string | string[] | boolean | number | undefined };

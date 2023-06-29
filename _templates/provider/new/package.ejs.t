@@ -5,7 +5,7 @@
 
 {
   "name": "@novu/<%= name %>",
-  "version": "<%= version %>",
+  "version": "^0.12.0",
   "description": "A <%= name %> wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -38,7 +38,7 @@
     "pnpm": "^7.26.0"
   },
   "dependencies": {
-    "@novu/stateless": "<%= version %>"
+    "@novu/stateless": "^0.13.0"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "~1.0.1",

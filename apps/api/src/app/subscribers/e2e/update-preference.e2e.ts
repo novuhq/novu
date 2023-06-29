@@ -85,10 +85,12 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
 
   it('should not do any action or error when sending an empty channels property', async function () {
     const initialPreferences = (await getPreference(session)).data.data[0];
-    expect(initialPreferences.preference.enabled).to.eql(true);
-    expect(initialPreferences.preference.channels).to.eql({
-      [ChannelTypeEnum.EMAIL]: true,
-      [ChannelTypeEnum.IN_APP]: true,
+    expect(initialPreferences.preference).to.eql({
+      enabled: true,
+      channels: {
+        [ChannelTypeEnum.EMAIL]: true,
+        [ChannelTypeEnum.IN_APP]: true,
+      },
     });
 
     const emptyPreferenceData = {
@@ -98,20 +100,23 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
     await updatePreference(emptyPreferenceData as any, session, template._id);
 
     const preferences = (await getPreference(session)).data.data[0];
-
-    expect(preferences.preference.enabled).to.eql(true);
-    expect(preferences.preference.channels).to.eql({
-      [ChannelTypeEnum.EMAIL]: true,
-      [ChannelTypeEnum.IN_APP]: true,
+    expect(preferences.preference).to.eql({
+      enabled: true,
+      channels: {
+        [ChannelTypeEnum.EMAIL]: true,
+        [ChannelTypeEnum.IN_APP]: true,
+      },
     });
   });
 
   it('should update user preference and disable the flag for the future general notification template preference', async function () {
     const initialPreferences = (await getPreference(session)).data.data[0];
-    expect(initialPreferences.preference.enabled).to.eql(true);
-    expect(initialPreferences.preference.channels).to.eql({
-      [ChannelTypeEnum.EMAIL]: true,
-      [ChannelTypeEnum.IN_APP]: true,
+    expect(initialPreferences.preference).to.eql({
+      enabled: true,
+      channels: {
+        [ChannelTypeEnum.EMAIL]: true,
+        [ChannelTypeEnum.IN_APP]: true,
+      },
     });
 
     const disablePreferenceData = {
@@ -121,10 +126,12 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
     await updatePreference(disablePreferenceData, session, template._id);
 
     const midwayPreferences = (await getPreference(session)).data.data[0];
-    expect(midwayPreferences.preference.enabled).to.eql(false);
-    expect(midwayPreferences.preference.channels).to.eql({
-      [ChannelTypeEnum.EMAIL]: true,
-      [ChannelTypeEnum.IN_APP]: true,
+    expect(midwayPreferences.preference).to.eql({
+      enabled: false,
+      channels: {
+        [ChannelTypeEnum.EMAIL]: true,
+        [ChannelTypeEnum.IN_APP]: true,
+      },
     });
 
     const updateEmailPreferenceData = {
@@ -137,19 +144,23 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
     await updatePreference(updateEmailPreferenceData, session, template._id);
 
     const finalPreferences = (await getPreference(session)).data.data[0];
-    expect(finalPreferences.preference.enabled).to.eql(false);
-    expect(finalPreferences.preference.channels).to.eql({
-      [ChannelTypeEnum.EMAIL]: false,
-      [ChannelTypeEnum.IN_APP]: true,
+    expect(finalPreferences.preference).to.eql({
+      enabled: false,
+      channels: {
+        [ChannelTypeEnum.EMAIL]: false,
+        [ChannelTypeEnum.IN_APP]: true,
+      },
     });
   });
 
   it('should update user preference and enable the flag for the future general notification template preference', async function () {
     const initialPreferences = (await getPreference(session)).data.data[0];
-    expect(initialPreferences.preference.enabled).to.eql(true);
-    expect(initialPreferences.preference.channels).to.eql({
-      [ChannelTypeEnum.EMAIL]: true,
-      [ChannelTypeEnum.IN_APP]: true,
+    expect(initialPreferences.preference).to.eql({
+      enabled: true,
+      channels: {
+        [ChannelTypeEnum.EMAIL]: true,
+        [ChannelTypeEnum.IN_APP]: true,
+      },
     });
 
     const disablePreferenceData = {
@@ -159,10 +170,12 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
     await updatePreference(disablePreferenceData, session, template._id);
 
     const midwayPreferences = (await getPreference(session)).data.data[0];
-    expect(midwayPreferences.preference.enabled).to.eql(false);
-    expect(midwayPreferences.preference.channels).to.eql({
-      [ChannelTypeEnum.EMAIL]: true,
-      [ChannelTypeEnum.IN_APP]: true,
+    expect(midwayPreferences.preference).to.eql({
+      enabled: false,
+      channels: {
+        [ChannelTypeEnum.EMAIL]: true,
+        [ChannelTypeEnum.IN_APP]: true,
+      },
     });
 
     const enablePreferenceData = {
@@ -172,19 +185,23 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
     await updatePreference(enablePreferenceData, session, template._id);
 
     const finalPreferences = (await getPreference(session)).data.data[0];
-    expect(finalPreferences.preference.enabled).to.eql(true);
-    expect(finalPreferences.preference.channels).to.eql({
-      [ChannelTypeEnum.EMAIL]: true,
-      [ChannelTypeEnum.IN_APP]: true,
+    expect(finalPreferences.preference).to.eql({
+      enabled: true,
+      channels: {
+        [ChannelTypeEnum.EMAIL]: true,
+        [ChannelTypeEnum.IN_APP]: true,
+      },
     });
   });
 
   it('should be able to update the subscriber preference for an active channel of the template', async function () {
     const initialPreferences = (await getPreference(session)).data.data[0];
-    expect(initialPreferences.preference.enabled).to.eql(true);
-    expect(initialPreferences.preference.channels).to.eql({
-      [ChannelTypeEnum.EMAIL]: true,
-      [ChannelTypeEnum.IN_APP]: true,
+    expect(initialPreferences.preference).to.eql({
+      enabled: true,
+      channels: {
+        [ChannelTypeEnum.EMAIL]: true,
+        [ChannelTypeEnum.IN_APP]: true,
+      },
     });
 
     const disableEmailPreferenceData = {
@@ -197,10 +214,12 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
     await updatePreference(disableEmailPreferenceData, session, template._id);
 
     const updatedPreferences = (await getPreference(session)).data.data[0];
-    expect(updatedPreferences.preference.enabled).to.eql(true);
-    expect(updatedPreferences.preference.channels).to.eql({
-      [ChannelTypeEnum.EMAIL]: false,
-      [ChannelTypeEnum.IN_APP]: true,
+    expect(updatedPreferences.preference).to.eql({
+      enabled: true,
+      channels: {
+        [ChannelTypeEnum.EMAIL]: false,
+        [ChannelTypeEnum.IN_APP]: true,
+      },
     });
 
     const enableEmailPreferenceData = {
@@ -213,19 +232,23 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
     await updatePreference(enableEmailPreferenceData, session, template._id);
 
     const finalPreferences = (await getPreference(session)).data.data[0];
-    expect(finalPreferences.preference.enabled).to.eql(true);
-    expect(finalPreferences.preference.channels).to.eql({
-      [ChannelTypeEnum.EMAIL]: true,
-      [ChannelTypeEnum.IN_APP]: true,
+    expect(finalPreferences.preference).to.eql({
+      enabled: true,
+      channels: {
+        [ChannelTypeEnum.EMAIL]: true,
+        [ChannelTypeEnum.IN_APP]: true,
+      },
     });
   });
 
   it('should ignore the channel update if channel not being used in the notification template', async function () {
     const initialPreferences = (await getPreference(session)).data.data[0];
-    expect(initialPreferences.preference.enabled).to.eql(true);
-    expect(initialPreferences.preference.channels).to.eql({
-      [ChannelTypeEnum.EMAIL]: true,
-      [ChannelTypeEnum.IN_APP]: true,
+    expect(initialPreferences.preference).to.eql({
+      enabled: true,
+      channels: {
+        [ChannelTypeEnum.EMAIL]: true,
+        [ChannelTypeEnum.IN_APP]: true,
+      },
     });
 
     const updateSmsPreferenceData = {
@@ -238,10 +261,12 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
     await updatePreference(updateSmsPreferenceData, session, template._id);
 
     const finalPreferences = (await getPreference(session)).data.data[0];
-    expect(finalPreferences.preference.enabled).to.eql(true);
-    expect(finalPreferences.preference.channels).to.eql({
-      [ChannelTypeEnum.EMAIL]: true,
-      [ChannelTypeEnum.IN_APP]: true,
+    expect(finalPreferences.preference).to.eql({
+      enabled: true,
+      channels: {
+        [ChannelTypeEnum.EMAIL]: true,
+        [ChannelTypeEnum.IN_APP]: true,
+      },
     });
   });
 
@@ -268,11 +293,13 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
     expect(updatedNotificationTemplate.steps.length).to.eql(3);
 
     const initialPreferences = (await getPreference(session)).data.data[0];
-    expect(initialPreferences.preference.enabled).to.eql(true);
-    expect(initialPreferences.preference.channels).to.eql({
-      [ChannelTypeEnum.EMAIL]: true,
-      [ChannelTypeEnum.IN_APP]: true,
-      [ChannelTypeEnum.SMS]: true,
+    expect(initialPreferences.preference).to.eql({
+      enabled: true,
+      channels: {
+        [ChannelTypeEnum.EMAIL]: true,
+        [ChannelTypeEnum.IN_APP]: true,
+        [ChannelTypeEnum.SMS]: true,
+      },
     });
 
     const updateSmsPreferenceData = {
@@ -285,11 +312,13 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
     await updatePreference(updateSmsPreferenceData, session, template._id);
 
     const finalPreferences = (await getPreference(session)).data.data[0];
-    expect(finalPreferences.preference.enabled).to.eql(true);
-    expect(finalPreferences.preference.channels).to.eql({
-      [ChannelTypeEnum.EMAIL]: true,
-      [ChannelTypeEnum.IN_APP]: true,
-      [ChannelTypeEnum.SMS]: false,
+    expect(finalPreferences.preference).to.eql({
+      enabled: true,
+      channels: {
+        [ChannelTypeEnum.EMAIL]: true,
+        [ChannelTypeEnum.IN_APP]: true,
+        [ChannelTypeEnum.SMS]: false,
+      },
     });
   });
 
@@ -322,10 +351,12 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
     expect(updatedNotificationTemplate.steps.length).to.eql(3);
 
     const initialPreferences = (await getPreference(session)).data.data[0];
-    expect(initialPreferences.preference.enabled).to.eql(true);
-    expect(initialPreferences.preference.channels).to.eql({
-      [ChannelTypeEnum.EMAIL]: true,
-      [ChannelTypeEnum.IN_APP]: true,
+    expect(initialPreferences.preference).to.eql({
+      enabled: true,
+      channels: {
+        [ChannelTypeEnum.EMAIL]: true,
+        [ChannelTypeEnum.IN_APP]: true,
+      },
     });
 
     const updateSmsPreferenceData = {
@@ -338,10 +369,12 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
     await updatePreference(updateSmsPreferenceData, session, template._id);
 
     const finalPreferences = (await getPreference(session)).data.data[0];
-    expect(finalPreferences.preference.enabled).to.eql(true);
-    expect(finalPreferences.preference.channels).to.eql({
-      [ChannelTypeEnum.EMAIL]: false,
-      [ChannelTypeEnum.IN_APP]: true,
+    expect(finalPreferences.preference).to.eql({
+      enabled: true,
+      channels: {
+        [ChannelTypeEnum.EMAIL]: false,
+        [ChannelTypeEnum.IN_APP]: true,
+      },
     });
   });
 });

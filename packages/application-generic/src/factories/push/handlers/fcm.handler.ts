@@ -1,6 +1,7 @@
-import { ChannelTypeEnum, ICredentials } from '@novu/shared';
+import { ChannelTypeEnum } from '@novu/shared';
 import { FcmPushProvider } from '@novu/fcm';
 import { BasePushHandler } from './base.handler';
+import { ICredentials } from '@novu/dal';
 
 export class FCMHandler extends BasePushHandler {
   constructor() {

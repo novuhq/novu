@@ -4,18 +4,19 @@ import type { IMessage, IPaginatedResponse } from '@novu/shared';
 import { INotificationsContext } from '../shared/interfaces';
 
 import { useNovuContext } from './useNovuContext';
+import { INFINITE_NOTIFICATIONS_QUERY_KEY } from './queryKeys';
 import { getNextPageParam } from '../utils/pagination';
-import { useFetchNotificationsQueryKey } from './useFetchNotificationsQueryKey';
+import { useSetQueryKey } from './useSetQueryKey';
 
 export const useFetchNotifications = (
-  { query }: { query?: IStoreQuery } = {},
+  { query }: { query?: IStoreQuery },
   options: UseInfiniteQueryOptions<IPaginatedResponse<IMessage>, Error, IPaginatedResponse<IMessage>> = {}
 ) => {
   const { apiService, isSessionInitialized, fetchingStrategy } = useNovuContext();
-  const fetchNotificationsQueryKey = useFetchNotificationsQueryKey();
+  const setQueryKey = useSetQueryKey();
 
   const result = useInfiniteQuery<IPaginatedResponse<IMessage>, Error, IPaginatedResponse<IMessage>>(
-    fetchNotificationsQueryKey,
+    setQueryKey([...INFINITE_NOTIFICATIONS_QUERY_KEY, query]),
     ({ pageParam = 0 }) => apiService.getNotificationsList(pageParam, query),
     {
       ...options,

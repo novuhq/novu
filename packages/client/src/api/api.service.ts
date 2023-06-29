@@ -70,14 +70,6 @@ export class ApiService {
     return await this.httpClient.delete(`/widgets/messages/${messageId}`, {});
   }
 
-  async removeAllMessages(feedId?: string): Promise<any> {
-    const url = feedId
-      ? `/widgets/messages?feedId=${feedId}`
-      : `/widgets/messages`;
-
-    return await this.httpClient.delete(url);
-  }
-
   async markAllMessagesAsRead(feedId?: string | string[]): Promise<any> {
     return await this.httpClient.post(`/widgets/messages/read`, {
       feedId,

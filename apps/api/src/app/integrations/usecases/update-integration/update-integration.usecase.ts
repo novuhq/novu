@@ -87,7 +87,6 @@ export class UpdateIntegration {
         organizationId: command.organizationId,
         integrationId: command.integrationId,
         channel: existingIntegration.channel,
-        userId: command.userId,
       });
     }
 

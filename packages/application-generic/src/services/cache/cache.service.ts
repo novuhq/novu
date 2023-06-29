@@ -6,7 +6,6 @@ import {
   InMemoryProviderService,
   Pipeline,
 } from '../in-memory-provider';
-import { addJitter } from '../../resilience';
 
 const LOG_CONTEXT = 'CacheService';
 
@@ -158,7 +157,13 @@ export class CacheService implements ICacheService {
   private getTtlInSeconds(options?: CachingConfig): number {
     const seconds = options?.ttl || this.cacheTtl;
 
-    return addJitter(seconds, this.TTL_VARIANT_PERCENTAGE);
+    return this.ttlVariant(seconds);
+  }
+
+  private ttlVariant(num): number {
+    const variant = this.TTL_VARIANT_PERCENTAGE * num * Math.random();
+
+    return Math.floor(num - (this.TTL_VARIANT_PERCENTAGE * num) / 2 + variant);
   }
 }
 

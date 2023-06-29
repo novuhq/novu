@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import styled from '@emotion/styled';
-import { Modal } from '@mantine/core';
-import * as cloneDeep from 'lodash.clonedeep';
 import {
   ChannelTypeEnum,
   IConfigCredentials,
@@ -12,9 +10,10 @@ import {
   InAppProviderIdEnum,
   ProvidersIdEnum,
   SmsProviderIdEnum,
-  ICredentials,
 } from '@novu/shared';
-
+import { Modal } from '@mantine/core';
+import * as cloneDeep from 'lodash.clonedeep';
+import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { ChannelGroup } from './components/ChannelGroup';
@@ -25,7 +24,6 @@ import { NovuInAppProviderModal } from './components/NovuInAppProviderModal';
 import { useProviders } from './useProviders';
 import { NovuSmsProviderModal } from './components/NovuSmsProviderModal';
 import { useCreateInAppIntegration } from '../../hooks/useCreateInAppIntegration';
-import { LoadingOverlay } from '../../design-system';
 
 export function IntegrationsStore() {
   const { emailProviders, smsProvider, chatProvider, pushProvider, inAppProvider, isLoading, refetch } = useProviders();
@@ -61,10 +59,12 @@ export function IntegrationsStore() {
   }
 
   return (
-    <PageContainer title="Integrations">
-      <PageHeader title="Integration Store" />
-      <LoadingOverlay visible={isLoading}>
-        <When truthy={!isLoading}>
+    <>
+      <PageMeta title="Integrations" />
+      {!isLoading ? (
+        <PageContainer>
+          <PageHeader title="Integration Store" />
+
           <Modal
             withCloseButton={false}
             centered
@@ -128,9 +128,9 @@ export function IntegrationsStore() {
               onProviderClick={handlerVisible}
             />
           </ContentWrapper>
-        </When>
-      </LoadingOverlay>
-    </PageContainer>
+        </PageContainer>
+      ) : null}
+    </>
   );
 }
 
@@ -153,16 +153,40 @@ export interface IIntegratedProvider {
   novu?: boolean;
 }
 
+export interface ICredentials {
+  apiKey?: string;
+  user?: string;
+  secretKey?: string;
+  domain?: string;
+  password?: string;
+  host?: string;
+  port?: string;
+  secure?: boolean;
+  region?: string;
+  accountSid?: string;
+  messageProfileId?: string;
+  token?: string;
+  from?: string;
+  senderName?: string;
+  applicationId?: string;
+  clientId?: string;
+  projectName?: string;
+  serviceAccount?: string;
+  baseUrl?: string;
+  webhookUrl?: string;
+  requireTls?: boolean;
+  ignoreTls?: boolean;
+  tlsOptions?: Record<string, unknown>;
+  redirectUrl?: string;
+  hmac?: boolean;
+}
+
 export interface IntegrationEntity {
   _id?: string;
 
   _environmentId: string;
 
   _organizationId: string;
-
-  name: string;
-
-  identifier: string;
 
   providerId: ProvidersIdEnum;
 

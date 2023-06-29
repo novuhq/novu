@@ -20,7 +20,7 @@ import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   GetDecryptedIntegrations,
-  GetEnvironmentDecryptedIntegrationsCommand,
+  GetDecryptedIntegrationsCommand,
   CompileTemplate,
   CompileTemplateCommand,
   PushFactory,
@@ -129,7 +129,7 @@ export class SendMessagePush extends SendMessageBase {
       }
 
       const integration = await this.getIntegration(
-        GetEnvironmentDecryptedIntegrationsCommand.create({
+        GetDecryptedIntegrationsCommand.create({
           organizationId: command.organizationId,
           environmentId: command.environmentId,
           channelType: ChannelTypeEnum.PUSH,
@@ -261,7 +261,7 @@ export class SendMessagePush extends SendMessageBase {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-          raw: JSON.stringify(e) !== JSON.stringify({}) ? JSON.stringify(e) : JSON.stringify(e.message),
+          raw: JSON.stringify(e),
         })
       );
 

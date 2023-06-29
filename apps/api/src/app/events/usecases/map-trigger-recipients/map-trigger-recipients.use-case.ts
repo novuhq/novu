@@ -1,16 +1,13 @@
 import { Injectable } from '@nestjs/common';
+import { ITopic, TriggerRecipientSubscriber, TriggerRecipientTopics, TriggerRecipients } from '@novu/node';
 import {
   EnvironmentId,
   ISubscribersDefine,
-  ITopic,
   LogCodeEnum,
   LogStatusEnum,
   OrganizationId,
   TopicKey,
   TopicSubscribersDto,
-  TriggerRecipients,
-  TriggerRecipientSubscriber,
-  TriggerRecipientTopics,
   TriggerRecipientsTypeEnum,
   UserId,
 } from '@novu/shared';
@@ -20,7 +17,7 @@ import { MapTriggerRecipientsCommand } from './map-trigger-recipients.command';
 import { CreateLog, CreateLogCommand } from '../../../logs/usecases/create-log';
 import { GetTopicSubscribersCommand, GetTopicSubscribersUseCase } from '../../../topics/use-cases';
 import { InstrumentUsecase } from '@novu/application-generic';
-import { FeatureFlagCommand, GetFeatureFlag } from '../../../shared/use-cases';
+import { FeatureFlagCommand, GetFeatureFlag } from '../../../feature-flags/use-cases';
 
 interface ILogTopicSubscribersPayload {
   environmentId: EnvironmentId;

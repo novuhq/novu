@@ -2,9 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Popover as MantinePopover, createStyles, UnstyledButton } from '@mantine/core';
 import styled from '@emotion/styled';
 import { useFormContext } from 'react-hook-form';
-import { useViewport } from 'react-flow-renderer';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
-
 import { Text } from '../../../../../design-system/typography/text/Text';
 import { Switch } from '../../../../../design-system/switch/Switch';
 import { useStyles } from '../../../../../design-system/template-button/TemplateButton.styles';
@@ -12,13 +10,21 @@ import { colors } from '../../../../../design-system/config';
 import { Trash } from '../../../../../design-system/icons';
 import { When } from '../../../../../components/utils/When';
 import { useActiveIntegrations, useEnvController, useIntegrationLimit } from '../../../../../hooks';
+import { useViewport } from 'react-flow-renderer';
 import { getFormattedStepErrors } from '../../../shared/errors';
 import { Popover } from '../../../../../design-system/popover';
 import { Button } from '../../../../../design-system/button/Button';
 import { IntegrationsStoreModal } from '../../../../integrations/IntegrationsStoreModal';
 import { useSegment } from '../../../../../components/providers/SegmentProvider';
 import { TemplateEditorAnalyticsEnum } from '../../../constants';
-import { CHANNEL_TYPE_TO_STRING } from '../../../../../utils/channels';
+
+const CHANNEL_TYPE_TO_TEXT = {
+  [ChannelTypeEnum.IN_APP]: 'in-app',
+  [ChannelTypeEnum.EMAIL]: 'email',
+  [ChannelTypeEnum.SMS]: 'sms',
+  [ChannelTypeEnum.CHAT]: 'chat',
+  [ChannelTypeEnum.PUSH]: 'push',
+};
 
 interface ITemplateButtonProps {
   Icon: React.FC<any>;
@@ -195,9 +201,7 @@ export function WorkflowNode({
             target={<ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />}
             title="Connect provider"
             titleGradient="red"
-            description={`Please configure a ${CHANNEL_TYPE_TO_STRING[
-              channelKey
-            ]?.toLowerCase()} provider to send notifications over this channel`}
+            description={`Please configure a ${CHANNEL_TYPE_TO_TEXT[channelKey]} provider to send notifications over this channel`}
             content={
               <ConfigureProviderButton
                 onClick={() => {

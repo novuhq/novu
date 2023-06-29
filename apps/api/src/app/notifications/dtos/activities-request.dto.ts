@@ -7,24 +7,23 @@ export class ActivitiesRequestDto {
     isArray: true,
   })
   channels: ChannelTypeEnum[] | ChannelTypeEnum;
-
   @ApiProperty({
     type: String,
     isArray: true,
   })
+  @ApiProperty()
   templates: string[] | string;
-
   @ApiProperty({
     type: String,
     isArray: true,
   })
+  @ApiProperty()
   emails: string | string[];
-
   @ApiProperty({
     type: String,
   })
+  @ApiProperty()
   search: string;
-
   @ApiPropertyOptional({
     type: Number,
     required: false,

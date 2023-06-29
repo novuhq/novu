@@ -110,8 +110,6 @@ jobs:
         run: pnpm cypress install
 
       - uses: browser-actions/setup-chrome@latest
-        with:
-          chrome-version: "stable"
       - run: |
           echo "BROWSER_PATH=$(which chrome)" >> $GITHUB_ENV
 

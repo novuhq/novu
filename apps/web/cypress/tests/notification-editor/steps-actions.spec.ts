@@ -58,28 +58,6 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.getByTestId('drag-side-menu').contains('Channels');
   });
 
-  it('should show add step in sidebar after a delete of a step with side settings ', function () {
-    interceptEditTemplateRequests();
-    const template = this.session.templates[0];
-
-    cy.visit('/workflows/edit/' + template._id);
-    waitForEditTemplateRequests();
-    dragAndDrop('digest');
-    cy.get('.react-flow__node').should('have.length', 5);
-    cy.clickWorkflowNode('node-digestSelector');
-
-    cy.getByTestId('node-digestSelector')
-      .getByTestId('channel-node')
-      .last()
-      .trigger('mouseover', { force: true })
-      .getByTestId('delete-step-action')
-      .click();
-    cy.get('.mantine-Modal-modal button').contains('Delete step').click();
-    cy.getByTestId(`node-digestSelector`).should('not.exist');
-    cy.get('.react-flow__node').should('have.length', 4);
-    cy.getByTestId('drag-side-menu').contains('Channels');
-  });
-
   it('should keep steps order on reload', function () {
     interceptEditTemplateRequests();
     const template = this.session.templates[0];

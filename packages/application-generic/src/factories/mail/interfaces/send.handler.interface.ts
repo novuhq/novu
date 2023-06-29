@@ -1,10 +1,11 @@
-import { IEmailOptions } from '@novu/shared';
 import {
+  IEmailOptions,
   IEmailProvider,
   ISendMessageSuccessResponse,
   ICheckIntegrationResponse,
 } from '@novu/stateless';
-import { ChannelTypeEnum, ICredentials } from '@novu/shared';
+import { ICredentials } from '@novu/dal';
+import { ChannelTypeEnum } from '@novu/shared';
 
 export interface IMailHandler {
   canHandle(providerId: string, channelType: ChannelTypeEnum);

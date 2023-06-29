@@ -19,8 +19,6 @@ interface IUser {
   createdAt?: string | null;
 }
 
-const LOG_CONTEXT = 'AnalyticsService';
-
 export class AnalyticsService {
   private segment: Analytics;
 
@@ -104,22 +102,11 @@ export class AnalyticsService {
         data,
       });
 
-      try {
-        this.segment.track({
-          userId: userId,
-          event: name,
-          properties: data,
-        });
-      } catch (error: any) {
-        Logger.error(
-          {
-            eventName: name,
-            usedId: userId,
-            message: error.message,
-          },
-          LOG_CONTEXT
-        );
-      }
+      this.segment.track({
+        userId: userId,
+        event: name,
+        properties: data,
+      });
     }
   }
 

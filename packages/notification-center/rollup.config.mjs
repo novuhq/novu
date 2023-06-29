@@ -8,53 +8,33 @@ import replace from '@rollup/plugin-replace';
 import gzipPlugin from 'rollup-plugin-gzip';
 import nodePolyfills from 'rollup-plugin-polyfill-node';
 import peerDepsExternal from 'rollup-plugin-peer-deps-external';
-// import bundleAnalyzer from 'rollup-plugin-bundle-analyzer';
-
-function onwarn(warning, warn) {
-  if (
-    warning.code === "MODULE_LEVEL_DIRECTIVE" &&
-    warning.message.includes(`"use client"`)
-  ) {
-    return;
-  }
-  warn(warning);
-};
+import packageJson from './package.json' assert { type: 'json' };
 
 export default [
   {
     input: 'src/index.ts',
     output: [
       {
-        dir: 'dist/cjs',
+        file: packageJson.main,
         format: 'cjs',
-        interop: 'auto',
-        preserveModules: true, // indicate not create a single-file
-        preserveModulesRoot: 'src', // optional but useful to create a more plain folder structure
         sourcemap: true,
+        interop: 'auto',
       },
       {
-        dir: 'dist/esm',
+        file: packageJson.module,
         format: 'esm',
-        preserveModules: true,
-        preserveModulesRoot: 'src',
         sourcemap: true,
       },
     ],
-    treeshake: 'smallest',
     plugins: [
       peerDepsExternal(),
       nodeExternals(),
       resolve({ preferBuiltins: false, browser: true }),
-      typescript({ tsconfig: './tsconfig.json' }),
       commonjs(),
-      replace({
-        preventAssignment: true,
-        'process.env.NODE_ENV': JSON.stringify('production'),
-      }),
+      typescript({ tsconfig: './tsconfig.json' }),
+      terser(),
       image(),
-      // bundleAnalyzer({ analyzerMode: 'static' }),
     ],
-    onwarn
   },
   {
     input: 'src/web-component.ts',
@@ -66,21 +46,18 @@ export default [
         sourcemap: true,
       },
     ],
-    treeshake: 'smallest',
     plugins: [
-      resolve({ browser: true }),
-      nodePolyfills(),
-      typescript({ tsconfig: './tsconfig.json' }),
-      commonjs(),
       replace({
         preventAssignment: true,
         'process.env.NODE_ENV': JSON.stringify('production'),
       }),
+      resolve({ preferBuiltins: false, browser: true }),
+      typescript({ tsconfig: './tsconfig.json' }),
+      commonjs(),
+      nodePolyfills(),
       terser(),
       gzipPlugin(),
       image(),
-      // bundleAnalyzer({ analyzerMode: 'static' }),
     ],
-    onwarn
   },
 ];

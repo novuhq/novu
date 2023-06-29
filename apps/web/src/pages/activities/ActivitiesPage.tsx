@@ -7,6 +7,7 @@ import styled from '@emotion/styled';
 import { useTemplates, useDebounce } from '../../hooks';
 import { getActivityList } from '../../api/activity';
 import PageContainer from '../../components/layout/components/PageContainer';
+import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import { Select, Input, Button } from '../../design-system';
 import { ActivityStatistics } from './components/ActivityStatistics';
@@ -99,7 +100,8 @@ export function ActivitiesPage() {
   };
 
   return (
-    <PageContainer title="Activity Feed">
+    <PageContainer>
+      <PageMeta title="Activity Feed" />
       <PageHeader title="Activity Feed" />
       <ActivityStatistics />
       <ActivityGraph onBarClick={onBarClick} />

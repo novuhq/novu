@@ -273,8 +273,8 @@ The `i18n` prop can accept 2 different types of values
   ```tsx
   i18n={{
     // Make sure that the following is a proper language code,
-    // since this is used by Intl.RelativeTimeFormat in order to calculate the relative time for each notification
-    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/RelativeTimeFormat
+    // since this is used by date-fns in order to calculate the relative time for each notification
+    // supported languages by date-fns: https://github.com/date-fns/date-fns/tree/main/src/locale
     lang: "de",
 
     translations: {

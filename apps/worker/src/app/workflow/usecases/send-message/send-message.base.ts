@@ -10,7 +10,6 @@ import {
   CreateExecutionDetailsCommand,
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
-  GetEnvironmentDecryptedIntegrationsCommand,
 } from '@novu/application-generic';
 
 import { SendMessageType } from './send-message-type.usecase';
@@ -49,16 +48,16 @@ export abstract class SendMessageBase extends SendMessageType {
   }
 
   @CachedQuery({
-    builder: ({ environmentId, ...command }: GetEnvironmentDecryptedIntegrationsCommand) =>
+    builder: ({ environmentId, ...command }: GetDecryptedIntegrationsCommand) =>
       buildIntegrationKey().cache({
         _environmentId: environmentId,
         ...command,
       }),
   })
-  protected async getIntegration(getDecryptedIntegrationsCommand: GetEnvironmentDecryptedIntegrationsCommand) {
+  protected async getIntegration(getDecryptedIntegrationsCommand: GetDecryptedIntegrationsCommand) {
     return (
       await this.getDecryptedIntegrationsUsecase.execute(
-        GetEnvironmentDecryptedIntegrationsCommand.create(getDecryptedIntegrationsCommand)
+        GetDecryptedIntegrationsCommand.create(getDecryptedIntegrationsCommand)
       )
     )[0];
   }

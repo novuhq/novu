@@ -13,9 +13,8 @@ import { applyToken, removeToken } from '../../utils/token';
 import { useSession } from '../../hooks/useSession';
 import { useInitializeSocket } from '../../hooks/useInitializeSocket';
 import { useFetchOrganization, useNovuContext } from '../../hooks';
-import { SESSION_QUERY_KEY } from '../../hooks/queryKeys';
 
-export const queryClient = new QueryClient({
+const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnMount: false,
@@ -65,12 +64,8 @@ export function NovuProvider({
     ...DEFAULT_FETCHING_STRATEGY,
     ...initialFetchingStrategy,
   });
-  const [sessionInfo, setSessionInfo] = useState({
-    isSessionInitialized: false,
-    applicationIdentifier,
-    subscriberId,
-    subscriberHash,
-  });
+
+  const [isSessionInitialized, setSessionInitialized] = useState(false);
 
   const apiService = useMemo(() => {
     queryClient.clear();
@@ -86,9 +81,9 @@ export function NovuProvider({
     (newSession: ISession) => {
       applyToken({ apiService, token: newSession.token });
       initializeSocket(newSession);
-      setSessionInfo((old) => ({ ...old, isSessionInitialized: true }));
+      setSessionInitialized(true);
     },
-    [apiService, setSessionInfo, initializeSocket]
+    [apiService, setSessionInitialized, initializeSocket]
   );
 
   const setFetchingStrategy = useCallback(
@@ -99,17 +94,17 @@ export function NovuProvider({
   const logout = useCallback(() => {
     removeToken(apiService);
     disconnectSocket();
-    setSessionInfo((old) => ({ ...old, isSessionInitialized: false }));
-  }, [setSessionInfo, disconnectSocket, apiService]);
+    setSessionInitialized(false);
+  }, [removeToken, disconnectSocket, apiService]);
 
   const contextValue = useMemo(
     () => ({
       backendUrl,
       socketUrl,
-      applicationIdentifier: sessionInfo.applicationIdentifier,
-      subscriberId: sessionInfo.subscriberId,
-      subscriberHash: sessionInfo.subscriberHash,
-      isSessionInitialized: sessionInfo.isSessionInitialized,
+      applicationIdentifier,
+      subscriberId,
+      subscriberHash,
+      isSessionInitialized,
       apiService,
       socket,
       fetchingStrategy,
@@ -117,22 +112,23 @@ export function NovuProvider({
       onLoad,
       logout,
     }),
-    [backendUrl, socketUrl, sessionInfo, apiService, socket, fetchingStrategy, setFetchingStrategy, onLoad, logout]
-  );
-
-  useEffect(() => disconnectSocket, [disconnectSocket]);
-
-  useEffect(() => {
-    setSessionInfo((old) => ({
-      ...old,
-      isSessionInitialized: false,
+    [
+      backendUrl,
+      socketUrl,
       applicationIdentifier,
       subscriberId,
       subscriberHash,
-    }));
-    logout();
-    queryClient.refetchQueries([...SESSION_QUERY_KEY, applicationIdentifier, subscriberId, subscriberHash]);
-  }, [logout, subscriberId, applicationIdentifier, subscriberHash]);
+      isSessionInitialized,
+      apiService,
+      socket,
+      fetchingStrategy,
+      setFetchingStrategy,
+      onLoad,
+      logout,
+    ]
+  );
+
+  useEffect(() => disconnectSocket, [disconnectSocket]);
 
   return (
     <QueryClientProvider client={queryClient}>
