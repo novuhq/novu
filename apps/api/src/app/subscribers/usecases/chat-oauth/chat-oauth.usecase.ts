@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { ChannelTypeEnum } from '@novu/stateless';
-import { IntegrationEntity, IntegrationRepository, EnvironmentRepository, ICredentials } from '@novu/dal';
+import { IntegrationEntity, IntegrationRepository, EnvironmentRepository, ICredentialsEntity } from '@novu/dal';
 
 import { ChatOauthCommand } from './chat-oauth.command';
 import { createHash } from '../../../shared/helpers/hmac.service';
@@ -60,7 +60,7 @@ export class ChatOauth {
     return `${this.SLACK_OAUTH_URL}client_id=${clientId}&scope=incoming-webhook&user_scope=&redirect_uri=${redirectUri}`;
   }
 
-  private async getCredentials(command: ChatOauthCommand): Promise<ICredentials> {
+  private async getCredentials(command: ChatOauthCommand): Promise<ICredentialsEntity> {
     const query: Partial<IntegrationEntity> & { _environmentId: string } = {
       _environmentId: command.environmentId,
       channel: ChannelTypeEnum.CHAT,

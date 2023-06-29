@@ -68,6 +68,7 @@ export class CreateIntegration {
           organizationId: command.organizationId,
           integrationId: response._id,
           channel: command.channel,
+          userId: command.userId,
         });
       }
     } catch (e) {

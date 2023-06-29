@@ -1,7 +1,6 @@
 import { ArrayMaxSize, ArrayNotEmpty, IsArray, IsDefined, IsObject, IsOptional, IsString } from 'class-validator';
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
-import { TriggerRecipientSubscriber, TriggerRecipients } from '@novu/node';
-import { TopicKey, TriggerRecipientsTypeEnum } from '@novu/shared';
+import { TopicKey, TriggerRecipientSubscriber, TriggerRecipients, TriggerRecipientsTypeEnum } from '@novu/shared';
 import { CreateSubscriberRequestDto } from '../../subscribers/dtos/create-subscriber-request.dto';
 
 export class SubscriberPayloadDto extends CreateSubscriberRequestDto {}
