@@ -8,7 +8,7 @@ import TabItem from '@theme/TabItem';
 
 # Vanilla JS Quickstart
 
-Learn how to integrate Novu into your vanilla JS app on the fly. Send notifications across channels (SMS, Email, Chat, Push) with the help of a rich, customizable, real-time In-App notification center
+Learn how to integrate Novu into your vanilla JS app on the fly. Send notifications across different channels (SMS, Email, Chat, Push) and enable real-time In-App notifications with the help of a rich and customizable Notification Center.
 
 ## Requirements
 
