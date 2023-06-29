@@ -43,7 +43,6 @@ export class GetActiveIntegrations {
         channelTypes.map(async (channelType) => {
           return await this.selectIntegration.execute(
             SelectIntegrationCommand.create({
-              environmentId: command.environmentId,
               organizationId: command.organizationId,
               userId: command.userId,
               channelType: channelType as ChannelTypeEnum,
