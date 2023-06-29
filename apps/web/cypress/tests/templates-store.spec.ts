@@ -12,7 +12,6 @@ describe('Templates Store', function () {
   };
 
   beforeEach(function () {
-    cy.clearDatabase();
     cy.initializeSession({ noTemplates: true }).as('session');
     indexedDB.deleteDatabase('localforage');
   });
