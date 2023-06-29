@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react';
 import styled from '@emotion/styled';
-import { ActionIcon, ColorScheme, Group, TextInput, useMantineColorScheme, Text, Loader } from '@mantine/core';
-import { Button, colors, Input, Switch } from '../../design-system';
+import { ActionIcon, Group, useMantineColorScheme, Loader, Center, Stack } from '@mantine/core';
+import { Button, colors, Input, NameInput, Switch, Text } from '../../design-system';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useProviders } from './useProviders';
 import { IIntegratedProvider } from './IntegrationsStoreModal';
 import { Check, Close, Copy } from '../../design-system/icons';
 import { Controller, useForm } from 'react-hook-form';
-import { CONTEXT_PATH } from '../../config';
-import { IConfigCredentials } from '@novu/shared';
+import { ChannelTypeEnum, IConfigCredentials } from '@novu/shared';
 import { IntegrationInput } from './components/IntegrationInput';
 import { useClipboard } from '@mantine/hooks';
 import slugify from 'slugify';
@@ -16,14 +15,7 @@ import { IntegrationChannel } from './components/IntegrationChannel';
 import { CHANNEL_TYPE_TO_STRING } from '../../utils/channels';
 import { IntegrationEnvironmentPill } from './components/IntegrationEnvironmentPill';
 import { useFetchEnvironments } from '../../hooks/useFetchEnvironments';
-
-const getLogoFileName = (id, schema: ColorScheme) => {
-  if (schema === 'dark') {
-    return `${CONTEXT_PATH}/static/images/providers/dark/square/${id}.svg`;
-  }
-
-  return `${CONTEXT_PATH}/static/images/providers/light/square/${id}.svg`;
-};
+import { ProviderImage } from './components/multi-provider/SelectProviderSidebar';
 
 interface IProviderForm {
   name: string;
@@ -104,7 +96,15 @@ export function UpdateProviderPage() {
   if (isLoading || areEnvironmentsLoading) {
     return (
       <SideBarWrapper dark={isDark}>
-        <Loader color={colors.error} size={32} />
+        <Stack
+          align="center"
+          justify="center"
+          sx={{
+            height: '100%',
+          }}
+        >
+          <Loader color={colors.error} size={32} />
+        </Stack>
       </SideBarWrapper>
     );
   }
@@ -126,64 +126,18 @@ export function UpdateProviderPage() {
         }}
       >
         <Group spacing={5}>
-          <img
-            src={getLogoFileName(selectedProvider.providerId, colorScheme)}
-            alt={selectedProvider.displayName}
-            style={{
-              height: '24px',
-              maxWidth: '140px',
-            }}
-          />
+          <ProviderImage providerId={selectedProvider?.providerId} />
           <Controller
             control={control}
             name="name"
             defaultValue=""
             render={({ field }) => {
               return (
-                <TextInput
-                  styles={(theme) => ({
-                    root: {
-                      flex: '1 1 auto',
-                    },
-                    wrapper: {
-                      background: 'transparent',
-                      width: '100%',
-                    },
-                    input: {
-                      background: 'transparent',
-                      borderStyle: 'solid',
-                      borderColor: colorScheme === 'dark' ? theme.colors.dark[5] : theme.colors.gray[5],
-                      borderWidth: '1px',
-                      fontSize: '20px',
-                      fontWeight: 'bolder',
-                      padding: 9,
-                      lineHeight: '28px',
-                      minHeight: 'auto',
-                      height: 'auto',
-                      width: '100%',
-                      textOverflow: 'ellipsis',
-                      '&:not(:placeholder-shown)': {
-                        borderStyle: 'none',
-                        padding: 10,
-                      },
-                      '&:hover, &:focus': {
-                        borderStyle: 'solid',
-                        padding: 9,
-                      },
-                      '&:disabled': {
-                        backgroundColor: colorScheme === 'dark' ? colors.B15 : theme.white,
-                        color: colorScheme === 'dark' ? theme.white : theme.black,
-                        opacity: 1,
-                      },
-                    },
-                  })}
+                <NameInput
                   {...field}
-                  value={field.value !== undefined ? field.value : selectedProvider.displayName}
-                  // error={showErrors && fieldState.error?.message}
-                  type="text"
-                  data-test-id="title"
-                  placeholder="Enter workflow name"
-                  // disabled={readonly}
+                  value={field.value !== undefined ? field.value : selectedProvider?.displayName}
+                  data-test-id="provider-instance-name"
+                  placeholder="Enter instance name"
                 />
               );
             }}
@@ -198,10 +152,13 @@ export function UpdateProviderPage() {
           </ActionIcon>
         </Group>
         <Group mb={16} spacing={16}>
-          <IntegrationChannel name={CHANNEL_TYPE_TO_STRING[selectedProvider.channel]} type={selectedProvider.channel} />
+          <IntegrationChannel
+            name={CHANNEL_TYPE_TO_STRING[selectedProvider?.channel || ChannelTypeEnum.EMAIL]}
+            type={selectedProvider?.channel || ChannelTypeEnum.EMAIL}
+          />
           <IntegrationEnvironmentPill
             name={
-              environments?.find((environment) => environment._id === selectedProvider.environmentId)?.name ||
+              environments?.find((environment) => environment._id === selectedProvider?.environmentId)?.name ||
               'Development'
             }
           />
@@ -211,11 +168,15 @@ export function UpdateProviderPage() {
             <Controller
               control={control}
               name="active"
-              render={({ field }) => <Switch checked={isActive} data-test-id="is_active_id" {...field} />}
+              render={({ field }) => (
+                <Switch
+                  checked={isActive}
+                  label={isActive ? 'Active' : 'Disabled'}
+                  data-test-id="is_active_id"
+                  {...field}
+                />
+              )}
             />
-            <StyledText data-test-id="connect-integration-form-active-text">
-              {isActive ? 'Active' : 'Disabled'}
-            </StyledText>
           </ActiveWrapper>
           <Controller
             control={control}
@@ -246,19 +207,14 @@ export function UpdateProviderPage() {
           ))}
         </CenterDiv>
         <Group mt={16} position="apart">
-          <Text>
-            Explore our{' '}
-            <a
-              style={{
-                color: colors.error,
-              }}
-              href={selectedProvider.docReference}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              set-up guide
-            </a>
-          </Text>
+          <Center inline>
+            <Text mr={5}>Explore our</Text>
+            <Text gradient>
+              <a href={selectedProvider?.docReference} target="_blank" rel="noopener noreferrer">
+                set-up guide
+              </a>
+            </Text>
+          </Center>
           <Button disabled={!isDirty} submit={true}>
             Update
           </Button>
