@@ -67,7 +67,7 @@ You can see all this in our [integrations store](https://web.novu.co/integration
 
 For each channel, there can be only one provider active at a time. Although the exact setup process varies from provider to provider, the general flow is signing up for a provider, getting an API key from its portal, and plugging it into the Novu web portal.
 
-Once having integrated a provider, we need a notification template to send notifications. One can have dynamic data in this template if they so choose.
+Once having integrated a provider, we need a notification workflow to send notifications. One can have dynamic data in this template if they so choose.
 
 In our case, we’ll have dynamic data and whatever we send as a description will be sent as an email notification. Following are the steps to create a notification template.
 
