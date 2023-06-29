@@ -228,7 +228,7 @@ And subscribers are users to which notifications will be sent. They are identifi
 
 ## Trigger a notification
 
-We can trigger a notification by simply running the code sandbox below with the correct credentials.
+We can trigger a notification by simply running the codesandbox below with the correct credentials.
 
 <iframe width="800" height="450" src="https://codesandbox.io/p/sandbox/exciting-violet-4k6234?embed=1" allowfullscreen></iframe>
 
