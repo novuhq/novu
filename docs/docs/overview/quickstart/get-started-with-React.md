@@ -108,7 +108,6 @@ const novu = new Novu('<YOUR_NOVU_API_KEY>');
 await novu.subscribers.identify('123', {
   firstName: 'Sumit',
   lastName: 'Saurabh',
-  returnUser: true,
 });
 ```
 
