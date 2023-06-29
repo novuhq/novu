@@ -24,7 +24,7 @@ import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   GetDecryptedIntegrations,
-  GetDecryptedIntegrationsCommand,
+  GetEnvironmentDecryptedIntegrationsCommand,
   GetNovuIntegration,
   CompileEmailTemplate,
   CompileEmailTemplateCommand,
@@ -71,7 +71,7 @@ export class SendMessageEmail extends SendMessageBase {
 
     try {
       integration = await this.getIntegration(
-        GetDecryptedIntegrationsCommand.create({
+        GetEnvironmentDecryptedIntegrationsCommand.create({
           organizationId: command.organizationId,
           environmentId: command.environmentId,
           channelType: ChannelTypeEnum.EMAIL,
@@ -243,6 +243,11 @@ export class SendMessageEmail extends SendMessageBase {
         attachments,
         id: message._id,
         replyTo: replyToAddress,
+        notificationDetails: {
+          transactionId: command.transactionId,
+          workflowIdentifier: command.identifier,
+          subscriberId: subscriber.subscriberId,
+        },
       },
       overrides || {}
     );

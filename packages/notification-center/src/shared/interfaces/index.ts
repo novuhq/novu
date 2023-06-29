@@ -120,6 +120,7 @@ export interface INotificationsContext extends IStoreContext {
   markNotificationAsUnRead: (messageId: string) => void;
   markNotificationAsSeen: (messageId: string) => void;
   removeMessage: (messageId: string) => void;
+  removeAllMessages: (feedId?: string) => void;
   markFetchedNotificationsAsRead: () => void;
   markFetchedNotificationsAsSeen: () => void;
   markAllNotificationsAsRead: () => void;
