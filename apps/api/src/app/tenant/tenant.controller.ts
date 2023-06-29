@@ -2,14 +2,24 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
+  Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Post,
   Put,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiConflictResponse,
+  ApiExcludeController,
+  ApiNoContentResponse,
+  ApiNotFoundResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 
 import { IJwtPayload } from '@novu/shared';
 
@@ -27,6 +37,8 @@ import { GetTenantCommand } from './usecases/get-tenant/get-tenant.command';
 import { UpdateTenantResponseDto } from './dtos/update-tenant-response.dto';
 import { UpdateTenantRequestDto } from './dtos/update-tenant-request.dto';
 import { UpdateTenant } from './usecases/update-tenant/update-tenant.usecase';
+import { DeleteTenantCommand } from './usecases/delete-tenant/delete-tenant.command';
+import { DeleteTenant } from './usecases/delete-tenant/delete-tenant.usecase';
 import { UpdateTenantCommand } from './usecases/update-tenant/update-tenant.command';
 
 @Controller('/tenants')
@@ -38,7 +50,8 @@ export class TenantController {
   constructor(
     private createTenantUsecase: CreateTenant,
     private updateTenantUsecase: UpdateTenant,
-    private getTenantUsecase: GetTenant
+    private getTenantUsecase: GetTenant,
+    private deleteTenantUsecase: DeleteTenant
   ) {}
 
   @Get('/:identifier')
@@ -68,6 +81,9 @@ export class TenantController {
     summary: 'Create tenant',
     description: 'Create tenant under the current environment',
   })
+  @ApiConflictResponse({
+    description: 'A tenant with the same identifier is already exist.',
+  })
   async createTenant(
     @UserSession() user: IJwtPayload,
     @Body() body: CreateTenantRequestDto
@@ -83,26 +99,50 @@ export class TenantController {
     );
   }
 
-  @Put('/:tenantId')
+  @Put('/:identifier')
   @ExternalApiAccessible()
   @ApiResponse(UpdateTenantResponseDto)
   @ApiOperation({
     summary: 'Update tenant',
-    description: 'Update tenant under the current environment',
+    description: 'Update tenant by your internal id used to identify the tenant',
   })
   async updateTenant(
     @UserSession() user: IJwtPayload,
-    @Param('tenantId') tenantId: string,
+    @Param('identifier') identifier: string,
     @Body() body: UpdateTenantRequestDto
   ): Promise<UpdateTenantResponseDto> {
     return await this.updateTenantUsecase.execute(
       UpdateTenantCommand.create({
-        identifier: tenantId,
+        identifier: identifier,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         name: body.name,
         data: body.data,
         newIdentifier: body.identifier,
+      })
+    );
+  }
+
+  @Delete('/:identifier')
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary: 'Delete tenant',
+    description: 'Deletes a tenant entity from the Novu platform',
+  })
+  @ApiNoContentResponse({
+    description: 'The tenant has been deleted correctly',
+  })
+  @ApiNotFoundResponse({
+    description: 'The tenant with the identifier provided does not exist in the database so it can not be deleted.',
+  })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async removeTenant(@UserSession() user: IJwtPayload, @Param('identifier') identifier: string): Promise<void> {
+    return await this.deleteTenantUsecase.execute(
+      DeleteTenantCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        identifier: identifier,
       })
     );
   }
