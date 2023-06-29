@@ -7,7 +7,7 @@ export { Textarea } from './textarea/Textarea';
 export { Radio } from './radio/Radio';
 export { Select } from './select/Select';
 export { Switch } from './switch/Switch';
-export { Table } from './table/Table';
+export * from './table';
 export { Tag } from './tag/Tag';
 export { Title } from './typography/title/Title';
 export { Text } from './typography/text/Text';
