@@ -158,7 +158,7 @@ The workflow includes the following:
 
 These are the steps to create a notification workflow:
 
-1. Click **Notifications** on the left sidebar of your Novu dashboard.
+1. Click **Workflows** on the left sidebar of your Novu dashboard.
 2. Click the **"Create Workflow"** button on the top right.
 3. The name of a new notification workflow is currently **"Untitled"**. Rename it to a more suitable title.
 4. Select **"In-App"** as the channel you want to add.
