@@ -28,6 +28,7 @@ import {
   DigestUnitEnum,
   DelayTypeEnum,
   PreviousStepTypeEnum,
+  InAppProviderIdEnum,
 } from '@novu/shared';
 import { EmailEventStatusEnum } from '@novu/stateless';
 
@@ -83,6 +84,47 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
     expect(body.data).to.be.ok;
     expect(body.data.status).to.equal('processed');
     expect(body.data.acknowledged).to.equal(true);
+  });
+
+  it('should store jobs & message provider id successfully', async function () {
+    await axiosInstance.post(
+      `${session.serverUrl}${eventTriggerPath}`,
+      {
+        name: template.triggers[0].identifier,
+        to: subscriber.subscriberId,
+      },
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
+
+    await session.awaitRunningJobs(template._id);
+
+    const message = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _templateId: template._id,
+      _subscriberId: subscriber._id,
+    });
+
+    const inAppMessage = message.find((msg) => msg.channel === ChannelTypeEnum.IN_APP);
+    const emailMessage = message.find((msg) => msg.channel === ChannelTypeEnum.EMAIL);
+
+    expect(inAppMessage?.providerId).to.equal(InAppProviderIdEnum.Novu);
+    expect(emailMessage?.providerId).to.equal(EmailProviderIdEnum.SendGrid);
+
+    const inAppJob = await jobRepository.findOne({
+      _id: inAppMessage?._jobId,
+      _environmentId: session.environment._id,
+    });
+    const emailJob = await jobRepository.findOne({
+      _id: emailMessage?._jobId,
+      _environmentId: session.environment._id,
+    });
+
+    expect(inAppJob?.providerId).to.equal(InAppProviderIdEnum.Novu);
+    expect(emailJob?.providerId).to.equal(EmailProviderIdEnum.SendGrid);
   });
 
   it('should create a subscriber based on event', async function () {
