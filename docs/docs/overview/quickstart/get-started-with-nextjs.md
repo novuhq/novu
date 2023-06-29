@@ -195,7 +195,7 @@ You have the flexibility to assign a descriptive name to a topic. Unlike the top
 
 A topic can have multiple subscribers associated with it. These subscribers will receive notifications whenever a notification is dispatched to the respective topic.
 
-### Creating a topic
+### Create a topic
 
 You can create a topic using two entities - `key` and `name`. Keys are unique identifiers for topics and a name is just something you assign to a topic for convenience.
 
