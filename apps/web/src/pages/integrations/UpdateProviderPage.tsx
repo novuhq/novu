@@ -197,7 +197,7 @@ export function UpdateProviderPage() {
             <Close color={colors.B40} />
           </ActionIcon>
         </Group>
-        <Group spacing={16}>
+        <Group mb={16} spacing={16}>
           <IntegrationChannel name={CHANNEL_TYPE_TO_STRING[selectedProvider.channel]} type={selectedProvider.channel} />
           <IntegrationEnvironmentPill
             name={
@@ -245,7 +245,7 @@ export function UpdateProviderPage() {
             </InputWrapper>
           ))}
         </CenterDiv>
-        <Group position="apart">
+        <Group mt={16} position="apart">
           <Text>
             Explore our{' '}
             <a
@@ -281,7 +281,7 @@ const SideBarWrapper = styled.div<{ dark: boolean }>`
 `;
 
 const InputWrapper = styled.div`
-  margin-bottom: 30px;
+  margin-top: 30px;
   label {
     font-weight: bold;
     margin-bottom: 10px;
@@ -305,8 +305,6 @@ const SideElementBase = styled.div`
 
 const ActiveWrapper = styled(SideElementBase)<{ active: boolean }>`
   align-items: center;
-  margin-bottom: 30px;
-  margin-top: 16px;
 
   ${StyledText} {
     color: ${({ active }) => (active ? colors.success : colors.error)};
@@ -318,8 +316,9 @@ const CenterDiv = styled.div`
   color: ${colors.B60};
   font-size: 14px;
   line-height: 20px;
-  max-height: calc(100% - 90px);
-  height: calc(100% - 90px);
+  max-height: calc(100% - 160px);
+  height: calc(100% - 160px);
+  margin-bottom: 16px;
 `;
 
 const CopyWrapper = styled.div`
