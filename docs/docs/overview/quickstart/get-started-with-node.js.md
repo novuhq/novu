@@ -50,13 +50,13 @@ A channel provider is a service that provides one or more notification functiona
 
 Only one provider can be **active** per **channel**. Connect any of your favorite providers to get started. The email channel comes with Novu's email provider, which is active by default and includes 300 credits.
 
-## Create A Notification Template
+## Create a Notification Workflow
 
-A notification template is the blueprint for the notifications that will be sent. It holds the entire flow of messages sent to the subscriber. This is where all the different channels are tied together under a single entity.
+A notification workflow is the blueprint for the notifications that will be sent. It holds the entire flow of messages sent to the subscriber. This is where all the different channels are tied together under a single entity.
 
-The template includes the following:
+The workflow includes the following:
 
-- Notification template name and Identifier
+- Notification workflow name and Identifier
 - Channel tailored content:
   | Channel | Content Style |
   | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
@@ -71,7 +71,7 @@ The template includes the following:
 
 </aside>
 
-Please proceed to create a notification template.
+Please proceed to create a notification workflow.
 
 1. Click “Workflows” on the left sidebar of your Novu dashboard.
 2. Click the “Create Workflow” button on the top right.
@@ -84,7 +84,7 @@ Please proceed to create a notification template.
 
 ![update_email_template.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1686776583/update_email_template_ivn0jv.png)
 
-1. Click on the “Test” tab and send a test email to verify your notification template.
+1. Click on the “Test” tab and send a test email to verify your notification workflow.
 
 ![send_test_email.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1686776583/send_test_email_ngzmth.png)
 
@@ -148,7 +148,7 @@ Other valid fields that can be updated are `phone`, `avatar`, and `data` . The `
 Copy and paste the following code into your app to trigger a notification:
 
 ```jsx
-const notificationTemplateId = 'first-email';
+const notificationWorkflowId = 'first-email';
 
 novu.trigger(notificationTemplateId, {
   to: {
@@ -160,14 +160,12 @@ novu.trigger(notificationTemplateId, {
 
 Before running the code, make sure you understand the following:
 
-- The value of `notificationTemplateId` should be the notification template’s trigger ID/slug.
+- The value of `notificationWorkflowId` should be the notification workflow's trigger ID/slug.
 
 ![trigger_id.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1686776585/trigger_id_xkhsx7.png)
 
 - The value of `payload` is an array of the data that you want to be dynamically injected into the notification template content.
-- The value of `subscriberId` is the id of the subscriber on Novu. Replace `7789`
-
-with your subscriber ID.
+- The value of `subscriberId` is the id of the subscriber on Novu. Replace `7789` with your subscriber ID.
 
 Run the code to trigger a notification!
 
@@ -188,7 +186,7 @@ Users can assign a name to a topic for descriptive purposes. This name does not 
 
 A topic can have different subscribers, who will receive a notification whenever a notification is sent to the topic.
 
-## **Create a topic[](https://docs.novu.co/platform/topics#create-a-topic)**
+## Create a topic[](https://docs.novu.co/platform/topics#create-a-topic)
 
 Copy and paste the following code into your app to create a topic:
 
@@ -204,7 +202,7 @@ Before running the code, make sure you understand the following:
 - When creating a `key`, ensure it is unique and accurately identifies the topic. Document naming conventions and communicate them to team members to avoid confusion and ensure a smooth workflow.
 - The value of `name` should be a descriptive topic name.
 
-## Add subscribers to a topic\*\*
+## Add Subscribers To A Topic
 
 Copy and paste the following code into your app to add subscribers to a topic.
 
@@ -218,7 +216,7 @@ const response = await novu.topics.addSubscribers(topicKey, {
 
 - To add multiple subscribers to a topic, simply separate their names with commas and add them to the array as part of the `subscribers` value.
 
-## **Sending a notification to a topic[](https://docs.novu.co/platform/topics#sending-a-notification-to-a-topic)**
+## Send Notification To A Topic
 
 Thanks to the topics feature, it is possible to trigger a notification to all subscribers assigned to a topic. This helps avoid listing all subscriber identifiers in the `to` field of the notification trigger.
 
@@ -234,7 +232,7 @@ await novu.trigger(notificationTemplateId, {
 });
 ```
 
-## **Next Steps**
+## Next Steps
 
 Great job! If you've reached this point, you should now have successfully created a subscriber, notification template, configured a channel provider, triggered a single notification, created a topic, added a subscriber to a topic and even triggered a notification to a topic in your application.
 

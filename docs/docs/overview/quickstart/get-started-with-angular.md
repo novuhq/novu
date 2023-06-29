@@ -280,9 +280,9 @@ You should now see a **bell button** that opens the notification center when cli
 
 </aside>
 
-## Create A Notification Template
+## Create A Notification Workflow
 
-The first step to trigger notifications is to create a notification template. A template is like a map that holds the entire flow of messages sent to the subscriber.
+The first step to trigger notifications is to create a notification workflow. A workflow is like a map that holds the entire flow of messages sent to the subscriber.
 
 <aside>
 📌 The recipients of a triggered notification are called subscribers.
@@ -291,22 +291,22 @@ The first step to trigger notifications is to create a notification template. A 
 
 The template includes the following:
 
-- Notification template name and Identifier
+- Notification workflow name and Identifier
 - Channel tailored content:
 
 | Channel                                                      | Content Style                                                                                 |
 | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
 | Email                                                        | 1. Custom Code (HTML) with option to use custom variables via the handlebars , {{ }}, syntax. |
-| 2. Click and place UI items with the visual template editor. |
+| 2. Click and place UI items with the visual workflow editor. |
 | SMS                                                          | Text with the option to use handlebars syntax, {{ }} to inject custom variables.              |
 | Chat                                                         | Text with the option to use handlebars syntax, {{ }} to inject custom variables.              |
 | In-App                                                       | Text                                                                                          |
 
-Please proceed to create a notification template.
+Please proceed to create a notification workflow.
 
-1. Click **Notifications** on the left sidebar of your Novu dashboard.
+1. Click **Workflows** on the left sidebar of your Novu dashboard.
 2. Click the **“Create Workflow”** button on the top right.
-3. The name of a new notification template is currently "Untitled." Rename it to a more suitable title.
+3. The name of a new notification workflow is currently "Untitled." Rename it to a more suitable title.
 4. Select **"In-App"** as the channel you want to add.
 
 ![untitled-in-app-notification-template.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1686776583/untitled-in-app-notification-template_ya7yd4.png)
@@ -358,6 +358,16 @@ await novu.subscribers.identify('132', {
 });
 ```
 
+```php
+// Create subscriber
+$novu->createSubscriber([
+    'subscriberId' => '7789', // replace with system_internal_user_id
+    'email' => 'abc@gmail.com',
+    'firstName' => 'John', // optional
+    'lastName' => 'Doe', // optional
+])->toArray();
+```
+
 <iframe width="800" height="450" src="[https://codesandbox.io/p/sandbox/clever-matan-m5uibf?embed=1](https://codesandbox.io/p/sandbox/clever-matan-m5uibf?embed=1)" allowfullscreen></iframe>
 
 Obtain your API key from your [Novu dashboard.](https://web.novu.co/settings) Replace `YOUR_NOVU_API_KEY_HERE` with it.
@@ -379,9 +389,21 @@ await novu.subscribers.update('132', {
 });
 ```
 
+```PHP
+// Update subscriber detail
+$subscriberId = '7789';
+$novu->updateSubscriber($subscriberId, [
+    'email' => 'validemail@gmail.com',  // replace with valid email
+    'firstName' => '<insert-firstname>', // optional
+    'lastName' => '<insert-lastname>', // optional
+])->toArray();
+```
+
 ## Trigger A Notification
 
 To trigger a notification, simply run the codesandbox below with the correct credentials.
+
+<iframe width="800" height="450" src="https://codesandbox.io/p/sandbox/create-subscriber-forked-x4tkwj?embed=1" allowfullscreen></iframe>
 
 ```jsx
 import { Novu } from '@novu/node';
@@ -395,7 +417,7 @@ await novu.trigger('onboarding-in-app', {
 });
 ```
 
-`onboarding-in-app` is the Notification template identifier we created earlier.
+`onboarding-in-app` is the Notification workflow identifier we created earlier.
 
 Ensure the `subscriberId` value in the backend code that triggers the notification matches the `subscriberId` in your `my-app/src/environments/environment.ts` code.
 
