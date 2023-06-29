@@ -319,8 +319,6 @@ novu.trigger('quickstart', {
 
 > Make sure you're executing this code with the correct credentials.
 
-This is the trigger snippet you can use to trigger notifications!
-
 ## Next Steps
 
 Great job! If you've reached this point, you should now have successfully set up the notification center, created a subscriber, notification workflow, configured a channel provider and triggered a notification in your React application.
