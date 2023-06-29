@@ -292,11 +292,34 @@ The front-end as well as the back-end code for the sample application can be fou
 
 ## Code to trigger the notification
 
-We can trigger a notification by simply executing the trigger code snippet we get from the Workflow tab in the Novu web dashboard as shown in the image below:
+We can trigger a notification by simply executing the trigger code snippet we get from the Novu web dashboard.
 
-![Code snippet to trigger a notification](https://res.cloudinary.com/dxc6bnman/image/upload/v1686865543/guides/Screenshot_2023-06-16_at_3.15.35_AM_wqjvzh.png)
+To get the snippet:
+
+1. Go to **Workflows** in the left sidebar on Novu web dashboard.
+2. Select the workflow.
+3. Click the **Get Snippet** button on the top right.
+
+Here's the trigger snippet you'll receive:
+
+```javascript
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<API_KEY>');
+
+novu.trigger('quickstart', {
+  to: {
+    subscriberId: '<REPLACE_WITH_DATA>',
+  },
+  payload: {
+    description: '<REPLACE_WITH_DATA>',
+  },
+});
+```
 
 > Make sure you're executing this code with the correct credentials.
+
+This is the trigger snippet you can use to trigger notifications!
 
 ## Next Steps
 
