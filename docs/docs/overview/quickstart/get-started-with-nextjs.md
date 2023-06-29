@@ -69,19 +69,19 @@ For each channel, there can be only one provider active at a time. Although the 
 
 Once having integrated a provider, we need a notification workflow to send notifications. One can have dynamic data in this workflow if they so choose.
 
-In our case, we’ll have dynamic data and whatever we send as a description will be sent as an email notification. Following are the steps to create a notification template.
+In our case, we’ll have dynamic data and whatever we send as a description will be sent as an email notification. Following are the steps to create a notification workflow.
 
-## Creating a notification template
+## Creating a notification workflow
 
-1. Click “Notifications” on the left sidebar of your Novu dashboard.
+1. Click "Workflows” on the left sidebar of your Novu dashboard.
 2. Click the “Create Workflow” button on the top right.
    ![Creating a workflow in Novu dashboard](https://res.cloudinary.com/dxc6bnman/image/upload/v1686777195/guides/Untitled_c2x7mn.png)
-3. The name of a new notification template is currently "Untitled." Rename it to a more suitable title.
-   ![Renaming the newly created notification template](https://res.cloudinary.com/dxc6bnman/image/upload/v1686777271/guides/Screenshot_2023-05-23_at_2.48.07_AM_ubvro5.png)
+3. The name of a new notification workflow is currently "Untitled." Rename it to a more suitable title.
+   ![Renaming the newly created notification workflow](https://res.cloudinary.com/dxc6bnman/image/upload/v1686777271/guides/Screenshot_2023-05-23_at_2.48.07_AM_ubvro5.png)
 4. Select "Email" as the channel you want to add.
-   ![Adding email channel to the notification template we created above](https://res.cloudinary.com/dxc6bnman/image/upload/v1686777324/guides/Screenshot_2023-05-23_at_2.49.12_AM_mygcmq.png)
+   ![Adding email channel to the notification workflow we created above](https://res.cloudinary.com/dxc6bnman/image/upload/v1686777324/guides/Screenshot_2023-05-23_at_2.49.12_AM_mygcmq.png)
 5. Click on the ‘Email’ in the workflow and edit it as per this image. Don’t forget to add the fields in the editor which is supposed to be updated with dynamic values that we’ll send when calling the API.
-   ![Adding email and description to the editor in the notification template we created above](https://res.cloudinary.com/dxc6bnman/image/upload/v1686777397/guides/Screenshot_2023-05-23_at_2.50.10_AM_mesp1o.png)
+   ![Adding email and description to the editor in the notification workflow we created above](https://res.cloudinary.com/dxc6bnman/image/upload/v1686777397/guides/Screenshot_2023-05-23_at_2.50.10_AM_mesp1o.png)
 6. Also, add the variables in the ‘variables’ section in the test tab and try testing it by sending the email to your email id using the ‘send test email’ button on the bottom right.
    ![Adding variables to the 'variables' section](https://res.cloudinary.com/dxc6bnman/image/upload/v1686777573/guides/Screenshot_2023-05-23_at_2.52.35_AM_kguwfl.jpg)
 
@@ -143,7 +143,7 @@ In our case, we’re creating a directory called `api` in our pages directory, a
 
 In this file, we simply need to define a function that will handle a POST request to our API. It’ll extract the ‘description’ and ‘email’ variables from the ‘request’ body that will be generated every time we make a POST request and call the function to send an email notification with those plugged in.
 
-We’d used these variables in the notification template we had created in the Novu dashboard and also specified the same in the trigger function above.
+We’d used these variables in the notification workflow we had created in the Novu dashboard and also specified the same in the trigger function above.
 
 The function in our route is quite simple and looks like this:
 
@@ -311,7 +311,7 @@ Notice that the response received contains the data from the payload and that th
 
 ## Next Steps
 
-Great job! If you've reached this point, you should now have successfully created a subscriber, and notification template, configured a channel provider, triggered a single notification, and sent an email notification.
+Great job! If you've reached this point, you should now have successfully created a subscriber, and notification workflow, configured a channel provider, triggered a single notification, and sent an email notification.
 
 To learn more about notifications and explore Novu's features and capabilities, check out:
 
