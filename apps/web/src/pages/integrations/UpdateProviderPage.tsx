@@ -89,7 +89,6 @@ export function UpdateProviderPage() {
     return missingCredentials.length === 0;
   }, [credentials, selectedProvider]);
 
-  const isActive = watch('active');
   const name = watch('name');
   const identifier = watch('identifier');
   const identifierClipboard = useClipboard({ timeout: 1000 });
@@ -215,20 +214,21 @@ export function UpdateProviderPage() {
               </div>
             </WarningMessage>
           </When>
-          <ActiveWrapper active={isActive}>
-            <Controller
-              control={control}
-              name="active"
-              render={({ field }) => (
+          <Controller
+            control={control}
+            name="active"
+            render={({ field }) => (
+              <ActiveWrapper active={field.value}>
                 <Switch
-                  checked={isActive}
-                  label={isActive ? 'Active' : 'Disabled'}
+                  checked={field.value}
+                  label={field.value ? 'Active' : 'Disabled'}
                   data-test-id="is_active_id"
                   {...field}
                 />
-              )}
-            />
-          </ActiveWrapper>
+              </ActiveWrapper>
+            )}
+          />
+
           <Controller
             control={control}
             name="identifier"
