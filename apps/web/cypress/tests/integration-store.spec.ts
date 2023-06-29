@@ -4,7 +4,7 @@ import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 Cypress.on('window:before:load', (win) => {
   win._cypress = {
     ...win._cypress,
-    IS_INTEGRATIONS_LIST_PAGE_ENABLED: 'false',
+    IS_MULTI_PROVIDER_CONFIGURATION_ENABLED: 'false',
   };
 });
 

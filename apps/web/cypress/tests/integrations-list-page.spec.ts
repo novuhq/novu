@@ -3,7 +3,7 @@
 Cypress.on('window:before:load', (win) => {
   win._cypress = {
     ...win._cypress,
-    IS_INTEGRATIONS_LIST_PAGE_ENABLED: 'true',
+    IS_MULTI_PROVIDER_CONFIGURATION_ENABLED: 'true',
   };
 });
 
