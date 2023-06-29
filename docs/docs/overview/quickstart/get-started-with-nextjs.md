@@ -228,7 +228,7 @@ If you test this on your local machine, you should get something like this:
 
 > Note how the return object contains the key I’d sent from my request body. That signals successful creation!
 
-## Adding subscriber to a Topic
+## Add subscriber to a Topic
 
 The code for adding a subscriber to a previously created topic is as follows:
 
