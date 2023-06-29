@@ -9,7 +9,7 @@ interface IButtonProps extends ButtonProps {
   id?: string;
   loading?: boolean;
   size?: Size;
-  variant?: 'outline' | 'gradient';
+  variant?: 'outline' | 'gradient' | 'subtle';
   disabled?: boolean;
   icon?: React.ReactNode;
   fullWidth?: boolean;
