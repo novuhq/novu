@@ -156,12 +156,12 @@ use Novu\SDK\Novu;
 
 $novu = new Novu('<NOVU_API_KEY>');
 
-$novu->updateSubscriber('123', {
-  // new firstName
-  firstName: 'Saurabh',
-  // new lastName
-  lastName: 'Sumit',
-});
+$novu->updateSubscriber('123', [
+    // new firstName
+    'firstName' => 'Saurabh',
+    // new lastName
+    'lastName' => 'Sumit',
+])->toArray();
 ```
 
 </TabItem>
