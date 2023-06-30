@@ -26,7 +26,6 @@ import { api } from './api/api.client';
 import { PasswordResetPage } from './pages/auth/PasswordResetPage';
 import { AppLayout } from './components/layout/AppLayout';
 import { MembersInvitePage } from './pages/invites/MembersInvitePage';
-import { IntegrationsStore } from './pages/integrations/IntegrationsStorePage';
 import CreateOrganizationPage from './pages/auth/CreateOrganizationPage';
 import { ENV, LAUNCH_DARKLY_CLIENT_SIDE_ID, SENTRY_DSN, CONTEXT_PATH, LOGROCKET_ID } from './config';
 import { PromoteChangesPage } from './pages/changes/PromoteChangesPage';
@@ -49,6 +48,7 @@ import { SnippetPage } from './pages/templates/components/SnippetPage';
 import { TemplateEditor } from './pages/templates/components/TemplateEditor';
 import { ProvidersPage } from './pages/templates/components/ProvidersPage';
 import { InAppSuccess } from './pages/quick-start/steps/InAppSuccess';
+import { IntegrationsListPage } from './pages/integrations/IntegrationsListPage';
 
 library.add(far, fas);
 
@@ -205,7 +205,7 @@ function App() {
                   <Route path={ROUTES.QUICK_START_SETUP_SUCCESS} element={<InAppSuccess />} />
                   <Route path={ROUTES.ACTIVITIES} element={<ActivitiesPage />} />
                   <Route path={ROUTES.SETTINGS} element={<SettingsPage />} />
-                  <Route path={ROUTES.INTEGRATIONS} element={<IntegrationsStore />} />
+                  <Route path={ROUTES.INTEGRATIONS} element={<IntegrationsListPage />} />
                   <Route path={ROUTES.TEAM} element={<MembersInvitePage />} />
                   <Route path={ROUTES.CHANGES} element={<PromoteChangesPage />} />
                   <Route path={ROUTES.SUBSCRIBERS} element={<SubscribersList />} />

@@ -25,12 +25,12 @@ import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   GetDecryptedIntegrations,
+  GetEnvironmentDecryptedIntegrationsCommand,
   CompileTemplate,
   CompileTemplateCommand,
   WsQueueService,
   buildFeedKey,
   buildMessageCountKey,
-  GetDecryptedIntegrationsCommand,
 } from '@novu/application-generic';
 
 import { CreateLog } from '../../../shared/logs';
@@ -76,7 +76,7 @@ export class SendMessageInApp extends SendMessageBase {
     });
 
     const integration = await this.getIntegration(
-      GetDecryptedIntegrationsCommand.create({
+      GetEnvironmentDecryptedIntegrationsCommand.create({
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         channelType: ChannelTypeEnum.IN_APP,
