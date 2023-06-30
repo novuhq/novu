@@ -39,12 +39,12 @@ export class FeatureFlagsService {
       try {
         await this.service.gracefullyShutdown();
         Logger.log(
-          'Feature Flags service has been gracefully shutted down',
+          'Feature Flags service has been gracefully shut down',
           LOG_CONTEXT
         );
       } catch (error) {
         Logger.error(
-          'Feature Flags service has failed when shutted down',
+          'Feature Flags service has failed when shut down',
           LOG_CONTEXT,
           error
         );

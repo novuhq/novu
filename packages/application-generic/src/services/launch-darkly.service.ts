@@ -76,12 +76,12 @@ export class LaunchDarklyService implements IFeatureFlagsService {
         await this.client.flush();
         await this.client.close();
         Logger.log(
-          'Launch Darkly SDK has been gracefully shutted down',
+          'Launch Darkly SDK has been gracefully shut down',
           LOG_CONTEXT
         );
       } catch (error) {
         Logger.error(
-          'Launch Darkly SDK has failed when shutted down',
+          'Launch Darkly SDK has failed when shut down',
           LOG_CONTEXT,
           error
         );
