@@ -90,7 +90,7 @@
   },
   "devDependencies": {
     "@faker-js/faker": "^6.0.0",
-    "@nestjs/cli": "9.4.2",
+    "@nestjs/cli": "9.5.0",
     "@nestjs/schematics": "9.0.4",
     "@nestjs/testing": "9.3.12",
     "@types/bcrypt": "^3.0.0",
