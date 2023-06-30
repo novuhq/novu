@@ -245,6 +245,14 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     await this.message.delete({ _id: message._id, _environmentId: message._environmentId });
   }
 
+  async deleteMany(query: MessageQuery) {
+    try {
+      return await this.message.delete({ ...query, deleted: false });
+    } catch (e) {
+      throw new DalException(e);
+    }
+  }
+
   async findDeleted(query: MessageQuery): Promise<MessageEntity> {
     const res: MessageEntity = await this.message.findDeleted(query);
 
@@ -267,13 +275,20 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
   }
 
   async getMessages(
-    query: Partial<MessageEntity> & { _environmentId: string },
+    query: Partial<Omit<MessageEntity, 'transactionId'>> & {
+      _environmentId: string;
+      transactionId?: string[];
+    },
     select = '',
     options?: {
       limit?: number;
       skip?: number;
     }
   ) {
+    const filterQuery: FilterQuery<MessageEntity> = { ...query };
+    if (query.transactionId) {
+      filterQuery.transactionId = { $in: query.transactionId };
+    }
     const data = await this.MongooseModel.find(query, select, {
       limit: options?.limit,
       skip: options?.skip,

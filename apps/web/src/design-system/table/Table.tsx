@@ -1,82 +1,69 @@
 import React, { useEffect } from 'react';
-import { TableProps, Table as MantineTable, LoadingOverlay, Pagination } from '@mantine/core';
+import { TableProps, Table as MantineTable, Pagination } from '@mantine/core';
 import styled from '@emotion/styled';
 import {
   useTable,
   Column,
-  ColumnWithStrictAccessor,
   usePagination,
   TableInstance,
   UsePaginationInstanceProps,
   UsePaginationState,
+  Row,
+  CellProps,
 } from 'react-table';
 
 import useStyles from './Table.styles';
 import { colors } from '../config';
+import { DefaultCell } from './DefaultCell';
 
 const NoDataPlaceholder = styled.div`
   padding: 0 30px;
   flex: 1;
 `;
 
-export type Data = Record<string, any>;
+export type IExtendedCellProps<T extends object = {}> = CellProps<T> & { isLoading: boolean };
 
-export interface ITableProps {
-  columns?: ColumnWithStrictAccessor<Data>[];
-  data?: Data[];
+export type IExtendedColumn<T extends object = {}> = Column<T> & {
+  Cell?: (props: IExtendedCellProps<T>) => React.ReactNode;
+};
+
+const defaultColumn: Partial<IExtendedColumn> = {
+  Cell: DefaultCell,
+};
+
+export interface ITableProps<T extends object> {
+  columns?: IExtendedColumn<T>[];
+  data?: T[];
   loading?: boolean;
   pagination?: any;
-  onRowClick?: (row: Data) => void;
+  onRowClick?: (row: Row<T>) => void;
   noDataPlaceholder?: React.ReactNode;
+  loadingItems?: number;
 }
 
-type UseTableProps = UsePaginationInstanceProps<Data> &
-  TableInstance<Data> & {
-    state: UsePaginationState<Data>;
+type UseTableProps<T extends object> = UsePaginationInstanceProps<T> &
+  TableInstance<T> & {
+    state: UsePaginationState<T>;
   };
 
 /**
  * Table component
  *
  */
-export function Table({
+export function Table<T extends object>({
   columns: userColumns,
   data: userData,
   pagination = false,
   loading = false,
   onRowClick,
   noDataPlaceholder,
+  loadingItems = 10,
   ...props
-}: ITableProps) {
+}: ITableProps<T>) {
   const { pageSize, total, onPageChange, current } = pagination;
-
-  const columns = React.useMemo(
-    () =>
-      userColumns?.map((col) => {
-        const column = {
-          Header: col.Header,
-          accessor: col.accessor,
-          width: col.width,
-          maxWidth: col.maxWidth,
-        };
-        if (col?.Cell) {
-          return {
-            ...column,
-            /**
-             * Due to an issue with the Column accessor interface from react-table
-             * We decided to ignore the Cell type for now.
-             */
-            // eslint-disable-next-line
-            Cell: ({ row }) => (col?.Cell ? (col?.Cell as any)(row.original) : null),
-          };
-        }
-
-        return column;
-      }) as Column<Data>[],
-    [userColumns]
-  );
-
-  const data = React.useMemo(() => (userData || [])?.map((row) => ({ ...row })) as Data[], [userData]);
+  const columns = React.useMemo(() => userColumns?.map((col) => ({ ...col })), [userColumns]);
+  const data = React.useMemo(() => (userData || [])?.map((row) => ({ ...row })), [userData]);
+  const fakeData = React.useMemo(() => Array.from({ length: loadingItems }).map((_, index) => ({ index })), []);
 
   const {
     getTableProps,
@@ -90,7 +77,8 @@ export function Table({
   } = useTable(
     {
       columns,
-      data,
+      defaultColumn,
+      data: loading ? fakeData : data,
       ...(pagination
         ? {
             initialState: { pageIndex: current, pageSize },
@@ -100,7 +88,7 @@ export function Table({
         : {}),
     } as any,
     usePagination
-  ) as UseTableProps;
+  ) as unknown as UseTableProps<T>;
 
   useEffect(() => {
     if (onPageChange) {
@@ -115,22 +103,13 @@ export function Table({
     return Math.ceil(total / pageSize);
   };
 
-  const { classes, theme } = useStyles();
+  const { classes } = useStyles();
   const defaultDesign = { verticalSpacing: 'sm', horizontalSpacing: 'sm', highlightOnHover: true } as TableProps;
   const rows = pagination ? page : allRows;
   const noData = rows.length === 0;
 
   return (
     <div style={{ position: 'relative', minHeight: 500, display: 'flex', flexDirection: 'column' }}>
-      <LoadingOverlay
-        visible={loading}
-        zIndex={1}
-        overlayColor={theme.colorScheme === 'dark' ? colors.B30 : colors.B98}
-        loaderProps={{
-          color: colors.error,
-        }}
-      />
-
       <MantineTable className={classes.root} {...defaultDesign} {...getTableProps()} {...props}>
         <thead>
           {headerGroups.map((headerGroup, i) => {
@@ -149,9 +128,10 @@ export function Table({
 
             return (
               <tr
-                onClick={() => (onRowClick ? onRowClick(row) : null)}
+                onClick={() => (!loading && onRowClick ? onRowClick(row) : null)}
                 {...row.getRowProps()}
                 className={classes.tableRow}
+                data-disabled={loading || !onRowClick}
               >
                 {row.cells.map((cell, i) => (
                   <td
@@ -162,7 +142,7 @@ export function Table({
                       },
                     })}
                   >
-                    {cell.render('Cell')}
+                    {cell.render('Cell', { isLoading: loading })}
                   </td>
                 ))}
               </tr>
@@ -171,7 +151,7 @@ export function Table({
         </tbody>
       </MantineTable>
       {!loading && noData && noDataPlaceholder && <NoDataPlaceholder>{noDataPlaceholder}</NoDataPlaceholder>}
-      {pagination && total > 0 && pageSize > 1 && getPageCount() > 1 && (
+      {!loading && pagination && total > 0 && pageSize > 1 && getPageCount() > 1 && (
         <div style={{ marginTop: 'auto' }}>
           <Pagination
             styles={{

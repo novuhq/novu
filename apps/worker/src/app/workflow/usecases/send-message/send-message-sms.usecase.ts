@@ -14,7 +14,7 @@ import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   GetDecryptedIntegrations,
-  GetDecryptedIntegrationsCommand,
+  GetEnvironmentDecryptedIntegrationsCommand,
   CompileTemplate,
   CompileTemplateCommand,
   SmsFactory,
@@ -56,7 +56,7 @@ export class SendMessageSms extends SendMessageBase {
     if (!subscriber) throw new PlatformException('Subscriber not found');
 
     const integration = await this.getIntegration(
-      GetDecryptedIntegrationsCommand.create({
+      GetEnvironmentDecryptedIntegrationsCommand.create({
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         channelType: ChannelTypeEnum.SMS,
