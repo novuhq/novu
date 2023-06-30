@@ -4,6 +4,8 @@
 
 In this guide, you’ll learn how to add digest notifications to a React app. But before exploring the actual code, let’s understand what a digest notification is and how it works.
 
+You can find the entire code(frontend as well as backend) for this app [here](https://github.com/novuhq/digest-learning-app/tree/main).
+
 ### What is a Digest Notification?
 
 Often times when you associate notifications with user activity, the end user can be bombarded with messages because of the nature of the activity. Take for example the case of commenting in the context of a social media app. If you were to send a notification to a user for every comment they receive, and they happen to receive 100 comments, it could lead to user fatigue since you would have to send 100 messages.
@@ -25,9 +27,9 @@ To get started with this, you need the following:
 - A Novu account. [Sign up for free](http://web.novu.co) if you don’t have one yet.
 - A working React development environment.
 
-## Setting things up in Novu
+## Workflow setup in Novu
 
-Once, you have these, you need to follow the following steps:
+Once, you have these, follow the steps below:
 
 1. Head over to the Novu Dashboard.
 2. Click “Workflows” on the left sidebar of your Novu dashboard.
@@ -45,13 +47,13 @@ You’ll now be taken to the workflow editor:
 
 Once here, you can add the channels you want to use for sending notifications and configure them. For this guide, we’ll use the ‘In-App’ channel. You’ll also see the ‘Digest’ action on the right sidebar.
 
-Note: Note: Each node that is added below the digest node will only be triggered after the specified time interval
+Note: Each node that is added below the digest node will only be triggered after the specified time interval
 
-For example, in our case, say we want the In-App notification to be sent after every 6 hours. Then we’ll add the ‘digest’ action below the ‘trigger node’ and the ‘in-app’ channel node below the ‘digest’ node as shown below:
+For example, in our case, say we want the In-App notification to be sent after every 6 hours. Next, add the 'digest' action below the 'trigger node', and add the 'in-app' channel node below the 'digest' node as shown below:
 
 ![Add digest action below the trigger node and in-app channel node below the digest node](https://res.cloudinary.com/dxc6bnman/image/upload/v1688131735/guides/Screenshot_2023-06-25_at_11.01.23_PM_vsvrjh.png)
 
-The time interval after which you want the notifications to be sent can be configured by selecting the ‘digest’ node:
+The 'digest' node allows you to set a specific time interval for when notifications should be sent:
 
 ![Configure the time interval in the digest node](https://res.cloudinary.com/dxc6bnman/image/upload/v1688131926/guides/Screenshot_2023-06-25_at_11.02.17_PM_vsmjg9.png)
 
@@ -80,7 +82,7 @@ It’ll automatically create a trigger code that you can use in your app. To get
 
 Now, let’s see how to add Novu to our app!
 
-## Adding Novu to the Backend and Configure it
+## Add Novu to the Backend and Configure it
 
 In your backend, install the novu package using the following code:
 
@@ -158,7 +160,7 @@ export const sendDigest = async (name) => {
 
 Now, we just need to hit the route defined above from the front end and add Novu to it.
 
-## Adding Novu’s Notification Center to the front end
+## Add Novu’s Notification Center to the front end
 
 In the front end, install the Novu notification centre package using the following command:
 
@@ -282,12 +284,10 @@ export default Body;
 
 The app is done now!
 
-Congratulations if you’ve followed the guide up until here. We can style our app a little using [some CSS](https://github.com/novuhq/digest-learning-app/blob/main/frontend/src/App.css).
+Congratulations for following the guide up until this point. We can style our app a little using [some CSS](https://github.com/novuhq/digest-learning-app/blob/main/frontend/src/App.css).
 
 If you’ve done everything as recommended, you’ll end up with an app that looks like this:
 
 ![out.gif](https://res.cloudinary.com/dxc6bnman/image/upload/v1688130966/guides/out_ca2bjr.gif)
 
 In this app, when we enter some text in the input box and click send, the notification appears in the bell icon after the delay specified above (when we’re creating the workflow):
-
-You can find the entire code(frontend as well as backend) for this app [here](https://github.com/novuhq/digest-learning-app/tree/main).
