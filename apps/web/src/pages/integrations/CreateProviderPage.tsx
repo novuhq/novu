@@ -1,24 +1,18 @@
-import { useState } from 'react';
+import { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useEffectOnce } from '../../hooks';
 import { IProviderConfig, providers } from '@novu/shared';
 import { CreateProviderInstanceSidebar } from './components/multi-provider/CreateProviderInstanceSidebar';
 import { SideBarWrapper } from './components/multi-provider/SelectProviderSidebar';
 
 export function CreateProviderPage() {
-  const [selectedProvider, setSelectedProvider] = useState<IProviderConfig | null>(null);
   const { channel, providerId } = useParams();
   const navigate = useNavigate();
+  const foundProvider = useMemo<IProviderConfig | undefined>(
+    () => providers.find((provider) => provider.channel === channel && provider.id === providerId),
+    [channel, providerId]
+  );
 
-  useEffectOnce(() => {
-    const foundProvider = providers.find((provider) => provider.channel === channel && provider.id === providerId);
-
-    if (foundProvider) {
-      setSelectedProvider(foundProvider);
-    }
-  }, channel !== undefined && providerId !== undefined);
-
-  if (selectedProvider === null) {
+  if (!foundProvider) {
     return null;
   }
 
@@ -31,7 +25,7 @@ export function CreateProviderPage() {
         onClose={() => {
           navigate('/integrations');
         }}
-        provider={selectedProvider}
+        provider={foundProvider}
       />
     </SideBarWrapper>
   );

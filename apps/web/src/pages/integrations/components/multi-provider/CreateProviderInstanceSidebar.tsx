@@ -1,11 +1,11 @@
 import { ActionIcon, Group, Radio, Text } from '@mantine/core';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { ChannelTypeEnum, ICredentialsDto, IProviderConfig } from '@novu/shared';
+import { Controller, useForm } from 'react-hook-form';
 import { colors, NameInput, Button } from '../../../../design-system';
 import { ArrowLeft, Close } from '../../../../design-system/icons';
-import { Controller, useForm } from 'react-hook-form';
 import { inputStyles } from '../../../../design-system/config/inputs.styles';
 import { useFetchEnvironments } from '../../../../hooks/useFetchEnvironments';
-import { ChannelTypeEnum, ICredentialsDto, IProviderConfig } from '@novu/shared';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSegment } from '../../../../components/providers/SegmentProvider';
 import { createIntegration } from '../../../../api/integration';
 import { IntegrationsStoreModalAnalytics } from '../../constants';

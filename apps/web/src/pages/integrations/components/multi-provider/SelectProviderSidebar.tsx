@@ -1,19 +1,29 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { ActionIcon, ColorScheme, Group, Space, Stack, Tabs, TabsValue, useMantineColorScheme } from '@mantine/core';
-import { ChannelTypeEnum, providers } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  emailProviders,
+  smsProviders,
+  pushProviders,
+  inAppProviders,
+  chatProviders,
+} from '@novu/shared';
 import { CONTEXT_PATH } from '../../../../config';
 import { colors } from '../../../../design-system';
-import { useDebounce } from '../../../../hooks';
 import { Button, Input, Title, Tooltip, Text } from '../../../../design-system';
-import { Search, Close } from '../../../../design-system/icons';
-import { ChannelTitle } from '../../../templates/components/ChannelTitle';
-import useStyles from '../../../../design-system/tabs/Tabs.styles';
-import { IIntegratedProvider } from '../../IntegrationsStoreModal';
 import { getGradient } from '../../../../design-system/config/helper';
-import { useNavigate } from 'react-router-dom';
+import { Search, Close } from '../../../../design-system/icons';
+import useStyles from '../../../../design-system/tabs/Tabs.styles';
+import { useDebounce } from '../../../../hooks';
+import { ChannelTitle } from '../../../templates/components/ChannelTitle';
+import { IIntegratedProvider } from '../../IntegrationsStoreModal';
 import { CHANNELS_ORDER } from '../IntegrationsListNoData';
 import { CHANNEL_TYPE_TO_STRING } from '../../../../utils/channels';
+
+const filterSearch = (list, search: string) =>
+  list.filter((prov) => prov.displayName.toLowerCase().includes(search.toLowerCase()));
 
 const mapStructure = (listProv): IIntegratedProvider[] =>
   listProv.map((providerItem) => ({
@@ -32,38 +42,25 @@ const getLogoFileName = (id, schema: ColorScheme): string => {
 };
 
 export function SelectProviderSidebar() {
-  const [{ emailProviders, smsProviders, chatProviders, pushProviders, inAppProviders }, setProviders] = useState({
-    emailProviders: mapStructure(
-      providers.filter((providerItem) => providerItem.channel === ChannelTypeEnum.EMAIL) || []
-    ),
+  const [{ emailProviderList, smsProviderList, chatProviderList, pushProviderList, inAppProviderList }, setProviders] =
+    useState({
+      emailProviderList: mapStructure(emailProviders),
+      smsProviderList: mapStructure(smsProviders),
+      pushProviderList: mapStructure(pushProviders),
+      inAppProviderList: mapStructure(inAppProviders),
+      chatProviderList: mapStructure(chatProviders),
+    });
 
-    smsProviders: mapStructure(providers.filter((providerItem) => providerItem.channel === ChannelTypeEnum.SMS) || []),
-
-    pushProviders: mapStructure(
-      providers.filter((providerItem) => providerItem.channel === ChannelTypeEnum.PUSH) || []
-    ),
-
-    inAppProviders: mapStructure(
-      providers.filter((providerItem) => providerItem.channel === ChannelTypeEnum.IN_APP) || []
-    ),
-
-    chatProviders: mapStructure(
-      providers.filter((providerItem) => providerItem.channel === ChannelTypeEnum.CHAT) || []
-    ),
-  });
   const [selectedProvider, setSelectedProvider] = useState<IIntegratedProvider | null>(null);
   const { classes: tabsClasses } = useStyles(false);
 
-  const filterSearch = (list, search: string) =>
-    list.filter((prov) => prov.displayName.toLowerCase().includes(search.toLowerCase()));
-
   const debouncedSearchChange = useDebounce((search: string) => {
     setProviders({
-      emailProviders: filterSearch(emailProviders, search),
-      smsProviders: filterSearch(smsProviders, search),
-      pushProviders: filterSearch(pushProviders, search),
-      inAppProviders: filterSearch(inAppProviders, search),
-      chatProviders: filterSearch(chatProviders, search),
+      emailProviderList: filterSearch(emailProviderList, search),
+      smsProviderList: filterSearch(smsProviderList, search),
+      pushProviderList: filterSearch(pushProviderList, search),
+      inAppProviderList: filterSearch(inAppProviderList, search),
+      chatProviderList: filterSearch(chatProviderList, search),
     });
   }, 500);
 
@@ -138,31 +135,31 @@ export function SelectProviderSidebar() {
           <ListProviders
             selectedProvider={selectedProvider}
             onProviderClick={onProviderClick}
-            channelProviders={inAppProviders}
+            channelProviders={inAppProviderList}
             channelType={ChannelTypeEnum.IN_APP}
           />
           <ListProviders
             selectedProvider={selectedProvider}
             onProviderClick={onProviderClick}
-            channelProviders={emailProviders}
+            channelProviders={emailProviderList}
             channelType={ChannelTypeEnum.EMAIL}
           />
           <ListProviders
             selectedProvider={selectedProvider}
             onProviderClick={onProviderClick}
-            channelProviders={chatProviders}
+            channelProviders={chatProviderList}
             channelType={ChannelTypeEnum.CHAT}
           />
           <ListProviders
             selectedProvider={selectedProvider}
             onProviderClick={onProviderClick}
-            channelProviders={pushProviders}
+            channelProviders={pushProviderList}
             channelType={ChannelTypeEnum.PUSH}
           />
           <ListProviders
             selectedProvider={selectedProvider}
             onProviderClick={onProviderClick}
-            channelProviders={smsProviders}
+            channelProviders={smsProviderList}
             channelType={ChannelTypeEnum.SMS}
           />
         </CenterDiv>
@@ -220,7 +217,7 @@ const ListProviders = ({
   selectedProvider: IIntegratedProvider | null;
 }) => {
   return (
-    <Stack pb={20} spacing={10} id={channelType}>
+    <Stack hidden={channelProviders.length === 0} pb={20} spacing={10} id={channelType}>
       <ChannelTitle spacing={8} channel={channelType} />
       <div>
         {channelProviders.map((provider) => {
