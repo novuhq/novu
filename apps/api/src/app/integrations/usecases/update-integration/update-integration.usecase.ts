@@ -57,7 +57,7 @@ export class UpdateIntegration {
 
     await this.invalidateCache.invalidateQuery({
       key: buildIntegrationKey().invalidate({
-        _environmentId: existingIntegration._environmentId,
+        _organizationId: command.organizationId,
       }),
     });
 
