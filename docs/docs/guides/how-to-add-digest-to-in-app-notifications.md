@@ -295,4 +295,4 @@ If you’ve done everything as recommended, you’ll end up with an app that loo
 
 ![out.gif](https://res.cloudinary.com/dxc6bnman/image/upload/v1688130966/guides/out_ca2bjr.gif)
 
-In this app, when we enter some text in the input box and click send, the notification appears in the bell icon after the delay specified above (when we’re creating the workflow):
+In this app, when we enter some text in the input box and click send, the notification appears in the bell icon after the delay specified above (when we’re creating the workflow).
