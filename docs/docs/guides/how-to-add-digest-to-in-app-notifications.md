@@ -1,3 +1,8 @@
+---
+sidebar_position: 1
+sidebar_label: How to Add Digest to In-App Notifications
+---
+
 # How to Add Digest to In-App Notifications
 
 ## Introduction
