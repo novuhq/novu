@@ -20,11 +20,10 @@ import {
   DetailEnum,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-  GetDecryptedIntegrations,
-  GetEnvironmentDecryptedIntegrationsCommand,
   CompileTemplate,
   CompileTemplateCommand,
   ChatFactory,
+  SelectIntegration,
 } from '@novu/application-generic';
 
 import { CreateLog } from '../../../shared/logs';
@@ -44,15 +43,9 @@ export class SendMessageChat extends SendMessageBase {
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
-    protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
+    protected selectIntegration: SelectIntegration
   ) {
-    super(
-      messageRepository,
-      createLogUsecase,
-      createExecutionDetails,
-      subscriberRepository,
-      getDecryptedIntegrationsUsecase
-    );
+    super(messageRepository, createLogUsecase, createExecutionDetails, subscriberRepository, selectIntegration);
   }
 
   @InstrumentUsecase()
@@ -147,17 +140,13 @@ export class SendMessageChat extends SendMessageBase {
     chatChannel,
     content: string
   ) {
-    const integration = await this.getIntegration(
-      GetEnvironmentDecryptedIntegrationsCommand.create({
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        providerId: subscriberChannel.providerId,
-        channelType: ChannelTypeEnum.CHAT,
-        findOne: true,
-        active: true,
-        userId: command.userId,
-      })
-    );
+    const integration = await this.getIntegration({
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+      providerId: subscriberChannel.providerId,
+      channelType: ChannelTypeEnum.CHAT,
+      userId: command.userId,
+    });
 
     const chatWebhookUrl = command.payload.webhookUrl || subscriberChannel.credentials?.webhookUrl;
     const channelSpecification = subscriberChannel.credentials?.channel;
