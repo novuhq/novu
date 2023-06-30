@@ -43,7 +43,7 @@ npm install @novu/node
 
 After installing it, we need to connect our app with our Novu account using the Novu API key. Simply log onto the [Novu web dashboard](https://web.novu.co) and from the settings there, obtain your API key. We’ll use it to connect our app to our Novu account.
 
-![Novu API key is available on the Novu web dashboard](https://res.cloudinary.com/dxc6bnman/image/upload/v1686776865/guides/Screenshot_2023-05-23_at_1.08.37_AM_1_s48je6.jpg)
+![Novu API key is available on the Novu web dashboard](https://res.cloudinary.com/dxc6bnman/image/upload/v1688127601/guides/SCR-20230630-ppsb_ky06jv.png)
 
 Now, we need to connect it to our app. To do so, the first step is to import Novu into our app. Importing Novu will give us the ability to interact with the Novu API. To import Novu into our app, use the following code in a separate file in our app:
 
@@ -75,15 +75,15 @@ In our case, we’ll have dynamic data and whatever we send as a description wil
 
 1. Click "Workflows” on the left sidebar of your Novu dashboard.
 2. Click the “Create Workflow” button on the top right.
-   ![Creating a workflow in Novu dashboard](https://res.cloudinary.com/dxc6bnman/image/upload/v1686777195/guides/Untitled_c2x7mn.png)
+   ![Creating a workflow in Novu dashboard](https://res.cloudinary.com/dxc6bnman/image/upload/v1688127676/guides/SCR-20230630-pqdm_z5npqe.png)
 3. The name of a new notification workflow is currently "Untitled." Rename it to a more suitable title.
-   ![Renaming the newly created notification workflow](https://res.cloudinary.com/dxc6bnman/image/upload/v1686777271/guides/Screenshot_2023-05-23_at_2.48.07_AM_ubvro5.png)
-4. Select "Email" as the channel you want to add.
-   ![Adding email channel to the notification workflow we created above](https://res.cloudinary.com/dxc6bnman/image/upload/v1686777324/guides/Screenshot_2023-05-23_at_2.49.12_AM_mygcmq.png)
+   ![Renaming the newly created notification workflow](https://res.cloudinary.com/dxc6bnman/image/upload/v1688127735/guides/SCR-20230630-pqpp_lvjfea.png)
+4. Select "Email" as the channel you want to add, by dragging it from the right sidebar:
+   ![Adding email channel to the notification workflow we created above](https://res.cloudinary.com/dxc6bnman/image/upload/v1688128047/guides/SCR-20230630-psgt_ottznp.png)
 5. Click on the ‘Email’ in the workflow and edit it as per this image. Don’t forget to add the fields in the editor which is supposed to be updated with dynamic values that we’ll send when calling the API.
-   ![Adding email and description to the editor in the notification workflow we created above](https://res.cloudinary.com/dxc6bnman/image/upload/v1686777397/guides/Screenshot_2023-05-23_at_2.50.10_AM_mesp1o.png)
+   ![Adding email and description to the editor in the notification workflow we created above](https://res.cloudinary.com/dxc6bnman/image/upload/v1688128150/guides/SCR-20230630-psxv_ef7jwh.png)
 6. Also, add the variables in the ‘variables’ section in the test tab and try testing it by sending the email to your email id using the ‘send test email’ button on the bottom right.
-   ![Adding variables to the 'variables' section](https://res.cloudinary.com/dxc6bnman/image/upload/v1686777573/guides/Screenshot_2023-05-23_at_2.52.35_AM_kguwfl.jpg)
+   ![Adding variables to the 'variables' section](https://res.cloudinary.com/dxc6bnman/image/upload/v1688129220/guides/SCR-20230630-pzgl_n94giv.png)
 
 Now, we’ve successfully sent the test email and just need to do this from our app.
 

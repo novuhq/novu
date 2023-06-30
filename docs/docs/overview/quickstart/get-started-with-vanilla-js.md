@@ -59,7 +59,7 @@ And subscribers are users to which notifications will be sent. They are identifi
 
 If you click “Subscriber” on the left sidebar of [Novu dashboard](https://web.novu.co/subscribers), you’ll see the subscriber list. By default, there will only be one subscriber as you’re automatically added as a subscriber when you sign up for Novu:
 
-![Subscribers page on the Novu dashboard](https://res.cloudinary.com/dxc6bnman/image/upload/v1685465978/guides/subscribers_1_opmw0s.png)
+![Subscribers page on the Novu dashboard](https://res.cloudinary.com/dxc6bnman/image/upload/v1688127117/guides/SCR-20230630-pmpj_hy4rui.png)
 
 Now, let’s create a subscriber on Novu. After creating a subscriber, we’ll trigger notification to this subscriber. Subscribers are identified by a unique `subscriberId`.
 
@@ -181,11 +181,11 @@ I'll briefly explain the function of each label in the image above:
 
 In our case, we'll use the custom variables functionality, as shown below:
 
-![Using custom variables in Novu](https://res.cloudinary.com/dxc6bnman/image/upload/v1686742931/guides/Screenshot_2023-05-28_at_3.36.10_AM_o6oosa.png)
+![Using custom variables in Novu](https://res.cloudinary.com/dxc6bnman/image/upload/v1688129401/guides/SCR-20230630-qajs_ac1jol.png)
 
 Feel free to add only text for now and rename the notification workflow to `quickstart`. It automatically creates a slug-like Identifier that will be needed in later steps to trigger a notification.
 
-![Creating a notification workflow from Novu dashboard](https://res.cloudinary.com/dxc6bnman/image/upload/v1686743094/guides/Screenshot_2023-05-28_at_3.40.01_AM_ulmqvm.png)
+![Creating a notification workflow from Novu dashboard](https://res.cloudinary.com/dxc6bnman/image/upload/v1688129550/guides/SCR-20230630-qbjj_rfuxa1.png)
 
 Having created a notification workflow and having our `subscriberID`, we're ready to send notifications using Novu!
 
