@@ -32,23 +32,56 @@ describe('Integrations List Page', function () {
     }: {
       name: string;
       isFree?: boolean;
-      key: string;
+      key: string | null;
       provider: string;
       channel: string;
-      environment: string;
+      environment: string | null;
       status: string;
     },
     nth: number
   ) => {
-    cy.getByTestId('integration-name-cell').eq(nth).should('be.visible').contains(name);
-    // cy.getByTestId('integration-name-cell').eq(nth).should('be.visible').contains(key);
+    cy.getByTestId('integrations-list-table').as('integrations-table');
+    cy.get('@integrations-table')
+      .get('tr')
+      .eq(nth)
+      .getByTestId('integration-name-cell')
+      .should('be.visible')
+      .contains(name);
+    // cy.get('@integrations-table').get('tr').eq(nth).getByTestId('integration-name-cell').should('be.visible').contains(key);
     if (isFree) {
-      cy.getByTestId('integration-name-cell').eq(nth).should('be.visible').contains('Free');
+      cy.get('@integrations-table')
+        .get('tr')
+        .eq(nth)
+        .getByTestId('integration-name-cell')
+        .should('be.visible')
+        .contains('Free');
     }
-    cy.getByTestId('integration-provider-cell').eq(nth).should('be.visible').contains(provider);
-    cy.getByTestId('integration-channel-cell').eq(nth).should('be.visible').contains(channel);
-    cy.getByTestId('integration-environment-cell').eq(nth).should('be.visible').contains(environment);
-    cy.getByTestId('integration-status-cell').eq(nth).should('be.visible').contains(status);
+    cy.get('@integrations-table')
+      .get('tr')
+      .eq(nth)
+      .getByTestId('integration-provider-cell')
+      .should('be.visible')
+      .contains(provider);
+    cy.get('@integrations-table')
+      .get('tr')
+      .eq(nth)
+      .getByTestId('integration-channel-cell')
+      .should('be.visible')
+      .contains(channel);
+    if (environment) {
+      cy.get('@integrations-table')
+        .get('tr')
+        .eq(nth)
+        .getByTestId('integration-environment-cell')
+        .should('be.visible')
+        .contains(environment);
+    }
+    cy.get('@integrations-table')
+      .get('tr')
+      .eq(nth)
+      .getByTestId('integration-status-cell')
+      .should('be.visible')
+      .contains(status);
   };
 
   it('should show the table loading skeleton and empty state', () => {
@@ -91,6 +124,28 @@ describe('Integrations List Page', function () {
 
     checkTableRow(
       {
+        name: 'Novu Email',
+        key: null,
+        provider: 'Novu Email',
+        channel: 'Email',
+        environment: null,
+        status: 'Disabled',
+      },
+      0
+    );
+    checkTableRow(
+      {
+        name: 'Novu SMS',
+        key: null,
+        provider: 'Novu SMS',
+        channel: 'SMS',
+        environment: null,
+        status: 'Disabled',
+      },
+      1
+    );
+    checkTableRow(
+      {
         name: 'SendGrid',
         key: '',
         provider: 'SendGrid',
@@ -98,7 +153,7 @@ describe('Integrations List Page', function () {
         environment: 'Development',
         status: 'Active',
       },
-      0
+      2
     );
     checkTableRow(
       {
@@ -109,7 +164,7 @@ describe('Integrations List Page', function () {
         environment: 'Development',
         status: 'Active',
       },
-      1
+      3
     );
     checkTableRow(
       {
@@ -120,7 +175,7 @@ describe('Integrations List Page', function () {
         environment: 'Development',
         status: 'Active',
       },
-      2
+      4
     );
     checkTableRow(
       {
@@ -131,7 +186,7 @@ describe('Integrations List Page', function () {
         environment: 'Development',
         status: 'Active',
       },
-      3
+      5
     );
     checkTableRow(
       {
@@ -142,7 +197,7 @@ describe('Integrations List Page', function () {
         environment: 'Development',
         status: 'Active',
       },
-      4
+      6
     );
     checkTableRow(
       {
@@ -154,7 +209,74 @@ describe('Integrations List Page', function () {
         environment: 'Development',
         status: 'Active',
       },
-      5
+      7
+    );
+    checkTableRow(
+      {
+        name: 'SendGrid',
+        key: '',
+        provider: 'SendGrid',
+        channel: 'Email',
+        environment: 'Production',
+        status: 'Active',
+      },
+      8
+    );
+    checkTableRow(
+      {
+        name: 'Twilio',
+        key: '',
+        provider: 'Twilio',
+        channel: 'SMS',
+        environment: 'Production',
+        status: 'Active',
+      },
+      9
+    );
+    checkTableRow(
+      {
+        name: 'Slack',
+        key: '',
+        provider: 'Slack',
+        channel: 'Chat',
+        environment: 'Production',
+        status: 'Active',
+      },
+      10
+    );
+    checkTableRow(
+      {
+        name: 'Discord',
+        key: '',
+        provider: 'Discord',
+        channel: 'Chat',
+        environment: 'Production',
+        status: 'Active',
+      },
+      11
+    );
+    checkTableRow(
+      {
+        name: 'Firebase Cloud Messaging',
+        key: '',
+        provider: 'Firebase Cloud Messaging',
+        channel: 'Push',
+        environment: 'Production',
+        status: 'Active',
+      },
+      12
+    );
+    checkTableRow(
+      {
+        name: 'Novu In-App',
+        isFree: true,
+        key: '',
+        provider: 'Novu In-App',
+        channel: 'In-App',
+        environment: 'Production',
+        status: 'Active',
+      },
+      13
     );
   });
 });
