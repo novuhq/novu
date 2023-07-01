@@ -18,9 +18,13 @@ export class GetDecryptedIntegrations {
   async execute(
     command: GetDecryptedIntegrationsCommand
   ): Promise<IntegrationEntity[]> {
-    const query: Partial<IntegrationEntity> & { _environmentId: string } = {
-      _environmentId: command.environmentId,
+    const query: Partial<IntegrationEntity> & { _organizationId: string } = {
+      _organizationId: command.organizationId,
     };
+
+    if (command.environmentId) {
+      query._environmentId = command.environmentId;
+    }
 
     if (command.active) {
       query.active = command.active;

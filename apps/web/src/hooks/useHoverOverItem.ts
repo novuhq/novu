@@ -1,15 +1,15 @@
 import { useRef, useState } from 'react';
 
-export const useHoverOverTemplate = () => {
-  const [templateId, setTemplateId] = useState<string | undefined>(undefined);
+export const useHoverOverItem = <T>() => {
+  const [item, setItem] = useState<T | undefined>(undefined);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const onMouseEnter = (id?: string) => {
+  const onMouseEnter = (newItem?: T) => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
     timeoutRef.current = setTimeout(() => {
-      setTemplateId(id);
+      setItem(newItem);
     }, 500);
   };
 
@@ -17,11 +17,11 @@ export const useHoverOverTemplate = () => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
-    setTemplateId(undefined);
+    setItem(undefined);
   };
 
   return {
-    templateId,
+    item,
     onMouseEnter,
     onMouseLeave,
   };
