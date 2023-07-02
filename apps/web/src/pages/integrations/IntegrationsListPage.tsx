@@ -1,4 +1,5 @@
 import { Container } from '@mantine/core';
+import { Outlet, useNavigate } from 'react-router-dom';
 import { useCallback, useMemo } from 'react';
 
 import PageContainer from '../../components/layout/components/PageContainer';
@@ -67,9 +68,10 @@ const IntegrationsList = () => {
     [integrations, environments]
   );
 
+  const navigate = useNavigate();
+
   const onRowClickCallback = useCallback((item) => {
-    // eslint-disable-next-line no-console
-    console.log('onRowClickCallback', item);
+    navigate(`/integrations/${item.original.identifier}`);
   }, []);
 
   const onChannelClickCallback = useCallback((item) => {
@@ -78,10 +80,21 @@ const IntegrationsList = () => {
   }, []);
 
   return (
-    <PageContainer title="Integrations">
+    <PageContainer
+      style={{
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+      title="Integrations"
+    >
       <PageHeader title="Integrations Store" />
       <Container fluid sx={{ padding: '0 30px 8px 30px' }}>
-        <IntegrationsListToolbar areIntegrationsLoading={isLoading} />
+        <IntegrationsListToolbar
+          openCreateIntegration={() => {
+            navigate('create');
+          }}
+          areIntegrationsLoading={isLoading}
+        />
       </Container>
       <When truthy={hasIntegrations || isLoading}>
         <Table
@@ -91,6 +104,7 @@ const IntegrationsList = () => {
           columns={columns}
           data={data}
         />
+        <Outlet />
       </When>
       <When truthy={!hasIntegrations && !isLoading}>
         <IntegrationsListNoData onChannelClick={onChannelClickCallback} />
