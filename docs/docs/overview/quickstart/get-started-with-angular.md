@@ -398,8 +398,8 @@ import { Novu } from '@novu/node';
 const novu = new Novu('<YOUR_NOVU_API_KEY>');
 
 await novu.subscribers.update('123', {
-  firstName: 'Saurabh', // new first name
-  lastName: 'Sumit', // new last name
+  firstName: 'Emil', // new first name
+  lastName: 'Pearce', // new last name
 });
 ```
 
@@ -413,9 +413,9 @@ $novu = new Novu('<NOVU_API_KEY>');
 
 $novu->updateSubscriber('123', [
     // new firstName
-    'firstName' => 'Saurabh',
+    'firstName' => 'Emil',
     // new lastName
-    'lastName' => 'Sumit',
+    'lastName' => 'Pearce',
 ])->toArray();
 ```
 
