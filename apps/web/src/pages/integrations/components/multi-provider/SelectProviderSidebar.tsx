@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
-import { ActionIcon, ColorScheme, Group, Space, Stack, Tabs, TabsValue, useMantineColorScheme } from '@mantine/core';
+import { ActionIcon, Group, Space, Stack, Tabs, TabsValue, useMantineColorScheme } from '@mantine/core';
 import {
   ChannelTypeEnum,
   emailProviders,
@@ -10,7 +10,6 @@ import {
   inAppProviders,
   chatProviders,
 } from '@novu/shared';
-import { CONTEXT_PATH } from '../../../../config';
 import { colors } from '../../../../design-system';
 import { Button, Input, Title, Tooltip, Text } from '../../../../design-system';
 import { getGradient } from '../../../../design-system/config/helper';
@@ -21,6 +20,8 @@ import { ChannelTitle } from '../../../templates/components/ChannelTitle';
 import { IIntegratedProvider } from '../../IntegrationsStoreModal';
 import { CHANNELS_ORDER } from '../IntegrationsListNoData';
 import { CHANNEL_TYPE_TO_STRING } from '../../../../utils/channels';
+import { getLogoFileName } from '../../../../utils/providers';
+import { sortProviders } from './sort-providers';
 
 const filterSearch = (list, search: string) =>
   list.filter((prov) => prov.displayName.toLowerCase().includes(search.toLowerCase()));
@@ -32,14 +33,6 @@ const mapStructure = (listProv): IIntegratedProvider[] =>
     channel: providerItem.channel,
     docReference: providerItem.docReference,
   }));
-
-const getLogoFileName = (id, schema: ColorScheme): string => {
-  if (schema === 'dark') {
-    return `${CONTEXT_PATH}/static/images/providers/dark/square/${id}.svg`;
-  }
-
-  return `${CONTEXT_PATH}/static/images/providers/light/square/${id}.svg`;
-};
 
 export function SelectProviderSidebar() {
   const [{ emailProviderList, smsProviderList, chatProviderList, pushProviderList, inAppProviderList }, setProviders] =
@@ -73,10 +66,11 @@ export function SelectProviderSidebar() {
       return;
     }
 
-    document.getElementById(scrollTo)?.scrollIntoView({
+    const element = document.getElementById(scrollTo);
+
+    element?.parentElement?.scrollTo({
       behavior: 'smooth',
-      inline: 'nearest',
-      block: 'nearest',
+      top: element?.offsetTop ? element?.offsetTop - 250 : undefined,
     });
   };
 
@@ -87,7 +81,7 @@ export function SelectProviderSidebar() {
   return (
     <SideBarWrapper>
       <FormStyled>
-        <Group style={{ width: '100%' }} align="start" position="apart">
+        <Group style={{ width: '100%' }} mt={10} align="start" position="apart">
           <Stack>
             {selectedProvider !== null ? (
               <>
@@ -216,11 +210,15 @@ const ListProviders = ({
   onProviderClick: (provider: IIntegratedProvider) => () => void;
   selectedProvider: IIntegratedProvider | null;
 }) => {
+  const providers = useMemo(() => {
+    return channelProviders.sort(sortProviders(channelType));
+  }, [channelProviders, channelType]);
+
   return (
-    <Stack hidden={channelProviders.length === 0} pb={20} spacing={10} id={channelType}>
+    <Stack hidden={providers.length === 0} pb={20} spacing={10} id={channelType}>
       <ChannelTitle spacing={8} channel={channelType} />
       <div>
-        {channelProviders.map((provider) => {
+        {providers.map((provider) => {
           return (
             <StyledButton
               key={provider.providerId}
