@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { NotificationTemplateEntity } from '@novu/dal';
 import { UserSession, NotificationTemplateService } from '@novu/testing';
 
-describe('Get Notification templates - /notification-templates (GET)', async () => {
+describe('Get Workflows - /workflows (GET)', async () => {
   let session: UserSession;
   const templates: NotificationTemplateEntity[] = [];
   let notificationTemplateService: NotificationTemplateService;
@@ -22,8 +22,8 @@ describe('Get Notification templates - /notification-templates (GET)', async () 
     templates.push(await notificationTemplateService.createTemplate());
   });
 
-  it('should return all templates for organization', async () => {
-    const { body } = await session.testAgent.get(`/v1/notification-templates`);
+  it('should return all workflows for an organization', async () => {
+    const { body } = await session.testAgent.get(`/v1/workflows`);
 
     expect(body.data.length).to.equal(3);
 
@@ -34,12 +34,12 @@ describe('Get Notification templates - /notification-templates (GET)', async () 
     expect(found.notificationGroup.name).to.equal('General');
   });
 
-  it('should return all templates as per pagination', async () => {
+  it('should return all workflows as per pagination', async () => {
     templates.push(await notificationTemplateService.createTemplate());
     templates.push(await notificationTemplateService.createTemplate());
     templates.push(await notificationTemplateService.createTemplate());
 
-    const { body: page0Limit2Results } = await session.testAgent.get(`/v1/notification-templates?page=0&limit=2`);
+    const { body: page0Limit2Results } = await session.testAgent.get(`/v1/workflows?page=0&limit=2`);
 
     expect(page0Limit2Results.data.length).to.equal(2);
     expect(page0Limit2Results.totalCount).to.equal(6);
@@ -47,7 +47,7 @@ describe('Get Notification templates - /notification-templates (GET)', async () 
     expect(page0Limit2Results.pageSize).to.equal(2);
     expect(page0Limit2Results.data[0]._id).to.equal(templates[5]._id);
 
-    const { body: page1Limit3Results } = await session.testAgent.get(`/v1/notification-templates?page=1&limit=3`);
+    const { body: page1Limit3Results } = await session.testAgent.get(`/v1/workflows?page=1&limit=3`);
 
     expect(page1Limit3Results.data.length).to.equal(3);
     expect(page1Limit3Results.totalCount).to.equal(6);

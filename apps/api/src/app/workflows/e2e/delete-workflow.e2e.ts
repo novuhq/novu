@@ -9,7 +9,7 @@ import {
 } from '@novu/dal';
 import { ChannelCTATypeEnum } from '@novu/shared';
 
-describe('Delete notification template by id - /notification-templates/:templateId (DELETE)', async () => {
+describe('Delete Workflow by id - /workflows/:workflowId (DELETE)', async () => {
   let session: UserSession;
   const notificationTemplateRepository = new NotificationTemplateRepository();
   const notificationGroupRepository: NotificationGroupRepository = new NotificationGroupRepository();
@@ -21,7 +21,7 @@ describe('Delete notification template by id - /notification-templates/:template
     await session.initialize();
   });
 
-  it('should delete the notification template', async function () {
+  it('should delete the workflow', async function () {
     const notificationTemplateService = new NotificationTemplateService(
       session.user._id,
       session.organization._id,
@@ -29,7 +29,7 @@ describe('Delete notification template by id - /notification-templates/:template
     );
     const template = await notificationTemplateService.createTemplate();
 
-    await session.testAgent.delete(`/v1/notification-templates/${template._id}`).send();
+    await session.testAgent.delete(`/v1/workflows/${template._id}`).send();
 
     const isDeleted = !(await notificationTemplateRepository.findOne({
       _environmentId: session.environment._id,
@@ -45,7 +45,7 @@ describe('Delete notification template by id - /notification-templates/:template
     expect(deletedIntegration.deleted).to.equal(true);
   });
 
-  it('should delete the production notification template', async function () {
+  it('should delete the production workflow', async function () {
     const groups = await notificationGroupRepository.find({
       _environmentId: session.environment._id,
     });
@@ -58,7 +58,7 @@ describe('Delete notification template by id - /notification-templates/:template
       steps: [],
     };
 
-    const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+    const { body } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
     const notificationTemplateId = body.data._id;
 
     await session.applyChanges({
@@ -74,7 +74,7 @@ describe('Delete notification template by id - /notification-templates/:template
 
     expect(isCreated).to.exist;
 
-    await session.testAgent.delete(`/v1/notification-templates/${notificationTemplateId}`).send();
+    await session.testAgent.delete(`/v1/workflows/${notificationTemplateId}`).send();
 
     const {
       body: { data },
@@ -107,10 +107,10 @@ describe('Delete notification template by id - /notification-templates/:template
       steps: [],
     };
 
-    const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+    const { body } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
     const notificationTemplateId = body.data._id;
 
-    await session.testAgent.delete(`/v1/notification-templates/${notificationTemplateId}`).send();
+    await session.testAgent.delete(`/v1/workflows/${notificationTemplateId}`).send();
 
     const {
       body: { data },
@@ -120,7 +120,7 @@ describe('Delete notification template by id - /notification-templates/:template
     expect(data.length).to.eq(1);
   });
 
-  it('should not display on listing notification templates', async function () {
+  it('should not display on listing workflows', async function () {
     const notificationTemplateService = new NotificationTemplateService(
       session.user._id,
       session.organization._id,
@@ -131,24 +131,24 @@ describe('Delete notification template by id - /notification-templates/:template
     await notificationTemplateService.createTemplate();
     await notificationTemplateService.createTemplate();
 
-    const { body: templates } = await session.testAgent.get(`/v1/notification-templates`);
+    const { body: templates } = await session.testAgent.get(`/v1/workflows`);
     expect(templates.data.length).to.equal(3);
 
-    await session.testAgent.delete(`/v1/notification-templates/${template1._id}`).send();
+    await session.testAgent.delete(`/v1/workflows/${template1._id}`).send();
 
-    const { body: templatesAfterDelete } = await session.testAgent.get(`/v1/notification-templates`);
+    const { body: templatesAfterDelete } = await session.testAgent.get(`/v1/workflows`);
 
     expect(templatesAfterDelete.data.length).to.equal(2);
   });
 
-  it('should fail for non-existing notification template', async function () {
+  it('should fail for non-existing workflow', async function () {
     const dummyId = '5f6651112efc19f33b34fc39';
-    const response = await session.testAgent.delete(`/v1/notification-templates/${dummyId}`).send();
+    const response = await session.testAgent.delete(`/v1/workflows/${dummyId}`).send();
 
     expect(response.body.message).to.contains('Could not find workflow with id');
   });
 
-  it('should delete the notification template along with the message templates', async function () {
+  it('should delete the workflow along with the message templates', async function () {
     const notificationTemplateService = new NotificationTemplateService(
       session.user._id,
       session.organization._id,
@@ -165,7 +165,7 @@ describe('Delete notification template by id - /notification-templates/:template
 
     expect(messageTemplates.length).to.equal(2);
 
-    await session.testAgent.delete(`/v1/notification-templates/${template._id}`).send();
+    await session.testAgent.delete(`/v1/workflows/${template._id}`).send();
 
     const deletedNotificationTemplate = await notificationTemplateRepository.findOne({
       _environmentId: session.environment._id,
@@ -222,7 +222,7 @@ describe('Delete notification template by id - /notification-templates/:template
       ],
     };
 
-    const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+    const { body } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
     const notificationTemplate = body.data;
 
     const notificationTemplateId = body.data._id;
@@ -249,7 +249,7 @@ describe('Delete notification template by id - /notification-templates/:template
 
     expect(isMessageTemplatePromoted).to.exist;
 
-    await session.testAgent.delete(`/v1/notification-templates/${notificationTemplateId}`).send();
+    await session.testAgent.delete(`/v1/workflows/${notificationTemplateId}`).send();
 
     const {
       body: { data },
