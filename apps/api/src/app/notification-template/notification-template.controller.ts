@@ -43,7 +43,7 @@ import { CreateNotificationTemplateQuery } from './queries';
 @Controller('/notification-templates')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
-@ApiTags('Workflows')
+@ApiTags('Notification Templates')
 export class NotificationTemplateController {
   constructor(
     private getNotificationTemplatesUsecase: GetNotificationTemplates,
@@ -59,6 +59,7 @@ export class NotificationTemplateController {
   @ApiOperation({
     summary: 'Get workflows',
     description: `Workflows were previously named notification templates`,
+    deprecated: true,
   })
   @ExternalApiAccessible()
   getNotificationTemplates(
@@ -81,6 +82,7 @@ export class NotificationTemplateController {
   @ApiOperation({
     summary: 'Update workflow',
     description: `Workflow was previously named notification template`,
+    deprecated: true,
   })
   @ExternalApiAccessible()
   async updateTemplateById(
@@ -115,6 +117,7 @@ export class NotificationTemplateController {
   @ApiOperation({
     summary: 'Delete workflow',
     description: `Workflow was previously named notification template`,
+    deprecated: true,
   })
   @ExternalApiAccessible()
   deleteTemplateById(@UserSession() user: IJwtPayload, @Param('templateId') templateId: string): Promise<boolean> {
@@ -133,6 +136,7 @@ export class NotificationTemplateController {
   @ApiOperation({
     summary: 'Get workflow',
     description: `Workflow was previously named notification template`,
+    deprecated: true,
   })
   @ExternalApiAccessible()
   getNotificationTemplateById(
@@ -156,6 +160,7 @@ export class NotificationTemplateController {
   @ApiOperation({
     summary: 'Create workflow',
     description: `Workflow was previously named notification template`,
+    deprecated: true,
   })
   @Roles(MemberRoleEnum.ADMIN)
   createNotificationTemplates(
@@ -190,6 +195,7 @@ export class NotificationTemplateController {
   @ApiOperation({
     summary: 'Update workflow status',
     description: `Workflow was previously named notification template`,
+    deprecated: true,
   })
   @ExternalApiAccessible()
   changeActiveStatus(
