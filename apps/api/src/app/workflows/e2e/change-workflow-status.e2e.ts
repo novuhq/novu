@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { NotificationTemplateRepository } from '@novu/dal';
 import { UserSession, NotificationTemplateService } from '@novu/testing';
 
-describe('Change template status by id - /notification-templates/:templateId/status (PUT)', async () => {
+describe('Change Workflow status by id - /workflows/:workflowId/status (PUT)', async () => {
   let session: UserSession;
   const notificationTemplateRepository = new NotificationTemplateRepository();
 
@@ -25,7 +25,7 @@ describe('Change template status by id - /notification-templates/:templateId/sta
 
     expect(beforeChange?.active).to.equal(false);
     expect(beforeChange?.draft).to.equal(true);
-    const { body } = await session.testAgent.put(`/v1/notification-templates/${template._id}/status`).send({
+    const { body } = await session.testAgent.put(`/v1/workflows/${template._id}/status`).send({
       active: true,
     });
     const found = await notificationTemplateRepository.findById(template._id, template._environmentId);

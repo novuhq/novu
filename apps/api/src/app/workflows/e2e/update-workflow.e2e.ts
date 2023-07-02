@@ -5,7 +5,7 @@ import { ChangeRepository } from '@novu/dal';
 import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from '../dto';
 import { WorkflowsResponse } from '../dto/notification-template-response.dto';
 
-describe('Update notification template by id - /notification-templates/:templateId (PUT)', async () => {
+describe('Update workflow by id - /workflows/:workflowId (PUT)', async () => {
   let session: UserSession;
   const changeRepository: ChangeRepository = new ChangeRepository();
 
@@ -14,7 +14,7 @@ describe('Update notification template by id - /notification-templates/:template
     await session.initialize();
   });
 
-  it('should update the notification template', async function () {
+  it('should update the workflow', async function () {
     const notificationTemplateService = new NotificationTemplateService(
       session.user._id,
       session.organization._id,
@@ -32,7 +32,7 @@ describe('Update notification template by id - /notification-templates/:template
         },
       ],
     };
-    const { body } = await session.testAgent.put(`/v1/notification-templates/${template._id}`).send(update);
+    const { body } = await session.testAgent.put(`/v1/workflows/${template._id}`).send(update);
     const foundTemplate: INotificationTemplate = body.data;
 
     expect(foundTemplate._id).to.equal(template._id);
@@ -60,12 +60,10 @@ describe('Update notification template by id - /notification-templates/:template
       identifier: template1.triggers[0].identifier,
     };
 
-    const { body } = await session.testAgent.put(`/v1/notification-templates/${template2._id}`).send(update);
+    const { body } = await session.testAgent.put(`/v1/workflows/${template2._id}`).send(update);
 
     expect(body.statusCode).to.equal(400);
-    expect(body.message).to.equal(
-      `Notification template with identifier ${template1.triggers[0].identifier} already exists`
-    );
+    expect(body.message).to.equal(`workflow with identifier ${template1.triggers[0].identifier} already exists`);
     expect(body.error).to.equal('Bad Request');
   });
 
@@ -81,7 +79,7 @@ describe('Update notification template by id - /notification-templates/:template
       identifier: newIdentifier,
     };
 
-    const { body } = await session.testAgent.put(`/v1/notification-templates/${template._id}`).send(update);
+    const { body } = await session.testAgent.put(`/v1/workflows/${template._id}`).send(update);
 
     const foundTemplate: INotificationTemplate = body.data;
 
@@ -123,7 +121,7 @@ describe('Update notification template by id - /notification-templates/:template
         },
       ],
     };
-    const { body } = await session.testAgent.put(`/v1/notification-templates/${template._id}`).send(update);
+    const { body } = await session.testAgent.put(`/v1/workflows/${template._id}`).send(update);
     const foundTemplate: INotificationTemplate = body.data;
 
     expect(foundTemplate._id).to.equal(template._id);
@@ -159,7 +157,7 @@ describe('Update notification template by id - /notification-templates/:template
         },
       ],
     };
-    const { body } = await session.testAgent.put(`/v1/notification-templates/${template._id}`).send(update);
+    const { body } = await session.testAgent.put(`/v1/workflows/${template._id}`).send(update);
     const foundTemplate: INotificationTemplate = body.data;
 
     expect(foundTemplate._id).to.equal(template._id);
@@ -194,7 +192,7 @@ describe('Update notification template by id - /notification-templates/:template
       ],
     };
 
-    const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+    const { body } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
 
     const template: INotificationTemplate = body.data;
 
@@ -228,9 +226,7 @@ describe('Update notification template by id - /notification-templates/:template
       notificationGroupId: session.notificationGroups[0]._id,
     };
 
-    const { body: updated } = await session.testAgent
-      .put(`/v1/notification-templates/${template._id}`)
-      .send(updateData);
+    const { body: updated } = await session.testAgent.put(`/v1/workflows/${template._id}`).send(updateData);
 
     const steps = updated.data.steps;
 
@@ -257,7 +253,7 @@ describe('Update notification template by id - /notification-templates/:template
       ],
     };
 
-    const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+    const { body } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
 
     const createdTemplate: WorkflowsResponse = body.data;
 
@@ -283,9 +279,7 @@ describe('Update notification template by id - /notification-templates/:template
       notificationGroupId: session.notificationGroups[0]._id,
     };
 
-    const { body: updated } = await session.testAgent
-      .put(`/v1/notification-templates/${template._id}`)
-      .send(updateData);
+    const { body: updated } = await session.testAgent.put(`/v1/workflows/${template._id}`).send(updateData);
 
     const updatedTemplate: WorkflowsResponse = updated.data;
 
