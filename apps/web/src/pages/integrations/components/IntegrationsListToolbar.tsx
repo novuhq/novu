@@ -23,10 +23,22 @@ const PlusSquare = styled.div`
   border-radius: 4px;
 `;
 
-export const IntegrationsListToolbar = ({ areIntegrationsLoading }: { areIntegrationsLoading: boolean }) => {
+export const IntegrationsListToolbar = ({
+  areIntegrationsLoading,
+  openCreateIntegration,
+}: {
+  areIntegrationsLoading: boolean;
+  openCreateIntegration: () => void;
+}) => {
   return (
     <IntegrationsListToolbarHolder>
-      <ButtonStyled id="add-provider" disabled={areIntegrationsLoading} data-test-id="add-provider" variant="subtle">
+      <ButtonStyled
+        id="add-provider"
+        onClick={openCreateIntegration}
+        disabled={areIntegrationsLoading}
+        data-test-id="add-provider"
+        variant="subtle"
+      >
         <PlusSquare data-square>+</PlusSquare>
         <Text gradient>Add a provider</Text>
       </ButtonStyled>
