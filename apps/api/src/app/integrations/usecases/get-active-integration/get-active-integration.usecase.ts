@@ -21,7 +21,7 @@ export class GetActiveIntegrations {
     });
 
     if (!activeIntegration.length) {
-      throw new NotFoundException(`No active integrations found for environment ${command.environmentId}`);
+      return [];
     }
 
     const selectedIntegrations = await this.getSelectedIntegrations(channelTypes, command);
@@ -29,7 +29,10 @@ export class GetActiveIntegrations {
     return this.mapBySelectedIntegration(activeIntegration, selectedIntegrations);
   }
 
-  private mapBySelectedIntegration(activeIntegration: IntegrationEntity[], selectedIntegrations: IntegrationEntity[]) {
+  private mapBySelectedIntegration(
+    activeIntegration: IntegrationEntity[],
+    selectedIntegrations: IntegrationEntity[]
+  ): GetActiveIntegrationResponseDto[] {
     return activeIntegration.map((integration) => {
       const selected = selectedIntegrations.find((selectedIntegration) => selectedIntegration._id === integration._id);
 
@@ -52,10 +55,10 @@ export class GetActiveIntegrations {
           );
         })
       )
-    ).filter(notEmpty);
+    ).filter(notNullish);
   }
 }
 
-export function notEmpty<TValue>(value: TValue | null | undefined): value is TValue {
+export function notNullish<TValue>(value: TValue | null | undefined): value is TValue {
   return value !== null && value !== undefined;
 }

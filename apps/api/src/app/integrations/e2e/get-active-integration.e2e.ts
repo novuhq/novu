@@ -41,8 +41,7 @@ describe('Get Active Integrations - /integrations/active (GET)', function () {
     await deleteAll(activeIntegrations, integrationRepository, session);
     const response = await session.testAgent.get(`/v1/integrations/active`);
 
-    expect(response.body.statusCode).to.equal(404);
-    expect(response.body.message).to.contain(`No active integrations found for environment ${session.environment._id}`);
+    expect(response.body.data).to.deep.equal([]);
   });
 
   it('should get active newly created integration with selected flag', async function () {
@@ -68,13 +67,30 @@ describe('Get Active Integrations - /integrations/active (GET)', function () {
 });
 
 function splitByChannels(activeIntegrations) {
-  const inAppIntegration = activeIntegrations.filter((integration) => integration.channel === ChannelTypeEnum.IN_APP);
-  const emailIntegration = activeIntegrations.filter((integration) => integration.channel === ChannelTypeEnum.EMAIL);
-  const smsIntegration = activeIntegrations.filter((integration) => integration.channel === ChannelTypeEnum.SMS);
-  const chatIntegration = activeIntegrations.filter((integration) => integration.channel === ChannelTypeEnum.CHAT);
-  const pushIntegration = activeIntegrations.filter((integration) => integration.channel === ChannelTypeEnum.PUSH);
+  return activeIntegrations.reduce(
+    (acc, integration) => {
+      if (integration.channel === ChannelTypeEnum.IN_APP) {
+        acc.inAppIntegration.push(integration);
+      } else if (integration.channel === ChannelTypeEnum.EMAIL) {
+        acc.emailIntegration.push(integration);
+      } else if (integration.channel === ChannelTypeEnum.SMS) {
+        acc.smsIntegration.push(integration);
+      } else if (integration.channel === ChannelTypeEnum.CHAT) {
+        acc.chatIntegration.push(integration);
+      } else if (integration.channel === ChannelTypeEnum.PUSH) {
+        acc.pushIntegration.push(integration);
+      }
 
-  return { inAppIntegration, emailIntegration, smsIntegration, chatIntegration, pushIntegration };
+      return acc;
+    },
+    {
+      inAppIntegration: [],
+      emailIntegration: [],
+      smsIntegration: [],
+      chatIntegration: [],
+      pushIntegration: [],
+    }
+  );
 }
 
 async function deleteAll(activeIntegrations, integrationRepository, session) {
