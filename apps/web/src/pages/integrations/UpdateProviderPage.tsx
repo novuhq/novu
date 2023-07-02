@@ -83,7 +83,7 @@ export function UpdateProviderPage() {
       .filter((credential) => {
         const value = credentials[credential.key];
 
-        return value === undefined || value === null || value.length === 0;
+        return !value;
       });
 
     return missingCredentials.length === 0;
