@@ -21,7 +21,7 @@ import {
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { MessageTemplate } from '../../../shared/dtos/message-template';
 
-export class CreateNotificationTemplateCommand extends EnvironmentWithUserCommand {
+export class CreateWorkflowCommand extends EnvironmentWithUserCommand {
   @IsMongoId()
   @IsDefined()
   notificationGroupId: string;

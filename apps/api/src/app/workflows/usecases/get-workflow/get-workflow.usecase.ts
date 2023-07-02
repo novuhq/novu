@@ -1,12 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
-import { GetNotificationTemplateCommand } from './get-notification-template.command';
+import { GetWorkflowCommand } from './get-workflow.command';
 
 @Injectable()
-export class GetNotificationTemplate {
+export class GetWorkflow {
   constructor(private notificationTemplateRepository: NotificationTemplateRepository) {}
 
-  async execute(command: GetNotificationTemplateCommand): Promise<NotificationTemplateEntity> {
+  async execute(command: GetWorkflowCommand): Promise<NotificationTemplateEntity> {
     const workflow = await this.notificationTemplateRepository.findById(command.workflowId, command.environmentId);
     if (!workflow) {
       throw new NotFoundException(`Workflow with id ${command.workflowId} not found`);

@@ -13,10 +13,10 @@ import {
 } from '@novu/application-generic';
 import { DeleteMessageTemplateCommand } from '../../../message-template/usecases/delete-message-template/delete-message-template.command';
 import { DeleteMessageTemplate } from '../../../message-template/usecases/delete-message-template/delete-message-template.usecase';
-import { GetNotificationTemplateCommand } from '../get-notification-template/get-notification-template.command';
+import { GetWorkflowCommand } from '../get-workflow/get-workflow.command';
 
 @Injectable()
-export class DeleteNotificationTemplate {
+export class DeleteWorkflow {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
     private createChange: CreateChange,
@@ -25,7 +25,7 @@ export class DeleteNotificationTemplate {
     private deleteMessageTemplate: DeleteMessageTemplate
   ) {}
 
-  async execute(command: GetNotificationTemplateCommand) {
+  async execute(command: GetWorkflowCommand) {
     try {
       const notificationTemplate = await this.notificationTemplateRepository.findOne({
         _environmentId: command.environmentId,

@@ -2,7 +2,7 @@ import { IsNumber } from 'class-validator';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
-export class GetNotificationTemplatesCommand extends EnvironmentWithUserCommand {
+export class GetWorkflowsCommand extends EnvironmentWithUserCommand {
   @IsNumber()
   page: number;
 
