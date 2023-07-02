@@ -7,6 +7,7 @@ import { ChannelTypeEnum, EmailProviderIdEnum, InAppProviderIdEnum, SmsProviderI
 import {
   addIntegrationIdentifierMigration,
   addIntegrationIdentifierMigrationBatched,
+  genIntegrationIdentificationDetails,
   getDisplayName,
   getIntegrationIdentifier,
 } from './add-integration-identifier-migration';
@@ -67,11 +68,10 @@ describe('Add default identifier and name to integration entity', function () {
     } as any);
 
     for (const integration of updatedIntegration) {
-      const displayName = getDisplayName(integration.providerId);
-      const integrationIdentifier = await getIntegrationIdentifier(environmentRepository, integration);
+      const { name, identifier } = genIntegrationIdentificationDetails({ providerId: integration.providerId });
 
-      expect(integration.name).to.equal(displayName);
-      expect(integration.identifier).to.equal(integrationIdentifier);
+      expect(integration.name).to.equal(name);
+      expect(integration.identifier).to.contain(identifier.split('-')[0]);
     }
   });
 
@@ -120,11 +120,10 @@ describe('Add default identifier and name to integration entity', function () {
     } as any);
 
     for (const integration of updatedIntegration) {
-      const displayName = getDisplayName(integration.providerId);
-      const integrationIdentifier = await getIntegrationIdentifier(environmentRepository, integration);
+      const { name, identifier } = genIntegrationIdentificationDetails({ providerId: integration.providerId });
 
-      expect(integration.name).to.equal(displayName);
-      expect(integration.identifier).to.equal(integrationIdentifier);
+      expect(integration.name).to.equal(name);
+      expect(integration.identifier).to.contain(identifier.split('-')[0]);
     }
   });
 });

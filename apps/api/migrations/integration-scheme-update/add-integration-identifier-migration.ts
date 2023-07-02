@@ -1,5 +1,8 @@
-import { EnvironmentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import * as shortid from 'shortid';
+import slugify from 'slugify';
+
 import { providers } from '@novu/shared';
+import { EnvironmentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
 
 export const ENVIRONMENT_NAME_TO_SHORT_NAME = { ['Development']: 'dev', ['Production']: 'prod', ['undefined']: '' };
 
@@ -70,26 +73,33 @@ export async function addIntegrationIdentifierMigration() {
 
 async function getUpdatePayload(integration: IntegrationEntity, environmentRepo: EnvironmentRepository) {
   const updatePayload: Partial<IntegrationEntity> = {};
+  const { name, identifier } = genIntegrationIdentificationDetails({ providerId: integration.providerId });
 
   if (!integration.name) {
-    updatePayload.name = getDisplayName(integration.providerId);
+    updatePayload.name = name;
   }
 
   if (!integration.identifier) {
-    updatePayload.identifier = await getIntegrationIdentifier(environmentRepo, integration);
+    updatePayload.identifier = identifier;
   }
 
   return updatePayload;
 }
 
-export async function getIntegrationIdentifier(environmentRepo, integration) {
-  const environment = await environmentRepo.findOne({ _id: integration._environmentId });
-  const environmentName = ENVIRONMENT_NAME_TO_SHORT_NAME[environment?.name || 'undefined'];
-  const environmentNameSuffix = environmentName ? `_${environmentName}` : '';
+export function genIntegrationIdentificationDetails({
+  providerId,
+  name: existingName,
+  identifier: existingIdentifier,
+}: {
+  providerId: string;
+  name?: string;
+  identifier?: string;
+}) {
+  const providerIdCapitalized = `${providerId.charAt(0).toUpperCase()}${providerId.slice(1)}`;
+  const defaultName = providers.find((provider) => provider.id === providerId)?.displayName ?? providerIdCapitalized;
 
-  return integration.providerId + environmentNameSuffix;
-}
+  const name = existingName ?? defaultName;
+  const identifier = existingIdentifier ?? `${slugify(name, { lower: true, strict: true })}-${shortid.generate()}`;
 
-export function getDisplayName(providerId: string) {
-  return providers.find((provider) => provider.id === providerId)?.displayName || providerId;
+  return { name, identifier };
 }
