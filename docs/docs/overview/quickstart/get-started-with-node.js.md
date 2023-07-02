@@ -67,7 +67,7 @@ The workflow includes the following:
   | In-App | Text |
 
 <aside>
-🔑 **Note:** Proper authorization needs to be set for the Chat channel for subscribers.
+🔑 Note: Proper authorization needs to be set for the Chat channel for subscribers.
 
 </aside>
 
@@ -96,7 +96,7 @@ The recipients of a triggered notification are called subscribers.
 
 Click “Subscribers” on the left sidebar of the Novu dashboard to see all subscribers. By default, the dashboard will display a subscriber, as you were added automatically during sign-up.
 
-![subscriber_id.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1686776584/subscriber_id_tzkwjh.png)
+![subscriber_id.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1688331839/Screenshot_2023-07-03_at_0.02.53_jmkhi3.png)
 
 Now, let's create a subscriber on Novu. Copy and paste the following code to do so:
 
@@ -122,8 +122,6 @@ node index.js
 
 You should see the subscriber on your Novu dashboard.
 
-![Screenshot 2023-05-14 at 11.06.38.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1685466979/guides/Screenshot_2023-05-14_at_11.06.38_ugvmc0.png)
-
 I’d like to publicly announce that `abc@gmail.com` is a random unlikely email your users will have. To update this to an alternative email, you can call the `updateSubscriber` method like so:
 
 ```jsx
@@ -139,7 +137,7 @@ await novu.subscribers.update('7789', {
 Other valid fields that can be updated are `phone`, `avatar`, and `data` . The `data` field can accept an array of metadata that you want to attach to the subscriber.
 
 <aside>
-🔑  **Note:** To make all of your app users subscribers, you need to programmatically add them to Novu.
+🔑  Note: To make all of your app users subscribers, you need to programmatically add them to Novu.
 
 </aside>
 

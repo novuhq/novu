@@ -3,6 +3,9 @@ sidebar_position: 4
 sidebar_label: Get started with Angular
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 # Angular Quickstart
 
 Learn how to use Novu to quickly send multi-channel (SMS, Email, Chat, Push) notifications and integrate a rich, customizable and ready-to-use real-time UI In-App notification center in Angular apps.
@@ -276,7 +279,7 @@ You should now see a **bell button** that opens the notification center when cli
 ![uv7tvfo08i8a0h2ppulr.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1686776584/uv7tvfo08i8a0h2ppulr_ukyj5c.png)
 
 <aside>
-📌 **Note:** There are no notifications because none has been triggered yet. When notifications are sent to a subscriber, it will show up in the UI. Next, we'll learn how to trigger notifications.
+📌 Note: There are no notifications because none has been triggered yet. When notifications are sent to a subscriber, it will show up in the UI. Next, we'll learn how to trigger notifications.
 
 </aside>
 
@@ -319,13 +322,13 @@ I’ll briefly explain the function of each label in the image above.
 
 - **1 - Preview**: Shows you a glimpse of how each notification item will look like in the Notification Center UI.
 - **2 - Avatar:** If turned on, each notification item will show the avatar of the subscriber.
-- 3 - **Action:** With this, you can add a primary and secondary call to action button to each notification item.
+- **3 - Action:** With this, you can add a primary and secondary call to action button to each notification item.
 - **4 - Notification Feeds:** This displays a stream of specific notifications. You can have multiple feeds to show specific notifications in multiple tabs.
 - **5 - Redirect URL** - This is the URL to which a subscriber can be directed when they click on a notification item.
 - **6 - Filter** - This feature allows you to configure the criteria for delivering notifications. For instance, you can apply a filter based on a subscriber's online status to send them an email if they were online within the last hour. Read [more about filters](https://docs.novu.co/platform/step-filter/#subscriber-seen--read-filters).
 - **Editor** - You can add text that you want displayed in each notification item. Additionally, you can specify custom variables using `{{ }}`. This means you can inject variables from your code into a notification item's text via a payload.
 
-1. Feel free to add only text for now and rename the notification template to `Onboarding In App`. It automatically creates a slug-like identifier that will be needed in later steps to trigger a notification.
+Feel free to add only text for now and rename the notification template to `Onboarding In App`. It automatically creates a slug-like identifier that will be needed in later steps to trigger a notification.
 
 ![Screenshot 2023-05-21 at 09.33.43.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1686776584/Screenshot_2023-05-21_at_09.33.43_ujx2td.png)
 
@@ -337,38 +340,47 @@ Next, we’ll learn how to create subscribers on Novu - _Recipients of Notificat
 
 Click **Subscribers** on the left sidebar of the [Novu dashboard](https://web.novu.co/subscribers) to see all subscribers. By default, the dashboard will display a subscriber, as you were added automatically during sign up.
 
-![subscribers.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1686776584/subscribers_ppir3w.png)
+![subscribers.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1688331839/Screenshot_2023-07-03_at_0.02.53_jmkhi3.png)
 
 Now, let's create a subscriber on Novu.
 
 Novu has a plethora of backend SDKs (Node.js, PHP, .NET, Go, Ruby, Python and Kotlin) to choose from to create a subscriber programmatically. This is the recommended method.
 
-<iframe width="800" height="450" src="https://codesandbox.io/p/sandbox/create-subscriber-m5uibf?file=%2Findex.js%3A1%2C1&embed=1" allowfullscreen></iframe>
+<Tabs groupId="language" queryString>
 
-```jsx
+  <TabItem value="js" label="Node.js">
+
+```javascript
 import { Novu } from '@novu/node';
 
 const novu = new Novu('<YOUR_NOVU_API_KEY>');
 
-await novu.subscribers.identify('132', {
-  email: 'john.doe@domain.com',
-  firstName: 'John',
-  lastName: 'Doe',
-  phone: '+13603963366',
+await novu.subscribers.identify('123', {
+  firstName: 'Emil',
+  lastName: 'Pearce',
+  returnUser: true,
 });
 ```
 
+  </TabItem>
+  <TabItem value="php" label="PHP">
+
 ```php
-// Create subscriber
+use Novu\SDK\Novu;
+
+$novu = new Novu('<NOVU_API_KEY>');
+
 $novu->createSubscriber([
-    'subscriberId' => '7789', // replace with system_internal_user_id
-    'email' => 'abc@gmail.com',
-    'firstName' => 'John', // optional
-    'lastName' => 'Doe', // optional
-])->toArray();
+    'subscriberId' => '123',
+    'firstName' => 'Emil',
+    'lastName' => 'Pearce'
+]);
 ```
 
-<iframe width="800" height="450" src="[https://codesandbox.io/p/sandbox/clever-matan-m5uibf?embed=1](https://codesandbox.io/p/sandbox/clever-matan-m5uibf?embed=1)" allowfullscreen></iframe>
+  </TabItem>
+</Tabs>
+
+<iframe width="800" height="450" src="https://codesandbox.io/p/sandbox/create-subscriber-m5uibf?file=%2Findex.js%3A1%2C1&embed=1" allowfullscreen></iframe>
 
 Obtain your API key from your [Novu dashboard.](https://web.novu.co/settings) Replace `YOUR_NOVU_API_KEY_HERE` with it.
 
@@ -376,36 +388,51 @@ Now check your Novu dashboard. You should see the recently created subscriber.
 
 You can also update the subscriber info like so:
 
-<iframe width="800" height="450" src="https://codesandbox.io/p/sandbox/create-subscriber-forked-r625n3?file=%2Findex.js%3A21%2C1&embed=1" allowfullscreen></iframe>
+<Tabs groupId="language" queryString>
 
-```jsx
+  <TabItem value="js" label="Node.js">
+
+```javascript
 import { Novu } from '@novu/node';
 
 const novu = new Novu('<YOUR_NOVU_API_KEY>');
 
-await novu.subscribers.update('132', {
-  email: 'janedoe@domain.com', // new email
-  phone: '+19874567832', // new phone
+await novu.subscribers.update('123', {
+  firstName: 'Saurabh', // new first name
+  lastName: 'Sumit', // new last name
 });
 ```
 
-```PHP
-// Update subscriber detail
-$subscriberId = '7789';
-$novu->updateSubscriber($subscriberId, [
-    'email' => 'validemail@gmail.com',  // replace with valid email
-    'firstName' => '<insert-firstname>', // optional
-    'lastName' => '<insert-lastname>', // optional
+  </TabItem>
+  <TabItem value="php" label="PHP">
+
+```php
+use Novu\SDK\Novu;
+
+$novu = new Novu('<NOVU_API_KEY>');
+
+$novu->updateSubscriber('123', [
+    // new firstName
+    'firstName' => 'Saurabh',
+    // new lastName
+    'lastName' => 'Sumit',
 ])->toArray();
 ```
+
+</TabItem>
+</Tabs>
+
+<iframe width="800" height="450" src="https://codesandbox.io/p/sandbox/create-subscriber-forked-r625n3?file=%2Findex.js%3A21%2C1&embed=1" allowfullscreen></iframe>
 
 ## Trigger A Notification
 
 To trigger a notification, simply run the codesandbox below with the correct credentials.
 
-<iframe width="800" height="450" src="https://codesandbox.io/p/sandbox/create-subscriber-forked-x4tkwj?embed=1" allowfullscreen></iframe>
+<Tabs groupId="language" queryString>
 
-```jsx
+  <TabItem value="js" label="Node.js">
+
+```javascript
 import { Novu } from '@novu/node';
 
 const novu = new Novu('<YOUR_NOVU_API_KEY>');
@@ -416,6 +443,24 @@ await novu.trigger('onboarding-in-app', {
   },
 });
 ```
+
+  </TabItem>
+  <TabItem value="php" label="PHP">
+
+```php
+$novu->triggerEvent([
+    'name' => 'onboarding-in-app',
+    'payload' => [],
+    'to' => [
+        'subscriberId' => '132'
+    ]
+])->toArray();
+```
+
+</TabItem>
+</Tabs>
+
+<iframe width="800" height="450" src="https://codesandbox.io/p/sandbox/create-subscriber-forked-x4tkwj?embed=1" allowfullscreen></iframe>
 
 `onboarding-in-app` is the Notification workflow identifier we created earlier.
 
