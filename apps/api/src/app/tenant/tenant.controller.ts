@@ -7,6 +7,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
   Put,
   Query,
@@ -26,26 +27,28 @@ import { IJwtPayload } from '@novu/shared';
 
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { UserSession } from '../shared/framework/user.decorator';
-import { CreateTenantResponseDto } from './dtos/create-tenant-response.dto';
 import { CreateTenant } from './usecases/create-tenant/create-tenant.usecase';
 import { CreateTenantCommand } from './usecases/create-tenant/create-tenant.command';
-import { CreateTenantRequestDto } from './dtos/create-tenant-request.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ApiResponse } from '../shared/framework/response.decorator';
-import { GetTenantResponseDto } from './dtos/get-tenant.response';
 import { GetTenant } from './usecases/get-tenant/get-tenant.usecase';
 import { GetTenantCommand } from './usecases/get-tenant/get-tenant.command';
-import { UpdateTenantResponseDto } from './dtos/update-tenant-response.dto';
-import { UpdateTenantRequestDto } from './dtos/update-tenant-request.dto';
 import { UpdateTenant } from './usecases/update-tenant/update-tenant.usecase';
 import { DeleteTenantCommand } from './usecases/delete-tenant/delete-tenant.command';
 import { DeleteTenant } from './usecases/delete-tenant/delete-tenant.usecase';
 import { UpdateTenantCommand } from './usecases/update-tenant/update-tenant.command';
 import { ApiOkPaginatedResponse } from '../shared/framework/paginated-ok-response.decorator';
 import { PaginatedResponseDto } from '../shared/dtos/pagination-response';
-import { GetTenantsRequestDto } from './dtos/get-tenants.request.dto';
 import { GetTenants } from './usecases/get-tenants/get-tenants.usecase';
 import { GetTenantsCommand } from './usecases/get-tenants/get-tenants.command';
+import {
+  UpdateTenantResponseDto,
+  GetTenantResponseDto,
+  GetTenantsRequestDto,
+  UpdateTenantRequestDto,
+  CreateTenantResponseDto,
+  CreateTenantRequestDto,
+} from './dtos';
 
 @Controller('/tenants')
 @ApiTags('Tenants')
@@ -89,6 +92,9 @@ export class TenantController {
     summary: 'Get tenant',
     description: `Get tenant by your internal id used to identify the tenant`,
   })
+  @ApiNotFoundResponse({
+    description: 'The tenant with the identifier provided does not exist in the database so it can not be deleted.',
+  })
   @ExternalApiAccessible()
   getTenantById(
     @UserSession() user: IJwtPayload,
@@ -128,12 +134,15 @@ export class TenantController {
     );
   }
 
-  @Put('/:identifier')
+  @Patch('/:identifier')
   @ExternalApiAccessible()
   @ApiResponse(UpdateTenantResponseDto)
   @ApiOperation({
     summary: 'Update tenant',
     description: 'Update tenant by your internal id used to identify the tenant',
+  })
+  @ApiNotFoundResponse({
+    description: 'The tenant with the identifier provided does not exist in the database so it can not be deleted.',
   })
   async updateTenant(
     @UserSession() user: IJwtPayload,

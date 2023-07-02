@@ -21,13 +21,15 @@ describe('Update Tenant - /tenants/:tenantId (PUT)', function () {
       data: { test1: 'test value1', test2: 'test value2' },
     });
 
-    await updateTenant({
+    const response = await updateTenant({
       session,
       identifier: 'identifier_123',
       newIdentifier: 'newIdentifier',
       name: 'new_name',
       data: { test1: 'new value', test2: 'new value2' },
     });
+
+    expect(response?.status).to.equal(200);
 
     const updatedTenant = await tenantRepository.findOne({
       _environmentId: session.environment._id,
@@ -94,8 +96,30 @@ describe('Update Tenant - /tenants/:tenantId (PUT)', function () {
 
       expectedException();
     } catch (e) {
+      expect(e.response.status).to.equal(409);
       expect(e?.response?.data?.message || e?.message).to.contains(
         `Tenant with identifier: identifier_456 already exists under environment ${session.environment._id}`
+      );
+    }
+  });
+
+  it('should throw exception id tenant was not found under environment', async function () {
+    await tenantRepository.create({
+      _environmentId: session.environment._id,
+      identifier: 'identifier_123',
+    });
+
+    try {
+      await updateTenant({
+        session,
+        identifier: 'identifier_1234',
+      });
+
+      expectedException();
+    } catch (e) {
+      expect(e.response.status).to.equal(404);
+      expect(e?.response?.data?.message || e?.message).to.contains(
+        `Tenant with identifier: identifier_1234 does not exist under environment ${session.environment._id}`
       );
     }
   });
@@ -120,7 +144,7 @@ export async function updateTenant({
 }): Promise<AxiosResponse> {
   const axiosInstance = axios.create();
 
-  return await axiosInstance.put(
+  return await axiosInstance.patch(
     `${session.serverUrl}/v1/tenants/${identifier}`,
     {
       identifier: newIdentifier,

@@ -21,8 +21,8 @@ describe('Create Tenant - /tenants (POST)', function () {
       data: { test1: 'test value1', test2: 'test value2' },
     });
 
-    const { data } = response;
-    expect(data).to.be.ok;
+    expect(response.status).to.equal(201);
+    expect(response.data).to.be.ok;
 
     const createdTenant = await tenantRepository.findOne({
       _environmentId: session.environment._id,
@@ -48,6 +48,7 @@ describe('Create Tenant - /tenants (POST)', function () {
 
       throw new Error('');
     } catch (e) {
+      expect(e.response.status).to.equal(409);
       expect(e.response.data.message).to.contains(
         `Tenant with identifier: identifier_123 already exists under environment ${session.environment._id}`
       );

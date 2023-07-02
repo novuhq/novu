@@ -53,7 +53,7 @@ describe('Delete Tenant - /tenants/:identifier (DELETE)', function () {
       throw new Error('');
     } catch (e) {
       expect(e?.response?.data?.message || e?.message).to.contains(
-        `Tenant with identifier: ${identifier} is not exists under environment ${session.environment._id}`
+        `Tenant with identifier: ${identifier} does not exist under environment ${session.environment._id}`
       );
     }
   });

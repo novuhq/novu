@@ -13,7 +13,7 @@ describe('Get Tenants List- /tenants (GET)', function () {
     await session.initialize();
   });
 
-  it('should get a newly created tenants', async function () {
+  it('should get the newly created tenants', async function () {
     for (let i = 0; i < 5; i++) {
       await tenantRepository.create({
         _environmentId: session.environment._id,

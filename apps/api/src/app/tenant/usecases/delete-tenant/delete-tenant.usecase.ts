@@ -4,23 +4,21 @@ import { TenantRepository, DalException } from '@novu/dal';
 
 import { DeleteTenantCommand } from './delete-tenant.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { GetTenantCommand } from '../get-tenant/get-tenant.command';
+import { GetTenant } from '../get-tenant/get-tenant.usecase';
 
 @Injectable()
 export class DeleteTenant {
-  constructor(private tenantRepository: TenantRepository) {}
+  constructor(private tenantRepository: TenantRepository, private getTenantUsecase: GetTenant) {}
 
   async execute(command: DeleteTenantCommand) {
-    const tenant = await this.tenantRepository.findOne({
-      environmentId: command.environmentId,
-      organizationId: command.organizationId,
-      identifier: command.identifier,
-    });
-
-    if (!tenant) {
-      throw new NotFoundException(
-        `Tenant with identifier: ${command.identifier} is not exists under environment ${command.environmentId}`
-      );
-    }
+    const tenant = await this.getTenantUsecase.execute(
+      GetTenantCommand.create({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        identifier: command.identifier,
+      })
+    );
 
     try {
       return await this.tenantRepository.delete({

@@ -1,23 +1,21 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { TenantRepository } from '@novu/dal';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { TenantRepository, TenantEntity } from '@novu/dal';
 import { UpdateTenantCommand } from './update-tenant.command';
-import { TenantEntity } from '@novu/dal';
+import { GetTenantCommand } from '../get-tenant/get-tenant.command';
+import { GetTenant } from '../get-tenant/get-tenant.usecase';
 
 @Injectable()
 export class UpdateTenant {
-  constructor(private tenantRepository: TenantRepository) {}
+  constructor(private tenantRepository: TenantRepository, private getTenantUsecase: GetTenant) {}
 
   async execute(command: UpdateTenantCommand): Promise<TenantEntity> {
-    const tenant = await this.tenantRepository.findOne({
-      _environmentId: command.environmentId,
-      identifier: command.identifier,
-    });
-
-    if (!tenant) {
-      throw new NotFoundException(
-        `Tenant with identifier: ${command.identifier} doesn't exist under environment ${command.environmentId}`
-      );
-    }
+    const tenant = await this.getTenantUsecase.execute(
+      GetTenantCommand.create({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        identifier: command.identifier,
+      })
+    );
 
     const updatePayload: Partial<TenantEntity> = {};
 
@@ -71,7 +69,7 @@ export class UpdateTenant {
     });
 
     if (tenantExist) {
-      throw new BadRequestException(
+      throw new ConflictException(
         `Tenant with identifier: ${identifier} already exists under environment ${environmentId}`
       );
     }
