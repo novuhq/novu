@@ -151,6 +151,7 @@ export interface IIntegratedProvider {
   logoFileName: ILogoFileName;
   betaVersion: boolean;
   novu?: boolean;
+  environmentId?: string;
 }
 
 export interface IntegrationEntity {
