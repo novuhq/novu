@@ -1,16 +1,19 @@
 import { Injectable } from '@nestjs/common';
 
-import { GetFeatureFlagCommand, FeatureFlagCommand } from './get-feature-flag.command';
-
+import {
+  GetFeatureFlagCommand,
+  FeatureFlagCommand,
+} from './get-feature-flag.command';
 import { FeatureFlagsService } from '../../services/feature-flags.service';
-import { FeatureFlagsKeysEnum } from '../../types';
+import { FeatureFlagsKeysEnum } from '../../services/types';
 
 @Injectable()
 export class GetFeatureFlag {
   constructor(private featureFlagsService: FeatureFlagsService) {}
 
   async execute<T>(command: GetFeatureFlagCommand<T>): Promise<T> {
-    const { defaultValue, key, environmentId, organizationId, userId } = command;
+    const { defaultValue, key, environmentId, organizationId, userId } =
+      command;
 
     const context = {
       environmentId,
@@ -21,10 +24,15 @@ export class GetFeatureFlag {
     return await this.featureFlagsService.get(key, defaultValue, context);
   }
 
-  async isTemplateStoreEnabled(featureFlagCommand: FeatureFlagCommand): Promise<boolean> {
+  async isTemplateStoreEnabled(
+    featureFlagCommand: FeatureFlagCommand
+  ): Promise<boolean> {
     const value = process.env.IS_TEMPLATE_STORE_ENABLED;
     const fallbackValue = false;
-    const defaultValue = this.prepareBooleanStringFeatureFlag(value, fallbackValue);
+    const defaultValue = this.prepareBooleanStringFeatureFlag(
+      value,
+      fallbackValue
+    );
     const key = FeatureFlagsKeysEnum.IS_TEMPLATE_STORE_ENABLED;
 
     const command = this.buildCommand(featureFlagCommand, key, defaultValue);
@@ -32,10 +40,15 @@ export class GetFeatureFlag {
     return await this.execute(command);
   }
 
-  async isMultiProviderConfigurationEnabled(featureFlagCommand: FeatureFlagCommand): Promise<boolean> {
+  async isMultiProviderConfigurationEnabled(
+    featureFlagCommand: FeatureFlagCommand
+  ): Promise<boolean> {
     const value = process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
     const fallbackValue = false;
-    const defaultValue = this.prepareBooleanStringFeatureFlag(value, fallbackValue);
+    const defaultValue = this.prepareBooleanStringFeatureFlag(
+      value,
+      fallbackValue
+    );
     const key = FeatureFlagsKeysEnum.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
 
     const command = this.buildCommand(featureFlagCommand, key, defaultValue);
@@ -43,10 +56,15 @@ export class GetFeatureFlag {
     return await this.execute(command);
   }
 
-  async isTopicNotificationEnabled(featureFlagCommand: FeatureFlagCommand): Promise<boolean> {
+  async isTopicNotificationEnabled(
+    featureFlagCommand: FeatureFlagCommand
+  ): Promise<boolean> {
     const value = process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED;
     const fallbackValue = true; // It is a permanent feature now
-    const defaultValue = this.prepareBooleanStringFeatureFlag(value, fallbackValue);
+    const defaultValue = this.prepareBooleanStringFeatureFlag(
+      value,
+      fallbackValue
+    );
     const key = FeatureFlagsKeysEnum.IS_TOPIC_NOTIFICATION_ENABLED;
 
     const command = this.buildCommand(featureFlagCommand, key, defaultValue);
@@ -66,7 +84,10 @@ export class GetFeatureFlag {
     };
   }
 
-  private prepareBooleanStringFeatureFlag(value: string | undefined, defaultValue: boolean): boolean {
+  private prepareBooleanStringFeatureFlag(
+    value: string | undefined,
+    defaultValue: boolean
+  ): boolean {
     if (!value) {
       return defaultValue;
     }
