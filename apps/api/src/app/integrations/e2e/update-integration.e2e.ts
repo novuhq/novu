@@ -3,6 +3,8 @@ import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 
+const IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
+
 describe('Update Integration - /integrations/:integrationId (PUT)', function () {
   let session: UserSession;
   const integrationRepository = new IntegrationRepository();
@@ -11,6 +13,11 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
+    process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = 'true';
+  });
+
+  afterEach(async () => {
+    process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
   });
 
   it('should update newly created integration', async function () {
@@ -64,7 +71,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
 
     const { body } = await session.testAgent.put(`/v1/integrations/${integrationOne._id}`).send(payload);
 
-    expect(body.statusCode).to.equal(400);
+    expect(body.statusCode).to.equal(409);
     expect(body.message).to.equal('Integration with identifier already exists');
   });
 
