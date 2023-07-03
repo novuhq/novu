@@ -18,11 +18,11 @@ describe('Get Active Integrations - /integrations/active (GET)', function () {
     const { inAppIntegration, emailIntegration, smsIntegration, chatIntegration, pushIntegration } =
       splitByChannels(activeIntegrations);
 
-    expect(inAppIntegration.length).to.equal(1);
-    expect(emailIntegration.length).to.equal(1);
-    expect(smsIntegration.length).to.equal(1);
-    expect(pushIntegration.length).to.equal(1);
-    expect(chatIntegration.length).to.equal(2);
+    expect(inAppIntegration.length).to.equal(2);
+    expect(emailIntegration.length).to.equal(2);
+    expect(smsIntegration.length).to.equal(2);
+    expect(pushIntegration.length).to.equal(2);
+    expect(chatIntegration.length).to.equal(4);
 
     expect(inAppIntegration[0].selected).to.equal(true);
     expect(emailIntegration[0].selected).to.equal(true);
@@ -56,7 +56,7 @@ describe('Get Active Integrations - /integrations/active (GET)', function () {
     const activeIntegrations = (await session.testAgent.get(`/v1/integrations/active`)).body.data;
     const { emailIntegration } = splitByChannels(activeIntegrations);
 
-    expect(emailIntegration.length).to.equal(2);
+    expect(emailIntegration.length).to.equal(3);
 
     const oneSelected = emailIntegration.some((integration) => integration.selected === true);
     const oneNotSelected = emailIntegration.some((integration) => integration.selected === false);
@@ -94,10 +94,14 @@ function splitByChannels(activeIntegrations) {
 }
 
 async function deleteAll(activeIntegrations, integrationRepository, session) {
-  for (const activeIntegration of activeIntegrations) {
-    const test = await integrationRepository.delete({
-      _id: activeIntegration._id,
-      _environmentId: session.environment._id,
+  const environmentsIds = activeIntegrations
+    .map((integration) => integration._environmentId)
+    .filter((value, index, self) => self.indexOf(value) === index);
+
+  for (const environmentId of environmentsIds) {
+    await integrationRepository.deleteMany({
+      _environmentId: environmentId,
+      _organizationId: session.organization._id,
     });
   }
 }

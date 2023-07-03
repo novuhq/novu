@@ -79,12 +79,12 @@ export class IntegrationsController {
   @Get('/active')
   @ApiOkResponse({
     type: IntegrationResponseDto,
-    description: 'The list of active integrations belonging to the environment that are successfully returned.',
+    description: 'The list of active integrations belonging to the organization that are successfully returned.',
   })
   @ApiOperation({
     summary: 'Get active integrations',
     description:
-      'Return all the active integrations the user has created for that environment. Review v.0.17.0 changelog for a breaking change',
+      'Return all the active integrations the user has created for that organization. Review v.0.17.0 changelog for a breaking change',
   })
   @ExternalApiAccessible()
   async getActiveIntegrations(@UserSession() user: IJwtPayload): Promise<GetActiveIntegrationResponseDto[]> {
