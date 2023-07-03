@@ -62,7 +62,7 @@ npm install @novu/notification-center-angular
 yarn add @novu/notification-center-angular
 ```
 
-## **Configuring Application Environments**
+## Configuring Application Environments
 
 Using the Angular CLI, start by running the [generate environments command](https://angular.io/cli/generate#environments-command)
 
@@ -92,9 +92,9 @@ Copy and paste the same code into `my-app/src/environments/environment.developme
 
 These variables are needed for the `GET` request our notification center will make to Novu’s API to actually push notifications into the feed.
 
-## **Adding Novu Module**
+## Adding Novu Module
 
-Now, navigate to the `app.module.ts` \***\*file (my-app/src/app/app.module.ts)**:\*\*
+Now, navigate to the `app.module.ts` file `(my-app/src/app/app.module.ts)`
 
 - Import `CUSTOM_ELEMENTS_SCHEMA` from `'@angular/core'`
 - Add Novu’s notification center module
@@ -117,14 +117,13 @@ export class AppModule {}
 
 Head to `my-app/src/app/app.component.ts` file.
 
-<aside>
 ⚠️ The `app.component.ts` file is a critical part of an Angular application, as it 
 defines the root component and provides the foundation for the rest of 
 the app's functionality.
 
-</aside>
+Now, we are going to import the `environment` variables to make them accessible in the `app.component.html` and the `styles` properties of our notification center
 
-Now, we are going to import the `environment` variables to make them accessible in the `app.component.html` and the `styles` properties of our notification center (there are many properties, but you can discover them later on)
+(there are many properties, but you can discover them later on)
 
 ```tsx
 import { Component } from '@angular/core';
@@ -188,21 +187,24 @@ export class AppComponent {
 }
 ```
 
-The Angular component is generated as a wrapper around the original React component. This approach is clever, as it allows Novu's engineers to focus on creating and developing things in the React way. Additionally, many other frameworks can still use the created components using the wrapping approach.
+The Angular component is generated as a wrapper around the original React component. 
+This approach is clever, as it allows Novu's engineers to focus on creating and developing things in the React way.
 
-We need to add `@types/react` as dev dependency for the angular component to work properly.
+Additionally, many other frameworks can still use the created components using the wrapping approach.
+
+We need to add `@types/react` as dev dependency for the angular component to work properly.
 
 Open your terminal and navigate to the app root directory and type the following:
 
 ```console
 npm i [@types/react](https://github.com/types/react)
 
-// or
+or
 
 yarn add [@types/react](https://github.com/types/react)
 ```
 
-Now head to the `my-app/tsconfig.json` file
+Now head to the `my-app/tsconfig.json` file.
 
 And we’re going to add `"allowSyntheticDefaultImports": true` to the `compilerOptions` array.
 
@@ -261,7 +263,7 @@ Paste the following into your `app.component.html` file:
   </div>
 ```
 
-And in the `<style>` tag, we also want to add some margin to our `#bell-icon` so that it looks good next to the other icons.
+And in the `<style>` tag, we also want to add some margin to our `#bell-icon`so that it looks good next to the other icons.
 
 ```css
 .toolbar #bell-icon {
@@ -272,14 +274,15 @@ And in the `<style>` tag, we also want to add some margin to our `
 
 Run your app again. Now you should see the bell icon (the notification center) in the toolbar section of your app.
 
-You should now see a **bell button** that opens the notification center when clicked. This bell can be customized to your preference.
+You should now see a **bell button** that opens the notification center when clicked.
+This bell can be customized to your preference.
 
 ![rmovxzn2ktdizdsldgsl.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1686776582/rmovxzn2ktdizdsldgsl_cbcmf5.png)
 
 ![uv7tvfo08i8a0h2ppulr.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1686776584/uv7tvfo08i8a0h2ppulr_ukyj5c.png)
 
 <aside>
-📌 Note: There are no notifications because none has been triggered yet. When notifications are sent to a subscriber, it will show up in the UI. Next, we'll learn how to trigger notifications.
+Note: There are no notifications because none has been triggered yet. When notifications are sent to a subscriber, it will show up in the UI. Next, we'll learn how to trigger notifications.
 
 </aside>
 
@@ -288,7 +291,7 @@ You should now see a **bell button** that opens the notification center when cli
 The first step to trigger notifications is to create a notification workflow. A workflow is like a map that holds the entire flow of messages sent to the subscriber.
 
 <aside>
-📌 The recipients of a triggered notification are called subscribers.
+The recipients of a triggered notification are called subscribers.
 
 </aside>
 
@@ -476,7 +479,7 @@ export const environment = {
 
 Check your app again. You should see the recently triggered notification!
 
-## **Next Steps**
+## Next Steps
 
 Great job! If you've reached this point, you should now have successfully set up the notification center, created a subscriber, notification template, configured a channel provider and triggered a notification in your Angular application.
 

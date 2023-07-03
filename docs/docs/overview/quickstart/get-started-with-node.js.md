@@ -7,14 +7,14 @@ sidebar_label: Get started with Node.js
 
 Welcome to the Node.js Quickstart guide for Novu, a powerful notification service that enables you to send multi-channel (SMS, Email, Chat, Push) notifications from your Node.js applications. In this Quickstart, you'll learn how to seamlessly integrate Novu into your app and perform various essential tasks. Let's get started!
 
-## **Prerequisites**
+## Prerequisites
 
 Before diving into the Quickstart, make sure you have the following:
 
 - Node.js installed on your development machine.
-- A Novu account. If you don't have one, sign up for free at "https://web.novu.co"
+- A Novu account. If you don't have one, sign up for free at [web.novu.co](https://web.novu.co)
 
-### **Install and Set Up Novu in your Node.js App**
+### Install and Set Up Novu in your Node.js App
 
 First, you must install the Novu package in your Node.js application. Open your terminal and run the following command:
 
@@ -33,7 +33,7 @@ const novu = new Novu('<YOUR_NOVU_API_KEY>');
 Replace the `<YOUR_NOVU_API_KEY>` value with the authentic key from the **API Key** section of your [Novu Dashboard](https://web.novu.co/settings).
 
 <aside>
-🔑 **Note:** Please do not hardcode your credentials in a file in production. Use environment variables instead.
+🔑 Note: Please do not hardcode your credentials in a file in production. Use environment variables instead.
 
 </aside>
 
@@ -58,18 +58,16 @@ The workflow includes the following:
 
 - Notification workflow name and Identifier
 - Channel tailored content:
-  | Channel | Content Style |
-  | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
-  | Email | 1. Custom Code (HTML) with option to use custom variables via the handlebars , {{ }}, syntax. |
-  | 2. Click and place UI items with the visual template editor. |
-  | SMS | Text with the option to use handlebars syntax, {{ }} to inject custom variables. |
-  | Chat | Text with the option to use handlebars syntax, {{ }} to inject custom variables. |
-  | In-App | Text |
 
-<aside>
-🔑 Note: Proper authorization needs to be set for the Chat channel for subscribers.
+| Channel | Content Style                                                                                 |
+| ------- | --------------------------------------------------------------------------------------------- |
+| Email   | 1. Custom Code (HTML) with option to use custom variables via the handlebars , {{ }}, syntax. |
+|         | 2. Click and place UI items with the visual template editor.                                  |
+| SMS     | Text with the option to use handlebars syntax, {{ }} to inject custom variables.              |
+| Chat    | Text with the option to use handlebars syntax, {{ }} to inject custom variables.              |
+| In-App  | Text                                                                                          |
 
-</aside>
+Note: Proper authorization needs to be set for the Chat channel for subscribers.
 
 Please proceed to create a notification workflow.
 
@@ -77,16 +75,13 @@ Please proceed to create a notification workflow.
 2. Click the “Create Workflow” button on the top right.
 3. The name of a new workflow is currently "Untitled." Rename it to a more suitable title.
 4. Select "Email" as the channel you want to add.
+   ![set-email.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1686776583/set-email_wavtrn.png)
 
-![set-email.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1686776583/set-email_wavtrn.png)
+5. Click on the recently added channel, fill the email subject and click “Update”.  
+   ![update_email_template.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1686776583/update_email_template_ivn0jv.png)
 
-1. Click on the recently added channel, fill the email subject and click “Update”.
-
-![update_email_template.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1686776583/update_email_template_ivn0jv.png)
-
-1. Click on the “Test” tab and send a test email to verify your notification workflow.
-
-![send_test_email.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1686776583/send_test_email_ngzmth.png)
+6. Click on the “Test” tab and send a test email to verify your notification workflow.
+   ![send_test_email.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1686776583/send_test_email_ngzmth.png)
 
 You should get an email within seconds. Yaaay, you have successfully sent your first notification via the Novu dashboard! Now, let’s take it a step further to trigger notifications via code.
 
@@ -137,7 +132,7 @@ await novu.subscribers.update('7789', {
 Other valid fields that can be updated are `phone`, `avatar`, and `data` . The `data` field can accept an array of metadata that you want to attach to the subscriber.
 
 <aside>
-🔑  Note: To make all of your app users subscribers, you need to programmatically add them to Novu.
+Note: To make all of your app users subscribers, you need to programmatically add them to Novu.
 
 </aside>
 
