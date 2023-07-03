@@ -18,6 +18,7 @@ export const mapToTableIntegration = (
 
   return {
     name: integration.name ?? provider?.displayName,
+    integrationId: integration._id ?? '',
     identifier: integration.identifier,
     provider:
       provider?.displayName ?? `${integration.providerId.charAt(0).toUpperCase()}${integration.providerId.slice(1)}`,

@@ -25,6 +25,6 @@ export class UpdateIntegrationCommand extends OrganizationCommand {
   @IsOptional()
   active?: boolean;
 
-  @IsDefined()
-  check: boolean;
+  @IsOptional()
+  check?: boolean;
 }

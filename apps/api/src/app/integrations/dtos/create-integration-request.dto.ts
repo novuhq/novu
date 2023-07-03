@@ -47,7 +47,7 @@ export class CreateIntegrationRequestDto implements ICreateIntegrationBodyDto {
   active?: boolean;
 
   @ApiPropertyOptional({ type: Boolean })
-  @IsDefined()
+  @IsOptional()
   @IsBoolean()
   check?: boolean;
 }
