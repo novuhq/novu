@@ -43,7 +43,7 @@ export class SelectIntegration {
       );
 
     if (!isMultiProviderConfigurationEnabled) {
-      return this.getDecryptedIntegrationsUsecase.execute(
+      const integrations = await this.getDecryptedIntegrationsUsecase.execute(
         GetDecryptedIntegrationsCommand.create({
           organizationId: command.organizationId,
           environmentId: command.environmentId,
@@ -52,7 +52,9 @@ export class SelectIntegration {
           active: true,
           userId: command.userId,
         })
-      )[0];
+      );
+
+      return integrations[0];
     }
 
     const query: Partial<IntegrationEntity> & { _organizationId: string } = {
