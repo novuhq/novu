@@ -1,14 +1,17 @@
-import { init, LDClient, LDContext, LDFlagValue, LDSingleKindContext } from 'launchdarkly-node-server-sdk';
+import {
+  init,
+  LDClient,
+  LDSingleKindContext,
+} from 'launchdarkly-node-server-sdk';
 import { Injectable, Logger } from '@nestjs/common';
 
 import {
   EnvironmentId,
   FeatureFlagsKeysEnum,
-  IFeatureFlagContext,
   IFeatureFlagsService,
   OrganizationId,
   UserId,
-} from '../types';
+} from './types';
 
 const LOG_CONTEXT = 'LaunchDarklyService';
 
@@ -29,7 +32,11 @@ export class LaunchDarklyService implements IFeatureFlagsService {
     }
   }
 
-  private async get<T>(key: FeatureFlagsKeysEnum, context: LDSingleKindContext, defaultValue: T): Promise<T> {
+  private async get<T>(
+    key: FeatureFlagsKeysEnum,
+    context: LDSingleKindContext,
+    defaultValue: T
+  ): Promise<T> {
     return await this.client.variation(key, context, defaultValue);
   }
 
@@ -53,7 +60,11 @@ export class LaunchDarklyService implements IFeatureFlagsService {
     return await this.get(key, context, defaultValue);
   }
 
-  public async getWithUserContext<T>(key: FeatureFlagsKeysEnum, defaultValue: T, userId: UserId): Promise<T> {
+  public async getWithUserContext<T>(
+    key: FeatureFlagsKeysEnum,
+    defaultValue: T,
+    userId: UserId
+  ): Promise<T> {
     const context = this.mapToUserContext(userId);
 
     return await this.get(key, context, defaultValue);
@@ -64,9 +75,16 @@ export class LaunchDarklyService implements IFeatureFlagsService {
       try {
         await this.client.flush();
         await this.client.close();
-        Logger.log('Launch Darkly SDK has been gracefully shutted down', LOG_CONTEXT);
+        Logger.log(
+          'Launch Darkly SDK has been gracefully shut down',
+          LOG_CONTEXT
+        );
       } catch (error) {
-        Logger.error('Launch Darkly SDK has failed when shutted down', LOG_CONTEXT, error);
+        Logger.error(
+          'Launch Darkly SDK has failed when shut down',
+          LOG_CONTEXT,
+          error
+        );
         throw error;
       }
     }
@@ -75,15 +93,24 @@ export class LaunchDarklyService implements IFeatureFlagsService {
   public async initialize(): Promise<void> {
     try {
       await this.client.waitForInitialization();
-      Logger.log('Launch Darkly SDK has been successfully initialized', LOG_CONTEXT);
+      Logger.log(
+        'Launch Darkly SDK has been successfully initialized',
+        LOG_CONTEXT
+      );
     } catch (error) {
-      Logger.error('Launch Darkly SDK has failed when initialized', LOG_CONTEXT, error);
+      Logger.error(
+        'Launch Darkly SDK has failed when initialized',
+        LOG_CONTEXT,
+        error
+      );
       throw error;
     }
   }
 
   // TODO: Unused for now.
-  private mapToEnvironmentContext(environmentId: EnvironmentId): LDSingleKindContext {
+  private mapToEnvironmentContext(
+    environmentId: EnvironmentId
+  ): LDSingleKindContext {
     const launchDarklyContext = {
       kind: 'environment',
       key: environmentId,
@@ -93,7 +120,9 @@ export class LaunchDarklyService implements IFeatureFlagsService {
   }
 
   // TODO: Unused for now
-  private mapToOrganizationContext(organizationId: OrganizationId): LDSingleKindContext {
+  private mapToOrganizationContext(
+    organizationId: OrganizationId
+  ): LDSingleKindContext {
     const launchDarklyContext = {
       kind: 'organization',
       key: organizationId,

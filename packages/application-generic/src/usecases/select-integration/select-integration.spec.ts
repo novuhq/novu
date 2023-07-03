@@ -1,9 +1,12 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 
 import { SelectIntegration } from './select-integration.usecase';
 import { SelectIntegrationCommand } from './select-integration.command';
 import { GetNovuIntegration } from '../get-novu-integration';
+import { GetFeatureFlag } from '../get-feature-flag';
+import { GetDecryptedIntegrations } from '../get-decrypted-integrations';
 
 const testIntegration: IntegrationEntity = {
   _environmentId: 'env-test-123',
@@ -69,6 +72,20 @@ jest.mock('@novu/dal', () => ({
   })),
 }));
 
+jest.mock('../get-feature-flag', () => ({
+  ...jest.requireActual('../get-feature-flag'),
+  GetFeatureFlag: jest.fn(() => ({
+    isMultiProviderConfigurationEnabled: jest.fn(() => true),
+  })),
+}));
+
+jest.mock('../get-decrypted-integrations', () => ({
+  ...jest.requireActual('../get-decrypted-integrations'),
+  GetDecryptedIntegrations: jest.fn(() => ({
+    execute: jest.fn(() => novuIntegration),
+  })),
+}));
+
 describe('select integration', function () {
   let useCase: SelectIntegration;
   let integrationRepository: IntegrationRepository;
@@ -76,9 +93,12 @@ describe('select integration', function () {
   beforeEach(async function () {
     useCase = new SelectIntegration(
       new IntegrationRepository() as any,
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
-      new GetNovuIntegration() as any
+      new GetNovuIntegration() as any,
+      // @ts-ignore
+      new GetFeatureFlag(),
+      // @ts-ignore
+      new GetDecryptedIntegrations()
     );
   });
 
