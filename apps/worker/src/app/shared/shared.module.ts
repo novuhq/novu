@@ -42,6 +42,9 @@ import {
   WsQueueServiceHealthIndicator,
   QueueService,
   TriggerQueueService,
+  GetFeatureFlag,
+  LaunchDarklyService,
+  FeatureFlagsService,
 } from '@novu/application-generic';
 
 import * as packageJson from '../../../package.json';
@@ -127,6 +130,9 @@ const readinessService = {
 };
 
 const PROVIDERS = [
+  LaunchDarklyService,
+  FeatureFlagsService,
+  GetFeatureFlag,
   cacheService,
   distributedLockService,
   {
