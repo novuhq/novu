@@ -104,5 +104,6 @@ export { AngularGradient } from './gradient/AngularGradient';
 export { VueGradient } from './gradient/VueGradient';
 export { JsGradient } from './gradient/JsGradient';
 export { CodeGradient } from './gradient/CodeGradient';
+export { DisconnectGradient } from './gradient/DisconnectGradient';
 
 export { GitHub } from './social/GitHub';

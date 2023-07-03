@@ -50,6 +50,7 @@ function initializeProviders(integrations: IntegrationEntity[]): IIntegratedProv
       active: integration?.active ?? false,
       connected: !!integration,
       logoFileName: providerItem.logoFileName,
+      environmentId: integration?._environmentId,
     };
   });
 }
@@ -69,7 +70,7 @@ const sortProviders = (unsortedProviders: IIntegratedProvider[]) => {
 };
 
 export const useProviders = () => {
-  const { integrations, loading: isLoading, refetch } = useIntegrations({ refetchOnMount: false });
+  const { integrations, loading: isLoading, refetch } = useIntegrations();
 
   const sortedProviders = useMemo(() => {
     if (integrations) {
@@ -91,6 +92,7 @@ export const useProviders = () => {
         inAppProvider: sortProviders(
           initializedProviders.filter((providerItem) => providerItem.channel === ChannelTypeEnum.IN_APP)
         ),
+        providers: initializedProviders,
       };
     }
 
@@ -100,6 +102,7 @@ export const useProviders = () => {
       chatProvider: [],
       pushProvider: [],
       inAppProvider: [],
+      providers: [],
     };
   }, [integrations]);
 

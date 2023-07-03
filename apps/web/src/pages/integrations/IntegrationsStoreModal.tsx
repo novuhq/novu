@@ -9,6 +9,7 @@ import {
   InAppProviderIdEnum,
   ProvidersIdEnum,
   SmsProviderIdEnum,
+  ICredentials,
 } from '@novu/shared';
 
 import { useAuthController, useEnvController } from '../../hooks';
@@ -18,7 +19,7 @@ import { NovuInAppProviderModal } from './components/NovuInAppProviderModal';
 import { ChannelGroup } from './components/Modal/ChannelGroup';
 import { colors, shadows, Title } from '../../design-system';
 import { ConnectIntegrationForm } from './components/Modal/ConnectIntegrationForm';
-import { Close } from '../../design-system/icons/actions/Close';
+import { Close } from '../../design-system/icons';
 import { useProviders } from './useProviders';
 import { useSegment } from '../../components/providers/SegmentProvider';
 import { IntegrationsStoreModalAnalytics } from './constants';
@@ -326,32 +327,7 @@ export interface IIntegratedProvider {
   logoFileName: ILogoFileName;
   betaVersion: boolean;
   novu?: boolean;
-}
-
-export interface ICredentials {
-  apiKey?: string;
-  user?: string;
-  secretKey?: string;
-  domain?: string;
-  password?: string;
-  host?: string;
-  port?: string;
-  secure?: boolean;
-  region?: string;
-  accountSid?: string;
-  messageProfileId?: string;
-  token?: string;
-  from?: string;
-  senderName?: string;
-  applicationId?: string;
-  clientId?: string;
-  projectName?: string;
-  serviceAccount?: string;
-  baseUrl?: string;
-  webhookUrl?: string;
-  requireTls?: boolean;
-  ignoreTls?: boolean;
-  tlsOptions?: Record<string, unknown>;
+  environmentId?: string;
 }
 
 export interface IntegrationEntity {

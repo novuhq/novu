@@ -10,6 +10,7 @@ import {
 import {
   ChannelTypeEnum,
   InAppProviderIdEnum,
+  ProvidersIdEnum,
   STEP_TYPE_TO_CHANNEL_TYPE,
 } from '@novu/shared';
 
@@ -221,8 +222,8 @@ export class TriggerEvent {
     organizationId: string,
     environmentId: string,
     template: NotificationTemplateEntity
-  ): Promise<Map<ChannelTypeEnum, string>> {
-    const providers = new Map<ChannelTypeEnum, string>();
+  ): Promise<Record<ChannelTypeEnum, ProvidersIdEnum>> {
+    const providers = {} as Record<ChannelTypeEnum, ProvidersIdEnum>;
 
     for (const step of template?.steps) {
       const type = step.template?.type;
@@ -230,9 +231,9 @@ export class TriggerEvent {
         const channelType = STEP_TYPE_TO_CHANNEL_TYPE.get(type);
 
         if (channelType) {
-          if (providers.has(channelType)) continue;
+          if (providers[channelType]) continue;
           if (channelType === ChannelTypeEnum.IN_APP) {
-            providers.set(channelType, InAppProviderIdEnum.Novu);
+            providers[channelType] = InAppProviderIdEnum.Novu;
           } else {
             const provider = await this.getProviderId(
               userId,
@@ -241,7 +242,7 @@ export class TriggerEvent {
               channelType
             );
             if (provider) {
-              providers.set(channelType, provider);
+              providers[channelType] = provider;
             }
           }
         }
@@ -257,7 +258,7 @@ export class TriggerEvent {
     organizationId: string,
     environmentId: string,
     channelType: ChannelTypeEnum
-  ): Promise<string> {
+  ): Promise<ProvidersIdEnum> {
     let integration = await this.integrationRepository.findOne(
       {
         _environmentId: environmentId,
@@ -278,6 +279,6 @@ export class TriggerEvent {
       );
     }
 
-    return integration?.providerId;
+    return integration?.providerId as ProvidersIdEnum;
   }
 }

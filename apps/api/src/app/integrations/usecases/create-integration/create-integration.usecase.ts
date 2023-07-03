@@ -49,7 +49,7 @@ export class CreateIntegration {
 
       await this.invalidateCache.invalidateQuery({
         key: buildIntegrationKey().invalidate({
-          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
         }),
       });
 
@@ -68,6 +68,7 @@ export class CreateIntegration {
           organizationId: command.organizationId,
           integrationId: response._id,
           channel: command.channel,
+          userId: command.userId,
         });
       }
     } catch (e) {

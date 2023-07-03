@@ -41,6 +41,9 @@ import {
 } from '@novu/application-generic';
 
 import * as packageJson from '../../../package.json';
+import { LaunchDarklyService } from './services/launch-darkly.service';
+import { FeatureFlagsService } from './services/feature-flags.service';
+import { GetFeatureFlag } from './use-cases';
 
 const DAL_MODELS = [
   UserRepository,
@@ -145,6 +148,9 @@ const PROVIDERS = [
     },
   },
   TriggerQueueService,
+  LaunchDarklyService,
+  FeatureFlagsService,
+  GetFeatureFlag,
 ];
 
 @Module({

@@ -59,6 +59,27 @@ export class NotificationTemplateRepository extends BaseRepository<
     return this.mapEntity(item);
   }
 
+  async findBlueprintTemplates(organizationId: string, environmentId: string): Promise<NotificationTemplateEntity[]> {
+    const _organizationId = organizationId;
+
+    if (!_organizationId) throw new DalException('Blueprint environment id was not found');
+
+    const templates = await this.MongooseModel.find({
+      isBlueprint: true,
+      _environmentId: environmentId,
+      _organizationId,
+    })
+      .populate('steps.template')
+      .populate('notificationGroup')
+      .lean();
+
+    if (!templates) {
+      return [];
+    }
+
+    return this.mapEntities(templates);
+  }
+
   async findAllGroupedByCategory(): Promise<{ name: string; blueprints: NotificationTemplateEntity[] }[]> {
     const organizationId = this.blueprintOrganizationId;
 
@@ -82,9 +103,12 @@ export class NotificationTemplateRepository extends BaseRepository<
       _organizationId: organizationId,
     };
 
-    const items = (
-      await this.MongooseModel.find(requestQuery).populate('steps.template').populate('notificationGroup').lean()
-    )?.map((item) => this.mapEntity(item));
+    const result = await this.MongooseModel.find(requestQuery)
+      .populate('steps.template')
+      .populate('notificationGroup')
+      .lean();
+
+    const items = result?.map((item) => this.mapEntity(item));
 
     const groupedItems = items.reduce((acc, item) => {
       const notificationGroupId = item._notificationGroupId;
