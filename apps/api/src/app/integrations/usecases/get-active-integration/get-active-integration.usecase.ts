@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
 
-import { SelectIntegration, SelectIntegrationCommand } from '@novu/application-generic';
+import {
+  GetDecryptedIntegrations,
+  GetDecryptedIntegrationsCommand,
+  SelectIntegration,
+  SelectIntegrationCommand,
+} from '@novu/application-generic';
 import { ChannelTypeEnum } from '@novu/shared';
 import { IntegrationEntity, IntegrationRepository, EnvironmentRepository } from '@novu/dal';
 
@@ -12,14 +17,18 @@ export class GetActiveIntegrations {
   constructor(
     private integrationRepository: IntegrationRepository,
     private selectIntegration: SelectIntegration,
-    private environmentRepository: EnvironmentRepository
+    private environmentRepository: EnvironmentRepository,
+    private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {}
 
   async execute(command: GetActiveIntegrationsCommand): Promise<GetActiveIntegrationResponseDto[]> {
-    const activeIntegration = await this.integrationRepository.find({
-      _organizationId: command.organizationId,
-      active: true,
-    });
+    const activeIntegration = await this.getDecryptedIntegrationsUsecase.execute(
+      GetDecryptedIntegrationsCommand.create({
+        organizationId: command.organizationId,
+        userId: command.userId,
+        active: true,
+      })
+    );
 
     if (!activeIntegration.length) {
       return [];
