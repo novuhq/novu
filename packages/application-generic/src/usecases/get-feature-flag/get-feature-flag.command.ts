@@ -1,7 +1,7 @@
-import { EnvironmentWithUserCommand } from '@novu/application-generic';
 import { IsDefined } from 'class-validator';
 
-import { FeatureFlagsKeysEnum } from '../../types';
+import { EnvironmentWithUserCommand } from './../../commands';
+import { FeatureFlagsKeysEnum } from '../../services/types';
 
 export class FeatureFlagCommand extends EnvironmentWithUserCommand {}
 
