@@ -14,6 +14,8 @@ Before diving into the Quickstart, make sure you have the following:
 - Node.js installed on your development machine.
 - A Novu account. If you don't have one, sign up for free at [web.novu.co](https://web.novu.co)
 
+You can also [view the completed code](https://github.com/novuhq/nodejs-sdk-quickstart) of this quick start in a GitHub repo.
+
 ### Install and Set Up Novu in your Node.js App
 
 First, you must install the Novu package in your Node.js application. Open your terminal and run the following command:
