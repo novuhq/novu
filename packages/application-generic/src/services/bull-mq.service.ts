@@ -9,6 +9,7 @@ import {
   WorkerOptions,
 } from 'bullmq';
 import { Injectable, Logger } from '@nestjs/common';
+import { IJobData } from '@novu/shared';
 
 interface IQueueMetrics {
   completed: Metrics;
@@ -16,6 +17,14 @@ interface IQueueMetrics {
 }
 
 const LOG_CONTEXT = 'BullMqService';
+
+interface IEventJobData {
+  event: string;
+  userId: string;
+  payload: Record<string, unknown>;
+}
+
+type BullMqJobData = undefined | IJobData | IEventJobData;
 
 @Injectable()
 export class BullMqService {
@@ -62,7 +71,7 @@ export class BullMqService {
     Logger.log(
       `Creating queue ${name} bullmq pro is ${
         this.runningWithProQueue() ? 'Enabled' : 'Disabled'
-      }`
+      }`,
     );
 
     this._queue = new QueueClass(name, {
@@ -75,7 +84,7 @@ export class BullMqService {
   public createWorker(
     name: string,
     processor?: string | Processor<any, unknown | void, string>,
-    options?: WorkerOptions
+    options?: WorkerOptions,
   ) {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const WorkerClass = !BullMqService.pro
@@ -102,9 +111,9 @@ export class BullMqService {
 
   public add(
     id: string,
-    data: any,
+    data: BullMqJobData,
     options: JobsOptions = {},
-    groupId?: string
+    groupId?: string,
   ) {
     this._queue.add(id, data, {
       ...options,
