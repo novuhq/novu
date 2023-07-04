@@ -3,7 +3,7 @@ import { UserSession } from '@novu/testing';
 import { ChannelTypeEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
 import { expect } from 'chai';
 
-const IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
+const ORIGINAL_IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
 
 describe('Create Integration - /integration (POST)', function () {
   let session: UserSession;
@@ -17,7 +17,7 @@ describe('Create Integration - /integration (POST)', function () {
   });
 
   afterEach(async () => {
-    process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
+    process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = ORIGINAL_IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
   });
 
   it('should get the email integration successfully', async function () {
@@ -151,7 +151,7 @@ describe('Create Integration - /integration (POST)', function () {
     expect(data.active).to.equal(false);
   });
 
-  it('should allow creating the integration for different environment', async function () {
+  it('should allow creating the integration in the chosen environment', async function () {
     const prodEnv = await envRepository.findOne({ name: 'Production', _organizationId: session.organization._id });
     const payload = {
       providerId: EmailProviderIdEnum.SendGrid,
