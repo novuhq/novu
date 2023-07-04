@@ -8,8 +8,6 @@ import {
   addIntegrationIdentifierMigration,
   addIntegrationIdentifierMigrationBatched,
   genIntegrationIdentificationDetails,
-  getDisplayName,
-  getIntegrationIdentifier,
 } from './add-integration-identifier-migration';
 
 describe('Add default identifier and name to integration entity', function () {
