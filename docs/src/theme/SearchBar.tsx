@@ -1,7 +1,3 @@
-// By default, the classic theme does not provide any SearchBar implementation
-// If you swizzled this, it is your responsibility to provide an implementation
-// Tip: swizzle the SearchBar from the Algolia theme for inspiration:
-// npm run swizzle @docusaurus/theme-search-algolia SearchBar
 import React from 'react';
 import {
   InkeepAIChatSettings,
@@ -9,8 +5,8 @@ import {
   InkeepSearchBarProps,
   InkeepSearchBar,
 } from '@inkeep/widgets';
-import BrowserOnly from '@docusaurus/BrowserOnly';
-// import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
+import { useColorMode } from '@docusaurus/theme-common'; // import the useColorMode hook
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 
 type InkeepIdentifierSettings = {
   apiKey: string;
@@ -19,33 +15,25 @@ type InkeepIdentifierSettings = {
 };
 
 export default function SearchBarWrapper() {
-  //   const {
-  //     siteConfig: { customFields },
-  //   } = useDocusaurusContext();
+  const { colorMode } = useColorMode();
+  const { siteConfig } = useDocusaurusContext();
 
-  //   const inkeepIdentifierSettings =
-  //     customFields.inkeepIdentifierSettings as InkeepIdentifierSettings;
+  const inkeepBaseConfig = siteConfig.customFields.inkeepConfig as InkeepIdentifierSettings;
 
   const inkeepBaseSettings: InkeepWidgetBaseSettings = {
     // ...inkeepIdentifierSettings,
-    apiKey: '78648f6e062ede8c6905d2af9ae468c3cb6a2494bb3f9e1d',
-    integrationId: 'clj6g2vov0005s601blyuv4wi',
-    organizationId: 'novu',
+    ...inkeepBaseConfig,
     organizationDisplayName: 'Novu',
     primaryBrandColor: '#F8247C',
     theme: {
+      colorMode: colorMode,
       fontWeights: {
         semibold: 500,
       },
       primaryColors: {
-        textColorOnPrimary: "white"
-      }
-      // colors: {
-      //   inkeepPrimary: {
-      //     textColorOnPrimary: "white"
-      //   }
-      // }
-    }
+        textColorOnPrimary: 'white',
+      },
+    },
   };
 
   const aiChatSettings: InkeepAIChatSettings = {
@@ -53,14 +41,14 @@ export default function SearchBarWrapper() {
     isChatModeToggleEnabled: true,
   };
 
-  const searchSettings: InkeepSearchBarProps = {
+  const searchBarProps: InkeepSearchBarProps = {
     baseSettings: { ...inkeepBaseSettings },
     aiChatSettings: { ...aiChatSettings },
   };
 
   return (
     <div className="Inkeep-Search">
-      <InkeepSearchBar {...searchSettings} />
+      <InkeepSearchBar {...searchBarProps} />
     </div>
   );
 }
