@@ -1,5 +1,5 @@
 import React, { createContext } from 'react';
-import DocPage from '@theme-original/DocPage';
+import DocPage from '@theme/DocPage';
 import { DocsSidebarProvider } from '@docusaurus/theme-common/internal';
 
 export const SidebarContext = createContext('default');
