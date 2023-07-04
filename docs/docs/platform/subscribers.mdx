@@ -17,7 +17,7 @@ Each subscriber has the following data points:
 - **User Data** - Data stored in the subscriber object that you can easily access in your notification templates. This contains basic info such as first name, last name, avatar, locale, email, and phone. This data is fixed and structured.
 - **Custom Data** - Apart from the above fixed structured user data, any unstructured custom data such as user's address, nationality, height, etc can also be stored in the `data` field using key-value pairs.
 - **Channel Specific Credentials** - `deviceTokens` required to send push notifications and `webhookUrl` for chat channel providers can also be stored.
-- **Preferences** - Each subscriber has separate preferences per template and along with template-level preferences. Read more about preferences [here](./preferences.md).
+- **Preferences** - Each subscriber has separate preferences per template and along with template-level preferences. Read more about preferences [here](./preferences.mdx).
 
 `subscriberId` is a unique identifier used by Novu to keep track of a specific subscriber. We recommend using the internal unique id your application uses for a specific user.
 
@@ -144,10 +144,10 @@ $novu->triggerEvent([
 | subscriberId | `string` | true     | b0bea066-f5fe-11ed-b67e-0242ac120002    |
 | firstName    | `string` | false    | John                                    |
 | lastName     | `string` | false    | Doe                                     |
-| email        | `string` | false    | john.doe@domain.org                     |
+| email        | `string` | false    | `john.doe@domain.org`                   |
 | phone        | `string` | false    | +13603963366                            |
 | locale       | `string` | false    | en                                      |
-| avatar       | `string` | false    | <https://example.com/images/avatar.jpg> |
+| avatar       | `string` | false    | `https://example.com/images/avatar.jpg` |
 | data         | `object` | false    | {"key" : "value"}                       |
 
 ## Find a subscriber

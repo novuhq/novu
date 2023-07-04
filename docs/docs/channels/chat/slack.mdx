@@ -24,9 +24,16 @@ Novu will manage the OAuth flow and store the credentials
 
 1. Configure your Slack application as mentioned [below](/channels/chat/slack#slack-application-configuration).
 2. Add the `Add to Slack` button or the shareable URL to your application in order to request permission of access (scope: incoming-webhook).
-   <br/>  
-   Make sure to use the generated shareable URL that is located under Slack form in the <a href="https://web.novu.co/integrations" style={{textDecoration: "underline"}}>Integration Store</a>.
-   The Shareable URL should be on the following format https:<span/>//api.novu.co/v1/subscribers/SUBSCRIBER_ID/credentials/slack/oauth?environmentId=ENVIRONMENT_ID. <br/>
+   <br />
+   Make sure to use the generated shareable URL that is located under Slack form in the <a
+     href="https://web.novu.co/integrations"
+     style={{ textDecoration: 'underline' }}
+   >
+     Integration Store
+   </a>
+   . The Shareable URL should be on the following format https:
+   <span />
+   //api.novu.co/v1/subscribers/SUBSCRIBER_ID/credentials/slack/oauth?environmentId=ENVIRONMENT_ID. <br />
 
 - SUBSCRIBER_ID is a custom identifier used when identifying your users within the Novu platform. [Read more here](/platform/subscribers). <br/>
 - ENVIRONMENT_ID is a context of an environment you can locate your environment id in the setting in the dashboard . <a href="https://web.novu.co/settings" style={{textDecoration: "underline"}}>Settings</a>.
@@ -39,7 +46,7 @@ Novu will manage the OAuth flow and store the credentials
 Create a new endpoint on your server that will handle the following steps (you can use Request Bin for an easy HTTPS service for redirects):
 
 1. Listen for redirect requests to your endpoint (REDIRECT_URL) after the user completes step 5 and grants permissions. Make sure to store the 'code' parameter from the request query as it will be needed later.
-2. Send a POST request to <https://slack.com/api/oauth.v2.access> with the following request body:
+2. Send a POST request to `https://slack.com/api/oauth.v2.access` with the following request body:
    Use the "Client ID" and "Client Secret" from Slack's Developer Dashboard under "Basic Information". The request body should be in the format: { code: string, client_id: string, client_secret: string }.
    Store the webhook URL from the response, which can be found under `response.data.incoming_webhook.url`.
    (read more on Slack's documentation here)
