@@ -210,7 +210,6 @@ importers:
       helmet: ^6.0.1
       ioredis: 5.3.2
       jsonwebtoken: 9.0.0
-      launchdarkly-node-server-sdk: ^7.0.1
       lodash: ^4.17.15
       mocha: ^8.4.0
       nanoid: ^3.1.20
@@ -278,7 +277,6 @@ importers:
       helmet: 6.1.4
       ioredis: 5.3.2
       jsonwebtoken: 9.0.0
-      launchdarkly-node-server-sdk: 7.0.1
       lodash: 4.17.21
       nanoid: 3.3.6
       nest-raven: 9.2.0_et2es4yui7j7p7rf6umj2zr7tu
@@ -1471,6 +1469,7 @@ importers:
       handlebars: ^4.7.7
       ioredis: ^5.2.4
       jest: ^27.1.0
+      launchdarkly-node-server-sdk: ^7.0.1
       lodash: ^4.17.15
       nestjs-pino: ^3.1.2
       newrelic: '>=9'
@@ -1549,6 +1548,7 @@ importers:
       date-fns: 2.29.3
       handlebars: 4.7.7
       ioredis: 5.3.1
+      launchdarkly-node-server-sdk: 7.0.1
       lodash: 4.17.21
       nestjs-pino: 3.1.2_g2cqd4mgcg63o5mvxc7l66lzja
       newrelic: 9.10.2
@@ -26433,7 +26433,7 @@ packages:
     resolution: {integrity: sha512-UCB0ioiyj8CRjtrvaceBLqqhZCVP+1B8+NWQhmdsm0VXOJtobBCf1dBQmebCCo34qZmUwZfIH2MZLqNHazrfjg==}
 
   /concat-map/0.0.1:
-    resolution: {integrity: sha1-2Klr13/Wjfd5OnMDajug1UBdR3s=}
+    resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
 
   /concat-stream/1.6.2:
     resolution: {integrity: sha512-27HBghJxjiZtIk3Ycvn/4kbJk/1uZuJFfuPEns6LaEvpvG1f0hTea8lilrouyo9mVc2GWdcEZ8OLoGmSADlrCw==}
@@ -36074,7 +36074,7 @@ packages:
       launchdarkly-eventsource: 1.4.4
       lru-cache: 6.0.0
       node-cache: 5.1.2
-      semver: 7.4.0
+      semver: 7.5.0
       tunnel: 0.0.6
       uuid: 8.3.2
     dev: false
