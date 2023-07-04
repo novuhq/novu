@@ -1,6 +1,5 @@
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, ICredentials } from '@novu/shared';
 import { SendchampSmsProvider } from '@novu/sendchamp';
-import { ICredentials } from '@novu/dal';
 import { BaseSmsHandler } from './base.handler';
 
 export class SendchampSmsHandler extends BaseSmsHandler {
