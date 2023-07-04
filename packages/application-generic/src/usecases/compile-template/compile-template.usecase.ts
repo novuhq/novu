@@ -50,6 +50,21 @@ Handlebars.registerHelper(
   }
 );
 
+Handlebars.registerHelper(
+  HandlebarHelpersEnum.UNIQUE,
+  function (array, property) {
+    if (!Array.isArray(array)) return '';
+
+    return array
+      .map((item) => {
+        if (item[property]) {
+          return item[property];
+        }
+      })
+      .filter((value, index, self) => self.indexOf(value) === index);
+  }
+);
+
 @Injectable()
 export class CompileTemplate {
   async execute(command: CompileTemplateCommand): Promise<string> {
