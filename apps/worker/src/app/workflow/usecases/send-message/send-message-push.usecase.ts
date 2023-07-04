@@ -19,8 +19,7 @@ import {
   DetailEnum,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-  GetDecryptedIntegrations,
-  GetDecryptedIntegrationsCommand,
+  SelectIntegration,
   CompileTemplate,
   CompileTemplateCommand,
   PushFactory,
@@ -41,15 +40,9 @@ export class SendMessagePush extends SendMessageBase {
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
-    protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
+    protected selectIntegration: SelectIntegration
   ) {
-    super(
-      messageRepository,
-      createLogUsecase,
-      createExecutionDetails,
-      subscriberRepository,
-      getDecryptedIntegrationsUsecase
-    );
+    super(messageRepository, createLogUsecase, createExecutionDetails, subscriberRepository, selectIntegration);
   }
 
   @InstrumentUsecase()
@@ -128,17 +121,13 @@ export class SendMessagePush extends SendMessageBase {
         continue;
       }
 
-      const integration = await this.getIntegration(
-        GetDecryptedIntegrationsCommand.create({
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          channelType: ChannelTypeEnum.PUSH,
-          providerId: channel.providerId,
-          findOne: true,
-          active: true,
-          userId: command.userId,
-        })
-      );
+      const integration = await this.getIntegration({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        channelType: ChannelTypeEnum.PUSH,
+        providerId: channel.providerId,
+        userId: command.userId,
+      });
 
       if (!integration) {
         await this.createExecutionDetails.execute(

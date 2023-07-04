@@ -50,6 +50,7 @@ function initializeProviders(integrations: IntegrationEntity[]): IIntegratedProv
       active: integration?.active ?? false,
       connected: !!integration,
       logoFileName: providerItem.logoFileName,
+      environmentId: integration?._environmentId,
     };
   });
 }
@@ -91,6 +92,7 @@ export const useProviders = () => {
         inAppProvider: sortProviders(
           initializedProviders.filter((providerItem) => providerItem.channel === ChannelTypeEnum.IN_APP)
         ),
+        providers: initializedProviders,
       };
     }
 
@@ -100,6 +102,7 @@ export const useProviders = () => {
       chatProvider: [],
       pushProvider: [],
       inAppProvider: [],
+      providers: [],
     };
   }, [integrations]);
 

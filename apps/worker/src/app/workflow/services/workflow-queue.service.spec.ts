@@ -69,7 +69,7 @@ describe('Workflow Queue service', () => {
     await organizationService.addMember(organization._id, user._id);
 
     const environmentService = new EnvironmentService();
-    environment = await environmentService.createEnvironment(organization._id);
+    environment = await environmentService.createEnvironment(organization._id, user._id);
 
     subscriberService = new SubscribersService(organization._id, environment._id);
     subscriber = await subscriberService.createSubscriber();

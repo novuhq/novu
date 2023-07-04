@@ -639,11 +639,17 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       _environmentId: session.environment._id,
     });
 
-    await integrationRepository.delete({
-      _id: { $in: existingIntegrations.map((integration) => integration._id) },
+    const integrationIdsToDelete = existingIntegrations.flatMap((integration) =>
+      integration._environmentId === session.environment._id ? [integration._id] : []
+    );
+
+    const deletedIntegrations = await integrationRepository.deleteMany({
+      _id: { $in: integrationIdsToDelete },
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
     });
+
+    expect(deletedIntegrations.modifiedCount).to.eql(integrationIdsToDelete.length);
 
     const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
     const channelType = ChannelTypeEnum.EMAIL;
@@ -728,7 +734,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
     expect(messages[0].providerId).to.be.equal(EmailProviderIdEnum.SendGrid);
 
     const payload = {
-      providerId: 'mailgun',
+      providerId: EmailProviderIdEnum.Mailgun,
       channel: 'email',
       credentials: { apiKey: '123', secretKey: 'abc' },
       active: true,

@@ -131,7 +131,7 @@ export function Table<T extends object>({
                 onClick={() => (!loading && onRowClick ? onRowClick(row) : null)}
                 {...row.getRowProps()}
                 className={classes.tableRow}
-                data-disabled={loading}
+                data-disabled={loading || !onRowClick}
               >
                 {row.cells.map((cell, i) => (
                   <td
