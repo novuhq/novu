@@ -89,8 +89,8 @@ export class GetActiveIntegrations {
     command: GetActiveIntegrationsCommand,
     activeIntegrationChannelTypes: ChannelTypeEnum[]
   ) {
-    return activeIntegrationChannelTypes.map(async (channelType) => {
-      return await this.selectIntegration.execute(
+    return activeIntegrationChannelTypes.map((channelType) =>
+      this.selectIntegration.execute(
         SelectIntegrationCommand.create({
           environmentId: environmentId,
           organizationId: command.organizationId,
@@ -98,8 +98,8 @@ export class GetActiveIntegrations {
           channelType: channelType as ChannelTypeEnum,
           providerId: command.providerId,
         })
-      );
-    });
+      )
+    );
   }
 }
 

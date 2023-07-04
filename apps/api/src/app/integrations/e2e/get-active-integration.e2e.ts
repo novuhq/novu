@@ -29,14 +29,14 @@ describe('Get Active Integrations - /integrations/active (GET)', function () {
     expect(smsIntegration[0].selected).to.equal(true);
     expect(pushIntegration[0].selected).to.equal(true);
 
-    const oneSelected = chatIntegration.some((integration) => integration.selected === true);
-    const oneNotSelected = chatIntegration.some((integration) => integration.selected === false);
+    const selected = chatIntegration.filter((integration) => integration.selected);
+    const notSelected = chatIntegration.filter((integration) => !integration.selected);
 
-    expect(oneSelected).to.equal(true);
-    expect(oneNotSelected).to.equal(true);
+    expect(selected.length).to.equal(2);
+    expect(notSelected.length).to.equal(2);
   });
 
-  it('should have thrown an exception if no active integration are exist', async function () {
+  it('should have return empty array if no active integration are exist', async function () {
     const activeIntegrations = (await session.testAgent.get(`/v1/integrations/active`)).body.data;
     await deleteAll(activeIntegrations, integrationRepository, session);
     const response = await session.testAgent.get(`/v1/integrations/active`);
@@ -44,7 +44,16 @@ describe('Get Active Integrations - /integrations/active (GET)', function () {
     expect(response.body.data).to.deep.equal([]);
   });
 
-  it('should get active newly created integration with selected flag', async function () {
+  it('should get addition unselected integration after a new one created', async function () {
+    const initialActiveIntegrations = (await session.testAgent.get(`/v1/integrations/active`)).body.data;
+    const { emailIntegration: initialEmailIntegrations } = splitByChannels(initialActiveIntegrations);
+
+    const initialSelected = initialEmailIntegrations.filter((integration) => integration.selected);
+    const initialNotSelected = initialEmailIntegrations.filter((integration) => !integration.selected);
+
+    expect(initialSelected.length).to.equal(2);
+    expect(initialNotSelected.length).to.equal(0);
+
     await integrationRepository.create({
       _environmentId: session.environment._id,
       _organizationId: session.organization._id,
@@ -58,11 +67,11 @@ describe('Get Active Integrations - /integrations/active (GET)', function () {
 
     expect(emailIntegration.length).to.equal(3);
 
-    const oneSelected = emailIntegration.some((integration) => integration.selected === true);
-    const oneNotSelected = emailIntegration.some((integration) => integration.selected === false);
+    const selected = emailIntegration.filter((integration) => integration.selected);
+    const notSelected = emailIntegration.filter((integration) => !integration.selected);
 
-    expect(oneSelected).to.equal(true);
-    expect(oneNotSelected).to.equal(true);
+    expect(selected.length).to.equal(2);
+    expect(notSelected.length).to.equal(1);
   });
 });
 
