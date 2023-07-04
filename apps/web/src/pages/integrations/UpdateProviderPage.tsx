@@ -220,6 +220,19 @@ export function UpdateProviderPage() {
           />
           <Controller
             control={control}
+            name="name"
+            defaultValue={''}
+            rules={{
+              required: 'Required - Instance name',
+            }}
+            render={({ field }) => (
+              <InputWrapper>
+                <Input {...field} required label="Name" error={errors.name?.message} />
+              </InputWrapper>
+            )}
+          />
+          <Controller
+            control={control}
             name="identifier"
             defaultValue={''}
             rules={{
