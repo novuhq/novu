@@ -71,7 +71,31 @@ export class GetNotificationsFeed {
     const skip = command.page * command.limit;
     let totalCount = 0;
 
+
     if (feed.length) {
+      totalCount = await this.messageRepository.getCount(
+        command.environmentId,
+        subscriber._id,
+        ChannelTypeEnum.IN_APP,
+        {
+          feedId: command.feedId,
+          seen: command.query.seen,
+          read: command.query.read,
+        },
+        { limit: command.limit + 1, skip }
+      );
+    }
+
+    const hasMore = feed.length < totalCount;
+    totalCount = Math.min(totalCount, command.limit);
+
+    return {
+      data: feed || [],
+      totalCount: totalCount,
+      hasMore: hasMore,
+      pageSize: command.limit,
+      page: command.page,
+    };
       totalCount = await this.messageRepository.getCount(
         command.environmentId,
         subscriber._id,
