@@ -7,11 +7,13 @@ export function IntegrationInput({
   errors,
   field,
   register,
+  ignoreTls,
 }: {
   credential: IConfigCredentials;
   errors: any;
   field: any;
   register?: any;
+  ignoreTls?: boolean;
 }) {
   if (isNeededToHide(credential.key)) {
     if (credential.type === 'text') {
@@ -96,18 +98,22 @@ export function IntegrationInput({
   }
 
   return (
-    <Input
-      label={credential.displayName}
-      required={credential.required}
-      placeholder={credential.displayName}
-      description={credential.description ?? ''}
-      data-test-id={credential.key}
-      error={errors[credential.key]?.message}
-      {...field}
-      {...register?.(credential.key, {
-        required: credential.required && `Please enter a ${credential.displayName.toLowerCase()}`,
-      })}
-    />
+    <>
+      {credential.key === 'tlsOptions' && ignoreTls ? null : (
+        <Input
+          label={credential.displayName}
+          required={credential.required}
+          placeholder={credential.displayName}
+          description={credential.description ?? ''}
+          data-test-id={credential.key}
+          error={errors[credential.key]?.message}
+          {...field}
+          {...register(credential.key, {
+            required: credential.required && `Please enter a ${credential.displayName.toLowerCase()}`,
+          })}
+        />
+      )}
+    </>
   );
 }
 

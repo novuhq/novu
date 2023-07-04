@@ -155,20 +155,22 @@ export function ConnectIntegrationForm({
         } catch (err) {
           throw new Error('Invalid JSON format for TLS Options');
         }
-      }
-      if (createModel) {
-        await createIntegrationApi({
-          providerId: provider?.providerId ? provider?.providerId : '',
-          channel: provider?.channel ? provider?.channel : null,
-          credentials,
-          active: isActive,
-          check: checkIntegrationState.check,
-        });
       } else {
-        await updateIntegrationApi({
-          integrationId: provider?.integrationId ? provider?.integrationId : '',
-          data: { credentials, active: isActive, check: checkIntegrationState.check },
-        });
+        credentials.tlsOptions = undefined;
+        if (createModel) {
+          await createIntegrationApi({
+            providerId: provider?.providerId ? provider?.providerId : '',
+            channel: provider?.channel ? provider?.channel : null,
+            credentials,
+            active: isActive,
+            check: checkIntegrationState.check,
+          });
+        } else {
+          await updateIntegrationApi({
+            integrationId: provider?.integrationId ? provider?.integrationId : '',
+            data: { credentials, active: isActive, check: checkIntegrationState.check },
+          });
+        }
       }
     } catch (e: any) {
       dispatch({
@@ -241,7 +243,13 @@ export function ConnectIntegrationForm({
                 name={credential.key}
                 control={control}
                 render={({ field }) => (
-                  <IntegrationInput credential={credential} errors={errors} field={field} register={register} />
+                  <IntegrationInput
+                    credential={credential}
+                    ignoreTls={watch('ignoreTls')}
+                    errors={errors}
+                    field={field}
+                    register={register}
+                  />
                 )}
               />
             </InputWrapper>
