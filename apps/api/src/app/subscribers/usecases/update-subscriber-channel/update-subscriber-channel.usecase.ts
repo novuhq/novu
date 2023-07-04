@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { isEqual } from 'lodash';
+import { isEqual, union } from 'lodash';
 import {
   IChannelSettings,
   SubscriberRepository,
@@ -108,7 +108,7 @@ export class UpdateSubscriberChannel {
 
   private async updateExistingSubscriberChannel(
     environmentId: string,
-    existingChannel,
+    existingChannel: IChannelSettings,
     updatePayload: Partial<IChannelSettings>,
     foundSubscriber: SubscriberEntity
   ) {
@@ -118,6 +118,15 @@ export class UpdateSubscriberChannel {
       return;
     }
 
+    let deviceTokens: string[] = [];
+
+    if (updatePayload.credentials?.deviceTokens) {
+      deviceTokens = this.unionDeviceTokens(
+        existingChannel.credentials.deviceTokens ?? [],
+        updatePayload.credentials.deviceTokens
+      );
+    }
+
     await this.invalidateCache.invalidateByKey({
       key: buildSubscriberKey({
         subscriberId: foundSubscriber.subscriberId,
@@ -125,7 +134,7 @@ export class UpdateSubscriberChannel {
       }),
     });
 
-    const mergedChannel = Object.assign(existingChannel, updatePayload);
+    const mappedChannel: IChannelSettings = this.mapChannel(updatePayload, existingChannel, deviceTokens);
 
     await this.subscriberRepository.update(
       {
@@ -133,8 +142,29 @@ export class UpdateSubscriberChannel {
         _id: foundSubscriber,
         'channels._integrationId': existingChannel._integrationId,
       },
-      { $set: { 'channels.$': mergedChannel } }
+      { $set: { 'channels.$': mappedChannel } }
     );
+  }
+
+  private mapChannel(
+    updatePayload: Partial<IChannelSettings>,
+    existingChannel: IChannelSettings,
+    deviceTokens: string[]
+  ): IChannelSettings {
+    return {
+      _integrationId: updatePayload._integrationId || existingChannel._integrationId,
+      providerId: updatePayload.providerId || existingChannel.providerId,
+      credentials: { ...existingChannel.credentials, ...updatePayload.credentials, ...{ deviceTokens } },
+    };
+  }
+
+  private unionDeviceTokens(existingDeviceTokens: string[], updateDeviceTokens: string[]): string[] {
+    // in order to not have breaking change we will support [] update
+    if (updateDeviceTokens?.length === 0) return [];
+
+    const merged = [...existingDeviceTokens, ...updateDeviceTokens];
+
+    return union(merged);
   }
 
   private createUpdatePayload(command: UpdateSubscriberChannelCommand) {
@@ -147,7 +177,7 @@ export class UpdateSubscriberChannel {
         updatePayload.credentials.webhookUrl = command.credentials.webhookUrl;
       }
       if (command.credentials.deviceTokens != null && updatePayload.credentials) {
-        updatePayload.credentials.deviceTokens = command.credentials.deviceTokens;
+        updatePayload.credentials.deviceTokens = union(command.credentials.deviceTokens);
       }
       if (command.credentials.channel != null && updatePayload.credentials) {
         updatePayload.credentials.channel = command.credentials.channel;

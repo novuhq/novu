@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
+import { SubscriberEntity, SubscriberRepository, IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
 
 export class SubscribersService {
@@ -7,7 +7,17 @@ export class SubscribersService {
 
   constructor(private _organizationId: string, private _environmentId: string) {}
 
+  private integrationRepository = new IntegrationRepository();
+
   async createSubscriber(fields: Partial<SubscriberEntity> = {}) {
+    const integrations = await this.integrationRepository.find({
+      _environmentId: this._environmentId,
+      _organizationId: this._organizationId,
+    });
+
+    const slackIntegration = integrations.find((integration) => integration.providerId === ChatProviderIdEnum.Slack);
+    const fcmIntegration = integrations.find((integration) => integration.providerId === PushProviderIdEnum.FCM);
+
     return await this.subscriberRepository.create({
       lastName: faker.name.lastName(),
       firstName: faker.name.firstName(),
@@ -18,12 +28,12 @@ export class SubscribersService {
       subscriberId: SubscriberRepository.createObjectId(),
       channels: [
         {
-          _integrationId: 'integrationId_slack',
+          _integrationId: slackIntegration?._id ?? 'integrationId_slack',
           providerId: ChatProviderIdEnum.Slack,
           credentials: { webhookUrl: 'webhookUrl' },
         },
         {
-          _integrationId: 'integrationId_fcm',
+          _integrationId: fcmIntegration?._id ?? 'integrationId_fcm',
           providerId: PushProviderIdEnum.FCM,
           credentials: { deviceTokens: ['identifier'] },
         },

@@ -3,10 +3,11 @@ import { SubscribersService, UserSession } from '@novu/testing';
 import { Test } from '@nestjs/testing';
 import { expect } from 'chai';
 import { SharedModule } from '../../../shared/shared.module';
-import { ChannelTypeEnum, ChatProviderIdEnum } from '@novu/shared';
+import { ChannelTypeEnum, ChatProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
 import { UpdateSubscriberChannel } from './update-subscriber-channel.usecase';
 import { UpdateSubscriberChannelCommand } from './update-subscriber-channel.command';
 import { OAuthHandlerEnum } from '../../types';
+import { faker } from '@faker-js/faker';
 
 describe('Update Subscriber channel credentials', function () {
   let updateSubscriberChannelUsecase: UpdateSubscriberChannel;
@@ -119,7 +120,6 @@ describe('Update Subscriber channel credentials', function () {
       (channel) => channel.providerId === newSlackCredentials.providerId
     );
 
-    expect(newChannel?._integrationId).to.equal('integrationId_slack');
     expect(newChannel?.providerId).to.equal('slack');
     expect(newChannel?.credentials.webhookUrl).to.equal('new-secret-webhookUrl');
   });
@@ -158,5 +158,182 @@ describe('Update Subscriber channel credentials', function () {
     );
 
     expect(updatedChannel?.credentials.webhookUrl).to.equal(webhookUrl);
+  });
+
+  it('should not add duplicated token ', async function () {
+    const subscriberService = new SubscribersService(session.organization._id, session.environment._id);
+    const subscriber = await subscriberService.createSubscriber();
+
+    const fcmCredentials = {
+      providerId: PushProviderIdEnum.FCM,
+      credentials: { deviceTokens: ['token_1', 'token_1'] },
+    };
+
+    await updateSubscriberChannelUsecase.execute(
+      UpdateSubscriberChannelCommand.create({
+        organizationId: subscriber._organizationId,
+        subscriberId: subscriber.subscriberId,
+        environmentId: session.environment._id,
+        providerId: fcmCredentials.providerId,
+        credentials: fcmCredentials.credentials,
+        oauthHandler: OAuthHandlerEnum.NOVU,
+      })
+    );
+
+    let updatedSubscriber = await subscriberRepository.findById(subscriber._id);
+
+    const addedFcmToken = updatedSubscriber?.channels?.find(
+      (channel) => channel.providerId === fcmCredentials.providerId
+    );
+
+    expect(addedFcmToken?.providerId).to.equal(PushProviderIdEnum.FCM);
+    expect(addedFcmToken?.credentials?.deviceTokens?.length).to.equal(2);
+    expect(addedFcmToken?.credentials?.deviceTokens).to.deep.equal(['identifier', 'token_1']);
+  });
+
+  it('should update deviceTokens with empty array', async function () {
+    const subscriberService = new SubscribersService(session.organization._id, session.environment._id);
+    const subscriber = await subscriberService.createSubscriber();
+
+    const fcmCredentials = {
+      providerId: PushProviderIdEnum.FCM,
+      credentials: { deviceTokens: ['token_1'] },
+    };
+
+    await updateSubscriberChannelUsecase.execute(
+      UpdateSubscriberChannelCommand.create({
+        organizationId: subscriber._organizationId,
+        subscriberId: subscriber.subscriberId,
+        environmentId: session.environment._id,
+        providerId: fcmCredentials.providerId,
+        credentials: fcmCredentials.credentials,
+        oauthHandler: OAuthHandlerEnum.NOVU,
+      })
+    );
+
+    let updatedSubscriber = await subscriberRepository.findById(subscriber._id);
+
+    const addedFcmToken = updatedSubscriber?.channels?.find(
+      (channel) => channel.providerId === fcmCredentials.providerId
+    );
+
+    expect(addedFcmToken?.credentials?.deviceTokens?.length).to.equal(2);
+    expect(addedFcmToken?.credentials?.deviceTokens).to.deep.equal(['identifier', 'token_1']);
+
+    await updateSubscriberChannelUsecase.execute(
+      UpdateSubscriberChannelCommand.create({
+        organizationId: subscriber._organizationId,
+        subscriberId: subscriber.subscriberId,
+        environmentId: session.environment._id,
+        providerId: fcmCredentials.providerId,
+        credentials: { deviceTokens: [] },
+        oauthHandler: OAuthHandlerEnum.NOVU,
+      })
+    );
+
+    updatedSubscriber = await subscriberRepository.findById(subscriber._id);
+
+    const updatedProviderWithEmptyDevicetoken = updatedSubscriber?.channels?.find(
+      (channel) => channel.providerId === fcmCredentials.providerId
+    );
+
+    expect(updatedProviderWithEmptyDevicetoken?.credentials?.deviceTokens?.length).to.equal(0);
+    expect(updatedProviderWithEmptyDevicetoken?.credentials?.deviceTokens).to.deep.equal([]);
+  });
+
+  it('should update deviceTokens with new token after stress adding', async function () {
+    const subscriberService = new SubscribersService(session.organization._id, session.environment._id);
+    const subscriber = await subscriberService.createSubscriber();
+
+    await updateSubscriberChannelUsecase.execute(
+      UpdateSubscriberChannelCommand.create({
+        organizationId: subscriber._organizationId,
+        subscriberId: subscriber.subscriberId,
+        environmentId: session.environment._id,
+        providerId: PushProviderIdEnum.FCM,
+        credentials: { deviceTokens: ['token_1'] },
+        oauthHandler: OAuthHandlerEnum.NOVU,
+      })
+    );
+
+    let updatedSubscriber = await subscriberRepository.findById(subscriber._id);
+
+    let updateToken = updatedSubscriber?.channels?.find((channel) => channel.providerId === PushProviderIdEnum.FCM);
+
+    expect(updateToken?.credentials?.deviceTokens?.length).to.equal(2);
+    expect(updateToken?.credentials?.deviceTokens).to.deep.equal(['identifier', 'token_1']);
+
+    await updateSubscriberChannelUsecase.execute(
+      UpdateSubscriberChannelCommand.create({
+        organizationId: subscriber._organizationId,
+        subscriberId: subscriber.subscriberId,
+        environmentId: session.environment._id,
+        providerId: PushProviderIdEnum.FCM,
+        credentials: { deviceTokens: ['token_1', 'token_2', 'token_2', 'token_3'] },
+        oauthHandler: OAuthHandlerEnum.NOVU,
+      })
+    );
+
+    updatedSubscriber = await subscriberRepository.findById(subscriber._id);
+
+    updateToken = updatedSubscriber?.channels?.find((channel) => channel.providerId === PushProviderIdEnum.FCM);
+
+    expect(updateToken?.credentials?.deviceTokens?.length).to.equal(4);
+    expect(updateToken?.credentials?.deviceTokens).to.deep.equal(['identifier', 'token_1', 'token_2', 'token_3']);
+
+    await updateSubscriberChannelUsecase.execute(
+      UpdateSubscriberChannelCommand.create({
+        organizationId: subscriber._organizationId,
+        subscriberId: subscriber.subscriberId,
+        environmentId: session.environment._id,
+        providerId: PushProviderIdEnum.FCM,
+        credentials: { deviceTokens: ['token_555'] },
+        oauthHandler: OAuthHandlerEnum.NOVU,
+      })
+    );
+
+    updatedSubscriber = await subscriberRepository.findById(subscriber._id);
+
+    updateToken = updatedSubscriber?.channels?.find((channel) => channel.providerId === PushProviderIdEnum.FCM);
+
+    expect(updateToken?.credentials?.deviceTokens?.length).to.equal(5);
+    expect(updateToken?.credentials?.deviceTokens).to.deep.equal([
+      'identifier',
+      'token_1',
+      'token_2',
+      'token_3',
+      'token_555',
+    ]);
+  });
+
+  it('should update deviceTokens without duplication on channel creation (addChannelToSubscriber)', async function () {
+    const subscriberId = SubscriberRepository.createObjectId();
+    const test = await subscriberRepository.create({
+      lastName: faker.name.lastName(),
+      firstName: faker.name.firstName(),
+      email: faker.internet.email(),
+      phone: faker.phone.phoneNumber(),
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+      subscriberId: subscriberId,
+    });
+
+    await updateSubscriberChannelUsecase.execute(
+      UpdateSubscriberChannelCommand.create({
+        organizationId: session.organization._id,
+        subscriberId: subscriberId,
+        environmentId: session.environment._id,
+        providerId: PushProviderIdEnum.FCM,
+        credentials: { deviceTokens: ['token_1', 'token_1', 'token_1'] },
+        oauthHandler: OAuthHandlerEnum.NOVU,
+      })
+    );
+
+    let updatedSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
+
+    const addedFcmToken = updatedSubscriber?.channels?.find((channel) => channel.providerId === PushProviderIdEnum.FCM);
+
+    expect(addedFcmToken?.credentials?.deviceTokens?.length).to.equal(1);
+    expect(addedFcmToken?.credentials?.deviceTokens).to.deep.equal(['token_1']);
   });
 });
