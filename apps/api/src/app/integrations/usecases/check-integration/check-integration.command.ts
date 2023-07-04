@@ -6,8 +6,10 @@ export class CheckIntegrationCommand extends EnvironmentCommand {
   @IsDefined()
   @IsString()
   providerId: string;
+
   @IsDefined()
   channel: ChannelTypeEnum;
+
   @IsDefined()
-  credentials: ICredentials;
+  credentials?: ICredentials;
 }
