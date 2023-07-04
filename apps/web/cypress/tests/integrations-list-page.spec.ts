@@ -24,7 +24,6 @@ describe('Integrations List Page', function () {
     {
       name,
       isFree,
-      key,
       provider,
       channel,
       environment,
@@ -32,10 +31,9 @@ describe('Integrations List Page', function () {
     }: {
       name: string;
       isFree?: boolean;
-      key: string | null;
       provider: string;
       channel: string;
-      environment: string | null;
+      environment?: string;
       status: string;
     },
     nth: number
@@ -47,7 +45,7 @@ describe('Integrations List Page', function () {
       .getByTestId('integration-name-cell')
       .should('be.visible')
       .contains(name);
-    // cy.get('@integrations-table').get('tr').eq(nth).getByTestId('integration-name-cell').should('be.visible').contains(key);
+
     if (isFree) {
       cy.get('@integrations-table')
         .get('tr')
@@ -56,18 +54,21 @@ describe('Integrations List Page', function () {
         .should('be.visible')
         .contains('Free');
     }
+
     cy.get('@integrations-table')
       .get('tr')
       .eq(nth)
       .getByTestId('integration-provider-cell')
       .should('be.visible')
       .contains(provider);
+
     cy.get('@integrations-table')
       .get('tr')
       .eq(nth)
       .getByTestId('integration-channel-cell')
       .should('be.visible')
       .contains(channel);
+
     if (environment) {
       cy.get('@integrations-table')
         .get('tr')
@@ -76,6 +77,7 @@ describe('Integrations List Page', function () {
         .should('be.visible')
         .contains(environment);
     }
+
     cy.get('@integrations-table')
       .get('tr')
       .eq(nth)
@@ -125,10 +127,8 @@ describe('Integrations List Page', function () {
     checkTableRow(
       {
         name: 'Novu Email',
-        key: null,
         provider: 'Novu Email',
         channel: 'Email',
-        environment: null,
         status: 'Disabled',
       },
       0
@@ -136,10 +136,8 @@ describe('Integrations List Page', function () {
     checkTableRow(
       {
         name: 'Novu SMS',
-        key: null,
         provider: 'Novu SMS',
         channel: 'SMS',
-        environment: null,
         status: 'Disabled',
       },
       1
@@ -147,7 +145,6 @@ describe('Integrations List Page', function () {
     checkTableRow(
       {
         name: 'SendGrid',
-        key: '',
         provider: 'SendGrid',
         channel: 'Email',
         environment: 'Development',
@@ -158,7 +155,6 @@ describe('Integrations List Page', function () {
     checkTableRow(
       {
         name: 'Twilio',
-        key: '',
         provider: 'Twilio',
         channel: 'SMS',
         environment: 'Development',
@@ -169,7 +165,6 @@ describe('Integrations List Page', function () {
     checkTableRow(
       {
         name: 'Slack',
-        key: '',
         provider: 'Slack',
         channel: 'Chat',
         environment: 'Development',
@@ -180,7 +175,6 @@ describe('Integrations List Page', function () {
     checkTableRow(
       {
         name: 'Discord',
-        key: '',
         provider: 'Discord',
         channel: 'Chat',
         environment: 'Development',
@@ -191,7 +185,6 @@ describe('Integrations List Page', function () {
     checkTableRow(
       {
         name: 'Firebase Cloud Messaging',
-        key: '',
         provider: 'Firebase Cloud Messaging',
         channel: 'Push',
         environment: 'Development',
@@ -203,7 +196,6 @@ describe('Integrations List Page', function () {
       {
         name: 'Novu In-App',
         isFree: true,
-        key: '',
         provider: 'Novu In-App',
         channel: 'In-App',
         environment: 'Development',
@@ -214,7 +206,6 @@ describe('Integrations List Page', function () {
     checkTableRow(
       {
         name: 'SendGrid',
-        key: '',
         provider: 'SendGrid',
         channel: 'Email',
         environment: 'Production',
@@ -225,7 +216,6 @@ describe('Integrations List Page', function () {
     checkTableRow(
       {
         name: 'Twilio',
-        key: '',
         provider: 'Twilio',
         channel: 'SMS',
         environment: 'Production',
@@ -236,7 +226,6 @@ describe('Integrations List Page', function () {
     checkTableRow(
       {
         name: 'Slack',
-        key: '',
         provider: 'Slack',
         channel: 'Chat',
         environment: 'Production',
@@ -247,7 +236,6 @@ describe('Integrations List Page', function () {
     checkTableRow(
       {
         name: 'Discord',
-        key: '',
         provider: 'Discord',
         channel: 'Chat',
         environment: 'Production',
@@ -258,7 +246,6 @@ describe('Integrations List Page', function () {
     checkTableRow(
       {
         name: 'Firebase Cloud Messaging',
-        key: '',
         provider: 'Firebase Cloud Messaging',
         channel: 'Push',
         environment: 'Production',
@@ -270,7 +257,6 @@ describe('Integrations List Page', function () {
       {
         name: 'Novu In-App',
         isFree: true,
-        key: '',
         provider: 'Novu In-App',
         channel: 'In-App',
         environment: 'Production',
