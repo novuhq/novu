@@ -233,12 +233,12 @@ describe('Update Subscriber channel credentials', function () {
 
     updatedSubscriber = await subscriberRepository.findById(subscriber._id);
 
-    const updatedProviderWithEmptyDevicetoken = updatedSubscriber?.channels?.find(
+    const updatedProviderWithEmptyDeviceToken = updatedSubscriber?.channels?.find(
       (channel) => channel.providerId === fcmCredentials.providerId
     );
 
-    expect(updatedProviderWithEmptyDevicetoken?.credentials?.deviceTokens?.length).to.equal(0);
-    expect(updatedProviderWithEmptyDevicetoken?.credentials?.deviceTokens).to.deep.equal([]);
+    expect(updatedProviderWithEmptyDeviceToken?.credentials?.deviceTokens?.length).to.equal(0);
+    expect(updatedProviderWithEmptyDeviceToken?.credentials?.deviceTokens).to.deep.equal([]);
   });
 
   it('should update deviceTokens with new token after stress adding', async function () {
