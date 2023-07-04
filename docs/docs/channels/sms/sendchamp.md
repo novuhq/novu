@@ -22,7 +22,7 @@ Alternatively, you can access the API key from the Accounts menu.
 
 ![Image displaying how to access the API Key from the Accounts menu dropdown](/img/providers/sms/sendchamp/accounts-menu-api-key.png)
 
-- On the API Keys page, copy the Create `Public access key`.
+- On the API Keys page, copy the `Public access key`.
 
 ![Image displaying the access the API Key on the API Keys page](/img/providers/sms/sendchamp/api-key.png)
 
@@ -52,12 +52,12 @@ Once it is approved, you can use your Sender ID as the `from` field on the Novu 
 - Visit the [Integrations](https://web.novu.co/integrations) page on Novu.
 - Locate **Sendchamp** under SMS section and click on the **Connect** button.
 
-![Image showing Novu web platform integration store page](/img/providers/sms/termii/integration.png)
+![Image showing Novu web platform integration store page](/img/providers/sms/sendchamp/web.png)
 
 - Enter your Sendchamp API Key.
 - Fill the `From` field.
 - Click on the **Connect** button.
 
-![Sendchamp integration modal on Novu’s web integration page](/img/providers/sms/termii/web.png)
+![Sendchamp integration modal on Novu’s web integration page](/img/providers/sms/sendchamp/integration.png)
 
 Now it is possible to send SMS notifications using **Sendchamp** in Novu.
