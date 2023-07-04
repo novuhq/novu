@@ -37,11 +37,14 @@ export default function SearchBarWrapper() {
       fontWeights: {
         semibold: 500,
       },
-      colors: {
-        inkeepPrimary: {
-          textColorOnPrimary: "white"
-        }
+      primaryColors: {
+        textColorOnPrimary: "white"
       }
+      // colors: {
+      //   inkeepPrimary: {
+      //     textColorOnPrimary: "white"
+      //   }
+      // }
     }
   };
 
@@ -57,11 +60,7 @@ export default function SearchBarWrapper() {
 
   return (
     <div className="Inkeep-Search">
-      <BrowserOnly fallback={<div />}>
-        {() =>
-          <InkeepSearchBar {...searchSettings} />
-        }
-      </BrowserOnly>
+      <InkeepSearchBar {...searchSettings} />
     </div>
   );
 }
