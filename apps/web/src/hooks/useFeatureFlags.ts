@@ -9,6 +9,12 @@ const prepareBooleanStringFeatureFlag = (value: string | undefined, defaultValue
   return preparedValue || defaultValue;
 };
 
+const useGetFlagByKey = <T>(key: FeatureFlagsKeysEnum): T => {
+  const { [key]: featureFlag } = useFlags();
+
+  return featureFlag;
+};
+
 export const useIsTemplateStoreEnabled = (): boolean => {
   const value = IS_TEMPLATE_STORE_ENABLED;
   const fallbackValue = false;
@@ -29,10 +35,4 @@ export const useIsMultiProviderConfigurationEnabled = (): boolean => {
   );
 
   return isMultiProviderConfigurationEnabled ?? defaultValue;
-};
-
-const useGetFlagByKey = <T>(key: FeatureFlagsKeysEnum): T => {
-  const { [key]: featureFlag } = useFlags();
-
-  return featureFlag;
 };

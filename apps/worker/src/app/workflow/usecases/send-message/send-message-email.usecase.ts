@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import {
   MessageRepository,
   NotificationStepEntity,
-  OrganizationRepository,
   SubscriberRepository,
   EnvironmentRepository,
   IntegrationEntity,
@@ -23,8 +22,7 @@ import {
   DetailEnum,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-  GetDecryptedIntegrations,
-  GetDecryptedIntegrationsCommand,
+  SelectIntegration,
   GetNovuIntegration,
   CompileEmailTemplate,
   CompileEmailTemplateCommand,
@@ -46,17 +44,10 @@ export class SendMessageEmail extends SendMessageBase {
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
-    private organizationRepository: OrganizationRepository,
     private compileEmailTemplateUsecase: CompileEmailTemplate,
-    protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
+    protected selectIntegration: SelectIntegration
   ) {
-    super(
-      messageRepository,
-      createLogUsecase,
-      createExecutionDetails,
-      subscriberRepository,
-      getDecryptedIntegrationsUsecase
-    );
+    super(messageRepository, createLogUsecase, createExecutionDetails, subscriberRepository, selectIntegration);
   }
 
   @InstrumentUsecase()
@@ -70,16 +61,12 @@ export class SendMessageEmail extends SendMessageBase {
     let integration: IntegrationEntity | undefined = undefined;
 
     try {
-      integration = await this.getIntegration(
-        GetDecryptedIntegrationsCommand.create({
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          channelType: ChannelTypeEnum.EMAIL,
-          findOne: true,
-          active: true,
-          userId: command.userId,
-        })
-      );
+      integration = await this.getIntegration({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        channelType: ChannelTypeEnum.EMAIL,
+        userId: command.userId,
+      });
     } catch (e) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
@@ -243,6 +230,11 @@ export class SendMessageEmail extends SendMessageBase {
         attachments,
         id: message._id,
         replyTo: replyToAddress,
+        notificationDetails: {
+          transactionId: command.transactionId,
+          workflowIdentifier: command.identifier,
+          subscriberId: subscriber.subscriberId,
+        },
       },
       overrides || {}
     );

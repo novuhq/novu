@@ -11,7 +11,7 @@ export function IntegrationInput({
   credential: IConfigCredentials;
   errors: any;
   field: any;
-  register: any;
+  register?: any;
 }) {
   if (isNeededToHide(credential.key)) {
     if (credential.type === 'text') {
@@ -27,7 +27,7 @@ export function IntegrationInput({
         data-test-id={credential.key}
         error={errors[credential.key]?.message}
         {...field}
-        {...register(credential.key, {
+        {...register?.(credential.key, {
           required: credential.required && `Please enter a ${credential.displayName.toLowerCase()}`,
         })}
       />
@@ -44,7 +44,7 @@ export function IntegrationInput({
         data-test-id={credential.key}
         error={errors[credential.key]?.message}
         {...field}
-        {...register(credential.key, {
+        {...register?.(credential.key, {
           required: credential.required && `Please enter a ${credential.displayName.toLowerCase()}`,
         })}
       />
@@ -66,7 +66,7 @@ export function IntegrationInput({
         description={credential.description ?? ''}
         data-test-id={credential.key}
         error={errors[credential.key]?.message}
-        {...register(credential.key)}
+        {...register?.(credential.key)}
         checked={field.value}
         onChange={field.onChange}
       />
@@ -88,7 +88,7 @@ export function IntegrationInput({
         description={credential.description ?? ''}
         data-test-id={credential.key}
         error={errors[credential.key]?.message}
-        {...register(credential.key)}
+        {...register?.(credential.key)}
         checked={field.value}
         onChange={field.onChange}
       />
@@ -104,7 +104,7 @@ export function IntegrationInput({
       data-test-id={credential.key}
       error={errors[credential.key]?.message}
       {...field}
-      {...register(credential.key, {
+      {...register?.(credential.key, {
         required: credential.required && `Please enter a ${credential.displayName.toLowerCase()}`,
       })}
     />

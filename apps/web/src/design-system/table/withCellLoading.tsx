@@ -11,14 +11,14 @@ export const SkeletonStyled = styled(Skeleton)`
 
 export const withCellLoading = <T extends object = {}>(
   Component: Renderer<IExtendedCellProps<T>>,
-  { width = 100, height = 20 }: { width?: number; height?: number } = {}
+  { width = 100, height = 20, loadingTestId }: { width?: number; height?: number; loadingTestId?: string } = {}
 ) => {
   const displayName =
     typeof Component === 'function' ? (Component as React.ComponentType).displayName || Component.name : 'Component';
 
   const CellLoading = ({ isLoading, ...rest }: IExtendedCellProps<T>) => {
     if (isLoading) {
-      return <SkeletonStyled width={width} height={height} />;
+      return <SkeletonStyled width={width} height={height} data-test-id={loadingTestId} />;
     }
 
     if (typeof Component === 'function') {
