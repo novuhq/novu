@@ -41,7 +41,10 @@ export class CreateIntegrationRequestDto implements ICreateIntegrationBodyDto {
   @ValidateNested()
   credentials?: CredentialsDto;
 
-  @ApiPropertyOptional({ type: Boolean })
+  @ApiPropertyOptional({
+    type: Boolean,
+    description: 'If the integration is active the validation on the credentials field will run',
+  })
   @IsOptional()
   @IsBoolean()
   active?: boolean;

@@ -31,8 +31,6 @@ export class NotificationTemplateService {
       _environmentId: this.environmentId,
     });
 
-    console.log({ groups, feeds, layouts });
-
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const steps: any[] = override?.steps ?? [
       {
