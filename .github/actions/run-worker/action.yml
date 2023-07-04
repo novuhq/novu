@@ -19,6 +19,7 @@ runs:
       shell: bash
       env:
         IN_MEMORY_CLUSTER_MODE_ENABLED: true
+        LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
       run: cd apps/worker && pnpm start:test &
 
     - name: Wait on worker

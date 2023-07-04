@@ -33,15 +33,6 @@ export class IntegrationRepository extends BaseRepository<IntegrationDBModel, In
   }
 
   async create(data: IntegrationQuery): Promise<IntegrationEntity> {
-    const existingIntegration = await this.findOne({
-      _environmentId: data._environmentId,
-      providerId: data.providerId,
-      channel: data.channel,
-    });
-    if (existingIntegration) {
-      throw new DalException('Duplicate key - One environment may not have two providers of the same channel type');
-    }
-
     return await super.create(data);
   }
 

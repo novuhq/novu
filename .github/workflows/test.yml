@@ -207,6 +207,7 @@ jobs:
 
       - uses: ./.github/actions/run-worker
         if: ${{matrix.projectName == '@novu/api' }}
+        secrets: inherit
 
       - uses: mansagroup/nrwl-nx-action@v3
         env:

@@ -3,6 +3,8 @@ import { expect } from 'chai';
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 import { IntegrationRepository } from '@novu/dal';
 
+const ORIGINAL_IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
+
 describe('Get Decrypted Integrations - /integrations (GET)', function () {
   let session: UserSession;
   const integrationRepository = new IntegrationRepository();
@@ -10,6 +12,11 @@ describe('Get Decrypted Integrations - /integrations (GET)', function () {
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
+    process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = 'true';
+  });
+
+  afterEach(async () => {
+    process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = ORIGINAL_IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
   });
 
   it('should get active decrypted integration', async function () {
@@ -25,22 +32,24 @@ describe('Get Decrypted Integrations - /integrations (GET)', function () {
 
     const result = (await session.testAgent.get(`/v1/integrations/active`)).body.data;
 
-    // We expect to find the test data 12 with the email one for the chosen environment replaced by the one created
-    expect(result.length).to.eq(12);
+    // We expect to find the test data 13 with the email one for the chosen environment replaced by the one created
+    expect(result.length).to.eq(13);
 
-    const activeEmailIntegration = result.find(
+    const activeEmailIntegrations = result.filter(
       (integration) =>
         integration.channel == ChannelTypeEnum.EMAIL && integration._environmentId === session.environment._id
     );
 
-    expect(activeEmailIntegration.providerId).to.equal('mailgun');
-    expect(activeEmailIntegration.credentials.apiKey).to.equal('123');
-    expect(activeEmailIntegration.credentials.secretKey).to.equal('abc');
-    expect(activeEmailIntegration.active).to.equal(true);
+    expect(activeEmailIntegrations.length).to.eq(2);
 
-    const environmentIntegrations = await integrationRepository.findByEnvironmentId(
-      activeEmailIntegration?._environmentId
-    );
+    const mailgun = activeEmailIntegrations.find((el) => el.providerId === EmailProviderIdEnum.Mailgun);
+
+    expect(mailgun.providerId).to.equal('mailgun');
+    expect(mailgun.credentials.apiKey).to.equal('123');
+    expect(mailgun.credentials.secretKey).to.equal('abc');
+    expect(mailgun.active).to.equal(true);
+
+    const environmentIntegrations = await integrationRepository.findByEnvironmentId(session.environment._id);
 
     // We expect to find the test data 6 plus the one created
     expect(environmentIntegrations.length).to.eq(7);
