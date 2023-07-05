@@ -56,10 +56,18 @@ export class SendMessageInApp extends SendMessageBase {
 
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
-    const subscriber = await this.getSubscriberBySubscriberId({
-      subscriberId: command.subscriberId,
-      _environmentId: command.environmentId,
-    });
+    const [subscriber, actorSubscriber] = await Promise.all([
+      this.getSubscriberBySubscriberId({
+        subscriberId: command.subscriberId,
+        _environmentId: command.environmentId,
+      }),
+      command.job._actorId
+        ? this.getSubscriberById({
+            _id: command.job._actorId,
+            _environmentId: command.environmentId,
+          })
+        : Promise.resolve(null),
+    ]);
     if (!subscriber) throw new PlatformException('Subscriber not found');
     if (!command.step.template) throw new PlatformException('Template not found');
 
@@ -103,6 +111,7 @@ export class SendMessageInApp extends SendMessageBase {
         inAppChannel.template.content,
         command.payload,
         subscriber,
+        actorSubscriber,
         command,
         organization
       );
@@ -112,6 +121,7 @@ export class SendMessageInApp extends SendMessageBase {
           inAppChannel.template.cta?.data?.url,
           command.payload,
           subscriber,
+          actorSubscriber,
           command,
           organization
         );
@@ -125,6 +135,7 @@ export class SendMessageInApp extends SendMessageBase {
             action.content,
             command.payload,
             subscriber,
+            actorSubscriber,
             command,
             organization
           );
@@ -146,6 +157,7 @@ export class SendMessageInApp extends SendMessageBase {
       _notificationId: command.notificationId,
       _environmentId: command.environmentId,
       _subscriberId: command._subscriberId,
+      _actorId: command.job._actorId,
       _templateId: command._templateId,
       _messageTemplateId: inAppChannel.template._id,
       channel: ChannelTypeEnum.IN_APP,
@@ -299,6 +311,7 @@ export class SendMessageInApp extends SendMessageBase {
     content: string | IEmailBlock[],
     payload: any,
     subscriber: SubscriberEntity,
+    actor: SubscriberEntity | null,
     command: SendMessageCommand,
     organization: OrganizationEntity | null
   ): Promise<string> {
@@ -316,6 +329,7 @@ export class SendMessageInApp extends SendMessageBase {
             logo: organization?.branding?.logo,
             color: organization?.branding?.color || '#f47373',
           },
+          actor,
           ...payload,
         },
       })

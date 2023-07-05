@@ -67,6 +67,7 @@ export class SendTestEmail {
             ...this.getSystemVariables('step', command),
           },
           subscriber: this.getSystemVariables('subscriber', command),
+          actor: this.getSystemVariables('actor', command),
         },
       })
     );
@@ -124,7 +125,7 @@ export class SendTestEmail {
   }
 
   private getSystemVariables(
-    variableType: 'subscriber' | 'step' | 'branding',
+    variableType: 'subscriber' | 'actor' | 'step' | 'branding',
     command: SendTestEmailCommand
   ) {
     const variables = {};

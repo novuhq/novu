@@ -160,7 +160,8 @@ export class TriggerEvent {
             to: subscriber,
             transactionId: command.transactionId,
             userId,
-            ...(actor && actorProcessed && { actor: actorProcessed }),
+            ...(actor &&
+              actorProcessed && { actor, actorSubscriber: actorProcessed }),
           });
 
         const notificationJobs = await this.createNotificationJobs.execute(

@@ -71,6 +71,8 @@ export class CreateNotificationJobs {
       payload: command.payload,
       expireAt: this.calculateExpireAt(command),
       channels,
+      ...(command.actorSubscriber && { _actorId: command.actorSubscriber._id }),
+      ...(command.actor && { actor: command.actor }),
     });
 
     if (!notification) {
@@ -108,7 +110,9 @@ export class CreateNotificationJobs {
         type: step.template.type,
         providerId: providerId,
         expireAt: notification.expireAt,
-        ...(command.actor && { _actorId: command.actor?._id }),
+        ...(command.actorSubscriber && {
+          _actorId: command.actorSubscriber._id,
+        }),
       };
 
       jobs.push(job);

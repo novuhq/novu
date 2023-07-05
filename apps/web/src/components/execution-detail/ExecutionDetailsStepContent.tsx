@@ -26,7 +26,7 @@ const GridColContainer = styled(Container)`
   padding: 20px;
 `;
 
-export const ExecutionDetailsStepContent = ({ identifier, step, subscriberVariables }) => {
+export const ExecutionDetailsStepContent = ({ identifier, step, subscriberVariables, actorVariables }) => {
   const [detailId, setDetailId] = useState<string>('');
   const [executionDetailsRawSnippet, setExecutionDetailsRawSnippet] = useState<string>('');
   const { executionDetails } = step || {};
@@ -61,7 +61,12 @@ export const ExecutionDetailsStepContent = ({ identifier, step, subscriberVariab
         <Grid.Col span={6}>
           <GridColContainer>
             <When truthy={detailId.length === 0}>
-              <ExecutionDetailTrigger identifier={identifier} step={step} subscriberVariables={subscriberVariables} />
+              <ExecutionDetailTrigger
+                identifier={identifier}
+                step={step}
+                subscriberVariables={subscriberVariables}
+                actorVariables={actorVariables}
+              />
             </When>
             <When truthy={detailId.length > 0 && executionDetailsRawSnippet}>
               <ExecutionDetailRawSnippet raw={executionDetailsRawSnippet} onClose={onHideExecutionDetail} />

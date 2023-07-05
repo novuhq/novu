@@ -25,6 +25,16 @@ const makeToValue = (subscriberVariables: INotificationTriggerVariable[], curren
   return JSON.stringify(subsVars, null, 2);
 };
 
+const makeActorValue = () => {
+  return JSON.stringify(
+    {
+      subscriberId: '<REPLACE_WITH_DATA>',
+    },
+    null,
+    2
+  );
+};
+
 const makePayloadValue = (variables: INotificationTriggerVariable[]) => {
   return JSON.stringify(getPayloadValue(variables), null, 2);
 };
@@ -61,11 +71,13 @@ export function TestWorkflow({ trigger }) {
   const form = useForm({
     initialValues: {
       toValue: makeToValue(subscriberVariables, currentUser),
+      actorValue: makeActorValue(),
       payloadValue: makePayloadValue(variables) === '{}' ? '{\n\n}' : makePayloadValue(variables),
       overridesValue: overridesTrigger,
     },
     validate: {
       toValue: jsonValidator,
+      actorValue: jsonValidator,
       payloadValue: jsonValidator,
       overridesValue: jsonValidator,
     },
@@ -75,8 +87,9 @@ export function TestWorkflow({ trigger }) {
     form.setValues({ toValue: makeToValue(subscriberVariables, currentUser) });
   }, [subscriberVariables, currentUser]);
 
-  const onTrigger = async ({ toValue, payloadValue, overridesValue }) => {
+  const onTrigger = async ({ toValue, actorValue, payloadValue, overridesValue }) => {
     const to = JSON.parse(toValue);
+    const actor = JSON.parse(actorValue);
     const payload = JSON.parse(payloadValue);
     const overrides = JSON.parse(overridesValue);
 
@@ -84,6 +97,7 @@ export function TestWorkflow({ trigger }) {
       const response = await triggerTestEvent({
         name: trigger?.identifier,
         to,
+        actor,
         payload: {
           ...payload,
           __source: 'test-workflow',
@@ -130,6 +144,17 @@ export function TestWorkflow({ trigger }) {
           minRows={3}
           validationError="Invalid JSON"
           mb={15}
+        />
+        <JsonInput
+          data-test-id="test-trigger-actor-param"
+          formatOnBlur
+          autosize
+          styles={inputStyles}
+          label="Actor (optional)"
+          {...form.getInputProps('actorValue')}
+          minRows={3}
+          mb={15}
+          validationError="Invalid JSON"
         />
         <JsonInput
           data-test-id="test-trigger-overrides-param"

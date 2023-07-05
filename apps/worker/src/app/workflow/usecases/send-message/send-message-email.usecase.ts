@@ -15,6 +15,7 @@ import {
   IAttachmentOptions,
   IEmailOptions,
   LogCodeEnum,
+  ActorTypeEnum,
 } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import {
@@ -52,10 +53,18 @@ export class SendMessageEmail extends SendMessageBase {
 
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
-    const subscriber = await this.getSubscriberBySubscriberId({
-      subscriberId: command.subscriberId,
-      _environmentId: command.environmentId,
-    });
+    const [subscriber, actorSubscriber] = await Promise.all([
+      this.getSubscriberBySubscriberId({
+        subscriberId: command.subscriberId,
+        _environmentId: command.environmentId,
+      }),
+      command.job._actorId
+        ? this.getSubscriberById({
+            _id: command.job._actorId,
+            _environmentId: command.environmentId,
+          })
+        : Promise.resolve(null),
+    ]);
     if (!subscriber) throw new PlatformException(`Subscriber ${command.subscriberId} not found`);
 
     let integration: IntegrationEntity | undefined = undefined;
@@ -87,6 +96,7 @@ export class SendMessageEmail extends SendMessageBase {
     if (!emailChannel.template) throw new PlatformException('Email channel template not found');
 
     const email = command.payload.email || subscriber.email;
+    const { actor } = emailChannel.template;
 
     Sentry.addBreadcrumb({
       message: 'Sending Email',
@@ -131,6 +141,7 @@ export class SendMessageEmail extends SendMessageBase {
           total_count: command.events?.length,
         },
         subscriber,
+        actor: actorSubscriber,
       },
     };
 
@@ -153,6 +164,11 @@ export class SendMessageEmail extends SendMessageBase {
       overrides,
       templateIdentifier: command.identifier,
       _jobId: command.jobId,
+      ...(actor &&
+        actor.type !== ActorTypeEnum.NONE && {
+          actor,
+          _actorId: command.job?._actorId,
+        }),
     });
 
     let replyToAddress: string | undefined;

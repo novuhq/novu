@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Center, LoadingOverlay, Modal, UnstyledButton, useMantineTheme } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
 import { JobStatusEnum } from '@novu/shared';
@@ -44,6 +44,7 @@ export function ExecutionDetailsModal({
     jobs,
     _digestedNotificationId: digestedNotificationId,
     to: subscriberVariables,
+    actor: actorVariables,
     template,
   } = response?.data || {};
   const { triggers } = template || {};
@@ -82,7 +83,12 @@ export function ExecutionDetailsModal({
         data-test-id="execution-details-modal-loading-overlay"
       />
 
-      <ExecutionDetailsAccordion identifier={identifier} steps={jobs} subscriberVariables={subscriberVariables} />
+      <ExecutionDetailsAccordion
+        identifier={identifier}
+        steps={jobs}
+        subscriberVariables={subscriberVariables}
+        actorVariables={actorVariables}
+      />
       <When truthy={digestedNotificationId}>
         <Center mt={20}>
           <Text mr={10} size="md" color={colors.B60}>

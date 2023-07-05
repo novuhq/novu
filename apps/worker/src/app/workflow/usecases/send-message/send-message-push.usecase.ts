@@ -47,10 +47,18 @@ export class SendMessagePush extends SendMessageBase {
 
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
-    const subscriber = await this.getSubscriberBySubscriberId({
-      subscriberId: command.subscriberId,
-      _environmentId: command.environmentId,
-    });
+    const [subscriber, actorSubscriber] = await Promise.all([
+      this.getSubscriberBySubscriberId({
+        subscriberId: command.subscriberId,
+        _environmentId: command.environmentId,
+      }),
+      command.job._actorId
+        ? this.getSubscriberById({
+            _id: command.job._actorId,
+            _environmentId: command.environmentId,
+          })
+        : Promise.resolve(null),
+    ]);
     if (!subscriber) throw new PlatformException(`Subscriber not found`);
 
     Sentry.addBreadcrumb({
@@ -66,6 +74,7 @@ export class SendMessagePush extends SendMessageBase {
         events: command.events,
         total_count: command.events?.length,
       },
+      actor: actorSubscriber,
       ...command.payload,
     };
     let content = '';
@@ -177,6 +186,7 @@ export class SendMessagePush extends SendMessageBase {
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       _subscriberId: command._subscriberId,
+      _actorId: command.job._actorId,
       _templateId: command._templateId,
       _messageTemplateId: command.step?.template?._id,
       channel: ChannelTypeEnum.PUSH,

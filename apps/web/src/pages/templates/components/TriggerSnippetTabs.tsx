@@ -15,18 +15,20 @@ export function TriggerSnippetTabs({ trigger }: { trigger: INotificationTrigger 
   const subscriberVariables = isPassingSubscriberId
     ? [...triggerSubscriberVariables]
     : [{ name: 'subscriberId' }, ...triggerSubscriberVariables];
+  const actorVariables = [{ name: 'subscriberId' }];
 
   const toValue = getSubscriberValue(subscriberVariables, (variable) => variable.value || '<REPLACE_WITH_DATA>');
+  const actorValue = getSubscriberValue(actorVariables, (variable) => variable.value || '<REPLACE_WITH_DATA>');
   const payloadValue = getPayloadValue(trigger.variables);
 
   const prismTabs = [
     {
       value: NODE_JS,
-      content: getNodeTriggerSnippet(trigger.identifier, toValue, payloadValue),
+      content: getNodeTriggerSnippet(trigger.identifier, toValue, actorValue, payloadValue),
     },
     {
       value: CURL,
-      content: getCurlTriggerSnippet(trigger.identifier, toValue, payloadValue),
+      content: getCurlTriggerSnippet(trigger.identifier, toValue, actorValue, payloadValue),
     },
   ];
 
@@ -36,6 +38,7 @@ export function TriggerSnippetTabs({ trigger }: { trigger: INotificationTrigger 
 export const getNodeTriggerSnippet = (
   identifier: string,
   to: Record<string, unknown>,
+  actor: Record<string, unknown>,
   payload: Record<string, unknown>,
   overrides?: Record<string, unknown>
 ) => {
@@ -46,6 +49,7 @@ const novu = new Novu('<API_KEY>');
 novu.trigger('${identifier}', ${JSON.stringify(
     {
       to,
+      actor,
       payload,
       overrides,
     },
@@ -67,6 +71,7 @@ novu.trigger('${identifier}', ${JSON.stringify(
 export const getCurlTriggerSnippet = (
   identifier: string,
   to: Record<string, any>,
+  actor: Record<string, unknown>,
   payload: Record<string, any>,
   overrides?: Record<string, any>
 ) => {
@@ -77,6 +82,7 @@ export const getCurlTriggerSnippet = (
        {
          name: identifier,
          to,
+         actor,
          payload,
          overrides,
        },

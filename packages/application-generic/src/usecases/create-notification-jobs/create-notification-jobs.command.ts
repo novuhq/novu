@@ -32,10 +32,13 @@ export class CreateNotificationJobsCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   to: ISubscribersDefine;
 
+  @IsOptional()
+  actor?: ISubscribersDefine;
+
   @IsString()
   @IsDefined()
   transactionId: string;
 
   @IsOptional()
-  actor?: SubscriberEntity;
+  actorSubscriber?: SubscriberEntity;
 }

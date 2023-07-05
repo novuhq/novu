@@ -7,7 +7,13 @@ import {
   MessageEntity,
   IntegrationEntity,
 } from '@novu/dal';
-import { ChannelTypeEnum, LogCodeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  LogCodeEnum,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  ActorTypeEnum,
+} from '@novu/shared';
 import {
   InstrumentUsecase,
   DetailEnum,
@@ -42,10 +48,18 @@ export class SendMessageSms extends SendMessageBase {
 
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
-    const subscriber = await this.getSubscriberBySubscriberId({
-      subscriberId: command.subscriberId,
-      _environmentId: command.environmentId,
-    });
+    const [subscriber, actorSubscriber] = await Promise.all([
+      this.getSubscriberBySubscriberId({
+        subscriberId: command.subscriberId,
+        _environmentId: command.environmentId,
+      }),
+      command.job._actorId
+        ? this.getSubscriberById({
+            _id: command.job._actorId,
+            _environmentId: command.environmentId,
+          })
+        : Promise.resolve(null),
+    ]);
     if (!subscriber) throw new PlatformException('Subscriber not found');
 
     const integration = await this.getIntegration({
@@ -62,8 +76,11 @@ export class SendMessageSms extends SendMessageBase {
     const smsChannel: NotificationStepEntity = command.step;
     if (!smsChannel.template) throw new PlatformException(`Unexpected error: SMS template is missing`);
 
+    const { actor } = smsChannel.template;
+
     const payload = {
       subscriber: subscriber,
+      actor: actorSubscriber,
       step: {
         digest: !!command.events?.length,
         events: command.events,
@@ -129,6 +146,11 @@ export class SendMessageSms extends SendMessageBase {
       overrides,
       templateIdentifier: command.identifier,
       _jobId: command.jobId,
+      ...(actor &&
+        actor.type !== ActorTypeEnum.NONE && {
+          actor,
+          _actorId: command.job?._actorId,
+        }),
     });
 
     await this.createExecutionDetails.execute(

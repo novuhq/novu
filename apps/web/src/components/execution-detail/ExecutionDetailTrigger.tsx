@@ -10,10 +10,10 @@ const TriggerTitle = styled(Text)`
   padding-bottom: 20px;
 `;
 
-export const ExecutionDetailTrigger = ({ identifier, step, subscriberVariables }) => {
+export const ExecutionDetailTrigger = ({ identifier, step, subscriberVariables, actorVariables }) => {
   const { payload, overrides } = step || {};
 
-  const curlSnippet = getCurlTriggerSnippet(identifier, subscriberVariables, payload, overrides);
+  const curlSnippet = getCurlTriggerSnippet(identifier, subscriberVariables, actorVariables, payload, overrides);
 
   return (
     <>

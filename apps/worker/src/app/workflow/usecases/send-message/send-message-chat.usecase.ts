@@ -14,6 +14,7 @@ import {
   ChatProviderIdEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  ActorTypeEnum,
 } from '@novu/shared';
 import {
   InstrumentUsecase,
@@ -50,10 +51,18 @@ export class SendMessageChat extends SendMessageBase {
 
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
-    const subscriber = await this.getSubscriberBySubscriberId({
-      subscriberId: command.subscriberId,
-      _environmentId: command.environmentId,
-    });
+    const [subscriber, actorSubscriber] = await Promise.all([
+      this.getSubscriberBySubscriberId({
+        subscriberId: command.subscriberId,
+        _environmentId: command.environmentId,
+      }),
+      command.job._actorId
+        ? this.getSubscriberById({
+            _id: command.job._actorId,
+            _environmentId: command.environmentId,
+          })
+        : Promise.resolve(null),
+    ]);
     if (!subscriber) throw new PlatformException('Subscriber not found');
 
     Sentry.addBreadcrumb({
@@ -70,6 +79,7 @@ export class SendMessageChat extends SendMessageBase {
         events: command.events,
         total_count: command.events?.length,
       },
+      actor: actorSubscriber,
       ...command.payload,
     };
 
@@ -169,6 +179,7 @@ export class SendMessageChat extends SendMessageBase {
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       _subscriberId: command._subscriberId,
+      _actorId: command.job._actorId,
       _templateId: command._templateId,
       _messageTemplateId: chatChannel.template._id,
       channel: ChannelTypeEnum.CHAT,
@@ -176,7 +187,6 @@ export class SendMessageChat extends SendMessageBase {
       chatWebhookUrl: chatWebhookUrl,
       content: this.storeContent() ? content : null,
       providerId: subscriberChannel.providerId,
-      _jobId: command.jobId,
     });
 
     if (!integration) {

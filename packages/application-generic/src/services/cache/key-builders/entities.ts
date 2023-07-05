@@ -23,6 +23,21 @@ const buildSubscriberKey = ({
     identifier: subscriberId,
   });
 
+const buildSubscriberIdentifierKey = ({
+  _id,
+  _environmentId,
+}: {
+  _id: string;
+  _environmentId: string;
+}): string =>
+  buildCommonKey({
+    type: CacheKeyTypeEnum.ENTITY,
+    keyEntity: CacheKeyPrefixEnum.SUBSCRIBER,
+    environmentId: _environmentId,
+    identifierPrefix: IdentifierPrefixEnum.ID,
+    identifier: _id,
+  });
+
 const buildUserKey = ({ _id }: { _id: string }): string =>
   buildKeyById({
     type: CacheKeyTypeEnum.ENTITY,
@@ -94,6 +109,7 @@ const buildGroupedBlueprintsKey = (): string =>
 export {
   buildUserKey,
   buildSubscriberKey,
+  buildSubscriberIdentifierKey,
   buildNotificationTemplateKey,
   buildNotificationTemplateIdentifierKey,
   buildEnvironmentByApiKey,

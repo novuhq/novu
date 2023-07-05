@@ -37,7 +37,7 @@ export interface IMessageTemplate {
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export const TemplateSystemVariables = ['subscriber', 'step', 'branding', 'preheader'];
+export const TemplateSystemVariables = ['subscriber', 'actor', 'step', 'branding', 'preheader'];
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const SystemVariablesWithTypes = {
@@ -48,6 +48,12 @@ export const SystemVariablesWithTypes = {
     phone: 'string',
     avatar: 'string',
     locale: 'string',
+    subscriberId: 'string',
+  },
+  actor: {
+    firstName: 'string',
+    lastName: 'string',
+    avatar: 'string',
     subscriberId: 'string',
   },
   step: {

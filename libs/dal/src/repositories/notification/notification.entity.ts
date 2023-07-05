@@ -16,6 +16,8 @@ export class NotificationEntity {
 
   _subscriberId: string;
 
+  _actorId?: string;
+
   transactionId: string;
 
   template?: NotificationTemplateEntity;
@@ -28,6 +30,9 @@ export class NotificationEntity {
   to?: any;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  actor?: any;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload?: any;
 
   createdAt?: string;
@@ -37,5 +42,5 @@ export class NotificationEntity {
 
 export type NotificationDBModel = ChangePropsValueType<
   NotificationEntity,
-  '_environmentId' | '_organizationId' | '_templateId' | '_subscriberId'
+  '_environmentId' | '_organizationId' | '_templateId' | '_subscriberId' | '_actorId'
 >;

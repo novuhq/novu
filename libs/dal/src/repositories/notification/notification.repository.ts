@@ -97,6 +97,13 @@ export class NotificationRepository extends BaseRepository<
         options: {
           readPreference: 'secondaryPreferred',
         },
+        path: 'actorSubscriber',
+        select: 'firstName _id lastName avatar subscriberId',
+      })
+      .populate({
+        options: {
+          readPreference: 'secondaryPreferred',
+        },
         path: 'template',
         select: '_id name triggers',
       })

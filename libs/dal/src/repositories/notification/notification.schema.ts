@@ -39,7 +39,14 @@ const notificationSchema = new Schema<NotificationDBModel>(
     _digestedNotificationId: {
       type: Schema.Types.String,
     },
+    _actorId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Subscriber',
+    },
     to: {
+      type: Schema.Types.Mixed,
+    },
+    actor: {
       type: Schema.Types.Mixed,
     },
     payload: {
@@ -76,6 +83,13 @@ notificationSchema.virtual('template', {
 notificationSchema.virtual('subscriber', {
   ref: 'Subscriber',
   localField: '_subscriberId',
+  foreignField: '_id',
+  justOne: true,
+});
+
+notificationSchema.virtual('actorSubscriber', {
+  ref: 'Subscriber',
+  localField: '_actorId',
   foreignField: '_id',
   justOne: true,
 });

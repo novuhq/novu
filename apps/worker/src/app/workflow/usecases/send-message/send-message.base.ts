@@ -2,6 +2,7 @@ import { IntegrationEntity, JobEntity, MessageRepository, SubscriberRepository }
 import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import {
   buildSubscriberKey,
+  buildSubscriberIdentifierKey,
   CachedEntity,
   DetailEnum,
   CreateExecutionDetails,
@@ -42,6 +43,20 @@ export abstract class SendMessageBase extends SendMessageType {
     return await this.subscriberRepository.findOne({
       _environmentId,
       subscriberId,
+    });
+  }
+
+  @CachedEntity({
+    builder: (command: { _id: string; _environmentId: string }) =>
+      buildSubscriberIdentifierKey({
+        _environmentId: command._environmentId,
+        _id: command._id,
+      }),
+  })
+  protected async getSubscriberById({ _id, _environmentId }: { _id: string; _environmentId: string }) {
+    return await this.subscriberRepository.findOne({
+      _environmentId,
+      _id,
     });
   }
 
