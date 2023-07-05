@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Center, LoadingOverlay, Modal, UnstyledButton, useMantineTheme } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
 import { JobStatusEnum } from '@novu/shared';
