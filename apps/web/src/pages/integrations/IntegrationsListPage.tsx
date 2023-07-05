@@ -1,11 +1,13 @@
 import { Container } from '@mantine/core';
+import { Outlet, useNavigate } from 'react-router-dom';
 import { useCallback, useMemo } from 'react';
+import { ChannelTypeEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
 
 import PageContainer from '../../components/layout/components/PageContainer';
 import PageHeader from '../../components/layout/components/PageHeader';
 import { Table, Text, withCellLoading } from '../../design-system';
 import { IExtendedColumn } from '../../design-system/table/Table';
-import { useIntegrations, useIsMultiProviderConfigurationEnabled } from '../../hooks';
+import { useIntegrationLimit, useIntegrations, useIsMultiProviderConfigurationEnabled } from '../../hooks';
 import { IntegrationsListToolbar } from './components/IntegrationsListToolbar';
 import { useFetchEnvironments } from '../../hooks/useFetchEnvironments';
 import { IntegrationNameCell } from './components/IntegrationNameCell';
@@ -17,6 +19,7 @@ import { When } from '../../components/utils/When';
 import { IntegrationsListNoData } from './components/IntegrationsListNoData';
 import { mapToTableIntegration } from './utils';
 import { IntegrationsStore } from './IntegrationsStorePage';
+import { IS_DOCKER_HOSTED } from '../../config';
 
 const columns: IExtendedColumn<ITableIntegration>[] = [
   {
@@ -62,14 +65,71 @@ const IntegrationsList = () => {
   const { integrations, loading: areIntegrationsLoading } = useIntegrations();
   const isLoading = areEnvironmentsLoading || areIntegrationsLoading;
   const hasIntegrations = integrations && integrations?.length > 0;
-  const data = useMemo<ITableIntegration[] | undefined>(
-    () => integrations?.map((el) => mapToTableIntegration(el, environments)),
-    [integrations, environments]
+
+  const {
+    data: { limit: emailLimit, count: emailCount },
+    loading: emailLimitLoading,
+  } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
+  const {
+    data: { limit: smsLimit, count: smsCount },
+    loading: smsLimitLoading,
+  } = useIntegrationLimit(ChannelTypeEnum.SMS);
+
+  const noEmailIntegrations = useMemo(
+    () => integrations?.filter((el) => el.channel === ChannelTypeEnum.EMAIL).length === 0,
+    [integrations]
   );
+  const noSmsIntegrations = useMemo(
+    () => integrations?.filter((el) => el.channel === ChannelTypeEnum.SMS).length === 0,
+    [integrations]
+  );
+  const isNovuEmailActive = !emailLimitLoading && noEmailIntegrations && emailLimit - emailCount > 0;
+  const isNovuSmsActive = !smsLimitLoading && noSmsIntegrations && smsLimit - smsCount > 0;
+
+  const data = useMemo<ITableIntegration[] | undefined>(() => {
+    const mappedIntegrations = (integrations ?? []).map((el) => mapToTableIntegration(el, environments));
+    if (!IS_DOCKER_HOSTED) {
+      mappedIntegrations.unshift(
+        mapToTableIntegration({
+          _id: '-2',
+          _environmentId: '',
+          _organizationId: '',
+          name: 'Novu SMS',
+          identifier: '',
+          providerId: SmsProviderIdEnum.Novu,
+          channel: ChannelTypeEnum.SMS,
+          credentials: {},
+          active: isNovuSmsActive,
+          deleted: false,
+          deletedAt: '',
+          deletedBy: '',
+        })
+      );
+      mappedIntegrations.unshift(
+        mapToTableIntegration({
+          _id: '-1',
+          _environmentId: '',
+          _organizationId: '',
+          name: 'Novu Email',
+          identifier: '',
+          providerId: EmailProviderIdEnum.Novu,
+          channel: ChannelTypeEnum.EMAIL,
+          credentials: {},
+          active: isNovuEmailActive,
+          deleted: false,
+          deletedAt: '',
+          deletedBy: '',
+        })
+      );
+    }
+
+    return mappedIntegrations;
+  }, [integrations, environments, isNovuEmailActive, isNovuSmsActive]);
+
+  const navigate = useNavigate();
 
   const onRowClickCallback = useCallback((item) => {
-    // eslint-disable-next-line no-console
-    console.log('onRowClickCallback', item);
+    navigate(`/integrations/${item.original.identifier}`);
   }, []);
 
   const onChannelClickCallback = useCallback((item) => {
@@ -78,10 +138,21 @@ const IntegrationsList = () => {
   }, []);
 
   return (
-    <PageContainer title="Integrations">
+    <PageContainer
+      style={{
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+      title="Integrations"
+    >
       <PageHeader title="Integrations Store" />
       <Container fluid sx={{ padding: '0 30px 8px 30px' }}>
-        <IntegrationsListToolbar areIntegrationsLoading={isLoading} />
+        <IntegrationsListToolbar
+          openCreateIntegration={() => {
+            navigate('create');
+          }}
+          areIntegrationsLoading={isLoading}
+        />
       </Container>
       <When truthy={hasIntegrations || isLoading}>
         <Table
@@ -91,6 +162,7 @@ const IntegrationsList = () => {
           columns={columns}
           data={data}
         />
+        <Outlet />
       </When>
       <When truthy={!hasIntegrations && !isLoading}>
         <IntegrationsListNoData onChannelClick={onChannelClickCallback} />

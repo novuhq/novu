@@ -71,9 +71,9 @@
   "devDependencies": {
     "@auto-it/npm": "^10.36.5",
     "@auto-it/released": "^10.36.5",
-    "@commitlint/cli": "17.6.5",
+    "@commitlint/cli": "17.6.6",
     "@commitlint/config-angular": "^17.0.0",
-    "@commitlint/config-conventional": "17.6.5",
+    "@commitlint/config-conventional": "17.6.6",
     "@cspell/eslint-plugin": "^6.14.3",
     "@nrwl/cli": "15.9.3",
     "@nrwl/eslint-plugin-nx": "15.9.4",
