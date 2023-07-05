@@ -227,7 +227,13 @@ export function UpdateProviderPage() {
             }}
             render={({ field }) => (
               <InputWrapper>
-                <Input {...field} required label="Name" error={errors.name?.message} />
+                <Input
+                  {...field}
+                  value={field.value ? field.value : selectedProvider?.displayName}
+                  required
+                  label="Name"
+                  error={errors.name?.message}
+                />
               </InputWrapper>
             )}
           />
