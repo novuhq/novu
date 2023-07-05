@@ -168,6 +168,7 @@ export class IntegrationsController {
         name: body.name,
         identifier: body.identifier,
         environmentId: body._environmentId,
+        userEnvironmentId: user.environmentId,
         organizationId: user.organizationId,
         integrationId,
         credentials: body.credentials,
