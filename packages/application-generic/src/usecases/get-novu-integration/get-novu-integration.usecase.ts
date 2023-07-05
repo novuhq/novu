@@ -96,21 +96,26 @@ export class GetNovuIntegration {
 
     switch (command.channelType) {
       case ChannelTypeEnum.EMAIL:
-        return this.createNovuEmailIntegration(organization);
+        return this.createNovuEmailIntegration(organization, command);
       case ChannelTypeEnum.SMS:
-        return this.createNovuSMSIntegration();
+        return this.createNovuSMSIntegration(command);
       default:
         return undefined;
     }
   }
 
   private createNovuEmailIntegration(
-    organization: OrganizationEntity | null
+    organization: OrganizationEntity | null,
+    command: GetNovuIntegrationCommand
   ): IntegrationEntity {
     const item = new IntegrationEntity();
     item.providerId = EmailProviderIdEnum.Novu;
     item.active = true;
     item.channel = ChannelTypeEnum.EMAIL;
+    item.name = 'Novu';
+    item._environmentId = command.environmentId;
+    item.identifier = item.providerId;
+    item._id = item.providerId;
 
     item.credentials = {
       apiKey: process.env.NOVU_EMAIL_INTEGRATION_API_KEY,
@@ -122,11 +127,17 @@ export class GetNovuIntegration {
     return item;
   }
 
-  private createNovuSMSIntegration(): IntegrationEntity {
+  private createNovuSMSIntegration(
+    command: GetNovuIntegrationCommand
+  ): IntegrationEntity {
     const item = new IntegrationEntity();
     item.providerId = SmsProviderIdEnum.Novu;
     item.active = true;
     item.channel = ChannelTypeEnum.SMS;
+    item.name = 'Novu';
+    item._environmentId = command.environmentId;
+    item.identifier = item.providerId;
+    item._id = item.providerId;
 
     item.credentials = {
       accountSid: process.env.NOVU_SMS_INTEGRATION_ACCOUNT_SID,
