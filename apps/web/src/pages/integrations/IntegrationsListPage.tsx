@@ -1,7 +1,7 @@
 import { Container } from '@mantine/core';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useCallback, useMemo } from 'react';
-import { ChannelTypeEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
+import { ChannelTypeEnum } from '@novu/shared';
 
 import PageContainer from '../../components/layout/components/PageContainer';
 import PageHeader from '../../components/layout/components/PageHeader';
@@ -18,7 +18,6 @@ import { When } from '../../components/utils/When';
 import { IntegrationsListNoData } from './components/IntegrationsListNoData';
 import { mapToTableIntegration } from './utils';
 import { IntegrationsStore } from './IntegrationsStorePage';
-import { IS_DOCKER_HOSTED } from '../../config';
 
 const columns: IExtendedColumn<ITableIntegration>[] = [
   {
@@ -87,40 +86,6 @@ const IntegrationsList = () => {
 
   const data = useMemo<ITableIntegration[] | undefined>(() => {
     const mappedIntegrations = (integrations ?? []).map((el) => mapToTableIntegration(el, environments));
-    if (!IS_DOCKER_HOSTED) {
-      mappedIntegrations.unshift(
-        mapToTableIntegration({
-          _id: '-2',
-          _environmentId: '',
-          _organizationId: '',
-          name: 'Novu SMS',
-          identifier: '',
-          providerId: SmsProviderIdEnum.Novu,
-          channel: ChannelTypeEnum.SMS,
-          credentials: {},
-          active: isNovuSmsActive,
-          deleted: false,
-          deletedAt: '',
-          deletedBy: '',
-        })
-      );
-      mappedIntegrations.unshift(
-        mapToTableIntegration({
-          _id: '-1',
-          _environmentId: '',
-          _organizationId: '',
-          name: 'Novu Email',
-          identifier: '',
-          providerId: EmailProviderIdEnum.Novu,
-          channel: ChannelTypeEnum.EMAIL,
-          credentials: {},
-          active: isNovuEmailActive,
-          deleted: false,
-          deletedAt: '',
-          deletedBy: '',
-        })
-      );
-    }
 
     return mappedIntegrations;
   }, [integrations, environments, isNovuEmailActive, isNovuSmsActive]);
