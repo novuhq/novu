@@ -112,10 +112,6 @@ export class GetNovuIntegration {
     item.providerId = EmailProviderIdEnum.Novu;
     item.active = true;
     item.channel = ChannelTypeEnum.EMAIL;
-    item.name = 'Novu';
-    item._environmentId = command.environmentId;
-    item.identifier = item.providerId;
-    item._id = item.providerId;
 
     item.credentials = {
       apiKey: process.env.NOVU_EMAIL_INTEGRATION_API_KEY,
@@ -124,7 +120,7 @@ export class GetNovuIntegration {
       ipPoolName: 'Demo',
     };
 
-    return item;
+    return this.mapNovuItem(item, command);
   }
 
   private createNovuSMSIntegration(
@@ -134,10 +130,6 @@ export class GetNovuIntegration {
     item.providerId = SmsProviderIdEnum.Novu;
     item.active = true;
     item.channel = ChannelTypeEnum.SMS;
-    item.name = 'Novu';
-    item._environmentId = command.environmentId;
-    item.identifier = item.providerId;
-    item._id = item.providerId;
 
     item.credentials = {
       accountSid: process.env.NOVU_SMS_INTEGRATION_ACCOUNT_SID,
@@ -145,7 +137,19 @@ export class GetNovuIntegration {
       from: process.env.NOVU_SMS_INTEGRATION_SENDER,
     };
 
-    return item;
+    return this.mapNovuItem(item, command);
+  }
+
+  private mapNovuItem(
+    entity: IntegrationEntity,
+    command: GetNovuIntegrationCommand
+  ): IntegrationEntity {
+    entity.name = 'Novu';
+    entity._environmentId = command.environmentId;
+    entity.identifier = entity.providerId;
+    entity._id = entity.providerId;
+
+    return entity;
   }
 
   public static mapProviders(type: ChannelTypeEnum, providerId: string) {
