@@ -272,11 +272,7 @@ export function UpdateProviderPage() {
                 defaultValue=""
                 rules={{ required: `Please enter a ${credential.displayName.toLowerCase()}` }}
                 render={({ field }) => (
-                  <IntegrationInput
-                    credential={credential}
-                    errors={errors?.credentials ? errors?.credentials : {}}
-                    field={field}
-                  />
+                  <IntegrationInput credential={credential} errors={errors?.credentials ?? {}} field={field} />
                 )}
               />
             </InputWrapper>
