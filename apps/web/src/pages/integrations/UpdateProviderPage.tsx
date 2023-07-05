@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ChannelTypeEnum, IConfigCredentials, ICredentialsDto, IUpdateIntegrationBodyDto } from '@novu/shared';
-import { ActionIcon, Group, Loader, Center, Stack } from '@mantine/core';
+import { ActionIcon, Group, Loader, Center, Stack, createStyles, MantineTheme, Drawer } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
 import styled from '@emotion/styled';
 import slugify from 'slugify';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Controller, useForm } from 'react-hook-form';
-import { Button, colors, Input, NameInput, Switch, Text } from '../../design-system';
+import { Button, colors, Input, NameInput, shadows, Switch, Text } from '../../design-system';
 import { Check, Close, Copy, DisconnectGradient } from '../../design-system/icons';
 import { useProviders } from './useProviders';
 import { IIntegratedProvider } from './IntegrationsStorePage';
@@ -29,6 +29,37 @@ interface IProviderForm {
   identifier: string;
 }
 
+const useDrawerStyles = createStyles((theme: MantineTheme) => {
+  const HEADER_HEIGHT = 65;
+  const HEADER_MARGIN = 30;
+  const DRAWER_PADDING = 24;
+  const INTEGRATION_PAGE_PADDING = 30;
+  const INTEGRATION_SETTING_TOP = HEADER_HEIGHT + HEADER_MARGIN;
+
+  return {
+    paperRoot: {},
+
+    drawer: {
+      display: 'flex',
+      position: 'fixed',
+      justifyContent: 'start',
+      flexDirection: 'column',
+      width: 480,
+      padding: `${DRAWER_PADDING}px !important`,
+      backgroundColor: `${theme.colorScheme === 'dark' ? colors.B17 : colors.white}` + '!important',
+      boxShadow: `${theme.colorScheme === 'dark' ? shadows.dark : shadows.medium}`,
+      borderRadius: '7px 7px 0 0',
+      top: `${INTEGRATION_SETTING_TOP}px`,
+      right: `${INTEGRATION_PAGE_PADDING}px`,
+    },
+
+    body: {
+      height: '100%',
+      overflow: 'scroll',
+    },
+  };
+});
+
 export function UpdateProviderPage() {
   const { environments, isLoading: areEnvironmentsLoading } = useFetchEnvironments();
   const [selectedProvider, setSelectedProvider] = useState<IIntegratedProvider | null>(null);
@@ -36,6 +67,8 @@ export function UpdateProviderPage() {
   const { integrationId } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  const { classes: drawerClasses } = useDrawerStyles();
 
   const { mutateAsync: updateIntegrationApi, isLoading: isLoadingUpdate } = useMutation<
     { res: string },
@@ -148,136 +181,145 @@ export function UpdateProviderPage() {
     );
   }
 
-  if (selectedProvider === null) {
-    return null;
-  }
-
   return (
-    <SideBarWrapper>
-      <Form name={'connect-integration-form'} noValidate onSubmit={handleSubmit(onUpdateIntegration)}>
-        <Group spacing={5}>
-          <ProviderImage providerId={selectedProvider?.providerId} />
-          <Controller
-            control={control}
-            name="name"
-            defaultValue=""
-            render={({ field }) => {
-              return (
-                <NameInput
+    <When truthy={selectedProvider}>
+      <Drawer
+        opened={true}
+        position="right"
+        onClose={() => {}}
+        withOverlay={false}
+        withCloseButton={false}
+        closeOnEscape={false}
+        classNames={drawerClasses}
+      >
+        <Form name={'connect-integration-form'} noValidate onSubmit={handleSubmit(onUpdateIntegration)}>
+          <Group spacing={5}>
+            <ProviderImage providerId={selectedProvider?.providerId} />
+            <Controller
+              control={control}
+              name="name"
+              defaultValue=""
+              render={({ field }) => {
+                return (
+                  <NameInput
+                    {...field}
+                    value={field.value ? field.value : selectedProvider?.displayName}
+                    data-test-id="provider-instance-name"
+                    placeholder="Enter instance name"
+                  />
+                );
+              }}
+            />
+            <ActionIcon
+              variant={'transparent'}
+              onClick={() => {
+                navigate('/integrations');
+              }}
+            >
+              <Close color={colors.B40} />
+            </ActionIcon>
+          </Group>
+          <Group mb={16} mt={16} spacing={16}>
+            <IntegrationChannel
+              name={CHANNEL_TYPE_TO_STRING[selectedProvider?.channel || ChannelTypeEnum.EMAIL]}
+              type={selectedProvider?.channel || ChannelTypeEnum.EMAIL}
+            />
+            <IntegrationEnvironmentPill
+              name={
+                environments?.find((environment) => environment._id === selectedProvider?.environmentId)?.name ||
+                'Development'
+              }
+            />
+          </Group>
+          <CenterDiv>
+            <When truthy={!haveAllCredentials}>
+              <WarningMessage spacing={12}>
+                <DisconnectGradient />
+                <div>
+                  Set up credentials to start sending notifications
+                  <br />
+                  <a href={selectedProvider?.docReference} target="_blank" rel="noopener noreferrer">
+                    Explore set-up guide
+                  </a>
+                </div>
+              </WarningMessage>
+            </When>
+            <Controller
+              control={control}
+              name="active"
+              render={({ field }) => (
+                <Switch
+                  checked={field.value}
+                  label={field.value ? 'Active' : 'Disabled'}
+                  data-test-id="is_active_id"
                   {...field}
-                  value={field.value ? field.value : selectedProvider?.displayName}
-                  data-test-id="provider-instance-name"
-                  placeholder="Enter instance name"
                 />
-              );
-            }}
-          />
-          <ActionIcon
-            variant={'transparent'}
-            onClick={() => {
-              navigate('/integrations');
-            }}
-          >
-            <Close color={colors.B40} />
-          </ActionIcon>
-        </Group>
-        <Group mb={16} mt={16} spacing={16}>
-          <IntegrationChannel
-            name={CHANNEL_TYPE_TO_STRING[selectedProvider?.channel || ChannelTypeEnum.EMAIL]}
-            type={selectedProvider?.channel || ChannelTypeEnum.EMAIL}
-          />
-          <IntegrationEnvironmentPill
-            name={
-              environments?.find((environment) => environment._id === selectedProvider?.environmentId)?.name ||
-              'Development'
-            }
-          />
-        </Group>
-        <CenterDiv>
-          <When truthy={!haveAllCredentials}>
-            <WarningMessage spacing={12}>
-              <DisconnectGradient />
-              <div>
-                Set up credentials to start sending notifications
-                <br />
-                <a href={selectedProvider?.docReference} target="_blank" rel="noopener noreferrer">
-                  Explore set-up guide
-                </a>
-              </div>
-            </WarningMessage>
-          </When>
-          <Controller
-            control={control}
-            name="active"
-            render={({ field }) => (
-              <Switch
-                checked={field.value}
-                label={field.value ? 'Active' : 'Disabled'}
-                data-test-id="is_active_id"
-                {...field}
-              />
-            )}
-          />
-          <Controller
-            control={control}
-            name="identifier"
-            defaultValue={''}
-            rules={{
-              required: 'Required - Instance key',
-              pattern: {
-                value: /^[A-Za-z0-9_-]+$/,
-                message: 'Instance key must contains only alphabetical, numeric, dash or underscore characters',
-              },
-            }}
-            render={({ field }) => (
-              <InputWrapper>
-                <Input
-                  {...field}
-                  required
-                  label="Instance key"
-                  error={errors.identifier?.message}
-                  rightSection={
-                    <CopyWrapper onClick={() => identifierClipboard.copy(field.value)}>
-                      {identifierClipboard.copied ? <Check /> : <Copy />}
-                    </CopyWrapper>
-                  }
+              )}
+            />
+            <Controller
+              control={control}
+              name="identifier"
+              defaultValue={''}
+              rules={{
+                required: 'Required - Instance key',
+                pattern: {
+                  value: /^[A-Za-z0-9_-]+$/,
+                  message: 'Instance key must contains only alphabetical, numeric, dash or underscore characters',
+                },
+              }}
+              render={({ field }) => (
+                <InputWrapper>
+                  <Input
+                    {...field}
+                    required
+                    label="Instance key"
+                    error={errors.identifier?.message}
+                    rightSection={
+                      <CopyWrapper onClick={() => identifierClipboard.copy(field.value)}>
+                        {identifierClipboard.copied ? <Check /> : <Copy />}
+                      </CopyWrapper>
+                    }
+                  />
+                </InputWrapper>
+              )}
+            />
+            {selectedProvider?.credentials.map((credential: IConfigCredentials) => (
+              <InputWrapper key={credential.key}>
+                <Controller
+                  name={`credentials.${credential.key}`}
+                  control={control}
+                  defaultValue=""
+                  rules={{ required: `Please enter a ${credential.displayName.toLowerCase()}` }}
+                  render={({ field }) => (
+                    <IntegrationInput
+                      credential={credential}
+                      errors={errors?.credentials ? errors?.credentials : {}}
+                      field={field}
+                    />
+                  )}
                 />
               </InputWrapper>
-            )}
-          />
-          {selectedProvider?.credentials.map((credential: IConfigCredentials) => (
-            <InputWrapper key={credential.key}>
-              <Controller
-                name={`credentials.${credential.key}`}
-                control={control}
-                defaultValue=""
-                rules={{ required: `Please enter a ${credential.displayName.toLowerCase()}` }}
-                render={({ field }) => (
-                  <IntegrationInput
-                    credential={credential}
-                    errors={errors?.credentials ? errors?.credentials : {}}
-                    field={field}
-                  />
-                )}
-              />
-            </InputWrapper>
-          ))}
-        </CenterDiv>
-        <Group mt={16} position="apart">
-          <Center inline>
-            <Text mr={5}>Explore our</Text>
-            <Text gradient>
-              <a href={selectedProvider?.docReference} target="_blank" rel="noopener noreferrer">
-                set-up guide
-              </a>
-            </Text>
-          </Center>
-          <Button disabled={!isDirty} submit loading={isLoadingUpdate}>
-            Update
-          </Button>
-        </Group>
-      </Form>
-    </SideBarWrapper>
+            ))}
+          </CenterDiv>
+
+          <Footer>
+            <Group position="apart">
+              <Center inline>
+                <Text mr={5}>Explore our</Text>
+                <Text gradient>
+                  <a href={selectedProvider?.docReference} target="_blank" rel="noopener noreferrer">
+                    set-up guide
+                  </a>
+                </Text>
+              </Center>
+              <Button disabled={!isDirty} submit loading={isLoadingUpdate}>
+                Update
+              </Button>
+            </Group>
+          </Footer>
+        </Form>
+      </Drawer>
+    </When>
   );
 }
 
@@ -303,13 +345,18 @@ const InputWrapper = styled.div`
 `;
 
 const CenterDiv = styled.div`
-  overflow: scroll;
+  overflow: auto;
+  padding: 30px;
+
   color: ${colors.B60};
   font-size: 14px;
   line-height: 20px;
   max-height: calc(100% - 160px);
   height: calc(100% - 160px);
-  margin-bottom: 16px;
+`;
+
+const Footer = styled.div`
+  padding: 16px 24px 24px 24px;
 `;
 
 const CopyWrapper = styled.div`
@@ -321,6 +368,13 @@ const CopyWrapper = styled.div`
 
 const Form = styled.form`
   height: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+
+  > *:last-child {
+    margin-top: auto;
+  }
 `;
 
 const WarningMessage = styled(Group)`
