@@ -1,13 +1,15 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Inject, Injectable } from '@nestjs/common';
 import * as shortid from 'shortid';
 import slugify from 'slugify';
 import { IntegrationEntity, IntegrationRepository, DalException } from '@novu/dal';
-import { providers } from '@novu/shared';
+import { ChannelTypeEnum, providers } from '@novu/shared';
 import {
   AnalyticsService,
   encryptCredentials,
   buildIntegrationKey,
   InvalidateCacheService,
+  GetFeatureFlag,
+  FeatureFlagCommand,
 } from '@novu/application-generic';
 
 import { CreateIntegrationCommand } from './create-integration.command';
@@ -24,10 +26,33 @@ export class CreateIntegration {
     private invalidateCache: InvalidateCacheService,
     private integrationRepository: IntegrationRepository,
     private deactivateSimilarChannelIntegrations: DeactivateSimilarChannelIntegrations,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private getFeatureFlag: GetFeatureFlag
   ) {}
 
   async execute(command: CreateIntegrationCommand): Promise<IntegrationEntity> {
+    const isMultiProviderConfigurationEnabled = await this.getFeatureFlag.isMultiProviderConfigurationEnabled(
+      FeatureFlagCommand.create({
+        userId: command.userId,
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+      })
+    );
+
+    if (!isMultiProviderConfigurationEnabled) {
+      const existingIntegration = await this.integrationRepository.findOne({
+        _environmentId: command.environmentId,
+        providerId: command.providerId,
+        channel: command.channel,
+      });
+
+      if (existingIntegration) {
+        throw new BadRequestException(
+          'Duplicate key - One environment may not have two providers of the same channel type'
+        );
+      }
+    }
+
     if (command.identifier) {
       const existingIntegrationWithIdentifier = await this.integrationRepository.findOne({
         _organizationId: command.organizationId,
@@ -35,7 +60,7 @@ export class CreateIntegration {
       });
 
       if (existingIntegrationWithIdentifier) {
-        throw new BadRequestException('Integration with identifier already exists');
+        throw new ConflictException('Integration with identifier already exists');
       }
     }
 
@@ -84,6 +109,20 @@ export class CreateIntegration {
         credentials: encryptCredentials(command.credentials ?? {}),
         active: command.active,
       });
+
+      if (
+        !isMultiProviderConfigurationEnabled &&
+        command.active &&
+        ![ChannelTypeEnum.CHAT, ChannelTypeEnum.PUSH].includes(command.channel)
+      ) {
+        await this.deactivateSimilarChannelIntegrations.execute({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          integrationId: integrationEntity._id,
+          channel: command.channel,
+          userId: command.userId,
+        });
+      }
 
       return integrationEntity;
     } catch (e) {

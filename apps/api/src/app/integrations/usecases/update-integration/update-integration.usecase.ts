@@ -1,10 +1,12 @@
-import { BadRequestException, Injectable, NotFoundException, Inject, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, Inject, Logger, ConflictException } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import {
   AnalyticsService,
   encryptCredentials,
   buildIntegrationKey,
   InvalidateCacheService,
+  GetFeatureFlag,
+  FeatureFlagCommand,
 } from '@novu/application-generic';
 import { ChannelTypeEnum } from '@novu/shared';
 
@@ -21,7 +23,8 @@ export class UpdateIntegration {
     private invalidateCache: InvalidateCacheService,
     private integrationRepository: IntegrationRepository,
     private deactivateSimilarChannelIntegrations: DeactivateSimilarChannelIntegrations,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private getFeatureFlag: GetFeatureFlag
   ) {}
 
   async execute(command: UpdateIntegrationCommand): Promise<IntegrationEntity> {
@@ -40,7 +43,7 @@ export class UpdateIntegration {
       });
 
       if (existingIntegrationWithIdentifier) {
-        throw new BadRequestException('Integration with identifier already exists');
+        throw new ConflictException('Integration with identifier already exists');
       }
     }
 
@@ -81,7 +84,7 @@ export class UpdateIntegration {
       updatePayload.name = command.name;
     }
 
-    if (command.identifier) {
+    if (identifierHasChanged) {
       updatePayload.identifier = command.identifier;
     }
 
@@ -111,7 +114,19 @@ export class UpdateIntegration {
       }
     );
 
-    if (command.active && ![ChannelTypeEnum.CHAT, ChannelTypeEnum.PUSH].includes(existingIntegration.channel)) {
+    const isMultiProviderConfigurationEnabled = await this.getFeatureFlag.isMultiProviderConfigurationEnabled(
+      FeatureFlagCommand.create({
+        userId: command.userId,
+        organizationId: command.organizationId,
+        environmentId: command.userEnvironmentId,
+      })
+    );
+
+    if (
+      !isMultiProviderConfigurationEnabled &&
+      command.active &&
+      ![ChannelTypeEnum.CHAT, ChannelTypeEnum.PUSH].includes(existingIntegration.channel)
+    ) {
       await this.deactivateSimilarChannelIntegrations.execute({
         environmentId,
         organizationId: command.organizationId,

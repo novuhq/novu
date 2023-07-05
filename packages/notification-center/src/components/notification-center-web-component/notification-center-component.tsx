@@ -22,7 +22,7 @@ export const NOTIFICATION_CENTER_PROPS = [
   'tabs',
   'showUserPreferences',
   'allowedNotificationActions',
-  'popover',
+  'popoverConfig',
   'theme',
   'styles',
   'colorScheme',
@@ -49,7 +49,7 @@ export const NotificationCenterComponent: FunctionComponent<NotificationCenterCo
   tabs,
   showUserPreferences,
   allowedNotificationActions,
-  popover,
+  popoverConfig,
   theme,
   styles,
   colorScheme = 'dark',
@@ -87,7 +87,7 @@ export const NotificationCenterComponent: FunctionComponent<NotificationCenterCo
         tabs={tabs}
         showUserPreferences={showUserPreferences}
         allowedNotificationActions={allowedNotificationActions}
-        popover={popover}
+        popoverConfig={popoverConfig}
       />
     </NovuProvider>
   );
@@ -103,7 +103,7 @@ function PopoverWrapper({
   tabs,
   showUserPreferences,
   allowedNotificationActions,
-  popover,
+  popoverConfig,
   unseenBadgeColor,
   unseenBadgeBackgroundColor,
 }: PopoverWrapperProps) {
@@ -125,8 +125,8 @@ function PopoverWrapper({
       tabs={tabs}
       showUserPreferences={showUserPreferences}
       allowedNotificationActions={allowedNotificationActions}
-      offset={popover?.offset}
-      position={popover?.position}
+      offset={popoverConfig?.offset}
+      position={popoverConfig?.position}
     >
       {({ unseenCount }) => (
         <NotificationBell

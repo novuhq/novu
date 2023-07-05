@@ -58,6 +58,8 @@ export function SelectProviderSidebar() {
     });
   }, 500);
 
+  const emptyProvidersList = Object.values(providersList).every((list) => list.length === 0);
+
   const navigate = useNavigate();
 
   const onProviderClick = (provider) => () => setSelectedProvider(provider);
@@ -129,20 +131,21 @@ export function SelectProviderSidebar() {
         </Tabs>
         <Space h={20} />
         <CenterDiv>
-          <When truthy={Object.values(providersList).every((list) => list.length === 0)}>
-            <Image src={`${CONTEXT_PATH}/static/images/empty-provider-search.png`} />
+          <When truthy={emptyProvidersList}>
+            <Image src={`${CONTEXT_PATH}/static/images/empty-provider-search.svg`} />
           </When>
-          {CHANNELS_ORDER.map((channelType) => {
-            return (
-              <ListProviders
-                key={channelType}
-                selectedProvider={selectedProvider}
-                onProviderClick={onProviderClick}
-                channelProviders={providersList[channelType]}
-                channelType={channelType}
-              />
-            );
-          })}
+          {!emptyProvidersList &&
+            CHANNELS_ORDER.map((channelType) => {
+              return (
+                <ListProviders
+                  key={channelType}
+                  selectedProvider={selectedProvider}
+                  onProviderClick={onProviderClick}
+                  channelProviders={providersList[channelType]}
+                  channelType={channelType}
+                />
+              );
+            })}
         </CenterDiv>
         <Footer>
           <Group>

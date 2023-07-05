@@ -21,6 +21,7 @@ import {
   SubscriberPreferenceRepository,
   TopicRepository,
   TopicSubscribersRepository,
+  TenantRepository,
 } from '@novu/dal';
 import {
   InMemoryProviderService,
@@ -65,6 +66,7 @@ const DAL_MODELS = [
   SubscriberPreferenceRepository,
   TopicRepository,
   TopicSubscribersRepository,
+  TenantRepository,
 ];
 
 function getStorageServiceClass() {
