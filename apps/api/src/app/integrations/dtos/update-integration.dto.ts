@@ -20,7 +20,10 @@ export class UpdateIntegrationRequestDto implements IUpdateIntegrationBodyDto {
   @IsMongoId()
   _environmentId?: string;
 
-  @ApiPropertyOptional({ type: Boolean })
+  @ApiPropertyOptional({
+    type: Boolean,
+    description: 'If the integration is active the validation on the credentials field will run',
+  })
   @IsOptional()
   @IsBoolean()
   active?: boolean;
