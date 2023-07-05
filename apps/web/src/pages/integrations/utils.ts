@@ -1,9 +1,23 @@
+import capitalize from 'lodash.capitalize';
 import { IEnvironment, providers } from '@novu/shared';
 
 import { IntegrationEntity } from './IntegrationsStorePage';
 import { CONTEXT_PATH } from '../../config';
 import { CHANNEL_TYPE_TO_STRING } from '../../utils/channels';
 import type { ITableIntegration } from './types';
+
+const makeNovuProviderName = (providerId: string) => {
+  return `${providerId}`
+    .split('-')
+    .map((el) => {
+      if (el.toLocaleLowerCase() === 'sms') {
+        return el.toUpperCase();
+      }
+
+      return capitalize(el);
+    })
+    .join(' ');
+};
 
 export const mapToTableIntegration = (
   integration: IntegrationEntity,
@@ -15,13 +29,16 @@ export const mapToTableIntegration = (
   };
   const environment = environments?.find((env) => env._id === integration._environmentId);
   const provider = providers.find((el) => el.id === integration.providerId);
+  const isNovuProvider = `${integration.providerId}`.toLowerCase().includes('novu');
+  const providerIdName = isNovuProvider
+    ? makeNovuProviderName(integration.providerId)
+    : `${integration.providerId.charAt(0).toUpperCase()}${integration.providerId.slice(1)}`;
 
   return {
     name: integration.name ?? provider?.displayName,
     integrationId: integration._id ?? '',
     identifier: integration.identifier,
-    provider:
-      provider?.displayName ?? `${integration.providerId.charAt(0).toUpperCase()}${integration.providerId.slice(1)}`,
+    provider: provider?.displayName ?? providerIdName,
     channel: CHANNEL_TYPE_TO_STRING[integration.channel],
     channelType: integration.channel,
     environment: environment?.name ?? '',
