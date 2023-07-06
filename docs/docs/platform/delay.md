@@ -6,6 +6,8 @@ sidebar_position: 8
 
 The delay action awaits a specified amount of time before moving on to trigger the following steps of the workflow.
 
+<iframe width="560" height="315" src="https://www.youtube.com/embed/kCMB-WdbzJo" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+
 ## Delay Node
 
 After adding a delay node in the workflow editor, the immediate next step will only be triggered after the specified period of time has elapsed.
