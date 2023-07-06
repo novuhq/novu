@@ -197,16 +197,6 @@ export function UpdateProviderPage() {
         <CenterDiv>
           <NovuProviderSidebarContent provider={selectedProvider} />
         </CenterDiv>
-        <When truthy={selectedProvider?.docReference}>
-          <Group spacing={0}>
-            <Text mr={5}>Read more in</Text>
-            <Text gradient>
-              <a href={selectedProvider?.docReference} target="_blank" rel="noopener noreferrer">
-                our docs
-              </a>
-            </Text>
-          </Group>
-        </When>
       </SideBarWrapper>
     );
   }
