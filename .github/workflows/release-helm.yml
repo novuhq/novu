@@ -1,0 +1,19 @@
+name: Release Helm Chart
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: stefanprodan/helm-gh-pages@master
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          charts_dir: "docker/kubernetes"
+          branch: charts
+          dependencies: bitnami=oci://registry-1.docker.io/bitnamicharts;localstack=https://localstack.github.io/helm-charts
