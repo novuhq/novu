@@ -11,9 +11,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: stefanprodan/helm-gh-pages@master
+      - uses: stefanprodan/helm-gh-pages@v1.7.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           charts_dir: "docker/kubernetes"
           branch: charts
-          dependencies: bitnami=oci://registry-1.docker.io/bitnamicharts;localstack=https://localstack.github.io/helm-charts
