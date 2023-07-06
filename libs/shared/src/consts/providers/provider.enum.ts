@@ -10,6 +10,7 @@ export enum CredentialsKeyEnum {
   Port = 'port',
   Secure = 'secure',
   Region = 'region',
+  Eu = 'eu',
   AccountSid = 'accountSid',
   MessageProfileId = 'messageProfileId',
   Token = 'token',

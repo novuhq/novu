@@ -41,7 +41,7 @@ export class SparkPostEmailProvider implements IEmailProvider {
 
     const files: Array<{ name: string; type: string; data: string }> = [];
 
-    attachments.forEach((attachment) => {
+    attachments?.forEach((attachment) => {
       files.push({
         name: attachment.name || randomUUID(),
         type: attachment.mime,
@@ -62,6 +62,7 @@ export class SparkPostEmailProvider implements IEmailProvider {
 
     return {
       id: sent.results.id,
+      date: new Date().toISOString(),
     };
   }
 
