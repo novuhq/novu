@@ -506,9 +506,10 @@ export function ShareableUrl({
 
   const subscriberId = '<SUBSCRIBER_ID>';
   const environmentId = `environmentId=${environment?._id}`;
+  const integrationIdentifier = `&integrationIdentifier=<INTEGRATION_IDENTIFIER>`;
   const hmac = hmacEnabled ? '&hmacHash=<HMAC_HASH>' : '';
 
-  const oauthUrl = `${API_ROOT}/v1/subscribers/${subscriberId}/credentials/slack/oauth?${environmentId}${hmac}`;
+  const oauthUrl = `${API_ROOT}/v1/subscribers/${subscriberId}/credentials/slack/oauth?${environmentId}${integrationIdentifier}${hmac}`;
 
   return (
     <When truthy={display}>

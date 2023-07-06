@@ -76,6 +76,7 @@ export class ChatOauthCallback {
         environmentId: command.environmentId,
         subscriberId: command.subscriberId,
         providerId: command.providerId,
+        integrationIdentifier: command.integrationIdentifier,
         credentials: subscriberCredentials,
         oauthHandler: OAuthHandlerEnum.NOVU,
       })
@@ -96,9 +97,13 @@ export class ChatOauthCallback {
     command: ChatOauthCallbackCommand,
     integrationCredentials: ICredentialsDto
   ): Promise<string> {
-    const redirectUri =
+    let redirectUri =
       process.env.API_ROOT_URL +
       `/v1/subscribers/${command.subscriberId}/credentials/${command.providerId}/oauth/callback?environmentId=${command.environmentId}`;
+
+    if (command.integrationIdentifier) {
+      redirectUri = `${redirectUri}&integrationIdentifier=${command.integrationIdentifier}`;
+    }
 
     const body = {
       redirect_uri: redirectUri,
@@ -136,7 +141,13 @@ export class ChatOauthCallback {
       providerId: command.providerId,
     };
 
-    const integration = await this.integrationRepository.findOne(query);
+    if (command.integrationIdentifier) {
+      query.identifier = command.integrationIdentifier;
+    }
+
+    const integration = await this.integrationRepository.findOne(query, undefined, {
+      query: { sort: { createdAt: -1 } },
+    });
 
     if (integration == null) {
       throw new NotFoundException(
