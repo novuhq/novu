@@ -1,6 +1,7 @@
+import { IsEnum, IsMongoId, IsOptional, IsString } from 'class-validator';
 import { BaseCommand } from '@novu/application-generic';
-import { IsEnum, IsMongoId, IsString } from 'class-validator';
 import { ChatProviderIdEnum } from '@novu/shared';
+
 import { IsNotEmpty } from '../chat-oauth-callback/chat-oauth-callback.command';
 
 export class ChatOauthCommand extends BaseCommand {
@@ -15,6 +16,10 @@ export class ChatOauthCommand extends BaseCommand {
   @IsNotEmpty()
   @IsString()
   readonly subscriberId: string;
+
+  @IsOptional()
+  @IsString()
+  readonly integrationIdentifier?: string;
 
   readonly hmacHash?: string;
 }
