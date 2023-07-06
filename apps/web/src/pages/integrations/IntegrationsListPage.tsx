@@ -5,8 +5,7 @@ import { ChannelTypeEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/s
 
 import PageContainer from '../../components/layout/components/PageContainer';
 import PageHeader from '../../components/layout/components/PageHeader';
-import { Table, Text, withCellLoading } from '../../design-system';
-import { IExtendedColumn } from '../../design-system/table/Table';
+import { Table, Text, withCellLoading, IExtendedColumn } from '../../design-system';
 import { useIntegrationLimit, useIntegrations, useIsMultiProviderConfigurationEnabled } from '../../hooks';
 import { IntegrationsListToolbar } from './components/IntegrationsListToolbar';
 import { useFetchEnvironments } from '../../hooks/useFetchEnvironments';
@@ -129,7 +128,7 @@ const IntegrationsList = () => {
   const navigate = useNavigate();
 
   const onRowClickCallback = useCallback((item) => {
-    navigate(`/integrations/${item.original.identifier}`);
+    navigate(`/integrations/${item.original.integrationId}`);
   }, []);
 
   const onChannelClickCallback = useCallback((item) => {

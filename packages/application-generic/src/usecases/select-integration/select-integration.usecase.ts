@@ -58,6 +58,7 @@ export class SelectIntegration {
     }
 
     const query: Partial<IntegrationEntity> & { _organizationId: string } = {
+      ...(command.id ? { id: command.id } : {}),
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
       channel: command.channelType,
