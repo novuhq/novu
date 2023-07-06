@@ -36,6 +36,7 @@ export const mapToTableIntegration = (
 
   return {
     name: integration.name ?? provider?.displayName,
+    integrationId: integration._id ?? '',
     identifier: integration.identifier,
     provider: provider?.displayName ?? providerIdName,
     channel: CHANNEL_TYPE_TO_STRING[integration.channel],

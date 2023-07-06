@@ -137,10 +137,11 @@ export class SendMessageChat extends SendMessageBase {
   private async sendChannelMessage(
     command: SendMessageCommand,
     subscriberChannel: IChannelSettings,
-    chatChannel,
+    chatChannel: NotificationStepEntity,
     content: string
   ) {
     const integration = await this.getIntegration({
+      id: subscriberChannel._integrationId,
       organizationId: command.organizationId,
       environmentId: command.environmentId,
       providerId: subscriberChannel.providerId,
@@ -170,7 +171,7 @@ export class SendMessageChat extends SendMessageBase {
       _organizationId: command.organizationId,
       _subscriberId: command._subscriberId,
       _templateId: command._templateId,
-      _messageTemplateId: chatChannel.template._id,
+      _messageTemplateId: chatChannel.template?._id,
       channel: ChannelTypeEnum.CHAT,
       transactionId: command.transactionId,
       chatWebhookUrl: chatWebhookUrl,

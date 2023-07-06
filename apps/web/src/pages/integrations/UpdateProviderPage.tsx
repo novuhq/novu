@@ -1,17 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChannelTypeEnum, IConfigCredentials } from '@novu/shared';
-import { ActionIcon, Group, useMantineColorScheme, Loader, Center, Stack } from '@mantine/core';
+import { ChannelTypeEnum, IConfigCredentials, ICredentialsDto } from '@novu/shared';
+import { ActionIcon, Group, Loader, Center, Stack } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
 import styled from '@emotion/styled';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import slugify from 'slugify';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Controller, useForm } from 'react-hook-form';
 import { Button, colors, Input, NameInput, Switch, Text } from '../../design-system';
 import { Check, Close, Copy, DisconnectGradient } from '../../design-system/icons';
 import { useProviders } from './useProviders';
-import { IIntegratedProvider } from './IntegrationsStoreModal';
+import { IIntegratedProvider } from './IntegrationsStorePage';
 import { IntegrationInput } from './components/IntegrationInput';
 import { IntegrationChannel } from './components/IntegrationChannel';
 import { CHANNEL_TYPE_TO_STRING } from '../../utils/channels';
@@ -19,39 +17,20 @@ import { IntegrationEnvironmentPill } from './components/IntegrationEnvironmentP
 import { useFetchEnvironments } from '../../hooks/useFetchEnvironments';
 import { ProviderImage } from './components/multi-provider/SelectProviderSidebar';
 import { When } from '../../components/utils/When';
+import { useUpdateIntegration } from '../../api/hooks/useUpdateIntegration';
 
 interface IProviderForm {
   name: string;
-  credentials: Record<string, string>;
+  credentials: ICredentialsDto;
   active: boolean;
   identifier: string;
 }
 
-const schema = z
-  .object({
-    identifier: z
-      .string({
-        required_error: 'Required - Instance key',
-      })
-      .superRefine((data, ctx) => {
-        const regexp = new RegExp(/^[A-Za-z_-]+$/);
-        if (!regexp.test(data)) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.invalid_string,
-            validation: 'regex',
-            message: 'Instance key must only contains alphabetical, dash and underscore characters',
-          });
-        }
-      }),
-  })
-  .passthrough();
-
 export function UpdateProviderPage() {
   const { environments, isLoading: areEnvironmentsLoading } = useFetchEnvironments();
   const [selectedProvider, setSelectedProvider] = useState<IIntegratedProvider | null>(null);
+  const { onUpdateIntegration, isLoadingUpdate } = useUpdateIntegration(selectedProvider?.integrationId || '');
   const { providers, refetch, isLoading } = useProviders();
-  const { colorScheme } = useMantineColorScheme();
-  const isDark = colorScheme === 'dark';
   const { integrationId } = useParams();
   const navigate = useNavigate();
 
@@ -64,7 +43,6 @@ export function UpdateProviderPage() {
     formState: { errors, isDirty },
   } = useForm<IProviderForm>({
     shouldUseNativeValidation: false,
-    resolver: zodResolver(schema),
     defaultValues: {
       name: '',
       credentials: {},
@@ -74,6 +52,7 @@ export function UpdateProviderPage() {
   });
 
   const credentials = watch('credentials');
+
   const haveAllCredentials = useMemo(() => {
     if (selectedProvider === null) {
       return false;
@@ -87,41 +66,34 @@ export function UpdateProviderPage() {
       });
 
     return missingCredentials.length === 0;
-  }, [credentials, selectedProvider]);
+  }, [selectedProvider, credentials]);
 
-  const name = watch('name');
-  const identifier = watch('identifier');
   const identifierClipboard = useClipboard({ timeout: 1000 });
 
   useEffect(() => {
-    if (!selectedProvider?.displayName.includes(name)) {
-      return;
-    }
-    const newIdentifier = slugify(name, {
-      lower: true,
-      strict: true,
-    });
+    if (selectedProvider && !selectedProvider?.identifier) {
+      const newIdentifier = slugify(selectedProvider?.displayName, {
+        lower: true,
+        strict: true,
+      });
 
-    if (newIdentifier === identifier) {
-      return;
+      setValue('identifier', newIdentifier);
     }
-
-    setValue('identifier', newIdentifier);
-  }, [name]);
+  }, [selectedProvider]);
 
   useEffect(() => {
     if (integrationId === undefined || providers.length === 0) {
       return;
     }
     const foundProvider = providers.find((provider) => provider.integrationId === integrationId);
-
     if (!foundProvider) {
       return;
     }
 
     setSelectedProvider(foundProvider);
     reset({
-      name: foundProvider.displayName,
+      name: foundProvider.name ?? foundProvider.displayName,
+      identifier: foundProvider.identifier,
       credentials: foundProvider.credentials.reduce((prev, credential) => {
         prev[credential.key] = credential.value;
 
@@ -133,7 +105,7 @@ export function UpdateProviderPage() {
 
   if (isLoading || areEnvironmentsLoading) {
     return (
-      <SideBarWrapper dark={isDark}>
+      <SideBarWrapper>
         <Stack
           align="center"
           justify="center"
@@ -152,17 +124,8 @@ export function UpdateProviderPage() {
   }
 
   return (
-    <SideBarWrapper dark={isDark}>
-      <Form
-        name={'connect-integration-form'}
-        noValidate
-        onSubmit={(e) => {
-          handleSubmit((values) => {
-            refetch();
-          });
-          e.preventDefault();
-        }}
-      >
+    <SideBarWrapper>
+      <Form name={'connect-integration-form'} noValidate onSubmit={handleSubmit(onUpdateIntegration)}>
         <Group spacing={5}>
           <ProviderImage providerId={selectedProvider?.providerId} />
           <Controller
@@ -173,7 +136,7 @@ export function UpdateProviderPage() {
               return (
                 <NameInput
                   {...field}
-                  value={field.value !== undefined ? field.value : selectedProvider?.displayName}
+                  value={field.value ? field.value : selectedProvider?.displayName}
                   data-test-id="provider-instance-name"
                   placeholder="Enter instance name"
                 />
@@ -218,23 +181,49 @@ export function UpdateProviderPage() {
             control={control}
             name="active"
             render={({ field }) => (
-              <ActiveWrapper active={field.value}>
-                <Switch
-                  checked={field.value}
-                  label={field.value ? 'Active' : 'Disabled'}
-                  data-test-id="is_active_id"
-                  {...field}
-                />
-              </ActiveWrapper>
+              <Switch
+                checked={field.value}
+                label={field.value ? 'Active' : 'Disabled'}
+                data-test-id="is_active_id"
+                {...field}
+              />
             )}
           />
-
           <Controller
             control={control}
-            name="identifier"
+            name="name"
+            defaultValue={''}
+            rules={{
+              required: 'Required - Instance name',
+            }}
             render={({ field }) => (
               <InputWrapper>
                 <Input
+                  {...field}
+                  value={field.value ? field.value : selectedProvider?.displayName}
+                  required
+                  label="Name"
+                  error={errors.name?.message}
+                />
+              </InputWrapper>
+            )}
+          />
+          <Controller
+            control={control}
+            name="identifier"
+            defaultValue={''}
+            rules={{
+              required: 'Required - Instance key',
+              pattern: {
+                value: /^[A-Za-z0-9_-]+$/,
+                message: 'Instance key must contains only alphabetical, numeric, dash or underscore characters',
+              },
+            }}
+            render={({ field }) => (
+              <InputWrapper>
+                <Input
+                  {...field}
+                  required
                   label="Instance key"
                   error={errors.identifier?.message}
                   rightSection={
@@ -242,7 +231,6 @@ export function UpdateProviderPage() {
                       {identifierClipboard.copied ? <Check /> : <Copy />}
                     </CopyWrapper>
                   }
-                  {...field}
                 />
               </InputWrapper>
             )}
@@ -252,7 +240,17 @@ export function UpdateProviderPage() {
               <Controller
                 name={`credentials.${credential.key}`}
                 control={control}
-                render={({ field }) => <IntegrationInput credential={credential} errors={errors} field={field} />}
+                defaultValue=""
+                rules={
+                  credential.required
+                    ? {
+                        required: `Please enter a ${credential.displayName.toLowerCase()}`,
+                      }
+                    : undefined
+                }
+                render={({ field }) => (
+                  <IntegrationInput credential={credential} errors={errors?.credentials ?? {}} field={field} />
+                )}
               />
             </InputWrapper>
           ))}
@@ -266,7 +264,7 @@ export function UpdateProviderPage() {
               </a>
             </Text>
           </Center>
-          <Button disabled={!isDirty} submit={true}>
+          <Button disabled={!isDirty} submit loading={isLoadingUpdate}>
             Update
           </Button>
         </Group>
@@ -275,8 +273,8 @@ export function UpdateProviderPage() {
   );
 }
 
-const SideBarWrapper = styled.div<{ dark: boolean }>`
-  background-color: ${({ dark }) => (dark ? colors.B17 : colors.white)} !important;
+const SideBarWrapper = styled.div`
+  background-color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B17 : colors.white)} !important;
   position: absolute;
   z-index: 1;
   width: 480px;
@@ -293,28 +291,6 @@ const InputWrapper = styled.div`
     font-weight: bold;
     margin-bottom: 10px;
     font-size: 14px;
-  }
-`;
-
-const StyledText = styled(Text)`
-  display: inline-block;
-  word-break: normal;
-  margin: 0 10px;
-`;
-
-const SideElementBase = styled.div`
-  display: flex;
-  justify-content: flex-start;
-  & > :first-of-type {
-    width: auto;
-  }
-`;
-
-const ActiveWrapper = styled(SideElementBase)<{ active: boolean }>`
-  align-items: center;
-
-  ${StyledText} {
-    color: ${({ active }) => (active ? colors.success : colors.error)};
   }
 `;
 

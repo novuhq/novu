@@ -1,6 +1,6 @@
 import { ActionIcon, Group, Radio, Text } from '@mantine/core';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ChannelTypeEnum, ICredentialsDto, IProviderConfig } from '@novu/shared';
+import { ICreateIntegrationBodyDto, IProviderConfig } from '@novu/shared';
 import { Controller, useForm } from 'react-hook-form';
 import { colors, NameInput, Button } from '../../../../design-system';
 import { ArrowLeft, Close } from '../../../../design-system/icons';
@@ -14,6 +14,9 @@ import { QueryKeys } from '../../../../api/query.keys';
 import { ProviderImage, Footer, FormStyled } from './SelectProviderSidebar';
 import { CHANNEL_TYPE_TO_STRING } from '../../../../utils/channels';
 
+import { useNavigate } from 'react-router-dom';
+import { IntegrationEntity } from '../../IntegrationsStorePage';
+
 export function CreateProviderInstanceSidebar({
   onClose,
   provider,
@@ -26,17 +29,12 @@ export function CreateProviderInstanceSidebar({
   const { environments, isLoading: areEnvironmentsLoading } = useFetchEnvironments();
   const queryClient = useQueryClient();
   const segment = useSegment();
+  const navigate = useNavigate();
 
   const { mutateAsync: createIntegrationApi, isLoading: isLoadingCreate } = useMutation<
-    { res: string },
+    IntegrationEntity,
     { error: string; message: string; statusCode: number },
-    {
-      providerId: string;
-      channel: ChannelTypeEnum | null;
-      credentials: ICredentialsDto;
-      active: boolean;
-      check: boolean;
-    }
+    ICreateIntegrationBodyDto
   >(createIntegration);
 
   const { handleSubmit, control } = useForm({
@@ -49,13 +47,16 @@ export function CreateProviderInstanceSidebar({
 
   const onCreateIntegrationInstance = async (data) => {
     try {
-      await createIntegrationApi({
+      const { _id: integrationId } = await createIntegrationApi({
         providerId: provider?.id,
-        channel: provider?.channel,
+        channel: provider.channel,
+        name: data.name,
         credentials: {},
         active: false,
         check: false,
+        _environmentId: data.environmentId,
       });
+
       segment.track(IntegrationsStoreModalAnalytics.CREATE_INTEGRATION_INSTANCE, {
         providerId: provider?.id,
         channel: provider?.channel,
@@ -65,8 +66,10 @@ export function CreateProviderInstanceSidebar({
       await queryClient.refetchQueries({
         predicate: ({ queryKey }) => queryKey.includes(QueryKeys.integrationsList),
       });
+
       successMessage('Instance configuration is created');
-      onClose();
+
+      navigate(`/integrations/${integrationId}`);
     } catch (e: any) {
       errorMessage(e.message || 'Unexpected error');
     }
