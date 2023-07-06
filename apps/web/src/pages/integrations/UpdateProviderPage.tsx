@@ -17,10 +17,7 @@ import { IntegrationEnvironmentPill } from './components/IntegrationEnvironmentP
 import { useFetchEnvironments } from '../../hooks/useFetchEnvironments';
 import { ProviderImage } from './components/multi-provider/SelectProviderSidebar';
 import { When } from '../../components/utils/When';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { updateIntegration } from '../../api/integration';
-import { QueryKeys } from '../../api/query.keys';
-import { errorMessage, successMessage } from '../../utils/notifications';
+import { useUpdateIntegration } from '../../api/hooks/useUpdateIntegration';
 
 interface IProviderForm {
   name: string;
@@ -63,21 +60,12 @@ const useDrawerStyles = createStyles((theme: MantineTheme) => {
 export function UpdateProviderPage() {
   const { environments, isLoading: areEnvironmentsLoading } = useFetchEnvironments();
   const [selectedProvider, setSelectedProvider] = useState<IIntegratedProvider | null>(null);
+  const { onUpdateIntegration, isLoadingUpdate } = useUpdateIntegration(selectedProvider?.integrationId || '');
   const { providers, refetch, isLoading } = useProviders();
   const { integrationId } = useParams();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   const { classes: drawerClasses } = useDrawerStyles();
-
-  const { mutateAsync: updateIntegrationApi, isLoading: isLoadingUpdate } = useMutation<
-    { res: string },
-    { error: string; message: string; statusCode: number },
-    {
-      id: string;
-      data: IUpdateIntegrationBodyDto;
-    }
-  >(({ id, data }) => updateIntegration(id, data));
 
   const {
     control,
@@ -115,23 +103,6 @@ export function UpdateProviderPage() {
 
   const identifierClipboard = useClipboard({ timeout: 1000 });
 
-  async function onUpdateIntegration(data) {
-    try {
-      await updateIntegrationApi({
-        id: selectedProvider?.integrationId ?? '',
-        data: { ...data },
-      });
-
-      await queryClient.refetchQueries({
-        predicate: ({ queryKey }) => queryKey.includes(QueryKeys.integrationsList),
-      });
-
-      successMessage('Instance configuration updated');
-    } catch (e: any) {
-      errorMessage(e.message || 'Unexpected error');
-    }
-  }
-
   useEffect(() => {
     if (selectedProvider && !selectedProvider?.identifier) {
       const newIdentifier = slugify(selectedProvider?.displayName, {
@@ -154,7 +125,7 @@ export function UpdateProviderPage() {
 
     setSelectedProvider(foundProvider);
     reset({
-      name: foundProvider.name,
+      name: foundProvider.name ?? foundProvider.displayName,
       identifier: foundProvider.identifier,
       credentials: foundProvider.credentials.reduce((prev, credential) => {
         prev[credential.key] = credential.value;
@@ -308,7 +279,13 @@ export function UpdateProviderPage() {
                   name={`credentials.${credential.key}`}
                   control={control}
                   defaultValue=""
-                  rules={{ required: `Please enter a ${credential.displayName.toLowerCase()}` }}
+                  rules={
+                    credential.required
+                      ? {
+                          required: `Please enter a ${credential.displayName.toLowerCase()}`,
+                        }
+                      : undefined
+                  }
                   render={({ field }) => (
                     <IntegrationInput credential={credential} errors={errors?.credentials ?? {}} field={field} />
                   )}
