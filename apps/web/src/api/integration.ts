@@ -17,7 +17,7 @@ export function createIntegration(data: ICreateIntegrationBodyDto) {
   return api.post(`/v1/integrations`, data);
 }
 
-export function updateIntegration(integrationId: string, data: Partial<IUpdateIntegrationBodyDto>) {
+export function updateIntegration(integrationId: string, data: IUpdateIntegrationBodyDto) {
   return api.put(`/v1/integrations/${integrationId}`, data);
 }
 

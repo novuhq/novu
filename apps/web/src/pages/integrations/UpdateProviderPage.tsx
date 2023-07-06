@@ -258,6 +258,25 @@ export function UpdateProviderPage() {
             />
             <Controller
               control={control}
+              name="name"
+              defaultValue={''}
+              rules={{
+                required: 'Required - Instance name',
+              }}
+              render={({ field }) => (
+                <InputWrapper>
+                  <Input
+                    {...field}
+                    value={field.value ? field.value : selectedProvider?.displayName}
+                    required
+                    label="Name"
+                    error={errors.name?.message}
+                  />
+                </InputWrapper>
+              )}
+            />
+            <Controller
+              control={control}
               name="identifier"
               defaultValue={''}
               rules={{
@@ -291,11 +310,7 @@ export function UpdateProviderPage() {
                   defaultValue=""
                   rules={{ required: `Please enter a ${credential.displayName.toLowerCase()}` }}
                   render={({ field }) => (
-                    <IntegrationInput
-                      credential={credential}
-                      errors={errors?.credentials ? errors?.credentials : {}}
-                      field={field}
-                    />
+                    <IntegrationInput credential={credential} errors={errors?.credentials ?? {}} field={field} />
                   )}
                 />
               </InputWrapper>
