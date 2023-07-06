@@ -82,20 +82,6 @@ export class GetDecryptedIntegrations {
       return novuIntegration ? [novuIntegration] : [];
     }
 
-    const novuSmsIntegration = await this.getNovuIntegration.execute(
-      GetNovuIntegrationCommand.create({
-        channelType: ChannelTypeEnum.SMS,
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        userId: command.userId,
-        ignoreActiveCount: true,
-      })
-    );
-
-    if (novuSmsIntegration) {
-      integrations.push(novuSmsIntegration);
-    }
-
     const novuEmailIntegration = await this.getNovuIntegration.execute(
       GetNovuIntegrationCommand.create({
         channelType: ChannelTypeEnum.EMAIL,
@@ -108,6 +94,20 @@ export class GetDecryptedIntegrations {
 
     if (novuEmailIntegration) {
       integrations.push(novuEmailIntegration);
+    }
+
+    const novuSmsIntegration = await this.getNovuIntegration.execute(
+      GetNovuIntegrationCommand.create({
+        channelType: ChannelTypeEnum.SMS,
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        userId: command.userId,
+        ignoreActiveCount: true,
+      })
+    );
+
+    if (novuSmsIntegration) {
+      integrations.push(novuSmsIntegration);
     }
 
     return integrations;
