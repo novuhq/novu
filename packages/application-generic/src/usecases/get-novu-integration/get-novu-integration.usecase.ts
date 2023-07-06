@@ -112,6 +112,7 @@ export class GetNovuIntegration {
     item.providerId = EmailProviderIdEnum.Novu;
     item.active = true;
     item.channel = ChannelTypeEnum.EMAIL;
+    item.name = 'Novu Email';
 
     item.credentials = {
       apiKey: process.env.NOVU_EMAIL_INTEGRATION_API_KEY,
@@ -130,6 +131,7 @@ export class GetNovuIntegration {
     item.providerId = SmsProviderIdEnum.Novu;
     item.active = true;
     item.channel = ChannelTypeEnum.SMS;
+    item.name = 'Novu SMS';
 
     item.credentials = {
       accountSid: process.env.NOVU_SMS_INTEGRATION_ACCOUNT_SID,
@@ -144,7 +146,6 @@ export class GetNovuIntegration {
     entity: IntegrationEntity,
     command: GetNovuIntegrationCommand
   ): IntegrationEntity {
-    entity.name = 'Novu';
     entity._environmentId = command.environmentId;
     entity.identifier = entity.providerId;
     entity._id = entity.providerId;
