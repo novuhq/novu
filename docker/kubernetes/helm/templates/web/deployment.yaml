@@ -4,7 +4,8 @@ metadata:
   name: {{ printf "%s-%s" .Release.Name "web"  }}
   namespace: {{ include "common.names.namespace" . | quote }}
   labels: {{- include "common.labels.standard" . | nindent 4 }}
-    app.kubernetes.io/component: novu-web
+    app.kubernetes.io/component: {{ printf "%s-%s" .Release.Name "web"  }}
+
     {{- if .Values.commonLabels }}
     {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
     {{- end }}
@@ -20,14 +21,14 @@ spec:
   {{- end }}
   selector:
     matchLabels: {{- include "common.labels.matchLabels" . | nindent 6 }}
-      app.kubernetes.io/component: novu-web
+      app.kubernetes.io/component: {{ printf "%s-%s" .Release.Name "web"  }}
   template:
     metadata:
       {{- if .Values.web.podAnnotations }}
       annotations: {{- include "common.tplvalues.render" (dict "value" .Values.web.podAnnotations "context" $) | nindent 8 }}
       {{- end }}
       labels: {{- include "common.labels.standard" . | nindent 8 }}
-        app.kubernetes.io/component: novu-web
+        app.kubernetes.io/component: {{ printf "%s-%s" .Release.Name "web"  }}
         {{- if .Values.web.podLabels }}
         {{- include "common.tplvalues.render" (dict "value" .Values.web.podLabels "context" $) | nindent 8 }}
         {{- end }}
