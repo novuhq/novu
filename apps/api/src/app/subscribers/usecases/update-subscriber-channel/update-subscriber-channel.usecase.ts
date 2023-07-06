@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { isEqual, union } from 'lodash';
+import { isEqual } from 'lodash';
 import {
   IChannelSettings,
   SubscriberRepository,
@@ -154,7 +154,7 @@ export class UpdateSubscriberChannel {
     return {
       _integrationId: updatePayload._integrationId || existingChannel._integrationId,
       providerId: updatePayload.providerId || existingChannel.providerId,
-      credentials: { ...existingChannel.credentials, ...updatePayload.credentials, ...{ deviceTokens } },
+      credentials: { ...existingChannel.credentials, ...updatePayload.credentials, deviceTokens },
     };
   }
 
@@ -162,9 +162,7 @@ export class UpdateSubscriberChannel {
     // in order to not have breaking change we will support [] update
     if (updateDeviceTokens?.length === 0) return [];
 
-    const merged = [...existingDeviceTokens, ...updateDeviceTokens];
-
-    return union(merged);
+    return [...new Set([...existingDeviceTokens, ...updateDeviceTokens])];
   }
 
   private createUpdatePayload(command: UpdateSubscriberChannelCommand) {
@@ -177,7 +175,7 @@ export class UpdateSubscriberChannel {
         updatePayload.credentials.webhookUrl = command.credentials.webhookUrl;
       }
       if (command.credentials.deviceTokens != null && updatePayload.credentials) {
-        updatePayload.credentials.deviceTokens = union(command.credentials.deviceTokens);
+        updatePayload.credentials.deviceTokens = [...new Set([...command.credentials.deviceTokens])];
       }
       if (command.credentials.channel != null && updatePayload.credentials) {
         updatePayload.credentials.channel = command.credentials.channel;
