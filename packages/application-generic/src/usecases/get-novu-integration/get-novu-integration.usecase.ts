@@ -55,7 +55,7 @@ export class GetNovuIntegration {
       _environmentId: command.environmentId,
     });
 
-    if (activeIntegrationsCount > 0) {
+    if (activeIntegrationsCount > 0 && !command.ignoreActiveCount) {
       return;
     }
 
@@ -94,11 +94,13 @@ export class GetNovuIntegration {
       command.organizationId
     );
 
+    const active = activeIntegrationsCount === 0;
+
     switch (command.channelType) {
       case ChannelTypeEnum.EMAIL:
-        return this.createNovuEmailIntegration(organization, command);
+        return this.createNovuEmailIntegration(organization, command, active);
       case ChannelTypeEnum.SMS:
-        return this.createNovuSMSIntegration(command);
+        return this.createNovuSMSIntegration(command, active);
       default:
         return undefined;
     }
@@ -106,11 +108,12 @@ export class GetNovuIntegration {
 
   private createNovuEmailIntegration(
     organization: OrganizationEntity | null,
-    command: GetNovuIntegrationCommand
+    command: GetNovuIntegrationCommand,
+    active = true
   ): IntegrationEntity {
     const item = new IntegrationEntity();
     item.providerId = EmailProviderIdEnum.Novu;
-    item.active = true;
+    item.active = active;
     item.channel = ChannelTypeEnum.EMAIL;
     item.name = 'Novu Email';
 
@@ -125,11 +128,12 @@ export class GetNovuIntegration {
   }
 
   private createNovuSMSIntegration(
-    command: GetNovuIntegrationCommand
+    command: GetNovuIntegrationCommand,
+    active = true
   ): IntegrationEntity {
     const item = new IntegrationEntity();
     item.providerId = SmsProviderIdEnum.Novu;
-    item.active = true;
+    item.active = active;
     item.channel = ChannelTypeEnum.SMS;
     item.name = 'Novu SMS';
 

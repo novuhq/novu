@@ -88,6 +88,7 @@ export class GetDecryptedIntegrations {
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         userId: command.userId,
+        ignoreActiveCount: true,
       })
     );
 
@@ -101,6 +102,7 @@ export class GetDecryptedIntegrations {
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         userId: command.userId,
+        ignoreActiveCount: true,
       })
     );
 
