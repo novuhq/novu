@@ -1,8 +1,3 @@
-import { IsDefined, IsMongoId } from 'class-validator';
-import { OrganizationCommand } from '../../../shared/commands/organization.command';
+import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
-export class GetMyEnvironmentsCommand extends OrganizationCommand {
-  @IsDefined()
-  @IsMongoId()
-  environmentId: string;
-}
+export class GetMyEnvironmentsCommand extends EnvironmentWithUserCommand {}
