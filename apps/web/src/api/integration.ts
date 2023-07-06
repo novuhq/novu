@@ -21,6 +21,10 @@ export function updateIntegration(integrationId: string, data: IUpdateIntegratio
   return api.put(`/v1/integrations/${integrationId}`, data);
 }
 
+export function deleteIntegration(integrationId: string) {
+  return api.delete(`/v1/integrations/${integrationId}`);
+}
+
 export function getWebhookSupportStatus(providerId: string) {
   return api.get(`/v1/integrations/webhook/provider/${providerId}/status`);
 }
