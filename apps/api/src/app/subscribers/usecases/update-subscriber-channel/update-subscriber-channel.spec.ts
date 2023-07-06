@@ -96,6 +96,11 @@ describe('Update Subscriber channel credentials', function () {
   it('should update only webhookUrl on existing slack channel credentials', async function () {
     const subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     const subscriber = await subscriberService.createSubscriber();
+    const slackIntegration = await integrationRepository.findOne({
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+      providerId: ChatProviderIdEnum.Slack,
+    });
 
     const newSlackCredentials = {
       providerId: ChatProviderIdEnum.Slack,
@@ -119,7 +124,7 @@ describe('Update Subscriber channel credentials', function () {
       (channel) => channel.providerId === newSlackCredentials.providerId
     );
 
-    expect(newChannel?._integrationId).to.equal('integrationId_slack');
+    expect(newChannel?._integrationId).to.equal(slackIntegration?._id);
     expect(newChannel?.providerId).to.equal('slack');
     expect(newChannel?.credentials.webhookUrl).to.equal('new-secret-webhookUrl');
   });
