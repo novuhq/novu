@@ -19,9 +19,9 @@ export class IntegrationEntity {
 
   active: boolean;
 
-  name?: string;
+  name: string;
 
-  identifier?: string;
+  identifier: string;
 
   deleted: boolean;
 

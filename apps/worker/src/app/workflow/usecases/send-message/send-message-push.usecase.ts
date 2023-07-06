@@ -122,6 +122,7 @@ export class SendMessagePush extends SendMessageBase {
       }
 
       const integration = await this.getIntegration({
+        id: channel._integrationId,
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         channelType: ChannelTypeEnum.PUSH,
