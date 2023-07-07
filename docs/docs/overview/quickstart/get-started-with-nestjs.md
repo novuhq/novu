@@ -32,3 +32,16 @@ cd nestjs-quickstart
 ```
 
 This command will create NestJS project and now we can create notification module and add Novu to our application.
+
+## Installing Novu and other dependencies
+
+Let's install Novu Node.js SDK and other dependencies like NestJS [config module](https://docs.nestjs.com/techniques/configuration).
+
+```sh
+npm install @novu/node @nestjs/config
+```
+
+Create `.env` file in the root of project and paste your API key:
+```env
+NOVU_API_KEY='<YOUR_NOVU_API_KEY>'
+```
