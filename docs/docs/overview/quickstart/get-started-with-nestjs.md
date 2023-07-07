@@ -5,7 +5,7 @@ sidebar_label: Get started with NestJS
 
 # NestJS Quickstart
 
-Learn how to integrate Novu into your NestJS project on the fly and send notifications across different channels (SMS, Email, Chat, Push).
+Learn how to use Novu to quickly send multi-channel (SMS, Email, Chat, Push) notifications from a NestJS app.
 
 In this Quickstart, you will learn how to:
 - Install the Novu Node.js SDK via npm.
@@ -25,19 +25,18 @@ You can also [view the completed code](https://github.com/novuhq/nestjs-quicksta
 
 The first step here would be to create a NestJS app. To get started, open your terminal and use the following commands:
 
-```sh
+```bash
 npx @nestjs/cli new nestjs-quickstart
-
 cd nestjs-quickstart
 ```
 
 This command will create NestJS project and now we can create notification module and add Novu to our application.
 
-## Install Novu and other dependencies
+## Install Novu SDK and other dependencies
 
-Let's install Novu Node.js SDK and other dependencies like NestJS [config module](https://docs.nestjs.com/techniques/configuration):
+Let's install Novu Node.js SDK and other dependencies like [config module](https://docs.nestjs.com/techniques/configuration) for NestJS:
 
-```sh
+```bash
 npm install @novu/node @nestjs/config
 ```
 
@@ -46,11 +45,14 @@ After installing dependencies, we need to connect our app with our Novu account 
 ![Novu API key is available on the Novu web dashboard](https://res.cloudinary.com/dxc6bnman/image/upload/v1688127601/guides/SCR-20230630-ppsb_ky06jv.png)
 
 Create `.env` file in the root of project and paste your obtained API key:
-```env
+
+```bash
 NOVU_API_KEY='<YOUR_NOVU_API_KEY>'
 ```
 
-> Don't forget to add .env file to .gitignore
+:::info
+Don't forget to add .env file to .gitignore
+:::
 
 Novu lets us send notifications across different channels like email, in-app, chat, SMS, etc, and for each channel, one can use a plethora of providers. You just need to set up a provider for the channel you want to use in Novu:
 
@@ -69,7 +71,7 @@ Once having integrated a provider, we need a notification workflow to send notif
 
 In our case, we’ll have dynamic data and whatever we send as a description will be sent as an email notification. Following are the steps to create a notification workflow.
 
-## Creating a notification workflow
+## Creating a Notification Workflow
 
 1. Click "Workflows” on the left sidebar of your Novu dashboard.
 2. Click the “Create Workflow” button on the top right.
@@ -85,14 +87,15 @@ In our case, we’ll have dynamic data and whatever we send as a description wil
 
 Now, we’ve successfully sent the test email and just need to do this from our app.
 
-
 ## Create notification module and integrate Novu
 Generate `notification` module with NestJS CLI:
-```
+
+```bash
 npx @nestjs/cli g module notification
 ```
 
 Register modules in `app.module.ts` file:
+
 ```ts
 // app.module.ts
 import { Module } from '@nestjs/common';
@@ -108,6 +111,7 @@ export class AppModule {}
 ```
 
 Create `novu.provider.ts` file inside notification module to integrate Novu SDK with NestJS dependency injection:
+
 ```ts
 // novu.provider.ts
 import { Provider, Inject } from '@nestjs/common';
@@ -129,7 +133,15 @@ export const NovuProvider: Provider = {
 export const InjectNovu = () => Inject(NOVU_PROVIDER_TOKEN);
 ```
 
-Next create `notification.service.ts` file and inject Novu provider in class constructor:
+## Create a Subscriber
+
+The recipients of a triggered notification are called [subscribers](https://docs.novu.co/platform/subscribers).
+
+Click “Subscribers” on the left sidebar of the Novu dashboard to see all subscribers. By default, the dashboard will display a subscriber, as you were added automatically during sign-up.
+
+![subscriber_id.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1688331839/Screenshot_2023-07-03_at_0.02.53_jmkhi3.png)
+
+Create `notification.service.ts` file and inject Novu provider in class constructor. In `sendMail` method we create new subscriber.  In real app replace `123` with subscriber ID of your user from database.
 
 ```ts
 // notification.service.ts
@@ -148,6 +160,40 @@ export class NotificationService {
     await this.novu.subscribers.identify('123', {
       email: email,
       firstName: 'Subscriber',
+      lastName: 'Lastname',
+    });
+  }
+}
+```
+
+Other valid fields that can be used are `phone`, `avatar`, and `data` . The `data` field can accept an object of metadata that you want to attach to the subscriber.
+
+:::info
+To make all of your app users subscribers, you need to programmatically add them to Novu.
+:::
+
+## Trigger a Notification
+
+Run trigger with same payload shape as we configured in Workflow editor previously:
+
+```ts
+// notification.service.ts
+import { Injectable } from '@nestjs/common';
+import { Novu } from '@novu/node';
+import { InjectNovu } from './novu.provider';
+
+@Injectable()
+export class NotificationService {
+  constructor(
+    @InjectNovu()
+    private readonly novu: Novu,
+  ) {}
+
+  async sendEmail(email: string, description: string) {
+    await this.novu.subscribers.identify('123', {
+      email: email,
+      firstName: 'Subscriber',
+      lastName: 'Lastname',
     });
 
     const result = await this.novu.trigger('email-quickstart', {
@@ -165,6 +211,14 @@ export class NotificationService {
   }
 }
 ```
+
+Make sure you understand the following:
+
+- First argument of trigger should be the notification template’s trigger ID/slug.
+
+![trigger-id](https://github.com/michaldziuba03/novu/assets/43048524/4d95a839-c533-4b02-ac29-be9aef947ed2)
+
+- The value of subscriberId is the id of the subscriber on Novu. In real app replace 123 with subscriber ID of your user from database.
 
 ## Create the route for sending notifications 
 
@@ -187,6 +241,7 @@ export class NotificationController {
 ```
 
 Lastly, don't forget to register all providers and controller in `notification.module.ts` file: 
+
 ```ts
 // notification.module.ts
 import { Module } from '@nestjs/common';
@@ -204,7 +259,8 @@ export class NotificationModule {}
 ```
 
 We can now start our local server and test our backend app on Postman. To start the local server, use the following command:
-```sh
+
+```bash
 npm run start:dev
 ```
 
