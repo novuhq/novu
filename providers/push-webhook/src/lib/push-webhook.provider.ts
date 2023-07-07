@@ -15,18 +15,19 @@ export class PushWebhookPushProvider implements IPushProvider {
     private config: {
       hmacSecretKey?: string;
       webhookUrl: string;
-    },
+    }
   ) {}
 
   async sendMessage(
-    options: IPushOptions,
+    options: IPushOptions
   ): Promise<ISendMessageSuccessResponse> {
+    const { subscriber, step, payload, ...rest } = options;
     const bodyData = this.createBody({
-      ...options,
+      ...rest,
       payload: {
-        ...options.payload,
-        subscriber: options.subscriber,
-        step: options.step,
+        ...payload,
+        subscriber,
+        step,
       },
     });
     const hmacValue = this.computeHmac(bodyData);
@@ -44,7 +45,7 @@ export class PushWebhookPushProvider implements IPushProvider {
     };
   }
 
-  createBody(options: IPushOptions): string {
+  createBody(options: object): string {
     return JSON.stringify(options);
   }
 

@@ -235,6 +235,8 @@ test('should trigger fcm data for ios with headers options', async () => {
     data: {
       key_1: 'val_1',
       key_2: 'val_2',
+      title: 'Test',
+      body: 'Test push',
     },
   });
 });
@@ -274,6 +276,8 @@ test('should trigger fcm data for android with priority option', async () => {
     data: {
       key_1: 'val_1',
       key_2: 'val_2',
+      title: 'Test',
+      body: 'Test push',
     },
   });
 });
@@ -290,6 +294,8 @@ test('should clean the payload for the FCM data message', async () => {
     one: '1',
     isActive: 'true',
     object: '{"asd":"asd"}',
+    title: 'Test',
+    body: 'Test push',
   };
 
   await provider.sendMessage({

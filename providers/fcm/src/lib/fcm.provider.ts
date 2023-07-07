@@ -26,7 +26,7 @@ export class FcmPushProvider implements IPushProvider {
       projectId: string;
       email: string;
       secretKey: string;
-    },
+    }
   ) {
     this.config = config;
     this.appName = crypto.randomBytes(32).toString();
@@ -38,13 +38,13 @@ export class FcmPushProvider implements IPushProvider {
           privateKey: this.config.secretKey,
         }),
       },
-      this.appName,
+      this.appName
     );
     this.messaging = getMessaging(firebase);
   }
 
   async sendMessage(
-    options: IPushOptions,
+    options: IPushOptions
   ): Promise<ISendMessageSuccessResponse> {
     delete (options.overrides as { deviceTokens?: string[] })?.deviceTokens;
 
@@ -66,7 +66,7 @@ export class FcmPushProvider implements IPushProvider {
       delete (options.overrides as { type?: string })?.type;
       res = await this.messaging.sendMulticast({
         tokens: options.target,
-        data: payload,
+        data: { ...payload, title: options.title, body: options.content },
         ...(androidData ? { android: androidData } : {}),
         ...(apnsData ? { apns: apnsData } : {}),
         ...(fcmOptionsData ? { fcmOptions: fcmOptionsData } : {}),
@@ -94,7 +94,7 @@ export class FcmPushProvider implements IPushProvider {
       throw new Error(
         `Sending message failed due to "${
           res.responses.find((i) => i.success === false).error.message
-        }"`,
+        }"`
       );
     }
 
@@ -105,7 +105,7 @@ export class FcmPushProvider implements IPushProvider {
       ids: res?.responses?.map((response, index) =>
         response.success
           ? response.messageId
-          : `${response.error.message}. Invalid token:- ${options.target[index]}`,
+          : `${response.error.message}. Invalid token:- ${options.target[index]}`
       ),
       date: new Date().toISOString(),
     };
