@@ -179,7 +179,7 @@ suspend fun updateSubscriber(): ResponseWrapper<SubscriberResponse>? {
         }.await()
     }
 ```
-Other valid fields that can be updated are `phone`, `avatar`, and `data` . The `data` field can accept an array of metadata that you want to attach to the subscriber.
+Other valid fields that can be updated are `phone`, `avatar`, and `data`. The `data` field can accept an Object or a Map with the info you want to attach to the subscriber.
 
 ::::info
 To create all of your subscribers, you need to programmatically add them to Novu.
