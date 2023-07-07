@@ -52,10 +52,9 @@ Generate `notification` module with NestJS CLI:
 npx @nestjs/cli g module notification
 ```
 
-Register module in `app.module.ts` file:
+Register modules in `app.module.ts` file:
 ```ts
 // app.module.ts
-
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { NotificationModule } from './notification/notification.module';
@@ -71,7 +70,6 @@ export class AppModule {}
 Create `novu.provider.ts` file inside notification module to integrate Novu SDK with NestJS dependency injection:
 ```ts
 // novu.provider.ts
-
 import { Provider, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Novu } from '@novu/node';
@@ -95,7 +93,6 @@ Next create `notification.service.ts` file and inject Novu provider in class con
 
 ```ts
 // notification.service.ts
-
 import { Injectable } from '@nestjs/common';
 import { Novu } from '@novu/node';
 import { InjectNovu } from './novu.provider';
@@ -129,11 +126,12 @@ export class NotificationService {
 }
 ```
 
+## Create the route for sending notifications 
+
 We also have to create `notification.controller.ts` file inside notification module and create endpoint for sending emails:
 
 ```ts
 // notification.controller.ts
-
 import { Body, Controller, Post } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 
@@ -148,10 +146,9 @@ export class NotificationController {
 }
 ```
 
-Don't forget to register all providers and controller in `notification.module.ts` file: 
+Lastly, don't forget to register all providers and controller in `notification.module.ts` file: 
 ```ts
 // notification.module.ts
-
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { NovuProvider } from './novu.provider';
@@ -170,6 +167,15 @@ We can now start our local server and test our backend app on Postman. To start 
 ```sh
 npm run start:dev
 ```
+
+Now, let's open Postman or other similar tool to test our endpoint. Send a POST request to the route you defined in notification controller - `http://localhost:3000/notifications/emails`.
+
+![postman-vsc](https://github.com/michaldziuba03/novu/assets/43048524/844fbbef-1f0a-4f7e-964e-184fe74abff9)
+
+This means that the email notification was sent successfully. Now go to your inbox and you should see an email notification like the following:
+
+![email-screenshot](https://github.com/michaldziuba03/novu/assets/43048524/d5c97ae2-07c1-4e6c-b9a4-0c82ac4e6681)
+
 
 ## Next Steps
 
