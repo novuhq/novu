@@ -117,7 +117,7 @@ Proper authorization needs to be set for the Chat channel for subscribers.
 Please proceed to create a notification workflow.
 
 1. Click **Workflows** on the left sidebar of your Novu dashboard. 
-TODO: (Add a picture that shows the sidebar)
+![click workflow](https://res.cloudinary.com/dxc6bnman/image/upload/v1688745999/guides/workflows_m60hkc.png)
 2. Click the **Create Workflow** button on the top right.
 3. The name of a new notification workflow is currently **Untitled.** Rename it to a more suitable title.
 4. Select **Email** as the channel you want to add.
