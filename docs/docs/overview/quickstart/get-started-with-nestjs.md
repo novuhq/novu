@@ -143,7 +143,7 @@ Click “Subscribers” on the left sidebar of the Novu dashboard to see all sub
 
 ![subscriber_id.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1688331839/Screenshot_2023-07-03_at_0.02.53_jmkhi3.png)
 
-Create `notification.service.ts` file and inject Novu provider in class constructor. In `sendMail` method we create new subscriber. In real app replace `123` with subscriber ID of your user from database.
+Create `notification.service.ts` file and inject Novu provider in class constructor. In `sendMail` method we create new subscriber. In real app replace `123` with ID of your user from database.
 
 ```ts
 // notification.service.ts
@@ -220,7 +220,7 @@ Make sure you understand the following:
 
 ![trigger-id](https://github.com/michaldziuba03/novu/assets/43048524/4d95a839-c533-4b02-ac29-be9aef947ed2)
 
-- The value of subscriberId is the id of the subscriber on Novu. In real app replace 123 with subscriber ID of your user from database.
+- The value of subscriberId is the id of the subscriber on Novu we created previously.
 
 ## Create the route for sending notifications
 
