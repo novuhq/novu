@@ -52,6 +52,40 @@ NOVU_API_KEY='<YOUR_NOVU_API_KEY>'
 
 > Don't forget to add .env file to .gitignore
 
+Novu lets us send notifications across different channels like email, in-app, chat, SMS, etc, and for each channel, one can use a plethora of providers. You just need to set up a provider for the channel you want to use in Novu:
+
+| Channel | Providers                                                           |
+| ------- | ------------------------------------------------------------------- | --- |
+| Email   | MailGun, Mandrill, MailJet, Amazon SES, Sendgrid, Postmark, Netcore |     |
+| SMS     | Twilio, Amazon SNS, Plivo, SMS, SMSCentral, Kannel, Infobip, Termii |
+| Chat    | Mattermost, Slack, Microsoft Teams, Discord                         |
+| Push    | FCM, APNS, Expo                                                     |
+
+You can see all this in our [integrations store](https://web.novu.co/integrations) and set it up there.
+
+For each channel, there can be only one provider active at a time. Although the exact setup process varies from provider to provider, the general flow is signing up for a provider, getting an API key from its portal, and plugging it into the Novu web portal.
+
+Once having integrated a provider, we need a notification workflow to send notifications. One can have dynamic data in this workflow if they so choose.
+
+In our case, we’ll have dynamic data and whatever we send as a description will be sent as an email notification. Following are the steps to create a notification workflow.
+
+## Creating a notification workflow
+
+1. Click "Workflows” on the left sidebar of your Novu dashboard.
+2. Click the “Create Workflow” button on the top right.
+   ![Creating a workflow in Novu dashboard](https://res.cloudinary.com/dxc6bnman/image/upload/v1688127676/guides/SCR-20230630-pqdm_z5npqe.png)
+3. The name of a new notification workflow is currently "Untitled." Rename it to a more suitable title.
+   ![Renaming the newly created notification workflow](https://res.cloudinary.com/dxc6bnman/image/upload/v1688127735/guides/SCR-20230630-pqpp_lvjfea.png)
+4. Select "Email" as the channel you want to add, by dragging it from the right sidebar:
+   ![Adding email channel to the notification workflow we created above](https://res.cloudinary.com/dxc6bnman/image/upload/v1688128047/guides/SCR-20230630-psgt_ottznp.png)
+5. Click on the ‘Email’ in the workflow and edit it as per this image. Don’t forget to add the fields in the editor which is supposed to be updated with dynamic values that we’ll send when calling the API.
+   ![Adding email and description to the editor in the notification workflow we created above](https://res.cloudinary.com/dxc6bnman/image/upload/v1688128150/guides/SCR-20230630-psxv_ef7jwh.png)
+6. Also, add the variables in the ‘variables’ section in the test tab and try testing it by sending the email to your email id using the ‘send test email’ button on the bottom right.
+   ![Adding variables to the 'variables' section](https://res.cloudinary.com/dxc6bnman/image/upload/v1688129220/guides/SCR-20230630-pzgl_n94giv.png)
+
+Now, we’ve successfully sent the test email and just need to do this from our app.
+
+
 ## Create notification module and integrate Novu
 Generate `notification` module with NestJS CLI:
 ```
