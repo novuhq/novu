@@ -1566,7 +1566,7 @@ web:
 
   ## @param web.wsExternalEndpoint The external websocket endpoint of the API
   wsExternalEndpoint: ws://localhost:3002
-  
+
 ## @section Persistence Parameters
 ##
 
