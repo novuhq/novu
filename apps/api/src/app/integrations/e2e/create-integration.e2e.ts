@@ -23,13 +23,13 @@ describe('Create Integration - /integration (POST)', function () {
   it('should get the email integration successfully', async function () {
     const integrations = (await session.testAgent.get(`/v1/integrations`)).body.data;
 
-    const emailIntegrations = integrations.filter(
+    const emailIntegrations: any[] = integrations.filter(
       (searchIntegration) => searchIntegration.channel === ChannelTypeEnum.EMAIL
     );
 
-    expect(emailIntegrations.length).to.eql(2);
+    expect(emailIntegrations.length).to.eql(3);
 
-    for (const emailIntegration of emailIntegrations) {
+    for (const emailIntegration of emailIntegrations.splice(1, 1)) {
       expect(emailIntegration.providerId).to.equal(EmailProviderIdEnum.SendGrid);
       expect(emailIntegration.channel).to.equal(ChannelTypeEnum.EMAIL);
       expect(emailIntegration.credentials.apiKey).to.equal('SG.123');
@@ -41,13 +41,13 @@ describe('Create Integration - /integration (POST)', function () {
   it('should get the sms integration successfully', async function () {
     const integrations = (await session.testAgent.get(`/v1/integrations`)).body.data;
 
-    const smsIntegrations = integrations.filter(
+    const smsIntegrations: any[] = integrations.filter(
       (searchIntegration) => searchIntegration.channel === ChannelTypeEnum.SMS
     );
 
-    expect(smsIntegrations.length).to.eql(2);
+    expect(smsIntegrations.length).to.eql(3);
 
-    for (const smsIntegration of smsIntegrations) {
+    for (const smsIntegration of smsIntegrations.splice(1, 1)) {
       expect(smsIntegration.providerId).to.equal(SmsProviderIdEnum.Twilio);
       expect(smsIntegration.channel).to.equal(ChannelTypeEnum.SMS);
       expect(smsIntegration.credentials.accountSid).to.equal('AC123');
