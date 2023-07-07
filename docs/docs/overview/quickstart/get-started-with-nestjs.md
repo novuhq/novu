@@ -170,3 +170,12 @@ We can now start our local server and test our backend app on Postman. To start 
 ```sh
 npm run start:dev
 ```
+
+## Next Steps
+
+Great job! If you've reached this point, you should now have successfully created a subscriber, notification template, configured a channel provider and triggered a notification in your application.
+
+To learn more about notifications and explore Novu's features and capabilities, check out:
+
+- [Novu Digest Engine](https://docs.novu.co/platform/digest) - Learn how to aggregate multiple trigger events into a single message and deliver it to the subscriber.
+- [Novu Notification Center](https://docs.novu.co/notification-center/getting-started) - Learn how to integrate a rich, ready-to-use real-time UI notification center into your app.
