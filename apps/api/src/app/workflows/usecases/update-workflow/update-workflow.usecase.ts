@@ -65,7 +65,7 @@ export class UpdateWorkflow {
       );
 
       if (isExistingIdentifier && isExistingIdentifier._id !== command.id) {
-        throw new BadRequestException(`Notification template with identifier ${command.identifier} already exists`);
+        throw new BadRequestException(`Workflow with identifier ${command.identifier} already exists`);
       } else {
         updatePayload['triggers.0.identifier'] = command.identifier;
       }

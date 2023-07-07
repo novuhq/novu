@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { NotificationTemplateService, UserSession } from '@novu/testing';
 import { INotificationTemplate } from '@novu/shared';
 
-describe('Get notification template by id - /notification-templates/:templateId (GET)', async () => {
+describe('Get workflow by id - /workflows/:workflowId (GET)', async () => {
   let session: UserSession;
 
   before(async () => {
@@ -10,14 +10,14 @@ describe('Get notification template by id - /notification-templates/:templateId 
     await session.initialize();
   });
 
-  it('should return the template by its id', async function () {
+  it('should return the workflow by its id', async function () {
     const notificationTemplateService = new NotificationTemplateService(
       session.user._id,
       session.organization._id,
       session.environment._id
     );
     const template = await notificationTemplateService.createTemplate();
-    const { body } = await session.testAgent.get(`/v1/notification-templates/${template._id}`);
+    const { body } = await session.testAgent.get(`/v1/workflows/${template._id}`);
 
     const foundTemplate: INotificationTemplate = body.data;
 
