@@ -50,6 +50,8 @@ Create `.env` file in the root of project and paste your obtained API key:
 NOVU_API_KEY='<YOUR_NOVU_API_KEY>'
 ```
 
+> Don't forget to add .env file to .gitignore
+
 ## Create notification module and integrate Novu
 Generate `notification` module with NestJS CLI:
 ```
