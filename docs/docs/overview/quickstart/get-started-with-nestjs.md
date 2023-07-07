@@ -8,6 +8,7 @@ sidebar_label: Get started with NestJS
 Learn how to use Novu to quickly send multi-channel (SMS, Email, Chat, Push) notifications from a NestJS app.
 
 In this Quickstart, you will learn how to:
+
 - Install the Novu Node.js SDK via npm.
 - Use Novu Node.js SDK with NestJS dependency injection.
 - Send your first notification.
@@ -88,6 +89,7 @@ In our case, we’ll have dynamic data and whatever we send as a description wil
 Now, we’ve successfully sent the test email and just need to do this from our app.
 
 ## Create notification module and integrate Novu
+
 Generate `notification` module with NestJS CLI:
 
 ```bash
@@ -141,7 +143,7 @@ Click “Subscribers” on the left sidebar of the Novu dashboard to see all sub
 
 ![subscriber_id.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1688331839/Screenshot_2023-07-03_at_0.02.53_jmkhi3.png)
 
-Create `notification.service.ts` file and inject Novu provider in class constructor. In `sendMail` method we create new subscriber.  In real app replace `123` with subscriber ID of your user from database.
+Create `notification.service.ts` file and inject Novu provider in class constructor. In `sendMail` method we create new subscriber. In real app replace `123` with subscriber ID of your user from database.
 
 ```ts
 // notification.service.ts
@@ -153,7 +155,7 @@ import { InjectNovu } from './novu.provider';
 export class NotificationService {
   constructor(
     @InjectNovu()
-    private readonly novu: Novu,
+    private readonly novu: Novu
   ) {}
 
   async sendEmail(email: string, description: string) {
@@ -186,7 +188,7 @@ import { InjectNovu } from './novu.provider';
 export class NotificationService {
   constructor(
     @InjectNovu()
-    private readonly novu: Novu,
+    private readonly novu: Novu
   ) {}
 
   async sendEmail(email: string, description: string) {
@@ -220,7 +222,7 @@ Make sure you understand the following:
 
 - The value of subscriberId is the id of the subscriber on Novu. In real app replace 123 with subscriber ID of your user from database.
 
-## Create the route for sending notifications 
+## Create the route for sending notifications
 
 We also have to create `notification.controller.ts` file inside notification module and create endpoint for sending emails:
 
@@ -240,7 +242,7 @@ export class NotificationController {
 }
 ```
 
-Lastly, don't forget to register all providers and controller in `notification.module.ts` file: 
+Lastly, don't forget to register all providers and controller in `notification.module.ts` file:
 
 ```ts
 // notification.module.ts
@@ -273,7 +275,6 @@ Next, let's open Postman or other similar tool to test our endpoint. Send a POST
 This means that the email notification was sent successfully. Now go to your inbox and you should see an email notification like the following:
 
 ![email-screenshot](https://github.com/michaldziuba03/novu/assets/43048524/d5c97ae2-07c1-4e6c-b9a4-0c82ac4e6681)
-
 
 ## Next Steps
 
