@@ -267,7 +267,7 @@ To trigger a notification, simply run the codesandbox below with the correct cre
 
 <iframe width="800" height="450" src="https://codesandbox.io/p/sandbox/trigger-notification-rzluxk?file=%2Findex.js%3A3%2C41&embed=1" allowfullscreen></iframe>
 
-`onboarding-in-app` is the Notification template identifier we created earlier.
+`onboarding-in-app` is the Notification workflow identifier we created earlier.
 
 Ensure the `subscriberId` value in the backend code that triggers the notification matches the `subscriberId` in your **NotificationCenterComponent** code.
 
@@ -296,7 +296,7 @@ Check your app again. You should see the recently triggered notification!
 
 ## Next Steps
 
-Great job! If you've reached this point, you should now have successfully set up the notification center, created a subscriber, notification template, configured a channel provider and triggered a notification in your Vue application.
+Great job! If you've reached this point, you should now have successfully set up the notification center, created a subscriber, notification workflow, configured a channel provider and triggered a notification in your Vue application.
 
 To learn more about the Notification Center and explore Novu's features and capabilities, check out, check out:
 

@@ -187,11 +187,11 @@ $novu->triggerEvent([
 
 Before running the code, make sure you understand the following:
 
-- The value of `name` should be the notification template’s trigger ID/slug.
+- The value of `name` should be the notification workflow’s trigger ID/slug.
 
 ![Notification Template](https://res.cloudinary.com/dxc6bnman/image/upload/f_auto,q_auto/v1685466980/guides/trigger_id_1_ur1azh.png)
 
-- The value of `payload` is an array of the data that you want to be dynamically injected into the notification template content.
+- The value of `payload` is an array of the data that you want to be dynamically injected into the notification workflow content.
 - The value of `subscriberId` is the id of the subscriber on Novu. Replace `7789` with your subscriber ID.
 
 Run the code to trigger a notification!
@@ -280,7 +280,7 @@ $novu->triggerEvent([
 
 ## Next Steps
 
-Great job! If you've reached this point, you should now have successfully created a subscriber, notification template, configured a channel provider and triggered a notification in your application.
+Great job! If you've reached this point, you should now have successfully created a subscriber, notification workflow, configured a channel provider and triggered a notification in your application.
 
 To learn more about notifications and explore Novu's features and capabilities, check out:
 
