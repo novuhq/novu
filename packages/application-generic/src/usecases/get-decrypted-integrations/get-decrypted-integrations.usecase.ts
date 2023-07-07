@@ -24,11 +24,20 @@ export class GetDecryptedIntegrations {
   async execute(
     command: GetDecryptedIntegrationsCommand
   ): Promise<IntegrationEntity[]> {
+    const isMultiProviderConfigurationEnabled =
+      await this.getFeatureFlag.isMultiProviderConfigurationEnabled(
+        FeatureFlagCommand.create({
+          userId: command.userId,
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+        })
+      );
+
     const query: Partial<IntegrationEntity> & { _organizationId: string } = {
       _organizationId: command.organizationId,
     };
 
-    if (command.environmentId) {
+    if (command.environmentId && !isMultiProviderConfigurationEnabled) {
       query._environmentId = command.environmentId;
     }
 
@@ -55,15 +64,6 @@ export class GetDecryptedIntegrations {
 
         return integration;
       });
-
-    const isMultiProviderConfigurationEnabled =
-      await this.getFeatureFlag.isMultiProviderConfigurationEnabled(
-        FeatureFlagCommand.create({
-          userId: command.userId,
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-        })
-      );
 
     if (!isMultiProviderConfigurationEnabled) {
       if (command.channelType === undefined || integrations.length > 0) {
