@@ -41,7 +41,11 @@ Let's install Novu Node.js SDK and other dependencies like NestJS [config module
 npm install @novu/node @nestjs/config
 ```
 
-Create `.env` file in the root of project and paste your API key:
+After installing dependencies, we need to connect our app with our Novu account using the Novu API key. Simply log onto the [Novu web dashboard](https://web.novu.co) and from the settings there, obtain your API key. We’ll use it to connect our app to our Novu account.
+
+![Novu API key is available on the Novu web dashboard](https://res.cloudinary.com/dxc6bnman/image/upload/v1688127601/guides/SCR-20230630-ppsb_ky06jv.png)
+
+Create `.env` file in the root of project and paste your obtained API key:
 ```env
 NOVU_API_KEY='<YOUR_NOVU_API_KEY>'
 ```
@@ -168,9 +172,11 @@ We can now start our local server and test our backend app on Postman. To start 
 npm run start:dev
 ```
 
-Now, let's open Postman or other similar tool to test our endpoint. Send a POST request to the route you defined in notification controller - `http://localhost:3000/notifications/emails`.
+Next, let's open Postman or other similar tool to test our endpoint. Send a POST request to the route we defined in notification controller - `http://localhost:3000/notifications/emails`.
 
 ![postman-vsc](https://github.com/michaldziuba03/novu/assets/43048524/844fbbef-1f0a-4f7e-964e-184fe74abff9)
+
+> In place of email field, use your actual email.
 
 This means that the email notification was sent successfully. Now go to your inbox and you should see an email notification like the following:
 
