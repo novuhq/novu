@@ -56,6 +56,11 @@ export { BuildWorkflow } from './general/BuildWorkflow';
 export { RunTestBell } from './general/RunTestBell';
 export { QuickGuide } from './general/QuickGuide';
 export { RightArrow } from './general/RightArrow';
+export { ReactLogo } from './general/ReactLogo';
+export { AngularLogo } from './general/AngularLogo';
+export { JSLogo } from './general/JSLogo';
+export { VueLogo } from './general/VueLogo';
+export { IframeLogo } from './general/IframeLogo';
 
 export { Copy } from './actions/Copy';
 export { Close } from './actions/Close';
