@@ -13,17 +13,17 @@ import {
 } from '@nestjs/common';
 import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
-import { GetNotificationTemplates } from './usecases/get-notification-templates/get-notification-templates.usecase';
-import { GetNotificationTemplatesCommand } from './usecases/get-notification-templates/get-notification-templates.command';
-import { CreateNotificationTemplate, CreateNotificationTemplateCommand } from './usecases/create-notification-template';
+import { GetWorkflows } from './usecases/get-workflows/get-workflows.usecase';
+import { GetWorkflowsCommand } from './usecases/get-workflows/get-workflows.command';
+import { CreateWorkflow, CreateWorkflowCommand } from './usecases/create-workflow';
 import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto, ChangeWorkflowStatusRequestDto } from './dto';
-import { GetNotificationTemplate } from './usecases/get-notification-template/get-notification-template.usecase';
-import { GetNotificationTemplateCommand } from './usecases/get-notification-template/get-notification-template.command';
-import { UpdateNotificationTemplate } from './usecases/update-notification-template/update-notification-template.usecase';
-import { DeleteNotificationTemplate } from './usecases/delete-notification-template/delete-notification-template.usecase';
-import { UpdateNotificationTemplateCommand } from './usecases/update-notification-template/update-notification-template.command';
-import { ChangeTemplateActiveStatus } from './usecases/change-template-active-status/change-template-active-status.usecase';
-import { ChangeTemplateActiveStatusCommand } from './usecases/change-template-active-status/change-template-active-status.command';
+import { GetWorkflow } from './usecases/get-workflow/get-workflow.usecase';
+import { GetWorkflowCommand } from './usecases/get-workflow/get-workflow.command';
+import { UpdateWorkflow } from './usecases/update-workflow/update-workflow.usecase';
+import { DeleteWorkflow } from './usecases/delete-workflow/delete-workflow.usecase';
+import { UpdateWorkflowCommand } from './usecases/update-workflow/update-workflow.command';
+import { ChangeWorkflowActiveStatus } from './usecases/change-workflow-active-status/change-workflow-active-status.usecase';
+import { ChangeWorkflowActiveStatusCommand } from './usecases/change-workflow-active-status/change-workflow-active-status.command';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { RootEnvironmentGuard } from '../auth/framework/root-environment-guard.service';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -42,12 +42,12 @@ import { CreateWorkflowQuery } from './queries';
 @ApiTags('Workflows')
 export class WorkflowsController {
   constructor(
-    private getNotificationTemplatesUsecase: GetNotificationTemplates,
-    private createNotificationTemplateUsecase: CreateNotificationTemplate,
-    private getNotificationTemplateUsecase: GetNotificationTemplate,
-    private updateTemplateByIdUsecase: UpdateNotificationTemplate,
-    private deleteTemplateByIdUsecase: DeleteNotificationTemplate,
-    private changeTemplateActiveStatusUsecase: ChangeTemplateActiveStatus
+    private getNotificationTemplatesUsecase: GetWorkflows,
+    private createNotificationTemplateUsecase: CreateWorkflow,
+    private getNotificationTemplateUsecase: GetWorkflow,
+    private updateTemplateByIdUsecase: UpdateWorkflow,
+    private deleteTemplateByIdUsecase: DeleteWorkflow,
+    private changeTemplateActiveStatusUsecase: ChangeWorkflowActiveStatus
   ) {}
 
   @Get('')
@@ -59,7 +59,7 @@ export class WorkflowsController {
   @ExternalApiAccessible()
   getWorkflows(@UserSession() user: IJwtPayload, @Query() query: WorkflowsRequestDto): Promise<WorkflowsResponseDto> {
     return this.getNotificationTemplatesUsecase.execute(
-      GetNotificationTemplatesCommand.create({
+      GetWorkflowsCommand.create({
         organizationId: user.organizationId,
         userId: user._id,
         environmentId: user.environmentId,
@@ -82,7 +82,7 @@ export class WorkflowsController {
     @Body() body: UpdateWorkflowRequestDto
   ): Promise<WorkflowsResponse> {
     return await this.updateTemplateByIdUsecase.execute(
-      UpdateNotificationTemplateCommand.create({
+      UpdateWorkflowCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
@@ -112,7 +112,7 @@ export class WorkflowsController {
   @ExternalApiAccessible()
   deleteWorkflowById(@UserSession() user: IJwtPayload, @Param('workflowId') workflowId: string): Promise<boolean> {
     return this.deleteTemplateByIdUsecase.execute(
-      GetNotificationTemplateCommand.create({
+      GetWorkflowCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
@@ -133,7 +133,7 @@ export class WorkflowsController {
     @Param('workflowId') workflowId: string
   ): Promise<WorkflowsResponse> {
     return this.getNotificationTemplateUsecase.execute(
-      GetNotificationTemplateCommand.create({
+      GetWorkflowCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
@@ -157,7 +157,7 @@ export class WorkflowsController {
     @Body() body: CreateWorkflowRequestDto
   ): Promise<WorkflowsResponse> {
     return this.createNotificationTemplateUsecase.execute(
-      CreateNotificationTemplateCommand.create({
+      CreateWorkflowCommand.create({
         organizationId: user.organizationId,
         userId: user._id,
         environmentId: user.environmentId,
@@ -191,7 +191,7 @@ export class WorkflowsController {
     @Param('workflowId') workflowId: string
   ): Promise<WorkflowsResponse> {
     return this.changeTemplateActiveStatusUsecase.execute(
-      ChangeTemplateActiveStatusCommand.create({
+      ChangeWorkflowActiveStatusCommand.create({
         organizationId: user.organizationId,
         userId: user._id,
         environmentId: user.environmentId,

@@ -7,11 +7,11 @@ import {
   InvalidateCacheService,
 } from '@novu/application-generic';
 
-import { ChangeTemplateActiveStatusCommand } from './change-template-active-status.command';
+import { ChangeWorkflowActiveStatusCommand } from './change-workflow-active-status.command';
 import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
 
 @Injectable()
-export class ChangeTemplateActiveStatus {
+export class ChangeWorkflowActiveStatus {
   constructor(
     private invalidateCache: InvalidateCacheService,
     private notificationTemplateRepository: NotificationTemplateRepository,
@@ -19,7 +19,7 @@ export class ChangeTemplateActiveStatus {
     private changeRepository: ChangeRepository
   ) {}
 
-  async execute(command: ChangeTemplateActiveStatusCommand): Promise<NotificationTemplateEntity> {
+  async execute(command: ChangeWorkflowActiveStatusCommand): Promise<NotificationTemplateEntity> {
     const foundTemplate = await this.notificationTemplateRepository.findOne({
       _environmentId: command.environmentId,
       _id: command.workflowId,
