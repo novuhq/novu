@@ -18,3 +18,17 @@ To follow the steps in this quickstart, you'll need:
 
 - A Novu account. [Sign up for free](http://web.novu.co) if you don’t have one yet.
 - A working Node.js development environment with a Node.js version of 16+.
+
+You can also [view the completed code](https://github.com/novuhq/nestjs-quickstart) of this quick start in a GitHub repo.
+
+## Create a NestJS app to get started
+
+The first step here would be to create a NestJS app. To get started, open your terminal and use the following commands:
+
+```sh
+npx @nestjs/cli new nestjs-quickstart
+
+cd nestjs-quickstart
+```
+
+This command will create NestJS project and now we can create notification module and add Novu to our application.
