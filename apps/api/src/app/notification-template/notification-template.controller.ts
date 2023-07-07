@@ -57,8 +57,8 @@ export class NotificationTemplateController {
   @Get('')
   @ApiResponse(NotificationTemplateResponse)
   @ApiOperation({
-    summary: 'Get workflows',
-    description: `Workflows were previously named notification templates`,
+    summary: 'Get Notification templates',
+    description: `Notification templates have been renamed to Workflows, Please use the new workflows controller`,
     deprecated: true,
   })
   @ExternalApiAccessible()
@@ -80,8 +80,8 @@ export class NotificationTemplateController {
   @Put('/:templateId')
   @ApiResponse(NotificationTemplateResponse)
   @ApiOperation({
-    summary: 'Update workflow',
-    description: `Workflow was previously named notification template`,
+    summary: 'Update Notification template',
+    description: `Notification templates have been renamed to Workflows, Please use the new workflows controller`,
     deprecated: true,
   })
   @ExternalApiAccessible()
@@ -115,8 +115,8 @@ export class NotificationTemplateController {
     type: DataBooleanDto,
   })
   @ApiOperation({
-    summary: 'Delete workflow',
-    description: `Workflow was previously named notification template`,
+    summary: 'Delete Notification template',
+    description: `Notification templates have been renamed to Workflows, Please use the new workflows controller`,
     deprecated: true,
   })
   @ExternalApiAccessible()
@@ -134,8 +134,8 @@ export class NotificationTemplateController {
   @Get('/:templateId')
   @ApiResponse(NotificationTemplateResponse)
   @ApiOperation({
-    summary: 'Get workflow',
-    description: `Workflow was previously named notification template`,
+    summary: 'Get Notification template',
+    description: `Notification templates have been renamed to Workflows, Please use the new workflows controller`,
     deprecated: true,
   })
   @ExternalApiAccessible()
@@ -158,8 +158,8 @@ export class NotificationTemplateController {
   @UseGuards(RootEnvironmentGuard)
   @ApiResponse(NotificationTemplateResponse, 201)
   @ApiOperation({
-    summary: 'Create workflow',
-    description: `Workflow was previously named notification template`,
+    summary: 'Create Notification template',
+    description: `Notification templates have been renamed to Workflows, Please use the new workflows controller`,
     deprecated: true,
   })
   @Roles(MemberRoleEnum.ADMIN)
@@ -193,8 +193,8 @@ export class NotificationTemplateController {
   @Roles(MemberRoleEnum.ADMIN)
   @ApiResponse(NotificationTemplateResponse)
   @ApiOperation({
-    summary: 'Update workflow status',
-    description: `Workflow was previously named notification template`,
+    summary: 'Update Notification template status',
+    description: `Notification templates have been renamed to Workflows, Please use the new workflows controller`,
     deprecated: true,
   })
   @ExternalApiAccessible()
