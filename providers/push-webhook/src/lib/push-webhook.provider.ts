@@ -15,11 +15,11 @@ export class PushWebhookPushProvider implements IPushProvider {
     private config: {
       hmacSecretKey?: string;
       webhookUrl: string;
-    }
+    },
   ) {}
 
   async sendMessage(
-    options: IPushOptions
+    options: IPushOptions,
   ): Promise<ISendMessageSuccessResponse> {
     const bodyData = this.createBody({
       ...options,
