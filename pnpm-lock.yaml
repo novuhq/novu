@@ -3001,7 +3001,7 @@ importers:
   providers/one-signal:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ~1.0.1
-      '@novu/stateless': ^0.13.0
+      '@novu/stateless': ^0.16.2
       '@types/jest': ~29.5.0
       cspell: ~6.19.2
       cz-conventional-changelog: ~3.3.0
@@ -3015,7 +3015,7 @@ importers:
       ts-node: ~10.9.1
       typescript: 4.9.5
     dependencies:
-      '@novu/stateless': 0.13.0
+      '@novu/stateless': link:../../packages/stateless
       onesignal-node: 3.4.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -14921,15 +14921,6 @@ packages:
       lodash.merge: 4.6.2
     dev: false
 
-  /@novu/stateless/0.13.0:
-    resolution: {integrity: sha512-2MFsqJbFX4LL/4hPHavg2t/8YpTjLDw8AuP6hlzuHO4qKpFOw4A8509oM6wo9PMV4+z6W37itrbuXj9fbUb0AA==}
-    engines: {node: '>=10'}
-    dependencies:
-      handlebars: 4.7.7
-      lodash.get: 4.4.2
-      lodash.merge: 4.6.2
-    dev: false
-
   /@novu/stateless/0.15.0:
     resolution: {integrity: sha512-NS7n34dlEB48EthLek0NWZXh+nJtbOUVkWdyprGF2f/WCCG/wT+yUtYLOauMffrySpnXEjY9zimyGgIWJQRl0g==}
     engines: {node: '>=10'}
@@ -22382,7 +22373,7 @@ packages:
       grapheme-splitter: 1.0.4
       ignore: 5.2.4
       natural-compare-lite: 1.4.0
-      semver: 7.5.0
+      semver: 7.5.2
       tsutils: 3.21.0_typescript@4.9.5
       typescript: 4.9.5
     transitivePeerDependencies:
@@ -22514,7 +22505,7 @@ packages:
       debug: 4.3.4
       globby: 11.1.0
       is-glob: 4.0.3
-      semver: 7.5.0
+      semver: 7.5.2
       tsutils: 3.21.0_typescript@4.9.5
       typescript: 4.9.5
     transitivePeerDependencies:
@@ -30531,7 +30522,7 @@ packages:
       webpack: ^4.0.0 || ^5.0.0
     dependencies:
       loader-utils: 2.0.4
-      schema-utils: 3.1.2
+      schema-utils: 3.1.1
       webpack: 4.46.0
     dev: true
 
@@ -30542,7 +30533,7 @@ packages:
       webpack: ^4.0.0 || ^5.0.0
     dependencies:
       loader-utils: 2.0.4
-      schema-utils: 3.1.2
+      schema-utils: 3.1.1
       webpack: 5.78.0
 
   /file-loader/6.2.0_webpack@5.82.1:
@@ -34465,7 +34456,7 @@ packages:
       pretty-format: 27.5.1
       slash: 3.0.0
       strip-json-comments: 3.1.1
-      ts-node: 10.9.1_j6r65ghnzvzk7vhdh4hyogrm4a
+      ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -44719,7 +44710,7 @@ packages:
       neo-async: 2.6.2
       sass: 1.61.0
       schema-utils: 3.1.1
-      semver: 7.5.0
+      semver: 7.5.2
       webpack: 5.82.1
     dev: false
 
@@ -45045,6 +45036,7 @@ packages:
     hasBin: true
     dependencies:
       lru-cache: 6.0.0
+    dev: false
 
   /semver/7.5.2:
     resolution: {integrity: sha512-SoftuTROv/cRjCze/scjGyiDtcUyxw1rgYQSZY7XTmtR5hX+dm76iDbTH8TkLPHCQmlbQVSSbNZCPM2hb0knnQ==}
@@ -46600,7 +46592,7 @@ packages:
       mime: 2.6.0
       qs: 6.11.1
       readable-stream: 3.6.2
-      semver: 7.5.0
+      semver: 7.5.2
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -48969,7 +48961,7 @@ packages:
       espree: 9.5.1
       esquery: 1.5.0
       lodash: 4.17.21
-      semver: 7.5.0
+      semver: 7.5.2
     transitivePeerDependencies:
       - supports-color
     dev: true
