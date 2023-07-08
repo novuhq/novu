@@ -17,6 +17,9 @@ test('should trigger push-webhook library correctly', async () => {
     hmacSecretKey: 'super-secret-key',
   });
 
+  const subscriber = {};
+  const step = { digest: false, events: [{}], total_count: 1 };
+
   await provider.sendMessage({
     title: 'Test',
     content: 'Test push',
@@ -24,6 +27,8 @@ test('should trigger push-webhook library correctly', async () => {
     payload: {
       sound: 'test_sound',
     },
+    subscriber,
+    step,
   });
 
   expect(fakePost).toHaveBeenCalled();
@@ -35,13 +40,15 @@ test('should trigger push-webhook library correctly', async () => {
       target: ['tester'],
       payload: {
         sound: 'test_sound',
+        subscriber,
+        step,
       },
     }),
     {
       headers: {
         'content-type': 'application/json',
         'X-Novu-Signature':
-          '39350928c49e8a2bde72d29f43325e5d99291a756ced0f9034f7659cfd2c5d34',
+          'ebb2ff6420df59a863a6ddfa64ca8721cbbce038d5432c441cde83dee43b70d9',
       },
     }
   );

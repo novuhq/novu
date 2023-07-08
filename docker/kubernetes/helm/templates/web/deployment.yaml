@@ -93,7 +93,7 @@ spec:
           {{- end }}
           env:
             - name: REACT_APP_ENVIRONMENT
-              value : {{ print .Values.api.env.NODE_ENV | quote }}
+              value : {{ print .Values.web.env.NODE_ENV | quote }}
             - name: REACT_APP_DOCKER_HOSTED_ENV
               value : "true"
             - name: API_ROOT_URL
