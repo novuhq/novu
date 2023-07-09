@@ -1,5 +1,5 @@
 ---
-sidebar_position: 9
+sidebar_position: 10
 sidebar_label: Get started with Ruby
 ---
 
@@ -9,12 +9,12 @@ Learn how to use Novu to quickly send multi-channel (SMS, Email, Chat, Push) not
 
 In this Quickstart guide, you’ll learn how to:
 
-- Install and use the Novu Ruby SDK via RubyGems or Bundle. 
-- Configure a Notification Channel Provider.
-- Set up a notification template.
-- Create subscribers and update subscriber information.
-- Send your first notification.
-- Send notifications via topics.
+- [Install and use the Novu Ruby SDK via RubyGems or Bundle.](#install-novu-ruby-sdk) 
+- [Configure a Notification Channel Provider.](#set-up-a-channel-provider)
+- [Set up a notification workflow.](#create-a-workflow)
+- [Create subscribers and update subscriber information.](#create-a-subscriber)
+- [Send your first notification.](#trigger-a-notification)
+- [Send notifications via topics.](#topics)
 
 ## Requirements
 
@@ -219,7 +219,7 @@ Before running the code, make sure you understand the following:
 
 ![Notification Template](https://res.cloudinary.com/dxc6bnman/image/upload/f_auto,q_auto/v1685466980/guides/trigger_id_1_ur1azh.png)
 
-- The value of `payload` is an array of the data that you want to be dynamically injected into the notification template content.
+- The value of `payload` is an array of the data that you want to be dynamically injected into the notification workflow content.
 - The value of `subscriberId` is the id of the subscriber on Novu. Replace `7789` with your subscriber ID.
 
 Run the code to trigger a notification!
@@ -242,7 +242,7 @@ The topic key should be unique and can't be changed once chosen. Novu also safe 
 
 A topic can have multiple subscribers who will receive a notification whenever a message is sent to the topic.
 
-## Create a Topic
+### Create a Topic
 
 Copy and paste the following code into your app to create a topic:
 
@@ -264,7 +264,7 @@ Before running the code, make sure you understand the following:
 - When creating a `key`, ensure it is unique and accurately identifies the topic. Document naming conventions and communicate them to team members to avoid confusion and ensure a smooth workflow.
 - The value of `name` should be a descriptive topic name.
 
-## Add and Remove subscribers to a Topic
+### Add and Remove subscribers to a Topic
 
 Copy and paste the following code into your app to add subscribers to a topic:
 
@@ -294,7 +294,7 @@ subscribers = ['6460925ce1a93324257d2fc1', '7789'].to_s
 client.remove_subscribers(topicKey, subscribers)
 ```
 
-## Sending a notification to a Topic
+### Sending a notification to a Topic
 
 Thanks to the topics feature, it is possible to trigger a notification to all subscribers assigned to a topic. This helps avoid listing all subscriber identifiers in the `to` field of the notification trigger.
 
@@ -321,7 +321,7 @@ The value of the `name` key in the payload should be the name of the notificatio
 
 ## Next Steps
 
-Great job! If you've reached this point, you should now have successfully created a subscriber, notification template, configured a channel provider and triggered a notification in your application.
+Great job! If you've reached this point, you should now have successfully created a subscriber, notification workflow, configured a channel provider and triggered a notification in your application.
 
 To learn more about notifications and explore Novu's features and capabilities, check out:
 

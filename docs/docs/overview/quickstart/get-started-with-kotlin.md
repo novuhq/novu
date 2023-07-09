@@ -179,7 +179,7 @@ suspend fun updateSubscriber(): ResponseWrapper<SubscriberResponse>? {
         }.await()
     }
 ```
-Other valid fields that can be updated are `phone`, `avatar`, and `data` . The `data` field can accept an array of metadata that you want to attach to the subscriber.
+Other valid fields that can be updated are `phone`, `avatar`, and `data`. The `data` field can accept an Object or a Map with the info you want to attach to the subscriber.
 
 ::::info
 To create all of your subscribers, you need to programmatically add them to Novu.
@@ -208,7 +208,7 @@ suspend fun triggerNotification(): Any? {
     }
 ```
 Before running the code, make sure you understand the following:
-- The value of `payload` is an array of the data that you want to be dynamically injected into the notification template content.
+- The value of `payload` is an array of the data that you want to be dynamically injected into the notification workflow content.
 - The value of `subscriberId` is the ID of the subscriber on Novu. Replace `12345` with your subscriber ID.
 
 Run the code to trigger a notification! :e-mail:
@@ -278,7 +278,7 @@ This feature is not yet available on the Kotlin SDK, this doc will be updated on
 
 ## Next Steps
 
-Great job! :clap: If you've reached this point, you should have successfully created a subscriber, notification template, configured a channel provider, triggered a single notification, created a topic, added a subscriber to a topic in your application.
+Great job! :clap: If you've reached this point, you should have successfully created a subscriber, notification workflow, configured a channel provider, triggered a single notification, created a topic, added a subscriber to a topic in your application.
 
 To learn more about notifications and explore Novu's features and capabilities, check out:
 
