@@ -29,6 +29,7 @@ import { deleteIntegration, updateIntegration } from '../../api/integration';
 import { QueryKeys } from '../../api/query.keys';
 import { errorMessage, successMessage } from '../../utils/notifications';
 import { NovuProviderSidebarContent } from './components/multi-provider/NovuProviderSidebarContent';
+import { ROUTES } from '../../constants/routes.enum';
 
 interface IProviderForm {
   name: string;
@@ -95,7 +96,7 @@ export function UpdateProviderPage() {
     onSuccess: (_, vars) => {
       successMessage(`Instance configuration ${vars.name} is deleted`);
       refetch();
-      navigate('/integrations');
+      navigate(ROUTES.INTEGRATIONS);
     },
     onError: (_, vars) => {
       errorMessage(`Instance configuration ${vars.name} could not be deleted`);
@@ -206,7 +207,7 @@ export function UpdateProviderPage() {
           <ActionIcon
             variant={'transparent'}
             onClick={() => {
-              navigate('/integrations');
+              navigate(ROUTES.INTEGRATIONS);
             }}
           >
             <Close color={colors.B40} />
