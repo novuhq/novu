@@ -88,7 +88,7 @@ describe('Compile Template', function () {
           ],
         },
         template:
-          '{{#each (unique names "name")}}<h1>{{key}}</h1>{{#each items}}{{age}}-{{/each}}{{/each}}>',
+          '{{#each (groupby names "name")}}<h1>{{key}}</h1>{{#each items}}{{age}}-{{/each}}{{/each}}>',
       }),
     );
 
