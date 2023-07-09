@@ -27,6 +27,9 @@ export default createStyles((theme: MantineTheme, _params, getRef) => {
       'tr th:last-child': {
         paddingRight: 30,
       },
+      '& thead tr': {
+        borderBottom: `1px solid ${dark ? colors.B30 : colors.B98}`,
+      },
       '& thead tr th': {
         fontWeight: 400,
         height: '17px',
@@ -43,6 +46,9 @@ export default createStyles((theme: MantineTheme, _params, getRef) => {
       },
       '& tbody tr[data-disabled="true"]:hover': {
         cursor: 'default',
+      },
+      '& tbody tr[data-disabled="false"]:hover': {
+        cursor: 'pointer',
       },
       '& tbody tr:last-of-type td': {
         borderBottom: `1px solid ${dark ? colors.B20 : colors.B98}`,

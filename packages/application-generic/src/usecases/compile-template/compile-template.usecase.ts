@@ -11,14 +11,15 @@ Handlebars.registerHelper(
     // eslint-disable-next-line
     // @ts-expect-error
     return arg1 == arg2 ? options.fn(this) : options.inverse(this);
-  }
+  },
 );
 
 Handlebars.registerHelper(HandlebarHelpersEnum.TITLECASE, function (value) {
   return value
     ?.split(' ')
     .map(
-      (letter) => letter.charAt(0).toUpperCase() + letter.slice(1).toLowerCase()
+      (letter) =>
+        letter.charAt(0).toUpperCase() + letter.slice(1).toLowerCase(),
     )
     .join(' ');
 });
@@ -35,7 +36,7 @@ Handlebars.registerHelper(
   HandlebarHelpersEnum.PLURALIZE,
   function (number, single, plural) {
     return number === 1 ? single : plural;
-  }
+  },
 );
 
 Handlebars.registerHelper(
@@ -47,7 +48,47 @@ Handlebars.registerHelper(
     }
 
     return date;
-  }
+  },
+);
+
+Handlebars.registerHelper(
+  HandlebarHelpersEnum.UNIQUE,
+  function (array, property) {
+    if (!Array.isArray(array)) return '';
+
+    return array
+      .map((item) => {
+        if (item[property]) {
+          return item[property];
+        }
+      })
+      .filter((value, index, self) => self.indexOf(value) === index);
+  },
+);
+
+Handlebars.registerHelper(
+  HandlebarHelpersEnum.GROUPBY,
+  function (array, property) {
+    if (!Array.isArray(array)) return [];
+    const map = {};
+    array.forEach((item) => {
+      if (item[property]) {
+        const key = item[property];
+        if (!map[key]) {
+          map[key] = [item];
+        } else {
+          map[key].push(item);
+        }
+      }
+    });
+
+    const result = [];
+    for (const [key, value] of Object.entries(map)) {
+      result.push({ key: key, items: value });
+    }
+
+    return result;
+  },
 );
 
 @Injectable()

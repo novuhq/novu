@@ -1,15 +1,13 @@
-import { JobEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
+import { IntegrationEntity, JobEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
 import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import {
   buildSubscriberKey,
-  buildIntegrationKey,
   CachedEntity,
-  CachedQuery,
   DetailEnum,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-  GetDecryptedIntegrations,
-  GetDecryptedIntegrationsCommand,
+  SelectIntegration,
+  SelectIntegrationCommand,
 } from '@novu/application-generic';
 
 import { SendMessageType } from './send-message-type.usecase';
@@ -22,7 +20,7 @@ export abstract class SendMessageBase extends SendMessageType {
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     protected subscriberRepository: SubscriberRepository,
-    protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
+    protected selectIntegration: SelectIntegration
   ) {
     super(messageRepository, createLogUsecase, createExecutionDetails);
   }
@@ -47,20 +45,12 @@ export abstract class SendMessageBase extends SendMessageType {
     });
   }
 
-  @CachedQuery({
-    builder: ({ environmentId, ...command }: GetDecryptedIntegrationsCommand) =>
-      buildIntegrationKey().cache({
-        _environmentId: environmentId,
-        ...command,
-      }),
-  })
-  protected async getIntegration(getDecryptedIntegrationsCommand: GetDecryptedIntegrationsCommand) {
-    return (
-      await this.getDecryptedIntegrationsUsecase.execute(
-        GetDecryptedIntegrationsCommand.create(getDecryptedIntegrationsCommand)
-      )
-    )[0];
+  protected async getIntegration(
+    selectIntegrationCommand: SelectIntegrationCommand
+  ): Promise<IntegrationEntity | undefined> {
+    return this.selectIntegration.execute(SelectIntegrationCommand.create(selectIntegrationCommand));
   }
+
   protected storeContent(): boolean {
     return this.channelType === ChannelTypeEnum.IN_APP || process.env.STORE_NOTIFICATION_CONTENT === 'true';
   }

@@ -1,5 +1,4 @@
-import { ChannelTypeEnum } from '@novu/shared';
-import { ICredentials } from '@novu/dal';
+import { ChannelTypeEnum, ICredentials } from '@novu/shared';
 import { Sms77SmsProvider } from '@novu/sms77';
 import { BaseSmsHandler } from './base.handler';
 
