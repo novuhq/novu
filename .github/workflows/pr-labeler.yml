@@ -13,9 +13,6 @@ jobs:
         with:
           repo-token: "${{ secrets.GITHUB_TOKEN }}"
 
-      - name: Run pull request stats
-        uses: flowwer-dev/pull-request-stats@master
-
       - uses: microsoft/PR-Metrics@v1.5.3
         name: PR Metrics
         env:
