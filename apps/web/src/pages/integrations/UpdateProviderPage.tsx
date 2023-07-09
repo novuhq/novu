@@ -1,12 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-  ChannelTypeEnum,
-  EmailProviderIdEnum,
-  IConfigCredentials,
-  ICredentialsDto,
-  IUpdateIntegrationBodyDto,
-  SmsProviderIdEnum,
-} from '@novu/shared';
+import { EmailProviderIdEnum, IConfigCredentials, ICredentialsDto, SmsProviderIdEnum } from '@novu/shared';
 import { ActionIcon, Group, Loader, Center, Stack } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
 import styled from '@emotion/styled';
@@ -18,18 +11,16 @@ import { Check, Close, Copy, DisconnectGradient, DotsHorizontal, Trash } from '.
 import { useProviders } from './useProviders';
 import { IIntegratedProvider } from './IntegrationsStorePage';
 import { IntegrationInput } from './components/IntegrationInput';
-import { IntegrationChannel } from './components/IntegrationChannel';
-import { CHANNEL_TYPE_TO_STRING } from '../../utils/channels';
-import { IntegrationEnvironmentPill } from './components/IntegrationEnvironmentPill';
 import { useFetchEnvironments } from '../../hooks/useFetchEnvironments';
 import { ProviderImage } from './components/multi-provider/SelectProviderSidebar';
 import { When } from '../../components/utils/When';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { deleteIntegration, updateIntegration } from '../../api/integration';
-import { QueryKeys } from '../../api/query.keys';
+import { useMutation } from '@tanstack/react-query';
+import { deleteIntegration } from '../../api/integration';
 import { errorMessage, successMessage } from '../../utils/notifications';
-import { NovuProviderSidebarContent } from './components/multi-provider/NovuProviderSidebarContent';
 import { ROUTES } from '../../constants/routes.enum';
+import { NovuProviderSidebarContent } from './components/multi-provider/NovuProviderSidebarContent';
+import { useUpdateIntegration } from '../../api/hooks/useUpdateIntegration';
+import { ProviderInfo } from './components/multi-provider/ProviderInfo';
 
 interface IProviderForm {
   name: string;
@@ -38,35 +29,14 @@ interface IProviderForm {
   identifier: string;
 }
 
-const Info = ({ provider, environments }) => (
-  <Group mb={16} mt={16} spacing={16}>
-    <IntegrationChannel
-      name={CHANNEL_TYPE_TO_STRING[provider?.channel || ChannelTypeEnum.EMAIL]}
-      type={provider?.channel || ChannelTypeEnum.EMAIL}
-    />
-    <IntegrationEnvironmentPill
-      name={environments?.find((environment) => environment._id === provider?.environmentId)?.name || 'Development'}
-    />
-  </Group>
-);
-
 export function UpdateProviderPage() {
   const [isModalOpened, setModalIsOpened] = useState(false);
   const { environments, isLoading: areEnvironmentsLoading } = useFetchEnvironments();
   const [selectedProvider, setSelectedProvider] = useState<IIntegratedProvider | null>(null);
   const { providers, isLoading, refetch } = useProviders();
+  const { onUpdateIntegration, isLoadingUpdate } = useUpdateIntegration(selectedProvider?.integrationId || '');
   const { integrationId } = useParams();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-
-  const { mutateAsync: updateIntegrationApi, isLoading: isLoadingUpdate } = useMutation<
-    { res: string },
-    { error: string; message: string; statusCode: number },
-    {
-      id: string;
-      data: IUpdateIntegrationBodyDto;
-    }
-  >(({ id, data }) => updateIntegration(id, data));
 
   const {
     control,
@@ -122,23 +92,6 @@ export function UpdateProviderPage() {
 
   const identifierClipboard = useClipboard({ timeout: 1000 });
 
-  async function onUpdateIntegration(data) {
-    try {
-      await updateIntegrationApi({
-        id: selectedProvider?.integrationId ?? '',
-        data: { ...data },
-      });
-
-      await queryClient.refetchQueries({
-        predicate: ({ queryKey }) => queryKey.includes(QueryKeys.integrationsList),
-      });
-
-      successMessage('Instance configuration updated');
-    } catch (e: any) {
-      errorMessage(e.message || 'Unexpected error');
-    }
-  }
-
   useEffect(() => {
     if (selectedProvider && !selectedProvider?.identifier) {
       const newIdentifier = slugify(selectedProvider?.displayName, {
@@ -161,7 +114,7 @@ export function UpdateProviderPage() {
 
     setSelectedProvider(foundProvider);
     reset({
-      name: foundProvider.name,
+      name: foundProvider.name ?? foundProvider.displayName,
       identifier: foundProvider.identifier,
       credentials: foundProvider.credentials.reduce((prev, credential) => {
         prev[credential.key] = credential.value;
@@ -213,7 +166,7 @@ export function UpdateProviderPage() {
             <Close color={colors.B40} />
           </ActionIcon>
         </Group>
-        <Info provider={selectedProvider} environments={environments} />
+        <ProviderInfo provider={selectedProvider} environments={environments} />
         <CenterDiv>
           <NovuProviderSidebarContent provider={selectedProvider} />
         </CenterDiv>
@@ -274,7 +227,7 @@ export function UpdateProviderPage() {
               </ActionIcon>
             </Group>
           </Group>
-          <Info provider={selectedProvider} environments={environments} />
+          <ProviderInfo provider={selectedProvider} environments={environments} />
           <CenterDiv>
             <When truthy={!haveAllCredentials}>
               <WarningMessage spacing={12}>
@@ -352,7 +305,13 @@ export function UpdateProviderPage() {
                   name={`credentials.${credential.key}`}
                   control={control}
                   defaultValue=""
-                  rules={{ required: `Please enter a ${credential.displayName.toLowerCase()}` }}
+                  rules={
+                    credential.required
+                      ? {
+                          required: `Please enter a ${credential.displayName.toLowerCase()}`,
+                        }
+                      : undefined
+                  }
                   render={({ field }) => (
                     <IntegrationInput credential={credential} errors={errors?.credentials ?? {}} field={field} />
                   )}

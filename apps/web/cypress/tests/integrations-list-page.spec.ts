@@ -126,27 +126,29 @@ describe('Integrations List Page', function () {
 
     checkTableRow(
       {
-        name: 'Novu Email',
-        provider: 'Novu Email',
+        name: 'SendGrid',
+        provider: 'SendGrid',
         channel: 'Email',
-        status: 'Disabled',
+        environment: 'Development',
+        status: 'Active',
       },
       0
     );
     checkTableRow(
       {
-        name: 'Novu SMS',
-        provider: 'Novu SMS',
+        name: 'Twilio',
+        provider: 'Twilio',
         channel: 'SMS',
-        status: 'Disabled',
+        environment: 'Development',
+        status: 'Active',
       },
       1
     );
     checkTableRow(
       {
-        name: 'SendGrid',
-        provider: 'SendGrid',
-        channel: 'Email',
+        name: 'Slack',
+        provider: 'Slack',
+        channel: 'Chat',
         environment: 'Development',
         status: 'Active',
       },
@@ -154,33 +156,13 @@ describe('Integrations List Page', function () {
     );
     checkTableRow(
       {
-        name: 'Twilio',
-        provider: 'Twilio',
-        channel: 'SMS',
-        environment: 'Development',
-        status: 'Active',
-      },
-      3
-    );
-    checkTableRow(
-      {
-        name: 'Slack',
-        provider: 'Slack',
-        channel: 'Chat',
-        environment: 'Development',
-        status: 'Active',
-      },
-      4
-    );
-    checkTableRow(
-      {
         name: 'Discord',
         provider: 'Discord',
         channel: 'Chat',
         environment: 'Development',
         status: 'Active',
       },
-      5
+      3
     );
     checkTableRow(
       {
@@ -190,7 +172,7 @@ describe('Integrations List Page', function () {
         environment: 'Development',
         status: 'Active',
       },
-      6
+      4
     );
     checkTableRow(
       {
@@ -201,7 +183,7 @@ describe('Integrations List Page', function () {
         environment: 'Development',
         status: 'Active',
       },
-      7
+      5
     );
     checkTableRow(
       {
@@ -211,7 +193,7 @@ describe('Integrations List Page', function () {
         environment: 'Production',
         status: 'Active',
       },
-      8
+      6
     );
     checkTableRow(
       {
@@ -221,7 +203,7 @@ describe('Integrations List Page', function () {
         environment: 'Production',
         status: 'Active',
       },
-      9
+      7
     );
     checkTableRow(
       {
@@ -231,7 +213,7 @@ describe('Integrations List Page', function () {
         environment: 'Production',
         status: 'Active',
       },
-      10
+      8
     );
     checkTableRow(
       {
@@ -241,7 +223,7 @@ describe('Integrations List Page', function () {
         environment: 'Production',
         status: 'Active',
       },
-      11
+      9
     );
     checkTableRow(
       {
@@ -251,7 +233,7 @@ describe('Integrations List Page', function () {
         environment: 'Production',
         status: 'Active',
       },
-      12
+      10
     );
     checkTableRow(
       {
@@ -261,6 +243,24 @@ describe('Integrations List Page', function () {
         channel: 'In-App',
         environment: 'Production',
         status: 'Active',
+      },
+      11
+    );
+    checkTableRow(
+      {
+        name: 'Novu Email',
+        provider: 'Novu Email',
+        channel: 'Email',
+        status: 'Disabled',
+      },
+      12
+    );
+    checkTableRow(
+      {
+        name: 'Novu SMS',
+        provider: 'Novu SMS',
+        channel: 'SMS',
+        status: 'Disabled',
       },
       13
     );

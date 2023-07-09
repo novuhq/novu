@@ -1,12 +1,11 @@
 import { Container } from '@mantine/core';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useCallback, useMemo } from 'react';
-import { ChannelTypeEnum } from '@novu/shared';
 
 import PageContainer from '../../components/layout/components/PageContainer';
 import PageHeader from '../../components/layout/components/PageHeader';
 import { Table, Text, withCellLoading, IExtendedColumn } from '../../design-system';
-import { useIntegrationLimit, useIntegrations, useIsMultiProviderConfigurationEnabled } from '../../hooks';
+import { useIntegrations, useIsMultiProviderConfigurationEnabled } from '../../hooks';
 import { IntegrationsListToolbar } from './components/IntegrationsListToolbar';
 import { useFetchEnvironments } from '../../hooks/useFetchEnvironments';
 import { IntegrationNameCell } from './components/IntegrationNameCell';
@@ -64,31 +63,9 @@ const IntegrationsList = () => {
   const isLoading = areEnvironmentsLoading || areIntegrationsLoading;
   const hasIntegrations = integrations && integrations?.length > 0;
 
-  const {
-    data: { limit: emailLimit, count: emailCount },
-    loading: emailLimitLoading,
-  } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
-  const {
-    data: { limit: smsLimit, count: smsCount },
-    loading: smsLimitLoading,
-  } = useIntegrationLimit(ChannelTypeEnum.SMS);
-
-  const noEmailIntegrations = useMemo(
-    () => integrations?.filter((el) => el.channel === ChannelTypeEnum.EMAIL).length === 0,
-    [integrations]
-  );
-  const noSmsIntegrations = useMemo(
-    () => integrations?.filter((el) => el.channel === ChannelTypeEnum.SMS).length === 0,
-    [integrations]
-  );
-  const isNovuEmailActive = !emailLimitLoading && noEmailIntegrations && emailLimit - emailCount > 0;
-  const isNovuSmsActive = !smsLimitLoading && noSmsIntegrations && smsLimit - smsCount > 0;
-
   const data = useMemo<ITableIntegration[] | undefined>(() => {
-    const mappedIntegrations = (integrations ?? []).map((el) => mapToTableIntegration(el, environments));
-
-    return mappedIntegrations;
-  }, [integrations, environments, isNovuEmailActive, isNovuSmsActive]);
+    return (integrations ?? []).map((el) => mapToTableIntegration(el, environments));
+  }, [integrations, environments]);
 
   const navigate = useNavigate();
 

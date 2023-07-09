@@ -24,11 +24,20 @@ export class GetDecryptedIntegrations {
   async execute(
     command: GetDecryptedIntegrationsCommand
   ): Promise<IntegrationEntity[]> {
+    const isMultiProviderConfigurationEnabled =
+      await this.getFeatureFlag.isMultiProviderConfigurationEnabled(
+        FeatureFlagCommand.create({
+          userId: command.userId,
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+        })
+      );
+
     const query: Partial<IntegrationEntity> & { _organizationId: string } = {
       _organizationId: command.organizationId,
     };
 
-    if (command.environmentId) {
+    if (command.environmentId && !isMultiProviderConfigurationEnabled) {
       query._environmentId = command.environmentId;
     }
 
@@ -56,15 +65,6 @@ export class GetDecryptedIntegrations {
         return integration;
       });
 
-    const isMultiProviderConfigurationEnabled =
-      await this.getFeatureFlag.isMultiProviderConfigurationEnabled(
-        FeatureFlagCommand.create({
-          userId: command.userId,
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-        })
-      );
-
     if (!isMultiProviderConfigurationEnabled) {
       if (command.channelType === undefined || integrations.length > 0) {
         return integrations;
@@ -82,30 +82,32 @@ export class GetDecryptedIntegrations {
       return novuIntegration ? [novuIntegration] : [];
     }
 
-    const novuSmsIntegration = await this.getNovuIntegration.execute(
-      GetNovuIntegrationCommand.create({
-        channelType: ChannelTypeEnum.SMS,
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        userId: command.userId,
-      })
-    );
-
-    if (novuSmsIntegration) {
-      integrations.push(novuSmsIntegration);
-    }
-
     const novuEmailIntegration = await this.getNovuIntegration.execute(
       GetNovuIntegrationCommand.create({
         channelType: ChannelTypeEnum.EMAIL,
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         userId: command.userId,
+        ignoreActiveCount: true,
       })
     );
 
     if (novuEmailIntegration) {
       integrations.push(novuEmailIntegration);
+    }
+
+    const novuSmsIntegration = await this.getNovuIntegration.execute(
+      GetNovuIntegrationCommand.create({
+        channelType: ChannelTypeEnum.SMS,
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        userId: command.userId,
+        ignoreActiveCount: true,
+      })
+    );
+
+    if (novuSmsIntegration) {
+      integrations.push(novuSmsIntegration);
     }
 
     return integrations;

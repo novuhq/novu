@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { isEqual } from 'lodash';
-import { IChannelSettings, SubscriberRepository, IntegrationRepository, SubscriberEntity } from '@novu/dal';
+import {
+  IChannelSettings,
+  SubscriberRepository,
+  IntegrationRepository,
+  SubscriberEntity,
+  IntegrationEntity,
+} from '@novu/dal';
 import { AnalyticsService, buildSubscriberKey, InvalidateCacheService } from '@novu/application-generic';
 
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -25,10 +31,17 @@ export class UpdateSubscriberChannel {
       throw new ApiException(`SubscriberId: ${command.subscriberId} not found`);
     }
 
-    const foundIntegration = await this.integrationRepository.findOne({
+    const query: Partial<IntegrationEntity> & { _environmentId: string } = {
       _environmentId: command.environmentId,
       providerId: command.providerId,
       active: true,
+    };
+    if (command.integrationIdentifier) {
+      query.identifier = command.integrationIdentifier;
+    }
+
+    const foundIntegration = await this.integrationRepository.findOne(query, undefined, {
+      query: { sort: { createdAt: -1 } },
     });
 
     if (!foundIntegration) {
@@ -39,7 +52,8 @@ export class UpdateSubscriberChannel {
     const updatePayload = this.createUpdatePayload(command);
 
     const existingChannel = foundSubscriber?.channels?.find(
-      (subscriberChannel) => subscriberChannel.providerId === command.providerId
+      (subscriberChannel) =>
+        subscriberChannel.providerId === command.providerId && subscriberChannel._integrationId === foundIntegration._id
     );
 
     if (existingChannel) {
