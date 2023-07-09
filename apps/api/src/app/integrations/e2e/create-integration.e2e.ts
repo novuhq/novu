@@ -45,7 +45,7 @@ describe('Create Integration - /integration (POST)', function () {
       .filter((searchIntegration) => searchIntegration.channel === ChannelTypeEnum.SMS)
       .filter((integration) => integration.providerId !== SmsProviderIdEnum.Novu);
 
-    expect(smsIntegrations.length).to.eql(3);
+    expect(smsIntegrations.length).to.eql(2);
 
     for (const smsIntegration of smsIntegrations) {
       expect(smsIntegration.providerId).to.equal(SmsProviderIdEnum.Twilio);
