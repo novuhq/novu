@@ -24,11 +24,11 @@ export class GetNovuIntegration {
     private integrationRepository: IntegrationRepository,
     private calculateLimitNovuIntegration: CalculateLimitNovuIntegration,
     private organizationRepository: OrganizationRepository,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
   ) {}
 
   async execute(
-    command: GetNovuIntegrationCommand
+    command: GetNovuIntegrationCommand,
   ): Promise<IntegrationEntity | undefined> {
     const channelType = command.channelType;
 
@@ -64,7 +64,7 @@ export class GetNovuIntegration {
         channelType: channelType,
         organizationId: command.organizationId,
         environmentId: command.environmentId,
-      })
+      }),
     );
 
     if (!limit) {
@@ -80,18 +80,18 @@ export class GetNovuIntegration {
           organizationId: command.organizationId,
           environmentId: command.environmentId,
           providerId: CalculateLimitNovuIntegration.getProviderId(
-            command.channelType
+            command.channelType,
           ),
           ...limit,
-        }
+        },
       );
       throw new ConflictException(
-        `Limit for Novus ${channelType.toLowerCase()} provider was reached.`
+        `Limit for Novus ${channelType.toLowerCase()} provider was reached.`,
       );
     }
 
     const organization = await this.organizationRepository.findById(
-      command.organizationId
+      command.organizationId,
     );
 
     const active = activeIntegrationsCount === 0;
@@ -109,7 +109,7 @@ export class GetNovuIntegration {
   private createNovuEmailIntegration(
     organization: OrganizationEntity | null,
     command: GetNovuIntegrationCommand,
-    active = true
+    active = true,
   ): IntegrationEntity {
     const item = new IntegrationEntity();
     item.providerId = EmailProviderIdEnum.Novu;
@@ -129,7 +129,7 @@ export class GetNovuIntegration {
 
   private createNovuSMSIntegration(
     command: GetNovuIntegrationCommand,
-    active = true
+    active = true,
   ): IntegrationEntity {
     const item = new IntegrationEntity();
     item.providerId = SmsProviderIdEnum.Novu;
@@ -148,7 +148,7 @@ export class GetNovuIntegration {
 
   private mapNovuItem(
     entity: IntegrationEntity,
-    command: GetNovuIntegrationCommand
+    command: GetNovuIntegrationCommand,
   ): IntegrationEntity {
     entity._environmentId = command.environmentId;
     entity.identifier = entity.providerId;
