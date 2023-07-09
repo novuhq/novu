@@ -473,7 +473,20 @@
     "bitnamicharts",
     "bitnami",
     "portname",
-    "externalredis"
+    "externalredis",
+    "autorun",
+    "webp",
+    "nocheck",
+    "webp",
+    "devs",
+    "flowwer",
+    "Grossman",
+    "Dima",
+    "orcid",
+    "Barnea",
+    "Tomer",
+    "codesandbox",
+    "GROUPBY"
   ],
   "flagWords": [],
   "patterns": [
