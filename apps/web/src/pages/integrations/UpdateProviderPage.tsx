@@ -1,12 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-  ChannelTypeEnum,
-  EmailProviderIdEnum,
-  IConfigCredentials,
-  ICredentialsDto,
-  IUpdateIntegrationBodyDto,
-  SmsProviderIdEnum,
-} from '@novu/shared';
+import { EmailProviderIdEnum, IConfigCredentials, ICredentialsDto, SmsProviderIdEnum } from '@novu/shared';
 import { ActionIcon, Group, Loader, Center, Stack } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
 import styled from '@emotion/styled';
@@ -18,19 +11,13 @@ import { Check, Close, Copy, DisconnectGradient } from '../../design-system/icon
 import { useProviders } from './useProviders';
 import { IIntegratedProvider } from './IntegrationsStorePage';
 import { IntegrationInput } from './components/IntegrationInput';
-import { IntegrationChannel } from './components/IntegrationChannel';
-import { CHANNEL_TYPE_TO_STRING } from '../../utils/channels';
-import { IntegrationEnvironmentPill } from './components/IntegrationEnvironmentPill';
 import { useFetchEnvironments } from '../../hooks/useFetchEnvironments';
 import { ProviderImage } from './components/multi-provider/SelectProviderSidebar';
 import { When } from '../../components/utils/When';
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { updateIntegration } from '../../api/integration';
-import { QueryKeys } from '../../api/query.keys';
-import { errorMessage, successMessage } from '../../utils/notifications';
 import { NovuProviderSidebarContent } from './components/multi-provider/NovuProviderSidebarContent';
 import { useUpdateIntegration } from '../../api/hooks/useUpdateIntegration';
+import { ProviderInfo } from './components/multi-provider/ProviderInfo';
 
 interface IProviderForm {
   name: string;
@@ -38,18 +25,6 @@ interface IProviderForm {
   active: boolean;
   identifier: string;
 }
-
-const Info = ({ provider, environments }) => (
-  <Group mb={16} mt={16} spacing={16}>
-    <IntegrationChannel
-      name={CHANNEL_TYPE_TO_STRING[provider?.channel || ChannelTypeEnum.EMAIL]}
-      type={provider?.channel || ChannelTypeEnum.EMAIL}
-    />
-    <IntegrationEnvironmentPill
-      name={environments?.find((environment) => environment._id === provider?.environmentId)?.name || 'Development'}
-    />
-  </Group>
-);
 
 export function UpdateProviderPage() {
   const { environments, isLoading: areEnvironmentsLoading } = useFetchEnvironments();
@@ -169,7 +144,7 @@ export function UpdateProviderPage() {
             <Close color={colors.B40} />
           </ActionIcon>
         </Group>
-        <Info provider={selectedProvider} environments={environments} />
+        <ProviderInfo provider={selectedProvider} environments={environments} />
         <CenterDiv>
           <NovuProviderSidebarContent provider={selectedProvider} />
         </CenterDiv>
@@ -206,7 +181,7 @@ export function UpdateProviderPage() {
             <Close color={colors.B40} />
           </ActionIcon>
         </Group>
-        <Info provider={selectedProvider} environments={environments} />
+        <ProviderInfo provider={selectedProvider} environments={environments} />
         <CenterDiv>
           <When truthy={!haveAllCredentials}>
             <WarningMessage spacing={12}>
