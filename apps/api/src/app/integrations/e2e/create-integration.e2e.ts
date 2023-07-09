@@ -23,13 +23,13 @@ describe('Create Integration - /integration (POST)', function () {
   it('should get the email integration successfully', async function () {
     const integrations = (await session.testAgent.get(`/v1/integrations`)).body.data;
 
-    const emailIntegrations: any[] = integrations.filter(
-      (searchIntegration) => searchIntegration.channel === ChannelTypeEnum.EMAIL
-    );
+    const emailIntegrations: any[] = integrations
+      .filter((searchIntegration) => searchIntegration.channel === ChannelTypeEnum.EMAIL)
+      .filter((integration) => integration.providerId !== EmailProviderIdEnum.Novu);
 
-    expect(emailIntegrations.length).to.eql(3);
+    expect(emailIntegrations.length).to.eql(2);
 
-    for (const emailIntegration of emailIntegrations.splice(1, 1)) {
+    for (const emailIntegration of emailIntegrations) {
       expect(emailIntegration.providerId).to.equal(EmailProviderIdEnum.SendGrid);
       expect(emailIntegration.channel).to.equal(ChannelTypeEnum.EMAIL);
       expect(emailIntegration.credentials.apiKey).to.equal('SG.123');
@@ -41,13 +41,13 @@ describe('Create Integration - /integration (POST)', function () {
   it('should get the sms integration successfully', async function () {
     const integrations = (await session.testAgent.get(`/v1/integrations`)).body.data;
 
-    const smsIntegrations: any[] = integrations.filter(
-      (searchIntegration) => searchIntegration.channel === ChannelTypeEnum.SMS
-    );
+    const smsIntegrations: any[] = integrations
+      .filter((searchIntegration) => searchIntegration.channel === ChannelTypeEnum.SMS)
+      .filter((integration) => integration.providerId !== SmsProviderIdEnum.Novu);
 
     expect(smsIntegrations.length).to.eql(3);
 
-    for (const smsIntegration of smsIntegrations.splice(1, 1)) {
+    for (const smsIntegration of smsIntegrations) {
       expect(smsIntegration.providerId).to.equal(SmsProviderIdEnum.Twilio);
       expect(smsIntegration.channel).to.equal(ChannelTypeEnum.SMS);
       expect(smsIntegration.credentials.accountSid).to.equal('AC123');
