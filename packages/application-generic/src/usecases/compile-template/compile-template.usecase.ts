@@ -11,14 +11,15 @@ Handlebars.registerHelper(
     // eslint-disable-next-line
     // @ts-expect-error
     return arg1 == arg2 ? options.fn(this) : options.inverse(this);
-  }
+  },
 );
 
 Handlebars.registerHelper(HandlebarHelpersEnum.TITLECASE, function (value) {
   return value
     ?.split(' ')
     .map(
-      (letter) => letter.charAt(0).toUpperCase() + letter.slice(1).toLowerCase()
+      (letter) =>
+        letter.charAt(0).toUpperCase() + letter.slice(1).toLowerCase(),
     )
     .join(' ');
 });
@@ -35,7 +36,7 @@ Handlebars.registerHelper(
   HandlebarHelpersEnum.PLURALIZE,
   function (number, single, plural) {
     return number === 1 ? single : plural;
-  }
+  },
 );
 
 Handlebars.registerHelper(
@@ -47,7 +48,7 @@ Handlebars.registerHelper(
     }
 
     return date;
-  }
+  },
 );
 
 Handlebars.registerHelper(
@@ -62,7 +63,7 @@ Handlebars.registerHelper(
         }
       })
       .filter((value, index, self) => self.indexOf(value) === index);
-  }
+  },
 );
 
 Handlebars.registerHelper(
@@ -77,7 +78,7 @@ Handlebars.registerHelper(
         }
       })
       .filter((value, index, self) => self.indexOf(value) === index);
-  }
+  },
 );
 
 Handlebars.registerHelper(
@@ -102,7 +103,7 @@ Handlebars.registerHelper(
     }
 
     return result;
-  }
+  },
 );
 
 @Injectable()
