@@ -147,7 +147,14 @@ describe('Workflow Queue service', () => {
 
     const jobCreated = await jobRepository.create(job);
 
-    await queueService.addToQueue(jobCreated._id, jobCreated, '0');
+    const jobData = {
+      _environmentId: jobCreated._environmentId,
+      _id: jobCreated._id,
+      _organizationId: jobCreated._organizationId,
+      _userId: jobCreated._userId,
+    };
+
+    await queueService.addToQueue(jobCreated._id, jobData, '0');
 
     await jobsService.awaitRunningJobs({
       templateId: _templateId,
@@ -203,7 +210,14 @@ describe('Workflow Queue service', () => {
 
     const jobCreated = await jobRepository.create(job);
 
-    await queueService.addToQueue(jobCreated._id, jobCreated, '0');
+    const jobData = {
+      _environmentId: jobCreated._environmentId,
+      _id: jobCreated._id,
+      _organizationId: jobCreated._organizationId,
+      _userId: jobCreated._userId,
+    };
+
+    await queueService.addToQueue(jobCreated._id, jobData, '0');
 
     await jobsService.awaitRunningJobs({
       templateId: _templateId,

@@ -31,7 +31,7 @@ export class AddJob {
     private queueService: QueueService,
     private createExecutionDetails: CreateExecutionDetails,
     private addDigestJob: AddDigestJob,
-    private addDelayJob: AddDelayJob
+    private addDelayJob: AddDelayJob,
   ) {}
 
   @InstrumentUsecase()
@@ -70,12 +70,12 @@ export class AddJob {
 
     if (digestAmount === undefined && delayAmount === undefined) {
       Logger.verbose(
-        'updating status as digestAmount and delayAmount is undefined'
+        'updating status as digestAmount and delayAmount is undefined',
       );
       await this.jobRepository.updateStatus(
         command.environmentId,
         job._id,
-        JobStatusEnum.QUEUED
+        JobStatusEnum.QUEUED,
       );
     }
 
@@ -90,12 +90,12 @@ export class AddJob {
         status: ExecutionDetailsStatusEnum.PENDING,
         isTest: false,
         isRetry: false,
-      })
+      }),
     );
 
     if (delay === null) {
       Logger.warn(
-        'variable delay is null which is not apart of the definition'
+        'variable delay is null which is not apart of the definition',
       );
     }
 
@@ -110,11 +110,19 @@ export class AddJob {
       };
       options.attempts = this.queueService.DEFAULT_ATTEMPTS;
     }
+
+    const jobData = {
+      _environmentId: job._environmentId,
+      _id: job._id,
+      _organizationId: job._organizationId,
+      _userId: job._userId,
+    };
+
     await this.queueService.addToQueue(
       job._id,
-      job,
+      jobData,
       command.organizationId,
-      options
+      options,
     );
 
     if (delay) {
@@ -128,7 +136,7 @@ export class AddJob {
           isTest: false,
           isRetry: false,
           raw: JSON.stringify({ delay }),
-        })
+        }),
       );
     }
   }
