@@ -1901,7 +1901,7 @@ importers:
       '@types/jasmine': ~4.3.0
       jasmine-core: ~4.6.0
       karma: ~6.4.0
-      karma-chrome-launcher: ~3.1.0
+      karma-chrome-launcher: ~3.2.0
       karma-coverage: ~2.2.0
       karma-jasmine: ~5.1.0
       karma-jasmine-html-reporter: ~2.0.0
@@ -1929,7 +1929,7 @@ importers:
       '@types/jasmine': 4.3.1
       jasmine-core: 4.6.0
       karma: 6.4.1
-      karma-chrome-launcher: 3.1.1
+      karma-chrome-launcher: 3.2.0
       karma-coverage: 2.2.0
       karma-jasmine: 5.1.0_karma@6.4.1
       karma-jasmine-html-reporter: 2.0.0_vl3unt3t2otf46m2vvwnwo5vau
@@ -35932,8 +35932,8 @@ packages:
     engines: {node: '>=12.0.0'}
     dev: false
 
-  /karma-chrome-launcher/3.1.1:
-    resolution: {integrity: sha512-hsIglcq1vtboGPAN+DGCISCFOxW+ZVnIqhDQcCMqqCp+4dmJ0Qpq5QAjkbA0X2L9Mi6OBkHi2Srrbmm7pUKkzQ==}
+  /karma-chrome-launcher/3.2.0:
+    resolution: {integrity: sha512-rE9RkUPI7I9mAxByQWkGJFXfFD6lE4gC5nPuZdobf/QdTEJI6EU4yIay/cfU/xV4ZxlM5JiTv7zWYgA64NpS5Q==}
     dependencies:
       which: 1.3.1
     dev: true
