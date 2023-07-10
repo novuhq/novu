@@ -1,12 +1,12 @@
-import React from 'react';
-import {
+import React, { useEffect, useState } from 'react';
+import type {
   InkeepAIChatSettings,
   InkeepWidgetBaseSettings,
   InkeepSearchBarProps,
-  InkeepSearchBar,
 } from '@inkeep/widgets';
 import { useColorMode } from '@docusaurus/theme-common'; // import the useColorMode hook
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
+import BrowserOnly from '@docusaurus/BrowserOnly';
 
 type InkeepIdentifierSettings = {
   apiKey: string;
@@ -46,9 +46,24 @@ export default function SearchBarWrapper() {
     aiChatSettings: { ...aiChatSettings },
   };
 
+  const [SearchBar, setSearchBar] = useState(null);
+
+  useEffect(() => {
+    /*
+     * We're using an IIFE (Immediately Invoked Function Expression) here because
+     * useEffect cannot directly return a Promise.
+     */
+    (async () => {
+      const { InkeepSearchBar } = await import('@inkeep/widgets');
+      setSearchBar(() => InkeepSearchBar);
+    })();
+  }, []);
+
   return (
-    <div className="Inkeep-Search">
-      <InkeepSearchBar {...searchBarProps} />
-    </div>
+    <BrowserOnly fallback={<div>Loading...</div>}>
+      {() => {
+        return SearchBar ? <SearchBar {...searchBarProps} /> : <div>Loading...</div>;
+      }}
+    </BrowserOnly>
   );
 }
