@@ -30,7 +30,7 @@
     "@docusaurus/plugin-google-gtag": "3.0.0-alpha.0",
     "@docusaurus/preset-classic": "3.0.0-alpha.0",
     "@docusaurus/theme-common": "3.0.0-alpha.0",
-    "@inkeep/widgets": "^0.1.87",
+    "@inkeep/widgets": "^0.2.141",
     "@mdx-js/react": "^2.3.0",
     "@svgr/webpack": "^6.2.1",
     "acorn": "^8.9.0",

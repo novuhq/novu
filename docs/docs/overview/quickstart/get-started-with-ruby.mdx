@@ -9,7 +9,7 @@ Learn how to use Novu to quickly send multi-channel (SMS, Email, Chat, Push) not
 
 In this Quickstart guide, you’ll learn how to:
 
-- [Install and use the Novu Ruby SDK via RubyGems or Bundle.](#install-novu-ruby-sdk) 
+- [Install and use the Novu Ruby SDK via RubyGems or Bundle.](#install-novu-ruby-sdk)
 - [Configure a Notification Channel Provider.](#set-up-a-channel-provider)
 - [Set up a notification workflow.](#create-a-workflow)
 - [Create subscribers and update subscriber information.](#create-a-subscriber)
@@ -26,7 +26,7 @@ To follow the steps in this quickstart, you'll need:
 You can also [view the completed code](https://github.com/novuhq/novu-ruby-quickstart) of this quick start in a GitHub repo.
 
 ## Install Novu Ruby SDK
- 
+
 The [Ruby SDK](http://github.com/novuhq/novu-ruby) provides a fluent and expressive interface for interacting with Novu's API and managing notifications.
 
 You can install the client library via RubyGems:
@@ -66,11 +66,13 @@ puts client.notifications
 ```
 
 Run the file `index.rb`:
+
 ```bash
 ruby index.rb
 ```
 
 You should see a result as below:
+
 ```json
 {
   "page": 0,
@@ -116,8 +118,8 @@ Proper authorization needs to be set for the Chat channel for subscribers.
 
 Please proceed to create a notification workflow.
 
-1. Click **Workflows** on the left sidebar of your Novu dashboard. 
-![click workflow](https://res.cloudinary.com/dxc6bnman/image/upload/v1688745999/guides/workflows_m60hkc.png)
+1. Click **Workflows** on the left sidebar of your Novu dashboard.
+   ![click workflow](https://res.cloudinary.com/dxc6bnman/image/upload/v1688745999/guides/workflows_m60hkc.png)
 2. Click the **Create Workflow** button on the top right.
 3. The name of a new notification workflow is currently **Untitled.** Rename it to a more suitable title.
 4. Select **Email** as the channel you want to add.
