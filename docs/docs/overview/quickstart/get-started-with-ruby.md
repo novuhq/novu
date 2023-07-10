@@ -1,17 +1,17 @@
 ---
-sidebar_position: 2
-sidebar_label: Get started with PHP
+sidebar_position: 10
+sidebar_label: Get started with Ruby
 ---
 
-# PHP Quickstart
+# Ruby Quickstart
 
-Learn how to use Novu to quickly send multi-channel (SMS, Email, Chat, Push) notifications from a PHP app.
+Learn how to use Novu to quickly send multi-channel (SMS, Email, Chat, Push) notifications from a Ruby app.
 
-In this Quickstart, you’ll learn how to:
+In this Quickstart guide, you’ll learn how to:
 
-- [Install and use the Novu PHP SDK via Composer.](#install-novu-php-sdk)
+- [Install and use the Novu Ruby SDK via RubyGems or Bundle.](#install-novu-ruby-sdk) 
 - [Configure a Notification Channel Provider.](#set-up-a-channel-provider)
-- [Set up a notification workflow.](#create-a-notification-workflow)
+- [Set up a notification workflow.](#create-a-workflow)
 - [Create subscribers and update subscriber information.](#create-a-subscriber)
 - [Send your first notification.](#trigger-a-notification)
 - [Send notifications via topics.](#topics)
@@ -21,56 +21,64 @@ In this Quickstart, you’ll learn how to:
 To follow the steps in this quickstart, you'll need:
 
 - A Novu account. [Sign up for free](http://web.novu.co) if you don’t have one yet.
-- A working PHP development environment with a PHP version of 7.2+.
+- A working Ruby development environment with at least version 2.6.0.
 
-You can also [v](https://cloudinary.com/documentation/php_quickstart#view_the_completed_code)[iew the completed code](https://github.com/novuhq/novu-php-quickstart) of this quick start in a GitHub repo.
+You can also [view the completed code](https://github.com/novuhq/novu-ruby-quickstart) of this quick start in a GitHub repo.
 
-## Install Novu PHP SDK
+## Install Novu Ruby SDK
+ 
+The [Ruby SDK](http://github.com/novuhq/novu-ruby) provides a fluent and expressive interface for interacting with Novu's API and managing notifications.
 
-The [PHP SDK](http://github.com/novuhq/novu-php) provides a fluent and expressive interface for interacting with Novu's API and managing notifications.
+You can install the client library via RubyGems:
 
-Now install the Novu PHP SDK by running the following command in your terminal:
-
-```bash
-composer install unicodeveloper/novu
+```ruby
+gem install novu
 ```
 
-Otherwise, create a file named `composer.json` and add the following to it:
+Or add it to your Gemfile:
 
-```php
-{
-    "require": {
-        "unicodeveloper/novu": "^1.0"
-    }
-}
+```ruby
+gem 'novu'
 ```
 
-Next, install the SDK by running the following `composer` command:
+Then run `bundle install`.
 
-```bash
-composer install
+## Initialize & Configure the Novu Ruby SDK
+
+To use the library, Create a new file `index.rb` then initialize the client with your API token:
+
+```ruby
+require 'novu'
+
+client = Novu::Client.new('YOUR_NOVU_API_KEY')
 ```
 
-### Initialize & Configure the Novu SDK
-
-Create a new file, `index.php` in your application and add the following code to it:
-
-```php
-<?php
-
-  require('vendor/autoload.php');
-
-  use Novu\SDK\Novu;
-
-  $apiKey = '<YOUR_NOVU_API_KEY>';
-  $novu = new Novu($apiKey);
-```
-
-Replace the `$apiKey`’s value with the authentic key from the **API Key** section of your [Novu Dashboard](https://web.novu.co/settings).
+Replace the `YOUR_NOVU_API_KEY` argument with the authentic key from the **API Key** section of your [Novu Dashboard](https://web.novu.co/settings).
 
 :::info
 Please do not hardcode your credentials in a file in production. Use environment variables instead.
 :::
+
+To test your API key, call the methods on the client to interact with the Novu API and display the result on your ruby console:
+
+```ruby
+puts client.notifications
+```
+
+Run the file `index.rb`:
+```bash
+ruby index.rb
+```
+
+You should see a result as below:
+```json
+{
+  "page": 0,
+  "totalCount": 0,
+  "pageSize": 10,
+  "data": []
+}
+```
 
 ## Set Up A Channel Provider
 
@@ -85,7 +93,7 @@ A channel provider is a service that provides one or more notification functiona
 
 Only one provider can be **active** per **channel**. Connect any of your favorite providers to get started. The email channel comes with Novu's email provider, which is active by default and includes 300 credits.
 
-## Create A Notification Workflow
+## Create A workflow
 
 A notification workflow is the blueprint for the notifications that will be sent. It holds the entire flow of messages sent to the subscriber. This is where all the different channels are tied together under a single entity.
 
@@ -108,7 +116,8 @@ Proper authorization needs to be set for the Chat channel for subscribers.
 
 Please proceed to create a notification workflow.
 
-1. Click **Workflows** on the left sidebar of your Novu dashboard.
+1. Click **Workflows** on the left sidebar of your Novu dashboard. 
+![click workflow](https://res.cloudinary.com/dxc6bnman/image/upload/v1688745999/guides/workflows_m60hkc.png)
 2. Click the **Create Workflow** button on the top right.
 3. The name of a new notification workflow is currently **Untitled.** Rename it to a more suitable title.
 4. Select **Email** as the channel you want to add.
@@ -133,20 +142,25 @@ Click **Subscribers** on the left sidebar of the Novu dashboard to see all subsc
 
 Now, let's create a subscriber on Novu. Copy and paste the following code to do so:
 
-```php
-// Create subscriber
-$novu->createSubscriber([
-    'subscriberId' => '7789', // replace with system_internal_user_id
-    'email' => 'abc@gmail.com',
-    'firstName' => 'John', // optional
-    'lastName' => 'Doe', // optional
-])->toArray();
+```ruby
+require 'novu'
+
+client = Novu::Client.new('YOUR_NOVU_API_KEY')
+
+# Create subscriber
+
+create_payload = {
+    'subscriberId' => '7789', # replace with system_internal_user_id
+    'firstName' => 'John', # optional
+    'lastName' => 'Doe', # optional
+}
+client.create_subscriber(create_payload)
 ```
 
-Run the code in your terminal like so:
+Run the code in your terminal:
 
 ```bash
-php index.php
+ruby index.rb
 ```
 
 You should see the subscriber on your Novu dashboard.
@@ -155,17 +169,22 @@ You should see the subscriber on your Novu dashboard.
 
 I’d like to publicly announce that `abc@gmail.com` is a random unlikely email your users will have. To update this to an alternative email, you can call the `updateSubscriber` method like so:
 
-```php
-// Update subscriber detail
-$subscriberId = '7789';
-$novu->updateSubscriber($subscriberId, [
-    'email' => 'validemail@gmail.com',  // replace with valid email
-    'firstName' => '<insert-firstname>', // optional
-    'lastName' => '<insert-lastname>', // optional
-])->toArray();
+```ruby
+require 'novu'
+
+client = Novu::Client.new('YOUR_NOVU_API_KEY')
+
+# Update subscriber detail
+
+update_payload = {
+    'email' => 'validemail@gmail.com',  # replace with valid email
+    'firstName' => '<insert-firstname>', # optional
+    'lastName' => 'Obasanjo', # optional
+}
+client.update_subscriber('7789', update_payload);
 ```
 
-Other valid fields that can be updated are `phone`, `avatar`, and `data` . The `data` field can accept an array of metadata that you want to attach to the subscriber.
+Other valid fields that can be updated are `phone`, `avatar`, and `data`. The `data` field can accept an array of metadata that you want to attach to the subscriber.
 
 ::::info
 To make all of your app users subscribers, you need to programmatically add them to Novu.
@@ -175,14 +194,23 @@ To make all of your app users subscribers, you need to programmatically add them
 
 Copy and paste the following code into your app to trigger a notification:
 
-```php
-$novu->triggerEvent([
-    'name' => 'first-email',
-    'payload' => ['first-name' => 'Adam'],
-    'to' => [
+```ruby
+require 'novu'
+
+client = Novu::Client.new('YOUR_NOVU_API_KEY')
+
+# trigger a notification
+
+trigger_payload = {
+    'name' => 'Trigger1',
+    'payload' => {
+        'first-name' => 'Adam'
+    },
+    'to' => {
         'subscriberId' => '7789'
-    ]
-])->toArray();
+    }
+}
+client.trigger_event(trigger_payload)
 ```
 
 Before running the code, make sure you understand the following:
@@ -196,8 +224,8 @@ Before running the code, make sure you understand the following:
 
 Run the code to trigger a notification!
 
-```php
-php index.php
+```bash
+ruby index.rb
 ```
 
 Next, we’ll learn how to send notifications to different groups of subscribers easily via **Topics.**
@@ -218,12 +246,17 @@ A topic can have multiple subscribers who will receive a notification whenever a
 
 Copy and paste the following code into your app to create a topic:
 
-```php
-// Create a Topic
-$novu->createTopic([
-  'key'  => 'frontend-users',
-  'name' => 'All frontend users'
-]);
+```ruby
+require 'novu'
+
+client = Novu::Client.new('YOUR_NOVU_API_KEY')
+# Create a Topic
+
+create_topic_payload = {
+    'key'  => 'frontend-users',
+    'name' => 'All frontend users'
+}
+client.create_topic(create_topic_payload)
 ```
 
 Before running the code, make sure you understand the following:
@@ -231,32 +264,34 @@ Before running the code, make sure you understand the following:
 - When creating a `key`, ensure it is unique and accurately identifies the topic. Document naming conventions and communicate them to team members to avoid confusion and ensure a smooth workflow.
 - The value of `name` should be a descriptive topic name.
 
-### Add subscribers to a Topic
+### Add and Remove subscribers to a Topic
 
-Copy and paste the following code into your app to add subscribers a topic:
+Copy and paste the following code into your app to add subscribers to a topic:
 
-```php
-$topicKey = 'frontend-users';
-$subscribers = [
-    '6460925ce1a93324257d2fc1',
-    '7789'
-];
+```ruby
+require 'novu'
 
-// Add subscribers to a topic
-$novu->topic($topicKey)->addSubscribers($subscribers);
+client = Novu::Client.new('YOUR_NOVU_API_KEY')
+
+topicKey = 'frontend-users'
+subscribers = ['6460925ce1a93324257d2fc1', '7789'].to_s
+
+# Add subscribers to a topic
+client.add_subscribers(topicKey, subscribers)
 ```
 
-On the other hand, if you want to remove subscribers from a topic, do the following:
+Also, you can remove subscribers from a topic by using the code snippet below:
 
-```php
-$topicKey = 'frontend-users';
-$subscribers = [
-    '6460925ce1a93324257d2fc1',
-    '7789'
-];
+```ruby
+require 'novu'
 
-// Remove subscribers from a topic
-$novu->topic($topicKey)->removeSubscribers($subscribers);
+client = Novu::Client.new('YOUR_NOVU_API_KEY')
+
+topicKey = 'frontend-users'
+subscribers = ['6460925ce1a93324257d2fc1', '7789'].to_s
+
+# Remove subscribers from a topic
+client.remove_subscribers(topicKey, subscribers)
 ```
 
 ### Sending a notification to a Topic
@@ -265,18 +300,24 @@ Thanks to the topics feature, it is possible to trigger a notification to all su
 
 To trigger a notification to all subscribers of a topic, copy and paste the code below:
 
-```php
-// Send notifications to a topic (all frontend users)
-$novu->triggerEvent([
-    'name' => 'first-email',
-    'to' => [
-       [
-         'type' => 'Topic',
-         'topicKey' => 'frontend-users'
-       ]
-    ]
-])->toArray();
+```ruby
+require 'novu'
+
+client = Novu::Client.new('YOUR_NOVU_API_KEY')
+
+# Send notifications to a topic (all frontend users)
+client.trigger_event({
+    'name' => 'Trigger1',
+    'to' => {
+        'type' => 'Topic',
+        'topicKey' => 'frontend-users'
+    }
+})
 ```
+
+::::info
+The value of the `name` key in the payload should be the name of the notification created earlier ([Trigger A Notification](#trigger-a-notification) section)
+::::
 
 ## Next Steps
 
@@ -285,5 +326,5 @@ Great job! If you've reached this point, you should now have successfully create
 To learn more about notifications and explore Novu's features and capabilities, check out:
 
 - [Novu Digest Engine](https://docs.novu.co/platform/digest) - Learn how to aggregate multiple trigger events into a single message and deliver it to the subscriber.
-- [Novu PHP SDK](https://github.com/novuhq/novu-php) - Delve deeper into the SDK and explore a lot of features.
+- [Novu Ruby SDK](https://github.com/novuhq/novu-ruby) - Delve deeper into the SDK and explore a lot of features.
 - [Novu Notification Center](https://docs.novu.co/notification-center/getting-started) - Learn how to integrate a rich, ready-to-use real-time UI notification center into your app.
