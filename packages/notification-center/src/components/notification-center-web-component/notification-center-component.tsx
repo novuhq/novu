@@ -22,10 +22,6 @@ export const NOTIFICATION_CENTER_PROPS = [
   'tabs',
   'showUserPreferences',
   'allowedNotificationActions',
-  /*
-   * @deprecated
-   * Use popoverConfig instead
-   */
   'popover',
   'popoverConfig',
   'theme',
