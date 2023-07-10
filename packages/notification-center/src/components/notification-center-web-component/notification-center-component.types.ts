@@ -37,6 +37,14 @@ type SelectedPopoverProps = Pick<
   | 'showUserPreferences'
   | 'allowedNotificationActions'
 > & {
+  popoverConfig?: {
+    offset?: IPopoverNotificationCenterProps['offset'];
+    position?: IPopoverNotificationCenterProps['position'];
+  };
+} & {
+  /**
+   * @deprecated Use popoverConfig instead
+   */
   popover?: {
     offset?: IPopoverNotificationCenterProps['offset'];
     position?: IPopoverNotificationCenterProps['position'];

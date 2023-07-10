@@ -25,6 +25,7 @@ import {
   CompileTemplateCommand,
   PushFactory,
 } from '@novu/application-generic';
+import type { IPushOptions } from '@novu/stateless';
 
 import { CreateLog } from '../../../shared/logs';
 import { SendMessageCommand } from './send-message.command';
@@ -66,13 +67,14 @@ export class SendMessagePush extends SendMessageBase {
 
     const pushChannel: NotificationStepEntity = command.step;
 
+    const stepData: IPushOptions['step'] = {
+      digest: !!command.events?.length,
+      events: command.events,
+      total_count: command.events?.length,
+    };
     const data = {
       subscriber: subscriber,
-      step: {
-        digest: !!command.events?.length,
-        events: command.events,
-        total_count: command.events?.length,
-      },
+      step: stepData,
       ...command.payload,
     };
     let content = '';
@@ -157,7 +159,17 @@ export class SendMessagePush extends SendMessageBase {
 
       const overrides = command.overrides[integration.providerId] || {};
 
-      await this.sendMessage(integration, channel.credentials.deviceTokens, title, content, command, data, overrides);
+      await this.sendMessage(
+        subscriber,
+        integration,
+        channel.credentials.deviceTokens,
+        title,
+        content,
+        command,
+        command.payload,
+        overrides,
+        stepData
+      );
     }
   }
 
@@ -175,13 +187,15 @@ export class SendMessagePush extends SendMessageBase {
   }
 
   private async sendMessage(
+    subscriber: IPushOptions['subscriber'],
     integration: IntegrationEntity,
     target: string[],
     title: string,
     content: string,
     command: SendMessageCommand,
     payload: object,
-    overrides: object
+    overrides: object,
+    step: IPushOptions['step']
   ) {
     const message: MessageEntity = await this.messageRepository.create({
       _notificationId: command.notificationId,
@@ -227,6 +241,8 @@ export class SendMessagePush extends SendMessageBase {
         content,
         payload,
         overrides,
+        subscriber,
+        step,
       });
 
       await this.createExecutionDetails.execute(
