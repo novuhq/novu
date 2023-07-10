@@ -12,6 +12,7 @@
     "declaration": false,
     "declarationMap": false,
     "sourceMap": true,
+    "removeComments": false,
     "outDir": "dist",
     "baseUrl": "."
   },
