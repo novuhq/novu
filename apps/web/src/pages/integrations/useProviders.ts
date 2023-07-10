@@ -76,7 +76,7 @@ function initializeProvidersByIntegration(integrations: IntegrationEntity[]): II
     fcmFallback(integrationItem, clonedCredentials);
 
     return {
-      providerId: integrationItem.providerId || providerItem?.id,
+      providerId: providerItem?.id || integrationItem.providerId,
       integrationId: integrationItem?._id ? integrationItem._id : '',
       displayName: providerItem?.displayName || integrationItem.name,
       channel: providerItem?.channel || integrationItem.channel,

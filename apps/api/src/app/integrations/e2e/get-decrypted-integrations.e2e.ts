@@ -32,7 +32,7 @@ describe('Get Decrypted Integrations - /integrations (GET)', function () {
 
     const result = (await session.testAgent.get(`/v1/integrations/active`)).body.data;
 
-    // We expect to find the test data 13 with the email one for the chosen environment replaced by the one created
+    // We expect to find the test data 15 with the email one
     expect(result.length).to.eq(15);
 
     const activeEmailIntegrations = result.filter(
