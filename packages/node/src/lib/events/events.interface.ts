@@ -123,7 +123,7 @@ export type ITriggerOverrideExpo = {
   channelId?: string;
   categoryId?: string;
   mutableContent?: boolean;
-}
+};
 
 export interface IBulkEvents extends ITriggerPayloadOptions {
   name: string;
