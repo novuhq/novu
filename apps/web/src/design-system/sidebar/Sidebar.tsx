@@ -21,6 +21,9 @@ const BodyHolder = styled.div`
   overflow-y: auto;
   margin: 0 24px;
   gap: 24px;
+  padding-right: 5px;
+  margin-right: 19px;
+  height: 100%;
 `;
 
 const FooterHolder = styled.div`
@@ -36,7 +39,7 @@ const COLLAPSED_WIDTH = 480;
 const HEADER_HEIGHT = 65;
 const NAVIGATION_WIDTH = 300;
 const PAGE_MARGIN = 30;
-const INTEGRATION_SETTING_TOP = HEADER_HEIGHT + PAGE_MARGIN;
+const INTEGRATION_SETTING_TOP = HEADER_HEIGHT;
 
 const useDrawerStyles = createStyles((theme: MantineTheme) => {
   return {
@@ -47,10 +50,11 @@ const useDrawerStyles = createStyles((theme: MantineTheme) => {
     drawer: {
       position: 'fixed',
       top: `${INTEGRATION_SETTING_TOP}px`,
-      right: `${PAGE_MARGIN}px`,
+      right: 0,
       bottom: 0,
       backgroundColor: theme.colorScheme === 'dark' ? colors.B17 : colors.white,
-      borderRadius: 7,
+      borderTopLeftRadius: 7,
+      borderBottomLeftRadius: 7,
       boxShadow: shadows.dark,
     },
     body: {
@@ -108,10 +112,10 @@ export const Sidebar = ({
       position="right"
       styles={{
         drawer: {
-          width: isExpanded ? `calc(100% - ${NAVIGATION_WIDTH + PAGE_MARGIN * 2}px)` : COLLAPSED_WIDTH,
+          width: isExpanded ? `calc(100% - ${NAVIGATION_WIDTH + PAGE_MARGIN}px)` : COLLAPSED_WIDTH,
           transition: 'all 300ms ease !important',
           '@media screen and (max-width: 768px)': {
-            width: isExpanded ? `calc(100% - ${PAGE_MARGIN * 2}px)` : COLLAPSED_WIDTH,
+            width: isExpanded ? `100%` : COLLAPSED_WIDTH,
           },
         },
       }}

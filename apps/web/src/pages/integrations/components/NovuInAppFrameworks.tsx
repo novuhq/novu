@@ -8,7 +8,6 @@ const NovuInAppFrameworksHolder = styled.div`
   display: flex;
   flex-direction: column;
   gap: 16px;
-  margin: 32px 0;
 `;
 
 const FrameworksGrid = styled.div`

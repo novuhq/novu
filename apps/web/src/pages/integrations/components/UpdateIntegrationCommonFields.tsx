@@ -6,10 +6,6 @@ import { Input, Switch } from '../../../design-system';
 import { Check, Copy } from '../../../design-system/icons';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
 
-const InputWrapper = styled.div`
-  margin-top: 32px;
-`;
-
 const CopyWrapper = styled.div`
   cursor: pointer;
   &:hover {
@@ -49,15 +45,13 @@ export const UpdateIntegrationCommonFields = ({ provider }: { provider: IIntegra
           required: 'Required - Instance name',
         }}
         render={({ field }) => (
-          <InputWrapper>
-            <Input
-              {...field}
-              value={field.value ? field.value : provider?.displayName}
-              required
-              label="Name"
-              error={errors.name?.message}
-            />
-          </InputWrapper>
+          <Input
+            {...field}
+            value={field.value ? field.value : provider?.displayName}
+            required
+            label="Name"
+            error={errors.name?.message}
+          />
         )}
       />
       <Controller
@@ -72,19 +66,17 @@ export const UpdateIntegrationCommonFields = ({ provider }: { provider: IIntegra
           },
         }}
         render={({ field }) => (
-          <InputWrapper>
-            <Input
-              {...field}
-              required
-              label="Instance key"
-              error={errors.identifier?.message}
-              rightSection={
-                <CopyWrapper onClick={() => identifierClipboard.copy(field.value)}>
-                  {identifierClipboard.copied ? <Check /> : <Copy />}
-                </CopyWrapper>
-              }
-            />
-          </InputWrapper>
+          <Input
+            {...field}
+            required
+            label="Instance key"
+            error={errors.identifier?.message}
+            rightSection={
+              <CopyWrapper onClick={() => identifierClipboard.copy(field.value)}>
+                {identifierClipboard.copied ? <Check /> : <Copy />}
+              </CopyWrapper>
+            }
+          />
         )}
       />
     </>

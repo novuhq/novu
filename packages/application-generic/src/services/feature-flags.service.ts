@@ -45,8 +45,8 @@ export class FeatureFlagsService {
       } catch (error) {
         Logger.error(
           'Feature Flags service has failed when shut down',
-          LOG_CONTEXT,
-          error
+          error,
+          LOG_CONTEXT
         );
       }
     }
@@ -91,8 +91,8 @@ export class FeatureFlagsService {
       } catch (error) {
         Logger.error(
           'Feature Flags service has failed when initialized',
-          LOG_CONTEXT,
-          error
+          error,
+          LOG_CONTEXT
         );
       }
     }

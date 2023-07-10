@@ -10,7 +10,6 @@ const WarningMessage = styled(Group)`
   align-items: center;
   flex-wrap: nowrap;
   padding: 15px;
-  margin-bottom: 24px;
   color: #e54545;
 
   background: rgba(230, 69, 69, 0.15);

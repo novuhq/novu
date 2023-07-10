@@ -112,6 +112,7 @@ export class AnalyticsService {
         });
       } catch (error: any) {
         Logger.error(
+          'There has been an error when tracking',
           {
             eventName: name,
             usedId: userId,

@@ -4,9 +4,15 @@ import styled from '@emotion/styled';
 import slugify from 'slugify';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Controller, FormProvider, useForm } from 'react-hook-form';
-import { IConfigCredentials, ICredentialsDto, InAppProviderIdEnum } from '@novu/shared';
+import {
+  EmailProviderIdEnum,
+  IConfigCredentials,
+  ICredentialsDto,
+  InAppProviderIdEnum,
+  SmsProviderIdEnum,
+} from '@novu/shared';
 
-import { Button, colors, Sidebar, Text } from '../../design-system';
+import { Button, colors, Sidebar, Text, Title } from '../../design-system';
 import { useProviders } from './useProviders';
 import { IIntegratedProvider } from './IntegrationsStorePage';
 import { IntegrationInput } from './components/IntegrationInput';
@@ -23,6 +29,9 @@ import { SetupTimeline } from '../quick-start/components/SetupTimeline';
 import { Faq } from '../quick-start/components/QuickStartWrapper';
 import { NovuInAppFrameworkHeader } from './components/NovuInAppFrameworkHeader';
 import { NovuInAppSetupWarning } from './components/NovuInAppSetupWarning';
+import { ProviderImage } from './components/multi-provider/SelectProviderSidebar';
+import { ProviderInfo } from './components/multi-provider/ProviderInfo';
+import { NovuProviderSidebarContent } from './components/multi-provider/NovuProviderSidebarContent';
 
 interface IProviderForm {
   name: string;
@@ -32,11 +41,11 @@ interface IProviderForm {
 }
 
 export function UpdateProviderPage() {
-  const { isLoading: areEnvironmentsLoading } = useFetchEnvironments();
+  const { environments, isLoading: areEnvironmentsLoading } = useFetchEnvironments();
   const [selectedProvider, setSelectedProvider] = useState<IIntegratedProvider | null>(null);
   const [sidebarState, setSidebarState] = useState<'normal' | 'expanded'>('normal');
   const [framework, setFramework] = useState<FrameworkEnum | null>(null);
-  const { providers, isLoading } = useProviders();
+  const { providers, isLoading: areProvidersLoading } = useProviders();
   const { integrationId } = useParams();
   const navigate = useNavigate();
   const isNovuInAppProvider = selectedProvider?.providerId === InAppProviderIdEnum.Novu;
@@ -128,11 +137,35 @@ export function UpdateProviderPage() {
     }
   };
 
+  if (
+    SmsProviderIdEnum.Novu === selectedProvider?.providerId ||
+    EmailProviderIdEnum.Novu === selectedProvider?.providerId
+  ) {
+    return (
+      <Sidebar
+        isOpened={!!selectedProvider}
+        isLoading={areProvidersLoading || areEnvironmentsLoading}
+        onClose={onClose}
+        customHeader={
+          <Group spacing={12}>
+            <ProviderImage providerId={selectedProvider?.providerId} />
+            <Title size={2}>{selectedProvider?.displayName ?? ''}</Title>
+            <Free>🎉 Free</Free>
+          </Group>
+        }
+      >
+        <ProviderInfo provider={selectedProvider} environments={environments} />
+
+        <NovuProviderSidebarContent provider={selectedProvider} />
+      </Sidebar>
+    );
+  }
+
   return (
     <FormProvider {...methods}>
       <Sidebar
         isOpened={!!selectedProvider}
-        isLoading={isLoading || areEnvironmentsLoading}
+        isLoading={areProvidersLoading || areEnvironmentsLoading}
         isExpanded={sidebarState === 'expanded'}
         onSubmit={handleSubmit(onUpdateIntegration)}
         onClose={onClose}
@@ -165,33 +198,29 @@ export function UpdateProviderPage() {
         }
       >
         <When truthy={sidebarState === 'normal'}>
-          <CenterDiv>
-            <SetupWarning
-              show={!haveAllCredentials}
-              message="Set up credentials to start sending notifications."
-              docReference={selectedProvider?.docReference}
-            />
-            {isNovuInAppProvider && <NovuInAppSetupWarning provider={selectedProvider} />}
-            <UpdateIntegrationCommonFields provider={selectedProvider} />
-            {selectedProvider?.credentials.map((credential: IConfigCredentials) => (
-              <InputWrapper key={credential.key}>
-                <Controller
-                  name={`credentials.${credential.key}`}
-                  control={control}
-                  defaultValue={credential.type === 'boolean' || credential.type === 'switch' ? false : ''}
-                  rules={{
-                    required: credential.required
-                      ? `Please enter a ${credential.displayName.toLowerCase()}`
-                      : undefined,
-                  }}
-                  render={({ field }) => (
-                    <IntegrationInput credential={credential} errors={errors?.credentials ?? {}} field={field} />
-                  )}
-                />
-              </InputWrapper>
-            ))}
-            {isNovuInAppProvider && <NovuInAppFrameworks onFrameworkClick={onFrameworkClickCallback} />}
-          </CenterDiv>
+          <SetupWarning
+            show={!haveAllCredentials}
+            message="Set up credentials to start sending notifications."
+            docReference={selectedProvider?.docReference}
+          />
+          {isNovuInAppProvider && <NovuInAppSetupWarning provider={selectedProvider} />}
+          <UpdateIntegrationCommonFields provider={selectedProvider} />
+          {selectedProvider?.credentials.map((credential: IConfigCredentials) => (
+            <InputWrapper key={credential.key}>
+              <Controller
+                name={`credentials.${credential.key}`}
+                control={control}
+                defaultValue={credential.type === 'boolean' || credential.type === 'switch' ? false : ''}
+                rules={{
+                  required: credential.required ? `Please enter a ${credential.displayName.toLowerCase()}` : undefined,
+                }}
+                render={({ field }) => (
+                  <IntegrationInput credential={credential} errors={errors?.credentials ?? {}} field={field} />
+                )}
+              />
+            </InputWrapper>
+          ))}
+          {isNovuInAppProvider && <NovuInAppFrameworks onFrameworkClick={onFrameworkClickCallback} />}
         </When>
         <When truthy={isNovuInAppProvider && sidebarState === 'expanded'}>
           <SetupTimeline
@@ -214,14 +243,26 @@ export function UpdateProviderPage() {
 }
 
 const InputWrapper = styled.div`
-  margin-top: 32px;
+  > div {
+    width: 100%;
+  }
 `;
 
 const CenterDiv = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
   overflow-y: auto;
   color: ${colors.B60};
   font-size: 14px;
   line-height: 20px;
   margin-bottom: 16px;
   padding-right: 5px;
+`;
+
+const Free = styled.span`
+  color: ${colors.success};
+  font-size: 14px;
+  min-width: fit-content;
+  margin-left: -4px;
 `;
