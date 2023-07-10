@@ -45,7 +45,7 @@ After that, you can use the web component in your HTML:
 Sometimes you might not be able to use the ESM module, for example in the WordPress environment. In that case, you can use the bundled version of the Notification Center Web Component that is available on the CDN.
 
 ```html
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     ...
@@ -84,6 +84,7 @@ If you are using TypeScript, then you might want to check the `NotificationCente
 | `showUserPreferences`        | `boolean`  | The flag indicating whether the user preference settings should be visible or not.                                                                                                                                                                                                                                     |
 | `allowedNotificationActions` | `boolean`  | The flag indicating whether to show/hide the dots menu for actions performed on a notification.                                                                                                                                                                                                                        |
 | `popoverConfig`              | `object`   | The object defining how the popover should be positioned. It's properties are position and offset.                                                                                                                                                                                                                     |
+| ~~`popover`~~                | `object`   | The object defining how the popover should be positioned. It's properties are position and offset. popover is deprecated, use popoverConfig instead.                                                                                                                                                                   |
 | `theme`                      | `object`   | The object defining the the light/dark styles of the Notification Center component, more info [here](./react/react-components#customizing-the-notification-center-theme). We discourage you to use this prop to do the styling, instead it's recommended to use the `styles` property.                                 |
 | `styles`                     | `object`   | The object allows you to define the custom CSS code. Check the details [here](./custom-styling).                                                                                                                                                                                                                       |
 | `colorScheme`                | `string`   | The prop defining which color version of the styles the component should set. The options are `light` and `dark`.                                                                                                                                                                                                      |
