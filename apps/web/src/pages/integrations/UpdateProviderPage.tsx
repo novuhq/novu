@@ -1,23 +1,23 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChannelTypeEnum, IConfigCredentials, ICredentialsDto } from '@novu/shared';
+import { EmailProviderIdEnum, IConfigCredentials, ICredentialsDto, SmsProviderIdEnum } from '@novu/shared';
 import { ActionIcon, Group, Loader, Center, Stack } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
 import styled from '@emotion/styled';
 import slugify from 'slugify';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Controller, useForm } from 'react-hook-form';
-import { Button, colors, Input, NameInput, Switch, Text } from '../../design-system';
+import { Button, colors, Input, NameInput, Switch, Text, Title } from '../../design-system';
 import { Check, Close, Copy, DisconnectGradient } from '../../design-system/icons';
 import { useProviders } from './useProviders';
 import { IIntegratedProvider } from './IntegrationsStorePage';
 import { IntegrationInput } from './components/IntegrationInput';
-import { IntegrationChannel } from './components/IntegrationChannel';
-import { CHANNEL_TYPE_TO_STRING } from '../../utils/channels';
-import { IntegrationEnvironmentPill } from './components/IntegrationEnvironmentPill';
 import { useFetchEnvironments } from '../../hooks/useFetchEnvironments';
 import { ProviderImage } from './components/multi-provider/SelectProviderSidebar';
 import { When } from '../../components/utils/When';
+
+import { NovuProviderSidebarContent } from './components/multi-provider/NovuProviderSidebarContent';
 import { useUpdateIntegration } from '../../api/hooks/useUpdateIntegration';
+import { ProviderInfo } from './components/multi-provider/ProviderInfo';
 
 interface IProviderForm {
   name: string;
@@ -123,6 +123,35 @@ export function UpdateProviderPage() {
     return null;
   }
 
+  if (
+    SmsProviderIdEnum.Novu === selectedProvider.providerId ||
+    EmailProviderIdEnum.Novu === selectedProvider.providerId
+  ) {
+    return (
+      <SideBarWrapper>
+        <Group position="apart">
+          <Group spacing={12}>
+            <ProviderImage providerId={selectedProvider?.providerId} />
+            <Title size={2}>{selectedProvider?.displayName}</Title>
+            <Free>🎉 Free</Free>
+          </Group>
+          <ActionIcon
+            variant={'transparent'}
+            onClick={() => {
+              navigate('/integrations');
+            }}
+          >
+            <Close color={colors.B40} />
+          </ActionIcon>
+        </Group>
+        <ProviderInfo provider={selectedProvider} environments={environments} />
+        <CenterDiv>
+          <NovuProviderSidebarContent provider={selectedProvider} />
+        </CenterDiv>
+      </SideBarWrapper>
+    );
+  }
+
   return (
     <SideBarWrapper>
       <Form name={'connect-integration-form'} noValidate onSubmit={handleSubmit(onUpdateIntegration)}>
@@ -152,18 +181,7 @@ export function UpdateProviderPage() {
             <Close color={colors.B40} />
           </ActionIcon>
         </Group>
-        <Group mb={16} mt={16} spacing={16}>
-          <IntegrationChannel
-            name={CHANNEL_TYPE_TO_STRING[selectedProvider?.channel || ChannelTypeEnum.EMAIL]}
-            type={selectedProvider?.channel || ChannelTypeEnum.EMAIL}
-          />
-          <IntegrationEnvironmentPill
-            name={
-              environments?.find((environment) => environment._id === selectedProvider?.environmentId)?.name ||
-              'Development'
-            }
-          />
-        </Group>
+        <ProviderInfo provider={selectedProvider} environments={environments} />
         <CenterDiv>
           <When truthy={!haveAllCredentials}>
             <WarningMessage spacing={12}>
@@ -328,4 +346,11 @@ const WarningMessage = styled(Group)`
   a {
     text-decoration: underline;
   }
+`;
+
+const Free = styled.span`
+  color: ${colors.success};
+  font-size: 14px;
+  min-width: fit-content;
+  margin-left: -4px;
 `;

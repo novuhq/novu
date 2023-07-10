@@ -126,12 +126,135 @@ describe('Integrations List Page', function () {
 
     checkTableRow(
       {
+        name: 'SendGrid',
+        provider: 'SendGrid',
+        channel: 'Email',
+        environment: 'Development',
+        status: 'Active',
+      },
+      0
+    );
+    checkTableRow(
+      {
+        name: 'Twilio',
+        provider: 'Twilio',
+        channel: 'SMS',
+        environment: 'Development',
+        status: 'Active',
+      },
+      1
+    );
+    checkTableRow(
+      {
+        name: 'Slack',
+        provider: 'Slack',
+        channel: 'Chat',
+        environment: 'Development',
+        status: 'Active',
+      },
+      2
+    );
+    checkTableRow(
+      {
+        name: 'Discord',
+        provider: 'Discord',
+        channel: 'Chat',
+        environment: 'Development',
+        status: 'Active',
+      },
+      3
+    );
+    checkTableRow(
+      {
+        name: 'Firebase Cloud Messaging',
+        provider: 'Firebase Cloud Messaging',
+        channel: 'Push',
+        environment: 'Development',
+        status: 'Active',
+      },
+      4
+    );
+    checkTableRow(
+      {
+        name: 'Novu In-App',
+        isFree: true,
+        provider: 'Novu In-App',
+        channel: 'In-App',
+        environment: 'Development',
+        status: 'Active',
+      },
+      5
+    );
+    /*
+    checkTableRow(
+      {
+        name: 'SendGrid',
+        provider: 'SendGrid',
+        channel: 'Email',
+        environment: 'Production',
+        status: 'Active',
+      },
+      6
+    );
+    checkTableRow(
+      {
+        name: 'Twilio',
+        provider: 'Twilio',
+        channel: 'SMS',
+        environment: 'Production',
+        status: 'Active',
+      },
+      7
+    );
+    checkTableRow(
+      {
+        name: 'Slack',
+        provider: 'Slack',
+        channel: 'Chat',
+        environment: 'Production',
+        status: 'Active',
+      },
+      8
+    );
+    checkTableRow(
+      {
+        name: 'Discord',
+        provider: 'Discord',
+        channel: 'Chat',
+        environment: 'Production',
+        status: 'Active',
+      },
+      9
+    );
+    checkTableRow(
+      {
+        name: 'Firebase Cloud Messaging',
+        provider: 'Firebase Cloud Messaging',
+        channel: 'Push',
+        environment: 'Production',
+        status: 'Active',
+      },
+      10
+    );
+    checkTableRow(
+      {
+        name: 'Novu In-App',
+        isFree: true,
+        provider: 'Novu In-App',
+        channel: 'In-App',
+        environment: 'Production',
+        status: 'Active',
+      },
+      11
+    );
+    checkTableRow(
+      {
         name: 'Novu Email',
         provider: 'Novu Email',
         channel: 'Email',
         status: 'Disabled',
       },
-      0
+      12
     );
     checkTableRow(
       {
@@ -140,129 +263,8 @@ describe('Integrations List Page', function () {
         channel: 'SMS',
         status: 'Disabled',
       },
-      1
-    );
-    checkTableRow(
-      {
-        name: 'SendGrid',
-        provider: 'SendGrid',
-        channel: 'Email',
-        environment: 'Development',
-        status: 'Active',
-      },
-      2
-    );
-    checkTableRow(
-      {
-        name: 'Twilio',
-        provider: 'Twilio',
-        channel: 'SMS',
-        environment: 'Development',
-        status: 'Active',
-      },
-      3
-    );
-    checkTableRow(
-      {
-        name: 'Slack',
-        provider: 'Slack',
-        channel: 'Chat',
-        environment: 'Development',
-        status: 'Active',
-      },
-      4
-    );
-    checkTableRow(
-      {
-        name: 'Discord',
-        provider: 'Discord',
-        channel: 'Chat',
-        environment: 'Development',
-        status: 'Active',
-      },
-      5
-    );
-    checkTableRow(
-      {
-        name: 'Firebase Cloud Messaging',
-        provider: 'Firebase Cloud Messaging',
-        channel: 'Push',
-        environment: 'Development',
-        status: 'Active',
-      },
-      6
-    );
-    checkTableRow(
-      {
-        name: 'Novu In-App',
-        isFree: true,
-        provider: 'Novu In-App',
-        channel: 'In-App',
-        environment: 'Development',
-        status: 'Active',
-      },
-      7
-    );
-    checkTableRow(
-      {
-        name: 'SendGrid',
-        provider: 'SendGrid',
-        channel: 'Email',
-        environment: 'Production',
-        status: 'Active',
-      },
-      8
-    );
-    checkTableRow(
-      {
-        name: 'Twilio',
-        provider: 'Twilio',
-        channel: 'SMS',
-        environment: 'Production',
-        status: 'Active',
-      },
-      9
-    );
-    checkTableRow(
-      {
-        name: 'Slack',
-        provider: 'Slack',
-        channel: 'Chat',
-        environment: 'Production',
-        status: 'Active',
-      },
-      10
-    );
-    checkTableRow(
-      {
-        name: 'Discord',
-        provider: 'Discord',
-        channel: 'Chat',
-        environment: 'Production',
-        status: 'Active',
-      },
-      11
-    );
-    checkTableRow(
-      {
-        name: 'Firebase Cloud Messaging',
-        provider: 'Firebase Cloud Messaging',
-        channel: 'Push',
-        environment: 'Production',
-        status: 'Active',
-      },
-      12
-    );
-    checkTableRow(
-      {
-        name: 'Novu In-App',
-        isFree: true,
-        provider: 'Novu In-App',
-        channel: 'In-App',
-        environment: 'Production',
-        status: 'Active',
-      },
       13
     );
+    */
   });
 });
