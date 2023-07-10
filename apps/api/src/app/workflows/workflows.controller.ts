@@ -46,7 +46,7 @@ export class WorkflowsController {
     private createWorkflowUsecase: CreateWorkflow,
     private getWorkflowUsecase: GetWorkflow,
     private updateWorkflowByIdUsecase: UpdateWorkflow,
-    private deleteWorflowByIdUsecase: DeleteWorkflow,
+    private deleteWorkflowByIdUsecase: DeleteWorkflow,
     private changeWorkflowActiveStatusUsecase: ChangeWorkflowActiveStatus
   ) {}
 
@@ -111,7 +111,7 @@ export class WorkflowsController {
   })
   @ExternalApiAccessible()
   deleteWorkflowById(@UserSession() user: IJwtPayload, @Param('workflowId') workflowId: string): Promise<boolean> {
-    return this.deleteWorflowByIdUsecase.execute(
+    return this.deleteWorkflowByIdUsecase.execute(
       GetWorkflowCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
