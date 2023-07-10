@@ -146,6 +146,6 @@ export class MetricQueueService extends QueueService<Record<string, never>> {
   }
 
   private async jobHasFailed(job, error): Promise<void> {
-    Logger.verbose('Metric job failed', LOG_CONTEXT, error);
+    Logger.verbose('Metric job failed', error, LOG_CONTEXT);
   }
 }
