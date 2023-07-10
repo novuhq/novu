@@ -147,6 +147,8 @@ export class SendMessagePush extends SendMessageBase {
         continue;
       }
 
+      await this.sendSelectedIntegrationExecution(command.job, integration);
+
       const overrides = command.overrides[integration.providerId] || {};
 
       await this.sendMessage(
