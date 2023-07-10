@@ -1,16 +1,13 @@
-import { JobEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
+import { IntegrationEntity, JobEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
 import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import {
   buildSubscriberKey,
-  buildIntegrationKey,
   CachedEntity,
-  CachedQuery,
   DetailEnum,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-  GetDecryptedIntegrations,
-  GetDecryptedIntegrationsCommand,
-  GetEnvironmentDecryptedIntegrationsCommand,
+  SelectIntegration,
+  SelectIntegrationCommand,
 } from '@novu/application-generic';
 
 import { SendMessageType } from './send-message-type.usecase';
@@ -23,7 +20,7 @@ export abstract class SendMessageBase extends SendMessageType {
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     protected subscriberRepository: SubscriberRepository,
-    protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
+    protected selectIntegration: SelectIntegration
   ) {
     super(messageRepository, createLogUsecase, createExecutionDetails);
   }
@@ -48,20 +45,12 @@ export abstract class SendMessageBase extends SendMessageType {
     });
   }
 
-  @CachedQuery({
-    builder: ({ environmentId, ...command }: GetEnvironmentDecryptedIntegrationsCommand) =>
-      buildIntegrationKey().cache({
-        _environmentId: environmentId,
-        ...command,
-      }),
-  })
-  protected async getIntegration(getDecryptedIntegrationsCommand: GetEnvironmentDecryptedIntegrationsCommand) {
-    return (
-      await this.getDecryptedIntegrationsUsecase.execute(
-        GetEnvironmentDecryptedIntegrationsCommand.create(getDecryptedIntegrationsCommand)
-      )
-    )[0];
+  protected async getIntegration(
+    selectIntegrationCommand: SelectIntegrationCommand
+  ): Promise<IntegrationEntity | undefined> {
+    return this.selectIntegration.execute(SelectIntegrationCommand.create(selectIntegrationCommand));
   }
+
   protected storeContent(): boolean {
     return this.channelType === ChannelTypeEnum.IN_APP || process.env.STORE_NOTIFICATION_CONTENT === 'true';
   }
@@ -76,6 +65,26 @@ export abstract class SendMessageBase extends SendMessageType {
         isTest: false,
         isRetry: false,
         raw: JSON.stringify({ error }),
+      })
+    );
+  }
+
+  protected async sendSelectedIntegrationExecution(job: JobEntity, integration: IntegrationEntity) {
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+        detail: DetailEnum.INTEGRATION_INSTANCE_SELECTED,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.PENDING,
+        isTest: false,
+        isRetry: false,
+        raw: JSON.stringify({
+          providerId: integration?.providerId,
+          identifier: integration?.identifier,
+          name: integration?.name,
+          _environmentId: integration?._environmentId,
+          _id: integration?._id,
+        }),
       })
     );
   }

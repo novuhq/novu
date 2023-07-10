@@ -21,6 +21,7 @@ import {
   SubscriberPreferenceRepository,
   TopicRepository,
   TopicSubscribersRepository,
+  TenantRepository,
 } from '@novu/dal';
 import {
   InMemoryProviderService,
@@ -37,12 +38,12 @@ import {
   DistributedLockService,
   PerformanceService,
   TriggerQueueService,
+  GetFeatureFlag,
+  LaunchDarklyService,
+  FeatureFlagsService,
 } from '@novu/application-generic';
 
 import * as packageJson from '../../../package.json';
-import { LaunchDarklyService } from './services/launch-darkly.service';
-import { FeatureFlagsService } from './services/feature-flags.service';
-import { GetFeatureFlag } from './use-cases';
 
 const DAL_MODELS = [
   UserRepository,
@@ -65,6 +66,7 @@ const DAL_MODELS = [
   SubscriberPreferenceRepository,
   TopicRepository,
   TopicSubscribersRepository,
+  TenantRepository,
 ];
 
 function getStorageServiceClass() {

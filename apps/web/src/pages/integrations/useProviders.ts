@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import * as cloneDeep from 'lodash.clonedeep';
-import { ChannelTypeEnum, providers, PushProviderIdEnum } from '@novu/shared';
+import { ChannelTypeEnum, IProviderConfig, providers, PushProviderIdEnum } from '@novu/shared';
 
-import { useIntegrations } from '../../hooks';
+import { useIntegrations, useIsMultiProviderConfigurationEnabled } from '../../hooks';
 import { IIntegratedProvider, IntegrationEntity } from './IntegrationsStorePage';
 
 /*
@@ -50,6 +50,42 @@ function initializeProviders(integrations: IntegrationEntity[]): IIntegratedProv
       active: integration?.active ?? false,
       connected: !!integration,
       logoFileName: providerItem.logoFileName,
+      environmentId: integration?._environmentId,
+    };
+  });
+}
+
+function initializeProvidersByIntegration(integrations: IntegrationEntity[]): IIntegratedProvider[] {
+  return integrations.map((integrationItem) => {
+    const providerItem = providers.find((provItem) => integrationItem.providerId === provItem.id) as IProviderConfig;
+
+    const clonedCredentials = cloneDeep(providerItem?.credentials);
+
+    if (integrationItem?.credentials && Object.keys(clonedCredentials).length !== 0) {
+      clonedCredentials.forEach((credential) => {
+        // eslint-disable-next-line no-param-reassign
+        credential.value = integrationItem.credentials[credential.key]?.toString();
+      });
+    }
+
+    // Remove this like after the run of the fcm-credentials-migration script
+    fcmFallback(integrationItem, clonedCredentials);
+
+    return {
+      providerId: providerItem.id,
+      integrationId: integrationItem?._id ? integrationItem._id : '',
+      displayName: providerItem.displayName,
+      channel: providerItem.channel,
+      credentials: integrationItem?.credentials ? clonedCredentials : providerItem.credentials,
+      docReference: providerItem.docReference,
+      comingSoon: !!providerItem.comingSoon,
+      betaVersion: !!providerItem.betaVersion,
+      active: integrationItem?.active ?? false,
+      connected: !!integrationItem,
+      logoFileName: providerItem.logoFileName,
+      environmentId: integrationItem?._environmentId,
+      name: integrationItem?.name,
+      identifier: integrationItem?.identifier,
     };
   });
 }
@@ -70,10 +106,13 @@ const sortProviders = (unsortedProviders: IIntegratedProvider[]) => {
 
 export const useProviders = () => {
   const { integrations, loading: isLoading, refetch } = useIntegrations();
+  const isMultiProviderConfigurationEnabled = useIsMultiProviderConfigurationEnabled();
 
   const sortedProviders = useMemo(() => {
     if (integrations) {
-      const initializedProviders = initializeProviders(integrations);
+      const initializedProviders = isMultiProviderConfigurationEnabled
+        ? initializeProvidersByIntegration(integrations)
+        : initializeProviders(integrations);
 
       return {
         emailProviders: sortProviders(
@@ -91,6 +130,7 @@ export const useProviders = () => {
         inAppProvider: sortProviders(
           initializedProviders.filter((providerItem) => providerItem.channel === ChannelTypeEnum.IN_APP)
         ),
+        providers: initializedProviders,
       };
     }
 
@@ -100,6 +140,7 @@ export const useProviders = () => {
       chatProvider: [],
       pushProvider: [],
       inAppProvider: [],
+      providers: [],
     };
   }, [integrations]);
 

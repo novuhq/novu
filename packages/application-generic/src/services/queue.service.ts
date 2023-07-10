@@ -1,6 +1,6 @@
 import { JobsOptions, QueueBaseOptions } from 'bullmq';
 import { ConnectionOptions } from 'tls';
-import { getRedisPrefix } from '@novu/shared';
+import { getRedisPrefix, IJobData } from '@novu/shared';
 import { Logger } from '@nestjs/common';
 
 import { BullMqService } from './bull-mq.service';
@@ -48,19 +48,28 @@ export class QueueService<T = unknown> {
 
   public async addToQueue(
     id: string,
-    data: T,
+    data?: IJobData,
     groupId?: string,
-    options: JobsOptions = {}
+    options: JobsOptions = {},
   ) {
+    const bullMqJobData = data
+      ? {
+          _environmentId: data._environmentId,
+          _id: id,
+          _organizationId: data._organizationId,
+          _userId: data._userId,
+        }
+      : undefined;
+
     await this.bullMqService.add(
       id,
-      data,
+      bullMqJobData,
       {
         removeOnComplete: true,
         removeOnFail: true,
         ...options,
       },
-      groupId
+      groupId,
     );
   }
 }

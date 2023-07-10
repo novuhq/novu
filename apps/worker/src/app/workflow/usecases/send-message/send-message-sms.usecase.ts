@@ -13,8 +13,7 @@ import {
   DetailEnum,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-  GetDecryptedIntegrations,
-  GetEnvironmentDecryptedIntegrationsCommand,
+  SelectIntegration,
   CompileTemplate,
   CompileTemplateCommand,
   SmsFactory,
@@ -36,15 +35,9 @@ export class SendMessageSms extends SendMessageBase {
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
-    protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
+    protected selectIntegration: SelectIntegration
   ) {
-    super(
-      messageRepository,
-      createLogUsecase,
-      createExecutionDetails,
-      subscriberRepository,
-      getDecryptedIntegrationsUsecase
-    );
+    super(messageRepository, createLogUsecase, createExecutionDetails, subscriberRepository, selectIntegration);
   }
 
   @InstrumentUsecase()
@@ -55,16 +48,12 @@ export class SendMessageSms extends SendMessageBase {
     });
     if (!subscriber) throw new PlatformException('Subscriber not found');
 
-    const integration = await this.getIntegration(
-      GetEnvironmentDecryptedIntegrationsCommand.create({
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        channelType: ChannelTypeEnum.SMS,
-        findOne: true,
-        active: true,
-        userId: command.userId,
-      })
-    );
+    const integration = await this.getIntegration({
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+      channelType: ChannelTypeEnum.SMS,
+      userId: command.userId,
+    });
 
     Sentry.addBreadcrumb({
       message: 'Sending SMS',
@@ -118,6 +107,8 @@ export class SendMessageSms extends SendMessageBase {
 
       return;
     }
+
+    await this.sendSelectedIntegrationExecution(command.job, integration);
 
     const overrides = command.overrides[integration?.providerId] || {};
 
