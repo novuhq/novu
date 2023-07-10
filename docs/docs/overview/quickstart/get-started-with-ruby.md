@@ -184,7 +184,7 @@ update_payload = {
 client.update_subscriber('7789', update_payload);
 ```
 
-Other valid fields that can be updated are `phone`, `avatar`, and `data`. The `data` field can accept an array of metadata that you want to attach to the subscriber.
+Other valid fields that can be updated are `phone`, `avatar`, and `data`. The `data` field can accept an object of metadata that you want to attach to the subscriber.
 
 ::::info
 To make all of your app users subscribers, you need to programmatically add them to Novu.
