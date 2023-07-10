@@ -3279,7 +3279,6 @@ importers:
       '@novu/stateless': ^0.16.3
       '@sendinblue/client': ^3.0.1
       '@types/jest': 29.5.2
-      '@types/request': ^2.48.7
       codecov: ^3.5.0
       cspell: ^4.1.0
       cz-conventional-changelog: ^3.3.0
@@ -3297,7 +3296,6 @@ importers:
     dependencies:
       '@novu/stateless': link:../../packages/stateless
       '@sendinblue/client': 3.3.1
-      '@types/request': 2.48.8
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
       '@types/jest': 29.5.2
@@ -4396,7 +4394,7 @@ packages:
       parse-github-url: 1.0.2
       pretty-ms: 7.0.1
       requireg: 0.2.2
-      semver: 7.5.0
+      semver: 7.5.2
       signale: 1.4.0
       tapable: 2.2.1
       terminal-link: 2.1.1
@@ -4473,7 +4471,7 @@ packages:
       '@auto-it/core': 10.44.0_j6r65ghnzvzk7vhdh4hyogrm4a
       fp-ts: 2.13.1
       io-ts: 2.2.20_fp-ts@2.13.1
-      semver: 7.5.0
+      semver: 7.5.2
       tslib: 1.10.0
     transitivePeerDependencies:
       - '@swc/core'
@@ -12720,7 +12718,7 @@ packages:
       npm-package-arg: 8.1.1
       p-map: 4.0.0
       pacote: 13.6.2
-      semver: 7.5.0
+      semver: 7.5.2
     transitivePeerDependencies:
       - bluebird
       - supports-color
@@ -12751,7 +12749,7 @@ packages:
       p-map: 4.0.0
       p-map-series: 2.1.0
       p-waterfall: 2.1.1
-      semver: 7.5.0
+      semver: 7.5.2
     transitivePeerDependencies:
       - bluebird
       - supports-color
@@ -12885,7 +12883,7 @@ packages:
       p-reduce: 2.1.0
       pacote: 13.6.2
       pify: 5.0.0
-      semver: 7.5.0
+      semver: 7.5.2
       slash: 3.0.0
       validate-npm-package-license: 3.0.4
       validate-npm-package-name: 4.0.0
@@ -13257,7 +13255,7 @@ packages:
       p-map: 4.0.0
       p-pipe: 3.1.0
       pacote: 13.6.2
-      semver: 7.5.0
+      semver: 7.5.2
     transitivePeerDependencies:
       - bluebird
       - encoding
@@ -13407,7 +13405,7 @@ packages:
       p-pipe: 3.1.0
       p-reduce: 2.1.0
       p-waterfall: 2.1.1
-      semver: 7.5.0
+      semver: 7.5.2
       slash: 3.0.0
       write-json-file: 4.3.0
     transitivePeerDependencies:
@@ -17329,7 +17327,7 @@ packages:
       read-pkg: 5.2.0
       registry-auth-token: 5.0.2
       semantic-release: 19.0.5
-      semver: 7.5.0
+      semver: 7.5.2
       tempy: 1.0.1
     dev: true
 
@@ -22555,7 +22553,7 @@ packages:
       debug: 4.3.4
       globby: 11.1.0
       is-glob: 4.0.3
-      semver: 7.5.0
+      semver: 7.5.2
       tsutils: 3.21.0_typescript@4.9.5
       typescript: 4.9.5
     transitivePeerDependencies:
@@ -27595,7 +27593,7 @@ packages:
       postcss-modules-scope: 3.0.0_postcss@8.4.25
       postcss-modules-values: 4.0.0_postcss@8.4.25
       postcss-value-parser: 4.2.0
-      semver: 7.5.0
+      semver: 7.5.2
       webpack: 5.78.0
 
   /css-minimizer-webpack-plugin/3.4.1_webpack@5.78.0:
@@ -31256,7 +31254,7 @@ packages:
       minimatch: 3.1.2
       node-abort-controller: 3.1.1
       schema-utils: 3.1.2
-      semver: 7.5.0
+      semver: 7.5.2
       tapable: 2.2.1
       typescript: 4.9.5
       webpack: 5.76.2
@@ -38938,7 +38936,7 @@ packages:
     dependencies:
       hosted-git-info: 4.1.0
       is-core-module: 2.12.0
-      semver: 7.5.0
+      semver: 7.5.2
       validate-npm-package-license: 3.0.4
 
   /normalize-package-data/4.0.1:
@@ -39045,7 +39043,7 @@ packages:
     dependencies:
       hosted-git-info: 6.1.1
       proc-log: 3.0.0
-      semver: 7.5.0
+      semver: 7.5.2
       validate-npm-package-name: 5.0.0
     dev: true
 
@@ -39111,7 +39109,7 @@ packages:
       npm-install-checks: 6.1.0
       npm-normalize-package-bin: 3.0.0
       npm-package-arg: 10.1.0
-      semver: 7.5.0
+      semver: 7.5.2
     dev: true
 
   /npm-registry-fetch/13.3.1:
@@ -41248,7 +41246,7 @@ packages:
       cosmiconfig: 7.1.0
       klona: 2.0.6
       postcss: 8.4.21
-      semver: 7.5.0
+      semver: 7.5.2
       webpack: 5.78.0
 
   /postcss-loader/7.0.2_mquw4qchulb5tpkmg3p2j6qala:
@@ -41261,7 +41259,7 @@ packages:
       cosmiconfig: 7.1.0
       klona: 2.0.6
       postcss: 8.4.21
-      semver: 7.5.0
+      semver: 7.5.2
       webpack: 5.76.1
     dev: true
 
@@ -45151,7 +45149,7 @@ packages:
       neo-async: 2.6.2
       sass: 1.61.0
       schema-utils: 3.1.2
-      semver: 7.5.0
+      semver: 7.5.2
       webpack: 5.82.1
     dev: false
 
@@ -47030,7 +47028,7 @@ packages:
       mime: 2.6.0
       qs: 6.11.1
       readable-stream: 3.6.2
-      semver: 7.5.0
+      semver: 7.5.2
     transitivePeerDependencies:
       - supports-color
 
@@ -47048,7 +47046,7 @@ packages:
       mime: 2.6.0
       qs: 6.11.1
       readable-stream: 3.6.2
-      semver: 7.5.0
+      semver: 7.5.2
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -47066,7 +47064,7 @@ packages:
       methods: 1.1.2
       mime: 2.6.0
       qs: 6.11.1
-      semver: 7.5.0
+      semver: 7.5.2
     transitivePeerDependencies:
       - supports-color
 
@@ -49403,7 +49401,7 @@ packages:
       espree: 9.5.1
       esquery: 1.5.0
       lodash: 4.17.21
-      semver: 7.5.0
+      semver: 7.5.2
     transitivePeerDependencies:
       - supports-color
     dev: true
