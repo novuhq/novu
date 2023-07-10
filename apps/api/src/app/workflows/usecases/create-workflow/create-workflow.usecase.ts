@@ -129,7 +129,7 @@ export class CreateWorkflow {
     });
 
     const item = await this.notificationTemplateRepository.findById(savedTemplate._id, command.environmentId);
-    if (!item) throw new NotFoundException(`Notification template ${savedTemplate._id} is not found`);
+    if (!item) throw new NotFoundException(`Workflow ${savedTemplate._id} is not found`);
 
     await this.createChange.execute(
       CreateChangeCommand.create({
@@ -143,7 +143,7 @@ export class CreateWorkflow {
     );
 
     if (command.name !== 'On-boarding notification' && !command.__source?.startsWith('onboarding_')) {
-      this.analyticsService.track('Create Notification Template - [Platform]', command.userId, {
+      this.analyticsService.track('Create Workflow - [Platform]', command.userId, {
         _organization: command.organizationId,
         steps: command.steps?.length,
         channels: command.steps?.map((i) => i.template?.type),

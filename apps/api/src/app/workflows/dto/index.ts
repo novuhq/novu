@@ -1,3 +1,3 @@
-export * from './change-template-status-request.dto';
-export * from './create-notification-template.request.dto';
-export * from './update-notification-template-request.dto';
+export * from './change-workflow-status-request.dto';
+export * from './create-workflow.request.dto';
+export * from './update-workflow-request.dto';

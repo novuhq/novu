@@ -27,10 +27,10 @@ import { ChangeWorkflowActiveStatusCommand } from './usecases/change-workflow-ac
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { RootEnvironmentGuard } from '../auth/framework/root-environment-guard.service';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { WorkflowsResponse } from './dto/notification-template-response.dto';
-import { WorkflowsResponseDto } from './dto/notification-templates.response.dto';
+import { WorkflowsResponse } from './dto/workflow-response.dto';
+import { WorkflowsResponseDto } from './dto/workflows-response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { WorkflowsRequestDto } from './dto/notification-templates-request.dto';
+import { WorkflowsRequestDto } from './dto/workflows-request.dto';
 import { Roles } from '../auth/framework/roles.decorator';
 import { ApiResponse } from '../shared/framework/response.decorator';
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
@@ -42,12 +42,12 @@ import { CreateWorkflowQuery } from './queries';
 @ApiTags('Workflows')
 export class WorkflowsController {
   constructor(
-    private getNotificationTemplatesUsecase: GetWorkflows,
-    private createNotificationTemplateUsecase: CreateWorkflow,
-    private getNotificationTemplateUsecase: GetWorkflow,
-    private updateTemplateByIdUsecase: UpdateWorkflow,
-    private deleteTemplateByIdUsecase: DeleteWorkflow,
-    private changeTemplateActiveStatusUsecase: ChangeWorkflowActiveStatus
+    private getWorkflowsUsecase: GetWorkflows,
+    private createWorkflowUsecase: CreateWorkflow,
+    private getWorkflowUsecase: GetWorkflow,
+    private updateWorkflowByIdUsecase: UpdateWorkflow,
+    private deleteWorflowByIdUsecase: DeleteWorkflow,
+    private changeWorkflowActiveStatusUsecase: ChangeWorkflowActiveStatus
   ) {}
 
   @Get('')
@@ -58,7 +58,7 @@ export class WorkflowsController {
   })
   @ExternalApiAccessible()
   getWorkflows(@UserSession() user: IJwtPayload, @Query() query: WorkflowsRequestDto): Promise<WorkflowsResponseDto> {
-    return this.getNotificationTemplatesUsecase.execute(
+    return this.getWorkflowsUsecase.execute(
       GetWorkflowsCommand.create({
         organizationId: user.organizationId,
         userId: user._id,
@@ -81,7 +81,7 @@ export class WorkflowsController {
     @Param('workflowId') workflowId: string,
     @Body() body: UpdateWorkflowRequestDto
   ): Promise<WorkflowsResponse> {
-    return await this.updateTemplateByIdUsecase.execute(
+    return await this.updateWorkflowByIdUsecase.execute(
       UpdateWorkflowCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
@@ -111,7 +111,7 @@ export class WorkflowsController {
   })
   @ExternalApiAccessible()
   deleteWorkflowById(@UserSession() user: IJwtPayload, @Param('workflowId') workflowId: string): Promise<boolean> {
-    return this.deleteTemplateByIdUsecase.execute(
+    return this.deleteWorflowByIdUsecase.execute(
       GetWorkflowCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
@@ -132,7 +132,7 @@ export class WorkflowsController {
     @UserSession() user: IJwtPayload,
     @Param('workflowId') workflowId: string
   ): Promise<WorkflowsResponse> {
-    return this.getNotificationTemplateUsecase.execute(
+    return this.getWorkflowUsecase.execute(
       GetWorkflowCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
@@ -156,7 +156,7 @@ export class WorkflowsController {
     @Query() query: CreateWorkflowQuery,
     @Body() body: CreateWorkflowRequestDto
   ): Promise<WorkflowsResponse> {
-    return this.createNotificationTemplateUsecase.execute(
+    return this.createWorkflowUsecase.execute(
       CreateWorkflowCommand.create({
         organizationId: user.organizationId,
         userId: user._id,
@@ -190,7 +190,7 @@ export class WorkflowsController {
     @Body() body: ChangeWorkflowStatusRequestDto,
     @Param('workflowId') workflowId: string
   ): Promise<WorkflowsResponse> {
-    return this.changeTemplateActiveStatusUsecase.execute(
+    return this.changeWorkflowActiveStatusUsecase.execute(
       ChangeWorkflowActiveStatusCommand.create({
         organizationId: user.organizationId,
         userId: user._id,

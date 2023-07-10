@@ -79,7 +79,7 @@ export class UpdateWorkflow {
 
       if (!notificationGroup)
         throw new NotFoundException(
-          `Notification group with id ${command.notificationGroupId} not found, under environment ${command.environmentId}`
+          `Workflow group with id ${command.notificationGroupId} not found, under environment ${command.environmentId}`
         );
 
       updatePayload._notificationGroupId = command.notificationGroupId;
