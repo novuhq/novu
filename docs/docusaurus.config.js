@@ -137,7 +137,7 @@ module.exports = {
             items: [
               {
                 label: 'Discord',
-                href: 'https://discord.novu.co',
+                href: 'https://discord.gg/novu',
               },
               {
                 label: 'Twitter',

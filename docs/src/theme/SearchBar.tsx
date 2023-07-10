@@ -60,10 +60,12 @@ export default function SearchBarWrapper() {
   }, []);
 
   return (
-    <BrowserOnly fallback={<div>Loading...</div>}>
-      {() => {
-        return SearchBar ? <SearchBar {...searchBarProps} /> : <div>Loading...</div>;
-      }}
-    </BrowserOnly>
+    <div className="Inkeep-Search">
+      <BrowserOnly fallback={<div></div>}>
+        {() => {
+          return SearchBar ? <SearchBar {...searchBarProps} /> : <div></div>;
+        }}
+      </BrowserOnly>
+    </div>
   );
 }

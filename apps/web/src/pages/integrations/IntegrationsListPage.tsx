@@ -4,8 +4,7 @@ import { useCallback, useMemo } from 'react';
 
 import PageContainer from '../../components/layout/components/PageContainer';
 import PageHeader from '../../components/layout/components/PageHeader';
-import { Table, Text, withCellLoading } from '../../design-system';
-import { IExtendedColumn } from '../../design-system/table/Table';
+import { Table, Text, withCellLoading, IExtendedColumn } from '../../design-system';
 import { useIntegrations, useIsMultiProviderConfigurationEnabled } from '../../hooks';
 import { IntegrationsListToolbar } from './components/IntegrationsListToolbar';
 import { useFetchEnvironments } from '../../hooks/useFetchEnvironments';
@@ -63,15 +62,15 @@ const IntegrationsList = () => {
   const { integrations, loading: areIntegrationsLoading } = useIntegrations();
   const isLoading = areEnvironmentsLoading || areIntegrationsLoading;
   const hasIntegrations = integrations && integrations?.length > 0;
-  const data = useMemo<ITableIntegration[] | undefined>(
-    () => integrations?.map((el) => mapToTableIntegration(el, environments)),
-    [integrations, environments]
-  );
+
+  const data = useMemo<ITableIntegration[] | undefined>(() => {
+    return (integrations ?? []).map((el) => mapToTableIntegration(el, environments));
+  }, [integrations, environments]);
 
   const navigate = useNavigate();
 
   const onRowClickCallback = useCallback((item) => {
-    navigate(`/integrations/${item.original.identifier}`);
+    navigate(`/integrations/${item.original.integrationId}`);
   }, []);
 
   const onChannelClickCallback = useCallback((item) => {

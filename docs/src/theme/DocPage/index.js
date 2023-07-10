@@ -1,8 +1,8 @@
 import React, { createContext } from 'react';
-import DocPage from '@theme/DocPage';
+import DocPage from '@docusaurus/theme-common';
 import { DocsSidebarProvider } from '@docusaurus/theme-common/internal';
 
-export const SidebarContext = createContext('default');
+export const SidebarContext = createContext([]);
 
 export default function DocPageWrapper(props) {
   return (
