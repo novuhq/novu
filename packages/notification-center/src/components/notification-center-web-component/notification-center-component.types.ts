@@ -41,6 +41,14 @@ type SelectedPopoverProps = Pick<
     offset?: IPopoverNotificationCenterProps['offset'];
     position?: IPopoverNotificationCenterProps['position'];
   };
+} & {
+  /**
+   * @deprecated Use popoverConfig instead
+   */
+  popover?: {
+    offset?: IPopoverNotificationCenterProps['offset'];
+    position?: IPopoverNotificationCenterProps['position'];
+  };
 };
 type PopoverProps = SelectedPopoverProps & {
   onNotificationClick?: IPopoverNotificationCenterProps['onNotificationClick'];
