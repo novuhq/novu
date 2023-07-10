@@ -195,6 +195,8 @@ export class SendMessageChat extends SendMessageBase {
       return;
     }
 
+    await this.sendSelectedIntegrationExecution(command.job, integration);
+
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
