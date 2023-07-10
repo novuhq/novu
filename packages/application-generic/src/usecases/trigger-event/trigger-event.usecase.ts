@@ -98,8 +98,9 @@ export class TriggerEvent {
      */
     if (!template) {
       const message = 'Notification template could not be found';
-      Logger.error(message, LOG_CONTEXT);
-      throw new ApiException(message);
+      const error = new ApiException(message);
+      Logger.error(message, error, LOG_CONTEXT);
+      throw error;
     }
 
     const templateProviderIds = await this.getProviderIdsForTemplate(

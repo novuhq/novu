@@ -23,9 +23,10 @@ describe('Create Integration - /integration (POST)', function () {
   it('should get the email integration successfully', async function () {
     const integrations = (await session.testAgent.get(`/v1/integrations`)).body.data;
 
-    const emailIntegrations: any[] = integrations
-      .filter((searchIntegration) => searchIntegration.channel === ChannelTypeEnum.EMAIL)
-      .filter((integration) => integration.providerId !== EmailProviderIdEnum.Novu);
+    const emailIntegrations: any[] = integrations.filter(
+      (searchIntegration) =>
+        searchIntegration.channel === ChannelTypeEnum.EMAIL && searchIntegration.providerId !== EmailProviderIdEnum.Novu
+    );
 
     expect(emailIntegrations.length).to.eql(2);
 
@@ -41,9 +42,10 @@ describe('Create Integration - /integration (POST)', function () {
   it('should get the sms integration successfully', async function () {
     const integrations = (await session.testAgent.get(`/v1/integrations`)).body.data;
 
-    const smsIntegrations: any[] = integrations
-      .filter((searchIntegration) => searchIntegration.channel === ChannelTypeEnum.SMS)
-      .filter((integration) => integration.providerId !== SmsProviderIdEnum.Novu);
+    const smsIntegrations: any[] = integrations.filter(
+      (searchIntegration) =>
+        searchIntegration.channel === ChannelTypeEnum.SMS && searchIntegration.providerId !== SmsProviderIdEnum.Novu
+    );
 
     expect(smsIntegrations.length).to.eql(2);
 

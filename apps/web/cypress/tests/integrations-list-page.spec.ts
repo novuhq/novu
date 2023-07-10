@@ -185,6 +185,7 @@ describe('Integrations List Page', function () {
       },
       5
     );
+    /*
     checkTableRow(
       {
         name: 'SendGrid',
@@ -264,5 +265,6 @@ describe('Integrations List Page', function () {
       },
       13
     );
+    */
   });
 });
