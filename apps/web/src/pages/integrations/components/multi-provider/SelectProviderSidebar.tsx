@@ -131,7 +131,7 @@ export function SelectProviderSidebar() {
         </Group>
       }
     >
-      <SelectProviderBodyConteiner>
+      <SelectProviderBodyContainer>
         <Input
           type={'search'}
           onChange={(e) => {
@@ -172,7 +172,7 @@ export function SelectProviderSidebar() {
               );
             })}
         </CenterDiv>
-      </SelectProviderBodyConteiner>
+      </SelectProviderBodyContainer>
     </Sidebar>
   );
 }
@@ -244,7 +244,7 @@ const CenterDiv = styled.div`
   line-height: 20px;
 `;
 
-const SelectProviderBodyConteiner = styled.form`
+const SelectProviderBodyContainer = styled.form`
   flex: 1;
   display: flex;
   flex-direction: column;

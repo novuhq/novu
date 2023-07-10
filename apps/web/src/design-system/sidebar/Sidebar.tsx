@@ -5,6 +5,7 @@ import styled from '@emotion/styled';
 import { colors, shadows } from '../config';
 import { ArrowLeft, Close } from '../icons';
 import { When } from '../../components/utils/When';
+import { useKeyDown } from '../../hooks';
 
 const HeaderHolder = styled.div`
   display: flex;
@@ -94,17 +95,7 @@ export const Sidebar = ({
 }) => {
   const { classes: drawerClasses } = useDrawerStyles();
 
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+  useKeyDown('Escape', onClose);
 
   return (
     <Drawer

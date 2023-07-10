@@ -32,6 +32,7 @@ import { NovuInAppSetupWarning } from './components/NovuInAppSetupWarning';
 import { ProviderImage } from './components/multi-provider/SelectProviderSidebar';
 import { ProviderInfo } from './components/multi-provider/ProviderInfo';
 import { NovuProviderSidebarContent } from './components/multi-provider/NovuProviderSidebarContent';
+import { ROUTES } from '../../constants/routes.enum';
 
 interface IProviderForm {
   name: string;
@@ -40,10 +41,15 @@ interface IProviderForm {
   identifier: string;
 }
 
+enum SidebarStateEnum {
+  NORMAL = 'normal',
+  EXPANDED = 'expanded',
+}
+
 export function UpdateProviderPage() {
   const { environments, isLoading: areEnvironmentsLoading } = useFetchEnvironments();
   const [selectedProvider, setSelectedProvider] = useState<IIntegratedProvider | null>(null);
-  const [sidebarState, setSidebarState] = useState<'normal' | 'expanded'>('normal');
+  const [sidebarState, setSidebarState] = useState<SidebarStateEnum>(SidebarStateEnum.NORMAL);
   const [framework, setFramework] = useState<FrameworkEnum | null>(null);
   const { providers, isLoading: areProvidersLoading } = useProviders();
   const { integrationId } = useParams();
@@ -122,17 +128,17 @@ export function UpdateProviderPage() {
   }, [integrationId, providers]);
 
   const onFrameworkClickCallback = (newFramework: FrameworkEnum) => {
-    setSidebarState('expanded');
+    setSidebarState(SidebarStateEnum.EXPANDED);
     setFramework(newFramework);
   };
 
   const onClose = () => {
-    navigate('/integrations');
+    navigate(ROUTES.INTEGRATIONS);
   };
 
   const onBack = () => {
-    if (sidebarState === 'expanded') {
-      setSidebarState('normal');
+    if (sidebarState === SidebarStateEnum.EXPANDED) {
+      setSidebarState(SidebarStateEnum.NORMAL);
       setFramework(null);
     }
   };
@@ -226,11 +232,11 @@ export function UpdateProviderPage() {
           <SetupTimeline
             framework={framework?.toString() ?? ''}
             onDone={() => {
-              setSidebarState('normal');
+              setSidebarState(SidebarStateEnum.NORMAL);
               successMessage('Successfully configured Novu In-App');
             }}
             onConfigureLater={() => {
-              setSidebarState('normal');
+              setSidebarState(SidebarStateEnum.NORMAL);
             }}
           />
           <Box ml={70}>

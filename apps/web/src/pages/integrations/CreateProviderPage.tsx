@@ -1,7 +1,9 @@
 import { useMemo } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { IProviderConfig, providers } from '@novu/shared';
+
 import { CreateProviderInstanceSidebar } from './components/multi-provider/CreateProviderInstanceSidebar';
+import { ROUTES } from '../../constants/routes.enum';
 
 export function CreateProviderPage() {
   const { channel, providerId } = useParams();
@@ -19,16 +21,16 @@ export function CreateProviderPage() {
   return (
     <CreateProviderInstanceSidebar
       onGoBack={() => {
-        if (location.pathname.includes('/integrations/create/')) {
-          navigate('/integrations/create');
+        if (location.pathname.includes(`${ROUTES.INTEGRATIONS_CREATE}/`)) {
+          navigate(ROUTES.INTEGRATIONS_CREATE);
 
           return;
         }
 
-        navigate('/integrations');
+        navigate(ROUTES.INTEGRATIONS);
       }}
       onClose={() => {
-        navigate('/integrations');
+        navigate(ROUTES.INTEGRATIONS);
       }}
       provider={foundProvider}
     />
