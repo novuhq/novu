@@ -261,8 +261,6 @@ const ActionButtonWrapper = styled.div`
 
 const TemplateListTableWrapper = styled.div`
   tr:hover {
-    cursor: pointer;
-
     ${ActionButtonWrapper} {
       a {
         opacity: 1;

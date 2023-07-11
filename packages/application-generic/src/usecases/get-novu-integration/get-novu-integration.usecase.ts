@@ -24,11 +24,11 @@ export class GetNovuIntegration {
     private integrationRepository: IntegrationRepository,
     private calculateLimitNovuIntegration: CalculateLimitNovuIntegration,
     private organizationRepository: OrganizationRepository,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
   ) {}
 
   async execute(
-    command: GetNovuIntegrationCommand
+    command: GetNovuIntegrationCommand,
   ): Promise<IntegrationEntity | undefined> {
     const channelType = command.channelType;
 
@@ -55,7 +55,7 @@ export class GetNovuIntegration {
       _environmentId: command.environmentId,
     });
 
-    if (activeIntegrationsCount > 0) {
+    if (activeIntegrationsCount > 0 && !command.ignoreActiveCount) {
       return;
     }
 
@@ -64,7 +64,7 @@ export class GetNovuIntegration {
         channelType: channelType,
         organizationId: command.organizationId,
         environmentId: command.environmentId,
-      })
+      }),
     );
 
     if (!limit) {
@@ -80,37 +80,42 @@ export class GetNovuIntegration {
           organizationId: command.organizationId,
           environmentId: command.environmentId,
           providerId: CalculateLimitNovuIntegration.getProviderId(
-            command.channelType
+            command.channelType,
           ),
           ...limit,
-        }
+        },
       );
       throw new ConflictException(
-        `Limit for Novus ${channelType.toLowerCase()} provider was reached.`
+        `Limit for Novus ${channelType.toLowerCase()} provider was reached.`,
       );
     }
 
     const organization = await this.organizationRepository.findById(
-      command.organizationId
+      command.organizationId,
     );
+
+    const active = activeIntegrationsCount === 0;
 
     switch (command.channelType) {
       case ChannelTypeEnum.EMAIL:
-        return this.createNovuEmailIntegration(organization);
+        return this.createNovuEmailIntegration(organization, command, active);
       case ChannelTypeEnum.SMS:
-        return this.createNovuSMSIntegration();
+        return this.createNovuSMSIntegration(command, active);
       default:
         return undefined;
     }
   }
 
   private createNovuEmailIntegration(
-    organization: OrganizationEntity | null
+    organization: OrganizationEntity | null,
+    command: GetNovuIntegrationCommand,
+    active = true,
   ): IntegrationEntity {
     const item = new IntegrationEntity();
     item.providerId = EmailProviderIdEnum.Novu;
-    item.active = true;
+    item.active = active;
     item.channel = ChannelTypeEnum.EMAIL;
+    item.name = 'Novu Email';
 
     item.credentials = {
       apiKey: process.env.NOVU_EMAIL_INTEGRATION_API_KEY,
@@ -119,14 +124,18 @@ export class GetNovuIntegration {
       ipPoolName: 'Demo',
     };
 
-    return item;
+    return this.mapNovuItem(item, command);
   }
 
-  private createNovuSMSIntegration(): IntegrationEntity {
+  private createNovuSMSIntegration(
+    command: GetNovuIntegrationCommand,
+    active = true,
+  ): IntegrationEntity {
     const item = new IntegrationEntity();
     item.providerId = SmsProviderIdEnum.Novu;
-    item.active = true;
+    item.active = active;
     item.channel = ChannelTypeEnum.SMS;
+    item.name = 'Novu SMS';
 
     item.credentials = {
       accountSid: process.env.NOVU_SMS_INTEGRATION_ACCOUNT_SID,
@@ -134,7 +143,18 @@ export class GetNovuIntegration {
       from: process.env.NOVU_SMS_INTEGRATION_SENDER,
     };
 
-    return item;
+    return this.mapNovuItem(item, command);
+  }
+
+  private mapNovuItem(
+    entity: IntegrationEntity,
+    command: GetNovuIntegrationCommand,
+  ): IntegrationEntity {
+    entity._environmentId = command.environmentId;
+    entity.identifier = entity.providerId;
+    entity._id = entity.providerId;
+
+    return entity;
   }
 
   public static mapProviders(type: ChannelTypeEnum, providerId: string) {

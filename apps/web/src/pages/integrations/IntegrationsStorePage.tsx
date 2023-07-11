@@ -12,6 +12,7 @@ import {
   InAppProviderIdEnum,
   ProvidersIdEnum,
   SmsProviderIdEnum,
+  ICredentials,
 } from '@novu/shared';
 
 import PageHeader from '../../components/layout/components/PageHeader';
@@ -72,10 +73,10 @@ export function IntegrationsStore() {
             opened={isModalOpened}
             onClose={() => setModalIsOpened(false)}
           >
-            <When truthy={!provider?.novu && provider?.providerId !== InAppProviderIdEnum.Novu}>
+            <When truthy={provider && !provider?.novu && provider?.providerId !== InAppProviderIdEnum.Novu}>
               <ConnectIntegrationForm
                 onClose={() => setModalIsOpened(false)}
-                provider={provider}
+                provider={provider as IIntegratedProvider}
                 showModal={handlerShowModal}
                 createModel={isCreateIntegrationModal}
               />
@@ -150,34 +151,9 @@ export interface IIntegratedProvider {
   logoFileName: ILogoFileName;
   betaVersion: boolean;
   novu?: boolean;
-}
-
-export interface ICredentials {
-  apiKey?: string;
-  user?: string;
-  secretKey?: string;
-  domain?: string;
-  password?: string;
-  host?: string;
-  port?: string;
-  secure?: boolean;
-  region?: string;
-  accountSid?: string;
-  messageProfileId?: string;
-  token?: string;
-  from?: string;
-  senderName?: string;
-  applicationId?: string;
-  clientId?: string;
-  projectName?: string;
-  serviceAccount?: string;
-  baseUrl?: string;
-  webhookUrl?: string;
-  requireTls?: boolean;
-  ignoreTls?: boolean;
-  tlsOptions?: Record<string, unknown>;
-  redirectUrl?: string;
-  hmac?: boolean;
+  environmentId?: string;
+  name?: string;
+  identifier?: string;
 }
 
 export interface IntegrationEntity {
@@ -186,6 +162,10 @@ export interface IntegrationEntity {
   _environmentId: string;
 
   _organizationId: string;
+
+  name: string;
+
+  identifier: string;
 
   providerId: ProvidersIdEnum;
 

@@ -13,6 +13,7 @@
     "declaration": false,
     "declarationMap": false,
     "sourceMap": true,
+    "removeComments": false,
     "baseUrl": "."
   },
   "exclude": ["src/**/*.test.*", "src/*.test.*", "node_modules", "**/node_modules/*"]

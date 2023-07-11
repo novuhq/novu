@@ -185,17 +185,17 @@ Simply delete the button element. Your component should look like this:
 
 You should now see a **bell button** that opens the notification center when clicked. This bell can be customized to your preference, and we will style and modify it in a later step.
 
-## Create A Notification Template
+## Create A Notification Workflow
 
-The first step to trigger notifications is to create a notification template. A template is like a map that holds the entire flow of messages sent to the subscriber.
+The first step to trigger notifications is to create a notification workflow. A workflow is like a map that holds the entire flow of messages sent to the subscriber.
 
 ::::info
 The recipients of a triggered notification are called subscribers.
 ::::
 
-The template includes the following:
+The workflow includes the following:
 
-- Notification template name and Identifier
+- Notification workflow name and Identifier
 - Channel tailored content:
 
 | Channel | Content Style                                                                                 |
@@ -206,11 +206,11 @@ The template includes the following:
 | Chat    | Text with the option to use handlebars syntax, {{ }} to inject custom variables.              |
 | In-App  | Text                                                                                          |
 
-Please proceed to create a notification template.
+Please proceed to create a notification workflow.
 
-1. Click **Notifications** on the left sidebar of your Novu dashboard.
+1. Click **Workflows** on the left sidebar of your Novu dashboard.
 2. Click the **Create Workflow** button on the top right.
-3. The name of a new notification template is currently "Untitled." Rename it to a more suitable title.
+3. The name of a new notification workflow is currently "Untitled." Rename it to a more suitable title.
 4. Select **In-App** as the channel you want to add.
    ![In-App Channel](https://res.cloudinary.com/dxc6bnman/image/upload/f_auto,q_auto/v1685465591/guides/untitled-in-app-notification-template_1_ctkdtw.png)
 5. Click on the recently added **In-App** channel and configure it according to your preferences. Once you’re done, click **Update** to save your configuration.
@@ -225,7 +225,7 @@ I’ll briefly explain the function of each label in the image above.
 - **5-Redirect URL** - This is the URL to which a subscriber can be directed when they click on a notification item.
 - **6-Filter** - This feature allows you to configure the criteria for delivering notifications. For instance, you can apply a filter based on a subscriber's online status to send them an email if they were online within the last hour. Read [more about filters](https://docs.novu.co/platform/step-filter/#subscriber-seen--read-filters).
 
-Feel free to add only text for now and rename the notification template to `Onboarding In App`. It automatically creates a slug-like Identifier that will be needed in later steps to trigger a notification.
+Feel free to add only text for now and rename the notification workflow to `Onboarding In App`. It automatically creates a slug-like Identifier that will be needed in later steps to trigger a notification.
 
 ![In-App editor](https://res.cloudinary.com/dxc6bnman/image/upload/f_auto,q_auto/v1685465861/guides/Screenshot_2023-05-21_at_09.33.43_v2yrif.png)
 ![Update](https://res.cloudinary.com/dxc6bnman/image/upload/f_auto,q_auto/v1685465862/guides/Screenshot_2023-05-21_at_09.20.51_cztqcu.png)
@@ -267,7 +267,7 @@ To trigger a notification, simply run the codesandbox below with the correct cre
 
 <iframe width="800" height="450" src="https://codesandbox.io/p/sandbox/trigger-notification-rzluxk?file=%2Findex.js%3A3%2C41&embed=1" allowfullscreen></iframe>
 
-`onboarding-in-app` is the Notification template identifier we created earlier.
+`onboarding-in-app` is the Notification workflow identifier we created earlier.
 
 Ensure the `subscriberId` value in the backend code that triggers the notification matches the `subscriberId` in your **NotificationCenterComponent** code.
 
@@ -296,7 +296,7 @@ Check your app again. You should see the recently triggered notification!
 
 ## Next Steps
 
-Great job! If you've reached this point, you should now have successfully set up the notification center, created a subscriber, notification template, configured a channel provider and triggered a notification in your Vue application.
+Great job! If you've reached this point, you should now have successfully set up the notification center, created a subscriber, notification workflow, configured a channel provider and triggered a notification in your Vue application.
 
 To learn more about the Notification Center and explore Novu's features and capabilities, check out, check out:
 
