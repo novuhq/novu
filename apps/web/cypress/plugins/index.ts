@@ -1,7 +1,7 @@
 /**
  * @type {Cypress.PluginConfig}
  */
-import { DalService, NotificationTemplateEntity } from '@novu/dal';
+import { DalService, NotificationGroupRepository, NotificationTemplateEntity } from '@novu/dal';
 import {
   UserSession,
   SubscribersService,
@@ -9,8 +9,10 @@ import {
   NotificationsService,
   OrganizationService,
   UserService,
+  EnvironmentService,
 } from '@novu/testing';
 import { JobsService } from '@novu/testing';
+import { getPopularTemplateIds } from '@novu/shared';
 
 const jobsService = new JobsService();
 
@@ -67,7 +69,7 @@ module.exports = (on, config) => {
       await dal.connect('mongodb://localhost:27017/novu-test');
 
       const userService = new UserService();
-      await userService.createTestUser();
+      await userService.createCypressTestUser();
 
       return true;
     },
@@ -95,6 +97,7 @@ module.exports = (on, config) => {
         noEnvironment?: boolean;
         partialTemplate?: Partial<NotificationTemplateEntity>;
         noTemplates?: boolean;
+        showOnBoardingTour?: boolean;
       } = {}
     ) {
       const dal = new DalService();
@@ -103,6 +106,7 @@ module.exports = (on, config) => {
       const session = new UserSession('http://localhost:1336');
       await session.initialize({
         noEnvironment: settings?.noEnvironment,
+        showOnBoardingTour: settings?.showOnBoardingTour,
       });
 
       const notificationTemplateService = new NotificationTemplateService(
@@ -135,6 +139,89 @@ module.exports = (on, config) => {
         environment: session.environment,
         templates,
       };
+    },
+    async makeBlueprints() {
+      const dal = new DalService();
+      await dal.connect('mongodb://localhost:27017/novu-test');
+
+      const userService = new UserService();
+      const user = await userService.createUser();
+
+      const notificationGroupRepository = new NotificationGroupRepository();
+      const organizationService = new OrganizationService();
+      const environmentService = new EnvironmentService();
+
+      let organization = await organizationService.getOrganization(config.env.BLUEPRINT_CREATOR);
+
+      if (!organization) {
+        organization = await organizationService.createOrganization({ _id: config.env.BLUEPRINT_CREATOR });
+      }
+
+      const organizationId = organization._id;
+
+      let developmentEnvironment = await environmentService.getDevelopmentEnvironment(organizationId);
+      if (!developmentEnvironment) {
+        developmentEnvironment = await environmentService.createDevelopmentEnvironment(organizationId, user._id);
+      }
+
+      let productionEnvironment = await environmentService.getProductionEnvironment(organizationId);
+      if (!productionEnvironment) {
+        productionEnvironment = await environmentService.createProductionEnvironment(
+          organizationId,
+          user._id,
+          developmentEnvironment._id
+        );
+      }
+
+      const productionEnvironmentId = productionEnvironment._id;
+
+      const productionGeneralGroup = await notificationGroupRepository.findOne({
+        name: 'General',
+        _environmentId: productionEnvironmentId,
+        _organizationId: organizationId,
+      });
+
+      if (!productionGeneralGroup) {
+        await notificationGroupRepository.create({
+          name: 'General',
+          _environmentId: productionEnvironmentId,
+          _organizationId: organizationId,
+        });
+      }
+
+      const productionNotificationTemplateService = new NotificationTemplateService(
+        user._id,
+        organizationId,
+        productionEnvironmentId
+      );
+
+      const popularTemplateIds = getPopularTemplateIds({ production: false });
+
+      const blueprintTemplates = await productionNotificationTemplateService.getBlueprintTemplates(
+        organizationId,
+        productionEnvironmentId
+      );
+
+      if (blueprintTemplates.length === 0) {
+        return await Promise.all([
+          productionNotificationTemplateService.createTemplate({
+            _id: popularTemplateIds[0],
+            noFeedId: true,
+            noLayoutId: true,
+            name: ':fa-solid fa-star: Super cool workflow',
+            isBlueprint: true,
+          }),
+          productionNotificationTemplateService.createTemplate({
+            _id: popularTemplateIds[1],
+            noFeedId: true,
+            noLayoutId: true,
+            name: ':fa-solid fa-lock: Password reset',
+            isBlueprint: true,
+          }),
+        ]);
+      }
+
+      return blueprintTemplates;
     },
   });
 };

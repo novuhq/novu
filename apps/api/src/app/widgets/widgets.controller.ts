@@ -5,6 +5,8 @@ import {
   DefaultValuePipe,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Patch,
   Post,
@@ -12,7 +14,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiExcludeController, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { ApiExcludeController, ApiNoContentResponse, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { AnalyticsService, GetSubscriberPreference, GetSubscriberPreferenceCommand } from '@novu/application-generic';
 import { MessageEntity, SubscriberEntity } from '@novu/dal';
 import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
@@ -38,18 +40,20 @@ import { InitializeSession } from './usecases/initialize-session/initialize-sess
 import { UpdateMessageActionsCommand } from './usecases/mark-action-as-done/update-message-actions.command';
 import { UpdateMessageActions } from './usecases/mark-action-as-done/update-message-actions.usecase';
 import { UpdateSubscriberPreferenceRequestDto } from './dtos/update-subscriber-preference-request.dto';
-import { StoreQuery } from './queries/store.query';
 import { GetFeedCountCommand } from './usecases/get-feed-count/get-feed-count.command';
 import { GetFeedCount } from './usecases/get-feed-count/get-feed-count.usecase';
 import { GetCountQuery } from './queries/get-count.query';
 import { RemoveMessageCommand } from './usecases/remove-message/remove-message.command';
 import { RemoveMessage } from './usecases/remove-message/remove-message.usecase';
-import { MarkEnum, MarkMessageAsCommand } from './usecases/mark-message-as/mark-message-as.command';
+import { MarkMessageAsCommand } from './usecases/mark-message-as/mark-message-as.command';
 import { MarkMessageAs } from './usecases/mark-message-as/mark-message-as.usecase';
 import { MarkAllMessagesAsCommand } from './usecases/mark-all-messages-as/mark-all-messages-as.command';
 import { MarkAllMessagesAs } from './usecases/mark-all-messages-as/mark-all-messages-as.usecase';
 import { GetNotificationsFeedDto } from './dtos/get-notifications-feed-request.dto';
 import { LimitPipe } from './pipes/limit-pipe/limit-pipe';
+import { RemoveAllMessagesCommand } from './usecases/remove-messages/remove-all-messages.command';
+import { RemoveAllMessages } from './usecases/remove-messages/remove-all-messages.usecase';
+import { RemoveAllMessagesDto } from './dtos/remove-all-messages.dto';
 
 @Controller('/widgets')
 @ApiExcludeController()
@@ -60,6 +64,7 @@ export class WidgetsController {
     private getFeedCountUsecase: GetFeedCount,
     private markMessageAsUsecase: MarkMessageAs,
     private removeMessageUsecase: RemoveMessage,
+    private removeAllMessagesUsecase: RemoveAllMessages,
     private updateMessageActionsUsecase: UpdateMessageActions,
     private getOrganizationUsecase: GetOrganizationData,
     private getSubscriberPreferenceUsecase: GetSubscriberPreference,
@@ -186,56 +191,6 @@ export class WidgetsController {
   }
 
   @ApiOperation({
-    summary: 'Mark a subscriber feed message as seen',
-    description: 'This endpoint is deprecated please address /messages/markAs instead',
-    deprecated: true,
-  })
-  @UseGuards(AuthGuard('subscriberJwt'))
-  @Post('/messages/:messageId/seen')
-  async markMessageAsSeen(
-    @SubscriberSession() subscriberSession: SubscriberEntity,
-    @Param('messageId') messageId: string
-  ): Promise<MessageEntity> {
-    const messageIds = this.toArray(messageId);
-    if (!messageIds) throw new BadRequestException('messageId is required');
-
-    const command = MarkMessageAsCommand.create({
-      organizationId: subscriberSession._organizationId,
-      subscriberId: subscriberSession.subscriberId,
-      environmentId: subscriberSession._environmentId,
-      messageIds,
-      mark: { [MarkEnum.SEEN]: true },
-    });
-
-    return (await this.markMessageAsUsecase.execute(command))[0];
-  }
-
-  @ApiOperation({
-    summary: 'Mark a subscriber feed message as read',
-    description: 'This endpoint is deprecated please address /messages/markAs instead',
-    deprecated: true,
-  })
-  @UseGuards(AuthGuard('subscriberJwt'))
-  @Post('/messages/:messageId/read')
-  async markMessageAsRead(
-    @SubscriberSession() subscriberSession: SubscriberEntity,
-    @Param('messageId') messageId: string | string[]
-  ): Promise<MessageEntity[]> {
-    const messageIds = this.toArray(messageId);
-    if (!messageIds) throw new BadRequestException('messageId is required');
-
-    const command = MarkMessageAsCommand.create({
-      organizationId: subscriberSession._organizationId,
-      subscriberId: subscriberSession.subscriberId,
-      environmentId: subscriberSession._environmentId,
-      messageIds,
-      mark: { [MarkEnum.READ]: true },
-    });
-
-    return await this.markMessageAsUsecase.execute(command);
-  }
-
-  @ApiOperation({
     summary: 'Mark a subscriber feed message or messages as seen or as read',
   })
   @UseGuards(AuthGuard('subscriberJwt'))
@@ -280,6 +235,27 @@ export class WidgetsController {
   }
 
   @ApiOperation({
+    summary: `Remove a subscriber's feed messages`,
+  })
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Delete('/messages')
+  @ApiNoContentResponse({ description: 'Messages removed' })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async removeAllMessages(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Query() query: RemoveAllMessagesDto
+  ): Promise<void> {
+    const command = RemoveAllMessagesCommand.create({
+      organizationId: subscriberSession._organizationId,
+      subscriberId: subscriberSession.subscriberId,
+      environmentId: subscriberSession._environmentId,
+      feedId: query.feedId,
+    });
+
+    await this.removeAllMessagesUsecase.execute(command);
+  }
+
+  @ApiOperation({
     summary: "Mark subscriber's all unread messages as read",
   })
   @UseGuards(AuthGuard('subscriberJwt'))
@@ -301,7 +277,7 @@ export class WidgetsController {
   }
 
   @ApiOperation({
-    summary: "Mark subscriber's all unread messages as seen",
+    summary: "Mark subscriber's all unseen messages as seen",
   })
   @UseGuards(AuthGuard('subscriberJwt'))
   @Post('/messages/seen')

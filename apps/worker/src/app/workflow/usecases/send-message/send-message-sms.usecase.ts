@@ -13,11 +13,11 @@ import {
   DetailEnum,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-  GetDecryptedIntegrations,
-  GetDecryptedIntegrationsCommand,
+  SelectIntegration,
   CompileTemplate,
   CompileTemplateCommand,
   SmsFactory,
+  GetNovuIntegration,
 } from '@novu/application-generic';
 
 import { CreateLog } from '../../../shared/logs';
@@ -35,15 +35,9 @@ export class SendMessageSms extends SendMessageBase {
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
-    protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
+    protected selectIntegration: SelectIntegration
   ) {
-    super(
-      messageRepository,
-      createLogUsecase,
-      createExecutionDetails,
-      subscriberRepository,
-      getDecryptedIntegrationsUsecase
-    );
+    super(messageRepository, createLogUsecase, createExecutionDetails, subscriberRepository, selectIntegration);
   }
 
   @InstrumentUsecase()
@@ -54,16 +48,12 @@ export class SendMessageSms extends SendMessageBase {
     });
     if (!subscriber) throw new PlatformException('Subscriber not found');
 
-    const integration = await this.getIntegration(
-      GetDecryptedIntegrationsCommand.create({
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        channelType: ChannelTypeEnum.SMS,
-        findOne: true,
-        active: true,
-        userId: command.userId,
-      })
-    );
+    const integration = await this.getIntegration({
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+      channelType: ChannelTypeEnum.SMS,
+      userId: command.userId,
+    });
 
     Sentry.addBreadcrumb({
       message: 'Sending SMS',
@@ -117,6 +107,8 @@ export class SendMessageSms extends SendMessageBase {
 
       return;
     }
+
+    await this.sendSelectedIntegrationExecution(command.job, integration);
 
     const overrides = command.overrides[integration?.providerId] || {};
 
@@ -247,7 +239,7 @@ export class SendMessageSms extends SendMessageBase {
   ) {
     try {
       const smsFactory = new SmsFactory();
-      const smsHandler = smsFactory.getHandler(integration);
+      const smsHandler = smsFactory.getHandler(this.buildFactoryIntegration(integration));
       if (!smsHandler) {
         throw new PlatformException(`Sms handler for provider ${integration.providerId} is  not found`);
       }
@@ -308,5 +300,12 @@ export class SendMessageSms extends SendMessageBase {
         })
       );
     }
+  }
+
+  public buildFactoryIntegration(integration: IntegrationEntity, senderName?: string) {
+    return {
+      ...integration,
+      providerId: GetNovuIntegration.mapProviders(ChannelTypeEnum.SMS, integration.providerId),
+    };
   }
 }

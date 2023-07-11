@@ -5,6 +5,8 @@ import {
   DefaultValuePipe,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Patch,
   Post,
@@ -19,8 +21,7 @@ import {
   UpdateSubscriber,
   UpdateSubscriberCommand,
 } from '@novu/application-generic';
-import { ApiOperation, ApiTags, ApiExcludeEndpoint } from '@nestjs/swagger';
-
+import { ApiOperation, ApiTags, ApiOkResponse, ApiNoContentResponse } from '@nestjs/swagger';
 import { ButtonTypeEnum, ChatProviderIdEnum, IJwtPayload } from '@novu/shared';
 import { MessageEntity } from '@novu/dal';
 
@@ -46,7 +47,7 @@ import { UpdateSubscriberPreferenceResponseDto } from '../widgets/dtos/update-su
 import { UpdateSubscriberPreferenceRequestDto } from '../widgets/dtos/update-subscriber-preference-request.dto';
 import { MessageResponseDto } from '../widgets/dtos/message-response.dto';
 import { UnseenCountResponse } from '../widgets/dtos/unseen-count-response.dto';
-import { MarkEnum, MarkMessageAsCommand } from '../widgets/usecases/mark-message-as/mark-message-as.command';
+import { MarkMessageAsCommand } from '../widgets/usecases/mark-message-as/mark-message-as.command';
 import { UpdateMessageActionsCommand } from '../widgets/usecases/mark-action-as-done/update-message-actions.command';
 import { GetNotificationsFeedCommand } from '../widgets/usecases/get-notifications-feed/get-notifications-feed.command';
 import { GetNotificationsFeed } from '../widgets/usecases/get-notifications-feed/get-notifications-feed.usecase';
@@ -73,6 +74,11 @@ import { ChatOauthCallback } from './usecases/chat-oauth-callback/chat-oauth-cal
 import { ChatOauthCallbackCommand } from './usecases/chat-oauth-callback/chat-oauth-callback.command';
 import { ChatOauth } from './usecases/chat-oauth/chat-oauth.usecase';
 import { ChatOauthCommand } from './usecases/chat-oauth/chat-oauth.command';
+import {
+  DeleteSubscriberCredentialsCommand,
+  DeleteSubscriberCredentials,
+} from './usecases/delete-subscriber-credentials';
+import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 
 @Controller('/subscribers')
 @ApiTags('Subscribers')
@@ -92,7 +98,8 @@ export class SubscribersController {
     private updateMessageActionsUsecase: UpdateMessageActions,
     private updateSubscriberOnlineFlagUsecase: UpdateSubscriberOnlineFlag,
     private chatOauthCallbackUsecase: ChatOauthCallback,
-    private chatOauthUsecase: ChatOauth
+    private chatOauthUsecase: ChatOauth,
+    private deleteSubscriberCredentialsUsecase: DeleteSubscriberCredentials
   ) {}
 
   @Get('')
@@ -218,7 +225,32 @@ export class SubscribersController {
         subscriberId,
         providerId: body.providerId,
         credentials: body.credentials,
+        integrationIdentifier: body.integrationIdentifier,
         oauthHandler: OAuthHandlerEnum.EXTERNAL,
+      })
+    );
+  }
+
+  @Delete('/:subscriberId/credentials/:providerId')
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  @ApiNoContentResponse()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Delete subscriber credentials by providerId',
+    description: 'Delete subscriber credentials such as slack and expo tokens.',
+  })
+  async deleteSubscriberCredentials(
+    @UserSession() user: IJwtPayload,
+    @Param('subscriberId') subscriberId: string,
+    @Param('providerId') providerId: string
+  ): Promise<void> {
+    return await this.deleteSubscriberCredentialsUsecase.execute(
+      DeleteSubscriberCredentialsCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        subscriberId,
+        providerId,
       })
     );
   }
@@ -375,35 +407,6 @@ export class SubscribersController {
   }
 
   @ExternalApiAccessible()
-  @ApiExcludeEndpoint()
-  @UseGuards(JwtAuthGuard)
-  @Post('/:subscriberId/messages/:messageId/seen')
-  @ApiOperation({
-    summary: 'Mark a subscriber feed message as seen',
-    description: 'This endpoint is deprecated please address /:subscriberId/messages/markAs instead',
-    deprecated: true,
-  })
-  @ApiResponse(MessageResponseDto, 201)
-  async markMessageAsSeen(
-    @UserSession() user: IJwtPayload,
-    @Param('messageId') messageId: string,
-    @Param('subscriberId') subscriberId: string
-  ): Promise<MessageEntity> {
-    const messageIds = this.toArray(messageId);
-    if (!messageIds) throw new BadRequestException('messageId is required');
-
-    const command = MarkMessageAsCommand.create({
-      organizationId: user.organizationId,
-      environmentId: user.environmentId,
-      subscriberId: subscriberId,
-      messageIds,
-      mark: { [MarkEnum.SEEN]: true },
-    });
-
-    return (await this.markMessageAsUsecase.execute(command))[0];
-  }
-
-  @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
   @Post('/:subscriberId/messages/markAs')
   @ApiOperation({
@@ -474,6 +477,7 @@ export class SubscribersController {
         providerCode: query?.code,
         hmacHash: query?.hmacHash,
         environmentId: query?.environmentId,
+        integrationIdentifier: query?.integrationIdentifier,
         subscriberId,
         providerId,
       })
@@ -503,6 +507,7 @@ export class SubscribersController {
       ChatOauthCommand.create({
         hmacHash: query?.hmacHash,
         environmentId: query?.environmentId,
+        integrationIdentifier: query?.integrationIdentifier,
         subscriberId,
         providerId,
       })

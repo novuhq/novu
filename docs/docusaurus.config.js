@@ -138,7 +138,7 @@ const codeTheme = require('./src/utils/prism');
               items: [
                 {
                   label: 'Discord',
-                  href: 'https://discord.novu.co',
+                  href: 'https://discord.gg/novu',
                 },
                 {
                   label: 'Twitter',
@@ -159,7 +159,7 @@ const codeTheme = require('./src/utils/prism');
         },
         prism: {
           theme: codeTheme,
-          additionalLanguages: ['php', 'ruby', 'java'],
+          additionalLanguages: ['php', 'ruby', 'java', 'csharp', 'go', 'kotlin', 'python'],
         },
       }),
   }

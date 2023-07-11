@@ -52,33 +52,22 @@ export class MarkAllMessagesAs {
       channel: ChannelTypeEnum.IN_APP,
     });
 
+    const isMarkAsRead = command.markAs === 'read';
+
     this.wsQueueService.bullMqService.add(
       'sendMessage',
       {
-        event: 'unseen_count_changed',
+        event: isMarkAsRead ? 'unread_count_changed' : 'unseen_count_changed',
         userId: subscriber._id,
-        payload: {
-          unseenCount: 0,
-        },
+        payload: isMarkAsRead
+          ? { unreadCount: 0 }
+          : {
+              unseenCount: 0,
+            },
       },
       {},
       subscriber._organizationId
     );
-
-    if (command.markAs === 'read') {
-      await this.wsQueueService.bullMqService.add(
-        'sendMessage',
-        {
-          event: 'unread_count_changed',
-          userId: subscriber._id,
-          payload: {
-            unreadCount: 0,
-          },
-        },
-        {},
-        subscriber._organizationId
-      );
-    }
 
     this.analyticsService.track(
       `Mark all messages as ${command.markAs}- [Notification Center]`,

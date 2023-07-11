@@ -1,11 +1,27 @@
-import { IsBoolean, IsDefined, IsEnum, IsString, ValidateNested } from 'class-validator';
-import { ChannelTypeEnum, ICreateIntegrationBodyDto } from '@novu/shared';
-import { CredentialsDto } from './credentials.dto';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsBoolean, IsDefined, IsEnum, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+import { ChannelTypeEnum, ICreateIntegrationBodyDto } from '@novu/shared';
+
+import { CredentialsDto } from './credentials.dto';
 
 export class CreateIntegrationRequestDto implements ICreateIntegrationBodyDto {
-  @ApiProperty()
+  @ApiPropertyOptional({ type: String })
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @ApiPropertyOptional({ type: String })
+  @IsOptional()
+  @IsString()
+  identifier?: string;
+
+  @ApiPropertyOptional({ type: String })
+  @IsOptional()
+  @IsMongoId()
+  _environmentId?: string;
+
+  @ApiProperty({ type: String })
   @IsDefined()
   @IsString()
   providerId: string;
@@ -17,21 +33,24 @@ export class CreateIntegrationRequestDto implements ICreateIntegrationBodyDto {
   @IsEnum(ChannelTypeEnum)
   channel: ChannelTypeEnum;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     type: CredentialsDto,
   })
-  @IsDefined()
+  @IsOptional()
   @Type(() => CredentialsDto)
   @ValidateNested()
-  credentials: CredentialsDto;
+  credentials?: CredentialsDto;
 
-  @ApiProperty()
-  @IsDefined()
+  @ApiPropertyOptional({
+    type: Boolean,
+    description: 'If the integration is active the validation on the credentials field will run',
+  })
+  @IsOptional()
   @IsBoolean()
-  active: boolean;
+  active?: boolean;
 
-  @ApiProperty()
-  @IsDefined()
+  @ApiPropertyOptional({ type: Boolean })
+  @IsOptional()
   @IsBoolean()
-  check: boolean;
+  check?: boolean;
 }

@@ -1,8 +1,7 @@
 import { Body, Controller, Delete, Param, Post, Scope, UseGuards } from '@nestjs/common';
 import { ApiOkResponse, ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { v4 as uuidv4 } from 'uuid';
-import { IJwtPayload, ISubscribersDefine } from '@novu/shared';
-import { TriggerRecipientSubscriber } from '@novu/node';
+import { IJwtPayload, ISubscribersDefine, TriggerRecipientSubscriber } from '@novu/shared';
 import { EventsPerformanceService, SendTestEmail, SendTestEmailCommand } from '@novu/application-generic';
 
 import {
@@ -46,8 +45,8 @@ export class EventsController {
   @ApiOperation({
     summary: 'Trigger event',
     description: `
-    Trigger event is the main (and the only) way to send notification to subscribers. 
-    The trigger identifier is used to match the particular template associated with it. 
+    Trigger event is the main (and only) way to send notifications to subscribers. 
+    The trigger identifier is used to match the particular workflow associated with it. 
     Additional information can be passed according the body interface below.
     `,
   })

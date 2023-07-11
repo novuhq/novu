@@ -26,7 +26,7 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       password: Schema.Types.String,
       host: Schema.Types.String,
       port: Schema.Types.String,
-      secure: Schema.Types.String,
+      secure: Schema.Types.Boolean,
       region: Schema.Types.String,
       accountSid: Schema.Types.String,
       messageProfileId: Schema.Types.String,
@@ -46,12 +46,14 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       privateKey: Schema.Types.String,
       publicKey: Schema.Types.String,
       hmac: Schema.Types.Boolean,
+      ipPoolName: Schema.Types.String,
     },
-
     active: {
       type: Schema.Types.Boolean,
       default: false,
     },
+    name: Schema.Types.String,
+    identifier: Schema.Types.String,
   },
   schemaOptions
 );

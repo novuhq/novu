@@ -28,6 +28,7 @@ export enum CredentialsKeyEnum {
   PublicKey = 'publicKey',
   PrivateKey = 'privateKey',
   Hmac = 'hmac',
+  IpPoolName = 'ipPoolName',
 }
 
 export enum EmailProviderIdEnum {
@@ -48,6 +49,7 @@ export enum EmailProviderIdEnum {
   Outlook365 = 'outlook365',
   Novu = 'novu-email',
   SparkPost = 'sparkpost',
+  EmailWebhook = 'email-webhook',
 }
 
 export enum SmsProviderIdEnum {
@@ -68,6 +70,7 @@ export enum SmsProviderIdEnum {
   Maqsam = 'maqsam',
   Termii = 'termii',
   AfricasTalking = 'africas-talking',
+  Novu = 'novu-sms',
 }
 
 export enum ChatProviderIdEnum {

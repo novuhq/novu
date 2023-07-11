@@ -192,7 +192,8 @@ const TemplateEditorFormProvider = ({ children }) => {
           },
         });
         setTrigger(response.triggers[0]);
-        reset(form);
+        reset(mapNotificationTemplateToForm(response));
+
         if (showMessage) {
           successMessage('Trigger code is updated successfully', 'workflowSaved');
         }

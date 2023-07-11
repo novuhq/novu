@@ -1,3 +1,6 @@
+import FAQ from '@site/src/components/FAQ';
+import FAQItem from '@site/src/components/FAQItem';
+
 # Slack
 
 When using Slack you will have to save the integration credentials on the subscriber entity.
@@ -20,18 +23,41 @@ This step is optional, if you already have a Slack application you can reuse it.
 Novu will manage the OAuth flow and store the credentials
 
 1. Configure your Slack application as mentioned [below](/channels/chat/slack#slack-application-configuration).
-2. Add the `Add to Slack` button or the shareable URL to your application in order to request permission of access (scope: incoming-webhook).
-   <br/>  
-   Make sure to use the generated shareable URL that is located under Slack form in the <a href="https://web.novu.co/integrations" style={{textDecoration: "underline"}}>Integration Store</a>.
-   The Shareable URL should be on the following format https:<span/>//api.novu.co/v1/subscribers/SUBSCRIBER_ID/credentials/slack/oauth?environmentId=ENVIRONMENT_ID. <br/>
+2. Add the `Add to Slack` button or the `Shareable URL` to your application in order to request permission of access (scope: incoming-webhook).
 
-- SUBSCRIBER_ID is a custom identifier used when identifying your users within the Novu platform. [Read more here](/platform/subscribers). <br/>
-- ENVIRONMENT_ID is a context of an environment you can locate your environment id in the setting in the dashboard . <a href="https://web.novu.co/settings" style={{textDecoration: "underline"}}>Settings</a>.
+   Make sure you use the generated `Shareable URL` that you can find under Slack integration form in the <a href="https://web.novu.co/integrations" style={{textDecoration: "underline"}}>Integration Store</a>.
+   The `Shareable URL` should have the following format:
+
+   ```bash
+   https://api.novu.co/v1/subscribers/SUBSCRIBER_ID/credentials/slack/oauth?environmentId=ENVIRONMENT_ID&integrationIdentifier=INTEGRATION_IDENTIFIER.
+   ```
+
+   - SUBSCRIBER_ID is a custom identifier used when identifying your users within the Novu platform. [Read more here](/platform/subscribers). <br/>
+   - ENVIRONMENT_ID is a context of an environment you can locate your environment id in the setting in the dashboard . <a href="https://web.novu.co/settings" style={{textDecoration: "underline"}}>Settings</a>.
+     <br/>
+   - INTEGRATION_IDENTIFIER optional, is a unique identifier of the integration. You can locate your integration identifier in the <a href="https://web.novu.co/integrations" style={{textDecoration: "underline"}}>Integration Store</a>. When not provided the last created integration will be used.
+
+If you are using the `Add to Slack` button you have to provide the `Shareable URL` as the `redirect_uri` parameter like in this example. Make sure that the `Sharaeble URL` is url encoded.
+
+```html
+<a
+  href="https://slack.com/oauth/v2/authorize?client_id=CLIENT_ID&scope=incoming-webhook&user_scope=&redirect_uri=https%3A%2F%2Fapi.novu.co%2Fv1%2Fsubscribers%2FSUBSCRIBER_ID%2Fcredentials%2Fslack%2Foauth%3FenvironmentId%3DENVIRONMENT_ID%26integrationIdentifier%3DINTEGRATION_IDENTIFIER"
+  ><img
+    alt="Add to Slack"
+    height="40"
+    width="139"
+    src="https://platform.slack-edge.com/img/add_to_slack.png"
+    srcset="
+      https://platform.slack-edge.com/img/add_to_slack.png    1x,
+      https://platform.slack-edge.com/img/add_to_slack@2x.png 2x
+    "
+/></a>
+```
 
 ### Manual Management
 
-<details>
-<summary>Instructions on configuring https server</summary>
+<FAQ>
+<FAQItem title="Instructions on configuring https server">
 
 Create a new endpoint on your server that will handle the following steps (you can use Request Bin for an easy HTTPS service for redirects):
 
@@ -66,7 +92,8 @@ Create a new endpoint on your server that will handle the following steps (you c
 6. After the end-user finishes the authorization you will get the webhookUrl from the response of the OAuth under `body.incoming_webhook.url`, that you will use in step 3.
 7. You are all set up and ready to send your first chat message via our @novu/node package or directly using the REST API.
 
-</details>
+</FAQItem>
+</FAQ>
 
 ## Slack Application Configuration
 

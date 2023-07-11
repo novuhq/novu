@@ -36,16 +36,14 @@ import { NotificationTemplatesResponseDto } from './dto/notification-templates.r
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { NotificationTemplatesRequestDto } from './dto/notification-templates-request.dto';
 import { Roles } from '../auth/framework/roles.decorator';
-import { GetBlueprintNotificationTemplate } from './usecases/get-blueprint-notification-template/get-blueprint-notification-template.usecase';
-import { GetBlueprintNotificationTemplateCommand } from './usecases/get-blueprint-notification-template/get-blueprint-notification-template.command';
-import { CreateBlueprintNotificationTemplate } from './usecases/create-blueprint-notification-template/create-blueprint-notification-template.usecase';
 import { ApiResponse } from '../shared/framework/response.decorator';
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
+import { CreateNotificationTemplateQuery } from './queries';
 
 @Controller('/notification-templates')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
-@ApiTags('Notification templates')
+@ApiTags('Notification Templates')
 export class NotificationTemplateController {
   constructor(
     private getNotificationTemplatesUsecase: GetNotificationTemplates,
@@ -53,15 +51,15 @@ export class NotificationTemplateController {
     private getNotificationTemplateUsecase: GetNotificationTemplate,
     private updateTemplateByIdUsecase: UpdateNotificationTemplate,
     private deleteTemplateByIdUsecase: DeleteNotificationTemplate,
-    private changeTemplateActiveStatusUsecase: ChangeTemplateActiveStatus,
-    private getBlueprintNotificationTemplate: GetBlueprintNotificationTemplate,
-    private createBlueprintNotificationTemplate: CreateBlueprintNotificationTemplate
+    private changeTemplateActiveStatusUsecase: ChangeTemplateActiveStatus
   ) {}
 
   @Get('')
   @ApiResponse(NotificationTemplateResponse)
   @ApiOperation({
-    summary: 'Get notification templates',
+    summary: 'Get Notification templates',
+    description: `Notification templates have been renamed to Workflows, Please use the new workflows controller`,
+    deprecated: true,
   })
   @ExternalApiAccessible()
   getNotificationTemplates(
@@ -82,7 +80,9 @@ export class NotificationTemplateController {
   @Put('/:templateId')
   @ApiResponse(NotificationTemplateResponse)
   @ApiOperation({
-    summary: 'Update notification template',
+    summary: 'Update Notification template',
+    description: `Notification templates have been renamed to Workflows, Please use the new workflows controller`,
+    deprecated: true,
   })
   @ExternalApiAccessible()
   async updateTemplateById(
@@ -115,7 +115,9 @@ export class NotificationTemplateController {
     type: DataBooleanDto,
   })
   @ApiOperation({
-    summary: 'Delete notification template',
+    summary: 'Delete Notification template',
+    description: `Notification templates have been renamed to Workflows, Please use the new workflows controller`,
+    deprecated: true,
   })
   @ExternalApiAccessible()
   deleteTemplateById(@UserSession() user: IJwtPayload, @Param('templateId') templateId: string): Promise<boolean> {
@@ -132,7 +134,9 @@ export class NotificationTemplateController {
   @Get('/:templateId')
   @ApiResponse(NotificationTemplateResponse)
   @ApiOperation({
-    summary: 'Get notification template',
+    summary: 'Get Notification template',
+    description: `Notification templates have been renamed to Workflows, Please use the new workflows controller`,
+    deprecated: true,
   })
   @ExternalApiAccessible()
   getNotificationTemplateById(
@@ -149,46 +153,19 @@ export class NotificationTemplateController {
     );
   }
 
-  @Get('/:templateId/blueprint')
-  getNotificationTemplateBlueprintById(
-    @UserSession() user: IJwtPayload,
-    @Param('templateId') templateId: string
-  ): Promise<NotificationTemplateResponse> {
-    return this.getBlueprintNotificationTemplate.execute(
-      GetBlueprintNotificationTemplateCommand.create({
-        environmentId: user.environmentId,
-        organizationId: user.organizationId,
-        userId: user._id,
-        templateId,
-      })
-    );
-  }
-
-  @Post('/:templateId/blueprint')
-  createNotificationTemplateFromBlueprintById(
-    @UserSession() user: IJwtPayload,
-    @Param('templateId') templateId: string
-  ): Promise<NotificationTemplateResponse> {
-    return this.createBlueprintNotificationTemplate.execute(
-      GetBlueprintNotificationTemplateCommand.create({
-        environmentId: user.environmentId,
-        organizationId: user.organizationId,
-        userId: user._id,
-        templateId,
-      })
-    );
-  }
-
   @Post('')
   @ExternalApiAccessible()
   @UseGuards(RootEnvironmentGuard)
   @ApiResponse(NotificationTemplateResponse, 201)
   @ApiOperation({
-    summary: 'Create notification template',
+    summary: 'Create Notification template',
+    description: `Notification templates have been renamed to Workflows, Please use the new workflows controller`,
+    deprecated: true,
   })
   @Roles(MemberRoleEnum.ADMIN)
   createNotificationTemplates(
     @UserSession() user: IJwtPayload,
+    @Query() query: CreateNotificationTemplateQuery,
     @Body() body: CreateNotificationTemplateRequestDto
   ): Promise<NotificationTemplateResponse> {
     return this.createNotificationTemplateUsecase.execute(
@@ -205,6 +182,8 @@ export class NotificationTemplateController {
         draft: body.draft ?? true,
         critical: body.critical ?? false,
         preferenceSettings: body.preferenceSettings,
+        blueprintId: body.blueprintId,
+        __source: query?.__source,
       })
     );
   }
@@ -214,7 +193,9 @@ export class NotificationTemplateController {
   @Roles(MemberRoleEnum.ADMIN)
   @ApiResponse(NotificationTemplateResponse)
   @ApiOperation({
-    summary: 'Update notification template status',
+    summary: 'Update Notification template status',
+    description: `Notification templates have been renamed to Workflows, Please use the new workflows controller`,
+    deprecated: true,
   })
   @ExternalApiAccessible()
   changeActiveStatus(

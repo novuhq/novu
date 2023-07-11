@@ -23,6 +23,9 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   MAX_NOVU_INTEGRATION_MAIL_REQUESTS: num({
     default: 300,
   }),
+  MAX_NOVU_INTEGRATION_SMS_REQUESTS: num({
+    default: 20,
+  }),
   STORAGE_SERVICE: str({
     default: undefined,
   }),
@@ -36,8 +39,14 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   }),
   REDIS_DB_INDEX: num(),
   MONGO_URL: str(),
+  MONGO_MAX_POOL_SIZE: num({
+    default: 500,
+  }),
   SEGMENT_TOKEN: str({
     default: undefined,
+  }),
+  LAUNCH_DARKLY_SDK_KEY: str({
+    default: '',
   }),
 };
 

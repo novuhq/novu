@@ -1,11 +1,16 @@
 import { Inject, Logger } from '@nestjs/common';
 
-import { CacheService } from '../cache.service';
+import { CacheService, CachingConfig } from '../cache.service';
 
 const LOG_CONTEXT = 'CachedEntityInterceptor';
-
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export function CachedEntity({ builder }: { builder: (...args) => string }) {
+export function CachedEntity({
+  builder,
+  options,
+}: {
+  builder: (...args) => string;
+  options?: CachingConfig;
+}) {
   const injectCache = Inject(CacheService);
 
   return (target: any, key: string, descriptor: any) => {
@@ -33,21 +38,21 @@ export function CachedEntity({ builder }: { builder: (...args) => string }) {
       } catch (err) {
         Logger.error(
           `An error has occurred when extracting "key: ${cacheKey}" in "method: ${methodName}"`,
-          LOG_CONTEXT,
-          err
+          err,
+          LOG_CONTEXT
         );
       }
 
       const response = await originalMethod.apply(this, args);
 
       try {
-        await cacheService.set(cacheKey, JSON.stringify(response));
+        await cacheService.set(cacheKey, JSON.stringify(response), options);
       } catch (err) {
         // eslint-disable-next-line no-console
         Logger.error(
           `An error has occurred when inserting "key: ${cacheKey}" in "method: ${methodName}" with "value: ${response}"`,
-          LOG_CONTEXT,
-          err
+          err,
+          LOG_CONTEXT
         );
       }
 

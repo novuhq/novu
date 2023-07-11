@@ -1,7 +1,7 @@
 import type { BuilderFieldType, BuilderGroupValues, TemplateVariableTypeEnum, FilterParts } from '../../types';
 import { IMessageTemplate } from '../message-template';
 import { IPreferenceChannels } from '../subscriber-preference';
-import { INotificationTemplateStepMetadata } from '../step';
+import { IWorkflowStepMetadata } from '../step';
 
 export interface INotificationTemplate {
   _id?: string;
@@ -19,6 +19,12 @@ export interface INotificationTemplate {
   updatedAt?: string;
   steps: INotificationTemplateStep[];
   triggers: INotificationTrigger[];
+  isBlueprint?: boolean;
+}
+
+export class IGroupedBlueprint {
+  name: string;
+  blueprints: INotificationTemplate[];
 }
 
 export enum TriggerTypeEnum {
@@ -52,7 +58,7 @@ export interface INotificationTemplateStep {
     active: boolean;
     url: string;
   };
-  metadata?: INotificationTemplateStepMetadata;
+  metadata?: IWorkflowStepMetadata;
 }
 
 export interface IMessageFilter {

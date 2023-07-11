@@ -50,7 +50,7 @@ export function PasswordResetForm({ token }: Props) {
         message: 'Password was changed successfully',
         color: 'green',
       });
-      navigate(ROUTES.TEMPLATES);
+      navigate(ROUTES.WORKFLOWS);
     } catch (e: any) {
       if (e.statusCode !== 400) {
         Sentry.captureException(e);

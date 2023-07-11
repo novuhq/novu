@@ -10,6 +10,7 @@ import {
 import {
   ChannelTypeEnum,
   InAppProviderIdEnum,
+  ProvidersIdEnum,
   STEP_TYPE_TO_CHANNEL_TYPE,
 } from '@novu/shared';
 
@@ -17,6 +18,7 @@ import { PinoLogger } from '../../logging';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 
 import {
+  AnalyticsService,
   buildNotificationTemplateIdentifierKey,
   CachedEntity,
   EventsPerformanceService,
@@ -53,7 +55,8 @@ export class TriggerEvent {
     protected performanceService: EventsPerformanceService,
     private jobRepository: JobRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private logger: PinoLogger
+    private logger: PinoLogger,
+    private analyticsService: AnalyticsService
   ) {}
 
   @InstrumentUsecase()
@@ -95,8 +98,9 @@ export class TriggerEvent {
      */
     if (!template) {
       const message = 'Notification template could not be found';
-      Logger.error(message, LOG_CONTEXT);
-      throw new ApiException(message);
+      const error = new ApiException(message);
+      Logger.error(message, error, LOG_CONTEXT);
+      throw error;
     }
 
     const templateProviderIds = await this.getProviderIdsForTemplate(
@@ -120,6 +124,19 @@ export class TriggerEvent {
     }
 
     for (const subscriber of to) {
+      this.analyticsService.track(
+        'Notification event trigger - [Triggers]',
+        command.userId,
+        {
+          _subscriber: subscriber._id,
+          transactionId: command.transactionId,
+          _template: template._id,
+          _organization: command.organizationId,
+          channels: template?.steps.map((step) => step.template?.type),
+          source: command.payload.__source || 'api',
+        }
+      );
+
       const subscriberProcessed = await this.processSubscriber.execute(
         ProcessSubscriberCommand.create({
           environmentId,
@@ -206,8 +223,8 @@ export class TriggerEvent {
     organizationId: string,
     environmentId: string,
     template: NotificationTemplateEntity
-  ): Promise<Map<ChannelTypeEnum, string>> {
-    const providers = new Map<ChannelTypeEnum, string>();
+  ): Promise<Record<ChannelTypeEnum, ProvidersIdEnum>> {
+    const providers = {} as Record<ChannelTypeEnum, ProvidersIdEnum>;
 
     for (const step of template?.steps) {
       const type = step.template?.type;
@@ -215,9 +232,9 @@ export class TriggerEvent {
         const channelType = STEP_TYPE_TO_CHANNEL_TYPE.get(type);
 
         if (channelType) {
-          if (providers.has(channelType)) continue;
+          if (providers[channelType]) continue;
           if (channelType === ChannelTypeEnum.IN_APP) {
-            providers.set(channelType, InAppProviderIdEnum.Novu);
+            providers[channelType] = InAppProviderIdEnum.Novu;
           } else {
             const provider = await this.getProviderId(
               userId,
@@ -226,7 +243,7 @@ export class TriggerEvent {
               channelType
             );
             if (provider) {
-              providers.set(channelType, provider);
+              providers[channelType] = provider;
             }
           }
         }
@@ -242,7 +259,7 @@ export class TriggerEvent {
     organizationId: string,
     environmentId: string,
     channelType: ChannelTypeEnum
-  ): Promise<string> {
+  ): Promise<ProvidersIdEnum> {
     let integration = await this.integrationRepository.findOne(
       {
         _environmentId: environmentId,
@@ -263,6 +280,6 @@ export class TriggerEvent {
       );
     }
 
-    return integration?.providerId;
+    return integration?.providerId as ProvidersIdEnum;
   }
 }

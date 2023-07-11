@@ -1,6 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { EnvironmentRepository } from '@novu/dal';
-import { AnalyticsService, LogDecorator, CreateSubscriber, CreateSubscriberCommand } from '@novu/application-generic';
+import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
+import {
+  AnalyticsService,
+  LogDecorator,
+  CreateSubscriber,
+  CreateSubscriberCommand,
+  SelectIntegrationCommand,
+  SelectIntegration,
+} from '@novu/application-generic';
 
 import { AuthService } from '../../../auth/services/auth.service';
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -15,6 +23,7 @@ export class InitializeSession {
     private environmentRepository: EnvironmentRepository,
     private createSubscriber: CreateSubscriber,
     private authService: AuthService,
+    private selectIntegration: SelectIntegration,
     private analyticsService: AnalyticsService
   ) {}
 
@@ -26,7 +35,21 @@ export class InitializeSession {
       throw new ApiException('Please provide a valid app identifier');
     }
 
-    if (environment.widget.notificationCenterEncryption) {
+    const inAppIntegration = await this.selectIntegration.execute(
+      SelectIntegrationCommand.create({
+        environmentId: environment._id,
+        organizationId: environment._organizationId,
+        userId: command.subscriberId,
+        channelType: ChannelTypeEnum.IN_APP,
+        providerId: InAppProviderIdEnum.Novu,
+      })
+    );
+
+    if (!inAppIntegration) {
+      throw new NotFoundException('In app integration could not be found');
+    }
+
+    if (inAppIntegration.credentials.hmac) {
       validateNotificationCenterEncryption(environment, command);
     }
 

@@ -15,12 +15,17 @@ import {
   IMessageAction,
   IPreferenceChannels,
   FilterParts,
-  INotificationTemplateStepMetadata,
+  IWorkflowStepMetadata,
 } from '@novu/shared';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { MessageTemplate } from '../../../shared/dtos/message-template';
 
+/**
+ * DEPRECATED:
+ * This command is deprecated and will be removed in the future.
+ * Please use the CreateWorkflowCommand instead.
+ */
 export class CreateNotificationTemplateCommand extends EnvironmentWithUserCommand {
   @IsMongoId()
   @IsDefined()
@@ -57,6 +62,10 @@ export class CreateNotificationTemplateCommand extends EnvironmentWithUserComman
 
   @IsOptional()
   blueprintId?: string;
+
+  @IsOptional()
+  @IsString()
+  __source?: string;
 }
 
 export class ChannelCTACommand {
@@ -108,7 +117,7 @@ export class NotificationStep {
   _id?: string;
 
   @IsOptional()
-  metadata?: INotificationTemplateStepMetadata;
+  metadata?: IWorkflowStepMetadata;
 }
 
 export class MessageFilter {

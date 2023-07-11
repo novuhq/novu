@@ -13,13 +13,14 @@ export class RemoveIntegration {
 
   async execute(command: RemoveIntegrationCommand) {
     try {
+      // TODO: We should check first if the Integration exists in the database
       await this.invalidateCache.invalidateQuery({
         key: buildIntegrationKey().invalidate({
-          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
         }),
       });
 
-      await this.integrationRepository.delete({ _environmentId: command.environmentId, _id: command.integrationId });
+      await this.integrationRepository.delete({ _id: command.integrationId, _organizationId: command.organizationId });
     } catch (e) {
       if (e instanceof DalException) {
         throw new ApiException(e.message);

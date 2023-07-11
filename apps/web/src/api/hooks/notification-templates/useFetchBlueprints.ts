@@ -1,167 +1,22 @@
-/* eslint-disable max-len */
-/* cSpell:disable */
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { IconName } from '@fortawesome/fontawesome-svg-core';
-import { StepTypeEnum } from '@novu/shared';
+import localforage from 'localforage';
+import { addWeeks } from 'date-fns';
+import { IGroupedBlueprint } from '@novu/shared';
 
+import { getBlueprintsGroupedByCategory } from '../../notification-templates';
 import { QueryKeys } from '../../query.keys';
-import { IFormStep } from '../../../pages/templates/components/formTypes';
+import { IBlueprintTemplate } from '../../types';
 
 export interface IBlueprintsGrouped {
   name: string;
-  templates: { name: string; description: string; iconName: IconName; steps: IFormStep[] }[];
+  blueprints: IBlueprintTemplate[];
 }
 
 interface IBlueprintsGroupedAndPopular {
-  groupedBlueprints: IBlueprintsGrouped[];
-  popularBlueprints: { id: string; name: string; description: string; iconName: IconName }[];
+  general: IBlueprintsGrouped[];
+  popular: IBlueprintsGrouped;
 }
-
-const STEPS: IFormStep[] = [
-  {
-    _id: 'digest',
-    name: 'Digest',
-    template: {
-      type: StepTypeEnum.DIGEST,
-      content: '',
-    },
-  },
-  {
-    _id: 'email',
-    name: 'Email',
-    template: {
-      name: 'Test email',
-      subject: 'Test subject',
-      title: 'Test title',
-      type: StepTypeEnum.EMAIL,
-      content: 'adsf',
-    },
-  },
-];
-
-const STEPS2: IFormStep[] = [
-  {
-    _id: 'in-app',
-    name: 'In-App',
-    template: {
-      type: StepTypeEnum.IN_APP,
-      content: '',
-    },
-  },
-  {
-    _id: 'digest',
-    name: 'Digest',
-    template: {
-      type: StepTypeEnum.DIGEST,
-      content: '',
-    },
-  },
-  {
-    _id: 'email',
-    name: 'Email',
-    template: {
-      name: 'Test email',
-      type: StepTypeEnum.EMAIL,
-      content: 'adsf',
-    },
-  },
-  {
-    _id: 'push',
-    name: 'Push',
-    template: {
-      type: StepTypeEnum.PUSH,
-      content: 'Test push',
-    },
-  },
-];
-
-const TEMPLATES_GROUPED = [
-  {
-    name: 'Collaboration',
-    templates: [
-      {
-        id: '1',
-        name: ':fa-regular fa-message: Comments',
-        description:
-          'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
-        steps: STEPS,
-      },
-      {
-        id: '2',
-        name: ':fa-solid fa-user-check: Mentions',
-        description:
-          'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
-        steps: STEPS2,
-      },
-      {
-        id: '3',
-        name: ':fa-solid fa-reply: Reply',
-        description:
-          'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
-        steps: STEPS,
-      },
-    ],
-  },
-  {
-    name: 'Growth',
-    templates: [
-      {
-        id: '4',
-        name: ':fa-regular fa-hand: Welcome message',
-        description:
-          'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
-        steps: STEPS,
-      },
-      {
-        id: '5',
-        name: ':fa-solid fa-envelope-open-text: Invite message',
-        description:
-          'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
-        steps: STEPS2,
-      },
-      {
-        id: '6',
-        name: ':fa-solid fa-gift: Refferal link',
-        description:
-          'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
-        steps: STEPS,
-      },
-    ],
-  },
-  {
-    name: 'Authentification',
-    templates: [
-      {
-        id: '7',
-        name: ':fa-solid fa-wand-magic-sparkles: Magic link',
-        description:
-          'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
-        steps: STEPS,
-      },
-      {
-        id: '8',
-        name: ':fa-solid fa-unlock: Password change',
-        description:
-          'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
-        steps: STEPS2,
-      },
-      {
-        id: '9',
-        name: ':fa-solid fa-unlock: Password change2',
-        description:
-          'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
-        steps: STEPS,
-      },
-      {
-        id: '10',
-        name: ':fa-solid fa-unlock: Password change3',
-        description:
-          'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
-        steps: STEPS,
-      },
-    ],
-  },
-];
 
 const getTemplateDetails = (templateName: string): { name: string; iconName: IconName } => {
   const regexResult = /^:.{1,}:/.exec(templateName);
@@ -175,33 +30,54 @@ const getTemplateDetails = (templateName: string): { name: string; iconName: Ico
   return { name, iconName: iconName as IconName };
 };
 
+const mapGroup = (group: IGroupedBlueprint): IBlueprintsGrouped => ({
+  name: group.name,
+  blueprints: group.blueprints.map((template) => {
+    const { name, iconName } = getTemplateDetails(template.name);
+
+    return {
+      ...template,
+      name,
+      iconName,
+    };
+  }),
+});
+
+const BLUEPRINTS_CACHE_KEY = 'blueprints';
+const BLUEPRINTS_CACHE_VALID_BY = 'blueprints_valid_by';
+
+const getCachedBlueprints = async (): Promise<IBlueprintsGroupedAndPopular | null> => {
+  const validByTimestamp = (await localforage.getItem<number>(BLUEPRINTS_CACHE_VALID_BY)) || 0;
+  const now = Date.now();
+
+  if (now <= validByTimestamp) {
+    return await localforage.getItem<IBlueprintsGroupedAndPopular>(BLUEPRINTS_CACHE_KEY);
+  }
+
+  return null;
+};
+
 export function useFetchBlueprints(
   options: UseQueryOptions<IBlueprintsGroupedAndPopular, any, IBlueprintsGroupedAndPopular> = {}
 ) {
   const { data, ...rest } = useQuery<IBlueprintsGroupedAndPopular>(
     [QueryKeys.blueprintsList],
-    () => {
-      return new Promise((resolve) => {
-        const groupedBlueprints = TEMPLATES_GROUPED.map((group) => ({
-          name: group.name,
-          templates: group.templates.map((template) => {
-            const { name, iconName } = getTemplateDetails(template.name);
+    async () => {
+      const cachedBlueprints = await getCachedBlueprints();
+      if (cachedBlueprints) {
+        return cachedBlueprints;
+      }
 
-            return {
-              ...template,
-              name,
-              iconName,
-            };
-          }),
-        }));
+      const { general, popular } = await getBlueprintsGroupedByCategory();
+      const blueprints = {
+        general: general.map<IBlueprintsGrouped>((group) => mapGroup(group)),
+        popular: mapGroup(popular),
+      };
 
-        setTimeout(() => {
-          resolve({
-            groupedBlueprints,
-            popularBlueprints: groupedBlueprints[0].templates.slice(0, 3),
-          });
-        }, 3000);
-      });
+      await localforage.setItem(BLUEPRINTS_CACHE_KEY, blueprints);
+      await localforage.setItem(BLUEPRINTS_CACHE_VALID_BY, +addWeeks(new Date(), 1));
+
+      return blueprints;
     },
     {
       refetchOnWindowFocus: false,

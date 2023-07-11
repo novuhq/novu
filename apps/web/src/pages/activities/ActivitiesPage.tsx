@@ -7,7 +7,6 @@ import styled from '@emotion/styled';
 import { useTemplates, useDebounce } from '../../hooks';
 import { getActivityList } from '../../api/activity';
 import PageContainer from '../../components/layout/components/PageContainer';
-import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import { Select, Input, Button } from '../../design-system';
 import { ActivityStatistics } from './components/ActivityStatistics';
@@ -100,8 +99,7 @@ export function ActivitiesPage() {
   };
 
   return (
-    <PageContainer>
-      <PageMeta title="Activity Feed" />
+    <PageContainer title="Activity Feed">
       <PageHeader title="Activity Feed" />
       <ActivityStatistics />
       <ActivityGraph onBarClick={onBarClick} />
@@ -136,11 +134,11 @@ export function ActivitiesPage() {
             <Controller
               render={({ field }) => (
                 <Select
-                  label="Templates"
+                  label="Workflows"
                   type="multiselect"
                   data-test-id="templates-filter"
                   loading={loadingTemplates}
-                  placeholder="Select template"
+                  placeholder="Select workflow"
                   data={(templates || []).map((template) => ({ value: template._id as string, label: template.name }))}
                   value={field.value}
                   onChange={(value) => {

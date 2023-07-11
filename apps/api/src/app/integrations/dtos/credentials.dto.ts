@@ -1,8 +1,9 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsObject, IsOptional, IsString } from 'class-validator';
-import { IsBooleanAny } from '../../shared/validators/is-boolean-any.validator';
+import { IsBoolean, IsObject, IsOptional, IsString } from 'class-validator';
+import { TransformToBoolean } from '../../shared/transformers/to-boolean';
+import { ICredentials } from '@novu/shared';
 
-export class CredentialsDto {
+export class CredentialsDto implements ICredentials {
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
@@ -39,8 +40,9 @@ export class CredentialsDto {
   port?: string;
 
   @ApiPropertyOptional()
+  @TransformToBoolean()
+  @IsBoolean()
   @IsOptional()
-  @IsBooleanAny()
   secure?: boolean;
 
   @ApiPropertyOptional()
@@ -89,25 +91,55 @@ export class CredentialsDto {
   clientId?: string;
 
   @ApiPropertyOptional()
+  @TransformToBoolean()
+  @IsBoolean()
   @IsOptional()
-  @IsBooleanAny()
   requireTls?: boolean;
 
   @ApiPropertyOptional()
+  @TransformToBoolean()
+  @IsBoolean()
   @IsOptional()
-  @IsBooleanAny()
   ignoreTls?: boolean;
 
   @ApiPropertyOptional()
   @IsObject()
   @IsOptional()
   tlsOptions?: Record<string, unknown>;
+
   @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
   baseUrl?: string;
+
   @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
   webhookUrl?: string;
+
   @ApiPropertyOptional()
   privateKey?: string;
+
   @ApiPropertyOptional()
   publicKey?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  redirectUrl?: string;
+
+  @ApiPropertyOptional()
+  @IsBoolean()
+  @IsOptional()
+  hmac?: boolean;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  serviceAccount?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  ipPoolName?: string;
 }
