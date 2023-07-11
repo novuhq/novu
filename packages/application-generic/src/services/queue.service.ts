@@ -50,7 +50,7 @@ export class QueueService<T = unknown> {
     id: string,
     data?: IJobData,
     groupId?: string,
-    options: JobsOptions = {},
+    options: JobsOptions = {}
   ) {
     const bullMqJobData = data
       ? {
@@ -69,7 +69,7 @@ export class QueueService<T = unknown> {
         removeOnFail: true,
         ...options,
       },
-      groupId,
+      groupId
     );
   }
 }

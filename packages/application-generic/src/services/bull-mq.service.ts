@@ -71,7 +71,7 @@ export class BullMqService {
     Logger.log(
       `Creating queue ${name} bullmq pro is ${
         this.runningWithProQueue() ? 'Enabled' : 'Disabled'
-      }`,
+      }`
     );
 
     this._queue = new QueueClass(name, {
@@ -84,7 +84,7 @@ export class BullMqService {
   public createWorker(
     name: string,
     processor?: string | Processor<any, unknown | void, string>,
-    options?: WorkerOptions,
+    options?: WorkerOptions
   ) {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const WorkerClass = !BullMqService.pro
@@ -113,7 +113,7 @@ export class BullMqService {
     id: string,
     data: BullMqJobData,
     options: JobsOptions = {},
-    groupId?: string,
+    groupId?: string
   ) {
     this._queue.add(id, data, {
       ...options,
