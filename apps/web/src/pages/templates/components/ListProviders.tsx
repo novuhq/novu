@@ -1,8 +1,9 @@
 import { Group, Text, UnstyledButton, useMantineColorScheme } from '@mantine/core';
 import { ChannelTypeEnum } from '@novu/shared';
+
 import { When } from '../../../components/utils/When';
 import { Button, colors } from '../../../design-system';
-import { IIntegratedProvider } from '../../integrations/IntegrationsStoreModal';
+import { IIntegratedProvider } from '../../integrations/IntegrationsStorePage';
 import { stepNames } from '../constants';
 import { ChannelTitle } from './ChannelTitle';
 import { LackIntegrationError } from './LackIntegrationError';
@@ -65,6 +66,7 @@ export const ListProviders = ({
         .map((provider) => {
           return (
             <UnstyledButton
+              key={provider.identifier ?? provider.providerId}
               style={{
                 width: '100%',
                 padding: 15,
