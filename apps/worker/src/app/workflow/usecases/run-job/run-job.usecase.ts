@@ -68,8 +68,6 @@ export class RunJob {
           job,
         })
       );
-
-      await this.storageHelperService.deleteAttachments(job.payload?.attachments);
     } catch (error: any) {
       if (job.step.shouldStopOnFail || this.shouldBackoff(error)) {
         shouldQueueNextJob = false;
