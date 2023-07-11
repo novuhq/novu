@@ -9,17 +9,13 @@ export class SubscribersService {
   constructor(private _organizationId: string, private _environmentId: string) {}
 
   async createSubscriber(fields: Partial<SubscriberEntity> = {}) {
-    const slackIntegration = await this.integrationRepository.findOne({
+    const integrations = await this.integrationRepository.find({
       _environmentId: this._environmentId,
       _organizationId: this._organizationId,
-      providerId: ChatProviderIdEnum.Slack,
-    });
-    const fcmIntegration = await this.integrationRepository.findOne({
-      _environmentId: this._environmentId,
-      _organizationId: this._organizationId,
-      providerId: PushProviderIdEnum.FCM,
     });
 
+    const slackIntegration = integrations.find((integration) => integration.providerId === ChatProviderIdEnum.Slack);
+    const fcmIntegration = integrations.find((integration) => integration.providerId === PushProviderIdEnum.FCM);
     const channels: SubscriberEntity['channels'] = [];
     if (slackIntegration) {
       channels.push({

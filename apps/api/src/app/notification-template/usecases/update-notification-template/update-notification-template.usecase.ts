@@ -30,6 +30,11 @@ import { NotificationStep } from '../create-notification-template';
 import { DeleteMessageTemplate } from '../../../message-template/usecases/delete-message-template/delete-message-template.usecase';
 import { DeleteMessageTemplateCommand } from '../../../message-template/usecases/delete-message-template/delete-message-template.command';
 
+/**
+ * DEPRECATED:
+ * This usecase is deprecated and will be removed in the future.
+ * Please use the UpdateWorkflow usecase instead.
+ */
 @Injectable()
 export class UpdateNotificationTemplate {
   constructor(
