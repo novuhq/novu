@@ -2,5 +2,5 @@
 build
 package.json
 yarn.lock
-*.md
+*.mdx
 .docusaurus
