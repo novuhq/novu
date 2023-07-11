@@ -162,7 +162,7 @@ module.exports = {
       },
     }),
   customFields: {
-    inkeepConfig: {
+    inkeepCredentials: {
       apiKey: '78648f6e062ede8c6905d2af9ae468c3cb6a2494bb3f9e1d',
       integrationId: 'clj6g2vov0005s601blyuv4wi',
       organizationId: 'novu',

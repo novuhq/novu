@@ -3,49 +3,12 @@ import type {
   InkeepAIChatSettings,
   InkeepWidgetBaseSettings,
   InkeepSearchBarProps,
+  InkeepFloatingButtonProps,
 } from '@inkeep/widgets';
-import { useColorMode } from '@docusaurus/theme-common'; // import the useColorMode hook
-import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import BrowserOnly from '@docusaurus/BrowserOnly';
-
-type InkeepIdentifierSettings = {
-  apiKey: string;
-  integrationId: string;
-  organizationId: string;
-};
+import useInkeepSettings from '../utils/useInkeepSettings';
 
 export default function SearchBarWrapper() {
-  const { colorMode } = useColorMode();
-  const { siteConfig } = useDocusaurusContext();
-
-  const inkeepBaseConfig = siteConfig.customFields.inkeepConfig as InkeepIdentifierSettings;
-
-  const inkeepBaseSettings: InkeepWidgetBaseSettings = {
-    // ...inkeepIdentifierSettings,
-    ...inkeepBaseConfig,
-    organizationDisplayName: 'Novu',
-    primaryBrandColor: '#F8247C',
-    theme: {
-      colorMode: colorMode,
-      fontWeights: {
-        semibold: 500,
-      },
-      primaryColors: {
-        textColorOnPrimary: 'white',
-      },
-    },
-  };
-
-  const aiChatSettings: InkeepAIChatSettings = {
-    botName: 'Novu',
-    isChatModeToggleEnabled: true,
-  };
-
-  const searchBarProps: InkeepSearchBarProps = {
-    baseSettings: { ...inkeepBaseSettings },
-    aiChatSettings: { ...aiChatSettings },
-  };
-
   const [SearchBar, setSearchBar] = useState(null);
 
   useEffect(() => {
@@ -58,6 +21,13 @@ export default function SearchBarWrapper() {
       setSearchBar(() => InkeepSearchBar);
     })();
   }, []);
+
+  const { baseSettings, aiChatSettings } = useInkeepSettings();
+
+  const searchBarProps: InkeepSearchBarProps = {
+    baseSettings,
+    aiChatSettings,
+  };
 
   return (
     <div className="Inkeep-Search">
