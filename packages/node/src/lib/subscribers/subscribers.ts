@@ -125,4 +125,18 @@ export class Subscribers extends WithHttp implements ISubscribers {
       `/subscribers/${subscriberId}/messages/${messageId}/actions/${type}`
     );
   }
+
+  async markAsRead(subscriberId: string, messageId: string) {
+    return await this.http.post(
+      `/subscribers/${subscriberId}/messages/${messageId}/read`
+    );
+  }
+
+  async markAllUnreadAsRead(subscriberId: string) {
+    return await this.http.post(`/subscribers/${subscriberId}/messages/read`);
+  }
+
+  async markAllUnseenAsSeen(subscriberId: string) {
+    return await this.http.post(`/subscribers/${subscriberId}/messages/seen`);
+  }
 }

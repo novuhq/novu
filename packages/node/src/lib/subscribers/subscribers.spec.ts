@@ -223,6 +223,39 @@ describe('test use of novus node package - Subscribers class', () => {
     );
   });
 
+  test('should mark subscriber feed message as read', async () => {
+    mockedAxios.post.mockResolvedValue({});
+
+    await novu.subscribers.markAsRead('test-message-read', 'message-1234');
+
+    expect(mockedAxios.post).toHaveBeenCalled();
+    expect(mockedAxios.post).toHaveBeenCalledWith(
+      '/subscribers/test-message-read/messages/message-1234/read'
+    );
+  });
+
+  test('should mark subscriber all unread messages as read', async () => {
+    mockedAxios.post.mockResolvedValue({});
+
+    await novu.subscribers.markAllUnreadAsRead('test-all-messages-read');
+
+    expect(mockedAxios.post).toHaveBeenCalled();
+    expect(mockedAxios.post).toHaveBeenCalledWith(
+      '/subscribers/test-all-messages-read/messages/read'
+    );
+  });
+
+  test('should mark subscriber all unseen messages as seen', async () => {
+    mockedAxios.post.mockResolvedValue({});
+
+    await novu.subscribers.markAllUnseenAsSeen('test-all-messages-seen');
+
+    expect(mockedAxios.post).toHaveBeenCalled();
+    expect(mockedAxios.post).toHaveBeenCalledWith(
+      '/subscribers/test-all-messages-seen/messages/seen'
+    );
+  });
+
   test('should mark message action as seen', async () => {
     mockedAxios.post.mockResolvedValue({});
 
