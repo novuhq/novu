@@ -54,10 +54,9 @@ export class TopicRepository extends BaseRepository<TopicDBModel, TopicEntity, E
 
   async filterTopics(
     query: FilterQuery<TopicDBModel>,
-    pagination: { limit: number; skip: number },
-    subscriberId?: string
+    pagination: { limit: number; skip: number }
   ): Promise<{ data: TopicEntity & { subscribers: ExternalSubscriberId[] }[]; totalCount: number }> {
-    const parsedQuery = { ...query };
+    const { subscriberId, ...parsedQuery } = query;
     if (query._id) {
       parsedQuery._id = this.convertStringToObjectId(query._id);
     }

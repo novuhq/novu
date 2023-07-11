@@ -51,11 +51,14 @@ import {
   RemoveSubscribersUseCase,
   RenameTopicCommand,
   RenameTopicUseCase,
+  GetSubscriberTopicsUseCase,
+  GetSubscriberTopicsCommand,
 } from './use-cases';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import { ApiResponse } from '../shared/framework/response.decorator';
+import { GetSubscriberTopicsResponseDto, GetSubscriberTopicsRequestDto } from './dtos/get-subscriber-topic.dto';
 
 @Controller('/topics')
 @ApiTags('Topics')
@@ -69,7 +72,8 @@ export class TopicsController {
     private getTopicSubscriberUseCase: GetTopicSubscriberUseCase,
     private getTopicUseCase: GetTopicUseCase,
     private removeSubscribersUseCase: RemoveSubscribersUseCase,
-    private renameTopicUseCase: RenameTopicUseCase
+    private renameTopicUseCase: RenameTopicUseCase,
+    private getSubscriberTopicsUseCase: GetSubscriberTopicsUseCase
   ) {}
 
   @Post('')
@@ -214,6 +218,44 @@ export class TopicsController {
         organizationId: user.organizationId,
         page: query?.page,
         pageSize: query?.pageSize,
+      })
+    );
+  }
+
+  @Get('/subscribers/:subscriberId')
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  @ApiQuery({
+    name: 'page',
+    type: Number,
+    description: 'Number of page for the pagination',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'pageSize',
+    type: Number,
+    description: 'Size of page for the pagination',
+    required: false,
+  })
+  @ApiOperation({
+    summary: 'Get subscriber topics',
+    description: 'Get topics in which subscriber belongs to.',
+  })
+  @ApiOkResponse({
+    type: GetSubscriberTopicsResponseDto,
+  })
+  async getSubscriberTopics(
+    @UserSession() user: IJwtPayload,
+    @Param('subscriberId') subscriberId: string,
+    @Query() query: GetSubscriberTopicsRequestDto
+  ): Promise<GetSubscriberTopicsResponseDto> {
+    return await this.getSubscriberTopicsUseCase.execute(
+      GetSubscriberTopicsCommand.create({
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+        subscriberId: subscriberId,
+        page: query.page,
+        pageSize: query.pageSize,
       })
     );
   }
