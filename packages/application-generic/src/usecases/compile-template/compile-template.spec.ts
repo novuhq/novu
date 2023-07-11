@@ -30,7 +30,7 @@ describe('Compile Template', function () {
           name: 'Test Name',
         },
         template: '<div>{{name}}</div>',
-      })
+      }),
     );
 
     expect(result).toEqual('<div>Test Name</div>');
@@ -48,7 +48,7 @@ describe('Compile Template', function () {
         },
         template:
           '<div>{{dog_count}} {{pluralize dog_count "dog" "dogs"}} and {{sausage_count}} {{pluralize sausage_count "sausage" "sausages"}} for {{pluralize dog_count "him" "them"}}</div>',
-      })
+      }),
     );
 
     expect(result).toEqual('<div>1 dog and 2 sausages for him</div>');
@@ -62,10 +62,37 @@ describe('Compile Template', function () {
         },
         template:
           '<div>{{#each (unique names "name")}}{{this}}-{{/each}}</div>',
-      })
+      }),
     );
 
     expect(result).toEqual('<div>dog-cat-</div>');
+  });
+
+  it('should render groupBy values of array', async function () {
+    const result = await useCase.execute(
+      CompileTemplateCommand.create({
+        data: {
+          names: [
+            {
+              name: 'Name 1',
+              age: '30',
+            },
+            {
+              name: 'Name 2',
+              age: '31',
+            },
+            {
+              name: 'Name 1',
+              age: '32',
+            },
+          ],
+        },
+        template:
+          '{{#each (groupby names "name")}}<h1>{{key}}</h1>{{#each items}}{{age}}-{{/each}}{{/each}}>',
+      }),
+    );
+
+    expect(result).toEqual('<h1>Name1</h1>30-32-<h1>Name2</h1>31-');
   });
 
   it('should allow the user to specify handlebars helpers', async function () {
@@ -80,11 +107,11 @@ describe('Compile Template', function () {
         },
         template:
           '<div>{{titlecase message}} and {{lowercase messageTwo}} and {{uppercase message}}</div>',
-      })
+      }),
     );
 
     expect(result).toEqual(
-      '<div>Hello World and hello world and HELLO WORLD</div>'
+      '<div>Hello World and hello world and HELLO WORLD</div>',
     );
   });
 
@@ -95,7 +122,7 @@ describe('Compile Template', function () {
           message: "hello' world",
         },
         template: '<div>{{message}}</div>',
-      })
+      }),
     );
 
     expect(result).toEqual("<div>hello' world</div>");
@@ -109,7 +136,7 @@ describe('Compile Template', function () {
             date: '2020-01-01',
           },
           template: "<div>{{dateFormat date 'EEEE, MMMM Do yyyy'}}</div>",
-        })
+        }),
       );
       expect(result).toEqual('<div>Wednesday, January 1st 2020</div>');
     });
@@ -121,7 +148,7 @@ describe('Compile Template', function () {
             date: 'ABCD',
           },
           template: "<div>{{dateFormat date 'EEEE, MMMM Do yyyy'}}</div>",
-        })
+        }),
       );
       expect(result).toEqual('<div>ABCD</div>');
     });

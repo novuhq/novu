@@ -39,6 +39,8 @@ export type ITriggerOverrides = {
 } & {
   [key in 'apns']?: ITriggerOverrideAPNS;
 } & {
+  [key in 'expo']?: ITriggerOverrideExpo;
+} & {
   [key in 'delay']?: ITriggerOverrideDelayAction;
 } & {
   [key in 'email']?: IEmailOverrides;
@@ -105,6 +107,22 @@ export type ITriggerOverrideAPNS = {
   mutableContent?: boolean;
   mdm?: string | Record<string, unknown>;
   urlArgs?: string[];
+};
+
+export type ITriggerOverrideExpo = {
+  to?: string | string[];
+  data?: object;
+  title?: string;
+  body?: string;
+  ttl?: number;
+  expiration?: number;
+  priority?: 'default' | 'normal' | 'high';
+  subtitle?: string;
+  badge?: number;
+  sound?: string;
+  channelId?: string;
+  categoryId?: string;
+  mutableContent?: boolean;
 };
 
 export interface IBulkEvents extends ITriggerPayloadOptions {
