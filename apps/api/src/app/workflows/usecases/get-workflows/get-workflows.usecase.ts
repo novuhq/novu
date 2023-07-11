@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { NotificationTemplateRepository } from '@novu/dal';
 import { GetWorkflowsCommand } from './get-workflows.command';
-import { WorkflowsResponseDto } from '../../dto/notification-templates.response.dto';
+import { WorkflowsResponseDto } from '../../dto/workflows-response.dto';
 @Injectable()
 export class GetWorkflows {
   constructor(private notificationTemplateRepository: NotificationTemplateRepository) {}

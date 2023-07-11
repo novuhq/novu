@@ -3,7 +3,7 @@ import { UserSession, NotificationTemplateService } from '@novu/testing';
 import { StepTypeEnum, INotificationTemplate, IUpdateNotificationTemplateDto } from '@novu/shared';
 import { ChangeRepository } from '@novu/dal';
 import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from '../dto';
-import { WorkflowsResponse } from '../dto/notification-template-response.dto';
+import { WorkflowsResponse } from '../dto/workflow-response.dto';
 
 describe('Update workflow by id - /workflows/:workflowId (PUT)', async () => {
   let session: UserSession;

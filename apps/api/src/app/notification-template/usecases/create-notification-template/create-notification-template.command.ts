@@ -15,7 +15,7 @@ import {
   IMessageAction,
   IPreferenceChannels,
   FilterParts,
-  INotificationTemplateStepMetadata,
+  IWorkflowStepMetadata,
 } from '@novu/shared';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
@@ -117,7 +117,7 @@ export class NotificationStep {
   _id?: string;
 
   @IsOptional()
-  metadata?: INotificationTemplateStepMetadata;
+  metadata?: IWorkflowStepMetadata;
 }
 
 export class MessageFilter {

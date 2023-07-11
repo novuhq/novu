@@ -26,7 +26,7 @@ export class ChangeWorkflowActiveStatus {
     });
 
     if (!foundTemplate) {
-      throw new NotFoundException(`Template with id ${command.workflowId} not found`);
+      throw new NotFoundException(`Workflow with id ${command.workflowId} not found`);
     }
 
     if (foundTemplate.active === command.active) {
@@ -61,7 +61,7 @@ export class ChangeWorkflowActiveStatus {
     );
 
     const item = await this.notificationTemplateRepository.findById(command.workflowId, command.environmentId);
-    if (!item) throw new NotFoundException(`Notification template ${command.workflowId} is not found`);
+    if (!item) throw new NotFoundException(`Workflow ${command.workflowId} is not found`);
 
     const parentChangeId: string = await this.changeRepository.getChangeId(
       command.environmentId,

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { WorkflowsResponse } from './notification-template-response.dto';
+import { WorkflowsResponse } from './workflow-response.dto';
 
 export class WorkflowsResponseDto {
   @ApiProperty()
