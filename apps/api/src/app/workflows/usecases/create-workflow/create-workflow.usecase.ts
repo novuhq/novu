@@ -12,19 +12,14 @@ import {
 import { ChangeEntityTypeEnum, INotificationTemplateStep, INotificationTrigger, TriggerTypeEnum } from '@novu/shared';
 import { AnalyticsService } from '@novu/application-generic';
 
-import { CreateNotificationTemplateCommand } from './create-notification-template.command';
+import { CreateWorkflowCommand } from './create-workflow.command';
 import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateMessageTemplate, CreateMessageTemplateCommand } from '../../../message-template/usecases';
 import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
-/**
- * DEPRECATED:
- * This usecase is deprecated and will be removed in the future.
- * Please use the CreateWorkflow usecase instead.
- */
 @Injectable()
-export class CreateNotificationTemplate {
+export class CreateWorkflow {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
     private createMessageTemplate: CreateMessageTemplate,
@@ -34,7 +29,7 @@ export class CreateNotificationTemplate {
     private analyticsService: AnalyticsService
   ) {}
 
-  async execute(usecaseCommand: CreateNotificationTemplateCommand) {
+  async execute(usecaseCommand: CreateWorkflowCommand) {
     const blueprintCommand = await this.processBlueprint(usecaseCommand);
     const command = blueprintCommand ?? usecaseCommand;
 
@@ -134,7 +129,7 @@ export class CreateNotificationTemplate {
     });
 
     const item = await this.notificationTemplateRepository.findById(savedTemplate._id, command.environmentId);
-    if (!item) throw new NotFoundException(`Notification template ${savedTemplate._id} is not found`);
+    if (!item) throw new NotFoundException(`Workflow ${savedTemplate._id} is not found`);
 
     await this.createChange.execute(
       CreateChangeCommand.create({
@@ -148,7 +143,7 @@ export class CreateNotificationTemplate {
     );
 
     if (command.name !== 'On-boarding notification' && !command.__source?.startsWith('onboarding_')) {
-      this.analyticsService.track('Create Notification Template - [Platform]', command.userId, {
+      this.analyticsService.track('Create Workflow - [Platform]', command.userId, {
         _organization: command.organizationId,
         steps: command.steps?.length,
         channels: command.steps?.map((i) => i.template?.type),
@@ -160,13 +155,13 @@ export class CreateNotificationTemplate {
     return item;
   }
 
-  private async processBlueprint(command: CreateNotificationTemplateCommand) {
+  private async processBlueprint(command: CreateWorkflowCommand) {
     if (!command.blueprintId) return null;
 
     const group: NotificationGroupEntity = await this.handleGroup(command.notificationGroupId, command);
     const steps: NotificationStepEntity[] = await this.handleFeeds(command.steps as any, command);
 
-    return CreateNotificationTemplateCommand.create({
+    return CreateWorkflowCommand.create({
       organizationId: command.organizationId,
       userId: command.userId,
       environmentId: command.environmentId,
@@ -186,7 +181,7 @@ export class CreateNotificationTemplate {
 
   private async handleFeeds(
     steps: NotificationStepEntity[],
-    command: CreateNotificationTemplateCommand
+    command: CreateWorkflowCommand
   ): Promise<NotificationStepEntity[]> {
     for (let i = 0; i < steps.length; i++) {
       const step = steps[i];
@@ -229,7 +224,7 @@ export class CreateNotificationTemplate {
 
   private async handleGroup(
     notificationGroupId: string,
-    command: CreateNotificationTemplateCommand
+    command: CreateWorkflowCommand
   ): Promise<NotificationGroupEntity> {
     const blueprintNotificationGroup = await this.notificationGroupRepository.findOne({
       _id: notificationGroupId,

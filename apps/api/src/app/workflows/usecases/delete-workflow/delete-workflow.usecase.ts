@@ -13,15 +13,10 @@ import {
 } from '@novu/application-generic';
 import { DeleteMessageTemplateCommand } from '../../../message-template/usecases/delete-message-template/delete-message-template.command';
 import { DeleteMessageTemplate } from '../../../message-template/usecases/delete-message-template/delete-message-template.usecase';
-import { GetNotificationTemplateCommand } from '../get-notification-template/get-notification-template.command';
+import { GetWorkflowCommand } from '../get-workflow/get-workflow.command';
 
-/**
- * DEPRECATED:
- * This usecase is deprecated and will be removed in the future.
- * Please use the DeleteWorkflow usecase instead.
- */
 @Injectable()
-export class DeleteNotificationTemplate {
+export class DeleteWorkflow {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
     private createChange: CreateChange,
@@ -30,20 +25,20 @@ export class DeleteNotificationTemplate {
     private deleteMessageTemplate: DeleteMessageTemplate
   ) {}
 
-  async execute(command: GetNotificationTemplateCommand) {
+  async execute(command: GetWorkflowCommand) {
     try {
       const notificationTemplate = await this.notificationTemplateRepository.findOne({
         _environmentId: command.environmentId,
-        _id: command.templateId,
+        _id: command.workflowId,
       });
       if (!notificationTemplate) {
-        throw new DalException(`Could not find workflow with id ${command.templateId}`);
+        throw new DalException(`Could not find workflow with id ${command.workflowId}`);
       }
 
       const parentChangeId: string = await this.changeRepository.getChangeId(
         command.environmentId,
         ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
-        command.templateId
+        command.workflowId
       );
 
       for (const step of notificationTemplate.steps) {
@@ -60,13 +55,13 @@ export class DeleteNotificationTemplate {
 
       await this.notificationTemplateRepository.delete({
         _environmentId: command.environmentId,
-        _id: command.templateId,
+        _id: command.workflowId,
       });
 
       const item: NotificationTemplateEntity = (
         await this.notificationTemplateRepository.findDeleted({
           _environmentId: command.environmentId,
-          _id: command.templateId,
+          _id: command.workflowId,
         })
       )?.[0];
 

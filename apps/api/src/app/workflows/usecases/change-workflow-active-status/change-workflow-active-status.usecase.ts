@@ -7,16 +7,11 @@ import {
   InvalidateCacheService,
 } from '@novu/application-generic';
 
-import { ChangeTemplateActiveStatusCommand } from './change-template-active-status.command';
+import { ChangeWorkflowActiveStatusCommand } from './change-workflow-active-status.command';
 import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
 
-/**
- * DEPRECATED:
- * This usecase is deprecated and will be removed in the future.
- * Please use the ChangeWorkflowActiveStatus usecase instead.
- */
 @Injectable()
-export class ChangeTemplateActiveStatus {
+export class ChangeWorkflowActiveStatus {
   constructor(
     private invalidateCache: InvalidateCacheService,
     private notificationTemplateRepository: NotificationTemplateRepository,
@@ -24,14 +19,14 @@ export class ChangeTemplateActiveStatus {
     private changeRepository: ChangeRepository
   ) {}
 
-  async execute(command: ChangeTemplateActiveStatusCommand): Promise<NotificationTemplateEntity> {
+  async execute(command: ChangeWorkflowActiveStatusCommand): Promise<NotificationTemplateEntity> {
     const foundTemplate = await this.notificationTemplateRepository.findOne({
       _environmentId: command.environmentId,
-      _id: command.templateId,
+      _id: command.workflowId,
     });
 
     if (!foundTemplate) {
-      throw new NotFoundException(`Template with id ${command.templateId} not found`);
+      throw new NotFoundException(`Workflow with id ${command.workflowId} not found`);
     }
 
     if (foundTemplate.active === command.active) {
@@ -40,7 +35,7 @@ export class ChangeTemplateActiveStatus {
 
     await this.invalidateCache.invalidateByKey({
       key: buildNotificationTemplateKey({
-        _id: command.templateId,
+        _id: command.workflowId,
         _environmentId: command.environmentId,
       }),
     });
@@ -54,7 +49,7 @@ export class ChangeTemplateActiveStatus {
 
     await this.notificationTemplateRepository.update(
       {
-        _id: command.templateId,
+        _id: command.workflowId,
         _environmentId: command.environmentId,
       },
       {
@@ -65,13 +60,13 @@ export class ChangeTemplateActiveStatus {
       }
     );
 
-    const item = await this.notificationTemplateRepository.findById(command.templateId, command.environmentId);
-    if (!item) throw new NotFoundException(`Notification template ${command.templateId} is not found`);
+    const item = await this.notificationTemplateRepository.findById(command.workflowId, command.environmentId);
+    if (!item) throw new NotFoundException(`Workflow ${command.workflowId} is not found`);
 
     const parentChangeId: string = await this.changeRepository.getChangeId(
       command.environmentId,
       ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
-      command.templateId
+      command.workflowId
     );
 
     await this.createChange.execute(

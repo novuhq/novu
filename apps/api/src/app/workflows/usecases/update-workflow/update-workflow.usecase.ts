@@ -16,7 +16,7 @@ import {
   buildNotificationTemplateKey,
 } from '@novu/application-generic';
 
-import { UpdateNotificationTemplateCommand } from './update-notification-template.command';
+import { UpdateWorkflowCommand } from './update-workflow.command';
 import { ContentService } from '../../../shared/helpers/content.service';
 import {
   CreateMessageTemplate,
@@ -26,17 +26,12 @@ import {
 } from '../../../message-template/usecases';
 import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { NotificationStep } from '../create-notification-template';
+import { NotificationStep } from '../create-workflow';
 import { DeleteMessageTemplate } from '../../../message-template/usecases/delete-message-template/delete-message-template.usecase';
 import { DeleteMessageTemplateCommand } from '../../../message-template/usecases/delete-message-template/delete-message-template.command';
 
-/**
- * DEPRECATED:
- * This usecase is deprecated and will be removed in the future.
- * Please use the UpdateWorkflow usecase instead.
- */
 @Injectable()
-export class UpdateNotificationTemplate {
+export class UpdateWorkflow {
   constructor(
     private cacheService: CacheService,
     private notificationTemplateRepository: NotificationTemplateRepository,
@@ -50,7 +45,7 @@ export class UpdateNotificationTemplate {
     private deleteMessageTemplate: DeleteMessageTemplate
   ) {}
 
-  async execute(command: UpdateNotificationTemplateCommand): Promise<NotificationTemplateEntity> {
+  async execute(command: UpdateWorkflowCommand): Promise<NotificationTemplateEntity> {
     const existingTemplate = await this.notificationTemplateRepository.findById(command.id, command.environmentId);
     if (!existingTemplate) throw new NotFoundException(`Notification template with id ${command.id} not found`);
 
@@ -70,7 +65,7 @@ export class UpdateNotificationTemplate {
       );
 
       if (isExistingIdentifier && isExistingIdentifier._id !== command.id) {
-        throw new BadRequestException(`Notification template with identifier ${command.identifier} already exists`);
+        throw new BadRequestException(`Workflow with identifier ${command.identifier} already exists`);
       } else {
         updatePayload['triggers.0.identifier'] = command.identifier;
       }
@@ -84,7 +79,7 @@ export class UpdateNotificationTemplate {
 
       if (!notificationGroup)
         throw new NotFoundException(
-          `Notification group with id ${command.notificationGroupId} not found, under environment ${command.environmentId}`
+          `Workflow group with id ${command.notificationGroupId} not found, under environment ${command.environmentId}`
         );
 
       updatePayload._notificationGroupId = command.notificationGroupId;
@@ -335,7 +330,7 @@ export class UpdateNotificationTemplate {
 
   private async deleteRemovedSteps(
     existingSteps: NotificationStepEntity[],
-    command: UpdateNotificationTemplateCommand,
+    command: UpdateWorkflowCommand,
     parentChangeId: string
   ) {
     const removedStepsIds = this.getRemovedSteps(existingSteps || [], command.steps || []);

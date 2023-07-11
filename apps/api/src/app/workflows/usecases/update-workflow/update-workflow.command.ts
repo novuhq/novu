@@ -2,14 +2,9 @@ import { IsArray, IsBoolean, IsDefined, IsMongoId, IsOptional, IsString, Validat
 import { IPreferenceChannels } from '@novu/shared';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
-import { NotificationStep } from '../create-notification-template';
+import { NotificationStep } from '../create-workflow';
 
-/**
- * DEPRECATED:
- * This command is deprecated and will be removed in the future.
- * Please use the UpdateWorkflowCommand instead.
- */
-export class UpdateNotificationTemplateCommand extends EnvironmentWithUserCommand {
+export class UpdateWorkflowCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   @IsMongoId()
   id: string;
