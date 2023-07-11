@@ -4,14 +4,12 @@ import { SuperTest, Test } from 'supertest';
 import * as request from 'supertest';
 import * as defaults from 'superagent-defaults';
 import { v4 as uuid } from 'uuid';
-import { Novu, TriggerRecipientsPayload } from '@novu/node';
-import { ChannelTypeEnum, EmailBlockTypeEnum, IEmailBlock, InAppProviderIdEnum, StepTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, EmailBlockTypeEnum, IEmailBlock, StepTypeEnum, TriggerRecipientsPayload } from '@novu/shared';
 import {
   UserEntity,
   EnvironmentEntity,
   OrganizationEntity,
   NotificationGroupEntity,
-  EnvironmentRepository,
   NotificationGroupRepository,
   FeedRepository,
   ChangeRepository,
@@ -38,12 +36,13 @@ const EMAIL_BLOCK: IEmailBlock[] = [
 ];
 
 export class UserSession {
-  private environmentRepository = new EnvironmentRepository();
   private notificationGroupRepository = new NotificationGroupRepository();
   private feedRepository = new FeedRepository();
   private layoutRepository = new LayoutRepository();
   private integrationRepository = new IntegrationRepository();
   private changeRepository: ChangeRepository = new ChangeRepository();
+  private environmentService: EnvironmentService = new EnvironmentService();
+  private integrationService: IntegrationService = new IntegrationService();
   private jobsService: JobsService;
 
   token: string;
@@ -70,8 +69,6 @@ export class UserSession {
 
   apiKey: string;
 
-  serverSdk: Novu;
-
   constructor(public serverUrl = `http://localhost:${process.env.PORT}`) {
     this.jobsService = new JobsService();
   }
@@ -80,7 +77,6 @@ export class UserSession {
     options: {
       noOrganization?: boolean;
       noEnvironment?: boolean;
-      noIntegrations?: boolean;
       showOnBoardingTour?: boolean;
     } = {}
   ) {
@@ -109,19 +105,8 @@ export class UserSession {
 
     await this.fetchJWT();
 
-    if (!options.noOrganization) {
-      if (!options?.noEnvironment) {
-        const environment = await this.createEnvironment('Development');
-        await this.createEnvironment('Production', this.environment._id);
-        this.environment = environment;
-        this.apiKey = this.environment.apiKeys[0].key;
-
-        if (!options?.noIntegrations) {
-          await this.createIntegration();
-        }
-        await this.createFeed();
-        await this.createFeed('New');
-      }
+    if (!options.noOrganization && !options?.noEnvironment) {
+      await this.createEnvironmentsAndFeeds();
     }
 
     await this.fetchJWT();
@@ -137,25 +122,10 @@ export class UserSession {
       this.subscriberToken = token;
       this.subscriberProfile = profile;
     }
-
-    this.serverSdk = new Novu(this.apiKey, {
-      backendUrl: this.serverUrl,
-    });
   }
 
   private async initializeWidgetSession() {
     this.subscriberId = SubscriberRepository.createObjectId();
-
-    await this.integrationRepository.create({
-      _environmentId: this.environment._id,
-      _organizationId: this.environment._organizationId,
-      providerId: InAppProviderIdEnum.Novu,
-      channel: ChannelTypeEnum.IN_APP,
-      credentials: {
-        hmac: false,
-      },
-      active: true,
-    });
 
     const { body } = await this.testAgent
       .post('/v1/widgets/session/initialize')
@@ -192,19 +162,25 @@ export class UserSession {
     this.testAgent = defaults(request(this.requestEndpoint)).set('Authorization', this.token);
   }
 
-  async createEnvironment(name = 'Test environment', parentId: string | undefined = undefined) {
-    this.environment = await this.environmentRepository.create({
+  async createEnvironmentsAndFeeds(): Promise<void> {
+    const development = await this.createEnvironment('Development');
+    this.environment = development;
+    const production = await this.createEnvironment('Production', development._id);
+    this.apiKey = this.environment.apiKeys[0].key;
+
+    await this.createIntegrations([development, production]);
+
+    await this.createFeed();
+    await this.createFeed('New');
+  }
+
+  async createEnvironment(name = 'Test environment', parentId?: string): Promise<EnvironmentEntity> {
+    const environment = await this.environmentService.createEnvironment(
+      this.organization._id,
+      this.user._id,
       name,
-      identifier: uuid(),
-      _parentId: parentId,
-      _organizationId: this.organization._id,
-      apiKeys: [
-        {
-          key: uuid(),
-          _userId: this.user._id,
-        },
-      ],
-    });
+      parentId
+    );
 
     let parentGroup;
     if (parentId) {
@@ -216,19 +192,19 @@ export class UserSession {
 
     await this.notificationGroupRepository.create({
       name: 'General',
-      _environmentId: this.environment._id,
+      _environmentId: environment._id,
       _organizationId: this.organization._id,
       _parentId: parentGroup?._id,
     });
 
     await this.layoutRepository.create({
       name: 'Default',
-      _environmentId: this.environment._id,
+      _environmentId: environment._id,
       _organizationId: this.organization._id,
       isDefault: true,
     });
 
-    return this.environment;
+    return environment;
   }
 
   async updateOrganizationDetails() {
@@ -248,24 +224,16 @@ export class UserSession {
     this.notificationGroups = groupsResponse.body.data;
   }
 
-  async addEnvironment() {
-    const environmentService = new EnvironmentService();
-
-    this.environment = await environmentService.createEnvironment(this.organization._id);
-
-    return this.environment;
-  }
-
   async createTemplate(template?: Partial<CreateTemplatePayload>) {
     const service = new NotificationTemplateService(this.user._id, this.organization._id, this.environment._id);
 
     return await service.createTemplate(template);
   }
 
-  async createIntegration() {
-    const service = new IntegrationService();
-
-    return await service.createIntegration(this.environment._id, this.organization._id);
+  async createIntegrations(environments: EnvironmentEntity[]): Promise<void> {
+    for (const environment of environments) {
+      await this.integrationService.createChannelIntegrations(environment._id, this.organization._id);
+    }
   }
 
   async createChannelTemplate(channel: StepTypeEnum) {
@@ -291,9 +259,7 @@ export class UserSession {
   }
 
   async switchEnvironment(environmentId: string) {
-    const environmentService = new EnvironmentService();
-
-    const environment = await environmentService.getEnvironment(environmentId);
+    const environment = await this.environmentService.getEnvironment(environmentId);
 
     if (environment) {
       this.environment = environment;

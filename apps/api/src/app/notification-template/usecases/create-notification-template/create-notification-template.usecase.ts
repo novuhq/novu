@@ -18,6 +18,11 @@ import { CreateMessageTemplate, CreateMessageTemplateCommand } from '../../../me
 import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
+/**
+ * DEPRECATED:
+ * This usecase is deprecated and will be removed in the future.
+ * Please use the CreateWorkflow usecase instead.
+ */
 @Injectable()
 export class CreateNotificationTemplate {
   constructor(

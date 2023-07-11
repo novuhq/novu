@@ -74,11 +74,11 @@ export class DigestFilterSteps {
     }
 
     try {
-      let result;
+      let result = payload;
       const keys = path.split('.');
 
       for (const key of keys) {
-        result = payload[key];
+        result = result[key];
       }
 
       return result;

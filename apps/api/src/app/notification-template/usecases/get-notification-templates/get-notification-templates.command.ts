@@ -2,6 +2,11 @@ import { IsNumber } from 'class-validator';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
+/**
+ * DEPRECATED:
+ * This command is deprecated and will be removed in the future.
+ * Please use the GetWorkflowsCommand instead.
+ */
 export class GetNotificationTemplatesCommand extends EnvironmentWithUserCommand {
   @IsNumber()
   page: number;

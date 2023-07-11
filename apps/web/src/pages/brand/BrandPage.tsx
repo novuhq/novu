@@ -1,6 +1,5 @@
 import { Container, TabsValue } from '@mantine/core';
 
-import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { Tabs } from '../../design-system';
@@ -44,8 +43,7 @@ export function BrandPage() {
   ];
 
   return (
-    <PageContainer>
-      <PageMeta title="Brand" />
+    <PageContainer title="Brand">
       <PageHeader title="Brand" />
       <Container fluid mt={15} ml={5}>
         <Tabs

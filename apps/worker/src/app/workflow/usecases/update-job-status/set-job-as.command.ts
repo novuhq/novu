@@ -1,9 +1,12 @@
 import { IsDefined } from 'class-validator';
-import { EnvironmentCommand } from '@novu/application-generic';
+import { EnvironmentLevelWithUserCommand } from '@novu/application-generic';
 
-export class SetJobAsCommand extends EnvironmentCommand {
+export class SetJobAsCommand extends EnvironmentLevelWithUserCommand {
   @IsDefined()
-  _jobId: string;
+  jobId: string;
 }
 
-export class SetJobAsFailedCommand extends SetJobAsCommand {}
+export class SetJobAsFailedCommand extends SetJobAsCommand {
+  @IsDefined()
+  organizationId: string;
+}

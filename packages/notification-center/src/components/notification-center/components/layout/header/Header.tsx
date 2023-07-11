@@ -52,6 +52,7 @@ export function Header({ onCogClick }: { onCogClick?: () => void }) {
           onClick={markAllNotificationsAsRead}
           role="button"
           tabIndex={0}
+          data-test-id="notifications-header-mark-all-as-read"
         >
           {t('markAllAsRead')}
         </div>

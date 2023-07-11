@@ -9,7 +9,7 @@ import { PlusCircle } from '../../../design-system/icons';
 import { IBlueprintTemplate } from '../../../api/types';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { TemplateCreationSourceEnum } from '../shared';
-import { useHoverOverTemplate } from '../hooks/useHoverOverTemplate';
+import { useHoverOverItem } from '../../../hooks';
 
 const WIDTH = 172;
 
@@ -43,7 +43,7 @@ export const CreateWorkflowDropdown = ({
   onAllTemplatesClick: React.MouseEventHandler<HTMLButtonElement>;
 }) => {
   const segment = useSegment();
-  const { templateId, onMouseEnter, onMouseLeave } = useHoverOverTemplate();
+  const { item: templateId, onMouseEnter, onMouseLeave } = useHoverOverItem<string>();
 
   return (
     <Dropdown

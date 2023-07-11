@@ -1,6 +1,7 @@
 import { IsEmail, IsLocale, IsOptional, IsString } from 'class-validator';
 import { SubscriberEntity } from '@novu/dal';
 import { SubscriberCustomData } from '@novu/shared';
+import { Transform } from 'class-transformer';
 
 import { EnvironmentCommand } from '../../commands/project.command';
 
@@ -14,6 +15,7 @@ export class UpdateSubscriberCommand extends EnvironmentCommand {
   @IsOptional()
   lastName?: string;
 
+  @Transform((params) => (params.value === '' ? null : params.value))
   @IsOptional()
   @IsEmail()
   email?: string;
