@@ -13,6 +13,7 @@ export class GetIntegrations {
       GetDecryptedIntegrationsCommand.create({
         organizationId: command.organizationId,
         userId: command.userId,
+        environmentId: command.environmentId,
       })
     );
   }

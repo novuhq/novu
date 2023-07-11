@@ -44,7 +44,7 @@ export class RunJob {
     let shouldQueueNextJob = true;
 
     try {
-      await this.jobRepository.updateStatus(command.environmentId, job._id, JobStatusEnum.RUNNING);
+      await this.jobRepository.updateStatus(job._environmentId, job._id, JobStatusEnum.RUNNING);
 
       await this.storageHelperService.getAttachments(job.payload?.attachments);
 
@@ -70,7 +70,7 @@ export class RunJob {
       );
 
       await this.storageHelperService.deleteAttachments(job.payload?.attachments);
-    } catch (error: any) {
+    } catch (error) {
       if (job.step.shouldStopOnFail || this.shouldBackoff(error)) {
         shouldQueueNextJob = false;
       }

@@ -13,8 +13,7 @@ export class SetJobAsCompleted {
     await this.updateJobStatus.execute(
       UpdateJobStatusCommand.create({
         environmentId: command.environmentId,
-        _jobId: command._jobId,
-        organizationId: command.organizationId,
+        jobId: command.jobId,
         status: JobStatusEnum.COMPLETED,
       })
     );

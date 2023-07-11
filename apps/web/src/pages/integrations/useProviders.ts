@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import * as cloneDeep from 'lodash.clonedeep';
-import { ChannelTypeEnum, IProviderConfig, providers, PushProviderIdEnum } from '@novu/shared';
+import { ChannelTypeEnum, IConfigCredentials, IProviderConfig, providers, PushProviderIdEnum } from '@novu/shared';
 
 import { useIntegrations, useIsMultiProviderConfigurationEnabled } from '../../hooks';
 import { IIntegratedProvider, IntegrationEntity } from './IntegrationsStorePage';
@@ -59,11 +59,21 @@ function initializeProvidersByIntegration(integrations: IntegrationEntity[]): II
   return integrations.map((integrationItem) => {
     const providerItem = providers.find((provItem) => integrationItem.providerId === provItem.id) as IProviderConfig;
 
-    const clonedCredentials = cloneDeep(providerItem?.credentials);
+    const clonedCredentials: IConfigCredentials[] = cloneDeep(providerItem?.credentials);
 
-    if (integrationItem?.credentials && Object.keys(clonedCredentials).length !== 0) {
+    if (
+      typeof clonedCredentials === 'object' &&
+      integrationItem?.credentials &&
+      Object.keys(clonedCredentials).length !== 0
+    ) {
       clonedCredentials.forEach((credential) => {
-        // eslint-disable-next-line no-param-reassign
+        if (credential.type === 'boolean' || credential.type === 'switch') {
+          credential.value = integrationItem.credentials[credential.key];
+
+          return;
+        }
+
+        // eslint-disable-next-line
         credential.value = integrationItem.credentials[credential.key]?.toString();
       });
     }
@@ -72,17 +82,17 @@ function initializeProvidersByIntegration(integrations: IntegrationEntity[]): II
     fcmFallback(integrationItem, clonedCredentials);
 
     return {
-      providerId: providerItem.id,
+      providerId: providerItem?.id || integrationItem.providerId,
       integrationId: integrationItem?._id ? integrationItem._id : '',
-      displayName: providerItem.displayName,
-      channel: providerItem.channel,
-      credentials: integrationItem?.credentials ? clonedCredentials : providerItem.credentials,
-      docReference: providerItem.docReference,
-      comingSoon: !!providerItem.comingSoon,
-      betaVersion: !!providerItem.betaVersion,
+      displayName: providerItem?.displayName || integrationItem.name,
+      channel: providerItem?.channel || integrationItem.channel,
+      credentials: (integrationItem?.credentials ? clonedCredentials : providerItem?.credentials) || [],
+      docReference: providerItem?.docReference || '',
+      comingSoon: !!providerItem?.comingSoon,
+      betaVersion: !!providerItem?.betaVersion,
       active: integrationItem?.active ?? false,
       connected: !!integrationItem,
-      logoFileName: providerItem.logoFileName,
+      logoFileName: providerItem?.logoFileName,
       environmentId: integrationItem?._environmentId,
       name: integrationItem?.name,
       identifier: integrationItem?.identifier,
