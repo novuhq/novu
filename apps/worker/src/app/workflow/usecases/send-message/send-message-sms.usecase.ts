@@ -108,6 +108,8 @@ export class SendMessageSms extends SendMessageBase {
       return;
     }
 
+    await this.sendSelectedIntegrationExecution(command.job, integration);
+
     const overrides = command.overrides[integration?.providerId] || {};
 
     const messagePayload = Object.assign({}, command.payload);

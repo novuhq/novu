@@ -31,6 +31,7 @@ import { TopicsModule } from './app/topics/topics.module';
 import { InboundParseModule } from './app/inbound-parse/inbound-parse.module';
 import { BlueprintModule } from './app/blueprint/blueprint.module';
 import { TenantModule } from './app/tenant/tenant.module';
+import { WorkflowsModule } from './app/workflows/workflows.module';
 
 const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
   InboundParseModule,
@@ -59,6 +60,7 @@ const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardRefe
   TopicsModule,
   BlueprintModule,
   TenantModule,
+  WorkflowsModule,
 ];
 
 const providers: Provider[] = [];
