@@ -9,6 +9,7 @@ import {
   ChatProviderIdEnum,
   CredentialsKeyEnum,
   IConfigCredentials,
+  ICreateIntegrationBodyDto,
   ICredentialsDto,
   IEnvironment,
   IOrganizationEntity,
@@ -114,7 +115,7 @@ export function ConnectIntegrationForm({
   onSuccessFormSubmit,
   onClose,
 }: {
-  provider: IIntegratedProvider | null;
+  provider: IIntegratedProvider;
   organization?: IOrganizationEntity;
   environment?: IEnvironment;
   createModel: boolean;
@@ -143,13 +144,7 @@ export function ConnectIntegrationForm({
   const { mutateAsync: createIntegrationApi, isLoading: isLoadingCreate } = useMutation<
     { res: string },
     { error: string; message: string; statusCode: number },
-    {
-      providerId: string;
-      channel: ChannelTypeEnum | null;
-      credentials: ICredentialsDto;
-      active: boolean;
-      check: boolean;
-    }
+    ICreateIntegrationBodyDto
   >(createIntegration);
 
   const { mutateAsync: updateIntegrationApi, isLoading: isLoadingUpdate } = useMutation<
@@ -202,7 +197,7 @@ export function ConnectIntegrationForm({
       if (createModel) {
         await createIntegrationApi({
           providerId: provider?.providerId ? provider?.providerId : '',
-          channel: provider?.channel ? provider?.channel : null,
+          channel: provider?.channel,
           credentials,
           active: isActive,
           check,
