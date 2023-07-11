@@ -75,6 +75,7 @@
     "@novu/postmark": "^0.16.3",
     "@novu/push-webhook": "^0.16.3",
     "@novu/resend": "^0.16.3",
+    "@novu/sendchamp": "^0.16.3",
     "@novu/sendgrid": "^0.16.3",
     "@novu/sendinblue": "^0.16.3",
     "@novu/ses": "^0.16.3",
