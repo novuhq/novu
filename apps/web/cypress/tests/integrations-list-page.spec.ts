@@ -4,6 +4,7 @@ Cypress.on('window:before:load', (win) => {
   win._cypress = {
     ...win._cypress,
     IS_MULTI_PROVIDER_CONFIGURATION_ENABLED: 'true',
+    LAUNCH_DARKLY_SDK_KEY: '',
   };
 });
 
@@ -185,7 +186,6 @@ describe('Integrations List Page', function () {
       },
       5
     );
-    /*
     checkTableRow(
       {
         name: 'SendGrid',
@@ -265,6 +265,5 @@ describe('Integrations List Page', function () {
       },
       13
     );
-    */
   });
 });
