@@ -16,6 +16,5 @@
     "source.fixAll": true
   },
   "cSpell.words": ["mantine"],
-  "vsicons.presets.nestjs": true,
-  "ansible.python.interpreterPath": "/opt/homebrew/bin/python3.11"
+  "vsicons.presets.nestjs": true
 }
