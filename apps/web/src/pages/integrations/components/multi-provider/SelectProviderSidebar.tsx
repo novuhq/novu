@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
-import { ActionIcon, Group, Space, Stack, Tabs, TabsValue, useMantineColorScheme } from '@mantine/core';
+import { ActionIcon, Group, Image, Space, Stack, Tabs, TabsValue, useMantineColorScheme } from '@mantine/core';
 import {
   ChannelTypeEnum,
   emailProviders,
@@ -22,6 +22,8 @@ import { CHANNELS_ORDER } from '../IntegrationsListNoData';
 import { CHANNEL_TYPE_TO_STRING } from '../../../../utils/channels';
 import { getLogoFileName } from '../../../../utils/providers';
 import { sortProviders } from './sort-providers';
+import { When } from '../../../../components/utils/When';
+import { CONTEXT_PATH } from '../../../../config';
 
 const filterSearch = (list, search: string) =>
   list.filter((prov) => prov.displayName.toLowerCase().includes(search.toLowerCase()));
@@ -35,27 +37,28 @@ const mapStructure = (listProv): IIntegratedProvider[] =>
   }));
 
 export function SelectProviderSidebar() {
-  const [{ emailProviderList, smsProviderList, chatProviderList, pushProviderList, inAppProviderList }, setProviders] =
-    useState({
-      emailProviderList: mapStructure(emailProviders),
-      smsProviderList: mapStructure(smsProviders),
-      pushProviderList: mapStructure(pushProviders),
-      inAppProviderList: mapStructure(inAppProviders),
-      chatProviderList: mapStructure(chatProviders),
-    });
+  const [providersList, setProvidersList] = useState({
+    [ChannelTypeEnum.EMAIL]: mapStructure(emailProviders),
+    [ChannelTypeEnum.SMS]: mapStructure(smsProviders),
+    [ChannelTypeEnum.PUSH]: mapStructure(pushProviders),
+    [ChannelTypeEnum.IN_APP]: mapStructure(inAppProviders),
+    [ChannelTypeEnum.CHAT]: mapStructure(chatProviders),
+  });
 
   const [selectedProvider, setSelectedProvider] = useState<IIntegratedProvider | null>(null);
   const { classes: tabsClasses } = useStyles(false);
 
   const debouncedSearchChange = useDebounce((search: string) => {
-    setProviders({
-      emailProviderList: filterSearch(emailProviderList, search),
-      smsProviderList: filterSearch(smsProviderList, search),
-      pushProviderList: filterSearch(pushProviderList, search),
-      inAppProviderList: filterSearch(inAppProviderList, search),
-      chatProviderList: filterSearch(chatProviderList, search),
+    setProvidersList({
+      [ChannelTypeEnum.EMAIL]: filterSearch(providersList[ChannelTypeEnum.EMAIL], search),
+      [ChannelTypeEnum.SMS]: filterSearch(providersList[ChannelTypeEnum.SMS], search),
+      [ChannelTypeEnum.PUSH]: filterSearch(providersList[ChannelTypeEnum.PUSH], search),
+      [ChannelTypeEnum.IN_APP]: filterSearch(providersList[ChannelTypeEnum.IN_APP], search),
+      [ChannelTypeEnum.CHAT]: filterSearch(providersList[ChannelTypeEnum.CHAT], search),
     });
   }, 500);
+
+  const emptyProvidersList = Object.values(providersList).every((list) => list.length === 0);
 
   const navigate = useNavigate();
 
@@ -116,8 +119,10 @@ export function SelectProviderSidebar() {
         <Tabs defaultValue={ChannelTypeEnum.IN_APP} classNames={tabsClasses} onTabChange={onTabChange}>
           <Tabs.List>
             {CHANNELS_ORDER.map((channelType) => {
+              const list = providersList[channelType];
+
               return (
-                <Tabs.Tab key={channelType} value={channelType}>
+                <Tabs.Tab key={channelType} hidden={list.length === 0} value={channelType}>
                   <ChannelTitle spacing={5} channel={channelType} />
                 </Tabs.Tab>
               );
@@ -126,36 +131,21 @@ export function SelectProviderSidebar() {
         </Tabs>
         <Space h={20} />
         <CenterDiv>
-          <ListProviders
-            selectedProvider={selectedProvider}
-            onProviderClick={onProviderClick}
-            channelProviders={inAppProviderList}
-            channelType={ChannelTypeEnum.IN_APP}
-          />
-          <ListProviders
-            selectedProvider={selectedProvider}
-            onProviderClick={onProviderClick}
-            channelProviders={emailProviderList}
-            channelType={ChannelTypeEnum.EMAIL}
-          />
-          <ListProviders
-            selectedProvider={selectedProvider}
-            onProviderClick={onProviderClick}
-            channelProviders={chatProviderList}
-            channelType={ChannelTypeEnum.CHAT}
-          />
-          <ListProviders
-            selectedProvider={selectedProvider}
-            onProviderClick={onProviderClick}
-            channelProviders={pushProviderList}
-            channelType={ChannelTypeEnum.PUSH}
-          />
-          <ListProviders
-            selectedProvider={selectedProvider}
-            onProviderClick={onProviderClick}
-            channelProviders={smsProviderList}
-            channelType={ChannelTypeEnum.SMS}
-          />
+          <When truthy={emptyProvidersList}>
+            <Image src={`${CONTEXT_PATH}/static/images/empty-provider-search.svg`} />
+          </When>
+          {!emptyProvidersList &&
+            CHANNELS_ORDER.map((channelType) => {
+              return (
+                <ListProviders
+                  key={channelType}
+                  selectedProvider={selectedProvider}
+                  onProviderClick={onProviderClick}
+                  channelProviders={providersList[channelType]}
+                  channelType={channelType}
+                />
+              );
+            })}
         </CenterDiv>
         <Footer>
           <Group>

@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, ICredentialsDto } from '@novu/shared';
+import { ChannelTypeEnum, ICreateIntegrationBodyDto, IUpdateIntegrationBodyDto } from '@novu/shared';
 import { api } from './api.client';
 
 export function getIntegrations() {
@@ -13,17 +13,16 @@ export function getActiveIntegrations() {
   return api.get('/v1/integrations/active');
 }
 
-export function createIntegration(data: {
-  providerId: string;
-  channel: ChannelTypeEnum | null;
-  credentials: ICredentialsDto;
-  active: boolean;
-}) {
+export function createIntegration(data: ICreateIntegrationBodyDto) {
   return api.post(`/v1/integrations`, data);
 }
 
-export function updateIntegration(integrationId: string, data: { credentials: ICredentialsDto; active: boolean }) {
+export function updateIntegration(integrationId: string, data: IUpdateIntegrationBodyDto) {
   return api.put(`/v1/integrations/${integrationId}`, data);
+}
+
+export function deleteIntegration(integrationId: string) {
+  return api.delete(`/v1/integrations/${integrationId}`);
 }
 
 export function getWebhookSupportStatus(providerId: string) {

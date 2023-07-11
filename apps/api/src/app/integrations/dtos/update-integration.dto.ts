@@ -1,6 +1,6 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IUpdateIntegrationBodyDto } from '@novu/shared';
-import { IsBoolean, IsDefined, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsBoolean, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { CredentialsDto } from './credentials.dto';
 import { Type } from 'class-transformer';
 
