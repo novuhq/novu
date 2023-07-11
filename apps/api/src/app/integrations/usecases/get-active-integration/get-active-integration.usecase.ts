@@ -1,13 +1,15 @@
 import { Injectable } from '@nestjs/common';
 
 import {
+  FeatureFlagCommand,
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
+  GetFeatureFlag,
   SelectIntegration,
   SelectIntegrationCommand,
 } from '@novu/application-generic';
 import { ChannelTypeEnum } from '@novu/shared';
-import { IntegrationEntity, IntegrationRepository, EnvironmentRepository } from '@novu/dal';
+import { EnvironmentEntity, EnvironmentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
 
 import { GetActiveIntegrationsCommand } from './get-active-integration.command';
 import { GetActiveIntegrationResponseDto } from '../../dtos/get-active-integration-response.dto';
@@ -18,26 +20,61 @@ export class GetActiveIntegrations {
     private integrationRepository: IntegrationRepository,
     private selectIntegration: SelectIntegration,
     private environmentRepository: EnvironmentRepository,
-    private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
+    private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations,
+    private getFeatureFlag: GetFeatureFlag
   ) {}
 
   async execute(command: GetActiveIntegrationsCommand): Promise<GetActiveIntegrationResponseDto[]> {
-    const activeIntegration = await this.getDecryptedIntegrationsUsecase.execute(
-      GetDecryptedIntegrationsCommand.create({
-        organizationId: command.organizationId,
-        userId: command.userId,
-        active: true,
-      })
-    );
+    const environments = await this.environmentRepository.findOrganizationEnvironments(command.organizationId);
 
-    if (!activeIntegration.length) {
+    const activeIntegrations = await this.getActiveIntegrations(command, environments);
+
+    if (!activeIntegrations.length) {
       return [];
     }
 
-    const activeIntegrationChannelTypes = this.getDistinctChannelTypes(activeIntegration);
-    const selectedIntegrations = await this.getSelectedIntegrations(command, activeIntegrationChannelTypes);
+    const activeIntegrationChannelTypes = this.getDistinctChannelTypes(activeIntegrations);
+    const selectedIntegrations = await this.getSelectedIntegrations(
+      command,
+      activeIntegrationChannelTypes,
+      environments
+    );
 
-    return this.mapBySelectedIntegration(activeIntegration, selectedIntegrations);
+    return this.mapBySelectedIntegration(activeIntegrations, selectedIntegrations);
+  }
+
+  private async getActiveIntegrations(command: GetActiveIntegrationsCommand, environments: EnvironmentEntity[]) {
+    const isMultiProviderConfigurationEnabled = await this.getFeatureFlag.isMultiProviderConfigurationEnabled(
+      FeatureFlagCommand.create({
+        userId: command.userId,
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+      })
+    );
+
+    const activeIntegrationPromises = isMultiProviderConfigurationEnabled
+      ? [
+          await this.getDecryptedIntegrationsUsecase.execute(
+            GetDecryptedIntegrationsCommand.create({
+              organizationId: command.organizationId,
+              environmentId: command.environmentId,
+              userId: command.userId,
+              active: true,
+            })
+          ),
+        ]
+      : environments.map(async (environment) => {
+          return this.getDecryptedIntegrationsUsecase.execute(
+            GetDecryptedIntegrationsCommand.create({
+              environmentId: environment._id,
+              organizationId: command.organizationId,
+              userId: command.userId,
+              active: true,
+            })
+          );
+        });
+
+    return (await Promise.all(activeIntegrationPromises)).flat();
   }
 
   private getDistinctChannelTypes(activeIntegration: IntegrationEntity[]): ChannelTypeEnum[] {
@@ -61,10 +98,9 @@ export class GetActiveIntegrations {
 
   private async getSelectedIntegrations(
     command: GetActiveIntegrationsCommand,
-    activeIntegrationChannelTypes: ChannelTypeEnum[]
+    activeIntegrationChannelTypes: ChannelTypeEnum[],
+    environments: EnvironmentEntity[]
   ) {
-    const environments = await this.environmentRepository.findOrganizationEnvironments(command.organizationId);
-
     const integrationPromises = this.selectIntegrationByEnvironment(
       environments,
       command,
