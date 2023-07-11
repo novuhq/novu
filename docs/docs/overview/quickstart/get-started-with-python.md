@@ -113,7 +113,7 @@ from novu.dto.subscriber import SubscriberDto
    
 your_subscriber_id = "123"; # Replace this with a unique user ID that matches your database.
 
-subscriber = SubscriberApi("https://api.novu.co", "b23c55928da9e76702b74921a7fffee2")
+subscriber = SubscriberApi("https://api.novu.co", "<YOUR_NOVU_API_KEY>")
 subscriber.create(SubscriberDto(
         subscriber_id=your_subscriber_id,
         email="abc@gmail.com",
