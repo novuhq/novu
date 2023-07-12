@@ -134,7 +134,7 @@ If you’re following the guide, you’ve already copied the trigger function. B
 
 Subscribers are users to which the notifications are sent. You can see a list of subscribers in the [Novu dashboard](https://web.novu.co/subscribers) as well.
 
-In our app, we’ll create a subscriber in Node.js as we’re writing our backend in Node.js, but we also have backend SDKs (Node.js, PHP, [.NET](https://github.com/novuhq/novu-dotnet), [Go](https://github.com/novuhq/go-novu), [Ruby](https://github.com/novuhq/novu-ruby), [Python](https://github.com/novuhq/novu-python), and [Kotlin](https://github.com/novuhq/novu-kotlin)) to choose from. The recommended way to create a subscriber in NodeJS is as follows:
+In our app, we’ll create a subscriber in Node.js as we’re writing our backend in Node.js, but we also have backend SDKs (Node.js, [PHP](https://github.com/novuhq/novu-php), [.NET](https://github.com/novuhq/novu-dotnet), [Go](https://github.com/novuhq/go-novu), [Ruby](https://github.com/novuhq/novu-ruby), [Python](https://github.com/novuhq/novu-python), and [Kotlin](https://github.com/novuhq/novu-kotlin)) to choose from. The recommended way to create a subscriber in NodeJS is as follows:
 
 ```jsx
 await novu.subscribers.identify('digestEmailSub', {
