@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
 
 import { GetDecryptedIntegrations, GetDecryptedIntegrationsCommand } from '@novu/application-generic';
-import { IntegrationResponseDto } from '../../dtos/integration-response.dto';
+
 import { GetActiveIntegrationsCommand } from './get-active-integration.command';
+
+import { IntegrationResponseDto } from '../../dtos/integration-response.dto';
 
 @Injectable()
 export class GetActiveIntegrations {

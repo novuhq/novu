@@ -22,6 +22,7 @@ import {
   getRedisClusterProviderConfig,
   IRedisClusterProviderConfig,
 } from './redis-cluster-provider';
+import { GetIsInMemoryClusterModeEnabled } from '../../usecases';
 
 const LOG_CONTEXT = 'InMemoryCluster';
 
@@ -37,16 +38,21 @@ export class InMemoryProviderService {
   public inMemoryProviderClient: InMemoryProviderClient;
   public inMemoryProviderConfig: InMemoryProviderConfig;
 
-  constructor(private enableAutoPipelining?: boolean) {}
+  private nodesInterval;
 
-  public initialize(): void {
+  constructor(
+    private getIsInMemoryClusterModeEnabled: GetIsInMemoryClusterModeEnabled,
+    private enableAutoPipelining?: boolean
+  ) {
     Logger.log('In-memory provider service initialized', LOG_CONTEXT);
 
     this.inMemoryProviderClient = this.buildClient();
   }
 
   private buildClient(): Redis | Cluster | undefined {
-    return this.isClusterMode()
+    const isClusterMode = this.isClusterMode();
+
+    return isClusterMode
       ? this.inMemoryClusterProviderSetup()
       : this.inMemoryProviderSetup();
   }
@@ -83,8 +89,7 @@ export class InMemoryProviderService {
   }
 
   public isClusterMode(): boolean {
-    const isClusterModeEnabled =
-      process.env.IN_MEMORY_CLUSTER_MODE_ENABLED === 'true';
+    const isClusterModeEnabled = this.getIsInMemoryClusterModeEnabled.execute();
     Logger.log(
       `Cluster mode ${
         isClusterModeEnabled ? 'is' : 'is not'
@@ -94,8 +99,8 @@ export class InMemoryProviderService {
     return isClusterModeEnabled;
   }
 
-  public async getClusterOptions(): Promise<ClusterOptions | undefined> {
-    const isClusterMode = await this.isClusterMode();
+  public getClusterOptions(): ClusterOptions | undefined {
+    const isClusterMode = this.isClusterMode();
     if (this.inMemoryProviderClient && isClusterMode) {
       return this.inMemoryProviderClient.options;
     }
@@ -159,7 +164,7 @@ export class InMemoryProviderService {
     if (host && inMemoryProviderClient) {
       Logger.log(`Connecting to cluster at ${host}`, LOG_CONTEXT);
 
-      setInterval(() => {
+      this.nodesInterval = setInterval(() => {
         try {
           inMemoryProviderClient.nodes('all')?.forEach((node) => {
             Logger.log(
@@ -284,7 +289,10 @@ export class InMemoryProviderService {
 
   public async shutdown(): Promise<void> {
     if (this.inMemoryProviderClient) {
+      clearInterval(this.nodesInterval);
+
       Logger.verbose('In-memory provider service shutdown', LOG_CONTEXT);
+
       await this.inMemoryProviderClient.quit();
     }
   }

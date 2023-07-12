@@ -2,11 +2,13 @@
 import Redlock from 'redlock';
 import { setTimeout } from 'timers/promises';
 
+import { DistributedLockService } from './distributed-lock.service';
+import { FeatureFlagsService } from '../feature-flags.service';
 import {
   InMemoryProviderClient,
   InMemoryProviderService,
 } from '../in-memory-provider';
-import { DistributedLockService } from './distributed-lock.service';
+import { GetIsInMemoryClusterModeEnabled } from '../../usecases';
 
 const originalRedisCacheServiceHost = (process.env.REDIS_CACHE_SERVICE_HOST =
   process.env.REDIS_CACHE_SERVICE_HOST ?? 'localhost');
@@ -27,6 +29,8 @@ const spyIncreaseLockCounter = jest.spyOn(
 const spyLock = jest.spyOn(Redlock.prototype, 'acquire');
 const spyUnlock = jest.spyOn(Redlock.prototype, 'unlock');
 
+const getIsInMemoryClusterModeEnabled = new GetIsInMemoryClusterModeEnabled();
+
 describe('Distributed Lock Service', () => {
   afterEach(() => {
     spyDecreaseLockCounter.mockClear();
@@ -40,8 +44,9 @@ describe('Distributed Lock Service', () => {
     let distributedLockService: DistributedLockService;
 
     beforeEach(async () => {
-      inMemoryProviderService = new InMemoryProviderService();
-      inMemoryProviderService.initialize();
+      inMemoryProviderService = new InMemoryProviderService(
+        getIsInMemoryClusterModeEnabled
+      );
 
       await inMemoryProviderService.delayUntilReadiness();
 
@@ -63,7 +68,7 @@ describe('Distributed Lock Service', () => {
         expect(await client!.ping()).toEqual('PONG');
         expect(client!.status).toEqual('ready');
         expect(client!.isCluster).toEqual(
-          process.env.IN_MEMORY_CLUSTER_MODE_ENABLED === 'true'
+          process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED === 'true'
         );
       });
 
@@ -293,8 +298,9 @@ describe('Distributed Lock Service', () => {
       process.env.REDIS_CLUSTER_SERVICE_HOST = '';
       process.env.REDIS_CLUSTER_SERVICE_PORTS = '';
 
-      inMemoryProviderService = new InMemoryProviderService();
-      inMemoryProviderService.initialize();
+      inMemoryProviderService = new InMemoryProviderService(
+        getIsInMemoryClusterModeEnabled
+      );
       expect(inMemoryProviderService.inMemoryProviderConfig.host).toEqual('');
       distributedLockService = new DistributedLockService(
         inMemoryProviderService

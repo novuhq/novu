@@ -3,20 +3,23 @@ import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 
 import { decryptCredentials } from '../../encryption';
 import { GetDecryptedIntegrationsCommand } from './get-decrypted-integrations.command';
-import { FeatureFlagCommand, GetFeatureFlag } from '../get-feature-flag';
+import {
+  FeatureFlagCommand,
+  GetIsMultiProviderConfigurationEnabled,
+} from '../get-feature-flag';
 
 @Injectable()
 export class GetDecryptedIntegrations {
   constructor(
     private integrationRepository: IntegrationRepository,
-    private getFeatureFlag: GetFeatureFlag
+    private getIsMultiProviderConfigurationEnabled: GetIsMultiProviderConfigurationEnabled
   ) {}
 
   async execute(
     command: GetDecryptedIntegrationsCommand
   ): Promise<IntegrationEntity[]> {
     const isMultiProviderConfigurationEnabled =
-      await this.getFeatureFlag.isMultiProviderConfigurationEnabled(
+      await this.getIsMultiProviderConfigurationEnabled.execute(
         FeatureFlagCommand.create({
           userId: command.userId,
           organizationId: command.organizationId,

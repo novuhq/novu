@@ -1,14 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { IntegrationRepository } from '@novu/dal';
-import { FeatureFlagCommand, GetFeatureFlag } from '@novu/application-generic';
+import { FeatureFlagCommand, GetIsMultiProviderConfigurationEnabled } from '@novu/application-generic';
 
 import { DeactivateSimilarChannelIntegrationsCommand } from './deactivate-integration.command';
 
 @Injectable()
 export class DeactivateSimilarChannelIntegrations {
-  constructor(private integrationRepository: IntegrationRepository, private getFeatureFlag: GetFeatureFlag) {}
+  constructor(
+    private integrationRepository: IntegrationRepository,
+    private getIsMultiProviderConfigurationEnabled: GetIsMultiProviderConfigurationEnabled
+  ) {}
   async execute(command: DeactivateSimilarChannelIntegrationsCommand): Promise<void> {
-    const shouldKeepIntegrationsActive = await this.getFeatureFlag.isMultiProviderConfigurationEnabled(
+    const shouldKeepIntegrationsActive = await this.getIsMultiProviderConfigurationEnabled.execute(
       FeatureFlagCommand.create({
         environmentId: command.environmentId,
         organizationId: command.organizationId,

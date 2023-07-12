@@ -15,6 +15,10 @@ export class InMemoryProviderServiceHealthIndicator extends HealthIndicator {
     super();
   }
 
+  /**
+   * TODO: Think how to check FeatureFlagsService dependency
+   * without blocking self hosted users
+   */
   async isHealthy(): Promise<HealthIndicatorResult> {
     if (this.inMemoryProviderService.isClientReady()) {
       return this.getStatus(this.INDICATOR_KEY, true);

@@ -64,6 +64,8 @@ jobs:
           targets: lint
           projects: '@novu/widget'
 
+      - uses: ./.github/actions/setup-redis-cluster
+
       - uses: mansagroup/nrwl-nx-action@v3
         with:
           targets: build
@@ -89,6 +91,7 @@ jobs:
           PORT: "1336"
           TZ: "UTC"
           GITHUB_OAUTH_REDIRECT: "http://localhost:1336/v1/auth/github/callback"
+          LAUNCH_DARKLY_SDK_KEY: ${{ secrets.TEST_LAUNCH_DARKLY_SDK_KEY }}
         run: cd apps/api && pnpm start:build &
 
       - name: Start worker
@@ -96,6 +99,7 @@ jobs:
           NODE_ENV: "test"
           PORT: 1342
           TZ: "UTC"
+          LAUNCH_DARKLY_SDK_KEY: ${{ secrets.TEST_LAUNCH_DARKLY_SDK_KEY }}
         run: cd apps/worker && pnpm start:prod &
 
       - name: Install wait-on plugin

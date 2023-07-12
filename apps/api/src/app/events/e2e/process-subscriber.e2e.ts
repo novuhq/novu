@@ -8,13 +8,14 @@ import {
   NotificationTemplateRepository,
 } from '@novu/dal';
 import { UserSession, SubscribersService } from '@novu/testing';
-import { ChannelTypeEnum, ISubscribersDefine, StepTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, ISubscribersDefine, IUpdateNotificationTemplateDto, StepTypeEnum } from '@novu/shared';
 import {
+  CacheService,
+  GetIsInMemoryClusterModeEnabled,
   InMemoryProviderService,
   buildNotificationTemplateIdentifierKey,
   buildNotificationTemplateKey,
   InvalidateCacheService,
-  CacheService,
 } from '@novu/application-generic';
 
 import { UpdateSubscriberPreferenceRequestDto } from '../../widgets/dtos/update-subscriber-preference-request.dto';
@@ -26,18 +27,28 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
+  let cacheService: CacheService;
+  let invalidateCache: InvalidateCacheService;
 
-  const inMemoryProviderService = new InMemoryProviderService();
-  inMemoryProviderService.initialize();
-  const invalidateCache = new InvalidateCacheService(new CacheService(inMemoryProviderService));
+  let featureFlagsService;
+  let inMemoryProviderService;
 
   const subscriberRepository = new SubscriberRepository();
   const messageRepository = new MessageRepository();
   const notificationTemplateRepository = new NotificationTemplateRepository();
 
+  before(async () => {
+    const getIsInMemoryClusterModeEnabled = new GetIsInMemoryClusterModeEnabled();
+    inMemoryProviderService = new InMemoryProviderService(getIsInMemoryClusterModeEnabled);
+    cacheService = new CacheService(inMemoryProviderService);
+    await cacheService.initialize();
+    invalidateCache = new InvalidateCacheService(cacheService);
+  });
+
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
+
     template = await session.createTemplate();
     subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     subscriber = await subscriberService.createSubscriber();
@@ -188,6 +199,14 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
 
     expect(message.length).to.equal(2);
 
+    const notificationTemplateKey = buildNotificationTemplateKey({
+      _id: template._id,
+      _environmentId: session.environment._id,
+    });
+    await invalidateCache.invalidateByKey({
+      key: notificationTemplateKey,
+    });
+
     const updateData = {
       channel: {
         type: ChannelTypeEnum.IN_APP,
@@ -197,21 +216,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
 
     await updateSubscriberPreference(updateData, session.subscriberToken, template._id);
 
-    await invalidateCache.invalidateByKey({
-      key: buildNotificationTemplateKey({
-        _id: template._id,
-        _environmentId: session.environment._id,
-      }),
-    });
-
-    await invalidateCache.invalidateByKey({
-      key: buildNotificationTemplateIdentifierKey({
-        templateIdentifier: template.triggers[0].identifier,
-        _environmentId: session.environment._id,
-      }),
-    });
-
-    await notificationTemplateRepository.update(
+    const rest = await notificationTemplateRepository.update(
       {
         _id: template._id,
         _environmentId: session.environment._id,

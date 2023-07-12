@@ -7,8 +7,8 @@ import { bootstrap } from '../src/bootstrap';
 const dalService = new DalService();
 
 before(async () => {
-  await testServer.create(await bootstrap());
   await dalService.connect(process.env.MONGO_URL);
+  await testServer.create(await bootstrap());
 });
 
 after(async () => {
