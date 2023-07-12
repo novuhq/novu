@@ -44,6 +44,7 @@ jobs:
           else
             echo ::set-output has_token=false
           fi
+
       # checkout with submodules if token is provided
       - uses: actions/checkout@v3
         if: steps.setup.outputs.has_token == 'true'
@@ -57,6 +58,9 @@ jobs:
         id: setup-project
         with:
           cypress: true
+
+      - uses: ./.github/actions/setup-redis-cluster
+      - uses: ./.github/actions/start-localstack
 
       - uses: mansagroup/nrwl-nx-action@v3
         with:

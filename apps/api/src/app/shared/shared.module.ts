@@ -37,7 +37,9 @@ import {
   WsQueueService,
   DistributedLockService,
   TriggerQueueService,
-  GetFeatureFlag,
+  GetIsInMemoryClusterModeEnabled,
+  GetIsMultiProviderConfigurationEnabled,
+  GetIsTopicNotificationEnabled,
   LaunchDarklyService,
   FeatureFlagsService,
 } from '@novu/application-generic';
@@ -83,8 +85,9 @@ const dalService = new DalService();
 
 const launchDarklyService = {
   provide: LaunchDarklyService,
-  useFactory: (): LaunchDarklyService => {
+  useFactory: async (): Promise<LaunchDarklyService> => {
     const service = new LaunchDarklyService();
+    await service.initialize();
 
     return service;
   },
@@ -94,57 +97,87 @@ const featureFlagsService = {
   provide: FeatureFlagsService,
   useFactory: async (): Promise<FeatureFlagsService> => {
     const instance = new FeatureFlagsService();
-
-    await instance.service.initialize();
+    await instance.initialize();
 
     return instance;
   },
 };
 
-const getFeatureFlagUseCase = {
-  provide: GetFeatureFlag,
-  useFactory: async (): Promise<GetFeatureFlag> => {
-    const featureFlagsServiceFactory = await featureFlagsService.useFactory();
-    const getFeatureFlag = new GetFeatureFlag(featureFlagsServiceFactory);
+const getIsInMemoryClusterModeEnabled = {
+  provide: GetIsInMemoryClusterModeEnabled,
+  useFactory: (): GetIsInMemoryClusterModeEnabled => {
+    return new GetIsInMemoryClusterModeEnabled();
+  },
+};
 
-    return getFeatureFlag;
+const getIsMultiProviderConfigurationEnabled = {
+  provide: GetIsMultiProviderConfigurationEnabled,
+  useFactory: async (): Promise<GetIsMultiProviderConfigurationEnabled> => {
+    const featureFlagsServiceFactory = await featureFlagsService.useFactory();
+    const useCase = new GetIsMultiProviderConfigurationEnabled(featureFlagsServiceFactory);
+
+    return useCase;
+  },
+};
+
+const getIsTopicNotificationEnabled = {
+  provide: GetIsTopicNotificationEnabled,
+  useFactory: async (): Promise<GetIsTopicNotificationEnabled> => {
+    const featureFlagsServiceFactory = await featureFlagsService.useFactory();
+    const useCase = new GetIsTopicNotificationEnabled(featureFlagsServiceFactory);
+
+    return useCase;
   },
 };
 
 const inMemoryProviderService = {
   provide: InMemoryProviderService,
-  useFactory: (enableAutoPipelining?: boolean): InMemoryProviderService => {
-    const inMemoryProvider = new InMemoryProviderService(enableAutoPipelining);
-    inMemoryProvider.initialize();
-
-    return inMemoryProvider;
+  useFactory: (
+    getIsInMemoryClusterModeEnabledUseCase: GetIsInMemoryClusterModeEnabled,
+    enableAutoPipelining?: boolean
+  ): InMemoryProviderService => {
+    return new InMemoryProviderService(getIsInMemoryClusterModeEnabledUseCase, enableAutoPipelining);
   },
+  inject: [GetIsInMemoryClusterModeEnabled],
 };
 
 const cacheService = {
   provide: CacheService,
-  useFactory: () => {
+  useFactory: async (
+    getIsInMemoryClusterModeEnabledUseCase: GetIsInMemoryClusterModeEnabled
+  ): Promise<CacheService> => {
     // TODO: Temporary to test in Dev. Should be removed.
     const enableAutoPipelining = process.env.REDIS_CACHE_ENABLE_AUTOPIPELINING === 'true';
-    const factoryInMemoryProviderService = inMemoryProviderService.useFactory(enableAutoPipelining);
+    const factoryInMemoryProviderService = inMemoryProviderService.useFactory(
+      getIsInMemoryClusterModeEnabledUseCase,
+      enableAutoPipelining
+    );
 
-    return new CacheService(factoryInMemoryProviderService);
+    const service = new CacheService(factoryInMemoryProviderService);
+
+    await service.initialize();
+
+    return service;
   },
+  inject: [GetIsInMemoryClusterModeEnabled],
 };
 
 const distributedLockService = {
   provide: DistributedLockService,
-  useFactory: () => {
-    const factoryInMemoryProviderService = inMemoryProviderService.useFactory();
+  useFactory: (getIsInMemoryClusterModeEnabledUseCase: GetIsInMemoryClusterModeEnabled): DistributedLockService => {
+    const factoryInMemoryProviderService = inMemoryProviderService.useFactory(getIsInMemoryClusterModeEnabledUseCase);
 
     return new DistributedLockService(factoryInMemoryProviderService);
   },
+  inject: [GetIsInMemoryClusterModeEnabled],
 };
 
 const PROVIDERS = [
   launchDarklyService,
   featureFlagsService,
-  getFeatureFlagUseCase,
+  getIsInMemoryClusterModeEnabled,
+  getIsMultiProviderConfigurationEnabled,
+  getIsTopicNotificationEnabled,
   inMemoryProviderService,
   cacheService,
   distributedLockService,

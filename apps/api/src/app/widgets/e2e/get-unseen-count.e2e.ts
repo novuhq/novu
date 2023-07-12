@@ -9,6 +9,7 @@ import {
   buildMessageCountKey,
   CacheService,
   InvalidateCacheService,
+  GetIsInMemoryClusterModeEnabled,
 } from '@novu/application-generic';
 
 describe('Unseen Count - GET /widget/notifications/unseen', function () {
@@ -21,13 +22,21 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
     _id: string;
   } | null = null;
 
-  const inMemoryProviderService = new InMemoryProviderService();
-  inMemoryProviderService.initialize();
-  const invalidateCache = new InvalidateCacheService(new CacheService(inMemoryProviderService));
+  let inMemoryProviderService: InMemoryProviderService;
+  let invalidateCache: InvalidateCacheService;
+
+  before(async () => {
+    const getIsInMemoryClusterModeEnabled = new GetIsInMemoryClusterModeEnabled();
+    inMemoryProviderService = new InMemoryProviderService(getIsInMemoryClusterModeEnabled);
+    const cacheService = new CacheService(inMemoryProviderService);
+    await cacheService.initialize();
+    invalidateCache = new InvalidateCacheService(cacheService);
+  });
 
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
+
     subscriberId = SubscriberRepository.createObjectId();
 
     template = await session.createTemplate({
