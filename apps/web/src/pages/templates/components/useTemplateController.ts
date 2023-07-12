@@ -3,21 +3,26 @@ import { ICreateNotificationTemplateDto, INotificationTemplate, IUpdateNotificat
 
 import { useTemplateFetcher } from '../../../api/hooks';
 import { QueryKeys } from '../../../api/query.keys';
-import { successMessage } from '../../../utils/notifications';
 import { createTemplate, deleteTemplateById, updateTemplate } from '../../../api/notification-templates';
 
-export function useTemplateController(templateId?: string) {
-  const { template, refetch, isInitialLoading: isLoading } = useTemplateFetcher({ templateId });
+export function useTemplateController(
+  templateId?: string,
+  { onFetchSuccess }: { onFetchSuccess?: (template: INotificationTemplate) => void } = {}
+) {
+  const {
+    template,
+    refetch,
+    isInitialLoading: isLoading,
+  } = useTemplateFetcher({ templateId }, { onSuccess: onFetchSuccess });
   const client = useQueryClient();
 
   const { isLoading: isCreating, mutateAsync: createNotificationTemplate } = useMutation<
-    INotificationTemplate,
+    INotificationTemplate & { __source?: string },
     { error: string; message: string; statusCode: number },
-    ICreateNotificationTemplateDto
-  >(createTemplate, {
+    { template: ICreateNotificationTemplateDto } & { params: { __source?: string } }
+  >((data) => createTemplate(data.template, data.params), {
     onSuccess: async () => {
       await client.refetchQueries([QueryKeys.changesCount]);
-      successMessage('Template saved successfully');
     },
   });
 
@@ -29,7 +34,6 @@ export function useTemplateController(templateId?: string) {
     onSuccess: async () => {
       refetch();
       await client.refetchQueries([QueryKeys.changesCount]);
-      successMessage('Template updated successfully');
     },
   });
 

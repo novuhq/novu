@@ -1,56 +1,56 @@
-import { addAndEditChannel, clickWorkflow, dragAndDrop, fillBasicNotificationDetails, goBack } from '.';
+import { addAndEditChannel, clickWorkflow, dragAndDrop, editChannel, fillBasicNotificationDetails, goBack } from '.';
 
 describe('Creation functionality', function () {
   beforeEach(function () {
-    cy.initializeSession().as('session');
+    cy.initializeSession({ showOnBoardingTour: false }).as('session');
   });
 
   it('should create in-app notification', function () {
     cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
+      cy.visit('/workflows/create');
     });
-    cy.getByTestId('title').type('Test Notification Title');
+    cy.getByTestId('settings-page').click();
+    cy.waitForNetworkIdle(500);
+    cy.getByTestId('title').clear().first().type('Test Notification Title');
     cy.getByTestId('description').type('This is a test description for a test title');
     cy.get('body').click();
     cy.getByTestId('trigger-code-snippet').should('not.exist');
     cy.getByTestId('groupSelector').should('have.value', 'General');
 
     addAndEditChannel('inApp');
+    cy.waitForNetworkIdle(500);
 
     cy.get('.ace_text-input').first().type('{{firstName}} someone assigned you to {{taskName}}', {
       parseSpecialCharSequences: false,
       force: true,
     });
     cy.getByTestId('inAppRedirect').type('/example/test');
-    cy.getByTestId('notification-template-submit-btn').click();
 
-    cy.getByTestId('success-trigger-modal').should('be.visible');
-    cy.getByTestId('success-trigger-modal').getByTestId('trigger-code-snippet').contains('test-notification');
-    cy.getByTestId('success-trigger-modal')
-      .getByTestId('trigger-code-snippet')
-      .contains("import { Novu } from '@novu/node'");
+    goBack();
+    cy.getByTestId('notification-template-submit-btn').click();
+    cy.getByTestId('get-snippet-btn').click();
+    cy.getByTestId('trigger-code-snippet').should('be.visible');
+    cy.getByTestId('trigger-code-snippet').contains('test-notification-title');
+    cy.getByTestId('trigger-code-snippet').contains("import { Novu } from '@novu/node'");
 
     cy.get('.mantine-Tabs-tabsList').contains('Curl').click();
-    cy.getByTestId('success-trigger-modal')
-      .getByTestId('trigger-curl-snippet')
-      .contains("--header 'Authorization: ApiKey");
-    cy.getByTestId('success-trigger-modal').getByTestId('trigger-curl-snippet').contains('taskName');
-
-    cy.getByTestId('trigger-snippet-btn').click();
-
-    cy.location('pathname').should('equal', '/templates');
+    cy.getByTestId('trigger-curl-snippet').contains("--header 'Authorization: ApiKey");
+    cy.getByTestId('trigger-curl-snippet').contains('taskName');
   });
 
   it('should create multiline in-app notification, send it and receive', function () {
     cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
+      cy.visit('/workflows/create');
     });
 
-    cy.getByTestId('title').type('Test Notification Title');
+    cy.getByTestId('settings-page').click();
+
+    cy.getByTestId('title').first().clear().type('Test Notification Title');
     cy.getByTestId('description').type('This is a test description for a test title');
     cy.get('body').click();
 
     addAndEditChannel('inApp');
+    cy.waitForNetworkIdle(500);
 
     // put the multiline notification message
     cy.get('.ace_text-input')
@@ -63,11 +63,9 @@ describe('Creation functionality', function () {
         force: true,
       });
     cy.getByTestId('inAppRedirect').type('/example/test');
+
+    goBack();
     cy.getByTestId('notification-template-submit-btn').click();
-
-    cy.getByTestId('trigger-snippet-btn').click();
-
-    cy.location('pathname').should('equal', '/templates');
 
     // trigger the notification
     cy.task('createNotifications', {
@@ -90,13 +88,15 @@ describe('Creation functionality', function () {
 
   it('should manage variables', function () {
     cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
+      cy.visit('/workflows/create');
     });
-    cy.getByTestId('title').type('Test Notification Title');
+    cy.getByTestId('settings-page').click();
+    cy.getByTestId('title').clear().first().type('Test Notification Title');
     cy.getByTestId('description').type('This is a test description for a test title');
     cy.get('body').click();
 
     addAndEditChannel('email');
+    cy.waitForNetworkIdle(500);
 
     cy.getByTestId('email-editor').getByTestId('editor-row').click();
     cy.getByTestId('control-add').click();
@@ -178,58 +178,16 @@ describe('Creation functionality', function () {
 
   it('should create email notification', function () {
     cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
+      cy.visit('/workflows/create');
     });
-    cy.getByTestId('title').type('Test Notification Title');
+    cy.getByTestId('settings-page').click();
+
+    cy.getByTestId('title').first().clear().type('Test Notification Title');
     cy.getByTestId('description').type('This is a test description for a test title');
     cy.get('body').click();
 
     addAndEditChannel('email');
-
-    cy.getByTestId('email-editor').getByTestId('editor-row').click();
-    cy.getByTestId('control-add').click();
-    cy.getByTestId('add-btn-block').click();
-    cy.getByTestId('button-block-wrapper').should('be.visible');
-    cy.getByTestId('button-block-wrapper').find('button').click();
-    cy.getByTestId('button-text-input').clear().type('Example Text Of {{ctaName}}', {
-      parseSpecialCharSequences: false,
-    });
-    cy.getByTestId('button-block-wrapper').find('button').contains('Example Text Of {{ctaName}}');
-    cy.getByTestId('editable-text-content').clear().type('This text is written from a test {{firstName}}', {
-      parseSpecialCharSequences: false,
-    });
-
-    cy.getByTestId('email-editor').getByTestId('editor-row').eq(1).click();
-    cy.getByTestId('control-add').click();
-    cy.getByTestId('add-text-block').click();
-    cy.getByTestId('editable-text-content').eq(1).clear().type('This another text will be {{customVariable}}', {
-      parseSpecialCharSequences: false,
-    });
-    cy.getByTestId('editable-text-content').eq(1).click();
-
-    cy.getByTestId('settings-row-btn').eq(1).invoke('show').click();
-    cy.getByTestId('remove-row-btn').click();
-    cy.getByTestId('button-block-wrapper').should('not.exist');
-
-    cy.getByTestId('emailSubject').type('this is email subject');
-
-    cy.getByTestId('notification-template-submit-btn').click();
-
-    cy.getByTestId('success-trigger-modal').should('be.visible');
-    cy.getByTestId('success-trigger-modal').getByTestId('trigger-code-snippet').contains('test-notification');
-    cy.getByTestId('success-trigger-modal').getByTestId('trigger-code-snippet').contains('firstName:');
-    cy.getByTestId('success-trigger-modal').getByTestId('trigger-code-snippet').contains('customVariable:');
-  });
-
-  it('should add digest node', function () {
-    cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
-    });
-    cy.getByTestId('title').type('Test Notification Title');
-    cy.getByTestId('description').type('This is a test description for a test title');
-    cy.get('body').click();
-
-    addAndEditChannel('email');
+    cy.waitForNetworkIdle(500);
 
     cy.getByTestId('email-editor').getByTestId('editor-row').click();
     cy.getByTestId('control-add').click();
@@ -259,54 +217,135 @@ describe('Creation functionality', function () {
     cy.getByTestId('emailSubject').type('this is email subject');
 
     goBack();
+    cy.getByTestId('notification-template-submit-btn').click();
+    cy.getByTestId('get-snippet-btn').click();
+    cy.getByTestId('trigger-code-snippet').should('be.visible');
+    cy.getByTestId('trigger-code-snippet').contains('test-notification-title');
+    cy.getByTestId('trigger-code-snippet').contains('firstName:');
+    cy.getByTestId('trigger-code-snippet').contains('customVariable:');
+  });
+
+  it('should not reset action steps values on update', function () {
+    cy.waitLoadTemplatePage(() => {
+      cy.visit('/workflows/create');
+    });
 
     dragAndDrop('digest');
+    cy.waitForNetworkIdle(500);
+
+    cy.clickWorkflowNode('node-digestSelector');
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('digest-send-options').click();
+    cy.getByTestId('time-amount').clear().type('30');
+    cy.getByTestId('time-unit').click();
+    cy.get('.mantine-Select-item').contains('sec (s)').click();
+
+    cy.getByTestId('digest-group-by-options').click();
+
+    cy.getByTestId('batch-key').type('id');
+
+    cy.getByTestId('digest-send-options').click();
+
+    cy.clickWorkflowNode('node-digestSelector');
+    cy.getByTestId('notification-template-submit-btn').click();
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('digest-send-options').click();
+
+    cy.getByTestId('time-amount').should('have.value', '30');
+    cy.getByTestId('batch-key').should('have.value', 'id');
+    cy.getByTestId('time-unit').should('have.value', 'sec (s)');
+  });
+
+  it('should add digest node', function () {
+    cy.waitLoadTemplatePage(() => {
+      cy.visit('/workflows/create');
+    });
+
+    cy.getByTestId('settings-page').click();
+    cy.getByTestId('title').first().clear().type('Test Notification Title');
+    cy.getByTestId('description').type('This is a test description for a test title');
+    cy.get('body').click();
+
+    addAndEditChannel('email');
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('email-editor').getByTestId('editor-row').click();
+    cy.getByTestId('control-add').click();
+    cy.getByTestId('add-btn-block').click();
+    cy.getByTestId('button-block-wrapper').should('be.visible');
+    cy.getByTestId('button-block-wrapper').find('button').click();
+    cy.getByTestId('button-text-input').clear().type('Example Text Of {{ctaName}}', {
+      parseSpecialCharSequences: false,
+    });
+    cy.getByTestId('button-block-wrapper').find('button').contains('Example Text Of {{ctaName}}');
+    cy.getByTestId('editable-text-content').clear().type('This text is written from a test {{firstName}}', {
+      parseSpecialCharSequences: false,
+    });
+
+    cy.getByTestId('email-editor').getByTestId('editor-row').eq(1).click();
+    cy.getByTestId('control-add').click();
+    cy.getByTestId('add-text-block').click();
+    cy.getByTestId('editable-text-content').eq(1).clear().type('This another text will be {{customVariable}}', {
+      parseSpecialCharSequences: false,
+    });
+    cy.getByTestId('editable-text-content').eq(1).click();
+
+    cy.getByTestId('settings-row-btn').eq(1).invoke('show').click();
+    cy.getByTestId('remove-row-btn').click();
+    cy.getByTestId('button-block-wrapper').should('not.exist');
+
+    cy.getByTestId('emailSubject').type('this is email subject');
+
+    goBack();
+    cy.waitForNetworkIdle(500);
+
+    dragAndDrop('digest');
+    cy.waitForNetworkIdle(500);
+
+    cy.clickWorkflowNode('node-digestSelector');
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('digest-send-options').click();
+    cy.getByTestId('time-amount').clear().type('20');
+    cy.getByTestId('time-unit').click();
+    cy.get('.mantine-Select-item').contains('min (s)').click();
+
+    cy.getByTestId('digest-group-by-options').click();
+
+    cy.getByTestId('batch-key').type('id');
+
+    cy.getByTestId('digest-send-options').click();
+
+    cy.getByTestId('backoff-switch').click({
+      force: true,
+    });
+
+    cy.getByTestId('backoff-amount').clear().type('20');
+
+    cy.getByTestId('time-unit-backoff').click();
+    cy.get('.mantine-Select-item').contains('min (s)').click();
+
+    goBack();
 
     cy.clickWorkflowNode('node-digestSelector');
 
-    cy.getByTestId('time-unit').click();
-    cy.get('.mantine-Select-dropdown .mantine-Select-item').contains('Minutes').click();
-    cy.getByTestId('time-amount').type('20');
-    cy.getByTestId('batch-key').type('id');
+    cy.getByTestId('digest-send-options').click();
 
-    cy.getByTestId('digest-type').click();
-    cy.get('.mantine-Select-dropdown .mantine-Select-item').contains('Backoff').click();
-
-    cy.getByTestId('backoff-amount').type('20');
-
-    cy.getByTestId('backoff-unit').click();
-    cy.get('.mantine-Select-dropdown .mantine-Select-item').contains('Minutes').click();
-
-    cy.getByTestId('notification-template-submit-btn').click();
-    cy.getByTestId('success-trigger-modal').should('be.visible');
-    cy.getByTestId('trigger-snippet-btn').click();
-
-    cy.intercept('GET', '/v1/notification-templates?page=0&limit=10').as('notification-templates');
-    cy.visit('/templates');
-    cy.wait('@notification-templates');
-
-    awaitGetContains('tbody', 'Test Notification Title').click({ force: true });
-
-    cy.waitLoadTemplatePage(() => {
-      clickWorkflow();
-
-      cy.clickWorkflowNode('node-digestSelector');
-
-      cy.getByTestId('time-amount').should('have.value', '20');
-      cy.getByTestId('batch-key').should('have.value', 'id');
-      cy.getByTestId('backoff-amount').should('have.value', '20');
-      cy.getByTestId('time-unit').should('have.value', 'Minutes');
-      cy.getByTestId('digest-type').should('have.value', 'Backoff');
-      cy.getByTestId('backoff-unit').should('have.value', 'Minutes');
-      // cy.getByTestId('updateMode').should('be.checked');
-    });
+    cy.getByTestId('time-amount').should('have.value', '20');
+    cy.getByTestId('batch-key').should('have.value', 'id');
+    cy.getByTestId('backoff-amount').should('have.value', '20');
+    cy.getByTestId('time-unit').should('have.value', 'min (s)');
+    cy.getByTestId('time-unit-backoff').should('have.value', 'min (s)');
   });
 
   it('should create and edit group id', function () {
     const template = this.session.templates[0];
-    cy.visit('/templates/edit/' + template._id);
+    cy.visit('/workflows/edit/' + template._id);
     cy.waitForNetworkIdle(500);
-
+    cy.getByTestId('settings-page').click();
+    cy.waitForNetworkIdle(500);
     cy.getByTestId('groupSelector').click();
     cy.getByTestId('groupSelector').clear();
     cy.getByTestId('groupSelector').type('New Test Category');
@@ -315,25 +354,65 @@ describe('Creation functionality', function () {
 
     cy.getByTestId('groupSelector').should('have.value', 'New Test Category');
 
+    goBack();
     cy.getByTestId('notification-template-submit-btn').click();
-
-    cy.visit('/templates');
-    cy.getByTestId('template-edit-link');
-    cy.visit('/templates/edit/' + template._id);
     cy.waitForNetworkIdle(500);
+
+    cy.visit('/workflows');
+    cy.getByTestId('template-edit-link');
+    cy.visit('/workflows/edit/' + template._id);
+    cy.waitForNetworkIdle(500);
+    cy.getByTestId('settings-page').click();
     cy.getByTestId('groupSelector').should('have.value', 'New Test Category');
   });
 
   it('should show delay settings in side menu', function () {
     cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
+      cy.visit('/workflows/create');
     });
     fillBasicNotificationDetails('Test Added Delay');
-    clickWorkflow();
+    goBack();
+    cy.waitForNetworkIdle(500);
     cy.getByTestId('button-add').click();
     cy.getByTestId('add-delay-node').click();
     cy.clickWorkflowNode('node-delaySelector');
     cy.getByTestId('delay-type').should('be.visible');
+  });
+
+  it('should be able to add huge amount of nodes.', function () {
+    cy.waitLoadTemplatePage(() => {
+      cy.visit('/workflows/create');
+    });
+
+    fillBasicNotificationDetails('Test 15 Nodes');
+    goBack();
+    cy.waitForNetworkIdle(500);
+
+    for (let i = 0; i < 15; i++) {
+      cy.getByTestId('button-add').last().click({ force: true });
+      cy.getByTestId('add-email-node').click();
+    }
+
+    editChannel('email', true);
+
+    cy.waitForNetworkIdle(500);
+    cy.getByTestId('editable-text-content').clear().type('This text is written from a test {{firstName}}', {
+      parseSpecialCharSequences: false,
+    });
+    cy.getByTestId('emailSubject').type('this is email subject');
+    cy.getByTestId('emailPreheader').type('this is email preheader');
+    cy.waitForNetworkIdle(500);
+    goBack();
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('node-emailSelector').should('have.length', 15);
+
+    editChannel('email', true);
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('editable-text-content').contains('This text is written from a test');
+    cy.getByTestId('emailSubject').should('have.value', 'this is email subject');
+    cy.getByTestId('emailPreheader').should('have.value', 'this is email preheader');
   });
 });
 

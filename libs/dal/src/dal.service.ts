@@ -6,8 +6,8 @@ export class DalService {
 
   async connect(url: string, config: ConnectOptions = {}) {
     const baseConfig: ConnectOptions = {
-      maxPoolSize: 700,
-      minPoolSize: process.env.NODE_ENV === 'prod' ? 200 : 10,
+      maxPoolSize: process.env.MONGO_MAX_POOL_SIZE || 500,
+      minPoolSize: process.env.NODE_ENV === 'production' ? 200 : 10,
       autoIndex: process.env.AUTO_CREATE_INDEXES === 'true',
     };
 

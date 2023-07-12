@@ -1,5 +1,6 @@
 ---
 sidebar_position: 12
+sidebar_label: Inbound Webhook
 ---
 
 # Inbound Parse Webhook
@@ -24,7 +25,7 @@ This feature is available only in our SaaS. This feature will not work in self h
    - Add your domain to the allowed list.
 3. Enable Inbound Parse and Set Webhook URL:
    - Log in to the dashboard.
-   - Navigate to the Notification Workflow Editor.
+   - Navigate to the Workflow Editor.
    - Select the email step.
    - Enable the Inbound Parse feature.
    - Set the Webhook URL to the location where you want the parsed data to be POSTed.

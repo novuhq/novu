@@ -36,5 +36,5 @@ services:
       - "6379:6379"
     healthcheck:
       test: "bash -c 'redis-cli ping'"
-      retries: 5 
+      retries: 5
       interval: 10s

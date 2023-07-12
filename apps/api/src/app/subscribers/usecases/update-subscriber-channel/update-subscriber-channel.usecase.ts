@@ -1,17 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { isEqual } from 'lodash';
-import { IChannelSettings, IntegrationRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
+import { IChannelSettings, SubscriberRepository, IntegrationRepository, SubscriberEntity } from '@novu/dal';
+import { AnalyticsService, buildSubscriberKey, InvalidateCacheService } from '@novu/application-generic';
+
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { UpdateSubscriberChannelCommand } from './update-subscriber-channel.command';
-import { InvalidateCacheService } from '../../../shared/services/cache';
-import { buildSubscriberKey } from '../../../shared/services/cache/key-builders/entities';
 
 @Injectable()
 export class UpdateSubscriberChannel {
   constructor(
     private invalidateCache: InvalidateCacheService,
     private subscriberRepository: SubscriberRepository,
-    private integrationRepository: IntegrationRepository
+    private integrationRepository: IntegrationRepository,
+    private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: UpdateSubscriberChannelCommand) {
@@ -51,6 +52,13 @@ export class UpdateSubscriberChannel {
     } else {
       await this.addChannelToSubscriber(updatePayload, foundIntegration, command, foundSubscriber);
     }
+
+    this.analyticsService.track('Set Subscriber Credentials - [Subscribers]', command.organizationId, {
+      providerId: command.providerId,
+      _organization: command.organizationId,
+      oauthHandler: command.oauthHandler,
+      _subscriberId: foundSubscriber._id,
+    });
 
     return (await this.subscriberRepository.findBySubscriberId(
       command.environmentId,

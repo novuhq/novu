@@ -2,6 +2,7 @@
 import { ClassConstructor, plainToInstance } from 'class-transformer';
 import { addMonths } from 'date-fns';
 import { Model, Types, ProjectionType, FilterQuery, UpdateQuery } from 'mongoose';
+import { DalException } from '../shared';
 
 export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
   public _model: Model<T_DBModel>;
@@ -87,14 +88,20 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
   }
 
   private calcExpireDate(modelName: string, data: FilterQuery<T_DBModel> & T_Enforcement) {
-    const now: number = Date.now();
+    let startDate: Date = new Date();
+    if (data.expireAt) {
+      startDate = new Date(data.expireAt);
+    }
+
     switch (modelName) {
       case 'Message':
         if (data.channel === 'in_app') {
-          return addMonths(now, 6);
+          return addMonths(startDate, 12);
         } else {
-          return addMonths(now, 1);
+          return addMonths(startDate, 1);
         }
+      case 'Notification':
+        return addMonths(startDate, 1);
       default:
         return null;
     }
@@ -112,9 +119,15 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
   }
 
   async insertMany(
-    data: FilterQuery<T_DBModel> & T_Enforcement[]
+    data: FilterQuery<T_DBModel> & T_Enforcement[],
+    ordered = false
   ): Promise<{ acknowledged: boolean; insertedCount: number; insertedIds: Types.ObjectId[] }> {
-    const result = await this.MongooseModel.insertMany(data, { ordered: false });
+    let result;
+    try {
+      result = await this.MongooseModel.insertMany(data, { ordered });
+    } catch (e) {
+      throw new DalException(e.message);
+    }
 
     const insertedIds = result.map((inserted) => inserted._id);
 

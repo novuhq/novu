@@ -15,16 +15,13 @@ const prePopulateEnv = (folders, folderBasePath, exampleEnvFilePath = 'src/.exam
 };
 
 (async () => {
-  const apps = ['api', 'ws'];
-  const exampleApps = ['vue-notification-center-example'];
+  const apps = ['api', 'ws', 'worker'];
   const appsBasePath = `${__dirname}/../apps`;
-  const exampleAppsBasePath = `${__dirname}/../examples`;
 
   console.log('----------------------------------------');
   console.log('Pre-populating .env files from .example.env');
 
   prePopulateEnv(apps, appsBasePath);
-  prePopulateEnv(exampleApps, exampleAppsBasePath, '.example.env', '.env');
 
   console.log('Finished populating .env files');
   console.log('----------------------------------------');

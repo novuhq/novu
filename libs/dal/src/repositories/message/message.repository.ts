@@ -86,22 +86,12 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     return this.mapEntities(messages);
   }
 
-  async getTotalCount(
-    environmentId: string,
-    subscriberId: string,
-    channel: ChannelTypeEnum,
-    query: { feedId?: string[]; seen?: boolean; read?: boolean } = {}
-  ) {
-    const requestQuery = await this.getFilterQueryForMessage(environmentId, subscriberId, channel, query);
-
-    return this.MongooseModel.countDocuments(requestQuery).read('secondaryPreferred');
-  }
-
   async getCount(
     environmentId: string,
     subscriberId: string,
     channel: ChannelTypeEnum,
-    query: { feedId?: string[]; seen?: boolean; read?: boolean } = {}
+    query: { feedId?: string[]; seen?: boolean; read?: boolean } = {},
+    options: { limit: number } = { limit: 1000 } // todo NV-2161 update to 100 in version 0.16
   ) {
     const requestQuery = await this.getFilterQueryForMessage(environmentId, subscriberId, channel, {
       feedId: query.feedId,
@@ -109,7 +99,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       read: query.read,
     });
 
-    return this.MongooseModel.countDocuments(requestQuery).read('secondaryPreferred');
+    return this.MongooseModel.countDocuments(requestQuery, options).read('secondaryPreferred');
   }
 
   async markAllMessagesAs({
@@ -255,6 +245,14 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     await this.message.delete({ _id: message._id, _environmentId: message._environmentId });
   }
 
+  async deleteMany(query: MessageQuery) {
+    try {
+      return await this.message.delete({ ...query, deleted: false });
+    } catch (e) {
+      throw new DalException(e);
+    }
+  }
+
   async findDeleted(query: MessageQuery): Promise<MessageEntity> {
     const res: MessageEntity = await this.message.findDeleted(query);
 
@@ -277,13 +275,20 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
   }
 
   async getMessages(
-    query: Partial<MessageEntity> & { _environmentId: string },
+    query: Partial<Omit<MessageEntity, 'transactionId'>> & {
+      _environmentId: string;
+      transactionId?: string[];
+    },
     select = '',
     options?: {
       limit?: number;
       skip?: number;
     }
   ) {
+    const filterQuery: FilterQuery<MessageEntity> = { ...query };
+    if (query.transactionId) {
+      filterQuery.transactionId = { $in: query.transactionId };
+    }
     const data = await this.MongooseModel.find(query, select, {
       limit: options?.limit,
       skip: options?.skip,

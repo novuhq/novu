@@ -1,4 +1,4 @@
-import { StepTypeEnum, DigestUnitEnum, DigestTypeEnum, DelayTypeEnum, JobStatusEnum } from '@novu/shared';
+import { StepTypeEnum, INotificationTemplateStepMetadata, JobStatusEnum } from '@novu/shared';
 import { Types } from 'mongoose';
 
 import { NotificationStepEntity } from '../notification-template';
@@ -31,16 +31,10 @@ export class JobEntity {
   error?: any;
   createdAt: string;
   updatedAt: string;
+  expireAt?: string;
   _templateId: string;
-  digest?: {
+  digest?: INotificationTemplateStepMetadata & {
     events?: any[];
-    amount?: number;
-    unit?: DigestUnitEnum;
-    digestKey?: string;
-    type: DigestTypeEnum | DelayTypeEnum;
-    backoffUnit?: DigestUnitEnum;
-    backoffAmount?: number;
-    updateMode?: boolean;
   };
   type?: StepTypeEnum;
   _actorId?: string;

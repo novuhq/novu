@@ -1,7 +1,7 @@
 {
   "name": "@novu/notification-center-vue",
   "sideEffects": false,
-  "version": "0.13.0",
+  "version": "0.16.3",
   "description": "Vue specific wrapper for notification-center",
   "repository": {
     "type": "git",
@@ -10,7 +10,8 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "vite build && vue-tsc --declaration --emitDeclarationOnly --declarationMap --declarationDir dist -p tsconfig.json",
-    "test": "jest --passWithNoTests"
+    "test": "jest --passWithNoTests",
+    "lint": "echo \"No linting configured\""
   },
   "main": "dist/index.cjs.js",
   "module": "dist/index.es.js",
@@ -21,7 +22,7 @@
   "dependencies": {
     "@emotion/css": "^11.10.5",
     "@novu/floating-vue": "^2.0.3",
-    "@novu/notification-center": "^0.13.0",
+    "@novu/notification-center": "^0.16.3",
     "react": "^17.0.1",
     "react-dom": "^17.0.1"
   },

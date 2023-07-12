@@ -1,11 +1,13 @@
-import { Grid, Input as MantineInput } from '@mantine/core';
-import { DigestUnitEnum, DelayTypeEnum } from '@novu/shared';
+import { Grid } from '@mantine/core';
+import { DelayTypeEnum } from '@novu/shared';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { Input, Select } from '../../../design-system';
+import { Input, SegmentedControl } from '../../../design-system';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { useEnvController } from '../../../hooks';
 import { When } from '../../../components/utils/When';
+import { IntervalRadios } from './IntervalRadios';
+import { LabelWithTooltip } from './LabelWithTooltip';
 
 export const DelayMetadata = ({ control, index }) => {
   const { readonly } = useEnvController();
@@ -14,7 +16,7 @@ export const DelayMetadata = ({ control, index }) => {
     watch,
     trigger,
   } = useFormContext();
-  const type = watch(`steps.${index}.metadata.type`);
+  const type = watch(`steps.${index}.delayMetadata.type`);
   const showErrors = isSubmitted && errors?.steps;
 
   return (
@@ -27,92 +29,83 @@ export const DelayMetadata = ({ control, index }) => {
         <Controller
           control={control}
           defaultValue={DelayTypeEnum.REGULAR}
-          name={`steps.${index}.metadata.type`}
+          name={`steps.${index}.delayMetadata.type`}
           render={({ field }) => {
             return (
-              <Select
+              <SegmentedControl
                 {...field}
-                label="Delay Type"
+                sx={{
+                  maxWidth: '100% !important',
+                }}
+                fullWidth
                 disabled={readonly}
                 data={[
                   { value: DelayTypeEnum.REGULAR, label: 'Regular' },
                   { value: DelayTypeEnum.SCHEDULED, label: 'Scheduled' },
                 ]}
-                data-test-id="delay-type"
-                onChange={async (value) => {
-                  field.onChange(value);
-                  await trigger(`steps.${index}.metadata`);
+                onChange={async (segmentValue) => {
+                  field.onChange(segmentValue);
+                  await trigger(`steps.${index}.delayMetadata`);
                 }}
+                data-test-id="delay-type"
               />
             );
           }}
         />
       </div>
       <When truthy={type === DelayTypeEnum.REGULAR}>
-        <MantineInput.Wrapper
+        <LabelWithTooltip
           label="Time Interval"
-          description="Once triggered, for how long should delay before next step execution."
-          styles={inputStyles}
+          tooltip="Once triggered, for how long should delay before next step execution."
+        />
+        <Grid
+          sx={{
+            marginBottom: '2px',
+          }}
         >
-          <Grid
-            sx={{
-              marginBottom: '2px',
-            }}
-          >
-            <Grid.Col span={4}>
-              <Controller
-                control={control}
-                name={`steps.${index}.metadata.amount`}
-                defaultValue=""
-                render={({ field, fieldState }) => {
-                  return (
-                    <Input
-                      {...field}
-                      value={field.value || ''}
-                      error={showErrors && fieldState.error?.message}
-                      min={0}
-                      max={100}
-                      type="number"
-                      data-test-id="time-amount"
-                      placeholder="0"
-                      disabled={readonly}
-                    />
-                  );
-                }}
-              />
-            </Grid.Col>
-            <Grid.Col span={8}>
-              <Controller
-                control={control}
-                name={`steps.${index}.metadata.unit`}
-                defaultValue=""
-                render={({ field, fieldState }) => {
-                  return (
-                    <Select
-                      disabled={readonly}
-                      error={showErrors && fieldState.error?.message}
-                      placeholder="Interval"
-                      data={[
-                        { value: DigestUnitEnum.SECONDS, label: 'Seconds' },
-                        { value: DigestUnitEnum.MINUTES, label: 'Minutes' },
-                        { value: DigestUnitEnum.HOURS, label: 'Hours' },
-                        { value: DigestUnitEnum.DAYS, label: 'Days' },
-                      ]}
-                      data-test-id="time-unit"
-                      {...field}
-                    />
-                  );
-                }}
-              />
-            </Grid.Col>
-          </Grid>
-        </MantineInput.Wrapper>
+          <Grid.Col span={4}>
+            <Controller
+              control={control}
+              name={`steps.${index}.delayMetadata.${DelayTypeEnum.REGULAR}.amount`}
+              defaultValue=""
+              render={({ field, fieldState }) => {
+                return (
+                  <Input
+                    {...field}
+                    value={field.value || ''}
+                    error={showErrors && fieldState.error?.message}
+                    min={0}
+                    max={100}
+                    type="number"
+                    data-test-id="time-amount"
+                    placeholder="0"
+                    disabled={readonly}
+                    styles={(theme) => ({
+                      ...inputStyles(theme),
+                      input: {
+                        textAlign: 'center',
+                        ...inputStyles(theme).input,
+                      },
+                    })}
+                  />
+                );
+              }}
+            />
+          </Grid.Col>
+          <Grid.Col span={8}>
+            <IntervalRadios
+              control={control}
+              name={`steps.${index}.delayMetadata.${DelayTypeEnum.REGULAR}.unit`}
+              showErrors={showErrors}
+            />
+          </Grid.Col>
+        </Grid>
       </When>
 
       <When truthy={type === DelayTypeEnum.SCHEDULED}>
         <Controller
           control={control}
-          name={`steps.${index}.metadata.delayPath`}
+          name={`steps.${index}.delayMetadata.${DelayTypeEnum.SCHEDULED}.delayPath`}
           defaultValue=""
           render={({ field, fieldState }) => {
             return (
@@ -120,9 +113,13 @@ export const DelayMetadata = ({ control, index }) => {
                 {...field}
                 value={field.value || ''}
                 disabled={readonly}
-                label="Path for scheduled date"
+                label={
+                  <LabelWithTooltip
+                    label="Path for scheduled date"
+                    tooltip="The path in payload for the scheduled delay date"
+                  />
+                }
                 placeholder="For example: sendAt"
-                description="The path in payload for the scheduled delay date"
                 error={showErrors && fieldState.error?.message}
                 type="text"
                 data-test-id="batch-key"

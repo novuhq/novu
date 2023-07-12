@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  DefaultValuePipe,
   Delete,
   Get,
   Param,
@@ -9,50 +10,48 @@ import {
   Post,
   Put,
   Query,
+  Res,
   UseGuards,
 } from '@nestjs/common';
-import { CreateSubscriber, CreateSubscriberCommand } from './usecases/create-subscriber';
-import { UpdateSubscriber, UpdateSubscriberCommand } from './usecases/update-subscriber';
+import {
+  CreateSubscriber,
+  CreateSubscriberCommand,
+  UpdateSubscriber,
+  UpdateSubscriberCommand,
+} from '@novu/application-generic';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
+
+import { ButtonTypeEnum, ChatProviderIdEnum, IJwtPayload } from '@novu/shared';
+import { MessageEntity } from '@novu/dal';
+
 import { RemoveSubscriber, RemoveSubscriberCommand } from './usecases/remove-subscriber';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
-import { ButtonTypeEnum, IJwtPayload } from '@novu/shared';
 import {
   CreateSubscriberRequestDto,
   DeleteSubscriberResponseDto,
   SubscriberResponseDto,
-  SubscribersResponseDto,
   UpdateSubscriberChannelRequestDto,
   UpdateSubscriberRequestDto,
 } from './dtos';
 import { UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from './usecases/update-subscriber-channel';
 import { GetSubscribers, GetSubscribersCommand } from './usecases/get-subscribers';
 import { GetSubscriber, GetSubscriberCommand } from './usecases/get-subscriber';
-import {
-  ApiCreatedResponse,
-  ApiOkResponse,
-  ApiOperation,
-  ApiQuery,
-  ApiTags,
-  ApiExcludeEndpoint,
-} from '@nestjs/swagger';
 import { GetPreferencesCommand } from './usecases/get-preferences/get-preferences.command';
 import { GetPreferences } from './usecases/get-preferences/get-preferences.usecase';
 import { UpdatePreference } from './usecases/update-preference/update-preference.usecase';
 import { UpdateSubscriberPreferenceCommand } from './usecases/update-subscriber-preference';
 import { UpdateSubscriberPreferenceResponseDto } from '../widgets/dtos/update-subscriber-preference-response.dto';
 import { UpdateSubscriberPreferenceRequestDto } from '../widgets/dtos/update-subscriber-preference-request.dto';
-import { MessageResponseDto, MessagesResponseDto } from '../widgets/dtos/message-response.dto';
+import { MessageResponseDto } from '../widgets/dtos/message-response.dto';
 import { UnseenCountResponse } from '../widgets/dtos/unseen-count-response.dto';
-import { MessageEntity } from '@novu/dal';
-import { MarkEnum, MarkMessageAsCommand } from '../widgets/usecases/mark-message-as/mark-message-as.command';
+import { MarkMessageAsCommand } from '../widgets/usecases/mark-message-as/mark-message-as.command';
 import { UpdateMessageActionsCommand } from '../widgets/usecases/mark-action-as-done/update-message-actions.command';
 import { GetNotificationsFeedCommand } from '../widgets/usecases/get-notifications-feed/get-notifications-feed.command';
 import { GetNotificationsFeed } from '../widgets/usecases/get-notifications-feed/get-notifications-feed.usecase';
 import { MarkMessageAs } from '../widgets/usecases/mark-message-as/mark-message-as.usecase';
 import { UpdateMessageActions } from '../widgets/usecases/mark-action-as-done/update-message-actions.usecase';
-import { StoreQuery } from '../widgets/queries/store.query';
 import { GetFeedCount } from '../widgets/usecases/get-feed-count/get-feed-count.usecase';
 import { GetFeedCountCommand } from '../widgets/usecases/get-feed-count/get-feed-count.command';
 import { UpdateSubscriberOnlineFlagRequestDto } from './dtos/update-subscriber-online-flag-request.dto';
@@ -62,6 +61,18 @@ import {
 } from './usecases/update-subscriber-online-flag';
 import { MarkMessageAsRequestDto } from '../widgets/dtos/mark-message-as-request.dto';
 import { MarkMessageActionAsSeenDto } from '../widgets/dtos/mark-message-action-as-seen.dto';
+import { ApiOkPaginatedResponse } from '../shared/framework/paginated-ok-response.decorator';
+import { PaginatedResponseDto } from '../shared/dtos/pagination-response';
+import { GetSubscribersDto } from './dtos/get-subscribers.dto';
+import { GetInAppNotificationsFeedForSubscriberDto } from './dtos/get-in-app-notification-feed-for-subscriber.dto';
+import { ApiResponse } from '../shared/framework/response.decorator';
+import { ChatOauthCallbackRequestDto, ChatOauthRequestDto } from './dtos/chat-oauth-request.dto';
+import { LimitPipe } from '../widgets/pipes/limit-pipe/limit-pipe';
+import { OAuthHandlerEnum } from './types';
+import { ChatOauthCallback } from './usecases/chat-oauth-callback/chat-oauth-callback.usecase';
+import { ChatOauthCallbackCommand } from './usecases/chat-oauth-callback/chat-oauth-callback.command';
+import { ChatOauth } from './usecases/chat-oauth/chat-oauth.usecase';
+import { ChatOauthCommand } from './usecases/chat-oauth/chat-oauth.command';
 
 @Controller('/subscribers')
 @ApiTags('Subscribers')
@@ -76,34 +87,32 @@ export class SubscribersController {
     private getPreferenceUsecase: GetPreferences,
     private updatePreferenceUsecase: UpdatePreference,
     private getNotificationsFeedUsecase: GetNotificationsFeed,
-    private genFeedCountUsecase: GetFeedCount,
+    private getFeedCountUsecase: GetFeedCount,
     private markMessageAsUsecase: MarkMessageAs,
     private updateMessageActionsUsecase: UpdateMessageActions,
-    private updateSubscriberOnlineFlagUsecase: UpdateSubscriberOnlineFlag
+    private updateSubscriberOnlineFlagUsecase: UpdateSubscriberOnlineFlag,
+    private chatOauthCallbackUsecase: ChatOauthCallback,
+    private chatOauthUsecase: ChatOauth
   ) {}
 
   @Get('')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  @ApiOkResponse({
-    type: SubscribersResponseDto,
-  })
+  @ApiOkPaginatedResponse(SubscriberResponseDto)
   @ApiOperation({
     summary: 'Get subscribers',
-    description: 'Returns a list of subscribers, could paginated using the `page` query parameter',
+    description: 'Returns a list of subscribers, could paginated using the `page` and `limit` query parameter',
   })
-  @ApiQuery({ name: 'page', type: Number, required: false, description: 'The page to fetch, defaults to 0' })
   async getSubscribers(
     @UserSession() user: IJwtPayload,
-    @Query('page') page = 0,
-    @Query('limit') limit = 10
-  ): Promise<SubscribersResponseDto> {
+    @Query() query: GetSubscribersDto
+  ): Promise<PaginatedResponseDto<SubscriberResponseDto>> {
     return await this.getSubscribersUsecase.execute(
       GetSubscribersCommand.create({
         organizationId: user.organizationId,
         environmentId: user.environmentId,
-        page: page ? Number(page) : 0,
-        limit: limit ? Number(limit) : 10,
+        page: query.page ? Number(query.page) : 0,
+        limit: query.limit ? Number(query.limit) : 10,
       })
     );
   }
@@ -111,9 +120,7 @@ export class SubscribersController {
   @Get('/:subscriberId')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  @ApiOkResponse({
-    type: SubscriberResponseDto,
-  })
+  @ApiResponse(SubscriberResponseDto)
   @ApiOperation({
     summary: 'Get subscriber',
     description: 'Get subscriber by your internal id used to identify the subscriber',
@@ -134,9 +141,7 @@ export class SubscribersController {
   @Post('/')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  @ApiCreatedResponse({
-    type: SubscriberResponseDto,
-  })
+  @ApiResponse(SubscriberResponseDto, 201)
   @ApiOperation({
     summary: 'Create subscriber',
     description:
@@ -167,9 +172,7 @@ export class SubscribersController {
   @Put('/:subscriberId')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  @ApiOkResponse({
-    type: SubscriberResponseDto,
-  })
+  @ApiResponse(SubscriberResponseDto)
   @ApiOperation({
     summary: 'Update subscriber',
     description: 'Used to update the subscriber entity with new information',
@@ -198,9 +201,7 @@ export class SubscribersController {
   @Put('/:subscriberId/credentials')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  @ApiOkResponse({
-    type: SubscriberResponseDto,
-  })
+  @ApiResponse(SubscriberResponseDto)
   @ApiOperation({
     summary: 'Update subscriber credentials',
     description: 'Subscriber credentials associated to the delivery methods such as slack and push tokens.',
@@ -217,6 +218,7 @@ export class SubscribersController {
         subscriberId,
         providerId: body.providerId,
         credentials: body.credentials,
+        oauthHandler: OAuthHandlerEnum.EXTERNAL,
       })
     );
   }
@@ -224,9 +226,7 @@ export class SubscribersController {
   @Patch('/:subscriberId/online-status')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  @ApiOkResponse({
-    type: SubscriberResponseDto,
-  })
+  @ApiResponse(SubscriberResponseDto)
   @ApiOperation({
     summary: 'Update subscriber online status',
     description: 'Used to update the subscriber isOnline flag.',
@@ -249,9 +249,7 @@ export class SubscribersController {
   @Delete('/:subscriberId')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  @ApiOkResponse({
-    type: DeleteSubscriberResponseDto,
-  })
+  @ApiResponse(DeleteSubscriberResponseDto)
   @ApiOperation({
     summary: 'Delete subscriber',
     description: 'Deletes a subscriber entity from the Novu platform',
@@ -272,9 +270,7 @@ export class SubscribersController {
   @Get('/:subscriberId/preferences')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  @ApiOkResponse({
-    type: [UpdateSubscriberPreferenceResponseDto],
-  })
+  @ApiResponse(UpdateSubscriberPreferenceResponseDto, 200, true)
   @ApiOperation({
     summary: 'Get subscriber preferences',
   })
@@ -294,9 +290,7 @@ export class SubscribersController {
   @Patch('/:subscriberId/preferences/:templateId')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  @ApiOkResponse({
-    type: UpdateSubscriberPreferenceResponseDto,
-  })
+  @ApiResponse(UpdateSubscriberPreferenceResponseDto)
   @ApiOperation({
     summary: 'Update subscriber preference',
   })
@@ -322,40 +316,27 @@ export class SubscribersController {
   @UseGuards(JwtAuthGuard)
   @Get('/:subscriberId/notifications/feed')
   @ApiOperation({
-    summary: 'Get a notification feed for a particular subscriber',
+    summary: 'Get in-app notification feed for a particular subscriber',
   })
-  @ApiOkResponse({
-    type: MessagesResponseDto,
-  })
-  @ApiQuery({
-    name: 'seen',
-    type: Boolean,
-    required: false,
-  })
-  @ApiQuery({
-    name: 'page',
-    type: Number,
-    required: false,
-  })
+  @ApiOkPaginatedResponse(MessageResponseDto)
   async getNotificationsFeed(
     @UserSession() user: IJwtPayload,
     @Param('subscriberId') subscriberId: string,
-    @Query('page') page?: string,
-    @Query('feedIdentifier') feedId?: string,
-    @Query() query: StoreQuery = {}
-  ) {
+    @Query() query: GetInAppNotificationsFeedForSubscriberDto
+  ): Promise<PaginatedResponseDto<MessageResponseDto>> {
     let feedsQuery: string[] | undefined;
-    if (feedId) {
-      feedsQuery = Array.isArray(feedId) ? feedId : [feedId];
+    if (query.feedIdentifier) {
+      feedsQuery = Array.isArray(query.feedIdentifier) ? query.feedIdentifier : [query.feedIdentifier];
     }
 
     const command = GetNotificationsFeedCommand.create({
       organizationId: user.organizationId,
       environmentId: user.environmentId,
       subscriberId: subscriberId,
-      page: page != null ? parseInt(page) : 0,
+      page: query.page != null ? parseInt(query.page) : 0,
       feedId: feedsQuery,
-      query: query,
+      query: { seen: query.seen, read: query.read },
+      limit: query.limit != null ? parseInt(query.limit) : 10,
     });
 
     return await this.getNotificationsFeedUsecase.execute(command);
@@ -364,17 +345,17 @@ export class SubscribersController {
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
   @Get('/:subscriberId/notifications/unseen')
-  @ApiOkResponse({
-    type: UnseenCountResponse,
-  })
+  @ApiResponse(UnseenCountResponse)
   @ApiOperation({
-    summary: 'Get the unseen notification count for subscribers feed',
+    summary: 'Get the unseen in-app notifications count for subscribers feed',
   })
   async getUnseenCount(
     @UserSession() user: IJwtPayload,
     @Query('feedIdentifier') feedId: string[] | string,
     @Query('seen') seen: boolean,
-    @Param('subscriberId') subscriberId: string
+    @Param('subscriberId') subscriberId: string,
+    // todo NV-2161 update DefaultValuePipe to 100 in version 0.16
+    @Query('limit', new DefaultValuePipe(1000), new LimitPipe(1, 1000, true)) limit: number
   ): Promise<UnseenCountResponse> {
     let feedsQuery: string[] | undefined;
     if (feedId) {
@@ -387,40 +368,10 @@ export class SubscribersController {
       environmentId: user.environmentId,
       feedId: feedsQuery,
       seen,
+      limit,
     });
 
-    return await this.genFeedCountUsecase.execute(command);
-  }
-
-  @ExternalApiAccessible()
-  @ApiExcludeEndpoint()
-  @UseGuards(JwtAuthGuard)
-  @Post('/:subscriberId/messages/:messageId/seen')
-  @ApiOperation({
-    summary: 'Mark a subscriber feed message as seen',
-    description: 'This endpoint is deprecated please address /:subscriberId/messages/markAs instead',
-    deprecated: true,
-  })
-  @ApiCreatedResponse({
-    type: MessageResponseDto,
-  })
-  async markMessageAsSeen(
-    @UserSession() user: IJwtPayload,
-    @Param('messageId') messageId: string,
-    @Param('subscriberId') subscriberId: string
-  ): Promise<MessageEntity> {
-    const messageIds = this.toArray(messageId);
-    if (!messageIds) throw new BadRequestException('messageId is required');
-
-    const command = MarkMessageAsCommand.create({
-      organizationId: user.organizationId,
-      environmentId: user.environmentId,
-      subscriberId: subscriberId,
-      messageIds,
-      mark: { [MarkEnum.SEEN]: true },
-    });
-
-    return (await this.markMessageAsUsecase.execute(command))[0];
+    return await this.getFeedCountUsecase.execute(command);
   }
 
   @ExternalApiAccessible()
@@ -429,9 +380,7 @@ export class SubscribersController {
   @ApiOperation({
     summary: 'Mark a subscriber feed message as seen',
   })
-  @ApiCreatedResponse({
-    type: MessageResponseDto,
-  })
+  @ApiResponse(MessageResponseDto, 201, true)
   async markMessageAs(
     @UserSession() user: IJwtPayload,
     @Param('subscriberId') subscriberId: string,
@@ -459,16 +408,14 @@ export class SubscribersController {
   @ApiOperation({
     summary: 'Mark message action as seen',
   })
-  @ApiCreatedResponse({
-    type: MessageResponseDto,
-  })
+  @ApiResponse(MessageResponseDto, 201)
   async markActionAsSeen(
     @UserSession() user: IJwtPayload,
     @Param('messageId') messageId: string,
     @Param('type') type: ButtonTypeEnum,
     @Body() body: MarkMessageActionAsSeenDto,
     @Param('subscriberId') subscriberId: string
-  ): Promise<MessageEntity> {
+  ): Promise<MessageResponseDto> {
     return await this.updateMessageActionsUsecase.execute(
       UpdateMessageActionsCommand.create({
         organizationId: user.organizationId,
@@ -480,6 +427,59 @@ export class SubscribersController {
         status: body.status,
       })
     );
+  }
+
+  @ExternalApiAccessible()
+  @Get('/:subscriberId/credentials/:providerId/oauth/callback')
+  @ApiOperation({
+    summary: 'Handle providers oauth redirect',
+  })
+  async chatOauthCallback(
+    @Param('subscriberId') subscriberId: string,
+    @Param('providerId') providerId: ChatProviderIdEnum,
+    @Query() query: ChatOauthCallbackRequestDto,
+    @Res() res
+  ): Promise<any> {
+    const data = await this.chatOauthCallbackUsecase.execute(
+      ChatOauthCallbackCommand.create({
+        providerCode: query?.code,
+        hmacHash: query?.hmacHash,
+        environmentId: query?.environmentId,
+        subscriberId,
+        providerId,
+      })
+    );
+
+    if (data.redirect) {
+      res.redirect(data.action);
+    } else {
+      res.setHeader('Content-Type', 'text/html');
+      res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'");
+      res.send(data.action);
+    }
+  }
+
+  @ExternalApiAccessible()
+  @Get('/:subscriberId/credentials/:providerId/oauth')
+  @ApiOperation({
+    summary: 'Handle chat oauth',
+  })
+  async chatAccessOauth(
+    @Param('subscriberId') subscriberId: string,
+    @Param('providerId') providerId: ChatProviderIdEnum,
+    @Res() res,
+    @Query() query: ChatOauthRequestDto
+  ): Promise<void> {
+    const data = await this.chatOauthUsecase.execute(
+      ChatOauthCommand.create({
+        hmacHash: query?.hmacHash,
+        environmentId: query?.environmentId,
+        subscriberId,
+        providerId,
+      })
+    );
+
+    res.redirect(data);
   }
 
   private toArray(param: string[] | string): string[] | undefined {

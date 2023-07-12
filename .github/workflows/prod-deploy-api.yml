@@ -14,6 +14,8 @@ jobs:
     uses: ./.github/workflows/reusable-api-e2e.yml
     with:
       ee: ${{ contains (matrix.name,'ee') }}
+      submodules: ${{ contains (matrix.name,'ee') }}
+    secrets: inherit
 
   build_prod_image:
     if: "!contains(github.event.head_commit.message, 'ci skip')"
@@ -34,6 +36,9 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: ${{ contains (matrix.name,'ee') }}
+          token: ${{ secrets.SUBMODULES_TOKEN }}
       - uses: ./.github/actions/setup-project
 
       - name: build api
@@ -79,8 +84,10 @@ jobs:
     uses: ./.github/workflows/reusable-app-service-deploy.yml
     secrets: inherit
     with:
+      environment: Production
       service_name: api
       terraform_workspace: novu-prod-eu
+      # This is a workaround to an issue with matrix outputs
       docker_image: ghcr.io/novuhq/novu/api-ee:${{ github.sha }}
 
   deploy_prod_api_us:
@@ -90,8 +97,10 @@ jobs:
     uses: ./.github/workflows/reusable-app-service-deploy.yml
     secrets: inherit
     with:
+      environment: Production
       service_name: api
       terraform_workspace: novu-prod
+      # This is a workaround to an issue with matrix outputs
       docker_image: ghcr.io/novuhq/novu/api-ee:${{ github.sha }}
       deploy_sentry_release: true
       sentry_project: api

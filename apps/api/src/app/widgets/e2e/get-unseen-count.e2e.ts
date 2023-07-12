@@ -1,12 +1,15 @@
 import axios from 'axios';
+import { expect } from 'chai';
 import { MessageRepository, NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
-import { expect } from 'chai';
 import { ChannelTypeEnum } from '@novu/shared';
-
-import { CacheService, InvalidateCacheService } from '../../shared/services/cache';
-import { buildFeedKey, buildMessageCountKey } from '../../shared/services/cache/key-builders/queries';
-import { InMemoryProviderService } from '../../shared/services/in-memory-provider';
+import {
+  InMemoryProviderService,
+  buildFeedKey,
+  buildMessageCountKey,
+  CacheService,
+  InvalidateCacheService,
+} from '@novu/application-generic';
 
 describe('Unseen Count - GET /widget/notifications/unseen', function () {
   const messageRepository = new MessageRepository();
@@ -63,8 +66,8 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
     expect(messages[0].seen).to.equal(false);
 
     await axios.post(
-      `http://localhost:${process.env.PORT}/v1/widgets/messages/${messageId}/seen`,
-      {},
+      `http://localhost:${process.env.PORT}/v1/widgets/messages/markAs`,
+      { messageId, mark: { seen: true } },
       {
         headers: {
           Authorization: `Bearer ${subscriberToken}`,
@@ -94,8 +97,8 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
     expect(messages[0].read).to.equal(false);
 
     await axios.post(
-      `http://localhost:${process.env.PORT}/v1/widgets/messages/${messageId}/read`,
-      {},
+      `http://localhost:${process.env.PORT}/v1/widgets/messages/markAs`,
+      { messageId, mark: { seen: true, read: true } },
       {
         headers: {
           Authorization: `Bearer ${subscriberToken}`,

@@ -1,17 +1,27 @@
 import { createContext, useEffect, useMemo, useCallback, useContext, useState } from 'react';
+import slugify from 'slugify';
 import { FormProvider, useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useParams } from 'react-router-dom';
-import { DigestTypeEnum, INotificationTemplate, INotificationTrigger } from '@novu/shared';
+import {
+  DelayTypeEnum,
+  DigestTypeEnum,
+  DigestUnitEnum,
+  INotificationTemplate,
+  INotificationTrigger,
+} from '@novu/shared';
 import * as Sentry from '@sentry/react';
 import { StepTypeEnum, ActorTypeEnum, EmailBlockTypeEnum, IEmailBlock, TextAlignEnum } from '@novu/shared';
 
-import type { IForm, IStepEntity } from './formTypes';
+import type { IForm, IFormStep } from './formTypes';
 import { useTemplateController } from './useTemplateController';
 import { mapNotificationTemplateToForm, mapFormToCreateNotificationTemplate } from './templateToFormMappers';
-import { errorMessage } from '../../../utils/notifications';
+import { errorMessage, successMessage } from '../../../utils/notifications';
 import { schema } from './notificationTemplateSchema';
 import { v4 as uuid4 } from 'uuid';
+import { useEffectOnce, useNotificationGroup } from '../../../hooks';
+import { useCreate } from '../hooks/useCreate';
+import { stepNames } from '../constants';
 
 const defaultEmailBlocks: IEmailBlock[] = [
   {
@@ -23,41 +33,55 @@ const defaultEmailBlocks: IEmailBlock[] = [
   },
 ];
 
-const makeStep = (channelType: StepTypeEnum, id: string): IStepEntity => ({
-  _id: id,
-  uuid: uuid4(),
-  template: {
-    type: channelType,
-    content: channelType === StepTypeEnum.EMAIL ? defaultEmailBlocks : '',
-    contentType: 'editor',
-    variables: [],
-    ...(channelType === StepTypeEnum.IN_APP && {
-      actor: {
-        type: ActorTypeEnum.NONE,
-        data: null,
+const makeStep = (channelType: StepTypeEnum, id: string): IFormStep => {
+  return {
+    _id: id,
+    uuid: uuid4(),
+    name: stepNames[channelType],
+    template: {
+      subject: '',
+      type: channelType,
+      content: channelType === StepTypeEnum.EMAIL ? defaultEmailBlocks : '',
+      contentType: 'editor',
+      variables: [],
+      ...(channelType === StepTypeEnum.IN_APP && {
+        actor: {
+          type: ActorTypeEnum.NONE,
+          data: null,
+        },
+        enableAvatar: false,
+      }),
+    },
+    active: true,
+    shouldStopOnFail: false,
+    filters: [],
+    ...(channelType === StepTypeEnum.EMAIL && {
+      replyCallback: {
+        active: false,
       },
-      enableAvatar: false,
     }),
-  },
-  active: true,
-  shouldStopOnFail: false,
-  filters: [],
-  ...(channelType === StepTypeEnum.EMAIL && {
-    replyCallback: {
-      active: false,
-    },
-  }),
-  ...(channelType === StepTypeEnum.DIGEST && {
-    metadata: {
-      type: DigestTypeEnum.REGULAR,
-    },
-  }),
-  ...(channelType === StepTypeEnum.DELAY && {
-    metadata: {
-      type: DigestTypeEnum.REGULAR,
-    },
-  }),
-});
+    ...(channelType === StepTypeEnum.DIGEST && {
+      digestMetadata: {
+        digestKey: '',
+        type: DigestTypeEnum.REGULAR,
+        regular: {
+          unit: DigestUnitEnum.MINUTES,
+          amount: '5',
+          backoff: false,
+        },
+      },
+    }),
+    ...(channelType === StepTypeEnum.DELAY && {
+      delayMetadata: {
+        type: DelayTypeEnum.REGULAR,
+        regular: {
+          unit: DigestUnitEnum.MINUTES,
+          amount: '5',
+        },
+      },
+    }),
+  };
+};
 
 interface ITemplateEditorFormContext {
   template?: INotificationTemplate;
@@ -65,10 +89,8 @@ interface ITemplateEditorFormContext {
   isCreating: boolean;
   isUpdating: boolean;
   isDeleting: boolean;
-  editMode: boolean;
   trigger?: INotificationTrigger;
-  createdTemplateId?: string;
-  onSubmit: (data: IForm, callbacks?: { onCreateSuccess: () => void }) => Promise<void>;
+  onSubmit: (data: IForm) => Promise<void>;
   addStep: (channelType: StepTypeEnum, id: string, stepIndex?: number) => void;
   deleteStep: (index: number) => void;
 }
@@ -78,16 +100,14 @@ const TemplateEditorFormContext = createContext<ITemplateEditorFormContext>({
   isCreating: false,
   isUpdating: false,
   isDeleting: false,
-  editMode: true,
   trigger: undefined,
-  createdTemplateId: undefined,
   onSubmit: (() => {}) as any,
   addStep: () => {},
   deleteStep: () => {},
 });
 
 const defaultValues: IForm = {
-  name: '',
+  name: 'Untitled',
   notificationGroupId: '',
   description: '',
   identifier: '',
@@ -110,77 +130,72 @@ const TemplateEditorFormProvider = ({ children }) => {
     defaultValues,
     mode: 'onChange',
   });
-  const [{ editMode, trigger, createdTemplateId }, setState] = useState<{
-    editMode: boolean;
-    trigger?: INotificationTrigger;
-    createdTemplateId?: string;
-  }>({
-    editMode: !!templateId,
-  });
+  const [trigger, setTrigger] = useState<INotificationTrigger>();
 
-  const setTrigger = useCallback(
-    (newTrigger: INotificationTrigger) => setState((old) => ({ ...old, trigger: newTrigger })),
-    [setState]
-  );
+  const { reset, watch } = methods;
 
-  const setCreatedTemplateId = useCallback(
-    (newCreatedTemplateId: string) => setState((old) => ({ ...old, createdTemplateId: newCreatedTemplateId })),
-    [setState]
-  );
-
-  const {
-    reset,
-    formState: { isDirty: isDirtyForm },
-  } = methods;
+  const name = watch('name');
+  const identifier = watch('identifier');
 
   const steps = useFieldArray({
     control: methods.control,
     name: 'steps',
   });
 
-  const {
-    template,
-    isLoading,
-    isCreating,
-    isUpdating,
-    isDeleting,
-    updateNotificationTemplate,
-    createNotificationTemplate,
-  } = useTemplateController(templateId);
-
   useEffect(() => {
-    if (isDirtyForm) {
+    if (!template?.triggers[0].identifier.includes('untitled')) {
+      return;
+    }
+    const newIdentifier = slugify(name, {
+      lower: true,
+      strict: true,
+    });
+
+    if (newIdentifier === identifier) {
       return;
     }
 
-    if (template && template.steps) {
-      const form = mapNotificationTemplateToForm(template);
-      reset(form);
-      setTrigger(template.triggers[0]);
+    methods.setValue('identifier', newIdentifier);
+    if (trigger) {
+      setTrigger({
+        ...trigger,
+        identifier: newIdentifier,
+      });
     }
-  }, [isDirtyForm, template]);
+  }, [name]);
+
+  const { template, isLoading, isCreating, isUpdating, isDeleting, updateNotificationTemplate } =
+    useTemplateController(templateId);
+
+  useEffectOnce(() => {
+    if (!template) return;
+
+    // we don't call this on success because the templates might be fetched before
+    setTrigger(template.triggers[0]);
+    const form = mapNotificationTemplateToForm(template);
+    reset(form);
+  }, !!template);
+
+  const { groups, loading: loadingGroups } = useNotificationGroup();
+
+  useCreate(templateId, groups, setTrigger, methods.getValues);
 
   const onSubmit = useCallback(
-    async (form: IForm, { onCreateSuccess } = {}) => {
+    async (form: IForm, showMessage = true) => {
       const payloadToCreate = mapFormToCreateNotificationTemplate(form);
-
       try {
-        if (editMode) {
-          const response = await updateNotificationTemplate({
-            id: templateId,
-            data: {
-              ...payloadToCreate,
-              identifier: form.identifier,
-            },
-          });
-          setTrigger(response.triggers[0]);
-          reset(form);
-        } else {
-          const response = await createNotificationTemplate({ ...payloadToCreate, active: true, draft: false });
-          setTrigger(response.triggers[0]);
-          setCreatedTemplateId(response._id || '');
-          reset(payloadToCreate);
-          onCreateSuccess?.();
+        const response = await updateNotificationTemplate({
+          id: templateId,
+          data: {
+            ...payloadToCreate,
+            identifier: form.identifier,
+          },
+        });
+        setTrigger(response.triggers[0]);
+        reset(mapNotificationTemplateToForm(response));
+
+        if (showMessage) {
+          successMessage('Trigger code is updated successfully', 'workflowSaved');
         }
       } catch (e: any) {
         Sentry.captureException(e);
@@ -188,20 +203,12 @@ const TemplateEditorFormProvider = ({ children }) => {
         errorMessage(e.message || 'Unexpected error occurred');
       }
     },
-    [
-      templateId,
-      editMode,
-      updateNotificationTemplate,
-      createNotificationTemplate,
-      reset,
-      setTrigger,
-      setCreatedTemplateId,
-    ]
+    [templateId, updateNotificationTemplate, setTrigger]
   );
 
   const addStep = useCallback(
     (channelType: StepTypeEnum, id: string, stepIndex?: number) => {
-      const newStep: IStepEntity = makeStep(channelType, id);
+      const newStep: IFormStep = makeStep(channelType, id);
 
       if (stepIndex != null) {
         steps.insert(stepIndex, newStep);
@@ -222,30 +229,16 @@ const TemplateEditorFormProvider = ({ children }) => {
   const value = useMemo<ITemplateEditorFormContext>(
     () => ({
       template,
-      isLoading,
+      isLoading: isLoading || loadingGroups,
       isCreating,
       isUpdating,
       isDeleting,
-      editMode: editMode,
       trigger: trigger,
-      createdTemplateId: createdTemplateId,
       onSubmit,
       addStep,
       deleteStep,
     }),
-    [
-      template,
-      isLoading,
-      isCreating,
-      isUpdating,
-      isDeleting,
-      editMode,
-      trigger,
-      createdTemplateId,
-      onSubmit,
-      addStep,
-      deleteStep,
-    ]
+    [template, isLoading, isCreating, isUpdating, isDeleting, trigger, onSubmit, addStep, deleteStep, loadingGroups]
   );
 
   return (

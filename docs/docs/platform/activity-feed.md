@@ -15,12 +15,12 @@ To use a subscriber's activity feed you can filter the feed by using the subscri
 
 You can hover over the status icon to get additional information, in case there was an error during delivery.
 
-## Filter by template or channel
+## Filter by workflow or channel
 
-The activity feed allows you to filter messages based on the associated notification template or channel. This is helpful when you want to assess or debug a particular template and its behaviour.
+The activity feed allows you to filter messages based on the associated workflow or channel. This is helpful when you want to assess or debug a particular workflow and its behaviour.
 
 ## Future plans for this page
 
-In the upcoming releases we will update this page with more information regarding the stack trace of a notification template across the different providers.
+In the upcoming releases we will update this page with more information regarding the stack trace of a workflow across the different providers.
 
 Follow us on [GitHub](https://github.com/novuhq/novu) to get the latest updates on this.

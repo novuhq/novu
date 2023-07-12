@@ -28,7 +28,7 @@ const codeTheme = require('./src/utils/prism');
         /** @type {import('@docusaurus/preset-classic').Options} */
         ({
           docs: {
-            sidebarCollapsed: false,
+            sidebarCollapsed: true,
             sidebarPath: require.resolve('./sidebars.js'),
             // Please change this to your repo.
             editUrl: 'https://github.com/novuhq/novu/blob/main/docs/',
@@ -65,7 +65,7 @@ const codeTheme = require('./src/utils/prism');
         },
         docs: {
           sidebar: {
-            autoCollapseCategories: false,
+            autoCollapseCategories: true,
           },
         },
         colorMode: {
@@ -159,7 +159,7 @@ const codeTheme = require('./src/utils/prism');
         },
         prism: {
           theme: codeTheme,
-          additionalLanguages: ['php', 'ruby', 'java'],
+          additionalLanguages: ['php', 'ruby', 'java', 'csharp', 'go', 'kotlin', 'python'],
         },
       }),
   }

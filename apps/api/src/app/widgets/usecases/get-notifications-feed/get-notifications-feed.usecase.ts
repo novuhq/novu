@@ -1,22 +1,23 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { ChannelTypeEnum, IActor, ActorTypeEnum } from '@novu/shared';
-import { AnalyticsService } from '@novu/application-generic';
-import { MessageRepository, SubscriberRepository, SubscriberEntity } from '@novu/dal';
+import { Injectable } from '@nestjs/common';
+import { ActorTypeEnum, ChannelTypeEnum } from '@novu/shared';
+import {
+  AnalyticsService,
+  buildFeedKey,
+  buildSubscriberKey,
+  CachedEntity,
+  CachedQuery,
+} from '@novu/application-generic';
+import { MessageRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
 
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { GetNotificationsFeedCommand } from './get-notifications-feed.command';
 import { MessagesResponseDto } from '../../dtos/message-response.dto';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
-import { CachedQuery } from '../../../shared/interceptors/cached-query.interceptor';
-import { buildSubscriberKey } from '../../../shared/services/cache/key-builders/entities';
-import { buildFeedKey } from '../../../shared/services/cache/key-builders/queries';
 
 @Injectable()
 export class GetNotificationsFeed {
   constructor(
     private messageRepository: MessageRepository,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
+    private analyticsService: AnalyticsService,
     private subscriberRepository: SubscriberRepository
   ) {}
 
@@ -29,7 +30,7 @@ export class GetNotificationsFeed {
       }),
   })
   async execute(command: GetNotificationsFeedCommand): Promise<MessagesResponseDto> {
-    const LIMIT = 10;
+    const COUNT_LIMIT = 1000;
 
     const subscriber = await this.fetchSubscriber({
       _environmentId: command.environmentId,
@@ -50,8 +51,8 @@ export class GetNotificationsFeed {
       ChannelTypeEnum.IN_APP,
       { feedId: command.feedId, seen: command.query.seen, read: command.query.read },
       {
-        limit: LIMIT,
-        skip: command.page * LIMIT,
+        limit: command.limit,
+        skip: command.page * command.limit,
       }
     );
 
@@ -69,7 +70,7 @@ export class GetNotificationsFeed {
       }
     }
 
-    const totalCount = await this.messageRepository.getTotalCount(
+    const totalCount = await this.messageRepository.getCount(
       command.environmentId,
       subscriber._id,
       ChannelTypeEnum.IN_APP,
@@ -77,15 +78,32 @@ export class GetNotificationsFeed {
         feedId: command.feedId,
         seen: command.query.seen,
         read: command.query.read,
-      }
+      },
+      { limit: COUNT_LIMIT }
+      /*
+       * todo NV-2161 in version 0.16
+       *  update option as below,
+       *  update below:  hasMore = feed.length < totalCount
+       *  remove totalCount
+       * { skip: command.page * command.limit, limit: command.limit + 1 }
+       */
     );
+
+    const hasMore = this.getHasMore(command.page, command.limit, feed, totalCount);
 
     return {
       data: feed || [],
       totalCount: totalCount || 0,
-      pageSize: LIMIT,
+      hasMore,
+      pageSize: command.limit,
       page: command.page,
     };
+  }
+
+  private getHasMore(page: number, LIMIT: number, feed, totalCount) {
+    const currentPaginationTotal = page * LIMIT + feed.length;
+
+    return currentPaginationTotal < totalCount;
   }
 
   @CachedEntity({

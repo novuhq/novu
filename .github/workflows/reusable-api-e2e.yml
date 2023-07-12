@@ -10,6 +10,11 @@ on:
         required: false
         default: false
         type: boolean
+      submodules:
+        description: 'The flag controlling whether we want submodules to checkout'
+        required: false
+        default: false
+        type: boolean
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -19,9 +24,30 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 80
 
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
+
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
+      - id: setup
+        run: |
+          if ! [[ -z "${{ secrets.SUBMODULES_TOKEN }}" ]]; then
+            echo ::set-output has_token=true
+          else
+            echo ::set-output has_token=false
+          fi
+      # checkout with submodules if token is provided
       - uses: actions/checkout@v3
+        if: steps.setup.outputs.has_token == 'true'
+        with:
+          submodules: ${{ inputs.submodules }}
+          token: ${{ secrets.SUBMODULES_TOKEN }}
+       # checkout without submodules
+      - uses: actions/checkout@v3
+        if: steps.setup.outputs.has_token != 'true'
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/setup-redis-cluster
       - uses: mansagroup/nrwl-nx-action@v3
@@ -29,30 +55,21 @@ jobs:
           targets: lint
           projects: "@novu/api"
 
-      - name: Start Local Stack
+      - uses: ./.github/actions/start-localstack
+
+      - name: Install wait-on plugin
+        run: npm i -g wait-on
+
+      - name: Build worker
+        run: CI='' pnpm build:worker
+
+      - name: Start worker
         env:
-          AWS_DEFAULT_REGION: us-east-1
-          DEFAULT_REGION: us-east-1
-          AWS_ACCOUNT_ID: '000000000000'
-          AWS_ACCESS_KEY_ID: test
-          AWS_SECRET_ACCESS_KEY: test
-          AWS_EC2_METADATA_DISABLED: true
-        working-directory: docker/local
-        run: |
-          docker-compose -f docker-compose.localstack.yml up -d
-          sleep 10
-          max_retry=30
-          counter=0
-          until $command
-          do
-            sleep 1
-            [[ counter -eq $max_retry ]] && echo "Failed!" && exit 1
-            aws --endpoint-url=http://localhost:4566 s3 ls
-            echo "Trying again. Try #$counter"
-            ((counter++))
-          done
-          docker-compose -f docker-compose.localstack.yml logs --tail="all"
-          aws --endpoint-url=http://localhost:4566 --cli-connect-timeout 600 s3 mb s3://novu-test
+          IN_MEMORY_CLUSTER_MODE_ENABLED: true
+        run: cd apps/worker && pnpm start:test &
+
+      - name: Wait on worker
+        run: wait-on --timeout=180000 http://localhost:1342/v1/health-check
 
         # Runs a single command using the runners shell
       - name: Build API

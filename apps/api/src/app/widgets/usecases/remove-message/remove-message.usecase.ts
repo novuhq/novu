@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import {
   MessageEntity,
   DalException,
@@ -8,23 +8,25 @@ import {
   MemberRepository,
 } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
-import { AnalyticsService } from '@novu/application-generic';
+import {
+  WsQueueService,
+  AnalyticsService,
+  InvalidateCacheService,
+  buildFeedKey,
+  buildMessageCountKey,
+} from '@novu/application-generic';
 
-import { InvalidateCacheService } from '../../../shared/services/cache';
-import { QueueService } from '../../../shared/services/queue';
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { RemoveMessageCommand } from './remove-message.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { MarkEnum } from '../mark-message-as/mark-message-as.command';
-import { buildFeedKey, buildMessageCountKey } from '../../../shared/services/cache/key-builders/queries';
 
 @Injectable()
 export class RemoveMessage {
   constructor(
     private invalidateCache: InvalidateCacheService,
     private messageRepository: MessageRepository,
-    private queueService: QueueService,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
+    private wsQueueService: WsQueueService,
+    private analyticsService: AnalyticsService,
     private subscriberRepository: SubscriberRepository,
     private memberRepository: MemberRepository
   ) {}
@@ -81,9 +83,15 @@ export class RemoveMessage {
 
   private async updateServices(command: RemoveMessageCommand, subscriber, message, marked: string) {
     const admin = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
-    const count = await this.messageRepository.getCount(command.environmentId, subscriber._id, ChannelTypeEnum.IN_APP, {
-      [marked]: false,
-    });
+    const count = await this.messageRepository.getCount(
+      command.environmentId,
+      subscriber._id,
+      ChannelTypeEnum.IN_APP,
+      {
+        [marked]: false,
+      },
+      { limit: 1000 }
+    );
 
     this.updateSocketCount(subscriber, count, marked);
 
@@ -100,7 +108,7 @@ export class RemoveMessage {
     const eventMessage = `un${mark}_count_changed`;
     const countKey = `un${mark}Count`;
 
-    this.queueService.bullMqService.add(
+    this.wsQueueService.bullMqService.add(
       'sendMessage',
       {
         event: eventMessage,

@@ -30,21 +30,24 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
         jobs[index]._parentId = stored[index - 1]._id;
       }
 
-      const created = await this.create(jobs[index]);
-      stored.push(created);
+      const created = new this.MongooseModel({ ...jobs[index], createdAt: Date.now() });
+
+      stored.push(this.mapEntity(created));
     }
+
+    await this.insertMany(stored, true);
 
     return stored;
   }
 
   public async updateStatus(
-    organizationId: string,
+    environmentId: string,
     jobId: string,
     status: JobStatusEnum
-  ): Promise<{ matched: number; modified: number }> {
-    return await this.update(
+  ): Promise<{ matchedCount: number; modifiedCount: number }> {
+    return this.MongooseModel.updateOne(
       {
-        _organizationId: organizationId,
+        _environmentId: environmentId,
         _id: jobId,
       },
       {
@@ -55,8 +58,8 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     );
   }
 
-  public async setError(organizationId: string, jobId: string, error: Error): Promise<void> {
-    const result = await this._model.update(
+  public async setError(organizationId: string, jobId: string, error: any): Promise<void> {
+    const result = await this._model.updateOne(
       {
         _organizationId: this.convertStringToObjectId(organizationId),
         _id: this.convertStringToObjectId(jobId),
@@ -75,7 +78,14 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     }
   }
 
-  public async findJobsToDigest(from: Date, templateId: string, environmentId: string, subscriberId: string) {
+  public async findJobsToDigest(
+    from: Date,
+    templateId: string,
+    environmentId: string,
+    subscriberId: string,
+    digestKey?: string,
+    digestValue?: string | number
+  ) {
     /**
      * Remove digest jobs that have been completed and currently delayed jobs that have a digest pending.
      */
@@ -102,6 +112,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
       type: StepTypeEnum.TRIGGER,
       _environmentId: environmentId,
       _subscriberId: subscriberId,
+      ...(digestKey && { [`payload.${digestKey}`]: digestValue }),
       transactionId: {
         $nin: transactionIds,
       },

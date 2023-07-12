@@ -1,33 +1,33 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
-import { HealthCheck, HealthCheckService, HttpHealthIndicator } from '@nestjs/terminus';
-import { DalService } from '@novu/dal';
-import { version } from '../../../package.json';
-import { CacheService } from '../shared/services/cache';
-import { CacheServiceHealthIndicator } from './cache-health-indicator';
+import { HealthCheck, HealthCheckResult, HealthCheckService } from '@nestjs/terminus';
 import { HealthIndicatorFunction } from '@nestjs/terminus/dist/health-indicator';
+import {
+  CacheServiceHealthIndicator,
+  DalServiceHealthIndicator,
+  InMemoryProviderServiceHealthIndicator,
+  TriggerQueueServiceHealthIndicator,
+} from '@novu/application-generic';
+
+import { version } from '../../../package.json';
 
 @Controller('health-check')
 @ApiExcludeController()
 export class HealthController {
   constructor(
     private healthCheckService: HealthCheckService,
-    private healthIndicator: HttpHealthIndicator,
-    private dalService: DalService,
-    private cacheHealthIndicator: CacheServiceHealthIndicator
+    private cacheHealthIndicator: CacheServiceHealthIndicator,
+    private dalHealthIndicator: DalServiceHealthIndicator,
+    private inMemoryHealthIndicator: InMemoryProviderServiceHealthIndicator,
+    private triggerQueueHealthIndicator: TriggerQueueServiceHealthIndicator
   ) {}
 
   @Get()
   @HealthCheck()
-  healthCheck() {
+  healthCheck(): Promise<HealthCheckResult> {
     const checks: HealthIndicatorFunction[] = [
-      async () => {
-        return {
-          db: {
-            status: this.dalService.connection.readyState === 1 ? 'up' : 'down',
-          },
-        };
-      },
+      () => this.dalHealthIndicator.isHealthy(),
+      () => this.inMemoryHealthIndicator.isHealthy(),
       async () => {
         return {
           apiVersion: {
@@ -36,6 +36,7 @@ export class HealthController {
           },
         };
       },
+      () => this.triggerQueueHealthIndicator.isHealthy(),
     ];
 
     if (process.env.ELASTICACHE_CLUSTER_SERVICE_HOST) {

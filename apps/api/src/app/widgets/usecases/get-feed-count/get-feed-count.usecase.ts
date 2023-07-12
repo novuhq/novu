@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { MessageRepository, SubscriberRepository } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
+import { buildMessageCountKey, CachedQuery } from '@novu/application-generic';
+
 import { GetFeedCountCommand } from './get-feed-count.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { CachedQuery } from '../../../shared/interceptors/cached-query.interceptor';
-import { buildMessageCountKey } from '../../../shared/services/cache/key-builders/queries';
 
 @Injectable()
 export class GetFeedCount {
@@ -32,11 +32,17 @@ export class GetFeedCount {
       );
     }
 
-    const count = await this.messageRepository.getCount(command.environmentId, subscriber._id, ChannelTypeEnum.IN_APP, {
-      feedId: command.feedId,
-      seen: command.seen,
-      read: command.read,
-    });
+    const count = await this.messageRepository.getCount(
+      command.environmentId,
+      subscriber._id,
+      ChannelTypeEnum.IN_APP,
+      {
+        feedId: command.feedId,
+        seen: command.seen,
+        read: command.read,
+      },
+      { limit: command.limit }
+    );
 
     return { count };
   }

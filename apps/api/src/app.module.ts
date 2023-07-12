@@ -12,16 +12,15 @@ import { HealthModule } from './app/health/health.module';
 import { OrganizationModule } from './app/organization/organization.module';
 import { EnvironmentsModule } from './app/environments/environments.module';
 import { ExecutionDetailsModule } from './app/execution-details/execution-details.module';
+import { FeatureFlagsModule } from './app/feature-flags/feature-flags.module';
 import { NotificationTemplateModule } from './app/notification-template/notification-template.module';
 import { EventsModule } from './app/events/events.module';
 import { WidgetsModule } from './app/widgets/widgets.module';
 import { NotificationModule } from './app/notifications/notification.module';
-import { ChannelsModule } from './app/channels/channels.module';
 import { StorageModule } from './app/storage/storage.module';
 import { NotificationGroupsModule } from './app/notification-groups/notification-groups.module';
 import { InvitesModule } from './app/invites/invites.module';
 import { ContentTemplatesModule } from './app/content-templates/content-templates.module';
-import { QueueService } from './app/shared/services/queue';
 import { IntegrationModule } from './app/integrations/integrations.module';
 import { ChangeModule } from './app/change/change.module';
 import { SubscribersModule } from './app/subscribers/subscribers.module';
@@ -31,11 +30,13 @@ import { MessagesModule } from './app/messages/messages.module';
 import { PartnerIntegrationsModule } from './app/partner-integrations/partner-integrations.module';
 import { TopicsModule } from './app/topics/topics.module';
 import { InboundParseModule } from './app/inbound-parse/inbound-parse.module';
+import { BlueprintModule } from './app/blueprint/blueprint.module';
 
 const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
   InboundParseModule,
   OrganizationModule,
   SharedModule,
+  FeatureFlagsModule,
   UserModule,
   AuthModule,
   HealthModule,
@@ -45,7 +46,6 @@ const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardRefe
   EventsModule,
   WidgetsModule,
   NotificationModule,
-  ChannelsModule,
   StorageModule,
   NotificationGroupsModule,
   InvitesModule,
@@ -58,6 +58,7 @@ const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardRefe
   MessagesModule,
   PartnerIntegrationsModule,
   TopicsModule,
+  BlueprintModule,
 ];
 
 const providers: Provider[] = [];
@@ -89,7 +90,7 @@ if (process.env.NODE_ENV === 'test') {
   providers,
 })
 export class AppModule {
-  constructor(private queueService: QueueService) {
+  constructor() {
     Logger.log(`BOOTSTRAPPED NEST APPLICATION`);
   }
 }

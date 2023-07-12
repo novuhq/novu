@@ -6,9 +6,9 @@ import { Grid } from '@mantine/core';
 import { Input, Switch, Text } from '../../../design-system';
 import { useEnvController } from '../../../hooks';
 import { When } from '../../../components/utils/When';
-import { DoubleArrowRight } from '../../../design-system/icons/arrows/CircleArrowRight';
+import { CircleArrowRight } from '../../../design-system/icons/arrows/CircleArrowRight';
 
-export const ReplyCallback = ({ control, index, errors }) => {
+export const ReplyCallback = ({ control, index }) => {
   const { environment } = useEnvController();
   const { watch } = useFormContext();
   const replyCallbackActive = watch(`steps.${index}.replyCallback.active`);
@@ -18,7 +18,6 @@ export const ReplyCallback = ({ control, index, errors }) => {
 
   return (
     <>
-      <ReplyCallbackSwitch index={index} control={control} />
       <When truthy={!domainMxRecordConfigured && replyCallbackActive}>
         <LackConfigurationError
           text={
@@ -47,6 +46,8 @@ export const ReplyCallbackUrlInput = ({ control, index }) => {
         render={({ field: { value, ...field } }) => {
           return (
             <Input
+              mb={24}
+              mt={24}
               {...field}
               data-test-id="reply-callback-url-input"
               disabled={readonly}
@@ -93,13 +94,13 @@ export function LackConfigurationError({ text, redirectTo }: { text: string; red
 
   return (
     <>
-      <Grid align={'center'} m={0}>
+      <Grid align={'center'} mt={24}>
         <WarningMessage>
           <Grid.Col p={0} span={11}>
             <Text>{text}</Text>
           </Grid.Col>
           <Grid.Col p={0} span={'content'}>
-            <DoubleArrowRight onClick={() => navigate(redirectTo)} />
+            <CircleArrowRight onClick={() => navigate(redirectTo)} />
           </Grid.Col>
         </WarningMessage>
       </Grid>
@@ -116,8 +117,10 @@ const WarningMessage = styled.div`
   color: #e54545;
   background: rgba(230, 69, 69, 0.15);
   border-radius: 7px;
+  width: 100%;
 `;
 
 const StyledSwitch = styled(Switch)`
   max-width: 100% !important;
+  width: auto;
 `;

@@ -13,9 +13,9 @@ import {
   BuilderGroupValues,
   ChannelCTATypeEnum,
   IMessageAction,
-  DigestUnitEnum,
   IPreferenceChannels,
   FilterParts,
+  INotificationTemplateStepMetadata,
 } from '@novu/shared';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
@@ -41,7 +41,7 @@ export class CreateNotificationTemplateCommand extends EnvironmentWithUserComman
   @IsDefined()
   @IsArray()
   @ValidateNested()
-  steps: NotificationStepCommand[];
+  steps: NotificationStep[];
 
   @IsBoolean()
   active: boolean;
@@ -57,6 +57,10 @@ export class CreateNotificationTemplateCommand extends EnvironmentWithUserComman
 
   @IsOptional()
   blueprintId?: string;
+
+  @IsOptional()
+  @IsString()
+  __source?: string;
 }
 
 export class ChannelCTACommand {
@@ -74,7 +78,7 @@ export class ChannelCTACommand {
   action?: IMessageAction[];
 }
 
-class NotificationStepCommand {
+export class NotificationStep {
   @ValidateNested()
   @IsOptional()
   template?: MessageTemplate;
@@ -108,12 +112,7 @@ class NotificationStepCommand {
   _id?: string;
 
   @IsOptional()
-  metadata?: {
-    amount?: number;
-    unit?: DigestUnitEnum;
-    digestKey?: string;
-    delayPath?: string;
-  };
+  metadata?: INotificationTemplateStepMetadata;
 }
 
 export class MessageFilter {

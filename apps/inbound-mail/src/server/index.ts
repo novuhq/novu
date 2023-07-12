@@ -13,13 +13,13 @@ import * as dns from 'dns';
 import logger from './logger';
 import * as extend from 'extend';
 import { QueueService } from './queue-service';
-import { BullmqService } from '@novu/application-generic';
+import { BullMqService } from '@novu/application-generic';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const LanguageDetect = require('languagedetect');
 const mailUtilities = Promise.promisifyAll(require('./mailUtilities'));
 const queueService = new QueueService();
-BullmqService.haveProInstalled();
+BullMqService.haveProInstalled();
 
 class Mailin extends events.EventEmitter {
   public configuration: IConfiguration;
@@ -368,9 +368,11 @@ class Mailin extends events.EventEmitter {
 
     function postQueue(connection, finalizedMessage) {
       return new Promise(function (resolve) {
+        logger.debug(connection.id + ' finalized message is: ' + finalizedMessage);
+
         logger.info(connection.id + ' Adding mail to queue ');
 
-        const toAddress: string = finalizedMessage.envelopeTo;
+        const toAddress = getAddressTo(finalizedMessage);
         const parts: string[] = toAddress.split('@');
         const username: string = parts[0];
         const environmentId = username.split('-nv-e=').at(-1);
@@ -519,6 +521,13 @@ class Mailin extends events.EventEmitter {
   }
 }
 
+function getAddressTo(finalizedMessage) {
+  const toAddressObject = Array.isArray(finalizedMessage.envelopeTo)
+    ? finalizedMessage.envelopeTo[0]
+    : finalizedMessage.envelopeTo;
+
+  return toAddressObject.address ?? toAddressObject;
+}
 interface ISmtpOptions {
   banner: string;
   logger: boolean;

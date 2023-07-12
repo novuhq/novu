@@ -1,16 +1,21 @@
-import { CreateSubscriber } from './create-subscriber';
+import {
+  GetSubscriberPreference,
+  GetSubscriberTemplatePreference,
+  UpdateSubscriber,
+  CreateSubscriber,
+} from '@novu/application-generic';
+
 import { GetSubscribers } from './get-subscribers';
 import { GetSubscriber } from './get-subscriber';
-import { GetSubscriberPreference } from './get-subscriber-preference/get-subscriber-preference.usecase';
-import { GetSubscriberTemplatePreference } from './get-subscriber-template-preference';
 import { GetPreferences } from './get-preferences/get-preferences.usecase';
 import { RemoveSubscriber } from './remove-subscriber';
 import { SearchByExternalSubscriberIds } from './search-by-external-subscriber-ids';
 import { UpdatePreference } from './update-preference/update-preference.usecase';
-import { UpdateSubscriber } from './update-subscriber';
 import { UpdateSubscriberChannel } from './update-subscriber-channel';
 import { UpdateSubscriberPreference } from './update-subscriber-preference';
 import { UpdateSubscriberOnlineFlag } from './update-subscriber-online-flag';
+import { ChatOauth } from './chat-oauth/chat-oauth.usecase';
+import { ChatOauthCallback } from './chat-oauth-callback/chat-oauth-callback.usecase';
 
 export {
   SearchByExternalSubscriberIds,
@@ -31,4 +36,6 @@ export const USE_CASES = [
   UpdateSubscriberChannel,
   UpdateSubscriberPreference,
   UpdateSubscriberOnlineFlag,
+  ChatOauthCallback,
+  ChatOauth,
 ];

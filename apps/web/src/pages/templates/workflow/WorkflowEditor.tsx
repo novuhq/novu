@@ -1,91 +1,87 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import styled from '@emotion/styled';
-import { Grid, useMantineColorScheme } from '@mantine/core';
-import { FilterPartTypeEnum, StepTypeEnum } from '@novu/shared';
+import { Link, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Container, Group, Stack } from '@mantine/core';
 import { showNotification } from '@mantine/notifications';
+import { FilterPartTypeEnum, StepTypeEnum } from '@novu/shared';
 
-import FlowEditor from './workflow/FlowEditor';
-import { colors } from '../../../design-system';
-import { channels, getChannel, NodeTypeEnum } from '../shared/channels';
+import { FlowEditor } from '../../../components/workflow';
+import { channels } from '../../../utils/channels';
 import type { IForm } from '../components/formTypes';
+import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
+import { useTemplateEditorForm } from '../components/TemplateEditorFormProvider';
 import { useEnvController } from '../../../hooks';
 import { When } from '../../../components/utils/When';
-import { TemplatePageHeader } from '../components/TemplatePageHeader';
-import { EditorPages } from '../editor/TemplateEditorPage';
-import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
-import { FilterModal } from '../filter/FilterModal';
-import { StepSettings } from './SideBar/StepSettings';
-import { AddStepMenu } from './SideBar/AddStepMenu';
-import { useTemplateFetcher } from '../../../api/hooks';
-import { ActivePageEnum } from '../../../constants/editorEnums';
-import { useTemplateEditorContext } from '../editor/TemplateEditorProvider';
+import { useBasePath } from '../hooks/useBasePath';
+import { UpdateButton } from '../components/UpdateButton';
+import { NameInput } from './NameInput';
+import { Settings } from '../../../design-system/icons';
+import { Button } from '../../../design-system';
+import ChannelNode from './workflow/node-types/ChannelNode';
+import TriggerNode from './workflow/node-types/TriggerNode';
+import AddNode from './workflow/node-types/AddNode';
+import { AddNodeEdge } from './workflow/edge-types/AddNodeEdge';
+import { getFormattedStepErrors } from '../shared/errors';
 
-const WorkflowEditor = ({
-  setActivePage,
-  templateId,
-  activePage,
-  onTestWorkflowClicked,
-  isCreatingTemplate,
-  isUpdatingTemplate,
-  addStep,
-  deleteStep,
-}: {
-  setActivePage: (string) => void;
-  templateId: string;
-  activePage: ActivePageEnum;
-  onTestWorkflowClicked: () => void;
-  isCreatingTemplate: boolean;
-  isUpdatingTemplate: boolean;
-  addStep: (channelType: StepTypeEnum, id: string, index?: number) => void;
-  deleteStep: (index: number) => void;
-}) => {
-  const { setSelectedNodeId, activeStepIndex, selectedChannel } = useTemplateEditorContext();
-  const hasActiveStepSelected = activeStepIndex >= 0;
-  const { colorScheme } = useMantineColorScheme();
+const nodeTypes = {
+  channelNode: ChannelNode,
+  triggerNode: TriggerNode,
+  addNode: AddNode,
+};
+
+const edgeTypes = { special: AddNodeEdge };
+
+const WorkflowEditor = () => {
+  const { addStep, deleteStep } = useTemplateEditorForm();
+  const { channel } = useParams<{
+    channel: StepTypeEnum | undefined;
+  }>();
   const [dragging, setDragging] = useState(false);
 
-  const onDragStart = (event, nodeType) => {
-    event.dataTransfer.setData('application/reactflow', nodeType);
-    event.dataTransfer.effectAllowed = 'move';
-  };
   const {
-    control,
+    trigger,
     watch,
-    clearErrors,
-    formState: { errors, isDirty: isDirtyForm, isSubmitted },
+    formState: { errors },
   } = useFormContext<IForm>();
-  const { isInitialLoading: loadingEditTemplate } = useTemplateFetcher({ templateId });
-
-  const [filterOpen, setFilterOpen] = useState(false);
+  const { readonly } = useEnvController();
   const steps = watch('steps');
 
-  const { readonly } = useEnvController();
   const [toDelete, setToDelete] = useState<string>('');
+  const basePath = useBasePath();
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
 
-  const setActivePageWrapper = (page: ActivePageEnum) => {
-    if (!isSubmitted && EditorPages.includes(page)) {
-      clearErrors('steps');
-    }
-    setActivePage(page);
-  };
+  const onNodeClick = useCallback(
+    (event, node) => {
+      event.preventDefault();
+
+      if (node.type === 'channelNode') {
+        navigate(basePath + `/${node.data.channelType}/${node.data.uuid}`);
+      }
+      if (node.type === 'triggerNode') {
+        navigate(basePath + '/test-workflow');
+      }
+    },
+    [basePath]
+  );
 
   const confirmDelete = () => {
-    const index = steps.findIndex((item) => item._id === toDelete);
+    const index = steps.findIndex((item) => item.uuid === toDelete);
     deleteStep(index);
-    setSelectedNodeId('');
     setToDelete('');
+    navigate(basePath);
   };
 
   const cancelDelete = () => {
     setToDelete('');
   };
 
-  const onDelete = (id) => {
-    const currentStep = steps.find((step) => step.id === id);
+  const onDelete = (uuid) => {
+    const stepToDelete = steps.find((step) => step.uuid === uuid);
 
-    if (!currentStep) {
-      setToDelete(id);
+    if (!stepToDelete) {
+      setToDelete(uuid);
 
       return;
     }
@@ -95,7 +91,7 @@ const WorkflowEditor = ({
         step.filters?.find(
           (filter) =>
             filter.children?.find(
-              (item) => item.on === FilterPartTypeEnum.PREVIOUS_STEP && item.step === currentStep.uuid
+              (item) => item.on === FilterPartTypeEnum.PREVIOUS_STEP && item.step === stepToDelete.uuid
             ) !== undefined
         ) !== undefined
       );
@@ -117,95 +113,149 @@ const WorkflowEditor = ({
       return;
     }
 
-    setToDelete(id);
+    setToDelete(uuid);
   };
 
-  useEffect(() => {
-    setSelectedNodeId('');
-  }, []);
+  const onStepInit = async () => {
+    await trigger('steps');
+  };
 
-  return (
-    <>
-      <Grid gutter={0} grow style={{ minHeight: '100%' }}>
-        <Grid.Col
-          md={9}
-          sm={6}
+  const onGetStepError = (i: number) => getFormattedStepErrors(i, errors);
+
+  if (readonly && pathname === basePath) {
+    return (
+      <div style={{ minHeight: '600px', display: 'flex', flexFlow: 'row' }}>
+        <div
           style={{
+            flex: '1 1 auto',
             display: 'flex',
-            flexDirection: 'column',
-            minHeight: 'calc(100vh - var(--mantine-header-height, 0px) - 60px)',
+            flexFlow: 'Column',
           }}
         >
-          <TemplatePageHeader
-            loading={isCreatingTemplate || isUpdatingTemplate}
-            disableSubmit={readonly || loadingEditTemplate || isCreatingTemplate || !isDirtyForm}
-            templateId={templateId}
-            setActivePage={setActivePage}
-            activePage={activePage}
-            onTestWorkflowClicked={onTestWorkflowClicked}
-          />
+          <Container fluid sx={{ width: '100%', height: '74px' }}>
+            <Stack
+              justify="center"
+              sx={{
+                height: '100%',
+              }}
+            >
+              <Group>
+                <NameInput />
+                <UpdateButton />
+                <Button
+                  onClick={() => {
+                    navigate(basePath + '/snippet');
+                  }}
+                  data-test-id="get-snippet-btn"
+                >
+                  Get Snippet
+                </Button>
+                <Link data-test-id="settings-page" to="settings">
+                  <Settings />
+                </Link>
+              </Group>
+            </Stack>
+          </Container>
           <FlowEditor
-            activePage={activePage}
             onDelete={onDelete}
-            setActivePage={setActivePageWrapper}
             dragging={dragging}
             errors={errors}
             steps={steps}
+            nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
             addStep={addStep}
-            setSelectedNodeId={setSelectedNodeId}
+            onStepInit={onStepInit}
+            onGetStepError={onGetStepError}
+            onNodeClick={onNodeClick}
           />
-          <When truthy={hasActiveStepSelected}>
-            <FilterModal
-              isOpen={filterOpen}
-              cancel={() => {
-                setFilterOpen(false);
-              }}
-              confirm={() => {
-                setFilterOpen(false);
-              }}
-              control={control}
-              stepIndex={activeStepIndex}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <When truthy={channel && [StepTypeEnum.EMAIL, StepTypeEnum.IN_APP].includes(channel)}>
+        <Outlet
+          context={{
+            setDragging,
+            onDelete,
+          }}
+        />
+      </When>
+      <When truthy={readonly && pathname === basePath}>{null}</When>
+      <When truthy={!channel || ![StepTypeEnum.EMAIL, StepTypeEnum.IN_APP].includes(channel)}>
+        <div style={{ minHeight: '600px', display: 'flex', flexFlow: 'row' }}>
+          <div
+            style={{
+              flex: '1 1 auto',
+              display: 'flex',
+              flexFlow: 'Column',
+            }}
+          >
+            <Container fluid sx={{ width: '100%', height: '74px' }}>
+              <Stack
+                justify="center"
+                sx={{
+                  height: '100%',
+                }}
+              >
+                <Group>
+                  <NameInput />
+                  <When truthy={pathname !== basePath}>
+                    <UpdateButton />
+                  </When>
+                </Group>
+              </Stack>
+            </Container>
+            <FlowEditor
+              onDelete={onDelete}
+              dragging={dragging}
+              errors={errors}
+              steps={steps}
+              nodeTypes={nodeTypes}
+              edgeTypes={edgeTypes}
+              addStep={addStep}
+              onStepInit={onStepInit}
+              onGetStepError={onGetStepError}
+              onNodeClick={onNodeClick}
             />
-          </When>
-        </Grid.Col>
-        <Grid.Col md={3} sm={6}>
-          <SideBarWrapper dark={colorScheme === 'dark'}>
-            {selectedChannel ? (
-              <StepSettings
-                setActivePage={setActivePageWrapper}
-                setFilterOpen={setFilterOpen}
-                isLoading={isCreatingTemplate}
-                isUpdateLoading={isUpdatingTemplate}
-                loadingEditTemplate={loadingEditTemplate}
-                onDelete={onDelete}
-              />
-            ) : (
-              <AddStepMenu setDragging={setDragging} onDragStart={onDragStart} />
-            )}
-          </SideBarWrapper>
-        </Grid.Col>
-      </Grid>
+          </div>
+          <div
+            style={{
+              position: 'relative',
+              minWidth: '260px',
+              width: 'auto',
+              minHeight: '600px',
+            }}
+          >
+            <Outlet
+              context={{
+                setDragging,
+                onDelete,
+              }}
+            />
+          </div>
+        </div>
+      </When>
       <DeleteConfirmModal
-        target={
-          selectedChannel !== null && getChannel(selectedChannel ?? '')?.type === NodeTypeEnum.CHANNEL
-            ? 'step'
-            : 'action'
+        description={
+          'This cannot be undone. ' +
+          'The trigger code will be updated and this step will no longer participate in the notification workflow.'
         }
+        target="step"
+        title={`Delete step?`}
         isOpen={toDelete.length > 0}
         confirm={confirmDelete}
         cancel={cancelDelete}
+        confirmButtonText="Delete step"
+        cancelButtonText="Cancel"
       />
     </>
   );
 };
 
 export default WorkflowEditor;
-
-const SideBarWrapper = styled.div<{ dark: boolean }>`
-  background-color: ${({ dark }) => (dark ? colors.B17 : colors.white)};
-  height: 100%;
-  position: relative;
-`;
 
 export const StyledNav = styled.div`
   padding: 15px 20px;

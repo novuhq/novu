@@ -1,13 +1,20 @@
 // eslint-ignore max-len
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   ChangeRepository,
   NotificationStepEntity,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
+  NotificationGroupRepository,
 } from '@novu/dal';
-import { ChangeEntityTypeEnum } from '@novu/shared';
-import { AnalyticsService } from '@novu/application-generic';
+import { ChangeEntityTypeEnum, INotificationTemplateStep } from '@novu/shared';
+import {
+  AnalyticsService,
+  InvalidateCacheService,
+  CacheService,
+  buildNotificationTemplateIdentifierKey,
+  buildNotificationTemplateKey,
+} from '@novu/application-generic';
 
 import { UpdateNotificationTemplateCommand } from './update-notification-template.command';
 import { ContentService } from '../../../shared/helpers/content.service';
@@ -18,14 +25,10 @@ import {
   UpdateMessageTemplate,
 } from '../../../message-template/usecases';
 import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
-import { CacheService, InvalidateCacheService } from '../../../shared/services/cache';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { NotificationStep } from '../../../shared/dtos/notification-step';
-import {
-  buildNotificationTemplateIdentifierKey,
-  buildNotificationTemplateKey,
-} from '../../../shared/services/cache/key-builders/entities';
+import { NotificationStep } from '../create-notification-template';
+import { DeleteMessageTemplate } from '../../../message-template/usecases/delete-message-template/delete-message-template.usecase';
+import { DeleteMessageTemplateCommand } from '../../../message-template/usecases/delete-message-template/delete-message-template.command';
 
 @Injectable()
 export class UpdateNotificationTemplate {
@@ -36,8 +39,10 @@ export class UpdateNotificationTemplate {
     private updateMessageTemplate: UpdateMessageTemplate,
     private createChange: CreateChange,
     private changeRepository: ChangeRepository,
+    private analyticsService: AnalyticsService,
     private invalidateCache: InvalidateCacheService,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
+    private notificationGroupRepository: NotificationGroupRepository,
+    private deleteMessageTemplate: DeleteMessageTemplate
   ) {}
 
   async execute(command: UpdateNotificationTemplateCommand): Promise<NotificationTemplateEntity> {
@@ -67,6 +72,16 @@ export class UpdateNotificationTemplate {
     }
 
     if (command.notificationGroupId) {
+      const notificationGroup = this.notificationGroupRepository.findOne({
+        _id: command.notificationGroupId,
+        _environmentId: command.environmentId,
+      });
+
+      if (!notificationGroup)
+        throw new NotFoundException(
+          `Notification group with id ${command.notificationGroupId} not found, under environment ${command.environmentId}`
+        );
+
       updatePayload._notificationGroupId = command.notificationGroupId;
     }
 
@@ -197,6 +212,8 @@ export class UpdateNotificationTemplate {
       throw new BadRequestException('No properties found for update');
     }
 
+    await this.deleteRemovedSteps(existingTemplate.steps, command, parentChangeId);
+
     await this.invalidateCache.invalidateByKey({
       key: buildNotificationTemplateKey({
         _id: existingTemplate._id,
@@ -283,6 +300,10 @@ export class UpdateNotificationTemplate {
       partialNotificationStep.uuid = message.uuid;
     }
 
+    if (message.name) {
+      partialNotificationStep.name = message.name;
+    }
+
     return partialNotificationStep;
   }
 
@@ -296,5 +317,34 @@ export class UpdateNotificationTemplate {
     });
 
     return notificationTemplate;
+  }
+
+  private getRemovedSteps(existingSteps: NotificationStepEntity[], newSteps: INotificationTemplateStep[]) {
+    const existingStepsIds = existingSteps.map((i) => i._templateId);
+    const newStepsIds = newSteps.map((i) => i._templateId);
+
+    const removedStepsIds = existingStepsIds.filter((id) => !newStepsIds.includes(id));
+
+    return removedStepsIds;
+  }
+
+  private async deleteRemovedSteps(
+    existingSteps: NotificationStepEntity[],
+    command: UpdateNotificationTemplateCommand,
+    parentChangeId: string
+  ) {
+    const removedStepsIds = this.getRemovedSteps(existingSteps || [], command.steps || []);
+
+    for (const id of removedStepsIds) {
+      await this.deleteMessageTemplate.execute(
+        DeleteMessageTemplateCommand.create({
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          userId: command.userId,
+          messageTemplateId: id,
+          parentChangeId: parentChangeId,
+        })
+      );
+    }
   }
 }

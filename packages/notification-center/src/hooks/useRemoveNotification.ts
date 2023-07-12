@@ -2,7 +2,7 @@ import { useMutation, useQueryClient, UseMutationOptions } from '@tanstack/react
 import type { IMessage } from '@novu/shared';
 
 import { useNovuContext } from './useNovuContext';
-import { INFINITE_NOTIFICATIONS_QUERY_KEY } from './queryKeys';
+import { useFetchNotificationsQueryKey } from './useFetchNotificationsQueryKey';
 
 interface IRemoveNotificationVariables {
   messageId: string;
@@ -11,16 +11,19 @@ interface IRemoveNotificationVariables {
 export const useRemoveNotification = ({
   onSuccess,
   ...options
-}: UseMutationOptions<IMessage, Error, IRemoveNotificationVariables> = {}) => {
+}: {
+  onSuccess?: () => void;
+} & UseMutationOptions<IMessage, Error, IRemoveNotificationVariables> = {}) => {
   const queryClient = useQueryClient();
   const { apiService } = useNovuContext();
+  const fetchNotificationsQueryKey = useFetchNotificationsQueryKey();
 
   const { mutate, ...result } = useMutation<IMessage, Error, IRemoveNotificationVariables>(
     ({ messageId }) => apiService.removeMessage(messageId),
     {
       ...options,
       onSuccess: (data, variables, context) => {
-        queryClient.refetchQueries(INFINITE_NOTIFICATIONS_QUERY_KEY, { exact: false });
+        queryClient.refetchQueries(fetchNotificationsQueryKey, { exact: false });
         onSuccess?.(data, variables, context);
       },
     }

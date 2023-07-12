@@ -4,6 +4,7 @@ import {
   SegmentedControlProps,
   SegmentedControlItem,
   LoadingOverlay,
+  Sx,
 } from '@mantine/core';
 import useStyles from './SegmentedControl.styles';
 import { colors } from '../config';
@@ -15,6 +16,10 @@ interface ISegmentedControlProps {
   value?: string;
   onChange?(value: string): void;
   loading?: boolean;
+  fullWidth?: boolean;
+  sx?: Sx | (Sx | undefined)[];
+  disabled?: boolean;
+  size?: 'md' | 'sm';
 }
 
 /**
@@ -23,7 +28,9 @@ interface ISegmentedControlProps {
  */
 export const SegmentedControl = React.forwardRef<HTMLDivElement, ISegmentedControlProps>(
   ({ onChange, loading = false, ...props }, ref) => {
-    const { classes, theme } = useStyles();
+    const { classes, theme } = useStyles({
+      size: props.size || 'md',
+    });
     const defaultDesign = {
       radius: 'xl',
       size: 'md',

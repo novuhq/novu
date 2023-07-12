@@ -1,11 +1,12 @@
 {
   "name": "@novu/docs",
-  "version": "0.13.0",
+  "version": "0.16.3",
   "private": true,
   "scripts": {
     "docusaurus": "docusaurus",
     "start": "docusaurus start --port 4040",
     "build": "docusaurus build",
+    "test": "echo \"Error: no test specified\"",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy",
     "clear": "docusaurus clear",
@@ -26,12 +27,14 @@
   },
   "dependencies": {
     "@docusaurus/core": "2.3.1",
+    "@docusaurus/plugin-google-gtag": "2.3.1",
     "@docusaurus/preset-classic": "2.3.1",
+    "@docusaurus/theme-common": "2.3.1",
     "@mdx-js/react": "^1.6.21",
     "@svgr/webpack": "^6.2.1",
     "clsx": "^1.1.1",
     "docusaurus-plugin-plausible": "^0.0.5",
-    "docusaurus-plugin-sass": "^0.2.2",
+    "docusaurus-plugin-sass": "0.2.3",
     "file-loader": "^6.2.0",
     "prism-react-renderer": "^1.3.1",
     "react": "^17.0.1",
@@ -44,7 +47,7 @@
   },
   "devDependencies": {
     "@docusaurus/module-type-aliases": "2.3.1",
-    "@tsconfig/docusaurus": "^1.0.5",
+    "@tsconfig/docusaurus": "1.0.7",
     "@types/react": "^17.0.14",
     "@types/react-helmet": "6.1.6",
     "@types/react-router-dom": "5.3.3",
@@ -73,6 +76,11 @@
       "last 1 chrome version",
       "last 1 firefox version",
       "last 1 safari version"
+    ]
+  },
+  "nx": {
+    "tags": [
+      "docs"
     ]
   }
 }

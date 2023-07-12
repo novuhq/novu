@@ -133,6 +133,30 @@ describe('GET /widget/notifications/feed', function () {
     expect(feed.data[0]).to.be.an('object').that.has.any.keys('subscriber');
   });
 
+  it('should include hasMore when there is more notification', async function () {
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+
+    await session.awaitRunningJobs(template._id);
+
+    let feed = await getSubscriberFeed();
+
+    expect(feed.data.length).to.be.equal(1);
+    expect(feed.totalCount).to.be.equal(1);
+    expect(feed.hasMore).to.be.equal(false);
+
+    for (let i = 0; i < 10; i++) {
+      await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    }
+
+    await session.awaitRunningJobs(template._id);
+
+    feed = await getSubscriberFeed();
+
+    expect(feed.data.length).to.be.equal(10);
+    expect(feed.totalCount).to.be.equal(11);
+    expect(feed.hasMore).to.be.equal(true);
+  });
+
   async function getSubscriberFeed(query = {}) {
     const response = await axios.get(`http://localhost:${process.env.PORT}/v1/widgets/notifications/feed`, {
       params: {
@@ -149,8 +173,8 @@ describe('GET /widget/notifications/feed', function () {
 
   async function markMessageAsSeen(messageId: string) {
     return await axios.post(
-      `http://localhost:${process.env.PORT}/v1/widgets/messages/${messageId}/seen`,
-      {},
+      `http://localhost:${process.env.PORT}/v1/widgets/messages/markAs`,
+      { messageId, mark: { seen: true } },
       {
         headers: {
           Authorization: `Bearer ${subscriberToken}`,

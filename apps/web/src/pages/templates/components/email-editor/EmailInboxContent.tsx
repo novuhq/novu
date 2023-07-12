@@ -39,16 +39,17 @@ export const EmailInboxContent = ({
   return (
     <div
       style={{
-        background: theme.colorScheme === 'dark' ? colors.B17 : colors.B98,
         borderRadius: '7px',
-        marginBottom: '40px',
-        padding: '5px 10px',
+        marginBottom: '24px',
+        padding: '16px',
+        background: theme.colorScheme === 'dark' ? colors.B20 : colors.B98,
       }}
     >
       <Grid grow justify="center" align="stretch">
         <Grid.Col span={3}>
           <Controller
             name={`steps.${index}.template.senderName`}
+            defaultValue=""
             control={control}
             render={({ field }) => {
               return (

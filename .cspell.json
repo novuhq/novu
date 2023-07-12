@@ -3,6 +3,11 @@
   "version": "0.2",
   "language": "en",
   "words": [
+    "tmproj",
+    "hgignore",
+    "bzrignore",
+    "metatype",
+    "Paramtype",
     "Millis",
     "maqsam",
     "sadd",
@@ -434,7 +439,41 @@
     "maqsam",
     "Millis",
     "sscan",
-    "vishnudxb"
+    "vishnudxb",
+    "autopipelining",
+    "maxtimeout",
+    "clsx",
+    "africastalking",
+    "africas",
+    "Shortcodes",
+    "supertest",
+    "superagent",
+    "INAPP",
+    "fortawesome",
+    "fontawesome",
+    "middlewares",
+    "localforage",
+    "autogeneration",
+    "statefulset",
+    "STATEFULSETS",
+    "Statefulset",
+    "Redmine",
+    "portname",
+    "autogeneration",
+    "fullname",
+    "Automount",
+    "Relabelings",
+    "relabelings",
+    "fullname",
+    "nindent",
+    "tplvalues",
+    "trunc",
+    "externaldb",
+    "Tolerations",
+    "bitnamicharts",
+    "bitnami",
+    "portname",
+    "externalredis"
   ],
   "flagWords": [],
   "patterns": [
@@ -476,6 +515,10 @@
       "name": "HTML Tags",
       "pattern": "<[^>]*>",
       "description": "Reference: https://stackoverflow.com/questions/11229831/regular-expression-to-remove-html-tags-from-a-string"
+    },
+    {
+      "name": "projectIds",
+      "pattern": "/projectId.*/"
     }
   ],
   "ignoreRegExpList": [
@@ -486,7 +529,8 @@
     "Snippet references",
     "Snippet references 2",
     "Multi-line code blocks",
-    "HTML Tags"
+    "HTML Tags",
+    "projectIds"
   ],
   "ignorePaths": [
     "apps/api/src/.env.test",
@@ -501,11 +545,14 @@
     "pnpm-lock.yaml",
     "pnpm-workspace.yaml",
     "novu.code-workspace",
+    "packages/application-generic/src/.env.test",
     "packages/notification-center/src/i18n/languages/**",
     "apps/widget/public/iframeResizer.contentWindow.js",
     ".eslintrc.js",
     ".vscode/settings.json",
+    "*/**/.vscode/settings.json",
     "docs/src/usage-examples.md",
+    "apps/worker/README.md",
     ".gitignore",
     "angular.json",
     "ng-package.json"

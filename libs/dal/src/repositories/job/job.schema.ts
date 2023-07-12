@@ -3,6 +3,7 @@ import { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
 import { JobDBModel, JobStatusEnum } from './job.entity';
+import { getTTLOptions } from '../../shared';
 
 const jobSchema = new Schema<JobDBModel>(
   {
@@ -85,6 +86,25 @@ const jobSchema = new Schema<JobDBModel>(
       updateMode: {
         type: Schema.Types.Boolean,
       },
+      backoff: {
+        type: Schema.Types.Boolean,
+      },
+      timed: {
+        atTime: {
+          type: Schema.Types.String,
+        },
+        weekDays: [Schema.Types.String],
+        monthDays: [Schema.Types.Number],
+        ordinal: {
+          type: Schema.Types.String,
+        },
+        ordinalValue: {
+          type: Schema.Types.String,
+        },
+        monthlyType: {
+          type: Schema.Types.String,
+        },
+      },
     },
     type: {
       type: Schema.Types.String,
@@ -96,9 +116,12 @@ const jobSchema = new Schema<JobDBModel>(
       type: Schema.Types.ObjectId,
       ref: 'Subscriber',
     },
+    expireAt: Schema.Types.Date,
   },
   schemaOptions
 );
+
+jobSchema.index({ expireAt: 1 }, getTTLOptions());
 
 jobSchema.virtual('executionDetails', {
   ref: 'ExecutionDetails',
@@ -348,6 +371,10 @@ jobSchema.index({
  */
 jobSchema.index({
   _notificationId: 1,
+});
+
+jobSchema.index({
+  _environmentId: 1,
 });
 
 // eslint-disable-next-line @typescript-eslint/naming-convention

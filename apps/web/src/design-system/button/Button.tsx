@@ -1,5 +1,5 @@
-import React from 'react';
-import { Button as MantineButton } from '@mantine/core';
+import React, { MouseEventHandler } from 'react';
+import { Button as MantineButton, Sx } from '@mantine/core';
 
 import useStyles from './Button.styles';
 import { SpacingProps } from '../shared/spacing.props';
@@ -15,8 +15,12 @@ interface IButtonProps extends JSX.ElementChildrenAttribute, SpacingProps {
   fullWidth?: boolean;
   submit?: boolean;
   onClick?: (e: any) => void;
+  onMouseEnter?: MouseEventHandler<any>;
+  onMouseLeave?: MouseEventHandler<any>;
   inherit?: boolean;
   pulse?: boolean;
+  sx?: Sx;
+  iconPosition?: 'left' | 'right';
 }
 
 /**
@@ -35,10 +39,11 @@ export function Button({
   onClick,
   variant = 'gradient',
   pulse,
+  iconPosition = 'left',
   ...props
 }: IButtonProps) {
   const { classes } = useStyles({ disabled, inherit, variant, pulse });
-  const withIconProps = icon ? { leftIcon: icon } : {};
+  const withIconProps = icon ? (iconPosition === 'left' ? { leftIcon: icon } : { rightIcon: icon }) : {};
 
   return (
     <MantineButton

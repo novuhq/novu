@@ -2,10 +2,12 @@ FROM nikolaik/python-nodejs:python3.10-nodejs16-alpine as dev_base
 
 ARG BULL_MQ_PRO_TOKEN
 ENV BULL_MQ_PRO_NPM_TOKEN=$BULL_MQ_PRO_TOKEN
+ENV NX_DAEMON=false
 
 RUN npm i pm2 -g
 RUN npm --no-update-notifier --no-fund --global install pnpm@7.28.0
 RUN pnpm --version
+
 
 WORKDIR /usr/src/app
 
@@ -27,7 +29,7 @@ RUN --mount=type=cache,id=pnpm-store-inbound-mail,target=/root/.pnpm-store\
  --unsafe-perm\
  --reporter=silent
 
-RUN NODE_ENV=prod pnpm build:inbound-mail
+RUN NODE_ENV=production pnpm build:inbound-mail
 
 WORKDIR /usr/src/app/apps/inbound-mail
 

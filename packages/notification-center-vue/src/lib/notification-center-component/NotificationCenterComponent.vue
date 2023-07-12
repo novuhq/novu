@@ -18,7 +18,14 @@ export interface INotificationCenterComponentProps {
   tabs?: NotificationCenterContentComponentProps['tabs'];
   showUserPreferences?: NotificationCenterContentComponentProps['showUserPreferences'];
   allowedNotificationActions?: NotificationCenterContentComponentProps['allowedNotificationActions'];
+  /**
+   * @deprecated Use popoverConfig instead
+   */
   popover?: {
+    offset?: number;
+    position?: FloatingPosition;
+  };
+  popoverConfig?: {
     offset?: number;
     position?: FloatingPosition;
   };
@@ -85,8 +92,8 @@ watch(computedStyles, (newComputedStyles) => {
   <VDropdown
     :theme="colorScheme"
     :popperClass="computedStyles.popoverDropdownClass"
-    :placement="popover?.position"
-    :distance="popover?.offset"
+    :placement="popoverConfig?.position || popover?.position"
+    :distance="popoverConfig?.offset || popover?.offset"
     :triggers="['click', 'touch']"
     eager-mount
     ref="popper"

@@ -9,11 +9,11 @@ import { useNotificationCenter, useNotifications, useFeedUnseenCount, useNovuCon
 
 export function FeedsTabs() {
   const { tabs, onTabClick } = useNotificationCenter();
-  const { storeId, setStore, markAllNotificationsAsSeen } = useNotifications();
+  const { storeId, setStore, markFetchedNotificationsAsSeen } = useNotifications();
   const { setFetchingStrategy } = useNovuContext();
 
   async function handleOnTabChange(newStoreId: string) {
-    markAllNotificationsAsSeen();
+    markFetchedNotificationsAsSeen();
     setStore(newStoreId);
   }
 
@@ -66,7 +66,7 @@ function UnseenBadgeContainer({ storeId }: { storeId: string }) {
   const query = useMemo(() => {
     const foundQuery = stores?.find((i) => i.storeId === storeId)?.query || {};
 
-    return Object.assign({}, foundQuery, { seen: false });
+    return Object.assign({}, foundQuery, { seen: false, limit: 100 });
   }, [stores]);
   const { data } = useFeedUnseenCount({ query });
   const unseenCount = query.seen ? 0 : data?.count ?? 0;

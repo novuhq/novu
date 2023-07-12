@@ -5,23 +5,37 @@ import useStyles from './Dropdown.styles';
 import { shadows } from '../config';
 
 interface IDropdownProps
-  extends Pick<MenuProps, 'opened' | 'offset' | 'position' | 'onOpen' | 'onClose' | 'withinPortal'> {
+  extends Pick<
+    MenuProps,
+    | 'withArrow'
+    | 'opened'
+    | 'offset'
+    | 'position'
+    | 'onOpen'
+    | 'onClose'
+    | 'withinPortal'
+    | 'middlewares'
+    | 'disabled'
+    | 'width'
+    | 'styles'
+  > {
   control: React.ReactNode;
   children: React.ReactNode;
 }
 
-export function Dropdown({ control, children, ...props }: IDropdownProps) {
+export function Dropdown({ control, withArrow = true, offset = 10, children, ...props }: IDropdownProps) {
   const { classes, theme } = useStyles();
 
   return (
     <Menu
-      withArrow
+      withArrow={withArrow}
       transitionDuration={0}
       radius={7}
-      offset={10}
+      offset={offset}
       shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.light}
       classNames={classes}
       clickOutsideEvents={['click', 'mousedown', 'touchstart']}
+      middlewares={{ flip: false, shift: false }}
       {...props}
     >
       <Menu.Target>{control}</Menu.Target>
@@ -32,3 +46,4 @@ export function Dropdown({ control, children, ...props }: IDropdownProps) {
 
 Dropdown.Item = Menu.Item;
 Dropdown.Label = Menu.Label;
+Dropdown.Divider = Menu.Divider;

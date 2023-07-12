@@ -1,23 +1,30 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { EnvironmentRepository, FeedRepository, MemberRepository } from '@novu/dal';
-import { AnalyticsService, LogDecorator } from '@novu/application-generic';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { EnvironmentRepository } from '@novu/dal';
+import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
+import {
+  AnalyticsService,
+  LogDecorator,
+  CreateSubscriber,
+  CreateSubscriberCommand,
+  GetDecryptedIntegrations,
+  GetDecryptedIntegrationsCommand,
+} from '@novu/application-generic';
 
 import { AuthService } from '../../../auth/services/auth.service';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
 import { InitializeSessionCommand } from './initialize-session.command';
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
+
 import { SessionInitializeResponseDto } from '../../dtos/session-initialize-response.dto';
 import { createHash } from '../../../shared/helpers/hmac.service';
+
 @Injectable()
 export class InitializeSession {
   constructor(
     private environmentRepository: EnvironmentRepository,
     private createSubscriber: CreateSubscriber,
     private authService: AuthService,
-    private feedRepository: FeedRepository,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
-    private membersRepository: MemberRepository
+    private getDecryptedIntegrations: GetDecryptedIntegrations,
+    private analyticsService: AnalyticsService
   ) {}
 
   @LogDecorator()
@@ -28,7 +35,25 @@ export class InitializeSession {
       throw new ApiException('Please provide a valid app identifier');
     }
 
-    if (environment.widget.notificationCenterEncryption) {
+    const inAppIntegration = await this.getDecryptedIntegrations.execute(
+      GetDecryptedIntegrationsCommand.create({
+        findOne: true,
+        active: true,
+        environmentId: environment._id,
+        organizationId: environment._organizationId,
+        userId: command.subscriberId,
+        channelType: ChannelTypeEnum.IN_APP,
+        providerId: InAppProviderIdEnum.Novu,
+      })
+    );
+
+    const item = Array.isArray(inAppIntegration) ? inAppIntegration[0] : inAppIntegration;
+
+    if (!item) {
+      throw new NotFoundException('In app integration could not be found');
+    }
+
+    if (item.credentials.hmac) {
       validateNotificationCenterEncryption(environment, command);
     }
 

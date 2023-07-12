@@ -1,37 +1,16 @@
-import {
-  ArrayMaxSize,
-  ArrayNotEmpty,
-  IsArray,
-  IsDefined,
-  IsObject,
-  IsOptional,
-  IsString,
-  MinLength,
-} from 'class-validator';
+import { ArrayMaxSize, ArrayNotEmpty, IsArray, IsDefined, IsObject, IsOptional, IsString } from 'class-validator';
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
-import { TriggerRecipientSubscriber, TriggerRecipients } from '@novu/node';
-import { TopicId, TopicKey, TriggerRecipientsTypeEnum } from '@novu/shared';
+import { TopicKey, TriggerRecipientSubscriber, TriggerRecipients, TriggerRecipientsTypeEnum } from '@novu/shared';
+import { CreateSubscriberRequestDto } from '../../subscribers/dtos/create-subscriber-request.dto';
 
-export class SubscriberPayloadDto {
-  @ApiProperty()
-  firstName?: string;
-  @ApiProperty()
-  lastName?: string;
-  @ApiProperty()
-  email?: string;
-  @ApiProperty()
-  phone?: string;
-  @ApiProperty()
-  avatar?: string;
-  @ApiProperty()
-  locale?: string;
-}
+export class SubscriberPayloadDto extends CreateSubscriberRequestDto {}
 
 export class TopicPayloadDto {
   @ApiProperty()
   topicKey: TopicKey;
-  @ApiProperty()
-  type: TriggerRecipientsTypeEnum.TOPIC;
+
+  @ApiProperty({ example: 'Topic', enum: TriggerRecipientsTypeEnum })
+  type: TriggerRecipientsTypeEnum;
 }
 
 export class BulkTriggerEventDto {
@@ -47,7 +26,7 @@ export class BulkTriggerEventDto {
 export class TriggerEventRequestDto {
   @ApiProperty({
     description:
-      'The trigger identifier of the template you wish to send. This identifier can be found on the template page.',
+      'The trigger identifier of the workflow you wish to send. This identifier can be found on the workflow page.',
   })
   @IsString()
   @IsDefined()
@@ -56,7 +35,7 @@ export class TriggerEventRequestDto {
   @ApiProperty({
     description:
       // eslint-disable-next-line max-len
-      `The payload object is used to pass additional custom information that could be used to render the template, or perform routing rules based on it. 
+      `The payload object is used to pass additional custom information that could be used to render the workflow, or perform routing rules based on it. 
       This data will also be available when fetching the notifications feed from the API to display certain parts of the UI.`,
     example: {
       comment_id: 'string',
@@ -66,13 +45,16 @@ export class TriggerEventRequestDto {
     },
   })
   @IsObject()
-  payload: Record<string, unknown>;
+  @IsOptional()
+  payload?: Record<string, unknown>;
 
   @ApiPropertyOptional({
     description: 'This could be used to override provider specific configurations',
     example: {
       fcm: {
-        color: '#fff',
+        data: {
+          key: 'value',
+        },
       },
     },
   })
@@ -87,22 +69,15 @@ export class TriggerEventRequestDto {
         $ref: getSchemaPath(SubscriberPayloadDto),
       },
       {
-        type: '[SubscriberPayloadDto]',
-        description: 'List of subscriber objects',
-      },
-      { type: 'string', description: 'Unique identifier of a subscriber in your systems' },
-      {
-        type: '[string]',
-        description: 'List of subscriber identifiers',
+        type: 'string',
+        description: 'Unique identifier of a subscriber in your systems',
+        example: 'SUBSCRIBER_ID',
       },
       {
         $ref: getSchemaPath(TopicPayloadDto),
       },
-      {
-        type: '[TopicPayloadDto]',
-        description: 'List of topics',
-      },
     ],
+    isArray: true,
   })
   @IsDefined()
   to: TriggerRecipients;

@@ -1,6 +1,6 @@
 import { IsDefined, IsObject, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
-import { TriggerRecipientSubscriber } from '@novu/node';
+import { TriggerRecipientSubscriber } from '@novu/shared';
 
 import { SubscriberPayloadDto } from './trigger-event-request.dto';
 
@@ -30,7 +30,9 @@ export class TriggerEventToAllRequestDto {
     description: 'This could be used to override provider specific configurations',
     example: {
       fcm: {
-        color: '#fff',
+        data: {
+          key: 'value',
+        },
       },
     },
   })
