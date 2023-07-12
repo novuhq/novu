@@ -11,6 +11,8 @@ In this guide, you’ll learn how to add digest functionality to email notificat
 
 You can find the entire code(frontend as well as backend) for this app [here](https://github.com/novuhq/digest-email-app).
 
+If, instead, you want to add digest to in-app notifications, we have a guide for that as well. Take a look [here](https://docs.novu.co/guides/how-to-add-digest-to-in-app-notifications).
+
 ### What is a Digest Notification?
 
 Often when you associate notifications with user activity, the end user can be bombarded with messages because of the nature of the activity. Take for example the case of commenting in the context of a social media app. If you were to send a notification to a user for every comment they receive, and they happen to receive 100 comments, it could lead to user fatigue since you would have to send 100 messages.
