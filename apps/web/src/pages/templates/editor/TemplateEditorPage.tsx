@@ -4,7 +4,6 @@ import { ReactFlowProvider } from 'react-flow-renderer';
 import { FieldErrors, useFormContext } from 'react-hook-form';
 
 import PageContainer from '../../../components/layout/components/PageContainer';
-import PageMeta from '../../../components/layout/components/PageMeta';
 import type { IForm } from '../components/formTypes';
 import WorkflowEditor from '../workflow/WorkflowEditor';
 import { useEnvController, usePrompt } from '../../../hooks';
@@ -30,14 +29,14 @@ function BaseTemplateEditorPage() {
   const isTouring = tourStorage.getCurrentTour('digest', templateId) > -1;
   const basePath = useBasePath();
 
-  const isCreateTemplatePage = location.pathname === ROUTES.TEMPLATES_CREATE;
+  const isCreateTemplatePage = location.pathname === ROUTES.WORKFLOWS_CREATE;
 
   const onInvalid = async (errors: FieldErrors<IForm>) => {
     errorMessage(getExplicitErrors(errors));
   };
 
   const [showNavigateValidatorModal, confirmNavigate, cancelNavigate] = usePrompt(
-    !methods.formState.isValid && location.pathname !== ROUTES.TEMPLATES_CREATE && !isTouring,
+    !methods.formState.isValid && location.pathname !== ROUTES.WORKFLOWS_CREATE && !isTouring,
     (nextLocation) => {
       if (nextLocation.location.pathname.includes(basePath)) {
         nextLocation.retry();
@@ -56,13 +55,13 @@ function BaseTemplateEditorPage() {
   useEffect(() => {
     if (environment && template) {
       if (environment._id !== template._environmentId) {
-        navigate(ROUTES.TEMPLATES);
+        navigate(ROUTES.WORKFLOWS);
       }
     }
   }, [environment, template]);
 
   if (environment && environment?.name === 'Production' && isCreateTemplatePage) {
-    navigate(ROUTES.TEMPLATES);
+    navigate(ROUTES.WORKFLOWS);
   }
 
   if (isCreating) return null;
@@ -70,8 +69,7 @@ function BaseTemplateEditorPage() {
   return (
     <>
       <TourProvider />
-      <PageContainer>
-        <PageMeta title={template?.name ?? 'Create Template'} />
+      <PageContainer title={template?.name ?? 'Create Template'}>
         <form
           name="template-form"
           noValidate

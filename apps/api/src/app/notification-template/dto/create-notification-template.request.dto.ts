@@ -42,7 +42,7 @@ export class CreateNotificationTemplateRequestDto implements ICreateNotification
   @IsOptional()
   active?: boolean;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ deprecated: true })
   @IsBoolean()
   @IsOptional()
   draft?: boolean;

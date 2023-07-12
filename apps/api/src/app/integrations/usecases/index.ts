@@ -1,4 +1,9 @@
-import { GetDecryptedIntegrations, CalculateLimitNovuIntegration, GetNovuIntegration } from '@novu/application-generic';
+import {
+  SelectIntegration,
+  GetDecryptedIntegrations,
+  CalculateLimitNovuIntegration,
+  GetNovuIntegration,
+} from '@novu/application-generic';
 
 import { GetWebhookSupportStatus } from './get-webhook-support-status/get-webhook-support-status.usecase';
 import { CreateIntegration } from './create-integration/create-integration.usecase';
@@ -9,7 +14,7 @@ import { DeactivateSimilarChannelIntegrations } from './deactivate-integration/d
 import { GetActiveIntegrations } from './get-active-integration/get-active-integration.usecase';
 import { CheckIntegration } from './check-integration/check-integration.usecase';
 import { CheckIntegrationEMail } from './check-integration/check-integration-email.usecase';
-import { GetInAppActivated } from './get-In-app-activated/get-In-app-activated.usecase';
+import { GetInAppActivated } from './get-in-app-activated/get-in-app-activated.usecase';
 
 export const USE_CASES = [
   GetInAppActivated,
@@ -17,6 +22,7 @@ export const USE_CASES = [
   CreateIntegration,
   GetIntegrations,
   GetActiveIntegrations,
+  SelectIntegration,
   GetDecryptedIntegrations,
   UpdateIntegration,
   RemoveIntegration,

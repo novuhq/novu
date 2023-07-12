@@ -50,6 +50,61 @@ Handlebars.registerHelper(
   }
 );
 
+Handlebars.registerHelper(
+  HandlebarHelpersEnum.UNIQUE,
+  function (array, property) {
+    if (!Array.isArray(array)) return '';
+
+    return array
+      .map((item) => {
+        if (item[property]) {
+          return item[property];
+        }
+      })
+      .filter((value, index, self) => self.indexOf(value) === index);
+  }
+);
+
+Handlebars.registerHelper(
+  HandlebarHelpersEnum.GROUPBY,
+  function (array, property) {
+    if (!Array.isArray(array)) return [];
+    const map = {};
+    array.forEach((item) => {
+      if (item[property]) {
+        const key = item[property];
+        if (!map[key]) {
+          map[key] = [item];
+        } else {
+          map[key].push(item);
+        }
+      }
+    });
+
+    const result = [];
+    for (const [key, value] of Object.entries(map)) {
+      result.push({ key: key, items: value });
+    }
+
+    return result;
+  }
+);
+
+Handlebars.registerHelper(
+  HandlebarHelpersEnum.UNIQUE,
+  function (array, property) {
+    if (!Array.isArray(array)) return '';
+
+    return array
+      .map((item) => {
+        if (item[property]) {
+          return item[property];
+        }
+      })
+      .filter((value, index, self) => self.indexOf(value) === index);
+  }
+);
+
 @Injectable()
 export class CompileTemplate {
   async execute(command: CompileTemplateCommand): Promise<string> {

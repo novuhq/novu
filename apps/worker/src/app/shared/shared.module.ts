@@ -36,6 +36,15 @@ import {
   GCSStorageService,
   AzureBlobStorageService,
   S3StorageService,
+  ReadinessService,
+  QueueServiceHealthIndicator,
+  TriggerQueueServiceHealthIndicator,
+  WsQueueServiceHealthIndicator,
+  QueueService,
+  TriggerQueueService,
+  GetFeatureFlag,
+  LaunchDarklyService,
+  FeatureFlagsService,
 } from '@novu/application-generic';
 
 import * as packageJson from '../../../package.json';
@@ -104,7 +113,26 @@ const distributedLockService = {
   },
 };
 
+const readinessService = {
+  provide: ReadinessService,
+  useFactory: (
+    queueServiceHealthIndicator: QueueServiceHealthIndicator,
+    triggerQueueServiceHealthIndicator: TriggerQueueServiceHealthIndicator,
+    wsQueueServiceHealthIndicator: WsQueueServiceHealthIndicator
+  ) => {
+    return new ReadinessService(
+      queueServiceHealthIndicator,
+      triggerQueueServiceHealthIndicator,
+      wsQueueServiceHealthIndicator
+    );
+  },
+  inject: [QueueServiceHealthIndicator, TriggerQueueServiceHealthIndicator, WsQueueServiceHealthIndicator],
+};
+
 const PROVIDERS = [
+  LaunchDarklyService,
+  FeatureFlagsService,
+  GetFeatureFlag,
   cacheService,
   distributedLockService,
   {
@@ -128,14 +156,17 @@ const PROVIDERS = [
   InvalidateCacheService,
   CreateLog,
   {
-    provide: WsQueueService,
-    useClass: WsQueueService,
-  },
-  {
     provide: StorageService,
     useClass: getStorageServiceClass(),
   },
+  QueueServiceHealthIndicator,
+  TriggerQueueServiceHealthIndicator,
+  WsQueueServiceHealthIndicator,
+  QueueService,
+  TriggerQueueService,
+  WsQueueService,
   StorageHelperService,
+  readinessService,
   ...DAL_MODELS,
 ];
 

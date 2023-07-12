@@ -1,6 +1,6 @@
 {
   "name": "@novu/ws",
-  "version": "0.14.0",
+  "version": "0.16.3",
   "description": "",
   "author": "",
   "private": true,
@@ -31,10 +31,10 @@
     "@nestjs/swagger": "^5.2.1",
     "@nestjs/terminus": "^9.2.1",
     "@nestjs/websockets": "^9.3.9",
-    "@novu/application-generic": "^0.14.0",
-    "@novu/dal": "^0.14.0",
-    "@novu/shared": "^0.14.0",
-    "@novu/testing": "^0.14.0",
+    "@novu/application-generic": "^0.16.3",
+    "@novu/dal": "^0.16.3",
+    "@novu/shared": "^0.16.3",
+    "@novu/testing": "^0.16.3",
     "@sentry/node": "^7.30.0",
     "@socket.io/redis-adapter": "^7.2.0",
     "bull": "^4.4.0",
@@ -49,7 +49,7 @@
     "newrelic": "9.10.2",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
-    "rxjs": "7.8.0",
+    "rxjs": "7.8.1",
     "socket.io": "^4.5.4"
   },
   "devDependencies": {
@@ -57,7 +57,7 @@
     "@nestjs/schematics": "^7.3.1",
     "@nestjs/testing": "^7.6.17",
     "@types/express": "^4.17.8",
-    "@types/jest": "^27.0.2",
+    "@types/jest": "^29.5.0",
     "@types/jsonwebtoken": "^8.5.9",
     "@types/node": "^14.14.6",
     "@types/socket.io": "^2.1.13",
@@ -70,7 +70,7 @@
     "ts-jest": "^27.0.7",
     "ts-loader": "~9.4.0",
     "ts-node": "~10.9.1",
-    "tsconfig-paths": "^3.9.0",
+    "tsconfig-paths": "~4.1.0",
     "typescript": "4.9.5"
   },
   "workspaces": {

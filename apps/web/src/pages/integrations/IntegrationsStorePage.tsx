@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import styled from '@emotion/styled';
+import { Modal } from '@mantine/core';
+import * as cloneDeep from 'lodash.clonedeep';
 import {
   ChannelTypeEnum,
   IConfigCredentials,
@@ -9,28 +11,34 @@ import {
   EmailProviderIdEnum,
   InAppProviderIdEnum,
   ProvidersIdEnum,
+  SmsProviderIdEnum,
+  ICredentials,
 } from '@novu/shared';
-import { Modal } from '@mantine/core';
-import * as cloneDeep from 'lodash.clonedeep';
-import PageMeta from '../../components/layout/components/PageMeta';
+
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { ChannelGroup } from './components/ChannelGroup';
 import { ConnectIntegrationForm } from './components/ConnectIntegrationForm';
-import { useIntegrations } from '../../hooks';
 import { When } from '../../components/utils/When';
 import { NovuEmailProviderModal } from './components/NovuEmailProviderModal';
 import { NovuInAppProviderModal } from './components/NovuInAppProviderModal';
+import { useProviders } from './useProviders';
+import { NovuSmsProviderModal } from './components/NovuSmsProviderModal';
+import { useCreateInAppIntegration } from '../../hooks/useCreateInAppIntegration';
+import { LoadingOverlay } from '../../design-system';
 
 export function IntegrationsStore() {
-  const { integrations, loading: isLoading, refetch } = useIntegrations();
-  const [emailProviders, setEmailProviders] = useState<IIntegratedProvider[]>([]);
-  const [smsProvider, setSmsProvider] = useState<IIntegratedProvider[]>([]);
-  const [chatProvider, setChatProvider] = useState<IIntegratedProvider[]>([]);
-  const [pushProvider, setPushProvider] = useState<IIntegratedProvider[]>([]);
+  const { emailProviders, smsProvider, chatProvider, pushProvider, inAppProvider, isLoading, refetch } = useProviders();
   const [isModalOpened, setModalIsOpened] = useState(false);
   const [isCreateIntegrationModal, setIsCreateIntegrationModal] = useState(false);
   const [provider, setProvider] = useState<IIntegratedProvider | null>(null);
+  const { create } = useCreateInAppIntegration((data: any) => {
+    setProvider({
+      ...(provider as IIntegratedProvider),
+      integrationId: data._id,
+      active: data.active,
+    });
+  });
 
   async function handlerVisible(
     visible: boolean,
@@ -38,6 +46,9 @@ export function IntegrationsStore() {
     providerConfig: IIntegratedProvider
   ) {
     setModalIsOpened(visible);
+    if (providerConfig.providerId === InAppProviderIdEnum.Novu && providerConfig.channel === ChannelTypeEnum.IN_APP) {
+      create();
+    }
     setProvider(providerConfig);
     setIsCreateIntegrationModal(createIntegrationModal);
   }
@@ -49,46 +60,23 @@ export function IntegrationsStore() {
     }
   }
 
-  useEffect(() => {
-    if (integrations) {
-      const initializedProviders = initializeProviders(integrations);
-
-      setEmailProviders(
-        sortProviders(initializedProviders.filter((providerItem) => providerItem.channel === ChannelTypeEnum.EMAIL))
-      );
-      setSmsProvider(
-        sortProviders(initializedProviders.filter((providerItem) => providerItem.channel === ChannelTypeEnum.SMS))
-      );
-
-      setChatProvider(
-        sortProviders(initializedProviders.filter((providerItem) => providerItem.channel === ChannelTypeEnum.CHAT))
-      );
-
-      setPushProvider(
-        sortProviders(initializedProviders.filter((providerItem) => providerItem.channel === ChannelTypeEnum.PUSH))
-      );
-    }
-  }, [integrations]);
-
   return (
-    <>
-      <PageMeta title="Integrations" />
-      {!isLoading ? (
-        <PageContainer>
-          <PageHeader title="Integration Store" />
-
+    <PageContainer title="Integrations">
+      <PageHeader title="Integration Store" />
+      <LoadingOverlay visible={isLoading}>
+        <When truthy={!isLoading}>
           <Modal
             withCloseButton={false}
             centered
-            size="lg"
+            size={provider?.providerId === InAppProviderIdEnum.Novu ? 1000 : 'lg'}
             overflow="inside"
             opened={isModalOpened}
             onClose={() => setModalIsOpened(false)}
           >
-            <When truthy={!provider?.novu}>
+            <When truthy={provider && !provider?.novu && provider?.providerId !== InAppProviderIdEnum.Novu}>
               <ConnectIntegrationForm
                 onClose={() => setModalIsOpened(false)}
-                provider={provider}
+                provider={provider as IIntegratedProvider}
                 showModal={handlerShowModal}
                 createModel={isCreateIntegrationModal}
               />
@@ -97,11 +85,24 @@ export function IntegrationsStore() {
               <NovuEmailProviderModal onClose={() => setModalIsOpened(false)} />
             </When>
             <When truthy={provider?.providerId === InAppProviderIdEnum.Novu}>
-              <NovuInAppProviderModal onClose={() => setModalIsOpened(false)} />
+              <NovuInAppProviderModal
+                showModal={handlerShowModal}
+                provider={provider}
+                onClose={() => setModalIsOpened(false)}
+              />
+            </When>
+            <When truthy={provider?.providerId === SmsProviderIdEnum.Novu}>
+              <NovuSmsProviderModal onClose={() => setModalIsOpened(false)} />
             </When>
           </Modal>
 
           <ContentWrapper>
+            <ChannelGroup
+              channel={ChannelTypeEnum.IN_APP}
+              providers={inAppProvider}
+              title="In-App"
+              onProviderClick={handlerVisible}
+            />
             <ChannelGroup
               channel={ChannelTypeEnum.EMAIL}
               providers={emailProviders}
@@ -127,29 +128,15 @@ export function IntegrationsStore() {
               onProviderClick={handlerVisible}
             />
           </ContentWrapper>
-        </PageContainer>
-      ) : null}
-    </>
+        </When>
+      </LoadingOverlay>
+    </PageContainer>
   );
 }
 
 const ContentWrapper = styled.div`
   padding: 0 30px;
 `;
-
-const sortProviders = (unsortedProviders: IIntegratedProvider[]) => {
-  return unsortedProviders
-    .sort((a, b) => Number(b.active) - Number(a.active))
-    .sort((a, b) => Number(isConnected(b)) - Number(isConnected(a)));
-};
-
-function isConnected(provider: IIntegratedProvider) {
-  if (!provider.credentials.length) return false;
-
-  return provider.credentials?.some((cred) => {
-    return cred.value;
-  });
-}
 
 export interface IIntegratedProvider {
   providerId: ProvidersIdEnum;
@@ -164,34 +151,9 @@ export interface IIntegratedProvider {
   logoFileName: ILogoFileName;
   betaVersion: boolean;
   novu?: boolean;
-}
-
-export interface ICredentials {
-  apiKey?: string;
-  user?: string;
-  secretKey?: string;
-  domain?: string;
-  password?: string;
-  host?: string;
-  port?: string;
-  secure?: boolean;
-  region?: string;
-  accountSid?: string;
-  messageProfileId?: string;
-  token?: string;
-  from?: string;
-  senderName?: string;
-  applicationId?: string;
-  clientId?: string;
-  projectName?: string;
-  serviceAccount?: string;
-  baseUrl?: string;
-  webhookUrl?: string;
-  requireTls?: boolean;
-  ignoreTls?: boolean;
-  tlsOptions?: Record<string, unknown>;
-  redirectUrl?: string;
-  hmac?: boolean;
+  environmentId?: string;
+  name?: string;
+  identifier?: string;
 }
 
 export interface IntegrationEntity {
@@ -200,6 +162,10 @@ export interface IntegrationEntity {
   _environmentId: string;
 
   _organizationId: string;
+
+  name: string;
+
+  identifier: string;
 
   providerId: ProvidersIdEnum;
 

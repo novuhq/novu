@@ -2,7 +2,9 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Popover as MantinePopover, createStyles, UnstyledButton } from '@mantine/core';
 import styled from '@emotion/styled';
 import { useFormContext } from 'react-hook-form';
+import { useViewport } from 'react-flow-renderer';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
+
 import { Text } from '../../../../../design-system/typography/text/Text';
 import { Switch } from '../../../../../design-system/switch/Switch';
 import { useStyles } from '../../../../../design-system/template-button/TemplateButton.styles';
@@ -10,21 +12,13 @@ import { colors } from '../../../../../design-system/config';
 import { Trash } from '../../../../../design-system/icons';
 import { When } from '../../../../../components/utils/When';
 import { useActiveIntegrations, useEnvController, useIntegrationLimit } from '../../../../../hooks';
-import { useViewport } from 'react-flow-renderer';
 import { getFormattedStepErrors } from '../../../shared/errors';
 import { Popover } from '../../../../../design-system/popover';
 import { Button } from '../../../../../design-system/button/Button';
 import { IntegrationsStoreModal } from '../../../../integrations/IntegrationsStoreModal';
 import { useSegment } from '../../../../../components/providers/SegmentProvider';
 import { TemplateEditorAnalyticsEnum } from '../../../constants';
-
-const CHANNEL_TYPE_TO_TEXT = {
-  [ChannelTypeEnum.IN_APP]: 'in-app',
-  [ChannelTypeEnum.EMAIL]: 'email',
-  [ChannelTypeEnum.SMS]: 'sms',
-  [ChannelTypeEnum.CHAT]: 'chat',
-  [ChannelTypeEnum.PUSH]: 'push',
-};
+import { CHANNEL_TYPE_TO_STRING } from '../../../../../utils/channels';
 
 interface ITemplateButtonProps {
   Icon: React.FC<any>;
@@ -96,7 +90,8 @@ export function WorkflowNode({
   const { classes: popoverClasses } = usePopoverStyles();
   const viewport = useViewport();
   const channelKey = tabKey ?? '';
-  const { isLimitReached } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
+  const { isLimitReached: isEmailLimitReached } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
+  const { isLimitReached: isSmsLimitReached } = useIntegrationLimit(ChannelTypeEnum.SMS);
   const [hover, setHover] = useState(false);
 
   const hasActiveIntegration = useMemo(() => {
@@ -104,15 +99,18 @@ export function WorkflowNode({
       channelType
     );
     const isEmailStep = channelType === StepTypeEnum.EMAIL;
+    const isSmsStep = channelType === StepTypeEnum.SMS;
 
     if (isChannelStep) {
       const isActive = !!integrations?.some((integration) => integration.channel === tabKey);
+      const isEmailStepActive = isEmailStep && !isEmailLimitReached;
+      const isSmsStepActive = isSmsStep && !isSmsLimitReached;
 
-      return isActive || (isEmailStep && !isLimitReached);
+      return isActive || isEmailStepActive || isSmsStepActive;
     }
 
     return true;
-  }, [integrations, tabKey, isLimitReached]);
+  }, [integrations, tabKey, isEmailLimitReached, isSmsLimitReached]);
 
   const {
     watch,
@@ -197,7 +195,9 @@ export function WorkflowNode({
             target={<ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />}
             title="Connect provider"
             titleGradient="red"
-            description={`Please configure a ${CHANNEL_TYPE_TO_TEXT[channelKey]} provider to send notifications over this channel`}
+            description={`Please configure a ${CHANNEL_TYPE_TO_STRING[
+              channelKey
+            ]?.toLowerCase()} provider to send notifications over this channel`}
             content={
               <ConfigureProviderButton
                 onClick={() => {

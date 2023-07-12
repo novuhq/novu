@@ -1,11 +1,19 @@
+import { IntegrationRepository } from '@novu/dal';
+import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { EnvironmentRepository } from '@novu/dal';
 import { createHash } from '../../shared/helpers/hmac.service';
+import {
+  buildIntegrationKey,
+  CacheService,
+  InMemoryProviderService,
+  InvalidateCacheService,
+} from '@novu/application-generic';
 
 describe('Initialize Session - /widgets/session/initialize (POST)', async () => {
   let session: UserSession;
-  const environmentRepository = new EnvironmentRepository();
+  const inMemoryProviderService = new InMemoryProviderService();
+  const invalidateCache = new InvalidateCacheService(new CacheService(inMemoryProviderService));
 
   before(async () => {
     session = new UserSession();
@@ -46,10 +54,9 @@ describe('Initialize Session - /widgets/session/initialize (POST)', async () => 
   });
 
   it('should pass the test with valid HMAC hash', async function () {
+    await setHmacConfig(session, invalidateCache);
     const subscriberId = '12345';
     const secretKey = session.environment.apiKeys[0].key;
-
-    await enableWidgetSecurityEncryption(environmentRepository, session);
 
     const hmacHash = createHash(secretKey, subscriberId);
     const response = await initWidgetSession(subscriberId, session, hmacHash);
@@ -58,11 +65,10 @@ describe('Initialize Session - /widgets/session/initialize (POST)', async () => 
   });
 
   it('should fail the test with invalid subscriber id or invalid secret key', async function () {
+    await setHmacConfig(session, invalidateCache);
     const validSubscriberId = '12345';
     const validSecretKey = session.environment.apiKeys[0].key;
     let hmacHash;
-
-    await enableWidgetSecurityEncryption(environmentRepository, session);
 
     const invalidSubscriberId = validSubscriberId + '0';
     hmacHash = createHash(validSecretKey, invalidSubscriberId);
@@ -78,16 +84,6 @@ describe('Initialize Session - /widgets/session/initialize (POST)', async () => 
   });
 });
 
-async function enableWidgetSecurityEncryption(environmentRepository, session) {
-  await environmentRepository.update(
-    {
-      _organizationId: session.organization._id,
-      _id: session.environment._id,
-    },
-    { $set: { widget: { notificationCenterEncryption: true } } }
-  );
-}
-
 async function initWidgetSession(subscriberId: string, session, hmacHash?: string) {
   return await session.testAgent.post('/v1/widgets/session/initialize').send({
     applicationIdentifier: session.environment.identifier,
@@ -98,4 +94,29 @@ async function initWidgetSession(subscriberId: string, session, hmacHash?: strin
     phone: '054777777',
     hmacHash: hmacHash,
   });
+}
+
+async function setHmacConfig(session: UserSession, invalidateCache: InvalidateCacheService) {
+  const integrationRepository = new IntegrationRepository();
+
+  await invalidateCache.invalidateQuery({
+    key: buildIntegrationKey().invalidate({
+      _organizationId: session.organization._id,
+    }),
+  });
+
+  await integrationRepository.update(
+    {
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+      providerId: InAppProviderIdEnum.Novu,
+      channel: ChannelTypeEnum.IN_APP,
+      active: true,
+    },
+    {
+      $set: {
+        'credentials.hmac': true,
+      },
+    }
+  );
 }

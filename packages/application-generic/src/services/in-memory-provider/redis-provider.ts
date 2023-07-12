@@ -62,6 +62,7 @@ export const getRedisProviderConfig = (): IRedisProviderConfig => {
     : DEFAULT_KEEP_ALIVE;
   const keyPrefix = redisConfig.keyPrefix ?? DEFAULT_KEY_PREFIX;
   const ttl = redisConfig.ttl ? Number(redisConfig.ttl) : DEFAULT_TTL_SECONDS;
+  const tls = redisConfig.tls;
 
   return {
     host,
@@ -72,6 +73,7 @@ export const getRedisProviderConfig = (): IRedisProviderConfig => {
     keepAlive,
     keyPrefix,
     ttl,
+    tls,
   };
 };
 

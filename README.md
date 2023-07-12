@@ -40,6 +40,7 @@ The ultimate service for managing multi-channel notifications with a single API.
   · <a href="https://github.com/novuhq/novu-kotlin">Kotlin</a>
   · <a href="https://github.com/novuhq/elixir">Elixir</a>
   · <a href="https://github.com/novuhq/rust">Rust</a>
+  · <a href="https://github.com/novuhq/novu-python">Python</a>
   </p>
 
 ## ⭐️ Why Novu?

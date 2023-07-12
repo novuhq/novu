@@ -25,6 +25,14 @@ interface IChannelDefinition {
   type: NodeTypeEnum;
 }
 
+export const CHANNEL_TYPE_TO_STRING: Record<ChannelTypeEnum, string> = {
+  [ChannelTypeEnum.IN_APP]: 'In-App',
+  [ChannelTypeEnum.EMAIL]: 'Email',
+  [ChannelTypeEnum.SMS]: 'SMS',
+  [ChannelTypeEnum.CHAT]: 'Chat',
+  [ChannelTypeEnum.PUSH]: 'Push',
+};
+
 export const channels: IChannelDefinition[] = [
   {
     tabKey: ChannelTypeEnum.IN_APP,
@@ -91,6 +99,6 @@ export const channels: IChannelDefinition[] = [
   },
 ];
 
-export const getChannel = (channelKey: string): IChannelDefinition | undefined => {
+export const getChannel = (channelKey?: string): IChannelDefinition | undefined => {
   return channels.find((channel) => channel.tabKey === channelKey);
 };

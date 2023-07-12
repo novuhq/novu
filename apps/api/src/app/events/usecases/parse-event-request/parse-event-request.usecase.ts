@@ -3,7 +3,7 @@ import * as Sentry from '@sentry/node';
 import * as hat from 'hat';
 import { merge } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
-import { AnalyticsService, Instrument, InstrumentUsecase } from '@novu/application-generic';
+import { Instrument, InstrumentUsecase } from '@novu/application-generic';
 import { NotificationTemplateRepository } from '@novu/dal';
 import { ISubscribersDefine } from '@novu/shared';
 import { StorageHelperService, CachedEntity, buildNotificationTemplateIdentifierKey } from '@novu/application-generic';
@@ -19,7 +19,6 @@ export class ParseEventRequest {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
     private verifyPayload: VerifyPayload,
-    private analyticsService: AnalyticsService,
     private storageHelperService: StorageHelperService,
     private triggerHandlerQueueService: TriggerHandlerQueueService,
     private mapTriggerRecipients: MapTriggerRecipients
@@ -53,10 +52,10 @@ export class ParseEventRequest {
     });
 
     if (!template) {
-      throw new UnprocessableEntityException('template_not_found');
+      throw new UnprocessableEntityException('workflow_not_found');
     }
 
-    if (!template.active || template.draft) {
+    if (!template.active) {
       return {
         acknowledged: true,
         status: 'trigger_not_active',
@@ -110,17 +109,6 @@ export class ParseEventRequest {
       },
       command.organizationId
     );
-
-    const steps = template.steps;
-
-    if (!command.payload.$on_boarding_trigger) {
-      this.analyticsService.track('Notification event trigger - [Triggers]', command.userId, {
-        _template: template._id,
-        _organization: command.organizationId,
-        channels: steps.map((step) => step.template?.type),
-        source: command.payload.__source || 'api',
-      });
-    }
 
     return {
       acknowledged: true,

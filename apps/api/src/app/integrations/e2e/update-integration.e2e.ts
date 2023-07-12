@@ -1,15 +1,23 @@
-import { IntegrationRepository } from '@novu/dal';
+import { EnvironmentRepository, IntegrationRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
+
+const ORIGINAL_IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
 
 describe('Update Integration - /integrations/:integrationId (PUT)', function () {
   let session: UserSession;
   const integrationRepository = new IntegrationRepository();
+  const envRepository = new EnvironmentRepository();
 
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
+    process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = 'true';
+  });
+
+  afterEach(async () => {
+    process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = ORIGINAL_IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
   });
 
   it('should update newly created integration', async function () {
@@ -36,48 +44,126 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
     expect(integration.credentials.secretKey).to.equal(payload.credentials.secretKey);
   });
 
-  it('should deactivate other providers on the same channel', async function () {
-    const firstProviderPayload = {
-      providerId: 'sendgrid',
+  it('should not allow to update the integration with same identifier', async function () {
+    const identifier2 = 'identifier2';
+    const integrationOne = await integrationRepository.create({
+      name: 'Test1',
+      identifier: 'identifier1',
+      providerId: EmailProviderIdEnum.SendGrid,
       channel: ChannelTypeEnum.EMAIL,
-      credentials: { apiKey: '123', secretKey: 'abc' },
+      active: false,
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+    });
+    await integrationRepository.create({
+      name: 'Test2',
+      identifier: identifier2,
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      active: false,
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+    });
+    const payload = {
+      identifier: identifier2,
+      check: false,
+    };
+
+    const { body } = await session.testAgent.put(`/v1/integrations/${integrationOne._id}`).send(payload);
+
+    expect(body.statusCode).to.equal(409);
+    expect(body.message).to.equal('Integration with identifier already exists');
+  });
+
+  it('should not allow to activate the integration without the credentials', async function () {
+    const integrationOne = await integrationRepository.create({
+      name: 'Test1',
+      identifier: 'identifier1',
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      active: false,
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+    });
+
+    const payload = {
       active: true,
       check: false,
     };
-    const secondProviderPayload = {
-      providerId: 'mailgun',
+
+    const { body } = await session.testAgent.put(`/v1/integrations/${integrationOne._id}`).send(payload);
+
+    expect(body.statusCode).to.equal(400);
+    expect(body.message).to.equal('The credentials are required to activate the integration');
+  });
+
+  it('should allow updating the integration with just identifier', async function () {
+    const integrationOne = await integrationRepository.create({
+      name: 'Test',
+      identifier: 'identifier',
+      providerId: EmailProviderIdEnum.SendGrid,
       channel: ChannelTypeEnum.EMAIL,
-      credentials: { apiKey: '123', secretKey: 'abc' },
       active: false,
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+    });
+
+    const payload = {
+      identifier: 'identifier2',
       check: false,
     };
 
-    // create integrations
-    await session.testAgent.post('/v1/integrations').send(firstProviderPayload);
-    const mailgunIntegrationId = (await session.testAgent.post('/v1/integrations').send(secondProviderPayload)).body
-      .data._id;
+    const {
+      body: { data },
+    } = await session.testAgent.put(`/v1/integrations/${integrationOne._id}`).send(payload);
 
-    // create irrelevant channel -> should not be affected by the update
-    firstProviderPayload.channel = ChannelTypeEnum.SMS;
-    await session.testAgent.post('/v1/integrations').send(firstProviderPayload);
+    expect(data.identifier).to.eq(payload.identifier);
+  });
 
-    // update second integration
-    secondProviderPayload.active = true;
-    await session.testAgent.put(`/v1/integrations/${mailgunIntegrationId}`).send(secondProviderPayload);
+  it('should allow updating the integration with just name', async function () {
+    const integrationOne = await integrationRepository.create({
+      name: 'Test',
+      identifier: 'identifier',
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      active: false,
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+    });
 
-    const integrations = await integrationRepository.findByEnvironmentId(session.environment._id);
+    const payload = {
+      name: 'Test2',
+      check: false,
+    };
 
-    const firstProviderIntegration = integrations.find(
-      (i) => i.providerId.toString() === 'sendgrid' && i.channel.toString() === ChannelTypeEnum.EMAIL
-    );
-    const secondProviderIntegration = integrations.find((i) => i.providerId.toString() === 'mailgun');
-    const irrelevantProviderIntegration = integrations.find(
-      (i) => i.providerId.toString() === 'sendgrid' && i.channel.toString() === ChannelTypeEnum.SMS
-    );
+    const {
+      body: { data },
+    } = await session.testAgent.put(`/v1/integrations/${integrationOne._id}`).send(payload);
 
-    expect(firstProviderIntegration.active).to.equal(false);
-    expect(secondProviderIntegration.active).to.equal(true);
-    expect(irrelevantProviderIntegration.active).to.equal(true);
+    expect(data.name).to.eq(payload.name);
+  });
+
+  it('should allow updating the integration with just environment', async function () {
+    const integrationOne = await integrationRepository.create({
+      name: 'Test',
+      identifier: 'identifier',
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      active: false,
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+    });
+    const prodEnv = await envRepository.findOne({ name: 'Production', _organizationId: session.organization._id });
+    const payload = {
+      _environmentId: prodEnv?._id,
+      check: false,
+    };
+
+    const {
+      body: { data },
+    } = await session.testAgent.put(`/v1/integrations/${integrationOne._id}`).send(payload);
+
+    expect(data._environmentId).to.equal(prodEnv?._id);
   });
 
   it('should update custom SMTP integration with TLS options successfully', async function () {
@@ -87,7 +173,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
       credentials: {
         host: 'smtp.example.com',
         port: '587',
-        secure: 'true',
+        secure: true,
         requireTls: true,
         tlsOptions: { rejectUnauthorized: false },
       },
@@ -106,7 +192,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
       credentials: {
         host: 'smtp.example.com',
         port: '587',
-        secure: 'true',
+        secure: true,
         requireTls: false,
         tlsOptions: { rejectUnauthorized: false, enableTrace: true },
       },

@@ -1,7 +1,6 @@
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, ICredentials } from '@novu/shared';
 import { APNSPushProvider } from '@novu/apns';
 import { BasePushHandler } from './base.handler';
-import { ICredentials } from '@novu/dal';
 
 export class APNSHandler extends BasePushHandler {
   constructor() {
@@ -21,7 +20,7 @@ export class APNSHandler extends BasePushHandler {
       keyId: credentials.apiKey,
       teamId: credentials.projectName,
       bundleId: credentials.applicationId as string,
-      production: credentials.secure as boolean,
+      production: credentials.secure ?? false,
     });
   }
 }
