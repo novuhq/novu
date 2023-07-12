@@ -13,7 +13,7 @@ You can find the entire code(frontend as well as backend) for this app [here](ht
 
 ### What is a Digest Notification?
 
-Often times when you associate notifications with user activity, the end user can be bombarded with messages because of the nature of the activity. Take for example the case of commenting in the context of a social media app. If you were to send a notification to a user for every comment they receive, and they happen to receive 100 comments, it could lead to user fatigue since you would have to send 100 messages.
+Often when you associate notifications with user activity, the end user can be bombarded with messages because of the nature of the activity. Take for example the case of commenting in the context of a social media app. If you were to send a notification to a user for every comment they receive, and they happen to receive 100 comments, it could lead to user fatigue since you would have to send 100 messages.
 
 This is where digest notifications come into the picture!
 
@@ -21,7 +21,7 @@ A digest notification is a notification that consolidates information from sever
 
 ### How does Digest Notification Work?
 
-Novu has a built-in digest engine that collects multiple trigger events, aggregates them into a single message and delivers it to the subscriber. You can use the digest engine by adding a ‘digest node’ to your workflow in the workflow editor in the [Novu dashboard](https://web.novu.co/workflows). If you want to learn more about it, [this](https://docs.novu.co/platform/digest/) is a great place to start.
+Novu has a built-in digest engine that collects multiple trigger events, aggregates them into a single message, and delivers it to the subscriber. You can use the digest engine by adding a ‘digest node’ to your workflow in the workflow editor in the [Novu dashboard](https://web.novu.co/workflows). If you want to learn more about it, [this](https://docs.novu.co/platform/digest/) is a great place to start.
 
 Let’s see it in action now!
 
@@ -69,8 +69,8 @@ Once, you’ve configured it. Go ahead and configure the 'email’ channel as pe
 Here’s a brief explanation of all the options:
 
 - **1-Preview:** This shows you a glimpse of what the email notification item will look like when delivered to the client.
-- **2-Sender Name:** Lets you set the sender name for emails that client will receive.
-- **3-Subject:** This lets you define the subject line for the emails that client will receive.
+- **2-Sender Name:** Lets you set the sender name for emails that the client will receive.
+- **3-Subject:** This lets you define the subject line for the emails that the client will receive.
 - **4-Filter:** This feature allows you to configure the criteria for delivering notifications. For instance, you can apply a filter based on a subscriber's online status to send them an email if they were online within the last hour. Read [more about filters](https://docs.novu.co/platform/step-filter/#subscriber-seen--read-filters).
 - **5-Custom Code** - In custom code, you can write custom digest templates to show some/all parts of a message. Read [more about it here](https://docs.novu.co/platform/digest#writing-digest-templates).
 - **6-Test** - This allows you to send a test email to test if everything is working as per your wish.
@@ -92,7 +92,7 @@ In your backend, install the novu package using the following code:
 npm install @novu/node
 ```
 
-Now, create a route which you want to hit when called from the front end. In our demo app, this is the route:
+Now, create a route that you want to hit when called from the front end. In our demo app, this is the route:
 
 ```jsx
 import express from "express";
@@ -128,7 +128,7 @@ If you’re following the guide, you’ve already copied the trigger function. B
 
 Subscribers are entities to which the notifications are sent. You can see a list of subscribers in the [Novu dashboard](https://web.novu.co/subscribers) as well.
 
-In our app, we’ll create a subscriber in Node.js as we’re writing our backend in Node.js, but we also have backend SDKs (Node.js, PHP, .NET, Go, Ruby, Python and Kotlin) to choose from. The recommended way to create a subscriber in NodeJS is as follows:
+In our app, we’ll create a subscriber in Node.js as we’re writing our backend in Node.js, but we also have backend SDKs (Node.js, PHP, .NET, Go, Ruby, Python, and Kotlin) to choose from. The recommended way to create a subscriber in NodeJS is as follows:
 
 ```jsx
 await novu.subscribers.identify('digestEmailSub', {
@@ -165,7 +165,7 @@ export const sendEmailDigest = async (notif, email) => {
 
 Now, we just need to hit the route defined above from the front end.
 
-## Hit backend route from front end
+## Hit the backend route from the front end
 
 From the front end, we just need to hit the route we had defined above. Below, I'm sharing the body component of the demo app I created to illustrate this:
 
@@ -250,10 +250,10 @@ const Body = () => {
 
 We're hitting the backend route we had created earlier. The backend has been deployed on render as can be seen in this code snippet above.
 
-Congratulations for following the guide up until this point. We can style our app a little using [some TailwindCSS](https://github.com/novuhq/digest-email-app).
+Congratulations on following the guide up until this point. We can style our app a little using [some TailwindCSS](https://github.com/novuhq/digest-email-app).
 
 If you’ve done everything as recommended, you’ll end up with an app that looks like this:
 
 ![email digest app showcase](https://res.cloudinary.com/dxc6bnman/image/upload/v1689098964/guides/Screenshot_2023-07-11_at_11.39.17_PM_xtbh3r.png)
 
-In this app, when we enter the email id, some text in the input box and click send, the notification appears in the inbox after the delay specified above (when we’re creating the workflow).
+In this app, when we enter the email id, some text in the input box, and click send, the notification appears in the inbox after the delay specified above (when we’re creating the workflow).
