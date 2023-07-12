@@ -1,6 +1,5 @@
 import { BullMqService } from '@novu/application-generic';
-import { Queue, QueueBaseOptions } from 'bullmq';
-import { ConnectionOptions } from 'tls';
+import { QueueBaseOptions } from 'bullmq';
 
 export class QueueService {
   readonly DEFAULT_ATTEMPTS = 5;
