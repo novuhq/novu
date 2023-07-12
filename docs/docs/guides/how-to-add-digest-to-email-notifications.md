@@ -56,7 +56,9 @@ You’ll now be taken to the workflow editor:
 
 Once here, you can add the channels you want to use for sending notifications and configure them. For this guide, we’ll use the ‘Email’ channel. You’ll also see the ‘Digest’ action on the right sidebar.
 
+:::info
 Note: Each node that is added below the digest node will only be triggered after the specified time interval
+:::
 
 For example, in our case, say we want the email notification to be sent after every 6 hours. So, add the 'digest' action below the 'trigger node', and add the 'email' channel node below the 'digest' node as shown below:
 
