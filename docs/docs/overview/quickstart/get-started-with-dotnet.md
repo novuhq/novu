@@ -9,12 +9,12 @@ Learn how to use Novu to quickly send multi-channel (SMS, Email, Chat, Push) not
 
 In this Quickstart, you’ll learn how to:
 
-- Install and use the Novu .NET SDK via the dotnet CLI.
-- Configure a Notification Channel Provider.
-- Set up a notification template.
-- Create subscribers and update subscriber information.
-- Send your first notification.
-- Send notifications via topics.
+- [Install and use the Novu .NET SDK via the dotnet CLI.](#install-novu-net-sdk)
+- [Configure a Notification Channel Provider.](#set-up-a-channel-provider)
+- [Set up a notification workflow.](#create-a-notification-workflow)
+- [Create subscribers and update subscriber information.](#create-a-subscriber)
+- [Send your first notification.](#trigger-a-notification)
+- [Send notifications via topics.](#sending-a-notification-to-a-topic)
 
 ## Requirements
 
@@ -69,7 +69,6 @@ using Novu;
 
 var novu = new NovuClient(novuConfiguration);
 
-var subscribers = await novu.Subscriber.GetSubscribers();
 ```
 
 Replace the `ApiKey`’s value with the authentic key from the **API Key** section of your [Novu Dashboard](https://web.novu.co/settings) and be sure to use your specific Novu instance URL.
@@ -91,19 +90,19 @@ A channel provider is a service that provides one or more notification functiona
 
 Only one provider can be **active** per **channel**. Connect any of your favorite providers to get started. The email channel comes with Novu's email provider, which is active by default and includes 300 credits.
 
-## Create A Notification Template
+## Create A Notification Workflow
 
-A notification template is the blueprint for the notifications that will be sent. It holds the entire flow of messages sent to the subscriber. This is where all the different channels are tied together under a single entity.
+A notification workflow is the blueprint for the notifications that will be sent. It holds the entire flow of messages sent to the subscriber. This is where all the different channels are tied together under a single entity.
 
-The template includes the following:
+The workflow includes the following:
 
-- Notification template name and Identifier
+- Notification workflow name and Identifier
 - Channel tailored content:
 
 | Channel | Content Style                                                                                 |
 | ------- | --------------------------------------------------------------------------------------------- |
 | Email   | 1. Custom Code (HTML) with option to use custom variables via the handlebars , {{ }}, syntax. |
-|         | 2. Click and place UI items with the visual template editor.                                  |
+|         | 2. Click and place UI items with the visual workflow editor.                                  |
 | SMS     | Text with the option to use handlebars syntax, {{ }} to inject custom variables.              |
 | Chat    | Text with the option to use handlebars syntax, {{ }} to inject custom variables.              |
 | In-App  | Text                                                                                          |
@@ -112,16 +111,16 @@ The template includes the following:
 Proper authorization needs to be set for the Chat channel for subscribers.
 :::
 
-Please proceed to create a notification template.
+Please proceed to create a notification workflow.
 
 1. Click **Notifications** on the left sidebar of your Novu dashboard.
 2. Click the **Create Workflow** button on the top right.
-3. The name of a new notification template is currently **Untitled.** Rename it to a more suitable title.
+3. The name of a new notification workflow is currently **Untitled.** Rename it to a more suitable title.
 4. Select **Email** as the channel you want to add.
    ![Select Email as Channel](https://res.cloudinary.com/dxc6bnman/image/upload/f_auto,q_auto/v1685466071/guides/set-email_1_aisoz4.png)
 5. Click on the recently added channel, fill the email subject and click **Update**.
    ![Update](https://res.cloudinary.com/dxc6bnman/image/upload/f_auto,q_auto/v1685466074/guides/update_email_template_1_exxybg.png)
-6. Click on the **Test** tab and send a test email to verify your notification template.
+6. Click on the **Test** tab and send a test email to verify your notification workflow.
 
 ![Test](https://res.cloudinary.com/dxc6bnman/image/upload/f_auto,q_auto/v1685466786/guides/send_test_email_1_goyknt.png)
 
@@ -187,7 +186,7 @@ Program.cs:
 var subscriber7789 = await novu.Subscriber.GetSubscriber("7789");
 
 subscriber7789.Email = "validemail@gmail.com"; // replace with valid email
-subscriber7789.FirstName = "<insert-fir2stname>"; // optional
+subscriber7789.FirstName = "<insert-firstname>"; // optional
 subscriber7789.LastName = "<insert-lastname>"; // optional
 
 var updatedSubscriber = await novu.Subscriber.UpdateSubscriber("7789",subscriber7789);
@@ -244,11 +243,11 @@ if (trigger.TriggerResponsePayloadDto.Acknowledged)
 
 Before running the code, make sure you understand the following:
 
-- The value of `EventName` should be the notification template’s trigger ID/slug.
+- The value of `EventName` should be the notification workflow’s trigger ID/slug.
 
-![Notification Template](https://res.cloudinary.com/dxc6bnman/image/upload/f_auto,q_auto/v1685466980/guides/trigger_id_1_ur1azh.png)
+![Notification Workflow](https://res.cloudinary.com/dxc6bnman/image/upload/f_auto,q_auto/v1685466980/guides/trigger_id_1_ur1azh.png)
 
-- The value of `Payload` is an array of the data that you want to be dynamically injected into the notification template content.
+- The value of `Payload` is an array of the data that you want to be dynamically injected into the notification workflow content.
 - The value of `SubscriberId` is the id of the subscriber on Novu. Replace `7789` with your subscriber ID.
 
 Run the code to trigger a notification!
@@ -280,7 +279,7 @@ Copy and paste the following code into your app to create a topic:
 var topicRequest = new TopicCreateDto
 {
     Key = "frontend-users",
-    Name = "All frontende users",
+    Name = "All frontend users",
     
 };
 
@@ -294,13 +293,13 @@ Before running the code, make sure you understand the following:
 - When creating a `Key`, ensure it is unique and accurately identifies the topic. Document naming conventions and communicate them to team members to avoid confusion and ensure a smooth workflow.
 - The value of `Name` should be a descriptive topic name.
 
-## Add subscribers to a Topic
+## Add Subscribers to a Topic
 
-Copy and paste the following code into your app to add subscribers a topic:
+Copy and paste the following code into your app to add subscribers to a topic:
 
 ```c#
 // Add Subscriber to Topic
-var topicKey = "frontender-user";
+var topicKey = "frontend-users";
 var subscriberList = new TopicSubscriberUpdateDto
 {
     Keys = new List<string>
@@ -313,7 +312,7 @@ var subscriberList = new TopicSubscriberUpdateDto
 var result = await client.Topic.AddSubscriberAsync(topicKey, subscriberList);
 ```
 
-## Sending a notification to a Topic
+## Sending a Notification to a Topic
 
 Thanks to the topics feature, it is possible to trigger a notification to all subscribers assigned to a topic. This helps avoid listing all subscriber identifiers in the `to` field of the notification trigger.
 
@@ -325,7 +324,6 @@ Program.cs
 
 var onboardingMessage = new OnboardEventPayload
 {
-  Username = "jdoe",
   WelcomeMessage = "Welcome to novu-dotnet"
 };
 
@@ -350,7 +348,7 @@ if (triggerTopic.TriggerResponsePayloadDto.Acknowledged);
 
 ## Next Steps
 
-Great job! If you've reached this point, you should now have successfully created a subscriber, notification template, configured a channel provider and triggered a notification in your application.
+Great job! If you've reached this point, you should now have successfully created a subscriber, notification workflow, configured a channel provider and triggered a notification in your application.
 
 To learn more about notifications and explore Novu's features and capabilities, check out:
 
