@@ -159,7 +159,7 @@ export function HeaderNav({}: Props) {
       sx={(theme) => ({
         position: 'sticky',
         top: 0,
-        boxShadow: theme.colorScheme === 'dark' ? shadows.dark : shadows.light,
+        boxShadow: theme.colorScheme === 'dark' ? 'none' : shadows.light,
         borderBottom: 'none',
       })}
     >
