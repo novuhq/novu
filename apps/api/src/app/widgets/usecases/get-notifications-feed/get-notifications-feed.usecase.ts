@@ -71,7 +71,6 @@ export class GetNotificationsFeed {
     const skip = command.page * command.limit;
     let totalCount = 0;
 
-
     if (feed.length) {
       totalCount = await this.messageRepository.getCount(
         command.environmentId,
@@ -93,26 +92,6 @@ export class GetNotificationsFeed {
       data: feed || [],
       totalCount: totalCount,
       hasMore: hasMore,
-      pageSize: command.limit,
-      page: command.page,
-    };
-      totalCount = await this.messageRepository.getCount(
-        command.environmentId,
-        subscriber._id,
-        ChannelTypeEnum.IN_APP,
-        {
-          feedId: command.feedId,
-          seen: command.query.seen,
-          read: command.query.read,
-        },
-        { limit: command.limit, skip }
-      );
-    }
-
-    return {
-      data: feed || [],
-      totalCount: Math.min(skip + totalCount, 100),
-      hasMore: feed.length < totalCount,
       pageSize: command.limit,
       page: command.page,
     };
