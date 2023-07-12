@@ -1,6 +1,9 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
+import { ChannelTypeEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
+import { IntegrationEntity } from '@novu/dal';
+
+const ORIGINAL_IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
 
 describe('Get Integrations - /integrations (GET)', function () {
   let session: UserSession;
@@ -8,14 +11,21 @@ describe('Get Integrations - /integrations (GET)', function () {
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
+    process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = 'true';
+  });
+
+  afterEach(async () => {
+    process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = ORIGINAL_IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
   });
 
   it('should retrieve all the integrations of all environments from an organization from the prefilled test data', async () => {
-    const integrations = (await session.testAgent.get(`/v1/integrations`)).body.data;
+    const integrations: IntegrationEntity[] = (await session.testAgent.get(`/v1/integrations`)).body.data;
 
-    expect(integrations.length).to.eq(12);
+    expect(integrations.length).to.eq(14);
 
-    const emailIntegrations = integrations.filter((integration) => integration.channel === ChannelTypeEnum.EMAIL);
+    const emailIntegrations = integrations
+      .filter((integration) => integration.channel === ChannelTypeEnum.EMAIL)
+      .filter((integration) => integration.providerId !== EmailProviderIdEnum.Novu);
     expect(emailIntegrations.length).to.eql(2);
 
     for (const emailIntegration of emailIntegrations) {
@@ -25,7 +35,9 @@ describe('Get Integrations - /integrations (GET)', function () {
       expect(emailIntegration.active).to.equal(true);
     }
 
-    const smsIntegrations = integrations.filter((integration) => integration.channel === ChannelTypeEnum.SMS);
+    const smsIntegrations = integrations
+      .filter((integration) => integration.channel === ChannelTypeEnum.SMS)
+      .filter((integration) => integration.providerId !== SmsProviderIdEnum.Novu);
     expect(smsIntegrations.length).to.eql(2);
 
     const pushIntegrations = integrations.filter((integration) => integration.channel === ChannelTypeEnum.PUSH);
@@ -56,26 +68,28 @@ describe('Get Integrations - /integrations (GET)', function () {
     // create nodemailer integration added to the existing sendgrid integration
     await session.testAgent.post('/v1/integrations').send(nodeMailerProviderPayload);
 
-    const activeIntegrations = (await session.testAgent.get(`/v1/integrations/active`)).body.data;
+    const activeIntegrations: IntegrationEntity[] = (await session.testAgent.get(`/v1/integrations/active`)).body.data;
 
-    expect(activeIntegrations.length).to.eq(12);
+    expect(activeIntegrations.length).to.eq(15);
 
-    const activeEmailIntegrations = activeIntegrations.filter(
-      (integration) =>
-        integration.channel == ChannelTypeEnum.EMAIL && integration._environmentId === session.environment._id
-    );
+    const activeEmailIntegrations = activeIntegrations
+      .filter(
+        (integration) =>
+          integration.channel == ChannelTypeEnum.EMAIL && integration._environmentId === session.environment._id
+      )
+      .filter((integration) => integration.providerId !== EmailProviderIdEnum.Novu);
 
-    expect(activeEmailIntegrations.length).to.eql(1);
+    expect(activeEmailIntegrations.length).to.eq(2);
 
-    const [nodemailerIntegration] = activeEmailIntegrations;
+    const customSmtp = activeEmailIntegrations.find((el) => el.providerId === EmailProviderIdEnum.CustomSMTP);
 
-    expect(nodemailerIntegration.active).to.eql(true);
-    expect(nodemailerIntegration.credentials?.host).to.equal(nodeMailerProviderPayload.credentials.host);
-    expect(nodemailerIntegration.credentials?.port).to.equal(nodeMailerProviderPayload.credentials.port);
-    expect(nodemailerIntegration.credentials?.secure).to.equal(nodeMailerProviderPayload.credentials.secure);
-    expect(nodemailerIntegration.credentials?.requireTls).to.equal(nodeMailerProviderPayload.credentials.requireTls);
-    expect(nodemailerIntegration.credentials?.tlsOptions).to.instanceOf(Object);
-    expect(nodemailerIntegration.credentials?.tlsOptions).to.eql(nodeMailerProviderPayload.credentials.tlsOptions);
-    expect(nodemailerIntegration.active).to.equal(true);
+    expect(customSmtp?.active).to.eql(true);
+    expect(customSmtp?.credentials?.host).to.equal(nodeMailerProviderPayload.credentials.host);
+    expect(customSmtp?.credentials?.port).to.equal(nodeMailerProviderPayload.credentials.port);
+    expect(customSmtp?.credentials?.secure).to.equal(nodeMailerProviderPayload.credentials.secure);
+    expect(customSmtp?.credentials?.requireTls).to.equal(nodeMailerProviderPayload.credentials.requireTls);
+    expect(customSmtp?.credentials?.tlsOptions).to.instanceOf(Object);
+    expect(customSmtp?.credentials?.tlsOptions).to.eql(nodeMailerProviderPayload.credentials.tlsOptions);
+    expect(customSmtp?.active).to.equal(true);
   });
 });

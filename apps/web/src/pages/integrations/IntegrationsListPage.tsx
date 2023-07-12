@@ -1,10 +1,10 @@
 import { Container } from '@mantine/core';
+import { Outlet, useNavigate } from 'react-router-dom';
 import { useCallback, useMemo } from 'react';
 
 import PageContainer from '../../components/layout/components/PageContainer';
 import PageHeader from '../../components/layout/components/PageHeader';
-import { Table, Text, withCellLoading } from '../../design-system';
-import { IExtendedColumn } from '../../design-system/table/Table';
+import { Table, Text, withCellLoading, IExtendedColumn } from '../../design-system';
 import { useIntegrations, useIsMultiProviderConfigurationEnabled } from '../../hooks';
 import { IntegrationsListToolbar } from './components/IntegrationsListToolbar';
 import { useFetchEnvironments } from '../../hooks/useFetchEnvironments';
@@ -62,14 +62,15 @@ const IntegrationsList = () => {
   const { integrations, loading: areIntegrationsLoading } = useIntegrations();
   const isLoading = areEnvironmentsLoading || areIntegrationsLoading;
   const hasIntegrations = integrations && integrations?.length > 0;
-  const data = useMemo<ITableIntegration[] | undefined>(
-    () => integrations?.map((el) => mapToTableIntegration(el, environments)),
-    [integrations, environments]
-  );
+
+  const data = useMemo<ITableIntegration[] | undefined>(() => {
+    return (integrations ?? []).map((el) => mapToTableIntegration(el, environments));
+  }, [integrations, environments]);
+
+  const navigate = useNavigate();
 
   const onRowClickCallback = useCallback((item) => {
-    // eslint-disable-next-line no-console
-    console.log('onRowClickCallback', item);
+    navigate(`/integrations/${item.original.integrationId}`);
   }, []);
 
   const onChannelClickCallback = useCallback((item) => {
@@ -78,10 +79,21 @@ const IntegrationsList = () => {
   }, []);
 
   return (
-    <PageContainer title="Integrations">
+    <PageContainer
+      style={{
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+      title="Integrations"
+    >
       <PageHeader title="Integrations Store" />
       <Container fluid sx={{ padding: '0 30px 8px 30px' }}>
-        <IntegrationsListToolbar areIntegrationsLoading={isLoading} />
+        <IntegrationsListToolbar
+          openCreateIntegration={() => {
+            navigate('create');
+          }}
+          areIntegrationsLoading={isLoading}
+        />
       </Container>
       <When truthy={hasIntegrations || isLoading}>
         <Table
@@ -91,6 +103,7 @@ const IntegrationsList = () => {
           columns={columns}
           data={data}
         />
+        <Outlet />
       </When>
       <When truthy={!hasIntegrations && !isLoading}>
         <IntegrationsListNoData onChannelClick={onChannelClickCallback} />

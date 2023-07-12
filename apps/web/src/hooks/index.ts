@@ -23,3 +23,4 @@ export * from './useEffectOnce';
 export * from './useDataRef';
 export * from './useInlineComponent';
 export * from './useHoverOverItem';
+export * from './useKeyDown';

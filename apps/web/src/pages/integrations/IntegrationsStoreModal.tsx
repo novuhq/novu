@@ -195,12 +195,12 @@ export function IntegrationsStoreModal({
           classNames={drawerClasses}
         >
           <IntegrationCardWrapper>
-            <When truthy={!provider?.novu && provider?.providerId !== InAppProviderIdEnum.Novu}>
+            <When truthy={provider && !provider?.novu && provider?.providerId !== InAppProviderIdEnum.Novu}>
               <ConnectIntegrationForm
                 onClose={handleCloseForm}
                 onSuccessFormSubmit={closeIntegration}
                 key={provider?.providerId}
-                provider={provider}
+                provider={provider as IIntegratedProvider}
                 createModel={isCreateIntegrationModal}
                 organization={organization}
                 environment={environment}
@@ -327,6 +327,7 @@ export interface IIntegratedProvider {
   logoFileName: ILogoFileName;
   betaVersion: boolean;
   novu?: boolean;
+  environmentId?: string;
 }
 
 export interface IntegrationEntity {

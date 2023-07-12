@@ -714,5 +714,9 @@ export const novuInAppConfig: IConfigCredentials[] = [
     displayName: 'Security HMAC encryption',
     type: 'switch',
     required: false,
+    tooltip: {
+      text: 'When active it verifies if a request is performed by a specific user',
+      when: false,
+    },
   },
 ];

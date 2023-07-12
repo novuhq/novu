@@ -73,10 +73,10 @@ export function IntegrationsStore() {
             opened={isModalOpened}
             onClose={() => setModalIsOpened(false)}
           >
-            <When truthy={!provider?.novu && provider?.providerId !== InAppProviderIdEnum.Novu}>
+            <When truthy={provider && !provider?.novu && provider?.providerId !== InAppProviderIdEnum.Novu}>
               <ConnectIntegrationForm
                 onClose={() => setModalIsOpened(false)}
-                provider={provider}
+                provider={provider as IIntegratedProvider}
                 showModal={handlerShowModal}
                 createModel={isCreateIntegrationModal}
               />
@@ -151,6 +151,9 @@ export interface IIntegratedProvider {
   logoFileName: ILogoFileName;
   betaVersion: boolean;
   novu?: boolean;
+  environmentId?: string;
+  name?: string;
+  identifier?: string;
 }
 
 export interface IntegrationEntity {

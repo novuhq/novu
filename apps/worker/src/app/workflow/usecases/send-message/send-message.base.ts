@@ -2,13 +2,10 @@ import { IntegrationEntity, JobEntity, MessageRepository, SubscriberRepository }
 import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import {
   buildSubscriberKey,
-  buildIntegrationKey,
   CachedEntity,
-  CachedQuery,
   DetailEnum,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-  GetDecryptedIntegrationsCommand,
   SelectIntegration,
   SelectIntegrationCommand,
 } from '@novu/application-generic';
@@ -68,6 +65,26 @@ export abstract class SendMessageBase extends SendMessageType {
         isTest: false,
         isRetry: false,
         raw: JSON.stringify({ error }),
+      })
+    );
+  }
+
+  protected async sendSelectedIntegrationExecution(job: JobEntity, integration: IntegrationEntity) {
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+        detail: DetailEnum.INTEGRATION_INSTANCE_SELECTED,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.PENDING,
+        isTest: false,
+        isRetry: false,
+        raw: JSON.stringify({
+          providerId: integration?.providerId,
+          identifier: integration?.identifier,
+          name: integration?.name,
+          _environmentId: integration?._environmentId,
+          _id: integration?._id,
+        }),
       })
     );
   }
