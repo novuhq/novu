@@ -132,7 +132,7 @@ To make it modular, we’ll keep the trigger code in a separate function in a se
 
 If you’re following the guide, you’ve already copied the trigger function. But before we can add it to our app, we need one key thing - Subscribers.
 
-Subscribers are entities to which the notifications are sent. You can see a list of subscribers in the [Novu dashboard](https://web.novu.co/subscribers) as well.
+Subscribers are users to which the notifications are sent. You can see a list of subscribers in the [Novu dashboard](https://web.novu.co/subscribers) as well.
 
 In our app, we’ll create a subscriber in Node.js as we’re writing our backend in Node.js, but we also have backend SDKs (Node.js, PHP, .NET, Go, Ruby, Python, and Kotlin) to choose from. The recommended way to create a subscriber in NodeJS is as follows:
 
