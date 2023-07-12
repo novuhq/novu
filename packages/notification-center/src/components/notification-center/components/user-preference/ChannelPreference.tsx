@@ -2,12 +2,10 @@ import React, { useState } from 'react';
 import { LoadingOverlay, Switch } from '@mantine/core';
 import styled from '@emotion/styled';
 import { css, cx } from '@emotion/css';
-import chroma from 'chroma-js';
 
 import { useNovuTheme } from '../../../../hooks';
 import { getChannel } from './channels';
 import { switchStyles, Text } from './styles';
-import { getLinearGradientColorStopValues } from '../../../../shared/utils/getLinearGradientColorStopValues';
 import { Check } from '../../../../shared/icons/Check';
 import { colors } from '../../../../shared/config/colors';
 import { useStyles } from '../../../../store/styles';
@@ -124,10 +122,7 @@ export function ChannelPreference({ type, active, disabled, handleUpdateChannelP
             data-test-id="channel-preference-item-loader"
             loaderProps={{
               size: 15,
-              color:
-                theme.loaderColor.indexOf('gradient') === -1
-                  ? theme.loaderColor
-                  : chroma.average(getLinearGradientColorStopValues(theme.loaderColor)),
+              color: theme.loaderColor,
             }}
             overlayOpacity={0.3}
             overlayColor="transparent"

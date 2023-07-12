@@ -11,6 +11,7 @@ export {
   IEmailBlock,
   TextAlignEnum,
   EmailBlockTypeEnum,
+  ChannelTypeEnum,
 } from '@novu/shared';
 
 export * from './lib/novu';

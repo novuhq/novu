@@ -22,6 +22,7 @@ export interface IEmailOptions {
   bcc?: string[];
   payloadDetails?: any;
   notificationDetails?: any;
+  ipPoolName?: string;
 }
 
 export interface ISmsOptions {
@@ -66,6 +67,12 @@ export interface IPushOptions {
       };
     };
     fcmOptions?: { analyticsLabel?: string };
+  };
+  subscriber: object;
+  step: {
+    digest: boolean;
+    events: object[] | undefined;
+    total_count: number | undefined;
   };
 }
 
