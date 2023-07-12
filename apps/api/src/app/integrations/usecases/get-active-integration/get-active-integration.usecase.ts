@@ -1,10 +1,8 @@
 import { Injectable } from '@nestjs/common';
 
 import {
-  FeatureFlagCommand,
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
-  GetFeatureFlag,
   SelectIntegration,
   SelectIntegrationCommand,
 } from '@novu/application-generic';
@@ -20,14 +18,20 @@ export class GetActiveIntegrations {
     private integrationRepository: IntegrationRepository,
     private selectIntegration: SelectIntegration,
     private environmentRepository: EnvironmentRepository,
-    private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations,
-    private getFeatureFlag: GetFeatureFlag
+    private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {}
 
   async execute(command: GetActiveIntegrationsCommand): Promise<GetActiveIntegrationResponseDto[]> {
     const environments = await this.environmentRepository.findOrganizationEnvironments(command.organizationId);
 
-    const activeIntegrations = await this.getActiveIntegrations(command, environments);
+    const activeIntegrations = await this.getDecryptedIntegrationsUsecase.execute(
+      GetDecryptedIntegrationsCommand.create({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        userId: command.userId,
+        active: true,
+      })
+    );
 
     if (!activeIntegrations.length) {
       return [];
@@ -41,40 +45,6 @@ export class GetActiveIntegrations {
     );
 
     return this.mapBySelectedIntegration(activeIntegrations, selectedIntegrations);
-  }
-
-  private async getActiveIntegrations(command: GetActiveIntegrationsCommand, environments: EnvironmentEntity[]) {
-    const isMultiProviderConfigurationEnabled = await this.getFeatureFlag.isMultiProviderConfigurationEnabled(
-      FeatureFlagCommand.create({
-        userId: command.userId,
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-      })
-    );
-
-    const activeIntegrationPromises = isMultiProviderConfigurationEnabled
-      ? [
-          await this.getDecryptedIntegrationsUsecase.execute(
-            GetDecryptedIntegrationsCommand.create({
-              organizationId: command.organizationId,
-              environmentId: command.environmentId,
-              userId: command.userId,
-              active: true,
-            })
-          ),
-        ]
-      : environments.map(async (environment) => {
-          return this.getDecryptedIntegrationsUsecase.execute(
-            GetDecryptedIntegrationsCommand.create({
-              environmentId: environment._id,
-              organizationId: command.organizationId,
-              userId: command.userId,
-              active: true,
-            })
-          );
-        });
-
-    return (await Promise.all(activeIntegrationPromises)).flat();
   }
 
   private getDistinctChannelTypes(activeIntegration: IntegrationEntity[]): ChannelTypeEnum[] {
