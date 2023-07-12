@@ -28,7 +28,7 @@ runs:
         TZ: "UTC"
         GITHUB_OAUTH_REDIRECT: "http://localhost:1336/v1/auth/github/callback"
         LAUNCH_DARKLY_SDK_KEY: ${{ inputs.launch_darkly_sdk_key }}
-        IN_MEMORY_CLUSTER_MODE_ENABLED: true
+        IS_IN_MEMORY_CLUSTER_MODE_ENABLED: true
       run: cd apps/api && pnpm start:build &
 
     - name: Start Worker
@@ -38,7 +38,7 @@ runs:
         PORT: "1342"
         TZ: "UTC"
         LAUNCH_DARKLY_SDK_KEY: ${{ inputs.launch_darkly_sdk_key }}
-        IN_MEMORY_CLUSTER_MODE_ENABLED: true
+        IS_IN_MEMORY_CLUSTER_MODE_ENABLED: true
       run: cd apps/worker && pnpm start:prod &
 
     - name: Wait on API and Worker
