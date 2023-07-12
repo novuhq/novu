@@ -21,7 +21,7 @@ export const ListProviders = ({
   setProvider: (provider: IIntegratedProvider) => void;
 }) => {
   const { colorScheme } = useMantineColorScheme();
-  const isIntegrationsListPageEnabled = !useIsMultiProviderConfigurationEnabled();
+  const isMultiProviderConfigurationEnabled = useIsMultiProviderConfigurationEnabled();
   const { environments } = useFetchEnvironments();
 
   return (
@@ -73,7 +73,7 @@ export const ListProviders = ({
             <UnstyledButton
               style={{
                 width: '100%',
-                padding: isIntegrationsListPageEnabled ? '8px 12px' : 15,
+                padding: isMultiProviderConfigurationEnabled ? '8px 12px' : 15,
                 background: colorScheme === 'dark' ? colors.B20 : colors.B98,
                 borderRadius: 8,
                 marginBottom: 12,
@@ -99,16 +99,19 @@ export const ListProviders = ({
 
                   <Stack
                     sx={{
-                      width: isIntegrationsListPageEnabled ? '117px' : undefined,
+                      width: isMultiProviderConfigurationEnabled ? '117px' : undefined,
                     }}
                     spacing={0}
                   >
-                    <Tooltip label={provider.displayName} opened={provider.name ? undefined : false}>
+                    <Tooltip
+                      label={provider.displayName}
+                      opened={isMultiProviderConfigurationEnabled ? undefined : false}
+                    >
                       <Text size="md" truncate="end">
                         {provider.name || provider.displayName}
                       </Text>
                     </Tooltip>
-                    <When truthy={isIntegrationsListPageEnabled && provider.identifier !== undefined}>
+                    <When truthy={isMultiProviderConfigurationEnabled && provider.identifier !== undefined}>
                       <Text
                         sx={{
                           color: colors.B40,
@@ -121,7 +124,7 @@ export const ListProviders = ({
                   </Stack>
                 </Group>
                 <Group spacing={16} position="apart">
-                  <When truthy={isIntegrationsListPageEnabled}>
+                  <When truthy={isMultiProviderConfigurationEnabled}>
                     <IntegrationEnvironmentPill
                       name={
                         environments?.find((environment) => environment._id === provider?.environmentId)?.name ||
