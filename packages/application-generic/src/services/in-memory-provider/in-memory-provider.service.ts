@@ -22,6 +22,7 @@ import {
   getRedisClusterProviderConfig,
   IRedisClusterProviderConfig,
 } from './redis-cluster-provider';
+import { GetFeatureFlag } from '../../usecases';
 
 const LOG_CONTEXT = 'InMemoryCluster';
 
@@ -37,16 +38,23 @@ export class InMemoryProviderService {
   public inMemoryProviderClient: InMemoryProviderClient;
   public inMemoryProviderConfig: InMemoryProviderConfig;
 
-  constructor(private enableAutoPipelining?: boolean) {}
+  private nodesInterval;
 
-  public initialize(): void {
+  constructor(
+    private getFeatureFlag: GetFeatureFlag,
+    private enableAutoPipelining?: boolean
+  ) {}
+
+  async initialize(): Promise<void> {
     Logger.log('In-memory provider service initialized', LOG_CONTEXT);
 
-    this.inMemoryProviderClient = this.buildClient();
+    this.inMemoryProviderClient = await this.buildClient();
   }
 
-  private buildClient(): Redis | Cluster | undefined {
-    return this.isClusterMode()
+  private async buildClient(): Promise<Redis | Cluster | undefined> {
+    const isClusterMode = await this.isClusterMode();
+
+    return isClusterMode
       ? this.inMemoryClusterProviderSetup()
       : this.inMemoryProviderSetup();
   }
@@ -82,9 +90,9 @@ export class InMemoryProviderService {
     return this.getStatus() === CLIENT_READY;
   }
 
-  public isClusterMode(): boolean {
+  public async isClusterMode(): Promise<boolean> {
     const isClusterModeEnabled =
-      process.env.IN_MEMORY_CLUSTER_MODE_ENABLED === 'true';
+      await this.getFeatureFlag.isInMemoryClusterModeEnabled();
     Logger.log(
       `Cluster mode ${
         isClusterModeEnabled ? 'is' : 'is not'
@@ -159,7 +167,7 @@ export class InMemoryProviderService {
     if (host && inMemoryProviderClient) {
       Logger.log(`Connecting to cluster at ${host}`, LOG_CONTEXT);
 
-      setInterval(() => {
+      this.nodesInterval = setInterval(() => {
         try {
           inMemoryProviderClient.nodes('all')?.forEach((node) => {
             Logger.debug(
@@ -284,7 +292,10 @@ export class InMemoryProviderService {
 
   public async shutdown(): Promise<void> {
     if (this.inMemoryProviderClient) {
+      clearInterval(this.nodesInterval);
+
       Logger.verbose('In-memory provider service shutdown', LOG_CONTEXT);
+
       await this.inMemoryProviderClient.quit();
     }
   }

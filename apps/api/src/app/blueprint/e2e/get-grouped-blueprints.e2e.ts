@@ -7,6 +7,8 @@ import { EmailBlockTypeEnum, FilterPartTypeEnum, INotificationTemplate, StepType
 import {
   buildGroupedBlueprintsKey,
   CacheService,
+  FeatureFlagsService,
+  GetFeatureFlag,
   InMemoryProviderService,
   InvalidateCacheService,
 } from '@novu/application-generic';
@@ -16,19 +18,26 @@ import { CreateWorkflowRequestDto } from '../../workflows/dto';
 import { GetGroupedBlueprints, POPULAR_TEMPLATES_ID_LIST } from '../usecases/get-grouped-blueprints';
 import * as blueprintStaticModule from '../usecases/get-grouped-blueprints/consts';
 
+const featureFlagsService = new FeatureFlagsService();
+
 describe('Get grouped notification template blueprints - /blueprints/group-by-category (GET)', async () => {
   let session: UserSession;
   const notificationTemplateRepository: NotificationTemplateRepository = new NotificationTemplateRepository();
   const environmentRepository: EnvironmentRepository = new EnvironmentRepository();
 
-  const inMemoryProviderService = new InMemoryProviderService();
-  inMemoryProviderService.initialize();
-  const invalidateCache = new InvalidateCacheService(new CacheService(inMemoryProviderService));
-
+  let invalidateCache: InvalidateCacheService;
   let getGroupedBlueprints: GetGroupedBlueprints;
   let indexModuleStub: sinon.SinonStub;
 
   before(async () => {
+    await featureFlagsService.initialize();
+    const getFeatureFlag = new GetFeatureFlag(featureFlagsService);
+    const inMemoryProviderService = new InMemoryProviderService(getFeatureFlag);
+    await inMemoryProviderService.initialize();
+    const cacheService = new CacheService(inMemoryProviderService);
+    await cacheService.initialize();
+    invalidateCache = new InvalidateCacheService(cacheService);
+
     session = new UserSession();
     await session.initialize();
 

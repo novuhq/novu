@@ -22,7 +22,7 @@ const featureFlagsProviders = {
 export class FeatureFlagsService {
   public service: IFeatureFlagsService;
 
-  constructor() {
+  public async initialize(): Promise<void> {
     Logger.verbose('Feature Flags service initialized', LOG_CONTEXT);
 
     // TODO: In the future we can replace the object key here for an environment variable
@@ -31,12 +31,20 @@ export class FeatureFlagsService {
 
     if (service) {
       this.service = new service();
-    }
-  }
 
-  private async initialize(): Promise<void> {
-    if (this.service) {
-      await this.service.initialize();
+      try {
+        await this.service.initialize();
+        Logger.log(
+          'Feature Flags service has been successfully initialized',
+          LOG_CONTEXT
+        );
+      } catch (error) {
+        Logger.error(
+          'Feature Flags service has failed when initialized',
+          error,
+          LOG_CONTEXT
+        );
+      }
     } else {
       Logger.error('No Feature Flags service available to initialize');
     }
@@ -84,25 +92,26 @@ export class FeatureFlagsService {
     )) satisfies T;
   }
 
-  private isServiceEnabled(): boolean {
-    return this.service && this.service.isEnabled;
+  /**
+   * When we want to retrieve a global feature flag that shouldn't be dependant on any context
+   * we will use this functionality. Helpful for setting feature flags that discriminate
+   * the Novu Cloud service offerings with the self hosted users.
+   */
+  public async getGlobal<T>(
+    key: FeatureFlagsKeysEnum,
+    defaultValue: T
+  ): Promise<T> {
+    if (!this.isServiceEnabled()) {
+      return defaultValue;
+    }
+
+    return (await this.service.getWithAnonymousContext(
+      key,
+      defaultValue
+    )) satisfies T;
   }
 
-  public async onModuleInit(): Promise<void> {
-    if (this.isServiceEnabled()) {
-      try {
-        await this.service.initialize();
-        Logger.log(
-          'Feature Flags service has been successfully initialized',
-          LOG_CONTEXT
-        );
-      } catch (error) {
-        Logger.error(
-          'Feature Flags service has failed when initialized',
-          error,
-          LOG_CONTEXT
-        );
-      }
-    }
+  private isServiceEnabled(): boolean {
+    return this.service && this.service.isEnabled;
   }
 }

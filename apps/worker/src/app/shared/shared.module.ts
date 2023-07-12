@@ -30,6 +30,7 @@ import {
   InvalidateCacheService,
   CacheService,
   DistributedLockService,
+  GetFeatureFlag,
   InMemoryProviderService,
   StorageHelperService,
   StorageService,
@@ -42,7 +43,6 @@ import {
   WsQueueServiceHealthIndicator,
   QueueService,
   TriggerQueueService,
-  GetFeatureFlag,
   LaunchDarklyService,
   FeatureFlagsService,
 } from '@novu/application-generic';
@@ -88,8 +88,9 @@ function getStorageServiceClass() {
 
 const launchDarklyService = {
   provide: LaunchDarklyService,
-  useFactory: (): LaunchDarklyService => {
+  useFactory: async (): Promise<LaunchDarklyService> => {
     const service = new LaunchDarklyService();
+    await service.initialize();
 
     return service;
   },
@@ -99,8 +100,7 @@ const featureFlagsService = {
   provide: FeatureFlagsService,
   useFactory: async (): Promise<FeatureFlagsService> => {
     const instance = new FeatureFlagsService();
-
-    await instance.service.initialize();
+    await instance.initialize();
 
     return instance;
   },
@@ -118,9 +118,10 @@ const getFeatureFlagUseCase = {
 
 const inMemoryProviderService = {
   provide: InMemoryProviderService,
-  useFactory: (enableAutoPipelining?: boolean): InMemoryProviderService => {
-    const inMemoryProvider = new InMemoryProviderService(enableAutoPipelining);
-    inMemoryProvider.initialize();
+  useFactory: async (enableAutoPipelining?: boolean): Promise<InMemoryProviderService> => {
+    const getFeatureFlag = await getFeatureFlagUseCase.useFactory();
+    const inMemoryProvider = new InMemoryProviderService(getFeatureFlag, enableAutoPipelining);
+    await inMemoryProvider.initialize();
 
     return inMemoryProvider;
   },
@@ -128,19 +129,23 @@ const inMemoryProviderService = {
 
 const cacheService = {
   provide: CacheService,
-  useFactory: () => {
+  useFactory: async () => {
     // TODO: Temporary to test in Dev. Should be removed.
     const enableAutoPipelining = process.env.REDIS_CACHE_ENABLE_AUTOPIPELINING === 'true';
-    const factoryInMemoryProviderService = inMemoryProviderService.useFactory(enableAutoPipelining);
+    const factoryInMemoryProviderService = await inMemoryProviderService.useFactory(enableAutoPipelining);
 
-    return new CacheService(factoryInMemoryProviderService);
+    const service = new CacheService(factoryInMemoryProviderService);
+
+    await service.initialize();
+
+    return service;
   },
 };
 
 const distributedLockService = {
   provide: DistributedLockService,
-  useFactory: () => {
-    const factoryInMemoryProviderService = inMemoryProviderService.useFactory();
+  useFactory: async () => {
+    const factoryInMemoryProviderService = await inMemoryProviderService.useFactory();
 
     return new DistributedLockService(factoryInMemoryProviderService);
   },

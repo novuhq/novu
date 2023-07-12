@@ -14,6 +14,10 @@ export interface IFeatureFlagContext {
 }
 
 export interface IFeatureFlagsService {
+  getWithAnonymousContext: <T>(
+    key: FeatureFlagsKeysEnum,
+    defaultValue: T
+  ) => Promise<T>;
   getWithEnvironmentContext: <T>(
     key: FeatureFlagsKeysEnum,
     defaultValue: T,
