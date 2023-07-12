@@ -223,6 +223,7 @@ export class SubscribersController {
         subscriberId,
         providerId: body.providerId,
         credentials: body.credentials,
+        integrationIdentifier: body.integrationIdentifier,
         oauthHandler: OAuthHandlerEnum.EXTERNAL,
       })
     );
@@ -473,6 +474,7 @@ export class SubscribersController {
         providerCode: query?.code,
         hmacHash: query?.hmacHash,
         environmentId: query?.environmentId,
+        integrationIdentifier: query?.integrationIdentifier,
         subscriberId,
         providerId,
       })
@@ -502,6 +504,7 @@ export class SubscribersController {
       ChatOauthCommand.create({
         hmacHash: query?.hmacHash,
         environmentId: query?.environmentId,
+        integrationIdentifier: query?.integrationIdentifier,
         subscriberId,
         providerId,
       })

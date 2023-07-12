@@ -11,6 +11,7 @@ import { PrismOnCopy } from '../../settings/tabs/components/Prism';
 import { SetupStatus } from './SetupStatus';
 import { API_KEY, APPLICATION_IDENTIFIER, BACKEND_API_URL, BACKEND_SOCKET_URL, frameworkInstructions } from '../consts';
 import { QueryKeys } from '../../../api/query.keys';
+import { useInAppActivated } from '../../../api/hooks';
 
 export const SetupTimeline = ({
   framework,
@@ -29,14 +30,7 @@ export const SetupTimeline = ({
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
 
-  const { data: inAppData } = useQuery<IGetInAppActivatedResponse>(
-    [QueryKeys.getInAppActive],
-    async () => getInAppActivated(),
-    {
-      refetchInterval: (data) => (data?.active ? false : 3000),
-      initialData: { active: false },
-    }
-  );
+  const { isInAppActive } = useInAppActivated();
 
   const instructions = frameworkInstructions.find((instruction) => instruction.key === framework)?.value ?? [];
   const environmentIdentifier = environment?.identifier ?? '';
@@ -85,7 +79,7 @@ export const SetupTimeline = ({
             title={'Render the components and run application'}
           >
             <LoaderWrapper>
-              <SetupStatus appInitialized={inAppData.active} onDone={onDone} onConfigureLater={onConfigureLater} />
+              <SetupStatus appInitialized={isInAppActive} onDone={onDone} onConfigureLater={onConfigureLater} />
             </LoaderWrapper>
           </Timeline.Item>
         </Timeline>
@@ -113,10 +107,6 @@ function updateCodeSnippet(codeSnippet: string, environmentIdentifier: string, a
     .replace(API_KEY, apiKey ?? '')
     .replace(BACKEND_API_URL, concatUrls ? API_ROOT : '')
     .replace(BACKEND_SOCKET_URL, concatUrls ? WS_URL : '');
-}
-
-interface IGetInAppActivatedResponse {
-  active: boolean;
 }
 
 const TimelineWrapper = styled.div<{ isDark: boolean }>`

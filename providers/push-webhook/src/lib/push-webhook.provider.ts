@@ -21,7 +21,15 @@ export class PushWebhookPushProvider implements IPushProvider {
   async sendMessage(
     options: IPushOptions
   ): Promise<ISendMessageSuccessResponse> {
-    const bodyData = this.createBody(options);
+    const { subscriber, step, payload, ...rest } = options;
+    const bodyData = this.createBody({
+      ...rest,
+      payload: {
+        ...payload,
+        subscriber,
+        step,
+      },
+    });
     const hmacValue = this.computeHmac(bodyData);
 
     const response = await axios.post(this.config.webhookUrl, bodyData, {
@@ -37,7 +45,7 @@ export class PushWebhookPushProvider implements IPushProvider {
     };
   }
 
-  createBody(options: IPushOptions): string {
+  createBody(options: object): string {
     return JSON.stringify(options);
   }
 

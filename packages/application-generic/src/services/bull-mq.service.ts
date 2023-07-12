@@ -9,6 +9,7 @@ import {
   WorkerOptions,
 } from 'bullmq';
 import { Injectable, Logger } from '@nestjs/common';
+import { IJobData } from '@novu/shared';
 
 interface IQueueMetrics {
   completed: Metrics;
@@ -16,6 +17,14 @@ interface IQueueMetrics {
 }
 
 const LOG_CONTEXT = 'BullMqService';
+
+interface IEventJobData {
+  event: string;
+  userId: string;
+  payload: Record<string, unknown>;
+}
+
+type BullMqJobData = undefined | IJobData | IEventJobData;
 
 @Injectable()
 export class BullMqService {
@@ -102,7 +111,7 @@ export class BullMqService {
 
   public add(
     id: string,
-    data: any,
+    data: BullMqJobData,
     options: JobsOptions = {},
     groupId?: string
   ) {

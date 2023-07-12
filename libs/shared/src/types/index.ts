@@ -4,6 +4,7 @@ export * from './channel';
 export * from './environment';
 export * from './events';
 export * from './feature-flags';
+export * from './jobs';
 export * from './layout';
 export * from './message-template';
 export * from './organization';

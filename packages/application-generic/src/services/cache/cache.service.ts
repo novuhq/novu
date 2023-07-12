@@ -122,8 +122,8 @@ export class CacheService implements ICacheService {
     } catch (error) {
       Logger.error(
         `Failed to execute pipeline action ${action} for key ${key}`,
-        LOG_CONTEXT,
-        error
+        error,
+        LOG_CONTEXT
       );
       throw error;
     }
