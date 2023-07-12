@@ -75,8 +75,9 @@ export class CreateNotificationJobs {
 
     if (!notification) {
       const message = 'Notification could not be created';
-      Logger.error(message, LOG_CONTEXT);
-      throw new PlatformException(message);
+      const error = new PlatformException(message);
+      Logger.error(message, error, LOG_CONTEXT);
+      throw error;
     }
 
     const jobs: NotificationJob[] = [];
@@ -87,9 +88,8 @@ export class CreateNotificationJobs {
       if (!step.template)
         throw new PlatformException('Step template was not found');
 
-      const providerId = command.templateProviderIds.get(
-        STEP_TYPE_TO_CHANNEL_TYPE.get(step.template.type) as ChannelTypeEnum
-      );
+      const channel = STEP_TYPE_TO_CHANNEL_TYPE.get(step.template.type);
+      const providerId = command.templateProviderIds[channel];
 
       const job = {
         identifier: command.identifier,

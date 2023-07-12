@@ -110,9 +110,17 @@ export class AddJob {
       };
       options.attempts = this.queueService.DEFAULT_ATTEMPTS;
     }
+
+    const jobData = {
+      _environmentId: job._environmentId,
+      _id: job._id,
+      _organizationId: job._organizationId,
+      _userId: job._userId,
+    };
+
     await this.queueService.addToQueue(
       job._id,
-      job,
+      jobData,
       command.organizationId,
       options
     );

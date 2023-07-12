@@ -51,7 +51,7 @@
     "eslint-plugin-prettier": "^4.2.1",
     "nodemon": "^2.0.3",
     "ts-node": "~10.9.1",
-    "tsconfig-paths": "^3.9.0",
+    "tsconfig-paths": "~4.1.0",
     "typescript": "4.9.5"
   },
   "lint-staged": {
