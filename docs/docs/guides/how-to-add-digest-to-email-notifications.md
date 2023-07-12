@@ -11,7 +11,9 @@ In this guide, you’ll learn how to add digest functionality to email notificat
 
 You can find the entire code(frontend as well as backend) for this app [here](https://github.com/novuhq/digest-email-app).
 
+:::info
 If, instead, you want to add digest to in-app notifications, we have a guide for that as well. Take a look [here](https://docs.novu.co/guides/how-to-add-digest-to-in-app-notifications).
+:::
 
 ### What is a Digest Notification?
 
