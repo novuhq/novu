@@ -2,7 +2,7 @@ import { Group, Stack, Text, UnstyledButton, useMantineColorScheme } from '@mant
 import { ChannelTypeEnum } from '@novu/shared';
 import { When } from '../../../components/utils/When';
 import { Button, colors, Tooltip } from '../../../design-system';
-import { useIsMultiProviderConfigurationEnabled } from '../../../hooks';
+import { useEnvController, useIsMultiProviderConfigurationEnabled } from '../../../hooks';
 import { useFetchEnvironments } from '../../../hooks/useFetchEnvironments';
 import { IntegrationEnvironmentPill } from '../../integrations/components/IntegrationEnvironmentPill';
 import { IntegrationStatus } from '../../integrations/components/IntegrationStatus';
@@ -21,8 +21,9 @@ export const ListProviders = ({
   setProvider: (provider: IIntegratedProvider) => void;
 }) => {
   const { colorScheme } = useMantineColorScheme();
-  const isMultiProviderConfigurationEnabled = useIsMultiProviderConfigurationEnabled();
+  const isMultiProviderConfigurationEnabled = !useIsMultiProviderConfigurationEnabled();
   const { environments } = useFetchEnvironments();
+  const { environment: currentEnvironment } = useEnvController();
 
   return (
     <div
@@ -67,7 +68,7 @@ export const ListProviders = ({
         </div>
       </When>
       {providers
-        .filter((provider) => provider.connected)
+        .filter((provider) => provider.connected && provider.environmentId === currentEnvironment?._id)
         .map((provider) => {
           return (
             <UnstyledButton
