@@ -5,6 +5,7 @@ import { Button, colors, Tooltip } from '../../../design-system';
 import { useIsMultiProviderConfigurationEnabled } from '../../../hooks';
 import { useFetchEnvironments } from '../../../hooks/useFetchEnvironments';
 import { IntegrationEnvironmentPill } from '../../integrations/components/IntegrationEnvironmentPill';
+import { IntegrationStatus } from '../../integrations/components/IntegrationStatus';
 import { IIntegratedProvider } from '../../integrations/IntegrationsStorePage';
 import { stepNames } from '../constants';
 import { ChannelTitle } from './ChannelTitle';
@@ -20,7 +21,7 @@ export const ListProviders = ({
   setProvider: (provider: IIntegratedProvider) => void;
 }) => {
   const { colorScheme } = useMantineColorScheme();
-  const isIntegrationsListPageEnabled = useIsMultiProviderConfigurationEnabled();
+  const isIntegrationsListPageEnabled = !useIsMultiProviderConfigurationEnabled();
   const { environments } = useFetchEnvironments();
 
   return (
@@ -98,7 +99,7 @@ export const ListProviders = ({
 
                   <Stack
                     sx={{
-                      width: isIntegrationsListPageEnabled ? '132px' : undefined,
+                      width: isIntegrationsListPageEnabled ? '117px' : undefined,
                     }}
                     spacing={0}
                   >
@@ -128,15 +129,13 @@ export const ListProviders = ({
                       }
                     />
                   </When>
-                  <Text
-                    sx={{
-                      minWidth: 54,
+                  <div
+                    style={{
+                      minWidth: 76,
                     }}
-                    color={provider.active ? colors.success : colors.B60}
                   >
-                    <When truthy={provider.active}>Active</When>
-                    <When truthy={!provider.active}>Disabled</When>
-                  </Text>
+                    <IntegrationStatus active={provider.active} />
+                  </div>
                 </Group>
               </Group>
             </UnstyledButton>
