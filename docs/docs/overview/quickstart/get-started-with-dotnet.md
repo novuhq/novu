@@ -55,7 +55,7 @@ dotnet restore
 Create a new file, `Program.cs` in your application and add the following code to it:
 
 Program.cs:
-```c#
+```csharp
 using Novu.DTO;
 using Novu.DTO.Topics;
 using Novu.Models;
@@ -139,7 +139,7 @@ Click **Subscribers** on the left sidebar of the Novu dashboard to see all subsc
 Now, let's create a subscriber on Novu. Copy and paste the following code to do so:
 
 Program.cs:
-```c#
+```js
 // Create subscriber
 
 var newSubscriberDto = new CreateSubscriberDto
