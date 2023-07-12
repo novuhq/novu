@@ -260,6 +260,6 @@ Congratulations on following the guide up until this point. We can style our app
 
 If you’ve done everything as recommended, you’ll end up with an app that looks like this:
 
-![email digest app showcase](https://res.cloudinary.com/dxc6bnman/image/upload/v1689098964/guides/Screenshot_2023-07-11_at_11.39.17_PM_xtbh3r.png)
+![email digest app showcase](https://res.cloudinary.com/dxc6bnman/image/upload/v1689188594/guides/output_lkcrll.gif)
 
 In this app, when we enter the email id, some text in the input box, and click send, the notification appears in the inbox after the delay specified above (when we’re creating the workflow).
