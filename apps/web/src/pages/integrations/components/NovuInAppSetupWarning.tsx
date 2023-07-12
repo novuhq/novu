@@ -1,6 +1,6 @@
-import type { IIntegratedProvider } from '../IntegrationsStoreModal';
 import { SetupWarning } from './SetupWarning';
 import { useInAppActivated } from '../../../api/hooks';
+import { IIntegratedProvider } from '../IntegrationsStorePage';
 
 export const NovuInAppSetupWarning = ({ provider }: { provider: IIntegratedProvider | null }) => {
   const { isInAppActive } = useInAppActivated();
