@@ -5,7 +5,7 @@ import {
   encryptCredentials,
   buildIntegrationKey,
   InvalidateCacheService,
-  GetFeatureFlag,
+  GetIsMultiProviderConfigurationEnabled,
   FeatureFlagCommand,
 } from '@novu/application-generic';
 import { ChannelTypeEnum } from '@novu/shared';
@@ -24,7 +24,7 @@ export class UpdateIntegration {
     private integrationRepository: IntegrationRepository,
     private deactivateSimilarChannelIntegrations: DeactivateSimilarChannelIntegrations,
     private analyticsService: AnalyticsService,
-    private getFeatureFlag: GetFeatureFlag
+    private getIsMultiProviderConfigurationEnabled: GetIsMultiProviderConfigurationEnabled
   ) {}
 
   async execute(command: UpdateIntegrationCommand): Promise<IntegrationEntity> {
@@ -110,7 +110,7 @@ export class UpdateIntegration {
       }
     );
 
-    const isMultiProviderConfigurationEnabled = await this.getFeatureFlag.isMultiProviderConfigurationEnabled(
+    const isMultiProviderConfigurationEnabled = await this.getIsMultiProviderConfigurationEnabled.execute(
       FeatureFlagCommand.create({
         userId: command.userId,
         organizationId: command.organizationId,

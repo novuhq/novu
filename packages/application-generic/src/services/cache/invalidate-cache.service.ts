@@ -13,11 +13,11 @@ const LOG_CONTEXT = 'InvalidateCache';
 export class InvalidateCacheService {
   constructor(private cacheService: CacheService) {}
 
-  public async invalidateByKey({ key }: { key: string }) {
+  public async invalidateByKey({ key }: { key: string }): Promise<number> {
     if (!this.cacheService?.cacheEnabled()) return;
 
     try {
-      await this.cacheService.del(key);
+      return await this.cacheService.del(key);
     } catch (err) {
       Logger.error(
         `An error has occurred when deleting "key: ${key}",`,
@@ -27,14 +27,18 @@ export class InvalidateCacheService {
     }
   }
 
-  public async invalidateQuery({ key }: { key: string }) {
+  public async invalidateQuery({
+    key,
+  }: {
+    key: string;
+  }): Promise<void | unknown[]> {
     if (!this.cacheService?.cacheEnabled()) return;
 
     try {
-      await this.cacheService.delQuery(key);
+      return await this.cacheService.delQuery(key);
     } catch (err) {
       Logger.error(
-        `An error has occurred when deleting "key: ${key}",`,
+        `An error has occurred when deleting by query "key: ${key}",`,
         err,
         LOG_CONTEXT
       );
@@ -44,7 +48,7 @@ export class InvalidateCacheService {
   private async clearByPattern(
     storeKeyPrefix: CacheKeyPrefixEnum,
     credentials: Record<string, unknown>
-  ) {
+  ): Promise<unknown | undefined> {
     Logger.verbose('Removing keys with prefix: ' + storeKeyPrefix);
     Logger.debug('storeKeyPrefix is: ' + storeKeyPrefix);
 
@@ -55,18 +59,20 @@ export class InvalidateCacheService {
     );
 
     if (!cacheKey) {
-      Logger.warn('Cachekey does not exist', LOG_CONTEXT);
+      Logger.warn('Cache key does not exist', LOG_CONTEXT);
 
       return;
     }
 
     try {
       Logger.verbose('Awaiting cache delete by pattern');
-      await this.cacheService.delByPattern(cacheKey);
+      const result = await this.cacheService.delByPattern(cacheKey);
       Logger.verbose('Finished cache delete by pattern');
+
+      return result;
     } catch (err) {
       Logger.error(
-        `An error has occurred when deleting "key: ${cacheKey}",`,
+        `An error has occurred when clearing by pattern "key: ${cacheKey}",`,
         err,
         LOG_CONTEXT
       );

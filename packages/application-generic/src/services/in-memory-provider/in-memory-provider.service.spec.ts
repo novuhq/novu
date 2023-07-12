@@ -1,18 +1,27 @@
 import { InMemoryProviderService } from './in-memory-provider.service';
 
+import { GetIsInMemoryClusterModeEnabled } from '../../usecases';
+
+const getIsInMemoryClusterModeEnabled = new GetIsInMemoryClusterModeEnabled();
+
 let inMemoryProviderService: InMemoryProviderService;
 
 describe('In-memory Provider Service', () => {
   describe('Non cluster mode', () => {
     beforeEach(async () => {
-      process.env.IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
+      process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
 
-      inMemoryProviderService = new InMemoryProviderService();
-      inMemoryProviderService.initialize();
+      inMemoryProviderService = new InMemoryProviderService(
+        getIsInMemoryClusterModeEnabled
+      );
 
       await inMemoryProviderService.delayUntilReadiness();
 
       expect(inMemoryProviderService.getStatus()).toEqual('ready');
+    });
+
+    afterAll(async () => {
+      await inMemoryProviderService.shutdown();
     });
 
     describe('Set up', () => {
@@ -39,7 +48,7 @@ describe('In-memory Provider Service', () => {
       });
 
       it('should instantiate the provider properly', async () => {
-        expect(inMemoryProviderService.isClusterMode()).toEqual(false);
+        expect(await inMemoryProviderService.isClusterMode()).toEqual(false);
 
         const { inMemoryProviderClient } = inMemoryProviderService;
 
@@ -78,21 +87,26 @@ describe('In-memory Provider Service', () => {
 
   describe('Cluster mode', () => {
     beforeEach(async () => {
-      process.env.IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
+      process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
 
-      inMemoryProviderService = new InMemoryProviderService();
-      inMemoryProviderService.initialize();
-
+      inMemoryProviderService = new InMemoryProviderService(
+        getIsInMemoryClusterModeEnabled
+      );
       await inMemoryProviderService.delayUntilReadiness();
 
       expect(inMemoryProviderService.getStatus()).toEqual('ready');
     });
 
+    afterAll(async () => {
+      await inMemoryProviderService.shutdown();
+    });
+
     describe('TEMP: Check if enableAutoPipelining true is set properly in Cluster', () => {
       it('enableAutoPipelining is enabled', async () => {
-        const clusterWithPipelining = new InMemoryProviderService(true);
-        clusterWithPipelining.initialize();
-
+        const clusterWithPipelining = new InMemoryProviderService(
+          getIsInMemoryClusterModeEnabled,
+          true
+        );
         await clusterWithPipelining.delayUntilReadiness();
 
         expect(clusterWithPipelining.getStatus()).toEqual('ready');
@@ -136,7 +150,7 @@ describe('In-memory Provider Service', () => {
       });
 
       it('should instantiate the provider properly', async () => {
-        expect(inMemoryProviderService.isClusterMode()).toEqual(true);
+        expect(await inMemoryProviderService.isClusterMode()).toEqual(true);
 
         const { inMemoryProviderClient } = inMemoryProviderService;
 
