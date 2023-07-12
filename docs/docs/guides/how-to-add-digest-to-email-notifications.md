@@ -256,7 +256,7 @@ const Body = () => {
 
 We're hitting the backend route we had created earlier. The backend has been deployed on render as can be seen in this code snippet above.
 
-Congratulations on following the guide up until this point. We can style our app a little using [some TailwindCSS](https://github.com/novuhq/digest-email-app).
+Congratulations on following the guide up until this point. We can style our app a little using [some TailwindCSS](https://github.com/novuhq/digest-email-app/blob/main/frontend/src/app.css).
 
 If you’ve done everything as recommended, you’ll end up with an app that looks like this:
 
