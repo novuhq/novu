@@ -6,12 +6,12 @@ import { showNotification } from '@mantine/notifications';
 import { useClipboard } from '@mantine/hooks';
 import { Image, useMantineColorScheme, Stack, Alert } from '@mantine/core';
 import { WarningOutlined } from '@ant-design/icons';
-import { ChannelTypeEnum, ICredentialsDto, IConfigCredentials } from '@novu/shared';
+import { ChannelTypeEnum, ICredentialsDto, IConfigCredentials, ICreateIntegrationBodyDto } from '@novu/shared';
 
 import { Button, colors, Input, Switch, Text } from '../../../design-system';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
 import { createIntegration, getWebhookSupportStatus, updateIntegration } from '../../../api/integration';
-import { Close } from '../../../design-system/icons/actions/Close';
+import { Close } from '../../../design-system/icons';
 import { IntegrationInput } from './IntegrationInput';
 import { IS_DOCKER_HOSTED, WEBHOOK_URL } from '../../../config';
 import { useEnvController, useAuthController } from '../../../hooks';
@@ -78,7 +78,7 @@ export function ConnectIntegrationForm({
   createModel,
   onClose,
 }: {
-  provider: IIntegratedProvider | null;
+  provider: IIntegratedProvider;
   showModal: (visible: boolean) => void;
   createModel: boolean;
   onClose: () => void;
@@ -102,13 +102,7 @@ export function ConnectIntegrationForm({
   const { mutateAsync: createIntegrationApi, isLoading: isLoadingCreate } = useMutation<
     { res: string },
     { error: string; message: string; statusCode: number },
-    {
-      providerId: string;
-      channel: ChannelTypeEnum | null;
-      credentials: ICredentialsDto;
-      active: boolean;
-      check: boolean;
-    }
+    ICreateIntegrationBodyDto
   >(createIntegration);
 
   const { mutateAsync: updateIntegrationApi, isLoading: isLoadingUpdate } = useMutation<
@@ -159,7 +153,7 @@ export function ConnectIntegrationForm({
       if (createModel) {
         await createIntegrationApi({
           providerId: provider?.providerId ? provider?.providerId : '',
-          channel: provider?.channel ? provider?.channel : null,
+          channel: provider?.channel,
           credentials,
           active: isActive,
           check: checkIntegrationState.check,

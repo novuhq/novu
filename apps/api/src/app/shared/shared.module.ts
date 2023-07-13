@@ -21,6 +21,7 @@ import {
   SubscriberPreferenceRepository,
   TopicRepository,
   TopicSubscribersRepository,
+  TenantRepository,
 } from '@novu/dal';
 import {
   InMemoryProviderService,
@@ -37,6 +38,9 @@ import {
   DistributedLockService,
   PerformanceService,
   TriggerQueueService,
+  GetFeatureFlag,
+  LaunchDarklyService,
+  FeatureFlagsService,
 } from '@novu/application-generic';
 
 import * as packageJson from '../../../package.json';
@@ -62,6 +66,7 @@ const DAL_MODELS = [
   SubscriberPreferenceRepository,
   TopicRepository,
   TopicSubscribersRepository,
+  TenantRepository,
 ];
 
 function getStorageServiceClass() {
@@ -143,6 +148,9 @@ const PROVIDERS = [
     },
   },
   TriggerQueueService,
+  LaunchDarklyService,
+  FeatureFlagsService,
+  GetFeatureFlag,
 ];
 
 @Module({

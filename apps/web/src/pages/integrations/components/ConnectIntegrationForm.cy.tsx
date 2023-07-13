@@ -20,11 +20,11 @@ const exampleProvider: IIntegratedProvider = {
 };
 
 const defaultProps: {
-  provider: IIntegratedProvider | null;
+  provider: IIntegratedProvider;
   showModal: (visible: boolean) => void;
   createModel: boolean;
   onClose: () => void;
-} = { provider: null, showModal: () => {}, onClose: () => {}, createModel: false };
+} = { provider: exampleProvider, showModal: () => {}, onClose: () => {}, createModel: false };
 
 const queryClient = new QueryClient();
 

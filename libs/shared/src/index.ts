@@ -15,6 +15,7 @@ export * from './entities/subscriber-preference';
 export * from './entities/subscriber';
 export * from './entities/layout';
 export * from './entities/notification-group';
+export * from './entities/integration';
 export * from './types';
 export * from './dto';
 export * from './consts';

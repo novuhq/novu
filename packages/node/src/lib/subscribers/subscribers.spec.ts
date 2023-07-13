@@ -219,7 +219,8 @@ describe('test use of novus node package - Subscribers class', () => {
 
     expect(mockedAxios.post).toHaveBeenCalled();
     expect(mockedAxios.post).toHaveBeenCalledWith(
-      '/subscribers/test-message-seen/messages/message-123/seen'
+      '/subscribers/test-message-seen/messages/markAs',
+      { mark: { seen: true }, messageId: 'message-123' }
     );
   });
 
