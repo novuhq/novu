@@ -35,6 +35,7 @@ function fcmFallback(integration: IntegrationEntity | undefined, clonedCredentia
 
 function initializeProviders(integrations: IntegrationEntity[]): IIntegratedProvider[] {
   return providers
+    .filter((provider) => !NOVU_PROVIDERS.includes(provider.id))
     .map((providerItem) => {
       const integration = integrations.find((integrationItem) => integrationItem.providerId === providerItem.id);
 
@@ -64,8 +65,7 @@ function initializeProviders(integrations: IntegrationEntity[]): IIntegratedProv
         logoFileName: providerItem.logoFileName,
         environmentId: integration?._environmentId,
       };
-    })
-    .filter((provider) => !NOVU_PROVIDERS.includes(provider.providerId));
+    });
 }
 
 function initializeProvidersByIntegration(integrations: IntegrationEntity[]): IIntegratedProvider[] {

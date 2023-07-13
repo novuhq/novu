@@ -28,7 +28,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'Novu SMS',
     channel: ChannelTypeEnum.SMS,
     credentials: [],
-    docReference: 'https://docs.novu.co/channels/sms/novu-sms',
+    docReference: 'https://docs.novu.co/channels/sms/',
     logoFileName: { light: 'novu.png', dark: 'novu.png' },
   },
   {

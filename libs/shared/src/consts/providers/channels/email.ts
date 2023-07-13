@@ -26,7 +26,7 @@ export const emailProviders: IProviderConfig[] = [
     displayName: 'Novu Email',
     channel: ChannelTypeEnum.EMAIL,
     credentials: [],
-    docReference: 'https://docs.novu.co/channels/email/novu-email',
+    docReference: 'https://docs.novu.co/channels/email/',
     logoFileName: { light: 'novu.png', dark: 'novu.png' },
   },
   {
