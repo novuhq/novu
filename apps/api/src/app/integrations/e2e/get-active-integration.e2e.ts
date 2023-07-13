@@ -12,6 +12,7 @@ describe('Get Active Integrations [IS_MULTI_PROVIDER_CONFIGURATION_ENABLED=true]
     session = new UserSession();
     await session.initialize();
     process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = 'true';
+    process.env.LAUNCH_DARKLY_SDK_KEY = '';
   });
 
   afterEach(async () => {
@@ -92,6 +93,7 @@ describe('Get Active Integrations [IS_MULTI_PROVIDER_CONFIGURATION_ENABLED=false
     session = new UserSession();
     await session.initialize();
     process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = 'false';
+    process.env.LAUNCH_DARKLY_SDK_KEY = '';
   });
 
   afterEach(async () => {
