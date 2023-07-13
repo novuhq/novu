@@ -18,13 +18,13 @@ import { Search } from '../../../../design-system/icons';
 import useStyles from '../../../../design-system/tabs/Tabs.styles';
 import { useDebounce } from '../../../../hooks';
 import { ChannelTitle } from '../../../templates/components/ChannelTitle';
-import { IIntegratedProvider } from '../../IntegrationsStoreModal';
 import { CHANNELS_ORDER } from '../IntegrationsListNoData';
 import { CHANNEL_TYPE_TO_STRING } from '../../../../utils/channels';
 import { getLogoFileName } from '../../../../utils/providers';
 import { sortProviders } from './sort-providers';
 import { When } from '../../../../components/utils/When';
 import { CONTEXT_PATH } from '../../../../config';
+import { IIntegratedProvider } from '../../IntegrationsStorePage';
 
 const filterSearch = (list, search: string) =>
   list.filter((prov) => prov.displayName.toLowerCase().includes(search.toLowerCase()));
