@@ -24,8 +24,6 @@ export class PlunkEmailProvider implements IEmailProvider {
   ) {
     this.plunk = new Plunk(this.config.apiKey);
   }
-  getMessageId?: (body: any) => string[];
-  parseEventBody?: (body: any, identifier: string) => IEmailEventBody;
   async checkIntegration(
     options: IEmailOptions
   ): Promise<ICheckIntegrationResponse> {

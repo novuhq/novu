@@ -1435,7 +1435,7 @@ importers:
       '@novu/one-signal': ^0.16.3
       '@novu/outlook365': ^0.16.3
       '@novu/plivo': ^0.16.3
-      '@novu/plunk': ^0.16.0
+      '@novu/plunk': ^0.16.3
       '@novu/postmark': ^0.16.3
       '@novu/push-webhook': ^0.16.3
       '@novu/resend': ^0.16.3
@@ -3118,7 +3118,7 @@ importers:
   providers/plunk:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ~1.0.1
-      '@novu/stateless': 0.16.0
+      '@novu/stateless': 0.16.3
       '@plunk/node': 2.0.0
       '@types/jest': ~27.5.2
       cspell: ~6.19.2
@@ -3132,7 +3132,7 @@ importers:
       ts-node: ~10.9.1
       typescript: 4.9.5
     dependencies:
-      '@novu/stateless': 0.16.0
+      '@novu/stateless': link:../../packages/stateless
       '@plunk/node': 2.0.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -14269,7 +14269,7 @@ packages:
     peerDependencies:
       '@nestjs/common': ^8.0.0 || ^9.0.0
     dependencies:
-      '@nestjs/common': 9.3.12_ia6oxmn2tswrmx73in3obvspd4
+      '@nestjs/common': 9.3.12_j3td4gnlgk75ora6o6suo62byy
       '@types/jsonwebtoken': 8.5.8
       jsonwebtoken: 8.5.1
     dev: false
@@ -14986,15 +14986,6 @@ packages:
 
   /@novu/stateless/0.15.0:
     resolution: {integrity: sha512-NS7n34dlEB48EthLek0NWZXh+nJtbOUVkWdyprGF2f/WCCG/wT+yUtYLOauMffrySpnXEjY9zimyGgIWJQRl0g==}
-    engines: {node: '>=10'}
-    dependencies:
-      handlebars: 4.7.7
-      lodash.get: 4.4.2
-      lodash.merge: 4.6.2
-    dev: false
-
-  /@novu/stateless/0.16.0:
-    resolution: {integrity: sha512-Tow988jpOio7Q5ZB2g3ZekGaaX0Q0xLbgQ5kSvxRH1TEfVpubGCYSHCbDPO44iA+Jc+cDYTWRp7WUMwenGsTMQ==}
     engines: {node: '>=10'}
     dependencies:
       handlebars: 4.7.7
