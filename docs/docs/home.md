@@ -13,7 +13,9 @@ import Discover from '@site/src/components/Discover'
 
 # Documentation
 
-Explore our guides and examples to integrate Novu.
+Welcome to the Novu docs! 
+
+This documentation contains everything you need to get started with Novu. Explore our guides and examples to integrate Novu in your app and start sending world-class notifications.
 
 ## What is Novu?
 
