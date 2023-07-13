@@ -22,8 +22,6 @@ export class GetActiveIntegrations {
   ) {}
 
   async execute(command: GetActiveIntegrationsCommand): Promise<GetActiveIntegrationResponseDto[]> {
-    const environments = await this.environmentRepository.findOrganizationEnvironments(command.organizationId);
-
     const activeIntegrations = await this.getDecryptedIntegrationsUsecase.execute(
       GetDecryptedIntegrationsCommand.create({
         organizationId: command.organizationId,
@@ -37,6 +35,7 @@ export class GetActiveIntegrations {
       return [];
     }
 
+    const environments = await this.environmentRepository.findOrganizationEnvironments(command.organizationId);
     const activeIntegrationChannelTypes = this.getDistinctChannelTypes(activeIntegrations);
     const selectedIntegrations = await this.getSelectedIntegrations(
       command,
