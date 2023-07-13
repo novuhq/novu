@@ -1,8 +1,11 @@
-import { Group, Text, UnstyledButton, useMantineColorScheme } from '@mantine/core';
+import { Group, Stack, Text, UnstyledButton, useMantineColorScheme } from '@mantine/core';
 import { ChannelTypeEnum } from '@novu/shared';
 import { When } from '../../../components/utils/When';
-import { Button, colors } from '../../../design-system';
-import { IIntegratedProvider } from '../../integrations/IntegrationsStoreModal';
+import { Button, colors, Tooltip } from '../../../design-system';
+import { useEnvController, useIsMultiProviderConfigurationEnabled } from '../../../hooks';
+import { IntegrationEnvironmentPill } from '../../integrations/components/IntegrationEnvironmentPill';
+import { IntegrationStatus } from '../../integrations/components/IntegrationStatus';
+import { IIntegratedProvider } from '../../integrations/IntegrationsStorePage';
 import { stepNames } from '../constants';
 import { ChannelTitle } from './ChannelTitle';
 import { LackIntegrationError } from './LackIntegrationError';
@@ -17,6 +20,8 @@ export const ListProviders = ({
   setProvider: (provider: IIntegratedProvider) => void;
 }) => {
   const { colorScheme } = useMantineColorScheme();
+  const isMultiProviderConfigurationEnabled = useIsMultiProviderConfigurationEnabled();
+  const { environment: currentEnvironment } = useEnvController();
 
   return (
     <div
@@ -61,13 +66,13 @@ export const ListProviders = ({
         </div>
       </When>
       {providers
-        .filter((provider) => provider.connected)
+        .filter((provider) => provider.connected && provider.environmentId === currentEnvironment?._id)
         .map((provider) => {
           return (
             <UnstyledButton
               style={{
                 width: '100%',
-                padding: 15,
+                padding: isMultiProviderConfigurationEnabled ? '8px 12px' : 15,
                 background: colorScheme === 'dark' ? colors.B20 : colors.B98,
                 borderRadius: 8,
                 marginBottom: 12,
@@ -79,20 +84,56 @@ export const ListProviders = ({
                 setConfigureChannel(provider.channel);
               }}
             >
-              <Group position="apart">
-                <img
-                  src={'/static/images/providers/' + colorScheme + '/' + provider.logoFileName[`${colorScheme}`]}
-                  alt={provider.displayName}
-                  style={{
-                    height: '24px',
-                    maxWidth: '140px',
-                    opacity: provider.active ? 1 : colorScheme === 'dark' ? 0.4 : 1,
-                  }}
-                />
-                <Text color={provider.active ? colors.success : colors.B60}>
-                  <When truthy={provider.active}>Active</When>
-                  <When truthy={!provider.active}>Disabled</When>
-                </Text>
+              <Group spacing={16} position="apart">
+                <Group spacing={16} position="apart">
+                  <img
+                    src={'/static/images/providers/' + colorScheme + '/square/' + provider.providerId + '.svg'}
+                    alt={provider.displayName}
+                    style={{
+                      height: '24px',
+                      maxWidth: '140px',
+                      opacity: provider.active ? 1 : colorScheme === 'dark' ? 0.4 : 1,
+                    }}
+                  />
+
+                  <Stack
+                    sx={{
+                      width: isMultiProviderConfigurationEnabled ? '117px' : undefined,
+                    }}
+                    spacing={0}
+                  >
+                    <Tooltip
+                      label={provider.displayName}
+                      opened={isMultiProviderConfigurationEnabled ? undefined : false}
+                    >
+                      <Text size="md" truncate="end">
+                        {provider.name || provider.displayName}
+                      </Text>
+                    </Tooltip>
+                    <When truthy={isMultiProviderConfigurationEnabled && provider.identifier !== undefined}>
+                      <Text
+                        sx={{
+                          color: colors.B40,
+                        }}
+                        size="sm"
+                      >
+                        Key: {provider.identifier}
+                      </Text>
+                    </When>
+                  </Stack>
+                </Group>
+                <Group spacing={16} position="apart">
+                  <When truthy={isMultiProviderConfigurationEnabled}>
+                    <IntegrationEnvironmentPill name={currentEnvironment?.name || 'Development'} />
+                  </When>
+                  <div
+                    style={{
+                      minWidth: 76,
+                    }}
+                  >
+                    <IntegrationStatus active={provider.active} />
+                  </div>
+                </Group>
               </Group>
             </UnstyledButton>
           );
