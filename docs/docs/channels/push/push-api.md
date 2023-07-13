@@ -32,7 +32,7 @@ const subscriptionJSON = JSON.stringify(subscription);
 const subscriptionBase64 = btoa(subscriptionJSON) // browser
 // const subscriptionBase64 = Buffer.from(subscriptionJSON, 'ascii').toString('base64') // nodejs
 
-await novu.subscribers.setCredentials('subscriberId', PushProviderIdEnum.FCM, {
+await novu.subscribers.setCredentials('subscriberId', PushProviderIdEnum.PushAPI, {
   deviceTokens: [subscriptionBase64], // for multiple devices store each new subscription in your own API
 });
 ```
