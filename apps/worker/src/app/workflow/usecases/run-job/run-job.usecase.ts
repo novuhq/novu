@@ -68,16 +68,14 @@ export class RunJob {
           job,
         })
       );
-
-      await this.storageHelperService.deleteAttachments(job.payload?.attachments);
-    } catch (error) {
+    } catch (error: any) {
       if (job.step.shouldStopOnFail || this.shouldBackoff(error)) {
         shouldQueueNextJob = false;
       }
       throw new PlatformException(error.message);
     } finally {
       if (shouldQueueNextJob) {
-        await this.queueNextJob.execute(
+        const newJob = await this.queueNextJob.execute(
           QueueNextJobCommand.create({
             parentId: job._id,
             environmentId: job._environmentId,
@@ -85,6 +83,14 @@ export class RunJob {
             userId: job._userId,
           })
         );
+
+        // Only remove the attachments if that is the last job
+        if (!newJob) {
+          await this.storageHelperService.deleteAttachments(job.payload?.attachments);
+        }
+      } else {
+        // Remove the attachments if the job should not be queued
+        await this.storageHelperService.deleteAttachments(job.payload?.attachments);
       }
     }
   }

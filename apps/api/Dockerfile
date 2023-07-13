@@ -9,6 +9,7 @@ RUN npm --no-update-notifier --no-fund --global install pnpm@7.28.0
 RUN pnpm --version
 
 WORKDIR /usr/src/app
+
 # ------- DEV BUILD ----------
 FROM dev_base AS dev
 ARG PACKAGE_PATH
