@@ -71,6 +71,7 @@ export class SelectIntegration {
         _organizationId: command.organizationId,
         channel: command.channelType,
         identifier: command.identifier,
+        active: true,
       };
     }
 

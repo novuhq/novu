@@ -13,6 +13,7 @@ import {
   JobStatusEnum,
   IntegrationRepository,
   ExecutionDetailsRepository,
+  EnvironmentRepository,
 } from '@novu/dal';
 import { UserSession, SubscribersService } from '@novu/testing';
 import {
@@ -54,8 +55,9 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
   const integrationRepository = new IntegrationRepository();
   const jobRepository = new JobRepository();
   const executionDetailsRepository = new ExecutionDetailsRepository();
+  const environmentRepository = new EnvironmentRepository();
 
-  describe('Trigger Event - []', function () {
+  describe(`Trigger Event - [IS_MULTI_PROVIDER_CONFIGURATION_ENABLED=${ORIGINAL_IS_MULTI_PROVIDER_CONFIGURATION_ENABLED}]`, function () {
     beforeEach(async () => {
       session = new UserSession();
       await session.initialize();
@@ -1596,9 +1598,9 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
   describe('Trigger Event - [IS_MULTI_PROVIDER_CONFIGURATION_ENABLED=true]', function () {
     beforeEach(async () => {
       process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = 'true';
+      process.env.LAUNCH_DARKLY_SDK_KEY = '';
       session = new UserSession();
       await session.initialize();
-      subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     });
 
     afterEach(async () => {
@@ -1626,11 +1628,17 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       expect(messages.length).to.be.equal(1);
       expect(messages[0].providerId).to.be.equal(EmailProviderIdEnum.SendGrid);
 
+      const prodEnv = await environmentRepository.findOne({
+        name: 'Production',
+        _organizationId: session.organization._id,
+      });
+
       const payload = {
         providerId: EmailProviderIdEnum.Mailgun,
         channel: 'email',
         credentials: { apiKey: '123', secretKey: 'abc' },
-        active: false,
+        _environmentId: prodEnv?._id,
+        active: true,
         check: false,
       };
 
