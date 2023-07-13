@@ -1,4 +1,10 @@
 export interface IPlunkResponse {
   success: boolean;
-  contact?: string;
+  emails?: {
+    contact: {
+      id: string;
+      email: string;
+    };
+  }[];
+  timestamp?: string;
 }

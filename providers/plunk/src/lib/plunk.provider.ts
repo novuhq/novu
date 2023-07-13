@@ -61,8 +61,8 @@ export class PlunkEmailProvider implements IEmailProvider {
     });
 
     return {
-      id: response.contact,
-      date: new Date().toISOString(),
+      id: response.emails[0].contact.id,
+      date: response.timestamp,
     };
   }
 }
