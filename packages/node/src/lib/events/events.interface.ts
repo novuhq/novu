@@ -5,8 +5,6 @@ import {
   TriggerRecipientsPayload,
 } from '@novu/shared';
 
-export { TriggerRecipientsTypeEnum } from '@novu/shared';
-
 export interface IBroadcastPayloadOptions {
   payload: ITriggerPayload;
   overrides?: ITriggerOverrides;
