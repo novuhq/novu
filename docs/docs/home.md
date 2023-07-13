@@ -31,3 +31,9 @@ Novu is an open-source notification infrastructure, built for engineering teams 
 To learn more about Novu, you can follow our [blog](https://novu.co/blog/) to read various use-cases and how-to guides, and to get information about various events (Ready for the next ConnectNovu hackathon?). 
 
 You can even join our [Discord Community](https://discord.gg/novu) to talk to fellow developers and get resolution for your support queries from our team and community members.
+
+## Contributing
+
+At Novu, contributions are not only welcome but are actively encouraged. To start contributing to Novu, head over to our [Contributing Guide](https://github.com/novuhq/novu/blob/next/CONTRIBUTING.md) to know the coding guidelines and general practices to folllow while contributing to Novu. 
+
+If you're stuck somewhere and need help, hop onto our [Discord Server](https://discord.gg/novu) to get priority help.
