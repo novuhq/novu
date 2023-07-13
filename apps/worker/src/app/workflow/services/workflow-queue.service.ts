@@ -1,7 +1,7 @@
 const nr = require('newrelic');
 import { Job, WorkerOptions } from 'bullmq';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, getRedisPrefix, IJobData } from '@novu/shared';
+import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, IJobData } from '@novu/shared';
 import { QueueService, PinoLogger, storage, Store, INovuWorker } from '@novu/application-generic';
 
 import {
@@ -43,13 +43,12 @@ export class WorkflowQueueService extends QueueService<IJobData> implements INov
 
   private getWorkerOpts(): WorkerOptions {
     return {
-      ...this.bullConfig,
       lockDuration: 90000,
       concurrency: 200,
       settings: {
         backoffStrategy: this.getBackoffStrategies(),
       },
-    } as WorkerOptions;
+    };
   }
 
   private getWorkerProcessor() {
