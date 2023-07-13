@@ -2,7 +2,7 @@ import axios from 'axios';
 import { expect } from 'chai';
 import { MessageRepository, NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import {
   InMemoryProviderService,
   buildFeedKey,
@@ -171,10 +171,23 @@ describe('Count - GET /widget/notifications/count', function () {
 
   it('should return unseen count by default limit 100', async function () {
     for (let i = 0; i < 102; i++) {
-      await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+      await messageRepository.create({
+        _notificationId: MessageRepository.createObjectId(),
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        _subscriberId: subscriberProfile?._id,
+        _templateId: template._id,
+        _messageTemplateId: template.steps[0]._templateId,
+        channel: ChannelTypeEnum.IN_APP,
+        cta: {},
+        transactionId: MessageRepository.createObjectId(),
+        content: template.steps,
+        payload: {},
+        providerId: InAppProviderIdEnum.Novu,
+        templateIdentifier: template.triggers[0].identifier,
+        seen: false,
+      });
     }
-
-    await session.awaitRunningJobs(template._id);
 
     const unseenCount = (await getFeedCount({ seen: false })).data.count;
     expect(unseenCount).to.equal(100);
