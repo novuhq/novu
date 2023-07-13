@@ -1,15 +1,18 @@
 import {
+  ConnectionOptions as RedisConnectionOptions,
   JobsOptions,
   Metrics,
   MetricsTime,
   Processor,
   Queue,
+  QueueBaseOptions,
   QueueOptions,
   Worker,
   WorkerOptions,
 } from 'bullmq';
+import { ConnectionOptions } from 'tls';
 import { Injectable, Logger } from '@nestjs/common';
-import { IJobData } from '@novu/shared';
+import { getRedisPrefix, IJobData } from '@novu/shared';
 
 interface IQueueMetrics {
   completed: Metrics;
@@ -25,6 +28,22 @@ interface IEventJobData {
 }
 
 type BullMqJobData = undefined | IJobData | IEventJobData;
+
+export { QueueBaseOptions, RedisConnectionOptions as BullMqConnectionOptions };
+
+export const bullMqBaseOptions = {
+  connection: {
+    db: Number(process.env.REDIS_DB_INDEX),
+    port: Number(process.env.REDIS_PORT),
+    host: process.env.REDIS_HOST,
+    password: process.env.REDIS_PASSWORD,
+    connectTimeout: 50000,
+    keepAlive: 30000,
+    family: 4,
+    keyPrefix: getRedisPrefix(),
+    tls: process.env.REDIS_TLS,
+  },
+};
 
 @Injectable()
 export class BullMqService {
@@ -62,7 +81,19 @@ export class BullMqService {
     };
   }
 
-  public createQueue(name: string, config: QueueOptions) {
+  public createQueue(name: string, queueOptions: QueueOptions) {
+    const config = {
+      connection: {
+        ...bullMqBaseOptions.connection,
+        ...queueOptions.connection,
+      },
+      ...(queueOptions?.defaultJobOptions && {
+        defaultJobOptions: {
+          ...queueOptions.defaultJobOptions,
+        },
+      }),
+    };
+
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const QueueClass = !BullMqService.pro
       ? Queue
@@ -84,21 +115,23 @@ export class BullMqService {
   public createWorker(
     name: string,
     processor?: string | Processor<any, unknown | void, string>,
-    options?: WorkerOptions
+    workerOptions?: WorkerOptions
   ) {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const WorkerClass = !BullMqService.pro
       ? Worker
       : require('@taskforcesh/bullmq-pro').WorkerPro;
 
-    let internalOptions: WorkerOptions = {};
-    if (options) {
-      internalOptions = options;
-    }
-    internalOptions.metrics = { maxDataPoints: MetricsTime.ONE_MONTH };
+    const config: WorkerOptions = {
+      connection: {
+        ...bullMqBaseOptions.connection,
+      },
+      ...workerOptions,
+      metrics: { maxDataPoints: MetricsTime.ONE_MONTH },
+    };
 
     this._worker = new WorkerClass(name, processor, {
-      ...internalOptions,
+      ...config,
       ...(BullMqService.pro
         ? {
             group: {},
