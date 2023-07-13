@@ -1,16 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import styled from '@emotion/styled';
 import { Grid, Group, Modal, ActionIcon, createStyles, MantineTheme, Drawer } from '@mantine/core';
-import {
-  ChannelTypeEnum,
-  IConfigCredentials,
-  ILogoFileName,
-  EmailProviderIdEnum,
-  InAppProviderIdEnum,
-  ProvidersIdEnum,
-  SmsProviderIdEnum,
-  ICredentials,
-} from '@novu/shared';
+import { ChannelTypeEnum, EmailProviderIdEnum, InAppProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
 
 import { useAuthController, useEnvController } from '../../hooks';
 import { When } from '../../components/utils/When';
@@ -25,6 +16,7 @@ import { useSegment } from '../../components/providers/SegmentProvider';
 import { IntegrationsStoreModalAnalytics } from './constants';
 import { NovuSmsProviderModal } from './components/NovuSmsProviderModal';
 import { useCreateInAppIntegration } from '../../hooks/useCreateInAppIntegration';
+import type { IIntegratedProvider } from './types';
 
 export function IntegrationsStoreModal({
   scrollTo,
@@ -313,41 +305,3 @@ const useDrawerStyles = createStyles((theme: MantineTheme) => {
     },
   };
 });
-
-export interface IIntegratedProvider {
-  providerId: ProvidersIdEnum;
-  integrationId: string;
-  displayName: string;
-  channel: ChannelTypeEnum;
-  credentials: IConfigCredentials[];
-  docReference: string;
-  comingSoon: boolean;
-  active: boolean;
-  connected: boolean;
-  logoFileName: ILogoFileName;
-  betaVersion: boolean;
-  novu?: boolean;
-  environmentId?: string;
-}
-
-export interface IntegrationEntity {
-  _id?: string;
-
-  _environmentId: string;
-
-  _organizationId: string;
-
-  providerId: string;
-
-  channel: ChannelTypeEnum;
-
-  credentials: ICredentials;
-
-  active: boolean;
-
-  deleted: boolean;
-
-  deletedAt: string;
-
-  deletedBy: string;
-}

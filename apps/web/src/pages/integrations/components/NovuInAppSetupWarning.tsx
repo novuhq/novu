@@ -1,4 +1,4 @@
-import type { IIntegratedProvider } from '../IntegrationsStoreModal';
+import type { IIntegratedProvider } from '../types';
 import { SetupWarning } from './SetupWarning';
 import { useInAppActivated } from '../../../api/hooks';
 
