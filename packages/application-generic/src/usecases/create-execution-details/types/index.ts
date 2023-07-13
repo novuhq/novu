@@ -13,6 +13,7 @@ export enum DetailEnum {
   MESSAGE_CREATED = 'Message created',
   SUBSCRIBER_NO_ACTIVE_INTEGRATION = 'Subscriber does not have an active integration',
   INTEGRATION_INSTANCE_SELECTED = 'Integration instance selected',
+  NO_INTEGRATION_INSTANCE_FOUND = 'Integration instance not found',
   LIMIT_PASSED_NOVU_INTEGRATION = "Novu's provider limit has been reached",
   SUBSCRIBER_NO_CHANNEL_DETAILS = 'Subscriber missing recipient details',
   SUBSCRIBER_NO_ACTIVE_CHANNEL = 'Subscriber does not have a configured channel',
