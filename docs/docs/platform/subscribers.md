@@ -47,7 +47,7 @@ await novu.subscribers.identify('111', {
   lastName: 'Doe',
   phone: '+13603963366',
   avatar: 'https://example.com/images/avatar.jpg',
-  locale: 'en',
+  locale: 'en-US',
   data: { customKey1: 'customVal1', customKey2: 'customVal2' },
 });
 ```
@@ -67,7 +67,7 @@ $novu->createSubscriber([
     'lastName' => 'Doe',
     'phone' => '+13603963366',
     'avatar' => 'https://example.com/images/avatar.jpg',
-    'locale' => 'en',
+    'locale' => 'en-US',
     'data' => [
       'customKey1' => 'customVal1',
       'customKey2' => 'customVal2'
@@ -91,7 +91,7 @@ import { Novu } from '@novu/node';
 
 const novu = new Novu('<NOVU_API_KEY>');
 
-await novu.trigger('<TEMPLATE_IDENTIFIER>', {
+await novu.trigger('<WORKFLOW_IDENTIFIER>', {
   to: {
     subscriberId: '111',
     email: 'john.doe@domain.com',
@@ -117,7 +117,7 @@ use Novu\SDK\Novu;
 $novu = new Novu('<NOVU_API_KEY>');
 
 $novu->triggerEvent([
-    'name' => '<TEMPLATE_IDENTIFIER>',
+    'name' => '<WORKFLOW_IDENTIFIER>',
     'to' => [
         'subscriberId' => '111',
         'email' => 'john.doe@domain.com',
@@ -146,7 +146,7 @@ $novu->triggerEvent([
 | lastName     | `string` | false    | Doe                                     |
 | email        | `string` | false    | john.doe@domain.org                     |
 | phone        | `string` | false    | +13603963366                            |
-| locale       | `string` | false    | en                                      |
+| locale       | `string` | false    | en-US                                   |
 | avatar       | `string` | false    | <https://example.com/images/avatar.jpg> |
 | data         | `object` | false    | {"key" : "value"}                       |
 
