@@ -1,10 +1,11 @@
 import {
   DigestUnitEnum,
-  IAttachmentOptions,
   ITriggerPayload,
   TriggerRecipientSubscriber,
   TriggerRecipientsPayload,
 } from '@novu/shared';
+
+export { TriggerRecipientsTypeEnum } from '@novu/shared';
 
 export interface IBroadcastPayloadOptions {
   payload: ITriggerPayload;
