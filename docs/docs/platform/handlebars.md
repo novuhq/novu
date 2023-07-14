@@ -45,11 +45,9 @@ To achieve this, you can create a workflow with a digest node and set the durati
 :::info
 Note: The `step.total_count` gives the total number of events in the digest period. Be careful when using this if you have multiple types of notifications being triggered as it will just output the total number of notifications triggered during the digest period.
 :::
-
 2. Order dispatch info notification - Say you're writing an e-commerce app and you want to send an order dispatch notification. You can do so easily:
 
 `We have dispatched your order {{order_number}} and it should reach you in {{estimated_delivery_time}}.`
-
 3. Sale promotional notifications - Staying in the e-commerce context, say you're running a sale on your e-commerce app. 
 
 There's a promotion you want to notify your users about. You can achieve this by:
