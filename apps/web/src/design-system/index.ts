@@ -29,3 +29,4 @@ export * from './cards';
 export * from './arrow-button';
 export * from './popover';
 export * from './dots-navigation';
+export * from './sidebar';

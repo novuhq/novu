@@ -77,8 +77,9 @@ export class CreateNotificationJobs {
 
     if (!notification) {
       const message = 'Notification could not be created';
-      Logger.error(message, LOG_CONTEXT);
-      throw new PlatformException(message);
+      const error = new PlatformException(message);
+      Logger.error(message, error, LOG_CONTEXT);
+      throw error;
     }
 
     const jobs: NotificationJob[] = [];

@@ -21,6 +21,12 @@ test('should trigger expo correctly', async () => {
     payload: {
       sound: 'test_sound',
     },
+    subscriber: {},
+    step: {
+      digest: false,
+      events: [{}],
+      total_count: 1,
+    },
   });
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-expect-error

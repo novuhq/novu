@@ -207,7 +207,8 @@ jobs:
 
       - uses: ./.github/actions/run-worker
         if: ${{matrix.projectName == '@novu/api' }}
-        secrets: inherit
+        with:
+          launch_darkly_sdk_key: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
 
       - uses: mansagroup/nrwl-nx-action@v3
         env:

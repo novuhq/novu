@@ -83,4 +83,24 @@ export abstract class SendMessageBase extends SendMessageType {
       })
     );
   }
+
+  protected async sendSelectedIntegrationExecution(job: JobEntity, integration: IntegrationEntity) {
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+        detail: DetailEnum.INTEGRATION_INSTANCE_SELECTED,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.PENDING,
+        isTest: false,
+        isRetry: false,
+        raw: JSON.stringify({
+          providerId: integration?.providerId,
+          identifier: integration?.identifier,
+          name: integration?.name,
+          _environmentId: integration?._environmentId,
+          _id: integration?._id,
+        }),
+      })
+    );
+  }
 }

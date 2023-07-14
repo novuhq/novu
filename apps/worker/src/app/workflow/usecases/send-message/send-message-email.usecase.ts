@@ -91,6 +91,7 @@ export class SendMessageEmail extends SendMessageBase {
 
       return;
     }
+
     const emailChannel: NotificationStepEntity = command.step;
     if (!emailChannel) throw new PlatformException('Email channel step not found');
     if (!emailChannel.template) throw new PlatformException('Email channel template not found');
@@ -116,6 +117,8 @@ export class SendMessageEmail extends SendMessageBase {
 
       return;
     }
+
+    await this.sendSelectedIntegrationExecution(command.job, integration);
 
     const overrides: Record<string, any> = Object.assign(
       {},
@@ -468,6 +471,7 @@ export const createMailData = (options: IEmailOptions, overrides: Record<string,
   let to = Array.isArray(options.to) ? options.to : [options.to];
   to = [...to, ...(overrides?.to || [])];
   to = to.reduce(filterDuplicate, []);
+  const ipPoolName = overrides?.ipPoolName ? { ipPoolName: overrides?.ipPoolName } : {};
 
   return {
     ...options,
@@ -476,7 +480,7 @@ export const createMailData = (options: IEmailOptions, overrides: Record<string,
     text: overrides?.text,
     cc: overrides?.cc || [],
     bcc: overrides?.bcc || [],
-    ipPoolName: overrides?.ipPoolName,
+    ...ipPoolName,
   };
 };
 

@@ -126,7 +126,7 @@ export class SendMessageChat extends SendMessageBase {
          * Do nothing, one chat channel failed, perhaps another one succeeds
          * The failed message has been created
          */
-        Logger.error(`Sending chat message to the chat channel ${channel.providerId} failed`, LOG_CONTEXT);
+        Logger.error(`Sending chat message to the chat channel ${channel.providerId} failed`, e, LOG_CONTEXT);
       }
     }
 
@@ -147,10 +147,11 @@ export class SendMessageChat extends SendMessageBase {
   private async sendChannelMessage(
     command: SendMessageCommand,
     subscriberChannel: IChannelSettings,
-    chatChannel,
+    chatChannel: NotificationStepEntity,
     content: string
   ) {
     const integration = await this.getIntegration({
+      id: subscriberChannel._integrationId,
       organizationId: command.organizationId,
       environmentId: command.environmentId,
       providerId: subscriberChannel.providerId,
@@ -181,7 +182,7 @@ export class SendMessageChat extends SendMessageBase {
       _subscriberId: command._subscriberId,
       _actorId: command.job._actorId,
       _templateId: command._templateId,
-      _messageTemplateId: chatChannel.template._id,
+      _messageTemplateId: chatChannel.template?._id,
       channel: ChannelTypeEnum.CHAT,
       transactionId: command.transactionId,
       chatWebhookUrl: chatWebhookUrl,
@@ -203,6 +204,8 @@ export class SendMessageChat extends SendMessageBase {
 
       return;
     }
+
+    await this.sendSelectedIntegrationExecution(command.job, integration);
 
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
