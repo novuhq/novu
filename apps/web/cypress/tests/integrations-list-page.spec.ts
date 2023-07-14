@@ -16,6 +16,7 @@ Cypress.on('window:before:load', (win) => {
     ...win._cypress,
     IS_MULTI_PROVIDER_CONFIGURATION_ENABLED: 'true',
   };
+  win.isDarkTheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
 });
 
 describe('Integrations List Page', function () {
@@ -422,11 +423,22 @@ describe('Integrations List Page', function () {
 
     cy.getByTestId(`provider-${EmailProviderIdEnum.Mailjet}`).contains('Mailjet').click();
 
-    cy.getByTestId(`selected-provider-image-${EmailProviderIdEnum.Mailjet}`).should(
-      'have.attr',
-      'src',
-      `/static/images/providers/dark/square/${EmailProviderIdEnum.Mailjet}.svg`
-    );
+    cy.window().then((win) => {
+      if (win.isDarkTheme) {
+        cy.getByTestId(`selected-provider-image-${EmailProviderIdEnum.Mailjet}`).should(
+          'have.attr',
+          'src',
+          `/static/images/providers/dark/square/${EmailProviderIdEnum.Mailjet}.svg`
+        );
+        return;
+      }
+
+      cy.getByTestId(`selected-provider-image-${EmailProviderIdEnum.Mailjet}`).should(
+        'have.attr',
+        'src',
+        `/static/images/providers/light/square/${EmailProviderIdEnum.Mailjet}.svg`
+      );
+    });
     cy.getByTestId('selected-provider-name').should('be.visible').contains('Mailjet');
 
     cy.getByTestId('select-provider-sidebar-next').should('not.be.disabled').contains('Next');
@@ -455,11 +467,22 @@ describe('Integrations List Page', function () {
       .contains('Specify assignment preferences to automatically allocate the provider instance to the Email channel.');
     cy.getByTestId('create-provider-instance-sidebar-back').should('be.visible');
     cy.getByTestId('sidebar-close').should('be.visible');
-    cy.getByTestId(`selected-provider-image-${EmailProviderIdEnum.Mailjet}`).should(
-      'have.attr',
-      'src',
-      `/static/images/providers/dark/square/${EmailProviderIdEnum.Mailjet}.svg`
-    );
+    cy.window().then((win) => {
+      if (win.isDarkTheme) {
+        cy.getByTestId(`selected-provider-image-${EmailProviderIdEnum.Mailjet}`).should(
+          'have.attr',
+          'src',
+          `/static/images/providers/dark/square/${EmailProviderIdEnum.Mailjet}.svg`
+        );
+        return;
+      }
+
+      cy.getByTestId(`selected-provider-image-${EmailProviderIdEnum.Mailjet}`).should(
+        'have.attr',
+        'src',
+        `/static/images/providers/light/square/${EmailProviderIdEnum.Mailjet}.svg`
+      );
+    });
     cy.getByTestId('provider-instance-name').should('be.visible').should('have.value', 'Mailjet');
     cy.getByTestId('create-provider-instance-sidebar').contains('Environment');
     cy.getByTestId('create-provider-instance-sidebar').contains('Provider instance executes only for');
@@ -758,11 +781,23 @@ describe('Integrations List Page', function () {
       .find('a[href="https://docs.novu.co/notification-center/getting-started"]')
       .contains('Explore set-up guide');
     cy.getByTestId('is_active_id').should('have.value', 'true');
-    cy.getByTestId(`selected-provider-image-${InAppProviderIdEnum.Novu}`).should(
-      'have.attr',
-      'src',
-      `/static/images/providers/dark/square/${InAppProviderIdEnum.Novu}.svg`
-    );
+    cy.window().then((win) => {
+      if (win.isDarkTheme) {
+        cy.getByTestId(`selected-provider-image-${InAppProviderIdEnum.Novu}`).should(
+          'have.attr',
+          'src',
+          `/static/images/providers/dark/square/${InAppProviderIdEnum.Novu}.svg`
+        );
+        return;
+      }
+
+      cy.getByTestId(`selected-provider-image-${InAppProviderIdEnum.Novu}`).should(
+        'have.attr',
+        'src',
+        `/static/images/providers/light/square/${InAppProviderIdEnum.Novu}.svg`
+      );
+    });
+
     cy.getByTestId('provider-instance-name').should('be.visible').should('have.value', 'Novu In-App');
     cy.getByTestId('provider-instance-identifier').should('contain.value', 'novu-in-app');
     cy.getByTestId('hmac').should('not.be.checked');
@@ -846,9 +881,19 @@ describe('Integrations List Page', function () {
 
     cy.wait('@getNovuEmailLimit');
     cy.getByTestId('update-provider-sidebar-novu').should('be.visible');
-    cy.getByTestId('update-provider-sidebar-novu').find(
-      'img[src="/static/images/providers/dark/square/novu-email.svg"]'
-    );
+    cy.window().then((win) => {
+      if (win.isDarkTheme) {
+        cy.getByTestId('update-provider-sidebar-novu').find(
+          'img[src="/static/images/providers/dark/square/novu-email.svg"]'
+        );
+        return;
+      }
+
+      cy.getByTestId('update-provider-sidebar-novu').find(
+        'img[src="/static/images/providers/light/square/novu-email.svg"]'
+      );
+    });
+
     cy.getByTestId('provider-instance-channel').should('contain', 'Email');
     cy.getByTestId('provider-instance-environment').should('contain', 'Development');
     cy.getByTestId('update-provider-sidebar-novu').contains('Novu Email');
@@ -905,7 +950,18 @@ describe('Integrations List Page', function () {
 
     cy.wait('@getNovuSmsLimit');
     cy.getByTestId('update-provider-sidebar-novu').should('be.visible');
-    cy.getByTestId('update-provider-sidebar-novu').find('img[src="/static/images/providers/dark/square/novu-sms.svg"]');
+    cy.window().then((win) => {
+      if (win.isDarkTheme) {
+        cy.getByTestId('update-provider-sidebar-novu').find(
+          'img[src="/static/images/providers/dark/square/novu-sms.svg"]'
+        );
+        return;
+      }
+
+      cy.getByTestId('update-provider-sidebar-novu').find(
+        'img[src="/static/images/providers/light/square/novu-sms.svg"]'
+      );
+    });
     cy.getByTestId('provider-instance-channel').should('contain', 'SMS');
     cy.getByTestId('provider-instance-environment').should('contain', 'Development');
     cy.getByTestId('update-provider-sidebar-novu').contains('Novu SMS');
