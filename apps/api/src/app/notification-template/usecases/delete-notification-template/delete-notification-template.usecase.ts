@@ -15,6 +15,11 @@ import { DeleteMessageTemplateCommand } from '../../../message-template/usecases
 import { DeleteMessageTemplate } from '../../../message-template/usecases/delete-message-template/delete-message-template.usecase';
 import { GetNotificationTemplateCommand } from '../get-notification-template/get-notification-template.command';
 
+/**
+ * DEPRECATED:
+ * This usecase is deprecated and will be removed in the future.
+ * Please use the DeleteWorkflow usecase instead.
+ */
 @Injectable()
 export class DeleteNotificationTemplate {
   constructor(

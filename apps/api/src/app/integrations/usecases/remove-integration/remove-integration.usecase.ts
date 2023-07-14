@@ -20,7 +20,7 @@ export class RemoveIntegration {
         }),
       });
 
-      await this.integrationRepository.delete({ _environmentId: command.environmentId, _id: command.integrationId });
+      await this.integrationRepository.delete({ _id: command.integrationId, _organizationId: command.organizationId });
     } catch (e) {
       if (e instanceof DalException) {
         throw new ApiException(e.message);
