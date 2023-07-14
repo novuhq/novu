@@ -487,7 +487,9 @@
     "Tomer",
     "codesandbox",
     "GROUPBY",
-    "stefanprodan"
+    "stefanprodan",
+    "inkeep",
+    "Inkeep"
   ],
   "flagWords": [],
   "patterns": [
@@ -566,7 +568,7 @@
     ".eslintrc.js",
     ".vscode/settings.json",
     "*/**/.vscode/settings.json",
-    "docs/src/usage-examples.md",
+    "docs/src/usage-examples.mdx",
     "apps/worker/README.md",
     ".gitignore",
     "angular.json",
