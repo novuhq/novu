@@ -218,13 +218,11 @@ export default async function createTopic(req, res) {
 }
 ```
 
-> Make sure you install circular-json using `npm i circular-json` command in your terminal
-
 This is a simple function that calls the **`create`** method on the **`topics`** property of the **`novu`** instance. This method creates a new topic in the Novu system using the provided **`key`** and **`name`** values.
 
 If you test this on your local machine, you should get something like this:
 
-![testing create method](https://res.cloudinary.com/dxc6bnman/image/upload/v1686780448/guides/Untitled_1_i0yw1r.png)
+![testing create method](https://res.cloudinary.com/dxc6bnman/image/upload/v1689372862/guides/create_topic_u6gjzw.png)
 
 > Note how the return object contains the key I’d sent from my request body. That signals successful creation!
 
@@ -232,13 +230,17 @@ If you test this on your local machine, you should get something like this:
 
 The code for adding a subscriber to a previously created topic is as follows:
 
+:::info
+Note: You can only add those subscribers to a topic that you've already created. You can see all the subsribers in the [Novu web dashboard](https://web.novu.co/subscribers)
+:::
+
 ```jsx
 import { Novu } from '@novu/node';
 import CircularJSON from 'circular-json';
 
 export default async function addSub(req, res) {
     try {
-        const novu = new Novu(<YOUR_NOVU_API_KEY>);
+        const novu = new Novu(process.env.NOVU_API_KEY);
         if (req.method === 'POST') {
             // Get the subscriber ID from the request body
             const subscriberId = req.body.subscriberId;
@@ -249,24 +251,22 @@ export default async function addSub(req, res) {
                 subscribers: [subscriberId],
             });
             // Return the result as JSON response
-            res.status(200).json(CircularJSON.stringify(result));
+            res.status(200).json(result.data);
         }
     } catch (error) {
         console.log(error);
-        res.status(500).json(CircularJSON.stringify({ message: error.message }));
+        res.status(500).json({ message: error.message });
     }
 }
 ```
 
-If you see the code above closely, you’ll see that we first establish a connection to Novu using the Novu API key. Then we extract `subscriberID` and topicKey from the request body and call the **`addSubscribers`** method on the **`topics`** property of the **`novu`** instance, passing the topic key and an object with an array of subscribers.
+If you see the code above closely, you’ll see that we first establish a connection to Novu using the Novu API key. <br/><br/>Then we extract `subscriberID` and topicKey from the request body and call the **`addSubscribers`** method on the **`topics`** property of the **`novu`** instance, passing the topic key and an object with an array of subscribers. <br/><br/>This adds the subscriber with the `subscriberID` we’d passed to the array of subscribers, which in the above case contains just one subscriber. <br/><br/>If you check this on Postman, the returned array will contain the `subscriberID` that we had passed in the request body, signalling that it was added to the topic successfully. <br/><br/>If, on the other hand, you find the passed `subscriberId` in the `notFound` array inside `failed` object, it means the subscriber wasn't added to the topic. <br/><br/>You can read more about it [here](https://docs.novu.co/platform/topics/#subscribers-management-in-a-topic).
 
-This adds the subscriber with the `subscriberID` we’d passed to the array of subscribers, which in the above case contains just one subscriber.
+The image below shows the case where the subscriber has been added successfully:
 
-If you check this on Postman, the array returned will contain the `subscriberID` (highlighted in the result) we’d passed in the request body signaling that it was added, as shown below:
+![The returned array contains 'subscriberID'](https://res.cloudinary.com/dxc6bnman/image/upload/v1689373330/guides/add_sub_upnde2.png)
 
-![The returned array contains 'subscriberID'](https://res.cloudinary.com/dxc6bnman/image/upload/v1686780607/guides/Untitled_2_za1uqr.png)
-
-After creating a topic and adding subscribers to the topic, we’ll now proceed to send a notification to all subscribers (we only have one subscriber in our topic) of a topic. This is what Topics are used for - sending bulk notifications.
+After creating a topic and adding subscribers to the topic, we’ll now proceed to send a notification to all subscribers (we only have one subscriber in our topic though) of a topic. This is what Topics are used for - sending bulk notifications.
 
 ## Sending notifications to a topic
 
@@ -278,7 +278,7 @@ import CircularJSON from 'circular-json';
 
 export default async function sendNotifToSub(req, res) {
     try {
-        const novu = new Novu(<YOUR_NOVU_API_KEY>);
+        const novu = new Novu(process.env.NOVU_API_KEY);
         if (req.method === 'POST') {
             // Get the topic key from the request body
             const topicKey = req.body.topicKey;
@@ -294,20 +294,22 @@ export default async function sendNotifToSub(req, res) {
                 },
             });
             // Return the result as JSON response
-            res.json(CircularJSON.stringify(result));
+            res.json(result.data);
         }
     } catch (error) {
         console.log(error);
-        res.status(500).json(CircularJSON.stringify({ message: error.message }));
+        res.status(500).json({ message: error.message });
     }
 }
 ```
 
 Testing this on Postman should give you something like this:
 
-![Sending notifications to a topic](https://res.cloudinary.com/dxc6bnman/image/upload/v1686780706/guides/Untitled_3_stdaxh.png)
+![Sending notifications to a topic](https://res.cloudinary.com/dxc6bnman/image/upload/v1689374058/guides/Screenshot_2023-07-15_at_4.04.10_AM_cjhpn2.png)
 
-Notice that the response received contains the data from the payload and that the status code is 200, denoting success!
+If you see this, then it means the notification was sent successfully, as can be seen in my inbox down below:
+
+![Inbox has received the sent notification](https://res.cloudinary.com/dxc6bnman/image/upload/v1689373989/guides/Screenshot_2023-07-15_at_4.02.40_AM_gxhkmm.png)
 
 ## Next Steps
 
