@@ -91,7 +91,7 @@ Now, we’ve successfully sent the test email and just need to do this from our 
 
 In Novu, entities that are supposed to receive notifications are called subscribers. You can see all the subscribers in the ‘subscribers’ tab in the left menu on the Novu web portal. There would be one subscriber by default, which is you. This was created when you signed up for Novu.
 
-In real-world scenarios, the `subscriber id` would be a unique id generated automatically by the database. So for our demo purpose, we’re using a simple subscriber id of ‘123’ in our app.
+In real-world scenarios, the `subscriber id` would be a unique id generated automatically by the database. So for our demo purpose, we’re using a simple subscriber id of ‘1234567890’ in our app.
 
 We’ll first create a subscriber using the following code:
 
@@ -101,14 +101,14 @@ import { Novu } from '@novu/node';
 const novu = new Novu(<YOUR_NOVU_API_KEY>);
 
 export async function sendEmail(email, description) {
-    await novu.subscribers.identify('123', {
+    await novu.subscribers.identify('1234567890', {
         email: email,
         firstName: "Subscriber",
     });
 }
 ```
 
-Here, we’re creating a subscriber with the subscriber id of `123` and now we’ll send a notification to the subscriber with this very subscriber id by triggering an email notification like follows:
+Here, we’re creating a subscriber with the subscriber id of `1234567890` and now we’ll send a notification to the subscriber with this very subscriber id by triggering an email notification like follows:
 
 ```jsx
 import { Novu } from '@novu/node';
@@ -116,13 +116,13 @@ import { Novu } from '@novu/node';
 const novu = new Novu(<YOUR_NOVU_API_KEY>);
 
 export async function sendEmail(email, description) {
-    await novu.subscribers.identify('123', {
+    await novu.subscribers.identify('1234567890', {
         email: email,
         firstName: "Subscriber",
     });
     await novu.trigger('email-quickstart', {
         to: {
-            subscriberId: '123',
+            subscriberId: '1234567890',
             email: email
         },
         payload: {
