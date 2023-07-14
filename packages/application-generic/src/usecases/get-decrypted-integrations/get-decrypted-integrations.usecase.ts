@@ -18,11 +18,11 @@ export class GetDecryptedIntegrations {
   constructor(
     private integrationRepository: IntegrationRepository,
     private getNovuIntegration: GetNovuIntegration,
-    private getFeatureFlag: GetFeatureFlag,
+    private getFeatureFlag: GetFeatureFlag
   ) {}
 
   async execute(
-    command: GetDecryptedIntegrationsCommand,
+    command: GetDecryptedIntegrationsCommand
   ): Promise<IntegrationEntity[]> {
     const isMultiProviderConfigurationEnabled =
       await this.getFeatureFlag.isMultiProviderConfigurationEnabled(
@@ -30,7 +30,7 @@ export class GetDecryptedIntegrations {
           userId: command.userId,
           organizationId: command.organizationId,
           environmentId: command.environmentId,
-        }),
+        })
       );
 
     const query: Partial<IntegrationEntity> & { _organizationId: string } = {
@@ -76,7 +76,7 @@ export class GetDecryptedIntegrations {
           organizationId: command.organizationId,
           environmentId: command.environmentId,
           userId: command.userId,
-        }),
+        })
       );
 
       return novuIntegration ? [novuIntegration] : [];
@@ -89,7 +89,7 @@ export class GetDecryptedIntegrations {
         environmentId: command.environmentId,
         userId: command.userId,
         ignoreActiveCount: true,
-      }),
+      })
     );
 
     if (novuEmailIntegration) {
@@ -103,7 +103,7 @@ export class GetDecryptedIntegrations {
         environmentId: command.environmentId,
         userId: command.userId,
         ignoreActiveCount: true,
-      }),
+      })
     );
 
     if (novuSmsIntegration) {

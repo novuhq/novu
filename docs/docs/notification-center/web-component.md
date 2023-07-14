@@ -45,7 +45,7 @@ After that, you can use the web component in your HTML:
 Sometimes you might not be able to use the ESM module, for example in the WordPress environment. In that case, you can use the bundled version of the Notification Center Web Component that is available on the CDN.
 
 ```html
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     ...
