@@ -56,6 +56,7 @@ describe('Activity Feed Screen', function () {
     cy.getByTestId('email-step').should('have.length', 10);
     cy.getByTestId('activities-filter').click();
     cy.get('.mantine-MultiSelect-item').contains('SMS').click();
+    cy.getByTestId('submit-filters').click();
     cy.getByTestId('email-step').should('have.length', 0);
   });
 
