@@ -25,7 +25,7 @@ export class ChatOauth {
       externalHmacHash: command.hmacHash,
     });
 
-    return this.getOAuthUrl(command.subscriberId, command.environmentId, clientId!);
+    return this.getOAuthUrl(command.subscriberId, command.environmentId, clientId!, command.integrationIdentifier);
   }
 
   private async hmacValidation({
@@ -54,10 +54,23 @@ export class ChatOauth {
     }
   }
 
-  private getOAuthUrl(subscriberId: string, environmentId: string, clientId: string): string {
-    const redirectUri = `${process.env.API_ROOT_URL}/v1/subscribers/${subscriberId}/credentials/slack/oauth/callback?environmentId=${environmentId}`;
+  private getOAuthUrl(
+    subscriberId: string,
+    environmentId: string,
+    clientId: string,
+    integrationIdentifier?: string
+  ): string {
+    let redirectUri =
+      process.env.API_ROOT_URL +
+      `/v1/subscribers/${subscriberId}/credentials/slack/oauth/callback?environmentId=${environmentId}`;
 
-    return `${this.SLACK_OAUTH_URL}client_id=${clientId}&scope=incoming-webhook&user_scope=&redirect_uri=${redirectUri}`;
+    if (integrationIdentifier) {
+      redirectUri = `${redirectUri}&integrationIdentifier=${integrationIdentifier}`;
+    }
+
+    return `${
+      this.SLACK_OAUTH_URL
+    }client_id=${clientId}&scope=incoming-webhook&user_scope=&redirect_uri=${encodeURIComponent(redirectUri)}`;
   }
 
   private async getCredentials(command: ChatOauthCommand): Promise<ICredentialsEntity> {
@@ -67,7 +80,13 @@ export class ChatOauth {
       providerId: command.providerId,
     };
 
-    const integration = await this.integrationRepository.findOne(query);
+    if (command.integrationIdentifier) {
+      query.identifier = command.integrationIdentifier;
+    }
+
+    const integration = await this.integrationRepository.findOne(query, undefined, {
+      query: { sort: { createdAt: -1 } },
+    });
 
     if (!integration) {
       throw new NotFoundException(

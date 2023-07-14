@@ -68,7 +68,6 @@ import { GetSubscribersDto } from './dtos/get-subscribers.dto';
 import { GetInAppNotificationsFeedForSubscriberDto } from './dtos/get-in-app-notification-feed-for-subscriber.dto';
 import { ApiResponse } from '../shared/framework/response.decorator';
 import { ChatOauthCallbackRequestDto, ChatOauthRequestDto } from './dtos/chat-oauth-request.dto';
-import { LimitPipe } from '../widgets/pipes/limit-pipe/limit-pipe';
 import { OAuthHandlerEnum } from './types';
 import { ChatOauthCallback } from './usecases/chat-oauth-callback/chat-oauth-callback.usecase';
 import { ChatOauthCallbackCommand } from './usecases/chat-oauth-callback/chat-oauth-callback.command';
@@ -78,7 +77,6 @@ import {
   DeleteSubscriberCredentialsCommand,
   DeleteSubscriberCredentials,
 } from './usecases/delete-subscriber-credentials';
-import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 
 @Controller('/subscribers')
 @ApiTags('Subscribers')
@@ -225,6 +223,7 @@ export class SubscribersController {
         subscriberId,
         providerId: body.providerId,
         credentials: body.credentials,
+        integrationIdentifier: body.integrationIdentifier,
         oauthHandler: OAuthHandlerEnum.EXTERNAL,
       })
     );
@@ -385,8 +384,7 @@ export class SubscribersController {
     @Query('feedIdentifier') feedId: string[] | string,
     @Query('seen') seen: boolean,
     @Param('subscriberId') subscriberId: string,
-    // todo NV-2161 update DefaultValuePipe to 100 in version 0.16
-    @Query('limit', new DefaultValuePipe(1000), new LimitPipe(1, 1000, true)) limit: number
+    @Query('limit', new DefaultValuePipe(100)) limit: number
   ): Promise<UnseenCountResponse> {
     let feedsQuery: string[] | undefined;
     if (feedId) {
@@ -476,6 +474,7 @@ export class SubscribersController {
         providerCode: query?.code,
         hmacHash: query?.hmacHash,
         environmentId: query?.environmentId,
+        integrationIdentifier: query?.integrationIdentifier,
         subscriberId,
         providerId,
       })
@@ -505,6 +504,7 @@ export class SubscribersController {
       ChatOauthCommand.create({
         hmacHash: query?.hmacHash,
         environmentId: query?.environmentId,
+        integrationIdentifier: query?.integrationIdentifier,
         subscriberId,
         providerId,
       })

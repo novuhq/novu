@@ -1,6 +1,5 @@
 import {
   DigestUnitEnum,
-  IAttachmentOptions,
   ITriggerPayload,
   TriggerRecipientSubscriber,
   TriggerRecipientsPayload,
@@ -24,6 +23,7 @@ export interface IEmailOverrides {
   replyTo?: string;
   cc?: string[];
   bcc?: string[];
+  senderName?: string;
 }
 
 export type ITriggerOverrides = {
@@ -38,6 +38,8 @@ export type ITriggerOverrides = {
   [key in 'fcm']?: ITriggerOverrideFCM;
 } & {
   [key in 'apns']?: ITriggerOverrideAPNS;
+} & {
+  [key in 'expo']?: ITriggerOverrideExpo;
 } & {
   [key in 'delay']?: ITriggerOverrideDelayAction;
 } & {
@@ -105,6 +107,22 @@ export type ITriggerOverrideAPNS = {
   mutableContent?: boolean;
   mdm?: string | Record<string, unknown>;
   urlArgs?: string[];
+};
+
+export type ITriggerOverrideExpo = {
+  to?: string | string[];
+  data?: object;
+  title?: string;
+  body?: string;
+  ttl?: number;
+  expiration?: number;
+  priority?: 'default' | 'normal' | 'high';
+  subtitle?: string;
+  badge?: number;
+  sound?: string;
+  channelId?: string;
+  categoryId?: string;
+  mutableContent?: boolean;
 };
 
 export interface IBulkEvents extends ITriggerPayloadOptions {
