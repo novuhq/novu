@@ -12,10 +12,6 @@ export default function SearchBarWrapper() {
   const [SearchBar, setSearchBar] = useState(null);
 
   useEffect(() => {
-    /*
-     * We're using an IIFE (Immediately Invoked Function Expression) here because
-     * useEffect cannot directly return a Promise.
-     */
     (async () => {
       const { InkeepSearchBar } = await import('@inkeep/widgets');
       setSearchBar(() => InkeepSearchBar);

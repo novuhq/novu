@@ -30,7 +30,7 @@
     "@docusaurus/plugin-google-gtag": "3.0.0-alpha.0",
     "@docusaurus/preset-classic": "3.0.0-alpha.0",
     "@docusaurus/theme-common": "3.0.0-alpha.0",
-    "@inkeep/widgets": "^0.2.143",
+    "@inkeep/widgets": "^0.2.150",
     "@mdx-js/react": "^2.3.0",
     "@svgr/webpack": "^6.2.1",
     "acorn": "^8.9.0",
@@ -51,6 +51,7 @@
     "url-loader": "^4.1.1"
   },
   "devDependencies": {
+    "@docusaurus/types": "3.0.0-alpha.0",
     "@docusaurus/module-type-aliases": "3.0.0-alpha.0",
     "@tsconfig/docusaurus": "1.0.7",
     "@types/react": "^18.2.14",
