@@ -170,11 +170,11 @@ Copy and paste the following code into your app to trigger a notification:
 from novu.config import NovuConfig
 from novu.api import EventApi
 
-NovuConfig().configure("https://api.novu.co", "<NOVU_API_TOKEN>")
+NovuConfig().configure("https://api.novu.co", "b23c55928da9e76702b74921a7fffee2")
 
 EventApi().trigger(
-     name="<YOUR_WORKFLOW_TRIGGER_ID>",  # The workflow ID is the slug of the workflow name. It can be found on the workflow page.
-    recipients="<YOUR_SUBSCRIBER_ID>",
+     name="test",  # The trigger ID of the workflow. It can be found on the workflow page.
+    recipients="123",
     payload={},  # Your Novu payload goes here
 )
 ```
