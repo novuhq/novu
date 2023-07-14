@@ -15,7 +15,7 @@ import { Button, Input, Title, Tooltip, Text } from '../../../../design-system';
 import { getGradient } from '../../../../design-system/config/helper';
 import { Search } from '../../../../design-system/icons';
 import useStyles from '../../../../design-system/tabs/Tabs.styles';
-import { useDebounce, useEffectOnce } from '../../../../hooks';
+import { useDebounce } from '../../../../hooks';
 import { ChannelTitle } from '../../../templates/components/ChannelTitle';
 import type { IIntegratedProvider } from '../../types';
 import { CHANNELS_ORDER } from '../IntegrationsListNoData';

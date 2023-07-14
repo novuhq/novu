@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import styled from '@emotion/styled';
 import { Grid, Group, Modal, ActionIcon, createStyles, MantineTheme, Drawer } from '@mantine/core';
-import { ChannelTypeEnum, EmailProviderIdEnum, InAppProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  EmailProviderIdEnum,
+  InAppProviderIdEnum,
+  SmsProviderIdEnum,
+  ICredentials,
+} from '@novu/shared';
 
 import { useAuthController, useEnvController } from '../../hooks';
 import { When } from '../../components/utils/When';
