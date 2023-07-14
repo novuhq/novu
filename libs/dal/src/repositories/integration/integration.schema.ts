@@ -28,7 +28,6 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       port: Schema.Types.String,
       secure: Schema.Types.Boolean,
       region: Schema.Types.String,
-      eu: Schema.Types.Boolean,
       accountSid: Schema.Types.String,
       messageProfileId: Schema.Types.String,
       token: Schema.Types.String,

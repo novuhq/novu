@@ -17,13 +17,14 @@ export class SparkPostEmailProvider implements IEmailProvider {
   constructor(
     private config: {
       apiKey: string;
-      eu: boolean;
+      region: string;
       from: string;
       senderName: string;
     }
   ) {
+    const endpoint = this.getEndpoint(config.region);
     this.client = new SparkPost(config.apiKey, {
-      endpoint: config.eu ? 'https://api.eu.sparkpost.com:443' : undefined,
+      endpoint,
     });
   }
 
@@ -89,6 +90,15 @@ export class SparkPostEmailProvider implements IEmailProvider {
         message: error?.message,
         code: CheckIntegrationResponseEnum.FAILED,
       };
+    }
+  }
+
+  private getEndpoint(region: string) {
+    switch (region) {
+      case 'eu':
+        return 'https://api.eu.sparkpost.com:443';
+      default:
+        return;
     }
   }
 }

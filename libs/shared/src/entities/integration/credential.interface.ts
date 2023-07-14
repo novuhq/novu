@@ -8,7 +8,6 @@ export interface ICredentials {
   port?: string;
   secure?: boolean;
   region?: string;
-  eu?: boolean;
   accountSid?: string;
   messageProfileId?: string;
   token?: string;

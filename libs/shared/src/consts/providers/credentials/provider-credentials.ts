@@ -228,10 +228,10 @@ export const sparkpostConfig: IConfigCredentials[] = [
     required: true,
   },
   {
-    key: CredentialsKeyEnum.Eu,
-    displayName: 'EU',
+    key: CredentialsKeyEnum.Region,
+    displayName: 'Region',
     description: 'Use `eu` if your account is registered to SparkPost EU',
-    type: 'boolean',
+    type: 'string',
     required: false,
   },
   ...mailConfigBase,

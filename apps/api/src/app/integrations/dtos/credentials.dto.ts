@@ -51,12 +51,6 @@ export class CredentialsDto implements ICredentials {
   region?: string;
 
   @ApiPropertyOptional()
-  @TransformToBoolean()
-  @IsBoolean()
-  @IsOptional()
-  eu?: boolean;
-
-  @ApiPropertyOptional()
   @IsString()
   @IsOptional()
   accountSid?: string;

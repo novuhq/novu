@@ -11,7 +11,7 @@ export class SparkPostHandler extends BaseHandler {
     const config = {
       from: from as string,
       apiKey: credentials.apiKey as string,
-      eu: credentials.eu as boolean,
+      region: credentials.region as string,
       senderName: credentials.senderName as string,
     };
 
