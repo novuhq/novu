@@ -1078,7 +1078,7 @@ importers:
       '@docusaurus/preset-classic': 3.0.0-alpha.0
       '@docusaurus/theme-common': 3.0.0-alpha.0
       '@docusaurus/types': 3.0.0-alpha.0
-      '@inkeep/widgets': ^0.2.150
+      '@inkeep/widgets': ^0.2.151
       '@mdx-js/react': ^2.3.0
       '@svgr/webpack': ^6.2.1
       '@tsconfig/docusaurus': 1.0.7
@@ -1128,7 +1128,7 @@ importers:
       '@docusaurus/plugin-google-gtag': 3.0.0-alpha.0_albshr5iihf5pum24m7re35nzm
       '@docusaurus/preset-classic': 3.0.0-alpha.0_6ibofzfj2wttepzcwjv3ycldam
       '@docusaurus/theme-common': 3.0.0-alpha.0_3j53q3twth65uiwtzfcd7ji7lu
-      '@inkeep/widgets': 0.2.150_clwdj742dood3wxkovrqay7cta
+      '@inkeep/widgets': 0.2.151_clwdj742dood3wxkovrqay7cta
       '@mdx-js/react': 2.3.0_react@18.2.0
       '@svgr/webpack': 6.5.1
       acorn: 8.10.0
@@ -13037,8 +13037,8 @@ packages:
       - debug
     dev: false
 
-  /@inkeep/widgets/0.2.150_clwdj742dood3wxkovrqay7cta:
-    resolution: {integrity: sha512-eodCmVc2p9KZaQKZdhGVWSM99zGdn7aG73puAGwmZQ4e+s+MbY8PItOzUX2QxqzFF/Vv4IfGBGiSA9NIAuGVSw==}
+  /@inkeep/widgets/0.2.151_clwdj742dood3wxkovrqay7cta:
+    resolution: {integrity: sha512-xvj3Hewaq1eA+/PzzCXdWyeRpfrOqyy5bFwB7VDjURpoWgdaweyku7WC2nCW2PDwIuDa4hFC8XEMylk0W6SlCA==}
     peerDependencies:
       react: ^18.2.0
       react-dom: ^18.2.0
