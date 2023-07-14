@@ -116,7 +116,7 @@ Now, let's create a subscriber on Novu. Copy and paste the following code to do 
 from novu.api.subscriber import SubscriberApi
 from novu.dto.subscriber import SubscriberDto
    
-your_subscriber_id = "123" # Replace this with a unique user ID that matches your database.
+your_subscriber_id = "123" # Replace this with a unique user ID.
 
 subscriber = SubscriberApi("https://api.novu.co", "b23c55928da9e76702b74921a7fffee2")
 subscriber.create(SubscriberDto(
