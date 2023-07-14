@@ -18,10 +18,17 @@ Cypress.on('window:before:load', (win) => {
   };
 });
 
-describe('Integrations List Page', function () {
+describe('Integrations List Modal', function () {
   beforeEach(function () {
     cy.initializeSession().as('session');
   });
+
+  const navigateToGetStarted = () => {
+    cy.visit('/get-started');
+    cy.location('pathname').should('equal', '/get-started');
+    cy.getByTestId('channel-card-email').find('button').contains('Change Provider').click();
+    cy.getByTestId('integrations-list-modal').should('be.visible').contains('Integrations Store');
+  };
 
   const checkTableLoading = () => {
     cy.getByTestId('integration-name-cell-loading').should('have.length', 10).first().should('be.visible');
@@ -110,11 +117,11 @@ describe('Integrations List Page', function () {
   it('should show the table loading skeleton and empty state', () => {
     cy.intercept('*/integrations', {
       data: [],
-      delay: 1000,
+      delay: 3500,
     }).as('getIntegrations');
-
-    cy.visit('/integrations');
-    cy.location('pathname').should('equal', '/integrations');
+    navigateToGetStarted();
+    cy.getByTestId('select-provider-sidebar').should('be.visible');
+    cy.getByTestId('sidebar-close').should('be.visible').click();
 
     cy.getByTestId('add-provider').should('be.disabled').contains('Add a provider');
     checkTableLoading();
@@ -134,11 +141,12 @@ describe('Integrations List Page', function () {
 
   it('should show the table loading skeleton and then table', function () {
     cy.intercept('*/integrations', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 3500));
     }).as('getIntegrations');
 
-    cy.visit('/integrations');
-    cy.location('pathname').should('equal', '/integrations');
+    navigateToGetStarted();
+    cy.getByTestId('select-provider-sidebar').should('be.visible');
+    cy.getByTestId('sidebar-close').should('be.visible').click();
 
     cy.getByTestId('add-provider').should('be.disabled').contains('Add a provider');
     checkTableLoading();
@@ -291,21 +299,17 @@ describe('Integrations List Page', function () {
 
   it('should show the select provider sidebar', () => {
     cy.intercept('*/integrations', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }).as('getIntegrations');
     cy.intercept('*/environments').as('getEnvironments');
 
-    cy.visit('/integrations');
-    cy.location('pathname').should('equal', '/integrations');
-
-    cy.getByTestId('add-provider').should('be.disabled').contains('Add a provider');
+    navigateToGetStarted();
 
     cy.wait('@getIntegrations');
     cy.wait('@getEnvironments');
 
     cy.getByTestId('add-provider').should('be.enabled').click();
 
-    cy.location('pathname').should('equal', '/integrations/create');
     cy.getByTestId('select-provider-sidebar').should('be.visible').as('selectProviderSidebar');
 
     cy.get('@selectProviderSidebar').getByTestId('sidebar-close').should('be.visible');
@@ -316,7 +320,7 @@ describe('Integrations List Page', function () {
       .should('have.attr', 'placeholder', 'Search a provider...');
 
     cy.get('@selectProviderSidebar').find('[role="tablist"]').as('channelTabs');
-    cy.get('@channelTabs').find('[data-active="true"]').contains('In-App');
+    cy.get('@channelTabs').find('[data-active="true"]').contains('Email');
     cy.get('@channelTabs').contains('In-App');
     cy.get('@channelTabs').contains('Email');
     cy.get('@channelTabs').contains('Chat');
@@ -351,16 +355,15 @@ describe('Integrations List Page', function () {
 
   it('should allow for searching', () => {
     cy.intercept('*/integrations', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }).as('getIntegrations');
     cy.intercept('*/environments').as('getEnvironments');
 
-    cy.visit('/integrations');
+    navigateToGetStarted();
 
     cy.wait('@getIntegrations');
     cy.wait('@getEnvironments');
 
-    cy.getByTestId('add-provider').should('be.enabled').click();
     cy.getByTestId('select-provider-sidebar').should('be.visible').as('selectProviderSidebar');
 
     cy.get('@selectProviderSidebar').find('input[type="search"]').type('Mail');
@@ -382,16 +385,15 @@ describe('Integrations List Page', function () {
 
   it('should show emply search results', () => {
     cy.intercept('*/integrations', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }).as('getIntegrations');
     cy.intercept('*/environments').as('getEnvironments');
 
-    cy.visit('/integrations');
+    navigateToGetStarted();
 
     cy.wait('@getIntegrations');
     cy.wait('@getEnvironments');
 
-    cy.getByTestId('add-provider').should('be.enabled').click();
     cy.getByTestId('select-provider-sidebar').should('be.visible').as('selectProviderSidebar');
 
     cy.get('@selectProviderSidebar').find('input[type="search"]').type('safasdfasdfasdfasdfas');
@@ -408,16 +410,15 @@ describe('Integrations List Page', function () {
 
   it('should allow selecting a provider', () => {
     cy.intercept('*/integrations', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }).as('getIntegrations');
     cy.intercept('*/environments').as('getEnvironments');
 
-    cy.visit('/integrations');
+    navigateToGetStarted();
 
     cy.wait('@getIntegrations');
     cy.wait('@getEnvironments');
 
-    cy.getByTestId('add-provider').should('be.enabled').click();
     cy.getByTestId('select-provider-sidebar').should('be.visible');
 
     cy.getByTestId(`provider-${EmailProviderIdEnum.Mailjet}`).contains('Mailjet').click();
@@ -434,22 +435,20 @@ describe('Integrations List Page', function () {
 
   it('should allow moving to create sidebar', () => {
     cy.intercept('*/integrations', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }).as('getIntegrations');
     cy.intercept('*/environments').as('getEnvironments');
 
-    cy.visit('/integrations');
+    navigateToGetStarted();
 
     cy.wait('@getIntegrations');
     cy.wait('@getEnvironments');
 
-    cy.getByTestId('add-provider').should('be.enabled').click();
     cy.getByTestId('select-provider-sidebar').should('be.visible');
 
     cy.getByTestId(`provider-${EmailProviderIdEnum.Mailjet}`).contains('Mailjet').click();
     cy.getByTestId('select-provider-sidebar-next').should('not.be.disabled').contains('Next').click();
 
-    cy.location('pathname').should('equal', '/integrations/create/email/mailjet');
     cy.getByTestId('create-provider-instance-sidebar')
       .should('be.visible')
       .contains('Specify assignment preferences to automatically allocate the provider instance to the Email channel.');
@@ -472,50 +471,43 @@ describe('Integrations List Page', function () {
 
   it('should allow moving back from create provider sidebar to select provider sidebar', () => {
     cy.intercept('*/integrations', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }).as('getIntegrations');
     cy.intercept('*/environments').as('getEnvironments');
 
-    cy.visit('/integrations');
+    navigateToGetStarted();
 
     cy.wait('@getIntegrations');
     cy.wait('@getEnvironments');
 
-    cy.getByTestId('add-provider').should('be.enabled').click();
-    cy.location('pathname').should('equal', '/integrations/create');
     cy.getByTestId('select-provider-sidebar').should('be.visible');
 
     cy.getByTestId(`provider-${EmailProviderIdEnum.Mailjet}`).contains('Mailjet').click();
     cy.getByTestId('select-provider-sidebar-next').should('not.be.disabled').contains('Next').click();
-    cy.location('pathname').should('equal', '/integrations/create/email/mailjet');
 
     cy.getByTestId('create-provider-instance-sidebar-back').should('be.visible').click();
-    cy.location('pathname').should('equal', '/integrations/create');
     cy.getByTestId('select-provider-sidebar').should('be.visible');
   });
 
   it('should create a new mailjet integration', () => {
     cy.intercept('GET', '*/integrations', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }).as('getIntegrations');
     cy.intercept('POST', '*/integrations', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }).as('createIntegration');
     cy.intercept('*/environments').as('getEnvironments');
 
-    cy.visit('/integrations');
+    navigateToGetStarted();
 
     cy.wait('@getIntegrations');
     cy.wait('@getEnvironments');
 
-    cy.getByTestId('add-provider').should('be.enabled').click();
-    cy.location('pathname').should('equal', '/integrations/create');
     cy.getByTestId('select-provider-sidebar').should('be.visible');
 
     cy.getByTestId(`provider-${EmailProviderIdEnum.Mailjet}`).contains('Mailjet').click();
     cy.getByTestId('select-provider-sidebar-next').should('not.be.disabled').contains('Next').click();
 
-    cy.location('pathname').should('equal', '/integrations/create/email/mailjet');
     cy.getByTestId('provider-instance-name').clear().type('Mailjet Integration');
     cy.getByTestId('create-provider-instance-sidebar-create').should('not.be.disabled').contains('Create').click();
     cy.getByTestId('create-provider-instance-sidebar-create').should('be.disabled');
@@ -523,7 +515,7 @@ describe('Integrations List Page', function () {
     cy.wait('@createIntegration');
 
     cy.getByTestId('update-provider-sidebar').should('be.visible');
-    cy.location('pathname').should('contain', '/integrations/');
+    cy.getByTestId('sidebar-close').click();
 
     checkTableRow(
       {
@@ -539,26 +531,23 @@ describe('Integrations List Page', function () {
 
   it('should update the mailjet integration', () => {
     cy.intercept('GET', '*/integrations', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }).as('getIntegrations');
     cy.intercept('POST', '*/integrations', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }).as('createIntegration');
     cy.intercept('*/environments').as('getEnvironments');
 
-    cy.visit('/integrations');
+    navigateToGetStarted();
 
     cy.wait('@getIntegrations');
     cy.wait('@getEnvironments');
 
-    cy.getByTestId('add-provider').should('be.enabled').click();
-    cy.location('pathname').should('equal', '/integrations/create');
     cy.getByTestId('select-provider-sidebar').should('be.visible');
 
     cy.getByTestId(`provider-${EmailProviderIdEnum.Mailjet}`).contains('Mailjet').click();
     cy.getByTestId('select-provider-sidebar-next').should('not.be.disabled').contains('Next').click();
 
-    cy.location('pathname').should('equal', '/integrations/create/email/mailjet');
     cy.getByTestId('provider-instance-name').clear().type('Mailjet Integration');
     cy.getByTestId('create-provider-instance-sidebar-create').should('not.be.disabled').contains('Create').click();
 
@@ -577,7 +566,6 @@ describe('Integrations List Page', function () {
       .should('contain.value', 'mailjet');
 
     cy.getByTestId('update-provider-sidebar-update').should('be.disabled');
-    cy.location('pathname').should('contain', '/integrations/');
     cy.getByTestId('provider-instance-name').first().clear().type('Mailjet Integration Updated');
     cy.getByTestId('is_active_id').check({ force: true });
     cy.getByTestId('apiKey').type('fake-api-key');
@@ -586,6 +574,7 @@ describe('Integrations List Page', function () {
     cy.getByTestId('senderName').type('Novu');
     cy.getByTestId('update-provider-sidebar-update').should('not.be.disabled').contains('Update').click();
 
+    cy.getByTestId('sidebar-close').click();
     checkTableRow(
       {
         name: 'Mailjet Integration Updated',
@@ -600,26 +589,23 @@ describe('Integrations List Page', function () {
 
   it('should update the mailjet integration from the list', () => {
     cy.intercept('GET', '*/integrations', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }).as('getIntegrations');
     cy.intercept('POST', '*/integrations', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }).as('createIntegration');
     cy.intercept('*/environments').as('getEnvironments');
 
-    cy.visit('/integrations');
+    navigateToGetStarted();
 
     cy.wait('@getIntegrations');
     cy.wait('@getEnvironments');
 
-    cy.getByTestId('add-provider').should('be.enabled').click();
-    cy.location('pathname').should('equal', '/integrations/create');
     cy.getByTestId('select-provider-sidebar').should('be.visible');
 
     cy.getByTestId(`provider-${EmailProviderIdEnum.Mailjet}`).contains('Mailjet').click();
     cy.getByTestId('select-provider-sidebar-next').should('not.be.disabled').contains('Next').click();
 
-    cy.location('pathname').should('equal', '/integrations/create/email/mailjet');
     cy.getByTestId('provider-instance-name').clear().type('Mailjet Integration');
     cy.getByTestId('create-provider-instance-sidebar-create').should('not.be.disabled').contains('Create').click();
 
@@ -627,12 +613,10 @@ describe('Integrations List Page', function () {
 
     cy.getByTestId('update-provider-sidebar').should('be.visible');
     cy.getByTestId('sidebar-close').should('be.visible').click();
-    cy.location('pathname').should('equal', '/integrations');
 
     cy.wait('@getIntegrations');
 
     clickOnListRow('Mailjet Integration');
-    cy.location('pathname').should('contain', '/integrations/');
 
     cy.getByTestId('update-provider-sidebar').contains('Set up credentials to start sending notifications.');
     cy.getByTestId('update-provider-sidebar').getByTestId('is_active_id').should('have.value', 'false');
@@ -644,7 +628,6 @@ describe('Integrations List Page', function () {
       .should('contain.value', 'mailjet');
 
     cy.getByTestId('update-provider-sidebar-update').should('be.disabled');
-    cy.location('pathname').should('contain', '/integrations/');
     cy.getByTestId('provider-instance-name').first().clear().type('Mailjet Integration Updated');
     cy.getByTestId('is_active_id').check({ force: true });
     cy.getByTestId('apiKey').type('fake-api-key');
@@ -653,6 +636,7 @@ describe('Integrations List Page', function () {
     cy.getByTestId('senderName').type('Novu');
     cy.getByTestId('update-provider-sidebar-update').should('not.be.disabled').click();
 
+    cy.getByTestId('sidebar-close').click();
     checkTableRow(
       {
         name: 'Mailjet Integration Updated',
@@ -667,7 +651,7 @@ describe('Integrations List Page', function () {
 
   it('should allow to delete the mailjet integration', () => {
     cy.intercept('GET', '*/integrations', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }).as('getIntegrations');
     cy.intercept('POST', '*/integrations', async () => {
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -677,19 +661,16 @@ describe('Integrations List Page', function () {
     }).as('deleteIntegration');
     cy.intercept('*/environments').as('getEnvironments');
 
-    cy.visit('/integrations');
+    navigateToGetStarted();
 
     cy.wait('@getIntegrations');
     cy.wait('@getEnvironments');
 
-    cy.getByTestId('add-provider').should('be.enabled').click();
-    cy.location('pathname').should('equal', '/integrations/create');
     cy.getByTestId('select-provider-sidebar').should('be.visible');
 
     cy.getByTestId(`provider-${EmailProviderIdEnum.Mailjet}`).contains('Mailjet').click();
     cy.getByTestId('select-provider-sidebar-next').should('not.be.disabled').contains('Next').click();
 
-    cy.location('pathname').should('equal', '/integrations/create/email/mailjet');
     cy.getByTestId('provider-instance-name').clear().type('Mailjet Integration');
     cy.getByTestId('create-provider-instance-sidebar-create').should('not.be.disabled').contains('Create').click();
 
@@ -697,12 +678,10 @@ describe('Integrations List Page', function () {
 
     cy.getByTestId('update-provider-sidebar').should('be.visible');
     cy.getByTestId('sidebar-close').should('be.visible').click();
-    cy.location('pathname').should('equal', '/integrations');
 
     cy.wait('@getIntegrations');
 
     clickOnListRow('Mailjet Integration');
-    cy.location('pathname').should('contain', '/integrations/');
 
     cy.getByTestId('update-provider-sidebar').find('[aria-haspopup="menu"]').click();
     cy.getByTestId('update-provider-sidebar').find('button[data-menu-item="true"]').contains('Delete').click();
@@ -729,7 +708,7 @@ describe('Integrations List Page', function () {
 
   it('should show the Novu in-app integration', () => {
     cy.intercept('GET', '*/integrations', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }).as('getIntegrations');
     cy.intercept('POST', '*/integrations', async () => {
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -739,7 +718,7 @@ describe('Integrations List Page', function () {
     }).as('deleteIntegration');
     cy.intercept('*/environments').as('getEnvironments');
 
-    cy.visit('/integrations');
+    navigateToGetStarted();
 
     cy.wait('@getIntegrations');
     cy.wait('@getEnvironments');
@@ -748,7 +727,6 @@ describe('Integrations List Page', function () {
 
     cy.getByTestId('update-provider-sidebar').should('be.visible');
     cy.getByTestId('sidebar-close').should('be.visible');
-    cy.location('pathname').should('contain', '/integrations/');
     cy.getByTestId('provider-instance-channel').should('contain', 'In-App');
     cy.getByTestId('provider-instance-environment').should('contain', 'Development');
     cy.getByTestId('update-provider-sidebar').contains(
@@ -778,7 +756,7 @@ describe('Integrations List Page', function () {
 
   it('should show the Novu in-app integration - React guide', () => {
     cy.intercept('GET', '*/integrations', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }).as('getIntegrations');
     cy.intercept('POST', '*/integrations', async () => {
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -788,7 +766,7 @@ describe('Integrations List Page', function () {
     }).as('deleteIntegration');
     cy.intercept('*/environments').as('getEnvironments');
 
-    cy.visit('/integrations');
+    navigateToGetStarted();
 
     cy.wait('@getIntegrations');
     cy.wait('@getEnvironments');
@@ -837,10 +815,12 @@ describe('Integrations List Page', function () {
     }).as('deleteIntegration');
     cy.intercept('*/environments').as('getEnvironments');
 
-    cy.visit('/integrations');
+    navigateToGetStarted();
 
     cy.wait('@getIntegrations');
     cy.wait('@getEnvironments');
+
+    cy.getByTestId('sidebar-close').should('be.visible').click();
 
     clickOnListRow('Novu Email');
 
@@ -896,10 +876,12 @@ describe('Integrations List Page', function () {
     }).as('deleteIntegration');
     cy.intercept('*/environments').as('getEnvironments');
 
-    cy.visit('/integrations');
+    navigateToGetStarted();
 
     cy.wait('@getIntegrations');
     cy.wait('@getEnvironments');
+
+    cy.getByTestId('sidebar-close').should('be.visible').click();
 
     clickOnListRow('Novu SMS');
 
