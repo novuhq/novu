@@ -46,12 +46,7 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
     });
   }
 
-  async searchSubscribers(
-    environmentId: string,
-    subscriberIds?: string[] | null,
-    emails: string[] = [],
-    search?: string
-  ) {
+  async searchSubscribers(environmentId: string, subscriberIds: string[] = [], emails: string[] = [], search?: string) {
     const filters: any = [];
 
     if (emails?.length) {

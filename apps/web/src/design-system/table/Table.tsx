@@ -16,6 +16,7 @@ import useStyles from './Table.styles';
 import { colors } from '../config';
 import { DefaultCell } from './DefaultCell';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { ChevronLeft, ChevronRight } from '../icons';
 
 const NoDataPlaceholder = styled.div`
   padding: 0 30px;
@@ -186,26 +187,26 @@ export function Table<T extends object>({
             marginTop: '10px',
             display: 'flex',
             width: '100%',
-            justifyContent: 'flex-end',
+            justifyContent: 'center',
             alignItems: 'center',
             padding: '15px',
           }}
         >
           <Button.Group>
             <Button
-              variant="default"
+              variant="outline"
               disabled={pagination?.current === 0 || loading}
               onClick={() => handlePageChange(pagination?.current - 1)}
             >
-              <FontAwesomeIcon icon="chevron-left" />
+              <ChevronLeft />
             </Button>
             <Button
               loading={loading}
-              variant="default"
+              variant="outline"
               disabled={!pagination?.hasMore || loading}
               onClick={() => handlePageChange(pagination?.current + 1)}
             >
-              <FontAwesomeIcon icon="chevron-right" />
+              <ChevronRight />
             </Button>
           </Button.Group>
         </div>

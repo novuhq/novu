@@ -3,7 +3,7 @@ import { Button, LoadingOverlay, Pagination, useMantineColorScheme } from '@mant
 
 import { ActivityItem } from './ActivityItem';
 import { colors } from '../../../design-system';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { ChevronLeft, ChevronRight } from '../../../design-system/icons';
 
 export type Data = Record<string, any>;
 
@@ -40,26 +40,25 @@ export function ActivityList({ data: userData, pagination = false, loading = fal
           marginTop: '10px',
           display: 'flex',
           width: '100%',
-          justifyContent: 'flex-end',
+          justifyContent: 'center',
           alignItems: 'center',
           padding: '15px',
         }}
       >
         <Button.Group>
           <Button
-            variant="default"
+            variant="outline"
             disabled={pagination?.current === 0 || loading}
             onClick={() => onPageChange(pagination?.current - 1)}
           >
-            <FontAwesomeIcon icon="chevron-left" />
+            <ChevronLeft />
           </Button>
           <Button
-            loading={loading}
-            variant="default"
+            variant="outline"
             disabled={!pagination?.hasMore || loading}
             onClick={() => onPageChange(pagination?.current + 1)}
           >
-            <FontAwesomeIcon icon="chevron-right" />
+            <ChevronRight />
           </Button>
         </Button.Group>
       </div>
