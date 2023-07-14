@@ -53,8 +53,10 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
   {
     accessor: 'notificationGroup',
     Header: 'Category',
+    width: 150,
+    maxWidth: 150,
     Cell: withCellLoading(({ row: { original } }) => (
-      <Tag data-test-id="category-label"> {original.notificationGroup?.name}</Tag>
+      <StyledTag data-test-id="category-label"> {original.notificationGroup?.name}</StyledTag>
     )),
   },
   {
@@ -71,7 +73,7 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
     maxWidth: 125,
     Cell: withCellLoading(({ row: { original } }) => (
       <>
-        {original.draft ? (
+        {!original.active ? (
           <Badge variant="outline" size="md" color="yellow">
             Disabled
           </Badge>
@@ -264,5 +266,13 @@ const TemplateListTableWrapper = styled.div`
         opacity: 1;
       }
     }
+  }
+`;
+
+const StyledTag = styled(Tag)`
+  max-width: 100%;
+
+  span {
+    max-width: 100%;
   }
 `;

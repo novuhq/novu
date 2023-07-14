@@ -10,6 +10,11 @@ import {
 import { ChangeTemplateActiveStatusCommand } from './change-template-active-status.command';
 import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
 
+/**
+ * DEPRECATED:
+ * This usecase is deprecated and will be removed in the future.
+ * Please use the ChangeWorkflowActiveStatus usecase instead.
+ */
 @Injectable()
 export class ChangeTemplateActiveStatus {
   constructor(
@@ -55,7 +60,7 @@ export class ChangeTemplateActiveStatus {
       {
         $set: {
           active: command.active,
-          draft: command.active === false,
+          draft: !command.active,
         },
       }
     );

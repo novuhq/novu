@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
-import { ActionIcon, Group, Image, Space, Stack, Tabs, TabsValue, useMantineColorScheme } from '@mantine/core';
+import { Group, Image, Space, Stack, Tabs, TabsValue, useMantineColorScheme } from '@mantine/core';
 import {
   ChannelTypeEnum,
   emailProviders,
@@ -10,20 +10,21 @@ import {
   inAppProviders,
   chatProviders,
 } from '@novu/shared';
-import { colors } from '../../../../design-system';
+
+import { colors, Sidebar } from '../../../../design-system';
 import { Button, Input, Title, Tooltip, Text } from '../../../../design-system';
 import { getGradient } from '../../../../design-system/config/helper';
-import { Search, Close } from '../../../../design-system/icons';
+import { Search } from '../../../../design-system/icons';
 import useStyles from '../../../../design-system/tabs/Tabs.styles';
 import { useDebounce } from '../../../../hooks';
 import { ChannelTitle } from '../../../templates/components/ChannelTitle';
-import { IIntegratedProvider } from '../../IntegrationsStoreModal';
 import { CHANNELS_ORDER } from '../IntegrationsListNoData';
 import { CHANNEL_TYPE_TO_STRING } from '../../../../utils/channels';
 import { getLogoFileName } from '../../../../utils/providers';
 import { sortProviders } from './sort-providers';
 import { When } from '../../../../components/utils/When';
 import { CONTEXT_PATH } from '../../../../config';
+import { IIntegratedProvider } from '../../IntegrationsStorePage';
 
 const filterSearch = (list, search: string) =>
   list.filter((prov) => prov.displayName.toLowerCase().includes(search.toLowerCase()));
@@ -82,37 +83,61 @@ export function SelectProviderSidebar() {
   };
 
   return (
-    <SideBarWrapper>
-      <FormStyled>
-        <Group style={{ width: '100%' }} mt={10} align="start" position="apart">
-          <Stack>
-            {selectedProvider !== null ? (
-              <>
-                <Group>
-                  <ProviderImage providerId={selectedProvider.providerId} />
-                  <Title size={2}>{selectedProvider.displayName}</Title>
-                </Group>
-                <Text color={colors.B40}>
-                  A provider instance for {CHANNEL_TYPE_TO_STRING[selectedProvider.channel]} channel
-                </Text>
-              </>
-            ) : (
-              <>
+    <Sidebar
+      isOpened
+      onClose={onCloseSidebar}
+      customHeader={
+        <Stack spacing={8}>
+          {selectedProvider !== null ? (
+            <>
+              <Group spacing={12} h={40}>
+                <ProviderImage providerId={selectedProvider.providerId} />
+                <Title size={2}>{selectedProvider.displayName}</Title>
+              </Group>
+              <Text color={colors.B40}>
+                A provider instance for {CHANNEL_TYPE_TO_STRING[selectedProvider.channel]} channel
+              </Text>
+            </>
+          ) : (
+            <>
+              <Group h={40}>
                 <Title size={2}>Select a provider</Title>
-                <Text color={colors.B40}>Select a provider to create instance for a channel</Text>
-              </>
-            )}
-          </Stack>
-          <ActionIcon variant={'transparent'} onClick={onCloseSidebar}>
-            <Close color={colors.B40} />
-          </ActionIcon>
+              </Group>
+              <Text color={colors.B40}>Select a provider to create instance for a channel</Text>
+            </>
+          )}
+        </Stack>
+      }
+      customFooter={
+        <Group ml="auto">
+          <Button variant={'outline'} onClick={onCloseSidebar}>
+            Cancel
+          </Button>
+          <Tooltip sx={{ position: 'absolute' }} disabled={selectedProvider !== null} label={'Select a provider'}>
+            <span>
+              <Button
+                disabled={selectedProvider === null}
+                onClick={() => {
+                  if (selectedProvider === null) {
+                    return;
+                  }
+                  navigate(`/integrations/create/${selectedProvider?.channel}/${selectedProvider?.providerId}`);
+                }}
+              >
+                Next
+              </Button>
+            </span>
+          </Tooltip>
         </Group>
+      }
+    >
+      <SelectProviderBodyContainer>
         <Input
           type={'search'}
           onChange={(e) => {
             debouncedSearchChange(e.target.value);
           }}
-          my={20}
+          mb={20}
           placeholder={'Search a provider...'}
           rightSection={<Search />}
         />
@@ -147,30 +172,8 @@ export function SelectProviderSidebar() {
               );
             })}
         </CenterDiv>
-        <Footer>
-          <Group>
-            <Button variant={'outline'} onClick={onCloseSidebar}>
-              Cancel
-            </Button>
-            <Tooltip sx={{ position: 'absolute' }} disabled={selectedProvider !== null} label={'Select a provider'}>
-              <span>
-                <Button
-                  disabled={selectedProvider === null}
-                  onClick={() => {
-                    if (selectedProvider === null) {
-                      return;
-                    }
-                    navigate(`/integrations/create/${selectedProvider?.channel}/${selectedProvider?.providerId}`);
-                  }}
-                >
-                  Next
-                </Button>
-              </span>
-            </Tooltip>
-          </Group>
-        </Footer>
-      </FormStyled>
-    </SideBarWrapper>
+      </SelectProviderBodyContainer>
+    </Sidebar>
   );
 }
 
@@ -183,7 +186,8 @@ export const ProviderImage = ({ providerId }) => {
       alt={providerId}
       style={{
         height: '24px',
-        maxWidth: '140px',
+        maxWidth: '24px',
+        width: '24px',
       }}
     />
   );
@@ -226,13 +230,11 @@ const ListProviders = ({
     </Stack>
   );
 };
+
 export const Footer = styled.div`
-  padding: 15px;
-  height: 80px;
   display: flex;
   justify-content: right;
   align-items: center;
-  gap: 20px;
 `;
 
 const CenterDiv = styled.div`
@@ -242,7 +244,7 @@ const CenterDiv = styled.div`
   line-height: 20px;
 `;
 
-export const FormStyled = styled.form`
+const SelectProviderBodyContainer = styled.form`
   flex: 1;
   display: flex;
   flex-direction: column;
