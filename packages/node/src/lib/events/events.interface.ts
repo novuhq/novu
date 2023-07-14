@@ -1,6 +1,5 @@
 import {
   DigestUnitEnum,
-  IAttachmentOptions,
   ITriggerPayload,
   TriggerRecipientSubscriber,
   TriggerRecipientsPayload,

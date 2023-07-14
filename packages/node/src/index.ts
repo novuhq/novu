@@ -12,6 +12,7 @@ export {
   TextAlignEnum,
   EmailBlockTypeEnum,
   ChannelTypeEnum,
+  TriggerRecipientsTypeEnum,
 } from '@novu/shared';
 
 export * from './lib/novu';
