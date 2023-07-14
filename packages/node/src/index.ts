@@ -14,6 +14,7 @@ export {
   ChannelTypeEnum,
   FilterPartTypeEnum,
   StepTypeEnum,
+  TriggerRecipientsTypeEnum,
 } from '@novu/shared';
 
 export * from './lib/novu';
