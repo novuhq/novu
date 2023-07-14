@@ -63,7 +63,7 @@ export interface INotificationTemplateStep {
 
 export interface IMessageFilter {
   isNegated?: boolean;
-  type: BuilderFieldType;
+  type?: BuilderFieldType;
   value: BuilderGroupValues;
   children: FilterParts[];
 }
