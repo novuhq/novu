@@ -5,7 +5,7 @@ sidebar_label: Get started with NextJS
 
 # NextJS Quickstart
 
-This quickstart guide is written with the intention of helping you integrate Novu into your NextJS app in no time. Novu is an open-source notifications infrastructure that you can use in your app to deliver rich notifications across channels like sms, email, in-app, push, chat, etc. In this guide, you’ll learn how to integrate email notifications into your NextJS app.
+This quick start guide is written to help you integrate Novu into your NextJS app in no time. Novu is an open-source notifications infrastructure that you can use in your app to deliver rich notifications across channels like sms, email, in-app, push, chat, etc. In this guide, you’ll learn how to integrate email notifications into your NextJS app.
 
 You can find the code for this app [here](https://github.com/novuhq/nextjs-quickstart/)
 
@@ -201,7 +201,6 @@ You can create a topic using two entities - `key` and `name`. Keys are unique id
 
 ```jsx
 import { Novu } from '@novu/node';
-import CircularJSON from 'circular-json';
 
 export default async function createTopic(req, res) {
     try {
@@ -224,19 +223,18 @@ If you test this on your local machine, you should get something like this:
 
 ![testing create method](https://res.cloudinary.com/dxc6bnman/image/upload/v1689372862/guides/create_topic_u6gjzw.png)
 
-> Note how the return object contains the key I’d sent from my request body. That signals successful creation!
+> Note how the return object contains the key I sent from my request body. That signals successful creation!
 
 ## Add subscriber to a Topic
 
 The code for adding a subscriber to a previously created topic is as follows:
 
 :::info
-Note: You can only add those subscribers to a topic that you've already created. You can see all the subsribers in the [Novu web dashboard](https://web.novu.co/subscribers)
+Note: You can only add those subscribers to a topic that you've already created. You can see all the subscribers in the [Novu web dashboard](https://web.novu.co/subscribers)
 :::
 
 ```jsx
 import { Novu } from '@novu/node';
-import CircularJSON from 'circular-json';
 
 export default async function addSub(req, res) {
     try {
@@ -260,7 +258,7 @@ export default async function addSub(req, res) {
 }
 ```
 
-If you see the code above closely, you’ll see that we first establish a connection to Novu using the Novu API key. <br/><br/>Then we extract `subscriberID` and topicKey from the request body and call the **`addSubscribers`** method on the **`topics`** property of the **`novu`** instance, passing the topic key and an object with an array of subscribers. <br/><br/>This adds the subscriber with the `subscriberID` we’d passed to the array of subscribers, which in the above case contains just one subscriber. <br/><br/>If you check this on Postman, the returned array will contain the `subscriberID` that we had passed in the request body, signalling that it was added to the topic successfully. <br/><br/>If, on the other hand, you find the passed `subscriberId` in the `notFound` array inside `failed` object, it means the subscriber wasn't added to the topic. <br/><br/>You can read more about it [here](https://docs.novu.co/platform/topics/#subscribers-management-in-a-topic).
+If you see the code above closely, you’ll see that we first establish a connection to Novu using the Novu API key. <br/><br/>Then we extract `subscriberID` and topicKey from the request body and call the **`addSubscribers`** method on the **`topics`** property of the **`novu`** instance, passing the topic key and an object with an array of subscribers. <br/><br/>This adds the subscriber with the `subscriberID` we’d passed to the array of subscribers, which in the above case contains just one subscriber. <br/><br/>If you check this on Postman, the returned array will contain the `subscriberID` that we had passed in the request body, signalling that it was added to the topic successfully. <br/><br/>If, on the other hand, you find the passed `subscriberId` in the `notFound` array inside the `failed` object, it means the subscriber wasn't added to the topic. <br/><br/>You can read more about it [here](https://docs.novu.co/platform/topics/#subscribers-management-in-a-topic).
 
 The image below shows the case where the subscriber has been added successfully:
 
@@ -274,7 +272,6 @@ Sending notifications to a topic is not a complex task. You need to extract the 
 
 ```jsx
 import { Novu } from '@novu/node';
-import CircularJSON from 'circular-json';
 
 export default async function sendNotifToSub(req, res) {
     try {
