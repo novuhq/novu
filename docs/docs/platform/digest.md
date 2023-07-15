@@ -54,7 +54,7 @@ Now, if we trigger a second within 15 minutes, then a new digest will be created
 
 - **Minutes**
 
-It digests events for every specified minutes. For example, as per the below image, events will be digested for 20 minutes and after 20 minutes, workfow will carry forward to the next step. It will be repeated after every 20 minutes.
+It digests events for every specified minutes. For example, as per the below image, events will be digested for 20 minutes and after 20 minutes, workflow will carry forward to the next step. It will be repeated after every 20 minutes.
 
 ![Scheduled Digest Min](/img/platform/digest/scheduled-digest-min.png)
 
@@ -86,9 +86,9 @@ It digests events for specified weekdays. Only at the specified time, the workfl
 
 ## Writing digest templates
 
-In many cases, you will need to access all the digested events payload in order to show the user all or parts of the events included in this digest. For example: "John and 5 others liked your photo."
+In many cases, you will need to access all the digested events payload in order to show the user all or parts of the events included in this digest. For example: **John and 5 others liked your photo.**
 
-As part of the digested template, you will have access to a few properties:
+As part of the digested template, you will have access to these properties:
 
 | Property           | Description                                                                                                                                         |
 | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -114,6 +114,14 @@ novu.trigger('workflow-name', {
 });
 ```
 
+After these two triggers, digest variables are as follows:
+
+| Property           | Value                                         |
+| ------------------ | --------------------------------------------- |
+| `step.events`      | [ { "name" : "Hello" }, { "name": "World" } ] |
+| `step.total_count` | 2                                             |
+| `step.digest`      | true                                          |
+
 Using the following template:
 
 ```handlebars
@@ -122,11 +130,17 @@ Total events in digest:
 
 {{#if step.digest}}
   {{#each step.events}}
-    {{name}}
+    <div>This is {{name}} payload event</div>
   {{/each}}
 {{else}}
   Not a digested template
 {{/if}}
+```
+
+It will renders as :
+
+```html
+Total events in digest: 2 This is Hello payload event This is World payload event
 ```
 
 Note that if only one matching trigger activates a regular digest during its period, that single item will still come through as a digest with `step.total_count` as 1.
