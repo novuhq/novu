@@ -208,7 +208,7 @@ export function ConnectIntegrationForm({
   const webhookUrl = `${WEBHOOK_URL}/webhooks/organizations/${organization?._id}/environments/${environment?._id}/${provider?.channel}/${provider?.providerId}`;
 
   const isWebhookEnabled =
-    IS_DOCKER_HOSTED &&
+    !IS_DOCKER_HOSTED &&
     webhookSupportStatus &&
     provider?.channel &&
     [ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS].includes(provider?.channel);
