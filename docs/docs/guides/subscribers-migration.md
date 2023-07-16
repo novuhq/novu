@@ -26,7 +26,7 @@ import TabItem from '@theme/TabItem';
 
 ## Bulk subscribers migration using mock data csv file
 
-Here, `mock_data.csv` file is a csv file having mock data. Below script will read this csv file and create new subscriber in Novu. Change example variables values like `API_KEY` value with your own valid values.
+Here, `mock_data.csv` file is a csv file having mock data. Below script will read this csv file and create new subscriber in Novu. Change example variables values like `API_KEY` value with your own valid values. Download `mock_data.csv` file from [here](/csv/mock_data.csv).
 
 :::info
 `mock_data.csv` file should be in same directory of script
