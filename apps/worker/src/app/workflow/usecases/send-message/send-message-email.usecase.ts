@@ -60,7 +60,7 @@ export class SendMessageEmail extends SendMessageBase {
 
     let integration: IntegrationEntity | undefined = undefined;
 
-    const overrideSelectedIntegration = command.overrides?.email?.integrationIdentifier ?? '';
+    const overrideSelectedIntegration = command.overrides?.email?.integrationIdentifier;
     try {
       integration = await this.getIntegration({
         organizationId: command.organizationId,
@@ -96,23 +96,6 @@ export class SendMessageEmail extends SendMessageBase {
     });
 
     if (!integration) {
-      if (overrideSelectedIntegration) {
-        await this.createExecutionDetails.execute(
-          CreateExecutionDetailsCommand.create({
-            ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-            detail: DetailEnum.NO_INTEGRATION_INSTANCE_FOUND,
-            source: ExecutionDetailsSourceEnum.INTERNAL,
-            status: ExecutionDetailsStatusEnum.FAILED,
-            isTest: false,
-            isRetry: false,
-            raw: JSON.stringify({
-              integrationIdentifier: overrideSelectedIntegration,
-            }),
-          })
-        );
-
-        return;
-      }
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -121,6 +104,13 @@ export class SendMessageEmail extends SendMessageBase {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
+          ...(overrideSelectedIntegration
+            ? {
+                raw: JSON.stringify({
+                  integrationIdentifier: overrideSelectedIntegration,
+                }),
+              }
+            : {}),
         })
       );
 

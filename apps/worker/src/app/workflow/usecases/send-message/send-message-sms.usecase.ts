@@ -48,7 +48,7 @@ export class SendMessageSms extends SendMessageBase {
     });
     if (!subscriber) throw new PlatformException('Subscriber not found');
 
-    const overrideSelectedIntegration = command.overrides?.sms?.integrationIdentifier ?? '';
+    const overrideSelectedIntegration = command.overrides?.sms?.integrationIdentifier;
 
     const integration = await this.getIntegration({
       organizationId: command.organizationId,
@@ -97,23 +97,6 @@ export class SendMessageSms extends SendMessageBase {
     const phone = command.payload.phone || subscriber.phone;
 
     if (!integration) {
-      if (overrideSelectedIntegration) {
-        await this.createExecutionDetails.execute(
-          CreateExecutionDetailsCommand.create({
-            ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-            detail: DetailEnum.NO_INTEGRATION_INSTANCE_FOUND,
-            source: ExecutionDetailsSourceEnum.INTERNAL,
-            status: ExecutionDetailsStatusEnum.FAILED,
-            isTest: false,
-            isRetry: false,
-            raw: JSON.stringify({
-              integrationIdentifier: overrideSelectedIntegration,
-            }),
-          })
-        );
-
-        return;
-      }
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -122,6 +105,13 @@ export class SendMessageSms extends SendMessageBase {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
+          ...(overrideSelectedIntegration
+            ? {
+                raw: JSON.stringify({
+                  integrationIdentifier: overrideSelectedIntegration,
+                }),
+              }
+            : {}),
         })
       );
 
