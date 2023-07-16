@@ -1,6 +1,5 @@
 import {
   DigestUnitEnum,
-  IAttachmentOptions,
   ITriggerPayload,
   TriggerRecipientSubscriber,
   TriggerRecipientsPayload,
@@ -26,6 +25,7 @@ export interface IEmailOverrides extends IIntegrationOverride {
   replyTo?: string;
   cc?: string[];
   bcc?: string[];
+  senderName?: string;
 }
 
 export type ITriggerOverrides = {
