@@ -31,7 +31,7 @@ Resend allows you to authenticate your sender identity using [Domain Authenticat
 - Visit the [Integrations](https://web.novu.co/integrations) page on Novu.
 - Locate Resend and click on the **Connect** button.
 - Enter your Resend API Key.
-- If you have verified your domain in previous step, fill the `From email address` field with any domain email address. For example, if your organization domain name is `linear.app` then you can any use any valid email address like `hello@linear.app`.
+- If you have verified your domain in previous step, fill the `From email address` field with any domain email address. For example, if your organization domain name is `linear.app` then you can use any valid email address like `hello@linear.app`.
   - For testing, you can use `onboarding@resend.dev` if you have not authenticated your sender identity.
 - Fill the `Sender name`.
 
