@@ -21,7 +21,7 @@ You can find the code for this project [here](https://github.com/novuhq/react-qu
 
 ## Install Novu React Notification Center Package in your React app
 
-The Novu React package provides a React component library that you can use to add a fully functioning notification center into your React application.
+The Novu React package provides a React component library that you can use to add a fully functioning notification center into your React application.
 
 To use it, first install the React Notification Center package by running the following command in your terminal:
 
@@ -45,13 +45,13 @@ The workflow includes the following:
 - Notification workflow name and Identifier
 - Channel tailored content:
 
-| Channel | Content Style                                                                                 |
-| ------- | --------------------------------------------------------------------------------------------- |
-| Email   | 1. Custom Code (HTML) with option to use custom variables via the handlebars , {{ }}, syntax. |
-|         | 2. Click and place UI items with the visual workflow editor.                                  |
-| SMS     | Text with the option to use handlebars syntax, {{ }} to inject custom variables.              |
-| Chat    | Text with the option to use handlebars syntax, {{ }} to inject custom variables.              |
-| In-App  | Text                                                                                          |
+| Channel | Content Style                                                                                   |
+| ------- | ----------------------------------------------------------------------------------------------- |
+| Email   | 1. Custom Code (HTML) with option to use custom variables via the handlebars , `{{ }}`, syntax. |
+|         | 2. Click and place UI items with the visual workflow editor.                                    |
+| SMS     | Text with the option to use handlebars syntax, `{{ }}` to inject custom variables.              |
+| Chat    | Text with the option to use handlebars syntax, `{{ }}` to inject custom variables.              |
+| In-App  | Text                                                                                            |
 
 These are the steps to create a notification workflow:
 
@@ -222,7 +222,12 @@ And subscribers are users to which notifications will be sent. They are identifi
 
 We can trigger a notification by simply running the codesandbox below with the correct credentials.
 
-<iframe width="800" height="450" src="https://codesandbox.io/p/sandbox/exciting-violet-4k6234?embed=1" allowfullscreen></iframe>
+<iframe
+  width="800"
+  height="450"
+  src="https://codesandbox.io/p/sandbox/exciting-violet-4k6234?embed=1"
+  allowfullscreen
+></iframe>
 
 This will take the workflow we created above with the identifier `quickstart` and send notification to the subscriber with `subscriberId` of `123`.
 

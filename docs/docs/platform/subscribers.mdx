@@ -15,9 +15,9 @@ import TabItem from '@theme/TabItem';
 Each subscriber has the following data points:
 
 - **User Data** - Data stored in the subscriber object that you can easily access in your notification templates. This contains basic info such as first name, last name, avatar, locale, email, and phone. This data is fixed and structured.
-- **Custom Data** - Apart from the above fixed structured user data, any unstructured custom data such as user's address, nationality, height, etc can also be stored in the `data` field using key-value pairs.
+- **Custom Data** - Apart from the above fixed structured user data, any unstructured custom data such as user's address, nationality, height, etc can also be stored in the `data` field using key-value pairs.
 - **Channel Specific Credentials** - `deviceTokens` required to send push notifications and `webhookUrl` for chat channel providers can also be stored.
-- **Preferences** - Each subscriber has separate preferences per template and along with template-level preferences. Read more about preferences [here](./preferences.md).
+- **Preferences** - Each subscriber has separate preferences per template and along with template-level preferences. Read more about preferences [here](./preferences.mdx).
 
 `subscriberId` is a unique identifier used by Novu to keep track of a specific subscriber. We recommend using the internal unique id your application uses for a specific user.
 
@@ -77,7 +77,7 @@ $novu->createSubscriber([
 
   </TabItem>
 </Tabs>
-Novu will create a subscriber if one does not exist and will update the existing subscriber based on the `identify` payload. You can call this function during registration or signup to make sure the subscriber data is up-to-date, if you wish to save additional attributes with a subscriber, you can pass additional custom data in the **data** field as key-value pairs.
+Novu will create a subscriber if one does not exist and will update the existing subscriber based on the `identify` payload. You can call this function during registration or signup to make sure the subscriber data is up-to-date, if you wish to save additional attributes with a subscriber, you can pass additional custom data in the **data** field as key-value pairs.
 
 ### 2. Inline of Trigger
 
@@ -147,8 +147,8 @@ $novu->triggerEvent([
 | email        | `string` | false    | john.doe@domain.org                     |
 | phone        | `string` | false    | +13603963366                            |
 | locale       | `string` | false    | en                                      |
-| avatar       | `string` | false    | <https://example.com/images/avatar.jpg> |
-| data         | `object` | false    | {"key" : "value"}                       |
+| avatar       | `string` | false    | `https://example.com/images/avatar.jpg` |
+| data         | `object` | false    | `{"key" : "value"}`                     |
 
 ## Find a subscriber
 
@@ -282,7 +282,7 @@ $novu->getSubscriberList($page)->toArray();
 
 ## Updating subscriber credentials
 
-Channel-specific credentials of subscribers can be added or updated using the `setCredentials` method. Novu supports credentials for `push` (deviceTokens) and `chat` (webhookUrl) channels.
+Channel-specific credentials of subscribers can be added or updated using the `setCredentials` method. Novu supports credentials for `push` (deviceTokens) and `chat` (webhookUrl) channels.
 
 <Tabs groupId="language" queryString>
   <TabItem value="js" label="Node.js">

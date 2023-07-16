@@ -22,37 +22,37 @@ You can also [view the completed code](https://github.com/novuhq/angular-quickst
 
 ## Create a new Angular app
 
-To create a new Angular app, open a terminal or command prompt and 
-run the following command:
+To create a new Angular app, open a terminal or command prompt and
+run the following command:
 
 ```console
 ng new my-app
 ```
 
-Here, `my-app` is the name of your new Angular app. 
-This command will create a new Angular app with a basic file structure and all the necessary dependencies installed.
+Here, `my-app` is the name of your new Angular app.
+This command will create a new Angular app with a basic file structure and all the necessary dependencies installed.
 
-Navigate to the app directory by running the following command:
+Navigate to the app directory by running the following command:
 
 ```console
 cd my-app
 ```
 
-Once you are in the app directory, you can start the development server by running the following command:
+Once you are in the app directory, you can start the development server by running the following command:
 
 ```console
 ng serve
 ```
 
-This command will start the development server and launch your app in the default browser. You can access your app by navigating to `http://localhost:4200/`.
+This command will start the development server and launch your app in the default browser. You can access your app by navigating to `http://localhost:4200/`.
 
 ![go9ch8vqvatmroiiz8c5.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1686776582/go9ch8vqvatmroiiz8c5_okfqai.png)
 
 ## Install Novu Angular Notification Center Package
 
-The Novu Angular package provides a Angular component wrapper over the web component that you can use to integrate the notification center into your Angular application.
+The Novu Angular package provides a Angular component wrapper over the web component that you can use to integrate the notification center into your Angular application.
 
-Navigate to the root directory of your Angular application. Now install the Angular Notification Center package by running the following command in your terminal:
+Navigate to the root directory of your Angular application. Now install the Angular Notification Center package by running the following command in your terminal:
 
 ```console
 npm install @novu/notification-center-angular
@@ -64,21 +64,21 @@ yarn add @novu/notification-center-angular
 
 ## Configuring Application Environments
 
-Using the Angular CLI, start by running the [generate environments command](https://angular.io/cli/generate#environments-command)
+Using the Angular CLI, start by running the [generate environments command](https://angular.io/cli/generate#environments-command)
 
-shown here to create the `src/environments/`directory and configure the 
-project to use these files.
+shown here to create the `src/environments/`directory and configure the
+project to use these files.
 
 ```console
 ng generate environments
 ```
 
-Navigate to `my-app/src/environments/environment.ts` 
-and add the following variables: `subscriberId`, `applicationIdentifier`
+Navigate to `my-app/src/environments/environment.ts`
+and add the following variables: `subscriberId`, `applicationIdentifier`
 
-**`Application Identifier`** can be found here:[https://web.novu.co/settings](https://web.novu.co/settings)
+**`Application Identifier`** can be found here:[https://web.novu.co/settings](https://web.novu.co/settings)
 
-**`subscriberId`** can be found here: [https://web.novu.co/subscribers](https://web.novu.co/subscribers)
+**`subscriberId`** can be found here: [https://web.novu.co/subscribers](https://web.novu.co/subscribers)
 
 ```tsx
 export const environment = {
@@ -90,14 +90,14 @@ export const environment = {
 
 Copy and paste the same code into `my-app/src/environments/environment.development.ts`
 
-These variables are needed for the `GET` request our notification center will make to Novu’s API to actually push notifications into the feed.
+These variables are needed for the `GET` request our notification center will make to Novu’s API to actually push notifications into the feed.
 
 ## Adding Novu Module
 
-Now, navigate to the `app.module.ts` file `(my-app/src/app/app.module.ts)`
+Now, navigate to the `app.module.ts` file `(my-app/src/app/app.module.ts)`
 
-- Import `CUSTOM_ELEMENTS_SCHEMA` from `'@angular/core'`
-- Add Novu’s notification center module
+- Import `CUSTOM_ELEMENTS_SCHEMA` from `'@angular/core'`
+- Add Novu’s notification center module
 
 ```jsx
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
@@ -115,15 +115,15 @@ import { NotificationCenterModule } from '@novu/notification-center-angular';
 export class AppModule {}
 ```
 
-Head to `my-app/src/app/app.component.ts` file.
+Head to `my-app/src/app/app.component.ts` file.
 
-⚠️ The `app.component.ts` file is a critical part of an Angular application, as it 
-defines the root component and provides the foundation for the rest of 
-the app's functionality.
+⚠️ The `app.component.ts` file is a critical part of an Angular application, as it
+defines the root component and provides the foundation for the rest of
+the app's functionality.
 
-Now, we are going to import the `environment` variables to make them accessible in the `app.component.html` and the `styles` properties of our notification center
+Now, we are going to import the `environment` variables to make them accessible in the `app.component.html` and the `styles` properties of our notification center
 
-(there are many properties, but you can discover them later on)
+(there are many properties, but you can discover them later on)
 
 ```tsx
 import { Component } from '@angular/core';
@@ -187,14 +187,14 @@ export class AppComponent {
 }
 ```
 
-The Angular component is generated as a wrapper around the original React component. 
-This approach is clever, as it allows Novu's engineers to focus on creating and developing things in the React way.
+The Angular component is generated as a wrapper around the original React component.
+This approach is clever, as it allows Novu's engineers to focus on creating and developing things in the React way.
 
-Additionally, many other frameworks can still use the created components using the wrapping approach.
+Additionally, many other frameworks can still use the created components using the wrapping approach.
 
-We need to add `@types/react` as dev dependency for the angular component to work properly.
+We need to add `@types/react` as dev dependency for the angular component to work properly.
 
-Open your terminal and navigate to the app root directory and type the following:
+Open your terminal and navigate to the app root directory and type the following:
 
 ```console
 npm i [@types/react](https://github.com/types/react)
@@ -204,9 +204,9 @@ or
 yarn add [@types/react](https://github.com/types/react)
 ```
 
-Now head to the `my-app/tsconfig.json` file.
+Now head to the `my-app/tsconfig.json` file.
 
-And we’re going to add `"allowSyntheticDefaultImports": true` to the `compilerOptions` array.
+And we’re going to add `"allowSyntheticDefaultImports": true` to the `compilerOptions` array.
 
 ```json
 /* To learn more about this file see: https://angular.io/config/tsconfig. */
@@ -244,13 +244,13 @@ And we’re going to add `"allowSyntheticDefaultImports": true` to the 
 
 ## Use & Display The Notification Center Component
 
-Open the `my-app/src/app/app.component.html` file.
+Open the `my-app/src/app/app.component.html` file.
 
-This file contain the CSS code along with the HTML one - ideally you should separate the CSS to the `my-app/src/app/app.component.css` file, but it’s not mandatory.
+This file contain the CSS code along with the HTML one - ideally you should separate the CSS to the `my-app/src/app/app.component.css` file, but it’s not mandatory.
 
-We will add our notification center to the .toolbar div.
+We will add our notification center to the .toolbar div.
 
-Paste the following into your `app.component.html` file:
+Paste the following into your `app.component.html` file:
 
 ```jsx
 <div id="bell-icon">
@@ -263,7 +263,7 @@ Paste the following into your `app.component.html` file:
   </div>
 ```
 
-And in the `<style>` tag, we also want to add some margin to our `#bell-icon`so that it looks good next to the other icons.
+And in the `<style>` tag, we also want to add some margin to our `#bell-icon`so that it looks good next to the other icons.
 
 ```css
 .toolbar #bell-icon {
@@ -300,13 +300,13 @@ The workflow includes the following:
 - Notification workflow name and Identifier
 - Channel tailored content:
 
-| Channel                                                      | Content Style                                                                                 |
-| ------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
-| Email                                                        | 1. Custom Code (HTML) with option to use custom variables via the handlebars , {{ }}, syntax. |
+| Channel                                                      | Content Style                                                                                   |
+| ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| Email                                                        | 1. Custom Code (HTML) with option to use custom variables via the handlebars , `{{ }}`, syntax. |
 | 2. Click and place UI items with the visual workflow editor. |
-| SMS                                                          | Text with the option to use handlebars syntax, {{ }} to inject custom variables.              |
-| Chat                                                         | Text with the option to use handlebars syntax, {{ }} to inject custom variables.              |
-| In-App                                                       | Text                                                                                          |
+| SMS                                                          | Text with the option to use handlebars syntax, `{{ }}` to inject custom variables.              |
+| Chat                                                         | Text with the option to use handlebars syntax, `{{ }}` to inject custom variables.              |
+| In-App                                                       | Text                                                                                            |
 
 Please proceed to create a notification workflow.
 
@@ -383,7 +383,12 @@ $novu->createSubscriber([
   </TabItem>
 </Tabs>
 
-<iframe width="800" height="450" src="https://codesandbox.io/p/sandbox/create-subscriber-m5uibf?file=%2Findex.js%3A1%2C1&embed=1" allowfullscreen></iframe>
+<iframe
+  width="800"
+  height="450"
+  src="https://codesandbox.io/p/sandbox/create-subscriber-m5uibf?file=%2Findex.js%3A1%2C1&embed=1"
+  allowfullscreen
+></iframe>
 
 Obtain your API key from your [Novu dashboard.](https://web.novu.co/settings) Replace `YOUR_NOVU_API_KEY_HERE` with it.
 
@@ -425,7 +430,12 @@ $novu->updateSubscriber('123', [
 </TabItem>
 </Tabs>
 
-<iframe width="800" height="450" src="https://codesandbox.io/p/sandbox/create-subscriber-forked-r625n3?file=%2Findex.js%3A21%2C1&embed=1" allowfullscreen></iframe>
+<iframe
+  width="800"
+  height="450"
+  src="https://codesandbox.io/p/sandbox/create-subscriber-forked-r625n3?file=%2Findex.js%3A21%2C1&embed=1"
+  allowfullscreen
+></iframe>
 
 ## Trigger A Notification
 
@@ -463,7 +473,12 @@ $novu->triggerEvent([
 </TabItem>
 </Tabs>
 
-<iframe width="800" height="450" src="https://codesandbox.io/p/sandbox/create-subscriber-forked-x4tkwj?embed=1" allowfullscreen></iframe>
+<iframe
+  width="800"
+  height="450"
+  src="https://codesandbox.io/p/sandbox/create-subscriber-forked-x4tkwj?embed=1"
+  allowfullscreen
+></iframe>
 
 `onboarding-in-app` is the Notification workflow identifier we created earlier.
 

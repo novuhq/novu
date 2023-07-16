@@ -12,7 +12,7 @@ Learn how to use Novu to quickly send multi-channel (SMS, Email, Chat, Push) not
 To follow the steps in this quickstart, you'll need:
 
 - A Novu account. [Sign up for free](http://web.novu.co) if you don’t have one yet.
-- A working Vue development environment with a Vue 3 version.
+- A working Vue development environment with a Vue 3 version.
 
 You can also [view the completed code](https://github.com/novuhq/vue-quickstart) of this quick start in a GitHub repo.
 
@@ -34,7 +34,7 @@ npm install && npm run format && npm run dev
 
 ## Install Novu Vue Notification Center Package
 
-The Novu Vue package provides a Vue component wrapper over the web component that you can use to integrate the notification center into your Vue application.
+The Novu Vue package provides a Vue component wrapper over the web component that you can use to integrate the notification center into your Vue application.
 
 Now install the Vue Notification Center package by running the following command in your terminal:
 
@@ -198,13 +198,13 @@ The workflow includes the following:
 - Notification workflow name and Identifier
 - Channel tailored content:
 
-| Channel | Content Style                                                                                 |
-| ------- | --------------------------------------------------------------------------------------------- |
-| Email   | 1. Custom Code (HTML) with option to use custom variables via the handlebars , {{ }}, syntax. |
-|         | 2. Click and place UI items with the visual template editor.                                  |
-| SMS     | Text with the option to use handlebars syntax, {{ }} to inject custom variables.              |
-| Chat    | Text with the option to use handlebars syntax, {{ }} to inject custom variables.              |
-| In-App  | Text                                                                                          |
+| Channel | Content Style                                                                                   |
+| ------- | ----------------------------------------------------------------------------------------------- |
+| Email   | 1. Custom Code (HTML) with option to use custom variables via the handlebars , `{{ }}`, syntax. |
+|         | 2. Click and place UI items with the visual template editor.                                    |
+| SMS     | Text with the option to use handlebars syntax, `{{ }}` to inject custom variables.              |
+| Chat    | Text with the option to use handlebars syntax, `{{ }}` to inject custom variables.              |
+| In-App  | Text                                                                                            |
 
 Please proceed to create a notification workflow.
 
@@ -242,7 +242,12 @@ Now, let's create a subscriber on Novu.
 
 Novu has a plethora of backend SDKs (Node.js, PHP, .NET, Go, Ruby, Python and Kotlin) to choose from to create a subscriber programmatically. This is the recommended method.
 
-<iframe width="800" height="450" src="https://codesandbox.io/p/sandbox/create-subscriber-m5uibf?file=%2Findex.js%3A1%2C1&embed=1" allowfullscreen></iframe>
+<iframe
+  width="800"
+  height="450"
+  src="https://codesandbox.io/p/sandbox/create-subscriber-m5uibf?file=%2Findex.js%3A1%2C1&embed=1"
+  allowfullscreen
+></iframe>
 
 Obtain your API key from your [Novu dashboard.](https://web.novu.co/settings) Replace `YOUR_NOVU_API_KEY_HERE` with it.
 
@@ -265,7 +270,12 @@ await novu.subscribers.update('132', {
 
 To trigger a notification, simply run the codesandbox below with the correct credentials.
 
-<iframe width="800" height="450" src="https://codesandbox.io/p/sandbox/trigger-notification-rzluxk?file=%2Findex.js%3A3%2C41&embed=1" allowfullscreen></iframe>
+<iframe
+  width="800"
+  height="450"
+  src="https://codesandbox.io/p/sandbox/trigger-notification-rzluxk?file=%2Findex.js%3A3%2C41&embed=1"
+  allowfullscreen
+></iframe>
 
 `onboarding-in-app` is the Notification workflow identifier we created earlier.
 

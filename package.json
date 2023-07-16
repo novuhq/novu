@@ -51,6 +51,7 @@
     "build:web": "nx build @novu/web",
     "build:widget": "nx build @novu/widget",
     "build:embed": "nx build @novu/embed",
+    "build:docs": "cross-env nx run @novu/docs:build",
     "build:storybook": "nx run @novu/web:build-storybook",
     "test:providers": "pnpm --filter './providers/**' test",
     "release:patch": "lerna version patch --no-push",

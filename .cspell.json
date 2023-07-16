@@ -473,7 +473,13 @@
     "bitnamicharts",
     "bitnami",
     "portname",
-    "externalredis"
+    "externalredis",
+    "inkeep",
+    "Inkeep",
+    "Infima",
+    "blyuv",
+    "markdownlint",
+    "stylelint"
   ],
   "flagWords": [],
   "patterns": [
@@ -551,7 +557,7 @@
     ".eslintrc.js",
     ".vscode/settings.json",
     "*/**/.vscode/settings.json",
-    "docs/src/usage-examples.md",
+    "docs/src/usage-examples.mdx",
     "apps/worker/README.md",
     ".gitignore",
     "angular.json",
