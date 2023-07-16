@@ -77,14 +77,13 @@ export function CreateProviderInstanceSidebar({
         name: data.name,
         environmentId: data.environmentId,
       });
-      await queryClient.refetchQueries({
+      successMessage('Instance configuration is created');
+      onIntegrationCreated(integrationId ?? '');
+
+      queryClient.refetchQueries({
         predicate: ({ queryKey }) =>
           queryKey.includes(QueryKeys.integrationsList) || queryKey.includes(QueryKeys.activeIntegrations),
       });
-
-      successMessage('Instance configuration is created');
-
-      onIntegrationCreated(integrationId ?? '');
     } catch (e: any) {
       errorMessage(e.message || 'Unexpected error');
     }
@@ -116,7 +115,7 @@ export function CreateProviderInstanceSidebar({
       onClose={onClose}
       customHeader={
         <Group spacing={12} w="100%" h={40}>
-          <ActionIcon onClick={onGoBack} variant={'transparent'}>
+          <ActionIcon onClick={onGoBack} variant={'transparent'} data-test-id="create-provider-instance-sidebar-back">
             <ArrowLeft color={colors.B80} />
           </ActionIcon>
           <ProviderImage providerId={provider?.id ?? ''} />
@@ -140,14 +139,20 @@ export function CreateProviderInstanceSidebar({
       }
       customFooter={
         <Group ml="auto">
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} data-test-id="create-provider-instance-sidebar-cancel">
             Cancel
           </Button>
-          <Button disabled={areEnvironmentsLoading || isLoadingCreate} loading={isLoadingCreate} submit>
+          <Button
+            disabled={areEnvironmentsLoading || isLoadingCreate}
+            loading={isLoadingCreate}
+            submit
+            data-test-id="create-provider-instance-sidebar-create"
+          >
             Create
           </Button>
         </Group>
       }
+      data-test-id="create-provider-instance-sidebar"
     >
       <Text color={colors.B40}>
         Specify assignment preferences to automatically allocate the provider instance to the{' '}
