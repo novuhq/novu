@@ -1,5 +1,6 @@
 import { Group, Stack, Text, UnstyledButton, useMantineColorScheme } from '@mantine/core';
 import { ChannelTypeEnum } from '@novu/shared';
+
 import { When } from '../../../components/utils/When';
 import { Button, colors, Tooltip } from '../../../design-system';
 import { useEnvController, useIsMultiProviderConfigurationEnabled } from '../../../hooks';
@@ -70,6 +71,7 @@ export const ListProviders = ({
         .map((provider) => {
           return (
             <UnstyledButton
+              key={provider.identifier ?? provider.providerId}
               style={{
                 width: '100%',
                 padding: isMultiProviderConfigurationEnabled ? '8px 12px' : 15,
