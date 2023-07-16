@@ -23,6 +23,7 @@ export interface IEmailOverrides {
   replyTo?: string;
   cc?: string[];
   bcc?: string[];
+  senderName?: string;
 }
 
 export type ITriggerOverrides = {
