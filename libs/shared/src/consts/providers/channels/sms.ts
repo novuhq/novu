@@ -24,6 +24,14 @@ import { ChannelTypeEnum } from '../../../types';
 
 export const smsProviders: IProviderConfig[] = [
   {
+    id: SmsProviderIdEnum.Novu,
+    displayName: 'Novu SMS',
+    channel: ChannelTypeEnum.SMS,
+    credentials: [],
+    docReference: 'https://docs.novu.co/channels/sms/',
+    logoFileName: { light: 'novu.png', dark: 'novu.png' },
+  },
+  {
     id: SmsProviderIdEnum.Nexmo,
     displayName: 'Nexmo',
     channel: ChannelTypeEnum.SMS,

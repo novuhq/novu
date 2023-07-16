@@ -36,6 +36,8 @@ import { GetInAppActivatedCommand } from './usecases/get-in-app-activated/get-in
 import { GetInAppActivated } from './usecases/get-in-app-activated/get-in-app-activated.usecase';
 import { ApiResponse } from '../shared/framework/response.decorator';
 import { ChannelTypeLimitDto } from './dtos/get-channel-type-limit.sto';
+import { GetActiveIntegrationsCommand } from './usecases/get-active-integration/get-active-integration.command';
+import { GetActiveIntegrationResponseDto } from './dtos/get-active-integration-response.dto';
 
 @Controller('/integrations')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -85,9 +87,9 @@ export class IntegrationsController {
       'Return all the active integrations the user has created for that organization. Review v.0.17.0 changelog for a breaking change',
   })
   @ExternalApiAccessible()
-  async getActiveIntegrations(@UserSession() user: IJwtPayload): Promise<IntegrationResponseDto[]> {
+  async getActiveIntegrations(@UserSession() user: IJwtPayload): Promise<GetActiveIntegrationResponseDto[]> {
     return await this.getActiveIntegrationsUsecase.execute(
-      GetIntegrationsCommand.create({
+      GetActiveIntegrationsCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,

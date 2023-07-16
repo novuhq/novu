@@ -6,7 +6,7 @@ import {
   OrganizationLevelWithUserCommand,
 } from '../../commands';
 
-export class GetDecryptedIntegrationsCommand extends OrganizationLevelWithUserCommand {
+export class GetDecryptedIntegrationsCommand extends EnvironmentWithUserCommand {
   @IsBoolean()
   @IsOptional()
   findOne?: boolean;
