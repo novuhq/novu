@@ -28,6 +28,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
   let subscriberService: SubscribersService;
 
   const inMemoryProviderService = new InMemoryProviderService();
+  inMemoryProviderService.initialize();
   const invalidateCache = new InvalidateCacheService(new CacheService(inMemoryProviderService));
 
   const subscriberRepository = new SubscriberRepository();
