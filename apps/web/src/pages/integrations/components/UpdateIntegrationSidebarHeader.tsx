@@ -1,31 +1,33 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Group } from '@mantine/core';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { Button, colors, Dropdown, Modal, NameInput, Text, Title } from '../../../design-system';
 import { useFetchEnvironments } from '../../../hooks/useFetchEnvironments';
 import { ProviderImage } from './multi-provider/SelectProviderSidebar';
-import { IIntegratedProvider } from '../IntegrationsStorePage';
+import type { IIntegratedProvider } from '../types';
 import { useProviders } from '../useProviders';
 import { useDeleteIntegration } from '../../../api/hooks';
 import { errorMessage, successMessage } from '../../../utils/notifications';
-import { ROUTES } from '../../../constants/routes.enum';
 import { DotsHorizontal, Trash } from '../../../design-system/icons';
 import { ProviderInfo } from './multi-provider/ProviderInfo';
 
-export const UpdateIntegrationSidebarHeader = ({ provider }: { provider: IIntegratedProvider | null }) => {
+export const UpdateIntegrationSidebarHeader = ({
+  provider,
+  onSuccessDelete,
+}: {
+  provider: IIntegratedProvider | null;
+  onSuccessDelete: () => void;
+}) => {
   const [isModalOpened, setModalIsOpened] = useState(false);
-  const navigate = useNavigate();
   const { control } = useFormContext();
   const { environments } = useFetchEnvironments();
-  const { isLoading, refetch } = useProviders();
+  const { isLoading } = useProviders();
 
   const { deleteIntegration, isLoading: isDeleting } = useDeleteIntegration({
     onSuccess: (_, { name }) => {
       successMessage(`Instance configuration ${name} is deleted`);
-      refetch();
-      navigate(ROUTES.INTEGRATIONS);
+      onSuccessDelete();
     },
     onError: (_, { name }) => {
       errorMessage(`Instance configuration ${name} could not be deleted`);

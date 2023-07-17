@@ -5,7 +5,7 @@ import { ErrorIcon } from '../../../../design-system/icons';
 import { colors, Text } from '../../../../design-system';
 import { LimitBar } from '../LimitBar';
 import { useIntegrationLimit } from '../../../../hooks';
-import { IIntegratedProvider } from '../../IntegrationsStorePage';
+import type { IIntegratedProvider } from '../../types';
 
 export const NovuProviderSidebarContent = ({ provider }: { provider: IIntegratedProvider | null }) => {
   const {

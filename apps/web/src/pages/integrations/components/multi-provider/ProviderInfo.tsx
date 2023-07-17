@@ -2,7 +2,7 @@ import { Group } from '@mantine/core';
 import { ChannelTypeEnum, IEnvironment } from '@novu/shared';
 
 import { CHANNEL_TYPE_TO_STRING } from '../../../../utils/channels';
-import { IIntegratedProvider } from '../../IntegrationsStorePage';
+import type { IIntegratedProvider } from '../../types';
 import { IntegrationChannel } from '../IntegrationChannel';
 import { IntegrationEnvironmentPill } from '../IntegrationEnvironmentPill';
 

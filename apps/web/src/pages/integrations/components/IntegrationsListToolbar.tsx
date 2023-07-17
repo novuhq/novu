@@ -25,16 +25,16 @@ const PlusSquare = styled.div`
 
 export const IntegrationsListToolbar = ({
   areIntegrationsLoading,
-  openCreateIntegration,
+  onAddProviderClick,
 }: {
   areIntegrationsLoading: boolean;
-  openCreateIntegration: () => void;
+  onAddProviderClick: () => void;
 }) => {
   return (
     <IntegrationsListToolbarHolder>
       <ButtonStyled
         id="add-provider"
-        onClick={openCreateIntegration}
+        onClick={onAddProviderClick}
         disabled={areIntegrationsLoading}
         data-test-id="add-provider"
         variant="subtle"
