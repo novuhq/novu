@@ -30,4 +30,4 @@ Before you can send emails on a large scale, you will need to authenticate your 
 - Fill the `From email address` field using the authenticated email from the previous step.
 - Click on the `Disabled` button and mark as `Active`.
 - Click on the **Connect** button.
-- You should now be able to send notifications using Plunksend in Novu.
+- You should now be able to send notifications using Plunk in Novu.
