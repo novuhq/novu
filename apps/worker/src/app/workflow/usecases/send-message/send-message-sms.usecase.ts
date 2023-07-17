@@ -62,11 +62,14 @@ export class SendMessageSms extends SendMessageBase {
     ]);
     if (!subscriber) throw new PlatformException('Subscriber not found');
 
+    const overrideSelectedIntegration = command.overrides?.sms?.integrationIdentifier;
+
     const integration = await this.getIntegration({
       organizationId: command.organizationId,
       environmentId: command.environmentId,
       channelType: ChannelTypeEnum.SMS,
       userId: command.userId,
+      identifier: overrideSelectedIntegration as string,
     });
 
     Sentry.addBreadcrumb({
@@ -119,6 +122,13 @@ export class SendMessageSms extends SendMessageBase {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
+          ...(overrideSelectedIntegration
+            ? {
+                raw: JSON.stringify({
+                  integrationIdentifier: overrideSelectedIntegration,
+                }),
+              }
+            : {}),
         })
       );
 

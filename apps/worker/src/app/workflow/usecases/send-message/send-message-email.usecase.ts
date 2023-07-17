@@ -69,12 +69,14 @@ export class SendMessageEmail extends SendMessageBase {
 
     let integration: IntegrationEntity | undefined = undefined;
 
+    const overrideSelectedIntegration = command.overrides?.email?.integrationIdentifier;
     try {
       integration = await this.getIntegration({
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         channelType: ChannelTypeEnum.EMAIL,
         userId: command.userId,
+        identifier: overrideSelectedIntegration as string,
       });
     } catch (e) {
       await this.createExecutionDetails.execute(
@@ -112,6 +114,13 @@ export class SendMessageEmail extends SendMessageBase {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
+          ...(overrideSelectedIntegration
+            ? {
+                raw: JSON.stringify({
+                  integrationIdentifier: overrideSelectedIntegration,
+                }),
+              }
+            : {}),
         })
       );
 

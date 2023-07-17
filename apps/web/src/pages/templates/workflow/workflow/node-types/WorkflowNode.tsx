@@ -11,7 +11,12 @@ import { useStyles } from '../../../../../design-system/template-button/Template
 import { colors } from '../../../../../design-system/config';
 import { Trash } from '../../../../../design-system/icons';
 import { When } from '../../../../../components/utils/When';
-import { useActiveIntegrations, useEnvController, useIntegrationLimit } from '../../../../../hooks';
+import {
+  useActiveIntegrations,
+  useEnvController,
+  useIntegrationLimit,
+  useIsMultiProviderConfigurationEnabled,
+} from '../../../../../hooks';
 import { getFormattedStepErrors } from '../../../shared/errors';
 import { Popover } from '../../../../../design-system/popover';
 import { Button } from '../../../../../design-system/button/Button';
@@ -19,6 +24,7 @@ import { IntegrationsStoreModal } from '../../../../integrations/IntegrationsSto
 import { useSegment } from '../../../../../components/providers/SegmentProvider';
 import { TemplateEditorAnalyticsEnum } from '../../../constants';
 import { CHANNEL_TYPE_TO_STRING } from '../../../../../utils/channels';
+import { IntegrationsListModal } from '../../../../integrations/IntegrationsListModal';
 
 interface ITemplateButtonProps {
   Icon: React.FC<any>;
@@ -93,6 +99,7 @@ export function WorkflowNode({
   const { isLimitReached: isEmailLimitReached } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
   const { isLimitReached: isSmsLimitReached } = useIntegrationLimit(ChannelTypeEnum.SMS);
   const [hover, setHover] = useState(false);
+  const isMultiProviderConfigurationEnabled = useIsMultiProviderConfigurationEnabled();
 
   const hasActiveIntegration = useMemo(() => {
     const isChannelStep = [StepTypeEnum.EMAIL, StepTypeEnum.PUSH, StepTypeEnum.SMS, StepTypeEnum.CHAT].includes(
@@ -111,6 +118,11 @@ export function WorkflowNode({
 
     return true;
   }, [integrations, tabKey, isEmailLimitReached, isSmsLimitReached]);
+
+  const onIntegrationModalClose = () => {
+    setIntegrationsModalVisible(false);
+    setPopoverOpened(false);
+  };
 
   const {
     watch,
@@ -236,14 +248,19 @@ export function WorkflowNode({
           </MantinePopover>
         )}
       </UnstyledButtonStyled>
-      <IntegrationsStoreModal
-        openIntegration={isIntegrationsModalVisible}
-        closeIntegration={() => {
-          setIntegrationsModalVisible(false);
-          setPopoverOpened(false);
-        }}
-        scrollTo={tabKey}
-      />
+      {isMultiProviderConfigurationEnabled ? (
+        <IntegrationsListModal
+          isOpen={isIntegrationsModalVisible}
+          onClose={onIntegrationModalClose}
+          scrollTo={tabKey}
+        />
+      ) : (
+        <IntegrationsStoreModal
+          openIntegration={isIntegrationsModalVisible}
+          closeIntegration={onIntegrationModalClose}
+          scrollTo={tabKey}
+        />
+      )}
     </>
   );
 }

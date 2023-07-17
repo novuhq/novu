@@ -22,7 +22,7 @@ import { useSegment } from '../../components/providers/SegmentProvider';
 import { IntegrationsStoreModalAnalytics } from './constants';
 import { NovuSmsProviderModal } from './components/NovuSmsProviderModal';
 import { useCreateInAppIntegration } from '../../hooks/useCreateInAppIntegration';
-import { IIntegratedProvider } from './IntegrationsStorePage';
+import type { IIntegratedProvider } from './types';
 
 export function IntegrationsStoreModal({
   scrollTo,
@@ -311,25 +311,3 @@ const useDrawerStyles = createStyles((theme: MantineTheme) => {
     },
   };
 });
-
-export interface IntegrationEntity {
-  _id?: string;
-
-  _environmentId: string;
-
-  _organizationId: string;
-
-  providerId: string;
-
-  channel: ChannelTypeEnum;
-
-  credentials: ICredentials;
-
-  active: boolean;
-
-  deleted: boolean;
-
-  deletedAt: string;
-
-  deletedBy: string;
-}

@@ -8,6 +8,9 @@ export class SelectIntegrationCommand extends EnvironmentWithUserCommand {
   @IsMongoId()
   id?: string;
 
+  @IsOptional()
+  identifier?: string;
+
   @IsDefined()
   channelType: ChannelTypeEnum;
 
