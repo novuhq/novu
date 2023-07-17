@@ -4,7 +4,7 @@ import { useClipboard } from '@mantine/hooks';
 
 import { Input, Switch } from '../../../design-system';
 import { Check, Copy } from '../../../design-system/icons';
-import { IIntegratedProvider } from '../IntegrationsStorePage';
+import type { IIntegratedProvider } from '../types';
 
 const CopyWrapper = styled.div`
   cursor: pointer;
