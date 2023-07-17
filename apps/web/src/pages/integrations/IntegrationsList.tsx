@@ -65,7 +65,7 @@ export const IntegrationsList = ({
   onChannelClick,
 }: {
   withOutlet?: boolean;
-  onAddProviderClick: () => void;
+  onAddProviderClick: React.MouseEventHandler<HTMLButtonElement>;
   onRowClickCallback: (row: Row<ITableIntegration>) => void;
   onChannelClick: (channel: ChannelTypeEnum) => void;
 }) => {

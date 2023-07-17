@@ -169,6 +169,7 @@ export function UpdateProviderSidebar({
             <Free>🎉 Free</Free>
           </Group>
         }
+        data-test-id="update-provider-sidebar-novu"
       >
         <ProviderInfo provider={selectedProvider} environments={environments} />
 
@@ -210,11 +211,17 @@ export function UpdateProviderSidebar({
                 </a>
               </Text>
             </Center>
-            <Button disabled={!isDirty || isLoadingUpdate} submit loading={isLoadingUpdate}>
+            <Button
+              disabled={!isDirty || isLoadingUpdate}
+              submit
+              loading={isLoadingUpdate}
+              data-test-id="update-provider-sidebar-update"
+            >
               Update
             </Button>
           </Group>
         }
+        data-test-id="update-provider-sidebar"
       >
         <When truthy={sidebarState === 'normal'}>
           <SetupWarning

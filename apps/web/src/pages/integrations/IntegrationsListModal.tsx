@@ -161,10 +161,11 @@ export function IntegrationsListModal({
       opened={isOpen}
       onClose={handleModalClose}
       styles={{ modal: { overflowX: 'hidden', overflowY: sidebarType ? 'hidden' : 'auto' } }}
+      data-test-id="integrations-list-modal"
     >
       <IntegrationsList
         withOutlet={false}
-        onAddProviderClick={showSelectSidebar}
+        onAddProviderClick={() => showSelectSidebar()}
         onRowClickCallback={onRowClickCallback}
         onChannelClick={showSelectSidebar}
       />

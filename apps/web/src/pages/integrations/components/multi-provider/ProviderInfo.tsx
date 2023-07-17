@@ -17,9 +17,11 @@ export const ProviderInfo = ({
     <IntegrationChannel
       name={CHANNEL_TYPE_TO_STRING[provider?.channel || ChannelTypeEnum.EMAIL]}
       type={provider?.channel || ChannelTypeEnum.EMAIL}
+      testId="provider-instance-channel"
     />
     <IntegrationEnvironmentPill
       name={environments?.find((environment) => environment._id === provider?.environmentId)?.name || 'Development'}
+      testId="provider-instance-environment"
     />
   </Group>
 );

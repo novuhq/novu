@@ -134,7 +134,7 @@ export function IntegrationInput({
           data-test-id={credential.key}
           error={errors[credential.key]?.message}
           {...field}
-          {...register(credential.key, {
+          {...register?.(credential.key, {
             required: credential.required && `Please enter a ${credential.displayName.toLowerCase()}`,
           })}
         />

@@ -96,6 +96,7 @@ export function SelectProviderSidebar({
   const onSidebarClose = () => {
     onClose();
     setProvidersList(initialProvidersList);
+    setSelectedTab(ChannelTypeEnum.IN_APP);
   };
 
   useEffect(() => {
@@ -112,7 +113,9 @@ export function SelectProviderSidebar({
             <>
               <Group spacing={12} h={40}>
                 <ProviderImage providerId={selectedProvider.providerId} />
-                <Title size={2}>{selectedProvider.displayName}</Title>
+                <Title size={2} data-test-id="selected-provider-name">
+                  {selectedProvider.displayName}
+                </Title>
               </Group>
               <Text color={colors.B40}>
                 A provider instance for {CHANNEL_TYPE_TO_STRING[selectedProvider.channel]} channel
@@ -130,7 +133,7 @@ export function SelectProviderSidebar({
       }
       customFooter={
         <Group ml="auto">
-          <Button variant={'outline'} onClick={onSidebarClose}>
+          <Button variant={'outline'} onClick={onSidebarClose} data-test-id="select-provider-sidebar-cancel">
             Cancel
           </Button>
           <Tooltip sx={{ position: 'absolute' }} disabled={selectedProvider !== null} label={'Select a provider'}>
@@ -143,6 +146,7 @@ export function SelectProviderSidebar({
                   }
                   onNextStepClick(selectedProvider);
                 }}
+                data-test-id="select-provider-sidebar-next"
               >
                 Next
               </Button>
@@ -150,6 +154,7 @@ export function SelectProviderSidebar({
           </Tooltip>
         </Group>
       }
+      data-test-id="select-provider-sidebar"
     >
       <SelectProviderBodyContainer>
         <Input
@@ -177,7 +182,10 @@ export function SelectProviderSidebar({
         <Space h={20} />
         <CenterDiv>
           <When truthy={emptyProvidersList}>
-            <Image src={`${CONTEXT_PATH}/static/images/empty-provider-search.svg`} />
+            <Image
+              src={`${CONTEXT_PATH}/static/images/empty-provider-search.svg`}
+              data-test-id="select-provider-no-search-results-img"
+            />
           </When>
           {!emptyProvidersList &&
             CHANNELS_ORDER.map((channelType) => {
@@ -209,6 +217,7 @@ export const ProviderImage = ({ providerId }) => {
         maxWidth: '24px',
         width: '24px',
       }}
+      data-test-id={`selected-provider-image-${providerId}`}
     />
   );
 };
@@ -229,7 +238,13 @@ const ListProviders = ({
   }, [channelProviders, channelType]);
 
   return (
-    <Stack hidden={providers.length === 0} pb={20} spacing={10} id={channelType}>
+    <Stack
+      hidden={providers.length === 0}
+      pb={20}
+      spacing={10}
+      id={channelType}
+      data-test-id={`providers-group-${channelType}`}
+    >
       <ChannelTitle spacing={8} channel={channelType} />
       <div>
         {providers.map((provider) => {
@@ -238,6 +253,7 @@ const ListProviders = ({
               key={provider.providerId}
               onClick={onProviderClick(provider)}
               selected={provider.providerId === selectedProvider?.providerId}
+              data-test-id={`provider-${provider.providerId}`}
             >
               <Group>
                 <ProviderImage providerId={provider.providerId} />
