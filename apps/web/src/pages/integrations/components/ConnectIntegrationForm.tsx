@@ -9,7 +9,7 @@ import { WarningOutlined } from '@ant-design/icons';
 import { ChannelTypeEnum, ICredentialsDto, IConfigCredentials, ICreateIntegrationBodyDto } from '@novu/shared';
 
 import { Button, colors, Input, Switch, Text } from '../../../design-system';
-import { IIntegratedProvider } from '../IntegrationsStorePage';
+import type { IIntegratedProvider } from '../types';
 import { createIntegration, getWebhookSupportStatus, updateIntegration } from '../../../api/integration';
 import { Close } from '../../../design-system/icons';
 import { IntegrationInput } from './IntegrationInput';
@@ -208,7 +208,7 @@ export function ConnectIntegrationForm({
   const webhookUrl = `${WEBHOOK_URL}/webhooks/organizations/${organization?._id}/environments/${environment?._id}/${provider?.channel}/${provider?.providerId}`;
 
   const isWebhookEnabled =
-    IS_DOCKER_HOSTED &&
+    !IS_DOCKER_HOSTED &&
     webhookSupportStatus &&
     provider?.channel &&
     [ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS].includes(provider?.channel);

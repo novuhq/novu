@@ -117,6 +117,7 @@ export const Sidebar = ({
       closeOnEscape={false}
       withinPortal={false}
       trapFocus={false}
+      data-expanded={isExpanded}
     >
       <Form noValidate onSubmit={onSubmit}>
         <HeaderHolder>
