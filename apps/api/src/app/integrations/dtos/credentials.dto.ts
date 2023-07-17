@@ -118,6 +118,12 @@ export class CredentialsDto implements ICredentials {
   webhookUrl?: string;
 
   @ApiPropertyOptional()
+  privateKey?: string;
+
+  @ApiPropertyOptional()
+  publicKey?: string;
+
+  @ApiPropertyOptional()
   @IsString()
   @IsOptional()
   redirectUrl?: string;

@@ -456,6 +456,24 @@ export const expoConfig: IConfigCredentials[] = [
   ...pushConfigBase,
 ];
 
+export const pushApiConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.PrivateKey,
+    displayName: 'VAPID Private Key',
+    type: 'string',
+    description: 'The private key used to encrypt the push payload.',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.PublicKey,
+    displayName: 'VAPID Public Key',
+    type: 'string',
+    description: 'The public key used to encrypt and decrypt the push payload.',
+    required: true,
+  },
+  ...pushConfigBase,
+];
+
 export const pushWebhookConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.WebhookUrl,

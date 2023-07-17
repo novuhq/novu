@@ -176,6 +176,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [x] [Expo](https://github.com/novuhq/novu/tree/main/providers/expo)
 - [x] [APNS](https://github.com/novuhq/novu/tree/main/providers/apns)
 - [x] [OneSignal](https://github.com/novuhq/novu/tree/main/providers/one-signal)
+- [x] [PushAPI](https://github.com/novuhq/novu/tree/main/providers/push-api)
 - [ ] Pushwoosh
 
 #### 👇 Chat
