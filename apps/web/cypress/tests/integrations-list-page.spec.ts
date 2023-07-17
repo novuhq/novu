@@ -898,7 +898,7 @@ describe('Integrations List Page', function () {
     cy.getByTestId('provider-instance-environment').should('contain', 'Development');
     cy.getByTestId('update-provider-sidebar-novu').contains('Novu Email');
     cy.getByTestId('update-provider-sidebar-novu').contains('Free');
-    cy.getByTestId('novu-in-app-limits').then((el) => {
+    cy.getByTestId('novu-provider-limits').then((el) => {
       expect(el.get(0).innerText).to.eq(
         'Novu provider allows sending max 300 emails per month,\nto send more messages, configure a different provider'
       );
@@ -966,7 +966,7 @@ describe('Integrations List Page', function () {
     cy.getByTestId('provider-instance-environment').should('contain', 'Development');
     cy.getByTestId('update-provider-sidebar-novu').contains('Novu SMS');
     cy.getByTestId('update-provider-sidebar-novu').contains('Free');
-    cy.getByTestId('novu-in-app-limits').then((el) => {
+    cy.getByTestId('novu-provider-limits').then((el) => {
       expect(el.get(0).innerText).to.eq(
         'Novu provider allows sending max 20 messages per month,\nto send more messages, configure a different provider'
       );

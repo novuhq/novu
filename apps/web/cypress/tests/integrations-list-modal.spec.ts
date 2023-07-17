@@ -384,7 +384,7 @@ describe('Integrations List Modal', function () {
     cy.getByTestId('select-provider-sidebar-next').should('be.disabled').contains('Next');
   });
 
-  it('should show emply search results', () => {
+  it('should show empty search results', () => {
     cy.intercept('*/integrations', async () => {
       await new Promise((resolve) => setTimeout(resolve, 100));
     }).as('getIntegrations');
@@ -736,9 +736,6 @@ describe('Integrations List Modal', function () {
     cy.intercept('POST', '*/integrations', async () => {
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }).as('createIntegration');
-    cy.intercept('DELETE', '*/integrations/*', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    }).as('deleteIntegration');
     cy.intercept('*/environments').as('getEnvironments');
 
     navigateToGetStarted();
@@ -795,9 +792,6 @@ describe('Integrations List Modal', function () {
     cy.intercept('POST', '*/integrations', async () => {
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }).as('createIntegration');
-    cy.intercept('DELETE', '*/integrations/*', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    }).as('deleteIntegration');
     cy.intercept('*/environments').as('getEnvironments');
 
     navigateToGetStarted();
@@ -876,7 +870,7 @@ describe('Integrations List Modal', function () {
     cy.getByTestId('provider-instance-environment').should('contain', 'Development');
     cy.getByTestId('update-provider-sidebar-novu').contains('Novu Email');
     cy.getByTestId('update-provider-sidebar-novu').contains('Free');
-    cy.getByTestId('novu-in-app-limits').then((el) => {
+    cy.getByTestId('novu-provider-limits').then((el) => {
       expect(el.get(0).innerText).to.eq(
         'Novu provider allows sending max 300 emails per month,\nto send more messages, configure a different provider'
       );
@@ -947,7 +941,7 @@ describe('Integrations List Modal', function () {
     cy.getByTestId('provider-instance-environment').should('contain', 'Development');
     cy.getByTestId('update-provider-sidebar-novu').contains('Novu SMS');
     cy.getByTestId('update-provider-sidebar-novu').contains('Free');
-    cy.getByTestId('novu-in-app-limits').then((el) => {
+    cy.getByTestId('novu-provider-limits').then((el) => {
       expect(el.get(0).innerText).to.eq(
         'Novu provider allows sending max 20 messages per month,\nto send more messages, configure a different provider'
       );
