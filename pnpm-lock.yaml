@@ -456,6 +456,7 @@ importers:
       cypress-wait-until: ^1.7.2
       date-fns: ^2.29.2
       eslint-plugin-cypress: ^2.12.1
+      eslint-plugin-react-hooks: ^4.4.0
       graphql: ^15.4.0
       handlebars: ^4.7.7
       html-webpack-plugin: 5.5.3
@@ -559,6 +560,7 @@ importers:
       chart.js: 3.9.1
       customize-cra: 1.0.0
       date-fns: 2.29.3
+      eslint-plugin-react-hooks: 4.6.0_eslint@8.38.0
       graphql: 15.8.0
       handlebars: 4.7.7
       html-webpack-plugin: 5.5.3_webpack@5.78.0

@@ -131,8 +131,9 @@ export const VariableComponent = ({ index, template, control, path, readonly }: 
 };
 
 export function VariableManager({ variablesArray, index, hideLabel = false, path, control }: VariableManagerProps) {
-  if (!variablesArray.fields.length) return null;
   const { readonly } = useEnvController();
+
+  if (!variablesArray.fields.length) return null;
 
   return (
     <>
