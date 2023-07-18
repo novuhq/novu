@@ -79,6 +79,7 @@ export const Sidebar = ({
   isOpened,
   isExpanded = false,
   isLoading = false,
+  'data-test-id': dataTestId,
   onClose,
   onBack,
   onSubmit,
@@ -92,6 +93,7 @@ export const Sidebar = ({
   onClose: () => void;
   onBack?: () => void;
   onSubmit?: React.FormEventHandler<HTMLFormElement>;
+  'data-test-id'?: string;
 }) => {
   const { classes: drawerClasses } = useDrawerStyles();
 
@@ -117,16 +119,22 @@ export const Sidebar = ({
       closeOnEscape={false}
       withinPortal={false}
       trapFocus={false}
+      data-expanded={isExpanded}
     >
-      <Form noValidate onSubmit={onSubmit}>
+      <Form noValidate onSubmit={onSubmit} data-test-id={dataTestId}>
         <HeaderHolder>
           {isExpanded && (
-            <ActionIcon variant="transparent" onClick={onBack}>
+            <ActionIcon variant="transparent" onClick={onBack} data-test-id="sidebar-back">
               <ArrowLeft color={colors.B40} />
             </ActionIcon>
           )}
           {customHeader}
-          <ActionIcon variant="transparent" onClick={onClose} style={{ marginLeft: 'auto' }}>
+          <ActionIcon
+            variant="transparent"
+            onClick={onClose}
+            style={{ marginLeft: 'auto' }}
+            data-test-id="sidebar-close"
+          >
             <Close color={colors.B40} />
           </ActionIcon>
         </HeaderHolder>

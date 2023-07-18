@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from '@emotion/styled';
 import { Group, Image, Space, Stack, Tabs, TabsValue, useMantineColorScheme } from '@mantine/core';
 import {
@@ -18,7 +17,7 @@ import { Search } from '../../../../design-system/icons';
 import useStyles from '../../../../design-system/tabs/Tabs.styles';
 import { useDebounce } from '../../../../hooks';
 import { ChannelTitle } from '../../../templates/components/ChannelTitle';
-import { IIntegratedProvider } from '../../IntegrationsStoreModal';
+import type { IIntegratedProvider } from '../../types';
 import { CHANNELS_ORDER } from '../IntegrationsListNoData';
 import { CHANNEL_TYPE_TO_STRING } from '../../../../utils/channels';
 import { getLogoFileName } from '../../../../utils/providers';
@@ -37,14 +36,27 @@ const mapStructure = (listProv): IIntegratedProvider[] =>
     docReference: providerItem.docReference,
   }));
 
-export function SelectProviderSidebar() {
-  const [providersList, setProvidersList] = useState({
-    [ChannelTypeEnum.EMAIL]: mapStructure(emailProviders),
-    [ChannelTypeEnum.SMS]: mapStructure(smsProviders),
-    [ChannelTypeEnum.PUSH]: mapStructure(pushProviders),
-    [ChannelTypeEnum.IN_APP]: mapStructure(inAppProviders),
-    [ChannelTypeEnum.CHAT]: mapStructure(chatProviders),
-  });
+const initialProvidersList = {
+  [ChannelTypeEnum.EMAIL]: mapStructure(emailProviders),
+  [ChannelTypeEnum.SMS]: mapStructure(smsProviders),
+  [ChannelTypeEnum.PUSH]: mapStructure(pushProviders),
+  [ChannelTypeEnum.IN_APP]: mapStructure(inAppProviders),
+  [ChannelTypeEnum.CHAT]: mapStructure(chatProviders),
+};
+
+export function SelectProviderSidebar({
+  scrollTo,
+  isOpened,
+  onClose,
+  onNextStepClick,
+}: {
+  scrollTo?: ChannelTypeEnum;
+  isOpened: boolean;
+  onClose: () => void;
+  onNextStepClick: (selectedProvider: IIntegratedProvider) => void;
+}) {
+  const [providersList, setProvidersList] = useState(initialProvidersList);
+  const [selectedTab, setSelectedTab] = useState(ChannelTypeEnum.IN_APP);
 
   const [selectedProvider, setSelectedProvider] = useState<IIntegratedProvider | null>(null);
   const { classes: tabsClasses } = useStyles(false);
@@ -61,38 +73,49 @@ export function SelectProviderSidebar() {
 
   const emptyProvidersList = Object.values(providersList).every((list) => list.length === 0);
 
-  const navigate = useNavigate();
-
   const onProviderClick = (provider) => () => setSelectedProvider(provider);
 
-  const onTabChange = (scrollTo: TabsValue) => {
-    if (scrollTo === null) {
-      return;
-    }
+  const onTabChange = useCallback(
+    (elementId?: TabsValue) => {
+      if (!elementId) {
+        return;
+      }
 
-    const element = document.getElementById(scrollTo);
+      setSelectedTab(elementId as ChannelTypeEnum);
 
-    element?.parentElement?.scrollTo({
-      behavior: 'smooth',
-      top: element?.offsetTop ? element?.offsetTop - 250 : undefined,
-    });
+      const element = document.getElementById(elementId);
+
+      element?.parentElement?.scrollTo({
+        behavior: 'smooth',
+        top: element?.offsetTop ? element?.offsetTop - 250 : undefined,
+      });
+    },
+    [setSelectedTab]
+  );
+
+  const onSidebarClose = () => {
+    onClose();
+    setProvidersList(initialProvidersList);
+    setSelectedTab(ChannelTypeEnum.IN_APP);
   };
 
-  const onCloseSidebar = () => {
-    navigate('/integrations');
-  };
+  useEffect(() => {
+    onTabChange(scrollTo?.toString());
+  }, [onTabChange, scrollTo]);
 
   return (
     <Sidebar
-      isOpened
-      onClose={onCloseSidebar}
+      isOpened={isOpened}
+      onClose={onSidebarClose}
       customHeader={
         <Stack spacing={8}>
           {selectedProvider !== null ? (
             <>
               <Group spacing={12} h={40}>
                 <ProviderImage providerId={selectedProvider.providerId} />
-                <Title size={2}>{selectedProvider.displayName}</Title>
+                <Title size={2} data-test-id="selected-provider-name">
+                  {selectedProvider.displayName}
+                </Title>
               </Group>
               <Text color={colors.B40}>
                 A provider instance for {CHANNEL_TYPE_TO_STRING[selectedProvider.channel]} channel
@@ -110,7 +133,7 @@ export function SelectProviderSidebar() {
       }
       customFooter={
         <Group ml="auto">
-          <Button variant={'outline'} onClick={onCloseSidebar}>
+          <Button variant={'outline'} onClick={onSidebarClose} data-test-id="select-provider-sidebar-cancel">
             Cancel
           </Button>
           <Tooltip sx={{ position: 'absolute' }} disabled={selectedProvider !== null} label={'Select a provider'}>
@@ -121,8 +144,9 @@ export function SelectProviderSidebar() {
                   if (selectedProvider === null) {
                     return;
                   }
-                  navigate(`/integrations/create/${selectedProvider?.channel}/${selectedProvider?.providerId}`);
+                  onNextStepClick(selectedProvider);
                 }}
+                data-test-id="select-provider-sidebar-next"
               >
                 Next
               </Button>
@@ -130,6 +154,7 @@ export function SelectProviderSidebar() {
           </Tooltip>
         </Group>
       }
+      data-test-id="select-provider-sidebar"
     >
       <SelectProviderBodyContainer>
         <Input
@@ -141,7 +166,7 @@ export function SelectProviderSidebar() {
           placeholder={'Search a provider...'}
           rightSection={<Search />}
         />
-        <Tabs defaultValue={ChannelTypeEnum.IN_APP} classNames={tabsClasses} onTabChange={onTabChange}>
+        <Tabs classNames={tabsClasses} onTabChange={onTabChange} value={selectedTab}>
           <Tabs.List>
             {CHANNELS_ORDER.map((channelType) => {
               const list = providersList[channelType];
@@ -157,7 +182,10 @@ export function SelectProviderSidebar() {
         <Space h={20} />
         <CenterDiv>
           <When truthy={emptyProvidersList}>
-            <Image src={`${CONTEXT_PATH}/static/images/empty-provider-search.svg`} />
+            <Image
+              src={`${CONTEXT_PATH}/static/images/empty-provider-search.svg`}
+              data-test-id="select-provider-no-search-results-img"
+            />
           </When>
           {!emptyProvidersList &&
             CHANNELS_ORDER.map((channelType) => {
@@ -189,6 +217,7 @@ export const ProviderImage = ({ providerId }) => {
         maxWidth: '24px',
         width: '24px',
       }}
+      data-test-id={`selected-provider-image-${providerId}`}
     />
   );
 };
@@ -209,7 +238,13 @@ const ListProviders = ({
   }, [channelProviders, channelType]);
 
   return (
-    <Stack hidden={providers.length === 0} pb={20} spacing={10} id={channelType}>
+    <Stack
+      hidden={providers.length === 0}
+      pb={20}
+      spacing={10}
+      id={channelType}
+      data-test-id={`providers-group-${channelType}`}
+    >
       <ChannelTitle spacing={8} channel={channelType} />
       <div>
         {providers.map((provider) => {
@@ -218,6 +253,7 @@ const ListProviders = ({
               key={provider.providerId}
               onClick={onProviderClick(provider)}
               selected={provider.providerId === selectedProvider?.providerId}
+              data-test-id={`provider-${provider.providerId}`}
             >
               <Group>
                 <ProviderImage providerId={provider.providerId} />
@@ -249,10 +285,6 @@ const SelectProviderBodyContainer = styled.form`
   display: flex;
   flex-direction: column;
   height: 100%;
-
-  > *:last-child {
-    margin-top: auto;
-  }
 `;
 
 const StyledButton = styled.div<{ selected: boolean }>`

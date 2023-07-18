@@ -57,7 +57,7 @@ export class SelectIntegration {
       return integrations[0];
     }
 
-    const query: Partial<IntegrationEntity> & { _organizationId: string } = {
+    let query: Partial<IntegrationEntity> & { _organizationId: string } = {
       ...(command.id ? { id: command.id } : {}),
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
@@ -65,6 +65,15 @@ export class SelectIntegration {
       ...(command.providerId ? { providerId: command.providerId } : {}),
       active: true,
     };
+
+    if (command.identifier) {
+      query = {
+        _organizationId: command.organizationId,
+        channel: command.channelType,
+        identifier: command.identifier,
+        active: true,
+      };
+    }
 
     const integration = await this.integrationRepository.findOne(
       query,

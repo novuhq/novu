@@ -36,7 +36,7 @@ export const SetupTimeline = ({
   const environmentIdentifier = environment?.identifier ?? '';
 
   return (
-    <Stack align="center" sx={{ width: '100%' }}>
+    <Stack align="center" sx={{ width: '100%' }} data-test-id="setup-timeline">
       <TimelineWrapper isDark={isDark}>
         <Timeline
           active={instructions?.length + 1}
