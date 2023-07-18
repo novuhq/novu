@@ -26,17 +26,6 @@ export class SocketModule implements OnModuleInit {
       {
         lockDuration: 90000,
         concurrency: 5,
-        connection: {
-          db: Number(process.env.REDIS_DB_INDEX),
-          port: Number(process.env.REDIS_PORT),
-          host: process.env.REDIS_HOST,
-          password: process.env.REDIS_PASSWORD,
-          connectTimeout: 50000,
-          keepAlive: 30000,
-          family: 4,
-          keyPrefix: getRedisPrefix(),
-          tls: process.env.REDIS_TLS as any,
-        },
       }
     );
   }

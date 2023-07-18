@@ -1,6 +1,6 @@
 {
   "name": "@novu/mandrill",
-  "version": "0.16.2",
+  "version": "0.16.4",
   "description": "A mandrill wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -42,7 +42,7 @@
   },
   "dependencies": {
     "@mailchimp/mailchimp_transactional": "^1.0.46",
-    "@novu/stateless": "^0.16.2"
+    "@novu/stateless": "^0.16.4"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "1.0.2",

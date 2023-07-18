@@ -476,13 +476,18 @@
     "externalredis",
     "autorun",
     "webp",
+    "nocheck",
+    "webp",
     "devs",
     "flowwer",
     "Grossman",
     "Dima",
     "orcid",
     "Barnea",
-    "Tomer"
+    "Tomer",
+    "codesandbox",
+    "GROUPBY",
+    "stefanprodan"
   ],
   "flagWords": [],
   "patterns": [

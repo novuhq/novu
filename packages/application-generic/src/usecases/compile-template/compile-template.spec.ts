@@ -54,6 +54,47 @@ describe('Compile Template', function () {
     expect(result).toEqual('<div>1 dog and 2 sausages for him</div>');
   });
 
+  it('should render unique values of array', async function () {
+    const result = await useCase.execute(
+      CompileTemplateCommand.create({
+        data: {
+          names: [{ name: 'dog' }, { name: 'cat' }, { name: 'dog' }],
+        },
+        template:
+          '<div>{{#each (unique names "name")}}{{this}}-{{/each}}</div>',
+      })
+    );
+
+    expect(result).toEqual('<div>dog-cat-</div>');
+  });
+
+  it('should render groupBy values of array', async function () {
+    const result = await useCase.execute(
+      CompileTemplateCommand.create({
+        data: {
+          names: [
+            {
+              name: 'Name 1',
+              age: '30',
+            },
+            {
+              name: 'Name 2',
+              age: '31',
+            },
+            {
+              name: 'Name 1',
+              age: '32',
+            },
+          ],
+        },
+        template:
+          '{{#each (groupby names "name")}}<h1>{{key}}</h1>{{#each items}}{{age}}-{{/each}}{{/each}}>',
+      })
+    );
+
+    expect(result).toEqual('<h1>Name1</h1>30-32-<h1>Name2</h1>31-');
+  });
+
   it('should allow the user to specify handlebars helpers', async function () {
     const result = await useCase.execute(
       CompileTemplateCommand.create({

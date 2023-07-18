@@ -69,7 +69,7 @@ describe('Workflow Queue service', () => {
     await organizationService.addMember(organization._id, user._id);
 
     const environmentService = new EnvironmentService();
-    environment = await environmentService.createEnvironment(organization._id);
+    environment = await environmentService.createEnvironment(organization._id, user._id);
 
     subscriberService = new SubscribersService(organization._id, environment._id);
     subscriber = await subscriberService.createSubscriber();
@@ -92,7 +92,7 @@ describe('Workflow Queue service', () => {
 
   it('should be initialised properly', async () => {
     expect(queueService).to.be.ok;
-    expect(queueService).to.have.all.keys('DEFAULT_ATTEMPTS', 'bullConfig', 'bullMqService', 'name');
+    expect(queueService).to.have.all.keys('DEFAULT_ATTEMPTS', 'bullMqService', 'name');
     expect(queueService.DEFAULT_ATTEMPTS).to.eql(3);
     expect(queueService.bullMqService.queue).to.deep.include({
       _events: {},
@@ -147,7 +147,14 @@ describe('Workflow Queue service', () => {
 
     const jobCreated = await jobRepository.create(job);
 
-    await queueService.addToQueue(jobCreated._id, jobCreated, '0');
+    const jobData = {
+      _environmentId: jobCreated._environmentId,
+      _id: jobCreated._id,
+      _organizationId: jobCreated._organizationId,
+      _userId: jobCreated._userId,
+    };
+
+    await queueService.addToQueue(jobCreated._id, jobData, '0');
 
     await jobsService.awaitRunningJobs({
       templateId: _templateId,
@@ -203,7 +210,14 @@ describe('Workflow Queue service', () => {
 
     const jobCreated = await jobRepository.create(job);
 
-    await queueService.addToQueue(jobCreated._id, jobCreated, '0');
+    const jobData = {
+      _environmentId: jobCreated._environmentId,
+      _id: jobCreated._id,
+      _organizationId: jobCreated._organizationId,
+      _userId: jobCreated._userId,
+    };
+
+    await queueService.addToQueue(jobCreated._id, jobData, '0');
 
     await jobsService.awaitRunningJobs({
       templateId: _templateId,
