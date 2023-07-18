@@ -102,7 +102,15 @@ export class Subscribers extends WithHttp implements ISubscribers {
 
   async markMessageSeen(subscriberId: string, messageId: string) {
     return await this.http.post(
-      `/subscribers/${subscriberId}/messages/${messageId}/seen`
+      `/subscribers/${subscriberId}/messages/markAs`,
+      { messageId, mark: { seen: true } }
+    );
+  }
+
+  async markMessageRead(subscriberId: string, messageId: string) {
+    return await this.http.post(
+      `/subscribers/${subscriberId}/messages/markAs`,
+      { messageId, mark: { read: true } }
     );
   }
 
