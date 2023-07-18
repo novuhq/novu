@@ -104,7 +104,8 @@
     "pino-pretty": "^9.4.0",
     "redlock": "4.2.0",
     "reflect-metadata": "^0.1.13",
-    "rrule": "^2.7.2"
+    "rrule": "^2.7.2",
+    "launchdarkly-node-server-sdk": "^7.0.1"
   },
   "optionalDependencies": {
     "@taskforcesh/bullmq-pro": "5.1.14"

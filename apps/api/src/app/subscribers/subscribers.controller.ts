@@ -5,6 +5,8 @@ import {
   DefaultValuePipe,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Patch,
   Post,
@@ -19,8 +21,7 @@ import {
   UpdateSubscriber,
   UpdateSubscriberCommand,
 } from '@novu/application-generic';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
-
+import { ApiOperation, ApiTags, ApiOkResponse, ApiNoContentResponse } from '@nestjs/swagger';
 import { ButtonTypeEnum, ChatProviderIdEnum, IJwtPayload } from '@novu/shared';
 import { MessageEntity } from '@novu/dal';
 
@@ -67,12 +68,15 @@ import { GetSubscribersDto } from './dtos/get-subscribers.dto';
 import { GetInAppNotificationsFeedForSubscriberDto } from './dtos/get-in-app-notification-feed-for-subscriber.dto';
 import { ApiResponse } from '../shared/framework/response.decorator';
 import { ChatOauthCallbackRequestDto, ChatOauthRequestDto } from './dtos/chat-oauth-request.dto';
-import { LimitPipe } from '../widgets/pipes/limit-pipe/limit-pipe';
 import { OAuthHandlerEnum } from './types';
 import { ChatOauthCallback } from './usecases/chat-oauth-callback/chat-oauth-callback.usecase';
 import { ChatOauthCallbackCommand } from './usecases/chat-oauth-callback/chat-oauth-callback.command';
 import { ChatOauth } from './usecases/chat-oauth/chat-oauth.usecase';
 import { ChatOauthCommand } from './usecases/chat-oauth/chat-oauth.command';
+import {
+  DeleteSubscriberCredentialsCommand,
+  DeleteSubscriberCredentials,
+} from './usecases/delete-subscriber-credentials';
 
 @Controller('/subscribers')
 @ApiTags('Subscribers')
@@ -92,7 +96,8 @@ export class SubscribersController {
     private updateMessageActionsUsecase: UpdateMessageActions,
     private updateSubscriberOnlineFlagUsecase: UpdateSubscriberOnlineFlag,
     private chatOauthCallbackUsecase: ChatOauthCallback,
-    private chatOauthUsecase: ChatOauth
+    private chatOauthUsecase: ChatOauth,
+    private deleteSubscriberCredentialsUsecase: DeleteSubscriberCredentials
   ) {}
 
   @Get('')
@@ -218,7 +223,32 @@ export class SubscribersController {
         subscriberId,
         providerId: body.providerId,
         credentials: body.credentials,
+        integrationIdentifier: body.integrationIdentifier,
         oauthHandler: OAuthHandlerEnum.EXTERNAL,
+      })
+    );
+  }
+
+  @Delete('/:subscriberId/credentials/:providerId')
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  @ApiNoContentResponse()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Delete subscriber credentials by providerId',
+    description: 'Delete subscriber credentials such as slack and expo tokens.',
+  })
+  async deleteSubscriberCredentials(
+    @UserSession() user: IJwtPayload,
+    @Param('subscriberId') subscriberId: string,
+    @Param('providerId') providerId: string
+  ): Promise<void> {
+    return await this.deleteSubscriberCredentialsUsecase.execute(
+      DeleteSubscriberCredentialsCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        subscriberId,
+        providerId,
       })
     );
   }
@@ -354,8 +384,7 @@ export class SubscribersController {
     @Query('feedIdentifier') feedId: string[] | string,
     @Query('seen') seen: boolean,
     @Param('subscriberId') subscriberId: string,
-    // todo NV-2161 update DefaultValuePipe to 100 in version 0.16
-    @Query('limit', new DefaultValuePipe(1000), new LimitPipe(1, 1000, true)) limit: number
+    @Query('limit', new DefaultValuePipe(100)) limit: number
   ): Promise<UnseenCountResponse> {
     let feedsQuery: string[] | undefined;
     if (feedId) {
@@ -445,6 +474,7 @@ export class SubscribersController {
         providerCode: query?.code,
         hmacHash: query?.hmacHash,
         environmentId: query?.environmentId,
+        integrationIdentifier: query?.integrationIdentifier,
         subscriberId,
         providerId,
       })
@@ -474,6 +504,7 @@ export class SubscribersController {
       ChatOauthCommand.create({
         hmacHash: query?.hmacHash,
         environmentId: query?.environmentId,
+        integrationIdentifier: query?.integrationIdentifier,
         subscriberId,
         providerId,
       })

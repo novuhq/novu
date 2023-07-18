@@ -10,7 +10,7 @@ export class UserService {
   private organizationService = new OrganizationService();
   private userRepository = new UserRepository();
 
-  async createTestUser(): Promise<UserEntity> {
+  async createCypressTestUser(): Promise<UserEntity> {
     const data = {
       email: 'test-user-1@example.com',
       firstName: faker.name.firstName(),
@@ -25,7 +25,7 @@ export class UserService {
 
     await this.organizationService.addMember(organization._id, user._id);
 
-    await this.environmentService.createEnvironment(organization._id);
+    await this.environmentService.createEnvironment(organization._id, user._id);
 
     return user;
   }
@@ -51,6 +51,10 @@ export class UserService {
     const user = await this.userRepository.findOne({
       _id: id,
     });
+
+    if (!user) {
+      throw new Error(`Test user with ${id} not found`);
+    }
 
     return user;
   }
