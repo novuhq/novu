@@ -521,16 +521,18 @@ export class HeadlessService {
             read: true,
           }),
         onSuccess: (data) => {
-          this.queryClient.setQueriesData<IMessage[]>(
+          this.queryClient.setQueriesData<IPaginatedResponse<IMessage>>(
             { queryKey: NOTIFICATIONS_QUERY_KEY, exact: false },
-            (oldMessages) =>
-              oldMessages.map((message) => {
+            (oldMessages) => ({
+              ...oldMessages,
+              data: oldMessages?.data?.map((message) => {
                 if (message._id === data._id) {
                   return data;
                 }
 
                 return message;
-              })
+              }),
+            })
           );
         },
       },
@@ -578,16 +580,18 @@ export class HeadlessService {
             seen: true,
           }),
         onSuccess: (data) => {
-          this.queryClient.setQueriesData<IMessage[]>(
+          this.queryClient.setQueriesData<IPaginatedResponse<IMessage>>(
             { queryKey: NOTIFICATIONS_QUERY_KEY, exact: false },
-            (oldMessages) =>
-              oldMessages.map((message) => {
+            (oldMessages) => ({
+              ...oldMessages,
+              data: oldMessages?.data?.map((message) => {
                 if (message._id === data._id) {
                   return data;
                 }
 
                 return message;
-              })
+              }),
+            })
           );
         },
       },
@@ -690,16 +694,18 @@ export class HeadlessService {
             variables.payload
           ),
         onSuccess: (data) => {
-          this.queryClient.setQueriesData<IMessage[]>(
+          this.queryClient.setQueriesData<IPaginatedResponse<IMessage>>(
             { queryKey: NOTIFICATIONS_QUERY_KEY, exact: false },
-            (oldMessages) =>
-              oldMessages.map((message) => {
-                if (message._id === messageId) {
+            (oldMessages) => ({
+              ...oldMessages,
+              data: oldMessages?.data?.map((message) => {
+                if (message._id === data._id) {
                   return data;
                 }
 
                 return message;
-              })
+              }),
+            })
           );
         },
       },
