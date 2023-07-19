@@ -181,6 +181,8 @@ describe('Creation functionality', function () {
       cy.visit('/workflows/create');
     });
 
+    cy.waitForNetworkIdle(500);
+
     dragAndDrop('email');
     cy.waitForNetworkIdle(500);
 
