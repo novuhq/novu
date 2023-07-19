@@ -525,12 +525,14 @@ export class HeadlessService {
             { queryKey: NOTIFICATIONS_QUERY_KEY, exact: false },
             (oldMessages) => ({
               ...oldMessages,
-              data: oldMessages?.data?.map((message) => {
-                if (message._id === data._id) {
-                  return data;
-                }
+              ...(oldMessages?.data && {
+                data: oldMessages?.data?.map((message) => {
+                  if (message._id === data._id) {
+                    return data;
+                  }
 
-                return message;
+                  return message;
+                }),
               }),
             })
           );
@@ -584,12 +586,14 @@ export class HeadlessService {
             { queryKey: NOTIFICATIONS_QUERY_KEY, exact: false },
             (oldMessages) => ({
               ...oldMessages,
-              data: oldMessages?.data?.map((message) => {
-                if (message._id === data._id) {
-                  return data;
-                }
+              ...(oldMessages?.data && {
+                data: oldMessages?.data?.map((message) => {
+                  if (message._id === data._id) {
+                    return data;
+                  }
 
-                return message;
+                  return message;
+                }),
               }),
             })
           );
@@ -698,12 +702,14 @@ export class HeadlessService {
             { queryKey: NOTIFICATIONS_QUERY_KEY, exact: false },
             (oldMessages) => ({
               ...oldMessages,
-              data: oldMessages?.data?.map((message) => {
-                if (message._id === data._id) {
-                  return data;
-                }
+              ...(oldMessages?.data && {
+                data: oldMessages?.data?.map((message) => {
+                  if (message._id === data._id) {
+                    return data;
+                  }
 
-                return message;
+                  return message;
+                }),
               }),
             })
           );
