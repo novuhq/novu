@@ -19,15 +19,9 @@ This documentation contains everything you need to get started with Novu. Explor
 
 ## What is Novu?
 
-Novu is an open-source notification infrastructure, built for engineering teams to help them build rich product notification experiences without constantly reinventing the wheel.
+Novu is an open-source notification infrastructure built to help engineering teams build rich product notification experiences without constantly re-inventing the wheel.
 <CardItems/>
 
 ## Discover Novu
 
 <Discover/>
-
-## Learn more
-
-To learn more about Novu, you can follow our [blog](https://novu.co/blog/) to read various use-cases and how-to guides, and to get information about various events (Ready for the next ConnectNovu hackathon?). 
-
-You can even join our [Discord Server](https://discord.gg/novu) to talk to fellow developers and get resolution for your support queries from our team and community members.
