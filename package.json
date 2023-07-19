@@ -92,11 +92,11 @@
     "@typescript-eslint/parser": "^5.50.0",
     "auto": "^10.36.5",
     "chalk": "4.1.2",
-    "cross-spawn": "^7.0.3",
     "chalk-animation": "^1.6.0",
     "commitizen": "^4.2.4",
     "cpx": "^1.5.0",
     "cross-env": "^7.0.3",
+    "cross-spawn": "^7.0.3",
     "cspell": "^6.19.2",
     "cypress-intellij-reporter": "^0.0.7",
     "cz-conventional-changelog": "3.3.0",
@@ -191,6 +191,7 @@
     "pnpm": "^7.26.0"
   },
   "dependencies": {
+    "@novu/testing": "workspace:^0.16.3",
     "nx": "^15.9.2",
     "tslib": "^2.4.0"
   }
