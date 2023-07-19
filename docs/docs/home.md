@@ -15,7 +15,7 @@ import Discover from '@site/src/components/Discover'
 
 Welcome to the Novu docs! 
 
-This documentation contains everything you need to get started with Novu. Explore our guides and examples to integrate Novu into your app and start sending world-class notifications.
+This documentation contains everything you need to get started with Novu. Explore our guides and examples to integrate Novu in your app and start sending world-class notifications.
 
 ## What is Novu?
 
@@ -28,12 +28,12 @@ Novu is an open-source notification infrastructure, built for engineering teams 
 
 ## Learn more
 
-To learn more about Novu, you can follow our [blog](https://novu.co/blog/) to read various use cases and how-to guides, and to get information about various events (Ready for the next ConnectNovu hackathon?). 
+To learn more about Novu, you can follow our [blog](https://novu.co/blog/) to read various use-cases and how-to guides, and to get information about various events (Ready for the next ConnectNovu hackathon?). 
 
-You can even join our [Discord Community](https://discord.gg/novu) to talk to fellow developers and get a resolution for your support queries from our team and community members.
+You can even join our [Discord Community](https://discord.gg/novu) to talk to fellow developers and get resolution for your support queries from our team and community members.
 
 ## Contributing
 
-At Novu, contributions are not only welcome but are actively encouraged. To start contributing to Novu, head over to our [Contributing Guide](https://github.com/novuhq/novu/blob/next/CONTRIBUTING.md) to know the coding guidelines and general practices to follow while contributing to Novu. 
+At Novu, contributions are not only welcome but are actively encouraged. To start contributing to Novu, head over to our [Contributing Guide](https://github.com/novuhq/novu/blob/next/CONTRIBUTING.md) to know the coding guidelines and general practices to folllow while contributing to Novu. 
 
 If you're stuck somewhere and need help, hop onto our [Discord Server](https://discord.gg/novu) to get priority help.
