@@ -360,13 +360,15 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.waitLoadTemplatePage(() => {
       cy.visit('/workflows/create');
     });
+    cy.waitForNetworkIdle(500);
 
     dragAndDrop('sms');
-    cy.waitForNetworkIdle(500);
 
     dragAndDrop('delay');
 
     dragAndDrop('sms');
+
+    cy.waitForNetworkIdle(500);
 
     const firstContent = 'first content for sms';
     const lastContent = 'last content for sms';
