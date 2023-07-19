@@ -46,6 +46,7 @@ export const VariablesManagement = ({
         >
           <Tooltip label="Add defaults or mark as required">
             <UnstyledButton
+              data-test-id="open-edit-variables-btn"
               onClick={() => {
                 if (openVariablesModal) {
                   openVariablesModal();
