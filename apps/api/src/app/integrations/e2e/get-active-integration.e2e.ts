@@ -81,7 +81,7 @@ describe('Get Active Integrations [IS_MULTI_PROVIDER_CONFIGURATION_ENABLED=true]
     expect(normalizeIntegration.length).to.equal(0);
   });
 
-  it('should have additional unselected integration after a one created', async function () {
+  it('should have additional unselected integration after creating a new one', async function () {
     const initialActiveIntegrations: IActiveIntegration[] = (await session.testAgent.get(`/v1/integrations/active`))
       .body.data;
     const { emailIntegration: initialEmailIntegrations } = splitByChannels(initialActiveIntegrations);
