@@ -37,6 +37,8 @@ export interface ISubscribers {
   markMessageSeen(subscriberId: string, messageId: string);
   markMessageRead(subscriberId: string, messageId: string);
   markMessageActionSeen(subscriberId: string, messageId: string, type: string);
+  markAllUnseenAsSeen(subscriberId: string, messageIds: string[], type: string);
+  markAllUnreadAsRead(subscriberId: string, messageIds: string[], type: string);
 }
 
 export interface IUpdateSubscriberPreferencePayload {

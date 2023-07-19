@@ -124,6 +124,20 @@ export class Subscribers extends WithHttp implements ISubscribers {
     );
   }
 
+  async markAllUnseenAsSeen(subscriberId: string, messageIds: string[]) {
+    return await this.http.post(
+      `/subscribers/${subscriberId}/messages/markAs`,
+      { messageIds, mark: { seen: true } }
+    );
+  }
+
+  async markAllUnreadAsRead(subscriberId: string, messageIds: string[]) {
+    return await this.http.post(
+      `/subscribers/${subscriberId}/messages/markAs`,
+      { messageIds, mark: { read: true } }
+    );
+  }
+
   async markMessageActionSeen(
     subscriberId: string,
     messageId: string,
@@ -132,19 +146,5 @@ export class Subscribers extends WithHttp implements ISubscribers {
     return await this.http.post(
       `/subscribers/${subscriberId}/messages/${messageId}/actions/${type}`
     );
-  }
-
-  async markAsRead(subscriberId: string, messageId: string) {
-    return await this.http.post(
-      `/subscribers/${subscriberId}/messages/${messageId}/read`
-    );
-  }
-
-  async markAllUnreadAsRead(subscriberId: string) {
-    return await this.http.post(`/subscribers/${subscriberId}/messages/read`);
-  }
-
-  async markAllUnseenAsSeen(subscriberId: string) {
-    return await this.http.post(`/subscribers/${subscriberId}/messages/seen`);
   }
 }
