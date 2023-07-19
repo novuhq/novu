@@ -5,6 +5,8 @@ import {
   GetDecryptedIntegrationsCommand,
   SelectIntegration,
   SelectIntegrationCommand,
+  FeatureFlagCommand,
+  GetFeatureFlag,
 } from '@novu/application-generic';
 import { ChannelTypeEnum } from '@novu/shared';
 import { EnvironmentEntity, EnvironmentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
@@ -18,10 +20,19 @@ export class GetActiveIntegrations {
     private integrationRepository: IntegrationRepository,
     private selectIntegration: SelectIntegration,
     private environmentRepository: EnvironmentRepository,
-    private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
+    private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations,
+    private getFeatureFlag: GetFeatureFlag
   ) {}
 
   async execute(command: GetActiveIntegrationsCommand): Promise<GetActiveIntegrationResponseDto[]> {
+    const isMultiProviderConfigurationEnabled = await this.getFeatureFlag.isMultiProviderConfigurationEnabled(
+      FeatureFlagCommand.create({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        userId: command.userId,
+      })
+    );
+
     const activeIntegrations = await this.getDecryptedIntegrationsUsecase.execute(
       GetDecryptedIntegrationsCommand.create({
         organizationId: command.organizationId,
@@ -33,6 +44,10 @@ export class GetActiveIntegrations {
 
     if (!activeIntegrations.length) {
       return [];
+    }
+
+    if (!isMultiProviderConfigurationEnabled) {
+      return activeIntegrations;
     }
 
     const environments = await this.environmentRepository.findOrganizationEnvironments(command.organizationId);
@@ -59,7 +74,12 @@ export class GetActiveIntegrations {
     selectedIntegrations: IntegrationEntity[]
   ): GetActiveIntegrationResponseDto[] {
     return activeIntegration.map((integration) => {
-      const selected = selectedIntegrations.find((selectedIntegration) => selectedIntegration._id === integration._id);
+      // novu integrations doesn't have unique id that's why we need to compare by environmentId
+      const selected = selectedIntegrations.find(
+        (selectedIntegration) =>
+          selectedIntegration._id === integration._id &&
+          selectedIntegration._environmentId === integration._environmentId
+      );
 
       return selected ? { ...integration, selected: true } : { ...integration, selected: false };
     });

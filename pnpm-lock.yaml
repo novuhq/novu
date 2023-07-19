@@ -1358,6 +1358,8 @@ importers:
       nodemon: ^2.0.3
       reflect-metadata: ^0.1.13
       rimraf: ^3.0.2
+      shortid: ^2.2.16
+      slugify: ^1.4.6
       superagent-defaults: ^0.1.14
       supertest: ^5.0.0
       ts-node: ~10.9.1
@@ -1382,6 +1384,8 @@ importers:
       ng-intercom: 8.0.2
       reflect-metadata: 0.1.13
       rimraf: 3.0.2
+      shortid: 2.2.16
+      slugify: 1.6.6
       superagent-defaults: 0.1.14_superagent@8.0.9
       supertest: 5.0.0
       uuid: 8.3.2
