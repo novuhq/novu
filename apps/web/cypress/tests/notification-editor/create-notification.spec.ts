@@ -176,6 +176,50 @@ describe('Creation functionality', function () {
     cy.get('.mantine-Notification-root').contains('Test sent successfully!');
   });
 
+  it('should not clear the set default values of variables on update', function () {
+    cy.waitLoadTemplatePage(() => {
+      cy.visit('/workflows/create');
+    });
+
+    dragAndDrop('email');
+    cy.waitForNetworkIdle(500);
+
+    cy.clickWorkflowNode('node-emailSelector');
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('emailSubject').type('this is email subject');
+    cy.getByTestId('email-editor').getByTestId('editor-row').click();
+    cy.getByTestId('editable-text-content').clear().type('This text is written from a test {{firstName}}', {
+      parseSpecialCharSequences: false,
+    });
+
+    cy.getByTestId('open-edit-variables-btn').click();
+    cy.getByTestId('variable-default-value').type('Test Var Value');
+    cy.getByTestId('close-var-manager-modal').click();
+    cy.getByTestId('notification-template-submit-btn').click();
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('open-edit-variables-btn').click();
+    cy.getByTestId('variable-default-value').should('have.value', 'Test Var Value');
+    cy.getByTestId('close-var-manager-modal').click();
+    goBack();
+    dragAndDrop('sms');
+    cy.waitForNetworkIdle(500);
+
+    cy.clickWorkflowNode('node-smsSelector');
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('smsNotificationContent').type('This text is written from a test {{var}}', {
+      parseSpecialCharSequences: false,
+    });
+    cy.getByTestId('variable-default-value').type('Test');
+
+    cy.getByTestId('notification-template-submit-btn').click();
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('variable-default-value').should('have.value', 'Test');
+  });
+
   it('should create email notification', function () {
     cy.waitLoadTemplatePage(() => {
       cy.visit('/workflows/create');

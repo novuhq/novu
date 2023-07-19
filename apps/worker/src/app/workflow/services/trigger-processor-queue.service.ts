@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { WorkerOptions } from 'bullmq';
 const nr = require('newrelic');
 import {
   INovuWorker,
@@ -19,9 +20,8 @@ export class TriggerProcessorQueueService extends TriggerQueueService implements
     this.bullMqService.createWorker(this.name, this.getWorkerProcessor(), this.getWorkerOpts());
   }
 
-  private getWorkerOpts() {
+  private getWorkerOpts(): WorkerOptions {
     return {
-      ...this.bullConfig,
       lockDuration: 90000,
       concurrency: 200,
     };

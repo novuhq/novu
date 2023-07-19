@@ -4,7 +4,7 @@ import { useClipboard } from '@mantine/hooks';
 
 import { Input, Switch } from '../../../design-system';
 import { Check, Copy } from '../../../design-system/icons';
-import { IIntegratedProvider } from '../IntegrationsStorePage';
+import type { IIntegratedProvider } from '../types';
 
 const CopyWrapper = styled.div`
   cursor: pointer;
@@ -51,6 +51,7 @@ export const UpdateIntegrationCommonFields = ({ provider }: { provider: IIntegra
             required
             label="Name"
             error={errors.name?.message}
+            data-test-id="provider-instance-name"
           />
         )}
       />
@@ -76,6 +77,7 @@ export const UpdateIntegrationCommonFields = ({ provider }: { provider: IIntegra
                 {identifierClipboard.copied ? <Check /> : <Copy />}
               </CopyWrapper>
             }
+            data-test-id="provider-instance-identifier"
           />
         )}
       />
