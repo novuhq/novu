@@ -75,6 +75,7 @@ const mockNotification: IMessage = {
   payload: {},
 };
 const mockNotificationsList: Array<IMessage> = [mockNotification];
+
 const mockUserPreferenceSetting: IUserPreferenceSettings = {
   template: { _id: templateId, name: 'mock template', critical: false },
   preference: {
@@ -844,8 +845,13 @@ describe('headless.service', () => {
         read: true,
       };
       mockServiceInstance.markMessageAs.mockImplementationOnce(() =>
-        promiseResolveTimeout(0, updatedNotification)
+        promiseResolveTimeout(0, [updatedNotification])
       );
+
+      mockServiceInstance.getNotificationsList.mockImplementationOnce(() =>
+        promiseResolveTimeout(0, [updatedNotification])
+      );
+
       const headlessService = new HeadlessService(options);
       const markNotificationsAsReadListener = jest.fn();
       const fetchNotificationsListener = jest.fn();
@@ -867,14 +873,19 @@ describe('headless.service', () => {
       expect(markNotificationsAsReadListener).toBeCalledWith(
         expect.objectContaining({ isLoading: true, data: undefined })
       );
-      await promiseResolveTimeout(100);
+      await promiseResolveTimeout(300);
 
       expect(mockServiceInstance.markMessageAs).toBeCalledTimes(1);
-      expect(onSuccess).toHaveBeenNthCalledWith(1, updatedNotification);
+      expect(onSuccess).toHaveBeenNthCalledWith(1, [updatedNotification]);
       expect(fetchNotificationsListener).toHaveBeenNthCalledWith(
         3,
         expect.objectContaining({
           data: [updatedNotification],
+          error: null,
+          isError: false,
+          isFetching: true,
+          isLoading: false,
+          status: 'success',
         })
       );
     });
