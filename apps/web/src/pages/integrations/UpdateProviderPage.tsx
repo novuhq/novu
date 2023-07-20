@@ -11,5 +11,5 @@ export function UpdateProviderPage() {
     navigate(ROUTES.INTEGRATIONS);
   };
 
-  return <UpdateProviderSidebar isOpened onClose={onClose} integrationId={integrationId} onSuccessDelete={onClose} />;
+  return <UpdateProviderSidebar isOpened onClose={onClose} integrationId={integrationId} />;
 }
