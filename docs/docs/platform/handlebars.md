@@ -10,6 +10,8 @@ import TabItem from '@theme/TabItem';
 
 You can customize the notification the end users get using Handlebars. This is crucial for many cases, for example, when using the [digest engine](https://docs.novu.co/platform/digest/). 
 
+## Properties and their description
+
 To be able to write handlebar templates to suit your needs, you'll first need to know the properties you have access to. Novu lets you access the following properties:
 
 | Property           | Description                                                                                                                                         |
@@ -17,6 +19,8 @@ To be able to write handlebar templates to suit your needs, you'll first need to
 | `step.events`      | An array of all the events aggregated under in digest. This will be the "payload" object passed to each `trigger.event` sent in the digest period |
 | `step.total_count` | The number of total events in this digest                                                                                                           |
 | `step.digest`      | A `boolean` flag to indicate if we are in a digest mode right now        
+
+## Functions and their description
 
 In addition to these properties, we also support the following functionality:
 
@@ -33,6 +37,8 @@ In addition to these properties, we also support the following functionality:
 | `{{lowercase key}}`      | This helps you use the `lowercase` handlebar helper function and turns the value of the specified key to its lowercase value. So, for `message: 'hEllo WORLD'`, if we write `{{lowercase message}}`, we'll end up with `hello world`|
 | `{{uppercase key}}`      | This helps you use the `uppercase` handlebar helper function and turns the value of the specified key to its uppercase value. So, for `message: 'hello woRld'`, if we write `{{uppercase message}}`, we'll end up with `HELLO WORLD`|
 | `{{titlecase key}}`      | This helps you use the `titlecase` handlebar helper function and turns the value of the specified key to its titlecase value. So, for `message: 'hEllo wOrLD'`, if we write `{{titlecase message}}`, we'll end up with `Hello World`|
+
+## Use-cases and examples
 
 By combining the functions and properties above, we can get some powerful results. Let's take a look at some scenarios and how you can achieve them:
 
