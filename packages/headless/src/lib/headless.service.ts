@@ -786,4 +786,51 @@ export class HeadlessService {
         unsubscribe();
       });
   }
+
+  public async removeAllNotifications({
+    feedId,
+    listener,
+    onSuccess,
+    onError,
+  }: {
+    feedId?: string;
+    listener: (
+      result: UpdateResult<void, unknown, { messageId: string }>
+    ) => void;
+    onSuccess?: () => void;
+    onError?: (error: unknown) => void;
+  }) {
+    this.assertSessionInitialized();
+
+    const { result, unsubscribe } = this.queryService.subscribeMutation<
+      void,
+      unknown,
+      { feedId?: string }
+    >({
+      options: {
+        mutationFn: (variables) =>
+          this.api.removeAllMessages(variables?.feedId),
+        onSuccess: (data) => {
+          this.queryClient.refetchQueries(NOTIFICATIONS_QUERY_KEY, {
+            exact: false,
+          });
+        },
+      },
+      listener: (res) => this.callUpdateListener(res, listener),
+    });
+
+    result
+      .mutate({ feedId })
+      .then((data) => {
+        onSuccess?.();
+
+        return data;
+      })
+      .catch((error) => {
+        onError?.(error);
+      })
+      .finally(() => {
+        unsubscribe();
+      });
+  }
 }
