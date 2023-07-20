@@ -80,13 +80,15 @@ describe('GET /widget/notifications/feed', function () {
       subscriberProfile?._id as string,
       ChannelTypeEnum.IN_APP
     );
-    const messageId = messages[0]._id;
+
+    const message = messages[0];
+    const messageId = message._id;
 
     const feed = await getSubscriberFeed({ payload: ['author'] });
 
     expect(feed.data.length).to.equal(1);
     expect(feed.data[0]._id).to.equal(messageId);
-    expect(feed.data[0].role).to.equal('author');
+    expect(message.payload.role).to.equal('author');
   });
 
   it('should filter only unseen messages', async function () {
