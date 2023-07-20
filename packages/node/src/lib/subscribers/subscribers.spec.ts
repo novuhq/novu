@@ -1,6 +1,6 @@
 import { Novu } from '../novu';
 import axios from 'axios';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, MarkMessagesAsEnum } from '@novu/shared';
 
 const mockConfig = {
   apiKey: '1234',
@@ -248,6 +248,40 @@ describe('test use of novus node package - Subscribers class', () => {
     expect(mockedAxios.post).toHaveBeenCalled();
     expect(mockedAxios.post).toHaveBeenCalledWith(
       '/subscribers/test-action-type-sub/messages/message-123/actions/action-1'
+    );
+  });
+
+  test('should mark all subscriber messages as read', async () => {
+    mockedAxios.post.mockResolvedValue({});
+
+    await novu.subscribers.markAllMessagesAs('test-action-type-sub', {
+      markAs: MarkMessagesAsEnum.READ,
+    });
+
+    expect(mockedAxios.post).toHaveBeenCalled();
+    expect(mockedAxios.post).toHaveBeenCalledWith(
+      '/subscribers/test-action-type-sub/messages/mark-all',
+      {
+        markAs: MarkMessagesAsEnum.READ,
+      }
+    );
+  });
+
+  test('should mark all subscriber messages as read for feed', async () => {
+    mockedAxios.post.mockResolvedValue({});
+
+    await novu.subscribers.markAllMessagesAs('test-action-type-sub', {
+      markAs: MarkMessagesAsEnum.READ,
+      feedId: 'feed-123',
+    });
+
+    expect(mockedAxios.post).toHaveBeenCalled();
+    expect(mockedAxios.post).toHaveBeenCalledWith(
+      '/subscribers/test-action-type-sub/messages/mark-all',
+      {
+        markAs: MarkMessagesAsEnum.READ,
+        feedId: 'feed-123',
+      }
     );
   });
 });
