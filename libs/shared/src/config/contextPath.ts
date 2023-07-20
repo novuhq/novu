@@ -8,10 +8,12 @@ export enum NovuComponentEnum {
 export function getContextPath(component: NovuComponentEnum) {
   let contextPath = '';
 
-  // Determine if we are running in the browser or in node.js. If we are
-  // running in node.js, we will have access to the process.env object,
-  // otherwise we will have access to the window._env_ object to get the
-  // environment variables.
+  /**
+   * Determine if we are running in the browser or in node.js. If we are
+   * running in node.js, we will have access to the process.env object,
+   * otherwise we will have access to the window._env_ object to get the
+   * environment variables.
+   */
 
   // eslint-disable-next-line no-undef
   const env = typeof process !== 'undefined' && process?.env ? process?.env : (window as any)._env_;
