@@ -121,20 +121,6 @@ describe('Create Integration - /integration (POST)', function () {
     expect(body.message).to.equal('Integration with identifier already exists');
   });
 
-  it('should not allow to activate the integration without the credentials', async function () {
-    const payload = {
-      providerId: EmailProviderIdEnum.SendGrid,
-      channel: ChannelTypeEnum.EMAIL,
-      active: true,
-      check: false,
-    };
-
-    const { body } = await session.testAgent.post('/v1/integrations').send(payload);
-
-    expect(body.statusCode).to.equal(400);
-    expect(body.message).to.equal('The credentials are required to activate the integration');
-  });
-
   it('should allow creating the integration with minimal data', async function () {
     const payload = {
       providerId: EmailProviderIdEnum.SendGrid,

@@ -53,17 +53,7 @@ export class GetMessages {
       }
     }
 
-    const totalCount = await this.messageRepository.count(
-      query,
-      COUNT_LIMIT
-      /*
-       * todo NV-2161 in version 0.16:
-       *  update option as below,
-       *  update below:  hasMore = feed.length < totalCount
-       *  remove totalCount
-       * { skip: command.page * LIMIT, limit: LIMIT + 1 }
-       */
-    );
+    const totalCount = await this.messageRepository.count(query);
 
     const hasMore = this.getHasMore(command.page, LIMIT, data.length, totalCount);
 

@@ -75,28 +75,6 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
     expect(body.message).to.equal('Integration with identifier already exists');
   });
 
-  it('should not allow to activate the integration without the credentials', async function () {
-    const integrationOne = await integrationRepository.create({
-      name: 'Test1',
-      identifier: 'identifier1',
-      providerId: EmailProviderIdEnum.SendGrid,
-      channel: ChannelTypeEnum.EMAIL,
-      active: false,
-      _organizationId: session.organization._id,
-      _environmentId: session.environment._id,
-    });
-
-    const payload = {
-      active: true,
-      check: false,
-    };
-
-    const { body } = await session.testAgent.put(`/v1/integrations/${integrationOne._id}`).send(payload);
-
-    expect(body.statusCode).to.equal(400);
-    expect(body.message).to.equal('The credentials are required to activate the integration');
-  });
-
   it('should allow updating the integration with just identifier', async function () {
     const integrationOne = await integrationRepository.create({
       name: 'Test',

@@ -38,9 +38,6 @@ export class UpdateNotificationTemplateRequestDto implements ICreateNotification
   notificationGroupId: string;
 
   @ApiPropertyOptional()
-  active?: boolean;
-
-  @ApiPropertyOptional()
   critical?: boolean;
 
   @ApiPropertyOptional({
