@@ -70,7 +70,7 @@ export const emailProviders: IProviderConfig[] = [
     logoFileName: { light: 'sendgrid.png', dark: 'sendgrid.png' },
   },
   {
-    id: EmailProviderIdEnum.Brevo,
+    id: EmailProviderIdEnum.Sendinblue,
     displayName: 'Brevo',
     channel: ChannelTypeEnum.EMAIL,
     credentials: brevoConfig,

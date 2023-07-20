@@ -37,6 +37,7 @@ export enum EmailProviderIdEnum {
   CustomSMTP = 'nodemailer',
   Postmark = 'postmark',
   SendGrid = 'sendgrid',
+  Sendinblue = 'sendinblue',
   Brevo = 'brevo',
   SES = 'ses',
   NetCore = 'netcore',

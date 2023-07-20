@@ -25,13 +25,15 @@ export class BrevoEmailProvider implements IEmailProvider {
       apiKey: string;
       from: string;
       senderName: string;
-    }
+    },
+    providerId?: string
   ) {
     this.transactionalEmailsApi = new TransactionalEmailsApi();
     this.transactionalEmailsApi.setApiKey(
       TransactionalEmailsApiApiKeys.apiKey,
       this.config.apiKey
     );
+    this.id = providerId || this.id;
   }
 
   async sendMessage(

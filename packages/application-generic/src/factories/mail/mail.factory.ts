@@ -1,4 +1,5 @@
 import { IntegrationEntity } from '@novu/dal';
+import { EmailProviderIdEnum } from 'libs/shared/dist/cjs';
 import {
   SendgridHandler,
   MailgunHandler,
@@ -29,7 +30,7 @@ export class MailFactory {
     new MandrillHandler(),
     new NodemailerHandler(),
     new PostmarkHandler(),
-    new BrevoHandler(),
+    new BrevoHandler(EmailProviderIdEnum.Brevo),
     new SESHandler(),
     new InfobipEmailHandler(),
     new MailerSendHandler(),
@@ -47,9 +48,16 @@ export class MailFactory {
     from?: string
   ): IMailHandler {
     const handler =
-      this.handlers.find((handlerItem) =>
-        handlerItem.canHandle(integration.providerId, integration.channel)
-      ) ?? null;
+      this.handlers.find((handlerItem) => {
+        if (integration.providerId === EmailProviderIdEnum.Sendinblue) {
+          return new BrevoHandler(integration.providerId).canHandle(
+            integration.providerId,
+            integration.channel
+          );
+        }
+
+        handlerItem.canHandle(integration.providerId, integration.channel);
+      }) ?? null;
 
     if (!handler) throw new Error('Handler for provider was not found');
 
