@@ -22,6 +22,7 @@ describe('Get grouped notification template blueprints - /blueprints/group-by-ca
   const environmentRepository: EnvironmentRepository = new EnvironmentRepository();
 
   const inMemoryProviderService = new InMemoryProviderService();
+  inMemoryProviderService.initialize();
   const invalidateCache = new InvalidateCacheService(new CacheService(inMemoryProviderService));
 
   let getGroupedBlueprints: GetGroupedBlueprints;
