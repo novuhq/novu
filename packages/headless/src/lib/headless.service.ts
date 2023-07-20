@@ -502,15 +502,15 @@ export class HeadlessService {
   }: {
     messageId: IMessageId;
     listener: (
-      result: UpdateResult<IMessage, unknown, { messageId: IMessageId }>
+      result: UpdateResult<IMessage[], unknown, { messageId: IMessageId }>
     ) => void;
-    onSuccess?: (message: IMessage) => void;
+    onSuccess?: (message: IMessage[]) => void;
     onError?: (error: unknown) => void;
   }) {
     this.assertSessionInitialized();
 
     const { result, unsubscribe } = this.queryService.subscribeMutation<
-      IMessage,
+      IMessage[],
       unknown,
       { messageId: IMessageId }
     >({
@@ -521,21 +521,9 @@ export class HeadlessService {
             read: true,
           }),
         onSuccess: (data) => {
-          this.queryClient.setQueriesData<IPaginatedResponse<IMessage>>(
-            { queryKey: NOTIFICATIONS_QUERY_KEY, exact: false },
-            (oldMessages) => ({
-              ...oldMessages,
-              ...(oldMessages?.data && {
-                data: oldMessages?.data?.map((message) => {
-                  if (message._id === data._id) {
-                    return data;
-                  }
-
-                  return message;
-                }),
-              }),
-            })
-          );
+          this.queryClient.refetchQueries(NOTIFICATIONS_QUERY_KEY, {
+            exact: false,
+          });
         },
       },
       listener: (res) => this.callUpdateListener(res, listener),
@@ -564,15 +552,15 @@ export class HeadlessService {
   }: {
     messageId: IMessageId;
     listener: (
-      result: UpdateResult<IMessage, unknown, { messageId: IMessageId }>
+      result: UpdateResult<IMessage[], unknown, { messageId: IMessageId }>
     ) => void;
-    onSuccess?: (message: IMessage) => void;
+    onSuccess?: (message: IMessage[]) => void;
     onError?: (error: unknown) => void;
   }) {
     this.assertSessionInitialized();
 
     const { result, unsubscribe } = this.queryService.subscribeMutation<
-      IMessage,
+      IMessage[],
       unknown,
       { messageId: IMessageId }
     >({
@@ -582,21 +570,9 @@ export class HeadlessService {
             seen: true,
           }),
         onSuccess: (data) => {
-          this.queryClient.setQueriesData<IPaginatedResponse<IMessage>>(
-            { queryKey: NOTIFICATIONS_QUERY_KEY, exact: false },
-            (oldMessages) => ({
-              ...oldMessages,
-              ...(oldMessages?.data && {
-                data: oldMessages?.data?.map((message) => {
-                  if (message._id === data._id) {
-                    return data;
-                  }
-
-                  return message;
-                }),
-              }),
-            })
-          );
+          this.queryClient.refetchQueries(NOTIFICATIONS_QUERY_KEY, {
+            exact: false,
+          });
         },
       },
       listener: (res) => this.callUpdateListener(res, listener),
@@ -698,21 +674,9 @@ export class HeadlessService {
             variables.payload
           ),
         onSuccess: (data) => {
-          this.queryClient.setQueriesData<IPaginatedResponse<IMessage>>(
-            { queryKey: NOTIFICATIONS_QUERY_KEY, exact: false },
-            (oldMessages) => ({
-              ...oldMessages,
-              ...(oldMessages?.data && {
-                data: oldMessages?.data?.map((message) => {
-                  if (message._id === data._id) {
-                    return data;
-                  }
-
-                  return message;
-                }),
-              }),
-            })
-          );
+          this.queryClient.refetchQueries(NOTIFICATIONS_QUERY_KEY, {
+            exact: false,
+          });
         },
       },
       listener: (res) => this.callUpdateListener(res, listener),
