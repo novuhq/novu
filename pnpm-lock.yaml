@@ -379,7 +379,7 @@ importers:
       cross-env: 7.0.3
       nodemon: 2.0.22
       prettier: 2.8.7
-      ts-jest: 27.1.5_ik2qjjkgpajyhqxqenowswsmya
+      ts-jest: 27.1.5_cnngzrja2umb46xxazlucyx2qu
       ts-loader: 9.4.2_hybrf64lftnf5l2xwgg7goi2iu
       ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
       tsconfig-paths: 4.1.2
@@ -1412,53 +1412,6 @@ importers:
       '@nestjs/swagger': '>=6.3.x'
       '@nestjs/terminus': 9.2.1
       '@nestjs/testing': '>=9.3.x'
-<<<<<<< HEAD
-      '@novu/africas-talking': ^0.16.3
-      '@novu/apns': ^0.16.3
-      '@novu/burst-sms': ^0.16.3
-      '@novu/clickatell': ^0.16.3
-      '@novu/dal': ^0.16.3
-      '@novu/discord': ^0.16.3
-      '@novu/email-webhook': ^0.16.3
-      '@novu/emailjs': ^0.16.3
-      '@novu/expo': ^0.16.3
-      '@novu/fcm': ^0.16.3
-      '@novu/firetext': ^0.16.3
-      '@novu/forty-six-elks': ^0.16.3
-      '@novu/gupshup': ^0.16.3
-      '@novu/infobip': ^0.16.3
-      '@novu/kannel': ^0.16.3
-      '@novu/mailersend': ^0.16.3
-      '@novu/mailgun': ^0.16.3
-      '@novu/mailjet': ^0.16.3
-      '@novu/mandrill': ^0.16.3
-      '@novu/maqsam': ^0.16.3
-      '@novu/mattermost': ^0.16.3
-      '@novu/ms-teams': ^0.16.3
-      '@novu/netcore': ^0.16.3
-      '@novu/nodemailer': ^0.16.3
-      '@novu/one-signal': ^0.16.3
-      '@novu/outlook365': ^0.16.3
-      '@novu/plivo': ^0.16.3
-      '@novu/postmark': ^0.16.3
-      '@novu/push-webhook': ^0.16.3
-      '@novu/resend': ^0.16.3
-      '@novu/sendchamp': ^0.16.3
-      '@novu/sendgrid': ^0.16.3
-      '@novu/sendinblue': ^0.16.3
-      '@novu/ses': ^0.16.3
-      '@novu/shared': ^0.16.3
-      '@novu/slack': ^0.16.3
-      '@novu/sms-central': ^0.16.3
-      '@novu/sms77': ^0.16.3
-      '@novu/sns': ^0.16.3
-      '@novu/sparkpost': ^0.16.3
-      '@novu/stateless': ^0.16.3
-      '@novu/telnyx': ^0.16.3
-      '@novu/termii': ^0.16.3
-      '@novu/testing': ^0.16.3
-      '@novu/twilio': ^0.16.3
-=======
       '@novu/africas-talking': ^0.16.4
       '@novu/apns': ^0.16.4
       '@novu/burst-sms': ^0.16.4
@@ -1489,6 +1442,7 @@ importers:
       '@novu/postmark': ^0.16.4
       '@novu/push-webhook': ^0.16.4
       '@novu/resend': ^0.16.4
+      '@novu/sendchamp': ^0.16.4
       '@novu/sendgrid': ^0.16.4
       '@novu/sendinblue': ^0.16.4
       '@novu/ses': ^0.16.4
@@ -1503,7 +1457,6 @@ importers:
       '@novu/termii': ^0.16.4
       '@novu/testing': ^0.16.4
       '@novu/twilio': ^0.16.4
->>>>>>> ac2a69d2fba5a5bc499b8e5d56008743f1b160cb
       '@sentry/node': ^7.12.1
       '@taskforcesh/bullmq-pro': 5.1.14
       '@types/analytics-node': ^3.1.9
@@ -14755,8 +14708,8 @@ packages:
       typeorm:
         optional: true
     dependencies:
-      '@nestjs/common': 9.3.12_j3td4gnlgk75ora6o6suo62byy
-      '@nestjs/core': 9.3.12_ecmcxsyqvbha2d6pvilkexfiby
+      '@nestjs/common': 9.3.12_ia6oxmn2tswrmx73in3obvspd4
+      '@nestjs/core': 9.3.12_466g4ncuhrpvcuwxr56y26ki6y
       boxen: 5.1.2
       check-disk-space: 3.3.1
       reflect-metadata: 0.1.13
@@ -34582,7 +34535,7 @@ packages:
       pretty-format: 27.5.1
       slash: 3.0.0
       strip-json-comments: 3.1.1
-      ts-node: 10.9.1_j6r65ghnzvzk7vhdh4hyogrm4a
+      ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -48014,6 +47967,39 @@ packages:
       yargs-parser: 20.2.9
     dev: true
 
+  /ts-jest/27.1.5_cnngzrja2umb46xxazlucyx2qu:
+    resolution: {integrity: sha512-Xv6jBQPoBEvBq/5i2TeSG9tt/nqkbpcurrEG1b+2yfBrcJelOZF9Ml6dmyMh7bcW9JyFbRYpR5rxROSlBLTZHA==}
+    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
+    hasBin: true
+    peerDependencies:
+      '@babel/core': '>=7.0.0-beta.0 <8'
+      '@types/jest': ^27.0.0
+      babel-jest: '>=27.0.0 <28'
+      esbuild: '*'
+      jest: ^27.0.0
+      typescript: '>=3.8 <5.0'
+    peerDependenciesMeta:
+      '@babel/core':
+        optional: true
+      '@types/jest':
+        optional: true
+      babel-jest:
+        optional: true
+      esbuild:
+        optional: true
+    dependencies:
+      bs-logger: 0.2.6
+      fast-json-stable-stringify: 2.1.0
+      jest: 27.5.1_ts-node@10.9.1
+      jest-util: 27.5.1
+      json5: 2.2.3
+      lodash.memoize: 4.1.2
+      make-error: 1.3.6
+      semver: 7.4.0
+      typescript: 4.9.5
+      yargs-parser: 20.2.9
+    dev: true
+
   /ts-jest/27.1.5_d5we6thvweerisoz5puaw7xkku:
     resolution: {integrity: sha512-Xv6jBQPoBEvBq/5i2TeSG9tt/nqkbpcurrEG1b+2yfBrcJelOZF9Ml6dmyMh7bcW9JyFbRYpR5rxROSlBLTZHA==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
@@ -48037,40 +48023,6 @@ packages:
     dependencies:
       '@babel/core': 7.21.4
       '@types/jest': 27.5.2
-      bs-logger: 0.2.6
-      fast-json-stable-stringify: 2.1.0
-      jest: 27.5.1_ts-node@10.9.1
-      jest-util: 27.5.1
-      json5: 2.2.3
-      lodash.memoize: 4.1.2
-      make-error: 1.3.6
-      semver: 7.4.0
-      typescript: 4.9.5
-      yargs-parser: 20.2.9
-    dev: true
-
-  /ts-jest/27.1.5_ik2qjjkgpajyhqxqenowswsmya:
-    resolution: {integrity: sha512-Xv6jBQPoBEvBq/5i2TeSG9tt/nqkbpcurrEG1b+2yfBrcJelOZF9Ml6dmyMh7bcW9JyFbRYpR5rxROSlBLTZHA==}
-    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
-    hasBin: true
-    peerDependencies:
-      '@babel/core': '>=7.0.0-beta.0 <8'
-      '@types/jest': ^27.0.0
-      babel-jest: '>=27.0.0 <28'
-      esbuild: '*'
-      jest: ^27.0.0
-      typescript: '>=3.8 <5.0'
-    peerDependenciesMeta:
-      '@babel/core':
-        optional: true
-      '@types/jest':
-        optional: true
-      babel-jest:
-        optional: true
-      esbuild:
-        optional: true
-    dependencies:
-      '@babel/core': 7.21.4
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
       jest: 27.5.1_ts-node@10.9.1
