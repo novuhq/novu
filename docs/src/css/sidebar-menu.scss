@@ -145,7 +145,7 @@ html[data-theme='dark'] {
     }
 
     .menu__link--sublist-caret::before {
-      background: url('/img/chevron-white.svg');
+      background: url('/img/chevron-white.svg') no-repeat;
     }
   }
 }
