@@ -4,6 +4,7 @@ import { getContextPath, NovuComponentEnum } from '@novu/shared';
 declare global {
   interface Window {
     _env_: any;
+    _cypress: any;
   }
 }
 
@@ -60,7 +61,8 @@ export const IS_TEMPLATE_STORE_ENABLED = isCypress
   : window._env_.IS_TEMPLATE_STORE_ENABLED || process.env.IS_TEMPLATE_STORE_ENABLED || 'false';
 
 export const IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = isCypress
-  ? window._env_.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED ||
+  ? window._cypress?.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED ||
+    window._env_.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED ||
     process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED ||
     'true'
   : window._env_.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED ||

@@ -32,26 +32,23 @@ export function HeaderNav({}: Props) {
   const { themeStatus } = useLocalThemePreference();
   const dark = colorScheme === 'dark';
   const { addItem } = useSpotlightContext();
+  const { boot } = useIntercom();
 
-  if (INTERCOM_APP_ID) {
-    const { boot } = useIntercom();
-
-    useEffect(() => {
-      if (currentUser && currentOrganization) {
-        boot({
-          userId: currentUser._id,
-          email: currentUser?.email ?? '',
-          name: currentUser?.firstName + ' ' + currentUser?.lastName,
-          createdAt: currentUser?.createdAt,
-          company: {
-            name: currentOrganization?.name,
-            companyId: currentOrganization?._id as string,
-          },
-          userHash: currentUser.servicesHashes?.intercom,
-        });
-      }
-    }, [currentUser, currentOrganization]);
-  }
+  useEffect(() => {
+    if (INTERCOM_APP_ID && currentUser && currentOrganization) {
+      boot({
+        userId: currentUser._id,
+        email: currentUser?.email ?? '',
+        name: currentUser?.firstName + ' ' + currentUser?.lastName,
+        createdAt: currentUser?.createdAt,
+        company: {
+          name: currentOrganization?.name,
+          companyId: currentOrganization?._id as string,
+        },
+        userHash: currentUser.servicesHashes?.intercom,
+      });
+    }
+  }, [currentUser, currentOrganization]);
 
   useEffect(() => {
     if (!LOGROCKET_ID) return;
@@ -159,7 +156,7 @@ export function HeaderNav({}: Props) {
       sx={(theme) => ({
         position: 'sticky',
         top: 0,
-        boxShadow: theme.colorScheme === 'dark' ? shadows.dark : shadows.light,
+        boxShadow: theme.colorScheme === 'dark' ? 'none' : shadows.light,
         borderBottom: 'none',
       })}
     >

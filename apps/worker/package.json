@@ -1,6 +1,6 @@
 {
   "name": "@novu/worker",
-  "version": "0.16.0",
+  "version": "0.16.4",
   "description": "description",
   "author": "",
   "private": "true",
@@ -30,11 +30,11 @@
     "@nestjs/platform-express": "9.3.12",
     "@nestjs/swagger": "^6.3.0",
     "@nestjs/terminus": "9.2.1",
-    "@novu/application-generic": "^0.16.0",
-    "@novu/dal": "^0.16.0",
-    "@novu/shared": "^0.16.0",
-    "@novu/stateless": "^0.16.0",
-    "@novu/testing": "^0.16.0",
+    "@novu/application-generic": "^0.16.4",
+    "@novu/dal": "^0.16.4",
+    "@novu/shared": "^0.16.4",
+    "@novu/stateless": "^0.16.4",
+    "@novu/testing": "^0.16.4",
     "@sentry/node": "^7.40.0",
     "@sentry/tracing": "^7.40.0",
     "@types/newrelic": "^9.13.0",
@@ -62,7 +62,7 @@
   },
   "devDependencies": {
     "@faker-js/faker": "^6.0.0",
-    "@nestjs/cli": "9.4.2",
+    "@nestjs/cli": "9.5.0",
     "@nestjs/schematics": "9.0.4",
     "@nestjs/testing": "9.3.12",
     "@types/bcrypt": "^3.0.0",
@@ -81,7 +81,7 @@
     "supertest": "^5.0.0",
     "ts-loader": "~9.4.0",
     "ts-node": "~10.9.1",
-    "tsconfig-paths": "3.14.2",
+    "tsconfig-paths": "~4.1.0",
     "typescript": "4.9.5"
   },
   "lint-staged": {

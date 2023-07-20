@@ -43,7 +43,7 @@ import { CreateNotificationTemplateQuery } from './queries';
 @Controller('/notification-templates')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
-@ApiTags('Workflows')
+@ApiTags('Notification Templates')
 export class NotificationTemplateController {
   constructor(
     private getNotificationTemplatesUsecase: GetNotificationTemplates,
@@ -57,8 +57,9 @@ export class NotificationTemplateController {
   @Get('')
   @ApiResponse(NotificationTemplateResponse)
   @ApiOperation({
-    summary: 'Get workflows',
-    description: `Workflows were previously named notification templates`,
+    summary: 'Get Notification templates',
+    description: `Notification templates have been renamed to Workflows, Please use the new workflows controller`,
+    deprecated: true,
   })
   @ExternalApiAccessible()
   getNotificationTemplates(
@@ -79,8 +80,9 @@ export class NotificationTemplateController {
   @Put('/:templateId')
   @ApiResponse(NotificationTemplateResponse)
   @ApiOperation({
-    summary: 'Update workflow',
-    description: `Workflow was previously named notification template`,
+    summary: 'Update Notification template',
+    description: `Notification templates have been renamed to Workflows, Please use the new workflows controller`,
+    deprecated: true,
   })
   @ExternalApiAccessible()
   async updateTemplateById(
@@ -113,8 +115,9 @@ export class NotificationTemplateController {
     type: DataBooleanDto,
   })
   @ApiOperation({
-    summary: 'Delete workflow',
-    description: `Workflow was previously named notification template`,
+    summary: 'Delete Notification template',
+    description: `Notification templates have been renamed to Workflows, Please use the new workflows controller`,
+    deprecated: true,
   })
   @ExternalApiAccessible()
   deleteTemplateById(@UserSession() user: IJwtPayload, @Param('templateId') templateId: string): Promise<boolean> {
@@ -131,8 +134,9 @@ export class NotificationTemplateController {
   @Get('/:templateId')
   @ApiResponse(NotificationTemplateResponse)
   @ApiOperation({
-    summary: 'Get workflow',
-    description: `Workflow was previously named notification template`,
+    summary: 'Get Notification template',
+    description: `Notification templates have been renamed to Workflows, Please use the new workflows controller`,
+    deprecated: true,
   })
   @ExternalApiAccessible()
   getNotificationTemplateById(
@@ -154,8 +158,9 @@ export class NotificationTemplateController {
   @UseGuards(RootEnvironmentGuard)
   @ApiResponse(NotificationTemplateResponse, 201)
   @ApiOperation({
-    summary: 'Create workflow',
-    description: `Workflow was previously named notification template`,
+    summary: 'Create Notification template',
+    description: `Notification templates have been renamed to Workflows, Please use the new workflows controller`,
+    deprecated: true,
   })
   @Roles(MemberRoleEnum.ADMIN)
   createNotificationTemplates(
@@ -174,7 +179,7 @@ export class NotificationTemplateController {
         steps: body.steps,
         notificationGroupId: body.notificationGroupId,
         active: body.active ?? false,
-        draft: body.draft ?? true,
+        draft: !body.active,
         critical: body.critical ?? false,
         preferenceSettings: body.preferenceSettings,
         blueprintId: body.blueprintId,
@@ -188,8 +193,9 @@ export class NotificationTemplateController {
   @Roles(MemberRoleEnum.ADMIN)
   @ApiResponse(NotificationTemplateResponse)
   @ApiOperation({
-    summary: 'Update workflow status',
-    description: `Workflow was previously named notification template`,
+    summary: 'Update Notification template status',
+    description: `Notification templates have been renamed to Workflows, Please use the new workflows controller`,
+    deprecated: true,
   })
   @ExternalApiAccessible()
   changeActiveStatus(

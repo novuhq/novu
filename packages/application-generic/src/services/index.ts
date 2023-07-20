@@ -1,4 +1,8 @@
-export { BullMqService } from './bull-mq.service';
+export {
+  bullMqBaseOptions,
+  BullMqConnectionOptions,
+  BullMqService,
+} from './bull-mq.service';
 export { AnalyticsService } from './analytics.service';
 export { QueueService } from './queue.service';
 export { WsQueueService } from './ws-queue.service';
@@ -12,3 +16,5 @@ export * from './performance';
 export * from './storage';
 export * from './distributed-lock';
 export * from './in-memory-provider';
+export * from './feature-flags.service';
+export * from './launch-darkly.service';

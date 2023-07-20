@@ -1,10 +1,135 @@
-import { CachingConfig, ICacheService, splitKey } from './cache.service';
+import {
+  CacheService,
+  CachingConfig,
+  ICacheService,
+  splitKey,
+} from './cache.service';
+
+import { FeatureFlagsService } from '../feature-flags.service';
+import { InMemoryProviderService } from '../in-memory-provider';
+
+const enableAutoPipelining =
+  process.env.REDIS_CACHE_ENABLE_AUTOPIPELINING === 'true';
+
+const featureFlagsService = new FeatureFlagsService();
+
+/**
+ * TODO: Maybe create a Test single Redis instance to be able to run it in the
+ * pipeline. Local wise they work
+ */
+describe.skip('Cache Service - Redis Instance - Non Cluster Mode', () => {
+  let cacheService: CacheService;
+
+  beforeAll(async () => {
+    process.env.IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
+    const inMemoryProviderService = new InMemoryProviderService(
+      enableAutoPipelining
+    );
+    inMemoryProviderService.initialize();
+    await inMemoryProviderService.delayUntilReadiness();
+    expect(inMemoryProviderService.isClusterMode()).toBe(false);
+
+    cacheService = new CacheService(inMemoryProviderService);
+  });
+
+  it('should be instantiated properly', async () => {
+    expect(cacheService.getStatus()).toEqual('ready');
+    expect(cacheService.getTtl()).toEqual(7200);
+    expect(cacheService.cacheEnabled()).toEqual(true);
+  });
+
+  it('should be able to add a key / value in the instance', async () => {
+    const result = await cacheService.set('instance-key1', 'value1');
+    expect(result).toBe('OK');
+    const value = await cacheService.get('instance-key1');
+    expect(value).toBe('value1');
+  });
+
+  it('should be able to delete a key / value in the instance', async () => {
+    const result = await cacheService.del('instance-key1');
+    expect(result).toBe(1);
+    const value = await cacheService.get('instance-key1');
+    expect(value).toBe(null);
+  });
+
+  it('should be able to add a compound key in the instance', async () => {
+    const compoundKey =
+      '{entity:notification_template:e=64b34d4908c2e563cccc20aa:i=64b34d4908c2e563cccc2b2f}';
+    const result = await cacheService.set(compoundKey, 'whatever');
+    expect(result).toBe('OK');
+    const value = await cacheService.get(compoundKey);
+    expect(value).toBe('whatever');
+  });
+
+  it('should be able to delete a compound key in the instance', async () => {
+    const compoundKey =
+      '{entity:notification_template:e=64b34d4908c2e563cccc20aa:i=64b34d4908c2e563cccc2b2f}';
+    const result = await cacheService.del(compoundKey);
+    expect(result).toBe(1);
+    const value = await cacheService.get(compoundKey);
+    expect(value).toBe(null);
+  });
+});
+
+describe('Cache Service - Cluster Mode', () => {
+  let cacheService: CacheService;
+
+  beforeAll(async () => {
+    process.env.IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
+    const inMemoryProviderService = new InMemoryProviderService(
+      enableAutoPipelining
+    );
+    inMemoryProviderService.initialize();
+    await inMemoryProviderService.delayUntilReadiness();
+    expect(inMemoryProviderService.isClusterMode()).toBe(true);
+
+    cacheService = new CacheService(inMemoryProviderService);
+  });
+
+  it('should be instantiated properly', async () => {
+    expect(cacheService.getStatus()).toEqual('ready');
+    expect(cacheService.getTtl()).toEqual(7200);
+    expect(cacheService.cacheEnabled()).toEqual(true);
+  });
+
+  it('should be able to add a key / value in the Redis Cluster', async () => {
+    const result = await cacheService.set('key1', 'value1');
+    expect(result).toBe('OK');
+    const value = await cacheService.get('key1');
+    expect(value).toBe('value1');
+  });
+
+  it('should be able to delete a key / value in the Redis Cluster', async () => {
+    const result = await cacheService.del('key1');
+    expect(result).toBe(1);
+    const value = await cacheService.get('key1');
+    expect(value).toBe(null);
+  });
+
+  it('should be able to add a compound key in the Redis Cluster', async () => {
+    const compoundKey =
+      '{entity:notification_template:e=64b34d4908c2e563cccc19dd:i=64b34d4908c2e563cccc1a1f}';
+    const result = await cacheService.set(compoundKey, 'whatever');
+    expect(result).toBe('OK');
+    const value = await cacheService.get(compoundKey);
+    expect(value).toBe('whatever');
+  });
+
+  it('should be able to delete a compound key in the Redis Cluster', async () => {
+    const compoundKey =
+      '{entity:notification_template:e=64b34d4908c2e563cccc19dd:i=64b34d4908c2e563cccc1a1f}';
+    const result = await cacheService.del(compoundKey);
+    expect(result).toBe(1);
+    const value = await cacheService.get(compoundKey);
+    expect(value).toBe(null);
+  });
+});
 
 describe('cache-service', function () {
   let cacheService: ICacheService;
 
   beforeEach(function () {
-    cacheService = CacheService.createClient();
+    cacheService = MockCacheService.createClient();
   });
 
   afterEach(function (done) {
@@ -71,7 +196,7 @@ describe('cache-service', function () {
 });
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export const CacheService = {
+export const MockCacheService = {
   createClient(): ICacheService {
     const data = {};
 

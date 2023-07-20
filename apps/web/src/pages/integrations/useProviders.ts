@@ -1,9 +1,20 @@
 import { useMemo } from 'react';
 import * as cloneDeep from 'lodash.clonedeep';
-import { ChannelTypeEnum, providers, PushProviderIdEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  EmailProviderIdEnum,
+  IConfigCredentials,
+  IProviderConfig,
+  providers,
+  ProvidersIdEnum,
+  PushProviderIdEnum,
+  SmsProviderIdEnum,
+} from '@novu/shared';
 
-import { useIntegrations } from '../../hooks';
-import { IIntegratedProvider, IntegrationEntity } from './IntegrationsStorePage';
+import { useIntegrations, useIsMultiProviderConfigurationEnabled } from '../../hooks';
+import type { IIntegratedProvider, IntegrationEntity } from './types';
+
+const NOVU_PROVIDERS: ProvidersIdEnum[] = [SmsProviderIdEnum.Novu, EmailProviderIdEnum.Novu];
 
 /*
  * temporary patch before migration script
@@ -23,33 +34,81 @@ function fcmFallback(integration: IntegrationEntity | undefined, clonedCredentia
 }
 
 function initializeProviders(integrations: IntegrationEntity[]): IIntegratedProvider[] {
-  return providers.map((providerItem) => {
-    const integration = integrations.find((integrationItem) => integrationItem.providerId === providerItem.id);
+  return providers
+    .filter((provider) => !NOVU_PROVIDERS.includes(provider.id))
+    .map((providerItem) => {
+      const integration = integrations.find((integrationItem) => integrationItem.providerId === providerItem.id);
 
-    const clonedCredentials = cloneDeep(providerItem.credentials);
+      const clonedCredentials = cloneDeep(providerItem.credentials);
 
-    if (integration?.credentials && Object.keys(clonedCredentials).length !== 0) {
+      if (integration?.credentials && Object.keys(clonedCredentials).length !== 0) {
+        clonedCredentials.forEach((credential) => {
+          // eslint-disable-next-line no-param-reassign
+          credential.value = integration.credentials[credential.key]?.toString();
+        });
+      }
+
+      // Remove this like after the run of the fcm-credentials-migration script
+      fcmFallback(integration, clonedCredentials);
+
+      return {
+        providerId: providerItem.id,
+        integrationId: integration?._id ? integration._id : '',
+        displayName: providerItem.displayName,
+        channel: providerItem.channel,
+        credentials: integration?.credentials ? clonedCredentials : providerItem.credentials,
+        docReference: providerItem.docReference,
+        comingSoon: !!providerItem.comingSoon,
+        betaVersion: !!providerItem.betaVersion,
+        active: integration?.active ?? false,
+        connected: !!integration,
+        logoFileName: providerItem.logoFileName,
+        environmentId: integration?._environmentId,
+      };
+    });
+}
+
+function initializeProvidersByIntegration(integrations: IntegrationEntity[]): IIntegratedProvider[] {
+  return integrations.map((integrationItem) => {
+    const providerItem = providers.find((provItem) => integrationItem.providerId === provItem.id) as IProviderConfig;
+
+    const clonedCredentials: IConfigCredentials[] = cloneDeep(providerItem?.credentials);
+
+    if (
+      typeof clonedCredentials === 'object' &&
+      integrationItem?.credentials &&
+      Object.keys(clonedCredentials).length !== 0
+    ) {
       clonedCredentials.forEach((credential) => {
-        // eslint-disable-next-line no-param-reassign
-        credential.value = integration.credentials[credential.key]?.toString();
+        if (credential.type === 'boolean' || credential.type === 'switch') {
+          credential.value = integrationItem.credentials[credential.key];
+
+          return;
+        }
+
+        // eslint-disable-next-line
+        credential.value = integrationItem.credentials[credential.key]?.toString();
       });
     }
 
     // Remove this like after the run of the fcm-credentials-migration script
-    fcmFallback(integration, clonedCredentials);
+    fcmFallback(integrationItem, clonedCredentials);
 
     return {
-      providerId: providerItem.id,
-      integrationId: integration?._id ? integration._id : '',
-      displayName: providerItem.displayName,
-      channel: providerItem.channel,
-      credentials: integration?.credentials ? clonedCredentials : providerItem.credentials,
-      docReference: providerItem.docReference,
-      comingSoon: !!providerItem.comingSoon,
-      betaVersion: !!providerItem.betaVersion,
-      active: integration?.active ?? false,
-      connected: !!integration,
-      logoFileName: providerItem.logoFileName,
+      providerId: providerItem?.id || integrationItem.providerId,
+      integrationId: integrationItem?._id ? integrationItem._id : '',
+      displayName: providerItem?.displayName || integrationItem.name,
+      channel: providerItem?.channel || integrationItem.channel,
+      credentials: (integrationItem?.credentials ? clonedCredentials : providerItem?.credentials) || [],
+      docReference: providerItem?.docReference || '',
+      comingSoon: !!providerItem?.comingSoon,
+      betaVersion: !!providerItem?.betaVersion,
+      active: integrationItem?.active ?? false,
+      connected: !!integrationItem,
+      logoFileName: providerItem?.logoFileName,
+      environmentId: integrationItem?._environmentId,
+      name: integrationItem?.name,
+      identifier: integrationItem?.identifier,
     };
   });
 }
@@ -70,10 +129,13 @@ const sortProviders = (unsortedProviders: IIntegratedProvider[]) => {
 
 export const useProviders = () => {
   const { integrations, loading: isLoading, refetch } = useIntegrations();
+  const isMultiProviderConfigurationEnabled = useIsMultiProviderConfigurationEnabled();
 
   const sortedProviders = useMemo(() => {
     if (integrations) {
-      const initializedProviders = initializeProviders(integrations);
+      const initializedProviders = isMultiProviderConfigurationEnabled
+        ? initializeProvidersByIntegration(integrations)
+        : initializeProviders(integrations);
 
       return {
         emailProviders: sortProviders(
@@ -91,6 +153,7 @@ export const useProviders = () => {
         inAppProvider: sortProviders(
           initializedProviders.filter((providerItem) => providerItem.channel === ChannelTypeEnum.IN_APP)
         ),
+        providers: initializedProviders,
       };
     }
 
@@ -100,6 +163,7 @@ export const useProviders = () => {
       chatProvider: [],
       pushProvider: [],
       inAppProvider: [],
+      providers: [],
     };
   }, [integrations]);
 

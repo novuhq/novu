@@ -68,6 +68,12 @@ export interface IPushOptions {
     };
     fcmOptions?: { analyticsLabel?: string };
   };
+  subscriber: object;
+  step: {
+    digest: boolean;
+    events: object[] | undefined;
+    total_count: number | undefined;
+  };
 }
 
 export interface IChatOptions {

@@ -176,6 +176,52 @@ describe('Creation functionality', function () {
     cy.get('.mantine-Notification-root').contains('Test sent successfully!');
   });
 
+  it('should not clear the set default values of variables on update', function () {
+    cy.waitLoadTemplatePage(() => {
+      cy.visit('/workflows/create');
+    });
+
+    cy.waitForNetworkIdle(500);
+
+    dragAndDrop('email');
+    cy.waitForNetworkIdle(500);
+
+    cy.clickWorkflowNode('node-emailSelector');
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('emailSubject').type('this is email subject');
+    cy.getByTestId('email-editor').getByTestId('editor-row').click();
+    cy.getByTestId('editable-text-content').clear().type('This text is written from a test {{firstName}}', {
+      parseSpecialCharSequences: false,
+    });
+
+    cy.getByTestId('open-edit-variables-btn').click();
+    cy.getByTestId('variable-default-value').type('Test Var Value');
+    cy.getByTestId('close-var-manager-modal').click();
+    cy.getByTestId('notification-template-submit-btn').click();
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('open-edit-variables-btn').click();
+    cy.getByTestId('variable-default-value').should('have.value', 'Test Var Value');
+    cy.getByTestId('close-var-manager-modal').click();
+    goBack();
+    dragAndDrop('sms');
+    cy.waitForNetworkIdle(500);
+
+    cy.clickWorkflowNode('node-smsSelector');
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('smsNotificationContent').type('This text is written from a test {{var}}', {
+      parseSpecialCharSequences: false,
+    });
+    cy.getByTestId('variable-default-value').type('Test');
+
+    cy.getByTestId('notification-template-submit-btn').click();
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('variable-default-value').should('have.value', 'Test');
+  });
+
   it('should create email notification', function () {
     cy.waitLoadTemplatePage(() => {
       cy.visit('/workflows/create');
@@ -223,6 +269,39 @@ describe('Creation functionality', function () {
     cy.getByTestId('trigger-code-snippet').contains('test-notification-title');
     cy.getByTestId('trigger-code-snippet').contains('firstName:');
     cy.getByTestId('trigger-code-snippet').contains('customVariable:');
+  });
+
+  it('should not reset action steps values on update', function () {
+    cy.waitLoadTemplatePage(() => {
+      cy.visit('/workflows/create');
+    });
+
+    dragAndDrop('digest');
+    cy.waitForNetworkIdle(500);
+
+    cy.clickWorkflowNode('node-digestSelector');
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('digest-send-options').click();
+    cy.getByTestId('time-amount').clear().type('30');
+    cy.getByTestId('time-unit').click();
+    cy.get('.mantine-Select-item').contains('sec (s)').click();
+
+    cy.getByTestId('digest-group-by-options').click();
+
+    cy.getByTestId('batch-key').type('id');
+
+    cy.getByTestId('digest-send-options').click();
+
+    cy.clickWorkflowNode('node-digestSelector');
+    cy.getByTestId('notification-template-submit-btn').click();
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('digest-send-options').click();
+
+    cy.getByTestId('time-amount').should('have.value', '30');
+    cy.getByTestId('batch-key').should('have.value', 'id');
+    cy.getByTestId('time-unit').should('have.value', 'sec (s)');
   });
 
   it('should add digest node', function () {

@@ -3,11 +3,8 @@ import styled from '@emotion/styled';
 import { Grid, Group, Modal, ActionIcon, createStyles, MantineTheme, Drawer } from '@mantine/core';
 import {
   ChannelTypeEnum,
-  IConfigCredentials,
-  ILogoFileName,
   EmailProviderIdEnum,
   InAppProviderIdEnum,
-  ProvidersIdEnum,
   SmsProviderIdEnum,
   ICredentials,
 } from '@novu/shared';
@@ -25,6 +22,7 @@ import { useSegment } from '../../components/providers/SegmentProvider';
 import { IntegrationsStoreModalAnalytics } from './constants';
 import { NovuSmsProviderModal } from './components/NovuSmsProviderModal';
 import { useCreateInAppIntegration } from '../../hooks/useCreateInAppIntegration';
+import type { IIntegratedProvider } from './types';
 
 export function IntegrationsStoreModal({
   scrollTo,
@@ -195,12 +193,12 @@ export function IntegrationsStoreModal({
           classNames={drawerClasses}
         >
           <IntegrationCardWrapper>
-            <When truthy={!provider?.novu && provider?.providerId !== InAppProviderIdEnum.Novu}>
+            <When truthy={provider && !provider?.novu && provider?.providerId !== InAppProviderIdEnum.Novu}>
               <ConnectIntegrationForm
                 onClose={handleCloseForm}
                 onSuccessFormSubmit={closeIntegration}
                 key={provider?.providerId}
-                provider={provider}
+                provider={provider as IIntegratedProvider}
                 createModel={isCreateIntegrationModal}
                 organization={organization}
                 environment={environment}
@@ -313,40 +311,3 @@ const useDrawerStyles = createStyles((theme: MantineTheme) => {
     },
   };
 });
-
-export interface IIntegratedProvider {
-  providerId: ProvidersIdEnum;
-  integrationId: string;
-  displayName: string;
-  channel: ChannelTypeEnum;
-  credentials: IConfigCredentials[];
-  docReference: string;
-  comingSoon: boolean;
-  active: boolean;
-  connected: boolean;
-  logoFileName: ILogoFileName;
-  betaVersion: boolean;
-  novu?: boolean;
-}
-
-export interface IntegrationEntity {
-  _id?: string;
-
-  _environmentId: string;
-
-  _organizationId: string;
-
-  providerId: string;
-
-  channel: ChannelTypeEnum;
-
-  credentials: ICredentials;
-
-  active: boolean;
-
-  deleted: boolean;
-
-  deletedAt: string;
-
-  deletedBy: string;
-}
