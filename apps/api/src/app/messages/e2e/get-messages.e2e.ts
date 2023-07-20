@@ -72,10 +72,11 @@ describe('Get Message - /messages (GET)', function () {
 
     const transactionId1 = '1566f9d0-6037-48c1-b356-42667921cadd';
     const transactionId2 = 'd2d9f9b5-4a96-403a-927f-1f8f40c6c7a9';
+    const transactionId3 = 'd2d9f9b5-4a96-403a-927f-1f8f40c6c71122';
 
     await triggerEventWithTransactionId(template.triggers[0].identifier, subscriber3.subscriberId, transactionId1);
     await triggerEventWithTransactionId(template.triggers[0].identifier, subscriber3.subscriberId, transactionId2);
-    await triggerEventWithTransactionId(template.triggers[0].identifier, subscriber3.subscriberId, transactionId1);
+    await triggerEventWithTransactionId(template.triggers[0].identifier, subscriber3.subscriberId, transactionId3);
 
     await session.awaitRunningJobs(template._id);
 
@@ -93,7 +94,7 @@ describe('Get Message - /messages (GET)', function () {
         authorization: `ApiKey ${session.apiKey}`,
       },
     });
-    expect(body.data.data.length).to.be.equal(4);
+    expect(body.data.data.length).to.be.equal(2);
 
     body = await axiosInstance.get(
       `${session.serverUrl}/v1/messages?transactionId=${transactionId1}&transactionId=${transactionId2}`,
@@ -103,7 +104,7 @@ describe('Get Message - /messages (GET)', function () {
         },
       }
     );
-    expect(body.data.data.length).to.be.equal(6);
+    expect(body.data.data.length).to.be.equal(4);
 
     body = await axiosInstance.get(`${session.serverUrl}/v1/messages?transactionId=${transactionId2}`, {
       headers: {
