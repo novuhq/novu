@@ -794,9 +794,7 @@ export class HeadlessService {
     onError,
   }: {
     feedId?: string;
-    listener: (
-      result: UpdateResult<void, unknown, { messageId: string }>
-    ) => void;
+    listener: (result: UpdateResult<void, unknown, undefined>) => void;
     onSuccess?: () => void;
     onError?: (error: unknown) => void;
   }) {

@@ -452,6 +452,37 @@ interface IMarkAllMessagesAsSeen {
 }
 ```
 
+## removeAllNotifications
+
+Removes all notifications.
+Can be used to remove all notifications of a feed by passing the `feedId`
+
+```ts
+headlessService.removeAllNotifications({
+  listener: (result: UpdateResult<void, unknown, undefined>) => {
+    console.log(result);
+  },
+  onSuccess: () => {
+    console.log('success');
+  },
+  onError: (error: unknown) => {
+    console.error(error);
+  },
+  feedId: 'feedOne',
+});
+```
+
+### method args interface
+
+```ts
+interface IRemoveAllNotifications {
+  feedId?: string;
+  listener: (result: UpdateResult<void, unknown, undefined>) => void;
+  onSuccess?: () => void;
+  onError?: (error: unknown) => void;
+}
+```
+
 ---
 
 ## Types and Interfaces
