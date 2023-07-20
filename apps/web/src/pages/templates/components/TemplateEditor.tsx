@@ -53,6 +53,7 @@ export const TemplateEditor = () => {
   if (channel === StepTypeEnum.IN_APP) {
     return (
       <SubPageWrapper
+        key={index}
         color={colors.white}
         title={<StepName index={index} color={colors.B60} channel={channel} />}
         style={{ width: '100%', borderTopLeftRadius: 7, borderBottomLeftRadius: 7, paddingBottom: 96 }}
@@ -66,6 +67,7 @@ export const TemplateEditor = () => {
   if (channel === StepTypeEnum.EMAIL) {
     return (
       <SubPageWrapper
+        key={index}
         color={colors.white}
         title={<StepName index={index} color={colors.B60} channel={channel} />}
         style={{ width: '100%', borderTopLeftRadius: 7, borderBottomLeftRadius: 7, paddingBottom: 96 }}
@@ -82,12 +84,14 @@ export const TemplateEditor = () => {
   return (
     <>
       <SubPageWrapper
+        key={index}
         color={colors.white}
         title={<StepName index={index} color={colors.B60} channel={channel} />}
         style={{ paddingBottom: 96 }}
       >
         {channel === StepTypeEnum.SMS && (
           <TemplateSMSEditor
+            key={index}
             control={control}
             index={index}
             errors={errors}
@@ -96,6 +100,7 @@ export const TemplateEditor = () => {
         )}
         {channel === StepTypeEnum.PUSH && (
           <TemplatePushEditor
+            key={index}
             control={control}
             index={index}
             errors={errors}

@@ -77,6 +77,7 @@ export const VariableComponent = ({ index, template, control, path, readonly }: 
                 <Input
                   error={fieldState.error?.message}
                   type="text"
+                  data-test-id="variable-default-value"
                   placeholder="Default Value"
                   value={field.value}
                   onChange={field.onChange}
@@ -94,6 +95,7 @@ export const VariableComponent = ({ index, template, control, path, readonly }: 
             render={({ field }) => {
               return (
                 <Switch
+                  data-test-id="variable-required-value"
                   label={field.value ? 'True' : 'False'}
                   checked={field.value === true}
                   onChange={field.onChange}

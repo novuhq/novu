@@ -73,7 +73,7 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
     maxWidth: 125,
     Cell: withCellLoading(({ row: { original } }) => (
       <>
-        {original.draft ? (
+        {!original.active ? (
           <Badge variant="outline" size="md" color="yellow">
             Disabled
           </Badge>

@@ -70,7 +70,7 @@ const LimitBarBase = ({
   return (
     <Stack spacing={2} sx={{ color: colors.B60 }}>
       <div>
-        <Text>
+        <Text data-test-id="limitbar-limit">
           {limitLeft}
           <span
             style={{
