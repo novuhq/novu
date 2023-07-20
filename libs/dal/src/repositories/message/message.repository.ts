@@ -23,7 +23,12 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     environmentId: string,
     subscriberId: string,
     channel: ChannelTypeEnum,
-    query: { feedId?: string[]; seen?: boolean; read?: boolean } = {}
+    query: {
+      feedId?: string[];
+      seen?: boolean;
+      read?: boolean;
+      payload?: string[];
+    } = {}
   ): Promise<MessageQuery & EnforceEnvId> {
     const requestQuery: MessageQuery & EnforceEnvId = {
       _environmentId: environmentId,
@@ -60,6 +65,12 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       requestQuery.read = query.read;
     } else {
       requestQuery.read = { $in: [true, false] };
+    }
+
+    if (query.payload != null) {
+      requestQuery.payload = {
+        $elemMatch: { $in: query.payload },
+      };
     }
 
     return requestQuery;

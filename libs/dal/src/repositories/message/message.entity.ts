@@ -101,6 +101,7 @@ export type MessageDBModel = ChangePropsValueType<
   | '_subscriberId'
   | '_feedId'
   | '_actorId'
+  | 'payload'
 > & {
   createdAt?: Date;
 };

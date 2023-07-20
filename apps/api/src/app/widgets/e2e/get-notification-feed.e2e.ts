@@ -69,6 +69,26 @@ describe('GET /widget/notifications/feed', function () {
     expect(response.data.length).to.equal(2);
   });
 
+  it('should filter only messages that match the custom payload', async function () {
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId, { role: 'author' });
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+
+    await session.awaitRunningJobs(template._id);
+
+    const messages = await messageRepository.findBySubscriberChannel(
+      session.environment._id,
+      subscriberProfile?._id as string,
+      ChannelTypeEnum.IN_APP
+    );
+    const messageId = messages[0]._id;
+
+    const feed = await getSubscriberFeed({ payload: ['author'] });
+
+    expect(feed.data.length).to.equal(1);
+    expect(feed.data[0]._id).to.equal(messageId);
+    expect(feed.data[0].role).to.equal('author');
+  });
+
   it('should filter only unseen messages', async function () {
     await session.triggerEvent(template.triggers[0].identifier, subscriberId);
     await session.triggerEvent(template.triggers[0].identifier, subscriberId);
