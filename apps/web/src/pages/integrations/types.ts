@@ -48,6 +48,7 @@ export interface IntegrationEntity {
   channel: ChannelTypeEnum;
   credentials: ICredentials;
   active: boolean;
+  selected: boolean;
   deleted: boolean;
   deletedAt: string;
   deletedBy: string;

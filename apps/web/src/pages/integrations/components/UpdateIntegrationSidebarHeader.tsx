@@ -87,6 +87,7 @@ export const UpdateIntegrationSidebarHeader = ({
         title={<Title size={2}>Delete {provider.name || provider.displayName} instance?</Title>}
         opened={isModalOpened}
         onClose={() => setModalIsOpened(false)}
+        data-test-id="delete-provider-instance-modal"
       >
         <Text mb={30} size="lg" color={colors.B60}>
           Deleting a provider instance will fail workflows relying on its configuration, leading to undelivered

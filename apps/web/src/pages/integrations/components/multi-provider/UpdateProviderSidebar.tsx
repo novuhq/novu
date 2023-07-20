@@ -31,6 +31,7 @@ import { NovuInAppSetupWarning } from '../../components/NovuInAppSetupWarning';
 import { ProviderImage } from '../../components/multi-provider/SelectProviderSidebar';
 import { ProviderInfo } from '../../components/multi-provider/ProviderInfo';
 import { NovuProviderSidebarContent } from '../../components/multi-provider/NovuProviderSidebarContent';
+import { useIntercom } from 'react-use-intercom';
 
 interface IProviderForm {
   name: string;
@@ -47,14 +48,13 @@ enum SidebarStateEnum {
 export function UpdateProviderSidebar({
   isOpened,
   integrationId,
-  onSuccessDelete,
   onClose,
 }: {
   isOpened: boolean;
   integrationId?: string;
-  onSuccessDelete: () => void;
   onClose: () => void;
 }) {
+  const { update } = useIntercom();
   const { environments, isLoading: areEnvironmentsLoading } = useFetchEnvironments();
   const [selectedProvider, setSelectedProvider] = useState<IIntegratedProvider | null>(null);
   const [sidebarState, setSidebarState] = useState<SidebarStateEnum>(SidebarStateEnum.NORMAL);
@@ -151,6 +151,7 @@ export function UpdateProviderSidebar({
       setSidebarState(SidebarStateEnum.NORMAL);
     }
     onClose();
+    update({ hideDefaultLauncher: false });
   };
 
   if (
@@ -169,6 +170,7 @@ export function UpdateProviderSidebar({
             <Free>🎉 Free</Free>
           </Group>
         }
+        data-test-id="update-provider-sidebar-novu"
       >
         <ProviderInfo provider={selectedProvider} environments={environments} />
 
@@ -191,7 +193,7 @@ export function UpdateProviderSidebar({
         onBack={onBack}
         customHeader={
           sidebarState === 'normal' ? (
-            <UpdateIntegrationSidebarHeader provider={selectedProvider} onSuccessDelete={onSuccessDelete} />
+            <UpdateIntegrationSidebarHeader provider={selectedProvider} onSuccessDelete={onSidebarClose} />
           ) : (
             <>
               <When truthy={isNovuInAppProvider}>
@@ -210,11 +212,17 @@ export function UpdateProviderSidebar({
                 </a>
               </Text>
             </Center>
-            <Button disabled={!isDirty || isLoadingUpdate} submit loading={isLoadingUpdate}>
+            <Button
+              disabled={!isDirty || isLoadingUpdate}
+              submit
+              loading={isLoadingUpdate}
+              data-test-id="update-provider-sidebar-update"
+            >
               Update
             </Button>
           </Group>
         }
+        data-test-id="update-provider-sidebar"
       >
         <When truthy={sidebarState === 'normal'}>
           <SetupWarning
