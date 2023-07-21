@@ -1,6 +1,6 @@
 ---
 sidebar_position: 2
-sidebar_label: Get started with PHP
+sidebar_label: PHP
 ---
 
 # PHP Quickstart
@@ -9,12 +9,19 @@ Learn how to use Novu to quickly send multi-channel (SMS, Email, Chat, Push) not
 
 In this Quickstart, you’ll learn how to:
 
-- [Install and use the Novu PHP SDK via Composer.](#install-novu-php-sdk)
-- [Configure a Notification Channel Provider.](#set-up-a-channel-provider)
-- [Set up a notification workflow.](#create-a-notification-workflow)
-- [Create subscribers and update subscriber information.](#create-a-subscriber)
-- [Send your first notification.](#trigger-a-notification)
-- [Send notifications via topics.](#topics)
+- [PHP Quickstart](#php-quickstart)
+  - [Requirements](#requirements)
+  - [Install Novu PHP SDK](#install-novu-php-sdk)
+    - [Initialize \& Configure the Novu SDK](#initialize--configure-the-novu-sdk)
+  - [Set Up A Channel Provider](#set-up-a-channel-provider)
+  - [Create A Notification Workflow](#create-a-notification-workflow)
+  - [Create A Subscriber](#create-a-subscriber)
+  - [Trigger A Notification](#trigger-a-notification)
+  - [Topics](#topics)
+    - [Create a Topic](#create-a-topic)
+    - [Add subscribers to a Topic](#add-subscribers-to-a-topic)
+    - [Sending a notification to a Topic](#sending-a-notification-to-a-topic)
+  - [Next Steps](#next-steps)
 
 ## Requirements
 
