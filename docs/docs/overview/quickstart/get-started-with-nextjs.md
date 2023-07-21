@@ -1,6 +1,6 @@
 ---
 sidebar_position: 6
-sidebar_label: Get started with NextJS
+sidebar_label: NextJS
 ---
 
 # NextJS Quickstart
