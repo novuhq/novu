@@ -119,3 +119,13 @@ export const getRedisCluster = (
 
   return undefined;
 };
+
+export const validateRedisClusterProviderConfig = (): boolean => {
+  const config = getRedisClusterProviderConfig();
+
+  const validPorts =
+    config.ports.length > 0 &&
+    config.ports.every((port: number) => Number.isInteger(port));
+
+  return !!config.host && validPorts;
+};
