@@ -41,6 +41,7 @@
 }
 
 .quickstartsItem {
+  position: relative;
   margin-top: 0;
   display: flex;
   align-items: flex-start;
@@ -49,7 +50,6 @@
   border-radius: 8px;
   border: 1px solid $color-gray-10;
   height: 100%;
-  transition: 3s ease backgroundImage;
 
   @media only screen and (max-width: 1400px) {
     padding: 20px 16px;
@@ -61,14 +61,34 @@
 
   &:hover{
     text-decoration: none;
+
+    &::before{
+      opacity: 1;
+    }
+  }
+
+  &::before{
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: .3s ease opacity;
   }
 
   &__logo{
+    position: relative;
+    z-index: 10;
     height: 36px;
     width: auto;
   }
 
   &__title{
+    position: relative;
+    z-index: 10;
     margin-top: 16px;
     margin-bottom: 0;
     font-weight: 500;
@@ -80,6 +100,8 @@
   }
 
   &__description{
+    position: relative;
+    z-index: 10;
     margin-top: 10px;
     margin-bottom: 10px;
     font-size: 14px;
@@ -88,6 +110,8 @@
   }
 
   &__more{
+    position: relative;
+    z-index: 10;
     position: relative;
     margin-top: auto;
     display: flex;
@@ -99,22 +123,69 @@
   }
 }
 
+@keyframes buttonUnderline {
+  0% {
+    transform-origin: right;
+    right: 0;
+    transform: scaleX(1);
+  }
+  49% {
+    transform-origin: right;
+    right: 0;
+    transform: scaleX(0);
+  }
+  50% {
+    transform-origin: left;
+    right: auto;
+    left: 0;
+  }
+  99%{
+    transform-origin: left;
+    left: 0;
+    transform: scaleX(1);
+  }
+  100% {
+    transform-origin: right;
+    right: 0;
+    left: auto;
+    transform: scaleX(1);
+  }
+}
+
 .quickstartsButton {
-  font-family: 'Brother-1816';
+  position: relative;
   margin: 32px auto 0;
   display: block;
   background: transparent;
   border: none;
   padding-left: 0;
   padding-right: 0;
+  padding-bottom: 6px;
+  cursor: pointer;
   text-transform: uppercase;
+  font-family: 'Brother-1816';
   font-size: 14px;
   line-height: 1;
   font-weight: 500;
-  padding-bottom: 5px;
 
   @media (max-width: 1400px) {
     margin-top: 24px;
+  }
+
+  &:hover{
+    &::after{
+      animation: buttonUnderline .5s ease-in-out;
+    }
+  }
+
+  &::after{
+    content: '';
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    width: 100%;
+    display: inline-block;
   }
 }
 
@@ -125,7 +196,7 @@ html[data-theme='dark'] {
   .quickstartsItem {
     border-color: $color-gray-4;
 
-    &:hover{
+    &::before{
       background-image: linear-gradient(180deg, $color-gray-2 0%, rgba(26, 26, 26, 0.7) 100%);
     }
 
@@ -140,7 +211,10 @@ html[data-theme='dark'] {
 
   .quickstartsButton {
     color: $color-primary-blue;
-    border-bottom: 1px solid $color-primary-blue;
+    
+    &::after{
+      background-color: $color-primary-blue;
+    }
   }
 }
 
@@ -151,7 +225,7 @@ html[data-theme='light'] {
   .quickstartsItem {
     border-color: $color-gray-10;
 
-    &:hover{
+    &::before{
       background-image: linear-gradient(180deg, #F2F2F2 0%, rgba(242, 242, 242, 0.6) 100%);
     }
 
@@ -172,6 +246,9 @@ html[data-theme='light'] {
 
   .quickstartsButton {
     color: $color-secondary-blue;
-    border-bottom: 1px solid $color-secondary-blue;
+    
+    &::after{
+      background-color: $color-secondary-blue;
+    }
   }
 }

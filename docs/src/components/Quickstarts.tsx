@@ -20,67 +20,67 @@ const quckstartItems = [
     title: 'ReactJS',
     description: 'Connect a ReactJS application to Novu',
     icon: ReactLogo,
-    href: '/overview/quickstart/get-started-with-react'
+    href: '/overview/quickstart/get-started-with-react',
   },
   {
     title: 'Vue',
     description: 'Connect a Vue application to Novu',
     icon: VueLogo,
-    href: '/overview/quickstart/get-started-with-vue'
+    href: '/overview/quickstart/get-started-with-vue',
   },
   {
     title: 'Angular',
     description: 'Connect an Angular application to Novu',
     icon: AngularLogo,
-    href: '/overview/quickstart/get-started-with-angular'
+    href: '/overview/quickstart/get-started-with-angular',
   },
   {
     title: 'PHP',
     description: 'Connect a PHP application to Novu',
     icon: PhpLogo,
-    href: '/overview/quickstart/get-started-with-php'
+    href: '/overview/quickstart/get-started-with-php',
   },
   {
     title: 'NextJS',
     description: 'Connect a NextJS application to Novu',
     icon: NextLogo,
-    href: '/overview/quickstart/get-started-with-nextjs'
+    href: '/overview/quickstart/get-started-with-nextjs',
   },
   {
     title: 'NodeJS',
     description: 'Connect a NodeJS application to Novu',
     icon: NodeLogo,
-    href: '/overview/quickstart/get-started-with-node.js'
+    href: '/overview/quickstart/get-started-with-node.js',
   },
   {
     title: 'VanillaJS',
     description: 'Connect a VanillaJS application to Novu',
     icon: VanillaLogo,
-    href: '/overview/quickstart/get-started-with-vanilla-js'
+    href: '/overview/quickstart/get-started-with-vanilla-js',
   },
   {
     title: 'Kotlin',
     description: 'Connect a Kotlin application to Novu',
     icon: KotlinLogo,
-    href: '/overview/quickstart/get-started-with-kotlin'
+    href: '/overview/quickstart/get-started-with-kotlin',
   },
   {
     title: 'Ruby',
     description: 'Connect a Ruby application to Novu',
     icon: RubyLogo,
-    href: '/overview/quickstart/get-started-with-ruby'
+    href: '/overview/quickstart/get-started-with-ruby',
   },
   {
     title: '.Net',
     description: 'Connect a .Net application to Novu',
     icon: DotnetLogo,
-    href: '/overview/quickstart/get-started-with-dotnet'
+    href: '/overview/quickstart/get-started-with-dotnet',
   },
   {
     title: 'General',
     description: 'Explore the General Quickstart guide',
     icon: NovuLogo,
-    href: '/overview/quickstart/general-quickstart'
+    href: '/overview/quickstart/general-quickstart',
   },
 ];
 
@@ -92,17 +92,20 @@ export default function Quickstarts() {
   return (
     <div className={styles.quickstartsWrapper}>
       <ul className={styles.quickstartsItems}>
-        {filteredItems.map(({ title, icon: Icon, description, href }, index) => 
-          (<li key={index}>
+        {filteredItems.map(({ title, icon: Icon, description, href }, index) => (
+          <li key={index}>
             <Link href={href} className={styles.quickstartsItem}>
               <Icon className={styles.quickstartsItem__logo} />
               <h3 className={styles.quickstartsItem__title}>{title}</h3>
               <p className={styles.quickstartsItem__description}>{description}</p>
-              <span className={styles.quickstartsItem__more}>Learn more <ArrowIcon /></span>
+              <span className={styles.quickstartsItem__more}>
+                Learn more <ArrowIcon />
+              </span>
             </Link>
-          </li>))}
+          </li>
+        ))}
       </ul>
-      <button onClick={() => setIsExpanded(prev => !prev)} className={styles.quickstartsButton}>
+      <button onClick={() => setIsExpanded((prev) => !prev)} className={styles.quickstartsButton}>
         <span>{isExpanded ? 'Hide' : 'Show more'}</span>
       </button>
     </div>
