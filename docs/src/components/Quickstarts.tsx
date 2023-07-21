@@ -105,9 +105,11 @@ export default function Quickstarts() {
           </li>
         ))}
       </ul>
-      <button onClick={() => setIsExpanded((prev) => !prev)} className={styles.quickstartsButton}>
-        <span>{isExpanded ? 'Hide' : 'Show more'}</span>
-      </button>
+      {!isExpanded && (
+        <button onClick={() => setIsExpanded(true)} className={styles.quickstartsButton}>
+          <span>Show more</span>
+        </button>
+      )}
     </div>
   );
 }
