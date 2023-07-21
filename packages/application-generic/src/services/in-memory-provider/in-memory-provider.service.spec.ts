@@ -1,6 +1,11 @@
-import { InMemoryProviderService } from './in-memory-provider.service';
+import {
+  InMemoryProviderEnum,
+  InMemoryProviderService,
+} from './in-memory-provider.service';
 
 import { GetIsInMemoryClusterModeEnabled } from '../../usecases';
+import { IElasticacheClusterProviderConfig } from './elasticache-cluster-provider';
+import { IRedisClusterProviderConfig } from './redis-cluster-provider';
 
 const getIsInMemoryClusterModeEnabled = new GetIsInMemoryClusterModeEnabled();
 
@@ -12,7 +17,8 @@ describe('In-memory Provider Service', () => {
       process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
 
       inMemoryProviderService = new InMemoryProviderService(
-        getIsInMemoryClusterModeEnabled
+        getIsInMemoryClusterModeEnabled,
+        InMemoryProviderEnum.REDIS
       );
 
       await inMemoryProviderService.delayUntilReadiness();
@@ -90,7 +96,8 @@ describe('In-memory Provider Service', () => {
       process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
 
       inMemoryProviderService = new InMemoryProviderService(
-        getIsInMemoryClusterModeEnabled
+        getIsInMemoryClusterModeEnabled,
+        InMemoryProviderEnum.REDIS
       );
       await inMemoryProviderService.delayUntilReadiness();
 
@@ -105,6 +112,7 @@ describe('In-memory Provider Service', () => {
       it('enableAutoPipelining is enabled', async () => {
         const clusterWithPipelining = new InMemoryProviderService(
           getIsInMemoryClusterModeEnabled,
+          InMemoryProviderEnum.REDIS,
           true
         );
         await clusterWithPipelining.delayUntilReadiness();
@@ -188,6 +196,108 @@ describe('In-memory Provider Service', () => {
         );
         expect(value).toEqual('cluster mode');
       });
+    });
+  });
+
+  describe('Client and config for cluster', () => {
+    const elasticacheUrl = 'http://elasticache.com';
+    const elasticachePort = '9999';
+    const redisClusterUrl = 'http://redis.com';
+    const redisClusterPorts = JSON.stringify([
+      9991, 9992, 9993, 9994, 9995, 9996,
+    ]);
+
+    it('should return Elasticache config after validating it', () => {
+      process.env.ELASTICACHE_CLUSTER_SERVICE_HOST = elasticacheUrl;
+      process.env.ELASTICACHE_CLUSTER_SERVICE_PORT = elasticachePort;
+      process.env.REDIS_CLUSTER_SERVICE_HOST = redisClusterUrl;
+      process.env.REDIS_CLUSTER_SERVICE_PORTS = redisClusterPorts;
+
+      const { getConfig } =
+        inMemoryProviderService.getClientAndConfigForCluster(
+          InMemoryProviderEnum.ELASTICACHE
+        );
+      const config: IElasticacheClusterProviderConfig = getConfig();
+      expect(config.host).toEqual(elasticacheUrl);
+      expect(config.port).toEqual(Number(elasticachePort));
+      expect(config.ttl).toEqual(7200);
+    });
+
+    it('should return Redis Cluster config after validating Elasticache faulty URL config', () => {
+      process.env.ELASTICACHE_CLUSTER_SERVICE_HOST = '';
+      process.env.ELASTICACHE_CLUSTER_SERVICE_PORT = elasticachePort;
+      process.env.REDIS_CLUSTER_SERVICE_HOST = redisClusterUrl;
+      process.env.REDIS_CLUSTER_SERVICE_PORTS = redisClusterPorts;
+
+      const { getConfig } =
+        inMemoryProviderService.getClientAndConfigForCluster(
+          InMemoryProviderEnum.ELASTICACHE
+        );
+      const config: IRedisClusterProviderConfig = getConfig();
+      expect(config.host).toEqual(redisClusterUrl);
+      expect(config.ports).toEqual(JSON.parse(redisClusterPorts));
+      expect(config.ttl).toEqual(7200);
+    });
+
+    it('should return Redis Cluster config after validating Elasticache faulty port config', () => {
+      process.env.ELASTICACHE_CLUSTER_SERVICE_HOST = elasticacheUrl;
+      process.env.ELASTICACHE_CLUSTER_SERVICE_PORT = '';
+      process.env.REDIS_CLUSTER_SERVICE_HOST = redisClusterUrl;
+      process.env.REDIS_CLUSTER_SERVICE_PORTS = redisClusterPorts;
+
+      const { getConfig } =
+        inMemoryProviderService.getClientAndConfigForCluster(
+          InMemoryProviderEnum.ELASTICACHE
+        );
+
+      const config: IRedisClusterProviderConfig = getConfig();
+      expect(config.host).toEqual(redisClusterUrl);
+      expect(config.ports).toEqual(JSON.parse(redisClusterPorts));
+      expect(config.ttl).toEqual(7200);
+    });
+
+    it('should throw an error if Redis Cluster config has faulty URL config', () => {
+      process.env.ELASTICACHE_CLUSTER_SERVICE_HOST = '';
+      process.env.ELASTICACHE_CLUSTER_SERVICE_PORT = '';
+      process.env.REDIS_CLUSTER_SERVICE_HOST = '';
+      process.env.REDIS_CLUSTER_SERVICE_PORTS = redisClusterPorts;
+
+      try {
+        const { getConfig } =
+          inMemoryProviderService.getClientAndConfigForCluster(
+            InMemoryProviderEnum.ELASTICACHE
+          );
+
+        fail('should not reach here');
+      } catch (error) {
+        expect(error).toBeInstanceOf(Error);
+        const { message } = error as Error;
+        expect(message).toEqual(
+          'Provider Elasticache is not properly configured in the environment variables'
+        );
+      }
+    });
+
+    it('should throw an error if Redis Cluster config has faulty port config', () => {
+      process.env.ELASTICACHE_CLUSTER_SERVICE_HOST = '';
+      process.env.ELASTICACHE_CLUSTER_SERVICE_PORT = '';
+      process.env.REDIS_CLUSTER_SERVICE_HOST = redisClusterUrl;
+      process.env.REDIS_CLUSTER_SERVICE_PORTS = '';
+
+      try {
+        const { getConfig } =
+          inMemoryProviderService.getClientAndConfigForCluster(
+            InMemoryProviderEnum.ELASTICACHE
+          );
+
+        fail('should not reach here');
+      } catch (error) {
+        expect(error).toBeInstanceOf(Error);
+        const { message } = error as Error;
+        expect(message).toEqual(
+          'Provider Elasticache is not properly configured in the environment variables'
+        );
+      }
     });
   });
 });

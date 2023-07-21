@@ -9,6 +9,7 @@ import {
   CacheService,
   InvalidateCacheService,
   InMemoryProviderService,
+  InMemoryProviderEnum,
 } from '../../services';
 
 const inMemoryProviderService = {
@@ -17,7 +18,8 @@ const inMemoryProviderService = {
     const getIsInMemoryClusterModeEnabled =
       new GetIsInMemoryClusterModeEnabled();
     const inMemoryProvider = new InMemoryProviderService(
-      getIsInMemoryClusterModeEnabled
+      getIsInMemoryClusterModeEnabled,
+      InMemoryProviderEnum.REDIS,
     );
 
     return inMemoryProvider;

@@ -5,6 +5,7 @@ import {
   getElasticacheCluster,
   getElasticacheClusterProviderConfig,
   IElasticacheClusterProviderConfig,
+  validateElasticacheClusterProviderConfig,
 } from './elasticache-cluster-provider';
 import {
   CLIENT_READY,
@@ -21,10 +22,18 @@ import {
   getRedisCluster,
   getRedisClusterProviderConfig,
   IRedisClusterProviderConfig,
+  validateRedisClusterProviderConfig,
 } from './redis-cluster-provider';
 import { GetIsInMemoryClusterModeEnabled } from '../../usecases';
+import { PlatformException } from '../../utils/exceptions';
 
 const LOG_CONTEXT = 'InMemoryCluster';
+
+export enum InMemoryProviderEnum {
+  ELASTICACHE = 'Elasticache',
+  MEMORY_DB = 'MemoryDB',
+  REDIS = 'Redis',
+}
 
 export type InMemoryProviderClient = Redis | Cluster | undefined;
 type InMemoryProviderConfig =
@@ -42,18 +51,21 @@ export class InMemoryProviderService {
 
   constructor(
     private getIsInMemoryClusterModeEnabled: GetIsInMemoryClusterModeEnabled,
+    private provider: InMemoryProviderEnum,
     private enableAutoPipelining?: boolean
   ) {
     Logger.log('In-memory provider service initialized', LOG_CONTEXT);
 
-    this.inMemoryProviderClient = this.buildClient();
+    this.inMemoryProviderClient = this.buildClient(provider);
   }
 
-  private buildClient(): Redis | Cluster | undefined {
+  private buildClient(
+    provider: InMemoryProviderEnum
+  ): Redis | Cluster | undefined {
     const isClusterMode = this.isClusterMode();
 
     return isClusterMode
-      ? this.inMemoryClusterProviderSetup()
+      ? this.inMemoryClusterProviderSetup(provider)
       : this.inMemoryProviderSetup();
   }
 
@@ -121,43 +133,60 @@ export class InMemoryProviderService {
     }
   }
 
-  private isElasticacheEnabled(): boolean {
-    return (
-      !!process.env.ELASTICACHE_CLUSTER_SERVICE_HOST &&
-      !!process.env.ELASTICACHE_CLUSTER_SERVICE_PORT
-    );
-  }
-
-  private getClientAndConfigForCluster(): {
+  public getClientAndConfigForCluster(providerId: InMemoryProviderEnum): {
     getClient: (enableAutoPipelining?: boolean) => Cluster | undefined;
     getConfig: () => InMemoryProviderConfig;
   } {
     const clusterProviders = {
-      elasticache: {
+      [InMemoryProviderEnum.ELASTICACHE]: {
         getClient: getElasticacheCluster,
         getConfig: getElasticacheClusterProviderConfig,
+        validate: validateElasticacheClusterProviderConfig,
       },
-      redis: {
+      [InMemoryProviderEnum.REDIS]: {
         getClient: getRedisCluster,
         getConfig: getRedisClusterProviderConfig,
+        validate: validateRedisClusterProviderConfig,
       },
     };
 
-    return this.isElasticacheEnabled()
-      ? clusterProviders.elasticache
-      : clusterProviders.redis;
+    const provider = clusterProviders[providerId];
+
+    if (
+      !provider ||
+      !provider.validate() ||
+      providerId === InMemoryProviderEnum.REDIS
+    ) {
+      const defaultProvider = clusterProviders[InMemoryProviderEnum.REDIS];
+      if (!defaultProvider.validate()) {
+        const message = `Provider ${providerId} is not properly configured in the environment variables`;
+        Logger.error(message, LOG_CONTEXT);
+        throw new PlatformException(message);
+      }
+
+      return defaultProvider;
+    }
+
+    return provider;
   }
 
-  private inMemoryClusterProviderSetup(): Cluster | undefined {
-    Logger.verbose('In-memory cluster service set up', LOG_CONTEXT);
+  private inMemoryClusterProviderSetup(provider): Cluster | undefined {
+    Logger.verbose(
+      `In-memory cluster service set up for ${provider}`,
+      LOG_CONTEXT
+    );
 
-    const { getConfig, getClient } = this.getClientAndConfigForCluster();
+    const { getConfig, getClient } =
+      this.getClientAndConfigForCluster(provider);
 
     this.inMemoryProviderConfig = getConfig();
     const { host, ttl } = getConfig();
 
     if (!host) {
-      Logger.warn('Missing host for in-memory cluster provider', LOG_CONTEXT);
+      Logger.warn(
+        `Missing host for in-memory cluster for provider ${provider}`,
+        LOG_CONTEXT
+      );
     }
 
     const inMemoryProviderClient = getClient(this.enableAutoPipelining);

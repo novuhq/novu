@@ -2,7 +2,11 @@ import Redlock from 'redlock';
 import { setTimeout } from 'timers/promises';
 import { Injectable, Logger } from '@nestjs/common';
 
-import { InMemoryProviderClient, InMemoryProviderService } from '../index';
+import {
+  InMemoryProviderClient,
+  InMemoryProviderEnum,
+  InMemoryProviderService,
+} from '../index';
 
 const LOG_CONTEXT = 'DistributedLock';
 
@@ -18,8 +22,11 @@ export class DistributedLockService {
   public lockCounter = {};
   public shuttingDown = false;
 
-  constructor(private inMemoryProviderService: InMemoryProviderService) {
-    this.startup(inMemoryProviderService.inMemoryProviderClient);
+  constructor(private inMemoryProviderService: InMemoryProviderService) {}
+
+  async initialize(): Promise<void> {
+    await this.inMemoryProviderService.delayUntilReadiness();
+    this.startup(this.inMemoryProviderService.inMemoryProviderClient);
   }
 
   public startup(

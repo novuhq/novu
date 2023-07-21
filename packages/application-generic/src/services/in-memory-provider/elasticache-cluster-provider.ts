@@ -115,3 +115,9 @@ export const getElasticacheCluster = (
 
   return undefined;
 };
+
+export const validateElasticacheClusterProviderConfig = (): boolean => {
+  const config = getElasticacheClusterProviderConfig();
+
+  return !!config.host && !!config.port;
+};
