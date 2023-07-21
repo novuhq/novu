@@ -5,7 +5,7 @@ import { EnvironmentWithSubscriber } from '../../../shared/commands/project.comm
 
 export class MarkAllMessagesAsCommand extends EnvironmentWithSubscriber {
   @IsOptional()
-  feedIds?: string[];
+  feedIdentifiers?: string[];
 
   @IsDefined()
   markAs: MarkMessagesAsEnum;

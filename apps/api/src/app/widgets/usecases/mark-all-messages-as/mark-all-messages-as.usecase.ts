@@ -48,7 +48,7 @@ export class MarkAllMessagesAs {
       subscriberId: subscriber._id,
       environmentId: command.environmentId,
       markAs: command.markAs,
-      feedIdentifiers: command.feedIds,
+      feedIdentifiers: command.feedIdentifiers,
       channel: ChannelTypeEnum.IN_APP,
     });
 
@@ -81,7 +81,7 @@ export class MarkAllMessagesAs {
       {
         _organization: command.organizationId,
         _subscriberId: subscriber._id,
-        feedIds: command.feedIds,
+        feedIds: command.feedIdentifiers,
         markAs: command.markAs,
       }
     );

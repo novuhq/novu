@@ -254,9 +254,10 @@ describe('test use of novus node package - Subscribers class', () => {
   test('should mark all subscriber messages as read', async () => {
     mockedAxios.post.mockResolvedValue({});
 
-    await novu.subscribers.markAllMessagesAs('test-action-type-sub', {
-      markAs: MarkMessagesAsEnum.READ,
-    });
+    await novu.subscribers.markAllMessagesAs(
+      'test-action-type-sub',
+      MarkMessagesAsEnum.READ
+    );
 
     expect(mockedAxios.post).toHaveBeenCalled();
     expect(mockedAxios.post).toHaveBeenCalledWith(
@@ -270,17 +271,18 @@ describe('test use of novus node package - Subscribers class', () => {
   test('should mark all subscriber messages as read for feed', async () => {
     mockedAxios.post.mockResolvedValue({});
 
-    await novu.subscribers.markAllMessagesAs('test-action-type-sub', {
-      markAs: MarkMessagesAsEnum.READ,
-      feedId: 'feed-123',
-    });
+    await novu.subscribers.markAllMessagesAs(
+      'test-action-type-sub',
+      MarkMessagesAsEnum.READ,
+      'feed-123'
+    );
 
     expect(mockedAxios.post).toHaveBeenCalled();
     expect(mockedAxios.post).toHaveBeenCalledWith(
       '/subscribers/test-action-type-sub/messages/mark-all',
       {
         markAs: MarkMessagesAsEnum.READ,
-        feedId: 'feed-123',
+        feedIdentifier: 'feed-123',
       }
     );
   });

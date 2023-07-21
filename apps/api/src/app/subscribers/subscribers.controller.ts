@@ -448,13 +448,13 @@ export class SubscribersController {
     @Param('subscriberId') subscriberId: string,
     @Body() body: MarkAllMessageAsRequestDto
   ) {
-    const feedIds = this.toArray(body.feedId);
+    const feedIdentifiers = this.toArray(body.feedIdentifier);
     const command = MarkAllMessagesAsCommand.create({
       organizationId: user.organizationId,
       subscriberId,
       environmentId: user.environmentId,
       markAs: body.markAs,
-      feedIds,
+      feedIdentifiers,
     });
 
     return await this.markAllMessagesAsUsecase.execute(command);

@@ -14,11 +14,6 @@ interface IChannelCredentials {
   deviceTokens?: string[];
 }
 
-interface IMarkAllMessageAs {
-  feedId?: string | string[];
-  markAs: MarkMessagesAsEnum;
-}
-
 export class Subscribers extends WithHttp implements ISubscribers {
   async list(page = 0, limit = 10) {
     return await this.http.get(`/subscribers`, {
@@ -134,11 +129,12 @@ export class Subscribers extends WithHttp implements ISubscribers {
 
   async markAllMessagesAs(
     subscriberId: string,
-    markAs: IMarkAllMessageAs
+    markAs: MarkMessagesAsEnum,
+    feedIdentifier?: string | string[]
   ): Promise<AxiosResponse<{ data: number }>> {
     return await this.http.post(
       `/subscribers/${subscriberId}/messages/mark-all`,
-      markAs
+      { markAs, feedIdentifier }
     );
   }
 

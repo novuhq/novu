@@ -267,7 +267,7 @@ export class WidgetsController {
       subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,
       markAs: MarkMessagesAsEnum.READ,
-      feedIds,
+      feedIdentifiers: feedIds,
     });
 
     return await this.markAllMessagesAsUsecase.execute(command);
@@ -288,7 +288,7 @@ export class WidgetsController {
       subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,
       markAs: MarkMessagesAsEnum.SEEN,
-      feedIds,
+      feedIdentifiers: feedIds,
     });
 
     return await this.markAllMessagesAsUsecase.execute(command);

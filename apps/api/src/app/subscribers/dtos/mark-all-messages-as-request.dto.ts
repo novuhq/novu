@@ -12,9 +12,9 @@ export class MarkAllMessageAsRequestDto {
         },
       },
     ],
-    description: 'Optional feed id or array of feed ids',
+    description: 'Optional feed identifier or array of feed identifiers',
   })
-  feedId?: string | string[];
+  feedIdentifier?: string | string[];
 
   @ApiProperty({
     enum: MarkMessagesAsEnum,
