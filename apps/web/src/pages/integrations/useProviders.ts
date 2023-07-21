@@ -12,7 +12,7 @@ import {
 } from '@novu/shared';
 
 import { useIntegrations, useIsMultiProviderConfigurationEnabled } from '../../hooks';
-import { IIntegratedProvider, IntegrationEntity } from './IntegrationsStorePage';
+import type { IIntegratedProvider, IntegrationEntity } from './types';
 
 const NOVU_PROVIDERS: ProvidersIdEnum[] = [SmsProviderIdEnum.Novu, EmailProviderIdEnum.Novu];
 

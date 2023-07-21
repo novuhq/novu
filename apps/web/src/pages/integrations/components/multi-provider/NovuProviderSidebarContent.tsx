@@ -5,7 +5,7 @@ import { ErrorIcon } from '../../../../design-system/icons';
 import { colors, Text } from '../../../../design-system';
 import { LimitBar } from '../LimitBar';
 import { useIntegrationLimit } from '../../../../hooks';
-import { IIntegratedProvider } from '../../IntegrationsStorePage';
+import type { IIntegratedProvider } from '../../types';
 
 export const NovuProviderSidebarContent = ({ provider }: { provider: IIntegratedProvider | null }) => {
   const {
@@ -20,7 +20,7 @@ export const NovuProviderSidebarContent = ({ provider }: { provider: IIntegrated
     <Stack spacing={16}>
       <Group pt={10} pb={10} spacing={16}>
         <ErrorIcon width="26" height="26" viewBox="0 0 22 22" color={descriptionColor} />
-        <Text color={descriptionColor}>
+        <Text color={descriptionColor} data-test-id="novu-provider-limits">
           Novu provider allows sending max {limit} {provider?.channel === ChannelTypeEnum.EMAIL ? 'emails' : 'messages'}{' '}
           per month,
           <br />

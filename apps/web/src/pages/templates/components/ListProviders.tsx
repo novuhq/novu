@@ -6,16 +6,18 @@ import { Button, colors, Tooltip } from '../../../design-system';
 import { useEnvController, useIsMultiProviderConfigurationEnabled } from '../../../hooks';
 import { IntegrationEnvironmentPill } from '../../integrations/components/IntegrationEnvironmentPill';
 import { IntegrationStatus } from '../../integrations/components/IntegrationStatus';
-import { IIntegratedProvider } from '../../integrations/IntegrationsStorePage';
+import type { IIntegratedProvider } from '../../integrations/types';
 import { stepNames } from '../constants';
 import { ChannelTitle } from './ChannelTitle';
 import { LackIntegrationError } from './LackIntegrationError';
 
 export const ListProviders = ({
+  channel,
   providers,
   setConfigureChannel,
   setProvider,
 }: {
+  channel: ChannelTypeEnum;
   providers: IIntegratedProvider[];
   setConfigureChannel: (channel: ChannelTypeEnum) => void;
   setProvider: (provider: IIntegratedProvider) => void;
@@ -28,6 +30,7 @@ export const ListProviders = ({
     <div
       style={{
         marginBottom: 32,
+        overflow: 'hidden',
       }}
     >
       <div
@@ -39,7 +42,7 @@ export const ListProviders = ({
         }}
       >
         <Group position="apart">
-          <ChannelTitle spacing={8} channel={providers[0].channel} />
+          <ChannelTitle spacing={8} channel={channel} />
           <Button
             sx={{
               height: '32px',
@@ -47,7 +50,7 @@ export const ListProviders = ({
             }}
             variant={providers.filter((provider) => provider.connected).length > 0 ? 'outline' : 'gradient'}
             onClick={() => {
-              setConfigureChannel(providers[0].channel);
+              setConfigureChannel(channel);
             }}
           >
             Configure
@@ -61,8 +64,8 @@ export const ListProviders = ({
           }}
         >
           <LackIntegrationError
-            text={`Please configure ${stepNames[providers[0].channel]} provider to activate the channel`}
-            channelType={providers[0].channel}
+            text={`Please configure ${stepNames[channel]} provider to activate the channel`}
+            channelType={channel}
           />
         </div>
       </When>

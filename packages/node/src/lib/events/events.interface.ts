@@ -15,8 +15,10 @@ export interface ITriggerPayloadOptions extends IBroadcastPayloadOptions {
   actor?: TriggerRecipientSubscriber;
   transactionId?: string;
 }
-
-export interface IEmailOverrides {
+export interface IIntegrationOverride {
+  integrationIdentifier: string;
+}
+export interface IEmailOverrides extends IIntegrationOverride {
   to?: string[];
   from?: string;
   text?: string;
@@ -44,6 +46,8 @@ export type ITriggerOverrides = {
   [key in 'delay']?: ITriggerOverrideDelayAction;
 } & {
   [key in 'email']?: IEmailOverrides;
+} & {
+  [key in 'sms']?: IIntegrationOverride;
 };
 
 export type ITriggerOverrideDelayAction = {

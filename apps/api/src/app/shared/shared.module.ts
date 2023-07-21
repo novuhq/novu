@@ -82,10 +82,43 @@ function getStorageServiceClass() {
 
 const dalService = new DalService();
 
+const launchDarklyService = {
+  provide: LaunchDarklyService,
+  useFactory: (): LaunchDarklyService => {
+    const service = new LaunchDarklyService();
+
+    return service;
+  },
+};
+
+const featureFlagsService = {
+  provide: FeatureFlagsService,
+  useFactory: async (): Promise<FeatureFlagsService> => {
+    const instance = new FeatureFlagsService();
+
+    await instance.service.initialize();
+
+    return instance;
+  },
+};
+
+const getFeatureFlagUseCase = {
+  provide: GetFeatureFlag,
+  useFactory: async (): Promise<GetFeatureFlag> => {
+    const featureFlagsServiceFactory = await featureFlagsService.useFactory();
+    const getFeatureFlag = new GetFeatureFlag(featureFlagsServiceFactory);
+
+    return getFeatureFlag;
+  },
+};
+
 const inMemoryProviderService = {
   provide: InMemoryProviderService,
-  useFactory: (enableAutoPipelining?: boolean) => {
-    return new InMemoryProviderService(enableAutoPipelining);
+  useFactory: (enableAutoPipelining?: boolean): InMemoryProviderService => {
+    const inMemoryProvider = new InMemoryProviderService(enableAutoPipelining);
+    inMemoryProvider.initialize();
+
+    return inMemoryProvider;
   },
 };
 
@@ -110,9 +143,12 @@ const distributedLockService = {
 };
 
 const PROVIDERS = [
+  launchDarklyService,
+  featureFlagsService,
+  getFeatureFlagUseCase,
+  inMemoryProviderService,
   cacheService,
   distributedLockService,
-  inMemoryProviderService,
   {
     provide: WsQueueService,
     useClass: WsQueueService,
@@ -148,9 +184,7 @@ const PROVIDERS = [
     },
   },
   TriggerQueueService,
-  LaunchDarklyService,
-  FeatureFlagsService,
-  GetFeatureFlag,
+  ...DAL_MODELS,
 ];
 
 @Module({
