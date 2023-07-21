@@ -1,6 +1,6 @@
 ---
 sidebar_position: 4
-sidebar_label: Get started with Angular
+sidebar_label: Angular
 ---
 
 import Tabs from '@theme/Tabs';
