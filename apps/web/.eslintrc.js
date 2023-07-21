@@ -35,8 +35,8 @@ module.exports = {
         format: ['PascalCase', 'camelCase', 'UPPER_CASE'],
       },
     ],
-    "react-hooks/rules-of-hooks": "error",
-    "react-hooks/exhaustive-deps": "warn"
+    "react-hooks/rules-of-hooks": 'error',
+    "react-hooks/exhaustive-deps": 'off'
   },
   env: {
     'cypress/globals': true,

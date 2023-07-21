@@ -20,7 +20,7 @@
     "start:api": "cd ../../ && pnpm start:api:test",
     "storybook": "start-storybook -p 6006 -s public",
     "build-storybook": "build-storybook -s public",
-    "lint": "eslint src --quiet",
+    "lint": "eslint src",
     "lint:fix": "pnpm lint -- --fix"
   },
   "dependencies": {
