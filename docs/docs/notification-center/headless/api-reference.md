@@ -122,8 +122,8 @@ interface IFetchUnreadCount {
 
 ## listenNotificationReceive
 
-Listens to the changes of the unseen count.
-Can be used to get real time count of the unseen messages.
+Listens to a new notification being added.
+Can be used to retrieve a new notification in real-time and trigger UI changes.
 
 ```ts
 headlessService.listenNotificationReceive({
