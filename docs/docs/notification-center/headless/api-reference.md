@@ -120,6 +120,27 @@ interface IFetchUnreadCount {
 }
 ```
 
+## listenNotificationReceive
+
+Listens to a new notification being added.
+Can be used to retrieve a new notification in real-time and trigger UI changes.
+
+```ts
+headlessService.listenNotificationReceive({
+  listener: (message: IMessage) => {
+    console.log(JSON.stringify(message));
+  },
+});
+```
+
+### method args interface
+
+```ts
+interface IListenNotificationReceive {
+  listener: (message: IMessage) => void;
+}
+```
+
 ## listenUnseenCountChange
 
 Listens to the changes of the unseen count.
