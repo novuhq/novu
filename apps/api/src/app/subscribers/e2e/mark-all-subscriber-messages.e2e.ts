@@ -22,7 +22,7 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
   });
 
   it("should throw not found when subscriberId doesn't exist", async function () {
-    const fakeSubscriberId = 'asdfasdfasdf';
+    const fakeSubscriberId = 'fake-subscriber-id';
     try {
       await markAllSubscriberMessagesAs(session, fakeSubscriberId, MarkMessagesAsEnum.READ);
     } catch (error) {
