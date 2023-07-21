@@ -6,6 +6,7 @@ import { DistributedLockService } from './distributed-lock.service';
 import { FeatureFlagsService } from '../feature-flags.service';
 import {
   InMemoryProviderClient,
+  InMemoryProviderEnum,
   InMemoryProviderService,
 } from '../in-memory-provider';
 import { GetIsInMemoryClusterModeEnabled } from '../../usecases';
@@ -45,18 +46,18 @@ describe('Distributed Lock Service', () => {
 
     beforeEach(async () => {
       inMemoryProviderService = new InMemoryProviderService(
-        getIsInMemoryClusterModeEnabled
+        getIsInMemoryClusterModeEnabled,
+        InMemoryProviderEnum.REDIS,
       );
 
       await inMemoryProviderService.delayUntilReadiness();
 
       expect(inMemoryProviderService.getStatus()).toEqual('ready');
-    });
 
-    beforeEach(() => {
       distributedLockService = new DistributedLockService(
         inMemoryProviderService
       );
+      await distributedLockService.initialize();
     });
 
     describe('Set up', () => {
@@ -292,19 +293,21 @@ describe('Distributed Lock Service', () => {
     let inMemoryProviderService: InMemoryProviderService;
     let distributedLockService: DistributedLockService;
 
-    beforeEach(() => {
+    beforeEach(async () => {
       process.env.REDIS_CACHE_SERVICE_HOST = '';
       process.env.REDIS_CACHE_SERVICE_PORT = '0';
       process.env.REDIS_CLUSTER_SERVICE_HOST = '';
       process.env.REDIS_CLUSTER_SERVICE_PORTS = '';
 
       inMemoryProviderService = new InMemoryProviderService(
-        getIsInMemoryClusterModeEnabled
+        getIsInMemoryClusterModeEnabled,
+        InMemoryProviderEnum.REDIS
       );
       expect(inMemoryProviderService.inMemoryProviderConfig.host).toEqual('');
       distributedLockService = new DistributedLockService(
         inMemoryProviderService
       );
+      await distributedLockService.initialize();
     });
 
     afterEach(() => {
