@@ -1,5 +1,5 @@
 import { Avatar, useMantineColorScheme, ActionIcon, Header, Group, Container } from '@mantine/core';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import * as capitalize from 'lodash.capitalize';
 import { useIntercom } from 'react-use-intercom';
 import { Link } from 'react-router-dom';
@@ -26,16 +26,30 @@ const menuItem = [
 ];
 const headerIconsSettings = { color: colors.B60, width: 30, height: 30 };
 
+const Icon = () => {
+  const { themeStatus } = useLocalThemePreference();
+
+  if (themeStatus === 'dark') {
+    return <Moon {...headerIconsSettings} />;
+  }
+  if (themeStatus === 'light') {
+    return <Sun {...headerIconsSettings} />;
+  }
+
+  return <Ellipse {...headerIconsSettings} height={24} width={24} />;
+};
+
 export function HeaderNav({}: Props) {
   const { currentOrganization, currentUser, logout } = useAuthContext();
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const { themeStatus } = useLocalThemePreference();
   const dark = colorScheme === 'dark';
-  const { addItem } = useSpotlightContext();
+  const { addItem, removeItems } = useSpotlightContext();
   const { boot } = useIntercom();
 
   useEffect(() => {
-    if (INTERCOM_APP_ID && currentUser && currentOrganization) {
+    const shouldBootIntercom = !!INTERCOM_APP_ID && currentUser && currentOrganization;
+    if (shouldBootIntercom) {
       boot({
         userId: currentUser._id,
         email: currentUser?.email ?? '',
@@ -48,7 +62,7 @@ export function HeaderNav({}: Props) {
         userHash: currentUser.servicesHashes?.intercom,
       });
     }
-  }, [currentUser, currentOrganization]);
+  }, [boot, currentUser, currentOrganization]);
 
   useEffect(() => {
     if (!LOGROCKET_ID) return;
@@ -74,34 +88,19 @@ export function HeaderNav({}: Props) {
     }
   }, [currentUser, currentOrganization]);
 
-  const themeTitle = () => {
-    let title = 'Match System Appearance';
-    if (themeStatus === 'dark') {
-      title = 'Dark Theme';
-    } else if (themeStatus === 'light') {
-      title = 'Light Theme';
-    }
+  let themeTitle = 'Match System Appearance';
+  if (themeStatus === 'dark') {
+    themeTitle = 'Dark Theme';
+  } else if (themeStatus === 'light') {
+    themeTitle = 'Light Theme';
+  }
 
-    return title;
-  };
-
-  const Icon = () => {
-    if (themeStatus === 'dark') {
-      return <Moon {...headerIconsSettings} />;
-    }
-    if (themeStatus === 'light') {
-      return <Sun {...headerIconsSettings} />;
-    }
-
-    return <Ellipse {...headerIconsSettings} height={24} width={24} />;
-  };
-
-  useEffect(() => {
-    addItem([
+  const additionalMenuItems = useMemo(() => {
+    return [
       {
         id: 'toggle-theme',
-        title: themeTitle(),
-        icon: Icon(),
+        title: themeTitle,
+        icon: <Icon />,
         onTrigger: () => {
           toggleColorScheme();
         },
@@ -114,8 +113,14 @@ export function HeaderNav({}: Props) {
           logout();
         },
       },
-    ]);
-  }, [colorScheme]);
+    ];
+  }, [toggleColorScheme, logout, themeTitle]);
+
+  useEffect(() => {
+    removeItems(additionalMenuItems.map((item) => item.id));
+
+    addItem(additionalMenuItems);
+  }, [addItem, removeItems, additionalMenuItems]);
 
   const profileMenuMantine = [
     <Dropdown.Item disabled key="user">
@@ -174,8 +179,10 @@ export function HeaderNav({}: Props) {
         </Link>
         <Group>
           <ActionIcon variant="transparent" onClick={() => toggleColorScheme()}>
-            <Tooltip label={themeTitle()}>
-              <div>{Icon()}</div>
+            <Tooltip label={themeTitle}>
+              <div>
+                <Icon />
+              </div>
             </Tooltip>
           </ActionIcon>
           <NotificationCenterWidget user={currentUser} />
