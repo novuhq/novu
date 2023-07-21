@@ -15,11 +15,9 @@ import { colors, NavMenu, SegmentedControl, shadows } from '../../../design-syst
 import { Activity, Bolt, Box, Settings, Team, Repeat, CheckCircleOutlined, Brand } from '../../../design-system/icons';
 import { ChangesCountBadge } from './ChangesCountBadge';
 import { useEnvController } from '../../../hooks';
-import { useAuthContext } from '../../providers/AuthProvider';
 import OrganizationSelect from './OrganizationSelect';
 import { useSpotlightContext } from '../../providers/SpotlightProvider';
 import { HEADER_HEIGHT } from '../constants';
-import { LimitBar } from '../../../pages/integrations/components/LimitBar';
 import { ROUTES } from '../../../constants/routes.enum';
 import { currentOnboardingStep } from '../../../pages/quick-start/components/route/store';
 
@@ -45,12 +43,11 @@ type Props = {};
 export function SideNav({}: Props) {
   const navigate = useNavigate();
   const { setEnvironment, isLoading, environment, readonly } = useEnvController();
-  const { currentUser } = useAuthContext();
   const location = useLocation();
   const [opened, setOpened] = useState(readonly);
   const { colorScheme } = useMantineColorScheme();
   const dark = colorScheme === 'dark';
-  const { addItem } = useSpotlightContext();
+  const { addItem, removeItems } = useSpotlightContext();
   const { classes } = usePopoverStyles();
 
   useEffect(() => {
@@ -58,9 +55,11 @@ export function SideNav({}: Props) {
     if (readonly && location.pathname === ROUTES.CHANGES) {
       navigate(ROUTES.HOME);
     }
-  }, [readonly]);
+  }, [readonly, navigate, location.pathname]);
 
   useEffect(() => {
+    removeItems(['toggle-environment']);
+
     addItem([
       {
         id: 'toggle-environment',
@@ -70,7 +69,7 @@ export function SideNav({}: Props) {
         },
       },
     ]);
-  }, [environment]);
+  }, [environment, addItem, removeItems, setEnvironment]);
 
   const lastStep = currentOnboardingStep().get();
   const getStartedRoute = lastStep === ROUTES.GET_STARTED_PREVIEW ? ROUTES.GET_STARTED : lastStep;

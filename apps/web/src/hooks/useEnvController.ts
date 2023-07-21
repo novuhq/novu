@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { IEnvironment } from '@novu/shared';
 
@@ -32,6 +32,7 @@ export const useEnvController = (): EnvironmentContext => {
     isLoading: isLoadingCurrentEnvironment,
     refetch: refetchEnvironment,
   } = useQuery<IEnvironment>([QueryKeys.currentEnvironment], getCurrentEnvironment);
+  const isAllLoading = isLoading || isLoadingMyEnvironments || isLoadingCurrentEnvironment;
 
   useEffect(() => {
     if (!environment) {
@@ -40,33 +41,36 @@ export const useEnvController = (): EnvironmentContext => {
     setReadonly(environment?._parentId !== undefined);
   }, [environment]);
 
-  async function setEnvironment(environmentName: string) {
-    if (isLoading || isLoadingMyEnvironments || isLoadingCurrentEnvironment) {
-      return;
-    }
+  const setEnvironmentCallback = useCallback(
+    async (environmentName: string) => {
+      if (isAllLoading) {
+        return;
+      }
 
-    const targetEnvironment = environments?.find((_environment) => _environment.name === environmentName);
-    if (!targetEnvironment) {
-      return;
-    }
+      const targetEnvironment = environments?.find((_environment) => _environment.name === environmentName);
+      if (!targetEnvironment) {
+        return;
+      }
 
-    setIsLoading(true);
-    const tokenResponse = await api.post(`/v1/auth/environments/${targetEnvironment?._id}/switch`, {});
-    setIsLoading(false);
-    if (!tokenResponse.token) {
-      return;
-    }
-    setToken(tokenResponse.token);
+      setIsLoading(true);
+      const tokenResponse = await api.post(`/v1/auth/environments/${targetEnvironment?._id}/switch`, {});
+      setIsLoading(false);
+      if (!tokenResponse.token) {
+        return;
+      }
+      setToken(tokenResponse.token);
 
-    await navigate('/');
-    await queryClient.invalidateQueries();
-  }
+      await navigate('/');
+      await queryClient.invalidateQueries();
+    },
+    [isAllLoading, environments, navigate, queryClient, setToken]
+  );
 
   return {
     refetchEnvironment,
     environment,
     readonly,
-    setEnvironment,
+    setEnvironment: setEnvironmentCallback,
     isLoading: isLoadingMyEnvironments || isLoadingCurrentEnvironment || isLoading,
   };
 };
