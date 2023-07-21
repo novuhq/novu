@@ -309,6 +309,34 @@ export class HeadlessService {
     return unsubscribe;
   }
 
+  public listenNotificationReceive({
+    listener,
+  }: {
+    listener: (message: IMessage) => void;
+  }) {
+    this.assertSessionInitialized();
+
+    if (this.socket) {
+      this.socket.on(
+        'notification_received',
+        (data?: { message: IMessage }) => {
+          if (data?.message) {
+            this.queryClient.removeQueries(NOTIFICATIONS_QUERY_KEY, {
+              exact: false,
+            });
+            listener(data.message);
+          }
+        }
+      );
+    }
+
+    return () => {
+      if (this.socket) {
+        this.socket.off('notification_received');
+      }
+    };
+  }
+
   public listenUnseenCountChange({
     listener,
   }: {

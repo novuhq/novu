@@ -120,6 +120,27 @@ interface IFetchUnreadCount {
 }
 ```
 
+## listenNotificationReceive
+
+Listens to the changes of the unseen count.
+Can be used to get real time count of the unseen messages.
+
+```ts
+headlessService.listenNotificationReceive({
+  listener: (message: IMessage) => {
+    console.log(JSON.stringify(message));
+  },
+});
+```
+
+### method args interface
+
+```ts
+interface IListenNotificationReceive {
+  listener: (message: IMessage) => void;
+}
+```
+
 ## listenUnseenCountChange
 
 Listens to the changes of the unseen count.
