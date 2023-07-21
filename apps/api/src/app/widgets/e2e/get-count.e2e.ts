@@ -22,6 +22,7 @@ describe('Count - GET /widget/notifications/count', function () {
   } | null = null;
 
   const inMemoryProviderService = new InMemoryProviderService();
+  inMemoryProviderService.initialize();
   const invalidateCache = new InvalidateCacheService(new CacheService(inMemoryProviderService));
 
   beforeEach(async () => {

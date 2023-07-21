@@ -187,7 +187,6 @@ export function IntegrationsListModal({
         isOpened={sidebarType === SidebarType.UPDATE}
         onClose={onSidebarClose}
         integrationId={integrationIdToEdit}
-        onSuccessDelete={onSidebarClose}
       />
     </Modal>
   );
