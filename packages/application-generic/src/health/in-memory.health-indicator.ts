@@ -20,7 +20,7 @@ export class InMemoryProviderServiceHealthIndicator extends HealthIndicator {
    * without blocking self hosted users
    */
   async isHealthy(): Promise<HealthIndicatorResult> {
-    if (this.inMemoryProviderService.isClientReady()) {
+    if (this.inMemoryProviderService?.isClientReady()) {
       return this.getStatus(this.INDICATOR_KEY, true);
     }
 

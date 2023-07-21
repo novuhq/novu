@@ -47,6 +47,7 @@ import {
   TriggerQueueService,
   LaunchDarklyService,
   FeatureFlagsService,
+  InMemoryProviderEnum,
 } from '@novu/application-generic';
 
 import * as packageJson from '../../../package.json';
@@ -130,9 +131,10 @@ const inMemoryProviderService = {
   provide: InMemoryProviderService,
   useFactory: (
     getIsInMemoryClusterModeEnabledUseCase: GetIsInMemoryClusterModeEnabled,
+    provider: InMemoryProviderEnum,
     enableAutoPipelining?: boolean
   ): InMemoryProviderService => {
-    return new InMemoryProviderService(getIsInMemoryClusterModeEnabledUseCase, enableAutoPipelining);
+    return new InMemoryProviderService(getIsInMemoryClusterModeEnabledUseCase, provider, enableAutoPipelining);
   },
   inject: [GetIsInMemoryClusterModeEnabled],
 };
@@ -146,6 +148,7 @@ const cacheService = {
     const enableAutoPipelining = process.env.REDIS_CACHE_ENABLE_AUTOPIPELINING === 'true';
     const factoryInMemoryProviderService = inMemoryProviderService.useFactory(
       getIsInMemoryClusterModeEnabledUseCase,
+      InMemoryProviderEnum.ELASTICACHE,
       enableAutoPipelining
     );
 
@@ -160,10 +163,19 @@ const cacheService = {
 
 const distributedLockService = {
   provide: DistributedLockService,
-  useFactory: (getIsInMemoryClusterModeEnabledUseCase: GetIsInMemoryClusterModeEnabled): DistributedLockService => {
-    const factoryInMemoryProviderService = inMemoryProviderService.useFactory(getIsInMemoryClusterModeEnabledUseCase);
+  useFactory: async (
+    getIsInMemoryClusterModeEnabledUseCase: GetIsInMemoryClusterModeEnabled
+  ): Promise<DistributedLockService> => {
+    const factoryInMemoryProviderService = await inMemoryProviderService.useFactory(
+      getIsInMemoryClusterModeEnabledUseCase,
+      InMemoryProviderEnum.ELASTICACHE
+    );
 
-    return new DistributedLockService(factoryInMemoryProviderService);
+    const service = new DistributedLockService(factoryInMemoryProviderService);
+
+    await service.initialize();
+
+    return service;
   },
   inject: [GetIsInMemoryClusterModeEnabled],
 };

@@ -6,7 +6,10 @@ import {
 } from './cache.service';
 
 import { FeatureFlagsService } from '../feature-flags.service';
-import { InMemoryProviderService } from '../in-memory-provider';
+import {
+  InMemoryProviderEnum,
+  InMemoryProviderService,
+} from '../in-memory-provider';
 import { GetIsInMemoryClusterModeEnabled } from '../../usecases';
 
 const enableAutoPipelining =
@@ -28,6 +31,7 @@ describe.skip('Cache Service - Redis Instance - Non Cluster Mode', () => {
 
     inMemoryProviderService = new InMemoryProviderService(
       getIsInMemoryClusterModeEnabled,
+      InMemoryProviderEnum.REDIS,
       enableAutoPipelining
     );
     await inMemoryProviderService.delayUntilReadiness();
@@ -89,6 +93,7 @@ describe('Cache Service - Cluster Mode', () => {
 
     inMemoryProviderService = new InMemoryProviderService(
       getIsInMemoryClusterModeEnabled,
+      InMemoryProviderEnum.REDIS,
       enableAutoPipelining
     );
     await inMemoryProviderService.delayUntilReadiness();

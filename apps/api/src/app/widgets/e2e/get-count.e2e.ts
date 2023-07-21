@@ -4,12 +4,13 @@ import { MessageRepository, NotificationTemplateEntity, SubscriberRepository } f
 import { UserSession } from '@novu/testing';
 import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import {
-  InMemoryProviderService,
   buildFeedKey,
   buildMessageCountKey,
   CacheService,
-  InvalidateCacheService,
   GetIsInMemoryClusterModeEnabled,
+  InMemoryProviderEnum,
+  InMemoryProviderService,
+  InvalidateCacheService,
 } from '@novu/application-generic';
 
 describe('Count - GET /widget/notifications/count', function () {
@@ -27,7 +28,7 @@ describe('Count - GET /widget/notifications/count', function () {
 
   before(async () => {
     const getIsInMemoryClusterModeEnabled = new GetIsInMemoryClusterModeEnabled();
-    inMemoryProviderService = new InMemoryProviderService(getIsInMemoryClusterModeEnabled);
+    inMemoryProviderService = new InMemoryProviderService(getIsInMemoryClusterModeEnabled, InMemoryProviderEnum.REDIS);
     const cacheService = new CacheService(inMemoryProviderService);
     await cacheService.initialize();
     invalidateCache = new InvalidateCacheService(cacheService);
