@@ -114,21 +114,27 @@ const getFeatureFlagUseCase = {
 
 const inMemoryProviderService = {
   provide: InMemoryProviderService,
-  useFactory: async (enableAutoPipelining?: boolean): Promise<InMemoryProviderService> => {
-    const getFeatureFlag = await getFeatureFlagUseCase.useFactory();
+  useFactory: async (
+    getFeatureFlag: GetFeatureFlag,
+    enableAutoPipelining?: boolean
+  ): Promise<InMemoryProviderService> => {
     const inMemoryProvider = new InMemoryProviderService(getFeatureFlag, enableAutoPipelining);
     await inMemoryProvider.initialize();
 
     return inMemoryProvider;
   },
+  inject: [GetFeatureFlag],
 };
 
 const cacheService = {
   provide: CacheService,
-  useFactory: async () => {
+  useFactory: async (getFeatureFlag: GetFeatureFlag): Promise<CacheService> => {
     // TODO: Temporary to test in Dev. Should be removed.
     const enableAutoPipelining = process.env.REDIS_CACHE_ENABLE_AUTOPIPELINING === 'true';
-    const factoryInMemoryProviderService = await inMemoryProviderService.useFactory(enableAutoPipelining);
+    const factoryInMemoryProviderService = await inMemoryProviderService.useFactory(
+      getFeatureFlag,
+      enableAutoPipelining
+    );
 
     const service = new CacheService(factoryInMemoryProviderService);
 
@@ -136,15 +142,17 @@ const cacheService = {
 
     return service;
   },
+  inject: [GetFeatureFlag],
 };
 
 const distributedLockService = {
   provide: DistributedLockService,
-  useFactory: async () => {
-    const factoryInMemoryProviderService = await inMemoryProviderService.useFactory();
+  useFactory: async (getFeatureFlag: GetFeatureFlag): Promise<DistributedLockService> => {
+    const factoryInMemoryProviderService = await inMemoryProviderService.useFactory(getFeatureFlag);
 
     return new DistributedLockService(factoryInMemoryProviderService);
   },
+  inject: [GetFeatureFlag],
 };
 
 const PROVIDERS = [

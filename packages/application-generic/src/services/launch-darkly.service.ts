@@ -29,7 +29,7 @@ export class LaunchDarklyService implements IFeatureFlagsService {
       this.isEnabled = true;
       await this.clientInitialization();
     } else {
-      Logger.error(
+      Logger.log(
         'Missing Launch Darkly SDK key. Launch Darkly is not initialized',
         LOG_CONTEXT
       );
