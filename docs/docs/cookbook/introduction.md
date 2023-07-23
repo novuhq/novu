@@ -3,6 +3,9 @@ sidebar_position: 6
 sidebar_label: Introduction
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 # Cookbook
 
 This cookbook contains recipes and code samples demonstrating how to accomplish everyday tasks with Novu in your application. Each code example uses our libraries and SDKs.
@@ -11,7 +14,7 @@ This cookbook contains recipes and code samples demonstrating how to accomplish 
 
 A subscriber feed is a list of all In-App messages for a single subscriber. It's a continuous stream of messages displayed in a list that subscribers can scroll through on the frontend via the Notification Center.
 
-It is a dynamic list with **seen** and **unseen**capabilities. Multiple feeds can exist for a subscriber.
+It is a dynamic list with **seen** and **unseen** capabilities. Multiple feeds can exist for a subscriber.
 
 :::info
 **Subscriber Feed** is very different from **Activity Feed**. The former is for In-App channels, while the latter is a list of every message and relevant metadata across all channels shown in your dashboard.
@@ -24,7 +27,7 @@ The code sample below fetches the list of all In-App messages sent to a specific
 
 ```js
 const { data: inAppMessages } = await novu.subscribers.getNotificationsFeed('subscriberId', {
-  page: 1,
+  page: 0,
   // it is of type string. By default all feeds messages are fetched
   feedIdentifier: 'Marketing',
   // seen filter of type boolean
@@ -59,7 +62,7 @@ const { data: feedsData } = await novu.feeds.get();
 
 A message is a content sent to a single subscriber over a single channel. Some messages are simple, like SMS, while others have more features and capabilities, such as Email, Chat, In-App.
 
-You can delete a single message can be deleted from a Feed. The code sample below shows how to do it:
+A single message can be deleted from a Feed. The code sample below shows how to do it:
 
 <Tabs groupId="language" queryString>
   <TabItem value="js" label="Node.js">
@@ -107,13 +110,9 @@ const { data: messagesData } = await novu.messages.list(listMessagesOptions);
   </TabItem>
 </Tabs>
 
-## Mark an In-App Message as Read/Unread/Seen/Unseen
+## Mark an In-App Message as Read/Seen
 
-You can mark an In-App message as read/unread/seen/unseen. Messages from other channels: **Email**, **Push**, **Chat**, **Sms** can't be marked as read/unread/seen/unseen.
-
-:::info
-The unread/unseen functionality has yet to be available in the Node.js SDK. Please use [the API](https://docs.novu.co/api/mark-a-subscriber-feed-message-as-seen/) to accomplish this task.
-:::
+You can mark an In-App message as read/seen. Messages from other channels: **Email**, **Push**, **Chat**, **Sms** can't be marked as read/seen.
 
 <Tabs groupId="language" queryString>
   <TabItem value="js" label="Node.js">
@@ -127,6 +126,29 @@ const { data: markInAppMessageAsRead } = await novu.subscribers.markMessageRead(
 const { data: markInAppMessageAsSeen } = await novu.subscribers.markMessageSeen(
   'subscriberId',
   'messageId'
+);
+```
+
+  </TabItem>
+</Tabs>
+
+## Mark an In-App Message as Read/Unread/Seen/Unseen
+
+You can mark an In-App message as read/unread/seen/unseen. Messages from other channels: **Email**, **Push**, **Chat**, **Sms** can't be marked as read/unread/seen/unseen.
+
+:::info
+The unread/unseen functionality has yet to be available in the Node.js SDK. Please use [the API](https://docs.novu.co/api/mark-a-subscriber-feed-message-as-seen/) to accomplish this task. It will be in the 0.17.0 release.
+:::
+
+<Tabs groupId="language" queryString>
+  <TabItem value="js" label="Node.js">
+
+```javascript
+// this method will be available in 0.17.0
+const { data: markInAppMessageAsRead } = await novu.subscribers.markInAppMessageAs(
+  'subscriberId',
+  'messageId',
+  { seen: true, read: false}
 );
 ```
 
