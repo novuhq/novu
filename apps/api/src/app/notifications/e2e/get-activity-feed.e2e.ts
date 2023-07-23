@@ -41,7 +41,7 @@ describe('Get activity feed - /notifications (GET)', async () => {
 
     const activities = body.data;
 
-    expect(body.totalCount).to.equal(2);
+    expect(body.hasMore).to.equal(false);
     expect(activities.length).to.equal(2);
     expect(activities[0].template.name).to.equal(template.name);
     expect(activities[0].template._id).to.equal(template._id);
@@ -71,7 +71,7 @@ describe('Get activity feed - /notifications (GET)', async () => {
 
     const activity = activities[0];
 
-    expect(activity.template.name).to.equal(smsOnlyTemplate.name);
+    expect(activity.template?.name).to.equal(smsOnlyTemplate.name);
     expect(activity.channels).to.include(ChannelTypeEnum.SMS);
   });
 
@@ -138,6 +138,53 @@ describe('Get activity feed - /notifications (GET)', async () => {
     await session.awaitRunningJobs(template._id);
 
     const { body } = await session.testAgent.get(`/v1/notifications?page=0&emails=test@email.coms`);
+    const activities: IMessage[] = body.data;
+
+    expect(activities.length).to.equal(1);
+    expect(activities[0]._templateId).to.equal(template._id);
+  });
+
+  it('should filter by subscriberId', async function () {
+    const subscriberIdToCreate = SubscriberRepository.createObjectId() + 'some-test';
+
+    await session.triggerEvent(
+      template.triggers[0].identifier,
+      {
+        subscriberId: subscriberIdToCreate,
+        email: 'test@email.coms',
+      },
+      {
+        firstName: 'Test',
+      }
+    );
+
+    await session.triggerEvent(template.triggers[0].identifier, SubscriberRepository.createObjectId(), {
+      firstName: 'Test',
+    });
+
+    await session.triggerEvent(
+      template.triggers[0].identifier,
+      {
+        subscriberId: SubscriberRepository.createObjectId(),
+      },
+      {
+        firstName: 'Test',
+      }
+    );
+
+    await session.triggerEvent(
+      template.triggers[0].identifier,
+      {
+        subscriberId: subscriberId,
+      },
+      {
+        firstName: 'Test',
+      }
+    );
+
+    await session.awaitRunningJobs(template._id);
+
+    const { body } = await session.testAgent.get(`/v1/notifications?page=0&subscriberIds=${subscriberIdToCreate}`);
     const activities: IMessage[] = body.data;
 
     expect(activities.length).to.equal(1);
