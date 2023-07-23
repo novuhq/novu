@@ -69,7 +69,6 @@ export class FeedsController {
     );
   }
 
-  // TODO: change feedId type to mongodbId
   @Delete('/:feedId')
   @ApiResponse(FeedResponseDto, 200, true)
   @ApiOperation({

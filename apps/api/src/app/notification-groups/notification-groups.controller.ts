@@ -82,7 +82,6 @@ export class NotificationGroupsController {
     );
   }
 
-  // TODO: change id type to mongodb id
   @Get('/:id')
   @ExternalApiAccessible()
   @ApiResponse(NotificationGroupResponseDto, 200)
@@ -104,7 +103,6 @@ export class NotificationGroupsController {
     );
   }
 
-  // TODO: Change id type to mongodb id
   @Patch('/:id')
   @ExternalApiAccessible()
   @ApiResponse(NotificationGroupResponseDto, 200)
@@ -128,7 +126,6 @@ export class NotificationGroupsController {
     );
   }
 
-  // TODO: Change id type to mongodb id
   @Delete('/:id')
   @ExternalApiAccessible()
   @ApiResponse(DeleteNotificationGroupResponseDto, 200)

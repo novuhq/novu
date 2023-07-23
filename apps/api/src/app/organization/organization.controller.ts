@@ -90,7 +90,6 @@ export class OrganizationController {
     return await this.getMyOrganizationUsecase.execute(command);
   }
 
-  // TODO: change memberId type to mongodb id
   @Delete('/members/:memberId')
   @Roles(MemberRoleEnum.ADMIN)
   async removeMember(@UserSession() user: IJwtPayload, @Param('memberId') memberId: string) {
@@ -103,7 +102,6 @@ export class OrganizationController {
     );
   }
 
-  // TODO: change memberId type to mongodb id
   @Put('/members/:memberId/roles')
   @Roles(MemberRoleEnum.ADMIN)
   async updateMemberRoles(

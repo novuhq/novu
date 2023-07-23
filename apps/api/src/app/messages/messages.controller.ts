@@ -50,7 +50,6 @@ export class MessagesController {
     );
   }
 
-  // TODO: change messageId type to mongodb id
   @Delete('/:messageId')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)

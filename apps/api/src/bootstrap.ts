@@ -110,6 +110,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
     .addTag('Feeds')
     .addTag('Messages')
     .addTag('Execution Details')
+    .addTag('Widgets')
     .build();
   const document = SwaggerModule.createDocument(app, options);
 
