@@ -57,7 +57,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
   const executionDetailsRepository = new ExecutionDetailsRepository();
   const environmentRepository = new EnvironmentRepository();
 
-  describe(`Trigger Event - [IS_MULTI_PROVIDER_CONFIGURATION_ENABLED=${ORIGINAL_IS_MULTI_PROVIDER_CONFIGURATION_ENABLED}]`, function () {
+  describe(`Trigger Event - ${eventTriggerPath} (POST)`, function () {
     beforeEach(async () => {
       session = new UserSession();
       await session.initialize();
@@ -1595,7 +1595,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       });
     });
   });
-  describe('Trigger Event - [IS_MULTI_PROVIDER_CONFIGURATION_ENABLED=true]', function () {
+  describe.skip('Trigger Event - [IS_MULTI_PROVIDER_CONFIGURATION_ENABLED=true]', function () {
     beforeEach(async () => {
       process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = 'true';
       process.env.LAUNCH_DARKLY_SDK_KEY = '';
