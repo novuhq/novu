@@ -7,9 +7,9 @@ export class PaginatedResponseDto<T> {
   page: number;
 
   @ApiProperty({
-    description: 'Total count of items matching the query',
+    description: 'Does the list have more items to fetch',
   })
-  totalCount: number;
+  hasMore: boolean;
 
   @ApiProperty({
     description: 'Number of items on each page',
