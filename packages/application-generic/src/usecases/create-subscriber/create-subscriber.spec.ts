@@ -7,21 +7,20 @@ import { CreateSubscriberCommand } from './create-subscriber.command';
 
 import {
   CacheService,
-  FeatureFlagsService,
   InMemoryProviderService,
   InvalidateCacheService,
 } from '../../services';
-import { GetFeatureFlag } from '../get-feature-flag';
+import { GetIsInMemoryClusterModeEnabled } from '../get-feature-flag';
 import { UpdateSubscriber } from '../update-subscriber';
 
 const inMemoryProviderService = {
   provide: InMemoryProviderService,
   useFactory: async (): Promise<InMemoryProviderService> => {
-    const featureFlagsService = new FeatureFlagsService();
-    const getFeatureFlag = new GetFeatureFlag(featureFlagsService);
-    const inMemoryProvider = new InMemoryProviderService(getFeatureFlag);
-
-    await inMemoryProvider.initialize();
+    const getIsInMemoryClusterModeEnabled =
+      new GetIsInMemoryClusterModeEnabled();
+    const inMemoryProvider = new InMemoryProviderService(
+      getIsInMemoryClusterModeEnabled
+    );
 
     return inMemoryProvider;
   },

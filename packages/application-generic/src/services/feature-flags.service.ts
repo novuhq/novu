@@ -6,6 +6,8 @@ import {
   FeatureFlagsKeysEnum,
   IFeatureFlagContext,
   IFeatureFlagsService,
+  IContextualFeatureFlag,
+  IGlobalFeatureFlag,
 } from './types';
 
 const LOG_CONTEXT = 'FeatureFlagsService';
@@ -68,6 +70,41 @@ export class FeatureFlagsService {
     }
   }
 
+  public async getWithContext<T>(
+    contextualFeatureFlag: IContextualFeatureFlag<T>
+  ): Promise<T> {
+    const { defaultValue, key, environmentId, organizationId, userId } =
+      contextualFeatureFlag;
+
+    const context = {
+      environmentId,
+      organizationId,
+      userId,
+    };
+
+    return await this.get(key, defaultValue, context);
+  }
+
+  /**
+   * When we want to retrieve a global feature flag that shouldn't be dependant on any context
+   * we will use this functionality. Helpful for setting feature flags that discriminate
+   * the Novu Cloud service offerings with the self hosted users.
+   */
+  public async getGlobal<T>(
+    globalFeatureFlag: IGlobalFeatureFlag<T>
+  ): Promise<T> {
+    const { defaultValue, key } = globalFeatureFlag;
+
+    if (!this.isServiceEnabled()) {
+      return defaultValue;
+    }
+
+    return (await this.service.getWithAnonymousContext(
+      key,
+      defaultValue
+    )) satisfies T;
+  }
+
   /**
    *  Feature Flags precedence will be this way:
    *  - Feature Flag service defined value
@@ -89,25 +126,6 @@ export class FeatureFlagsService {
       key,
       defaultValue,
       context.userId
-    )) satisfies T;
-  }
-
-  /**
-   * When we want to retrieve a global feature flag that shouldn't be dependant on any context
-   * we will use this functionality. Helpful for setting feature flags that discriminate
-   * the Novu Cloud service offerings with the self hosted users.
-   */
-  public async getGlobal<T>(
-    key: FeatureFlagsKeysEnum,
-    defaultValue: T
-  ): Promise<T> {
-    if (!this.isServiceEnabled()) {
-      return defaultValue;
-    }
-
-    return (await this.service.getWithAnonymousContext(
-      key,
-      defaultValue
     )) satisfies T;
   }
 

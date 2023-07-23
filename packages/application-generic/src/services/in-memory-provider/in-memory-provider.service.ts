@@ -22,7 +22,7 @@ import {
   getRedisClusterProviderConfig,
   IRedisClusterProviderConfig,
 } from './redis-cluster-provider';
-import { GetFeatureFlag } from '../../usecases';
+import { GetIsInMemoryClusterModeEnabled } from '../../usecases';
 
 const LOG_CONTEXT = 'InMemoryCluster';
 
@@ -41,18 +41,16 @@ export class InMemoryProviderService {
   private nodesInterval;
 
   constructor(
-    private getFeatureFlag: GetFeatureFlag,
+    private getIsInMemoryClusterModeEnabled: GetIsInMemoryClusterModeEnabled,
     private enableAutoPipelining?: boolean
-  ) {}
-
-  async initialize(): Promise<void> {
+  ) {
     Logger.log('In-memory provider service initialized', LOG_CONTEXT);
 
-    this.inMemoryProviderClient = await this.buildClient();
+    this.inMemoryProviderClient = this.buildClient();
   }
 
-  private async buildClient(): Promise<Redis | Cluster | undefined> {
-    const isClusterMode = await this.isClusterMode();
+  private buildClient(): Redis | Cluster | undefined {
+    const isClusterMode = this.isClusterMode();
 
     return isClusterMode
       ? this.inMemoryClusterProviderSetup()
@@ -90,9 +88,8 @@ export class InMemoryProviderService {
     return this.getStatus() === CLIENT_READY;
   }
 
-  public async isClusterMode(): Promise<boolean> {
-    const isClusterModeEnabled =
-      await this.getFeatureFlag.isInMemoryClusterModeEnabled();
+  public isClusterMode(): boolean {
+    const isClusterModeEnabled = this.getIsInMemoryClusterModeEnabled.execute();
     Logger.log(
       `Cluster mode ${
         isClusterModeEnabled ? 'is' : 'is not'
@@ -102,8 +99,8 @@ export class InMemoryProviderService {
     return isClusterModeEnabled;
   }
 
-  public async getClusterOptions(): Promise<ClusterOptions | undefined> {
-    const isClusterMode = await this.isClusterMode();
+  public getClusterOptions(): ClusterOptions | undefined {
+    const isClusterMode = this.isClusterMode();
     if (this.inMemoryProviderClient && isClusterMode) {
       return this.inMemoryProviderClient.options;
     }

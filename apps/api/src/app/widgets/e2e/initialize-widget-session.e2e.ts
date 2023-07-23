@@ -6,8 +6,7 @@ import { createHash } from '../../shared/helpers/hmac.service';
 import {
   buildIntegrationKey,
   CacheService,
-  GetFeatureFlag,
-  FeatureFlagsService,
+  GetIsInMemoryClusterModeEnabled,
   InMemoryProviderService,
   InvalidateCacheService,
 } from '@novu/application-generic';
@@ -20,11 +19,8 @@ describe('Initialize Session - /widgets/session/initialize (POST)', async () => 
   let invalidateCache: InvalidateCacheService;
 
   before(async () => {
-    const featureFlagsService = new FeatureFlagsService();
-    await featureFlagsService.initialize();
-    const getFeatureFlag = new GetFeatureFlag(featureFlagsService);
-    const inMemoryProviderService = new InMemoryProviderService(getFeatureFlag);
-    await inMemoryProviderService.initialize();
+    const getIsInMemoryClusterModeEnabled = new GetIsInMemoryClusterModeEnabled();
+    const inMemoryProviderService = new InMemoryProviderService(getIsInMemoryClusterModeEnabled);
     const cacheService = new CacheService(inMemoryProviderService);
     await cacheService.initialize();
     invalidateCache = new InvalidateCacheService(cacheService);

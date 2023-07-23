@@ -13,6 +13,14 @@ export interface IFeatureFlagContext {
   userId: UserId;
 }
 
+export interface IGlobalFeatureFlag<T> {
+  key: FeatureFlagsKeysEnum;
+  defaultValue: T;
+}
+
+export type IContextualFeatureFlag<T> = IGlobalFeatureFlag<T> &
+  IFeatureFlagContext;
+
 export interface IFeatureFlagsService {
   getWithAnonymousContext: <T>(
     key: FeatureFlagsKeysEnum,

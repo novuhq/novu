@@ -1,5 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { SubscribersService, UserSession } from '@novu/testing';
+import { FeatureFlagsService, GetIsTopicNotificationEnabled, LaunchDarklyService } from '@novu/application-generic';
 import {
   SubscriberEntity,
   SubscriberRepository,
@@ -26,6 +27,9 @@ import { MapTriggerRecipientsCommand } from './map-trigger-recipients.command';
 import { SharedModule } from '../../../shared/shared.module';
 import { EventsModule } from '../../events.module';
 
+import { GetTopicSubscribersUseCase } from '../../../topics/use-cases';
+import { CreateLog } from '../../../logs/usecases/create-log';
+
 const originalLaunchDarklySdkKey = process.env.LAUNCH_DARKLY_SDK_KEY;
 
 describe('MapTriggerRecipientsUseCase', () => {
@@ -36,7 +40,10 @@ describe('MapTriggerRecipientsUseCase', () => {
   let useCase: MapTriggerRecipients;
 
   describe('When feature disabled', () => {
-    beforeEach(async () => {
+    before(async () => {
+      const featureFlagsService = new FeatureFlagsService();
+      await featureFlagsService.initialize();
+
       process.env.LAUNCH_DARKLY_SDK_KEY = '';
       process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'false';
 
@@ -54,7 +61,7 @@ describe('MapTriggerRecipientsUseCase', () => {
       topicSubscribersRepository = new TopicSubscribersRepository();
     });
 
-    afterEach(() => {
+    after(() => {
       process.env.LAUNCH_DARKLY_SDK_KEY = originalLaunchDarklySdkKey;
     });
 
@@ -182,7 +189,7 @@ describe('MapTriggerRecipientsUseCase', () => {
   });
 
   describe('When feature enabled', () => {
-    beforeEach(async () => {
+    before(async () => {
       process.env.LAUNCH_DARKLY_SDK_KEY = '';
       process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'true';
 
@@ -194,13 +201,13 @@ describe('MapTriggerRecipientsUseCase', () => {
       session = new UserSession();
       await session.initialize();
 
-      useCase = moduleRef.get<MapTriggerRecipients>(MapTriggerRecipients);
+      useCase = moduleRef.get<MapTriggerRecipients>(MapTriggerRecipients, { strict: false });
       subscribersService = new SubscribersService(session.organization._id, session.environment._id);
       topicRepository = new TopicRepository();
       topicSubscribersRepository = new TopicSubscribersRepository();
     });
 
-    afterEach(() => {
+    after(() => {
       process.env.LAUNCH_DARKLY_SDK_KEY = originalLaunchDarklySdkKey;
     });
 

@@ -9,8 +9,7 @@ import {
   buildMessageCountKey,
   CacheService,
   InvalidateCacheService,
-  GetFeatureFlag,
-  FeatureFlagsService,
+  GetIsInMemoryClusterModeEnabled,
 } from '@novu/application-generic';
 
 describe('Count - GET /widget/notifications/count', function () {
@@ -27,10 +26,8 @@ describe('Count - GET /widget/notifications/count', function () {
   let inMemoryProviderService: InMemoryProviderService;
 
   before(async () => {
-    const featureFlagsService = new FeatureFlagsService();
-    const getFeatureFlag = new GetFeatureFlag(featureFlagsService);
-    inMemoryProviderService = new InMemoryProviderService(getFeatureFlag);
-    await inMemoryProviderService.initialize();
+    const getIsInMemoryClusterModeEnabled = new GetIsInMemoryClusterModeEnabled();
+    inMemoryProviderService = new InMemoryProviderService(getIsInMemoryClusterModeEnabled);
     const cacheService = new CacheService(inMemoryProviderService);
     await cacheService.initialize();
     invalidateCache = new InvalidateCacheService(cacheService);

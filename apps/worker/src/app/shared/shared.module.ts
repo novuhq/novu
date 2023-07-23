@@ -30,7 +30,8 @@ import {
   InvalidateCacheService,
   CacheService,
   DistributedLockService,
-  GetFeatureFlag,
+  GetIsInMemoryClusterModeEnabled,
+  GetIsMultiProviderConfigurationEnabled,
   InMemoryProviderService,
   StorageHelperService,
   StorageService,
@@ -106,37 +107,43 @@ const featureFlagsService = {
   },
 };
 
-const getFeatureFlagUseCase = {
-  provide: GetFeatureFlag,
-  useFactory: async (): Promise<GetFeatureFlag> => {
-    const featureFlagsServiceFactory = await featureFlagsService.useFactory();
-    const getFeatureFlag = new GetFeatureFlag(featureFlagsServiceFactory);
+const getIsInMemoryClusterModeEnabled = {
+  provide: GetIsInMemoryClusterModeEnabled,
+  useFactory: (): GetIsInMemoryClusterModeEnabled => {
+    return new GetIsInMemoryClusterModeEnabled();
+  },
+};
 
-    return getFeatureFlag;
+const getIsMultiProviderConfigurationEnabled = {
+  provide: GetIsMultiProviderConfigurationEnabled,
+  useFactory: async (): Promise<GetIsMultiProviderConfigurationEnabled> => {
+    const featureFlagsServiceFactory = await featureFlagsService.useFactory();
+    const useCase = new GetIsMultiProviderConfigurationEnabled(featureFlagsServiceFactory);
+
+    return useCase;
   },
 };
 
 const inMemoryProviderService = {
   provide: InMemoryProviderService,
-  useFactory: async (
-    getFeatureFlag: GetFeatureFlag,
+  useFactory: (
+    getIsInMemoryClusterModeEnabledUseCase: GetIsInMemoryClusterModeEnabled,
     enableAutoPipelining?: boolean
-  ): Promise<InMemoryProviderService> => {
-    const inMemoryProvider = new InMemoryProviderService(getFeatureFlag, enableAutoPipelining);
-    await inMemoryProvider.initialize();
-
-    return inMemoryProvider;
+  ): InMemoryProviderService => {
+    return new InMemoryProviderService(getIsInMemoryClusterModeEnabledUseCase, enableAutoPipelining);
   },
-  inject: [GetFeatureFlag],
+  inject: [GetIsInMemoryClusterModeEnabled],
 };
 
 const cacheService = {
   provide: CacheService,
-  useFactory: async (getFeatureFlag: GetFeatureFlag): Promise<CacheService> => {
+  useFactory: async (
+    getIsInMemoryClusterModeEnabledUseCase: GetIsInMemoryClusterModeEnabled
+  ): Promise<CacheService> => {
     // TODO: Temporary to test in Dev. Should be removed.
     const enableAutoPipelining = process.env.REDIS_CACHE_ENABLE_AUTOPIPELINING === 'true';
-    const factoryInMemoryProviderService = await inMemoryProviderService.useFactory(
-      getFeatureFlag,
+    const factoryInMemoryProviderService = inMemoryProviderService.useFactory(
+      getIsInMemoryClusterModeEnabledUseCase,
       enableAutoPipelining
     );
 
@@ -146,17 +153,17 @@ const cacheService = {
 
     return service;
   },
-  inject: [GetFeatureFlag],
+  inject: [GetIsInMemoryClusterModeEnabled],
 };
 
 const distributedLockService = {
   provide: DistributedLockService,
-  useFactory: async (getFeatureFlag: GetFeatureFlag): Promise<DistributedLockService> => {
-    const factoryInMemoryProviderService = await inMemoryProviderService.useFactory(getFeatureFlag);
+  useFactory: (getIsInMemoryClusterModeEnabledUseCase: GetIsInMemoryClusterModeEnabled): DistributedLockService => {
+    const factoryInMemoryProviderService = inMemoryProviderService.useFactory(getIsInMemoryClusterModeEnabledUseCase);
 
     return new DistributedLockService(factoryInMemoryProviderService);
   },
-  inject: [GetFeatureFlag],
+  inject: [GetIsInMemoryClusterModeEnabled],
 };
 
 const readinessService = {
@@ -178,7 +185,8 @@ const readinessService = {
 const PROVIDERS = [
   launchDarklyService,
   featureFlagsService,
-  getFeatureFlagUseCase,
+  getIsInMemoryClusterModeEnabled,
+  getIsMultiProviderConfigurationEnabled,
   inMemoryProviderService,
   cacheService,
   distributedLockService,

@@ -11,8 +11,7 @@ import { UserSession, SubscribersService } from '@novu/testing';
 import { ChannelTypeEnum, ISubscribersDefine, IUpdateNotificationTemplateDto, StepTypeEnum } from '@novu/shared';
 import {
   CacheService,
-  FeatureFlagsService,
-  GetFeatureFlag,
+  GetIsInMemoryClusterModeEnabled,
   InMemoryProviderService,
   buildNotificationTemplateIdentifierKey,
   buildNotificationTemplateKey,
@@ -39,11 +38,8 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
   const notificationTemplateRepository = new NotificationTemplateRepository();
 
   before(async () => {
-    featureFlagsService = new FeatureFlagsService();
-    await featureFlagsService.initialize();
-    const getFeatureFlag = new GetFeatureFlag(featureFlagsService);
-    inMemoryProviderService = new InMemoryProviderService(getFeatureFlag);
-    await inMemoryProviderService.initialize();
+    const getIsInMemoryClusterModeEnabled = new GetIsInMemoryClusterModeEnabled();
+    inMemoryProviderService = new InMemoryProviderService(getIsInMemoryClusterModeEnabled);
     cacheService = new CacheService(inMemoryProviderService);
     await cacheService.initialize();
     invalidateCache = new InvalidateCacheService(cacheService);

@@ -1,10 +1,8 @@
 import { InMemoryProviderService } from './in-memory-provider.service';
 
-import { FeatureFlagsService } from '../feature-flags.service';
-import { GetFeatureFlag } from '../../usecases';
+import { GetIsInMemoryClusterModeEnabled } from '../../usecases';
 
-const featureFlagsService = new FeatureFlagsService();
-const getFeatureFlag = new GetFeatureFlag(featureFlagsService);
+const getIsInMemoryClusterModeEnabled = new GetIsInMemoryClusterModeEnabled();
 
 let inMemoryProviderService: InMemoryProviderService;
 
@@ -13,8 +11,9 @@ describe('In-memory Provider Service', () => {
     beforeEach(async () => {
       process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
 
-      inMemoryProviderService = new InMemoryProviderService(getFeatureFlag);
-      inMemoryProviderService.initialize();
+      inMemoryProviderService = new InMemoryProviderService(
+        getIsInMemoryClusterModeEnabled
+      );
 
       await inMemoryProviderService.delayUntilReadiness();
 
@@ -90,9 +89,9 @@ describe('In-memory Provider Service', () => {
     beforeEach(async () => {
       process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
 
-      inMemoryProviderService = new InMemoryProviderService(getFeatureFlag);
-      await inMemoryProviderService.initialize();
-
+      inMemoryProviderService = new InMemoryProviderService(
+        getIsInMemoryClusterModeEnabled
+      );
       await inMemoryProviderService.delayUntilReadiness();
 
       expect(inMemoryProviderService.getStatus()).toEqual('ready');
@@ -105,10 +104,9 @@ describe('In-memory Provider Service', () => {
     describe('TEMP: Check if enableAutoPipelining true is set properly in Cluster', () => {
       it('enableAutoPipelining is enabled', async () => {
         const clusterWithPipelining = new InMemoryProviderService(
-          getFeatureFlag,
+          getIsInMemoryClusterModeEnabled,
           true
         );
-        await clusterWithPipelining.initialize();
         await clusterWithPipelining.delayUntilReadiness();
 
         expect(clusterWithPipelining.getStatus()).toEqual('ready');

@@ -4,10 +4,9 @@ import { Test } from '@nestjs/testing';
 
 import { UpdateSubscriber } from './update-subscriber.usecase';
 import { UpdateSubscriberCommand } from './update-subscriber.command';
-import { GetFeatureFlag } from '../get-feature-flag';
+import { GetIsInMemoryClusterModeEnabled } from '../get-feature-flag';
 import {
   CacheService,
-  FeatureFlagsService,
   InvalidateCacheService,
   InMemoryProviderService,
 } from '../../services';
@@ -15,10 +14,11 @@ import {
 const inMemoryProviderService = {
   provide: InMemoryProviderService,
   useFactory: async (): Promise<InMemoryProviderService> => {
-    const featureFlagsService = new FeatureFlagsService();
-    const getFeatureFlag = new GetFeatureFlag(featureFlagsService);
-    const inMemoryProvider = new InMemoryProviderService(getFeatureFlag);
-    await inMemoryProvider.initialize();
+    const getIsInMemoryClusterModeEnabled =
+      new GetIsInMemoryClusterModeEnabled();
+    const inMemoryProvider = new InMemoryProviderService(
+      getIsInMemoryClusterModeEnabled
+    );
 
     return inMemoryProvider;
   },
