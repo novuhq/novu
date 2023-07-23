@@ -7,13 +7,11 @@ import {
   ISubscribers,
   IUpdateSubscriberPreferencePayload,
 } from './subscriber.interface';
-import { Novu } from '../novu';
+import { WithHttp } from '../novu.interface';
 
-export class Subscribers implements ISubscribers {
-  constructor(private readonly novu: Novu) {}
-
+export class Subscribers extends WithHttp implements ISubscribers {
   async list(page = 0, limit = 10) {
-    return await this.novu.get(`/subscribers`, {
+    return await this.getRequest(`/subscribers`, {
       params: {
         page,
         limit,
@@ -22,28 +20,28 @@ export class Subscribers implements ISubscribers {
   }
 
   async get(subscriberId: string) {
-    return await this.novu.get(`/subscribers/${subscriberId}`);
+    return await this.getRequest(`/subscribers/${subscriberId}`);
   }
 
   /**
    * @deprecated Use create instead
    */
   async identify(subscriberId: string, data: ISubscriberPayload) {
-    return await this.novu.post(`/subscribers`, {
+    return await this.postRequest(`/subscribers`, {
       subscriberId,
       ...data,
     });
   }
 
   async create(subscriberId: string, data: ISubscriberPayload) {
-    return await this.novu.post(`/subscribers`, {
+    return await this.postRequest(`/subscribers`, {
       subscriberId,
       ...data,
     });
   }
 
   async update(subscriberId: string, data: ISubscriberPayload) {
-    return await this.novu.put(`/subscribers/${subscriberId}`, {
+    return await this.putRequest(`/subscribers/${subscriberId}`, {
       ...data,
     });
   }
@@ -54,7 +52,7 @@ export class Subscribers implements ISubscribers {
     providerId: string,
     credentials: IChannelCredentials
   ) {
-    return await this.novu.put(`/subscribers/${subscriberId}/credentials`, {
+    return await this.putRequest(`/subscribers/${subscriberId}/credentials`, {
       providerId,
       credentials: {
         ...credentials,
@@ -63,7 +61,7 @@ export class Subscribers implements ISubscribers {
   }
 
   async deleteCredentials(subscriberId: string, providerId: string) {
-    return await this.novu.delete(
+    return await this.deleteRequest(
       `/subscribers/${subscriberId}/credentials/${providerId}`
     );
   }
@@ -72,24 +70,27 @@ export class Subscribers implements ISubscribers {
    * @deprecated Use deleteCredentials instead
    */
   async unsetCredentials(subscriberId: string, providerId: string) {
-    return await this.novu.put(`/subscribers/${subscriberId}/credentials`, {
+    return await this.putRequest(`/subscribers/${subscriberId}/credentials`, {
       providerId,
       credentials: { webhookUrl: undefined, deviceTokens: [] },
     });
   }
 
   async updateOnlineStatus(subscriberId: string, online: boolean) {
-    return await this.novu.patch(`/subscribers/${subscriberId}/online-status`, {
-      online,
-    });
+    return await this.patchRequest(
+      `/subscribers/${subscriberId}/online-status`,
+      {
+        online,
+      }
+    );
   }
 
   async delete(subscriberId: string) {
-    return await this.novu.delete(`/subscribers/${subscriberId}`);
+    return await this.deleteRequest(`/subscribers/${subscriberId}`);
   }
 
   async getPreference(subscriberId: string) {
-    return await this.novu.get(`/subscribers/${subscriberId}/preferences`);
+    return await this.getRequest(`/subscribers/${subscriberId}/preferences`);
   }
 
   async updatePreference(
@@ -97,7 +98,7 @@ export class Subscribers implements ISubscribers {
     templateId: string,
     data: IUpdateSubscriberPreferencePayload
   ) {
-    return await this.novu.patch(
+    return await this.patchRequest(
       `/subscribers/${subscriberId}/preferences/${templateId}`,
       {
         ...data,
@@ -109,7 +110,7 @@ export class Subscribers implements ISubscribers {
     subscriberId: string,
     params: IGetSubscriberNotificationFeedParams
   ) {
-    return await this.novu.get(
+    return await this.getRequest(
       `/subscribers/${subscriberId}/notifications/feed`,
       {
         params,
@@ -119,7 +120,7 @@ export class Subscribers implements ISubscribers {
 
   // TODO: Add read option and change method name to getInAppMessagesCount
   async getUnseenCount(subscriberId: string, seen: boolean) {
-    return await this.novu.get(
+    return await this.getRequest(
       `/subscribers/${subscriberId}/notifications/unseen`,
       {
         params: {
@@ -133,9 +134,12 @@ export class Subscribers implements ISubscribers {
    * deprecated use markInAppMessageAs instead
    */
   async markMessageSeen(subscriberId: string, messageId: string) {
-    return await this.novu.post(
+    return await this.postRequest(
       `/subscribers/${subscriberId}/messages/markAs`,
-      { messageId, mark: { seen: true } }
+      {
+        messageId,
+        mark: { seen: true },
+      }
     );
   }
 
@@ -143,9 +147,12 @@ export class Subscribers implements ISubscribers {
    * deprecated use markInAppMessageAs instead
    */
   async markMessageRead(subscriberId: string, messageId: string) {
-    return await this.novu.post(
+    return await this.postRequest(
       `/subscribers/${subscriberId}/messages/markAs`,
-      { messageId, mark: { read: true } }
+      {
+        messageId,
+        mark: { read: true },
+      }
     );
   }
 
@@ -158,9 +165,12 @@ export class Subscribers implements ISubscribers {
       throw new Error('Either seen or read must be set');
     }
 
-    return await this.novu.post(
+    return await this.postRequest(
       `/subscribers/${subscriberId}/messages/markAs`,
-      { messageId, mark }
+      {
+        messageId,
+        mark,
+      }
     );
   }
 
@@ -170,7 +180,7 @@ export class Subscribers implements ISubscribers {
     type: ButtonTypeEnum,
     data: IMarkMessageActionFields
   ) {
-    return await this.novu.post(
+    return await this.postRequest(
       `/subscribers/${subscriberId}/messages/${messageId}/actions/${type}`,
       {
         status: data.status,

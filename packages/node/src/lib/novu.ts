@@ -58,15 +58,15 @@ export class Novu extends EventEmitter {
       },
     });
 
-    this.subscribers = new Subscribers(this);
+    this.subscribers = new Subscribers(this.http);
     this.environments = new Environments(this);
     this.events = new Events(this);
-    this.changes = new Changes(this);
+    this.changes = new Changes(this.http);
     this.layouts = new Layouts(this);
     this.notificationGroups = new NotificationGroups(this);
     this.notificationTemplates = new NotificationTemplates(this);
     this.workflows = new Workflows(this);
-    this.feeds = new Feeds(this);
+    this.feeds = new Feeds(this.http);
     this.topics = new Topics(this);
     this.integrations = new Integrations(this);
     this.messages = new Messages(this);

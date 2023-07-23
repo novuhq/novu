@@ -1,19 +1,17 @@
 import { IFeeds } from './feeds.interface';
-import { Novu } from '../novu';
+import { WithHttp } from '../novu.interface';
 
-export class Feeds implements IFeeds {
-  constructor(private readonly novu: Novu) {}
-
+export class Feeds extends WithHttp implements IFeeds {
   async create(name: string) {
-    return await this.novu.post(`/feeds`, { name });
+    return await this.postRequest(`/feeds`, { name });
   }
 
   // TODO: Add pagination options
   async get() {
-    return await this.novu.get(`/feeds`);
+    return await this.getRequest(`/feeds`);
   }
 
   async delete(feedId: string) {
-    return await this.novu.delete(`/feeds/${feedId}`);
+    return await this.deleteRequest(`/feeds/${feedId}`);
   }
 }
