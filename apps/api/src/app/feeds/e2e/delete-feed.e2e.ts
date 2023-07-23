@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { UserSession, NotificationTemplateService } from '@novu/testing';
 import { StepTypeEnum } from '@novu/shared';
 import { FeedRepository, MessageTemplateRepository, NotificationTemplateRepository } from '@novu/dal';
-import { CreateNotificationTemplateRequestDto } from '../../notification-template/dto';
+import { CreateWorkflowRequestDto } from '../../workflows/dto';
 
 describe('Delete A Feed - /feeds (POST)', async () => {
   let session: UserSession;
@@ -95,7 +95,7 @@ describe('Delete A Feed - /feeds (POST)', async () => {
     const { body } = await session.testAgent.post(`/v1/feeds`).send(testFeed);
     const feed = body.data;
 
-    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+    const testTemplate: Partial<CreateWorkflowRequestDto> = {
       name: 'test email template',
       description: 'This is a test description',
       tags: ['test-tag'],

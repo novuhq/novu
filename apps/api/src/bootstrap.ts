@@ -103,6 +103,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
     .addTag('Integrations')
     .addTag('Layouts')
     .addTag('Workflows')
+    .addTag('Notification Templates')
     .addTag('Workflow groups')
     .addTag('Changes')
     .addTag('Environments')

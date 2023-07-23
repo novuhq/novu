@@ -3,10 +3,7 @@ import { ChangeRepository } from '@novu/dal';
 import { EmailBlockTypeEnum, StepTypeEnum, FilterPartTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 
-import {
-  CreateNotificationTemplateRequestDto,
-  UpdateNotificationTemplateRequestDto,
-} from '../../notification-template/dto';
+import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from '../../workflows/dto';
 
 describe('Get changes', () => {
   let session: UserSession;
@@ -18,7 +15,7 @@ describe('Get changes', () => {
   });
 
   it('get list of changes', async () => {
-    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+    const testTemplate: Partial<CreateWorkflowRequestDto> = {
       name: 'test email template',
       description: 'This is a test description',
       tags: ['test-tag'],
@@ -54,7 +51,7 @@ describe('Get changes', () => {
 
     await session.applyChanges();
 
-    const updateData: UpdateNotificationTemplateRequestDto = {
+    const updateData: UpdateWorkflowRequestDto = {
       name: testTemplate.name,
       tags: testTemplate.tags,
       description: testTemplate.description,

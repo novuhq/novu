@@ -1,10 +1,7 @@
 import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
 import { StepTypeEnum } from '@novu/shared';
-import {
-  CreateNotificationTemplateRequestDto,
-  UpdateNotificationTemplateRequestDto,
-} from '../../notification-template/dto';
+import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from '../../workflows/dto';
 import { FeedRepository } from '@novu/dal';
 
 describe('Create A Feed - /feeds (POST)', async () => {
@@ -38,7 +35,7 @@ describe('Create A Feed - /feeds (POST)', async () => {
     const { body } = await session.testAgent.post(`/v1/feeds`).send(testFeed);
     const feed = body.data;
 
-    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+    const testTemplate: Partial<CreateWorkflowRequestDto> = {
       name: 'test email template',
       description: 'This is a test description',
       tags: ['test-tag'],
@@ -70,7 +67,7 @@ describe('Create A Feed - /feeds (POST)', async () => {
   });
 
   it('update existing message with feed', async () => {
-    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+    const testTemplate: Partial<CreateWorkflowRequestDto> = {
       name: 'test email template',
       description: 'This is a test description',
       tags: ['test-tag'],
@@ -105,7 +102,7 @@ describe('Create A Feed - /feeds (POST)', async () => {
     } = await session.testAgent.post(`/v1/feeds`).send(testFeed);
 
     const step = data.steps[0];
-    const update: UpdateNotificationTemplateRequestDto = {
+    const update: UpdateWorkflowRequestDto = {
       name: data.name,
       description: data.description,
       tags: data.tags,

@@ -12,7 +12,7 @@ import {
 } from '@novu/application-generic';
 
 import { GroupedBlueprintResponse } from '../dto/grouped-blueprint.response.dto';
-import { CreateNotificationTemplateRequestDto } from '../../notification-template/dto';
+import { CreateWorkflowRequestDto } from '../../workflows/dto';
 import { GetGroupedBlueprints, POPULAR_TEMPLATES_ID_LIST } from '../usecases/get-grouped-blueprints';
 import * as blueprintStaticModule from '../usecases/get-grouped-blueprints/consts';
 
@@ -156,7 +156,7 @@ export async function createTemplateFromBlueprint({
   notificationTemplateRepository: NotificationTemplateRepository;
   prodEnv;
 }) {
-  const testTemplateRequestDto: Partial<CreateNotificationTemplateRequestDto> = {
+  const testTemplateRequestDto: Partial<CreateWorkflowRequestDto> = {
     name: 'test email template',
     description: 'This is a test description',
     tags: ['test-tag'],

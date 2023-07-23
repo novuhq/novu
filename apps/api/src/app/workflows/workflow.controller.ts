@@ -13,22 +13,22 @@ import {
 } from '@nestjs/common';
 import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
-import { GetWorkflows } from './usecases/get-workflows/get-workflows.usecase';
-import { GetWorkflowsCommand } from './usecases/get-workflows/get-workflows.command';
-import { CreateWorkflow, CreateWorkflowCommand } from './usecases/create-workflow';
+import { GetNotificationTemplates } from './usecases/get-notification-templates/get-notification-templates.usecase';
+import { GetNotificationTemplatesCommand } from './usecases/get-notification-templates/get-notification-templates.command';
+import { CreateNotificationTemplate, CreateNotificationTemplateCommand } from './usecases/create-notification-template';
 import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto, ChangeWorkflowStatusRequestDto } from './dto';
-import { GetWorkflow } from './usecases/get-workflow/get-workflow.usecase';
-import { GetWorkflowCommand } from './usecases/get-workflow/get-workflow.command';
-import { UpdateWorkflow } from './usecases/update-workflow/update-workflow.usecase';
-import { DeleteWorkflow } from './usecases/delete-workflow/delete-workflow.usecase';
-import { UpdateWorkflowCommand } from './usecases/update-workflow/update-workflow.command';
-import { ChangeWorkflowActiveStatus } from './usecases/change-workflow-active-status/change-workflow-active-status.usecase';
-import { ChangeWorkflowActiveStatusCommand } from './usecases/change-workflow-active-status/change-workflow-active-status.command';
+import { GetNotificationTemplate } from './usecases/get-notification-template/get-notification-template.usecase';
+import { GetNotificationTemplateCommand } from './usecases/get-notification-template/get-notification-template.command';
+import { UpdateNotificationTemplate } from './usecases/update-notification-template/update-notification-template.usecase';
+import { DeleteNotificationTemplate } from './usecases/delete-notification-template/delete-notification-template.usecase';
+import { UpdateNotificationTemplateCommand } from './usecases/update-notification-template/update-notification-template.command';
+import { ChangeTemplateActiveStatus } from './usecases/change-template-active-status/change-template-active-status.usecase';
+import { ChangeTemplateActiveStatusCommand } from './usecases/change-template-active-status/change-template-active-status.command';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { RootEnvironmentGuard } from '../auth/framework/root-environment-guard.service';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { WorkflowsResponse } from './dto/workflow-response.dto';
-import { WorkflowsResponseDto } from './dto/workflows-response.dto';
+import { WorkflowResponse } from './dto/workflow-response.dto';
+import { WorkflowsResponseDto } from './dto/workflows.response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { WorkflowsRequestDto } from './dto/workflows-request.dto';
 import { Roles } from '../auth/framework/roles.decorator';
@@ -40,18 +40,18 @@ import { CreateWorkflowQuery } from './queries';
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
 @ApiTags('Workflows')
-export class WorkflowsController {
+export class WorkflowController {
   constructor(
-    private getWorkflowsUsecase: GetWorkflows,
-    private createWorkflowUsecase: CreateWorkflow,
-    private getWorkflowUsecase: GetWorkflow,
-    private updateWorkflowByIdUsecase: UpdateWorkflow,
-    private deleteWorkflowByIdUsecase: DeleteWorkflow,
-    private changeWorkflowActiveStatusUsecase: ChangeWorkflowActiveStatus
+    private getWorkflowsUsecase: GetNotificationTemplates,
+    private createWorkflowUsecase: CreateNotificationTemplate,
+    private getWorkflowUsecase: GetNotificationTemplate,
+    private updateWorkflowByIdUsecase: UpdateNotificationTemplate,
+    private deleteWorkflowByIdUsecase: DeleteNotificationTemplate,
+    private changeWorkflowActiveStatusUsecase: ChangeTemplateActiveStatus
   ) {}
 
   @Get('')
-  @ApiResponse(WorkflowsResponse)
+  @ApiResponse(WorkflowResponse)
   @ApiOperation({
     summary: 'Get workflows',
     description: `Workflows were previously named notification templates`,
@@ -59,7 +59,7 @@ export class WorkflowsController {
   @ExternalApiAccessible()
   getWorkflows(@UserSession() user: IJwtPayload, @Query() query: WorkflowsRequestDto): Promise<WorkflowsResponseDto> {
     return this.getWorkflowsUsecase.execute(
-      GetWorkflowsCommand.create({
+      GetNotificationTemplatesCommand.create({
         organizationId: user.organizationId,
         userId: user._id,
         environmentId: user.environmentId,
@@ -70,7 +70,7 @@ export class WorkflowsController {
   }
 
   @Put('/:workflowId')
-  @ApiResponse(WorkflowsResponse)
+  @ApiResponse(WorkflowResponse)
   @ApiOperation({
     summary: 'Update workflow',
     description: `Workflow was previously named notification template`,
@@ -80,9 +80,9 @@ export class WorkflowsController {
     @UserSession() user: IJwtPayload,
     @Param('workflowId') workflowId: string,
     @Body() body: UpdateWorkflowRequestDto
-  ): Promise<WorkflowsResponse> {
+  ): Promise<WorkflowResponse> {
     return await this.updateWorkflowByIdUsecase.execute(
-      UpdateWorkflowCommand.create({
+      UpdateNotificationTemplateCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
@@ -112,17 +112,17 @@ export class WorkflowsController {
   @ExternalApiAccessible()
   deleteWorkflowById(@UserSession() user: IJwtPayload, @Param('workflowId') workflowId: string): Promise<boolean> {
     return this.deleteWorkflowByIdUsecase.execute(
-      GetWorkflowCommand.create({
+      GetNotificationTemplateCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
-        workflowId,
+        templateId: workflowId,
       })
     );
   }
 
   @Get('/:workflowId')
-  @ApiResponse(WorkflowsResponse)
+  @ApiResponse(WorkflowResponse)
   @ApiOperation({
     summary: 'Get workflow',
     description: `Workflow was previously named notification template`,
@@ -131,13 +131,13 @@ export class WorkflowsController {
   getWorkflowById(
     @UserSession() user: IJwtPayload,
     @Param('workflowId') workflowId: string
-  ): Promise<WorkflowsResponse> {
+  ): Promise<WorkflowResponse> {
     return this.getWorkflowUsecase.execute(
-      GetWorkflowCommand.create({
+      GetNotificationTemplateCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
-        workflowId,
+        templateId: workflowId,
       })
     );
   }
@@ -145,7 +145,7 @@ export class WorkflowsController {
   @Post('')
   @ExternalApiAccessible()
   @UseGuards(RootEnvironmentGuard)
-  @ApiResponse(WorkflowsResponse, 201)
+  @ApiResponse(WorkflowResponse, 201)
   @ApiOperation({
     summary: 'Create workflow',
     description: `Workflow was previously named notification template`,
@@ -155,9 +155,9 @@ export class WorkflowsController {
     @UserSession() user: IJwtPayload,
     @Query() query: CreateWorkflowQuery,
     @Body() body: CreateWorkflowRequestDto
-  ): Promise<WorkflowsResponse> {
+  ): Promise<WorkflowResponse> {
     return this.createWorkflowUsecase.execute(
-      CreateWorkflowCommand.create({
+      CreateNotificationTemplateCommand.create({
         organizationId: user.organizationId,
         userId: user._id,
         environmentId: user.environmentId,
@@ -167,7 +167,7 @@ export class WorkflowsController {
         steps: body.steps,
         notificationGroupId: body.notificationGroupId,
         active: body.active ?? false,
-        draft: body.draft ?? true,
+        draft: !body.active,
         critical: body.critical ?? false,
         preferenceSettings: body.preferenceSettings,
         blueprintId: body.blueprintId,
@@ -179,7 +179,7 @@ export class WorkflowsController {
   @Put('/:workflowId/status')
   @UseGuards(RootEnvironmentGuard)
   @Roles(MemberRoleEnum.ADMIN)
-  @ApiResponse(WorkflowsResponse)
+  @ApiResponse(WorkflowResponse)
   @ApiOperation({
     summary: 'Update workflow status',
     description: `Workflow was previously named notification template`,
@@ -189,14 +189,14 @@ export class WorkflowsController {
     @UserSession() user: IJwtPayload,
     @Body() body: ChangeWorkflowStatusRequestDto,
     @Param('workflowId') workflowId: string
-  ): Promise<WorkflowsResponse> {
+  ): Promise<WorkflowResponse> {
     return this.changeWorkflowActiveStatusUsecase.execute(
-      ChangeWorkflowActiveStatusCommand.create({
+      ChangeTemplateActiveStatusCommand.create({
         organizationId: user.organizationId,
         userId: user._id,
         environmentId: user.environmentId,
         active: body.active,
-        workflowId,
+        templateId: workflowId,
       })
     );
   }

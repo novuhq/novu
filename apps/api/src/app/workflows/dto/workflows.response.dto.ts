@@ -1,12 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { NotificationTemplateResponse } from './notification-template-response.dto';
+import { WorkflowResponse } from './workflow-response.dto';
 
-export class NotificationTemplatesResponseDto {
+export class WorkflowsResponseDto {
   @ApiProperty()
   totalCount: number;
 
   @ApiProperty()
-  data: NotificationTemplateResponse[];
+  data: WorkflowResponse[];
 
   @ApiProperty()
   pageSize: number;

@@ -19,11 +19,11 @@ import {
   SubscriberEntity,
 } from '@novu/dal';
 import { isSameDay } from 'date-fns';
-import { CreateNotificationTemplateRequestDto } from '../dto';
+import { CreateWorkflowRequestDto } from '../dto';
 
 import axios from 'axios';
 
-describe('Create Notification template - /notification-templates (POST)', async () => {
+describe('Create Workflow - /workflows (POST)', async () => {
   let session: UserSession;
   const changeRepository: ChangeRepository = new ChangeRepository();
   const notificationTemplateRepository: NotificationTemplateRepository = new NotificationTemplateRepository();
@@ -42,7 +42,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
   });
 
   it('should be able to create a notification with the API Key', async function () {
-    const templateBody: Partial<CreateNotificationTemplateRequestDto> = {
+    const templateBody: Partial<CreateWorkflowRequestDto> = {
       name: 'test api template',
       description: 'This is a test description',
       tags: ['test-tag-api'],
@@ -50,7 +50,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
       steps: [],
     };
 
-    const response = await axiosInstance.post(`${session.serverUrl}/v1/notification-templates`, templateBody, {
+    const response = await axiosInstance.post(`${session.serverUrl}/v1/workflows`, templateBody, {
       headers: {
         authorization: `ApiKey ${session.apiKey}`,
       },
@@ -62,7 +62,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
   it('should create email template', async function () {
     const defaultMessageIsActive = true;
 
-    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+    const testTemplate: Partial<CreateWorkflowRequestDto> = {
       name: 'test email template',
       description: 'This is a test description',
       tags: ['test-tag'],
@@ -95,7 +95,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
       ],
     };
 
-    const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+    const { body } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
 
     expect(body.data).to.be.ok;
     const template: INotificationTemplate = body.data;
@@ -165,7 +165,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
   });
 
   it('should create a valid notification', async () => {
-    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+    const testTemplate: Partial<CreateWorkflowRequestDto> = {
       name: 'test template',
       description: 'This is a test description',
       notificationGroupId: session.notificationGroups[0]._id,
@@ -185,7 +185,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
         },
       ],
     };
-    const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+    const { body } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
 
     expect(body.data).to.be.ok;
 
@@ -205,7 +205,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
   });
 
   it('should create event trigger', async () => {
-    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+    const testTemplate: Partial<CreateWorkflowRequestDto> = {
       name: 'test template',
       notificationGroupId: session.notificationGroups[0]._id,
       description: 'This is a test description',
@@ -227,7 +227,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
       ],
     };
 
-    const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+    const { body } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
 
     expect(body.data).to.be.ok;
 
@@ -240,27 +240,27 @@ describe('Create Notification template - /notification-templates (POST)', async 
   });
 
   it('should only add shortid to trigger identifier if same identifier exists', async () => {
-    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+    const testTemplate: Partial<CreateWorkflowRequestDto> = {
       name: 'test',
       notificationGroupId: session.notificationGroups[0]._id,
       description: 'This is a test description',
       steps: [],
     };
 
-    const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+    const { body } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
 
     expect(body.data).to.be.ok;
     const template: INotificationTemplate = body.data;
 
     expect(template.triggers[0].identifier).to.equal('test');
 
-    const sameNameTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+    const sameNameTemplate: Partial<CreateWorkflowRequestDto> = {
       name: 'test',
       notificationGroupId: session.notificationGroups[0]._id,
       description: 'This is a test description',
       steps: [],
     };
-    const { body: newBody } = await session.testAgent.post(`/v1/notification-templates`).send(sameNameTemplate);
+    const { body: newBody } = await session.testAgent.post(`/v1/workflows`).send(sameNameTemplate);
 
     expect(newBody.data).to.be.ok;
     const newTemplate: INotificationTemplate = newBody.data;
@@ -269,7 +269,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
   });
 
   it('should add parentId to step', async () => {
-    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+    const testTemplate: Partial<CreateWorkflowRequestDto> = {
       name: 'test template',
       description: 'This is a test description',
       notificationGroupId: session.notificationGroups[0]._id,
@@ -300,7 +300,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
         },
       ],
     };
-    const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+    const { body } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
 
     expect(body.data).to.be.ok;
 
@@ -311,7 +311,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
   });
 
   it('should use sender name in email template', async function () {
-    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+    const testTemplate: Partial<CreateWorkflowRequestDto> = {
       name: 'test email template',
       description: 'This is a test description',
       tags: ['test-tag'],
@@ -331,7 +331,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
       ],
     };
 
-    const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+    const { body } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
 
     expect(body.data).to.be.ok;
     const template: INotificationTemplate = body.data;
@@ -400,7 +400,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
   });
 
   it('should not promote deleted template that is not existing in prod', async function () {
-    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+    const testTemplate: Partial<CreateWorkflowRequestDto> = {
       name: 'test email template',
       description: 'This is a test description',
       tags: ['test-tag'],
@@ -408,12 +408,12 @@ describe('Create Notification template - /notification-templates (POST)', async 
       steps: [],
     };
 
-    const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+    const { body } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
 
     expect(body.data).to.be.ok;
     const template: INotificationTemplate = body.data;
 
-    await session.testAgent.delete(`/v1/notification-templates/${template._id}`).send();
+    await session.testAgent.delete(`/v1/workflows/${template._id}`).send();
 
     const change = await changeRepository.findOne({ _environmentId: session.environment._id, _entityId: template._id });
     await session.testAgent.post(`/v1/changes/${change?._id}/apply`);
@@ -486,7 +486,7 @@ export async function createTemplateFromBlueprint({
   notificationTemplateRepository: NotificationTemplateRepository;
   prodEnv;
 }) {
-  const testTemplateRequestDto: Partial<CreateNotificationTemplateRequestDto> = {
+  const testTemplateRequestDto: Partial<CreateWorkflowRequestDto> = {
     name: 'test email template',
     description: 'This is a test description',
     tags: ['test-tag'],
@@ -519,14 +519,12 @@ export async function createTemplateFromBlueprint({
     ],
   };
 
-  const testTemplate = (await session.testAgent.post(`/v1/notification-templates`).send(testTemplateRequestDto)).body
-    .data;
+  const testTemplate = (await session.testAgent.post(`/v1/workflows`).send(testTemplateRequestDto)).body.data;
 
   process.env.BLUEPRINT_CREATOR = session.organization._id;
 
-  const testEnvBlueprintTemplate = (
-    await session.testAgent.post(`/v1/notification-templates`).send(testTemplateRequestDto)
-  ).body.data;
+  const testEnvBlueprintTemplate = (await session.testAgent.post(`/v1/workflows`).send(testTemplateRequestDto)).body
+    .data;
 
   expect(testEnvBlueprintTemplate).to.be.ok;
 
@@ -550,7 +548,7 @@ export async function createTemplateFromBlueprint({
   blueprint.notificationGroupId = blueprint._notificationGroupId;
   blueprint.blueprintId = blueprint._id;
 
-  const createdTemplate = (await session.testAgent.post(`/v1/notification-templates`).send({ ...blueprint })).body.data;
+  const createdTemplate = (await session.testAgent.post(`/v1/workflows`).send({ ...blueprint })).body.data;
 
   return {
     testTemplateRequestDto,

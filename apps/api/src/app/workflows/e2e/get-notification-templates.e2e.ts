@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { NotificationTemplateEntity } from '@novu/dal';
 import { UserSession, NotificationTemplateService } from '@novu/testing';
 
-describe('Get Workflows - /workflows (GET)', async () => {
+describe('Get workflows - /workflows (GET)', async () => {
   let session: UserSession;
   const templates: NotificationTemplateEntity[] = [];
   let notificationTemplateService: NotificationTemplateService;
@@ -22,7 +22,7 @@ describe('Get Workflows - /workflows (GET)', async () => {
     templates.push(await notificationTemplateService.createTemplate());
   });
 
-  it('should return all workflows for an organization', async () => {
+  it('should return all workflows for organization', async () => {
     const { body } = await session.testAgent.get(`/v1/workflows`);
 
     expect(body.data.length).to.equal(3);

@@ -19,10 +19,7 @@ import {
 } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 
-import {
-  CreateNotificationTemplateRequestDto,
-  UpdateNotificationTemplateRequestDto,
-} from '../../notification-template/dto';
+import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from '../../workflows/dto';
 
 describe('Promote changes', () => {
   let session: UserSession;
@@ -55,7 +52,7 @@ describe('Promote changes', () => {
         _parentId: parentGroup._id,
       });
 
-      const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+      const testTemplate: Partial<CreateWorkflowRequestDto> = {
         name: 'test email template',
         description: 'This is a test description',
         tags: ['test-tag'],
@@ -103,7 +100,7 @@ describe('Promote changes', () => {
     });
 
     it('should promote step variables default values', async () => {
-      const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+      const testTemplate: Partial<CreateWorkflowRequestDto> = {
         name: 'test email template',
         description: 'This is a test description',
         notificationGroupId: session.notificationGroups[0]._id,
@@ -150,7 +147,7 @@ describe('Promote changes', () => {
       expect(variable?.defaultValue).to.eq('Test Default Value');
 
       const step = body.data.steps[0];
-      const update: Partial<UpdateNotificationTemplateRequestDto> = {
+      const update: Partial<UpdateWorkflowRequestDto> = {
         steps: [
           {
             _id: step._templateId,
@@ -190,7 +187,7 @@ describe('Promote changes', () => {
     });
 
     it('delete message', async () => {
-      const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+      const testTemplate: Partial<CreateWorkflowRequestDto> = {
         name: 'test email template',
         description: 'This is a test description',
         tags: ['test-tag'],
@@ -224,7 +221,7 @@ describe('Promote changes', () => {
 
       let { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
 
-      const updateData: UpdateNotificationTemplateRequestDto = {
+      const updateData: UpdateWorkflowRequestDto = {
         name: testTemplate.name,
         tags: testTemplate.tags,
         description: testTemplate.description,
@@ -249,7 +246,7 @@ describe('Promote changes', () => {
     });
 
     it('update active flag on notification template', async () => {
-      const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+      const testTemplate: Partial<CreateWorkflowRequestDto> = {
         name: 'test email template',
         description: 'This is a test description',
         tags: ['test-tag'],
@@ -281,7 +278,7 @@ describe('Promote changes', () => {
     });
 
     it('update existing message', async () => {
-      const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+      const testTemplate: Partial<CreateWorkflowRequestDto> = {
         name: 'test email template',
         description: 'This is a test description',
         tags: ['test-tag'],
@@ -324,7 +321,7 @@ describe('Promote changes', () => {
       const notificationTemplateId = data._id;
 
       const step = data.steps[0];
-      const update: UpdateNotificationTemplateRequestDto = {
+      const update: UpdateWorkflowRequestDto = {
         name: data.name,
         description: data.description,
         tags: data.tags,
@@ -361,7 +358,7 @@ describe('Promote changes', () => {
     });
 
     it('add one more message', async () => {
-      const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+      const testTemplate: Partial<CreateWorkflowRequestDto> = {
         name: 'test email template',
         description: 'This is a test description',
         tags: ['test-tag'],
@@ -403,7 +400,7 @@ describe('Promote changes', () => {
       const notificationTemplateId = data._id;
 
       const step = data.steps[0];
-      const update: UpdateNotificationTemplateRequestDto = {
+      const update: UpdateWorkflowRequestDto = {
         name: data.name,
         description: data.description,
         tags: data.tags,
@@ -469,7 +466,7 @@ describe('Promote changes', () => {
     });
 
     it('should count not applied changes', async () => {
-      const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+      const testTemplate: Partial<CreateWorkflowRequestDto> = {
         name: 'test email template',
         description: 'This is a test description',
         tags: ['test-tag'],
@@ -511,7 +508,7 @@ describe('Promote changes', () => {
     });
 
     it('should count delete change', async () => {
-      const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+      const testTemplate: Partial<CreateWorkflowRequestDto> = {
         name: 'test email template',
         description: 'This is a test description',
         tags: ['test-tag'],
@@ -567,7 +564,7 @@ describe('Promote changes', () => {
         name: 'Test name',
       });
 
-      const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+      const testTemplate: Partial<CreateWorkflowRequestDto> = {
         name: 'test email template',
         description: 'This is a test description',
         tags: ['test-tag'],
@@ -622,7 +619,7 @@ describe('Promote changes', () => {
         _parentId: parentGroup._id,
       });
 
-      const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+      const testTemplate: Partial<CreateWorkflowRequestDto> = {
         name: 'test email template',
         description: 'This is a test description',
         tags: ['test-tag'],
@@ -670,7 +667,7 @@ describe('Promote changes', () => {
     });
 
     it('should merge creation, and status changes to one change', async () => {
-      const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+      const testTemplate: Partial<CreateWorkflowRequestDto> = {
         name: 'test email template',
         description: 'This is a test description',
         tags: ['test-tag'],

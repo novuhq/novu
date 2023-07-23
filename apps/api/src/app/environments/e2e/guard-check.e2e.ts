@@ -2,7 +2,7 @@ import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { NotificationTemplateRepository } from '@novu/dal';
 
-import { CreateNotificationTemplateRequestDto } from '../../notification-template/dto/create-notification-template.request.dto';
+import { CreateWorkflowRequestDto } from '../../workflows/dto/create-workflow.request.dto';
 
 describe('Environment - Check Root Environment Guard', async () => {
   let session: UserSession;
@@ -14,7 +14,7 @@ describe('Environment - Check Root Environment Guard', async () => {
   });
 
   it('should not allow create when not in development environment', async () => {
-    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+    const testTemplate: Partial<CreateWorkflowRequestDto> = {
       name: 'test template',
       description: 'This is a test description',
       notificationGroupId: session.notificationGroups[0]._id,
