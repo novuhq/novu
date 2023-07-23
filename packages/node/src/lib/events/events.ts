@@ -1,15 +1,17 @@
-// axios must be imported because it is used with http
 import {
   IBroadcastPayloadOptions,
   IBulkEvents,
+  IEvents,
   ITriggerPayloadOptions,
 } from './events.interface';
-import { WithHttp } from '../novu.interface';
+import { Novu } from '../novu';
 
-export class Events extends WithHttp {
-  async trigger(eventId: string, data: ITriggerPayloadOptions) {
-    return await this.http.post(`/events/trigger`, {
-      name: eventId,
+export class Events implements IEvents {
+  constructor(private readonly novu: Novu) {}
+
+  async trigger(workflowIdentifier: string, data: ITriggerPayloadOptions) {
+    return await this.novu.post(`/events/trigger`, {
+      name: workflowIdentifier,
       to: data.to,
       payload: {
         ...data?.payload,
@@ -20,9 +22,15 @@ export class Events extends WithHttp {
     });
   }
 
-  async broadcast(eventId: string, data: IBroadcastPayloadOptions) {
-    return await this.http.post(`/events/trigger/broadcast`, {
-      name: eventId,
+  async bulkTrigger(events: IBulkEvents[]) {
+    return await this.novu.post(`/events/trigger/bulk`, {
+      events,
+    });
+  }
+
+  async broadcast(workflowIdentifier: string, data: IBroadcastPayloadOptions) {
+    return await this.novu.post(`/events/trigger/broadcast`, {
+      name: workflowIdentifier,
       payload: {
         ...data?.payload,
       },
@@ -31,12 +39,6 @@ export class Events extends WithHttp {
   }
 
   async cancel(transactionId: string) {
-    return await this.http.delete(`/events/trigger/${transactionId}`);
-  }
-
-  async bulkTrigger(events: IBulkEvents[]) {
-    return await this.http.post(`/events/trigger/bulk`, {
-      events,
-    });
+    return await this.novu.delete(`/events/trigger/${transactionId}`);
   }
 }

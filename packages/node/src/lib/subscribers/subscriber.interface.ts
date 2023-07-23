@@ -2,15 +2,20 @@ import {
   ChannelTypeEnum,
   IChannelCredentials,
   ISubscriberPayload,
-  SubscriberCustomData,
+  ButtonTypeEnum,
+  MessageActionStatusEnum,
 } from '@novu/shared';
 
-export { ISubscriberPayload };
+export { ISubscriberPayload, ButtonTypeEnum, MessageActionStatusEnum };
 
 export interface ISubscribers {
   list(page: number, limit: number);
   get(subscriberId: string);
+  /**
+   * @deprecated Use create instead
+   */
   identify(subscriberId: string, data: ISubscriberPayload);
+  create(subscriberId: string, data: ISubscriberPayload);
   update(subscriberId: string, data: ISubscriberPayload);
   delete(subscriberId: string);
   setCredentials(
@@ -23,6 +28,7 @@ export interface ISubscribers {
    * @deprecated Use deleteCredentials instead
    */
   unsetCredentials(subscriberId: string, providerId: string);
+  updateOnlineStatus(subscriberId: string, online: boolean);
   getPreference(subscriberId: string);
   updatePreference(
     subscriberId: string,
@@ -34,9 +40,25 @@ export interface ISubscribers {
     params: IGetSubscriberNotificationFeedParams
   );
   getUnseenCount(subscriberId: string, seen: boolean);
+  /**
+   * deprecated use markInAppMessageAs instead
+   */
   markMessageSeen(subscriberId: string, messageId: string);
+  /**
+   * deprecated use markInAppMessageAs instead
+   */
   markMessageRead(subscriberId: string, messageId: string);
-  markMessageActionSeen(subscriberId: string, messageId: string, type: string);
+  markInAppMessageAs(
+    subscriberId: string,
+    messageId: string,
+    mark: IMarkFields
+  );
+  markMessageActionSeen(
+    subscriberId: string,
+    messageId: string,
+    type: string,
+    data: IMarkMessageActionFields
+  );
 }
 
 export interface IUpdateSubscriberPreferencePayload {
@@ -44,11 +66,22 @@ export interface IUpdateSubscriberPreferencePayload {
     type: ChannelTypeEnum;
     enabled: boolean;
   };
-
   enabled?: boolean;
 }
 export interface IGetSubscriberNotificationFeedParams {
   page?: number;
+  limit?: number;
   feedIdentifier?: string;
   seen?: boolean;
+  read?: boolean;
+}
+
+export interface IMarkFields {
+  seen?: boolean;
+  read?: boolean;
+}
+
+export interface IMarkMessageActionFields {
+  status: MessageActionStatusEnum;
+  payload?: Record<string, unknown>;
 }

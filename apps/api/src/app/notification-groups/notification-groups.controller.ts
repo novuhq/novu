@@ -12,7 +12,6 @@ import {
 } from '@nestjs/common';
 import { IJwtPayload } from '@novu/shared';
 import { CreateNotificationGroup } from './usecases/create-notification-group/create-notification-group.usecase';
-import { Roles } from '../auth/framework/roles.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateNotificationGroupCommand } from './usecases/create-notification-group/create-notification-group.command';
 import { CreateNotificationGroupRequestDto } from './dtos/create-notification-group-request.dto';
@@ -65,6 +64,7 @@ export class NotificationGroupsController {
     );
   }
 
+  // TODO: add pagination options
   @Get('')
   @ExternalApiAccessible()
   @ApiResponse(NotificationGroupResponseDto, 200, true)
@@ -82,6 +82,7 @@ export class NotificationGroupsController {
     );
   }
 
+  // TODO: change id type to mongodb id
   @Get('/:id')
   @ExternalApiAccessible()
   @ApiResponse(NotificationGroupResponseDto, 200)
@@ -103,6 +104,7 @@ export class NotificationGroupsController {
     );
   }
 
+  // TODO: Change id type to mongodb id
   @Patch('/:id')
   @ExternalApiAccessible()
   @ApiResponse(NotificationGroupResponseDto, 200)
@@ -126,6 +128,7 @@ export class NotificationGroupsController {
     );
   }
 
+  // TODO: Change id type to mongodb id
   @Delete('/:id')
   @ExternalApiAccessible()
   @ApiResponse(DeleteNotificationGroupResponseDto, 200)

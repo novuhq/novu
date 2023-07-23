@@ -172,6 +172,7 @@ export class LayoutsController {
     );
   }
 
+  // TODO: change layoutId type to mongodb id
   @Delete('/:layoutId')
   @ExternalApiAccessible()
   @ApiNoContentResponse({

@@ -77,6 +77,7 @@ export class NotificationTemplateController {
     );
   }
 
+  // TODO: change templateId type to mongodb id
   @Put('/:templateId')
   @ApiResponse(NotificationTemplateResponse)
   @ApiOperation({
@@ -188,6 +189,7 @@ export class NotificationTemplateController {
     );
   }
 
+  // TODO: change templateId type to mongodb id
   @Put('/:templateId/status')
   @UseGuards(RootEnvironmentGuard)
   @Roles(MemberRoleEnum.ADMIN)

@@ -69,6 +69,7 @@ export class WorkflowsController {
     );
   }
 
+  // TODO: change workflowId type to mongodb id
   @Put('/:workflowId')
   @ApiResponse(WorkflowsResponse)
   @ApiOperation({
@@ -99,6 +100,7 @@ export class WorkflowsController {
     );
   }
 
+  // TODO: change workflowId type to mongodb id
   @Delete('/:workflowId')
   @UseGuards(RootEnvironmentGuard)
   @Roles(MemberRoleEnum.ADMIN)
@@ -176,6 +178,7 @@ export class WorkflowsController {
     );
   }
 
+  // TODO: change workflowId type to mongodb id
   @Put('/:workflowId/status')
   @UseGuards(RootEnvironmentGuard)
   @Roles(MemberRoleEnum.ADMIN)

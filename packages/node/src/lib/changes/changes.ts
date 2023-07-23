@@ -1,24 +1,22 @@
-import Axios from 'axios';
 import { IChanges } from './changes.interface';
-import { WithHttp } from '../novu.interface';
+import { Novu } from '../novu';
 
-export class Changes extends WithHttp implements IChanges {
-  applyAll() {
-    throw new Error('Method not implemented.');
-  }
+export class Changes implements IChanges {
+  constructor(private readonly novu: Novu) {}
 
+  // TODO: add pagination options and promoted params
   /**
    * @returns {promise<object>} - Returns an object containing all changes
    */
   async get() {
-    return await this.http.get(`/changes`);
+    return await this.novu.get(`/changes`);
   }
 
   /**
    * @returns {promise<object>} - Returns the number of changes
    */
   async getCount() {
-    return await this.http.get(`/changes/count`);
+    return await this.novu.get(`/changes/count`);
   }
 
   /**
@@ -26,7 +24,7 @@ export class Changes extends WithHttp implements IChanges {
    * @returns {promise<object>} - Applies the change specified by the ID
    */
   async applyOne(changeId: string) {
-    return await this.http.post(`/changes/${changeId}/apply`, {});
+    return await this.novu.post(`/changes/${changeId}/apply`, {});
   }
 
   /**
@@ -34,7 +32,7 @@ export class Changes extends WithHttp implements IChanges {
    * @returns {promise<object>} - Applies all changes specified in the array
    */
   async applyMany(changeIds: string[]) {
-    return await this.http.post(`/changes/bulk/apply`, {
+    return await this.novu.post(`/changes/bulk/apply`, {
       ChangeIDs: changeIds,
     });
   }

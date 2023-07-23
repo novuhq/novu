@@ -55,6 +55,7 @@ export class IntegrationsController {
     private calculateLimitNovuIntegration: CalculateLimitNovuIntegration
   ) {}
 
+  //TODO: Add pagination options
   @Get('/')
   @ApiOkResponse({
     type: IntegrationResponseDto,
@@ -76,6 +77,7 @@ export class IntegrationsController {
     );
   }
 
+  // TODO: Add pagination options
   @Get('/active')
   @ApiOkResponse({
     type: IntegrationResponseDto,
@@ -149,6 +151,7 @@ export class IntegrationsController {
     );
   }
 
+  // TODO: change integrationId type to mongodb id
   @Put('/:integrationId')
   @Roles(MemberRoleEnum.ADMIN)
   @ApiResponse(IntegrationResponseDto)
@@ -180,6 +183,7 @@ export class IntegrationsController {
     );
   }
 
+  // TODO: change integrationId type to mongodb id
   @Delete('/:integrationId')
   @ApiResponse(IntegrationResponseDto, 200, true)
   @ApiOperation({

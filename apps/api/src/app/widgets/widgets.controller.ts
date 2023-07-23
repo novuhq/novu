@@ -210,6 +210,7 @@ export class WidgetsController {
     return await this.markMessageAsUsecase.execute(command);
   }
 
+  // TODO: change messageId type to mongodb id
   @ApiOperation({
     summary: 'Remove a subscriber feed message',
   })

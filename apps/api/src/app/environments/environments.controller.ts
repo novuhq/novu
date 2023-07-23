@@ -94,7 +94,7 @@ export class EnvironmentsController {
       })
     );
   }
-
+  // TODO: change environmentId type to mongodb id
   @Put('/:environmentId')
   @ApiOperation({
     summary: 'Update env by id',
