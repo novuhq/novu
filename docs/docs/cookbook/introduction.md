@@ -150,7 +150,7 @@ The unread/unseen functionality has yet to be available in the Node.js SDK. Plea
 const { data: markInAppMessageAsRead } = await novu.subscribers.markInAppMessageAs(
   'subscriberId',
   'messageId',
-  { seen: true, read: false}
+  { seen: true, read: false }
 );
 ```
 
