@@ -17,6 +17,7 @@ import {
 
 import { ApplyChange, ApplyChangeCommand } from '../apply-change';
 import { PromoteTypeChangeCommand } from '../promote-type-change.command';
+import { WrapperType } from '../../../../types/wrapper-type';
 
 @Injectable()
 export class PromoteNotificationTemplateChange {
@@ -25,7 +26,7 @@ export class PromoteNotificationTemplateChange {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private messageTemplateRepository: MessageTemplateRepository,
     private notificationGroupRepository: NotificationGroupRepository,
-    @Inject(forwardRef(() => ApplyChange)) private applyChange: ApplyChange,
+    @Inject(forwardRef(() => ApplyChange)) private applyChange: WrapperType<ApplyChange>,
     private changeRepository: ChangeRepository
   ) {}
 

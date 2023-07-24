@@ -15,7 +15,7 @@
     "skipLibCheck": true,
     "outDir": "./dist",
     "baseUrl": "./src",
-    "types": ["node", "mocha"]
+    "types": ["node"]
   },
   "include": [".eslintrc.js", "src/**/*", "src/**/*.d.ts"],
   "exclude": ["node_modules", "**/*.spec.ts", "**/*.e2e.ts"]

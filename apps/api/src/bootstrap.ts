@@ -4,8 +4,8 @@ import '@sentry/tracing';
 
 import helmet from 'helmet';
 import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
-import * as passport from 'passport';
-import * as compression from 'compression';
+import passport from 'passport';
+import compression from 'compression';
 import { NestFactory, Reflector } from '@nestjs/core';
 import * as bodyParser from 'body-parser';
 import * as Sentry from '@sentry/node';
@@ -18,6 +18,7 @@ import { ResponseInterceptor } from './app/shared/framework/response.interceptor
 import { RolesGuard } from './app/auth/framework/roles.guard';
 import { SubscriberRouteGuard } from './app/auth/framework/subscriber-route.guard';
 import { validateEnv } from './config/env-validator';
+import metadata from './metadata';
 
 import * as packageJson from '../package.json';
 
@@ -113,6 +114,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
     .build();
   const document = SwaggerModule.createDocument(app, options);
 
+  await SwaggerModule.loadPluginMetadata(metadata);
   SwaggerModule.setup('api', app, document);
 
   Logger.log('BOOTSTRAPPED SUCCESSFULLY');

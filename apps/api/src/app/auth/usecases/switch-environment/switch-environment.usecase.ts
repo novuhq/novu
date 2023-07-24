@@ -1,5 +1,6 @@
 import { forwardRef, Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { EnvironmentRepository, MemberRepository, OrganizationRepository, UserRepository } from '@novu/dal';
+import { WrapperType } from '../../../../types/wrapper-type';
 import { AuthService } from '../../services/auth.service';
 import { SwitchEnvironmentCommand } from './switch-environment.command';
 
@@ -9,7 +10,7 @@ export class SwitchEnvironment {
     private environmentRepository: EnvironmentRepository,
     private userRepository: UserRepository,
     private memberRepository: MemberRepository,
-    @Inject(forwardRef(() => AuthService)) private authService: AuthService
+    @Inject(forwardRef(() => AuthService)) private authService: WrapperType<AuthService>
   ) {}
 
   async execute(command: SwitchEnvironmentCommand) {

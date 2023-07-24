@@ -10,6 +10,7 @@ import { PromoteNotificationTemplateChange } from '../promote-notification-templ
 import { PromoteMessageTemplateChange } from '../promote-message-template-change/promote-message-template-change';
 import { PromoteNotificationGroupChange } from '../promote-notification-group-change/promote-notification-group-change';
 import { PromoteFeedChange } from '../promote-feed-change/promote-feed-change';
+import { WrapperType } from '../../../../types/wrapper-type';
 
 @Injectable()
 export class PromoteChangeToEnvironment {
@@ -18,7 +19,7 @@ export class PromoteChangeToEnvironment {
     private environmentRepository: EnvironmentRepository,
     private promoteLayoutChange: PromoteLayoutChange,
     @Inject(forwardRef(() => PromoteNotificationTemplateChange))
-    private promoteNotificationTemplateChange: PromoteNotificationTemplateChange,
+    private promoteNotificationTemplateChange: WrapperType<PromoteNotificationTemplateChange>,
     private promoteMessageTemplateChange: PromoteMessageTemplateChange,
     private promoteNotificationGroupChange: PromoteNotificationGroupChange,
     private promoteFeedChange: PromoteFeedChange

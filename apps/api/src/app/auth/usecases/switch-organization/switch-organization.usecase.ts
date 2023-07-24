@@ -3,6 +3,7 @@ import { MemberRepository, OrganizationRepository, UserRepository, EnvironmentRe
 import { SwitchOrganizationCommand } from './switch-organization.command';
 import { AuthService } from '../../services/auth.service';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { WrapperType } from '../../../../types/wrapper-type';
 
 @Injectable()
 export class SwitchOrganization {
@@ -11,7 +12,7 @@ export class SwitchOrganization {
     private userRepository: UserRepository,
     private memberRepository: MemberRepository,
     private environmentRepository: EnvironmentRepository,
-    @Inject(forwardRef(() => AuthService)) private authService: AuthService
+    @Inject(forwardRef(() => AuthService)) private authService: WrapperType<AuthService>
   ) {}
 
   async execute(command: SwitchOrganizationCommand): Promise<string> {
