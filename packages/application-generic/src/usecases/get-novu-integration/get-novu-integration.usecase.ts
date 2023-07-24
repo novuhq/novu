@@ -98,13 +98,13 @@ export class GetNovuIntegration {
 
     switch (command.channelType) {
       case ChannelTypeEnum.EMAIL:
-        return GetNovuIntegration.createNovuEmailIntegration(
+        return GetNovuIntegration.generateNovuEmailIntegration(
           organization,
           command.environmentId,
           active
         );
       case ChannelTypeEnum.SMS:
-        return GetNovuIntegration.createNovuSMSIntegration(
+        return GetNovuIntegration.generateNovuSMSIntegration(
           command.environmentId,
           active
         );
@@ -113,7 +113,7 @@ export class GetNovuIntegration {
     }
   }
 
-  public static createNovuEmailIntegration(
+  public static generateNovuEmailIntegration(
     organization: OrganizationEntity | null,
     environmentId: string,
     active = true
@@ -134,7 +134,7 @@ export class GetNovuIntegration {
     return GetNovuIntegration.mapNovuItem(item, environmentId);
   }
 
-  public static createNovuSMSIntegration(
+  public static generateNovuSMSIntegration(
     environmentId: string,
     active = true
   ): IntegrationEntity {

@@ -22,15 +22,15 @@ export class CreateNovuIntegrations {
       return [];
     }
 
-    const emailProvider = GetNovuIntegration.createNovuEmailIntegration(null, command.environmentId, true);
-    let count = await this.integrationRepository.count({
+    const emailProvider = GetNovuIntegration.generateNovuEmailIntegration(null, command.environmentId, true);
+    const emailIntegrationCount = await this.integrationRepository.count({
       channel: emailProvider.channel,
       providerId: emailProvider.providerId,
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
     });
 
-    if (count === 0) {
+    if (emailIntegrationCount === 0) {
       integrations.push(
         await this.createIntegration.execute(
           CreateIntegrationCommand.create({
@@ -46,15 +46,15 @@ export class CreateNovuIntegrations {
       );
     }
 
-    const smsProvider = GetNovuIntegration.createNovuSMSIntegration(command.environmentId, true);
-    count = await this.integrationRepository.count({
+    const smsProvider = GetNovuIntegration.generateNovuSMSIntegration(command.environmentId, true);
+    const smsIntegrationCount = await this.integrationRepository.count({
       channel: smsProvider.channel,
       providerId: smsProvider.providerId,
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
     });
 
-    if (count === 0) {
+    if (smsIntegrationCount === 0) {
       integrations.push(
         await this.createIntegration.execute(
           CreateIntegrationCommand.create({
