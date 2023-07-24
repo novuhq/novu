@@ -84,6 +84,7 @@ export function SideNav({}: Props) {
       testId: 'side-nav-quickstart-link',
     },
     { icon: <Bolt />, link: ROUTES.WORKFLOWS, label: 'Workflows', testId: 'side-nav-templates-link' },
+    { icon: <Bolt />, link: ROUTES.TENANTS, label: 'Tenants', testId: 'side-nav-tenants-link' },
     {
       icon: <Team />,
       link: ROUTES.SUBSCRIBERS,

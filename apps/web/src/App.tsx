@@ -49,10 +49,10 @@ import { TemplateEditor } from './pages/templates/components/TemplateEditor';
 import { ProvidersPage } from './pages/templates/components/ProvidersPage';
 import { InAppSuccess } from './pages/quick-start/steps/InAppSuccess';
 import { IntegrationsListPage } from './pages/integrations/IntegrationsListPage';
-import { SelectProviderSidebar } from './pages/integrations/components/multi-provider/SelectProviderSidebar';
 import { CreateProviderPage } from './pages/integrations/CreateProviderPage';
 import { UpdateProviderPage } from './pages/integrations/UpdateProviderPage';
 import { SelectProviderPage } from './pages/integrations/components/SelectProviderPage';
+import { TenantsList } from './pages/tenants/TenantsList';
 
 library.add(far, fas);
 
@@ -201,6 +201,7 @@ function App() {
                     <Route path=":channel/:stepUuid" element={<TemplateEditor />} />
                   </Route>
                   <Route path={ROUTES.WORKFLOWS} element={<WorkflowListPage />} />
+                  <Route path={ROUTES.TENANTS} element={<TenantsList />} />
                   <Route path={ROUTES.GET_STARTED} element={<GetStarted />} />
                   <Route path={ROUTES.GET_STARTED_PREVIEW} element={<DigestPreview />} />
                   <Route path={ROUTES.QUICK_START_NOTIFICATION_CENTER} element={<NotificationCenter />} />
