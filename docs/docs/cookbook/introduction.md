@@ -10,6 +10,8 @@ import TabItem from '@theme/TabItem';
 
 This cookbook contains recipes and code samples demonstrating how to accomplish everyday tasks with Novu in your application. Each code example uses our libraries and SDKs.
 
+![UML flow](https://res.cloudinary.com/dxc6bnman/image/upload/v1690181515/flow-2x-straight-white-bg_l8elfm.png)
+
 ## Fetch Subscriber Feed
 
 A subscriber feed is a list of all In-App messages for a single subscriber. It's a continuous stream of messages displayed in a list that subscribers can scroll through on the frontend via the Notification Center.
