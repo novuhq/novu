@@ -1,5 +1,6 @@
 import { InfobipEmailProvider } from '@novu/infobip';
-import { ChannelTypeEnum, ICredentials } from '@novu/shared';
+import { ChannelTypeEnum } from '@novu/shared';
+import { ICredentials } from '@novu/dal';
 import { BaseHandler } from './base.handler';
 
 export class InfobipEmailHandler extends BaseHandler {

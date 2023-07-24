@@ -3,17 +3,9 @@ import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { createHash } from '../../shared/helpers/hmac.service';
-import {
-  buildIntegrationKey,
-  CacheService,
-  InMemoryProviderService,
-  InvalidateCacheService,
-} from '@novu/application-generic';
 
 describe('Initialize Session - /widgets/session/initialize (POST)', async () => {
   let session: UserSession;
-  const inMemoryProviderService = new InMemoryProviderService();
-  const invalidateCache = new InvalidateCacheService(new CacheService(inMemoryProviderService));
 
   before(async () => {
     session = new UserSession();
@@ -54,7 +46,7 @@ describe('Initialize Session - /widgets/session/initialize (POST)', async () => 
   });
 
   it('should pass the test with valid HMAC hash', async function () {
-    await setHmacConfig(session, invalidateCache);
+    await setHmacConfig(session);
     const subscriberId = '12345';
     const secretKey = session.environment.apiKeys[0].key;
 
@@ -65,7 +57,7 @@ describe('Initialize Session - /widgets/session/initialize (POST)', async () => 
   });
 
   it('should fail the test with invalid subscriber id or invalid secret key', async function () {
-    await setHmacConfig(session, invalidateCache);
+    await setHmacConfig(session);
     const validSubscriberId = '12345';
     const validSecretKey = session.environment.apiKeys[0].key;
     let hmacHash;
@@ -96,14 +88,8 @@ async function initWidgetSession(subscriberId: string, session, hmacHash?: strin
   });
 }
 
-async function setHmacConfig(session: UserSession, invalidateCache: InvalidateCacheService) {
+async function setHmacConfig(session: UserSession) {
   const integrationRepository = new IntegrationRepository();
-
-  await invalidateCache.invalidateQuery({
-    key: buildIntegrationKey().invalidate({
-      _organizationId: session.organization._id,
-    }),
-  });
 
   await integrationRepository.update(
     {

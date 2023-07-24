@@ -8,7 +8,6 @@ describe('In-memory Provider Service', () => {
       process.env.IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
 
       inMemoryProviderService = new InMemoryProviderService();
-      inMemoryProviderService.initialize();
 
       await inMemoryProviderService.delayUntilReadiness();
 
@@ -43,8 +42,8 @@ describe('In-memory Provider Service', () => {
 
         const { inMemoryProviderClient } = inMemoryProviderService;
 
-        expect(inMemoryProviderClient.status).toEqual('ready');
-        expect(inMemoryProviderClient.isCluster).toEqual(false);
+        expect(inMemoryProviderClient!.status).toEqual('ready');
+        expect(inMemoryProviderClient!.isCluster).toEqual(false);
 
         const options = inMemoryProviderService.getOptions();
 
@@ -60,15 +59,15 @@ describe('In-memory Provider Service', () => {
 
       it('should we able to operate in the in-memory database', async () => {
         const pingCommandResult =
-          await inMemoryProviderService.inMemoryProviderClient.ping();
+          await inMemoryProviderService.inMemoryProviderClient!.ping();
         expect(pingCommandResult).toEqual('PONG');
 
         const valueToStore = 'non cluster mode';
-        await inMemoryProviderService.inMemoryProviderClient.set(
+        await inMemoryProviderService.inMemoryProviderClient!.set(
           'novu',
           valueToStore
         );
-        const value = await inMemoryProviderService.inMemoryProviderClient.get(
+        const value = await inMemoryProviderService.inMemoryProviderClient!.get(
           'novu'
         );
         expect(value).toEqual('non cluster mode');
@@ -81,7 +80,6 @@ describe('In-memory Provider Service', () => {
       process.env.IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
 
       inMemoryProviderService = new InMemoryProviderService();
-      inMemoryProviderService.initialize();
 
       await inMemoryProviderService.delayUntilReadiness();
 
@@ -91,7 +89,6 @@ describe('In-memory Provider Service', () => {
     describe('TEMP: Check if enableAutoPipelining true is set properly in Cluster', () => {
       it('enableAutoPipelining is enabled', async () => {
         const clusterWithPipelining = new InMemoryProviderService(true);
-        clusterWithPipelining.initialize();
 
         await clusterWithPipelining.delayUntilReadiness();
 
@@ -140,8 +137,8 @@ describe('In-memory Provider Service', () => {
 
         const { inMemoryProviderClient } = inMemoryProviderService;
 
-        expect(inMemoryProviderClient.status).toEqual('ready');
-        expect(inMemoryProviderClient.isCluster).toEqual(true);
+        expect(inMemoryProviderClient!.status).toEqual('ready');
+        expect(inMemoryProviderClient!.isCluster).toEqual(true);
         expect(inMemoryProviderClient.options.enableAutoPipelining).toEqual(
           false
         );
@@ -149,27 +146,26 @@ describe('In-memory Provider Service', () => {
         const options = inMemoryProviderService.getOptions();
         expect(options).toEqual(undefined);
 
-        const clusterOptions =
-          await inMemoryProviderService.getClusterOptions();
-        expect(clusterOptions.enableOfflineQueue).toEqual(false);
-        expect(clusterOptions.enableReadyCheck).toEqual(true);
-        expect(clusterOptions.maxRedirections).toEqual(16);
-        expect(clusterOptions.retryDelayOnClusterDown).toEqual(100);
-        expect(clusterOptions.retryDelayOnFailover).toEqual(100);
-        expect(clusterOptions.retryDelayOnTryAgain).toEqual(100);
+        const clusterOptions = inMemoryProviderService.getClusterOptions();
+        expect(clusterOptions!.enableOfflineQueue).toEqual(false);
+        expect(clusterOptions!.enableReadyCheck).toEqual(true);
+        expect(clusterOptions!.maxRedirections).toEqual(16);
+        expect(clusterOptions!.retryDelayOnClusterDown).toEqual(100);
+        expect(clusterOptions!.retryDelayOnFailover).toEqual(100);
+        expect(clusterOptions!.retryDelayOnTryAgain).toEqual(100);
       });
 
       it('should we able to operate in the in-memory database', async () => {
         const pingCommandResult =
-          await inMemoryProviderService.inMemoryProviderClient.ping();
+          await inMemoryProviderService.inMemoryProviderClient!.ping();
         expect(pingCommandResult).toEqual('PONG');
 
         const valueToStore = 'cluster mode';
-        await inMemoryProviderService.inMemoryProviderClient.set(
+        await inMemoryProviderService.inMemoryProviderClient!.set(
           'novu',
           valueToStore
         );
-        const value = await inMemoryProviderService.inMemoryProviderClient.get(
+        const value = await inMemoryProviderService.inMemoryProviderClient!.get(
           'novu'
         );
         expect(value).toEqual('cluster mode');

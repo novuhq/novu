@@ -12,13 +12,3 @@ jobs:
       - uses: actions/labeler@v4
         with:
           repo-token: "${{ secrets.GITHUB_TOKEN }}"
-
-      - uses: microsoft/PR-Metrics@v1.5.4
-        name: PR Metrics
-        env:
-          PR_METRICS_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          base-size: 200
-          growth-rate: 2.0
-          test-factor: 0.5
-        continue-on-error: true

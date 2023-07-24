@@ -69,7 +69,7 @@ module.exports = (on, config) => {
       await dal.connect('mongodb://localhost:27017/novu-test');
 
       const userService = new UserService();
-      await userService.createCypressTestUser();
+      await userService.createTestUser();
 
       return true;
     },
@@ -98,6 +98,7 @@ module.exports = (on, config) => {
         partialTemplate?: Partial<NotificationTemplateEntity>;
         noTemplates?: boolean;
         showOnBoardingTour?: boolean;
+        withBlueprints?: boolean;
       } = {}
     ) {
       const dal = new DalService();
@@ -152,66 +153,44 @@ module.exports = (on, config) => {
       const environmentService = new EnvironmentService();
 
       let organization = await organizationService.getOrganization(config.env.BLUEPRINT_CREATOR);
-
       if (!organization) {
         organization = await organizationService.createOrganization({ _id: config.env.BLUEPRINT_CREATOR });
+        await environmentService.createEnvironment(organization._id, 'Production');
       }
+      const productionEnvironment = await environmentService.getProductionEnvironment(organization._id);
 
-      const organizationId = organization._id;
-
-      let developmentEnvironment = await environmentService.getDevelopmentEnvironment(organizationId);
-      if (!developmentEnvironment) {
-        developmentEnvironment = await environmentService.createDevelopmentEnvironment(organizationId, user._id);
-      }
-
-      let productionEnvironment = await environmentService.getProductionEnvironment(organizationId);
-      if (!productionEnvironment) {
-        productionEnvironment = await environmentService.createProductionEnvironment(
-          organizationId,
-          user._id,
-          developmentEnvironment._id
-        );
-      }
-
-      const productionEnvironmentId = productionEnvironment._id;
-
-      const productionGeneralGroup = await notificationGroupRepository.findOne({
+      const generalGroup = await notificationGroupRepository.findOne({
         name: 'General',
-        _environmentId: productionEnvironmentId,
-        _organizationId: organizationId,
+        _environmentId: productionEnvironment._id,
+        _organizationId: organization._id,
       });
-
-      if (!productionGeneralGroup) {
+      if (!generalGroup) {
         await notificationGroupRepository.create({
           name: 'General',
-          _environmentId: productionEnvironmentId,
-          _organizationId: organizationId,
+          _environmentId: productionEnvironment._id,
+          _organizationId: organization._id,
         });
       }
 
-      const productionNotificationTemplateService = new NotificationTemplateService(
+      const notificationTemplateService = new NotificationTemplateService(
         user._id,
-        organizationId,
-        productionEnvironmentId
+        organization._id,
+        productionEnvironment._id
       );
 
       const popularTemplateIds = getPopularTemplateIds({ production: false });
 
-      const blueprintTemplates = await productionNotificationTemplateService.getBlueprintTemplates(
-        organizationId,
-        productionEnvironmentId
-      );
-
-      if (blueprintTemplates.length === 0) {
+      const templatesCount = await notificationTemplateService.countTemplates();
+      if (templatesCount === 0) {
         return await Promise.all([
-          productionNotificationTemplateService.createTemplate({
+          notificationTemplateService.createTemplate({
             _id: popularTemplateIds[0],
             noFeedId: true,
             noLayoutId: true,
             name: ':fa-solid fa-star: Super cool workflow',
             isBlueprint: true,
           }),
-          productionNotificationTemplateService.createTemplate({
+          notificationTemplateService.createTemplate({
             _id: popularTemplateIds[1],
             noFeedId: true,
             noLayoutId: true,
@@ -221,7 +200,7 @@ module.exports = (on, config) => {
         ]);
       }
 
-      return blueprintTemplates;
+      return await notificationTemplateService.getTemplates();
     },
   });
 };

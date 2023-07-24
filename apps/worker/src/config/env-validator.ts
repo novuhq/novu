@@ -45,9 +45,6 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   SEGMENT_TOKEN: str({
     default: undefined,
   }),
-  LAUNCH_DARKLY_SDK_KEY: str({
-    default: '',
-  }),
 };
 
 if (process.env.STORAGE_SERVICE === 'AZURE') {

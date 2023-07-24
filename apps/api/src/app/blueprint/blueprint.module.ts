@@ -1,12 +1,12 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 
 import { SharedModule } from '../shared/shared.module';
-import { WorkflowModule } from '../workflows/workflow.module';
+import { NotificationTemplateModule } from '../notification-template/notification-template.module';
 import { USE_CASES } from './usecases';
 import { BlueprintController } from './blueprint.controller';
 
 @Module({
-  imports: [SharedModule, WorkflowModule],
+  imports: [SharedModule, NotificationTemplateModule],
   controllers: [BlueprintController],
   providers: [...USE_CASES],
   exports: [...USE_CASES],

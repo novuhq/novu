@@ -29,8 +29,4 @@ export class UpdateSubscriberChannelCommand extends EnvironmentCommand implement
 
   @IsNotEmpty()
   oauthHandler: OAuthHandlerEnum;
-
-  @IsOptional()
-  @IsString()
-  integrationIdentifier?: string;
 }

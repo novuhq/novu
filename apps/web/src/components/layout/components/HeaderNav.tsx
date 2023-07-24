@@ -1,5 +1,5 @@
 import { Avatar, useMantineColorScheme, ActionIcon, Header, Group, Container } from '@mantine/core';
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import * as capitalize from 'lodash.capitalize';
 import { useIntercom } from 'react-use-intercom';
 import { Link } from 'react-router-dom';
@@ -26,43 +26,32 @@ const menuItem = [
 ];
 const headerIconsSettings = { color: colors.B60, width: 30, height: 30 };
 
-const Icon = () => {
-  const { themeStatus } = useLocalThemePreference();
-
-  if (themeStatus === 'dark') {
-    return <Moon {...headerIconsSettings} />;
-  }
-  if (themeStatus === 'light') {
-    return <Sun {...headerIconsSettings} />;
-  }
-
-  return <Ellipse {...headerIconsSettings} height={24} width={24} />;
-};
-
 export function HeaderNav({}: Props) {
   const { currentOrganization, currentUser, logout } = useAuthContext();
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const { themeStatus } = useLocalThemePreference();
   const dark = colorScheme === 'dark';
-  const { addItem, removeItems } = useSpotlightContext();
-  const { boot } = useIntercom();
+  const { addItem } = useSpotlightContext();
 
-  useEffect(() => {
-    const shouldBootIntercom = !!INTERCOM_APP_ID && currentUser && currentOrganization;
-    if (shouldBootIntercom) {
-      boot({
-        userId: currentUser._id,
-        email: currentUser?.email ?? '',
-        name: currentUser?.firstName + ' ' + currentUser?.lastName,
-        createdAt: currentUser?.createdAt,
-        company: {
-          name: currentOrganization?.name,
-          companyId: currentOrganization?._id as string,
-        },
-        userHash: currentUser.servicesHashes?.intercom,
-      });
-    }
-  }, [boot, currentUser, currentOrganization]);
+  if (INTERCOM_APP_ID) {
+    const { boot } = useIntercom();
+
+    useEffect(() => {
+      if (currentUser && currentOrganization) {
+        boot({
+          userId: currentUser._id,
+          email: currentUser?.email ?? '',
+          name: currentUser?.firstName + ' ' + currentUser?.lastName,
+          createdAt: currentUser?.createdAt,
+          company: {
+            name: currentOrganization?.name,
+            companyId: currentOrganization?._id as string,
+          },
+          userHash: currentUser.servicesHashes?.intercom,
+        });
+      }
+    }, [currentUser, currentOrganization]);
+  }
 
   useEffect(() => {
     if (!LOGROCKET_ID) return;
@@ -88,19 +77,34 @@ export function HeaderNav({}: Props) {
     }
   }, [currentUser, currentOrganization]);
 
-  let themeTitle = 'Match System Appearance';
-  if (themeStatus === 'dark') {
-    themeTitle = 'Dark Theme';
-  } else if (themeStatus === 'light') {
-    themeTitle = 'Light Theme';
-  }
+  const themeTitle = () => {
+    let title = 'Match System Appearance';
+    if (themeStatus === 'dark') {
+      title = 'Dark Theme';
+    } else if (themeStatus === 'light') {
+      title = 'Light Theme';
+    }
 
-  const additionalMenuItems = useMemo(() => {
-    return [
+    return title;
+  };
+
+  const Icon = () => {
+    if (themeStatus === 'dark') {
+      return <Moon {...headerIconsSettings} />;
+    }
+    if (themeStatus === 'light') {
+      return <Sun {...headerIconsSettings} />;
+    }
+
+    return <Ellipse {...headerIconsSettings} height={24} width={24} />;
+  };
+
+  useEffect(() => {
+    addItem([
       {
         id: 'toggle-theme',
-        title: themeTitle,
-        icon: <Icon />,
+        title: themeTitle(),
+        icon: Icon(),
         onTrigger: () => {
           toggleColorScheme();
         },
@@ -113,14 +117,8 @@ export function HeaderNav({}: Props) {
           logout();
         },
       },
-    ];
-  }, [toggleColorScheme, logout, themeTitle]);
-
-  useEffect(() => {
-    removeItems(additionalMenuItems.map((item) => item.id));
-
-    addItem(additionalMenuItems);
-  }, [addItem, removeItems, additionalMenuItems]);
+    ]);
+  }, [colorScheme]);
 
   const profileMenuMantine = [
     <Dropdown.Item disabled key="user">
@@ -161,7 +159,7 @@ export function HeaderNav({}: Props) {
       sx={(theme) => ({
         position: 'sticky',
         top: 0,
-        boxShadow: theme.colorScheme === 'dark' ? 'none' : shadows.light,
+        boxShadow: theme.colorScheme === 'dark' ? shadows.dark : shadows.light,
         borderBottom: 'none',
       })}
     >
@@ -179,10 +177,8 @@ export function HeaderNav({}: Props) {
         </Link>
         <Group>
           <ActionIcon variant="transparent" onClick={() => toggleColorScheme()}>
-            <Tooltip label={themeTitle}>
-              <div>
-                <Icon />
-              </div>
+            <Tooltip label={themeTitle()}>
+              <div>{Icon()}</div>
             </Tooltip>
           </ActionIcon>
           <NotificationCenterWidget user={currentUser} />

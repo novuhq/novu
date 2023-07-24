@@ -1,45 +1,15 @@
 import { faker } from '@faker-js/faker';
 import { EnvironmentRepository, EnvironmentEntity } from '@novu/dal';
-import { v4 as uuid } from 'uuid';
-
-enum EnvironmentsEnum {
-  DEVELOPMENT = 'Development',
-  PRODUCTION = 'Production',
-}
 
 export class EnvironmentService {
   private environmentRepository = new EnvironmentRepository();
 
-  async createEnvironment(
-    organizationId: string,
-    userId: string,
-    name?: string,
-    parentId?: string
-  ): Promise<EnvironmentEntity> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async createEnvironment(organizationId: any, name?: string) {
     return await this.environmentRepository.create({
-      identifier: uuid(),
       name: name ?? faker.name.jobTitle(),
       _organizationId: organizationId,
-      ...(parentId && { _parentId: parentId }),
-      apiKeys: [
-        {
-          key: uuid(),
-          _userId: userId,
-        },
-      ],
     });
-  }
-
-  async createDevelopmentEnvironment(organizationId: string, userId: string): Promise<EnvironmentEntity> {
-    return await this.createEnvironment(organizationId, userId, EnvironmentsEnum.DEVELOPMENT);
-  }
-
-  async createProductionEnvironment(
-    organizationId: string,
-    userId: string,
-    parentId: string
-  ): Promise<EnvironmentEntity> {
-    return await this.createEnvironment(organizationId, userId, EnvironmentsEnum.PRODUCTION, parentId);
   }
 
   async enableEnvironmentHmac(environment: EnvironmentEntity) {
@@ -51,44 +21,21 @@ export class EnvironmentService {
       { $set: { 'widget.notificationCenterEncryption': true } }
     );
   }
-
-  async getEnvironment(environmentId: string): Promise<EnvironmentEntity | undefined> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async getEnvironment(environmentId: any) {
     const environment = await this.environmentRepository.findOne({
       _id: environmentId,
     });
 
-    if (!environment) {
-      return;
-    }
-
     return environment;
   }
 
-  async getEnvironmentByNameAndOrganization(
-    organizationId: string,
-    name: string
-  ): Promise<EnvironmentEntity | undefined> {
+  async getProductionEnvironment(organizationId: any) {
     const environment = await this.environmentRepository.findOne({
-      name,
       _organizationId: organizationId,
+      name: 'Production',
     });
 
-    if (!environment) {
-      return;
-    }
-
     return environment;
-  }
-
-  async getEnvironments(organizationId: string): Promise<EnvironmentEntity[]> {
-    return await this.environmentRepository.findOrganizationEnvironments(organizationId);
-  }
-
-  async getDevelopmentEnvironment(organizationId: string): Promise<EnvironmentEntity | undefined> {
-    return await this.getEnvironmentByNameAndOrganization(organizationId, EnvironmentsEnum.DEVELOPMENT);
-  }
-
-  async getProductionEnvironment(organizationId: string): Promise<EnvironmentEntity | undefined> {
-    return await this.getEnvironmentByNameAndOrganization(organizationId, EnvironmentsEnum.PRODUCTION);
   }
 }

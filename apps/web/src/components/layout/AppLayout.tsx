@@ -1,7 +1,6 @@
-import { AppShell } from '@mantine/core';
+import { AppShell, useMantineTheme } from '@mantine/core';
 import * as Sentry from '@sentry/react';
 import { Outlet } from 'react-router-dom';
-
 import { ThemeProvider } from '../../design-system/ThemeProvider';
 import { HeaderNav } from './components/HeaderNav';
 import { SideNav } from './components/SideNav';
@@ -18,7 +17,7 @@ export function AppLayout() {
     <RequiredAuth>
       <SpotLightProvider>
         <ThemeProvider>
-          <IntercomProvider appId={INTERCOM_APP_ID}>
+          <SupportChatProvider>
             <AppShell
               padding="lg"
               navbar={<SideNav />}
@@ -61,9 +60,17 @@ export function AppLayout() {
                 </SpotLight>
               </Sentry.ErrorBoundary>
             </AppShell>
-          </IntercomProvider>
+          </SupportChatProvider>
         </ThemeProvider>
       </SpotLightProvider>
     </RequiredAuth>
   );
+}
+
+function SupportChatProvider({ children }) {
+  if (INTERCOM_APP_ID) {
+    return <IntercomProvider appId={INTERCOM_APP_ID}>{children}</IntercomProvider>;
+  }
+
+  return children;
 }

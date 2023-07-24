@@ -1,5 +1,6 @@
 import { Container } from '@mantine/core';
 
+import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { Tabs } from '../../design-system';
@@ -14,7 +15,8 @@ enum MenuTitleEnum {
 
 const SettingsPageWrapper = ({ children }: { children: React.ReactNode }) => {
   return (
-    <PageContainer title="Settings">
+    <PageContainer>
+      <PageMeta title="Settings" />
       <PageHeader title="Settings" />
       <Container fluid mt={15} ml={5}>
         {children}

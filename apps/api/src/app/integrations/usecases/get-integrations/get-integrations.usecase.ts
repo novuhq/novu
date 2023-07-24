@@ -11,9 +11,9 @@ export class GetIntegrations {
   async execute(command: GetIntegrationsCommand): Promise<IntegrationEntity[]> {
     return await this.getDecryptedIntegrationsUsecase.execute(
       GetDecryptedIntegrationsCommand.create({
+        environmentId: command.environmentId,
         organizationId: command.organizationId,
         userId: command.userId,
-        environmentId: command.environmentId,
       })
     );
   }

@@ -5,7 +5,7 @@ import {
   InMemoryProviderClient,
   InMemoryProviderService,
   Pipeline,
-} from '../index';
+} from '../in-memory-provider';
 import { addJitter } from '../../resilience';
 
 const LOG_CONTEXT = 'CacheService';
@@ -36,17 +36,12 @@ export class CacheService implements ICacheService {
 
   constructor(private inMemoryProviderService: InMemoryProviderService) {
     Logger.log('Initiated cache service', LOG_CONTEXT);
-
     this.client = this.inMemoryProviderService.inMemoryProviderClient;
     this.cacheTtl = this.inMemoryProviderService.inMemoryProviderConfig.ttl;
   }
 
   public getStatus() {
     return this.client?.status;
-  }
-
-  public getTtl() {
-    return this.cacheTtl;
   }
 
   public cacheEnabled(): boolean {
@@ -58,26 +53,8 @@ export class CacheService implements ICacheService {
     return isEnabled;
   }
 
-  public async set(
-    key: string,
-    value: string,
-    options?: CachingConfig
-  ): Promise<string | null> {
-    const result = await this.client?.set(
-      key,
-      value,
-      'EX',
-      this.getTtlInSeconds(options)
-    );
-
-    if (result === null) {
-      Logger.error(
-        `Set operation for key ${key} was not performed`,
-        LOG_CONTEXT
-      );
-    }
-
-    return result;
+  public async set(key: string, value: string, options?: CachingConfig) {
+    this.client?.set(key, value, 'EX', this.getTtlInSeconds(options));
   }
 
   public async setQuery(key: string, value: string, options?: CachingConfig) {
@@ -145,8 +122,8 @@ export class CacheService implements ICacheService {
     } catch (error) {
       Logger.error(
         `Failed to execute pipeline action ${action} for key ${key}`,
-        error,
-        LOG_CONTEXT
+        LOG_CONTEXT,
+        error
       );
       throw error;
     }

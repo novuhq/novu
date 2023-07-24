@@ -47,6 +47,5 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="announcement" level="application" />
   </component>
 </module>

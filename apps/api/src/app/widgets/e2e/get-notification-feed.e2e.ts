@@ -153,7 +153,7 @@ describe('GET /widget/notifications/feed', function () {
     feed = await getSubscriberFeed();
 
     expect(feed.data.length).to.be.equal(10);
-    expect(feed.totalCount).to.be.equal(10);
+    expect(feed.totalCount).to.be.equal(11);
     expect(feed.hasMore).to.be.equal(true);
   });
 

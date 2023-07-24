@@ -25,6 +25,7 @@ To follow the steps in this quickstart, you'll need:
 
 You can also [view the completed code](https://github.com/novuhq/novu-dotnet-quickstart) of this quick start in a GitHub repo.
 
+
 ## Install Novu .NET SDK
 
 The [.NET SDK](https://github.com/novuhq/novu-dotnet) provides a fluent and expressive interface for interacting with Novu's API and managing notifications.
@@ -54,7 +55,6 @@ dotnet restore
 Create a new file, `Program.cs` in your application and add the following code to it:
 
 Program.cs:
-
 ```csharp
 using Novu.DTO;
 using Novu.DTO.Topics;
@@ -139,7 +139,6 @@ Click **Subscribers** on the left sidebar of the Novu dashboard to see all subsc
 Now, let's create a subscriber on Novu. Copy and paste the following code to do so:
 
 Program.cs:
-
 ```csharp
 // Create subscriber
 
@@ -182,7 +181,6 @@ You should see the subscriber on your Novu dashboard.
 I’d like to publicly announce that `abc@gmail.com` is a random unlikely email your users will have. To update this to an alternative email, you can call the `UpdateSubscriber` method like so:
 
 Program.cs:
-
 ```csharp
 // Update subscriber detail
 var subscriber7789 = await novu.Subscriber.GetSubscriber("7789");
@@ -205,7 +203,6 @@ To make all of your app users subscribers, you need to programmatically add them
 Copy and paste the following code into your app to trigger a notification:
 
 OnboardEventPayload.cs:
-
 ```csharp
 // OnboardEventPayload.cs
 public class OnboardEventPayload
@@ -220,7 +217,6 @@ public class OnboardEventPayload
 ```
 
 Program.cs:
-
 ```csharp
 var onboardingMessage = new OnboardEventPayload
 {
@@ -278,13 +274,14 @@ A topic can have multiple subscribers who will receive a notification whenever a
 
 Copy and paste the following code into your app to create a topic:
 
+
 ```csharp
 // Create Topic
 var topicRequest = new TopicCreateDto
 {
     Key = "frontend-users",
     Name = "All frontend users",
-
+    
 };
 
 var topic = await novu.Topic.CreateTopicAsync(topicRequest);
@@ -326,7 +323,6 @@ Thanks to the topics feature, it is possible to trigger a notification to all su
 To trigger a notification to all subscribers of a topic, copy and paste the code below:
 
 Program.cs
-
 ```csharp
 // Send notifications to a topic (all frontend users)
 

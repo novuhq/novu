@@ -3,6 +3,7 @@ import { Avatar as MAvatar, ActionIcon, Menu, createStyles, MantineTheme } from 
 import { useHover } from '@mantine/hooks';
 import { css, cx } from '@emotion/css';
 import styled from '@emotion/styled';
+import { formatDistanceToNow } from 'date-fns';
 import {
   IMessage,
   ButtonTypeEnum,
@@ -35,7 +36,6 @@ import {
 } from '../../../../shared/icons';
 import { colors } from '../../../../shared/config/colors';
 import { useStyles } from '../../../../store/styles';
-import { formatRelativeTime } from '../../../../utils/date';
 
 const avatarSystemIcons = [
   {
@@ -86,7 +86,7 @@ export function NotificationListItem({
   const { theme: novuTheme, colorScheme } = useNovuTheme();
   const { onActionClick, listItem, allowedNotificationActions } = useNotificationCenter();
   const { removeMessage, markNotificationAsRead, markNotificationAsUnRead } = useNotifications();
-  const { t, lang } = useTranslations();
+  const { dateFnsLocale, t } = useTranslations();
   const { hovered, ref } = useHover();
   const unread = readSupportAdded(notification) ? !notification.read : !notification.seen;
   const [
@@ -186,7 +186,7 @@ export function NotificationListItem({
                 css(listItemTimestampStyles)
               )}
             >
-              {formatRelativeTime({ fromDate: new Date(notification.createdAt), locale: lang })}
+              {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true, locale: dateFnsLocale() })}
             </div>
           </NotificationTextContainer>
         </NotificationContentContainer>

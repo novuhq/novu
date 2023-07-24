@@ -1,9 +1,8 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
 import { Badge } from '@mantine/core';
-
 import { Switch } from '../switch/Switch';
-import { IExtendedColumn, Table } from './Table';
+import { Table } from './Table';
 
 export default {
   title: 'Components/Table',
@@ -18,7 +17,7 @@ export default {
   },
 } as ComponentMeta<typeof Table>;
 
-const SwitchCell = (props) => {
+const switchCell = (props) => {
   const [status, setStatus] = useState(props.status);
   const switchHandler = () => {
     setStatus((prev) => (prev === 'Enabled' ? 'Disabled' : 'Enabled'));
@@ -27,7 +26,7 @@ const SwitchCell = (props) => {
   return <Switch label={status} onChange={switchHandler} checked={status === 'Enabled'} />;
 };
 
-const BadgeCell = (props) => {
+const badgeCell = (props) => {
   return (
     <Badge
       sx={(theme) => ({
@@ -49,28 +48,18 @@ const BadgeCell = (props) => {
   );
 };
 
-interface IExampleData {
-  name: string;
-  category: string;
-  creationDate: string;
-  status: string;
-}
-
-const columns: IExtendedColumn<IExampleData>[] = [
+const columns = [
   { accessor: 'name', Header: 'Name' },
-  { accessor: 'category', Header: 'Category', Cell: BadgeCell },
+  { accessor: 'category', Header: 'Category', Cell: badgeCell },
   { accessor: 'creationDate', Header: 'Date Created' },
-  { accessor: 'status', Header: 'Status', Cell: SwitchCell },
+  { accessor: 'status', Header: 'Status', Cell: switchCell },
 ];
-
-const data: IExampleData[] = [
+const data = [
   { name: 'Great', category: 'Fun', status: 'Disabled', creationDate: '01/01/2021 16:36' },
   { name: 'Whats up?', category: 'Done', status: 'Enabled', creationDate: '01/01/2021 16:36' },
 ];
 
-const Template: ComponentStory<typeof Table> = ({ ...args }) => (
-  <Table columns={columns as any} data={data} {...args} />
-);
+const Template: ComponentStory<typeof Table> = ({ ...args }) => <Table columns={columns} data={data} {...args} />;
 
 export const PrimaryUse = Template.bind({});
 PrimaryUse.args = {};

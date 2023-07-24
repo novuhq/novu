@@ -1,6 +1,6 @@
+import { ChannelTypeEnum, ActorTypeEnum } from '@novu/shared';
 import { SoftDeleteModel } from 'mongoose-delete';
 import { FilterQuery, Types } from 'mongoose';
-import { MarkMessagesAsEnum, ChannelTypeEnum, ActorTypeEnum } from '@novu/shared';
 
 import { BaseRepository } from '../base-repository';
 import { MessageEntity, MessageDBModel } from './message.entity';
@@ -91,7 +91,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     subscriberId: string,
     channel: ChannelTypeEnum,
     query: { feedId?: string[]; seen?: boolean; read?: boolean } = {},
-    options: { limit: number; skip?: number } = { limit: 100, skip: 0 }
+    options: { limit: number } = { limit: 1000 } // todo NV-2161 update to 100 in version 0.16
   ) {
     const requestQuery = await this.getFilterQueryForMessage(environmentId, subscriberId, channel, {
       feedId: query.feedId,
@@ -100,80 +100,6 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     });
 
     return this.MongooseModel.countDocuments(requestQuery, options).read('secondaryPreferred');
-  }
-
-  private getReadSeenUpdateQuery(
-    subscriberId: string,
-    environmentId: string,
-    markAs: MarkMessagesAsEnum
-  ): Partial<MessageEntity> & EnforceEnvId {
-    const updateQuery: Partial<MessageEntity> & EnforceEnvId = {
-      _subscriberId: subscriberId,
-      _environmentId: environmentId,
-    };
-
-    switch (markAs) {
-      case MarkMessagesAsEnum.READ:
-        return {
-          ...updateQuery,
-          read: false,
-        };
-      case MarkMessagesAsEnum.UNREAD:
-        return {
-          ...updateQuery,
-          read: true,
-        };
-      case MarkMessagesAsEnum.SEEN:
-        return {
-          ...updateQuery,
-          seen: false,
-        };
-      case MarkMessagesAsEnum.UNSEEN:
-        return {
-          ...updateQuery,
-          seen: true,
-        };
-      default:
-        return updateQuery;
-    }
-  }
-
-  private getReadSeenUpdatePayload(markAs: MarkMessagesAsEnum): {
-    read?: boolean;
-    lastReadDate?: Date;
-    seen?: boolean;
-    lastSeenDate?: Date;
-  } {
-    const now = new Date();
-
-    switch (markAs) {
-      case MarkMessagesAsEnum.READ:
-        return {
-          read: true,
-          lastReadDate: now,
-          seen: true,
-          lastSeenDate: now,
-        };
-      case MarkMessagesAsEnum.UNREAD:
-        return {
-          read: false,
-          lastReadDate: now,
-          seen: true,
-          lastSeenDate: now,
-        };
-      case MarkMessagesAsEnum.SEEN:
-        return {
-          seen: true,
-          lastSeenDate: now,
-        };
-      case MarkMessagesAsEnum.UNSEEN:
-        return {
-          seen: false,
-          lastSeenDate: now,
-        };
-      default:
-        return {};
-    }
   }
 
   async markAllMessagesAs({
@@ -185,7 +111,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
   }: {
     subscriberId: string;
     environmentId: string;
-    markAs: MarkMessagesAsEnum;
+    markAs: 'read' | 'seen';
     channel?: ChannelTypeEnum;
     feedIdentifiers?: string[];
   }) {
@@ -207,7 +133,11 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       };
     }
 
-    const updateQuery = this.getReadSeenUpdateQuery(subscriberId, environmentId, markAs);
+    const updateQuery: Partial<MessageEntity> & EnforceEnvId = {
+      _subscriberId: subscriberId,
+      _environmentId: environmentId,
+      [markAs]: false,
+    };
 
     if (feedQuery != null) {
       updateQuery._feedId = feedQuery;
@@ -217,7 +147,15 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       updateQuery.channel = channel;
     }
 
-    const updatePayload = this.getReadSeenUpdatePayload(markAs);
+    const now = new Date();
+    const updatePayload = {
+      seen: true,
+      lastSeenDate: now,
+      ...(markAs === 'read' && {
+        read: true,
+        lastReadDate: now,
+      }),
+    };
 
     return await this.update(updateQuery, {
       $set: updatePayload,

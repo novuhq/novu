@@ -1,4 +1,4 @@
-import { StepTypeEnum, IWorkflowStepMetadata, JobStatusEnum } from '@novu/shared';
+import { StepTypeEnum, INotificationTemplateStepMetadata, JobStatusEnum } from '@novu/shared';
 import { Types } from 'mongoose';
 
 import { NotificationStepEntity } from '../notification-template';
@@ -33,7 +33,7 @@ export class JobEntity {
   updatedAt: string;
   expireAt?: string;
   _templateId: string;
-  digest?: IWorkflowStepMetadata & {
+  digest?: INotificationTemplateStepMetadata & {
     events?: any[];
   };
   type?: StepTypeEnum;

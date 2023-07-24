@@ -10,6 +10,6 @@ export class UpdateJobStatus {
 
   @InstrumentUsecase()
   public async execute(command: UpdateJobStatusCommand): Promise<void> {
-    await this.jobRepository.updateStatus(command.environmentId, command.jobId, command.status);
+    await this.jobRepository.updateStatus(command.environmentId, command._jobId, command.status);
   }
 }

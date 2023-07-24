@@ -3,7 +3,7 @@ import { ChannelTypeEnum, CredentialsKeyEnum, EmailProviderIdEnum } from '@novu/
 
 import { ConnectIntegrationForm } from './ConnectIntegrationForm';
 import { TestWrapper } from '../../../testing';
-import type { IIntegratedProvider } from '../types';
+import { IIntegratedProvider } from '../IntegrationsStorePage';
 
 const exampleProvider: IIntegratedProvider = {
   providerId: EmailProviderIdEnum.EmailJS,
@@ -20,11 +20,11 @@ const exampleProvider: IIntegratedProvider = {
 };
 
 const defaultProps: {
-  provider: IIntegratedProvider;
+  provider: IIntegratedProvider | null;
   showModal: (visible: boolean) => void;
   createModel: boolean;
   onClose: () => void;
-} = { provider: exampleProvider, showModal: () => {}, onClose: () => {}, createModel: false };
+} = { provider: null, showModal: () => {}, onClose: () => {}, createModel: false };
 
 const queryClient = new QueryClient();
 
