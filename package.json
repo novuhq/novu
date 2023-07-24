@@ -47,6 +47,7 @@
     "build:worker": "nx build @novu/worker",
     "build:ws": "nx build @novu/ws",
     "build:webhook": "nx build @novu/webhook",
+    "build:docs": "nx build @novu/docs",
     "build:inbound-mail": "nx build @novu/inbound-mail",
     "build:web": "nx build @novu/web",
     "build:widget": "nx build @novu/widget",
