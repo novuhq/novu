@@ -55,7 +55,6 @@ export class IntegrationsController {
     private calculateLimitNovuIntegration: CalculateLimitNovuIntegration
   ) {}
 
-  //TODO: Add pagination options
   @Get('/')
   @ApiOkResponse({
     type: IntegrationResponseDto,
