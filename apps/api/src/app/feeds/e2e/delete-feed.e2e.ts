@@ -113,9 +113,7 @@ describe('Delete A Feed - /feeds (POST)', async () => {
       ],
     };
 
-    const { body: notificationTemplateBody } = await session.testAgent
-      .post(`/v1/notification-templates`)
-      .send(testTemplate);
+    const { body: notificationTemplateBody } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
 
     const template = notificationTemplateBody.data;
 
@@ -128,7 +126,7 @@ describe('Delete A Feed - /feeds (POST)', async () => {
 
     expect(messageTemplates.length).to.equal(1);
 
-    await session.testAgent.delete(`/v1/notification-templates/${template._id}`).send();
+    await session.testAgent.delete(`/v1/workflows/${template._id}`).send();
 
     const deletedNotificationTemplate = await notificationTemplateRepository.findOne({
       _environmentId: session.environment._id,

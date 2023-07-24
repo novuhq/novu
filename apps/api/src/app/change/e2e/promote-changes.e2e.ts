@@ -84,7 +84,7 @@ describe('Promote changes', () => {
         ],
       };
 
-      const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+      const { body } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
       const notificationTemplateId = body.data._id;
 
       await session.applyChanges({
@@ -124,7 +124,7 @@ describe('Promote changes', () => {
         ],
       };
 
-      const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+      const { body } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
       const notificationTemplateId = body.data._id;
 
       await session.applyChanges({
@@ -168,7 +168,7 @@ describe('Promote changes', () => {
         ],
       };
 
-      await session.testAgent.put(`/v1/notification-templates/${notificationTemplateId}`).send(update);
+      await session.testAgent.put(`/v1/workflows/${notificationTemplateId}`).send(update);
 
       await session.applyChanges({
         enabled: false,
@@ -219,7 +219,7 @@ describe('Promote changes', () => {
         ],
       };
 
-      let { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+      let { body } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
 
       const updateData: UpdateWorkflowRequestDto = {
         name: testTemplate.name,
@@ -231,7 +231,7 @@ describe('Promote changes', () => {
 
       const notificationTemplateId = body.data._id;
 
-      body = await session.testAgent.put(`/v1/notification-templates/${notificationTemplateId}`).send(updateData);
+      body = await session.testAgent.put(`/v1/workflows/${notificationTemplateId}`).send(updateData);
 
       await session.applyChanges({
         enabled: false,
@@ -254,7 +254,7 @@ describe('Promote changes', () => {
         steps: [],
       };
 
-      const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+      const { body } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
 
       await session.applyChanges({
         enabled: false,
@@ -262,7 +262,7 @@ describe('Promote changes', () => {
 
       const notificationTemplateId = body.data._id;
 
-      await session.testAgent.put(`/v1/notification-templates/${notificationTemplateId}/status`).send({ active: true });
+      await session.testAgent.put(`/v1/workflows/${notificationTemplateId}/status`).send({ active: true });
 
       await session.applyChanges({
         enabled: false,
@@ -312,7 +312,7 @@ describe('Promote changes', () => {
 
       let {
         body: { data },
-      } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+      } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
 
       await session.applyChanges({
         enabled: false,
@@ -340,9 +340,7 @@ describe('Promote changes', () => {
         ],
       };
 
-      const body: any = await session.testAgent
-        .put(`/v1/notification-templates/${notificationTemplateId}`)
-        .send(update);
+      const body: any = await session.testAgent.put(`/v1/workflows/${notificationTemplateId}`).send(update);
       data = body.data;
 
       await session.applyChanges({
@@ -392,7 +390,7 @@ describe('Promote changes', () => {
 
       let {
         body: { data },
-      } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+      } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
       await session.applyChanges({
         enabled: false,
       });
@@ -448,9 +446,7 @@ describe('Promote changes', () => {
         ],
       };
 
-      const body: any = await session.testAgent
-        .put(`/v1/notification-templates/${notificationTemplateId}`)
-        .send(update);
+      const body: any = await session.testAgent.put(`/v1/workflows/${notificationTemplateId}`).send(update);
       data = body.data;
 
       await session.applyChanges({
@@ -498,7 +494,7 @@ describe('Promote changes', () => {
         ],
       };
 
-      await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+      await session.testAgent.post(`/v1/workflows`).send(testTemplate);
 
       const {
         body: { data },
@@ -542,13 +538,13 @@ describe('Promote changes', () => {
 
       const {
         body: { data },
-      } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+      } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
       const notificationTemplateId = data._id;
       await session.applyChanges({
         enabled: false,
       });
 
-      await session.testAgent.delete(`/v1/notification-templates/${notificationTemplateId}`);
+      await session.testAgent.delete(`/v1/workflows/${notificationTemplateId}`);
 
       const {
         body: { data: count },
@@ -574,7 +570,7 @@ describe('Promote changes', () => {
 
       const {
         body: { data },
-      } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+      } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
       const notificationTemplateId = data._id;
       const changes = await changeRepository.find(
         {
@@ -651,7 +647,7 @@ describe('Promote changes', () => {
         ],
       };
 
-      const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+      const { body } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
       const notificationTemplateId = body.data._id;
 
       await session.applyChanges({
@@ -675,15 +671,13 @@ describe('Promote changes', () => {
         steps: [],
       };
 
-      const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+      const { body } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
 
       const notificationTemplateId = body.data._id;
 
-      await session.testAgent.put(`/v1/notification-templates/${notificationTemplateId}/status`).send({ active: true });
+      await session.testAgent.put(`/v1/workflows/${notificationTemplateId}/status`).send({ active: true });
 
-      await session.testAgent
-        .put(`/v1/notification-templates/${notificationTemplateId}/status`)
-        .send({ active: false });
+      await session.testAgent.put(`/v1/workflows/${notificationTemplateId}/status`).send({ active: false });
 
       const changes = await changeRepository.find(
         {

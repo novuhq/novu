@@ -53,7 +53,7 @@ describe('Create A Feed - /feeds (POST)', async () => {
       ],
     };
 
-    await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+    await session.testAgent.post(`/v1/workflows`).send(testTemplate);
 
     await session.applyChanges({
       enabled: false,
@@ -85,7 +85,7 @@ describe('Create A Feed - /feeds (POST)', async () => {
 
     let {
       body: { data },
-    } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+    } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
 
     await session.applyChanges({
       enabled: false,
@@ -122,7 +122,7 @@ describe('Create A Feed - /feeds (POST)', async () => {
       ],
     };
 
-    const body: any = await session.testAgent.put(`/v1/notification-templates/${notificationTemplateId}`).send(update);
+    const body: any = await session.testAgent.put(`/v1/workflows/${notificationTemplateId}`).send(update);
     data = body.data;
 
     await session.applyChanges({

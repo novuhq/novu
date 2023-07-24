@@ -47,7 +47,7 @@ describe('Get changes', () => {
       ],
     };
 
-    const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+    const { body } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
 
     await session.applyChanges();
 
@@ -61,7 +61,7 @@ describe('Get changes', () => {
 
     const notificationTemplateId = body.data._id;
 
-    await session.testAgent.put(`/v1/notification-templates/${notificationTemplateId}`).send(updateData);
+    await session.testAgent.put(`/v1/workflows/${notificationTemplateId}`).send(updateData);
 
     const {
       body: { data },

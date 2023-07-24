@@ -21,7 +21,7 @@ import { validateEnv } from './config/env-validator';
 
 import * as packageJson from '../package.json';
 
-const extendedBodySizeRoutes = ['/v1/events', '/v1/notification-templates', '/v1/layouts'];
+const extendedBodySizeRoutes = ['/v1/events', '/v1/notification-templates', '/v1/workflows', '/v1/layouts'];
 
 if (process.env.SENTRY_DSN) {
   Sentry.init({
