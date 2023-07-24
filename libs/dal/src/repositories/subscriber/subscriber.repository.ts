@@ -46,24 +46,14 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
     });
   }
 
-  async searchSubscribers(environmentId: string, subscriberIds: string[] = [], emails: string[] = [], search?: string) {
-    const filters: any = [];
-
-    if (emails?.length) {
-      filters.push({
+  async searchSubscribers(environmentId: string, search?: string | null, emails: string[] = []) {
+    const filters: any = [
+      {
         email: {
           $in: emails,
         },
-      });
-    }
-
-    if (subscriberIds?.length) {
-      filters.push({
-        subscriberId: {
-          $in: subscriberIds,
-        },
-      });
-    }
+      },
+    ];
 
     if (search) {
       filters.push(

@@ -6,8 +6,8 @@ import {
   LogDecorator,
   CreateSubscriber,
   CreateSubscriberCommand,
-  SelectIntegrationCommand,
-  SelectIntegration,
+  GetDecryptedIntegrations,
+  GetDecryptedIntegrationsCommand,
 } from '@novu/application-generic';
 
 import { AuthService } from '../../../auth/services/auth.service';
@@ -23,7 +23,7 @@ export class InitializeSession {
     private environmentRepository: EnvironmentRepository,
     private createSubscriber: CreateSubscriber,
     private authService: AuthService,
-    private selectIntegration: SelectIntegration,
+    private getDecryptedIntegrations: GetDecryptedIntegrations,
     private analyticsService: AnalyticsService
   ) {}
 
@@ -35,8 +35,10 @@ export class InitializeSession {
       throw new ApiException('Please provide a valid app identifier');
     }
 
-    const inAppIntegration = await this.selectIntegration.execute(
-      SelectIntegrationCommand.create({
+    const inAppIntegration = await this.getDecryptedIntegrations.execute(
+      GetDecryptedIntegrationsCommand.create({
+        findOne: true,
+        active: true,
         environmentId: environment._id,
         organizationId: environment._organizationId,
         userId: command.subscriberId,
@@ -45,11 +47,13 @@ export class InitializeSession {
       })
     );
 
-    if (!inAppIntegration) {
+    const item = Array.isArray(inAppIntegration) ? inAppIntegration[0] : inAppIntegration;
+
+    if (!item) {
       throw new NotFoundException('In app integration could not be found');
     }
 
-    if (inAppIntegration.credentials.hmac) {
+    if (item.credentials.hmac) {
       validateNotificationCenterEncryption(environment, command);
     }
 

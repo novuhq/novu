@@ -14,7 +14,7 @@ export const IntegrationSecretTextarea = ({
   credential: IConfigCredentials;
   errors: any;
   field: any;
-  register?: any;
+  register: any;
 }) => {
   const [hidden, setHidden] = useState(true);
 
@@ -41,7 +41,7 @@ export const IntegrationSecretTextarea = ({
             data-test-id={credential.key}
             error={errors[credential.key]?.message}
             {...field}
-            {...register?.(credential.key, {
+            {...register(credential.key, {
               required: credential.required && `Please enter a ${credential.displayName.toLowerCase()}`,
             })}
           />

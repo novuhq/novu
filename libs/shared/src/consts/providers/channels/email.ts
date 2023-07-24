@@ -22,14 +22,6 @@ import { ChannelTypeEnum } from '../../../types';
 
 export const emailProviders: IProviderConfig[] = [
   {
-    id: EmailProviderIdEnum.Novu,
-    displayName: 'Novu Email',
-    channel: ChannelTypeEnum.EMAIL,
-    credentials: [],
-    docReference: 'https://docs.novu.co/channels/email/',
-    logoFileName: { light: 'novu.png', dark: 'novu.png' },
-  },
-  {
     id: EmailProviderIdEnum.Mailgun,
     displayName: 'Mailgun',
     channel: ChannelTypeEnum.EMAIL,

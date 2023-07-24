@@ -19,9 +19,9 @@ For some email providers including SendGrid you will have to authenticate the **
 The overrides field supports an email property that should have the interface of this:
 
 ```ts
-import { Novu } from '@novu/node';
+import { Novu } from 'packages/node/build/main/index';
 
-const novu = new Novu('<NOVU_API_KEY>');
+const novu = new Novu(process.env.NOVU_API_KEY);
 
 novu.trigger('event-name', {
   to: {
@@ -40,7 +40,6 @@ novu.trigger('event-name', {
     email: {
       to: ['to@novu.co'],
       from: 'from@novu.co',
-      senderName: 'Novu Team'
       text: 'text version of email',
       replyTo: 'no-reply@novu.co',
       cc: ['1@novu.co'],
@@ -62,11 +61,11 @@ In this article, we’ll go over the benefits of planning for your webinar and t
 ```ts
 import { Novu } from '@novu/node';
 
-const novu = new Novu('<NOVU_API_KEY>');
+const novu = new Novu(process.env.NOVU_API_KEY);
 
 novu.trigger('event-name', {
   to: {
-    subscriberId: '123',
+    subscriberId: '...',
   },
   payload: {
     attachments: [

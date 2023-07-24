@@ -1,27 +1,17 @@
-import { useState } from 'react';
 import { Center, Loader } from '@mantine/core';
 import { ChannelTypeEnum } from '@novu/shared';
-
+import { useState } from 'react';
 import { colors } from '../../../design-system';
-import { IntegrationsStoreModal } from '../../integrations/IntegrationsStoreModal';
-import type { IIntegratedProvider } from '../../integrations/types';
+import { IIntegratedProvider, IntegrationsStoreModal } from '../../integrations/IntegrationsStoreModal';
 import { useProviders } from '../../integrations/useProviders';
 import { ListProviders } from './ListProviders';
 import { SubPageWrapper } from './SubPageWrapper';
 import { WorkflowSettingsTabs } from './WorkflowSettingsTabs';
-import { useIsMultiProviderConfigurationEnabled } from '../../../hooks';
-import { IntegrationsListModal } from '../../integrations/IntegrationsListModal';
 
 export function ProvidersPage() {
   const { emailProviders, smsProvider, chatProvider, pushProvider, inAppProvider, isLoading } = useProviders();
   const [configureChannel, setConfigureChannel] = useState<ChannelTypeEnum | undefined>(undefined);
   const [provider, setProvider] = useState<IIntegratedProvider | null>(null);
-  const isMultiProviderConfigurationEnabled = useIsMultiProviderConfigurationEnabled();
-
-  const onIntegrationModalClose = () => {
-    setProvider(null);
-    setConfigureChannel(undefined);
-  };
 
   if (isLoading) {
     return (
@@ -35,52 +25,21 @@ export function ProvidersPage() {
     <>
       <SubPageWrapper title="Workflow Settings">
         <WorkflowSettingsTabs />
-        <ListProviders
-          channel={ChannelTypeEnum.IN_APP}
-          setProvider={setProvider}
-          setConfigureChannel={setConfigureChannel}
-          providers={inAppProvider}
-        />
-        <ListProviders
-          channel={ChannelTypeEnum.EMAIL}
-          setProvider={setProvider}
-          setConfigureChannel={setConfigureChannel}
-          providers={emailProviders}
-        />
-        <ListProviders
-          channel={ChannelTypeEnum.CHAT}
-          setProvider={setProvider}
-          setConfigureChannel={setConfigureChannel}
-          providers={chatProvider}
-        />
-        <ListProviders
-          channel={ChannelTypeEnum.PUSH}
-          setProvider={setProvider}
-          setConfigureChannel={setConfigureChannel}
-          providers={pushProvider}
-        />
-        <ListProviders
-          channel={ChannelTypeEnum.SMS}
-          setProvider={setProvider}
-          setConfigureChannel={setConfigureChannel}
-          providers={smsProvider}
-        />
+        <ListProviders setProvider={setProvider} setConfigureChannel={setConfigureChannel} providers={inAppProvider} />
+        <ListProviders setProvider={setProvider} setConfigureChannel={setConfigureChannel} providers={emailProviders} />
+        <ListProviders setProvider={setProvider} setConfigureChannel={setConfigureChannel} providers={chatProvider} />
+        <ListProviders setProvider={setProvider} setConfigureChannel={setConfigureChannel} providers={pushProvider} />
+        <ListProviders setProvider={setProvider} setConfigureChannel={setConfigureChannel} providers={smsProvider} />
       </SubPageWrapper>
-      {isMultiProviderConfigurationEnabled ? (
-        <IntegrationsListModal
-          isOpen={configureChannel !== undefined}
-          selectedProvider={provider}
-          onClose={onIntegrationModalClose}
-          scrollTo={configureChannel}
-        />
-      ) : (
-        <IntegrationsStoreModal
-          selectedProvider={provider}
-          openIntegration={configureChannel !== undefined}
-          closeIntegration={onIntegrationModalClose}
-          scrollTo={configureChannel}
-        />
-      )}
+      <IntegrationsStoreModal
+        selectedProvider={provider}
+        openIntegration={configureChannel !== undefined}
+        closeIntegration={() => {
+          setProvider(null);
+          setConfigureChannel(undefined);
+        }}
+        scrollTo={configureChannel}
+      />
     </>
   );
 }

@@ -3,7 +3,7 @@ import * as Sentry from '@sentry/node';
 import * as hat from 'hat';
 import { merge } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
-import { Instrument, InstrumentUsecase } from '@novu/application-generic';
+import { AnalyticsService, Instrument, InstrumentUsecase } from '@novu/application-generic';
 import { NotificationTemplateRepository } from '@novu/dal';
 import { ISubscribersDefine } from '@novu/shared';
 import { StorageHelperService, CachedEntity, buildNotificationTemplateIdentifierKey } from '@novu/application-generic';
@@ -19,6 +19,7 @@ export class ParseEventRequest {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
     private verifyPayload: VerifyPayload,
+    private analyticsService: AnalyticsService,
     private storageHelperService: StorageHelperService,
     private triggerHandlerQueueService: TriggerHandlerQueueService,
     private mapTriggerRecipients: MapTriggerRecipients
@@ -55,7 +56,7 @@ export class ParseEventRequest {
       throw new UnprocessableEntityException('workflow_not_found');
     }
 
-    if (!template.active) {
+    if (!template.active || template.draft) {
       return {
         acknowledged: true,
         status: 'trigger_not_active',

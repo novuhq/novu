@@ -1,4 +1,4 @@
-import { IWorkflowStepMetadata } from '../../entities/step';
+import { INotificationTemplateStepMetadata } from '../../entities/step';
 import { BuilderFieldType, BuilderGroupValues, FilterParts } from '../../types';
 import { MessageTemplateDto } from '../message-template';
 
@@ -21,5 +21,5 @@ export class NotificationStepDto {
     active: boolean;
     url?: string;
   };
-  metadata?: IWorkflowStepMetadata;
+  metadata?: INotificationTemplateStepMetadata;
 }

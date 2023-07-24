@@ -1,7 +1,7 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { IntegrationRepository } from '@novu/dal';
-import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
+import { ChannelTypeEnum } from '@novu/shared';
 import { HttpStatus } from '@nestjs/common';
 
 describe('Delete Integration - /integration/:integrationId (DELETE)', function () {
@@ -10,42 +10,14 @@ describe('Delete Integration - /integration/:integrationId (DELETE)', function (
 
   beforeEach(async () => {
     session = new UserSession();
-    await session.initialize();
+    await session.initialize({
+      noIntegrations: true,
+    });
   });
 
   it('should remove existing integration', async function () {
-    const existingIntegrations = (await session.testAgent.get(`/v1/integrations`)).body.data;
-
-    const developmentEmailIntegration = existingIntegrations.find(
-      (integration) =>
-        integration.channel === ChannelTypeEnum.EMAIL && session.environment._id === integration._environmentId
-    );
-
-    const deletedId = developmentEmailIntegration._id;
-
-    const res = await session.testAgent.delete(`/v1/integrations/${deletedId}`).send();
-    expect(res.status).to.equal(HttpStatus.OK);
-
-    const isDeleted = !(await integrationRepository.findOne({
-      _environmentId: session.environment._id,
-      _id: deletedId,
-    }));
-
-    expect(isDeleted).to.equal(true);
-
-    const deletedIntegration = (
-      await integrationRepository.findDeleted({
-        _environmentId: session.environment._id,
-        _id: deletedId,
-      })
-    )[0];
-
-    expect(deletedIntegration.deleted).to.equal(true);
-  });
-
-  it.skip('should remove a newly created integration', async function () {
     const payload = {
-      providerId: EmailProviderIdEnum.SendGrid,
+      providerId: 'sendgrid',
       channel: ChannelTypeEnum.EMAIL,
       credentials: { apiKey: '123', secretKey: 'abc' },
       active: true,

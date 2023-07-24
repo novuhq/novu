@@ -19,7 +19,8 @@ import {
   DetailEnum,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-  SelectIntegration,
+  GetDecryptedIntegrations,
+  GetDecryptedIntegrationsCommand,
   CompileTemplate,
   CompileTemplateCommand,
   PushFactory,
@@ -41,9 +42,15 @@ export class SendMessagePush extends SendMessageBase {
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
-    protected selectIntegration: SelectIntegration
+    protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {
-    super(messageRepository, createLogUsecase, createExecutionDetails, subscriberRepository, selectIntegration);
+    super(
+      messageRepository,
+      createLogUsecase,
+      createExecutionDetails,
+      subscriberRepository,
+      getDecryptedIntegrationsUsecase
+    );
   }
 
   @InstrumentUsecase()
@@ -123,14 +130,17 @@ export class SendMessagePush extends SendMessageBase {
         continue;
       }
 
-      const integration = await this.getIntegration({
-        id: channel._integrationId,
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        channelType: ChannelTypeEnum.PUSH,
-        providerId: channel.providerId,
-        userId: command.userId,
-      });
+      const integration = await this.getIntegration(
+        GetDecryptedIntegrationsCommand.create({
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          channelType: ChannelTypeEnum.PUSH,
+          providerId: channel.providerId,
+          findOne: true,
+          active: true,
+          userId: command.userId,
+        })
+      );
 
       if (!integration) {
         await this.createExecutionDetails.execute(
@@ -146,8 +156,6 @@ export class SendMessagePush extends SendMessageBase {
 
         continue;
       }
-
-      await this.sendSelectedIntegrationExecution(command.job, integration);
 
       const overrides = command.overrides[integration.providerId] || {};
 

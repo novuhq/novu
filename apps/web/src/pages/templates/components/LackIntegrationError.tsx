@@ -7,8 +7,6 @@ import { CircleArrowRight } from '../../../design-system/icons/arrows/CircleArro
 import { IntegrationsStoreModal } from '../../integrations/IntegrationsStoreModal';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { stepNames, TemplateEditorAnalyticsEnum } from '../constants';
-import { useIsMultiProviderConfigurationEnabled } from '../../../hooks';
-import { IntegrationsListModal } from '../../integrations/IntegrationsListModal';
 
 const DoubleArrowRightStyled = styled(CircleArrowRight)`
   cursor: pointer;
@@ -27,9 +25,6 @@ export function LackIntegrationError({
 }) {
   const segment = useSegment();
   const [isIntegrationsModalOpened, openIntegrationsModal] = useState(false);
-  const isMultiProviderConfigurationEnabled = useIsMultiProviderConfigurationEnabled();
-
-  const onIntegrationModalClose = () => openIntegrationsModal(false);
 
   return (
     <>
@@ -50,19 +45,11 @@ export function LackIntegrationError({
           width={iconWidth}
         />
       </WarningMessage>
-      {isMultiProviderConfigurationEnabled ? (
-        <IntegrationsListModal
-          isOpen={isIntegrationsModalOpened}
-          onClose={onIntegrationModalClose}
-          scrollTo={channelType}
-        />
-      ) : (
-        <IntegrationsStoreModal
-          openIntegration={isIntegrationsModalOpened}
-          closeIntegration={onIntegrationModalClose}
-          scrollTo={channelType}
-        />
-      )}
+      <IntegrationsStoreModal
+        openIntegration={isIntegrationsModalOpened}
+        closeIntegration={() => openIntegrationsModal(false)}
+        scrollTo={channelType}
+      />
     </>
   );
 }

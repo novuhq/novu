@@ -61,6 +61,7 @@ export class NotificationRepository extends BaseRepository<
       };
     }
 
+    const totalCount = await this.MongooseModel.countDocuments(requestQuery).read('secondaryPreferred');
     const response = await this.populateFeed(this.MongooseModel.find(requestQuery), environmentId)
       .read('secondaryPreferred')
       .skip(skip)
@@ -68,6 +69,7 @@ export class NotificationRepository extends BaseRepository<
       .sort('-createdAt');
 
     return {
+      totalCount,
       data: this.mapEntities(response),
     };
   }

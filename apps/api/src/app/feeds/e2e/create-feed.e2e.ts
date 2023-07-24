@@ -1,7 +1,10 @@
 import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
 import { StepTypeEnum } from '@novu/shared';
-import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from '../../workflows/dto';
+import {
+  CreateNotificationTemplateRequestDto,
+  UpdateNotificationTemplateRequestDto,
+} from '../../notification-template/dto';
 import { FeedRepository } from '@novu/dal';
 
 describe('Create A Feed - /feeds (POST)', async () => {
@@ -35,7 +38,7 @@ describe('Create A Feed - /feeds (POST)', async () => {
     const { body } = await session.testAgent.post(`/v1/feeds`).send(testFeed);
     const feed = body.data;
 
-    const testTemplate: Partial<CreateWorkflowRequestDto> = {
+    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
       name: 'test email template',
       description: 'This is a test description',
       tags: ['test-tag'],
@@ -53,7 +56,7 @@ describe('Create A Feed - /feeds (POST)', async () => {
       ],
     };
 
-    await session.testAgent.post(`/v1/workflows`).send(testTemplate);
+    await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
 
     await session.applyChanges({
       enabled: false,
@@ -67,7 +70,7 @@ describe('Create A Feed - /feeds (POST)', async () => {
   });
 
   it('update existing message with feed', async () => {
-    const testTemplate: Partial<CreateWorkflowRequestDto> = {
+    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
       name: 'test email template',
       description: 'This is a test description',
       tags: ['test-tag'],
@@ -85,7 +88,7 @@ describe('Create A Feed - /feeds (POST)', async () => {
 
     let {
       body: { data },
-    } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
+    } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
 
     await session.applyChanges({
       enabled: false,
@@ -102,7 +105,7 @@ describe('Create A Feed - /feeds (POST)', async () => {
     } = await session.testAgent.post(`/v1/feeds`).send(testFeed);
 
     const step = data.steps[0];
-    const update: UpdateWorkflowRequestDto = {
+    const update: UpdateNotificationTemplateRequestDto = {
       name: data.name,
       description: data.description,
       tags: data.tags,
@@ -122,7 +125,7 @@ describe('Create A Feed - /feeds (POST)', async () => {
       ],
     };
 
-    const body: any = await session.testAgent.put(`/v1/workflows/${notificationTemplateId}`).send(update);
+    const body: any = await session.testAgent.put(`/v1/notification-templates/${notificationTemplateId}`).send(update);
     data = body.data;
 
     await session.applyChanges({

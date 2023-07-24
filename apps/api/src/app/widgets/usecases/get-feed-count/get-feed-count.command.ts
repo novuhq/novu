@@ -16,7 +16,8 @@ export class GetFeedCountCommand extends EnvironmentWithSubscriber {
   @IsOptional()
   @Transform(({ value }) => {
     if (isNaN(value) || value == null) {
-      return 100;
+      // todo NV-2161 update the limit default to 100 to in version 0.16
+      return 1000;
     }
 
     return value;

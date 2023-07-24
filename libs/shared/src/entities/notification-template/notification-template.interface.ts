@@ -1,7 +1,7 @@
 import type { BuilderFieldType, BuilderGroupValues, TemplateVariableTypeEnum, FilterParts } from '../../types';
 import { IMessageTemplate } from '../message-template';
 import { IPreferenceChannels } from '../subscriber-preference';
-import { IWorkflowStepMetadata } from '../step';
+import { INotificationTemplateStepMetadata } from '../step';
 
 export interface INotificationTemplate {
   _id?: string;
@@ -58,12 +58,12 @@ export interface INotificationTemplateStep {
     active: boolean;
     url: string;
   };
-  metadata?: IWorkflowStepMetadata;
+  metadata?: INotificationTemplateStepMetadata;
 }
 
 export interface IMessageFilter {
   isNegated?: boolean;
-  type?: BuilderFieldType;
+  type: BuilderFieldType;
   value: BuilderGroupValues;
   children: FilterParts[];
 }

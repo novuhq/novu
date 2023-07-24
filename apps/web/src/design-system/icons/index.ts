@@ -56,11 +56,6 @@ export { BuildWorkflow } from './general/BuildWorkflow';
 export { RunTestBell } from './general/RunTestBell';
 export { QuickGuide } from './general/QuickGuide';
 export { RightArrow } from './general/RightArrow';
-export { ReactLogo } from './general/ReactLogo';
-export { AngularLogo } from './general/AngularLogo';
-export { JavaScriptLogo } from './general/JavaScriptLogo';
-export { VueLogo } from './general/VueLogo';
-export { IframeLogo } from './general/IframeLogo';
 
 export { Copy } from './actions/Copy';
 export { Close } from './actions/Close';
@@ -109,6 +104,5 @@ export { AngularGradient } from './gradient/AngularGradient';
 export { VueGradient } from './gradient/VueGradient';
 export { JsGradient } from './gradient/JsGradient';
 export { CodeGradient } from './gradient/CodeGradient';
-export { DisconnectGradient } from './gradient/DisconnectGradient';
 
 export { GitHub } from './social/GitHub';

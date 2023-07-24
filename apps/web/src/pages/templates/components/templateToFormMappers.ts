@@ -6,7 +6,7 @@ import {
   NotificationStepDto,
   DelayTypeEnum,
   DigestUnitEnum,
-  IWorkflowStepMetadata,
+  INotificationTemplateStepMetadata,
   MonthlyTypeEnum,
 } from '@novu/shared';
 import { StepTypeEnum, ActorTypeEnum, ChannelCTATypeEnum } from '@novu/shared';
@@ -258,7 +258,7 @@ export const mapFormToCreateNotificationTemplate = (form: IForm): ICreateNotific
   };
 };
 
-const mapFormStepDelayMetadata = (formStep: IFormStep): IWorkflowStepMetadata | undefined => {
+const mapFormStepDelayMetadata = (formStep: IFormStep): INotificationTemplateStepMetadata | undefined => {
   if (!formStep.delayMetadata) {
     return undefined;
   }
@@ -280,7 +280,7 @@ const mapFormStepDelayMetadata = (formStep: IFormStep): IWorkflowStepMetadata | 
   return undefined;
 };
 
-const mapFormStepDigestMetadata = (formStep: IFormStep): IWorkflowStepMetadata | undefined => {
+const mapFormStepDigestMetadata = (formStep: IFormStep): INotificationTemplateStepMetadata | undefined => {
   if (!formStep.digestMetadata) {
     return undefined;
   }

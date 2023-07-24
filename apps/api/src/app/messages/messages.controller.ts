@@ -32,7 +32,7 @@ export class MessagesController {
     @UserSession() user: IJwtPayload,
     @Query() query: GetMessagesRequestDto
   ): Promise<MessagesResponseDto> {
-    let transactionIdQuery: string[] | undefined = undefined;
+    let transactionIdQuery: string[] | null = null;
     if (query.transactionId) {
       transactionIdQuery = Array.isArray(query.transactionId) ? query.transactionId : [query.transactionId];
     }
@@ -45,7 +45,7 @@ export class MessagesController {
         subscriberId: query.subscriberId,
         page: query.page ? Number(query.page) : 0,
         limit: query.limit ? Number(query.limit) : 10,
-        transactionIds: transactionIdQuery,
+        transactionId: transactionIdQuery,
       })
     );
   }

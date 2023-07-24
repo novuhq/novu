@@ -18,5 +18,3 @@ export * from './store-subscriber-jobs';
 export * from './trigger-event';
 export * from './create-notification-jobs';
 export * from './process-subscriber';
-export * from './select-integration';
-export * from './get-feature-flag';

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import * as capitalize from 'lodash.capitalize';
 import styled from '@emotion/styled';
@@ -13,7 +13,7 @@ export default function OrganizationSelect() {
   const [value, setValue] = useState<string>('');
   const [search, setSearch] = useState<string>('');
   const [loadingSwitch, setLoadingSwitch] = useState<boolean>(false);
-  const { addItem, removeItems } = useSpotlightContext();
+  const { addItem, removeItem } = useSpotlightContext();
 
   const queryClient = useQueryClient();
   const { currentOrganization, organizations, setToken } = useAuthContext();
@@ -28,57 +28,48 @@ export default function OrganizationSelect() {
     string,
     { error: string; message: string; statusCode: number },
     string
-  >((id) => switchOrganization(id));
-
-  const switchOrgCallback = useCallback(
-    async (organizationId: string | string[] | null) => {
-      if (
-        Array.isArray(organizationId) ||
-        !organizationId ||
-        organizationId === currentOrganization?._id ||
-        organizationId === search
-      ) {
-        return;
-      }
-
-      setLoadingSwitch(true);
-      const token = await changeOrganization(organizationId);
-      setToken(token);
-      await queryClient.refetchQueries();
-      setLoadingSwitch(false);
-    },
-    [currentOrganization, search, setToken, changeOrganization, queryClient]
-  );
+  >((name) => switchOrganization(name));
 
   function addOrganizationItem(newOrganization: string): undefined {
     if (!newOrganization) return;
 
     createOrganization(newOrganization).then((response) => {
-      return switchOrgCallback(response._id);
+      return switchOrg(response._id);
     });
   }
 
-  const organizationItems = useMemo(() => {
-    return (organizations || [])
-      .filter((item) => item._id !== value)
-      .map((item) => ({
-        id: 'change-org-' + item._id,
-        title: 'Change org to ' + capitalize(item.name),
-        onTrigger: () => {
-          switchOrgCallback(item._id);
-        },
-      }));
-  }, [organizations, value, switchOrgCallback]);
+  async function switchOrg(organizationId: string | string[] | null) {
+    if (!organizationId || organizationId === currentOrganization?._id || organizationId === search) {
+      return;
+    }
+
+    setLoadingSwitch(true);
+
+    const token = await changeOrganization(organizationId as string);
+    setToken(token);
+    await queryClient.refetchQueries();
+
+    setLoadingSwitch(false);
+  }
 
   useEffect(() => {
     setValue(currentOrganization?._id || '');
   }, [currentOrganization]);
 
   useEffect(() => {
-    removeItems(['change-org-' + value]);
-
-    addItem(organizationItems);
-  }, [addItem, removeItems, organizationItems, value]);
+    addItem(
+      (organizations || [])
+        .filter((item) => item._id !== value)
+        .map((item) => ({
+          id: 'change-org-' + item._id,
+          title: 'Change org to ' + capitalize(item.name),
+          onTrigger: () => {
+            switchOrg(item._id);
+          },
+        }))
+    );
+    removeItem('change-org-' + value);
+  }, [value]);
 
   return (
     <>
@@ -91,7 +82,7 @@ export default function OrganizationSelect() {
           getCreateLabel={(newOrganization) => <div>+ Add "{newOrganization}"</div>}
           onCreate={addOrganizationItem}
           value={value}
-          onChange={switchOrgCallback}
+          onChange={switchOrg}
           allowDeselect={false}
           onSearchChange={setSearch}
           data={(organizations || []).map((item) => ({

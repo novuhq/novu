@@ -1,34 +1,20 @@
-import { IsDefined, IsMongoId, IsOptional, IsString } from 'class-validator';
+import { IsDefined } from 'class-validator';
 import { ICredentialsDto } from '@novu/shared';
+import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
-import { OrganizationCommand } from '../../../shared/commands/organization.command';
-
-export class UpdateIntegrationCommand extends OrganizationCommand {
-  @IsOptional()
-  @IsString()
-  name?: string;
-
-  @IsOptional()
-  @IsString()
-  identifier?: string;
-
-  @IsOptional()
-  @IsMongoId()
-  environmentId?: string;
-
-  @IsOptional()
-  @IsMongoId()
-  userEnvironmentId: string;
+export class UpdateIntegrationCommand extends EnvironmentCommand {
+  @IsDefined()
+  userId: string;
 
   @IsDefined()
   integrationId: string;
 
-  @IsOptional()
-  credentials?: ICredentialsDto;
+  @IsDefined()
+  credentials: ICredentialsDto;
 
-  @IsOptional()
-  active?: boolean;
+  @IsDefined()
+  active: boolean;
 
-  @IsOptional()
-  check?: boolean;
+  @IsDefined()
+  check: boolean;
 }

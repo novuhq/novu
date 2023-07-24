@@ -1,10 +1,9 @@
-import { IConfigCredentials } from '@novu/shared';
+import { ChannelTypeEnum, IConfigCredentials } from '@novu/shared';
 import styled from '@emotion/styled';
 import { Group, useMantineColorScheme } from '@mantine/core';
-
 import { colors, shadows } from '../../../../design-system';
 import { CardStatusBar } from '../CardStatusBar';
-import type { IIntegratedProvider } from '../../types';
+import { IIntegratedProvider } from '../../IntegrationsStorePage';
 import { LimitBar } from '../LimitBar';
 import { getGradient } from '../../../../design-system/config/helper';
 import { useIntegrationLimit } from '../../../../hooks';

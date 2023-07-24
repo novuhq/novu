@@ -1,13 +1,14 @@
 import * as capitalize from 'lodash.capitalize';
 import { format } from 'date-fns';
 import { useMantineColorScheme } from '@mantine/core';
+import { ColumnWithStrictAccessor } from 'react-table';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 import { useEffect } from 'react';
 import { showNotification } from '@mantine/notifications';
 
-import { IExtendedColumn, Table } from '../../../design-system/table/Table';
-import { Button, colors, Text, withCellLoading } from '../../../design-system';
+import { Data, Table } from '../../../design-system/table/Table';
+import { Button, colors, Text } from '../../../design-system';
 import { promoteChange } from '../../../api/changes';
 import { QueryKeys } from '../../../api/query.keys';
 
@@ -20,7 +21,7 @@ export const ChangesTable = ({
   totalCount,
   dataTestId,
 }: {
-  changes: any[];
+  changes: Data[];
   loading: boolean;
   handleTableChange: (pageIndex) => void;
   page: Number;
@@ -48,85 +49,79 @@ export const ChangesTable = ({
     });
   }, [error]);
 
-  const columns: IExtendedColumn<any>[] = [
+  const columns: ColumnWithStrictAccessor<Data>[] = [
     {
       accessor: 'change',
       Header: 'Change',
-      Cell: withCellLoading(
-        ({
-          row: {
-            original: { type, templateName, messageType, previousDefaultLayout },
-          },
-        }) => (
-          <div data-test-id="change-type">
-            {type === ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE && (
-              <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Workflow Change</Text>
-            )}
-            {type === ChangeEntityTypeEnum.MESSAGE_TEMPLATE && (
-              <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Message Change</Text>
-            )}
-            {type === ChangeEntityTypeEnum.NOTIFICATION_GROUP && (
-              <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Notification Group Change</Text>
-            )}
-            {type === ChangeEntityTypeEnum.FEED && (
-              <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Feed Change</Text>
-            )}
-            {type === ChangeEntityTypeEnum.LAYOUT && (
-              <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Layout Change</Text>
-            )}
-            {type === ChangeEntityTypeEnum.DEFAULT_LAYOUT && (
-              <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Default Layout Change</Text>
-            )}
-            {previousDefaultLayout && (
-              <Text data-test-id="previous-default-layout-content" rows={1} mt={5}>
-                Previous Default Layout: {previousDefaultLayout}
-              </Text>
-            )}
-            <Text data-test-id="change-content" rows={1} mt={5}>
-              {templateName}
-              {messageType ? `, ${messageType}` : null}
+      Cell: ({ type, templateName, messageType, previousDefaultLayout }: any) => (
+        <div data-test-id="change-type">
+          {type === ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE && (
+            <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Workflow Change</Text>
+          )}
+          {type === ChangeEntityTypeEnum.MESSAGE_TEMPLATE && (
+            <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Message Change</Text>
+          )}
+          {type === ChangeEntityTypeEnum.NOTIFICATION_GROUP && (
+            <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Notification Group Change</Text>
+          )}
+          {type === ChangeEntityTypeEnum.FEED && (
+            <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Feed Change</Text>
+          )}
+          {type === ChangeEntityTypeEnum.LAYOUT && (
+            <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Layout Change</Text>
+          )}
+          {type === ChangeEntityTypeEnum.DEFAULT_LAYOUT && (
+            <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Default Layout Change</Text>
+          )}
+          {previousDefaultLayout && (
+            <Text data-test-id="previous-default-layout-content" rows={1} mt={5}>
+              Previous Default Layout: {previousDefaultLayout}
             </Text>
-          </div>
-        )
+          )}
+          <Text data-test-id="change-content" rows={1} mt={5}>
+            {templateName}
+            {messageType ? `, ${messageType}` : null}
+          </Text>
+        </div>
       ),
     },
     {
       accessor: 'user',
       Header: 'Changed By',
-      Cell: withCellLoading(({ row: { original } }) => (
+      Cell: ({ user }: any) => (
         <Text data-test-id="subscriber-name" rows={1}>
-          {capitalize(original.user.firstName)} {capitalize(original.user.lastName)}
+          {capitalize(user.firstName)} {capitalize(user.lastName)}
         </Text>
-      )),
+      ),
     },
     {
       accessor: 'createdAt',
       Header: 'Date Changed',
-      Cell: withCellLoading(({ row: { original } }) => {
-        return format(new Date(original.createdAt), 'dd/MM/yyyy');
-      }),
+      Cell: ({ createdAt }: any) => {
+        return format(new Date(createdAt), 'dd/MM/yyyy');
+      },
     },
     {
       accessor: '_id',
       Header: '',
       maxWidth: 50,
-      Cell: withCellLoading(({ row: { original } }) => {
+      Cell: ({ _id, enabled }: any) => {
         return (
           <div style={{ textAlign: 'right' }}>
             <Button
               variant="outline"
               data-test-id="promote-btn"
               onClick={() => {
-                mutate(original._id);
+                mutate(_id);
               }}
-              disabled={original.enabled}
+              disabled={enabled}
               loading={isLoading}
             >
               Promote
             </Button>
           </div>
         );
-      }),
+      },
     },
   ];
 

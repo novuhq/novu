@@ -8,6 +8,8 @@ export default createStyles((theme: MantineTheme, _params, getRef) => {
 
   return {
     root: {
+      width: '100%',
+      maxWidth: '70px',
       display: 'flex',
       alignItems: 'center',
     },

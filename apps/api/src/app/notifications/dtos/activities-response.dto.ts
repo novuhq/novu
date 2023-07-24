@@ -187,7 +187,7 @@ export class ActivityNotificationResponseDto {
 
 export class ActivitiesResponseDto {
   @ApiProperty()
-  hasMore: boolean;
+  totalCount: number;
 
   @ApiProperty()
   data: ActivityNotificationResponseDto[];

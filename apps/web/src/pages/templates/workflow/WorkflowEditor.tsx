@@ -3,6 +3,7 @@ import { useFormContext } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { Link, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Container, Group, Stack } from '@mantine/core';
+import { showNotification } from '@mantine/notifications';
 import { FilterPartTypeEnum, StepTypeEnum } from '@novu/shared';
 
 import { FlowEditor } from '../../../components/workflow';
@@ -22,7 +23,6 @@ import TriggerNode from './workflow/node-types/TriggerNode';
 import AddNode from './workflow/node-types/AddNode';
 import { AddNodeEdge } from './workflow/edge-types/AddNodeEdge';
 import { getFormattedStepErrors } from '../shared/errors';
-import { errorMessage } from '../../../utils/notifications';
 
 const nodeTypes = {
   channelNode: ChannelNode,
@@ -103,11 +103,12 @@ const WorkflowEditor = () => {
 
       const label = channels.find((item) => item.channelType === dependingStep.template.type)?.label;
 
-      errorMessage(
-        `${label} ${
+      showNotification({
+        message: `${label} ${
           sameTypeSteps.length > 1 ? `(${foundIndex + 1}) ` : ''
-        } filters is depending on the step you try to delete`
-      );
+        } filters is depending on the step you try to delete`,
+        color: 'red',
+      });
 
       return;
     }

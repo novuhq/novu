@@ -1,12 +1,11 @@
 import { FilterQuery } from 'mongoose';
 import { SoftDeleteModel } from 'mongoose-delete';
 
+import { BaseRepository } from '../base-repository';
 import { IntegrationEntity, IntegrationDBModel } from './integration.entity';
 import { Integration } from './integration.schema';
-
-import { BaseRepository } from '../base-repository';
 import { DalException } from '../../shared';
-import type { EnforceEnvOrOrgIds, IDeleteResult } from '../../types';
+import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 
 type IntegrationQuery = FilterQuery<IntegrationDBModel> & EnforceEnvOrOrgIds;
 
@@ -33,36 +32,22 @@ export class IntegrationRepository extends BaseRepository<IntegrationDBModel, In
   }
 
   async create(data: IntegrationQuery): Promise<IntegrationEntity> {
+    const existingIntegration = await this.findOne({
+      _environmentId: data._environmentId,
+      providerId: data.providerId,
+      channel: data.channel,
+    });
+    if (existingIntegration) {
+      throw new DalException('Duplicate key - One environment may not have two providers of the same channel type');
+    }
+
     return await super.create(data);
   }
-
   async delete(query: IntegrationQuery) {
-    const integration = await this.findOne({ _id: query._id, _organizationId: query._organizationId });
+    const integration = await this.findOne({ _id: query._id, _environmentId: query._environmentId });
     if (!integration) throw new DalException(`Could not find integration with id ${query._id}`);
 
-    await this.integration.delete({ _id: integration._id, _organizationId: integration._organizationId });
-  }
-
-  async deleteMany(query: IntegrationQuery): Promise<IDeleteResult> {
-    const { _environmentId, _organizationId } = query || {};
-    if (!_environmentId || !_organizationId) {
-      throw new DalException(
-        'Deletion operation blocked for missing any of these properties: [_environmentId, _organizationId]. We are avoiding a potential unexpected multiple deletion'
-      );
-    }
-
-    const { acknowledged, modifiedCount, matchedCount } = await this.integration.delete(query);
-
-    if (matchedCount === 0 || modifiedCount === 0) {
-      throw new DalException(
-        `Deletion of many integrations in environment ${_environmentId} and organization ${_organizationId}  was not performed properly`
-      );
-    }
-
-    return {
-      modifiedCount,
-      matchedCount,
-    };
+    await this.integration.delete({ _id: integration._id, _environmentId: integration._environmentId });
   }
 
   async findDeleted(query: IntegrationQuery): Promise<IntegrationEntity> {

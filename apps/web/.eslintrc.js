@@ -35,15 +35,13 @@ module.exports = {
         format: ['PascalCase', 'camelCase', 'UPPER_CASE'],
       },
     ],
-    "react-hooks/rules-of-hooks": 'error',
-    "react-hooks/exhaustive-deps": 'off'
   },
   env: {
     'cypress/globals': true,
   },
   ignorePatterns: ['craco.config.js', 'cypress/*'],
   extends: ['plugin:cypress/recommended', '../../.eslintrc.js'],
-  plugins: ['cypress', 'react-hooks'],
+  plugins: ['cypress'],
   parserOptions: {
     project: './tsconfig.json',
     ecmaVersion: 2020,
