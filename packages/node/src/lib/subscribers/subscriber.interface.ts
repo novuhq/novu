@@ -41,18 +41,14 @@ export interface ISubscribers {
   );
   getUnseenCount(subscriberId: string, seen: boolean);
   /**
-   * deprecated use markInAppMessageAs instead
+   * deprecated use markMessageAs instead
    */
   markMessageSeen(subscriberId: string, messageId: string);
   /**
-   * deprecated use markInAppMessageAs instead
+   * deprecated use markMessageAs instead
    */
   markMessageRead(subscriberId: string, messageId: string);
-  markInAppMessageAs(
-    subscriberId: string,
-    messageId: string,
-    mark: IMarkFields
-  );
+  markMessageAs(subscriberId: string, messageId: string, mark: IMarkFields);
   markMessageActionSeen(
     subscriberId: string,
     messageId: string,

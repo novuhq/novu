@@ -2,31 +2,32 @@ import {
   INotificationGroupUpdatePayload,
   INotificationGroups,
 } from './notification-groups.interface';
-import { Novu } from '../novu';
+import { WithHttp } from '../novu.interface';
 
-export class NotificationGroups implements INotificationGroups {
-  constructor(private readonly novu: Novu) {}
-
+export class NotificationGroups
+  extends WithHttp
+  implements INotificationGroups
+{
   async create(name: string) {
-    return await this.novu.post(`/notification-groups`, { name });
+    return await this.postRequest(`/notification-groups`, { name });
   }
 
   // TODO: add pagination options
   async get() {
-    return await this.novu.get(`/notification-groups`);
+    return await this.getRequest(`/notification-groups`);
   }
 
   async getOne(id: string) {
-    return await this.novu.get(`/notification-groups/${id}`);
+    return await this.getRequest(`/notification-groups/${id}`);
   }
 
   async update(id: string, data: INotificationGroupUpdatePayload) {
-    return await this.novu.patch(`/notification-groups/${id}`, {
+    return await this.patchRequest(`/notification-groups/${id}`, {
       ...data,
     });
   }
 
   async delete(id: string) {
-    return await this.novu.delete(`/notification-groups/${id}`);
+    return await this.deleteRequest(`/notification-groups/${id}`);
   }
 }

@@ -4,13 +4,11 @@ import {
   IEvents,
   ITriggerPayloadOptions,
 } from './events.interface';
-import { Novu } from '../novu';
+import { WithHttp } from '../novu.interface';
 
-export class Events implements IEvents {
-  constructor(private readonly novu: Novu) {}
-
+export class Events extends WithHttp implements IEvents {
   async trigger(workflowIdentifier: string, data: ITriggerPayloadOptions) {
-    return await this.novu.post(`/events/trigger`, {
+    return await this.postRequest(`/events/trigger`, {
       name: workflowIdentifier,
       to: data.to,
       payload: {
@@ -23,13 +21,13 @@ export class Events implements IEvents {
   }
 
   async bulkTrigger(events: IBulkEvents[]) {
-    return await this.novu.post(`/events/trigger/bulk`, {
+    return await this.postRequest(`/events/trigger/bulk`, {
       events,
     });
   }
 
   async broadcast(workflowIdentifier: string, data: IBroadcastPayloadOptions) {
-    return await this.novu.post(`/events/trigger/broadcast`, {
+    return await this.postRequest(`/events/trigger/broadcast`, {
       name: workflowIdentifier,
       payload: {
         ...data?.payload,
@@ -39,6 +37,6 @@ export class Events implements IEvents {
   }
 
   async cancel(transactionId: string) {
-    return await this.novu.delete(`/events/trigger/${transactionId}`);
+    return await this.deleteRequest(`/events/trigger/${transactionId}`);
   }
 }

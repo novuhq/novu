@@ -5,13 +5,11 @@ import {
   ILayoutUpdatePayload,
   ILayouts,
 } from './layout.interface';
-import { Novu } from '../novu';
+import { WithHttp } from '../novu.interface';
 
-export class Layouts implements ILayouts {
-  constructor(private readonly novu: Novu) {}
-
+export class Layouts extends WithHttp implements ILayouts {
   async create(data: ILayoutPayload) {
-    return await this.novu.post(`/layouts`, {
+    return await this.postRequest(`/layouts`, {
       name: data.name,
       description: data.description,
       content: data.content,
@@ -21,7 +19,7 @@ export class Layouts implements ILayouts {
   }
 
   async list(data?: ILayoutPaginationPayload) {
-    return await this.novu.get(`/layouts`, {
+    return await this.getRequest(`/layouts`, {
       params: {
         // handle page = 0 by toString()
         ...(data?.page?.toString() && { page: data.page }),
@@ -33,7 +31,7 @@ export class Layouts implements ILayouts {
   }
 
   async get(layoutId: LayoutId) {
-    return await this.novu.get(`/layouts`, {
+    return await this.getRequest(`/layouts`, {
       params: {
         layoutId,
       },
@@ -41,11 +39,11 @@ export class Layouts implements ILayouts {
   }
 
   async delete(layoutId: LayoutId) {
-    return await this.novu.delete(`/layouts/${layoutId}`);
+    return await this.deleteRequest(`/layouts/${layoutId}`);
   }
 
   async update(layoutId: LayoutId, data: ILayoutUpdatePayload) {
-    return await this.novu.patch(`/layouts/${layoutId}`, {
+    return await this.patchRequest(`/layouts/${layoutId}`, {
       ...(data.name && { name: data.name }),
       ...(data.description && { description: data.description }),
       ...(data.content && { content: data.content }),
@@ -57,6 +55,6 @@ export class Layouts implements ILayouts {
   }
 
   async setDefault(layoutId: LayoutId) {
-    return await this.novu.post(`/layouts/${layoutId}/default`);
+    return await this.postRequest(`/layouts/${layoutId}/default`);
   }
 }

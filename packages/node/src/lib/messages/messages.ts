@@ -1,11 +1,9 @@
 import { IMessagesPayload, IMessages } from './messages.interface';
-import { Novu } from '../novu';
+import { WithHttp } from '../novu.interface';
 
 const BASE_PATH = '/messages';
 
-export class Messages implements IMessages {
-  constructor(private readonly novu: Novu) {}
-
+export class Messages extends WithHttp implements IMessages {
   async list(data?: IMessagesPayload) {
     const queryParams: Partial<IMessagesPayload> & {
       transactionId?: string[];
@@ -16,12 +14,12 @@ export class Messages implements IMessages {
     data?.channel && (queryParams.channel = data?.channel);
     data?.transactionIds && (queryParams.transactionId = data?.transactionIds);
 
-    return await this.novu.get(BASE_PATH, {
+    return await this.getRequest(BASE_PATH, {
       params: queryParams,
     });
   }
 
   async deleteById(messageId: string) {
-    return await this.novu.delete(`${BASE_PATH}/${messageId}`);
+    return await this.deleteRequest(`${BASE_PATH}/${messageId}`);
   }
 }

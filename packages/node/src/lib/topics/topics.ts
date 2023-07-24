@@ -5,22 +5,20 @@ import {
   ITopics,
   ITopicSubscribersPayload,
 } from './topic.interface';
-import { Novu } from '../novu';
+import { WithHttp } from '../novu.interface';
 
 const BASE_PATH = '/topics';
 
-export class Topics implements ITopics {
-  constructor(private readonly novu: Novu) {}
-
+export class Topics extends WithHttp implements ITopics {
   async create(data: ITopicPayload) {
-    return await this.novu.post(BASE_PATH, {
+    return await this.postRequest(BASE_PATH, {
       key: data.key,
       name: data.name,
     });
   }
 
   async addSubscribers(topicKey: TopicKey, data: ITopicSubscribersPayload) {
-    return await this.novu.post(`${BASE_PATH}/${topicKey}/subscribers`, data);
+    return await this.postRequest(`${BASE_PATH}/${topicKey}/subscribers`, data);
   }
 
   /**
@@ -30,7 +28,7 @@ export class Topics implements ITopics {
     topicKey: TopicKey,
     externalSubscriberId: ExternalSubscriberId
   ) {
-    return await this.novu.get(
+    return await this.getRequest(
       `${BASE_PATH}/${topicKey}/subscribers/${externalSubscriberId}`
     );
   }
@@ -39,20 +37,20 @@ export class Topics implements ITopics {
     topicKey: TopicKey,
     externalSubscriberId: ExternalSubscriberId
   ) {
-    return await this.novu.get(
+    return await this.getRequest(
       `${BASE_PATH}/${topicKey}/subscribers/${externalSubscriberId}`
     );
   }
 
   async removeSubscribers(topicKey: TopicKey, data: ITopicSubscribersPayload) {
-    return await this.novu.post(
+    return await this.postRequest(
       `${BASE_PATH}/${topicKey}/subscribers/removal`,
       data
     );
   }
 
   async list(data: ITopicPaginationPayload) {
-    return await this.novu.get(BASE_PATH, {
+    return await this.getRequest(BASE_PATH, {
       params: {
         // handle page = 0 by toString()
         ...(data?.page?.toString() && { page: data.page }),
@@ -63,15 +61,15 @@ export class Topics implements ITopics {
   }
 
   async delete(topicKey: TopicKey) {
-    return await this.novu.delete(`${BASE_PATH}/${topicKey}`);
+    return await this.deleteRequest(`${BASE_PATH}/${topicKey}`);
   }
 
   async get(topicKey: TopicKey) {
-    return await this.novu.get(`${BASE_PATH}/${topicKey}`);
+    return await this.getRequest(`${BASE_PATH}/${topicKey}`);
   }
 
   async rename(topicKey: TopicKey, newName: TopicName) {
-    return await this.novu.patch(`${BASE_PATH}/${topicKey}`, {
+    return await this.patchRequest(`${BASE_PATH}/${topicKey}`, {
       name: newName,
     });
   }

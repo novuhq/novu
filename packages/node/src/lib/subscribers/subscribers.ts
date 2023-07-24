@@ -131,7 +131,7 @@ export class Subscribers extends WithHttp implements ISubscribers {
   }
 
   /**
-   * deprecated use markInAppMessageAs instead
+   * deprecated use markMessageAs instead
    */
   async markMessageSeen(subscriberId: string, messageId: string) {
     return await this.postRequest(
@@ -144,7 +144,7 @@ export class Subscribers extends WithHttp implements ISubscribers {
   }
 
   /**
-   * deprecated use markInAppMessageAs instead
+   * deprecated use markMessageAs instead
    */
   async markMessageRead(subscriberId: string, messageId: string) {
     return await this.postRequest(
@@ -156,15 +156,11 @@ export class Subscribers extends WithHttp implements ISubscribers {
     );
   }
 
-  async markInAppMessageAs(
+  async markMessageAs(
     subscriberId: string,
     messageId: string,
     mark: IMarkFields
   ) {
-    if (!mark.read && !mark.seen) {
-      throw new Error('Either seen or read must be set');
-    }
-
     return await this.postRequest(
       `/subscribers/${subscriberId}/messages/markAs`,
       {

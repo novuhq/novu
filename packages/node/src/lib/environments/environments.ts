@@ -3,32 +3,31 @@ import {
   IEnvironments,
   IEnvironmentUpdatePayload,
 } from './environments.interface';
-import { Novu } from '../novu';
+import { WithHttp } from '../novu.interface';
 
-export class Environments implements IEnvironments {
-  constructor(private readonly novu: Novu) {}
+export class Environments extends WithHttp implements IEnvironments {
   async getCurrent() {
-    return await this.novu.get('/environments/me');
+    return await this.getRequest('/environments/me');
   }
 
   async create(payload: IEnvironmentCreatePayload) {
-    return await this.novu.post('/environments', payload);
+    return await this.postRequest('/environments', payload);
   }
 
   // TODO: Add pagination options
   async getAll() {
-    return await this.novu.get('/environments');
+    return await this.getRequest('/environments');
   }
 
   async updateOne(id: string, payload: IEnvironmentUpdatePayload) {
-    return await this.novu.put(`/environments/${id}`, payload);
+    return await this.putRequest(`/environments/${id}`, payload);
   }
 
   async getApiKeys() {
-    return await this.novu.get('/environments/api-keys');
+    return await this.getRequest('/environments/api-keys');
   }
 
   async regenerateApiKeys() {
-    return await this.novu.post('/environments/api-keys/regenerate');
+    return await this.postRequest('/environments/api-keys/regenerate');
   }
 }
