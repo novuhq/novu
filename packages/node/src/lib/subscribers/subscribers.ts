@@ -12,6 +12,9 @@ import {
 import { WithHttp } from '../novu.interface';
 
 export class Subscribers extends WithHttp implements ISubscribers {
+  create(subscriberId: string, data: ISubscriberPayload) {
+    throw new Error('Method not implemented.');
+  }
   async list(page = 0, limit = 10) {
     return await this.http.get(`/subscribers`, {
       params: {
@@ -25,17 +28,7 @@ export class Subscribers extends WithHttp implements ISubscribers {
     return await this.http.get(`/subscribers/${subscriberId}`);
   }
 
-  /**
-   * @deprecated Use create instead
-   */
   async identify(subscriberId: string, data: ISubscriberPayload) {
-    return await this.http.post(`/subscribers`, {
-      subscriberId,
-      ...data,
-    });
-  }
-
-  async create(subscriberId: string, data: ISubscriberPayload) {
     return await this.http.post(`/subscribers`, {
       subscriberId,
       ...data,

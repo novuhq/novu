@@ -11,11 +11,7 @@ export { ISubscriberPayload, ButtonTypeEnum, MessageActionStatusEnum };
 export interface ISubscribers {
   list(page: number, limit: number);
   get(subscriberId: string);
-  /**
-   * @deprecated Use create instead
-   */
   identify(subscriberId: string, data: ISubscriberPayload);
-  create(subscriberId: string, data: ISubscriberPayload);
   update(subscriberId: string, data: ISubscriberPayload);
   delete(subscriberId: string);
   setCredentials(
