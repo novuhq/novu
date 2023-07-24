@@ -38,9 +38,6 @@ export class UpdateWorkflowRequestDto implements ICreateNotificationTemplateDto 
   notificationGroupId: string;
 
   @ApiPropertyOptional()
-  active?: boolean;
-
-  @ApiPropertyOptional()
   critical?: boolean;
 
   @ApiPropertyOptional({
