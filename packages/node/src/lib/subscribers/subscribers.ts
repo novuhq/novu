@@ -12,9 +12,6 @@ import {
 import { WithHttp } from '../novu.interface';
 
 export class Subscribers extends WithHttp implements ISubscribers {
-  create(subscriberId: string, data: ISubscriberPayload) {
-    throw new Error('Method not implemented.');
-  }
   async list(page = 0, limit = 10) {
     return await this.http.get(`/subscribers`, {
       params: {
