@@ -1,3 +1,6 @@
+import type { AxiosResponse } from 'axios';
+import { MarkMessagesAsEnum } from '@novu/shared';
+
 import { WithHttp } from '../novu.interface';
 import {
   IGetSubscriberNotificationFeedParams,
@@ -121,6 +124,17 @@ export class Subscribers extends WithHttp implements ISubscribers {
     return await this.http.post(
       `/subscribers/${subscriberId}/messages/markAs`,
       { messageId, mark: { read: true } }
+    );
+  }
+
+  async markAllMessagesAs(
+    subscriberId: string,
+    markAs: MarkMessagesAsEnum,
+    feedIdentifier?: string | string[]
+  ): Promise<AxiosResponse<{ data: number }>> {
+    return await this.http.post(
+      `/subscribers/${subscriberId}/messages/mark-all`,
+      { markAs, feedIdentifier }
     );
   }
 
