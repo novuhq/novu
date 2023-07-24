@@ -70,7 +70,7 @@ describe('Get Integrations - /integrations (GET)', function () {
 
     const activeIntegrations: IntegrationEntity[] = (await session.testAgent.get(`/v1/integrations/active`)).body.data;
 
-    expect(activeIntegrations.length).to.eq(15);
+    expect(activeIntegrations.length).to.eq(13);
 
     const activeEmailIntegrations = activeIntegrations
       .filter(

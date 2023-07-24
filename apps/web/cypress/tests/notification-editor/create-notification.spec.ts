@@ -181,6 +181,8 @@ describe('Creation functionality', function () {
       cy.visit('/workflows/create');
     });
 
+    cy.waitForNetworkIdle(500);
+
     dragAndDrop('email');
     cy.waitForNetworkIdle(500);
 
@@ -218,6 +220,26 @@ describe('Creation functionality', function () {
     cy.waitForNetworkIdle(500);
 
     cy.getByTestId('variable-default-value').should('have.value', 'Test');
+  });
+
+  it('should not throw error for using array variable with index greater than 0', function () {
+    cy.waitLoadTemplatePage(() => {
+      cy.visit('/workflows/create');
+    });
+
+    dragAndDrop('email');
+    cy.waitForNetworkIdle(500);
+
+    cy.clickWorkflowNode('node-emailSelector');
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('emailSubject').type('this is email subject');
+    cy.getByTestId('email-editor').getByTestId('editor-row').click();
+    cy.getByTestId('editable-text-content').clear().type('This tests array var {{array.[1].name}}', {
+      parseSpecialCharSequences: false,
+    });
+
+    cy.getByTestId('var-items-array').contains('array').contains('object');
   });
 
   it('should create email notification', function () {

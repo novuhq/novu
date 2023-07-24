@@ -40,7 +40,9 @@
     "rimraf": "^3.0.2",
     "superagent-defaults": "^0.1.14",
     "supertest": "^5.0.0",
-    "uuid": "^8.3.0"
+    "uuid": "^8.3.0",
+    "shortid": "^2.2.16",
+    "slugify": "^1.4.6"
   },
   "devDependencies": {
     "@types/async": "^3.2.1",
