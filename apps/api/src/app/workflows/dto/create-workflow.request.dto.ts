@@ -5,7 +5,7 @@ import { ICreateNotificationTemplateDto, IPreferenceChannels } from '@novu/share
 import { PreferenceChannels } from '../../shared/dtos/preference-channels';
 import { NotificationStep } from '../../shared/dtos/notification-step';
 
-export class CreateNotificationTemplateRequestDto implements ICreateNotificationTemplateDto {
+export class CreateWorkflowRequestDto implements ICreateNotificationTemplateDto {
   @ApiProperty()
   @IsString()
   @IsDefined()

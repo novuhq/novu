@@ -16,11 +16,7 @@ import { UserSession } from '../shared/framework/user.decorator';
 import { GetNotificationTemplates } from './usecases/get-notification-templates/get-notification-templates.usecase';
 import { GetNotificationTemplatesCommand } from './usecases/get-notification-templates/get-notification-templates.command';
 import { CreateNotificationTemplate, CreateNotificationTemplateCommand } from './usecases/create-notification-template';
-import {
-  CreateNotificationTemplateRequestDto,
-  UpdateNotificationTemplateRequestDto,
-  ChangeTemplateStatusRequestDto,
-} from './dto';
+import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto, ChangeWorkflowStatusRequestDto } from './dto';
 import { GetNotificationTemplate } from './usecases/get-notification-template/get-notification-template.usecase';
 import { GetNotificationTemplateCommand } from './usecases/get-notification-template/get-notification-template.command';
 import { UpdateNotificationTemplate } from './usecases/update-notification-template/update-notification-template.usecase';
@@ -31,14 +27,14 @@ import { ChangeTemplateActiveStatusCommand } from './usecases/change-template-ac
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { RootEnvironmentGuard } from '../auth/framework/root-environment-guard.service';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { NotificationTemplateResponse } from './dto/notification-template-response.dto';
-import { NotificationTemplatesResponseDto } from './dto/notification-templates.response.dto';
+import { WorkflowResponse } from './dto/workflow-response.dto';
+import { WorkflowsResponseDto } from './dto/workflows.response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { NotificationTemplatesRequestDto } from './dto/notification-templates-request.dto';
+import { WorkflowsRequestDto } from './dto/workflows-request.dto';
 import { Roles } from '../auth/framework/roles.decorator';
 import { ApiResponse } from '../shared/framework/response.decorator';
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
-import { CreateNotificationTemplateQuery } from './queries';
+import { CreateWorkflowQuery } from './queries';
 
 @Controller('/notification-templates')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -55,7 +51,7 @@ export class NotificationTemplateController {
   ) {}
 
   @Get('')
-  @ApiResponse(NotificationTemplateResponse)
+  @ApiResponse(WorkflowResponse)
   @ApiOperation({
     summary: 'Get Notification templates',
     description: `Notification templates have been renamed to Workflows, Please use the new workflows controller`,
@@ -64,8 +60,8 @@ export class NotificationTemplateController {
   @ExternalApiAccessible()
   getNotificationTemplates(
     @UserSession() user: IJwtPayload,
-    @Query() query: NotificationTemplatesRequestDto
-  ): Promise<NotificationTemplatesResponseDto> {
+    @Query() query: WorkflowsRequestDto
+  ): Promise<WorkflowsResponseDto> {
     return this.getNotificationTemplatesUsecase.execute(
       GetNotificationTemplatesCommand.create({
         organizationId: user.organizationId,
@@ -78,7 +74,7 @@ export class NotificationTemplateController {
   }
 
   @Put('/:templateId')
-  @ApiResponse(NotificationTemplateResponse)
+  @ApiResponse(WorkflowResponse)
   @ApiOperation({
     summary: 'Update Notification template',
     description: `Notification templates have been renamed to Workflows, Please use the new workflows controller`,
@@ -88,8 +84,8 @@ export class NotificationTemplateController {
   async updateTemplateById(
     @UserSession() user: IJwtPayload,
     @Param('templateId') templateId: string,
-    @Body() body: UpdateNotificationTemplateRequestDto
-  ): Promise<NotificationTemplateResponse> {
+    @Body() body: UpdateWorkflowRequestDto
+  ): Promise<WorkflowResponse> {
     return await this.updateTemplateByIdUsecase.execute(
       UpdateNotificationTemplateCommand.create({
         environmentId: user.environmentId,
@@ -132,7 +128,7 @@ export class NotificationTemplateController {
   }
 
   @Get('/:templateId')
-  @ApiResponse(NotificationTemplateResponse)
+  @ApiResponse(WorkflowResponse)
   @ApiOperation({
     summary: 'Get Notification template',
     description: `Notification templates have been renamed to Workflows, Please use the new workflows controller`,
@@ -142,7 +138,7 @@ export class NotificationTemplateController {
   getNotificationTemplateById(
     @UserSession() user: IJwtPayload,
     @Param('templateId') templateId: string
-  ): Promise<NotificationTemplateResponse> {
+  ): Promise<WorkflowResponse> {
     return this.getNotificationTemplateUsecase.execute(
       GetNotificationTemplateCommand.create({
         environmentId: user.environmentId,
@@ -156,7 +152,7 @@ export class NotificationTemplateController {
   @Post('')
   @ExternalApiAccessible()
   @UseGuards(RootEnvironmentGuard)
-  @ApiResponse(NotificationTemplateResponse, 201)
+  @ApiResponse(WorkflowResponse, 201)
   @ApiOperation({
     summary: 'Create Notification template',
     description: `Notification templates have been renamed to Workflows, Please use the new workflows controller`,
@@ -165,9 +161,9 @@ export class NotificationTemplateController {
   @Roles(MemberRoleEnum.ADMIN)
   createNotificationTemplates(
     @UserSession() user: IJwtPayload,
-    @Query() query: CreateNotificationTemplateQuery,
-    @Body() body: CreateNotificationTemplateRequestDto
-  ): Promise<NotificationTemplateResponse> {
+    @Query() query: CreateWorkflowQuery,
+    @Body() body: CreateWorkflowRequestDto
+  ): Promise<WorkflowResponse> {
     return this.createNotificationTemplateUsecase.execute(
       CreateNotificationTemplateCommand.create({
         organizationId: user.organizationId,
@@ -191,7 +187,7 @@ export class NotificationTemplateController {
   @Put('/:templateId/status')
   @UseGuards(RootEnvironmentGuard)
   @Roles(MemberRoleEnum.ADMIN)
-  @ApiResponse(NotificationTemplateResponse)
+  @ApiResponse(WorkflowResponse)
   @ApiOperation({
     summary: 'Update Notification template status',
     description: `Notification templates have been renamed to Workflows, Please use the new workflows controller`,
@@ -200,9 +196,9 @@ export class NotificationTemplateController {
   @ExternalApiAccessible()
   changeActiveStatus(
     @UserSession() user: IJwtPayload,
-    @Body() body: ChangeTemplateStatusRequestDto,
+    @Body() body: ChangeWorkflowStatusRequestDto,
     @Param('templateId') templateId: string
-  ): Promise<NotificationTemplateResponse> {
+  ): Promise<WorkflowResponse> {
     return this.changeTemplateActiveStatusUsecase.execute(
       ChangeTemplateActiveStatusCommand.create({
         organizationId: user.organizationId,
