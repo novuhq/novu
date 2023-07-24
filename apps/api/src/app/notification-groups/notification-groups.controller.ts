@@ -64,7 +64,6 @@ export class NotificationGroupsController {
     );
   }
 
-  // TODO: add pagination options
   @Get('')
   @ExternalApiAccessible()
   @ApiResponse(NotificationGroupResponseDto, 200, true)

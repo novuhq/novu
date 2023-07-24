@@ -77,7 +77,6 @@ export class IntegrationsController {
     );
   }
 
-  // TODO: Add pagination options
   @Get('/active')
   @ApiOkResponse({
     type: IntegrationResponseDto,

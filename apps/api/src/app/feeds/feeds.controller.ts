@@ -52,7 +52,6 @@ export class FeedsController {
     );
   }
 
-  // TODO: add pagination options
   @Get('')
   @ApiResponse(FeedResponseDto, 200, true)
   @ApiOperation({
