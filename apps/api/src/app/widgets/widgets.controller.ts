@@ -17,7 +17,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeController, ApiNoContentResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { AnalyticsService, GetSubscriberPreference, GetSubscriberPreferenceCommand } from '@novu/application-generic';
 import { MessageEntity, SubscriberEntity } from '@novu/dal';
-import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
+import { MarkMessagesAsEnum, ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 
 import { SubscriberSession } from '../shared/framework/user.decorator';
 import {
@@ -267,8 +267,8 @@ export class WidgetsController {
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,
-      markAs: 'read',
-      feedIds,
+      markAs: MarkMessagesAsEnum.READ,
+      feedIdentifiers: feedIds,
     });
 
     return await this.markAllMessagesAsUsecase.execute(command);
@@ -288,8 +288,8 @@ export class WidgetsController {
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,
-      markAs: 'seen',
-      feedIds,
+      markAs: MarkMessagesAsEnum.SEEN,
+      feedIdentifiers: feedIds,
     });
 
     return await this.markAllMessagesAsUsecase.execute(command);

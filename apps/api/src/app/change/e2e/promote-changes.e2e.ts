@@ -19,10 +19,7 @@ import {
 } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 
-import {
-  CreateNotificationTemplateRequestDto,
-  UpdateNotificationTemplateRequestDto,
-} from '../../notification-template/dto';
+import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from '../../workflows/dto';
 
 describe('Promote changes', () => {
   let session: UserSession;
@@ -55,7 +52,7 @@ describe('Promote changes', () => {
         _parentId: parentGroup._id,
       });
 
-      const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+      const testTemplate: Partial<CreateWorkflowRequestDto> = {
         name: 'test email template',
         description: 'This is a test description',
         tags: ['test-tag'],
@@ -87,7 +84,7 @@ describe('Promote changes', () => {
         ],
       };
 
-      const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+      const { body } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
       const notificationTemplateId = body.data._id;
 
       await session.applyChanges({
@@ -103,7 +100,7 @@ describe('Promote changes', () => {
     });
 
     it('should promote step variables default values', async () => {
-      const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+      const testTemplate: Partial<CreateWorkflowRequestDto> = {
         name: 'test email template',
         description: 'This is a test description',
         notificationGroupId: session.notificationGroups[0]._id,
@@ -127,7 +124,7 @@ describe('Promote changes', () => {
         ],
       };
 
-      const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+      const { body } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
       const notificationTemplateId = body.data._id;
 
       await session.applyChanges({
@@ -150,7 +147,7 @@ describe('Promote changes', () => {
       expect(variable?.defaultValue).to.eq('Test Default Value');
 
       const step = body.data.steps[0];
-      const update: Partial<UpdateNotificationTemplateRequestDto> = {
+      const update: Partial<UpdateWorkflowRequestDto> = {
         steps: [
           {
             _id: step._templateId,
@@ -171,7 +168,7 @@ describe('Promote changes', () => {
         ],
       };
 
-      await session.testAgent.put(`/v1/notification-templates/${notificationTemplateId}`).send(update);
+      await session.testAgent.put(`/v1/workflows/${notificationTemplateId}`).send(update);
 
       await session.applyChanges({
         enabled: false,
@@ -190,7 +187,7 @@ describe('Promote changes', () => {
     });
 
     it('delete message', async () => {
-      const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+      const testTemplate: Partial<CreateWorkflowRequestDto> = {
         name: 'test email template',
         description: 'This is a test description',
         tags: ['test-tag'],
@@ -222,9 +219,9 @@ describe('Promote changes', () => {
         ],
       };
 
-      let { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+      let { body } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
 
-      const updateData: UpdateNotificationTemplateRequestDto = {
+      const updateData: UpdateWorkflowRequestDto = {
         name: testTemplate.name,
         tags: testTemplate.tags,
         description: testTemplate.description,
@@ -234,7 +231,7 @@ describe('Promote changes', () => {
 
       const notificationTemplateId = body.data._id;
 
-      body = await session.testAgent.put(`/v1/notification-templates/${notificationTemplateId}`).send(updateData);
+      body = await session.testAgent.put(`/v1/workflows/${notificationTemplateId}`).send(updateData);
 
       await session.applyChanges({
         enabled: false,
@@ -249,7 +246,7 @@ describe('Promote changes', () => {
     });
 
     it('update active flag on notification template', async () => {
-      const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+      const testTemplate: Partial<CreateWorkflowRequestDto> = {
         name: 'test email template',
         description: 'This is a test description',
         tags: ['test-tag'],
@@ -257,7 +254,7 @@ describe('Promote changes', () => {
         steps: [],
       };
 
-      const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+      const { body } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
 
       await session.applyChanges({
         enabled: false,
@@ -265,7 +262,7 @@ describe('Promote changes', () => {
 
       const notificationTemplateId = body.data._id;
 
-      await session.testAgent.put(`/v1/notification-templates/${notificationTemplateId}/status`).send({ active: true });
+      await session.testAgent.put(`/v1/workflows/${notificationTemplateId}/status`).send({ active: true });
 
       await session.applyChanges({
         enabled: false,
@@ -281,7 +278,7 @@ describe('Promote changes', () => {
     });
 
     it('update existing message', async () => {
-      const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+      const testTemplate: Partial<CreateWorkflowRequestDto> = {
         name: 'test email template',
         description: 'This is a test description',
         tags: ['test-tag'],
@@ -315,7 +312,7 @@ describe('Promote changes', () => {
 
       let {
         body: { data },
-      } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+      } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
 
       await session.applyChanges({
         enabled: false,
@@ -324,7 +321,7 @@ describe('Promote changes', () => {
       const notificationTemplateId = data._id;
 
       const step = data.steps[0];
-      const update: UpdateNotificationTemplateRequestDto = {
+      const update: UpdateWorkflowRequestDto = {
         name: data.name,
         description: data.description,
         tags: data.tags,
@@ -343,9 +340,7 @@ describe('Promote changes', () => {
         ],
       };
 
-      const body: any = await session.testAgent
-        .put(`/v1/notification-templates/${notificationTemplateId}`)
-        .send(update);
+      const body: any = await session.testAgent.put(`/v1/workflows/${notificationTemplateId}`).send(update);
       data = body.data;
 
       await session.applyChanges({
@@ -361,7 +356,7 @@ describe('Promote changes', () => {
     });
 
     it('add one more message', async () => {
-      const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+      const testTemplate: Partial<CreateWorkflowRequestDto> = {
         name: 'test email template',
         description: 'This is a test description',
         tags: ['test-tag'],
@@ -395,7 +390,7 @@ describe('Promote changes', () => {
 
       let {
         body: { data },
-      } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+      } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
       await session.applyChanges({
         enabled: false,
       });
@@ -403,7 +398,7 @@ describe('Promote changes', () => {
       const notificationTemplateId = data._id;
 
       const step = data.steps[0];
-      const update: UpdateNotificationTemplateRequestDto = {
+      const update: UpdateWorkflowRequestDto = {
         name: data.name,
         description: data.description,
         tags: data.tags,
@@ -451,9 +446,7 @@ describe('Promote changes', () => {
         ],
       };
 
-      const body: any = await session.testAgent
-        .put(`/v1/notification-templates/${notificationTemplateId}`)
-        .send(update);
+      const body: any = await session.testAgent.put(`/v1/workflows/${notificationTemplateId}`).send(update);
       data = body.data;
 
       await session.applyChanges({
@@ -469,7 +462,7 @@ describe('Promote changes', () => {
     });
 
     it('should count not applied changes', async () => {
-      const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+      const testTemplate: Partial<CreateWorkflowRequestDto> = {
         name: 'test email template',
         description: 'This is a test description',
         tags: ['test-tag'],
@@ -501,7 +494,7 @@ describe('Promote changes', () => {
         ],
       };
 
-      await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+      await session.testAgent.post(`/v1/workflows`).send(testTemplate);
 
       const {
         body: { data },
@@ -511,7 +504,7 @@ describe('Promote changes', () => {
     });
 
     it('should count delete change', async () => {
-      const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+      const testTemplate: Partial<CreateWorkflowRequestDto> = {
         name: 'test email template',
         description: 'This is a test description',
         tags: ['test-tag'],
@@ -545,13 +538,13 @@ describe('Promote changes', () => {
 
       const {
         body: { data },
-      } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+      } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
       const notificationTemplateId = data._id;
       await session.applyChanges({
         enabled: false,
       });
 
-      await session.testAgent.delete(`/v1/notification-templates/${notificationTemplateId}`);
+      await session.testAgent.delete(`/v1/workflows/${notificationTemplateId}`);
 
       const {
         body: { data: count },
@@ -567,7 +560,7 @@ describe('Promote changes', () => {
         name: 'Test name',
       });
 
-      const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+      const testTemplate: Partial<CreateWorkflowRequestDto> = {
         name: 'test email template',
         description: 'This is a test description',
         tags: ['test-tag'],
@@ -577,7 +570,7 @@ describe('Promote changes', () => {
 
       const {
         body: { data },
-      } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+      } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
       const notificationTemplateId = data._id;
       const changes = await changeRepository.find(
         {
@@ -622,7 +615,7 @@ describe('Promote changes', () => {
         _parentId: parentGroup._id,
       });
 
-      const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+      const testTemplate: Partial<CreateWorkflowRequestDto> = {
         name: 'test email template',
         description: 'This is a test description',
         tags: ['test-tag'],
@@ -654,7 +647,7 @@ describe('Promote changes', () => {
         ],
       };
 
-      const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+      const { body } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
       const notificationTemplateId = body.data._id;
 
       await session.applyChanges({
@@ -670,7 +663,7 @@ describe('Promote changes', () => {
     });
 
     it('should merge creation, and status changes to one change', async () => {
-      const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+      const testTemplate: Partial<CreateWorkflowRequestDto> = {
         name: 'test email template',
         description: 'This is a test description',
         tags: ['test-tag'],
@@ -678,15 +671,13 @@ describe('Promote changes', () => {
         steps: [],
       };
 
-      const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+      const { body } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
 
       const notificationTemplateId = body.data._id;
 
-      await session.testAgent.put(`/v1/notification-templates/${notificationTemplateId}/status`).send({ active: true });
+      await session.testAgent.put(`/v1/workflows/${notificationTemplateId}/status`).send({ active: true });
 
-      await session.testAgent
-        .put(`/v1/notification-templates/${notificationTemplateId}/status`)
-        .send({ active: false });
+      await session.testAgent.put(`/v1/workflows/${notificationTemplateId}/status`).send({ active: false });
 
       const changes = await changeRepository.find(
         {
