@@ -1,5 +1,4 @@
-import { ChannelTypeEnum } from '@novu/shared';
-import { ICredentials } from '@novu/dal';
+import { ChannelTypeEnum, ICredentials } from '@novu/shared';
 import { SparkPostEmailProvider } from '@novu/sparkpost';
 
 import { BaseHandler } from './base.handler';

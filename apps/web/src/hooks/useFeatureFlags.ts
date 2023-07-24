@@ -1,12 +1,18 @@
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useFlags } from 'launchdarkly-react-client-sdk';
 
-import { IS_TEMPLATE_STORE_ENABLED } from '../config';
+import { IS_TEMPLATE_STORE_ENABLED, IS_MULTI_PROVIDER_CONFIGURATION_ENABLED } from '../config';
 
 const prepareBooleanStringFeatureFlag = (value: string | undefined, defaultValue: boolean): boolean => {
   const preparedValue = value === 'true';
 
   return preparedValue || defaultValue;
+};
+
+const useGetFlagByKey = <T>(key: FeatureFlagsKeysEnum): T => {
+  const { [key]: featureFlag } = useFlags();
+
+  return featureFlag;
 };
 
 export const useIsTemplateStoreEnabled = (): boolean => {
@@ -19,8 +25,14 @@ export const useIsTemplateStoreEnabled = (): boolean => {
   return isTemplateStoreEnabled ?? defaultValue;
 };
 
-const useGetFlagByKey = <T>(key: FeatureFlagsKeysEnum): T => {
-  const { [key]: featureFlag } = useFlags();
+export const useIsMultiProviderConfigurationEnabled = (): boolean => {
+  const value = IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
+  const fallbackValue = false;
+  const defaultValue = prepareBooleanStringFeatureFlag(value, fallbackValue);
 
-  return featureFlag;
+  const isMultiProviderConfigurationEnabled = useGetFlagByKey<boolean>(
+    FeatureFlagsKeysEnum.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED
+  );
+
+  return isMultiProviderConfigurationEnabled ?? defaultValue;
 };

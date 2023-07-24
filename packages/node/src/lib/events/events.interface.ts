@@ -1,6 +1,5 @@
 import {
   DigestUnitEnum,
-  IAttachmentOptions,
   ITriggerPayload,
   TriggerRecipientSubscriber,
   TriggerRecipientsPayload,
@@ -16,14 +15,17 @@ export interface ITriggerPayloadOptions extends IBroadcastPayloadOptions {
   actor?: TriggerRecipientSubscriber;
   transactionId?: string;
 }
-
-export interface IEmailOverrides {
+export interface IIntegrationOverride {
+  integrationIdentifier: string;
+}
+export interface IEmailOverrides extends IIntegrationOverride {
   to?: string[];
   from?: string;
   text?: string;
   replyTo?: string;
   cc?: string[];
   bcc?: string[];
+  senderName?: string;
 }
 
 export type ITriggerOverrides = {
@@ -39,9 +41,13 @@ export type ITriggerOverrides = {
 } & {
   [key in 'apns']?: ITriggerOverrideAPNS;
 } & {
+  [key in 'expo']?: ITriggerOverrideExpo;
+} & {
   [key in 'delay']?: ITriggerOverrideDelayAction;
 } & {
   [key in 'email']?: IEmailOverrides;
+} & {
+  [key in 'sms']?: IIntegrationOverride;
 };
 
 export type ITriggerOverrideDelayAction = {
@@ -105,6 +111,22 @@ export type ITriggerOverrideAPNS = {
   mutableContent?: boolean;
   mdm?: string | Record<string, unknown>;
   urlArgs?: string[];
+};
+
+export type ITriggerOverrideExpo = {
+  to?: string | string[];
+  data?: object;
+  title?: string;
+  body?: string;
+  ttl?: number;
+  expiration?: number;
+  priority?: 'default' | 'normal' | 'high';
+  subtitle?: string;
+  badge?: number;
+  sound?: string;
+  channelId?: string;
+  categoryId?: string;
+  mutableContent?: boolean;
 };
 
 export interface IBulkEvents extends ITriggerPayloadOptions {
