@@ -98,17 +98,24 @@ export class GetNovuIntegration {
 
     switch (command.channelType) {
       case ChannelTypeEnum.EMAIL:
-        return this.createNovuEmailIntegration(organization, command, active);
+        return GetNovuIntegration.createNovuEmailIntegration(
+          organization,
+          command.environmentId,
+          active
+        );
       case ChannelTypeEnum.SMS:
-        return this.createNovuSMSIntegration(command, active);
+        return GetNovuIntegration.createNovuSMSIntegration(
+          command.environmentId,
+          active
+        );
       default:
         return undefined;
     }
   }
 
-  private createNovuEmailIntegration(
+  public static createNovuEmailIntegration(
     organization: OrganizationEntity | null,
-    command: GetNovuIntegrationCommand,
+    environmentId: string,
     active = true
   ): IntegrationEntity {
     const item = new IntegrationEntity();
@@ -124,11 +131,11 @@ export class GetNovuIntegration {
       ipPoolName: 'Demo',
     };
 
-    return this.mapNovuItem(item, command);
+    return GetNovuIntegration.mapNovuItem(item, environmentId);
   }
 
-  private createNovuSMSIntegration(
-    command: GetNovuIntegrationCommand,
+  public static createNovuSMSIntegration(
+    environmentId: string,
     active = true
   ): IntegrationEntity {
     const item = new IntegrationEntity();
@@ -143,14 +150,14 @@ export class GetNovuIntegration {
       from: process.env.NOVU_SMS_INTEGRATION_SENDER,
     };
 
-    return this.mapNovuItem(item, command);
+    return GetNovuIntegration.mapNovuItem(item, environmentId);
   }
 
-  private mapNovuItem(
+  private static mapNovuItem(
     entity: IntegrationEntity,
-    command: GetNovuIntegrationCommand
+    environmentId: string
   ): IntegrationEntity {
-    entity._environmentId = command.environmentId;
+    entity._environmentId = environmentId;
     entity.identifier = entity.providerId;
     entity._id = entity.providerId;
 
