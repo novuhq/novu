@@ -14,7 +14,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiExcludeController, ApiNoContentResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiExcludeController, ApiNoContentResponse, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { AnalyticsService, GetSubscriberPreference, GetSubscriberPreferenceCommand } from '@novu/application-generic';
 import { MessageEntity, SubscriberEntity } from '@novu/dal';
 import { MarkMessagesAsEnum, ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
@@ -56,8 +56,7 @@ import { RemoveAllMessages } from './usecases/remove-messages/remove-all-message
 import { RemoveAllMessagesDto } from './dtos/remove-all-messages.dto';
 
 @Controller('/widgets')
-// @ApiExcludeController()
-@ApiTags('Widgets')
+@ApiExcludeController()
 export class WidgetsController {
   constructor(
     private initializeSessionUsecase: InitializeSession,
