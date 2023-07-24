@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
 import { Badge } from '@mantine/core';
+
 import { Switch } from '../switch/Switch';
 import { IExtendedColumn, Table } from './Table';
 
@@ -17,7 +18,7 @@ export default {
   },
 } as ComponentMeta<typeof Table>;
 
-const switchCell = (props) => {
+const SwitchCell = (props) => {
   const [status, setStatus] = useState(props.status);
   const switchHandler = () => {
     setStatus((prev) => (prev === 'Enabled' ? 'Disabled' : 'Enabled'));
@@ -26,7 +27,7 @@ const switchCell = (props) => {
   return <Switch label={status} onChange={switchHandler} checked={status === 'Enabled'} />;
 };
 
-const badgeCell = (props) => {
+const BadgeCell = (props) => {
   return (
     <Badge
       sx={(theme) => ({
@@ -57,9 +58,9 @@ interface IExampleData {
 
 const columns: IExtendedColumn<IExampleData>[] = [
   { accessor: 'name', Header: 'Name' },
-  { accessor: 'category', Header: 'Category', Cell: badgeCell },
+  { accessor: 'category', Header: 'Category', Cell: BadgeCell },
   { accessor: 'creationDate', Header: 'Date Created' },
-  { accessor: 'status', Header: 'Status', Cell: switchCell },
+  { accessor: 'status', Header: 'Status', Cell: SwitchCell },
 ];
 
 const data: IExampleData[] = [
