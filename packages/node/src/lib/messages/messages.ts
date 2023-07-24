@@ -14,12 +14,12 @@ export class Messages extends WithHttp implements IMessages {
     data?.channel && (queryParams.channel = data?.channel);
     data?.transactionIds && (queryParams.transactionId = data?.transactionIds);
 
-    return await this.getRequest(BASE_PATH, {
+    return await this.http.get(BASE_PATH, {
       params: queryParams,
     });
   }
 
   async deleteById(messageId: string) {
-    return await this.deleteRequest(`${BASE_PATH}/${messageId}`);
+    return await this.http.delete(`${BASE_PATH}/${messageId}`);
   }
 }

@@ -7,27 +7,26 @@ import { WithHttp } from '../novu.interface';
 
 export class Environments extends WithHttp implements IEnvironments {
   async getCurrent() {
-    return await this.getRequest('/environments/me');
+    return await this.http.get('/environments/me');
   }
 
   async create(payload: IEnvironmentCreatePayload) {
-    return await this.postRequest('/environments', payload);
+    return await this.http.post('/environments', payload);
   }
 
-  // TODO: Add pagination options
   async getAll() {
-    return await this.getRequest('/environments');
+    return await this.http.get('/environments');
   }
 
   async updateOne(id: string, payload: IEnvironmentUpdatePayload) {
-    return await this.putRequest(`/environments/${id}`, payload);
+    return await this.http.put(`/environments/${id}`, payload);
   }
 
   async getApiKeys() {
-    return await this.getRequest('/environments/api-keys');
+    return await this.http.get('/environments/api-keys');
   }
 
   async regenerateApiKeys() {
-    return await this.postRequest('/environments/api-keys/regenerate');
+    return await this.http.post('/environments/api-keys/regenerate');
   }
 }

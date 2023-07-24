@@ -9,25 +9,24 @@ export class NotificationGroups
   implements INotificationGroups
 {
   async create(name: string) {
-    return await this.postRequest(`/notification-groups`, { name });
+    return await this.http.post(`/notification-groups`, { name });
   }
 
-  // TODO: add pagination options
   async get() {
-    return await this.getRequest(`/notification-groups`);
+    return await this.http.get(`/notification-groups`);
   }
 
   async getOne(id: string) {
-    return await this.getRequest(`/notification-groups/${id}`);
+    return await this.http.get(`/notification-groups/${id}`);
   }
 
   async update(id: string, data: INotificationGroupUpdatePayload) {
-    return await this.patchRequest(`/notification-groups/${id}`, {
+    return await this.http.patch(`/notification-groups/${id}`, {
       ...data,
     });
   }
 
   async delete(id: string) {
-    return await this.deleteRequest(`/notification-groups/${id}`);
+    return await this.http.delete(`/notification-groups/${id}`);
   }
 }

@@ -11,14 +11,14 @@ const BASE_PATH = '/topics';
 
 export class Topics extends WithHttp implements ITopics {
   async create(data: ITopicPayload) {
-    return await this.postRequest(BASE_PATH, {
+    return await this.http.post(BASE_PATH, {
       key: data.key,
       name: data.name,
     });
   }
 
   async addSubscribers(topicKey: TopicKey, data: ITopicSubscribersPayload) {
-    return await this.postRequest(`${BASE_PATH}/${topicKey}/subscribers`, data);
+    return await this.http.post(`${BASE_PATH}/${topicKey}/subscribers`, data);
   }
 
   /**
@@ -28,7 +28,7 @@ export class Topics extends WithHttp implements ITopics {
     topicKey: TopicKey,
     externalSubscriberId: ExternalSubscriberId
   ) {
-    return await this.getRequest(
+    return await this.http.get(
       `${BASE_PATH}/${topicKey}/subscribers/${externalSubscriberId}`
     );
   }
@@ -37,20 +37,20 @@ export class Topics extends WithHttp implements ITopics {
     topicKey: TopicKey,
     externalSubscriberId: ExternalSubscriberId
   ) {
-    return await this.getRequest(
+    return await this.http.get(
       `${BASE_PATH}/${topicKey}/subscribers/${externalSubscriberId}`
     );
   }
 
   async removeSubscribers(topicKey: TopicKey, data: ITopicSubscribersPayload) {
-    return await this.postRequest(
+    return await this.http.post(
       `${BASE_PATH}/${topicKey}/subscribers/removal`,
       data
     );
   }
 
   async list(data: ITopicPaginationPayload) {
-    return await this.getRequest(BASE_PATH, {
+    return await this.http.get(BASE_PATH, {
       params: {
         // handle page = 0 by toString()
         ...(data?.page?.toString() && { page: data.page }),
@@ -61,15 +61,15 @@ export class Topics extends WithHttp implements ITopics {
   }
 
   async delete(topicKey: TopicKey) {
-    return await this.deleteRequest(`${BASE_PATH}/${topicKey}`);
+    return await this.http.delete(`${BASE_PATH}/${topicKey}`);
   }
 
   async get(topicKey: TopicKey) {
-    return await this.getRequest(`${BASE_PATH}/${topicKey}`);
+    return await this.http.get(`${BASE_PATH}/${topicKey}`);
   }
 
   async rename(topicKey: TopicKey, newName: TopicName) {
-    return await this.patchRequest(`${BASE_PATH}/${topicKey}`, {
+    return await this.http.patch(`${BASE_PATH}/${topicKey}`, {
       name: newName,
     });
   }

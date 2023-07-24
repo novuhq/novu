@@ -3,15 +3,14 @@ import { WithHttp } from '../novu.interface';
 
 export class Feeds extends WithHttp implements IFeeds {
   async create(name: string) {
-    return await this.postRequest(`/feeds`, { name });
+    return await this.http.post(`/feeds`, { name });
   }
 
-  // TODO: Add pagination options
   async get() {
-    return await this.getRequest(`/feeds`);
+    return await this.http.get(`/feeds`);
   }
 
   async delete(feedId: string) {
-    return await this.deleteRequest(`/feeds/${feedId}`);
+    return await this.http.delete(`/feeds/${feedId}`);
   }
 }

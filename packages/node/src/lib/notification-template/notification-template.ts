@@ -13,7 +13,7 @@ export class NotificationTemplates
    * @param {number} limit - Number of results to fetch in one page
    */
   async getAll(page = 0, limit = 10) {
-    return await this.getRequest(`/notification-templates`, {
+    return await this.http.get(`/notification-templates`, {
       params: { page, limit },
     });
   }
@@ -22,7 +22,7 @@ export class NotificationTemplates
    * @param {INotificationTemplatePayload} data - All the additional parameters to create a notification-template
    */
   async create(data: INotificationTemplatePayload) {
-    return await this.postRequest(`/notification-templates`, {
+    return await this.http.post(`/notification-templates`, {
       ...data,
     });
   }
@@ -32,7 +32,7 @@ export class NotificationTemplates
    * @param {INotificationTemplatePayload} data - All the additional parameters to update a notification-template
    */
   async update(templateId: string, data: INotificationTemplatePayload) {
-    return await this.putRequest(`/notification-templates/${templateId}`, {
+    return await this.http.put(`/notification-templates/${templateId}`, {
       ...data,
     });
   }
@@ -41,14 +41,14 @@ export class NotificationTemplates
    * @param {string} templateId - templateId of the notification-template to delete
    */
   async delete(templateId: string) {
-    return await this.deleteRequest(`/notification-templates/${templateId}`);
+    return await this.http.delete(`/notification-templates/${templateId}`);
   }
 
   /**
    * @param {string} templateId - templateId of the notification-template to get details of
    */
   async getOne(templateId: string) {
-    return await this.getRequest(`/notification-templates/${templateId}`);
+    return await this.http.get(`/notification-templates/${templateId}`);
   }
 
   /**
@@ -56,11 +56,8 @@ export class NotificationTemplates
    * @param {boolean} active - status of the notification-template
    */
   async updateStatus(templateId: string, active: boolean) {
-    return await this.putRequest(
-      `/notification-templates/${templateId}/status`,
-      {
-        active,
-      }
-    );
+    return await this.http.put(`/notification-templates/${templateId}/status`, {
+      active,
+    });
   }
 }

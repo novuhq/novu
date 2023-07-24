@@ -6,21 +6,19 @@ import {
 import { WithHttp } from '../novu.interface';
 
 export class Integrations extends WithHttp implements IIntegrations {
-  // TODO: Add pagination options
   async getAll() {
-    return await this.getRequest('/integrations');
+    return await this.http.get('/integrations');
   }
 
-  // TODO: Add pagination options
   async getActive() {
-    return await this.getRequest('/integrations/active');
+    return await this.http.get('/integrations/active');
   }
 
   /**
    * @param {string} providerId - Id of the provider to get status
    */
   async getWebhookProviderStatus(providerId: string) {
-    return await this.getRequest(
+    return await this.http.get(
       `integrations/webhook/provider/${providerId}/status`
     );
   }
@@ -30,7 +28,7 @@ export class Integrations extends WithHttp implements IIntegrations {
    * @param {IIntegrationsPayload} data - All the parameters to create an Integration
    */
   async create(providerId: string, data: IIntegrationsPayload) {
-    return await this.postRequest(`/integrations`, {
+    return await this.http.post(`/integrations`, {
       providerId,
       ...data,
     });
@@ -41,7 +39,7 @@ export class Integrations extends WithHttp implements IIntegrations {
    * @param {IIntegrationsUpdatePayload} data - All the parameters to update an integration
    */
   async update(integrationId: string, data: IIntegrationsUpdatePayload) {
-    return await this.putRequest(`/integrations/${integrationId}`, {
+    return await this.http.put(`/integrations/${integrationId}`, {
       ...data,
     });
   }
@@ -50,10 +48,10 @@ export class Integrations extends WithHttp implements IIntegrations {
    * @param {string} integrationId - integrationId of the integration to delete
    */
   async delete(integrationId: string) {
-    return await this.deleteRequest(`/integrations/${integrationId}`);
+    return await this.http.delete(`/integrations/${integrationId}`);
   }
 
   async getInAppStatus() {
-    return await this.getRequest('/integrations/in-app/status');
+    return await this.http.get('/integrations/in-app/status');
   }
 }

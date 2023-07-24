@@ -13,7 +13,7 @@ import { WithHttp } from '../novu.interface';
 
 export class Subscribers extends WithHttp implements ISubscribers {
   async list(page = 0, limit = 10) {
-    return await this.getRequest(`/subscribers`, {
+    return await this.http.get(`/subscribers`, {
       params: {
         page,
         limit,
@@ -22,39 +22,38 @@ export class Subscribers extends WithHttp implements ISubscribers {
   }
 
   async get(subscriberId: string) {
-    return await this.getRequest(`/subscribers/${subscriberId}`);
+    return await this.http.get(`/subscribers/${subscriberId}`);
   }
 
   /**
    * @deprecated Use create instead
    */
   async identify(subscriberId: string, data: ISubscriberPayload) {
-    return await this.postRequest(`/subscribers`, {
+    return await this.http.post(`/subscribers`, {
       subscriberId,
       ...data,
     });
   }
 
   async create(subscriberId: string, data: ISubscriberPayload) {
-    return await this.postRequest(`/subscribers`, {
+    return await this.http.post(`/subscribers`, {
       subscriberId,
       ...data,
     });
   }
 
   async update(subscriberId: string, data: ISubscriberPayload) {
-    return await this.putRequest(`/subscribers/${subscriberId}`, {
+    return await this.http.put(`/subscribers/${subscriberId}`, {
       ...data,
     });
   }
 
-  // TODO: Add integrationIdentifier optional parameter
   async setCredentials(
     subscriberId: string,
     providerId: string,
     credentials: IChannelCredentials
   ) {
-    return await this.putRequest(`/subscribers/${subscriberId}/credentials`, {
+    return await this.http.put(`/subscribers/${subscriberId}/credentials`, {
       providerId,
       credentials: {
         ...credentials,
@@ -63,7 +62,7 @@ export class Subscribers extends WithHttp implements ISubscribers {
   }
 
   async deleteCredentials(subscriberId: string, providerId: string) {
-    return await this.deleteRequest(
+    return await this.http.delete(
       `/subscribers/${subscriberId}/credentials/${providerId}`
     );
   }
@@ -72,27 +71,24 @@ export class Subscribers extends WithHttp implements ISubscribers {
    * @deprecated Use deleteCredentials instead
    */
   async unsetCredentials(subscriberId: string, providerId: string) {
-    return await this.putRequest(`/subscribers/${subscriberId}/credentials`, {
+    return await this.http.put(`/subscribers/${subscriberId}/credentials`, {
       providerId,
       credentials: { webhookUrl: undefined, deviceTokens: [] },
     });
   }
 
   async updateOnlineStatus(subscriberId: string, online: boolean) {
-    return await this.patchRequest(
-      `/subscribers/${subscriberId}/online-status`,
-      {
-        online,
-      }
-    );
+    return await this.http.patch(`/subscribers/${subscriberId}/online-status`, {
+      online,
+    });
   }
 
   async delete(subscriberId: string) {
-    return await this.deleteRequest(`/subscribers/${subscriberId}`);
+    return await this.http.delete(`/subscribers/${subscriberId}`);
   }
 
   async getPreference(subscriberId: string) {
-    return await this.getRequest(`/subscribers/${subscriberId}/preferences`);
+    return await this.http.get(`/subscribers/${subscriberId}/preferences`);
   }
 
   async updatePreference(
@@ -100,7 +96,7 @@ export class Subscribers extends WithHttp implements ISubscribers {
     templateId: string,
     data: IUpdateSubscriberPreferencePayload
   ) {
-    return await this.patchRequest(
+    return await this.http.patch(
       `/subscribers/${subscriberId}/preferences/${templateId}`,
       {
         ...data,
@@ -112,7 +108,7 @@ export class Subscribers extends WithHttp implements ISubscribers {
     subscriberId: string,
     params: IGetSubscriberNotificationFeedParams
   ) {
-    return await this.getRequest(
+    return await this.http.get(
       `/subscribers/${subscriberId}/notifications/feed`,
       {
         params,
@@ -120,9 +116,8 @@ export class Subscribers extends WithHttp implements ISubscribers {
     );
   }
 
-  // TODO: Add read option and change method name to getInAppMessagesCount
   async getUnseenCount(subscriberId: string, seen: boolean) {
-    return await this.getRequest(
+    return await this.http.get(
       `/subscribers/${subscriberId}/notifications/unseen`,
       {
         params: {
@@ -136,7 +131,7 @@ export class Subscribers extends WithHttp implements ISubscribers {
    * deprecated use markMessageAs instead
    */
   async markMessageSeen(subscriberId: string, messageId: string) {
-    return await this.postRequest(
+    return await this.http.post(
       `/subscribers/${subscriberId}/messages/markAs`,
       {
         messageId,
@@ -149,7 +144,7 @@ export class Subscribers extends WithHttp implements ISubscribers {
    * deprecated use markMessageAs instead
    */
   async markMessageRead(subscriberId: string, messageId: string) {
-    return await this.postRequest(
+    return await this.http.post(
       `/subscribers/${subscriberId}/messages/markAs`,
       {
         messageId,
@@ -163,7 +158,7 @@ export class Subscribers extends WithHttp implements ISubscribers {
     messageId: string,
     mark: IMarkFields
   ) {
-    return await this.postRequest(
+    return await this.http.post(
       `/subscribers/${subscriberId}/messages/markAs`,
       {
         messageId,
@@ -189,7 +184,7 @@ export class Subscribers extends WithHttp implements ISubscribers {
     type: ButtonTypeEnum,
     data: IMarkMessageActionFields
   ) {
-    return await this.postRequest(
+    return await this.http.post(
       `/subscribers/${subscriberId}/messages/${messageId}/actions/${type}`,
       {
         status: data.status,

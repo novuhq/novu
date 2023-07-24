@@ -55,18 +55,17 @@ export class Novu extends EventEmitter {
     this.topics = new Topics(this.http);
     this.integrations = new Integrations(this.http);
     this.messages = new Messages(this.http);
+
+    this.trigger = this.events.trigger;
+    this.bulkTrigger = this.events.bulkTrigger;
+    this.broadcast = this.events.broadcast;
   }
 
-  public trigger(workflowIdentifier: string, data: ITriggerPayloadOptions) {
-    return this.events.trigger(workflowIdentifier, data);
-  }
+  public trigger: typeof Events.prototype.trigger;
 
-  public bulkTrigger(events: IBulkEvents[]) {
-    return this.events.bulkTrigger(events);
-  }
-  public broadcast(workflowIdentifier: string, data: IBroadcastPayloadOptions) {
-    return this.events.broadcast(workflowIdentifier, data);
-  }
+  public bulkTrigger: typeof Events.prototype.bulkTrigger;
+
+  public broadcast: typeof Events.prototype.broadcast;
 
   private buildBackendUrl(config?: INovuConfiguration) {
     const novuApiVersion = 'v1';

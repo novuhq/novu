@@ -2,19 +2,18 @@ import { IChanges } from './changes.interface';
 import { WithHttp } from '../novu.interface';
 
 export class Changes extends WithHttp implements IChanges {
-  // TODO: add pagination options and promoted params
   /**
    * @returns {promise<object>} - Returns an object containing all changes
    */
   async get() {
-    return await this.getRequest(`/changes`);
+    return await this.http.get(`/changes`);
   }
 
   /**
    * @returns {promise<object>} - Returns the number of changes
    */
   async getCount() {
-    return await this.getRequest(`/changes/count`);
+    return await this.http.get(`/changes/count`);
   }
 
   /**
@@ -22,7 +21,7 @@ export class Changes extends WithHttp implements IChanges {
    * @returns {promise<object>} - Applies the change specified by the ID
    */
   async applyOne(changeId: string) {
-    return await this.postRequest(`/changes/${changeId}/apply`, {});
+    return await this.http.post(`/changes/${changeId}/apply`, {});
   }
 
   /**
@@ -30,7 +29,7 @@ export class Changes extends WithHttp implements IChanges {
    * @returns {promise<object>} - Applies all changes specified in the array
    */
   async applyMany(changeIds: string[]) {
-    return await this.postRequest(`/changes/bulk/apply`, {
+    return await this.http.post(`/changes/bulk/apply`, {
       ChangeIDs: changeIds,
     });
   }

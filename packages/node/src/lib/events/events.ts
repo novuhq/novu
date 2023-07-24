@@ -8,7 +8,7 @@ import { WithHttp } from '../novu.interface';
 
 export class Events extends WithHttp implements IEvents {
   async trigger(workflowIdentifier: string, data: ITriggerPayloadOptions) {
-    return await this.postRequest(`/events/trigger`, {
+    return await this.http.post(`/events/trigger`, {
       name: workflowIdentifier,
       to: data.to,
       payload: {
@@ -21,13 +21,13 @@ export class Events extends WithHttp implements IEvents {
   }
 
   async bulkTrigger(events: IBulkEvents[]) {
-    return await this.postRequest(`/events/trigger/bulk`, {
+    return await this.http.post(`/events/trigger/bulk`, {
       events,
     });
   }
 
   async broadcast(workflowIdentifier: string, data: IBroadcastPayloadOptions) {
-    return await this.postRequest(`/events/trigger/broadcast`, {
+    return await this.http.post(`/events/trigger/broadcast`, {
       name: workflowIdentifier,
       payload: {
         ...data?.payload,
@@ -37,6 +37,6 @@ export class Events extends WithHttp implements IEvents {
   }
 
   async cancel(transactionId: string) {
-    return await this.deleteRequest(`/events/trigger/${transactionId}`);
+    return await this.http.delete(`/events/trigger/${transactionId}`);
   }
 }
