@@ -25,6 +25,7 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
     const fakeSubscriberId = 'fake-subscriber-id';
     try {
       await markAllSubscriberMessagesAs(session, fakeSubscriberId, MarkMessagesAsEnum.READ);
+      throw new Error('Should not reach this point');
     } catch (error) {
       expect(error.response.status).to.equal(404);
       expect(error.response.data.message).to.equal(
