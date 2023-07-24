@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { TableProps, Table as MantineTable, Pagination } from '@mantine/core';
+import { TableProps, Table as MantineTable, Pagination, Button } from '@mantine/core';
 import styled from '@emotion/styled';
 import {
   useTable,
@@ -15,6 +15,8 @@ import {
 import useStyles from './Table.styles';
 import { colors } from '../config';
 import { DefaultCell } from './DefaultCell';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { ChevronLeft, ChevronRight } from '../icons';
 
 const NoDataPlaceholder = styled.div`
   padding: 0 30px;
@@ -39,6 +41,8 @@ export interface ITableProps<T extends object> {
   onRowClick?: (row: Row<T>) => void;
   noDataPlaceholder?: React.ReactNode;
   loadingItems?: number;
+  hasMore?: boolean;
+  minimalPagination?: boolean;
 }
 
 type UseTableProps<T extends object> = UsePaginationInstanceProps<T> &
@@ -79,7 +83,7 @@ export function Table<T extends object>({
       columns,
       defaultColumn,
       data: loading ? fakeData : data,
-      ...(pagination
+      ...(pagination && !pagination?.minimalPagination
         ? {
             initialState: { pageIndex: current, pageSize },
             manualPagination: true,
@@ -97,7 +101,11 @@ export function Table<T extends object>({
   }, [pageIndex]);
 
   const handlePageChange = (pageNumber) => {
-    gotoPage(pageNumber - 1);
+    if (pagination?.minimalPagination) {
+      onPageChange(pageNumber);
+    } else {
+      gotoPage(pageNumber - 1);
+    }
   };
   const getPageCount = () => {
     return Math.ceil(total / pageSize);
@@ -151,7 +159,7 @@ export function Table<T extends object>({
         </tbody>
       </MantineTable>
       {!loading && noData && noDataPlaceholder && <NoDataPlaceholder>{noDataPlaceholder}</NoDataPlaceholder>}
-      {!loading && pagination && total > 0 && pageSize > 1 && getPageCount() > 1 && (
+      {!loading && pagination && total > 0 && pageSize > 1 && getPageCount() > 1 && !pagination?.minimalPagination && (
         <div style={{ marginTop: 'auto' }}>
           <Pagination
             styles={{
@@ -170,6 +178,37 @@ export function Table<T extends object>({
             onChange={handlePageChange}
             position="center"
           />
+        </div>
+      )}
+
+      {!loading && pagination && pageSize > 1 && pagination?.minimalPagination && (
+        <div
+          style={{
+            marginTop: '10px',
+            display: 'flex',
+            width: '100%',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: '15px',
+          }}
+        >
+          <Button.Group>
+            <Button
+              variant="outline"
+              disabled={pagination?.current === 0 || loading}
+              onClick={() => handlePageChange(pagination?.current - 1)}
+            >
+              <ChevronLeft />
+            </Button>
+            <Button
+              loading={loading}
+              variant="outline"
+              disabled={!pagination?.hasMore || loading}
+              onClick={() => handlePageChange(pagination?.current + 1)}
+            >
+              <ChevronRight />
+            </Button>
+          </Button.Group>
         </div>
       )}
     </div>
