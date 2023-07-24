@@ -1,6 +1,6 @@
 {
   "name": "@novu/docs",
-  "version": "0.16.3",
+  "version": "0.16.4",
   "private": true,
   "scripts": {
     "docusaurus": "docusaurus",

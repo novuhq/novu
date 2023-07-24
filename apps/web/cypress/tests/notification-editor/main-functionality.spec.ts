@@ -45,6 +45,27 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.getByTestId('emailPreheader').should('have.value', 'this is email preheader');
   });
 
+  it('should save avatar enabled and content for in app', function () {
+    cy.waitLoadTemplatePage(() => {
+      cy.visit('/workflows/create');
+    });
+    fillBasicNotificationDetails('Test save avatar');
+    cy.waitForNetworkIdle(500);
+    addAndEditChannel('inApp');
+    cy.waitForNetworkIdle(500);
+    cy.get('.ace_text-input').first().type('new content for notification', {
+      force: true,
+    });
+    cy.getByTestId('enable-add-avatar').click();
+    cy.getByTestId('choose-avatar-btn').click();
+    cy.getByTestId('avatar-icon-info').click();
+
+    cy.getByTestId('notification-template-submit-btn').click();
+
+    cy.getByTestId('enabled-avatar').should('be.checked');
+    cy.getByTestId('avatar-icon-info').should('be.visible');
+  });
+
   it('should edit in-app notification', function () {
     const template = this.session.templates[0];
 
