@@ -65,7 +65,7 @@ function TriggerButton({ setOpened }: { setOpened: (value: boolean) => void }) {
 
   const { groups, loading: notificationGroupLoading } = useNotificationGroup();
 
-  const { mutateAsync: createNotificationTemplate, isLoading: createTemplateLoading } = useMutation<
+  const { mutate: createNotificationTemplate, isLoading: createTemplateLoading } = useMutation<
     INotificationTemplate & { __source?: string },
     { error: string; message: string; statusCode: number },
     { template: ICreateNotificationTemplateDto; params: { __source?: string } }
@@ -79,7 +79,7 @@ function TriggerButton({ setOpened }: { setOpened: (value: boolean) => void }) {
   const hasToCreateOnboardingTemplate =
     !templatesLoading && !notificationGroupLoading && !createTemplateLoading && !onboardingNotificationTemplate;
 
-  useEffectOnce(async () => {
+  useEffectOnce(() => {
     const payloadToCreate = {
       notificationGroupId: groups[0]._id,
       isBlueprint: false,
@@ -100,7 +100,7 @@ function TriggerButton({ setOpened }: { setOpened: (value: boolean) => void }) {
       ],
     };
 
-    await createNotificationTemplate({
+    createNotificationTemplate({
       template: payloadToCreate as unknown as ICreateNotificationTemplateDto,
       params: { __source: TemplateCreationSourceEnum.ONBOARDING_IN_APP },
     });

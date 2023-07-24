@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback, useState } from 'react';
+import { useQuery, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
 import { IEnvironment } from '@novu/shared';
 
 import { getCurrentEnvironment, getMyEnvironments } from '../api/environment';
@@ -7,6 +7,7 @@ import { api } from '../api/api.client';
 import { useAuthContext } from '../components/providers/AuthProvider';
 import { QueryKeys } from '../api/query.keys';
 import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '../constants/routes.enum';
 
 export type EnvironmentContext = {
   readonly: boolean;
@@ -16,12 +17,13 @@ export type EnvironmentContext = {
   refetchEnvironment: () => void;
 };
 
-export const useEnvController = (): EnvironmentContext => {
+export const useEnvController = (
+  options: UseQueryOptions<IEnvironment, any, IEnvironment> = {}
+): EnvironmentContext => {
   const navigate = useNavigate();
 
   const queryClient = useQueryClient();
   const { setToken } = useAuthContext();
-  const [readonly, setReadonly] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(false);
   const { data: environments, isLoading: isLoadingMyEnvironments } = useQuery<IEnvironment[]>(
     [QueryKeys.myEnvironments],
@@ -31,15 +33,12 @@ export const useEnvController = (): EnvironmentContext => {
     data: environment,
     isLoading: isLoadingCurrentEnvironment,
     refetch: refetchEnvironment,
-  } = useQuery<IEnvironment>([QueryKeys.currentEnvironment], getCurrentEnvironment);
+  } = useQuery<IEnvironment>([QueryKeys.currentEnvironment], getCurrentEnvironment, {
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    ...options,
+  });
   const isAllLoading = isLoading || isLoadingMyEnvironments || isLoadingCurrentEnvironment;
-
-  useEffect(() => {
-    if (!environment) {
-      return;
-    }
-    setReadonly(environment?._parentId !== undefined);
-  }, [environment]);
 
   const setEnvironmentCallback = useCallback(
     async (environmentName: string) => {
@@ -60,7 +59,7 @@ export const useEnvController = (): EnvironmentContext => {
       }
       setToken(tokenResponse.token);
 
-      await navigate('/');
+      await navigate(ROUTES.HOME);
       await queryClient.invalidateQueries();
     },
     [isAllLoading, environments, navigate, queryClient, setToken]
@@ -69,7 +68,7 @@ export const useEnvController = (): EnvironmentContext => {
   return {
     refetchEnvironment,
     environment,
-    readonly,
+    readonly: environment?._parentId !== undefined,
     setEnvironment: setEnvironmentCallback,
     isLoading: isLoadingMyEnvironments || isLoadingCurrentEnvironment || isLoading,
   };

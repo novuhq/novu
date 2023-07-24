@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   Navbar,
   Popover,
@@ -42,20 +42,16 @@ type Props = {};
 
 export function SideNav({}: Props) {
   const navigate = useNavigate();
-  const { setEnvironment, isLoading, environment, readonly } = useEnvController();
-  const location = useLocation();
-  const [opened, setOpened] = useState(readonly);
+  const [opened, setOpened] = useState(false);
+  const { setEnvironment, isLoading, environment, readonly } = useEnvController({
+    onSuccess: (newEnvironment) => {
+      setOpened(!!newEnvironment?._parentId);
+    },
+  });
   const { colorScheme } = useMantineColorScheme();
   const dark = colorScheme === 'dark';
   const { addItem, removeItems } = useSpotlightContext();
   const { classes } = usePopoverStyles();
-
-  useEffect(() => {
-    setOpened(readonly);
-    if (readonly && location.pathname === ROUTES.CHANGES) {
-      navigate(ROUTES.HOME);
-    }
-  }, [readonly, navigate, location.pathname]);
 
   useEffect(() => {
     removeItems(['toggle-environment']);
