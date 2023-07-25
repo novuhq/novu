@@ -12,10 +12,10 @@ import TabItem from '@theme/TabItem';
 
 ### Full Sync
 
-1. Usually done in early stages
-2. CRON based or Data (csv) based
-3. Syncs everything before move into production
-4. Mandatory for usage of Topics (because only existing subscriber can be added in topic)
+1. Usually done in the early stages
+2. CRON-based or Data (CSV) based
+3. Syncs everything before moving into production
+4. Mandatory for the usage of Topics (because only existing subscribers can be added to the topic)
 
 ### Differential Sync
 
@@ -24,12 +24,12 @@ import TabItem from '@theme/TabItem';
 3. Used to make sure data is updated and available
 4. Easy to do
 
-## Bulk subscribers migration using mock data csv file
+## Bulk subscribers migration using mock data CSV file
 
-Here, `mock_data.csv` file is a csv file having mock data. Below script will read this csv file and create new subscriber in Novu. Change example variables values like `API_KEY` value with your own valid values. Download `mock_data.csv` file from [here](/csv/mock_data.csv).
+Here, `mock_data.csv` file is a CSV file having mock data. The below script will read this CSV file and create a new subscriber in Novu. Change example variables values like `API_KEY` value with your valid values. Download `mock_data.csv` file from [here](/csv/mock_data.csv).
 
 :::info
-`mock_data.csv` file should be in same directory of script
+`mock_data.csv` file should be in the same directory of script
 :::
 
 <Tabs groupId="language" queryString>
@@ -174,8 +174,8 @@ fs.createReadStream('mock_data.csv')
 
 ### Steps:-
 
-1. Export your user details in csv format.
-2. Clean this exported csv file. Keep only relevant fields.
-3. Move this csv file in script directory.
-4. Change file name in script with your file name.
+1. Export your user details in CSV format.
+2. Clean this exported CSV file. Keep only relevant fields.
+3. Move this CSV file to the script directory.
+4. Change the file name in the script with your file name.
 5. Run the script. (Make script.sh executable before using)
