@@ -8,7 +8,7 @@ import {
 export { ISubscriberPayload };
 
 export interface ISubscribers {
-  list(page: number);
+  list(page: number, limit: number);
   get(subscriberId: string);
   identify(subscriberId: string, data: ISubscriberPayload);
   update(subscriberId: string, data: ISubscriberPayload);
@@ -18,6 +18,10 @@ export interface ISubscribers {
     providerId: string,
     credentials: IChannelCredentials
   );
+  deleteCredentials(subscriberId: string, providerId: string);
+  /**
+   * @deprecated Use deleteCredentials instead
+   */
   unsetCredentials(subscriberId: string, providerId: string);
   getPreference(subscriberId: string);
   updatePreference(
@@ -31,6 +35,7 @@ export interface ISubscribers {
   );
   getUnseenCount(subscriberId: string, seen: boolean);
   markMessageSeen(subscriberId: string, messageId: string);
+  markMessageRead(subscriberId: string, messageId: string);
   markMessageActionSeen(subscriberId: string, messageId: string, type: string);
 }
 

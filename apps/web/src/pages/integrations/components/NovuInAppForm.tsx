@@ -4,7 +4,8 @@ import { Title, Text, Grid, Stack, useMantineColorScheme } from '@mantine/core';
 import { useMutation } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
 import { ICredentialsDto } from '@novu/shared';
-import { IIntegratedProvider } from '../IntegrationsStorePage';
+
+import { IIntegratedProvider } from '../types';
 import { updateIntegration } from '../../../api/integration';
 import { Switch, Button, colors } from '../../../design-system';
 import { CircleArrowRight } from '../../../design-system/icons/arrows/CircleArrowRight';
