@@ -12,14 +12,23 @@ import {
 import styled from '@emotion/styled';
 
 import { colors, NavMenu, SegmentedControl, shadows } from '../../../design-system';
-import { Activity, Bolt, Box, Settings, Team, Repeat, CheckCircleOutlined, Brand } from '../../../design-system/icons';
+import {
+  Activity,
+  Bolt,
+  Box,
+  Settings,
+  Team,
+  Repeat,
+  CheckCircleOutlined,
+  Brand,
+  Buildings,
+} from '../../../design-system/icons';
 import { ChangesCountBadge } from './ChangesCountBadge';
 import { useEnvController } from '../../../hooks';
 import { useAuthContext } from '../../providers/AuthProvider';
 import OrganizationSelect from './OrganizationSelect';
 import { useSpotlightContext } from '../../providers/SpotlightProvider';
 import { HEADER_HEIGHT } from '../constants';
-import { LimitBar } from '../../../pages/integrations/components/LimitBar';
 import { ROUTES } from '../../../constants/routes.enum';
 import { currentOnboardingStep } from '../../../pages/quick-start/components/route/store';
 
@@ -84,7 +93,7 @@ export function SideNav({}: Props) {
       testId: 'side-nav-quickstart-link',
     },
     { icon: <Bolt />, link: ROUTES.WORKFLOWS, label: 'Workflows', testId: 'side-nav-templates-link' },
-    { icon: <Bolt />, link: ROUTES.TENANTS, label: 'Tenants', testId: 'side-nav-tenants-link' },
+    { icon: <Buildings />, link: ROUTES.TENANTS, label: 'Tenants', testId: 'side-nav-tenants-link' },
     {
       icon: <Team />,
       link: ROUTES.SUBSCRIBERS,
