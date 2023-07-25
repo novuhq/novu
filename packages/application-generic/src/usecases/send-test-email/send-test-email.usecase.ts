@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 import { OrganizationRepository, IntegrationEntity } from '@novu/dal';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 import { IEmailOptions } from '@novu/stateless';
 
 import { AnalyticsService } from '../../services/analytics.service';
@@ -47,12 +47,20 @@ export class SendTestEmail {
         environmentId: command.environmentId,
         channelType: ChannelTypeEnum.EMAIL,
         userId: command.userId,
-        hideNovuCredentials: false,
       })
     );
 
     if (!integration) {
       throw new ApiException(`Missing an active email integration`);
+    }
+
+    if (integration.providerId === EmailProviderIdEnum.Novu) {
+      integration.credentials = {
+        apiKey: process.env.NOVU_EMAIL_INTEGRATION_API_KEY,
+        from: 'no-reply@novu.co',
+        senderName: 'Novu',
+        ipPoolName: 'Demo',
+      };
     }
 
     const { html, subject } = await this.compileEmailTemplateUsecase.execute(

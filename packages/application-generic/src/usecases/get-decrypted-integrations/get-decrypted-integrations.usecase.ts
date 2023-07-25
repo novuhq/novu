@@ -4,7 +4,6 @@ import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { decryptCredentials } from '../../encryption';
 import { GetDecryptedIntegrationsCommand } from './get-decrypted-integrations.command';
 import { FeatureFlagCommand, GetFeatureFlag } from '../get-feature-flag';
-import { EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
 
 @Injectable()
 export class GetDecryptedIntegrations {
@@ -52,44 +51,11 @@ export class GetDecryptedIntegrations {
     return foundIntegrations
       .filter((integration) => integration)
       .map((integration: IntegrationEntity) =>
-        GetDecryptedIntegrations.decryptCredentials(
-          integration,
-          command.hideNovuCredentials
-        )
+        GetDecryptedIntegrations.decryptCredentials(integration)
       );
   }
 
-  public static decryptCredentials(
-    integration: IntegrationEntity,
-    hideNovuCredentials = true
-  ) {
-    if (
-      integration.providerId === EmailProviderIdEnum.Novu &&
-      !hideNovuCredentials
-    ) {
-      integration.credentials = {
-        apiKey: process.env.NOVU_EMAIL_INTEGRATION_API_KEY,
-        from: 'no-reply@novu.co',
-        senderName: 'Novu',
-        ipPoolName: 'Demo',
-      };
-
-      return integration;
-    }
-
-    if (
-      integration.providerId === SmsProviderIdEnum.Novu &&
-      !hideNovuCredentials
-    ) {
-      integration.credentials = {
-        accountSid: process.env.NOVU_SMS_INTEGRATION_ACCOUNT_SID,
-        token: process.env.NOVU_SMS_INTEGRATION_TOKEN,
-        from: process.env.NOVU_SMS_INTEGRATION_SENDER,
-      };
-
-      return integration;
-    }
-
+  public static decryptCredentials(integration: IntegrationEntity) {
     integration.credentials = decryptCredentials(integration.credentials);
 
     return integration;

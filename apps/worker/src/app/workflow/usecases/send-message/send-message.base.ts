@@ -1,5 +1,11 @@
 import { IntegrationEntity, JobEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
-import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  EmailProviderIdEnum,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  SmsProviderIdEnum,
+} from '@novu/shared';
 import {
   buildSubscriberKey,
   CachedEntity,
@@ -8,10 +14,13 @@ import {
   CreateExecutionDetailsCommand,
   SelectIntegration,
   SelectIntegrationCommand,
+  CalculateLimitNovuIntegration,
+  AnalyticsService,
 } from '@novu/application-generic';
 
 import { SendMessageType } from './send-message-type.usecase';
 import { CreateLog } from '../../../shared/logs';
+import { ConflictException } from '@nestjs/common';
 
 export abstract class SendMessageBase extends SendMessageType {
   abstract readonly channelType: ChannelTypeEnum;
@@ -20,7 +29,9 @@ export abstract class SendMessageBase extends SendMessageType {
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     protected subscriberRepository: SubscriberRepository,
-    protected selectIntegration: SelectIntegration
+    protected selectIntegration: SelectIntegration,
+    protected calculateLimitNovuIntegration: CalculateLimitNovuIntegration,
+    private analyticsService: AnalyticsService
   ) {
     super(messageRepository, createLogUsecase, createExecutionDetails);
   }
@@ -48,12 +59,49 @@ export abstract class SendMessageBase extends SendMessageType {
   protected async getIntegration(
     selectIntegrationCommand: SelectIntegrationCommand
   ): Promise<IntegrationEntity | undefined> {
-    return this.selectIntegration.execute(
-      SelectIntegrationCommand.create({
-        hideNovuCredentials: false,
-        ...selectIntegrationCommand,
-      })
-    );
+    const integration = await this.selectIntegration.execute(SelectIntegrationCommand.create(selectIntegrationCommand));
+
+    if (!integration) {
+      return;
+    }
+
+    if (integration.providerId === EmailProviderIdEnum.Novu || integration.providerId === SmsProviderIdEnum.Novu) {
+      const limit = await this.calculateLimitNovuIntegration.execute({
+        channelType: integration.channel,
+        environmentId: integration._environmentId,
+        organizationId: integration._organizationId,
+      });
+
+      if (limit && limit.count >= limit.limit) {
+        this.analyticsService.track('[Novu Integration] - Limit reached', selectIntegrationCommand.userId, {
+          channelType: integration.channel,
+          organizationId: integration._organizationId,
+          environmentId: integration._environmentId,
+          providerId: integration.providerId,
+          ...limit,
+        });
+        throw new ConflictException(`Limit for Novus ${integration.channel.toLowerCase()} provider was reached.`);
+      }
+    }
+
+    if (integration.providerId === EmailProviderIdEnum.Novu) {
+      integration.credentials = {
+        apiKey: process.env.NOVU_EMAIL_INTEGRATION_API_KEY,
+        from: 'no-reply@novu.co',
+        senderName: 'Novu',
+        ipPoolName: 'Demo',
+      };
+    }
+
+    if (integration.providerId === SmsProviderIdEnum.Novu) {
+      integration.credentials = {
+        accountSid: process.env.NOVU_SMS_INTEGRATION_ACCOUNT_SID,
+        token: process.env.NOVU_SMS_INTEGRATION_TOKEN,
+        from: process.env.NOVU_SMS_INTEGRATION_SENDER,
+      };
+    }
+
+    return integration;
   }
 
   protected storeContent(): boolean {

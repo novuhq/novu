@@ -45,7 +45,6 @@ export class SelectIntegration {
           findOne: true,
           active: true,
           userId: command.userId,
-          hideNovuCredentials: command.hideNovuCredentials,
         })
       );
 
@@ -80,9 +79,6 @@ export class SelectIntegration {
       return;
     }
 
-    return GetDecryptedIntegrations.decryptCredentials(
-      integration,
-      command.hideNovuCredentials
-    );
+    return GetDecryptedIntegrations.decryptCredentials(integration);
   }
 }

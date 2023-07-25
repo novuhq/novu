@@ -1,4 +1,4 @@
-import { IsBoolean, IsDefined, IsMongoId, IsOptional } from 'class-validator';
+import { IsDefined, IsMongoId, IsOptional } from 'class-validator';
 import { ChannelTypeEnum, ProvidersIdEnum } from '@novu/shared';
 
 import { EnvironmentWithUserCommand } from '../../commands/project.command';
@@ -16,8 +16,4 @@ export class SelectIntegrationCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   providerId?: ProvidersIdEnum;
-
-  @IsOptional()
-  @IsBoolean()
-  hideNovuCredentials?: boolean = true;
 }
