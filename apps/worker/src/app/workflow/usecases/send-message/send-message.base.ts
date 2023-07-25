@@ -48,7 +48,12 @@ export abstract class SendMessageBase extends SendMessageType {
   protected async getIntegration(
     selectIntegrationCommand: SelectIntegrationCommand
   ): Promise<IntegrationEntity | undefined> {
-    return this.selectIntegration.execute(SelectIntegrationCommand.create(selectIntegrationCommand));
+    return this.selectIntegration.execute(
+      SelectIntegrationCommand.create({
+        hideNovuCredentials: false,
+        ...selectIntegrationCommand,
+      })
+    );
   }
 
   protected storeContent(): boolean {

@@ -7,7 +7,6 @@ import { IEmailOptions } from '@novu/stateless';
 import { AnalyticsService } from '../../services/analytics.service';
 import { InstrumentUsecase } from '../../instrumentation';
 import { MailFactory } from '../../factories/mail/mail.factory';
-import { GetNovuIntegration } from '../get-novu-integration';
 import {
   CompileEmailTemplate,
   CompileEmailTemplateCommand,
@@ -48,6 +47,7 @@ export class SendTestEmail {
         environmentId: command.environmentId,
         channelType: ChannelTypeEnum.EMAIL,
         userId: command.userId,
+        hideNovuCredentials: false,
       })
     );
 
@@ -97,16 +97,7 @@ export class SendTestEmail {
     const { providerId } = integration;
 
     try {
-      const mailHandler = mailFactory.getHandler(
-        {
-          ...integration,
-          providerId: GetNovuIntegration.mapProviders(
-            ChannelTypeEnum.EMAIL,
-            providerId
-          ),
-        },
-        mailData.from
-      );
+      const mailHandler = mailFactory.getHandler(integration, mailData.from);
       await mailHandler.send(mailData);
       this.analyticsService.track(
         'Test Email Sent - [Events]',

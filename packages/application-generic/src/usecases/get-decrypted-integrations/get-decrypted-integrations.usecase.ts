@@ -1,62 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import {
-  ChannelTypeEnum,
-  IntegrationEntity,
-  IntegrationRepository,
-} from '@novu/dal';
+import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 
 import { decryptCredentials } from '../../encryption';
 import { GetDecryptedIntegrationsCommand } from './get-decrypted-integrations.command';
-import {
-  GetNovuIntegration,
-  GetNovuIntegrationCommand,
-} from '../get-novu-integration';
 import { FeatureFlagCommand, GetFeatureFlag } from '../get-feature-flag';
+import { EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
 
 @Injectable()
 export class GetDecryptedIntegrations {
   constructor(
     private integrationRepository: IntegrationRepository,
-    private getNovuIntegration: GetNovuIntegration,
     private getFeatureFlag: GetFeatureFlag
   ) {}
-
-  private async getNovuIntegrations(command: GetDecryptedIntegrationsCommand) {
-    let novuIntegrations: IntegrationEntity[] = [];
-    const novuEmailIntegration = await this.getNovuIntegration.execute(
-      GetNovuIntegrationCommand.create({
-        channelType: ChannelTypeEnum.EMAIL,
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        userId: command.userId,
-        ignoreActiveCount: true,
-      })
-    );
-
-    if (novuEmailIntegration) {
-      novuIntegrations.push(novuEmailIntegration);
-    }
-
-    const novuSmsIntegration = await this.getNovuIntegration.execute(
-      GetNovuIntegrationCommand.create({
-        channelType: ChannelTypeEnum.SMS,
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        userId: command.userId,
-        ignoreActiveCount: true,
-      })
-    );
-
-    if (novuSmsIntegration) {
-      novuIntegrations.push(novuSmsIntegration);
-    }
-
-    if (command.active) {
-      novuIntegrations = novuIntegrations.filter((el) => el.active);
-    }
-
-    return novuIntegrations;
-  }
 
   async execute(
     command: GetDecryptedIntegrationsCommand
@@ -94,33 +49,49 @@ export class GetDecryptedIntegrations {
       ? [await this.integrationRepository.findOne(query)]
       : await this.integrationRepository.find(query);
 
-    const integrations = foundIntegrations
+    return foundIntegrations
       .filter((integration) => integration)
-      .map((integration: IntegrationEntity) => {
-        integration.credentials = decryptCredentials(integration.credentials);
-
-        return integration;
-      });
-
-    if (!isMultiProviderConfigurationEnabled) {
-      if (command.channelType === undefined || integrations.length > 0) {
-        return integrations;
-      }
-
-      const novuIntegration = await this.getNovuIntegration.execute(
-        GetNovuIntegrationCommand.create({
-          channelType: command.channelType,
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          userId: command.userId,
-        })
+      .map((integration: IntegrationEntity) =>
+        GetDecryptedIntegrations.decryptCredentials(
+          integration,
+          command.hideNovuCredentials
+        )
       );
+  }
 
-      return novuIntegration ? [novuIntegration] : [];
+  public static decryptCredentials(
+    integration: IntegrationEntity,
+    hideNovuCredentials = true
+  ) {
+    if (
+      integration.providerId === EmailProviderIdEnum.Novu &&
+      !hideNovuCredentials
+    ) {
+      integration.credentials = {
+        apiKey: process.env.NOVU_EMAIL_INTEGRATION_API_KEY,
+        from: 'no-reply@novu.co',
+        senderName: 'Novu',
+        ipPoolName: 'Demo',
+      };
+
+      return integration;
     }
 
-    const novuIntegrations = await this.getNovuIntegrations(command);
+    if (
+      integration.providerId === SmsProviderIdEnum.Novu &&
+      !hideNovuCredentials
+    ) {
+      integration.credentials = {
+        accountSid: process.env.NOVU_SMS_INTEGRATION_ACCOUNT_SID,
+        token: process.env.NOVU_SMS_INTEGRATION_TOKEN,
+        from: process.env.NOVU_SMS_INTEGRATION_SENDER,
+      };
 
-    return [...integrations, ...novuIntegrations];
+      return integration;
+    }
+
+    integration.credentials = decryptCredentials(integration.credentials);
+
+    return integration;
   }
 }

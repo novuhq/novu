@@ -17,7 +17,6 @@ import {
   CompileTemplate,
   CompileTemplateCommand,
   SmsFactory,
-  GetNovuIntegration,
 } from '@novu/application-generic';
 
 import { CreateLog } from '../../../shared/logs';
@@ -315,7 +314,7 @@ export class SendMessageSms extends SendMessageBase {
   public buildFactoryIntegration(integration: IntegrationEntity, senderName?: string) {
     return {
       ...integration,
-      providerId: GetNovuIntegration.mapProviders(ChannelTypeEnum.SMS, integration.providerId),
+      providerId: integration.providerId,
     };
   }
 }

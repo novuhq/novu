@@ -23,7 +23,6 @@ import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   SelectIntegration,
-  GetNovuIntegration,
   CompileEmailTemplate,
   CompileEmailTemplateCommand,
   MailFactory,
@@ -453,7 +452,7 @@ export class SendMessageEmail extends SendMessageBase {
         ...integration.credentials,
         senderName: senderName && senderName.length > 0 ? senderName : integration.credentials.senderName,
       },
-      providerId: GetNovuIntegration.mapProviders(ChannelTypeEnum.EMAIL, integration.providerId),
+      providerId: integration.providerId,
     };
   }
 }

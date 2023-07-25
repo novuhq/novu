@@ -21,6 +21,10 @@ export class GetDecryptedIntegrationsCommand extends EnvironmentWithUserCommand 
 
   @IsOptional()
   providerId?: ProvidersIdEnum;
+
+  @IsOptional()
+  @IsBoolean()
+  hideNovuCredentials?: boolean = true;
 }
 
 export class GetEnvironmentDecryptedIntegrationsCommand extends EnvironmentWithUserCommand {

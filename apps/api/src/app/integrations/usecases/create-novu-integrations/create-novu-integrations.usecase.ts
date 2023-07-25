@@ -4,7 +4,7 @@ import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { CreateNovuIntegrationsCommand } from './create-novu-integrations.command';
 import { CreateIntegration } from '../create-integration/create-integration.usecase';
 import { CreateIntegrationCommand } from '../create-integration/create-integration.command';
-import { GetNovuIntegration } from '@novu/application-generic';
+import { ChannelTypeEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
 
 @Injectable()
 export class CreateNovuIntegrations {
@@ -22,10 +22,9 @@ export class CreateNovuIntegrations {
       return [];
     }
 
-    const emailProvider = GetNovuIntegration.generateNovuEmailIntegration(null, command.environmentId, true);
     const emailIntegrationCount = await this.integrationRepository.count({
-      channel: emailProvider.channel,
-      providerId: emailProvider.providerId,
+      providerId: EmailProviderIdEnum.Novu,
+      channel: ChannelTypeEnum.EMAIL,
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
     });
@@ -34,9 +33,10 @@ export class CreateNovuIntegrations {
       integrations.push(
         await this.createIntegration.execute(
           CreateIntegrationCommand.create({
-            providerId: emailProvider.providerId,
-            channel: emailProvider.channel,
-            active: emailProvider.active,
+            providerId: EmailProviderIdEnum.Novu,
+            channel: ChannelTypeEnum.EMAIL,
+            active: true,
+            name: 'Novu Email',
             check: false,
             userId: command.userId,
             environmentId: command.environmentId,
@@ -46,10 +46,9 @@ export class CreateNovuIntegrations {
       );
     }
 
-    const smsProvider = GetNovuIntegration.generateNovuSMSIntegration(command.environmentId, true);
     const smsIntegrationCount = await this.integrationRepository.count({
-      channel: smsProvider.channel,
-      providerId: smsProvider.providerId,
+      providerId: SmsProviderIdEnum.Novu,
+      channel: ChannelTypeEnum.SMS,
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
     });
@@ -58,9 +57,10 @@ export class CreateNovuIntegrations {
       integrations.push(
         await this.createIntegration.execute(
           CreateIntegrationCommand.create({
-            providerId: smsProvider.providerId,
-            channel: smsProvider.channel,
-            active: smsProvider.active,
+            providerId: SmsProviderIdEnum.Novu,
+            channel: ChannelTypeEnum.SMS,
+            name: 'Novu SMS',
+            active: true,
             check: false,
             userId: command.userId,
             environmentId: command.environmentId,

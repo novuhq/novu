@@ -1,12 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 
-import {
-  GetNovuIntegration,
-  GetNovuIntegrationCommand,
-} from '../get-novu-integration';
 import { SelectIntegrationCommand } from './select-integration.command';
-import { decryptCredentials } from '../../encryption';
 import { buildIntegrationKey, CachedQuery } from '../../services';
 import { FeatureFlagCommand, GetFeatureFlag } from '../get-feature-flag';
 import {
@@ -18,7 +13,6 @@ import {
 export class SelectIntegration {
   constructor(
     private integrationRepository: IntegrationRepository,
-    private getNovuIntegration: GetNovuIntegration,
     protected getFeatureFlag: GetFeatureFlag,
     protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {}
@@ -51,6 +45,7 @@ export class SelectIntegration {
           findOne: true,
           active: true,
           userId: command.userId,
+          hideNovuCredentials: command.hideNovuCredentials,
         })
       );
 
@@ -81,21 +76,13 @@ export class SelectIntegration {
       { query: { sort: { createdAt: -1 } } }
     );
 
-    if (integration) {
-      integration.credentials = decryptCredentials(integration.credentials);
-
-      return integration;
+    if (!integration) {
+      return;
     }
 
-    const novuIntegration = await this.getNovuIntegration.execute(
-      GetNovuIntegrationCommand.create({
-        channelType: command.channelType,
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        userId: command.userId,
-      })
+    return GetDecryptedIntegrations.decryptCredentials(
+      integration,
+      command.hideNovuCredentials
     );
-
-    return novuIntegration;
   }
 }
