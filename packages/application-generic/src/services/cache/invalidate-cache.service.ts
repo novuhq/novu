@@ -21,8 +21,8 @@ export class InvalidateCacheService {
     } catch (err) {
       Logger.error(
         `An error has occurred when deleting "key: ${key}",`,
-        LOG_CONTEXT,
-        err
+        err,
+        LOG_CONTEXT
       );
     }
   }
@@ -35,8 +35,8 @@ export class InvalidateCacheService {
     } catch (err) {
       Logger.error(
         `An error has occurred when deleting "key: ${key}",`,
-        LOG_CONTEXT,
-        err
+        err,
+        LOG_CONTEXT
       );
     }
   }
@@ -67,8 +67,8 @@ export class InvalidateCacheService {
     } catch (err) {
       Logger.error(
         `An error has occurred when deleting "key: ${cacheKey}",`,
-        LOG_CONTEXT,
-        err
+        err,
+        LOG_CONTEXT
       );
     }
   }

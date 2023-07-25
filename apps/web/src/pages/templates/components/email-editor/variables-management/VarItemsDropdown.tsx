@@ -41,14 +41,14 @@ export const VarItemsDropdown = ({ name, type }) => {
           }}
         >
           {Object.keys(type).map((key, index) => {
-            let varType = type[key];
+            let varType = type?.[key];
 
-            if (!['boolean', 'string', 'number', 'object', 'array'].includes(varType)) {
+            if (varType !== null && !['boolean', 'string', 'number', 'object', 'array'].includes(varType)) {
               varType = typeof varType;
             }
 
             if (varType === 'object') {
-              return <VarItemsDropdown key={index} name={key} type={type[key]} />;
+              return <VarItemsDropdown key={index} name={key} type={type?.[key]} />;
             }
 
             return <VarItemTooltip pathToCopy={`${name}.${key}`} name={key} type={varType} key={index} />;
