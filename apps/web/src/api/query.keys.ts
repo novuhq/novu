@@ -13,6 +13,7 @@ interface IQueryKeys {
   getApiKeys: string;
   getInAppActive: string;
   getTemplateById: (templateId?: string) => string;
+  tenantsList: string;
 }
 
 export const QueryKeys: IQueryKeys = Object.freeze({
@@ -30,4 +31,5 @@ export const QueryKeys: IQueryKeys = Object.freeze({
   getApiKeys: 'getApiKeys',
   getInAppActive: 'inAppActive',
   getTemplateById: (templateId?: string) => `notificationById:${templateId}`,
+  tenantsList: 'tenantsList',
 });
