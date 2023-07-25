@@ -6,6 +6,7 @@ export interface INotificationTemplates {
   delete(templateId: string);
   getOne(templateId: string);
   updateStatus(templateId: string, active: boolean);
+  getAll(page?: number, limit?: number);
 }
 
 export interface INotificationTemplatePayload {

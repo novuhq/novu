@@ -15,6 +15,12 @@ describe('Get My Environments - /environments (GET)', async () => {
     expect(body.data.length).to.be.greaterThanOrEqual(2);
     for (const elem of body.data) {
       expect(elem._organizationId).to.eq(session.organization._id);
+
+      if (elem._id !== session.environment._id) {
+        expect(elem.apiKeys.length).to.eq(0);
+      } else {
+        expect(elem.apiKeys.length).to.be.greaterThanOrEqual(1);
+      }
     }
   });
 });
