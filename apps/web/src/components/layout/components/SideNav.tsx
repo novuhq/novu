@@ -12,7 +12,17 @@ import {
 import styled from '@emotion/styled';
 
 import { colors, NavMenu, SegmentedControl, shadows } from '../../../design-system';
-import { Activity, Bolt, Box, Settings, Team, Repeat, CheckCircleOutlined, Brand } from '../../../design-system/icons';
+import {
+  Activity,
+  Bolt,
+  Box,
+  Settings,
+  Team,
+  Repeat,
+  CheckCircleOutlined,
+  Brand,
+  Buildings,
+} from '../../../design-system/icons';
 import { ChangesCountBadge } from './ChangesCountBadge';
 import { useEnvController } from '../../../hooks';
 import OrganizationSelect from './OrganizationSelect';
@@ -79,6 +89,7 @@ export function SideNav({}: Props) {
       testId: 'side-nav-quickstart-link',
     },
     { icon: <Bolt />, link: ROUTES.WORKFLOWS, label: 'Workflows', testId: 'side-nav-templates-link' },
+    { icon: <Buildings />, link: ROUTES.TENANTS, label: 'Tenants', testId: 'side-nav-tenants-link' },
     {
       icon: <Team />,
       link: ROUTES.SUBSCRIBERS,
