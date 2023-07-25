@@ -1,12 +1,7 @@
-import Axios from 'axios';
 import { IChanges } from './changes.interface';
 import { WithHttp } from '../novu.interface';
 
 export class Changes extends WithHttp implements IChanges {
-  applyAll() {
-    throw new Error('Method not implemented.');
-  }
-
   /**
    * @returns {promise<object>} - Returns an object containing all changes
    */
