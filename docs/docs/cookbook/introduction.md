@@ -120,12 +120,12 @@ You can mark an In-App message as read/seen. Messages from other channels: **Ema
   <TabItem value="js" label="Node.js">
 
 ```javascript
-const { data: markInAppMessageAsRead } = await novu.subscribers.markMessageRead(
+const { data: markMessageAsRead } = await novu.subscribers.markMessageRead(
   'subscriberId',
   'messageId'
 );
 
-const { data: markInAppMessageAsSeen } = await novu.subscribers.markMessageSeen(
+const { data: markMessageAsSeen } = await novu.subscribers.markMessageSeen(
   'subscriberId',
   'messageId'
 );
@@ -147,7 +147,7 @@ The unread/unseen functionality has yet to be available in the Node.js SDK. Plea
 
 ```javascript
 // this method will be available in 0.17.1
-const { data: markInAppMessageAsRead } = await novu.subscribers.markInAppMessageAs(
+const { data: markMessageAs } = await novu.subscribers.markMessageAs(
   'subscriberId',
   'messageId',
   { seen: true, read: false }
