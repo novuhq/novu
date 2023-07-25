@@ -2,7 +2,7 @@ import axios from 'axios';
 import { expect } from 'chai';
 import { MessageRepository, NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import {
   InMemoryProviderService,
   buildFeedKey,
@@ -22,6 +22,7 @@ describe('Count - GET /widget/notifications/count', function () {
   } | null = null;
 
   const inMemoryProviderService = new InMemoryProviderService();
+  inMemoryProviderService.initialize();
   const invalidateCache = new InvalidateCacheService(new CacheService(inMemoryProviderService));
 
   beforeEach(async () => {
@@ -137,12 +138,6 @@ describe('Count - GET /widget/notifications/count', function () {
 
     await session.awaitRunningJobs(template._id);
 
-    const messages = await messageRepository.findBySubscriberChannel(
-      session.environment._id,
-      subscriberProfile!._id,
-      ChannelTypeEnum.IN_APP
-    );
-
     try {
       await getFeedCount({ seen: false, limit: 0 });
       throw new Error('Exception should have been thrown');
@@ -160,28 +155,40 @@ describe('Count - GET /widget/notifications/count', function () {
     unseenCount = (await getFeedCount({ seen: false, limit: 4 })).data.count;
     expect(unseenCount).to.equal(3);
 
-    unseenCount = (await getFeedCount({ seen: false, limit: 999 })).data.count;
+    unseenCount = (await getFeedCount({ seen: false, limit: 99 })).data.count;
     expect(unseenCount).to.equal(3);
 
-    unseenCount = (await getFeedCount({ seen: false, limit: 1000 })).data.count;
+    unseenCount = (await getFeedCount({ seen: false, limit: 100 })).data.count;
     expect(unseenCount).to.equal(3);
 
     try {
-      await getFeedCount({ seen: false, limit: 1001 });
+      await getFeedCount({ seen: false, limit: 101 });
       throw new Error('Exception should have been thrown');
     } catch (e) {
       const message = Array.isArray(e.response.data.message) ? e.response.data.message[0] : e.response.data.message;
-      expect(message).to.equal('limit must not be greater than 1000');
+      expect(message).to.equal('limit must not be greater than 100');
     }
   });
 
-  // todo NV-2161 in version 0.16 remove skip
-  it.skip('should return unseen count by default limit 100', async function () {
+  it('should return unseen count by default limit 100', async function () {
     for (let i = 0; i < 102; i++) {
-      await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+      await messageRepository.create({
+        _notificationId: MessageRepository.createObjectId(),
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        _subscriberId: subscriberProfile?._id,
+        _templateId: template._id,
+        _messageTemplateId: template.steps[0]._templateId,
+        channel: ChannelTypeEnum.IN_APP,
+        cta: {},
+        transactionId: MessageRepository.createObjectId(),
+        content: template.steps,
+        payload: {},
+        providerId: InAppProviderIdEnum.Novu,
+        templateIdentifier: template.triggers[0].identifier,
+        seen: false,
+      });
     }
-
-    await session.awaitRunningJobs(template._id);
 
     const unseenCount = (await getFeedCount({ seen: false })).data.count;
     expect(unseenCount).to.equal(100);
@@ -217,18 +224,18 @@ describe('Count - GET /widget/notifications/count', function () {
     unseenCount = (await getFeedCount({ seen: false, limit: '2' })).data.count;
     expect(unseenCount).to.equal(2);
 
-    unseenCount = (await getFeedCount({ seen: false, limit: '999' })).data.count;
+    unseenCount = (await getFeedCount({ seen: false, limit: '99' })).data.count;
     expect(unseenCount).to.equal(2);
 
-    unseenCount = (await getFeedCount({ seen: false, limit: '1000' })).data.count;
+    unseenCount = (await getFeedCount({ seen: false, limit: '100' })).data.count;
     expect(unseenCount).to.equal(2);
 
     try {
-      await getFeedCount({ seen: false, limit: '1001' });
+      await getFeedCount({ seen: false, limit: '101' });
       throw new Error('Exception should have been thrown');
     } catch (e) {
       const message = Array.isArray(e.response.data.message) ? e.response.data.message[0] : e.response.data.message;
-      expect(message).to.equal('limit must not be greater than 1000');
+      expect(message).to.equal('limit must not be greater than 100');
     }
   });
 

@@ -4,7 +4,7 @@ import { css, cx } from '@emotion/css';
 
 import { useNovuTheme, useFetchUserPreferences, useNovuContext } from '../../../../hooks';
 import { accordionStyles } from './styles';
-import image from '../../../../images/no-settings.png';
+import image from '../../../../images/no-settings.webp';
 import { useStyles } from '../../../../store/styles';
 import { UserPreferenceItem } from './UserPreferenceItem';
 import { Loader } from '../Loader';
