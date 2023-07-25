@@ -47,9 +47,8 @@ describe('Get Novu Integration', function () {
     }).compile();
 
     session = new UserSession();
-    await session.initialize({
-      noIntegrations: true,
-    });
+    await session.initialize();
+
     getNovuIntegration = moduleRef.get<GetNovuIntegration>(GetNovuIntegration);
     integrationRepository = moduleRef.get<IntegrationRepository>(
       IntegrationRepository

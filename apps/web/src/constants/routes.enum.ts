@@ -24,6 +24,7 @@ export enum ROUTES {
   ACTIVITIES = '/activities',
   SETTINGS = '/settings',
   INTEGRATIONS = '/integrations',
+  INTEGRATIONS_CREATE = '/integrations/create',
   TEAM = '/team',
   CHANGES = '/changes',
   SUBSCRIBERS = '/subscribers',

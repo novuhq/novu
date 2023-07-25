@@ -22,14 +22,13 @@ export function TemplatePreference() {
 
 export function ChannelPreference() {
   const { control } = useFormContext();
+  const { readonly } = useEnvController();
 
   return (
     <Controller
       name="preferenceSettings"
       control={control}
       render={({ field }) => {
-        const { readonly } = useEnvController();
-
         const preferences: IForm['preferenceSettings'] = field.value;
 
         function handleCheckboxChange(e, channelType) {
@@ -44,7 +43,6 @@ export function ChannelPreference() {
               Default Channels On:
             </Text>
             {Object.keys(preferences).map((key) => {
-              const label = channels.find((channel) => channel.tabKey === key)?.label;
               const checked = preferences[key] || false;
 
               return (

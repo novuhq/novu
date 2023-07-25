@@ -1,4 +1,9 @@
-import { GetDecryptedIntegrations, CalculateLimitNovuIntegration, GetNovuIntegration } from '@novu/application-generic';
+import {
+  SelectIntegration,
+  GetDecryptedIntegrations,
+  CalculateLimitNovuIntegration,
+  GetNovuIntegration,
+} from '@novu/application-generic';
 
 import { GetWebhookSupportStatus } from './get-webhook-support-status/get-webhook-support-status.usecase';
 import { CreateIntegration } from './create-integration/create-integration.usecase';
@@ -17,6 +22,7 @@ export const USE_CASES = [
   CreateIntegration,
   GetIntegrations,
   GetActiveIntegrations,
+  SelectIntegration,
   GetDecryptedIntegrations,
   UpdateIntegration,
   RemoveIntegration,
