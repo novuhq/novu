@@ -52,7 +52,7 @@ import { IntegrationsListPage } from './pages/integrations/IntegrationsListPage'
 import { CreateProviderPage } from './pages/integrations/CreateProviderPage';
 import { UpdateProviderPage } from './pages/integrations/UpdateProviderPage';
 import { SelectProviderPage } from './pages/integrations/components/SelectProviderPage';
-import { TenantsList } from './pages/tenants/TenantsList';
+import { Tenants } from './pages/tenants/Tenants';
 
 library.add(far, fas);
 
@@ -201,7 +201,7 @@ function App() {
                     <Route path=":channel/:stepUuid" element={<TemplateEditor />} />
                   </Route>
                   <Route path={ROUTES.WORKFLOWS} element={<WorkflowListPage />} />
-                  <Route path={ROUTES.TENANTS} element={<TenantsList />} />
+                  <Route path={ROUTES.TENANTS} element={<Tenants />} />
                   <Route path={ROUTES.GET_STARTED} element={<GetStarted />} />
                   <Route path={ROUTES.GET_STARTED_PREVIEW} element={<DigestPreview />} />
                   <Route path={ROUTES.QUICK_START_NOTIFICATION_CENTER} element={<NotificationCenter />} />
