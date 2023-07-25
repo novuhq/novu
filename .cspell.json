@@ -489,7 +489,14 @@
     "GROUPBY",
     "stefanprodan",
     "Sendchamp",
-    "sendchamp"
+    "sendchamp",
+    "Quickstarts",
+    "quickstarts",
+    "quickstartslogo",
+    "reactjs",
+    "nextjs",
+    "vanillajs",
+    "quckstart"
   ],
   "flagWords": [],
   "patterns": [
