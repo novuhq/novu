@@ -39,10 +39,10 @@ Once installed, you can import Novu into your project and initialize it using yo
 ```python
 from novu.config import NovuConfig
 
-NovuConfig().configure("https://api.novu.co", "b23c55928da9e76702b74921a7fffee2")
+NovuConfig().configure("https://api.novu.co", "<YOUR_NOVU_API_KEY>")
 ```
 
-Replace the `b23c55928da9e76702b74921a7fffee2` value with the authentic key from the **API Key** section of your [Novu Dashboard](https://web.novu.co/settings).
+Replace the `<YOUR_NOVU_API_KEY>` value with the authentic key from the **API Key** section of your [Novu Dashboard](https://web.novu.co/settings).
 
 <aside>
 🔑 Note: Please do not hardcode your credentials in a file in production. Use environment variables instead.
@@ -118,7 +118,7 @@ from novu.dto.subscriber import SubscriberDto
    
 your_subscriber_id = "123" # Replace this with a unique user ID.
 
-subscriber = SubscriberApi("https://api.novu.co", "b23c55928da9e76702b74921a7fffee2")
+subscriber = SubscriberApi("https://api.novu.co", "<YOUR_NOVU_API_KEY>")
 subscriber.create(SubscriberDto(
         subscriber_id=your_subscriber_id,
         email="abc@gmail.com",
@@ -147,7 +147,7 @@ To update the Subscriber details you can call the put method from SubcriberApi. 
 
 from novu.api.subscriber import SubscriberApi
 from novu.dto.subscriber import SubscriberDto
-subscriber = SubscriberApi("https://api.novu.co", "b23c55928da9e76702b74921a7fffee2")
+subscriber = SubscriberApi("https://api.novu.co", "<YOUR_NOVU_API_KEY>")
 subscriber.put(subscriber=SubscriberDto(
         subscriber_id="123",
         email="new.abc@gmail.com",
@@ -170,7 +170,7 @@ Copy and paste the following code into your app to trigger a notification:
 from novu.config import NovuConfig
 from novu.api import EventApi
 
-NovuConfig().configure("https://api.novu.co", "b23c55928da9e76702b74921a7fffee2")
+NovuConfig().configure("https://api.novu.co", "<YOUR_NOVU_API_KEY>")
 
 EventApi().trigger(
      name="test",  # The trigger ID of the workflow. It can be found on the workflow page.
