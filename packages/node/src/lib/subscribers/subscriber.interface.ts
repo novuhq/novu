@@ -31,6 +31,7 @@ export interface ISubscribers {
   );
   getUnseenCount(subscriberId: string, seen: boolean);
   markMessageSeen(subscriberId: string, messageId: string);
+  markMessageRead(subscriberId: string, messageId: string);
   markMessageActionSeen(subscriberId: string, messageId: string, type: string);
 }
 

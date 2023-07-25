@@ -231,7 +231,7 @@ var payload = new EventTriggerDataDto()
   Payload = onboardingMessage
 };
 
-var trigger = await client.Event.Trigger(payload);
+var trigger = await novu.Event.Trigger(payload);
 
 if (trigger.TriggerResponsePayloadDto.Acknowledged)
 {
@@ -274,6 +274,7 @@ A topic can have multiple subscribers who will receive a notification whenever a
 
 Copy and paste the following code into your app to create a topic:
 
+
 ```csharp
 // Create Topic
 var topicRequest = new TopicCreateDto
@@ -283,7 +284,8 @@ var topicRequest = new TopicCreateDto
     
 };
 
-var topic = await client.Topic.CreateTopicAsync(topicRequest);
+var topic = await novu.Topic.CreateTopicAsync(topicRequest);
+
 
 
 ```
@@ -298,6 +300,7 @@ Before running the code, make sure you understand the following:
 Copy and paste the following code into your app to add subscribers to a topic:
 
 ```csharp
+
 // Add Subscriber to Topic
 var topicKey = "frontend-users";
 var subscriberList = new TopicSubscriberUpdateDto
@@ -309,7 +312,8 @@ var subscriberList = new TopicSubscriberUpdateDto
     }
 };
 
-var result = await client.Topic.AddSubscriberAsync(topicKey, subscriberList);
+var result = await novu.Topic.AddSubscriberAsync(topicKey, subscriberList);
+
 ```
 
 ## Sending a Notification to a Topic
