@@ -7,7 +7,7 @@ interface IQueryKeys {
   getFeeds: string;
   getLayoutsList: string;
   getLayoutById: string;
-  activeIntegrations: string;
+  activeNotificationsList: string;
   integrationsList: string;
   blueprintsList: string;
   getApiKeys: string;
@@ -24,7 +24,7 @@ export const QueryKeys: IQueryKeys = Object.freeze({
   getFeeds: 'getFeeds',
   getLayoutsList: 'getLayoutsList',
   getLayoutById: 'getLayoutById',
-  activeIntegrations: 'activeIntegrations',
+  activeNotificationsList: 'activeNotificationsList',
   integrationsList: 'integrationsList',
   blueprintsList: 'blueprintsList',
   getApiKeys: 'getApiKeys',

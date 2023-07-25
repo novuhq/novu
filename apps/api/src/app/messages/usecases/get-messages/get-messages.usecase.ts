@@ -38,8 +38,8 @@ export class GetMessages {
       query.channel = command.channel;
     }
 
-    if (command.transactionIds) {
-      query.transactionId = command.transactionIds;
+    if (command.transactionId) {
+      query.transactionId = command.transactionId;
     }
 
     const data = await this.messageRepository.getMessages(query, '', {
@@ -53,7 +53,17 @@ export class GetMessages {
       }
     }
 
-    const totalCount = await this.messageRepository.count(query);
+    const totalCount = await this.messageRepository.count(
+      query,
+      COUNT_LIMIT
+      /*
+       * todo NV-2161 in version 0.16:
+       *  update option as below,
+       *  update below:  hasMore = feed.length < totalCount
+       *  remove totalCount
+       * { skip: command.page * LIMIT, limit: LIMIT + 1 }
+       */
+    );
 
     const hasMore = this.getHasMore(command.page, LIMIT, data.length, totalCount);
 

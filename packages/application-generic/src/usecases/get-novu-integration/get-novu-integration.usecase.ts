@@ -55,7 +55,7 @@ export class GetNovuIntegration {
       _environmentId: command.environmentId,
     });
 
-    if (activeIntegrationsCount > 0 && !command.ignoreActiveCount) {
+    if (activeIntegrationsCount > 0) {
       return;
     }
 
@@ -94,28 +94,23 @@ export class GetNovuIntegration {
       command.organizationId
     );
 
-    const active = activeIntegrationsCount === 0;
-
     switch (command.channelType) {
       case ChannelTypeEnum.EMAIL:
-        return this.createNovuEmailIntegration(organization, command, active);
+        return this.createNovuEmailIntegration(organization);
       case ChannelTypeEnum.SMS:
-        return this.createNovuSMSIntegration(command, active);
+        return this.createNovuSMSIntegration();
       default:
         return undefined;
     }
   }
 
   private createNovuEmailIntegration(
-    organization: OrganizationEntity | null,
-    command: GetNovuIntegrationCommand,
-    active = true
+    organization: OrganizationEntity | null
   ): IntegrationEntity {
     const item = new IntegrationEntity();
     item.providerId = EmailProviderIdEnum.Novu;
-    item.active = active;
+    item.active = true;
     item.channel = ChannelTypeEnum.EMAIL;
-    item.name = 'Novu Email';
 
     item.credentials = {
       apiKey: process.env.NOVU_EMAIL_INTEGRATION_API_KEY,
@@ -124,18 +119,14 @@ export class GetNovuIntegration {
       ipPoolName: 'Demo',
     };
 
-    return this.mapNovuItem(item, command);
+    return item;
   }
 
-  private createNovuSMSIntegration(
-    command: GetNovuIntegrationCommand,
-    active = true
-  ): IntegrationEntity {
+  private createNovuSMSIntegration(): IntegrationEntity {
     const item = new IntegrationEntity();
     item.providerId = SmsProviderIdEnum.Novu;
-    item.active = active;
+    item.active = true;
     item.channel = ChannelTypeEnum.SMS;
-    item.name = 'Novu SMS';
 
     item.credentials = {
       accountSid: process.env.NOVU_SMS_INTEGRATION_ACCOUNT_SID,
@@ -143,18 +134,7 @@ export class GetNovuIntegration {
       from: process.env.NOVU_SMS_INTEGRATION_SENDER,
     };
 
-    return this.mapNovuItem(item, command);
-  }
-
-  private mapNovuItem(
-    entity: IntegrationEntity,
-    command: GetNovuIntegrationCommand
-  ): IntegrationEntity {
-    entity._environmentId = command.environmentId;
-    entity.identifier = entity.providerId;
-    entity._id = entity.providerId;
-
-    return entity;
+    return item;
   }
 
   public static mapProviders(type: ChannelTypeEnum, providerId: string) {

@@ -101,9 +101,9 @@ npm install @novu/node
 Now, create a route that you want to hit when called from the front end. In our demo app, this is the route:
 
 ```jsx
-import express from 'express';
+import express from "express";
 
-import { getEmailDigest } from '../controller/emaildigest.js';
+import { getEmailDigest } from "../controller/emaildigest.js";
 
 const router = express.Router();
 
@@ -115,17 +115,17 @@ export default router;
 Now, we need to write a controller function that will handle the logic for what is to be sent in the trigger function’s payload. In our case, this is the controller function:
 
 ```jsx
-import { sendEmailDigest } from '../novu/novu.js';
+import { sendEmailDigest } from "../novu/novu.js";
 
 export const getEmailDigest = async (req, res) => {
-  const { notif, email } = req.body;
-  try {
-    await sendEmailDigest(notif, email);
-    res.status(201).json({ message: 'success', notif: notif });
-  } catch (error) {
-    res.status(409).json({ message: error.message });
-  }
-};
+    const { notif, email } = req.body
+    try {
+        await sendEmailDigest(notif, email);
+        res.status(201).json({ message: 'success', notif: notif });
+    } catch (error) {
+        res.status(409).json({ message: error.message });
+    }
+}
 ```
 
 To make it modular, we’ll keep the trigger code in a separate function in a separate file (’novu.js’, in our case) and the trigger function is getting called in the controller function above by the name ‘getEmailDigest’.
@@ -138,34 +138,34 @@ In our app, we’ll create a subscriber in Node.js as we’re writing our backen
 
 ```jsx
 await novu.subscribers.identify('digestEmailSub', {
-  firstName: 'digest email subscriber',
-  email: email,
-});
+        firstName: "digest email subscriber",
+        email: email
+    });
 ```
 
-Here, we’re creating a subscriber with the `subscriberID` of `digestEmailSub.` In most real-world scenarios, the `subscriberId` should be an alphanumeric entity like `adfa67y87ad0`. You can read more about subscribers [here](https://docs.novu.co/platform/subscribers/).
+Here, we’re creating a subscriber with the `subscriberID` of `digestEmailSub.` In most real-world scenarios, the `subscriberId`  should be an alphanumeric entity like `adfa67y87ad0`. You can read more about subscribers [here](https://docs.novu.co/platform/subscribers/).
 
 Back in our app, we can now add the trigger function:
 
 ```jsx
-import { Novu } from '@novu/node';
+import { Novu } from "@novu/node";
 
 export const sendEmailDigest = async (notif, email) => {
-  const novu = new Novu(process.env.YOUR_NOVU_API_KEY);
-  await novu.subscribers.identify('digestEmailSub', {
-    firstName: 'digest email subscriber',
-    email: email,
-  });
+    const novu = new Novu(process.env.YOUR_NOVU_API_KEY);
+    await novu.subscribers.identify('digestEmailSub', {
+        firstName: "digest email subscriber",
+        email: email
+    });
 
-  novu.trigger('emaildigestworkflow', {
-    to: {
-      subscriberId: 'digestEmailSub',
-      email: email,
-    },
-    payload: {
-      notif: notif,
-    },
-  });
+    novu.trigger('emaildigestworkflow', {
+        to: {
+            subscriberId: 'digestEmailSub',
+            email: email
+        },
+        payload: {
+            notif: notif,
+        },
+    });
 };
 ```
 
@@ -177,85 +177,81 @@ From the front end, we just need to hit the route we had defined above. Below, I
 
 ```jsx
 const Body = () => {
-  const [formInput, setFormInput] = useState({ notif: '', email: '' });
-  const [buttonClicked, setButtonClicked] = useState(false);
+    const [formInput, setFormInput] = useState({ notif: '', email: '' });
+    const [buttonClicked, setButtonClicked] = useState(false);
 
-  const onSubmitHandler = async (e) => {
-    e.preventDefault();
-    const response = await fetch(
-      'https://emaildigestbackend.onrender.com/api/v1/sending-email-digest',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formInput),
-      }
-    );
-    console.log(response.data);
-    setFormInput({ notif: '' });
-  };
+    const onSubmitHandler = async (e) => {
+        e.preventDefault();
+        const response = await fetch("https://emaildigestbackend.onrender.com/api/v1/sending-email-digest", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(formInput),
 
-  const handleClick = () => {
-    setButtonClicked(true);
+        })
+        console.log(response.data);
+        setFormInput({ notif: '' })
+    }
 
-    // Reset the button feedback after a certain duration
-    setTimeout(() => {
-      setButtonClicked(false);
-    }, 100);
-  };
+    const handleClick = () => {
+        setButtonClicked(true);
 
-  const onChangeHandler = (e) => {
-    const value = e.target.name === 'email' ? e.target.value.trim() : e.target.value;
+        // Reset the button feedback after a certain duration
+        setTimeout(() => {
+            setButtonClicked(false);
+        }, 100);
+    };
 
-    setFormInput((prev) => ({
-      ...prev,
-      [e.target.name]: value,
-    }));
-  };
-  return (
-    <div>
-      <h1>Email Digest Playground</h1>
-      <p>
-        Don't know how to? Start{' '}
-        <a className="underline" href="https://docs.novu.co/platform/digest/">
-          {' '}
-          here
-        </a>
-      </p>
-      <form onSubmit={onSubmitHandler}>
-        <div>
-          <div>
-            <label htmlFor="email" className="w-48">
-              Email:
-            </label>
-            <input
-              placeholder="Your Email here"
-              value={formInput.email}
-              id="email"
-              name="email"
-              onChange={onChangeHandler}
-            />
-          </div>
-          <div>
-            <label htmlFor="notif">Notification:</label>
-            <textarea
-              placeholder="Enter the notification text"
-              value={formInput.notif}
-              id="notif"
-              name="notif"
-              onChange={onChangeHandler}
-            />
-          </div>
+    const onChangeHandler = e => {
+        const value = e.target.name === 'email' ? e.target.value.trim() : e.target.value;
+
+        setFormInput((prev) => (
+            {
+                ...prev,
+                [e.target.name]: value
+            }
+        ))
+    }
+    return (
+            <div>
+            <h1 >Email Digest Playground</h1>
+            <p >Don't know how to? Start <a className="underline" href="https://docs.novu.co/platform/digest/"> here</a></p>
+            <form onSubmit={onSubmitHandler}>
+                <div>
+                    <div>
+                        <label htmlFor="email" className="w-48">
+                            Email:
+                        </label>
+                        <input
+                            placeholder="Your Email here"
+                            value={formInput.email}
+                            id="email"
+                            name="email"
+                            onChange={onChangeHandler}
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="notif">
+                            Notification:
+                        </label>
+                        <textarea
+                            placeholder="Enter the notification text"
+                            value={formInput.notif}
+                            id="notif"
+                            name="notif"
+                            onChange={onChangeHandler}
+                        />
+                    </div>
+                </div>
+
+                <button onClick={handleClick} type="submit">
+                    <BiRightArrowAlt className="text-2xl" />
+                </button>
+            </form>
         </div>
-
-        <button onClick={handleClick} type="submit">
-          <BiRightArrowAlt className="text-2xl" />
-        </button>
-      </form>
-    </div>
-  );
-};
+    )
+}
 ```
 
 We're hitting the backend route we had created earlier. The backend has been deployed on render as can be seen in this code snippet above.

@@ -158,11 +158,7 @@ jobs:
       - uses: ./.github/actions/setup-project
         with:
           slim: 'true'
-      - uses: ./.github/actions/setup-redis-cluster
       - uses: mansagroup/nrwl-nx-action@v3
-        env:
-          IN_MEMORY_CLUSTER_MODE_ENABLED: true
-          LOGGING_LEVEL: 'info'
         with:
           targets: lint,build,test
           projects: ${{join(fromJson(needs.get-affected.outputs.test-packages), ',')}}
@@ -211,8 +207,6 @@ jobs:
 
       - uses: ./.github/actions/run-worker
         if: ${{matrix.projectName == '@novu/api' }}
-        with:
-          launch_darkly_sdk_key: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
 
       - uses: mansagroup/nrwl-nx-action@v3
         env:

@@ -3,10 +3,12 @@ import styled from '@emotion/styled';
 import { Grid, Group, Modal, ActionIcon, createStyles, MantineTheme, Drawer } from '@mantine/core';
 import {
   ChannelTypeEnum,
+  IConfigCredentials,
+  ILogoFileName,
   EmailProviderIdEnum,
   InAppProviderIdEnum,
+  ProvidersIdEnum,
   SmsProviderIdEnum,
-  ICredentials,
 } from '@novu/shared';
 
 import { useAuthController, useEnvController } from '../../hooks';
@@ -16,13 +18,12 @@ import { NovuInAppProviderModal } from './components/NovuInAppProviderModal';
 import { ChannelGroup } from './components/Modal/ChannelGroup';
 import { colors, shadows, Title } from '../../design-system';
 import { ConnectIntegrationForm } from './components/Modal/ConnectIntegrationForm';
-import { Close } from '../../design-system/icons';
+import { Close } from '../../design-system/icons/actions/Close';
 import { useProviders } from './useProviders';
 import { useSegment } from '../../components/providers/SegmentProvider';
 import { IntegrationsStoreModalAnalytics } from './constants';
 import { NovuSmsProviderModal } from './components/NovuSmsProviderModal';
 import { useCreateInAppIntegration } from '../../hooks/useCreateInAppIntegration';
-import type { IIntegratedProvider } from './types';
 
 export function IntegrationsStoreModal({
   scrollTo,
@@ -193,12 +194,12 @@ export function IntegrationsStoreModal({
           classNames={drawerClasses}
         >
           <IntegrationCardWrapper>
-            <When truthy={provider && !provider?.novu && provider?.providerId !== InAppProviderIdEnum.Novu}>
+            <When truthy={!provider?.novu && provider?.providerId !== InAppProviderIdEnum.Novu}>
               <ConnectIntegrationForm
                 onClose={handleCloseForm}
                 onSuccessFormSubmit={closeIntegration}
                 key={provider?.providerId}
-                provider={provider as IIntegratedProvider}
+                provider={provider}
                 createModel={isCreateIntegrationModal}
                 organization={organization}
                 environment={environment}
@@ -311,3 +312,66 @@ const useDrawerStyles = createStyles((theme: MantineTheme) => {
     },
   };
 });
+
+export interface IIntegratedProvider {
+  providerId: ProvidersIdEnum;
+  integrationId: string;
+  displayName: string;
+  channel: ChannelTypeEnum;
+  credentials: IConfigCredentials[];
+  docReference: string;
+  comingSoon: boolean;
+  active: boolean;
+  connected: boolean;
+  logoFileName: ILogoFileName;
+  betaVersion: boolean;
+  novu?: boolean;
+}
+
+export interface ICredentials {
+  apiKey?: string;
+  user?: string;
+  secretKey?: string;
+  domain?: string;
+  password?: string;
+  host?: string;
+  port?: string;
+  secure?: boolean;
+  region?: string;
+  accountSid?: string;
+  messageProfileId?: string;
+  token?: string;
+  from?: string;
+  senderName?: string;
+  applicationId?: string;
+  clientId?: string;
+  projectName?: string;
+  serviceAccount?: string;
+  baseUrl?: string;
+  webhookUrl?: string;
+  requireTls?: boolean;
+  ignoreTls?: boolean;
+  tlsOptions?: Record<string, unknown>;
+}
+
+export interface IntegrationEntity {
+  _id?: string;
+
+  _environmentId: string;
+
+  _organizationId: string;
+
+  providerId: string;
+
+  channel: ChannelTypeEnum;
+
+  credentials: ICredentials;
+
+  active: boolean;
+
+  deleted: boolean;
+
+  deletedAt: string;
+
+  deletedBy: string;
+}

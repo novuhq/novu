@@ -10,8 +10,6 @@ import { ChannelsConfiguration } from '../components/ChannelsConfiguration';
 import { HeaderSecondaryTitle } from '../components/layout/HeaderLayout';
 import { IntegrationsStoreModal } from '../../integrations/IntegrationsStoreModal';
 import { NavButton } from '../components/NavButton';
-import { useIsMultiProviderConfigurationEnabled } from '../../../hooks';
-import { IntegrationsListModal } from '../../integrations/IntegrationsListModal';
 
 const ChannelsConfigurationHolder = styled.div`
   display: flex;
@@ -28,13 +26,10 @@ const ChannelsConfigurationHolder = styled.div`
 
 export function GetStarted() {
   const segment = useSegment();
-  const isMultiProviderConfigurationEnabled = useIsMultiProviderConfigurationEnabled();
   const [clickedChannel, setClickedChannel] = useState<{
     open: boolean;
     channelType?: ChannelTypeEnum;
   }>({ open: false });
-
-  const onIntegrationModalClose = () => setClickedChannel({ open: false });
 
   useEffect(() => {
     segment.track(OnBoardingAnalyticsEnum.CONFIGURE_PROVIDER_VISIT);
@@ -58,20 +53,13 @@ export function GetStarted() {
       }}
     >
       <ChannelsConfigurationHolder>
-        {isMultiProviderConfigurationEnabled ? (
-          <IntegrationsListModal
-            isOpen={clickedChannel.open}
-            onClose={onIntegrationModalClose}
-            scrollTo={clickedChannel.channelType}
-          />
-        ) : (
-          <IntegrationsStoreModal
-            openIntegration={clickedChannel.open}
-            closeIntegration={onIntegrationModalClose}
-            scrollTo={clickedChannel.channelType}
-          />
-        )}
-
+        <IntegrationsStoreModal
+          openIntegration={clickedChannel.open}
+          closeIntegration={() => {
+            setClickedChannel({ open: false });
+          }}
+          scrollTo={clickedChannel.channelType}
+        />
         <ChannelsConfiguration setClickedChannel={setClickedChannel} />
       </ChannelsConfigurationHolder>
     </GetStartedLayout>

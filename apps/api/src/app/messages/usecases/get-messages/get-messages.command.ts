@@ -18,5 +18,5 @@ export class GetMessagesCommand extends EnvironmentCommand {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  transactionIds?: string[] | undefined;
+  transactionId?: string[] | null;
 }

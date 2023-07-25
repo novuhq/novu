@@ -1,6 +1,3 @@
-import type { AxiosResponse } from 'axios';
-import { MarkMessagesAsEnum } from '@novu/shared';
-
 import { WithHttp } from '../novu.interface';
 import {
   IGetSubscriberNotificationFeedParams,
@@ -15,11 +12,10 @@ interface IChannelCredentials {
 }
 
 export class Subscribers extends WithHttp implements ISubscribers {
-  async list(page = 0, limit = 10) {
+  async list(page: number) {
     return await this.http.get(`/subscribers`, {
       params: {
         page,
-        limit,
       },
     });
   }
@@ -70,19 +66,10 @@ export class Subscribers extends WithHttp implements ISubscribers {
     });
   }
 
-  async deleteCredentials(subscriberId: string, providerId: string) {
-    return await this.http.delete(
-      `/subscribers/${subscriberId}/credentials/${providerId}`
-    );
-  }
-
-  /**
-   * @deprecated Use deleteCredentials instead
-   */
   async unsetCredentials(subscriberId: string, providerId: string) {
     return await this.http.put(`/subscribers/${subscriberId}/credentials`, {
       providerId,
-      credentials: { webhookUrl: undefined, deviceTokens: [] },
+      credentials: { webhookUrl: undefined },
     });
   }
 
@@ -124,17 +111,6 @@ export class Subscribers extends WithHttp implements ISubscribers {
     return await this.http.post(
       `/subscribers/${subscriberId}/messages/markAs`,
       { messageId, mark: { read: true } }
-    );
-  }
-
-  async markAllMessagesAs(
-    subscriberId: string,
-    markAs: MarkMessagesAsEnum,
-    feedIdentifier?: string | string[]
-  ): Promise<AxiosResponse<{ data: number }>> {
-    return await this.http.post(
-      `/subscribers/${subscriberId}/messages/mark-all`,
-      { markAs, feedIdentifier }
     );
   }
 

@@ -1,4 +1,10 @@
-import { ExternalSubscriberId, TopicKey, TopicName } from '@novu/shared';
+import {
+  ExternalSubscriberId,
+  ITopic,
+  TopicKey,
+  TopicName,
+  TriggerRecipientsTypeEnum,
+} from '@novu/shared';
 
 export interface ITopics {
   addSubscribers(topicKey: TopicKey, data: ITopicSubscribersPayload);

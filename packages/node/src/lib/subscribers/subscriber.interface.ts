@@ -8,7 +8,7 @@ import {
 export { ISubscriberPayload };
 
 export interface ISubscribers {
-  list(page: number, limit: number);
+  list(page: number);
   get(subscriberId: string);
   identify(subscriberId: string, data: ISubscriberPayload);
   update(subscriberId: string, data: ISubscriberPayload);
@@ -18,10 +18,6 @@ export interface ISubscribers {
     providerId: string,
     credentials: IChannelCredentials
   );
-  deleteCredentials(subscriberId: string, providerId: string);
-  /**
-   * @deprecated Use deleteCredentials instead
-   */
   unsetCredentials(subscriberId: string, providerId: string);
   getPreference(subscriberId: string);
   updatePreference(

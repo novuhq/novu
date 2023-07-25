@@ -1,34 +1,18 @@
-import { useMantineTheme } from '@mantine/core';
-import styled from '@emotion/styled';
 import { CredentialsKeyEnum, IConfigCredentials, secureCredentials } from '@novu/shared';
-
-import { Input, PasswordInput, Switch, Textarea, Text, Tooltip } from '../../../design-system';
+import { Input, PasswordInput, Switch, Textarea } from '../../../design-system';
 import { IntegrationSecretTextarea } from './IntegrationSecretTextarea';
-
-const SwitchWrapper = styled.div`
-  display: flex;
-  align-items: center;
-
-  > .mantine-Text-root {
-    margin-right: auto;
-  }
-`;
 
 export function IntegrationInput({
   credential,
   errors,
   field,
   register,
-  ignoreTls,
 }: {
   credential: IConfigCredentials;
   errors: any;
   field: any;
-  register?: any;
-  ignoreTls?: boolean;
+  register: any;
 }) {
-  const theme = useMantineTheme();
-
   if (isNeededToHide(credential.key)) {
     if (credential.type === 'text') {
       return <IntegrationSecretTextarea credential={credential} errors={errors} field={field} register={register} />;
@@ -43,7 +27,7 @@ export function IntegrationInput({
         data-test-id={credential.key}
         error={errors[credential.key]?.message}
         {...field}
-        {...register?.(credential.key, {
+        {...register(credential.key, {
           required: credential.required && `Please enter a ${credential.displayName.toLowerCase()}`,
         })}
       />
@@ -60,7 +44,7 @@ export function IntegrationInput({
         data-test-id={credential.key}
         error={errors[credential.key]?.message}
         {...field}
-        {...register?.(credential.key, {
+        {...register(credential.key, {
           required: credential.required && `Please enter a ${credential.displayName.toLowerCase()}`,
         })}
       />
@@ -68,78 +52,62 @@ export function IntegrationInput({
   }
 
   if (credential.type === 'switch') {
-    let switchComponent = (
+    return (
       <Switch
-        label={field.value ? 'Active' : 'Disabled'}
+        styles={() => ({
+          root: {
+            display: 'block !important',
+            maxWidth: '100% !important',
+          },
+        })}
+        label={credential.displayName}
         required={credential.required}
         placeholder={credential.displayName}
         description={credential.description ?? ''}
         data-test-id={credential.key}
         error={errors[credential.key]?.message}
-        {...register?.(credential.key)}
+        {...register(credential.key)}
         checked={field.value}
         onChange={field.onChange}
       />
-    );
-
-    if (credential.tooltip) {
-      switchComponent = (
-        <Tooltip
-          disabled={credential.tooltip.when !== field.value}
-          withinPortal={false}
-          position="top"
-          width={250}
-          multiline
-          label={credential.tooltip.text}
-        >
-          <span>{switchComponent}</span>
-        </Tooltip>
-      );
-    }
-
-    return (
-      <SwitchWrapper>
-        {credential.displayName && <Text>{credential.displayName}</Text>}
-        {switchComponent}
-      </SwitchWrapper>
     );
   }
 
   if (credential.type === 'boolean') {
     return (
-      <SwitchWrapper>
-        {credential.displayName && <Text>{credential.displayName}</Text>}
-        <Switch
-          required={credential.required}
-          placeholder={credential.displayName}
-          description={credential.description ?? ''}
-          data-test-id={credential.key}
-          error={errors[credential.key]?.message}
-          {...register?.(credential.key)}
-          checked={field.value}
-          onChange={field.onChange}
-        />
-      </SwitchWrapper>
+      <Switch
+        styles={() => ({
+          root: {
+            display: 'block !important',
+            maxWidth: '100% !important',
+          },
+        })}
+        label={credential.displayName}
+        required={credential.required}
+        placeholder={credential.displayName}
+        description={credential.description ?? ''}
+        data-test-id={credential.key}
+        error={errors[credential.key]?.message}
+        {...register(credential.key)}
+        checked={field.value}
+        onChange={field.onChange}
+      />
     );
   }
 
   return (
-    <>
-      {credential.key === 'tlsOptions' && ignoreTls ? null : (
-        <Input
-          label={credential.displayName}
-          required={credential.required}
-          placeholder={credential.displayName}
-          description={credential.description ?? ''}
-          data-test-id={credential.key}
-          error={errors[credential.key]?.message}
-          {...field}
-          {...register?.(credential.key, {
-            required: credential.required && `Please enter a ${credential.displayName.toLowerCase()}`,
-          })}
-        />
-      )}
-    </>
+    <Input
+      label={credential.displayName}
+      required={credential.required}
+      placeholder={credential.displayName}
+      description={credential.description ?? ''}
+      data-test-id={credential.key}
+      error={errors[credential.key]?.message}
+      {...field}
+      {...register(credential.key, {
+        required: credential.required && `Please enter a ${credential.displayName.toLowerCase()}`,
+      })}
+    />
   );
 }
 

@@ -12,7 +12,6 @@ import {
 } from '@nestjs/common';
 import { ChannelTypeEnum, IJwtPayload, MemberRoleEnum } from '@novu/shared';
 import { CalculateLimitNovuIntegration, CalculateLimitNovuIntegrationCommand } from '@novu/application-generic';
-import { ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -28,6 +27,7 @@ import { UpdateIntegrationCommand } from './usecases/update-integration/update-i
 import { RemoveIntegrationCommand } from './usecases/remove-integration/remove-integration.command';
 import { RemoveIntegration } from './usecases/remove-integration/remove-integration.usecase';
 import { GetActiveIntegrations } from './usecases/get-active-integration/get-active-integration.usecase';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { IntegrationResponseDto } from './dtos/integration-response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { GetWebhookSupportStatus } from './usecases/get-webhook-support-status/get-webhook-support-status.usecase';
@@ -36,8 +36,6 @@ import { GetInAppActivatedCommand } from './usecases/get-in-app-activated/get-in
 import { GetInAppActivated } from './usecases/get-in-app-activated/get-in-app-activated.usecase';
 import { ApiResponse } from '../shared/framework/response.decorator';
 import { ChannelTypeLimitDto } from './dtos/get-channel-type-limit.sto';
-import { GetActiveIntegrationsCommand } from './usecases/get-active-integration/get-active-integration.command';
-import { GetActiveIntegrationResponseDto } from './dtos/get-active-integration-response.dto';
 
 @Controller('/integrations')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -56,14 +54,9 @@ export class IntegrationsController {
   ) {}
 
   @Get('/')
-  @ApiOkResponse({
-    type: IntegrationResponseDto,
-    description: 'The list of integrations belonging to the organization that are successfully returned.',
-  })
+  @ApiResponse(IntegrationResponseDto, 200, true)
   @ApiOperation({
     summary: 'Get integrations',
-    description:
-      'Return all the integrations the user has created for that organization. Review v.0.17.0 changelog for a breaking change',
   })
   @ExternalApiAccessible()
   async getIntegrations(@UserSession() user: IJwtPayload): Promise<IntegrationResponseDto[]> {
@@ -77,19 +70,14 @@ export class IntegrationsController {
   }
 
   @Get('/active')
-  @ApiOkResponse({
-    type: IntegrationResponseDto,
-    description: 'The list of active integrations belonging to the organization that are successfully returned.',
-  })
+  @ApiResponse(IntegrationResponseDto, 200, true)
   @ApiOperation({
     summary: 'Get active integrations',
-    description:
-      'Return all the active integrations the user has created for that organization. Review v.0.17.0 changelog for a breaking change',
   })
   @ExternalApiAccessible()
-  async getActiveIntegrations(@UserSession() user: IJwtPayload): Promise<GetActiveIntegrationResponseDto[]> {
+  async getActiveIntegrations(@UserSession() user: IJwtPayload): Promise<IntegrationResponseDto[]> {
     return await this.getActiveIntegrationsUsecase.execute(
-      GetActiveIntegrationsCommand.create({
+      GetIntegrationsCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
@@ -98,14 +86,8 @@ export class IntegrationsController {
   }
 
   @Get('/webhook/provider/:providerId/status')
-  @ApiOkResponse({
-    type: Boolean,
-    description: 'The status of the webhook for the provider requested',
-  })
   @ApiOperation({
     summary: 'Get webhook support status for provider',
-    description:
-      'Return the status of the webhook for this provider, if it is supported or if it is not based on a boolean value',
   })
   @ExternalApiAccessible()
   async getWebhookSupportStatus(
@@ -126,7 +108,6 @@ export class IntegrationsController {
   @ApiResponse(IntegrationResponseDto, 201)
   @ApiOperation({
     summary: 'Create integration',
-    description: 'Create an integration for the current environment the user is based on the API key provided',
   })
   @ExternalApiAccessible()
   async createIntegration(
@@ -136,15 +117,13 @@ export class IntegrationsController {
     return await this.createIntegrationUsecase.execute(
       CreateIntegrationCommand.create({
         userId: user._id,
-        name: body.name,
-        identifier: body.identifier,
-        environmentId: body._environmentId ?? user.environmentId,
+        environmentId: user.environmentId,
         organizationId: user.organizationId,
         providerId: body.providerId,
         channel: body.channel,
         credentials: body.credentials,
-        active: body.active ?? false,
-        check: body.check ?? true,
+        active: body.active,
+        check: body.check,
       })
     );
   }
@@ -152,9 +131,6 @@ export class IntegrationsController {
   @Put('/:integrationId')
   @Roles(MemberRoleEnum.ADMIN)
   @ApiResponse(IntegrationResponseDto)
-  @ApiNotFoundResponse({
-    description: 'The integration with the integrationId provided does not exist in the database.',
-  })
   @ApiOperation({
     summary: 'Update integration',
   })
@@ -167,15 +143,12 @@ export class IntegrationsController {
     return this.updateIntegrationUsecase.execute(
       UpdateIntegrationCommand.create({
         userId: user._id,
-        name: body.name,
-        identifier: body.identifier,
-        environmentId: body._environmentId,
-        userEnvironmentId: user.environmentId,
+        environmentId: user.environmentId,
         organizationId: user.organizationId,
         integrationId,
         credentials: body.credentials,
         active: body.active,
-        check: body.check ?? true,
+        check: body.check,
       })
     );
   }

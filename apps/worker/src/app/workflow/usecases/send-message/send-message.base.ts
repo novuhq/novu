@@ -1,13 +1,15 @@
-import { IntegrationEntity, JobEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
+import { JobEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
 import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import {
   buildSubscriberKey,
+  buildIntegrationKey,
   CachedEntity,
+  CachedQuery,
   DetailEnum,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-  SelectIntegration,
-  SelectIntegrationCommand,
+  GetDecryptedIntegrations,
+  GetDecryptedIntegrationsCommand,
 } from '@novu/application-generic';
 
 import { SendMessageType } from './send-message-type.usecase';
@@ -20,7 +22,7 @@ export abstract class SendMessageBase extends SendMessageType {
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     protected subscriberRepository: SubscriberRepository,
-    protected selectIntegration: SelectIntegration
+    protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {
     super(messageRepository, createLogUsecase, createExecutionDetails);
   }
@@ -45,12 +47,20 @@ export abstract class SendMessageBase extends SendMessageType {
     });
   }
 
-  protected async getIntegration(
-    selectIntegrationCommand: SelectIntegrationCommand
-  ): Promise<IntegrationEntity | undefined> {
-    return this.selectIntegration.execute(SelectIntegrationCommand.create(selectIntegrationCommand));
+  @CachedQuery({
+    builder: ({ environmentId, ...command }: GetDecryptedIntegrationsCommand) =>
+      buildIntegrationKey().cache({
+        _environmentId: environmentId,
+        ...command,
+      }),
+  })
+  protected async getIntegration(getDecryptedIntegrationsCommand: GetDecryptedIntegrationsCommand) {
+    return (
+      await this.getDecryptedIntegrationsUsecase.execute(
+        GetDecryptedIntegrationsCommand.create(getDecryptedIntegrationsCommand)
+      )
+    )[0];
   }
-
   protected storeContent(): boolean {
     return this.channelType === ChannelTypeEnum.IN_APP || process.env.STORE_NOTIFICATION_CONTENT === 'true';
   }
@@ -65,26 +75,6 @@ export abstract class SendMessageBase extends SendMessageType {
         isTest: false,
         isRetry: false,
         raw: JSON.stringify({ error }),
-      })
-    );
-  }
-
-  protected async sendSelectedIntegrationExecution(job: JobEntity, integration: IntegrationEntity) {
-    await this.createExecutionDetails.execute(
-      CreateExecutionDetailsCommand.create({
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
-        detail: DetailEnum.INTEGRATION_INSTANCE_SELECTED,
-        source: ExecutionDetailsSourceEnum.INTERNAL,
-        status: ExecutionDetailsStatusEnum.PENDING,
-        isTest: false,
-        isRetry: false,
-        raw: JSON.stringify({
-          providerId: integration?.providerId,
-          identifier: integration?.identifier,
-          name: integration?.name,
-          _environmentId: integration?._environmentId,
-          _id: integration?._id,
-        }),
       })
     );
   }

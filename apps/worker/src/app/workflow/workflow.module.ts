@@ -32,7 +32,6 @@ import {
   StoreSubscriberJobs,
   CalculateDelayService,
   WsQueueService,
-  SelectIntegration,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
@@ -51,7 +50,6 @@ import {
   Digest,
   GetDigestEventsBackoff,
   GetDigestEventsRegular,
-  HandleLastFailedJob,
   QueueNextJob,
   RunJob,
   SetJobAsCompleted,
@@ -69,11 +67,9 @@ const USE_CASES = [
   CreateExecutionDetails,
   BulkCreateExecutionDetails,
   GetDecryptedIntegrations,
-  SelectIntegration,
   GetNovuIntegration,
   GetSubscriberPreference,
   GetSubscriberTemplatePreference,
-  HandleLastFailedJob,
   MessageMatcher,
   QueueNextJob,
   RunJob,
@@ -138,8 +134,6 @@ const SERVICES: Provider[] = [
   EventsDistributedLockService,
   EventsPerformanceService,
   CalculateDelayService,
-  TriggerProcessorQueueService,
-  WorkflowQueueService,
 ];
 
 @Module({

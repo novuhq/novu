@@ -15,10 +15,11 @@ export class SetJobAsFailed {
     await this.updateJobStatus.execute(
       UpdateJobStatusCommand.create({
         environmentId: command.environmentId,
-        jobId: command.jobId,
+        _jobId: command._jobId,
+        organizationId: command.organizationId,
         status: JobStatusEnum.FAILED,
       })
     );
-    await this.jobRepository.setError(command.organizationId, command.jobId, error);
+    await this.jobRepository.setError(command.organizationId, command._jobId, error);
   }
 }

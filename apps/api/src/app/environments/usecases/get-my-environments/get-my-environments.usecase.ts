@@ -11,16 +11,6 @@ export class GetMyEnvironments {
   async execute(command: GetMyEnvironmentsCommand): Promise<EnvironmentEntity[]> {
     Logger.verbose('Getting Environments');
 
-    const environments = await this.environmentRepository.findOrganizationEnvironments(command.organizationId);
-
-    return environments.map((environment) => {
-      if (environment._id === command.environmentId) {
-        return environment;
-      }
-
-      environment.apiKeys = [];
-
-      return environment;
-    });
+    return await this.environmentRepository.findOrganizationEnvironments(command.organizationId);
   }
 }

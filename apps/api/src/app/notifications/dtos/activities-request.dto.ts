@@ -22,15 +22,8 @@ export class ActivitiesRequestDto {
 
   @ApiProperty({
     type: String,
-    deprecated: true,
   })
   search: string;
-
-  @ApiProperty({
-    type: String,
-    isArray: true,
-  })
-  subscriberIds: string | string[];
 
   @ApiPropertyOptional({
     type: Number,

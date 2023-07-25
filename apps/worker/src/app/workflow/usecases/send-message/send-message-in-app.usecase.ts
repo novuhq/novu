@@ -15,6 +15,7 @@ import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   IEmailBlock,
+  InAppProviderIdEnum,
   ActorTypeEnum,
 } from '@novu/shared';
 import {
@@ -23,12 +24,13 @@ import {
   DetailEnum,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-  SelectIntegration,
+  GetDecryptedIntegrations,
   CompileTemplate,
   CompileTemplateCommand,
   WsQueueService,
   buildFeedKey,
   buildMessageCountKey,
+  GetDecryptedIntegrationsCommand,
 } from '@novu/application-generic';
 
 import { CreateLog } from '../../../shared/logs';
@@ -49,9 +51,15 @@ export class SendMessageInApp extends SendMessageBase {
     protected subscriberRepository: SubscriberRepository,
     private compileTemplate: CompileTemplate,
     private organizationRepository: OrganizationRepository,
-    protected selectIntegration: SelectIntegration
+    protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {
-    super(messageRepository, createLogUsecase, createExecutionDetails, subscriberRepository, selectIntegration);
+    super(
+      messageRepository,
+      createLogUsecase,
+      createExecutionDetails,
+      subscriberRepository,
+      getDecryptedIntegrationsUsecase
+    );
   }
 
   @InstrumentUsecase()
@@ -67,12 +75,16 @@ export class SendMessageInApp extends SendMessageBase {
       message: 'Sending In App',
     });
 
-    const integration = await this.getIntegration({
-      organizationId: command.organizationId,
-      environmentId: command.environmentId,
-      channelType: ChannelTypeEnum.IN_APP,
-      userId: command.userId,
-    });
+    const integration = await this.getIntegration(
+      GetDecryptedIntegrationsCommand.create({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        channelType: ChannelTypeEnum.IN_APP,
+        findOne: true,
+        active: true,
+        userId: command.userId,
+      })
+    );
 
     if (!integration) {
       await this.createExecutionDetails.execute(
@@ -184,7 +196,6 @@ export class SendMessageInApp extends SendMessageBase {
         transactionId: command.transactionId,
         content: this.storeContent() ? content : null,
         payload: messagePayload,
-        providerId: integration.providerId,
         templateIdentifier: command.identifier,
         _jobId: command.jobId,
         ...(actor &&
@@ -246,7 +257,7 @@ export class SendMessageInApp extends SendMessageBase {
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         messageId: message._id,
-        providerId: integration.providerId,
+        providerId: InAppProviderIdEnum.Novu,
         detail: DetailEnum.MESSAGE_CREATED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.PENDING,
@@ -285,7 +296,7 @@ export class SendMessageInApp extends SendMessageBase {
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         messageId: message._id,
-        providerId: integration.providerId,
+        providerId: InAppProviderIdEnum.Novu,
         detail: DetailEnum.MESSAGE_SENT,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.SUCCESS,

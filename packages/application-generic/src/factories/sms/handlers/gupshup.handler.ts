@@ -1,4 +1,5 @@
-import { ChannelTypeEnum, ICredentials } from '@novu/shared';
+import { ChannelTypeEnum } from '@novu/shared';
+import { ICredentials } from '@novu/dal';
 import { BaseSmsHandler } from './base.handler';
 import { GupshupSmsProvider } from '@novu/gupshup';
 

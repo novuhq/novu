@@ -6,6 +6,10 @@ import { IEmailOptions } from '@novu/stateless';
 
 import { AnalyticsService } from '../../services/analytics.service';
 import { InstrumentUsecase } from '../../instrumentation';
+import {
+  GetDecryptedIntegrations,
+  GetDecryptedIntegrationsCommand,
+} from '../get-decrypted-integrations';
 import { MailFactory } from '../../factories/mail/mail.factory';
 import { GetNovuIntegration } from '../get-novu-integration';
 import {
@@ -14,17 +18,13 @@ import {
 } from '../compile-email-template';
 import { SendTestEmailCommand } from './send-test-email.command';
 import { ApiException } from '../../utils/exceptions';
-import {
-  SelectIntegration,
-  SelectIntegrationCommand,
-} from '../select-integration';
 
 @Injectable()
 export class SendTestEmail {
   constructor(
     private compileEmailTemplateUsecase: CompileEmailTemplate,
     private organizationRepository: OrganizationRepository,
-    private selectIntegration: SelectIntegration,
+    private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations,
     private analyticsService: AnalyticsService
   ) {}
 
@@ -42,14 +42,18 @@ export class SendTestEmail {
       message: 'Sending Email',
     });
 
-    const integration = await this.selectIntegration.execute(
-      SelectIntegrationCommand.create({
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        channelType: ChannelTypeEnum.EMAIL,
-        userId: command.userId,
-      })
-    );
+    const integration = (
+      await this.getDecryptedIntegrationsUsecase.execute(
+        GetDecryptedIntegrationsCommand.create({
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          channelType: ChannelTypeEnum.EMAIL,
+          findOne: true,
+          active: true,
+          userId: command.userId,
+        })
+      )
+    )[0];
 
     if (!integration) {
       throw new ApiException(`Missing an active email integration`);

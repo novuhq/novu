@@ -22,7 +22,6 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
   } | null = null;
 
   const inMemoryProviderService = new InMemoryProviderService();
-  inMemoryProviderService.initialize();
   const invalidateCache = new InvalidateCacheService(new CacheService(inMemoryProviderService));
 
   beforeEach(async () => {

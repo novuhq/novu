@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, ICreateIntegrationBodyDto, InAppProviderIdEnum } from '@novu/shared';
+import { ChannelTypeEnum, ICredentialsDto, InAppProviderIdEnum } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createIntegration } from '../api/integration';
 import { QueryKeys } from '../api/query.keys';
@@ -11,7 +11,13 @@ export const useCreateInAppIntegration = (onSuccess: (data: any) => void) => {
   const { mutateAsync: createIntegrationApi, isLoading } = useMutation<
     { _id: string; active: boolean },
     { error: string; message: string; statusCode: number },
-    ICreateIntegrationBodyDto
+    {
+      providerId: string;
+      channel: ChannelTypeEnum | null;
+      credentials: ICredentialsDto;
+      active: boolean;
+      check: boolean;
+    }
   >(createIntegration, {
     onSuccess: (data) => {
       queryClient.setQueryData([QueryKeys.integrationsList], (oldData: any[] | undefined) => {

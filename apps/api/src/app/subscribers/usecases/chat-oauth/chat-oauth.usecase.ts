@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { ChannelTypeEnum } from '@novu/stateless';
-import { IntegrationEntity, IntegrationRepository, EnvironmentRepository, ICredentialsEntity } from '@novu/dal';
+import { IntegrationEntity, IntegrationRepository, EnvironmentRepository, ICredentials } from '@novu/dal';
 
 import { ChatOauthCommand } from './chat-oauth.command';
 import { createHash } from '../../../shared/helpers/hmac.service';
@@ -25,7 +25,7 @@ export class ChatOauth {
       externalHmacHash: command.hmacHash,
     });
 
-    return this.getOAuthUrl(command.subscriberId, command.environmentId, clientId!, command.integrationIdentifier);
+    return this.getOAuthUrl(command.subscriberId, command.environmentId, clientId!);
   }
 
   private async hmacValidation({
@@ -54,39 +54,20 @@ export class ChatOauth {
     }
   }
 
-  private getOAuthUrl(
-    subscriberId: string,
-    environmentId: string,
-    clientId: string,
-    integrationIdentifier?: string
-  ): string {
-    let redirectUri =
-      process.env.API_ROOT_URL +
-      `/v1/subscribers/${subscriberId}/credentials/slack/oauth/callback?environmentId=${environmentId}`;
+  private getOAuthUrl(subscriberId: string, environmentId: string, clientId: string): string {
+    const redirectUri = `${process.env.API_ROOT_URL}/v1/subscribers/${subscriberId}/credentials/slack/oauth/callback?environmentId=${environmentId}`;
 
-    if (integrationIdentifier) {
-      redirectUri = `${redirectUri}&integrationIdentifier=${integrationIdentifier}`;
-    }
-
-    return `${
-      this.SLACK_OAUTH_URL
-    }client_id=${clientId}&scope=incoming-webhook&user_scope=&redirect_uri=${encodeURIComponent(redirectUri)}`;
+    return `${this.SLACK_OAUTH_URL}client_id=${clientId}&scope=incoming-webhook&user_scope=&redirect_uri=${redirectUri}`;
   }
 
-  private async getCredentials(command: ChatOauthCommand): Promise<ICredentialsEntity> {
+  private async getCredentials(command: ChatOauthCommand): Promise<ICredentials> {
     const query: Partial<IntegrationEntity> & { _environmentId: string } = {
       _environmentId: command.environmentId,
       channel: ChannelTypeEnum.CHAT,
       providerId: command.providerId,
     };
 
-    if (command.integrationIdentifier) {
-      query.identifier = command.integrationIdentifier;
-    }
-
-    const integration = await this.integrationRepository.findOne(query, undefined, {
-      query: { sort: { createdAt: -1 } },
-    });
+    const integration = await this.integrationRepository.findOne(query);
 
     if (!integration) {
       throw new NotFoundException(

@@ -1,8 +1,7 @@
 const nr = require('newrelic');
-import { Job, WorkerOptions } from 'bullmq';
+import { WorkerOptions } from 'bullmq';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { QueueService } from '@novu/application-generic';
-import { IJobData } from '@novu/shared';
 import { min, max, sum, mean } from 'simple-statistics';
 
 interface IMetric {
@@ -53,13 +52,13 @@ export class MetricQueueService extends QueueService<Record<string, never>> {
         return exists;
       })
     )
-      .then(async (exists: boolean): Promise<void> => {
-        Logger.debug(`metric job exists: ${exists}`, LOG_CONTEXT);
+      .then(async (exists): Promise<void> => {
+        Logger.debug('metric job exists: ' + exists, LOG_CONTEXT);
 
         if (!exists) {
           Logger.debug(`metricJob doesn't exist, creating it`, LOG_CONTEXT);
 
-          return await this.addToQueue(METRIC_JOB_ID, undefined, '', {
+          return await this.addToQueue(METRIC_JOB_ID, {}, '', {
             jobId: METRIC_JOB_ID,
             repeatJobKey: METRIC_JOB_ID,
             repeat: {
@@ -74,15 +73,16 @@ export class MetricQueueService extends QueueService<Record<string, never>> {
 
         return undefined;
       })
-      .catch((error) => Logger.error('Metric Job Exists function errored', error, LOG_CONTEXT));
+      .catch((error) => Logger.error('Metric Job Exists function errored', LOG_CONTEXT, error));
   }
 
   private getWorkerOpts(): WorkerOptions {
     return {
+      ...this.bullConfig,
       lockDuration: 500,
       concurrency: 1,
       settings: {},
-    };
+    } as WorkerOptions;
   }
 
   private getWorkerProcessor() {
@@ -145,6 +145,6 @@ export class MetricQueueService extends QueueService<Record<string, never>> {
   }
 
   private async jobHasFailed(job, error): Promise<void> {
-    Logger.verbose('Metric job failed', error, LOG_CONTEXT);
+    Logger.verbose('Metric job failed', LOG_CONTEXT, error);
   }
 }

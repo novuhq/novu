@@ -1,8 +1,7 @@
 import { Container, Grid } from '@mantine/core';
 import { Title } from '../../../../design-system';
 import { ChannelTypeEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
-
-import type { IIntegratedProvider } from '../../types';
+import { IIntegratedProvider } from '../../IntegrationsStorePage';
 import { When } from '../../../../components/utils/When';
 import { CONTEXT_PATH, IS_DOCKER_HOSTED } from '../../../../config';
 import { ProviderCard } from './ProviderCard';

@@ -1,8 +1,3 @@
-import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
-import { IsOptional } from 'class-validator';
-import { ProvidersIdEnum } from '@novu/shared';
+import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
-export class GetActiveIntegrationsCommand extends EnvironmentWithUserCommand {
-  @IsOptional()
-  providerId?: ProvidersIdEnum;
-}
+export class GetActiveIntegrationsCommand extends EnvironmentCommand {}

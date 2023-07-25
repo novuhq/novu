@@ -2,7 +2,7 @@ import React from 'react';
 import { IMessage, ChannelCTATypeEnum } from '@novu/shared';
 
 import { useNotifications, useNotificationCenter, useNovuContext, useTranslations } from '../../../hooks';
-import image from '../../../images/no-new-notifications.webp';
+import image from '../../../images/no-new-notifications.png';
 import { NotificationsList } from './NotificationsList';
 import { Loader } from './Loader';
 import { colors } from '../../../shared/config/colors';

@@ -1,4 +1,4 @@
-import { ICredentials } from '@novu/shared';
+import { ICredentials } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/stateless';
 import { BaseChatHandler } from './base.handler';
 import { DiscordProvider } from '@novu/discord';

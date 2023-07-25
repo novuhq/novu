@@ -2,7 +2,6 @@ import { BaseCommand } from '@novu/application-generic';
 import {
   IsEnum,
   IsMongoId,
-  IsOptional,
   IsString,
   registerDecorator,
   ValidationArguments,
@@ -50,8 +49,4 @@ export class ChatOauthCallbackCommand extends BaseCommand {
   readonly providerCode: string;
 
   readonly hmacHash?: string;
-
-  @IsOptional()
-  @IsString()
-  readonly integrationIdentifier?: string;
 }

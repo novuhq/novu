@@ -95,7 +95,7 @@ export interface IDelayScheduledMetadata {
   delayPath: string;
 }
 
-export type IWorkflowStepMetadata =
+export type INotificationTemplateStepMetadata =
   | IDigestRegularMetadata
   | IDigestTimedMetadata
   | IDelayRegularMetadata

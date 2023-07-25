@@ -1,9 +1,8 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsObject, IsOptional, IsString } from 'class-validator';
 import { TransformToBoolean } from '../../shared/transformers/to-boolean';
-import { ICredentials } from '@novu/shared';
 
-export class CredentialsDto implements ICredentials {
+export class CredentialsDto {
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
@@ -116,24 +115,4 @@ export class CredentialsDto implements ICredentials {
   @IsString()
   @IsOptional()
   webhookUrl?: string;
-
-  @ApiPropertyOptional()
-  @IsString()
-  @IsOptional()
-  redirectUrl?: string;
-
-  @ApiPropertyOptional()
-  @IsBoolean()
-  @IsOptional()
-  hmac?: boolean;
-
-  @ApiPropertyOptional()
-  @IsString()
-  @IsOptional()
-  serviceAccount?: string;
-
-  @ApiPropertyOptional()
-  @IsString()
-  @IsOptional()
-  ipPoolName?: string;
 }

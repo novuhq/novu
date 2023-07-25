@@ -4,7 +4,7 @@ import {
   BuilderFieldType,
   BuilderGroupValues,
   IPreferenceChannels,
-  IWorkflowStepMetadata,
+  INotificationTemplateStepMetadata,
   TemplateVariableTypeEnum,
   DaysEnum,
 } from '@novu/shared';
@@ -107,7 +107,7 @@ export class NotificationStepEntity {
 
   _parentId?: string | null;
 
-  metadata?: IWorkflowStepMetadata;
+  metadata?: INotificationTemplateStepMetadata;
 
   shouldStopOnFail?: boolean;
 }

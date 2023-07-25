@@ -138,7 +138,7 @@ const codeTheme = require('./src/utils/prism');
               items: [
                 {
                   label: 'Discord',
-                  href: 'https://discord.gg/novu',
+                  href: 'https://discord.novu.co',
                 },
                 {
                   label: 'Twitter',

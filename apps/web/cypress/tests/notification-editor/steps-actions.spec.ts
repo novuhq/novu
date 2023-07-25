@@ -355,34 +355,4 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.getByTestId('add-filter-btn').contains('2 filters');
   });
-
-  it('should re-render content on between step click', function () {
-    cy.waitLoadTemplatePage(() => {
-      cy.visit('/workflows/create');
-    });
-    cy.waitForNetworkIdle(500);
-
-    dragAndDrop('sms');
-
-    dragAndDrop('delay');
-
-    dragAndDrop('sms');
-
-    cy.waitForNetworkIdle(500);
-
-    const firstContent = 'first content for sms';
-    const lastContent = 'last content for sms';
-
-    cy.clickWorkflowNode(`node-smsSelector`);
-    cy.getByTestId('smsNotificationContent').type(firstContent);
-
-    cy.clickWorkflowNode(`node-smsSelector`, true);
-    cy.getByTestId('smsNotificationContent').type(lastContent);
-
-    cy.clickWorkflowNode(`node-smsSelector`);
-    cy.getByTestId('smsNotificationContent').should('have.text', firstContent);
-
-    cy.clickWorkflowNode(`node-smsSelector`, true);
-    cy.getByTestId('smsNotificationContent').should('have.text', lastContent);
-  });
 });

@@ -1,4 +1,4 @@
-type Channel = 'inApp' | 'email' | 'sms' | 'digest' | 'delay';
+type Channel = 'inApp' | 'email' | 'sms' | 'digest';
 
 export function addAndEditChannel(channel: Channel) {
   cy.waitForNetworkIdle(500);

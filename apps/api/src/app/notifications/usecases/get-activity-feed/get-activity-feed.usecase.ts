@@ -16,7 +16,7 @@ export class GetActivityFeed {
 
     let subscriberIds: string[] = [];
 
-    if (command.search || command.emails?.length || command.subscriberIds?.length) {
+    if (command.search || command.emails?.length) {
       const foundSubscribers = await this.findSubscribers(command);
 
       subscriberIds = foundSubscribers.map((subscriber) => subscriber._id);
@@ -24,18 +24,18 @@ export class GetActivityFeed {
       if (subscriberIds.length === 0) {
         return {
           page: 0,
-          hasMore: false,
+          totalCount: 0,
           pageSize: LIMIT,
           data: [],
         };
       }
     }
 
-    const { notifications } = await this.getFeedNotifications(command, subscriberIds, LIMIT);
+    const { notifications, totalCount } = await this.getFeedNotifications(command, subscriberIds, LIMIT);
 
     return {
       page: command.page,
-      hasMore: notifications?.length === LIMIT,
+      totalCount,
       pageSize: LIMIT,
       data: notifications,
     };
@@ -45,9 +45,8 @@ export class GetActivityFeed {
   private async findSubscribers(command: GetActivityFeedCommand) {
     const foundSubscribers = await this.subscribersRepository.searchSubscribers(
       command.environmentId,
-      command.subscriberIds,
-      command.emails,
-      command.search
+      command.search,
+      command.emails
     );
 
     return foundSubscribers;
@@ -55,13 +54,13 @@ export class GetActivityFeed {
 
   @Instrument()
   private async getFeedNotifications(command: GetActivityFeedCommand, subscriberIds: string[], LIMIT: number) {
-    const { data: notifications } = await this.notificationRepository.getFeed(
+    const { data: notifications, totalCount } = await this.notificationRepository.getFeed(
       command.environmentId,
       { channels: command.channels, templates: command.templates, subscriberIds, transactionId: command.transactionId },
       command.page * LIMIT,
       LIMIT
     );
 
-    return { notifications };
+    return { notifications, totalCount };
   }
 }

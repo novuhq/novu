@@ -38,8 +38,8 @@ export function CachedEntity({
       } catch (err) {
         Logger.error(
           `An error has occurred when extracting "key: ${cacheKey}" in "method: ${methodName}"`,
-          err,
-          LOG_CONTEXT
+          LOG_CONTEXT,
+          err
         );
       }
 
@@ -51,8 +51,8 @@ export function CachedEntity({
         // eslint-disable-next-line no-console
         Logger.error(
           `An error has occurred when inserting "key: ${cacheKey}" in "method: ${methodName}" with "value: ${response}"`,
-          err,
-          LOG_CONTEXT
+          LOG_CONTEXT,
+          err
         );
       }
 

@@ -12,10 +12,6 @@ export {
   TextAlignEnum,
   EmailBlockTypeEnum,
   ChannelTypeEnum,
-  FilterPartTypeEnum,
-  StepTypeEnum,
-  TriggerRecipientsTypeEnum,
-  MarkMessagesAsEnum,
 } from '@novu/shared';
 
 export * from './lib/novu';

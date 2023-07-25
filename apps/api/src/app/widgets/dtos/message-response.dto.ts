@@ -8,7 +8,7 @@ import {
   TextAlignEnum,
 } from '@novu/shared';
 import { SubscriberResponseDto } from '../../subscribers/dtos';
-import { WorkflowResponse } from '../../workflows/dto/workflow-response.dto';
+import { NotificationTemplateResponse } from '../../notification-template/dto/notification-template-response.dto';
 
 class EmailBlockStyles {
   @ApiProperty({
@@ -113,9 +113,9 @@ export class MessageResponseDto {
   subscriber?: SubscriberResponseDto;
 
   @ApiPropertyOptional({
-    type: WorkflowResponse,
+    type: NotificationTemplateResponse,
   })
-  template?: WorkflowResponse;
+  template?: NotificationTemplateResponse;
 
   @ApiPropertyOptional()
   templateIdentifier?: string;

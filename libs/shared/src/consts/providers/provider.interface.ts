@@ -20,10 +20,6 @@ export interface IConfigCredentials {
   description?: string;
   type: string;
   required: boolean;
-  tooltip?: {
-    text: string;
-    when?: boolean;
-  };
 }
 
 export interface ILogoFileName {

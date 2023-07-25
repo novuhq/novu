@@ -7,10 +7,6 @@ export class ChatOauthRequestDto {
   @IsMongoId()
   @IsDefined()
   environmentId: string;
-
-  @IsOptional()
-  @IsString()
-  integrationIdentifier?: string;
 }
 
 export class ChatOauthCallbackRequestDto extends ChatOauthRequestDto {

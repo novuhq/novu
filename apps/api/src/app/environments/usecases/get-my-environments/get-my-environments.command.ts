@@ -1,3 +1,3 @@
-import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
+import { OrganizationCommand } from '../../../shared/commands/organization.command';
 
-export class GetMyEnvironmentsCommand extends EnvironmentWithUserCommand {}
+export class GetMyEnvironmentsCommand extends OrganizationCommand {}

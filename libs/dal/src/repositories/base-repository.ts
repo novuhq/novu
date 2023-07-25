@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ClassConstructor, plainToInstance } from 'class-transformer';
 import { addMonths } from 'date-fns';
-import { Model, Types, ProjectionType, FilterQuery, UpdateQuery, QueryOptions } from 'mongoose';
+import { Model, Types, ProjectionType, FilterQuery, UpdateQuery } from 'mongoose';
 import { DalException } from '../shared';
 
 export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
@@ -43,11 +43,9 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
   async findOne(
     query: FilterQuery<T_DBModel> & T_Enforcement,
     select?: ProjectionType<T_MappedEntity>,
-    options: { readPreference?: 'secondaryPreferred' | 'primary'; query?: QueryOptions<T_DBModel> } = {}
+    options: { readPreference?: 'secondaryPreferred' | 'primary' } = {}
   ): Promise<T_MappedEntity | null> {
-    const data = await this.MongooseModel.findOne(query, select, options.query).read(
-      options.readPreference || 'primary'
-    );
+    const data = await this.MongooseModel.findOne(query, select).read(options.readPreference || 'primary');
     if (!data) return null;
 
     return this.mapEntity(data.toObject());

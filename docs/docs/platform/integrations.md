@@ -11,9 +11,7 @@ Novu's integrations page is used to configure the final delivery providers for e
 Each provider connects to a specific channel within the platform, currently we support the following channels:
 
 - E-mail
-- Chat
 - SMS
-- Push
 - In-app notification center
 
 ## Provider specific configuration
@@ -30,9 +28,3 @@ For email providers, you will be required to add the following data:
 ## Missing a provider?
 
 Novu is an open-source platform, meaning that if you are missing a particular provider you can create one using the guide specified [here](/community/create-provider).
-
-### Changelog
-
-:::warning
-In version 0.17.0 we introduced a breaking change in the Integrations API as the GET endpoints passed to bring the integrations filtered by environment identifier to bring the integrations filtered by organization.
-:::warning

@@ -19,5 +19,4 @@ export * from './repositories/execution-details';
 export * from './repositories/subscriber-preference';
 export * from './repositories/topic';
 export * from './repositories/layout';
-export * from './repositories/tenant';
 export * from './shared';

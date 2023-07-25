@@ -1,12 +1,10 @@
-import { Text as MantineText, MantineColor, useMantineTheme, TextProps } from '@mantine/core';
+import { Text as MantineText, MantineColor, useMantineTheme } from '@mantine/core';
 
 import { colors } from '../../config';
 import { SpacingProps } from '../../shared/spacing.props';
 
 interface ITextProps extends JSX.ElementChildrenAttribute, SpacingProps {
-  size?: TextProps['size'];
-  style?: TextProps['style'];
-  styles?: TextProps['styles'];
+  size?: 'md' | 'lg';
   align?: 'left' | 'center' | 'right' | 'justify';
   weight?: 'bold' | 'normal';
   color?: MantineColor;

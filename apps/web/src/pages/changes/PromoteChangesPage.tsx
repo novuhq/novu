@@ -5,6 +5,7 @@ import styled from '@emotion/styled';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { Button, Tabs } from '../../design-system';
+import PageMeta from '../../components/layout/components/PageMeta';
 import { usePromotedChanges, useUnPromotedChanges } from '../../hooks';
 import { ChangesTable } from './components/ChangesTableLayout';
 import { bulkPromoteChanges } from '../../api/changes';
@@ -71,7 +72,8 @@ export function PromoteChangesPage() {
   ];
 
   return (
-    <PageContainer title="Changes">
+    <PageContainer>
+      <PageMeta title="Changes" />
       <PageHeader
         title="Changes"
         actions={

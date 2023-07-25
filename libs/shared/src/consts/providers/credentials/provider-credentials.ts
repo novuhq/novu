@@ -201,12 +201,6 @@ export const sendgridConfig: IConfigCredentials[] = [
     type: 'string',
     required: true,
   },
-  {
-    key: CredentialsKeyEnum.IpPoolName,
-    displayName: 'IP Pool Name',
-    type: 'string',
-    required: false,
-  },
   ...mailConfigBase,
 ];
 
@@ -714,19 +708,5 @@ export const novuInAppConfig: IConfigCredentials[] = [
     displayName: 'Security HMAC encryption',
     type: 'switch',
     required: false,
-    tooltip: {
-      text: 'When active it verifies if a request is performed by a specific user',
-      when: false,
-    },
   },
-];
-
-export const sendchampConfig: IConfigCredentials[] = [
-  {
-    key: CredentialsKeyEnum.ApiKey,
-    displayName: 'API Key',
-    type: 'string',
-    required: true,
-  },
-  ...smsConfigBase,
 ];

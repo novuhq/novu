@@ -21,7 +21,7 @@ export class GetSubscribers {
 
     return {
       page: command.page,
-      hasMore: data?.length === command.limit,
+      totalCount,
       pageSize: command.limit,
       data,
     };

@@ -12,12 +12,6 @@ export class IntegrationResponseDto {
   @ApiProperty()
   _organizationId: string;
 
-  @ApiProperty({ type: String })
-  name: string;
-
-  @ApiProperty({ type: String })
-  identifier: string;
-
   @ApiProperty()
   providerId: string;
 

@@ -1,5 +1,5 @@
 import { SpotlightAction } from '@mantine/spotlight';
-import React, { useCallback, useContext, useMemo, useState } from 'react';
+import React, { useContext, useState } from 'react';
 
 interface SpotlightItem extends SpotlightAction {
   order?: number;
@@ -7,13 +7,13 @@ interface SpotlightItem extends SpotlightAction {
 
 interface ISpotlightContext {
   items: SpotlightItem[];
-  removeItems: (id: string[]) => void;
+  removeItem: (id: string) => void;
   addItem: (item: SpotlightItem | SpotlightItem[]) => void;
 }
 
 const SpotlightContext = React.createContext<ISpotlightContext>({
   items: [],
-  removeItems: (ids: string[]) => {},
+  removeItem: (id: string) => {},
   addItem: (item: SpotlightItem | SpotlightItem[]) => {},
 });
 
@@ -22,21 +22,20 @@ export const useSpotlightContext = (): ISpotlightContext => useContext(Spotlight
 export const SpotLightProvider = ({ children }) => {
   const [items, setItems] = useState<SpotlightItem[]>([]);
 
-  const addItem = useCallback(
-    (item: SpotlightItem | SpotlightItem[]) => {
-      const newItems = Array.isArray(item) ? item : [item];
+  const addItem = (item: SpotlightItem | SpotlightItem[]) => {
+    if (!Array.isArray(item)) {
+      item = [item];
+    }
 
-      setItems((old) => [...old, ...newItems].sort((a, b) => (b.order || 0) - (a.order || 0)));
-    },
-    [setItems]
-  );
+    const newItems = [...items, ...item];
+    newItems.sort((a, b) => (b.order || 0) - (a.order || 0));
 
-  const removeItems = useCallback(
-    (ids: string[]) => setItems((old) => old.filter((item) => !ids.includes(item.id ?? ''))),
-    [setItems]
-  );
+    setItems(newItems);
+  };
 
-  const contextValue = useMemo(() => ({ items, addItem, removeItems }), [items, addItem, removeItems]);
+  const removeItem = (id: string) => {
+    setItems(items.filter((item) => item.id !== id));
+  };
 
-  return <SpotlightContext.Provider value={contextValue}>{children}</SpotlightContext.Provider>;
+  return <SpotlightContext.Provider value={{ items, addItem, removeItem }}>{children}</SpotlightContext.Provider>;
 };

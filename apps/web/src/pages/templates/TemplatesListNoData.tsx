@@ -5,10 +5,10 @@ import { faFile } from '@fortawesome/free-regular-svg-icons';
 import { Skeleton } from '@mantine/core';
 import { useSegment } from '../../components/providers/SegmentProvider';
 
-import { CardTile, colors, Popover, shadows } from '../../design-system';
+import { colors, Popover, shadows } from '../../design-system';
 import { IBlueprintTemplate } from '../../api/types';
 import { TemplateCreationSourceEnum } from './shared';
-import { useHoverOverItem } from '../../hooks';
+import { useHoverOverTemplate } from './hooks/useHoverOverTemplate';
 
 const NoDataHolder = styled.div`
   display: flex;
@@ -24,14 +24,70 @@ const NoDataSubHeading = styled.p`
   color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B40 : colors.B80)};
 `;
 
+const Card = styled.button`
+  outline: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-width: 140px;
+  width: 140px;
+  height: 100px;
+  border-radius: 8px;
+  color: ${colors.B60};
+  background: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B20 : colors.B98)};
+  box-shadow: ${shadows.dark};
+  font-size: 14px;
+  transition: all 0.25s ease;
+
+  > svg {
+    font-size: 20px;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+
+  &:not(:disabled)&:hover {
+    color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.white : colors.B60)};
+    background: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B30 : colors.BGLight)};
+  }
+
+  &[data-can-be-hidden='true'] {
+    &:nth-last-of-type(2) {
+      display: none;
+    }
+
+    @media screen and (min-width: 1369px) {
+      &:nth-last-of-type(2) {
+        display: flex;
+      }
+    }
+  }
+
+  @media screen and (min-width: 1025px) {
+    min-width: 160px;
+    width: 160px;
+    height: 120px;
+
+    > svg {
+      font-size: 24px;
+    }
+  }
+`;
+
 const CardsContainer = styled.div`
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 24px;
+  gap: 20px;
   margin: 50px 20px;
 
   @media screen and (min-width: 1025px) {
+    gap: 24px;
     margin: 50px 40px;
   }
 `;
@@ -68,13 +124,13 @@ export const TemplatesListNoData = ({
   onAllTemplatesClick: React.MouseEventHandler<HTMLButtonElement>;
 }) => {
   const segment = useSegment();
-  const { item: templateId, onMouseEnter, onMouseLeave } = useHoverOverItem<string>();
+  const { templateId, onMouseEnter, onMouseLeave } = useHoverOverTemplate();
 
   return (
     <NoDataHolder data-test-id="no-workflow-templates-placeholder">
       <NoDataSubHeading>Start from a blank workflow or use a template</NoDataSubHeading>
       <CardsContainer>
-        <CardTile
+        <Card
           disabled={readonly}
           data-test-id="create-workflow-tile"
           onClick={(event) => {
@@ -88,13 +144,13 @@ export const TemplatesListNoData = ({
         >
           <FontAwesomeIcon icon={faFile} />
           <span>Blank Workflow</span>
-        </CardTile>
+        </Card>
         {isLoading
           ? Array.from({ length: 3 }).map((_, index) => (
-              <CardTile key={index} data-can-be-hidden={index === 2} data-test-id="second-workflow-tile">
+              <Card key={index} data-can-be-hidden={index === 2} data-test-id="second-workflow-tile">
                 <SkeletonIcon />
                 <Skeleton height={14} width="100%" />
-              </CardTile>
+              </Card>
             ))
           : blueprints?.map((template, index) => (
               <Popover
@@ -108,7 +164,7 @@ export const TemplatesListNoData = ({
                 width={300}
                 styles={{ dropdown: { minHeight: 'auto !important' } }}
                 target={
-                  <CardTile
+                  <Card
                     data-can-be-hidden={index === 2}
                     data-test-id="popular-workflow-tile"
                     disabled={readonly || isCreating}
@@ -127,12 +183,12 @@ export const TemplatesListNoData = ({
                   >
                     <FontAwesomeIcon icon={template.iconName} />
                     <span>{template.name}</span>
-                  </CardTile>
+                  </Card>
                 }
                 content={template.description}
               />
             ))}
-        <CardTile
+        <Card
           data-test-id="all-workflow-tile"
           onClick={(event) => {
             segment.track('[Template Store] Click Open Template Store', {
@@ -145,7 +201,7 @@ export const TemplatesListNoData = ({
         >
           <FontAwesomeIcon icon={faDiagramNext} />
           <span>All templates</span>
-        </CardTile>
+        </Card>
       </CardsContainer>
     </NoDataHolder>
   );

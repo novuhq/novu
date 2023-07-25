@@ -8,7 +8,7 @@ import { ChannelTypeEnum } from '../../../types';
 export const inAppProviders: IProviderConfig[] = [
   {
     id: InAppProviderIdEnum.Novu,
-    displayName: 'Novu In-App',
+    displayName: 'Notification Center',
     channel: ChannelTypeEnum.IN_APP,
     credentials: novuInAppConfig,
     docReference: 'https://docs.novu.co/notification-center/getting-started',

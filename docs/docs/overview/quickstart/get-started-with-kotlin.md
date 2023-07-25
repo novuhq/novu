@@ -31,7 +31,6 @@ The completed code for this quick start is available on GitHub. Check it out [he
 
 First, you need to import the library into your application.
 If you use Maven, add the dependency to the `pom.xml` file;
-
 ```xml
 <dependencies>
   ...
@@ -42,9 +41,7 @@ If you use Maven, add the dependency to the `pom.xml` file;
   </dependency>
 </dependencies>
 ```
-
 Then add the repository;
-
 ```xml
 <repositories>
     ...
@@ -55,22 +52,18 @@ Then add the repository;
 ```
 
 If you use Gradle, add the dependency to the `build.gradle` file;
-
 ```groovy
 implementation 'io.github.crashiv:novu-kotlin:0.1.1-SNAPSHOT' //Groovy
 
 implementation ("io.github.crashiv:novu-kotlin:0.1.1-SNAPSHOT") //Kotlin
 ```
-
 Then add the repository;
-
 ```groovy
 repositories {
     ...
     maven { url "https://s01.oss.sonatype.org/content/repositories/releases/" }
 }
 ```
-
 Sync your project, and you should have the artifacts downloaded.
 
 To use the SDK, you need to have your API key handy, it can be gotten from [settings page](https://web.novu.co/settings) of the web portal.
@@ -151,7 +144,6 @@ Click **Subscribers** on the left sidebar of the Novu dashboard to see all subsc
 ![subscribers.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1688331839/Screenshot_2023-07-03_at_0.02.53_jmkhi3.png)
 
 Now, let's create a subscriber on Novu. Copy and paste the following code to do so:
-
 ```kotlin
 suspend fun createSubscriber(): ResponseWrapper<SubscriberResponse>? {
         val novu = Novu(apiKey = "API_KEY")
@@ -168,11 +160,9 @@ suspend fun createSubscriber(): ResponseWrapper<SubscriberResponse>? {
         }.await()
     }
 ```
-
 When you run this code snippet, you should see the subscriber on your Novu dashboard. :bust_in_silhouette:
 
 Now, let's assume you want to modify the email address of the Subscriber you just created, you can do that with the following code:
-
 ```kotlin
 suspend fun updateSubscriber(): ResponseWrapper<SubscriberResponse>? {
         val novu = Novu(apiKey = "API_KEY")
@@ -189,7 +179,6 @@ suspend fun updateSubscriber(): ResponseWrapper<SubscriberResponse>? {
         }.await()
     }
 ```
-
 Other valid fields that can be updated are `phone`, `avatar`, and `data`. The `data` field can accept an Object or a Map with the info you want to attach to the subscriber.
 
 ::::info
@@ -199,7 +188,6 @@ To create all of your subscribers, you need to programmatically add them to Novu
 ## Trigger a Notification
 
 Copy and paste the following code into your app to trigger a notification to a Subscriber:
-
 ```kotlin
 suspend fun triggerNotification(): Any? {
         val novu = Novu(apiKey = "API_KEY")
@@ -219,9 +207,7 @@ suspend fun triggerNotification(): Any? {
         }.await()
     }
 ```
-
 Before running the code, make sure you understand the following:
-
 - The value of `payload` is an array of the data that you want to be dynamically injected into the notification workflow content.
 - The value of `subscriberId` is the ID of the subscriber on Novu. Replace `12345` with your subscriber ID.
 
@@ -240,7 +226,6 @@ A topic can have multiple subscribers who will receive a notification whenever a
 ### Create a Topic
 
 Copy and paste the following code into your app to create a topic:
-
 ```kotlin
 suspend fun createTopic(): Any? {
         val novu = Novu(apiKey = "API_KEY")
@@ -253,7 +238,6 @@ suspend fun createTopic(): Any? {
         }.await()
     }
 ```
-
 Before running the code, make sure you understand the following:
 
 - When creating a `key`, ensure it is unique and accurately identifies the topic. Document naming conventions and communicate them to team members to avoid confusion and ensure a smooth workflow.
@@ -262,7 +246,6 @@ Before running the code, make sure you understand the following:
 ### Add subscribers to a Topic
 
 Copy and paste the following code into your app to add subscribers a topic:
-
 ```kotlin
 suspend fun addSubscriberToTopic(): Any? {
         val novu = Novu(apiKey = "API_KEY")
@@ -273,9 +256,7 @@ suspend fun addSubscriberToTopic(): Any? {
         }.await()
     }
 ```
-
 On the other hand, if you want to remove subscribers from a topic, do the following:
-
 ```kotlin
 suspend fun removeSubscriberFromTopic(): Any? {
         val novu = Novu(apiKey = "API_KEY")
