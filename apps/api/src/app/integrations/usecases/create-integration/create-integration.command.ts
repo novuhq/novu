@@ -1,22 +1,32 @@
-import { IsDefined } from 'class-validator';
+import { IsDefined, IsEnum, IsOptional, IsString } from 'class-validator';
 import { ChannelTypeEnum, ICredentialsDto } from '@novu/shared';
 
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
 export class CreateIntegrationCommand extends EnvironmentCommand {
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @IsOptional()
+  @IsString()
+  identifier?: string;
+
   @IsDefined()
+  @IsString()
   providerId: string;
 
   @IsDefined()
+  @IsEnum(ChannelTypeEnum)
   channel: ChannelTypeEnum;
 
-  @IsDefined()
-  credentials: ICredentialsDto;
+  @IsOptional()
+  credentials?: ICredentialsDto;
 
-  @IsDefined()
+  @IsOptional()
   active: boolean;
 
-  @IsDefined()
+  @IsOptional()
   check: boolean;
 
   @IsDefined()

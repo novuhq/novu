@@ -6,7 +6,12 @@ import { Tabs } from '../../../../design-system';
 import { EmailMessageEditor } from './EmailMessageEditor';
 import { EmailCustomCodeEditor } from './EmailCustomCodeEditor';
 import { LackIntegrationError } from '../LackIntegrationError';
-import { useEnvController, useActiveIntegrations, useIntegrationLimit } from '../../../../hooks';
+import {
+  useEnvController,
+  useActiveIntegrations,
+  useIntegrationLimit,
+  useIsMultiProviderConfigurationEnabled,
+} from '../../../../hooks';
 import { EmailInboxContent } from './EmailInboxContent';
 
 const EDITOR = 'Editor';
@@ -25,6 +30,7 @@ export function EmailContentCard({
   const { control, setValue, watch } = useFormContext(); // retrieve all hook methods
   const contentType = watch(`steps.${index}.template.contentType`);
   const activeTab = contentType === 'customHtml' ? CUSTOM_CODE : EDITOR;
+  const isMultiProviderConfigEnabled = useIsMultiProviderConfigurationEnabled();
   const { integrations = [] } = useActiveIntegrations();
   const [integration, setIntegration]: any = useState(null);
 
@@ -34,8 +40,12 @@ export function EmailContentCard({
     if (integrations.length === 0) {
       return;
     }
-    setIntegration(integrations.find((item) => item.channel === 'email') || null);
-  }, [integrations, setIntegration]);
+    setIntegration(
+      integrations.find((item) =>
+        isMultiProviderConfigEnabled ? item.channel === 'email' && item.selected : item.channel === 'email'
+      ) || null
+    );
+  }, [isMultiProviderConfigEnabled, integrations, setIntegration]);
 
   const onTabChange = (value: string | null) => {
     setValue(`steps.${index}.template.contentType`, value === EDITOR ? 'editor' : 'customHtml');

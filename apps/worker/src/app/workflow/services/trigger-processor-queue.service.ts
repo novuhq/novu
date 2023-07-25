@@ -1,24 +1,27 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { WorkerOptions } from 'bullmq';
 const nr = require('newrelic');
 import {
-  TriggerQueueService,
+  INovuWorker,
   PinoLogger,
   storage,
   Store,
   TriggerEvent,
   TriggerEventCommand,
+  TriggerQueueService,
 } from '@novu/application-generic';
 
+const LOG_CONTEXT = 'TriggerProcessorQueueService';
+
 @Injectable()
-export class TriggerProcessorQueueService extends TriggerQueueService {
+export class TriggerProcessorQueueService extends TriggerQueueService implements INovuWorker {
   constructor(private triggerEventUsecase: TriggerEvent) {
     super();
     this.bullMqService.createWorker(this.name, this.getWorkerProcessor(), this.getWorkerOpts());
   }
 
-  private getWorkerOpts() {
+  private getWorkerOpts(): WorkerOptions {
     return {
-      ...this.bullConfig,
       lockDuration: 90000,
       concurrency: 200,
     };
@@ -45,5 +48,15 @@ export class TriggerProcessorQueueService extends TriggerQueueService {
         });
       });
     };
+  }
+
+  public async pauseWorker(): Promise<void> {
+    Logger.log('Pausing worker', LOG_CONTEXT);
+    await this.bullMqService.pauseWorker();
+  }
+
+  public async resumeWorker(): Promise<void> {
+    Logger.log('Resuming worker', LOG_CONTEXT);
+    await this.bullMqService.resumeWorker();
   }
 }

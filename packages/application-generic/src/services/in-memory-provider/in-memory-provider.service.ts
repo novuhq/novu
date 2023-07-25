@@ -37,7 +37,9 @@ export class InMemoryProviderService {
   public inMemoryProviderClient: InMemoryProviderClient;
   public inMemoryProviderConfig: InMemoryProviderConfig;
 
-  constructor(private enableAutoPipelining?: boolean) {
+  constructor(private enableAutoPipelining?: boolean) {}
+
+  public initialize(): void {
     Logger.log('In-memory provider service initialized', LOG_CONTEXT);
 
     this.inMemoryProviderClient = this.buildClient();
@@ -81,11 +83,20 @@ export class InMemoryProviderService {
   }
 
   public isClusterMode(): boolean {
-    return process.env.IN_MEMORY_CLUSTER_MODE_ENABLED === 'true';
+    const isClusterModeEnabled =
+      process.env.IN_MEMORY_CLUSTER_MODE_ENABLED === 'true';
+    Logger.log(
+      `Cluster mode ${
+        isClusterModeEnabled ? 'is' : 'is not'
+      } enabled for InMemoryProviderService`
+    );
+
+    return isClusterModeEnabled;
   }
 
-  public getClusterOptions(): ClusterOptions | undefined {
-    if (this.inMemoryProviderClient && this.isClusterMode()) {
+  public async getClusterOptions(): Promise<ClusterOptions | undefined> {
+    const isClusterMode = await this.isClusterMode();
+    if (this.inMemoryProviderClient && isClusterMode) {
       return this.inMemoryProviderClient.options;
     }
   }
@@ -151,7 +162,7 @@ export class InMemoryProviderService {
       setInterval(() => {
         try {
           inMemoryProviderClient.nodes('all')?.forEach((node) => {
-            Logger.log(
+            Logger.debug(
               {
                 commandQueueLength: node.commandQueue?.length,
                 host: node.options?.host,
@@ -161,7 +172,11 @@ export class InMemoryProviderService {
             );
           });
         } catch (e) {
-          Logger.error(e);
+          Logger.error(
+            'Connecting to cluster executing intervals has failed',
+            e,
+            LOG_CONTEXT
+          );
         }
       }, 2000);
 
@@ -186,7 +201,11 @@ export class InMemoryProviderService {
       });
 
       inMemoryProviderClient.on('error', (error) => {
-        Logger.error(error, LOG_CONTEXT);
+        Logger.error(
+          'There has been an error in the InMemory Cluster provider client',
+          error,
+          LOG_CONTEXT
+        );
       });
 
       inMemoryProviderClient.on('ready', () => {
@@ -232,7 +251,11 @@ export class InMemoryProviderService {
       });
 
       inMemoryProviderClient.on('error', (error) => {
-        Logger.error(error, LOG_CONTEXT);
+        Logger.error(
+          'There has been an error in the InMemory provider client',
+          error,
+          LOG_CONTEXT
+        );
       });
 
       inMemoryProviderClient.on('ready', () => {
