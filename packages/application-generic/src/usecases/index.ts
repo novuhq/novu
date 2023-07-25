@@ -3,7 +3,6 @@ export * from './create-execution-details';
 export * from './bulk-create-execution-details';
 export * from './digest-filter-steps';
 export * from './get-decrypted-integrations';
-export * from './get-novu-integration';
 export * from './get-subscriber-preference';
 export * from './get-subscriber-template-preference';
 export * from './compile-template';
