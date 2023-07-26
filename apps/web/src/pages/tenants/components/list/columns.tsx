@@ -1,8 +1,8 @@
 import { ITenantEntity } from '@novu/shared';
-import { IExtendedColumn } from '../../../../design-system';
 import { Skeleton } from '@mantine/core';
+import { format } from 'date-fns';
 
-const { format } = require('date-fns');
+import { IExtendedColumn } from '../../../../design-system';
 
 const maxWidth = 60;
 
