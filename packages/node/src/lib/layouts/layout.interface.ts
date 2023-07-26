@@ -13,7 +13,7 @@ export interface ILayouts {
   create(data: ILayoutPayload);
   delete(layoutId: LayoutId);
   get(layoutId: LayoutId);
-  list(data: ILayoutPaginationPayload);
+  list(data?: ILayoutPaginationPayload);
   setDefault(layoutId: LayoutId);
   update(layoutId: LayoutId, data: ILayoutUpdatePayload);
 }
@@ -35,7 +35,7 @@ export interface ILayoutUpdatePayload {
 }
 
 export interface ILayoutPaginationPayload {
-  page: number;
+  page?: number;
   pageSize?: number;
   orderBy?: OrderDirectionEnum;
   sortBy?: string;
