@@ -53,6 +53,8 @@ import { CreateProviderPage } from './pages/integrations/CreateProviderPage';
 import { UpdateProviderPage } from './pages/integrations/UpdateProviderPage';
 import { SelectProviderPage } from './pages/integrations/components/SelectProviderPage';
 import { TenantsPage } from './pages/tenants/TenantsPage';
+import { CreateTenantPage } from './pages/tenants/CreateTenantPage';
+import { UpdateTenantPage } from './pages/tenants/UpdateTenantPage';
 
 library.add(far, fas);
 
@@ -201,7 +203,10 @@ function App() {
                     <Route path=":channel/:stepUuid" element={<TemplateEditor />} />
                   </Route>
                   <Route path={ROUTES.WORKFLOWS} element={<WorkflowListPage />} />
-                  <Route path={ROUTES.TENANTS} element={<TenantsPage />} />
+                  <Route path={ROUTES.TENANTS} element={<TenantsPage />}>
+                    <Route path="create" element={<CreateTenantPage />} />
+                    <Route path=":identifier" element={<UpdateTenantPage />} />
+                  </Route>
                   <Route path={ROUTES.GET_STARTED} element={<GetStarted />} />
                   <Route path={ROUTES.GET_STARTED_PREVIEW} element={<DigestPreview />} />
                   <Route path={ROUTES.QUICK_START_NOTIFICATION_CENTER} element={<NotificationCenter />} />

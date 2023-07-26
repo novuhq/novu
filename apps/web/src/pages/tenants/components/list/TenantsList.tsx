@@ -1,4 +1,6 @@
 import { Container } from '@mantine/core';
+import { Row } from 'react-table';
+import { ITenantEntity } from '@novu/shared';
 
 import { Table } from '../../../../design-system';
 import PageContainer from '../../../../components/layout/components/PageContainer';
@@ -7,7 +9,13 @@ import { columns } from './columns';
 import { useTenants } from '../../../../hooks/useTenants';
 import { Toolbar } from './ToolBar';
 
-export const TenantsList = ({ onAddTenantClick }: { onAddTenantClick: React.MouseEventHandler<HTMLButtonElement> }) => {
+export const TenantsList = ({
+  onAddTenantClick,
+  onRowClickCallback,
+}: {
+  onAddTenantClick: React.MouseEventHandler<HTMLButtonElement>;
+  onRowClickCallback: (row: Row<ITenantEntity>) => void;
+}) => {
   const { tenants, loading } = useTenants();
   const hasTenants = tenants && tenants?.length > 0;
 
@@ -23,7 +31,13 @@ export const TenantsList = ({ onAddTenantClick }: { onAddTenantClick: React.Mous
         <Toolbar onAddTenantClick={onAddTenantClick} tenantLoading={loading} />
       </Container>
       <When truthy={hasTenants || loading}>
-        <Table loading={loading} data-test-id="tenants-list-table" columns={columns} data={tenants || []} />
+        <Table
+          onRowClick={onRowClickCallback}
+          loading={loading}
+          data-test-id="tenants-list-table"
+          columns={columns}
+          data={tenants || []}
+        />
       </When>
     </PageContainer>
   );

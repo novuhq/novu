@@ -1,8 +1,8 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { TenantCustomData } from '@novu/shared';
+import { IUpdateTenantBodyDto, TenantCustomData } from '@novu/shared';
 import { IsOptional, IsString } from 'class-validator';
 
-export class UpdateTenantRequestDto {
+export class UpdateTenantRequestDto implements IUpdateTenantBodyDto {
   @IsOptional()
   @IsString()
   @ApiPropertyOptional({ type: String })
