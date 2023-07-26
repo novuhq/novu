@@ -83,10 +83,10 @@ export class IntegrationService {
     const novuMailPayload = {
       _environmentId: environmentId,
       _organizationId: organizationId,
-      providerId: 'novu-email',
+      providerId: EmailProviderIdEnum.Novu,
       channel: ChannelTypeEnum.EMAIL,
       credentials: {},
-      active: true,
+      active: false,
     };
 
     await this.integrationRepository.create(novuMailPayload);
@@ -94,10 +94,10 @@ export class IntegrationService {
     const novuSmsPayload = {
       _environmentId: environmentId,
       _organizationId: organizationId,
-      providerId: 'novu-sms',
+      providerId: SmsProviderIdEnum.Novu,
       channel: ChannelTypeEnum.SMS,
       credentials: {},
-      active: true,
+      active: false,
     };
 
     await this.integrationRepository.create(novuSmsPayload);
