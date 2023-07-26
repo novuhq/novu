@@ -2,7 +2,7 @@ import { BadRequestException, ConflictException, Inject, Injectable } from '@nes
 import * as shortid from 'shortid';
 import slugify from 'slugify';
 import { IntegrationEntity, IntegrationRepository, DalException } from '@novu/dal';
-import { ChannelTypeEnum, providers } from '@novu/shared';
+import { ChannelTypeEnum, EmailProviderIdEnum, providers, SmsProviderIdEnum } from '@novu/shared';
 import {
   AnalyticsService,
   encryptCredentials,
@@ -49,6 +49,20 @@ export class CreateIntegration {
       if (existingIntegration) {
         throw new BadRequestException(
           'Duplicate key - One environment may not have two providers of the same channel type'
+        );
+      }
+    }
+
+    if (command.providerId === SmsProviderIdEnum.Novu || command.providerId === EmailProviderIdEnum.Novu) {
+      const count = await this.integrationRepository.count({
+        _environmentId: command.environmentId,
+        providerId: EmailProviderIdEnum.Novu,
+        channel: command.channel,
+      });
+
+      if (count > 0) {
+        throw new BadRequestException(
+          `Integration with novu provider for ${command.channel.toLowerCase()} channel already exists`
         );
       }
     }
@@ -118,6 +132,20 @@ export class CreateIntegration {
           channel: command.channel,
           userId: command.userId,
         });
+      }
+
+      if (command.channel === ChannelTypeEnum.EMAIL && command.providerId !== EmailProviderIdEnum.Novu) {
+        await this.integrationRepository.update(
+          { _environmentId: command.environmentId, providerId: EmailProviderIdEnum.Novu, channel: command.channel },
+          { $set: { active: false } }
+        );
+      }
+
+      if (command.channel === ChannelTypeEnum.SMS && command.providerId !== SmsProviderIdEnum.Novu) {
+        await this.integrationRepository.update(
+          { _environmentId: command.environmentId, providerId: SmsProviderIdEnum.Novu, channel: command.channel },
+          { $set: { active: false } }
+        );
       }
 
       return integrationEntity;
