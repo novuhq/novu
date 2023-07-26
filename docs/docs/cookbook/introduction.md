@@ -30,14 +30,14 @@ The code sample below fetches the list of all In-App messages sent to a specific
 ```js
 const { data: inAppMessages } = await novu.subscribers.getNotificationsFeed('subscriberId', {
   page: 0,
+  limit: 10,
+
   // it is of type string. By default all feeds messages are fetched
   feedIdentifier: 'Marketing',
-  // seen filter of type boolean
-  seen: true
 
-  //These options will be available in the 0.17.0 release
-  read: true,
-  limit: 10
+  // seen and read filter of type boolean
+  seen: true,
+  read: true
 });
 ```
 
@@ -120,12 +120,12 @@ You can mark an In-App message as read/seen. Messages from other channels: **Ema
   <TabItem value="js" label="Node.js">
 
 ```javascript
-const { data: markInAppMessageAsRead } = await novu.subscribers.markMessageRead(
+const { data: markMessageAsRead } = await novu.subscribers.markMessageRead(
   'subscriberId',
   'messageId'
 );
 
-const { data: markInAppMessageAsSeen } = await novu.subscribers.markMessageSeen(
+const { data: markMessageAsSeen } = await novu.subscribers.markMessageSeen(
   'subscriberId',
   'messageId'
 );
@@ -146,8 +146,8 @@ The unread/unseen functionality has yet to be available in the Node.js SDK. Plea
   <TabItem value="js" label="Node.js">
 
 ```javascript
-// this method will be available in 0.17.0
-const { data: markInAppMessageAsRead } = await novu.subscribers.markInAppMessageAs(
+// this method will be available in 0.17.1
+const { data: markMessageAs } = await novu.subscribers.markMessageAs(
   'subscriberId',
   'messageId',
   { seen: true, read: false }
@@ -162,10 +162,6 @@ const { data: markInAppMessageAsRead } = await novu.subscribers.markInAppMessage
 You can mark all In-App messages as read/unread/seen/unseen.
 
 Messages from other channels: **Email**, **Push**, **Chat**, **Sms** can't be marked as read/unread/seen/unseen.
-
-:::info
-This functionality has yet to be made available. It will be in the 0.17.0 release.
-:::
 
 <Tabs groupId="language" queryString>
   <TabItem value="js" label="Node.js">

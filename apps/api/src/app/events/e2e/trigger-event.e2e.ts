@@ -169,6 +169,140 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       expect(createdSubscriber?.locale).to.equal(payload.locale);
     });
 
+    it('should update a subscribers email if one dont exists', async function () {
+      const subscriberId = SubscriberRepository.createObjectId();
+      const payload = {
+        subscriberId,
+        firstName: 'Test Name',
+        lastName: 'Last of name',
+        email: undefined,
+        locale: 'en',
+      };
+
+      await axiosInstance.post(
+        `${session.serverUrl}${eventTriggerPath}`,
+        {
+          name: template.triggers[0].identifier,
+          to: {
+            ...payload,
+          },
+          payload: {
+            urlVar: '/test/url/path',
+          },
+        },
+        {
+          headers: {
+            authorization: `ApiKey ${session.apiKey}`,
+          },
+        }
+      );
+
+      await session.awaitRunningJobs();
+      const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
+
+      expect(createdSubscriber?.subscriberId).to.equal(subscriberId);
+      expect(createdSubscriber?.firstName).to.equal(payload.firstName);
+      expect(createdSubscriber?.lastName).to.equal(payload.lastName);
+      expect(createdSubscriber?.email).to.equal(payload.email);
+      expect(createdSubscriber?.locale).to.equal(payload.locale);
+
+      await axiosInstance.post(
+        `${session.serverUrl}${eventTriggerPath}`,
+        {
+          name: template.triggers[0].identifier,
+          to: {
+            ...payload,
+            email: 'hello@world.com',
+          },
+          payload: {
+            urlVar: '/test/url/path',
+          },
+        },
+        {
+          headers: {
+            authorization: `ApiKey ${session.apiKey}`,
+          },
+        }
+      );
+
+      await session.awaitRunningJobs();
+
+      const updatedSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
+
+      expect(updatedSubscriber?.subscriberId).to.equal(subscriberId);
+      expect(updatedSubscriber?.firstName).to.equal(payload.firstName);
+      expect(updatedSubscriber?.lastName).to.equal(payload.lastName);
+      expect(updatedSubscriber?.email).to.equal('hello@world.com');
+      expect(updatedSubscriber?.locale).to.equal(payload.locale);
+    });
+
+    it('should not unset a subscriber email', async function () {
+      const subscriberId = SubscriberRepository.createObjectId();
+      const payload = {
+        subscriberId,
+        firstName: 'Test Name',
+        lastName: 'Last of name',
+        email: 'hello@world.com',
+        locale: 'en',
+      };
+
+      await axiosInstance.post(
+        `${session.serverUrl}${eventTriggerPath}`,
+        {
+          name: template.triggers[0].identifier,
+          to: {
+            ...payload,
+          },
+          payload: {
+            urlVar: '/test/url/path',
+          },
+        },
+        {
+          headers: {
+            authorization: `ApiKey ${session.apiKey}`,
+          },
+        }
+      );
+
+      await session.awaitRunningJobs();
+      const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
+
+      expect(createdSubscriber?.subscriberId).to.equal(subscriberId);
+      expect(createdSubscriber?.firstName).to.equal(payload.firstName);
+      expect(createdSubscriber?.lastName).to.equal(payload.lastName);
+      expect(createdSubscriber?.email).to.equal(payload.email);
+      expect(createdSubscriber?.locale).to.equal(payload.locale);
+
+      await axiosInstance.post(
+        `${session.serverUrl}${eventTriggerPath}`,
+        {
+          name: template.triggers[0].identifier,
+          to: {
+            ...payload,
+            email: undefined,
+          },
+          payload: {
+            urlVar: '/test/url/path',
+          },
+        },
+        {
+          headers: {
+            authorization: `ApiKey ${session.apiKey}`,
+          },
+        }
+      );
+
+      await session.awaitRunningJobs();
+
+      const updatedSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
+
+      expect(updatedSubscriber?.subscriberId).to.equal(subscriberId);
+      expect(updatedSubscriber?.firstName).to.equal(payload.firstName);
+      expect(updatedSubscriber?.lastName).to.equal(payload.lastName);
+      expect(updatedSubscriber?.email).to.equal('hello@world.com');
+      expect(updatedSubscriber?.locale).to.equal(payload.locale);
+    });
+
     it('should override subscriber email based on event data', async function () {
       const subscriberId = SubscriberRepository.createObjectId();
       const transactionId = SubscriberRepository.createObjectId();
