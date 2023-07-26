@@ -24,7 +24,7 @@ import {
   Buildings,
 } from '../../../design-system/icons';
 import { ChangesCountBadge } from './ChangesCountBadge';
-import { useEnvController } from '../../../hooks';
+import { useEnvController, useIsMultiTenancyEnabled } from '../../../hooks';
 import OrganizationSelect from './OrganizationSelect';
 import { useSpotlightContext } from '../../providers/SpotlightProvider';
 import { HEADER_HEIGHT } from '../constants';
@@ -62,6 +62,7 @@ export function SideNav({}: Props) {
   const dark = colorScheme === 'dark';
   const { addItem, removeItems } = useSpotlightContext();
   const { classes } = usePopoverStyles();
+  const isMultiTenancyEnabled = useIsMultiTenancyEnabled();
 
   useEffect(() => {
     removeItems(['toggle-environment']);
@@ -80,7 +81,7 @@ export function SideNav({}: Props) {
   const lastStep = currentOnboardingStep().get();
   const getStartedRoute = lastStep === ROUTES.GET_STARTED_PREVIEW ? ROUTES.GET_STARTED : lastStep;
 
-  const menuItems = [
+  let menuItems = [
     {
       condition: !readonly,
       icon: <CheckCircleOutlined />,
@@ -120,6 +121,10 @@ export function SideNav({}: Props) {
       condition: !readonly,
     },
   ];
+
+  if (!isMultiTenancyEnabled) {
+    menuItems = menuItems.filter((item) => item.link !== ROUTES.TENANTS);
+  }
 
   async function handlePopoverForChanges(e) {
     e.preventDefault();
