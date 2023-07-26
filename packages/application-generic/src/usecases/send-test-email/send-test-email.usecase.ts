@@ -17,6 +17,7 @@ import {
   SelectIntegration,
   SelectIntegrationCommand,
 } from '../select-integration';
+import { GetNovuProviderCredentials } from '../get-novu-provider-credentials';
 
 @Injectable()
 export class SendTestEmail {
@@ -24,7 +25,8 @@ export class SendTestEmail {
     private compileEmailTemplateUsecase: CompileEmailTemplate,
     private organizationRepository: OrganizationRepository,
     private selectIntegration: SelectIntegration,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    protected getNovuProviderCredentials: GetNovuProviderCredentials
   ) {}
 
   @InstrumentUsecase()
@@ -55,12 +57,13 @@ export class SendTestEmail {
     }
 
     if (integration.providerId === EmailProviderIdEnum.Novu) {
-      integration.credentials = {
-        apiKey: process.env.NOVU_EMAIL_INTEGRATION_API_KEY,
-        from: 'no-reply@novu.co',
-        senderName: 'Novu',
-        ipPoolName: 'Demo',
-      };
+      integration.credentials = await this.getNovuProviderCredentials.execute({
+        channelType: integration.channel,
+        providerId: integration.providerId,
+        environmentId: integration._environmentId,
+        organizationId: integration._organizationId,
+        userId: command.userId,
+      });
     }
 
     const { html, subject } = await this.compileEmailTemplateUsecase.execute(

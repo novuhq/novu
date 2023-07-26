@@ -19,3 +19,4 @@ export * from './create-notification-jobs';
 export * from './process-subscriber';
 export * from './select-integration';
 export * from './get-feature-flag';
+export * from './get-novu-provider-credentials';
