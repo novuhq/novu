@@ -8,8 +8,7 @@ import { useTenants } from '../../../../hooks/useTenants';
 import { Toolbar } from './ToolBar';
 
 export const TenantsList = ({ onAddTenantClick }: { onAddTenantClick: React.MouseEventHandler<HTMLButtonElement> }) => {
-  const { tenants, loading: tenantLoading } = useTenants();
-  const isLoading = tenantLoading;
+  const { tenants, loading } = useTenants();
   const hasTenants = tenants && tenants?.length > 0;
 
   return (
@@ -21,10 +20,10 @@ export const TenantsList = ({ onAddTenantClick }: { onAddTenantClick: React.Mous
       title="Tenants"
     >
       <Container fluid sx={{ padding: '0 30px 8px 30px' }}>
-        <Toolbar onAddTenantClick={onAddTenantClick} tenantLoading={tenantLoading} />
+        <Toolbar onAddTenantClick={onAddTenantClick} tenantLoading={loading} />
       </Container>
-      <When truthy={hasTenants || isLoading}>
-        <Table loading={isLoading} data-test-id="tenants-list-table" columns={columns} data={tenants || []} />
+      <When truthy={hasTenants || loading}>
+        <Table loading={loading} data-test-id="tenants-list-table" columns={columns} data={tenants || []} />
       </When>
     </PageContainer>
   );

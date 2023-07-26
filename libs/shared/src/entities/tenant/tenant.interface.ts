@@ -1,4 +1,4 @@
-import { EnvironmentId, TenantCustomData } from '../../types';
+import { EnvironmentId, TenantCustomData, TenantId } from '../../types';
 
 export interface ITenantEntity {
   _id?: TenantId;
@@ -17,5 +17,3 @@ export interface ITenantEntity {
 
   _environmentId: EnvironmentId;
 }
-
-export type TenantId = string;
