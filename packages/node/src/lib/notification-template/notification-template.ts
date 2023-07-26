@@ -1,11 +1,8 @@
-import axios from 'axios';
-
-import { WithHttp } from '../novu.interface';
-
 import {
   INotificationTemplatePayload,
   INotificationTemplates,
 } from './notification-template.interface';
+import { WithHttp } from '../novu.interface';
 
 export class NotificationTemplates
   extends WithHttp

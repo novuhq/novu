@@ -6,6 +6,8 @@ import { colors, shadows } from '../config';
 import { ArrowLeft, Close } from '../icons';
 import { When } from '../../components/utils/When';
 import { useKeyDown } from '../../hooks';
+import { useIntercom } from 'react-use-intercom';
+import { INTERCOM_APP_ID } from '../../config';
 
 const HeaderHolder = styled.div`
   display: flex;
@@ -79,6 +81,7 @@ export const Sidebar = ({
   isOpened,
   isExpanded = false,
   isLoading = false,
+  'data-test-id': dataTestId,
   onClose,
   onBack,
   onSubmit,
@@ -92,10 +95,24 @@ export const Sidebar = ({
   onClose: () => void;
   onBack?: () => void;
   onSubmit?: React.FormEventHandler<HTMLFormElement>;
+  'data-test-id'?: string;
 }) => {
+  const { update } = useIntercom();
   const { classes: drawerClasses } = useDrawerStyles();
+  const onCloseCallback = () => {
+    onClose();
+    update({ hideDefaultLauncher: false });
+  };
 
-  useKeyDown('Escape', onClose);
+  useKeyDown('Escape', onCloseCallback);
+
+  useEffect(() => {
+    if (INTERCOM_APP_ID && isOpened) {
+      update({ hideDefaultLauncher: true });
+
+      return;
+    }
+  }, [update, isOpened]);
 
   return (
     <Drawer
@@ -111,7 +128,7 @@ export const Sidebar = ({
         },
       }}
       classNames={drawerClasses}
-      onClose={onClose}
+      onClose={onCloseCallback}
       withOverlay={false}
       withCloseButton={false}
       closeOnEscape={false}
@@ -119,15 +136,20 @@ export const Sidebar = ({
       trapFocus={false}
       data-expanded={isExpanded}
     >
-      <Form noValidate onSubmit={onSubmit}>
+      <Form noValidate onSubmit={onSubmit} data-test-id={dataTestId}>
         <HeaderHolder>
           {isExpanded && (
-            <ActionIcon variant="transparent" onClick={onBack}>
+            <ActionIcon variant="transparent" onClick={onBack} data-test-id="sidebar-back">
               <ArrowLeft color={colors.B40} />
             </ActionIcon>
           )}
           {customHeader}
-          <ActionIcon variant="transparent" onClick={onClose} style={{ marginLeft: 'auto' }}>
+          <ActionIcon
+            variant="transparent"
+            onClick={onCloseCallback}
+            style={{ marginLeft: 'auto' }}
+            data-test-id="sidebar-close"
+          >
             <Close color={colors.B40} />
           </ActionIcon>
         </HeaderHolder>

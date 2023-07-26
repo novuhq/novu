@@ -51,6 +51,7 @@ export const UpdateIntegrationCommonFields = ({ provider }: { provider: IIntegra
             required
             label="Name"
             error={errors.name?.message}
+            data-test-id="provider-instance-name"
           />
         )}
       />
@@ -76,6 +77,7 @@ export const UpdateIntegrationCommonFields = ({ provider }: { provider: IIntegra
                 {identifierClipboard.copied ? <Check /> : <Copy />}
               </CopyWrapper>
             }
+            data-test-id="provider-instance-identifier"
           />
         )}
       />

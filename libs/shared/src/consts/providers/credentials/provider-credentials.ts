@@ -730,3 +730,13 @@ export const novuInAppConfig: IConfigCredentials[] = [
     },
   },
 ];
+
+export const sendchampConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+];

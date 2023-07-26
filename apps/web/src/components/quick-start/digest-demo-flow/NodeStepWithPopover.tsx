@@ -70,7 +70,7 @@ export function NodeStepWithPopover({
 
   useEffect(() => {
     setSequence(popoverData.sequence[counter.toString()] as IBeat);
-  }, [counter]);
+  }, [counter, popoverData]);
 
   const onDropdownMouseEnter = () => {
     setHoveredHintId(id);

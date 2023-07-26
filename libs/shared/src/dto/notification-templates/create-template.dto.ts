@@ -1,4 +1,4 @@
-import { NotificationStepDto } from './notification-template.dto';
+import { NotificationStepDto } from '../workflows/workflow.dto';
 import { IPreferenceChannels } from '../../entities/subscriber-preference';
 
 export interface ICreateNotificationTemplateDto {

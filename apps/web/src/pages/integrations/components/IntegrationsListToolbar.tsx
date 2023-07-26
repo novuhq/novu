@@ -1,4 +1,5 @@
 import styled from '@emotion/styled';
+import React from 'react';
 import { Button, Text } from '../../../design-system';
 
 const IntegrationsListToolbarHolder = styled.div`
@@ -28,7 +29,7 @@ export const IntegrationsListToolbar = ({
   onAddProviderClick,
 }: {
   areIntegrationsLoading: boolean;
-  onAddProviderClick: () => void;
+  onAddProviderClick: React.MouseEventHandler<HTMLButtonElement>;
 }) => {
   return (
     <IntegrationsListToolbarHolder>

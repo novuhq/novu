@@ -54,7 +54,7 @@ export function ChannelsConfiguration({ setClickedChannel }: { setClickedChannel
               <IconContainer>
                 <Icon style={{ width: '28px', height: '32px' }} />
               </IconContainer>
-              <ChannelCard>
+              <ChannelCard data-test-id={`channel-card-${channel.type}`}>
                 <TitleRow>
                   {channel.title}
                   <When truthy={isIntegrationActive}>
