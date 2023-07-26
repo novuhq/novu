@@ -80,6 +80,28 @@ export class IntegrationService {
   }
 
   async createChannelIntegrations(environmentId: string, organizationId: string) {
+    const novuMailPayload = {
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      providerId: 'novu-email',
+      channel: ChannelTypeEnum.EMAIL,
+      credentials: {},
+      active: true,
+    };
+
+    await this.integrationRepository.create(novuMailPayload);
+
+    const novuSmsPayload = {
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      providerId: 'novu-sms',
+      channel: ChannelTypeEnum.SMS,
+      credentials: {},
+      active: true,
+    };
+
+    await this.integrationRepository.create(novuSmsPayload);
+
     const mailPayload = {
       _environmentId: environmentId,
       _organizationId: organizationId,
