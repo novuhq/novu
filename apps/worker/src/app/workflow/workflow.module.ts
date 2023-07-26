@@ -32,6 +32,7 @@ import {
   CalculateDelayService,
   WsQueueService,
   SelectIntegration,
+  GetNovuProviderCredentials,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
@@ -105,6 +106,7 @@ const USE_CASES = [
   ProcessSubscriber,
   CreateSubscriber,
   UpdateSubscriber,
+  GetNovuProviderCredentials,
 ];
 
 const REPOSITORIES = [JobRepository];
