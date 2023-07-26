@@ -8,6 +8,11 @@ declare module '*.webp' {
   export = value;
 }
 
+declare module '*.svg' {
+  const value: any;
+  export = value;
+}
+
 interface IMessagePayload {
   type: string;
   [key: string]: any; // eslint-disable-line @typescript-eslint/no-explicit-any
