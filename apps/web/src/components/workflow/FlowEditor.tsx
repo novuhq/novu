@@ -116,7 +116,7 @@ export function FlowEditor({
 
       addStep(channel.channelType, newId, nodeIndex);
     },
-    [steps]
+    [addStep, steps]
   );
 
   const onDragOver = useCallback((event) => {
@@ -148,7 +148,7 @@ export function FlowEditor({
 
       addNewNode(parentId, type);
     },
-    [reactFlowInstance, nodes, edges]
+    [addNewNode, reactFlowInstance, nodes, edges]
   );
 
   async function initializeWorkflowTree() {
