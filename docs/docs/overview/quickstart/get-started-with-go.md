@@ -14,7 +14,6 @@ Before diving into the Quickstart, make sure you have the following:
 - The [Go SDK](https://go.dev/doc/install) installed on your development machine.
 - A Novu account. If you don't have one, sign up for free at [web.novu.co](https://web.novu.co)
 
-
 ### Install and Set Up Novu in your Go Project
 
 First, you must install the Novu package in your Go project. From your terminal, you can install the Novu package in your project by running the following command:
@@ -27,7 +26,7 @@ Once installed, you can import Novu into your project and initialize it using yo
 
 ```go
 import (
-	novu "github.com/novuhq/go-novu/lib"
+ novu "github.com/novuhq/go-novu/lib"
 )
 
 novuClient := novu.NewAPIClient("<NOVU_API_KEY>", &novu.Config{})
@@ -79,7 +78,7 @@ To create a notification workflow, please follow the following steps:
 3. Select **blank workflow** from the dropdown.
 4. The name of a new workflow is currently "Untitled." Rename it to a suitable title.
 5. Select any channel you want to use in your app. For the sake of this guide, we'll be using the 'Email' channel.
-   ![set-email.png] (https://res.cloudinary.com/dxc6bnman/image/upload/v1686776583/set-email_wavtrn.png)
+   ![set-email.png] (<https://res.cloudinary.com/dxc6bnman/image/upload/v1686776583/set-email_wavtrn.png>)
 
 6. Click on the recently added channel, fill the email subject and click “Update”.
    ![update_email_template.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1686776583/update_email_template_ivn0jv.png)
@@ -105,11 +104,11 @@ Now, let's create a subscriber on Novu. Copy and paste the following code to do 
 package main
 
 import (
-	"context"
-	"fmt"
-	"log"
+ "context"
+ "fmt"
+ "log"
 
-	novu "github.com/novuhq/go-novu/lib"
+ novu "github.com/novuhq/go-novu/lib"
 )
 
 
@@ -118,26 +117,26 @@ func main() {
     ctx := context.Background()
     subscriberID := "<REPLACE_WITH_YOUR_SUBSCRIBER>"
     subscriber := novu.SubscriberPayload{
-    	LastName: "Skjæveland",
-    	Email:    "benedicte.skjaeveland@example.com",
-    	Avatar:   "https://randomuser.me/api/portraits/thumb/women/79.jpg",
-    	Data: map[string]interface{}{
-    		"location": map[string]interface{}{
-    			"city":     "Ballangen",
-    			"state":    "Aust-Agder",
-    			"country":  "Norway",
-    			"postcode": "7481",
-    		},
-    	},
+     LastName: "Skjæveland",
+     Email:    "benedicte.skjaeveland@example.com",
+     Avatar:   "https://randomuser.me/api/portraits/thumb/women/79.jpg",
+     Data: map[string]interface{}{
+      "location": map[string]interface{}{
+       "city":     "Ballangen",
+       "state":    "Aust-Agder",
+       "country":  "Norway",
+       "postcode": "7481",
+      },
+     },
     }
 
-	resp, err := novuClient.SubscriberApi.Identify(ctx, subscriberID, subscriber)
-	if err != nil {
-		log.Fatal("Subscriber error: ", err.Error())
-		return
-	}
+ resp, err := novuClient.SubscriberApi.Identify(ctx, subscriberID, subscriber)
+ if err != nil {
+  log.Fatal("Subscriber error: ", err.Error())
+  return
+ }
 
-	fmt.Println(resp)
+ fmt.Println(resp)
 }
 ```
 
@@ -149,7 +148,6 @@ go run main.go # replace main.go with your file name
 
 You should see a new subscriber (that you created above) on your Novu dashboard.
 
-
 ## Update A Subscriber
 
 To update the Subscriber details you can call the put method from SubcriberApi. Here is an example:
@@ -158,11 +156,11 @@ To update the Subscriber details you can call the put method from SubcriberApi. 
 package main
 
 import (
-	"context"
-	"fmt"
-	"log"
+ "context"
+ "fmt"
+ "log"
 
-	novu "github.com/novuhq/go-novu/lib"
+ novu "github.com/novuhq/go-novu/lib"
 )
 
 # Update subscriber details
@@ -170,16 +168,15 @@ func main() {
     ctx := context.Background()
     subscriberID := "<REPLACE_WITH_YOUR_SUBSCRIBER>"
     updateSubscriber := novu.SubscriberPayload{FirstName: "Susan"}
-	updateResp, err := novuClient.SubscriberApi.Update(ctx, subscriberID, updateSubscriber)
-	if err != nil {
-		log.Fatal("Update subscriber error: ", err.Error())
-		return
-	}
+ updateResp, err := novuClient.SubscriberApi.Update(ctx, subscriberID, updateSubscriber)
+ if err != nil {
+  log.Fatal("Update subscriber error: ", err.Error())
+  return
+ }
 
-	fmt.Println(updateResp)
+ fmt.Println(updateResp)
 }
 ```
-
 
 <aside>
 Note: To send notifications to all your users, you'll need to make them subscribers in Novu, which you can do by programmatically adding them to Novu.
@@ -194,44 +191,44 @@ Copy and paste the following code into your app to trigger a notification:
 package main
 
 import (
-	"context"
-	"fmt"
-	"log"
+ "context"
+ "fmt"
+ "log"
 
-	novu "github.com/novuhq/go-novu/lib"
+ novu "github.com/novuhq/go-novu/lib"
 )
 
 # Trigger A Notification
 func main() {
     subscriberID := "<<REPLACE_WITH_YOUR_SUBSCRIBER>"
-	apiKey := "<REPLACE_WITH_YOUR_API_KEY>"
-	eventId := "<REPLACE_WITH_YOUR_EVENT_ID>"
+ apiKey := "<REPLACE_WITH_YOUR_API_KEY>"
+ eventId := "<REPLACE_WITH_YOUR_EVENT_ID>"
 
-	ctx := context.Background()
-	to := map[string]interface{}{
-		"lastName":     "Nwosu",
-		"firstName":    "John",
-		"subscriberId": subscriberID,
-		"email":        "johnnwosu@email.com",
-	}
-	payload := map[string]interface{}{
-		"name": "Hello World",
-		"organization": map[string]interface{}{
-			"logo": "https://happycorp.com/logo.png",
-		},
-	}
-	
-	novuClient := novu.NewAPIClient(apiKey, &novu.Config{})
-	triggerResp, err := novuClient.EventApi.Trigger(ctx, eventId, novu.ITriggerPayloadOptions{
-		To:      to,
-		Payload: payload,
-	})
-	if err != nil {
-		log.Fatal("Novu error", err.Error())
-		return
-	}
+ ctx := context.Background()
+ to := map[string]interface{}{
+  "lastName":     "Nwosu",
+  "firstName":    "John",
+  "subscriberId": subscriberID,
+  "email":        "johnnwosu@email.com",
+ }
+ payload := map[string]interface{}{
+  "name": "Hello World",
+  "organization": map[string]interface{}{
+   "logo": "https://happycorp.com/logo.png",
+  },
+ }
+ 
+ novuClient := novu.NewAPIClient(apiKey, &novu.Config{})
+ triggerResp, err := novuClient.EventApi.Trigger(ctx, eventId, novu.ITriggerPayloadOptions{
+  To:      to,
+  Payload: payload,
+ })
+ if err != nil {
+  log.Fatal("Novu error", err.Error())
+  return
+ }
 
-	fmt.Println(triggerResp)
+ fmt.Println(triggerResp)
 }
 ```
 
@@ -274,11 +271,11 @@ Copy and paste the following code into your app to create a topic:
 package main
 
 import (
-	"context"
-	"fmt"
-	"log"
+ "context"
+ "fmt"
+ "log"
 
-	novu "github.com/novuhq/go-novu/lib"
+ novu "github.com/novuhq/go-novu/lib"
 )
 
 # Create Topic
@@ -286,13 +283,13 @@ func main() {
     ctx := context.Background()
     topicKey := "<REPLACE_WITH_YOUR_TOPIC_KEY>"
     topicName := "<REPLACE_WITH_YOUR_TOPIC_NAME>"
-	createResp, err := novuClient.TopicsApi.Create(ctx, topicKey, topicName)
-	if err != nil {
-		log.Fatal("Create topic error: ", err.Error())
-		return
-	}
+ createResp, err := novuClient.TopicsApi.Create(ctx, topicKey, topicName)
+ if err != nil {
+  log.Fatal("Create topic error: ", err.Error())
+  return
+ }
 
-	fmt.Println(createResp)
+ fmt.Println(createResp)
 }
 ```
 
@@ -309,11 +306,11 @@ Copy and paste the following code into your app to add subscribers a topic:
 package main
 
 import (
-	"context"
-	"fmt"
-	"log"
+ "context"
+ "fmt"
+ "log"
 
-	novu "github.com/novuhq/go-novu/lib"
+ novu "github.com/novuhq/go-novu/lib"
 )
 
 # Add subscriber to Topic
@@ -321,13 +318,13 @@ func main() {
     ctx := context.Background()
     topicKey := "<REPLACE_WITH_YOUR_TOPIC_KEY>"
     subscribers := []string{"<SUBSCRIBER_ID_1>", "<SUBSCRIBER_ID_2>"}
-	addSubscribersResp, err := novuClient.TopicsApi.AddSubscribers(ctx, topicKey, subscribers)
-	if err != nil {
-		log.Fatal("Add subscriber to topic error: ", err.Error())
-		return
-	}
+ addSubscribersResp, err := novuClient.TopicsApi.AddSubscribers(ctx, topicKey, subscribers)
+ if err != nil {
+  log.Fatal("Add subscriber to topic error: ", err.Error())
+  return
+ }
 
-	fmt.Println(addSubscribersResp)
+ fmt.Println(addSubscribersResp)
 }
 ```
 
@@ -337,11 +334,11 @@ On the other hand, if you want to remove subscribers from a topic, do the follow
 package main
 
 import (
-	"context"
-	"fmt"
-	"log"
+ "context"
+ "fmt"
+ "log"
 
-	novu "github.com/novuhq/go-novu/lib"
+ novu "github.com/novuhq/go-novu/lib"
 )
 
 # Remove subscriber from Topic
@@ -349,13 +346,13 @@ func main() {
     ctx := context.Background()
     topicKey := "<REPLACE_WITH_YOUR_TOPIC_KEY>"
     subscribers := []string{"<SUBSCRIBER_ID_1>", "<SUBSCRIBER_ID_2>"}
-	removeSubscribersResp, err := novuClient.TopicsApi.RemoveSubscribers(ctx, topicKey, subscribers)
-	if err != nil {
-		log.Fatal("Add subscriber to topic error: ", err.Error())
-		return
-	}
+ removeSubscribersResp, err := novuClient.TopicsApi.RemoveSubscribers(ctx, topicKey, subscribers)
+ if err != nil {
+  log.Fatal("Add subscriber to topic error: ", err.Error())
+  return
+ }
 
-	fmt.Println(addSubscribersResp)
+ fmt.Println(addSubscribersResp)
 }
 ```
 
@@ -369,42 +366,42 @@ To trigger a notification to all subscribers of a topic, copy and paste the code
 package main
 
 import (
-	"context"
-	"fmt"
-	"log"
+ "context"
+ "fmt"
+ "log"
 
-	novu "github.com/novuhq/go-novu/lib"
+ novu "github.com/novuhq/go-novu/lib"
 )
 
 # Trigger A Notification
 func main() {
     topicKey := "<<REPLACE_WITH_YOUR_TOPIC_KEY>"
-	apiKey := "<REPLACE_WITH_YOUR_API_KEY>"
-	eventId := "<REPLACE_WITH_YOUR_EVENT_ID>"
-	ctx := context.Background()
-	
-	to := map[string]interface{}{
-		"type":     "Topic",
-		"topicKey":    topicKey
-	}
-	payload := map[string]interface{}{
-		"name": "Hello World",
-		"organization": map[string]interface{}{
-			"logo": "https://happycorp.com/logo.png",
-		},
-	}
-	
-	novuClient := novu.NewAPIClient(apiKey, &novu.Config{})
+ apiKey := "<REPLACE_WITH_YOUR_API_KEY>"
+ eventId := "<REPLACE_WITH_YOUR_EVENT_ID>"
+ ctx := context.Background()
+ 
+ to := map[string]interface{}{
+  "type":     "Topic",
+  "topicKey":    topicKey
+ }
+ payload := map[string]interface{}{
+  "name": "Hello World",
+  "organization": map[string]interface{}{
+   "logo": "https://happycorp.com/logo.png",
+  },
+ }
+ 
+ novuClient := novu.NewAPIClient(apiKey, &novu.Config{})
     triggerResp, err := novuClient.EventApi.Trigger(ctx, eventId, novu.ITriggerPayloadOptions{
-    		To:      to,
-    		Payload: payload,
-    	})
-	if err != nil {
-		log.Fatal("Novu error", err.Error())
-		return
-	}
+      To:      to,
+      Payload: payload,
+     })
+ if err != nil {
+  log.Fatal("Novu error", err.Error())
+  return
+ }
 
-	fmt.Println(triggerResp)
+ fmt.Println(triggerResp)
 }
 ```
 
