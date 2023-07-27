@@ -1,6 +1,6 @@
 import { IConstructTenantDto } from './create-tenant.dto';
 
-export interface IUpdateTenantBodyDto extends IConstructTenantDto {
+export interface IUpdateTenantDto extends IConstructTenantDto {
   name?: string;
   identifier?: string;
 }

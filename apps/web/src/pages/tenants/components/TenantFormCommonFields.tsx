@@ -1,11 +1,25 @@
 import { Control, Controller } from 'react-hook-form';
-import { JsonInput } from '@mantine/core';
+import { useClipboard } from '@mantine/hooks';
+import { JsonInput, ActionIcon } from '@mantine/core';
 
 import { Input } from '../../../design-system';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { ITenantForm } from './UpdateTenantSidebar';
+import { Check, Copy } from '../../../design-system/icons';
 
+function jsonValidator(value?: string) {
+  if (!value) {
+    return true;
+  }
+  try {
+    JSON.parse(value);
+  } catch (e) {
+    return 'Invalid JSON';
+  }
+}
 export const TenantFormCommonFields = ({ control }: { control: Control<ITenantForm, any> }) => {
+  const identifierClipboard = useClipboard({ timeout: 1000 });
+
   return (
     <>
       <Controller
@@ -46,6 +60,15 @@ export const TenantFormCommonFields = ({ control }: { control: Control<ITenantFo
             description="You reference to it when triggering a workflow"
             error={fieldState.error?.message}
             data-test-id="tenant-identifier"
+            rightSection={
+              <ActionIcon
+                variant="transparent"
+                disabled={!field.value}
+                onClick={() => identifierClipboard.copy(field.value)}
+              >
+                {identifierClipboard.copied ? <Check /> : <Copy />}
+              </ActionIcon>
+            }
           />
         )}
       />
@@ -53,12 +76,16 @@ export const TenantFormCommonFields = ({ control }: { control: Control<ITenantFo
         control={control}
         name="data"
         defaultValue={''}
+        rules={{
+          validate: (value) => jsonValidator(value),
+        }}
         render={({ field }) => (
           <JsonInput
             {...field}
             data-test-id="tenant-custom-properties"
             formatOnBlur
             autosize
+            placeholder={'{\n\n}'}
             styles={inputStyles}
             label="Custom properties"
             description="Set-up custom properties using JSON format"

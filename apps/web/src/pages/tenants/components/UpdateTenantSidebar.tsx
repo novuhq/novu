@@ -1,26 +1,26 @@
+import { useEffect } from 'react';
 import { Group, Stack } from '@mantine/core';
 import { Controller, useForm } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 
-import { ITenantEntity, IUpdateTenantBodyDto } from '@novu/shared';
+import { ITenantEntity, IUpdateTenantDto } from '@novu/shared';
 
 import { Button, colors, NameInput, Sidebar, Text } from '../../../design-system';
 import { getTenantByIdentifier, updateTenant } from '../../../api/tenants';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { QueryKeys } from '../../../api/query.keys';
-import { useEffectOnce } from '../../../hooks';
 import { TenantFormCommonFields } from './TenantFormCommonFields';
 
 export interface ITenantForm {
   identifier: string;
   name: string;
-  data: string;
+  data?: string;
 }
 export const defaultFormValues = {
   identifier: '',
   name: '',
-  data: '{}',
+  data: '',
 };
 export function UpdateTenantSidebar({
   isOpened,
@@ -28,14 +28,14 @@ export function UpdateTenantSidebar({
   onClose,
 }: {
   isOpened: boolean;
-  tenantIdentifier?: string;
+  tenantIdentifier: string;
   onClose: () => void;
 }) {
   const queryClient = useQueryClient();
 
   const { data: tenant, isLoading: isLoadingTenant } = useQuery<ITenantEntity>(
     [QueryKeys.getTenantByIdentifier(tenantIdentifier)],
-    () => getTenantByIdentifier(tenantIdentifier as string),
+    () => getTenantByIdentifier(tenantIdentifier),
     {
       enabled: !!tenantIdentifier,
     }
@@ -44,7 +44,7 @@ export function UpdateTenantSidebar({
   const { mutateAsync: updateTenantMutate, isLoading: isLoadingUpdate } = useMutation<
     ITenantEntity,
     { error: string; message: string; statusCode: number },
-    { identifier: string; data: IUpdateTenantBodyDto }
+    { identifier: string; data: IUpdateTenantDto }
   >(({ identifier, data }) => updateTenant(identifier, data), {
     onSuccess: async () => {
       await queryClient.refetchQueries({
@@ -57,21 +57,26 @@ export function UpdateTenantSidebar({
     },
   });
 
-  const { handleSubmit, control, formState, reset } = useForm<ITenantForm>({
+  const {
+    handleSubmit,
+    control,
+    formState: { isDirty, isValid },
+    reset,
+  } = useForm<ITenantForm>({
     shouldUseNativeValidation: false,
     defaultValues: defaultFormValues,
   });
 
-  useEffectOnce(() => {
+  useEffect(() => {
     if (!tenant) return;
 
-    reset({ name: tenant.name, identifier: tenant.identifier, data: JSON.stringify(tenant.data) });
-  }, !!tenant);
+    reset({ name: tenant.name, identifier: tenant.identifier, data: JSON.stringify(tenant.data, null, 2) });
+  }, [tenant]);
 
   const onUpdateTenant = async (form) => {
     await updateTenantMutate({
-      identifier: tenantIdentifier as string,
-      data: { ...form, data: JSON.parse(form.data) },
+      identifier: tenantIdentifier,
+      data: { ...form, ...(form.data ? { data: JSON.parse(form.data) } : {}) },
     });
 
     onClose();
@@ -121,7 +126,7 @@ export function UpdateTenantSidebar({
             </Text>
           </Stack>
           <Button
-            disabled={!formState.isDirty || isLoadingUpdate}
+            disabled={!isDirty || !isValid || isLoadingUpdate}
             submit
             loading={isLoadingUpdate}
             data-test-id="update-tenant-sidebar-submit"

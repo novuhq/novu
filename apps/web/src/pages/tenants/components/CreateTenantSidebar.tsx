@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import slugify from 'slugify';
 
-import { ICreateTenantBodyDto, ITenantEntity } from '@novu/shared';
+import { ICreateTenantDto, ITenantEntity } from '@novu/shared';
 
 import { Button, colors, Sidebar, Text, Title, Tooltip } from '../../../design-system';
 import { createTenant } from '../../../api/tenants';
@@ -27,7 +27,7 @@ export function CreateTenantSidebar({
   const { mutateAsync: createTenantMutation, isLoading: isLoadingCreate } = useMutation<
     ITenantEntity,
     { error: string; message: string; statusCode: number },
-    ICreateTenantBodyDto
+    ICreateTenantDto
   >(createTenant, {
     onSuccess: async () => {
       await queryClient.refetchQueries({
@@ -40,7 +40,13 @@ export function CreateTenantSidebar({
     },
   });
 
-  const { handleSubmit, control, formState, setValue, watch } = useForm<ITenantForm>({
+  const {
+    handleSubmit,
+    control,
+    formState: { isValid, isDirty },
+    setValue,
+    watch,
+  } = useForm<ITenantForm>({
     shouldUseNativeValidation: false,
     defaultValues: defaultFormValues,
   });
@@ -65,10 +71,14 @@ export function CreateTenantSidebar({
     const { identifier: tenantIdentifier } = await createTenantMutation({
       name: data.name,
       identifier: data.identifier,
-      data: JSON.parse(data.data),
+      ...(data.data ? { data: JSON.parse(data.data) } : {}),
     });
 
-    onTenantCreated(tenantIdentifier);
+    if (!tenantIdentifier) {
+      onClose();
+    } else {
+      onTenantCreated(tenantIdentifier);
+    }
   };
 
   return (
@@ -96,13 +106,13 @@ export function CreateTenantSidebar({
           </Button>
           <Tooltip
             sx={{ position: 'absolute' }}
-            disabled={formState.isDirty}
+            disabled={isDirty}
             label={'Fill in the name and identifier to create the tenant'}
           >
             <span>
               <Button
                 loading={isLoadingCreate}
-                disabled={!formState.isDirty}
+                disabled={!isDirty || !isValid}
                 submit
                 data-test-id="create-tenant-sidebar-submit"
               >

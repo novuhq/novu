@@ -4,7 +4,7 @@ export interface IConstructTenantDto {
   data?: TenantCustomData;
 }
 
-export interface ICreateTenantBodyDto extends IConstructTenantDto {
+export interface ICreateTenantDto extends IConstructTenantDto {
   name: string;
   identifier: string;
 }

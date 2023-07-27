@@ -11,5 +11,11 @@ export function UpdateTenantPage() {
     navigate(ROUTES.TENANTS);
   };
 
+  if (!identifier) {
+    navigate(ROUTES.TENANTS);
+
+    return null;
+  }
+
   return <UpdateTenantSidebar isOpened onClose={onClose} tenantIdentifier={identifier} />;
 }
