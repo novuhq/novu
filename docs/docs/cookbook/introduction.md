@@ -138,15 +138,10 @@ const { data: markMessageAsSeen } = await novu.subscribers.markMessageSeen(
 
 You can mark an In-App message as read/unread/seen/unseen. Messages from other channels: **Email**, **Push**, **Chat**, **Sms** can't be marked as read/unread/seen/unseen.
 
-:::info
-The unread/unseen functionality has yet to be available in the Node.js SDK. Please use [the API](https://docs.novu.co/api/mark-a-subscriber-feed-message-as-seen/) to accomplish this task. It will be in the 0.17.0 release.
-:::
-
 <Tabs groupId="language" queryString>
   <TabItem value="js" label="Node.js">
 
 ```javascript
-// this method will be available in 0.17.1
 const { data: markMessageAs } = await novu.subscribers.markMessageAs('subscriberId', 'messageId', {
   seen: true,
   read: false,
