@@ -9,6 +9,8 @@ import type {
 
 export interface ITableIntegration {
   name: string;
+  order: number;
+  isPrimary: boolean;
   integrationId: string;
   identifier: string;
   provider: string;
@@ -50,6 +52,8 @@ export interface IntegrationEntity {
   active: boolean;
   selected: boolean;
   deleted: boolean;
+  order: number;
+  isPrimary: boolean;
   deletedAt: string;
   deletedBy: string;
 }

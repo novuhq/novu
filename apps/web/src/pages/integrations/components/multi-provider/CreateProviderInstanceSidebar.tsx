@@ -16,6 +16,12 @@ import { QueryKeys } from '../../../../api/query.keys';
 import { ProviderImage } from './SelectProviderSidebar';
 import { CHANNEL_TYPE_TO_STRING } from '../../../../utils/channels';
 import type { IntegrationEntity } from '../../types';
+import { useIntegrations } from '../../../../hooks';
+
+interface ICreateProviderInstanceForm {
+  name: string;
+  environmentId: string;
+}
 
 export function CreateProviderInstanceSidebar({
   isOpened,
@@ -30,9 +36,12 @@ export function CreateProviderInstanceSidebar({
   providerId?: string;
   onClose: () => void;
   onGoBack: () => void;
-  onIntegrationCreated: (id: string) => void;
+  onIntegrationCreated: (id: string, hasSimilarIntegration: boolean) => void;
 }) {
   const { environments, isLoading: areEnvironmentsLoading } = useFetchEnvironments();
+  const { integrations, loading: areIntegrationsLoading } = useIntegrations();
+  const isLoading = areEnvironmentsLoading || areIntegrationsLoading;
+
   const queryClient = useQueryClient();
   const segment = useSegment();
 
@@ -47,7 +56,7 @@ export function CreateProviderInstanceSidebar({
     ICreateIntegrationBodyDto
   >(createIntegration);
 
-  const { handleSubmit, control, reset } = useForm({
+  const { handleSubmit, control, reset } = useForm<ICreateProviderInstanceForm>({
     shouldUseNativeValidation: false,
     defaultValues: {
       name: '',
@@ -55,30 +64,36 @@ export function CreateProviderInstanceSidebar({
     },
   });
 
-  const onCreateIntegrationInstance = async (data) => {
+  const onCreateIntegrationInstance = async (data: ICreateProviderInstanceForm) => {
     try {
       if (!provider) {
         return;
       }
 
+      const { channel: selectedChannel } = provider;
+      const { environmentId } = data;
+      const hasSimilarIntegration = !!integrations?.find(
+        (el) => el.channel === selectedChannel && el._environmentId === environmentId
+      );
+
       const { _id: integrationId } = await createIntegrationApi({
         providerId: provider.id,
-        channel: provider.channel,
+        channel: selectedChannel,
         name: data.name,
         credentials: {},
         active: false,
         check: false,
-        _environmentId: data.environmentId,
+        _environmentId: environmentId,
       });
 
       segment.track(IntegrationsStoreModalAnalytics.CREATE_INTEGRATION_INSTANCE, {
         providerId: provider.id,
-        channel: provider.channel,
+        channel: selectedChannel,
         name: data.name,
-        environmentId: data.environmentId,
+        environmentId,
       });
       successMessage('Instance configuration is created');
-      onIntegrationCreated(integrationId ?? '');
+      onIntegrationCreated(integrationId ?? '', hasSimilarIntegration);
 
       queryClient.refetchQueries({
         predicate: ({ queryKey }) =>
@@ -107,7 +122,7 @@ export function CreateProviderInstanceSidebar({
   return (
     <Sidebar
       isOpened={isOpened}
-      isLoading={areEnvironmentsLoading}
+      isLoading={isLoading}
       onSubmit={(e) => {
         handleSubmit(onCreateIntegrationInstance)(e);
         e.stopPropagation();
@@ -143,7 +158,7 @@ export function CreateProviderInstanceSidebar({
             Cancel
           </Button>
           <Button
-            disabled={areEnvironmentsLoading || isLoadingCreate}
+            disabled={isLoading || isLoadingCreate}
             loading={isLoadingCreate}
             submit
             data-test-id="create-provider-instance-sidebar-create"

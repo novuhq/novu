@@ -3,6 +3,7 @@ import { Skeleton } from '@mantine/core';
 import { useMantineColorScheme } from '@mantine/core';
 
 import { colors, IExtendedCellProps, Text } from '../../../design-system';
+import { Star } from '../../../design-system/icons';
 import type { ITableIntegration } from '../types';
 
 const CellHolder = styled.div`
@@ -36,6 +37,11 @@ const Identifier = styled.span`
   overflow: hidden;
 `;
 
+const IconHolder = styled.div`
+  position: relative;
+  display: flex;
+`;
+
 const Image = styled.img`
   width: 24px;
   min-width: 24px;
@@ -60,7 +66,10 @@ export const IntegrationNameCell = ({ row: { original }, isLoading }: IExtendedC
 
   return (
     <CellHolder data-test-id="integration-name-cell">
-      <Image src={original.logoFileName[`${colorScheme}`]} alt={original.name} />
+      <IconHolder>
+        <Image src={original.logoFileName[`${colorScheme}`]} alt={original.name} />
+        {original.isPrimary && <Star />}
+      </IconHolder>
       <DetailsHolder>
         <NameHolder>
           <Text rows={1}>{original.name}</Text>

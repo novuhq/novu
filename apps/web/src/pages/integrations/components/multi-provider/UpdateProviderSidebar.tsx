@@ -32,6 +32,8 @@ import { ProviderImage } from '../../components/multi-provider/SelectProviderSid
 import { ProviderInfo } from '../../components/multi-provider/ProviderInfo';
 import { NovuProviderSidebarContent } from '../../components/multi-provider/NovuProviderSidebarContent';
 import { useIntercom } from 'react-use-intercom';
+import { useEffectOnce } from '../../../../hooks';
+import { useSelectPrimaryIntegrationModal } from './useSelectPrimaryIntegrationModal';
 
 interface IProviderForm {
   name: string;
@@ -47,10 +49,12 @@ enum SidebarStateEnum {
 
 export function UpdateProviderSidebar({
   isOpened,
+  hasToSelectPrimaryProvider,
   integrationId,
   onClose,
 }: {
   isOpened: boolean;
+  hasToSelectPrimaryProvider: boolean;
   integrationId?: string;
   onClose: () => void;
 }) {
@@ -61,6 +65,9 @@ export function UpdateProviderSidebar({
   const [framework, setFramework] = useState<FrameworkEnum | null>(null);
   const { providers, isLoading: areProvidersLoading } = useProviders();
   const isNovuInAppProvider = selectedProvider?.providerId === InAppProviderIdEnum.Novu;
+
+  const { openModal: openSelectPrimaryIntegrationModal, SelectPrimaryIntegrationModal } =
+    useSelectPrimaryIntegrationModal();
 
   const { onUpdateIntegration, isLoadingUpdate } = useUpdateIntegration(selectedProvider?.integrationId || '');
 
@@ -153,6 +160,13 @@ export function UpdateProviderSidebar({
     onClose();
     update({ hideDefaultLauncher: false });
   };
+
+  useEffectOnce(() => {
+    openSelectPrimaryIntegrationModal({
+      environmentId: selectedProvider?.environmentId,
+      channelType: selectedProvider?.channel,
+    });
+  }, hasToSelectPrimaryProvider && !!selectedProvider);
 
   if (
     SmsProviderIdEnum.Novu === selectedProvider?.providerId ||
@@ -265,6 +279,7 @@ export function UpdateProviderSidebar({
           </Box>
         </When>
       </Sidebar>
+      <SelectPrimaryIntegrationModal />
     </FormProvider>
   );
 }

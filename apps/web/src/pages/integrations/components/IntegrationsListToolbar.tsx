@@ -37,7 +37,7 @@ export const IntegrationsListToolbar = ({
         id="add-provider"
         onClick={onAddProviderClick}
         disabled={areIntegrationsLoading}
-        data-test-id="add-provider"
+        testId="add-provider"
         variant="subtle"
       >
         <PlusSquare data-square>+</PlusSquare>

@@ -61,6 +61,7 @@ export { AngularLogo } from './general/AngularLogo';
 export { JavaScriptLogo } from './general/JavaScriptLogo';
 export { VueLogo } from './general/VueLogo';
 export { IframeLogo } from './general/IframeLogo';
+export { Star } from './general/Star';
 
 export { Copy } from './actions/Copy';
 export { Close } from './actions/Close';

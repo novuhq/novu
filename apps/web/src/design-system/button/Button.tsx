@@ -21,6 +21,7 @@ interface IButtonProps extends ButtonProps {
   pulse?: boolean;
   sx?: Sx;
   iconPosition?: 'left' | 'right';
+  testId?: string;
 }
 
 /**
@@ -41,6 +42,7 @@ export function Button({
   variant = 'gradient',
   pulse,
   iconPosition = 'left',
+  testId,
   ...props
 }: IButtonProps) {
   const { classes } = useStyles({ disabled, inherit, variant, pulse });
@@ -60,6 +62,7 @@ export function Button({
       fullWidth={fullWidth}
       variant={variant}
       {...props}
+      data-test-id={testId}
     >
       {children}
     </MantineButton>
