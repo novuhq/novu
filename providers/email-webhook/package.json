@@ -1,6 +1,6 @@
 {
   "name": "@novu/email-webhook",
-  "version": "0.16.4",
+  "version": "0.17.1",
   "description": "An email channel webhook provider wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",

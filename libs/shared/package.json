@@ -1,6 +1,6 @@
 {
   "name": "@novu/shared",
-  "version": "0.16.4",
+  "version": "0.17.1",
   "description": "",
   "scripts": {
     "start": "npm run start:dev",
@@ -26,7 +26,7 @@
     "dist/"
   ],
   "dependencies": {
-    "axios": "1.2.0",
+    "axios": "^1.4.0",
     "class-transformer": "0.5.1",
     "class-validator": "0.14.0"
   },
