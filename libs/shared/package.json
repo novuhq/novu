@@ -45,6 +45,5 @@
     "*.{html,md,yml}": [
       "prettier --ignore-path .eslintignore --single-quote --write"
     ]
-  },
-  "gitHead": "e1055f2fd2f0ec9a85d64b271c7d5824bdb381d0"
+  }
 }
