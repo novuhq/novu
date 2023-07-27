@@ -8,6 +8,7 @@ import { When } from '../../../../components/utils/When';
 import { columns } from './columns';
 import { useTenants } from '../../../../hooks/useTenants';
 import { Toolbar } from './ToolBar';
+import { TenantsListNoData } from './TenantsListNoData';
 
 export const TenantsList = ({
   onAddTenantClick,
@@ -18,6 +19,8 @@ export const TenantsList = ({
 }) => {
   const { tenants, loading } = useTenants();
   const hasTenants = tenants && tenants?.length > 0;
+  const loadingPhase = hasTenants || loading;
+  const noTenants = !hasTenants && !loading;
 
   return (
     <PageContainer
@@ -30,7 +33,7 @@ export const TenantsList = ({
       <Container fluid sx={{ padding: '0 30px 8px 30px' }}>
         <Toolbar onAddTenantClick={onAddTenantClick} tenantLoading={loading} />
       </Container>
-      <When truthy={hasTenants || loading}>
+      <When truthy={loadingPhase}>
         <Table
           onRowClick={onRowClickCallback}
           loading={loading}
@@ -38,6 +41,9 @@ export const TenantsList = ({
           columns={columns}
           data={tenants || []}
         />
+      </When>
+      <When truthy={noTenants}>
+        <TenantsListNoData />
       </When>
     </PageContainer>
   );
