@@ -11,7 +11,7 @@ import {
   SmsProviderIdEnum,
 } from '@novu/shared';
 
-import { Button, colors, Sidebar, Text, Title } from '../../../../design-system';
+import { Button, colors, Sidebar, Text } from '../../../../design-system';
 import { useProviders } from '../../useProviders';
 import type { IIntegratedProvider } from '../../types';
 import { IntegrationInput } from '../../components/IntegrationInput';
@@ -28,8 +28,6 @@ import { SetupTimeline } from '../../../quick-start/components/SetupTimeline';
 import { Faq } from '../../../quick-start/components/QuickStartWrapper';
 import { NovuInAppFrameworkHeader } from '../../components/NovuInAppFrameworkHeader';
 import { NovuInAppSetupWarning } from '../../components/NovuInAppSetupWarning';
-import { ProviderImage } from '../../components/multi-provider/SelectProviderSidebar';
-import { ProviderInfo } from '../../components/multi-provider/ProviderInfo';
 import { NovuProviderSidebarContent } from '../../components/multi-provider/NovuProviderSidebarContent';
 import { useIntercom } from 'react-use-intercom';
 
@@ -55,7 +53,7 @@ export function UpdateProviderSidebar({
   onClose: () => void;
 }) {
   const { update } = useIntercom();
-  const { environments, isLoading: areEnvironmentsLoading } = useFetchEnvironments();
+  const { isLoading: areEnvironmentsLoading } = useFetchEnvironments();
   const [selectedProvider, setSelectedProvider] = useState<IIntegratedProvider | null>(null);
   const [sidebarState, setSidebarState] = useState<SidebarStateEnum>(SidebarStateEnum.NORMAL);
   const [framework, setFramework] = useState<FrameworkEnum | null>(null);
@@ -159,23 +157,38 @@ export function UpdateProviderSidebar({
     EmailProviderIdEnum.Novu === selectedProvider?.providerId
   ) {
     return (
-      <Sidebar
-        isOpened={isSidebarOpened}
-        isLoading={areProvidersLoading || areEnvironmentsLoading}
-        onClose={onSidebarClose}
-        customHeader={
-          <Group spacing={12}>
-            <ProviderImage providerId={selectedProvider?.providerId} />
-            <Title size={2}>{selectedProvider?.displayName ?? ''}</Title>
-            <Free>🎉 Free</Free>
-          </Group>
-        }
-        data-test-id="update-provider-sidebar-novu"
-      >
-        <ProviderInfo provider={selectedProvider} environments={environments} />
-
-        <NovuProviderSidebarContent provider={selectedProvider} />
-      </Sidebar>
+      <FormProvider {...methods}>
+        <Sidebar
+          isOpened={isSidebarOpened}
+          isLoading={areProvidersLoading || areEnvironmentsLoading}
+          onClose={onSidebarClose}
+          onSubmit={(e) => {
+            handleSubmit(onUpdateIntegration)(e);
+            e.stopPropagation();
+          }}
+          customHeader={
+            <UpdateIntegrationSidebarHeader provider={selectedProvider} onSuccessDelete={onSidebarClose}>
+              <Free>🎉 Free</Free>
+            </UpdateIntegrationSidebarHeader>
+          }
+          data-test-id="update-provider-sidebar-novu"
+          customFooter={
+            <Group position="right" w="100%">
+              <Button
+                disabled={!isDirty || isLoadingUpdate}
+                submit
+                loading={isLoadingUpdate}
+                data-test-id="update-provider-sidebar-update"
+              >
+                Update
+              </Button>
+            </Group>
+          }
+        >
+          <UpdateIntegrationCommonFields provider={selectedProvider} showActive={false} />
+          <NovuProviderSidebarContent provider={selectedProvider} />
+        </Sidebar>
+      </FormProvider>
     );
   }
 
@@ -184,7 +197,7 @@ export function UpdateProviderSidebar({
       <Sidebar
         isOpened={isSidebarOpened}
         isLoading={areProvidersLoading || areEnvironmentsLoading}
-        isExpanded={sidebarState === 'expanded'}
+        isExpanded={sidebarState === SidebarStateEnum.EXPANDED}
         onSubmit={(e) => {
           handleSubmit(onUpdateIntegration)(e);
           e.stopPropagation();
@@ -192,7 +205,7 @@ export function UpdateProviderSidebar({
         onClose={onSidebarClose}
         onBack={onBack}
         customHeader={
-          sidebarState === 'normal' ? (
+          sidebarState === SidebarStateEnum.NORMAL ? (
             <UpdateIntegrationSidebarHeader provider={selectedProvider} onSuccessDelete={onSidebarClose} />
           ) : (
             <>
@@ -224,7 +237,7 @@ export function UpdateProviderSidebar({
         }
         data-test-id="update-provider-sidebar"
       >
-        <When truthy={sidebarState === 'normal'}>
+        <When truthy={sidebarState === SidebarStateEnum.NORMAL}>
           <SetupWarning
             show={!haveAllCredentials}
             message="Set up credentials to start sending notifications."
@@ -249,7 +262,7 @@ export function UpdateProviderSidebar({
           ))}
           {isNovuInAppProvider && <NovuInAppFrameworks onFrameworkClick={onFrameworkClickCallback} />}
         </When>
-        <When truthy={isNovuInAppProvider && sidebarState === 'expanded'}>
+        <When truthy={isNovuInAppProvider && sidebarState === SidebarStateEnum.EXPANDED}>
           <SetupTimeline
             framework={framework?.toString() ?? ''}
             onDone={() => {
