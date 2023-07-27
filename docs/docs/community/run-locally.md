@@ -73,7 +73,7 @@ However, if you want to test certain parts of Novu or run it in production mode,
 - `REDIS_CACHE_FAMILY`<br />The Redis cache IP stack version
 - `REDIS_CACHE_KEY_PREFIX`<br />The Redis cache prefix prepend to all keys
 - `REDIS_CACHE_SERVICE_TLS`<br />The Redis cache TLS connection support
-- `IN_MEMORY_CLUSTER_MODE_ENABLED`<br />The flag that enables the cluster mode. It might be Redis or ElastiCache cluster, depending on the env variables set for either service.
+- `IS_IN_MEMORY_CLUSTER_MODE_ENABLED`<br />The flag that enables the cluster mode. It might be Redis or ElastiCache cluster, depending on the env variables set for either service.
 - `ELASTICACHE_CLUSTER_SERVICE_HOST`<br />ElastiCache cluster host
 - `ELASTICACHE_CLUSTER_SERVICE_PORT`<br />ElastiCache cluster port
 - `REDIS_CLUSTER_SERVICE_HOST`<br />Redis cluster host
@@ -125,7 +125,7 @@ However, if you want to test certain parts of Novu or run it in production mode,
 - `REDIS_CACHE_FAMILY`<br />The Redis cache IP stack version
 - `REDIS_CACHE_KEY_PREFIX`<br />The Redis cache prefix prepend to all keys
 - `REDIS_CACHE_SERVICE_TLS`<br />The Redis cache TLS connection support
-- `IN_MEMORY_CLUSTER_MODE_ENABLED`<br />The flag that enables the cluster mode. It might be Redis or ElastiCache cluster, depending on the env variables set for either service.
+- `IS_IN_MEMORY_CLUSTER_MODE_ENABLED`<br />The flag that enables the cluster mode. It might be Redis or ElastiCache cluster, depending on the env variables set for either service.
 - `ELASTICACHE_CLUSTER_SERVICE_HOST`<br />ElastiCache cluster host
 - `ELASTICACHE_CLUSTER_SERVICE_PORT`<br />ElastiCache cluster port
 - `REDIS_CLUSTER_SERVICE_HOST`<br />Redis cluster host

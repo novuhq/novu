@@ -5,7 +5,7 @@ import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { SelectIntegration } from './select-integration.usecase';
 import { SelectIntegrationCommand } from './select-integration.command';
 import { GetNovuIntegration } from '../get-novu-integration';
-import { GetFeatureFlag } from '../get-feature-flag';
+import { GetIsMultiProviderConfigurationEnabled } from '../get-feature-flag';
 import { GetDecryptedIntegrations } from '../get-decrypted-integrations';
 
 const testIntegration: IntegrationEntity = {
@@ -74,8 +74,8 @@ jest.mock('@novu/dal', () => ({
 
 jest.mock('../get-feature-flag', () => ({
   ...jest.requireActual('../get-feature-flag'),
-  GetFeatureFlag: jest.fn(() => ({
-    isMultiProviderConfigurationEnabled: jest.fn(() => true),
+  GetIsMultiProviderConfigurationEnabled: jest.fn(() => ({
+    execute: jest.fn(() => true),
   })),
 }));
 
@@ -96,7 +96,7 @@ describe('select integration', function () {
       // @ts-ignore
       new GetNovuIntegration() as any,
       // @ts-ignore
-      new GetFeatureFlag(),
+      new GetIsMultiProviderConfigurationEnabled(),
       // @ts-ignore
       new GetDecryptedIntegrations()
     );

@@ -6,7 +6,7 @@ import {
   SelectIntegration,
   SelectIntegrationCommand,
   FeatureFlagCommand,
-  GetFeatureFlag,
+  GetIsMultiProviderConfigurationEnabled,
 } from '@novu/application-generic';
 import { ChannelTypeEnum } from '@novu/shared';
 import { EnvironmentEntity, EnvironmentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
@@ -21,11 +21,11 @@ export class GetActiveIntegrations {
     private selectIntegration: SelectIntegration,
     private environmentRepository: EnvironmentRepository,
     private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations,
-    private getFeatureFlag: GetFeatureFlag
+    private getIsMultiProviderConfigurationEnabled: GetIsMultiProviderConfigurationEnabled
   ) {}
 
   async execute(command: GetActiveIntegrationsCommand): Promise<GetActiveIntegrationResponseDto[]> {
-    const isMultiProviderConfigurationEnabled = await this.getFeatureFlag.isMultiProviderConfigurationEnabled(
+    const isMultiProviderConfigurationEnabled = await this.getIsMultiProviderConfigurationEnabled.execute(
       FeatureFlagCommand.create({
         environmentId: command.environmentId,
         organizationId: command.organizationId,

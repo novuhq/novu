@@ -47,6 +47,7 @@ jobs:
           else
             echo ::set-output has_token=false
           fi
+
       # checkout with submodules if token is provided
       - uses: actions/checkout@v3
         if: steps.setup.outputs.has_token == 'true'
@@ -61,12 +62,13 @@ jobs:
         with:
           cypress: true
 
+      - uses: ./.github/actions/setup-redis-cluster
+      - uses: ./.github/actions/start-localstack
+
       - uses: mansagroup/nrwl-nx-action@v3
         with:
           targets: lint,build
           projects: '@novu/web,@novu/api,@novu/worker'
-
-      - uses: ./.github/actions/start-localstack
 
       - name: Start Client
         working-directory: apps/web
@@ -88,6 +90,7 @@ jobs:
           PORT: "1336"
           TZ: "UTC"
           GITHUB_OAUTH_REDIRECT: "http://localhost:1336/v1/auth/github/callback"
+          LAUNCH_DARKLY_SDK_KEY: ${{ secrets.TEST_LAUNCH_DARKLY_SDK_KEY }}
         run: cd apps/api && pnpm start:build &
 
       - name: Start worker
@@ -95,6 +98,7 @@ jobs:
           NODE_ENV: "test"
           PORT: 1342
           TZ: "UTC"
+          LAUNCH_DARKLY_SDK_KEY: ${{ secrets.TEST_LAUNCH_DARKLY_SDK_KEY }}
         run: cd apps/worker && pnpm start:prod &
 
       - name: Install wait-on plugin
