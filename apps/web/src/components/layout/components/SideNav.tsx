@@ -81,7 +81,7 @@ export function SideNav({}: Props) {
   const lastStep = currentOnboardingStep().get();
   const getStartedRoute = lastStep === ROUTES.GET_STARTED_PREVIEW ? ROUTES.GET_STARTED : lastStep;
 
-  let menuItems = [
+  const menuItems = [
     {
       condition: !readonly,
       icon: <CheckCircleOutlined />,
@@ -90,7 +90,13 @@ export function SideNav({}: Props) {
       testId: 'side-nav-quickstart-link',
     },
     { icon: <Bolt />, link: ROUTES.WORKFLOWS, label: 'Workflows', testId: 'side-nav-templates-link' },
-    { icon: <Buildings />, link: ROUTES.TENANTS, label: 'Tenants', testId: 'side-nav-tenants-link' },
+    {
+      condition: isMultiTenancyEnabled,
+      icon: <Buildings />,
+      link: ROUTES.TENANTS,
+      label: 'Tenants',
+      testId: 'side-nav-tenants-link',
+    },
     {
       icon: <Team />,
       link: ROUTES.SUBSCRIBERS,
@@ -121,10 +127,6 @@ export function SideNav({}: Props) {
       condition: !readonly,
     },
   ];
-
-  if (!isMultiTenancyEnabled) {
-    menuItems = menuItems.filter((item) => item.link !== ROUTES.TENANTS);
-  }
 
   async function handlePopoverForChanges(e) {
     e.preventDefault();
