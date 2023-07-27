@@ -99,7 +99,7 @@ export function Table<T extends object>({
     page,
     gotoPage,
     toggleAllRowsSelected,
-    state: { pageIndex, selectedRowIds },
+    state: { pageIndex },
   } = useTable(
     {
       columns,
