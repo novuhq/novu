@@ -18,9 +18,8 @@ import {
   SmsCentralHandler,
   AfricasTalkingSmsHandler,
   SendchampSmsHandler,
+  NovuSmsHandler,
 } from './handlers';
-import { SmsProviderIdEnum } from '@novu/shared';
-import { NovuSmsHandler } from './handlers/novu.handler';
 
 export class SmsFactory implements ISmsFactory {
   handlers: ISmsHandler[] = [

@@ -1,5 +1,4 @@
 import { IntegrationEntity } from '@novu/dal';
-import { EmailProviderIdEnum } from '@novu/shared';
 import {
   SendgridHandler,
   MailgunHandler,
@@ -17,8 +16,8 @@ import {
   ResendHandler,
   SparkPostHandler,
   EmailWebhookHandler,
+  NovuEmailHandler,
 } from './handlers';
-import { NovuEmailHandler } from './handlers/novu.handler';
 import { IMailHandler } from './interfaces/send.handler.interface';
 
 export class MailFactory {
