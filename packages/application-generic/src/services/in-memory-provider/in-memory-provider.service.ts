@@ -8,6 +8,12 @@ import {
   validateElasticacheClusterProviderConfig,
 } from './elasticache-cluster-provider';
 import {
+  getMemoryDbCluster,
+  getMemoryDbClusterProviderConfig,
+  IMemoryDbClusterProviderConfig,
+  validateMemoryDbClusterProviderConfig,
+} from './memory-db-cluster-provider';
+import {
   CLIENT_READY,
   getRedisInstance,
   getRedisProviderConfig,
@@ -38,6 +44,7 @@ export enum InMemoryProviderEnum {
 export type InMemoryProviderClient = Redis | Cluster | undefined;
 type InMemoryProviderConfig =
   | IElasticacheClusterProviderConfig
+  | IMemoryDbClusterProviderConfig
   | IRedisProviderConfig
   | IRedisClusterProviderConfig;
 export type Pipeline = ChainableCommander;
@@ -142,6 +149,11 @@ export class InMemoryProviderService {
         getClient: getElasticacheCluster,
         getConfig: getElasticacheClusterProviderConfig,
         validate: validateElasticacheClusterProviderConfig,
+      },
+      [InMemoryProviderEnum.MEMORY_DB]: {
+        getClient: getMemoryDbCluster,
+        getConfig: getMemoryDbClusterProviderConfig,
+        validate: validateMemoryDbClusterProviderConfig,
       },
       [InMemoryProviderEnum.REDIS]: {
         getClient: getRedisCluster,
