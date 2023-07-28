@@ -1,7 +1,7 @@
-import Redis, { RedisOptions } from 'ioredis';
+import Redis, { RedisOptions, ScanStream } from 'ioredis';
 import { ConnectionOptions } from 'tls';
 
-export { Redis, RedisOptions };
+export { Redis, RedisOptions, ScanStream };
 
 export const CLIENT_READY = 'ready';
 const DEFAULT_TTL_SECONDS = 60 * 60 * 2;
@@ -91,3 +91,6 @@ export const getRedisInstance = (): Redis | undefined => {
 
   return undefined;
 };
+
+export const isClientReady = (status: string): boolean =>
+  status === CLIENT_READY;
