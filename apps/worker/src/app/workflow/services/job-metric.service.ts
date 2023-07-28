@@ -1,8 +1,12 @@
 const nr = require('newrelic');
-import { Job, WorkerOptions } from 'bullmq';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { QueueService } from '@novu/application-generic';
-import { IJobData, JobTopicNameEnum } from '@novu/shared';
+import {
+  JobMetricsQueueService,
+  JobMetricsWorkerService,
+  QueueBaseService,
+  WorkerOptions,
+} from '@novu/application-generic';
+import { JobTopicNameEnum } from '@novu/shared';
 import { min, max, sum, mean } from 'simple-statistics';
 
 interface IMetric {
@@ -19,21 +23,29 @@ function sumOfSquares(values: number[]): number {
   return sum(values.map((value) => (value - meanVal) ** 2));
 }
 
-const LOG_CONTEXT = 'MetricQueueService';
+const LOG_CONTEXT = 'JobMetricService';
 const METRIC_JOB_ID = 'metric-job';
 
+/**
+ * TODO: This service should be split in 2 but have no mental capacity right now
+ * to think how to do.
+ */
 @Injectable()
-export class MetricQueueService extends QueueService<Record<string, never>> {
-  constructor(@Inject('BULLMQ_LIST') private token_list: QueueService[]) {
-    super(JobTopicNameEnum.METRICS);
+export class JobMetricService {
+  constructor(
+    @Inject('BULL_MQ_TOKEN_LIST')
+    private tokenList: QueueBaseService[],
+    public readonly jobMetricsQueueService: JobMetricsQueueService,
+    public readonly jobMetricsWorkerService: JobMetricsWorkerService
+  ) {
+    this.jobMetricsQueueService.createQueue();
+    this.jobMetricsWorkerService.createWorker(this.getWorkerProcessor(), this.getWorkerOptions());
 
-    this.bullMqService.createWorker(JobTopicNameEnum.METRICS, this.getWorkerProcessor(), this.getWorkerOptions());
-
-    this.bullMqService.worker.on('completed', async (job) => {
-      await this.jobHasCompleted(job);
+    this.jobMetricsWorkerService.worker.on('completed', async (job, error) => {
+      await this.jobHasFailed(job, error);
     });
 
-    this.bullMqService.worker.on('failed', async (job, error) => {
+    this.jobMetricsWorkerService.worker.on('failed', async (job, error) => {
       await this.jobHasFailed(job, error);
     });
 
@@ -42,7 +54,7 @@ export class MetricQueueService extends QueueService<Record<string, never>> {
 
   private addToQueueIfMetricJobExists(): void {
     Promise.resolve(
-      this.bullMqService.queue.getRepeatableJobs().then((job): boolean => {
+      this.jobMetricsQueueService.queue.getRepeatableJobs().then((job): boolean => {
         let exists = false;
         for (const jobElement of job) {
           if (jobElement.id === METRIC_JOB_ID) {
@@ -59,7 +71,7 @@ export class MetricQueueService extends QueueService<Record<string, never>> {
         if (!exists) {
           Logger.debug(`metricJob doesn't exist, creating it`, LOG_CONTEXT);
 
-          return await this.addToQueue(METRIC_JOB_ID, undefined, '', {
+          return await this.jobMetricsQueueService.add(METRIC_JOB_ID, undefined, '', {
             jobId: METRIC_JOB_ID,
             repeatJobKey: METRIC_JOB_ID,
             repeat: {
@@ -91,7 +103,7 @@ export class MetricQueueService extends QueueService<Record<string, never>> {
         Logger.verbose('metric job started', LOG_CONTEXT);
 
         try {
-          for (const queueService of this.token_list) {
+          for (const queueService of this.tokenList) {
             const metrics = await queueService.bullMqService.getQueueMetrics();
 
             const completeNumber = metrics.completed.count;
@@ -146,5 +158,18 @@ export class MetricQueueService extends QueueService<Record<string, never>> {
 
   private async jobHasFailed(job, error): Promise<void> {
     Logger.verbose('Metric job failed', error, LOG_CONTEXT);
+  }
+
+  public async gracefulShutdown(): Promise<void> {
+    Logger.log('Shutting the Queue service down', LOG_CONTEXT);
+
+    await this.jobMetricsQueueService.gracefulShutdown();
+    await this.jobMetricsWorkerService.gracefulShutdown();
+
+    Logger.log('Shutting down the Queue service has finished', LOG_CONTEXT);
+  }
+
+  async onModuleDestroy(): Promise<void> {
+    await this.gracefulShutdown();
   }
 }

@@ -1,19 +1,21 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { BullMqService } from './bull-mq.service';
+import { Worker } from './bull-mq';
 
 import {
-  QueueServiceHealthIndicator,
-  TriggerQueueServiceHealthIndicator,
-  WsQueueServiceHealthIndicator,
+  StandardQueueServiceHealthIndicator,
+  WebSocketsQueueServiceHealthIndicator,
+  WorkflowQueueServiceHealthIndicator,
 } from '../health';
 
 export interface INovuWorker {
-  name: string;
-  bullMqService: BullMqService;
+  readonly DEFAULT_ATTEMPTS: number;
   gracefulShutdown: () => Promise<void>;
+  readonly name: string;
+  onModuleDestroy: () => Promise<void>;
   pauseWorker: () => Promise<void>;
   resumeWorker: () => Promise<void>;
+  worker: Worker;
 }
 
 const LOG_CONTEXT = 'ReadinessService';
@@ -21,9 +23,12 @@ const LOG_CONTEXT = 'ReadinessService';
 @Injectable()
 export class ReadinessService {
   constructor(
-    private queueServiceHealthIndicator: QueueServiceHealthIndicator,
-    private triggerQueueServiceHealthIndicator: TriggerQueueServiceHealthIndicator,
-    private wsQueueServiceHealthIndicator: WsQueueServiceHealthIndicator
+    @Inject(StandardQueueServiceHealthIndicator)
+    private standardQueueServiceHealthIndicator: StandardQueueServiceHealthIndicator,
+    @Inject(WebSocketsQueueServiceHealthIndicator)
+    private webSocketsQueueServiceHealthIndicator: WebSocketsQueueServiceHealthIndicator,
+    @Inject(WorkflowQueueServiceHealthIndicator)
+    private workflowQueueServiceHealthIndicator: WorkflowQueueServiceHealthIndicator
   ) {}
 
   async areQueuesEnabled(): Promise<boolean> {
@@ -31,9 +36,9 @@ export class ReadinessService {
 
     try {
       const healths = await Promise.all([
-        this.queueServiceHealthIndicator.isHealthy(),
-        this.triggerQueueServiceHealthIndicator.isHealthy(),
-        this.wsQueueServiceHealthIndicator.isHealthy(),
+        this.standardQueueServiceHealthIndicator.isHealthy(),
+        this.webSocketsQueueServiceHealthIndicator.isHealthy(),
+        this.workflowQueueServiceHealthIndicator.isHealthy(),
       ]);
 
       return healths.every((health) => !!health === true);

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 import { OrganizationRepository, IntegrationEntity } from '@novu/dal';
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
@@ -25,6 +25,7 @@ export class SendTestEmail {
     private compileEmailTemplateUsecase: CompileEmailTemplate,
     private organizationRepository: OrganizationRepository,
     private selectIntegration: SelectIntegration,
+    @Inject(AnalyticsService)
     private analyticsService: AnalyticsService,
     protected getNovuProviderCredentials: GetNovuProviderCredentials
   ) {}

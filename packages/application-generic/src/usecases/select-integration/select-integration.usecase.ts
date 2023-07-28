@@ -3,7 +3,7 @@ import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
 
 import { SelectIntegrationCommand } from './select-integration.command';
-import { buildIntegrationKey, CachedQuery } from '../../services';
+import { buildIntegrationKey, CachedQuery } from '../../services/cache';
 import {
   FeatureFlagCommand,
   GetIsMultiProviderConfigurationEnabled,

@@ -3,6 +3,7 @@ import { expect } from 'chai';
 import { formatISO } from 'date-fns';
 import { v4 as uuid } from 'uuid';
 import { faker } from '@faker-js/faker';
+import { setTimeout } from 'timers/promises';
 
 import {
   EnvironmentEntity,
@@ -26,13 +27,23 @@ import {
   UserService,
   JobsService,
 } from '@novu/testing';
-import { QueueService } from '@novu/application-generic';
+import { StandardQueueService } from '@novu/application-generic';
+
+import { StandardWorker } from './standard.worker';
 
 import { WorkflowModule } from '../workflow.module';
+import {
+  HandleLastFailedJob,
+  RunJob,
+  SetJobAsCompleted,
+  SetJobAsFailed,
+  WebhookFilterBackoffStrategy,
+} from '../usecases';
 
-let queueService: QueueService;
+let standardQueueService: StandardQueueService;
+let standardWorker: StandardWorker;
 
-describe('Workflow Queue service', () => {
+describe('Standard Worker', () => {
   let jobRepository: JobRepository;
   let organization: OrganizationEntity;
   let environment: EnvironmentEntity;
@@ -43,6 +54,9 @@ describe('Workflow Queue service', () => {
   let jobsService: JobsService;
 
   before(async () => {
+    process.env.IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
+    process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
+
     jobRepository = new JobRepository();
 
     jobsService = new JobsService();
@@ -76,6 +90,9 @@ describe('Workflow Queue service', () => {
 
     const templateService = new NotificationTemplateService(user._id, organization._id, environment._id);
     template = await templateService.createTemplate({ noFeedId: true, noLayoutId: true, noGroupId: true });
+
+    standardQueueService = new StandardQueueService();
+    await standardQueueService.queue.obliterate();
   });
 
   beforeEach(async () => {
@@ -83,29 +100,66 @@ describe('Workflow Queue service', () => {
       imports: [WorkflowModule],
     }).compile();
 
-    queueService = moduleRef.get<QueueService>(QueueService);
+    const handleLastFailedJob = moduleRef.get<HandleLastFailedJob>(HandleLastFailedJob);
+    const runJob = moduleRef.get<RunJob>(RunJob);
+    const setJobAsCompleted = moduleRef.get<SetJobAsCompleted>(SetJobAsCompleted);
+    const setJobAsFailed = moduleRef.get<SetJobAsFailed>(SetJobAsFailed);
+    const webhookFilterBackoffStrategy = moduleRef.get<WebhookFilterBackoffStrategy>(WebhookFilterBackoffStrategy);
+
+    standardWorker = new StandardWorker(
+      handleLastFailedJob,
+      runJob,
+      setJobAsCompleted,
+      setJobAsFailed,
+      webhookFilterBackoffStrategy
+    );
   });
 
-  afterEach(async () => {
-    await queueService.gracefulShutdown();
+  after(async () => {
+    await standardQueueService.queue.drain();
+    await standardWorker.gracefulShutdown();
   });
 
   it('should be initialised properly', async () => {
-    expect(queueService).to.be.ok;
-    expect(queueService).to.have.all.keys('DEFAULT_ATTEMPTS', 'bullMqService', 'name');
-    expect(queueService.DEFAULT_ATTEMPTS).to.eql(3);
-    expect(queueService.bullMqService.queue).to.deep.include({
-      _events: {},
-      _eventsCount: 0,
+    expect(standardWorker).to.be.ok;
+    expect(standardWorker).to.have.all.keys(
+      'DEFAULT_ATTEMPTS',
+      'getBackoffStrategies',
+      'handleLastFailedJob',
+      'instance',
+      'name',
+      'runJob',
+      'setJobAsCompleted',
+      'setJobAsFailed',
+      'webhookFilterBackoffStrategy',
+      'worker'
+    );
+    expect(standardWorker.DEFAULT_ATTEMPTS).to.eql(3);
+    expect(standardWorker.worker).to.deep.include({
+      _eventsCount: 2,
       _maxListeners: undefined,
       name: 'standard',
-      jobsOpts: {
-        removeOnComplete: true,
-      },
+    });
+    expect(await standardWorker.bullMqService.getRunningStatus()).to.deep.equal({
+      queueIsPaused: undefined,
+      queueName: undefined,
+      workerName: 'standard',
+      workerIsRunning: true,
+    });
+    expect(standardWorker.worker.opts).to.deep.include({
+      concurrency: 200,
+      lockDuration: 90000,
+    });
+    expect(standardWorker.worker.opts.connection).to.deep.include({
+      host: 'localhost',
+      port: 6379,
     });
   });
 
   it('should a job added to the queue be updated as completed if works right', async () => {
+    const existingJobs = await standardQueueService.queue.getJobs();
+    expect(existingJobs.length).to.equal(0);
+
     const transactionId = uuid();
     const _environmentId = environment._id;
     const _notificationId = NotificationRepository.createObjectId();
@@ -154,7 +208,7 @@ describe('Workflow Queue service', () => {
       _userId: jobCreated._userId,
     };
 
-    await queueService.addToQueue(jobCreated._id, jobData, '0');
+    await standardQueueService.addMinimalJob(jobCreated._id, jobData, '0');
 
     await jobsService.awaitRunningJobs({
       templateId: _templateId,
@@ -217,18 +271,19 @@ describe('Workflow Queue service', () => {
       _userId: jobCreated._userId,
     };
 
-    await queueService.addToQueue(jobCreated._id, jobData, '0');
+    await standardQueueService.addMinimalJob(jobCreated._id, jobData, '0');
 
     await jobsService.awaitRunningJobs({
       templateId: _templateId,
       organizationId: organization._id,
       delay: false,
     });
+
     /**
-     * We pause the worker as little trick to allow the `failed` status to be updated
-     * in the callback of the worker and not having a race condition.
+     * We pause a bit as little trick to allow the `failed` status to be updated
+     * in the callback of the Worker and not having a race condition.
      */
-    await queueService.gracefulShutdown();
+    await setTimeout(100);
 
     let failedTrigger: JobEntity | null = null;
     do {
