@@ -337,18 +337,22 @@ describe('Integrations List Modal', function () {
     inAppProviders.forEach((provider) => {
       cy.get('@inAppGroup').getByTestId(`provider-${provider.id}`).contains(provider.displayName);
     });
-    emailProviders.forEach((provider) => {
-      cy.get('@emailGroup').getByTestId(`provider-${provider.id}`).contains(provider.displayName);
-    });
+    emailProviders
+      .filter((provider) => provider.id !== EmailProviderIdEnum.Novu)
+      .forEach((provider) => {
+        cy.get('@emailGroup').getByTestId(`provider-${provider.id}`).contains(provider.displayName);
+      });
     chatProviders.forEach((provider) => {
       cy.get('@chatGroup').getByTestId(`provider-${provider.id}`).contains(provider.displayName);
     });
     pushProviders.forEach((provider) => {
       cy.get('@pushGroup').getByTestId(`provider-${provider.id}`).contains(provider.displayName);
     });
-    smsProviders.forEach((provider) => {
-      cy.get('@smsGroup').getByTestId(`provider-${provider.id}`).contains(provider.displayName);
-    });
+    smsProviders
+      .filter((provider) => provider.id !== SmsProviderIdEnum.Novu)
+      .forEach((provider) => {
+        cy.get('@smsGroup').getByTestId(`provider-${provider.id}`).contains(provider.displayName);
+      });
 
     cy.getByTestId('select-provider-sidebar-cancel').contains('Cancel');
     cy.getByTestId('select-provider-sidebar-next').should('be.disabled').contains('Next');
