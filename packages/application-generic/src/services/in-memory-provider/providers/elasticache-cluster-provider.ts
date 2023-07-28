@@ -1,13 +1,8 @@
-import Redis, {
-  ChainableCommander,
-  Cluster,
-  ClusterNode,
-  ClusterOptions,
-} from 'ioredis';
+import Redis, { Cluster, ClusterNode, ClusterOptions, NodeRole } from 'ioredis';
 import { ConnectionOptions } from 'tls';
 import { Logger } from '@nestjs/common';
 
-export { ChainableCommander, Cluster, ClusterOptions };
+export { Cluster, ClusterOptions };
 
 export const CLIENT_READY = 'ready';
 const DEFAULT_TTL_SECONDS = 60 * 60 * 2;
@@ -17,19 +12,19 @@ const DEFAULT_FAMILY = 4;
 const DEFAULT_KEY_PREFIX = '';
 const TTL_VARIANT_PERCENTAGE = 0.1;
 
-interface IRedisClusterConfig {
+interface IElasticacheClusterConfig {
   connectTimeout?: string;
   family?: string;
   host?: string;
   keepAlive?: string;
   keyPrefix?: string;
   password?: string;
-  ports?: string;
+  port?: string;
   tls?: ConnectionOptions;
   ttl?: string;
 }
 
-export interface IRedisClusterProviderConfig {
+export interface IElasticacheClusterProviderConfig {
   connectTimeout: number;
   family: number;
   host?: string;
@@ -37,16 +32,16 @@ export interface IRedisClusterProviderConfig {
   keepAlive: number;
   keyPrefix: string;
   password?: string;
-  ports?: number[];
+  port?: number;
   tls?: ConnectionOptions;
   ttl: number;
 }
 
-export const getRedisClusterProviderConfig =
-  (): IRedisClusterProviderConfig => {
-    const redisClusterConfig: IRedisClusterConfig = {
-      host: process.env.REDIS_CLUSTER_SERVICE_HOST,
-      ports: process.env.REDIS_CLUSTER_SERVICE_PORTS,
+export const getElasticacheClusterProviderConfig =
+  (): IElasticacheClusterProviderConfig => {
+    const redisClusterConfig: IElasticacheClusterConfig = {
+      host: process.env.ELASTICACHE_CLUSTER_SERVICE_HOST,
+      port: process.env.ELASTICACHE_CLUSTER_SERVICE_PORT,
       ttl: process.env.REDIS_CLUSTER_TTL,
       password: process.env.REDIS_CLUSTER_PASSWORD,
       connectTimeout: process.env.REDIS_CLUSTER_CONNECTION_TIMEOUT,
@@ -57,9 +52,7 @@ export const getRedisClusterProviderConfig =
     };
 
     const host = redisClusterConfig.host;
-    const ports = redisClusterConfig.ports
-      ? JSON.parse(redisClusterConfig.ports)
-      : [];
+    const port = Number(redisClusterConfig.port);
     const password = redisClusterConfig.password;
     const connectTimeout = redisClusterConfig.connectTimeout
       ? Number(redisClusterConfig.connectTimeout)
@@ -75,13 +68,11 @@ export const getRedisClusterProviderConfig =
       ? Number(redisClusterConfig.ttl)
       : DEFAULT_TTL_SECONDS;
 
-    const instances: ClusterNode[] = ports.map(
-      (port: number): ClusterNode => ({ host, port })
-    );
+    const instances: ClusterNode[] = [{ host, port }];
 
     return {
       host,
-      ports,
+      port,
       instances,
       password,
       connectTimeout,
@@ -92,25 +83,30 @@ export const getRedisClusterProviderConfig =
     };
   };
 
-export const getRedisCluster = (
+export const getElasticacheCluster = (
   enableAutoPipelining?: boolean
 ): Cluster | undefined => {
-  const { instances } = getRedisClusterProviderConfig();
+  const { instances } = getElasticacheClusterProviderConfig();
 
   const options: ClusterOptions = {
+    dnsLookup: (address, callback) => callback(null, address),
     enableAutoPipelining: enableAutoPipelining ?? false,
     enableOfflineQueue: false,
     enableReadyCheck: true,
+    redisOptions: {
+      tls: {},
+      connectTimeout: 10000,
+    },
     scaleReads: 'slave',
     /*
      *  Disabled in Prod as affects performance
      */
     showFriendlyErrorStack: process.env.NODE_ENV !== 'production',
-    slotsRefreshTimeout: 2000,
+    slotsRefreshTimeout: 10000,
   };
 
   Logger.log(
-    `Initializing Redis Cluster Provider with ${instances?.length} instances and auto-pipelining as ${options.enableAutoPipelining}`
+    `Initializing Elasticache Cluster Provider with ${instances?.length} instances and auto-pipelining as ${options.enableAutoPipelining}`
   );
 
   if (instances && instances.length > 0) {
@@ -120,12 +116,11 @@ export const getRedisCluster = (
   return undefined;
 };
 
-export const validateRedisClusterProviderConfig = (): boolean => {
-  const config = getRedisClusterProviderConfig();
+export const validateElasticacheClusterProviderConfig = (): boolean => {
+  const config = getElasticacheClusterProviderConfig();
 
-  const validPorts =
-    config.ports.length > 0 &&
-    config.ports.every((port: number) => Number.isInteger(port));
-
-  return !!config.host && validPorts;
+  return !!config.host && !!config.port;
 };
+
+export const isClientReady = (status: string): boolean =>
+  status === CLIENT_READY;
