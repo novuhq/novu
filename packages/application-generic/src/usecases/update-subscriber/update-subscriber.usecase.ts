@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 
 import {
@@ -13,6 +13,7 @@ import { ApiException } from '../../utils/exceptions';
 @Injectable()
 export class UpdateSubscriber {
   constructor(
+    @Inject(InvalidateCacheService)
     private invalidateCache: InvalidateCacheService,
     private subscriberRepository: SubscriberRepository
   ) {}

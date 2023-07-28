@@ -23,7 +23,6 @@
     "@novu/shared": "^0.17.2",
     "@sentry/node": "^7.12.1",
     "bluebird": "^2.9.30",
-    "bullmq": "^3.10.2",
     "dotenv": "^8.6.0",
     "envalid": "^7.1.0",
     "extend": "^2.0.1",

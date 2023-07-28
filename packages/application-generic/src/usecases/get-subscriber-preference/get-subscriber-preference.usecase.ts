@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import {
   NotificationTemplateRepository,
   NotificationTemplateEntity,
@@ -23,6 +23,7 @@ export class GetSubscriberPreference {
     private memberRepository: MemberRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
+    @Inject(forwardRef(() => AnalyticsService))
     private analyticsService: AnalyticsService
   ) {}
 

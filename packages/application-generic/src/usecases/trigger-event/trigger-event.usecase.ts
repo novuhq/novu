@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 import {
   JobEntity,
@@ -35,8 +35,8 @@ import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import {
   AnalyticsService,
   buildNotificationTemplateIdentifierKey,
-  CachedEntity,
 } from '../../services';
+import { CachedEntity } from '../../services/cache';
 import { ApiException } from '../../utils/exceptions';
 
 const LOG_CONTEXT = 'TriggerEventUseCase';
@@ -51,6 +51,7 @@ export class TriggerEvent {
     private jobRepository: JobRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private logger: PinoLogger,
+    @Inject(forwardRef(() => AnalyticsService))
     private analyticsService: AnalyticsService
   ) {}
 

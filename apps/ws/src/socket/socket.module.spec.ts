@@ -1,9 +1,8 @@
 import { expect } from 'chai';
 import { JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
-
-import { AnalyticsService, BullMqService } from '@novu/application-generic';
-import { MemberRepository, SubscriberRepository, MessageRepository } from '@novu/dal';
+import { AnalyticsService, bullMqService, GetIsInMemoryClusterModeEnabled } from '@novu/application-generic';
+import { MemberRepository, MessageRepository, SubscriberRepository } from '@novu/dal';
 
 import { SocketModule } from './socket.module';
 import { WSGateway } from './ws.gateway';
@@ -19,7 +18,8 @@ describe('Socket Module', () => {
       imports: [SocketModule],
       providers: [
         WSGateway,
-        BullMqService,
+        GetIsInMemoryClusterModeEnabled,
+        bullMqService,
         JwtService,
         AnalyticsService,
         SubscriberOnlineService,
@@ -36,18 +36,18 @@ describe('Socket Module', () => {
   it('should instantiate properly the BullMQ service on module init', async () => {
     expect(socketQueueConsumerService).to.exist;
 
-    const bullMqService = socketQueueConsumerService.bullMqService;
-    expect(await bullMqService.getRunningStatus()).to.deep.equal({
+    const moduleBullMqService = socketQueueConsumerService.bullMqService;
+    expect(await moduleBullMqService.getRunningStatus()).to.deep.equal({
       queueIsPaused: undefined,
       queueName: undefined,
       workerName: 'ws_socket_queue',
       workerIsRunning: true,
     });
-    expect(bullMqService.worker.opts).to.deep.include({
+    expect(moduleBullMqService.worker.opts).to.deep.include({
       concurrency: 5,
       lockDuration: 90000,
     });
-    expect(bullMqService.worker.opts.connection).to.deep.include({
+    expect(moduleBullMqService.worker.opts.connection).to.deep.include({
       host: 'localhost',
       port: 6379,
     });

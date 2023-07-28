@@ -34,7 +34,6 @@
     "@novu/testing": "^0.17.2",
     "@sentry/node": "^7.30.0",
     "@socket.io/redis-adapter": "^7.2.0",
-    "bull": "^4.4.0",
     "class-transformer": "^0.5.1",
     "dotenv": "^8.2.0",
     "envalid": "^7.1.0",

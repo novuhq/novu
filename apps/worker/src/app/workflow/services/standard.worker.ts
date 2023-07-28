@@ -1,5 +1,4 @@
 const nr = require('newrelic');
-import { Job, WorkerOptions } from 'bullmq';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import {
   ExecutionDetailsSourceEnum,
@@ -7,7 +6,15 @@ import {
   IJobData,
   ObservabilityBackgroundTransactionEnum,
 } from '@novu/shared';
-import { QueueService, PinoLogger, storage, Store, INovuWorker } from '@novu/application-generic';
+import {
+  INovuWorker,
+  Job,
+  PinoLogger,
+  StandardWorkerService,
+  storage,
+  Store,
+  WorkerOptions,
+} from '@novu/application-generic';
 
 import {
   RunJob,
@@ -24,7 +31,9 @@ import {
 const LOG_CONTEXT = 'WorkflowQueueService';
 
 @Injectable()
-export class WorkflowQueueService extends QueueService<IJobData> implements INovuWorker {
+export class StandardWorker extends StandardWorkerService implements INovuWorker {
+  public readonly worker;
+
   constructor(
     @Inject(forwardRef(() => HandleLastFailedJob)) private handleLastFailedJob: HandleLastFailedJob,
     @Inject(forwardRef(() => RunJob)) private runJob: RunJob,
@@ -34,14 +43,15 @@ export class WorkflowQueueService extends QueueService<IJobData> implements INov
     private webhookFilterBackoffStrategy: WebhookFilterBackoffStrategy
   ) {
     super();
-    Logger.warn('Workflow queue service created');
-    this.bullMqService.createWorker(this.name, this.getWorkerProcessor(), this.getWorkerOptions());
 
-    this.bullMqService.worker.on('completed', async (job: Job<IJobData, void, string>): Promise<void> => {
+    Logger.warn('Workflow queue service created');
+    this.initWorker(this.getWorkerProcessor(), this.getWorkerOptions());
+
+    this.worker.on('completed', async (job: Job<IJobData, void, string>): Promise<void> => {
       await this.jobHasCompleted(job);
     });
 
-    this.bullMqService.worker.on('failed', async (job: Job<IJobData, void, string>, error: Error): Promise<void> => {
+    this.worker.on('failed', async (job: Job<IJobData, void, string>, error: Error): Promise<void> => {
       await this.jobHasFailed(job, error);
     });
   }
@@ -56,9 +66,36 @@ export class WorkflowQueueService extends QueueService<IJobData> implements INov
     };
   }
 
+  private extractMinimalJobData(job: any): {
+    environmentId: string;
+    organizationId: string;
+    jobId: string;
+    userId: string;
+  } {
+    const { _environmentId: environmentId, _id: jobId, _organizationId: organizationId, _userId: userId } = job;
+
+    if (!environmentId || !jobId || !organizationId || !userId) {
+      const message = job.payload.message;
+
+      return {
+        environmentId: message._environmentId,
+        jobId: message._jobId,
+        organizationId: message._organizationId,
+        userId: job.userId,
+      };
+    }
+
+    return {
+      environmentId,
+      jobId,
+      organizationId,
+      userId,
+    };
+  }
+
   private getWorkerProcessor() {
-    return async ({ data }: { data: IJobData }) => {
-      const { _environmentId: environmentId, _id: jobId, _organizationId: organizationId, _userId: userId } = data;
+    return async ({ data }: { data: IJobData | any }) => {
+      const minimalJobData = this.extractMinimalJobData(data);
 
       return await new Promise(async (resolve, reject) => {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
@@ -72,18 +109,14 @@ export class WorkflowQueueService extends QueueService<IJobData> implements INov
 
             storage.run(new Store(PinoLogger.root), () => {
               _this.runJob
-                .execute(
-                  RunJobCommand.create({
-                    environmentId,
-                    jobId,
-                    organizationId,
-                    userId,
-                  })
-                )
-
+                .execute(RunJobCommand.create(minimalJobData))
                 .then(resolve)
                 .catch((error) => {
-                  Logger.error(`Failed to run the job ${jobId} during worker processing`, error, LOG_CONTEXT);
+                  Logger.error(
+                    `Failed to run the job ${minimalJobData.jobId} during worker processing`,
+                    error,
+                    LOG_CONTEXT
+                  );
 
                   return reject(error);
                 })
@@ -101,9 +134,10 @@ export class WorkflowQueueService extends QueueService<IJobData> implements INov
     let jobId;
 
     try {
-      jobId = job.data._id;
-      const environmentId = job.data._environmentId;
-      const userId = job.data._userId;
+      const minimalData = this.extractMinimalJobData(job.data);
+      jobId = minimalData.jobId;
+      const environmentId = minimalData.environmentId;
+      const userId = minimalData.userId;
 
       await this.setJobAsCompleted.execute(
         SetJobAsCommand.create({
@@ -121,10 +155,8 @@ export class WorkflowQueueService extends QueueService<IJobData> implements INov
     let jobId;
 
     try {
-      jobId = job.data._id;
-      const environmentId = job.data._environmentId;
-      const organizationId = job.data._organizationId;
-      const userId = job.data._userId;
+      const minimalData = this.extractMinimalJobData(job.data);
+      jobId = minimalData.jobId;
 
       const hasToBackoff = this.runJob.shouldBackoff(error);
       const hasReachedMaxAttempts = job.attemptsMade >= this.DEFAULT_ATTEMPTS;
@@ -132,24 +164,13 @@ export class WorkflowQueueService extends QueueService<IJobData> implements INov
 
       const shouldBeSetAsFailed = !hasToBackoff || shouldHandleLastFailedJob;
       if (shouldBeSetAsFailed) {
-        await this.setJobAsFailed.execute(
-          SetJobAsFailedCommand.create({
-            environmentId,
-            jobId,
-            organizationId,
-            userId,
-          }),
-          error
-        );
+        await this.setJobAsFailed.execute(SetJobAsFailedCommand.create(minimalData), error);
       }
 
       if (shouldHandleLastFailedJob) {
         const handleLastFailedJobCommand = HandleLastFailedJobCommand.create({
-          environmentId,
+          ...minimalData,
           error,
-          jobId,
-          organizationId,
-          userId,
         });
 
         await this.handleLastFailedJob.execute(handleLastFailedJobCommand);

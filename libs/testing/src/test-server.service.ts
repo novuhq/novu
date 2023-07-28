@@ -14,7 +14,13 @@ export class TestServer {
   }
 
   async teardown() {
-    await this.app.close();
+    try {
+      if (this.app) {
+        await this.app.close();
+      }
+    } catch (error) {
+      console.error('Error when closing TestServer', error.message);
+    }
   }
 }
 
@@ -36,8 +42,12 @@ export class WsTestServer {
   }
 
   async teardown() {
-    if (this.app) {
-      await this.app.close();
+    try {
+      if (this.app) {
+        await this.app.close();
+      }
+    } catch (error) {
+      console.error('Error when closing WsServer', error.message);
     }
   }
 }

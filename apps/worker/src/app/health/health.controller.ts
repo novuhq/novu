@@ -1,20 +1,22 @@
 import { Controller, Get } from '@nestjs/common';
+import { ApiExcludeController } from '@nestjs/swagger';
 import { HealthCheck, HealthCheckResult, HealthCheckService } from '@nestjs/terminus';
 import {
   DalServiceHealthIndicator,
-  QueueServiceHealthIndicator,
-  TriggerQueueServiceHealthIndicator,
+  StandardQueueServiceHealthIndicator,
+  WorkflowQueueServiceHealthIndicator,
 } from '@novu/application-generic';
 
 import { version } from '../../../package.json';
 
 @Controller('health-check')
+@ApiExcludeController()
 export class HealthController {
   constructor(
     private healthCheckService: HealthCheckService,
     private dalHealthIndicator: DalServiceHealthIndicator,
-    private queueHealthIndicator: QueueServiceHealthIndicator,
-    private triggerQueueHealthIndicator: TriggerQueueServiceHealthIndicator
+    private standardQueueHealthIndicator: StandardQueueServiceHealthIndicator,
+    private workflowQueueHealthIndicator: WorkflowQueueServiceHealthIndicator
   ) {}
 
   @Get()
@@ -22,8 +24,8 @@ export class HealthController {
   healthCheck(): Promise<HealthCheckResult> {
     return this.healthCheckService.check([
       () => this.dalHealthIndicator.isHealthy(),
-      () => this.queueHealthIndicator.isHealthy(),
-      () => this.triggerQueueHealthIndicator.isHealthy(),
+      () => this.standardQueueHealthIndicator.isHealthy(),
+      () => this.workflowQueueHealthIndicator.isHealthy(),
       async () => {
         return {
           apiVersion: {

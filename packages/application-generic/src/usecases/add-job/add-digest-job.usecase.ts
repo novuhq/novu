@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { JobEntity, JobRepository } from '@novu/dal';
 import {
   ExecutionDetailsSourceEnum,
@@ -32,9 +32,11 @@ type AddDigestJobResult = number | undefined;
 @Injectable()
 export class AddDigestJob {
   constructor(
+    @Inject(forwardRef(() => EventsDistributedLockService))
     private eventsDistributedLockService: EventsDistributedLockService,
     private jobRepository: JobRepository,
     protected createExecutionDetails: CreateExecutionDetails,
+    @Inject(forwardRef(() => CalculateDelayService))
     private calculateDelayService: CalculateDelayService
   ) {}
 

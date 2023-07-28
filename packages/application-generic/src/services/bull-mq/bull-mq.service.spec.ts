@@ -9,6 +9,9 @@ let bullMqService: BullMqService;
 describe('BullMQ Service', () => {
   describe('Non cluster mode', () => {
     beforeEach(() => {
+      process.env.IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
+      process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
+
       bullMqService = new BullMqService();
     });
 
@@ -40,7 +43,7 @@ describe('BullMQ Service', () => {
           db: 1,
           family: 4,
           host: 'localhost',
-          keepAlive: 30000,
+          keepAlive: 7200,
           keyPrefix: '',
           password: undefined,
           port: 6379,
@@ -99,7 +102,7 @@ describe('BullMQ Service', () => {
           db: 1,
           family: 4,
           host: 'localhost',
-          keepAlive: 30000,
+          keepAlive: 7200,
           keyPrefix: '',
           password: undefined,
           port: 6379,
@@ -130,10 +133,6 @@ describe('BullMQ Service', () => {
         await bullMqService.createWorker(workerName, undefined, workerOptions);
 
         expect(bullMqService.worker.name).toEqual(workerName);
-        /*
-         * TODO: This test if executed shows we have a bug. As we are not running this
-         * in the CI is not going to block. I am fixing it in MemoryDB feature.
-         */
         expect(bullMqService.worker.opts.connection).toEqual({
           connectTimeout: 10000,
           db: 10,

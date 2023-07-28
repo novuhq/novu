@@ -26,7 +26,7 @@ import {
   SelectIntegration,
   CompileTemplate,
   CompileTemplateCommand,
-  WsQueueService,
+  WebSocketsQueueService,
   buildFeedKey,
   buildMessageCountKey,
   GetNovuProviderCredentials,
@@ -44,7 +44,7 @@ export class SendMessageInApp extends SendMessageBase {
   constructor(
     private invalidateCache: InvalidateCacheService,
     protected messageRepository: MessageRepository,
-    private wsQueueService: WsQueueService,
+    private webSocketsQueueService: WebSocketsQueueService,
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     protected subscriberRepository: SubscriberRepository,
@@ -222,7 +222,7 @@ export class SendMessageInApp extends SendMessageBase {
 
     if (!message) throw new PlatformException('Message not found');
 
-    await this.wsQueueService.bullMqService.add(
+    await this.webSocketsQueueService.bullMqService.add(
       'sendMessage',
       {
         event: 'notification_received',
@@ -248,7 +248,7 @@ export class SendMessageInApp extends SendMessageBase {
       })
     );
 
-    await this.wsQueueService.bullMqService.add(
+    await this.webSocketsQueueService.bullMqService.add(
       'sendMessage',
       {
         event: 'unseen_count_changed',
@@ -259,7 +259,7 @@ export class SendMessageInApp extends SendMessageBase {
       command.organizationId
     );
 
-    await this.wsQueueService.bullMqService.add(
+    await this.webSocketsQueueService.bullMqService.add(
       'sendMessage',
       {
         event: 'unread_count_changed',

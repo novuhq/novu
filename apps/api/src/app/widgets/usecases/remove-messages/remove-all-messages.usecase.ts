@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
   MessageEntity,
   DalException,
@@ -10,7 +10,7 @@ import {
 } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
 import {
-  WsQueueService,
+  WebSocketsQueueService,
   AnalyticsService,
   InvalidateCacheService,
   buildFeedKey,
@@ -24,9 +24,10 @@ import { MarkEnum } from '../mark-message-as/mark-message-as.command';
 @Injectable()
 export class RemoveAllMessages {
   constructor(
+    @Inject(InvalidateCacheService)
     private invalidateCache: InvalidateCacheService,
     private messageRepository: MessageRepository,
-    private wsQueueService: WsQueueService,
+    private webSocketsQueueService: WebSocketsQueueService,
     private analyticsService: AnalyticsService,
     private subscriberRepository: SubscriberRepository,
     private memberRepository: MemberRepository,
@@ -100,14 +101,14 @@ export class RemoveAllMessages {
   private updateSocketCount(subscriber: SubscriberEntity, mark: string) {
     const eventMessage = mark === MarkEnum.READ ? `unread_count_changed` : 'unseen_count_changed';
 
-    this.wsQueueService.bullMqService.add(
+    this.webSocketsQueueService.add(
       'sendMessage',
       {
         event: eventMessage,
         userId: subscriber._id,
         _environmentId: subscriber._environmentId,
       },
-      {},
+      undefined,
       subscriber._organizationId
     );
   }
