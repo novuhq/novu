@@ -1,11 +1,11 @@
-import { Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { QUERY_PREFIX } from './key-builders';
 import {
   InMemoryProviderClient,
   InMemoryProviderService,
   Pipeline,
-} from '../index';
+} from '../in-memory-provider';
 import { addJitter } from '../../resilience';
 
 const LOG_CONTEXT = 'CacheService';
@@ -29,12 +29,16 @@ export type CachingConfig = {
   ttl?: number;
 };
 
+@Injectable()
 export class CacheService implements ICacheService {
   private client: InMemoryProviderClient;
   private cacheTtl: number;
   private readonly TTL_VARIANT_PERCENTAGE = 0.1;
 
-  constructor(private inMemoryProviderService: InMemoryProviderService) {}
+  constructor(
+    @Inject(InMemoryProviderService)
+    private inMemoryProviderService: InMemoryProviderService
+  ) {}
 
   public async initialize(): Promise<void> {
     Logger.log('Initiated cache service', LOG_CONTEXT);

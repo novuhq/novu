@@ -21,19 +21,9 @@ import { ParseEventRequest } from './parse-event-request';
 import { ProcessBulkTrigger } from './process-bulk-trigger';
 
 export const USE_CASES = [
-  TriggerEvent,
-  ProcessSubscriber,
-  CreateNotificationJobs,
   CancelDelayed,
   TriggerEventToAll,
-  DigestFilterSteps,
-  DigestFilterStepsRegular,
-  DigestFilterStepsBackoff,
-  DigestFilterStepsTimed,
   VerifyPayload,
-  AddJob,
-  AddDelayJob,
-  AddDigestJob,
   MapTriggerRecipients,
   ParseEventRequest,
   ProcessBulkTrigger,

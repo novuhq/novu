@@ -1,4 +1,4 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, forwardRef, Inject, Injectable } from '@nestjs/common';
 
 import { TenantRepository } from '@novu/dal';
 import { AnalyticsService } from '../../services';
@@ -9,6 +9,7 @@ import { CreateTenantCommand } from './create-tenant.command';
 export class CreateTenant {
   constructor(
     private tenantRepository: TenantRepository,
+    @Inject(forwardRef(() => AnalyticsService))
     private analyticsService: AnalyticsService
   ) {}
 

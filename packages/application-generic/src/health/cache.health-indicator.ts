@@ -3,7 +3,7 @@ import {
   HealthIndicator,
   HealthIndicatorResult,
 } from '@nestjs/terminus';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { CacheService } from '../services';
 
@@ -11,7 +11,7 @@ import { CacheService } from '../services';
 export class CacheServiceHealthIndicator extends HealthIndicator {
   private INDICATOR_KEY = 'cacheService';
 
-  constructor(private cacheService: CacheService) {
+  constructor(@Inject(CacheService) private cacheService: CacheService) {
     super();
   }
 

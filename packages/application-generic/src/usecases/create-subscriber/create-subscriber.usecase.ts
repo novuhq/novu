@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { SubscriberRepository } from '@novu/dal';
 import { SubscriberEntity } from '@novu/dal';
 
@@ -16,6 +16,7 @@ import {
 @Injectable()
 export class CreateSubscriber {
   constructor(
+    @Inject(InvalidateCacheService)
     private invalidateCache: InvalidateCacheService,
     private subscriberRepository: SubscriberRepository,
     private updateSubscriber: UpdateSubscriber

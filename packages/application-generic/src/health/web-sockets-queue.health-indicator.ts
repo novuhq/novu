@@ -3,21 +3,24 @@ import {
   HealthIndicator,
   HealthIndicatorResult,
 } from '@nestjs/terminus';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
-import { WsQueueService } from '../services';
+import { WebSocketsQueueService } from '../services';
 
 @Injectable()
-export class WsQueueServiceHealthIndicator extends HealthIndicator {
-  private INDICATOR_KEY = 'wsQueue';
+export class WebSocketsQueueServiceHealthIndicator extends HealthIndicator {
+  private INDICATOR_KEY = 'webSocketsQueue';
 
-  constructor(private wsQueueService: WsQueueService) {
+  constructor(
+    @Inject(WebSocketsQueueService)
+    private webSocketsQueueService: WebSocketsQueueService
+  ) {
     super();
   }
 
   async isHealthy(): Promise<HealthIndicatorResult> {
     const runningStatus =
-      await this.wsQueueService.bullMqService.getRunningStatus();
+      await this.webSocketsQueueService.bullMqService.getRunningStatus();
 
     if (!runningStatus.queueIsPaused) {
       return this.getStatus(this.INDICATOR_KEY, true);

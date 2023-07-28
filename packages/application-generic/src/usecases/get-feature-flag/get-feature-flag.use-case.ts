@@ -3,7 +3,6 @@ import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 import {
   GetFeatureFlagCommand,
-  GetGlobalFeatureFlagCommand,
   FeatureFlagCommand,
 } from './get-feature-flag.command';
 import { FeatureFlagsService } from '../../services';

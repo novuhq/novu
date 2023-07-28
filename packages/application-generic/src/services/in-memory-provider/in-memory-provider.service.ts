@@ -61,7 +61,7 @@ export class InMemoryProviderService {
       await setTimeout(timeout);
     }
 
-    Logger.log(
+    Logger.warn(
       `Delayed ${times} times up to a total of ${times * retries}`,
       LOG_CONTEXT
     );
@@ -205,7 +205,7 @@ export class InMemoryProviderService {
     const { host, port, ttl } = getConfig();
 
     if (!host) {
-      Logger.log('Missing host for in-memory provider', LOG_CONTEXT);
+      Logger.warn('Missing host for in-memory provider', LOG_CONTEXT);
     }
 
     const inMemoryProviderClient = getClient();
