@@ -87,6 +87,8 @@ export class IntegrationService {
       channel: ChannelTypeEnum.EMAIL,
       credentials: { apiKey: 'SG.123', secretKey: 'abc' },
       active: true,
+      primary: true,
+      priority: 1,
     };
 
     await this.integrationRepository.create(mailPayload);
@@ -98,6 +100,8 @@ export class IntegrationService {
       channel: ChannelTypeEnum.SMS,
       credentials: { accountSid: 'AC123', token: '123', from: 'me' },
       active: true,
+      primary: true,
+      priority: 1,
     };
     await this.integrationRepository.create(smsPayload);
 

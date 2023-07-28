@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
 
 import {
   GetNovuIntegration,
@@ -57,6 +58,10 @@ export class SelectIntegration {
       return integrations[0];
     }
 
+    const isChannelSupportsPrimary = CHANNELS_WITH_PRIMARY.includes(
+      command.channelType
+    );
+
     let query: Partial<IntegrationEntity> & { _organizationId: string } = {
       ...(command.id ? { id: command.id } : {}),
       _organizationId: command.organizationId,
@@ -64,6 +69,9 @@ export class SelectIntegration {
       channel: command.channelType,
       ...(command.providerId ? { providerId: command.providerId } : {}),
       active: true,
+      ...(isChannelSupportsPrimary && {
+        primary: true,
+      }),
     };
 
     if (command.identifier) {

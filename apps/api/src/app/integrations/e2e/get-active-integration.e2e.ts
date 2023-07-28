@@ -50,7 +50,7 @@ describe('Get Active Integrations [IS_MULTI_PROVIDER_CONFIGURATION_ENABLED=true]
     expect(chatIntegration.length).to.equal(4);
 
     const selectedInAppIntegrations = filterEnvIntegrations(inAppIntegration, session.environment._id);
-    expect(selectedInAppIntegrations.length).to.equal(1);
+    expect(selectedInAppIntegrations.length).to.equal(0);
 
     const selectedEmailIntegrations = filterEnvIntegrations(emailIntegration, session.environment._id);
     expect(selectedEmailIntegrations.length).to.equal(1);
@@ -59,13 +59,10 @@ describe('Get Active Integrations [IS_MULTI_PROVIDER_CONFIGURATION_ENABLED=true]
     expect(selectedSmsIntegrations.length).to.equal(1);
 
     const selectedPushIntegrations = filterEnvIntegrations(pushIntegration, session.environment._id);
-    expect(selectedPushIntegrations.length).to.equal(1);
+    expect(selectedPushIntegrations.length).to.equal(0);
 
-    const selected = chatIntegration.filter((integration) => integration.selected);
-    const notSelected = chatIntegration.filter((integration) => !integration.selected);
-
-    expect(selected.length).to.equal(2);
-    expect(notSelected.length).to.equal(2);
+    const selectedChatIntegrations = filterEnvIntegrations(chatIntegration, session.environment._id);
+    expect(selectedChatIntegrations.length).to.equal(0);
 
     for (const integration of activeIntegrations) {
       expect(integration.active).to.equal(true);
