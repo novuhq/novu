@@ -16,6 +16,7 @@ import {
   ResendHandler,
   SparkPostHandler,
   EmailWebhookHandler,
+  NovuEmailHandler,
 } from './handlers';
 import { IMailHandler } from './interfaces/send.handler.interface';
 
@@ -37,6 +38,7 @@ export class MailFactory {
     new ResendHandler(),
     new SparkPostHandler(),
     new EmailWebhookHandler(),
+    new NovuEmailHandler(),
   ];
 
   getHandler(
