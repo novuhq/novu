@@ -79,6 +79,6 @@ export class SelectIntegration {
       return;
     }
 
-    return GetDecryptedIntegrations.decryptCredentials(integration);
+    return GetDecryptedIntegrations.getDecryptedCredentials(integration);
   }
 }

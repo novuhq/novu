@@ -61,7 +61,7 @@ export class CreateIntegration {
       });
 
       if (count > 0) {
-        throw new BadRequestException(
+        throw new ConflictException(
           `Integration with novu provider for ${command.channel.toLowerCase()} channel already exists`
         );
       }
@@ -134,14 +134,22 @@ export class CreateIntegration {
         });
       }
 
-      if (command.channel === ChannelTypeEnum.EMAIL && command.providerId !== EmailProviderIdEnum.Novu) {
+      if (
+        integrationEntity.active &&
+        command.channel === ChannelTypeEnum.EMAIL &&
+        command.providerId !== EmailProviderIdEnum.Novu
+      ) {
         await this.integrationRepository.update(
           { _environmentId: command.environmentId, providerId: EmailProviderIdEnum.Novu, channel: command.channel },
           { $set: { active: false } }
         );
       }
 
-      if (command.channel === ChannelTypeEnum.SMS && command.providerId !== SmsProviderIdEnum.Novu) {
+      if (
+        integrationEntity.active &&
+        command.channel === ChannelTypeEnum.SMS &&
+        command.providerId !== SmsProviderIdEnum.Novu
+      ) {
         await this.integrationRepository.update(
           { _environmentId: command.environmentId, providerId: SmsProviderIdEnum.Novu, channel: command.channel },
           { $set: { active: false } }

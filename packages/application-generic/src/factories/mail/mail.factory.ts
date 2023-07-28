@@ -18,6 +18,7 @@ import {
   SparkPostHandler,
   EmailWebhookHandler,
 } from './handlers';
+import { NovuEmailHandler } from './handlers/novu.handler';
 import { IMailHandler } from './interfaces/send.handler.interface';
 
 export class MailFactory {
@@ -38,6 +39,7 @@ export class MailFactory {
     new ResendHandler(),
     new SparkPostHandler(),
     new EmailWebhookHandler(),
+    new NovuEmailHandler(),
   ];
 
   getHandler(
@@ -49,12 +51,7 @@ export class MailFactory {
   ): IMailHandler {
     const handler =
       this.handlers.find((handlerItem) =>
-        handlerItem.canHandle(
-          EmailProviderIdEnum.Novu
-            ? EmailProviderIdEnum.SendGrid
-            : integration.providerId,
-          integration.channel
-        )
+        handlerItem.canHandle(integration.providerId, integration.channel)
       ) ?? null;
 
     if (!handler) throw new Error('Handler for provider was not found');

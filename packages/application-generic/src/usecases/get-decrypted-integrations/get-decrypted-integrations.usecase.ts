@@ -51,11 +51,11 @@ export class GetDecryptedIntegrations {
     return foundIntegrations
       .filter((integration) => integration)
       .map((integration: IntegrationEntity) =>
-        GetDecryptedIntegrations.decryptCredentials(integration)
+        GetDecryptedIntegrations.getDecryptedCredentials(integration)
       );
   }
 
-  public static decryptCredentials(integration: IntegrationEntity) {
+  public static getDecryptedCredentials(integration: IntegrationEntity) {
     integration.credentials = decryptCredentials(integration.credentials);
 
     return integration;

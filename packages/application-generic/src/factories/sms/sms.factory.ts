@@ -20,6 +20,7 @@ import {
   SendchampSmsHandler,
 } from './handlers';
 import { SmsProviderIdEnum } from '@novu/shared';
+import { NovuSmsHandler } from './handlers/novu.handler';
 
 export class SmsFactory implements ISmsFactory {
   handlers: ISmsHandler[] = [
@@ -40,17 +41,13 @@ export class SmsFactory implements ISmsFactory {
     new SmsCentralHandler(),
     new AfricasTalkingSmsHandler(),
     new SendchampSmsHandler(),
+    new NovuSmsHandler(),
   ];
 
   getHandler(integration: IntegrationEntity) {
     const handler =
       this.handlers.find((handlerItem) =>
-        handlerItem.canHandle(
-          integration.providerId === SmsProviderIdEnum.Novu
-            ? SmsProviderIdEnum.Twilio
-            : integration.providerId,
-          integration.channel
-        )
+        handlerItem.canHandle(integration.providerId, integration.channel)
       ) ?? null;
 
     if (!handler) return null;

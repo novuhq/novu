@@ -35,7 +35,7 @@ export class GetNovuProviderCredentials {
 
       if (!limit) {
         throw new ConflictException(
-          `Limit for Novus ${integration.channelType.toLowerCase()} provider does not exists.`
+          `Limit for Novu's ${integration.channelType.toLowerCase()} provider does not exists.`
         );
       }
 
@@ -52,7 +52,7 @@ export class GetNovuProviderCredentials {
           }
         );
         throw new ConflictException(
-          `Limit for Novus ${integration.channelType.toLowerCase()} provider was reached.`
+          `Limit for Novu's ${integration.channelType.toLowerCase()} provider was reached.`
         );
       }
     }
@@ -75,7 +75,7 @@ export class GetNovuProviderCredentials {
     }
 
     throw new NotFoundException(
-      `Credentials for Novus ${integration.channelType.toLowerCase()} provider could not be found`
+      `Credentials for Novu's ${integration.channelType.toLowerCase()} provider could not be found`
     );
   }
 }
