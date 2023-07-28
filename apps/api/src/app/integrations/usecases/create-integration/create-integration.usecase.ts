@@ -17,6 +17,7 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/deactivate-integration.usecase';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
+import { DisableNovuIntegration } from '../disable-novu-integration/disable-novu-integration.usecase';
 
 @Injectable()
 export class CreateIntegration {
@@ -27,7 +28,8 @@ export class CreateIntegration {
     private integrationRepository: IntegrationRepository,
     private deactivateSimilarChannelIntegrations: DeactivateSimilarChannelIntegrations,
     private analyticsService: AnalyticsService,
-    private getFeatureFlag: GetFeatureFlag
+    private getFeatureFlag: GetFeatureFlag,
+    private disableNovuIntegration: DisableNovuIntegration
   ) {}
 
   async execute(command: CreateIntegrationCommand): Promise<IntegrationEntity> {
@@ -134,26 +136,14 @@ export class CreateIntegration {
         });
       }
 
-      if (
-        integrationEntity.active &&
-        command.channel === ChannelTypeEnum.EMAIL &&
-        command.providerId !== EmailProviderIdEnum.Novu
-      ) {
-        await this.integrationRepository.update(
-          { _environmentId: command.environmentId, providerId: EmailProviderIdEnum.Novu, channel: command.channel },
-          { $set: { active: false } }
-        );
-      }
-
-      if (
-        integrationEntity.active &&
-        command.channel === ChannelTypeEnum.SMS &&
-        command.providerId !== SmsProviderIdEnum.Novu
-      ) {
-        await this.integrationRepository.update(
-          { _environmentId: command.environmentId, providerId: SmsProviderIdEnum.Novu, channel: command.channel },
-          { $set: { active: false } }
-        );
+      if (integrationEntity.active) {
+        await this.disableNovuIntegration.execute({
+          channel: command.channel,
+          providerId: command.providerId,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          userId: command.userId,
+        });
       }
 
       return integrationEntity;
