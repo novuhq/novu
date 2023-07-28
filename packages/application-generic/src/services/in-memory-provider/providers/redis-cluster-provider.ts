@@ -1,8 +1,13 @@
-import Redis, { Cluster, ClusterNode, ClusterOptions, NodeRole } from 'ioredis';
+import Redis, {
+  ChainableCommander,
+  Cluster,
+  ClusterNode,
+  ClusterOptions,
+} from 'ioredis';
 import { ConnectionOptions } from 'tls';
 import { Logger } from '@nestjs/common';
 
-export { Cluster, ClusterOptions };
+export { ChainableCommander, Cluster, ClusterOptions };
 
 export const CLIENT_READY = 'ready';
 const DEFAULT_TTL_SECONDS = 60 * 60 * 2;
@@ -12,19 +17,19 @@ const DEFAULT_FAMILY = 4;
 const DEFAULT_KEY_PREFIX = '';
 const TTL_VARIANT_PERCENTAGE = 0.1;
 
-interface IMemoryDbClusterConfig {
+interface IRedisClusterConfig {
   connectTimeout?: string;
   family?: string;
   host?: string;
   keepAlive?: string;
   keyPrefix?: string;
   password?: string;
-  port?: string;
+  ports?: string;
   tls?: ConnectionOptions;
   ttl?: string;
 }
 
-export interface IMemoryDbClusterProviderConfig {
+export interface IRedisClusterProviderConfig {
   connectTimeout: number;
   family: number;
   host?: string;
@@ -32,16 +37,16 @@ export interface IMemoryDbClusterProviderConfig {
   keepAlive: number;
   keyPrefix: string;
   password?: string;
-  port?: number;
+  ports?: number[];
   tls?: ConnectionOptions;
   ttl: number;
 }
 
-export const getMemoryDbClusterProviderConfig =
-  (): IMemoryDbClusterProviderConfig => {
-    const redisClusterConfig: IMemoryDbClusterConfig = {
-      host: process.env.MEMORY_DB_CLUSTER_SERVICE_HOST,
-      port: process.env.MEMORY_DB_CLUSTER_SERVICE_PORT,
+export const getRedisClusterProviderConfig =
+  (): IRedisClusterProviderConfig => {
+    const redisClusterConfig: IRedisClusterConfig = {
+      host: process.env.REDIS_CLUSTER_SERVICE_HOST,
+      ports: process.env.REDIS_CLUSTER_SERVICE_PORTS,
       ttl: process.env.REDIS_CLUSTER_TTL,
       password: process.env.REDIS_CLUSTER_PASSWORD,
       connectTimeout: process.env.REDIS_CLUSTER_CONNECTION_TIMEOUT,
@@ -52,7 +57,9 @@ export const getMemoryDbClusterProviderConfig =
     };
 
     const host = redisClusterConfig.host;
-    const port = Number(redisClusterConfig.port);
+    const ports = redisClusterConfig.ports
+      ? JSON.parse(redisClusterConfig.ports)
+      : [];
     const password = redisClusterConfig.password;
     const connectTimeout = redisClusterConfig.connectTimeout
       ? Number(redisClusterConfig.connectTimeout)
@@ -68,11 +75,13 @@ export const getMemoryDbClusterProviderConfig =
       ? Number(redisClusterConfig.ttl)
       : DEFAULT_TTL_SECONDS;
 
-    const instances: ClusterNode[] = [{ host, port }];
+    const instances: ClusterNode[] = ports.map(
+      (port: number): ClusterNode => ({ host, port })
+    );
 
     return {
       host,
-      port,
+      ports,
       instances,
       password,
       connectTimeout,
@@ -83,30 +92,25 @@ export const getMemoryDbClusterProviderConfig =
     };
   };
 
-export const getMemoryDbCluster = (
+export const getRedisCluster = (
   enableAutoPipelining?: boolean
 ): Cluster | undefined => {
-  const { instances } = getMemoryDbClusterProviderConfig();
+  const { instances } = getRedisClusterProviderConfig();
 
   const options: ClusterOptions = {
-    dnsLookup: (address, callback) => callback(null, address),
     enableAutoPipelining: enableAutoPipelining ?? false,
     enableOfflineQueue: false,
     enableReadyCheck: true,
-    redisOptions: {
-      tls: {},
-      connectTimeout: 10000,
-    },
     scaleReads: 'slave',
     /*
      *  Disabled in Prod as affects performance
      */
     showFriendlyErrorStack: process.env.NODE_ENV !== 'production',
-    slotsRefreshTimeout: 10000,
+    slotsRefreshTimeout: 2000,
   };
 
   Logger.log(
-    `Initializing MemoryDb Cluster Provider with ${instances?.length} instances and auto-pipelining as ${options.enableAutoPipelining}`
+    `Initializing Redis Cluster Provider with ${instances?.length} instances and auto-pipelining as ${options.enableAutoPipelining}`
   );
 
   if (instances && instances.length > 0) {
@@ -116,8 +120,15 @@ export const getMemoryDbCluster = (
   return undefined;
 };
 
-export const validateMemoryDbClusterProviderConfig = (): boolean => {
-  const config = getMemoryDbClusterProviderConfig();
+export const validateRedisClusterProviderConfig = (): boolean => {
+  const config = getRedisClusterProviderConfig();
 
-  return !!config.host && !!config.port;
+  const validPorts =
+    config.ports.length > 0 &&
+    config.ports.every((port: number) => Number.isInteger(port));
+
+  return !!config.host && validPorts;
 };
+
+export const isClientReady = (status: string): boolean =>
+  status === CLIENT_READY;

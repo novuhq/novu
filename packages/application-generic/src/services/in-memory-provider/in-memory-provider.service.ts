@@ -2,58 +2,30 @@ import { Injectable, Logger } from '@nestjs/common';
 import { setTimeout } from 'timers/promises';
 
 import {
-  getElasticacheCluster,
-  getElasticacheClusterProviderConfig,
-  IElasticacheClusterProviderConfig,
-  validateElasticacheClusterProviderConfig,
-} from './elasticache-cluster-provider';
+  getClientAndConfig,
+  getClientAndConfigForCluster,
+  InMemoryProviderConfig,
+} from './providers';
 import {
-  getMemoryDbCluster,
-  getMemoryDbClusterProviderConfig,
-  IMemoryDbClusterProviderConfig,
-  validateMemoryDbClusterProviderConfig,
-} from './memory-db-cluster-provider';
-import {
-  CLIENT_READY,
-  getRedisInstance,
-  getRedisProviderConfig,
-  IRedisProviderConfig,
-  Redis,
-  RedisOptions,
-} from './redis-provider';
-import {
-  ChainableCommander,
   Cluster,
   ClusterOptions,
-  getRedisCluster,
-  getRedisClusterProviderConfig,
-  IRedisClusterProviderConfig,
-  validateRedisClusterProviderConfig,
-} from './redis-cluster-provider';
+  InMemoryProviderClient,
+  InMemoryProviderEnum,
+  Redis,
+  RedisOptions,
+  ScanStream,
+} from './types';
+
 import { GetIsInMemoryClusterModeEnabled } from '../../usecases';
-import { PlatformException } from '../../utils/exceptions';
 
-const LOG_CONTEXT = 'InMemoryCluster';
-
-export enum InMemoryProviderEnum {
-  ELASTICACHE = 'Elasticache',
-  MEMORY_DB = 'MemoryDB',
-  REDIS = 'Redis',
-}
-
-export type InMemoryProviderClient = Redis | Cluster | undefined;
-type InMemoryProviderConfig =
-  | IElasticacheClusterProviderConfig
-  | IMemoryDbClusterProviderConfig
-  | IRedisProviderConfig
-  | IRedisClusterProviderConfig;
-export type Pipeline = ChainableCommander;
+const LOG_CONTEXT = 'InMemoryProviderService';
 
 @Injectable()
 export class InMemoryProviderService {
   public inMemoryProviderClient: InMemoryProviderClient;
   public inMemoryProviderConfig: InMemoryProviderConfig;
 
+  public isProviderClientReady: (string) => boolean;
   private nodesInterval;
 
   constructor(
@@ -66,9 +38,7 @@ export class InMemoryProviderService {
     this.inMemoryProviderClient = this.buildClient(provider);
   }
 
-  private buildClient(
-    provider: InMemoryProviderEnum
-  ): Redis | Cluster | undefined {
+  private buildClient(provider: InMemoryProviderEnum): InMemoryProviderClient {
     const isClusterMode = this.isClusterMode();
 
     return isClusterMode
@@ -104,7 +74,7 @@ export class InMemoryProviderService {
   }
 
   public isClientReady(): boolean {
-    return this.getStatus() === CLIENT_READY;
+    return this.isProviderClientReady(this.getStatus());
   }
 
   public isClusterMode(): boolean {
@@ -140,57 +110,16 @@ export class InMemoryProviderService {
     }
   }
 
-  public getClientAndConfigForCluster(providerId: InMemoryProviderEnum): {
-    getClient: (enableAutoPipelining?: boolean) => Cluster | undefined;
-    getConfig: () => InMemoryProviderConfig;
-  } {
-    const clusterProviders = {
-      [InMemoryProviderEnum.ELASTICACHE]: {
-        getClient: getElasticacheCluster,
-        getConfig: getElasticacheClusterProviderConfig,
-        validate: validateElasticacheClusterProviderConfig,
-      },
-      [InMemoryProviderEnum.MEMORY_DB]: {
-        getClient: getMemoryDbCluster,
-        getConfig: getMemoryDbClusterProviderConfig,
-        validate: validateMemoryDbClusterProviderConfig,
-      },
-      [InMemoryProviderEnum.REDIS]: {
-        getClient: getRedisCluster,
-        getConfig: getRedisClusterProviderConfig,
-        validate: validateRedisClusterProviderConfig,
-      },
-    };
-
-    const provider = clusterProviders[providerId];
-
-    if (
-      !provider ||
-      !provider.validate() ||
-      providerId === InMemoryProviderEnum.REDIS
-    ) {
-      const defaultProvider = clusterProviders[InMemoryProviderEnum.REDIS];
-      if (!defaultProvider.validate()) {
-        const message = `Provider ${providerId} is not properly configured in the environment variables`;
-        Logger.error(message, LOG_CONTEXT);
-        throw new PlatformException(message);
-      }
-
-      return defaultProvider;
-    }
-
-    return provider;
-  }
-
   private inMemoryClusterProviderSetup(provider): Cluster | undefined {
     Logger.verbose(
       `In-memory cluster service set up for ${provider}`,
       LOG_CONTEXT
     );
 
-    const { getConfig, getClient } =
-      this.getClientAndConfigForCluster(provider);
+    const { getConfig, getClient, isClientReady } =
+      getClientAndConfigForCluster(provider);
 
+    this.isProviderClientReady = isClientReady;
     this.inMemoryProviderConfig = getConfig();
     const { host, ttl } = getConfig();
 
@@ -269,14 +198,17 @@ export class InMemoryProviderService {
   private inMemoryProviderSetup(): Redis | undefined {
     Logger.verbose('In-memory service set up', LOG_CONTEXT);
 
-    this.inMemoryProviderConfig = getRedisProviderConfig();
-    const { host, port, ttl } = getRedisProviderConfig();
+    const { getClient, getConfig, isClientReady } = getClientAndConfig();
+
+    this.isProviderClientReady = isClientReady;
+    this.inMemoryProviderConfig = getConfig();
+    const { host, port, ttl } = getConfig();
 
     if (!host) {
       Logger.log('Missing host for in-memory provider', LOG_CONTEXT);
     }
 
-    const inMemoryProviderClient = getRedisInstance();
+    const inMemoryProviderClient = getClient();
     if (host && inMemoryProviderClient) {
       Logger.log(`Connecting to ${host}:${port}`, LOG_CONTEXT);
 
@@ -316,7 +248,7 @@ export class InMemoryProviderService {
     }
   }
 
-  public inMemoryScan(pattern: string) {
+  public inMemoryScan(pattern: string): ScanStream {
     if (this.isClusterMode()) {
       const client = this.inMemoryProviderClient as Cluster;
 

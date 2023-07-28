@@ -12,7 +12,7 @@ const DEFAULT_FAMILY = 4;
 const DEFAULT_KEY_PREFIX = '';
 const TTL_VARIANT_PERCENTAGE = 0.1;
 
-interface IElasticacheClusterConfig {
+interface IMemoryDbClusterConfig {
   connectTimeout?: string;
   family?: string;
   host?: string;
@@ -24,7 +24,7 @@ interface IElasticacheClusterConfig {
   ttl?: string;
 }
 
-export interface IElasticacheClusterProviderConfig {
+export interface IMemoryDbClusterProviderConfig {
   connectTimeout: number;
   family: number;
   host?: string;
@@ -37,11 +37,11 @@ export interface IElasticacheClusterProviderConfig {
   ttl: number;
 }
 
-export const getElasticacheClusterProviderConfig =
-  (): IElasticacheClusterProviderConfig => {
-    const redisClusterConfig: IElasticacheClusterConfig = {
-      host: process.env.ELASTICACHE_CLUSTER_SERVICE_HOST,
-      port: process.env.ELASTICACHE_CLUSTER_SERVICE_PORT,
+export const getMemoryDbClusterProviderConfig =
+  (): IMemoryDbClusterProviderConfig => {
+    const redisClusterConfig: IMemoryDbClusterConfig = {
+      host: process.env.MEMORY_DB_CLUSTER_SERVICE_HOST,
+      port: process.env.MEMORY_DB_CLUSTER_SERVICE_PORT,
       ttl: process.env.REDIS_CLUSTER_TTL,
       password: process.env.REDIS_CLUSTER_PASSWORD,
       connectTimeout: process.env.REDIS_CLUSTER_CONNECTION_TIMEOUT,
@@ -83,10 +83,10 @@ export const getElasticacheClusterProviderConfig =
     };
   };
 
-export const getElasticacheCluster = (
+export const getMemoryDbCluster = (
   enableAutoPipelining?: boolean
 ): Cluster | undefined => {
-  const { instances } = getElasticacheClusterProviderConfig();
+  const { instances } = getMemoryDbClusterProviderConfig();
 
   const options: ClusterOptions = {
     dnsLookup: (address, callback) => callback(null, address),
@@ -106,7 +106,7 @@ export const getElasticacheCluster = (
   };
 
   Logger.log(
-    `Initializing Elasticache Cluster Provider with ${instances?.length} instances and auto-pipelining as ${options.enableAutoPipelining}`
+    `Initializing MemoryDb Cluster Provider with ${instances?.length} instances and auto-pipelining as ${options.enableAutoPipelining}`
   );
 
   if (instances && instances.length > 0) {
@@ -116,8 +116,11 @@ export const getElasticacheCluster = (
   return undefined;
 };
 
-export const validateElasticacheClusterProviderConfig = (): boolean => {
-  const config = getElasticacheClusterProviderConfig();
+export const validateMemoryDbClusterProviderConfig = (): boolean => {
+  const config = getMemoryDbClusterProviderConfig();
 
   return !!config.host && !!config.port;
 };
+
+export const isClientReady = (status: string): boolean =>
+  status === CLIENT_READY;

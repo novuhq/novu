@@ -7,7 +7,7 @@ import {
   FeatureFlagCommand,
   GetIsMultiProviderConfigurationEnabled,
   InvalidateCacheService,
- } from '@novu/application-generic';
+} from '@novu/application-generic';
 
 import { SetIntegrationAsPrimaryCommand } from './set-integration-as-primary.command';
 
