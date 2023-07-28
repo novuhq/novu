@@ -6,6 +6,7 @@ import {
 import { GetIsInMemoryClusterModeEnabled } from '../../usecases';
 import { IElasticacheClusterProviderConfig } from './elasticache-cluster-provider';
 import { IRedisClusterProviderConfig } from './redis-cluster-provider';
+import { IMemoryDbClusterProviderConfig } from './memory-db-cluster-provider';
 
 const getIsInMemoryClusterModeEnabled = new GetIsInMemoryClusterModeEnabled();
 
@@ -201,7 +202,9 @@ describe('In-memory Provider Service', () => {
 
   describe('Client and config for cluster', () => {
     const elasticacheUrl = 'http://elasticache.com';
-    const elasticachePort = '9999';
+    const elasticachePort = '10000';
+    const memoryDbUrl = 'http://memory-db.com';
+    const memoryDbPort = '10001';
     const redisClusterUrl = 'http://redis.com';
     const redisClusterPorts = JSON.stringify([
       9991, 9992, 9993, 9994, 9995, 9996,
@@ -220,6 +223,22 @@ describe('In-memory Provider Service', () => {
       const config: IElasticacheClusterProviderConfig = getConfig();
       expect(config.host).toEqual(elasticacheUrl);
       expect(config.port).toEqual(Number(elasticachePort));
+      expect(config.ttl).toEqual(7200);
+    });
+
+    it('should return MemoryDB config after validating it', () => {
+      process.env.MEMORY_DB_CLUSTER_SERVICE_HOST = memoryDbUrl;
+      process.env.MEMORY_DB_CLUSTER_SERVICE_PORT = memoryDbPort;
+      process.env.REDIS_CLUSTER_SERVICE_HOST = redisClusterUrl;
+      process.env.REDIS_CLUSTER_SERVICE_PORTS = redisClusterPorts;
+
+      const { getConfig } =
+        inMemoryProviderService.getClientAndConfigForCluster(
+          InMemoryProviderEnum.MEMORY_DB
+        );
+      const config: IMemoryDbClusterProviderConfig = getConfig();
+      expect(config.host).toEqual(memoryDbUrl);
+      expect(config.port).toEqual(Number(memoryDbPort));
       expect(config.ttl).toEqual(7200);
     });
 
