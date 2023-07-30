@@ -87,7 +87,7 @@ function LearnMoreRef() {
 
   return (
     <a
-      href={'https://docs.novu.co/overview/quick-start'}
+      href={'https://docs.novu.co/overview/quickstart/general-quickstart'}
       style={{ color: '#DD2476', textDecoration: 'underline', fontSize: '18px' }}
       onClick={() => handleOnClick}
       target="_blank"
