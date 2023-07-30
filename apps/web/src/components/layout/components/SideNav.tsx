@@ -24,7 +24,7 @@ import {
   Buildings,
 } from '../../../design-system/icons';
 import { ChangesCountBadge } from './ChangesCountBadge';
-import { useEnvController } from '../../../hooks';
+import { useEnvController, useIsMultiTenancyEnabled } from '../../../hooks';
 import OrganizationSelect from './OrganizationSelect';
 import { useSpotlightContext } from '../../providers/SpotlightProvider';
 import { HEADER_HEIGHT } from '../constants';
@@ -62,6 +62,7 @@ export function SideNav({}: Props) {
   const dark = colorScheme === 'dark';
   const { addItem, removeItems } = useSpotlightContext();
   const { classes } = usePopoverStyles();
+  const isMultiTenancyEnabled = useIsMultiTenancyEnabled();
 
   useEffect(() => {
     removeItems(['toggle-environment']);
@@ -89,7 +90,13 @@ export function SideNav({}: Props) {
       testId: 'side-nav-quickstart-link',
     },
     { icon: <Bolt />, link: ROUTES.WORKFLOWS, label: 'Workflows', testId: 'side-nav-templates-link' },
-    { icon: <Buildings />, link: ROUTES.TENANTS, label: 'Tenants', testId: 'side-nav-tenants-link' },
+    {
+      condition: isMultiTenancyEnabled,
+      icon: <Buildings />,
+      link: ROUTES.TENANTS,
+      label: 'Tenants',
+      testId: 'side-nav-tenants-link',
+    },
     {
       icon: <Team />,
       link: ROUTES.SUBSCRIBERS,
