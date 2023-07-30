@@ -17,7 +17,7 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, Response<T>> {
     return next.handle().pipe(
       map((data) => {
         // For paginated results that already contain the data wrapper, return the whole object
-        if (data?.data) {
+        if (data?.data && !data?._id) {
           return {
             ...data,
             data: isObject(data.data) ? this.transformResponse(data.data) : data.data,
