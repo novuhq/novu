@@ -45,9 +45,11 @@ describe('Get Tenant - /tenants/:identifier (GET)', function () {
 async function getTenant({ session, identifier }: { session; identifier: string }): Promise<AxiosResponse> {
   const axiosInstance = axios.create();
 
-  return await axiosInstance.get(`${session.serverUrl}/v1/tenants/${identifier}`, {
-    headers: {
-      authorization: `ApiKey ${session.apiKey}`,
-    },
-  });
+  return (
+    await axiosInstance.get(`${session.serverUrl}/v1/tenants/${identifier}`, {
+      headers: {
+        authorization: `ApiKey ${session.apiKey}`,
+      },
+    })
+  ).data;
 }
