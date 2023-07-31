@@ -33,7 +33,7 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, Response<T>> {
   /**
    * This method is used to determine if the entire object should be returned or just the data property
    *   for paginated results that already contain the data wrapper, true.
-   *   for entity results that *could* contain data object, false.
+   *   for single entity result that *could* contain data object, false.
    * @param data
    * @private
    */
