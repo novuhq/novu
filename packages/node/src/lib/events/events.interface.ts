@@ -1,3 +1,10 @@
+export interface IEvents {
+  trigger(workflowIdentifier: string, data: ITriggerPayloadOptions);
+  broadcast(workflowIdentifier: string, data: IBroadcastPayloadOptions);
+  bulkTrigger(events: IBulkEvents[]);
+  cancel(transactionId: string);
+}
+
 import {
   DigestUnitEnum,
   ITriggerPayload,
@@ -69,7 +76,7 @@ export type ITriggerOverrideFCM = {
   clickAction?: string;
   titleLocKey?: string;
   titleLocArgs?: string;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
 };
 
 export type IAPNSAlert = {

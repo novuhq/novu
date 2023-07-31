@@ -2,10 +2,10 @@ import React from 'react';
 import { IMessage, ChannelCTATypeEnum } from '@novu/shared';
 
 import { useNotifications, useNotificationCenter, useNovuContext, useTranslations } from '../../../hooks';
-import image from '../../../images/no-new-notifications.webp';
 import { NotificationsList } from './NotificationsList';
 import { Loader } from './Loader';
 import { colors } from '../../../shared/config/colors';
+import { NoNewNotifications } from '../../../images/NoNewNotifications';
 
 export function NotificationsListTab() {
   const { apiService } = useNovuContext();
@@ -54,7 +54,7 @@ export function NotificationsListTab() {
                 justifyContent: 'center',
               }}
             >
-              <img src={image as any} alt="logo" style={{ maxWidth: 200, marginBottom: 15 }} />
+              <NoNewNotifications style={{ maxWidth: 200, marginBottom: 15 }} />
               <span style={{ color: colors.B70, fontSize: 15 }}>{t('noNewNotification')}</span>
             </div>
           )}

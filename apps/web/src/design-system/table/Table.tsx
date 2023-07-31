@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { TableProps, Table as MantineTable, Pagination } from '@mantine/core';
+import React, { useEffect, useMemo } from 'react';
+import { TableProps, Table as MantineTable, Pagination, Button } from '@mantine/core';
 import styled from '@emotion/styled';
 import {
   useTable,
@@ -15,6 +15,8 @@ import {
 import useStyles from './Table.styles';
 import { colors } from '../config';
 import { DefaultCell } from './DefaultCell';
+import { useDataRef } from '../../hooks';
+import { ChevronLeft, ChevronRight } from '../icons';
 
 const NoDataPlaceholder = styled.div`
   padding: 0 30px;
@@ -39,6 +41,8 @@ export interface ITableProps<T extends object> {
   onRowClick?: (row: Row<T>) => void;
   noDataPlaceholder?: React.ReactNode;
   loadingItems?: number;
+  hasMore?: boolean;
+  minimalPagination?: boolean;
 }
 
 type UseTableProps<T extends object> = UsePaginationInstanceProps<T> &
@@ -61,9 +65,10 @@ export function Table<T extends object>({
   ...props
 }: ITableProps<T>) {
   const { pageSize, total, onPageChange, current } = pagination;
-  const columns = React.useMemo(() => userColumns?.map((col) => ({ ...col })), [userColumns]);
-  const data = React.useMemo(() => (userData || [])?.map((row) => ({ ...row })), [userData]);
-  const fakeData = React.useMemo(() => Array.from({ length: loadingItems }).map((_, index) => ({ index })), []);
+  const columns = useMemo(() => userColumns?.map((col) => ({ ...col })), [userColumns]);
+  const data = useMemo(() => (userData || [])?.map((row) => ({ ...row })), [userData]);
+  const fakeData = useMemo(() => Array.from({ length: loadingItems }).map((_, index) => ({ index })), [loadingItems]);
+  const onPageChangeRef = useDataRef(onPageChange);
 
   const {
     getTableProps,
@@ -79,7 +84,7 @@ export function Table<T extends object>({
       columns,
       defaultColumn,
       data: loading ? fakeData : data,
-      ...(pagination
+      ...(pagination && !pagination?.minimalPagination
         ? {
             initialState: { pageIndex: current, pageSize },
             manualPagination: true,
@@ -91,13 +96,15 @@ export function Table<T extends object>({
   ) as unknown as UseTableProps<T>;
 
   useEffect(() => {
-    if (onPageChange) {
-      onPageChange(pageIndex);
-    }
-  }, [pageIndex]);
+    onPageChangeRef.current?.(pageIndex);
+  }, [onPageChangeRef, pageIndex]);
 
   const handlePageChange = (pageNumber) => {
-    gotoPage(pageNumber - 1);
+    if (pagination?.minimalPagination) {
+      onPageChange(pageNumber);
+    } else {
+      gotoPage(pageNumber - 1);
+    }
   };
   const getPageCount = () => {
     return Math.ceil(total / pageSize);
@@ -151,7 +158,7 @@ export function Table<T extends object>({
         </tbody>
       </MantineTable>
       {!loading && noData && noDataPlaceholder && <NoDataPlaceholder>{noDataPlaceholder}</NoDataPlaceholder>}
-      {!loading && pagination && total > 0 && pageSize > 1 && getPageCount() > 1 && (
+      {!loading && pagination && total > 0 && pageSize > 1 && getPageCount() > 1 && !pagination?.minimalPagination && (
         <div style={{ marginTop: 'auto' }}>
           <Pagination
             styles={{
@@ -170,6 +177,37 @@ export function Table<T extends object>({
             onChange={handlePageChange}
             position="center"
           />
+        </div>
+      )}
+
+      {!loading && pagination && pageSize > 1 && pagination?.minimalPagination && (
+        <div
+          style={{
+            marginTop: '10px',
+            display: 'flex',
+            width: '100%',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: '15px',
+          }}
+        >
+          <Button.Group>
+            <Button
+              variant="outline"
+              disabled={pagination?.current === 0 || loading}
+              onClick={() => handlePageChange(pagination?.current - 1)}
+            >
+              <ChevronLeft />
+            </Button>
+            <Button
+              loading={loading}
+              variant="outline"
+              disabled={!pagination?.hasMore || loading}
+              onClick={() => handlePageChange(pagination?.current + 1)}
+            >
+              <ChevronRight />
+            </Button>
+          </Button.Group>
         </div>
       )}
     </div>

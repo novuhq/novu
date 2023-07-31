@@ -73,7 +73,7 @@ export const useCreateDigestDemoWorkflow = () => {
         params: { __source: TemplateCreationSourceEnum.ONBOARDING_DIGEST_DEMO },
       });
     }
-  }, [createNotificationTemplate, groups, templates]);
+  }, [createNotificationTemplate, navigate, templatesLoading, groups, templates]);
 
   return {
     createDigestDemoWorkflow,

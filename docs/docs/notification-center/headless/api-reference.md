@@ -120,6 +120,27 @@ interface IFetchUnreadCount {
 }
 ```
 
+## listenNotificationReceive
+
+Listens to a new notification being added.
+Can be used to retrieve a new notification in real-time and trigger UI changes.
+
+```ts
+headlessService.listenNotificationReceive({
+  listener: (message: IMessage) => {
+    console.log(JSON.stringify(message));
+  },
+});
+```
+
+### method args interface
+
+```ts
+interface IListenNotificationReceive {
+  listener: (message: IMessage) => void;
+}
+```
+
 ## listenUnseenCountChange
 
 Listens to the changes of the unseen count.
@@ -449,6 +470,37 @@ interface IMarkAllMessagesAsSeen {
   onSuccess?: (count: number) => void;
   onError?: (error: unknown) => void;
   feedId?: IFeedId;
+}
+```
+
+## removeAllNotifications
+
+Removes all notifications.
+Can be used to remove all notifications of a feed by passing the `feedId`
+
+```ts
+headlessService.removeAllNotifications({
+  listener: (result: UpdateResult<void, unknown, undefined>) => {
+    console.log(result);
+  },
+  onSuccess: () => {
+    console.log('success');
+  },
+  onError: (error: unknown) => {
+    console.error(error);
+  },
+  feedId: 'feedOne',
+});
+```
+
+### method args interface
+
+```ts
+interface IRemoveAllNotifications {
+  feedId?: string;
+  listener: (result: UpdateResult<void, unknown, undefined>) => void;
+  onSuccess?: () => void;
+  onError?: (error: unknown) => void;
 }
 ```
 
