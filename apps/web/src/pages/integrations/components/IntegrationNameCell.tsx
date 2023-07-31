@@ -1,9 +1,9 @@
 import styled from '@emotion/styled';
-import { Skeleton } from '@mantine/core';
-import { useMantineColorScheme } from '@mantine/core';
+import { Skeleton, useMantineColorScheme } from '@mantine/core';
 
 import { colors, IExtendedCellProps, Text } from '../../../design-system';
 import type { ITableIntegration } from '../types';
+import { ChannelTypeEnum } from '@novu/shared';
 
 const CellHolder = styled.div`
   display: flex;
@@ -64,7 +64,9 @@ export const IntegrationNameCell = ({ row: { original }, isLoading }: IExtendedC
       <DetailsHolder>
         <NameHolder>
           <Text rows={1}>{original.name}</Text>
-          {original.name.toLowerCase().includes('novu') && <Free>🎉 Free</Free>}
+          {original.name.toLowerCase().includes('novu') && original.channelType !== ChannelTypeEnum.IN_APP && (
+            <Free>Test Provider</Free>
+          )}
         </NameHolder>
         {original.identifier && <Identifier>Key: {original.identifier}</Identifier>}
       </DetailsHolder>
