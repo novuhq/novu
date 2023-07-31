@@ -22,9 +22,9 @@ export const columns: IExtendedColumn<ITenantEntity>[] = [
     accessor: 'identifier',
     Header: 'Tenant identifier',
     Cell: withCellLoading(({ row: { original } }) => (
-      <Tooltip label={original.name}>
+      <Tooltip label={original.identifier}>
         <div>
-          <Text rows={1}>{original.name || ''}</Text>
+          <Text rows={1}>{original.identifier || ''}</Text>
         </div>
       </Tooltip>
     )),
@@ -33,7 +33,7 @@ export const columns: IExtendedColumn<ITenantEntity>[] = [
     accessor: 'createdAt',
     Header: 'Created at',
     maxWidth: maxWidth,
-    Cell: withCellLoading(({ row: { original }, isLoading }) => {
+    Cell: withCellLoading(({ row: { original } }) => {
       return format(new Date(original.createdAt), 'dd/MM/yyyy HH:mm');
     }),
   },
@@ -41,7 +41,7 @@ export const columns: IExtendedColumn<ITenantEntity>[] = [
     accessor: 'updatedAt',
     Header: 'Updated at',
     maxWidth: maxWidth,
-    Cell: withCellLoading(({ row: { original }, isLoading }) => {
+    Cell: withCellLoading(({ row: { original } }) => {
       return format(new Date(original.updatedAt), 'dd/MM/yyyy HH:mm');
     }),
   },

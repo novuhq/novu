@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Container } from '@mantine/core';
+import { Row } from 'react-table';
+import { ITenantEntity } from '@novu/shared';
 
 import { Table } from '../../../../design-system';
 import PageContainer from '../../../../components/layout/components/PageContainer';
@@ -9,7 +11,13 @@ import { useTenants } from '../../../../hooks/useTenants';
 import { Toolbar } from './ToolBar';
 import { TenantsListNoData } from './TenantsListNoData';
 
-export const TenantsList = ({ onAddTenantClick }: { onAddTenantClick: React.MouseEventHandler<HTMLButtonElement> }) => {
+export const TenantsList = ({
+  onAddTenantClick,
+  onRowClickCallback,
+}: {
+  onAddTenantClick: React.MouseEventHandler<HTMLButtonElement>;
+  onRowClickCallback: (row: Row<ITenantEntity>) => void;
+}) => {
   const [page, setPage] = useState<number>(0);
   const { tenants, pageSize, hasMore, loading, ...ten } = useTenants({ page });
 
@@ -34,6 +42,7 @@ export const TenantsList = ({ onAddTenantClick }: { onAddTenantClick: React.Mous
       </Container>
       <When truthy={loadingPhase}>
         <Table
+          onRowClick={onRowClickCallback}
           loading={loading}
           data-test-id="tenants-list-table"
           columns={columns}

@@ -14,6 +14,7 @@ interface IQueryKeys {
   getInAppActive: string;
   getTemplateById: (templateId?: string) => string;
   tenantsList: string;
+  getTenantByIdentifier: (tenantIdentifier?: string) => string;
 }
 
 export const QueryKeys: IQueryKeys = Object.freeze({
@@ -32,4 +33,5 @@ export const QueryKeys: IQueryKeys = Object.freeze({
   getInAppActive: 'inAppActive',
   getTemplateById: (templateId?: string) => `notificationById:${templateId}`,
   tenantsList: 'tenantsList',
+  getTenantByIdentifier: (tenantIdentifier?: string) => `tenantByIdentifier:${tenantIdentifier}`,
 });
