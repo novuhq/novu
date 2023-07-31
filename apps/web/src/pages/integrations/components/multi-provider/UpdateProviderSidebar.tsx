@@ -167,7 +167,7 @@ export function UpdateProviderSidebar({
           <Group spacing={12}>
             <ProviderImage providerId={selectedProvider?.providerId} />
             <Title size={2}>{selectedProvider?.displayName ?? ''}</Title>
-            <Free>🎉 Free</Free>
+            <Free>Test Provider</Free>
           </Group>
         }
         data-test-id="update-provider-sidebar-novu"
