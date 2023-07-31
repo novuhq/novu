@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 import { Group } from '@mantine/core';
 import { Controller, useFormContext } from 'react-hook-form';
 
@@ -15,9 +15,11 @@ import { ProviderInfo } from './multi-provider/ProviderInfo';
 export const UpdateIntegrationSidebarHeader = ({
   provider,
   onSuccessDelete,
+  children = null,
 }: {
   provider: IIntegratedProvider | null;
   onSuccessDelete: () => void;
+  children?: ReactNode | null;
 }) => {
   const [isModalOpened, setModalIsOpened] = useState(false);
   const { control } = useFormContext();
@@ -57,6 +59,7 @@ export const UpdateIntegrationSidebarHeader = ({
           }}
         />
         <Group spacing={16}>
+          {children}
           <div>
             <Dropdown
               withArrow={false}
