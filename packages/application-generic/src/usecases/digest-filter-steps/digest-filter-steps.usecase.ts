@@ -8,6 +8,8 @@ import { DigestFilterStepsRegular } from './digest-filter-steps-regular.usecase'
 import { DigestFilterStepsTimed } from './digest-filter-steps-timed.usecase';
 import { EventsPerformanceService } from '../../services/performance/events-performance.service';
 
+const LOG_CONTEXT = 'DigestFilterSteps';
+
 // TODO; Potentially rename this use case
 @Injectable()
 export class DigestFilterSteps {
@@ -83,7 +85,11 @@ export class DigestFilterSteps {
 
       return result;
     } catch (error) {
-      Logger.error('Failure when parsing digest payload nested key');
+      Logger.error(
+        'Failure when parsing digest payload nested key',
+        error,
+        LOG_CONTEXT
+      );
 
       return undefined;
     }

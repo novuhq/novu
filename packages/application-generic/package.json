@@ -72,6 +72,7 @@
     "@novu/one-signal": "^0.17.1",
     "@novu/outlook365": "^0.17.1",
     "@novu/plivo": "^0.17.1",
+    "@novu/plunk": "^0.17.1",
     "@novu/postmark": "^0.17.1",
     "@novu/push-webhook": "^0.17.1",
     "@novu/resend": "^0.17.1",
@@ -159,6 +160,5 @@
     "exclude": [
       "**/*.spec.js"
     ]
-  },
-  "gitHead": "e1055f2fd2f0ec9a85d64b271c7d5824bdb381d0"
+  }
 }
