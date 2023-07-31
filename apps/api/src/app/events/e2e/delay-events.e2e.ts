@@ -402,8 +402,8 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
           type: StepTypeEnum.DELAY,
           content: '',
           metadata: {
-            delayPath: 'sendAt',
             type: DelayTypeEnum.SCHEDULED,
+            delayPath: 'sendAt',
           },
         },
         {
@@ -459,6 +459,105 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
       ...jobPayload,
       status: JobStatusEnum.DELAYED,
     });
+    expect(canceledJobs).to.equal(0);
+    expect(delayedJobs).to.equal(1);
+  });
+
+  it('should be able to resume delay and send message after delay step', async function () {
+    const id = MessageRepository.createObjectId();
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: StepTypeEnum.DELAY,
+          content: '',
+          metadata: {
+            type: DelayTypeEnum.SCHEDULED,
+            delayPath: 'sendAt',
+          },
+        },
+        {
+          type: StepTypeEnum.DIGEST,
+          content: '',
+          metadata: {
+            unit: DigestUnitEnum.SECONDS,
+            amount: 1,
+            type: DigestTypeEnum.REGULAR,
+          },
+        },
+        {
+          type: StepTypeEnum.IN_APP,
+          content: 'Hello world {{customVar}}' as string,
+        },
+        {
+          type: StepTypeEnum.SMS,
+          content: 'Digested Events {{step.events.length}}' as string,
+        },
+      ],
+    });
+
+    const jobPayload = {
+      transactionId: id,
+      _environmentId: session.environment._id,
+      _templateId: template._id,
+    };
+
+    await triggerEvent(
+      {
+        customVar: 'Testing of User Name',
+        sendAt: addSeconds(new Date(), 30),
+      },
+      id
+    );
+
+    await session.awaitRunningJobs(template?._id, true, 1);
+    await axiosInstance.delete(`${session.serverUrl}/v1/events/trigger/${id}`, {
+      headers: {
+        authorization: `ApiKey ${session.apiKey}`,
+      },
+    });
+
+    let canceledJobs = await jobRepository.count({
+      ...jobPayload,
+      status: JobStatusEnum.CANCELED,
+    });
+    let delayedJobs = await jobRepository.count({
+      ...jobPayload,
+      status: JobStatusEnum.DELAYED,
+    });
+    expect(canceledJobs).to.equal(1);
+    expect(delayedJobs).to.equal(0);
+
+    await axiosInstance.post(
+      `${session.serverUrl}/v1/events/trigger/${id}/resume`,
+      {},
+      { headers: { authorization: `ApiKey ${session.apiKey}` } }
+    );
+
+    await triggerEvent({
+      eventNumber: '2',
+      sendAt: addSeconds(new Date(), 1),
+    });
+
+    await session.awaitRunningJobs(template?._id, true, 1);
+
+    canceledJobs = await jobRepository.count({
+      ...jobPayload,
+      status: JobStatusEnum.CANCELED,
+    });
+    delayedJobs = await jobRepository.count({
+      ...jobPayload,
+      status: JobStatusEnum.DELAYED,
+    });
+
+    const messages = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: subscriber._id,
+      channel: StepTypeEnum.SMS,
+    });
+
+    expect(messages.length).to.equal(1);
+    expect(messages[0].content).to.include('Digested Events 2');
+
     expect(canceledJobs).to.equal(0);
     expect(delayedJobs).to.equal(1);
   });

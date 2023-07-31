@@ -1,12 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { JobStatusEnum, JobRepository } from '@novu/dal';
-import { isBefore } from 'date-fns';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { ResumeDelayedCommand } from './resume-delayed.command';
+import { CalculateDelayService } from '@novu/application-generic';
 
 @Injectable()
 export class ResumeDelayed {
-  constructor(private jobRepository: JobRepository) {}
+  constructor(private jobRepository: JobRepository, private calculateDelayService: CalculateDelayService) {}
 
   public async execute(command: ResumeDelayedCommand): Promise<void> {
     const job = await this.jobRepository.findOne({
@@ -19,9 +19,12 @@ export class ResumeDelayed {
       throw new NotFoundException(`Job with transactionId ${command.transactionId} was not found`);
     }
 
-    if (isBefore(new Date(job?.expireAt as string), new Date())) {
-      throw new ApiException(`Job ${command.transactionId} can not be resumed as it has expired`);
-    }
+    // Will throw an exception if the calculation of the delay doesn't pass.
+    this.calculateDelayService.calculateDelay({
+      stepMetadata: job.step.metadata,
+      payload: job.payload,
+      overrides: job.overrides,
+    });
 
     const { matched, modified } = await this.jobRepository.update(
       {
