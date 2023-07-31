@@ -9,7 +9,6 @@ import {
   Param,
   Patch,
   Post,
-  Put,
   Query,
   UseGuards,
   UseInterceptors,
@@ -125,6 +124,7 @@ export class TenantController {
   ): Promise<CreateTenantResponseDto> {
     return await this.createTenantUsecase.execute(
       CreateTenantCommand.create({
+        userId: user._id,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         identifier: body.identifier,
@@ -151,6 +151,7 @@ export class TenantController {
   ): Promise<UpdateTenantResponseDto> {
     return await this.updateTenantUsecase.execute(
       UpdateTenantCommand.create({
+        userId: user._id,
         identifier: identifier,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
@@ -178,6 +179,7 @@ export class TenantController {
   async removeTenant(@UserSession() user: IJwtPayload, @Param('identifier') identifier: string): Promise<void> {
     return await this.deleteTenantUsecase.execute(
       DeleteTenantCommand.create({
+        userId: user._id,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         identifier: identifier,
