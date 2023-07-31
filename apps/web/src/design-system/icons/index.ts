@@ -84,6 +84,7 @@ export { Search } from './actions/Search';
 export { Edit } from './actions/Edit';
 export { Upload } from './actions/Upload';
 export { Invite } from './actions/Invite';
+export { PlusFilled } from './actions/PlusFilled';
 
 export { ArrowDown } from './arrows/ArrowDown';
 export { DoubleArrowRight } from './arrows/DoubleArrowRight';
