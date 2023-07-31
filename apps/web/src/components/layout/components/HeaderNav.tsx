@@ -24,7 +24,7 @@ const menuItem = [
     path: ROUTES.TEAM,
   },
 ];
-const headerIconsSettings = { color: colors.B60, width: 30, height: 30 };
+const headerIconsSettings = { color: colors.B60, width: 24, height: 24 };
 
 const Icon = () => {
   const { themeStatus } = useLocalThemePreference();
@@ -36,7 +36,7 @@ const Icon = () => {
     return <Sun {...headerIconsSettings} />;
   }
 
-  return <Ellipse {...headerIconsSettings} height={24} width={24} />;
+  return <Ellipse {...headerIconsSettings} />;
 };
 
 export function HeaderNav({}: Props) {
@@ -167,16 +167,8 @@ export function HeaderNav({}: Props) {
     >
       <Container
         fluid
-        p={30}
-        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '100%' }}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', height: HEADER_HEIGHT }}
       >
-        <Link to="/">
-          <img
-            src={dark ? CONTEXT_PATH + '/static/images/logo-light.png' : CONTEXT_PATH + '/static/images/logo.png'}
-            alt="logo"
-            style={{ maxWidth: 150, maxHeight: 25 }}
-          />
-        </Link>
         <Group>
           <ActionIcon variant="transparent" onClick={() => toggleColorScheme()}>
             <Tooltip label={themeTitle}>
@@ -192,7 +184,7 @@ export function HeaderNav({}: Props) {
             control={
               <ActionIcon variant="transparent">
                 <Avatar
-                  size={35}
+                  size={24}
                   radius="xl"
                   data-test-id="header-profile-avatar"
                   src={currentUser?.profilePicture || CONTEXT_PATH + '/static/images/avatar.png'}

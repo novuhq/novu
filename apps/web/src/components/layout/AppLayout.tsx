@@ -22,7 +22,6 @@ export function AppLayout() {
             <AppShell
               padding="lg"
               navbar={<SideNav />}
-              header={<HeaderNav />}
               styles={(theme) => ({
                 root: { minHeight: '100vh', position: 'relative', zIndex: 1 },
                 body: {
@@ -35,8 +34,9 @@ export function AppLayout() {
                 main: {
                   backgroundColor: theme.colorScheme === 'dark' ? colors.BGDark : colors.BGLight,
                   minHeight: 'auto',
-                  padding: '30px',
+                  padding: 0,
                   overflowX: 'hidden',
+                  borderRadius: 0,
                 },
               })}
             >
@@ -57,6 +57,7 @@ export function AppLayout() {
                 )}
               >
                 <SpotLight>
+                  <HeaderNav />
                   <Outlet />
                 </SpotLight>
               </Sentry.ErrorBoundary>
