@@ -207,7 +207,7 @@ describe('Integrations List Modal', function () {
     checkTableRow(
       {
         name: 'Novu In-App',
-        isFree: true,
+        isFree: false,
         provider: 'Novu In-App',
         channel: 'In-App',
         environment: 'Development',
