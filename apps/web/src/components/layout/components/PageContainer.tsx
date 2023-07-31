@@ -1,5 +1,6 @@
 import React, { CSSProperties } from 'react';
 import { Container } from '../../../design-system';
+import { HEADER_HEIGHT } from '../constants';
 import PageMeta from './PageMeta';
 
 function PageContainer({
@@ -11,8 +12,13 @@ function PageContainer({
   title?: string;
   style?: CSSProperties;
 }) {
+  const containerStyle = {
+    borderRadius: 0,
+    ...style,
+  };
+
   return (
-    <Container pl={0} pr={0} fluid style={style}>
+    <Container pl={0} pr={0} fluid style={containerStyle} h={`calc(100% - ${HEADER_HEIGHT})`}>
       <PageMeta title={title} />
       {children}
     </Container>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Navbar,
   Popover,
@@ -22,6 +22,7 @@ import {
   CheckCircleOutlined,
   Brand,
   Buildings,
+  NovuLogo,
 } from '../../../design-system/icons';
 import { ChangesCountBadge } from './ChangesCountBadge';
 import { useEnvController, useIsMultiTenancyEnabled } from '../../../hooks';
@@ -30,6 +31,7 @@ import { useSpotlightContext } from '../../providers/SpotlightProvider';
 import { HEADER_HEIGHT } from '../constants';
 import { ROUTES } from '../../../constants/routes.enum';
 import { currentOnboardingStep } from '../../../pages/quick-start/components/route/store';
+import { CONTEXT_PATH } from '../../../config';
 
 const usePopoverStyles = createStyles(({ colorScheme }) => ({
   dropdown: {
@@ -138,9 +140,10 @@ export function SideNav({}: Props) {
   return (
     <Navbar
       p={30}
+      pt={16}
       sx={{
         position: 'sticky',
-        top: HEADER_HEIGHT,
+        top: 0,
         zIndex: 'auto',
         backgroundColor: 'transparent',
         borderRight: 'none',
@@ -152,6 +155,11 @@ export function SideNav({}: Props) {
         },
       }}
     >
+      <Navbar.Section mb={30}>
+        <Link to="/">
+          <NovuLogo />
+        </Link>
+      </Navbar.Section>
       <Navbar.Section>
         <Popover
           classNames={classes}
