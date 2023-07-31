@@ -1,20 +1,20 @@
-import { useState } from 'react';
 import styled from '@emotion/styled';
-import { format } from 'date-fns';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ActionIcon, useMantineTheme, UnstyledButton } from '@mantine/core';
+import { ActionIcon, Group, UnstyledButton, useMantineTheme } from '@mantine/core';
 import type { ILayoutEntity } from '@novu/shared';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import { useState } from 'react';
 
-import { IExtendedColumn, Table } from '../../../design-system/table/Table';
-import { colors, LoadingOverlay, Text, Tooltip, withCellLoading } from '../../../design-system';
-import { Edit, Trash } from '../../../design-system/icons';
-import { LayoutEditor } from './LayoutEditor';
-import { When } from '../../../components/utils/When';
-import { useLayouts, useEnvController } from '../../../hooks';
 import { deleteLayoutById } from '../../../api/layouts';
-import { errorMessage, successMessage } from '../../../utils/notifications';
 import { QueryKeys } from '../../../api/query.keys';
+import { When } from '../../../components/utils/When';
+import { colors, Text, Tooltip, withCellLoading } from '../../../design-system';
+import { Edit, PlusFilled, Trash } from '../../../design-system/icons';
+import { IExtendedColumn, Table } from '../../../design-system/table/Table';
+import { useEnvController, useLayouts } from '../../../hooks';
+import { errorMessage, successMessage } from '../../../utils/notifications';
 import { DeleteConfirmModal } from '../../templates/components/DeleteConfirmModal';
+import { LayoutEditor } from './LayoutEditor';
 
 const enum ActivePageEnum {
   LAYOUTS_LIST = 'layouts_list',
@@ -159,8 +159,8 @@ export function LayoutsListPage({ handleLayoutAnalytics }: LayoutsListPageProps)
       <When truthy={activeScreen === ActivePageEnum.LAYOUTS_LIST}>
         <div
           style={{
-            textAlign: 'right',
             marginBottom: '10px',
+            marginTop: '10px',
           }}
         >
           <UnstyledButton
@@ -170,9 +170,12 @@ export function LayoutsListPage({ handleLayoutAnalytics }: LayoutsListPageProps)
               handleLayoutAnalytics('Create new layout btn clicked');
             }}
           >
-            <Text gradient={!readonly} color={colors.B60}>
-              + Create New Layout
-            </Text>
+            <Group spacing={8}>
+              <PlusFilled width={24} height={24} />
+              <Text gradient={!readonly} color={colors.B60} weight="bold">
+                Add New Layout
+              </Text>
+            </Group>
           </UnstyledButton>
         </div>
 
