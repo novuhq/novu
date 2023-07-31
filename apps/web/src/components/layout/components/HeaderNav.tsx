@@ -158,12 +158,11 @@ export function HeaderNav({}: Props) {
   return (
     <Header
       height={HEADER_HEIGHT}
-      sx={(theme) => ({
+      sx={{
         position: 'sticky',
         top: 0,
-        boxShadow: theme.colorScheme === 'dark' ? 'none' : shadows.light,
         borderBottom: 'none',
-      })}
+      }}
     >
       <Container
         fluid
