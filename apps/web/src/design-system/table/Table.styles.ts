@@ -16,16 +16,16 @@ export default createStyles((theme: MantineTheme, _params, getRef) => {
       borderCollapse: 'collapse',
       borderSpacing: '0px 20px',
       'tr td:first-of-type': {
-        paddingLeft: 30,
+        paddingLeft: 0,
       },
       'tr th:first-of-type': {
-        paddingLeft: 30,
+        paddingLeft: 0,
       },
       'tr td:last-child': {
-        paddingRight: 30,
+        paddingRight: 0,
       },
       'tr th:last-child': {
-        paddingRight: 30,
+        paddingRight: 0,
       },
       '& thead tr': {
         borderBottom: `1px solid ${dark ? colors.B30 : colors.B98}`,
