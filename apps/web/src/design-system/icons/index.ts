@@ -1,6 +1,7 @@
 export { ActiveLabel } from './general/ActiveLabel';
 export { Activity } from './general/Activity';
 export { Brand } from './general/Brand';
+export { Buildings } from './general/Buildings';
 export { Team } from './general/Team';
 export { Settings } from './general/Settings';
 export { Bolt } from './general/Bolt';
