@@ -21,8 +21,27 @@ const tenantSchema = new Schema<TenantDBModel>(
   schemaOptions
 );
 
+/*
+ * This index was initially created to optimize:
+ *
+ * Path: apps/api/src/app/tenant/usecases/get-tenants/get-tenants.usecase.ts
+ * Context: execute()
+ * Query: find(
+ *    {
+ *      _environmentId: command.environmentId,
+ *      _organizationId: command.organizationId,
+ *    },
+ *    '',
+ *    {
+ *      limit: command.limit,
+ *      skip: command.page * command.limit,
+ *      sort: { createdAt: -1 },
+ *    }
+ *  );
+ */
 tenantSchema.index({
   _environmentId: 1,
+  createdAt: -1,
 });
 
 /*
