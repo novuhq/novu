@@ -13,6 +13,10 @@ const tenantSchema = new Schema<TenantDBModel>(
       type: Schema.Types.ObjectId,
       ref: 'Environment',
     },
+    _organizationId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Organization',
+    },
   },
   schemaOptions
 );
