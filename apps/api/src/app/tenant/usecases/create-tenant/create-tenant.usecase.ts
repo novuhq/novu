@@ -1,7 +1,9 @@
 import { ConflictException, Injectable } from '@nestjs/common';
+
 import { TenantRepository } from '@novu/dal';
-import { CreateTenantCommand } from './create-tenant.command';
 import { AnalyticsService } from '@novu/application-generic';
+
+import { CreateTenantCommand } from './create-tenant.command';
 
 @Injectable()
 export class CreateTenant {
@@ -19,16 +21,19 @@ export class CreateTenant {
       );
     }
 
-    this.analyticsService.track('Create Tenant - [Tenants]', command.userId, {
-      _environmentId: command.environmentId,
-      _organization: command.organizationId,
-    });
-
-    return await this.tenantRepository.create({
+    const tenant = await this.tenantRepository.create({
+      _organizationId: command.organizationId,
       _environmentId: command.environmentId,
       identifier: command.identifier,
       name: command.name,
       data: command.data,
     });
+
+    this.analyticsService.track('Create Tenant - [Tenants]', command.userId, {
+      _environmentId: command.environmentId,
+      _organization: command.organizationId,
+    });
+
+    return tenant;
   }
 }

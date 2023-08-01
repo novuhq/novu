@@ -16,6 +16,7 @@ describe('Get Tenants List- /tenants (GET)', function () {
   it('should get the newly created tenants', async function () {
     for (let i = 0; i < 5; i++) {
       await tenantRepository.create({
+        _organizationId: session.organization._id,
         _environmentId: session.environment._id,
         identifier: `identifier_${i}`,
         name: 'name_123',
@@ -39,6 +40,7 @@ describe('Get Tenants List- /tenants (GET)', function () {
     for (let i = 0; i < 9; i++) {
       await tenantRepository.create({
         _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
         identifier: `identifier_${i}`,
         name: 'name_123',
         data: { test1: 'test value1', test2: 'test value2' },
@@ -61,6 +63,7 @@ describe('Get Tenants List- /tenants (GET)', function () {
     for (let i = 0; i < 14; i++) {
       await tenantRepository.create({
         _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
         identifier: `identifier_${i}`,
         name: 'name_123',
         data: { test1: 'test value1', test2: 'test value2' },
