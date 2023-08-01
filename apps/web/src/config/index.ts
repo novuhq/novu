@@ -68,3 +68,7 @@ export const IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = isCypress
   : window._env_.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED ||
     process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED ||
     'false';
+
+export const IS_MULTI_TENANCY_ENABLED = isCypress
+  ? window._env_.IS_MULTI_TENANCY_ENABLED || process.env.IS_MULTI_TENANCY_ENABLED || 'true'
+  : window._env_.IS_MULTI_TENANCY_ENABLED || process.env.IS_MULTI_TENANCY_ENABLED || 'false';

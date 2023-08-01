@@ -15,6 +15,7 @@ describe('Get Tenant - /tenants/:identifier (GET)', function () {
 
   it('should get a newly created tenant', async function () {
     await tenantRepository.create({
+      _organizationId: session.organization._id,
       _environmentId: session.environment._id,
       identifier: 'identifier_123',
       name: 'name_123',
@@ -45,9 +46,11 @@ describe('Get Tenant - /tenants/:identifier (GET)', function () {
 async function getTenant({ session, identifier }: { session; identifier: string }): Promise<AxiosResponse> {
   const axiosInstance = axios.create();
 
-  return await axiosInstance.get(`${session.serverUrl}/v1/tenants/${identifier}`, {
-    headers: {
-      authorization: `ApiKey ${session.apiKey}`,
-    },
-  });
+  return (
+    await axiosInstance.get(`${session.serverUrl}/v1/tenants/${identifier}`, {
+      headers: {
+        authorization: `ApiKey ${session.apiKey}`,
+      },
+    })
+  ).data;
 }
