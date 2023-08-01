@@ -18,6 +18,7 @@ export function useNotificationCenter(): INotificationCenterContext {
     showUserPreferences,
     allowedNotificationActions,
     onTabClick,
+    preferenceFilter,
   } = useContext(NotificationCenterContext);
 
   return {
@@ -34,5 +35,6 @@ export function useNotificationCenter(): INotificationCenterContext {
     showUserPreferences,
     allowedNotificationActions,
     onTabClick,
+    preferenceFilter,
   };
 }

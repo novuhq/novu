@@ -1,4 +1,8 @@
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional } from 'class-validator';
+
+import { NotificationTemplateCustomData } from '@novu/shared';
+
 import { NotificationStep } from '../../shared/dtos/notification-step';
 import { PreferenceChannels } from '../../shared/dtos/preference-channels';
 
@@ -107,4 +111,8 @@ export class WorkflowResponse {
     type: NotificationGroup,
   })
   readonly notificationGroup?: NotificationGroup;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  data?: NotificationTemplateCustomData;
 }
