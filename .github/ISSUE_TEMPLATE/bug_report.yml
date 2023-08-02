@@ -52,7 +52,7 @@ body:
   - type: input
     id: npm-version
     validations:
-      required: true
+      required: false
     attributes:
       label: npm version
       description: In case of self-hosting or local installation mention the npm version. If using our cloud-managed solution, mention NA.
@@ -60,7 +60,7 @@ body:
   - type: input
     id: node-version
     validations:
-      required: true
+      required: false
     attributes:
       label: node version
       description: In case of self-hosting or local installation mention the node version. If using our cloud-managed solution, mention NA.
