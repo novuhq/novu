@@ -40,8 +40,7 @@ export const WIDGET_EMBED_PATH =
 export const IS_DOCKER_HOSTED =
   window._env_.REACT_APP_DOCKER_HOSTED_ENV === 'true' || process.env.REACT_APP_DOCKER_HOSTED_ENV === 'true';
 
-export const INTERCOM_APP_ID =
-  'fqe0apnx' || window._env_.REACT_APP_INTERCOM_APP_ID || process.env.REACT_APP_INTERCOM_APP_ID;
+export const INTERCOM_APP_ID = window._env_.REACT_APP_INTERCOM_APP_ID || process.env.REACT_APP_INTERCOM_APP_ID;
 
 export const CONTEXT_PATH = getContextPath(NovuComponentEnum.WEB);
 
@@ -55,9 +54,7 @@ export const MAIL_SERVER_DOMAIN =
   window._env_.REACT_APP_MAIL_SERVER_DOMAIN || process.env.REACT_APP_MAIL_SERVER_DOMAIN || 'dev.inbound-mail.novu.co';
 
 export const LAUNCH_DARKLY_CLIENT_SIDE_ID =
-  '64708935336dd81236770db7' ||
-  window._env_.REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID ||
-  process.env.REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID;
+  window._env_.REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID || process.env.REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID;
 
 export const IS_TEMPLATE_STORE_ENABLED = isCypress
   ? window._env_.IS_TEMPLATE_STORE_ENABLED || process.env.IS_TEMPLATE_STORE_ENABLED || 'true'
