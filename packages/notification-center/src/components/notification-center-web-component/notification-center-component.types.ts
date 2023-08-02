@@ -25,6 +25,7 @@ interface PopoverAdditionalProps {
   unseenCountChanged?: IPopoverNotificationCenterProps['onUnseenCountChanged'];
   actionClicked?: IPopoverNotificationCenterProps['onActionClick'];
   tabClicked?: IPopoverNotificationCenterProps['onTabClick'];
+  preferenceFilter?: IPopoverNotificationCenterProps['preferenceFilter'];
 }
 
 type SelectedPopoverProps = Pick<
@@ -50,6 +51,7 @@ type SelectedPopoverProps = Pick<
     position?: IPopoverNotificationCenterProps['position'];
   };
 };
+
 type PopoverProps = SelectedPopoverProps & {
   onNotificationClick?: IPopoverNotificationCenterProps['onNotificationClick'];
   colorScheme?: ColorScheme;

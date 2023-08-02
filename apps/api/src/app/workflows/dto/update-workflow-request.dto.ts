@@ -1,10 +1,10 @@
 import { IsArray, IsMongoId, IsOptional, IsString, MaxLength, ValidateNested } from 'class-validator';
-import { ICreateWorkflowDto, IPreferenceChannels, NotificationTemplateCustomData } from '@novu/shared';
+import { IPreferenceChannels, IUpdateWorkflowDto, NotificationTemplateCustomData } from '@novu/shared';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PreferenceChannels } from '../../shared/dtos/preference-channels';
 import { NotificationStep } from '../../shared/dtos/notification-step';
 
-export class UpdateWorkflowRequestDto implements ICreateWorkflowDto {
+export class UpdateWorkflowRequestDto implements IUpdateWorkflowDto {
   @ApiProperty()
   @IsString()
   @IsOptional()
