@@ -43,10 +43,9 @@ NovuConfig().configure("https://api.novu.co", "<YOUR_NOVU_API_KEY>")
 
 Replace the `<YOUR_NOVU_API_KEY>` value with the authentic key from the **API Key** section of your [Novu Dashboard](https://web.novu.co/settings).
 
-<aside>
-🔑 Note: Please do not hardcode your credentials in a file in production. Use environment variables instead.
-
-</aside>
+:::info
+   Please do not hardcode your credentials in a file in production. Use environment variables instead.
+:::
 
 ## Set Up A Channel Provider
 
