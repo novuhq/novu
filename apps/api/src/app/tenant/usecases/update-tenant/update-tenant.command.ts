@@ -1,9 +1,9 @@
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
-import { EnvironmentCommand } from '@novu/application-generic';
+import { EnvironmentWithUserCommand } from '@novu/application-generic';
 import { TenantCustomData } from '@novu/shared';
 
-export class UpdateTenantCommand extends EnvironmentCommand {
+export class UpdateTenantCommand extends EnvironmentWithUserCommand {
   @IsString()
   @IsNotEmpty()
   identifier: string;
