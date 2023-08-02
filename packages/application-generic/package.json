@@ -41,8 +41,8 @@
     "reflect-metadata": "^0.1.13"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.234.0",
-    "@aws-sdk/s3-request-presigner": "^3.234.0",
+    "@aws-sdk/client-s3": "^3.382.0",
+    "@aws-sdk/s3-request-presigner": "^3.382.0",
     "@azure/storage-blob": "^12.11.0",
     "@google-cloud/storage": "^6.2.3",
     "@novu/africas-talking": "^0.17.1",

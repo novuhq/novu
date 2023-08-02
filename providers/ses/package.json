@@ -32,7 +32,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@aws-sdk/client-ses": "3.282.0",
+    "@aws-sdk/client-ses": "3.382.0",
     "@novu/stateless": "^0.17.1",
     "nodemailer": "^6.6.5"
   },

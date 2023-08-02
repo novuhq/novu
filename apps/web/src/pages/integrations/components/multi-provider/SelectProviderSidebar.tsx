@@ -298,6 +298,9 @@ const StyledButton = styled.div<{ selected: boolean }>`
 
   margin-bottom: 12px;
   line-height: 1;
+  &:hover {
+    cursor: pointer;
+  }
 
   ${({ selected, theme }) => {
     return selected
