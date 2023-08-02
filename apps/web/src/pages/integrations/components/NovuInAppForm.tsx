@@ -8,7 +8,7 @@ import { ICredentialsDto } from '@novu/shared';
 import { IIntegratedProvider } from '../types';
 import { updateIntegration } from '../../../api/integration';
 import { Switch, Button, colors } from '../../../design-system';
-import { CircleArrowRight } from '../../../design-system/icons/arrows/CircleArrowRight';
+import { CircleArrowRight } from '../../../design-system/icons';
 import { When } from '../../../components/utils/When';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 
@@ -194,18 +194,4 @@ const WarningMessage = styled.div`
 
 const CircleArrowRightStyled = styled(CircleArrowRight)`
   cursor: pointer;
-`;
-
-const CloseButton = styled.button`
-  position: absolute;
-  right: 0;
-  top: 0;
-  background: transparent;
-  border: none;
-  color: ${colors.B40};
-  outline: none;
-
-  &:hover {
-    cursor: pointer;
-  }
 `;
