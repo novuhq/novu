@@ -14,6 +14,7 @@ export const inputStyles = (theme: MantineTheme) => {
     },
     input: {
       minHeight: '50px',
+      borderRadius: '7px',
       borderColor: dark ? theme.colors.dark[5] : theme.colors.gray[5],
       backgroundColor: 'transparent',
       color: primaryColor,
