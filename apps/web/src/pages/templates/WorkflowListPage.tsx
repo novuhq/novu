@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Badge, ActionIcon, useMantineTheme } from '@mantine/core';
+import { Badge, ActionIcon, useMantineTheme, Group } from '@mantine/core';
 import { Link, useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { format } from 'date-fns';
@@ -14,7 +14,7 @@ import {
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { Tag, Table, colors, Text, Button, IExtendedColumn, withCellLoading } from '../../design-system';
-import { Edit, PlusCircle } from '../../design-system/icons';
+import { Bolt, BoltFilled, BoltOffFilled, Edit, PlusCircle } from '../../design-system/icons';
 import { Tooltip } from '../../design-system';
 import { ROUTES } from '../../constants/routes.enum';
 import { parseUrl } from '../../utils/routeUtils';
@@ -33,20 +33,16 @@ import { When } from '../../components/utils/When';
 
 const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
   {
-    accessor: 'id',
-    Header: 'Trigger ID',
-    Cell: withCellLoading(({ row: { original } }) => (
-      <Tooltip label={original.triggers ? original.triggers[0].identifier : 'Unknown'}>
-        <Text rows={1}>{original.triggers ? original.triggers[0].identifier : 'Unknown'}</Text>
-      </Tooltip>
-    )),
-  },
-  {
     accessor: 'name',
-    Header: 'Name',
+    Header: 'Name & Trigger ID',
     Cell: withCellLoading(({ row: { original } }) => (
       <Tooltip label={original.name}>
-        <Text rows={1}>{original.name}</Text>
+        <div>
+          <Text rows={1}>{original.name}</Text>
+          <Text rows={1} size="xs" color={colors.B40}>
+            {original.triggers ? original.triggers[0].identifier : 'Unknown'}
+          </Text>
+        </div>
       </Tooltip>
     )),
   },
@@ -63,7 +59,7 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
     accessor: 'createdAt',
     Header: 'Created At',
     Cell: withCellLoading(({ row: { original } }) => (
-      <Text rows={1}>{format(new Date(original.createdAt ?? ''), 'dd/MM/yyyy HH:mm')}</Text>
+      <Text rows={1}>{format(new Date(original.createdAt ?? ''), 'dd.MM.yyyy')}</Text>
     )),
   },
   {
@@ -74,14 +70,20 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
     Cell: withCellLoading(({ row: { original } }) => (
       <>
         {!original.active ? (
-          <Badge variant="outline" size="md" color="yellow">
-            Disabled
-          </Badge>
+          <Group spacing={0}>
+            <BoltOffFilled color={colors.B40} width="16px" height="16px" />
+            <Text rows={1} size="sm" color={colors.B40}>
+              Disabled
+            </Text>
+          </Group>
         ) : null}{' '}
         {original.active ? (
-          <Badge variant="outline" size="md" color="green" data-test-id="active-status-label">
-            Active
-          </Badge>
+          <Group spacing={0}>
+            <BoltFilled color={colors.success} width="16px" height="16px" />
+            <Text rows={1} size="sm" color={colors.success}>
+              Active
+            </Text>
+          </Group>
         ) : null}{' '}
       </>
     )),
