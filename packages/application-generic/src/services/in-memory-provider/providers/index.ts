@@ -30,7 +30,7 @@ import {
   validateRedisClusterProviderConfig,
 } from './redis-cluster-provider';
 
-import { InMemoryProviderEnum, InMemoryProviderClient, Redis } from '../types';
+import { InMemoryProviderEnum, Redis } from '../types';
 
 import { PlatformException } from '../../../utils/exceptions';
 
