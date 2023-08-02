@@ -33,7 +33,7 @@ type ActionType =
   | { type: ActionsTypeEnum.SHOW_CREATE_SIDEBAR; payload: { provider: IIntegratedProvider } }
   | {
       type: ActionsTypeEnum.SHOW_UPDATE_SIDEBAR;
-      payload: { integrationIdToEdit: string; hasToSelectPrimaryProvider: boolean };
+      payload: { integrationIdToEdit: string };
     };
 
 interface IModalState {
@@ -41,7 +41,6 @@ interface IModalState {
   sidebarType?: SidebarType;
   provider?: IIntegratedProvider | null;
   integrationIdToEdit?: string;
-  hasToSelectPrimaryProvider?: boolean;
 }
 
 const reducer = (state: IModalState, action: ActionType) => {
@@ -65,7 +64,6 @@ const reducer = (state: IModalState, action: ActionType) => {
         ...state,
         sidebarType: SidebarType.UPDATE,
         integrationIdToEdit: action.payload.integrationIdToEdit,
-        hasToSelectPrimaryProvider: action.payload.hasToSelectPrimaryProvider,
       };
     default:
       return state;
@@ -83,13 +81,10 @@ export function IntegrationsListModal({
   onClose: () => void;
   selectedProvider?: IIntegratedProvider | null;
 }) {
-  const [{ integrationIdToEdit, provider, sidebarType, scrollTo, hasToSelectPrimaryProvider }, dispatch] = useReducer(
-    reducer,
-    {
-      sidebarType: !!scrollToProp ? SidebarType.SELECT : undefined,
-      provider: selectedProvider,
-    }
-  );
+  const [{ integrationIdToEdit, provider, sidebarType, scrollTo }, dispatch] = useReducer(reducer, {
+    sidebarType: !!scrollToProp ? SidebarType.SELECT : undefined,
+    provider: selectedProvider,
+  });
 
   const segment = useSegment();
   const { classes } = useModalStyles();
@@ -105,7 +100,7 @@ export function IntegrationsListModal({
     const integration = item.original;
     dispatch({
       type: ActionsTypeEnum.SHOW_UPDATE_SIDEBAR,
-      payload: { integrationIdToEdit: integration.integrationId, hasToSelectPrimaryProvider: false },
+      payload: { integrationIdToEdit: integration.integrationId },
     });
 
     segment.track(IntegrationsStoreModalAnalytics.SELECT_PROVIDER_CLICK, {
@@ -131,10 +126,10 @@ export function IntegrationsListModal({
     });
   };
 
-  const onIntegrationCreated = (integrationId: string, hasSimilarIntegration: boolean) => {
+  const onIntegrationCreated = (integrationId: string) => {
     dispatch({
       type: ActionsTypeEnum.SHOW_UPDATE_SIDEBAR,
-      payload: { integrationIdToEdit: integrationId, hasToSelectPrimaryProvider: hasSimilarIntegration },
+      payload: { integrationIdToEdit: integrationId },
     });
   };
 
@@ -193,7 +188,6 @@ export function IntegrationsListModal({
       />
       <UpdateProviderSidebar
         isOpened={sidebarType === SidebarType.UPDATE}
-        hasToSelectPrimaryProvider={hasToSelectPrimaryProvider ?? false}
         onClose={onSidebarClose}
         integrationId={integrationIdToEdit}
       />

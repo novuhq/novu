@@ -64,6 +64,7 @@ function initializeProviders(integrations: IntegrationEntity[]): IIntegratedProv
         connected: !!integration,
         logoFileName: providerItem.logoFileName,
         environmentId: integration?._environmentId,
+        primary: integration?.primary ?? false,
       };
     });
 }
@@ -109,6 +110,7 @@ function initializeProvidersByIntegration(integrations: IntegrationEntity[]): II
       environmentId: integrationItem?._environmentId,
       name: integrationItem?.name,
       identifier: integrationItem?.identifier,
+      primary: integrationItem?.primary ?? false,
     };
   });
 }

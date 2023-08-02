@@ -21,6 +21,10 @@ export function updateIntegration(integrationId: string, data: IUpdateIntegratio
   return api.put(`/v1/integrations/${integrationId}`, data);
 }
 
+export function setIntegrationAsPrimary(integrationId: string) {
+  return api.post(`/v1/integrations/${integrationId}/set-primary`, {});
+}
+
 export function deleteIntegration(integrationId: string) {
   return api.delete(`/v1/integrations/${integrationId}`);
 }

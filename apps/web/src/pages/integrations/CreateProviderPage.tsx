@@ -8,10 +8,8 @@ export function CreateProviderPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const onIntegrationCreated = (integrationId: string, hasSimilarIntegration: boolean) => {
-    navigate(`/integrations/${integrationId}`, {
-      state: { hasSelectPrimaryProvider: hasSimilarIntegration },
-    });
+  const onIntegrationCreated = (integrationId: string) => {
+    navigate(`/integrations/${integrationId}`);
   };
 
   return (
