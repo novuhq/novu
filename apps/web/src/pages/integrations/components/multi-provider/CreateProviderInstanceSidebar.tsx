@@ -36,10 +36,10 @@ export function CreateProviderInstanceSidebar({
   providerId?: string;
   onClose: () => void;
   onGoBack: () => void;
-  onIntegrationCreated: (id: string, hasSimilarIntegration: boolean) => void;
+  onIntegrationCreated: (id: string) => void;
 }) {
   const { environments, isLoading: areEnvironmentsLoading } = useFetchEnvironments();
-  const { integrations, loading: areIntegrationsLoading } = useIntegrations();
+  const { loading: areIntegrationsLoading } = useIntegrations();
   const isLoading = areEnvironmentsLoading || areIntegrationsLoading;
 
   const queryClient = useQueryClient();
@@ -72,9 +72,6 @@ export function CreateProviderInstanceSidebar({
 
       const { channel: selectedChannel } = provider;
       const { environmentId } = data;
-      const hasSimilarIntegration = !!integrations?.find(
-        (el) => el.channel === selectedChannel && el._environmentId === environmentId
-      );
 
       const { _id: integrationId } = await createIntegrationApi({
         providerId: provider.id,
@@ -93,7 +90,7 @@ export function CreateProviderInstanceSidebar({
         environmentId,
       });
       successMessage('Instance configuration is created');
-      onIntegrationCreated(integrationId ?? '', hasSimilarIntegration);
+      onIntegrationCreated(integrationId ?? '');
 
       queryClient.refetchQueries({
         predicate: ({ queryKey }) =>

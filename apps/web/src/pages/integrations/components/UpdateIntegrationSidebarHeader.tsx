@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Group } from '@mantine/core';
 import { Controller, useFormContext } from 'react-hook-form';
+import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
 
 import { Button, colors, Dropdown, Modal, NameInput, Text, Title } from '../../../design-system';
 import { useFetchEnvironments } from '../../../hooks/useFetchEnvironments';
@@ -9,8 +10,10 @@ import type { IIntegratedProvider } from '../types';
 import { useProviders } from '../useProviders';
 import { useDeleteIntegration } from '../../../api/hooks';
 import { errorMessage, successMessage } from '../../../utils/notifications';
-import { DotsHorizontal, Trash } from '../../../design-system/icons';
+import { DotsHorizontal, StarEmpty, Trash } from '../../../design-system/icons';
 import { ProviderInfo } from './multi-provider/ProviderInfo';
+import { useSelectPrimaryIntegrationModal } from './multi-provider/useSelectPrimaryIntegrationModal';
+import { useMakePrimaryIntegration } from '../../../api/hooks/useMakePrimaryIntegration';
 
 export const UpdateIntegrationSidebarHeader = ({
   provider,
@@ -23,6 +26,10 @@ export const UpdateIntegrationSidebarHeader = ({
   const { control } = useFormContext();
   const { environments } = useFetchEnvironments();
   const { isLoading } = useProviders();
+  const canMarkAsPrimary = provider && !provider.primary && CHANNELS_WITH_PRIMARY.includes(provider.channel);
+  const { openModal, SelectPrimaryIntegrationModal } = useSelectPrimaryIntegrationModal();
+
+  const { makePrimaryIntegration, isLoading: isMarkingPrimary } = useMakePrimaryIntegration();
 
   const { deleteIntegration, isLoading: isDeleting } = useDeleteIntegration({
     onSuccess: (_, { name }) => {
@@ -33,6 +40,32 @@ export const UpdateIntegrationSidebarHeader = ({
       errorMessage(`Instance configuration ${name} could not be deleted`);
     },
   });
+
+  const onDeleteClick = () => {
+    if (!provider) {
+      return;
+    }
+
+    if (provider.primary) {
+      openModal({
+        environmentId: provider.environmentId,
+        channelType: provider.channel,
+        onClose: () => {
+          deleteIntegration({
+            id: provider.integrationId,
+            name: provider.name || provider.displayName,
+          });
+        },
+      });
+
+      return;
+    }
+
+    deleteIntegration({
+      id: provider.integrationId,
+      name: provider.name || provider.displayName,
+    });
+  };
 
   if (!provider) return null;
 
@@ -67,7 +100,19 @@ export const UpdateIntegrationSidebarHeader = ({
                 </div>
               }
               middlewares={{ flip: false, shift: false }}
+              position="bottom-end"
             >
+              {canMarkAsPrimary && (
+                <Dropdown.Item
+                  onClick={() => {
+                    makePrimaryIntegration({ id: provider.integrationId });
+                  }}
+                  icon={<StarEmpty />}
+                  disabled={isLoading || isMarkingPrimary}
+                >
+                  Mark as primary
+                </Dropdown.Item>
+              )}
               <Dropdown.Item
                 onClick={() => {
                   setModalIsOpened(true);
@@ -90,26 +135,22 @@ export const UpdateIntegrationSidebarHeader = ({
         data-test-id="delete-provider-instance-modal"
       >
         <Text mb={30} size="lg" color={colors.B60}>
-          Deleting a provider instance will fail workflows relying on its configuration, leading to undelivered
-          notifications.
+          {provider.primary
+            ? 'Deleting the primary provider instance will cause to select another primary one. ' +
+              'All workflows relying on its configuration will be linked to the selected primary provider instance.'
+            : 'Deleting a provider instance will fail workflows relying on its configuration, leading to undelivered notifications.'}
         </Text>
         <Group position="right">
           <Button variant="outline" onClick={() => setModalIsOpened(false)}>
             Cancel
           </Button>
-          <Button
-            loading={isDeleting}
-            onClick={() => {
-              deleteIntegration({
-                id: provider.integrationId,
-                name: provider.name || provider.displayName,
-              });
-            }}
-          >
-            Delete instance
+          <Button loading={isDeleting} onClick={onDeleteClick}>
+            <Trash />
+            {provider.primary ? 'Delete and relink' : 'Delete instance'}
           </Button>
         </Group>
       </Modal>
+      <SelectPrimaryIntegrationModal />
     </Group>
   );
 };

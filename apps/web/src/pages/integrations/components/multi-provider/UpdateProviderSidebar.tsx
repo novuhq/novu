@@ -4,10 +4,13 @@ import styled from '@emotion/styled';
 import slugify from 'slugify';
 import { Controller, FormProvider, useForm } from 'react-hook-form';
 import {
+  CHANNELS_WITH_PRIMARY,
   EmailProviderIdEnum,
   IConfigCredentials,
+  IConstructIntegrationDto,
   ICredentialsDto,
   InAppProviderIdEnum,
+  NOVU_PROVIDERS,
   SmsProviderIdEnum,
 } from '@novu/shared';
 
@@ -49,12 +52,10 @@ enum SidebarStateEnum {
 
 export function UpdateProviderSidebar({
   isOpened,
-  hasToSelectPrimaryProvider,
   integrationId,
   onClose,
 }: {
   isOpened: boolean;
-  hasToSelectPrimaryProvider: boolean;
   integrationId?: string;
   onClose: () => void;
 }) {
@@ -69,7 +70,7 @@ export function UpdateProviderSidebar({
   const { openModal: openSelectPrimaryIntegrationModal, SelectPrimaryIntegrationModal } =
     useSelectPrimaryIntegrationModal();
 
-  const { onUpdateIntegration, isLoadingUpdate } = useUpdateIntegration(selectedProvider?.integrationId || '');
+  const { updateIntegration, isLoadingUpdate } = useUpdateIntegration(selectedProvider?.integrationId || '');
 
   const methods = useForm<IProviderForm>({
     shouldUseNativeValidation: false,
@@ -87,10 +88,11 @@ export function UpdateProviderSidebar({
     reset,
     watch,
     setValue,
-    formState: { errors, isDirty },
+    formState: { errors, isDirty, dirtyFields },
   } = methods;
 
   const credentials = watch('credentials');
+  const isActive = watch('active');
   const isSidebarOpened = !!selectedProvider && isOpened;
 
   const haveAllCredentials = useMemo(() => {
@@ -161,12 +163,43 @@ export function UpdateProviderSidebar({
     update({ hideDefaultLauncher: false });
   };
 
-  useEffectOnce(() => {
-    openSelectPrimaryIntegrationModal({
-      environmentId: selectedProvider?.environmentId,
-      channelType: selectedProvider?.channel,
-    });
-  }, hasToSelectPrimaryProvider && !!selectedProvider);
+  const updateAndSelectPrimaryIntegration = async (data: IConstructIntegrationDto) => {
+    if (!selectedProvider) {
+      return;
+    }
+
+    const { channel: selectedChannel, environmentId, primary } = selectedProvider;
+    const isActiveFieldChanged = dirtyFields.active;
+    const hasSameChannelActiveIntegration = !!providers
+      .filter((el) => !NOVU_PROVIDERS.includes(el.providerId))
+      .find((el) => el.active && el.channel === selectedChannel && el.environmentId === environmentId);
+    const isChannelSupportPrimary = CHANNELS_WITH_PRIMARY.includes(selectedChannel);
+
+    if (
+      isActiveFieldChanged &&
+      isChannelSupportPrimary &&
+      ((isActive && hasSameChannelActiveIntegration) || (!isActive && primary))
+    ) {
+      openSelectPrimaryIntegrationModal({
+        environmentId: selectedProvider?.environmentId,
+        channelType: selectedProvider?.channel,
+        onClose: () => {
+          updateIntegration(data);
+        },
+      });
+
+      return;
+    }
+
+    updateIntegration(data);
+  };
+
+  const onSubmit: React.FormEventHandler<HTMLFormElement> = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+
+    handleSubmit(updateAndSelectPrimaryIntegration)(e);
+  };
 
   if (
     SmsProviderIdEnum.Novu === selectedProvider?.providerId ||
@@ -199,10 +232,7 @@ export function UpdateProviderSidebar({
         isOpened={isSidebarOpened}
         isLoading={areProvidersLoading || areEnvironmentsLoading}
         isExpanded={sidebarState === 'expanded'}
-        onSubmit={(e) => {
-          handleSubmit(onUpdateIntegration)(e);
-          e.stopPropagation();
-        }}
+        onSubmit={onSubmit}
         onClose={onSidebarClose}
         onBack={onBack}
         customHeader={

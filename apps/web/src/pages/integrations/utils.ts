@@ -18,7 +18,7 @@ export const mapToTableIntegration = (
 
   return {
     name: integration.name ?? provider?.displayName,
-    isPrimary: integration.isPrimary,
+    primary: integration.primary,
     order: integration.order,
     integrationId: integration._id ?? '',
     identifier: integration.identifier,
@@ -30,11 +30,4 @@ export const mapToTableIntegration = (
     logoFileName,
     providerId: integration.providerId,
   };
-};
-
-export const findPrimaryIntegration = <T extends { order: number }>(integrations: T[]): T => {
-  const sortedIntegrations = [...integrations].sort((a, b) => a.order - b.order);
-  const [primaryIntegration] = sortedIntegrations;
-
-  return primaryIntegration;
 };
