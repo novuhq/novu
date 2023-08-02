@@ -129,7 +129,6 @@ export const NovuInAppForm = ({
             To finish security enabling, follow the step-by-step guide in our docs
           </Text>
           <CircleArrowRightStyled
-            backgroundColor={colors.white}
             onClick={() => {
               window.open('https://docs.novu.co/notification-center/iframe-embed/#enabling-hmac-encryption');
             }}
