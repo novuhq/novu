@@ -49,7 +49,7 @@ body:
       label: Novu version
       description: In case of self-hosting or local installation mention the Novu version like 0.17.0. If using our cloud-managed solution, mention Novu Saas.
       placeholder: Novu Saas
-   - type: input
+  - type: input
     id: npm-version
     validations:
       required: true
@@ -57,7 +57,7 @@ body:
       label: npm version
       description: In case of self-hosting or local installation mention the npm version. If using our cloud-managed solution, mention NA.
       placeholder: 7.0.0
-   - type: input
+  - type: input
     id: node-version
     validations:
       required: true
