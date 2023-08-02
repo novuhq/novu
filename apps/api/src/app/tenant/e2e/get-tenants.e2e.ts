@@ -16,6 +16,7 @@ describe('Get Tenants List- /tenants (GET)', function () {
   it('should get the newly created tenants', async function () {
     for (let i = 0; i < 5; i++) {
       await tenantRepository.create({
+        _organizationId: session.organization._id,
         _environmentId: session.environment._id,
         identifier: `identifier_${i}`,
         name: 'name_123',
@@ -31,14 +32,15 @@ describe('Get Tenants List- /tenants (GET)', function () {
     expect(data.pageSize).to.equal(10);
     expect(data.hasMore).to.equal(false);
     expect(data.data.length).to.equal(5);
-    expect(data.data[0].identifier).to.equal('identifier_0');
-    expect(data.data[4].identifier).to.equal('identifier_4');
+    expect(data.data[0].identifier).to.equal('identifier_4');
+    expect(data.data[4].identifier).to.equal('identifier_0');
   });
 
   it('should get second page of tenants', async function () {
     for (let i = 0; i < 9; i++) {
       await tenantRepository.create({
         _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
         identifier: `identifier_${i}`,
         name: 'name_123',
         data: { test1: 'test value1', test2: 'test value2' },
@@ -53,14 +55,15 @@ describe('Get Tenants List- /tenants (GET)', function () {
     expect(data.pageSize).to.equal(5);
     expect(data.hasMore).to.equal(false);
     expect(data.data.length).to.equal(4);
-    expect(data.data[0].identifier).to.equal('identifier_5');
-    expect(data.data[3].identifier).to.equal('identifier_8');
+    expect(data.data[0].identifier).to.equal('identifier_3');
+    expect(data.data[3].identifier).to.equal('identifier_0');
   });
 
   it('should get tenants by pagination', async function () {
     for (let i = 0; i < 14; i++) {
       await tenantRepository.create({
         _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
         identifier: `identifier_${i}`,
         name: 'name_123',
         data: { test1: 'test value1', test2: 'test value2' },

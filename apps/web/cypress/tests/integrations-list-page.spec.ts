@@ -64,7 +64,7 @@ describe('Integrations List Page', function () {
         .eq(nth)
         .getByTestId('integration-name-cell')
         .should('be.visible')
-        .contains('Free');
+        .contains('Test Provider');
     }
 
     cy.get('@integrations-table')
@@ -199,7 +199,7 @@ describe('Integrations List Page', function () {
     checkTableRow(
       {
         name: 'Novu In-App',
-        isFree: true,
+        isFree: false,
         provider: 'Novu In-App',
         channel: 'In-App',
         environment: 'Development',
@@ -897,7 +897,7 @@ describe('Integrations List Page', function () {
     cy.getByTestId('provider-instance-channel').should('contain', 'Email');
     cy.getByTestId('provider-instance-environment').should('contain', 'Development');
     cy.getByTestId('update-provider-sidebar-novu').contains('Novu Email');
-    cy.getByTestId('update-provider-sidebar-novu').contains('Free');
+    cy.getByTestId('update-provider-sidebar-novu').contains('Test Provider');
     cy.getByTestId('novu-provider-limits').then((el) => {
       expect(el.get(0).innerText).to.eq(
         'Novu provider allows sending max 300 emails per month,\nto send more messages, configure a different provider'
@@ -965,7 +965,7 @@ describe('Integrations List Page', function () {
     cy.getByTestId('provider-instance-channel').should('contain', 'SMS');
     cy.getByTestId('provider-instance-environment').should('contain', 'Development');
     cy.getByTestId('update-provider-sidebar-novu').contains('Novu SMS');
-    cy.getByTestId('update-provider-sidebar-novu').contains('Free');
+    cy.getByTestId('update-provider-sidebar-novu').contains('Test Provider');
     cy.getByTestId('novu-provider-limits').then((el) => {
       expect(el.get(0).innerText).to.eq(
         'Novu provider allows sending max 20 messages per month,\nto send more messages, configure a different provider'

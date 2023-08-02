@@ -9,7 +9,6 @@ import {
   Param,
   Patch,
   Post,
-  Put,
   Query,
   UseGuards,
   UseInterceptors,
@@ -93,14 +92,14 @@ export class TenantController {
     description: `Get tenant by your internal id used to identify the tenant`,
   })
   @ApiNotFoundResponse({
-    description: 'The tenant with the identifier provided does not exist in the database so it can not be deleted.',
+    description: 'The tenant with the identifier provided does not exist in the database.',
   })
   @ExternalApiAccessible()
-  getTenantById(
+  async getTenantById(
     @UserSession() user: IJwtPayload,
     @Param('identifier') identifier: string
   ): Promise<GetTenantResponseDto> {
-    return this.getTenantUsecase.execute(
+    return await this.getTenantUsecase.execute(
       GetTenantCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
@@ -125,6 +124,7 @@ export class TenantController {
   ): Promise<CreateTenantResponseDto> {
     return await this.createTenantUsecase.execute(
       CreateTenantCommand.create({
+        userId: user._id,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         identifier: body.identifier,
@@ -142,7 +142,7 @@ export class TenantController {
     description: 'Update tenant by your internal id used to identify the tenant',
   })
   @ApiNotFoundResponse({
-    description: 'The tenant with the identifier provided does not exist in the database so it can not be deleted.',
+    description: 'The tenant with the identifier provided does not exist in the database.',
   })
   async updateTenant(
     @UserSession() user: IJwtPayload,
@@ -151,6 +151,7 @@ export class TenantController {
   ): Promise<UpdateTenantResponseDto> {
     return await this.updateTenantUsecase.execute(
       UpdateTenantCommand.create({
+        userId: user._id,
         identifier: identifier,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
@@ -178,6 +179,7 @@ export class TenantController {
   async removeTenant(@UserSession() user: IJwtPayload, @Param('identifier') identifier: string): Promise<void> {
     return await this.deleteTenantUsecase.execute(
       DeleteTenantCommand.create({
+        userId: user._id,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         identifier: identifier,
