@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { UserSession, NotificationTemplateService } from '@novu/testing';
 import { StepTypeEnum } from '@novu/shared';
 import { FeedRepository, MessageTemplateRepository, NotificationTemplateRepository } from '@novu/dal';
-import { CreateNotificationTemplateRequestDto } from '../../notification-template/dto';
+import { CreateWorkflowRequestDto } from '../../workflows/dto';
 
 describe('Delete A Feed - /feeds (POST)', async () => {
   let session: UserSession;
@@ -95,7 +95,7 @@ describe('Delete A Feed - /feeds (POST)', async () => {
     const { body } = await session.testAgent.post(`/v1/feeds`).send(testFeed);
     const feed = body.data;
 
-    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+    const testTemplate: Partial<CreateWorkflowRequestDto> = {
       name: 'test email template',
       description: 'This is a test description',
       tags: ['test-tag'],
@@ -113,9 +113,7 @@ describe('Delete A Feed - /feeds (POST)', async () => {
       ],
     };
 
-    const { body: notificationTemplateBody } = await session.testAgent
-      .post(`/v1/notification-templates`)
-      .send(testTemplate);
+    const { body: notificationTemplateBody } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
 
     const template = notificationTemplateBody.data;
 
@@ -128,7 +126,7 @@ describe('Delete A Feed - /feeds (POST)', async () => {
 
     expect(messageTemplates.length).to.equal(1);
 
-    await session.testAgent.delete(`/v1/notification-templates/${template._id}`).send();
+    await session.testAgent.delete(`/v1/workflows/${template._id}`).send();
 
     const deletedNotificationTemplate = await notificationTemplateRepository.findOne({
       _environmentId: session.environment._id,

@@ -1,6 +1,11 @@
 import { Novu } from '../novu';
 import axios from 'axios';
-import { ChannelTypeEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  MessageActionStatusEnum,
+  ButtonTypeEnum,
+  MarkMessagesAsEnum,
+} from '@novu/shared';
 
 const mockConfig = {
   apiKey: '1234',
@@ -56,6 +61,17 @@ describe('test use of novus node package - Subscribers class', () => {
     );
   });
 
+  test('should delete subscriber provider credentials correctly', async () => {
+    mockedAxios.put.mockResolvedValue({});
+
+    await novu.subscribers.deleteCredentials('test-update-subscriber', 'slack');
+
+    expect(mockedAxios.delete).toHaveBeenCalled();
+    expect(mockedAxios.delete).toHaveBeenCalledWith(
+      `/subscribers/test-update-subscriber/credentials/slack`
+    );
+  });
+
   test('should unset subscriber channel credentials correctly', async () => {
     mockedAxios.put.mockResolvedValue({});
 
@@ -68,6 +84,7 @@ describe('test use of novus node package - Subscribers class', () => {
         providerId: 'slack',
         credentials: {
           webhookUrl: undefined,
+          deviceTokens: [],
         },
       }
     );
@@ -112,6 +129,20 @@ describe('test use of novus node package - Subscribers class', () => {
         credentials: {
           webhookUrl: 'webhookUrl',
         },
+      }
+    );
+  });
+
+  test('should update subscriber online status', async () => {
+    mockedAxios.put.mockResolvedValue({});
+
+    await novu.subscribers.updateOnlineStatus('test-update-subscriber', true);
+
+    expect(mockedAxios.patch).toHaveBeenCalled();
+    expect(mockedAxios.patch).toHaveBeenCalledWith(
+      `/subscribers/test-update-subscriber/online-status`,
+      {
+        online: true,
       }
     );
   });
@@ -230,12 +261,50 @@ describe('test use of novus node package - Subscribers class', () => {
     await novu.subscribers.markMessageActionSeen(
       'test-action-type-sub',
       'message-123',
-      'action-1'
+      ButtonTypeEnum.PRIMARY,
+      { status: MessageActionStatusEnum.DONE }
     );
 
     expect(mockedAxios.post).toHaveBeenCalled();
     expect(mockedAxios.post).toHaveBeenCalledWith(
-      '/subscribers/test-action-type-sub/messages/message-123/actions/action-1'
+      '/subscribers/test-action-type-sub/messages/message-123/actions/primary',
+      { status: 'done' }
+    );
+  });
+
+  test('should mark all subscriber messages as read', async () => {
+    mockedAxios.post.mockResolvedValue({});
+
+    await novu.subscribers.markAllMessagesAs(
+      'test-action-type-sub',
+      MarkMessagesAsEnum.READ
+    );
+
+    expect(mockedAxios.post).toHaveBeenCalled();
+    expect(mockedAxios.post).toHaveBeenCalledWith(
+      '/subscribers/test-action-type-sub/messages/mark-all',
+      {
+        markAs: MarkMessagesAsEnum.READ,
+      }
+    );
+  });
+
+  test('should mark all subscriber messages as read for feed', async () => {
+    mockedAxios.post.mockResolvedValue({});
+
+    await novu.subscribers.markAllMessagesAs(
+      'test-action-type-sub',
+      MarkMessagesAsEnum.READ,
+      'feed-123'
+    );
+
+    expect(mockedAxios.post).toHaveBeenCalled();
+    expect(mockedAxios.post).toHaveBeenCalledWith(
+      '/subscribers/test-action-type-sub/messages/mark-all',
+      {
+        markAs: MarkMessagesAsEnum.READ,
+        feedIdentifier: 'feed-123',
+      }
     );
   });
 });

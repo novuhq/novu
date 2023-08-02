@@ -1,11 +1,8 @@
-import axios from 'axios';
-
-import { WithHttp } from '../novu.interface';
-
 import {
   INotificationTemplatePayload,
   INotificationTemplates,
 } from './notification-template.interface';
+import { WithHttp } from '../novu.interface';
 
 export class NotificationTemplates
   extends WithHttp
@@ -15,24 +12,10 @@ export class NotificationTemplates
    * @param {number} page - Page number to fetch
    * @param {number} limit - Number of results to fetch in one page
    */
-  async getAll(page?: number, limit?: number) {
-    if (page === undefined && limit === undefined) {
-      return await this.http.get(`/notification-templates`, {});
-    } else if (page === undefined) {
-      return await this.http.get(`/notification-templates`, {
-        params: {
-          limit,
-        },
-      });
-    } else if (limit === undefined) {
-      return await this.http.get(`/notification-templates`, {
-        params: { page },
-      });
-    } else {
-      return await this.http.get(`/notification-templates`, {
-        params: { page, limit },
-      });
-    }
+  async getAll(page = 0, limit = 10) {
+    return await this.http.get(`/notification-templates`, {
+      params: { page, limit },
+    });
   }
 
   /**

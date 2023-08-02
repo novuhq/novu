@@ -203,17 +203,17 @@ You can create a topic using two entities - `key` and `name`. Keys are unique id
 import { Novu } from '@novu/node';
 
 export default async function createTopic(req, res) {
-    try {
-        const novu = new Novu(process.env.NOVU_API_KEY);
-        if (req.method === 'POST') {
-            const { key, name } = req.body
-            const result = await novu.topics.create({ key, name });
-            res.status(201).json(result.data);
-        }
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: error.message });
+  try {
+    const novu = new Novu(process.env.NOVU_API_KEY);
+    if (req.method === 'POST') {
+      const { key, name } = req.body;
+      const result = await novu.topics.create({ key, name });
+      res.status(201).json(result.data);
     }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: error.message });
+  }
 }
 ```
 
@@ -237,24 +237,24 @@ Note: You can only add those subscribers to a topic that you've already created.
 import { Novu } from '@novu/node';
 
 export default async function addSub(req, res) {
-    try {
-        const novu = new Novu(process.env.NOVU_API_KEY);
-        if (req.method === 'POST') {
-            // Get the subscriber ID from the request body
-            const subscriberId = req.body.subscriberId;
-            // Get the topic key from the request body
-            const topicKey = req.body.topicKey;
-            // Call Novu SDK to add the subscriber to the topic
-            const result = await novu.topics.addSubscribers(topicKey, {
-                subscribers: [subscriberId],
-            });
-            // Return the result as JSON response
-            res.status(200).json(result.data);
-        }
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: error.message });
+  try {
+    const novu = new Novu(process.env.NOVU_API_KEY);
+    if (req.method === 'POST') {
+      // Get the subscriber ID from the request body
+      const subscriberId = req.body.subscriberId;
+      // Get the topic key from the request body
+      const topicKey = req.body.topicKey;
+      // Call Novu SDK to add the subscriber to the topic
+      const result = await novu.topics.addSubscribers(topicKey, {
+        subscribers: [subscriberId],
+      });
+      // Return the result as JSON response
+      res.status(200).json(result.data);
     }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: error.message });
+  }
 }
 ```
 
@@ -274,29 +274,29 @@ Sending notifications to a topic is not a complex task. You need to extract the 
 import { Novu } from '@novu/node';
 
 export default async function sendNotifToSub(req, res) {
-    try {
-        const novu = new Novu(process.env.NOVU_API_KEY);
-        if (req.method === 'POST') {
-            // Get the topic key from the request body
-            const topicKey = req.body.topicKey;
-            const email = req.body.email;
-            const description = req.body.description;
+  try {
+    const novu = new Novu(process.env.NOVU_API_KEY);
+    if (req.method === 'POST') {
+      // Get the topic key from the request body
+      const topicKey = req.body.topicKey;
+      const email = req.body.email;
+      const description = req.body.description;
 
-            // Call Novu SDK to trigger a notification to the topic subscribers
-            const result = await novu.trigger("email-quickstart", {
-                to: [{ type: "Topic", topicKey: topicKey }],
-                payload: {
-                    email: email,
-                    description: description,
-                },
-            });
-            // Return the result as JSON response
-            res.json(result.data);
-        }
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: error.message });
+      // Call Novu SDK to trigger a notification to the topic subscribers
+      const result = await novu.trigger('email-quickstart', {
+        to: [{ type: 'Topic', topicKey: topicKey }],
+        payload: {
+          email: email,
+          description: description,
+        },
+      });
+      // Return the result as JSON response
+      res.json(result.data);
     }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: error.message });
+  }
 }
 ```
 

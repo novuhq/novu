@@ -7,7 +7,10 @@ export function subscriberNeedUpdate(
 ): boolean {
   return (
     !!(
-      subscriberPayload?.email && subscriber?.email !== subscriberPayload?.email
+      (subscriberPayload?.email &&
+        subscriber?.email !== subscriberPayload?.email) ||
+      (subscriber?.email !== undefined &&
+        subscriber?.email !== subscriberPayload?.email)
     ) ||
     !!(
       subscriberPayload?.firstName &&

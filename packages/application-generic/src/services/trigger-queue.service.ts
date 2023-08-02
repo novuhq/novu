@@ -1,7 +1,4 @@
 import { Logger } from '@nestjs/common';
-import { QueueBaseOptions } from 'bullmq';
-import { getRedisPrefix } from '@novu/shared';
-import { ConnectionOptions } from 'tls';
 
 const LOG_CONTEXT = 'TriggerQueueService';
 
@@ -9,26 +6,12 @@ import { BullMqService } from './bull-mq.service';
 
 export class TriggerQueueService {
   public readonly name = 'trigger-handler';
-  protected bullConfig: QueueBaseOptions = {
-    connection: {
-      db: Number(process.env.REDIS_DB_INDEX),
-      port: Number(process.env.REDIS_PORT),
-      host: process.env.REDIS_HOST,
-      password: process.env.REDIS_PASSWORD,
-      connectTimeout: 50000,
-      keepAlive: 30000,
-      family: 4,
-      keyPrefix: getRedisPrefix(),
-      tls: process.env.REDIS_TLS as ConnectionOptions,
-    },
-  };
   public readonly bullMqService: BullMqService;
 
   constructor() {
     this.bullMqService = new BullMqService();
 
     this.bullMqService.createQueue(this.name, {
-      ...this.bullConfig,
       defaultJobOptions: {
         removeOnComplete: true,
       },
@@ -52,7 +35,7 @@ export class TriggerQueueService {
     );
   }
 
-  public async gracefulShutdown() {
+  public async gracefulShutdown(): Promise<void> {
     Logger.log('Shutting the Trigger Queue service down', LOG_CONTEXT);
 
     await this.bullMqService.gracefulShutdown();
