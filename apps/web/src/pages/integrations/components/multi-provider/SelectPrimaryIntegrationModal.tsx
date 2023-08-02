@@ -21,7 +21,7 @@ import { useFetchEnvironments } from '../../../../hooks/useFetchEnvironments';
 import { CHANNEL_TYPE_TO_STRING } from '../../../../utils/channels';
 import { useIntegrations } from '../../../../hooks';
 import { ITableIntegration } from '../../types';
-import { findPrimaryIntegration, mapToTableIntegration } from '../../utils';
+import { mapToTableIntegration } from '../../utils';
 import { IntegrationStatusCell } from '../IntegrationStatusCell';
 import { IntegrationNameCell } from '../IntegrationNameCell';
 import { useMakePrimaryIntegration } from '../../../../api/hooks/useMakePrimaryIntegration';
@@ -113,7 +113,7 @@ export interface ISelectPrimaryIntegrationModalProps {
 export const SelectPrimaryIntegrationModal = ({
   isOpened,
   environmentId,
-  channelType,
+  channelType = ChannelTypeEnum.EMAIL,
   onClose,
 }: ISelectPrimaryIntegrationModalProps) => {
   const theme = useMantineTheme();
@@ -144,15 +144,18 @@ export const SelectPrimaryIntegrationModal = ({
   }, [integrations, environments, channelType, environmentId]);
 
   const initialSelectedIndex = useMemo(() => {
-    const primary = findPrimaryIntegration(integrationsByEnvAndChannel ?? []);
+    const primary = integrationsByEnvAndChannel.find((el) => el.primary);
+    if (primary) {
+      return integrationsByEnvAndChannel.indexOf(primary ?? {});
+    }
 
-    return integrationsByEnvAndChannel?.indexOf(primary);
+    return -1;
   }, [integrationsByEnvAndChannel]);
 
   const isLoading = areEnvironmentsLoading || areIntegrationsLoading;
   const isInitialProviderSelected = !selectedRowId || selectedRowId === `${initialSelectedIndex}`;
   const makePrimaryButtonDisabled = !selectedIntegrationId || isLoading || isInitialProviderSelected;
-  const channelName = CHANNEL_TYPE_TO_STRING[channelType ?? ''];
+  const channelName = CHANNEL_TYPE_TO_STRING[channelType];
 
   const onRowSelectCallback = (row: Row<ITableIntegration>) => {
     setSelectedState({
@@ -194,7 +197,8 @@ export const SelectPrimaryIntegrationModal = ({
     >
       <ModalBodyHolder data-test-id="select-primary-integration-modal">
         <Description>
-          Please select the primary provider instance within the email channel in the development environment.
+          {`Please select the primary provider instance within the ${channelName.toLowerCase()} ` +
+            `channel in the ${environmentName.toLowerCase()} environment.`}
         </Description>
         <MetaHolder>
           <IntegrationEnvironmentPill
