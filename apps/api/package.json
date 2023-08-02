@@ -33,7 +33,7 @@
     "@nestjs/common": "9.3.12",
     "@nestjs/core": "9.3.12",
     "@nestjs/graphql": "10.2.1",
-    "@nestjs/jwt": "9.0.0",
+    "@nestjs/jwt": "^10.1.0",
     "@nestjs/passport": "9.0.3",
     "@nestjs/platform-express": "9.3.12",
     "@nestjs/swagger": "^6.3.0",
@@ -84,7 +84,7 @@
     "shortid": "^2.2.16",
     "slugify": "^1.4.6",
     "swagger-ui-express": "^4.4.0",
-    "twilio": "^3.72.0",
+    "twilio": "^4.14.1",
     "uuid": "^8.3.2"
   },
   "devDependencies": {
