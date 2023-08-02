@@ -67,6 +67,7 @@ export const NotificationCenterComponent: FunctionComponent<NotificationCenterCo
   onActionClick = actionClicked,
   tabClicked,
   onTabClick = tabClicked,
+  preferenceFilter,
 }) => {
   return (
     <NovuProvider
@@ -92,6 +93,7 @@ export const NotificationCenterComponent: FunctionComponent<NotificationCenterCo
         allowedNotificationActions={allowedNotificationActions}
         popover={popover}
         popoverConfig={popoverConfig}
+        preferenceFilter={preferenceFilter}
       />
     </NovuProvider>
   );
