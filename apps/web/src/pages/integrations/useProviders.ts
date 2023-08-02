@@ -174,7 +174,7 @@ export const useProviders = () => {
       inAppProvider: [],
       providers: [],
     };
-  }, [integrations]);
+  }, [isMultiProviderConfigurationEnabled, integrations]);
 
   return {
     ...sortedProviders,

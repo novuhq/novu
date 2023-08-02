@@ -168,7 +168,7 @@ export function UpdateProviderSidebar({
           }}
           customHeader={
             <UpdateIntegrationSidebarHeader provider={selectedProvider} onSuccessDelete={onSidebarClose}>
-              <Free>🎉 Free</Free>
+              <Free>Test Provider</Free>
             </UpdateIntegrationSidebarHeader>
           }
           data-test-id="update-provider-sidebar-novu"

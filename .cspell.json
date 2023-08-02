@@ -487,9 +487,17 @@
     "Tomer",
     "codesandbox",
     "GROUPBY",
+    "GROUP_BY",
     "stefanprodan",
     "Sendchamp",
-    "sendchamp"
+    "sendchamp",
+    "Quickstarts",
+    "quickstarts",
+    "quickstartslogo",
+    "reactjs",
+    "nextjs",
+    "vanillajs",
+    "quckstart"
   ],
   "flagWords": [],
   "patterns": [
@@ -569,6 +577,7 @@
     ".vscode/settings.json",
     "*/**/.vscode/settings.json",
     "docs/src/usage-examples.md",
+    "docs/static/csv/mock_data.csv",
     "apps/worker/README.md",
     ".gitignore",
     "angular.json",

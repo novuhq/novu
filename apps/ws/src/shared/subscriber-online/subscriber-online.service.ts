@@ -22,15 +22,6 @@ export class SubscriberOnlineService {
     await this.updateOnlineStatus(subscriber, { isOnline });
   }
 
-  private async trackIsOnlineUpdate(updatePayload: IUpdateSubscriberPayload, subscriber: ISubscriberJwt) {
-    this.analyticsService.track('Update online flag - [Subscriber]', subscriber.organizationId, {
-      _organization: subscriber.organizationId,
-      _environment: subscriber.environmentId,
-      _subscriber: subscriber._id,
-      ...updatePayload,
-    });
-  }
-
   async handleDisconnection(subscriber: ISubscriberJwt, activeConnections: number) {
     const lastOnlineAt = new Date().toISOString();
     let isOnline = false;
@@ -48,6 +39,5 @@ export class SubscriberOnlineService {
         $set: updatePayload,
       }
     );
-    this.trackIsOnlineUpdate(updatePayload, subscriber);
   }
 }

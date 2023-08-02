@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { TableProps, Table as MantineTable, Pagination, Button } from '@mantine/core';
 import styled from '@emotion/styled';
 import {
@@ -15,7 +15,7 @@ import {
 import useStyles from './Table.styles';
 import { colors } from '../config';
 import { DefaultCell } from './DefaultCell';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useDataRef } from '../../hooks';
 import { ChevronLeft, ChevronRight } from '../icons';
 
 const NoDataPlaceholder = styled.div`
@@ -65,9 +65,10 @@ export function Table<T extends object>({
   ...props
 }: ITableProps<T>) {
   const { pageSize, total, onPageChange, current } = pagination;
-  const columns = React.useMemo(() => userColumns?.map((col) => ({ ...col })), [userColumns]);
-  const data = React.useMemo(() => (userData || [])?.map((row) => ({ ...row })), [userData]);
-  const fakeData = React.useMemo(() => Array.from({ length: loadingItems }).map((_, index) => ({ index })), []);
+  const columns = useMemo(() => userColumns?.map((col) => ({ ...col })), [userColumns]);
+  const data = useMemo(() => (userData || [])?.map((row) => ({ ...row })), [userData]);
+  const fakeData = useMemo(() => Array.from({ length: loadingItems }).map((_, index) => ({ index })), [loadingItems]);
+  const onPageChangeRef = useDataRef(onPageChange);
 
   const {
     getTableProps,
@@ -95,10 +96,8 @@ export function Table<T extends object>({
   ) as unknown as UseTableProps<T>;
 
   useEffect(() => {
-    if (onPageChange) {
-      onPageChange(pageIndex);
-    }
-  }, [pageIndex]);
+    onPageChangeRef.current?.(pageIndex);
+  }, [onPageChangeRef, pageIndex]);
 
   const handlePageChange = (pageNumber) => {
     if (pagination?.minimalPagination) {
