@@ -35,6 +35,7 @@ const createNovuIntegration = async (
     _environmentId: environment._id,
     _organizationId: environment._organizationId,
     channel,
+    active: true,
   });
 
   const response = await integrationRepository.create({
@@ -72,10 +73,10 @@ export async function createNovuIntegrations() {
       await createNovuIntegration(environment, ChannelTypeEnum.SMS);
       await createNovuIntegration(environment, ChannelTypeEnum.EMAIL);
 
-      console.log('Prococessed environment' + environment._id);
+      console.log('Processed environment' + environment._id);
     }
 
-    console.log('Prococessed organization' + organization._id);
+    console.log('Processed organization' + organization._id);
   }
 
   // eslint-disable-next-line no-console
