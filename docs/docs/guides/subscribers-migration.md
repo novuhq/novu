@@ -170,6 +170,93 @@ fs.createReadStream('mock_data.csv')
 ```
 
   </TabItem>
+
+  <TabItem value="dotnet" label=".Net">
+
+```csharp
+using System;
+using System.IO;
+using System.Text;
+using System.Linq;
+using Novu.DTO;
+using Novu.Models;
+using Novu;
+
+class Program
+{
+    static async Task Main()
+    {
+        var novuConfiguration = new NovuClientConfiguration
+            {
+                ApiKey = "<NOVU_API_KEY>",
+            };
+
+        var novu = new NovuClient(novuConfiguration);
+
+        string filePath = "./mock_data.csv"; // Replace with the actual path to your CSV file
+
+        await MigrateFromCSV(filePath, novu);
+    }
+
+    async static Task MigrateFromCSV(string filePath, NovuClient novu)
+    {
+        try
+        {
+            string[] lines = File.ReadAllLines(filePath, Encoding.UTF8);
+
+            var myTasks = lines.Select(async line =>
+            {
+                await ProcessLine(line, novu);
+            });
+
+            await Task.WhenAll(myTasks);
+
+            Console.WriteLine("All lines processed successfully.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error: " + ex.Message);
+        }
+    }
+
+    async static Task ProcessLine(string line, NovuClient novu)
+    {
+
+        string[] data = line.Split(",");
+
+        var additionalData = new List<AdditionalDataDto>
+        {
+        new AdditionalDataDto
+        {
+            Key = "Address",
+            Value = data[7]
+        },
+        new AdditionalDataDto
+        {
+            Key = "Job",
+            Value = data[8]
+        }
+        };
+
+        var newSubscriberDto = new CreateSubscriberDto
+        {
+        SubscriberId = data[0],
+        FirstName = data[1],
+        LastName = data[2],
+        Email = data[3],
+        Phone = data[4],
+        Locale = data[5],
+        Avatar = data[6],
+        Data = additionalData
+        };
+
+        var subscriber = await novu.Subscriber.CreateSubscriber(newSubscriberDto);
+        Console.WriteLine("added " +  subscriber.Email);
+    }
+}
+```
+
+  </TabItem>
 </Tabs>
 
 ### Steps:-
