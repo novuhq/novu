@@ -9,6 +9,7 @@ describe('Creation functionality', function () {
     cy.waitLoadTemplatePage(() => {
       cy.visit('/workflows/create');
     });
+    cy.waitForNetworkIdle(500);
     cy.getByTestId('settings-page').click();
     cy.waitForNetworkIdle(500);
     cy.getByTestId('title').clear().first().type('Test Notification Title');
@@ -44,6 +45,7 @@ describe('Creation functionality', function () {
     cy.waitLoadTemplatePage(() => {
       cy.visit('/workflows/create');
     });
+    cy.waitForNetworkIdle(500);
 
     cy.getByTestId('settings-page').click();
 
@@ -92,6 +94,7 @@ describe('Creation functionality', function () {
     cy.waitLoadTemplatePage(() => {
       cy.visit('/workflows/create');
     });
+    cy.waitForNetworkIdle(500);
     cy.getByTestId('settings-page').click();
     cy.getByTestId('title').clear().first().type('Test Notification Title');
     cy.getByTestId('description').type('This is a test description for a test title');
@@ -248,6 +251,8 @@ describe('Creation functionality', function () {
     cy.waitLoadTemplatePage(() => {
       cy.visit('/workflows/create');
     });
+    cy.waitForNetworkIdle(500);
+
     cy.getByTestId('settings-page').click();
 
     cy.getByTestId('title').first().clear().type('Test Notification Title');
@@ -330,6 +335,7 @@ describe('Creation functionality', function () {
     cy.waitLoadTemplatePage(() => {
       cy.visit('/workflows/create');
     });
+    cy.waitForNetworkIdle(500);
 
     cy.getByTestId('settings-page').click();
     cy.getByTestId('title').first().clear().type('Test Notification Title');
@@ -451,6 +457,7 @@ describe('Creation functionality', function () {
     cy.waitLoadTemplatePage(() => {
       cy.visit('/workflows/create');
     });
+    cy.waitForNetworkIdle(500);
 
     fillBasicNotificationDetails('Test 15 Nodes');
     goBack();
