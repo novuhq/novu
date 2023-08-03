@@ -8,7 +8,7 @@
     "preinstall": "npx only-allow pnpm",
     "prepare": "husky install",
     "publish": "lerna publish from-package",
-    "setup:project": "npx --yes pnpm@7.28.0 i && node scripts/setup-env-files.js && pnpm build",
+    "setup:project": "npx --yes pnpm@7.33.4 i && node scripts/setup-env-files.js && pnpm build",
     "install:docs": "pnpm install --filter @novu/docs",
     "clean": "lerna clean --yes && npm run prebuild",
     "commit": "cz",
@@ -188,7 +188,7 @@
   },
   "engines": {
     "node": ">=13.0.0 <17.0.0",
-    "pnpm": "^7.26.0"
+    "pnpm": "^7.33.4"
   },
   "dependencies": {
     "nx": "^15.9.2",
