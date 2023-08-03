@@ -46,7 +46,7 @@ export function HeaderNav({ isIntercomOpened }: Props) {
   const dark = colorScheme === 'dark';
   const { addItem, removeItems } = useSpotlightContext();
   const { boot } = useIntercom();
-  const isSelfHosted = !IS_DOCKER_HOSTED;
+  const isSelfHosted = IS_DOCKER_HOSTED;
 
   useEffect(() => {
     const shouldBootIntercom = !!INTERCOM_APP_ID && currentUser && currentOrganization;
