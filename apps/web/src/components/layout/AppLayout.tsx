@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { AppShell } from '@mantine/core';
 import * as Sentry from '@sentry/react';
 import { Outlet } from 'react-router-dom';
@@ -14,11 +15,17 @@ import { SpotLight } from '../utils/Spotlight';
 import { SpotLightProvider } from '../providers/SpotlightProvider';
 
 export function AppLayout() {
+  const [isIntercomOpened, setIsIntercomOpened] = useState(false);
+
   return (
     <RequiredAuth>
       <SpotLightProvider>
         <ThemeProvider>
-          <IntercomProvider appId={INTERCOM_APP_ID}>
+          <IntercomProvider
+            appId={INTERCOM_APP_ID}
+            onShow={() => setIsIntercomOpened(true)}
+            onHide={() => setIsIntercomOpened(false)}
+          >
             <AppShell
               padding="lg"
               navbar={<SideNav />}
@@ -57,7 +64,7 @@ export function AppLayout() {
                 )}
               >
                 <SpotLight>
-                  <HeaderNav />
+                  <HeaderNav isIntercomOpened={isIntercomOpened} />
                   <Outlet />
                 </SpotLight>
               </Sentry.ErrorBoundary>

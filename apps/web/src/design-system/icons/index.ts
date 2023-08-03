@@ -71,6 +71,7 @@ export { ChatFilled } from './general/ChatFilled';
 export { PushFilled } from './general/PushFilled';
 export { BoltFilled } from './general/BoltFilled';
 export { BoltOffFilled } from './general/BoltOffFilled';
+export { Question } from './general/Question';
 
 export { Copy } from './actions/Copy';
 export { Close } from './actions/Close';
