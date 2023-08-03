@@ -67,7 +67,9 @@ export function SelectProviderSidebar({
         integration.channel === ChannelTypeEnum.IN_APP && integration.providerId === InAppProviderIdEnum.Novu
     ).length;
 
-    setSelectedTab(ChannelTypeEnum.EMAIL);
+    if (count === 2) {
+      setSelectedTab(ChannelTypeEnum.EMAIL);
+    }
 
     return count;
   }, [integrations]);
