@@ -21,6 +21,7 @@ const createNovuIntegration = async (
   channel: ChannelTypeEnum.EMAIL | ChannelTypeEnum.SMS
 ) => {
   const providerId = channel === ChannelTypeEnum.SMS ? SmsProviderIdEnum.Novu : EmailProviderIdEnum.Novu;
+  const name = channel === ChannelTypeEnum.SMS ? 'Novu SMS' : 'Novu Email';
 
   const count = await integrationRepository.count({
     _environmentId: environment._id,
@@ -44,7 +45,8 @@ const createNovuIntegration = async (
     _organizationId: environment._organizationId,
     providerId,
     channel,
-    identifier: `${slugify(providerId, { lower: true, strict: true })}-${shortid.generate()}`,
+    name,
+    identifier: `${slugify(name, { lower: true, strict: true })}-${shortid.generate()}`,
     active: countChannelIntegrations === 0,
   });
 
