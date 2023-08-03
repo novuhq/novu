@@ -35,6 +35,8 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
   {
     accessor: 'name',
     Header: 'Name & Trigger ID',
+    width: 340,
+    maxWidth: 340,
     Cell: withCellLoading(({ row: { original } }) => (
       <Tooltip label={original.name}>
         <div>
@@ -48,9 +50,9 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
   },
   {
     accessor: 'notificationGroup',
-    Header: 'Category',
-    width: 150,
-    maxWidth: 150,
+    Header: 'Group',
+    width: 240,
+    maxWidth: 240,
     Cell: withCellLoading(({ row: { original } }) => (
       <StyledTag data-test-id="category-label"> {original.notificationGroup?.name}</StyledTag>
     )),
@@ -58,6 +60,8 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
   {
     accessor: 'createdAt',
     Header: 'Created At',
+    width: 314,
+    maxWidth: 314,
     Cell: withCellLoading(({ row: { original } }) => (
       <Text rows={1}>{format(new Date(original.createdAt ?? ''), 'dd.MM.yyyy')}</Text>
     )),
@@ -65,8 +69,7 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
   {
     accessor: 'status',
     Header: 'Status',
-    width: 125,
-    maxWidth: 125,
+    maxWidth: 100,
     Cell: withCellLoading(({ row: { original } }) => (
       <>
         {!original.active ? (
