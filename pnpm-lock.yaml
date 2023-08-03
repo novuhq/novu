@@ -326,6 +326,7 @@ importers:
       '@novu/shared': ^0.17.1
       '@sentry/node': ^7.12.1
       '@types/express': ^4.17.8
+      '@types/html-to-text': ^9.0.1
       '@types/node': ^14.14.6
       '@types/smtp-server': ^3.5.7
       bluebird: ^2.9.30
@@ -374,6 +375,7 @@ importers:
       winston: 1.1.2
     devDependencies:
       '@types/express': 4.17.17
+      '@types/html-to-text': 9.0.1
       '@types/node': 14.18.42
       '@types/smtp-server': 3.5.7
       cross-env: 7.0.3
@@ -21791,6 +21793,10 @@ packages:
 
   /@types/html-minifier-terser/6.1.0:
     resolution: {integrity: sha512-oh/6byDPnL1zeNXFrDXFLyZjkr1MsBG667IM792caf1L2UPOOMf65NFzjUH/ltyfwjAGfs1rsX1eftK0jC/KIg==}
+
+  /@types/html-to-text/9.0.1:
+    resolution: {integrity: sha512-sHu702QGb0SP2F0Zt+CxdCmGZIZ0gEaaCjqOh/V4iba1wTxPVntEPOM/vHm5bel08TILhB3+OxUTkDJWnr/zHQ==}
+    dev: true
 
   /@types/http-proxy/1.17.10:
     resolution: {integrity: sha512-Qs5aULi+zV1bwKAg5z1PWnDXWmsn+LxIvUGv6E2+OOMYhclZMO+OXd9pYVf2gLykf2I7IV2u7oTHwChPNsvJ7g==}
