@@ -15,7 +15,7 @@ import { useIntegrations, useIsMultiProviderConfigurationEnabled } from '../../h
 import type { IIntegratedProvider, IntegrationEntity } from './types';
 import { IS_DOCKER_HOSTED } from '../../config';
 
-export const NOVU_PROVIDERS: ProvidersIdEnum[] = [SmsProviderIdEnum.Novu, EmailProviderIdEnum.Novu];
+export const NOVU_SMS_EMAIL_PROVIDERS: ProvidersIdEnum[] = [SmsProviderIdEnum.Novu, EmailProviderIdEnum.Novu];
 
 /*
  * temporary patch before migration script
@@ -36,7 +36,7 @@ function fcmFallback(integration: IntegrationEntity | undefined, clonedCredentia
 
 function initializeProviders(integrations: IntegrationEntity[]): IIntegratedProvider[] {
   return providers
-    .filter((provider) => !NOVU_PROVIDERS.includes(provider.id))
+    .filter((provider) => !NOVU_SMS_EMAIL_PROVIDERS.includes(provider.id))
     .map((providerItem) => {
       const integration = integrations.find((integrationItem) => integrationItem.providerId === providerItem.id);
 
@@ -77,7 +77,7 @@ function initializeProvidersByIntegration(integrations: IntegrationEntity[]): II
         return true;
       }
 
-      return !NOVU_PROVIDERS.includes(integrationItem.providerId);
+      return !NOVU_SMS_EMAIL_PROVIDERS.includes(integrationItem.providerId);
     })
     .map((integrationItem) => {
       const providerItem = providers.find((provItem) => integrationItem.providerId === provItem.id) as IProviderConfig;

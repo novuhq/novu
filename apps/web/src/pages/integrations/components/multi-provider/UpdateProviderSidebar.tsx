@@ -209,10 +209,7 @@ export function UpdateProviderSidebar({
           isOpened={isSidebarOpened}
           isLoading={areProvidersLoading || areEnvironmentsLoading}
           onClose={onSidebarClose}
-          onSubmit={(e) => {
-            handleSubmit(onUpdateIntegration)(e);
-            e.stopPropagation();
-          }}
+          onSubmit={onSubmit}
           customHeader={
             <UpdateIntegrationSidebarHeader provider={selectedProvider} onSuccessDelete={onSidebarClose}>
               <Free>Test Provider</Free>
