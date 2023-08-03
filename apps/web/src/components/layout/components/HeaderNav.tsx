@@ -158,7 +158,7 @@ export function HeaderNav({}: Props) {
   return (
     <Header
       height={`${HEADER_HEIGHT}px`}
-      sx={(theme) => ({
+      sx={{
         position: 'sticky',
         top: 0,
         borderBottom: 'none',
