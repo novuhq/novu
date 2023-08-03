@@ -37,10 +37,6 @@ import {
   ProcessSubscriberCommand,
 } from '../process-subscriber';
 import { ApiException } from '../../utils/exceptions';
-import {
-  GetNovuIntegration,
-  GetNovuIntegrationCommand,
-} from '../get-novu-integration';
 
 const LOG_CONTEXT = 'TriggerEventUseCase';
 
@@ -51,7 +47,6 @@ export class TriggerEvent {
     private createNotificationJobs: CreateNotificationJobs,
     private processSubscriber: ProcessSubscriber,
     private integrationRepository: IntegrationRepository,
-    private getNovuIntegration: GetNovuIntegration,
     protected performanceService: EventsPerformanceService,
     private jobRepository: JobRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
@@ -104,8 +99,6 @@ export class TriggerEvent {
     }
 
     const templateProviderIds = await this.getProviderIdsForTemplate(
-      command.userId,
-      command.organizationId,
       command.environmentId,
       template
     );
@@ -219,8 +212,6 @@ export class TriggerEvent {
 
   @InstrumentUsecase()
   private async getProviderIdsForTemplate(
-    userId: string,
-    organizationId: string,
     environmentId: string,
     template: NotificationTemplateEntity
   ): Promise<Record<ChannelTypeEnum, ProvidersIdEnum>> {
@@ -237,8 +228,6 @@ export class TriggerEvent {
             providers[channelType] = InAppProviderIdEnum.Novu;
           } else {
             const provider = await this.getProviderId(
-              userId,
-              organizationId,
               environmentId,
               channelType
             );
@@ -255,12 +244,10 @@ export class TriggerEvent {
 
   @Instrument()
   private async getProviderId(
-    userId: string,
-    organizationId: string,
     environmentId: string,
     channelType: ChannelTypeEnum
   ): Promise<ProvidersIdEnum> {
-    let integration = await this.integrationRepository.findOne(
+    const integration = await this.integrationRepository.findOne(
       {
         _environmentId: environmentId,
         active: true,
@@ -268,17 +255,6 @@ export class TriggerEvent {
       },
       'providerId'
     );
-
-    if (!integration) {
-      integration = await this.getNovuIntegration.execute(
-        GetNovuIntegrationCommand.create({
-          channelType: channelType,
-          organizationId: organizationId,
-          environmentId: environmentId,
-          userId: userId,
-        })
-      );
-    }
 
     return integration?.providerId as ProvidersIdEnum;
   }
