@@ -45,6 +45,7 @@ interface ITemplateButtonProps {
   onDelete?: () => void;
   dragging?: boolean;
   disabled?: boolean;
+  description?: string;
 }
 
 const usePopoverStyles = createStyles(() => ({
@@ -83,6 +84,7 @@ export function WorkflowNode({
   onDelete = () => {},
   dragging = false,
   disabled: initDisabled,
+  description,
 }: ITemplateButtonProps) {
   const segment = useSegment();
   const { readonly: readonlyEnv } = useEnvController();
@@ -164,11 +166,18 @@ export function WorkflowNode({
       >
         <ButtonWrapper>
           <LeftContainerWrapper>
-            <IconWrapper className={classes.linkIcon}>{Icon ? <Icon {...disabledProp} /> : null}</IconWrapper>
+            <IconWrapper className={classes.linkIcon}>
+              {Icon ? <Icon {...disabledProp} width="32px" height="32px" /> : null}
+            </IconWrapper>
             <StyledContentWrapper>
               <Text {...disabledColor} weight="bold">
                 {label}
               </Text>
+              {description && (
+                <Text {...disabledColor} size={12} color={colors.B60}>
+                  {description}
+                </Text>
+              )}
             </StyledContentWrapper>
           </LeftContainerWrapper>
 
@@ -321,6 +330,7 @@ const UnstyledButtonStyled = styled.div`
   position: relative;
   pointer-events: all;
   background-color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B17 : colors.white)};
+  width: 280px;
 
   @media screen and (max-width: 1400px) {
     padding: 0 5px;

@@ -157,8 +157,8 @@ export function HeaderNav({}: Props) {
 
   return (
     <Header
-      height={HEADER_HEIGHT}
-      sx={{
+      height={`${HEADER_HEIGHT}px`}
+      sx={(theme) => ({
         position: 'sticky',
         top: 0,
         borderBottom: 'none',
@@ -166,7 +166,7 @@ export function HeaderNav({}: Props) {
     >
       <Container
         fluid
-        style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', height: HEADER_HEIGHT }}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', height: `${HEADER_HEIGHT}px` }}
       >
         <Group>
           <ActionIcon variant="transparent" onClick={() => toggleColorScheme()}>

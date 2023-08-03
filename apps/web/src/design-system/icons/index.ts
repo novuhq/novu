@@ -63,6 +63,13 @@ export { JavaScriptLogo } from './general/JavaScriptLogo';
 export { VueLogo } from './general/VueLogo';
 export { IframeLogo } from './general/IframeLogo';
 export { NovuLogo } from './general/NovuLogo';
+export { DelayAction } from './general/DelayAction';
+export { DigestAction } from './general/DigestAction';
+export { InAppFilled } from './general/InAppFilled';
+export { EmailFilled } from './general/EmailFilled';
+export { SmsFilled } from './general/SmsFilled';
+export { ChatFilled } from './general/ChatFilled';
+export { PushFilled } from './general/PushFilled';
 
 export { Copy } from './actions/Copy';
 export { Close } from './actions/Close';
@@ -112,5 +119,6 @@ export { VueGradient } from './gradient/VueGradient';
 export { JsGradient } from './gradient/JsGradient';
 export { CodeGradient } from './gradient/CodeGradient';
 export { DisconnectGradient } from './gradient/DisconnectGradient';
+export { BoltOutlinedGradient } from './gradient/BoltOutlinedGradient';
 
 export { GitHub } from './social/GitHub';
