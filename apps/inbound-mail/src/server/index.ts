@@ -1,7 +1,7 @@
 import { MailParser } from 'mailparser';
 import * as _ from 'lodash';
 import * as Promise from 'bluebird';
-import * as htmlToText from 'html-to-text';
+import { convert } from 'html-to-text';
 import * as events from 'events';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -517,7 +517,7 @@ class Mailin extends events.EventEmitter {
   }
 
   public _convertHtmlToText(html) {
-    return htmlToText.fromString(html);
+    return convert(html);
   }
 }
 
