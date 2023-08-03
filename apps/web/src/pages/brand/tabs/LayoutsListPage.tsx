@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import { ActionIcon, Group, UnstyledButton, useMantineTheme } from '@mantine/core';
+import { ActionIcon, useMantineTheme } from '@mantine/core';
 import type { ILayoutEntity } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -9,10 +9,11 @@ import { deleteLayoutById } from '../../../api/layouts';
 import { QueryKeys } from '../../../api/query.keys';
 import { When } from '../../../components/utils/When';
 import { colors, Text, Tooltip, withCellLoading } from '../../../design-system';
-import { Edit, PlusFilled, Trash } from '../../../design-system/icons';
+import { Edit, Trash } from '../../../design-system/icons';
 import { IExtendedColumn, Table } from '../../../design-system/table/Table';
 import { useEnvController, useLayouts } from '../../../hooks';
 import { errorMessage, successMessage } from '../../../utils/notifications';
+import PageHeaderToolbar from '../../integrations/components/PageHeaderToolbar';
 import { DeleteConfirmModal } from '../../templates/components/DeleteConfirmModal';
 import { LayoutEditor } from './LayoutEditor';
 
@@ -163,20 +164,15 @@ export function LayoutsListPage({ handleLayoutAnalytics }: LayoutsListPageProps)
             marginTop: '10px',
           }}
         >
-          <UnstyledButton
+          <PageHeaderToolbar
+            isGradient={!readonly}
+            label="Add New Layout"
             disabled={readonly || isLoading || isLoadingDelete}
             onClick={() => {
               setActiveScreen(ActivePageEnum.CREATE_LAYOUT);
               handleLayoutAnalytics('Create new layout btn clicked');
             }}
-          >
-            <Group spacing={8}>
-              <PlusFilled width={24} height={24} />
-              <Text gradient={!readonly} color={colors.B60} weight="bold">
-                Add New Layout
-              </Text>
-            </Group>
-          </UnstyledButton>
+          />
         </div>
 
         <TemplateListTableWrapper>
