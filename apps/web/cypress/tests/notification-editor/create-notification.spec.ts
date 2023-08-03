@@ -295,9 +295,9 @@ describe('Creation functionality', function () {
     cy.waitLoadTemplatePage(() => {
       cy.visit('/workflows/create');
     });
+    cy.waitForNetworkIdle(500);
 
     dragAndDrop('digest');
-    cy.waitForNetworkIdle(500);
 
     cy.clickWorkflowNode('node-digestSelector');
     cy.waitForNetworkIdle(500);

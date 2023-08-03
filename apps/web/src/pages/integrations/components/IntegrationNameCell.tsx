@@ -68,7 +68,7 @@ export const IntegrationNameCell = ({ row: { original }, isLoading }: IExtendedC
             <Free>Test Provider</Free>
           )}
         </NameHolder>
-        {original.identifier && <Identifier>Key: {original.identifier}</Identifier>}
+        {original.identifier && <Identifier>Provider identifier: {original.identifier}</Identifier>}
       </DetailsHolder>
     </CellHolder>
   );
