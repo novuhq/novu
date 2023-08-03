@@ -71,7 +71,7 @@ const ContentRender = ({ index, control, payload }) => {
     } catch (e) {}
   }, [content, payload]);
 
-  return <>{compiledContent}</>;
+  return <span data-test-id="in-app-content-preview" dangerouslySetInnerHTML={{ __html: compiledContent }} />;
 };
 
 function ContentContainerController({ control, index }: { control: Control<IForm>; index: number }) {
