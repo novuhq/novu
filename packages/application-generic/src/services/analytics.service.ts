@@ -99,10 +99,14 @@ export class AnalyticsService {
 
   track(name: string, userId: string, data: Record<string, unknown> = {}) {
     if (this.segmentEnabled) {
-      Logger.log('Tracking event: ' + name, {
-        name,
-        data,
-      });
+      Logger.log(
+        'Tracking event: ' + name,
+        {
+          name,
+          data,
+        },
+        LOG_CONTEXT
+      );
 
       try {
         this.segment.track({

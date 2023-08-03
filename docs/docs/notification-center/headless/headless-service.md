@@ -16,7 +16,7 @@ npm install @novu/headless
 Then, in your project import the headless service:
 
 ```js
-import { HeadlessService } from '@novu/headless';
+import { HeadlessService, FetchResult, ISession } from '@novu/headless';
 ```
 
 ## Initialize the session
@@ -70,6 +70,8 @@ headlessService.initializeSession({
 ## Fetch Notifications
 
 ```js
+import { IPaginatedResponse, IMessage } from '@novu/headless';
+
 headlessService.fetchNotifications({
   listener: ({ data, error, isError, isFetching, isLoading, status }) => {
     console.log({ data, error, isError, isFetching, isLoading, status });

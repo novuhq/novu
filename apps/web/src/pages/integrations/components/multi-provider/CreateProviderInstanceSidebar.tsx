@@ -2,9 +2,9 @@ import { ActionIcon, Group, Radio, Text } from '@mantine/core';
 import { useEffect, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
-import { ICreateIntegrationBodyDto, providers } from '@novu/shared';
+import { ChannelTypeEnum, ICreateIntegrationBodyDto, providers } from '@novu/shared';
 
-import { colors, NameInput, Button, Sidebar } from '../../../../design-system';
+import { Button, colors, NameInput, Sidebar } from '../../../../design-system';
 import { ArrowLeft } from '../../../../design-system/icons';
 import { inputStyles } from '../../../../design-system/config/inputs.styles';
 import { useFetchEnvironments } from '../../../../hooks/useFetchEnvironments';
@@ -66,7 +66,7 @@ export function CreateProviderInstanceSidebar({
         channel: provider.channel,
         name: data.name,
         credentials: {},
-        active: false,
+        active: provider.channel === ChannelTypeEnum.IN_APP ? true : false,
         check: false,
         _environmentId: data.environmentId,
       });

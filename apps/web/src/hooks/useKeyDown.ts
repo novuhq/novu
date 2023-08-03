@@ -14,5 +14,5 @@ export const useKeyDown = (key: string, callback: () => void) => {
     document.addEventListener('keydown', handleKeyDown);
 
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [callbackRef, key]);
 };

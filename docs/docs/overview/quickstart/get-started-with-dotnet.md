@@ -68,7 +68,6 @@ using Novu;
 };
 
 var novu = new NovuClient(novuConfiguration);
-
 ```
 
 Replace the `ApiKey`’s value with the authentic key from the **API Key** section of your [Novu Dashboard](https://web.novu.co/settings) and be sure to use your specific Novu instance URL.
@@ -121,8 +120,7 @@ Please proceed to create a notification workflow.
 5. Click on the recently added channel, fill the email subject and click **Update**.
    ![Update](https://res.cloudinary.com/dxc6bnman/image/upload/f_auto,q_auto/v1685466074/guides/update_email_template_1_exxybg.png)
 6. Click on the **Test** tab and send a test email to verify your notification workflow.
-
-![Test](https://res.cloudinary.com/dxc6bnman/image/upload/f_auto,q_auto/v1685466786/guides/send_test_email_1_goyknt.png)
+   ![Test](https://res.cloudinary.com/dxc6bnman/image/upload/f_auto,q_auto/v1685466786/guides/send_test_email_1_goyknt.png)
 
 You should get an email within seconds. Yaaay, you have successfully sent your first notification via the Novu dashboard!
 
@@ -162,8 +160,6 @@ var newSubscriberDto = new CreateSubscriberDto
     }
   }
 };
-
-
 
 var subscriber = await novu.Subscriber.CreateSubscriber(newSubscriberDto);
 
@@ -242,7 +238,6 @@ if (trigger.TriggerResponsePayloadDto.Acknowledged)
   Console.WriteLine("Trigger has been created.");
 }
 
-
 ```
 
 Before running the code, make sure you understand the following:
@@ -288,8 +283,6 @@ var topicRequest = new TopicCreateDto
 };
 
 var topic = await novu.Topic.CreateTopicAsync(topicRequest);
-
-
 
 ```
 
@@ -349,8 +342,6 @@ if (triggerTopic.TriggerResponsePayloadDto.Acknowledged);
 {
   Console.WriteLine("Trigger has been created.");
 }
-
-
 
 ```
 

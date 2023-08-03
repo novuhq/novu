@@ -1,13 +1,15 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect } from 'react';
 import debounce from 'lodash.debounce';
 
+import { useDataRef } from './useDataRef';
+
 export const useDebounce = <Arguments = unknown | unknown[]>(callback: (args: Arguments) => void, ms = 0) => {
-  const callbackRef = useRef(callback);
-  callbackRef.current = callback;
+  const callbackRef = useDataRef(callback);
 
-  const debouncedCallback = useCallback(debounce(callbackRef.current, ms), [ms]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const debouncedCallback = useCallback(debounce(callbackRef.current, ms), [callbackRef, ms]);
 
-  useEffect(() => debouncedCallback.cancel, []);
+  useEffect(() => debouncedCallback.cancel, [debouncedCallback.cancel]);
 
   return debouncedCallback;
 };

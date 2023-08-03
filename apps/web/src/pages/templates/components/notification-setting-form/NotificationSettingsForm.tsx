@@ -136,7 +136,7 @@ export const NotificationSettingsForm = ({ trigger }: { trigger?: INotificationT
               data-test-id="trigger-id"
               value={field.value || ''}
               error={fieldState.error?.message}
-              label="Identifier"
+              label="Trigger identifier"
               disabled={readonly}
               rightSection={
                 <Tooltip data-test-id={'Tooltip'} label={idClipboard.copied ? 'Copied!' : 'Copy Key'}>

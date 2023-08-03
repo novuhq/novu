@@ -1,4 +1,4 @@
-import { NotificationStepDto } from './notification-template.dto';
+import { NotificationStepDto } from '../workflows/workflow.dto';
 
 export interface IUpdateNotificationTemplateDto {
   name?: string;

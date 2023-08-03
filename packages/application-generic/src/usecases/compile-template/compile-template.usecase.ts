@@ -66,7 +66,7 @@ Handlebars.registerHelper(
 );
 
 Handlebars.registerHelper(
-  HandlebarHelpersEnum.GROUPBY,
+  HandlebarHelpersEnum.GROUP_BY,
   function (array, property) {
     if (!Array.isArray(array)) return [];
     const map = {};
