@@ -14,3 +14,4 @@ export * from './topic';
 export * from './analytics';
 export * from './user';
 export * from './tenant';
+export * from './messages';

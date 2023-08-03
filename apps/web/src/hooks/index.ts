@@ -13,7 +13,6 @@ export * from './useNotificationGroup';
 export * from './useNovu';
 export * from './useProcessVariables';
 export * from './usePrompt';
-export * from './useSearchParams';
 export * from './useSubscribers';
 export * from './useTemplates';
 export * from './useVariablesManager';

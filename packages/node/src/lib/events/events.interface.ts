@@ -1,6 +1,12 @@
+export interface IEvents {
+  trigger(workflowIdentifier: string, data: ITriggerPayloadOptions);
+  broadcast(workflowIdentifier: string, data: IBroadcastPayloadOptions);
+  bulkTrigger(events: IBulkEvents[]);
+  cancel(transactionId: string);
+}
+
 import {
   DigestUnitEnum,
-  IAttachmentOptions,
   ITriggerPayload,
   TriggerRecipientSubscriber,
   TriggerRecipientsPayload,
@@ -16,14 +22,17 @@ export interface ITriggerPayloadOptions extends IBroadcastPayloadOptions {
   actor?: TriggerRecipientSubscriber;
   transactionId?: string;
 }
-
-export interface IEmailOverrides {
+export interface IIntegrationOverride {
+  integrationIdentifier: string;
+}
+export interface IEmailOverrides extends IIntegrationOverride {
   to?: string[];
   from?: string;
   text?: string;
   replyTo?: string;
   cc?: string[];
   bcc?: string[];
+  senderName?: string;
 }
 
 export type ITriggerOverrides = {
@@ -44,6 +53,8 @@ export type ITriggerOverrides = {
   [key in 'delay']?: ITriggerOverrideDelayAction;
 } & {
   [key in 'email']?: IEmailOverrides;
+} & {
+  [key in 'sms']?: IIntegrationOverride;
 };
 
 export type ITriggerOverrideDelayAction = {
@@ -65,7 +76,7 @@ export type ITriggerOverrideFCM = {
   clickAction?: string;
   titleLocKey?: string;
   titleLocArgs?: string;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
 };
 
 export type IAPNSAlert = {

@@ -47,10 +47,6 @@ export class UpdateIntegration {
       }
     }
 
-    if (command.active && Object.keys(command.credentials ?? {}).length === 0) {
-      throw new BadRequestException('The credentials are required to activate the integration');
-    }
-
     this.analyticsService.track('Update Integration - [Integrations]', command.userId, {
       providerId: existingIntegration.providerId,
       channel: existingIntegration.channel,

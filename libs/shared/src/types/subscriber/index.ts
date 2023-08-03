@@ -1,3 +1,4 @@
+import { ChannelTypeEnum } from '../channel';
 import { CustomDataType } from '../shared';
 
 export type ExternalSubscriberId = string;
@@ -18,4 +19,9 @@ export interface ISubscriberPayload {
 
 export interface ISubscribersDefine extends ISubscriberPayload {
   subscriberId: string;
+}
+
+export enum PreferenceOverrideSourceEnum {
+  SUBSCRIBER = 'subscriber',
+  TEMPLATE = 'template',
 }

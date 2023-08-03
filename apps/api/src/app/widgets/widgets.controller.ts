@@ -17,7 +17,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeController, ApiNoContentResponse, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { AnalyticsService, GetSubscriberPreference, GetSubscriberPreferenceCommand } from '@novu/application-generic';
 import { MessageEntity, SubscriberEntity } from '@novu/dal';
-import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
+import { MarkMessagesAsEnum, ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 
 import { SubscriberSession } from '../shared/framework/user.decorator';
 import {
@@ -123,8 +123,7 @@ export class WidgetsController {
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Query('feedIdentifier') feedId: string[] | string,
     @Query('seen') seen: boolean,
-    // todo NV-2161 in version 0.16: update DefaultValuePipe to 100 and limit-pipe max to 100
-    @Query('limit', new DefaultValuePipe(1000), new LimitPipe(1, 1000, true)) limit: number
+    @Query('limit', new DefaultValuePipe(100), new LimitPipe(1, 100, true)) limit: number
   ): Promise<UnseenCountResponse> {
     const feedsQuery = this.toArray(feedId);
 
@@ -146,8 +145,7 @@ export class WidgetsController {
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Query('feedIdentifier') feedId: string[] | string,
     @Query('read') read: boolean,
-    // todo NV-2161 in version 0.16: update DefaultValuePipe to 100 and limit-pipe max to 100
-    @Query('limit', new DefaultValuePipe(1000), new LimitPipe(1, 1000, true)) limit: number
+    @Query('limit', new DefaultValuePipe(100), new LimitPipe(1, 100, true)) limit: number
   ): Promise<UnseenCountResponse> {
     const feedsQuery = this.toArray(feedId);
 
@@ -168,8 +166,7 @@ export class WidgetsController {
   async getCount(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Query() query: GetCountQuery,
-    // todo NV-2161 in version 0.16: update DefaultValuePipe to 100 and limit-pipe max to 100
-    @Query('limit', new DefaultValuePipe(1000), new LimitPipe(1, 1000, true)) limit: number
+    @Query('limit', new DefaultValuePipe(100), new LimitPipe(1, 100, true)) limit: number
   ): Promise<UnseenCountResponse> {
     const feedsQuery = this.toArray(query.feedIdentifier);
 
@@ -269,8 +266,8 @@ export class WidgetsController {
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,
-      markAs: 'read',
-      feedIds,
+      markAs: MarkMessagesAsEnum.READ,
+      feedIdentifiers: feedIds,
     });
 
     return await this.markAllMessagesAsUsecase.execute(command);
@@ -290,8 +287,8 @@ export class WidgetsController {
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,
-      markAs: 'seen',
-      feedIds,
+      markAs: MarkMessagesAsEnum.SEEN,
+      feedIdentifiers: feedIds,
     });
 
     return await this.markAllMessagesAsUsecase.execute(command);

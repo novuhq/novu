@@ -34,7 +34,7 @@ import { When } from '../../components/utils/When';
 const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
   {
     accessor: 'id',
-    Header: 'Trigger ID',
+    Header: 'Trigger identifier',
     Cell: withCellLoading(({ row: { original } }) => (
       <Tooltip label={original.triggers ? original.triggers[0].identifier : 'Unknown'}>
         <Text rows={1}>{original.triggers ? original.triggers[0].identifier : 'Unknown'}</Text>
@@ -73,7 +73,7 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
     maxWidth: 125,
     Cell: withCellLoading(({ row: { original } }) => (
       <>
-        {original.draft ? (
+        {!original.active ? (
           <Badge variant="outline" size="md" color="yellow">
             Disabled
           </Badge>

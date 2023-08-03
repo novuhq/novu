@@ -32,15 +32,15 @@ describe('Get Decrypted Integrations - /integrations (GET)', function () {
 
     const result = (await session.testAgent.get(`/v1/integrations/active`)).body.data;
 
-    // We expect to find the test data 15 with the email one
-    expect(result.length).to.eq(15);
+    // We expect to find the test data 13 with the email one
+    expect(result.length).to.eq(13);
 
     const activeEmailIntegrations = result.filter(
       (integration) =>
         integration.channel == ChannelTypeEnum.EMAIL && integration._environmentId === session.environment._id
     );
 
-    expect(activeEmailIntegrations.length).to.eq(3);
+    expect(activeEmailIntegrations.length).to.eq(2);
 
     const mailgun = activeEmailIntegrations.find((el) => el.providerId === EmailProviderIdEnum.Mailgun);
 

@@ -4,7 +4,7 @@ import { useClipboard } from '@mantine/hooks';
 
 import { Input, Switch } from '../../../design-system';
 import { Check, Copy } from '../../../design-system/icons';
-import { IIntegratedProvider } from '../IntegrationsStorePage';
+import type { IIntegratedProvider } from '../types';
 
 const CopyWrapper = styled.div`
   cursor: pointer;
@@ -51,6 +51,7 @@ export const UpdateIntegrationCommonFields = ({ provider }: { provider: IIntegra
             required
             label="Name"
             error={errors.name?.message}
+            data-test-id="provider-instance-name"
           />
         )}
       />
@@ -59,23 +60,24 @@ export const UpdateIntegrationCommonFields = ({ provider }: { provider: IIntegra
         name="identifier"
         defaultValue={''}
         rules={{
-          required: 'Required - Instance key',
+          required: 'Required - Provider identifier',
           pattern: {
             value: /^[A-Za-z0-9_-]+$/,
-            message: 'Instance key must contains only alphabetical, numeric, dash or underscore characters',
+            message: 'Provider identifier must contains only alphabetical, numeric, dash or underscore characters',
           },
         }}
         render={({ field }) => (
           <Input
             {...field}
             required
-            label="Instance key"
+            label="Provider identifier"
             error={errors.identifier?.message}
             rightSection={
               <CopyWrapper onClick={() => identifierClipboard.copy(field.value)}>
                 {identifierClipboard.copied ? <Check /> : <Copy />}
               </CopyWrapper>
             }
+            data-test-id="provider-instance-identifier"
           />
         )}
       />

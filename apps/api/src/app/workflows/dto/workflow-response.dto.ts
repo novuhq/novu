@@ -42,7 +42,7 @@ class NotificationTrigger {
 }
 
 @ApiExtraModels(NotificationGroup)
-export class WorkflowsResponse {
+export class WorkflowResponse {
   @ApiPropertyOptional()
   _id?: string;
 

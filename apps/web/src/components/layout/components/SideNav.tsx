@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   Navbar,
   Popover,
@@ -12,14 +12,22 @@ import {
 import styled from '@emotion/styled';
 
 import { colors, NavMenu, SegmentedControl, shadows } from '../../../design-system';
-import { Activity, Bolt, Box, Settings, Team, Repeat, CheckCircleOutlined, Brand } from '../../../design-system/icons';
+import {
+  Activity,
+  Bolt,
+  Box,
+  Settings,
+  Team,
+  Repeat,
+  CheckCircleOutlined,
+  Brand,
+  Buildings,
+} from '../../../design-system/icons';
 import { ChangesCountBadge } from './ChangesCountBadge';
-import { useEnvController } from '../../../hooks';
-import { useAuthContext } from '../../providers/AuthProvider';
+import { useEnvController, useIsMultiTenancyEnabled } from '../../../hooks';
 import OrganizationSelect from './OrganizationSelect';
 import { useSpotlightContext } from '../../providers/SpotlightProvider';
 import { HEADER_HEIGHT } from '../constants';
-import { LimitBar } from '../../../pages/integrations/components/LimitBar';
 import { ROUTES } from '../../../constants/routes.enum';
 import { currentOnboardingStep } from '../../../pages/quick-start/components/route/store';
 
@@ -44,23 +52,21 @@ type Props = {};
 
 export function SideNav({}: Props) {
   const navigate = useNavigate();
-  const { setEnvironment, isLoading, environment, readonly } = useEnvController();
-  const { currentUser } = useAuthContext();
-  const location = useLocation();
-  const [opened, setOpened] = useState(readonly);
+  const [opened, setOpened] = useState(false);
+  const { setEnvironment, isLoading, environment, readonly } = useEnvController({
+    onSuccess: (newEnvironment) => {
+      setOpened(!!newEnvironment?._parentId);
+    },
+  });
   const { colorScheme } = useMantineColorScheme();
   const dark = colorScheme === 'dark';
-  const { addItem } = useSpotlightContext();
+  const { addItem, removeItems } = useSpotlightContext();
   const { classes } = usePopoverStyles();
+  const isMultiTenancyEnabled = useIsMultiTenancyEnabled();
 
   useEffect(() => {
-    setOpened(readonly);
-    if (readonly && location.pathname === ROUTES.CHANGES) {
-      navigate(ROUTES.HOME);
-    }
-  }, [readonly]);
+    removeItems(['toggle-environment']);
 
-  useEffect(() => {
     addItem([
       {
         id: 'toggle-environment',
@@ -70,7 +76,7 @@ export function SideNav({}: Props) {
         },
       },
     ]);
-  }, [environment]);
+  }, [environment, addItem, removeItems, setEnvironment]);
 
   const lastStep = currentOnboardingStep().get();
   const getStartedRoute = lastStep === ROUTES.GET_STARTED_PREVIEW ? ROUTES.GET_STARTED : lastStep;
@@ -84,6 +90,13 @@ export function SideNav({}: Props) {
       testId: 'side-nav-quickstart-link',
     },
     { icon: <Bolt />, link: ROUTES.WORKFLOWS, label: 'Workflows', testId: 'side-nav-templates-link' },
+    {
+      condition: isMultiTenancyEnabled,
+      icon: <Buildings />,
+      link: ROUTES.TENANTS,
+      label: 'Tenants',
+      testId: 'side-nav-tenants-link',
+    },
     {
       icon: <Team />,
       link: ROUTES.SUBSCRIBERS,

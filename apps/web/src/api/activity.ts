@@ -6,7 +6,8 @@ export function getActivityList(page = 0, filters) {
     page,
     channels: filters?.channels,
     templates: filters?.templates,
-    search: filters?.search !== '' ? filters?.search : undefined,
+    emails: filters?.email !== '' ? filters?.email : undefined,
+    subscriberIds: filters?.subscriberId !== '' ? filters?.subscriberId : undefined,
     transactionId: filters?.transactionId !== '' ? filters?.transactionId : undefined,
   });
 }
