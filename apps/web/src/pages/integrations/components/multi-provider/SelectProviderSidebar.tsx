@@ -8,6 +8,7 @@ import {
   pushProviders,
   inAppProviders,
   chatProviders,
+  InAppProviderIdEnum,
 } from '@novu/shared';
 
 import { colors, Sidebar } from '../../../../design-system';
@@ -24,6 +25,7 @@ import { getLogoFileName } from '../../../../utils/providers';
 import { sortProviders } from './sort-providers';
 import { When } from '../../../../components/utils/When';
 import { CONTEXT_PATH } from '../../../../config';
+import { useProviders } from '../../useProviders';
 
 const filterSearch = (list, search: string) =>
   list.filter((prov) => prov.displayName.toLowerCase().includes(search.toLowerCase()));
@@ -57,6 +59,18 @@ export function SelectProviderSidebar({
 }) {
   const [providersList, setProvidersList] = useState(initialProvidersList);
   const [selectedTab, setSelectedTab] = useState(ChannelTypeEnum.IN_APP);
+  const { isLoading: isIntegrationsLoading, providers: integrations } = useProviders();
+
+  const inAppCount: number = useMemo(() => {
+    const count = integrations.filter(
+      (integration) =>
+        integration.channel === ChannelTypeEnum.IN_APP && integration.providerId === InAppProviderIdEnum.Novu
+    ).length;
+
+    setSelectedTab(ChannelTypeEnum.EMAIL);
+
+    return count;
+  }, [integrations]);
 
   const [selectedProvider, setSelectedProvider] = useState<IIntegratedProvider | null>(null);
   const { classes: tabsClasses } = useStyles(false);
@@ -96,7 +110,7 @@ export function SelectProviderSidebar({
   const onSidebarClose = () => {
     onClose();
     setProvidersList(initialProvidersList);
-    setSelectedTab(ChannelTypeEnum.IN_APP);
+    setSelectedTab(inAppCount < 2 ? ChannelTypeEnum.IN_APP : ChannelTypeEnum.EMAIL);
   };
 
   useEffect(() => {
@@ -106,6 +120,7 @@ export function SelectProviderSidebar({
   return (
     <Sidebar
       isOpened={isOpened}
+      isLoading={isIntegrationsLoading}
       onClose={onSidebarClose}
       customHeader={
         <Stack spacing={8}>
@@ -172,7 +187,11 @@ export function SelectProviderSidebar({
               const list = providersList[channelType];
 
               return (
-                <Tabs.Tab key={channelType} hidden={list.length === 0} value={channelType}>
+                <Tabs.Tab
+                  key={channelType}
+                  hidden={list.length === 0 || (channelType === ChannelTypeEnum.IN_APP && inAppCount === 2)}
+                  value={channelType}
+                >
                   <ChannelTitle spacing={5} channel={channelType} />
                 </Tabs.Tab>
               );
@@ -194,7 +213,9 @@ export function SelectProviderSidebar({
                   key={channelType}
                   selectedProvider={selectedProvider}
                   onProviderClick={onProviderClick}
-                  channelProviders={providersList[channelType]}
+                  channelProviders={
+                    channelType === ChannelTypeEnum.IN_APP && inAppCount === 2 ? [] : providersList[channelType]
+                  }
                   channelType={channelType}
                 />
               );
