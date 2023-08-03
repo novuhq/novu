@@ -1,9 +1,9 @@
+import styled from '@emotion/styled';
 import { Stack, Title } from '@mantine/core';
-import { colors, DragButton } from '../../../../design-system';
-import { channels, NodeTypeEnum } from '../../../../utils/channels';
-import { useEnvController } from '../../../../hooks';
 import { When } from '../../../../components/utils/When';
-import { StyledNav } from '../WorkflowEditor';
+import { colors, DragButton, Tooltip } from '../../../../design-system';
+import { useEnvController } from '../../../../hooks';
+import { channels, NodeTypeEnum } from '../../../../utils/channels';
 
 export function AddStepMenu({
   setDragging,
@@ -18,6 +18,25 @@ export function AddStepMenu({
     <StyledNav data-test-id="drag-side-menu">
       <div>
         <Title color={colors.B60} size={16} mb={16}>
+          Actions
+        </Title>
+      </div>
+      <When truthy={!readonly}>
+        <Stack spacing={18} mb={16}>
+          {channels
+            .filter((channel) => channel.type === NodeTypeEnum.ACTION)
+            .map((channel, index) => (
+              <DraggableNode key={index} channel={channel} setDragging={setDragging} onDragStart={onDragStart} />
+            ))}
+        </Stack>
+      </When>
+
+      <div
+        style={{
+          marginTop: '24px',
+        }}
+      >
+        <Title color={colors.B60} size={16} mb={16}>
           Channels
         </Title>
       </div>
@@ -30,43 +49,44 @@ export function AddStepMenu({
             ))}
         </Stack>
       </When>
-      <div
-        style={{
-          marginTop: '15px',
-        }}
-      >
-        <Title color={colors.B60} size={16} mb={16}>
-          Actions
-        </Title>
-      </div>
-      <When truthy={!readonly}>
-        <Stack spacing={18}>
-          {channels
-            .filter((channel) => channel.type === NodeTypeEnum.ACTION)
-            .map((channel, index) => (
-              <DraggableNode key={index} channel={channel} setDragging={setDragging} onDragStart={onDragStart} />
-            ))}
-        </Stack>
-      </When>
     </StyledNav>
   );
 }
 
 const DraggableNode = ({ channel, setDragging, onDragStart }) => (
-  <div
-    key={channel.tabKey}
-    data-test-id={`dnd-${channel.testId}`}
-    onDragStart={(event) => {
-      setDragging(true);
-      onDragStart(event, channel.channelType);
-    }}
-    onDragEnd={() => {
-      setDragging(false);
-    }}
-    draggable
-    role="presentation"
-    aria-grabbed="true"
-  >
-    <DragButton Icon={channel.Icon} description={''} label={channel.label} />
-  </div>
+  <Tooltip label={channel.label} position="left" offset={18}>
+    <StyledDraggableNode
+      key={channel.tabKey}
+      data-test-id={`dnd-${channel.testId}`}
+      onDragStart={(event) => {
+        setDragging(true);
+        onDragStart(event, channel.channelType);
+      }}
+      onDragEnd={() => {
+        setDragging(false);
+      }}
+      draggable
+      role="presentation"
+      aria-grabbed="true"
+    >
+      <DragButton Icon={channel.Icon} description={''} />
+    </StyledDraggableNode>
+  </Tooltip>
 );
+
+const StyledNav = styled.div`
+  padding: 16px;
+  background: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B15 : colors.white)};
+  border-radius: 12px;
+  z-index: 3;
+`;
+
+const StyledDraggableNode = styled.div`
+  :hover svg stop:first-child {
+    stop-color: #dd2476 !important;
+  }
+
+  :hover svg stop:last-child {
+    stop-color: #ff512f !important;
+  }
+`;

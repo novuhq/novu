@@ -25,7 +25,7 @@ export function AppLayout() {
               styles={(theme) => ({
                 root: { minHeight: '100vh', position: 'relative', zIndex: 1 },
                 body: {
-                  minHeight: `calc(100vh - ${HEADER_HEIGHT})`,
+                  minHeight: `calc(100vh - ${HEADER_HEIGHT}px)`,
                   '@media (max-width: 768px)': {
                     flexDirection: 'column',
                     height: 'auto',
