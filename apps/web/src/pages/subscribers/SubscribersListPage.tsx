@@ -36,6 +36,26 @@ const columns: IExtendedColumn<ISubscriber>[] = [
     Header: 'Created At',
     Cell: withCellLoading(({ row: { original } }) => format(new Date(original.createdAt), 'dd.MM.yyyy')),
   },
+  {
+    accessor: 'data',
+    Header: 'Data',
+    Cell: withCellLoading(({ row: { original } }) =>
+      original.data ? (
+        <HoverCard width={200} position="bottom" shadow="md" withArrow arrowSize={3.5}>
+          <HoverCard.Target>
+            <Button>
+              <ViewportWide />
+            </Button>
+          </HoverCard.Target>
+          <HoverCard.Dropdown>
+            <Code>{JSON.stringify(original.data, null, 2)}</Code>
+          </HoverCard.Dropdown>
+        </HoverCard>
+      ) : (
+        ''
+      )
+    ),
+  },
 ];
 
 function SubscribersList() {
