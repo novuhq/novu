@@ -296,9 +296,7 @@ describe('Integrations List Page', function () {
     */
   });
 
-  it.only('should show the select provider sidebar', () => {
-    console.log(session.environment);
-
+  it('should show the select provider sidebar', () => {
     cy.task('deleteProvider', {
       providerId: InAppProviderIdEnum.Novu,
       channel: ChannelTypeEnum.IN_APP,
