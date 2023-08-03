@@ -18,7 +18,7 @@ function PageContainer({
   };
 
   return (
-    <Container pl={0} pr={0} fluid style={containerStyle} h={`calc(100% - ${HEADER_HEIGHT})`}>
+    <Container pl={0} pr={0} fluid style={containerStyle} h={`calc(100% - ${HEADER_HEIGHT}px)`}>
       <PageMeta title={title} />
       {children}
     </Container>

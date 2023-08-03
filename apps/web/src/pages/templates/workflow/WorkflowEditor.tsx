@@ -1,28 +1,32 @@
+import { Container, Group, Stack, useMantineColorScheme } from '@mantine/core';
+import { FilterPartTypeEnum, StepTypeEnum } from '@novu/shared';
 import { useCallback, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import styled from '@emotion/styled';
 import { Link, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { Container, Group, Stack } from '@mantine/core';
-import { FilterPartTypeEnum, StepTypeEnum } from '@novu/shared';
 
-import { FlowEditor } from '../../../components/workflow';
-import { channels } from '../../../utils/channels';
-import type { IForm } from '../components/formTypes';
-import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
-import { useTemplateEditorForm } from '../components/TemplateEditorFormProvider';
-import { useEnvController } from '../../../hooks';
+import { useDidUpdate, useTimeout } from '@mantine/hooks';
+import { HEADER_HEIGHT } from '../../../components/layout/constants';
 import { When } from '../../../components/utils/When';
-import { useBasePath } from '../hooks/useBasePath';
-import { UpdateButton } from '../components/UpdateButton';
-import { NameInput } from './NameInput';
-import { Settings } from '../../../design-system/icons';
+import { FlowEditor } from '../../../components/workflow';
 import { Button } from '../../../design-system';
+import { Settings } from '../../../design-system/icons';
+import { useEnvController } from '../../../hooks';
+import { channels } from '../../../utils/channels';
+import { errorMessage } from '../../../utils/notifications';
+import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
+import type { IForm } from '../components/formTypes';
+import { useTemplateEditorForm } from '../components/TemplateEditorFormProvider';
+import { UpdateButton } from '../components/UpdateButton';
+import { useBasePath } from '../hooks/useBasePath';
+import { getFormattedStepErrors } from '../shared/errors';
+import { NameInput } from './NameInput';
+import { AddNodeEdge } from './workflow/edge-types/AddNodeEdge';
+import AddNode from './workflow/node-types/AddNode';
 import ChannelNode from './workflow/node-types/ChannelNode';
 import TriggerNode from './workflow/node-types/TriggerNode';
-import AddNode from './workflow/node-types/AddNode';
-import { AddNodeEdge } from './workflow/edge-types/AddNodeEdge';
-import { getFormattedStepErrors } from '../shared/errors';
-import { errorMessage } from '../../../utils/notifications';
+
+const TOP_ROW_HEIGHT = 74;
+const EDITOR_CONTAINER_HEIGHT = `calc(100% - ${TOP_ROW_HEIGHT + HEADER_HEIGHT}px)`;
 
 const nodeTypes = {
   channelNode: ChannelNode,
@@ -42,7 +46,7 @@ const WorkflowEditor = () => {
   const {
     trigger,
     watch,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useFormContext<IForm>();
   const { readonly } = useEnvController();
   const steps = watch('steps');
@@ -51,6 +55,8 @@ const WorkflowEditor = () => {
   const basePath = useBasePath();
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  const { colorScheme } = useMantineColorScheme();
+  const dark = colorScheme === 'dark';
 
   const onNodeClick = useCallback(
     (event, node) => {
@@ -121,9 +127,23 @@ const WorkflowEditor = () => {
 
   const onGetStepError = (i: number) => getFormattedStepErrors(i, errors);
 
+  const [shouldPulse, setShouldPulse] = useState(false);
+
+  useDidUpdate(() => {
+    if (isDirty) {
+      return;
+    }
+    setShouldPulse(true);
+    start();
+  }, [isDirty]);
+
+  const { start } = useTimeout(() => {
+    setShouldPulse(false);
+  }, 5000);
+
   if (readonly && pathname === basePath) {
     return (
-      <div style={{ minHeight: '600px', display: 'flex', flexFlow: 'row' }}>
+      <div style={{ minHeight: '600px', display: 'flex', flexFlow: 'row', height: '100%' }}>
         <div
           style={{
             flex: '1 1 auto',
@@ -131,7 +151,7 @@ const WorkflowEditor = () => {
             flexFlow: 'Column',
           }}
         >
-          <Container fluid sx={{ width: '100%', height: '74px' }}>
+          <Container fluid sx={{ width: '100%', height: `${TOP_ROW_HEIGHT}px` }}>
             <Stack
               justify="center"
               sx={{
@@ -184,29 +204,44 @@ const WorkflowEditor = () => {
       </When>
       <When truthy={readonly && pathname === basePath}>{null}</When>
       <When truthy={!channel || ![StepTypeEnum.EMAIL, StepTypeEnum.IN_APP].includes(channel)}>
-        <div style={{ minHeight: '600px', display: 'flex', flexFlow: 'row' }}>
+        <div style={{ minHeight: '600px', display: 'flex', flexFlow: 'column', height: '100%' }}>
+          <Container fluid sx={{ width: '100%', height: `${TOP_ROW_HEIGHT}px` }}>
+            <Stack
+              justify="center"
+              sx={{
+                height: '100%',
+              }}
+            >
+              <Group>
+                <NameInput />
+                <Group>
+                  <UpdateButton />
+                  <Button
+                    pulse={shouldPulse}
+                    onClick={() => {
+                      navigate(basePath + '/snippet');
+                    }}
+                    data-test-id="get-snippet-btn"
+                  >
+                    Get Snippet
+                  </Button>
+                  <Link data-test-id="settings-page" to="settings">
+                    <Settings />
+                  </Link>
+                </Group>
+              </Group>
+            </Stack>
+          </Container>
           <div
             style={{
-              flex: '1 1 auto',
+              flex: '1',
               display: 'flex',
-              flexFlow: 'Column',
+              flexFlow: 'row',
+              position: 'relative',
+              maxHeight: EDITOR_CONTAINER_HEIGHT,
+              height: '100%',
             }}
           >
-            <Container fluid sx={{ width: '100%', height: '74px' }}>
-              <Stack
-                justify="center"
-                sx={{
-                  height: '100%',
-                }}
-              >
-                <Group>
-                  <NameInput />
-                  <When truthy={pathname !== basePath}>
-                    <UpdateButton />
-                  </When>
-                </Group>
-              </Stack>
-            </Container>
             <FlowEditor
               onDelete={onDelete}
               dragging={dragging}
@@ -219,21 +254,19 @@ const WorkflowEditor = () => {
               onGetStepError={onGetStepError}
               onNodeClick={onNodeClick}
             />
-          </div>
-          <div
-            style={{
-              position: 'relative',
-              minWidth: '260px',
-              width: 'auto',
-              minHeight: '600px',
-            }}
-          >
-            <Outlet
-              context={{
-                setDragging,
-                onDelete,
+            <div
+              style={{
+                width: 'auto',
+                minHeight: '600px',
               }}
-            />
+            >
+              <Outlet
+                context={{
+                  setDragging,
+                  onDelete,
+                }}
+              />
+            </div>
           </div>
         </div>
       </When>
@@ -255,8 +288,3 @@ const WorkflowEditor = () => {
 };
 
 export default WorkflowEditor;
-
-export const StyledNav = styled.div`
-  padding: 15px 20px;
-  height: 100%;
-`;

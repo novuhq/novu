@@ -1,37 +1,35 @@
-import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import styled from '@emotion/styled';
 import {
+  CloseButton,
+  CloseButtonProps,
+  createPolymorphicComponent,
+  createStyles,
   Navbar,
   Popover,
-  CloseButton,
   useMantineColorScheme,
-  createStyles,
-  createPolymorphicComponent,
-  CloseButtonProps,
 } from '@mantine/core';
-import styled from '@emotion/styled';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 
+import { ROUTES } from '../../../constants/routes.enum';
 import { colors, NavMenu, SegmentedControl, shadows } from '../../../design-system';
 import {
   Activity,
   Bolt,
   Box,
-  Settings,
-  Team,
-  Repeat,
-  CheckCircleOutlined,
   Brand,
   Buildings,
+  CheckCircleOutlined,
   NovuLogo,
+  Repeat,
+  Settings,
+  Team,
 } from '../../../design-system/icons';
-import { ChangesCountBadge } from './ChangesCountBadge';
 import { useEnvController, useIsMultiTenancyEnabled } from '../../../hooks';
-import OrganizationSelect from './OrganizationSelect';
-import { useSpotlightContext } from '../../providers/SpotlightProvider';
-import { HEADER_HEIGHT } from '../constants';
-import { ROUTES } from '../../../constants/routes.enum';
 import { currentOnboardingStep } from '../../../pages/quick-start/components/route/store';
-import { CONTEXT_PATH } from '../../../config';
+import { useSpotlightContext } from '../../providers/SpotlightProvider';
+import { ChangesCountBadge } from './ChangesCountBadge';
+import OrganizationSelect from './OrganizationSelect';
 
 const usePopoverStyles = createStyles(({ colorScheme }) => ({
   dropdown: {
