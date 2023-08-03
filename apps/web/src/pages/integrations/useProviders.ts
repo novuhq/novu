@@ -13,8 +13,9 @@ import {
 
 import { useIntegrations, useIsMultiProviderConfigurationEnabled } from '../../hooks';
 import type { IIntegratedProvider, IntegrationEntity } from './types';
+import { IS_DOCKER_HOSTED } from '../../config';
 
-const NOVU_PROVIDERS: ProvidersIdEnum[] = [SmsProviderIdEnum.Novu, EmailProviderIdEnum.Novu];
+export const NOVU_SMS_EMAIL_PROVIDERS: ProvidersIdEnum[] = [SmsProviderIdEnum.Novu, EmailProviderIdEnum.Novu];
 
 /*
  * temporary patch before migration script
@@ -35,7 +36,7 @@ function fcmFallback(integration: IntegrationEntity | undefined, clonedCredentia
 
 function initializeProviders(integrations: IntegrationEntity[]): IIntegratedProvider[] {
   return providers
-    .filter((provider) => !NOVU_PROVIDERS.includes(provider.id))
+    .filter((provider) => !NOVU_SMS_EMAIL_PROVIDERS.includes(provider.id))
     .map((providerItem) => {
       const integration = integrations.find((integrationItem) => integrationItem.providerId === providerItem.id);
 
@@ -70,49 +71,57 @@ function initializeProviders(integrations: IntegrationEntity[]): IIntegratedProv
 }
 
 function initializeProvidersByIntegration(integrations: IntegrationEntity[]): IIntegratedProvider[] {
-  return integrations.map((integrationItem) => {
-    const providerItem = providers.find((provItem) => integrationItem.providerId === provItem.id) as IProviderConfig;
+  return integrations
+    .filter((integrationItem) => {
+      if (!IS_DOCKER_HOSTED) {
+        return true;
+      }
 
-    const clonedCredentials: IConfigCredentials[] = cloneDeep(providerItem?.credentials);
+      return !NOVU_SMS_EMAIL_PROVIDERS.includes(integrationItem.providerId);
+    })
+    .map((integrationItem) => {
+      const providerItem = providers.find((provItem) => integrationItem.providerId === provItem.id) as IProviderConfig;
 
-    if (
-      typeof clonedCredentials === 'object' &&
-      integrationItem?.credentials &&
-      Object.keys(clonedCredentials).length !== 0
-    ) {
-      clonedCredentials.forEach((credential) => {
-        if (credential.type === 'boolean' || credential.type === 'switch') {
-          credential.value = integrationItem.credentials[credential.key];
+      const clonedCredentials: IConfigCredentials[] = cloneDeep(providerItem?.credentials);
 
-          return;
-        }
+      if (
+        typeof clonedCredentials === 'object' &&
+        integrationItem?.credentials &&
+        Object.keys(clonedCredentials).length !== 0
+      ) {
+        clonedCredentials.forEach((credential) => {
+          if (credential.type === 'boolean' || credential.type === 'switch') {
+            credential.value = integrationItem.credentials[credential.key];
 
-        // eslint-disable-next-line
-        credential.value = integrationItem.credentials[credential.key]?.toString();
-      });
-    }
+            return;
+          }
 
-    // Remove this like after the run of the fcm-credentials-migration script
-    fcmFallback(integrationItem, clonedCredentials);
+          // eslint-disable-next-line
+          credential.value = integrationItem.credentials[credential.key]?.toString();
+        });
+      }
 
-    return {
-      providerId: providerItem?.id || integrationItem.providerId,
-      integrationId: integrationItem?._id ? integrationItem._id : '',
-      displayName: providerItem?.displayName || integrationItem.name,
-      channel: providerItem?.channel || integrationItem.channel,
-      credentials: (integrationItem?.credentials ? clonedCredentials : providerItem?.credentials) || [],
-      docReference: providerItem?.docReference || '',
-      comingSoon: !!providerItem?.comingSoon,
-      betaVersion: !!providerItem?.betaVersion,
-      active: integrationItem?.active ?? false,
-      connected: !!integrationItem,
-      logoFileName: providerItem?.logoFileName,
-      environmentId: integrationItem?._environmentId,
-      name: integrationItem?.name,
-      identifier: integrationItem?.identifier,
-      primary: integrationItem?.primary ?? false,
-    };
-  });
+      // Remove this like after the run of the fcm-credentials-migration script
+      fcmFallback(integrationItem, clonedCredentials);
+
+      return {
+        providerId: providerItem?.id || integrationItem.providerId,
+        integrationId: integrationItem?._id ? integrationItem._id : '',
+        displayName: providerItem?.displayName || integrationItem.name,
+        channel: providerItem?.channel || integrationItem.channel,
+        credentials: (integrationItem?.credentials ? clonedCredentials : providerItem?.credentials) || [],
+        docReference: providerItem?.docReference || '',
+        comingSoon: !!providerItem?.comingSoon,
+        betaVersion: !!providerItem?.betaVersion,
+        active: integrationItem?.active ?? false,
+        connected: !!integrationItem,
+        logoFileName: providerItem?.logoFileName,
+        environmentId: integrationItem?._environmentId,
+        name: integrationItem?.name,
+        identifier: integrationItem?.identifier,
+        primary: integrationItem?.primary ?? false,
+      };
+    });
 }
 
 function isConnected(provider: IIntegratedProvider) {

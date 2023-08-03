@@ -13,7 +13,7 @@ import { HoverCard } from '../../design-system/hover-card/HoverCard';
 const columns: IExtendedColumn<ISubscriber>[] = [
   {
     accessor: 'subscriberId',
-    Header: 'Subscriber Id',
+    Header: 'Subscriber identifier',
   },
   {
     accessor: 'firstName',

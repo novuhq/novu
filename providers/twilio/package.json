@@ -45,7 +45,7 @@
   },
   "dependencies": {
     "@novu/stateless": "^0.17.1",
-    "twilio": "^3.67.2"
+    "twilio": "^4.14.1"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "1.0.2",
