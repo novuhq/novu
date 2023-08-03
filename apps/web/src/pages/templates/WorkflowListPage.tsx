@@ -73,7 +73,7 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
     Cell: withCellLoading(({ row: { original } }) => (
       <>
         {!original.active ? (
-          <Group spacing={0}>
+          <Group spacing={0} data-test-id="disabled-status-label">
             <BoltOffFilled color={colors.B40} width="16px" height="16px" />
             <Text rows={1} size="sm" color={colors.B40}>
               Disabled
@@ -81,7 +81,7 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
           </Group>
         ) : null}{' '}
         {original.active ? (
-          <Group spacing={0}>
+          <Group spacing={0} data-test-id="active-status-label">
             <BoltFilled color={colors.success} width="16px" height="16px" />
             <Text rows={1} size="sm" color={colors.success}>
               Active
