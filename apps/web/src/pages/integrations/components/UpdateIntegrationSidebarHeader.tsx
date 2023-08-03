@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 import { Group } from '@mantine/core';
 import { Controller, useFormContext } from 'react-hook-form';
 import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
@@ -18,9 +18,11 @@ import { useMakePrimaryIntegration } from '../../../api/hooks/useMakePrimaryInte
 export const UpdateIntegrationSidebarHeader = ({
   provider,
   onSuccessDelete,
+  children = null,
 }: {
   provider: IIntegratedProvider | null;
   onSuccessDelete: () => void;
+  children?: ReactNode | null;
 }) => {
   const [isModalOpened, setModalIsOpened] = useState(false);
   const { control } = useFormContext();
@@ -90,6 +92,7 @@ export const UpdateIntegrationSidebarHeader = ({
           }}
         />
         <Group spacing={16}>
+          {children}
           <div>
             <Dropdown
               withArrow={false}

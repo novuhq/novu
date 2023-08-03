@@ -23,10 +23,10 @@ import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   SelectIntegration,
-  GetNovuIntegration,
   CompileEmailTemplate,
   CompileEmailTemplateCommand,
   MailFactory,
+  GetNovuProviderCredentials,
 } from '@novu/application-generic';
 
 import { CreateLog } from '../../../shared/logs';
@@ -45,9 +45,17 @@ export class SendMessageEmail extends SendMessageBase {
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     private compileEmailTemplateUsecase: CompileEmailTemplate,
-    protected selectIntegration: SelectIntegration
+    protected selectIntegration: SelectIntegration,
+    protected getNovuProviderCredentials: GetNovuProviderCredentials
   ) {
-    super(messageRepository, createLogUsecase, createExecutionDetails, subscriberRepository, selectIntegration);
+    super(
+      messageRepository,
+      createLogUsecase,
+      createExecutionDetails,
+      subscriberRepository,
+      selectIntegration,
+      getNovuProviderCredentials
+    );
   }
 
   @InstrumentUsecase()
@@ -453,7 +461,7 @@ export class SendMessageEmail extends SendMessageBase {
         ...integration.credentials,
         senderName: senderName && senderName.length > 0 ? senderName : integration.credentials.senderName,
       },
-      providerId: GetNovuIntegration.mapProviders(ChannelTypeEnum.EMAIL, integration.providerId),
+      providerId: integration.providerId,
     };
   }
 }

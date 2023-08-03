@@ -29,6 +29,7 @@ import {
   WsQueueService,
   buildFeedKey,
   buildMessageCountKey,
+  GetNovuProviderCredentials,
 } from '@novu/application-generic';
 
 import { CreateLog } from '../../../shared/logs';
@@ -49,9 +50,17 @@ export class SendMessageInApp extends SendMessageBase {
     protected subscriberRepository: SubscriberRepository,
     private compileTemplate: CompileTemplate,
     private organizationRepository: OrganizationRepository,
-    protected selectIntegration: SelectIntegration
+    protected selectIntegration: SelectIntegration,
+    protected getNovuProviderCredentials: GetNovuProviderCredentials
   ) {
-    super(messageRepository, createLogUsecase, createExecutionDetails, subscriberRepository, selectIntegration);
+    super(
+      messageRepository,
+      createLogUsecase,
+      createExecutionDetails,
+      subscriberRepository,
+      selectIntegration,
+      getNovuProviderCredentials
+    );
   }
 
   @InstrumentUsecase()
