@@ -51,8 +51,8 @@ describe('Get Decrypted Integrations - /integrations (GET)', function () {
 
     const environmentIntegrations = await integrationRepository.findByEnvironmentId(session.environment._id);
 
-    // We expect to find the test data 6 plus the one created
-    expect(environmentIntegrations.length).to.eq(7);
+    // We expect to find the test data 8 with novu provider integrations plus the one created
+    expect(environmentIntegrations.length).to.eq(9);
 
     const encryptedStoredIntegration = environmentIntegrations.find(
       (i) => i.providerId.toString() === EmailProviderIdEnum.Mailgun

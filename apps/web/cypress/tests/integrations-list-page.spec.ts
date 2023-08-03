@@ -345,18 +345,22 @@ describe('Integrations List Page', function () {
       inAppProviders.forEach((provider) => {
         cy.get('@inAppGroup').getByTestId(`provider-${provider.id}`).contains(provider.displayName);
       });
-      emailProviders.forEach((provider) => {
-        cy.get('@emailGroup').getByTestId(`provider-${provider.id}`).contains(provider.displayName);
-      });
+      emailProviders
+        .filter((provider) => provider.id !== EmailProviderIdEnum.Novu)
+        .forEach((provider) => {
+          cy.get('@emailGroup').getByTestId(`provider-${provider.id}`).contains(provider.displayName);
+        });
       chatProviders.forEach((provider) => {
         cy.get('@chatGroup').getByTestId(`provider-${provider.id}`).contains(provider.displayName);
       });
       pushProviders.forEach((provider) => {
         cy.get('@pushGroup').getByTestId(`provider-${provider.id}`).contains(provider.displayName);
       });
-      smsProviders.forEach((provider) => {
-        cy.get('@smsGroup').getByTestId(`provider-${provider.id}`).contains(provider.displayName);
-      });
+      smsProviders
+        .filter((provider) => provider.id !== SmsProviderIdEnum.Novu)
+        .forEach((provider) => {
+          cy.get('@smsGroup').getByTestId(`provider-${provider.id}`).contains(provider.displayName);
+        });
 
       cy.getByTestId('select-provider-sidebar-cancel').contains('Cancel');
       cy.getByTestId('select-provider-sidebar-next').should('be.disabled').contains('Next');
@@ -909,7 +913,9 @@ describe('Integrations List Page', function () {
 
     cy.getByTestId('provider-instance-channel').should('contain', 'Email');
     cy.getByTestId('provider-instance-environment').should('contain', 'Development');
-    cy.getByTestId('update-provider-sidebar-novu').contains('Novu Email');
+    cy.getByTestId('update-provider-sidebar-novu')
+      .getByTestId('provider-instance-name')
+      .should('have.value', 'Novu Email');
     cy.getByTestId('update-provider-sidebar-novu').contains('Test Provider');
     cy.getByTestId('novu-provider-limits').then((el) => {
       expect(el.get(0).innerText).to.eq(
@@ -977,7 +983,9 @@ describe('Integrations List Page', function () {
     });
     cy.getByTestId('provider-instance-channel').should('contain', 'SMS');
     cy.getByTestId('provider-instance-environment').should('contain', 'Development');
-    cy.getByTestId('update-provider-sidebar-novu').contains('Novu SMS');
+    cy.getByTestId('update-provider-sidebar-novu')
+      .getByTestId('provider-instance-name')
+      .should('have.value', 'Novu SMS');
     cy.getByTestId('update-provider-sidebar-novu').contains('Test Provider');
     cy.getByTestId('novu-provider-limits').then((el) => {
       expect(el.get(0).innerText).to.eq(

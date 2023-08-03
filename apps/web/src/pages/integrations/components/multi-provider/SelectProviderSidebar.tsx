@@ -26,17 +26,20 @@ import { sortProviders } from './sort-providers';
 import { When } from '../../../../components/utils/When';
 import { CONTEXT_PATH } from '../../../../config';
 import { useProviders } from '../../useProviders';
+import { NOVU_PROVIDERS } from '../../useProviders';
 
 const filterSearch = (list, search: string) =>
   list.filter((prov) => prov.displayName.toLowerCase().includes(search.toLowerCase()));
 
 const mapStructure = (listProv): IIntegratedProvider[] =>
-  listProv.map((providerItem) => ({
-    providerId: providerItem.id,
-    displayName: providerItem.displayName,
-    channel: providerItem.channel,
-    docReference: providerItem.docReference,
-  }));
+  listProv
+    .filter((providerItem) => !NOVU_PROVIDERS.includes(providerItem.id))
+    .map((providerItem) => ({
+      providerId: providerItem.id,
+      displayName: providerItem.displayName,
+      channel: providerItem.channel,
+      docReference: providerItem.docReference,
+    }));
 
 const initialProvidersList = {
   [ChannelTypeEnum.EMAIL]: mapStructure(emailProviders),

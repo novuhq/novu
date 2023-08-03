@@ -2,7 +2,7 @@ import { BadRequestException, ConflictException, Inject, Injectable } from '@nes
 import * as shortid from 'shortid';
 import slugify from 'slugify';
 import { IntegrationEntity, IntegrationRepository, DalException } from '@novu/dal';
-import { ChannelTypeEnum, InAppProviderIdEnum, providers } from '@novu/shared';
+import { ChannelTypeEnum, EmailProviderIdEnum, providers, SmsProviderIdEnum, InAppProviderIdEnum } from '@novu/shared';
 import {
   AnalyticsService,
   encryptCredentials,
@@ -17,6 +17,7 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/deactivate-integration.usecase';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
+import { DisableNovuIntegration } from '../disable-novu-integration/disable-novu-integration.usecase';
 
 @Injectable()
 export class CreateIntegration {
@@ -27,7 +28,8 @@ export class CreateIntegration {
     private integrationRepository: IntegrationRepository,
     private deactivateSimilarChannelIntegrations: DeactivateSimilarChannelIntegrations,
     private analyticsService: AnalyticsService,
-    private getFeatureFlag: GetFeatureFlag
+    private getFeatureFlag: GetFeatureFlag,
+    private disableNovuIntegration: DisableNovuIntegration
   ) {}
 
   async execute(command: CreateIntegrationCommand): Promise<IntegrationEntity> {
@@ -57,6 +59,20 @@ export class CreateIntegration {
       command.channel === ChannelTypeEnum.IN_APP
     ) {
       throw new BadRequestException('One environment can only have one In app provider');
+    }
+
+    if (command.providerId === SmsProviderIdEnum.Novu || command.providerId === EmailProviderIdEnum.Novu) {
+      const count = await this.integrationRepository.count({
+        _environmentId: command.environmentId,
+        providerId: EmailProviderIdEnum.Novu,
+        channel: command.channel,
+      });
+
+      if (count > 0) {
+        throw new ConflictException(
+          `Integration with novu provider for ${command.channel.toLowerCase()} channel already exists`
+        );
+      }
     }
 
     if (command.identifier) {
@@ -122,6 +138,16 @@ export class CreateIntegration {
           organizationId: command.organizationId,
           integrationId: integrationEntity._id,
           channel: command.channel,
+          userId: command.userId,
+        });
+      }
+
+      if (integrationEntity.active) {
+        await this.disableNovuIntegration.execute({
+          channel: command.channel,
+          providerId: command.providerId,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
           userId: command.userId,
         });
       }
