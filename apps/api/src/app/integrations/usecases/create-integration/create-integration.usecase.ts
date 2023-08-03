@@ -2,7 +2,7 @@ import { BadRequestException, ConflictException, Inject, Injectable } from '@nes
 import * as shortid from 'shortid';
 import slugify from 'slugify';
 import { IntegrationEntity, IntegrationRepository, DalException } from '@novu/dal';
-import { ChannelTypeEnum, providers } from '@novu/shared';
+import { ChannelTypeEnum, InAppProviderIdEnum, providers } from '@novu/shared';
 import {
   AnalyticsService,
   encryptCredentials,
@@ -39,18 +39,24 @@ export class CreateIntegration {
       })
     );
 
-    if (!isMultiProviderConfigurationEnabled) {
-      const existingIntegration = await this.integrationRepository.findOne({
-        _environmentId: command.environmentId,
-        providerId: command.providerId,
-        channel: command.channel,
-      });
+    const existingIntegration = await this.integrationRepository.findOne({
+      _environmentId: command.environmentId,
+      providerId: command.providerId,
+      channel: command.channel,
+    });
 
-      if (existingIntegration) {
-        throw new BadRequestException(
-          'Duplicate key - One environment may not have two providers of the same channel type'
-        );
-      }
+    if (!isMultiProviderConfigurationEnabled && existingIntegration) {
+      throw new BadRequestException(
+        'Duplicate key - One environment may not have two providers of the same channel type'
+      );
+    }
+
+    if (
+      existingIntegration &&
+      command.providerId === InAppProviderIdEnum.Novu &&
+      command.channel === ChannelTypeEnum.IN_APP
+    ) {
+      throw new BadRequestException('One environment can only have one In app provider');
     }
 
     if (command.identifier) {
