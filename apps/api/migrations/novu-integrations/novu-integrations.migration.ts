@@ -9,6 +9,8 @@ import {
 import { EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../../src/app.module';
+import slugify from 'slugify';
+import * as shortid from 'shortid';
 
 const organizationRepository = new OrganizationRepository();
 const environmentRepository = new EnvironmentRepository();
@@ -19,6 +21,7 @@ const createNovuIntegration = async (
   channel: ChannelTypeEnum.EMAIL | ChannelTypeEnum.SMS
 ) => {
   const providerId = channel === ChannelTypeEnum.SMS ? SmsProviderIdEnum.Novu : EmailProviderIdEnum.Novu;
+  const name = channel === ChannelTypeEnum.SMS ? 'Novu SMS' : 'Novu Email';
 
   const count = await integrationRepository.count({
     _environmentId: environment._id,
@@ -43,6 +46,8 @@ const createNovuIntegration = async (
     _organizationId: environment._organizationId,
     providerId,
     channel,
+    name,
+    identifier: `${slugify(name, { lower: true, strict: true })}-${shortid.generate()}`,
     active: countChannelIntegrations === 0,
   });
 
