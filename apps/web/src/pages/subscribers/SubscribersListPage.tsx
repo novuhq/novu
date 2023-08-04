@@ -34,7 +34,7 @@ const columns: IExtendedColumn<ISubscriber>[] = [
   {
     accessor: 'createdAt',
     Header: 'Created At',
-    Cell: withCellLoading(({ row: { original } }) => format(new Date(original.createdAt), 'dd.MM.yyyy')),
+    Cell: withCellLoading(({ row: { original } }) => format(new Date(original.createdAt), 'dd/MM/yyyy HH:mm')),
   },
   {
     accessor: 'data',
