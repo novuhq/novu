@@ -181,12 +181,12 @@ export function HeaderNav({ isIntercomOpened }: Props) {
           </ActionIcon>
           {isSelfHosted ? (
             <a href={discordInviteUrl} target="_blank" rel="noreferrer">
-              <ActionIcon>
+              <ActionIcon variant="transparent">
                 <Question width={24} height={24} color={colors.B60} isGradient={isIntercomOpened} />
               </ActionIcon>
             </a>
           ) : (
-            <ActionIcon id="intercom-launcher">
+            <ActionIcon variant="transparent" id="intercom-launcher">
               <Question width={24} height={24} color={colors.B60} isGradient={isIntercomOpened} />
             </ActionIcon>
           )}
