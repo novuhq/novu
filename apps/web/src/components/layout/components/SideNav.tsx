@@ -111,7 +111,6 @@ export function SideNav({}: Props) {
     },
     { icon: <Activity />, link: ROUTES.ACTIVITIES, label: 'Activity Feed', testId: 'side-nav-activities-link' },
     { icon: <Box />, link: ROUTES.INTEGRATIONS, label: 'Integrations Store', testId: 'side-nav-integrations-link' },
-    { icon: <Settings />, link: ROUTES.SETTINGS, label: 'Settings', testId: 'side-nav-settings-link' },
     {
       icon: <Team />,
       link: ROUTES.TEAM,
@@ -126,6 +125,7 @@ export function SideNav({}: Props) {
       rightSide: <ChangesCountBadge />,
       condition: !readonly,
     },
+    { icon: <Settings />, link: ROUTES.SETTINGS, label: 'Settings', testId: 'side-nav-settings-link' },
   ];
 
   async function handlePopoverForChanges(e) {
@@ -137,7 +137,7 @@ export function SideNav({}: Props) {
 
   return (
     <Navbar
-      p={30}
+      p={24}
       pt={16}
       sx={{
         position: 'sticky',
@@ -153,7 +153,7 @@ export function SideNav({}: Props) {
         },
       }}
     >
-      <Navbar.Section mb={30}>
+      <Navbar.Section mb={24}>
         <Link to="/">
           <NovuLogo />
         </Link>

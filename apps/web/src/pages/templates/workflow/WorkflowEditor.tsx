@@ -5,7 +5,6 @@ import { useFormContext } from 'react-hook-form';
 import { Link, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { useDidUpdate, useTimeout } from '@mantine/hooks';
-import { HEADER_HEIGHT } from '../../../components/layout/constants';
 import { When } from '../../../components/utils/When';
 import { FlowEditor } from '../../../components/workflow';
 import { Button } from '../../../design-system';
@@ -26,7 +25,6 @@ import ChannelNode from './workflow/node-types/ChannelNode';
 import TriggerNode from './workflow/node-types/TriggerNode';
 
 const TOP_ROW_HEIGHT = 74;
-const EDITOR_CONTAINER_HEIGHT = `calc(100% - ${TOP_ROW_HEIGHT + HEADER_HEIGHT}px)`;
 
 const nodeTypes = {
   channelNode: ChannelNode,
@@ -238,7 +236,6 @@ const WorkflowEditor = () => {
               display: 'flex',
               flexFlow: 'row',
               position: 'relative',
-              maxHeight: EDITOR_CONTAINER_HEIGHT,
               height: '100%',
             }}
           >

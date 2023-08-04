@@ -48,8 +48,8 @@ const LeftContent = styled.div`
 const StepCard: any = styled.div`
   position: relative;
   display: flex;
-  width: 300px;
-  height: 75px;
+  width: 280px;
+  height: 80px;
   box-shadow: ${({ theme }) => (theme.colorScheme === 'dark' ? shadows.dark : shadows.light)};
   border-radius: 7px;
   pointer-events: none;

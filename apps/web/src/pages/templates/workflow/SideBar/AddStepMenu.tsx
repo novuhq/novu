@@ -17,7 +17,7 @@ export function AddStepMenu({
   return (
     <StyledNav data-test-id="drag-side-menu">
       <div>
-        <Title color={colors.B60} size={16} mb={16}>
+        <Title color={colors.B60} size={14} mb={12} ta="center">
           Actions
         </Title>
       </div>
@@ -36,7 +36,7 @@ export function AddStepMenu({
           marginTop: '24px',
         }}
       >
-        <Title color={colors.B60} size={16} mb={16}>
+        <Title color={colors.B60} size={14} mb={12} ta="center">
           Channels
         </Title>
       </div>
