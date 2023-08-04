@@ -215,4 +215,7 @@ const TemplateListTableWrapper = styled.div`
       }
     }
   }
+  [data-table-holder] {
+    margin: 0 -25px;
+  }
 `;
