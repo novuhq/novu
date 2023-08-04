@@ -174,6 +174,20 @@ export class TriggerEvent {
           organizationId: command.organizationId,
         });
         await this.storeSubscriberJobs.execute(storeSubscriberJobsCommand);
+      } else {
+        /**
+         * TODO: Potentially add a CreateExecutionDetails entry. Right now we
+         * have the limitation we need a job to be created for that. Here there
+         * is no job at this point.
+         */
+        Logger.warn(
+          `Subscriber ${JSON.stringify(subscriber._id)} of organization ${
+            command.organizationId
+          } in transaction ${
+            command.transactionId
+          } was not processed. No jobs are created.`,
+          LOG_CONTEXT
+        );
       }
     }
 
