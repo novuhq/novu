@@ -28,10 +28,10 @@ export const HeaderSecondaryTitle = styled(Title)`
 `;
 
 const StyledHeader = styled.div`
-  height: 160px;
-  padding: 60px;
+  height: 60px;
+  padding: 20px 24px;
   display: flex;
   justify-content: center;
-  align-items: center;
   flex-direction: column;
+  margin-bottom: 10px;
 `;
