@@ -63,7 +63,7 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
     width: 314,
     maxWidth: 314,
     Cell: withCellLoading(({ row: { original } }) => (
-      <Text rows={1}>{format(new Date(original.createdAt ?? ''), 'dd.MM.yyyy')}</Text>
+      <Text rows={1}>{format(new Date(original.createdAt ?? ''), 'dd/MM/yyyy HH:mm')}</Text>
     )),
   },
   {
