@@ -166,11 +166,9 @@ export function WorkflowNode({
       >
         <ButtonWrapper>
           <LeftContainerWrapper>
-            <IconWrapper className={classes.linkIcon}>
-              {Icon ? <Icon {...disabledProp} width="32px" height="32px" /> : null}
-            </IconWrapper>
+            {Icon ? <Icon {...disabledProp} width="32px" height="32px" /> : null}
             <StyledContentWrapper>
-              <Text {...disabledColor} weight="bold">
+              <Text {...disabledColor} weight="bold" size={16}>
                 {label}
               </Text>
               {description && (
@@ -311,6 +309,7 @@ const LeftContainerWrapper = styled.div`
   display: flex;
   align-items: center;
   overflow: hidden;
+  gap: 16px;
 `;
 
 const ButtonWrapper = styled.div`
@@ -320,6 +319,9 @@ const ButtonWrapper = styled.div`
 `;
 
 const StyledContentWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   padding-right: 10px;
 `;
 
@@ -331,8 +333,5 @@ const UnstyledButtonStyled = styled.div`
   pointer-events: all;
   background-color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B17 : colors.white)};
   width: 280px;
-
-  @media screen and (max-width: 1400px) {
-    padding: 0 5px;
-  }
+  padding: 20px;
 `;
