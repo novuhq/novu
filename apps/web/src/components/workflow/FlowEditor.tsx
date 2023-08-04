@@ -337,7 +337,7 @@ const Wrapper = styled.div<{ dark: boolean }>`
   .react-flow__node.react-flow__node-channelNode,
   .react-flow__node.react-flow__node-triggerNode {
     width: 280px;
-    height: 75px;
+    height: 80px;
     cursor: pointer;
   }
   .react-flow__node.react-flow__node-addNode {
