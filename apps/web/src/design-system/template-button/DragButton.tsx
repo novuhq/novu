@@ -27,6 +27,9 @@ export function DragButton({ description, label, Icon }: IDragButtonProps) {
           border: `1px dashed ${theme.colorScheme === 'dark' ? colors.B30 : colors.B80}`,
           height: description.length > 0 ? '75px' : '50px',
           position: 'relative',
+          '&:hover': {
+            cursor: 'grab',
+          },
         }}
         className={cx(classes.button, { [classes.active]: false })}
         onMouseEnter={() => {
