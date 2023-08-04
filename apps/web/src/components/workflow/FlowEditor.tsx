@@ -336,12 +336,12 @@ const Wrapper = styled.div<{ dark: boolean }>`
   background: ${({ dark }) => (dark ? colors.B15 : colors.B98)};
   .react-flow__node.react-flow__node-channelNode,
   .react-flow__node.react-flow__node-triggerNode {
-    width: 200px;
-    height: 75px;
+    width: 280px;
+    height: 80px;
     cursor: pointer;
   }
   .react-flow__node.react-flow__node-addNode {
-    width: 200px;
+    width: 280px;
   }
   .react-flow__handle.connectable {
     cursor: pointer;

@@ -1,36 +1,34 @@
-import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import styled from '@emotion/styled';
 import {
+  CloseButton,
+  CloseButtonProps,
+  createPolymorphicComponent,
+  createStyles,
   Navbar,
   Popover,
-  CloseButton,
   useMantineColorScheme,
-  createStyles,
-  createPolymorphicComponent,
-  CloseButtonProps,
 } from '@mantine/core';
-import styled from '@emotion/styled';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 
+import { ROUTES } from '../../../constants/routes.enum';
 import { colors, NavMenu, SegmentedControl, shadows } from '../../../design-system';
 import {
   Activity,
   Bolt,
   Box,
+  Brand,
+  CheckCircleOutlined,
+  NovuLogo,
+  Repeat,
   Settings,
   Team,
-  Repeat,
-  CheckCircleOutlined,
-  Brand,
-  NovuLogo,
 } from '../../../design-system/icons';
-import { ChangesCountBadge } from './ChangesCountBadge';
 import { useEnvController } from '../../../hooks';
-import OrganizationSelect from './OrganizationSelect';
-import { useSpotlightContext } from '../../providers/SpotlightProvider';
-import { HEADER_HEIGHT } from '../constants';
-import { ROUTES } from '../../../constants/routes.enum';
 import { currentOnboardingStep } from '../../../pages/quick-start/components/route/store';
-import { CONTEXT_PATH } from '../../../config';
+import { useSpotlightContext } from '../../providers/SpotlightProvider';
+import { ChangesCountBadge } from './ChangesCountBadge';
+import OrganizationSelect from './OrganizationSelect';
 
 const usePopoverStyles = createStyles(({ colorScheme }) => ({
   dropdown: {
@@ -104,7 +102,6 @@ export function SideNav({}: Props) {
     },
     { icon: <Activity />, link: ROUTES.ACTIVITIES, label: 'Activity Feed', testId: 'side-nav-activities-link' },
     { icon: <Box />, link: ROUTES.INTEGRATIONS, label: 'Integrations Store', testId: 'side-nav-integrations-link' },
-    { icon: <Settings />, link: ROUTES.SETTINGS, label: 'Settings', testId: 'side-nav-settings-link' },
     {
       icon: <Team />,
       link: ROUTES.TEAM,
@@ -119,6 +116,7 @@ export function SideNav({}: Props) {
       rightSide: <ChangesCountBadge />,
       condition: !readonly,
     },
+    { icon: <Settings />, link: ROUTES.SETTINGS, label: 'Settings', testId: 'side-nav-settings-link' },
   ];
 
   async function handlePopoverForChanges(e) {
@@ -130,7 +128,7 @@ export function SideNav({}: Props) {
 
   return (
     <Navbar
-      p={30}
+      p={24}
       pt={16}
       sx={{
         position: 'sticky',
@@ -146,7 +144,7 @@ export function SideNav({}: Props) {
         },
       }}
     >
-      <Navbar.Section mb={30}>
+      <Navbar.Section mb={24}>
         <Link to="/">
           <NovuLogo />
         </Link>
