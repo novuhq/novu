@@ -1,6 +1,7 @@
 import styled from '@emotion/styled';
 import React from 'react';
-import PageHeaderToolbar from './PageHeaderToolbar';
+
+import { PlusButton } from '../../../design-system';
 
 const IntegrationsListToolbarHolder = styled.div`
   display: flex;
@@ -16,7 +17,12 @@ export const IntegrationsListToolbar = ({
 }) => {
   return (
     <IntegrationsListToolbarHolder>
-      <PageHeaderToolbar label="Add a provider" onClick={onAddProviderClick} disabled={areIntegrationsLoading} />
+      <PlusButton
+        label="Add a provider"
+        onClick={onAddProviderClick}
+        disabled={areIntegrationsLoading}
+        data-test-id="add-provider"
+      />
     </IntegrationsListToolbarHolder>
   );
 };
