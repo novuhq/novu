@@ -9,6 +9,7 @@ import {
   inAppProviders,
   chatProviders,
   InAppProviderIdEnum,
+  NOVU_PROVIDERS,
 } from '@novu/shared';
 
 import { colors, Sidebar } from '../../../../design-system';
@@ -26,7 +27,6 @@ import { sortProviders } from './sort-providers';
 import { When } from '../../../../components/utils/When';
 import { CONTEXT_PATH } from '../../../../config';
 import { useProviders } from '../../useProviders';
-import { NOVU_PROVIDERS } from '../../useProviders';
 
 const filterSearch = (list, search: string) =>
   list.filter((prov) => prov.displayName.toLowerCase().includes(search.toLowerCase()));
