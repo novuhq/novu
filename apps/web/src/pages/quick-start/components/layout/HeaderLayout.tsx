@@ -14,15 +14,16 @@ export const HeaderTitle = styled(Text)`
 
   display: flex;
   align-items: center;
-
+  justify-content: center;
   margin-bottom: 4px;
+  margin-top: 5px;
 `;
 
 export const HeaderSecondaryTitle = styled(Title)`
   height: 48px;
   font-size: 40px;
   color: ${colors.B40};
-
+  justify-content: center;
   display: flex;
   align-items: center;
 `;

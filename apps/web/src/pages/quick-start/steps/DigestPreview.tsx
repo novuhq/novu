@@ -8,13 +8,14 @@ import { useCreateDigestDemoWorkflow } from '../../../api/hooks/notification-tem
 import { DigestDemoFlow } from '../../../components';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { ROUTES } from '../../../constants/routes.enum';
-import { Button, Title } from '../../../design-system';
+import { Button } from '../../../design-system';
 import { ArrowLeft } from '../../../design-system/icons';
 import { ArrowLeftGradient } from '../../../design-system/icons/gradient/ArrowLeftGradient';
 import { Label } from '../../../design-system/typography/label';
 import { NavButton } from '../components/NavButton';
 import useStyles from '../components/OnboardingSteps.styles';
 import { getStartedSteps, OnBoardingAnalyticsEnum } from '../consts';
+import { HeaderSecondaryTitle, HeaderTitle } from '../components/layout/HeaderLayout';
 
 export function DigestPreview() {
   const segment = useSegment();
@@ -27,7 +28,8 @@ export function DigestPreview() {
     <GetStartedLayout
       header={
         <>
-          <Title>Get started</Title>
+          <HeaderTitle>Set-up steps to get started</HeaderTitle>
+          <HeaderSecondaryTitle>Quick Start Guide</HeaderSecondaryTitle>
         </>
       }
       footer={{
