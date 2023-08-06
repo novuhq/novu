@@ -4,7 +4,6 @@ import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 
 import { SelectIntegration } from './select-integration.usecase';
 import { SelectIntegrationCommand } from './select-integration.command';
-import { GetNovuIntegration } from '../get-novu-integration';
 import { GetFeatureFlag } from '../get-feature-flag';
 import { GetDecryptedIntegrations } from '../get-decrypted-integrations';
 
@@ -58,13 +57,6 @@ const novuIntegration: IntegrationEntity = {
 
 const findOneMock = jest.fn(() => testIntegration);
 
-jest.mock('../get-novu-integration', () => ({
-  ...jest.requireActual('../get-novu-integration'),
-  GetNovuIntegration: jest.fn(() => ({
-    execute: jest.fn(() => novuIntegration),
-  })),
-}));
-
 jest.mock('@novu/dal', () => ({
   ...jest.requireActual('@novu/dal'),
   IntegrationRepository: jest.fn(() => ({
@@ -93,8 +85,6 @@ describe('select integration', function () {
   beforeEach(async function () {
     useCase = new SelectIntegration(
       new IntegrationRepository() as any,
-      // @ts-ignore
-      new GetNovuIntegration() as any,
       // @ts-ignore
       new GetFeatureFlag(),
       // @ts-ignore
