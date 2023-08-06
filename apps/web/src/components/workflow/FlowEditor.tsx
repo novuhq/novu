@@ -339,7 +339,16 @@ const Wrapper = styled.div<{ dark: boolean }>`
     width: 280px;
     height: 80px;
     cursor: pointer;
+    svg {
+      stop:first-child {
+        stop-color: #dd2476 !important;
+      }
+      stop:last-child {
+        stop-color: #ff512f !important;
+      }
+    }
   }
+
   .react-flow__node.react-flow__node-addNode {
     cursor: default;
     width: 280px;
