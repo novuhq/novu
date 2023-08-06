@@ -29,7 +29,7 @@ function PageContainer({
 export default PageContainer;
 
 const StyledContainer = styled(Container)`
-  overflow-y: auto;
+  overflow-y: auto !important;
   border-radius: 0;
   padding-left: 0;
   padding-right: 0;
