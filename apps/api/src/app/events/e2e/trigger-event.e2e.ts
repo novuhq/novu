@@ -776,6 +776,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       const existingIntegrations = await integrationRepository.find({
         _organizationId: session.organization._id,
         _environmentId: session.environment._id,
+        active: true,
       });
 
       const integrationIdsToDelete = existingIntegrations.flatMap((integration) =>
@@ -789,6 +790,19 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       });
 
       expect(deletedIntegrations.modifiedCount).to.eql(integrationIdsToDelete.length);
+
+      await integrationRepository.update(
+        {
+          _organizationId: session.organization._id,
+          _environmentId: session.environment._id,
+          active: false,
+        },
+        {
+          $set: {
+            active: true,
+          },
+        }
+      );
 
       const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
       const channelType = ChannelTypeEnum.EMAIL;
@@ -1820,7 +1834,7 @@ export async function sendTrigger(
   payload: Record<string, unknown> = {},
   overrides: Record<string, unknown> = {}
 ) {
-  await axiosInstance.post(
+  return await axiosInstance.post(
     `${session.serverUrl}${eventTriggerPath}`,
     {
       name: template.triggers[0].identifier,
