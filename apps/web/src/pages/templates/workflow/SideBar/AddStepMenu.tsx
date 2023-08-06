@@ -82,11 +82,17 @@ const StyledNav = styled.div`
 `;
 
 const StyledDraggableNode = styled.div`
-  :hover svg stop:first-child {
-    stop-color: #dd2476 !important;
+  &:not(:hover) svg path {
+    stop-color: currentcolor !important;
+    fill: currentcolor !important;
   }
 
-  :hover svg stop:last-child {
-    stop-color: #ff512f !important;
+  &:hover svg {
+    stop:first-child {
+      stop-color: #dd2476 !important;
+    }
+    stop:last-child {
+      stop-color: #ff512f !important;
+    }
   }
 `;
