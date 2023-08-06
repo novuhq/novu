@@ -196,6 +196,7 @@ describe('MembersTable Component', function () {
           currentUser={{ _id: 1 }}
           onRemoveMember={onRemoveMember}
           onChangeMemberRole={onChangeMemberRole}
+          allowChangeRole={true}
         />
       </TestWrapper>
     );

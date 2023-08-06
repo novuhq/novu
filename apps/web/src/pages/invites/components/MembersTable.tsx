@@ -19,6 +19,7 @@ export function MembersTable({
   loading = false,
   onResendInviteMember,
   onChangeMemberRole,
+  allowChangeRole = false,
 }) {
   const { classes, theme } = useStyles();
   const clipboardInviteLink = useClipboard({ timeout: 1000 });
@@ -77,6 +78,7 @@ export function MembersTable({
                   onChangeMemberRole={onChangeMemberRole}
                   member={member}
                   isEnableMemberActions={isEnableMemberActions}
+                  allowChangeRole={allowChangeRole}
                 />
               </div>
             </ActionsSider>
