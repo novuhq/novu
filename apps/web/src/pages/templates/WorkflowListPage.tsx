@@ -13,7 +13,17 @@ import {
 } from '../../hooks';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
-import { Tag, Table, colors, Text, Button, IExtendedColumn, withCellLoading } from '../../design-system';
+import {
+  Tag,
+  Table,
+  colors,
+  Text,
+  Button,
+  IExtendedColumn,
+  withCellLoading,
+  PlusButton,
+  Container,
+} from '../../design-system';
 import { Bolt, BoltFilled, BoltOffFilled, Edit, PlusCircle } from '../../design-system/icons';
 import { Tooltip } from '../../design-system';
 import { ROUTES } from '../../constants/routes.enum';
@@ -166,10 +176,10 @@ function WorkflowListPage() {
 
   return (
     <PageContainer title="Workflows">
-      <PageHeader
-        title="Workflows"
-        actions={
-          isTemplateStoreEnabled ? (
+      <PageHeader title="Workflows" />
+      <Container fluid sx={{ padding: '0 24px 8px 24px' }}>
+        {isTemplateStoreEnabled ? (
+          <div>
             <CreateWorkflowDropdown
               readonly={readonly}
               blueprints={popular?.blueprints}
@@ -180,18 +190,18 @@ function WorkflowListPage() {
               onTemplateClick={handleOnBlueprintClick}
               onAllTemplatesClick={openModal}
             />
-          ) : (
-            <Button
+          </div>
+        ) : (
+          <>
+            <PlusButton
+              label="Add a workflow"
               disabled={readonly}
               onClick={() => handleRedirectToCreateTemplate(true)}
-              icon={<PlusCircle />}
-              data-test-id="create-template-btn"
-            >
-              Create Workflow
-            </Button>
-          )
-        }
-      />
+              data-test-id="create-workflow-btn"
+            />
+          </>
+        )}
+      </Container>
 
       <TemplateListTableWrapper>
         {isTemplateStoreEnabled ? (
