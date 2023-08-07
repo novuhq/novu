@@ -22,10 +22,10 @@ export default createStyles((theme: MantineTheme, _params, getRef) => {
         paddingLeft: 24,
       },
       'tr td:last-child': {
-        paddingRight: 10,
+        paddingRight: 24,
       },
       'tr th:last-child': {
-        paddingRight: 10,
+        paddingRight: 24,
       },
       '& thead tr': {
         borderBottom: `1px solid ${dark ? colors.B30 : colors.B98}`,

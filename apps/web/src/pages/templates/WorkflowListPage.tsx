@@ -84,16 +84,16 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
       <>
         {!original.active ? (
           <Group spacing={0} data-test-id="disabled-status-label">
-            <BoltOffFilled color={colors.B40} width="16px" height="16px" />
-            <Text rows={1} size="sm" color={colors.B40}>
+            <BoltOffFilled color={colors.B40} />
+            <Text rows={1} color={colors.B40}>
               Disabled
             </Text>
           </Group>
         ) : null}{' '}
         {original.active ? (
           <Group spacing={0} data-test-id="active-status-label">
-            <BoltFilled color={colors.success} width="16px" height="16px" />
-            <Text rows={1} size="sm" color={colors.success}>
+            <BoltFilled color={colors.success} />
+            <Text rows={1} color={colors.success}>
               Active
             </Text>
           </Group>
@@ -104,7 +104,7 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
   {
     accessor: '_id',
     Header: '',
-    maxWidth: 50,
+    maxWidth: 75,
     Cell: withCellLoading(({ row: { original } }) => {
       const theme = useMantineTheme();
 
@@ -266,7 +266,7 @@ export default WorkflowListPage;
 
 const ActionButtonWrapper = styled.div`
   text-align: right;
-
+  padding-right: 8px;
   a {
     display: inline-block;
     opacity: 0;
