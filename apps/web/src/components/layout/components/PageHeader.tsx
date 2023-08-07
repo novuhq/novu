@@ -3,7 +3,7 @@ import { Title, Container } from '../../../design-system';
 
 function PageHeader({ actions, title }: { actions?: JSX.Element; title: string }) {
   return (
-    <Container fluid sx={{ padding: '30px' }}>
+    <Container fluid sx={{ padding: '20px 24px' }}>
       <Group position="apart">
         <Title>{title}</Title>
         {actions && <div>{actions}</div>}

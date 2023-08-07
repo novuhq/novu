@@ -249,7 +249,6 @@ export function Table<T extends object>({
       {!loading && pagination && pageSize > 1 && pagination?.minimalPagination && (
         <div
           style={{
-            marginTop: '10px',
             display: 'flex',
             width: '100%',
             justifyContent: 'center',

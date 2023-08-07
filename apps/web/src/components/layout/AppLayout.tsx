@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { AppShell } from '@mantine/core';
 import * as Sentry from '@sentry/react';
 import { Outlet } from 'react-router-dom';
@@ -14,19 +15,24 @@ import { SpotLight } from '../utils/Spotlight';
 import { SpotLightProvider } from '../providers/SpotlightProvider';
 
 export function AppLayout() {
+  const [isIntercomOpened, setIsIntercomOpened] = useState(false);
+
   return (
     <RequiredAuth>
       <SpotLightProvider>
         <ThemeProvider>
-          <IntercomProvider appId={INTERCOM_APP_ID}>
+          <IntercomProvider
+            appId={INTERCOM_APP_ID}
+            onShow={() => setIsIntercomOpened(true)}
+            onHide={() => setIsIntercomOpened(false)}
+          >
             <AppShell
               padding="lg"
               navbar={<SideNav />}
-              header={<HeaderNav />}
               styles={(theme) => ({
                 root: { minHeight: '100vh', position: 'relative', zIndex: 1 },
                 body: {
-                  minHeight: `calc(100vh - ${HEADER_HEIGHT})`,
+                  minHeight: `calc(100vh - ${HEADER_HEIGHT}px)`,
                   '@media (max-width: 768px)': {
                     flexDirection: 'column',
                     height: 'auto',
@@ -35,8 +41,9 @@ export function AppLayout() {
                 main: {
                   backgroundColor: theme.colorScheme === 'dark' ? colors.BGDark : colors.BGLight,
                   minHeight: 'auto',
-                  padding: '30px',
+                  padding: 0,
                   overflowX: 'hidden',
+                  borderRadius: 0,
                 },
               })}
             >
@@ -57,6 +64,7 @@ export function AppLayout() {
                 )}
               >
                 <SpotLight>
+                  <HeaderNav isIntercomOpened={isIntercomOpened} />
                   <Outlet />
                 </SpotLight>
               </Sentry.ErrorBoundary>

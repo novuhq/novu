@@ -11,7 +11,7 @@ import { SharedModule } from '../shared/shared.module';
   exports: [WSGateway],
 })
 export class SocketModule implements OnModuleInit {
-  private readonly bullMqService: BullMqService;
+  public readonly bullMqService: BullMqService;
 
   constructor(private wsGateway: WSGateway) {
     this.bullMqService = new BullMqService();
