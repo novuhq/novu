@@ -3,7 +3,7 @@ import { createStyles, NumberInput, Loader } from '@mantine/core';
 import styled from '@emotion/styled';
 
 import { NodeStepWithPopover } from './NodeStepWithPopover';
-import { DigestGradient, CountdownTimer } from '../../../design-system/icons';
+import { CountdownTimer, DigestAction } from '../../../design-system/icons';
 import { useDigestDemoFlowContext } from './DigestDemoFlowProvider';
 import { Indicator } from './Indicator';
 import { colors } from '../../../design-system';
@@ -72,7 +72,7 @@ export function DigestNode({ data, id }: { data: any; id: string }) {
     <NodeStepWithPopover
       data={data}
       id={id}
-      Icon={DigestGradient}
+      Icon={DigestAction}
       ContentItem={
         <>
           <Indicator isShown={!isReadOnly && triggerCount > 0} value={triggerCount > 99 ? '99' : `${triggerCount}`} />
