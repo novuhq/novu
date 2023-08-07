@@ -95,6 +95,41 @@ describe('Compile Template', function () {
     expect(result).toEqual('<h1>Name1</h1>30-32-<h1>Name2</h1>31-');
   });
 
+  it('should render sortBy values of array', async function () {
+    const result = await useCase.execute(
+      CompileTemplateCommand.create({
+        data: {
+          people: [
+            {
+              name: 'a75',
+              item1: false,
+              item2: false,
+              id: 1,
+              updated_at: '2023-01-01T06:25:24Z',
+            },
+            {
+              name: 'z32',
+              item1: true,
+              item2: false,
+              id: 3,
+              updated_at: '2023-01-09T11:25:13Z',
+            },
+            {
+              name: 'e77',
+              item1: false,
+              item2: false,
+              id: 2,
+              updated_at: '2023-01-05T04:13:24Z',
+            },
+          ],
+        },
+        template: `{{#each (sortBy people 'updated_at')}}{{name}} - {{id}}{{/each}}`,
+      })
+    );
+
+    expect(result).toEqual('a75 - 1e77 - 2z32 - 3');
+  });
+
   it('should allow the user to specify handlebars helpers', async function () {
     const result = await useCase.execute(
       CompileTemplateCommand.create({
