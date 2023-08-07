@@ -25,11 +25,15 @@ describe('Brand Screen', function () {
 
     cy.getByTestId('logo-image-wrapper').should('have.attr', 'src').should('include', '.png');
 
-    cy.getByTestId('logo-image-wrapper').should('have.attr', 'src').should('include', this.session.organization._id);
+    cy.getByTestId('logo-image-wrapper')
+      .should('have.attr', 'src')
+      .should('include', 'https://web.novu.co/static/images/logo-');
     cy.getByTestId('submit-branding-settings').click();
 
     cy.getByTestId('logo-image-wrapper').should('have.attr', 'src').should('include', '.png');
-    cy.getByTestId('logo-image-wrapper').should('have.attr', 'src').should('include', this.session.organization._id);
+    cy.getByTestId('logo-image-wrapper')
+      .should('have.attr', 'src')
+      .should('include', 'https://web.novu.co/static/images/logo-');
   });
 
   it('should change look and feel settings', function () {

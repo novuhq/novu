@@ -6,8 +6,8 @@ import { ISelectPrimaryIntegrationModalProps, SelectPrimaryIntegrationModal } fr
 
 export const useSelectPrimaryIntegrationModal = () => {
   const [opened, { open, close }] = useDisclosure(false);
-  const [{ environmentId, channelType, onClose }, setModalProps] = useState<
-    Partial<Pick<ISelectPrimaryIntegrationModalProps, 'environmentId' | 'channelType' | 'onClose'>>
+  const [{ environmentId, channelType, exclude, onClose }, setModalProps] = useState<
+    Partial<Pick<ISelectPrimaryIntegrationModalProps, 'environmentId' | 'channelType' | 'exclude' | 'onClose'>>
   >({});
   const isMultiProviderConfigurationEnabled = useIsMultiProviderConfigurationEnabled();
   const isOpened = opened && isMultiProviderConfigurationEnabled;
@@ -21,11 +21,12 @@ export const useSelectPrimaryIntegrationModal = () => {
     isOpened,
     environmentId,
     channelType,
+    exclude,
     onClose: onCloseCallback,
   });
 
   const openModalCallback = useCallback(
-    (props: Pick<ISelectPrimaryIntegrationModalProps, 'environmentId' | 'channelType' | 'onClose'>) => {
+    (props: Pick<ISelectPrimaryIntegrationModalProps, 'environmentId' | 'channelType' | 'exclude' | 'onClose'>) => {
       setModalProps({ ...props });
       open();
     },

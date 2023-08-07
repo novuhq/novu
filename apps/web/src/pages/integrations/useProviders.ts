@@ -2,20 +2,16 @@ import { useMemo } from 'react';
 import * as cloneDeep from 'lodash.clonedeep';
 import {
   ChannelTypeEnum,
-  EmailProviderIdEnum,
   IConfigCredentials,
   IProviderConfig,
+  NOVU_SMS_EMAIL_PROVIDERS,
   providers,
-  ProvidersIdEnum,
   PushProviderIdEnum,
-  SmsProviderIdEnum,
 } from '@novu/shared';
 
 import { useIntegrations, useIsMultiProviderConfigurationEnabled } from '../../hooks';
 import type { IIntegratedProvider, IntegrationEntity } from './types';
 import { IS_DOCKER_HOSTED } from '../../config';
-
-export const NOVU_SMS_EMAIL_PROVIDERS: ProvidersIdEnum[] = [SmsProviderIdEnum.Novu, EmailProviderIdEnum.Novu];
 
 /*
  * temporary patch before migration script
