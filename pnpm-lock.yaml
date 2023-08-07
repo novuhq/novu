@@ -452,7 +452,7 @@ importers:
       babel-plugin-import: ^1.13.3
       chart.js: ^3.7.1
       customize-cra: ^1.0.0
-      cypress: ^12.3.0
+      cypress: ^12.17.3
       cypress-localstorage-commands: ^1.7.0
       cypress-network-idle: ^1.11.2
       cypress-wait-until: ^1.7.2
@@ -517,7 +517,7 @@ importers:
       '@babel/plugin-proposal-optional-chaining': 7.21.0_@babel+core@7.21.4
       '@babel/plugin-transform-react-display-name': 7.18.6_@babel+core@7.21.4
       '@babel/plugin-transform-runtime': 7.21.4_@babel+core@7.21.4
-      '@cypress/react': 7.0.3_7czwiautn6cxs5xzv3i2omathy
+      '@cypress/react': 7.0.3_a5iav5bdwa3paydmmfzr63dd4m
       '@cypress/webpack-dev-server': 3.4.1_webpack@5.78.0
       '@editorjs/editorjs': 2.26.5
       '@editorjs/paragraph': 2.9.0
@@ -625,8 +625,8 @@ importers:
       '@storybook/react': 6.5.16_a3dnqsrebdr2erg6rshcubf6vu
       '@testing-library/jest-dom': 4.2.4
       '@types/testing-library__jest-dom': 5.14.5
-      cypress: 12.17.2
-      cypress-localstorage-commands: 1.7.0_cypress@12.17.2
+      cypress: 12.17.3
+      cypress-localstorage-commands: 1.7.0_cypress@12.17.3
       cypress-network-idle: 1.14.2
       cypress-wait-until: 1.7.2
       eslint-plugin-cypress: 2.13.2_eslint@8.38.0
@@ -9437,7 +9437,7 @@ packages:
     resolution: {integrity: sha512-/Z3l6pXthq0JvMYdUFyX9j0MaCltlIn6mfh9jLyQwg5aPKxkyNa0PTHtU1AlFXLNk55ZuAeJRcpvq+tmLfKmaQ==}
     engines: {node: '>=10'}
 
-  /@cypress/react/7.0.3_7czwiautn6cxs5xzv3i2omathy:
+  /@cypress/react/7.0.3_a5iav5bdwa3paydmmfzr63dd4m:
     resolution: {integrity: sha512-YseqnMugTbdPV9YCYEMXVqIf+P7x+pfjXOdjv4dnDFqNCZeHaZfOZVFZ4XfEHVxMv0aDszxlaLiIp3QDPhr12w==}
     peerDependencies:
       '@types/react': ^16.9.16 || ^17.0.0
@@ -9449,7 +9449,7 @@ packages:
         optional: true
     dependencies:
       '@types/react': 17.0.53
-      cypress: 12.17.2
+      cypress: 12.17.3
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
     dev: false
@@ -21997,6 +21997,9 @@ packages:
     resolution: {integrity: sha512-QB5D2sqfSjCmTuWcBWyJ+/44bcjO7VbjSbOE0ucoVbAsSNQc4Lt6QkgkVXkTDwkL4z/beecZNDvVX15D4P8Jbw==}
     dev: true
 
+  /@types/node/16.18.39:
+    resolution: {integrity: sha512-8q9ZexmdYYyc5/cfujaXb4YOucpQxAV4RMG0himLyDUOEr8Mr79VrqsFI+cQ2M2h89YIuy95lbxuYjxT4Hk4kQ==}
+
   /@types/node/17.0.45:
     resolution: {integrity: sha512-w+tIMs3rq2afQdsPJlODhoUEKzFP1ayaoyl1CcnwtIlsVe7K7bA1NGm4s3PraqTLlXnbIN84zuBlxBWo1u9BLw==}
 
@@ -28003,13 +28006,13 @@ packages:
       mocha: 10.2.0
     dev: true
 
-  /cypress-localstorage-commands/1.7.0_cypress@12.17.2:
+  /cypress-localstorage-commands/1.7.0_cypress@12.17.3:
     resolution: {integrity: sha512-4v4FrDRPimMStWmiGikyN7OmO2rH0MLI7DMk76dBpb9/sJqCDwa7fAHTUDx6avUEDmO7TFQFgaT3OQTr1HqasQ==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       cypress: '>=2.1.0'
     dependencies:
-      cypress: 12.17.2
+      cypress: 12.17.3
     dev: true
 
   /cypress-network-idle/1.14.2:
@@ -28029,6 +28032,56 @@ packages:
       '@cypress/request': 2.88.11
       '@cypress/xvfb': 1.2.4_supports-color@8.1.1
       '@types/node': 14.18.42
+      '@types/sinonjs__fake-timers': 8.1.1
+      '@types/sizzle': 2.3.3
+      arch: 2.2.0
+      blob-util: 2.0.2
+      bluebird: 3.7.2
+      buffer: 5.7.1
+      cachedir: 2.3.0
+      chalk: 4.1.2
+      check-more-types: 2.24.0
+      cli-cursor: 3.1.0
+      cli-table3: 0.6.3
+      commander: 6.2.1
+      common-tags: 1.8.2
+      dayjs: 1.11.9
+      debug: 4.3.4_supports-color@8.1.1
+      enquirer: 2.3.6
+      eventemitter2: 6.4.7
+      execa: 4.1.0
+      executable: 4.1.1
+      extract-zip: 2.0.1_supports-color@8.1.1
+      figures: 3.2.0
+      fs-extra: 9.1.0
+      getos: 3.2.1
+      is-ci: 3.0.1
+      is-installed-globally: 0.4.0
+      lazy-ass: 1.6.0
+      listr2: 3.14.0_enquirer@2.3.6
+      lodash: 4.17.21
+      log-symbols: 4.1.0
+      minimist: 1.2.8
+      ospath: 1.2.2
+      pretty-bytes: 5.6.0
+      proxy-from-env: 1.0.0
+      request-progress: 3.0.0
+      semver: 7.5.4
+      supports-color: 8.1.1
+      tmp: 0.2.1
+      untildify: 4.0.0
+      yauzl: 2.10.0
+    dev: true
+
+  /cypress/12.17.3:
+    resolution: {integrity: sha512-/R4+xdIDjUSLYkiQfwJd630S81KIgicmQOLXotFxVXkl+eTeVO+3bHXxdi5KBh/OgC33HWN33kHX+0tQR/ZWpg==}
+    engines: {node: ^14.0.0 || ^16.0.0 || >=18.0.0}
+    hasBin: true
+    requiresBuild: true
+    dependencies:
+      '@cypress/request': 2.88.11
+      '@cypress/xvfb': 1.2.4_supports-color@8.1.1
+      '@types/node': 16.18.39
       '@types/sinonjs__fake-timers': 8.1.1
       '@types/sizzle': 2.3.3
       arch: 2.2.0
@@ -30445,7 +30498,7 @@ packages:
       - supports-color
 
   /extsprintf/1.3.0:
-    resolution: {integrity: sha1-lpGEQOMEGnpBT4xS48V06zw+HgU=}
+    resolution: {integrity: sha512-11Ndz7Nv+mvAC1j0ktTa7fAb0vLyGGX+rMHNBYQviQDGU0Hw7lhctJANqbPhu9nV9/izT/IntTgZ7Im/9LJs9g==}
     engines: {'0': node >=0.6.0}
 
   /extsprintf/1.4.1:
