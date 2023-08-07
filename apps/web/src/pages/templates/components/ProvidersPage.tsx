@@ -33,7 +33,13 @@ export function ProvidersPage() {
 
   return (
     <>
-      <SubPageWrapper title="Workflow Settings">
+      <SubPageWrapper
+        title="Workflow Settings"
+        style={{
+          display: 'flex',
+          flexFlow: 'column',
+        }}
+      >
         <WorkflowSettingsTabs />
         <ScrollArea h="100%" offsetScrollbars>
           <ListProviders
