@@ -1,22 +1,22 @@
 import { useState } from 'react';
 import styled from '@emotion/styled';
+
 import { ChannelTypeEnum } from '@novu/shared';
 
 import { Text } from '../../../design-system';
-import { CircleArrowRight } from '../../../design-system/icons/arrows/CircleArrowRight';
+import { CircleArrowRight } from '../../../design-system/icons';
 import { IntegrationsStoreModal } from '../../integrations/IntegrationsStoreModal';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { stepNames, TemplateEditorAnalyticsEnum } from '../constants';
 import { useIsMultiProviderConfigurationEnabled } from '../../../hooks';
 import { IntegrationsListModal } from '../../integrations/IntegrationsListModal';
 
-const DoubleArrowRightStyled = styled(CircleArrowRight)`
-  cursor: pointer;
-`;
+type alertType = 'error' | 'warning';
 
-export function LackIntegrationError({
+export function LackIntegrationAlert({
   channelType,
   text,
+  type = 'error',
   iconHeight = 18,
   iconWidth = 18,
 }: {
@@ -24,6 +24,7 @@ export function LackIntegrationError({
   text?: string;
   iconHeight?: number | string | undefined;
   iconWidth?: number | string | undefined;
+  type?: alertType;
 }) {
   const segment = useSegment();
   const [isIntegrationsModalOpened, openIntegrationsModal] = useState(false);
@@ -33,7 +34,7 @@ export function LackIntegrationError({
 
   return (
     <>
-      <WarningMessage>
+      <WarningMessage backgroundColor={alertTypeToMessageBackgroundColor(type)}>
         <Text>
           {text
             ? text
@@ -42,6 +43,7 @@ export function LackIntegrationError({
               ' provider yet, this channel will be disabled until you configure it.'}
         </Text>
         <DoubleArrowRightStyled
+          color={alertTypeToDoubleArrowColor(type)}
           onClick={() => {
             openIntegrationsModal(true);
             segment.track(TemplateEditorAnalyticsEnum.CONFIGURE_PROVIDER_BANNER_CLICK);
@@ -67,7 +69,12 @@ export function LackIntegrationError({
   );
 }
 
-const WarningMessage = styled.div`
+const DoubleArrowRightStyled = styled(CircleArrowRight)<{ color?: string | undefined }>`
+  cursor: pointer;
+  color: ${({ color }) => color};
+`;
+
+const WarningMessage = styled.div<{ backgroundColor: string }>`
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -76,6 +83,26 @@ const WarningMessage = styled.div`
   margin-bottom: 40px;
   color: #e54545;
 
-  background: rgba(230, 69, 69, 0.15);
+  background: ${({ backgroundColor }) => backgroundColor};
   border-radius: 7px;
 `;
+
+function alertTypeToDoubleArrowColor(type: alertType) {
+  switch (type) {
+    case 'warning':
+      return 'rgba(234, 169, 0, 1)';
+    default:
+      return 'undefined';
+  }
+}
+
+function alertTypeToMessageBackgroundColor(type: alertType) {
+  switch (type) {
+    case 'error':
+      return 'rgba(230, 69, 69, 0.15)';
+    case 'warning':
+      return 'rgba(234, 169, 0, 0.15)';
+    default:
+      return 'rgba(230, 69, 69, 0.15)';
+  }
+}

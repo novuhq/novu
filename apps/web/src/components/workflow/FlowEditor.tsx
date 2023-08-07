@@ -342,6 +342,7 @@ const Wrapper = styled.div<{ dark: boolean }>`
   }
   .react-flow__node.react-flow__node-addNode {
     width: 200px;
+    cursor: default;
   }
   .react-flow__handle.connectable {
     cursor: pointer;
