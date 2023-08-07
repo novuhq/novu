@@ -202,43 +202,31 @@ const WorkflowEditor = () => {
       </When>
       <When truthy={readonly && pathname === basePath}>{null}</When>
       <When truthy={!channel || ![StepTypeEnum.EMAIL, StepTypeEnum.IN_APP].includes(channel)}>
-        <div style={{ minHeight: '600px', display: 'flex', flexFlow: 'column', height: '100%' }}>
-          <Container fluid sx={{ width: '100%', height: `${TOP_ROW_HEIGHT}px` }}>
-            <Stack
-              justify="center"
-              sx={{
-                height: '100%',
-              }}
-            >
-              <Group>
-                <NameInput />
-                <Group>
-                  <UpdateButton />
-                  <Button
-                    pulse={shouldPulse}
-                    onClick={() => {
-                      navigate(basePath + '/snippet');
-                    }}
-                    data-test-id="get-snippet-btn"
-                  >
-                    Get Snippet
-                  </Button>
-                  <Link data-test-id="settings-page" to="settings">
-                    <Settings />
-                  </Link>
-                </Group>
-              </Group>
-            </Stack>
-          </Container>
+        <div style={{ minHeight: '600px', display: 'flex', flexFlow: 'row', height: '100%' }}>
           <div
             style={{
-              flex: '1',
+              flex: '1 1 auto',
               display: 'flex',
-              flexFlow: 'row',
-              position: 'relative',
-              height: '100%',
+              flexFlow: 'column',
             }}
           >
+            <Container fluid sx={{ width: '100%', height: `${TOP_ROW_HEIGHT}px` }}>
+              <Stack
+                justify="center"
+                sx={{
+                  height: '100%',
+                }}
+              >
+                <Group>
+                  <NameInput />
+                  <Group>
+                    <When truthy={pathname !== basePath}>
+                      <UpdateButton />
+                    </When>
+                  </Group>
+                </Group>
+              </Stack>
+            </Container>
             <FlowEditor
               onDelete={onDelete}
               dragging={dragging}
@@ -251,19 +239,20 @@ const WorkflowEditor = () => {
               onGetStepError={onGetStepError}
               onNodeClick={onNodeClick}
             />
-            <div
-              style={{
-                width: 'auto',
-                minHeight: '600px',
+          </div>
+
+          <div
+            style={{
+              width: 'auto',
+              minHeight: '600px',
+            }}
+          >
+            <Outlet
+              context={{
+                setDragging,
+                onDelete,
               }}
-            >
-              <Outlet
-                context={{
-                  setDragging,
-                  onDelete,
-                }}
-              />
-            </div>
+            />
           </div>
         </div>
       </When>
