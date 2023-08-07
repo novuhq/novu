@@ -45,7 +45,7 @@ export function BrandPage() {
   return (
     <PageContainer title="Brand">
       <PageHeader title="Brand" />
-      <Container fluid px={24}>
+      <Container fluid px={30}>
         <Tabs
           loading={!currentOrganization}
           menuTabs={menuTabs}
