@@ -92,12 +92,6 @@ export enum InAppProviderIdEnum {
   Novu = 'novu',
 }
 
-export const NOVU_PROVIDERS: ProvidersIdEnum[] = [
-  InAppProviderIdEnum.Novu,
-  SmsProviderIdEnum.Novu,
-  EmailProviderIdEnum.Novu,
-];
-
 export type ProvidersIdEnum =
   | EmailProviderIdEnum
   | SmsProviderIdEnum

@@ -1,7 +1,7 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useMemo, useState } from 'react';
 import { Group } from '@mantine/core';
 import { Controller, useFormContext } from 'react-hook-form';
-import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
+import { CHANNELS_WITH_PRIMARY, NOVU_PROVIDERS } from '@novu/shared';
 
 import { Button, colors, Dropdown, Modal, NameInput, Text, Title } from '../../../design-system';
 import { useFetchEnvironments } from '../../../hooks/useFetchEnvironments';
@@ -27,9 +27,20 @@ export const UpdateIntegrationSidebarHeader = ({
   const [isModalOpened, setModalIsOpened] = useState(false);
   const { control } = useFormContext();
   const { environments } = useFetchEnvironments();
-  const { isLoading } = useProviders();
+  const { providers, isLoading } = useProviders();
   const canMarkAsPrimary = provider && !provider.primary && CHANNELS_WITH_PRIMARY.includes(provider.channel);
   const { openModal, SelectPrimaryIntegrationModal } = useSelectPrimaryIntegrationModal();
+
+  const shouldSetNewPrimary = useMemo(() => {
+    if (!provider) return false;
+
+    const { channel: selectedChannel, environmentId, integrationId, primary } = provider;
+    const hasSameChannelActiveIntegration = !!providers
+      .filter((el) => !NOVU_PROVIDERS.includes(el.providerId) && el.integrationId !== integrationId)
+      .find((el) => el.active && el.channel === selectedChannel && el.environmentId === environmentId);
+
+    return hasSameChannelActiveIntegration && primary;
+  }, [provider, providers]);
 
   const { makePrimaryIntegration, isLoading: isMarkingPrimary } = useMakePrimaryIntegration();
 
@@ -52,6 +63,7 @@ export const UpdateIntegrationSidebarHeader = ({
       openModal({
         environmentId: provider.environmentId,
         channelType: provider.channel,
+        exclude: [provider.integrationId],
         onClose: () => {
           deleteIntegration({
             id: provider.integrationId,
@@ -138,7 +150,7 @@ export const UpdateIntegrationSidebarHeader = ({
         data-test-id="delete-provider-instance-modal"
       >
         <Text mb={30} size="lg" color={colors.B60}>
-          {provider.primary
+          {shouldSetNewPrimary
             ? 'Deleting the primary provider instance will cause to select another primary one. ' +
               'All workflows relying on its configuration will be linked to the selected primary provider instance.'
             : 'Deleting a provider instance will fail workflows relying on its configuration, leading to undelivered notifications.'}
@@ -149,7 +161,7 @@ export const UpdateIntegrationSidebarHeader = ({
           </Button>
           <Button loading={isDeleting} onClick={onDeleteClick}>
             <Trash />
-            {provider.primary ? 'Delete and relink' : 'Delete instance'}
+            {shouldSetNewPrimary ? 'Delete and relink' : 'Delete instance'}
           </Button>
         </Group>
       </Modal>

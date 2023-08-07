@@ -3,6 +3,7 @@ import { Group, Center, Box } from '@mantine/core';
 import styled from '@emotion/styled';
 import slugify from 'slugify';
 import { Controller, FormProvider, useForm } from 'react-hook-form';
+import { useIntercom } from 'react-use-intercom';
 import {
   CHANNELS_WITH_PRIMARY,
   EmailProviderIdEnum,
@@ -32,8 +33,6 @@ import { Faq } from '../../../quick-start/components/QuickStartWrapper';
 import { NovuInAppFrameworkHeader } from '../../components/NovuInAppFrameworkHeader';
 import { NovuInAppSetupWarning } from '../../components/NovuInAppSetupWarning';
 import { NovuProviderSidebarContent } from '../../components/multi-provider/NovuProviderSidebarContent';
-import { useIntercom } from 'react-use-intercom';
-import { useEffectOnce } from '../../../../hooks';
 import { useSelectPrimaryIntegrationModal } from './useSelectPrimaryIntegrationModal';
 
 interface IProviderForm {
@@ -169,18 +168,19 @@ export function UpdateProviderSidebar({
     const { channel: selectedChannel, environmentId, primary } = selectedProvider;
     const isActiveFieldChanged = dirtyFields.active;
     const hasSameChannelActiveIntegration = !!providers
-      .filter((el) => !NOVU_PROVIDERS.includes(el.providerId))
+      .filter((el) => !NOVU_PROVIDERS.includes(el.providerId) && el.integrationId !== selectedProvider.integrationId)
       .find((el) => el.active && el.channel === selectedChannel && el.environmentId === environmentId);
     const isChannelSupportPrimary = CHANNELS_WITH_PRIMARY.includes(selectedChannel);
 
     if (
       isActiveFieldChanged &&
       isChannelSupportPrimary &&
-      ((isActive && hasSameChannelActiveIntegration) || (!isActive && primary))
+      ((isActive && hasSameChannelActiveIntegration) || (!isActive && primary && hasSameChannelActiveIntegration))
     ) {
       openSelectPrimaryIntegrationModal({
         environmentId: selectedProvider?.environmentId,
         channelType: selectedProvider?.channel,
+        exclude: !isActive ? [selectedProvider.integrationId] : undefined,
         onClose: () => {
           updateIntegration(data);
         },

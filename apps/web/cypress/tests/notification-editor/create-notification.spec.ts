@@ -20,11 +20,13 @@ describe('Creation functionality', function () {
     addAndEditChannel('inApp');
     cy.waitForNetworkIdle(500);
 
-    cy.get('.ace_text-input').first().type('{{firstName}} someone assigned you to {{taskName}}', {
+    cy.get('.ace_text-input').first().type('<p>{{firstName}} someone assigned you to {{taskName}}', {
       parseSpecialCharSequences: false,
       force: true,
     });
     cy.getByTestId('inAppRedirect').type('/example/test');
+    cy.getByTestId('editor-mode-switch').find('label').last().click();
+    cy.getByTestId('in-app-content-preview').contains('firstName someone assigned you to taskName');
 
     goBack();
     cy.getByTestId('notification-template-submit-btn').click();
