@@ -1,11 +1,17 @@
 /* eslint-disable max-len */
 import React from 'react';
 
-export function DigestAction(props: React.ComponentPropsWithoutRef<'svg'> & { isGradient?: boolean }) {
-  const { isGradient = false, ...rest } = props;
-
+export function DigestAction(props: React.ComponentPropsWithoutRef<'svg'>) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" {...rest}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      fill="none"
+      viewBox="0 0 24 24"
+      data-blue-gradient-svg
+      {...props}
+    >
       <mask
         id="mask0_528_4359"
         style={{ maskType: 'alpha' }}
@@ -25,8 +31,8 @@ export function DigestAction(props: React.ComponentPropsWithoutRef<'svg'> & { is
       </g>
       <defs>
         <linearGradient id="paint0_linear_528_4359" x1="2" x2="22" y1="12" y2="12" gradientUnits="userSpaceOnUse">
-          <stop stopColor={isGradient ? '#dd2476' : '#525266'}></stop>
-          <stop offset="1" stopColor={isGradient ? '#ff512f' : '#525266'}></stop>
+          <stop stopColor="#525266"></stop>
+          <stop offset="1" stopColor="#525266"></stop>
         </linearGradient>
       </defs>
     </svg>

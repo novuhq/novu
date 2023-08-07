@@ -87,12 +87,22 @@ const StyledDraggableNode = styled.div`
     fill: currentcolor !important;
   }
 
-  &:hover svg {
-    stop:first-child {
-      stop-color: #dd2476 !important;
+  &:hover {
+    svg {
+      stop:first-child {
+        stop-color: #dd2476 !important;
+      }
+      stop:last-child {
+        stop-color: #ff512f !important;
+      }
     }
-    stop:last-child {
-      stop-color: #ff512f !important;
+    [data-blue-gradient-svg] {
+      stop:first-child {
+        stop-color: #4c6dd4 !important;
+      }
+      stop:last-child {
+        stop-color: #66d9e8 !important;
+      }
     }
   }
 `;

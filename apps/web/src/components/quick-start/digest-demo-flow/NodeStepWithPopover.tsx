@@ -137,4 +137,13 @@ const StyledDiv = styled.div`
       stop-color: #ff512f !important;
     }
   }
+
+  [data-blue-gradient-svg] {
+    stop:first-child {
+      stop-color: #4c6dd4 !important;
+    }
+    stop:last-child {
+      stop-color: #66d9e8 !important;
+    }
+  }
 `;
