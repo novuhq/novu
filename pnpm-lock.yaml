@@ -452,7 +452,7 @@ importers:
       babel-plugin-import: ^1.13.3
       chart.js: ^3.7.1
       customize-cra: ^1.0.0
-      cypress: ^12.17.3
+      cypress: ^12.17.2
       cypress-localstorage-commands: ^1.7.0
       cypress-network-idle: ^1.11.2
       cypress-wait-until: ^1.7.2
