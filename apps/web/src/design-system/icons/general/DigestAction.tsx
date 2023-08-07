@@ -3,7 +3,15 @@ import React from 'react';
 
 export function DigestAction(props: React.ComponentPropsWithoutRef<'svg'>) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" {...props}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      fill="none"
+      viewBox="0 0 24 24"
+      data-blue-gradient-svg
+      {...props}
+    >
       <mask
         id="mask0_528_4359"
         style={{ maskType: 'alpha' }}

@@ -347,6 +347,14 @@ const Wrapper = styled.div<{ dark: boolean }>`
         stop-color: #ff512f !important;
       }
     }
+    [data-blue-gradient-svg] {
+      stop:first-child {
+        stop-color: #4c6dd4 !important;
+      }
+      stop:last-child {
+        stop-color: #66d9e8 !important;
+      }
+    }
   }
 
   .react-flow__node.react-flow__node-addNode {

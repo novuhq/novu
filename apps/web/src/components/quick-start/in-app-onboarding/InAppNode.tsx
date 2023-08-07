@@ -1,13 +1,12 @@
 import { Handle, Position } from 'react-flow-renderer';
-
-import { TurnOnGradient } from '../../../design-system/icons/gradient/TurnOnGradient';
+import { InAppFilled } from '../../../design-system/icons';
 import { NodeStep } from '../../workflow';
 
 export function InAppNode({ data }: { data: { label: string; email?: string } }) {
   return (
     <NodeStep
       data={data}
-      Icon={TurnOnGradient}
+      Icon={InAppFilled}
       Handlers={() => {
         return (
           <>

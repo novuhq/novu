@@ -43,6 +43,14 @@ const LeftContent = styled.div`
   display: flex;
   align-items: center;
   gap: 15px;
+  svg {
+    stop:first-child {
+      stop-color: #dd2476 !important;
+    }
+    stop:last-child {
+      stop-color: #ff512f !important;
+    }
+  }
 `;
 
 const StepCard: any = styled.div`
