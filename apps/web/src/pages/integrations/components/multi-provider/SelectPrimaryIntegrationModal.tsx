@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Modal, useMantineTheme } from '@mantine/core';
 import styled from '@emotion/styled';
 import type { Row } from 'react-table';
@@ -103,10 +103,18 @@ const columns: IExtendedColumn<ITableIntegration>[] = [
   },
 ];
 
+const initialState: {
+  selectedIntegrationId?: string;
+  isActive: boolean;
+  selectedRowId?: string;
+  isPopoverOpened: boolean;
+} = { isActive: true, isPopoverOpened: false };
+
 export interface ISelectPrimaryIntegrationModalProps {
   isOpened: boolean;
   environmentId?: string;
   channelType?: ChannelTypeEnum;
+  exclude?: string[];
   onClose: () => void;
 }
 
@@ -114,34 +122,38 @@ export const SelectPrimaryIntegrationModal = ({
   isOpened,
   environmentId,
   channelType = ChannelTypeEnum.EMAIL,
+  exclude,
   onClose,
 }: ISelectPrimaryIntegrationModalProps) => {
   const theme = useMantineTheme();
-  const [isPopoverOpened, setPopoverOpened] = useState(false);
-  const [{ selectedIntegrationId, isActive, selectedRowId }, setSelectedState] = useState<{
-    selectedIntegrationId?: string;
-    isActive: boolean;
-    selectedRowId?: string;
-  }>({ isActive: true });
+  const [{ selectedIntegrationId, isActive, selectedRowId, isPopoverOpened }, setSelectedState] =
+    useState(initialState);
 
   const { environments, isLoading: areEnvironmentsLoading } = useFetchEnvironments();
   const environmentName = environments?.find((el) => el._id === environmentId)?.name ?? '';
 
+  const onCloseCallback = useCallback(() => {
+    setSelectedState(initialState);
+    onClose();
+  }, [onClose]);
+
   const { integrations, loading: areIntegrationsLoading } = useIntegrations();
   const { makePrimaryIntegration, isLoading: isMarkingPrimaryIntegration } = useMakePrimaryIntegration({
-    onSuccess: onClose,
+    onSuccess: onCloseCallback,
   });
   const integrationsByEnvAndChannel = useMemo<ITableIntegration[]>(() => {
     const filteredIntegrations = (integrations ?? []).filter((el) => {
+      const isNotExcluded = !exclude?.includes(el._id ?? '');
+
       if (environmentId) {
-        return el.channel === channelType && el._environmentId === environmentId;
+        return el.channel === channelType && el._environmentId === environmentId && isNotExcluded;
       }
 
-      return el.channel === channelType;
+      return el.channel === channelType && isNotExcluded;
     });
 
     return filteredIntegrations.map((el) => mapToTableIntegration(el, environments));
-  }, [integrations, environments, channelType, environmentId]);
+  }, [integrations, environments, channelType, environmentId, exclude]);
 
   const initialSelectedIndex = useMemo(() => {
     const primary = integrationsByEnvAndChannel.find((el) => el.primary);
@@ -158,11 +170,12 @@ export const SelectPrimaryIntegrationModal = ({
   const channelName = CHANNEL_TYPE_TO_STRING[channelType];
 
   const onRowSelectCallback = (row: Row<ITableIntegration>) => {
-    setSelectedState({
+    setSelectedState((old) => ({
+      ...old,
       selectedIntegrationId: row.original.integrationId,
       isActive: row.original.active,
       selectedRowId: row.id,
-    });
+    }));
   };
 
   return (
@@ -193,7 +206,7 @@ export const SelectPrimaryIntegrationModal = ({
       shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.medium}
       radius="md"
       size="lg"
-      onClose={onClose}
+      onClose={onCloseCallback}
     >
       <ModalBodyHolder data-test-id="select-primary-integration-modal">
         <Description>
@@ -233,7 +246,7 @@ export const SelectPrimaryIntegrationModal = ({
               The selected provider instance will be activated as the primary provider cannot be disabled.
             </Warning>
           )}
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onCloseCallback}>
             Cancel
           </Button>
           <Popover
@@ -247,7 +260,10 @@ export const SelectPrimaryIntegrationModal = ({
             styles={{ dropdown: { minHeight: 'initial !important' } }}
             content={<Description>The selected provider instance is already the primary provider</Description>}
             target={
-              <span onMouseEnter={() => setPopoverOpened(true)} onMouseLeave={() => setPopoverOpened(false)}>
+              <span
+                onMouseEnter={() => setSelectedState((old) => ({ ...old, isPopoverOpened: true }))}
+                onMouseLeave={() => setSelectedState((old) => ({ ...old, isPopoverOpened: false }))}
+              >
                 <Button
                   loading={isMarkingPrimaryIntegration}
                   disabled={makePrimaryButtonDisabled}
