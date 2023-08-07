@@ -45,7 +45,7 @@ export function MembersTable({
   }
 
   return (
-    <Container fluid mt={15} style={{ position: 'relative', minHeight: 500 }}>
+    <Container fluid mt={15} style={{ position: 'relative', minHeight: 500 }} px={0}>
       <LoadingOverlay
         visible={loading}
         overlayColor={theme.colorScheme === 'dark' ? colors.B30 : colors.B98}

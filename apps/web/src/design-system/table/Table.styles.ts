@@ -16,18 +16,18 @@ export default createStyles((theme: MantineTheme, { withSelection }: { withSelec
       borderCollapse: 'collapse',
       borderSpacing: '0px 20px',
       'tr td:first-of-type': {
-        paddingLeft: withSelection ? 10 : 30,
-        paddingRight: withSelection ? 10 : 30,
+        paddingLeft: withSelection ? 10 : 24,
+        paddingRight: withSelection ? 10 : 24,
       },
       'tr th:first-of-type': {
-        paddingLeft: withSelection ? 10 : 30,
-        paddingRight: withSelection ? 10 : 30,
+        paddingLeft: withSelection ? 10 : 24,
+        paddingRight: withSelection ? 10 : 24,
       },
       'tr td:last-child': {
-        paddingRight: 30,
+        paddingRight: 24,
       },
       'tr th:last-child': {
-        paddingRight: 30,
+        paddingRight: 24,
       },
       '& thead tr': {
         borderBottom: `1px solid ${dark ? colors.B30 : colors.B98}`,
