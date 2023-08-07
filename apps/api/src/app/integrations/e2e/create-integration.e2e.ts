@@ -213,6 +213,11 @@ describe('Create Integration - /integration (POST)', function () {
   });
 
   it('should not calculate primary and priority fields for in-app channel', async function () {
+    await integrationRepository.deleteMany({
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+    });
+
     const payload = {
       providerId: InAppProviderIdEnum.Novu,
       channel: ChannelTypeEnum.IN_APP,
@@ -338,7 +343,7 @@ describe('Create Integration - /integration (POST)', function () {
 
       expect(second._id).to.equal(novuEmail._id);
       expect(second.primary).to.equal(false);
-      expect(second.active).to.equal(true);
+      expect(second.active).to.equal(false);
       expect(second.priority).to.equal(1);
     }
   );

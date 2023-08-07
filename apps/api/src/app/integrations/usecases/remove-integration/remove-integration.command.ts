@@ -1,11 +1,8 @@
-import { IsDefined, IsNotEmpty } from 'class-validator';
+import { IsDefined } from 'class-validator';
 
-import { EnvironmentCommand } from '../../../shared/commands/project.command';
+import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
-export class RemoveIntegrationCommand extends EnvironmentCommand {
-  @IsNotEmpty()
-  public readonly userId: string;
-
+export class RemoveIntegrationCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   integrationId: string;
 }

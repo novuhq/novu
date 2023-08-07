@@ -1,13 +1,9 @@
 import { IsDefined, IsMongoId } from 'class-validator';
 
-import { OrganizationCommand } from '../../../shared/commands/organization.command';
+import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
-export class SetIntegrationAsPrimaryCommand extends OrganizationCommand {
+export class SetIntegrationAsPrimaryCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   @IsMongoId()
   integrationId: string;
-
-  @IsDefined()
-  @IsMongoId()
-  environmentId: string;
 }

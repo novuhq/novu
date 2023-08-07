@@ -465,7 +465,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
 
     expect(second._id).to.equal(novuEmail._id);
     expect(second.primary).to.equal(false);
-    expect(second.active).to.equal(true);
+    expect(second.active).to.equal(false);
     expect(second.priority).to.equal(1);
   });
 

@@ -50,11 +50,9 @@ export class RemoveIntegration {
       const isChannelSupportsPrimary = CHANNELS_WITH_PRIMARY.includes(existingIntegration.channel);
       if (isMultiProviderConfigurationEnabled && isChannelSupportsPrimary) {
         await this.integrationRepository.recalculatePriorityForAllActive({
-          _id: existingIntegration._id,
           _organizationId: existingIntegration._organizationId,
           _environmentId: existingIntegration._environmentId,
           channel: existingIntegration.channel,
-          exclude: true,
         });
       }
     } catch (e) {
