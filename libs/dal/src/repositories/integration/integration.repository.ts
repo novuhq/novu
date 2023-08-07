@@ -110,8 +110,8 @@ export class IntegrationRepository extends BaseRepository<IntegrationDBModel, In
     _organizationId,
     _environmentId,
     channel,
-    exclude = false,
-  }: Pick<IntegrationEntity, '_id' | '_environmentId' | '_organizationId' | 'channel'> & {
+  }: Pick<IntegrationEntity, '_environmentId' | '_organizationId' | 'channel'> & {
+    _id?: string;
     exclude?: boolean;
   }) {
     const otherActiveIntegrations = await this.find(
@@ -120,17 +120,19 @@ export class IntegrationRepository extends BaseRepository<IntegrationDBModel, In
         _environmentId,
         channel,
         active: true,
-        _id: {
-          $nin: [_id],
-        },
+        ...(_id && {
+          _id: {
+            $nin: [_id],
+          },
+        }),
       },
       '_id',
       { sort: { priority: -1 } }
     );
 
-    let ids = [_id, ...otherActiveIntegrations.map((integration) => integration._id)];
-    if (exclude) {
-      ids = otherActiveIntegrations.map((integration) => integration._id);
+    let ids = otherActiveIntegrations.map((integration) => integration._id);
+    if (_id) {
+      ids = [_id, ...otherActiveIntegrations.map((integration) => integration._id)];
     }
 
     const promises = ids.map((id, index) =>

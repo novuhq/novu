@@ -39,6 +39,49 @@ export class CreateIntegration {
     private disableNovuIntegration: DisableNovuIntegration
   ) {}
 
+  private async calculatePriorityAndPrimary(command: CreateIntegrationCommand) {
+    const result: { primary: boolean; priority: number } = {
+      primary: false,
+      priority: 0,
+    };
+
+    const highestPriorityIntegration = await this.integrationRepository.findHighestPriorityIntegration({
+      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
+      channel: command.channel,
+    });
+
+    if (highestPriorityIntegration?.primary) {
+      result.priority = highestPriorityIntegration.priority;
+      await this.integrationRepository.update(
+        {
+          _id: highestPriorityIntegration._id,
+          _organizationId: command.organizationId,
+          _environmentId: command.environmentId,
+        },
+        {
+          $set: {
+            priority: highestPriorityIntegration.priority + 1,
+          },
+        }
+      );
+    } else {
+      result.priority = highestPriorityIntegration ? highestPriorityIntegration.priority + 1 : 1;
+    }
+
+    const activeIntegrationsCount = await this.integrationRepository.countActiveExcludingNovu({
+      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
+      channel: command.channel,
+    });
+
+    if (activeIntegrationsCount === 0) {
+      result.primary = true;
+    }
+
+    return result;
+  }
+
   async execute(command: CreateIntegrationCommand): Promise<IntegrationEntity> {
     const isMultiProviderConfigurationEnabled = await this.getFeatureFlag.isMultiProviderConfigurationEnabled(
       FeatureFlagCommand.create({
@@ -137,39 +180,10 @@ export class CreateIntegration {
 
       const isActiveAndChannelSupportsPrimary = command.active && CHANNELS_WITH_PRIMARY.includes(command.channel);
       if (isMultiProviderConfigurationEnabled && isActiveAndChannelSupportsPrimary) {
-        const highestPriorityIntegration = await this.integrationRepository.findHighestPriorityIntegration({
-          _organizationId: command.organizationId,
-          _environmentId: command.environmentId,
-          channel: command.channel,
-        });
+        const { primary, priority } = await this.calculatePriorityAndPrimary(command);
 
-        if (highestPriorityIntegration?.primary) {
-          query.priority = highestPriorityIntegration.priority;
-          await this.integrationRepository.update(
-            {
-              _id: highestPriorityIntegration._id,
-              _organizationId: command.organizationId,
-              _environmentId: command.environmentId,
-            },
-            {
-              $set: {
-                priority: highestPriorityIntegration.priority + 1,
-              },
-            }
-          );
-        } else {
-          query.priority = highestPriorityIntegration ? highestPriorityIntegration.priority + 1 : 1;
-        }
-
-        const activeIntegrationsCount = await this.integrationRepository.countActiveExcludingNovu({
-          _organizationId: command.organizationId,
-          _environmentId: command.environmentId,
-          channel: command.channel,
-        });
-
-        if (activeIntegrationsCount === 0) {
-          query.primary = true;
-        }
+        query.primary = primary;
+        query.priority = priority;
       }
 
       const integrationEntity = await this.integrationRepository.create(query);

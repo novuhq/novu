@@ -1,31 +1,14 @@
 import { Injectable } from '@nestjs/common';
 
-import {
-  GetDecryptedIntegrations,
-  GetDecryptedIntegrationsCommand,
-  FeatureFlagCommand,
-  GetFeatureFlag,
-} from '@novu/application-generic';
-
+import { GetDecryptedIntegrations, GetDecryptedIntegrationsCommand } from '@novu/application-generic';
+import { IntegrationResponseDto } from '../../dtos/integration-response.dto';
 import { GetActiveIntegrationsCommand } from './get-active-integration.command';
-import { GetActiveIntegrationResponseDto } from '../../dtos/get-active-integration-response.dto';
 
 @Injectable()
 export class GetActiveIntegrations {
-  constructor(
-    private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations,
-    private getFeatureFlag: GetFeatureFlag
-  ) {}
+  constructor(private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations) {}
 
-  async execute(command: GetActiveIntegrationsCommand): Promise<GetActiveIntegrationResponseDto[]> {
-    const isMultiProviderConfigurationEnabled = await this.getFeatureFlag.isMultiProviderConfigurationEnabled(
-      FeatureFlagCommand.create({
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        userId: command.userId,
-      })
-    );
-
+  async execute(command: GetActiveIntegrationsCommand): Promise<IntegrationResponseDto[]> {
     const activeIntegrations = await this.getDecryptedIntegrationsUsecase.execute(
       GetDecryptedIntegrationsCommand.create({
         organizationId: command.organizationId,
@@ -39,13 +22,7 @@ export class GetActiveIntegrations {
       return [];
     }
 
-    if (!isMultiProviderConfigurationEnabled) {
-      return activeIntegrations;
-    }
-
-    return activeIntegrations.map((integration) => {
-      return { ...integration, selected: integration.primary };
-    });
+    return activeIntegrations;
   }
 }
 

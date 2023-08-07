@@ -4,10 +4,6 @@ import { ChannelTypeEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/s
 import { IntegrationService } from '@novu/testing';
 import { IntegrationEntity } from '@novu/dal';
 
-interface IActiveIntegration extends IntegrationEntity {
-  selected: boolean;
-}
-
 describe('Get Active Integrations [IS_MULTI_PROVIDER_CONFIGURATION_ENABLED=true] - /integrations/active (GET)', function () {
   let session: UserSession;
   const integrationService = new IntegrationService();
@@ -38,7 +34,7 @@ describe('Get Active Integrations [IS_MULTI_PROVIDER_CONFIGURATION_ENABLED=true]
       channel: ChannelTypeEnum.SMS,
     });
 
-    const activeIntegrations: IActiveIntegration[] = (await session.testAgent.get(`/v1/integrations/active`)).body.data;
+    const activeIntegrations: IntegrationEntity[] = (await session.testAgent.get(`/v1/integrations/active`)).body.data;
 
     const { inAppIntegration, emailIntegration, smsIntegration, chatIntegration, pushIntegration } =
       splitByChannels(activeIntegrations);
@@ -79,11 +75,11 @@ describe('Get Active Integrations [IS_MULTI_PROVIDER_CONFIGURATION_ENABLED=true]
   });
 
   it('should have additional unselected integration after creating a new one', async function () {
-    const initialActiveIntegrations: IActiveIntegration[] = (await session.testAgent.get(`/v1/integrations/active`))
-      .body.data;
+    const initialActiveIntegrations: IntegrationEntity[] = (await session.testAgent.get(`/v1/integrations/active`)).body
+      .data;
     const { emailIntegration: initialEmailIntegrations } = splitByChannels(initialActiveIntegrations);
 
-    let allOrgSelectedIntegrations = initialEmailIntegrations.filter((integration) => integration.selected);
+    let allOrgSelectedIntegrations = initialEmailIntegrations.filter((integration) => integration.primary);
     let allEnvSelectedIntegrations = filterEnvIntegrations(initialEmailIntegrations, session.environment._id);
     let allEnvNotSelectedIntegrations = filterEnvIntegrations(initialEmailIntegrations, session.environment._id, false);
 
@@ -99,10 +95,10 @@ describe('Get Active Integrations [IS_MULTI_PROVIDER_CONFIGURATION_ENABLED=true]
       active: true,
     });
 
-    const activeIntegrations: IActiveIntegration[] = (await session.testAgent.get(`/v1/integrations/active`)).body.data;
+    const activeIntegrations: IntegrationEntity[] = (await session.testAgent.get(`/v1/integrations/active`)).body.data;
     const { emailIntegration } = splitByChannels(activeIntegrations);
 
-    allOrgSelectedIntegrations = emailIntegration.filter((integration) => integration.selected);
+    allOrgSelectedIntegrations = emailIntegration.filter((integration) => integration.primary);
     allEnvSelectedIntegrations = filterEnvIntegrations(emailIntegration, session.environment._id);
     allEnvNotSelectedIntegrations = filterEnvIntegrations(emailIntegration, session.environment._id, false);
 
@@ -112,19 +108,19 @@ describe('Get Active Integrations [IS_MULTI_PROVIDER_CONFIGURATION_ENABLED=true]
   });
 });
 
-function filterEnvIntegrations(integrations: IActiveIntegration[], environmentId: string, selected = true) {
+function filterEnvIntegrations(integrations: IntegrationEntity[], environmentId: string, primary = true) {
   return integrations.filter(
-    (integration) => integration.selected === selected && integration._environmentId === environmentId
+    (integration) => integration.primary === primary && integration._environmentId === environmentId
   );
 }
 
-function splitByChannels(activeIntegrations: IActiveIntegration[]) {
+function splitByChannels(activeIntegrations: IntegrationEntity[]) {
   return activeIntegrations.reduce<{
-    inAppIntegration: IActiveIntegration[];
-    emailIntegration: IActiveIntegration[];
-    smsIntegration: IActiveIntegration[];
-    chatIntegration: IActiveIntegration[];
-    pushIntegration: IActiveIntegration[];
+    inAppIntegration: IntegrationEntity[];
+    emailIntegration: IntegrationEntity[];
+    smsIntegration: IntegrationEntity[];
+    chatIntegration: IntegrationEntity[];
+    pushIntegration: IntegrationEntity[];
   }>(
     (acc, integration) => {
       if (integration.channel === ChannelTypeEnum.IN_APP) {
