@@ -85,7 +85,7 @@ export const UpdateIntegrationSidebarHeader = ({
 
   return (
     <Group spacing={5}>
-      <Group spacing={12} w="100%" h={40}>
+      <Group spacing={12} w="100%" h={28} noWrap>
         <ProviderImage providerId={provider.providerId} />
         <Controller
           control={control}
@@ -103,7 +103,7 @@ export const UpdateIntegrationSidebarHeader = ({
             );
           }}
         />
-        <Group spacing={16}>
+        <Group spacing={12} noWrap ml="auto">
           {children}
           <div>
             <Dropdown
@@ -111,7 +111,7 @@ export const UpdateIntegrationSidebarHeader = ({
               offset={0}
               control={
                 <div style={{ cursor: 'pointer' }}>
-                  <DotsHorizontal color={colors.B40} />
+                  <DotsHorizontal color={colors.B40} width={28} height={28} />
                 </div>
               }
               middlewares={{ flip: false, shift: false }}
