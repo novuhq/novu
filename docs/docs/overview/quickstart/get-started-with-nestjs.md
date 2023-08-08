@@ -144,7 +144,7 @@ Click “Subscribers” on the left sidebar of the Novu dashboard to see all sub
 
 ![subscriber_id.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1688331839/Screenshot_2023-07-03_at_0.02.53_jmkhi3.png)
 
-Create `notification.service.ts` file and inject Novu provider in class constructor. In `createSubscriber` method we create new subscriber. In real app you may want to use this method after user registration. Use user's unique identifier from database for `subscriberId`. 
+Create `notification.service.ts` file and inject Novu provider in class constructor. In `createSubscriber` method we create new subscriber. In real app you may want to use this method after user registration. Use user's unique identifier from database for `subscriberId`.
 
 ```ts
 // notification.service.ts
@@ -219,7 +219,7 @@ export class NotificationService {
 }
 ```
 
-> Novu will update subscriber if you provide different email than previously for specific `subscriberId`. Read more about this behavior in [Create subscriber inline of trigger](https://docs.novu.co/platform/subscribers?language=js#2-inline-of-trigger).
+> Novu will update subscriber if you provide different email than previously for specific `subscriberId`.
 
 Make sure you understand the following:
 
@@ -244,21 +244,12 @@ export class NotificationController {
 
   @Post('subscribers')
   createSubscriber(@Body() body: { subscriberId: string; email: string }) {
-    return this.notificationService.createSubscriber(
-      body.subscriberId,
-      body.email,
-    );
+    return this.notificationService.createSubscriber(body.subscriberId, body.email);
   }
 
   @Post('emails')
-  sendEmail(
-    @Body() body: { subscriberId: string; email: string; description: string },
-  ) {
-    return this.notificationService.sendEmail(
-      body.subscriberId,
-      body.email,
-      body.description,
-    );
+  sendEmail(@Body() body: { subscriberId: string; email: string; description: string }) {
+    return this.notificationService.sendEmail(body.subscriberId, body.email, body.description);
   }
 }
 ```
@@ -287,15 +278,15 @@ We can now start our local server and test our backend app on Postman. To start 
 npm run start:dev
 ```
 
-Next, let's open Postman or other similar tool to test our endpoint. Send a POST request and create new subscriber (`http://localhost:3000/notifications/subscribers`).
+Next, let's open Postman or other similar tool to test our endpoint. Send a POST request and create new subscriber.
 
-![Postman /subscribers](https://github.com/michaldziuba03/novu/assets/43048524/60c96cd5-9c28-47ed-9313-7354d4506ec0)
+![Create subscriber in Postman](https://github.com/michaldziuba03/novu/assets/43048524/60c96cd5-9c28-47ed-9313-7354d4506ec0)
 
 > In place of email field, use your actual email.
 
-With subscriber created, now we can actually send our first email to this subscriber (`http://localhost:3000/notifications/emails`).
+With subscriber created, now we can actually send our first email to this subscriber.
 
-![Postman /emails](https://github.com/michaldziuba03/novu/assets/43048524/d9d9f0f9-c6bc-4b49-afc1-1a8798cfe37b)
+![Send emails in Postman](https://github.com/michaldziuba03/novu/assets/43048524/d9d9f0f9-c6bc-4b49-afc1-1a8798cfe37b)
 
 This means that the email notification was sent successfully. Now go to your inbox and you should see an email notification like the following:
 
@@ -321,7 +312,6 @@ You can create a topic using two entities - `key` and `name`. Keys are unique id
 
 ```ts
 // notification.service.ts
-
 import { Injectable } from '@nestjs/common';
 import { Novu, TriggerRecipientsTypeEnum } from '@novu/node';
 import { InjectNovu } from './novu.provider';
@@ -356,7 +346,6 @@ Note: You can only add those subscribers to a topic that you've already created.
 
 ```ts
 // notification.service.ts
-
 import { Injectable } from '@nestjs/common';
 import { Novu } from '@novu/node';
 import { InjectNovu } from './novu.provider';
@@ -394,6 +383,7 @@ export class NotificationService {
 Sending notifications to a topic is not a complex task. You need to extract the topic key to which you want to send notifications and trigger Novu’s method on that topic key with the message in the payload:
 
 ```ts
+// notification.service.ts
 import { Injectable } from '@nestjs/common';
 import { Novu, TriggerRecipientsTypeEnum } from '@novu/node';
 import { InjectNovu } from './novu.provider';
@@ -435,13 +425,14 @@ export class NotificationService {
 }
 ```
 
-> Value behind TriggerRecipientsTypeEnum.TOPIC is string "Topic".
+> Value behind `TriggerRecipientsTypeEnum.TOPIC` is string `"Topic"`.
 
 ## Create routes for topics
 
+In notification controller add remaining routes for topics.
+
 ```ts
 // notification.controller.ts
-
 import { Body, Controller, Param, Post } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 
@@ -474,24 +465,31 @@ export class NotificationController {
 }
 ```
 
-We can test our endpoints in Postman:
+We can test our endpoints in Postman. First, create new topic:
 
 ![Create topic in Postman](https://github.com/michaldziuba03/novu/assets/43048524/e5300572-96da-4a41-83a9-89d1d4976925)
 
-Let's add subscriber we created previously to the topic:
+> Note how the return object contains the key I sent from my request body. That signals successful creation!
+
+Let's add subscriber to the topic we created previously:
 
 ![Add subscriber to topic in Postman](https://github.com/michaldziuba03/novu/assets/43048524/d22da38b-d42f-4bf1-a696-53d501512bbe)
 
-Finally let's send notification to the topic:
+The returned array will contain the subscriberID that we had passed in the request body, signalling that it was added to the topic successfully.
+
+If, on the other hand, you find the passed subscriberId in the notFound array inside the failed object, it means the subscriber wasn't added to the topic.
+
+You can read more about it [here](https://docs.novu.co/platform/topics/#subscribers-management-in-a-topic).
+
+Finally we can send notification to the topic:
 
 ![Trigger topic notification in Postman](https://github.com/michaldziuba03/novu/assets/43048524/e45028d9-abb2-442a-be8f-3b38eae4e0a4)
 
-> Create more subscribers and add them to the topic to test this feature.
+> You can create more subscribers and add them to the topic to test this feature.
 
-Now each subscriber should see email message in their inboxes:
+Now each topic subscriber should see email message in their inboxes:
 
 ![image](https://github.com/michaldziuba03/novu/assets/43048524/a82593f1-574f-42dc-89ac-8a70700157eb)
-
 
 ## Next Steps
 
