@@ -11,6 +11,7 @@ In this Quickstart, you will learn how to:
 
 - Install the Novu Node.js SDK via npm.
 - Use Novu Node.js SDK with NestJS dependency injection.
+- Create subscribers.
 - Send your first notification.
 - Send notifications via topics.
 
@@ -144,7 +145,7 @@ Click “Subscribers” on the left sidebar of the Novu dashboard to see all sub
 
 ![subscriber_id.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1688331839/Screenshot_2023-07-03_at_0.02.53_jmkhi3.png)
 
-Create `notification.service.ts` file and inject Novu provider in class constructor. In `createSubscriber` method we create new subscriber. In real app you may want to use this method after user registration. Use user's unique identifier from database for `subscriberId`.
+Create `notification.service.ts` file and inject Novu instance in class constructor. In `createSubscriber` method we create new subscriber. In real app you may want to use this method after user registration. Use user's unique identifier from database for `subscriberId`.
 
 ```ts
 // notification.service.ts
