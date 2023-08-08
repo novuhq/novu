@@ -437,6 +437,62 @@ export class NotificationService {
 
 > Value behind TriggerRecipientsTypeEnum.TOPIC is string "Topic".
 
+## Create routes for topics
+
+```ts
+// notification.controller.ts
+
+import { Body, Controller, Param, Post } from '@nestjs/common';
+import { NotificationService } from './notification.service';
+
+@Controller('notifications')
+export class NotificationController {
+  constructor(private readonly notificationService: NotificationService) {}
+
+  ...
+
+  @Post('topics')
+  createTopic(@Body() body: { key: string; name: string }) {
+    return this.notificationService.createTopic(body.key, body.name);
+  }
+
+  @Post('topics/:key/subscribers')
+  addSubscriberToTopic(
+    @Param('key') key: string,
+    @Body('subscriberId') subscriberId: string,
+  ) {
+    return this.notificationService.addTopicSubscriber(key, subscriberId);
+  }
+
+  @Post('topics/:key/send')
+  sendTopicNotification(
+    @Param('key') key: string,
+    @Body('description') description: string,
+  ) {
+    return this.notificationService.sendTopicNotification(key, description);
+  }
+}
+```
+
+We can test our endpoints in Postman:
+
+![Create topic in Postman](https://github.com/michaldziuba03/novu/assets/43048524/e5300572-96da-4a41-83a9-89d1d4976925)
+
+Let's add subscriber we created previously to the topic:
+
+![Add subscriber to topic in Postman](https://github.com/michaldziuba03/novu/assets/43048524/d22da38b-d42f-4bf1-a696-53d501512bbe)
+
+Finally let's send notification to the topic:
+
+![Trigger topic notification in Postman](https://github.com/michaldziuba03/novu/assets/43048524/e45028d9-abb2-442a-be8f-3b38eae4e0a4)
+
+> Create more subscribers and add them to the topic to test this feature.
+
+Now each subscriber should see email message in their inboxes:
+
+![image](https://github.com/michaldziuba03/novu/assets/43048524/a82593f1-574f-42dc-89ac-8a70700157eb)
+
+
 ## Next Steps
 
 Great job! If you've reached this point, you should now have successfully created a subscriber, notification template, configured a channel provider and triggered a notification in your application.
