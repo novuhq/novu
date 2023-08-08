@@ -56,7 +56,13 @@ export const TemplateEditor = () => {
         key={index}
         color={colors.white}
         title={<StepName index={index} color={colors.B60} channel={channel} />}
-        style={{ width: '100%', borderTopLeftRadius: 7, borderBottomLeftRadius: 7, paddingBottom: 96 }}
+        style={{
+          width: '100%',
+          borderTopLeftRadius: 7,
+          borderBottomLeftRadius: 7,
+          paddingBottom: 96,
+          overflowY: 'auto',
+        }}
       >
         <TemplateInAppEditor errors={errors} control={control} index={index} />
         <DeleteStepRow />
@@ -70,7 +76,13 @@ export const TemplateEditor = () => {
         key={index}
         color={colors.white}
         title={<StepName index={index} color={colors.B60} channel={channel} />}
-        style={{ width: '100%', borderTopLeftRadius: 7, borderBottomLeftRadius: 7, paddingBottom: 96 }}
+        style={{
+          width: '100%',
+          borderTopLeftRadius: 7,
+          borderBottomLeftRadius: 7,
+          paddingBottom: 96,
+          overflowY: 'auto',
+        }}
       >
         <EmailMessagesCards
           index={index}

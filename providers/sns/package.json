@@ -32,7 +32,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@aws-sdk/client-sns": "^3.39.0",
+    "@aws-sdk/client-sns": "^3.382.0",
     "@novu/stateless": "^0.17.1"
   },
   "devDependencies": {

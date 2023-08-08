@@ -9,6 +9,7 @@ describe('Creation functionality', function () {
     cy.waitLoadTemplatePage(() => {
       cy.visit('/workflows/create');
     });
+    cy.waitForNetworkIdle(500);
     cy.getByTestId('settings-page').click();
     cy.waitForNetworkIdle(500);
     cy.getByTestId('title').clear().first().type('Test Notification Title');
@@ -20,11 +21,13 @@ describe('Creation functionality', function () {
     addAndEditChannel('inApp');
     cy.waitForNetworkIdle(500);
 
-    cy.get('.ace_text-input').first().type('{{firstName}} someone assigned you to {{taskName}}', {
+    cy.get('.ace_text-input').first().type('<p>{{firstName}} someone assigned you to {{taskName}}', {
       parseSpecialCharSequences: false,
       force: true,
     });
     cy.getByTestId('inAppRedirect').type('/example/test');
+    cy.getByTestId('editor-mode-switch').find('label').last().click();
+    cy.getByTestId('in-app-content-preview').contains('firstName someone assigned you to taskName');
 
     goBack();
     cy.getByTestId('notification-template-submit-btn').click();
@@ -42,6 +45,7 @@ describe('Creation functionality', function () {
     cy.waitLoadTemplatePage(() => {
       cy.visit('/workflows/create');
     });
+    cy.waitForNetworkIdle(500);
 
     cy.getByTestId('settings-page').click();
 
@@ -90,6 +94,7 @@ describe('Creation functionality', function () {
     cy.waitLoadTemplatePage(() => {
       cy.visit('/workflows/create');
     });
+    cy.waitForNetworkIdle(500);
     cy.getByTestId('settings-page').click();
     cy.getByTestId('title').clear().first().type('Test Notification Title');
     cy.getByTestId('description').type('This is a test description for a test title');
@@ -246,6 +251,8 @@ describe('Creation functionality', function () {
     cy.waitLoadTemplatePage(() => {
       cy.visit('/workflows/create');
     });
+    cy.waitForNetworkIdle(500);
+
     cy.getByTestId('settings-page').click();
 
     cy.getByTestId('title').first().clear().type('Test Notification Title');
@@ -295,9 +302,9 @@ describe('Creation functionality', function () {
     cy.waitLoadTemplatePage(() => {
       cy.visit('/workflows/create');
     });
+    cy.waitForNetworkIdle(500);
 
     dragAndDrop('digest');
-    cy.waitForNetworkIdle(500);
 
     cy.clickWorkflowNode('node-digestSelector');
     cy.waitForNetworkIdle(500);
@@ -328,6 +335,7 @@ describe('Creation functionality', function () {
     cy.waitLoadTemplatePage(() => {
       cy.visit('/workflows/create');
     });
+    cy.waitForNetworkIdle(500);
 
     cy.getByTestId('settings-page').click();
     cy.getByTestId('title').first().clear().type('Test Notification Title');
@@ -449,6 +457,7 @@ describe('Creation functionality', function () {
     cy.waitLoadTemplatePage(() => {
       cy.visit('/workflows/create');
     });
+    cy.waitForNetworkIdle(500);
 
     fillBasicNotificationDetails('Test 15 Nodes');
     goBack();

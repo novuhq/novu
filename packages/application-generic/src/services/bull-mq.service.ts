@@ -29,7 +29,11 @@ interface IEventJobData {
 
 type BullMqJobData = undefined | IJobData | IEventJobData;
 
-export { QueueBaseOptions, RedisConnectionOptions as BullMqConnectionOptions };
+export {
+  QueueBaseOptions,
+  RedisConnectionOptions as BullMqConnectionOptions,
+  WorkerOptions,
+};
 
 export const bullMqBaseOptions = {
   connection: {

@@ -120,6 +120,9 @@ describe('Integrations List Modal', function () {
       data: [],
       delay: 3500,
     }).as('getIntegrations');
+    cy.intercept('*/environments', async () => {
+      await new Promise((resolve) => setTimeout(resolve, 3500));
+    }).as('getEnvironments');
     navigateToGetStarted();
     cy.getByTestId('select-provider-sidebar').should('be.visible');
     cy.getByTestId('sidebar-close').should('be.visible').click();
@@ -128,6 +131,7 @@ describe('Integrations List Modal', function () {
     checkTableLoading();
 
     cy.wait('@getIntegrations');
+    cy.wait('@getEnvironments');
 
     cy.getByTestId('add-provider').should('be.enabled');
     cy.getByTestId('no-integrations-placeholder').should('be.visible');
@@ -337,18 +341,22 @@ describe('Integrations List Modal', function () {
     inAppProviders.forEach((provider) => {
       cy.get('@inAppGroup').getByTestId(`provider-${provider.id}`).contains(provider.displayName);
     });
-    emailProviders.forEach((provider) => {
-      cy.get('@emailGroup').getByTestId(`provider-${provider.id}`).contains(provider.displayName);
-    });
+    emailProviders
+      .filter((provider) => provider.id !== EmailProviderIdEnum.Novu)
+      .forEach((provider) => {
+        cy.get('@emailGroup').getByTestId(`provider-${provider.id}`).contains(provider.displayName);
+      });
     chatProviders.forEach((provider) => {
       cy.get('@chatGroup').getByTestId(`provider-${provider.id}`).contains(provider.displayName);
     });
     pushProviders.forEach((provider) => {
       cy.get('@pushGroup').getByTestId(`provider-${provider.id}`).contains(provider.displayName);
     });
-    smsProviders.forEach((provider) => {
-      cy.get('@smsGroup').getByTestId(`provider-${provider.id}`).contains(provider.displayName);
-    });
+    smsProviders
+      .filter((provider) => provider.id !== SmsProviderIdEnum.Novu)
+      .forEach((provider) => {
+        cy.get('@smsGroup').getByTestId(`provider-${provider.id}`).contains(provider.displayName);
+      });
 
     cy.getByTestId('select-provider-sidebar-cancel').contains('Cancel');
     cy.getByTestId('select-provider-sidebar-next').should('be.disabled').contains('Next');
@@ -597,6 +605,7 @@ describe('Integrations List Modal', function () {
     cy.getByTestId('senderName').type('Novu');
     cy.getByTestId('update-provider-sidebar-update').should('not.be.disabled').contains('Update').click();
 
+    cy.get('.mantine-Modal-close').click();
     cy.getByTestId('sidebar-close').click();
     checkTableRow(
       {
@@ -659,6 +668,7 @@ describe('Integrations List Modal', function () {
     cy.getByTestId('senderName').type('Novu');
     cy.getByTestId('update-provider-sidebar-update').should('not.be.disabled').click();
 
+    cy.get('.mantine-Modal-close').click();
     cy.getByTestId('sidebar-close').click();
     checkTableRow(
       {
@@ -868,7 +878,9 @@ describe('Integrations List Modal', function () {
     });
     cy.getByTestId('provider-instance-channel').should('contain', 'Email');
     cy.getByTestId('provider-instance-environment').should('contain', 'Development');
-    cy.getByTestId('update-provider-sidebar-novu').contains('Novu Email');
+    cy.getByTestId('update-provider-sidebar-novu')
+      .getByTestId('provider-instance-name')
+      .should('have.value', 'Novu Email');
     cy.getByTestId('update-provider-sidebar-novu').contains('Test Provider');
     cy.getByTestId('novu-provider-limits').then((el) => {
       expect(el.get(0).innerText).to.eq(
@@ -939,7 +951,9 @@ describe('Integrations List Modal', function () {
 
     cy.getByTestId('provider-instance-channel').should('contain', 'SMS');
     cy.getByTestId('provider-instance-environment').should('contain', 'Development');
-    cy.getByTestId('update-provider-sidebar-novu').contains('Novu SMS');
+    cy.getByTestId('update-provider-sidebar-novu')
+      .getByTestId('provider-instance-name')
+      .should('have.value', 'Novu SMS');
     cy.getByTestId('update-provider-sidebar-novu').contains('Test Provider');
     cy.getByTestId('novu-provider-limits').then((el) => {
       expect(el.get(0).innerText).to.eq(

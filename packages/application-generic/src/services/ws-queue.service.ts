@@ -3,7 +3,6 @@ import { ConnectionOptions } from 'tls';
 import { QueueOptions } from 'bullmq';
 import { Injectable, Logger } from '@nestjs/common';
 
-import { BullMqService } from './bull-mq.service';
 import { QueueService } from './queue.service';
 
 const LOG_CONTEXT = 'WsQueueService';

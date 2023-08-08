@@ -15,3 +15,4 @@ export * from './analytics';
 export * from './user';
 export * from './tenant';
 export * from './messages';
+export * from './notification-templates';
