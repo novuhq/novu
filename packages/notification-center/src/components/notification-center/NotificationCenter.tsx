@@ -1,5 +1,7 @@
 import React, { useEffect, useRef } from 'react';
+
 import { IMessage, IMessageAction, ButtonTypeEnum } from '@novu/shared';
+import { IUserPreferenceSettings } from '@novu/client';
 
 import { AppContent } from './components';
 import { useNotifications, useNovuContext } from '../../hooks';
@@ -12,14 +14,15 @@ export interface INotificationCenterProps {
   onUrlChange?: (url: string) => void;
   onNotificationClick?: (notification: IMessage) => void;
   onUnseenCountChanged?: (unseenCount: number) => void;
+  onActionClick?: (templateIdentifier: string, type: ButtonTypeEnum, message: IMessage) => void;
+  actionsResultBlock?: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
+  preferenceFilter?: (userPreference: IUserPreferenceSettings) => boolean;
   header?: () => JSX.Element;
   footer?: () => JSX.Element;
   emptyState?: JSX.Element;
   listItem?: ListItem;
-  actionsResultBlock?: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
   colorScheme: ColorScheme;
   theme?: INovuThemeProvider;
-  onActionClick?: (templateIdentifier: string, type: ButtonTypeEnum, message: IMessage) => void;
   tabs?: ITab[];
   showUserPreferences?: boolean;
   allowedNotificationActions?: boolean;
@@ -31,6 +34,7 @@ export function NotificationCenter({
   onUrlChange,
   onNotificationClick,
   onActionClick,
+  preferenceFilter,
   header,
   footer,
   emptyState,
@@ -60,6 +64,8 @@ export function NotificationCenter({
         onUrlChange: onUrlChange,
         onNotificationClick: onNotificationClick,
         onActionClick: onActionClick,
+        onTabClick: onTabClick ? onTabClick : () => {},
+        preferenceFilter: preferenceFilter,
         isLoading: !applicationIdentifier,
         header: header,
         footer: footer,
@@ -69,7 +75,6 @@ export function NotificationCenter({
         tabs: tabs,
         showUserPreferences: showUserPreferences ?? true,
         allowedNotificationActions: allowedNotificationActions ?? true,
-        onTabClick: onTabClick ? onTabClick : () => {},
       }}
     >
       <NovuThemeProvider colorScheme={colorScheme} theme={theme}>

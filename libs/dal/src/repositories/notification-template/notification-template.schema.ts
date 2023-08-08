@@ -183,6 +183,7 @@ const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
       type: Schema.Types.ObjectId,
       ref: 'NotificationTemplate',
     },
+    data: Schema.Types.Mixed,
   },
   schemaOptions
 );
