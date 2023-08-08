@@ -16,6 +16,7 @@ import {
   IPreferenceChannels,
   FilterParts,
   IWorkflowStepMetadata,
+  NotificationTemplateCustomData,
 } from '@novu/shared';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
@@ -66,6 +67,9 @@ export class CreateNotificationTemplateCommand extends EnvironmentWithUserComman
   @IsOptional()
   @IsString()
   __source?: string;
+
+  @IsOptional()
+  data?: NotificationTemplateCustomData;
 }
 
 export class ChannelCTACommand {
