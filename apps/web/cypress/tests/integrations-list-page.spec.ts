@@ -119,6 +119,9 @@ describe('Integrations List Page', function () {
       data: [],
       delay: 1000,
     }).as('getIntegrations');
+    cy.intercept('*/environments', async () => {
+      await new Promise((resolve) => setTimeout(resolve, 3500));
+    }).as('getEnvironments');
 
     cy.visit('/integrations');
     cy.location('pathname').should('equal', '/integrations');
@@ -127,6 +130,7 @@ describe('Integrations List Page', function () {
     checkTableLoading();
 
     cy.wait('@getIntegrations');
+    cy.wait('@getEnvironments');
 
     cy.getByTestId('add-provider').should('be.enabled');
     cy.getByTestId('no-integrations-placeholder').should('be.visible');
@@ -626,6 +630,8 @@ describe('Integrations List Page', function () {
     cy.getByTestId('senderName').type('Novu');
     cy.getByTestId('update-provider-sidebar-update').should('not.be.disabled').contains('Update').click();
 
+    cy.get('.mantine-Modal-close').click();
+
     checkTableRow(
       {
         name: 'Mailjet Integration Updated',
@@ -692,6 +698,8 @@ describe('Integrations List Page', function () {
     cy.getByTestId('from').type('info@novu.co');
     cy.getByTestId('senderName').type('Novu');
     cy.getByTestId('update-provider-sidebar-update').should('not.be.disabled').click();
+
+    cy.get('.mantine-Modal-close').click();
 
     checkTableRow(
       {
@@ -882,7 +890,7 @@ describe('Integrations List Page', function () {
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }).as('createIntegration');
     cy.intercept('GET', '*/integrations/email/limit', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }).as('getNovuEmailLimit');
     cy.intercept('DELETE', '*/integrations/*', async () => {
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -953,7 +961,7 @@ describe('Integrations List Page', function () {
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }).as('createIntegration');
     cy.intercept('GET', '*/integrations/sms/limit', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }).as('getNovuSmsLimit');
     cy.intercept('DELETE', '*/integrations/*', async () => {
       await new Promise((resolve) => setTimeout(resolve, 1000));

@@ -98,11 +98,11 @@ export const IntegrationsList = ({
           columns={columns}
           data={data}
         />
-        {withOutlet && <Outlet />}
       </When>
       <When truthy={!hasIntegrations && !isLoading}>
         <IntegrationsListNoData onChannelClick={onChannelClick} />
       </When>
+      {withOutlet && <Outlet />}
     </PageContainer>
   );
 };

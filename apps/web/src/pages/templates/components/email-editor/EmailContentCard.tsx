@@ -42,7 +42,7 @@ export function EmailContentCard({
     }
     setIntegration(
       integrations.find((item) =>
-        isMultiProviderConfigEnabled ? item.channel === 'email' && item.selected : item.channel === 'email'
+        isMultiProviderConfigEnabled ? item.channel === 'email' && item.primary : item.channel === 'email'
       ) || null
     );
   }, [isMultiProviderConfigEnabled, integrations, setIntegration]);
