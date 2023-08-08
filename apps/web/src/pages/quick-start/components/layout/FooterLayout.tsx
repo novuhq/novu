@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import styled from '@emotion/styled';
 
-import { DotsNavigation } from '../../../../design-system';
+import { colors, DotsNavigation } from '../../../../design-system';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../../../constants/routes.enum';
 import { Grid } from '@mantine/core';
@@ -10,7 +10,7 @@ interface IFooterLayoutProps {
   leftSide: React.ReactNode;
   rightSide: React.ReactNode;
 }
-
+export const FOOTER_HEIGHT = 80;
 export function FooterLayout({ leftSide, rightSide }: IFooterLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -63,17 +63,25 @@ const RightCol = styled(Grid.Col)`
 `;
 
 const FooterWrapper = styled.div`
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  height: ${FOOTER_HEIGHT}px;
+  z-index: 100;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-direction: row;
 
-  padding: 32px 40px;
+  padding: 20px 24px;
   box-shadow: inset 0 1px 0 #000000;
 
   @media screen and (min-width: 1369px) {
     padding: 32px 80px;
   }
+
+  background-color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B15 : colors.white)};
 
   ${({ theme }) => {
     return (

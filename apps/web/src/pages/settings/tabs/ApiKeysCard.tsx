@@ -48,6 +48,7 @@ export const ApiKeysCard = () => {
             data-test-id="api-key-container"
           />
         </MantineInput.Wrapper>
+        <Regenerate fetchApiKeys={refetchApiKeys} />
       </ParamContainer>
       <ParamContainer>
         <MantineInput.Wrapper
@@ -93,7 +94,6 @@ export const ApiKeysCard = () => {
           />
         </MantineInput.Wrapper>
       </ParamContainer>
-      <Regenerate fetchApiKeys={refetchApiKeys} />
     </>
   );
 };

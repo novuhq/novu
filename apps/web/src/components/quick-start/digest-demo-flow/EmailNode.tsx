@@ -1,7 +1,7 @@
 import { Handle, Position } from 'react-flow-renderer';
 
 import { NodeStepWithPopover } from './NodeStepWithPopover';
-import { MailGradient } from '../../../design-system/icons';
+import { EmailFilled } from '../../../design-system/icons';
 import { useDigestDemoFlowContext } from './DigestDemoFlowProvider';
 import { Indicator } from './Indicator';
 import { useAuthContext } from '../../providers/AuthProvider';
@@ -15,7 +15,7 @@ export function EmailNode({ data, id }: { data: any; id: string }) {
     <NodeStepWithPopover
       data={data}
       id={id}
-      Icon={MailGradient}
+      Icon={EmailFilled}
       ContentItem={
         !isReadOnly && (
           <>

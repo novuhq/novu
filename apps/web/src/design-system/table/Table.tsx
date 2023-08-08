@@ -116,7 +116,7 @@ export function Table<T extends object>({
   const noData = rows.length === 0;
 
   return (
-    <div style={{ position: 'relative', minHeight: 500, display: 'flex', flexDirection: 'column' }}>
+    <div style={{ position: 'relative', minHeight: 500, display: 'flex', flexDirection: 'column' }} data-table-holder>
       <MantineTable className={classes.root} {...defaultDesign} {...getTableProps()} {...props}>
         <thead>
           {headerGroups.map((headerGroup, i) => {
@@ -183,7 +183,6 @@ export function Table<T extends object>({
       {!loading && pagination && pageSize > 1 && pagination?.minimalPagination && (
         <div
           style={{
-            marginTop: '10px',
             display: 'flex',
             width: '100%',
             justifyContent: 'center',

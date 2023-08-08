@@ -1,19 +1,19 @@
-import { Container, Group, Stack, useMantineColorScheme } from '@mantine/core';
-import { colors } from '@novu/notification-center';
-import { Background, BackgroundVariant } from 'react-flow-renderer';
-import { AddStepMenu } from './AddStepMenu';
 import styled from '@emotion/styled';
+import { Container, Flex, Group, Stack, useMantineColorScheme } from '@mantine/core';
+import { useDidUpdate, useTimeout } from '@mantine/hooks';
+import { colors } from '@novu/notification-center';
+import { useState } from 'react';
+import { Background, BackgroundVariant } from 'react-flow-renderer';
+import { useFormContext } from 'react-hook-form';
 import { Link, useNavigate, useOutletContext } from 'react-router-dom';
+import { When } from '../../../../components/utils/When';
 import { Button } from '../../../../design-system';
 import { Settings } from '../../../../design-system/icons';
-import { useBasePath } from '../../hooks/useBasePath';
-import { useFormContext } from 'react-hook-form';
-import { IForm } from '../../components/formTypes';
-import { useDidUpdate, useTimeout } from '@mantine/hooks';
-import { useState } from 'react';
-import { UpdateButton } from '../../components/UpdateButton';
 import { useEnvController } from '../../../../hooks';
-import { When } from '../../../../components/utils/When';
+import { IForm } from '../../components/formTypes';
+import { UpdateButton } from '../../components/UpdateButton';
+import { useBasePath } from '../../hooks/useBasePath';
+import { AddStepMenu } from './AddStepMenu';
 
 export const Sidebar = () => {
   const { colorScheme } = useMantineColorScheme();
@@ -23,8 +23,10 @@ export const Sidebar = () => {
   };
   const { setDragging }: any = useOutletContext();
   const { readonly } = useEnvController();
+
   const navigate = useNavigate();
   const basePath = useBasePath();
+
   const {
     formState: { isDirty },
   } = useFormContext<IForm>();
@@ -43,7 +45,7 @@ export const Sidebar = () => {
   }, 5000);
 
   return (
-    <>
+    <Flex direction="column" sx={{ height: '100%' }}>
       <Container fluid sx={{ width: '100%', paddingLeft: 0, height: '74px' }}>
         <Stack
           justify="center"
@@ -69,7 +71,7 @@ export const Sidebar = () => {
         </Stack>
       </Container>
       <When truthy={!readonly}>
-        <div style={{ position: 'relative', padding: '12px', paddingLeft: 0 }}>
+        <div style={{ position: 'relative', flex: '1 1 auto' }}>
           <SideBarWrapper dark={colorScheme === 'dark'}>
             <AddStepMenu setDragging={setDragging} onDragStart={onDragStart} />
           </SideBarWrapper>
@@ -81,23 +83,18 @@ export const Sidebar = () => {
           />
         </div>
       </When>
-      <When truthy={readonly}>
-        <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-          <Background
-            size={1}
-            gap={10}
-            variant={BackgroundVariant.Dots}
-            color={colorScheme === 'dark' ? colors.BGDark : colors.BGLight}
-          />
-        </div>
-      </When>
-    </>
+    </Flex>
   );
 };
 
 const SideBarWrapper = styled.div<{ dark: boolean }>`
-  background-color: ${({ dark }) => (dark ? colors.B17 : colors.white)} !important;
   position: relative;
-  z-index: 1;
-  border-radius: 12px;
+
+  background: ${({ dark }) => (dark ? colors.B15 : colors.B98)};
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-end;
+  padding-right: 8px;
 `;
