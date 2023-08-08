@@ -1,8 +1,15 @@
 import { BadRequestException, ConflictException, Inject, Injectable } from '@nestjs/common';
 import * as shortid from 'shortid';
 import slugify from 'slugify';
-import { IntegrationEntity, IntegrationRepository, DalException } from '@novu/dal';
-import { ChannelTypeEnum, EmailProviderIdEnum, providers, SmsProviderIdEnum, InAppProviderIdEnum } from '@novu/shared';
+import { IntegrationEntity, IntegrationRepository, DalException, IntegrationQuery } from '@novu/dal';
+import {
+  ChannelTypeEnum,
+  EmailProviderIdEnum,
+  providers,
+  SmsProviderIdEnum,
+  InAppProviderIdEnum,
+  CHANNELS_WITH_PRIMARY,
+} from '@novu/shared';
 import {
   AnalyticsService,
   encryptCredentials,
@@ -31,6 +38,49 @@ export class CreateIntegration {
     private getFeatureFlag: GetFeatureFlag,
     private disableNovuIntegration: DisableNovuIntegration
   ) {}
+
+  private async calculatePriorityAndPrimary(command: CreateIntegrationCommand) {
+    const result: { primary: boolean; priority: number } = {
+      primary: false,
+      priority: 0,
+    };
+
+    const highestPriorityIntegration = await this.integrationRepository.findHighestPriorityIntegration({
+      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
+      channel: command.channel,
+    });
+
+    if (highestPriorityIntegration?.primary) {
+      result.priority = highestPriorityIntegration.priority;
+      await this.integrationRepository.update(
+        {
+          _id: highestPriorityIntegration._id,
+          _organizationId: command.organizationId,
+          _environmentId: command.environmentId,
+        },
+        {
+          $set: {
+            priority: highestPriorityIntegration.priority + 1,
+          },
+        }
+      );
+    } else {
+      result.priority = highestPriorityIntegration ? highestPriorityIntegration.priority + 1 : 1;
+    }
+
+    const activeIntegrationsCount = await this.integrationRepository.countActiveExcludingNovu({
+      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
+      channel: command.channel,
+    });
+
+    if (activeIntegrationsCount === 0) {
+      result.primary = true;
+    }
+
+    return result;
+  }
 
   async execute(command: CreateIntegrationCommand): Promise<IntegrationEntity> {
     const isMultiProviderConfigurationEnabled = await this.getFeatureFlag.isMultiProviderConfigurationEnabled(
@@ -117,7 +167,7 @@ export class CreateIntegration {
       const name = command.name ?? defaultName;
       const identifier = command.identifier ?? `${slugify(name, { lower: true, strict: true })}-${shortid.generate()}`;
 
-      const integrationEntity = await this.integrationRepository.create({
+      const query: IntegrationQuery = {
         name,
         identifier,
         _environmentId: command.environmentId,
@@ -126,7 +176,17 @@ export class CreateIntegration {
         channel: command.channel,
         credentials: encryptCredentials(command.credentials ?? {}),
         active: command.active,
-      });
+      };
+
+      const isActiveAndChannelSupportsPrimary = command.active && CHANNELS_WITH_PRIMARY.includes(command.channel);
+      if (isMultiProviderConfigurationEnabled && isActiveAndChannelSupportsPrimary) {
+        const { primary, priority } = await this.calculatePriorityAndPrimary(command);
+
+        query.primary = primary;
+        query.priority = priority;
+      }
+
+      const integrationEntity = await this.integrationRepository.create(query);
 
       if (
         !isMultiProviderConfigurationEnabled &&

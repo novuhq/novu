@@ -800,6 +800,8 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
         {
           $set: {
             active: true,
+            primary: true,
+            priority: 1,
           },
         }
       );
@@ -851,8 +853,6 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
       const channelType = ChannelTypeEnum.EMAIL;
 
-      template = await createTemplate(session, channelType);
-
       template = await session.createTemplate({
         steps: [
           {
@@ -894,7 +894,11 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
         check: false,
       };
 
-      await session.testAgent.post('/v1/integrations').send(payload);
+      const {
+        body: { data },
+      } = await session.testAgent.post('/v1/integrations').send(payload);
+      await session.testAgent.post(`/v1/integrations/${data._id}/set-primary`).send({});
+
       await sendTrigger(session, template, newSubscriberIdInAppNotification, {
         nested: {
           subject: 'a subject nested',
