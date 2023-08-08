@@ -2,20 +2,20 @@ import { Injectable } from '@nestjs/common';
 
 import { BullMqService } from '@novu/application-generic';
 
-import { SendMessageRoute, SendMessageRouteCommand } from '../usecases';
+import { ExternalServicesRoute, ExternalServicesRouteCommand } from '../usecases/external-services-route';
 
 @Injectable()
 export class SocketQueueConsumerService {
   private readonly QUEUE_NAME = 'ws_socket_queue';
 
-  constructor(private sendMessageRoute: SendMessageRoute, private bullMqService: BullMqService) {
+  constructor(private externalServicesRoute: ExternalServicesRoute, public bullMqService: BullMqService) {
     this.bullMqService.createWorker(this.QUEUE_NAME, this.getWorkerProcessor(), this.getWorkerOpts());
   }
 
   private getWorkerProcessor() {
     return async (job) => {
-      await this.sendMessageRoute.execute(
-        SendMessageRouteCommand.create({
+      await this.externalServicesRoute.execute(
+        ExternalServicesRouteCommand.create({
           userId: job.data.userId,
           event: job.data.event,
           payload: job.data.payload,

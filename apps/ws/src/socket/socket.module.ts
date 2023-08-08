@@ -4,10 +4,10 @@ import { BullMqService } from '@novu/application-generic';
 
 import { WSGateway } from './ws.gateway';
 import { SharedModule } from '../shared/shared.module';
-import { SendMessageRoute } from './usecases';
+import { ExternalServicesRoute } from './usecases/external-services-route';
 import { SocketQueueConsumerService } from './services/socket-queue-consumer.service';
 
-const USE_CASES: Provider[] = [SendMessageRoute];
+const USE_CASES: Provider[] = [ExternalServicesRoute];
 
 const SERVICES: Provider[] = [SocketQueueConsumerService, BullMqService];
 

@@ -2,7 +2,7 @@ import { IsDefined, IsOptional, IsString } from 'class-validator';
 
 import { BaseCommand } from '@novu/application-generic';
 
-export class SendMessageRouteCommand extends BaseCommand {
+export class ExternalServicesRouteCommand extends BaseCommand {
   @IsDefined()
   @IsString()
   userId: string;
