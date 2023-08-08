@@ -301,6 +301,142 @@ This means that the email notification was sent successfully. Now go to your inb
 
 ![email-screenshot](https://github.com/michaldziuba03/novu/assets/43048524/d5c97ae2-07c1-4e6c-b9a4-0c82ac4e6681)
 
+## Topics
+
+Novu simplifies the process of triggering notifications to multiple subscribers with an API called "Topics". By utilizing the Topics API, you can effortlessly manage bulk notifications easily.
+
+Each topic is uniquely identified by a custom key specified by the user, serving as the primary identifier for interacting with the Topics API.
+
+This intuitive approach streamlines notifications management, empowering users to focus on delivering targeted messages to their subscribers without the hassle of intricate implementation details.
+
+> Make sure that you use a unique key for a Topic. Keys once used, can’t be changed later!
+
+You have the flexibility to assign a descriptive name to a topic. Unlike the topic key, this name does not require uniqueness and can be modified using the provided API.
+
+A topic can have multiple subscribers associated with it. These subscribers will receive notifications whenever a notification is dispatched to the respective topic.
+
+### Create a topic
+
+You can create a topic using two entities - `key` and `name`. Keys are unique identifiers for topics and a name is just something you assign to a topic for convenience.
+
+```ts
+// notification.service.ts
+
+import { Injectable } from '@nestjs/common';
+import { Novu, TriggerRecipientsTypeEnum } from '@novu/node';
+import { InjectNovu } from './novu.provider';
+
+@Injectable()
+export class NotificationService {
+  constructor(
+    @InjectNovu()
+    private readonly novu: Novu,
+  ) {}
+
+  ...
+
+  async createTopic(key: string, name: string) {
+    const result = await this.novu.topics.create({
+      key,
+      name,
+    });
+
+    return result.data;
+  }
+}
+```
+
+## Add subscriber to a Topic
+
+The code for adding a subscriber to a previously created topic is as follows:
+
+:::info
+Note: You can only add those subscribers to a topic that you've already created. You can see all the subscribers in the [Novu web dashboard](https://web.novu.co/subscribers)
+:::
+
+```ts
+// notification.service.ts
+
+import { Injectable } from '@nestjs/common';
+import { Novu } from '@novu/node';
+import { InjectNovu } from './novu.provider';
+
+@Injectable()
+export class NotificationService {
+  constructor(
+    @InjectNovu()
+    private readonly novu: Novu,
+  ) {}
+
+  ...
+
+  async createTopic(key: string, name: string) {
+    const result = await this.novu.topics.create({
+      key,
+      name,
+    });
+
+    return result.data;
+  }
+
+  async addTopicSubscriber(key: string, subscriberId: string) {
+    const result = await this.novu.topics.addSubscribers(key, {
+      subscribers: [subscriberId],
+    });
+
+    return result.data;
+  }
+}
+```
+
+## Sending notifications to a topic
+
+Sending notifications to a topic is not a complex task. You need to extract the topic key to which you want to send notifications and trigger Novu’s method on that topic key with the message in the payload:
+
+```ts
+import { Injectable } from '@nestjs/common';
+import { Novu, TriggerRecipientsTypeEnum } from '@novu/node';
+import { InjectNovu } from './novu.provider';
+
+@Injectable()
+export class NotificationService {
+  constructor(
+    @InjectNovu()
+    private readonly novu: Novu,
+  ) {}
+
+  ...
+
+  async createTopic(key: string, name: string) {
+    const result = await this.novu.topics.create({
+      key,
+      name,
+    });
+
+    return result.data;
+  }
+
+  async addTopicSubscriber(key: string, subscriberId: string) {
+    const result = await this.novu.topics.addSubscribers(key, {
+      subscribers: [subscriberId],
+    });
+
+    return result.data;
+  }
+
+  async sendTopicNotification(key: string, description: string) {
+    const result = await this.novu.trigger('email-quickstart', {
+      to: [{ type: TriggerRecipientsTypeEnum.TOPIC, topicKey: key }],
+      payload: { description },
+    });
+
+    return result.data;
+  }
+}
+```
+
+> Value behind TriggerRecipientsTypeEnum.TOPIC is string "Topic".
+
 ## Next Steps
 
 Great job! If you've reached this point, you should now have successfully created a subscriber, notification template, configured a channel provider and triggered a notification in your application.
