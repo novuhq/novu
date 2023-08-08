@@ -30,6 +30,7 @@ import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import {
+  BulkSubscriberCreateDto,
   CreateSubscriberRequestDto,
   DeleteSubscriberResponseDto,
   SubscriberResponseDto,
@@ -80,12 +81,15 @@ import {
 import { MarkAllMessagesAsCommand } from '../widgets/usecases/mark-all-messages-as/mark-all-messages-as.command';
 import { MarkAllMessagesAs } from '../widgets/usecases/mark-all-messages-as/mark-all-messages-as.usecase';
 import { MarkAllMessageAsRequestDto } from './dtos/mark-all-messages-as-request.dto';
+import { BulkCreateSubscribers } from './usecases/bulk-create-subscribers/bulk-create-subscribers.usecase';
+import { BulkCreateSubscribersCommand } from './usecases/bulk-create-subscribers';
 
 @Controller('/subscribers')
 @ApiTags('Subscribers')
 export class SubscribersController {
   constructor(
     private createSubscriberUsecase: CreateSubscriber,
+    private bulkCreateSubscribersUsecase: BulkCreateSubscribers,
     private updateSubscriberUsecase: UpdateSubscriber,
     private updateSubscriberChannelUsecase: UpdateSubscriberChannel,
     private removeSubscriberUsecase: RemoveSubscriber,
@@ -174,6 +178,27 @@ export class SubscribersController {
         avatar: body.avatar,
         locale: body.locale,
         data: body.data,
+      })
+    );
+  }
+
+  @Post('/bulk')
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  @ApiNoContentResponse()
+  @ApiOperation({
+    summary: 'Bulk create subscribers',
+    description: `
+      Using this endpoint you can create multiple subscribers at once, to avoid multiple calls to the API.
+      The bulk API is limited to 500 subscribers per request.
+    `,
+  })
+  async bulkCreateSubscribers(@UserSession() user: IJwtPayload, @Body() body: BulkSubscriberCreateDto) {
+    return await this.bulkCreateSubscribersUsecase.execute(
+      BulkCreateSubscribersCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        subscribers: body.subscribers,
       })
     );
   }

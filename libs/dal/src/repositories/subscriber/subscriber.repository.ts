@@ -7,6 +7,7 @@ import { IExternalSubscribersEntity } from './types';
 import { BaseRepository } from '../base-repository';
 import { DalException } from '../../shared';
 import type { EnforceEnvOrOrgIds } from '../../types/enforce';
+import { EnvironmentId, OrganizationId } from '@novu/shared';
 
 type SubscriberQuery = FilterQuery<SubscriberDBModel> & EnforceEnvOrOrgIds;
 
@@ -30,6 +31,68 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
       undefined,
       { readPreference: secondaryRead ? 'secondaryPreferred' : 'primary' }
     );
+  }
+
+  async bulkCreateSubscribers(subscribers, environmentId: EnvironmentId, organizationId: OrganizationId) {
+    const bulkWriteOps = subscribers.map((subscriber) => {
+      const { subscriberId, ...rest } = subscriber;
+
+      return {
+        updateOne: {
+          filter: { subscriberId, _environmentId: environmentId, _organizationId: organizationId },
+          update: { $set: rest },
+          upsert: true,
+        },
+      };
+    });
+
+    let result;
+    try {
+      const response = await this.bulkWrite(bulkWriteOps);
+      result = response.result;
+    } catch (e) {
+      if (!e.writeErrors) {
+        throw new DalException(e.message);
+      }
+      result = e.result.result;
+    }
+
+    const { upserted: created, nModified: updatedCount, nUpserted: createdCount, writeErrors } = result;
+    const indexes: number[] = [];
+
+    const insertedSubscribers = created.map((inserted) => {
+      indexes.push(inserted.index);
+
+      return { subscriberId: subscribers[inserted.index]?.subscriberId };
+    });
+
+    let failed = [];
+    if (writeErrors.length > 0) {
+      failed = writeErrors.map((error) => {
+        indexes.push(error.err.index);
+
+        return {
+          message: error.err.errmsg,
+          subscriberId: error.err.op?.subscriberId,
+        };
+      });
+    }
+
+    const updatedSubscribers = subscribers
+      .filter((subId, index) => !indexes.includes(index))
+      .map((subscriber) => {
+        return {
+          subscriberId: subscriber.subscriberId,
+        };
+      });
+
+    return {
+      updated: updatedSubscribers,
+      updatedCount,
+      created: insertedSubscribers,
+      createdCount,
+      failed,
+    };
   }
 
   async searchByExternalSubscriberIds(

@@ -1,6 +1,17 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDefined, IsEmail, IsLocale, IsOptional, IsString } from 'class-validator';
+import {
+  ArrayMaxSize,
+  ArrayNotEmpty,
+  IsArray,
+  IsDefined,
+  IsEmail,
+  IsLocale,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 import { SubscriberCustomData } from '@novu/shared';
+import { Type } from 'class-transformer';
 
 export class CreateSubscriberRequestDto {
   @ApiProperty({
@@ -46,4 +57,14 @@ export class CreateSubscriberRequestDto {
   @ApiPropertyOptional()
   @IsOptional()
   data?: SubscriberCustomData;
+}
+
+export class BulkSubscriberCreateDto {
+  @ApiProperty()
+  @IsArray()
+  @ArrayNotEmpty()
+  @ArrayMaxSize(500)
+  @ValidateNested()
+  @Type(() => CreateSubscriberRequestDto)
+  subscribers: CreateSubscriberRequestDto[];
 }
