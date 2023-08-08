@@ -1,5 +1,5 @@
 ---
-sidebar_position: 10
+sidebar_position: 12
 sidebar_label: Get started with NestJS
 ---
 
@@ -12,6 +12,7 @@ In this Quickstart, you will learn how to:
 - Install the Novu Node.js SDK via npm.
 - Use Novu Node.js SDK with NestJS dependency injection.
 - Send your first notification.
+- Send notifications via topics.
 
 ## Requirements
 
@@ -41,7 +42,7 @@ Let's install Novu Node.js SDK and other dependencies like [config module](https
 npm install @novu/node @nestjs/config
 ```
 
-After installing dependencies, we need to connect our app with our Novu account using the Novu API key. Simply log onto the [Novu web dashboard](https://web.novu.co) and from the settings there, obtain your API key. We’ll use it to connect our app to our Novu account.
+After installing dependencies, we need to connect app with our Novu account using the Novu API key. Simply log onto the [Novu web dashboard](https://web.novu.co) and from the settings there, obtain your API key. We’ll use it to connect our app to our Novu account.
 
 ![Novu API key is available on the Novu web dashboard](https://res.cloudinary.com/dxc6bnman/image/upload/v1688127601/guides/SCR-20230630-ppsb_ky06jv.png)
 
@@ -143,7 +144,7 @@ Click “Subscribers” on the left sidebar of the Novu dashboard to see all sub
 
 ![subscriber_id.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1688331839/Screenshot_2023-07-03_at_0.02.53_jmkhi3.png)
 
-Create `notification.service.ts` file and inject Novu provider in class constructor. In `sendMail` method we create new subscriber. In real app replace `123` with ID of your user from database.
+Create `notification.service.ts` file and inject Novu provider in class constructor. In `createSubscriber` method we create new subscriber. In real app you may want to use this method after user registration. Use user's unique identifier from database for `subscriberId`. 
 
 ```ts
 // notification.service.ts
@@ -158,12 +159,13 @@ export class NotificationService {
     private readonly novu: Novu
   ) {}
 
-  async sendEmail(email: string, description: string) {
-    await this.novu.subscribers.identify('123', {
-      email: email,
+  async createSubscriber(subscriberId: string, email: string) {
+    const result = await this.novu.subscribers.identify(subscriberId, {
+      email,
       firstName: 'Subscriber',
-      lastName: 'Lastname',
     });
+
+    return result.data;
   }
 }
 ```
@@ -176,7 +178,7 @@ To make all of your app users subscribers, you need to programmatically add them
 
 ## Trigger a Notification
 
-Run trigger with same payload shape as we configured in Workflow editor previously:
+Run trigger inside `sendEmail` method with same payload shape as we configured in Workflow editor previously:
 
 ```ts
 // notification.service.ts
@@ -191,21 +193,24 @@ export class NotificationService {
     private readonly novu: Novu
   ) {}
 
-  async sendEmail(email: string, description: string) {
-    await this.novu.subscribers.identify('123', {
-      email: email,
+  async createSubscriber(subscriberId: string, email: string) {
+    const result = await this.novu.subscribers.identify(subscriberId, {
+      email,
       firstName: 'Subscriber',
-      lastName: 'Lastname',
     });
 
+    return result.data;
+  }
+
+  async sendEmail(subscriberId: string, email: string, description: string) {
     const result = await this.novu.trigger('email-quickstart', {
       to: {
-        subscriberId: '123',
-        email: email,
+        subscriberId,
+        email,
       },
       payload: {
-        email: email,
-        description: description,
+        email,
+        description,
       },
     });
 
@@ -213,6 +218,8 @@ export class NotificationService {
   }
 }
 ```
+
+> Novu will update subscriber if you provide different email than previously for specific `subscriberId`. Read more about this behavior in [Create subscriber inline of trigger](https://docs.novu.co/platform/subscribers?language=js#2-inline-of-trigger).
 
 Make sure you understand the following:
 
@@ -224,7 +231,7 @@ Make sure you understand the following:
 
 ## Create the route for sending notifications
 
-We also have to create `notification.controller.ts` file inside notification module and create endpoint for sending emails:
+We also have to create `notification.controller.ts` file inside notification module and create endpoint for creating subscribers and sending emails:
 
 ```ts
 // notification.controller.ts
@@ -235,9 +242,23 @@ import { NotificationService } from './notification.service';
 export class NotificationController {
   constructor(private readonly notificationService: NotificationService) {}
 
+  @Post('subscribers')
+  createSubscriber(@Body() body: { subscriberId: string; email: string }) {
+    return this.notificationService.createSubscriber(
+      body.subscriberId,
+      body.email,
+    );
+  }
+
   @Post('emails')
-  sendEmail(@Body() body: { email: string; description: string }) {
-    return this.notificationService.sendEmail(body.email, body.description);
+  sendEmail(
+    @Body() body: { subscriberId: string; email: string; description: string },
+  ) {
+    return this.notificationService.sendEmail(
+      body.subscriberId,
+      body.email,
+      body.description,
+    );
   }
 }
 ```
@@ -266,11 +287,15 @@ We can now start our local server and test our backend app on Postman. To start 
 npm run start:dev
 ```
 
-Next, let's open Postman or other similar tool to test our endpoint. Send a POST request to the route we defined in notification controller - `http://localhost:3000/notifications/emails`.
+Next, let's open Postman or other similar tool to test our endpoint. Send a POST request and create new subscriber (`http://localhost:3000/notifications/subscribers`).
 
-![postman-vsc](https://github.com/michaldziuba03/novu/assets/43048524/844fbbef-1f0a-4f7e-964e-184fe74abff9)
+![Postman /subscribers](https://github.com/michaldziuba03/novu/assets/43048524/60c96cd5-9c28-47ed-9313-7354d4506ec0)
 
 > In place of email field, use your actual email.
+
+With subscriber created, now we can actually send our first email to this subscriber (`http://localhost:3000/notifications/emails`).
+
+![Postman /emails](https://github.com/michaldziuba03/novu/assets/43048524/d9d9f0f9-c6bc-4b49-afc1-1a8798cfe37b)
 
 This means that the email notification was sent successfully. Now go to your inbox and you should see an email notification like the following:
 
