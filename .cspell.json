@@ -498,7 +498,8 @@
     "reactjs",
     "nextjs",
     "vanillajs",
-    "quckstart"
+    "quckstart",
+    "errmsg"
   ],
   "flagWords": [],
   "patterns": [
