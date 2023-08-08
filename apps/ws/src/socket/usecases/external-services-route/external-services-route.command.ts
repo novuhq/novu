@@ -15,5 +15,6 @@ export class ExternalServicesRouteCommand extends BaseCommand {
   payload: Record<string, unknown>;
 
   @IsString()
+  @IsOptional()
   _environmentId?: string;
 }
