@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import { BullMqService } from '@novu/application-generic';
 
@@ -7,6 +7,7 @@ import { ExternalServicesRoute, ExternalServicesRouteCommand } from '../usecases
 @Injectable()
 export class SocketQueueConsumerService {
   private readonly QUEUE_NAME = 'ws_socket_queue';
+  LOG_CONTEXT = 'SocketQueueConsumerService';
 
   constructor(private externalServicesRoute: ExternalServicesRoute, public bullMqService: BullMqService) {
     this.bullMqService.createWorker(this.QUEUE_NAME, this.getWorkerProcessor(), this.getWorkerOpts());
@@ -14,14 +15,21 @@ export class SocketQueueConsumerService {
 
   private getWorkerProcessor() {
     return async (job) => {
-      await this.externalServicesRoute.execute(
-        ExternalServicesRouteCommand.create({
-          userId: job.data.userId,
-          event: job.data.event,
-          payload: job.data.payload,
-          _environmentId: job.data._environmentId,
-        })
-      );
+      try {
+        await this.externalServicesRoute.execute(
+          ExternalServicesRouteCommand.create({
+            userId: job.data.userId,
+            event: job.data.event,
+            payload: job.data.payload,
+            _environmentId: job.data._environmentId,
+          })
+        );
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        Logger.error('Unexpected exception occurred while handling external services route ', e, this.LOG_CONTEXT);
+
+        throw e;
+      }
     };
   }
 
