@@ -9,7 +9,6 @@ const DEFAULT_CONNECT_TIMEOUT = 50000;
 const DEFAULT_KEEP_ALIVE = 30000;
 const DEFAULT_FAMILY = 4;
 const DEFAULT_KEY_PREFIX = '';
-const TTL_VARIANT_PERCENTAGE = 0.1;
 
 interface IRedisConfig {
   db?: string;

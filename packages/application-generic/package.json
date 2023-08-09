@@ -97,6 +97,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "date-fns": "^2.29.2",
+    "generic-pool": "^3.9.0",
     "handlebars": "^4.7.7",
     "ioredis": "^5.2.4",
     "launchdarkly-node-server-sdk": "^7.0.1",
