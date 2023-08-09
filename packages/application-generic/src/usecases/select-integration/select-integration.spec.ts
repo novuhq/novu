@@ -36,6 +36,8 @@ const testIntegration: IntegrationEntity = {
   deleted: false,
   identifier: 'test-integration-identifier',
   name: 'test-integration-name',
+  primary: true,
+  priority: 1,
   deletedAt: null,
   deletedBy: null,
 };
@@ -51,6 +53,8 @@ const novuIntegration: IntegrationEntity = {
   deleted: false,
   identifier: 'test-novu-integration-identifier',
   name: 'test-novu-integration-name',
+  primary: true,
+  priority: 1,
   deletedAt: null,
   deletedBy: null,
 };
@@ -90,6 +94,7 @@ describe('select integration', function () {
       // @ts-ignore
       new GetDecryptedIntegrations()
     );
+    jest.clearAllMocks();
   });
 
   it('should select the integration', async function () {
@@ -121,4 +126,47 @@ describe('select integration', function () {
     expect(integration).not.toBeNull();
     expect(integration?.providerId).toEqual(EmailProviderIdEnum.Novu);
   });
+
+  it.each`
+    channel                   | shouldUsePrimary
+    ${ChannelTypeEnum.PUSH}   | ${false}
+    ${ChannelTypeEnum.CHAT}   | ${false}
+    ${ChannelTypeEnum.IN_APP} | ${false}
+    ${ChannelTypeEnum.EMAIL}  | ${true}
+    ${ChannelTypeEnum.SMS}    | ${true}
+  `(
+    'for channel $channel it should select integration by primary: $shouldUsePrimary',
+    async ({ channel, shouldUsePrimary }) => {
+      const environmentId = 'environmentId';
+      const organizationId = 'organizationId';
+      const userId = 'userId';
+      findOneMock.mockImplementation(() => ({
+        ...testIntegration,
+        channel,
+      }));
+
+      const integration = await useCase.execute(
+        SelectIntegrationCommand.create({
+          channelType: channel,
+          environmentId,
+          organizationId,
+          userId,
+        })
+      );
+
+      expect(findOneMock).toHaveBeenCalledWith(
+        {
+          _organizationId: organizationId,
+          _environmentId: environmentId,
+          channel,
+          active: true,
+          ...(shouldUsePrimary && {
+            primary: true,
+          }),
+        },
+        undefined,
+        { query: { sort: { createdAt: -1 } } }
+      );
+    }
+  );
 });

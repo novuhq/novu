@@ -3,11 +3,15 @@ import { Group, Center, Box } from '@mantine/core';
 import styled from '@emotion/styled';
 import slugify from 'slugify';
 import { Controller, FormProvider, useForm } from 'react-hook-form';
+import { useIntercom } from 'react-use-intercom';
 import {
+  CHANNELS_WITH_PRIMARY,
   EmailProviderIdEnum,
   IConfigCredentials,
+  IConstructIntegrationDto,
   ICredentialsDto,
   InAppProviderIdEnum,
+  NOVU_PROVIDERS,
   SmsProviderIdEnum,
 } from '@novu/shared';
 
@@ -29,7 +33,7 @@ import { Faq } from '../../../quick-start/components/QuickStartWrapper';
 import { NovuInAppFrameworkHeader } from '../../components/NovuInAppFrameworkHeader';
 import { NovuInAppSetupWarning } from '../../components/NovuInAppSetupWarning';
 import { NovuProviderSidebarContent } from '../../components/multi-provider/NovuProviderSidebarContent';
-import { useIntercom } from 'react-use-intercom';
+import { useSelectPrimaryIntegrationModal } from './useSelectPrimaryIntegrationModal';
 
 interface IProviderForm {
   name: string;
@@ -60,7 +64,10 @@ export function UpdateProviderSidebar({
   const { providers, isLoading: areProvidersLoading } = useProviders();
   const isNovuInAppProvider = selectedProvider?.providerId === InAppProviderIdEnum.Novu;
 
-  const { onUpdateIntegration, isLoadingUpdate } = useUpdateIntegration(selectedProvider?.integrationId || '');
+  const { openModal: openSelectPrimaryIntegrationModal, SelectPrimaryIntegrationModal } =
+    useSelectPrimaryIntegrationModal();
+
+  const { updateIntegration, isLoadingUpdate } = useUpdateIntegration(selectedProvider?.integrationId || '');
 
   const methods = useForm<IProviderForm>({
     shouldUseNativeValidation: false,
@@ -78,10 +85,11 @@ export function UpdateProviderSidebar({
     reset,
     watch,
     setValue,
-    formState: { errors, isDirty },
+    formState: { errors, isDirty, dirtyFields },
   } = methods;
 
   const credentials = watch('credentials');
+  const isActive = watch('active');
   const isSidebarOpened = !!selectedProvider && isOpened;
 
   const haveAllCredentials = useMemo(() => {
@@ -152,6 +160,45 @@ export function UpdateProviderSidebar({
     update({ hideDefaultLauncher: false });
   };
 
+  const updateAndSelectPrimaryIntegration = async (data: IConstructIntegrationDto) => {
+    if (!selectedProvider) {
+      return;
+    }
+
+    const { channel: selectedChannel, environmentId, primary } = selectedProvider;
+    const isActiveFieldChanged = dirtyFields.active;
+    const hasSameChannelActiveIntegration = !!providers
+      .filter((el) => !NOVU_PROVIDERS.includes(el.providerId) && el.integrationId !== selectedProvider.integrationId)
+      .find((el) => el.active && el.channel === selectedChannel && el.environmentId === environmentId);
+    const isChannelSupportPrimary = CHANNELS_WITH_PRIMARY.includes(selectedChannel);
+
+    if (
+      isActiveFieldChanged &&
+      isChannelSupportPrimary &&
+      ((isActive && hasSameChannelActiveIntegration) || (!isActive && primary && hasSameChannelActiveIntegration))
+    ) {
+      openSelectPrimaryIntegrationModal({
+        environmentId: selectedProvider?.environmentId,
+        channelType: selectedProvider?.channel,
+        exclude: !isActive ? [selectedProvider.integrationId] : undefined,
+        onClose: () => {
+          updateIntegration(data);
+        },
+      });
+
+      return;
+    }
+
+    updateIntegration(data);
+  };
+
+  const onSubmit: React.FormEventHandler<HTMLFormElement> = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+
+    handleSubmit(updateAndSelectPrimaryIntegration)(e);
+  };
+
   if (
     SmsProviderIdEnum.Novu === selectedProvider?.providerId ||
     EmailProviderIdEnum.Novu === selectedProvider?.providerId
@@ -162,10 +209,7 @@ export function UpdateProviderSidebar({
           isOpened={isSidebarOpened}
           isLoading={areProvidersLoading || areEnvironmentsLoading}
           onClose={onSidebarClose}
-          onSubmit={(e) => {
-            handleSubmit(onUpdateIntegration)(e);
-            e.stopPropagation();
-          }}
+          onSubmit={onSubmit}
           customHeader={
             <UpdateIntegrationSidebarHeader provider={selectedProvider} onSuccessDelete={onSidebarClose}>
               <Free>Test Provider</Free>
@@ -198,10 +242,7 @@ export function UpdateProviderSidebar({
         isOpened={isSidebarOpened}
         isLoading={areProvidersLoading || areEnvironmentsLoading}
         isExpanded={sidebarState === SidebarStateEnum.EXPANDED}
-        onSubmit={(e) => {
-          handleSubmit(onUpdateIntegration)(e);
-          e.stopPropagation();
-        }}
+        onSubmit={onSubmit}
         onClose={onSidebarClose}
         onBack={onBack}
         customHeader={
@@ -278,6 +319,7 @@ export function UpdateProviderSidebar({
           </Box>
         </When>
       </Sidebar>
+      <SelectPrimaryIntegrationModal />
     </FormProvider>
   );
 }

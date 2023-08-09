@@ -62,6 +62,8 @@ export { AngularLogo } from './general/AngularLogo';
 export { JavaScriptLogo } from './general/JavaScriptLogo';
 export { VueLogo } from './general/VueLogo';
 export { IframeLogo } from './general/IframeLogo';
+export { Star } from './general/Star';
+export { StarEmpty } from './general/StarEmpty';
 export { NovuLogo } from './general/NovuLogo';
 export { DelayAction } from './general/DelayAction';
 export { DigestAction } from './general/DigestAction';
