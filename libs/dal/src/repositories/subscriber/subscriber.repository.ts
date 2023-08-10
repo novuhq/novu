@@ -6,7 +6,7 @@ import { Subscriber } from './subscriber.schema';
 import { IExternalSubscribersEntity } from './types';
 import { BaseRepository } from '../base-repository';
 import { DalException } from '../../shared';
-import type { EnforceEnvOrOrgIds } from '../../types/enforce';
+import type { EnforceEnvOrOrgIds } from '../../types';
 import { EnvironmentId, ISubscribersDefine, OrganizationId } from '@novu/shared';
 
 type SubscriberQuery = FilterQuery<SubscriberDBModel> & EnforceEnvOrOrgIds;
@@ -50,24 +50,23 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
       };
     });
 
-    let result;
+    let bulkResponse;
     try {
-      const response = await this.bulkWrite(bulkWriteOps);
-      result = response.result;
+      bulkResponse = await this.bulkWrite(bulkWriteOps);
     } catch (e) {
       if (!e.writeErrors) {
         throw new DalException(e.message);
       }
-      result = e.result.result;
+      bulkResponse = e.result;
     }
 
-    const { upserted: created, nModified: updatedCount, nUpserted: createdCount, writeErrors } = result;
+    const { upserted: created, writeErrors } = bulkResponse.result;
     const indexes: number[] = [];
 
     const insertedSubscribers = created.map((inserted) => {
       indexes.push(inserted.index);
 
-      return { subscriberId: subscribers[inserted.index]?.subscriberId };
+      return mapToSubscriberObject(subscribers[inserted.index]?.subscriberId);
     });
 
     let failed = [];
@@ -85,16 +84,12 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
     const updatedSubscribers = subscribers
       .filter((subId, index) => !indexes.includes(index))
       .map((subscriber) => {
-        return {
-          subscriberId: subscriber.subscriberId,
-        };
+        return mapToSubscriberObject(subscriber.subscriberId);
       });
 
     return {
       updated: updatedSubscribers,
-      updatedCount,
       created: insertedSubscribers,
-      createdCount,
       failed,
     };
   }
