@@ -185,7 +185,6 @@ export class SubscribersController {
   @Post('/bulk')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  @ApiNoContentResponse()
   @ApiOperation({
     summary: 'Bulk create subscribers',
     description: `

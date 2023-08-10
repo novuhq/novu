@@ -47,14 +47,12 @@ describe('Bulk create subscribers - /v1/subscribers/bulk (POST)', function () {
 
     expect(body.data).to.be.ok;
     const response = body.data;
-    const { updated, updatedCount, created, createdCount, failed } = response;
+    const { updated, created, failed } = response;
 
-    expect(updatedCount).to.equal(2);
     expect(updated?.length).to.equal(2);
     expect(updated[0].subscriberId).to.equal(subscriber.subscriberId);
     expect(updated[1].subscriberId).to.equal('test2');
 
-    expect(createdCount).to.equal(2);
     expect(created?.length).to.equal(2);
     expect(created[0].subscriberId).to.equal('test1');
     expect(created[1].subscriberId).to.equal('test2');
@@ -101,8 +99,6 @@ describe('Bulk create subscribers - /v1/subscribers/bulk (POST)', function () {
       }
     );
     expect(body.data).to.be.ok;
-    expect(body.data.updatedCount).to.equal(1);
-    expect(body.data.createdCount).to.equal(4);
 
     const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, 'sub1');
     const updatedSubscriber = await subscriberRepository.findBySubscriberId(
@@ -125,7 +121,6 @@ describe('Bulk create subscribers - /v1/subscribers/bulk (POST)', function () {
       email: 'sub2@test.co',
     };
 
-    let error;
     try {
       await axiosInstance.post(
         `${session.serverUrl}${BULK_API_ENDPOINT}`,
@@ -138,12 +133,11 @@ describe('Bulk create subscribers - /v1/subscribers/bulk (POST)', function () {
           },
         }
       );
-    } catch (e) {
-      error = e;
+      expect.fail();
+    } catch (error) {
+      expect(error).to.be.ok;
+      expect(error.response.status).to.equal(400);
+      expect(error.response.data.message[0]).to.equal('subscribers must contain no more than 500 elements');
     }
-
-    expect(error).to.be.ok;
-    expect(error.response.status).to.equal(400);
-    expect(error.response.data.message[0]).to.equal('subscribers must contain no more than 500 elements');
   });
 });

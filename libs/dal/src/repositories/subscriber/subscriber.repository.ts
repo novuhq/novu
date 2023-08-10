@@ -7,7 +7,7 @@ import { IExternalSubscribersEntity } from './types';
 import { BaseRepository } from '../base-repository';
 import { DalException } from '../../shared';
 import type { EnforceEnvOrOrgIds } from '../../types/enforce';
-import { EnvironmentId, OrganizationId } from '@novu/shared';
+import { EnvironmentId, ISubscribersDefine, OrganizationId } from '@novu/shared';
 
 type SubscriberQuery = FilterQuery<SubscriberDBModel> & EnforceEnvOrOrgIds;
 
@@ -33,7 +33,11 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
     );
   }
 
-  async bulkCreateSubscribers(subscribers, environmentId: EnvironmentId, organizationId: OrganizationId) {
+  async bulkCreateSubscribers(
+    subscribers: ISubscribersDefine[],
+    environmentId: EnvironmentId,
+    organizationId: OrganizationId
+  ) {
     const bulkWriteOps = subscribers.map((subscriber) => {
       const { subscriberId, ...rest } = subscriber;
 
@@ -180,7 +184,9 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
     return this.mapEntity(res);
   }
 }
-
+function mapToSubscriberObject(subscriberId: string) {
+  return { subscriberId };
+}
 function regExpEscape(literalString: string): string {
   return literalString.replace(/[-[\]{}()*+!<=:?./\\^$|#\s,]/g, '\\$&');
 }
