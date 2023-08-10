@@ -83,6 +83,7 @@ function getTooltipConfiguration() {
         tooltipEl.id = 'chartjs-tooltip';
         tooltipEl.innerHTML = '<table></table>';
         document.body.appendChild(tooltipEl);
+        tooltipEl.style.position = 'absolute';
       }
 
       // Hide if no tooltip

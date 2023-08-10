@@ -18,14 +18,14 @@ export default function AuthContainer({
       sx={{
         display: 'flex',
         alignItems: 'center',
+        justifyContent: 'center',
         margin: 0,
-        '@media (max-width: 1100px)': {
-          justifyContent: 'center',
-        },
+        overflowY: 'auto',
+        height: '100vh',
       }}
     >
       <PageMeta title={title} />
-      <div style={{ margin: '30px 0', width: '100%', maxWidth: 550 }}>
+      <div style={{ margin: 'auto', padding: '40px 20px', width: '100%', maxWidth: 550 }}>
         <Title data-test-id="auth-container-title">{title}</Title>
         {customDescription || (
           <Text size="lg" color={colors.B60} mb={60} mt={20}>
