@@ -23,6 +23,10 @@ export class IntegrationEntity {
 
   identifier: string;
 
+  priority: number;
+
+  primary: boolean;
+
   deleted: boolean;
 
   deletedAt: string;
