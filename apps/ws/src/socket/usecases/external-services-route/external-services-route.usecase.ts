@@ -41,14 +41,17 @@ export class ExternalServicesRoute {
       return;
     }
 
-    const unreadCount = await this.messageRepository.getCount(
-      command._environmentId,
-      command.userId,
-      ChannelTypeEnum.IN_APP,
-      { read: false },
-      { limit: 1000 }
-    );
+    let unreadCount = this.extractCount(command.payload?.unreadCount);
 
+    if (unreadCount === undefined) {
+      unreadCount = await this.messageRepository.getCount(
+        command._environmentId,
+        command.userId,
+        ChannelTypeEnum.IN_APP,
+        { read: false },
+        { limit: 1000 }
+      );
+    }
     await this.wsGateway.sendMessage(command.userId, command.event, {
       unreadCount,
     });
@@ -65,17 +68,33 @@ export class ExternalServicesRoute {
       return;
     }
 
-    const unseenCount = await this.messageRepository.getCount(
-      command._environmentId,
-      command.userId,
-      ChannelTypeEnum.IN_APP,
-      { seen: false },
-      { limit: 1000 }
-    );
+    let unseenCount = this.extractCount(command.payload?.unseenCount);
+
+    if (unseenCount === undefined) {
+      unseenCount = await this.messageRepository.getCount(
+        command._environmentId,
+        command.userId,
+        ChannelTypeEnum.IN_APP,
+        { seen: false },
+        { limit: 1000 }
+      );
+    }
 
     await this.wsGateway.sendMessage(command.userId, command.event, {
       unseenCount,
     });
+  }
+
+  private extractCount(count: unknown): number | undefined {
+    if (count === null || count === undefined) return undefined;
+
+    if (typeof count === 'number') {
+      return count;
+    }
+
+    if (typeof count === 'string') {
+      return parseInt(count, 10);
+    }
   }
 
   private async connectionExist(command: ExternalServicesRouteCommand) {
