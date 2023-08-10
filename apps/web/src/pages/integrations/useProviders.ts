@@ -4,7 +4,7 @@ import {
   ChannelTypeEnum,
   IConfigCredentials,
   IProviderConfig,
-  NOVU_PROVIDERS,
+  NOVU_SMS_EMAIL_PROVIDERS,
   providers,
   PushProviderIdEnum,
 } from '@novu/shared';
@@ -32,7 +32,7 @@ function fcmFallback(integration: IntegrationEntity | undefined, clonedCredentia
 
 function initializeProviders(integrations: IntegrationEntity[]): IIntegratedProvider[] {
   return providers
-    .filter((provider) => !NOVU_PROVIDERS.includes(provider.id))
+    .filter((provider) => !NOVU_SMS_EMAIL_PROVIDERS.includes(provider.id))
     .map((providerItem) => {
       const integration = integrations.find((integrationItem) => integrationItem.providerId === providerItem.id);
 
@@ -61,6 +61,7 @@ function initializeProviders(integrations: IntegrationEntity[]): IIntegratedProv
         connected: !!integration,
         logoFileName: providerItem.logoFileName,
         environmentId: integration?._environmentId,
+        primary: integration?.primary ?? false,
       };
     });
 }
@@ -72,7 +73,7 @@ function initializeProvidersByIntegration(integrations: IntegrationEntity[]): II
         return true;
       }
 
-      return !NOVU_PROVIDERS.includes(integrationItem.providerId);
+      return !NOVU_SMS_EMAIL_PROVIDERS.includes(integrationItem.providerId);
     })
     .map((integrationItem) => {
       const providerItem = providers.find((provItem) => integrationItem.providerId === provItem.id) as IProviderConfig;
@@ -114,6 +115,7 @@ function initializeProvidersByIntegration(integrations: IntegrationEntity[]): II
         environmentId: integrationItem?._environmentId,
         name: integrationItem?.name,
         identifier: integrationItem?.identifier,
+        primary: integrationItem?.primary ?? false,
       };
     });
 }

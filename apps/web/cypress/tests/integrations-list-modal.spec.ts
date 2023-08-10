@@ -120,6 +120,9 @@ describe('Integrations List Modal', function () {
       data: [],
       delay: 3500,
     }).as('getIntegrations');
+    cy.intercept('*/environments', async () => {
+      await new Promise((resolve) => setTimeout(resolve, 3500));
+    }).as('getEnvironments');
     navigateToGetStarted();
     cy.getByTestId('select-provider-sidebar').should('be.visible');
     cy.getByTestId('sidebar-close').should('be.visible').click();
@@ -128,6 +131,7 @@ describe('Integrations List Modal', function () {
     checkTableLoading();
 
     cy.wait('@getIntegrations');
+    cy.wait('@getEnvironments');
 
     cy.getByTestId('add-provider').should('be.enabled');
     cy.getByTestId('no-integrations-placeholder').should('be.visible');
@@ -601,6 +605,7 @@ describe('Integrations List Modal', function () {
     cy.getByTestId('senderName').type('Novu');
     cy.getByTestId('update-provider-sidebar-update').should('not.be.disabled').contains('Update').click();
 
+    cy.get('.mantine-Modal-close').click();
     cy.getByTestId('sidebar-close').click();
     checkTableRow(
       {
@@ -663,6 +668,7 @@ describe('Integrations List Modal', function () {
     cy.getByTestId('senderName').type('Novu');
     cy.getByTestId('update-provider-sidebar-update').should('not.be.disabled').click();
 
+    cy.get('.mantine-Modal-close').click();
     cy.getByTestId('sidebar-close').click();
     checkTableRow(
       {

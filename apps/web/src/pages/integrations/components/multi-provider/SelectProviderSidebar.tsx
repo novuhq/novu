@@ -9,7 +9,7 @@ import {
   inAppProviders,
   chatProviders,
   InAppProviderIdEnum,
-  NOVU_PROVIDERS,
+  NOVU_SMS_EMAIL_PROVIDERS,
 } from '@novu/shared';
 
 import { colors, Sidebar } from '../../../../design-system';
@@ -33,7 +33,7 @@ const filterSearch = (list, search: string) =>
 
 const mapStructure = (listProv): IIntegratedProvider[] =>
   listProv
-    .filter((providerItem) => !NOVU_PROVIDERS.includes(providerItem.id))
+    .filter((providerItem) => !NOVU_SMS_EMAIL_PROVIDERS.includes(providerItem.id))
     .map((providerItem) => ({
       providerId: providerItem.id,
       displayName: providerItem.displayName,

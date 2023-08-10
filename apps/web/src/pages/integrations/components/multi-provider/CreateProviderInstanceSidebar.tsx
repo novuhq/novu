@@ -2,6 +2,7 @@ import { ActionIcon, Group, Radio, Text } from '@mantine/core';
 import { useEffect, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
+import styled from '@emotion/styled';
 import { ChannelTypeEnum, ICreateIntegrationBodyDto, InAppProviderIdEnum, providers } from '@novu/shared';
 
 import { Button, colors, NameInput, Sidebar } from '../../../../design-system';
@@ -18,7 +19,11 @@ import { CHANNEL_TYPE_TO_STRING } from '../../../../utils/channels';
 import type { IntegrationEntity } from '../../types';
 import { useProviders } from '../../useProviders';
 import { When } from '../../../../components/utils/When';
-import styled from '@emotion/styled';
+
+interface ICreateProviderInstanceForm {
+  name: string;
+  environmentId: string;
+}
 
 export function CreateProviderInstanceSidebar({
   isOpened,
@@ -36,7 +41,8 @@ export function CreateProviderInstanceSidebar({
   onIntegrationCreated: (id: string) => void;
 }) {
   const { environments, isLoading: areEnvironmentsLoading } = useFetchEnvironments();
-  const { isLoading: isIntegrationsLoading, providers: integrations } = useProviders();
+  const { isLoading: areIntegrationsLoading, providers: integrations } = useProviders();
+  const isLoading = areEnvironmentsLoading || areIntegrationsLoading;
   const queryClient = useQueryClient();
   const segment = useSegment();
 
@@ -51,7 +57,7 @@ export function CreateProviderInstanceSidebar({
     ICreateIntegrationBodyDto
   >(createIntegration);
 
-  const { handleSubmit, control, reset, watch } = useForm({
+  const { handleSubmit, control, reset, watch } = useForm<ICreateProviderInstanceForm>({
     shouldUseNativeValidation: false,
     defaultValues: {
       name: '',
@@ -73,27 +79,30 @@ export function CreateProviderInstanceSidebar({
     return found !== undefined;
   }, [integrations, provider, selectedEnvironmentId]);
 
-  const onCreateIntegrationInstance = async (data) => {
+  const onCreateIntegrationInstance = async (data: ICreateProviderInstanceForm) => {
     try {
       if (!provider) {
         return;
       }
 
+      const { channel: selectedChannel } = provider;
+      const { environmentId } = data;
+
       const { _id: integrationId } = await createIntegrationApi({
         providerId: provider.id,
-        channel: provider.channel,
+        channel: selectedChannel,
         name: data.name,
         credentials: {},
         active: provider.channel === ChannelTypeEnum.IN_APP ? true : false,
         check: false,
-        _environmentId: data.environmentId,
+        _environmentId: environmentId,
       });
 
       segment.track(IntegrationsStoreModalAnalytics.CREATE_INTEGRATION_INSTANCE, {
         providerId: provider.id,
-        channel: provider.channel,
+        channel: selectedChannel,
         name: data.name,
-        environmentId: data.environmentId,
+        environmentId,
       });
       successMessage('Instance configuration is created');
       onIntegrationCreated(integrationId ?? '');
@@ -125,7 +134,7 @@ export function CreateProviderInstanceSidebar({
   return (
     <Sidebar
       isOpened={isOpened}
-      isLoading={areEnvironmentsLoading || isIntegrationsLoading}
+      isLoading={isLoading}
       onSubmit={(e) => {
         handleSubmit(onCreateIntegrationInstance)(e);
         e.stopPropagation();
@@ -161,7 +170,7 @@ export function CreateProviderInstanceSidebar({
             Cancel
           </Button>
           <Button
-            disabled={areEnvironmentsLoading || isLoadingCreate || showInAppErrorMessage}
+            disabled={isLoading || isLoadingCreate || showInAppErrorMessage}
             loading={isLoadingCreate}
             submit
             data-test-id="create-provider-instance-sidebar-create"

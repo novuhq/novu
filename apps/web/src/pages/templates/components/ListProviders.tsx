@@ -1,5 +1,5 @@
 import { Group, Stack, Text, UnstyledButton, useMantineColorScheme } from '@mantine/core';
-import { ChannelTypeEnum, NOVU_PROVIDERS } from '@novu/shared';
+import { ChannelTypeEnum, NOVU_SMS_EMAIL_PROVIDERS } from '@novu/shared';
 
 import { When } from '../../../components/utils/When';
 import { Button, colors, Tooltip } from '../../../design-system';
@@ -143,7 +143,7 @@ const LackIntegrationByType = ({
   providers: IIntegratedProvider[];
   channel: ChannelTypeEnum;
 }) => {
-  const containsNovuProvider = NOVU_PROVIDERS.some(
+  const containsNovuProvider = NOVU_SMS_EMAIL_PROVIDERS.some(
     (providerId) => providerId === providers.find((provider) => provider.connected)?.providerId
   );
 
