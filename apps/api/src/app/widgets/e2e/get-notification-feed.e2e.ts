@@ -167,7 +167,11 @@ describe('GET /widget/notifications/feed', function () {
     } catch (err) {
       expect(err.response.status).to.equals(400);
       expect(err.response.data.message).to.eq(`Invalid payload, the JSON object should be encoded to base64 string.`);
+
+      return;
     }
+
+    expect.fail('Should have thrown an bad request exception');
   });
 
   it('should allow filtering by custom data from the payload', async function () {
