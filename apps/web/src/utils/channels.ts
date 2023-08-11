@@ -1,5 +1,6 @@
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 import React from 'react';
+import { Node } from 'react-flow-renderer';
 import {
   ChatFilled,
   DelayAction,
@@ -101,4 +102,23 @@ export const channels: IChannelDefinition[] = [
 
 export const getChannel = (channelKey?: string): IChannelDefinition | undefined => {
   return channels.find((channel) => channel.tabKey === channelKey);
+};
+
+export const computeNodeActualPosition = (node: Node<any>, nodes: Array<Node<any>>, xSum = 0, ySum = 0) => {
+  if (node.parentNode) {
+    const parent = nodes.find(({ id }) => id === node.parentNode);
+    if (parent) {
+      const { actualPosition } = computeNodeActualPosition(parent, nodes, xSum, ySum);
+      xSum += actualPosition.x;
+      ySum += actualPosition.y;
+    }
+  }
+
+  return {
+    ...node,
+    actualPosition: {
+      x: node.position.x + xSum,
+      y: node.position.y + ySum,
+    },
+  };
 };

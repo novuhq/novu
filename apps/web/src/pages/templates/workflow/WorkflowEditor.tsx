@@ -35,7 +35,7 @@ const nodeTypes = {
 const edgeTypes = { special: AddNodeEdge };
 
 const WorkflowEditor = () => {
-  const { addStep, deleteStep } = useTemplateEditorForm();
+  const { addStep, deleteStep, moveStepPosition } = useTemplateEditorForm();
   const { channel } = useParams<{
     channel: StepTypeEnum | undefined;
   }>();
@@ -184,6 +184,7 @@ const WorkflowEditor = () => {
             onStepInit={onStepInit}
             onGetStepError={onGetStepError}
             onNodeClick={onNodeClick}
+            moveStepPosition={moveStepPosition}
           />
         </div>
       </div>
@@ -238,6 +239,7 @@ const WorkflowEditor = () => {
               onStepInit={onStepInit}
               onGetStepError={onGetStepError}
               onNodeClick={onNodeClick}
+              moveStepPosition={moveStepPosition}
             />
           </div>
 

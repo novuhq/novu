@@ -21,7 +21,7 @@ import cloneDeep from 'lodash.clonedeep';
 import { StepTypeEnum } from '@novu/shared';
 
 import { colors } from '../../design-system';
-import { getChannel } from '../../utils/channels';
+import { computeNodeActualPosition, getChannel } from '../../utils/channels';
 import { useEnvController } from '../../hooks';
 import type { IEdge, IFlowStep } from './types';
 
@@ -56,6 +56,7 @@ interface IFlowEditorProps extends ReactFlowProps {
   onStepInit?: (step: IFlowStep) => Promise<void>;
   onGetStepError?: (i: number, errors: any) => string;
   addStep?: (channelType: StepTypeEnum, id: string, index?: number) => void;
+  moveStepPosition?: (id: string, stepIndex: number) => void;
 }
 
 export function FlowEditor({
@@ -79,12 +80,15 @@ export function FlowEditor({
   onStepInit,
   onGetStepError,
   addStep,
+  moveStepPosition,
   onDelete,
   ...restProps
 }: IFlowEditorProps) {
   const { colorScheme } = useMantineColorScheme();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const nodesRef = useRef<Array<Node<any>>>([]);
+  const [onRepositioning, setOnRepositioning] = useState(false);
   const [edges, setEdges, onEdgesChange] = useEdgesState<IEdge>([]);
   const reactFlowInstance = useReactFlow();
   const { readonly } = useEnvController();
@@ -150,6 +154,92 @@ export function FlowEditor({
     },
     [addNewNode, reactFlowInstance, nodes, edges]
   );
+
+  const updateNodeConnections = useCallback(() => {
+    const edgeType = edgeTypes ? 'special' : 'default';
+
+    setEdges(
+      nodes.slice(1, nodes.length - 1).map(({ id, parentNode }) => buildNewEdge(parentNode ?? '', id, edgeType))
+    );
+  }, [setEdges, nodes]);
+
+  const onNodeDragStop = useCallback(
+    (event, node: Node<any>) => {
+      if (onRepositioning) {
+        const clonedNodes = nodes.map((mappedNode) => computeNodeActualPosition(mappedNode, nodes));
+        const filteredNodes = cloneDeep(clonedNodes).filter(({ type }) => type === 'channelNode');
+
+        const sourcePosition = filteredNodes.findIndex(({ id }) => id === node.id);
+
+        const targetPosition = filteredNodes
+          .sort(({ actualPosition: { y: aY } }, { actualPosition: { y: bY } }) => aY - bY)
+          .findIndex(({ id }) => node.id === id);
+
+        setNodes(clonedNodes.map((_node, index) => ({ ..._node, position: nodesRef.current[index].position })));
+
+        if (sourcePosition === targetPosition) {
+          updateNodeConnections();
+
+          return;
+        }
+
+        moveStepPosition?.(node.id, targetPosition);
+      }
+
+      if (!isRepositioningNode(event) && onRepositioning) updateNodeConnections();
+      setOnRepositioning(false);
+    },
+    [nodes, onRepositioning]
+  );
+
+  const onNodeDragStart = useCallback(
+    (event: ReactMouseEvent, node: Node<any>) => {
+      if (!isRepositioningNode(event)) return;
+      setOnRepositioning(true);
+      /*
+       * When the user tries to reposition a node, the connecting edge is removed so that it doesn't
+       * cause confusion for the user, making them think they are repositioning the node and all its descendants.
+       */
+      setEdges((newEdges) =>
+        newEdges.map((edge) => {
+          let source = node.id === edge.target ? '' : edge.source;
+          if (edge.source === node.id) source = '';
+
+          return { ...edge, source };
+        })
+      );
+
+      nodesRef.current = cloneDeep(nodes);
+    },
+    [setEdges, nodes]
+  );
+
+  const onNodeDrag = useCallback(
+    (event: ReactMouseEvent, node: Node<any>) => {
+      if (!onRepositioning) return;
+
+      /**
+       * When repositioning a node, implementation below ensures descendants nodes are not moving alongside.
+       */
+      const activeNode = nodesRef.current.find(({ id }) => node.id === id);
+      const childNodeIndex = nodesRef.current.findIndex(({ parentNode }) => node.id === parentNode);
+      const childNode = nodesRef.current[childNodeIndex];
+
+      if (!activeNode || childNodeIndex === -1) return;
+
+      setNodes((initialNodes) => {
+        initialNodes[childNodeIndex].position.x = childNode.position.x - (node.position.x - activeNode.position.x);
+        initialNodes[childNodeIndex].position.y = childNode.position.y - (node.position.y - activeNode.position.y);
+
+        return [...initialNodes];
+      });
+    },
+    [setNodes, onRepositioning]
+  );
+
+  const isRepositioningNode = (e: ReactMouseEvent) => {
+    return !!(e.target as HTMLElement).closest('button[data-test-id="drag-step-action"]');
+  };
 
   async function initializeWorkflowTree() {
     let parentId = '1';
@@ -313,6 +403,9 @@ export function FlowEditor({
             minZoom={minZoom}
             maxZoom={maxZoom}
             defaultZoom={defaultZoom}
+            onNodeDragStop={onNodeDragStop}
+            onNodeDragStart={onNodeDragStart}
+            onNodeDrag={onNodeDrag}
             {...restProps}
           >
             {withControls && <Controls />}

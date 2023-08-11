@@ -93,6 +93,7 @@ interface ITemplateEditorFormContext {
   onSubmit: (data: IForm) => Promise<void>;
   addStep: (channelType: StepTypeEnum, id: string, stepIndex?: number) => void;
   deleteStep: (index: number) => void;
+  moveStepPosition: (id: string, stepIndex: number) => void;
 }
 
 const TemplateEditorFormContext = createContext<ITemplateEditorFormContext>({
@@ -104,6 +105,7 @@ const TemplateEditorFormContext = createContext<ITemplateEditorFormContext>({
   onSubmit: (() => {}) as any,
   addStep: () => {},
   deleteStep: () => {},
+  moveStepPosition: () => {},
 });
 
 const defaultValues: IForm = {
@@ -219,6 +221,16 @@ const TemplateEditorFormProvider = ({ children }) => {
     [steps]
   );
 
+  const moveStepPosition = useCallback(
+    (id: string, stepIndex: number) => {
+      const index = steps.fields.findIndex(({ _id: stepId }) => id === stepId);
+      if (index !== -1) {
+        steps.move(index, stepIndex);
+      }
+    },
+    [steps]
+  );
+
   const deleteStep = useCallback(
     (index: number) => {
       steps.remove(index);
@@ -237,8 +249,21 @@ const TemplateEditorFormProvider = ({ children }) => {
       onSubmit,
       addStep,
       deleteStep,
+      moveStepPosition,
     }),
-    [template, isLoading, isCreating, isUpdating, isDeleting, trigger, onSubmit, addStep, deleteStep, loadingGroups]
+    [
+      template,
+      isLoading,
+      isCreating,
+      isUpdating,
+      isDeleting,
+      trigger,
+      onSubmit,
+      addStep,
+      deleteStep,
+      moveStepPosition,
+      loadingGroups,
+    ]
   );
 
   return (
