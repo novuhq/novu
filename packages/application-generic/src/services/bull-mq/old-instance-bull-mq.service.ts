@@ -11,6 +11,7 @@ import {
   Worker,
   WorkerOptions,
 } from 'bullmq';
+import { ConnectionOptions } from 'tls';
 import { Injectable, Logger } from '@nestjs/common';
 import { getRedisPrefix, IEventJobData, IJobData } from '@novu/shared';
 import {
@@ -27,22 +28,12 @@ interface IQueueMetrics {
 
 type BullMqJobData = undefined | IJobData | IEventJobData;
 
-const LOG_CONTEXT = 'BullMqService';
-
-export {
-  Job,
-  JobsOptions,
-  Processor,
-  Queue,
-  QueueBaseOptions,
-  QueueOptions,
-  RedisConnectionOptions as BullMqConnectionOptions,
-  Worker,
-  WorkerOptions,
-};
-
+const LOG_CONTEXT = 'OldInstanceBullMqService';
+/**
+ * TODO: Temporary to migrate to MemoryDB
+ */
 @Injectable()
-export class BullMqService {
+export class OldInstanceBullMqService {
   private _queue: Queue;
   private _worker: Worker;
   private inMemoryProviderService: InMemoryProviderService;
@@ -55,7 +46,7 @@ export class BullMqService {
       new GetIsInMemoryClusterModeEnabled();
     this.inMemoryProviderService = new InMemoryProviderService(
       getIsInMemoryClusterModeEnabled,
-      InMemoryProviderEnum.MEMORY_DB
+      InMemoryProviderEnum.OLD_INSTANCE_REDIS
     );
   }
 
@@ -72,7 +63,7 @@ export class BullMqService {
   }
 
   public static haveProInstalled(): boolean {
-    if (!BullMqService.pro) {
+    if (!OldInstanceBullMqService.pro) {
       return false;
     }
 
@@ -82,7 +73,10 @@ export class BullMqService {
   }
 
   private runningWithProQueue(): boolean {
-    return BullMqService.pro && BullMqService.haveProInstalled();
+    return (
+      OldInstanceBullMqService.pro &&
+      OldInstanceBullMqService.haveProInstalled()
+    );
   }
 
   public async getQueueMetrics(): Promise<IQueueMetrics> {
@@ -129,7 +123,7 @@ export class BullMqService {
     };
 
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    const QueueClass = !BullMqService.pro
+    const QueueClass = !OldInstanceBullMqService.pro
       ? Queue
       : require('@taskforcesh/bullmq-pro').QueuePro;
 
@@ -153,7 +147,7 @@ export class BullMqService {
     workerOptions?: WorkerOptions
   ) {
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    const WorkerClass = !BullMqService.pro
+    const WorkerClass = !OldInstanceBullMqService.pro
       ? Worker
       : require('@taskforcesh/bullmq-pro').WorkerPro;
 
@@ -173,7 +167,7 @@ export class BullMqService {
 
     this._worker = new WorkerClass(name, processor, {
       ...config,
-      ...(BullMqService.pro
+      ...(OldInstanceBullMqService.pro
         ? {
             group: {},
           }
@@ -191,7 +185,7 @@ export class BullMqService {
   ) {
     this._queue.add(id, data, {
       ...options,
-      ...(BullMqService.pro && groupId
+      ...(OldInstanceBullMqService.pro && groupId
         ? {
             group: {
               id: groupId,

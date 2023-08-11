@@ -15,6 +15,7 @@ export enum InMemoryProviderEnum {
   ELASTICACHE = 'Elasticache',
   MEMORY_DB = 'MemoryDB',
   REDIS = 'Redis',
+  OLD_INSTANCE_REDIS = 'OldInstanceRedis',
 }
 
 export type Pipeline = ChainableCommander;

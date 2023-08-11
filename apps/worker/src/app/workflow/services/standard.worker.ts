@@ -28,7 +28,7 @@ import {
   HandleLastFailedJob,
 } from '../usecases';
 
-const LOG_CONTEXT = 'WorkflowQueueService';
+const LOG_CONTEXT = 'StandardWorker';
 
 @Injectable()
 export class StandardWorker extends StandardWorkerService implements INovuWorker {
