@@ -1,7 +1,12 @@
 const nr = require('newrelic');
 import { Job, WorkerOptions } from 'bullmq';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, IJobData } from '@novu/shared';
+import {
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  IJobData,
+  ObservabilityBackgroundTransactionEnum,
+} from '@novu/shared';
 import { QueueService, PinoLogger, storage, Store, INovuWorker } from '@novu/application-generic';
 
 import {
@@ -30,18 +35,18 @@ export class WorkflowQueueService extends QueueService<IJobData> implements INov
   ) {
     super();
     Logger.warn('Workflow queue service created');
-    this.bullMqService.createWorker(this.name, this.getWorkerProcessor(), this.getWorkerOpts());
+    this.bullMqService.createWorker(this.name, this.getWorkerProcessor(), this.getWorkerOptions());
 
-    this.bullMqService.worker.on('completed', async (job: Job<IJobData, any, string>): Promise<void> => {
+    this.bullMqService.worker.on('completed', async (job: Job<IJobData, void, string>): Promise<void> => {
       await this.jobHasCompleted(job);
     });
 
-    this.bullMqService.worker.on('failed', async (job: Job<IJobData, any, string>, error: Error): Promise<void> => {
+    this.bullMqService.worker.on('failed', async (job: Job<IJobData, void, string>, error: Error): Promise<void> => {
       await this.jobHasFailed(job, error);
     });
   }
 
-  private getWorkerOpts(): WorkerOptions {
+  private getWorkerOptions(): WorkerOptions {
     return {
       lockDuration: 90000,
       concurrency: 200,
@@ -59,36 +64,40 @@ export class WorkflowQueueService extends QueueService<IJobData> implements INov
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const _this = this;
 
-        nr.startBackgroundTransaction('job-processing-queue', 'Trigger Engine', function () {
-          const transaction = nr.getTransaction();
+        nr.startBackgroundTransaction(
+          ObservabilityBackgroundTransactionEnum.JOB_PROCESSING_QUEUE,
+          'Trigger Engine',
+          function () {
+            const transaction = nr.getTransaction();
 
-          storage.run(new Store(PinoLogger.root), () => {
-            _this.runJob
-              .execute(
-                RunJobCommand.create({
-                  environmentId,
-                  jobId,
-                  organizationId,
-                  userId,
+            storage.run(new Store(PinoLogger.root), () => {
+              _this.runJob
+                .execute(
+                  RunJobCommand.create({
+                    environmentId,
+                    jobId,
+                    organizationId,
+                    userId,
+                  })
+                )
+
+                .then(resolve)
+                .catch((error) => {
+                  Logger.error(`Failed to run the job ${jobId} during worker processing`, error, LOG_CONTEXT);
+
+                  return reject(error);
                 })
-              )
-
-              .then(resolve)
-              .catch((error) => {
-                Logger.error(`Failed to run the job ${jobId} during worker processing`, error, LOG_CONTEXT);
-
-                return reject(error);
-              })
-              .finally(() => {
-                transaction.end();
-              });
-          });
-        });
+                .finally(() => {
+                  transaction.end();
+                });
+            });
+          }
+        );
       });
     };
   }
 
-  private async jobHasCompleted(job: Job<IJobData, any, string>): Promise<void> {
+  private async jobHasCompleted(job: Job<IJobData, void, string>): Promise<void> {
     let jobId;
 
     try {
@@ -108,7 +117,7 @@ export class WorkflowQueueService extends QueueService<IJobData> implements INov
     }
   }
 
-  private async jobHasFailed(job: Job<IJobData, any, string>, error: Error): Promise<void> {
+  private async jobHasFailed(job: Job<IJobData, void, string>, error: Error): Promise<void> {
     let jobId;
 
     try {
