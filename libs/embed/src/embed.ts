@@ -143,7 +143,12 @@ class Novu {
         const elem = document.querySelector('.wrapper-novu-widget') as HTMLBodyElement;
 
         if (elem) {
-          elem.style.display = 'inline-block';
+          const elemNotVisible = elem.style.display === 'none';
+          if (elemNotVisible) {
+            elem.style.display = 'inline-block';
+          } else {
+            hideWidget();
+          }
         }
 
         _scope.iframe?.contentWindow?.postMessage(
