@@ -9,7 +9,7 @@ const LOG_CONTEXT = 'WsQueueService';
 
 @Injectable()
 export class WsQueueService extends QueueService<Record<string, never>> {
-  public queueName = 'ws_socket_queue';
+  public readonly name = JobTopicNameEnum.WEB_SOCKETS;
 
   constructor() {
     super(JobTopicNameEnum.WEB_SOCKETS);
