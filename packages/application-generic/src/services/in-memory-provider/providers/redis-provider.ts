@@ -92,5 +92,11 @@ export const getRedisInstance = (): Redis | undefined => {
   return undefined;
 };
 
+export const validateRedisProviderConfig = (): boolean => {
+  const config = getRedisProviderConfig();
+
+  return !!config.host && !!config.port;
+};
+
 export const isClientReady = (status: string): boolean =>
   status === CLIENT_READY;
