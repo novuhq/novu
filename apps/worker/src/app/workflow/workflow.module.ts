@@ -21,10 +21,13 @@ import {
   WorkflowQueueService,
   WebSocketsWorkerService,
   WebSocketsQueueService,
+  oldInstanceBullMqService,
+  OldInstanceBullMqService,
+  OldInstanceWorkflowWorkerService,
 } from '@novu/application-generic';
 import { JobRepository, MessageRepository, OrganizationRepository, SubscriberRepository } from '@novu/dal';
 
-import { JobMetricService, StandardWorker, WorkflowWorker } from './services';
+import { JobMetricService, StandardWorker, WorkflowWorker, OldInstanceWorkflowWorker } from './services';
 import {
   MessageMatcher,
   SendMessage,
@@ -98,7 +101,14 @@ const bullMqTokenList = {
   inject: [StandardQueueService, WebSocketsQueueService, WorkflowQueueService],
 };
 
-const PROVIDERS = [bullMqService, bullMqTokenList, StandardWorker, WorkflowWorker];
+const PROVIDERS = [
+  bullMqService,
+  bullMqTokenList,
+  StandardWorker,
+  WorkflowWorker,
+  oldInstanceBullMqService,
+  OldInstanceWorkflowWorker,
+];
 
 @Module({
   imports: [SharedModule, QueuesModule],

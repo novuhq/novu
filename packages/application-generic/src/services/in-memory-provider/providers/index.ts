@@ -19,6 +19,7 @@ import {
   getRedisProviderConfig,
   IRedisProviderConfig,
   isClientReady as isRedisClientReady,
+  validateRedisProviderConfig,
 } from './redis-provider';
 import {
   Cluster,
@@ -46,11 +47,13 @@ export const getClientAndConfig = (): {
   getClient: () => Redis | undefined;
   getConfig: () => IRedisProviderConfig;
   isClientReady: (string) => boolean;
+  validate: () => boolean;
 } => {
   return {
     getClient: getRedisInstance,
     getConfig: getRedisProviderConfig,
     isClientReady: isRedisClientReady,
+    validate: validateRedisProviderConfig,
   };
 };
 

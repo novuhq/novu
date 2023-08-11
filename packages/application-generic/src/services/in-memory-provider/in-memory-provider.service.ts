@@ -39,6 +39,11 @@ export class InMemoryProviderService {
   }
 
   private buildClient(provider: InMemoryProviderEnum): InMemoryProviderClient {
+    // TODO: Temporary while migrating to MemoryDB
+    if (provider === InMemoryProviderEnum.OLD_INSTANCE_REDIS) {
+      return this.oldInstanceInMemoryProviderSetup();
+    }
+
     const isClusterMode = this.isClusterMode();
 
     return isClusterMode
@@ -97,15 +102,18 @@ export class InMemoryProviderService {
 
   public getOptions(): RedisOptions | undefined {
     if (this.inMemoryProviderClient) {
-      if (this.isClusterMode()) {
+      if (
+        this.provider === InMemoryProviderEnum.OLD_INSTANCE_REDIS ||
+        !this.isClusterMode()
+      ) {
+        const options: RedisOptions = this.inMemoryProviderClient.options;
+
+        return options;
+      } else {
         const clusterOptions: ClusterOptions =
           this.inMemoryProviderClient.options;
 
         return clusterOptions.redisOptions;
-      } else {
-        const options: RedisOptions = this.inMemoryProviderClient.options;
-
-        return options;
       }
     }
   }
@@ -196,6 +204,62 @@ export class InMemoryProviderService {
   }
 
   private inMemoryProviderSetup(): Redis | undefined {
+    Logger.verbose('In-memory service set up', LOG_CONTEXT);
+
+    const { getClient, getConfig, isClientReady } = getClientAndConfig();
+
+    this.isProviderClientReady = isClientReady;
+    this.inMemoryProviderConfig = getConfig();
+    const { host, port, ttl } = getConfig();
+
+    if (!host) {
+      Logger.warn('Missing host for in-memory provider', LOG_CONTEXT);
+    }
+
+    const inMemoryProviderClient = getClient();
+    if (host && inMemoryProviderClient) {
+      Logger.log(`Connecting to ${host}:${port}`, LOG_CONTEXT);
+
+      inMemoryProviderClient.on('connect', () => {
+        Logger.log('REDIS CONNECTED', LOG_CONTEXT);
+      });
+
+      inMemoryProviderClient.on('reconnecting', () => {
+        Logger.log('Redis reconnecting', LOG_CONTEXT);
+      });
+
+      inMemoryProviderClient.on('close', () => {
+        Logger.warn('Redis close', LOG_CONTEXT);
+      });
+
+      inMemoryProviderClient.on('end', () => {
+        Logger.warn('Redis end', LOG_CONTEXT);
+      });
+
+      inMemoryProviderClient.on('error', (error) => {
+        Logger.error(
+          'There has been an error in the InMemory provider client',
+          error,
+          LOG_CONTEXT
+        );
+      });
+
+      inMemoryProviderClient.on('ready', () => {
+        Logger.log('Redis ready', LOG_CONTEXT);
+      });
+
+      inMemoryProviderClient.on('wait', () => {
+        Logger.log('Redis wait', LOG_CONTEXT);
+      });
+
+      return inMemoryProviderClient;
+    }
+  }
+
+  /**
+   * TODO: Temporary while we migrate to MemoryDB
+   */
+  private oldInstanceInMemoryProviderSetup(): Redis | undefined {
     Logger.verbose('In-memory service set up', LOG_CONTEXT);
 
     const { getClient, getConfig, isClientReady } = getClientAndConfig();

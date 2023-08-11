@@ -9,6 +9,7 @@ import { JobMetricsWorkerService } from './job-metrics-worker.service';
 import { StandardWorkerService } from './standard-worker.service';
 import { WebSocketsWorkerService } from './web-sockets-worker.service';
 import { WorkflowWorkerService } from './workflow-worker.service';
+import { OldInstanceWorkflowWorkerService } from './old-instance-workflow-worker.service';
 
 export {
   InboundParseWorkerService,
@@ -19,4 +20,5 @@ export {
   WorkerOptions,
   WorkerProcessor,
   WorkflowWorkerService,
+  OldInstanceWorkflowWorkerService,
 };

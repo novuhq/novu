@@ -2,21 +2,25 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 const nr = require('newrelic');
 import {
   INovuWorker,
+  OldInstanceBullMqService,
   PinoLogger,
   storage,
   Store,
   TriggerEvent,
   TriggerEventCommand,
-  WorkflowWorkerService,
+  OldInstanceWorkflowWorkerService,
   WorkerOptions,
   WorkerProcessor,
 } from '@novu/application-generic';
 import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 
-const LOG_CONTEXT = 'WorkflowWorker';
+const LOG_CONTEXT = 'OldInstanceWorkflowWorker';
 
+/**
+ * TODO: Temporary for migration to MemoryDB
+ */
 @Injectable()
-export class WorkflowWorker extends WorkflowWorkerService implements INovuWorker {
+export class OldInstanceWorkflowWorker extends OldInstanceWorkflowWorkerService implements INovuWorker {
   constructor(
     @Inject(TriggerEvent)
     private triggerEventUsecase: TriggerEvent
