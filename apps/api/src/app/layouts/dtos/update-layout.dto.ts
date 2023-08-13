@@ -16,7 +16,7 @@ export class UpdateLayoutRequestDto {
   name?: LayoutName;
 
   @ApiProperty({
-    description: 'User defined custom key that will that will be a unique identifier for the the Layout updated.',
+    description: 'User defined custom key that will be a unique identifier for the Layout updated.',
   })
   @IsString()
   @IsOptional()

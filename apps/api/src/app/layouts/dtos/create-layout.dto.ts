@@ -19,7 +19,7 @@ export class CreateLayoutRequestDto {
   name: LayoutName;
 
   @ApiProperty({
-    description: 'User defined custom key that will that will be a unique identifier for the the Layout created.',
+    description: 'User defined custom key that will be a unique identifier for the Layout created.',
   })
   @IsString()
   @IsDefined()
