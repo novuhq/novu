@@ -113,6 +113,7 @@ jobs:
           image: ${{ steps.build-image.outputs.IMAGE }}
 
       - name: Deploy to Amazon ECS service
+        if: ${{contains(matrix.name, 'ee')}}
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.render-container.outputs.task-definition }}
