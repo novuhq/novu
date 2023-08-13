@@ -52,6 +52,8 @@ export type ITriggerOverrides = {
 } & {
   [key in 'delay']?: ITriggerOverrideDelayAction;
 } & {
+  [key in 'layoutIdentifier']?: string;
+} & {
   [key in 'email']?: IEmailOverrides;
 } & {
   [key in 'sms']?: IIntegrationOverride;

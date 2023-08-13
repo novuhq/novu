@@ -6,6 +6,7 @@ import {
   EnvironmentRepository,
   IntegrationEntity,
   MessageEntity,
+  LayoutRepository,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -42,6 +43,7 @@ export class SendMessageEmail extends SendMessageBase {
     protected environmentRepository: EnvironmentRepository,
     protected subscriberRepository: SubscriberRepository,
     protected messageRepository: MessageRepository,
+    protected layoutRepository: LayoutRepository,
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     private compileEmailTemplateUsecase: CompileEmailTemplate,
@@ -133,6 +135,8 @@ export class SendMessageEmail extends SendMessageBase {
       command.overrides[integration?.providerId] || {}
     );
 
+    const overrideLayoutId = await this.getOverrideLayoutId(command);
+
     let html;
     let subject = '';
     let content;
@@ -141,7 +145,7 @@ export class SendMessageEmail extends SendMessageBase {
       subject: emailChannel.template.subject || '',
       preheader: emailChannel.template.preheader,
       content: emailChannel.template.content,
-      layoutId: emailChannel.template._layoutId,
+      layoutId: overrideLayoutId ?? emailChannel.template._layoutId,
       contentType: emailChannel.template.contentType ? emailChannel.template.contentType : 'editor',
       payload: {
         ...command.payload,
@@ -451,6 +455,37 @@ export class SendMessageEmail extends SendMessageBase {
       );
 
       return;
+    }
+  }
+
+  private async getOverrideLayoutId(command: SendMessageCommand) {
+    const overrideLayoutIdentifier = command.overrides?.layoutIdentifier;
+
+    if (overrideLayoutIdentifier) {
+      const layoutOverride = await this.layoutRepository.findOne(
+        {
+          _environmentId: command.environmentId,
+          identifier: overrideLayoutIdentifier,
+        },
+        '_id'
+      );
+      if (!layoutOverride) {
+        await this.createExecutionDetails.execute(
+          CreateExecutionDetailsCommand.create({
+            ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+            detail: DetailEnum.LAYOUT_NOT_FOUND,
+            source: ExecutionDetailsSourceEnum.INTERNAL,
+            status: ExecutionDetailsStatusEnum.FAILED,
+            isTest: false,
+            isRetry: false,
+            raw: JSON.stringify({
+              layoutIdentifier: overrideLayoutIdentifier,
+            }),
+          })
+        );
+      }
+
+      return layoutOverride?._id;
     }
   }
 
