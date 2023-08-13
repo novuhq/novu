@@ -11,6 +11,15 @@ import { EnforceEnvId } from '../../types/enforce';
 
 type MessageQuery = FilterQuery<MessageDBModel>;
 
+const getEntries = (obj: object, prefix = '') =>
+  Object.entries(obj).flatMap(([key, value]) =>
+    Object(value) === value ? getEntries(value, `${prefix}${key}.`) : [[`${prefix}${key}`, value]]
+  );
+
+const getFlatObject = (obj: object) => {
+  return Object.fromEntries(getEntries(obj));
+};
+
 export class MessageRepository extends BaseRepository<MessageDBModel, MessageEntity, EnforceEnvId> {
   private message: SoftDeleteModel;
   private feedRepository = new FeedRepository();
@@ -23,9 +32,9 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     environmentId: string,
     subscriberId: string,
     channel: ChannelTypeEnum,
-    query: { feedId?: string[]; seen?: boolean; read?: boolean } = {}
+    query: { feedId?: string[]; seen?: boolean; read?: boolean; payload?: object } = {}
   ): Promise<MessageQuery & EnforceEnvId> {
-    const requestQuery: MessageQuery & EnforceEnvId = {
+    let requestQuery: MessageQuery & EnforceEnvId = {
       _environmentId: environmentId,
       _subscriberId: subscriberId,
       channel,
@@ -62,6 +71,13 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       requestQuery.read = { $in: [true, false] };
     }
 
+    if (query.payload) {
+      requestQuery = {
+        ...requestQuery,
+        ...getFlatObject({ payload: query.payload }),
+      };
+    }
+
     return requestQuery;
   }
 
@@ -69,7 +85,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     environmentId: string,
     subscriberId: string,
     channel: ChannelTypeEnum,
-    query: { feedId?: string[]; seen?: boolean; read?: boolean } = {},
+    query: { feedId?: string[]; seen?: boolean; read?: boolean; payload?: object } = {},
     options: { limit: number; skip?: number } = { limit: 10 }
   ) {
     const requestQuery = await this.getFilterQueryForMessage(environmentId, subscriberId, channel, query);
@@ -90,13 +106,14 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     environmentId: string,
     subscriberId: string,
     channel: ChannelTypeEnum,
-    query: { feedId?: string[]; seen?: boolean; read?: boolean } = {},
+    query: { feedId?: string[]; seen?: boolean; read?: boolean; payload?: object } = {},
     options: { limit: number; skip?: number } = { limit: 100, skip: 0 }
   ) {
     const requestQuery = await this.getFilterQueryForMessage(environmentId, subscriberId, channel, {
       feedId: query.feedId,
       seen: query.seen,
       read: query.read,
+      payload: query.payload,
     });
 
     return this.MongooseModel.countDocuments(requestQuery, options).read('secondaryPreferred');
