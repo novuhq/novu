@@ -8,7 +8,7 @@ on:
 
 jobs:
   dependency-review:
-    runs-on: Test
+    runs-on: large-runners
     steps:
       - name: 'Checkout Repository'
         uses: actions/checkout@v3
@@ -16,14 +16,14 @@ jobs:
         uses: actions/dependency-review-action@v3
 
   spellcheck: # run the action
-    runs-on: Test
+    runs-on: large-runners
     steps:
       - uses: actions/checkout@v3
       - uses: streetsidesoftware/cspell-action@v2
 
   get-affected:
     name: Get Affected Packages
-    runs-on: Test
+    runs-on: large-runners
     outputs:
       test-unit: ${{ steps.get-projects-arrays.outputs.test-unit }}
       test-e2e: ${{ steps.get-projects-arrays.outputs.test-e2e }}
@@ -101,7 +101,7 @@ jobs:
 
   build_docker_api:
     name: Build Docker API
-    runs-on: Test
+    runs-on: large-runners
     timeout-minutes: 80
     needs: [ get-affected ]
     if: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/api') }}
@@ -125,7 +125,7 @@ jobs:
 
   test_providers:
     name: Unit Test Providers
-    runs-on: Test
+    runs-on: large-runners
     needs: [get-affected]
     if: ${{ fromJson(needs.get-affected.outputs.test-providers)[0] }}
     timeout-minutes: 80
@@ -143,7 +143,7 @@ jobs:
 
   test_packages:
     name: Unit Test Packages
-    runs-on: Test
+    runs-on: large-runners
     needs: [get-affected]
     if: ${{ fromJson(needs.get-affected.outputs.test-packages)[0] }}
     timeout-minutes: 80
@@ -169,7 +169,7 @@ jobs:
 
   test_libs:
     name: Unit Test Libs
-    runs-on: Test
+    runs-on: large-runners
     needs: [get-affected]
     if: ${{ fromJson(needs.get-affected.outputs.test-libs)[0] }}
     timeout-minutes: 80
@@ -184,7 +184,7 @@ jobs:
 
   test_e2e:
     name: Test E2E
-    runs-on: Test
+    runs-on: large-runners
     needs: [get-affected]
     if:  ${{ fromJson(needs.get-affected.outputs.test-e2e)[0] }}
     timeout-minutes: 80
@@ -224,7 +224,7 @@ jobs:
 
   test_unit:
     name: Unit Test
-    runs-on: Test
+    runs-on: large-runners
     needs: [get-affected]
     if:  ${{ fromJson(needs.get-affected.outputs.test-unit)[0] }}
     timeout-minutes: 80
