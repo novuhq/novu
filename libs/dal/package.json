@@ -21,8 +21,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.14.0",
-    "@aws-sdk/s3-request-presigner": "^3.14.0",
+    "@aws-sdk/client-s3": "^3.382.0",
+    "@aws-sdk/s3-request-presigner": "^3.382.0",
     "@faker-js/faker": "^6.0.0",
     "@novu/shared": "^0.17.2",
     "@sendgrid/mail": "^7.4.2",

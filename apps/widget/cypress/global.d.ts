@@ -54,6 +54,7 @@ interface IInitializeSessionSettings {
   i18n?: ITranslationEntry;
   tabs?: ITab[];
   stores?: IStore[];
+  preferenceFilter?: (userPreference: IUserPreferenceSettings) => boolean;
 }
 
 interface IInitializeWidgetSettings {

@@ -1,6 +1,7 @@
 export { ActiveLabel } from './general/ActiveLabel';
 export { Activity } from './general/Activity';
 export { Brand } from './general/Brand';
+export { Buildings } from './general/Buildings';
 export { Team } from './general/Team';
 export { Settings } from './general/Settings';
 export { Bolt } from './general/Bolt';
@@ -61,6 +62,19 @@ export { AngularLogo } from './general/AngularLogo';
 export { JavaScriptLogo } from './general/JavaScriptLogo';
 export { VueLogo } from './general/VueLogo';
 export { IframeLogo } from './general/IframeLogo';
+export { Star } from './general/Star';
+export { StarEmpty } from './general/StarEmpty';
+export { NovuLogo } from './general/NovuLogo';
+export { DelayAction } from './general/DelayAction';
+export { DigestAction } from './general/DigestAction';
+export { InAppFilled } from './general/InAppFilled';
+export { EmailFilled } from './general/EmailFilled';
+export { SmsFilled } from './general/SmsFilled';
+export { ChatFilled } from './general/ChatFilled';
+export { PushFilled } from './general/PushFilled';
+export { BoltFilled } from './general/BoltFilled';
+export { BoltOffFilled } from './general/BoltOffFilled';
+export { Question } from './general/Question';
 
 export { Copy } from './actions/Copy';
 export { Close } from './actions/Close';
@@ -72,6 +86,7 @@ export { Search } from './actions/Search';
 export { Edit } from './actions/Edit';
 export { Upload } from './actions/Upload';
 export { Invite } from './actions/Invite';
+export { PlusFilled } from './actions/PlusFilled';
 
 export { ArrowDown } from './arrows/ArrowDown';
 export { DoubleArrowRight } from './arrows/DoubleArrowRight';
@@ -110,5 +125,6 @@ export { VueGradient } from './gradient/VueGradient';
 export { JsGradient } from './gradient/JsGradient';
 export { CodeGradient } from './gradient/CodeGradient';
 export { DisconnectGradient } from './gradient/DisconnectGradient';
+export { BoltOutlinedGradient } from './gradient/BoltOutlinedGradient';
 
 export { GitHub } from './social/GitHub';

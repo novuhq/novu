@@ -1,9 +1,10 @@
 import React, { ChangeEvent } from 'react';
-import { Radio as MantineRadio } from '@mantine/core';
+import { Radio as MantineRadio, RadioProps as MantineRadioProps } from '@mantine/core';
 import useStyles from './Radio.styles';
 
-export interface RadioProps extends JSX.ElementChildrenAttribute {
-  value: string;
+export interface RadioProps extends MantineRadioProps {
+  children?: React.ReactNode;
+  value?: string;
   checked?: boolean;
   disabled?: boolean;
   onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
@@ -13,7 +14,7 @@ export interface RadioProps extends JSX.ElementChildrenAttribute {
  * Checkbox Component
  *
  */
-export function Radio({ value, onChange, disabled = false, checked, children, ...props }: RadioProps) {
+export function Radio({ value, onChange, disabled = false, checked, children, size = 'md', ...props }: RadioProps) {
   const { classes } = useStyles();
 
   return (
@@ -23,7 +24,7 @@ export function Radio({ value, onChange, disabled = false, checked, children, ..
       checked={checked}
       classNames={classes}
       disabled={disabled}
-      size="md"
+      size={size}
       {...props}
     >
       {children}

@@ -192,7 +192,7 @@ export function LayoutEditor({
               data-test-id="layout-content"
               control={control}
               render={({ field }) => {
-                return <EmailCustomCodeEditor onChange={field.onChange} value={field.value} />;
+                return <EmailCustomCodeEditor onChange={field.onChange} value={field.value} height="380px" />;
               }}
             />
           </Grid.Col>

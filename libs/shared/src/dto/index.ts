@@ -8,3 +8,4 @@ export * from './shared';
 export * from './subscriber';
 export * from './topic';
 export * from './workflows';
+export * from './tenant';

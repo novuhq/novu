@@ -87,6 +87,5 @@
     "socket.io-client": "4.6.1",
     "tslib": "^2.3.1",
     "webfontloader": "^1.6.28"
-  },
-  "gitHead": "e1055f2fd2f0ec9a85d64b271c7d5824bdb381d0"
+  }
 }

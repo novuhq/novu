@@ -109,10 +109,9 @@ export const ChangesTable = ({
     {
       accessor: '_id',
       Header: '',
-      maxWidth: 50,
       Cell: withCellLoading(({ row: { original } }) => {
         return (
-          <div style={{ textAlign: 'right' }}>
+          <div style={{ textAlign: 'right', paddingRight: '20px' }}>
             <Button
               variant="outline"
               data-test-id="promote-btn"

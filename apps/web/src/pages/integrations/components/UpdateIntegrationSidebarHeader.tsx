@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { ReactNode, useMemo, useState } from 'react';
 import { Group } from '@mantine/core';
 import { Controller, useFormContext } from 'react-hook-form';
+import { CHANNELS_WITH_PRIMARY, NOVU_PROVIDERS } from '@novu/shared';
 
 import { Button, colors, Dropdown, Modal, NameInput, Text, Title } from '../../../design-system';
 import { useFetchEnvironments } from '../../../hooks/useFetchEnvironments';
@@ -9,20 +10,39 @@ import type { IIntegratedProvider } from '../types';
 import { useProviders } from '../useProviders';
 import { useDeleteIntegration } from '../../../api/hooks';
 import { errorMessage, successMessage } from '../../../utils/notifications';
-import { DotsHorizontal, Trash } from '../../../design-system/icons';
+import { DotsHorizontal, StarEmpty, Trash } from '../../../design-system/icons';
 import { ProviderInfo } from './multi-provider/ProviderInfo';
+import { useSelectPrimaryIntegrationModal } from './multi-provider/useSelectPrimaryIntegrationModal';
+import { useMakePrimaryIntegration } from '../../../api/hooks/useMakePrimaryIntegration';
 
 export const UpdateIntegrationSidebarHeader = ({
   provider,
   onSuccessDelete,
+  children = null,
 }: {
   provider: IIntegratedProvider | null;
   onSuccessDelete: () => void;
+  children?: ReactNode | null;
 }) => {
   const [isModalOpened, setModalIsOpened] = useState(false);
   const { control } = useFormContext();
   const { environments } = useFetchEnvironments();
-  const { isLoading } = useProviders();
+  const { providers, isLoading } = useProviders();
+  const canMarkAsPrimary = provider && !provider.primary && CHANNELS_WITH_PRIMARY.includes(provider.channel);
+  const { openModal, SelectPrimaryIntegrationModal } = useSelectPrimaryIntegrationModal();
+
+  const shouldSetNewPrimary = useMemo(() => {
+    if (!provider) return false;
+
+    const { channel: selectedChannel, environmentId, integrationId, primary } = provider;
+    const hasSameChannelActiveIntegration = !!providers
+      .filter((el) => !NOVU_PROVIDERS.includes(el.providerId) && el.integrationId !== integrationId)
+      .find((el) => el.active && el.channel === selectedChannel && el.environmentId === environmentId);
+
+    return hasSameChannelActiveIntegration && primary;
+  }, [provider, providers]);
+
+  const { makePrimaryIntegration, isLoading: isMarkingPrimary } = useMakePrimaryIntegration();
 
   const { deleteIntegration, isLoading: isDeleting } = useDeleteIntegration({
     onSuccess: (_, { name }) => {
@@ -34,11 +54,38 @@ export const UpdateIntegrationSidebarHeader = ({
     },
   });
 
+  const onDeleteClick = () => {
+    if (!provider) {
+      return;
+    }
+
+    if (provider.primary) {
+      openModal({
+        environmentId: provider.environmentId,
+        channelType: provider.channel,
+        exclude: [provider.integrationId],
+        onClose: () => {
+          deleteIntegration({
+            id: provider.integrationId,
+            name: provider.name || provider.displayName,
+          });
+        },
+      });
+
+      return;
+    }
+
+    deleteIntegration({
+      id: provider.integrationId,
+      name: provider.name || provider.displayName,
+    });
+  };
+
   if (!provider) return null;
 
   return (
     <Group spacing={5}>
-      <Group spacing={12} w="100%" h={40}>
+      <Group spacing={12} w="100%" h={28} noWrap>
         <ProviderImage providerId={provider.providerId} />
         <Controller
           control={control}
@@ -56,18 +103,31 @@ export const UpdateIntegrationSidebarHeader = ({
             );
           }}
         />
-        <Group spacing={16}>
+        <Group spacing={12} noWrap ml="auto">
+          {children}
           <div>
             <Dropdown
               withArrow={false}
               offset={0}
               control={
                 <div style={{ cursor: 'pointer' }}>
-                  <DotsHorizontal color={colors.B40} />
+                  <DotsHorizontal color={colors.B40} width={28} height={28} />
                 </div>
               }
               middlewares={{ flip: false, shift: false }}
+              position="bottom-end"
             >
+              {canMarkAsPrimary && (
+                <Dropdown.Item
+                  onClick={() => {
+                    makePrimaryIntegration({ id: provider.integrationId });
+                  }}
+                  icon={<StarEmpty />}
+                  disabled={isLoading || isMarkingPrimary}
+                >
+                  Mark as primary
+                </Dropdown.Item>
+              )}
               <Dropdown.Item
                 onClick={() => {
                   setModalIsOpened(true);
@@ -90,26 +150,22 @@ export const UpdateIntegrationSidebarHeader = ({
         data-test-id="delete-provider-instance-modal"
       >
         <Text mb={30} size="lg" color={colors.B60}>
-          Deleting a provider instance will fail workflows relying on its configuration, leading to undelivered
-          notifications.
+          {shouldSetNewPrimary
+            ? 'Deleting the primary provider instance will cause to select another primary one. ' +
+              'All workflows relying on its configuration will be linked to the selected primary provider instance.'
+            : 'Deleting a provider instance will fail workflows relying on its configuration, leading to undelivered notifications.'}
         </Text>
         <Group position="right">
           <Button variant="outline" onClick={() => setModalIsOpened(false)}>
             Cancel
           </Button>
-          <Button
-            loading={isDeleting}
-            onClick={() => {
-              deleteIntegration({
-                id: provider.integrationId,
-                name: provider.name || provider.displayName,
-              });
-            }}
-          >
-            Delete instance
+          <Button loading={isDeleting} onClick={onDeleteClick}>
+            <Trash />
+            {shouldSetNewPrimary ? 'Delete and relink' : 'Delete instance'}
           </Button>
         </Group>
       </Modal>
+      <SelectPrimaryIntegrationModal />
     </Group>
   );
 };

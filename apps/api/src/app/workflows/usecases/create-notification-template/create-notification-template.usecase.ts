@@ -131,6 +131,7 @@ export class CreateNotificationTemplate {
       triggers: [trigger],
       _notificationGroupId: command.notificationGroupId,
       blueprintId: command.blueprintId,
+      ...(command.data ? { data: command.data } : {}),
     });
 
     const item = await this.notificationTemplateRepository.findById(savedTemplate._id, command.environmentId);

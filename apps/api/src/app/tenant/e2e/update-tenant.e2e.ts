@@ -15,6 +15,7 @@ describe('Update Tenant - /tenants/:tenantId (PUT)', function () {
 
   it('should update tenant', async function () {
     await tenantRepository.create({
+      _organizationId: session.organization._id,
       _environmentId: session.environment._id,
       identifier: 'identifier_123',
       name: 'name_123',
@@ -43,6 +44,7 @@ describe('Update Tenant - /tenants/:tenantId (PUT)', function () {
 
   it('should not update identifier with null/undefined', async function () {
     await tenantRepository.create({
+      _organizationId: session.organization._id,
       _environmentId: session.environment._id,
       identifier: 'identifier_123',
       name: 'name_123',
@@ -78,11 +80,13 @@ describe('Update Tenant - /tenants/:tenantId (PUT)', function () {
 
   it('should not be able to update to already existing identifier (in the same environment)', async function () {
     await tenantRepository.create({
+      _organizationId: session.organization._id,
       _environmentId: session.environment._id,
       identifier: 'identifier_123',
     });
 
     await tenantRepository.create({
+      _organizationId: session.organization._id,
       _environmentId: session.environment._id,
       identifier: 'identifier_456',
     });
@@ -105,6 +109,7 @@ describe('Update Tenant - /tenants/:tenantId (PUT)', function () {
 
   it('should throw exception id tenant was not found under environment', async function () {
     await tenantRepository.create({
+      _organizationId: session.organization._id,
       _environmentId: session.environment._id,
       identifier: 'identifier_123',
     });

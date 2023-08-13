@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { ActorTypeEnum, ChannelTypeEnum } from '@novu/shared';
 import {
   AnalyticsService,
@@ -21,6 +21,18 @@ export class GetNotificationsFeed {
     private subscriberRepository: SubscriberRepository
   ) {}
 
+  private getPayloadObject(payload?: string): object | undefined {
+    if (!payload) {
+      return;
+    }
+
+    try {
+      return JSON.parse(Buffer.from(payload, 'base64').toString());
+    } catch (e) {
+      throw new BadRequestException('Invalid payload, the JSON object should be encoded to base64 string.');
+    }
+  }
+
   @CachedQuery({
     builder: ({ environmentId, subscriberId, ...command }: GetNotificationsFeedCommand) =>
       buildFeedKey().cache({
@@ -30,6 +42,8 @@ export class GetNotificationsFeed {
       }),
   })
   async execute(command: GetNotificationsFeedCommand): Promise<MessagesResponseDto> {
+    const payload = this.getPayloadObject(command.payload);
+
     const subscriber = await this.fetchSubscriber({
       _environmentId: command.environmentId,
       subscriberId: command.subscriberId,
@@ -47,7 +61,7 @@ export class GetNotificationsFeed {
       command.environmentId,
       subscriber._id,
       ChannelTypeEnum.IN_APP,
-      { feedId: command.feedId, seen: command.query.seen, read: command.query.read },
+      { feedId: command.feedId, seen: command.query.seen, read: command.query.read, payload },
       {
         limit: command.limit,
         skip: command.page * command.limit,
@@ -80,6 +94,7 @@ export class GetNotificationsFeed {
           feedId: command.feedId,
           seen: command.query.seen,
           read: command.query.read,
+          payload,
         },
         { limit: command.limit + 1, skip }
       );

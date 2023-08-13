@@ -1,9 +1,9 @@
 import { Handle, Position } from 'react-flow-renderer';
 
-import { NodeStepWithPopover } from './NodeStepWithPopover';
-import { TurnOnGradient } from '../../../design-system/icons/gradient/TurnOnGradient';
 import { Button } from '../../../design-system';
+import { BoltOutlinedGradient } from '../../../design-system/icons';
 import { useDigestDemoFlowContext } from './DigestDemoFlowProvider';
+import { NodeStepWithPopover } from './NodeStepWithPopover';
 
 export function TriggerNode({ data, id }: { data: any; id: string }) {
   const { isReadOnly, runTrigger } = useDigestDemoFlowContext();
@@ -12,7 +12,7 @@ export function TriggerNode({ data, id }: { data: any; id: string }) {
     <NodeStepWithPopover
       data={data}
       id={id}
-      Icon={TurnOnGradient}
+      Icon={BoltOutlinedGradient}
       ActionItem={
         !isReadOnly && (
           <Button variant="outline" onClick={runTrigger}>

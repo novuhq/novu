@@ -1,13 +1,11 @@
-import { ReactNode, useEffect } from 'react';
-import { ActionIcon, createStyles, Drawer, Loader, MantineTheme, Stack } from '@mantine/core';
 import styled from '@emotion/styled';
+import { ActionIcon, createStyles, Drawer, Loader, MantineTheme, Stack } from '@mantine/core';
+import { ReactNode } from 'react';
 
-import { colors, shadows } from '../config';
-import { ArrowLeft, Close } from '../icons';
 import { When } from '../../components/utils/When';
 import { useKeyDown } from '../../hooks';
-import { useIntercom } from 'react-use-intercom';
-import { INTERCOM_APP_ID } from '../../config';
+import { colors, shadows } from '../config';
+import { ArrowLeft, Close } from '../icons';
 
 const HeaderHolder = styled.div`
   display: flex;
@@ -97,22 +95,12 @@ export const Sidebar = ({
   onSubmit?: React.FormEventHandler<HTMLFormElement>;
   'data-test-id'?: string;
 }) => {
-  const { update } = useIntercom();
   const { classes: drawerClasses } = useDrawerStyles();
   const onCloseCallback = () => {
     onClose();
-    update({ hideDefaultLauncher: false });
   };
 
   useKeyDown('Escape', onCloseCallback);
-
-  useEffect(() => {
-    if (INTERCOM_APP_ID && isOpened) {
-      update({ hideDefaultLauncher: true });
-
-      return;
-    }
-  }, [update, isOpened]);
 
   return (
     <Drawer

@@ -7,6 +7,7 @@ import { colors } from '../../../../design-system';
 import { getStartedSteps, OnBoardingAnalyticsEnum } from '../../consts';
 import { useSegment } from '../../../../components/providers/SegmentProvider';
 import { ROUTES } from '../../../../constants/routes.enum';
+import { FOOTER_HEIGHT } from './FooterLayout';
 
 const BULLET_TOP_MARGIN = 20;
 
@@ -26,6 +27,9 @@ export function BodyLayout({ children }: { children: React.ReactNode }) {
 const StyledBody = styled.div`
   display: block;
   flex: auto;
+  margin-bottom: ${FOOTER_HEIGHT}px;
+  padding-top: 25px;
+  padding-bottom: 25px;
 `;
 
 function BodyNavigation() {
@@ -77,7 +81,7 @@ function BodyNavigation() {
 
 const TimelineWrapper = styled.div`
   width: 100%;
-  padding: 0 0 0 60px;
+  padding: 0 0 0 40px;
 
   .mantine-Timeline-itemBullet {
     width: 34px;
