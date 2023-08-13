@@ -11,6 +11,10 @@ inputs:
     description: 'Should only install dependencies and checkout code'
     required: false
     default: 'false'
+  root_only:
+    description: 'Should only install root dependencies'
+    required: false
+    default: 'false'
 outputs:
   cypress_cache_hit:
     description: 'Did cypress use binary cache'
@@ -59,4 +63,10 @@ runs:
 
     - name: 🛟 Install dependencies
       shell: bash
+      if: ${{ inputs.root_only == 'false' }}
       run: pnpm install --frozen-lockfile
+
+    - name: 🛟 Install root dependencies
+      shell: bash
+      if: ${{ inputs.root_only == 'true' }}
+      run: pnpm install --frozen-lockfile --filter=novuhq

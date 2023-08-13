@@ -58,6 +58,7 @@ jobs:
       - uses: ./.github/actions/setup-project
         with:
           slim: 'true'
+          root: 'true'
 
       # Configure Nx to be able to detect changes between branches when we are in a PR
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
