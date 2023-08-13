@@ -19,6 +19,10 @@ on:
       sentry_project:
         required: false
         type: string
+      sentry_environment:
+        required: false
+        type: string
+        default: "prod"
       deploy_sentry_release:
         required: false
         default: false
@@ -115,6 +119,6 @@ jobs:
         with:
           version: ${{ steps.package-version.outputs.current-version}}
           version_prefix: v
-          environment: prod
+          environment: ${{ inputs.sentry_environment }}
           ignore_empty: true
           ignore_missing: true
