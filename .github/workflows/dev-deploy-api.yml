@@ -84,12 +84,12 @@ jobs:
 
       - name: Terraform Init
         if: ${{ contains (matrix.name,'ee') }}
-        working-directory: cloud-infra/terraform
+        working-directory: cloud-infra/terraform/novu
         run: terraform init
 
       - name: Terraform get output
         if: ${{ contains (matrix.name,'ee') }}
-        working-directory: cloud-infra/terraform
+        working-directory: cloud-infra/terraform/novu
         id: terraform
         run: |
           echo "api_ecs_container_name=$(terraform output -json api_ecs_container_name | jq -r .)" >> $GITHUB_ENV
