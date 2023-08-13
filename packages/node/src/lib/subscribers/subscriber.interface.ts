@@ -66,6 +66,7 @@ export interface IGetSubscriberNotificationFeedParams {
   feedIdentifier?: string;
   seen?: boolean;
   read?: boolean;
+  payload?: Record<string, unknown>;
 }
 
 export interface IMarkFields {
