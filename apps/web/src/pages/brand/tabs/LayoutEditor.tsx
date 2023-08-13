@@ -1,14 +1,15 @@
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
-import { Center, Grid, Group, Modal, Title, useMantineTheme } from '@mantine/core';
+import { ActionIcon, Center, Grid, Group, Modal, Title, useMantineTheme } from '@mantine/core';
 import slugify from 'slugify';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { parse } from '@handlebars/parser';
+import { useClipboard } from '@mantine/hooks';
 
 import { getTemplateVariables, ITemplateVariable, isReservedVariableName, LayoutId } from '@novu/shared';
 
-import { ArrowLeft } from '../../../design-system/icons';
-import { Button, Checkbox, colors, Input, Text, LoadingOverlay, shadows } from '../../../design-system';
+import { ArrowLeft, Check, Copy } from '../../../design-system/icons';
+import { Button, Checkbox, colors, Input, Text, LoadingOverlay, shadows, Tooltip } from '../../../design-system';
 import { useEnvController, useLayoutsEditor, usePrompt } from '../../../hooks';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { QueryKeys } from '../../../api/query.keys';
@@ -43,6 +44,7 @@ export function LayoutEditor({
   goBack: () => void;
 }) {
   const { readonly, environment } = useEnvController();
+  const identifierClipboard = useClipboard({ timeout: 1000 });
   const theme = useMantineTheme();
   const queryClient = useQueryClient();
   const [ast, setAst] = useState<any>({ body: [] });
@@ -56,9 +58,10 @@ export function LayoutEditor({
     watch,
     control,
     setValue,
-    formState: { isDirty },
+    formState: { isDirty, errors },
   } = useForm<ILayoutForm>({
     defaultValues: defaultFormValues,
+    shouldUseNativeValidation: false,
   });
   const [showModal, confirmNavigation, cancelNavigation] = usePrompt(isDirty);
 
@@ -168,64 +171,91 @@ export function LayoutEditor({
           Go Back
         </Text>
       </Center>
-      <form name={'layout-form'} onSubmit={handleSubmit(onSubmitLayout)}>
+      <form noValidate name={'layout-form'} onSubmit={handleSubmit(onSubmitLayout)}>
         <Grid grow>
           <Grid.Col span={9}>
-            <Grid gutter={30} grow>
-              <Grid.Col md={5} sm={12}>
-                <Controller
-                  control={control}
-                  name="name"
-                  render={({ field }) => (
-                    <Input
-                      {...field}
-                      mb={30}
-                      data-test-id="layout-name"
-                      disabled={readonly}
-                      required
-                      value={field.value || ''}
-                      label="Layout Name"
-                      placeholder="Layout name goes here..."
-                    />
-                  )}
-                />
-              </Grid.Col>
-              <Grid.Col md={5} sm={12}>
-                <Controller
-                  control={control}
-                  name="identifier"
-                  render={({ field }) => (
-                    <Input
-                      {...field}
-                      mb={30}
-                      data-test-id="layout-identifier"
-                      disabled={readonly}
-                      required
-                      value={field.value || ''}
-                      label="Layout identifier"
-                      placeholder="Layout identifier goes here..."
-                    />
-                  )}
-                />
-              </Grid.Col>
-              <Grid.Col md={5} sm={12}>
-                <Controller
-                  name="description"
-                  control={control}
-                  render={({ field }) => (
-                    <Input
-                      {...field}
-                      value={field.value || ''}
-                      disabled={readonly}
-                      mb={30}
-                      data-test-id="layout-description"
-                      label="Layout Description"
-                      placeholder="Describe your layout..."
-                    />
-                  )}
-                />
-              </Grid.Col>
-            </Grid>
+            <div
+              style={{
+                borderRadius: '7px',
+                marginBottom: '24px',
+                padding: '16px',
+                background: theme.colorScheme === 'dark' ? colors.B20 : colors.B98,
+              }}
+            >
+              <Grid gutter={30} grow>
+                <Grid.Col md={5} sm={12}>
+                  <Controller
+                    control={control}
+                    name="name"
+                    rules={{
+                      required: 'Required - Layout name',
+                    }}
+                    render={({ field }) => (
+                      <Input
+                        {...field}
+                        mb={30}
+                        data-test-id="layout-name"
+                        disabled={readonly}
+                        required
+                        value={field.value || ''}
+                        error={errors?.name?.message}
+                        label="Layout Name"
+                        placeholder="Layout name goes here..."
+                      />
+                    )}
+                  />
+                </Grid.Col>
+                <Grid.Col md={5} sm={12}>
+                  <Controller
+                    control={control}
+                    name="identifier"
+                    rules={{
+                      required: 'Required - Layout identifier',
+                      pattern: {
+                        value: /^[A-Za-z0-9_-]+$/,
+                        message:
+                          'Layout identifier must contains only alphabetical, numeric, dash or underscore characters',
+                      },
+                    }}
+                    render={({ field }) => (
+                      <Input
+                        {...field}
+                        mb={30}
+                        data-test-id="layout-identifier"
+                        disabled={readonly}
+                        required
+                        value={field.value || ''}
+                        error={errors?.identifier?.message}
+                        label="Layout identifier"
+                        placeholder="Layout identifier goes here..."
+                        rightSection={
+                          <Tooltip data-test-id={'Tooltip'} label={identifierClipboard.copied ? 'Copied!' : 'Copy Key'}>
+                            <ActionIcon variant="transparent" onClick={() => identifierClipboard.copy(field.value)}>
+                              {identifierClipboard.copied ? <Check /> : <Copy />}
+                            </ActionIcon>
+                          </Tooltip>
+                        }
+                      />
+                    )}
+                  />
+                </Grid.Col>
+              </Grid>
+              <Controller
+                name="description"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    value={field.value || ''}
+                    disabled={readonly}
+                    mb={30}
+                    data-test-id="layout-description"
+                    label="Layout Description"
+                    placeholder="Describe your layout..."
+                  />
+                )}
+              />
+            </div>
 
             <Controller
               name="content"
