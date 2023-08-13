@@ -16,7 +16,7 @@ jobs:
   # This workflow contains a single job called "build"
   e2e_widget:
     # The type of runner that the job will run on
-    runs-on: large-runners
+    runs-on: ubuntu-latest
     timeout-minutes: 80
 
     strategy:

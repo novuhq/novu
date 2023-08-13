@@ -29,7 +29,7 @@ jobs:
         containers: [1, 2, 3, 4, 5, 6, 7]
 
     # The type of runner that the job will run on
-    runs-on: large-runners
+    runs-on: ubuntu-latest
     timeout-minutes: 80
 
     permissions:
@@ -81,7 +81,7 @@ jobs:
         env:
           IN_MEMORY_CLUSTER_MODE_ENABLED: false
         run: |
-          cd apps/ws && pnpm start:test
+          cd apps/ws && pnpm start:test &
 
       - name: Start API in TEST
         env:
