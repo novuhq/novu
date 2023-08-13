@@ -35,6 +35,7 @@ interface IEventCountData {
 type BullMqJobData = undefined | IJobData | IEventJobData | IEventCountData;
 
 export {
+  JobsOptions,
   QueueBaseOptions,
   RedisConnectionOptions as BullMqConnectionOptions,
   WorkerOptions,
