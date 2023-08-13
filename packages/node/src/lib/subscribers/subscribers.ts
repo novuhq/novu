@@ -106,12 +106,19 @@ export class Subscribers extends WithHttp implements ISubscribers {
 
   async getNotificationsFeed(
     subscriberId: string,
-    params: IGetSubscriberNotificationFeedParams
+    { payload, ...rest }: IGetSubscriberNotificationFeedParams = {}
   ) {
+    const payloadString = payload
+      ? Buffer.from(JSON.stringify(payload)).toString('base64')
+      : undefined;
+
     return await this.http.get(
       `/subscribers/${subscriberId}/notifications/feed`,
       {
-        params,
+        params: {
+          payload: payloadString,
+          ...rest,
+        },
       }
     );
   }

@@ -1,9 +1,9 @@
-import { BullMqService } from '@novu/application-generic';
-import { QueueBaseOptions } from 'bullmq';
+import { BullMqService, QueueBaseOptions } from '@novu/application-generic';
+import { JobTopicNameEnum } from '@novu/shared';
 
 export class QueueService {
   readonly DEFAULT_ATTEMPTS = 5;
-  readonly QUEUE_NAME = 'inbound-parse-mail';
+  readonly name = JobTopicNameEnum.INBOUND_PARSE_MAIL;
 
   private bullConfig: QueueBaseOptions = {
     connection: {
@@ -16,7 +16,7 @@ export class QueueService {
 
   constructor() {
     this.bullMqService = new BullMqService();
-    this.bullMqService.createQueue(this.QUEUE_NAME, {
+    this.bullMqService.createQueue(this.name, {
       ...this.bullConfig,
       defaultJobOptions: {
         removeOnComplete: true,

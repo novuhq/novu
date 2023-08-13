@@ -2,6 +2,7 @@ export {
   bullMqBaseOptions,
   BullMqConnectionOptions,
   BullMqService,
+  QueueBaseOptions,
 } from './bull-mq.service';
 export { AnalyticsService } from './analytics.service';
 export { QueueService } from './queue.service';

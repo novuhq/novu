@@ -1,6 +1,6 @@
 import { Queue } from 'bullmq';
 import { JobRepository, JobStatusEnum } from '@novu/dal';
-import { StepTypeEnum } from '@novu/shared';
+import { JobTopicNameEnum, StepTypeEnum } from '@novu/shared';
 
 import { QueueService } from './queue.service';
 
@@ -11,10 +11,10 @@ export class JobsService {
   public jobQueue: QueueService;
 
   constructor() {
-    this.queueService = new QueueService('trigger-handler');
+    this.queueService = new QueueService(JobTopicNameEnum.WORKFLOW);
     this.queue = this.queueService.queue;
 
-    this.jobQueue = new QueueService('standard');
+    this.jobQueue = new QueueService(JobTopicNameEnum.STANDARD);
   }
 
   public async awaitParsingEvents() {

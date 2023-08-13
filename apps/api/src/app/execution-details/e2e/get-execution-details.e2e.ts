@@ -1,6 +1,6 @@
-import { ExecutionDetailsRepository } from '@novu/dal';
+import { ExecutionDetailsRepository, SubscriberEntity } from '@novu/dal';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
-import { UserSession } from '@novu/testing';
+import { UserSession, SubscribersService } from '@novu/testing';
 import axios from 'axios';
 import { expect } from 'chai';
 
@@ -9,10 +9,14 @@ const axiosInstance = axios.create();
 describe('Execution details - Get execution details by notification id - /v1/execution-details/notification/:notificationId (GET)', function () {
   let session: UserSession;
   const executionDetailsRepository: ExecutionDetailsRepository = new ExecutionDetailsRepository();
+  let subscriber: SubscriberEntity;
+  let subscriberService: SubscribersService;
 
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
+    subscriberService = new SubscribersService(session.organization._id, session.environment._id);
+    subscriber = await subscriberService.createSubscriber();
   });
 
   it('should get execution details', async function () {
@@ -23,7 +27,7 @@ describe('Execution details - Get execution details by notification id - /v1/exe
       _organizationId: session.organization._id,
       _notificationId: notificationId,
       _notificationTemplateId: ExecutionDetailsRepository.createObjectId(),
-      _subscriberId: session.subscriberId,
+      _subscriberId: subscriber._id,
       providerId: '',
       transactionId: 'transactionId',
       channel: StepTypeEnum.EMAIL,
@@ -37,7 +41,7 @@ describe('Execution details - Get execution details by notification id - /v1/exe
     const {
       data: { data },
     } = await axiosInstance.get(
-      `${session.serverUrl}/v1/execution-details?notificationId=${notificationId}&subscriberId=${session.subscriberId}`,
+      `${session.serverUrl}/v1/execution-details?notificationId=${notificationId}&subscriberId=${subscriber.subscriberId}`,
       {
         headers: {
           authorization: `ApiKey ${session.apiKey}`,
