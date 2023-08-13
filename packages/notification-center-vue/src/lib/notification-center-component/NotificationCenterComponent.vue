@@ -28,6 +28,7 @@ export interface INotificationCenterComponentProps {
   popoverConfig?: {
     offset?: number;
     position?: FloatingPosition;
+    triggers: string[];
   };
   theme?: NotificationCenterContentComponentProps['theme'];
   styles?: NotificationCenterContentComponentProps['styles'];
@@ -43,6 +44,7 @@ export interface INotificationCenterComponentProps {
 
 const props = withDefaults(defineProps<INotificationCenterComponentProps>(), {
   colorScheme: 'dark',
+  popoverConfig: () => ({ triggers: ['click', 'touch'] }),
 });
 const slots = useSlots();
 const popper = ref();
@@ -95,7 +97,7 @@ watch(computedStyles, (newComputedStyles) => {
     :popperClass="computedStyles.popoverDropdownClass"
     :placement="popoverConfig?.position || popover?.position"
     :distance="popoverConfig?.offset || popover?.offset"
-    :triggers="['click', 'touch']"
+    :triggers="popoverConfig?.triggers"
     eager-mount
     ref="popper"
   >
