@@ -78,7 +78,9 @@ jobs:
         run: pnpm start:static:build &
 
       - name: Start WS
-        run: pnpm start:ws:test &
+        env:
+          IN_MEMORY_CLUSTER_MODE_ENABLED: false
+        run: pnpm start:ws:test
 
       - name: Start API in TEST
         env:
