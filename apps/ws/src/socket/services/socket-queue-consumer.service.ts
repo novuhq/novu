@@ -1,16 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 import { BullMqService } from '@novu/application-generic';
+import { JobTopicNameEnum } from '@novu/shared';
 
 import { ExternalServicesRoute, ExternalServicesRouteCommand } from '../usecases/external-services-route';
 
 @Injectable()
 export class SocketQueueConsumerService {
-  private readonly QUEUE_NAME = 'ws_socket_queue';
   LOG_CONTEXT = 'SocketQueueConsumerService';
 
   constructor(private externalServicesRoute: ExternalServicesRoute, public bullMqService: BullMqService) {
-    this.bullMqService.createWorker(this.QUEUE_NAME, this.getWorkerProcessor(), this.getWorkerOpts());
+    this.bullMqService.createWorker(JobTopicNameEnum.WEB_SOCKETS, this.getWorkerProcessor(), this.getWorkerOpts());
   }
 
   private getWorkerProcessor() {
