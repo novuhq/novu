@@ -1,15 +1,17 @@
 import { expect } from 'chai';
 import { JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
+
 import { AnalyticsService, BullMqService } from '@novu/application-generic';
-import { MemberRepository, SubscriberRepository } from '@novu/dal';
+import { MemberRepository, SubscriberRepository, MessageRepository } from '@novu/dal';
 
 import { SocketModule } from './socket.module';
 import { WSGateway } from './ws.gateway';
-
 import { SubscriberOnlineService } from '../shared/subscriber-online';
+import { SocketQueueConsumerService } from './services/socket-queue-consumer.service';
+import { ExternalServicesRoute } from './usecases/external-services-route';
 
-let socketModule: SocketModule;
+let socketQueueConsumerService: SocketQueueConsumerService;
 
 describe('Socket Module', () => {
   beforeEach(async () => {
@@ -23,16 +25,18 @@ describe('Socket Module', () => {
         SubscriberOnlineService,
         MemberRepository,
         SubscriberRepository,
+        SocketQueueConsumerService,
+        ExternalServicesRoute,
+        MessageRepository,
       ],
     }).compile();
-    socketModule = moduleRef.get<SocketModule>(SocketModule);
+    socketQueueConsumerService = moduleRef.get<SocketQueueConsumerService>(SocketQueueConsumerService);
   });
 
   it('should instantiate properly the BullMQ service on module init', async () => {
-    expect(socketModule).to.exist;
-    await socketModule.onModuleInit();
+    expect(socketQueueConsumerService).to.exist;
 
-    const bullMqService = socketModule.bullMqService;
+    const bullMqService = socketQueueConsumerService.bullMqService;
     expect(await bullMqService.getRunningStatus()).to.deep.equal({
       queueIsPaused: undefined,
       queueName: undefined,

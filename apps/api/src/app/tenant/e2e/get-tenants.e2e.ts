@@ -22,6 +22,8 @@ describe('Get Tenants List- /tenants (GET)', function () {
         name: 'name_123',
         data: { test1: 'test value1', test2: 'test value2' },
       });
+
+      await timeout(5);
     }
 
     const getTenantResult = await getTenants({ session });
@@ -45,6 +47,8 @@ describe('Get Tenants List- /tenants (GET)', function () {
         name: 'name_123',
         data: { test1: 'test value1', test2: 'test value2' },
       });
+
+      await timeout(10);
     }
 
     const getTenantResult = await getTenants({ session, page: 1, limit: 5 });
@@ -68,6 +72,8 @@ describe('Get Tenants List- /tenants (GET)', function () {
         name: 'name_123',
         data: { test1: 'test value1', test2: 'test value2' },
       });
+
+      await timeout(5);
     }
 
     const page1 = (await getTenants({ session, page: 0, limit: 5 })).data;
@@ -113,4 +119,8 @@ async function getTenants({
       authorization: `ApiKey ${session.apiKey}`,
     },
   });
+}
+
+function timeout(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
