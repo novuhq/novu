@@ -59,8 +59,9 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
       }
       bulkResponse = e.result;
     }
+    const created = bulkResponse.getUpsertedIds();
+    const writeErrors = bulkResponse.getWriteErrors();
 
-    const { upserted: created, writeErrors } = bulkResponse.result;
     const indexes: number[] = [];
 
     const insertedSubscribers = created.map((inserted) => {
