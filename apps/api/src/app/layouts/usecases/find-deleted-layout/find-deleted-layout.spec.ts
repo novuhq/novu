@@ -62,6 +62,7 @@ describe('Find Deleted Layout Usecase', function () {
     const userId = session.user._id;
 
     const name = 'find-deleted-layout-name';
+    const identifier = 'find-deleted-layout-identifier';
     const description = 'Amazing new layout';
     const content = '<html><body><div>Hello {{organizationName}} {{{body}}}</div></body></html>';
     const variables = [
@@ -71,6 +72,7 @@ describe('Find Deleted Layout Usecase', function () {
 
     const createCommand = CreateLayoutCommand.create({
       content,
+      identifier,
       description,
       environmentId,
       isDefault,
