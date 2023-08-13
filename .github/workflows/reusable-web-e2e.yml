@@ -78,7 +78,10 @@ jobs:
         run: pnpm start:static:build &
 
       - name: Start WS
-        run: pnpm start:ws:test &
+        env:
+          IN_MEMORY_CLUSTER_MODE_ENABLED: false
+        run: |
+          cd apps/ws && pnpm start:test &
 
       - name: Start API in TEST
         env:
@@ -95,6 +98,7 @@ jobs:
           NODE_ENV: "test"
           PORT: 1342
           TZ: "UTC"
+          IN_MEMORY_CLUSTER_MODE_ENABLED: false
         run: cd apps/worker && pnpm start:prod &
 
       - name: Install wait-on plugin

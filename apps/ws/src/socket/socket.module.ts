@@ -1,6 +1,5 @@
 import { Module, OnModuleInit } from '@nestjs/common';
 import { BullMqService, WsQueueService } from '@novu/application-generic';
-import { getRedisPrefix } from '@novu/shared';
 
 import { WSGateway } from './ws.gateway';
 import { SharedModule } from '../shared/shared.module';

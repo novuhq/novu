@@ -1,6 +1,6 @@
 {
   "name": "@novu/inbound-mail",
-  "version": "0.17.1",
+  "version": "0.17.2",
   "description": "",
   "author": "",
   "private": true,
@@ -19,8 +19,8 @@
     "test": "echo \"No e2e tests, only build tests\""
   },
   "dependencies": {
-    "@novu/application-generic": "^0.17.1",
-    "@novu/shared": "^0.17.1",
+    "@novu/application-generic": "^0.17.2",
+    "@novu/shared": "^0.17.2",
     "@sentry/node": "^7.12.1",
     "bluebird": "^2.9.30",
     "bullmq": "^3.10.2",
