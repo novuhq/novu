@@ -23,12 +23,15 @@ describe('Layout creation - /layouts (POST)', async () => {
     expect(body.message).to.eql([
       'name should not be null or undefined',
       'name must be a string',
+      'identifier should not be null or undefined',
+      'identifier must be a string',
       'content should not be null or undefined',
     ]);
   });
 
   it('should create a new layout successfully', async () => {
     const layoutName = 'layout-name-creation';
+    const layoutIdentifier = 'layout-identifier-creation';
     const layoutDescription = 'Amazing new layout';
     const content = '<html><body><div>Hello {{organizationName}} {{{body}}}</div></body></html>';
     const variables = [
@@ -37,6 +40,7 @@ describe('Layout creation - /layouts (POST)', async () => {
     const isDefault = true;
     const response = await session.testAgent.post(BASE_PATH).send({
       name: layoutName,
+      identifier: layoutIdentifier,
       description: layoutDescription,
       content,
       variables,
@@ -51,6 +55,35 @@ describe('Layout creation - /layouts (POST)', async () => {
     expect(initialDefaultLayoutId).to.exist;
     expect(initialDefaultLayoutId).to.be.string;
   });
+  it('should throw error for a create with layout identifier that already exists in the environment', async function () {
+    const firstLayoutUrl = `${BASE_PATH}/${initialDefaultLayoutId}`;
+    const firstLayoutResponse = await session.testAgent.get(firstLayoutUrl);
+    const existingLayoutIdentifier = firstLayoutResponse.body.data.identifier;
+
+    const layoutName = 'second-layout-name-creation';
+    const layoutDescription = 'Amazing new layout';
+    const content = '<html><body><div>Hello {{organizationName}} {{{body}}}</div></body></html>';
+    const variables = [
+      { name: 'organizationName', type: TemplateVariableTypeEnum.STRING, defaultValue: 'Company', required: false },
+    ];
+    const isDefault = false;
+
+    const response = await session.testAgent.post(BASE_PATH).send({
+      name: layoutName,
+      identifier: existingLayoutIdentifier,
+      description: layoutDescription,
+      content,
+      variables,
+      isDefault,
+    });
+
+    expect(response.statusCode).to.eql(409);
+    expect(response.body).to.eql({
+      error: 'Conflict',
+      message: `Layout with identifier: ${existingLayoutIdentifier} already exists under environment ${session.environment._id}`,
+      statusCode: 409,
+    });
+  });
 
   it('if the layout created is assigned as default it should set as non default the existing default layout', async () => {
     const firstLayoutUrl = `${BASE_PATH}/${initialDefaultLayoutId}`;
@@ -59,6 +92,7 @@ describe('Layout creation - /layouts (POST)', async () => {
     expect(firstLayoutResponse.body.data.isDefault).to.eql(true);
 
     const layoutName = 'layout-name-creation-new-default';
+    const layoutIdentifier = 'layout-identifier-creation-new-default';
     const layoutDescription = 'new-default-layout';
     const content = '<html><body><div>Hello {{organizationName}} {{{body}}}</div></body></html>';
     const variables = [
@@ -67,6 +101,7 @@ describe('Layout creation - /layouts (POST)', async () => {
     const isDefault = true;
     const response = await session.testAgent.post(BASE_PATH).send({
       name: layoutName,
+      identifier: layoutIdentifier,
       description: layoutDescription,
       content,
       variables,
@@ -84,6 +119,7 @@ describe('Layout creation - /layouts (POST)', async () => {
     const secondLayoutDefaultResponse = await session.testAgent.get(secondLayoutUrl);
     expect(secondLayoutDefaultResponse.body.data._id).to.eql(secondLayoutId);
     expect(secondLayoutDefaultResponse.body.data.name).to.eql(layoutName);
+    expect(secondLayoutDefaultResponse.body.data.identifier).to.eql(layoutIdentifier);
     expect(secondLayoutDefaultResponse.body.data.isDefault).to.eql(true);
   });
 });

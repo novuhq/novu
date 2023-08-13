@@ -4,12 +4,12 @@ import { expect } from 'chai';
 import { createLayout } from './helpers';
 
 import { LayoutDto } from '../dtos';
-import { TemplateVariableTypeEnum } from '../types';
 
 const BASE_PATH = '/v1/layouts';
 
 describe('Set layout as default - /layouts/:layoutId/default (POST)', async () => {
   const layoutName = 'layout-name-set-default';
+  const layoutIdentifier = 'layout-identifier-set-default';
   const isDefault = false;
   let session: UserSession;
   let createdLayout: LayoutDto;
@@ -17,7 +17,7 @@ describe('Set layout as default - /layouts/:layoutId/default (POST)', async () =
   before(async () => {
     session = new UserSession();
     await session.initialize();
-    createdLayout = await createLayout(session, layoutName, isDefault);
+    createdLayout = await createLayout(session, layoutName, isDefault, layoutIdentifier);
   });
 
   it('should set the chosen layout as default', async () => {
@@ -35,7 +35,8 @@ describe('Set layout as default - /layouts/:layoutId/default (POST)', async () =
 
   it('should set the chosen layout as default and the previous default layout is non default anymore', async () => {
     const secondLayoutName = 'layout-name-set-default-2';
-    const secondLayout = await createLayout(session, secondLayoutName, false);
+    const secondLayoutIdentifier = 'layout-identifier-set-default-2';
+    const secondLayout = await createLayout(session, secondLayoutName, false, secondLayoutIdentifier);
     expect(secondLayout.isDefault).to.eql(false);
 
     const firstLayoutUrl = `${BASE_PATH}/${createdLayout._id}`;
