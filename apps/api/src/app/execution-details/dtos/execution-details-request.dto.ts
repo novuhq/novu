@@ -1,4 +1,4 @@
-import { IsDefined, IsMongoId } from 'class-validator';
+import { IsDefined, IsMongoId, IsString } from 'class-validator';
 
 export class ExecutionDetailsRequestDto {
   @IsDefined()
@@ -6,6 +6,6 @@ export class ExecutionDetailsRequestDto {
   notificationId: string;
 
   @IsDefined()
-  @IsMongoId()
+  @IsString()
   subscriberId: string;
 }

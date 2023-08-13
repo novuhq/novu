@@ -7,7 +7,6 @@ import {
   SubscriberEntity,
   MemberRepository,
 } from '@novu/dal';
-import { ChannelTypeEnum } from '@novu/shared';
 import {
   WsQueueService,
   AnalyticsService,
@@ -81,19 +80,10 @@ export class RemoveMessage {
     return deletedMessage;
   }
 
-  private async updateServices(command: RemoveMessageCommand, subscriber, message, marked: string) {
+  private async updateServices(command: RemoveMessageCommand, subscriber, message, marked: MarkEnum) {
     const admin = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
-    const count = await this.messageRepository.getCount(
-      command.environmentId,
-      subscriber._id,
-      ChannelTypeEnum.IN_APP,
-      {
-        [marked]: false,
-      },
-      { limit: 1000 }
-    );
 
-    this.updateSocketCount(subscriber, count, marked);
+    this.updateSocketCount(subscriber, marked);
 
     if (admin) {
       this.analyticsService.track(`Removed Message - [Notification Center]`, admin._userId, {
@@ -104,18 +94,15 @@ export class RemoveMessage {
     }
   }
 
-  private updateSocketCount(subscriber: SubscriberEntity, count: number, mark: string) {
-    const eventMessage = `un${mark}_count_changed`;
-    const countKey = `un${mark}Count`;
+  private updateSocketCount(subscriber: SubscriberEntity, mark: MarkEnum) {
+    const eventMessage = mark === MarkEnum.READ ? `unread_count_changed` : 'unseen_count_changed';
 
     this.wsQueueService.bullMqService.add(
       'sendMessage',
       {
         event: eventMessage,
         userId: subscriber._id,
-        payload: {
-          [countKey]: count,
-        },
+        _environmentId: subscriber._environmentId,
       },
       {},
       subscriber._organizationId

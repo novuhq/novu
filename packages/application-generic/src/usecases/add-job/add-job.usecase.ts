@@ -30,10 +30,10 @@ const LOG_CONTEXT = 'AddJob';
 export class AddJob {
   constructor(
     private jobRepository: JobRepository,
-    private queueService: QueueService,
     private createExecutionDetails: CreateExecutionDetails,
     private addDigestJob: AddDigestJob,
-    private addDelayJob: AddDelayJob
+    private addDelayJob: AddDelayJob,
+    public readonly queueService: QueueService
   ) {}
 
   @InstrumentUsecase()

@@ -81,9 +81,10 @@ jobs:
         run: |
           cd apps/api && pnpm test:e2e
 
+      - name: Kill port for worker 1342 for unit tests
+        run: sudo kill -9 $(sudo lsof -t -i:1342)
+
       - name: Run unit tests
-        env:
-          IN_MEMORY_CLUSTER_MODE_ENABLED: true
         run: |
           cd apps/api && pnpm test
           
