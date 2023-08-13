@@ -80,7 +80,8 @@ jobs:
       - name: Start WS
         env:
           IN_MEMORY_CLUSTER_MODE_ENABLED: false
-        run: pnpm start:ws:test
+        run: |
+          cd apps/ws && pnpm start:test
 
       - name: Start API in TEST
         env:
