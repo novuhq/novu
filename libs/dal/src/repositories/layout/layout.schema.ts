@@ -24,6 +24,7 @@ const layoutSchema = new Schema<LayoutDBModel>(
       ref: 'Layout',
     },
     name: Schema.Types.String,
+    identifier: Schema.Types.String,
     description: Schema.Types.String,
     variables: [
       {

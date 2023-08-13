@@ -1,5 +1,5 @@
 import { LayoutEntity, LayoutRepository } from '@novu/dal';
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, ConflictException } from '@nestjs/common';
 import { isReservedVariableName } from '@novu/shared';
 import { AnalyticsService } from '@novu/application-generic';
 import { CreateLayoutCommand } from './create-layout.command';
@@ -25,6 +25,16 @@ export class CreateLayoutUseCase {
     const hasBody = command.content.includes('{{{body}}}');
     if (!hasBody) {
       throw new ApiException('Layout content must contain {{{body}}}');
+    }
+    const layoutIdentifierExist = await this.layoutRepository.findOne({
+      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
+      identifier: command.identifier,
+    });
+    if (layoutIdentifierExist) {
+      throw new ConflictException(
+        `Layout with identifier: ${command.identifier} already exists under environment ${command.environmentId}`
+      );
     }
     const entity = this.mapToEntity({ ...command, variables });
 
@@ -74,6 +84,7 @@ export class CreateLayoutUseCase {
       contentType: 'customHtml',
       description: domainEntity.description,
       name: domainEntity.name,
+      identifier: domainEntity.identifier,
       variables: domainEntity.variables,
       isDefault: domainEntity.isDefault ?? false,
       deleted: false,

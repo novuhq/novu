@@ -1,14 +1,16 @@
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { Center, Grid, Group, Modal, Title, useMantineTheme } from '@mantine/core';
+import slugify from 'slugify';
+import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo, useState } from 'react';
+import { parse } from '@handlebars/parser';
+
+import { getTemplateVariables, ITemplateVariable, isReservedVariableName, LayoutId } from '@novu/shared';
+
 import { ArrowLeft } from '../../../design-system/icons';
 import { Button, Checkbox, colors, Input, Text, LoadingOverlay, shadows } from '../../../design-system';
 import { useEnvController, useLayoutsEditor, usePrompt } from '../../../hooks';
 import { errorMessage, successMessage } from '../../../utils/notifications';
-import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
-import { parse } from '@handlebars/parser';
-import { getTemplateVariables, ITemplateVariable, isReservedVariableName, LayoutId } from '@novu/shared';
-
 import { QueryKeys } from '../../../api/query.keys';
 import { VariablesManagement } from '../../templates/components/email-editor/variables-management/VariablesManagement';
 import { UnsavedChangesModal } from '../../templates/components/UnsavedChangesModal';
@@ -18,6 +20,7 @@ import { EmailCustomCodeEditor } from '../../templates/components/email-editor/E
 interface ILayoutForm {
   content: string;
   name: string;
+  identifier: string;
   description: string;
   isDefault: boolean;
   variables: ITemplateVariable[];
@@ -25,6 +28,7 @@ interface ILayoutForm {
 const defaultFormValues = {
   content: '',
   name: '',
+  identifier: '',
   description: '',
   isDefault: false,
   variables: [],
@@ -70,6 +74,9 @@ export function LayoutEditor({
       if (layout.name) {
         setValue('name', layout?.name);
       }
+      if (layout.identifier) {
+        setValue('identifier', layout?.identifier);
+      }
       if (layout.description) {
         setValue('description', layout?.description);
       }
@@ -81,6 +88,21 @@ export function LayoutEditor({
       }
     }
   }, [layout]);
+
+  const layoutName = watch('name');
+  const identifier = watch('identifier');
+
+  useEffect(() => {
+    if (editMode && identifier) {
+      return;
+    }
+
+    const newIdentifier = slugify(layoutName, {
+      lower: true,
+      strict: true,
+    });
+    setValue('identifier', newIdentifier);
+  }, [editMode, layoutName]);
 
   useEffect(() => {
     if (environment && layout) {
@@ -164,6 +186,24 @@ export function LayoutEditor({
                       value={field.value || ''}
                       label="Layout Name"
                       placeholder="Layout name goes here..."
+                    />
+                  )}
+                />
+              </Grid.Col>
+              <Grid.Col md={5} sm={12}>
+                <Controller
+                  control={control}
+                  name="identifier"
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      mb={30}
+                      data-test-id="layout-identifier"
+                      disabled={readonly}
+                      required
+                      value={field.value || ''}
+                      label="Layout identifier"
+                      placeholder="Layout identifier goes here..."
                     />
                   )}
                 />

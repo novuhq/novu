@@ -1,6 +1,6 @@
 import { IsBoolean, IsDefined, IsOptional, IsString } from 'class-validator';
 
-import { LayoutDescription, LayoutName, LayoutVariables } from '../../types';
+import { LayoutDescription, LayoutName, LayoutVariables, LayoutIdentifier } from '../../types';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
@@ -8,6 +8,10 @@ export class CreateLayoutCommand extends EnvironmentWithUserCommand {
   @IsString()
   @IsDefined()
   name: LayoutName;
+
+  @IsString()
+  @IsDefined()
+  identifier: LayoutIdentifier;
 
   @IsString()
   @IsOptional()

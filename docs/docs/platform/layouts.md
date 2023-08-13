@@ -61,10 +61,11 @@ Novu SDK supports all layout functionalities:
 
 ### Create a new layout
 
-A new layout can be created with name, description, content, variables and an <code>isDefault</code> flag. Here, content param is html content with custom variables.
+A new layout can be created with name, identifier, description, content, variables and an <code>isDefault</code> flag. Here, content param is html content with custom variables.
 
 ```typescript
 const name: string = 'layout-name';
+const identifier: string = 'layout-unique-identifier';
 const description: string =
   'The description of the layout that will help other users to understand the goal it was created'; // Optional.
 const content: string = '<EMAIL_LAYOUT>';
@@ -73,6 +74,7 @@ const isDefault: boolean = true; // Optional. All layouts are created as non def
 
 const { _id: layoutId } = await novu.layouts.create({
   name,
+  identifier,
   description,
   content,
   variables,
@@ -104,6 +106,7 @@ const layoutId: LayoutId = '<LAYOUT_ID>'; // The unique identifier of the layout
 
 const updatedLayout = await novu.layouts.update(layoutId, {
   name,
+  identifier,
   description,
   content,
   variables,
