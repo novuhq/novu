@@ -13,18 +13,8 @@ import {
 } from '../../hooks';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
-import {
-  Tag,
-  Table,
-  colors,
-  Text,
-  Button,
-  IExtendedColumn,
-  withCellLoading,
-  PlusButton,
-  Container,
-} from '../../design-system';
-import { Bolt, BoltFilled, BoltOffFilled, Edit, PlusCircle } from '../../design-system/icons';
+import { Tag, Table, colors, Text, IExtendedColumn, withCellLoading, PlusButton, Container } from '../../design-system';
+import { Bolt, BoltFilled, BoltOffFilled, Edit, ProviderMissing } from '../../design-system/icons';
 import { Tooltip } from '../../design-system';
 import { ROUTES } from '../../constants/routes.enum';
 import { parseUrl } from '../../utils/routeUtils';
@@ -49,12 +39,20 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
     maxWidth: 340,
     Cell: withCellLoading(({ row: { original } }) => (
       <Tooltip label={original.name}>
-        <div>
-          <Text rows={1}>{original.name}</Text>
-          <Text rows={1} size="xs" color={colors.B40}>
-            {original.triggers ? original.triggers[0].identifier : 'Unknown'}
-          </Text>
-        </div>
+        <Group spacing={8}>
+          {original.activeIntegrationStatus?.isActive ? (
+            <Bolt color={colors.B40} width="24px" height="24px" />
+          ) : (
+            <ProviderMissing width="24px" height="24px" />
+          )}
+
+          <div>
+            <Text rows={1}>{original.name}</Text>
+            <Text rows={1} size="xs" color={colors.B40}>
+              {original.triggers ? original.triggers[0].identifier : 'Unknown'}
+            </Text>
+          </div>
+        </Group>
       </Tooltip>
     )),
   },
