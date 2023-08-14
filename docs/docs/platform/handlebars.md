@@ -8,7 +8,7 @@ import TabItem from '@theme/TabItem';
 
 # Handlebars
 
-You can customize the notification the end users get using Handlebars. This is crucial for many cases, for example, when using the [digest engine](https://docs.novu.co/platform/digest/). 
+You can customize the notification (appearance and structure) the end users get using Handlebars. This is crucial for many cases, for example, when using the [digest engine](https://docs.novu.co/platform/digest/). 
 
 ## Properties and their description
 
