@@ -20,9 +20,9 @@ const digestTourSteps: Step[] = [
     offset: 0,
   },
   {
-    target: '[data-test-id="email-step-settings-edit"]',
+    target: '#codeEditor',
     content: '',
-    placement: 'left',
+    placement: 'right',
     disableBeacon: true,
     hideBackButton: true,
     locale: { skip: 'Skip tour' },
@@ -32,7 +32,7 @@ const digestTourSteps: Step[] = [
   {
     target: '[data-test-id="test-workflow-btn"]',
     content: '',
-    placement: 'bottom',
+    placement: 'top',
     disableBeacon: true,
     hideBackButton: true,
     tooltipComponent: DigestWorkflowTourTooltip,

@@ -73,6 +73,7 @@ const Wrapper = styled.div`
   display: flex;
   align-items: center;
   flex-direction: column;
+  position: relative;
 `;
 
 function fillDateGaps(data: IActivityGraphStats[]): IActivityGraphStats[] {

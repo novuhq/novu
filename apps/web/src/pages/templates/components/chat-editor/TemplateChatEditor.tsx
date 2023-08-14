@@ -38,7 +38,6 @@ export function TemplateChatEditor({
         control={control}
         render={({ field }) => (
           <Textarea
-            mt={24}
             {...field}
             data-test-id="chatNotificationContent"
             error={errors?.steps ? errors.steps[index]?.template?.content?.message : undefined}
