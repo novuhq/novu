@@ -134,6 +134,7 @@ export class PromoteNotificationTemplateChange {
         _notificationGroupId: notificationGroup._id,
         isBlueprint: command.organizationId === this.blueprintOrganizationId,
         blueprintId: newItem.blueprintId,
+        ...(newItem.data ? { data: newItem.data } : {}),
       };
 
       return this.notificationTemplateRepository.create(newNotificationTemplate as NotificationTemplateEntity);
@@ -181,6 +182,7 @@ export class PromoteNotificationTemplateChange {
         steps,
         _notificationGroupId: notificationGroup._id,
         isBlueprint: command.organizationId === this.blueprintOrganizationId,
+        ...(newItem.data ? { data: newItem.data } : {}),
       }
     );
   }

@@ -7,6 +7,7 @@ export interface IIntegrations {
   getWebhookProviderStatus(providerId: string);
   update(integrationId: string, data: IIntegrationsUpdatePayload);
   delete(integrationId: string);
+  getInAppStatus();
 }
 
 export interface IIntegrationsPayload extends IIntegrationsUpdatePayload {
@@ -14,7 +15,9 @@ export interface IIntegrationsPayload extends IIntegrationsUpdatePayload {
 }
 
 export interface IIntegrationsUpdatePayload {
-  credentials: ICredentialsDto;
-  active: boolean;
-  check: boolean;
+  name?: string;
+  identifier?: string;
+  credentials?: ICredentialsDto;
+  active?: boolean;
+  check?: boolean;
 }

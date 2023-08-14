@@ -38,6 +38,7 @@ export interface INotificationCenterComponentProps {
   unseenCountChanged?: NotificationCenterContentComponentProps['unseenCountChanged'];
   actionClicked?: NotificationCenterContentComponentProps['actionClicked'];
   tabClicked?: NotificationCenterContentComponentProps['tabClicked'];
+  preferenceFilter?: NotificationCenterContentComponentProps['preferenceFilter'];
 }
 
 const props = withDefaults(defineProps<INotificationCenterComponentProps>(), {
@@ -128,6 +129,7 @@ watch(computedStyles, (newComputedStyles) => {
         :unseenCountChanged="unseenCountChanged"
         :actionClicked="actionClicked"
         :tabClicked="tabClicked"
+        :preferenceFilter="preferenceFilter"
       />
     </template>
   </VDropdown>

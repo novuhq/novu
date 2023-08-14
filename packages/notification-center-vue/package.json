@@ -1,7 +1,7 @@
 {
   "name": "@novu/notification-center-vue",
   "sideEffects": false,
-  "version": "0.16.4",
+  "version": "0.17.2",
   "description": "Vue specific wrapper for notification-center",
   "repository": {
     "type": "git",
@@ -22,7 +22,7 @@
   "dependencies": {
     "@emotion/css": "^11.10.5",
     "@novu/floating-vue": "^2.0.3",
-    "@novu/notification-center": "^0.16.4",
+    "@novu/notification-center": "^0.17.2",
     "react": "^17.0.1",
     "react-dom": "^17.0.1"
   },
@@ -52,6 +52,5 @@
       "node_modules",
       "dist"
     ]
-  },
-  "gitHead": "1a8fa1bd98790810d7fb69c4dc0e82d33c20eec2"
+  }
 }

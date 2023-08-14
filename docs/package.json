@@ -1,6 +1,6 @@
 {
   "name": "@novu/docs",
-  "version": "0.16.4",
+  "version": "0.17.2",
   "private": true,
   "scripts": {
     "docusaurus": "docusaurus",
@@ -54,7 +54,6 @@
     "eslint-config-airbnb-typescript": "^17.0.0",
     "eslint-config-prettier": "^8.5.0",
     "husky": "^8.0.0",
-    "lint-staged": "^12.4.1",
     "markdownlint-cli": "^0.33.0",
     "prettier": "~2.8.0",
     "sass-loader": "^13.0.0",

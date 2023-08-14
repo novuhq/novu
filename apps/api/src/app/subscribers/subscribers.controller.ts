@@ -21,7 +21,7 @@ import {
   UpdateSubscriber,
   UpdateSubscriberCommand,
 } from '@novu/application-generic';
-import { ApiOperation, ApiTags, ApiOkResponse, ApiNoContentResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiTags, ApiNoContentResponse } from '@nestjs/swagger';
 import { ButtonTypeEnum, ChatProviderIdEnum, IJwtPayload } from '@novu/shared';
 import { MessageEntity } from '@novu/dal';
 
@@ -77,6 +77,9 @@ import {
   DeleteSubscriberCredentialsCommand,
   DeleteSubscriberCredentials,
 } from './usecases/delete-subscriber-credentials';
+import { MarkAllMessagesAsCommand } from '../widgets/usecases/mark-all-messages-as/mark-all-messages-as.command';
+import { MarkAllMessagesAs } from '../widgets/usecases/mark-all-messages-as/mark-all-messages-as.usecase';
+import { MarkAllMessageAsRequestDto } from './dtos/mark-all-messages-as-request.dto';
 
 @Controller('/subscribers')
 @ApiTags('Subscribers')
@@ -97,7 +100,8 @@ export class SubscribersController {
     private updateSubscriberOnlineFlagUsecase: UpdateSubscriberOnlineFlag,
     private chatOauthCallbackUsecase: ChatOauthCallback,
     private chatOauthUsecase: ChatOauth,
-    private deleteSubscriberCredentialsUsecase: DeleteSubscriberCredentials
+    private deleteSubscriberCredentialsUsecase: DeleteSubscriberCredentials,
+    private markAllMessagesAsUsecase: MarkAllMessagesAs
   ) {}
 
   @Get('')
@@ -367,6 +371,7 @@ export class SubscribersController {
       feedId: feedsQuery,
       query: { seen: query.seen, read: query.read },
       limit: query.limit != null ? parseInt(query.limit) : 10,
+      payload: query.payload,
     });
 
     return await this.getNotificationsFeedUsecase.execute(command);
@@ -429,6 +434,31 @@ export class SubscribersController {
     });
 
     return await this.markMessageAsUsecase.execute(command);
+  }
+
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  @Post('/:subscriberId/messages/mark-all')
+  @ApiOperation({
+    summary:
+      'Marks all the subscriber messages as read, unread, seen or unseen. ' +
+      'Optionally you can pass feed id (or array) to mark messages of a particular feed.',
+  })
+  async markAllUnreadAsRead(
+    @UserSession() user: IJwtPayload,
+    @Param('subscriberId') subscriberId: string,
+    @Body() body: MarkAllMessageAsRequestDto
+  ) {
+    const feedIdentifiers = this.toArray(body.feedIdentifier);
+    const command = MarkAllMessagesAsCommand.create({
+      organizationId: user.organizationId,
+      subscriberId,
+      environmentId: user.environmentId,
+      markAs: body.markAs,
+      feedIdentifiers,
+    });
+
+    return await this.markAllMessagesAsUsecase.execute(command);
   }
 
   @ExternalApiAccessible()
@@ -513,12 +543,12 @@ export class SubscribersController {
     res.redirect(data);
   }
 
-  private toArray(param: string[] | string): string[] | undefined {
+  private toArray(param?: string[] | string): string[] | undefined {
     let paramArray: string[] | undefined;
     if (param) {
       paramArray = Array.isArray(param) ? param : param.split(',');
     }
 
-    return paramArray as string[];
+    return paramArray;
   }
 }

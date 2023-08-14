@@ -6,7 +6,8 @@ import { DigestFilterStepsCommand } from './digest-filter-steps.command';
 import { DigestFilterStepsBackoff } from './digest-filter-steps-backoff.usecase';
 import { DigestFilterStepsRegular } from './digest-filter-steps-regular.usecase';
 import { DigestFilterStepsTimed } from './digest-filter-steps-timed.usecase';
-import { EventsPerformanceService } from '../../services/performance/events-performance.service';
+
+const LOG_CONTEXT = 'DigestFilterSteps';
 
 // TODO; Potentially rename this use case
 @Injectable()
@@ -14,20 +15,12 @@ export class DigestFilterSteps {
   constructor(
     private filterStepsBackoff: DigestFilterStepsBackoff,
     private filterStepsRegular: DigestFilterStepsRegular,
-    private filterStepsTimed: DigestFilterStepsTimed,
-    protected performanceService: EventsPerformanceService
+    private filterStepsTimed: DigestFilterStepsTimed
   ) {}
 
   public async execute(
     command: DigestFilterStepsCommand
   ): Promise<NotificationStepEntity[]> {
-    const mark = this.performanceService.buildDigestFilterStepsMark(
-      command.transactionId,
-      command.templateId,
-      command.notificationId,
-      command._subscriberId
-    );
-
     const actions = {
       [DigestTypeEnum.BACKOFF]: this.filterStepsBackoff,
       [DigestTypeEnum.REGULAR]: this.filterStepsRegular,
@@ -46,8 +39,6 @@ export class DigestFilterSteps {
     });
 
     const triggerStep = this.createTriggerStep(command);
-
-    this.performanceService.setEnd(mark);
 
     return [triggerStep, ...steps];
   }
@@ -83,7 +74,11 @@ export class DigestFilterSteps {
 
       return result;
     } catch (error) {
-      Logger.error('Failure when parsing digest payload nested key');
+      Logger.error(
+        'Failure when parsing digest payload nested key',
+        error,
+        LOG_CONTEXT
+      );
 
       return undefined;
     }

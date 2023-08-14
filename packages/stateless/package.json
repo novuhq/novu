@@ -1,6 +1,6 @@
 {
   "name": "@novu/stateless",
-  "version": "0.16.4",
+  "version": "0.17.1",
   "description": "Notification Management Framework",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -74,6 +74,5 @@
   ],
   "prettier": {
     "singleQuote": true
-  },
-  "gitHead": "e1055f2fd2f0ec9a85d64b271c7d5824bdb381d0"
+  }
 }

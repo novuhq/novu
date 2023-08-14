@@ -26,6 +26,7 @@ customElements.define('notification-center-web-component', NotificationCenterWeb
     [unseenCountChanged]="unseenCountChanged"
     [actionClicked]="actionClicked"
     [tabClicked]="tabClicked"
+    [preferenceFilter]="preferenceFilter"
   ></notification-center-web-component>`,
   inputs: [
     'backendUrl',
@@ -48,6 +49,7 @@ customElements.define('notification-center-web-component', NotificationCenterWeb
     'unseenCountChanged',
     'actionClicked',
     'tabClicked',
+    'preferenceFilter',
   ],
 })
 export class NotificationCenterComponent {
@@ -74,4 +76,5 @@ export class NotificationCenterComponent {
   @Input() unseenCountChanged: NotificationCenterComponentProps['unseenCountChanged'];
   @Input() actionClicked: NotificationCenterComponentProps['actionClicked'];
   @Input() tabClicked: NotificationCenterComponentProps['tabClicked'];
+  @Input() preferenceFilter: NotificationCenterComponentProps['preferenceFilter'];
 }

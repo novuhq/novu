@@ -1,6 +1,6 @@
 {
   "name": "@novu/notification-center-angular",
-  "version": "0.16.4",
+  "version": "0.17.2",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -37,7 +37,7 @@
     "@angular/core": "~15.2.0",
     "@angular/platform-browser": "~15.2.0",
     "@angular/platform-browser-dynamic": "~15.2.0",
-    "@novu/notification-center": "^0.16.4",
+    "@novu/notification-center": "^0.17.2",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "tslib": "^2.3.0",
@@ -56,6 +56,5 @@
     "karma-jasmine-html-reporter": "~2.0.0",
     "ng-packagr": "~15.2.0",
     "typescript": "4.9.5"
-  },
-  "gitHead": "1a8fa1bd98790810d7fb69c4dc0e82d33c20eec2"
+  }
 }

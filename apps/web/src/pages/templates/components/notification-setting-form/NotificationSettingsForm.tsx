@@ -62,7 +62,7 @@ export const NotificationSettingsForm = ({ trigger }: { trigger?: INotificationT
 
   return (
     <>
-      <Grid gutter={0}>
+      <Grid gutter={0} mt={-8} mb={-8}>
         <Grid.Col span={6}>
           <Stack
             justify="center"
@@ -136,7 +136,7 @@ export const NotificationSettingsForm = ({ trigger }: { trigger?: INotificationT
               data-test-id="trigger-id"
               value={field.value || ''}
               error={fieldState.error?.message}
-              label="Identifier"
+              label="Trigger identifier"
               disabled={readonly}
               rightSection={
                 <Tooltip data-test-id={'Tooltip'} label={idClipboard.copied ? 'Copied!' : 'Copy Key'}>

@@ -1,6 +1,6 @@
 {
   "name": "@novu/embed",
-  "version": "0.16.4",
+  "version": "0.17.2",
   "private": true,
   "description": "",
   "keywords": [],
@@ -107,7 +107,6 @@
     "husky": "^1.0.1",
     "jest": "^27.0.6",
     "jest-config": "^27.4.7",
-    "lint-staged": "^8.0.0",
     "lodash.camelcase": "^4.3.0",
     "prettier": "~2.8.0",
     "prompt": "^1.0.0",
@@ -128,7 +127,7 @@
     "typescript": "4.9.5"
   },
   "dependencies": {
-    "@novu/notification-center": "^0.16.4",
+    "@novu/notification-center": "^0.17.2",
     "@types/iframe-resizer": "^3.5.8",
     "iframe-resizer": "^4.3.1"
   }

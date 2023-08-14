@@ -1,7 +1,7 @@
 import { createStyles, MantineTheme } from '@mantine/core';
 import { colors } from '../config';
 
-export default createStyles((theme: MantineTheme, _params, getRef) => {
+export default createStyles((theme: MantineTheme, { withSelection }: { withSelection: boolean }, getRef) => {
   const dark = theme.colorScheme === 'dark';
   const hover = { ref: getRef('hover') };
 
@@ -16,10 +16,12 @@ export default createStyles((theme: MantineTheme, _params, getRef) => {
       borderCollapse: 'collapse',
       borderSpacing: '0px 20px',
       'tr td:first-of-type': {
-        paddingLeft: 30,
+        paddingLeft: withSelection ? 10 : 30,
+        paddingRight: withSelection ? 10 : 30,
       },
       'tr th:first-of-type': {
-        paddingLeft: 30,
+        paddingLeft: withSelection ? 10 : 30,
+        paddingRight: withSelection ? 10 : 30,
       },
       'tr td:last-child': {
         paddingRight: 30,

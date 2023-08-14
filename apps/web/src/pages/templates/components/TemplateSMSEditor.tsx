@@ -1,7 +1,7 @@
 import { Control, Controller, useFormContext } from 'react-hook-form';
 import { ChannelTypeEnum } from '@novu/shared';
 
-import { LackIntegrationError } from './LackIntegrationError';
+import { LackIntegrationAlert } from './LackIntegrationAlert';
 import type { IForm } from './formTypes';
 import { Textarea } from '../../../design-system';
 import { useEnvController, useVariablesManager } from '../../../hooks';
@@ -29,7 +29,7 @@ export function TemplateSMSEditor({
   return (
     <>
       {!isIntegrationActive ? (
-        <LackIntegrationError channelType={ChannelTypeEnum.SMS} iconHeight={34} iconWidth={34} />
+        <LackIntegrationAlert channelType={ChannelTypeEnum.SMS} iconHeight={34} iconWidth={34} />
       ) : null}
       <StepSettings index={index} />
       <Controller
@@ -43,7 +43,6 @@ export function TemplateSMSEditor({
             error={errors?.steps ? errors.steps[index]?.template?.content?.message : undefined}
             disabled={readonly}
             minRows={4}
-            mt={24}
             value={field.value || ''}
             label="SMS message content"
             placeholder="Add notification content here..."

@@ -67,7 +67,7 @@ export function EmailMessagesCards({ index, isIntegrationActive }: { index: numb
         }}
       >
         <StepSettings index={index} />
-        <Grid m={0} mb={24} mt={24}>
+        <Grid m={0} mt={24}>
           <Grid.Col p={0} mr={20} span={7}>
             <EditorPreviewSwitch view={view} setView={setView} />
           </Grid.Col>

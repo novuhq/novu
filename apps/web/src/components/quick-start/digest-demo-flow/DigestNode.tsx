@@ -3,12 +3,13 @@ import { createStyles, NumberInput, Loader } from '@mantine/core';
 import styled from '@emotion/styled';
 
 import { NodeStepWithPopover } from './NodeStepWithPopover';
-import { DigestGradient, CountdownTimer } from '../../../design-system/icons';
+import { CountdownTimer, DigestAction } from '../../../design-system/icons';
 import { useDigestDemoFlowContext } from './DigestDemoFlowProvider';
 import { Indicator } from './Indicator';
 import { colors } from '../../../design-system';
 import { useEffect, useState } from 'react';
 import { useInterval } from '@mantine/hooks';
+import { useDataRef } from '../../../hooks';
 
 const LoaderStyled = styled(Loader)`
   position: absolute;
@@ -51,17 +52,19 @@ export function DigestNode({ data, id }: { data: any; id: string }) {
 
   const [seconds, setSeconds] = useState(0);
   const interval = useInterval(() => setSeconds((sec) => sec - 1), 1000);
+  const intervalRef = useDataRef({ interval, digestInterval });
 
   useEffect(() => {
+    const { interval: intervalObject, digestInterval: currentDigestInterval } = intervalRef.current;
     if (isRunningDigest) {
-      setSeconds(digestInterval);
-      interval.start();
+      setSeconds(currentDigestInterval);
+      intervalObject.start();
     } else {
-      interval.stop();
+      intervalObject.stop();
     }
 
-    return interval.stop;
-  }, [isRunningDigest]);
+    return intervalObject.stop;
+  }, [isRunningDigest, intervalRef]);
 
   const digestIntervalDisplay = !isRunningDigest ? digestInterval : seconds;
 
@@ -69,7 +72,7 @@ export function DigestNode({ data, id }: { data: any; id: string }) {
     <NodeStepWithPopover
       data={data}
       id={id}
-      Icon={DigestGradient}
+      Icon={DigestAction}
       ContentItem={
         <>
           <Indicator isShown={!isReadOnly && triggerCount > 0} value={triggerCount > 99 ? '99' : `${triggerCount}`} />

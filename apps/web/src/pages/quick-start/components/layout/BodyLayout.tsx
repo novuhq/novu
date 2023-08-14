@@ -13,7 +13,7 @@ const BULLET_TOP_MARGIN = 20;
 export function BodyLayout({ children }: { children: React.ReactNode }) {
   return (
     <StyledBody>
-      <Grid columns={24}>
+      <Grid columns={24} m={0}>
         <Grid.Col span={7}>
           <BodyNavigation />
         </Grid.Col>
@@ -24,8 +24,10 @@ export function BodyLayout({ children }: { children: React.ReactNode }) {
 }
 
 const StyledBody = styled.div`
-  display: block;
-  flex: auto;
+  height: calc(100vh - 180px);
+  padding-top: 25px;
+  padding-bottom: 25px;
+  overflow-y: auto;
 `;
 
 function BodyNavigation() {
@@ -77,7 +79,7 @@ function BodyNavigation() {
 
 const TimelineWrapper = styled.div`
   width: 100%;
-  padding: 0 0 0 60px;
+  padding: 0 0 0 40px;
 
   .mantine-Timeline-itemBullet {
     width: 34px;

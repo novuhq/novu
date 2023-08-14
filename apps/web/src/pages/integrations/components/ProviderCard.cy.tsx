@@ -30,6 +30,7 @@ const provider = {
   active: false,
   connected: false,
   logoFileName: { light: 'examplelight.svg', dark: 'exampledark.svg' },
+  primary: false,
 };
 
 it('should change the image based on the colorScheme (light) selected by user', () => {

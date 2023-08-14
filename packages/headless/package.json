@@ -1,6 +1,6 @@
 {
   "name": "@novu/headless",
-  "version": "0.16.4",
+  "version": "0.17.2",
   "repository": "https://github.com/novuhq/novu",
   "description": "Headless client package that is a thin abstraction layer over the API client + state and socket management",
   "keywords": [],
@@ -28,8 +28,8 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@novu/client": "^0.16.4",
-    "@novu/shared": "^0.16.4",
+    "@novu/client": "^0.17.2",
+    "@novu/shared": "^0.17.2",
     "@tanstack/query-core": "^4.15.1",
     "socket.io-client": "4.6.1"
   },
@@ -46,6 +46,5 @@
   },
   "prettier": {
     "singleQuote": true
-  },
-  "gitHead": "e1055f2fd2f0ec9a85d64b271c7d5824bdb381d0"
+  }
 }

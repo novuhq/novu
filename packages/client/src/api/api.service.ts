@@ -92,13 +92,16 @@ export class ApiService {
 
   async getNotificationsList(
     page: number,
-    query: IStoreQuery = {}
+    { payload, ...rest }: IStoreQuery = {}
   ): Promise<IPaginatedResponse<IMessage>> {
+    const payloadString = payload ? btoa(JSON.stringify(payload)) : undefined;
+
     return await this.httpClient.getFullResponse(
       `/widgets/notifications/feed`,
       {
         page,
-        ...query,
+        payload: payloadString,
+        ...rest,
       }
     );
   }

@@ -116,7 +116,7 @@ export function FlowEditor({
 
       addStep(channel.channelType, newId, nodeIndex);
     },
-    [steps]
+    [addStep, steps]
   );
 
   const onDragOver = useCallback((event) => {
@@ -148,7 +148,7 @@ export function FlowEditor({
 
       addNewNode(parentId, type);
     },
-    [reactFlowInstance, nodes, edges]
+    [addNewNode, reactFlowInstance, nodes, edges]
   );
 
   async function initializeWorkflowTree() {
@@ -336,12 +336,30 @@ const Wrapper = styled.div<{ dark: boolean }>`
   background: ${({ dark }) => (dark ? colors.B15 : colors.B98)};
   .react-flow__node.react-flow__node-channelNode,
   .react-flow__node.react-flow__node-triggerNode {
-    width: 200px;
-    height: 75px;
+    width: 280px;
+    height: 80px;
     cursor: pointer;
+    svg {
+      stop:first-child {
+        stop-color: #dd2476 !important;
+      }
+      stop:last-child {
+        stop-color: #ff512f !important;
+      }
+    }
+    [data-blue-gradient-svg] {
+      stop:first-child {
+        stop-color: #4c6dd4 !important;
+      }
+      stop:last-child {
+        stop-color: #66d9e8 !important;
+      }
+    }
   }
+
   .react-flow__node.react-flow__node-addNode {
-    width: 200px;
+    cursor: default;
+    width: 280px;
   }
   .react-flow__handle.connectable {
     cursor: pointer;
