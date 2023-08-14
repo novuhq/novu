@@ -9,7 +9,7 @@ describe('Subscribers Page', function () {
     cy.getByTestId('subscribers-table')
       .find('th:nth-child(1)')
       .each((el) => {
-        expect(el.text()).equal('Subscriber Id');
+        expect(el.text()).equal('Subscriber identifier');
       });
 
     cy.getByTestId('subscribers-table')

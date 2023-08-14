@@ -5,7 +5,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { Tabs } from '../../../../design-system';
 import { EmailMessageEditor } from './EmailMessageEditor';
 import { EmailCustomCodeEditor } from './EmailCustomCodeEditor';
-import { LackIntegrationError } from '../LackIntegrationError';
+import { LackIntegrationAlert } from '../LackIntegrationAlert';
 import {
   useEnvController,
   useActiveIntegrations,
@@ -42,7 +42,7 @@ export function EmailContentCard({
     }
     setIntegration(
       integrations.find((item) =>
-        isMultiProviderConfigEnabled ? item.channel === 'email' && item.selected : item.channel === 'email'
+        isMultiProviderConfigEnabled ? item.channel === 'email' && item.primary : item.channel === 'email'
       ) || null
     );
   }, [isMultiProviderConfigEnabled, integrations, setIntegration]);
@@ -74,7 +74,7 @@ export function EmailContentCard({
   return (
     <>
       {!isIntegrationActive && isLimitReached && (
-        <LackIntegrationError
+        <LackIntegrationAlert
           channelType={ChannelTypeEnum.EMAIL}
           text="Looks like you haven’t configured your E-Mail provider yet, visit the integrations page to configure."
           iconHeight={34}

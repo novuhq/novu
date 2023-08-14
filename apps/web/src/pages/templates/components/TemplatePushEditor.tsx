@@ -1,7 +1,7 @@
 import { Control, Controller, useFormContext } from 'react-hook-form';
 import { ChannelTypeEnum } from '@novu/shared';
 
-import { LackIntegrationError } from './LackIntegrationError';
+import { LackIntegrationAlert } from './LackIntegrationAlert';
 import type { IForm } from './formTypes';
 import { Textarea } from '../../../design-system';
 import { useEnvController, useVariablesManager } from '../../../hooks';
@@ -29,7 +29,7 @@ export function TemplatePushEditor({
   return (
     <>
       {!isIntegrationActive ? (
-        <LackIntegrationError channelType={ChannelTypeEnum.PUSH} iconHeight={34} iconWidth={34} />
+        <LackIntegrationAlert channelType={ChannelTypeEnum.PUSH} iconHeight={34} iconWidth={34} />
       ) : null}
       <StepSettings index={index} />
       <Controller
@@ -38,8 +38,6 @@ export function TemplatePushEditor({
         control={control}
         render={({ field }) => (
           <Textarea
-            mt={24}
-            mb={24}
             {...field}
             data-test-id="pushNotificationTitle"
             error={errors?.steps ? errors.steps[index]?.template?.title?.message : undefined}

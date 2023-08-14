@@ -1,6 +1,6 @@
 {
   "name": "@novu/notification-center",
-  "version": "0.17.2",
+  "version": "0.18.0",
   "repository": "https://github.com/novuhq/novu",
   "description": "",
   "scripts": {
@@ -75,8 +75,8 @@
     "@emotion/styled": "^11.6.0",
     "@mantine/core": "^5.7.1",
     "@mantine/hooks": "^5.7.1",
-    "@novu/client": "^0.17.2",
-    "@novu/shared": "^0.17.2",
+    "@novu/client": "^0.18.0",
+    "@novu/shared": "^0.18.0",
     "@tanstack/react-query": "^4.20.4",
     "acorn-jsx": "^5.3.2",
     "axios": "^1.4.0",
@@ -87,6 +87,5 @@
     "socket.io-client": "4.6.1",
     "tslib": "^2.3.1",
     "webfontloader": "^1.6.28"
-  },
-  "gitHead": "e1055f2fd2f0ec9a85d64b271c7d5824bdb381d0"
+  }
 }

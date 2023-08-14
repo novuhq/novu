@@ -26,4 +26,12 @@ export class GetInAppNotificationsFeedForSubscriberDto extends PaginationRequest
 
   @ApiPropertyOptional({ required: false, type: Boolean })
   seen: boolean;
+
+  @ApiPropertyOptional({
+    required: false,
+    type: 'string',
+    description: 'Base64 encoded string of the partial payload JSON object',
+    example: 'btoa(JSON.stringify({ foo: 123 })) results in base64 encoded string like eyJmb28iOjEyM30=',
+  })
+  payload?: string;
 }

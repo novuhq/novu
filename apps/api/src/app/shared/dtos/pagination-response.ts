@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IPaginatedResponseDto } from '@novu/shared';
 
-export class PaginatedResponseDto<T> {
+export class PaginatedResponseDto<T> implements IPaginatedResponseDto<T> {
   @ApiProperty({
     description: 'The current page of the paginated response',
   })

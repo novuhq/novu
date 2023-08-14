@@ -17,6 +17,7 @@ const exampleProvider: IIntegratedProvider = {
   docReference: 'https://www.emailjs.com/docs',
   logoFileName: { light: 'emailjs.svg', dark: 'emailjs.svg' },
   integrationId: '',
+  primary: false,
 };
 
 const defaultProps: {

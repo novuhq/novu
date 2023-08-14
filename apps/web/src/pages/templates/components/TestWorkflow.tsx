@@ -103,7 +103,7 @@ export function TestWorkflow({ trigger }) {
   return (
     <>
       <SubPageWrapper title="Trigger">
-        <Text color={colors.B60} mt={-16} mb={24}>
+        <Text color={colors.B60} mt={-16}>
           Test trigger as if you sent it from your API or implement it by copy/pasting it into the codebase of your
           application.
         </Text>
@@ -117,7 +117,6 @@ export function TestWorkflow({ trigger }) {
           label="To"
           {...form.getInputProps('toValue')}
           minRows={3}
-          mb={15}
           validationError="Invalid JSON"
         />
         <JsonInput
@@ -129,7 +128,6 @@ export function TestWorkflow({ trigger }) {
           {...form.getInputProps('payloadValue')}
           minRows={3}
           validationError="Invalid JSON"
-          mb={15}
         />
         <JsonInput
           data-test-id="test-trigger-overrides-param"
@@ -141,7 +139,7 @@ export function TestWorkflow({ trigger }) {
           minRows={3}
           validationError="Invalid JSON"
         />
-        <Group mt={30} position="right">
+        <Group position="right" mt={'auto'}>
           <div data-test-id="test-workflow-btn">
             <Button
               sx={{

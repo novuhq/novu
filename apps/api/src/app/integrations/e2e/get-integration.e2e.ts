@@ -21,7 +21,7 @@ describe('Get Integrations - /integrations (GET)', function () {
   it('should retrieve all the integrations of all environments from an organization from the prefilled test data', async () => {
     const integrations: IntegrationEntity[] = (await session.testAgent.get(`/v1/integrations`)).body.data;
 
-    expect(integrations.length).to.eq(14);
+    expect(integrations.length).to.eq(16);
 
     const emailIntegrations = integrations
       .filter((integration) => integration.channel === ChannelTypeEnum.EMAIL)

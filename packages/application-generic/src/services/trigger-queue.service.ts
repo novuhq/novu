@@ -1,11 +1,13 @@
-import { Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { JobTopicNameEnum } from '@novu/shared';
 
 const LOG_CONTEXT = 'TriggerQueueService';
 
 import { BullMqService } from './bull-mq.service';
 
+@Injectable()
 export class TriggerQueueService {
-  public readonly name = 'trigger-handler';
+  public readonly name = JobTopicNameEnum.WORKFLOW;
   public readonly bullMqService: BullMqService;
 
   constructor() {

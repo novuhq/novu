@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Center, Loader } from '@mantine/core';
+import { Center, Loader, ScrollArea } from '@mantine/core';
 import { ChannelTypeEnum } from '@novu/shared';
 
 import { colors } from '../../../design-system';
@@ -33,38 +33,46 @@ export function ProvidersPage() {
 
   return (
     <>
-      <SubPageWrapper title="Workflow Settings">
+      <SubPageWrapper
+        title="Workflow Settings"
+        style={{
+          display: 'flex',
+          flexFlow: 'column',
+        }}
+      >
         <WorkflowSettingsTabs />
-        <ListProviders
-          channel={ChannelTypeEnum.IN_APP}
-          setProvider={setProvider}
-          setConfigureChannel={setConfigureChannel}
-          providers={inAppProvider}
-        />
-        <ListProviders
-          channel={ChannelTypeEnum.EMAIL}
-          setProvider={setProvider}
-          setConfigureChannel={setConfigureChannel}
-          providers={emailProviders}
-        />
-        <ListProviders
-          channel={ChannelTypeEnum.CHAT}
-          setProvider={setProvider}
-          setConfigureChannel={setConfigureChannel}
-          providers={chatProvider}
-        />
-        <ListProviders
-          channel={ChannelTypeEnum.PUSH}
-          setProvider={setProvider}
-          setConfigureChannel={setConfigureChannel}
-          providers={pushProvider}
-        />
-        <ListProviders
-          channel={ChannelTypeEnum.SMS}
-          setProvider={setProvider}
-          setConfigureChannel={setConfigureChannel}
-          providers={smsProvider}
-        />
+        <ScrollArea h="calc(100vh - 220px)" offsetScrollbars mr={-12}>
+          <ListProviders
+            channel={ChannelTypeEnum.IN_APP}
+            setProvider={setProvider}
+            setConfigureChannel={setConfigureChannel}
+            providers={inAppProvider}
+          />
+          <ListProviders
+            channel={ChannelTypeEnum.EMAIL}
+            setProvider={setProvider}
+            setConfigureChannel={setConfigureChannel}
+            providers={emailProviders}
+          />
+          <ListProviders
+            channel={ChannelTypeEnum.CHAT}
+            setProvider={setProvider}
+            setConfigureChannel={setConfigureChannel}
+            providers={chatProvider}
+          />
+          <ListProviders
+            channel={ChannelTypeEnum.PUSH}
+            setProvider={setProvider}
+            setConfigureChannel={setConfigureChannel}
+            providers={pushProvider}
+          />
+          <ListProviders
+            channel={ChannelTypeEnum.SMS}
+            setProvider={setProvider}
+            setConfigureChannel={setConfigureChannel}
+            providers={smsProvider}
+          />
+        </ScrollArea>
       </SubPageWrapper>
       {isMultiProviderConfigurationEnabled ? (
         <IntegrationsListModal

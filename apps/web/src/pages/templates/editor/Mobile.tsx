@@ -5,7 +5,7 @@ const useStyles = createStyles((theme) => ({
   phone: {
     display: 'block',
     margin: 'auto',
-    width: '390px',
+    width: '400px',
     height: '740px',
     position: 'relative',
     borderColor: theme.colorScheme === 'dark' ? colors.B20 : colors.B85,

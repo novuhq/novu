@@ -9,6 +9,8 @@ import type {
 
 export interface ITableIntegration {
   name: string;
+  order: number;
+  primary: boolean;
   integrationId: string;
   identifier: string;
   provider: string;
@@ -36,6 +38,7 @@ export interface IIntegratedProvider {
   environmentId?: string;
   name?: string;
   identifier?: string;
+  primary: boolean;
 }
 
 export interface IntegrationEntity {
@@ -48,8 +51,9 @@ export interface IntegrationEntity {
   channel: ChannelTypeEnum;
   credentials: ICredentials;
   active: boolean;
-  selected: boolean;
   deleted: boolean;
+  order: number;
+  primary: boolean;
   deletedAt: string;
   deletedBy: string;
 }

@@ -40,7 +40,7 @@ export const SegmentedControl = React.forwardRef<HTMLDivElement, ISegmentedContr
     } as SegmentedControlProps;
 
     return (
-      <ControlWrapper style={{ position: 'relative', marginBottom: 30 }}>
+      <ControlWrapper style={{ position: 'relative', marginBottom: 0 }}>
         <LoadingOverlay
           visible={loading}
           overlayColor={theme.colorScheme === 'dark' ? colors.B30 : colors.B98}

@@ -1,7 +1,6 @@
 import { Handle, Position } from 'react-flow-renderer';
 
 import { Button, colors, shadows, Text, Title } from '../../../design-system';
-import { TurnOnGradient } from '../../../design-system/icons/gradient/TurnOnGradient';
 
 import styled from '@emotion/styled';
 import { createStyles, Group, Popover, Stack, useMantineColorScheme } from '@mantine/core';
@@ -19,7 +18,7 @@ import {
 import { NodeStep } from '../../workflow';
 import { useSegment } from '../../providers/SegmentProvider';
 import { errorMessage } from '../../../utils/notifications';
-import { Playground } from '../../../design-system/icons';
+import { BoltOutlinedGradient, Playground } from '../../../design-system/icons';
 import { TemplateCreationSourceEnum } from '../../../pages/templates/shared';
 
 const useStyles = createStyles((theme) => ({
@@ -44,7 +43,7 @@ export function TriggerNode({ data }: { data: { label: string; email?: string } 
   return (
     <NodeStep
       data={data}
-      Icon={TurnOnGradient}
+      Icon={BoltOutlinedGradient}
       ActionItem={!framework && <TriggerPopover />}
       Handlers={() => {
         return (

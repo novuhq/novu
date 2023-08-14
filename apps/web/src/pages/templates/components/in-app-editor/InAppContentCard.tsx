@@ -69,7 +69,7 @@ export function InAppContentCard({ index, openVariablesModal }: { index: number;
         radius={'xl'}
       />
       <When truthy={activeTab === PREVIEW}>
-        <Grid mt={24} mb={24}>
+        <Grid mt={24} mb={0}>
           <Grid.Col span={9} p={0}>
             <div style={{ margin: '0 10px' }}>
               <InAppEditorBlock
@@ -116,7 +116,6 @@ export function InAppContentCard({ index, openVariablesModal }: { index: number;
           </Grid.Col>
           <Grid.Col
             span={3}
-            mb={20}
             style={{
               maxWidth: '350px',
             }}

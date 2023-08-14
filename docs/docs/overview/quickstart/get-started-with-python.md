@@ -14,12 +14,9 @@ Before diving into the Quickstart, make sure you have the following:
 - Python3 installed on your development machine.
 - A Novu account. If you don't have one, sign up for free at [web.novu.co](https://web.novu.co)
 
-
 ### Install and Set Up Novu in your Python Project
 
 First, you must install the Novu package in your Python project. From your terminal, you can install the Novu package in your project by running either of the following two commands:
-
-
 
 Via pip
 
@@ -44,7 +41,7 @@ NovuConfig().configure("https://api.novu.co", "<YOUR_NOVU_API_KEY>")
 Replace the `<YOUR_NOVU_API_KEY>` value with the authentic key from the **API Key** section of your [Novu Dashboard](https://web.novu.co/settings).
 
 :::info
-   Please do not hardcode your credentials in a file in production. Use environment variables instead.
+Please do not hardcode your credentials in a file in production. Use environment variables instead.
 :::
 
 ## Set Up A Channel Provider
@@ -115,7 +112,7 @@ Now, let's create a subscriber on Novu. Copy and paste the following code to do 
 
 from novu.api.subscriber import SubscriberApi
 from novu.dto.subscriber import SubscriberDto
-   
+
 your_subscriber_id = "123" # Replace this with a unique user ID.
 
 # Define a subscriber instance
@@ -136,7 +133,6 @@ python main.py # replace main.py with your file name
 ```
 
 You should see a new subscriber (that you created above) on your Novu dashboard.
-
 
 ## Update A Subscriber
 
@@ -275,4 +271,3 @@ To learn more about notifications and explore Novu's features and capabilities, 
 - [Novu Digest Engine](https://docs.novu.co/platform/digest) - Learn how to aggregate multiple trigger events into a single message and deliver it to the subscriber.
 - [Novu Python SDK](https://github.com/novuhq/novu-python) - Delve deeper into the SDK and explore a lot of features.
 - [Novu Notification Center](https://docs.novu.co/notification-center/getting-started) - Learn how to integrate a rich, ready-to-use real-time UI notification center into your app.
-
