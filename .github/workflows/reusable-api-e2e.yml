@@ -81,6 +81,14 @@ jobs:
         run: |
           cd apps/api && pnpm test:e2e
 
+      - name: Get swagger json as file
+        run: |
+          curl -o swagger.json http://localhost:1342/api-json  
+
+      - uses: char0n/swagger-editor-validate@v1
+        with:
+          definition-file: swagger.json
+
       - name: Kill port for worker 1342 for unit tests
         run: sudo kill -9 $(sudo lsof -t -i:1342)
 
