@@ -3,10 +3,11 @@ import { GetActiveIntegrations } from '../../../integrations/usecases/get-active
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 import { GetActiveIntegrationsStatusCommand } from './get-active-integrations-status.command';
 import { GetActiveIntegrationsCommand } from '../../../integrations/usecases/get-active-integration/get-active-integration.command';
-import { GetActiveIntegrationResponseDto } from '../../../integrations/dtos/get-active-integration-response.dto';
+
 import { WorkflowResponse } from '../../dto/workflow-response.dto';
 import { NotificationTemplateEntity } from '@novu/dal';
 import { NotificationStep } from '../create-notification-template';
+import { IntegrationResponseDto } from '../../../integrations/dtos/integration-response.dto';
 
 @Injectable()
 export class GetActiveIntegrationsStatus {
@@ -37,7 +38,7 @@ export class GetActiveIntegrationsStatus {
   }
 
   private updateStateByChannelType(
-    activeIntegrations: GetActiveIntegrationResponseDto[],
+    activeIntegrations: IntegrationResponseDto[],
     stateByChannelType: { [key in ChannelTypeEnum]: boolean }
   ): { [key in ChannelTypeEnum]: boolean } {
     return activeIntegrations.reduce((acc, integration) => {
