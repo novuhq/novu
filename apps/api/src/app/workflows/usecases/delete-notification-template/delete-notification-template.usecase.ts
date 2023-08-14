@@ -101,6 +101,13 @@ export class DeleteNotificationTemplate {
         _organization: command.organizationId,
         _environment: command.environmentId,
         _templateId: command.templateId,
+        data: {
+          createdAt: item.createdAt,
+          lastUpdatedAt: item.updatedAt,
+          deletedAt: new Date(),
+          draft: item.draft,
+          critical: item.critical,
+        },
       });
     } catch (e) {
       if (e instanceof DalException) {
