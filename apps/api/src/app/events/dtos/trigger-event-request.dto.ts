@@ -13,14 +13,6 @@ export class TopicPayloadDto {
   type: TriggerRecipientsTypeEnum;
 }
 
-export class BulkTriggerEventDto {
-  @ApiProperty()
-  @IsArray()
-  @ArrayNotEmpty()
-  @ArrayMaxSize(100)
-  events: TriggerEventRequestDto[];
-}
-
 @ApiExtraModels(SubscriberPayloadDto)
 @ApiExtraModels(TopicPayloadDto)
 export class TriggerEventRequestDto {
@@ -77,6 +69,7 @@ export class TriggerEventRequestDto {
         $ref: getSchemaPath(TopicPayloadDto),
       },
     ],
+    type: [String, SubscriberPayloadDto, TopicPayloadDto],
     isArray: true,
   })
   @IsDefined()
@@ -100,4 +93,15 @@ export class TriggerEventRequestDto {
   })
   @IsOptional()
   actor?: TriggerRecipientSubscriber;
+}
+
+export class BulkTriggerEventDto {
+  @ApiProperty({
+    isArray: true,
+    type: [TriggerEventRequestDto],
+  })
+  @IsArray()
+  @ArrayNotEmpty()
+  @ArrayMaxSize(100)
+  events: TriggerEventRequestDto[];
 }
