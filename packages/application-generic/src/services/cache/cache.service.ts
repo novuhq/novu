@@ -68,7 +68,7 @@ export class CacheService implements ICacheService {
     };
     const opts = {
       max: this.MAX_CLIENT_POOL,
-      min: this.MIN_CLIENT_POOL,
+      min: this.MAX_CLIENT_POOL,
     };
 
     this.redisPool = createPool(factory, opts);
