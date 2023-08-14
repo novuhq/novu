@@ -1,4 +1,5 @@
-import { NotificationStepDto } from './notification-template.dto';
+import { NotificationStepDto } from '../workflows';
+import { NotificationTemplateCustomData } from '../../types';
 
 export interface IUpdateNotificationTemplateDto {
   name?: string;
@@ -14,4 +15,6 @@ export interface IUpdateNotificationTemplateDto {
   steps?: NotificationStepDto[];
 
   notificationGroupId?: string;
+
+  data?: NotificationTemplateCustomData;
 }

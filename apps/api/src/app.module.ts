@@ -12,7 +12,7 @@ import { HealthModule } from './app/health/health.module';
 import { OrganizationModule } from './app/organization/organization.module';
 import { EnvironmentsModule } from './app/environments/environments.module';
 import { ExecutionDetailsModule } from './app/execution-details/execution-details.module';
-import { NotificationTemplateModule } from './app/notification-template/notification-template.module';
+import { WorkflowModule } from './app/workflows/workflow.module';
 import { EventsModule } from './app/events/events.module';
 import { WidgetsModule } from './app/widgets/widgets.module';
 import { NotificationModule } from './app/notifications/notification.module';
@@ -30,6 +30,7 @@ import { PartnerIntegrationsModule } from './app/partner-integrations/partner-in
 import { TopicsModule } from './app/topics/topics.module';
 import { InboundParseModule } from './app/inbound-parse/inbound-parse.module';
 import { BlueprintModule } from './app/blueprint/blueprint.module';
+import { TenantModule } from './app/tenant/tenant.module';
 
 const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
   InboundParseModule,
@@ -40,7 +41,7 @@ const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardRefe
   HealthModule,
   EnvironmentsModule,
   ExecutionDetailsModule,
-  NotificationTemplateModule,
+  WorkflowModule,
   EventsModule,
   WidgetsModule,
   NotificationModule,
@@ -57,6 +58,7 @@ const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardRefe
   PartnerIntegrationsModule,
   TopicsModule,
   BlueprintModule,
+  TenantModule,
 ];
 
 const providers: Provider[] = [];

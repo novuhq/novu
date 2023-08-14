@@ -20,11 +20,11 @@ import {
   DetailEnum,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-  GetDecryptedIntegrations,
-  GetDecryptedIntegrationsCommand,
   CompileTemplate,
   CompileTemplateCommand,
   ChatFactory,
+  SelectIntegration,
+  GetNovuProviderCredentials,
 } from '@novu/application-generic';
 
 import { CreateLog } from '../../../shared/logs';
@@ -44,14 +44,16 @@ export class SendMessageChat extends SendMessageBase {
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
-    protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
+    protected selectIntegration: SelectIntegration,
+    protected getNovuProviderCredentials: GetNovuProviderCredentials
   ) {
     super(
       messageRepository,
       createLogUsecase,
       createExecutionDetails,
       subscriberRepository,
-      getDecryptedIntegrationsUsecase
+      selectIntegration,
+      getNovuProviderCredentials
     );
   }
 
@@ -123,7 +125,7 @@ export class SendMessageChat extends SendMessageBase {
          * Do nothing, one chat channel failed, perhaps another one succeeds
          * The failed message has been created
          */
-        Logger.error(`Sending chat message to the chat channel ${channel.providerId} failed`, LOG_CONTEXT);
+        Logger.error(`Sending chat message to the chat channel ${channel.providerId} failed`, e, LOG_CONTEXT);
       }
     }
 
@@ -144,20 +146,17 @@ export class SendMessageChat extends SendMessageBase {
   private async sendChannelMessage(
     command: SendMessageCommand,
     subscriberChannel: IChannelSettings,
-    chatChannel,
+    chatChannel: NotificationStepEntity,
     content: string
   ) {
-    const integration = await this.getIntegration(
-      GetDecryptedIntegrationsCommand.create({
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        providerId: subscriberChannel.providerId,
-        channelType: ChannelTypeEnum.CHAT,
-        findOne: true,
-        active: true,
-        userId: command.userId,
-      })
-    );
+    const integration = await this.getIntegration({
+      id: subscriberChannel._integrationId,
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+      providerId: subscriberChannel.providerId,
+      channelType: ChannelTypeEnum.CHAT,
+      userId: command.userId,
+    });
 
     const chatWebhookUrl = command.payload.webhookUrl || subscriberChannel.credentials?.webhookUrl;
     const channelSpecification = subscriberChannel.credentials?.channel;
@@ -181,7 +180,7 @@ export class SendMessageChat extends SendMessageBase {
       _organizationId: command.organizationId,
       _subscriberId: command._subscriberId,
       _templateId: command._templateId,
-      _messageTemplateId: chatChannel.template._id,
+      _messageTemplateId: chatChannel.template?._id,
       channel: ChannelTypeEnum.CHAT,
       transactionId: command.transactionId,
       chatWebhookUrl: chatWebhookUrl,
@@ -204,6 +203,8 @@ export class SendMessageChat extends SendMessageBase {
 
       return;
     }
+
+    await this.sendSelectedIntegrationExecution(command.job, integration);
 
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({

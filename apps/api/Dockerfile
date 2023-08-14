@@ -5,10 +5,11 @@ ENV BULL_MQ_PRO_NPM_TOKEN=$BULL_MQ_PRO_TOKEN
 ENV NX_DAEMON=false
 
 RUN npm i pm2 -g
-RUN npm --no-update-notifier --no-fund --global install pnpm@7.28.0
+RUN npm --no-update-notifier --no-fund --global install pnpm@7.33.4
 RUN pnpm --version
 
 WORKDIR /usr/src/app
+
 # ------- DEV BUILD ----------
 FROM dev_base AS dev
 ARG PACKAGE_PATH

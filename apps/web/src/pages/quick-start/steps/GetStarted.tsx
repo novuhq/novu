@@ -1,15 +1,16 @@
-import { useEffect, useState } from 'react';
-import { ChannelTypeEnum } from '@novu/shared';
 import styled from '@emotion/styled';
+import { ChannelTypeEnum } from '@novu/shared';
+import { useEffect, useState } from 'react';
 
 import { useSegment } from '../../../components/providers/SegmentProvider';
-import { GetStartedLayout } from '../components/layout/GetStartedLayout';
-import { getStartedSteps, OnBoardingAnalyticsEnum } from '../consts';
 import { ArrowRight } from '../../../design-system/icons/arrows/ArrowRight';
-import { ChannelsConfiguration } from '../components/ChannelsConfiguration';
-import { HeaderSecondaryTitle } from '../components/layout/HeaderLayout';
+import { useIsMultiProviderConfigurationEnabled } from '../../../hooks';
+import { IntegrationsListModal } from '../../integrations/IntegrationsListModal';
 import { IntegrationsStoreModal } from '../../integrations/IntegrationsStoreModal';
+import { ChannelsConfiguration } from '../components/ChannelsConfiguration';
+import { GetStartedLayout } from '../components/layout/GetStartedLayout';
 import { NavButton } from '../components/NavButton';
+import { getStartedSteps, OnBoardingAnalyticsEnum } from '../consts';
 
 const ChannelsConfigurationHolder = styled.div`
   display: flex;
@@ -26,10 +27,13 @@ const ChannelsConfigurationHolder = styled.div`
 
 export function GetStarted() {
   const segment = useSegment();
+  const isMultiProviderConfigurationEnabled = useIsMultiProviderConfigurationEnabled();
   const [clickedChannel, setClickedChannel] = useState<{
     open: boolean;
     channelType?: ChannelTypeEnum;
   }>({ open: false });
+
+  const onIntegrationModalClose = () => setClickedChannel({ open: false });
 
   useEffect(() => {
     segment.track(OnBoardingAnalyticsEnum.CONFIGURE_PROVIDER_VISIT);
@@ -41,7 +45,6 @@ export function GetStarted() {
 
   return (
     <GetStartedLayout
-      header={<HeaderSecondaryTitle>Quick Start Guide</HeaderSecondaryTitle>}
       footer={{
         leftSide: <LearnMoreRef />,
         rightSide: (
@@ -53,13 +56,20 @@ export function GetStarted() {
       }}
     >
       <ChannelsConfigurationHolder>
-        <IntegrationsStoreModal
-          openIntegration={clickedChannel.open}
-          closeIntegration={() => {
-            setClickedChannel({ open: false });
-          }}
-          scrollTo={clickedChannel.channelType}
-        />
+        {isMultiProviderConfigurationEnabled ? (
+          <IntegrationsListModal
+            isOpen={clickedChannel.open}
+            onClose={onIntegrationModalClose}
+            scrollTo={clickedChannel.channelType}
+          />
+        ) : (
+          <IntegrationsStoreModal
+            openIntegration={clickedChannel.open}
+            closeIntegration={onIntegrationModalClose}
+            scrollTo={clickedChannel.channelType}
+          />
+        )}
+
         <ChannelsConfiguration setClickedChannel={setClickedChannel} />
       </ChannelsConfigurationHolder>
     </GetStartedLayout>
@@ -75,7 +85,7 @@ function LearnMoreRef() {
 
   return (
     <a
-      href={'https://docs.novu.co/overview/quick-start'}
+      href={'https://docs.novu.co/overview/quickstart/general-quickstart'}
       style={{ color: '#DD2476', textDecoration: 'underline', fontSize: '18px' }}
       onClick={() => handleOnClick}
       target="_blank"

@@ -29,7 +29,7 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.get('.mantine-Modal-modal button').contains('Delete step').click();
     cy.getByTestId(`node-inAppSelector`).should('not.exist');
     cy.get('.react-flow__node').should('have.length', 3);
-    cy.get('.react-flow__node').first().should('contain', 'Trigger').next().should('contain', 'Email');
+    cy.get('.react-flow__node').first().should('contain', 'Workflow trigger').next().should('contain', 'Email');
     cy.getByTestId('notification-template-submit-btn').click();
 
     cy.visit('/workflows/edit/' + template._id);
@@ -99,7 +99,7 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.get('.react-flow__node').should('have.length', 5);
     cy.get('.react-flow__node')
       .first()
-      .should('contain', 'Trigger')
+      .should('contain', 'Workflow trigger')
       .next()
       .should('contain', 'In-App')
       .next()
@@ -354,5 +354,35 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.getByTestId('filter-confirm-btn').click();
 
     cy.getByTestId('add-filter-btn').contains('2 filters');
+  });
+
+  it('should re-render content on between step click', function () {
+    cy.waitLoadTemplatePage(() => {
+      cy.visit('/workflows/create');
+    });
+    cy.waitForNetworkIdle(500);
+
+    dragAndDrop('sms');
+
+    dragAndDrop('delay');
+
+    dragAndDrop('sms');
+
+    cy.waitForNetworkIdle(500);
+
+    const firstContent = 'first content for sms';
+    const lastContent = 'last content for sms';
+
+    cy.clickWorkflowNode(`node-smsSelector`);
+    cy.getByTestId('smsNotificationContent').type(firstContent);
+
+    cy.clickWorkflowNode(`node-smsSelector`, true);
+    cy.getByTestId('smsNotificationContent').type(lastContent);
+
+    cy.clickWorkflowNode(`node-smsSelector`);
+    cy.getByTestId('smsNotificationContent').should('have.text', firstContent);
+
+    cy.clickWorkflowNode(`node-smsSelector`, true);
+    cy.getByTestId('smsNotificationContent').should('have.text', lastContent);
   });
 });

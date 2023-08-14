@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import {
   MessageRepository,
   NotificationStepEntity,
-  OrganizationRepository,
   SubscriberRepository,
   EnvironmentRepository,
   IntegrationEntity,
@@ -23,12 +22,11 @@ import {
   DetailEnum,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-  GetDecryptedIntegrations,
-  GetDecryptedIntegrationsCommand,
-  GetNovuIntegration,
+  SelectIntegration,
   CompileEmailTemplate,
   CompileEmailTemplateCommand,
   MailFactory,
+  GetNovuProviderCredentials,
 } from '@novu/application-generic';
 
 import { CreateLog } from '../../../shared/logs';
@@ -46,16 +44,17 @@ export class SendMessageEmail extends SendMessageBase {
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
-    private organizationRepository: OrganizationRepository,
     private compileEmailTemplateUsecase: CompileEmailTemplate,
-    protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
+    protected selectIntegration: SelectIntegration,
+    protected getNovuProviderCredentials: GetNovuProviderCredentials
   ) {
     super(
       messageRepository,
       createLogUsecase,
       createExecutionDetails,
       subscriberRepository,
-      getDecryptedIntegrationsUsecase
+      selectIntegration,
+      getNovuProviderCredentials
     );
   }
 
@@ -69,17 +68,15 @@ export class SendMessageEmail extends SendMessageBase {
 
     let integration: IntegrationEntity | undefined = undefined;
 
+    const overrideSelectedIntegration = command.overrides?.email?.integrationIdentifier;
     try {
-      integration = await this.getIntegration(
-        GetDecryptedIntegrationsCommand.create({
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          channelType: ChannelTypeEnum.EMAIL,
-          findOne: true,
-          active: true,
-          userId: command.userId,
-        })
-      );
+      integration = await this.getIntegration({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        channelType: ChannelTypeEnum.EMAIL,
+        userId: command.userId,
+        identifier: overrideSelectedIntegration as string,
+      });
     } catch (e) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
@@ -95,6 +92,7 @@ export class SendMessageEmail extends SendMessageBase {
 
       return;
     }
+
     const emailChannel: NotificationStepEntity = command.step;
     if (!emailChannel) throw new PlatformException('Email channel step not found');
     if (!emailChannel.template) throw new PlatformException('Email channel template not found');
@@ -114,11 +112,20 @@ export class SendMessageEmail extends SendMessageBase {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
+          ...(overrideSelectedIntegration
+            ? {
+                raw: JSON.stringify({
+                  integrationIdentifier: overrideSelectedIntegration,
+                }),
+              }
+            : {}),
         })
       );
 
       return;
     }
+
+    await this.sendSelectedIntegrationExecution(command.job, integration);
 
     const overrides: Record<string, any> = Object.assign(
       {},
@@ -454,7 +461,7 @@ export class SendMessageEmail extends SendMessageBase {
         ...integration.credentials,
         senderName: senderName && senderName.length > 0 ? senderName : integration.credentials.senderName,
       },
-      providerId: GetNovuIntegration.mapProviders(ChannelTypeEnum.EMAIL, integration.providerId),
+      providerId: integration.providerId,
     };
   }
 }
@@ -465,6 +472,7 @@ export const createMailData = (options: IEmailOptions, overrides: Record<string,
   let to = Array.isArray(options.to) ? options.to : [options.to];
   to = [...to, ...(overrides?.to || [])];
   to = to.reduce(filterDuplicate, []);
+  const ipPoolName = overrides?.ipPoolName ? { ipPoolName: overrides?.ipPoolName } : {};
 
   return {
     ...options,
@@ -473,7 +481,7 @@ export const createMailData = (options: IEmailOptions, overrides: Record<string,
     text: overrides?.text,
     cc: overrides?.cc || [],
     bcc: overrides?.bcc || [],
-    ipPoolName: overrides?.ipPoolName,
+    ...ipPoolName,
   };
 };
 

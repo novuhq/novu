@@ -114,6 +114,8 @@ export function ThemeProvider({ children }: { children: JSX.Element; dark?: Bool
               ...theme.fn.fontStyles(),
               backgroundColor: theme.colorScheme === 'dark' ? colors.BGDark : colors.BGLight,
               color: theme.colorScheme === 'dark' ? colors.white : colors.B40,
+              marginRight: `calc(-1 * var(--removed-scroll-width, 0))`,
+              overflow: 'hidden',
             },
             a: {
               textDecoration: 'none',

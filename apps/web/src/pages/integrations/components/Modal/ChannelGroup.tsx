@@ -1,7 +1,8 @@
 import { Container, Grid } from '@mantine/core';
 import { Title } from '../../../../design-system';
 import { ChannelTypeEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
-import { IIntegratedProvider } from '../../IntegrationsStorePage';
+
+import type { IIntegratedProvider } from '../../types';
 import { When } from '../../../../components/utils/When';
 import { CONTEXT_PATH, IS_DOCKER_HOSTED } from '../../../../config';
 import { ProviderCard } from './ProviderCard';
@@ -52,6 +53,7 @@ export function ChannelGroup({
                 },
                 betaVersion: false,
                 novu: true,
+                primary: false,
               }}
               onConnectClick={handlerOnConnectClick}
             />
@@ -79,6 +81,7 @@ export function ChannelGroup({
                 },
                 betaVersion: false,
                 novu: true,
+                primary: false,
               }}
               onConnectClick={handlerOnConnectClick}
             />

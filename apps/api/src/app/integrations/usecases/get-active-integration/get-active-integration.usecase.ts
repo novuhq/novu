@@ -1,21 +1,31 @@
 import { Injectable } from '@nestjs/common';
-import { IntegrationEntity } from '@novu/dal';
-import { GetDecryptedIntegrations, GetDecryptedIntegrationsCommand } from '@novu/application-generic';
 
-import { GetIntegrationsCommand } from '../get-integrations/get-integrations.command';
+import { GetDecryptedIntegrations, GetDecryptedIntegrationsCommand } from '@novu/application-generic';
+import { IntegrationResponseDto } from '../../dtos/integration-response.dto';
+import { GetActiveIntegrationsCommand } from './get-active-integration.command';
 
 @Injectable()
 export class GetActiveIntegrations {
   constructor(private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations) {}
 
-  async execute(command: GetIntegrationsCommand): Promise<IntegrationEntity[]> {
-    return await this.getDecryptedIntegrationsUsecase.execute(
+  async execute(command: GetActiveIntegrationsCommand): Promise<IntegrationResponseDto[]> {
+    const activeIntegrations = await this.getDecryptedIntegrationsUsecase.execute(
       GetDecryptedIntegrationsCommand.create({
-        environmentId: command.environmentId,
         organizationId: command.organizationId,
-        active: true,
+        environmentId: command.environmentId,
         userId: command.userId,
+        active: true,
       })
     );
+
+    if (!activeIntegrations.length) {
+      return [];
+    }
+
+    return activeIntegrations;
   }
+}
+
+export function notNullish<TValue>(value: TValue | null | undefined): value is TValue {
+  return value !== null && value !== undefined;
 }

@@ -1,4 +1,6 @@
 export { Button } from './button/Button';
+export { PlusButton } from './button/PlusButton';
+export type { IButtonProps } from './button/Button';
 export type { Size } from './button/Button';
 export { Checkbox } from './checkbox/Checkbox';
 export { colors, shadows } from './config';
@@ -24,7 +26,9 @@ export { SegmentedControl } from './segmented-control/SegmentedControl';
 export { NotificationBadge } from './notification-badge/NotificationBadge';
 export { Modal } from './modal/Modal';
 export { LoadingOverlay } from './loading-overlay/LoadingOverlay';
+export { NameInput } from './name-input/NameInput';
 export * from './cards';
 export * from './arrow-button';
 export * from './popover';
 export * from './dots-navigation';
+export * from './sidebar';

@@ -43,13 +43,21 @@ const LeftContent = styled.div`
   display: flex;
   align-items: center;
   gap: 15px;
+  svg {
+    stop:first-child {
+      stop-color: #dd2476 !important;
+    }
+    stop:last-child {
+      stop-color: #ff512f !important;
+    }
+  }
 `;
 
 const StepCard: any = styled.div`
   position: relative;
   display: flex;
-  width: 300px;
-  height: 75px;
+  width: 280px;
+  height: 80px;
   box-shadow: ${({ theme }) => (theme.colorScheme === 'dark' ? shadows.dark : shadows.light)};
   border-radius: 7px;
   pointer-events: none;

@@ -1,12 +1,12 @@
 import { Container, TabsValue } from '@mantine/core';
 
-import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
-import { Tabs } from '../../design-system';
+import PageHeader from '../../components/layout/components/PageHeader';
 import { useAuthContext } from '../../components/providers/AuthProvider';
-import { BrandingForm, LayoutsListPage } from './tabs';
 import { useSegment } from '../../components/providers/SegmentProvider';
+import { Tabs } from '../../design-system';
 import { useEnvController } from '../../hooks';
+import { BrandingForm, LayoutsListPage } from './tabs';
 
 const BRANDING = 'Assets';
 const LAYOUT = 'Layouts';
@@ -45,7 +45,7 @@ export function BrandPage() {
   return (
     <PageContainer title="Brand">
       <PageHeader title="Brand" />
-      <Container fluid mt={15} ml={5}>
+      <Container fluid px={30}>
         <Tabs
           loading={!currentOrganization}
           menuTabs={menuTabs}

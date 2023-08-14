@@ -3,6 +3,12 @@ name: Run Worker
 
 description: Sets up a Redis Cluster instance needed to run the tests
 
+inputs:
+  launch_darkly_sdk_key:
+    description: 'The Launch Darkly SDK key to use'
+    required: false
+    default: ''
+
 runs:
   using: composite
 
@@ -19,6 +25,7 @@ runs:
       shell: bash
       env:
         IN_MEMORY_CLUSTER_MODE_ENABLED: true
+        LAUNCH_DARKLY_SDK_KEY: ${{ inputs.launch_darkly_sdk_key }}
       run: cd apps/worker && pnpm start:test &
 
     - name: Wait on worker

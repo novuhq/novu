@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import styled from '@emotion/styled';
 
-import { DotsNavigation } from '../../../../design-system';
+import { colors, DotsNavigation } from '../../../../design-system';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../../../constants/routes.enum';
 import { Grid } from '@mantine/core';
@@ -10,7 +10,7 @@ interface IFooterLayoutProps {
   leftSide: React.ReactNode;
   rightSide: React.ReactNode;
 }
-
+export const FOOTER_HEIGHT = 80;
 export function FooterLayout({ leftSide, rightSide }: IFooterLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -31,7 +31,7 @@ export function FooterLayout({ leftSide, rightSide }: IFooterLayoutProps) {
 
   return (
     <FooterWrapper>
-      <Grid justify={'space-between'} style={{ width: '100%' }}>
+      <Grid justify={'space-between'} style={{ width: '100%' }} m={0} mx={12}>
         <LeftCol span={4}>{leftSide} </LeftCol>
         <MiddleCol span={4}>
           <DotsNavigation selectedIndex={selectedIndex} size={2} onClick={handleOnNavigationClick} />
@@ -63,17 +63,15 @@ const RightCol = styled(Grid.Col)`
 `;
 
 const FooterWrapper = styled.div`
+  width: 100%;
+  height: ${FOOTER_HEIGHT}px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-direction: row;
-
-  padding: 32px 40px;
   box-shadow: inset 0 1px 0 #000000;
 
-  @media screen and (min-width: 1369px) {
-    padding: 32px 80px;
-  }
+  background-color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B15 : colors.white)};
 
   ${({ theme }) => {
     return (

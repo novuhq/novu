@@ -7,11 +7,11 @@ import { OrderDirectionEnum } from '../../types';
 export class FilterLayoutsCommand extends EnvironmentCommand {
   @IsNumber()
   @IsOptional()
-  page?: number;
+  page?: number = 0;
 
   @IsNumber()
   @IsOptional()
-  pageSize?: number;
+  pageSize?: number = 10;
 
   @IsString()
   @IsOptional()

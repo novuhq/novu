@@ -1,5 +1,6 @@
-import { NotificationStepDto } from './notification-template.dto';
+import { NotificationStepDto } from '../workflows';
 import { IPreferenceChannels } from '../../entities/subscriber-preference';
+import { NotificationTemplateCustomData } from '../../types';
 
 export interface ICreateNotificationTemplateDto {
   name: string;
@@ -21,4 +22,6 @@ export interface ICreateNotificationTemplateDto {
   preferenceSettings?: IPreferenceChannels;
 
   blueprintId?: string;
+
+  data?: NotificationTemplateCustomData;
 }

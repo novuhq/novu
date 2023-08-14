@@ -10,15 +10,19 @@ export class ChangeMemberRole {
   constructor(private organizationRepository: OrganizationRepository, private memberRepository: MemberRepository) {}
 
   async execute(command: ChangeMemberRoleCommand) {
+    if (![MemberRoleEnum.MEMBER, MemberRoleEnum.ADMIN].includes(command.role)) {
+      throw new ApiException('Not supported role type');
+    }
+
+    if (command.role !== MemberRoleEnum.ADMIN) {
+      throw new ApiException(`The change of role to an ${command.role} type is not supported`);
+    }
+
     const organization = await this.organizationRepository.findById(command.organizationId);
     if (!organization) throw new NotFoundException('No organization was found');
 
     const member = await this.memberRepository.findMemberById(organization._id, command.memberId);
-    if (!member) throw new ApiException('No member was found');
-
-    if (![MemberRoleEnum.MEMBER, MemberRoleEnum.ADMIN].includes(command.role)) {
-      throw new ApiException('Not supported role type');
-    }
+    if (!member) throw new NotFoundException('No member was found');
 
     const roles = [command.role];
 

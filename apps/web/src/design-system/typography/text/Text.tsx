@@ -1,10 +1,13 @@
-import { Text as MantineText, MantineColor, useMantineTheme } from '@mantine/core';
+import React from 'react';
+import { Text as MantineText, MantineColor, useMantineTheme, TextProps } from '@mantine/core';
 
 import { colors } from '../../config';
 import { SpacingProps } from '../../shared/spacing.props';
 
 interface ITextProps extends JSX.ElementChildrenAttribute, SpacingProps {
-  size?: 'md' | 'lg';
+  size?: TextProps['size'];
+  style?: TextProps['style'];
+  styles?: TextProps['styles'];
   align?: 'left' | 'center' | 'right' | 'justify';
   weight?: 'bold' | 'normal';
   color?: MantineColor;
@@ -16,7 +19,7 @@ interface ITextProps extends JSX.ElementChildrenAttribute, SpacingProps {
  * Text component
  *
  */
-export function Text({ children, gradient = false, ...props }: ITextProps) {
+export const Text = React.forwardRef<HTMLDivElement, ITextProps>(({ children, gradient = false, ...props }, ref) => {
   const { colorScheme } = useMantineTheme();
   const gradientStyles = gradient
     ? { backgroundImage: colors.horizontal, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }
@@ -28,8 +31,16 @@ export function Text({ children, gradient = false, ...props }: ITextProps) {
   }
 
   return (
-    <MantineText lineClamp={props.rows} size="md" weight="normal" style={gradientStyles} {...props} color={textColor}>
+    <MantineText
+      lineClamp={props.rows}
+      size="md"
+      weight="normal"
+      style={gradientStyles}
+      ref={ref}
+      {...props}
+      color={textColor}
+    >
       {children}
     </MantineText>
   );
-}
+});

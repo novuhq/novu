@@ -7,6 +7,9 @@
     "siblings_only": true
   },
 
+  // no-multiple-blanks
+  "MD012": false,
+  
   // MD032/blanks-around-lists - Lists should be surrounded by blank lines
   "MD032": false,
 
@@ -44,5 +47,8 @@
   // MD-46/code-block-style
   "MD046": {
     "style": "fenced"
-  }
+  },
+
+  // MD031/blanks-around-fences Fenced code blocks should be surrounded by blank lines
+  "MD031": false
 }
