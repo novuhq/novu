@@ -62,7 +62,7 @@ export const NotificationSettingsForm = ({ trigger }: { trigger?: INotificationT
 
   return (
     <>
-      <Grid gutter={0}>
+      <Grid gutter={0} mt={-8} mb={-8}>
         <Grid.Col span={6}>
           <Stack
             justify="center"

@@ -15,7 +15,6 @@ export const WorkflowSettingsTabs = () => {
 
   return (
     <Tabs
-      mb={24}
       orientation="horizontal"
       keepMounted={true}
       onTabChange={(tabValue) => {
