@@ -161,7 +161,9 @@ export class NotificationTemplateRepository extends BaseRepository<
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
-      .populate({ path: 'notificationGroup' });
+      .populate({ path: 'notificationGroup' })
+      .populate('steps.template', { type: 1 })
+      .lean();
 
     return { totalCount: totalItemsCount, data: this.mapEntities(items) };
   }
