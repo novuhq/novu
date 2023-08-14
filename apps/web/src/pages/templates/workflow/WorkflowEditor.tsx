@@ -24,7 +24,7 @@ import AddNode from './workflow/node-types/AddNode';
 import ChannelNode from './workflow/node-types/ChannelNode';
 import TriggerNode from './workflow/node-types/TriggerNode';
 
-const TOP_ROW_HEIGHT = 74;
+export const TOP_ROW_HEIGHT = 74;
 
 const nodeTypes = {
   channelNode: ChannelNode,
@@ -220,10 +220,22 @@ const WorkflowEditor = () => {
                 <Group>
                   <NameInput />
                   <Group>
-                    <When truthy={pathname !== basePath}>
-                      <UpdateButton />
-                    </When>
+                    <UpdateButton />
                   </Group>
+                  <When truthy={pathname === basePath}>
+                    <Button
+                      pulse={shouldPulse}
+                      onClick={() => {
+                        navigate(basePath + '/snippet');
+                      }}
+                      data-test-id="get-snippet-btn"
+                    >
+                      Get Snippet
+                    </Button>
+                    <Link data-test-id="settings-page" to="settings">
+                      <Settings />
+                    </Link>
+                  </When>
                 </Group>
               </Stack>
             </Container>
@@ -245,6 +257,7 @@ const WorkflowEditor = () => {
             style={{
               width: 'auto',
               minHeight: '600px',
+              position: 'relative',
             }}
           >
             <Outlet
