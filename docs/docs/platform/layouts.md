@@ -55,6 +55,34 @@ You can preview your layout combined with your email content through the `Previe
      </picture>
    </div>
 
+## Override layout on trigger
+
+To override your assigned layout during a trigger event use the `layoutIdentifier` property, the layout specified will be used for all emails in the context of that trigger event.
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+novu.trigger('workflow-identifier', {
+  to: {
+    subscriberId: '...',
+  },
+  payload: {
+    attachments: [
+      {
+        file: fs.readFileSync(__dirname + '/data/test.jpeg'),
+        name: 'test.jpeg',
+        mime: 'image/jpg',
+      },
+    ],
+  },
+  overrides: {
+    layoutIdentifier: 'your-layout-identifier',
+  },
+});
+```
+
 ## Using SDK
 
 Novu SDK supports all layout functionalities:
