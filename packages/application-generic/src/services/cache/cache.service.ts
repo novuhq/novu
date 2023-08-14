@@ -38,7 +38,7 @@ export class CacheService implements ICacheService {
     : 1;
   private readonly MAX_CLIENT_POOL = process.env.REDIS_CACHE_MAX_CLIENT_POOL
     ? Number(process.env.REDIS_CACHE_MAX_CLIENT_POOL)
-    : 5;
+    : 100;
   private redisPool: Pool<InMemoryProviderClient>;
 
   constructor(private inMemoryProviderService: InMemoryProviderService) {
