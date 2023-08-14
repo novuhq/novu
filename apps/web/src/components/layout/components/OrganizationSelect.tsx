@@ -105,6 +105,8 @@ export default function OrganizationSelect() {
 }
 
 const SelectWrapper = styled.div`
+  margin-top: 16px;
+
   input {
     background: transparent;
   }
