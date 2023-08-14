@@ -37,21 +37,24 @@ export function CachedEntity({
         }
       } catch (err) {
         Logger.error(
-          `An error has occurred when extracting "key: ${cacheKey}" in "method: ${methodName}"`,
           err,
+          `An error has occurred when extracting "key: ${cacheKey}" in "method: ${methodName}"`,
           LOG_CONTEXT
         );
       }
 
       const response = await originalMethod.apply(this, args);
 
+      let stringResponse = '';
       try {
-        await cacheService.set(cacheKey, JSON.stringify(response), options);
+        stringResponse = JSON.stringify(response);
+
+        await cacheService.set(cacheKey, stringResponse, options);
       } catch (err) {
         // eslint-disable-next-line no-console
         Logger.error(
-          `An error has occurred when inserting "key: ${cacheKey}" in "method: ${methodName}" with "value: ${response}"`,
           err,
+          `An error has occurred when inserting "key: ${cacheKey}" in "method: ${methodName}" with "value: ${stringResponse}"`,
           LOG_CONTEXT
         );
       }

@@ -62,7 +62,7 @@ export class CacheService implements ICacheService {
         return inMemoryProvider.inMemoryProviderClient;
       },
       destroy: async function (client) {
-        Logger.error('Destroying client ', client, LOG_CONTEXT);
+        Logger.error(client, 'Destroying client ', LOG_CONTEXT);
         client.disconnect();
       },
     };
@@ -86,6 +86,13 @@ export class CacheService implements ICacheService {
         const available = pool.available;
 
         Logger.log(
+          {
+            poolSize: size,
+            inUse: borrowed,
+            pending,
+            available,
+            spareResourceCapacity,
+          },
           'Cache service pool stats' +
             `, resources free or in use in the pool: ${size}` +
             `, resources currently in use: ${borrowed}` +
@@ -233,8 +240,8 @@ export class CacheService implements ICacheService {
       await pipeline.exec();
     } catch (error) {
       Logger.error(
-        `Failed to execute pipeline action ${action} for key ${key}`,
         error,
+        `Failed to execute pipeline action ${action} for key ${key}`,
         LOG_CONTEXT
       );
       throw error;
@@ -282,8 +289,8 @@ export class CacheService implements ICacheService {
       return await handler(client);
     } catch (error) {
       Logger.error(
-        `Unexpected exception occurred while handling use client`,
         error,
+        `Unexpected exception occurred while handling use client`,
         LOG_CONTEXT
       );
       throw error;
