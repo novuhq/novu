@@ -141,7 +141,7 @@ const WorkflowEditor = () => {
 
   if (readonly && pathname === basePath) {
     return (
-      <div style={{ minHeight: '600px', display: 'flex', flexFlow: 'row', height: '100%' }}>
+      <div style={{ display: 'flex', flexFlow: 'row' }}>
         <div
           style={{
             flex: '1 1 auto',
@@ -200,9 +200,8 @@ const WorkflowEditor = () => {
           }}
         />
       </When>
-      <When truthy={readonly && pathname === basePath}>{null}</When>
       <When truthy={!channel || ![StepTypeEnum.EMAIL, StepTypeEnum.IN_APP].includes(channel)}>
-        <div style={{ minHeight: '600px', display: 'flex', flexFlow: 'row', height: '100%' }}>
+        <div style={{ display: 'flex', flexFlow: 'row', position: 'relative' }}>
           <div
             style={{
               flex: '1 1 auto',
@@ -252,21 +251,12 @@ const WorkflowEditor = () => {
               onNodeClick={onNodeClick}
             />
           </div>
-
-          <div
-            style={{
-              width: 'auto',
-              minHeight: '600px',
-              position: 'relative',
+          <Outlet
+            context={{
+              setDragging,
+              onDelete,
             }}
-          >
-            <Outlet
-              context={{
-                setDragging,
-                onDelete,
-              }}
-            />
-          </div>
+          />
         </div>
       </When>
       <DeleteConfirmModal

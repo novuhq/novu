@@ -74,7 +74,7 @@ export const TourProvider = React.memo(() => {
         styles={{
           options: {
             arrowColor: colorScheme === 'dark' ? colors.B30 : colors.B98,
-            zIndex: 99,
+            zIndex: 200,
           },
           tooltipFooter: {
             flexDirection: 'row-reverse',

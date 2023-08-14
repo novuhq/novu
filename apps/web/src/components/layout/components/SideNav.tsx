@@ -137,17 +137,16 @@ export function SideNav({}: Props) {
 
   return (
     <Navbar
-      p={24}
-      pt={16}
       sx={{
         position: 'sticky',
         top: 0,
         zIndex: 'auto',
         backgroundColor: 'transparent',
         borderRight: 'none',
-        paddingRight: 0,
         width: '300px',
-        height: 'max-content',
+        minHeight: '100vh',
+        padding: '16px 24px',
+        paddingBottom: '0px',
         '@media (max-width: 768px)': {
           width: '100%',
         },
@@ -158,13 +157,13 @@ export function SideNav({}: Props) {
           <NovuLogo />
         </Link>
       </Navbar.Section>
-      <Navbar.Section>
+      <Navbar.Section sx={{ overflowY: 'auto', flex: 1 }}>
         <Popover
           classNames={classes}
           withArrow
           opened={opened}
           onClose={() => setOpened(false)}
-          withinPortal={false}
+          withinPortal={true}
           transition="rotate-left"
           transitionDuration={250}
           position="right"
@@ -180,6 +179,7 @@ export function SideNav({}: Props) {
               onChange={async (value) => {
                 await setEnvironment(value);
               }}
+              sx={{ marginBottom: '16px' }}
               data-test-id="environment-switch"
             />
           </Popover.Target>
@@ -193,45 +193,39 @@ export function SideNav({}: Props) {
           </Popover.Dropdown>
         </Popover>
         <NavMenu menuItems={menuItems} />
-      </Navbar.Section>
-      <Navbar.Section mt={15}>
-        <Navbar.Section>
-          <OrganizationSelect />
-        </Navbar.Section>
-        <Navbar.Section>
-          <BottomNav dark={dark} data-test-id="side-nav-bottom-links">
-            <a
-              target="_blank"
-              rel="noopener noreferrer"
-              href="https://discord.novu.co"
-              data-test-id="side-nav-bottom-link-support"
-            >
-              Support
-            </a>
-            <p>
-              <b>&nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp;</b>
-            </p>
-            <a
-              target="_blank"
-              rel="noopener noreferrer"
-              href="https://docs.novu.co"
-              data-test-id="side-nav-bottom-link-documentation"
-            >
-              Docs
-            </a>
-            <p>
-              <b>&nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp;</b>
-            </p>
-            <a
-              target="_blank"
-              rel="noopener noreferrer"
-              href="https://github.com/novuhq/novu/issues/new/choose"
-              data-test-id="side-nav-bottom-link-share-feedback"
-            >
-              Share Feedback
-            </a>
-          </BottomNav>
-        </Navbar.Section>
+        <OrganizationSelect />
+        <BottomNav dark={dark} data-test-id="side-nav-bottom-links">
+          <a
+            target="_blank"
+            rel="noopener noreferrer"
+            href="https://discord.novu.co"
+            data-test-id="side-nav-bottom-link-support"
+          >
+            Support
+          </a>
+          <p>
+            <b>&nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp;</b>
+          </p>
+          <a
+            target="_blank"
+            rel="noopener noreferrer"
+            href="https://docs.novu.co"
+            data-test-id="side-nav-bottom-link-documentation"
+          >
+            Docs
+          </a>
+          <p>
+            <b>&nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp;</b>
+          </p>
+          <a
+            target="_blank"
+            rel="noopener noreferrer"
+            href="https://github.com/novuhq/novu/issues/new/choose"
+            data-test-id="side-nav-bottom-link-share-feedback"
+          >
+            Share Feedback
+          </a>
+        </BottomNav>
       </Navbar.Section>
     </Navbar>
   );
@@ -258,5 +252,4 @@ const BottomNav = styled.div<{ dark: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 5px;
 `;

@@ -72,7 +72,7 @@ export function TestSendEmail({ index, isIntegrationActive }: { index: number; i
 
   return (
     <div>
-      <Text my={30} color={colors.B60}>
+      <Text mb={30} color={colors.B60}>
         Fill in the required variables and send a test to your desired address.
       </Text>
 
@@ -114,7 +114,6 @@ export function TestSendEmail({ index, isIntegrationActive }: { index: number; i
           value={payloadValue}
           onChange={setPayloadValue}
           minRows={12}
-          mb={15}
           validationError="Invalid JSON"
           rightSectionWidth={50}
           rightSectionProps={{ style: { alignItems: 'start', padding: '5px' } }}
