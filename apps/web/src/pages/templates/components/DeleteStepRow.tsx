@@ -20,15 +20,7 @@ export const DeleteStepRow = () => {
   }
 
   return (
-    <Group
-      position="apart"
-      sx={{
-        position: 'absolute',
-        bottom: 24,
-        left: 24,
-        right: 24,
-      }}
-    >
+    <Group position="apart" mt={'auto'}>
       <When truthy={![StepTypeEnum.DELAY, StepTypeEnum.DIGEST].includes(channel)}>
         <div />
       </When>
