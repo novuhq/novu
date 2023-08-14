@@ -1,9 +1,10 @@
-import { colors, Text, Tooltip } from '../../../../../design-system';
 import { useWatch } from 'react-hook-form';
+import { UnstyledButton } from '@mantine/core';
 import { SystemVariablesWithTypes } from '@novu/shared';
+
+import { Text, Tooltip } from '../../../../../design-system';
 import { VarItemsDropdown } from './VarItemsDropdown';
 import { VarLabel } from './VarLabel';
-import { UnstyledButton, useMantineTheme } from '@mantine/core';
 import { EditGradient } from '../../../../../design-system/icons/gradient/EditGradient';
 import { useProcessVariables } from '../../../../../hooks';
 import { VarItemTooltip } from './VarItemTooltip';
@@ -20,7 +21,6 @@ export const VariablesManagement = ({
   control?: any;
   path?: string;
 }) => {
-  const theme = useMantineTheme();
   const variableArray = useWatch({
     name: path ?? `steps.${index}.template.variables`,
     control,
@@ -32,7 +32,6 @@ export const VariablesManagement = ({
       style={{
         width: '100%',
         height: '100%',
-        background: theme.colorScheme === 'dark' ? colors.B17 : colors.B98,
         borderRadius: 7,
         padding: 15,
       }}

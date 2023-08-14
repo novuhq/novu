@@ -8,6 +8,7 @@ import { currentOnboardingStep } from '../route/store';
 import { BodyLayout } from './BodyLayout';
 import { FooterLayout } from './FooterLayout';
 import { HeaderLayout } from './HeaderLayout';
+import { Title } from '../../../../design-system';
 
 interface IGetStartedLayoutProps {
   children?: React.ReactNode;
@@ -15,10 +16,9 @@ interface IGetStartedLayoutProps {
     leftSide: React.ReactNode;
     rightSide: React.ReactNode;
   };
-  header: React.ReactNode;
 }
 
-export function GetStartedLayout({ children, footer, header }: IGetStartedLayoutProps) {
+export function GetStartedLayout({ children, footer }: IGetStartedLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -48,7 +48,9 @@ export function GetStartedLayout({ children, footer, header }: IGetStartedLayout
     <>
       <PageContainer style={{ display: 'flex' }}>
         <PageWrapper>
-          <HeaderLayout>{header}</HeaderLayout>
+          <HeaderLayout>
+            <Title>Get started</Title>
+          </HeaderLayout>
           <BodyLayout>{children}</BodyLayout>
           <FooterLayout leftSide={footer.leftSide} rightSide={footer.rightSide} />
         </PageWrapper>
@@ -59,7 +61,6 @@ export function GetStartedLayout({ children, footer, header }: IGetStartedLayout
 
 const PageWrapper = styled.div`
   display: flex;
-  justify-content: space-between;
   flex-direction: column;
   width: 100%;
   position: relative;
