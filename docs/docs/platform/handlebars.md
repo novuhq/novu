@@ -6,7 +6,7 @@ sidebar_label: Handlebars
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-# Handlebars
+# Handlebars Template
 
 You can customize the notification (appearance and structure) the end users get using Handlebars. This is crucial for many cases, for example, when using the [digest engine](https://docs.novu.co/platform/digest/). 
 
