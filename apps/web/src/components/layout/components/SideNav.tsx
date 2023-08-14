@@ -164,7 +164,7 @@ export function SideNav({}: Props) {
           withArrow
           opened={opened}
           onClose={() => setOpened(false)}
-          withinPortal={false}
+          withinPortal={true}
           transition="rotate-left"
           transitionDuration={250}
           position="right"
