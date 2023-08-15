@@ -1,5 +1,9 @@
 import { AxiosResponse } from 'axios';
-import { ButtonTypeEnum, IChannelCredentials } from '@novu/shared';
+import {
+  ButtonTypeEnum,
+  IChannelCredentials,
+  ISubscribersDefine,
+} from '@novu/shared';
 import { MarkMessagesAsEnum } from '@novu/shared';
 import {
   IGetSubscriberNotificationFeedParams,
@@ -29,6 +33,12 @@ export class Subscribers extends WithHttp implements ISubscribers {
     return await this.http.post(`/subscribers`, {
       subscriberId,
       ...data,
+    });
+  }
+
+  async bulkCreate(subscribers: ISubscribersDefine[]) {
+    return await this.http.post(`/subscribers/bulk`, {
+      subscribers,
     });
   }
 
