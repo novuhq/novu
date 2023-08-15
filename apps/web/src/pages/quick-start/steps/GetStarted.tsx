@@ -3,7 +3,6 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { useEffect, useState } from 'react';
 
 import { useSegment } from '../../../components/providers/SegmentProvider';
-import { Title } from '../../../design-system';
 import { ArrowRight } from '../../../design-system/icons/arrows/ArrowRight';
 import { useIsMultiProviderConfigurationEnabled } from '../../../hooks';
 import { IntegrationsListModal } from '../../integrations/IntegrationsListModal';
@@ -46,7 +45,6 @@ export function GetStarted() {
 
   return (
     <GetStartedLayout
-      header={<Title>Get started</Title>}
       footer={{
         leftSide: <LearnMoreRef />,
         rightSide: (

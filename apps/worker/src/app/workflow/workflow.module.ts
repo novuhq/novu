@@ -1,6 +1,5 @@
 import { Provider, Module } from '@nestjs/common';
 import {
-  EventsPerformanceService,
   CreateExecutionDetails,
   BulkCreateExecutionDetails,
   CalculateLimitNovuIntegration,
@@ -136,7 +135,6 @@ const SERVICES: Provider[] = [
     inject: [QueueService, TriggerQueueService, WsQueueService],
   },
   EventsDistributedLockService,
-  EventsPerformanceService,
   CalculateDelayService,
   TriggerProcessorQueueService,
   WorkflowQueueService,

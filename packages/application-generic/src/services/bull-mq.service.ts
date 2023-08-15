@@ -10,9 +10,8 @@ import {
   Worker,
   WorkerOptions,
 } from 'bullmq';
-import { ConnectionOptions } from 'tls';
 import { Injectable, Logger } from '@nestjs/common';
-import { getRedisPrefix, IJobData } from '@novu/shared';
+import { EnvironmentId, getRedisPrefix, IJobData } from '@novu/shared';
 
 interface IQueueMetrics {
   completed: Metrics;
@@ -27,7 +26,13 @@ interface IEventJobData {
   payload: Record<string, unknown>;
 }
 
-type BullMqJobData = undefined | IJobData | IEventJobData;
+interface IEventCountData {
+  event: string;
+  userId: string;
+  _environmentId: EnvironmentId;
+}
+
+type BullMqJobData = undefined | IJobData | IEventJobData | IEventCountData;
 
 export {
   JobsOptions,

@@ -36,7 +36,6 @@ import {
   AnalyticsService,
   buildNotificationTemplateIdentifierKey,
   CachedEntity,
-  EventsPerformanceService,
 } from '../../services';
 import { ApiException } from '../../utils/exceptions';
 
@@ -49,7 +48,6 @@ export class TriggerEvent {
     private createNotificationJobs: CreateNotificationJobs,
     private processSubscriber: ProcessSubscriber,
     private integrationRepository: IntegrationRepository,
-    protected performanceService: EventsPerformanceService,
     private jobRepository: JobRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private logger: PinoLogger,
@@ -58,11 +56,6 @@ export class TriggerEvent {
 
   @InstrumentUsecase()
   async execute(command: TriggerEventCommand) {
-    const mark = this.performanceService.buildTriggerEventMark(
-      command.identifier,
-      command.transactionId
-    );
-
     const { actor, environmentId, identifier, organizationId, to, userId } =
       command;
 
@@ -184,8 +177,6 @@ export class TriggerEvent {
         );
       }
     }
-
-    this.performanceService.setEnd(mark);
   }
 
   @CachedEntity({
