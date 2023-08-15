@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { CacheKeyPrefixEnum } from './key-builders';
 import { CacheService } from './cache.service';
@@ -11,7 +11,7 @@ const LOG_CONTEXT = 'InvalidateCache';
 
 @Injectable()
 export class InvalidateCacheService {
-  constructor(private cacheService: CacheService) {}
+  constructor(@Inject(CacheService) private cacheService: CacheService) {}
 
   public async invalidateByKey({ key }: { key: string }): Promise<number> {
     if (!this.cacheService?.cacheEnabled()) return;

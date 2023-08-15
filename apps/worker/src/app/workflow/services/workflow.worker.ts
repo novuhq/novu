@@ -1,5 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { WorkerOptions } from 'bullmq';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 const nr = require('newrelic');
 import {
   INovuWorker,
@@ -8,27 +7,33 @@ import {
   Store,
   TriggerEvent,
   TriggerEventCommand,
-  TriggerQueueService,
+  WorkflowWorkerService,
+  WorkerOptions,
+  WorkerProcessor,
 } from '@novu/application-generic';
 import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 
 const LOG_CONTEXT = 'TriggerProcessorQueueService';
 
 @Injectable()
-export class TriggerProcessorQueueService extends TriggerQueueService implements INovuWorker {
-  constructor(private triggerEventUsecase: TriggerEvent) {
+export class WorkflowWorker extends WorkflowWorkerService implements INovuWorker {
+  constructor(
+    @Inject(TriggerEvent)
+    private triggerEventUsecase: TriggerEvent
+  ) {
     super();
-    this.bullMqService.createWorker(this.name, this.getWorkerProcessor(), this.getWorkerOpts());
+
+    this.initWorker(this.getWorkerProcessor(), this.getWorkerOptions());
   }
 
-  private getWorkerOpts(): WorkerOptions {
+  private getWorkerOptions(): WorkerOptions {
     return {
       lockDuration: 90000,
       concurrency: 200,
     };
   }
 
-  public getWorkerProcessor() {
+  private getWorkerProcessor(): WorkerProcessor {
     return async ({ data }: { data: TriggerEventCommand }) => {
       return await new Promise(async (resolve, reject) => {
         // eslint-disable-next-line @typescript-eslint/no-this-alias

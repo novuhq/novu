@@ -12,7 +12,7 @@ const envFileMapper = {
   local: '.env',
   dev: '.env.development',
 };
-const selectedEnvFile = envFileMapper[process.env.NODE_ENV as any] || '.env';
+const selectedEnvFile = envFileMapper[String(process.env.NODE_ENV)] || '.env';
 
 const { error } = dotenv.config({ path: `${__dirname}/${process.env.E2E_RUNNER ? '..' : 'src'}/${selectedEnvFile}` });
 

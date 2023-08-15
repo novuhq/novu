@@ -70,7 +70,7 @@ describe('Count - GET /widget/notifications/count', function () {
 
     const messages = await messageRepository.findBySubscriberChannel(
       session.environment._id,
-      subscriberProfile!._id,
+      String(subscriberProfile?._id),
       ChannelTypeEnum.IN_APP
     );
     const messageId = messages[0]._id;
@@ -87,7 +87,7 @@ describe('Count - GET /widget/notifications/count', function () {
 
     const messages = await messageRepository.findBySubscriberChannel(
       session.environment._id,
-      subscriberProfile!._id,
+      String(subscriberProfile?._id),
       ChannelTypeEnum.IN_APP
     );
 
@@ -117,7 +117,7 @@ describe('Count - GET /widget/notifications/count', function () {
 
     const messages = await messageRepository.findBySubscriberChannel(
       session.environment._id,
-      subscriberProfile!._id,
+      String(subscriberProfile?._id),
       ChannelTypeEnum.IN_APP
     );
 

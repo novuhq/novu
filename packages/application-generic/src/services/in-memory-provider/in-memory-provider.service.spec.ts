@@ -22,7 +22,7 @@ describe('In-memory Provider Service', () => {
       expect(inMemoryProviderService.getStatus()).toEqual('ready');
     });
 
-    afterAll(async () => {
+    afterEach(async () => {
       await inMemoryProviderService.shutdown();
     });
 
@@ -44,7 +44,7 @@ describe('In-memory Provider Service', () => {
         expect(inMemoryProviderConfig.family).toEqual(4);
         expect(inMemoryProviderConfig.keepAlive).toEqual(30_000);
         expect(inMemoryProviderConfig.keyPrefix).toEqual('');
-        expect(inMemoryProviderConfig.password).toEqual('');
+        expect(inMemoryProviderConfig.password).toEqual(undefined);
         expect(inMemoryProviderConfig.ttl).toEqual(7_200);
         expect(inMemoryProviderConfig.tls).toEqual(undefined);
       });
@@ -65,8 +65,8 @@ describe('In-memory Provider Service', () => {
         );
         expect(options?.role).toEqual('master');
         expect(options?.username).toEqual(null);
-        expect(options?.password).toEqual('');
-        expect(options?.db).toEqual(0);
+        expect(options?.password).toEqual(null);
+        expect(options?.db).toEqual(1);
       });
 
       it('should we able to operate in the in-memory database', async () => {
@@ -100,7 +100,7 @@ describe('In-memory Provider Service', () => {
       expect(inMemoryProviderService.getStatus()).toEqual('ready');
     });
 
-    afterAll(async () => {
+    afterEach(async () => {
       await inMemoryProviderService.shutdown();
     });
 

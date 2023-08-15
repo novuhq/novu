@@ -10,3 +10,9 @@ export interface IJobData {
   _organizationId: OrganizationId;
   _userId: UserId;
 }
+
+export interface IEventJobData {
+  event: string;
+  userId: string;
+  payload?: Record<string, unknown>;
+}

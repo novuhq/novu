@@ -12,7 +12,6 @@ import {
 } from '@novu/dal';
 import { StepTypeEnum, DigestTypeEnum, DigestUnitEnum, IDigestRegularMetadata } from '@novu/shared';
 import { UserSession, SubscribersService } from '@novu/testing';
-import { QueueService } from '@novu/application-generic';
 
 const axiosInstance = axios.create();
 
@@ -24,7 +23,6 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
   const jobRepository = new JobRepository();
-  let queueService: QueueService;
   const messageRepository = new MessageRepository();
 
   const triggerEvent = async (payload, transactionId?: string): Promise<void> => {
@@ -50,7 +48,6 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     template = await session.createTemplate();
     subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     subscriber = await subscriberService.createSubscriber();
-    queueService = session.testServer?.getService(QueueService);
   });
 
   it('should digest events within time interval', async function () {

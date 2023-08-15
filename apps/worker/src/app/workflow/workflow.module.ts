@@ -1,43 +1,30 @@
-import { Provider, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import {
-  CreateExecutionDetails,
-  BulkCreateExecutionDetails,
-  CalculateLimitNovuIntegration,
-  DigestFilterSteps,
-  DigestFilterStepsRegular,
-  DigestFilterStepsBackoff,
-  DigestFilterStepsTimed,
-  GetDecryptedIntegrations,
-  GetSubscriberPreference,
-  GetSubscriberTemplatePreference,
-  CompileEmailTemplate,
-  CompileTemplate,
-  GetLayoutUseCase,
-  GetNovuLayout,
-  QueueService,
-  TriggerQueueService,
-  AddJob,
   AddDelayJob,
   AddDigestJob,
-  EventsDistributedLockService,
+  bullMqService,
+  BulkCreateExecutionDetails,
+  CalculateLimitNovuIntegration,
+  CompileEmailTemplate,
+  CompileTemplate,
+  GetDecryptedIntegrations,
+  GetLayoutUseCase,
+  GetNovuLayout,
+  GetNovuProviderCredentials,
+  GetSubscriberPreference,
+  GetSubscriberTemplatePreference,
+  QueuesModule,
+  SelectIntegration,
   SendTestEmail,
   SendTestEmailCommand,
-  CreateSubscriber,
-  UpdateSubscriber,
-  TriggerEvent,
-  CreateNotificationJobs,
-  ProcessSubscriber,
-  StoreSubscriberJobs,
-  CalculateDelayService,
-  WsQueueService,
-  SelectIntegration,
-  GetNovuProviderCredentials,
+  StandardQueueService,
+  WorkflowQueueService,
+  WebSocketsWorkerService,
+  WebSocketsQueueService,
 } from '@novu/application-generic';
-import { JobRepository } from '@novu/dal';
+import { JobRepository, MessageRepository, OrganizationRepository, SubscriberRepository } from '@novu/dal';
 
-import { SharedModule } from '../shared/shared.module';
-import { WorkflowQueueService } from './services/workflow-queue.service';
-import { TriggerProcessorQueueService } from './services/trigger-processor-queue.service';
+import { JobMetricService, StandardWorker, WorkflowWorker } from './services';
 import {
   MessageMatcher,
   SendMessage,
@@ -58,15 +45,16 @@ import {
   UpdateJobStatus,
   WebhookFilterBackoffStrategy,
 } from './usecases';
-import { MetricQueueService } from './services/metric-queue.service';
+
+import { CreateLog } from '../shared/logs';
+import { SharedModule } from '../shared/shared.module';
+
+const REPOSITORIES = [JobRepository];
 
 const USE_CASES = [
-  AddJob,
   AddDelayJob,
   AddDigestJob,
   CalculateLimitNovuIntegration,
-  CreateExecutionDetails,
-  BulkCreateExecutionDetails,
   GetDecryptedIntegrations,
   SelectIntegration,
   GetSubscriberPreference,
@@ -89,60 +77,32 @@ const USE_CASES = [
   Digest,
   GetDigestEventsBackoff,
   GetDigestEventsRegular,
-  DigestFilterStepsTimed,
   GetLayoutUseCase,
   GetNovuLayout,
-  DigestFilterSteps,
-  DigestFilterStepsRegular,
-  DigestFilterStepsBackoff,
+  GetNovuProviderCredentials,
   SetJobAsCompleted,
   SetJobAsFailed,
   UpdateJobStatus,
   WebhookFilterBackoffStrategy,
-  StoreSubscriberJobs,
-  TriggerEvent,
-  CreateNotificationJobs,
-  ProcessSubscriber,
-  CreateSubscriber,
-  UpdateSubscriber,
-  GetNovuProviderCredentials,
 ];
 
-const REPOSITORIES = [JobRepository];
+const bullMqTokenList = {
+  provide: 'BULLMQ_LIST',
+  useFactory: (
+    standardQueueService: WorkflowQueueService,
+    webSocketsQueueService: WebSocketsQueueService,
+    workflowQueueService: WorkflowQueueService
+  ) => {
+    return [standardQueueService, webSocketsQueueService, workflowQueueService];
+  },
+  inject: [StandardQueueService, WebSocketsQueueService, WorkflowQueueService],
+};
 
-const SERVICES: Provider[] = [
-  {
-    provide: MetricQueueService,
-    useClass: MetricQueueService,
-  },
-  {
-    provide: QueueService,
-    useClass: WorkflowQueueService,
-  },
-  {
-    provide: TriggerQueueService,
-    useClass: TriggerProcessorQueueService,
-  },
-  {
-    provide: WsQueueService,
-    useClass: WsQueueService,
-  },
-  {
-    provide: 'BULLMQ_LIST',
-    useFactory: (workflowQueue: QueueService, triggerQueue: TriggerQueueService, wsQueue: WsQueueService) => {
-      return [workflowQueue, triggerQueue, wsQueue];
-    },
-    inject: [QueueService, TriggerQueueService, WsQueueService],
-  },
-  EventsDistributedLockService,
-  CalculateDelayService,
-  TriggerProcessorQueueService,
-  WorkflowQueueService,
-];
+const PROVIDERS = [bullMqService, bullMqTokenList, StandardWorker, WorkflowWorker];
 
 @Module({
-  imports: [SharedModule],
+  imports: [SharedModule, QueuesModule],
   controllers: [],
-  providers: [...USE_CASES, ...REPOSITORIES, ...SERVICES],
+  providers: [...PROVIDERS, ...USE_CASES, ...REPOSITORIES],
 })
 export class WorkflowModule {}

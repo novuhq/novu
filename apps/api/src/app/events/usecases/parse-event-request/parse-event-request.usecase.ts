@@ -1,4 +1,4 @@
-import { Injectable, UnprocessableEntityException, Logger } from '@nestjs/common';
+import { Inject, Injectable, UnprocessableEntityException, Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 import * as hat from 'hat';
 import { merge } from 'lodash';
@@ -6,12 +6,14 @@ import { v4 as uuidv4 } from 'uuid';
 import { Instrument, InstrumentUsecase } from '@novu/application-generic';
 import { NotificationTemplateRepository } from '@novu/dal';
 import { ISubscribersDefine } from '@novu/shared';
-import { StorageHelperService, CachedEntity, buildNotificationTemplateIdentifierKey } from '@novu/application-generic';
+import { buildNotificationTemplateIdentifierKey, CachedEntity, StorageHelperService } from '@novu/application-generic';
+
+import { ParseEventRequestCommand } from './parse-event-request.command';
+
+import { EventsWorkflowQueueService } from '../../services';
 
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { VerifyPayload, VerifyPayloadCommand } from '../verify-payload';
-import { ParseEventRequestCommand } from './parse-event-request.command';
-import { TriggerHandlerQueueService } from '../../services/workflow-queue/trigger-handler-queue.service';
 import { MapTriggerRecipients, MapTriggerRecipientsCommand } from '../map-trigger-recipients';
 
 @Injectable()
@@ -20,7 +22,7 @@ export class ParseEventRequest {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private verifyPayload: VerifyPayload,
     private storageHelperService: StorageHelperService,
-    private triggerHandlerQueueService: TriggerHandlerQueueService,
+    private eventsWorkflowQueueService: EventsWorkflowQueueService,
     private mapTriggerRecipients: MapTriggerRecipients
   ) {}
 
@@ -99,16 +101,13 @@ export class ParseEventRequest {
 
     command.payload = merge({}, defaultPayload, command.payload);
 
-    await this.triggerHandlerQueueService.add(
+    const jobData = {
+      ...command,
+      to: mappedRecipients,
+      actor: mappedActor,
       transactionId,
-      {
-        ...command,
-        to: mappedRecipients,
-        actor: mappedActor,
-        transactionId,
-      },
-      command.organizationId
-    );
+    };
+    await this.eventsWorkflowQueueService.add(transactionId, jobData, command.organizationId);
 
     return {
       acknowledged: true,

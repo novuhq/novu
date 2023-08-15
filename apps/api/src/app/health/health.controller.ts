@@ -1,12 +1,11 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
-import { HealthCheck, HealthCheckResult, HealthCheckService } from '@nestjs/terminus';
-import { HealthIndicatorFunction } from '@nestjs/terminus/dist/health-indicator';
+import { HealthCheck, HealthCheckResult, HealthCheckService, HealthIndicatorFunction } from '@nestjs/terminus';
 import {
   CacheServiceHealthIndicator,
   DalServiceHealthIndicator,
   InMemoryProviderServiceHealthIndicator,
-  TriggerQueueServiceHealthIndicator,
+  WorkflowQueueServiceHealthIndicator,
 } from '@novu/application-generic';
 
 import { version } from '../../../package.json';
@@ -19,7 +18,7 @@ export class HealthController {
     private cacheHealthIndicator: CacheServiceHealthIndicator,
     private dalHealthIndicator: DalServiceHealthIndicator,
     private inMemoryHealthIndicator: InMemoryProviderServiceHealthIndicator,
-    private triggerQueueHealthIndicator: TriggerQueueServiceHealthIndicator
+    private workflowQueueHealthIndicator: WorkflowQueueServiceHealthIndicator
   ) {}
 
   @Get()
@@ -28,6 +27,7 @@ export class HealthController {
     const checks: HealthIndicatorFunction[] = [
       () => this.dalHealthIndicator.isHealthy(),
       () => this.inMemoryHealthIndicator.isHealthy(),
+      () => this.workflowQueueHealthIndicator.isHealthy(),
       async () => {
         return {
           apiVersion: {
@@ -36,7 +36,6 @@ export class HealthController {
           },
         };
       },
-      () => this.triggerQueueHealthIndicator.isHealthy(),
     ];
 
     if (process.env.ELASTICACHE_CLUSTER_SERVICE_HOST) {

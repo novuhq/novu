@@ -23,34 +23,51 @@ import {
   TopicSubscribersRepository,
 } from '@novu/dal';
 import {
-  AnalyticsService,
-  WsQueueService,
+  AddDelayJob,
+  AddDigestJob,
+  AddJob,
+  analyticsService,
+  BulkCreateExecutionDetails,
+  bullMqService,
+  cacheService,
+  CalculateDelayService,
+  CreateExecutionDetails,
   createNestLoggingModuleOptions,
-  LoggerModule,
-  InvalidateCacheService,
-  CacheService,
-  DistributedLockService,
+  CreateNotificationJobs,
+  CreateSubscriber,
+  DalServiceHealthIndicator,
+  DigestFilterSteps,
+  DigestFilterStepsBackoff,
+  DigestFilterStepsRegular,
+  DigestFilterStepsTimed,
+  distributedLockService,
+  EventsDistributedLockService,
+  featureFlagsService,
   GetIsInMemoryClusterModeEnabled,
-  GetIsMultiProviderConfigurationEnabled,
-  InMemoryProviderService,
+  getIsMultiProviderConfigurationEnabled,
+  inMemoryProviderService,
+  InvalidateCacheService,
+  launchDarklyService,
+  LoggerModule,
+  ProcessSubscriber,
+  QueuesModule,
+  readinessService,
+  StandardQueueService,
+  StandardQueueServiceHealthIndicator,
   StorageHelperService,
-  StorageService,
-  GCSStorageService,
-  AzureBlobStorageService,
-  S3StorageService,
-  ReadinessService,
-  QueueServiceHealthIndicator,
-  TriggerQueueServiceHealthIndicator,
-  WsQueueServiceHealthIndicator,
-  QueueService,
-  TriggerQueueService,
-  LaunchDarklyService,
-  FeatureFlagsService,
-  InMemoryProviderEnum,
+  storageService,
+  StoreSubscriberJobs,
+  TriggerEvent,
+  UpdateSubscriber,
+  WebSocketsQueueService,
+  WebSocketsQueueServiceHealthIndicator,
+  WorkflowQueueService,
+  WorkflowQueueServiceHealthIndicator,
 } from '@novu/application-generic';
 
 import * as packageJson from '../../../package.json';
 import { CreateLog } from './logs';
+import { StandardWorker } from '../workflow/services';
 
 const DAL_MODELS = [
   UserRepository,
@@ -75,165 +92,56 @@ const DAL_MODELS = [
   TopicSubscribersRepository,
 ];
 
-const dalService = new DalService();
-
-function getStorageServiceClass() {
-  switch (process.env.STORAGE_SERVICE) {
-    case 'GCS':
-      return GCSStorageService;
-    case 'AZURE':
-      return AzureBlobStorageService;
-    default:
-      return S3StorageService;
-  }
-}
-
-const launchDarklyService = {
-  provide: LaunchDarklyService,
-  useFactory: async (): Promise<LaunchDarklyService> => {
-    const service = new LaunchDarklyService();
-    await service.initialize();
+const dalService = {
+  provide: DalService,
+  useFactory: async () => {
+    const service = new DalService();
+    await service.connect(process.env.MONGO_URL);
 
     return service;
   },
-};
-
-const featureFlagsService = {
-  provide: FeatureFlagsService,
-  useFactory: async (): Promise<FeatureFlagsService> => {
-    const instance = new FeatureFlagsService();
-    await instance.initialize();
-
-    return instance;
-  },
-};
-
-const getIsInMemoryClusterModeEnabled = {
-  provide: GetIsInMemoryClusterModeEnabled,
-  useFactory: (): GetIsInMemoryClusterModeEnabled => {
-    return new GetIsInMemoryClusterModeEnabled();
-  },
-};
-
-const getIsMultiProviderConfigurationEnabled = {
-  provide: GetIsMultiProviderConfigurationEnabled,
-  useFactory: async (): Promise<GetIsMultiProviderConfigurationEnabled> => {
-    const featureFlagsServiceFactory = await featureFlagsService.useFactory();
-    const useCase = new GetIsMultiProviderConfigurationEnabled(featureFlagsServiceFactory);
-
-    return useCase;
-  },
-};
-
-const inMemoryProviderService = {
-  provide: InMemoryProviderService,
-  useFactory: (
-    getIsInMemoryClusterModeEnabledUseCase: GetIsInMemoryClusterModeEnabled,
-    provider: InMemoryProviderEnum,
-    enableAutoPipelining?: boolean
-  ): InMemoryProviderService => {
-    return new InMemoryProviderService(getIsInMemoryClusterModeEnabledUseCase, provider, enableAutoPipelining);
-  },
-  inject: [GetIsInMemoryClusterModeEnabled],
-};
-
-const cacheService = {
-  provide: CacheService,
-  useFactory: async (
-    getIsInMemoryClusterModeEnabledUseCase: GetIsInMemoryClusterModeEnabled
-  ): Promise<CacheService> => {
-    // TODO: Temporary to test in Dev. Should be removed.
-    const enableAutoPipelining = process.env.REDIS_CACHE_ENABLE_AUTOPIPELINING === 'true';
-    const factoryInMemoryProviderService = inMemoryProviderService.useFactory(
-      getIsInMemoryClusterModeEnabledUseCase,
-      InMemoryProviderEnum.ELASTICACHE,
-      enableAutoPipelining
-    );
-
-    const service = new CacheService(factoryInMemoryProviderService);
-
-    await service.initialize();
-
-    return service;
-  },
-  inject: [GetIsInMemoryClusterModeEnabled],
-};
-
-const distributedLockService = {
-  provide: DistributedLockService,
-  useFactory: async (
-    getIsInMemoryClusterModeEnabledUseCase: GetIsInMemoryClusterModeEnabled
-  ): Promise<DistributedLockService> => {
-    const factoryInMemoryProviderService = await inMemoryProviderService.useFactory(
-      getIsInMemoryClusterModeEnabledUseCase,
-      InMemoryProviderEnum.ELASTICACHE
-    );
-
-    const service = new DistributedLockService(factoryInMemoryProviderService);
-
-    await service.initialize();
-
-    return service;
-  },
-  inject: [GetIsInMemoryClusterModeEnabled],
-};
-
-const readinessService = {
-  provide: ReadinessService,
-  useFactory: (
-    queueServiceHealthIndicator: QueueServiceHealthIndicator,
-    triggerQueueServiceHealthIndicator: TriggerQueueServiceHealthIndicator,
-    wsQueueServiceHealthIndicator: WsQueueServiceHealthIndicator
-  ) => {
-    return new ReadinessService(
-      queueServiceHealthIndicator,
-      triggerQueueServiceHealthIndicator,
-      wsQueueServiceHealthIndicator
-    );
-  },
-  inject: [QueueServiceHealthIndicator, TriggerQueueServiceHealthIndicator, WsQueueServiceHealthIndicator],
 };
 
 const PROVIDERS = [
-  launchDarklyService,
+  AddDelayJob,
+  AddDigestJob,
+  AddJob,
+  analyticsService,
+  BulkCreateExecutionDetails,
+  bullMqService,
+  cacheService,
+  CalculateDelayService,
+  CreateExecutionDetails,
+  CreateLog,
+  CreateNotificationJobs,
+  CreateSubscriber,
+  dalService,
+  DalServiceHealthIndicator,
+  DigestFilterSteps,
+  DigestFilterStepsBackoff,
+  DigestFilterStepsRegular,
+  DigestFilterStepsTimed,
+  distributedLockService,
+  EventsDistributedLockService,
   featureFlagsService,
-  getIsInMemoryClusterModeEnabled,
+  GetIsInMemoryClusterModeEnabled,
   getIsMultiProviderConfigurationEnabled,
   inMemoryProviderService,
-  cacheService,
-  distributedLockService,
-  {
-    provide: AnalyticsService,
-    useFactory: async () => {
-      const analyticsService = new AnalyticsService(process.env.SEGMENT_TOKEN);
-
-      await analyticsService.initialize();
-
-      return analyticsService;
-    },
-  },
-  {
-    provide: DalService,
-    useFactory: async () => {
-      await dalService.connect(process.env.MONGO_URL);
-
-      return dalService;
-    },
-  },
   InvalidateCacheService,
-  CreateLog,
-  {
-    provide: StorageService,
-    useClass: getStorageServiceClass(),
-  },
-  QueueServiceHealthIndicator,
-  TriggerQueueServiceHealthIndicator,
-  WsQueueServiceHealthIndicator,
-  QueueService,
-  TriggerQueueService,
-  WsQueueService,
-  StorageHelperService,
+  launchDarklyService,
+  ProcessSubscriber,
+  StandardQueueService,
+  StandardQueueServiceHealthIndicator,
   readinessService,
+  StorageHelperService,
+  storageService,
+  StoreSubscriberJobs,
+  TriggerEvent,
+  UpdateSubscriber,
+  WebSocketsQueueService,
+  WebSocketsQueueServiceHealthIndicator,
+  WorkflowQueueService,
+  WorkflowQueueServiceHealthIndicator,
   ...DAL_MODELS,
 ];
 
@@ -245,6 +153,7 @@ const PROVIDERS = [
         version: packageJson.version,
       })
     ),
+    QueuesModule,
   ],
   providers: [...PROVIDERS],
   exports: [...PROVIDERS, LoggerModule],

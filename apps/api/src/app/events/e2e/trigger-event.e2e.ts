@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { expect } from 'chai';
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import { v4 as uuid } from 'uuid';
 import { differenceInMilliseconds, subMonths } from 'date-fns';
 import {
@@ -434,10 +434,12 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
     });
 
     it('should correctly set expiration date (TTL) for notification and messages', async function () {
+      const templateName = template.triggers[0].identifier;
+
       const { data: body } = await axiosInstance.post(
         `${session.serverUrl}${eventTriggerPath}`,
         {
-          name: template.triggers[0].identifier,
+          name: templateName,
           to: {
             subscriberId: subscriber.subscriberId,
           },
@@ -453,7 +455,18 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
         }
       );
 
+      expect(body.data).to.have.all.keys('acknowledged', 'status', 'transactionId');
+      expect(body.data.acknowledged).to.equal(true);
+      expect(body.data.status).to.equal('processed');
+      expect(body.data.transaction).to.be.a.string;
+
       await session.awaitRunningJobs(template._id);
+
+      const jobs = await jobRepository.find({
+        _templateId: template._id,
+        _environmentId: session.environment._id,
+      });
+      expect(jobs.length).to.equal(2);
 
       const notifications = await notificationRepository.findBySubscriberId(session.environment._id, subscriber._id);
 
@@ -1837,7 +1850,7 @@ export async function sendTrigger(
   newSubscriberIdInAppNotification: string,
   payload: Record<string, unknown> = {},
   overrides: Record<string, unknown> = {}
-) {
+): Promise<AxiosResponse> {
   return await axiosInstance.post(
     `${session.serverUrl}${eventTriggerPath}`,
     {

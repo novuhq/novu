@@ -32,8 +32,6 @@
     "async": "^3.2.0",
     "aws-sdk": "^2.665.0",
     "bluebird": "^3.7.2",
-    "bull": "^3.13.0",
-    "bull-arena": "^3.2.2",
     "class-transformer": "^0.5.1",
     "cross-fetch": "^3.0.4",
     "date-fns": "^2.29.2",
@@ -54,7 +52,6 @@
   "devDependencies": {
     "@types/async": "^3.2.1",
     "@types/bluebird": "^3.5.30",
-    "@types/bull": "^3.12.2",
     "@types/node": "^14.6.0",
     "@typescript-eslint/parser": "^4.14.2",
     "apollo-boost": "0.4.9",

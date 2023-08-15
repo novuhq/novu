@@ -19,7 +19,7 @@ import {
 import { GetSubscriberTemplatePreferenceCommand } from './get-subscriber-template-preference.command';
 
 import { ApiException } from '../../utils/exceptions';
-import { CachedEntity, buildSubscriberKey } from '../../services';
+import { CachedEntity, buildSubscriberKey } from '../../services/cache';
 
 const PRIORITY_ORDER = [
   PreferenceOverrideSourceEnum.TEMPLATE,

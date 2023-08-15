@@ -1,5 +1,6 @@
 import {
   ConnectionOptions as RedisConnectionOptions,
+  Job,
   JobsOptions,
   Metrics,
   MetricsTime,
@@ -11,62 +12,62 @@ import {
   WorkerOptions,
 } from 'bullmq';
 import { Injectable, Logger } from '@nestjs/common';
-import { EnvironmentId, getRedisPrefix, IJobData } from '@novu/shared';
+import { getRedisPrefix, IEventJobData, IJobData } from '@novu/shared';
+import {
+  InMemoryProviderEnum,
+  InMemoryProviderService,
+} from '../in-memory-provider';
+import { IRedisProviderConfig } from '../in-memory-provider/providers/redis-provider';
+import { GetIsInMemoryClusterModeEnabled } from '../../usecases';
 
 interface IQueueMetrics {
   completed: Metrics;
   failed: Metrics;
 }
 
+type BullMqJobData = undefined | IJobData | IEventJobData;
+
 const LOG_CONTEXT = 'BullMqService';
 
-interface IEventJobData {
-  event: string;
-  userId: string;
-  payload: Record<string, unknown>;
-}
-
-interface IEventCountData {
-  event: string;
-  userId: string;
-  _environmentId: EnvironmentId;
-}
-
-type BullMqJobData = undefined | IJobData | IEventJobData | IEventCountData;
-
 export {
+  Job,
   JobsOptions,
+  Processor,
+  Queue,
   QueueBaseOptions,
+  QueueOptions,
   RedisConnectionOptions as BullMqConnectionOptions,
+  Worker,
   WorkerOptions,
-};
-
-export const bullMqBaseOptions = {
-  connection: {
-    db: Number(process.env.REDIS_DB_INDEX),
-    port: Number(process.env.REDIS_PORT),
-    host: process.env.REDIS_HOST,
-    password: process.env.REDIS_PASSWORD,
-    connectTimeout: 50000,
-    keepAlive: 30000,
-    family: 4,
-    keyPrefix: getRedisPrefix(),
-    tls: process.env.REDIS_TLS,
-  },
 };
 
 @Injectable()
 export class BullMqService {
   private _queue: Queue;
   private _worker: Worker;
+  private inMemoryProviderService: InMemoryProviderService;
+
   public static readonly pro: boolean =
     process.env.NOVU_MANAGED_SERVICE !== undefined;
 
-  get worker() {
+  constructor() {
+    const getIsInMemoryClusterModeEnabled =
+      new GetIsInMemoryClusterModeEnabled();
+    this.inMemoryProviderService = new InMemoryProviderService(
+      getIsInMemoryClusterModeEnabled,
+      InMemoryProviderEnum.REDIS
+    );
+  }
+
+  public async initialize() {
+    await this.inMemoryProviderService.delayUntilReadiness();
+  }
+
+  get worker(): Worker {
     return this._worker;
   }
 
-  get queue() {
+  get queue(): Queue {
     return this._queue;
   }
 
@@ -80,7 +81,7 @@ export class BullMqService {
     return true;
   }
 
-  private runningWithProQueue() {
+  private runningWithProQueue(): boolean {
     return BullMqService.pro && BullMqService.haveProInstalled();
   }
 
@@ -91,7 +92,30 @@ export class BullMqService {
     };
   }
 
+  private getQueueBaseOptions(): QueueBaseOptions {
+    const inMemoryProviderConfig: IRedisProviderConfig =
+      this.inMemoryProviderService.inMemoryProviderConfig;
+
+    const bullMqBaseOptions = {
+      connection: {
+        db: Number(process.env.REDIS_DB_INDEX),
+        port: inMemoryProviderConfig.port,
+        host: inMemoryProviderConfig.host,
+        password: inMemoryProviderConfig.password,
+        connectTimeout: inMemoryProviderConfig.connectTimeout,
+        keepAlive: inMemoryProviderConfig.ttl,
+        family: inMemoryProviderConfig.family,
+        keyPrefix: inMemoryProviderConfig.keyPrefix,
+        tls: inMemoryProviderConfig.tls,
+      },
+    };
+
+    return bullMqBaseOptions;
+  }
+
   public createQueue(name: string, queueOptions: QueueOptions) {
+    const bullMqBaseOptions: QueueBaseOptions = this.getQueueBaseOptions();
+
     const config = {
       connection: {
         ...bullMqBaseOptions.connection,
@@ -132,11 +156,17 @@ export class BullMqService {
       ? Worker
       : require('@taskforcesh/bullmq-pro').WorkerPro;
 
-    const config: WorkerOptions = {
+    const bullMqBaseOptions = this.getQueueBaseOptions();
+    const { concurrency, connection, lockDuration, settings } = workerOptions;
+
+    const config = {
       connection: {
         ...bullMqBaseOptions.connection,
+        ...connection,
       },
-      ...workerOptions,
+      ...(concurrency && { concurrency }),
+      ...(lockDuration && { lockDuration }),
+      ...(settings && { settings }),
       metrics: { maxDataPoints: MetricsTime.ONE_MONTH },
     };
 
@@ -179,6 +209,8 @@ export class BullMqService {
     if (this._worker) {
       await this._worker.close();
     }
+
+    await this.inMemoryProviderService.shutdown();
 
     Logger.log('Shutting down the BullMQ service has finished', LOG_CONTEXT);
   }
