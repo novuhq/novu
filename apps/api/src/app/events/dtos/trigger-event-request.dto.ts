@@ -69,7 +69,7 @@ export class TriggerEventRequestDto {
         $ref: getSchemaPath(TopicPayloadDto),
       },
     ],
-    // type: [String, SubscriberPayloadDto, TopicPayloadDto],
+    type: [String, SubscriberPayloadDto, TopicPayloadDto],
     isArray: true,
   })
   @IsDefined()
