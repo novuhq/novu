@@ -27,9 +27,7 @@ interface ILogTopicSubscribersPayload {
   userId: UserId;
 }
 
-const isNotTopic = (recipient: TriggerRecipient): recipient is TriggerRecipientSubscriber => {
-  return typeof recipient === 'string' || recipient?.hasOwnProperty('subscriberId');
-};
+const isNotTopic = (recipient: TriggerRecipient) => !isTopic(recipient);
 
 const isTopic = (recipient: TriggerRecipient): recipient is ITopic =>
   (recipient as ITopic).type && (recipient as ITopic).type === TriggerRecipientsTypeEnum.TOPIC;
