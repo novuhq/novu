@@ -12,6 +12,7 @@ export enum DetailEnum {
   MESSAGE_CONTENT_SYNTAX_ERROR = 'Message content could not be generated due to syntax error in email editor',
   MESSAGE_CREATED = 'Message created',
   SUBSCRIBER_NO_ACTIVE_INTEGRATION = 'Subscriber does not have an active integration',
+  LAYOUT_NOT_FOUND = 'Layout not found ',
   INTEGRATION_INSTANCE_SELECTED = 'Integration instance selected',
   LIMIT_PASSED_NOVU_INTEGRATION = "Novu's provider limit has been reached",
   SUBSCRIBER_NO_CHANNEL_DETAILS = 'Subscriber missing recipient details',

@@ -30,8 +30,9 @@ describe('Delete a layout - /layouts/:layoutId (DELETE)', async () => {
 
   it('should soft delete the requested layout successfully if exists in the database for that user', async () => {
     const layoutName = 'layout-name-deletion';
+    const layoutIdentifier = 'layout-identifier-deletion';
     const isDefault = false;
-    const createdLayout = await createLayout(session, layoutName, isDefault);
+    const createdLayout = await createLayout(session, layoutName, isDefault, layoutIdentifier);
     const url = `${BASE_PATH}/${createdLayout._id}`;
     const deleteResponse = await session.testAgent.delete(url);
 
@@ -56,8 +57,9 @@ describe('Delete a layout - /layouts/:layoutId (DELETE)', async () => {
 
   it('should throw a conflict error when the layout ID to soft delete is the default layout', async () => {
     const layoutName = 'layout-name-deletion';
+    const layoutIdentifier = 'layout-identifier-deletion';
     const isDefault = true;
-    const createdLayout = await createLayout(session, layoutName, isDefault);
+    const createdLayout = await createLayout(session, layoutName, isDefault, layoutIdentifier);
     const url = `${BASE_PATH}/${createdLayout._id}`;
     const deleteResponse = await session.testAgent.delete(url);
 
@@ -71,8 +73,9 @@ describe('Delete a layout - /layouts/:layoutId (DELETE)', async () => {
 
   it('should throw a conflict error when the layout ID to soft delete is associated to message templates', async () => {
     const layoutName = 'layout-name-deletion-conflict';
+    const layoutIdentifier = 'layout-identifier-deletion-conflict';
     const isDefault = true;
-    const createdLayout = await createLayout(session, layoutName, isDefault);
+    const createdLayout = await createLayout(session, layoutName, isDefault, layoutIdentifier);
 
     const parentChangeId = MessageTemplateRepository.createObjectId();
     const content = [{ type: EmailBlockTypeEnum.TEXT, content: 'test' }];

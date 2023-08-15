@@ -44,7 +44,7 @@ import { When } from '../../components/utils/When';
 const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
   {
     accessor: 'name',
-    Header: 'Name & Trigger ID',
+    Header: 'Name & Trigger Identifier',
     width: 340,
     maxWidth: 340,
     Cell: withCellLoading(({ row: { original } }) => (

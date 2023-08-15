@@ -3,7 +3,7 @@ import { IsBoolean, IsDefined, IsOptional, IsString } from 'class-validator';
 
 import { LayoutDto } from './layout.dto';
 
-import { LayoutDescription, LayoutId, LayoutName, LayoutVariables } from '../types';
+import { LayoutDescription, LayoutId, LayoutIdentifier, LayoutName, LayoutVariables } from '../types';
 
 export class CreateLayoutResponseDto implements Pick<LayoutDto, '_id'> {
   @ApiProperty()
@@ -17,6 +17,13 @@ export class CreateLayoutRequestDto {
   @IsString()
   @IsDefined()
   name: LayoutName;
+
+  @ApiProperty({
+    description: 'User defined custom key that will be a unique identifier for the Layout created.',
+  })
+  @IsString()
+  @IsDefined()
+  identifier: LayoutIdentifier;
 
   @ApiPropertyOptional({
     description: 'User description of the layout',

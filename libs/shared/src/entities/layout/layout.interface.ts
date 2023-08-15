@@ -4,6 +4,7 @@ import {
   ITemplateVariable,
   LayoutDescription,
   LayoutId,
+  LayoutIdentifier,
   LayoutName,
   OrganizationId,
   UserId,
@@ -16,6 +17,7 @@ export interface ILayoutEntity {
   _creatorId: UserId;
   _parentId?: LayoutId;
   name: LayoutName;
+  identifier: LayoutIdentifier;
   channel: ChannelTypeEnum;
   content: string;
   description?: LayoutDescription;

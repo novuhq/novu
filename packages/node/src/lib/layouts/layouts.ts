@@ -11,6 +11,7 @@ export class Layouts extends WithHttp implements ILayouts {
   async create(data: ILayoutPayload) {
     return await this.http.post(`/layouts`, {
       name: data.name,
+      identifier: data.identifier,
       description: data.description,
       content: data.content,
       variables: data.variables,
@@ -45,6 +46,7 @@ export class Layouts extends WithHttp implements ILayouts {
   async update(layoutId: LayoutId, data: ILayoutUpdatePayload) {
     return await this.http.patch(`/layouts/${layoutId}`, {
       ...(data.name && { name: data.name }),
+      ...(data.identifier && { identifier: data.identifier }),
       ...(data.description && { description: data.description }),
       ...(data.content && { content: data.content }),
       ...(data.variables && { variables: data.variables }),

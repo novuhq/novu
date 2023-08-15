@@ -12,9 +12,9 @@ describe('Filter layouts - /layouts (GET)', async () => {
     session = new UserSession();
     await session.initialize();
 
-    await createLayout(session, 'layout-name-1', false);
-    await createLayout(session, 'layout-name-2', false);
-    await createLayout(session, 'layout-name-3', false);
+    await createLayout(session, 'layout-name-1', false, 'layout-identifier-1');
+    await createLayout(session, 'layout-name-2', false, 'layout-identifier-2');
+    await createLayout(session, 'layout-name-3', false, 'layout-identifier-3');
   });
 
   it('should return a validation error if the params provided are not in the right type', async () => {

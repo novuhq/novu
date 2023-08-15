@@ -88,6 +88,9 @@ export function LayoutsListPage({ handleLayoutAnalytics }: LayoutsListPageProps)
         <Tooltip label={original.name}>
           <div>
             <Text rows={1}>{original.name}</Text>
+            <Text rows={1} size="xs" color={colors.B40}>
+              {original.identifier}
+            </Text>
           </div>
         </Tooltip>
       )),

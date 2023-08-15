@@ -55,16 +55,45 @@ You can preview your layout combined with your email content through the `Previe
      </picture>
    </div>
 
+## Override layout on trigger
+
+To override your assigned layout during a trigger event use the `layoutIdentifier` property, the layout specified will be used for all emails in the context of that trigger event.
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+novu.trigger('workflow-identifier', {
+  to: {
+    subscriberId: '...',
+  },
+  payload: {
+    attachments: [
+      {
+        file: fs.readFileSync(__dirname + '/data/test.jpeg'),
+        name: 'test.jpeg',
+        mime: 'image/jpg',
+      },
+    ],
+  },
+  overrides: {
+    layoutIdentifier: 'your-layout-identifier',
+  },
+});
+```
+
 ## Using SDK
 
 Novu SDK supports all layout functionalities:
 
 ### Create a new layout
 
-A new layout can be created with name, description, content, variables and an <code>isDefault</code> flag. Here, content param is html content with custom variables.
+A new layout can be created with name, identifier, description, content, variables and an <code>isDefault</code> flag. Here, content param is html content with custom variables.
 
 ```typescript
 const name: string = 'layout-name';
+const identifier: string = 'layout-unique-identifier';
 const description: string =
   'The description of the layout that will help other users to understand the goal it was created'; // Optional.
 const content: string = '<EMAIL_LAYOUT>';
@@ -73,6 +102,7 @@ const isDefault: boolean = true; // Optional. All layouts are created as non def
 
 const { _id: layoutId } = await novu.layouts.create({
   name,
+  identifier,
   description,
   content,
   variables,
@@ -104,6 +134,7 @@ const layoutId: LayoutId = '<LAYOUT_ID>'; // The unique identifier of the layout
 
 const updatedLayout = await novu.layouts.update(layoutId, {
   name,
+  identifier,
   description,
   content,
   variables,
