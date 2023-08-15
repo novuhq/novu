@@ -16,7 +16,7 @@ export class RunJob {
     private sendMessage: SendMessage,
     private queueNextJob: QueueNextJob,
     private storageHelperService: StorageHelperService,
-    private logger: PinoLogger
+    private logger?: PinoLogger
   ) {}
 
   @InstrumentUsecase()
