@@ -11,6 +11,7 @@ import {
   TriggerRecipientTopics,
   TriggerRecipientsTypeEnum,
   UserId,
+  TriggerRecipient,
 } from '@novu/shared';
 import { InstrumentUsecase, FeatureFlagCommand, GetFeatureFlag } from '@novu/application-generic';
 
@@ -26,10 +27,10 @@ interface ILogTopicSubscribersPayload {
   userId: UserId;
 }
 
-const isNotTopic = (recipient: TriggerRecipientSubscriber): recipient is TriggerRecipientSubscriber =>
-  typeof recipient === 'string' || recipient?.type !== TriggerRecipientsTypeEnum.TOPIC;
+const isNotTopic = (recipient: TriggerRecipient) => !isTopic(recipient);
 
-const isTopic = (recipient: ITopic): recipient is ITopic => recipient?.type === TriggerRecipientsTypeEnum.TOPIC;
+const isTopic = (recipient: TriggerRecipient): recipient is ITopic =>
+  (recipient as ITopic).type && (recipient as ITopic).type === TriggerRecipientsTypeEnum.TOPIC;
 
 @Injectable()
 export class MapTriggerRecipients {
