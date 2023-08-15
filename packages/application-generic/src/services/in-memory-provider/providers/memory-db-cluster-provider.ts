@@ -18,6 +18,7 @@ interface IMemoryDbClusterConfig {
   host?: string;
   keepAlive?: string;
   keyPrefix?: string;
+  username?: string;
   password?: string;
   port?: string;
   tls?: ConnectionOptions;
@@ -31,6 +32,7 @@ export interface IMemoryDbClusterProviderConfig {
   instances?: ClusterNode[];
   keepAlive: number;
   keyPrefix: string;
+  username?: string;
   password?: string;
   port?: number;
   tls?: ConnectionOptions;
@@ -43,7 +45,8 @@ export const getMemoryDbClusterProviderConfig =
       host: process.env.MEMORY_DB_CLUSTER_SERVICE_HOST,
       port: process.env.MEMORY_DB_CLUSTER_SERVICE_PORT,
       ttl: process.env.REDIS_CLUSTER_TTL,
-      password: process.env.REDIS_CLUSTER_PASSWORD,
+      username: process.env.MEMORY_DB_CLUSTER_USERNAME,
+      password: process.env.MEMORY_DB_CLUSTER_PASSWORD,
       connectTimeout: process.env.REDIS_CLUSTER_CONNECTION_TIMEOUT,
       keepAlive: process.env.REDIS_CLUSTER_KEEP_ALIVE,
       family: process.env.REDIS_CLUSTER_FAMILY,
@@ -53,6 +56,7 @@ export const getMemoryDbClusterProviderConfig =
 
     const host = redisClusterConfig.host;
     const port = Number(redisClusterConfig.port);
+    const username = redisClusterConfig.username;
     const password = redisClusterConfig.password;
     const connectTimeout = redisClusterConfig.connectTimeout
       ? Number(redisClusterConfig.connectTimeout)
@@ -74,6 +78,7 @@ export const getMemoryDbClusterProviderConfig =
       host,
       port,
       instances,
+      username,
       password,
       connectTimeout,
       family,
@@ -86,7 +91,7 @@ export const getMemoryDbClusterProviderConfig =
 export const getMemoryDbCluster = (
   enableAutoPipelining?: boolean
 ): Cluster | undefined => {
-  const { instances } = getMemoryDbClusterProviderConfig();
+  const { instances, password } = getMemoryDbClusterProviderConfig();
 
   const options: ClusterOptions = {
     dnsLookup: (address, callback) => callback(null, address),
@@ -96,6 +101,7 @@ export const getMemoryDbCluster = (
     redisOptions: {
       tls: {},
       connectTimeout: 10000,
+      ...(password && { password }),
     },
     scaleReads: 'slave',
     /*
