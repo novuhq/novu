@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { TerminusModule } from '@nestjs/terminus';
 import {
   EventsDistributedLockService,
-  EventsPerformanceService,
   StorageHelperService,
   SendTestEmail,
   QueueService,
@@ -49,7 +48,6 @@ import { LayoutsModule } from '../layouts/layouts.module';
     StorageHelperService,
     TriggerHandlerQueueService,
     EventsDistributedLockService,
-    EventsPerformanceService,
     SendTestEmail,
     CalculateDelayService,
     GetNovuProviderCredentials,
