@@ -20,6 +20,7 @@ export class PaginatedResponseDto<T> implements IPaginatedResponseDto<T> {
   @ApiProperty({
     description: 'The list of items matching the query',
     isArray: true,
+    type: Object,
   })
   data: T[];
 }

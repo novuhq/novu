@@ -98,7 +98,7 @@ export class TriggerEventRequestDto {
 export class BulkTriggerEventDto {
   @ApiProperty({
     isArray: true,
-    type: [TriggerEventRequestDto],
+    type: TriggerEventRequestDto,
   })
   @IsArray()
   @ArrayNotEmpty()
