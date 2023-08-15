@@ -225,7 +225,7 @@ jobs:
       - name: Start Api
         env:
           IN_MEMORY_CLUSTER_MODE_ENABLED: true
-        run: cd apps/api && pnpm start:test
+        run: cd apps/api && pnpm start:test &
 
       - name: Wait on Api
         run: wait-on --timeout=180000 http://localhost:1336/v1/health-check
