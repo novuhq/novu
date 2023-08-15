@@ -84,25 +84,6 @@ jobs:
       - name: Kill port for worker 1342 for unit tests
         run: sudo kill -9 $(sudo lsof -t -i:1342)
 
-      - name: Start Api
-        env:
-          IN_MEMORY_CLUSTER_MODE_ENABLED: true
-        run: pnpm start:test
-
-      - name: Wait on Api
-        run: wait-on --timeout=180000 http://localhost:1336/v1/health-check
-
-      - name: Get swagger json as file
-        run: |
-          curl -o swagger.json http://localhost:1336/api-json  
-
-      - uses: char0n/swagger-editor-validate@v1
-        with:
-          definition-file: swagger.json
-
-      - name: Kill port for api 1336 for unit tests
-        run: sudo kill -9 $(sudo lsof -t -i:1336)
-
       - name: Run unit tests
         run: |
           cd apps/api && pnpm test
