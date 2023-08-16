@@ -101,9 +101,6 @@ jobs:
           IN_MEMORY_CLUSTER_MODE_ENABLED: false
         run: cd apps/worker && pnpm start:prod &
 
-      - name: Install wait-on plugin
-        run: npm i -g wait-on
-
       - name: Wait on Services
         run: wait-on --timeout=180000 http://localhost:1336/v1/health-check http://localhost:1342/v1/health-check http://localhost:1340/v1/health-check http://localhost:4200
 
