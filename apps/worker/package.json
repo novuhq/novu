@@ -48,6 +48,7 @@
     "dotenv": "^8.2.0",
     "envalid": "^6.0.1",
     "helmet": "^6.0.1",
+    "inline-css": "^4.0.2",
     "ioredis": "^5.2.4",
     "lodash": "^4.17.15",
     "nest-raven": "^9.2.0",
