@@ -17,6 +17,7 @@ export class Events extends WithHttp implements IEvents {
       transactionId: data.transactionId,
       overrides: data.overrides || {},
       ...(data.actor && { actor: data.actor }),
+      data,
     });
   }
 
