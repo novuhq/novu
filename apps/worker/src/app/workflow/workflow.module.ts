@@ -32,6 +32,7 @@ import {
   WsQueueService,
   SelectIntegration,
   GetNovuProviderCredentials,
+  BullMqService,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
@@ -59,6 +60,8 @@ import {
   WebhookFilterBackoffStrategy,
 } from './usecases';
 import { MetricQueueService } from './services/metric-queue.service';
+import { ExecutionDetailsArchiveProducer } from './services/execution-details-archive/execution-details-archive-producer.service';
+import { ExecutionDetailsArchiveConsumer } from './services/execution-details-archive/execution-details-archive-consumer.service';
 
 const USE_CASES = [
   AddJob,
@@ -111,6 +114,7 @@ const USE_CASES = [
 const REPOSITORIES = [JobRepository];
 
 const SERVICES: Provider[] = [
+  BullMqService,
   {
     provide: MetricQueueService,
     useClass: MetricQueueService,
@@ -128,11 +132,31 @@ const SERVICES: Provider[] = [
     useClass: WsQueueService,
   },
   {
+    provide: ExecutionDetailsArchiveProducer,
+    useClass: ExecutionDetailsArchiveProducer,
+  },
+  {
+    provide: ExecutionDetailsArchiveConsumer,
+    useClass: ExecutionDetailsArchiveConsumer,
+  },
+  {
     provide: 'BULLMQ_LIST',
-    useFactory: (workflowQueue: QueueService, triggerQueue: TriggerQueueService, wsQueue: WsQueueService) => {
-      return [workflowQueue, triggerQueue, wsQueue];
+    useFactory: (
+      workflowQueue: QueueService,
+      triggerQueue: TriggerQueueService,
+      wsQueue: WsQueueService,
+      executionDetailsArchiveProducer: ExecutionDetailsArchiveProducer,
+      executionDetailsArchiveConsumer: ExecutionDetailsArchiveConsumer
+    ) => {
+      return [workflowQueue, triggerQueue, wsQueue, executionDetailsArchiveProducer, executionDetailsArchiveConsumer];
     },
-    inject: [QueueService, TriggerQueueService, WsQueueService],
+    inject: [
+      QueueService,
+      TriggerQueueService,
+      WsQueueService,
+      ExecutionDetailsArchiveProducer,
+      ExecutionDetailsArchiveConsumer,
+    ],
   },
   EventsDistributedLockService,
   CalculateDelayService,

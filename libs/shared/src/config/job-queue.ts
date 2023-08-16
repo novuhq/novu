@@ -4,6 +4,7 @@ export enum JobTopicNameEnum {
   STANDARD = 'standard',
   WEB_SOCKETS = 'ws_socket_queue',
   WORKFLOW = 'trigger-handler',
+  EXECUTION_DETAIL_ARCHIVE = 'execution-details-archive',
 }
 
 export enum ObservabilityBackgroundTransactionEnum {

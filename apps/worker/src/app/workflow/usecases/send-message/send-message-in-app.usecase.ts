@@ -36,6 +36,7 @@ import { CreateLog } from '../../../shared/logs';
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageBase } from './send-message.base';
 import { PlatformException } from '../../../shared/utils';
+import { ExecutionDetailsArchiveProducer } from '../../services/execution-details-archive/execution-details-archive-producer.service';
 
 @Injectable()
 export class SendMessageInApp extends SendMessageBase {
@@ -51,7 +52,8 @@ export class SendMessageInApp extends SendMessageBase {
     private compileTemplate: CompileTemplate,
     private organizationRepository: OrganizationRepository,
     protected selectIntegration: SelectIntegration,
-    protected getNovuProviderCredentials: GetNovuProviderCredentials
+    protected getNovuProviderCredentials: GetNovuProviderCredentials,
+    private executionDetailsArchiveProducer: ExecutionDetailsArchiveProducer
   ) {
     super(
       messageRepository,
@@ -65,6 +67,19 @@ export class SendMessageInApp extends SendMessageBase {
 
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
+    await this.executionDetailsArchiveProducer.add(
+      command.transactionId,
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+        detail: `say what? queued execution detail, that's what`,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.FAILED,
+        isTest: false,
+        isRetry: false,
+      }),
+      command.organizationId
+    );
+
     const subscriber = await this.getSubscriberBySubscriberId({
       subscriberId: command.subscriberId,
       _environmentId: command.environmentId,
