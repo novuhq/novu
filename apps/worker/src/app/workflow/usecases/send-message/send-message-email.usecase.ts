@@ -218,6 +218,7 @@ export class SendMessageEmail extends SendMessageBase {
       }
 
       html = await inlineCss(html, {
+        // Used for stylesheet links that starts with / so should not be needed in our case.
         url: ' ',
       });
     } catch (e) {
