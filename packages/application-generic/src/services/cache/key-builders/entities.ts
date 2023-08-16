@@ -91,6 +91,14 @@ const buildGroupedBlueprintsKey = (): string =>
     identifier: BLUEPRINT_IDENTIFIER,
   });
 
+const buildUserDataKey = ({ apiKey }: { apiKey: string }): string =>
+  buildKeyById({
+    type: CacheKeyTypeEnum.ENTITY,
+    keyEntity: CacheKeyPrefixEnum.USER_DATA,
+    identifier: apiKey,
+    identifierPrefix: IdentifierPrefixEnum.API_KEY,
+  });
+
 export {
   buildUserKey,
   buildSubscriberKey,
@@ -99,4 +107,5 @@ export {
   buildEnvironmentByApiKey,
   buildKeyById,
   buildGroupedBlueprintsKey,
+  buildUserDataKey,
 };

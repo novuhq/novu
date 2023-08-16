@@ -32,6 +32,7 @@ export enum CacheKeyPrefixEnum {
   INTEGRATION = 'integration',
   ENVIRONMENT_BY_API_KEY = 'environment_by_api_key',
   GROUPED_BLUEPRINTS = 'grouped-blueprints',
+  USER_DATA = 'user_data_env_entity_user_entity',
 }
 
 export enum CacheKeyTypeEnum {
