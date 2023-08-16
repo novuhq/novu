@@ -108,6 +108,49 @@ describe('test use of novus node package - Subscribers class', () => {
     });
   });
 
+  test('should bulk create subscribers correctly', async () => {
+    mockedAxios.post.mockResolvedValue({});
+
+    await novu.subscribers.bulkCreate([
+      {
+        subscriberId: 'test-subscriber-1',
+        email: 'test-user@sd.com',
+        firstName: 'subscriber-1',
+        lastName: 'test-1',
+      },
+      {
+        subscriberId: 'test-subscriber-2',
+        email: 'test-user-2@sd.com',
+        firstName: 'subscriber-2',
+        lastName: 'test-2',
+      },
+      {
+        subscriberId: 'test-subscriber-3',
+      },
+    ]);
+
+    expect(mockedAxios.post).toHaveBeenCalled();
+    expect(mockedAxios.post).toHaveBeenCalledWith('/subscribers/bulk', {
+      subscribers: [
+        {
+          subscriberId: 'test-subscriber-1',
+          email: 'test-user@sd.com',
+          firstName: 'subscriber-1',
+          lastName: 'test-1',
+        },
+        {
+          subscriberId: 'test-subscriber-2',
+          email: 'test-user-2@sd.com',
+          firstName: 'subscriber-2',
+          lastName: 'test-2',
+        },
+        {
+          subscriberId: 'test-subscriber-3',
+        },
+      ],
+    });
+  });
+
   test('should update subscriber channel credentials correctly', async () => {
     mockedAxios.put.mockResolvedValue({});
 

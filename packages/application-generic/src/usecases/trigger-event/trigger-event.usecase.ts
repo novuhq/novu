@@ -36,7 +36,6 @@ import {
   AnalyticsService,
   buildNotificationTemplateIdentifierKey,
   CachedEntity,
-  EventsPerformanceService,
 } from '../../services';
 import { ApiException } from '../../utils/exceptions';
 
@@ -49,7 +48,6 @@ export class TriggerEvent {
     private createNotificationJobs: CreateNotificationJobs,
     private processSubscriber: ProcessSubscriber,
     private integrationRepository: IntegrationRepository,
-    protected performanceService: EventsPerformanceService,
     private jobRepository: JobRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private logger: PinoLogger,
@@ -58,11 +56,6 @@ export class TriggerEvent {
 
   @InstrumentUsecase()
   async execute(command: TriggerEventCommand) {
-    const mark = this.performanceService.buildTriggerEventMark(
-      command.identifier,
-      command.transactionId
-    );
-
     const { actor, environmentId, identifier, organizationId, to, userId } =
       command;
 
@@ -123,7 +116,6 @@ export class TriggerEvent {
         'Notification event trigger - [Triggers]',
         command.userId,
         {
-          _subscriber: subscriber._id,
           transactionId: command.transactionId,
           _template: template._id,
           _organization: command.organizationId,
@@ -176,17 +168,15 @@ export class TriggerEvent {
          * is no job at this point.
          */
         Logger.warn(
-          `Subscriber ${JSON.stringify(subscriber._id)} of organization ${
-            command.organizationId
-          } in transaction ${
+          `Subscriber ${JSON.stringify(
+            subscriber.subscriberId
+          )} of organization ${command.organizationId} in transaction ${
             command.transactionId
           } was not processed. No jobs are created.`,
           LOG_CONTEXT
         );
       }
     }
-
-    this.performanceService.setEnd(mark);
   }
 
   @CachedEntity({

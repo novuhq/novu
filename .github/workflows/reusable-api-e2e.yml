@@ -57,19 +57,7 @@ jobs:
 
       - uses: ./.github/actions/start-localstack
 
-      - name: Install wait-on plugin
-        run: npm i -g wait-on
-
-      - name: Build worker
-        run: CI='' pnpm build:worker
-
-      - name: Start worker
-        env:
-          IN_MEMORY_CLUSTER_MODE_ENABLED: true
-        run: cd apps/worker && pnpm start:test &
-
-      - name: Wait on worker
-        run: wait-on --timeout=180000 http://localhost:1342/v1/health-check
+      - uses: ./.github/actions/run-worker
 
         # Runs a single command using the runners shell
       - name: Build API
