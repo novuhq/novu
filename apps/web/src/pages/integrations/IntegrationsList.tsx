@@ -81,7 +81,7 @@ export const IntegrationsList = ({
   return (
     <PageContainer title="Integrations">
       <PageHeader title="Integrations Store" />
-      <When truthy={!hasIntegrations}>
+      <When truthy={hasIntegrations}>
         <Container fluid sx={{ padding: '0 30px 8px 30px' }}>
           <IntegrationsListToolbar onAddProviderClick={onAddProviderClick} areIntegrationsLoading={isLoading} />
         </Container>
