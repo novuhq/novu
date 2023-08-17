@@ -11,7 +11,12 @@ import { useStyles } from '../../../../../design-system/template-button/Template
 import { colors } from '../../../../../design-system/config';
 import { Trash } from '../../../../../design-system/icons';
 import { When } from '../../../../../components/utils/When';
-import { useActiveIntegrations, useEnvController, useIntegrationLimit } from '../../../../../hooks';
+import {
+  useActiveIntegrations,
+  useEnvController,
+  useIntegrationLimit,
+  useIsMultiProviderConfigurationEnabled,
+} from '../../../../../hooks';
 import { getFormattedStepErrors } from '../../../shared/errors';
 import { Popover } from '../../../../../design-system/popover';
 import { Button } from '../../../../../design-system/button/Button';
@@ -19,6 +24,7 @@ import { IntegrationsStoreModal } from '../../../../integrations/IntegrationsSto
 import { useSegment } from '../../../../../components/providers/SegmentProvider';
 import { TemplateEditorAnalyticsEnum } from '../../../constants';
 import { CHANNEL_TYPE_TO_STRING } from '../../../../../utils/channels';
+import { IntegrationsListModal } from '../../../../integrations/IntegrationsListModal';
 
 interface ITemplateButtonProps {
   Icon: React.FC<any>;
@@ -39,6 +45,7 @@ interface ITemplateButtonProps {
   onDelete?: () => void;
   dragging?: boolean;
   disabled?: boolean;
+  description?: string;
 }
 
 const usePopoverStyles = createStyles(() => ({
@@ -77,6 +84,7 @@ export function WorkflowNode({
   onDelete = () => {},
   dragging = false,
   disabled: initDisabled,
+  description,
 }: ITemplateButtonProps) {
   const segment = useSegment();
   const { readonly: readonlyEnv } = useEnvController();
@@ -93,6 +101,7 @@ export function WorkflowNode({
   const { isLimitReached: isEmailLimitReached } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
   const { isLimitReached: isSmsLimitReached } = useIntegrationLimit(ChannelTypeEnum.SMS);
   const [hover, setHover] = useState(false);
+  const isMultiProviderConfigurationEnabled = useIsMultiProviderConfigurationEnabled();
 
   const hasActiveIntegration = useMemo(() => {
     const isChannelStep = [StepTypeEnum.EMAIL, StepTypeEnum.PUSH, StepTypeEnum.SMS, StepTypeEnum.CHAT].includes(
@@ -111,6 +120,11 @@ export function WorkflowNode({
 
     return true;
   }, [integrations, tabKey, isEmailLimitReached, isSmsLimitReached]);
+
+  const onIntegrationModalClose = () => {
+    setIntegrationsModalVisible(false);
+    setPopoverOpened(false);
+  };
 
   const {
     watch,
@@ -152,11 +166,16 @@ export function WorkflowNode({
       >
         <ButtonWrapper>
           <LeftContainerWrapper>
-            <IconWrapper className={classes.linkIcon}>{Icon ? <Icon {...disabledProp} /> : null}</IconWrapper>
+            {Icon ? <Icon {...disabledProp} width="32px" height="32px" /> : null}
             <StyledContentWrapper>
-              <Text {...disabledColor} weight="bold">
+              <Text {...disabledColor} weight="bold" size={16}>
                 {label}
               </Text>
+              {description && (
+                <Text {...disabledColor} size={12} color={colors.B60}>
+                  {description}
+                </Text>
+              )}
             </StyledContentWrapper>
           </LeftContainerWrapper>
 
@@ -236,14 +255,19 @@ export function WorkflowNode({
           </MantinePopover>
         )}
       </UnstyledButtonStyled>
-      <IntegrationsStoreModal
-        openIntegration={isIntegrationsModalVisible}
-        closeIntegration={() => {
-          setIntegrationsModalVisible(false);
-          setPopoverOpened(false);
-        }}
-        scrollTo={tabKey}
-      />
+      {isMultiProviderConfigurationEnabled ? (
+        <IntegrationsListModal
+          isOpen={isIntegrationsModalVisible}
+          onClose={onIntegrationModalClose}
+          scrollTo={tabKey}
+        />
+      ) : (
+        <IntegrationsStoreModal
+          openIntegration={isIntegrationsModalVisible}
+          closeIntegration={onIntegrationModalClose}
+          scrollTo={tabKey}
+        />
+      )}
     </>
   );
 }
@@ -285,6 +309,7 @@ const LeftContainerWrapper = styled.div`
   display: flex;
   align-items: center;
   overflow: hidden;
+  gap: 16px;
 `;
 
 const ButtonWrapper = styled.div`
@@ -294,6 +319,9 @@ const ButtonWrapper = styled.div`
 `;
 
 const StyledContentWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   padding-right: 10px;
 `;
 
@@ -304,8 +332,6 @@ const UnstyledButtonStyled = styled.div`
   position: relative;
   pointer-events: all;
   background-color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B17 : colors.white)};
-
-  @media screen and (max-width: 1400px) {
-    padding: 0 5px;
-  }
+  width: 280px;
+  padding: 20px;
 `;

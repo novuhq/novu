@@ -13,7 +13,7 @@ export const useStyles = createStyles((theme) => {
       boxShadow: dark ? shadows.dark : shadows.light,
     },
     button: {
-      height: '75px',
+      height: '80px',
       width: '100%',
       margin: '0px',
       marginBottom: '20px',

@@ -20,9 +20,9 @@ export default createStyles((theme: MantineTheme) => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      height: '50px',
+      height: '44px',
       width: '100%',
-      margin: '15px 0px',
+      margin: '8px 0px',
       position: 'relative',
       padding: theme.spacing.xs,
       boxSizing: 'border-box',
@@ -39,6 +39,15 @@ export default createStyles((theme: MantineTheme) => {
       '&:first-of-type': {
         marginTop: '0px',
       },
+
+      '&:last-of-type': {
+        marginBottom: '0px',
+      },
+
+      '@media (min-width: 1440px)': {
+        margin: '15px 0px',
+        height: '50px',
+      },
     },
     linkActive: {
       '&, &:hover': {
@@ -46,7 +55,7 @@ export default createStyles((theme: MantineTheme) => {
         alignItems: 'center',
         justifyContent: 'space-between',
         width: '100%',
-        height: '50px',
+        height: '44px',
         position: 'relative',
         padding: theme.spacing.xs,
         boxSizing: 'border-box',
@@ -66,6 +75,10 @@ export default createStyles((theme: MantineTheme) => {
           left: 0,
           borderRadius: '7px 0px 0px 7px',
           background: colors.vertical,
+        },
+
+        '@media (min-width: 1440px)': {
+          height: '50px',
         },
       },
     },

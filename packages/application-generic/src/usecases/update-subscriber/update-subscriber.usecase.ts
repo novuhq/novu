@@ -32,7 +32,10 @@ export class UpdateSubscriber {
     }
 
     const updatePayload: Partial<SubscriberEntity> = {};
-    updatePayload.email = command.email;
+
+    if (command.email !== undefined) {
+      updatePayload.email = command.email;
+    }
 
     if (command.phone != null) {
       updatePayload.phone = command.phone;

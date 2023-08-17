@@ -81,6 +81,6 @@ describe('Delete subscriber provider credentials', function () {
       (channel) => channel.providerId === PushProviderIdEnum.FCM
     );
     expect(isDiscordProviderDeleted).to.equal(undefined);
-    expect(fcmCredentials?.credentials.deviceTokens).to.deep.equal(fcmTokens);
+    expect(fcmCredentials?.credentials.deviceTokens).to.deep.equal(['identifier', ...fcmTokens]);
   });
 });

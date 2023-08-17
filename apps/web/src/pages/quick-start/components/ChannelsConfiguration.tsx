@@ -10,7 +10,7 @@ import { ActiveLabel } from '../../../design-system/icons/general/ActiveLabel';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { useActiveIntegrations, useIntegrationLimit } from '../../../hooks';
 import { Button, colors } from '../../../design-system';
-import { IntegrationEntity } from '../../integrations/IntegrationsStorePage';
+import type { IntegrationEntity } from '../../integrations/types';
 import { useCreateInAppIntegration } from '../../../hooks/useCreateInAppIntegration';
 
 export function ChannelsConfiguration({ setClickedChannel }: { setClickedChannel: Dispatch<any> }) {
@@ -54,7 +54,7 @@ export function ChannelsConfiguration({ setClickedChannel }: { setClickedChannel
               <IconContainer>
                 <Icon style={{ width: '28px', height: '32px' }} />
               </IconContainer>
-              <ChannelCard>
+              <ChannelCard data-test-id={`channel-card-${channel.type}`}>
                 <TitleRow>
                   {channel.title}
                   <When truthy={isIntegrationActive}>

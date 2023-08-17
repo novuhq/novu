@@ -9,6 +9,7 @@ import {
   ChatProviderIdEnum,
   CredentialsKeyEnum,
   IConfigCredentials,
+  ICreateIntegrationBodyDto,
   ICredentialsDto,
   IEnvironment,
   IOrganizationEntity,
@@ -18,7 +19,7 @@ import styled from '@emotion/styled';
 import { keyframes } from '@emotion/react';
 
 import { Button, colors, Input, shadows, Switch, Text } from '../../../../design-system';
-import { IIntegratedProvider } from '../../IntegrationsStorePage';
+import type { IIntegratedProvider } from '../../types';
 import { createIntegration, getWebhookSupportStatus, updateIntegration } from '../../../../api/integration';
 import { Close } from '../../../../design-system/icons/actions/Close';
 import { IntegrationInput } from '../IntegrationInput';
@@ -114,7 +115,7 @@ export function ConnectIntegrationForm({
   onSuccessFormSubmit,
   onClose,
 }: {
-  provider: IIntegratedProvider | null;
+  provider: IIntegratedProvider;
   organization?: IOrganizationEntity;
   environment?: IEnvironment;
   createModel: boolean;
@@ -143,13 +144,7 @@ export function ConnectIntegrationForm({
   const { mutateAsync: createIntegrationApi, isLoading: isLoadingCreate } = useMutation<
     { res: string },
     { error: string; message: string; statusCode: number },
-    {
-      providerId: string;
-      channel: ChannelTypeEnum | null;
-      credentials: ICredentialsDto;
-      active: boolean;
-      check: boolean;
-    }
+    ICreateIntegrationBodyDto
   >(createIntegration);
 
   const { mutateAsync: updateIntegrationApi, isLoading: isLoadingUpdate } = useMutation<
@@ -202,7 +197,7 @@ export function ConnectIntegrationForm({
       if (createModel) {
         await createIntegrationApi({
           providerId: provider?.providerId ? provider?.providerId : '',
-          channel: provider?.channel ? provider?.channel : null,
+          channel: provider?.channel,
           credentials,
           active: isActive,
           check,
@@ -227,7 +222,7 @@ export function ConnectIntegrationForm({
       }
       await queryClient.refetchQueries({
         predicate: ({ queryKey }) =>
-          queryKey.includes(QueryKeys.integrationsList) || queryKey.includes(QueryKeys.activeNotificationsList),
+          queryKey.includes(QueryKeys.integrationsList) || queryKey.includes(QueryKeys.activeIntegrations),
       });
     } catch (e: any) {
       dispatch({
@@ -511,9 +506,10 @@ export function ShareableUrl({
 
   const subscriberId = '<SUBSCRIBER_ID>';
   const environmentId = `environmentId=${environment?._id}`;
+  const integrationIdentifier = `&integrationIdentifier=<INTEGRATION_IDENTIFIER>`;
   const hmac = hmacEnabled ? '&hmacHash=<HMAC_HASH>' : '';
 
-  const oauthUrl = `${API_ROOT}/v1/subscribers/${subscriberId}/credentials/slack/oauth?${environmentId}${hmac}`;
+  const oauthUrl = `${API_ROOT}/v1/subscribers/${subscriberId}/credentials/slack/oauth?${environmentId}${integrationIdentifier}${hmac}`;
 
   return (
     <When truthy={display}>

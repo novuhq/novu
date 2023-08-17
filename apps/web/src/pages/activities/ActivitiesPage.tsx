@@ -14,13 +14,9 @@ import { ActivityGraph } from './components/ActivityGraph';
 import { ActivityList } from './components/ActivityList';
 import { ExecutionDetailsModal } from '../../components/execution-detail/ExecutionDetailsModal';
 import { IActivityGraphStats } from './interfaces';
+import { Flex } from '@mantine/core';
 
 const FiltersContainer = styled.div`
-  width: 80%;
-  display: flex;
-  align-items: center;
-  flex-direction: row;
-  flex-wrap: wrap;
   gap: 15px;
   padding: 30px;
 `;
@@ -29,14 +25,16 @@ interface IFiltersForm {
   channels: ChannelTypeEnum[];
   templates: string[];
   transactionId: string;
-  search: string;
+  email: string;
+  subscriberId: string;
 }
 
 const initialFormState: IFiltersForm = {
   channels: [],
   templates: [],
   transactionId: '',
-  search: '',
+  email: '',
+  subscriberId: '',
 };
 
 export function ActivitiesPage() {
@@ -45,7 +43,7 @@ export function ActivitiesPage() {
   const [isModalOpen, setToggleModal] = useState<boolean>(false);
   const [notificationId, setNotificationId] = useState<string>('');
   const [filters, setFilters] = useState<IFiltersForm>(initialFormState);
-  const { data, isLoading, isFetching } = useQuery<{ data: any[]; totalCount: number; pageSize: number }>(
+  const { data, isLoading, isFetching } = useQuery<{ data: any[]; hasMore: boolean; pageSize: number }>(
     ['activitiesList', page, filters],
     () => getActivityList(page, filters),
     { keepPreviousData: true }
@@ -59,10 +57,6 @@ export function ActivitiesPage() {
     onFiltersChange({ transactionId });
   }, 500);
 
-  const debouncedSearchChange = useDebounce((search: string) => {
-    onFiltersChange({ search });
-  }, 500);
-
   function handleTableChange(pageIndex) {
     setPage(pageIndex);
   }
@@ -72,6 +66,7 @@ export function ActivitiesPage() {
     setValue,
     reset,
     formState: { isDirty },
+    getValues,
   } = useForm<IFiltersForm>({
     defaultValues: initialFormState,
   });
@@ -105,7 +100,7 @@ export function ActivitiesPage() {
       <ActivityGraph onBarClick={onBarClick} />
       <form>
         <FiltersContainer>
-          <div style={{ minWidth: '250px' }}>
+          <Flex mih={50} gap="md" justify="flex-start" align="flex-start" direction="row" wrap="wrap">
             <Controller
               render={({ field }) => (
                 <Select
@@ -122,15 +117,12 @@ export function ActivitiesPage() {
                   value={field.value}
                   onChange={(value) => {
                     field.onChange(value);
-                    onFiltersChange({ channels: value as ChannelTypeEnum[] });
                   }}
                 />
               )}
               control={control}
               name="channels"
             />
-          </div>
-          <div style={{ minWidth: '250px' }}>
             <Controller
               render={({ field }) => (
                 <Select
@@ -139,63 +131,92 @@ export function ActivitiesPage() {
                   data-test-id="templates-filter"
                   loading={loadingTemplates}
                   placeholder="Select workflow"
-                  data={(templates || []).map((template) => ({ value: template._id as string, label: template.name }))}
+                  data={(templates || []).map((template) => ({
+                    value: template._id as string,
+                    label: template.name,
+                  }))}
                   value={field.value}
                   onChange={(value) => {
                     field.onChange(value);
-                    onFiltersChange({ templates: value as string[] });
                   }}
                 />
               )}
               control={control}
               name="templates"
             />
-          </div>
-          <div style={{ minWidth: '250px' }}>
-            <Controller
-              render={({ field, fieldState }) => (
-                <Input
-                  {...field}
-                  error={fieldState.error?.message}
-                  label="Transaction ID"
-                  placeholder="Search by transaction id"
-                  value={field.value || ''}
-                  onChange={(e) => {
-                    field.onChange(e);
-                    debouncedTransactionIdChange(e.target.value);
-                  }}
-                  data-test-id="transactionId-filter"
-                />
-              )}
-              control={control}
-              name="transactionId"
-            />
-          </div>
-          <div style={{ minWidth: '250px' }}>
-            <Controller
-              render={({ field, fieldState }) => (
-                <Input
-                  {...field}
-                  error={fieldState.error?.message}
-                  label="Search"
-                  placeholder="Search by subscriberId or email"
-                  value={field.value || ''}
-                  onChange={(e) => {
-                    field.onChange(e);
-                    debouncedSearchChange(e.target.value);
-                  }}
-                  data-test-id="search-filter"
-                />
-              )}
-              control={control}
-              name="search"
-            />
-          </div>
-          {isDirty && (
-            <Button variant="outline" size="md" mt={30} onClick={onClearClick} data-test-id="clear-filters">
-              Clear
-            </Button>
-          )}
+            <div style={{ minWidth: '250px' }}>
+              <Controller
+                render={({ field, fieldState }) => (
+                  <Input
+                    {...field}
+                    error={fieldState.error?.message}
+                    label="Transaction ID"
+                    placeholder="Search by transaction id"
+                    value={field.value || ''}
+                    data-test-id="transactionId-filter"
+                  />
+                )}
+                control={control}
+                name="transactionId"
+              />
+            </div>
+
+            <div style={{ minWidth: '250px' }}>
+              <Controller
+                render={({ field, fieldState }) => (
+                  <Input
+                    {...field}
+                    error={fieldState.error?.message}
+                    label="E-mail"
+                    placeholder="Search by subscriber email"
+                    value={field.value || ''}
+                    data-test-id="email-filter"
+                  />
+                )}
+                control={control}
+                name="email"
+              />
+            </div>
+            <div style={{ minWidth: '250px' }}>
+              <Controller
+                render={({ field, fieldState }) => (
+                  <Input
+                    {...field}
+                    error={fieldState.error?.message}
+                    label="Subscriber ID"
+                    placeholder="Search by subscriberId"
+                    value={field.value || ''}
+                    data-test-id="subscriberId-filter"
+                  />
+                )}
+                control={control}
+                name="subscriberId"
+              />
+            </div>
+            <div style={{ paddingTop: 10, marginLeft: 'auto' }}>
+              <Button
+                variant="subtle"
+                size="md"
+                mt={30}
+                onClick={onClearClick}
+                data-test-id="clear-filters"
+                disabled={!isDirty}
+                style={{ marginRight: 15 }}
+              >
+                Clear
+              </Button>
+              <Button
+                variant="gradient"
+                loading={isLoading || isLoading}
+                size="md"
+                mt={30}
+                onClick={() => onFiltersChange(getValues())}
+                data-test-id="submit-filters"
+              >
+                Search
+              </Button>
+            </div>
+          </Flex>
         </FiltersContainer>
       </form>
       <ActivityList
@@ -205,8 +226,9 @@ export function ActivitiesPage() {
         pagination={{
           pageSize: data?.pageSize,
           current: page,
-          total: data?.totalCount,
           onPageChange: handleTableChange,
+          minimalPagination: true,
+          hasMore: data?.hasMore,
         }}
       />
       <ExecutionDetailsModal

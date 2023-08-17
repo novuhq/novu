@@ -1,25 +1,24 @@
-import { getRedisPrefix } from '@novu/shared';
+import { getRedisPrefix, JobTopicNameEnum } from '@novu/shared';
 import { ConnectionOptions } from 'tls';
 import { QueueOptions } from 'bullmq';
 import { Injectable, Logger } from '@nestjs/common';
 
-import { BullMqService } from './bull-mq.service';
 import { QueueService } from './queue.service';
 
 const LOG_CONTEXT = 'WsQueueService';
 
 @Injectable()
 export class WsQueueService extends QueueService<Record<string, never>> {
-  public static queueName = 'ws_socket_queue';
+  public readonly name = JobTopicNameEnum.WEB_SOCKETS;
 
   constructor() {
-    super('ws_socket_queue');
+    super(JobTopicNameEnum.WEB_SOCKETS);
   }
 
   async getJobStats(
     type: string
   ): Promise<{ waiting: number; active: number }> {
-    if (type === WsQueueService.queueName) {
+    if (type === this.name) {
       return {
         waiting: await this.bullMqService.queue.getWaitingCount(),
         active: await this.bullMqService.queue.getActiveCount(),

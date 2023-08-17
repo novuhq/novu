@@ -8,7 +8,7 @@ import { UpdateSubscriberPreferenceRequestDto } from '../../../widgets/dtos/upda
 const axiosInstance = axios.create();
 
 export async function getNotificationTemplate(session: UserSession, id: string) {
-  return await axiosInstance.get(`${session.serverUrl}/v1/notification-templates/${id}`, {
+  return await axiosInstance.get(`${session.serverUrl}/v1/workflows/${id}`, {
     headers: {
       authorization: `ApiKey ${session.apiKey}`,
     },
@@ -20,7 +20,7 @@ export async function updateNotificationTemplate(
   id: string,
   data: IUpdateNotificationTemplateDto
 ) {
-  return await axiosInstance.put(`${session.serverUrl}/v1/notification-templates/${id}`, data, {
+  return await axiosInstance.put(`${session.serverUrl}/v1/workflows/${id}`, data, {
     headers: {
       authorization: `ApiKey ${session.apiKey}`,
     },

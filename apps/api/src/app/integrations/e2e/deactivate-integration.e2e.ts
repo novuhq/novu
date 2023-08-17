@@ -2,7 +2,7 @@ import { IntegrationRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
-import { GetFeatureFlag } from '../../shared/use-cases';
+import { GetFeatureFlag } from '@novu/application-generic';
 
 describe('Deactivate Integration', function () {
   let session: UserSession;

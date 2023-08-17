@@ -70,7 +70,7 @@ export class SendgridEmailProvider implements IEmailProvider {
         email: options.from || this.config.from,
         name: this.config.senderName,
       },
-      ipPoolName: options.ipPoolName || this.config.ipPoolName,
+      ...this.getIpPoolObject(options),
       to: options.to.map((email) => ({ email })),
       cc: options.cc?.map((ccItem) => ({ email: ccItem })),
       bcc: options.bcc?.map((ccItem) => ({ email: ccItem })),
@@ -99,6 +99,12 @@ export class SendgridEmailProvider implements IEmailProvider {
     }
 
     return mailData as MailDataRequired;
+  }
+
+  private getIpPoolObject(options: IEmailOptions) {
+    const ipPoolNameValue = options.ipPoolName || this.config.ipPoolName;
+
+    return ipPoolNameValue ? { ipPoolName: ipPoolNameValue } : {};
   }
 
   getMessageId(body: any | any[]): string[] {

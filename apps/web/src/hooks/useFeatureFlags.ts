@@ -1,12 +1,22 @@
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useFlags } from 'launchdarkly-react-client-sdk';
 
-import { IS_TEMPLATE_STORE_ENABLED, IS_MULTI_PROVIDER_CONFIGURATION_ENABLED } from '../config';
+import {
+  IS_TEMPLATE_STORE_ENABLED,
+  IS_MULTI_PROVIDER_CONFIGURATION_ENABLED,
+  IS_MULTI_TENANCY_ENABLED,
+} from '../config';
 
 const prepareBooleanStringFeatureFlag = (value: string | undefined, defaultValue: boolean): boolean => {
   const preparedValue = value === 'true';
 
   return preparedValue || defaultValue;
+};
+
+const useGetFlagByKey = <T>(key: FeatureFlagsKeysEnum): T => {
+  const { [key]: featureFlag } = useFlags();
+
+  return featureFlag;
 };
 
 export const useIsTemplateStoreEnabled = (): boolean => {
@@ -31,8 +41,12 @@ export const useIsMultiProviderConfigurationEnabled = (): boolean => {
   return isMultiProviderConfigurationEnabled ?? defaultValue;
 };
 
-const useGetFlagByKey = <T>(key: FeatureFlagsKeysEnum): T => {
-  const { [key]: featureFlag } = useFlags();
+export const useIsMultiTenancyEnabled = (): boolean => {
+  const value = IS_MULTI_TENANCY_ENABLED;
+  const fallbackValue = false;
+  const defaultValue = prepareBooleanStringFeatureFlag(value, fallbackValue);
 
-  return featureFlag;
+  const isMultiTenancyEnabled = useGetFlagByKey<boolean>(FeatureFlagsKeysEnum.IS_MULTI_TENANCY_ENABLED);
+
+  return isMultiTenancyEnabled ?? defaultValue;
 };
