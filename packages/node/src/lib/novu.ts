@@ -12,11 +12,6 @@ import { Feeds } from './feeds/feeds';
 import { Topics } from './topics/topics';
 import { Integrations } from './integrations/integrations';
 import { Messages } from './messages/messages';
-import {
-  ITriggerPayloadOptions,
-  IBulkEvents,
-  IBroadcastPayloadOptions,
-} from './events/events.interface';
 
 export class Novu extends EventEmitter {
   private readonly apiKey?: string;

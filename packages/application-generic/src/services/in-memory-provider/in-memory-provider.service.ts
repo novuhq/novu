@@ -162,7 +162,7 @@ export class InMemoryProviderService {
       setInterval(() => {
         try {
           inMemoryProviderClient.nodes('all')?.forEach((node) => {
-            Logger.debug(
+            Logger.log(
               {
                 commandQueueLength: node.commandQueue?.length,
                 host: node.options?.host,

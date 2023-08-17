@@ -78,6 +78,7 @@ export class Digest extends SendMessageType {
     const nextJobs = await this.jobRepository.find({
       _environmentId: command.environmentId,
       transactionId: command.transactionId,
+      _subscriberId: command._subscriberId,
       _id: {
         $ne: command.jobId,
       },

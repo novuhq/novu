@@ -1,23 +1,9 @@
-import capitalize from 'lodash.capitalize';
 import { IEnvironment, providers } from '@novu/shared';
 
 import type { IntegrationEntity } from './types';
 import { CONTEXT_PATH } from '../../config';
 import { CHANNEL_TYPE_TO_STRING } from '../../utils/channels';
 import type { ITableIntegration } from './types';
-
-const makeNovuProviderName = (providerId: string) => {
-  return `${providerId}`
-    .split('-')
-    .map((el) => {
-      if (el.toLocaleLowerCase() === 'sms') {
-        return el.toUpperCase();
-      }
-
-      return capitalize(el);
-    })
-    .join(' ');
-};
 
 export const mapToTableIntegration = (
   integration: IntegrationEntity,
@@ -32,6 +18,8 @@ export const mapToTableIntegration = (
 
   return {
     name: integration.name ?? provider?.displayName,
+    primary: integration.primary,
+    order: integration.order,
     integrationId: integration._id ?? '',
     identifier: integration.identifier,
     provider: provider?.displayName ?? '',

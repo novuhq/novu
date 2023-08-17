@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Param, Post, Scope, UseGuards } from '@nestjs
 import { ApiOkResponse, ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { v4 as uuidv4 } from 'uuid';
 import { IJwtPayload, ISubscribersDefine, TriggerRecipientSubscriber } from '@novu/shared';
-import { EventsPerformanceService, SendTestEmail, SendTestEmailCommand } from '@novu/application-generic';
+import { SendTestEmail, SendTestEmailCommand } from '@novu/application-generic';
 
 import {
   BulkTriggerEventDto,
@@ -37,7 +37,6 @@ export class EventsController {
     private sendTestEmail: SendTestEmail,
     private parseEventRequest: ParseEventRequest,
     private processBulkTriggerUsecase: ProcessBulkTrigger,
-    protected performanceService: EventsPerformanceService,
     protected resumeDelayedUsecase: ResumeDelayed
   ) {}
 
@@ -57,8 +56,6 @@ export class EventsController {
     @UserSession() user: IJwtPayload,
     @Body() body: TriggerEventRequestDto
   ): Promise<TriggerEventResponseDto> {
-    const mark = this.performanceService.buildEndpointTriggerEventMark(body.transactionId as string);
-
     const result = await this.parseEventRequest.execute(
       ParseEventRequestCommand.create({
         userId: user._id,
@@ -72,8 +69,6 @@ export class EventsController {
         transactionId: body.transactionId,
       })
     );
-
-    this.performanceService.setEnd(mark);
 
     return result as unknown as TriggerEventResponseDto;
   }

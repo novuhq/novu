@@ -208,17 +208,21 @@ export class UpdateNotificationTemplate {
         parentStepId = stepId || null;
       }
       updatePayload.steps = templateMessages;
+
+      await this.deleteRemovedSteps(existingTemplate.steps, command, parentChangeId);
     }
 
     if (command.tags) {
       updatePayload.tags = command.tags;
     }
 
+    if (command.data) {
+      updatePayload.data = command.data;
+    }
+
     if (!Object.keys(updatePayload).length) {
       throw new BadRequestException('No properties found for update');
     }
-
-    await this.deleteRemovedSteps(existingTemplate.steps, command, parentChangeId);
 
     await this.invalidateCache.invalidateByKey({
       key: buildNotificationTemplateKey({

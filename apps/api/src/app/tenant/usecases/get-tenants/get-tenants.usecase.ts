@@ -27,6 +27,7 @@ export class GetTenants {
       {
         limit: command.limit,
         skip: command.page * command.limit,
+        sort: { createdAt: -1 },
       }
     );
 

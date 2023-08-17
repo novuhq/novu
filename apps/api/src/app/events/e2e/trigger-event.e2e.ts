@@ -776,6 +776,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       const existingIntegrations = await integrationRepository.find({
         _organizationId: session.organization._id,
         _environmentId: session.environment._id,
+        active: true,
       });
 
       const integrationIdsToDelete = existingIntegrations.flatMap((integration) =>
@@ -789,6 +790,21 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       });
 
       expect(deletedIntegrations.modifiedCount).to.eql(integrationIdsToDelete.length);
+
+      await integrationRepository.update(
+        {
+          _organizationId: session.organization._id,
+          _environmentId: session.environment._id,
+          active: false,
+        },
+        {
+          $set: {
+            active: true,
+            primary: true,
+            priority: 1,
+          },
+        }
+      );
 
       const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
       const channelType = ChannelTypeEnum.EMAIL;
@@ -837,8 +853,6 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
       const channelType = ChannelTypeEnum.EMAIL;
 
-      template = await createTemplate(session, channelType);
-
       template = await session.createTemplate({
         steps: [
           {
@@ -880,7 +894,11 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
         check: false,
       };
 
-      await session.testAgent.post('/v1/integrations').send(payload);
+      const {
+        body: { data },
+      } = await session.testAgent.post('/v1/integrations').send(payload);
+      await session.testAgent.post(`/v1/integrations/${data._id}/set-primary`).send({});
+
       await sendTrigger(session, template, newSubscriberIdInAppNotification, {
         nested: {
           subject: 'a subject nested',
@@ -1820,7 +1838,7 @@ export async function sendTrigger(
   payload: Record<string, unknown> = {},
   overrides: Record<string, unknown> = {}
 ) {
-  await axiosInstance.post(
+  return await axiosInstance.post(
     `${session.serverUrl}${eventTriggerPath}`,
     {
       name: template.triggers[0].identifier,

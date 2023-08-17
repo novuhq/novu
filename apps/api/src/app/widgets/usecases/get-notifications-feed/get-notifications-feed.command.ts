@@ -1,7 +1,7 @@
-import { IsArray, IsNumber, IsOptional, Max, Min } from 'class-validator';
+import { IsArray, IsNumber, IsOptional, IsString } from 'class-validator';
+
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 import { StoreQuery } from '../../queries/store.query';
-import { Transform } from 'class-transformer';
 
 export class GetNotificationsFeedCommand extends EnvironmentWithSubscriber {
   @IsNumber()
@@ -18,4 +18,8 @@ export class GetNotificationsFeedCommand extends EnvironmentWithSubscriber {
 
   @IsOptional()
   query: StoreQuery;
+
+  @IsOptional()
+  @IsString()
+  payload?: string;
 }

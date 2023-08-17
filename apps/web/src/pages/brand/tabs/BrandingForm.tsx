@@ -1,17 +1,17 @@
-import { useEffect, useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { Flex, Grid, Group, Input, LoadingOverlay, Stack, useMantineTheme } from '@mantine/core';
 import { Dropzone } from '@mantine/dropzone';
+import { IOrganizationEntity } from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
 import axios from 'axios';
-import { useMantineTheme, Group, Input, LoadingOverlay, Flex } from '@mantine/core';
-import { IOrganizationEntity } from '@novu/shared';
+import { useEffect, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 
-import { Button, colors, Select, ColorInput } from '../../../design-system';
-import { getSignedUrl } from '../../../api/storage';
 import { updateBrandingSettings } from '../../../api/organization';
+import { getSignedUrl } from '../../../api/storage';
+import Card from '../../../components/layout/components/Card';
+import { Button, ColorInput, colors, Select } from '../../../design-system';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { Upload } from '../../../design-system/icons';
-import Card from '../../../components/layout/components/Card';
 import { successMessage } from '../../../utils/notifications';
 
 const mimeTypes = {
@@ -115,110 +115,120 @@ export function BrandingForm({
   const theme = useMantineTheme();
 
   return (
-    <>
+    <Stack h="100%">
       <LoadingOverlay visible={isLoading} />
       <form noValidate onSubmit={handleSubmit(saveBrandsForm)}>
-        <Flex columnGap={50} align="flex-start">
-          <Card title="Brand Setting">
-            <Controller
-              render={({ field }) => (
-                <Input.Wrapper
-                  styles={inputStyles}
-                  label="Your Logo"
-                  description="Will be used on email templates and inbox"
-                >
-                  <Dropzone
-                    styles={{
-                      root: {
-                        borderRadius: '7px',
-                        width: '50%',
-                        border: ` 1px solid ${
-                          theme.colorScheme === 'dark' ? theme.colors.dark[5] : theme.colors.gray[5]
-                        }`,
-                        background: 'none',
-                      },
-                    }}
-                    accept={Object.keys(mimeTypes)}
-                    multiple={false}
-                    onDrop={beforeUpload}
+        <Grid>
+          <Grid.Col span={6}>
+            <Card title="Brand Setting" space={26}>
+              <Stack spacing={40}>
+                <Flex>
+                  <Controller
+                    render={({ field }) => (
+                      <Input.Wrapper
+                        styles={inputStyles}
+                        label="Your Logo"
+                        description="Will be used on email templates and inbox"
+                      >
+                        <Dropzone
+                          styles={{
+                            root: {
+                              borderRadius: '7px',
+                              border: ` 1px solid ${
+                                theme.colorScheme === 'dark' ? theme.colors.dark[5] : theme.colors.gray[5]
+                              }`,
+                              background: 'none',
+                            },
+                          }}
+                          accept={Object.keys(mimeTypes)}
+                          multiple={false}
+                          onDrop={beforeUpload}
+                          {...field}
+                          data-test-id="upload-image-button"
+                        >
+                          <Group
+                            position="center"
+                            spacing="xl"
+                            style={{ minHeight: 100, minWidth: 100, pointerEvents: 'none' }}
+                          >
+                            {!image ? (
+                              <Upload style={{ width: 80, height: 80, color: colors.B60 }} />
+                            ) : (
+                              <img
+                                data-test-id="logo-image-wrapper"
+                                src={image}
+                                style={{ width: 100, height: 100, objectFit: 'contain' }}
+                                alt="avatar"
+                              />
+                            )}
+                          </Group>
+                        </Dropzone>
+                      </Input.Wrapper>
+                    )}
+                    control={control}
+                    name="image"
+                  />
+                </Flex>
+                <div style={{ width: '50%' }}>
+                  <Controller
+                    render={({ field }) => (
+                      <ColorInput
+                        label="Font Color"
+                        description="Will be used for text in the in-app widget"
+                        data-test-id="color-picker"
+                        disallowInput={false}
+                        {...field}
+                      />
+                    )}
+                    control={control}
+                    name="color"
+                  />
+                </div>
+              </Stack>
+            </Card>
+          </Grid.Col>
+          <Grid.Col span={6}>
+            {' '}
+            <Card title="In-App Widget Customizations" space={26}>
+              <Controller
+                render={({ field }) => (
+                  <Select
+                    label="Font Family"
+                    description="Will be used as the main font-family in the in-app widget"
+                    placeholder="Select a font family"
+                    data={[
+                      'inherit',
+                      'Fira Code',
+                      'Roboto',
+                      'Montserrat',
+                      'Open Sans',
+                      'Lato',
+                      'Nunito',
+                      'Oswald',
+                      'Raleway',
+                    ]}
+                    data-test-id="font-family-selector"
                     {...field}
-                    data-test-id="upload-image-button"
-                  >
-                    <Group
-                      position="center"
-                      spacing="xl"
-                      style={{ minHeight: 100, minWidth: 100, pointerEvents: 'none' }}
-                    >
-                      {!image ? (
-                        <Upload style={{ width: 80, height: 80, color: colors.B60 }} />
-                      ) : (
-                        <img
-                          data-test-id="logo-image-wrapper"
-                          src={image}
-                          style={{ width: 100, height: 100, objectFit: 'contain' }}
-                          alt="avatar"
-                        />
-                      )}
-                    </Group>
-                  </Dropzone>
-                </Input.Wrapper>
-              )}
-              control={control}
-              name="image"
-            />
+                  />
+                )}
+                control={control}
+                name="fontFamily"
+              />
+            </Card>
+          </Grid.Col>
+        </Grid>
 
-            <Controller
-              render={({ field }) => (
-                <ColorInput
-                  mt={25}
-                  label="Brand Color"
-                  description="Will be used to style emails and inbox experience"
-                  data-test-id="color-picker"
-                  disallowInput={false}
-                  {...field}
-                />
-              )}
-              control={control}
-              name="color"
-            />
-          </Card>
-          <Card title="In-App Widget Customizations">
-            <Controller
-              render={({ field }) => (
-                <Select
-                  label="Font Family"
-                  description="Will be used as the main font-family in the in-app widget"
-                  placeholder="Select a font family"
-                  data={[
-                    'inherit',
-                    'Fira Code',
-                    'Roboto',
-                    'Montserrat',
-                    'Open Sans',
-                    'Lato',
-                    'Nunito',
-                    'Oswald',
-                    'Raleway',
-                  ]}
-                  data-test-id="font-family-selector"
-                  {...field}
-                />
-              )}
-              control={control}
-              name="fontFamily"
-            />
-          </Card>
-        </Flex>
         <div
           style={{
             textAlign: 'right',
+            marginTop: '60px',
           }}
         >
-          <Button submit mb={20} mt={25} loading={isUpdateBrandingLoading} data-test-id="submit-branding-settings">
+          <Button submit loading={isUpdateBrandingLoading} data-test-id="submit-branding-settings">
             Update
           </Button>
         </div>
       </form>
-    </>
+    </Stack>
   );
 }

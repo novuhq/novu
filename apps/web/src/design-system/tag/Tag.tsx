@@ -1,4 +1,5 @@
 import { Badge } from '@mantine/core';
+import { colors } from '../config';
 
 interface ITagProps extends JSX.ElementChildrenAttribute {
   color?: string;
@@ -15,8 +16,8 @@ export function Tag({ children, color, border, ...props }: ITagProps) {
   return (
     <Badge
       sx={(theme) => ({
-        color: theme.colorScheme === 'dark' ? theme.white : theme.colors.gray[8],
-        borderColor: theme.colorScheme === 'dark' ? theme.colors.dark[5] : theme.colors.gray[5],
+        color: theme.colorScheme === 'dark' ? theme.white : colors.B40,
+        border: `1px solid ${colors.B30}`,
         borderRadius: '5px',
         textTransform: 'none',
         backgroundColor: 'transparent',

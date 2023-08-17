@@ -30,7 +30,7 @@ export const useUpdateIntegration = (integrationId: string) => {
     },
   });
 
-  const onUpdateIntegration = async (data: IUpdateIntegrationBodyDto) => {
+  const updateIntegrationCallback = async (data: IUpdateIntegrationBodyDto) => {
     await updateIntegrationMutation({
       id: integrationId,
       data: { ...data, check: false },
@@ -38,7 +38,7 @@ export const useUpdateIntegration = (integrationId: string) => {
   };
 
   return {
-    onUpdateIntegration,
+    updateIntegration: updateIntegrationCallback,
     isLoadingUpdate,
   };
 };

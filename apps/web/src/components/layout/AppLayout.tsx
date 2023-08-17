@@ -1,66 +1,69 @@
-import { AppShell } from '@mantine/core';
+import { useState } from 'react';
 import * as Sentry from '@sentry/react';
 import { Outlet } from 'react-router-dom';
+import styled from '@emotion/styled';
 
 import { ThemeProvider } from '../../design-system/ThemeProvider';
 import { HeaderNav } from './components/HeaderNav';
 import { SideNav } from './components/SideNav';
-import { colors } from '../../design-system';
 import { IntercomProvider } from 'react-use-intercom';
 import { INTERCOM_APP_ID } from '../../config';
-import { HEADER_HEIGHT } from './constants';
 import { RequiredAuth } from './RequiredAuth';
 import { SpotLight } from '../utils/Spotlight';
 import { SpotLightProvider } from '../providers/SpotlightProvider';
 
+const AppShellNew = styled.div`
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  min-width: 1024px;
+`;
+
+const ContentShell = styled.div`
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0%;
+  overflow: hidden; // for appropriate scroll
+`;
+
 export function AppLayout() {
+  const [isIntercomOpened, setIsIntercomOpened] = useState(false);
+
   return (
     <RequiredAuth>
       <SpotLightProvider>
         <ThemeProvider>
-          <IntercomProvider appId={INTERCOM_APP_ID}>
-            <AppShell
-              padding="lg"
-              navbar={<SideNav />}
-              header={<HeaderNav />}
-              styles={(theme) => ({
-                root: { minHeight: '100vh', position: 'relative', zIndex: 1 },
-                body: {
-                  minHeight: `calc(100vh - ${HEADER_HEIGHT})`,
-                  '@media (max-width: 768px)': {
-                    flexDirection: 'column',
-                    height: 'auto',
-                  },
-                },
-                main: {
-                  backgroundColor: theme.colorScheme === 'dark' ? colors.BGDark : colors.BGLight,
-                  minHeight: 'auto',
-                  padding: '30px',
-                  overflowX: 'hidden',
-                },
-              })}
+          <IntercomProvider
+            appId={INTERCOM_APP_ID}
+            onShow={() => setIsIntercomOpened(true)}
+            onHide={() => setIsIntercomOpened(false)}
+          >
+            <Sentry.ErrorBoundary
+              fallback={({ error, resetError, eventId }) => (
+                <>
+                  Sorry, but something went wrong. <br />
+                  Our team been notified about it and we will look at it asap.
+                  <br />
+                  <code>
+                    <small style={{ color: 'lightGrey' }}>
+                      Event Id: {eventId}.
+                      <br />
+                      {error.toString()}
+                    </small>
+                  </code>
+                </>
+              )}
             >
-              <Sentry.ErrorBoundary
-                fallback={({ error, resetError, eventId }) => (
-                  <>
-                    Sorry, but something went wrong. <br />
-                    Our team been notified about it and we will look at it asap.
-                    <br />
-                    <code>
-                      <small style={{ color: 'lightGrey' }}>
-                        Event Id: {eventId}.
-                        <br />
-                        {error.toString()}
-                      </small>
-                    </code>
-                  </>
-                )}
-              >
-                <SpotLight>
-                  <Outlet />
-                </SpotLight>
-              </Sentry.ErrorBoundary>
-            </AppShell>
+              <SpotLight>
+                <AppShellNew>
+                  <SideNav />
+                  <ContentShell>
+                    <HeaderNav isIntercomOpened={isIntercomOpened} />
+                    <Outlet />
+                  </ContentShell>
+                </AppShellNew>
+              </SpotLight>
+            </Sentry.ErrorBoundary>
           </IntercomProvider>
         </ThemeProvider>
       </SpotLightProvider>

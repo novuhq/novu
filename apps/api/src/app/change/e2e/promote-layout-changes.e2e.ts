@@ -6,6 +6,7 @@ import {
   ITemplateVariable,
   LayoutDescription,
   LayoutId,
+  LayoutIdentifier,
   LayoutName,
   TemplateVariableTypeEnum,
 } from '@novu/shared';
@@ -24,6 +25,7 @@ describe('Promote Layout Changes', () => {
 
   it('should promote a new layout created to production', async () => {
     const layoutName = 'layout-name-creation';
+    const layoutIdentifier = 'layout-identifier-creation';
     const layoutDescription = 'Amazing new layout';
     const content = '<html><body><div>Hello {{organizationName}} {{{body}}}</div></body></html>';
     const variables = [
@@ -33,6 +35,7 @@ describe('Promote Layout Changes', () => {
 
     const createLayoutPayload = {
       name: layoutName,
+      identifier: layoutIdentifier,
       description: layoutDescription,
       content,
       variables,
@@ -87,6 +90,7 @@ describe('Promote Layout Changes', () => {
     expect(prodLayout._organizationId).to.eql(session.organization._id);
     expect(prodLayout._creatorId).to.eql(session.user._id);
     expect(prodLayout.name).to.eql(layoutName);
+    expect(prodLayout.identifier).to.eql(layoutIdentifier);
     expect(prodLayout.content).to.eql(content);
     // TODO: Awful but it comes from the repository directly.
     const { _id: _, ...prodVariables } = prodLayout.variables?.[0] as any;
@@ -98,6 +102,7 @@ describe('Promote Layout Changes', () => {
 
   it('should promote the updates done to a layout existing to production', async () => {
     const layoutName = 'layout-name-update';
+    const layoutIdentifier = 'layout-identifier-update';
     const layoutDescription = 'Amazing new layout';
     const content = '<html><body><div>Hello {{organizationName}} {{{body}}}</div></body></html>';
     const variables = [
@@ -105,13 +110,14 @@ describe('Promote Layout Changes', () => {
     ];
     const isDefault = false;
 
-    const layoutId = await createLayout(layoutName, layoutDescription, content, variables, isDefault);
+    const layoutId = await createLayout(layoutName, layoutIdentifier, layoutDescription, content, variables, isDefault);
 
     await session.applyChanges({
       enabled: false,
     });
 
     const updatedLayoutName = 'layout-name-creation-updated';
+    const updatedLayoutIdentifier = 'layout-identifier-creation-updated';
     const updatedDescription = 'Amazing new layout updated';
     const updatedContent = '<html><body><div>Hello {{organizationName}}, you all {{{body}}}</div></body></html>';
     const updatedVariables = [
@@ -126,6 +132,7 @@ describe('Promote Layout Changes', () => {
 
     const patchLayoutPayload = {
       name: updatedLayoutName,
+      identifier: updatedLayoutIdentifier,
       description: updatedDescription,
       content: updatedContent,
       variables: updatedVariables,
@@ -161,6 +168,12 @@ describe('Promote Layout Changes', () => {
         path: ['name'],
         val: updatedLayoutName,
         oldVal: layoutName,
+      },
+      {
+        op: 'update',
+        path: ['identifier'],
+        val: updatedLayoutIdentifier,
+        oldVal: layoutIdentifier,
       },
       {
         op: 'update',
@@ -211,6 +224,7 @@ describe('Promote Layout Changes', () => {
     expect(prodLayout._organizationId).to.eql(session.organization._id);
     expect(prodLayout._creatorId).to.eql(session.user._id);
     expect(prodLayout.name).to.eql(updatedLayoutName);
+    expect(prodLayout.identifier).to.eql(updatedLayoutIdentifier);
     expect(prodLayout.content).to.eql(updatedContent);
     // TODO: Awful but it comes from the repository directly.
     const { _id, ...prodVariables } = prodLayout.variables?.[0] as any;
@@ -222,6 +236,7 @@ describe('Promote Layout Changes', () => {
 
   it('should promote the deletion of a layout to production', async () => {
     const layoutName = 'layout-name-deletion';
+    const layoutIdentifier = 'layout-identifier-deletion';
     const layoutDescription = 'Amazing new layout';
     const content = '<html><body><div>Hello {{organizationName}} {{{body}}}</div></body></html>';
     const variables = [
@@ -229,7 +244,7 @@ describe('Promote Layout Changes', () => {
     ];
     const isDefault = false;
 
-    const layoutId = await createLayout(layoutName, layoutDescription, content, variables, isDefault);
+    const layoutId = await createLayout(layoutName, layoutIdentifier, layoutDescription, content, variables, isDefault);
     const {
       body: { data: devLayout },
     } = await session.testAgent.get(`/v1/layouts/${layoutId}`);
@@ -311,6 +326,7 @@ describe('Promote Layout Changes', () => {
 
   async function createLayout(
     layoutName: LayoutName,
+    layoutIdentifier: LayoutIdentifier,
     layoutDescription: LayoutDescription,
     content: string,
     variables: ITemplateVariable[],
@@ -318,6 +334,7 @@ describe('Promote Layout Changes', () => {
   ): Promise<LayoutId> {
     const createLayoutPayload = {
       name: layoutName,
+      identifier: layoutIdentifier,
       description: layoutDescription,
       content,
       variables,

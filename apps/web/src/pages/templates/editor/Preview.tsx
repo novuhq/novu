@@ -94,7 +94,7 @@ export const Preview = ({ activeStep, view }: { activeStep: number; view: string
     }
     setIntegration(
       integrations.find((item) =>
-        isMultiProviderConfigEnabled ? item.channel === 'email' && item.selected : item.channel === 'email'
+        isMultiProviderConfigEnabled ? item.channel === 'email' && item.primary : item.channel === 'email'
       ) || null
     );
   }, [integrations, setIntegration]);

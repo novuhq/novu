@@ -1,5 +1,6 @@
 import { IsArray, IsBoolean, IsDefined, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { IPreferenceChannels } from '@novu/shared';
+
+import { IPreferenceChannels, NotificationTemplateCustomData } from '@novu/shared';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { NotificationStep } from '../create-notification-template';
@@ -54,4 +55,7 @@ export class UpdateNotificationTemplateCommand extends EnvironmentWithUserComman
     active: boolean;
     url: string;
   };
+
+  @IsOptional()
+  data?: NotificationTemplateCustomData;
 }

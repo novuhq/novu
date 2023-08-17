@@ -45,6 +45,7 @@ interface ITemplateButtonProps {
   onDelete?: () => void;
   dragging?: boolean;
   disabled?: boolean;
+  description?: string;
 }
 
 const usePopoverStyles = createStyles(() => ({
@@ -83,6 +84,7 @@ export function WorkflowNode({
   onDelete = () => {},
   dragging = false,
   disabled: initDisabled,
+  description,
 }: ITemplateButtonProps) {
   const segment = useSegment();
   const { readonly: readonlyEnv } = useEnvController();
@@ -164,11 +166,16 @@ export function WorkflowNode({
       >
         <ButtonWrapper>
           <LeftContainerWrapper>
-            <IconWrapper className={classes.linkIcon}>{Icon ? <Icon {...disabledProp} /> : null}</IconWrapper>
+            {Icon ? <Icon {...disabledProp} width="32px" height="32px" /> : null}
             <StyledContentWrapper>
-              <Text {...disabledColor} weight="bold">
+              <Text {...disabledColor} weight="bold" size={16}>
                 {label}
               </Text>
+              {description && (
+                <Text {...disabledColor} size={12} color={colors.B60}>
+                  {description}
+                </Text>
+              )}
             </StyledContentWrapper>
           </LeftContainerWrapper>
 
@@ -302,6 +309,7 @@ const LeftContainerWrapper = styled.div`
   display: flex;
   align-items: center;
   overflow: hidden;
+  gap: 16px;
 `;
 
 const ButtonWrapper = styled.div`
@@ -311,6 +319,9 @@ const ButtonWrapper = styled.div`
 `;
 
 const StyledContentWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   padding-right: 10px;
 `;
 
@@ -321,8 +332,6 @@ const UnstyledButtonStyled = styled.div`
   position: relative;
   pointer-events: all;
   background-color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B17 : colors.white)};
-
-  @media screen and (max-width: 1400px) {
-    padding: 0 5px;
-  }
+  width: 280px;
+  padding: 20px;
 `;

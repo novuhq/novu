@@ -13,7 +13,7 @@ export const ProviderInfo = ({
   provider: IIntegratedProvider | null;
   environments: IEnvironment[] | undefined;
 }) => (
-  <Group spacing={16}>
+  <Group spacing={16} mt={10}>
     <IntegrationChannel
       name={CHANNEL_TYPE_TO_STRING[provider?.channel || ChannelTypeEnum.EMAIL]}
       type={provider?.channel || ChannelTypeEnum.EMAIL}
