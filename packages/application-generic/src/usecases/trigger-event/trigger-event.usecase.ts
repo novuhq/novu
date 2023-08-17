@@ -116,7 +116,6 @@ export class TriggerEvent {
         'Notification event trigger - [Triggers]',
         command.userId,
         {
-          _subscriber: subscriber._id,
           transactionId: command.transactionId,
           _template: template._id,
           _organization: command.organizationId,
@@ -169,9 +168,9 @@ export class TriggerEvent {
          * is no job at this point.
          */
         Logger.warn(
-          `Subscriber ${JSON.stringify(subscriber._id)} of organization ${
-            command.organizationId
-          } in transaction ${
+          `Subscriber ${JSON.stringify(
+            subscriber.subscriberId
+          )} of organization ${command.organizationId} in transaction ${
             command.transactionId
           } was not processed. No jobs are created.`,
           LOG_CONTEXT

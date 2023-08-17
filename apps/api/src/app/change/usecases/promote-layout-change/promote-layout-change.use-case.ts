@@ -23,6 +23,7 @@ export class PromoteLayoutChange {
     if (!item) {
       const layoutEntity = {
         name: newItem.name,
+        identifier: newItem.identifier,
         content: newItem.content,
         description: newItem.description,
         contentType: newItem.contentType,
@@ -56,6 +57,7 @@ export class PromoteLayoutChange {
       },
       {
         name: newItem.name,
+        identifier: newItem.identifier,
         content: newItem.content,
         description: newItem.description,
         contentType: newItem.contentType,

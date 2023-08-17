@@ -4,6 +4,7 @@ import {
   IEmailBlock,
   ITemplateVariable,
   LayoutDescription,
+  LayoutIdentifier,
   LayoutId,
   LayoutName,
   OrderDirectionEnum,
@@ -24,6 +25,7 @@ export {
   LayoutDescription,
   LayoutId,
   LayoutName,
+  LayoutIdentifier,
   TemplateVariableTypeEnum,
   UserId,
 };
