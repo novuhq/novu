@@ -1,4 +1,4 @@
-import { IntegrationEntity, JobEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
+import { IntegrationEntity, JobEntity, MessageRepository, SubscriberRepository, TenantEntity } from '@novu/dal';
 import {
   ChannelTypeEnum,
   EmailProviderIdEnum,
@@ -108,6 +108,26 @@ export abstract class SendMessageBase extends SendMessageType {
           name: integration?.name,
           _environmentId: integration?._environmentId,
           _id: integration?._id,
+        }),
+      })
+    );
+  }
+
+  protected async sendSelectedTenantExecution(job: JobEntity, tenant: TenantEntity) {
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+        detail: DetailEnum.TENANT_CONTEXT_SELECTED,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.PENDING,
+        isTest: false,
+        isRetry: false,
+        raw: JSON.stringify({
+          identifier: tenant?.identifier,
+          name: tenant?.name,
+          data: tenant?.data,
+          _environmentId: tenant?._environmentId,
+          _id: tenant?._id,
         }),
       })
     );

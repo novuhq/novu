@@ -6,6 +6,8 @@ import {
   SubscriberRepository,
   MessageEntity,
   IntegrationEntity,
+  TenantEntity,
+  TenantRepository,
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import {
@@ -32,6 +34,7 @@ export class SendMessageSms extends SendMessageBase {
   constructor(
     protected subscriberRepository: SubscriberRepository,
     protected messageRepository: MessageRepository,
+    protected tenantRepository: TenantRepository,
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
@@ -70,6 +73,34 @@ export class SendMessageSms extends SendMessageBase {
       message: 'Sending SMS',
     });
 
+    const tenantIdentifier = command.job.tenantIdentifier;
+    let tenant: TenantEntity | null = null;
+
+    if (tenantIdentifier) {
+      tenant = await this.tenantRepository.findOne({
+        _environmentId: command.environmentId,
+        identifier: tenantIdentifier,
+      });
+      if (!tenant) {
+        await this.createExecutionDetails.execute(
+          CreateExecutionDetailsCommand.create({
+            ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+            detail: DetailEnum.TENANT_NOT_FOUND,
+            source: ExecutionDetailsSourceEnum.INTERNAL,
+            status: ExecutionDetailsStatusEnum.FAILED,
+            isTest: false,
+            isRetry: false,
+            raw: JSON.stringify({
+              tenantIdentifier: tenantIdentifier,
+            }),
+          })
+        );
+
+        return;
+      }
+      await this.sendSelectedTenantExecution(command.job, tenant);
+    }
+
     const smsChannel: NotificationStepEntity = command.step;
     if (!smsChannel.template) throw new PlatformException(`Unexpected error: SMS template is missing`);
 
@@ -80,6 +111,7 @@ export class SendMessageSms extends SendMessageBase {
         events: command.events,
         total_count: command.events?.length,
       },
+      ...(tenant ? { tenant: { name: tenant.name, ...tenant.data } } : {}),
       ...command.payload,
     };
 

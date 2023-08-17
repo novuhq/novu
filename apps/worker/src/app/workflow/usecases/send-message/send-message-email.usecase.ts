@@ -7,6 +7,8 @@ import {
   IntegrationEntity,
   MessageEntity,
   LayoutRepository,
+  TenantRepository,
+  TenantEntity,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -44,6 +46,7 @@ export class SendMessageEmail extends SendMessageBase {
     protected subscriberRepository: SubscriberRepository,
     protected messageRepository: MessageRepository,
     protected layoutRepository: LayoutRepository,
+    protected tenantRepository: TenantRepository,
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     private compileEmailTemplateUsecase: CompileEmailTemplate,
@@ -100,6 +103,33 @@ export class SendMessageEmail extends SendMessageBase {
     if (!emailChannel.template) throw new PlatformException('Email channel template not found');
 
     const email = command.payload.email || subscriber.email;
+    const tenantIdentifier = command.job.tenantIdentifier;
+
+    let tenant: TenantEntity | null = null;
+    if (tenantIdentifier) {
+      tenant = await this.tenantRepository.findOne({
+        _environmentId: command.environmentId,
+        identifier: tenantIdentifier,
+      });
+      if (!tenant) {
+        await this.createExecutionDetails.execute(
+          CreateExecutionDetailsCommand.create({
+            ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+            detail: DetailEnum.TENANT_NOT_FOUND,
+            source: ExecutionDetailsSourceEnum.INTERNAL,
+            status: ExecutionDetailsStatusEnum.FAILED,
+            isTest: false,
+            isRetry: false,
+            raw: JSON.stringify({
+              tenantIdentifier: tenantIdentifier,
+            }),
+          })
+        );
+
+        return;
+      }
+      await this.sendSelectedTenantExecution(command.job, tenant);
+    }
 
     Sentry.addBreadcrumb({
       message: 'Sending Email',
@@ -154,6 +184,7 @@ export class SendMessageEmail extends SendMessageBase {
           events: command.events,
           total_count: command.events?.length,
         },
+        ...(tenant ? { tenant: { name: tenant.name, ...tenant.data } } : {}),
         subscriber,
       },
     };
