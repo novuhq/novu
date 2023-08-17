@@ -20,7 +20,7 @@ const featureFlagsProviders = {
 
 @Injectable()
 export class FeatureFlagsService {
-  private service: IFeatureFlagsService;
+  public service: IFeatureFlagsService;
 
   constructor() {
     Logger.verbose('Feature Flags service initialized', LOG_CONTEXT);
@@ -31,6 +31,14 @@ export class FeatureFlagsService {
 
     if (service) {
       this.service = new service();
+    }
+  }
+
+  private async initialize(): Promise<void> {
+    if (this.service) {
+      await this.service.initialize();
+    } else {
+      Logger.error('No Feature Flags service available to initialize');
     }
   }
 

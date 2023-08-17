@@ -24,53 +24,62 @@ export enum BackoffStrategiesEnum {
   WEBHOOK_FILTER_BACKOFF = 'webhookFilterBackoff',
 }
 
+const LOG_CONTEXT = 'AddJob';
+
 @Injectable()
 export class AddJob {
   constructor(
     private jobRepository: JobRepository,
-    private queueService: QueueService,
     private createExecutionDetails: CreateExecutionDetails,
     private addDigestJob: AddDigestJob,
-    private addDelayJob: AddDelayJob
+    private addDelayJob: AddDelayJob,
+    public readonly queueService: QueueService
   ) {}
 
   @InstrumentUsecase()
   @LogDecorator()
   public async execute(command: AddJobCommand): Promise<void> {
-    Logger.verbose('Getting Job');
+    Logger.verbose('Getting Job', LOG_CONTEXT);
     const job =
       command.job ?? (await this.jobRepository.findById(command.jobId));
-    Logger.debug(job, 'job contents');
+    Logger.debug(`Job contents for job ${job._id}`, job, LOG_CONTEXT);
 
     if (!job) {
-      Logger.warn('job was null in both the input and search');
+      Logger.warn(
+        `Job ${job._id} was null in both the input and search`,
+        LOG_CONTEXT
+      );
 
       return;
     }
 
-    Logger.log('Starting New Job of type: ' + job.type);
+    Logger.log(`Starting New Job ${job._id} of type: ${job.type}`, LOG_CONTEXT);
 
     const digestAmount =
       job.type === StepTypeEnum.DIGEST
         ? await this.addDigestJob.execute(AddDigestJobCommand.create({ job }))
         : undefined;
-    Logger.debug('digestAmount is: ' + digestAmount);
+    Logger.debug(`DigestAmount is: ${digestAmount}`, LOG_CONTEXT);
 
     const delayAmount =
       job.type === StepTypeEnum.DELAY
         ? await this.addDelayJob.execute(command)
         : undefined;
-    Logger.debug('delayAmount is: ' + delayAmount);
+    Logger.debug(`DelayAmount is: ${delayAmount}`, LOG_CONTEXT);
 
     if (job.type === StepTypeEnum.DIGEST && digestAmount === undefined) {
-      Logger.warn('Digest Amount does not exist on a digest job');
+      Logger.warn(
+        `Digest Amount does not exist on a digest job ${job._id}`,
+        LOG_CONTEXT
+      );
 
       return;
     }
 
     if (digestAmount === undefined && delayAmount === undefined) {
       Logger.verbose(
-        'updating status as digestAmount and delayAmount is undefined'
+        `Updating status to queued for job ${job._id}`,
+        LOG_CONTEXT
       );
       await this.jobRepository.updateStatus(
         command.environmentId,
@@ -80,7 +89,7 @@ export class AddJob {
     }
 
     const delay = digestAmount ?? delayAmount;
-    Logger.debug('delay is: ' + delay);
+    Logger.debug('Delay is: ' + delay, LOG_CONTEXT);
 
     this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
@@ -95,11 +104,12 @@ export class AddJob {
 
     if (delay === null) {
       Logger.warn(
-        'variable delay is null which is not apart of the definition'
+        'Variable delay is null which is not apart of the definition',
+        LOG_CONTEXT
       );
     }
 
-    Logger.verbose('Adding Job to Queue');
+    Logger.verbose(`Adding Job ${job._id} to Queue`, LOG_CONTEXT);
     const stepContainsWebhookFilter = this.stepContainsFilter(job, 'webhook');
     const options: JobsOptions = {
       delay,
@@ -126,7 +136,10 @@ export class AddJob {
     );
 
     if (delay) {
-      Logger.verbose('Delay is active, Creating execution details');
+      Logger.verbose(
+        'Delay is active, Creating execution details',
+        LOG_CONTEXT
+      );
       this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),

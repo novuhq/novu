@@ -1,11 +1,12 @@
-import { ReactNode, useEffect } from 'react';
-import { ActionIcon, createStyles, Drawer, Loader, MantineTheme, Stack } from '@mantine/core';
 import styled from '@emotion/styled';
+import { ActionIcon, createStyles, Drawer, Loader, MantineTheme, Stack } from '@mantine/core';
+import { ReactNode } from 'react';
+import { HEADER_HEIGHT } from '../../components/layout/constants';
 
-import { colors, shadows } from '../config';
-import { ArrowLeft, Close } from '../icons';
 import { When } from '../../components/utils/When';
 import { useKeyDown } from '../../hooks';
+import { colors, shadows } from '../config';
+import { ArrowLeft, Close } from '../icons';
 
 const HeaderHolder = styled.div`
   display: flex;
@@ -37,7 +38,6 @@ const FooterHolder = styled.div`
 `;
 
 const COLLAPSED_WIDTH = 480;
-const HEADER_HEIGHT = 65;
 const NAVIGATION_WIDTH = 300;
 const PAGE_MARGIN = 30;
 const INTEGRATION_SETTING_TOP = HEADER_HEIGHT;
@@ -79,6 +79,7 @@ export const Sidebar = ({
   isOpened,
   isExpanded = false,
   isLoading = false,
+  'data-test-id': dataTestId,
   onClose,
   onBack,
   onSubmit,
@@ -92,10 +93,14 @@ export const Sidebar = ({
   onClose: () => void;
   onBack?: () => void;
   onSubmit?: React.FormEventHandler<HTMLFormElement>;
+  'data-test-id'?: string;
 }) => {
   const { classes: drawerClasses } = useDrawerStyles();
+  const onCloseCallback = () => {
+    onClose();
+  };
 
-  useKeyDown('Escape', onClose);
+  useKeyDown('Escape', onCloseCallback);
 
   return (
     <Drawer
@@ -103,7 +108,7 @@ export const Sidebar = ({
       position="right"
       styles={{
         drawer: {
-          width: isExpanded ? `calc(100% - ${NAVIGATION_WIDTH + PAGE_MARGIN}px)` : COLLAPSED_WIDTH,
+          width: isExpanded ? `calc(100% - ${NAVIGATION_WIDTH}px)` : COLLAPSED_WIDTH,
           transition: 'all 300ms ease !important',
           '@media screen and (max-width: 768px)': {
             width: isExpanded ? `100%` : COLLAPSED_WIDTH,
@@ -111,22 +116,28 @@ export const Sidebar = ({
         },
       }}
       classNames={drawerClasses}
-      onClose={onClose}
+      onClose={onCloseCallback}
       withOverlay={false}
       withCloseButton={false}
       closeOnEscape={false}
       withinPortal={false}
       trapFocus={false}
+      data-expanded={isExpanded}
     >
-      <Form noValidate onSubmit={onSubmit}>
+      <Form noValidate onSubmit={onSubmit} data-test-id={dataTestId}>
         <HeaderHolder>
           {isExpanded && (
-            <ActionIcon variant="transparent" onClick={onBack}>
+            <ActionIcon variant="transparent" onClick={onBack} data-test-id="sidebar-back">
               <ArrowLeft color={colors.B40} />
             </ActionIcon>
           )}
           {customHeader}
-          <ActionIcon variant="transparent" onClick={onClose} style={{ marginLeft: 'auto' }}>
+          <ActionIcon
+            variant="transparent"
+            onClick={onCloseCallback}
+            style={{ marginLeft: 'auto' }}
+            data-test-id="sidebar-close"
+          >
             <Close color={colors.B40} />
           </ActionIcon>
         </HeaderHolder>

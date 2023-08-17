@@ -1,12 +1,9 @@
 import { IsBoolean, IsEnum, IsOptional } from 'class-validator';
 import { ChannelTypeEnum, ProvidersIdEnum } from '@novu/shared';
 
-import {
-  EnvironmentWithUserCommand,
-  OrganizationLevelWithUserCommand,
-} from '../../commands';
+import { EnvironmentWithUserCommand } from '../../commands';
 
-export class GetDecryptedIntegrationsCommand extends OrganizationLevelWithUserCommand {
+export class GetDecryptedIntegrationsCommand extends EnvironmentWithUserCommand {
   @IsBoolean()
   @IsOptional()
   findOne?: boolean;

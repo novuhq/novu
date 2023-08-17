@@ -7,23 +7,18 @@ export class GetTenants {
   constructor(private tenantRepository: TenantRepository) {}
 
   async execute(command: GetTenantsCommand) {
-    const { data, totalCount } = await this.getTenants(command);
+    const data = await this.getTenants(command);
 
     return {
       page: command.page,
-      totalCount,
+      hasMore: data?.length === command.limit,
       pageSize: command.limit,
       data,
     };
   }
 
   private async getTenants(command: GetTenantsCommand) {
-    const totalCountPromise = this.tenantRepository.count({
-      _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
-    });
-
-    const dataPromise = this.tenantRepository.find(
+    const data = await this.tenantRepository.find(
       {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
@@ -32,11 +27,10 @@ export class GetTenants {
       {
         limit: command.limit,
         skip: command.page * command.limit,
+        sort: { createdAt: -1 },
       }
     );
 
-    const [data, totalCount] = await Promise.all([dataPromise, totalCountPromise]);
-
-    return { data, totalCount };
+    return data;
   }
 }

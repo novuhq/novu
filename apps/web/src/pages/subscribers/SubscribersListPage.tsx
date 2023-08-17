@@ -13,7 +13,7 @@ import { HoverCard } from '../../design-system/hover-card/HoverCard';
 const columns: IExtendedColumn<ISubscriber>[] = [
   {
     accessor: 'subscriberId',
-    Header: 'Subscriber Id',
+    Header: 'Subscriber identifier',
   },
   {
     accessor: 'firstName',
@@ -60,7 +60,7 @@ const columns: IExtendedColumn<ISubscriber>[] = [
 
 function SubscribersList() {
   const [page, setPage] = useState<number>(0);
-  const { subscribers, loading: isLoading, totalCount, pageSize } = useSubscribers(page);
+  const { subscribers, loading: isLoading, hasMore, pageSize } = useSubscribers(page);
 
   function handleTableChange(pageIndex) {
     setPage(pageIndex);
@@ -77,7 +77,8 @@ function SubscribersList() {
         pagination={{
           pageSize: pageSize,
           current: page,
-          total: totalCount,
+          hasMore,
+          minimalPagination: true,
           onPageChange: handleTableChange,
         }}
       />

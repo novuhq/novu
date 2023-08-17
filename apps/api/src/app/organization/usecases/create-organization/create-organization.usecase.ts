@@ -12,6 +12,8 @@ import { AddMember } from '../membership/add-member/add-member.usecase';
 import { CreateOrganizationCommand } from './create-organization.command';
 
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { CreateNovuIntegrations } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
+import { CreateNovuIntegrationsCommand } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.command';
 
 @Injectable({
   scope: Scope.REQUEST,
@@ -23,6 +25,7 @@ export class CreateOrganization {
     private readonly getOrganizationUsecase: GetOrganization,
     private readonly userRepository: UserRepository,
     private readonly createEnvironmentUsecase: CreateEnvironment,
+    private readonly createNovuIntegrations: CreateNovuIntegrations,
     private analyticsService: AnalyticsService
   ) {}
 
@@ -53,12 +56,28 @@ export class CreateOrganization {
       })
     );
 
-    await this.createEnvironmentUsecase.execute(
+    await this.createNovuIntegrations.execute(
+      CreateNovuIntegrationsCommand.create({
+        environmentId: devEnv._id,
+        organizationId: devEnv._organizationId,
+        userId: user._id,
+      })
+    );
+
+    const prodEnv = await this.createEnvironmentUsecase.execute(
       CreateEnvironmentCommand.create({
         userId: user._id,
         name: 'Production',
         organizationId: createdOrganization._id,
         parentEnvironmentId: devEnv._id,
+      })
+    );
+
+    await this.createNovuIntegrations.execute(
+      CreateNovuIntegrationsCommand.create({
+        environmentId: prodEnv._id,
+        organizationId: prodEnv._organizationId,
+        userId: user._id,
       })
     );
 

@@ -66,15 +66,10 @@ export class MarkMessageAs {
     return messages;
   }
 
-  private async updateServices(command: MarkMessageAsCommand, subscriber, messages, marked: string) {
-    const [admin, count] = await Promise.all([
-      this.memberRepository.getOrganizationAdminAccount(command.organizationId),
-      this.messageRepository.getCount(command.environmentId, subscriber._id, ChannelTypeEnum.IN_APP, {
-        [marked]: false,
-      }),
-    ]);
+  private async updateServices(command: MarkMessageAsCommand, subscriber, messages, marked: MarkEnum) {
+    const admin = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
 
-    this.updateSocketCount(subscriber, count, marked);
+    this.updateSocketCount(subscriber, marked);
 
     if (admin) {
       for (const message of messages) {
@@ -87,18 +82,15 @@ export class MarkMessageAs {
     }
   }
 
-  private updateSocketCount(subscriber: SubscriberEntity, count: number, mark: string) {
-    const eventMessage = `un${mark}_count_changed`;
-    const countKey = `un${mark}Count`;
+  private updateSocketCount(subscriber: SubscriberEntity, mark: MarkEnum) {
+    const eventMessage = mark === MarkEnum.READ ? `unread_count_changed` : 'unseen_count_changed';
 
     this.wsQueueService.bullMqService.add(
       'sendMessage',
       {
         event: eventMessage,
         userId: subscriber._id,
-        payload: {
-          [countKey]: count,
-        },
+        _environmentId: subscriber._environmentId,
       },
       {},
       subscriber._organizationId

@@ -20,7 +20,7 @@
     }
 
     &::before {
-      top: 14px;
+      top: 16px;
       position: absolute;
       left: -1px;
       content: '';
@@ -145,7 +145,7 @@ html[data-theme='dark'] {
     }
 
     .menu__link--sublist-caret::before {
-      background: url('/img/chevron-white.svg');
+      background: url('/img/chevron-white.svg') no-repeat;
     }
   }
 }
@@ -181,7 +181,7 @@ html[data-theme='light'] {
     }
 
     .menu__link--sublist-caret::before {
-      background: url('/img/chevron-black.svg');
+      background: url('/img/chevron-black.svg') no-repeat;
     }
   }
 }

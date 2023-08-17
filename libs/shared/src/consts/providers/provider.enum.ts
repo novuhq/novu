@@ -42,6 +42,7 @@ export enum EmailProviderIdEnum {
   NetCore = 'netcore',
   Infobip = 'infobip-email',
   Resend = 'resend',
+  Plunk = 'plunk',
   MailerSend = 'mailersend',
   Clickatell = 'clickatell',
   Outlook365 = 'outlook365',
@@ -69,6 +70,7 @@ export enum SmsProviderIdEnum {
   Termii = 'termii',
   AfricasTalking = 'africas-talking',
   Novu = 'novu-sms',
+  Sendchamp = 'sendchamp',
 }
 
 export enum ChatProviderIdEnum {

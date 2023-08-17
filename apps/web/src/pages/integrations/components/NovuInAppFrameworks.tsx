@@ -56,7 +56,7 @@ const frameworks = [
 
 export const NovuInAppFrameworks = ({ onFrameworkClick }: { onFrameworkClick: (framework: FrameworkEnum) => void }) => {
   return (
-    <NovuInAppFrameworksHolder>
+    <NovuInAppFrameworksHolder data-test-id="novu-in-app-frameworks">
       <Text>Integrate In-App using a framework below</Text>
       <FrameworksGrid>
         {frameworks.map(({ name, icon: Icon, frameworkEnum, href }) =>

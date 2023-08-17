@@ -1,6 +1,5 @@
 import { Provider, Module } from '@nestjs/common';
 import {
-  EventsPerformanceService,
   CreateExecutionDetails,
   BulkCreateExecutionDetails,
   CalculateLimitNovuIntegration,
@@ -9,7 +8,6 @@ import {
   DigestFilterStepsBackoff,
   DigestFilterStepsTimed,
   GetDecryptedIntegrations,
-  GetNovuIntegration,
   GetSubscriberPreference,
   GetSubscriberTemplatePreference,
   CompileEmailTemplate,
@@ -33,6 +31,7 @@ import {
   CalculateDelayService,
   WsQueueService,
   SelectIntegration,
+  GetNovuProviderCredentials,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
@@ -70,7 +69,6 @@ const USE_CASES = [
   BulkCreateExecutionDetails,
   GetDecryptedIntegrations,
   SelectIntegration,
-  GetNovuIntegration,
   GetSubscriberPreference,
   GetSubscriberTemplatePreference,
   HandleLastFailedJob,
@@ -107,6 +105,7 @@ const USE_CASES = [
   ProcessSubscriber,
   CreateSubscriber,
   UpdateSubscriber,
+  GetNovuProviderCredentials,
 ];
 
 const REPOSITORIES = [JobRepository];
@@ -136,7 +135,6 @@ const SERVICES: Provider[] = [
     inject: [QueueService, TriggerQueueService, WsQueueService],
   },
   EventsDistributedLockService,
-  EventsPerformanceService,
   CalculateDelayService,
   TriggerProcessorQueueService,
   WorkflowQueueService,

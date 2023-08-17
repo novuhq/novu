@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
@@ -30,12 +30,16 @@ export class RunJob {
     const job = await this.jobRepository.findById(command.jobId);
     if (!job) throw new PlatformException(`Job with id ${command.jobId} not found`);
 
-    this.logger?.assign({
-      transactionId: job.transactionId,
-      environmentId: job._environmentId,
-      organizationId: job._organizationId,
-      jobId: job._id,
-    });
+    try {
+      this.logger?.assign({
+        transactionId: job.transactionId,
+        environmentId: job._environmentId,
+        organizationId: job._organizationId,
+        jobId: job._id,
+      });
+    } catch (e) {
+      Logger.error(e, 'RunJob');
+    }
 
     const canceled = await this.delayedEventIsCanceled(job);
     if (canceled) {
@@ -68,16 +72,14 @@ export class RunJob {
           job,
         })
       );
-
-      await this.storageHelperService.deleteAttachments(job.payload?.attachments);
-    } catch (error) {
+    } catch (error: any) {
       if (job.step.shouldStopOnFail || this.shouldBackoff(error)) {
         shouldQueueNextJob = false;
       }
       throw new PlatformException(error.message);
     } finally {
       if (shouldQueueNextJob) {
-        await this.queueNextJob.execute(
+        const newJob = await this.queueNextJob.execute(
           QueueNextJobCommand.create({
             parentId: job._id,
             environmentId: job._environmentId,
@@ -85,6 +87,14 @@ export class RunJob {
             userId: job._userId,
           })
         );
+
+        // Only remove the attachments if that is the last job
+        if (!newJob) {
+          await this.storageHelperService.deleteAttachments(job.payload?.attachments);
+        }
+      } else {
+        // Remove the attachments if the job should not be queued
+        await this.storageHelperService.deleteAttachments(job.payload?.attachments);
       }
     }
   }

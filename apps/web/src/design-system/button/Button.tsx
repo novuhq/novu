@@ -5,7 +5,7 @@ import useStyles from './Button.styles';
 
 export type Size = 'md' | 'lg' | undefined;
 
-interface IButtonProps extends ButtonProps {
+export interface IButtonProps extends ButtonProps {
   id?: string;
   loading?: boolean;
   size?: Size;

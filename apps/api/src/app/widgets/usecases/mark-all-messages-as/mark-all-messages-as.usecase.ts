@@ -7,7 +7,7 @@ import {
   buildFeedKey,
   buildMessageCountKey,
 } from '@novu/application-generic';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, MarkMessagesAsEnum } from '@novu/shared';
 
 import { MarkAllMessagesAsCommand } from './mark-all-messages-as.command';
 
@@ -22,6 +22,14 @@ export class MarkAllMessagesAs {
   ) {}
 
   async execute(command: MarkAllMessagesAsCommand): Promise<number> {
+    const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
+    if (!subscriber) {
+      throw new NotFoundException(
+        `Subscriber ${command.subscriberId} does not exist in environment ${command.environmentId}, ` +
+          `please provide a valid subscriber identifier`
+      );
+    }
+
     await this.invalidateCache.invalidateQuery({
       key: buildFeedKey().invalidate({
         subscriberId: command.subscriberId,
@@ -36,34 +44,23 @@ export class MarkAllMessagesAs {
       }),
     });
 
-    const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
-    if (!subscriber) {
-      throw new NotFoundException(
-        `Subscriber ${command.subscriberId} does not exist in environment ${command.environmentId}, ` +
-          `please provide a valid subscriber identifier`
-      );
-    }
-
     const response = await this.messageRepository.markAllMessagesAs({
       subscriberId: subscriber._id,
       environmentId: command.environmentId,
       markAs: command.markAs,
-      feedIdentifiers: command.feedIds,
+      feedIdentifiers: command.feedIdentifiers,
       channel: ChannelTypeEnum.IN_APP,
     });
 
-    const isMarkAsRead = command.markAs === 'read';
+    const isUnreadCountChanged =
+      command.markAs === MarkMessagesAsEnum.READ || command.markAs === MarkMessagesAsEnum.UNREAD;
 
     this.wsQueueService.bullMqService.add(
       'sendMessage',
       {
-        event: isMarkAsRead ? 'unread_count_changed' : 'unseen_count_changed',
+        event: isUnreadCountChanged ? 'unread_count_changed' : 'unseen_count_changed',
         userId: subscriber._id,
-        payload: isMarkAsRead
-          ? { unreadCount: 0 }
-          : {
-              unseenCount: 0,
-            },
+        _environmentId: command.environmentId,
       },
       {},
       subscriber._organizationId
@@ -75,7 +72,7 @@ export class MarkAllMessagesAs {
       {
         _organization: command.organizationId,
         _subscriberId: subscriber._id,
-        feedIds: command.feedIds,
+        feedIds: command.feedIdentifiers,
         markAs: command.markAs,
       }
     );

@@ -41,6 +41,7 @@ describe('Distributed Lock Service', () => {
 
     beforeEach(async () => {
       inMemoryProviderService = new InMemoryProviderService();
+      inMemoryProviderService.initialize();
 
       await inMemoryProviderService.delayUntilReadiness();
 
@@ -293,6 +294,7 @@ describe('Distributed Lock Service', () => {
       process.env.REDIS_CLUSTER_SERVICE_PORTS = '';
 
       inMemoryProviderService = new InMemoryProviderService();
+      inMemoryProviderService.initialize();
       expect(inMemoryProviderService.inMemoryProviderConfig.host).toEqual('');
       distributedLockService = new DistributedLockService(
         inMemoryProviderService

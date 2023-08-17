@@ -29,6 +29,7 @@ import {
   WsQueueService,
   buildFeedKey,
   buildMessageCountKey,
+  GetNovuProviderCredentials,
 } from '@novu/application-generic';
 
 import { CreateLog } from '../../../shared/logs';
@@ -49,9 +50,17 @@ export class SendMessageInApp extends SendMessageBase {
     protected subscriberRepository: SubscriberRepository,
     private compileTemplate: CompileTemplate,
     private organizationRepository: OrganizationRepository,
-    protected selectIntegration: SelectIntegration
+    protected selectIntegration: SelectIntegration,
+    protected getNovuProviderCredentials: GetNovuProviderCredentials
   ) {
-    super(messageRepository, createLogUsecase, createExecutionDetails, subscriberRepository, selectIntegration);
+    super(
+      messageRepository,
+      createLogUsecase,
+      createExecutionDetails,
+      subscriberRepository,
+      selectIntegration,
+      getNovuProviderCredentials
+    );
   }
 
   @InstrumentUsecase()
@@ -226,22 +235,6 @@ export class SendMessageInApp extends SendMessageBase {
       command.organizationId
     );
 
-    const unseenCount = await this.messageRepository.getCount(
-      command.environmentId,
-      command._subscriberId,
-      ChannelTypeEnum.IN_APP,
-      { seen: false },
-      { limit: 1000 }
-    );
-
-    const unreadCount = await this.messageRepository.getCount(
-      command.environmentId,
-      command._subscriberId,
-      ChannelTypeEnum.IN_APP,
-      { read: false },
-      { limit: 1000 }
-    );
-
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -260,9 +253,7 @@ export class SendMessageInApp extends SendMessageBase {
       {
         event: 'unseen_count_changed',
         userId: command._subscriberId,
-        payload: {
-          unseenCount,
-        },
+        _environmentId: command.environmentId,
       },
       {},
       command.organizationId
@@ -273,9 +264,7 @@ export class SendMessageInApp extends SendMessageBase {
       {
         event: 'unread_count_changed',
         userId: command._subscriberId,
-        payload: {
-          unreadCount,
-        },
+        _environmentId: command.environmentId,
       },
       {},
       command.organizationId

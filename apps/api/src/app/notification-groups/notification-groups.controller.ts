@@ -12,7 +12,6 @@ import {
 } from '@nestjs/common';
 import { IJwtPayload } from '@novu/shared';
 import { CreateNotificationGroup } from './usecases/create-notification-group/create-notification-group.usecase';
-import { Roles } from '../auth/framework/roles.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateNotificationGroupCommand } from './usecases/create-notification-group/create-notification-group.command';
 import { CreateNotificationGroupRequestDto } from './dtos/create-notification-group-request.dto';

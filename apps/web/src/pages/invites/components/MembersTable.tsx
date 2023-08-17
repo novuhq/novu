@@ -19,6 +19,7 @@ export function MembersTable({
   loading = false,
   onResendInviteMember,
   onChangeMemberRole,
+  allowChangeRole = false,
 }) {
   const { classes, theme } = useStyles();
   const clipboardInviteLink = useClipboard({ timeout: 1000 });
@@ -44,7 +45,7 @@ export function MembersTable({
   }
 
   return (
-    <Container fluid mt={15} style={{ position: 'relative', minHeight: 500 }}>
+    <Container fluid mt={15} style={{ position: 'relative', minHeight: 500 }} px={0}>
       <LoadingOverlay
         visible={loading}
         overlayColor={theme.colorScheme === 'dark' ? colors.B30 : colors.B98}
@@ -77,6 +78,7 @@ export function MembersTable({
                   onChangeMemberRole={onChangeMemberRole}
                   member={member}
                   isEnableMemberActions={isEnableMemberActions}
+                  allowChangeRole={allowChangeRole}
                 />
               </div>
             </ActionsSider>

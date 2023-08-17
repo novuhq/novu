@@ -1,6 +1,11 @@
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional } from 'class-validator';
+
+import { NotificationTemplateCustomData } from '@novu/shared';
+
 import { NotificationStep } from '../../shared/dtos/notification-step';
 import { PreferenceChannels } from '../../shared/dtos/preference-channels';
+import { ChannelTypeEnum } from '@novu/shared';
 
 class NotificationGroup {
   @ApiPropertyOptional()
@@ -42,7 +47,7 @@ class NotificationTrigger {
 }
 
 @ApiExtraModels(NotificationGroup)
-export class WorkflowsResponse {
+export class WorkflowResponse {
   @ApiPropertyOptional()
   _id?: string;
 
@@ -107,4 +112,12 @@ export class WorkflowsResponse {
     type: NotificationGroup,
   })
   readonly notificationGroup?: NotificationGroup;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  data?: NotificationTemplateCustomData;
+
+  activeIntegrationStatus?: ActiveIntegrationsChannelsStatus;
 }
+
+export type ActiveIntegrationsChannelsStatus = { isActive: boolean; channels: { [key in ChannelTypeEnum]: boolean } };

@@ -199,6 +199,7 @@ export class UserSession {
 
     await this.layoutRepository.create({
       name: 'Default',
+      identifier: 'default-layout',
       _environmentId: environment._id,
       _organizationId: this.organization._id,
       isDefault: true,

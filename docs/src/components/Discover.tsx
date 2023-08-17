@@ -42,6 +42,12 @@ const discoverData = {
     description:
       'Novu is the only open-source notification infrastructure, join a community of thousands of developers. Learn about how you can contribute and stay in touch with our growing community.',
   },
+  Cookbook: {
+    darkIcon: '/img/discover/multiple.svg',
+    lightIcon: '/img/discover/multiple-light.svg',
+    description:
+      'Explore recipes and code samples that demonstrate how to accomplish common tasks with Novu in your application.',
+  },
 };
 
 function Items({ items, className }) {

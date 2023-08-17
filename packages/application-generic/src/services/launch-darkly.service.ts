@@ -20,18 +20,35 @@ export class LaunchDarklyService implements IFeatureFlagsService {
   private client: LDClient;
   public isEnabled: boolean;
 
-  constructor() {
-    Logger.verbose('Launch Darkly service initialized', LOG_CONTEXT);
+  public async initialize(): Promise<void> {
+    Logger.log('Launch Darkly service initialized', LOG_CONTEXT);
     const launchDarklySdkKey = process.env.LAUNCH_DARKLY_SDK_KEY;
 
     if (launchDarklySdkKey) {
       this.client = init(launchDarklySdkKey);
       this.isEnabled = true;
+      await this.clientInitialization();
     } else {
       this.isEnabled = false;
     }
   }
 
+  private async clientInitialization(): Promise<void> {
+    try {
+      await this.client.waitForInitialization();
+      Logger.log(
+        'Launch Darkly SDK has been successfully initialized',
+        LOG_CONTEXT
+      );
+    } catch (error) {
+      Logger.error(
+        'Launch Darkly SDK has failed when initialized',
+        error,
+        LOG_CONTEXT
+      );
+      throw error;
+    }
+  }
   private async get<T>(
     key: FeatureFlagsKeysEnum,
     context: LDSingleKindContext,
@@ -87,23 +104,6 @@ export class LaunchDarklyService implements IFeatureFlagsService {
         );
         throw error;
       }
-    }
-  }
-
-  public async initialize(): Promise<void> {
-    try {
-      await this.client.waitForInitialization();
-      Logger.log(
-        'Launch Darkly SDK has been successfully initialized',
-        LOG_CONTEXT
-      );
-    } catch (error) {
-      Logger.error(
-        'Launch Darkly SDK has failed when initialized',
-        error,
-        LOG_CONTEXT
-      );
-      throw error;
     }
   }
 

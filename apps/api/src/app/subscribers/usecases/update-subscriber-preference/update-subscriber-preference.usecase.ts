@@ -9,10 +9,10 @@ import {
 } from '@novu/dal';
 import {
   AnalyticsService,
-  ISubscriberPreferenceResponse,
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
 } from '@novu/application-generic';
+import { ISubscriberPreferenceResponse } from '@novu/shared';
 
 import { UpdateSubscriberPreferenceCommand } from './update-subscriber-preference.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';

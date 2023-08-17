@@ -12,7 +12,7 @@ import { useProcessVariables } from '../../../hooks';
 import { PreviewMobile } from './PreviewMobile';
 import { PreviewWeb } from './PreviewWeb';
 import { errorMessage } from '../../../utils/notifications';
-import { useActiveIntegrations } from '../../../hooks';
+import { useActiveIntegrations, useIsMultiProviderConfigurationEnabled } from '../../../hooks';
 
 export const Preview = ({ activeStep, view }: { activeStep: number; view: string }) => {
   const { control } = useFormContext();
@@ -44,6 +44,7 @@ export const Preview = ({ activeStep, view }: { activeStep: number; view: string
   });
 
   const { integrations = [] } = useActiveIntegrations();
+  const isMultiProviderConfigEnabled = useIsMultiProviderConfigurationEnabled();
   const [integration, setIntegration]: any = useState(null);
   const [parsedSubject, setParsedSubject] = useState(subject);
   const [content, setContent] = useState<string>('<html><head></head><body><div></div></body></html>');
@@ -91,7 +92,11 @@ export const Preview = ({ activeStep, view }: { activeStep: number; view: string
     if (integrations.length === 0) {
       return;
     }
-    setIntegration(integrations.find((item) => item.channel === 'email') || null);
+    setIntegration(
+      integrations.find((item) =>
+        isMultiProviderConfigEnabled ? item.channel === 'email' && item.primary : item.channel === 'email'
+      ) || null
+    );
   }, [integrations, setIntegration]);
 
   return (

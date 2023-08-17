@@ -1,5 +1,11 @@
 import { IntegrationEntity, JobEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
-import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  EmailProviderIdEnum,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  SmsProviderIdEnum,
+} from '@novu/shared';
 import {
   buildSubscriberKey,
   CachedEntity,
@@ -8,6 +14,7 @@ import {
   CreateExecutionDetailsCommand,
   SelectIntegration,
   SelectIntegrationCommand,
+  GetNovuProviderCredentials,
 } from '@novu/application-generic';
 
 import { SendMessageType } from './send-message-type.usecase';
@@ -20,7 +27,8 @@ export abstract class SendMessageBase extends SendMessageType {
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     protected subscriberRepository: SubscriberRepository,
-    protected selectIntegration: SelectIntegration
+    protected selectIntegration: SelectIntegration,
+    protected getNovuProviderCredentials: GetNovuProviderCredentials
   ) {
     super(messageRepository, createLogUsecase, createExecutionDetails);
   }
@@ -48,7 +56,23 @@ export abstract class SendMessageBase extends SendMessageType {
   protected async getIntegration(
     selectIntegrationCommand: SelectIntegrationCommand
   ): Promise<IntegrationEntity | undefined> {
-    return this.selectIntegration.execute(SelectIntegrationCommand.create(selectIntegrationCommand));
+    const integration = await this.selectIntegration.execute(SelectIntegrationCommand.create(selectIntegrationCommand));
+
+    if (!integration) {
+      return;
+    }
+
+    if (integration.providerId === EmailProviderIdEnum.Novu || integration.providerId === SmsProviderIdEnum.Novu) {
+      integration.credentials = await this.getNovuProviderCredentials.execute({
+        channelType: integration.channel,
+        providerId: integration.providerId,
+        environmentId: integration._environmentId,
+        organizationId: integration._organizationId,
+        userId: selectIntegrationCommand.userId,
+      });
+    }
+
+    return integration;
   }
 
   protected storeContent(): boolean {

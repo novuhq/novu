@@ -1,22 +1,22 @@
-import { Avatar, useMantineColorScheme, ActionIcon, Header, Group, Container } from '@mantine/core';
-import { useEffect } from 'react';
+import { ActionIcon, Avatar, Container, Group, Header, useMantineColorScheme } from '@mantine/core';
 import * as capitalize from 'lodash.capitalize';
-import { useIntercom } from 'react-use-intercom';
+import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { useIntercom } from 'react-use-intercom';
 
-import { useAuthContext } from '../../providers/AuthProvider';
-import { shadows, colors, Text, Dropdown } from '../../../design-system';
-import { Sun, Moon, Ellipse, Trash, Mail } from '../../../design-system/icons';
+import LogRocket from 'logrocket';
+import { CONTEXT_PATH, INTERCOM_APP_ID, IS_DOCKER_HOSTED, LOGROCKET_ID } from '../../../config';
+import { ROUTES } from '../../../constants/routes.enum';
+import { colors, Dropdown, shadows, Text, Tooltip } from '../../../design-system';
+import { Ellipse, Mail, Moon, Question, Sun, Trash } from '../../../design-system/icons';
 import { useLocalThemePreference } from '../../../hooks';
-import { NotificationCenterWidget } from './NotificationCenterWidget';
-import { Tooltip } from '../../../design-system';
-import { CONTEXT_PATH, INTERCOM_APP_ID, LOGROCKET_ID } from '../../../config';
+import { discordInviteUrl } from '../../../pages/quick-start/consts';
+import { useAuthContext } from '../../providers/AuthProvider';
 import { useSpotlightContext } from '../../providers/SpotlightProvider';
 import { HEADER_HEIGHT } from '../constants';
-import LogRocket from 'logrocket';
-import { ROUTES } from '../../../constants/routes.enum';
+import { NotificationCenterWidget } from './NotificationCenterWidget';
 
-type Props = {};
+type Props = { isIntercomOpened: boolean };
 const menuItem = [
   {
     title: 'Invite Members',
@@ -24,34 +24,48 @@ const menuItem = [
     path: ROUTES.TEAM,
   },
 ];
-const headerIconsSettings = { color: colors.B60, width: 30, height: 30 };
+const headerIconsSettings = { color: colors.B60, width: 24, height: 24 };
 
-export function HeaderNav({}: Props) {
+const Icon = () => {
+  const { themeStatus } = useLocalThemePreference();
+
+  if (themeStatus === 'dark') {
+    return <Moon {...headerIconsSettings} />;
+  }
+  if (themeStatus === 'light') {
+    return <Sun {...headerIconsSettings} />;
+  }
+
+  return <Ellipse {...headerIconsSettings} />;
+};
+
+export function HeaderNav({ isIntercomOpened }: Props) {
   const { currentOrganization, currentUser, logout } = useAuthContext();
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const { themeStatus } = useLocalThemePreference();
   const dark = colorScheme === 'dark';
-  const { addItem } = useSpotlightContext();
+  const { addItem, removeItems } = useSpotlightContext();
+  const { boot } = useIntercom();
+  const isSelfHosted = IS_DOCKER_HOSTED;
 
-  if (INTERCOM_APP_ID) {
-    const { boot } = useIntercom();
-
-    useEffect(() => {
-      if (currentUser && currentOrganization) {
-        boot({
-          userId: currentUser._id,
-          email: currentUser?.email ?? '',
-          name: currentUser?.firstName + ' ' + currentUser?.lastName,
-          createdAt: currentUser?.createdAt,
-          company: {
-            name: currentOrganization?.name,
-            companyId: currentOrganization?._id as string,
-          },
-          userHash: currentUser.servicesHashes?.intercom,
-        });
-      }
-    }, [currentUser, currentOrganization]);
-  }
+  useEffect(() => {
+    const shouldBootIntercom = !!INTERCOM_APP_ID && currentUser && currentOrganization;
+    if (shouldBootIntercom) {
+      boot({
+        userId: currentUser._id,
+        email: currentUser?.email ?? '',
+        name: currentUser?.firstName + ' ' + currentUser?.lastName,
+        createdAt: currentUser?.createdAt,
+        company: {
+          name: currentOrganization?.name,
+          companyId: currentOrganization?._id as string,
+        },
+        userHash: currentUser.servicesHashes?.intercom,
+        customLauncherSelector: '#intercom-launcher',
+        hideDefaultLauncher: true,
+      });
+    }
+  }, [boot, currentUser, currentOrganization]);
 
   useEffect(() => {
     if (!LOGROCKET_ID) return;
@@ -77,34 +91,19 @@ export function HeaderNav({}: Props) {
     }
   }, [currentUser, currentOrganization]);
 
-  const themeTitle = () => {
-    let title = 'Match System Appearance';
-    if (themeStatus === 'dark') {
-      title = 'Dark Theme';
-    } else if (themeStatus === 'light') {
-      title = 'Light Theme';
-    }
+  let themeTitle = 'Match System Appearance';
+  if (themeStatus === 'dark') {
+    themeTitle = 'Dark Theme';
+  } else if (themeStatus === 'light') {
+    themeTitle = 'Light Theme';
+  }
 
-    return title;
-  };
-
-  const Icon = () => {
-    if (themeStatus === 'dark') {
-      return <Moon {...headerIconsSettings} />;
-    }
-    if (themeStatus === 'light') {
-      return <Sun {...headerIconsSettings} />;
-    }
-
-    return <Ellipse {...headerIconsSettings} height={24} width={24} />;
-  };
-
-  useEffect(() => {
-    addItem([
+  const additionalMenuItems = useMemo(() => {
+    return [
       {
         id: 'toggle-theme',
-        title: themeTitle(),
-        icon: Icon(),
+        title: themeTitle,
+        icon: <Icon />,
         onTrigger: () => {
           toggleColorScheme();
         },
@@ -117,8 +116,14 @@ export function HeaderNav({}: Props) {
           logout();
         },
       },
-    ]);
-  }, [colorScheme]);
+    ];
+  }, [toggleColorScheme, logout, themeTitle]);
+
+  useEffect(() => {
+    removeItems(additionalMenuItems.map((item) => item.id));
+
+    addItem(additionalMenuItems);
+  }, [addItem, removeItems, additionalMenuItems]);
 
   const profileMenuMantine = [
     <Dropdown.Item disabled key="user">
@@ -155,32 +160,37 @@ export function HeaderNav({}: Props) {
 
   return (
     <Header
-      height={HEADER_HEIGHT}
-      sx={(theme) => ({
+      height={`${HEADER_HEIGHT}px`}
+      sx={{
         position: 'sticky',
         top: 0,
-        boxShadow: theme.colorScheme === 'dark' ? 'none' : shadows.light,
         borderBottom: 'none',
-      })}
+        zIndex: 199,
+      }}
     >
       <Container
         fluid
-        p={30}
-        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '100%' }}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', height: `${HEADER_HEIGHT}px` }}
       >
-        <Link to="/">
-          <img
-            src={dark ? CONTEXT_PATH + '/static/images/logo-light.png' : CONTEXT_PATH + '/static/images/logo.png'}
-            alt="logo"
-            style={{ maxWidth: 150, maxHeight: 25 }}
-          />
-        </Link>
         <Group>
           <ActionIcon variant="transparent" onClick={() => toggleColorScheme()}>
-            <Tooltip label={themeTitle()}>
-              <div>{Icon()}</div>
+            <Tooltip label={themeTitle}>
+              <div>
+                <Icon />
+              </div>
             </Tooltip>
           </ActionIcon>
+          {isSelfHosted ? (
+            <a href={discordInviteUrl} target="_blank" rel="noreferrer">
+              <ActionIcon variant="transparent">
+                <Question width={24} height={24} color={colors.B60} isGradient={isIntercomOpened} />
+              </ActionIcon>
+            </a>
+          ) : (
+            <ActionIcon variant="transparent" id="intercom-launcher">
+              <Question width={24} height={24} color={colors.B60} isGradient={isIntercomOpened} />
+            </ActionIcon>
+          )}
           <NotificationCenterWidget user={currentUser} />
           <Dropdown
             position="bottom-end"
@@ -188,7 +198,7 @@ export function HeaderNav({}: Props) {
             control={
               <ActionIcon variant="transparent">
                 <Avatar
-                  size={35}
+                  size={24}
                   radius="xl"
                   data-test-id="header-profile-avatar"
                   src={currentUser?.profilePicture || CONTEXT_PATH + '/static/images/avatar.png'}
