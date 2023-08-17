@@ -29,7 +29,7 @@ import {
   MailFactory,
   GetNovuProviderCredentials,
 } from '@novu/application-generic';
-
+import * as inlineCss from 'inline-css';
 import { CreateLog } from '../../../shared/logs';
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageBase } from './send-message.base';
@@ -216,6 +216,11 @@ export class SendMessageEmail extends SendMessageBase {
           }
         );
       }
+
+      html = await inlineCss(html, {
+        // Used for stylesheet links that starts with / so should not be needed in our case.
+        url: ' ',
+      });
     } catch (e) {
       await this.sendErrorHandlebars(command.job, e.message);
 
