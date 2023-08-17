@@ -16,6 +16,7 @@ customElements.define('notification-center-web-component', NotificationCenterWeb
     [showUserPreferences]="showUserPreferences"
     [allowedNotificationActions]="allowedNotificationActions"
     [popover]="popover"
+    [popoverConfig]="popoverConfig"
     [theme]="theme"
     [styles]="styles"
     [colorScheme]="colorScheme"
@@ -25,6 +26,7 @@ customElements.define('notification-center-web-component', NotificationCenterWeb
     [unseenCountChanged]="unseenCountChanged"
     [actionClicked]="actionClicked"
     [tabClicked]="tabClicked"
+    [preferenceFilter]="preferenceFilter"
   ></notification-center-web-component>`,
   inputs: [
     'backendUrl',
@@ -37,6 +39,7 @@ customElements.define('notification-center-web-component', NotificationCenterWeb
     'showUserPreferences',
     'allowedNotificationActions',
     'popover',
+    'popoverConfig',
     'theme',
     'styles',
     'colorScheme',
@@ -46,6 +49,7 @@ customElements.define('notification-center-web-component', NotificationCenterWeb
     'unseenCountChanged',
     'actionClicked',
     'tabClicked',
+    'preferenceFilter',
   ],
 })
 export class NotificationCenterComponent {
@@ -58,7 +62,11 @@ export class NotificationCenterComponent {
   @Input() tabs: NotificationCenterComponentProps['tabs'];
   @Input() showUserPreferences: NotificationCenterComponentProps['showUserPreferences'];
   @Input() allowedNotificationActions: NotificationCenterComponentProps['allowedNotificationActions'];
+  /**
+   * @deprecated Use popoverConfig instead
+   */
   @Input() popover: NotificationCenterComponentProps['popover'];
+  @Input() popoverConfig: NotificationCenterComponentProps['popoverConfig'];
   @Input() theme: NotificationCenterComponentProps['theme'];
   @Input() styles: NotificationCenterComponentProps['styles'];
   @Input() colorScheme?: NotificationCenterComponentProps['colorScheme'];
@@ -68,4 +76,5 @@ export class NotificationCenterComponent {
   @Input() unseenCountChanged: NotificationCenterComponentProps['unseenCountChanged'];
   @Input() actionClicked: NotificationCenterComponentProps['actionClicked'];
   @Input() tabClicked: NotificationCenterComponentProps['tabClicked'];
+  @Input() preferenceFilter: NotificationCenterComponentProps['preferenceFilter'];
 }

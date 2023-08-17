@@ -10,6 +10,7 @@ const BASE_PATH = '/v1/layouts';
 
 describe('Get a layout - /layouts/:layoutId (GET)', async () => {
   const layoutName = 'layout-name-retrieval';
+  const layoutIdentifier = 'layout-identifier-retrieval';
   const isDefault = false;
   let session: UserSession;
   let createdLayout: LayoutDto;
@@ -17,7 +18,7 @@ describe('Get a layout - /layouts/:layoutId (GET)', async () => {
   before(async () => {
     session = new UserSession();
     await session.initialize();
-    createdLayout = await createLayout(session, layoutName, isDefault);
+    createdLayout = await createLayout(session, layoutName, isDefault, layoutIdentifier);
   });
 
   it('should retrieve the requested layout successfully if exists in the database for that user', async () => {
@@ -40,6 +41,7 @@ describe('Get a layout - /layouts/:layoutId (GET)', async () => {
     expect(layout._organizationId).to.eql(session.organization._id);
     expect(layout._creatorId).to.eql(session.user._id);
     expect(layout.name).to.eql(layoutName);
+    expect(layout.identifier).to.eql(layoutIdentifier);
     expect(layout.description).to.eql(expectedDescription);
     expect(layout.content).to.eql(expectedContent);
     expect(layout.variables).to.eql(expectedVariables);

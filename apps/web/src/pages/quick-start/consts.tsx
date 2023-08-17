@@ -21,7 +21,7 @@ export const npmRunCommand = 'npm run dev';
 export const frameworkSetupTitle = 'Choose your go-to framework';
 export const faqUrl = 'https://docs.novu.co/notification-center/FAQ';
 export const notificationCenterDocsUrl = 'https://docs.novu.co/notification-center/getting-started';
-export const discordInviteUrl = 'https://discord.novu.co';
+export const discordInviteUrl = 'https://discord.gg/novu';
 export const demoSetupSecondaryTitle = 'Follow the installation steps to connect your app';
 
 export const getStartedSteps = { first: ROUTES.GET_STARTED, second: ROUTES.GET_STARTED_PREVIEW };

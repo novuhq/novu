@@ -26,7 +26,7 @@ export const DigestMetadata = ({ index, readonly }: { index: number; readonly: b
 
   return (
     <div data-test-id="digest-step-settings-interval">
-      <Accordion>
+      <Accordion styles={{ item: { '&:last-of-type': { marginBottom: 0 } } }}>
         <Tooltip
           position="left"
           width={227}

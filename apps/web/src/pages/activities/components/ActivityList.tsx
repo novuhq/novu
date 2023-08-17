@@ -1,8 +1,9 @@
 import React from 'react';
-import { LoadingOverlay, Pagination, useMantineColorScheme } from '@mantine/core';
+import { Button, LoadingOverlay, Pagination, useMantineColorScheme } from '@mantine/core';
 
 import { ActivityItem } from './ActivityItem';
 import { colors } from '../../../design-system';
+import { ChevronLeft, ChevronRight } from '../../../design-system/icons';
 
 export type Data = Record<string, any>;
 
@@ -33,27 +34,34 @@ export function ActivityList({ data: userData, pagination = false, loading = fal
           return <ActivityItem onClick={onRowClick} key={`activity-item-${item.id}`} item={item} />;
         })}
       </div>
-      {pagination && total > 0 && pageSize > 1 && getPageCount() > 1 && (
-        <Pagination
-          styles={{
-            item: {
-              marginTop: '15px',
-              marginBottom: '15px',
-              backgroundColor: 'transparent',
-              '&[data-active]': {
-                backgroundImage: colors.horizontal,
-                border: 'none',
-              },
-            },
-          }}
-          total={getPageCount()}
-          page={current + 1}
-          onChange={(pageNumber) => {
-            onPageChange(pageNumber - 1);
-          }}
-          position="center"
-        />
-      )}
+
+      <div
+        style={{
+          marginTop: '10px',
+          display: 'flex',
+          width: '100%',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: '15px',
+        }}
+      >
+        <Button.Group>
+          <Button
+            variant="outline"
+            disabled={pagination?.current === 0 || loading}
+            onClick={() => onPageChange(pagination?.current - 1)}
+          >
+            <ChevronLeft />
+          </Button>
+          <Button
+            variant="outline"
+            disabled={!pagination?.hasMore || loading}
+            onClick={() => onPageChange(pagination?.current + 1)}
+          >
+            <ChevronRight />
+          </Button>
+        </Button.Group>
+      </div>
     </div>
   );
 }

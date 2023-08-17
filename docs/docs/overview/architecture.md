@@ -44,6 +44,10 @@ The trigger is responsible to let the engine know what happened and what workflo
 
 The trigger should only be responsible to let the system know that something has happened, but not where and when the message will be delivered.
 
+## The workflow-trigger-event-notification flow
+
+![Novu Architecture](https://res.cloudinary.com/dxc6bnman/image/upload/v1690181294/flow-2x-white-bg_igzccb.png)
+
 ## Communication API
 
 This is the unit that is responsible for reading the configurations of the workflows, finding the relevant channels, locating the providers, and doing the heavy lifting of sending the notifications. All logical rules such as priority, timing, channel selection, and others are managed by the engine.

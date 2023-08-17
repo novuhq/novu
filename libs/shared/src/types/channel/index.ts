@@ -50,3 +50,5 @@ export enum SystemAvatarIconEnum {
   UP = 'up',
   QUESTION = 'question',
 }
+
+export const CHANNELS_WITH_PRIMARY = [ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS];

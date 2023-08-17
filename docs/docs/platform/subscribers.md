@@ -408,7 +408,7 @@ Novu stores user personal information like first name, last name, email, phone, 
 </FAQItem>
 <FAQItem title="How to create new subscribers in bulk at once?">
 
-We don't support adding bulk subscribers at once as of now. Workaround for this is to create a custom script to call create single subscriber method or API multiple times to add bulk subscribers.
+We don't support adding bulk subscribers at once as of now. Workaround for this is to use [this csv based script](../guides/subscribers-migration.md#bulk-subscribers-migration-using-mock-data-csv-file).
 
 </FAQItem>
 <FAQItem title="How to get subscriber properties before step execution in workflow.">

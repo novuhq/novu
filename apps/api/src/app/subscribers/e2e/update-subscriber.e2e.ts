@@ -59,6 +59,51 @@ describe('Update Subscriber - /subscribers/:subscriberId (PUT)', function () {
     expect(createdSubscriber?.data?.test).to.equal('test value');
   });
 
+  it('should allow unsetting the email', async function () {
+    await axiosInstance.post(
+      `${session.serverUrl}/v1/subscribers`,
+      {
+        subscriberId: '123',
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'john@doe.com',
+      },
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
+
+    const response = await axiosInstance.put(
+      `${session.serverUrl}/v1/subscribers/123`,
+      {
+        lastName: 'Test Changed',
+        email: null,
+        phone: '+972523333333',
+        locale: 'sv',
+        data: { test: 'test value' },
+      },
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
+
+    const { data: body } = response;
+
+    expect(body.data).to.be.ok;
+    const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, '123');
+
+    expect(createdSubscriber?.firstName).to.equal('John');
+    expect(createdSubscriber?.lastName).to.equal('Test Changed');
+    expect(createdSubscriber?.email).to.equal(null);
+    expect(createdSubscriber?.phone).to.equal('+972523333333');
+    expect(createdSubscriber?.locale).to.equal('sv');
+    expect(createdSubscriber?.data?.test).to.equal('test value');
+  });
+
   it('should update an existing subscriber credentials', async function () {
     await axiosInstance.post(
       `${session.serverUrl}/v1/subscribers`,

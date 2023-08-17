@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ClassConstructor, plainToInstance } from 'class-transformer';
 import { addMonths } from 'date-fns';
-import { Model, Types, ProjectionType, FilterQuery, UpdateQuery } from 'mongoose';
+import { Model, Types, ProjectionType, FilterQuery, UpdateQuery, QueryOptions } from 'mongoose';
 import { DalException } from '../shared';
 
 export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
@@ -43,9 +43,11 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
   async findOne(
     query: FilterQuery<T_DBModel> & T_Enforcement,
     select?: ProjectionType<T_MappedEntity>,
-    options: { readPreference?: 'secondaryPreferred' | 'primary' } = {}
+    options: { readPreference?: 'secondaryPreferred' | 'primary'; query?: QueryOptions<T_DBModel> } = {}
   ): Promise<T_MappedEntity | null> {
-    const data = await this.MongooseModel.findOne(query, select).read(options.readPreference || 'primary');
+    const data = await this.MongooseModel.findOne(query, select, options.query).read(
+      options.readPreference || 'primary'
+    );
     if (!data) return null;
 
     return this.mapEntity(data.toObject());
@@ -161,8 +163,8 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
     return await Promise.all(promises);
   }
 
-  async bulkWrite(bulkOperations: any) {
-    await this.MongooseModel.bulkWrite(bulkOperations);
+  async bulkWrite(bulkOperations: any, ordered = false): Promise<any> {
+    return await this.MongooseModel.bulkWrite(bulkOperations, { ordered });
   }
 
   protected mapEntity<TData>(data: TData): TData extends null ? null : T_MappedEntity {

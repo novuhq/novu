@@ -206,6 +206,7 @@ The floating popover component that appears when clicking on the [NotificationBe
 | onActionClick              | function (optional)                                            | The callback function triggered when the notification button is clicked.                                                                                                                                                     |
 | actionsResultBlock         | function (optional)                                            | The render function that allows you to define the custom component that will be rendered after the notification button is clicked.                                                                                           |
 | onTabClick                 | function (optional)                                            | The callback function triggered when the notifications feed tab changes.                                                                                                                                                     |
+| preferenceFilter           | function (optional)                                            | The callback function triggered when filtering the subscriber preference.                                                                                                                                                    |
 
 ### Props interface
 
@@ -229,6 +230,7 @@ interface IPopoverNotificationCenterProps {
   onActionClick?: (templateIdentifier: string, type: ButtonTypeEnum, message: IMessage) => void;
   actionsResultBlock?: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
   onTabClick?: (tab: ITab) => void;
+  preferenceFilter?: (userPreference: IUserPreferenceSettings) => boolean;
 }
 ```
 
@@ -258,10 +260,10 @@ type ListItem = (
 The component that renders the notifications feed and allows to update the user preferences.
 
 | Prop                       | Type                                                           | Description                                                                                                                                                                                                                        |
-| -------------------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| -------------------------- | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------       |
 | colorScheme                | string                                                         | The UI light or dark mode.                                                                                                                                                                                                         |
-| theme                      | [object](./api-reference#the-theme-interface) (optional)       | The theme object allowing you to override light and dark colors of the UI components. **Deprecated for styling**, please use the [styles](./api-reference#styles-interface) prop on the NovuProvider.                        |
-| tabs                       | [object[]](./api-reference#the-tab-interface) (optional)       | Allows to define separate UI tabs for the notifications feed. The array of connection objects between the feed tab and [store](./api-reference#store-interface) (that you define on the `NovuProvider`) and feed identifier. |
+| theme                      | [object](./api-reference#the-theme-interface) (optional)       | The theme object allowing you to override light and dark colors of the UI components. **Deprecated for styling**, please use the [styles](./api-reference#styles-interface) prop on the NovuProvider.                              |
+| tabs                       | [object[]](./api-reference#the-tab-interface) (optional)       | Allows to define separate UI tabs for the notifications feed. The array of connection objects between the feed tab and [store](./api-reference#store-interface) (that you define on the `NovuProvider`) and feed identifier.       |
 | listItem                   | [function](./api-reference#the-list-item-interface) (optional) | The render function allowing you to define the custom element for the notification list item.                                                                                                                                      |
 | showUserPreferences        | boolean (optional)                                             | The flag that enables to show/hide the user preferences. By default it is enabled.                                                                                                                                                 |
 | allowedNotificationActions | boolean (optional)                                             | The flag that enables to show/hide the dots menu for actions performed on a notification. By default it is enabled.                                                                                                                |
@@ -271,9 +273,10 @@ The component that renders the notifications feed and allows to update the user 
 | header                     | function (optional)                                            | The render function that allows you to define the custom header component. It's called with two arguments `setScreen` a setter function for state variable and `screen` the state variable itself representing the current screen. |
 | footer                     | function (optional)                                            | The render function that allows you to define the custom footer component.                                                                                                                                                         |
 | emptyState                 | JSX.Element (optional)                                         | The render function that allows you to define the custom component for the empty notifications list state.                                                                                                                         |
-| onActionClick              | function (optional)                                            | The callback function triggered when the notification button is clicked.                                                                                                                                                     |
+| onActionClick              | function (optional)                                            | The callback function triggered when the notification button is clicked.                                                                                                                                                           |
 | actionsResultBlock         | function (optional)                                            | The render function that allows you to define the custom component that will be rendered after the notification button is clicked.                                                                                                 |
 | onTabClick                 | function (optional)                                            | The callback function triggered when the notifications feed tab changes.                                                                                                                                                           |
+| preferenceFilter           | function (optional)                                            | The callback function triggered when filtering the subscriber preference.                                                                                                                                                          |
 
 ### The props interface
 
@@ -300,6 +303,7 @@ interface INotificationCenterProps {
   onActionClick?: (templateIdentifier: string, type: ButtonTypeEnum, message: IMessage) => void;
   actionsResultBlock?: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
   onTabClick?: (tab: ITab) => void;
+  preferenceFilter?: (userPreference: IUserPreferenceSettings) => boolean;
 }
 ```
 

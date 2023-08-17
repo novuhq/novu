@@ -1,174 +1,161 @@
 const nr = require('newrelic');
 import { Job, WorkerOptions } from 'bullmq';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, getRedisPrefix } from '@novu/shared';
 import {
-  QueueService,
-  PinoLogger,
-  storage,
-  Store,
-  CreateExecutionDetails,
-  CreateExecutionDetailsCommand,
-  DetailEnum,
-  INovuWorker,
-} from '@novu/application-generic';
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  IJobData,
+  ObservabilityBackgroundTransactionEnum,
+} from '@novu/shared';
+import { QueueService, PinoLogger, storage, Store, INovuWorker } from '@novu/application-generic';
 
 import {
   RunJob,
   RunJobCommand,
-  QueueNextJob,
-  QueueNextJobCommand,
   SetJobAsCommand,
   SetJobAsCompleted,
   SetJobAsFailed,
   SetJobAsFailedCommand,
   WebhookFilterBackoffStrategy,
+  HandleLastFailedJobCommand,
+  HandleLastFailedJob,
 } from '../usecases';
-
-interface IJobData {
-  _id: string;
-  _environmentId: string;
-  _organizationId: string;
-  _userId: string;
-}
 
 const LOG_CONTEXT = 'WorkflowQueueService';
 
 @Injectable()
 export class WorkflowQueueService extends QueueService<IJobData> implements INovuWorker {
   constructor(
-    @Inject(forwardRef(() => QueueNextJob)) private queueNextJob: QueueNextJob,
+    @Inject(forwardRef(() => HandleLastFailedJob)) private handleLastFailedJob: HandleLastFailedJob,
     @Inject(forwardRef(() => RunJob)) private runJob: RunJob,
     @Inject(forwardRef(() => SetJobAsCompleted)) private setJobAsCompleted: SetJobAsCompleted,
     @Inject(forwardRef(() => SetJobAsFailed)) private setJobAsFailed: SetJobAsFailed,
     @Inject(forwardRef(() => WebhookFilterBackoffStrategy))
-    private webhookFilterWebhookFilterBackoffStrategy: WebhookFilterBackoffStrategy,
-    @Inject(forwardRef(() => CreateExecutionDetails)) private createExecutionDetails: CreateExecutionDetails
+    private webhookFilterBackoffStrategy: WebhookFilterBackoffStrategy
   ) {
     super();
     Logger.warn('Workflow queue service created');
-    this.bullMqService.createWorker(this.name, this.getWorkerProcessor(), this.getWorkerOpts());
+    this.bullMqService.createWorker(this.name, this.getWorkerProcessor(), this.getWorkerOptions());
 
-    this.bullMqService.worker.on('completed', async (job) => {
+    this.bullMqService.worker.on('completed', async (job: Job<IJobData, void, string>): Promise<void> => {
       await this.jobHasCompleted(job);
     });
 
-    this.bullMqService.worker.on('failed', async (job, error) => {
+    this.bullMqService.worker.on('failed', async (job: Job<IJobData, void, string>, error: Error): Promise<void> => {
       await this.jobHasFailed(job, error);
     });
   }
 
-  private getWorkerOpts(): WorkerOptions {
+  private getWorkerOptions(): WorkerOptions {
     return {
-      ...this.bullConfig,
       lockDuration: 90000,
       concurrency: 200,
       settings: {
         backoffStrategy: this.getBackoffStrategies(),
       },
-    } as WorkerOptions;
+    };
   }
 
   private getWorkerProcessor() {
     return async ({ data }: { data: IJobData }) => {
+      const { _environmentId: environmentId, _id: jobId, _organizationId: organizationId, _userId: userId } = data;
+
       return await new Promise(async (resolve, reject) => {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const _this = this;
 
-        nr.startBackgroundTransaction('job-processing-queue', 'Trigger Engine', function () {
-          const transaction = nr.getTransaction();
+        nr.startBackgroundTransaction(
+          ObservabilityBackgroundTransactionEnum.JOB_PROCESSING_QUEUE,
+          'Trigger Engine',
+          function () {
+            const transaction = nr.getTransaction();
 
-          storage.run(new Store(PinoLogger.root), () => {
-            _this.runJob
-              .execute(
-                RunJobCommand.create({
-                  jobId: data._id,
-                  environmentId: data._environmentId,
-                  organizationId: data._organizationId,
-                  userId: data._userId,
+            storage.run(new Store(PinoLogger.root), () => {
+              _this.runJob
+                .execute(
+                  RunJobCommand.create({
+                    environmentId,
+                    jobId,
+                    organizationId,
+                    userId,
+                  })
+                )
+
+                .then(resolve)
+                .catch((error) => {
+                  Logger.error(`Failed to run the job ${jobId} during worker processing`, error, LOG_CONTEXT);
+
+                  return reject(error);
                 })
-              )
-              .then(resolve)
-              .catch(reject)
-              .finally(() => {
-                transaction.end();
-              });
-          });
-        });
+                .finally(() => {
+                  transaction.end();
+                });
+            });
+          }
+        );
       });
     };
   }
 
-  private async jobHasCompleted(job): Promise<void> {
+  private async jobHasCompleted(job: Job<IJobData, void, string>): Promise<void> {
+    let jobId;
+
     try {
+      jobId = job.data._id;
+      const environmentId = job.data._environmentId;
+      const userId = job.data._userId;
+
       await this.setJobAsCompleted.execute(
         SetJobAsCommand.create({
-          environmentId: job.data._environmentId,
-          _jobId: job.data._id,
-          organizationId: job.data._organizationId,
+          environmentId,
+          jobId,
+          userId,
         })
       );
     } catch (error) {
-      Logger.error('Failed to set job as completed', LOG_CONTEXT, error);
+      Logger.error(`Failed to set job ${jobId} as completed`, error, LOG_CONTEXT);
     }
   }
 
-  private async jobHasFailed(job, error): Promise<void> {
-    try {
-      const hasToBackoff = this.runJob.shouldBackoff(error);
+  private async jobHasFailed(job: Job<IJobData, void, string>, error: Error): Promise<void> {
+    let jobId;
 
-      if (!hasToBackoff) {
+    try {
+      jobId = job.data._id;
+      const environmentId = job.data._environmentId;
+      const organizationId = job.data._organizationId;
+      const userId = job.data._userId;
+
+      const hasToBackoff = this.runJob.shouldBackoff(error);
+      const hasReachedMaxAttempts = job.attemptsMade >= this.DEFAULT_ATTEMPTS;
+      const shouldHandleLastFailedJob = hasToBackoff && hasReachedMaxAttempts;
+
+      const shouldBeSetAsFailed = !hasToBackoff || shouldHandleLastFailedJob;
+      if (shouldBeSetAsFailed) {
         await this.setJobAsFailed.execute(
           SetJobAsFailedCommand.create({
-            environmentId: job.data._environmentId,
-            _jobId: job.data._id,
-            organizationId: job.data._organizationId,
+            environmentId,
+            jobId,
+            organizationId,
+            userId,
           }),
           error
         );
       }
 
-      const lastWebhookFilterRetry = job.attemptsMade === this.DEFAULT_ATTEMPTS && hasToBackoff;
-      if (lastWebhookFilterRetry) {
-        await this.handleLastFailedWebhookFilter(job, error);
+      if (shouldHandleLastFailedJob) {
+        const handleLastFailedJobCommand = HandleLastFailedJobCommand.create({
+          environmentId,
+          error,
+          jobId,
+          organizationId,
+          userId,
+        });
+
+        await this.handleLastFailedJob.execute(handleLastFailedJobCommand);
       }
     } catch (anotherError) {
-      Logger.error('Failed to set job as failed', LOG_CONTEXT, anotherError);
-    }
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private async handleLastFailedWebhookFilter(job: any, error: Error) {
-    await this.setJobAsFailed.execute(
-      SetJobAsFailedCommand.create({
-        environmentId: job.data._environmentId,
-        _jobId: job.data._id,
-        organizationId: job.data._organizationId,
-      }),
-      error
-    );
-
-    await this.createExecutionDetails.execute(
-      CreateExecutionDetailsCommand.create({
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(job.data),
-        detail: DetailEnum.WEBHOOK_FILTER_FAILED_LAST_RETRY,
-        source: ExecutionDetailsSourceEnum.WEBHOOK,
-        status: ExecutionDetailsStatusEnum.PENDING,
-        isTest: false,
-        isRetry: true,
-        raw: JSON.stringify({ message: JSON.parse(error.message).message }),
-      })
-    );
-
-    if (!job?.data?.step?.shouldStopOnFail) {
-      await this.queueNextJob.execute(
-        QueueNextJobCommand.create({
-          parentId: job?.data._id,
-          environmentId: job?.data._environmentId,
-          organizationId: job?.data._organizationId,
-          userId: job?.data._userId,
-        })
-      );
+      Logger.error(`Failed to set job ${jobId} as failed`, anotherError, LOG_CONTEXT);
     }
   }
 
@@ -183,7 +170,7 @@ export class WorkflowQueueService extends QueueService<IJobData> implements INov
         userId: eventJob?.data?._userId,
       };
 
-      return await this.webhookFilterWebhookFilterBackoffStrategy.execute(command);
+      return await this.webhookFilterBackoffStrategy.execute(command);
     };
   };
 

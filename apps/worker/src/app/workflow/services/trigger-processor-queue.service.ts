@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { WorkerOptions } from 'bullmq';
 const nr = require('newrelic');
 import {
   INovuWorker,
@@ -9,6 +10,7 @@ import {
   TriggerEventCommand,
   TriggerQueueService,
 } from '@novu/application-generic';
+import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 
 const LOG_CONTEXT = 'TriggerProcessorQueueService';
 
@@ -19,9 +21,8 @@ export class TriggerProcessorQueueService extends TriggerQueueService implements
     this.bullMqService.createWorker(this.name, this.getWorkerProcessor(), this.getWorkerOpts());
   }
 
-  private getWorkerOpts() {
+  private getWorkerOpts(): WorkerOptions {
     return {
-      ...this.bullConfig,
       lockDuration: 90000,
       concurrency: 200,
     };
@@ -33,19 +34,23 @@ export class TriggerProcessorQueueService extends TriggerQueueService implements
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const _this = this;
 
-        nr.startBackgroundTransaction('trigger-handler-queue', 'Trigger Engine', function () {
-          const transaction = nr.getTransaction();
+        nr.startBackgroundTransaction(
+          ObservabilityBackgroundTransactionEnum.TRIGGER_HANDLER_QUEUE,
+          'Trigger Engine',
+          function () {
+            const transaction = nr.getTransaction();
 
-          storage.run(new Store(PinoLogger.root), () => {
-            _this.triggerEventUsecase
-              .execute(data)
-              .then(resolve)
-              .catch(reject)
-              .finally(() => {
-                transaction.end();
-              });
-          });
-        });
+            storage.run(new Store(PinoLogger.root), () => {
+              _this.triggerEventUsecase
+                .execute(data)
+                .then(resolve)
+                .catch(reject)
+                .finally(() => {
+                  transaction.end();
+                });
+            });
+          }
+        );
       });
     };
   }

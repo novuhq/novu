@@ -1,6 +1,8 @@
 import React from 'react';
 import { PopoverProps } from '@mantine/core';
+
 import { IMessage, IMessageAction, ButtonTypeEnum } from '@novu/shared';
+import { IUserPreferenceSettings } from '@novu/client';
 
 import { NotificationCenter } from '../notification-center';
 import { INotificationBellProps } from '../notification-bell';
@@ -15,14 +17,15 @@ export interface IPopoverNotificationCenterProps {
   onNotificationClick?: (notification: IMessage) => void;
   onUnseenCountChanged?: (unseenCount: number) => void;
   children: (props: INotificationBellProps) => JSX.Element;
+  onActionClick?: (templateIdentifier: string, type: ButtonTypeEnum, message: IMessage) => void;
+  actionsResultBlock?: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
+  preferenceFilter?: (userPreference: IUserPreferenceSettings) => boolean;
   header?: () => JSX.Element;
   footer?: () => JSX.Element;
   emptyState?: JSX.Element;
   listItem?: ListItem;
   colorScheme: ColorScheme;
   theme?: INovuThemePopoverProvider;
-  onActionClick?: (templateIdentifier: string, type: ButtonTypeEnum, message: IMessage) => void;
-  actionsResultBlock?: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
   tabs?: ITab[];
   showUserPreferences?: boolean;
   allowedNotificationActions?: boolean;
@@ -58,6 +61,7 @@ export function PopoverNotificationCenter({ children, ...props }: IPopoverNotifi
         allowedNotificationActions={props.allowedNotificationActions}
         onTabClick={props.onTabClick}
         onUnseenCountChanged={props.onUnseenCountChanged}
+        preferenceFilter={props.preferenceFilter}
       />
     </Popover>
   );

@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { ISubscriberJwt } from '@novu/shared';
-import { AnalyticsService } from '@novu/application-generic';
 import { SubscriberRepository, MemberRepository } from '@novu/dal';
 
 interface IUpdateSubscriberPayload {
@@ -10,25 +9,12 @@ interface IUpdateSubscriberPayload {
 
 @Injectable()
 export class SubscriberOnlineService {
-  constructor(
-    private subscriberRepository: SubscriberRepository,
-    private analyticsService: AnalyticsService,
-    private memberRepository: MemberRepository
-  ) {}
+  constructor(private subscriberRepository: SubscriberRepository) {}
 
   async handleConnection(subscriber: ISubscriberJwt) {
     const isOnline = true;
 
     await this.updateOnlineStatus(subscriber, { isOnline });
-  }
-
-  private async trackIsOnlineUpdate(updatePayload: IUpdateSubscriberPayload, subscriber: ISubscriberJwt) {
-    this.analyticsService.track('Update online flag - [Subscriber]', subscriber.organizationId, {
-      _organization: subscriber.organizationId,
-      _environment: subscriber.environmentId,
-      _subscriber: subscriber._id,
-      ...updatePayload,
-    });
   }
 
   async handleDisconnection(subscriber: ISubscriberJwt, activeConnections: number) {
@@ -48,6 +34,5 @@ export class SubscriberOnlineService {
         $set: updatePayload,
       }
     );
-    this.trackIsOnlineUpdate(updatePayload, subscriber);
   }
 }

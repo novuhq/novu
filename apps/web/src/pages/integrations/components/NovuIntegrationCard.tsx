@@ -1,9 +1,10 @@
 import styled from '@emotion/styled';
-import { Box, createStyles, Group, useMantineColorScheme } from '@mantine/core';
+import { createStyles, Group, useMantineColorScheme } from '@mantine/core';
 import { ChannelTypeEnum, IConfigCredentials } from '@novu/shared';
+
 import { colors, shadows, Text, Tooltip } from '../../../design-system';
 import { useIntegrationLimit } from '../../../hooks';
-import { IIntegratedProvider } from '../IntegrationsStorePage';
+import type { IIntegratedProvider } from '../types';
 import { CardStatusBar } from './CardStatusBar';
 import { LimitBar } from './LimitBar';
 

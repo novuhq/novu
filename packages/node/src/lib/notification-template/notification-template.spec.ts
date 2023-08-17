@@ -22,7 +22,12 @@ describe('test use of novus node package - NotificationTemplates class', () => {
     await novu.notificationTemplates.getAll();
 
     expect(mockedAxios.get).toHaveBeenCalled();
-    expect(mockedAxios.get).toHaveBeenCalledWith('/notification-templates', {});
+    expect(mockedAxios.get).toHaveBeenCalledWith('/notification-templates', {
+      params: {
+        page: 0,
+        limit: 10,
+      },
+    });
   });
 
   test('should fetch all the notification-templates correctly of 2nd page', async () => {
@@ -34,19 +39,21 @@ describe('test use of novus node package - NotificationTemplates class', () => {
     expect(mockedAxios.get).toHaveBeenCalledWith('/notification-templates', {
       params: {
         page: 2,
+        limit: 10,
       },
     });
   });
 
-  test('should fetch all the notification-templates correctly with limit of 10', async () => {
+  test('should fetch all the notification-templates correctly with limit of 15', async () => {
     mockedAxios.post.mockResolvedValue({});
 
-    await novu.notificationTemplates.getAll(undefined, 10);
+    await novu.notificationTemplates.getAll(0, 15);
 
     expect(mockedAxios.get).toHaveBeenCalled();
     expect(mockedAxios.get).toHaveBeenCalledWith('/notification-templates', {
       params: {
-        limit: 10,
+        page: 0,
+        limit: 15,
       },
     });
   });

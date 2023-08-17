@@ -1,7 +1,6 @@
 import { Handle, Position } from 'react-flow-renderer';
 
 import { Button, colors, shadows, Text, Title } from '../../../design-system';
-import { TurnOnGradient } from '../../../design-system/icons/gradient/TurnOnGradient';
 
 import styled from '@emotion/styled';
 import { createStyles, Group, Popover, Stack, useMantineColorScheme } from '@mantine/core';
@@ -10,7 +9,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { createTemplate, testTrigger } from '../../../api/notification-templates';
-import { useNotificationGroup, useTemplates } from '../../../hooks';
+import { useEffectOnce, useNotificationGroup, useTemplates } from '../../../hooks';
 import {
   inAppSandboxSubscriberId,
   notificationTemplateName,
@@ -19,7 +18,7 @@ import {
 import { NodeStep } from '../../workflow';
 import { useSegment } from '../../providers/SegmentProvider';
 import { errorMessage } from '../../../utils/notifications';
-import { Playground } from '../../../design-system/icons';
+import { BoltOutlinedGradient, Playground } from '../../../design-system/icons';
 import { TemplateCreationSourceEnum } from '../../../pages/templates/shared';
 
 const useStyles = createStyles((theme) => ({
@@ -44,7 +43,7 @@ export function TriggerNode({ data }: { data: { label: string; email?: string } 
   return (
     <NodeStep
       data={data}
-      Icon={TurnOnGradient}
+      Icon={BoltOutlinedGradient}
       ActionItem={!framework && <TriggerPopover />}
       Handlers={() => {
         return (
@@ -65,7 +64,7 @@ function TriggerButton({ setOpened }: { setOpened: (value: boolean) => void }) {
 
   const { groups, loading: notificationGroupLoading } = useNotificationGroup();
 
-  const { mutateAsync: createNotificationTemplate, isLoading: createTemplateLoading } = useMutation<
+  const { mutate: createNotificationTemplate, isLoading: createTemplateLoading } = useMutation<
     INotificationTemplate & { __source?: string },
     { error: string; message: string; statusCode: number },
     { template: ICreateNotificationTemplateDto; params: { __source?: string } }
@@ -76,39 +75,35 @@ function TriggerButton({ setOpened }: { setOpened: (value: boolean) => void }) {
   });
 
   const onboardingNotificationTemplate = templates.find((template) => template.name.includes(notificationTemplateName));
+  const hasToCreateOnboardingTemplate =
+    !templatesLoading && !notificationGroupLoading && !createTemplateLoading && !onboardingNotificationTemplate;
 
-  useEffect(() => {
-    async function createOnBoardingTemplate() {
-      const payloadToCreate = {
-        notificationGroupId: groups[0]._id,
-        isBlueprint: false,
-        name: notificationTemplateName,
-        active: true,
-        draft: false,
-        steps: [
-          {
-            template: {
-              type: StepTypeEnum.IN_APP,
-              content: 'Test notification {{number}}',
-              actor: {
-                type: ActorTypeEnum.SYSTEM_ICON,
-                data: SystemAvatarIconEnum.SUCCESS,
-              },
+  useEffectOnce(() => {
+    const payloadToCreate = {
+      notificationGroupId: groups[0]._id,
+      isBlueprint: false,
+      name: notificationTemplateName,
+      active: true,
+      draft: false,
+      steps: [
+        {
+          template: {
+            type: StepTypeEnum.IN_APP,
+            content: 'Test notification {{number}}',
+            actor: {
+              type: ActorTypeEnum.SYSTEM_ICON,
+              data: SystemAvatarIconEnum.SUCCESS,
             },
           },
-        ],
-      };
+        },
+      ],
+    };
 
-      await createNotificationTemplate({
-        template: payloadToCreate as unknown as ICreateNotificationTemplateDto,
-        params: { __source: TemplateCreationSourceEnum.ONBOARDING_IN_APP },
-      });
-    }
-
-    if (!templatesLoading && !notificationGroupLoading && !createTemplateLoading && !onboardingNotificationTemplate) {
-      createOnBoardingTemplate();
-    }
-  }, [templates, onboardingNotificationTemplate]);
+    createNotificationTemplate({
+      template: payloadToCreate as unknown as ICreateNotificationTemplateDto,
+      params: { __source: TemplateCreationSourceEnum.ONBOARDING_IN_APP },
+    });
+  }, hasToCreateOnboardingTemplate);
 
   async function handleRunTrigger() {
     setOpened(false);

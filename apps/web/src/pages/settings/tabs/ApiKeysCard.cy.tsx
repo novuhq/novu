@@ -72,14 +72,11 @@ describe('Input Component', () => {
   beforeEach(renderComponent);
 
   it('should render Api Key and Application Identifier in each input form', () => {
-    cy.wait('@getApiKeys');
     cy.get("[data-test-id='api-key-container']").should('have.value', apiKeys[0].key);
-    cy.wait('@currentEnvironment');
     cy.get("[data-test-id='api-identifier']").should('have.value', currentEnvironment.identifier);
   });
 
   it('should copy Api Key and Application Identifier to the clipboard', () => {
-    cy.wait('@getApiKeys');
     cy.window().then((win) => {
       cy.spy(win.navigator.clipboard, 'writeText').as('copy');
 
@@ -88,7 +85,6 @@ describe('Input Component', () => {
     cy.get("[data-test-id='api-key-copy']").click();
     cy.get('@copy').should('be.calledWithExactly', apiKeys[0].key);
 
-    cy.wait('@currentEnvironment');
     cy.get("[data-test-id='application-identifier-copy']").click();
     cy.get('@copy').should('be.calledWithExactly', currentEnvironment.identifier);
   });
@@ -98,17 +94,11 @@ describe('Regenerate Keys', () => {
   beforeEach(renderComponent);
 
   it('should open modals', () => {
-    cy.wait('@getApiKeys');
-    cy.wait('@currentEnvironment');
-
     cy.get("[data-test-id='show-regenerate-api-key-modal']").click();
     cy.get("[data-test-id='regenerate-api-key-modal']").should('be.visible');
   });
 
   it('should regenerate an api key and update api key in the input field', () => {
-    cy.wait('@getApiKeys');
-    cy.wait('@currentEnvironment');
-
     cy.get("[data-test-id='show-regenerate-api-key-modal']").click();
     cy.intercept('POST', '/v1/environments/api-keys/regenerate', {
       body: {
