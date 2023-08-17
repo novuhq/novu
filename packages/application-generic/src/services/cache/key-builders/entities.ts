@@ -91,7 +91,7 @@ const buildGroupedBlueprintsKey = (): string =>
     identifier: BLUEPRINT_IDENTIFIER,
   });
 
-const buildUserDataKey = ({ apiKey }: { apiKey: string }): string =>
+const buildAuthServiceKey = ({ apiKey }: { apiKey: string }): string =>
   buildKeyById({
     type: CacheKeyTypeEnum.ENTITY,
     keyEntity: CacheKeyPrefixEnum.AUTH_SERVICE,
@@ -107,5 +107,5 @@ export {
   buildEnvironmentByApiKey,
   buildKeyById,
   buildGroupedBlueprintsKey,
-  buildUserDataKey,
+  buildAuthServiceKey,
 };

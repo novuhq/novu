@@ -21,7 +21,7 @@ import {
   buildEnvironmentByApiKey,
   buildSubscriberKey,
   buildUserKey,
-  buildUserDataKey,
+  buildAuthServiceKey,
 } from '@novu/application-generic';
 
 import { CreateUserCommand } from '../../user/usecases/create-user/create-user.dto';
@@ -340,7 +340,7 @@ export class AuthService {
 
   @CachedEntity({
     builder: ({ apiKey }: { apiKey: string }) =>
-      buildUserDataKey({
+      buildAuthServiceKey({
         apiKey: apiKey,
       }),
   })
