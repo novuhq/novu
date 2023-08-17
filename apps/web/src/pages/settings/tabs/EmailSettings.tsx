@@ -61,7 +61,7 @@ export const EmailSettings = () => {
   async function handleCheckRecords() {
     const record = await validateMxRecord();
 
-    if (record.mxRecordConfigured !== environment?.dns?.mxRecordConfigured) {
+    if (environment?.dns && record.mxRecordConfigured !== environment.dns.mxRecordConfigured) {
       await refetchEnvironment();
     }
   }

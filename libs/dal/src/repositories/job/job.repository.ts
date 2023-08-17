@@ -8,7 +8,7 @@ import { NotificationTemplateEntity } from '../notification-template';
 import { SubscriberEntity } from '../subscriber';
 import { NotificationEntity } from '../notification';
 import { EnvironmentEntity } from '../environment';
-import type { EnforceEnvOrOrgIds } from '../../types/enforce';
+import type { EnforceEnvOrOrgIds, IUpdateResult } from '../../types';
 import { DalException } from '../../shared';
 
 type JobEntityPopulated = JobEntity & {
@@ -40,11 +40,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     return stored;
   }
 
-  public async updateStatus(
-    environmentId: string,
-    jobId: string,
-    status: JobStatusEnum
-  ): Promise<{ matchedCount: number; modifiedCount: number }> {
+  public async updateStatus(environmentId: string, jobId: string, status: JobStatusEnum): Promise<IUpdateResult> {
     return this.MongooseModel.updateOne(
       {
         _environmentId: environmentId,
@@ -78,7 +74,14 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     }
   }
 
-  public async findJobsToDigest(from: Date, templateId: string, environmentId: string, subscriberId: string) {
+  public async findJobsToDigest(
+    from: Date,
+    templateId: string,
+    environmentId: string,
+    subscriberId: string,
+    digestKey?: string,
+    digestValue?: string | number
+  ) {
     /**
      * Remove digest jobs that have been completed and currently delayed jobs that have a digest pending.
      */
@@ -105,6 +108,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
       type: StepTypeEnum.TRIGGER,
       _environmentId: environmentId,
       _subscriberId: subscriberId,
+      ...(digestKey && { [`payload.${digestKey}`]: digestValue }),
       transactionId: {
         $nin: transactionIds,
       },

@@ -125,7 +125,7 @@ export const DigestDemoFlowProvider = ({
 
       onRunTriggerClick?.();
     }
-  }, [template, currentUser]);
+  }, [template, currentUser, onRunTriggerClick, testTriggerMutation]);
 
   const startDigestTimer = useCallback(() => {
     setTimeout(() => {

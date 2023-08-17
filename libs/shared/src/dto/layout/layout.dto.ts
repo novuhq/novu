@@ -7,6 +7,7 @@ import {
   LayoutDescription,
   LayoutId,
   LayoutName,
+  LayoutIdentifier,
   UserId,
 } from '../../types';
 
@@ -17,6 +18,7 @@ export class LayoutDto {
   _creatorId: UserId;
   _parentId?: LayoutId;
   name: LayoutName;
+  identifier: LayoutIdentifier;
   description?: LayoutDescription;
   channel: ChannelTypeEnum;
   content: IEmailBlock[];

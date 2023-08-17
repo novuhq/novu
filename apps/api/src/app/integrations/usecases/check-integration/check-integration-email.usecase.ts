@@ -10,10 +10,10 @@ export class CheckIntegrationEMail {
     const mailHandler = mailFactory.getHandler(
       {
         channel: command.channel,
-        credentials: command.credentials,
+        credentials: command.credentials ?? {},
         providerId: command.providerId,
       },
-      command.credentials.from
+      command.credentials?.from
     );
 
     return await mailHandler.check();

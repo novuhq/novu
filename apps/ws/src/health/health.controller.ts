@@ -1,5 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
-import { HealthCheck, HealthCheckResult, HealthCheckService, HttpHealthIndicator } from '@nestjs/terminus';
+import { HealthCheck, HealthCheckResult, HealthCheckService } from '@nestjs/terminus';
 import { DalServiceHealthIndicator, WsQueueServiceHealthIndicator } from '@novu/application-generic';
 
 import { version } from '../../package.json';

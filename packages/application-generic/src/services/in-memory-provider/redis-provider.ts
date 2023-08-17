@@ -12,6 +12,7 @@ const DEFAULT_KEY_PREFIX = '';
 const TTL_VARIANT_PERCENTAGE = 0.1;
 
 interface IRedisConfig {
+  db?: string;
   connectTimeout?: string;
   family?: string;
   host?: string;
@@ -24,6 +25,7 @@ interface IRedisConfig {
 }
 
 export interface IRedisProviderConfig {
+  db?: number;
   connectTimeout: number;
   family: number;
   host?: string;
@@ -37,17 +39,19 @@ export interface IRedisProviderConfig {
 
 export const getRedisProviderConfig = (): IRedisProviderConfig => {
   const redisConfig: IRedisConfig = {
-    host: process.env.REDIS_CACHE_SERVICE_HOST,
-    port: process.env.REDIS_CACHE_SERVICE_PORT || String(6379),
+    db: process.env.REDIS_DB_INDEX,
+    host: process.env.REDIS_HOST || 'localhost',
+    port: process.env.REDIS_PORT || String(6379),
     ttl: process.env.REDIS_CACHE_TTL,
-    password: process.env.REDIS_CACHE_PASSWORD,
-    connectTimeout: process.env.REDIS_CACHE_CONNECTION_TIMEOUT,
-    keepAlive: process.env.REDIS_CACHE_KEEP_ALIVE,
-    family: process.env.REDIS_CACHE_FAMILY,
+    password: process.env.REDIS_PASSWORD,
+    connectTimeout: process.env.REDIS_CONNECT_TIMEOUT,
+    keepAlive: process.env.REDIS_KEEP_ALIVE,
+    family: process.env.REDIS_FAMILY,
     keyPrefix: process.env.REDIS_CACHE_KEY_PREFIX,
-    tls: process.env.REDIS_CACHE_SERVICE_TLS as ConnectionOptions,
+    tls: process.env.REDIS_TLS as ConnectionOptions,
   };
 
+  const db = Number(redisConfig.db);
   const port = Number(redisConfig.port);
   const host = redisConfig.host;
   const password = redisConfig.password;
@@ -65,6 +69,7 @@ export const getRedisProviderConfig = (): IRedisProviderConfig => {
   const tls = redisConfig.tls;
 
   return {
+    db,
     host,
     port,
     password,

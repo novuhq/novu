@@ -11,7 +11,7 @@ export function SnippetPage() {
 
   return (
     <SubPageWrapper title="Trigger">
-      <Text color={colors.B60} mt={-16} mb={24}>
+      <Text color={colors.B60} mt={-16}>
         Test trigger as if you sent it from your API or implement it by copy/pasting it into the codebase of your
         application.
       </Text>

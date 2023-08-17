@@ -15,7 +15,7 @@ import { CompileTemplate } from '@novu/application-generic';
 const USER_MAIL_DOMAIN = 'mail.domain.com';
 const USER_PARSE_WEBHOOK = 'user-parse.com/webhook/{{compiledVariable}}';
 
-describe('Should handler the new arrived mail', () => {
+describe('Should handle the new arrived mail', () => {
   let inboundEmailParseUsecase: InboundEmailParse;
   let session: UserSession;
 

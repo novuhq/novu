@@ -1,3 +1,3 @@
-import { EnvironmentCommand } from '../../../shared/commands/project.command';
+import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
-export class GetActiveIntegrationsCommand extends EnvironmentCommand {}
+export class GetActiveIntegrationsCommand extends EnvironmentWithUserCommand {}

@@ -1,7 +1,9 @@
+import { CustomDataType } from '../shared';
+
 export type ExternalSubscriberId = string;
 export type SubscriberId = string;
 
-export type SubscriberCustomData = { [key: string]: string | string[] | boolean | number | undefined };
+export type SubscriberCustomData = CustomDataType;
 
 export interface ISubscriberPayload {
   firstName?: string;
@@ -11,9 +13,13 @@ export interface ISubscriberPayload {
   avatar?: string;
   locale?: string;
   data?: SubscriberCustomData;
-  [key: string]: string | string[] | boolean | number | SubscriberCustomData | undefined;
 }
 
 export interface ISubscribersDefine extends ISubscriberPayload {
   subscriberId: string;
+}
+
+export enum PreferenceOverrideSourceEnum {
+  SUBSCRIBER = 'subscriber',
+  TEMPLATE = 'template',
 }
