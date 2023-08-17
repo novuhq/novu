@@ -8,6 +8,10 @@ import {
   DelayTypeEnum,
   IFieldFilterPart,
   FilterPartTypeEnum,
+  TriggerReservedVariables,
+  ReservedVariablesMap,
+  TriggerContextTypeEnum,
+  ITriggerSnippetVariable,
 } from '@novu/shared';
 import Handlebars from 'handlebars';
 import { ApiException } from '../exceptions/api.exception';
@@ -37,21 +41,37 @@ export class ContentService {
     }
   }
 
-  extractMessageVariables(messages: INotificationTemplateStep[]): IMustacheVariable[] {
+  extractMessageVariables(messages: INotificationTemplateStep[]): {
+    variables: IMustacheVariable[];
+    snippetVariables: ITriggerSnippetVariable[];
+  } {
     const variables: IMustacheVariable[] = [];
+    const snippetVariables: ITriggerSnippetVariable[] = [];
 
     for (const text of this.messagesTextIterator(messages)) {
       const extractedVariables = this.extractVariables(text);
+
+      const varArray = extractedVariables
+        .filter((item) => this.isReservedVariable(item.name))
+        .map((item) => this.getVariableNamePrefix(item.name));
+
+      const contextTypes = Array.from(new Set(varArray)) as TriggerContextTypeEnum[];
+      contextTypes.forEach((variable) => {
+        snippetVariables.push({ type: variable, variables: ReservedVariablesMap[variable] });
+      });
       variables.push(...extractedVariables);
     }
 
     variables.push(...this.extractStepVariables(messages));
 
-    return [
-      ...new Map(
-        variables.filter((item) => !this.isSystemVariable(item.name)).map((item) => [item.name, item])
-      ).values(),
-    ];
+    return {
+      variables: [
+        ...new Map(
+          variables.filter((item) => !this.isSystemVariable(item.name)).map((item) => [item.name, item])
+        ).values(),
+      ],
+      snippetVariables,
+    };
   }
 
   extractStepVariables(messages: INotificationTemplateStep[]): IMustacheVariable[] {
@@ -132,6 +152,14 @@ export class ContentService {
 
   private isSystemVariable(variableName: string): boolean {
     return TemplateSystemVariables.includes(variableName.includes('.') ? variableName.split('.')[0] : variableName);
+  }
+
+  private getVariableNamePrefix(variableName: string): string {
+    return variableName.includes('.') ? variableName.split('.')[0] : variableName;
+  }
+
+  private isReservedVariable(variableName: string): boolean {
+    return TriggerReservedVariables.includes(this.getVariableNamePrefix(variableName));
   }
 
   private escapeForRegExp(content: string) {

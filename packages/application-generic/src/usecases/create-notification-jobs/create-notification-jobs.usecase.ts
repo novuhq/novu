@@ -100,6 +100,10 @@ export class CreateNotificationJobs {
         providerId: providerId,
         expireAt: notification.expireAt,
         ...(command.actor && { _actorId: command.actor?._id }),
+        ...(command.tenant && {
+          _tenantId: command.tenant?._id,
+          tenantIdentifier: command.tenant.identifier,
+        }),
       };
 
       jobs.push(job);

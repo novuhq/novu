@@ -38,6 +38,7 @@ import {
   CachedEntity,
 } from '../../services';
 import { ApiException } from '../../utils/exceptions';
+import { ProcessTenant, ProcessTenantCommand } from '../process-tenant';
 
 const LOG_CONTEXT = 'TriggerEventUseCase';
 
@@ -50,14 +51,22 @@ export class TriggerEvent {
     private integrationRepository: IntegrationRepository,
     private jobRepository: JobRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
+    private processTenant: ProcessTenant,
     private logger: PinoLogger,
     private analyticsService: AnalyticsService
   ) {}
 
   @InstrumentUsecase()
   async execute(command: TriggerEventCommand) {
-    const { actor, environmentId, identifier, organizationId, to, userId } =
-      command;
+    const {
+      actor,
+      environmentId,
+      identifier,
+      organizationId,
+      to,
+      userId,
+      tenant,
+    } = command;
 
     await this.validateTransactionIdProperty(
       command.transactionId,
@@ -97,6 +106,18 @@ export class TriggerEvent {
       command.environmentId,
       template
     );
+
+    let tenantProcessed;
+    if (tenant) {
+      tenantProcessed = await this.processTenant.execute(
+        ProcessTenantCommand.create({
+          environmentId,
+          organizationId,
+          userId,
+          tenant,
+        })
+      );
+    }
 
     // We might have a single actor for every trigger, so we only need to check for it once
     let actorProcessed;
@@ -149,6 +170,7 @@ export class TriggerEvent {
             transactionId: command.transactionId,
             userId,
             ...(actor && actorProcessed && { actor: actorProcessed }),
+            ...(tenant && tenantProcessed && { tenant: tenantProcessed }),
           });
 
         const notificationJobs = await this.createNotificationJobs.execute(

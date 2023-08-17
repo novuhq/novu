@@ -1,5 +1,5 @@
 import { IsDefined, IsString, IsOptional } from 'class-validator';
-import { ISubscribersDefine } from '@novu/shared';
+import { ISubscribersDefine, ITenantDefine } from '@novu/shared';
 
 import { EnvironmentWithUserCommand } from '../../commands';
 
@@ -23,4 +23,7 @@ export class TriggerEventCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   actor?: ISubscribersDefine | null;
+
+  @IsOptional()
+  tenant?: ITenantDefine | null;
 }

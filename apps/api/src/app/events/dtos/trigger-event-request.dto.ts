@@ -1,9 +1,17 @@
 import { ArrayMaxSize, ArrayNotEmpty, IsArray, IsDefined, IsObject, IsOptional, IsString } from 'class-validator';
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
-import { TopicKey, TriggerRecipientSubscriber, TriggerRecipients, TriggerRecipientsTypeEnum } from '@novu/shared';
-import { CreateSubscriberRequestDto } from '../../subscribers/dtos/create-subscriber-request.dto';
+import {
+  TopicKey,
+  TriggerRecipientSubscriber,
+  TriggerRecipients,
+  TriggerRecipientsTypeEnum,
+  TriggerTenantContext,
+} from '@novu/shared';
+import { CreateSubscriberRequestDto } from '../../subscribers/dtos';
+import { CreateTenantRequestDto } from '../../tenant/dtos';
 
 export class SubscriberPayloadDto extends CreateSubscriberRequestDto {}
+export class TenantPayloadDto extends CreateTenantRequestDto {}
 
 export class TopicPayloadDto {
   @ApiProperty()
@@ -14,6 +22,7 @@ export class TopicPayloadDto {
 }
 
 @ApiExtraModels(SubscriberPayloadDto)
+@ApiExtraModels(TenantPayloadDto)
 @ApiExtraModels(TopicPayloadDto)
 export class TriggerEventRequestDto {
   @ApiProperty({
@@ -93,6 +102,18 @@ export class TriggerEventRequestDto {
   })
   @IsOptional()
   actor?: TriggerRecipientSubscriber;
+
+  @ApiProperty({
+    description: `It is used to specify a tenant context during trigger event.
+    If a new tenant object is provided, we will create a new tenant in your system
+    `,
+    oneOf: [
+      { type: 'string', description: 'Unique identifier of a tenant in your system' },
+      { $ref: getSchemaPath(TenantPayloadDto) },
+    ],
+  })
+  @IsOptional()
+  tenant?: TriggerTenantContext;
 }
 
 export class BulkTriggerEventDto {

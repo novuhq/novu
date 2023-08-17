@@ -10,7 +10,8 @@ const NODE_JS = 'Node.js';
 const CURL = 'Curl';
 
 export function TriggerSnippetTabs({ trigger }: { trigger: INotificationTrigger }) {
-  const { subscriberVariables: triggerSubscriberVariables = [] } = trigger || {};
+  const { subscriberVariables: triggerSubscriberVariables = [], snippetVariables: triggerSnippetVariables = [] } =
+    trigger || {};
   const isPassingSubscriberId = triggerSubscriberVariables?.find((el) => el.name === 'subscriberId');
   const subscriberVariables = isPassingSubscriberId
     ? [...triggerSubscriberVariables]
@@ -19,14 +20,20 @@ export function TriggerSnippetTabs({ trigger }: { trigger: INotificationTrigger 
   const toValue = getSubscriberValue(subscriberVariables, (variable) => variable.value || '<REPLACE_WITH_DATA>');
   const payloadValue = getPayloadValue(trigger.variables);
 
+  const tenantValue = triggerSnippetVariables.reduce((acc, variable) => {
+    acc[variable.type] = getPayloadValue(variable.variables);
+
+    return acc;
+  }, {});
+
   const prismTabs = [
     {
       value: NODE_JS,
-      content: getNodeTriggerSnippet(trigger.identifier, toValue, payloadValue),
+      content: getNodeTriggerSnippet(trigger.identifier, toValue, payloadValue, {}, tenantValue),
     },
     {
       value: CURL,
-      content: getCurlTriggerSnippet(trigger.identifier, toValue, payloadValue),
+      content: getCurlTriggerSnippet(trigger.identifier, toValue, payloadValue, {}, tenantValue),
     },
   ];
 
@@ -37,7 +44,8 @@ export const getNodeTriggerSnippet = (
   identifier: string,
   to: Record<string, unknown>,
   payload: Record<string, unknown>,
-  overrides?: Record<string, unknown>
+  overrides?: Record<string, unknown>,
+  snippet?: Record<string, unknown>
 ) => {
   const triggerCodeSnippet = `import { Novu } from '@novu/node'; 
 
@@ -48,6 +56,7 @@ novu.trigger('${identifier}', ${JSON.stringify(
       to,
       payload,
       overrides,
+      ...snippet,
     },
     null,
     2
@@ -68,7 +77,8 @@ export const getCurlTriggerSnippet = (
   identifier: string,
   to: Record<string, any>,
   payload: Record<string, any>,
-  overrides?: Record<string, any>
+  overrides?: Record<string, any>,
+  snippet?: Record<string, unknown>
 ) => {
   const curlSnippet = `curl --location --request POST '${API_ROOT}/v1/events/trigger' \\
      --header 'Authorization: ApiKey <REPLACE_WITH_API_KEY>' \\
@@ -79,6 +89,7 @@ export const getCurlTriggerSnippet = (
          to,
          payload,
          overrides,
+         ...snippet,
        },
        null,
        2

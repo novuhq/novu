@@ -47,6 +47,7 @@ export function TestWorkflow({ trigger }) {
     return [{ name: 'subscriberId' }, ...(trigger?.subscriberVariables || [])];
   }, [trigger]);
   const variables = useMemo(() => [...(trigger?.variables || [])], [trigger]);
+  const snippetVariables = useMemo(() => [...(trigger?.snippetVariables || [])], [trigger]);
 
   const overridesTrigger = '{\n\n}';
 
@@ -62,6 +63,9 @@ export function TestWorkflow({ trigger }) {
     initialValues: {
       toValue: makeToValue(subscriberVariables, currentUser),
       payloadValue: makePayloadValue(variables) === '{}' ? '{\n\n}' : makePayloadValue(variables),
+      snippetValue: snippetVariables.map((vari) => {
+        return { ...vari, variables: makePayloadValue(vari.variables) };
+      }),
       overridesValue: overridesTrigger,
     },
     validate: {
@@ -75,10 +79,15 @@ export function TestWorkflow({ trigger }) {
     form.setValues({ toValue: makeToValue(subscriberVariables, currentUser) });
   }, [subscriberVariables, currentUser]);
 
-  const onTrigger = async ({ toValue, payloadValue, overridesValue }) => {
+  const onTrigger = async ({ toValue, payloadValue, overridesValue, snippetValue }) => {
     const to = JSON.parse(toValue);
     const payload = JSON.parse(payloadValue);
     const overrides = JSON.parse(overridesValue);
+    const snippet = snippetValue.reduce((acc, variable) => {
+      acc[variable.type] = JSON.parse(variable.variables);
+
+      return acc;
+    }, {});
 
     try {
       const response = await triggerTestEvent({
@@ -88,6 +97,7 @@ export function TestWorkflow({ trigger }) {
           ...payload,
           __source: 'test-workflow',
         },
+        ...snippet,
         overrides,
       });
 
@@ -139,6 +149,19 @@ export function TestWorkflow({ trigger }) {
           minRows={3}
           validationError="Invalid JSON"
         />
+        {form.values.snippetValue.map((variable, index) => (
+          <JsonInput
+            key={index}
+            data-test-id="test-trigger-overrides-param"
+            formatOnBlur
+            autosize
+            styles={inputStyles}
+            label={`${variable.type}`}
+            {...form.getInputProps(`snippetValue.${index}.variables`)}
+            minRows={3}
+            validationError="Invalid JSON"
+          />
+        ))}
         <Group position="right" mt={'auto'}>
           <div data-test-id="test-workflow-btn">
             <Button

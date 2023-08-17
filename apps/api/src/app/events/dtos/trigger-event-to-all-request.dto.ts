@@ -1,8 +1,8 @@
 import { IsDefined, IsObject, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
-import { TriggerRecipientSubscriber } from '@novu/shared';
+import { TriggerRecipientSubscriber, TriggerTenantContext } from '@novu/shared';
 
-import { SubscriberPayloadDto } from './trigger-event-request.dto';
+import { SubscriberPayloadDto, TenantPayloadDto } from './trigger-event-request.dto';
 
 export class TriggerEventToAllRequestDto {
   @ApiProperty({
@@ -58,4 +58,16 @@ export class TriggerEventToAllRequestDto {
   })
   @IsOptional()
   actor?: TriggerRecipientSubscriber;
+
+  @ApiProperty({
+    description: `It is used to specify a tenant context during trigger event.
+    If a new tenant object is provided, we will create a new tenant in your system
+    `,
+    oneOf: [
+      { type: 'string', description: 'Unique identifier of a tenant in your system' },
+      { $ref: getSchemaPath(TenantPayloadDto) },
+    ],
+  })
+  @IsOptional()
+  tenant?: TriggerTenantContext;
 }

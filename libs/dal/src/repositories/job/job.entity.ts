@@ -1,10 +1,10 @@
-import { StepTypeEnum, IWorkflowStepMetadata, JobStatusEnum } from '@novu/shared';
+import { StepTypeEnum, IWorkflowStepMetadata, JobStatusEnum, TenantIdentifier } from '@novu/shared';
 import { Types } from 'mongoose';
 
 import { NotificationStepEntity } from '../notification-template';
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
-import type { ChangePropsValueType } from '../../types/helpers';
+import type { ChangePropsValueType } from '../../types';
 
 export { JobStatusEnum };
 
@@ -38,13 +38,17 @@ export class JobEntity {
   };
   type?: StepTypeEnum;
   _actorId?: string;
+  _tenantId?: string;
+  tenantIdentifier?: TenantIdentifier;
 }
 
 export type JobDBModel = ChangePropsValueType<
-  Omit<JobEntity, '_parentId' | '_actorId'>,
+  Omit<JobEntity, '_parentId' | '_actorId' | '_tenantId'>,
   '_notificationId' | '_subscriberId' | '_environmentId' | '_organizationId' | '_userId'
 > & {
   _parentId?: Types.ObjectId;
 
   _actorId?: Types.ObjectId;
+
+  _tenantId?: Types.ObjectId;
 };

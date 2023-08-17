@@ -36,6 +36,17 @@ export interface INotificationTrigger {
   identifier: string;
   variables: INotificationTriggerVariable[];
   subscriberVariables?: INotificationTriggerVariable[];
+  snippetVariables?: ITriggerSnippetVariable[];
+}
+
+export enum TriggerContextTypeEnum {
+  TENANT = 'tenant',
+  ACTOR = 'actor',
+}
+
+export interface ITriggerSnippetVariable {
+  type: TriggerContextTypeEnum;
+  variables: INotificationTriggerVariable[];
 }
 
 export interface INotificationTriggerVariable {

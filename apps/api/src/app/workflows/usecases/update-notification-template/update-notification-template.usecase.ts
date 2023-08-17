@@ -125,12 +125,23 @@ export class UpdateNotificationTemplate {
       const contentService = new ContentService();
       const { steps } = command;
 
-      const variables = contentService.extractMessageVariables(command.steps);
-
+      const { variables, snippetVariables } = contentService.extractMessageVariables(command.steps);
       updatePayload['triggers.0.variables'] = variables.map((i) => {
         return {
           name: i.name,
           type: i.type,
+        };
+      });
+
+      updatePayload['triggers.0.snippetVariables'] = snippetVariables.map((i) => {
+        return {
+          type: i.type,
+          variables: i.variables.map((variable) => {
+            return {
+              name: variable.name,
+              type: variable.type,
+            };
+          }),
         };
       });
 

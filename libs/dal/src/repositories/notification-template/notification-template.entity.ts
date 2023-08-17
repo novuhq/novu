@@ -7,6 +7,7 @@ import {
   IWorkflowStepMetadata,
   TemplateVariableTypeEnum,
   NotificationTemplateCustomData,
+  TriggerContextTypeEnum,
 } from '@novu/shared';
 
 import { MessageTemplateEntity } from '../message-template';
@@ -84,6 +85,14 @@ export class NotificationTriggerEntity {
 
   subscriberVariables?: {
     name: string;
+  }[];
+
+  snippetVariables?: {
+    type: TriggerContextTypeEnum;
+    variables: {
+      name: string;
+      type: TemplateVariableTypeEnum;
+    }[];
   }[];
 }
 

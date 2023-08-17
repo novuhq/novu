@@ -116,6 +116,13 @@ const jobSchema = new Schema<JobDBModel>(
       type: Schema.Types.ObjectId,
       ref: 'Subscriber',
     },
+    _tenantId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Tenant',
+    },
+    tenantIdentifier: {
+      type: Schema.Types.String,
+    },
     expireAt: Schema.Types.Date,
   },
   schemaOptions

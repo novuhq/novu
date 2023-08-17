@@ -1,21 +1,26 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { TenantRepository, TenantEntity } from '@novu/dal';
+
 import { UpdateTenantCommand } from './update-tenant.command';
-import { GetTenantCommand } from '../get-tenant/get-tenant.command';
-import { GetTenant } from '../get-tenant/get-tenant.usecase';
+import { GetTenantCommand, GetTenant } from '../get-tenant';
 
 @Injectable()
 export class UpdateTenant {
-  constructor(private tenantRepository: TenantRepository, private getTenantUsecase: GetTenant) {}
+  constructor(
+    private tenantRepository: TenantRepository,
+    private getTenantUsecase: GetTenant
+  ) {}
 
   async execute(command: UpdateTenantCommand): Promise<TenantEntity> {
-    const tenant = await this.getTenantUsecase.execute(
-      GetTenantCommand.create({
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        identifier: command.identifier,
-      })
-    );
+    const tenant =
+      command.tenant ??
+      (await this.getTenantUsecase.execute(
+        GetTenantCommand.create({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          identifier: command.identifier,
+        })
+      ));
 
     const updatePayload: Partial<TenantEntity> = {};
 
@@ -27,7 +32,10 @@ export class UpdateTenant {
       updatePayload.data = command.data;
     }
 
-    if (command?.newIdentifier && command?.newIdentifier !== tenant?.identifier) {
+    if (
+      command?.newIdentifier &&
+      command?.newIdentifier !== tenant?.identifier
+    ) {
       await this.validateIdentifierDuplication({
         environmentId: command.environmentId,
         identifier: command.newIdentifier,
