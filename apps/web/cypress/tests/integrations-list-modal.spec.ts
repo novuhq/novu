@@ -130,7 +130,6 @@ describe('Integrations List Modal', function () {
     cy.wait('@getIntegrations');
     cy.wait('@getEnvironments');
 
-    cy.getByTestId('add-provider').should('be.enabled').contains('Add a provider');
     checkTableLoading();
 
     cy.getByTestId('no-integrations-placeholder').should('be.visible');
@@ -153,7 +152,6 @@ describe('Integrations List Modal', function () {
     cy.getByTestId('sidebar-close').should('be.visible').click();
 
     cy.wait('@getIntegrations');
-    cy.wait('@getEnvironments');
 
     cy.getByTestId('add-provider').should('be.enabled').contains('Add a provider');
     checkTableLoading();

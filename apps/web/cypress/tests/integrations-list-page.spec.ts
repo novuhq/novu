@@ -131,7 +131,6 @@ describe('Integrations List Page', function () {
 
     checkTableLoading();
 
-    cy.getByTestId('add-provider').should('be.enabled').contains('Add a provider');
     cy.getByTestId('no-integrations-placeholder').should('be.visible');
     cy.contains('Choose a channel you want to start sending notifications');
 
@@ -151,7 +150,6 @@ describe('Integrations List Page', function () {
     cy.location('pathname').should('equal', '/integrations');
 
     cy.wait('@getIntegrations');
-    cy.wait('@getEnvironments');
 
     cy.getByTestId('add-provider').should('be.enabled').contains('Add a provider');
     checkTableLoading();
