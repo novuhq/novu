@@ -94,7 +94,7 @@ const buildGroupedBlueprintsKey = (): string =>
 const buildUserDataKey = ({ apiKey }: { apiKey: string }): string =>
   buildKeyById({
     type: CacheKeyTypeEnum.ENTITY,
-    keyEntity: CacheKeyPrefixEnum.USER_DATA,
+    keyEntity: CacheKeyPrefixEnum.AUTH_SERVICE,
     identifier: apiKey,
     identifierPrefix: IdentifierPrefixEnum.API_KEY,
   });
