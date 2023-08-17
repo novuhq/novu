@@ -30,13 +30,7 @@ export const TenantsList = ({
   }
 
   return (
-    <PageContainer
-      style={{
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-      title="Tenants"
-    >
+    <>
       <Container fluid sx={{ padding: '0 30px 8px 30px' }}>
         <Toolbar onAddTenantClick={onAddTenantClick} tenantLoading={loading} />
       </Container>
@@ -59,6 +53,6 @@ export const TenantsList = ({
       <When truthy={noTenants}>
         <TenantsListNoData />
       </When>
-    </PageContainer>
+    </>
   );
 };

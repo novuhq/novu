@@ -49,6 +49,7 @@ export function ChannelGroup({
               },
               betaVersion: false,
               novu: true,
+              primary: false,
             }}
             onConnectClick={handlerOnConnectClick}
           />
@@ -76,6 +77,7 @@ export function ChannelGroup({
               },
               betaVersion: false,
               novu: true,
+              primary: false,
             }}
             onConnectClick={handlerOnConnectClick}
           />

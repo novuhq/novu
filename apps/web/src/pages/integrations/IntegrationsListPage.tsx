@@ -26,7 +26,7 @@ export const IntegrationsListPage = () => {
 
   const onChannelClickCallback = useCallback(
     (channel: ChannelTypeEnum) => {
-      navigate(`${ROUTES.INTEGRATIONS_CREATE}/${channel}`);
+      navigate(`${ROUTES.INTEGRATIONS_CREATE}?scrollTo=${channel}`);
     },
     [navigate]
   );

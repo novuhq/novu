@@ -36,7 +36,6 @@ import {
   StorageService,
   WsQueueService,
   DistributedLockService,
-  PerformanceService,
   TriggerQueueService,
   GetFeatureFlag,
   LaunchDarklyService,
@@ -159,12 +158,6 @@ const PROVIDERS = [
       await dalService.connect(process.env.MONGO_URL);
 
       return dalService;
-    },
-  },
-  {
-    provide: PerformanceService,
-    useFactory: () => {
-      return new PerformanceService();
     },
   },
   InvalidateCacheService,

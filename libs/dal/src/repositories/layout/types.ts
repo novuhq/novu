@@ -7,4 +7,5 @@ export { UserId } from '../user';
 
 export type LayoutId = string;
 export type LayoutName = string;
+export type LayoutIdentifier = string;
 export type LayoutDescription = string;

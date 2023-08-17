@@ -2,7 +2,7 @@ const nr = require('newrelic');
 import { Job, WorkerOptions } from 'bullmq';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { QueueService } from '@novu/application-generic';
-import { IJobData } from '@novu/shared';
+import { IJobData, JobTopicNameEnum } from '@novu/shared';
 import { min, max, sum, mean } from 'simple-statistics';
 
 interface IMetric {
@@ -25,9 +25,9 @@ const METRIC_JOB_ID = 'metric-job';
 @Injectable()
 export class MetricQueueService extends QueueService<Record<string, never>> {
   constructor(@Inject('BULLMQ_LIST') private token_list: QueueService[]) {
-    super('metric');
+    super(JobTopicNameEnum.METRICS);
 
-    this.bullMqService.createWorker(this.name, this.getWorkerProcessor(), this.getWorkerOpts());
+    this.bullMqService.createWorker(JobTopicNameEnum.METRICS, this.getWorkerProcessor(), this.getWorkerOptions());
 
     this.bullMqService.worker.on('completed', async (job) => {
       await this.jobHasCompleted(job);
@@ -77,7 +77,7 @@ export class MetricQueueService extends QueueService<Record<string, never>> {
       .catch((error) => Logger.error('Metric Job Exists function errored', error, LOG_CONTEXT));
   }
 
-  private getWorkerOpts(): WorkerOptions {
+  private getWorkerOptions(): WorkerOptions {
     return {
       lockDuration: 500,
       concurrency: 1,

@@ -95,6 +95,7 @@ export class WorkflowController {
         preferenceSettings: body.preferenceSettings,
         steps: body.steps,
         notificationGroupId: body.notificationGroupId,
+        data: body.data,
       })
     );
   }
@@ -171,6 +172,7 @@ export class WorkflowController {
         critical: body.critical ?? false,
         preferenceSettings: body.preferenceSettings,
         blueprintId: body.blueprintId,
+        data: body.data,
         __source: query?.__source,
       })
     );

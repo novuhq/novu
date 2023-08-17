@@ -1,35 +1,35 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import styled from '@emotion/styled';
 import {
+  CloseButton,
+  CloseButtonProps,
+  createPolymorphicComponent,
+  createStyles,
   Navbar,
   Popover,
-  CloseButton,
   useMantineColorScheme,
-  createStyles,
-  createPolymorphicComponent,
-  CloseButtonProps,
 } from '@mantine/core';
-import styled from '@emotion/styled';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 
+import { ROUTES } from '../../../constants/routes.enum';
 import { colors, NavMenu, SegmentedControl, shadows } from '../../../design-system';
 import {
   Activity,
   Bolt,
   Box,
-  Settings,
-  Team,
-  Repeat,
-  CheckCircleOutlined,
   Brand,
   Buildings,
+  CheckCircleOutlined,
+  NovuLogo,
+  Repeat,
+  Settings,
+  Team,
 } from '../../../design-system/icons';
-import { ChangesCountBadge } from './ChangesCountBadge';
 import { useEnvController, useIsMultiTenancyEnabled } from '../../../hooks';
-import OrganizationSelect from './OrganizationSelect';
-import { useSpotlightContext } from '../../providers/SpotlightProvider';
-import { HEADER_HEIGHT } from '../constants';
-import { ROUTES } from '../../../constants/routes.enum';
 import { currentOnboardingStep } from '../../../pages/quick-start/components/route/store';
+import { useSpotlightContext } from '../../providers/SpotlightProvider';
+import { ChangesCountBadge } from './ChangesCountBadge';
+import OrganizationSelect from './OrganizationSelect';
 
 const usePopoverStyles = createStyles(({ colorScheme }) => ({
   dropdown: {
@@ -111,7 +111,6 @@ export function SideNav({}: Props) {
     },
     { icon: <Activity />, link: ROUTES.ACTIVITIES, label: 'Activity Feed', testId: 'side-nav-activities-link' },
     { icon: <Box />, link: ROUTES.INTEGRATIONS, label: 'Integrations Store', testId: 'side-nav-integrations-link' },
-    { icon: <Settings />, link: ROUTES.SETTINGS, label: 'Settings', testId: 'side-nav-settings-link' },
     {
       icon: <Team />,
       link: ROUTES.TEAM,
@@ -126,6 +125,7 @@ export function SideNav({}: Props) {
       rightSide: <ChangesCountBadge />,
       condition: !readonly,
     },
+    { icon: <Settings />, link: ROUTES.SETTINGS, label: 'Settings', testId: 'side-nav-settings-link' },
   ];
 
   async function handlePopoverForChanges(e) {
@@ -137,28 +137,33 @@ export function SideNav({}: Props) {
 
   return (
     <Navbar
-      p={30}
       sx={{
         position: 'sticky',
-        top: HEADER_HEIGHT,
+        top: 0,
         zIndex: 'auto',
         backgroundColor: 'transparent',
         borderRight: 'none',
-        paddingRight: 0,
         width: '300px',
-        height: 'max-content',
+        minHeight: '100vh',
+        padding: '16px 24px',
+        paddingBottom: '0px',
         '@media (max-width: 768px)': {
           width: '100%',
         },
       }}
     >
-      <Navbar.Section>
+      <Navbar.Section mb={24}>
+        <Link to="/">
+          <NovuLogo />
+        </Link>
+      </Navbar.Section>
+      <Navbar.Section sx={{ overflowY: 'auto', flex: 1 }}>
         <Popover
           classNames={classes}
           withArrow
           opened={opened}
           onClose={() => setOpened(false)}
-          withinPortal={false}
+          withinPortal={true}
           transition="rotate-left"
           transitionDuration={250}
           position="right"
@@ -174,6 +179,7 @@ export function SideNav({}: Props) {
               onChange={async (value) => {
                 await setEnvironment(value);
               }}
+              sx={{ marginBottom: '16px' }}
               data-test-id="environment-switch"
             />
           </Popover.Target>
@@ -187,45 +193,39 @@ export function SideNav({}: Props) {
           </Popover.Dropdown>
         </Popover>
         <NavMenu menuItems={menuItems} />
-      </Navbar.Section>
-      <Navbar.Section mt={15}>
-        <Navbar.Section>
-          <OrganizationSelect />
-        </Navbar.Section>
-        <Navbar.Section>
-          <BottomNav dark={dark} data-test-id="side-nav-bottom-links">
-            <a
-              target="_blank"
-              rel="noopener noreferrer"
-              href="https://discord.novu.co"
-              data-test-id="side-nav-bottom-link-support"
-            >
-              Support
-            </a>
-            <p>
-              <b>&nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp;</b>
-            </p>
-            <a
-              target="_blank"
-              rel="noopener noreferrer"
-              href="https://docs.novu.co"
-              data-test-id="side-nav-bottom-link-documentation"
-            >
-              Docs
-            </a>
-            <p>
-              <b>&nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp;</b>
-            </p>
-            <a
-              target="_blank"
-              rel="noopener noreferrer"
-              href="https://github.com/novuhq/novu/issues/new/choose"
-              data-test-id="side-nav-bottom-link-share-feedback"
-            >
-              Share Feedback
-            </a>
-          </BottomNav>
-        </Navbar.Section>
+        <OrganizationSelect />
+        <BottomNav dark={dark} data-test-id="side-nav-bottom-links">
+          <a
+            target="_blank"
+            rel="noopener noreferrer"
+            href="https://discord.novu.co"
+            data-test-id="side-nav-bottom-link-support"
+          >
+            Support
+          </a>
+          <p>
+            <b>&nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp;</b>
+          </p>
+          <a
+            target="_blank"
+            rel="noopener noreferrer"
+            href="https://docs.novu.co"
+            data-test-id="side-nav-bottom-link-documentation"
+          >
+            Docs
+          </a>
+          <p>
+            <b>&nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp;</b>
+          </p>
+          <a
+            target="_blank"
+            rel="noopener noreferrer"
+            href="https://github.com/novuhq/novu/issues/new/choose"
+            data-test-id="side-nav-bottom-link-share-feedback"
+          >
+            Share Feedback
+          </a>
+        </BottomNav>
       </Navbar.Section>
     </Navbar>
   );
@@ -252,5 +252,4 @@ const BottomNav = styled.div<{ dark: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 5px;
 `;

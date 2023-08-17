@@ -100,6 +100,7 @@ export class NotificationTemplateController {
         preferenceSettings: body.preferenceSettings,
         steps: body.steps,
         notificationGroupId: body.notificationGroupId,
+        data: body.data,
       })
     );
   }
@@ -179,6 +180,7 @@ export class NotificationTemplateController {
         critical: body.critical ?? false,
         preferenceSettings: body.preferenceSettings,
         blueprintId: body.blueprintId,
+        data: body.data,
         __source: query?.__source,
       })
     );

@@ -15,3 +15,4 @@ export * from './kannel.handler';
 export * from './sms-central.handler';
 export * from './africas-talking.handler';
 export * from './sendchamp.handler';
+export * from './novu.handler';

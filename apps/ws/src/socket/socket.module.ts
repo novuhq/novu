@@ -1,32 +1,19 @@
-import { Module, OnModuleInit } from '@nestjs/common';
-import { BullMqService, WsQueueService } from '@novu/application-generic';
-import { getRedisPrefix } from '@novu/shared';
+import { Module, Provider } from '@nestjs/common';
+
+import { BullMqService } from '@novu/application-generic';
 
 import { WSGateway } from './ws.gateway';
 import { SharedModule } from '../shared/shared.module';
+import { ExternalServicesRoute } from './usecases/external-services-route';
+import { SocketQueueConsumerService } from './services/socket-queue-consumer.service';
+
+const USE_CASES: Provider[] = [ExternalServicesRoute];
+
+const SERVICES: Provider[] = [SocketQueueConsumerService, BullMqService];
 
 @Module({
   imports: [SharedModule],
-  providers: [WSGateway],
+  providers: [WSGateway, ...SERVICES, ...USE_CASES],
   exports: [WSGateway],
 })
-export class SocketModule implements OnModuleInit {
-  private readonly bullMqService: BullMqService;
-
-  constructor(private wsGateway: WSGateway) {
-    this.bullMqService = new BullMqService();
-  }
-
-  async onModuleInit() {
-    this.bullMqService.createWorker(
-      WsQueueService.queueName,
-      async (job) => {
-        this.wsGateway.sendMessage(job.data.userId, job.data.event, job.data.payload);
-      },
-      {
-        lockDuration: 90000,
-        concurrency: 5,
-      }
-    );
-  }
-}
+export class SocketModule {}

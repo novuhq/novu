@@ -1,4 +1,3 @@
-import { FunctionComponent } from 'react';
 import styled from '@emotion/styled';
 import { Skeleton } from '@mantine/core';
 

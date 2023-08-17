@@ -214,6 +214,10 @@ export class UpdateNotificationTemplate {
       updatePayload.tags = command.tags;
     }
 
+    if (command.data) {
+      updatePayload.data = command.data;
+    }
+
     if (!Object.keys(updatePayload).length) {
       throw new BadRequestException('No properties found for update');
     }

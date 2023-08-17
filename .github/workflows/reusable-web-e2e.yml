@@ -68,6 +68,10 @@ jobs:
 
       - uses: ./.github/actions/start-localstack
 
+      - uses: ./.github/actions/run-backend
+        with:
+          launch_darkly_sdk_key: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
+
       - name: Start Client
         working-directory: apps/web
         env:
@@ -78,30 +82,11 @@ jobs:
         run: pnpm start:static:build &
 
       - name: Start WS
-        run: pnpm start:ws:test &
-
-      - name: Start API in TEST
-        env:
-          GITHUB_OAUTH_CLIENT_ID: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_ID }}
-          GITHUB_OAUTH_CLIENT_SECRET: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_SECRET }}
-          NODE_ENV: "test"
-          PORT: "1336"
-          TZ: "UTC"
-          GITHUB_OAUTH_REDIRECT: "http://localhost:1336/v1/auth/github/callback"
-        run: cd apps/api && pnpm start:build &
-
-      - name: Start worker
-        env:
-          NODE_ENV: "test"
-          PORT: 1342
-          TZ: "UTC"
-        run: cd apps/worker && pnpm start:prod &
-
-      - name: Install wait-on plugin
-        run: npm i -g wait-on
+        run: |
+          cd apps/ws && pnpm start:test &
 
       - name: Wait on Services
-        run: wait-on --timeout=180000 http://localhost:1336/v1/health-check http://localhost:1342/v1/health-check http://localhost:1340/v1/health-check http://localhost:4200
+        run: wait-on --timeout=180000 http://localhost:1340/v1/health-check http://localhost:4200
 
       # run cypress install only when cache was not hit
       - name: Cypress install
