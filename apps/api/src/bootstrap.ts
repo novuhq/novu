@@ -109,6 +109,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
     .addTag('Environments')
     .addTag('Inbound Parse')
     .addTag('Feeds')
+    .addTag('Tenants')
     .addTag('Messages')
     .addTag('Execution Details')
     .build();
