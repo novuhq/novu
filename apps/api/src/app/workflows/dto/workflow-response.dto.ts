@@ -116,13 +116,8 @@ export class WorkflowResponse {
   @ApiPropertyOptional()
   @IsOptional()
   data?: NotificationTemplateCustomData;
+
   activeIntegrationStatus?: ActiveIntegrationsChannelsStatus;
-
-  @ApiProperty()
-  isBlueprint: boolean;
-
-  @ApiPropertyOptional()
-  blueprintId?: string;
 }
 
 export type ActiveIntegrationsChannelsStatus = { isActive: boolean; channels: { [key in ChannelTypeEnum]: boolean } };
