@@ -151,10 +151,10 @@ describe('Integrations List Modal', function () {
     cy.getByTestId('select-provider-sidebar').should('be.visible');
     cy.getByTestId('sidebar-close').should('be.visible').click();
 
-    cy.wait('@getIntegrations');
-
-    cy.getByTestId('add-provider').should('be.enabled').contains('Add a provider');
     checkTableLoading();
+
+    cy.wait('@getIntegrations');
+    cy.getByTestId('add-provider').should('be.enabled').contains('Add a provider');
 
     checkTableRow(
       {

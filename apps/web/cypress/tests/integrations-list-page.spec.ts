@@ -149,10 +149,10 @@ describe('Integrations List Page', function () {
     cy.visit('/integrations');
     cy.location('pathname').should('equal', '/integrations');
 
-    cy.wait('@getIntegrations');
-
-    cy.getByTestId('add-provider').should('be.enabled').contains('Add a provider');
     checkTableLoading();
+
+    cy.wait('@getIntegrations');
+    cy.getByTestId('add-provider').should('be.enabled').contains('Add a provider');
 
     checkTableRow(
       {
