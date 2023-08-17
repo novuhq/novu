@@ -7,7 +7,8 @@ import {
   PushProviderIdEnum,
   SmsProviderIdEnum,
 } from '@novu/shared';
-import { IIntegratedProvider } from '../../IntegrationsStorePage';
+
+import type { IIntegratedProvider } from '../../types';
 
 const providers: Record<ChannelTypeEnum, ProvidersIdEnum[]> = {
   [ChannelTypeEnum.CHAT]: [

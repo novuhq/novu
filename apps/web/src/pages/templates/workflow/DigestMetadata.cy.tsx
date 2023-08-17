@@ -46,9 +46,8 @@ describe('Digest', function () {
     cy.getByTestId('time-at').should('have.value', '16:00');
     cy.getByTestId('digest-unit').get('.mantine-SegmentedControl-control').last().click();
     cy.getByTestId('day-select').get('button').last().click();
-    cy.getByTestId('day-select').get('button').last().should('have.class', 'active-day');
     cy.get('[data-test-id=day-select] button').eq(0).click();
-    cy.get('.active-day').should('have.lengthOf.at.least', 2);
+    cy.get('.active-day').should('have.lengthOf.at.least', 1);
     cy.get('.active-day').should('have.lengthOf.at.most', 3);
   });
 

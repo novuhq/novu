@@ -220,6 +220,16 @@ export const resendConfig: IConfigCredentials[] = [
   ...mailConfigBase,
 ];
 
+export const plunkConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  ...mailConfigBase,
+];
+
 export const sparkpostConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
@@ -714,5 +724,19 @@ export const novuInAppConfig: IConfigCredentials[] = [
     displayName: 'Security HMAC encryption',
     type: 'switch',
     required: false,
+    tooltip: {
+      text: 'When active it verifies if a request is performed by a specific user',
+      when: false,
+    },
   },
+];
+
+export const sendchampConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
 ];

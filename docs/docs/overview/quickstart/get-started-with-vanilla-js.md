@@ -1,6 +1,6 @@
 ---
 sidebar_position: 8
-sidebar_label: Get started with vanilla JS
+sidebar_label: Get started with Vanilla JS
 ---
 
 import Tabs from '@theme/Tabs';
@@ -15,7 +15,7 @@ Learn how to integrate Novu into your vanilla JS app on the fly. Send notificati
 To follow the steps in this quickstart, you'll need:
 
 - A Novu account. [Sign up for free](http://web.novu.co) if you don’t have one yet.
-- A working vanilla JS development environment.
+- A working Vanilla JS development environment.
 
 You can find the code for this project [here](https://github.com/novuhq/vanillajs-quickstart)
 

@@ -15,6 +15,7 @@ describe('Delete Tenant - /tenants/:identifier (DELETE)', function () {
 
   it('should delete newly created tenant', async function () {
     await tenantRepository.create({
+      _organizationId: session.organization._id,
       _environmentId: session.environment._id,
       identifier: 'identifier_123',
       name: 'name_123',

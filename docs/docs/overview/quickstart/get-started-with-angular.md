@@ -295,7 +295,7 @@ The recipients of a triggered notification are called subscribers.
 
 </aside>
 
-The template includes the following:
+The workflow includes the following:
 
 - Notification workflow name and Identifier
 - Channel tailored content:
@@ -331,7 +331,7 @@ I’ll briefly explain the function of each label in the image above.
 - **6 - Filter** - This feature allows you to configure the criteria for delivering notifications. For instance, you can apply a filter based on a subscriber's online status to send them an email if they were online within the last hour. Read [more about filters](https://docs.novu.co/platform/step-filter/#subscriber-seen--read-filters).
 - **Editor** - You can add text that you want displayed in each notification item. Additionally, you can specify custom variables using `{{ }}`. This means you can inject variables from your code into a notification item's text via a payload.
 
-Feel free to add only text for now and rename the notification template to `Onboarding In App`. It automatically creates a slug-like identifier that will be needed in later steps to trigger a notification.
+Feel free to add only text for now and rename the notification workflow to `Onboarding In App`. It automatically creates a slug-like identifier that will be needed in later steps to trigger a notification.
 
 ![Screenshot 2023-05-21 at 09.33.43.png](https://res.cloudinary.com/dxc6bnman/image/upload/v1686776584/Screenshot_2023-05-21_at_09.33.43_ujx2td.png)
 
@@ -481,7 +481,7 @@ Check your app again. You should see the recently triggered notification!
 
 ## Next Steps
 
-Great job! If you've reached this point, you should now have successfully set up the notification center, created a subscriber, notification template, configured a channel provider and triggered a notification in your Angular application.
+Great job! If you've reached this point, you should now have successfully set up the notification center, created a subscriber, notification workflow, configured a channel provider and triggered a notification in your Angular application.
 
 To learn more about the Notification Center and explore Novu's features and capabilities, check out, check out:
 

@@ -1,32 +1,35 @@
-import { useMemo } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { IProviderConfig, providers } from '@novu/shared';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+
 import { CreateProviderInstanceSidebar } from './components/multi-provider/CreateProviderInstanceSidebar';
-import { SideBarWrapper } from './components/multi-provider/SelectProviderSidebar';
+import { ROUTES } from '../../constants/routes.enum';
 
 export function CreateProviderPage() {
   const { channel, providerId } = useParams();
   const navigate = useNavigate();
-  const foundProvider = useMemo<IProviderConfig | undefined>(
-    () => providers.find((provider) => provider.channel === channel && provider.id === providerId),
-    [channel, providerId]
-  );
+  const location = useLocation();
 
-  if (!foundProvider) {
-    return null;
-  }
+  const onIntegrationCreated = (integrationId: string) => {
+    navigate(`/integrations/${integrationId}`);
+  };
 
   return (
-    <SideBarWrapper>
-      <CreateProviderInstanceSidebar
-        goBack={() => {
-          navigate('/integrations/create');
-        }}
-        onClose={() => {
-          navigate('/integrations');
-        }}
-        provider={foundProvider}
-      />
-    </SideBarWrapper>
+    <CreateProviderInstanceSidebar
+      isOpened
+      onGoBack={() => {
+        if (location.pathname.includes(`${ROUTES.INTEGRATIONS_CREATE}/`)) {
+          navigate(ROUTES.INTEGRATIONS_CREATE);
+
+          return;
+        }
+
+        navigate(ROUTES.INTEGRATIONS);
+      }}
+      onClose={() => {
+        navigate(ROUTES.INTEGRATIONS);
+      }}
+      onIntegrationCreated={onIntegrationCreated}
+      providerId={providerId}
+      channel={channel}
+    />
   );
 }

@@ -1,4 +1,6 @@
 export { Button } from './button/Button';
+export { PlusButton } from './button/PlusButton';
+export type { IButtonProps } from './button/Button';
 export type { Size } from './button/Button';
 export { Checkbox } from './checkbox/Checkbox';
 export { colors, shadows } from './config';
@@ -29,3 +31,4 @@ export * from './cards';
 export * from './arrow-button';
 export * from './popover';
 export * from './dots-navigation';
+export * from './sidebar';

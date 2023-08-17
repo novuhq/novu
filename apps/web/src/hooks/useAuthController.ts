@@ -84,7 +84,7 @@ export function useAuthController() {
     } else {
       Sentry.configureScope((scope) => scope.setUser(null));
     }
-  }, [user, organization]);
+  }, [user, organization, segment]);
 
   const setTokenCallback = useCallback(
     (newToken: string | null, refetch = true) => {

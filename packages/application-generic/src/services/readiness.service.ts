@@ -40,8 +40,8 @@ export class ReadinessService {
     } catch (error) {
       Logger.error(
         'Some health indicator throw an error when checking if queues are enabled',
-        LOG_CONTEXT,
-        error
+        error,
+        LOG_CONTEXT
       );
 
       return false;

@@ -11,7 +11,10 @@ import { InMemoryProviderService } from '../../services';
 const inMemoryProviderService = {
   provide: InMemoryProviderService,
   useFactory: () => {
-    return new InMemoryProviderService();
+    const service = new InMemoryProviderService();
+    service.initialize();
+
+    return service;
   },
 };
 

@@ -11,15 +11,14 @@ Handlebars.registerHelper(
     // eslint-disable-next-line
     // @ts-expect-error
     return arg1 == arg2 ? options.fn(this) : options.inverse(this);
-  },
+  }
 );
 
 Handlebars.registerHelper(HandlebarHelpersEnum.TITLECASE, function (value) {
   return value
     ?.split(' ')
     .map(
-      (letter) =>
-        letter.charAt(0).toUpperCase() + letter.slice(1).toLowerCase(),
+      (letter) => letter.charAt(0).toUpperCase() + letter.slice(1).toLowerCase()
     )
     .join(' ');
 });
@@ -36,7 +35,7 @@ Handlebars.registerHelper(
   HandlebarHelpersEnum.PLURALIZE,
   function (number, single, plural) {
     return number === 1 ? single : plural;
-  },
+  }
 );
 
 Handlebars.registerHelper(
@@ -48,26 +47,11 @@ Handlebars.registerHelper(
     }
 
     return date;
-  },
+  }
 );
 
 Handlebars.registerHelper(
-  HandlebarHelpersEnum.UNIQUE,
-  function (array, property) {
-    if (!Array.isArray(array)) return '';
-
-    return array
-      .map((item) => {
-        if (item[property]) {
-          return item[property];
-        }
-      })
-      .filter((value, index, self) => self.indexOf(value) === index);
-  },
-);
-
-Handlebars.registerHelper(
-  HandlebarHelpersEnum.GROUPBY,
+  HandlebarHelpersEnum.GROUP_BY,
   function (array, property) {
     if (!Array.isArray(array)) return [];
     const map = {};
@@ -88,7 +72,37 @@ Handlebars.registerHelper(
     }
 
     return result;
-  },
+  }
+);
+
+Handlebars.registerHelper(
+  HandlebarHelpersEnum.UNIQUE,
+  function (array, property) {
+    if (!Array.isArray(array)) return '';
+
+    return array
+      .map((item) => {
+        if (item[property]) {
+          return item[property];
+        }
+      })
+      .filter((value, index, self) => self.indexOf(value) === index);
+  }
+);
+
+Handlebars.registerHelper(
+  HandlebarHelpersEnum.SORT_BY,
+  function (array, property) {
+    if (!Array.isArray(array)) return '';
+    if (!property) return array.sort();
+
+    return array.sort(function (a, b) {
+      const _x = a[property];
+      const _y = b[property];
+
+      return _x < _y ? -1 : _x > _y ? 1 : 0;
+    });
+  }
 );
 
 @Injectable()

@@ -1,12 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { TenantCustomData } from '@novu/shared';
+import { ICreateTenantDto, TenantCustomData } from '@novu/shared';
 
-export class CreateTenantRequestDto {
+export class CreateTenantRequestDto implements ICreateTenantDto {
   @ApiProperty()
   identifier: string;
 
   @ApiProperty()
-  name?: string;
+  name: string;
 
   @ApiProperty()
   data?: TenantCustomData;

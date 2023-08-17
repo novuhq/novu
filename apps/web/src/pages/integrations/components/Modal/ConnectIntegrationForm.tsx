@@ -19,7 +19,7 @@ import styled from '@emotion/styled';
 import { keyframes } from '@emotion/react';
 
 import { Button, colors, Input, shadows, Switch, Text } from '../../../../design-system';
-import { IIntegratedProvider } from '../../IntegrationsStorePage';
+import type { IIntegratedProvider } from '../../types';
 import { createIntegration, getWebhookSupportStatus, updateIntegration } from '../../../../api/integration';
 import { Close } from '../../../../design-system/icons/actions/Close';
 import { IntegrationInput } from '../IntegrationInput';
@@ -222,7 +222,7 @@ export function ConnectIntegrationForm({
       }
       await queryClient.refetchQueries({
         predicate: ({ queryKey }) =>
-          queryKey.includes(QueryKeys.integrationsList) || queryKey.includes(QueryKeys.activeNotificationsList),
+          queryKey.includes(QueryKeys.integrationsList) || queryKey.includes(QueryKeys.activeIntegrations),
       });
     } catch (e: any) {
       dispatch({

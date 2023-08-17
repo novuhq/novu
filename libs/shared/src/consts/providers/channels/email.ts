@@ -12,6 +12,7 @@ import {
   outlook365Config,
   infobipEmailConfig,
   resendConfig,
+  plunkConfig,
   sparkpostConfig,
   emailWebhookConfig,
 } from '../credentials';
@@ -21,6 +22,14 @@ import { EmailProviderIdEnum } from '../provider.enum';
 import { ChannelTypeEnum } from '../../../types';
 
 export const emailProviders: IProviderConfig[] = [
+  {
+    id: EmailProviderIdEnum.Novu,
+    displayName: 'Novu Email',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: [],
+    docReference: 'https://docs.novu.co/channels/email/',
+    logoFileName: { light: 'novu.png', dark: 'novu.png' },
+  },
   {
     id: EmailProviderIdEnum.Mailgun,
     displayName: 'Mailgun',
@@ -124,6 +133,14 @@ export const emailProviders: IProviderConfig[] = [
     credentials: resendConfig,
     docReference: 'https://docs.novu.co/channels/email/resend',
     logoFileName: { light: 'resend.svg', dark: 'resend.svg' },
+  },
+  {
+    id: EmailProviderIdEnum.Plunk,
+    displayName: 'Plunk',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: plunkConfig,
+    docReference: 'https://docs.novu.co/channels/email/plunk',
+    logoFileName: { light: 'plunk.png', dark: 'plunk.png' },
   },
   {
     id: EmailProviderIdEnum.SparkPost,

@@ -6,6 +6,7 @@ import { nameInputStyles } from './nameInputStyles';
 interface INameInputProps extends SpacingProps {
   placeholder?: string;
   required?: boolean;
+  autoFocus?: boolean;
   disabled?: boolean;
   value?: string;
   onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
