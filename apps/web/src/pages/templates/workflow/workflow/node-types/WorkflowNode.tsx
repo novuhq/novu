@@ -1,30 +1,39 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Popover as MantinePopover, createStyles, UnstyledButton } from '@mantine/core';
 import styled from '@emotion/styled';
-import { useFormContext } from 'react-hook-form';
+import {
+  Avatar,
+  createStyles,
+  Group,
+  Indicator,
+  Popover as MantinePopover,
+  useMantineColorScheme,
+  UnstyledButton,
+} from '@mantine/core';
+import { ChannelTypeEnum, InAppProviderIdEnum, providers, StepTypeEnum } from '@novu/shared';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useViewport } from 'react-flow-renderer';
-import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
+import { useFormContext } from 'react-hook-form';
 
-import { Text } from '../../../../../design-system/typography/text/Text';
-import { Switch } from '../../../../../design-system/switch/Switch';
-import { useStyles } from '../../../../../design-system/template-button/TemplateButton.styles';
-import { colors } from '../../../../../design-system/config';
-import { Trash } from '../../../../../design-system/icons';
+import { useSegment } from '../../../../../components/providers/SegmentProvider';
 import { When } from '../../../../../components/utils/When';
+import { CONTEXT_PATH } from '../../../../../config';
+import { Switch } from '../../../../../design-system';
+import { Button } from '../../../../../design-system/button/Button';
+import { colors } from '../../../../../design-system/config';
+import { ProviderMissing, Trash } from '../../../../../design-system/icons';
+import { Popover } from '../../../../../design-system/popover';
+import { useStyles } from '../../../../../design-system/template-button/TemplateButton.styles';
+import { Text } from '../../../../../design-system/typography/text/Text';
 import {
   useActiveIntegrations,
   useEnvController,
   useIntegrationLimit,
   useIsMultiProviderConfigurationEnabled,
 } from '../../../../../hooks';
-import { getFormattedStepErrors } from '../../../shared/errors';
-import { Popover } from '../../../../../design-system/popover';
-import { Button } from '../../../../../design-system/button/Button';
-import { IntegrationsStoreModal } from '../../../../integrations/IntegrationsStoreModal';
-import { useSegment } from '../../../../../components/providers/SegmentProvider';
-import { TemplateEditorAnalyticsEnum } from '../../../constants';
 import { CHANNEL_TYPE_TO_STRING } from '../../../../../utils/channels';
 import { IntegrationsListModal } from '../../../../integrations/IntegrationsListModal';
+import { IntegrationsStoreModal } from '../../../../integrations/IntegrationsStoreModal';
+import { TemplateEditorAnalyticsEnum } from '../../../constants';
+import { getFormattedStepErrors } from '../../../shared/errors';
 
 interface ITemplateButtonProps {
   Icon: React.FC<any>;
@@ -45,7 +54,7 @@ interface ITemplateButtonProps {
   onDelete?: () => void;
   dragging?: boolean;
   disabled?: boolean;
-  description?: string;
+  subtitle?: string | React.ReactNode;
 }
 
 const usePopoverStyles = createStyles(() => ({
@@ -84,7 +93,7 @@ export function WorkflowNode({
   onDelete = () => {},
   dragging = false,
   disabled: initDisabled,
-  description,
+  subtitle,
 }: ITemplateButtonProps) {
   const segment = useSegment();
   const { readonly: readonlyEnv } = useEnvController();
@@ -102,11 +111,14 @@ export function WorkflowNode({
   const { isLimitReached: isSmsLimitReached } = useIntegrationLimit(ChannelTypeEnum.SMS);
   const [hover, setHover] = useState(false);
   const isMultiProviderConfigurationEnabled = useIsMultiProviderConfigurationEnabled();
-
-  const hasActiveIntegration = useMemo(() => {
-    const isChannelStep = [StepTypeEnum.EMAIL, StepTypeEnum.PUSH, StepTypeEnum.SMS, StepTypeEnum.CHAT].includes(
+  const { colorScheme } = useMantineColorScheme();
+  const isChannelStep = useMemo(() => {
+    return [StepTypeEnum.IN_APP, StepTypeEnum.EMAIL, StepTypeEnum.PUSH, StepTypeEnum.SMS, StepTypeEnum.CHAT].includes(
       channelType
     );
+  }, [channelType]);
+
+  const hasActiveIntegration = useMemo(() => {
     const isEmailStep = channelType === StepTypeEnum.EMAIL;
     const isSmsStep = channelType === StepTypeEnum.SMS;
 
@@ -119,7 +131,22 @@ export function WorkflowNode({
     }
 
     return true;
-  }, [integrations, tabKey, isEmailLimitReached, isSmsLimitReached]);
+  }, [integrations, tabKey, isEmailLimitReached, isSmsLimitReached, isChannelStep]);
+
+  const getPrimaryIntegration = useMemo(() => {
+    if (channelType === StepTypeEnum.IN_APP) {
+      return InAppProviderIdEnum.Novu;
+    }
+    if (isChannelStep && hasActiveIntegration) {
+      if ([StepTypeEnum.CHAT, StepTypeEnum.PUSH].includes(channelType)) {
+        return integrations?.filter((integration) => integration.channel === channelKey)[0].providerId;
+      }
+
+      return integrations?.find((integration) => integration.channel === channelKey)?.providerId;
+    }
+
+    return undefined;
+  }, [isChannelStep, hasActiveIntegration, integrations, channelKey, channelType]);
 
   const onIntegrationModalClose = () => {
     setIntegrationsModalVisible(false);
@@ -149,6 +176,10 @@ export function WorkflowNode({
     return () => subscription.unsubscribe();
   }, [watch]);
 
+  const provider = providers.find((_provider) => _provider.id === getPrimaryIntegration);
+
+  const logoSrc = provider && `${CONTEXT_PATH}/static/images/providers/${colorScheme}/square/${provider.id}.svg`;
+
   return (
     <>
       <UnstyledButtonStyled
@@ -164,16 +195,23 @@ export function WorkflowNode({
         data-test-id={testId}
         className={cx(classes.button, { [classes.active]: active })}
       >
-        <ButtonWrapper>
+        <Group w="100%" noWrap>
           <LeftContainerWrapper>
-            {Icon ? <Icon {...disabledProp} width="32px" height="32px" /> : null}
+            <RenderIcon
+              Icon={Icon}
+              disabledProp={disabledProp}
+              getPrimaryIntegration={getPrimaryIntegration}
+              isChannelStep={isChannelStep}
+              logoSrc={logoSrc}
+            />
+
             <StyledContentWrapper>
-              <Text {...disabledColor} weight="bold" size={16}>
+              <Text {...disabledColor} weight="bold" size={16} data-test-id="workflow-node-label">
                 {label}
               </Text>
-              {description && (
-                <Text {...disabledColor} size={12} color={colors.B60}>
-                  {description}
+              {subtitle && (
+                <Text {...disabledColor} size={12} color={colors.B60} rows={1} data-test-id="workflow-node-subtitle">
+                  {subtitle}
                 </Text>
               )}
             </StyledContentWrapper>
@@ -203,7 +241,7 @@ export function WorkflowNode({
               </UnstyledButton>
             </When>
           </ActionWrapper>
-        </ButtonWrapper>
+        </Group>
         {!hasActiveIntegration && (
           <Popover
             opened={popoverOpened}
@@ -272,6 +310,45 @@ export function WorkflowNode({
   );
 }
 
+function RenderIcon({ isChannelStep, getPrimaryIntegration, logoSrc, disabledProp, Icon }) {
+  if (isChannelStep) {
+    return (
+      <Indicator
+        label={<Icon width="16px" height="16px" {...disabledProp} />}
+        position="bottom-end"
+        size={16}
+        offset={getPrimaryIntegration ? 8 : 4}
+        inline
+      >
+        <div
+          style={{
+            width: '40px',
+            height: '40px',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: '4px',
+          }}
+        >
+          {getPrimaryIntegration ? (
+            <Avatar src={logoSrc} size={32} radius={0} color="white" />
+          ) : (
+            <Avatar radius="xl">
+              <ProviderMissing {...disabledProp} width="32px" height="32px" />
+            </Avatar>
+          )}
+        </div>
+      </Indicator>
+    );
+  } else {
+    return (
+      <div>
+        <Icon {...disabledProp} width="32px" height="32px" />
+      </div>
+    );
+  }
+}
+
 const ConfigureProviderButton = styled(Button)`
   margin-top: 16px;
 `;
@@ -288,18 +365,6 @@ const ErrorCircle = styled.div<{ dark: boolean }>`
   border: 3px solid ${({ dark }) => (dark ? colors.B15 : 'white')};
 `;
 
-const IconWrapper = styled.div`
-  padding-right: 15px;
-  @media screen and (max-width: 1400px) {
-    padding-right: 5px;
-
-    svg {
-      width: 20px;
-      height: 20px;
-    }
-  }
-`;
-
 const ActionWrapper = styled.div`
   display: flex;
   align-items: center;
@@ -308,21 +373,18 @@ const ActionWrapper = styled.div`
 const LeftContainerWrapper = styled.div`
   display: flex;
   align-items: center;
-  overflow: hidden;
   gap: 16px;
-`;
-
-const ButtonWrapper = styled.div`
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
+  flex: 1 1 auto;
 `;
 
 const StyledContentWrapper = styled.div`
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding-right: 10px;
+  overflow: hidden;
+  justify-content: flex-start;
+  width: 100%;
+  flex: 1;
 `;
 
 const UnstyledButtonStyled = styled.div`
