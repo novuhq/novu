@@ -25,6 +25,9 @@ export class SubscriberResponseDto {
   email?: string;
 
   @ApiPropertyOptional()
+  tool?: string;
+
+  @ApiPropertyOptional()
   phone?: string;
 
   @ApiPropertyOptional()

@@ -22,6 +22,10 @@ export class UpdateSubscriberCommand extends EnvironmentCommand {
 
   @IsOptional()
   @IsString()
+  tool?: string;
+
+  @IsOptional()
+  @IsString()
   phone?: string;
 
   @IsString()
