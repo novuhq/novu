@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Badge, ActionIcon, useMantineTheme, Group } from '@mantine/core';
+import { ActionIcon, useMantineTheme, Group } from '@mantine/core';
 import { Link, useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { format } from 'date-fns';
@@ -13,18 +13,8 @@ import {
 } from '../../hooks';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
-import {
-  Tag,
-  Table,
-  colors,
-  Text,
-  Button,
-  IExtendedColumn,
-  withCellLoading,
-  PlusButton,
-  Container,
-} from '../../design-system';
-import { Bolt, BoltFilled, BoltOffFilled, Edit, PlusCircle } from '../../design-system/icons';
+import { Tag, Table, colors, Text, IExtendedColumn, withCellLoading, PlusButton, Container } from '../../design-system';
+import { Bolt, BoltFilled, BoltOffFilled, Edit, ProviderMissing } from '../../design-system/icons';
 import { Tooltip } from '../../design-system';
 import { ROUTES } from '../../constants/routes.enum';
 import { parseUrl } from '../../utils/routeUtils';
@@ -48,14 +38,35 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
     width: 340,
     maxWidth: 340,
     Cell: withCellLoading(({ row: { original } }) => (
-      <Tooltip label={original.name}>
-        <div>
-          <Text rows={1}>{original.name}</Text>
-          <Text rows={1} size="xs" color={colors.B40}>
-            {original.triggers ? original.triggers[0].identifier : 'Unknown'}
-          </Text>
-        </div>
-      </Tooltip>
+      <Group spacing={8}>
+        <TooltipContainer>
+          <Tooltip
+            label="Some steps are missing a provider configuration, 
+          causing some notifications to fail."
+            width={300}
+            multiline
+            disabled={original.activeIntegrationStatus?.isActive}
+            position="top"
+          >
+            <div>
+              {original.activeIntegrationStatus?.isActive ? (
+                <Bolt color={colors.B40} width="24px" height="24px" />
+              ) : (
+                <ProviderMissing width="24px" height="24px" />
+              )}
+            </div>
+          </Tooltip>
+        </TooltipContainer>
+
+        <Tooltip label={original.name}>
+          <div>
+            <Text rows={1}>{original.name}</Text>
+            <Text rows={1} size="xs" color={colors.B40}>
+              {original.triggers ? original.triggers[0].identifier : 'Unknown'}
+            </Text>
+          </div>
+        </Tooltip>
+      </Group>
     )),
   },
   {
@@ -289,5 +300,20 @@ const StyledTag = styled(Tag)`
 
   span {
     max-width: 100%;
+  }
+`;
+
+const TooltipContainer = styled.div`
+  & .mantine-Tooltip-tooltip {
+    color: ${colors.error};
+    padding: 16px;
+    font-size: 14px;
+    font-weight: 400;
+    border-radius: 8px;
+    background: linear-gradient(0deg, rgba(229, 69, 69, 0.2) 0%, rgba(229, 69, 69, 0.2) 100%), #23232b !important;
+  }
+
+  & .mantine-Tooltip-arrow {
+    background: linear-gradient(0deg, rgba(229, 69, 69, 0.2) 0%, rgba(229, 69, 69, 0.2) 100%), #23232b !important;
   }
 `;

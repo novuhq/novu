@@ -75,6 +75,7 @@ export { PushFilled } from './general/PushFilled';
 export { BoltFilled } from './general/BoltFilled';
 export { BoltOffFilled } from './general/BoltOffFilled';
 export { Question } from './general/Question';
+export { ProviderMissing } from './general/ProviderMissing';
 
 export { Copy } from './actions/Copy';
 export { Close } from './actions/Close';
