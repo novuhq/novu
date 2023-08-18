@@ -1,4 +1,5 @@
 import { ApiService, IUserPreferenceSettings } from '@novu/client';
+import { WebSocketEventEnum } from '@novu/shared';
 import io from 'socket.io-client';
 
 import {
@@ -515,7 +516,7 @@ describe('headless.service', () => {
       const notificationsListener = jest.fn();
       const mockedSocket = {
         on: jest.fn((type, callback) => {
-          if (type === 'notification_received') {
+          if (type === WebSocketEventEnum.RECEIVED) {
             callback({ message: mockedMessage });
           }
         }),
@@ -538,7 +539,7 @@ describe('headless.service', () => {
       // check results
       expect(mockedSocket.on).toHaveBeenNthCalledWith(
         1,
-        'notification_received',
+        WebSocketEventEnum.RECEIVED,
         expect.any(Function)
       );
       expect(messageListener).toHaveBeenCalledWith(mockedMessage);
@@ -586,7 +587,7 @@ describe('headless.service', () => {
       });
       unsubscribe();
 
-      expect(mockedSocket.off).toHaveBeenCalledWith('unseen_count_changed');
+      expect(mockedSocket.off).toHaveBeenCalledWith(WebSocketEventEnum.UNSEEN);
     });
   });
 
@@ -600,7 +601,7 @@ describe('headless.service', () => {
       const notificationsListener = jest.fn();
       const mockedSocket = {
         on: jest.fn((type, callback) => {
-          if (type === 'unseen_count_changed') {
+          if (type === WebSocketEventEnum.UNSEEN) {
             callback(mockedUnseenCount);
           }
         }),
@@ -628,7 +629,7 @@ describe('headless.service', () => {
       // check results
       expect(mockedSocket.on).toHaveBeenNthCalledWith(
         1,
-        'unseen_count_changed',
+        WebSocketEventEnum.UNSEEN,
         expect.any(Function)
       );
       expect(listener).toHaveBeenCalledWith(mockedUnseenCount.unseenCount);
@@ -682,7 +683,7 @@ describe('headless.service', () => {
       });
       unsubscribe();
 
-      expect(mockedSocket.off).toHaveBeenCalledWith('unseen_count_changed');
+      expect(mockedSocket.off).toHaveBeenCalledWith(WebSocketEventEnum.UNSEEN);
     });
   });
 
@@ -696,7 +697,7 @@ describe('headless.service', () => {
       const notificationsListener = jest.fn();
       const mockedSocket = {
         on: jest.fn((type, callback) => {
-          if (type === 'unread_count_changed') {
+          if (type === WebSocketEventEnum.UNREAD) {
             callback(mockedUnreadCount);
           }
         }),
@@ -724,7 +725,7 @@ describe('headless.service', () => {
       // check results
       expect(mockedSocket.on).toHaveBeenNthCalledWith(
         1,
-        'unread_count_changed',
+        WebSocketEventEnum.UNREAD,
         expect.any(Function)
       );
       expect(listener).toHaveBeenCalledWith(mockedUnreadCount.unreadCount);
@@ -778,7 +779,7 @@ describe('headless.service', () => {
       });
       unsubscribe();
 
-      expect(mockedSocket.off).toHaveBeenCalledWith('unread_count_changed');
+      expect(mockedSocket.off).toHaveBeenCalledWith(WebSocketEventEnum.UNREAD);
     });
   });
 

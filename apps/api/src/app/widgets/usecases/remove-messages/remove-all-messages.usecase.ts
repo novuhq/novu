@@ -8,7 +8,7 @@ import {
   MemberRepository,
   FeedRepository,
 } from '@novu/dal';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, WebSocketEventEnum } from '@novu/shared';
 import {
   WsQueueService,
   AnalyticsService,
@@ -98,7 +98,7 @@ export class RemoveAllMessages {
   }
 
   private updateSocketCount(subscriber: SubscriberEntity, mark: string) {
-    const eventMessage = mark === MarkEnum.READ ? `unread_count_changed` : 'unseen_count_changed';
+    const eventMessage = mark === MarkEnum.READ ? WebSocketEventEnum.UNREAD : WebSocketEventEnum.UNSEEN;
 
     this.wsQueueService.bullMqService.add(
       'sendMessage',

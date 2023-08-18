@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import { MessageRepository } from '@novu/dal';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, WebSocketEventEnum } from '@novu/shared';
 import { BullMqService } from '@novu/application-generic';
 
 import { ExternalServicesRouteCommand } from './external-services-route.command';
@@ -15,13 +15,13 @@ export class ExternalServicesRoute {
     this.bullMqService = new BullMqService();
   }
   public async execute(command: ExternalServicesRouteCommand) {
-    if (command.event === 'unseen_count_changed') {
+    if (command.event === WebSocketEventEnum.UNSEEN) {
       await this.sendUnseenCountChange(command);
 
       return;
     }
 
-    if (command.event === 'unread_count_changed') {
+    if (command.event === WebSocketEventEnum.UNREAD) {
       await this.sendUnreadCountChange(command);
 
       return;
