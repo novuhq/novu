@@ -16,5 +16,6 @@
     "source.fixAll": true
   },
   "cSpell.words": ["mantine"],
-  "vsicons.presets.nestjs": true
+  "vsicons.presets.nestjs": true,
+  "jest.rootPath": "./packages/nest"
 }

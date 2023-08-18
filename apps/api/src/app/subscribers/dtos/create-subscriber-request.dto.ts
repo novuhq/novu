@@ -22,6 +22,10 @@ export class CreateSubscriberRequestDto {
   @IsDefined()
   subscriberId: string;
 
+  @IsString()
+  @IsOptional()
+  tool: string;
+
   @ApiPropertyOptional()
   @IsEmail()
   @IsOptional()
