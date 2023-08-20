@@ -111,6 +111,8 @@ export class BullMqService {
       },
     };
 
+    Logger.log(bullMqBaseOptions.connection, 'BullMqBaseOptions', LOG_CONTEXT);
+
     return bullMqBaseOptions;
   }
 
@@ -160,6 +162,12 @@ export class BullMqService {
 
     const bullMqBaseOptions = this.getQueueBaseOptions();
     const { concurrency, connection, lockDuration, settings } = workerOptions;
+
+    Logger.log(
+      connection,
+      'Connection options from worker options during connect',
+      LOG_CONTEXT
+    );
 
     const config = {
       connection: {
