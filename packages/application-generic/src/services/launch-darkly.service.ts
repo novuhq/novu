@@ -42,8 +42,8 @@ export class LaunchDarklyService implements IFeatureFlagsService {
       );
     } catch (error) {
       Logger.error(
-        'Launch Darkly SDK has failed when initialized',
         error,
+        'Launch Darkly SDK has failed when initialized',
         LOG_CONTEXT
       );
       throw error;
@@ -98,8 +98,8 @@ export class LaunchDarklyService implements IFeatureFlagsService {
         );
       } catch (error) {
         Logger.error(
-          'Launch Darkly SDK has failed when shut down',
           error,
+          'Launch Darkly SDK has failed when shut down',
           LOG_CONTEXT
         );
         throw error;

@@ -7,6 +7,7 @@ import {
   LayoutDescription,
   LayoutId,
   LayoutName,
+  LayoutIdentifier,
   UserId,
 } from '../types';
 
@@ -25,6 +26,9 @@ export class LayoutDto {
 
   @ApiProperty()
   name: LayoutName;
+
+  @ApiProperty()
+  identifier: LayoutIdentifier;
 
   @ApiProperty()
   description?: LayoutDescription;

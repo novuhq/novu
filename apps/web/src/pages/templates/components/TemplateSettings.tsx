@@ -56,10 +56,8 @@ export const TemplateSettings = () => {
     <SubPageWrapper title="Workflow Settings">
       <WorkflowSettingsTabs />
       <NotificationSettingsForm trigger={trigger} />
-
-      <Group position="right">
+      <Group position="right" mt={'auto'}>
         <DeleteNotificationButton
-          mt={48}
           variant="outline"
           disabled={readonly}
           data-test-id="delete-notification-button"

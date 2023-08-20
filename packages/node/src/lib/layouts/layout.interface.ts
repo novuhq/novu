@@ -4,6 +4,7 @@ import {
   LayoutDto,
   LayoutId,
   LayoutName,
+  LayoutIdentifier,
   OrderDirectionEnum,
 } from '@novu/shared';
 
@@ -22,6 +23,7 @@ export interface ILayoutPayload {
   content: string;
   description: LayoutDescription;
   name: LayoutName;
+  identifier: LayoutIdentifier;
   variables?: ITemplateVariable[];
   isDefault?: boolean;
 }
@@ -30,6 +32,7 @@ export interface ILayoutUpdatePayload {
   content?: string;
   description?: LayoutDescription;
   name?: LayoutName;
+  identifier?: LayoutIdentifier;
   variables?: ITemplateVariable[];
   isDefault?: boolean;
 }

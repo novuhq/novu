@@ -1,8 +1,7 @@
-import { JobsOptions } from 'bullmq';
-import { IJobData } from '@novu/shared';
+import { IJobData, JobTopicNameEnum } from '@novu/shared';
 import { Logger } from '@nestjs/common';
 
-import { BullMqService } from './bull-mq.service';
+import { BullMqService, JobsOptions } from './bull-mq.service';
 
 const LOG_CONTEXT = 'QueueService';
 
@@ -10,9 +9,9 @@ export class QueueService<T = unknown> {
   public readonly bullMqService: BullMqService;
   public readonly DEFAULT_ATTEMPTS = 3;
 
-  constructor(public name = 'standard') {
+  constructor(public name = JobTopicNameEnum.STANDARD) {
     this.bullMqService = new BullMqService();
-    this.bullMqService.createQueue(name, {
+    this.bullMqService.createQueue(this.name, {
       defaultJobOptions: {
         removeOnComplete: true,
       },

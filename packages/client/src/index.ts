@@ -20,6 +20,7 @@ export interface IStoreQuery {
   seen?: boolean;
   read?: boolean;
   limit?: number;
+  payload?: Record<string, unknown>;
 }
 
 export interface ITabCountQuery {

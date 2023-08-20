@@ -26,6 +26,21 @@ export class UpdateLayoutUseCase {
     });
     const databaseEntity = await this.getLayoutUseCase.execute(getLayoutCommand);
 
+    const identifierHasChanged = command.identifier && command.identifier !== databaseEntity.identifier;
+    if (identifierHasChanged) {
+      const existingLayoutWithIdentifier = await this.layoutRepository.findOne({
+        _organizationId: command.organizationId,
+        _environmentId: command.environmentId,
+        identifier: command.identifier,
+      });
+
+      if (existingLayoutWithIdentifier) {
+        throw new ConflictException(
+          `Layout with identifier: ${command.identifier} already exists under environment ${command.environmentId}`
+        );
+      }
+    }
+
     if (typeof command.isDefault === 'boolean' && !command.isDefault && databaseEntity.isDefault) {
       throw new ConflictException(`One default layout is required`);
     }
@@ -76,6 +91,7 @@ export class UpdateLayoutUseCase {
     return {
       ...layout,
       ...(updates.name && { name: updates.name }),
+      ...(updates.identifier && { identifier: updates.identifier }),
       ...(updates.description && { description: updates.description }),
       ...(updates.content && { content: updates.content }),
       ...(updates.variables && { variables: updates.variables }),

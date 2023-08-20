@@ -45,7 +45,7 @@ import { TemplateSettings } from './pages/templates/components/TemplateSettings'
 import { UserPreference } from './pages/templates/components/UserPreference';
 import { TestWorkflowPage } from './pages/templates/components/TestWorkflowPage';
 import { SnippetPage } from './pages/templates/components/SnippetPage';
-import { TemplateEditor } from './pages/templates/components/TemplateEditor';
+import { ChannelStepEditor } from './pages/templates/components/ChannelStepEditor';
 import { ProvidersPage } from './pages/templates/components/ProvidersPage';
 import { InAppSuccess } from './pages/quick-start/steps/InAppSuccess';
 import { IntegrationsListPage } from './pages/integrations/IntegrationsListPage';
@@ -200,7 +200,7 @@ function App() {
                     <Route path="test-workflow" element={<TestWorkflowPage />} />
                     <Route path="snippet" element={<SnippetPage />} />
                     <Route path="providers" element={<ProvidersPage />} />
-                    <Route path=":channel/:stepUuid" element={<TemplateEditor />} />
+                    <Route path=":channel/:stepUuid" element={<ChannelStepEditor />} />
                   </Route>
                   <Route path={ROUTES.WORKFLOWS} element={<WorkflowListPage />} />
                   <Route path={ROUTES.TENANTS} element={<TenantsPage />}>

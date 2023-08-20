@@ -17,7 +17,7 @@ import { useBasePath } from '../hooks/useBasePath';
 import { StepName } from './StepName';
 import { DeleteStepRow } from './DeleteStepRow';
 
-export const TemplateEditor = () => {
+export const ChannelStepEditor = () => {
   const { readonly } = useEnvController();
   const { channel, stepUuid = '' } = useParams<{
     channel: StepTypeEnum | undefined;
@@ -60,8 +60,7 @@ export const TemplateEditor = () => {
           width: '100%',
           borderTopLeftRadius: 7,
           borderBottomLeftRadius: 7,
-          paddingBottom: 96,
-          overflowY: 'auto',
+          paddingBottom: 24,
         }}
       >
         <TemplateInAppEditor errors={errors} control={control} index={index} />
@@ -80,8 +79,7 @@ export const TemplateEditor = () => {
           width: '100%',
           borderTopLeftRadius: 7,
           borderBottomLeftRadius: 7,
-          paddingBottom: 96,
-          overflowY: 'auto',
+          paddingBottom: 24,
         }}
       >
         <EmailMessagesCards
@@ -99,7 +97,7 @@ export const TemplateEditor = () => {
         key={index}
         color={colors.white}
         title={<StepName index={index} color={colors.B60} channel={channel} />}
-        style={{ paddingBottom: 96 }}
+        style={{ paddingBottom: 24 }}
       >
         {channel === StepTypeEnum.SMS && (
           <TemplateSMSEditor

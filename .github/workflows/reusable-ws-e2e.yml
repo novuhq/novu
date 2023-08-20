@@ -3,6 +3,17 @@ name: E2E WebSocket Tests
 # Controls when the action will run. Triggers the workflow on push or pull request
 on:
   workflow_call:
+    inputs:
+      ee:
+        description: 'use the ee version of worker'
+        required: false
+        default: false
+        type: boolean
+      submodules:
+        description: 'The flag controlling whether we want submodules to checkout'
+        required: false
+        default: false
+        type: boolean
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:

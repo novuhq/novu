@@ -1,4 +1,3 @@
-import { ChannelTypeEnum } from '../channel';
 import { CustomDataType } from '../shared';
 
 export type ExternalSubscriberId = string;
@@ -14,7 +13,6 @@ export interface ISubscriberPayload {
   avatar?: string;
   locale?: string;
   data?: SubscriberCustomData;
-  [key: string]: string | string[] | boolean | number | SubscriberCustomData | undefined;
 }
 
 export interface ISubscribersDefine extends ISubscriberPayload {

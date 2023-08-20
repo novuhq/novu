@@ -31,7 +31,7 @@ export function FooterLayout({ leftSide, rightSide }: IFooterLayoutProps) {
 
   return (
     <FooterWrapper>
-      <Grid justify={'space-between'} style={{ width: '100%' }}>
+      <Grid justify={'space-between'} style={{ width: '100%' }} m={0} mx={12}>
         <LeftCol span={4}>{leftSide} </LeftCol>
         <MiddleCol span={4}>
           <DotsNavigation selectedIndex={selectedIndex} size={2} onClick={handleOnNavigationClick} />
@@ -63,23 +63,13 @@ const RightCol = styled(Grid.Col)`
 `;
 
 const FooterWrapper = styled.div`
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  left: 0;
+  width: 100%;
   height: ${FOOTER_HEIGHT}px;
-  z-index: 100;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-direction: row;
-
-  padding: 20px 24px;
   box-shadow: inset 0 1px 0 #000000;
-
-  @media screen and (min-width: 1369px) {
-    padding: 32px 80px;
-  }
 
   background-color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B15 : colors.white)};
 
