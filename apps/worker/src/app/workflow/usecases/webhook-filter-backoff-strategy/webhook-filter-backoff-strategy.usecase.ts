@@ -27,7 +27,7 @@ export class WebhookFilterBackoffStrategy {
     } catch (anotherError) {
       Logger.error(
         anotherError,
-        'Failed to create the execution details for backoff stategy',
+        'Failed to create the execution details for backoff strategy',
         'WebhookFilterBackoffStrategy'
       );
     }
