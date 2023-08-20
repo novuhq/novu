@@ -125,7 +125,7 @@ export class UpdateNotificationTemplate {
       const contentService = new ContentService();
       const { steps } = command;
 
-      const { variables, snippetVariables } = contentService.extractMessageVariables(command.steps);
+      const { variables, reservedVariables } = contentService.extractMessageVariables(command.steps);
       updatePayload['triggers.0.variables'] = variables.map((i) => {
         return {
           name: i.name,
@@ -133,7 +133,7 @@ export class UpdateNotificationTemplate {
         };
       });
 
-      updatePayload['triggers.0.snippetVariables'] = snippetVariables.map((i) => {
+      updatePayload['triggers.0.reservedVariables'] = reservedVariables.map((i) => {
         return {
           type: i.type,
           variables: i.variables.map((variable) => {

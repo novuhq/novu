@@ -39,7 +39,7 @@ export class CreateNotificationTemplate {
     const command = blueprintCommand ?? usecaseCommand;
 
     const contentService = new ContentService();
-    const { variables, snippetVariables } = contentService.extractMessageVariables(command.steps);
+    const { variables, reservedVariables } = contentService.extractMessageVariables(command.steps);
     const subscriberVariables = contentService.extractSubscriberMessageVariables(command.steps);
 
     const triggerIdentifier = `${slugify(command.name, {
@@ -61,7 +61,7 @@ export class CreateNotificationTemplate {
           type: i.type,
         };
       }),
-      snippetVariables: snippetVariables.map((i) => {
+      reservedVariables: reservedVariables.map((i) => {
         return {
           type: i.type,
           variables: i.variables.map((variable) => {

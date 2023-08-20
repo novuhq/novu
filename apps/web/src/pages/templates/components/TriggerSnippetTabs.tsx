@@ -10,7 +10,7 @@ const NODE_JS = 'Node.js';
 const CURL = 'Curl';
 
 export function TriggerSnippetTabs({ trigger }: { trigger: INotificationTrigger }) {
-  const { subscriberVariables: triggerSubscriberVariables = [], snippetVariables: triggerSnippetVariables = [] } =
+  const { subscriberVariables: triggerSubscriberVariables = [], reservedVariables: triggerSnippetVariables = [] } =
     trigger || {};
   const isPassingSubscriberId = triggerSubscriberVariables?.find((el) => el.name === 'subscriberId');
   const subscriberVariables = isPassingSubscriberId

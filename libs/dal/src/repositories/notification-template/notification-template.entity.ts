@@ -87,7 +87,7 @@ export class NotificationTriggerEntity {
     name: string;
   }[];
 
-  snippetVariables?: {
+  reservedVariables?: {
     type: TriggerContextTypeEnum;
     variables: {
       name: string;

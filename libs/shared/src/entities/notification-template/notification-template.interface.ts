@@ -36,7 +36,7 @@ export interface INotificationTrigger {
   identifier: string;
   variables: INotificationTriggerVariable[];
   subscriberVariables?: INotificationTriggerVariable[];
-  snippetVariables?: ITriggerSnippetVariable[];
+  reservedVariables?: ITriggerReservedVariable[];
 }
 
 export enum TriggerContextTypeEnum {
@@ -44,7 +44,7 @@ export enum TriggerContextTypeEnum {
   ACTOR = 'actor',
 }
 
-export interface ITriggerSnippetVariable {
+export interface ITriggerReservedVariable {
   type: TriggerContextTypeEnum;
   variables: INotificationTriggerVariable[];
 }

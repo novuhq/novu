@@ -26,6 +26,7 @@ export class ProcessBulkTrigger {
             overrides: event.overrides || {},
             to: event.to,
             actor: event.actor,
+            tenant: event.tenant,
             transactionId: event.transactionId,
           })
         )) as unknown as TriggerEventResponseDto;

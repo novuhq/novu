@@ -3,6 +3,8 @@ import { Group, JsonInput, Text } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useMutation } from '@tanstack/react-query';
 import * as Sentry from '@sentry/react';
+import * as capitalize from 'lodash.capitalize';
+
 import { IUserEntity, INotificationTriggerVariable } from '@novu/shared';
 import { Button, colors } from '../../../design-system';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
@@ -47,7 +49,7 @@ export function TestWorkflow({ trigger }) {
     return [{ name: 'subscriberId' }, ...(trigger?.subscriberVariables || [])];
   }, [trigger]);
   const variables = useMemo(() => [...(trigger?.variables || [])], [trigger]);
-  const snippetVariables = useMemo(() => [...(trigger?.snippetVariables || [])], [trigger]);
+  const reservedVariables = useMemo(() => [...(trigger?.reservedVariables || [])], [trigger]);
 
   const overridesTrigger = '{\n\n}';
 
@@ -63,8 +65,8 @@ export function TestWorkflow({ trigger }) {
     initialValues: {
       toValue: makeToValue(subscriberVariables, currentUser),
       payloadValue: makePayloadValue(variables) === '{}' ? '{\n\n}' : makePayloadValue(variables),
-      snippetValue: snippetVariables.map((vari) => {
-        return { ...vari, variables: makePayloadValue(vari.variables) };
+      snippetValue: reservedVariables.map((variable) => {
+        return { ...variable, variables: makePayloadValue(variable.variables) };
       }),
       overridesValue: overridesTrigger,
     },
@@ -156,7 +158,7 @@ export function TestWorkflow({ trigger }) {
             formatOnBlur
             autosize
             styles={inputStyles}
-            label={`${variable.type}`}
+            label={`${capitalize(variable.type)}`}
             {...form.getInputProps(`snippetValue.${index}.variables`)}
             minRows={3}
             validationError="Invalid JSON"

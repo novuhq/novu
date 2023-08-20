@@ -11,7 +11,7 @@ import {
   TriggerReservedVariables,
   ReservedVariablesMap,
   TriggerContextTypeEnum,
-  ITriggerSnippetVariable,
+  ITriggerReservedVariable,
 } from '@novu/shared';
 import Handlebars from 'handlebars';
 import { ApiException } from '../exceptions/api.exception';
@@ -43,10 +43,10 @@ export class ContentService {
 
   extractMessageVariables(messages: INotificationTemplateStep[]): {
     variables: IMustacheVariable[];
-    snippetVariables: ITriggerSnippetVariable[];
+    reservedVariables: ITriggerReservedVariable[];
   } {
     const variables: IMustacheVariable[] = [];
-    const snippetVariables: ITriggerSnippetVariable[] = [];
+    const reservedVariables: ITriggerReservedVariable[] = [];
 
     for (const text of this.messagesTextIterator(messages)) {
       const extractedVariables = this.extractVariables(text);
@@ -57,7 +57,7 @@ export class ContentService {
 
       const contextTypes = Array.from(new Set(varArray)) as TriggerContextTypeEnum[];
       contextTypes.forEach((variable) => {
-        snippetVariables.push({ type: variable, variables: ReservedVariablesMap[variable] });
+        reservedVariables.push({ type: variable, variables: ReservedVariablesMap[variable] });
       });
       variables.push(...extractedVariables);
     }
@@ -70,7 +70,7 @@ export class ContentService {
           variables.filter((item) => !this.isSystemVariable(item.name)).map((item) => [item.name, item])
         ).values(),
       ],
-      snippetVariables,
+      reservedVariables: [...new Map(reservedVariables.map((item) => [item.type, item])).values()],
     };
   }
 

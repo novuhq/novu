@@ -47,7 +47,7 @@ const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
             },
           },
         ],
-        snippetVariables: [
+        reservedVariables: [
           {
             type: {
               type: Schema.Types.String,
