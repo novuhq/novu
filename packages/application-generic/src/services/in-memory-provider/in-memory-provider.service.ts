@@ -185,7 +185,10 @@ export class InMemoryProviderService {
 
       inMemoryProviderClient.on('error', (error) => {
         Logger.error(
-          error,
+          {
+            error,
+            provider,
+          },
           'There has been an error in the InMemory Cluster provider client',
           LOG_CONTEXT
         );
