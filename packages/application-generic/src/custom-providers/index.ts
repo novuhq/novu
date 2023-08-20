@@ -66,7 +66,6 @@ export const getIsTopicNotificationEnabled = {
 };
 
 export const inMemoryProviderService = {
-  provide: InMemoryProviderService,
   useFactory: (
     getIsInMemoryClusterModeEnabledUseCase: GetIsInMemoryClusterModeEnabled,
     provider: InMemoryProviderEnum,
@@ -78,7 +77,6 @@ export const inMemoryProviderService = {
       enableAutoPipelining
     );
   },
-  inject: [GetIsInMemoryClusterModeEnabled],
 };
 
 export const bullMqService = {
