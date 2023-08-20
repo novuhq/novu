@@ -87,7 +87,7 @@ jobs:
           cp apps/ws/src/.env.test apps/ws/dist/src/.env.test
           cd apps/ws && pnpm start:prod &
 
-       - name: Wait on Widget and WS Services
+      - name: Wait on Widget and WS Services
         run: wait-on --timeout=180000 http://localhost:1340/v1/health-check http://localhost:3500
 
       - name: Cypress install
