@@ -101,6 +101,7 @@ export class BullMqService {
         db: Number(process.env.REDIS_DB_INDEX),
         port: inMemoryProviderConfig.port,
         host: inMemoryProviderConfig.host,
+        username: inMemoryProviderConfig.username,
         password: inMemoryProviderConfig.password,
         connectTimeout: inMemoryProviderConfig.connectTimeout,
         keepAlive: inMemoryProviderConfig.ttl,
@@ -170,6 +171,14 @@ export class BullMqService {
       ...(settings && { settings }),
       metrics: { maxDataPoints: MetricsTime.ONE_MONTH },
     };
+
+    Logger.log(
+      {
+        ...bullMqBaseOptions.connection,
+        ...connection,
+      },
+      'Connection options for worker'
+    );
 
     this._worker = new WorkerClass(name, processor, {
       ...config,
