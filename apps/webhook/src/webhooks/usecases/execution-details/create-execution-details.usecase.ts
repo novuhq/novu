@@ -19,7 +19,7 @@ export class CreateExecutionDetails {
       command.channel
     );
 
-    await this.executionDetailsRepository.create(executionDetailsEntity, { safe: { w: 1 } });
+    await this.executionDetailsRepository.create(executionDetailsEntity, { w: 1 });
   }
 
   private mapWebhookEventIntoEntity(
