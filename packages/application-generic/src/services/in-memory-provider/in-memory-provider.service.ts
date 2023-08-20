@@ -294,8 +294,8 @@ export class InMemoryProviderService {
 
       inMemoryProviderClient.on('error', (error) => {
         Logger.error(
-          'There has been an error in the InMemory provider client',
           error,
+          'There has been an error in the InMemory provider client',
           LOG_CONTEXT
         );
       });
