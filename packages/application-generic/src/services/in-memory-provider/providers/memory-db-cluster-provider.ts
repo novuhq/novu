@@ -45,12 +45,12 @@ export const getMemoryDbClusterProviderConfig =
       host: process.env.MEMORY_DB_CLUSTER_SERVICE_HOST,
       port: process.env.MEMORY_DB_CLUSTER_SERVICE_PORT,
       ttl: process.env.REDIS_CLUSTER_TTL,
-      username: process.env.MEMORY_DB_CLUSTER_USERNAME,
-      password: process.env.MEMORY_DB_CLUSTER_PASSWORD,
-      connectTimeout: process.env.REDIS_CLUSTER_CONNECTION_TIMEOUT,
-      keepAlive: process.env.REDIS_CLUSTER_KEEP_ALIVE,
-      family: process.env.REDIS_CLUSTER_FAMILY,
-      keyPrefix: process.env.REDIS_CLUSTER_KEY_PREFIX,
+      username: process.env.MEMORY_DB_CLUSTER_SERVICE_USERNAME,
+      password: process.env.MEMORY_DB_CLUSTER_SERVICE_PASSWORD,
+      connectTimeout: process.env.REDIS_CLUSTER_SERVICE_CONNECTION_TIMEOUT,
+      keepAlive: process.env.REDIS_CLUSTER_SERVICE_KEEP_ALIVE,
+      family: process.env.REDIS_CLUSTER_SERVICE_FAMILY,
+      keyPrefix: process.env.REDIS_CLUSTER_SERVICE_KEY_PREFIX,
       tls: process.env.REDIS_CLUSTER_TLS as ConnectionOptions,
     };
 
@@ -91,7 +91,7 @@ export const getMemoryDbClusterProviderConfig =
 export const getMemoryDbCluster = (
   enableAutoPipelining?: boolean
 ): Cluster | undefined => {
-  const { instances, password } = getMemoryDbClusterProviderConfig();
+  const { instances, password, username } = getMemoryDbClusterProviderConfig();
 
   const options: ClusterOptions = {
     dnsLookup: (address, callback) => callback(null, address),
@@ -102,6 +102,7 @@ export const getMemoryDbCluster = (
       tls: {},
       connectTimeout: 10000,
       ...(password && { password }),
+      ...(username && { username }),
     },
     scaleReads: 'slave',
     /*
