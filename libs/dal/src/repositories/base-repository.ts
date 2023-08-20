@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ClassConstructor, plainToInstance } from 'class-transformer';
 import { addMonths } from 'date-fns';
-import { Model, Types, ProjectionType, FilterQuery, UpdateQuery, QueryOptions } from 'mongoose';
+import { Model, Types, ProjectionType, FilterQuery, UpdateQuery, QueryOptions, SaveOptions } from 'mongoose';
 import { DalException } from '../shared';
 
 export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
@@ -109,13 +109,14 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
     }
   }
 
-  async create(data: FilterQuery<T_DBModel> & T_Enforcement): Promise<T_MappedEntity> {
+  async create(data: FilterQuery<T_DBModel> & T_Enforcement, options?: SaveOptions): Promise<T_MappedEntity> {
     const expireAt = this.calcExpireDate(this.MongooseModel.modelName, data);
     if (expireAt) {
       data = { ...data, expireAt };
     }
     const newEntity = new this.MongooseModel(data);
-    const saved = await newEntity.save();
+
+    const saved = await newEntity.save({ ...options });
 
     return this.mapEntity(saved);
   }
