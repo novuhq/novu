@@ -220,7 +220,7 @@ class Mailin extends events.EventEmitter {
         .then(postQueue.bind(null, connection))
         .then(unlinkFile.bind(null, connection))
         .catch(function (error) {
-          logger.error(connection.id + ' Unable to finish processing message!!', error);
+          logger.error(error, connection.id + ' Unable to finish processing message!!');
           logger.error(error);
           throw error;
         });

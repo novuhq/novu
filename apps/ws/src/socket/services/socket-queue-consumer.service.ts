@@ -26,7 +26,7 @@ export class SocketQueueConsumerService {
         );
       } catch (e) {
         // eslint-disable-next-line no-console
-        Logger.error('Unexpected exception occurred while handling external services route ', e, this.LOG_CONTEXT);
+        Logger.error(e, 'Unexpected exception occurred while handling external services route ', this.LOG_CONTEXT);
 
         throw e;
       }

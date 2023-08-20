@@ -25,7 +25,11 @@ export class WebhookFilterBackoffStrategy {
         })
       );
     } catch (anotherError) {
-      Logger.error('Failed to create the execution details for backoff stategy', anotherError);
+      Logger.error(
+        anotherError,
+        'Failed to create the execution details for backoff strategy',
+        'WebhookFilterBackoffStrategy'
+      );
     }
 
     return Math.round(Math.random() * Math.pow(2, attemptsMade) * 1000);
