@@ -32,6 +32,7 @@ export interface IRedisProviderConfig {
   keepAlive: number;
   keyPrefix: string;
   password?: string;
+  username?: string;
   port?: number;
   tls?: ConnectionOptions;
   ttl: number;
