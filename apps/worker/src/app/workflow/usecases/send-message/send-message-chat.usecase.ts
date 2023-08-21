@@ -131,7 +131,7 @@ export class SendMessageChat extends SendMessageBase {
          * Do nothing, one chat channel failed, perhaps another one succeeds
          * The failed message has been created
          */
-        Logger.error(`Sending chat message to the chat channel ${channel.providerId} failed`, e, LOG_CONTEXT);
+        Logger.error(e, `Sending chat message to the chat channel ${channel.providerId} failed`, LOG_CONTEXT);
       }
     }
 
