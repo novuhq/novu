@@ -74,7 +74,7 @@ export class MetricQueueService extends QueueService<Record<string, never>> {
 
         return undefined;
       })
-      .catch((error) => Logger.error('Metric Job Exists function errored', error, LOG_CONTEXT));
+      .catch((error) => Logger.error(error, 'Metric Job Exists function errored', LOG_CONTEXT));
   }
 
   private getWorkerOptions(): WorkerOptions {
