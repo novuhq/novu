@@ -67,6 +67,7 @@ jobs:
           projects: '@novu/web,@novu/api,@novu/worker'
 
       - uses: ./.github/actions/start-localstack
+      - uses: ./.github/actions/setup-redis-cluster
 
       - uses: ./.github/actions/run-backend
         with:
