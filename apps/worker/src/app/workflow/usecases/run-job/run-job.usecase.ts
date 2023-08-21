@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
@@ -30,12 +30,16 @@ export class RunJob {
     const job = await this.jobRepository.findById(command.jobId);
     if (!job) throw new PlatformException(`Job with id ${command.jobId} not found`);
 
-    this.logger?.assign({
-      transactionId: job.transactionId,
-      environmentId: job._environmentId,
-      organizationId: job._organizationId,
-      jobId: job._id,
-    });
+    try {
+      this.logger?.assign({
+        transactionId: job.transactionId,
+        environmentId: job._environmentId,
+        organizationId: job._organizationId,
+        jobId: job._id,
+      });
+    } catch (e) {
+      Logger.error(e, 'RunJob');
+    }
 
     const canceled = await this.delayedEventIsCanceled(job);
     if (canceled) {

@@ -66,9 +66,6 @@ const useStyles = createStyles((theme) => ({
     padding: '15px',
     textAlign: 'center',
   },
-  bottom: {
-    height: '30px',
-  },
 }));
 
 export const PreviewWeb = ({
@@ -163,7 +160,6 @@ export const PreviewWeb = ({
           </div>
         </When>
       </div>
-      <div className={classes.bottom}></div>
     </>
   );
 };

@@ -15,7 +15,6 @@ import { Label } from '../../../design-system/typography/label';
 import { NavButton } from '../components/NavButton';
 import useStyles from '../components/OnboardingSteps.styles';
 import { getStartedSteps, OnBoardingAnalyticsEnum } from '../consts';
-import { HeaderSecondaryTitle, HeaderTitle } from '../components/layout/HeaderLayout';
 
 export function DigestPreview() {
   const segment = useSegment();
@@ -26,12 +25,6 @@ export function DigestPreview() {
 
   return (
     <GetStartedLayout
-      header={
-        <>
-          <HeaderTitle>Set-up steps to get started</HeaderTitle>
-          <HeaderSecondaryTitle>Quick Start Guide</HeaderSecondaryTitle>
-        </>
-      }
       footer={{
         leftSide: <FooterLeftSide />,
         rightSide: <FooterRightSide />,
@@ -103,7 +96,7 @@ const DigestDemoFlowStyled = styled(DigestDemoFlow)`
 
 const ButtonsHolder = styled.div`
   display: flex;
-  gap: 40px;
+  gap: 20px;
 `;
 
 const DemoContainer = styled.div`

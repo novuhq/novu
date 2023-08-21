@@ -13,10 +13,6 @@ runs:
   using: composite
 
   steps:
-    - name: Install wait-on plugin
-      shell: bash
-      run: npm i -g wait-on
-
     - name: Build worker
       shell: bash
       run: CI='' pnpm build:worker

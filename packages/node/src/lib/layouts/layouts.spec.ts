@@ -12,6 +12,7 @@ jest.mock('axios');
 
 const layoutId = 'layoutId';
 const name = 'layout-name';
+const identifier = 'layout-identifier';
 const description = 'layout-description';
 const content =
   '<html><body><div>Hello {{organizationName}} {{{body}}}</div></body></html>';
@@ -32,6 +33,7 @@ const layoutDto = {
   _creatorId: 'user-id',
   channel: 'email',
   name,
+  identifier,
   description,
   contentType: 'customHtml',
   isDefault,
@@ -67,6 +69,7 @@ describe('Novu Node.js package - Layouts class', () => {
 
     const result = await novu.layouts.create({
       name,
+      identifier,
       description,
       content,
       variables,
@@ -76,6 +79,7 @@ describe('Novu Node.js package - Layouts class', () => {
     expect(mockedAxios.post).toHaveBeenCalled();
     expect(mockedAxios.post).toHaveBeenCalledWith('/layouts', {
       name,
+      identifier,
       description,
       content,
       variables,

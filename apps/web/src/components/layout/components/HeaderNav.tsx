@@ -165,6 +165,7 @@ export function HeaderNav({ isIntercomOpened }: Props) {
         position: 'sticky',
         top: 0,
         borderBottom: 'none',
+        zIndex: 199,
       }}
     >
       <Container

@@ -1,13 +1,11 @@
 import { Module } from '@nestjs/common';
-import { TerminusModule } from '@nestjs/terminus';
 import { DalServiceHealthIndicator, WsQueueService, WsQueueServiceHealthIndicator } from '@novu/application-generic';
-
 import { HealthController } from './health.controller';
-
 import { SharedModule } from '../shared/shared.module';
+import { TerminusModule } from '@nestjs/terminus';
 
 @Module({
-  imports: [SharedModule, TerminusModule],
+  imports: [TerminusModule, SharedModule],
   controllers: [HealthController],
   providers: [DalServiceHealthIndicator, WsQueueServiceHealthIndicator, WsQueueService],
 })
