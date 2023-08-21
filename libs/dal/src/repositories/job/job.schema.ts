@@ -20,6 +20,9 @@ const jobSchema = new Schema<JobDBModel>(
     overrides: {
       type: Schema.Types.Mixed,
     },
+    tenant: {
+      type: Schema.Types.Mixed,
+    },
     step: {
       type: Schema.Types.Mixed,
     },
@@ -115,13 +118,6 @@ const jobSchema = new Schema<JobDBModel>(
     _actorId: {
       type: Schema.Types.ObjectId,
       ref: 'Subscriber',
-    },
-    _tenantId: {
-      type: Schema.Types.ObjectId,
-      ref: 'Tenant',
-    },
-    tenantIdentifier: {
-      type: Schema.Types.String,
     },
     expireAt: Schema.Types.Date,
   },

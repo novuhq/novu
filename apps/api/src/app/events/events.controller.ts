@@ -190,10 +190,6 @@ export class EventsController {
   private mapTenant(tenant?: TriggerTenantContext | null): ITenantDefine | null {
     if (!tenant) return null;
 
-    if (typeof tenant === 'string') {
-      return { identifier: tenant };
-    }
-
-    return tenant;
+    return this.parseEventRequest.mapTenant(tenant);
   }
 }

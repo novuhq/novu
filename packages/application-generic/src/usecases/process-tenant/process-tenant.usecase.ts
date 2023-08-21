@@ -22,21 +22,27 @@ export class ProcessTenant {
   ): Promise<TenantEntity | undefined> {
     const { environmentId, organizationId, userId, tenant } = command;
 
-    const subscriberEntity = await this.getSubscriber(
-      environmentId,
-      organizationId,
-      userId,
-      tenant
-    );
+    let tenantEntity;
 
-    if (subscriberEntity === null) {
+    try {
+      tenantEntity = await this.getTenant(
+        environmentId,
+        organizationId,
+        userId,
+        tenant
+      );
+    } catch (e) {
+      tenantEntity = null;
+    }
+
+    if (tenantEntity === null) {
       return undefined;
     }
 
-    return subscriberEntity;
+    return tenantEntity;
   }
 
-  private async getSubscriber(
+  private async getTenant(
     environmentId: string,
     organizationId: string,
     userId: string,
@@ -47,19 +53,19 @@ export class ProcessTenant {
       identifier: tenantPayload.identifier,
     });
 
-    if (tenant && !this.tenantNeedUpdate(tenant, tenantPayload)) {
-      return tenant;
-    }
+    if (tenant) {
+      if (!this.tenantNeedUpdate(tenant, tenantPayload)) {
+        return tenant;
+      }
 
-    if (tenant && this.tenantNeedUpdate(tenant, tenantPayload)) {
       return await this.updateTenantUsecase.execute(
         UpdateTenantCommand.create({
           environmentId,
           organizationId,
           userId,
           identifier: tenantPayload.identifier,
-          name: tenantPayload.name,
-          data: tenantPayload.data,
+          name: tenantPayload?.name,
+          data: tenantPayload?.data,
           tenant,
         })
       );
@@ -77,15 +83,14 @@ export class ProcessTenant {
     environmentId: string,
     organizationId: string,
     userId: string,
-    tenantPayload
-    // TODO: Getting rid of this null would be amazing
+    tenantPayload: ITenantDefine
   ): Promise<TenantEntity> {
     return await this.createTenantUsecase.execute(
       CreateTenantCommand.create({
         environmentId,
         organizationId,
         userId,
-        identifier: tenantPayload?.identifier,
+        identifier: tenantPayload.identifier,
         name: tenantPayload?.name,
         data: tenantPayload?.data,
       })
@@ -104,6 +109,7 @@ export class ProcessTenant {
       identifier,
     });
   }
+
   private tenantNeedUpdate(
     tenant: TenantEntity,
     tenantPayload: Partial<TenantEntity>

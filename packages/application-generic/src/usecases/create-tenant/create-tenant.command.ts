@@ -8,8 +8,8 @@ export class CreateTenantCommand extends EnvironmentWithUserCommand {
   identifier: string;
 
   @IsString()
-  @IsOptional()
-  name?: string;
+  @IsNotEmpty()
+  name: string;
 
   @IsOptional()
   data?: TenantCustomData;

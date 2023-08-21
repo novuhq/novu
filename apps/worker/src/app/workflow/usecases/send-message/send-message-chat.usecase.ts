@@ -7,6 +7,7 @@ import {
   MessageEntity,
   IntegrationEntity,
   IChannelSettings,
+  TenantRepository,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -41,6 +42,7 @@ export class SendMessageChat extends SendMessageBase {
   constructor(
     protected subscriberRepository: SubscriberRepository,
     protected messageRepository: MessageRepository,
+    protected tenantRepository: TenantRepository,
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
@@ -52,6 +54,7 @@ export class SendMessageChat extends SendMessageBase {
       createLogUsecase,
       createExecutionDetails,
       subscriberRepository,
+      tenantRepository,
       selectIntegration,
       getNovuProviderCredentials
     );
@@ -71,6 +74,8 @@ export class SendMessageChat extends SendMessageBase {
     const chatChannel: NotificationStepEntity = command.step;
     if (!chatChannel?.template) throw new PlatformException('Chat channel template not found');
 
+    const tenant = await this.handleTenantExecution(command.job);
+
     let content = '';
     const data = {
       subscriber: subscriber,
@@ -79,6 +84,7 @@ export class SendMessageChat extends SendMessageBase {
         events: command.events,
         total_count: command.events?.length,
       },
+      ...(tenant ? { tenant: { name: tenant.name, ...tenant.data } } : {}),
       ...command.payload,
     };
 

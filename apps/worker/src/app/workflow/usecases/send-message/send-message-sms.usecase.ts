@@ -6,7 +6,6 @@ import {
   SubscriberRepository,
   MessageEntity,
   IntegrationEntity,
-  TenantEntity,
   TenantRepository,
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
@@ -46,6 +45,7 @@ export class SendMessageSms extends SendMessageBase {
       createLogUsecase,
       createExecutionDetails,
       subscriberRepository,
+      tenantRepository,
       selectIntegration,
       getNovuProviderCredentials
     );
@@ -73,36 +73,10 @@ export class SendMessageSms extends SendMessageBase {
       message: 'Sending SMS',
     });
 
-    const tenantIdentifier = command.job.tenantIdentifier;
-    let tenant: TenantEntity | null = null;
-
-    if (tenantIdentifier) {
-      tenant = await this.tenantRepository.findOne({
-        _environmentId: command.environmentId,
-        identifier: tenantIdentifier,
-      });
-      if (!tenant) {
-        await this.createExecutionDetails.execute(
-          CreateExecutionDetailsCommand.create({
-            ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-            detail: DetailEnum.TENANT_NOT_FOUND,
-            source: ExecutionDetailsSourceEnum.INTERNAL,
-            status: ExecutionDetailsStatusEnum.FAILED,
-            isTest: false,
-            isRetry: false,
-            raw: JSON.stringify({
-              tenantIdentifier: tenantIdentifier,
-            }),
-          })
-        );
-
-        return;
-      }
-      await this.sendSelectedTenantExecution(command.job, tenant);
-    }
-
     const smsChannel: NotificationStepEntity = command.step;
     if (!smsChannel.template) throw new PlatformException(`Unexpected error: SMS template is missing`);
+
+    const tenant = await this.handleTenantExecution(command.job);
 
     const payload = {
       subscriber: subscriber,

@@ -8,7 +8,6 @@ import {
   MessageEntity,
   LayoutRepository,
   TenantRepository,
-  TenantEntity,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -58,6 +57,7 @@ export class SendMessageEmail extends SendMessageBase {
       createLogUsecase,
       createExecutionDetails,
       subscriberRepository,
+      tenantRepository,
       selectIntegration,
       getNovuProviderCredentials
     );
@@ -103,33 +103,6 @@ export class SendMessageEmail extends SendMessageBase {
     if (!emailChannel.template) throw new PlatformException('Email channel template not found');
 
     const email = command.payload.email || subscriber.email;
-    const tenantIdentifier = command.job.tenantIdentifier;
-
-    let tenant: TenantEntity | null = null;
-    if (tenantIdentifier) {
-      tenant = await this.tenantRepository.findOne({
-        _environmentId: command.environmentId,
-        identifier: tenantIdentifier,
-      });
-      if (!tenant) {
-        await this.createExecutionDetails.execute(
-          CreateExecutionDetailsCommand.create({
-            ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-            detail: DetailEnum.TENANT_NOT_FOUND,
-            source: ExecutionDetailsSourceEnum.INTERNAL,
-            status: ExecutionDetailsStatusEnum.FAILED,
-            isTest: false,
-            isRetry: false,
-            raw: JSON.stringify({
-              tenantIdentifier: tenantIdentifier,
-            }),
-          })
-        );
-
-        return;
-      }
-      await this.sendSelectedTenantExecution(command.job, tenant);
-    }
 
     Sentry.addBreadcrumb({
       message: 'Sending Email',
@@ -157,15 +130,17 @@ export class SendMessageEmail extends SendMessageBase {
       return;
     }
 
-    await this.sendSelectedIntegrationExecution(command.job, integration);
+    const [tenant, overrideLayoutId] = await Promise.all([
+      this.handleTenantExecution(command.job),
+      this.getOverrideLayoutId(command),
+      this.sendSelectedIntegrationExecution(command.job, integration),
+    ]);
 
     const overrides: Record<string, any> = Object.assign(
       {},
       command.overrides.email || {},
       command.overrides[integration?.providerId] || {}
     );
-
-    const overrideLayoutId = await this.getOverrideLayoutId(command);
 
     let html;
     let subject = '';

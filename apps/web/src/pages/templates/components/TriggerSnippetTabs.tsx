@@ -29,11 +29,11 @@ export function TriggerSnippetTabs({ trigger }: { trigger: INotificationTrigger 
   const prismTabs = [
     {
       value: NODE_JS,
-      content: getNodeTriggerSnippet(trigger.identifier, toValue, payloadValue, {}, tenantValue),
+      content: getNodeTriggerSnippet(trigger.identifier, toValue, payloadValue, undefined, tenantValue),
     },
     {
       value: CURL,
-      content: getCurlTriggerSnippet(trigger.identifier, toValue, payloadValue, {}, tenantValue),
+      content: getCurlTriggerSnippet(trigger.identifier, toValue, payloadValue, undefined, tenantValue),
     },
   ];
 

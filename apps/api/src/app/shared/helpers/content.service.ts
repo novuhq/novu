@@ -50,15 +50,9 @@ export class ContentService {
 
     for (const text of this.messagesTextIterator(messages)) {
       const extractedVariables = this.extractVariables(text);
+      const extractedReservedVariables = this.extractReservedVariables(extractedVariables);
 
-      const varArray = extractedVariables
-        .filter((item) => this.isReservedVariable(item.name))
-        .map((item) => this.getVariableNamePrefix(item.name));
-
-      const contextTypes = Array.from(new Set(varArray)) as TriggerContextTypeEnum[];
-      contextTypes.forEach((variable) => {
-        reservedVariables.push({ type: variable, variables: ReservedVariablesMap[variable] });
-      });
+      reservedVariables.push(...extractedReservedVariables);
       variables.push(...extractedVariables);
     }
 
@@ -106,6 +100,22 @@ export class ContentService {
     return variables;
   }
 
+  extractReservedVariables(variables: IMustacheVariable[]): ITriggerReservedVariable[] {
+    const reservedVariables: ITriggerReservedVariable[] = [];
+
+    const reservedVariableTypes = variables
+      .filter((item) => this.isReservedVariable(item.name))
+      .map((item) => this.getVariableNamePrefix(item.name));
+
+    const triggerContextTypes = Array.from(new Set(reservedVariableTypes)) as TriggerContextTypeEnum[];
+
+    triggerContextTypes.forEach((variable) => {
+      reservedVariables.push({ type: variable, variables: ReservedVariablesMap[variable] });
+    });
+
+    return reservedVariables;
+  }
+
   extractSubscriberMessageVariables(messages: INotificationTemplateStep[]): string[] {
     const variables: string[] = [];
 
@@ -151,7 +161,7 @@ export class ContentService {
   }
 
   private isSystemVariable(variableName: string): boolean {
-    return TemplateSystemVariables.includes(variableName.includes('.') ? variableName.split('.')[0] : variableName);
+    return TemplateSystemVariables.includes(this.getVariableNamePrefix(variableName));
   }
 
   private getVariableNamePrefix(variableName: string): string {

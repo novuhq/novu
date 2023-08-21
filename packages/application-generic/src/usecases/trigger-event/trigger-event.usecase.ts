@@ -107,9 +107,8 @@ export class TriggerEvent {
       template
     );
 
-    let tenantProcessed;
     if (tenant) {
-      tenantProcessed = await this.processTenant.execute(
+      const tenantProcessed = await this.processTenant.execute(
         ProcessTenantCommand.create({
           environmentId,
           organizationId,
@@ -117,6 +116,17 @@ export class TriggerEvent {
           tenant,
         })
       );
+
+      if (!tenantProcessed) {
+        Logger.warn(
+          `Tenant with identifier ${JSON.stringify(
+            tenant.identifier
+          )} of organization ${command.organizationId} in transaction ${
+            command.transactionId
+          } could not be processed.`,
+          LOG_CONTEXT
+        );
+      }
     }
 
     // We might have a single actor for every trigger, so we only need to check for it once
@@ -170,7 +180,7 @@ export class TriggerEvent {
             transactionId: command.transactionId,
             userId,
             ...(actor && actorProcessed && { actor: actorProcessed }),
-            ...(tenant && tenantProcessed && { tenant: tenantProcessed }),
+            tenant,
           });
 
         const notificationJobs = await this.createNotificationJobs.execute(

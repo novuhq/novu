@@ -1,4 +1,11 @@
-import { IntegrationEntity, JobEntity, MessageRepository, SubscriberRepository, TenantEntity } from '@novu/dal';
+import {
+  IntegrationEntity,
+  JobEntity,
+  TenantRepository,
+  MessageRepository,
+  SubscriberRepository,
+  TenantEntity,
+} from '@novu/dal';
 import {
   ChannelTypeEnum,
   EmailProviderIdEnum,
@@ -27,6 +34,7 @@ export abstract class SendMessageBase extends SendMessageType {
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     protected subscriberRepository: SubscriberRepository,
+    protected tenantRepository: TenantRepository,
     protected selectIntegration: SelectIntegration,
     protected getNovuProviderCredentials: GetNovuProviderCredentials
   ) {
@@ -126,10 +134,44 @@ export abstract class SendMessageBase extends SendMessageType {
           identifier: tenant?.identifier,
           name: tenant?.name,
           data: tenant?.data,
+          createdAt: tenant?.createdAt,
+          updatedAt: tenant?.updatedAt,
           _environmentId: tenant?._environmentId,
           _id: tenant?._id,
         }),
       })
     );
+  }
+
+  protected async handleTenantExecution(job: JobEntity): Promise<TenantEntity | null> {
+    const tenantIdentifier = job.tenant?.identifier;
+
+    let tenant: TenantEntity | null = null;
+    if (tenantIdentifier) {
+      tenant = await this.tenantRepository.findOne({
+        _environmentId: job._environmentId,
+        identifier: tenantIdentifier,
+      });
+      if (!tenant) {
+        await this.createExecutionDetails.execute(
+          CreateExecutionDetailsCommand.create({
+            ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+            detail: DetailEnum.TENANT_NOT_FOUND,
+            source: ExecutionDetailsSourceEnum.INTERNAL,
+            status: ExecutionDetailsStatusEnum.FAILED,
+            isTest: false,
+            isRetry: false,
+            raw: JSON.stringify({
+              tenantIdentifier: tenantIdentifier,
+            }),
+          })
+        );
+
+        return null;
+      }
+      await this.sendSelectedTenantExecution(job, tenant);
+    }
+
+    return tenant;
   }
 }
