@@ -1,6 +1,6 @@
 name: Run Backend
 
-description: Starts and waits for the API and Worker instance 
+description: Starts and waits for the API and Worker instance
 
 inputs:
   launch_darkly_sdk_key:

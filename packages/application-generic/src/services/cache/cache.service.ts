@@ -144,8 +144,8 @@ export class CacheService implements ICacheService {
       await pipeline.exec();
     } catch (error) {
       Logger.error(
-        `Failed to execute pipeline action ${action} for key ${key}`,
         error,
+        `Failed to execute pipeline action ${action} for key ${key}`,
         LOG_CONTEXT
       );
       throw error;
