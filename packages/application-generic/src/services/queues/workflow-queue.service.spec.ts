@@ -21,10 +21,10 @@ describe('Workflow Queue service', () => {
   it('should be initialised properly', async () => {
     expect(workflowQueueService).toBeDefined();
     expect(Object.keys(workflowQueueService)).toEqual(
-      expect.arrayContaining(['name', 'DEFAULT_ATTEMPTS', 'instance', 'queue'])
+      expect.arrayContaining(['topic', 'DEFAULT_ATTEMPTS', 'instance', 'queue'])
     );
     expect(workflowQueueService.DEFAULT_ATTEMPTS).toEqual(3);
-    expect(workflowQueueService.name).toEqual('trigger-handler');
+    expect(workflowQueueService.topic).toEqual('trigger-handler');
     expect(await workflowQueueService.bullMqService.getRunningStatus()).toEqual(
       {
         queueIsPaused: false,
@@ -57,11 +57,12 @@ describe('Workflow Queue service', () => {
           password: undefined,
           port: 6379,
           tls: undefined,
+          username: undefined,
         },
         defaultJobOptions: {
           removeOnComplete: true,
         },
-        prefix: 'bull',
+        prefix: '{trigger-handler}',
         sharedConnection: false,
       })
     );

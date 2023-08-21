@@ -21,14 +21,17 @@ export class OldInstanceWorkflowWorkerService {
 
   public readonly DEFAULT_ATTEMPTS = 3;
   public worker: Worker;
-  public readonly name: JobTopicNameEnum;
+  public readonly topic: JobTopicNameEnum;
 
   constructor() {
-    this.name = JobTopicNameEnum.WORKFLOW;
+    this.topic = JobTopicNameEnum.WORKFLOW;
     this.instance = new OldInstanceBullMqService();
+    Logger.log(`Worker ${this.topic} instantiated`, LOG_CONTEXT);
   }
 
   public initWorker(processor: WorkerProcessor, options?: WorkerOptions): void {
+    Logger.log(`Worker ${this.topic} initialized`, LOG_CONTEXT);
+
     this.createWorker(processor, options);
   }
 
@@ -40,7 +43,15 @@ export class OldInstanceWorkflowWorkerService {
     processor: WorkerProcessor,
     options: WorkerOptions
   ): void {
-    this.worker = this.instance.createWorker(this.name, processor, options);
+    this.worker = this.instance.createWorker(this.topic, processor, options);
+  }
+
+  public async pauseWorker(): Promise<void> {
+    await this.instance.pauseWorker();
+  }
+
+  public async resumeWorker(): Promise<void> {
+    await this.instance.resumeWorker();
   }
 
   public async gracefulShutdown(): Promise<void> {

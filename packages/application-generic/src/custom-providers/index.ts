@@ -1,6 +1,5 @@
 import {
   StandardQueueServiceHealthIndicator,
-  WebSocketsQueueServiceHealthIndicator,
   WorkflowQueueServiceHealthIndicator,
 } from '../health';
 import {
@@ -66,6 +65,7 @@ export const getIsTopicNotificationEnabled = {
 };
 
 export const inMemoryProviderService = {
+  provide: InMemoryProviderService,
   useFactory: (
     getIsInMemoryClusterModeEnabledUseCase: GetIsInMemoryClusterModeEnabled,
     provider: InMemoryProviderEnum,
@@ -77,6 +77,7 @@ export const inMemoryProviderService = {
       enableAutoPipelining
     );
   },
+  inject: [GetIsInMemoryClusterModeEnabled],
 };
 
 export const bullMqService = {
@@ -157,18 +158,15 @@ export const readinessService = {
   provide: ReadinessService,
   useFactory: (
     standardQueueServiceHealthIndicator: StandardQueueServiceHealthIndicator,
-    webSocketsQueueServiceHealthIndicator: WebSocketsQueueServiceHealthIndicator,
     workflowQueueServiceHealthIndicator: WorkflowQueueServiceHealthIndicator
   ) => {
     return new ReadinessService(
       standardQueueServiceHealthIndicator,
-      webSocketsQueueServiceHealthIndicator,
       workflowQueueServiceHealthIndicator
     );
   },
   inject: [
     StandardQueueServiceHealthIndicator,
-    WebSocketsQueueServiceHealthIndicator,
     WorkflowQueueServiceHealthIndicator,
   ],
 };

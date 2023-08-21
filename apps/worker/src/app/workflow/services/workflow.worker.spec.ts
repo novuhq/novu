@@ -34,7 +34,7 @@ describe('Workflow Worker', () => {
 
   it('should be initialised properly', async () => {
     expect(workflowWorker).to.be.ok;
-    expect(workflowWorker).to.have.all.keys('DEFAULT_ATTEMPTS', 'instance', 'name', 'triggerEventUsecase', 'worker');
+    expect(workflowWorker).to.have.all.keys('DEFAULT_ATTEMPTS', 'instance', 'topic', 'triggerEventUsecase', 'worker');
     expect(await workflowWorker.bullMqService.getRunningStatus()).to.deep.equal({
       queueIsPaused: undefined,
       queueName: undefined,

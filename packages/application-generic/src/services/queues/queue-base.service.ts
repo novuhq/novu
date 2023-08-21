@@ -11,7 +11,7 @@ export class QueueBaseService {
   public readonly DEFAULT_ATTEMPTS = 3;
   public queue: Queue;
 
-  constructor(public readonly name: JobTopicNameEnum) {
+  constructor(public readonly topic: JobTopicNameEnum) {
     this.instance = new BullMqService();
   }
 
@@ -20,7 +20,7 @@ export class QueueBaseService {
   }
 
   public createQueue(): void {
-    this.queue = this.instance.createQueue(this.name, this.getQueueOptions());
+    this.queue = this.instance.createQueue(this.topic, this.getQueueOptions());
   }
 
   private getQueueOptions(): QueueOptions {

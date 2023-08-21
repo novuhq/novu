@@ -1,3 +1,5 @@
+import { JobTopicNameEnum } from '@novu/shared';
+
 import {
   BullMqService,
   QueueBaseOptions,
@@ -8,7 +10,7 @@ let bullMqService: BullMqService;
 
 describe('BullMQ Service', () => {
   describe('Non cluster mode', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       process.env.IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
       process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
 
@@ -33,7 +35,7 @@ describe('BullMQ Service', () => {
       });
 
       it('should create a queue properly with the default configuration', async () => {
-        const queueName = 'test-queue';
+        const queueName = JobTopicNameEnum.METRICS;
         const queueOptions: QueueBaseOptions = {};
         await bullMqService.createQueue(queueName, queueOptions);
 
@@ -59,7 +61,7 @@ describe('BullMQ Service', () => {
       });
 
       it('should create a queue properly with a chosen configuration', async () => {
-        const queueName = 'test-queue';
+        const queueName = JobTopicNameEnum.METRICS;
         const queueOptions: QueueBaseOptions = {
           connection: {
             connectTimeout: 10000,
@@ -93,7 +95,7 @@ describe('BullMQ Service', () => {
       });
 
       it('should create a worker properly with the default configuration', async () => {
-        const workerName = 'test-worker';
+        const workerName = JobTopicNameEnum.METRICS;
         await bullMqService.createWorker(workerName, undefined, {});
 
         expect(bullMqService.worker.name).toEqual(workerName);
@@ -118,7 +120,7 @@ describe('BullMQ Service', () => {
       });
 
       it('should create a worker properly with a chosen configuration', async () => {
-        const workerName = 'test-worker';
+        const workerName = JobTopicNameEnum.METRICS;
         const workerOptions: WorkerOptions = {
           connection: {
             connectTimeout: 10000,

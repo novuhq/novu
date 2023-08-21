@@ -21,10 +21,10 @@ describe('WebSockets Queue service', () => {
   it('should be initialised properly', async () => {
     expect(webSocketsQueueService).toBeDefined();
     expect(Object.keys(webSocketsQueueService)).toEqual(
-      expect.arrayContaining(['name', 'DEFAULT_ATTEMPTS', 'instance', 'queue'])
+      expect.arrayContaining(['topic', 'DEFAULT_ATTEMPTS', 'instance', 'queue'])
     );
     expect(webSocketsQueueService.DEFAULT_ATTEMPTS).toEqual(3);
-    expect(webSocketsQueueService.name).toEqual('ws_socket_queue');
+    expect(webSocketsQueueService.topic).toEqual('ws_socket_queue');
     expect(
       await webSocketsQueueService.bullMqService.getRunningStatus()
     ).toEqual({
@@ -57,11 +57,12 @@ describe('WebSockets Queue service', () => {
           password: undefined,
           port: 6379,
           tls: undefined,
+          username: undefined,
         },
         defaultJobOptions: {
           removeOnComplete: true,
         },
-        prefix: 'bull',
+        prefix: '{ws_socket_queue}',
         sharedConnection: false,
       })
     );

@@ -47,7 +47,7 @@ describe('Distributed Lock Service', () => {
     beforeEach(async () => {
       inMemoryProviderService = new InMemoryProviderService(
         getIsInMemoryClusterModeEnabled,
-        InMemoryProviderEnum.REDIS,
+        InMemoryProviderEnum.REDIS
       );
 
       await inMemoryProviderService.delayUntilReadiness();
@@ -303,7 +303,9 @@ describe('Distributed Lock Service', () => {
         getIsInMemoryClusterModeEnabled,
         InMemoryProviderEnum.REDIS
       );
-      expect(inMemoryProviderService.inMemoryProviderConfig.host).toEqual('');
+      expect(inMemoryProviderService.inMemoryProviderConfig.host).toEqual(
+        'localhost'
+      );
       distributedLockService = new DistributedLockService(
         inMemoryProviderService
       );

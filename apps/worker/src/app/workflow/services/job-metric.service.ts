@@ -130,17 +130,17 @@ export class JobMetricService {
             const activeCount = await queueService.bullMqService.queue.getActiveCount();
 
             if (process.env.NOVU_MANAGED_SERVICE === 'true') {
-              nr.recordMetric(`MetricQueueService/${queueService.name}/completed`, successMetric);
-              nr.recordMetric(`MetricQueueService/${queueService.name}/failed`, failMetric);
-              nr.recordMetric(`MetricQueueService/${queueService.name}/waiting`, waitCount);
-              nr.recordMetric(`MetricQueueService/${queueService.name}/delayed`, delayedCount);
-              nr.recordMetric(`MetricQueueService/${queueService.name}/active`, activeCount);
+              nr.recordMetric(`MetricQueueService/${queueService.topic}/completed`, successMetric);
+              nr.recordMetric(`MetricQueueService/${queueService.topic}/failed`, failMetric);
+              nr.recordMetric(`MetricQueueService/${queueService.topic}/waiting`, waitCount);
+              nr.recordMetric(`MetricQueueService/${queueService.topic}/delayed`, delayedCount);
+              nr.recordMetric(`MetricQueueService/${queueService.topic}/active`, activeCount);
             } else {
-              Logger.debug(`MetricQueueService/${queueService.name}/completed`, JSON.stringify(successMetric));
-              Logger.debug(`MetricQueueService/${queueService.name}/failed`, JSON.stringify(failMetric));
-              Logger.debug(`MetricQueueService/${queueService.name}/waiting`, waitCount);
-              Logger.debug(`MetricQueueService/${queueService.name}/delayed`, delayedCount);
-              Logger.debug(`MetricQueueService/${queueService.name}/active`, activeCount);
+              Logger.debug(`MetricQueueService/${queueService.topic}/completed`, JSON.stringify(successMetric));
+              Logger.debug(`MetricQueueService/${queueService.topic}/failed`, JSON.stringify(failMetric));
+              Logger.debug(`MetricQueueService/${queueService.topic}/waiting`, waitCount);
+              Logger.debug(`MetricQueueService/${queueService.topic}/delayed`, delayedCount);
+              Logger.debug(`MetricQueueService/${queueService.topic}/active`, activeCount);
             }
           }
 

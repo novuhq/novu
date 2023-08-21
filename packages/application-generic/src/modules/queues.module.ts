@@ -12,14 +12,11 @@ import {
 } from '../health';
 import { OldInstanceBullMqService } from '../services';
 import {
-  InboundParseQueueService,
-  JobMetricsQueueService,
   StandardQueueService,
   WebSocketsQueueService,
   WorkflowQueueService,
 } from '../services/queues';
 import {
-  InboundParseWorkerService,
   JobMetricsWorkerService,
   StandardWorkerService,
   WebSocketsWorkerService,

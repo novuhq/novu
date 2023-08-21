@@ -127,10 +127,10 @@ describe('Standard Worker', () => {
       'getBackoffStrategies',
       'handleLastFailedJob',
       'instance',
-      'name',
       'runJob',
       'setJobAsCompleted',
       'setJobAsFailed',
+      'topic',
       'webhookFilterBackoffStrategy',
       'worker'
     );
@@ -217,7 +217,7 @@ describe('Standard Worker', () => {
     });
 
     const jobs = await jobRepository.find({ _environmentId, _organizationId });
-    expect(jobs.length).to.eql(1);
+    expect(jobs.length).to.equal(1);
 
     expect(jobs[0].status).to.eql(JobStatusEnum.COMPLETED);
   });

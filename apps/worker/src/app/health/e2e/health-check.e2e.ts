@@ -16,6 +16,7 @@ describe('Health-check', () => {
       getIsInMemoryClusterModeEnabled,
       InMemoryProviderEnum.REDIS
     );
+    await inMemoryProviderService.delayUntilReadiness();
 
     testAgent = defaults(request(`http://localhost:${process.env.PORT}`));
   });
@@ -26,7 +27,7 @@ describe('Health-check', () => {
         body: { data },
       } = await testAgent.get('/v1/health-check');
 
-      expect(data.status).to.equal('ok');
+      expect(data?.status).to.equal('ok');
     });
   });
 });

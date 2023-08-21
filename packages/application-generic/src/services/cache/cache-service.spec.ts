@@ -97,7 +97,7 @@ describe('Cache Service - Cluster Mode', () => {
       enableAutoPipelining
     );
     await inMemoryProviderService.delayUntilReadiness();
-    expect(await inMemoryProviderService.isClusterMode()).toBe(true);
+    expect(inMemoryProviderService.isClusterMode()).toBe(true);
 
     cacheService = new CacheService(inMemoryProviderService);
     await cacheService.initialize();
