@@ -40,6 +40,7 @@ describe('ExternalServicesRoute', () => {
 
     sinon.assert.calledOnceWithExactly(wsGatewayStub.sendMessage, 'userId', 'unseen_count_changed', {
       unseenCount: 5,
+      hasMore: false,
     });
 
     messageRepositoryStub.restore();
@@ -59,6 +60,7 @@ describe('ExternalServicesRoute', () => {
 
     sinon.assert.calledOnceWithExactly(wsGatewayStub.sendMessage, 'userId', 'unread_count_changed', {
       unreadCount: 10,
+      hasMore: false,
     });
 
     messageRepositoryStub.restore();
@@ -93,6 +95,7 @@ describe('ExternalServicesRoute', () => {
     await externalServicesRoute.execute(command);
     sinon.assert.calledOnceWithExactly(wsGatewayStub.sendMessage, 'userId', 'unseen_count_changed', {
       unseenCount: 5,
+      hasMore: false,
     });
     messageRepositoryStub.restore();
 
@@ -172,6 +175,7 @@ describe('ExternalServicesRoute', () => {
     await externalServicesRoute.execute(command);
     sinon.assert.calledOnceWithExactly(wsGatewayStub.sendMessage, 'userId', 'unread_count_changed', {
       unreadCount: 5,
+      hasMore: false,
     });
     messageRepositoryStub.restore();
 
