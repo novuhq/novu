@@ -12,7 +12,13 @@ import {
   WorkerOptions,
 } from 'bullmq';
 import { Injectable, Logger } from '@nestjs/common';
-import { getRedisPrefix, IEventJobData, IJobData } from '@novu/shared';
+import {
+  getRedisPrefix,
+  IEventJobData,
+  IJobData,
+  JobTopicNameEnum,
+} from '@novu/shared';
+
 import {
   InMemoryProviderEnum,
   InMemoryProviderService,
@@ -59,7 +65,7 @@ export class BullMqService {
     );
   }
 
-  public async initialize() {
+  public async initialize(): Promise<void> {
     await this.inMemoryProviderService.delayUntilReadiness();
   }
 
@@ -111,12 +117,23 @@ export class BullMqService {
       },
     };
 
-    Logger.log(bullMqBaseOptions.connection, 'BullMqBaseOptions', LOG_CONTEXT);
-
     return bullMqBaseOptions;
   }
 
-  public createQueue(name: string, queueOptions: QueueOptions) {
+  /**
+   * To avoid going crazy not understanding why jobs are not processed in cluster mode
+   * Reference:
+   * https://github.com/taskforcesh/bullmq/issues/560
+   * https://github.com/taskforcesh/bullmq/issues/1219
+   */
+  private addPrefixToConfig(prefix: JobTopicNameEnum, config) {
+    return {
+      ...config,
+      prefix: `{${prefix}}`,
+    };
+  }
+
+  public createQueue(topic: JobTopicNameEnum, queueOptions: QueueOptions) {
     const bullMqBaseOptions: QueueBaseOptions = this.getQueueBaseOptions();
 
     const config = {
@@ -137,21 +154,19 @@ export class BullMqService {
       : require('@taskforcesh/bullmq-pro').QueuePro;
 
     Logger.log(
-      `Creating queue ${name} bullmq pro is ${
+      `Creating queue ${topic}. BullMQ pro is ${
         this.runningWithProQueue() ? 'Enabled' : 'Disabled'
       }`,
       LOG_CONTEXT
     );
 
-    this._queue = new QueueClass(name, {
-      ...config,
-    });
+    this._queue = new QueueClass(topic, this.addPrefixToConfig(topic, config));
 
     return this._queue;
   }
 
   public createWorker(
-    name: string,
+    topic: JobTopicNameEnum,
     processor?: string | Processor<any, unknown | void, string>,
     workerOptions?: WorkerOptions
   ) {
@@ -163,12 +178,6 @@ export class BullMqService {
     const bullMqBaseOptions = this.getQueueBaseOptions();
     const { concurrency, connection, lockDuration, settings } = workerOptions;
 
-    Logger.log(
-      connection,
-      'Connection options from worker options during connect',
-      LOG_CONTEXT
-    );
-
     const config = {
       connection: {
         ...bullMqBaseOptions.connection,
@@ -178,24 +187,25 @@ export class BullMqService {
       ...(lockDuration && { lockDuration }),
       ...(settings && { settings }),
       metrics: { maxDataPoints: MetricsTime.ONE_MONTH },
-    };
-
-    Logger.log(
-      {
-        ...bullMqBaseOptions.connection,
-        ...connection,
-      },
-      'Connection options for worker'
-    );
-
-    this._worker = new WorkerClass(name, processor, {
-      ...config,
       ...(BullMqService.pro
         ? {
             group: {},
           }
         : {}),
-    });
+    };
+
+    Logger.log(
+      `Creating worker ${topic}. BullMQ pro is ${
+        this.runningWithProQueue() ? 'Enabled' : 'Disabled'
+      }`,
+      LOG_CONTEXT
+    );
+
+    this._worker = new WorkerClass(
+      topic,
+      processor,
+      this.addPrefixToConfig(topic, config)
+    );
 
     return this._worker;
   }
@@ -256,13 +266,39 @@ export class BullMqService {
 
   public async pauseWorker(): Promise<void> {
     if (this._worker) {
-      await this._worker.pause();
+      Logger.log(`There is worker ${this._worker.name} to pause`, LOG_CONTEXT);
+
+      try {
+        await this._worker.pause();
+        Logger.log(`Worker ${this._worker.name} pause succeeded`, LOG_CONTEXT);
+      } catch (error) {
+        Logger.error(
+          error,
+          `Worker ${this._worker.name} pause failed`,
+          LOG_CONTEXT
+        );
+
+        throw error;
+      }
     }
   }
 
   public async resumeWorker(): Promise<void> {
     if (this._worker) {
-      await this._worker.resume();
+      Logger.log(`There is worker ${this._worker.name} to resume`, LOG_CONTEXT);
+
+      try {
+        await this._worker.resume();
+        Logger.log(`Worker ${this._worker.name} resume succeeded`, LOG_CONTEXT);
+      } catch (error) {
+        Logger.error(
+          error,
+          `Worker ${this._worker.name} resume failed`,
+          LOG_CONTEXT
+        );
+
+        throw error;
+      }
     }
   }
 }

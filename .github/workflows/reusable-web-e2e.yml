@@ -62,9 +62,6 @@ jobs:
         with:
           cypress: true
 
-      - uses: ./.github/actions/setup-redis-cluster
-      - uses: ./.github/actions/start-localstack
-
       - uses: mansagroup/nrwl-nx-action@v3
         with:
           targets: lint,build

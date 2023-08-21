@@ -18,6 +18,7 @@ export class TestingQueueService {
       defaultJobOptions: {
         removeOnComplete: true,
       },
+      prefix: `{${name}}`,
     });
 
     if (process.env.NODE_ENV === 'test' && !process.env.CI) {

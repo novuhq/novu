@@ -94,7 +94,7 @@ const USE_CASES = [
 const bullMqTokenList = {
   provide: 'BULLMQ_LIST',
   useFactory: (
-    standardQueueService: WorkflowQueueService,
+    standardQueueService: StandardQueueService,
     webSocketsQueueService: WebSocketsQueueService,
     workflowQueueService: WorkflowQueueService
   ) => {

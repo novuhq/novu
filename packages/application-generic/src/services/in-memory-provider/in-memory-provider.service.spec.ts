@@ -50,7 +50,7 @@ describe('In-memory Provider Service', () => {
       });
 
       it('should instantiate the provider properly', async () => {
-        expect(await inMemoryProviderService.isClusterMode()).toEqual(false);
+        expect(inMemoryProviderService.isClusterMode()).toEqual(false);
 
         const { inMemoryProviderClient } = inMemoryProviderService;
 
@@ -154,7 +154,7 @@ describe('In-memory Provider Service', () => {
       });
 
       it('should instantiate the provider properly', async () => {
-        expect(await inMemoryProviderService.isClusterMode()).toEqual(true);
+        expect(inMemoryProviderService.isClusterMode()).toEqual(true);
 
         const { inMemoryProviderClient } = inMemoryProviderService;
 

@@ -21,10 +21,10 @@ describe('Standard Queue service', () => {
   it('should be initialised properly', async () => {
     expect(standardQueueService).toBeDefined();
     expect(Object.keys(standardQueueService)).toEqual(
-      expect.arrayContaining(['name', 'DEFAULT_ATTEMPTS', 'instance', 'queue'])
+      expect.arrayContaining(['topic', 'DEFAULT_ATTEMPTS', 'instance', 'queue'])
     );
     expect(standardQueueService.DEFAULT_ATTEMPTS).toEqual(3);
-    expect(standardQueueService.name).toEqual('standard');
+    expect(standardQueueService.topic).toEqual('standard');
     expect(await standardQueueService.bullMqService.getRunningStatus()).toEqual(
       {
         queueIsPaused: false,
@@ -57,11 +57,12 @@ describe('Standard Queue service', () => {
           password: undefined,
           port: 6379,
           tls: undefined,
+          username: undefined,
         },
         defaultJobOptions: {
           removeOnComplete: true,
         },
-        prefix: 'bull',
+        prefix: '{standard}',
         sharedConnection: false,
       })
     );

@@ -71,7 +71,6 @@ import {
 
 import * as packageJson from '../../../package.json';
 import { CreateLog } from './logs';
-import { StandardWorker } from '../workflow/services';
 
 const DAL_MODELS = [
   UserRepository,

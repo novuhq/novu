@@ -11,9 +11,14 @@ import {
   Worker,
   WorkerOptions,
 } from 'bullmq';
-import { ConnectionOptions } from 'tls';
 import { Injectable, Logger } from '@nestjs/common';
-import { getRedisPrefix, IEventJobData, IJobData } from '@novu/shared';
+import {
+  getRedisPrefix,
+  IEventJobData,
+  IJobData,
+  JobTopicNameEnum,
+} from '@novu/shared';
+
 import {
   InMemoryProviderEnum,
   InMemoryProviderService,
@@ -95,6 +100,7 @@ export class OldInstanceBullMqService {
         db: Number(process.env.REDIS_DB_INDEX),
         port: inMemoryProviderConfig.port,
         host: inMemoryProviderConfig.host,
+        username: inMemoryProviderConfig.username,
         password: inMemoryProviderConfig.password,
         connectTimeout: inMemoryProviderConfig.connectTimeout,
         keepAlive: inMemoryProviderConfig.ttl,
@@ -107,7 +113,7 @@ export class OldInstanceBullMqService {
     return bullMqBaseOptions;
   }
 
-  public createQueue(name: string, queueOptions: QueueOptions) {
+  public createQueue(topic: JobTopicNameEnum, queueOptions: QueueOptions) {
     const bullMqBaseOptions: QueueBaseOptions = this.getQueueBaseOptions();
 
     const config = {
@@ -128,13 +134,13 @@ export class OldInstanceBullMqService {
       : require('@taskforcesh/bullmq-pro').QueuePro;
 
     Logger.log(
-      `Creating queue ${name} bullmq pro is ${
+      `Creating queue ${topic} for old instance. BullMQ pro is ${
         this.runningWithProQueue() ? 'Enabled' : 'Disabled'
       }`,
       LOG_CONTEXT
     );
 
-    this._queue = new QueueClass(name, {
+    this._queue = new QueueClass(topic, {
       ...config,
     });
 
@@ -142,7 +148,7 @@ export class OldInstanceBullMqService {
   }
 
   public createWorker(
-    name: string,
+    topic: JobTopicNameEnum,
     processor?: string | Processor<any, unknown | void, string>,
     workerOptions?: WorkerOptions
   ) {
@@ -165,7 +171,14 @@ export class OldInstanceBullMqService {
       metrics: { maxDataPoints: MetricsTime.ONE_MONTH },
     };
 
-    this._worker = new WorkerClass(name, processor, {
+    Logger.log(
+      `Creating worker for old instance. BullMQ pro is ${
+        this.runningWithProQueue() ? 'Enabled' : 'Disabled'
+      }`,
+      LOG_CONTEXT
+    );
+
+    this._worker = new WorkerClass(topic, processor, {
       ...config,
       ...(OldInstanceBullMqService.pro
         ? {
@@ -233,13 +246,39 @@ export class OldInstanceBullMqService {
 
   public async pauseWorker(): Promise<void> {
     if (this._worker) {
-      await this._worker.pause();
+      Logger.log(`There is worker ${this._worker.name} to pause`, LOG_CONTEXT);
+
+      try {
+        await this._worker.pause();
+        Logger.log(`Worker ${this._worker.name} pause succeeded`, LOG_CONTEXT);
+      } catch (error) {
+        Logger.error(
+          error,
+          `Worker ${this._worker.name} pause failed`,
+          LOG_CONTEXT
+        );
+
+        throw error;
+      }
     }
   }
 
   public async resumeWorker(): Promise<void> {
     if (this._worker) {
-      await this._worker.resume();
+      Logger.log(`There is worker ${this._worker.name} to resume`, LOG_CONTEXT);
+
+      try {
+        await this._worker.resume();
+        Logger.log(`Worker ${this._worker.name} resume succeeded`, LOG_CONTEXT);
+      } catch (error) {
+        Logger.error(
+          error,
+          `Worker ${this._worker.name} resume failed`,
+          LOG_CONTEXT
+        );
+
+        throw error;
+      }
     }
   }
 }

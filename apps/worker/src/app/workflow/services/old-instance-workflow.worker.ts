@@ -63,14 +63,4 @@ export class OldInstanceWorkflowWorker extends OldInstanceWorkflowWorkerService 
       });
     };
   }
-
-  public async pauseWorker(): Promise<void> {
-    Logger.log('Pausing worker', LOG_CONTEXT);
-    await this.bullMqService.pauseWorker();
-  }
-
-  public async resumeWorker(): Promise<void> {
-    Logger.log('Resuming worker', LOG_CONTEXT);
-    await this.bullMqService.resumeWorker();
-  }
 }

@@ -14,6 +14,10 @@ describe('Job metrics Queue service', () => {
     await jobMetricsQueueService.queue.drain();
   });
 
+  afterEach(async () => {
+    await jobMetricsQueueService.queue.drain();
+  });
+
   afterAll(async () => {
     await jobMetricsQueueService.gracefulShutdown();
   });
@@ -21,10 +25,10 @@ describe('Job metrics Queue service', () => {
   it('should be initialised properly', async () => {
     expect(jobMetricsQueueService).toBeDefined();
     expect(Object.keys(jobMetricsQueueService)).toEqual(
-      expect.arrayContaining(['name', 'DEFAULT_ATTEMPTS', 'instance', 'queue'])
+      expect.arrayContaining(['topic', 'DEFAULT_ATTEMPTS', 'instance', 'queue'])
     );
     expect(jobMetricsQueueService.DEFAULT_ATTEMPTS).toEqual(3);
-    expect(jobMetricsQueueService.name).toEqual('metric');
+    expect(jobMetricsQueueService.topic).toEqual('metric');
     expect(
       await jobMetricsQueueService.bullMqService.getRunningStatus()
     ).toEqual({
@@ -57,11 +61,12 @@ describe('Job metrics Queue service', () => {
           password: undefined,
           port: 6379,
           tls: undefined,
+          username: undefined,
         },
         defaultJobOptions: {
           removeOnComplete: true,
         },
-        prefix: 'bull',
+        prefix: '{metric}',
         sharedConnection: false,
       })
     );

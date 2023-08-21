@@ -44,7 +44,7 @@ export class StandardWorker extends StandardWorkerService implements INovuWorker
   ) {
     super();
 
-    Logger.warn('Workflow queue service created');
+    Logger.log('Workflow queue service created');
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOptions());
 
     this.worker.on('completed', async (job: Job<IJobData, void, string>): Promise<void> => {
@@ -194,14 +194,4 @@ export class StandardWorker extends StandardWorkerService implements INovuWorker
       return await this.webhookFilterBackoffStrategy.execute(command);
     };
   };
-
-  public async pauseWorker(): Promise<void> {
-    Logger.log('Pausing worker', LOG_CONTEXT);
-    await this.bullMqService.pauseWorker();
-  }
-
-  public async resumeWorker(): Promise<void> {
-    Logger.log('Resuming worker', LOG_CONTEXT);
-    await this.bullMqService.resumeWorker();
-  }
 }

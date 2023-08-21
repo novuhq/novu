@@ -18,12 +18,12 @@ describe('EventsWorkflowQueue service', () => {
   it('should be initialised properly', async () => {
     expect(eventsWorkflowQueueService).to.exist;
     expect(Object.keys(eventsWorkflowQueueService)).to.include.members([
-      'name',
+      'topic',
       'queue',
       'DEFAULT_ATTEMPTS',
       'instance',
     ]);
-    expect(eventsWorkflowQueueService.name).to.equal('trigger-handler');
+    expect(eventsWorkflowQueueService.topic).to.equal('trigger-handler');
     expect(await eventsWorkflowQueueService.bullMqService.getRunningStatus()).to.deep.equal({
       queueIsPaused: false,
       queueName: 'trigger-handler',
@@ -51,11 +51,12 @@ describe('EventsWorkflowQueue service', () => {
         password: undefined,
         port: 6379,
         tls: undefined,
+        username: undefined,
       },
       defaultJobOptions: {
         removeOnComplete: true,
       },
-      prefix: 'bull',
+      prefix: '{trigger-handler}',
       sharedConnection: false,
     });
     expect(eventsWorkflowQueueService.queue.opts.connection).to.deep.include({

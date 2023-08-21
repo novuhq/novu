@@ -39,6 +39,7 @@ describe('Job Metric Service', () => {
   });
 
   after(async () => {
+    await jobMetricService.jobMetricsQueueService.queue.drain();
     await jobMetricService.gracefulShutdown();
   });
 

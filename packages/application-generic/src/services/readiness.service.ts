@@ -11,7 +11,7 @@ import {
 export interface INovuWorker {
   readonly DEFAULT_ATTEMPTS: number;
   gracefulShutdown: () => Promise<void>;
-  readonly name: string;
+  readonly topic: string;
   onModuleDestroy: () => Promise<void>;
   pauseWorker: () => Promise<void>;
   resumeWorker: () => Promise<void>;
@@ -25,8 +25,6 @@ export class ReadinessService {
   constructor(
     @Inject(StandardQueueServiceHealthIndicator)
     private standardQueueServiceHealthIndicator: StandardQueueServiceHealthIndicator,
-    @Inject(WebSocketsQueueServiceHealthIndicator)
-    private webSocketsQueueServiceHealthIndicator: WebSocketsQueueServiceHealthIndicator,
     @Inject(WorkflowQueueServiceHealthIndicator)
     private workflowQueueServiceHealthIndicator: WorkflowQueueServiceHealthIndicator
   ) {}
@@ -37,11 +35,14 @@ export class ReadinessService {
     try {
       const healths = await Promise.all([
         this.standardQueueServiceHealthIndicator.isHealthy(),
-        this.webSocketsQueueServiceHealthIndicator.isHealthy(),
         this.workflowQueueServiceHealthIndicator.isHealthy(),
       ]);
 
-      return healths.every((health) => !!health === true);
+      const result = healths.every((health) => !!health === true);
+
+      Logger.log(`The result of the Queue healths is ${result}`, LOG_CONTEXT);
+
+      return result;
     } catch (error) {
       Logger.error(
         error,
@@ -55,8 +56,19 @@ export class ReadinessService {
 
   async pauseWorkers(workers: INovuWorker[]): Promise<void> {
     for (const worker of workers) {
-      Logger.log(`Pausing worker ${worker.name}...`, LOG_CONTEXT);
-      await worker.pauseWorker();
+      try {
+        Logger.log(`Pausing worker ${worker.topic}...`, LOG_CONTEXT);
+
+        await worker.pauseWorker();
+      } catch (error) {
+        Logger.error(
+          error,
+          `Failed to pause worker ${worker.topic}.`,
+          LOG_CONTEXT
+        );
+
+        throw error;
+      }
     }
   }
 
@@ -65,8 +77,19 @@ export class ReadinessService {
 
     if (areQueuesEnabled) {
       for (const worker of workers) {
-        Logger.log(`Resuming worker ${worker.name}...`, LOG_CONTEXT);
-        await worker.resumeWorker();
+        try {
+          Logger.log(`Resuming worker ${worker.topic}...`, LOG_CONTEXT);
+
+          await worker.resumeWorker();
+        } catch (error) {
+          Logger.error(
+            error,
+            `Failed to resume worker ${worker.topic}.`,
+            LOG_CONTEXT
+          );
+
+          throw error;
+        }
       }
     }
   }

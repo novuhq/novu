@@ -6,7 +6,7 @@ import {
   InMemoryProviderClient,
   InMemoryProviderEnum,
   InMemoryProviderService,
-} from '../index';
+} from '../in-memory-provider';
 
 const LOG_CONTEXT = 'DistributedLock';
 
