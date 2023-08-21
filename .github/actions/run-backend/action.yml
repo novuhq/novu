@@ -1,6 +1,6 @@
 name: Run Backend
 
-description: Starts and waits for the API and Worker instance 
+description: Starts and waits for the API and Worker instance
 
 inputs:
   launch_darkly_sdk_key:
@@ -29,7 +29,7 @@ runs:
         GITHUB_OAUTH_REDIRECT: "http://localhost:1336/v1/auth/github/callback"
         LAUNCH_DARKLY_SDK_KEY: ${{ inputs.launch_darkly_sdk_key }}
         IN_MEMORY_CLUSTER_MODE_ENABLED: true
-      run: cd apps/api && pnpm start:build &
+      run: cd apps/api && pnpm start:build
 
     - name: Start Worker
       shell: bash
