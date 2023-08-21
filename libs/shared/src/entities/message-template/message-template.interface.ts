@@ -38,7 +38,7 @@ export interface IMessageTemplate {
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export const TemplateSystemVariables = ['subscriber', 'step', 'branding', 'tenant', 'actor', 'preheader'];
+export const TemplateSystemVariables = ['subscriber', 'step', 'branding', 'tenant', 'preheader'];
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const SystemVariablesWithTypes = {
@@ -67,10 +67,9 @@ export const SystemVariablesWithTypes = {
 };
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export const TriggerReservedVariables = ['tenant', 'actor'];
+export const TriggerReservedVariables = ['tenant'];
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const ReservedVariablesMap = {
   [TriggerContextTypeEnum.TENANT]: [{ name: 'identifier', type: TemplateVariableTypeEnum.STRING }],
-  [TriggerContextTypeEnum.ACTOR]: [{ name: 'subscriberId', type: TemplateVariableTypeEnum.STRING }],
 };

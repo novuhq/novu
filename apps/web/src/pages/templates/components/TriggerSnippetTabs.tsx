@@ -20,7 +20,7 @@ export function TriggerSnippetTabs({ trigger }: { trigger: INotificationTrigger 
   const toValue = getSubscriberValue(subscriberVariables, (variable) => variable.value || '<REPLACE_WITH_DATA>');
   const payloadValue = getPayloadValue(trigger.variables);
 
-  const tenantValue = triggerSnippetVariables.reduce((acc, variable) => {
+  const reservedValue = triggerSnippetVariables.reduce((acc, variable) => {
     acc[variable.type] = getPayloadValue(variable.variables);
 
     return acc;
@@ -29,11 +29,11 @@ export function TriggerSnippetTabs({ trigger }: { trigger: INotificationTrigger 
   const prismTabs = [
     {
       value: NODE_JS,
-      content: getNodeTriggerSnippet(trigger.identifier, toValue, payloadValue, undefined, tenantValue),
+      content: getNodeTriggerSnippet(trigger.identifier, toValue, payloadValue, undefined, reservedValue),
     },
     {
       value: CURL,
-      content: getCurlTriggerSnippet(trigger.identifier, toValue, payloadValue, undefined, tenantValue),
+      content: getCurlTriggerSnippet(trigger.identifier, toValue, payloadValue, undefined, reservedValue),
     },
   ];
 
