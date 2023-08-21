@@ -138,7 +138,7 @@ export class AuthService {
 
   @Instrument()
   async apiKeyAuthenticate(apiKey: string) {
-    const { environment, user, key, error } = await this.getUserData(apiKey);
+    const { environment, user, key, error } = await this.getUserData({ apiKey });
 
     if (error) throw new UnauthorizedException(error);
     if (!environment) throw new UnauthorizedException('API Key not found');
@@ -344,9 +344,11 @@ export class AuthService {
         apiKey: apiKey,
       }),
   })
-  private async getUserData(
-    apiKey: string
-  ): Promise<{ environment?: EnvironmentEntity; user?: UserEntity; key?: IApiKey; error?: string }> {
+  private async getUserData({
+    apiKey,
+  }: {
+    apiKey: string;
+  }): Promise<{ environment?: EnvironmentEntity; user?: UserEntity; key?: IApiKey; error?: string }> {
     const environment = await this.environmentRepository.findByApiKey(apiKey);
     if (!environment) {
       return { error: 'API Key not found' };
