@@ -404,4 +404,13 @@ const Wrapper = styled.div<{ dark: boolean }>`
       fill: ${colors.B60};
     }
   }
+
+  [data-template-store-editor] [data-workflow-node-icon] {
+    stop:first-child {
+      stop-color: #dd2476 !important;
+    }
+    stop:last-child {
+      stop-color: #ff512f !important;
+    }
+  }
 `;

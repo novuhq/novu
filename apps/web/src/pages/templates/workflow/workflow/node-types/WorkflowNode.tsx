@@ -1,13 +1,5 @@
 import styled from '@emotion/styled';
-import {
-  Avatar,
-  createStyles,
-  Group,
-  Indicator,
-  Popover as MantinePopover,
-  useMantineColorScheme,
-  UnstyledButton,
-} from '@mantine/core';
+import { createStyles, Group, Popover as MantinePopover, UnstyledButton, useMantineColorScheme } from '@mantine/core';
 import { ChannelTypeEnum, InAppProviderIdEnum, providers, StepTypeEnum } from '@novu/shared';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useViewport } from 'react-flow-renderer';
@@ -19,7 +11,7 @@ import { CONTEXT_PATH } from '../../../../../config';
 import { Switch } from '../../../../../design-system';
 import { Button } from '../../../../../design-system/button/Button';
 import { colors } from '../../../../../design-system/config';
-import { ProviderMissing, Trash } from '../../../../../design-system/icons';
+import { Trash } from '../../../../../design-system/icons';
 import { Popover } from '../../../../../design-system/popover';
 import { useStyles } from '../../../../../design-system/template-button/TemplateButton.styles';
 import { Text } from '../../../../../design-system/typography/text/Text';
@@ -34,6 +26,7 @@ import { IntegrationsListModal } from '../../../../integrations/IntegrationsList
 import { IntegrationsStoreModal } from '../../../../integrations/IntegrationsStoreModal';
 import { TemplateEditorAnalyticsEnum } from '../../../constants';
 import { getFormattedStepErrors } from '../../../shared/errors';
+import { DisplayPrimaryProviderIcon } from '../../DisplayPrimaryProviderIcon';
 
 interface ITemplateButtonProps {
   Icon: React.FC<any>;
@@ -96,7 +89,7 @@ export function WorkflowNode({
   subtitle,
 }: ITemplateButtonProps) {
   const segment = useSegment();
-  const { readonly: readonlyEnv } = useEnvController();
+  const { readonly: readonlyEnv, environment } = useEnvController();
   const { integrations } = useActiveIntegrations({ refetchOnMount: false, refetchOnWindowFocus: false });
   const { cx, classes, theme } = useStyles();
   const [popoverOpened, setPopoverOpened] = useState(false);
@@ -118,12 +111,16 @@ export function WorkflowNode({
     );
   }, [channelType]);
 
+  const integrationsByEnv = useMemo(() => {
+    return integrations?.filter((integration) => integration._environmentId === environment?._id);
+  }, [environment, integrations]);
+
   const hasActiveIntegration = useMemo(() => {
     const isEmailStep = channelType === StepTypeEnum.EMAIL;
     const isSmsStep = channelType === StepTypeEnum.SMS;
 
     if (isChannelStep) {
-      const isActive = !!integrations?.some((integration) => integration.channel === tabKey);
+      const isActive = !!integrationsByEnv?.some((integration) => integration.channel === tabKey);
       const isEmailStepActive = isEmailStep && !isEmailLimitReached;
       const isSmsStepActive = isSmsStep && !isSmsLimitReached;
 
@@ -131,22 +128,26 @@ export function WorkflowNode({
     }
 
     return true;
-  }, [integrations, tabKey, isEmailLimitReached, isSmsLimitReached, isChannelStep]);
+  }, [integrationsByEnv, tabKey, isEmailLimitReached, isSmsLimitReached, isChannelStep]);
 
   const getPrimaryIntegration = useMemo(() => {
+    if (!hasActiveIntegration) {
+      return undefined;
+    }
     if (channelType === StepTypeEnum.IN_APP) {
       return InAppProviderIdEnum.Novu;
     }
-    if (isChannelStep && hasActiveIntegration) {
-      if ([StepTypeEnum.CHAT, StepTypeEnum.PUSH].includes(channelType)) {
-        return integrations?.filter((integration) => integration.channel === channelKey)[0].providerId;
+    if (isChannelStep) {
+      if ([StepTypeEnum.EMAIL, StepTypeEnum.SMS].includes(channelType)) {
+        return integrations?.find((integration) => integration.primary && integration.channel === channelKey)
+          ?.providerId;
       }
 
       return integrations?.find((integration) => integration.channel === channelKey)?.providerId;
     }
 
     return undefined;
-  }, [isChannelStep, hasActiveIntegration, integrations, channelKey, channelType]);
+  }, [isChannelStep, hasActiveIntegration, integrationsByEnv, channelKey, channelType]);
 
   const onIntegrationModalClose = () => {
     setIntegrationsModalVisible(false);
@@ -197,7 +198,7 @@ export function WorkflowNode({
       >
         <Group w="100%" noWrap>
           <LeftContainerWrapper>
-            <RenderIcon
+            <DisplayPrimaryProviderIcon
               Icon={Icon}
               disabledProp={disabledProp}
               getPrimaryIntegration={getPrimaryIntegration}
@@ -308,45 +309,6 @@ export function WorkflowNode({
       )}
     </>
   );
-}
-
-function RenderIcon({ isChannelStep, getPrimaryIntegration, logoSrc, disabledProp, Icon }) {
-  if (isChannelStep) {
-    return (
-      <Indicator
-        label={<Icon width="16px" height="16px" {...disabledProp} />}
-        position="bottom-end"
-        size={16}
-        offset={getPrimaryIntegration ? 8 : 4}
-        inline
-      >
-        <div
-          style={{
-            width: '40px',
-            height: '40px',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            padding: '4px',
-          }}
-        >
-          {getPrimaryIntegration ? (
-            <Avatar src={logoSrc} size={32} radius={0} color="white" />
-          ) : (
-            <Avatar radius="xl">
-              <ProviderMissing {...disabledProp} width="32px" height="32px" />
-            </Avatar>
-          )}
-        </div>
-      </Indicator>
-    );
-  } else {
-    return (
-      <div>
-        <Icon {...disabledProp} width="32px" height="32px" />
-      </div>
-    );
-  }
 }
 
 const ConfigureProviderButton = styled(Button)`
