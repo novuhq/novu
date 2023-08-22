@@ -8,6 +8,7 @@ export enum DetailEnum {
   STEP_CREATED = 'Step created',
   STEP_QUEUED = 'Step queued',
   STEP_DELAYED = 'Step delayed',
+  STEP_DIGESTED = 'Step digested',
   MESSAGE_CONTENT_NOT_GENERATED = 'Message content could not be generated',
   MESSAGE_CONTENT_SYNTAX_ERROR = 'Message content could not be generated due to syntax error in email editor',
   MESSAGE_CREATED = 'Message created',
