@@ -18,6 +18,7 @@ import {
   ExecutionDetailsStatusEnum,
   IEmailBlock,
   ActorTypeEnum,
+  WebSocketEventEnum,
 } from '@novu/shared';
 import {
   InstrumentUsecase,
@@ -235,7 +236,7 @@ export class SendMessageInApp extends SendMessageBase {
     await this.wsQueueService.bullMqService.add(
       'sendMessage',
       {
-        event: 'notification_received',
+        event: WebSocketEventEnum.RECEIVED,
         userId: command._subscriberId,
         payload: {
           message,
@@ -261,7 +262,7 @@ export class SendMessageInApp extends SendMessageBase {
     await this.wsQueueService.bullMqService.add(
       'sendMessage',
       {
-        event: 'unseen_count_changed',
+        event: WebSocketEventEnum.UNSEEN,
         userId: command._subscriberId,
         _environmentId: command.environmentId,
       },
@@ -272,7 +273,7 @@ export class SendMessageInApp extends SendMessageBase {
     await this.wsQueueService.bullMqService.add(
       'sendMessage',
       {
-        event: 'unread_count_changed',
+        event: WebSocketEventEnum.UNREAD,
         userId: command._subscriberId,
         _environmentId: command.environmentId,
       },
