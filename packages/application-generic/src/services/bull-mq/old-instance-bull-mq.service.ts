@@ -246,11 +246,8 @@ export class OldInstanceBullMqService {
 
   public async pauseWorker(): Promise<void> {
     if (this._worker) {
-      Logger.log(`There is worker ${this._worker.name} to pause`, LOG_CONTEXT);
-
       try {
-        await this._worker.pause();
-        Logger.log(`Worker ${this._worker.name} pause succeeded`, LOG_CONTEXT);
+        await this._worker.pause(true);
       } catch (error) {
         Logger.error(
           error,
@@ -265,11 +262,8 @@ export class OldInstanceBullMqService {
 
   public async resumeWorker(): Promise<void> {
     if (this._worker) {
-      Logger.log(`There is worker ${this._worker.name} to resume`, LOG_CONTEXT);
-
       try {
         await this._worker.resume();
-        Logger.log(`Worker ${this._worker.name} resume succeeded`, LOG_CONTEXT);
       } catch (error) {
         Logger.error(
           error,

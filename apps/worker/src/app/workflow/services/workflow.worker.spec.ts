@@ -34,11 +34,12 @@ describe('Workflow Worker', () => {
 
   it('should be initialised properly', async () => {
     expect(workflowWorker).to.be.ok;
-    expect(workflowWorker).to.have.all.keys('DEFAULT_ATTEMPTS', 'instance', 'topic', 'triggerEventUsecase', 'worker');
-    expect(await workflowWorker.bullMqService.getRunningStatus()).to.deep.equal({
+    expect(workflowWorker).to.have.all.keys('DEFAULT_ATTEMPTS', 'instance', 'topic', 'triggerEventUsecase');
+    expect(await workflowWorker.bullMqService.getStatus()).to.deep.equal({
       queueIsPaused: undefined,
       queueName: undefined,
       workerName: 'trigger-handler',
+      workerIsPaused: false,
       workerIsRunning: true,
     });
     expect(workflowWorker.worker.opts).to.deep.include({
@@ -81,5 +82,63 @@ describe('Workflow Worker', () => {
     // No jobs left in queue
     const queueJobs = await workflowQueueService.queue.getJobs();
     expect(queueJobs.length).to.equal(0);
+  });
+
+  it('should pause the worker', async () => {
+    const isPaused = await workflowWorker.worker.isPaused();
+    expect(isPaused).to.equal(false);
+
+    const runningStatus = await workflowWorker.bullMqService.getStatus();
+    expect(runningStatus).to.deep.equal({
+      queueIsPaused: undefined,
+      queueName: undefined,
+      workerName: 'trigger-handler',
+      workerIsPaused: false,
+      workerIsRunning: true,
+    });
+
+    await workflowWorker.pause();
+
+    const isNowPaused = await workflowWorker.worker.isPaused();
+    expect(isNowPaused).to.equal(true);
+
+    const runningStatusChanged = await workflowWorker.bullMqService.getStatus();
+    expect(runningStatusChanged).to.deep.equal({
+      queueIsPaused: undefined,
+      queueName: undefined,
+      workerName: 'trigger-handler',
+      workerIsPaused: true,
+      workerIsRunning: true,
+    });
+  });
+
+  it('should resume the worker', async () => {
+    await workflowWorker.pause();
+
+    const isPaused = await workflowWorker.worker.isPaused();
+    expect(isPaused).to.equal(true);
+
+    const runningStatus = await workflowWorker.bullMqService.getStatus();
+    expect(runningStatus).to.deep.equal({
+      queueIsPaused: undefined,
+      queueName: undefined,
+      workerName: 'trigger-handler',
+      workerIsPaused: true,
+      workerIsRunning: true,
+    });
+
+    await workflowWorker.resume();
+
+    const isNowPaused = await workflowWorker.worker.isPaused();
+    expect(isNowPaused).to.equal(false);
+
+    const runningStatusChanged = await workflowWorker.bullMqService.getStatus();
+    expect(runningStatusChanged).to.deep.equal({
+      queueIsPaused: undefined,
+      queueName: undefined,
+      workerName: 'trigger-handler',
+      workerIsPaused: false,
+      workerIsRunning: true,
+    });
   });
 });

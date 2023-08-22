@@ -26,9 +26,10 @@ describe('BullMQ Service', () => {
         expect(bullMqService.queue).toBeUndefined();
         expect(bullMqService.worker).toBeUndefined();
         expect(BullMqService.haveProInstalled()).toBeFalsy();
-        expect(await bullMqService.getRunningStatus()).toEqual({
+        expect(await bullMqService.getStatus()).toEqual({
           queueIsPaused: undefined,
           queueName: undefined,
+          workerIsPaused: undefined,
           workerIsRunning: undefined,
           workerName: undefined,
         });
@@ -52,9 +53,10 @@ describe('BullMQ Service', () => {
           tls: undefined,
         });
 
-        expect(await bullMqService.getRunningStatus()).toEqual({
+        expect(await bullMqService.getStatus()).toEqual({
           queueIsPaused: false,
           queueName,
+          workerIsPaused: undefined,
           workerIsRunning: undefined,
           workerName: undefined,
         });
@@ -86,9 +88,10 @@ describe('BullMQ Service', () => {
           tls: undefined,
         });
 
-        expect(await bullMqService.getRunningStatus()).toEqual({
+        expect(await bullMqService.getStatus()).toEqual({
           queueIsPaused: false,
           queueName,
+          workerIsPaused: undefined,
           workerIsRunning: undefined,
           workerName: undefined,
         });
@@ -111,9 +114,10 @@ describe('BullMQ Service', () => {
           tls: undefined,
         });
 
-        expect(await bullMqService.getRunningStatus()).toEqual({
+        expect(await bullMqService.getStatus()).toEqual({
           queueIsPaused: undefined,
           queueName: undefined,
+          workerIsPaused: false,
           workerIsRunning: false,
           workerName,
         });
@@ -149,9 +153,10 @@ describe('BullMQ Service', () => {
         expect(bullMqService.worker.opts.concurrency).toEqual(200);
         expect(bullMqService.worker.opts.lockDuration).toEqual(90000);
 
-        expect(await bullMqService.getRunningStatus()).toEqual({
+        expect(await bullMqService.getStatus()).toEqual({
           queueIsPaused: undefined,
           queueName: undefined,
+          workerIsPaused: false,
           workerIsRunning: false,
           workerName,
         });

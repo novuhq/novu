@@ -13,7 +13,7 @@ import {
 } from '@novu/dal';
 import {
   AnalyticsService,
-  bullMqService,
+  BullMqService,
   DalServiceHealthIndicator,
   GetIsInMemoryClusterModeEnabled,
   QueuesModule,
@@ -55,7 +55,7 @@ const analyticsService = {
 
 const PROVIDERS = [
   analyticsService,
-  bullMqService,
+  BullMqService,
   dalService,
   DalServiceHealthIndicator,
   GetIsInMemoryClusterModeEnabled,

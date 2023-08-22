@@ -24,10 +24,11 @@ describe('EventsWorkflowQueue service', () => {
       'instance',
     ]);
     expect(eventsWorkflowQueueService.topic).to.equal('trigger-handler');
-    expect(await eventsWorkflowQueueService.bullMqService.getRunningStatus()).to.deep.equal({
+    expect(await eventsWorkflowQueueService.bullMqService.getStatus()).to.deep.equal({
       queueIsPaused: false,
       queueName: 'trigger-handler',
       workerName: undefined,
+      workerIsPaused: undefined,
       workerIsRunning: undefined,
     });
     expect(eventsWorkflowQueueService.queue).to.deep.include({

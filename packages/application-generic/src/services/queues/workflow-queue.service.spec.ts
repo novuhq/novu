@@ -25,14 +25,14 @@ describe('Workflow Queue service', () => {
     );
     expect(workflowQueueService.DEFAULT_ATTEMPTS).toEqual(3);
     expect(workflowQueueService.topic).toEqual('trigger-handler');
-    expect(await workflowQueueService.bullMqService.getRunningStatus()).toEqual(
-      {
-        queueIsPaused: false,
-        queueName: 'trigger-handler',
-        workerName: undefined,
-        workerIsRunning: undefined,
-      }
-    );
+    expect(await workflowQueueService.bullMqService.getStatus()).toEqual({
+      queueIsPaused: false,
+      queueName: 'trigger-handler',
+      workerName: undefined,
+      workerIsPaused: undefined,
+      workerIsRunning: undefined,
+    });
+    expect(await workflowQueueService.isPaused()).toEqual(false);
     expect(workflowQueueService.queue).toMatchObject(
       expect.objectContaining({
         _events: {},

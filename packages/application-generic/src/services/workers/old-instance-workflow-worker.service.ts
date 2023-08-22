@@ -46,11 +46,11 @@ export class OldInstanceWorkflowWorkerService {
     this.worker = this.instance.createWorker(this.topic, processor, options);
   }
 
-  public async pauseWorker(): Promise<void> {
+  public async pause(): Promise<void> {
     await this.instance.pauseWorker();
   }
 
-  public async resumeWorker(): Promise<void> {
+  public async resume(): Promise<void> {
     await this.instance.resumeWorker();
   }
 

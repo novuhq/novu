@@ -69,7 +69,7 @@ export class BullMqService {
     await this.inMemoryProviderService.delayUntilReadiness();
   }
 
-  get worker(): Worker {
+  public get worker(): Worker {
     return this._worker;
   }
 
@@ -240,37 +240,65 @@ export class BullMqService {
 
     await this.inMemoryProviderService.shutdown();
 
-    Logger.log('Shutting down the BullMQ service has finished', LOG_CONTEXT);
+    Logger.verbose(
+      'Shutting down the BullMQ service has finished',
+      LOG_CONTEXT
+    );
   }
 
-  public async getRunningStatus(): Promise<{
+  public async getStatus(): Promise<{
     queueIsPaused: boolean | undefined;
     queueName: string | undefined;
+    workerIsPaused: boolean | undefined;
     workerIsRunning: boolean | undefined;
     workerName: string | undefined;
   }> {
-    const queueIsPaused = this._queue
-      ? await this._queue.isPaused()
-      : undefined;
-    const workerIsRunning = this._worker
-      ? await this._worker.isRunning()
-      : undefined;
+    const [queueIsPaused, workerIsPaused, workerIsRunning] = await Promise.all([
+      this.isQueuePaused(),
+      this.isWorkerPaused(),
+      this.isWorkerRunning(),
+    ]);
 
     return {
       queueIsPaused,
       queueName: this._queue?.name,
+      workerIsPaused,
       workerIsRunning,
       workerName: this._worker?.name,
     };
   }
 
+  public isClientReady(): boolean {
+    return this.inMemoryProviderService.isClientReady();
+  }
+
+  public async isQueuePaused(): Promise<boolean> {
+    return await this._queue?.isPaused();
+  }
+
+  public async isWorkerPaused(): Promise<boolean> {
+    return await this._worker?.isPaused();
+  }
+
+  public async isWorkerRunning(): Promise<boolean> {
+    return await this._worker?.isRunning();
+  }
+
   public async pauseWorker(): Promise<void> {
     if (this._worker) {
-      Logger.log(`There is worker ${this._worker.name} to pause`, LOG_CONTEXT);
-
       try {
-        await this._worker.pause();
-        Logger.log(`Worker ${this._worker.name} pause succeeded`, LOG_CONTEXT);
+        /**
+         * We will only execute this in the cold start, therefore we will
+         * expect jobs not being processed in the Worker.
+         * Reference: https://api.docs.bullmq.io/classes/v4.Worker.html#pause.pause-1
+         */
+        const doNotWaitActive = true;
+
+        await this._worker.pause(doNotWaitActive);
+        Logger.verbose(
+          `Worker ${this._worker.name} pause succeeded`,
+          LOG_CONTEXT
+        );
       } catch (error) {
         Logger.error(
           error,
@@ -285,11 +313,12 @@ export class BullMqService {
 
   public async resumeWorker(): Promise<void> {
     if (this._worker) {
-      Logger.log(`There is worker ${this._worker.name} to resume`, LOG_CONTEXT);
-
       try {
         await this._worker.resume();
-        Logger.log(`Worker ${this._worker.name} resume succeeded`, LOG_CONTEXT);
+        Logger.verbose(
+          `Worker ${this._worker.name} resume succeeded`,
+          LOG_CONTEXT
+        );
       } catch (error) {
         Logger.error(
           error,

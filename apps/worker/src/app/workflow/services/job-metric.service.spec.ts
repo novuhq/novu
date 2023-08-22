@@ -46,16 +46,18 @@ describe('Job Metric Service', () => {
   it('should be initialised properly', async () => {
     expect(jobMetricService).to.be.ok;
     expect(jobMetricService).to.have.all.keys('jobMetricsQueueService', 'jobMetricsWorkerService', 'tokenList');
-    expect(await jobMetricService.jobMetricsQueueService.bullMqService.getRunningStatus()).to.deep.equal({
+    expect(await jobMetricService.jobMetricsQueueService.bullMqService.getStatus()).to.deep.equal({
       queueIsPaused: false,
       queueName: 'metric',
       workerName: undefined,
+      workerIsPaused: undefined,
       workerIsRunning: undefined,
     });
-    expect(await jobMetricService.jobMetricsWorkerService.bullMqService.getRunningStatus()).to.deep.equal({
+    expect(await jobMetricService.jobMetricsWorkerService.bullMqService.getStatus()).to.deep.equal({
       queueIsPaused: undefined,
       queueName: undefined,
       workerName: 'metric',
+      workerIsPaused: false,
       workerIsRunning: true,
     });
     expect(jobMetricService.jobMetricsWorkerService.worker.opts).to.deep.include({

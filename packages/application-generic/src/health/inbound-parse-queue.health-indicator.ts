@@ -21,16 +21,15 @@ export class InboundParseQueueServiceHealthIndicator extends HealthIndicator {
   }
 
   async isHealthy(): Promise<HealthIndicatorResult> {
-    const runningStatus =
-      await this.inboundParseQueueService.bullMqService.getRunningStatus();
+    const isReady = this.inboundParseQueueService.isReady();
 
-    if (!runningStatus.queueIsPaused) {
-      Logger.log('InboundParseQueueService is not paused', LOG_CONTEXT);
+    if (isReady) {
+      Logger.verbose('InboundParseQueueService is ready', LOG_CONTEXT);
 
       return this.getStatus(this.INDICATOR_KEY, true);
     }
 
-    Logger.log('InboundParseQueueService is paused', LOG_CONTEXT);
+    Logger.verbose('InboundParseQueueService is not ready', LOG_CONTEXT);
 
     throw new HealthCheckError(
       'InboundParse Queue Health',

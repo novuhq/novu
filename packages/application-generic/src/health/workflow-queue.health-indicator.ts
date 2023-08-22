@@ -21,20 +21,15 @@ export class WorkflowQueueServiceHealthIndicator extends HealthIndicator {
   }
 
   async isHealthy(): Promise<HealthIndicatorResult> {
-    Logger.log('Checking the health', LOG_CONTEXT);
+    const isReady = this.workflowQueueService.isReady();
 
-    const runningStatus =
-      await this.workflowQueueService.bullMqService.getRunningStatus();
-
-    Logger.warn({ runningStatus }, 'Running status', LOG_CONTEXT);
-
-    if (!runningStatus.queueIsPaused) {
-      Logger.log('WorkflowQueueService is not paused', LOG_CONTEXT);
+    if (isReady) {
+      Logger.verbose('WorkflowQueueService is ready', LOG_CONTEXT);
 
       return this.getStatus(this.INDICATOR_KEY, true);
     }
 
-    Logger.log('WorkflowQueueService is paused', LOG_CONTEXT);
+    Logger.verbose('WorkflowQueueService is not ready', LOG_CONTEXT);
 
     throw new HealthCheckError(
       'Workflow Queue Health',

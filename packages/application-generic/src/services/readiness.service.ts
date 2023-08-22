@@ -13,8 +13,8 @@ export interface INovuWorker {
   gracefulShutdown: () => Promise<void>;
   readonly topic: string;
   onModuleDestroy: () => Promise<void>;
-  pauseWorker: () => Promise<void>;
-  resumeWorker: () => Promise<void>;
+  pause: () => Promise<void>;
+  resume: () => Promise<void>;
   worker: Worker;
 }
 
@@ -38,11 +38,7 @@ export class ReadinessService {
         this.workflowQueueServiceHealthIndicator.isHealthy(),
       ]);
 
-      const result = healths.every((health) => !!health === true);
-
-      Logger.log(`The result of the Queue healths is ${result}`, LOG_CONTEXT);
-
-      return result;
+      return healths.every((health) => !!health === true);
     } catch (error) {
       Logger.error(
         error,
@@ -57,9 +53,9 @@ export class ReadinessService {
   async pauseWorkers(workers: INovuWorker[]): Promise<void> {
     for (const worker of workers) {
       try {
-        Logger.log(`Pausing worker ${worker.topic}...`, LOG_CONTEXT);
+        Logger.verbose(`Pausing worker ${worker.topic}...`, LOG_CONTEXT);
 
-        await worker.pauseWorker();
+        await worker.pause();
       } catch (error) {
         Logger.error(
           error,
@@ -78,9 +74,9 @@ export class ReadinessService {
     if (areQueuesEnabled) {
       for (const worker of workers) {
         try {
-          Logger.log(`Resuming worker ${worker.topic}...`, LOG_CONTEXT);
+          Logger.verbose(`Resuming worker ${worker.topic}...`, LOG_CONTEXT);
 
-          await worker.resumeWorker();
+          await worker.resume();
         } catch (error) {
           Logger.error(
             error,

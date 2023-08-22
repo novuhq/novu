@@ -301,15 +301,13 @@ describe('Distributed Lock Service', () => {
 
       inMemoryProviderService = new InMemoryProviderService(
         getIsInMemoryClusterModeEnabled,
-        InMemoryProviderEnum.REDIS
+        undefined
       );
       expect(inMemoryProviderService.inMemoryProviderConfig.host).toEqual(
         'localhost'
       );
-      distributedLockService = new DistributedLockService(
-        inMemoryProviderService
-      );
-      await distributedLockService.initialize();
+      distributedLockService = new DistributedLockService(undefined);
+      // If no initializing the service is like the client is not properly set
     });
 
     afterEach(() => {

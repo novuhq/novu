@@ -31,6 +31,14 @@ export class QueueBaseService {
     };
   }
 
+  public isReady(): boolean {
+    return this.instance.isClientReady();
+  }
+
+  public async isPaused(): Promise<boolean> {
+    return await this.instance.isQueuePaused();
+  }
+
   public async gracefulShutdown(): Promise<void> {
     Logger.log('Shutting the Queue service down', LOG_CONTEXT);
 

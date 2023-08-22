@@ -25,14 +25,14 @@ describe('WebSockets Queue service', () => {
     );
     expect(webSocketsQueueService.DEFAULT_ATTEMPTS).toEqual(3);
     expect(webSocketsQueueService.topic).toEqual('ws_socket_queue');
-    expect(
-      await webSocketsQueueService.bullMqService.getRunningStatus()
-    ).toEqual({
+    expect(await webSocketsQueueService.bullMqService.getStatus()).toEqual({
       queueIsPaused: false,
       queueName: 'ws_socket_queue',
       workerName: undefined,
+      workerIsPaused: undefined,
       workerIsRunning: undefined,
     });
+    expect(await webSocketsQueueService.isPaused()).toEqual(false);
     expect(webSocketsQueueService.queue).toMatchObject(
       expect.objectContaining({
         _events: {},
