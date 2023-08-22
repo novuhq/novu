@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
 
 import { MessageRepository } from '@novu/dal';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, WebSocketEventEnum } from '@novu/shared';
 import { BullMqService } from '@novu/application-generic';
 
 import { ExternalServicesRouteCommand } from './external-services-route.command';
 import { WSGateway } from '../../ws.gateway';
+import { IUnreadCountPaginationIndication, IUnseenCountPaginationIndication } from './types';
 
 @Injectable()
 export class ExternalServicesRoute {
@@ -15,13 +16,13 @@ export class ExternalServicesRoute {
     this.bullMqService = new BullMqService();
   }
   public async execute(command: ExternalServicesRouteCommand) {
-    if (command.event === 'unseen_count_changed') {
+    if (command.event === WebSocketEventEnum.UNSEEN) {
       await this.sendUnseenCountChange(command);
 
       return;
     }
 
-    if (command.event === 'unread_count_changed') {
+    if (command.event === WebSocketEventEnum.UNREAD) {
       await this.sendUnreadCountChange(command);
 
       return;
@@ -49,11 +50,15 @@ export class ExternalServicesRoute {
         command.userId,
         ChannelTypeEnum.IN_APP,
         { read: false },
-        { limit: 1000 }
+        { limit: 101 }
       );
     }
+    const paginationIndication: IUnreadCountPaginationIndication =
+      unreadCount > 100 ? { unreadCount: 100, hasMore: true } : { unreadCount: unreadCount, hasMore: false };
+
     await this.wsGateway.sendMessage(command.userId, command.event, {
-      unreadCount,
+      unreadCount: paginationIndication.unreadCount,
+      hasMore: paginationIndication.hasMore,
     });
   }
 
@@ -76,12 +81,16 @@ export class ExternalServicesRoute {
         command.userId,
         ChannelTypeEnum.IN_APP,
         { seen: false },
-        { limit: 1000 }
+        { limit: 101 }
       );
     }
 
+    const paginationIndication: IUnseenCountPaginationIndication =
+      unseenCount > 100 ? { unseenCount: 100, hasMore: true } : { unseenCount: unseenCount, hasMore: false };
+
     await this.wsGateway.sendMessage(command.userId, command.event, {
-      unseenCount,
+      unseenCount: paginationIndication.unseenCount,
+      hasMore: paginationIndication.hasMore,
     });
   }
 

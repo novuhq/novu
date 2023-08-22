@@ -83,7 +83,7 @@ export class WorkflowQueueService extends QueueService<IJobData> implements INov
 
                 .then(resolve)
                 .catch((error) => {
-                  Logger.error(`Failed to run the job ${jobId} during worker processing`, error, LOG_CONTEXT);
+                  Logger.error(error, `Failed to run the job ${jobId} during worker processing`, LOG_CONTEXT);
 
                   return reject(error);
                 })
@@ -113,7 +113,7 @@ export class WorkflowQueueService extends QueueService<IJobData> implements INov
         })
       );
     } catch (error) {
-      Logger.error(`Failed to set job ${jobId} as completed`, error, LOG_CONTEXT);
+      Logger.error(error, `Failed to set job ${jobId} as completed`, LOG_CONTEXT);
     }
   }
 
@@ -155,7 +155,7 @@ export class WorkflowQueueService extends QueueService<IJobData> implements INov
         await this.handleLastFailedJob.execute(handleLastFailedJobCommand);
       }
     } catch (anotherError) {
-      Logger.error(`Failed to set job ${jobId} as failed`, anotherError, LOG_CONTEXT);
+      Logger.error(anotherError, `Failed to set job ${jobId} as failed`, LOG_CONTEXT);
     }
   }
 

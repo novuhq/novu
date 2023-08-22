@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { MessageEntity, MessageRepository, SubscriberRepository, SubscriberEntity, MemberRepository } from '@novu/dal';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, WebSocketEventEnum } from '@novu/shared';
 import {
   WsQueueService,
   AnalyticsService,
@@ -83,7 +83,7 @@ export class MarkMessageAs {
   }
 
   private updateSocketCount(subscriber: SubscriberEntity, mark: MarkEnum) {
-    const eventMessage = mark === MarkEnum.READ ? `unread_count_changed` : 'unseen_count_changed';
+    const eventMessage = mark === MarkEnum.READ ? WebSocketEventEnum.UNREAD : WebSocketEventEnum.UNSEEN;
 
     this.wsQueueService.bullMqService.add(
       'sendMessage',

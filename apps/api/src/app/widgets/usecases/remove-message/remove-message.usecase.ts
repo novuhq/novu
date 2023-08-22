@@ -14,6 +14,7 @@ import {
   buildFeedKey,
   buildMessageCountKey,
 } from '@novu/application-generic';
+import { WebSocketEventEnum } from '@novu/shared';
 
 import { RemoveMessageCommand } from './remove-message.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -95,7 +96,7 @@ export class RemoveMessage {
   }
 
   private updateSocketCount(subscriber: SubscriberEntity, mark: MarkEnum) {
-    const eventMessage = mark === MarkEnum.READ ? `unread_count_changed` : 'unseen_count_changed';
+    const eventMessage = mark === MarkEnum.READ ? WebSocketEventEnum.UNREAD : WebSocketEventEnum.UNSEEN;
 
     this.wsQueueService.bullMqService.add(
       'sendMessage',
