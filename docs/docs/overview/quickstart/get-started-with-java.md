@@ -23,7 +23,7 @@ Let's get started! :muscle:
 To be able to use this Quickstart, you would need to have the following:
 
 - A Novu account, if you don't have one yet, [sign up](https://web.novu.co) for free.
-- A working Java development environment with JDK 17 and Springboot Framework of 4.0.0+.
+- A working Java development environment with JDK 17 and Springboot Framework of 3.1.2+.
 
 The completed code for this quick start is available on GitHub. Check it out [here](https://github.com/novuhq/novu-java-quickstart).
 
@@ -60,14 +60,12 @@ To initialize the library, you can create an instance of `Novu.java` class using
 ```java
 //Using the API Key only
 String apiKey = "INSERT_API_KEY_HERE";
-// Using the API Key only
 Novu novu = new Novu(apiKey);
 ```
 
 ```java
 //Using the API Key plus an instance of NovuConfig
 String apiKey = "INSERT_API_KEY_HERE";
-// Using the Config Param
 NovuConfig novuConfig = new NovuConfig(apiKey);
 Novu novu = new Novu(novuConfig);
 ```
