@@ -1,4 +1,5 @@
-import { IsDefined, IsObject, IsOptional, IsString } from 'class-validator';
+import { IsDefined, IsObject, IsOptional, IsString, ValidateIf, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import { TriggerRecipientSubscriber, TriggerTenantContext } from '@novu/shared';
 
@@ -69,5 +70,8 @@ export class TriggerEventToAllRequestDto {
     ],
   })
   @IsOptional()
+  @ValidateIf((_, value) => typeof value !== 'string')
+  @ValidateNested()
+  @Type(() => TenantPayloadDto)
   tenant?: TriggerTenantContext;
 }

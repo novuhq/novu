@@ -1,10 +1,12 @@
 import { Prism } from '@mantine/prism';
+import { useMemo } from 'react';
+import * as set from 'lodash.set';
+import * as get from 'lodash.get';
+
 import { INotificationTrigger, INotificationTriggerVariable, TemplateVariableTypeEnum } from '@novu/shared';
 
 import { API_ROOT } from '../../../config';
 import { colors, Tabs } from '../../../design-system';
-import * as set from 'lodash.set';
-import * as get from 'lodash.get';
 
 const NODE_JS = 'Node.js';
 const CURL = 'Curl';
@@ -20,11 +22,13 @@ export function TriggerSnippetTabs({ trigger }: { trigger: INotificationTrigger 
   const toValue = getSubscriberValue(subscriberVariables, (variable) => variable.value || '<REPLACE_WITH_DATA>');
   const payloadValue = getPayloadValue(trigger.variables);
 
-  const reservedValue = triggerSnippetVariables.reduce((acc, variable) => {
-    acc[variable.type] = getPayloadValue(variable.variables);
+  const reservedValue = useMemo(() => {
+    return triggerSnippetVariables.reduce((acc, variable) => {
+      acc[variable.type] = getPayloadValue(variable.variables);
 
-    return acc;
-  }, {});
+      return acc;
+    }, {});
+  }, [triggerSnippetVariables]);
 
   const prismTabs = [
     {

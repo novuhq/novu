@@ -1,4 +1,4 @@
-import { IsDefined, IsString, IsOptional } from 'class-validator';
+import { IsDefined, IsString, IsOptional, ValidateNested } from 'class-validator';
 import { TriggerRecipients, TriggerRecipientSubscriber, TriggerTenantContext } from '@novu/shared';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
@@ -25,5 +25,6 @@ export class ParseEventRequestCommand extends EnvironmentWithUserCommand {
   actor?: TriggerRecipientSubscriber | null;
 
   @IsOptional()
+  @ValidateNested()
   tenant?: TriggerTenantContext | null;
 }
