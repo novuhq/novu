@@ -8,10 +8,10 @@ import {
   TriggerTenantContext,
 } from '@novu/shared';
 import { CreateSubscriberRequestDto } from '../../subscribers/dtos';
-import { CreateTenantRequestDto } from '../../tenant/dtos';
+import { UpdateTenantRequestDto } from '../../tenant/dtos';
 
 export class SubscriberPayloadDto extends CreateSubscriberRequestDto {}
-export class TenantPayloadDto extends CreateTenantRequestDto {}
+export class TenantPayloadDto extends UpdateTenantRequestDto {}
 
 export class TopicPayloadDto {
   @ApiProperty()
@@ -105,7 +105,7 @@ export class TriggerEventRequestDto {
 
   @ApiProperty({
     description: `It is used to specify a tenant context during trigger event.
-    If a new tenant object is provided, we will create a new tenant in your system
+    If a new tenant object is provided, we will create a new tenant.
     `,
     oneOf: [
       { type: 'string', description: 'Unique identifier of a tenant in your system' },

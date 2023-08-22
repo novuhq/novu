@@ -59,6 +59,8 @@ export class EventsController {
     @UserSession() user: IJwtPayload,
     @Body() body: TriggerEventRequestDto
   ): Promise<TriggerEventResponseDto> {
+    const mappedTenant = body.tenant ? this.mapTenant(body.tenant) : null;
+
     const result = await this.parseEventRequest.execute(
       ParseEventRequestCommand.create({
         userId: user._id,
@@ -69,7 +71,7 @@ export class EventsController {
         overrides: body.overrides || {},
         to: body.to,
         actor: body.actor,
-        tenant: body.tenant,
+        tenant: mappedTenant,
         transactionId: body.transactionId,
       })
     );

@@ -36,10 +36,8 @@ export class ParseEventRequest {
     Logger.log('Starting Trigger');
 
     const mappedActor = command.actor ? this.mapTriggerRecipients.mapSubscriber(command.actor) : undefined;
-    const mappedTenant = command.tenant ? this.mapTenant(command.tenant) : undefined;
 
     Logger.debug(mappedActor);
-    Logger.debug(mappedTenant);
 
     const mappedRecipients = await this.mapTriggerRecipients.execute(
       MapTriggerRecipientsCommand.create({
@@ -116,7 +114,6 @@ export class ParseEventRequest {
         ...command,
         to: mappedRecipients,
         actor: mappedActor,
-        tenant: mappedTenant,
         transactionId,
       },
       command.organizationId
@@ -173,15 +170,14 @@ export class ParseEventRequest {
       const payload = command[reservedVariableType];
       if (!payload) {
         invalidKeys.push(`${reservedVariableType} object`);
-      } else {
-        const requiredVariablesContextNames = ReservedVariablesMap[reservedVariableType].map(
-          (variable) => variable.name
-        );
-        for (const variableName of requiredVariablesContextNames) {
-          const variableNameExists = typeof payload === 'string' ? payload : payload[variableName];
-          if (!variableNameExists) {
-            invalidKeys.push(`${variableName} property of ${reservedVariableType}`);
-          }
+        continue;
+      }
+      const reservedVariableFields = ReservedVariablesMap[reservedVariableType].map((variable) => variable.name);
+      for (const variableName of reservedVariableFields) {
+        const variableNameExists = payload[variableName];
+
+        if (!variableNameExists) {
+          invalidKeys.push(`${variableName} property of ${reservedVariableType}`);
         }
       }
     }
