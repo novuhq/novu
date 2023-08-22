@@ -16,6 +16,8 @@ import { useEffect, useMemo } from 'react';
 import { useBasePath } from '../hooks/useBasePath';
 import { StepName } from './StepName';
 import { DeleteStepRow } from './DeleteStepRow';
+import { ProductLead } from '../../../components/utils/ProductLead';
+import { Translate } from '../../../design-system/icons';
 
 export const ChannelStepEditor = () => {
   const { readonly } = useEnvController();
@@ -100,31 +102,61 @@ export const ChannelStepEditor = () => {
         style={{ paddingBottom: 24 }}
       >
         {channel === StepTypeEnum.SMS && (
-          <TemplateSMSEditor
-            key={index}
-            control={control}
-            index={index}
-            errors={errors}
-            isIntegrationActive={!!integrations?.some((integration) => integration.channel === ChannelTypeEnum.SMS)}
-          />
+          <>
+            <TemplateSMSEditor
+              key={index}
+              control={control}
+              index={index}
+              errors={errors}
+              isIntegrationActive={!!integrations?.some((integration) => integration.channel === ChannelTypeEnum.SMS)}
+            />
+            <ProductLead
+              icon={<Translate />}
+              id="translate-sms-editor"
+              title="Translation management"
+              // eslint-disable-next-line max-len
+              text="Translate your notification content to multiple languages using a connection with a preferred i18n localization provider."
+              variant="column"
+            />
+          </>
         )}
         {channel === StepTypeEnum.PUSH && (
-          <TemplatePushEditor
-            key={index}
-            control={control}
-            index={index}
-            errors={errors}
-            isIntegrationActive={!!integrations?.some((integration) => integration.channel === ChannelTypeEnum.PUSH)}
-          />
+          <>
+            <TemplatePushEditor
+              key={index}
+              control={control}
+              index={index}
+              errors={errors}
+              isIntegrationActive={!!integrations?.some((integration) => integration.channel === ChannelTypeEnum.PUSH)}
+            />
+            <ProductLead
+              icon={<Translate />}
+              id="translate-push-editor"
+              title="Translation management"
+              // eslint-disable-next-line max-len
+              text="Translate your notification content to multiple languages using a connection with a preferred i18n localization provider."
+              variant="column"
+            />
+          </>
         )}
         {channel === StepTypeEnum.CHAT && (
-          <TemplateChatEditor
-            key={index}
-            errors={errors}
-            control={control}
-            index={index}
-            isIntegrationActive={!!integrations?.some((integration) => integration.channel === ChannelTypeEnum.CHAT)}
-          />
+          <>
+            <TemplateChatEditor
+              key={index}
+              errors={errors}
+              control={control}
+              index={index}
+              isIntegrationActive={!!integrations?.some((integration) => integration.channel === ChannelTypeEnum.CHAT)}
+            />
+            <ProductLead
+              icon={<Translate />}
+              id="translate-chat-editor"
+              title="Translation management"
+              // eslint-disable-next-line max-len
+              text="Translate your notification content to multiple languages using a connection with a preferred i18n localization provider."
+              variant="column"
+            />
+          </>
         )}
         {channel === StepTypeEnum.DIGEST && <DigestMetadata index={index} readonly={readonly} />}
         {channel === StepTypeEnum.DELAY && <DelayMetadata control={control} index={index} />}

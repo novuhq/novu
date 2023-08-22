@@ -14,6 +14,8 @@ import { VariablesManagement } from './variables-management/VariablesManagement'
 import { useVariablesManager } from '../../../../hooks';
 import { VariableManagerModal } from '../VariableManagerModal';
 import { StepSettings } from '../../workflow/SideBar/StepSettings';
+import { Translate } from '../../../../design-system/icons';
+import { ProductLead } from '../../../../components/utils/ProductLead';
 
 export enum ViewEnum {
   EDIT = 'Edit',
@@ -130,6 +132,17 @@ export function EmailMessagesCards({ index, isIntegrationActive }: { index: numb
               organization={currentOrganization}
               index={index}
               isIntegrationActive={isIntegrationActive}
+            />
+            <ProductLead
+              icon={<Translate />}
+              id="translate-email-editor"
+              title="Translation management"
+              // eslint-disable-next-line max-len
+              text="Translate your notification content to multiple languages using a connection with a preferred i18n localization provider."
+              variant="column"
+              style={{
+                marginTop: 32,
+              }}
             />
           </Grid.Col>
           <Grid.Col
