@@ -170,7 +170,7 @@ export function UpdateProviderSidebar({
     const { channel: selectedChannel, environmentId, primary } = selectedProvider;
     const isActiveFieldChanged = dirtyFields.active;
     const hasSameChannelActiveIntegration = !!providers
-      .filter((el) => !NOVU_PROVIDERS.includes(el.providerId) && el.integrationId !== selectedProvider.integrationId)
+      .filter((el) => el.integrationId !== selectedProvider.integrationId)
       .find((el) => el.active && el.channel === selectedChannel && el.environmentId === environmentId);
     const isChannelSupportPrimary = CHANNELS_WITH_PRIMARY.includes(selectedChannel);
 
