@@ -23,7 +23,7 @@ Let's get started! :muscle:
 To be able to use this Quickstart, you would need to have the following:
 
 - A Novu account, if you don't have one yet, [sign up](https://web.novu.co) for free.
-- A working Java development environment with JDK 17 and Springboot Framework of 3.1.2+.
+- A working Java development environment with JDK 17 and Springboot Framework of 4.0.0+.
 
 The completed code for this quick start is available on GitHub. Check it out [here](https://github.com/novuhq/novu-java-quickstart).
 
@@ -60,12 +60,14 @@ To initialize the library, you can create an instance of `Novu.java` class using
 ```java
 //Using the API Key only
 String apiKey = "INSERT_API_KEY_HERE";
+// Using the API Key only
 Novu novu = new Novu(apiKey);
 ```
 
 ```java
 //Using the API Key plus an instance of NovuConfig
 String apiKey = "INSERT_API_KEY_HERE";
+// Using the Config Param
 NovuConfig novuConfig = new NovuConfig(apiKey);
 Novu novu = new Novu(novuConfig);
 ```
@@ -319,9 +321,32 @@ Novu novu = new Novu(apiKey);
 
 Thanks to the topics feature, it is possible to trigger a notification to all subscribers assigned to a topic. This helps avoid listing all subscriber identifiers in the `to` field of the notification trigger.
 
-:::info
-This feature is not yet available on the Java SDK, this doc will be updated once it is released on Java.
-:::
+
+To trigger a notification to all subscribers of a topic, copy and paste the code below:
+
+```java
+String apiKey = "API_KEY";
+    Novu novu = new Novu(apiKey);
+
+
+    Topic topic = new Topic();
+        topic.setType("Topic");
+        topic.setTopicKey("topicKey");
+
+    TriggerEventRequest triggerEventRequest = new TriggerEventRequest();
+            triggerEventRequest.setName("name");
+            triggerEventRequest.setTo(topic);
+
+
+    try {
+        return novu.triggerEvent(triggerEventRequest);
+    }catch (Exception e){
+        log.error("Error sending notification to topic", e);
+    }
+
+            return null;
+
+```
 
 ## Next Steps
 
