@@ -16,8 +16,7 @@ import { useEffect, useMemo } from 'react';
 import { useBasePath } from '../hooks/useBasePath';
 import { StepName } from './StepName';
 import { DeleteStepRow } from './DeleteStepRow';
-import { ProductLead } from '../../../components/utils/ProductLead';
-import { Translate } from '../../../design-system/icons';
+import { TranslateProductLead } from './TranslateProductLead';
 
 export const ChannelStepEditor = () => {
   const { readonly } = useEnvController();
@@ -110,14 +109,7 @@ export const ChannelStepEditor = () => {
               errors={errors}
               isIntegrationActive={!!integrations?.some((integration) => integration.channel === ChannelTypeEnum.SMS)}
             />
-            <ProductLead
-              icon={<Translate />}
-              id="translate-sms-editor"
-              title="Translation management"
-              // eslint-disable-next-line max-len
-              text="Translate your notification content to multiple languages using a connection with a preferred i18n localization provider."
-              variant="column"
-            />
+            <TranslateProductLead id="translate-sms-editor" />
           </>
         )}
         {channel === StepTypeEnum.PUSH && (
@@ -129,14 +121,7 @@ export const ChannelStepEditor = () => {
               errors={errors}
               isIntegrationActive={!!integrations?.some((integration) => integration.channel === ChannelTypeEnum.PUSH)}
             />
-            <ProductLead
-              icon={<Translate />}
-              id="translate-push-editor"
-              title="Translation management"
-              // eslint-disable-next-line max-len
-              text="Translate your notification content to multiple languages using a connection with a preferred i18n localization provider."
-              variant="column"
-            />
+            <TranslateProductLead id="translate-push-editor" />
           </>
         )}
         {channel === StepTypeEnum.CHAT && (
@@ -148,14 +133,7 @@ export const ChannelStepEditor = () => {
               index={index}
               isIntegrationActive={!!integrations?.some((integration) => integration.channel === ChannelTypeEnum.CHAT)}
             />
-            <ProductLead
-              icon={<Translate />}
-              id="translate-chat-editor"
-              title="Translation management"
-              // eslint-disable-next-line max-len
-              text="Translate your notification content to multiple languages using a connection with a preferred i18n localization provider."
-              variant="column"
-            />
+            <TranslateProductLead id="translate-chat-editor" />
           </>
         )}
         {channel === StepTypeEnum.DIGEST && <DigestMetadata index={index} readonly={readonly} />}

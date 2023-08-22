@@ -8,7 +8,12 @@ import { useAuthContext } from '../providers/AuthProvider';
 import { useSegment } from '../providers/SegmentProvider';
 import { When } from './When';
 
-const Wrapper = ({ children, variant, id }: { children: any; variant: 'default' | 'column'; id: string }) => {
+export enum ProductLeadVariants {
+  DEFAULT = 'default',
+  COLUMN = 'column',
+}
+
+const Wrapper = ({ children, variant, id }: { children: any; variant: ProductLeadVariants; id: string }) => {
   const segment = useSegment();
 
   useEffect(() => {
@@ -17,7 +22,7 @@ const Wrapper = ({ children, variant, id }: { children: any; variant: 'default' 
     });
   }, []);
 
-  return variant === 'default' ? (
+  return variant === ProductLeadVariants.COLUMN ? (
     <Group position="apart" align="center">
       {children}
     </Group>
@@ -32,7 +37,7 @@ export const ProductLead = ({
   closeable = true,
   icon = null,
   id,
-  variant = 'default',
+  variant = ProductLeadVariants.DEFAULT,
   style = {},
 }: {
   title: string;
@@ -40,7 +45,7 @@ export const ProductLead = ({
   closeable?: boolean;
   icon?: ReactNode;
   id: string;
-  variant?: 'default' | 'column';
+  variant?: ProductLeadVariants;
   style?: CSSProperties;
 }) => {
   const { currentUser } = useAuthContext();
@@ -78,7 +83,7 @@ export const ProductLead = ({
                 {title}
               </Title>
             </Group>
-            <When truthy={closeable && variant === 'column'}>
+            <When truthy={closeable && variant === ProductLeadVariants.COLUMN}>
               <ActionIcon
                 variant={'transparent'}
                 onClick={() => {
@@ -98,14 +103,16 @@ export const ProductLead = ({
         </div>
         <Group spacing={24}>
           <Button
-            mt={variant === 'column' ? 16 : undefined}
+            mt={variant === ProductLeadVariants.COLUMN ? 16 : undefined}
             onClick={() => {
               segment.track('Product lead banner scheduled call clicked', {
                 id,
               });
-              window.location.href = `https://calendly.com/novuhq/novu-meeting?full_name=${
-                currentUser?.firstName
-              }&email=${currentUser?.email}&utm_campaign=${id}&utm_source=${isSelfHosted ? 'self-hosted' : 'cloud'}`;
+              window.open(
+                `https://calendly.com/novuhq/novu-meeting?full_name=${currentUser?.firstName}&email=${
+                  currentUser?.email
+                }&utm_campaign=${id}&utm_source=${isSelfHosted ? 'self-hosted' : 'cloud'}`
+              );
             }}
             variant="outline"
           >
@@ -113,7 +120,7 @@ export const ProductLead = ({
               <Calendar color={dark ? theme.white : colors.B60} /> Schedule a call
             </Group>
           </Button>
-          <When truthy={closeable && variant === 'default'}>
+          <When truthy={closeable && variant === ProductLeadVariants.DEFAULT}>
             <ActionIcon
               variant={'transparent'}
               onClick={() => {

@@ -8,8 +8,7 @@ import { inputStyles } from '../../../../design-system/config/inputs.styles';
 import { useState, useEffect } from 'react';
 import { AvatarFeedFields } from './AvatarFeedFields';
 import { When } from '../../../../components/utils/When';
-import { ProductLead } from '../../../../components/utils/ProductLead';
-import { Translate } from '../../../../design-system/icons';
+import { TranslateProductLead } from '../TranslateProductLead';
 
 const EDITOR = 'Editor';
 const PREVIEW = 'Preview';
@@ -114,13 +113,8 @@ export function InAppContentCard({ index, openVariablesModal }: { index: number;
         <Grid mt={24} grow>
           <Grid.Col span={9}>
             <InAppEditorBlock control={control as any} index={index} readonly={readonly} />
-            <ProductLead
-              icon={<Translate />}
+            <TranslateProductLead
               id="translate-in-app-editor"
-              title="Translation management"
-              // eslint-disable-next-line max-len
-              text="Translate your notification content to multiple languages using a connection with a preferred i18n localization provider."
-              variant="column"
               style={{
                 marginTop: 32,
               }}
