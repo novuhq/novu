@@ -10,7 +10,7 @@ Here we will outline some of the most common questions we get asked about the pr
 
 Novu consists of multiple services written in Node.js and Typescript. The following are the dependencies required to run the project fully:
 
-- Node.js version v16.15.1
+- Node.js version v18.17.1
 - MongoDB
 - Redis
 - File storage (S3/GCP/Azure) - Optional

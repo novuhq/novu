@@ -13,7 +13,7 @@ import FAQItem from '@site/src/components/FAQItem';
 
 ## Requirements
 
-- Node.js version v16.15.1
+- Node.js version v18.17.1
 - MongoDB
 - Redis
 - **(Optional)** pnpm - Needed if you want to install new packages
