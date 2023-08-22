@@ -336,6 +336,7 @@ String apiKey = "API_KEY";
     TriggerEventRequest triggerEventRequest = new TriggerEventRequest();
             triggerEventRequest.setName("name");
             triggerEventRequest.setTo(topic);
+            triggerEventRequest.setPayload(Collections.singletonMap("customVariables", "Hello"));
 
 
     try {
