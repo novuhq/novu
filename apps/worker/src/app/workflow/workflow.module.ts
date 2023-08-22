@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import {
   AddDelayJob,
   AddDigestJob,
-  bullMqService,
+  BullMqService,
   BulkCreateExecutionDetails,
   CalculateLimitNovuIntegration,
   CompileEmailTemplate,
@@ -104,7 +104,7 @@ const bullMqTokenList = {
 };
 
 const PROVIDERS = [
-  bullMqService,
+  BullMqService,
   bullMqTokenList,
   StandardWorker,
   WorkflowWorker,

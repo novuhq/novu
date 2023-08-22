@@ -29,14 +29,14 @@ describe('Job metrics Queue service', () => {
     );
     expect(jobMetricsQueueService.DEFAULT_ATTEMPTS).toEqual(3);
     expect(jobMetricsQueueService.topic).toEqual('metric');
-    expect(
-      await jobMetricsQueueService.bullMqService.getRunningStatus()
-    ).toEqual({
+    expect(await jobMetricsQueueService.bullMqService.getStatus()).toEqual({
       queueIsPaused: false,
       queueName: 'metric',
       workerName: undefined,
+      workerIsPaused: undefined,
       workerIsRunning: undefined,
     });
+    expect(await jobMetricsQueueService.isPaused()).toEqual(false);
     expect(jobMetricsQueueService.queue).toMatchObject(
       expect.objectContaining({
         _events: {},

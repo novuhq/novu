@@ -32,8 +32,6 @@ const LOG_CONTEXT = 'StandardWorker';
 
 @Injectable()
 export class StandardWorker extends StandardWorkerService implements INovuWorker {
-  public readonly worker;
-
   constructor(
     @Inject(forwardRef(() => HandleLastFailedJob)) private handleLastFailedJob: HandleLastFailedJob,
     @Inject(forwardRef(() => RunJob)) private runJob: RunJob,

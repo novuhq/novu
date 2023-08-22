@@ -21,16 +21,15 @@ export class WebSocketsQueueServiceHealthIndicator extends HealthIndicator {
   }
 
   async isHealthy(): Promise<HealthIndicatorResult> {
-    const runningStatus =
-      await this.webSocketsQueueService.bullMqService.getRunningStatus();
+    const isReady = this.webSocketsQueueService.isReady();
 
-    if (!runningStatus.queueIsPaused) {
-      Logger.log('WebSocketsQueueService is not paused', LOG_CONTEXT);
+    if (isReady) {
+      Logger.verbose('WebSocketsQueueService is ready', LOG_CONTEXT);
 
       return this.getStatus(this.INDICATOR_KEY, true);
     }
 
-    Logger.log('WebSocketsQueueService is paused', LOG_CONTEXT);
+    Logger.verbose('WebSocketsQueueService is not ready', LOG_CONTEXT);
 
     throw new HealthCheckError(
       'Ws Queue Health',

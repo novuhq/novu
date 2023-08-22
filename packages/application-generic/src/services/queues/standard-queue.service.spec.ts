@@ -25,14 +25,14 @@ describe('Standard Queue service', () => {
     );
     expect(standardQueueService.DEFAULT_ATTEMPTS).toEqual(3);
     expect(standardQueueService.topic).toEqual('standard');
-    expect(await standardQueueService.bullMqService.getRunningStatus()).toEqual(
-      {
-        queueIsPaused: false,
-        queueName: 'standard',
-        workerName: undefined,
-        workerIsRunning: undefined,
-      }
-    );
+    expect(await standardQueueService.bullMqService.getStatus()).toEqual({
+      queueIsPaused: false,
+      queueName: 'standard',
+      workerName: undefined,
+      workerIsPaused: undefined,
+      workerIsRunning: undefined,
+    });
+    expect(await standardQueueService.isPaused()).toEqual(false);
     expect(standardQueueService.queue).toMatchObject(
       expect.objectContaining({
         _events: {},

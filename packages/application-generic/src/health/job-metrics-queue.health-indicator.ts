@@ -21,16 +21,15 @@ export class JobMetricsQueueServiceHealthIndicator extends HealthIndicator {
   }
 
   async isHealthy(): Promise<HealthIndicatorResult> {
-    const runningStatus =
-      await this.jobMetricsQueueService.bullMqService.getRunningStatus();
+    const isReady = this.jobMetricsQueueService.isReady();
 
-    if (!runningStatus.queueIsPaused) {
-      Logger.log('JobMetricsQueueService is not paused', LOG_CONTEXT);
+    if (isReady) {
+      Logger.verbose('JobMetricsQueueService is ready', LOG_CONTEXT);
 
       return this.getStatus(this.INDICATOR_KEY, true);
     }
 
-    Logger.log('JobMetricsQueueService is paused', LOG_CONTEXT);
+    Logger.verbose('JobMetricsQueueService is not ready', LOG_CONTEXT);
 
     throw new HealthCheckError(
       'JobMetrics Queue Health',

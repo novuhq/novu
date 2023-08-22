@@ -22,7 +22,6 @@ export class WorkerBaseService {
   private instance: BullMqService;
 
   public readonly DEFAULT_ATTEMPTS = 3;
-  public worker: Worker;
 
   constructor(public readonly topic: JobTopicNameEnum) {
     this.instance = new BullMqService();
@@ -30,6 +29,10 @@ export class WorkerBaseService {
 
   public get bullMqService(): BullMqService {
     return this.instance;
+  }
+
+  public get worker(): Worker {
+    return this.instance.worker;
   }
 
   public initWorker(processor: WorkerProcessor, options?: WorkerOptions): void {
@@ -42,51 +45,28 @@ export class WorkerBaseService {
     processor: WorkerProcessor,
     options: WorkerOptions
   ): void {
-    this.worker = this.instance.createWorker(this.topic, processor, options);
+    this.instance.createWorker(this.topic, processor, options);
   }
 
-  public async pauseWorker(): Promise<void> {
+  public async isRunning(): Promise<boolean> {
+    return await this.instance.isWorkerRunning();
+  }
+
+  public async pause(): Promise<void> {
     if (this.worker) {
-      Logger.log(`There is worker ${this.worker.name} to pause`, LOG_CONTEXT);
-
-      try {
-        await this.worker.pause();
-        Logger.log(`Worker ${this.worker.name} pause succeeded`, LOG_CONTEXT);
-      } catch (error) {
-        Logger.error(
-          error,
-          `Worker ${this.worker.name} pause failed`,
-          LOG_CONTEXT
-        );
-
-        throw error;
-      }
+      await this.instance.pauseWorker();
     }
   }
 
-  public async resumeWorker(): Promise<void> {
+  public async resume(): Promise<void> {
     if (this.worker) {
-      Logger.log(`There is worker ${this.worker.name} to resume`, LOG_CONTEXT);
-
-      try {
-        await this.worker.resume();
-        Logger.log(`Worker ${this.worker.name} resume succeeded`, LOG_CONTEXT);
-      } catch (error) {
-        Logger.error(
-          error,
-          `Worker ${this.worker.name} resume failed`,
-          LOG_CONTEXT
-        );
-
-        throw error;
-      }
+      await this.instance.resumeWorker();
     }
   }
 
   public async gracefulShutdown(): Promise<void> {
     Logger.log('Shutting the Worker service down', LOG_CONTEXT);
 
-    this.worker = undefined;
     await this.instance.gracefulShutdown();
 
     Logger.log('Shutting down the Worker service has finished', LOG_CONTEXT);

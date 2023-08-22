@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 
 import {
-  bullMqService,
   readinessService,
   oldInstanceBullMqService,
 } from '../custom-providers';
@@ -10,7 +9,7 @@ import {
   WebSocketsQueueServiceHealthIndicator,
   WorkflowQueueServiceHealthIndicator,
 } from '../health';
-import { OldInstanceBullMqService } from '../services';
+import { BullMqService, OldInstanceBullMqService } from '../services';
 import {
   StandardQueueService,
   WebSocketsQueueService,
@@ -25,7 +24,7 @@ import {
 } from '../services/workers';
 
 const PROVIDERS = [
-  bullMqService,
+  BullMqService,
   readinessService,
   StandardQueueService,
   StandardQueueServiceHealthIndicator,

@@ -21,20 +21,15 @@ export class StandardQueueServiceHealthIndicator extends HealthIndicator {
   }
 
   async isHealthy(): Promise<HealthIndicatorResult> {
-    Logger.log('Checking the health', LOG_CONTEXT);
+    const isReady = this.standardQueueService.isReady();
 
-    const runningStatus =
-      await this.standardQueueService.bullMqService.getRunningStatus();
-
-    Logger.warn({ runningStatus }, 'Running status', LOG_CONTEXT);
-
-    if (!runningStatus.queueIsPaused) {
-      Logger.log('StandardQueueService is not paused', LOG_CONTEXT);
+    if (isReady) {
+      Logger.verbose('StandardQueueService is ready', LOG_CONTEXT);
 
       return this.getStatus(this.INDICATOR_KEY, true);
     }
 
-    Logger.log('StandardQueueService is paused', LOG_CONTEXT);
+    Logger.verbose('StandardQueueService is not ready', LOG_CONTEXT);
 
     throw new HealthCheckError(
       'Standard Queue Health',

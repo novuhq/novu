@@ -131,8 +131,7 @@ describe('Standard Worker', () => {
       'setJobAsCompleted',
       'setJobAsFailed',
       'topic',
-      'webhookFilterBackoffStrategy',
-      'worker'
+      'webhookFilterBackoffStrategy'
     );
     expect(standardWorker.DEFAULT_ATTEMPTS).to.eql(3);
     expect(standardWorker.worker).to.deep.include({
@@ -140,10 +139,11 @@ describe('Standard Worker', () => {
       _maxListeners: undefined,
       name: 'standard',
     });
-    expect(await standardWorker.bullMqService.getRunningStatus()).to.deep.equal({
+    expect(await standardWorker.bullMqService.getStatus()).to.deep.equal({
       queueIsPaused: undefined,
       queueName: undefined,
       workerName: 'standard',
+      workerIsPaused: false,
       workerIsRunning: true,
     });
     expect(standardWorker.worker.opts).to.deep.include({
@@ -297,6 +297,64 @@ describe('Standard Worker', () => {
 
     expect(failedTrigger.error).to.deep.include({
       message: `Notification template ${_templateId} is not found`,
+    });
+  });
+
+  it('should pause the worker', async () => {
+    const isPaused = await standardWorker.worker.isPaused();
+    expect(isPaused).to.equal(false);
+
+    const runningStatus = await standardWorker.bullMqService.getStatus();
+    expect(runningStatus).to.deep.equal({
+      queueIsPaused: undefined,
+      queueName: undefined,
+      workerName: 'standard',
+      workerIsPaused: false,
+      workerIsRunning: true,
+    });
+
+    await standardWorker.pause();
+
+    const isNowPaused = await standardWorker.worker.isPaused();
+    expect(isNowPaused).to.equal(true);
+
+    const runningStatusChanged = await standardWorker.bullMqService.getStatus();
+    expect(runningStatusChanged).to.deep.equal({
+      queueIsPaused: undefined,
+      queueName: undefined,
+      workerName: 'standard',
+      workerIsPaused: true,
+      workerIsRunning: true,
+    });
+  });
+
+  it('should resume the worker', async () => {
+    await standardWorker.pause();
+
+    const isPaused = await standardWorker.worker.isPaused();
+    expect(isPaused).to.equal(true);
+
+    const runningStatus = await standardWorker.bullMqService.getStatus();
+    expect(runningStatus).to.deep.equal({
+      queueIsPaused: undefined,
+      queueName: undefined,
+      workerName: 'standard',
+      workerIsPaused: true,
+      workerIsRunning: true,
+    });
+
+    await standardWorker.resume();
+
+    const isNowPaused = await standardWorker.worker.isPaused();
+    expect(isNowPaused).to.equal(false);
+
+    const runningStatusChanged = await standardWorker.bullMqService.getStatus();
+    expect(runningStatusChanged).to.deep.equal({
+      queueIsPaused: undefined,
+      queueName: undefined,
+      workerName: 'standard',
+      workerIsPaused: false,
+      workerIsRunning: true,
     });
   });
 });

@@ -13,9 +13,7 @@ import * as dns from 'dns';
 import logger from './logger';
 import * as extend from 'extend';
 import { InboundMailQueueService } from './inbound-mail-queue.service';
-import {
-  BullMqService,
-} from '@novu/application-generic';
+import { BullMqService } from '@novu/application-generic';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const LanguageDetect = require('languagedetect');
