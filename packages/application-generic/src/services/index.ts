@@ -4,7 +4,7 @@ export * from './feature-flags.service';
 export * from './cache';
 export * from './queues';
 export * from './workers';
-export { INovuWorker, ReadinessService } from './readiness.service';
+export { INovuWorker, ReadinessService } from './readiness';
 export { AnalyticsService } from './analytics.service';
 export { VerifyPayloadService } from './verify-payload.service';
 export { EventsDistributedLockService } from './events-distributed-lock.service';

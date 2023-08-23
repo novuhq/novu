@@ -1,12 +1,12 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { Worker } from './bull-mq';
+import { Worker } from '../bull-mq';
 
 import {
   StandardQueueServiceHealthIndicator,
   WebSocketsQueueServiceHealthIndicator,
   WorkflowQueueServiceHealthIndicator,
-} from '../health';
+} from '../../health';
 
 export interface INovuWorker {
   readonly DEFAULT_ATTEMPTS: number;

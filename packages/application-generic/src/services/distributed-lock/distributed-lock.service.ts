@@ -103,6 +103,7 @@ export class DistributedLockService {
         } finally {
           this.shuttingDown = false;
           this.distributedLock = undefined;
+          await this.inMemoryProviderService.shutdown();
           Logger.verbose('Redlock shutdown', LOG_CONTEXT);
         }
       }

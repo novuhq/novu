@@ -60,6 +60,10 @@ describe('Distributed Lock Service', () => {
       await distributedLockService.initialize();
     });
 
+    afterAll(async () => {
+      await distributedLockService.shutdown();
+    });
+
     describe('Set up', () => {
       it('should have made a connection to the unique instance implemented', async () => {
         expect(distributedLockService.distributedLock).toBeDefined();
@@ -316,6 +320,10 @@ describe('Distributed Lock Service', () => {
       process.env.REDIS_CLUSTER_SERVICE_HOST = originalRedisClusterServiceHost;
       process.env.REDIS_CLUSTER_SERVICE_PORTS =
         originalRedisClusterServicePorts;
+    });
+
+    afterAll(async () => {
+      await distributedLockService.shutdown();
     });
 
     describe('No in-memory instance', () => {
