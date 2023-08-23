@@ -17,7 +17,7 @@ const Wrapper = ({ children, variant, id }: { children: any; variant: ProductLea
   const segment = useSegment();
 
   useEffect(() => {
-    segment.track('Product lead banner seen', {
+    segment.track('Banner seen - [Product lead]', {
       id,
     });
   }, []);
@@ -88,7 +88,7 @@ export const ProductLead = ({
                 variant={'transparent'}
                 onClick={() => {
                   setOpen(false);
-                  segment.track('Product lead banner hidden', {
+                  segment.track('Banner hidden - [Product lead]', {
                     id,
                   });
                 }}
@@ -105,7 +105,7 @@ export const ProductLead = ({
           <Button
             mt={variant === ProductLeadVariants.COLUMN ? 16 : undefined}
             onClick={() => {
-              segment.track('Product lead banner scheduled call clicked', {
+              segment.track('Scheduled call clicked - [Product lead]', {
                 id,
               });
               window.open(
@@ -125,7 +125,7 @@ export const ProductLead = ({
               variant={'transparent'}
               onClick={() => {
                 setOpen(false);
-                segment.track('Product lead banner hidden', {
+                segment.track('Banner hidden - [Product lead]', {
                   id,
                 });
               }}
