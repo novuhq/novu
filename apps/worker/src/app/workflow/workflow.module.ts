@@ -35,6 +35,7 @@ import {
   UpdateTenant,
   GetTenant,
   CreateTenant,
+  ProcessTenant,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
@@ -62,7 +63,6 @@ import {
   WebhookFilterBackoffStrategy,
 } from './usecases';
 import { MetricQueueService } from './services/metric-queue.service';
-import { ProcessTenant } from '@novu/application-generic/build/main/usecases/process-tenant';
 
 const USE_CASES = [
   AddJob,
