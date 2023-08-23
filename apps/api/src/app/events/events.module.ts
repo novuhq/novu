@@ -2,10 +2,10 @@ import { Module } from '@nestjs/common';
 import { TerminusModule } from '@nestjs/terminus';
 
 import {
+  AddJob,
   AddDelayJob,
   AddDigestJob,
-  AddJob,
-  BullMqService,
+  CreateExecutionDetails,
   CreateNotificationJobs,
   DigestFilterSteps,
   DigestFilterStepsBackoff,
@@ -14,6 +14,7 @@ import {
   EventsDistributedLockService,
   GetNovuProviderCredentials,
   ProcessSubscriber,
+  ProcessTenant,
   QueuesModule,
   StorageHelperService,
   SendTestEmail,
@@ -22,7 +23,6 @@ import {
 } from '@novu/application-generic';
 
 import { EventsController } from './events.controller';
-import { EventsWorkflowQueueService } from './services';
 import { USE_CASES } from './usecases';
 
 import { SharedModule } from '../shared/shared.module';
@@ -38,20 +38,20 @@ import { LayoutsModule } from '../layouts/layouts.module';
 import { TenantModule } from '../tenant/tenant.module';
 
 const PROVIDERS = [
+  AddJob,
   AddDelayJob,
   AddDigestJob,
-  AddJob,
-  BullMqService,
+  CreateExecutionDetails,
   CreateNotificationJobs,
   DigestFilterSteps,
   DigestFilterStepsBackoff,
   DigestFilterStepsRegular,
   DigestFilterStepsTimed,
-  EventsWorkflowQueueService,
   GetNovuProviderCredentials,
   StorageHelperService,
   EventsDistributedLockService,
   ProcessSubscriber,
+  ProcessTenant,
   SendTestEmail,
   StoreSubscriberJobs,
   TriggerEvent,

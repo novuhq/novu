@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import { Worker } from '../bull-mq';
 
@@ -23,9 +23,7 @@ const LOG_CONTEXT = 'ReadinessService';
 @Injectable()
 export class ReadinessService {
   constructor(
-    @Inject(StandardQueueServiceHealthIndicator)
     private standardQueueServiceHealthIndicator: StandardQueueServiceHealthIndicator,
-    @Inject(WorkflowQueueServiceHealthIndicator)
     private workflowQueueServiceHealthIndicator: WorkflowQueueServiceHealthIndicator
   ) {}
 

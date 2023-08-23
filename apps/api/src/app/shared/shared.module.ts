@@ -38,6 +38,7 @@ import {
   InvalidateCacheService,
   launchDarklyService,
   LoggerModule,
+  QueuesModule,
   storageService,
 } from '@novu/application-generic';
 
@@ -103,8 +104,9 @@ const PROVIDERS = [
         version: packageJson.version,
       })
     ),
+    QueuesModule,
   ],
   providers: [...PROVIDERS],
-  exports: [...PROVIDERS, LoggerModule],
+  exports: [...PROVIDERS, LoggerModule, QueuesModule],
 })
 export class SharedModule {}

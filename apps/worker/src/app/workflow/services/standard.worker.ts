@@ -33,8 +33,8 @@ const LOG_CONTEXT = 'StandardWorker';
 @Injectable()
 export class StandardWorker extends StandardWorkerService implements INovuWorker {
   constructor(
-    @Inject(forwardRef(() => HandleLastFailedJob)) private handleLastFailedJob: HandleLastFailedJob,
-    @Inject(forwardRef(() => RunJob)) private runJob: RunJob,
+    private handleLastFailedJob: HandleLastFailedJob,
+    private runJob: RunJob,
     @Inject(forwardRef(() => SetJobAsCompleted)) private setJobAsCompleted: SetJobAsCompleted,
     @Inject(forwardRef(() => SetJobAsFailed)) private setJobAsFailed: SetJobAsFailed,
     @Inject(forwardRef(() => WebhookFilterBackoffStrategy))
@@ -93,7 +93,10 @@ export class StandardWorker extends StandardWorkerService implements INovuWorker
 
   private getWorkerProcessor() {
     return async ({ data }: { data: IJobData | any }) => {
+      Logger.verbose(data, 'Processing a job', LOG_CONTEXT);
       const minimalJobData = this.extractMinimalJobData(data);
+
+      Logger.verbose(minimalJobData, 'Processing the minimal job data', LOG_CONTEXT);
 
       return await new Promise(async (resolve, reject) => {
         // eslint-disable-next-line @typescript-eslint/no-this-alias

@@ -59,6 +59,12 @@ export class TriggerEvent {
 
   @InstrumentUsecase()
   async execute(command: TriggerEventCommand) {
+    Logger.verbose(
+      command,
+      'Trigger event starts from the StandardWorker',
+      LOG_CONTEXT
+    );
+
     const {
       actor,
       environmentId,
@@ -165,6 +171,17 @@ export class TriggerEvent {
         })
       );
 
+      Logger.verbose(
+        {
+          environmentId,
+          organizationId,
+          userId,
+          subscriberProcessed,
+        },
+        'Subscriber processed stored',
+        LOG_CONTEXT
+      );
+
       // If no subscriber makes no sense to try to create notification
       if (subscriberProcessed) {
         const createNotificationJobsCommand =
@@ -194,6 +211,17 @@ export class TriggerEvent {
           organizationId: command.organizationId,
         });
         await this.storeSubscriberJobs.execute(storeSubscriberJobsCommand);
+
+        Logger.verbose(
+          {
+            numberOfJobs: notificationJobs.length,
+            environmentId,
+            organizationId,
+            subscriberProcessed,
+          },
+          'Jobs stored',
+          LOG_CONTEXT
+        );
       } else {
         /**
          * TODO: Potentially add a CreateExecutionDetails entry. Right now we

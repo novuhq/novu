@@ -3,7 +3,7 @@ import {
   HealthIndicator,
   HealthIndicatorResult,
 } from '@nestjs/terminus';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import { InboundParseQueueService } from '../services';
 
@@ -13,10 +13,7 @@ const LOG_CONTEXT = 'InboundParseQueueServiceHealthIndicator';
 export class InboundParseQueueServiceHealthIndicator extends HealthIndicator {
   private INDICATOR_KEY = 'inboundParseQueue';
 
-  constructor(
-    @Inject(InboundParseQueueService)
-    private inboundParseQueueService: InboundParseQueueService
-  ) {
+  constructor(private inboundParseQueueService: InboundParseQueueService) {
     super();
   }
 

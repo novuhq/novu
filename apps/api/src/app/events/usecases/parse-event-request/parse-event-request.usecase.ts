@@ -1,10 +1,16 @@
-import { Inject, Injectable, UnprocessableEntityException, Logger } from '@nestjs/common';
+import { Injectable, UnprocessableEntityException, Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 import * as hat from 'hat';
 import { merge } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
-import { Instrument, InstrumentUsecase } from '@novu/application-generic';
-
+import {
+  buildNotificationTemplateIdentifierKey,
+  CachedEntity,
+  Instrument,
+  InstrumentUsecase,
+  StorageHelperService,
+  WorkflowQueueService,
+} from '@novu/application-generic';
 import { NotificationTemplateRepository, NotificationTemplateEntity } from '@novu/dal';
 import {
   ISubscribersDefine,
@@ -13,15 +19,14 @@ import {
   TriggerContextTypeEnum,
   TriggerTenantContext,
 } from '@novu/shared';
-import { buildNotificationTemplateIdentifierKey, CachedEntity, StorageHelperService } from '@novu/application-generic';
 
 import { ParseEventRequestCommand } from './parse-event-request.command';
-
-import { EventsWorkflowQueueService } from '../../services';
 
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { VerifyPayload, VerifyPayloadCommand } from '../verify-payload';
 import { MapTriggerRecipients, MapTriggerRecipientsCommand } from '../map-trigger-recipients';
+
+const LOG_CONTEXT = 'ParseEventRequest';
 
 @Injectable()
 export class ParseEventRequest {
@@ -29,7 +34,7 @@ export class ParseEventRequest {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private verifyPayload: VerifyPayload,
     private storageHelperService: StorageHelperService,
-    private eventsWorkflowQueueService: EventsWorkflowQueueService,
+    private workflowQueueService: WorkflowQueueService,
     private mapTriggerRecipients: MapTriggerRecipients
   ) {}
 
@@ -117,7 +122,8 @@ export class ParseEventRequest {
       actor: mappedActor,
       transactionId,
     };
-    await this.eventsWorkflowQueueService.add(transactionId, jobData, command.organizationId);
+    Logger.verbose(jobData, 'Adding complete job in the Workflow Queue "trigger-handler"', LOG_CONTEXT);
+    await this.workflowQueueService.add(transactionId, jobData, command.organizationId);
 
     return {
       acknowledged: true,

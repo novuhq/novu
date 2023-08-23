@@ -3,7 +3,7 @@ import {
   HealthIndicator,
   HealthIndicatorResult,
 } from '@nestjs/terminus';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import { WebSocketsQueueService } from '../services';
 
@@ -13,10 +13,7 @@ const LOG_CONTEXT = 'WebSocketsQueueServiceHealthIndicator';
 export class WebSocketsQueueServiceHealthIndicator extends HealthIndicator {
   private INDICATOR_KEY = 'webSocketsQueue';
 
-  constructor(
-    @Inject(WebSocketsQueueService)
-    private webSocketsQueueService: WebSocketsQueueService
-  ) {
+  constructor(private webSocketsQueueService: WebSocketsQueueService) {
     super();
   }
 

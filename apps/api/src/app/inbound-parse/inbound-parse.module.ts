@@ -3,7 +3,6 @@ import {
   CompileTemplate,
   InboundParseQueueService as InboundParseQueue,
   InboundParseWorkerService as InboundParseWorker,
-  QueuesModule,
 } from '@novu/application-generic';
 
 import { USE_CASES } from './usecases';
@@ -18,7 +17,7 @@ import { AuthModule } from '../auth/auth.module';
 const PROVIDERS = [InboundParseQueue, InboundParseWorker, InboundParseQueueService, GetMxRecord, CompileTemplate];
 
 @Module({
-  imports: [SharedModule, AuthModule, QueuesModule],
+  imports: [SharedModule, AuthModule],
   controllers: [InboundParseController],
   providers: [...PROVIDERS, ...USE_CASES],
   exports: [...USE_CASES],

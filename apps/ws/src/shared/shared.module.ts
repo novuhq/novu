@@ -13,11 +13,8 @@ import {
 } from '@novu/dal';
 import {
   AnalyticsService,
-  BullMqService,
   DalServiceHealthIndicator,
   GetIsInMemoryClusterModeEnabled,
-  QueuesModule,
-  WebSocketsQueueServiceHealthIndicator,
 } from '@novu/application-generic';
 
 import { SubscriberOnlineService } from './subscriber-online';
@@ -55,12 +52,10 @@ const analyticsService = {
 
 const PROVIDERS = [
   analyticsService,
-  BullMqService,
   dalService,
   DalServiceHealthIndicator,
   GetIsInMemoryClusterModeEnabled,
   SubscriberOnlineService,
-  WebSocketsQueueServiceHealthIndicator,
   ...DAL_MODELS,
 ];
 
@@ -72,7 +67,6 @@ const PROVIDERS = [
         expiresIn: 360000,
       },
     }),
-    QueuesModule,
   ],
   providers: [...PROVIDERS],
   exports: [...PROVIDERS, JwtModule],

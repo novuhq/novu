@@ -23,9 +23,9 @@ export class HealthController {
   @HealthCheck()
   healthCheck(): Promise<HealthCheckResult> {
     return this.healthCheckService.check([
-      () => this.dalHealthIndicator.isHealthy(),
-      () => this.standardQueueHealthIndicator.isHealthy(),
-      () => this.workflowQueueHealthIndicator.isHealthy(),
+      async () => this.dalHealthIndicator.isHealthy(),
+      async () => this.standardQueueHealthIndicator.isHealthy(),
+      async () => this.workflowQueueHealthIndicator.isHealthy(),
       async () => {
         return {
           apiVersion: {

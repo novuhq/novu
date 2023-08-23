@@ -13,6 +13,9 @@ import {
   LaunchDarklyService,
   ReadinessService,
   OldInstanceBullMqService,
+  StandardQueueService,
+  WebSocketsQueueService,
+  WorkflowQueueService,
 } from '../services';
 import {
   GetIsInMemoryClusterModeEnabled,
@@ -154,19 +157,14 @@ export const distributedLockService = {
   inject: [GetIsInMemoryClusterModeEnabled],
 };
 
-export const readinessService = {
-  provide: ReadinessService,
+export const bullMqTokenList = {
+  provide: 'BULLMQ_LIST',
   useFactory: (
-    standardQueueServiceHealthIndicator: StandardQueueServiceHealthIndicator,
-    workflowQueueServiceHealthIndicator: WorkflowQueueServiceHealthIndicator
+    standardQueueService: StandardQueueService,
+    webSocketsQueueService: WebSocketsQueueService,
+    workflowQueueService: WorkflowQueueService
   ) => {
-    return new ReadinessService(
-      standardQueueServiceHealthIndicator,
-      workflowQueueServiceHealthIndicator
-    );
+    return [standardQueueService, webSocketsQueueService, workflowQueueService];
   },
-  inject: [
-    StandardQueueServiceHealthIndicator,
-    WorkflowQueueServiceHealthIndicator,
-  ],
+  inject: [StandardQueueService, WebSocketsQueueService, WorkflowQueueService],
 };

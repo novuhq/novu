@@ -129,7 +129,7 @@ export class BullMqService {
   private addPrefixToConfig(prefix: JobTopicNameEnum, config) {
     return {
       ...config,
-      prefix: `{${prefix}}`,
+      //prefix: `{${prefix}}`,
     };
   }
 
@@ -216,6 +216,12 @@ export class BullMqService {
     options: JobsOptions = {},
     groupId?: string
   ) {
+    Logger.verbose(
+      { id, data, options },
+      'Adding the job to the queue',
+      LOG_CONTEXT
+    );
+
     this._queue.add(id, data, {
       ...options,
       ...(BullMqService.pro && groupId
@@ -226,6 +232,8 @@ export class BullMqService {
           }
         : {}),
     });
+
+    Logger.verbose({ id }, `Added the job ${id} to the queue`, LOG_CONTEXT);
   }
 
   public async gracefulShutdown(): Promise<void> {

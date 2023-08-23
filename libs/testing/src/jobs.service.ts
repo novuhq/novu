@@ -4,15 +4,17 @@ import { JobTopicNameEnum, StepTypeEnum } from '@novu/shared';
 
 import { TestingQueueService } from './testing-queue.service';
 
+const LOG_CONTEXT = 'TestingJobsService';
+
 export class JobsService {
   private jobRepository = new JobRepository();
 
   public standardQueue: Queue;
   public workflowQueue: Queue;
 
-  constructor() {
-    this.workflowQueue = new TestingQueueService(JobTopicNameEnum.WORKFLOW).queue;
-    this.standardQueue = new TestingQueueService(JobTopicNameEnum.STANDARD).queue;
+  constructor(private isClusterMode?: boolean) {
+    this.workflowQueue = new TestingQueueService(JobTopicNameEnum.WORKFLOW, this.isClusterMode).queue;
+    this.standardQueue = new TestingQueueService(JobTopicNameEnum.STANDARD, this.isClusterMode).queue;
   }
 
   public async awaitParsingEvents() {
