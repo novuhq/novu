@@ -130,7 +130,7 @@ export class BullMqService {
   private addPrefixToConfig(prefix: JobTopicNameEnum, config) {
     return {
       ...config,
-      //prefix: `{${prefix}}`,
+      prefix: `{${prefix}}`,
     };
   }
 

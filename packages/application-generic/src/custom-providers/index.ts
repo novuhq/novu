@@ -101,9 +101,8 @@ export const cacheService = {
   useFactory: async (
     getIsInMemoryClusterModeEnabledUseCase: GetIsInMemoryClusterModeEnabled
   ): Promise<CacheService> => {
-    // TODO: Temporary to test in Dev. Should be removed.
     const enableAutoPipelining =
-      process.env.REDIS_CACHE_ENABLE_AUTOPIPELINING === 'true';
+      process.env.REDIS_CACHE_ENABLE_AUTOPIPELINING === 'false';
     const factoryInMemoryProviderService = inMemoryProviderService.useFactory(
       getIsInMemoryClusterModeEnabledUseCase,
       InMemoryProviderEnum.ELASTICACHE,

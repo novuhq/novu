@@ -20,7 +20,6 @@ import { GetIsInMemoryClusterModeEnabled } from '../../usecases';
 
 const LOG_CONTEXT = 'InMemoryProviderService';
 
-@Injectable()
 export class InMemoryProviderService {
   public inMemoryProviderClient: InMemoryProviderClient;
   public inMemoryProviderConfig: InMemoryProviderConfig;
