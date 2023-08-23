@@ -120,23 +120,6 @@ export class ParseEventRequest {
     );
   }
 
-  /*
-   * @Instrument()
-   * private async validateSubscriberIdProperty(to: ISubscribersDefine[]): Promise<boolean> {
-   *   for (const subscriber of to) {
-   *     const subscriberIdExists = typeof subscriber === 'string' ? subscriber : subscriber.subscriberId;
-   *
-   *     if (!subscriberIdExists) {
-   *       throw new ApiException(
-   *         'subscriberId under property to is not configured, please make sure all subscribers contains subscriberId property'
-   *       );
-   *     }
-   *   }
-   *
-   *   return true;
-   * }
-   */
-
   @Instrument()
   private validateTriggerContext(
     command: ParseEventRequestCommand,
