@@ -12,12 +12,7 @@ import {
   WorkerOptions,
 } from 'bullmq';
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  getRedisPrefix,
-  IEventJobData,
-  IJobData,
-  JobTopicNameEnum,
-} from '@novu/shared';
+import { IEventJobData, IJobData, JobTopicNameEnum } from '@novu/shared';
 
 import {
   InMemoryProviderEnum,
@@ -104,7 +99,11 @@ export class BullMqService {
 
     const bullMqBaseOptions = {
       connection: {
-        db: Number(process.env.REDIS_DB_INDEX),
+        db:
+          this.inMemoryProviderService.getProvider !==
+          InMemoryProviderEnum.MEMORY_DB
+            ? Number(process.env.REDIS_DB_INDEX)
+            : undefined,
         port: inMemoryProviderConfig.port,
         host: inMemoryProviderConfig.host,
         username: inMemoryProviderConfig.username,
