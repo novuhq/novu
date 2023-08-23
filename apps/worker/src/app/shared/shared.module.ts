@@ -39,7 +39,6 @@ import {
   DigestFilterStepsTimed,
   distributedLockService,
   EventsDistributedLockService,
-  featureFlagsService,
   GetIsInMemoryClusterModeEnabled,
   getIsMultiProviderConfigurationEnabled,
   InvalidateCacheService,
@@ -53,6 +52,7 @@ import {
   GetTenant,
   CreateTenant,
   ProcessTenant,
+  featureFlagsService,
 } from '@novu/application-generic';
 
 import * as packageJson from '../../../package.json';

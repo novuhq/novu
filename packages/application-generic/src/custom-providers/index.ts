@@ -10,7 +10,6 @@ import {
   FeatureFlagsService,
   InMemoryProviderEnum,
   InMemoryProviderService,
-  LaunchDarklyService,
   ReadinessService,
   OldInstanceBullMqService,
   StandardQueueService,
@@ -22,16 +21,6 @@ import {
   GetIsMultiProviderConfigurationEnabled,
   GetIsTopicNotificationEnabled,
 } from '../usecases';
-
-export const launchDarklyService = {
-  provide: LaunchDarklyService,
-  useFactory: async (): Promise<LaunchDarklyService> => {
-    const service = new LaunchDarklyService();
-    await service.initialize();
-
-    return service;
-  },
-};
 
 export const featureFlagsService = {
   provide: FeatureFlagsService,
@@ -45,26 +34,28 @@ export const featureFlagsService = {
 
 export const getIsMultiProviderConfigurationEnabled = {
   provide: GetIsMultiProviderConfigurationEnabled,
-  useFactory: async (): Promise<GetIsMultiProviderConfigurationEnabled> => {
-    const featureFlagsServiceFactory = await featureFlagsService.useFactory();
+  useFactory: async (
+    featureFlagServiceItem: FeatureFlagsService
+  ): Promise<GetIsMultiProviderConfigurationEnabled> => {
     const useCase = new GetIsMultiProviderConfigurationEnabled(
-      featureFlagsServiceFactory
+      featureFlagServiceItem
     );
 
     return useCase;
   },
+  inject: [FeatureFlagsService],
 };
 
 export const getIsTopicNotificationEnabled = {
   provide: GetIsTopicNotificationEnabled,
-  useFactory: async (): Promise<GetIsTopicNotificationEnabled> => {
-    const featureFlagsServiceFactory = await featureFlagsService.useFactory();
-    const useCase = new GetIsTopicNotificationEnabled(
-      featureFlagsServiceFactory
-    );
+  useFactory: async (
+    featureFlagsServiceItem: FeatureFlagsService
+  ): Promise<GetIsTopicNotificationEnabled> => {
+    const useCase = new GetIsTopicNotificationEnabled(featureFlagsServiceItem);
 
     return useCase;
   },
+  inject: [FeatureFlagsService],
 };
 
 export const inMemoryProviderService = {

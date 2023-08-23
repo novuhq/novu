@@ -36,7 +36,6 @@ import {
   getIsMultiProviderConfigurationEnabled,
   getIsTopicNotificationEnabled,
   InvalidateCacheService,
-  launchDarklyService,
   LoggerModule,
   QueuesModule,
   storageService,
@@ -91,7 +90,6 @@ const PROVIDERS = [
   getIsMultiProviderConfigurationEnabled,
   getIsTopicNotificationEnabled,
   InvalidateCacheService,
-  launchDarklyService,
   storageService,
   ...DAL_MODELS,
 ];
