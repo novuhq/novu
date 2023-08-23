@@ -4,7 +4,7 @@ import { ConnectionOptions } from 'tls';
 export class TestingQueueService {
   public queue: Queue;
 
-  constructor(name: string) {
+  constructor(name: string, isClusterMode?: boolean) {
     this.queue = new Queue(name, {
       connection: {
         db: Number(process.env.REDIS_DB_INDEX || '1'),
@@ -18,7 +18,7 @@ export class TestingQueueService {
       defaultJobOptions: {
         removeOnComplete: true,
       },
-      prefix: `{${name}}`,
+      ...(isClusterMode && { prefix: '{${name}}' }),
     });
 
     if (process.env.NODE_ENV === 'test' && !process.env.CI) {

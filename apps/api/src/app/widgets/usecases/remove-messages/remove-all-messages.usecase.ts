@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import {
   MessageEntity,
   DalException,
@@ -24,7 +24,6 @@ import { MarkEnum } from '../mark-message-as/mark-message-as.command';
 @Injectable()
 export class RemoveAllMessages {
   constructor(
-    @Inject(InvalidateCacheService)
     private invalidateCache: InvalidateCacheService,
     private messageRepository: MessageRepository,
     private webSocketsQueueService: WebSocketsQueueService,

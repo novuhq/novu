@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { MessageEntity, MessageRepository, SubscriberRepository, SubscriberEntity, MemberRepository } from '@novu/dal';
 import { ChannelTypeEnum, WebSocketEventEnum } from '@novu/shared';
 import {
@@ -16,7 +16,6 @@ import { MarkEnum, MarkMessageAsCommand } from './mark-message-as.command';
 @Injectable()
 export class MarkMessageAs {
   constructor(
-    @Inject(InvalidateCacheService)
     private invalidateCache: InvalidateCacheService,
     private messageRepository: MessageRepository,
     private webSocketsQueueService: WebSocketsQueueService,

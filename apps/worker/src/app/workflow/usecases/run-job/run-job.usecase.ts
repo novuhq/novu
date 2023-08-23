@@ -9,6 +9,8 @@ import { QueueNextJob, QueueNextJobCommand } from '../queue-next-job';
 import { SendMessage, SendMessageCommand } from '../send-message';
 import { PlatformException, EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER } from '../../../shared/utils';
 
+const LOG_CONTEXT = 'RunJob';
+
 @Injectable()
 export class RunJob {
   constructor(
@@ -21,6 +23,8 @@ export class RunJob {
 
   @InstrumentUsecase()
   public async execute(command: RunJobCommand): Promise<JobEntity | undefined> {
+    Logger.verbose(command, 'Run job starts from the WorkflowWorker', LOG_CONTEXT);
+
     Sentry.setUser({
       id: command.userId,
       organizationId: command.organizationId,

@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import { INovuWorker, WebSocketsWorkerService } from '@novu/application-generic';
 
@@ -8,10 +8,7 @@ const LOG_CONTEXT = 'WebSocketWorker';
 
 @Injectable()
 export class WebSocketWorker extends WebSocketsWorkerService implements INovuWorker {
-  constructor(
-    @Inject(ExternalServicesRoute)
-    private externalServicesRoute: ExternalServicesRoute
-  ) {
+  constructor(private externalServicesRoute: ExternalServicesRoute) {
     super();
 
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOpts());

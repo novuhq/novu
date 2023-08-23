@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import { QUERY_PREFIX } from './key-builders';
 import {
@@ -35,10 +35,7 @@ export class CacheService implements ICacheService {
   private cacheTtl: number;
   private readonly TTL_VARIANT_PERCENTAGE = 0.1;
 
-  constructor(
-    @Inject(InMemoryProviderService)
-    private inMemoryProviderService: InMemoryProviderService
-  ) {}
+  constructor(private inMemoryProviderService: InMemoryProviderService) {}
 
   public async initialize(): Promise<void> {
     Logger.log('Initiated cache service', LOG_CONTEXT);

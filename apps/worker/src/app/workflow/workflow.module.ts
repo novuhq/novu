@@ -2,11 +2,12 @@ import { Module } from '@nestjs/common';
 import {
   AddDelayJob,
   AddDigestJob,
-  BullMqService,
+  AddJob,
   BulkCreateExecutionDetails,
   CalculateLimitNovuIntegration,
   CompileEmailTemplate,
   CompileTemplate,
+  CreateExecutionDetails,
   CreateSubscriber,
   GetDecryptedIntegrations,
   GetLayoutUseCase,
@@ -14,18 +15,14 @@ import {
   GetNovuProviderCredentials,
   GetSubscriberPreference,
   GetSubscriberTemplatePreference,
+  ProcessTenant,
   QueuesModule,
   SelectIntegration,
   SendTestEmail,
   SendTestEmailCommand,
-  StandardQueueService,
+  StoreSubscriberJobs,
+  TriggerEvent,
   UpdateSubscriber,
-  WorkflowQueueService,
-  WebSocketsWorkerService,
-  WebSocketsQueueService,
-  oldInstanceBullMqService,
-  OldInstanceBullMqService,
-  OldInstanceWorkflowWorkerService,
 } from '@novu/application-generic';
 import { JobRepository, MessageRepository, OrganizationRepository, SubscriberRepository } from '@novu/dal';
 
@@ -59,13 +56,24 @@ const REPOSITORIES = [JobRepository];
 const USE_CASES = [
   AddDelayJob,
   AddDigestJob,
+  AddJob,
   CalculateLimitNovuIntegration,
+  CompileEmailTemplate,
+  CompileTemplate,
+  CreateExecutionDetails,
+  Digest,
   GetDecryptedIntegrations,
+  GetDigestEventsBackoff,
+  GetDigestEventsRegular,
+  GetLayoutUseCase,
+  GetNovuLayout,
+  GetNovuProviderCredentials,
   SelectIntegration,
   GetSubscriberPreference,
   GetSubscriberTemplatePreference,
   HandleLastFailedJob,
   MessageMatcher,
+  ProcessTenant,
   QueueNextJob,
   RunJob,
   SendMessage,
@@ -77,41 +85,15 @@ const USE_CASES = [
   SendMessageSms,
   SendTestEmail,
   SendTestEmailCommand,
-  CompileEmailTemplate,
-  CompileTemplate,
-  Digest,
-  GetDigestEventsBackoff,
-  GetDigestEventsRegular,
-  GetLayoutUseCase,
-  GetNovuLayout,
-  GetNovuProviderCredentials,
+  StoreSubscriberJobs,
   SetJobAsCompleted,
   SetJobAsFailed,
+  TriggerEvent,
   UpdateJobStatus,
   WebhookFilterBackoffStrategy,
 ];
 
-const bullMqTokenList = {
-  provide: 'BULLMQ_LIST',
-  useFactory: (
-    standardQueueService: StandardQueueService,
-    webSocketsQueueService: WebSocketsQueueService,
-    workflowQueueService: WorkflowQueueService
-  ) => {
-    return [standardQueueService, webSocketsQueueService, workflowQueueService];
-  },
-  inject: [StandardQueueService, WebSocketsQueueService, WorkflowQueueService],
-};
-
-const PROVIDERS = [
-  BullMqService,
-  bullMqTokenList,
-  StandardWorker,
-  WorkflowWorker,
-  oldInstanceBullMqService,
-  OldInstanceWorkflowWorker,
-];
-
+const PROVIDERS = [StandardWorker, WorkflowWorker, OldInstanceWorkflowWorker];
 @Module({
   imports: [SharedModule, QueuesModule],
   controllers: [],

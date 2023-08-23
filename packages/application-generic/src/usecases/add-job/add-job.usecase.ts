@@ -14,7 +14,7 @@ import {
   DetailEnum,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-} from '../create-execution-details';
+} from '../../usecases';
 import { JobsOptions, StandardQueueService } from '../../services';
 import { LogDecorator } from '../../logging';
 import { InstrumentUsecase } from '../../instrumentation';
@@ -128,6 +128,11 @@ export class AddJob {
       _userId: job._userId,
     };
 
+    Logger.verbose(
+      jobData,
+      'Going to add a minimal job in Standard Queue',
+      LOG_CONTEXT
+    );
     await this.standardQueueService.addMinimalJob(
       job._id,
       jobData,

@@ -69,11 +69,14 @@ export class WorkerBaseService {
   }
 
   public async gracefulShutdown(): Promise<void> {
-    Logger.log('Shutting the Worker service down', LOG_CONTEXT);
+    Logger.log(`Shutting the ${this.topic} worker service down`, LOG_CONTEXT);
 
     await this.instance.gracefulShutdown();
 
-    Logger.log('Shutting down the Worker service has finished', LOG_CONTEXT);
+    Logger.log(
+      `Shutting down the ${this.topic} worker service has finished`,
+      LOG_CONTEXT
+    );
   }
 
   async onModuleDestroy(): Promise<void> {

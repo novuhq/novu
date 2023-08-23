@@ -1,5 +1,5 @@
 import { JobRepository, JobEntity, DalException } from '@novu/dal';
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
@@ -19,9 +19,12 @@ import {
 } from '../bulk-create-execution-details';
 import { PlatformException } from '../../utils/exceptions';
 
+const LOG_CONTEXT = 'StoreSubscriberJobs';
+
 @Injectable()
 export class StoreSubscriberJobs {
   constructor(
+    @Inject(forwardRef(() => AddJob))
     private addJob: AddJob,
     private jobRepository: JobRepository,
     protected bulkCreateExecutionDetails: BulkCreateExecutionDetails
@@ -42,13 +45,16 @@ export class StoreSubscriberJobs {
     this.createJobsExecutionDetails(storedJobs);
     const firstJob = storedJobs[0];
 
-    await this.addJob.execute({
+    const addJobCommand = {
       userId: firstJob._userId,
       environmentId: firstJob._environmentId,
       organizationId: firstJob._organizationId,
       jobId: firstJob._id,
       job: firstJob,
-    });
+    };
+
+    Logger.verbose({ addJobCommand }, 'Adding a job', LOG_CONTEXT);
+    await this.addJob.execute(addJobCommand);
   }
 
   @Instrument()

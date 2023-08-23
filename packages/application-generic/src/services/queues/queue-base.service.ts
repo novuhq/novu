@@ -40,12 +40,15 @@ export class QueueBaseService {
   }
 
   public async gracefulShutdown(): Promise<void> {
-    Logger.log('Shutting the Queue service down', LOG_CONTEXT);
+    Logger.log(`Shutting the ${this.topic} queue service down`, LOG_CONTEXT);
 
     this.queue = undefined;
     await this.instance.gracefulShutdown();
 
-    Logger.log('Shutting down the Queue service has finished', LOG_CONTEXT);
+    Logger.log(
+      `Shutting down the ${this.topic} queue service has finished`,
+      LOG_CONTEXT
+    );
   }
 
   async onModuleDestroy(): Promise<void> {
@@ -67,6 +70,12 @@ export class QueueBaseService {
         }
       : undefined;
 
+    Logger.verbose(
+      { ...jobData, topic: this.topic },
+      `Adding minimal job to ${this.topic} queue`,
+      LOG_CONTEXT
+    );
+
     await this.add(id, jobData, groupId, {
       removeOnComplete: true,
       removeOnFail: true,
@@ -85,6 +94,12 @@ export class QueueBaseService {
       removeOnFail: true,
       ...options,
     };
+
+    Logger.verbose(
+      { ...data, topic: this.topic },
+      `Adding complete job to ${this.topic} queue`,
+      LOG_CONTEXT
+    );
 
     await this.instance.add(id, data, jobOptions, groupId);
   }

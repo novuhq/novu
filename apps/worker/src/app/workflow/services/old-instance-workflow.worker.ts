@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 const nr = require('newrelic');
 import {
   INovuWorker,
@@ -21,10 +21,7 @@ const LOG_CONTEXT = 'OldInstanceWorkflowWorker';
  */
 @Injectable()
 export class OldInstanceWorkflowWorker extends OldInstanceWorkflowWorkerService implements INovuWorker {
-  constructor(
-    @Inject(TriggerEvent)
-    private triggerEventUsecase: TriggerEvent
-  ) {
+  constructor(private triggerEventUsecase: TriggerEvent) {
     super();
 
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOptions());

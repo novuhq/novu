@@ -7,7 +7,7 @@ import {
   WorkerOptions,
 } from '@novu/application-generic';
 import { JobTopicNameEnum } from '@novu/shared';
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import { InboundEmailParse } from '../usecases/inbound-email-parse/inbound-email-parse.usecase';
 import { InboundEmailParseCommand } from '../usecases/inbound-email-parse/inbound-email-parse.command';
@@ -18,11 +18,8 @@ export class InboundParseQueueService {
   public readonly worker: Worker;
 
   constructor(
-    @Inject(InboundEmailParse)
     private emailParseUsecase: InboundEmailParse,
-    @Inject(InboundParseQueue)
     public readonly inboundParseQueue: InboundParseQueue,
-    @Inject(InboundParseWorker)
     public readonly inboundParseWorker: InboundParseWorker
   ) {
     this.inboundParseQueue.createQueue();

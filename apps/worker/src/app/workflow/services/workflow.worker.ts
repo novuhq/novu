@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 const nr = require('newrelic');
 import {
   INovuWorker,
@@ -17,10 +17,7 @@ const LOG_CONTEXT = 'WorkflowWorker';
 
 @Injectable()
 export class WorkflowWorker extends WorkflowWorkerService implements INovuWorker {
-  constructor(
-    @Inject(TriggerEvent)
-    private triggerEventUsecase: TriggerEvent
-  ) {
+  constructor(private triggerEventUsecase: TriggerEvent) {
     super();
 
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOptions());
@@ -36,6 +33,7 @@ export class WorkflowWorker extends WorkflowWorkerService implements INovuWorker
   private getWorkerProcessor(): WorkerProcessor {
     return async ({ data }: { data: TriggerEventCommand }) => {
       return await new Promise(async (resolve, reject) => {
+        Logger.verbose(data, 'Processing a job', LOG_CONTEXT);
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const _this = this;
 
