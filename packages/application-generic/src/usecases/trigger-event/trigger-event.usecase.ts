@@ -177,35 +177,7 @@ export class TriggerEvent {
       );
 
       // If no subscriber makes no sense to try to create notification
-      if (subscriberProcessed) {
-        const createNotificationJobsCommand =
-          CreateNotificationJobsCommand.create({
-            environmentId,
-            identifier,
-            organizationId,
-            overrides: command.overrides,
-            payload: command.payload,
-            subscriber: subscriberProcessed,
-            template,
-            templateProviderIds,
-            to: subscriber,
-            transactionId: command.transactionId,
-            userId,
-            ...(actor && actorProcessed && { actor: actorProcessed }),
-            tenant,
-          });
-
-        const notificationJobs = await this.createNotificationJobs.execute(
-          createNotificationJobsCommand
-        );
-
-        const storeSubscriberJobsCommand = StoreSubscriberJobsCommand.create({
-          environmentId: command.environmentId,
-          jobs: notificationJobs,
-          organizationId: command.organizationId,
-        });
-        await this.storeSubscriberJobs.execute(storeSubscriberJobsCommand);
-      } else {
+      if (!subscriberProcessed) {
         /**
          * TODO: Potentially add a CreateExecutionDetails entry. Right now we
          * have the limitation we need a job to be created for that. Here there
@@ -219,7 +191,35 @@ export class TriggerEvent {
           } was not processed. No jobs are created.`,
           LOG_CONTEXT
         );
+
+        return;
       }
+
+      const notificationJobs = await this.createNotificationJobs.execute(
+        CreateNotificationJobsCommand.create({
+          environmentId,
+          identifier,
+          organizationId,
+          overrides: command.overrides,
+          payload: command.payload,
+          subscriber: subscriberProcessed,
+          template,
+          templateProviderIds,
+          to: subscriber,
+          transactionId: command.transactionId,
+          userId,
+          ...(actor && actorProcessed && { actor: actorProcessed }),
+          tenant,
+        })
+      );
+
+      await this.storeSubscriberJobs.execute(
+        StoreSubscriberJobsCommand.create({
+          environmentId: command.environmentId,
+          jobs: notificationJobs,
+          organizationId: command.organizationId,
+        })
+      );
     }
   }
 
@@ -269,22 +269,18 @@ export class TriggerEvent {
 
     for (const step of template?.steps) {
       const type = step.template?.type;
-      if (type) {
-        const channelType = STEP_TYPE_TO_CHANNEL_TYPE.get(type);
+      if (!type) continue;
 
-        if (channelType) {
-          if (providers[channelType]) continue;
-          if (channelType === ChannelTypeEnum.IN_APP) {
-            providers[channelType] = InAppProviderIdEnum.Novu;
-          } else {
-            const provider = await this.getProviderId(
-              environmentId,
-              channelType
-            );
-            if (provider) {
-              providers[channelType] = provider;
-            }
-          }
+      const channelType = STEP_TYPE_TO_CHANNEL_TYPE.get(type);
+      if (!channelType) continue;
+      if (providers[channelType]) continue;
+
+      if (channelType === ChannelTypeEnum.IN_APP) {
+        providers[channelType] = InAppProviderIdEnum.Novu;
+      } else {
+        const provider = await this.getProviderId(environmentId, channelType);
+        if (provider) {
+          providers[channelType] = provider;
         }
       }
     }
