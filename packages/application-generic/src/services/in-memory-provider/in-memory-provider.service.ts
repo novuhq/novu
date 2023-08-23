@@ -25,7 +25,6 @@ export class InMemoryProviderService {
   public inMemoryProviderConfig: InMemoryProviderConfig;
 
   public isProviderClientReady: (string) => boolean;
-  private nodesInterval;
 
   constructor(
     private getIsInMemoryClusterModeEnabled: GetIsInMemoryClusterModeEnabled,

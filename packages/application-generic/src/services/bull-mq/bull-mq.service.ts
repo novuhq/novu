@@ -95,32 +95,6 @@ export class BullMqService {
     };
   }
 
-  private getQueueBaseOptions(): QueueBaseOptions {
-    const inMemoryProviderConfig: IRedisProviderConfig =
-      this.inMemoryProviderService.inMemoryProviderConfig;
-
-    const bullMqBaseOptions = {
-      connection: {
-        db:
-          this.inMemoryProviderService.getProvider !==
-          InMemoryProviderEnum.MEMORY_DB
-            ? Number(process.env.REDIS_DB_INDEX)
-            : undefined,
-        port: inMemoryProviderConfig.port,
-        host: inMemoryProviderConfig.host,
-        username: inMemoryProviderConfig.username,
-        password: inMemoryProviderConfig.password,
-        connectTimeout: inMemoryProviderConfig.connectTimeout,
-        keepAlive: inMemoryProviderConfig.ttl,
-        family: inMemoryProviderConfig.family,
-        keyPrefix: inMemoryProviderConfig.keyPrefix,
-        tls: inMemoryProviderConfig.tls,
-      },
-    };
-
-    return bullMqBaseOptions;
-  }
-
   /**
    * To avoid going crazy not understanding why jobs are not processed in cluster mode
    * Reference:
@@ -135,13 +109,8 @@ export class BullMqService {
   }
 
   public createQueue(topic: JobTopicNameEnum, queueOptions: QueueOptions) {
-    const bullMqBaseOptions: QueueBaseOptions = this.getQueueBaseOptions();
-
     const config = {
-      connection: {
-        ...bullMqBaseOptions.connection,
-        ...queueOptions.connection,
-      },
+      connection: this.inMemoryProviderService.inMemoryProviderClient,
       ...(queueOptions?.defaultJobOptions && {
         defaultJobOptions: {
           ...queueOptions.defaultJobOptions,
@@ -176,14 +145,10 @@ export class BullMqService {
       ? Worker
       : require('@taskforcesh/bullmq-pro').WorkerPro;
 
-    const bullMqBaseOptions = this.getQueueBaseOptions();
     const { concurrency, connection, lockDuration, settings } = workerOptions;
 
     const config = {
-      connection: {
-        ...bullMqBaseOptions.connection,
-        ...connection,
-      },
+      connection: this.inMemoryProviderService.inMemoryProviderClient,
       ...(concurrency && { concurrency }),
       ...(lockDuration && { lockDuration }),
       ...(settings && { settings }),
