@@ -8,7 +8,6 @@ import {
   NotificationStepEntity,
 } from '@novu/dal';
 import {
-  ChannelTypeEnum,
   DigestTypeEnum,
   STEP_TYPE_TO_CHANNEL_TYPE,
   StepTypeEnum,
@@ -85,6 +84,7 @@ export class CreateNotificationJobs {
         identifier: command.identifier,
         payload: command.payload,
         overrides: command.overrides,
+        tenant: command.tenant,
         step,
         transactionId: command.transactionId,
         _notificationId: notification._id,
