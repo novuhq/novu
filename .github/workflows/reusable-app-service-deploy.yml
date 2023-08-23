@@ -105,6 +105,17 @@ jobs:
         with:
           path: apps/${{ inputs.sentry_project }}
 
+      - name: Set env variable for environment
+        id: set-env
+        run: |
+          if [ "${{ inputs.env }}" = "Production" ]; then
+            echo "::set-output name=env::prod"
+          elif [ "${{ inputs.env }}" = "Development" ]; then
+            echo "::set-output name=env::dev"
+          else
+            echo "::set-output name=env::dev"
+          fi
+
       - name: Create Sentry release
         if: ${{ inputs.deploy_sentry_release }}
         uses: getsentry/action-release@v1
@@ -115,6 +126,6 @@ jobs:
         with:
           version: ${{ steps.package-version.outputs.current-version}}
           version_prefix: v
-          environment: prod
+          environment: ${{teps.set-env.outputs.env}}
           ignore_empty: true
           ignore_missing: true
