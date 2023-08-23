@@ -32,6 +32,9 @@ import {
   WsQueueService,
   SelectIntegration,
   GetNovuProviderCredentials,
+  UpdateTenant,
+  GetTenant,
+  CreateTenant,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
@@ -59,6 +62,7 @@ import {
   WebhookFilterBackoffStrategy,
 } from './usecases';
 import { MetricQueueService } from './services/metric-queue.service';
+import { ProcessTenant } from '@novu/application-generic/build/main/usecases/process-tenant';
 
 const USE_CASES = [
   AddJob,
@@ -106,6 +110,10 @@ const USE_CASES = [
   CreateSubscriber,
   UpdateSubscriber,
   GetNovuProviderCredentials,
+  UpdateTenant,
+  GetTenant,
+  CreateTenant,
+  ProcessTenant,
 ];
 
 const REPOSITORIES = [JobRepository];

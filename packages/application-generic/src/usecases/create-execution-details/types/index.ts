@@ -14,6 +14,8 @@ export enum DetailEnum {
   SUBSCRIBER_NO_ACTIVE_INTEGRATION = 'Subscriber does not have an active integration',
   LAYOUT_NOT_FOUND = 'Layout not found ',
   INTEGRATION_INSTANCE_SELECTED = 'Integration instance selected',
+  TENANT_CONTEXT_SELECTED = 'Tenant context selected',
+  TENANT_NOT_FOUND = 'Tenant identifier not found',
   LIMIT_PASSED_NOVU_INTEGRATION = "Novu's provider limit has been reached",
   SUBSCRIBER_NO_CHANNEL_DETAILS = 'Subscriber missing recipient details',
   SUBSCRIBER_NO_ACTIVE_CHANNEL = 'Subscriber does not have a configured channel',
