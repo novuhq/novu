@@ -29,7 +29,6 @@ export type CachingConfig = {
   ttl?: number;
 };
 
-@Injectable()
 export class CacheService implements ICacheService {
   private client: InMemoryProviderClient;
   private cacheTtl: number;

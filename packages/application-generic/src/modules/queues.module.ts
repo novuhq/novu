@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, Provider } from '@nestjs/common';
 
 import {
   bullMqTokenList,
@@ -27,7 +27,7 @@ import {
   OldInstanceWorkflowWorkerService,
 } from '../services/workers';
 
-const PROVIDERS = [
+const PROVIDERS: Provider[] = [
   bullMqTokenList,
   BullMqService,
   ReadinessService,
@@ -40,10 +40,13 @@ const PROVIDERS = [
   WorkflowQueueService,
   WorkflowQueueServiceHealthIndicator,
   WorkflowWorkerService,
-  oldInstanceBullMqService,
   OldInstanceWorkflowWorkerService,
   OldInstanceBullMqService,
 ];
+
+if (process.env.MEMORY_DB_CLUSTER_SERVICE_HOST) {
+  PROVIDERS.push(oldInstanceBullMqService);
+}
 
 @Module({
   providers: [...PROVIDERS],
