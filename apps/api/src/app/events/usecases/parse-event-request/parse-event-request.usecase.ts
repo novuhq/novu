@@ -3,22 +3,16 @@ import * as Sentry from '@sentry/node';
 import * as hat from 'hat';
 import { merge } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
+
 import { Instrument, InstrumentUsecase } from '@novu/application-generic';
 import { NotificationTemplateRepository, NotificationTemplateEntity } from '@novu/dal';
-import {
-  ISubscribersDefine,
-  ITenantDefine,
-  ReservedVariablesMap,
-  TriggerContextTypeEnum,
-  TriggerTenantContext,
-} from '@novu/shared';
+import { ITenantDefine, ReservedVariablesMap, TriggerContextTypeEnum, TriggerTenantContext } from '@novu/shared';
 import { StorageHelperService, CachedEntity, buildNotificationTemplateIdentifierKey } from '@novu/application-generic';
 
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { VerifyPayload, VerifyPayloadCommand } from '../verify-payload';
 import { ParseEventRequestCommand } from './parse-event-request.command';
 import { TriggerHandlerQueueService } from '../../services/workflow-queue/trigger-handler-queue.service';
-import { MapTriggerRecipients, MapTriggerRecipientsCommand } from '../map-trigger-recipients';
 
 @Injectable()
 export class ParseEventRequest {
@@ -26,31 +20,13 @@ export class ParseEventRequest {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private verifyPayload: VerifyPayload,
     private storageHelperService: StorageHelperService,
-    private triggerHandlerQueueService: TriggerHandlerQueueService,
-    private mapTriggerRecipients: MapTriggerRecipients
+    private triggerHandlerQueueService: TriggerHandlerQueueService
   ) {}
 
   @InstrumentUsecase()
   async execute(command: ParseEventRequestCommand) {
     const transactionId = command.transactionId || uuidv4();
     Logger.log('Starting Trigger');
-
-    const mappedActor = command.actor ? this.mapTriggerRecipients.mapSubscriber(command.actor) : undefined;
-
-    Logger.debug(mappedActor);
-
-    const mappedRecipients = await this.mapTriggerRecipients.execute(
-      MapTriggerRecipientsCommand.create({
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        recipients: command.to,
-        transactionId,
-        userId: command.userId,
-        actor: mappedActor,
-      })
-    );
-
-    await this.validateSubscriberIdProperty(mappedRecipients);
 
     const template = await this.getNotificationTemplateByTriggerIdentifier({
       environmentId: command.environmentId,
@@ -112,8 +88,8 @@ export class ParseEventRequest {
       transactionId,
       {
         ...command,
-        to: mappedRecipients,
-        actor: mappedActor,
+        to: command.to,
+        actor: command.actor,
         transactionId,
       },
       command.organizationId
@@ -144,20 +120,22 @@ export class ParseEventRequest {
     );
   }
 
-  @Instrument()
-  private async validateSubscriberIdProperty(to: ISubscribersDefine[]): Promise<boolean> {
-    for (const subscriber of to) {
-      const subscriberIdExists = typeof subscriber === 'string' ? subscriber : subscriber.subscriberId;
-
-      if (!subscriberIdExists) {
-        throw new ApiException(
-          'subscriberId under property to is not configured, please make sure all subscribers contains subscriberId property'
-        );
-      }
-    }
-
-    return true;
-  }
+  /*
+   * @Instrument()
+   * private async validateSubscriberIdProperty(to: ISubscribersDefine[]): Promise<boolean> {
+   *   for (const subscriber of to) {
+   *     const subscriberIdExists = typeof subscriber === 'string' ? subscriber : subscriber.subscriberId;
+   *
+   *     if (!subscriberIdExists) {
+   *       throw new ApiException(
+   *         'subscriberId under property to is not configured, please make sure all subscribers contains subscriberId property'
+   *       );
+   *     }
+   *   }
+   *
+   *   return true;
+   * }
+   */
 
   @Instrument()
   private validateTriggerContext(

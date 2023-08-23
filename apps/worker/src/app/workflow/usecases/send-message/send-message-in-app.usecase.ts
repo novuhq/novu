@@ -33,9 +33,9 @@ import {
   buildFeedKey,
   buildMessageCountKey,
   GetNovuProviderCredentials,
+  CreateLog,
 } from '@novu/application-generic';
 
-import { CreateLog } from '../../../shared/logs';
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageBase } from './send-message.base';
 import { PlatformException } from '../../../shared/utils';

@@ -6,10 +6,10 @@ import {
   DetailEnum,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
+  CreateLog,
 } from '@novu/application-generic';
 
 import { SendMessageType } from './send-message-type.usecase';
-import { CreateLog } from '../../../shared/logs';
 import { SendMessageCommand } from './send-message.command';
 
 @Injectable()

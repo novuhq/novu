@@ -1,6 +1,12 @@
-import { IsDefined, IsEnum, IsMongoId, IsOptional, IsString } from 'class-validator';
+import {
+  IsDefined,
+  IsEnum,
+  IsMongoId,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { LogCodeEnum, LogStatusEnum, TopicId } from '@novu/shared';
-import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
+import { EnvironmentWithUserCommand } from '../../commands';
 
 export class CreateLogCommand extends EnvironmentWithUserCommand {
   @IsDefined()

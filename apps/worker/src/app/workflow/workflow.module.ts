@@ -36,6 +36,8 @@ import {
   GetTenant,
   CreateTenant,
   ProcessTenant,
+  MapTriggerRecipients,
+  GetTopicSubscribersUseCase,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
@@ -114,6 +116,8 @@ const USE_CASES = [
   GetTenant,
   CreateTenant,
   ProcessTenant,
+  MapTriggerRecipients,
+  GetTopicSubscribersUseCase,
 ];
 
 const REPOSITORIES = [JobRepository];

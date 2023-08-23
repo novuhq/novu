@@ -1,4 +1,3 @@
-import { Injectable } from '@nestjs/common';
 import {
   EnvironmentId,
   ISubscribersDefine,
@@ -6,18 +5,22 @@ import {
   OrganizationId,
   TopicKey,
   TopicSubscribersDto,
+  TriggerRecipient,
   TriggerRecipients,
+  TriggerRecipientsTypeEnum,
   TriggerRecipientSubscriber,
   TriggerRecipientTopics,
-  TriggerRecipientsTypeEnum,
   UserId,
-  TriggerRecipient,
 } from '@novu/shared';
-import { InstrumentUsecase, FeatureFlagCommand, GetFeatureFlag } from '@novu/application-generic';
-
+import { Injectable } from '@nestjs/common';
+import { CreateLog } from '../create-log';
+import {
+  GetTopicSubscribersCommand,
+  GetTopicSubscribersUseCase,
+} from '../get-topic-subscribers';
+import { FeatureFlagCommand, GetFeatureFlag } from '../get-feature-flag';
+import { InstrumentUsecase } from '../../instrumentation';
 import { MapTriggerRecipientsCommand } from './map-trigger-recipients.command';
-import { CreateLog } from '../../../logs/usecases/create-log';
-import { GetTopicSubscribersCommand, GetTopicSubscribersUseCase } from '../../../topics/use-cases';
 
 interface ILogTopicSubscribersPayload {
   environmentId: EnvironmentId;
@@ -27,10 +30,13 @@ interface ILogTopicSubscribersPayload {
   userId: UserId;
 }
 
-const isNotTopic = (recipient: TriggerRecipient) => !isTopic(recipient);
+const isNotTopic = (
+  recipient: TriggerRecipient
+): recipient is TriggerRecipientSubscriber => !isTopic(recipient);
 
 const isTopic = (recipient: TriggerRecipient): recipient is ITopic =>
-  (recipient as ITopic).type && (recipient as ITopic).type === TriggerRecipientsTypeEnum.TOPIC;
+  (recipient as ITopic).type &&
+  (recipient as ITopic).type === TriggerRecipientsTypeEnum.TOPIC;
 
 @Injectable()
 export class MapTriggerRecipients {
@@ -41,32 +47,53 @@ export class MapTriggerRecipients {
   ) {}
 
   @InstrumentUsecase()
-  async execute(command: MapTriggerRecipientsCommand): Promise<ISubscribersDefine[]> {
-    const { environmentId, organizationId, recipients, transactionId, userId, actor } = command;
-
-    const mappedRecipients = Array.isArray(recipients) ? recipients : [recipients];
-
-    const simpleSubscribers: ISubscribersDefine[] = this.findSubscribers(mappedRecipients);
-
-    let topicSubscribers: ISubscribersDefine[] = await this.getSubscribersFromAllTopics(
-      transactionId,
+  async execute(
+    command: MapTriggerRecipientsCommand
+  ): Promise<ISubscribersDefine[]> {
+    const {
       environmentId,
       organizationId,
+      recipients,
+      transactionId,
       userId,
-      mappedRecipients
-    );
+      actor,
+    } = command;
+
+    const mappedRecipients = Array.isArray(recipients)
+      ? recipients
+      : [recipients];
+
+    const simpleSubscribers: ISubscribersDefine[] =
+      this.findSubscribers(mappedRecipients);
+
+    let topicSubscribers: ISubscribersDefine[] =
+      await this.getSubscribersFromAllTopics(
+        transactionId,
+        environmentId,
+        organizationId,
+        userId,
+        mappedRecipients
+      );
 
     if (actor) {
-      topicSubscribers = this.excludeActorFromTopicSubscribers(topicSubscribers, actor);
+      topicSubscribers = this.excludeActorFromTopicSubscribers(
+        topicSubscribers,
+        actor
+      );
     }
 
-    return this.deduplicateSubscribers([...simpleSubscribers, ...topicSubscribers]);
+    return this.deduplicateSubscribers([
+      ...simpleSubscribers,
+      ...topicSubscribers,
+    ]);
   }
 
   /**
    * Time complexity: O(n)
    */
-  private deduplicateSubscribers(subscribers: ISubscribersDefine[]): ISubscribersDefine[] {
+  private deduplicateSubscribers(
+    subscribers: ISubscribersDefine[]
+  ): ISubscribersDefine[] {
     const uniqueSubscribers = new Set();
 
     return subscribers.filter((el) => {
@@ -81,7 +108,9 @@ export class MapTriggerRecipients {
     subscribers: ISubscribersDefine[],
     actor: ISubscribersDefine
   ): ISubscribersDefine[] {
-    return subscribers.filter((subscriber) => subscriber.subscriberId !== actor?.subscriberId);
+    return subscribers.filter(
+      (subscriber) => subscriber.subscriberId !== actor?.subscriberId
+    );
   }
 
   private async getSubscribersFromAllTopics(
@@ -96,7 +125,9 @@ export class MapTriggerRecipients {
       organizationId,
       userId,
     });
-    const isEnabled = await this.getFeatureFlag.isTopicNotificationEnabled(featureFlagCommand);
+    const isEnabled = await this.getFeatureFlag.isTopicNotificationEnabled(
+      featureFlagCommand
+    );
 
     if (isEnabled) {
       const topics = this.findTopics(recipients);
@@ -109,7 +140,9 @@ export class MapTriggerRecipients {
           topicKey: topic.topicKey,
           organizationId,
         });
-        const topicSubscribers = await this.getTopicSubscribers.execute(getTopicSubscribersCommand);
+        const topicSubscribers = await this.getTopicSubscribers.execute(
+          getTopicSubscribersCommand
+        );
 
         topicSubscribers.forEach((subscriber: TopicSubscribersDto) =>
           subscribers.push({ subscriberId: subscriber.externalSubscriberId })
@@ -122,7 +155,9 @@ export class MapTriggerRecipients {
     return [];
   }
 
-  public mapSubscriber(subscriber: TriggerRecipientSubscriber): ISubscribersDefine {
+  public mapSubscriber(
+    subscriber: TriggerRecipientSubscriber
+  ): ISubscribersDefine {
     if (typeof subscriber === 'string') {
       return { subscriberId: subscriber };
     }

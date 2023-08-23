@@ -22,10 +22,10 @@ import {
   SelectIntegration,
   SelectIntegrationCommand,
   GetNovuProviderCredentials,
+  CreateLog,
 } from '@novu/application-generic';
 
 import { SendMessageType } from './send-message-type.usecase';
-import { CreateLog } from '../../../shared/logs';
 
 export abstract class SendMessageBase extends SendMessageType {
   abstract readonly channelType: ChannelTypeEnum;

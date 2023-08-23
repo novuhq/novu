@@ -24,3 +24,6 @@ export * from './update-tenant';
 export * from './create-tenant';
 export * from './get-tenant';
 export * from './process-tenant';
+export * from './map-trigger-recipients';
+export * from './get-topic-subscribers';
+export * from './create-log';

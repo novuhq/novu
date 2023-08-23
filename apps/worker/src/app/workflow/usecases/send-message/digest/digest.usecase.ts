@@ -7,9 +7,13 @@ import {
   ExecutionDetailsStatusEnum,
   IDigestRegularMetadata,
 } from '@novu/shared';
-import { DetailEnum, CreateExecutionDetails, CreateExecutionDetailsCommand } from '@novu/application-generic';
+import {
+  DetailEnum,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+  CreateLog,
+} from '@novu/application-generic';
 
-import { CreateLog } from '../../../../shared/logs';
 import { SendMessageCommand } from '../send-message.command';
 import { SendMessageType } from '../send-message-type.usecase';
 import { GetDigestEventsRegular } from './get-digest-events-regular.usecase';

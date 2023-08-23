@@ -46,10 +46,10 @@ import {
   GetFeatureFlag,
   LaunchDarklyService,
   FeatureFlagsService,
+  CreateLog,
 } from '@novu/application-generic';
 
 import * as packageJson from '../../../package.json';
-import { CreateLog } from './logs';
 
 const DAL_MODELS = [
   UserRepository,

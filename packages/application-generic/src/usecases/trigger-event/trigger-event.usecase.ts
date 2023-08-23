@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
+
 import {
   JobEntity,
   JobRepository,
@@ -10,12 +11,12 @@ import {
 import {
   ChannelTypeEnum,
   InAppProviderIdEnum,
+  ISubscribersDefine,
   ProvidersIdEnum,
   STEP_TYPE_TO_CHANNEL_TYPE,
 } from '@novu/shared';
 
 import { TriggerEventCommand } from './trigger-event.command';
-
 import {
   CreateNotificationJobsCommand,
   CreateNotificationJobs,
@@ -28,10 +29,8 @@ import {
   StoreSubscriberJobs,
   StoreSubscriberJobsCommand,
 } from '../store-subscriber-jobs';
-
 import { PinoLogger } from '../../logging';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
-
 import {
   AnalyticsService,
   buildNotificationTemplateIdentifierKey,
@@ -39,6 +38,10 @@ import {
 } from '../../services';
 import { ApiException } from '../../utils/exceptions';
 import { ProcessTenant, ProcessTenantCommand } from '../process-tenant';
+import {
+  MapTriggerRecipients,
+  MapTriggerRecipientsCommand,
+} from '../map-trigger-recipients';
 
 const LOG_CONTEXT = 'TriggerEventUseCase';
 
@@ -53,7 +56,8 @@ export class TriggerEvent {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private processTenant: ProcessTenant,
     private logger: PinoLogger,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private mapTriggerRecipients: MapTriggerRecipients
   ) {}
 
   @InstrumentUsecase()
@@ -91,22 +95,6 @@ export class TriggerEvent {
       triggerIdentifier: command.identifier,
     });
 
-    /*
-     * Makes no sense to execute anything if template doesn't exist
-     * TODO: Send a 404?
-     */
-    if (!template) {
-      const message = 'Notification template could not be found';
-      const error = new ApiException(message);
-      Logger.error(error, message, LOG_CONTEXT);
-      throw error;
-    }
-
-    const templateProviderIds = await this.getProviderIdsForTemplate(
-      command.environmentId,
-      template
-    );
-
     if (tenant) {
       const tenantProcessed = await this.processTenant.execute(
         ProcessTenantCommand.create({
@@ -129,20 +117,44 @@ export class TriggerEvent {
       }
     }
 
+    const mappedActor = command.actor
+      ? this.mapTriggerRecipients.mapSubscriber(actor)
+      : undefined;
+
+    Logger.debug(mappedActor);
+
     // We might have a single actor for every trigger, so we only need to check for it once
     let actorProcessed;
-    if (actor) {
+    if (mappedActor) {
       actorProcessed = await this.processSubscriber.execute(
         ProcessSubscriberCommand.create({
           environmentId,
           organizationId,
           userId,
-          subscriber: actor,
+          subscriber: mappedActor,
         })
       );
     }
 
-    for (const subscriber of to) {
+    const mappedRecipients = await this.mapTriggerRecipients.execute(
+      MapTriggerRecipientsCommand.create({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        recipients: command.to,
+        transactionId: command.transactionId,
+        userId: command.userId,
+        actor: mappedActor,
+      })
+    );
+
+    await this.validateSubscriberIdProperty(mappedRecipients);
+
+    const templateProviderIds = await this.getProviderIdsForTemplate(
+      command.environmentId,
+      template
+    );
+
+    for (const subscriber of mappedRecipients) {
       this.analyticsService.track(
         'Notification event trigger - [Triggers]',
         command.userId,
@@ -295,5 +307,23 @@ export class TriggerEvent {
     );
 
     return integration?.providerId as ProvidersIdEnum;
+  }
+
+  @Instrument()
+  private async validateSubscriberIdProperty(
+    to: ISubscribersDefine[]
+  ): Promise<boolean> {
+    for (const subscriber of to) {
+      const subscriberIdExists =
+        typeof subscriber === 'string' ? subscriber : subscriber.subscriberId;
+
+      if (!subscriberIdExists) {
+        throw new ApiException(
+          'subscriberId under property to is not configured, please make sure all subscribers contains subscriberId property'
+        );
+      }
+    }
+
+    return true;
   }
 }

@@ -1,13 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { ProcessBulkTriggerCommand } from './process-bulk-trigger.command';
 import { TriggerEventResponseDto } from '../../dtos';
-import { MapTriggerRecipients } from '../map-trigger-recipients';
-import { ParseEventRequestCommand } from '../parse-event-request/parse-event-request.command';
-import { ParseEventRequest } from '../parse-event-request/parse-event-request.usecase';
+import { ParseEventRequestCommand, ParseEventRequest } from '../parse-event-request';
 
 @Injectable()
 export class ProcessBulkTrigger {
-  constructor(private parseEventRequest: ParseEventRequest, private mapTriggerRecipients: MapTriggerRecipients) {}
+  constructor(private parseEventRequest: ParseEventRequest) {}
 
   async execute(command: ProcessBulkTriggerCommand) {
     const results: TriggerEventResponseDto[] = [];

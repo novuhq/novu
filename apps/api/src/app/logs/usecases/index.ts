@@ -1,6 +1,4 @@
-export * from './create-log';
-
-import { CreateLog } from './create-log/create-log.usecase';
+import { CreateLog } from '@novu/application-generic';
 
 export const USE_CASES = [
   CreateLog,

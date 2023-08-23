@@ -1,7 +1,6 @@
 import { IsDefined, IsOptional } from 'class-validator';
 import { ISubscribersDefine, TriggerRecipientsPayload } from '@novu/shared';
-
-import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
+import { EnvironmentWithUserCommand } from '../../commands';
 
 export class MapTriggerRecipientsCommand extends EnvironmentWithUserCommand {
   @IsDefined()
@@ -11,5 +10,5 @@ export class MapTriggerRecipientsCommand extends EnvironmentWithUserCommand {
   transactionId: string;
 
   @IsOptional()
-  actor?: ISubscribersDefine | null;
+  actor: ISubscribersDefine;
 }

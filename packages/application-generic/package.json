@@ -94,6 +94,7 @@
     "@sentry/node": "^7.12.1",
     "analytics-node": "^6.2.0",
     "bullmq": "^3.10.2",
+    "chai": "^4.2.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "date-fns": "^2.29.2",
@@ -107,7 +108,8 @@
     "pino-pretty": "^9.4.0",
     "redlock": "4.2.0",
     "reflect-metadata": "^0.1.13",
-    "rrule": "^2.7.2"
+    "rrule": "^2.7.2",
+    "uuid": "^9.0.0"
   },
   "optionalDependencies": {
     "@taskforcesh/bullmq-pro": "5.1.14"
