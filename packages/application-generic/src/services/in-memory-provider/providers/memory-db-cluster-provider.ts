@@ -23,6 +23,7 @@ interface IMemoryDbClusterConfig {
   port?: string;
   tls?: ConnectionOptions;
   ttl?: string;
+  maxRetriesPerRequest?: number;
 }
 
 export interface IMemoryDbClusterProviderConfig {
@@ -52,6 +53,7 @@ export const getMemoryDbClusterProviderConfig =
       family: process.env.REDIS_CLUSTER_SERVICE_FAMILY,
       keyPrefix: process.env.REDIS_CLUSTER_SERVICE_KEY_PREFIX,
       tls: process.env.REDIS_CLUSTER_TLS as ConnectionOptions,
+      maxRetriesPerRequest: null,
     };
 
     const host = redisClusterConfig.host;
