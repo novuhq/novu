@@ -56,7 +56,9 @@ export class BullMqService {
       new GetIsInMemoryClusterModeEnabled();
     this.inMemoryProviderService = new InMemoryProviderService(
       getIsInMemoryClusterModeEnabled,
-      InMemoryProviderEnum.MEMORY_DB
+      process.env.MEMORY_DB_CLUSTER_SERVICE_HOST
+        ? InMemoryProviderEnum.MEMORY_DB
+        : InMemoryProviderEnum.REDIS
     );
   }
 
