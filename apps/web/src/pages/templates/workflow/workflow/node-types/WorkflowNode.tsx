@@ -134,16 +134,13 @@ export function WorkflowNode({
     if (!hasActiveIntegration) {
       return undefined;
     }
-    if (channelType === StepTypeEnum.IN_APP) {
-      return InAppProviderIdEnum.Novu;
-    }
     if (isChannelStep) {
       if ([StepTypeEnum.EMAIL, StepTypeEnum.SMS].includes(channelType)) {
-        return integrations?.find((integration) => integration.primary && integration.channel === channelKey)
+        return integrationsByEnv?.find((integration) => integration.primary && integration.channel === channelKey)
           ?.providerId;
       }
 
-      return integrations?.find((integration) => integration.channel === channelKey)?.providerId;
+      return integrationsByEnv?.find((integration) => integration.channel === channelKey)?.providerId;
     }
 
     return undefined;
