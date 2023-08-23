@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 
 import {
-  bullMqService,
   bullMqTokenList,
   oldInstanceBullMqService,
 } from '../custom-providers';
@@ -30,7 +29,6 @@ import {
 
 const PROVIDERS = [
   bullMqTokenList,
-  bullMqService,
   BullMqService,
   ReadinessService,
   StandardQueueService,

@@ -1,5 +1,5 @@
 import { JobRepository, JobEntity, DalException } from '@novu/dal';
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
@@ -24,7 +24,6 @@ const LOG_CONTEXT = 'StoreSubscriberJobs';
 @Injectable()
 export class StoreSubscriberJobs {
   constructor(
-    @Inject(forwardRef(() => AddJob))
     private addJob: AddJob,
     private jobRepository: JobRepository,
     protected bulkCreateExecutionDetails: BulkCreateExecutionDetails

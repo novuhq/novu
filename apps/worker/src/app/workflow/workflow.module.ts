@@ -3,6 +3,8 @@ import {
   AddDelayJob,
   AddDigestJob,
   AddJob,
+  BullMqService,
+  bullMqTokenList,
   BulkCreateExecutionDetails,
   CalculateLimitNovuIntegration,
   CompileEmailTemplate,
@@ -16,6 +18,7 @@ import {
   GetSubscriberPreference,
   GetSubscriberTemplatePreference,
   ProcessTenant,
+  oldInstanceBullMqService,
   QueuesModule,
   SelectIntegration,
   SendTestEmail,
@@ -93,7 +96,14 @@ const USE_CASES = [
   WebhookFilterBackoffStrategy,
 ];
 
-const PROVIDERS = [StandardWorker, WorkflowWorker, OldInstanceWorkflowWorker];
+const PROVIDERS = [
+  BullMqService,
+  bullMqTokenList,
+  StandardWorker,
+  WorkflowWorker,
+  oldInstanceBullMqService,
+  OldInstanceWorkflowWorker,
+];
 @Module({
   imports: [SharedModule, QueuesModule],
   controllers: [],
