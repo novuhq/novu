@@ -20,8 +20,14 @@ Cypress.on('window:before:load', (win) => {
 });
 
 describe('Integrations List Modal', function () {
+  let session: any;
+
   beforeEach(function () {
-    cy.initializeSession().as('session');
+    cy.initializeSession()
+      .then((result) => {
+        session = result;
+      })
+      .as('session');
   });
 
   const navigateToGetStarted = () => {
