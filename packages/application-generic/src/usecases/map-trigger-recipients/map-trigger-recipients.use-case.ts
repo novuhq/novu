@@ -134,20 +134,23 @@ export class MapTriggerRecipients {
 
       const subscribers: ISubscribersDefine[] = [];
 
-      for (const topic of topics) {
-        const getTopicSubscribersCommand = GetTopicSubscribersCommand.create({
-          environmentId,
-          topicKey: topic.topicKey,
-          organizationId,
-        });
-        const topicSubscribers = await this.getTopicSubscribers.execute(
-          getTopicSubscribersCommand
-        );
+      await Promise.all(
+        topics.map(async (topic) => {
+          const topicSubscribers = await this.getTopicSubscribers.execute(
+            GetTopicSubscribersCommand.create({
+              environmentId,
+              topicKey: topic.topicKey,
+              organizationId,
+            })
+          );
 
-        topicSubscribers.forEach((subscriber: TopicSubscribersDto) =>
-          subscribers.push({ subscriberId: subscriber.externalSubscriberId })
-        );
-      }
+          const subscribersForTopic = topicSubscribers.map((subscriber) => ({
+            subscriberId: subscriber.externalSubscriberId,
+          }));
+
+          subscribers.push(...subscribersForTopic);
+        })
+      );
 
       return subscribers;
     }
