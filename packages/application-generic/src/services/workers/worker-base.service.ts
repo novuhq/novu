@@ -52,6 +52,10 @@ export class WorkerBaseService {
     return await this.instance.isWorkerRunning();
   }
 
+  public async isPaused(): Promise<boolean> {
+    return await this.instance.isWorkerPaused();
+  }
+
   public async pause(): Promise<void> {
     if (this.worker) {
       await this.instance.pauseWorker();

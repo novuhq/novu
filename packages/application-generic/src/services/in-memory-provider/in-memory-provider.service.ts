@@ -170,32 +170,36 @@ export class InMemoryProviderService {
         LOG_CONTEXT
       );
 
-      this.nodesInterval = setInterval(() => {
-        try {
-          /*
-           * inMemoryProviderClient.nodes('all')?.forEach((node) => {
-           *   Logger.verbose(
-           *     {
-           *       commandQueueLength: node.commandQueue?.length,
-           *       host: node.options?.host,
-           *     },
-           *     this.descriptiveLogMessage(
-           *       `Node ${node.options?.host}:${node.options.port} commandQueue length is ${node.commandQueue.length}`
-           *     ),
-           *     LOG_CONTEXT
-           *   );
-           * });
-           */
-        } catch (e) {
-          Logger.error(
-            e,
-            this.descriptiveLogMessage(
-              `Connecting to cluster executing intervals has failed`
-            ),
-            LOG_CONTEXT
-          );
-        }
-      }, 2000);
+      /*
+       * this.nodesInterval = setInterval(() => {
+       *  try {
+       */
+      /*
+       * inMemoryProviderClient.nodes('all')?.forEach((node) => {
+       *   Logger.verbose(
+       *     {
+       *       commandQueueLength: node.commandQueue?.length,
+       *       host: node.options?.host,
+       *     },
+       *     this.descriptiveLogMessage(
+       *       `Node ${node.options?.host}:${node.options.port} commandQueue length is ${node.commandQueue.length}`
+       *     ),
+       *     LOG_CONTEXT
+       *   );
+       * });
+       */
+      /*
+       * } catch (e) {
+       *  Logger.error(
+       *    e,
+       *    this.descriptiveLogMessage(
+       *      `Connecting to cluster executing intervals has failed`
+       *    ),
+       *    LOG_CONTEXT
+       *  );
+       * }
+       * }, 2000);
+       */
 
       inMemoryProviderClient.on('connect', () => {
         Logger.log(
@@ -430,14 +434,23 @@ export class InMemoryProviderService {
 
   public async shutdown(): Promise<void> {
     if (this.inMemoryProviderClient) {
-      clearInterval(this.nodesInterval);
+      // this.nodesInterval && clearInterval(this.nodesInterval);
 
-      Logger.verbose(
-        this.descriptiveLogMessage(`In-memory provider service shutdown`),
-        LOG_CONTEXT
-      );
-
-      await this.inMemoryProviderClient.quit();
+      try {
+        await this.inMemoryProviderClient.quit();
+        Logger.verbose(
+          this.descriptiveLogMessage(`In-memory provider service shutdown`),
+          LOG_CONTEXT
+        );
+      } catch (error) {
+        Logger.error(
+          error,
+          this.descriptiveLogMessage(
+            `In-memory provider service shutdown has failed`
+          ),
+          LOG_CONTEXT
+        );
+      }
     }
   }
 
