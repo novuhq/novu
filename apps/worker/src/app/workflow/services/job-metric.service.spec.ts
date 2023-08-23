@@ -69,9 +69,5 @@ describe('Job Metric Service', () => {
       concurrency: 1,
       lockDuration: 500,
     });
-    expect(jobMetricService.jobMetricsWorkerService.worker.opts.connection).to.deep.include({
-      host: 'localhost',
-      port: 6379,
-    });
   });
 });

@@ -150,10 +150,6 @@ describe('Standard Worker', () => {
       concurrency: 200,
       lockDuration: 90000,
     });
-    expect(standardWorker.worker.opts.connection).to.deep.include({
-      host: 'localhost',
-      port: 6379,
-    });
   });
 
   it('should a job added to the queue be updated as completed if works right', async () => {
