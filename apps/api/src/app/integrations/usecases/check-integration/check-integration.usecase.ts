@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CheckIntegrationEMail } from './check-integration-email.usecase';
 import { CheckIntegrationCommand } from './check-integration.command';
 import { ChannelTypeEnum, ICredentialsDto } from '@novu/shared';
@@ -15,7 +15,7 @@ export class CheckIntegration {
       }
     } catch (e) {
       if (e.message?.includes('getaddrinfo ENOTFOUND')) {
-        throw new NotFoundException(
+        throw new BadRequestException(
           `Provider gateway can't resolve the host with the given hostname ${command.credentials?.host || ''}`
         );
       }
