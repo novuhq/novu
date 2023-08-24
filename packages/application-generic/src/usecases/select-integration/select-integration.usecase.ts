@@ -108,14 +108,23 @@ export class SelectIntegration {
       {
         ...command,
         query,
-        firstOneName: integration?.name,
-        firstOneProvider: integration?.providerId,
+        integration,
       },
       'Multi provider available',
       LOG_CONTEXT
     );
 
     if (!integration) {
+      Logger.verbose(
+        {
+          ...command,
+          query,
+          integration,
+        },
+        'No integration selected in multi provider',
+        LOG_CONTEXT
+      );
+
       return;
     }
 
