@@ -452,7 +452,7 @@ importers:
       babel-plugin-import: ^1.13.3
       chart.js: ^3.7.1
       customize-cra: ^1.0.0
-      cypress: ^12.17.2
+      cypress: ^12.14.0
       cypress-localstorage-commands: ^1.7.0
       cypress-network-idle: ^1.11.2
       cypress-wait-until: ^1.7.2
@@ -13674,7 +13674,7 @@ packages:
       nopt: 5.0.0
       npmlog: 5.0.1
       rimraf: 3.0.2
-      semver: 7.5.2
+      semver: 7.5.4
       tar: 6.1.13
     transitivePeerDependencies:
       - encoding
@@ -22345,6 +22345,7 @@ packages:
 
   /@types/node/18.15.11:
     resolution: {integrity: sha512-E5Kwq2n4SbMzQOn6wnmBjuK9ouqlURrcZDVfbo9ftDDTFt3nk7ZKK4GMOzoYgnpQJKcxwQw+lGaBvvlMo0qN/Q==}
+    dev: true
 
   /@types/nodemailer/6.4.7:
     resolution: {integrity: sha512-f5qCBGAn/f0qtRcd4SEn88c8Fp3Swct1731X4ryPKqS61/A3LmmzN8zaEz7hneJvpjFbUUgY7lru/B/7ODTazg==}
@@ -27988,7 +27989,7 @@ packages:
       postcss-modules-scope: 3.0.0_postcss@8.4.25
       postcss-modules-values: 4.0.0_postcss@8.4.25
       postcss-value-parser: 4.2.0
-      semver: 7.5.2
+      semver: 7.5.4
       webpack: 5.78.0
 
   /css-minimizer-webpack-plugin/3.4.1_webpack@5.78.0:
@@ -28389,7 +28390,7 @@ packages:
       cli-table3: 0.6.3
       commander: 6.2.1
       common-tags: 1.8.2
-      dayjs: 1.11.7
+      dayjs: 1.11.9
       debug: 4.3.4_supports-color@8.1.1
       enquirer: 2.3.6
       eventemitter2: 6.4.7
@@ -28598,12 +28599,8 @@ packages:
     resolution: {integrity: sha512-2P0p0pFGzHS5EMnhdxQi7aJN+iMheud0UhG4dlE1DLAlvL8JHjJJTX/CSm4JXwV0Ka5nGk3zC5mcb5bUQUxxMA==}
     dev: false
 
-  /dayjs/1.11.7:
-    resolution: {integrity: sha512-+Yw9U6YO5TQohxLcIkrXBeY73WP3ejHWVvx8XCk3gxvQDCTEmS48ZrSZCKciI7Bhl/uCMyxYtE9UqRILmFphkQ==}
-
   /dayjs/1.11.9:
     resolution: {integrity: sha512-QvzAURSbQ0pKdIye2txOzNaHmxtUBXerpY0FJsFXUMKbIZeFm5ht1LS/jFsrncjnmtv8HsG0W2g6c0zUjZWmpA==}
-    dev: false
 
   /de-indent/1.0.2:
     resolution: {integrity: sha512-e/1zu3xH5MQryN2zdVaF0OrdNLUbvWxzMbi+iNA6Bky7l1RoP8a2fIbRocyHclXt/arDrrR6lL3TqFD9pMQTsg==}
@@ -31672,7 +31669,7 @@ packages:
       minimatch: 3.1.2
       node-abort-controller: 3.1.1
       schema-utils: 3.1.2
-      semver: 7.5.2
+      semver: 7.5.4
       tapable: 2.2.1
       typescript: 4.9.5
       webpack: 5.82.1
@@ -35813,7 +35810,7 @@ packages:
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
     dependencies:
       '@jest/types': 27.5.1
-      '@types/node': 18.15.11
+      '@types/node': 14.18.42
       chalk: 4.1.2
       ci-info: 3.8.0
       graceful-fs: 4.2.11
@@ -41538,7 +41535,7 @@ packages:
       cosmiconfig: 7.1.0
       klona: 2.0.6
       postcss: 8.4.21
-      semver: 7.5.2
+      semver: 7.5.4
       webpack: 5.78.0
 
   /postcss-loader/7.0.2_mquw4qchulb5tpkmg3p2j6qala:
@@ -43201,7 +43198,7 @@ packages:
       '@babel/runtime': 7.21.0
       classnames: 2.3.2
       date-fns: 2.29.3
-      dayjs: 1.11.7
+      dayjs: 1.11.9
       moment: 2.29.4
       rc-trigger: 5.3.4_sfoxds7t5ydpegc3knd667wn6m
       rc-util: 5.29.3_sfoxds7t5ydpegc3knd667wn6m
@@ -45716,6 +45713,7 @@ packages:
     hasBin: true
     dependencies:
       lru-cache: 6.0.0
+    dev: true
 
   /semver/7.5.4:
     resolution: {integrity: sha512-1bCSESV6Pv+i21Hvpxp3Dx+pSD8lIPt8uVjRrxAUt/nbswYc+tK6Y2btiULjd4+fnq15PX+nqQDC7Oft7WkwcA==}
@@ -49574,7 +49572,7 @@ packages:
     engines: {node: '>= 0.8'}
 
   /verror/1.10.0:
-    resolution: {integrity: sha512-ZZKSmDAEFOijERBLkmYfJ+vmk3w+7hOLYDNkRCuRuMJGEmqYNCNLyBBFwWKVMhfwaEF3WOd0Zlw86U/WC/+nYw==}
+    resolution: {integrity: sha1-OhBcoXBTr1XW4nDB+CiGguGNpAA=}
     engines: {'0': node >=0.6.0}
     dependencies:
       assert-plus: 1.0.0
