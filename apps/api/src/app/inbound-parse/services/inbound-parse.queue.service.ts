@@ -1,6 +1,6 @@
 import {
-  InboundParseQueueService as InboundParseQueue,
-  InboundParseWorkerService as InboundParseWorker,
+  InboundParseQueue,
+  InboundParseWorker,
   Queue,
   QueueOptions,
   Worker,

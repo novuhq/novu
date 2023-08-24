@@ -13,8 +13,8 @@ export class JobsService {
   public workflowQueue: Queue;
 
   constructor(private isClusterMode?: boolean) {
-    this.workflowQueue = new TestingQueueService(JobTopicNameEnum.WORKFLOW, this.isClusterMode).queue;
-    this.standardQueue = new TestingQueueService(JobTopicNameEnum.STANDARD, this.isClusterMode).queue;
+    this.workflowQueue = new TestingQueueService(JobTopicNameEnum.WORKFLOW).queue;
+    this.standardQueue = new TestingQueueService(JobTopicNameEnum.STANDARD).queue;
   }
 
   public async awaitParsingEvents() {

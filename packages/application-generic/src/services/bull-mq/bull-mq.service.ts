@@ -18,7 +18,7 @@ import {
   InMemoryProviderEnum,
   InMemoryProviderService,
 } from '../in-memory-provider';
-import { IRedisProviderConfig } from '../in-memory-provider/providers/redis-provider';
+import { validateMemoryDbClusterProviderConfig } from '../in-memory-provider/providers/memory-db-cluster-provider';
 import { GetIsInMemoryClusterModeEnabled } from '../../usecases';
 
 interface IQueueMetrics {
@@ -56,10 +56,24 @@ export class BullMqService {
       new GetIsInMemoryClusterModeEnabled();
     this.inMemoryProviderService = new InMemoryProviderService(
       getIsInMemoryClusterModeEnabled,
-      process.env.MEMORY_DB_CLUSTER_SERVICE_HOST
-        ? InMemoryProviderEnum.MEMORY_DB
-        : InMemoryProviderEnum.REDIS
+      this.selectProvider()
     );
+  }
+
+  /**
+   * Rules for the provider selection:
+   * - For our self hosted users we assume all of them have a single node Redis
+   * instance.
+   * - For Novu we will use MemoryDB. We fallback to a Redis Cluster configuration
+   * if MemoryDB not configured properly. That's happening in the provider
+   * mapping in the /in-memory-provider/providers/index.ts
+   */
+  private selectProvider(): InMemoryProviderEnum {
+    if (process.env.IS_DOCKER_HOSTED) {
+      return InMemoryProviderEnum.REDIS;
+    }
+
+    return InMemoryProviderEnum.MEMORY_DB;
   }
 
   public async initialize(): Promise<void> {
@@ -100,12 +114,22 @@ export class BullMqService {
    * Reference:
    * https://github.com/taskforcesh/bullmq/issues/560
    * https://github.com/taskforcesh/bullmq/issues/1219
+   *
+   * For retro-compatibility instances of the BullMqService must use prefix
+   * but in one single case:
+   * - Only Redis instances that are not in Cluster mode can't use prefix.
+   *
    */
-  private addPrefixToConfig(prefix: JobTopicNameEnum, config) {
-    return {
-      ...config,
-      prefix: `{${prefix}}`,
-    };
+  private generatePrefix(prefix: JobTopicNameEnum): string {
+    const isClusterMode = this.inMemoryProviderService.isClusterMode();
+    const providerConfigured =
+      this.inMemoryProviderService.getProvider.configured;
+
+    if (isClusterMode || providerConfigured !== InMemoryProviderEnum.REDIS) {
+      return `{${prefix}}`;
+    }
+
+    return undefined;
   }
 
   public createQueue(topic: JobTopicNameEnum, queueOptions: QueueOptions) {
@@ -130,7 +154,11 @@ export class BullMqService {
       LOG_CONTEXT
     );
 
-    this._queue = new QueueClass(topic, this.addPrefixToConfig(topic, config));
+    const prefix = this.generatePrefix(topic);
+    this._queue = new QueueClass(topic, {
+      ...config,
+      ...(prefix && { prefix }),
+    });
 
     return this._queue;
   }
@@ -167,11 +195,11 @@ export class BullMqService {
       LOG_CONTEXT
     );
 
-    this._worker = new WorkerClass(
-      topic,
-      processor,
-      this.addPrefixToConfig(topic, config)
-    );
+    const prefix = this.generatePrefix(topic);
+    this._worker = new WorkerClass(topic, processor, {
+      ...config,
+      ...(prefix && { prefix }),
+    });
 
     return this._worker;
   }

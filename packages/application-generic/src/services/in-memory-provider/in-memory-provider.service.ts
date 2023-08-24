@@ -39,8 +39,18 @@ export class InMemoryProviderService {
     this.inMemoryProviderClient = this.buildClient(provider);
   }
 
-  public get getProvider(): InMemoryProviderEnum {
-    return this.provider;
+  public get getProvider(): {
+    selected: InMemoryProviderEnum;
+    configured: InMemoryProviderEnum;
+  } {
+    const config = this.isClusterMode()
+      ? getClientAndConfigForCluster(this.provider)
+      : getClientAndConfig();
+
+    return {
+      selected: this.provider,
+      configured: config.provider,
+    };
   }
 
   private descriptiveLogMessage(message) {

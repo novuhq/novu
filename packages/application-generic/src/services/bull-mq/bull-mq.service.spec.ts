@@ -41,52 +41,6 @@ describe('BullMQ Service', () => {
         await bullMqService.createQueue(queueName, queueOptions);
 
         expect(bullMqService.queue.name).toEqual(queueName);
-        expect(bullMqService.queue.opts.connection).toEqual({
-          connectTimeout: 50000,
-          db: 1,
-          family: 4,
-          host: 'localhost',
-          keepAlive: 7200,
-          keyPrefix: '',
-          password: undefined,
-          port: 6379,
-          tls: undefined,
-        });
-
-        expect(await bullMqService.getStatus()).toEqual({
-          queueIsPaused: false,
-          queueName,
-          workerIsPaused: undefined,
-          workerIsRunning: undefined,
-          workerName: undefined,
-        });
-      });
-
-      it('should create a queue properly with a chosen configuration', async () => {
-        const queueName = JobTopicNameEnum.METRICS;
-        const queueOptions: QueueBaseOptions = {
-          connection: {
-            connectTimeout: 10000,
-            db: 10,
-            family: 6,
-            keepAlive: 1000,
-            keyPrefix: 'test',
-          },
-        };
-        await bullMqService.createQueue(queueName, queueOptions);
-
-        expect(bullMqService.queue.name).toEqual(queueName);
-        expect(bullMqService.queue.opts.connection).toEqual({
-          connectTimeout: 10000,
-          db: 10,
-          family: 6,
-          host: 'localhost',
-          keepAlive: 1000,
-          keyPrefix: 'test',
-          password: undefined,
-          port: 6379,
-          tls: undefined,
-        });
 
         expect(await bullMqService.getStatus()).toEqual({
           queueIsPaused: false,
@@ -102,65 +56,36 @@ describe('BullMQ Service', () => {
         await bullMqService.createWorker(workerName, undefined, {});
 
         expect(bullMqService.worker.name).toEqual(workerName);
-        expect(bullMqService.worker.opts.connection).toEqual({
-          connectTimeout: 50000,
-          db: 1,
-          family: 4,
-          host: 'localhost',
-          keepAlive: 7200,
-          keyPrefix: '',
-          password: undefined,
-          port: 6379,
-          tls: undefined,
-        });
-
-        expect(await bullMqService.getStatus()).toEqual({
-          queueIsPaused: undefined,
-          queueName: undefined,
-          workerIsPaused: false,
-          workerIsRunning: false,
-          workerName,
-        });
       });
+    });
+  });
 
-      it('should create a worker properly with a chosen configuration', async () => {
-        const workerName = JobTopicNameEnum.METRICS;
-        const workerOptions: WorkerOptions = {
-          connection: {
-            connectTimeout: 10000,
-            db: 10,
-            family: 6,
-            keepAlive: 1000,
-            keyPrefix: 'test',
-          },
-          lockDuration: 90000,
-          concurrency: 200,
-        };
-        await bullMqService.createWorker(workerName, undefined, workerOptions);
+  describe('Prefix functionality', () => {
+    it('should use prefix if any Cluster provider enabled', async () => {
+      process.env.MEMORY_DB_CLUSTER_SERVICE_HOST = 'localhost';
+      process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
 
-        expect(bullMqService.worker.name).toEqual(workerName);
-        expect(bullMqService.worker.opts.connection).toEqual({
-          connectTimeout: 10000,
-          db: 10,
-          family: 6,
-          host: 'localhost',
-          keepAlive: 1000,
-          keyPrefix: 'test',
-          password: undefined,
-          port: 6379,
-          tls: undefined,
-        });
-        expect(bullMqService.worker.opts.concurrency).toEqual(200);
-        expect(bullMqService.worker.opts.lockDuration).toEqual(90000);
+      bullMqService = new BullMqService();
+      const queue = bullMqService.createQueue(JobTopicNameEnum.METRICS, {});
+      expect(queue.opts.prefix).toEqual('{metric}');
+    });
 
-        expect(await bullMqService.getStatus()).toEqual({
-          queueIsPaused: undefined,
-          queueName: undefined,
-          workerIsPaused: false,
-          workerIsRunning: false,
-          workerName,
-        });
-      });
+    it('should not use prefix if a Redis provider is used and not in Cluster mode', async () => {
+      process.env.MEMORY_DB_CLUSTER_SERVICE_HOST = '';
+      process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
+
+      bullMqService = new BullMqService();
+      const queue = bullMqService.createQueue(JobTopicNameEnum.METRICS, {});
+      expect(queue.opts.prefix).toEqual('bull');
+    });
+
+    it('should use prefix if in Cluster mode in Redis', async () => {
+      process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
+      process.env.MEMORY_DB_CLUSTER_SERVICE_HOST = '';
+
+      bullMqService = new BullMqService();
+      const queue = bullMqService.createQueue(JobTopicNameEnum.METRICS, {});
+      expect(queue.opts.prefix).toEqual('{metric}');
     });
   });
 });

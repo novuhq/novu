@@ -8,7 +8,7 @@ import { WorkflowQueueService } from './workflow-queue.service';
 
 export {
   QueueBaseService,
-  InboundParseQueueService,
+  InboundParseQueueService as InboundParseQueue,
   JobMetricsQueueService,
   StandardQueueService,
   WebSocketsQueueService,

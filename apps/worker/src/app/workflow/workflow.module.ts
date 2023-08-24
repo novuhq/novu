@@ -101,12 +101,9 @@ const PROVIDERS: Provider[] = [
   bullMqTokenList,
   StandardWorker,
   WorkflowWorker,
+  oldInstanceBullMqService,
   OldInstanceWorkflowWorker,
 ];
-
-if (process.env.MEMORY_DB_CLUSTER_SERVICE_HOST) {
-  PROVIDERS.push(oldInstanceBullMqService);
-}
 
 @Module({
   imports: [SharedModule, QueuesModule],
