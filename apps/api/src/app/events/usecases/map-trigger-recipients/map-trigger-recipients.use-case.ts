@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   EnvironmentId,
   ISubscribersDefine,
@@ -43,10 +43,12 @@ export class MapTriggerRecipients {
   @InstrumentUsecase()
   async execute(command: MapTriggerRecipientsCommand): Promise<ISubscribersDefine[]> {
     const { environmentId, organizationId, recipients, transactionId, userId, actor } = command;
-
     const mappedRecipients = Array.isArray(recipients) ? recipients : [recipients];
+    Logger.verbose(mappedRecipients, 'Mapped Recipients');
 
     const simpleSubscribers: ISubscribersDefine[] = this.findSubscribers(mappedRecipients);
+
+    Logger.verbose(simpleSubscribers, 'Simple Subscribers found');
 
     let topicSubscribers: ISubscribersDefine[] = await this.getSubscribersFromAllTopics(
       transactionId,
