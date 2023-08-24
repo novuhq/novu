@@ -291,7 +291,7 @@ export function UpdateProviderSidebar({
               <Controller
                 name={`credentials.${credential.key}`}
                 control={control}
-                defaultValue={credential.type === 'boolean' || credential.type === 'switch' ? false : ''}
+                {...(credential.type === 'boolean' || credential.type === 'switch' ? { defaultValue: false } : {})}
                 rules={{
                   required: credential.required ? `Please enter a ${credential.displayName.toLowerCase()}` : undefined,
                 }}
