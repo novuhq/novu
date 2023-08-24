@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { SubscriberRepository } from '@novu/dal';
 import { SubscriberEntity } from '@novu/dal';
 
@@ -31,6 +31,9 @@ export class CreateSubscriber {
       }));
 
     if (!subscriber) {
+      Logger.verbose(
+        `Subscriber not found invalidating cache ${command.subscriberId}`
+      );
       await this.invalidateCache.invalidateByKey({
         key: buildSubscriberKey({
           subscriberId: command.subscriberId,
@@ -38,7 +41,7 @@ export class CreateSubscriber {
         }),
       });
 
-      subscriber = await this.subscriberRepository.create({
+      const subscriberPayload = {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
         firstName: command.firstName,
@@ -49,7 +52,11 @@ export class CreateSubscriber {
         avatar: command.avatar,
         locale: command.locale,
         data: command.data,
-      });
+      };
+
+      Logger.verbose(subscriberPayload, `Creating subscriber`);
+
+      subscriber = await this.subscriberRepository.create(subscriberPayload);
     } else {
       subscriber = await this.updateSubscriber.execute(
         UpdateSubscriberCommand.create({

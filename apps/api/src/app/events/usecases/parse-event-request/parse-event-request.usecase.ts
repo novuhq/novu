@@ -42,10 +42,11 @@ export class ParseEventRequest {
   async execute(command: ParseEventRequestCommand) {
     const transactionId = command.transactionId || uuidv4();
     Logger.log('Starting Trigger');
+    Logger.debug(command, 'Trigger Command');
 
     const mappedActor = command.actor ? this.mapTriggerRecipients.mapSubscriber(command.actor) : undefined;
 
-    Logger.debug(mappedActor);
+    Logger.debug(mappedActor, 'Mapped Actor');
 
     const mappedRecipients = await this.mapTriggerRecipients.execute(
       MapTriggerRecipientsCommand.create({
@@ -57,6 +58,8 @@ export class ParseEventRequest {
         actor: mappedActor,
       })
     );
+
+    Logger.debug(mappedRecipients, 'Mapped Recipients Result');
 
     await this.validateSubscriberIdProperty(mappedRecipients);
 
