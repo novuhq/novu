@@ -30,9 +30,11 @@ export class OldInstanceWorkflowWorkerService {
   }
 
   public initWorker(processor: WorkerProcessor, options?: WorkerOptions): void {
-    Logger.log(`Worker ${this.topic} initialized`, LOG_CONTEXT);
+    if (this.instance.enabled) {
+      Logger.log(`Worker ${this.topic} initialized`, LOG_CONTEXT);
 
-    this.createWorker(processor, options);
+      this.createWorker(processor, options);
+    }
   }
 
   public get bullMqService(): OldInstanceBullMqService {
@@ -43,24 +45,32 @@ export class OldInstanceWorkflowWorkerService {
     processor: WorkerProcessor,
     options: WorkerOptions
   ): void {
-    this.worker = this.instance.createWorker(this.topic, processor, options);
+    if (this.instance.enabled) {
+      this.worker = this.instance.createWorker(this.topic, processor, options);
+    }
   }
 
   public async pause(): Promise<void> {
-    await this.instance.pauseWorker();
+    if (this.instance.enabled) {
+      await this.instance.pauseWorker();
+    }
   }
 
   public async resume(): Promise<void> {
-    await this.instance.resumeWorker();
+    if (this.instance.enabled) {
+      await this.instance.resumeWorker();
+    }
   }
 
   public async gracefulShutdown(): Promise<void> {
-    Logger.log('Shutting the Worker service down', LOG_CONTEXT);
+    if (this.instance.enabled) {
+      Logger.log('Shutting the Worker service down', LOG_CONTEXT);
 
-    this.worker = undefined;
-    await this.instance.gracefulShutdown();
+      this.worker = undefined;
+      await this.instance.gracefulShutdown();
 
-    Logger.log('Shutting down the Worker service has finished', LOG_CONTEXT);
+      Logger.log('Shutting down the Worker service has finished', LOG_CONTEXT);
+    }
   }
 
   async onModuleDestroy(): Promise<void> {

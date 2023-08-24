@@ -15,6 +15,7 @@ export enum InMemoryProviderEnum {
   ELASTICACHE = 'Elasticache',
   MEMORY_DB = 'MemoryDB',
   REDIS = 'Redis',
+  REDIS_CLUSTER = 'RedisCluster',
   OLD_INSTANCE_REDIS = 'OldInstanceRedis',
 }
 

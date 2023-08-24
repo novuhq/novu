@@ -1,10 +1,8 @@
 import { Module, Provider } from '@nestjs/common';
 
+import { bullMqTokenList, oldInstanceBullMqService } from '../custom-providers';
 import {
-  bullMqTokenList,
-  oldInstanceBullMqService,
-} from '../custom-providers';
-import {
+  InboundParseQueueServiceHealthIndicator,
   StandardQueueServiceHealthIndicator,
   WebSocketsQueueServiceHealthIndicator,
   WorkflowQueueServiceHealthIndicator,
@@ -15,11 +13,13 @@ import {
   ReadinessService,
 } from '../services';
 import {
+  InboundParseQueue,
   StandardQueueService,
   WebSocketsQueueService,
   WorkflowQueueService,
 } from '../services/queues';
 import {
+  InboundParseWorker,
   JobMetricsWorkerService,
   StandardWorkerService,
   WebSocketsWorkerService,
@@ -30,6 +30,9 @@ import {
 const PROVIDERS: Provider[] = [
   bullMqTokenList,
   BullMqService,
+  InboundParseQueue,
+  InboundParseWorker,
+  InboundParseQueueServiceHealthIndicator,
   ReadinessService,
   StandardQueueService,
   StandardQueueServiceHealthIndicator,
@@ -40,13 +43,10 @@ const PROVIDERS: Provider[] = [
   WorkflowQueueService,
   WorkflowQueueServiceHealthIndicator,
   WorkflowWorkerService,
+  oldInstanceBullMqService,
   OldInstanceWorkflowWorkerService,
   OldInstanceBullMqService,
 ];
-
-if (process.env.MEMORY_DB_CLUSTER_SERVICE_HOST) {
-  PROVIDERS.push(oldInstanceBullMqService);
-}
 
 @Module({
   providers: [...PROVIDERS],

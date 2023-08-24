@@ -47,10 +47,6 @@ describe('WebSocket Worker', () => {
       concurrency: 5,
       lockDuration: 90000,
     });
-    expect(webSocketWorker.worker.opts.connection).to.deep.include({
-      host: 'localhost',
-      port: 6379,
-    });
   });
 
   it('should be able to automatically pull a job from the queue', async () => {

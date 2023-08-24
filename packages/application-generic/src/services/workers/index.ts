@@ -12,7 +12,7 @@ import { WorkflowWorkerService } from './workflow-worker.service';
 import { OldInstanceWorkflowWorkerService } from './old-instance-workflow-worker.service';
 
 export {
-  InboundParseWorkerService,
+  InboundParseWorkerService as InboundParseWorker,
   JobMetricsWorkerService,
   StandardWorkerService,
   WebSocketsWorkerService,

@@ -11,13 +11,9 @@ import { OldInstanceWorkflowWorker } from './old-instance-workflow.worker';
 const getWorkers = (app: INestApplication): INovuWorker[] => {
   const standardWorker = app.get(StandardWorker, { strict: false });
   const workflowWorker = app.get(WorkflowWorker, { strict: false });
+  const oldInstanceWorkflowWorker = app.get(OldInstanceWorkflowWorker, { strict: false });
 
-  const workers: INovuWorker[] = [standardWorker, workflowWorker];
-
-  if (!process.env.IS_DOCKER_HOSTED) {
-    const oldInstanceWorkflowWorker = app.get(OldInstanceWorkflowWorker, { strict: false });
-    workers.push(oldInstanceWorkflowWorker);
-  }
+  const workers: INovuWorker[] = [standardWorker, workflowWorker, oldInstanceWorkflowWorker];
 
   return workers;
 };

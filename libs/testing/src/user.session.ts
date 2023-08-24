@@ -69,18 +69,17 @@ export class UserSession {
 
   apiKey: string;
 
-  constructor(public serverUrl = `http://localhost:${process.env.PORT}`) {}
+  constructor(public serverUrl = `http://localhost:${process.env.PORT}`) {
+    this.jobsService = new JobsService();
+  }
 
   async initialize(
     options: {
-      isClusterMode?: boolean;
       noOrganization?: boolean;
       noEnvironment?: boolean;
       showOnBoardingTour?: boolean;
     } = {}
   ) {
-    this.jobsService = new JobsService(options?.isClusterMode);
-
     const card = {
       firstName: faker.name.firstName(),
       lastName: faker.name.lastName(),
