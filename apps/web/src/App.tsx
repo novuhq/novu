@@ -60,6 +60,7 @@ import { EmailSettings } from './pages/settings/tabs/EmailSettings';
 import { ProductLead } from './components/utils/ProductLead';
 import { SSO, UserAccess } from './design-system/icons';
 import { Cloud } from './design-system/icons/general/Cloud';
+import { BrandingForm, LayoutsListPage } from './pages/brand/tabs';
 
 library.add(far, fas);
 
@@ -267,7 +268,10 @@ function App() {
                   <Route path={ROUTES.TEAM} element={<MembersInvitePage />} />
                   <Route path={ROUTES.CHANGES} element={<PromoteChangesPage />} />
                   <Route path={ROUTES.SUBSCRIBERS} element={<SubscribersList />} />
-                  <Route path="/brand" element={<BrandPage />} />
+                  <Route path={ROUTES.BRAND} element={<BrandPage />}>
+                    <Route path="" element={<BrandingForm />} />
+                    <Route path="layouts" element={<LayoutsListPage />} />
+                  </Route>
                 </Route>
               </Routes>
             </AuthProvider>
