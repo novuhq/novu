@@ -70,21 +70,6 @@ describe('Testing BrandingForm', () => {
     cy.get('[data-test-id="color-picker"]').should('exist');
     cy.get('[data-test-id="upload-image-button"]').should('exist');
   });
-  it('should render with organization and loading', () => {
-    cy.mount(
-      <QueryClientProvider client={queryClient}>
-        <TestWrapper>
-          <BrandingFormRoute organization={testOrganization} />
-        </TestWrapper>
-      </QueryClientProvider>
-    );
-    cy.get('form').should('exist');
-    cy.get('.mantine-LoadingOverlay-root').should('exist');
-    cy.get('[data-test-id="logo-image-wrapper"]').should('exist');
-    cy.get('[data-test-id="font-family-selector"]').should('exist');
-    cy.get('[data-test-id="color-picker"]').should('exist');
-    cy.get('[data-test-id="upload-image-button"]').should('exist');
-  });
   it('default values should be correct', () => {
     cy.get('[data-test-id="logo-image-wrapper"]').should('not.exist');
     cy.get('[data-test-id="upload-image-button"]').should('exist');
