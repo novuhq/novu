@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 import {
@@ -6,6 +6,8 @@ import {
   FeatureFlagCommand,
 } from './get-feature-flag.command';
 import { GetFeatureFlag } from './get-feature-flag.use-case';
+
+const LOG_CONTEXT = 'GetIsMultiProviderConfigurationEnabled';
 
 @Injectable()
 export class GetIsMultiProviderConfigurationEnabled extends GetFeatureFlag {
@@ -19,6 +21,17 @@ export class GetIsMultiProviderConfigurationEnabled extends GetFeatureFlag {
     const key = FeatureFlagsKeysEnum.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
 
     const command = this.buildCommand(key, defaultValue, featureFlagCommand);
+
+    Logger.verbose(
+      {
+        value,
+        fallbackValue,
+        defaultValue,
+        usedValue: await this.featureFlagsService.getWithContext(command),
+      },
+      'Multi provider configuration enabled feature flag',
+      LOG_CONTEXT
+    );
 
     return await this.featureFlagsService.getWithContext(command);
   }
