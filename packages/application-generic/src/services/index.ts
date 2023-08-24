@@ -18,3 +18,4 @@ export * from './distributed-lock';
 export * from './in-memory-provider';
 export * from './feature-flags.service';
 export * from './launch-darkly.service';
+export * from './communication';

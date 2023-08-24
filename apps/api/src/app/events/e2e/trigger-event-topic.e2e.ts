@@ -331,8 +331,16 @@ describe('Topic Trigger Event', () => {
 
       template = await session.createTemplate();
       subscriberService = new SubscribersService(session.organization._id, session.environment._id);
-      firstSubscriber = await subscriberService.createSubscriber();
-      secondSubscriber = await subscriberService.createSubscriber();
+      firstSubscriber = await subscriberService.createSubscriber({
+        subscriberId: 'sad_george_1',
+        firstName: 'sad_george_1',
+        lastName: 'sad_george_1',
+      });
+      secondSubscriber = await subscriberService.createSubscriber({
+        subscriberId: 'sad_george_2',
+        firstName: 'sad_george_2',
+        lastName: 'sad_george_2',
+      });
       firstTopicSubscribers = [firstSubscriber, secondSubscriber];
 
       const firstTopicKey = 'topic-key-1-trigger-event';
@@ -341,8 +349,16 @@ describe('Topic Trigger Event', () => {
 
       await addSubscribersToTopic(session, firstTopicDto, firstTopicSubscribers);
 
-      thirdSubscriber = await subscriberService.createSubscriber();
-      fourthSubscriber = await subscriberService.createSubscriber();
+      thirdSubscriber = await subscriberService.createSubscriber({
+        subscriberId: 'sad_george_3',
+        firstName: 'sad_george_3',
+        lastName: 'sad_george_3',
+      });
+      fourthSubscriber = await subscriberService.createSubscriber({
+        subscriberId: 'sad_george_4',
+        firstName: 'sad_george_4',
+        lastName: 'sad_george_4',
+      });
       const secondTopicSubscribers = [thirdSubscriber, fourthSubscriber];
 
       const secondTopicKey = 'topic-key-2-trigger-event';
@@ -351,8 +367,16 @@ describe('Topic Trigger Event', () => {
 
       await addSubscribersToTopic(session, secondTopicDto, secondTopicSubscribers);
 
-      fifthSubscriber = await subscriberService.createSubscriber();
-      sixthSubscriber = await subscriberService.createSubscriber();
+      fifthSubscriber = await subscriberService.createSubscriber({
+        subscriberId: 'sad_george_5',
+        firstName: 'sad_george_5',
+        lastName: 'sad_george_5',
+      });
+      sixthSubscriber = await subscriberService.createSubscriber({
+        subscriberId: 'sad_george_6',
+        firstName: 'sad_george_6',
+        lastName: 'sad_george_6',
+      });
 
       subscribers = [
         firstSubscriber,
@@ -368,8 +392,8 @@ describe('Topic Trigger Event', () => {
         fifthSubscriber.subscriberId,
         {
           subscriberId: sixthSubscriber.subscriberId,
-          firstName: 'Subscribers',
-          lastName: 'Define',
+          firstName: 'sad_george_6',
+          lastName: 'sad_george_6',
           email: 'subscribers-define@email.novu',
         },
       ];
@@ -483,15 +507,18 @@ describe('Topic Trigger Event', () => {
       expect(subscribers.length).to.be.greaterThan(0);
 
       for (const subscriber of subscribers) {
-        const message = await messageRepository._model.findOne({
+        const message = await messageRepository.findOne({
           _environmentId: session.environment._id,
           _templateId: template._id,
           _subscriberId: subscriber._id,
           channel: ChannelTypeEnum.SMS,
         });
 
-        expect(message?._subscriberId.toString()).to.be.eql(subscriber._id);
+        expect(message?._subscriberId).to.be.eql(subscriber._id);
+
         expect(message?.phone).to.equal(subscriber.phone);
+        // eslint-disable-next-line no-console
+        console.log();
       }
     });
 

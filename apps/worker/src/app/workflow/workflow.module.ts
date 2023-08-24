@@ -38,6 +38,7 @@ import {
   ProcessTenant,
   MapTriggerRecipients,
   GetTopicSubscribersUseCase,
+  BullMqService,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
@@ -65,6 +66,9 @@ import {
   WebhookFilterBackoffStrategy,
 } from './usecases';
 import { MetricQueueService } from './services/metric-queue.service';
+import { SubscriberProcessQueueService } from '@novu/application-generic/build/main/services/communication/subscriber-process/subscriber-process-queue.service';
+import { SubscriberJobBoundUsecase } from '@novu/application-generic/build/main/usecases/subscriber-job-bound/subscriber-job-bound.usecase';
+import { SubscriberProcessWorkerService } from '@novu/application-generic/build/main/services/communication/subscriber-process/subscriber-process-worker.service';
 
 const USE_CASES = [
   AddJob,
@@ -118,6 +122,7 @@ const USE_CASES = [
   ProcessTenant,
   MapTriggerRecipients,
   GetTopicSubscribersUseCase,
+  SubscriberJobBoundUsecase,
 ];
 
 const REPOSITORIES = [JobRepository];
@@ -139,10 +144,19 @@ const SERVICES: Provider[] = [
     provide: WsQueueService,
     useClass: WsQueueService,
   },
+  BullMqService,
+  SubscriberProcessQueueService,
+  SubscriberProcessWorkerService,
   {
     provide: 'BULLMQ_LIST',
-    useFactory: (workflowQueue: QueueService, triggerQueue: TriggerQueueService, wsQueue: WsQueueService) => {
-      return [workflowQueue, triggerQueue, wsQueue];
+    useFactory: (
+      workflowQueue: QueueService,
+      triggerQueue: TriggerQueueService,
+      wsQueue: WsQueueService,
+      subscriberProcessQueueService: SubscriberProcessQueueService,
+      subscriberProcessWorkerService: SubscriberProcessWorkerService
+    ) => {
+      return [workflowQueue, triggerQueue, wsQueue, subscriberProcessQueueService, subscriberProcessWorkerService];
     },
     inject: [QueueService, TriggerQueueService, WsQueueService],
   },

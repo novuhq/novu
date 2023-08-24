@@ -6,7 +6,12 @@ import { INestApplication, Logger, NestInterceptor, ValidationPipe } from '@nest
 import { NestFactory } from '@nestjs/core';
 import * as bodyParser from 'body-parser';
 import * as Sentry from '@sentry/node';
-import { BullMqService, INovuWorker, ReadinessService } from '@novu/application-generic';
+import {
+  BullMqService,
+  INovuWorker,
+  ReadinessService,
+  SubscriberProcessWorkerService,
+} from '@novu/application-generic';
 import { getErrorInterceptor, Logger as PinoLogger } from '@novu/application-generic';
 
 import { AppModule } from './app.module';
@@ -37,8 +42,9 @@ validateEnv();
 const getWorkers = (app: INestApplication): INovuWorker[] => {
   const workflowQueueService = app.get(WorkflowQueueService, { strict: false });
   const triggerQueueService = app.get(TriggerProcessorQueueService, { strict: false });
+  const subscriberProcessWorkerService = app.get(SubscriberProcessWorkerService, { strict: false });
 
-  return [workflowQueueService, triggerQueueService];
+  return [workflowQueueService, triggerQueueService, subscriberProcessWorkerService];
 };
 
 const prepareAppInfra = async (app: INestApplication): Promise<void> => {

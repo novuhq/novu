@@ -7,6 +7,7 @@ import {
   QueueService,
   CalculateDelayService,
   GetNovuProviderCredentials,
+  BullMqService,
 } from '@novu/application-generic';
 
 import { EventsController } from './events.controller';
@@ -24,6 +25,7 @@ import { ExecutionDetailsModule } from '../execution-details/execution-details.m
 import { TopicsModule } from '../topics/topics.module';
 import { LayoutsModule } from '../layouts/layouts.module';
 import { TenantModule } from '../tenant/tenant.module';
+import { SubscriberProcessQueueService } from '@novu/application-generic';
 
 @Module({
   imports: [
@@ -53,6 +55,8 @@ import { TenantModule } from '../tenant/tenant.module';
     SendTestEmail,
     CalculateDelayService,
     GetNovuProviderCredentials,
+    SubscriberProcessQueueService,
+    BullMqService,
   ],
 })
 export class EventsModule {}

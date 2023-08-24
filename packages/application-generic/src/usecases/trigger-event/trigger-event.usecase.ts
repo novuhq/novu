@@ -17,18 +17,12 @@ import {
 } from '@novu/shared';
 
 import { TriggerEventCommand } from './trigger-event.command';
-import {
-  CreateNotificationJobsCommand,
-  CreateNotificationJobs,
-} from '../create-notification-jobs';
+import { CreateNotificationJobs } from '../create-notification-jobs';
 import {
   ProcessSubscriber,
   ProcessSubscriberCommand,
 } from '../process-subscriber';
-import {
-  StoreSubscriberJobs,
-  StoreSubscriberJobsCommand,
-} from '../store-subscriber-jobs';
+import { StoreSubscriberJobs } from '../store-subscriber-jobs';
 import { PinoLogger } from '../../logging';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import {
@@ -42,6 +36,7 @@ import {
   MapTriggerRecipients,
   MapTriggerRecipientsCommand,
 } from '../map-trigger-recipients';
+import { SubscriberProcessQueueService } from '../../services';
 
 const LOG_CONTEXT = 'TriggerEventUseCase';
 
@@ -57,7 +52,8 @@ export class TriggerEvent {
     private processTenant: ProcessTenant,
     private logger: PinoLogger,
     private analyticsService: AnalyticsService,
-    private mapTriggerRecipients: MapTriggerRecipients
+    private mapTriggerRecipients: MapTriggerRecipients,
+    private subscriberProcessQueueService: SubscriberProcessQueueService
   ) {}
 
   @InstrumentUsecase()
@@ -88,11 +84,6 @@ export class TriggerEvent {
       transactionId: command.transactionId,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
-    });
-
-    const template = await this.getNotificationTemplateByTriggerIdentifier({
-      environmentId: command.environmentId,
-      triggerIdentifier: command.identifier,
     });
 
     if (tenant) {
@@ -140,14 +131,17 @@ export class TriggerEvent {
       MapTriggerRecipientsCommand.create({
         environmentId: command.environmentId,
         organizationId: command.organizationId,
+        userId: command.userId,
         recipients: command.to,
         transactionId: command.transactionId,
-        userId: command.userId,
         actor: mappedActor,
       })
     );
 
-    await this.validateSubscriberIdProperty(mappedRecipients);
+    const template = await this.getNotificationTemplateByTriggerIdentifier({
+      environmentId: command.environmentId,
+      triggerIdentifier: command.identifier,
+    });
 
     const templateProviderIds = await this.getProviderIdsForTemplate(
       command.environmentId,
@@ -155,70 +149,23 @@ export class TriggerEvent {
     );
 
     for (const subscriber of mappedRecipients) {
-      this.analyticsService.track(
-        'Notification event trigger - [Triggers]',
-        command.userId,
+      this.subscriberProcessQueueService.add(
+        command.transactionId + subscriber.subscriberId,
         {
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          userId: command.userId,
           transactionId: command.transactionId,
-          _template: template._id,
-          _organization: command.organizationId,
-          channels: template?.steps.map((step) => step.template?.type),
-          source: command.payload.__source || 'api',
-        }
-      );
-
-      const subscriberProcessed = await this.processSubscriber.execute(
-        ProcessSubscriberCommand.create({
-          environmentId,
-          organizationId,
-          userId,
-          subscriber,
-        })
-      );
-
-      // If no subscriber makes no sense to try to create notification
-      if (!subscriberProcessed) {
-        /**
-         * TODO: Potentially add a CreateExecutionDetails entry. Right now we
-         * have the limitation we need a job to be created for that. Here there
-         * is no job at this point.
-         */
-        Logger.warn(
-          `Subscriber ${JSON.stringify(
-            subscriber.subscriberId
-          )} of organization ${command.organizationId} in transaction ${
-            command.transactionId
-          } was not processed. No jobs are created.`,
-          LOG_CONTEXT
-        );
-
-        return;
-      }
-
-      const notificationJobs = await this.createNotificationJobs.execute(
-        CreateNotificationJobsCommand.create({
-          environmentId,
-          identifier,
-          organizationId,
-          overrides: command.overrides,
+          identifier: command.identifier,
           payload: command.payload,
-          subscriber: subscriberProcessed,
+          overrides: command.overrides,
+          tenant: command.tenant,
+          ...(actor && actorProcessed && { actor: actorProcessed }),
           template,
           templateProviderIds,
-          to: subscriber,
-          transactionId: command.transactionId,
-          userId,
-          ...(actor && actorProcessed && { actor: actorProcessed }),
-          tenant,
-        })
-      );
-
-      await this.storeSubscriberJobs.execute(
-        StoreSubscriberJobsCommand.create({
-          environmentId: command.environmentId,
-          jobs: notificationJobs,
-          organizationId: command.organizationId,
-        })
+          subscriber,
+        },
+        command.organizationId
       );
     }
   }
