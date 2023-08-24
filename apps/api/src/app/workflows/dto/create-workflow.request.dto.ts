@@ -26,7 +26,7 @@ export class CreateWorkflowRequestDto implements ICreateWorkflowDto {
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
-  @MaxLength(100)
+  @MaxLength(1000)
   description: string;
 
   @ApiProperty({
