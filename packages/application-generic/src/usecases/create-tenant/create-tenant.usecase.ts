@@ -1,13 +1,16 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 
 import { TenantRepository } from '@novu/dal';
-import { AnalyticsService } from '@novu/application-generic';
+import { AnalyticsService } from '../../services';
 
 import { CreateTenantCommand } from './create-tenant.command';
 
 @Injectable()
 export class CreateTenant {
-  constructor(private tenantRepository: TenantRepository, private analyticsService: AnalyticsService) {}
+  constructor(
+    private tenantRepository: TenantRepository,
+    private analyticsService: AnalyticsService
+  ) {}
 
   async execute(command: CreateTenantCommand) {
     const tenantExist = await this.tenantRepository.findOne({
