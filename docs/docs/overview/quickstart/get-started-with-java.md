@@ -266,17 +266,9 @@ Copy and paste the following code into your app to add subscribers a topic:
 String apiKey = "API_KEY";
 Novu novu = new Novu(apiKey);
 
-    SubscriberRequest subscriberRequest = new SubscriberRequest();
-        subscriberRequest.setEmail("email");
-        subscriberRequest.setFirstName("fName");
-        subscriberRequest.setLastName("lName");
-        subscriberRequest.setPhone("phone");
-        subscriberRequest.setAvatar("avatar");
-        subscriberRequest.setSubscriberId("subscriberId");
-
         String topicKey = "key";
         SubscriberAdditionRequest requestBody = new SubscriberAdditionRequest();
-        requestBody.setSubscribers(Collections.singletonList(subscriberRequest));
+        requestBody.setSubscribers(Collections.singletonList("aSubscriberId"));
 
         try {
             return novu.addSubscriberToTopic(requestBody,topicKey);
@@ -293,18 +285,10 @@ On the other hand, if you want to remove subscribers from a topic, do the follow
 String apiKey = "API_KEY";
 Novu novu = new Novu(apiKey);
 
-    SubscriberRequest subscriberRequest = new SubscriberRequest();
-        subscriberRequest.setEmail("email");
-        subscriberRequest.setFirstName("fName");
-        subscriberRequest.setLastName("lName");
-        subscriberRequest.setPhone("phone");
-        subscriberRequest.setAvatar("avatar");
-        subscriberRequest.setSubscriberId("subscriberId");
-
 
         String topicKey = "key";
         SubscriberAdditionRequest requestBody = new SubscriberAdditionRequest();
-        requestBody.setSubscribers(Collections.singletonList(subscriberRequest));
+        requestBody.setSubscribers(Collections.singletonList("aSubscriberId"));
 
         try {
             return novu.removeSubscriberFromTopic(requestBody, topicKey);
