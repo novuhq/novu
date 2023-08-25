@@ -97,7 +97,7 @@ const codeTheme = require('./src/utils/prism');
               position: 'right',
             },
             {
-              href: 'https://discord.novu.co',
+              href: 'https://discord.gg/novu',
               label: 'Community',
               position: 'right',
             },
@@ -130,7 +130,7 @@ const codeTheme = require('./src/utils/prism');
                 },
                 {
                   label: 'Contact Us',
-                  href: 'https://discord.novu.co',
+                  href: 'https://discord.gg/novu',
                 },
               ],
             },

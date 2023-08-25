@@ -198,7 +198,7 @@ export function SideNav({}: Props) {
           <a
             target="_blank"
             rel="noopener noreferrer"
-            href="https://discord.novu.co"
+            href="https://discord.gg/novu"
             data-test-id="side-nav-bottom-link-support"
           >
             Support
