@@ -1,10 +1,6 @@
 import { InMemoryProviderService } from './in-memory-provider.service';
 import { InMemoryProviderEnum } from './types';
 
-import { GetIsInMemoryClusterModeEnabled } from '../../usecases';
-
-const getIsInMemoryClusterModeEnabled = new GetIsInMemoryClusterModeEnabled();
-
 let inMemoryProviderService: InMemoryProviderService;
 
 describe('In-memory Provider Service', () => {
@@ -13,7 +9,6 @@ describe('In-memory Provider Service', () => {
       process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
 
       inMemoryProviderService = new InMemoryProviderService(
-        getIsInMemoryClusterModeEnabled,
         InMemoryProviderEnum.REDIS
       );
 
@@ -92,7 +87,6 @@ describe('In-memory Provider Service', () => {
       process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
 
       inMemoryProviderService = new InMemoryProviderService(
-        getIsInMemoryClusterModeEnabled,
         InMemoryProviderEnum.REDIS
       );
       await inMemoryProviderService.delayUntilReadiness();
@@ -107,7 +101,6 @@ describe('In-memory Provider Service', () => {
     describe('TEMP: Check if enableAutoPipelining true is set properly in Cluster', () => {
       it('enableAutoPipelining is enabled', async () => {
         const clusterWithPipelining = new InMemoryProviderService(
-          getIsInMemoryClusterModeEnabled,
           InMemoryProviderEnum.REDIS,
           true
         );

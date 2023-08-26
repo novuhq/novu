@@ -1,20 +1,12 @@
 import { UserSession } from '@novu/testing';
-import {
-  GetIsInMemoryClusterModeEnabled,
-  InMemoryProviderEnum,
-  InMemoryProviderService,
-} from '@novu/application-generic';
+import { InMemoryProviderEnum, InMemoryProviderService } from '@novu/application-generic';
 import { expect } from 'chai';
 
 describe('Health-check', () => {
   const session = new UserSession();
 
   before(async () => {
-    const getIsInMemoryClusterModeEnabled = new GetIsInMemoryClusterModeEnabled();
-    const inMemoryProviderService = new InMemoryProviderService(
-      getIsInMemoryClusterModeEnabled,
-      InMemoryProviderEnum.REDIS
-    );
+    const inMemoryProviderService = new InMemoryProviderService(InMemoryProviderEnum.REDIS);
 
     await session.initialize();
   });

@@ -9,7 +9,6 @@ import {
   InMemoryProviderEnum,
   InMemoryProviderService,
 } from '../in-memory-provider';
-import { GetIsInMemoryClusterModeEnabled } from '../../usecases';
 
 const originalRedisCacheServiceHost = (process.env.REDIS_CACHE_SERVICE_HOST =
   process.env.REDIS_CACHE_SERVICE_HOST ?? 'localhost');
@@ -30,8 +29,6 @@ const spyIncreaseLockCounter = jest.spyOn(
 const spyLock = jest.spyOn(Redlock.prototype, 'acquire');
 const spyUnlock = jest.spyOn(Redlock.prototype, 'unlock');
 
-const getIsInMemoryClusterModeEnabled = new GetIsInMemoryClusterModeEnabled();
-
 describe('Distributed Lock Service', () => {
   afterEach(() => {
     spyDecreaseLockCounter.mockClear();
@@ -46,7 +43,6 @@ describe('Distributed Lock Service', () => {
 
     beforeEach(async () => {
       inMemoryProviderService = new InMemoryProviderService(
-        getIsInMemoryClusterModeEnabled,
         InMemoryProviderEnum.REDIS
       );
 
@@ -303,10 +299,7 @@ describe('Distributed Lock Service', () => {
       process.env.REDIS_CLUSTER_SERVICE_HOST = '';
       process.env.REDIS_CLUSTER_SERVICE_PORTS = '';
 
-      inMemoryProviderService = new InMemoryProviderService(
-        getIsInMemoryClusterModeEnabled,
-        undefined
-      );
+      inMemoryProviderService = new InMemoryProviderService(undefined);
       expect(inMemoryProviderService.inMemoryProviderConfig.host).toEqual(
         'localhost'
       );

@@ -21,13 +21,13 @@ import { GetIsInMemoryClusterModeEnabled } from '../../usecases';
 const LOG_CONTEXT = 'InMemoryProviderService';
 
 export class InMemoryProviderService {
+  private getIsInMemoryClusterModeEnabled: GetIsInMemoryClusterModeEnabled;
   public inMemoryProviderClient: InMemoryProviderClient;
   public inMemoryProviderConfig: InMemoryProviderConfig;
 
   public isProviderClientReady: (string) => boolean;
 
   constructor(
-    private getIsInMemoryClusterModeEnabled: GetIsInMemoryClusterModeEnabled,
     private provider: InMemoryProviderEnum,
     private enableAutoPipelining?: boolean
   ) {
@@ -36,6 +36,8 @@ export class InMemoryProviderService {
       LOG_CONTEXT
     );
 
+    this.getIsInMemoryClusterModeEnabled =
+      new GetIsInMemoryClusterModeEnabled();
     this.inMemoryProviderClient = this.buildClient(provider);
   }
 

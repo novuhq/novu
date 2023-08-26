@@ -6,7 +6,6 @@ import { createHash } from '../../shared/helpers/hmac.service';
 import {
   buildIntegrationKey,
   CacheService,
-  GetIsInMemoryClusterModeEnabled,
   InMemoryProviderService,
   InvalidateCacheService,
   InMemoryProviderEnum,
@@ -20,11 +19,7 @@ describe('Initialize Session - /widgets/session/initialize (POST)', async () => 
   let invalidateCache: InvalidateCacheService;
 
   before(async () => {
-    const getIsInMemoryClusterModeEnabled = new GetIsInMemoryClusterModeEnabled();
-    const inMemoryProviderService = new InMemoryProviderService(
-      getIsInMemoryClusterModeEnabled,
-      InMemoryProviderEnum.REDIS
-    );
+    const inMemoryProviderService = new InMemoryProviderService(InMemoryProviderEnum.REDIS);
     const cacheService = new CacheService(inMemoryProviderService);
     await cacheService.initialize();
     invalidateCache = new InvalidateCacheService(cacheService);

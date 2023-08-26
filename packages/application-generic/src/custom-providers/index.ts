@@ -17,7 +17,6 @@ import {
   WorkflowQueueService,
 } from '../services';
 import {
-  GetIsInMemoryClusterModeEnabled,
   GetIsMultiProviderConfigurationEnabled,
   GetIsTopicNotificationEnabled,
 } from '../usecases';
@@ -61,17 +60,11 @@ export const getIsTopicNotificationEnabled = {
 export const inMemoryProviderService = {
   provide: InMemoryProviderService,
   useFactory: (
-    getIsInMemoryClusterModeEnabledUseCase: GetIsInMemoryClusterModeEnabled,
     provider: InMemoryProviderEnum,
     enableAutoPipelining?: boolean
   ): InMemoryProviderService => {
-    return new InMemoryProviderService(
-      getIsInMemoryClusterModeEnabledUseCase,
-      provider,
-      enableAutoPipelining
-    );
+    return new InMemoryProviderService(provider, enableAutoPipelining);
   },
-  inject: [GetIsInMemoryClusterModeEnabled],
 };
 
 export const bullMqService = {
@@ -98,13 +91,10 @@ export const oldInstanceBullMqService = {
 
 export const cacheService = {
   provide: CacheService,
-  useFactory: async (
-    getIsInMemoryClusterModeEnabledUseCase: GetIsInMemoryClusterModeEnabled
-  ): Promise<CacheService> => {
+  useFactory: async (): Promise<CacheService> => {
     const enableAutoPipelining =
       process.env.REDIS_CACHE_ENABLE_AUTOPIPELINING === 'false';
     const factoryInMemoryProviderService = inMemoryProviderService.useFactory(
-      getIsInMemoryClusterModeEnabledUseCase,
       InMemoryProviderEnum.ELASTICACHE,
       enableAutoPipelining
     );
@@ -115,7 +105,6 @@ export const cacheService = {
 
     return service;
   },
-  inject: [GetIsInMemoryClusterModeEnabled],
 };
 
 export const analyticsService = {
@@ -130,11 +119,8 @@ export const analyticsService = {
 
 export const distributedLockService = {
   provide: DistributedLockService,
-  useFactory: async (
-    getIsInMemoryClusterModeEnabledUseCase: GetIsInMemoryClusterModeEnabled
-  ): Promise<DistributedLockService> => {
+  useFactory: async (): Promise<DistributedLockService> => {
     const factoryInMemoryProviderService = inMemoryProviderService.useFactory(
-      getIsInMemoryClusterModeEnabledUseCase,
       InMemoryProviderEnum.ELASTICACHE
     );
 
@@ -144,7 +130,6 @@ export const distributedLockService = {
 
     return service;
   },
-  inject: [GetIsInMemoryClusterModeEnabled],
 };
 
 export const bullMqTokenList = {

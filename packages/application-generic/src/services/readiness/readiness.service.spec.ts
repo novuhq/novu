@@ -1,17 +1,12 @@
 import { ReadinessService } from './readiness.service';
 
 import { BullMqService } from '../bull-mq';
-import {
-  InMemoryProviderEnum,
-  InMemoryProviderService,
-} from '../in-memory-provider';
 import { StandardQueueService, WorkflowQueueService } from '../queues';
 import { StandardWorkerService, WorkerBaseService } from '../workers';
 import {
   StandardQueueServiceHealthIndicator,
   WorkflowQueueServiceHealthIndicator,
 } from '../../health';
-import { GetIsInMemoryClusterModeEnabled } from '../../usecases';
 
 let readinessService: ReadinessService;
 let standardQueueService: StandardQueueService;

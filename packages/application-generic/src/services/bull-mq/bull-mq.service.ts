@@ -19,7 +19,6 @@ import {
   InMemoryProviderService,
 } from '../in-memory-provider';
 import { validateMemoryDbClusterProviderConfig } from '../in-memory-provider/providers/memory-db-cluster-provider';
-import { GetIsInMemoryClusterModeEnabled } from '../../usecases';
 
 interface IQueueMetrics {
   completed: Metrics;
@@ -52,10 +51,7 @@ export class BullMqService {
     process.env.NOVU_MANAGED_SERVICE !== undefined;
 
   constructor() {
-    const getIsInMemoryClusterModeEnabled =
-      new GetIsInMemoryClusterModeEnabled();
     this.inMemoryProviderService = new InMemoryProviderService(
-      getIsInMemoryClusterModeEnabled,
       this.selectProvider()
     );
   }

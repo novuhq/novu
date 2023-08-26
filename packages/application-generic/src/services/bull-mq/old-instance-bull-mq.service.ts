@@ -24,7 +24,6 @@ import {
   InMemoryProviderService,
 } from '../in-memory-provider';
 import { IRedisProviderConfig } from '../in-memory-provider/providers/redis-provider';
-import { GetIsInMemoryClusterModeEnabled } from '../../usecases';
 
 interface IQueueMetrics {
   completed: Metrics;
@@ -52,10 +51,7 @@ export class OldInstanceBullMqService {
       !process.env.IS_DOCKER_HOSTED &&
       process.env.MEMORY_DB_CLUSTER_SERVICE_HOST
     ) {
-      const getIsInMemoryClusterModeEnabled =
-        new GetIsInMemoryClusterModeEnabled();
       this.inMemoryProviderService = new InMemoryProviderService(
-        getIsInMemoryClusterModeEnabled,
         InMemoryProviderEnum.OLD_INSTANCE_REDIS
       );
       this.enabled = true;

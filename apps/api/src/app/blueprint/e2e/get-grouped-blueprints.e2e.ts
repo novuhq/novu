@@ -7,7 +7,6 @@ import { EmailBlockTypeEnum, FilterPartTypeEnum, INotificationTemplate, StepType
 import {
   buildGroupedBlueprintsKey,
   CacheService,
-  GetIsInMemoryClusterModeEnabled,
   InMemoryProviderEnum,
   InMemoryProviderService,
   InvalidateCacheService,
@@ -28,11 +27,7 @@ describe('Get grouped notification template blueprints - /blueprints/group-by-ca
   let indexModuleStub: sinon.SinonStub;
 
   before(async () => {
-    const getIsInMemoryClusterModeEnabled = new GetIsInMemoryClusterModeEnabled();
-    const inMemoryProviderService = new InMemoryProviderService(
-      getIsInMemoryClusterModeEnabled,
-      InMemoryProviderEnum.REDIS
-    );
+    const inMemoryProviderService = new InMemoryProviderService(InMemoryProviderEnum.REDIS);
     const cacheService = new CacheService(inMemoryProviderService);
     await cacheService.initialize();
     invalidateCache = new InvalidateCacheService(cacheService);

@@ -7,7 +7,6 @@ import {
   buildFeedKey,
   buildMessageCountKey,
   CacheService,
-  GetIsInMemoryClusterModeEnabled,
   InMemoryProviderEnum,
   InMemoryProviderService,
   InvalidateCacheService,
@@ -27,8 +26,7 @@ describe('Count - GET /widget/notifications/count', function () {
   let inMemoryProviderService: InMemoryProviderService;
 
   before(async () => {
-    const getIsInMemoryClusterModeEnabled = new GetIsInMemoryClusterModeEnabled();
-    inMemoryProviderService = new InMemoryProviderService(getIsInMemoryClusterModeEnabled, InMemoryProviderEnum.REDIS);
+    inMemoryProviderService = new InMemoryProviderService(InMemoryProviderEnum.REDIS);
     const cacheService = new CacheService(inMemoryProviderService);
     await cacheService.initialize();
     invalidateCache = new InvalidateCacheService(cacheService);

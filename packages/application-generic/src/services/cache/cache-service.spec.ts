@@ -5,18 +5,13 @@ import {
   splitKey,
 } from './cache.service';
 
-import { FeatureFlagsService } from '../feature-flags.service';
 import {
   InMemoryProviderEnum,
   InMemoryProviderService,
 } from '../in-memory-provider';
-import { GetIsInMemoryClusterModeEnabled } from '../../usecases';
 
 const enableAutoPipelining =
   process.env.REDIS_CACHE_ENABLE_AUTOPIPELINING === 'true';
-
-const featureFlagsService = new FeatureFlagsService();
-const getIsInMemoryClusterModeEnabled = new GetIsInMemoryClusterModeEnabled();
 
 /**
  * TODO: Maybe create a Test single Redis instance to be able to run it in the
@@ -30,7 +25,6 @@ describe.skip('Cache Service - Redis Instance - Non Cluster Mode', () => {
     process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
 
     inMemoryProviderService = new InMemoryProviderService(
-      getIsInMemoryClusterModeEnabled,
       InMemoryProviderEnum.REDIS,
       enableAutoPipelining
     );
@@ -92,7 +86,6 @@ describe('Cache Service - Cluster Mode', () => {
     process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
 
     inMemoryProviderService = new InMemoryProviderService(
-      getIsInMemoryClusterModeEnabled,
       InMemoryProviderEnum.REDIS,
       enableAutoPipelining
     );

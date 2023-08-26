@@ -11,16 +11,12 @@ import {
   InMemoryProviderService,
   InvalidateCacheService,
 } from '../../services';
-import { GetIsInMemoryClusterModeEnabled } from '../get-feature-flag';
 import { UpdateSubscriber } from '../update-subscriber';
 
 const inMemoryProviderService = {
   provide: InMemoryProviderService,
   useFactory: async (): Promise<InMemoryProviderService> => {
-    const getIsInMemoryClusterModeEnabled =
-      new GetIsInMemoryClusterModeEnabled();
     const inMemoryProvider = new InMemoryProviderService(
-      getIsInMemoryClusterModeEnabled,
       InMemoryProviderEnum.REDIS
     );
 

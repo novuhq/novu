@@ -10,13 +10,12 @@ import {
 import { UserSession, SubscribersService } from '@novu/testing';
 import { ChannelTypeEnum, ISubscribersDefine, IUpdateNotificationTemplateDto, StepTypeEnum } from '@novu/shared';
 import {
-  CacheService,
-  GetIsInMemoryClusterModeEnabled,
-  InMemoryProviderService,
   buildNotificationTemplateIdentifierKey,
   buildNotificationTemplateKey,
-  InvalidateCacheService,
+  CacheService,
   InMemoryProviderEnum,
+  InMemoryProviderService,
+  InvalidateCacheService,
 } from '@novu/application-generic';
 
 import { UpdateSubscriberPreferenceRequestDto } from '../../widgets/dtos/update-subscriber-preference-request.dto';
@@ -30,17 +29,14 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
   let subscriberService: SubscribersService;
   let cacheService: CacheService;
   let invalidateCache: InvalidateCacheService;
-
-  let featureFlagsService;
-  let inMemoryProviderService;
+  let inMemoryProviderService: InMemoryProviderService;
 
   const subscriberRepository = new SubscriberRepository();
   const messageRepository = new MessageRepository();
   const notificationTemplateRepository = new NotificationTemplateRepository();
 
   before(async () => {
-    const getIsInMemoryClusterModeEnabled = new GetIsInMemoryClusterModeEnabled();
-    inMemoryProviderService = new InMemoryProviderService(getIsInMemoryClusterModeEnabled, InMemoryProviderEnum.REDIS);
+    inMemoryProviderService = new InMemoryProviderService(InMemoryProviderEnum.REDIS);
     cacheService = new CacheService(inMemoryProviderService);
     await cacheService.initialize();
     invalidateCache = new InvalidateCacheService(cacheService);
