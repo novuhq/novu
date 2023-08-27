@@ -127,6 +127,22 @@ export class TriggerEvent {
       );
     }
 
+    const template = await this.getNotificationTemplateByTriggerIdentifier({
+      environmentId: command.environmentId,
+      triggerIdentifier: command.identifier,
+    });
+
+    /*
+     * Makes no sense to execute anything if template doesn't exist
+     * TODO: Send a 404?
+     */
+    if (!template) {
+      const message = 'Notification template could not be found';
+      const error = new ApiException(message);
+      Logger.error(error, message, LOG_CONTEXT);
+      throw error;
+    }
+
     const mappedRecipients = await this.mapTriggerRecipients.execute(
       MapTriggerRecipientsCommand.create({
         environmentId: command.environmentId,
@@ -137,11 +153,6 @@ export class TriggerEvent {
         actor: mappedActor,
       })
     );
-
-    const template = await this.getNotificationTemplateByTriggerIdentifier({
-      environmentId: command.environmentId,
-      triggerIdentifier: command.identifier,
-    });
 
     const templateProviderIds = await this.getProviderIdsForTemplate(
       command.environmentId,
