@@ -1421,6 +1421,7 @@ importers:
       '@nestjs/terminus': 9.2.1
       '@nestjs/testing': '>=9.3.x'
       '@novu/africas-talking': ^0.18.0
+      '@novu/amqp-sms': 0.16.3
       '@novu/apns': ^0.18.0
       '@novu/burst-sms': ^0.18.0
       '@novu/clickatell': ^0.18.0
@@ -1511,6 +1512,7 @@ importers:
       '@nestjs/terminus': 9.2.1_xorjd64vxiojgaxr7csztwhuxy
       '@nestjs/testing': 9.3.12_ge4qplnzbmfyi5znl534zhtkn4
       '@novu/africas-talking': link:../../providers/africas-talking
+      '@novu/amqp-sms': link:../../providers/amqp-sms
       '@novu/apns': link:../../providers/apns
       '@novu/burst-sms': link:../../providers/burst-sms
       '@novu/clickatell': link:../../providers/clickatell
@@ -2056,6 +2058,41 @@ importers:
       prettier: 2.8.7
       rimraf: 3.0.2
       ts-jest: 27.1.5_4wgqf3npuoqplmntcgovrjla64
+      ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
+      typescript: 4.9.5
+
+  providers/amqp-sms:
+    specifiers:
+      '@istanbuljs/nyc-config-typescript': ~1.0.1
+      '@novu/stateless': 0.16.3
+      '@types/amqplib': ^0.10.1
+      '@types/jest': ~27.5.2
+      amqplib: ^0.10.3
+      cspell: ~6.19.2
+      cz-conventional-changelog: ~3.3.0
+      jest: ~27.5.1
+      npm-run-all: ^4.1.5
+      nyc: ~15.1.0
+      prettier: ~2.8.0
+      rimraf: ~3.0.2
+      ts-jest: ~27.1.5
+      ts-node: ~10.9.1
+      typescript: 4.9.5
+    dependencies:
+      '@novu/stateless': 0.16.3
+      amqplib: 0.10.3
+    devDependencies:
+      '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
+      '@types/amqplib': 0.10.1
+      '@types/jest': 27.5.2
+      cspell: 6.19.2
+      cz-conventional-changelog: 3.3.0
+      jest: 27.5.1_ts-node@10.9.1
+      npm-run-all: 4.1.5
+      nyc: 15.1.0
+      prettier: 2.8.7
+      rimraf: 3.0.2
+      ts-jest: 27.1.5_d5we6thvweerisoz5puaw7xkku
       ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
       typescript: 4.9.5
 
@@ -3754,6 +3791,17 @@ importers:
       typescript: 4.9.5
 
 packages:
+
+  /@acuminous/bitsyntax/0.1.2:
+    resolution: {integrity: sha512-29lUK80d1muEQqiUsSo+3A0yP6CdspgC95EnKBMi22Xlwt79i/En4Vr67+cXhU+cZjbti3TgGGC5wy1stIywVQ==}
+    engines: {node: '>=0.8'}
+    dependencies:
+      buffer-more-ints: 1.0.0
+      debug: 4.3.4
+      safe-buffer: 5.1.2
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
 
   /@adobe/css-tools/4.2.0:
     resolution: {integrity: sha512-E09FiIft46CmH5Qnjb0wsW54/YQd69LsxeKUOWawmws1XWvyFGURnAChH0mlr7YPFR1ofwvUQfcL0J3lMxXqPA==}
@@ -15039,6 +15087,15 @@ packages:
       lodash.merge: 4.6.2
     dev: false
 
+  /@novu/stateless/0.16.3:
+    resolution: {integrity: sha512-9wrqUluSaR9rCdDp4oUWFBwsk6OSM4P+yMaEtFGHrGmSPMcspnvXQaQoARKakuUpCXFvQlPPJq5+yaicv4o/hA==}
+    engines: {node: '>=10'}
+    dependencies:
+      handlebars: 4.7.7
+      lodash.get: 4.4.2
+      lodash.merge: 4.6.2
+    dev: false
+
   /@novu/stateless/0.7.2:
     resolution: {integrity: sha512-hZPVjtdckROXF4WpcpUJGigA+7Nfz1mM5dIHwuDfh6MZ6cRGOgjQVq2TKhiOjHcu2umcKORem4cuyz47KoSA5w==}
     engines: {node: '>=10'}
@@ -21766,6 +21823,12 @@ packages:
       minimatch: 7.4.6
     dev: true
 
+  /@types/amqplib/0.10.1:
+    resolution: {integrity: sha512-j6ANKT79ncUDnAs/+9r9eDujxbeJoTjoVu33gHHcaPfmLQaMhvfbH2GqSe8KUM444epAp1Vl3peVOQfZk3UIqA==}
+    dependencies:
+      '@types/node': 14.18.42
+    dev: true
+
   /@types/analytics-node/3.1.11:
     resolution: {integrity: sha512-CNQVFhaEwL5dEzzV+OtJxt5psRQKJ+XHd0eokdPOM432tpDd4vgB6FzYRCDhDo8uxH0JPXlF6BVA9sbJPpUuug==}
     dev: true
@@ -23845,6 +23908,18 @@ packages:
       '@algolia/transporter': 4.17.0
     dev: false
 
+  /amqplib/0.10.3:
+    resolution: {integrity: sha512-UHmuSa7n8vVW/a5HGh2nFPqAEr8+cD4dEZ6u9GjP91nHfr1a54RyAKyra7Sb5NH7NBKOUlyQSMXIp0qAixKexw==}
+    engines: {node: '>=10'}
+    dependencies:
+      '@acuminous/bitsyntax': 0.1.2
+      buffer-more-ints: 1.0.0
+      readable-stream: 1.1.14
+      url-parse: 1.5.10
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
   /analytics-node/6.2.0:
     resolution: {integrity: sha512-NLU4tCHlWt0tzEaFQL7NIoWhq2KmQSmz0JvyS2lYn6fc4fEjTMSabhJUx8H1r5995FX8fE3rZ15uIHU6u+ovlQ==}
     engines: {node: '>=4'}
@@ -25564,6 +25639,10 @@ packages:
   /buffer-from/1.1.2:
     resolution: {integrity: sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ==}
 
+  /buffer-more-ints/1.0.0:
+    resolution: {integrity: sha512-EMetuGFz5SLsT0QTnXzINh4Ksr+oo4i+UGTXEshiGCQWnsgSs7ZhJ8fzlwQ+OzEMs0MpDAMr1hxnblp5a4vcHg==}
+    dev: false
+
   /buffer-xor/1.0.3:
     resolution: {integrity: sha512-571s0T7nZWK6vB67HI5dyUF7wXiNcfaPPPTl6zYCNApANjIvYJTg7hlud/+cJpdAhS7dVzqMLmfhfHR3rAcOjQ==}
 
@@ -26882,7 +26961,7 @@ packages:
     resolution: {integrity: sha512-UCB0ioiyj8CRjtrvaceBLqqhZCVP+1B8+NWQhmdsm0VXOJtobBCf1dBQmebCCo34qZmUwZfIH2MZLqNHazrfjg==}
 
   /concat-map/0.0.1:
-    resolution: {integrity: sha1-2Klr13/Wjfd5OnMDajug1UBdR3s=}
+    resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
 
   /concat-stream/1.6.2:
     resolution: {integrity: sha512-27HBghJxjiZtIk3Ycvn/4kbJk/1uZuJFfuPEns6LaEvpvG1f0hTea8lilrouyo9mVc2GWdcEZ8OLoGmSADlrCw==}
@@ -27988,7 +28067,7 @@ packages:
       postcss-modules-scope: 3.0.0_postcss@8.4.25
       postcss-modules-values: 4.0.0_postcss@8.4.25
       postcss-value-parser: 4.2.0
-      semver: 7.5.2
+      semver: 7.5.4
       webpack: 5.78.0
 
   /css-minimizer-webpack-plugin/3.4.1_webpack@5.78.0:
@@ -41538,7 +41617,7 @@ packages:
       cosmiconfig: 7.1.0
       klona: 2.0.6
       postcss: 8.4.21
-      semver: 7.5.2
+      semver: 7.5.4
       webpack: 5.78.0
 
   /postcss-loader/7.0.2_mquw4qchulb5tpkmg3p2j6qala:

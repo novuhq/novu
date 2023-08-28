@@ -740,3 +740,36 @@ export const sendchampConfig: IConfigCredentials[] = [
   },
   ...smsConfigBase,
 ];
+
+export const amqpSmsConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'Amqp Queue',
+    type: 'text',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Host,
+    displayName: 'Amqp Host',
+    type: 'text',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Port,
+    displayName: 'Amqp port',
+    type: 'text',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.User,
+    displayName: 'Amqp user',
+    type: 'text',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Password,
+    displayName: 'Amqp password',
+    type: 'password',
+    required: true,
+  },
+];
