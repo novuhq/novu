@@ -39,5 +39,5 @@ const SideBarWrapper = styled.div<{ dark: boolean }>`
   bottom: 0;
   background: transparent;
   right: 8px;
-  z-index: 9999;
+  z-index: 5;
 `;
