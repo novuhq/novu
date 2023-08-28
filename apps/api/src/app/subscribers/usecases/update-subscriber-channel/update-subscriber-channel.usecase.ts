@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { isEqual } from 'lodash';
-import { IChannelSettings, SubscriberRepository, IntegrationRepository, SubscriberEntity } from '@novu/dal';
+import {
+  IChannelSettings,
+  SubscriberRepository,
+  IntegrationRepository,
+  SubscriberEntity,
+  IntegrationEntity,
+} from '@novu/dal';
 import { AnalyticsService, buildSubscriberKey, InvalidateCacheService } from '@novu/application-generic';
 
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -25,10 +31,17 @@ export class UpdateSubscriberChannel {
       throw new ApiException(`SubscriberId: ${command.subscriberId} not found`);
     }
 
-    const foundIntegration = await this.integrationRepository.findOne({
+    const query: Partial<IntegrationEntity> & { _environmentId: string } = {
       _environmentId: command.environmentId,
       providerId: command.providerId,
       active: true,
+    };
+    if (command.integrationIdentifier) {
+      query.identifier = command.integrationIdentifier;
+    }
+
+    const foundIntegration = await this.integrationRepository.findOne(query, undefined, {
+      query: { sort: { createdAt: -1 } },
     });
 
     if (!foundIntegration) {
@@ -39,7 +52,8 @@ export class UpdateSubscriberChannel {
     const updatePayload = this.createUpdatePayload(command);
 
     const existingChannel = foundSubscriber?.channels?.find(
-      (subscriberChannel) => subscriberChannel.providerId === command.providerId
+      (subscriberChannel) =>
+        subscriberChannel.providerId === command.providerId && subscriberChannel._integrationId === foundIntegration._id
     );
 
     if (existingChannel) {
@@ -94,7 +108,7 @@ export class UpdateSubscriberChannel {
 
   private async updateExistingSubscriberChannel(
     environmentId: string,
-    existingChannel,
+    existingChannel: IChannelSettings,
     updatePayload: Partial<IChannelSettings>,
     foundSubscriber: SubscriberEntity
   ) {
@@ -104,6 +118,15 @@ export class UpdateSubscriberChannel {
       return;
     }
 
+    let deviceTokens: string[] = [];
+
+    if (updatePayload.credentials?.deviceTokens) {
+      deviceTokens = this.unionDeviceTokens(
+        existingChannel.credentials.deviceTokens ?? [],
+        updatePayload.credentials.deviceTokens
+      );
+    }
+
     await this.invalidateCache.invalidateByKey({
       key: buildSubscriberKey({
         subscriberId: foundSubscriber.subscriberId,
@@ -111,7 +134,7 @@ export class UpdateSubscriberChannel {
       }),
     });
 
-    const mergedChannel = Object.assign(existingChannel, updatePayload);
+    const mappedChannel: IChannelSettings = this.mapChannel(updatePayload, existingChannel, deviceTokens);
 
     await this.subscriberRepository.update(
       {
@@ -119,8 +142,27 @@ export class UpdateSubscriberChannel {
         _id: foundSubscriber,
         'channels._integrationId': existingChannel._integrationId,
       },
-      { $set: { 'channels.$': mergedChannel } }
+      { $set: { 'channels.$': mappedChannel } }
     );
+  }
+
+  private mapChannel(
+    updatePayload: Partial<IChannelSettings>,
+    existingChannel: IChannelSettings,
+    deviceTokens: string[]
+  ): IChannelSettings {
+    return {
+      _integrationId: updatePayload._integrationId || existingChannel._integrationId,
+      providerId: updatePayload.providerId || existingChannel.providerId,
+      credentials: { ...existingChannel.credentials, ...updatePayload.credentials, deviceTokens },
+    };
+  }
+
+  private unionDeviceTokens(existingDeviceTokens: string[], updateDeviceTokens: string[]): string[] {
+    // in order to not have breaking change we will support [] update
+    if (updateDeviceTokens?.length === 0) return [];
+
+    return [...new Set([...existingDeviceTokens, ...updateDeviceTokens])];
   }
 
   private createUpdatePayload(command: UpdateSubscriberChannelCommand) {
@@ -133,7 +175,7 @@ export class UpdateSubscriberChannel {
         updatePayload.credentials.webhookUrl = command.credentials.webhookUrl;
       }
       if (command.credentials.deviceTokens != null && updatePayload.credentials) {
-        updatePayload.credentials.deviceTokens = command.credentials.deviceTokens;
+        updatePayload.credentials.deviceTokens = [...new Set([...command.credentials.deviceTokens])];
       }
       if (command.credentials.channel != null && updatePayload.credentials) {
         updatePayload.credentials.channel = command.credentials.channel;

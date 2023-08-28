@@ -30,11 +30,23 @@ const discoverData = {
     description:
       'With Novu you can send notification over multiple channels using a single API. Read more about our supported channels and recipes.',
   },
+  Guides: {
+    darkIcon: '/img/discover/stack.svg',
+    lightIcon: '/img/discover/stack-light.svg',
+    description:
+      'Learn how to use Novu features in your apps with these guides. Explore specific use cases with our how-to guides',
+  },
   Community: {
     darkIcon: '/img/discover/multiple.svg',
     lightIcon: '/img/discover/multiple-light.svg',
     description:
       'Novu is the only open-source notification infrastructure, join a community of thousands of developers. Learn about how you can contribute and stay in touch with our growing community.',
+  },
+  Cookbook: {
+    darkIcon: '/img/discover/multiple.svg',
+    lightIcon: '/img/discover/multiple-light.svg',
+    description:
+      'Explore recipes and code samples that demonstrate how to accomplish common tasks with Novu in your application.',
   },
 };
 

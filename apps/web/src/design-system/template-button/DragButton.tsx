@@ -1,21 +1,18 @@
-import React, { useState } from 'react';
-import { UnstyledButton } from '@mantine/core';
 import styled from '@emotion/styled';
-import { Text } from '../typography/text/Text';
-import { useStyles } from './TemplateButton.styles';
-import { colors } from '../config';
+import { UnstyledButton } from '@mantine/core';
+import React, { useState } from 'react';
 import { When } from '../../components/utils/When';
+import { colors } from '../config';
 import { Drag } from '../icons/general/Drag';
-import { useOutletContext } from 'react-router-dom';
+import { useStyles } from './TemplateButton.styles';
 
 interface IDragButtonProps {
   Icon: React.FC<any>;
   description: string;
-  label: string;
 }
 
-export function DragButton({ description, label, Icon }: IDragButtonProps) {
-  const { cx, classes, theme } = useStyles();
+export function DragButton({ description, Icon }: IDragButtonProps) {
+  const { classes, theme } = useStyles();
   const [hover, setHover] = useState(false);
 
   return (
@@ -27,8 +24,10 @@ export function DragButton({ description, label, Icon }: IDragButtonProps) {
           border: `1px dashed ${theme.colorScheme === 'dark' ? colors.B30 : colors.B80}`,
           height: description.length > 0 ? '75px' : '50px',
           position: 'relative',
+          '&:hover': {
+            cursor: 'grab',
+          },
         }}
-        className={cx(classes.button, { [classes.active]: false })}
         onMouseEnter={() => {
           setHover(true);
         }}
@@ -47,19 +46,9 @@ export function DragButton({ description, label, Icon }: IDragButtonProps) {
           />
         </When>
         <ButtonWrapper>
-          <LeftContainerWrapper>
-            <IconWrapper className={classes.linkIcon}>
-              <Icon />
-            </IconWrapper>
-            <StyledContentWrapper>
-              <Text weight="bold">{label}</Text>
-              <When truthy={description}>
-                <Text mt={3} color={colors.B60}>
-                  {description}
-                </Text>
-              </When>
-            </StyledContentWrapper>
-          </LeftContainerWrapper>
+          <IconWrapper className={classes.linkIcon}>
+            <Icon />
+          </IconWrapper>
         </ButtonWrapper>
       </Button>
     </>
@@ -67,37 +56,28 @@ export function DragButton({ description, label, Icon }: IDragButtonProps) {
 }
 
 const IconWrapper = styled.div`
-  padding-right: 15px;
-
   @media screen and (max-width: 1400px) {
-    padding-right: 5px;
-
     svg {
-      width: 20px;
-      height: 20px;
+      width: 24px;
+      height: 24px;
     }
   }
-`;
-
-const LeftContainerWrapper = styled.div`
-  display: flex;
-  align-items: center;
+  margin-left: 0px;
 `;
 
 const ButtonWrapper = styled.div`
   display: flex;
-  justify-content: space-between;
-`;
-
-const StyledContentWrapper = styled.div`
-  padding-right: 10px;
+  justify-content: center;
 `;
 
 const Button: any = styled(UnstyledButton)`
   position: relative;
   margin-bottom: 0;
-
+  width: 64px;
   @media screen and (max-width: 1400px) {
-    padding: 0 5px;
+    padding: 5px;
   }
+  text-align: center;
+  border-radius: 7px;
+  cursor: grab;
 `;

@@ -3,11 +3,7 @@ import { IOrganizationEntity } from '@novu/shared';
 
 import { BrandingForm } from './BrandingForm';
 import { TestWrapper } from '../../../testing';
-
-const defaultProps: {
-  isLoading: boolean;
-  organization: IOrganizationEntity | undefined;
-} = { isLoading: false, organization: undefined };
+import { Outlet, Route, Routes } from 'react-router-dom';
 
 const testOrganization: IOrganizationEntity = {
   _id: '1',
@@ -25,12 +21,22 @@ const testOrganization: IOrganizationEntity = {
 
 const queryClient = new QueryClient();
 
+const BrandingFormRoute = ({ organization = undefined }: { organization?: IOrganizationEntity | undefined }) => {
+  return (
+    <Routes>
+      <Route path="/" element={<Outlet context={{ currentOrganization: organization }} />}>
+        <Route index element={<BrandingForm />} />
+      </Route>
+    </Routes>
+  );
+};
+
 describe('Testing BrandingForm', () => {
   beforeEach(() => {
     cy.mount(
       <QueryClientProvider client={queryClient}>
         <TestWrapper>
-          <BrandingForm {...defaultProps} />
+          <BrandingFormRoute />
         </TestWrapper>
       </QueryClientProvider>
     );
@@ -42,7 +48,7 @@ describe('Testing BrandingForm', () => {
     cy.mount(
       <QueryClientProvider client={queryClient}>
         <TestWrapper>
-          <BrandingForm {...defaultProps} isLoading={true} />
+          <BrandingFormRoute />
         </TestWrapper>
       </QueryClientProvider>
     );
@@ -53,27 +59,12 @@ describe('Testing BrandingForm', () => {
     cy.mount(
       <QueryClientProvider client={queryClient}>
         <TestWrapper>
-          <BrandingForm {...defaultProps} organization={testOrganization} />
+          <BrandingFormRoute organization={testOrganization} />
         </TestWrapper>
       </QueryClientProvider>
     );
     cy.get('form').should('exist');
     cy.get('.mantine-LoadingOverlay-root').should('not.exist');
-    cy.get('[data-test-id="logo-image-wrapper"]').should('exist');
-    cy.get('[data-test-id="font-family-selector"]').should('exist');
-    cy.get('[data-test-id="color-picker"]').should('exist');
-    cy.get('[data-test-id="upload-image-button"]').should('exist');
-  });
-  it('should render with organization and loading', () => {
-    cy.mount(
-      <QueryClientProvider client={queryClient}>
-        <TestWrapper>
-          <BrandingForm {...defaultProps} organization={testOrganization} isLoading={true} />
-        </TestWrapper>
-      </QueryClientProvider>
-    );
-    cy.get('form').should('exist');
-    cy.get('.mantine-LoadingOverlay-root').should('exist');
     cy.get('[data-test-id="logo-image-wrapper"]').should('exist');
     cy.get('[data-test-id="font-family-selector"]').should('exist');
     cy.get('[data-test-id="color-picker"]').should('exist');

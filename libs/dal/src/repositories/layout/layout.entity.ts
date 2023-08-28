@@ -4,6 +4,7 @@ import {
   ITemplateVariable,
   LayoutDescription,
   LayoutId,
+  LayoutIdentifier,
   LayoutName,
   OrganizationId,
   UserId,
@@ -17,6 +18,7 @@ export class LayoutEntity {
   _creatorId: UserId;
   _parentId?: LayoutId;
   name: LayoutName;
+  identifier: LayoutIdentifier;
   description?: LayoutDescription;
   variables?: ITemplateVariable[];
   content: string;

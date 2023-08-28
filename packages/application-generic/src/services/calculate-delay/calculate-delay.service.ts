@@ -5,7 +5,7 @@ import {
   DelayTypeEnum,
   IDigestRegularMetadata,
   IDigestTimedMetadata,
-  INotificationTemplateStepMetadata,
+  IWorkflowStepMetadata,
   DigestTypeEnum,
 } from '@novu/shared';
 
@@ -19,7 +19,7 @@ export class CalculateDelayService {
     payload,
     overrides,
   }: {
-    stepMetadata?: INotificationTemplateStepMetadata;
+    stepMetadata?: IWorkflowStepMetadata;
     payload: any;
     overrides: any;
   }): number {

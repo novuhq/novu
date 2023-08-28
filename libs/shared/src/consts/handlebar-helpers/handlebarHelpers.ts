@@ -5,6 +5,9 @@ export enum HandlebarHelpersEnum {
   LOWERCASE = 'lowercase',
   PLURALIZE = 'pluralize',
   DATEFORMAT = 'dateFormat',
+  UNIQUE = 'unique',
+  GROUP_BY = 'groupBy',
+  SORT_BY = 'sortBy',
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -15,4 +18,7 @@ export const HandlebarHelpers = {
   [HandlebarHelpersEnum.LOWERCASE]: { description: 'transform to lowercase' },
   [HandlebarHelpersEnum.PLURALIZE]: { description: 'pluralize if needed' },
   [HandlebarHelpersEnum.DATEFORMAT]: { description: 'format date' },
+  [HandlebarHelpersEnum.UNIQUE]: { description: 'filter unique values in an array' },
+  [HandlebarHelpersEnum.GROUP_BY]: { description: 'group by a property' },
+  [HandlebarHelpersEnum.SORT_BY]: { description: 'sort an array of objects by a property' },
 };

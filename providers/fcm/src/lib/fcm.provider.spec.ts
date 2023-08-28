@@ -1,8 +1,16 @@
+import { IPushOptions } from '@novu/stateless';
 import app from 'firebase-admin/app';
+
 import { FcmPushProvider } from './fcm.provider';
 
 let provider: FcmPushProvider;
 let spy: jest.SpyInstance;
+const subscriber = {};
+const step: IPushOptions['step'] = {
+  digest: false,
+  events: [{}],
+  total_count: 1,
+};
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -32,6 +40,8 @@ test('should trigger fcm correctly', async () => {
     payload: {
       sound: 'test_sound',
     },
+    subscriber,
+    step,
   });
   expect(app.initializeApp).toHaveBeenCalledTimes(1);
   expect(app.cert).toHaveBeenCalledTimes(1);
@@ -59,6 +69,8 @@ test('should trigger fcm with fcm options override', async () => {
         analyticsLabel: 'my-label',
       },
     },
+    subscriber,
+    step,
   });
   expect(app.initializeApp).toHaveBeenCalledTimes(1);
   expect(app.cert).toHaveBeenCalledTimes(1);
@@ -96,6 +108,8 @@ test('should trigger fcm with android override', async () => {
         },
       },
     },
+    subscriber,
+    step,
   });
   expect(app.initializeApp).toHaveBeenCalledTimes(1);
   expect(app.cert).toHaveBeenCalledTimes(1);
@@ -142,6 +156,8 @@ test('should trigger fcm with apns (ios) override', async () => {
         },
       },
     },
+    subscriber,
+    step,
   });
   expect(app.initializeApp).toHaveBeenCalledTimes(1);
   expect(app.cert).toHaveBeenCalledTimes(1);
@@ -194,6 +210,8 @@ test('should trigger fcm data for ios with headers options', async () => {
         },
       },
     },
+    subscriber,
+    step,
   });
   expect(app.initializeApp).toHaveBeenCalledTimes(1);
   expect(app.cert).toHaveBeenCalledTimes(1);
@@ -217,6 +235,8 @@ test('should trigger fcm data for ios with headers options', async () => {
     data: {
       key_1: 'val_1',
       key_2: 'val_2',
+      title: 'Test',
+      body: 'Test push',
     },
   });
 });
@@ -239,6 +259,8 @@ test('should trigger fcm data for android with priority option', async () => {
         priority: 'high',
       },
     },
+    subscriber,
+    step,
   });
   expect(app.initializeApp).toHaveBeenCalledTimes(1);
   expect(app.cert).toHaveBeenCalledTimes(1);
@@ -254,6 +276,56 @@ test('should trigger fcm data for android with priority option', async () => {
     data: {
       key_1: 'val_1',
       key_2: 'val_2',
+      title: 'Test',
+      body: 'Test push',
     },
+  });
+});
+
+test('should clean the payload for the FCM data message', async () => {
+  const payload = {
+    foo: 'bar',
+    one: 1,
+    isActive: true,
+    object: { asd: 'asd' },
+  };
+  const cleanPayload = {
+    foo: 'bar',
+    one: '1',
+    isActive: 'true',
+    object: '{"asd":"asd"}',
+    title: 'Test',
+    body: 'Test push',
+  };
+
+  await provider.sendMessage({
+    title: 'Test',
+    content: 'Test push',
+    target: ['tester'],
+    payload,
+    overrides: {
+      type: 'data',
+      android: {
+        data: {
+          for_android: 'only',
+        },
+        priority: 'high',
+      },
+    },
+    subscriber,
+    step,
+  });
+  expect(app.initializeApp).toHaveBeenCalledTimes(1);
+  expect(app.cert).toHaveBeenCalledTimes(1);
+  expect(spy).toHaveBeenCalled();
+  expect(spy).toHaveBeenCalledWith({
+    tokens: ['tester'],
+    android: {
+      data: {
+        for_android: 'only',
+      },
+      priority: 'high',
+    },
+    data: cleanPayload,
   });
 });

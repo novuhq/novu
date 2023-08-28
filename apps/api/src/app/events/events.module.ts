@@ -2,11 +2,11 @@ import { Module } from '@nestjs/common';
 import { TerminusModule } from '@nestjs/terminus';
 import {
   EventsDistributedLockService,
-  EventsPerformanceService,
   StorageHelperService,
   SendTestEmail,
   QueueService,
   CalculateDelayService,
+  GetNovuProviderCredentials,
 } from '@novu/application-generic';
 
 import { EventsController } from './events.controller';
@@ -23,6 +23,7 @@ import { IntegrationModule } from '../integrations/integrations.module';
 import { ExecutionDetailsModule } from '../execution-details/execution-details.module';
 import { TopicsModule } from '../topics/topics.module';
 import { LayoutsModule } from '../layouts/layouts.module';
+import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { LayoutsModule } from '../layouts/layouts.module';
     ExecutionDetailsModule,
     TopicsModule,
     LayoutsModule,
+    TenantModule,
   ],
   controllers: [EventsController],
   providers: [
@@ -48,9 +50,9 @@ import { LayoutsModule } from '../layouts/layouts.module';
     StorageHelperService,
     TriggerHandlerQueueService,
     EventsDistributedLockService,
-    EventsPerformanceService,
     SendTestEmail,
     CalculateDelayService,
+    GetNovuProviderCredentials,
   ],
 })
 export class EventsModule {}

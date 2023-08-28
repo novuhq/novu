@@ -1,6 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { LogEntity, LogRepository } from '@novu/dal';
 import { CreateLogCommand } from './create-log.command';
+
+const LOG_CONTEXT = 'CreateLog';
 
 @Injectable()
 export class CreateLog {
@@ -12,7 +14,7 @@ export class CreateLog {
       try {
         rawData = JSON.stringify(command.raw);
       } catch (error) {
-        console.error('Parsing raw data when creating a log failed', error);
+        Logger.error(error, 'Parsing raw data when creating a log failed', LOG_CONTEXT);
       }
     }
 

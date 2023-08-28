@@ -59,6 +59,7 @@ jobs:
         with:
           cypress_version: 12.9.0
           cypress: true
+      - uses: ./.github/actions/setup-redis-cluster
       - uses: mansagroup/nrwl-nx-action@v3
         with:
           targets: lint
@@ -68,6 +69,12 @@ jobs:
         with:
           targets: build
           projects: '@novu/widget,@novu/embed,@novu/api,@novu/worker,@novu/ws'
+
+      - uses: ./.github/actions/run-backend
+        with:
+          cypress_github_oauth_client_id: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_ID }}
+          cypress_github_oauth_client_secret: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_SECRET }}
+          launch_darkly_sdk_key: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
 
       # Runs a single command using the runners shell
       - name: Start Client
@@ -81,28 +88,8 @@ jobs:
           cp apps/ws/src/.env.test apps/ws/dist/src/.env.test
           cd apps/ws && pnpm start:prod &
 
-      - name: Start API in TEST
-        env:
-          GITHUB_OAUTH_CLIENT_ID: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_ID }}
-          GITHUB_OAUTH_CLIENT_SECRET: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_SECRET }}
-          NODE_ENV: "test"
-          PORT: "1336"
-          TZ: "UTC"
-          GITHUB_OAUTH_REDIRECT: "http://localhost:1336/v1/auth/github/callback"
-        run: cd apps/api && pnpm start:build &
-
-      - name: Start worker
-        env:
-          NODE_ENV: "test"
-          PORT: 1342
-          TZ: "UTC"
-        run: cd apps/worker && pnpm start:prod &
-
-      - name: Install wait-on plugin
-        run: npm i -g wait-on
-
-      - name: Wait on Services
-        run: wait-on --timeout=180000 http://localhost:1336/v1/health-check http://localhost:1342/v1/health-check http://localhost:1340/v1/health-check http://localhost:3500
+      - name: Wait on Widget and WS Services
+        run: wait-on --timeout=180000 http://localhost:1340/v1/health-check http://localhost:3500
 
       - name: Cypress install
         if: steps.setup-project.outputs.cypress_cache_hit != 'true'

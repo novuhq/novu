@@ -8,7 +8,6 @@ import {
   NotificationStepEntity,
 } from '@novu/dal';
 import {
-  ChannelTypeEnum,
   DigestTypeEnum,
   STEP_TYPE_TO_CHANNEL_TYPE,
   StepTypeEnum,
@@ -21,10 +20,7 @@ import {
 import { InstrumentUsecase } from '../../instrumentation';
 import { CreateNotificationJobsCommand } from './create-notification-jobs.command';
 import { PlatformException } from '../../utils/exceptions';
-import {
-  CalculateDelayService,
-  EventsPerformanceService,
-} from '../../services';
+import { CalculateDelayService } from '../../services';
 
 const LOG_CONTEXT = 'CreateNotificationUseCase';
 type NotificationJob = Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>;
@@ -34,20 +30,13 @@ export class CreateNotificationJobs {
   constructor(
     private digestFilterSteps: DigestFilterSteps,
     private notificationRepository: NotificationRepository,
-    private calculateDelayService: CalculateDelayService,
-    protected performanceService: EventsPerformanceService
+    private calculateDelayService: CalculateDelayService
   ) {}
 
   @InstrumentUsecase()
   public async execute(
     command: CreateNotificationJobsCommand
   ): Promise<NotificationJob[]> {
-    const mark = this.performanceService.buildCreateNotificationJobsMark(
-      command.identifier,
-      command.transactionId,
-      command.to.subscriberId
-    );
-
     const activeSteps = this.filterActiveSteps(command.template.steps);
 
     const channels = activeSteps
@@ -75,8 +64,9 @@ export class CreateNotificationJobs {
 
     if (!notification) {
       const message = 'Notification could not be created';
-      Logger.error(message, LOG_CONTEXT);
-      throw new PlatformException(message);
+      const error = new PlatformException(message);
+      Logger.error(error, message, LOG_CONTEXT);
+      throw error;
     }
 
     const jobs: NotificationJob[] = [];
@@ -94,6 +84,7 @@ export class CreateNotificationJobs {
         identifier: command.identifier,
         payload: command.payload,
         overrides: command.overrides,
+        tenant: command.tenant,
         step,
         transactionId: command.transactionId,
         _notificationId: notification._id,
@@ -113,8 +104,6 @@ export class CreateNotificationJobs {
 
       jobs.push(job);
     }
-
-    this.performanceService.setEnd(mark);
 
     return jobs;
   }

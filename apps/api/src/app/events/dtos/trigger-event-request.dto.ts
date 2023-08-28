@@ -1,9 +1,28 @@
-import { ArrayMaxSize, ArrayNotEmpty, IsArray, IsDefined, IsObject, IsOptional, IsString } from 'class-validator';
+import {
+  ArrayMaxSize,
+  ArrayNotEmpty,
+  IsArray,
+  IsDefined,
+  IsObject,
+  IsOptional,
+  IsString,
+  ValidateIf,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
-import { TopicKey, TriggerRecipientSubscriber, TriggerRecipients, TriggerRecipientsTypeEnum } from '@novu/shared';
-import { CreateSubscriberRequestDto } from '../../subscribers/dtos/create-subscriber-request.dto';
+import {
+  TopicKey,
+  TriggerRecipientSubscriber,
+  TriggerRecipients,
+  TriggerRecipientsTypeEnum,
+  TriggerTenantContext,
+} from '@novu/shared';
+import { CreateSubscriberRequestDto } from '../../subscribers/dtos';
+import { UpdateTenantRequestDto } from '../../tenant/dtos';
 
 export class SubscriberPayloadDto extends CreateSubscriberRequestDto {}
+export class TenantPayloadDto extends UpdateTenantRequestDto {}
 
 export class TopicPayloadDto {
   @ApiProperty()
@@ -13,15 +32,8 @@ export class TopicPayloadDto {
   type: TriggerRecipientsTypeEnum;
 }
 
-export class BulkTriggerEventDto {
-  @ApiProperty()
-  @IsArray()
-  @ArrayNotEmpty()
-  @ArrayMaxSize(100)
-  events: TriggerEventRequestDto[];
-}
-
 @ApiExtraModels(SubscriberPayloadDto)
+@ApiExtraModels(TenantPayloadDto)
 @ApiExtraModels(TopicPayloadDto)
 export class TriggerEventRequestDto {
   @ApiProperty({
@@ -77,6 +89,7 @@ export class TriggerEventRequestDto {
         $ref: getSchemaPath(TopicPayloadDto),
       },
     ],
+    type: [String, SubscriberPayloadDto, TopicPayloadDto],
     isArray: true,
   })
   @IsDefined()
@@ -100,4 +113,30 @@ export class TriggerEventRequestDto {
   })
   @IsOptional()
   actor?: TriggerRecipientSubscriber;
+
+  @ApiProperty({
+    description: `It is used to specify a tenant context during trigger event.
+    If a new tenant object is provided, we will create a new tenant.
+    `,
+    oneOf: [
+      { type: 'string', description: 'Unique identifier of a tenant in your system' },
+      { $ref: getSchemaPath(TenantPayloadDto) },
+    ],
+  })
+  @IsOptional()
+  @ValidateIf((_, value) => typeof value !== 'string')
+  @ValidateNested()
+  @Type(() => TenantPayloadDto)
+  tenant?: TriggerTenantContext;
+}
+
+export class BulkTriggerEventDto {
+  @ApiProperty({
+    isArray: true,
+    type: TriggerEventRequestDto,
+  })
+  @IsArray()
+  @ArrayNotEmpty()
+  @ArrayMaxSize(100)
+  events: TriggerEventRequestDto[];
 }

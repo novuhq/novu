@@ -141,9 +141,12 @@ class Novu {
         positionIframe();
 
         const elem = document.querySelector('.wrapper-novu-widget') as HTMLBodyElement;
+        const isWidgetHidden = elem && elem.style.display === 'none';
 
-        if (elem) {
+        if (isWidgetHidden) {
           elem.style.display = 'inline-block';
+        } else {
+          hideWidget();
         }
 
         _scope.iframe?.contentWindow?.postMessage(

@@ -74,7 +74,7 @@ function BaseTemplateEditorPage() {
           name="template-form"
           noValidate
           onSubmit={handleSubmit(onSubmitHandler, onInvalid)}
-          style={{ minHeight: '100%' }}
+          style={{ height: '100%', display: 'grid', gridTemplateColumns: '1fr' }}
         >
           <ReactFlowProvider>
             <WorkflowEditor />

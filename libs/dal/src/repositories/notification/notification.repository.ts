@@ -5,7 +5,7 @@ import { subMonths, subWeeks } from 'date-fns';
 import { BaseRepository } from '../base-repository';
 import { NotificationEntity, NotificationDBModel } from './notification.entity';
 import { Notification } from './notification.schema';
-import type { EnforceEnvOrOrgIds } from '../../types/enforce';
+import type { EnforceEnvOrOrgIds } from '../../types';
 import { EnvironmentId } from '../environment';
 
 export class NotificationRepository extends BaseRepository<
@@ -61,7 +61,6 @@ export class NotificationRepository extends BaseRepository<
       };
     }
 
-    const totalCount = await this.MongooseModel.countDocuments(requestQuery).read('secondaryPreferred');
     const response = await this.populateFeed(this.MongooseModel.find(requestQuery), environmentId)
       .read('secondaryPreferred')
       .skip(skip)
@@ -69,7 +68,6 @@ export class NotificationRepository extends BaseRepository<
       .sort('-createdAt');
 
     return {
-      totalCount,
       data: this.mapEntities(response),
     };
   }
@@ -112,7 +110,7 @@ export class NotificationRepository extends BaseRepository<
             $nin: [StepTypeEnum.TRIGGER],
           },
         },
-        select: 'createdAt digest payload overrides to providerId step status type updatedAt',
+        select: 'createdAt digest payload overrides to tenant providerId step status type updatedAt',
         populate: [
           {
             path: 'executionDetails',

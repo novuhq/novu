@@ -3,7 +3,7 @@ import {
   DigestUnitEnum,
   DigestTypeEnum,
   DelayTypeEnum,
-  INotificationTemplateStepMetadata,
+  IWorkflowStepMetadata,
   IDigestBaseMetadata,
   IDigestRegularMetadata,
   IDigestTimedMetadata,
@@ -148,7 +148,7 @@ export class NotificationStep {
       { $ref: getSchemaPath(DelayScheduledMetadata) },
     ],
   })
-  metadata?: INotificationTemplateStepMetadata;
+  metadata?: IWorkflowStepMetadata;
 
   @ApiPropertyOptional()
   replyCallback?: {

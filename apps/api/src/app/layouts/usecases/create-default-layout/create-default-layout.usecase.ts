@@ -22,6 +22,7 @@ export class CreateDefaultLayout {
         userId: command.userId,
         name: 'Default Layout',
         isDefault: true,
+        identifier: 'novu-default-layout',
         content: await this.getNovuLayout.execute({}),
         environmentId: command.environmentId,
         organizationId: command.organizationId,

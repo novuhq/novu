@@ -1,14 +1,22 @@
+export interface IEvents {
+  trigger(workflowIdentifier: string, data: ITriggerPayloadOptions);
+  broadcast(workflowIdentifier: string, data: IBroadcastPayloadOptions);
+  bulkTrigger(events: IBulkEvents[]);
+  cancel(transactionId: string);
+}
+
 import {
   DigestUnitEnum,
-  IAttachmentOptions,
   ITriggerPayload,
   TriggerRecipientSubscriber,
   TriggerRecipientsPayload,
+  ITenantDefine,
 } from '@novu/shared';
 
 export interface IBroadcastPayloadOptions {
   payload: ITriggerPayload;
   overrides?: ITriggerOverrides;
+  tenant?: ITriggerTenant;
 }
 
 export interface ITriggerPayloadOptions extends IBroadcastPayloadOptions {
@@ -16,15 +24,20 @@ export interface ITriggerPayloadOptions extends IBroadcastPayloadOptions {
   actor?: TriggerRecipientSubscriber;
   transactionId?: string;
 }
-
-export interface IEmailOverrides {
+export interface IIntegrationOverride {
+  integrationIdentifier: string;
+}
+export interface IEmailOverrides extends IIntegrationOverride {
   to?: string[];
   from?: string;
   text?: string;
   replyTo?: string;
   cc?: string[];
   bcc?: string[];
+  senderName?: string;
 }
+
+export type ITriggerTenant = string | ITenantDefine;
 
 export type ITriggerOverrides = {
   [key in
@@ -39,9 +52,15 @@ export type ITriggerOverrides = {
 } & {
   [key in 'apns']?: ITriggerOverrideAPNS;
 } & {
+  [key in 'expo']?: ITriggerOverrideExpo;
+} & {
   [key in 'delay']?: ITriggerOverrideDelayAction;
 } & {
+  [key in 'layoutIdentifier']?: string;
+} & {
   [key in 'email']?: IEmailOverrides;
+} & {
+  [key in 'sms']?: IIntegrationOverride;
 };
 
 export type ITriggerOverrideDelayAction = {
@@ -63,7 +82,7 @@ export type ITriggerOverrideFCM = {
   clickAction?: string;
   titleLocKey?: string;
   titleLocArgs?: string;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
 };
 
 export type IAPNSAlert = {
@@ -105,6 +124,22 @@ export type ITriggerOverrideAPNS = {
   mutableContent?: boolean;
   mdm?: string | Record<string, unknown>;
   urlArgs?: string[];
+};
+
+export type ITriggerOverrideExpo = {
+  to?: string | string[];
+  data?: object;
+  title?: string;
+  body?: string;
+  ttl?: number;
+  expiration?: number;
+  priority?: 'default' | 'normal' | 'high';
+  subtitle?: string;
+  badge?: number;
+  sound?: string;
+  channelId?: string;
+  categoryId?: string;
+  mutableContent?: boolean;
 };
 
 export interface IBulkEvents extends ITriggerPayloadOptions {

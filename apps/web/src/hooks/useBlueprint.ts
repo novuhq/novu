@@ -1,33 +1,33 @@
-import { useSearchParams } from './useSearchParams';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useEffect } from 'react';
+
 import { getToken } from './useAuthController';
 import { useSegment } from '../components/providers/SegmentProvider';
 import { ROUTES } from '../constants/routes.enum';
 
 export const useBlueprint = () => {
-  const searchParams = useSearchParams();
+  const [params] = useSearchParams();
+  const blueprintId = params.get('blueprintId');
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const segment = useSegment();
+  const id = localStorage.getItem('blueprintId');
+  const token = getToken();
 
   useEffect(() => {
-    const id = localStorage.getItem('blueprintId');
-    const token = getToken();
-
     if (id && token !== null) {
       navigate(ROUTES.WORKFLOWS_CREATE, {
         replace: true,
       });
     }
-  }, [localStorage.getItem('blueprintId'), getToken(), pathname]);
+  }, [navigate, id, token, pathname]);
 
   useEffect(() => {
-    if (searchParams.blueprintId) {
+    if (blueprintId) {
       segment.track('Notification directory CTA clicked', {
-        blueprintId: searchParams.blueprintId,
+        blueprintId: blueprintId,
       });
-      localStorage.setItem('blueprintId', searchParams.blueprintId);
+      localStorage.setItem('blueprintId', blueprintId);
     }
-  }, [searchParams.blueprintId]);
+  }, [blueprintId, segment]);
 };

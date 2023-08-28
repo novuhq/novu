@@ -54,6 +54,7 @@ export class TriggerEventToAll {
         transactionId: command.transactionId,
         overrides: command.overrides,
         actor: command.actor,
+        tenant: command.tenant,
       })
     );
   }

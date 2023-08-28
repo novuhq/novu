@@ -1,15 +1,21 @@
 import { useEffect, useState, useReducer } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import styled from '@emotion/styled/macro';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { showNotification } from '@mantine/notifications';
 import { useClipboard } from '@mantine/hooks';
 import { Image, useMantineColorScheme, Stack, Alert } from '@mantine/core';
 import { WarningOutlined } from '@ant-design/icons';
-import { ChannelTypeEnum, ICredentialsDto, IConfigCredentials } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  ICredentialsDto,
+  IConfigCredentials,
+  ICreateIntegrationBodyDto,
+  CredentialsKeyEnum,
+} from '@novu/shared';
 
 import { Button, colors, Input, Switch, Text } from '../../../design-system';
-import { IIntegratedProvider } from '../IntegrationsStorePage';
+import type { IIntegratedProvider } from '../types';
 import { createIntegration, getWebhookSupportStatus, updateIntegration } from '../../../api/integration';
 import { Close } from '../../../design-system/icons';
 import { IntegrationInput } from './IntegrationInput';
@@ -78,7 +84,7 @@ export function ConnectIntegrationForm({
   createModel,
   onClose,
 }: {
-  provider: IIntegratedProvider | null;
+  provider: IIntegratedProvider;
   showModal: (visible: boolean) => void;
   createModel: boolean;
   onClose: () => void;
@@ -102,13 +108,7 @@ export function ConnectIntegrationForm({
   const { mutateAsync: createIntegrationApi, isLoading: isLoadingCreate } = useMutation<
     { res: string },
     { error: string; message: string; statusCode: number },
-    {
-      providerId: string;
-      channel: ChannelTypeEnum | null;
-      credentials: ICredentialsDto;
-      active: boolean;
-      check: boolean;
-    }
+    ICreateIntegrationBodyDto
   >(createIntegration);
 
   const { mutateAsync: updateIntegrationApi, isLoading: isLoadingUpdate } = useMutation<
@@ -155,20 +155,22 @@ export function ConnectIntegrationForm({
         } catch (err) {
           throw new Error('Invalid JSON format for TLS Options');
         }
-      }
-      if (createModel) {
-        await createIntegrationApi({
-          providerId: provider?.providerId ? provider?.providerId : '',
-          channel: provider?.channel ? provider?.channel : null,
-          credentials,
-          active: isActive,
-          check: checkIntegrationState.check,
-        });
       } else {
-        await updateIntegrationApi({
-          integrationId: provider?.integrationId ? provider?.integrationId : '',
-          data: { credentials, active: isActive, check: checkIntegrationState.check },
-        });
+        credentials.tlsOptions = undefined;
+        if (createModel) {
+          await createIntegrationApi({
+            providerId: provider?.providerId ? provider?.providerId : '',
+            channel: provider?.channel,
+            credentials,
+            active: isActive,
+            check: checkIntegrationState.check,
+          });
+        } else {
+          await updateIntegrationApi({
+            integrationId: provider?.integrationId ? provider?.integrationId : '',
+            data: { credentials, active: isActive, check: checkIntegrationState.check },
+          });
+        }
       }
     } catch (e: any) {
       dispatch({
@@ -212,7 +214,7 @@ export function ConnectIntegrationForm({
   const webhookUrl = `${WEBHOOK_URL}/webhooks/organizations/${organization?._id}/environments/${environment?._id}/${provider?.channel}/${provider?.providerId}`;
 
   const isWebhookEnabled =
-    IS_DOCKER_HOSTED &&
+    !IS_DOCKER_HOSTED &&
     webhookSupportStatus &&
     provider?.channel &&
     [ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS].includes(provider?.channel);
@@ -241,7 +243,13 @@ export function ConnectIntegrationForm({
                 name={credential.key}
                 control={control}
                 render={({ field }) => (
-                  <IntegrationInput credential={credential} errors={errors} field={field} register={register} />
+                  <IntegrationInput
+                    credential={credential}
+                    ignoreTls={watch('ignoreTls')}
+                    errors={errors}
+                    field={field}
+                    register={register}
+                  />
                 )}
               />
             </InputWrapper>
@@ -261,7 +269,13 @@ export function ConnectIntegrationForm({
             </InputWrapper>
           )}
 
-          <ShareableUrl provider={provider?.providerId} control={control} />
+          <ShareableUrl
+            provider={provider?.providerId}
+            hmacEnabled={useWatch({
+              control,
+              name: CredentialsKeyEnum.Hmac,
+            })}
+          />
 
           <Stack my={30}>
             <ActiveWrapper active={isActive}>
