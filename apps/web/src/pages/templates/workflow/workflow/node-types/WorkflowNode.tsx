@@ -1,6 +1,13 @@
 import styled from '@emotion/styled';
 import { createStyles, Group, Popover as MantinePopover, UnstyledButton, useMantineColorScheme } from '@mantine/core';
-import { ChannelTypeEnum, InAppProviderIdEnum, providers, StepTypeEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  EmailProviderIdEnum,
+  InAppProviderIdEnum,
+  providers,
+  SmsProviderIdEnum,
+  StepTypeEnum,
+} from '@novu/shared';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useViewport } from 'react-flow-renderer';
 import { useFormContext } from 'react-hook-form';
@@ -121,10 +128,24 @@ export function WorkflowNode({
 
     if (isChannelStep) {
       const isActive = !!integrationsByEnv?.some((integration) => integration.channel === tabKey);
-      const isEmailStepActive = isEmailStep && !isEmailLimitReached;
-      const isSmsStepActive = isSmsStep && !isSmsLimitReached;
 
-      return isActive || isEmailStepActive || isSmsStepActive;
+      if (isActive && isEmailStep) {
+        const isNovuProvider = integrationsByEnv?.some(
+          (integration) => integration.providerId === EmailProviderIdEnum.Novu && integration.primary
+        );
+
+        return isNovuProvider ? !isEmailLimitReached : isActive;
+      }
+
+      if (isActive && isSmsStep) {
+        const isNovuProvider = integrationsByEnv?.some(
+          (integration) => integration.providerId === SmsProviderIdEnum.Novu && integration.primary
+        );
+
+        return isNovuProvider ? !isSmsLimitReached : isActive;
+      }
+
+      return isActive;
     }
 
     return true;

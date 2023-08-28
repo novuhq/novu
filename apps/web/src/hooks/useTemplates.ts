@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { ChannelTypeEnum, INotificationTemplate } from '@novu/shared';
+import { INotificationTemplate, WorkflowIntegrationStatus } from '@novu/shared';
 
 import { useEnvController } from './useEnvController';
 import { getNotificationsList } from '../api/notification-templates';
@@ -8,7 +8,7 @@ export type INotificationTemplateExtended = INotificationTemplate & {
   id: string;
   status: string;
   notificationGroup: { name: string };
-  activeIntegrationStatus?: { isActive: boolean; channels: { [key in ChannelTypeEnum]: boolean } };
+  workflowIntegrationStatus?: WorkflowIntegrationStatus;
 };
 
 export function useTemplates(page = 0, limit = 10) {

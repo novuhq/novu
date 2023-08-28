@@ -45,11 +45,15 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
           causing some notifications to fail."
             width={300}
             multiline
-            disabled={original.activeIntegrationStatus?.isActive}
+            disabled={
+              original.workflowIntegrationStatus?.hasActiveIntegrations &&
+              original.workflowIntegrationStatus?.hasPrimaryIntegrations !== false
+            }
             position="top"
           >
             <div>
-              {original.activeIntegrationStatus?.isActive ? (
+              {original.workflowIntegrationStatus?.hasActiveIntegrations &&
+              original.workflowIntegrationStatus?.hasPrimaryIntegrations !== false ? (
                 <Bolt color={colors.B40} width="24px" height="24px" />
               ) : (
                 <ProviderMissing width="24px" height="24px" />
