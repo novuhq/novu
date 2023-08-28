@@ -1,8 +1,9 @@
 import { WorkerOptions } from 'bullmq';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { QueueService } from '@novu/application-generic';
-import { checkinForCronJob } from '../../shared/utils/cron-health';
+import { checkinForCronJob } from '../../shared/utils';
 import * as process from 'process';
+import { JobTopicNameEnum } from '@novu/shared';
 
 const LOG_CONTEXT = 'MetricQueueService';
 const METRIC_JOB_ID = 'metric-job';
@@ -10,7 +11,7 @@ const METRIC_JOB_ID = 'metric-job';
 @Injectable()
 export class MetricQueueActiveService extends QueueService<Record<string, never>> {
   constructor(@Inject('BULLMQ_LIST') private token_list: QueueService[]) {
-    super('metric-active');
+    super(JobTopicNameEnum.METRICS_ACTIVE);
 
     this.bullMqService.createWorker(this.name, this.getWorkerProcessor(), this.getWorkerOpts());
 
@@ -45,7 +46,7 @@ export class MetricQueueActiveService extends QueueService<Record<string, never>
         } else {
           Logger.debug(`metricJob doesn't exist, creating it`, LOG_CONTEXT);
 
-          return await this.addToQueue(METRIC_JOB_ID, {}, '', {
+          return await this.addToQueue(METRIC_JOB_ID, undefined, '', {
             jobId: METRIC_JOB_ID,
             repeatJobKey: METRIC_JOB_ID,
             repeat: {
@@ -65,7 +66,6 @@ export class MetricQueueActiveService extends QueueService<Record<string, never>
 
   private getWorkerOpts(): WorkerOptions {
     return {
-      ...this.bullConfig,
       lockDuration: 900,
       concurrency: 1,
       settings: {},
