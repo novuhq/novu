@@ -55,7 +55,7 @@ describe('Get Active Integrations Status', function () {
     });
 
     const result = (await useCase.execute(command)) as WorkflowResponse;
-    console.log('banda', result.workflowIntegrationStatus?.hasActiveIntegrations);
+
     expect(result.workflowIntegrationStatus?.hasActiveIntegrations).to.equal(true);
     expect(result.workflowIntegrationStatus?.channels[ChannelTypeEnum.EMAIL].hasActiveIntegrations).to.equal(true);
     expect(result.workflowIntegrationStatus?.channels[ChannelTypeEnum.PUSH].hasActiveIntegrations).to.equal(false);
