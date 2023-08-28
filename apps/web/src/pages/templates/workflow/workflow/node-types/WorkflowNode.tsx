@@ -119,7 +119,7 @@ export function WorkflowNode({
     }
 
     return true;
-  }, [integrations, tabKey, isEmailLimitReached, isSmsLimitReached]);
+  }, [channelType, integrations, tabKey, isEmailLimitReached, isSmsLimitReached]);
 
   const onIntegrationModalClose = () => {
     setIntegrationsModalVisible(false);
@@ -147,7 +147,7 @@ export function WorkflowNode({
     });
 
     return () => subscription.unsubscribe();
-  }, [watch]);
+  }, [watch, id]);
 
   return (
     <>

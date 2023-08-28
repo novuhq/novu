@@ -118,7 +118,7 @@ export function UpdateProviderSidebar({
 
       setValue('identifier', newIdentifier);
     }
-  }, [selectedProvider]);
+  }, [setValue, selectedProvider]);
 
   useEffect(() => {
     if (integrationId === undefined || providers.length === 0) {
@@ -140,7 +140,7 @@ export function UpdateProviderSidebar({
       }, {} as any),
       active: foundProvider.active,
     });
-  }, [integrationId, providers]);
+  }, [reset, integrationId, providers]);
 
   const onFrameworkClickCallback = (newFramework: FrameworkEnum) => {
     setSidebarState(SidebarStateEnum.EXPANDED);

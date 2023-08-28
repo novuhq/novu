@@ -4,16 +4,15 @@ const storageKey = 'tour';
 
 export const useTourStorage = () => {
   const [state, setState] = useState({});
+  const storageValue = localStorage.getItem(storageKey);
 
   useEffect(() => {
-    const value = localStorage.getItem(storageKey);
-
-    if (value === null) {
+    if (storageValue === null) {
       return;
     }
 
-    setState(JSON.parse(value));
-  }, [localStorage.getItem(storageKey)]);
+    setState(JSON.parse(storageValue));
+  }, [storageValue]);
 
   const setTour = useCallback(
     (tour: string, templateId: string, tourStepIndex: number) => {

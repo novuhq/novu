@@ -70,6 +70,7 @@ export default function LoginPage() {
       setToken(token);
       navigate('/');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   return (

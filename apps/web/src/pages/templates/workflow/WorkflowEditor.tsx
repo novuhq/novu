@@ -67,7 +67,7 @@ const WorkflowEditor = () => {
         navigate(basePath + '/test-workflow');
       }
     },
-    [basePath]
+    [navigate, basePath]
   );
 
   const confirmDelete = () => {

@@ -52,7 +52,7 @@ export default memo(
       }
 
       setCount(foundIndex + 1);
-    }, [nodes.length, data, id]);
+    }, [nodes, data, id]);
 
     return (
       <div data-test-id={`node-${data.testId}`} style={{ pointerEvents: 'none' }}>

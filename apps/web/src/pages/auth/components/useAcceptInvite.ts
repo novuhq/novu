@@ -20,27 +20,30 @@ export function useAcceptInvite() {
     string
   >((tokenItem) => api.post(`/v1/invites/${tokenItem}/accept`, {}));
 
-  const submitToken = useCallback(async (token: string, invitationToken: string, refetch = false) => {
-    try {
-      // just set the header, user is logged in after token is submitted
-      applyToken(token);
-      const newToken = await mutateAsync(invitationToken);
-      if (!newToken) return;
+  const submitToken = useCallback(
+    async (token: string, invitationToken: string, refetch = false) => {
+      try {
+        // just set the header, user is logged in after token is submitted
+        applyToken(token);
+        const newToken = await mutateAsync(invitationToken);
+        if (!newToken) return;
 
-      setToken(newToken, refetch);
-      if (refetch) {
-        await queryClient.refetchQueries({
-          predicate: (query) => query.queryKey.includes('/v1/organizations'),
-        });
+        setToken(newToken, refetch);
+        if (refetch) {
+          await queryClient.refetchQueries({
+            predicate: (query) => query.queryKey.includes('/v1/organizations'),
+          });
+        }
+
+        navigate(ROUTES.WORKFLOWS);
+      } catch (e: unknown) {
+        errorMessage('Failed to accept an invite.');
+
+        Sentry.captureException(e);
       }
-
-      navigate(ROUTES.WORKFLOWS);
-    } catch (e: unknown) {
-      errorMessage('Failed to accept an invite.');
-
-      Sentry.captureException(e);
-    }
-  }, []);
+    },
+    [mutateAsync, navigate, queryClient, setToken]
+  );
 
   return {
     isLoading,

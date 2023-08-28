@@ -125,7 +125,7 @@ export function CreateProviderInstanceSidebar({
       name: provider?.displayName ?? '',
       environmentId: environments.find((env) => env.name === 'Development')?._id || '',
     });
-  }, [environments, provider]);
+  }, [reset, environments, provider]);
 
   if (!provider) {
     return null;
