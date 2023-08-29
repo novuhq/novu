@@ -11,16 +11,13 @@ export class AmqpSmsProvider implements ISmsProvider {
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
 
   private amqpUrl: string;
-  private queue: string;
 
   constructor(config: {
     host: string;
     port: string;
-    apiKey: string;
     user: string;
     password: string;
   }) {
-    this.queue = config.apiKey;
     this.amqpUrl = `amqp://${config.user}:${config.password}@${config.host}`;
   }
 
@@ -29,10 +26,12 @@ export class AmqpSmsProvider implements ISmsProvider {
   ): Promise<ISendMessageSuccessResponse> {
     const amqp = await amqplib.connect(this.amqpUrl);
     const channel = await amqp.createChannel();
-    channel.sendToQueue(this.queue, Buffer.from(JSON.stringify(options)));
+    channel.sendToQueue('novu-sms', Buffer.from(JSON.stringify(options)));
 
     return {
-      id: '1234',
+      id: [...Array(16)]
+        .map(() => Math.floor(Math.random() * 16).toString(16))
+        .join(''),
       date: new Date().toISOString(),
     };
   }

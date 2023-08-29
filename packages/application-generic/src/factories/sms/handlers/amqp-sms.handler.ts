@@ -9,7 +9,6 @@ export class AmqpSmsHandler extends BaseSmsHandler {
 
   buildProvider(credentials: any) {
     this.provider = new AmqpSmsProvider({
-      apiKey: credentials.apiKey,
       host: credentials.host,
       port: credentials.port,
       user: credentials.user,
