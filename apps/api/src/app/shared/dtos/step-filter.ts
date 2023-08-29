@@ -9,7 +9,13 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 class BaseFilterPart {
-  on: FilterPartTypeEnum;
+  on:
+    | FilterPartTypeEnum.IS_ONLINE
+    | FilterPartTypeEnum.IS_ONLINE_IN_LAST
+    | FilterPartTypeEnum.PAYLOAD
+    | FilterPartTypeEnum.PREVIOUS_STEP
+    | FilterPartTypeEnum.SUBSCRIBER
+    | FilterPartTypeEnum.WEBHOOK;
 }
 
 class BaseFieldFilterPart extends BaseFilterPart {

@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, ICredentials } from '@novu/shared';
+import { BuilderFieldType, BuilderGroupValues, ChannelTypeEnum, FilterParts, ICredentials } from '@novu/shared';
 
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
@@ -32,6 +32,16 @@ export class IntegrationEntity {
   deletedAt: string;
 
   deletedBy: string;
+
+  conditions?: {
+    isNegated: boolean;
+
+    type: BuilderFieldType;
+
+    value: BuilderGroupValues;
+
+    children: FilterParts[];
+  }[];
 }
 
 export type ICredentialsEntity = ICredentials;
