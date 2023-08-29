@@ -1,25 +1,25 @@
 import { IProviderConfig } from '../provider.interface';
 import {
-  africasTalkingConfig,
-  amqpSmsConfig,
-  burstSmsConfig,
-  clickatellConfig,
-  firetextConfig,
-  fortySixElksConfig,
   gupshupConfig,
-  infobipSMSConfig,
-  kannelConfig,
-  maqsamConfig,
   nexmoConfig,
   plivoConfig,
-  sendchampConfig,
   sms77Config,
-  smsCentralConfig,
   snsConfig,
   telnyxConfig,
-  termiiConfig,
   twilioConfig,
-} from '../credentials';
+  firetextConfig,
+  infobipSMSConfig,
+  burstSmsConfig,
+  clickatellConfig,
+  fortySixElksConfig,
+  kannelConfig,
+  maqsamConfig,
+  smsCentralConfig,
+  termiiConfig,
+  africasTalkingConfig,
+  sendchampConfig,
+  amqpSmsConfig
+} from "../credentials";
 import { SmsProviderIdEnum } from '../provider.enum';
 
 import { ChannelTypeEnum } from '../../../types';
