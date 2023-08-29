@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "@novu/stateless": "^0.18.0",
-    "firebase-admin": "^11.0.0"
+    "firebase-admin": "^11.10.1"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",

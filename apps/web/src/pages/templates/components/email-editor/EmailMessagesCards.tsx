@@ -14,6 +14,7 @@ import { VariablesManagement } from './variables-management/VariablesManagement'
 import { useVariablesManager } from '../../../../hooks';
 import { VariableManagerModal } from '../VariableManagerModal';
 import { StepSettings } from '../../workflow/SideBar/StepSettings';
+import { TranslateProductLead } from '../TranslateProductLead';
 
 export enum ViewEnum {
   EDIT = 'Edit',
@@ -130,6 +131,12 @@ export function EmailMessagesCards({ index, isIntegrationActive }: { index: numb
               organization={currentOrganization}
               index={index}
               isIntegrationActive={isIntegrationActive}
+            />
+            <TranslateProductLead
+              id="translate-email-editor"
+              style={{
+                marginTop: 32,
+              }}
             />
           </Grid.Col>
           <Grid.Col
