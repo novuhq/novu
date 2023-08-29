@@ -499,7 +499,9 @@
     "nextjs",
     "vanillajs",
     "quckstart",
-    "errmsg"
+    "errmsg",
+    "devcontainer",
+    "INITDB"
   ],
   "flagWords": [],
   "patterns": [
