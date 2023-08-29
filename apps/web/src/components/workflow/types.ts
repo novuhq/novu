@@ -1,5 +1,6 @@
 import { EdgeProps } from 'react-flow-renderer';
-import { StepTypeEnum } from '@novu/shared';
+import { IEmailBlock, StepTypeEnum } from '@novu/shared';
+import { IFormStep } from '../../pages/templates/components/formTypes';
 
 export interface IEdge extends EdgeProps {
   parentId: string;
@@ -15,5 +16,9 @@ export interface IFlowStep {
   active?: boolean;
   template?: {
     type: StepTypeEnum;
+    content?: string | IEmailBlock[];
+    htmlContent?: string;
   };
+  digestMetadata?: IFormStep['digestMetadata'];
+  delayMetadata?: IFormStep['delayMetadata'];
 }
