@@ -42,4 +42,7 @@ export class IntegrationResponseDto {
 
   @ApiProperty()
   deletedBy: string;
+
+  @ApiProperty()
+  primary: boolean;
 }
