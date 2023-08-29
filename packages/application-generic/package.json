@@ -33,10 +33,10 @@
     "node": ">=10"
   },
   "peerDependencies": {
-    "@nestjs/common": ">=9.3.x",
+    "@nestjs/common": ">=10.0.0",
     "@nestjs/swagger": ">=6.3.x",
-    "@nestjs/terminus": ">=9.2.1",
-    "@nestjs/testing": ">=9.3.x",
+    "@nestjs/terminus": ">=10.0.0",
+    "@nestjs/testing": ">=10.0.0",
     "newrelic": ">=9",
     "reflect-metadata": "^0.1.13"
   },
