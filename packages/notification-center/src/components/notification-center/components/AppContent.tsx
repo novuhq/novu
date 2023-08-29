@@ -45,10 +45,6 @@ const wrapperClassName = (primaryColor: string, fontFamily: string, dir: string)
   *::selection {
     background: ${primaryColor};
   }
-
-  @media (max-width: 480px) {
-    padding: 0 10% 0 2%;
-  }
 `;
 
 const wrapperStyle = css`
