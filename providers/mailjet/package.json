@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "@novu/stateless": "^0.18.0",
-    "node-mailjet": "^3.3.4"
+    "node-mailjet": "^6.0.4"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
