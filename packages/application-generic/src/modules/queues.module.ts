@@ -1,6 +1,6 @@
 import { Module, Provider } from '@nestjs/common';
 
-import { bullMqTokenList, oldInstanceBullMqService } from '../custom-providers';
+import { bullMqTokenList } from '../custom-providers';
 import {
   InboundParseQueueServiceHealthIndicator,
   StandardQueueServiceHealthIndicator,
@@ -43,7 +43,6 @@ const PROVIDERS: Provider[] = [
   WorkflowQueueService,
   WorkflowQueueServiceHealthIndicator,
   WorkflowWorkerService,
-  oldInstanceBullMqService,
   OldInstanceWorkflowWorkerService,
   OldInstanceBullMqService,
 ];

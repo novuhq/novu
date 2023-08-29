@@ -44,14 +44,14 @@ export const getMemoryDbClusterProviderConfig =
     const redisClusterConfig: IMemoryDbClusterConfig = {
       host: process.env.MEMORY_DB_CLUSTER_SERVICE_HOST,
       port: process.env.MEMORY_DB_CLUSTER_SERVICE_PORT,
-      ttl: process.env.REDIS_CLUSTER_TTL,
+      ttl: process.env.MEMORY_DB_CLUSTER_SERVICE_TTL,
       username: process.env.MEMORY_DB_CLUSTER_SERVICE_USERNAME,
       password: process.env.MEMORY_DB_CLUSTER_SERVICE_PASSWORD,
-      connectTimeout: process.env.REDIS_CLUSTER_SERVICE_CONNECTION_TIMEOUT,
-      keepAlive: process.env.REDIS_CLUSTER_SERVICE_KEEP_ALIVE,
-      family: process.env.REDIS_CLUSTER_SERVICE_FAMILY,
-      keyPrefix: process.env.REDIS_CLUSTER_SERVICE_KEY_PREFIX,
-      tls: process.env.REDIS_CLUSTER_TLS as ConnectionOptions,
+      connectTimeout: process.env.MEMORY_DB_CLUSTER_SERVICE_CONNECTION_TIMEOUT,
+      keepAlive: process.env.MEMORY_DB_CLUSTER_SERVICE_KEEP_ALIVE,
+      family: process.env.MEMORY_DB_CLUSTER_SERVICE_FAMILY,
+      keyPrefix: process.env.MEMORY_DB_CLUSTER_SERVICE_KEY_PREFIX,
+      tls: process.env.MEMORY_DB_CLUSTER_SERVICE_TLS as ConnectionOptions,
     };
 
     const host = redisClusterConfig.host;

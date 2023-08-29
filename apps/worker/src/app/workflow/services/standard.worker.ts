@@ -93,7 +93,7 @@ export class StandardWorker extends StandardWorkerService implements INovuWorker
 
   private getWorkerProcessor() {
     return async ({ data }: { data: IJobData | any }) => {
-      Logger.verbose(data, 'Processing a job', LOG_CONTEXT);
+      Logger.verbose({ data, prefix: this.bullMqService.workerPrefix }, 'Processing a job', LOG_CONTEXT);
       const minimalJobData = this.extractMinimalJobData(data);
 
       Logger.verbose(minimalJobData, 'Processing the minimal job data', LOG_CONTEXT);

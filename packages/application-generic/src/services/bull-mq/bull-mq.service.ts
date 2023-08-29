@@ -80,8 +80,16 @@ export class BullMqService {
     return this._worker;
   }
 
-  get queue(): Queue {
+  public get queue(): Queue {
     return this._queue;
+  }
+
+  public get queuePrefix(): string {
+    return this._queue.opts.prefix;
+  }
+
+  public get workerPrefix(): string {
+    return this._worker.opts.prefix;
   }
 
   public static haveProInstalled(): boolean {

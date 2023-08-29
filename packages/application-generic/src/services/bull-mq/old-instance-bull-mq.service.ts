@@ -61,17 +61,40 @@ export class OldInstanceBullMqService {
   }
 
   public async initialize() {
+    Logger.verbose(
+      { enabled: this.enabled },
+      'We initialize the old instance',
+      LOG_CONTEXT
+    );
     if (this.enabled) {
+      Logger.verbose(
+        {
+          enabled: this.enabled,
+          options: await this.inMemoryProviderService.getClusterOptions(),
+          config: this.inMemoryProviderService.inMemoryProviderConfig,
+        },
+        'We are initializing the old instance',
+        LOG_CONTEXT
+      );
+
       await this.inMemoryProviderService.delayUntilReadiness();
     }
   }
 
-  get worker(): Worker {
+  public get worker(): Worker {
     return this._worker;
   }
 
-  get queue(): Queue {
+  public get queue(): Queue {
     return this._queue;
+  }
+
+  public get queuePrefix(): string {
+    return this._queue?.opts?.prefix;
+  }
+
+  public get workerPrefix(): string {
+    return this._worker?.opts?.prefix;
   }
 
   public static haveProInstalled(): boolean {
@@ -94,8 +117,8 @@ export class OldInstanceBullMqService {
   public async getQueueMetrics(): Promise<IQueueMetrics> {
     if (this.enabled) {
       return {
-        completed: await this._queue.getMetrics('completed'),
-        failed: await this._queue.getMetrics('failed'),
+        completed: await this._queue?.getMetrics('completed'),
+        failed: await this._queue?.getMetrics('failed'),
       };
     } else {
       return {
@@ -105,37 +128,10 @@ export class OldInstanceBullMqService {
     }
   }
 
-  private getQueueBaseOptions(): QueueBaseOptions {
-    const inMemoryProviderConfig: IRedisProviderConfig =
-      this.inMemoryProviderService.inMemoryProviderConfig;
-
-    const bullMqBaseOptions = {
-      connection: {
-        db: Number(process.env.REDIS_DB_INDEX),
-        port: inMemoryProviderConfig.port,
-        host: inMemoryProviderConfig.host,
-        username: inMemoryProviderConfig.username,
-        password: inMemoryProviderConfig.password,
-        connectTimeout: inMemoryProviderConfig.connectTimeout,
-        keepAlive: inMemoryProviderConfig.ttl,
-        family: inMemoryProviderConfig.family,
-        keyPrefix: inMemoryProviderConfig.keyPrefix,
-        tls: inMemoryProviderConfig.tls,
-      },
-    };
-
-    return bullMqBaseOptions;
-  }
-
   public createQueue(topic: JobTopicNameEnum, queueOptions: QueueOptions) {
     if (this.enabled) {
-      const bullMqBaseOptions: QueueBaseOptions = this.getQueueBaseOptions();
-
       const config = {
-        connection: {
-          ...bullMqBaseOptions.connection,
-          ...queueOptions.connection,
-        },
+        connection: this.inMemoryProviderService.inMemoryProviderClient,
         ...(queueOptions?.defaultJobOptions && {
           defaultJobOptions: {
             ...queueOptions.defaultJobOptions,
@@ -149,6 +145,10 @@ export class OldInstanceBullMqService {
         : require('@taskforcesh/bullmq-pro').QueuePro;
 
       Logger.log(
+        {
+          config: this.inMemoryProviderService.inMemoryProviderConfig,
+          options: this.inMemoryProviderService.getOptions(),
+        },
         `Creating queue ${topic} for old instance. BullMQ pro is ${
           this.runningWithProQueue() ? 'Enabled' : 'Disabled'
         }`,
@@ -168,41 +168,44 @@ export class OldInstanceBullMqService {
     processor?: string | Processor<any, unknown | void, string>,
     workerOptions?: WorkerOptions
   ) {
+    Logger.verbose(
+      { enabled: this.enabled },
+      'Old instance starting to create worker',
+      LOG_CONTEXT
+    );
     if (this.enabled) {
       // eslint-disable-next-line @typescript-eslint/naming-convention
       const WorkerClass = !OldInstanceBullMqService.pro
         ? Worker
         : require('@taskforcesh/bullmq-pro').WorkerPro;
 
-      const bullMqBaseOptions = this.getQueueBaseOptions();
       const { concurrency, connection, lockDuration, settings } = workerOptions;
 
       const config = {
-        connection: {
-          ...bullMqBaseOptions.connection,
-          ...connection,
-        },
+        connection: this.inMemoryProviderService.inMemoryProviderClient,
         ...(concurrency && { concurrency }),
         ...(lockDuration && { lockDuration }),
         ...(settings && { settings }),
         metrics: { maxDataPoints: MetricsTime.ONE_MONTH },
+        ...(OldInstanceBullMqService.pro
+          ? {
+              group: {},
+            }
+          : {}),
       };
 
       Logger.log(
+        {
+          config: this.inMemoryProviderService.inMemoryProviderConfig,
+          options: this.inMemoryProviderService.getOptions(),
+        },
         `Creating worker for old instance. BullMQ pro is ${
           this.runningWithProQueue() ? 'Enabled' : 'Disabled'
         }`,
         LOG_CONTEXT
       );
 
-      this._worker = new WorkerClass(topic, processor, {
-        ...config,
-        ...(OldInstanceBullMqService.pro
-          ? {
-              group: {},
-            }
-          : {}),
-      });
+      this._worker = new WorkerClass(topic, processor, config);
 
       return this._worker;
     }
@@ -243,7 +246,7 @@ export class OldInstanceBullMqService {
     Logger.log('Shutting down the BullMQ service has finished', LOG_CONTEXT);
   }
 
-  public async getRunningStatus(): Promise<{
+  public async getStatus(): Promise<{
     queueIsPaused: boolean | undefined;
     queueName: string | undefined;
     workerIsPaused: boolean | undefined;
@@ -251,21 +254,18 @@ export class OldInstanceBullMqService {
     workerName: string | undefined;
   }> {
     if (this.enabled) {
-      const queueIsPaused = this._queue
-        ? await this._queue.isPaused()
-        : undefined;
-      const workerIsPaused = this._worker
-        ? await this._worker.isPaused()
-        : undefined;
-      const workerIsRunning = this._worker
-        ? await this._worker.isRunning()
-        : undefined;
+      const [queueIsPaused, workerIsPaused, workerIsRunning] =
+        await Promise.all([
+          this.isQueuePaused(),
+          this.isWorkerPaused(),
+          this.isWorkerRunning(),
+        ]);
 
       return {
         queueIsPaused,
         queueName: this._queue?.name,
-        workerIsRunning,
         workerIsPaused,
+        workerIsRunning,
         workerName: this._worker?.name,
       };
     } else {
@@ -279,10 +279,33 @@ export class OldInstanceBullMqService {
     }
   }
 
+  public isClientReady(): boolean {
+    return this.inMemoryProviderService.isClientReady();
+  }
+
+  public async isQueuePaused(): Promise<boolean> {
+    return await this._queue?.isPaused();
+  }
+
+  public async isWorkerPaused(): Promise<boolean> {
+    return await this._worker?.isPaused();
+  }
+
+  public async isWorkerRunning(): Promise<boolean> {
+    return await this._worker?.isRunning();
+  }
+
   public async pauseWorker(): Promise<void> {
     if (this.enabled && this._worker) {
       try {
-        await this._worker.pause(true);
+        /**
+         * We will only execute this in the cold start, therefore we will
+         * expect jobs not being processed in the Worker.
+         * Reference: https://api.docs.bullmq.io/classes/v4.Worker.html#pause.pause-1
+         */
+        const doNotWaitActive = true;
+
+        await this._worker.pause(doNotWaitActive);
       } catch (error) {
         Logger.error(
           error,

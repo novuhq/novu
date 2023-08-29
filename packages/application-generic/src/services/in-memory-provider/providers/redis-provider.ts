@@ -6,10 +6,10 @@ export { Redis, RedisOptions, ScanStream };
 export const CLIENT_READY = 'ready';
 const DEFAULT_TTL_SECONDS = 60 * 60 * 2;
 const DEFAULT_CONNECT_TIMEOUT = 50000;
+const DEFAULT_HOST = 'localhost';
 const DEFAULT_KEEP_ALIVE = 30000;
 const DEFAULT_FAMILY = 4;
-const DEFAULT_KEY_PREFIX = '';
-const TTL_VARIANT_PERCENTAGE = 0.1;
+const DEFAULT_PORT = 6379;
 
 interface IRedisConfig {
   db?: string;
@@ -41,20 +41,20 @@ export interface IRedisProviderConfig {
 export const getRedisProviderConfig = (): IRedisProviderConfig => {
   const redisConfig: IRedisConfig = {
     db: process.env.REDIS_DB_INDEX,
-    host: process.env.REDIS_HOST || 'localhost',
-    port: process.env.REDIS_PORT || String(6379),
-    ttl: process.env.REDIS_CACHE_TTL,
+    host: process.env.REDIS_HOST,
+    port: process.env.REDIS_PORT,
+    ttl: process.env.REDIS_TTL,
     password: process.env.REDIS_PASSWORD,
     connectTimeout: process.env.REDIS_CONNECT_TIMEOUT,
     keepAlive: process.env.REDIS_KEEP_ALIVE,
     family: process.env.REDIS_FAMILY,
-    keyPrefix: process.env.REDIS_CACHE_KEY_PREFIX,
+    keyPrefix: process.env.REDIS_PREFIX,
     tls: process.env.REDIS_TLS as ConnectionOptions,
   };
 
   const db = Number(redisConfig.db);
-  const port = Number(redisConfig.port);
-  const host = redisConfig.host;
+  const port = Number(redisConfig.port) || DEFAULT_PORT;
+  const host = redisConfig.host || DEFAULT_HOST;
   const password = redisConfig.password;
   const connectTimeout = redisConfig.connectTimeout
     ? Number(redisConfig.connectTimeout)
@@ -65,7 +65,7 @@ export const getRedisProviderConfig = (): IRedisProviderConfig => {
   const keepAlive = redisConfig.keepAlive
     ? Number(redisConfig.keepAlive)
     : DEFAULT_KEEP_ALIVE;
-  const keyPrefix = redisConfig.keyPrefix ?? DEFAULT_KEY_PREFIX;
+  const keyPrefix = redisConfig.keyPrefix;
   const ttl = redisConfig.ttl ? Number(redisConfig.ttl) : DEFAULT_TTL_SECONDS;
   const tls = redisConfig.tls;
 
@@ -84,7 +84,16 @@ export const getRedisProviderConfig = (): IRedisProviderConfig => {
 };
 
 export const getRedisInstance = (): Redis | undefined => {
-  const { port, host, ...options } = getRedisProviderConfig();
+  const { port, host, ...configOptions } = getRedisProviderConfig();
+
+  const options = {
+    ...configOptions,
+    enableOfflineQueue: false,
+    /*
+     *  Disabled in Prod as affects performance
+     */
+    showFriendlyErrorStack: process.env.NODE_ENV !== 'production',
+  };
 
   if (port && host) {
     return new Redis(port, host, options);

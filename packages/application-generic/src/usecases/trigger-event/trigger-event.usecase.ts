@@ -61,7 +61,7 @@ export class TriggerEvent {
   async execute(command: TriggerEventCommand) {
     Logger.verbose(
       command,
-      'Trigger event starts from the StandardWorker',
+      'Trigger event starts from the WorkflowWorker',
       LOG_CONTEXT
     );
 

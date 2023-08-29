@@ -18,7 +18,7 @@ import {
   GetSubscriberPreference,
   GetSubscriberTemplatePreference,
   ProcessTenant,
-  oldInstanceBullMqService,
+  OldInstanceBullMqService,
   QueuesModule,
   SelectIntegration,
   SendTestEmail,
@@ -101,7 +101,7 @@ const PROVIDERS: Provider[] = [
   bullMqTokenList,
   StandardWorker,
   WorkflowWorker,
-  oldInstanceBullMqService,
+  OldInstanceBullMqService,
   OldInstanceWorkflowWorker,
 ];
 

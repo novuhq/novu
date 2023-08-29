@@ -20,16 +20,28 @@ export class OldInstanceWorkflowWorkerService {
   private instance: OldInstanceBullMqService;
 
   public readonly DEFAULT_ATTEMPTS = 3;
-  public worker: Worker;
   public readonly topic: JobTopicNameEnum;
 
   constructor() {
-    this.topic = JobTopicNameEnum.WORKFLOW;
+    this.topic = JobTopicNameEnum.STANDARD;
     this.instance = new OldInstanceBullMqService();
     Logger.log(`Worker ${this.topic} instantiated`, LOG_CONTEXT);
   }
 
+  public get bullMqService(): OldInstanceBullMqService {
+    return this.instance;
+  }
+
+  public get worker(): Worker {
+    return this.instance.worker;
+  }
+
   public initWorker(processor: WorkerProcessor, options?: WorkerOptions): void {
+    Logger.verbose(
+      { enabled: this.instance.enabled, options },
+      'Old Instance Worker is enabled?',
+      LOG_CONTEXT
+    );
     if (this.instance.enabled) {
       Logger.log(`Worker ${this.topic} initialized`, LOG_CONTEXT);
 
@@ -37,28 +49,59 @@ export class OldInstanceWorkflowWorkerService {
     }
   }
 
-  public get bullMqService(): OldInstanceBullMqService {
-    return this.instance;
-  }
-
   public createWorker(
     processor: WorkerProcessor,
     options: WorkerOptions
   ): void {
     if (this.instance.enabled) {
-      this.worker = this.instance.createWorker(this.topic, processor, options);
+      this.instance.createWorker(this.topic, processor, options);
     }
   }
 
+  public async isRunning(): Promise<boolean> {
+    return await this.instance.isWorkerRunning();
+  }
+
+  public async isPaused(): Promise<boolean> {
+    return await this.instance.isWorkerPaused();
+  }
+
   public async pause(): Promise<void> {
-    if (this.instance.enabled) {
+    if (this.instance.enabled && this.worker) {
+      Logger.verbose(
+        { instanceEnabled: this.instance.enabled },
+        'Pausing the old instance workflow worker',
+        LOG_CONTEXT
+      );
+
       await this.instance.pauseWorker();
+
+      Logger.verbose(
+        {
+          instanceEnabled: this.instance.enabled,
+          isPaused: await this.isPaused(),
+          isRunning: await this.isRunning(),
+        },
+        'Paused the old instance workflow worker?',
+        LOG_CONTEXT
+      );
     }
   }
 
   public async resume(): Promise<void> {
-    if (this.instance.enabled) {
+    Logger.verbose({ instanceEnabled: this.instance.enabled }, LOG_CONTEXT);
+    if (this.instance.enabled && this.worker) {
       await this.instance.resumeWorker();
+      Logger.verbose(
+        {
+          isRunning: await this.isRunning(),
+          isPaused: await this.isPaused(),
+          metrics: await this.instance.getQueueMetrics(),
+          jobs: await this.instance.queue?.getJobs(),
+        },
+        'After resuming the old instance workflow worker service',
+        LOG_CONTEXT
+      );
     }
   }
 
@@ -66,7 +109,6 @@ export class OldInstanceWorkflowWorkerService {
     if (this.instance.enabled) {
       Logger.log('Shutting the Worker service down', LOG_CONTEXT);
 
-      this.worker = undefined;
       await this.instance.gracefulShutdown();
 
       Logger.log('Shutting down the Worker service has finished', LOG_CONTEXT);
