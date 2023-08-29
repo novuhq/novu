@@ -47,7 +47,7 @@ If you use Gradle, add the dependency to the `build.gradle` file;
 
 ```groovy
 dependencies {
-  implementation 'co.novu:novu-java:1.0.0'
+  implementation 'co.novu:novu-java:1.1.0'
 }
 ```
 
