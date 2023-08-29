@@ -81,6 +81,9 @@ export class SendMessageEmail extends SendMessageBase {
         channelType: ChannelTypeEnum.EMAIL,
         userId: command.userId,
         identifier: overrideSelectedIntegration as string,
+        filterData: {
+          tenant: command.job.tenant,
+        },
       });
     } catch (e) {
       await this.createExecutionDetails.execute(

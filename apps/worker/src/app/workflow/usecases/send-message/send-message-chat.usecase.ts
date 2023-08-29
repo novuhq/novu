@@ -162,6 +162,9 @@ export class SendMessageChat extends SendMessageBase {
       providerId: subscriberChannel.providerId,
       channelType: ChannelTypeEnum.CHAT,
       userId: command.userId,
+      filterData: {
+        tenant: command.job.tenant,
+      },
     });
 
     const chatWebhookUrl = command.payload.webhookUrl || subscriberChannel.credentials?.webhookUrl;

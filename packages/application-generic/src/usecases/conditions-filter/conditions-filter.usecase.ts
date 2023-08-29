@@ -17,68 +17,62 @@ export class ConditionsFilter extends Filter {
     conditions: ICondition[];
   }> {
     const { filters } = command;
-    if (!filters || !Array.isArray(filters)) {
+    if (!filters || !Array.isArray(filters) || filters.length === 0) {
       return {
         passed: true,
         conditions: [],
       };
     }
-    if (filters?.length) {
-      const details: FilterProcessingDetails[] = [];
 
-      const foundFilter = await this.findAsync(filters, async (filter) => {
-        const filterProcessingDetails = new FilterProcessingDetails();
-        filterProcessingDetails.addFilter(filter, variables);
+    const details: FilterProcessingDetails[] = [];
 
-        const children = filter.children;
-        const noRules =
-          !children || (Array.isArray(children) && children.length === 0);
-        if (noRules) {
-          return true;
-        }
+    const foundFilter = await this.findAsync(filters, async (filter) => {
+      const filterProcessingDetails = new FilterProcessingDetails();
+      filterProcessingDetails.addFilter(filter, variables);
 
-        const singleRule =
-          !children || (Array.isArray(children) && children.length === 1);
-        if (singleRule) {
-          const result = await this.processFilter(
-            variables,
-            children[0],
-            filterProcessingDetails
-          );
+      const children = filter.children;
+      const noRules =
+        !children || (Array.isArray(children) && children.length === 0);
+      if (noRules) {
+        return true;
+      }
 
-          details.push(filterProcessingDetails);
-
-          return result;
-        }
-
-        const result = await this.handleGroupFilters(
-          filter,
+      const singleRule =
+        !children || (Array.isArray(children) && children.length === 1);
+      if (singleRule) {
+        const result = await this.processFilter(
           variables,
-
+          children[0],
           filterProcessingDetails
         );
 
         details.push(filterProcessingDetails);
 
         return result;
-      });
+      }
 
-      const conditions = details
-        .map((detail) => detail.toObject().conditions)
-        .reduce(
-          (conditionsArray, collection) => [...collection, ...conditionsArray],
-          []
-        );
+      const result = await this.handleGroupFilters(
+        filter,
+        variables,
 
-      return {
-        passed: !!foundFilter,
-        conditions: conditions,
-      };
-    }
+        filterProcessingDetails
+      );
+
+      details.push(filterProcessingDetails);
+
+      return result;
+    });
+
+    const conditions = details
+      .map((detail) => detail.toObject().conditions)
+      .reduce(
+        (conditionsArray, collection) => [...collection, ...conditionsArray],
+        []
+      );
 
     return {
-      passed: true,
-      conditions: [],
+      passed: !!foundFilter,
+      conditions: conditions,
     };
   }
 
