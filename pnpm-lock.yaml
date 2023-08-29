@@ -905,7 +905,6 @@ importers:
       rimraf: ^3.0.2
       rxjs: 7.8.1
       shortid: ^2.2.16
-      simple-statistics: ^7.8.3
       sinon: ^9.2.4
       superagent-defaults: ^0.1.14
       supertest: ^5.0.0
@@ -949,7 +948,6 @@ importers:
       rimraf: 3.0.2
       rxjs: 7.8.1
       shortid: 2.2.16
-      simple-statistics: 7.8.3
       uuid: 8.3.2
     devDependencies:
       '@faker-js/faker': 6.3.1
@@ -45976,10 +45974,6 @@ packages:
       decompress-response: 6.0.0
       once: 1.4.0
       simple-concat: 1.0.1
-    dev: false
-
-  /simple-statistics/7.8.3:
-    resolution: {integrity: sha512-JFvMY00t6SBGtwMuJ+nqgsx9ylkMiJ5JlK9bkj8AdvniIe5615wWQYkKHXe84XtSuc40G/tlrPu0A5/NlJvv8A==}
     dev: false
 
   /simple-swizzle/0.2.2:
