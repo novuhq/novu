@@ -38,7 +38,7 @@ If you use Maven, add the dependency to the `pom.xml` file;
   <dependency>
     <groupId>co.novu</groupId>
     <artifactId>novu-java</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
   </dependency>
 </dependencies>
 ```
