@@ -135,3 +135,200 @@ Novu provides a single API to manage providers across multiple channels with a s
 ## 🔗 Links
 
 - [Home page](https://novu.co/)
+
+
+## SDK Methods
+
+- [Subscribers](#subscribers)
+- [Events](#events)
+- Workflows
+- Notification Groups
+- Topics
+- Feeds
+- Tenants
+- Messages
+- Changes
+- Environments
+- Layouts
+- Integrations
+
+
+### Subscribers
+- #### list all subscribers
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+const page = 0;
+const limit = 20;
+
+await novu.subscribers.list(page,limit)
+```
+
+- #### identify (create) a new subscriber
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.subscribers.identify("subscriberId",{
+  firstName: "Pawan";
+  lastName: "Jain";
+  email: "pawan.jain@domain.com";
+  phone: "+1234567890";
+  avatar: "https://gravatar.com/avatar/553b157d82ac2880237566d5a644e5fe?s=400&d=robohash&r=x";
+  locale: "en-US";
+  data: {
+    isDeveloper : true
+    customKey: "customValue"
+  };
+})
+```
+
+
+- #### bulk create subscribers
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.subscribers.identify([
+  {
+    subscriberId: "1"
+    firstName: "Pawan";
+    lastName: "Jain";
+    email: "pawan.jain@domain.com";
+    phone: "+1234567890";
+    avatar: "https://gravatar.com/avatar/553b157d82ac2880237566d5a644e5fe?s=400&d=robohash&r=x";
+    locale: "en-US";
+    data: {
+      isDeveloper : true
+      customKey: "customValue"
+    };
+  },
+  {
+    subscriberId: "2"
+    firstName: "John";
+    lastName: "Doe";
+    email: "john.doe@domain.com";
+    phone: "+1234567891";
+    avatar: "https://gravatar.com/avatar/553b157d82ac2880237566d5a644e5fe?s=400&d=robohash&r=x";
+    locale: "en-US";
+    data: {
+      isDeveloper : false
+      customKey1: "customValue1"
+    };
+  }
+  // more subscribers ...
+])
+```
+
+
+- #### get a single subsciber
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.subscribers.get("subscriberId")
+```
+
+- #### update a subscriber
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.subscribers.update("subscriberId",{
+  firstName: "Pawan";
+  lastName: "Jain";
+  email: "pawan.jain@domain.com";
+  phone: "+1234567890";
+  avatar: "https://gravatar.com/avatar/553b157d82ac2880237566d5a644e5fe?s=400&d=robohash&r=x";
+  locale: "en-US";
+  data: {
+    isDeveloper : true
+    customKey: "customValue"
+    customKey2: "customValue2"
+  };
+})
+```
+
+- #### update provider credentials
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+// update fcm token
+await novu.subscribers.setCredentials("subscriberId", "fcm", {
+  deviceTokens: ["token1", "token2"]
+})
+
+// update slack webhookurl
+await novu.subscribers.setCredentials("subscriberId", "slack", {
+  webhookUrl: ["webhookUrl"]
+})
+```
+
+- #### delete provider credentials
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+// delete fcm token
+await novu.subscribers.deleteCredentials("subscriberId", "fcm")
+
+// delete slack webhookurl
+await novu.subscribers.deleteCredentials("subscriberId", "slack")
+```
+
+- #### delete a subscriber
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.subscribers.delete("subscriberId")
+```
+
+- #### get subscriber preference for all workflows
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.subscribers.getPreference("subscriberId")
+```
+
+- #### update subscriber preference for a workflow
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+// enable in-app channel
+await novu.subscribers.updatePreference("subscriberId", "workflowId", {
+  channel: {
+    type: "in_app"
+    enabled: true
+  }
+})
+
+
+// disable email channel
+await novu.subscribers.updatePreference("subscriberId", "workflowId", {
+  channel: {
+    type: "email"
+    enabled: 
+  }
+})
+```
+
+### Events
