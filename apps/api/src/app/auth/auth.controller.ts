@@ -84,6 +84,41 @@ export class AuthController {
       return response.redirect(`${process.env.FRONT_BASE_URL + '/auth/login'}?error=AuthenticationError`);
     }
 
+    const url = this.buildOauthRedirectUrl(request);
+
+    return response.redirect(url);
+  }
+
+  @Get('/google')
+  googleAuth() {
+    Logger.verbose('Checking Google Auth');
+
+    if (!process.env.GOOGLE_OAUTH_CLIENT_ID || !process.env.GOOGLE_OAUTH_CLIENT_SECRET) {
+      throw new ApiException(
+        'Google auth is not configured, please provide GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET as env variables'
+      );
+    }
+
+    Logger.verbose('Google Auth has all variables.');
+
+    return {
+      success: true,
+    };
+  }
+
+  @Get('/google/callback')
+  @UseGuards(AuthGuard('google'))
+  async googleCallback(@Req() request, @Res() response) {
+    if (!request.user || !request.user.token) {
+      return response.redirect(`${process.env.FRONT_BASE_URL + '/auth/login'}?error=AuthenticationError`);
+    }
+
+    const url = this.buildOauthRedirectUrl(request);
+
+    return response.redirect(url);
+  }
+
+  private buildOauthRedirectUrl(request): string {
     let url = process.env.FRONT_BASE_URL + '/auth/login';
     const redirectUrl = JSON.parse(request.query.state).redirectUrl;
 
@@ -125,7 +160,7 @@ export class AuthController {
       url += `&invitationToken=${invitationToken}`;
     }
 
-    return response.redirect(url);
+    return url;
   }
 
   @Get('/refresh')

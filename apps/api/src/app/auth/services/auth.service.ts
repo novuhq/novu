@@ -111,6 +111,32 @@ export class AuthService {
         }
       }
 
+      if (authProvider === AuthProviderEnum.GOOGLE) {
+        const withoutUsername = user.tokens.find(
+          (token) =>
+            token.provider === AuthProviderEnum.GOOGLE &&
+            !token.username &&
+            String(token.providerId) === String(profile.id)
+        );
+
+        if (withoutUsername) {
+          await this.userRepository.update(
+            {
+              _id: user._id,
+              'tokens.providerId': profile.id,
+            },
+            {
+              $set: {
+                'tokens.$.username': profile.login,
+              },
+            }
+          );
+
+          user = await this.userRepository.findById(user._id);
+          if (!user) throw new ApiException('User not found');
+        }
+      }
+
       this.analyticsService.track('[Authentication] - Login', user._id, {
         loginType: authProvider,
       });

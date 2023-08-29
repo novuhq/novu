@@ -2,6 +2,9 @@ import { MiddlewareConsumer, Module, NestModule, Provider, RequestMethod } from 
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule, PassportStrategy } from '@nestjs/passport';
 import * as passport from 'passport';
+
+import { AuthProviderEnum } from '@novu/shared';
+
 import { RolesGuard } from './framework/roles.guard';
 import { JwtStrategy } from './services/passport/jwt.strategy';
 import { AuthController } from './auth.controller';
@@ -15,11 +18,16 @@ import { EnvironmentsModule } from '../environments/environments.module';
 import { JwtSubscriberStrategy } from './services/passport/subscriber-jwt.strategy';
 import { JwtAuthGuard } from './framework/auth.guard';
 import { RootEnvironmentGuard } from './framework/root-environment-guard.service';
+import { GoogleStrategy } from './services/passport/google.strategy';
 
 const AUTH_STRATEGIES: Provider[] = [];
 
 if (process.env.GITHUB_OAUTH_CLIENT_ID) {
   AUTH_STRATEGIES.push(GitHubStrategy);
+}
+
+if (process.env.GOOGLE_OAUTH_CLIENT_ID) {
+  AUTH_STRATEGIES.push(GoogleStrategy);
 }
 
 @Module({
@@ -56,13 +64,26 @@ export class AuthModule implements NestModule {
     if (process.env.GITHUB_OAUTH_CLIENT_ID) {
       consumer
         .apply(
-          passport.authenticate('github', {
+          passport.authenticate(AuthProviderEnum.GITHUB, {
             session: false,
             scope: ['user:email'],
           })
         )
         .forRoutes({
           path: '/auth/github',
+          method: RequestMethod.GET,
+        });
+    }
+    if (process.env.GITHUB_OAUTH_CLIENT_ID) {
+      consumer
+        .apply(
+          passport.authenticate(AuthProviderEnum.GOOGLE, {
+            session: false,
+            scope: ['profile', 'email'],
+          })
+        )
+        .forRoutes({
+          path: '/auth/google',
           method: RequestMethod.GET,
         });
     }
