@@ -23,19 +23,21 @@ import {
 } from '@nestjs/swagger';
 
 import { IJwtPayload } from '@novu/shared';
+import {
+  UpdateTenant,
+  UpdateTenantCommand,
+  GetTenant,
+  GetTenantCommand,
+  CreateTenant,
+  CreateTenantCommand,
+} from '@novu/application-generic';
 
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { UserSession } from '../shared/framework/user.decorator';
-import { CreateTenant } from './usecases/create-tenant/create-tenant.usecase';
-import { CreateTenantCommand } from './usecases/create-tenant/create-tenant.command';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ApiResponse } from '../shared/framework/response.decorator';
-import { GetTenant } from './usecases/get-tenant/get-tenant.usecase';
-import { GetTenantCommand } from './usecases/get-tenant/get-tenant.command';
-import { UpdateTenant } from './usecases/update-tenant/update-tenant.usecase';
 import { DeleteTenantCommand } from './usecases/delete-tenant/delete-tenant.command';
 import { DeleteTenant } from './usecases/delete-tenant/delete-tenant.usecase';
-import { UpdateTenantCommand } from './usecases/update-tenant/update-tenant.command';
 import { ApiOkPaginatedResponse } from '../shared/framework/paginated-ok-response.decorator';
 import { PaginatedResponseDto } from '../shared/dtos/pagination-response';
 import { GetTenants } from './usecases/get-tenants/get-tenants.usecase';

@@ -10,11 +10,13 @@ import {
   ITriggerPayload,
   TriggerRecipientSubscriber,
   TriggerRecipientsPayload,
+  ITenantDefine,
 } from '@novu/shared';
 
 export interface IBroadcastPayloadOptions {
   payload: ITriggerPayload;
   overrides?: ITriggerOverrides;
+  tenant?: ITriggerTenant;
 }
 
 export interface ITriggerPayloadOptions extends IBroadcastPayloadOptions {
@@ -34,6 +36,8 @@ export interface IEmailOverrides extends IIntegrationOverride {
   bcc?: string[];
   senderName?: string;
 }
+
+export type ITriggerTenant = string | ITenantDefine;
 
 export type ITriggerOverrides = {
   [key in
