@@ -103,7 +103,7 @@ export const ProductLead = ({
         </div>
         <Group spacing={24}>
           <Button
-            mt={variant === ProductLeadVariants.COLUMN ? 16 : undefined}
+            mt={variant === ProductLeadVariants.DEFAULT ? 16 : undefined}
             onClick={() => {
               segment.track('Scheduled call clicked - [Product lead]', {
                 id,

@@ -55,8 +55,9 @@ describe('Get Active Integrations Status', function () {
     });
 
     const result = (await useCase.execute(command)) as WorkflowResponse;
-    expect(result.activeIntegrationStatus?.isActive).to.equal(true);
-    expect(result.activeIntegrationStatus?.channels[ChannelTypeEnum.EMAIL]).to.equal(true);
-    expect(result.activeIntegrationStatus?.channels[ChannelTypeEnum.PUSH]).to.equal(false);
+
+    expect(result.workflowIntegrationStatus?.hasActiveIntegrations).to.equal(true);
+    expect(result.workflowIntegrationStatus?.channels[ChannelTypeEnum.EMAIL].hasActiveIntegrations).to.equal(true);
+    expect(result.workflowIntegrationStatus?.channels[ChannelTypeEnum.PUSH].hasActiveIntegrations).to.equal(false);
   });
 });
