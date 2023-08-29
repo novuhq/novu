@@ -298,6 +298,17 @@ const novu = new Novu('<NOVU_API_KEY>');
 await novu.subscribers.delete("subscriberId")
 ```
 
+- #### update online status 
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+// mark subscriber as offline
+await novu.subscribers.updateOnlineStatus("subscriberId", false)
+```
+
 - #### get subscriber preference for all workflows
 ```ts
 import { Novu } from '@novu/node';
@@ -330,5 +341,92 @@ await novu.subscribers.updatePreference("subscriberId", "workflowId", {
   }
 })
 ```
+
+- #### get in-app messages (notifications) feed for subsriber
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+const params = {
+  page: 0;
+  limit: 20;
+  // copy this value from in-app editor
+  feedIdentifier: "feedId";
+  seen: true
+  read: false
+  payload: {
+    "customkey": "customValue"
+  }
+}
+
+await novu.subscribers.getNotificationsFeed("subscriberId", params);
+```
+
+- #### get seen/unseen in-app messages (notifications) count
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+// get seen count
+await novu.subscribers.getUnseenCount("subscriberId", true);
+
+// get unseen count
+await novu.subscribers.getUnseenCount("subscriberId", false);
+```
+
+- #### mark an in-app message (notification) as seen/unseen/read/unread
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+// mark unseen
+await novu.subscribers.markMessageAs("subscriberId", "messageId", {
+  seen: false
+});
+
+// mark seen and unread
+await novu.subscribers.markMessageAs("subscriberId", "messageId", {
+  seen: true,
+  read: false
+});
+```
+
+- #### mark all in-app messages (notifications) as seen/unseen/read/unread
+
+```ts
+import { Novu, MarkMessagesAsEnum } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+// mark all messages as seen
+await novu.subscribers.markAllMessagesAs("subscriberId", MarkMessageAsEnum.SEEN, "feedId");
+
+// mark all messages as read
+await novu.subscribers.markAllMessagesAs("subscriberId", MarkMessageAsEnum.READ, "feedId");
+```
+
+- #### mark in-app message (notification) action as seen
+
+```ts
+import { Novu, ButtonTypeEnum, MessageActionStatusEnum } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+// mark a message's primary action button as pending
+await novu.subscribers.markMessageActionSeen("subscriberId", "messageId", ButtonTypeEnum.PRIMARY, {
+  status: MessageActionStatusEnum.PENDING
+});
+
+// mark a message's secondary action button as done
+await novu.subscribers.markMessageActionSeen("subscriberId", "messageId", ButtonTypeEnum.SECONDARY, {
+  status: MessageActionStatusEnum.DONE
+});
+```
+
 
 ### Events
