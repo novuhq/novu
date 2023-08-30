@@ -47,10 +47,7 @@ export class OldInstanceBullMqService {
     process.env.NOVU_MANAGED_SERVICE !== undefined;
 
   constructor() {
-    if (
-      !process.env.IS_DOCKER_HOSTED &&
-      process.env.MEMORY_DB_CLUSTER_SERVICE_HOST
-    ) {
+    if (this.shouldInstantiate()) {
       this.inMemoryProviderService = new InMemoryProviderService(
         InMemoryProviderEnum.OLD_INSTANCE_REDIS
       );
@@ -60,23 +57,24 @@ export class OldInstanceBullMqService {
     }
   }
 
-  public async initialize() {
-    Logger.verbose(
-      { enabled: this.enabled },
-      'We initialize the old instance',
+  private shouldInstantiate(): boolean {
+    const shouldInstantiate =
+      !process.env.IS_DOCKER_HOSTED &&
+      !!process.env.MEMORY_DB_CLUSTER_SERVICE_HOST;
+
+    Logger.warn(
+      { shouldInstantiate },
+      `OldInstanceBullMqService should ${
+        shouldInstantiate ? '' : 'not'
+      } be instantiated`,
       LOG_CONTEXT
     );
-    if (this.enabled) {
-      Logger.verbose(
-        {
-          enabled: this.enabled,
-          options: await this.inMemoryProviderService.getClusterOptions(),
-          config: this.inMemoryProviderService.inMemoryProviderConfig,
-        },
-        'We are initializing the old instance',
-        LOG_CONTEXT
-      );
 
+    return shouldInstantiate;
+  }
+
+  public async initialize() {
+    if (this.enabled) {
       await this.inMemoryProviderService.delayUntilReadiness();
     }
   }
@@ -145,10 +143,6 @@ export class OldInstanceBullMqService {
         : require('@taskforcesh/bullmq-pro').QueuePro;
 
       Logger.log(
-        {
-          config: this.inMemoryProviderService.inMemoryProviderConfig,
-          options: this.inMemoryProviderService.getOptions(),
-        },
         `Creating queue ${topic} for old instance. BullMQ pro is ${
           this.runningWithProQueue() ? 'Enabled' : 'Disabled'
         }`,
@@ -168,11 +162,6 @@ export class OldInstanceBullMqService {
     processor?: string | Processor<any, unknown | void, string>,
     workerOptions?: WorkerOptions
   ) {
-    Logger.verbose(
-      { enabled: this.enabled },
-      'Old instance starting to create worker',
-      LOG_CONTEXT
-    );
     if (this.enabled) {
       // eslint-disable-next-line @typescript-eslint/naming-convention
       const WorkerClass = !OldInstanceBullMqService.pro
@@ -195,10 +184,6 @@ export class OldInstanceBullMqService {
       };
 
       Logger.log(
-        {
-          config: this.inMemoryProviderService.inMemoryProviderConfig,
-          options: this.inMemoryProviderService.getOptions(),
-        },
         `Creating worker for old instance. BullMQ pro is ${
           this.runningWithProQueue() ? 'Enabled' : 'Disabled'
         }`,

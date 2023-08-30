@@ -42,7 +42,6 @@ export class StandardWorker extends StandardWorkerService implements INovuWorker
   ) {
     super();
 
-    Logger.log('Workflow queue service created');
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOptions());
 
     this.worker.on('completed', async (job: Job<IJobData, void, string>): Promise<void> => {
@@ -93,10 +92,7 @@ export class StandardWorker extends StandardWorkerService implements INovuWorker
 
   private getWorkerProcessor() {
     return async ({ data }: { data: IJobData | any }) => {
-      Logger.verbose({ data, prefix: this.bullMqService.workerPrefix }, 'Processing a job', LOG_CONTEXT);
       const minimalJobData = this.extractMinimalJobData(data);
-
-      Logger.verbose(minimalJobData, 'Processing the minimal job data', LOG_CONTEXT);
 
       return await new Promise(async (resolve, reject) => {
         // eslint-disable-next-line @typescript-eslint/no-this-alias

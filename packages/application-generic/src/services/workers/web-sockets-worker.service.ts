@@ -9,5 +9,6 @@ const LOG_CONTEXT = 'WebSocketsWorkerService';
 export class WebSocketsWorkerService extends WorkerBaseService {
   constructor() {
     super(JobTopicNameEnum.WEB_SOCKETS);
+    Logger.log(`Worker ${this.topic} instantiated`, LOG_CONTEXT);
   }
 }

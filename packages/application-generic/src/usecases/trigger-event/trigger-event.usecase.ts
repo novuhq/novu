@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 import {
   JobEntity,
@@ -32,11 +32,11 @@ import {
 import { PinoLogger } from '../../logging';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 
+import { AnalyticsService } from '../../services/analytics.service';
 import {
-  AnalyticsService,
   buildNotificationTemplateIdentifierKey,
-} from '../../services';
-import { CachedEntity } from '../../services/cache';
+  CachedEntity,
+} from '../../services/cache';
 import { ApiException } from '../../utils/exceptions';
 import { ProcessTenant, ProcessTenantCommand } from '../process-tenant';
 
@@ -53,18 +53,11 @@ export class TriggerEvent {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private processTenant: ProcessTenant,
     private logger: PinoLogger,
-    @Inject(forwardRef(() => AnalyticsService))
     private analyticsService: AnalyticsService
   ) {}
 
   @InstrumentUsecase()
   async execute(command: TriggerEventCommand) {
-    Logger.verbose(
-      command,
-      'Trigger event starts from the WorkflowWorker',
-      LOG_CONTEXT
-    );
-
     const {
       actor,
       environmentId,
@@ -105,7 +98,6 @@ export class TriggerEvent {
     if (!template) {
       const message = 'Notification template could not be found';
       const error = new ApiException(message);
-      Logger.error(error, message, LOG_CONTEXT);
       throw error;
     }
 
@@ -171,17 +163,6 @@ export class TriggerEvent {
         })
       );
 
-      Logger.verbose(
-        {
-          environmentId,
-          organizationId,
-          userId,
-          subscriberProcessed,
-        },
-        'Subscriber processed stored',
-        LOG_CONTEXT
-      );
-
       // If no subscriber makes no sense to try to create notification
       if (subscriberProcessed) {
         const createNotificationJobsCommand =
@@ -211,17 +192,6 @@ export class TriggerEvent {
           organizationId: command.organizationId,
         });
         await this.storeSubscriberJobs.execute(storeSubscriberJobsCommand);
-
-        Logger.verbose(
-          {
-            numberOfJobs: notificationJobs.length,
-            environmentId,
-            organizationId,
-            subscriberProcessed,
-          },
-          'Jobs stored',
-          LOG_CONTEXT
-        );
       } else {
         /**
          * TODO: Potentially add a CreateExecutionDetails entry. Right now we

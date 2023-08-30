@@ -1,11 +1,6 @@
 const nr = require('newrelic');
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import {
-  ExecutionDetailsSourceEnum,
-  ExecutionDetailsStatusEnum,
-  IJobData,
-  ObservabilityBackgroundTransactionEnum,
-} from '@novu/shared';
+import { IJobData, ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import {
   INovuWorker,
   Job,
@@ -47,49 +42,16 @@ export class OldInstanceWorkflowWorker extends OldInstanceWorkflowWorkerService 
     super();
 
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOptions());
-    Logger.verbose(
-      {
-        instanceName: this.worker?.name,
-        name: this.bullMqService.worker?.name,
-        topic: this.topic,
-        prefix: this.bullMqService.workerPrefix,
-        prefix2: this.worker?.opts?.prefix,
-      },
-      'Old instance worker should have been connected now',
-      LOG_CONTEXT
-    );
 
-    this.worker?.on('drained', async () => {
-      Logger.verbose(
-        {
-          workerConnection: this.bullMqService.worker?.opts?.connection,
-          workerSettings: this.bullMqService.worker?.opts?.settings,
-          workerClient: await this.bullMqService.worker.client,
-        },
-        'All jobs are drained',
-        LOG_CONTEXT
-      );
-    });
+    if (this.bullMqService.enabled) {
+      this.worker.on('completed', async (job: Job<IJobData, void, string>): Promise<void> => {
+        await this.jobHasCompleted(job);
+      });
 
-    this.worker?.on('error', (job) => {
-      Logger.verbose({ job }, 'All jobs are error', LOG_CONTEXT);
-    });
-
-    this.worker?.on('stalled', (job) => {
-      Logger.verbose({ job }, 'All jobs are stalled', LOG_CONTEXT);
-    });
-
-    this.worker?.on('completed', async (job: Job<IJobData, void, string>): Promise<void> => {
-      await this.jobHasCompleted(job);
-
-      Logger.verbose({ job }, 'All jobs are completed', LOG_CONTEXT);
-    });
-
-    this.worker?.on('failed', async (job: Job<IJobData, void, string>, error: Error): Promise<void> => {
-      await this.jobHasFailed(job, error);
-
-      Logger.verbose({ job }, 'All jobs are failed', LOG_CONTEXT);
-    });
+      this.worker.on('failed', async (job: Job<IJobData, void, string>, error: Error): Promise<void> => {
+        await this.jobHasFailed(job, error);
+      });
+    }
   }
 
   private getWorkerOptions(): WorkerOptions {
@@ -131,10 +93,7 @@ export class OldInstanceWorkflowWorker extends OldInstanceWorkflowWorkerService 
 
   private getWorkerProcessor() {
     return async ({ data }: { data: IJobData | any }) => {
-      Logger.verbose({ data, prefix: this.bullMqService.workerPrefix }, 'Processing a job', LOG_CONTEXT);
       const minimalJobData = this.extractMinimalJobData(data);
-
-      Logger.verbose(minimalJobData, 'Processing the minimal job data', LOG_CONTEXT);
 
       return await new Promise(async (resolve, reject) => {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
@@ -145,8 +104,6 @@ export class OldInstanceWorkflowWorker extends OldInstanceWorkflowWorkerService 
           'Trigger Engine',
           function () {
             const transaction = nr.getTransaction();
-
-            Logger.verbose({ data, transaction }, 'Generating observability transaction', LOG_CONTEXT);
 
             storage.run(new Store(PinoLogger.root), () => {
               _this.runJob
@@ -187,6 +144,7 @@ export class OldInstanceWorkflowWorker extends OldInstanceWorkflowWorkerService 
           userId,
         })
       );
+      Logger.verbose({ job }, `Job ${jobId} set as completed`, LOG_CONTEXT);
     } catch (error) {
       Logger.error(error, `Failed to set job ${jobId} as completed`, LOG_CONTEXT);
     }
@@ -216,6 +174,7 @@ export class OldInstanceWorkflowWorker extends OldInstanceWorkflowWorkerService 
 
         await this.handleLastFailedJob.execute(handleLastFailedJobCommand);
       }
+      Logger.verbose({ job }, `Job ${jobId} set as failed`, LOG_CONTEXT);
     } catch (anotherError) {
       Logger.error(anotherError, `Failed to set job ${jobId} as failed`, LOG_CONTEXT);
     }

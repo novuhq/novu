@@ -42,7 +42,7 @@ export class JobMetricService {
     this.jobMetricsWorkerService.createWorker(this.getWorkerProcessor(), this.getWorkerOptions());
 
     this.jobMetricsWorkerService.worker.on('completed', async (job, error) => {
-      await this.jobHasFailed(job, error);
+      await this.jobHasCompleted(job);
     });
 
     this.jobMetricsWorkerService.worker.on('failed', async (job, error) => {

@@ -85,7 +85,6 @@ export class SendMessageEmail extends SendMessageBase {
         identifier: overrideSelectedIntegration as string,
       };
 
-      Logger.verbose(getIntegrationCommand, 'Getting the integration with this values', LOG_CONTEXT);
       integration = await this.getIntegration({
         organizationId: command.organizationId,
         environmentId: command.environmentId,
@@ -239,6 +238,7 @@ export class SendMessageEmail extends SendMessageBase {
         url: ' ',
       });
     } catch (e) {
+      Logger.error({ payload }, 'Compiling the email template or storing it or inlining it has failed', LOG_CONTEXT);
       await this.sendErrorHandlebars(command.job, e.message);
 
       return;
@@ -386,6 +386,7 @@ export class SendMessageEmail extends SendMessageBase {
 
       return;
     }
+
     if (!integration) {
       const integrationError = `${errorMessage} active email integration not found`;
 
@@ -427,6 +428,8 @@ export class SendMessageEmail extends SendMessageBase {
     try {
       const result = await mailHandler.send(mailData);
 
+      Logger.verbose({ command }, 'Email message has been sent', LOG_CONTEXT);
+
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -439,6 +442,8 @@ export class SendMessageEmail extends SendMessageBase {
           raw: JSON.stringify(result),
         })
       );
+
+      Logger.verbose({ command }, 'Execution details of sending an email message have been stored', LOG_CONTEXT);
 
       if (!result?.id) {
         return;

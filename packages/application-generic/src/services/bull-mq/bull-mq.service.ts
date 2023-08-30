@@ -214,12 +214,6 @@ export class BullMqService {
     options: JobsOptions = {},
     groupId?: string
   ) {
-    Logger.verbose(
-      { id, data, options },
-      'Adding the job to the queue',
-      LOG_CONTEXT
-    );
-
     this._queue.add(id, data, {
       ...options,
       ...(BullMqService.pro && groupId
@@ -230,8 +224,6 @@ export class BullMqService {
           }
         : {}),
     });
-
-    Logger.verbose({ id }, `Added the job ${id} to the queue`, LOG_CONTEXT);
   }
 
   public async gracefulShutdown(): Promise<void> {
@@ -246,10 +238,7 @@ export class BullMqService {
 
     await this.inMemoryProviderService.shutdown();
 
-    Logger.verbose(
-      'Shutting down the BullMQ service has finished',
-      LOG_CONTEXT
-    );
+    Logger.log('Shutting down the BullMQ service has finished', LOG_CONTEXT);
   }
 
   public async getStatus(): Promise<{

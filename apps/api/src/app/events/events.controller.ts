@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Logger, Param, Post, Scope, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Param, Post, Scope, UseGuards } from '@nestjs/common';
 import { ApiOkResponse, ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -61,7 +61,6 @@ export class EventsController {
     @Body() body: TriggerEventRequestDto
   ): Promise<TriggerEventResponseDto> {
     const mappedTenant = body.tenant ? this.mapTenant(body.tenant) : null;
-    Logger.verbose(body, 'TriggerEventRequestDto');
 
     const result = await this.parseEventRequest.execute(
       ParseEventRequestCommand.create({

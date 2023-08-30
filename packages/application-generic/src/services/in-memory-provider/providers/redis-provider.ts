@@ -8,6 +8,7 @@ const DEFAULT_TTL_SECONDS = 60 * 60 * 2;
 const DEFAULT_CONNECT_TIMEOUT = 50000;
 const DEFAULT_HOST = 'localhost';
 const DEFAULT_KEEP_ALIVE = 30000;
+const DEFAULT_KEY_PREFIX = '';
 const DEFAULT_FAMILY = 4;
 const DEFAULT_PORT = 6379;
 
@@ -65,7 +66,7 @@ export const getRedisProviderConfig = (): IRedisProviderConfig => {
   const keepAlive = redisConfig.keepAlive
     ? Number(redisConfig.keepAlive)
     : DEFAULT_KEEP_ALIVE;
-  const keyPrefix = redisConfig.keyPrefix;
+  const keyPrefix = redisConfig.keyPrefix ?? DEFAULT_KEY_PREFIX;
   const ttl = redisConfig.ttl ? Number(redisConfig.ttl) : DEFAULT_TTL_SECONDS;
   const tls = redisConfig.tls;
 
@@ -88,7 +89,6 @@ export const getRedisInstance = (): Redis | undefined => {
 
   const options = {
     ...configOptions,
-    enableOfflineQueue: false,
     /*
      *  Disabled in Prod as affects performance
      */

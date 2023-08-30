@@ -1,7 +1,5 @@
 import {
   ConflictException,
-  forwardRef,
-  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -10,7 +8,7 @@ import {
   ICredentials,
   SmsProviderIdEnum,
 } from '@novu/shared';
-import { AnalyticsService } from '../../services';
+import { AnalyticsService } from '../../services/analytics.service';
 import { CalculateLimitNovuIntegration } from '../calculate-limit-novu-integration';
 
 import { GetNovuProviderCredentialsCommand } from './get-novu-provider-credentials.command';
@@ -18,7 +16,6 @@ import { GetNovuProviderCredentialsCommand } from './get-novu-provider-credentia
 @Injectable()
 export class GetNovuProviderCredentials {
   constructor(
-    @Inject(forwardRef(() => AnalyticsService))
     private analyticsService: AnalyticsService,
     protected calculateLimitNovuIntegration: CalculateLimitNovuIntegration
   ) {}

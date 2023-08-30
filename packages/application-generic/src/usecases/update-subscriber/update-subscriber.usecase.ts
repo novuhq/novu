@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 
 import {
@@ -13,7 +13,6 @@ import { ApiException } from '../../utils/exceptions';
 @Injectable()
 export class UpdateSubscriber {
   constructor(
-    @Inject(InvalidateCacheService)
     private invalidateCache: InvalidateCacheService,
     private subscriberRepository: SubscriberRepository
   ) {}
@@ -62,11 +61,7 @@ export class UpdateSubscriber {
       updatePayload.data = command.data;
     }
 
-    Logger.verbose(updatePayload, `Updating subscriber`);
-
     if (!subscriberNeedUpdate(foundSubscriber, updatePayload)) {
-      Logger.verbose(`Updating subscriber not needed`);
-
       return {
         ...foundSubscriber,
       };
@@ -78,8 +73,6 @@ export class UpdateSubscriber {
         _environmentId: command.environmentId,
       }),
     });
-
-    Logger.verbose(updatePayload, `Setting update fields`);
 
     await this.subscriberRepository.update(
       {

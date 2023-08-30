@@ -70,12 +70,6 @@ export class QueueBaseService {
         }
       : undefined;
 
-    Logger.verbose(
-      { ...jobData, topic: this.topic },
-      `Adding minimal job to ${this.topic} queue`,
-      LOG_CONTEXT
-    );
-
     await this.add(id, jobData, groupId, {
       removeOnComplete: true,
       removeOnFail: true,
@@ -94,12 +88,6 @@ export class QueueBaseService {
       removeOnFail: true,
       ...options,
     };
-
-    Logger.verbose(
-      { ...data, topic: this.topic },
-      `Adding complete job to ${this.topic} queue`,
-      LOG_CONTEXT
-    );
 
     await this.instance.add(id, data, jobOptions, groupId);
   }

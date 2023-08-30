@@ -1,4 +1,3 @@
-import { Logger } from '@nestjs/common';
 import {
   IntegrationEntity,
   JobEntity,
@@ -27,8 +26,6 @@ import {
 
 import { SendMessageType } from './send-message-type.usecase';
 import { CreateLog } from '../../../shared/logs';
-
-const LOG_CONTEXT = 'SendMessageBase';
 
 export abstract class SendMessageBase extends SendMessageType {
   abstract readonly channelType: ChannelTypeEnum;
@@ -70,8 +67,6 @@ export abstract class SendMessageBase extends SendMessageType {
     const integration = await this.selectIntegration.execute(SelectIntegrationCommand.create(selectIntegrationCommand));
 
     if (!integration) {
-      Logger.verbose(selectIntegrationCommand, 'No integration was found for this data', LOG_CONTEXT);
-
       return;
     }
 

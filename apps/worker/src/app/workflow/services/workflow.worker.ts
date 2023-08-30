@@ -33,7 +33,6 @@ export class WorkflowWorker extends WorkflowWorkerService implements INovuWorker
   private getWorkerProcessor(): WorkerProcessor {
     return async ({ data }: { data: TriggerEventCommand }) => {
       return await new Promise(async (resolve, reject) => {
-        Logger.verbose({ data, prefix: this.bullMqService.workerPrefix }, 'Processing a job', LOG_CONTEXT);
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const _this = this;
 

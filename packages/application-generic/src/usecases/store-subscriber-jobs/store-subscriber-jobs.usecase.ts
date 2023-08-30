@@ -1,5 +1,5 @@
 import { JobRepository, JobEntity, DalException } from '@novu/dal';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
@@ -52,7 +52,6 @@ export class StoreSubscriberJobs {
       job: firstJob,
     };
 
-    Logger.verbose({ addJobCommand }, 'Adding a job', LOG_CONTEXT);
     await this.addJob.execute(addJobCommand);
   }
 

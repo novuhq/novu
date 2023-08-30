@@ -41,12 +41,8 @@ export class ParseEventRequest {
   @InstrumentUsecase()
   async execute(command: ParseEventRequestCommand) {
     const transactionId = command.transactionId || uuidv4();
-    Logger.log('Starting Trigger');
-    Logger.debug(command, 'Trigger Command');
 
     const mappedActor = command.actor ? this.mapTriggerRecipients.mapSubscriber(command.actor) : undefined;
-
-    Logger.debug(mappedActor, 'Mapped Actor');
 
     const mappedRecipients = await this.mapTriggerRecipients.execute(
       MapTriggerRecipientsCommand.create({
@@ -58,8 +54,6 @@ export class ParseEventRequest {
         actor: mappedActor,
       })
     );
-
-    Logger.debug(mappedRecipients, 'Mapped Recipients Result');
 
     await this.validateSubscriberIdProperty(mappedRecipients);
 
@@ -125,7 +119,6 @@ export class ParseEventRequest {
       actor: mappedActor,
       transactionId,
     };
-    Logger.verbose(jobData, 'Adding complete job in the Workflow Queue "trigger-handler"', LOG_CONTEXT);
     await this.workflowQueueService.add(transactionId, jobData, command.organizationId);
 
     return {

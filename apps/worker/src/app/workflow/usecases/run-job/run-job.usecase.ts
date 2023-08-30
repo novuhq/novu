@@ -23,8 +23,6 @@ export class RunJob {
 
   @InstrumentUsecase()
   public async execute(command: RunJobCommand): Promise<JobEntity | undefined> {
-    Logger.verbose(command, 'Run job starts from the WorkflowWorker', LOG_CONTEXT);
-
     Sentry.setUser({
       id: command.userId,
       organizationId: command.organizationId,
@@ -47,8 +45,11 @@ export class RunJob {
 
     const canceled = await this.delayedEventIsCanceled(job);
     if (canceled) {
+      Logger.verbose({ canceled }, `Job ${job._id} that had been delayed has been cancelled`, LOG_CONTEXT);
+
       return;
     }
+
     let shouldQueueNextJob = true;
 
     try {
@@ -77,6 +78,7 @@ export class RunJob {
         })
       );
     } catch (error: any) {
+      Logger.error({ error }, `Running job ${job._id} has thrown an error`, LOG_CONTEXT);
       if (job.step.shouldStopOnFail || this.shouldBackoff(error)) {
         shouldQueueNextJob = false;
       }

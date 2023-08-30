@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
 
@@ -42,11 +42,6 @@ export class SelectIntegration {
         })
       );
 
-    Logger.verbose(
-      { ...command, isMultiProviderConfigurationEnabled },
-      'Multi provider availability',
-      LOG_CONTEXT
-    );
     if (!isMultiProviderConfigurationEnabled) {
       const integrations = await this.getDecryptedIntegrationsUsecase.execute(
         GetDecryptedIntegrationsCommand.create({
@@ -57,17 +52,6 @@ export class SelectIntegration {
           active: true,
           userId: command.userId,
         })
-      );
-
-      Logger.verbose(
-        {
-          ...command,
-          numberOfIntegrations: integrations.length,
-          firstOneName: integrations[0]?.name,
-          firstOneProvider: integrations[0]?.providerId,
-        },
-        'No multi provider availability',
-        LOG_CONTEXT
       );
 
       return integrations[0];
@@ -104,27 +88,7 @@ export class SelectIntegration {
       { query: { sort: { createdAt: -1 } } }
     );
 
-    Logger.verbose(
-      {
-        ...command,
-        query,
-        integration,
-      },
-      'Multi provider available',
-      LOG_CONTEXT
-    );
-
     if (!integration) {
-      Logger.verbose(
-        {
-          ...command,
-          query,
-          integration,
-        },
-        'No integration selected in multi provider',
-        LOG_CONTEXT
-      );
-
       return;
     }
 
