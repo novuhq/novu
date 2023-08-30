@@ -662,6 +662,7 @@ importers:
       '@types/mocha': ^8.0.1
       '@types/node': ^14.14.6
       '@types/sinon': ^9.0.0
+      '@types/socket.io': ^2.1.13
       '@types/supertest': ^2.0.10
       axios: ^1.3.3
       bull: ^4.4.0
@@ -726,6 +727,7 @@ importers:
       '@types/mocha': 8.2.3
       '@types/node': 14.18.42
       '@types/sinon': 9.0.11
+      '@types/socket.io': 2.1.13
       '@types/supertest': 2.0.12
       chai: 4.3.7
       cross-env: 7.0.3
@@ -789,7 +791,7 @@ importers:
       react-router-dom: ^6.2.2
       react-scripts: ^5.0.1
       rimraf: ^3.0.2
-      socket.io-client: 4.7.2
+      socket.io-client: 4.6.1
       typescript: 4.9.5
       web-vitals: ^0.2.4
       webfontloader: ^1.6.28
@@ -821,7 +823,7 @@ importers:
       react-router-dom: 6.10.0_sfoxds7t5ydpegc3knd667wn6m
       react-scripts: 5.0.1_s7oswrg7wt65hla35vaobymcou
       rimraf: 3.0.2
-      socket.io-client: 4.7.2
+      socket.io-client: 4.6.1
       web-vitals: 0.2.4
       webfontloader: 1.6.28
     devDependencies:
@@ -994,7 +996,7 @@ importers:
       '@types/jsonwebtoken': ^8.5.9
       '@types/mocha': ^8.2.3
       '@types/node': ^14.14.6
-      '@types/socket.io': ^3.0.2
+      '@types/socket.io': ^2.1.13
       '@types/supertest': ^2.0.10
       bull: ^4.4.0
       chai: ^4.2.0
@@ -1016,7 +1018,7 @@ importers:
       rimraf: ^3.0.2
       rxjs: 7.8.1
       sinon: ^9.2.4
-      socket.io: ^4.7.2
+      socket.io: ^4.5.4
       supertest: ^6.0.0
       ts-loader: ~9.4.0
       ts-node: ~10.9.1
@@ -1063,7 +1065,7 @@ importers:
       '@types/jsonwebtoken': 8.5.9
       '@types/mocha': 8.2.3
       '@types/node': 14.18.42
-      '@types/socket.io': 3.0.2
+      '@types/socket.io': 2.1.13
       '@types/supertest': 2.0.12
       chai: 4.3.7
       cross-env: 7.0.3
@@ -1670,7 +1672,7 @@ importers:
       '@types/node': ^14.6.0
       jest: ^29.3.1
       jest-environment-jsdom: ^29.3.1
-      socket.io-client: 4.7.2
+      socket.io-client: 4.6.1
       ts-jest: ^29.0.3
       typedoc: ^0.24.0
       typescript: 4.9.5
@@ -1678,7 +1680,7 @@ importers:
       '@novu/client': link:../client
       '@novu/shared': link:../../libs/shared
       '@tanstack/query-core': 4.29.1
-      socket.io-client: 4.7.2
+      socket.io-client: 4.6.1
     devDependencies:
       '@babel/preset-env': 7.21.4_@babel+core@7.22.11
       '@babel/preset-typescript': 7.21.4_@babel+core@7.22.11
@@ -1813,7 +1815,7 @@ importers:
       react-dom: ^17.0.1
       react-infinite-scroll-component: ^6.0.0
       rimraf: ^3.0.2
-      socket.io-client: 4.7.2
+      socket.io-client: 4.6.1
       terser-webpack-plugin: ^5.3.9
       ts-jest: ^29.0.3
       ts-loader: ~9.4.0
@@ -1839,7 +1841,7 @@ importers:
       lodash.debounce: 4.0.8
       lodash.merge: 4.6.2
       react-infinite-scroll-component: 6.1.0_react@17.0.2
-      socket.io-client: 4.7.2
+      socket.io-client: 4.6.1
       tslib: 2.5.0
       webfontloader: 1.6.28
     devDependencies:
@@ -23294,6 +23296,12 @@ packages:
       '@types/d3-zoom': 3.0.2
     dev: false
 
+  /@types/engine.io/3.1.7:
+    resolution: {integrity: sha512-qNjVXcrp+1sS8YpRUa714r0pgzOwESdW5UjHL7D/2ZFdBX0BXUXtg1LUrp+ylvqbvMcMWUy73YpRoxPN2VoKAQ==}
+    dependencies:
+      '@types/node': 14.18.42
+    dev: true
+
   /@types/eslint-scope/3.7.4:
     resolution: {integrity: sha512-9K4zoImiZc3HlIp6AVUDE4CWYx22a+lhSZMYNpbjW04+YF0KWj4pJXnEMjdnFTiQibFFmElcsasJXDbdI/EPhA==}
     dependencies:
@@ -23843,15 +23851,23 @@ packages:
       '@types/nodemailer': 6.4.7
     dev: true
 
-  /@types/socket.io/3.0.2:
-    resolution: {integrity: sha512-pu0sN9m5VjCxBZVK8hW37ZcMe8rjn4HHggBN5CbaRTvFwv5jOmuIRZEuddsBPa9Th0ts0SIo3Niukq+95cMBbQ==}
-    deprecated: This is a stub types definition. socket.io provides its own type definitions, so you do not need this installed.
+  /@types/socket.io-parser/3.0.0:
+    resolution: {integrity: sha512-Ry/rbTE6HQNL9eu3LpL1Ocup5VexXu1bSSGlSho/IR5LuRc8YvxwSNJ3JxqTltVJEATLbZkMQETSbxfKNgp4Ew==}
+    deprecated: This is a stub types definition. socket.io-parser provides its own type definitions, so you do not need this installed.
     dependencies:
-      socket.io: 4.7.2
+      socket.io-parser: 4.2.4
     transitivePeerDependencies:
-      - bufferutil
       - supports-color
-      - utf-8-validate
+    dev: true
+
+  /@types/socket.io/2.1.13:
+    resolution: {integrity: sha512-JRgH3nCgsWel4OPANkhH8TelpXvacAJ9VeryjuqCDiaVDMpLysd6sbt0dr6Z15pqH3p2YpOT3T1C5vQ+O/7uyg==}
+    dependencies:
+      '@types/engine.io': 3.1.7
+      '@types/node': 14.18.42
+      '@types/socket.io-parser': 3.0.0
+    transitivePeerDependencies:
+      - supports-color
     dev: true
 
   /@types/sockjs/0.3.33:
@@ -30799,18 +30815,23 @@ packages:
       objectorarray: 1.0.5
     dev: true
 
-  /engine.io-client/6.5.2:
-    resolution: {integrity: sha512-CQZqbrpEYnrpGqC07a9dJDz4gePZUgTPMU3NKJPSeQOyw27Tst4Pl3FemKoFGAlHzgZmKjoRmiJvbWfhCXUlIg==}
+  /engine.io-client/6.4.0:
+    resolution: {integrity: sha512-GyKPDyoEha+XZ7iEqam49vz6auPnNJ9ZBfy89f+rMMas8AuiMWOZ9PVzu8xb9ZC6rafUqiGHSCfu22ih66E+1g==}
     dependencies:
       '@socket.io/component-emitter': 3.1.0
       debug: 4.3.4
-      engine.io-parser: 5.2.1
+      engine.io-parser: 5.0.7
       ws: 8.11.0
       xmlhttprequest-ssl: 2.0.0
     transitivePeerDependencies:
       - bufferutil
       - supports-color
       - utf-8-validate
+    dev: false
+
+  /engine.io-parser/5.0.7:
+    resolution: {integrity: sha512-P+jDFbvK6lE3n1OL+q9KuzdOFWkkZ/cMV9gol/SbVfpyqfvrfrFTOFJ6fQm2VC3PZHlU3QPhVwmbsCnauHF2MQ==}
+    engines: {node: '>=10.0.0'}
     dev: false
 
   /engine.io-parser/5.2.1:
@@ -47774,13 +47795,13 @@ packages:
       - bufferutil
       - utf-8-validate
 
-  /socket.io-client/4.7.2:
-    resolution: {integrity: sha512-vtA0uD4ibrYD793SOIAwlo8cj6haOeMHrGvwPxJsxH7CeIksqJ+3Zc06RvWTIFgiSqx4A3sOnTXpfAEE2Zyz6w==}
+  /socket.io-client/4.6.1:
+    resolution: {integrity: sha512-5UswCV6hpaRsNg5kkEHVcbBIXEYoVbMQaHJBXJCyEQ+CiFPV1NIOY0XOFWG4XR4GZcB8Kn6AsRs/9cy9TbqVMQ==}
     engines: {node: '>=10.0.0'}
     dependencies:
       '@socket.io/component-emitter': 3.1.0
       debug: 4.3.4
-      engine.io-client: 6.5.2
+      engine.io-client: 6.4.0
       socket.io-parser: 4.2.4
     transitivePeerDependencies:
       - bufferutil
