@@ -59,15 +59,10 @@ export function getStepErrors(index: number | string, errors?: FieldErrors<IForm
       return findMessages(digestMetadataErrors);
     }
 
-    const delayMetadataErrors = errors.steps[index]?.digestMetadata;
+    const delayMetadataErrors = errors.steps[index]?.delayMetadata;
+
     if (delayMetadataErrors) {
       return findMessages(delayMetadataErrors);
-    }
-
-    const nameError = errors.steps[index]?.name;
-
-    if (nameError) {
-      return [nameError?.message];
     }
   }
 
