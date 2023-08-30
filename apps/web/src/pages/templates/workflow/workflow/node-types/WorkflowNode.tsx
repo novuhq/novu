@@ -118,6 +118,10 @@ export function WorkflowNode({
     );
   }, [channelType]);
 
+  const isDelayStep = useMemo(() => {
+    return channelType === StepTypeEnum.DELAY;
+  }, [channelType]);
+
   const integrationsByEnv = useMemo(() => {
     return integrations?.filter((integration) => integration._environmentId === environment?._id);
   }, [environment, integrations]);
@@ -287,7 +291,7 @@ export function WorkflowNode({
             }
           />
         )}
-        {hasActiveIntegration && stepErrorContent && (
+        {(hasActiveIntegration || isDelayStep) && stepErrorContent && (
           <MantinePopover
             withinPortal
             classNames={popoverClasses}
