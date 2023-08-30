@@ -147,6 +147,7 @@ export class IntegrationsController {
         credentials: body.credentials,
         active: body.active ?? false,
         check: body.check ?? true,
+        conditions: body.conditions,
       })
     );
   }
@@ -178,6 +179,7 @@ export class IntegrationsController {
         credentials: body.credentials,
         active: body.active,
         check: body.check ?? true,
+        conditions: body.conditions,
       })
     );
   }

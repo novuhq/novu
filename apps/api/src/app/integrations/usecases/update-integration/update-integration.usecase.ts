@@ -182,6 +182,8 @@ export class UpdateIntegration {
       updatePayload.credentials = encryptCredentials(command.credentials);
     }
 
+    updatePayload.conditions = command.conditions;
+
     if (!Object.keys(updatePayload).length) {
       throw new BadRequestException('No properties found for update');
     }
@@ -201,7 +203,7 @@ export class UpdateIntegration {
         active: !!command.active,
       });
 
-      updatePayload.primary = primary;
+      updatePayload.primary = command.conditions && command.conditions.length > 0 ? false : primary;
       updatePayload.priority = priority;
     }
 
