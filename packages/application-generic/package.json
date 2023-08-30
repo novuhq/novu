@@ -33,10 +33,11 @@
     "node": ">=10"
   },
   "peerDependencies": {
-    "@nestjs/common": ">=9.3.x",
-    "@nestjs/swagger": ">=6.3.x",
-    "@nestjs/terminus": "9.2.1",
-    "@nestjs/testing": ">=9.3.x",
+    "@nestjs/common": ">=10",
+    "@nestjs/core": ">=10",
+    "@nestjs/swagger": ">=6",
+    "@nestjs/terminus": ">=10",
+    "@nestjs/testing": ">=10",
     "newrelic": ">=9",
     "reflect-metadata": "^0.1.13"
   },
@@ -101,7 +102,7 @@
     "ioredis": "^5.2.4",
     "launchdarkly-node-server-sdk": "^7.0.1",
     "lodash": "^4.17.15",
-    "nestjs-pino": "^3.1.2",
+    "nestjs-pino": "^3.4.0",
     "node-fetch": "^3.2.10",
     "pino-http": "^8.3.3",
     "pino-pretty": "^9.4.0",
