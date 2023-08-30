@@ -69,15 +69,15 @@ export class CreateIntegration {
       result.priority = highestPriorityIntegration ? highestPriorityIntegration.priority + 1 : 1;
     }
 
+    if (command.conditions && command.conditions.length > 0) {
+      return result;
+    }
+
     const activeIntegrationsCount = await this.integrationRepository.countActiveExcludingNovu({
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
       channel: command.channel,
     });
-
-    if (command.conditions && command.conditions.length > 0) {
-      return result;
-    }
 
     if (activeIntegrationsCount === 0) {
       result.primary = true;

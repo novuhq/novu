@@ -2,7 +2,7 @@ import { IsDefined, IsEnum, IsOptional, IsString } from 'class-validator';
 import { ChannelTypeEnum, ICredentialsDto } from '@novu/shared';
 
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
-import { StepFilter } from '@novu/dal';
+import { StepFilter } from '../../../shared/dtos/step-filter';
 
 export class CreateIntegrationCommand extends EnvironmentCommand {
   @IsOptional()

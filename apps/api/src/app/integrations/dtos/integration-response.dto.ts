@@ -1,6 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ChannelTypeEnum } from '@novu/shared';
-import { ValidateNested } from 'class-validator';
 import { StepFilter } from '../../shared/dtos/step-filter';
 import { CredentialsDto } from './credentials.dto';
 
@@ -51,6 +50,5 @@ export class IntegrationResponseDto {
   @ApiPropertyOptional({
     type: [StepFilter],
   })
-  @ValidateNested({ each: true })
   conditions?: StepFilter[];
 }

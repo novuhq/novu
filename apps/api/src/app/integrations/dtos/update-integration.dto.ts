@@ -45,5 +45,6 @@ export class UpdateIntegrationRequestDto implements IUpdateIntegrationBodyDto {
   @ApiPropertyOptional({
     type: [StepFilter],
   })
+  @ValidateNested({ each: true })
   conditions?: StepFilter[];
 }

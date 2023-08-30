@@ -58,5 +58,6 @@ export class CreateIntegrationRequestDto implements ICreateIntegrationBodyDto {
   @ApiPropertyOptional({
     type: [StepFilter],
   })
+  @ValidateNested({ each: true })
   conditions?: StepFilter[];
 }

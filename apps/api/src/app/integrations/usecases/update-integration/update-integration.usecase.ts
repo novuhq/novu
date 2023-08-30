@@ -182,7 +182,9 @@ export class UpdateIntegration {
       updatePayload.credentials = encryptCredentials(command.credentials);
     }
 
-    updatePayload.conditions = command.conditions;
+    if (command.conditions) {
+      updatePayload.conditions = command.conditions;
+    }
 
     if (!Object.keys(updatePayload).length) {
       throw new BadRequestException('No properties found for update');
