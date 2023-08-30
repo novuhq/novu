@@ -898,6 +898,7 @@ importers:
       rimraf: ^3.0.2
       rxjs: 7.8.1
       shortid: ^2.2.16
+      simple-statistics: ^7.8.3
       sinon: ^9.2.4
       superagent-defaults: ^0.1.14
       supertest: ^5.0.0
@@ -941,6 +942,7 @@ importers:
       rimraf: 3.0.2
       rxjs: 7.8.1
       shortid: 2.2.16
+      simple-statistics: 7.8.3
       uuid: 8.3.2
     devDependencies:
       '@faker-js/faker': 6.3.1
@@ -26886,7 +26888,7 @@ packages:
     resolution: {integrity: sha512-UCB0ioiyj8CRjtrvaceBLqqhZCVP+1B8+NWQhmdsm0VXOJtobBCf1dBQmebCCo34qZmUwZfIH2MZLqNHazrfjg==}
 
   /concat-map/0.0.1:
-    resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
+    resolution: {integrity: sha1-2Klr13/Wjfd5OnMDajug1UBdR3s=}
 
   /concat-stream/1.6.2:
     resolution: {integrity: sha512-27HBghJxjiZtIk3Ycvn/4kbJk/1uZuJFfuPEns6LaEvpvG1f0hTea8lilrouyo9mVc2GWdcEZ8OLoGmSADlrCw==}
@@ -45943,6 +45945,10 @@ packages:
       decompress-response: 6.0.0
       once: 1.4.0
       simple-concat: 1.0.1
+    dev: false
+
+  /simple-statistics/7.8.3:
+    resolution: {integrity: sha512-JFvMY00t6SBGtwMuJ+nqgsx9ylkMiJ5JlK9bkj8AdvniIe5615wWQYkKHXe84XtSuc40G/tlrPu0A5/NlJvv8A==}
     dev: false
 
   /simple-swizzle/0.2.2:
