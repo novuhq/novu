@@ -1,11 +1,11 @@
 import { Test } from '@nestjs/testing';
 import { expect } from 'chai';
 
-import { MetricQueueService } from './metric-queue.service';
+import { MetricQueueActiveService } from './metric-queue-active.service';
 
 import { WorkflowModule } from '../workflow.module';
 
-let metricQueueService: MetricQueueService;
+let metricQueueService: MetricQueueActiveService;
 
 describe('Metric Queue service', () => {
   beforeEach(async () => {
@@ -13,7 +13,7 @@ describe('Metric Queue service', () => {
       imports: [WorkflowModule],
     }).compile();
 
-    metricQueueService = moduleRef.get<MetricQueueService>(MetricQueueService);
+    metricQueueService = moduleRef.get<MetricQueueActiveService>(MetricQueueActiveService);
   });
 
   afterEach(async () => {
@@ -24,7 +24,7 @@ describe('Metric Queue service', () => {
     expect(metricQueueService).to.be.ok;
     expect(metricQueueService).to.have.all.keys('DEFAULT_ATTEMPTS', 'bullMqService', 'name', 'token_list');
     expect(await metricQueueService.bullMqService.getRunningStatus()).to.deep.include({
-      queueName: 'metric',
+      queueName: 'metric-complete',
       workerName: 'metric',
     });
     expect(metricQueueService.bullMqService.worker.opts).to.deep.include({
