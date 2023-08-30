@@ -110,6 +110,7 @@ export class BullMqService {
       : require('@taskforcesh/bullmq-pro').QueuePro;
 
     Logger.log(
+      { config },
       `Creating queue ${name} bullmq pro is ${
         this.runningWithProQueue() ? 'Enabled' : 'Disabled'
       }`
@@ -139,6 +140,13 @@ export class BullMqService {
       ...workerOptions,
       metrics: { maxDataPoints: MetricsTime.ONE_MONTH },
     };
+
+    Logger.log(
+      { config },
+      `Creating worker ${name} bullmq pro is ${
+        this.runningWithProQueue() ? 'Enabled' : 'Disabled'
+      }`
+    );
 
     this._worker = new WorkerClass(name, processor, {
       ...config,
