@@ -1,3 +1,4 @@
+import { StepFilter } from '@novu/dal';
 import {
   BuilderFieldType,
   BuilderGroupValues,
@@ -6,17 +7,7 @@ import {
 import { IsDefined } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../commands';
 
-export interface IFilter {
-  isNegated: boolean;
-
-  type: BuilderFieldType;
-
-  value: BuilderGroupValues;
-
-  children: FilterParts[];
-}
-
 export class ConditionsFilterCommand extends EnvironmentWithUserCommand {
   @IsDefined()
-  filters: IFilter[];
+  filters: StepFilter[];
 }

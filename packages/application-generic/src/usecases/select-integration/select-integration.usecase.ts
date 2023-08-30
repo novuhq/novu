@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import {
+  IntegrationEntity,
+  IntegrationRepository,
+  TenantEntity,
+  TenantRepository,
+} from '@novu/dal';
 import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
 
 import { SelectIntegrationCommand } from './select-integration.command';
@@ -18,7 +23,8 @@ export class SelectIntegration {
     private integrationRepository: IntegrationRepository,
     protected getFeatureFlag: GetFeatureFlag,
     protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations,
-    protected conditionsFilter: ConditionsFilter
+    protected conditionsFilter: ConditionsFilter,
+    private tenantRepository: TenantRepository
   ) {}
 
   @CachedQuery({
@@ -57,7 +63,7 @@ export class SelectIntegration {
 
     let integration: IntegrationEntity | null = null;
 
-    if (command.filterData.tenant) {
+    if (command.identifier) {
       const query: Partial<IntegrationEntity> & { _organizationId: string } = {
         ...(command.id ? { id: command.id } : {}),
         _organizationId: command.organizationId,
@@ -66,6 +72,14 @@ export class SelectIntegration {
         ...(command.providerId ? { providerId: command.providerId } : {}),
         active: true,
       };
+
+      let tenant: TenantEntity | null = null;
+
+      if (command.filterData.tenant.identifier) {
+        tenant = await this.tenantRepository.findOne({
+          identifier: command.filterData.tenant.identifier,
+        });
+      }
 
       const integrations = await this.integrationRepository.find(query);
 
@@ -77,7 +91,9 @@ export class SelectIntegration {
             organizationId: command.organizationId,
             userId: command.userId,
           }),
-          command.filterData
+          {
+            tenant,
+          }
         );
         if (passed) {
           integration = currentIntegration;

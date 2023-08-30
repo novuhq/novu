@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
-import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import {
+  IntegrationEntity,
+  IntegrationRepository,
+  TenantRepository,
+} from '@novu/dal';
 
 import { SelectIntegration } from './select-integration.usecase';
 import { SelectIntegrationCommand } from './select-integration.command';
@@ -94,7 +98,8 @@ describe('select integration', function () {
       new GetFeatureFlag(),
       // @ts-ignore
       new GetDecryptedIntegrations(),
-      new ConditionsFilter()
+      new ConditionsFilter(),
+      new TenantRepository()
     );
     jest.clearAllMocks();
   });

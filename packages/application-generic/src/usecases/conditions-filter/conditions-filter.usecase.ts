@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
+import { StepFilter } from '@novu/dal';
 import { FilterParts, FilterPartTypeEnum, ICondition } from '@novu/shared';
 import { Filter } from '../../utils/filter';
 import {
   FilterProcessingDetails,
   IFilterVariables,
 } from '../../utils/filter-processing-details';
-import { ConditionsFilterCommand, IFilter } from './conditions-filter.command';
+import { ConditionsFilterCommand } from './conditions-filter.command';
 
 @Injectable()
 export class ConditionsFilter extends Filter {
@@ -77,7 +78,7 @@ export class ConditionsFilter extends Filter {
   }
 
   private async handleGroupFilters(
-    filter: IFilter,
+    filter: StepFilter,
     variables: IFilterVariables,
     filterProcessingDetails: FilterProcessingDetails
   ): Promise<boolean> {
@@ -102,7 +103,7 @@ export class ConditionsFilter extends Filter {
   }
 
   private async handleAndFilters(
-    filter: IFilter,
+    filter: StepFilter,
     variables: IFilterVariables,
     filterProcessingDetails: FilterProcessingDetails
   ): Promise<boolean> {
@@ -114,7 +115,7 @@ export class ConditionsFilter extends Filter {
   }
 
   private async handleOrFilters(
-    filter: IFilter,
+    filter: StepFilter,
     variables: IFilterVariables,
     filterProcessingDetails: FilterProcessingDetails
   ): Promise<boolean> {
@@ -122,7 +123,7 @@ export class ConditionsFilter extends Filter {
       this.processFilter(variables, i, filterProcessingDetails)
     );
 
-    return foundFilter ? true : false;
+    return !!foundFilter;
   }
 
   private async processFilter(

@@ -3,6 +3,7 @@ import { BuilderFieldType, BuilderGroupValues, ChannelTypeEnum, FilterParts, ICr
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
 import { ChangePropsValueType } from '../../types/helpers';
+import { StepFilter } from '../notification-template';
 
 export class IntegrationEntity {
   _id: string;
@@ -33,15 +34,7 @@ export class IntegrationEntity {
 
   deletedBy: string;
 
-  conditions?: {
-    isNegated: boolean;
-
-    type: BuilderFieldType;
-
-    value: BuilderGroupValues;
-
-    children: FilterParts[];
-  }[];
+  conditions?: StepFilter[];
 }
 
 export type ICredentialsEntity = ICredentials;
