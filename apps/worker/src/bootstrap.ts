@@ -2,7 +2,7 @@ import { CONTEXT_PATH } from './config';
 import 'newrelic';
 import '@sentry/tracing';
 import helmet from 'helmet';
-import { INestApplication, Logger, NestInterceptor, ValidationPipe } from '@nestjs/common';
+import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import * as bodyParser from 'body-parser';
 import * as Sentry from '@sentry/node';
