@@ -7,9 +7,16 @@ import {
   TimeOperatorEnum,
 } from '@novu/shared';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ITenantFilterPart } from '@novu/shared';
 
 class BaseFilterPart {
-  on: FilterPartTypeEnum;
+  on:
+    | FilterPartTypeEnum.IS_ONLINE
+    | FilterPartTypeEnum.IS_ONLINE_IN_LAST
+    | FilterPartTypeEnum.PAYLOAD
+    | FilterPartTypeEnum.PREVIOUS_STEP
+    | FilterPartTypeEnum.SUBSCRIBER
+    | FilterPartTypeEnum.WEBHOOK;
 }
 
 class BaseFieldFilterPart extends BaseFilterPart {
@@ -102,7 +109,8 @@ type FilterParts =
   | WebhookFilterPart
   | RealtimeOnlineFilterPart
   | OnlineInLastFilterPart
-  | PreviousStepFilterPart;
+  | PreviousStepFilterPart
+  | ITenantFilterPart;
 
 export class StepFilter {
   @ApiProperty()

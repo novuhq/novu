@@ -36,6 +36,7 @@ import {
   GetTenant,
   CreateTenant,
   ProcessTenant,
+  ConditionsFilter,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
@@ -70,6 +71,7 @@ const USE_CASES = [
   AddDigestJob,
   CalculateLimitNovuIntegration,
   CreateExecutionDetails,
+  ConditionsFilter,
   BulkCreateExecutionDetails,
   GetDecryptedIntegrations,
   SelectIntegration,

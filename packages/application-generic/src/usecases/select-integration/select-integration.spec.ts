@@ -1,11 +1,16 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
-import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import {
+  IntegrationEntity,
+  IntegrationRepository,
+  TenantRepository,
+} from '@novu/dal';
 
 import { SelectIntegration } from './select-integration.usecase';
 import { SelectIntegrationCommand } from './select-integration.command';
 import { GetFeatureFlag } from '../get-feature-flag';
 import { GetDecryptedIntegrations } from '../get-decrypted-integrations';
+import { ConditionsFilter } from '../conditions-filter';
 
 const testIntegration: IntegrationEntity = {
   _environmentId: 'env-test-123',
@@ -92,7 +97,9 @@ describe('select integration', function () {
       // @ts-ignore
       new GetFeatureFlag(),
       // @ts-ignore
-      new GetDecryptedIntegrations()
+      new GetDecryptedIntegrations(),
+      new ConditionsFilter(),
+      new TenantRepository()
     );
     jest.clearAllMocks();
   });
@@ -104,6 +111,7 @@ describe('select integration', function () {
         environmentId: 'environmentId',
         organizationId: 'organizationId',
         userId: 'userId',
+        filterData: {},
       })
     );
 
@@ -120,6 +128,7 @@ describe('select integration', function () {
         environmentId: 'environmentId',
         organizationId: 'organizationId',
         userId: 'userId',
+        filterData: {},
       })
     );
 
@@ -151,6 +160,7 @@ describe('select integration', function () {
           environmentId,
           organizationId,
           userId,
+          filterData: {},
         })
       );
 
