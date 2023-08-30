@@ -49,7 +49,7 @@
     "rimraf": "^3.0.2",
     "rxjs": "7.8.1",
     "sinon": "^9.2.4",
-    "socket.io": "^4.5.4"
+    "socket.io": "^4.7.2"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.1.16",
@@ -60,7 +60,7 @@
     "@types/jsonwebtoken": "^8.5.9",
     "@types/mocha": "^8.2.3",
     "@types/node": "^14.14.6",
-    "@types/socket.io": "^2.1.13",
+    "@types/socket.io": "^3.0.2",
     "@types/supertest": "^2.0.10",
     "chai": "^4.2.0",
     "cross-env": "^7.0.3",
