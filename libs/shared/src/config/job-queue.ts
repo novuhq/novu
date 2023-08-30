@@ -1,7 +1,6 @@
 export enum JobTopicNameEnum {
   INBOUND_PARSE_MAIL = 'inbound-parse-mail',
-  METRICS_ACTIVE = 'metric-active',
-  METRICS_COMPLETED = 'metric-completed',
+  METRICS = 'metric',
   STANDARD = 'standard',
   WEB_SOCKETS = 'ws_socket_queue',
   WORKFLOW = 'trigger-handler',
