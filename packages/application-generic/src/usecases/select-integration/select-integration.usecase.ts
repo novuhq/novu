@@ -61,9 +61,10 @@ export class SelectIntegration {
       return integrations[0];
     }
 
-    let integration: IntegrationEntity | null = null;
+    let integration: IntegrationEntity | null =
+      await this.getPrimaryIntegration(command);
 
-    if (command.identifier) {
+    if (!command.identifier && command.filterData.tenant) {
       const query: Partial<IntegrationEntity> & { _organizationId: string } = {
         ...(command.id ? { id: command.id } : {}),
         _organizationId: command.organizationId,
@@ -100,10 +101,6 @@ export class SelectIntegration {
           break;
         }
       }
-    }
-
-    if (!integration) {
-      integration = await this.getPrimaryIntegration(command);
     }
 
     if (!integration) {
