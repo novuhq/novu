@@ -193,5 +193,10 @@
   "dependencies": {
     "nx": "^15.9.2",
     "tslib": "^2.4.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "proxy-agent": "^6.3.0"
+    }
   }
 }
