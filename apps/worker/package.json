@@ -52,7 +52,7 @@
     "ioredis": "^5.2.4",
     "lodash": "^4.17.15",
     "nest-raven": "^10.0.0",
-    "newrelic": "9.13.0",
+    "newrelic": "^11.0.0",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "rxjs": "7.8.1",

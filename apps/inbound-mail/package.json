@@ -31,7 +31,7 @@
     "languagedetect": "^1.1.1",
     "lodash": "^4.17.15",
     "mailparser": "^0.6.0",
-    "newrelic": "9.7.5",
+    "newrelic": "^11.0.0",
     "node-uuid": "^1.4.3",
     "rimraf": "^3.0.2",
     "shelljs": "^0.8.5",
