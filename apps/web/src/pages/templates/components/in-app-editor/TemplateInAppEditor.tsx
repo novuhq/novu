@@ -4,10 +4,12 @@ import { useState } from 'react';
 
 import type { IForm, ITemplates } from '../formTypes';
 import { Input } from '../../../../design-system';
-import { useEnvController, useVariablesManager } from '../../../../hooks';
+import { useActiveIntegrations, useEnvController, useVariablesManager } from '../../../../hooks';
 import { InAppContentCard } from './InAppContentCard';
 import { VariableManagerModal } from '../VariableManagerModal';
 import { StepSettings } from '../../workflow/SideBar/StepSettings';
+import { LackIntegrationAlert } from '../LackIntegrationAlert';
+import { ChannelTypeEnum } from '@novu/shared';
 
 const getVariableContents = (template: ITemplates) => {
   const baseContent = ['content'];
@@ -32,9 +34,13 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
   const variableContents = getVariableContents(template);
 
   const variablesArray = useVariablesManager(index, variableContents);
+  const { integrations } = useActiveIntegrations();
+
+  const isActive = !!integrations?.some((item) => item.channel === ChannelTypeEnum.IN_APP);
 
   return (
     <>
+      {!isActive && <LackIntegrationAlert channelType={ChannelTypeEnum.IN_APP} />}
       <StepSettings index={index} />
       <Stack spacing={24}>
         <Controller
