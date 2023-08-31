@@ -291,6 +291,9 @@ describe('Creation functionality', function () {
 
     goBack();
     cy.getByTestId('notification-template-submit-btn').click();
+    cy.getByTestId('node-emailSelector')
+      .getByTestId('workflow-node-subtitle')
+      .should('contain.text', 'This text is written from a test {{firstName}}');
     cy.getByTestId('get-snippet-btn').click();
     cy.getByTestId('trigger-code-snippet').should('be.visible');
     cy.getByTestId('trigger-code-snippet').contains('test-notification-title');
@@ -412,6 +415,9 @@ describe('Creation functionality', function () {
     cy.getByTestId('backoff-amount').should('have.value', '20');
     cy.getByTestId('time-unit').should('have.value', 'min (s)');
     cy.getByTestId('time-unit-backoff').should('have.value', 'min (s)');
+    cy.getByTestId('node-digestSelector')
+      .getByTestId('workflow-node-subtitle')
+      .should('contain.text', 'after 20 minutes');
   });
 
   it('should create and edit group id', function () {
