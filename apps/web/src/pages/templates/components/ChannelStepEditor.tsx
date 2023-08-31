@@ -6,7 +6,7 @@ import { TemplateSMSEditor } from './TemplateSMSEditor';
 import type { IForm } from './formTypes';
 import { TemplatePushEditor } from './TemplatePushEditor';
 import { TemplateChatEditor } from './chat-editor/TemplateChatEditor';
-import { useActiveIntegrations, useEnvController, useIsMultiProviderConfigurationEnabled } from '../../../hooks';
+import { useActiveIntegrations, useEnvController } from '../../../hooks';
 import { useNavigate, useParams } from 'react-router-dom';
 import { SubPageWrapper } from './SubPageWrapper';
 import { DigestMetadata } from '../workflow/DigestMetadata';
@@ -19,8 +19,7 @@ import { DeleteStepRow } from './DeleteStepRow';
 import { TranslateProductLead } from './TranslateProductLead';
 
 export const ChannelStepEditor = () => {
-  const { readonly, environment } = useEnvController();
-  const isMultiProviderConfigEnabled = useIsMultiProviderConfigurationEnabled();
+  const { readonly } = useEnvController();
 
   const { channel, stepUuid = '' } = useParams<{
     channel: StepTypeEnum | undefined;
