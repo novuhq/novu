@@ -1,13 +1,7 @@
+/* eslint-disable max-len */
 import styled from '@emotion/styled';
-import { createStyles, Group, Popover as MantinePopover, UnstyledButton, useMantineColorScheme } from '@mantine/core';
-import {
-  ChannelTypeEnum,
-  EmailProviderIdEnum,
-  InAppProviderIdEnum,
-  providers,
-  SmsProviderIdEnum,
-  StepTypeEnum,
-} from '@novu/shared';
+import { Group, UnstyledButton, useMantineColorScheme } from '@mantine/core';
+import { ChannelTypeEnum, EmailProviderIdEnum, providers, SmsProviderIdEnum, StepTypeEnum } from '@novu/shared';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useViewport } from 'react-flow-renderer';
 import { useFormContext } from 'react-hook-form';
@@ -18,8 +12,7 @@ import { CONTEXT_PATH } from '../../../../../config';
 import { Switch } from '../../../../../design-system';
 import { Button } from '../../../../../design-system/button/Button';
 import { colors } from '../../../../../design-system/config';
-import { Trash } from '../../../../../design-system/icons';
-import { Popover } from '../../../../../design-system/popover';
+import { ProviderMissing, Trash } from '../../../../../design-system/icons';
 import { useStyles } from '../../../../../design-system/template-button/TemplateButton.styles';
 import { Text } from '../../../../../design-system/typography/text/Text';
 import {
@@ -29,11 +22,13 @@ import {
   useIsMultiProviderConfigurationEnabled,
 } from '../../../../../hooks';
 import { CHANNEL_TYPE_TO_STRING } from '../../../../../utils/channels';
+import { useSelectPrimaryIntegrationModal } from '../../../../integrations/components/multi-provider/useSelectPrimaryIntegrationModal';
 import { IntegrationsListModal } from '../../../../integrations/IntegrationsListModal';
 import { IntegrationsStoreModal } from '../../../../integrations/IntegrationsStoreModal';
 import { TemplateEditorAnalyticsEnum } from '../../../constants';
 import { getFormattedStepErrors } from '../../../shared/errors';
 import { DisplayPrimaryProviderIcon } from '../../DisplayPrimaryProviderIcon';
+import { NodeErrorPopover } from '../../NodeErrorPopover';
 
 interface ITemplateButtonProps {
   Icon: React.FC<any>;
@@ -56,22 +51,6 @@ interface ITemplateButtonProps {
   disabled?: boolean;
   subtitle?: string | React.ReactNode;
 }
-
-const usePopoverStyles = createStyles(() => ({
-  dropdown: {
-    padding: '12px 15px 14px',
-    backgroundColor: colors.error,
-    color: colors.white,
-    border: 'none',
-    maxWidth: 300,
-  },
-  arrow: {
-    backgroundColor: colors.error,
-    width: '7px',
-    height: '7px',
-    margin: '0px',
-  },
-}));
 
 const MENU_CLICK_OUTSIDE_EVENTS = ['click', 'mousedown', 'touchstart'];
 
@@ -104,7 +83,7 @@ export function WorkflowNode({
   const [isIntegrationsModalVisible, setIntegrationsModalVisible] = useState(false);
   const disabledColor = disabled ? { color: theme.colorScheme === 'dark' ? colors.B40 : colors.B70 } : {};
   const disabledProp = disabled ? { disabled: disabled } : {};
-  const { classes: popoverClasses } = usePopoverStyles();
+
   const viewport = useViewport();
   const channelKey = tabKey ?? '';
   const { isLimitReached: isEmailLimitReached } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
@@ -112,14 +91,13 @@ export function WorkflowNode({
   const [hover, setHover] = useState(false);
   const isMultiProviderConfigurationEnabled = useIsMultiProviderConfigurationEnabled();
   const { colorScheme } = useMantineColorScheme();
+  const { openModal: openSelectPrimaryIntegrationModal, SelectPrimaryIntegrationModal } =
+    useSelectPrimaryIntegrationModal();
+
   const isChannelStep = useMemo(() => {
     return [StepTypeEnum.IN_APP, StepTypeEnum.EMAIL, StepTypeEnum.PUSH, StepTypeEnum.SMS, StepTypeEnum.CHAT].includes(
       channelType
     );
-  }, [channelType]);
-
-  const isDelayStep = useMemo(() => {
-    return channelType === StepTypeEnum.DELAY;
   }, [channelType]);
 
   const integrationsByEnv = useMemo(() => {
@@ -232,7 +210,12 @@ export function WorkflowNode({
               <Text {...disabledColor} weight="bold" size={16} data-test-id="workflow-node-label">
                 {label}
               </Text>
-              {subtitle && (
+              {Object.keys(stepErrorContent).length > 0 && (
+                <Text {...disabledColor} size={12} color={colors.error} rows={1} data-test-id="workflow-node-error">
+                  {stepErrorContent}
+                </Text>
+              )}
+              {!(Object.keys(stepErrorContent).length > 0) && subtitle && (
                 <Text {...disabledColor} size={12} color={colors.B60} rows={1} data-test-id="workflow-node-subtitle">
                   {subtitle}
                 </Text>
@@ -265,36 +248,63 @@ export function WorkflowNode({
             </When>
           </ActionWrapper>
         </Group>
+
         {!hasActiveIntegration && (
-          <Popover
+          <NodeErrorPopover
             opened={popoverOpened}
             withinPortal
             transition="rotate-left"
             transitionDuration={250}
             offset={theme.spacing.xs}
             target={<ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />}
-            title="Connect provider"
-            titleGradient="red"
-            description={`Please configure a ${CHANNEL_TYPE_TO_STRING[
-              channelKey
-            ]?.toLowerCase()} provider to send notifications over this channel`}
-            content={
-              <ConfigureProviderButton
+            titleIcon={<ProviderMissing />}
+            title={`${CHANNEL_TYPE_TO_STRING[channelKey]} provider is not connected`}
+            content={`Please configure or activate a provider instance for the ${CHANNEL_TYPE_TO_STRING[channelKey]} channel to send notifications over this node`}
+            actionItem={
+              <Button
                 onClick={() => {
                   segment.track(TemplateEditorAnalyticsEnum.CONFIGURE_PROVIDER_POPOVER_CLICK);
                   setIntegrationsModalVisible(true);
                   setPopoverOpened(false);
                 }}
               >
-                Configure
-              </ConfigureProviderButton>
+                Open integration store
+              </Button>
             }
           />
         )}
-        {(hasActiveIntegration || isDelayStep) && stepErrorContent && (
-          <MantinePopover
+        {hasActiveIntegration && !getPrimaryIntegration && isChannelStep && (
+          <NodeErrorPopover
+            opened={popoverOpened}
             withinPortal
-            classNames={popoverClasses}
+            transition="rotate-left"
+            transitionDuration={250}
+            offset={theme.spacing.xs}
+            target={<ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />}
+            titleIcon={<ProviderMissing />}
+            title="Select primary provider"
+            content={`You have multiple provider instances for ${CHANNEL_TYPE_TO_STRING[channelKey]} in the ${environment?.name} environment. Please select the primary instance.
+            `}
+            actionItem={
+              <Button
+                onClick={() => {
+                  segment.track(TemplateEditorAnalyticsEnum.CONFIGURE_PROVIDER_POPOVER_CLICK);
+                  openSelectPrimaryIntegrationModal({
+                    environmentId: environment?._id,
+                    channelType: tabKey,
+                    onClose: () => {},
+                  });
+                  setPopoverOpened(false);
+                }}
+              >
+                Select primary provider
+              </Button>
+            }
+          />
+        )}
+        {hasActiveIntegration && getPrimaryIntegration && stepErrorContent && (
+          <NodeErrorPopover
+            withinPortal
             withArrow
             opened={popoverOpened && Object.keys(stepErrorContent).length > 0}
             transition="rotate-left"
@@ -304,16 +314,14 @@ export function WorkflowNode({
             zIndex={4}
             positionDependencies={[dragging, viewport]}
             clickOutsideEvents={MENU_CLICK_OUTSIDE_EVENTS}
-          >
-            <MantinePopover.Target>
-              <ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />
-            </MantinePopover.Target>
-            <MantinePopover.Dropdown>
-              <Text rows={1} color={colors.white}>
-                {stepErrorContent || 'Something is missing here'}
-              </Text>
-            </MantinePopover.Dropdown>
-          </MantinePopover>
+            target={<ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />}
+            title={stepErrorContent || 'Something is missing here'}
+            content={
+              `Please specify a ${(stepErrorContent as string)
+                .replace(/(is|are) missing!/g, '')
+                .toLowerCase()} to prevent sending empty notifications.` || 'Something is missing here'
+            }
+          />
         )}
       </UnstyledButtonStyled>
       {isMultiProviderConfigurationEnabled ? (
@@ -329,13 +337,10 @@ export function WorkflowNode({
           scrollTo={tabKey}
         />
       )}
+      <SelectPrimaryIntegrationModal />
     </>
   );
 }
-
-const ConfigureProviderButton = styled(Button)`
-  margin-top: 16px;
-`;
 
 const ErrorCircle = styled.div<{ dark: boolean }>`
   width: 11px;
