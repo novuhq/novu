@@ -8,12 +8,12 @@ export async function checkinForCronJob(cronId?: string) {
   if (process.env.NOVU_MANAGED_SERVICE && process.env.NODE_ENV === 'production' && cronId && url) {
     Logger.verbose(`Calling health endpoint for ${cronId}`);
 
-    const responce = await fetch(url + cronId);
+    const response = await fetch(url + cronId);
 
-    if (responce.status !== 200) {
-      Logger.error(`Failed calling better Uptime: ${responce.status}`, LOG_CONTEXT);
+    if (response.status !== 200) {
+      Logger.error(`Failed calling better Uptime: ${response.status}`, LOG_CONTEXT);
     } else {
-      Logger.verbose(`Response from better Uptime: ${responce.status}`, LOG_CONTEXT);
+      Logger.verbose(`Response from better Uptime: ${response.status}`, LOG_CONTEXT);
     }
   }
 }
