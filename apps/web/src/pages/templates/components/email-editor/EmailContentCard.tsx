@@ -26,7 +26,7 @@ export function EmailContentCard({
   organization: IOrganizationEntity | undefined;
   isIntegrationActive: boolean;
 }) {
-  const { readonly } = useEnvController();
+  const { readonly, environment } = useEnvController();
   const { control, setValue, watch } = useFormContext(); // retrieve all hook methods
   const contentType = watch(`steps.${index}.template.contentType`);
   const activeTab = contentType === 'customHtml' ? CUSTOM_CODE : EDITOR;
@@ -71,14 +71,27 @@ export function EmailContentCard({
     },
   ];
 
+  const hasPrimaryIntegration = isMultiProviderConfigEnabled
+    ? integrations.some(
+        (item) => item.channel === ChannelTypeEnum.EMAIL && item.primary && item._environmentId === environment?._id
+      )
+    : true;
+
+  console.log(
+    'EmailContentCard',
+    { isIntegrationActive, isLimitReached, hasPrimaryIntegration },
+    integrations.some(
+      (item) => item.channel === ChannelTypeEnum.EMAIL && item.primary && item._environmentId === environment?._id
+    )
+  );
+
   return (
     <>
-      {!isIntegrationActive && isLimitReached && (
+      {!isIntegrationActive && isLimitReached && <LackIntegrationAlert channelType={ChannelTypeEnum.EMAIL} />}
+      {isIntegrationActive && !hasPrimaryIntegration && (
         <LackIntegrationAlert
           channelType={ChannelTypeEnum.EMAIL}
-          text="Looks like you haven’t configured your E-Mail provider yet, visit the integrations page to configure."
-          iconHeight={34}
-          iconWidth={34}
+          text="You have multiple provider instances for Push in the dev environment. Please select the primary instance."
         />
       )}
       <EmailInboxContent integration={integration} index={index} readonly={readonly} />

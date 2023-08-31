@@ -19,7 +19,7 @@ import { DeleteStepRow } from './DeleteStepRow';
 import { TranslateProductLead } from './TranslateProductLead';
 
 export const ChannelStepEditor = () => {
-  const { readonly } = useEnvController();
+  const { readonly, environment } = useEnvController();
   const { channel, stepUuid = '' } = useParams<{
     channel: StepTypeEnum | undefined;
     stepUuid: string;
@@ -85,7 +85,12 @@ export const ChannelStepEditor = () => {
       >
         <EmailMessagesCards
           index={index}
-          isIntegrationActive={!!integrations?.some((integration) => integration.channel === ChannelTypeEnum.EMAIL)}
+          isIntegrationActive={
+            !!integrations?.some(
+              (integration) =>
+                integration.channel === ChannelTypeEnum.EMAIL && integration._environmentId === environment?._id
+            )
+          }
         />
         <DeleteStepRow />
       </SubPageWrapper>
