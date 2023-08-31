@@ -8,7 +8,7 @@ type UseHasPrimaryIntegrationProps = {
   channelType: ChannelTypeEnum;
 };
 
-export function useHasPrimaryIntegration({ filterByEnv = true, channelType }: UseHasPrimaryIntegrationProps) {
+export function useGetPrimaryIntegration({ filterByEnv = true, channelType }: UseHasPrimaryIntegrationProps) {
   const isMultiProviderConfigurationEnabled = useIsMultiProviderConfigurationEnabled();
 
   const { activeIntegrationsByEnv, hasActiveIntegration, isChannelStep } = useHasActiveIntegrations({

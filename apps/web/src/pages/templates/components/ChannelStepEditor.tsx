@@ -6,7 +6,7 @@ import { TemplateSMSEditor } from './TemplateSMSEditor';
 import type { IForm } from './formTypes';
 import { TemplatePushEditor } from './TemplatePushEditor';
 import { TemplateChatEditor } from './chat-editor/TemplateChatEditor';
-import { useActiveIntegrations, useEnvController } from '../../../hooks';
+import { useActiveIntegrations, useEnvController, useIsMultiProviderConfigurationEnabled } from '../../../hooks';
 import { useNavigate, useParams } from 'react-router-dom';
 import { SubPageWrapper } from './SubPageWrapper';
 import { DigestMetadata } from '../workflow/DigestMetadata';
@@ -20,6 +20,8 @@ import { TranslateProductLead } from './TranslateProductLead';
 
 export const ChannelStepEditor = () => {
   const { readonly, environment } = useEnvController();
+  const isMultiProviderConfigEnabled = useIsMultiProviderConfigurationEnabled();
+
   const { channel, stepUuid = '' } = useParams<{
     channel: StepTypeEnum | undefined;
     stepUuid: string;
@@ -83,15 +85,7 @@ export const ChannelStepEditor = () => {
           paddingBottom: 24,
         }}
       >
-        <EmailMessagesCards
-          index={index}
-          isIntegrationActive={
-            !!integrations?.some(
-              (integration) =>
-                integration.channel === ChannelTypeEnum.EMAIL && integration._environmentId === environment?._id
-            )
-          }
-        />
+        <EmailMessagesCards index={index} />
         <DeleteStepRow />
       </SubPageWrapper>
     );
@@ -107,13 +101,7 @@ export const ChannelStepEditor = () => {
       >
         {channel === StepTypeEnum.SMS && (
           <>
-            <TemplateSMSEditor
-              key={index}
-              control={control}
-              index={index}
-              errors={errors}
-              isIntegrationActive={!!integrations?.some((integration) => integration.channel === ChannelTypeEnum.SMS)}
-            />
+            <TemplateSMSEditor key={index} control={control} index={index} errors={errors} />
             <TranslateProductLead id="translate-sms-editor" />
           </>
         )}

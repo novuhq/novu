@@ -1,18 +1,12 @@
+import { ChannelTypeEnum, IOrganizationEntity } from '@novu/shared';
 import { useEffect, useState } from 'react';
-import { IOrganizationEntity, ChannelTypeEnum } from '@novu/shared';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { Tabs } from '../../../../design-system';
-import { EmailMessageEditor } from './EmailMessageEditor';
+import { useActiveIntegrations, useEnvController, useIsMultiProviderConfigurationEnabled } from '../../../../hooks';
 import { EmailCustomCodeEditor } from './EmailCustomCodeEditor';
-import { LackIntegrationAlert } from '../LackIntegrationAlert';
-import {
-  useEnvController,
-  useActiveIntegrations,
-  useIntegrationLimit,
-  useIsMultiProviderConfigurationEnabled,
-} from '../../../../hooks';
 import { EmailInboxContent } from './EmailInboxContent';
+import { EmailMessageEditor } from './EmailMessageEditor';
 
 const EDITOR = 'Editor';
 const CUSTOM_CODE = 'Custom Code';
@@ -20,11 +14,9 @@ const CUSTOM_CODE = 'Custom Code';
 export function EmailContentCard({
   index,
   organization,
-  isIntegrationActive,
 }: {
   index: number;
   organization: IOrganizationEntity | undefined;
-  isIntegrationActive: boolean;
 }) {
   const { readonly, environment } = useEnvController();
   const { control, setValue, watch } = useFormContext(); // retrieve all hook methods
@@ -33,8 +25,6 @@ export function EmailContentCard({
   const isMultiProviderConfigEnabled = useIsMultiProviderConfigurationEnabled();
   const { integrations = [] } = useActiveIntegrations();
   const [integration, setIntegration]: any = useState(null);
-
-  const { isLimitReached } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
 
   useEffect(() => {
     if (integrations.length === 0) {
@@ -79,13 +69,6 @@ export function EmailContentCard({
 
   return (
     <>
-      {!isIntegrationActive && isLimitReached && <LackIntegrationAlert channelType={ChannelTypeEnum.EMAIL} />}
-      {isIntegrationActive && !hasPrimaryIntegration && (
-        <LackIntegrationAlert
-          channelType={ChannelTypeEnum.EMAIL}
-          text="You have multiple provider instances for Push in the dev environment. Please select the primary instance."
-        />
-      )}
       <EmailInboxContent integration={integration} index={index} readonly={readonly} />
       <div data-test-id="email-step-settings-edit">
         <div data-test-id="editor-type-selector">

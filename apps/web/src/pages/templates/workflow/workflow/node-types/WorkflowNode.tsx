@@ -1,8 +1,8 @@
 /* eslint-disable max-len */
 import styled from '@emotion/styled';
 import { Group, UnstyledButton, useMantineColorScheme } from '@mantine/core';
-import { ChannelTypeEnum, EmailProviderIdEnum, providers, SmsProviderIdEnum, StepTypeEnum } from '@novu/shared';
-import React, { useEffect, useMemo, useState } from 'react';
+import { ChannelTypeEnum, providers, StepTypeEnum } from '@novu/shared';
+import React, { useEffect, useState } from 'react';
 import { useViewport } from 'react-flow-renderer';
 import { useFormContext } from 'react-hook-form';
 
@@ -16,9 +16,9 @@ import { ProviderMissing, Trash } from '../../../../../design-system/icons';
 import { useStyles } from '../../../../../design-system/template-button/TemplateButton.styles';
 import { Text } from '../../../../../design-system/typography/text/Text';
 import {
-  useActiveIntegrations,
   useEnvController,
-  useIntegrationLimit,
+  useGetPrimaryIntegration,
+  useHasActiveIntegrations,
   useIsMultiProviderConfigurationEnabled,
 } from '../../../../../hooks';
 import { CHANNEL_TYPE_TO_STRING } from '../../../../../utils/channels';
@@ -76,7 +76,6 @@ export function WorkflowNode({
 }: ITemplateButtonProps) {
   const segment = useSegment();
   const { readonly: readonlyEnv, environment } = useEnvController();
-  const { integrations } = useActiveIntegrations({ refetchOnMount: false, refetchOnWindowFocus: false });
   const { cx, classes, theme } = useStyles();
   const [popoverOpened, setPopoverOpened] = useState(false);
   const [disabled, setDisabled] = useState(initDisabled);
@@ -86,68 +85,20 @@ export function WorkflowNode({
 
   const viewport = useViewport();
   const channelKey = tabKey ?? '';
-  const { isLimitReached: isEmailLimitReached } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
-  const { isLimitReached: isSmsLimitReached } = useIntegrationLimit(ChannelTypeEnum.SMS);
   const [hover, setHover] = useState(false);
   const isMultiProviderConfigurationEnabled = useIsMultiProviderConfigurationEnabled();
   const { colorScheme } = useMantineColorScheme();
   const { openModal: openSelectPrimaryIntegrationModal, SelectPrimaryIntegrationModal } =
     useSelectPrimaryIntegrationModal();
 
-  const isChannelStep = useMemo(() => {
-    return [StepTypeEnum.IN_APP, StepTypeEnum.EMAIL, StepTypeEnum.PUSH, StepTypeEnum.SMS, StepTypeEnum.CHAT].includes(
-      channelType
-    );
-  }, [channelType]);
-
-  const integrationsByEnv = useMemo(() => {
-    return integrations?.filter((integration) => integration._environmentId === environment?._id);
-  }, [environment, integrations]);
-
-  const hasActiveIntegration = useMemo(() => {
-    const isEmailStep = channelType === StepTypeEnum.EMAIL;
-    const isSmsStep = channelType === StepTypeEnum.SMS;
-
-    if (isChannelStep) {
-      const isActive = !!integrationsByEnv?.some((integration) => integration.channel === tabKey);
-
-      if (isActive && isEmailStep) {
-        const isNovuProvider = integrationsByEnv?.some(
-          (integration) => integration.providerId === EmailProviderIdEnum.Novu && integration.primary
-        );
-
-        return isNovuProvider ? !isEmailLimitReached : isActive;
-      }
-
-      if (isActive && isSmsStep) {
-        const isNovuProvider = integrationsByEnv?.some(
-          (integration) => integration.providerId === SmsProviderIdEnum.Novu && integration.primary
-        );
-
-        return isNovuProvider ? !isSmsLimitReached : isActive;
-      }
-
-      return isActive;
-    }
-
-    return true;
-  }, [integrationsByEnv, tabKey, isEmailLimitReached, isSmsLimitReached, isChannelStep]);
-
-  const getPrimaryIntegration = useMemo(() => {
-    if (!hasActiveIntegration) {
-      return undefined;
-    }
-    if (isChannelStep) {
-      if ([StepTypeEnum.EMAIL, StepTypeEnum.SMS].includes(channelType)) {
-        return integrationsByEnv?.find((integration) => integration.primary && integration.channel === channelKey)
-          ?.providerId;
-      }
-
-      return integrationsByEnv?.find((integration) => integration.channel === channelKey)?.providerId;
-    }
-
-    return undefined;
-  }, [isChannelStep, hasActiveIntegration, integrationsByEnv, channelKey, channelType]);
+  const { hasActiveIntegration, isChannelStep } = useHasActiveIntegrations({
+    filterByEnv: true,
+    channelType: channelType as unknown as ChannelTypeEnum,
+  });
+  const { primaryIntegration } = useGetPrimaryIntegration({
+    filterByEnv: true,
+    channelType: channelType as unknown as ChannelTypeEnum,
+  });
 
   const onIntegrationModalClose = () => {
     setIntegrationsModalVisible(false);
@@ -177,7 +128,7 @@ export function WorkflowNode({
     return () => subscription.unsubscribe();
   }, [watch]);
 
-  const provider = providers.find((_provider) => _provider.id === getPrimaryIntegration);
+  const provider = providers.find((_provider) => _provider.id === primaryIntegration);
 
   const logoSrc = provider && `${CONTEXT_PATH}/static/images/providers/${colorScheme}/square/${provider.id}.svg`;
 
@@ -201,7 +152,7 @@ export function WorkflowNode({
             <DisplayPrimaryProviderIcon
               Icon={Icon}
               disabledProp={disabledProp}
-              getPrimaryIntegration={getPrimaryIntegration}
+              getPrimaryIntegration={primaryIntegration}
               isChannelStep={isChannelStep}
               logoSrc={logoSrc}
             />
@@ -273,7 +224,7 @@ export function WorkflowNode({
             }
           />
         )}
-        {hasActiveIntegration && !getPrimaryIntegration && isChannelStep && (
+        {hasActiveIntegration && !primaryIntegration && isChannelStep && (
           <NodeErrorPopover
             opened={popoverOpened}
             withinPortal
@@ -302,7 +253,7 @@ export function WorkflowNode({
             }
           />
         )}
-        {hasActiveIntegration && getPrimaryIntegration && stepErrorContent && (
+        {hasActiveIntegration && primaryIntegration && stepErrorContent && (
           <NodeErrorPopover
             withinPortal
             withArrow
