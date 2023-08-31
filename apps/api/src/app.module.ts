@@ -4,6 +4,8 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { Type } from '@nestjs/common/interfaces/type.interface';
 import { ForwardReference } from '@nestjs/common/interfaces/modules/forward-reference.interface';
 
+import { EEAuthModule } from '@novu/ee-auth';
+
 import { SharedModule } from './app/shared/shared.module';
 import { UserModule } from './app/user/user.module';
 import { AuthModule } from './app/auth/auth.module';
@@ -32,7 +34,10 @@ import { InboundParseModule } from './app/inbound-parse/inbound-parse.module';
 import { BlueprintModule } from './app/blueprint/blueprint.module';
 import { TenantModule } from './app/tenant/tenant.module';
 
+const externalModules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [EEAuthModule];
+
 const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
+  ...externalModules,
   InboundParseModule,
   OrganizationModule,
   SharedModule,
