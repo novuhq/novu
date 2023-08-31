@@ -5,6 +5,7 @@ import { useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import { useOutletContext } from 'react-router-dom';
 
 import { updateBrandingSettings } from '../../../api/organization';
 import { getSignedUrl } from '../../../api/storage';
@@ -19,13 +20,10 @@ const mimeTypes = {
   'image/png': 'png',
 };
 
-export function BrandingForm({
-  isLoading,
-  organization,
-}: {
-  isLoading: boolean;
-  organization: IOrganizationEntity | undefined;
-}) {
+export function BrandingForm() {
+  const { currentOrganization: organization } = useOutletContext<{
+    currentOrganization: IOrganizationEntity | undefined;
+  }>();
   const [image, setImage] = useState<string>();
   const [file, setFile] = useState<File>();
   const [imageLoading, setImageLoading] = useState<boolean>(false);
@@ -116,7 +114,7 @@ export function BrandingForm({
 
   return (
     <Stack h="100%">
-      <LoadingOverlay visible={isLoading} />
+      <LoadingOverlay visible={!organization} />
       <form noValidate onSubmit={handleSubmit(saveBrandsForm)}>
         <Grid>
           <Grid.Col span={6}>

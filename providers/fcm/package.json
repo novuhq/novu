@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "@novu/stateless": "^0.18.0",
-    "firebase-admin": "^11.0.0"
+    "firebase-admin": "^11.10.1"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
@@ -41,7 +41,6 @@
     "@types/mocha": "^8.0.1",
     "codecov": "^3.5.0",
     "cspell": "^4.1.0",
-    "cz-conventional-changelog": "^3.3.0",
     "eslint": "7.32.0",
     "gh-pages": "^3.1.0",
     "jest": "^27.1.0",

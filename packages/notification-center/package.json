@@ -84,7 +84,7 @@
     "lodash.debounce": "^4.0.8",
     "lodash.merge": "^4.6.2",
     "react-infinite-scroll-component": "^6.0.0",
-    "socket.io-client": "4.6.1",
+    "socket.io-client": "4.7.2",
     "tslib": "^2.3.1",
     "webfontloader": "^1.6.28"
   }

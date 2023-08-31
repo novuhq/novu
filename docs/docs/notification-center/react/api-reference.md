@@ -627,7 +627,7 @@ interface IPreferenceChannels {
 }
 
 interface IUserPreferenceSettings {
-  template: { _id: string; name: string; critical: boolean };
+  template: { _id: string; name: string; critical: boolean; tags: string[] };
   preference: { enabled: boolean; channels: IPreferenceChannels };
 }
 

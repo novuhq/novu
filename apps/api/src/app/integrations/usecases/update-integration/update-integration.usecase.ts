@@ -196,6 +196,16 @@ export class UpdateIntegration {
 
     const isChannelSupportsPrimary = CHANNELS_WITH_PRIMARY.includes(existingIntegration.channel);
     if (isMultiProviderConfigurationEnabled && isActiveChanged && isChannelSupportsPrimary) {
+      if (command.active) {
+        await this.disableNovuIntegration.execute({
+          channel: existingIntegration.channel,
+          providerId: existingIntegration.providerId,
+          environmentId: existingIntegration._environmentId,
+          organizationId: existingIntegration._organizationId,
+          userId: command.userId,
+        });
+      }
+
       const { primary, priority } = await this.calculatePriorityAndPrimary({
         existingIntegration,
         active: !!command.active,
@@ -235,16 +245,6 @@ export class UpdateIntegration {
     });
     if (!updatedIntegration) {
       throw new NotFoundException(`Integration with id ${command.integrationId} is not found`);
-    }
-
-    if (updatedIntegration.active) {
-      await this.disableNovuIntegration.execute({
-        channel: updatedIntegration.channel,
-        providerId: updatedIntegration.providerId,
-        environmentId: updatedIntegration._environmentId,
-        organizationId: updatedIntegration._organizationId,
-        userId: command.userId,
-      });
     }
 
     return updatedIntegration;

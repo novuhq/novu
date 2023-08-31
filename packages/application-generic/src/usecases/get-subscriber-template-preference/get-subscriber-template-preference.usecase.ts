@@ -251,6 +251,7 @@ function mapTemplateConfiguration(
   return {
     _id: template._id,
     name: template.name,
+    tags: template?.tags || [],
     critical: template.critical != null ? template.critical : true,
     ...(template.data ? { data: template.data } : {}),
   };

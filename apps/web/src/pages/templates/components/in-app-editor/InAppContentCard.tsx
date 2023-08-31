@@ -8,6 +8,7 @@ import { inputStyles } from '../../../../design-system/config/inputs.styles';
 import { useState, useEffect } from 'react';
 import { AvatarFeedFields } from './AvatarFeedFields';
 import { When } from '../../../../components/utils/When';
+import { TranslateProductLead } from '../TranslateProductLead';
 
 const EDITOR = 'Editor';
 const PREVIEW = 'Preview';
@@ -112,6 +113,12 @@ export function InAppContentCard({ index, openVariablesModal }: { index: number;
         <Grid mt={24} grow>
           <Grid.Col span={9}>
             <InAppEditorBlock control={control as any} index={index} readonly={readonly} />
+            <TranslateProductLead
+              id="translate-in-app-editor"
+              style={{
+                marginTop: 32,
+              }}
+            />
             <AvatarFeedFields control={control} index={index} />
           </Grid.Col>
           <Grid.Col
