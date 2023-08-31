@@ -106,25 +106,13 @@ export const ChannelStepEditor = () => {
         )}
         {channel === StepTypeEnum.PUSH && (
           <>
-            <TemplatePushEditor
-              key={index}
-              control={control}
-              index={index}
-              errors={errors}
-              isIntegrationActive={!!integrations?.some((integration) => integration.channel === ChannelTypeEnum.PUSH)}
-            />
+            <TemplatePushEditor key={index} control={control} index={index} errors={errors} />
             <TranslateProductLead id="translate-push-editor" />
           </>
         )}
         {channel === StepTypeEnum.CHAT && (
           <>
-            <TemplateChatEditor
-              key={index}
-              errors={errors}
-              control={control}
-              index={index}
-              isIntegrationActive={!!integrations?.some((integration) => integration.channel === ChannelTypeEnum.CHAT)}
-            />
+            <TemplateChatEditor key={index} errors={errors} control={control} index={index} />
             <TranslateProductLead id="translate-chat-editor" />
           </>
         )}
