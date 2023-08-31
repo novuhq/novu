@@ -1,5 +1,5 @@
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
-import React from 'react';
+import React, { MouseEvent as ReactMouseEvent } from 'react';
 import { Node } from 'react-flow-renderer';
 import {
   ChatFilled,
@@ -120,5 +120,34 @@ export const computeNodeActualPosition = (node: Node<any>, nodes: Array<Node<any
       x: node.position.x + xSum,
       y: node.position.y + ySum,
     },
+  };
+};
+
+export const triggerFromReplaceHandle = (e: ReactMouseEvent) => {
+  return !!(e.target as HTMLElement).closest('.node-swap-trigger-wrapper');
+};
+
+// The default node height would be used if `node.height` is `null`.
+const defaultNodeHeight = 80;
+// Determines the overlap needed for a swap.
+const margin = 8;
+
+/**
+ * Calculates the offset position of the node to be swapped. This calculation helps determine
+ * if the node's position is close enough to trigger a swap operation.
+ *
+ * @param nodeId Node ID of the node to be swapped.
+ * @param node Node.
+ * @param isUpward Determines if the swap direction.
+ */
+export const getOffsetPosition = (nodeId: string, node: Node, isUpward: boolean) => {
+  if (nodeId !== node.id) return node;
+
+  const height = node.height ?? defaultNodeHeight;
+  const computedOffset = isUpward ? height - margin : 0 - height + margin;
+
+  return {
+    ...node,
+    position: { ...node.position, y: node.position.y + computedOffset },
   };
 };

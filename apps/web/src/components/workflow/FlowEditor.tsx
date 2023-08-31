@@ -21,7 +21,12 @@ import cloneDeep from 'lodash.clonedeep';
 import { StepTypeEnum } from '@novu/shared';
 
 import { colors } from '../../design-system';
-import { computeNodeActualPosition, getChannel } from '../../utils/channels';
+import {
+  computeNodeActualPosition,
+  getChannel,
+  getOffsetPosition,
+  triggerFromReplaceHandle,
+} from '../../utils/channels';
 import { useEnvController } from '../../hooks';
 import type { IEdge, IFlowStep } from './types';
 
@@ -39,6 +44,8 @@ const DEFAULT_WRAPPER_STYLES = {
   width: '100%',
   minHeight: '600px',
 };
+
+const ClonedNodeId = 'temp_cloned_node';
 
 interface IFlowEditorProps extends ReactFlowProps {
   steps: IFlowStep[];
@@ -82,6 +89,7 @@ export function FlowEditor({
   addStep,
   moveStepPosition,
   onDelete,
+  onNodeClick: onClick,
   ...restProps
 }: IFlowEditorProps) {
   const { colorScheme } = useMantineColorScheme();
@@ -155,30 +163,59 @@ export function FlowEditor({
     [addNewNode, reactFlowInstance, nodes, edges]
   );
 
-  const updateNodeConnections = useCallback(() => {
-    const edgeType = edgeTypes ? 'special' : 'default';
+  const updateNodeConnections = useCallback(
+    (updatedNodes) => {
+      const edgeType = edgeTypes ? 'special' : 'default';
 
-    setEdges(
-      nodes.slice(1, nodes.length - 1).map(({ id, parentNode }) => buildNewEdge(parentNode ?? '', id, edgeType))
-    );
-  }, [setEdges, nodes]);
+      setEdges(
+        updatedNodes
+          .slice(1, nodes.length - 1)
+          .map(({ id, parentNode }) => buildNewEdge(parentNode ?? '', id, edgeType))
+      );
+    },
+    [setEdges]
+  );
 
   const onNodeDragStop = useCallback(
-    (event, node: Node<any>) => {
+    (_, node: Node<any>) => {
       if (onRepositioning) {
-        const clonedNodes = nodes.map((mappedNode) => computeNodeActualPosition(mappedNode, nodes));
+        // Check the direction of the swapping, if it is with a node at the top or bottom.
+        const isUpward = node.position.y > (nodesRef.current?.find(({ id }) => id === node.id)?.position.y ?? 0);
+
+        /*
+         * Filter out the cloned node & also compute every node actual position relative to the flow
+         * work area. This is used to sort the nodes, which helps to get the new position of node being swapped.
+         */
+        const clonedNodes = nodes
+          .filter(({ id }) => id !== ClonedNodeId)
+          .map((mappedNode) => computeNodeActualPosition(getOffsetPosition(node.id, mappedNode, isUpward), nodes));
+
         const filteredNodes = cloneDeep(clonedNodes).filter(({ type }) => type === 'channelNode');
 
+        // Get the initial position before the swapping.
         const sourcePosition = filteredNodes.findIndex(({ id }) => id === node.id);
 
+        // Get the current position after the swapping.
         const targetPosition = filteredNodes
           .sort(({ actualPosition: { y: aY } }, { actualPosition: { y: bY } }) => aY - bY)
           .findIndex(({ id }) => node.id === id);
 
-        setNodes(clonedNodes.map((_node, index) => ({ ..._node, position: nodesRef.current[index].position })));
+        /*
+         * Updates the positions of the nodes to their initial positions. If no swapping has occurred,
+         * the node is snapped back to its original position. Additionally, it handles updating the node whose
+         * parent node ID has been changed to the cloned ID, resetting it to its initial parent node ID.
+         */
+        const newNodes = clonedNodes.map(({ parentNode, ...others }, index) => ({
+          ...others,
+          parentNode: parentNode === ClonedNodeId ? node.id : parentNode,
+          position: nodesRef.current[index].position,
+        }));
 
+        setNodes(newNodes);
+
+        // If no swapping occured, update the edges & return.
         if (sourcePosition === targetPosition) {
-          updateNodeConnections();
+          updateNodeConnections(newNodes);
 
           return;
         }
@@ -186,15 +223,25 @@ export function FlowEditor({
         moveStepPosition?.(node.id, targetPosition);
       }
 
-      if (!isRepositioningNode(event) && onRepositioning) updateNodeConnections();
       setOnRepositioning(false);
     },
-    [nodes, onRepositioning]
+    [nodes, onRepositioning, edges]
   );
 
   const onNodeDragStart = useCallback(
     (event: ReactMouseEvent, node: Node<any>) => {
-      if (!isRepositioningNode(event)) return;
+      if (!triggerFromReplaceHandle(event)) return;
+      /**
+       * The nodes are cloned and a new node is created.
+       */
+      nodesRef.current = nodes;
+      const clonedNodes = cloneDeep(nodes);
+      const clonedNode = cloneDeep(node);
+      const childNode = clonedNodes.find(({ parentNode }) => parentNode === node.id) as Node;
+      clonedNode.id = ClonedNodeId;
+
+      if (childNode) childNode.parentNode = ClonedNodeId;
+
       setOnRepositioning(true);
       /*
        * When the user tries to reposition a node, the connecting edge is removed so that it doesn't
@@ -208,38 +255,29 @@ export function FlowEditor({
           return { ...edge, source };
         })
       );
+      setNodes([...clonedNodes, clonedNode]);
 
-      nodesRef.current = cloneDeep(nodes);
+      const nodeDocument = document.querySelector(`.react-flow__node[data-id="${node.id}"]`);
+      if (nodeDocument) nodeDocument.classList.add('swap-drag-active');
     },
     [setEdges, nodes]
   );
 
-  const onNodeDrag = useCallback(
+  const onNodeClick = useCallback(
     (event: ReactMouseEvent, node: Node<any>) => {
-      if (!onRepositioning) return;
+      onClick?.(event, node);
 
-      /**
-       * When repositioning a node, implementation below ensures descendants nodes are not moving alongside.
-       */
-      const activeNode = nodesRef.current.find(({ id }) => node.id === id);
-      const childNodeIndex = nodesRef.current.findIndex(({ parentNode }) => node.id === parentNode);
-      const childNode = nodesRef.current[childNodeIndex];
+      const childNode = nodes.find(({ parentNode }) => parentNode === ClonedNodeId);
+      if (childNode) {
+        childNode.parentNode = node.id;
+        const newNodes = nodes.filter(({ id }) => id !== ClonedNodeId);
+        setNodes(newNodes);
 
-      if (!activeNode || childNodeIndex === -1) return;
-
-      setNodes((initialNodes) => {
-        initialNodes[childNodeIndex].position.x = childNode.position.x - (node.position.x - activeNode.position.x);
-        initialNodes[childNodeIndex].position.y = childNode.position.y - (node.position.y - activeNode.position.y);
-
-        return [...initialNodes];
-      });
+        updateNodeConnections(newNodes);
+      }
     },
-    [setNodes, onRepositioning]
+    [setNodes, nodes]
   );
-
-  const isRepositioningNode = (e: ReactMouseEvent) => {
-    return !!(e.target as HTMLElement).closest('button[data-test-id="drag-step-action"]');
-  };
 
   async function initializeWorkflowTree() {
     let parentId = '1';
@@ -296,6 +334,10 @@ export function FlowEditor({
         onDelete,
         uuid: step.uuid,
         name: step.name,
+        content: step.template?.content,
+        htmlContent: step.template?.htmlContent,
+        delayMetadata: step.delayMetadata,
+        digestMetadata: step.digestMetadata,
       },
     };
   }
@@ -405,7 +447,7 @@ export function FlowEditor({
             defaultZoom={defaultZoom}
             onNodeDragStop={onNodeDragStop}
             onNodeDragStart={onNodeDragStart}
-            onNodeDrag={onNodeDrag}
+            onNodeClick={onNodeClick}
             {...restProps}
           >
             {withControls && <Controls />}
@@ -432,13 +474,8 @@ const Wrapper = styled.div<{ dark: boolean }>`
     width: 280px;
     height: 80px;
     cursor: pointer;
-    svg {
-      stop:first-child {
-        stop-color: #dd2476 !important;
-      }
-      stop:last-child {
-        stop-color: #ff512f !important;
-      }
+    &.swap-drag-active {
+      z-index: 1001 !important;
     }
     [data-blue-gradient-svg] {
       stop:first-child {
@@ -446,6 +483,12 @@ const Wrapper = styled.div<{ dark: boolean }>`
       }
       stop:last-child {
         stop-color: #66d9e8 !important;
+      }
+    }
+
+    [data-workflow-node-icon] {
+      stop {
+        stop-color: white !important;
       }
     }
   }
@@ -492,6 +535,15 @@ const Wrapper = styled.div<{ dark: boolean }>`
 
     svg {
       fill: ${colors.B60};
+    }
+  }
+
+  [data-template-store-editor] [data-workflow-node-icon] {
+    stop:first-child {
+      stop-color: #dd2476 !important;
+    }
+    stop:last-child {
+      stop-color: #ff512f !important;
     }
   }
 `;

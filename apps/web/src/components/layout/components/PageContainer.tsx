@@ -1,7 +1,6 @@
 import styled from '@emotion/styled';
 import React, { CSSProperties } from 'react';
 import { Container } from '../../../design-system';
-import { HEADER_HEIGHT } from '../constants';
 import PageMeta from './PageMeta';
 
 function PageContainer({
@@ -19,7 +18,7 @@ function PageContainer({
   };
 
   return (
-    <StyledContainer pl={0} pr={0} fluid style={containerStyle} h={`calc(100vh - ${HEADER_HEIGHT}px)`}>
+    <StyledContainer fluid style={containerStyle} h={`100%`}>
       <PageMeta title={title} />
       {children}
     </StyledContainer>
@@ -33,4 +32,5 @@ const StyledContainer = styled(Container)`
   border-radius: 0;
   padding-left: 0;
   padding-right: 0;
+  margin: 0;
 `;

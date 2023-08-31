@@ -112,6 +112,7 @@ export class WidgetsController {
       feedId: feedsQuery,
       query: { seen: query.seen, read: query.read },
       limit: query.limit != null ? parseInt(query.limit) : 10,
+      payload: query.payload,
     });
 
     return await this.getNotificationsFeedUsecase.execute(command);

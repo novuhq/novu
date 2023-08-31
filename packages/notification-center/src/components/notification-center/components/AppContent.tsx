@@ -20,8 +20,10 @@ export function AppContent() {
 
   return (
     <MantineProvider theme={themeConfig}>
-      <div className={wrapperClassName(primaryColor, fontFamily, dir)}>
-        <Layout />
+      <div className={wrapperStyle}>
+        <div className={wrapperClassName(primaryColor, fontFamily, dir)}>
+          <Layout />
+        </div>
       </div>
     </MantineProvider>
   );
@@ -32,8 +34,9 @@ const wrapperClassName = (primaryColor: string, fontFamily: string, dir: string)
   font-family: ${fontFamily === 'inherit' ? fontFamily : `${fontFamily}, Helvetica, sans-serif`};
   color: #333737;
   direction: ${dir};
-  width: 420px;
   z-index: 999;
+  width: auto;
+  max-width: 420px;
 
   ::-moz-selection {
     background: ${primaryColor};
@@ -42,4 +45,8 @@ const wrapperClassName = (primaryColor: string, fontFamily: string, dir: string)
   *::selection {
     background: ${primaryColor};
   }
+`;
+
+const wrapperStyle = css`
+  width: 100%;
 `;

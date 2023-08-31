@@ -7,6 +7,7 @@ import {
   MessageEntity,
   IntegrationEntity,
   IChannelSettings,
+  TenantRepository,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -41,6 +42,7 @@ export class SendMessageChat extends SendMessageBase {
   constructor(
     protected subscriberRepository: SubscriberRepository,
     protected messageRepository: MessageRepository,
+    protected tenantRepository: TenantRepository,
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
@@ -52,6 +54,7 @@ export class SendMessageChat extends SendMessageBase {
       createLogUsecase,
       createExecutionDetails,
       subscriberRepository,
+      tenantRepository,
       selectIntegration,
       getNovuProviderCredentials
     );
@@ -71,6 +74,8 @@ export class SendMessageChat extends SendMessageBase {
     const chatChannel: NotificationStepEntity = command.step;
     if (!chatChannel?.template) throw new PlatformException('Chat channel template not found');
 
+    const tenant = await this.handleTenantExecution(command.job);
+
     let content = '';
     const data = {
       subscriber: subscriber,
@@ -79,6 +84,7 @@ export class SendMessageChat extends SendMessageBase {
         events: command.events,
         total_count: command.events?.length,
       },
+      ...(tenant ? { tenant: { name: tenant.name, ...tenant.data } } : {}),
       ...command.payload,
     };
 
@@ -125,7 +131,7 @@ export class SendMessageChat extends SendMessageBase {
          * Do nothing, one chat channel failed, perhaps another one succeeds
          * The failed message has been created
          */
-        Logger.error(`Sending chat message to the chat channel ${channel.providerId} failed`, e, LOG_CONTEXT);
+        Logger.error(e, `Sending chat message to the chat channel ${channel.providerId} failed`, LOG_CONTEXT);
       }
     }
 

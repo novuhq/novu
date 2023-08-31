@@ -1,6 +1,5 @@
 import { Provider, Module } from '@nestjs/common';
 import {
-  EventsPerformanceService,
   CreateExecutionDetails,
   BulkCreateExecutionDetails,
   CalculateLimitNovuIntegration,
@@ -33,6 +32,10 @@ import {
   WsQueueService,
   SelectIntegration,
   GetNovuProviderCredentials,
+  UpdateTenant,
+  GetTenant,
+  CreateTenant,
+  ProcessTenant,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
@@ -107,6 +110,10 @@ const USE_CASES = [
   CreateSubscriber,
   UpdateSubscriber,
   GetNovuProviderCredentials,
+  UpdateTenant,
+  GetTenant,
+  CreateTenant,
+  ProcessTenant,
 ];
 
 const REPOSITORIES = [JobRepository];
@@ -136,7 +143,6 @@ const SERVICES: Provider[] = [
     inject: [QueueService, TriggerQueueService, WsQueueService],
   },
   EventsDistributedLockService,
-  EventsPerformanceService,
   CalculateDelayService,
   TriggerProcessorQueueService,
   WorkflowQueueService,

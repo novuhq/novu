@@ -1,5 +1,9 @@
 import { AxiosResponse } from 'axios';
-import { ButtonTypeEnum, IChannelCredentials } from '@novu/shared';
+import {
+  ButtonTypeEnum,
+  IChannelCredentials,
+  ISubscribersDefine,
+} from '@novu/shared';
 import { MarkMessagesAsEnum } from '@novu/shared';
 import {
   IGetSubscriberNotificationFeedParams,
@@ -29,6 +33,12 @@ export class Subscribers extends WithHttp implements ISubscribers {
     return await this.http.post(`/subscribers`, {
       subscriberId,
       ...data,
+    });
+  }
+
+  async bulkCreate(subscribers: ISubscribersDefine[]) {
+    return await this.http.post(`/subscribers/bulk`, {
+      subscribers,
     });
   }
 
@@ -96,12 +106,19 @@ export class Subscribers extends WithHttp implements ISubscribers {
 
   async getNotificationsFeed(
     subscriberId: string,
-    params: IGetSubscriberNotificationFeedParams
+    { payload, ...rest }: IGetSubscriberNotificationFeedParams = {}
   ) {
+    const payloadString = payload
+      ? Buffer.from(JSON.stringify(payload)).toString('base64')
+      : undefined;
+
     return await this.http.get(
       `/subscribers/${subscriberId}/notifications/feed`,
       {
-        params,
+        params: {
+          payload: payloadString,
+          ...rest,
+        },
       }
     );
   }

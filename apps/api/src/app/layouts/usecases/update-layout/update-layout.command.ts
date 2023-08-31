@@ -1,6 +1,6 @@
 import { IsBoolean, IsDefined, IsOptional, IsString } from 'class-validator';
 
-import { LayoutDescription, LayoutId, LayoutName, LayoutVariables } from '../../types';
+import { LayoutDescription, LayoutId, LayoutIdentifier, LayoutName, LayoutVariables } from '../../types';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
@@ -12,6 +12,10 @@ export class UpdateLayoutCommand extends EnvironmentWithUserCommand {
   @IsString()
   @IsOptional()
   name?: LayoutName;
+
+  @IsString()
+  @IsOptional()
+  identifier?: LayoutIdentifier;
 
   @IsString()
   @IsOptional()

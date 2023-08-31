@@ -20,8 +20,14 @@ Cypress.on('window:before:load', (win) => {
 });
 
 describe('Integrations List Modal', function () {
+  let session: any;
+
   beforeEach(function () {
-    cy.initializeSession().as('session');
+    cy.initializeSession()
+      .then((result) => {
+        session = result;
+      })
+      .as('session');
   });
 
   const navigateToGetStarted = () => {
@@ -127,13 +133,11 @@ describe('Integrations List Modal', function () {
     cy.getByTestId('select-provider-sidebar').should('be.visible');
     cy.getByTestId('sidebar-close').should('be.visible').click();
 
-    cy.getByTestId('add-provider').should('be.disabled').contains('Add a provider');
-    checkTableLoading();
-
     cy.wait('@getIntegrations');
     cy.wait('@getEnvironments');
 
-    cy.getByTestId('add-provider').should('be.enabled');
+    checkTableLoading();
+
     cy.getByTestId('no-integrations-placeholder').should('be.visible');
     cy.contains('Choose a channel you want to start sending notifications');
 
@@ -153,10 +157,10 @@ describe('Integrations List Modal', function () {
     cy.getByTestId('select-provider-sidebar').should('be.visible');
     cy.getByTestId('sidebar-close').should('be.visible').click();
 
-    cy.getByTestId('add-provider').should('be.disabled').contains('Add a provider');
     checkTableLoading();
 
     cy.wait('@getIntegrations');
+    cy.getByTestId('add-provider').should('be.enabled').contains('Add a provider');
 
     checkTableRow(
       {
@@ -303,63 +307,70 @@ describe('Integrations List Modal', function () {
   });
 
   it('should show the select provider sidebar', () => {
-    cy.intercept('*/integrations', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    }).as('getIntegrations');
-    cy.intercept('*/environments').as('getEnvironments');
+    cy.task('deleteProvider', {
+      providerId: InAppProviderIdEnum.Novu,
+      channel: ChannelTypeEnum.IN_APP,
+      environmentId: session.environment.id,
+      organizationId: session.organization.id,
+    }).then(() => {
+      cy.intercept('*/integrations', async () => {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }).as('getIntegrations');
+      cy.intercept('*/environments').as('getEnvironments');
 
-    navigateToGetStarted();
+      navigateToGetStarted();
 
-    cy.wait('@getIntegrations');
-    cy.wait('@getEnvironments');
+      cy.wait('@getIntegrations');
+      cy.wait('@getEnvironments');
 
-    cy.getByTestId('add-provider').should('be.enabled').click();
+      cy.getByTestId('add-provider').should('be.enabled').click();
 
-    cy.getByTestId('select-provider-sidebar').should('be.visible').as('selectProviderSidebar');
+      cy.getByTestId('select-provider-sidebar').should('be.visible').as('selectProviderSidebar');
 
-    cy.get('@selectProviderSidebar').getByTestId('sidebar-close').should('be.visible');
-    cy.get('@selectProviderSidebar').contains('Select a provider');
-    cy.get('@selectProviderSidebar').contains('Select a provider to create instance for a channel');
-    cy.get('@selectProviderSidebar')
-      .find('input[type="search"]')
-      .should('have.attr', 'placeholder', 'Search a provider...');
+      cy.get('@selectProviderSidebar').getByTestId('sidebar-close').should('be.visible');
+      cy.get('@selectProviderSidebar').contains('Select a provider');
+      cy.get('@selectProviderSidebar').contains('Select a provider to create instance for a channel');
+      cy.get('@selectProviderSidebar')
+        .find('input[type="search"]')
+        .should('have.attr', 'placeholder', 'Search a provider...');
 
-    cy.get('@selectProviderSidebar').find('[role="tablist"]').as('channelTabs');
-    cy.get('@channelTabs').find('[data-active="true"]').contains('Email');
-    cy.get('@channelTabs').contains('In-App');
-    cy.get('@channelTabs').contains('Email');
-    cy.get('@channelTabs').contains('Chat');
-    cy.get('@channelTabs').contains('Push');
-    cy.get('@channelTabs').contains('SMS');
+      cy.get('@selectProviderSidebar').find('[role="tablist"]').as('channelTabs');
+      cy.get('@channelTabs').find('[data-active="true"]').contains('Email');
+      cy.get('@channelTabs').contains('In-App');
+      cy.get('@channelTabs').contains('Email');
+      cy.get('@channelTabs').contains('Chat');
+      cy.get('@channelTabs').contains('Push');
+      cy.get('@channelTabs').contains('SMS');
 
-    cy.getByTestId('providers-group-in_app').contains('In-App').as('inAppGroup');
-    cy.getByTestId('providers-group-email').contains('Email').as('emailGroup');
-    cy.getByTestId('providers-group-chat').contains('Chat').as('chatGroup');
-    cy.getByTestId('providers-group-push').contains('Push').as('pushGroup');
-    cy.getByTestId('providers-group-sms').contains('SMS').as('smsGroup');
+      cy.getByTestId('providers-group-in_app').contains('In-App').as('inAppGroup');
+      cy.getByTestId('providers-group-email').contains('Email').as('emailGroup');
+      cy.getByTestId('providers-group-chat').contains('Chat').as('chatGroup');
+      cy.getByTestId('providers-group-push').contains('Push').as('pushGroup');
+      cy.getByTestId('providers-group-sms').contains('SMS').as('smsGroup');
 
-    inAppProviders.forEach((provider) => {
-      cy.get('@inAppGroup').getByTestId(`provider-${provider.id}`).contains(provider.displayName);
-    });
-    emailProviders
-      .filter((provider) => provider.id !== EmailProviderIdEnum.Novu)
-      .forEach((provider) => {
-        cy.get('@emailGroup').getByTestId(`provider-${provider.id}`).contains(provider.displayName);
+      inAppProviders.forEach((provider) => {
+        cy.get('@inAppGroup').getByTestId(`provider-${provider.id}`).contains(provider.displayName);
       });
-    chatProviders.forEach((provider) => {
-      cy.get('@chatGroup').getByTestId(`provider-${provider.id}`).contains(provider.displayName);
-    });
-    pushProviders.forEach((provider) => {
-      cy.get('@pushGroup').getByTestId(`provider-${provider.id}`).contains(provider.displayName);
-    });
-    smsProviders
-      .filter((provider) => provider.id !== SmsProviderIdEnum.Novu)
-      .forEach((provider) => {
-        cy.get('@smsGroup').getByTestId(`provider-${provider.id}`).contains(provider.displayName);
+      emailProviders
+        .filter((provider) => provider.id !== EmailProviderIdEnum.Novu)
+        .forEach((provider) => {
+          cy.get('@emailGroup').getByTestId(`provider-${provider.id}`).contains(provider.displayName);
+        });
+      chatProviders.forEach((provider) => {
+        cy.get('@chatGroup').getByTestId(`provider-${provider.id}`).contains(provider.displayName);
       });
+      pushProviders.forEach((provider) => {
+        cy.get('@pushGroup').getByTestId(`provider-${provider.id}`).contains(provider.displayName);
+      });
+      smsProviders
+        .filter((provider) => provider.id !== SmsProviderIdEnum.Novu)
+        .forEach((provider) => {
+          cy.get('@smsGroup').getByTestId(`provider-${provider.id}`).contains(provider.displayName);
+        });
 
-    cy.getByTestId('select-provider-sidebar-cancel').contains('Cancel');
-    cy.getByTestId('select-provider-sidebar-next').should('be.disabled').contains('Next');
+      cy.getByTestId('select-provider-sidebar-cancel').contains('Cancel');
+      cy.getByTestId('select-provider-sidebar-next').should('be.disabled').contains('Next');
+    });
   });
 
   it('should allow for searching', () => {

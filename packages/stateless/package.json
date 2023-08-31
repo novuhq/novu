@@ -1,6 +1,6 @@
 {
   "name": "@novu/stateless",
-  "version": "0.17.1",
+  "version": "0.18.0",
   "description": "Notification Management Framework",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -53,7 +53,6 @@
     "@types/lodash.merge": "^4.6.6",
     "@types/node": "^14.6.0",
     "codecov": "^3.5.0",
-    "cz-conventional-changelog": "^3.3.0",
     "jest": "^27.0.6",
     "npm-run-all": "^4.1.5",
     "open-cli": "^6.0.1",

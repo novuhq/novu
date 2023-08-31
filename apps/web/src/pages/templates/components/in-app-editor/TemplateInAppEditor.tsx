@@ -36,7 +36,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
   return (
     <>
       <StepSettings index={index} />
-      <Stack mt={24} spacing={24}>
+      <Stack spacing={24}>
         <Controller
           name={`steps.${index}.template.cta.data.url` as any}
           defaultValue=""

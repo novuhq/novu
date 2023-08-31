@@ -10,7 +10,7 @@ import { FlowEditor } from '../../../components/workflow';
 import { Button } from '../../../design-system';
 import { Settings } from '../../../design-system/icons';
 import { useEnvController } from '../../../hooks';
-import { channels } from '../../../utils/channels';
+import { channels, triggerFromReplaceHandle } from '../../../utils/channels';
 import { errorMessage } from '../../../utils/notifications';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import type { IForm } from '../components/formTypes';
@@ -24,7 +24,7 @@ import AddNode from './workflow/node-types/AddNode';
 import ChannelNode from './workflow/node-types/ChannelNode';
 import TriggerNode from './workflow/node-types/TriggerNode';
 
-const TOP_ROW_HEIGHT = 74;
+export const TOP_ROW_HEIGHT = 74;
 
 const nodeTypes = {
   channelNode: ChannelNode,
@@ -59,6 +59,7 @@ const WorkflowEditor = () => {
   const onNodeClick = useCallback(
     (event, node) => {
       event.preventDefault();
+      if (triggerFromReplaceHandle(event)) return;
 
       if (node.type === 'channelNode') {
         navigate(basePath + `/${node.data.channelType}/${node.data.uuid}`);
@@ -141,7 +142,7 @@ const WorkflowEditor = () => {
 
   if (readonly && pathname === basePath) {
     return (
-      <div style={{ minHeight: '600px', display: 'flex', flexFlow: 'row', height: '100%' }}>
+      <div style={{ display: 'flex', flexFlow: 'row' }}>
         <div
           style={{
             flex: '1 1 auto',
@@ -201,9 +202,8 @@ const WorkflowEditor = () => {
           }}
         />
       </When>
-      <When truthy={readonly && pathname === basePath}>{null}</When>
       <When truthy={!channel || ![StepTypeEnum.EMAIL, StepTypeEnum.IN_APP].includes(channel)}>
-        <div style={{ minHeight: '600px', display: 'flex', flexFlow: 'row', height: '100%' }}>
+        <div style={{ display: 'flex', flexFlow: 'row', position: 'relative' }}>
           <div
             style={{
               flex: '1 1 auto',
@@ -221,10 +221,22 @@ const WorkflowEditor = () => {
                 <Group>
                   <NameInput />
                   <Group>
-                    <When truthy={pathname !== basePath}>
-                      <UpdateButton />
-                    </When>
+                    <UpdateButton />
                   </Group>
+                  <When truthy={pathname === basePath}>
+                    <Button
+                      pulse={shouldPulse}
+                      onClick={() => {
+                        navigate(basePath + '/snippet');
+                      }}
+                      data-test-id="get-snippet-btn"
+                    >
+                      Get Snippet
+                    </Button>
+                    <Link data-test-id="settings-page" to="settings">
+                      <Settings />
+                    </Link>
+                  </When>
                 </Group>
               </Stack>
             </Container>
@@ -242,20 +254,12 @@ const WorkflowEditor = () => {
               moveStepPosition={moveStepPosition}
             />
           </div>
-
-          <div
-            style={{
-              width: 'auto',
-              minHeight: '600px',
+          <Outlet
+            context={{
+              setDragging,
+              onDelete,
             }}
-          >
-            <Outlet
-              context={{
-                setDragging,
-                onDelete,
-              }}
-            />
-          </div>
+          />
         </div>
       </When>
       <DeleteConfirmModal

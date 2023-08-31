@@ -41,7 +41,7 @@ export function ProvidersPage() {
         }}
       >
         <WorkflowSettingsTabs />
-        <ScrollArea h="100%" offsetScrollbars>
+        <ScrollArea h="calc(100vh - 220px)" offsetScrollbars mr={-12}>
           <ListProviders
             channel={ChannelTypeEnum.IN_APP}
             setProvider={setProvider}

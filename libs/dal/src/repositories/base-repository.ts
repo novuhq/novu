@@ -109,13 +109,16 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
     }
   }
 
-  async create(data: FilterQuery<T_DBModel> & T_Enforcement): Promise<T_MappedEntity> {
+  async create(data: FilterQuery<T_DBModel> & T_Enforcement, options: IOptions = {}): Promise<T_MappedEntity> {
     const expireAt = this.calcExpireDate(this.MongooseModel.modelName, data);
     if (expireAt) {
       data = { ...data, expireAt };
     }
     const newEntity = new this.MongooseModel(data);
-    const saved = await newEntity.save();
+
+    const saveOptions = options?.writeConcern ? { w: options?.writeConcern } : {};
+
+    const saved = await newEntity.save(saveOptions);
 
     return this.mapEntity(saved);
   }
@@ -163,8 +166,8 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
     return await Promise.all(promises);
   }
 
-  async bulkWrite(bulkOperations: any) {
-    await this.MongooseModel.bulkWrite(bulkOperations);
+  async bulkWrite(bulkOperations: any, ordered = false): Promise<any> {
+    return await this.MongooseModel.bulkWrite(bulkOperations, { ordered });
   }
 
   protected mapEntity<TData>(data: TData): TData extends null ? null : T_MappedEntity {
@@ -174,4 +177,8 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
   protected mapEntities(data: any): T_MappedEntity[] {
     return plainToInstance<T_MappedEntity, T_MappedEntity[]>(this.entity, JSON.parse(JSON.stringify(data)));
   }
+}
+
+interface IOptions {
+  writeConcern?: number | 'majority';
 }

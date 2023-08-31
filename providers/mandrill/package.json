@@ -1,6 +1,6 @@
 {
   "name": "@novu/mandrill",
-  "version": "0.17.1",
+  "version": "0.18.0",
   "description": "A mandrill wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -42,14 +42,13 @@
   },
   "dependencies": {
     "@mailchimp/mailchimp_transactional": "^1.0.46",
-    "@novu/stateless": "^0.17.1"
+    "@novu/stateless": "^0.18.0"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "1.0.2",
     "@types/jest": "29.5.2",
     "codecov": "^3.5.0",
     "cspell": "^4.1.0",
-    "cz-conventional-changelog": "^3.3.0",
     "eslint": "^8.16.0",
     "eslint-plugin-eslint-comments": "^3.2.0",
     "gh-pages": "^3.1.0",
