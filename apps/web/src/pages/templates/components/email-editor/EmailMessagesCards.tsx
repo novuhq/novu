@@ -86,6 +86,7 @@ export function EmailMessagesCards({ index }: { index: number }) {
           <LackIntegrationAlert
             channelType={ChannelTypeEnum.EMAIL}
             text="You have multiple provider instances for Email in the dev environment. Please select the primary instance."
+            isPrimaryMissing
           />
         )}
         <StepSettings index={index} />

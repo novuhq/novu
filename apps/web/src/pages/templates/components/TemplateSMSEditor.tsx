@@ -35,6 +35,7 @@ export function TemplateSMSEditor({ control, index }: { control: Control<IForm>;
         <LackIntegrationAlert
           channelType={ChannelTypeEnum.SMS}
           text="You have multiple provider instances for SMS in the dev environment. Please select the primary instance."
+          isPrimaryMissing
         />
       ) : null}
       <StepSettings index={index} />
