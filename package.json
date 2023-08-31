@@ -195,7 +195,8 @@
   },
   "pnpm": {
     "overrides": {
-      "proxy-agent": "^6.3.0"
+      "proxy-agent": "^6.3.0",
+      "nth-check": "^2.1.1"
     }
   }
 }
