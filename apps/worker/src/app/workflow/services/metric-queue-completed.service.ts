@@ -13,18 +13,20 @@ export class MetricQueueCompletedService extends QueueService<Record<string, nev
   constructor(@Inject('BULLMQ_LIST') private token_list: QueueService[]) {
     super(JobTopicNameEnum.METRICS_COMPLETED);
 
-    this.bullMqService.createWorker(this.name, this.getWorkerProcessor(), this.getWorkerOpts());
+    if (process.env.NOVU_MANAGED_SERVICE === 'true' && process.env.NEW_RELIC_LICENSE_KEY) {
+      this.bullMqService.createWorker(this.name, this.getWorkerProcessor(), this.getWorkerOpts());
 
-    this.bullMqService.worker.on('completed', async (job) => {
-      await checkinForCronJob(process.env.COMPLETE_CRON_ID);
-      Logger.verbose(`metric job succeeded`);
-    });
+      this.bullMqService.worker.on('completed', async (job) => {
+        await checkinForCronJob(process.env.COMPLETE_CRON_ID);
+        Logger.verbose(`metric job succeeded`);
+      });
 
-    this.bullMqService.worker.on('failed', async (job, error) => {
-      Logger.error(`job failed to start: ${error}`, job);
-    });
+      this.bullMqService.worker.on('failed', async (job, error) => {
+        Logger.error(`job failed to start: ${error}`, job);
+      });
 
-    this.addToQueueIfMetricJobExists();
+      this.addToQueueIfMetricJobExists();
+    }
   }
 
   private addToQueueIfMetricJobExists(): void {
