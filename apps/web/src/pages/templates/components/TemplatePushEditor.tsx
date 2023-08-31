@@ -28,9 +28,7 @@ export function TemplatePushEditor({
 
   return (
     <>
-      {!isIntegrationActive ? (
-        <LackIntegrationAlert channelType={ChannelTypeEnum.PUSH} iconHeight={34} iconWidth={34} />
-      ) : null}
+      {!isIntegrationActive ? <LackIntegrationAlert channelType={ChannelTypeEnum.PUSH} /> : null}
       <StepSettings index={index} />
       <Controller
         name={`steps.${index}.template.title` as any}

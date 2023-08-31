@@ -1,15 +1,17 @@
+/* eslint-disable max-len */
 import { useState } from 'react';
 import styled from '@emotion/styled';
 
 import { ChannelTypeEnum } from '@novu/shared';
 
-import { Text } from '../../../design-system';
-import { CircleArrowRight } from '../../../design-system/icons';
+import { colors, Text } from '../../../design-system';
+import { ProviderMissing } from '../../../design-system/icons';
 import { IntegrationsStoreModal } from '../../integrations/IntegrationsStoreModal';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { stepNames, TemplateEditorAnalyticsEnum } from '../constants';
 import { useIsMultiProviderConfigurationEnabled } from '../../../hooks';
 import { IntegrationsListModal } from '../../integrations/IntegrationsListModal';
+import { Group } from '@mantine/core';
 
 type alertType = 'error' | 'warning';
 
@@ -17,13 +19,9 @@ export function LackIntegrationAlert({
   channelType,
   text,
   type = 'error',
-  iconHeight = 18,
-  iconWidth = 18,
 }: {
   channelType: ChannelTypeEnum;
   text?: string;
-  iconHeight?: number | string | undefined;
-  iconWidth?: number | string | undefined;
   type?: alertType;
 }) {
   const segment = useSegment();
@@ -35,22 +33,22 @@ export function LackIntegrationAlert({
   return (
     <>
       <WarningMessage backgroundColor={alertTypeToMessageBackgroundColor(type)}>
-        <Text>
-          {text
-            ? text
-            : 'Looks like you haven’t configured your ' +
-              stepNames[channelType] +
-              ' provider yet, this channel will be disabled until you configure it.'}
-        </Text>
-        <DoubleArrowRightStyled
-          color={alertTypeToDoubleArrowColor(type)}
-          onClick={() => {
-            openIntegrationsModal(true);
-            segment.track(TemplateEditorAnalyticsEnum.CONFIGURE_PROVIDER_BANNER_CLICK);
-          }}
-          height={iconHeight}
-          width={iconWidth}
-        />
+        <Group spacing={12} noWrap>
+          <div>
+            <MissingIcon
+              color={alertTypeToDoubleArrowColor(type)}
+              onClick={() => {
+                openIntegrationsModal(true);
+                segment.track(TemplateEditorAnalyticsEnum.CONFIGURE_PROVIDER_BANNER_CLICK);
+              }}
+            />
+          </div>
+          <Text color={alertTypeToMessageTextColor(type)}>
+            {text
+              ? text
+              : `Please configure or activate a provider instance for the ${stepNames[channelType]} channel to send notifications over this node`}
+          </Text>
+        </Group>
       </WarningMessage>
       {isMultiProviderConfigurationEnabled ? (
         <IntegrationsListModal
@@ -69,7 +67,7 @@ export function LackIntegrationAlert({
   );
 }
 
-const DoubleArrowRightStyled = styled(CircleArrowRight)<{ color?: string | undefined }>`
+const MissingIcon = styled(ProviderMissing)<{ color?: string | undefined }>`
   cursor: pointer;
   color: ${({ color }) => color};
 `;
@@ -99,10 +97,20 @@ function alertTypeToDoubleArrowColor(type: alertType) {
 function alertTypeToMessageBackgroundColor(type: alertType) {
   switch (type) {
     case 'error':
-      return 'rgba(230, 69, 69, 0.15)';
+      return 'rgba(229, 69, 69, 0.15)';
     case 'warning':
       return 'rgba(234, 169, 0, 0.15)';
     default:
-      return 'rgba(230, 69, 69, 0.15)';
+      return 'rgba(229, 69, 69, 0.15)';
+  }
+}
+
+function alertTypeToMessageTextColor(type: alertType) {
+  switch (type) {
+    case 'error':
+      return colors.error;
+
+    default:
+      return undefined;
   }
 }
