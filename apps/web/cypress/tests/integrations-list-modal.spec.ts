@@ -133,10 +133,10 @@ describe('Integrations List Modal', function () {
     cy.getByTestId('select-provider-sidebar').should('be.visible');
     cy.getByTestId('sidebar-close').should('be.visible').click();
 
+    checkTableLoading();
+
     cy.wait('@getIntegrations');
     cy.wait('@getEnvironments');
-
-    checkTableLoading();
 
     cy.getByTestId('no-integrations-placeholder').should('be.visible');
     cy.contains('Choose a channel you want to start sending notifications');
