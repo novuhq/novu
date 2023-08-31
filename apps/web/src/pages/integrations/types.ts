@@ -20,6 +20,7 @@ export interface ITableIntegration {
   environment: string;
   active: boolean;
   logoFileName: IProviderConfig['logoFileName'];
+  conditions?: any[];
 }
 
 export interface IIntegratedProvider {

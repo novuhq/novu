@@ -81,6 +81,7 @@ export { Translate } from './general/Translate';
 export { UserAccess } from './general/UserAccess';
 export { SSO } from './general/SSO';
 export { Cloud } from './general/Cloud';
+export { Condition } from './general/Condition';
 
 export { Copy } from './actions/Copy';
 export { Close } from './actions/Close';
