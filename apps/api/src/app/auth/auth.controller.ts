@@ -20,7 +20,6 @@ import { MemberRepository, OrganizationRepository, UserRepository, MemberEntity 
 import { JwtService } from '@nestjs/jwt';
 import { AuthGuard } from '@nestjs/passport';
 import { IJwtPayload } from '@novu/shared';
-import { AuthService } from './services/auth.service';
 import { UserRegistrationBodyDto } from './dtos/user-registration.dto';
 import { UserRegister } from './usecases/register/user-register.usecase';
 import { UserRegisterCommand } from './usecases/register/user-register.command';
@@ -28,10 +27,6 @@ import { Login } from './usecases/login/login.usecase';
 import { LoginBodyDto } from './dtos/login.dto';
 import { LoginCommand } from './usecases/login/login.command';
 import { UserSession } from '../shared/framework/user.decorator';
-import { SwitchEnvironment } from './usecases/switch-environment/switch-environment.usecase';
-import { SwitchEnvironmentCommand } from './usecases/switch-environment/switch-environment.command';
-import { SwitchOrganization } from './usecases/switch-organization/switch-organization.usecase';
-import { SwitchOrganizationCommand } from './usecases/switch-organization/switch-organization.command';
 import { JwtAuthGuard } from './framework/auth.guard';
 import { PasswordResetRequestCommand } from './usecases/password-reset-request/password-reset-request.command';
 import { PasswordResetRequest } from './usecases/password-reset-request/password-reset-request.usecase';
@@ -40,6 +35,13 @@ import { PasswordReset } from './usecases/password-reset/password-reset.usecase'
 import { ApiException } from '../shared/exceptions/api.exception';
 import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 import { PasswordResetBodyDto } from './dtos/password-reset.dto';
+import {
+  AuthService,
+  SwitchEnvironment,
+  SwitchEnvironmentCommand,
+  SwitchOrganization,
+  SwitchOrganizationCommand,
+} from '@novu/application-generic';
 
 @Controller('/auth')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -80,35 +82,6 @@ export class AuthController {
   @Get('/github/callback')
   @UseGuards(AuthGuard('github'))
   async githubCallback(@Req() request, @Res() response) {
-    if (!request.user || !request.user.token) {
-      return response.redirect(`${process.env.FRONT_BASE_URL + '/auth/login'}?error=AuthenticationError`);
-    }
-
-    const url = this.buildOauthRedirectUrl(request);
-
-    return response.redirect(url);
-  }
-
-  @Get('/google')
-  googleAuth() {
-    Logger.verbose('Checking Google Auth');
-
-    if (!process.env.GOOGLE_OAUTH_CLIENT_ID || !process.env.GOOGLE_OAUTH_CLIENT_SECRET) {
-      throw new ApiException(
-        'Google auth is not configured, please provide GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET as env variables'
-      );
-    }
-
-    Logger.verbose('Google Auth has all variables.');
-
-    return {
-      success: true,
-    };
-  }
-
-  @Get('/google/callback')
-  @UseGuards(AuthGuard('google'))
-  async googleCallback(@Req() request, @Res() response) {
     if (!request.user || !request.user.token) {
       return response.redirect(`${process.env.FRONT_BASE_URL + '/auth/login'}?error=AuthenticationError`);
     }

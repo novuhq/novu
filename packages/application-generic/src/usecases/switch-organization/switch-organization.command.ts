@@ -1,5 +1,5 @@
 import { IsNotEmpty } from 'class-validator';
-import { AuthenticatedCommand } from '../../../shared/commands/authenticated.command';
+import { AuthenticatedCommand } from '../../commands';
 
 export class SwitchOrganizationCommand extends AuthenticatedCommand {
   @IsNotEmpty()
