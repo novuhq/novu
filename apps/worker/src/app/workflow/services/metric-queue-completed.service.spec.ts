@@ -25,7 +25,7 @@ describe('Metric Queue service', () => {
     expect(metricQueueService).to.have.all.keys('DEFAULT_ATTEMPTS', 'bullMqService', 'name', 'token_list');
     expect(await metricQueueService.bullMqService.getRunningStatus()).to.deep.include({
       queueName: 'metric-complete',
-      workerName: 'metric',
+      workerName: 'metric-completed',
     });
     expect(metricQueueService.bullMqService.worker.opts).to.deep.include({
       concurrency: 1,
