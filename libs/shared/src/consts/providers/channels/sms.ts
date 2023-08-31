@@ -18,7 +18,8 @@ import {
   termiiConfig,
   africasTalkingConfig,
   sendchampConfig,
-} from '../credentials';
+  amqpSmsConfig
+} from "../credentials";
 import { SmsProviderIdEnum } from '../provider.enum';
 
 import { ChannelTypeEnum } from '../../../types';
@@ -178,5 +179,13 @@ export const smsProviders: IProviderConfig[] = [
     credentials: sendchampConfig,
     docReference: 'https://sendchamp.readme.io/reference/api-structure',
     logoFileName: { light: 'sendchamp.svg', dark: 'sendchamp.svg' },
+  },
+  {
+    id: SmsProviderIdEnum.AmqpSms,
+    displayName: 'Amqp',
+    channel: ChannelTypeEnum.SMS,
+    credentials: amqpSmsConfig,
+    docReference: '',
+    logoFileName: { light: 'amqp-sms.svg', dark: 'amqp-sms.svg' },
   },
 ];
