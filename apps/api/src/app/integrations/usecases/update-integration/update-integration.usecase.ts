@@ -31,8 +31,10 @@ export class UpdateIntegration {
 
   private async calculatePriorityAndPrimaryForActive({
     existingIntegration,
+    conditionsApplied = false,
   }: {
     existingIntegration: IntegrationEntity;
+    conditionsApplied?: boolean;
   }) {
     const result: { primary: boolean; priority: number } = {
       primary: existingIntegration.primary,
@@ -74,15 +76,21 @@ export class UpdateIntegration {
       result.primary = true;
     }
 
+    if (conditionsApplied) {
+      result.primary = false;
+    }
+
     return result;
   }
 
   private async calculatePriorityAndPrimary({
     existingIntegration,
     active,
+    conditionsApplied = false,
   }: {
     existingIntegration: IntegrationEntity;
     active: boolean;
+    conditionsApplied?: boolean;
   }) {
     let result: { primary: boolean; priority: number } = {
       primary: existingIntegration.primary,
@@ -92,6 +100,7 @@ export class UpdateIntegration {
     if (active) {
       result = await this.calculatePriorityAndPrimaryForActive({
         existingIntegration,
+        conditionsApplied,
       });
     } else {
       await this.integrationRepository.recalculatePriorityForAllActive({
@@ -198,15 +207,24 @@ export class UpdateIntegration {
       })
     );
 
+    const haveConditions = updatePayload.conditions && updatePayload.conditions?.length > 0;
+
     const isChannelSupportsPrimary = CHANNELS_WITH_PRIMARY.includes(existingIntegration.channel);
     if (isMultiProviderConfigurationEnabled && isActiveChanged && isChannelSupportsPrimary) {
       const { primary, priority } = await this.calculatePriorityAndPrimary({
         existingIntegration,
         active: !!command.active,
+        conditionsApplied: haveConditions,
       });
 
-      updatePayload.primary = command.conditions && command.conditions.length > 0 ? false : primary;
+      updatePayload.primary = primary;
       updatePayload.priority = priority;
+    }
+
+    const shouldRemovePrimary = haveConditions && existingIntegration.primary;
+
+    if (shouldRemovePrimary) {
+      updatePayload.primary = false;
     }
 
     await this.integrationRepository.update(
@@ -218,6 +236,15 @@ export class UpdateIntegration {
         $set: updatePayload,
       }
     );
+
+    if (shouldRemovePrimary) {
+      await this.integrationRepository.recalculatePriorityForAllActive({
+        _id: existingIntegration._id,
+        _organizationId: existingIntegration._organizationId,
+        _environmentId: existingIntegration._organizationId,
+        channel: existingIntegration.channel,
+      });
+    }
 
     if (
       !isMultiProviderConfigurationEnabled &&
