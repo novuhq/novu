@@ -77,14 +77,6 @@ export function EmailContentCard({
       )
     : true;
 
-  console.log(
-    'EmailContentCard',
-    { isIntegrationActive, isLimitReached, hasPrimaryIntegration },
-    integrations.some(
-      (item) => item.channel === ChannelTypeEnum.EMAIL && item.primary && item._environmentId === environment?._id
-    )
-  );
-
   return (
     <>
       {!isIntegrationActive && isLimitReached && <LackIntegrationAlert channelType={ChannelTypeEnum.EMAIL} />}
