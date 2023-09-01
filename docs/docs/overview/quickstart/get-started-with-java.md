@@ -303,7 +303,6 @@ Novu novu = new Novu(apiKey);
 
 Thanks to the topics feature, it is possible to trigger a notification to all subscribers assigned to a topic. This helps avoid listing all subscriber identifiers in the `to` field of the notification trigger.
 
-
 To trigger a notification to all subscribers of a topic, copy and paste the code below:
 
 ```java

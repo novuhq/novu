@@ -1,6 +1,6 @@
 {
   "name": "@novu/api",
-  "version": "0.19.0-alpha.0",
+  "version": "0.19.0-alpha.1",
   "description": "description",
   "author": "",
   "private": "true",
@@ -70,7 +70,7 @@
     "lodash": "^4.17.15",
     "nanoid": "^3.1.20",
     "nest-raven": "^10.0.0",
-    "newrelic": "^11.0.0",
+    "newrelic": "^10.6.2",
     "passport": "0.6.0",
     "passport-github2": "^0.1.12",
     "passport-jwt": "^4.0.0",
