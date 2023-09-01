@@ -8,7 +8,7 @@ import {
   EnvironmentRepository,
   JobStatusEnum,
 } from '@novu/dal';
-import { addMinutes, addMonths } from 'date-fns';
+import { addMinutes, addDays } from 'date-fns';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../../src/app.module';
 
@@ -19,8 +19,8 @@ const executionDetailsRepository = new ExecutionDetailsRepository();
 const organizationRepository = new OrganizationRepository();
 const environmentRepository = new EnvironmentRepository();
 const now = Date.now();
-let expireAtOneMonth = addMonths(now, 1);
-let expireAtOneYear = addMonths(now, 12);
+let expireAtOneMonth = addDays(now, 30);
+let expireAtOneYear = addDays(now, 365);
 
 export async function createExpireAt() {
   const app = await NestFactory.create(AppModule, {
