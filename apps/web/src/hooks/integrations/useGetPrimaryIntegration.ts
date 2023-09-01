@@ -9,32 +9,33 @@ type UseHasPrimaryIntegrationProps = {
 };
 
 export function useGetPrimaryIntegration({ filterByEnv = true, channelType }: UseHasPrimaryIntegrationProps) {
+  const isPrimaryStep = useMemo(
+    () => channelType === ChannelTypeEnum.EMAIL || channelType === ChannelTypeEnum.SMS,
+    [channelType]
+  );
   const isMultiProviderConfigurationEnabled = useIsMultiProviderConfigurationEnabled();
 
-  const { activeIntegrationsByEnv, hasActiveIntegration, isChannelStep } = useHasActiveIntegrations({
+  const { activeIntegrationsByEnv, hasActiveIntegration } = useHasActiveIntegrations({
     filterByEnv,
     channelType,
   });
 
   const getPrimaryIntegration = useMemo(() => {
+    if (!hasActiveIntegration || !isPrimaryStep) {
+      return undefined;
+    }
+
     if (!isMultiProviderConfigurationEnabled) {
       return activeIntegrationsByEnv?.find((integration) => integration.channel === channelType && integration.active)
         ?.providerId;
     }
 
-    if (!hasActiveIntegration || !isChannelStep) {
-      return undefined;
-    }
-
-    if ([ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS].includes(channelType)) {
-      return activeIntegrationsByEnv?.find((integration) => integration.primary && integration.channel === channelType)
-        ?.providerId;
-    }
-
-    return activeIntegrationsByEnv?.find((integration) => integration.channel === channelType)?.providerId;
-  }, [isChannelStep, hasActiveIntegration, activeIntegrationsByEnv, channelType, channelType]);
+    return activeIntegrationsByEnv?.find((integration) => integration.primary && integration.channel === channelType)
+      ?.providerId;
+  }, [hasActiveIntegration, activeIntegrationsByEnv, channelType, isPrimaryStep]);
 
   return {
     primaryIntegration: getPrimaryIntegration,
+    isPrimaryStep,
   };
 }

@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, IOrganizationEntity } from '@novu/shared';
+import { IOrganizationEntity } from '@novu/shared';
 import { useEffect, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
@@ -18,7 +18,7 @@ export function EmailContentCard({
   index: number;
   organization: IOrganizationEntity | undefined;
 }) {
-  const { readonly, environment } = useEnvController();
+  const { readonly } = useEnvController();
   const { control, setValue, watch } = useFormContext(); // retrieve all hook methods
   const contentType = watch(`steps.${index}.template.contentType`);
   const activeTab = contentType === 'customHtml' ? CUSTOM_CODE : EDITOR;
@@ -60,12 +60,6 @@ export function EmailContentCard({
       ),
     },
   ];
-
-  const hasPrimaryIntegration = isMultiProviderConfigEnabled
-    ? integrations.some(
-        (item) => item.channel === ChannelTypeEnum.EMAIL && item.primary && item._environmentId === environment?._id
-      )
-    : true;
 
   return (
     <>

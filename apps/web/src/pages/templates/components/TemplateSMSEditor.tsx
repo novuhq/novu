@@ -16,7 +16,7 @@ import { StepSettings } from '../workflow/SideBar/StepSettings';
 const templateFields = ['content'];
 
 export function TemplateSMSEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {
-  const { readonly } = useEnvController();
+  const { readonly, environment } = useEnvController();
   const {
     formState: { errors },
   } = useFormContext();
@@ -34,7 +34,7 @@ export function TemplateSMSEditor({ control, index }: { control: Control<IForm>;
       {hasActiveIntegration && !primaryIntegration ? (
         <LackIntegrationAlert
           channelType={ChannelTypeEnum.SMS}
-          text="You have multiple provider instances for SMS in the dev environment. Please select the primary instance."
+          text={`You have multiple provider instances for SMS in the ${environment?.name} environment. Please select the primary instance.`}
           isPrimaryMissing
         />
       ) : null}

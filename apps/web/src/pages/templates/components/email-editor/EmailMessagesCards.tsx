@@ -16,6 +16,7 @@ import {
   useGetPrimaryIntegration,
   useIntegrationLimit,
   useVariablesManager,
+  useEnvController,
 } from '../../../../hooks';
 import { VariableManagerModal } from '../VariableManagerModal';
 import { StepSettings } from '../../workflow/SideBar/StepSettings';
@@ -44,7 +45,7 @@ export function EmailMessagesCards({ index }: { index: number }) {
   const { primaryIntegration } = useGetPrimaryIntegration({
     channelType: ChannelTypeEnum.EMAIL,
   });
-
+  const { environment } = useEnvController();
   useHotkeys([
     [
       '1',
@@ -85,7 +86,8 @@ export function EmailMessagesCards({ index }: { index: number }) {
         {hasActiveIntegration && !primaryIntegration && (
           <LackIntegrationAlert
             channelType={ChannelTypeEnum.EMAIL}
-            text="You have multiple provider instances for Email in the dev environment. Please select the primary instance."
+            text={`You have multiple provider instances for Email in the ${environment?.name} environment. 
+            Please select the primary instance.`}
             isPrimaryMissing
           />
         )}

@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import styled from '@emotion/styled';
 import { Group, UnstyledButton, useMantineColorScheme } from '@mantine/core';
 import { ChannelTypeEnum, providers, StepTypeEnum } from '@novu/shared';
@@ -91,11 +90,11 @@ export function WorkflowNode({
   const { openModal: openSelectPrimaryIntegrationModal, SelectPrimaryIntegrationModal } =
     useSelectPrimaryIntegrationModal();
 
-  const { hasActiveIntegration, isChannelStep } = useHasActiveIntegrations({
+  const { hasActiveIntegration, isChannelStep, activeIntegrationsByEnv } = useHasActiveIntegrations({
     filterByEnv: true,
     channelType: channelType as unknown as ChannelTypeEnum,
   });
-  const { primaryIntegration } = useGetPrimaryIntegration({
+  const { primaryIntegration, isPrimaryStep } = useGetPrimaryIntegration({
     filterByEnv: true,
     channelType: channelType as unknown as ChannelTypeEnum,
   });
@@ -128,9 +127,13 @@ export function WorkflowNode({
     return () => subscription.unsubscribe();
   }, [watch]);
 
-  const provider = providers.find((_provider) => _provider.id === primaryIntegration);
+  const providerIntegration = isPrimaryStep
+    ? primaryIntegration
+    : activeIntegrationsByEnv?.find((integration) => integration.channel === channelKey)?.providerId;
 
-  const logoSrc = provider && `${CONTEXT_PATH}/static/images/providers/${colorScheme}/square/${provider.id}.svg`;
+  const provider = providers.find((_provider) => _provider.id === providerIntegration);
+
+  const logoSrc = provider && `${CONTEXT_PATH}/static/images/providers/${colorScheme}/square/${provider?.id}.svg`;
 
   return (
     <>
@@ -152,7 +155,7 @@ export function WorkflowNode({
             <DisplayPrimaryProviderIcon
               Icon={Icon}
               disabledProp={disabledProp}
-              getPrimaryIntegration={primaryIntegration}
+              providerIntegration={providerIntegration}
               isChannelStep={isChannelStep}
               logoSrc={logoSrc}
             />
@@ -210,7 +213,11 @@ export function WorkflowNode({
             target={<ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />}
             titleIcon={<ProviderMissing />}
             title={`${CHANNEL_TYPE_TO_STRING[channelKey]} provider is not connected`}
-            content={`Please configure or activate a provider instance for the ${CHANNEL_TYPE_TO_STRING[channelKey]} channel to send notifications over this node`}
+            content={
+              'Please configure or activate a provider instance for the ' +
+              CHANNEL_TYPE_TO_STRING[channelKey] +
+              ' channel to send notifications over this node'
+            }
             actionItem={
               <Button
                 onClick={() => {
@@ -224,7 +231,7 @@ export function WorkflowNode({
             }
           />
         )}
-        {hasActiveIntegration && !primaryIntegration && isChannelStep && (
+        {hasActiveIntegration && !primaryIntegration && isPrimaryStep && (
           <NodeErrorPopover
             opened={popoverOpened}
             withinPortal
@@ -234,8 +241,12 @@ export function WorkflowNode({
             target={<ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />}
             titleIcon={<ProviderMissing />}
             title="Select primary provider"
-            content={`You have multiple provider instances for ${CHANNEL_TYPE_TO_STRING[channelKey]} in the ${environment?.name} environment. Please select the primary instance.
-            `}
+            content={
+              'You have multiple provider instances for' +
+              CHANNEL_TYPE_TO_STRING[channelKey] +
+              `in the ${environment?.name} environment. Please select the primary instance.
+            `
+            }
             actionItem={
               <Button
                 onClick={() => {
@@ -253,7 +264,7 @@ export function WorkflowNode({
             }
           />
         )}
-        {hasActiveIntegration && primaryIntegration && stepErrorContent && (
+        {hasActiveIntegration && stepErrorContent && (
           <NodeErrorPopover
             withinPortal
             withArrow
