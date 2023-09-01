@@ -21,7 +21,7 @@ const useGetFlagByKey = <T>(key: FeatureFlagsKeysEnum): T => {
 
 export const useIsTemplateStoreEnabled = (): boolean => {
   const value = IS_TEMPLATE_STORE_ENABLED;
-  const fallbackValue = true;
+  const fallbackValue = false;
   const defaultValue = prepareBooleanStringFeatureFlag(value, fallbackValue);
 
   const isTemplateStoreEnabled = useGetFlagByKey<boolean>(FeatureFlagsKeysEnum.IS_TEMPLATE_STORE_ENABLED);
@@ -31,7 +31,7 @@ export const useIsTemplateStoreEnabled = (): boolean => {
 
 export const useIsMultiProviderConfigurationEnabled = (): boolean => {
   const value = IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
-  const fallbackValue = true;
+  const fallbackValue = false;
   const defaultValue = prepareBooleanStringFeatureFlag(value, fallbackValue);
 
   const isMultiProviderConfigurationEnabled = useGetFlagByKey<boolean>(
@@ -43,7 +43,7 @@ export const useIsMultiProviderConfigurationEnabled = (): boolean => {
 
 export const useIsMultiTenancyEnabled = (): boolean => {
   const value = IS_MULTI_TENANCY_ENABLED;
-  const fallbackValue = true;
+  const fallbackValue = false;
   const defaultValue = prepareBooleanStringFeatureFlag(value, fallbackValue);
 
   const isMultiTenancyEnabled = useGetFlagByKey<boolean>(FeatureFlagsKeysEnum.IS_MULTI_TENANCY_ENABLED);
