@@ -38,7 +38,7 @@
     "@nestjs/swagger": ">=6",
     "@nestjs/terminus": ">=10",
     "@nestjs/testing": ">=10",
-    "newrelic": "^10",
+    "newrelic": "^9",
     "reflect-metadata": "^0.1.13"
   },
   "dependencies": {
