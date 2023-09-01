@@ -174,13 +174,13 @@ export function UpdateProviderSidebar({
       .find((el) => el.active && el.channel === selectedChannel && el.environmentId === environmentId);
     const isChannelSupportPrimary = CHANNELS_WITH_PRIMARY.includes(selectedChannel);
     const hasAddedCondition = primary && conditions && conditions.length > 0; // show modal
-    const hasNotAddedCondtionOnActive = !(isActive && conditions && conditions.length > 0); // show modal
+    const hasNotAddedConditionOnActive = !(isActive && conditions && conditions.length > 0); // show modal
 
     if (
       isActiveFieldChanged &&
       isChannelSupportPrimary &&
       hasAddedCondition &&
-      hasNotAddedCondtionOnActive &&
+      hasNotAddedConditionOnActive &&
       ((isActive && hasSameChannelActiveIntegration) || (!isActive && primary && hasSameChannelActiveIntegration))
     ) {
       openSelectPrimaryIntegrationModal({
