@@ -59,4 +59,4 @@ We strongly recommend that you decouple your database before deploying.
 
 ## Next steps
 
-- Got a question? [Ask here](https://github.com/novuhq/novu/discussions).
+- Got a question? [Ask here](https://discord.gg/novu).
