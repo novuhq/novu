@@ -213,7 +213,7 @@ export function FlowEditor({
 
         setNodes(newNodes);
 
-        // If no swapping occured, update the edges & return.
+        // If no swapping occurred, update the edges & return.
         if (sourcePosition === targetPosition) {
           updateNodeConnections(newNodes);
 
