@@ -6,6 +6,8 @@ import {
   EnvironmentRepository,
   IntegrationEntity,
   MessageEntity,
+  LayoutRepository,
+  TenantRepository,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -28,7 +30,7 @@ import {
   MailFactory,
   GetNovuProviderCredentials,
 } from '@novu/application-generic';
-
+import * as inlineCss from 'inline-css';
 import { CreateLog } from '../../../shared/logs';
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageBase } from './send-message.base';
@@ -42,6 +44,8 @@ export class SendMessageEmail extends SendMessageBase {
     protected environmentRepository: EnvironmentRepository,
     protected subscriberRepository: SubscriberRepository,
     protected messageRepository: MessageRepository,
+    protected layoutRepository: LayoutRepository,
+    protected tenantRepository: TenantRepository,
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     private compileEmailTemplateUsecase: CompileEmailTemplate,
@@ -53,6 +57,7 @@ export class SendMessageEmail extends SendMessageBase {
       createLogUsecase,
       createExecutionDetails,
       subscriberRepository,
+      tenantRepository,
       selectIntegration,
       getNovuProviderCredentials
     );
@@ -125,7 +130,11 @@ export class SendMessageEmail extends SendMessageBase {
       return;
     }
 
-    await this.sendSelectedIntegrationExecution(command.job, integration);
+    const [tenant, overrideLayoutId] = await Promise.all([
+      this.handleTenantExecution(command.job),
+      this.getOverrideLayoutId(command),
+      this.sendSelectedIntegrationExecution(command.job, integration),
+    ]);
 
     const overrides: Record<string, any> = Object.assign(
       {},
@@ -141,7 +150,7 @@ export class SendMessageEmail extends SendMessageBase {
       subject: emailChannel.template.subject || '',
       preheader: emailChannel.template.preheader,
       content: emailChannel.template.content,
-      layoutId: emailChannel.template._layoutId,
+      layoutId: overrideLayoutId ?? emailChannel.template._layoutId,
       contentType: emailChannel.template.contentType ? emailChannel.template.contentType : 'editor',
       payload: {
         ...command.payload,
@@ -150,6 +159,7 @@ export class SendMessageEmail extends SendMessageBase {
           events: command.events,
           total_count: command.events?.length,
         },
+        ...(tenant ? { tenant: { name: tenant.name, ...tenant.data } } : {}),
         subscriber,
       },
     };
@@ -212,6 +222,11 @@ export class SendMessageEmail extends SendMessageBase {
           }
         );
       }
+
+      html = await inlineCss(html, {
+        // Used for stylesheet links that starts with / so should not be needed in our case.
+        url: ' ',
+      });
     } catch (e) {
       await this.sendErrorHandlebars(command.job, e.message);
 
@@ -451,6 +466,37 @@ export class SendMessageEmail extends SendMessageBase {
       );
 
       return;
+    }
+  }
+
+  private async getOverrideLayoutId(command: SendMessageCommand) {
+    const overrideLayoutIdentifier = command.overrides?.layoutIdentifier;
+
+    if (overrideLayoutIdentifier) {
+      const layoutOverride = await this.layoutRepository.findOne(
+        {
+          _environmentId: command.environmentId,
+          identifier: overrideLayoutIdentifier,
+        },
+        '_id'
+      );
+      if (!layoutOverride) {
+        await this.createExecutionDetails.execute(
+          CreateExecutionDetailsCommand.create({
+            ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+            detail: DetailEnum.LAYOUT_NOT_FOUND,
+            source: ExecutionDetailsSourceEnum.INTERNAL,
+            status: ExecutionDetailsStatusEnum.FAILED,
+            isTest: false,
+            isRetry: false,
+            raw: JSON.stringify({
+              layoutIdentifier: overrideLayoutIdentifier,
+            }),
+          })
+        );
+      }
+
+      return layoutOverride?._id;
     }
   }
 

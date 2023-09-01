@@ -4,6 +4,7 @@ import { When } from '../../../../components/utils/When';
 import { colors, DragButton, Tooltip } from '../../../../design-system';
 import { useEnvController } from '../../../../hooks';
 import { channels, NodeTypeEnum } from '../../../../utils/channels';
+import { TOP_ROW_HEIGHT } from '../WorkflowEditor';
 
 export function AddStepMenu({
   setDragging,
@@ -79,6 +80,7 @@ const StyledNav = styled.div`
   background: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B15 : colors.white)};
   border-radius: 12px;
   z-index: 3;
+  margin-top: -${TOP_ROW_HEIGHT}px;
 `;
 
 const StyledDraggableNode = styled.div`

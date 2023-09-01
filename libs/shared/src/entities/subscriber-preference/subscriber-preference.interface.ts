@@ -26,4 +26,5 @@ export interface ITemplateConfiguration {
   _id: string;
   name: string;
   critical: boolean;
+  tags?: string[];
 }

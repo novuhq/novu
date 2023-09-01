@@ -26,7 +26,7 @@ export class DisableNovuIntegration {
 
     await this.integrationRepository.update(
       { _environmentId: command.environmentId, providerId: novuProviderId, channel: command.channel },
-      { $set: { active: false } }
+      { $set: { active: false, primary: false, priority: 0 } }
     );
   }
 }

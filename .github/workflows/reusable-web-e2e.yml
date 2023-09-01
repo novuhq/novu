@@ -24,9 +24,6 @@ jobs:
       # leaving the Dashboard hanging ...
       # https://github.com/cypress-io/github-action/issues/48
       fail-fast: false
-      matrix:
-        # run 3 copies of the current job in parallel
-        containers: [1, 2, 3, 4, 5, 6, 7]
 
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
@@ -67,6 +64,13 @@ jobs:
           projects: '@novu/web,@novu/api,@novu/worker'
 
       - uses: ./.github/actions/start-localstack
+      - uses: ./.github/actions/setup-redis-cluster
+
+      - uses: ./.github/actions/run-backend
+        with:
+          cypress_github_oauth_client_id: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_ID }}
+          cypress_github_oauth_client_secret: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_SECRET }}
+          launch_darkly_sdk_key: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
 
       - name: Start Client
         working-directory: apps/web
@@ -78,34 +82,11 @@ jobs:
         run: pnpm start:static:build &
 
       - name: Start WS
-        env:
-          IN_MEMORY_CLUSTER_MODE_ENABLED: false
         run: |
           cd apps/ws && pnpm start:test &
 
-      - name: Start API in TEST
-        env:
-          GITHUB_OAUTH_CLIENT_ID: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_ID }}
-          GITHUB_OAUTH_CLIENT_SECRET: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_SECRET }}
-          NODE_ENV: "test"
-          PORT: "1336"
-          TZ: "UTC"
-          GITHUB_OAUTH_REDIRECT: "http://localhost:1336/v1/auth/github/callback"
-        run: cd apps/api && pnpm start:build &
-
-      - name: Start worker
-        env:
-          NODE_ENV: "test"
-          PORT: 1342
-          TZ: "UTC"
-          IN_MEMORY_CLUSTER_MODE_ENABLED: false
-        run: cd apps/worker && pnpm start:prod &
-
-      - name: Install wait-on plugin
-        run: npm i -g wait-on
-
       - name: Wait on Services
-        run: wait-on --timeout=180000 http://localhost:1336/v1/health-check http://localhost:1342/v1/health-check http://localhost:1340/v1/health-check http://localhost:4200
+        run: wait-on --timeout=180000 http://localhost:1340/v1/health-check http://localhost:4200
 
       # run cypress install only when cache was not hit
       - name: Cypress install
@@ -132,7 +113,7 @@ jobs:
           working-directory: apps/web
           browser: "${{ env.BROWSER_PATH }}"
           record: true
-          parallel: true
+          parallel: false
           install: false
           config-file: cypress.config.ts
 

@@ -10,6 +10,7 @@ import {
   ProcessSubscriber,
   CreateNotificationJobs,
   StoreSubscriberJobs,
+  ProcessTenant,
 } from '@novu/application-generic';
 
 import { CancelDelayed } from './cancel-delayed';
@@ -37,4 +38,5 @@ export const USE_CASES = [
   ParseEventRequest,
   ProcessBulkTrigger,
   StoreSubscriberJobs,
+  ProcessTenant,
 ];

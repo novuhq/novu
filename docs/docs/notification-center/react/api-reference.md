@@ -627,7 +627,7 @@ interface IPreferenceChannels {
 }
 
 interface IUserPreferenceSettings {
-  template: { _id: string; name: string; critical: boolean };
+  template: { _id: string; name: string; critical: boolean; tags: string[] };
   preference: { enabled: boolean; channels: IPreferenceChannels };
 }
 
@@ -852,6 +852,12 @@ const { socket } = useSocket();
 interface ISocket {
   on: (eventName: string, callback: (data: any) => void) => void;
   off: (eventName: string) => void;
+}
+
+enum WebSocketEventsEnum {
+  RECEIVED = 'notification_received',
+  UNREAD = 'unread_count_changed',
+  UNSEEN = 'unseen_count_changed',
 }
 ```
 

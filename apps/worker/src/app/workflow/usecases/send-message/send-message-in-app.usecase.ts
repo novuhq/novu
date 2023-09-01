@@ -8,6 +8,8 @@ import {
   MessageEntity,
   OrganizationRepository,
   OrganizationEntity,
+  TenantRepository,
+  TenantEntity,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -16,6 +18,7 @@ import {
   ExecutionDetailsStatusEnum,
   IEmailBlock,
   ActorTypeEnum,
+  WebSocketEventEnum,
 } from '@novu/shared';
 import {
   InstrumentUsecase,
@@ -48,6 +51,7 @@ export class SendMessageInApp extends SendMessageBase {
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     protected subscriberRepository: SubscriberRepository,
+    protected tenantRepository: TenantRepository,
     private compileTemplate: CompileTemplate,
     private organizationRepository: OrganizationRepository,
     protected selectIntegration: SelectIntegration,
@@ -58,6 +62,7 @@ export class SendMessageInApp extends SendMessageBase {
       createLogUsecase,
       createExecutionDetails,
       subscriberRepository,
+      tenantRepository,
       selectIntegration,
       getNovuProviderCredentials
     );
@@ -105,7 +110,10 @@ export class SendMessageInApp extends SendMessageBase {
 
     const { actor } = command.step.template;
 
-    const organization = await this.organizationRepository.findById(command.organizationId, 'branding');
+    const [tenant, organization] = await Promise.all([
+      this.handleTenantExecution(command.job),
+      this.organizationRepository.findById(command.organizationId, 'branding'),
+    ]);
 
     try {
       content = await this.compileInAppTemplate(
@@ -113,7 +121,8 @@ export class SendMessageInApp extends SendMessageBase {
         command.payload,
         subscriber,
         command,
-        organization
+        organization,
+        tenant
       );
 
       if (inAppChannel.template.cta?.data?.url) {
@@ -122,7 +131,8 @@ export class SendMessageInApp extends SendMessageBase {
           command.payload,
           subscriber,
           command,
-          organization
+          organization,
+          tenant
         );
       }
 
@@ -135,7 +145,8 @@ export class SendMessageInApp extends SendMessageBase {
             command.payload,
             subscriber,
             command,
-            organization
+            organization,
+            tenant
           );
           ctaButtons.push({ type: action.type, content: buttonContent });
         }
@@ -225,7 +236,7 @@ export class SendMessageInApp extends SendMessageBase {
     await this.wsQueueService.bullMqService.add(
       'sendMessage',
       {
-        event: 'notification_received',
+        event: WebSocketEventEnum.RECEIVED,
         userId: command._subscriberId,
         payload: {
           message,
@@ -251,7 +262,7 @@ export class SendMessageInApp extends SendMessageBase {
     await this.wsQueueService.bullMqService.add(
       'sendMessage',
       {
-        event: 'unseen_count_changed',
+        event: WebSocketEventEnum.UNSEEN,
         userId: command._subscriberId,
         _environmentId: command.environmentId,
       },
@@ -262,7 +273,7 @@ export class SendMessageInApp extends SendMessageBase {
     await this.wsQueueService.bullMqService.add(
       'sendMessage',
       {
-        event: 'unread_count_changed',
+        event: WebSocketEventEnum.UNREAD,
         userId: command._subscriberId,
         _environmentId: command.environmentId,
       },
@@ -289,7 +300,8 @@ export class SendMessageInApp extends SendMessageBase {
     payload: any,
     subscriber: SubscriberEntity,
     command: SendMessageCommand,
-    organization: OrganizationEntity | null
+    organization: OrganizationEntity | null,
+    tenant: TenantEntity | null
   ): Promise<string> {
     return await this.compileTemplate.execute(
       CompileTemplateCommand.create({
@@ -305,6 +317,7 @@ export class SendMessageInApp extends SendMessageBase {
             logo: organization?.branding?.logo,
             color: organization?.branding?.color || '#f47373',
           },
+          ...(tenant ? { tenant: { name: tenant.name, ...tenant.data } } : {}),
           ...payload,
         },
       })
