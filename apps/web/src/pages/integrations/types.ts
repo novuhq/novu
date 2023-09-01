@@ -40,6 +40,7 @@ export interface IIntegratedProvider {
   name?: string;
   identifier?: string;
   primary: boolean;
+  conditions?: any[];
 }
 
 export interface IntegrationEntity {
@@ -57,4 +58,5 @@ export interface IntegrationEntity {
   primary: boolean;
   deletedAt: string;
   deletedBy: string;
+  conditions?: any[];
 }

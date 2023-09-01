@@ -6,7 +6,7 @@ import { CHANNELS_WITH_PRIMARY, NOVU_PROVIDERS } from '@novu/shared';
 import { Button, colors, Dropdown, Modal, NameInput, Text, Title } from '../../../design-system';
 import { useFetchEnvironments } from '../../../hooks/useFetchEnvironments';
 import { ProviderImage } from './multi-provider/SelectProviderSidebar';
-import type { IIntegratedProvider } from '../types';
+import type { IIntegratedProvider, IntegrationEntity } from '../types';
 import { useProviders } from '../useProviders';
 import { useDeleteIntegration } from '../../../api/hooks';
 import { errorMessage, successMessage } from '../../../utils/notifications';
@@ -63,7 +63,13 @@ export const UpdateIntegrationSidebarHeader = ({
       openModal({
         environmentId: provider.environmentId,
         channelType: provider.channel,
-        exclude: [provider.integrationId],
+        exclude: (el: IntegrationEntity) => {
+          if (el._id === provider.integrationId || (el.conditions && el.conditions.length > 0)) {
+            return true;
+          }
+
+          return false;
+        },
         onClose: () => {
           deleteIntegration({
             id: provider.integrationId,

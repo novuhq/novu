@@ -20,7 +20,7 @@ import { IntegrationEnvironmentPill } from '../IntegrationEnvironmentPill';
 import { useFetchEnvironments } from '../../../../hooks/useFetchEnvironments';
 import { CHANNEL_TYPE_TO_STRING } from '../../../../utils/channels';
 import { useIntegrations } from '../../../../hooks';
-import { ITableIntegration } from '../../types';
+import { IntegrationEntity, ITableIntegration } from '../../types';
 import { mapToTableIntegration } from '../../utils';
 import { IntegrationStatusCell } from '../IntegrationStatusCell';
 import { IntegrationNameCell } from '../IntegrationNameCell';
@@ -114,7 +114,7 @@ export interface ISelectPrimaryIntegrationModalProps {
   isOpened: boolean;
   environmentId?: string;
   channelType?: ChannelTypeEnum;
-  exclude?: string[];
+  exclude?: (integration: IntegrationEntity) => boolean;
   onClose: () => void;
 }
 
@@ -143,7 +143,10 @@ export const SelectPrimaryIntegrationModal = ({
   });
   const integrationsByEnvAndChannel = useMemo<ITableIntegration[]>(() => {
     const filteredIntegrations = (integrations ?? []).filter((el) => {
-      const isNotExcluded = !exclude?.includes(el._id ?? '');
+      let isNotExcluded = true;
+      if (exclude) {
+        isNotExcluded = !exclude(el);
+      }
 
       if (environmentId) {
         return el.channel === channelType && el._environmentId === environmentId && isNotExcluded;
@@ -152,7 +155,7 @@ export const SelectPrimaryIntegrationModal = ({
       return el.channel === channelType && isNotExcluded;
     });
 
-    return filteredIntegrations.map((el) => mapToTableIntegration(el, environments));
+    return filteredIntegrations.filter((el) => el.active).map((el) => mapToTableIntegration(el, environments));
   }, [integrations, environments, channelType, environmentId, exclude]);
 
   const initialSelectedIndex = useMemo(() => {
