@@ -1476,7 +1476,7 @@ importers:
       launchdarkly-node-server-sdk: ^7.0.1
       lodash: ^4.17.15
       nestjs-pino: ^3.4.0
-      newrelic: '>=10'
+      newrelic: ^10
       node-fetch: ^3.2.10
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
@@ -1558,7 +1558,7 @@ importers:
       launchdarkly-node-server-sdk: 7.0.1
       lodash: 4.17.21
       nestjs-pino: 3.4.0_63skzxoikz7i6kgl2v2i7k2p4y
-      newrelic: 11.0.0
+      newrelic: 10.6.2
       node-fetch: 3.3.1
       pino-http: 8.3.3
       pino-pretty: 9.4.0
@@ -15846,15 +15846,6 @@ packages:
       newrelic: 10.6.2
     dev: false
 
-  /@newrelic/aws-sdk/7.0.0_newrelic@11.0.0:
-    resolution: {integrity: sha512-/14Y9qYomDEzFrdXogqms2CGMI9hEJECzNBSqBLT53FY/uZh6SdI4Tr5u0sEOghjCdNyF2rseW7u63bAn09Pxw==}
-    engines: {node: '>=16.0.0'}
-    peerDependencies:
-      newrelic: '>=10.0.0'
-    dependencies:
-      newrelic: 11.0.0
-    dev: false
-
   /@newrelic/koa/7.2.0_newrelic@10.6.2:
     resolution: {integrity: sha512-3y/CCOLJ6sEPTKyQAmBrBP5CfZ5ak8mWt+7mWjdbblOXQh20LEsrA/KQAh/ROcTh6rV8oxsubLZ3N13LIeIoVQ==}
     engines: {node: '>=14.0.0'}
@@ -15863,28 +15854,6 @@ packages:
     dependencies:
       newrelic: 10.6.2
     dev: false
-
-  /@newrelic/koa/8.0.0_newrelic@11.0.0:
-    resolution: {integrity: sha512-aaqEVLnRk12DzChCGbWthVQR4PxomqeNVVxnBF3txfHCMhDL2rkOjjcu8VYVoLkhVXrNtY0M226sYN/uqzQ+bQ==}
-    engines: {node: '>=16.0.0'}
-    peerDependencies:
-      newrelic: '>=6.11.0'
-    dependencies:
-      newrelic: 11.0.0
-    dev: false
-
-  /@newrelic/native-metrics/10.0.0:
-    resolution: {integrity: sha512-0AFPPnj/wFT32mWK6vjc6LY0dZUOcHludZqPkHj2e3m+Zto3pWGk8PmRr1m3OGi+yVdHlEWbgHEAJ3T9lSAMBA==}
-    engines: {node: '>=16', npm: '>=6'}
-    requiresBuild: true
-    dependencies:
-      https-proxy-agent: 5.0.1
-      nan: 2.17.0
-      semver: 7.5.4
-    transitivePeerDependencies:
-      - supports-color
-    dev: false
-    optional: true
 
   /@newrelic/native-metrics/9.0.1:
     resolution: {integrity: sha512-ZMCd6xW9PWhrWvg8Ik0oFU+XGFLbqRujh15qu3+7FJRI8163RBOD6SS8tsU0ydG8+LlaPDZQp/ODD4LvBXu5UA==}
@@ -15939,15 +15908,6 @@ packages:
       newrelic: '>=6.11.0'
     dependencies:
       newrelic: 10.6.2
-    dev: false
-
-  /@newrelic/superagent/7.0.0_newrelic@11.0.0:
-    resolution: {integrity: sha512-fNB4NC+pJYYrFZRLcXaTb4Z7XFEfHi7fVQ3O9Qh10m/9CBM2W+Qc/6yyK9M1liRfgUGo5NOILRdjA23SS7720A==}
-    engines: {node: '>=16.0'}
-    peerDependencies:
-      newrelic: '>=6.11.0'
-    dependencies:
-      newrelic: 11.0.0
     dev: false
 
   /@ngtools/webpack/15.2.5_zqos56hbuiu24z4fwvegrcbdm4:
@@ -17689,12 +17649,6 @@ packages:
   /@popperjs/core/2.11.7:
     resolution: {integrity: sha512-Cr4OjIkipTtcXKjAsm8agyleBuDHvxzeBoa1v543lbv1YaIwQjESsVcmjiWiPEbC1FIeHOG/Op9kdCmAmiS3Kw==}
     dev: false
-
-  /@prisma/prisma-fmt-wasm/4.17.0-16.27eb2449f178cd9fe1a4b892d732cc4795f75085:
-    resolution: {integrity: sha512-zYz3rFwPB82mVlHGknAPdnSY/a308dhPOblxQLcZgZTDRtDXOE1MgxoRAys+jekwR4/bm3+rZDPs1xsFMsPZig==}
-    requiresBuild: true
-    dev: false
-    optional: true
 
   /@protobufjs/aspromise/1.1.2:
     resolution: {integrity: sha512-j+gKExEuLmKwvz3OgROXtrJ2UG2x8Ch2YZUxahh+s1F2HZ+wAceUNLkvy6zKCPVRkU++ZWQrdxsUeQXmcg4uoQ==}
@@ -35301,15 +35255,6 @@ packages:
     engines: {node: '>=12.2'}
     dev: true
 
-  /import-in-the-middle/1.4.2:
-    resolution: {integrity: sha512-9WOz1Yh/cvO/p69sxRmhyQwrIGGSp7EIdcb+fFNVi7CzQGQB8U1/1XrKVSbEd/GNOAeM0peJtmi7+qphe7NvAw==}
-    dependencies:
-      acorn: 8.10.0
-      acorn-import-assertions: 1.9.0_acorn@8.10.0
-      cjs-module-lexer: 1.2.2
-      module-details-from-path: 1.0.3
-    dev: false
-
   /import-lazy/2.1.0:
     resolution: {integrity: sha512-m7ZEHgtw69qOGw+jwxXkHlrlIPdTGkyh66zXZ1ajZbxkDBNjSY/LGbmjc7h0s2ELsUDTAhFr55TrPSSqJGPG0A==}
     engines: {node: '>=4'}
@@ -40101,10 +40046,6 @@ packages:
     resolution: {integrity: sha512-A/78XjoX2EmNvppVWEhM2oGk3x4lLxnkEA4jTbaK97QKSDjkIoOsKQlfylt/d3kKKi596Qy3NP5XrXJ6fZIC9Q==}
     dev: true
 
-  /module-details-from-path/1.0.3:
-    resolution: {integrity: sha512-ySViT69/76t8VhE1xXHK6Ch4NcDd26gx0MzKXLO+F7NOtnqH68d9zF94nT8ZWSxXh8ELOERsnJO/sWt1xZYw5A==}
-    dev: false
-
   /moment-timezone/0.5.43:
     resolution: {integrity: sha512-72j3aNyuIsDxdF1i7CEgV2FfxM1r6aaqJyLB2vwb33mXYyoyLly+F1zbWqhA3/bVIoJ4szlUoMbUnVdid32NUQ==}
     dependencies:
@@ -40486,39 +40427,6 @@ packages:
     optionalDependencies:
       '@contrast/fn-inspect': 3.3.0
       '@newrelic/native-metrics': 9.0.1
-    transitivePeerDependencies:
-      - aws-crt
-      - bufferutil
-      - debug
-      - supports-color
-      - utf-8-validate
-    dev: false
-
-  /newrelic/11.0.0:
-    resolution: {integrity: sha512-uZEetgjfoscuuFNP7TH5BIKLv4vnfX27DV9y+Yb26ZrC3CNnVL+jBOAKY4+/vTxQiQHCi4uPfRyjw+1/3fOQXA==}
-    engines: {node: '>=16', npm: '>=6.0.0'}
-    hasBin: true
-    dependencies:
-      '@grpc/grpc-js': 1.8.21
-      '@grpc/proto-loader': 0.7.9
-      '@newrelic/aws-sdk': 7.0.0_newrelic@11.0.0
-      '@newrelic/koa': 8.0.0_newrelic@11.0.0
-      '@newrelic/security-agent': 0.2.1
-      '@newrelic/superagent': 7.0.0_newrelic@11.0.0
-      '@tyriar/fibonacci-heap': 2.0.9
-      concat-stream: 2.0.0
-      https-proxy-agent: 7.0.1
-      import-in-the-middle: 1.4.2
-      json-bigint: 1.0.0
-      json-stringify-safe: 5.0.1
-      readable-stream: 3.6.2
-      require-in-the-middle: 7.2.0
-      semver: 7.5.4
-      winston-transport: 4.5.0
-    optionalDependencies:
-      '@contrast/fn-inspect': 3.3.0
-      '@newrelic/native-metrics': 10.0.0
-      '@prisma/prisma-fmt-wasm': 4.17.0-16.27eb2449f178cd9fe1a4b892d732cc4795f75085
     transitivePeerDependencies:
       - aws-crt
       - bufferutil
@@ -46522,17 +46430,6 @@ packages:
     resolution: {integrity: sha512-Xf0nWe6RseziFMu+Ap9biiUbmplq6S9/p+7w7YXP/JBHhrUDDUhwa+vANyubuqfZWTveU//DYVGsDG7RKL/vEw==}
     engines: {node: '>=0.10.0'}
 
-  /require-in-the-middle/7.2.0:
-    resolution: {integrity: sha512-3TLx5TGyAY6AOqLBoXmHkNql0HIf2RGbuMgCDT2WO/uGVAPJs6h7Kl+bN6TIZGd9bWhWPwnDnTHGtW8Iu77sdw==}
-    engines: {node: '>=8.6.0'}
-    dependencies:
-      debug: 4.3.4
-      module-details-from-path: 1.0.3
-      resolve: 1.22.2
-    transitivePeerDependencies:
-      - supports-color
-    dev: false
-
   /require-like/0.1.2:
     resolution: {integrity: sha512-oyrU88skkMtDdauHDuKVrgR+zuItqr6/c//FXzvmxRGMexSDc6hNvJInGW3LL46n+8b50RykrvwSUIIQH2LQ5A==}
     dev: false
@@ -46827,7 +46724,7 @@ packages:
       jest-worker: 26.6.2
       rollup: 2.79.1
       serialize-javascript: 4.0.0
-      terser: 5.19.2
+      terser: 5.16.9
 
   /rollup-plugin-terser/7.0.2_rollup@3.20.2:
     resolution: {integrity: sha512-w3iIaU4OxcF52UUXiZNsNeuXIMDvFrr+ZXK6bFZ0Q60qyVfq4uLptoS4bbq3paG3x216eQllFZX7zt6TIImguQ==}
@@ -49579,7 +49476,6 @@ packages:
       acorn: 8.10.0
       commander: 2.20.3
       source-map-support: 0.5.21
-    dev: true
 
   /terser/5.19.2:
     resolution: {integrity: sha512-qC5+dmecKJA4cpYxRa5aVkKehYsQKc+AHeKl0Oe62aYjBL8ZA33tTljktDHJSaxxMnbI5ZYw+o/S2DxxLu8OfA==}
