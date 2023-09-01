@@ -473,7 +473,13 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       let expireAt = new Date(message?.expireAt as string);
       let createdAt = new Date(message?.createdAt as string);
 
+      console.log('expireAt', expireAt);
+      console.log('createdAt', createdAt);
+
       let subExpireMonths = subMonths(expireAt, IN_APP_MESSAGE_EXPIRE_MONTHS);
+
+      console.log('subExpireMonths', subExpireMonths);
+
       let diff = differenceInMilliseconds(subExpireMonths, createdAt);
 
       expect(diff).to.approximately(0, 100);

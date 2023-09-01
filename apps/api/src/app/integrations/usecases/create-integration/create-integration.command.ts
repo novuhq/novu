@@ -2,6 +2,7 @@ import { IsDefined, IsEnum, IsOptional, IsString } from 'class-validator';
 import { ChannelTypeEnum, ICredentialsDto } from '@novu/shared';
 
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
+import { StepFilter } from '../../../shared/dtos/step-filter';
 
 export class CreateIntegrationCommand extends EnvironmentCommand {
   @IsOptional()
@@ -31,4 +32,7 @@ export class CreateIntegrationCommand extends EnvironmentCommand {
 
   @IsDefined()
   userId: string;
+
+  @IsOptional()
+  conditions?: StepFilter[];
 }

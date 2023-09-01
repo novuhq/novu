@@ -4,6 +4,7 @@ import { Type } from 'class-transformer';
 import { ChannelTypeEnum, ICreateIntegrationBodyDto } from '@novu/shared';
 
 import { CredentialsDto } from './credentials.dto';
+import { StepFilter } from '../../shared/dtos/step-filter';
 
 export class CreateIntegrationRequestDto implements ICreateIntegrationBodyDto {
   @ApiPropertyOptional({ type: String })
@@ -53,4 +54,10 @@ export class CreateIntegrationRequestDto implements ICreateIntegrationBodyDto {
   @IsOptional()
   @IsBoolean()
   check?: boolean;
+
+  @ApiPropertyOptional({
+    type: [StepFilter],
+  })
+  @ValidateNested({ each: true })
+  conditions?: StepFilter[];
 }

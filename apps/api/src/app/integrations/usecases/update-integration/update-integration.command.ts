@@ -2,6 +2,7 @@ import { IsDefined, IsMongoId, IsOptional, IsString } from 'class-validator';
 import { ICredentialsDto } from '@novu/shared';
 
 import { OrganizationCommand } from '../../../shared/commands/organization.command';
+import { StepFilter } from '../../../shared/dtos/step-filter';
 
 export class UpdateIntegrationCommand extends OrganizationCommand {
   @IsOptional()
@@ -31,4 +32,7 @@ export class UpdateIntegrationCommand extends OrganizationCommand {
 
   @IsOptional()
   check?: boolean;
+
+  @IsOptional()
+  conditions?: StepFilter[];
 }
