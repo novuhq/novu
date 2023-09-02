@@ -33,13 +33,15 @@ The ultimate service for managing multi-channel notifications with a single API.
     .
     <a href="https://novu.co/blog">Read our blog</a>
   </p>
+
 ## ⭐️ Why
-Building a notification system is hard, at first it seems like just sending an email but in reality it's just the beginning. In today's world users expect multichannel communication experience over email, sms, push, chat and more... An ever-growing list of providers are popping up each day, and notifications are spread around the code. Novu's goal is to simplify notifications and provide developers the tools to create meaningful communication between the system and its users.
+
+Building a notification system is hard, at first it seems like just sending an email but in reality, it's just the beginning. In today's world users expect multi-channel communication experience over email, sms, push, chat, and more... An ever-growing list of providers is popping up each day, and notifications are spread around the code. Novu's goal is to simplify notifications and provide developers the tools to create meaningful communication between the system and its users.
 
 ## ✨ Features
 
 - 🌈 Single API for all messaging providers (Email, SMS, Push, Chat)
-- 💅 Easily manage notification over multiple channels
+- 💅 Easily manage notifications over multiple channels
 - 🚀 Equipped with a templating engine for advanced layouts and designs
 - 🛡 Built-in protection for missing variables
 - 📦 Easy to set up and integrate
@@ -142,19 +144,20 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [Subscribers](#subscribers)
 - [Events](#events)
 - Workflows
-- Notification Groups
-- Topics
+- [Notification Groups](#notification-groups)
+- [Topics](#topics)
 - Feeds
 - Tenants
-- Messages
+- [Messages](#messages)
 - Changes
 - Environments
-- Layouts
-- Integrations
+- [Layouts](#layouts)
+- [Integrations](#integrations)
 
 
 ### Subscribers
-- #### list all subscribers
+
+- #### List all subscribers
 
 ```ts
 import { Novu } from '@novu/node';
@@ -167,7 +170,7 @@ const limit = 20;
 await novu.subscribers.list(page,limit)
 ```
 
-- #### identify (create) a new subscriber
+- #### Identify (create) a new subscriber
 ```ts
 import { Novu } from '@novu/node';
 
@@ -188,7 +191,7 @@ await novu.subscribers.identify("subscriberId",{
 ```
 
 
-- #### bulk create subscribers
+- #### Bulk create subscribers
 ```ts
 import { Novu } from '@novu/node';
 
@@ -215,7 +218,7 @@ await novu.subscribers.identify([
     email: "john.doe@domain.com";
     phone: "+1234567891";
     avatar: "https://gravatar.com/avatar/553b157d82ac2880237566d5a644e5fe?s=400&d=robohash&r=x";
-    locale: "en-US";
+    locale: "en-UK";
     data: {
       isDeveloper : false
       customKey1: "customValue1"
@@ -226,8 +229,7 @@ await novu.subscribers.identify([
 ```
 
 
-- #### get a single subsciber
-
+- #### Get a single subscriber
 ```ts
 import { Novu } from '@novu/node';
 
@@ -236,7 +238,7 @@ const novu = new Novu('<NOVU_API_KEY>');
 await novu.subscribers.get("subscriberId")
 ```
 
-- #### update a subscriber
+- #### Update a subscriber
 
 ```ts
 import { Novu } from '@novu/node';
@@ -258,7 +260,7 @@ await novu.subscribers.update("subscriberId",{
 })
 ```
 
-- #### update provider credentials
+- #### Update provider credentials
 ```ts
 import { Novu } from '@novu/node';
 
@@ -275,7 +277,7 @@ await novu.subscribers.setCredentials("subscriberId", "slack", {
 })
 ```
 
-- #### delete provider credentials
+- #### Delete provider credentials
 ```ts
 import { Novu } from '@novu/node';
 
@@ -288,7 +290,7 @@ await novu.subscribers.deleteCredentials("subscriberId", "fcm")
 await novu.subscribers.deleteCredentials("subscriberId", "slack")
 ```
 
-- #### delete a subscriber
+- #### Delete a subscriber
 
 ```ts
 import { Novu } from '@novu/node';
@@ -298,7 +300,7 @@ const novu = new Novu('<NOVU_API_KEY>');
 await novu.subscribers.delete("subscriberId")
 ```
 
-- #### update online status 
+- #### Update online status 
 
 ```ts
 import { Novu } from '@novu/node';
@@ -309,7 +311,7 @@ const novu = new Novu('<NOVU_API_KEY>');
 await novu.subscribers.updateOnlineStatus("subscriberId", false)
 ```
 
-- #### get subscriber preference for all workflows
+- #### Get subscriber preference for all workflows
 ```ts
 import { Novu } from '@novu/node';
 
@@ -318,7 +320,7 @@ const novu = new Novu('<NOVU_API_KEY>');
 await novu.subscribers.getPreference("subscriberId")
 ```
 
-- #### update subscriber preference for a workflow
+- #### Update subscriber preference for a workflow
 ```ts
 import { Novu } from '@novu/node';
 
@@ -342,7 +344,7 @@ await novu.subscribers.updatePreference("subscriberId", "workflowId", {
 })
 ```
 
-- #### get in-app messages (notifications) feed for subsriber
+- #### Get in-app messages (notifications) feed for a subscriber
 
 ```ts
 import { Novu } from '@novu/node';
@@ -364,7 +366,7 @@ const params = {
 await novu.subscribers.getNotificationsFeed("subscriberId", params);
 ```
 
-- #### get seen/unseen in-app messages (notifications) count
+- #### Get seen/unseen in-app messages (notifications) count
 ```ts
 import { Novu } from '@novu/node';
 
@@ -377,7 +379,7 @@ await novu.subscribers.getUnseenCount("subscriberId", true);
 await novu.subscribers.getUnseenCount("subscriberId", false);
 ```
 
-- #### mark an in-app message (notification) as seen/unseen/read/unread
+- #### Mark an in-app message (notification) as seen/unseen/read/unread
 
 ```ts
 import { Novu } from '@novu/node';
@@ -396,7 +398,7 @@ await novu.subscribers.markMessageAs("subscriberId", "messageId", {
 });
 ```
 
-- #### mark all in-app messages (notifications) as seen/unseen/read/unread
+- #### Mark all in-app messages (notifications) as seen/unseen/read/unread
 
 ```ts
 import { Novu, MarkMessagesAsEnum } from '@novu/node';
@@ -410,7 +412,7 @@ await novu.subscribers.markAllMessagesAs("subscriberId", MarkMessageAsEnum.SEEN,
 await novu.subscribers.markAllMessagesAs("subscriberId", MarkMessageAsEnum.READ, "feedId");
 ```
 
-- #### mark in-app message (notification) action as seen
+- #### Mark in-app message (notification) action as seen
 
 ```ts
 import { Novu, ButtonTypeEnum, MessageActionStatusEnum } from '@novu/node';
@@ -428,5 +430,456 @@ await novu.subscribers.markMessageActionSeen("subscriberId", "messageId", Button
 });
 ```
 
-
 ### Events
+
+- #### Trigger workflow to one subscriber
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+// trigger to existing subscribers
+await novu.subscribers.trigger("workflowIdentifier", {
+  to: "subscriberId",
+  payload: {
+    customKey: "customValue",
+    customKey1: {
+      nestedkey1: "nestedValue1"
+    }
+  },
+  overrides: {
+    email: {
+      from: "support@novu.co"
+    }
+  },
+  // actorId is subscriberId of actor
+  actor: "actorId"
+  tenant: "tenantIdentifier"
+});
+
+// create new subscriber inline with trigger
+await novu.subscribers.trigger("workflowIdentifier", {
+  to: {
+    subscriberId: "1"
+    firstName: "Pawan";
+    lastName: "Jain";
+    email: "pawan.jain@domain.com";
+    phone: "+1234567890";
+    avatar: "https://gravatar.com/avatar/553b157d82ac2880237566d5a644e5fe?s=400&d=robohash&r=x";
+    locale: "en-US";
+    data: {
+      isDeveloper : true
+      customKey: "customValue"
+    };
+  },
+  payload: {},
+  overrides:{} ,
+  actor: "actorId"
+  tenant: "tenantIdentifier"
+});
+```
+
+- #### Trigger workflow to multiple subscribers
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.subscribers.trigger("workflowIdentifier", {
+  to: [ "subscriberId1" , "subscriberId2" ],
+  payload: {},
+  overrides:{} ,
+  actor: "actorId"
+  tenant: "tenantIdentifier"
+});
+
+
+// create new subscribers inline with trigger
+await novu.subscribers.trigger("workflowIdentifier", {
+  to: [
+    {
+      subscriberId: "1"
+      firstName: "Pawan";
+      lastName: "Jain";
+      email: "pawan.jain@domain.com";
+      phone: "+1234567890";
+      avatar: "https://gravatar.com/avatar/553b157d82ac2880237566d5a644e5fe?s=400&d=robohash&r=x";
+      locale: "en-US";
+      data: {
+        isDeveloper : true
+        customKey: "customValue"
+      };
+    },
+    {
+      subscriberId: "2"
+      firstName: "John";
+      lastName: "Doe";
+      email: "john.doe@domain.com";
+      phone: "+1234567891";
+      avatar: "https://gravatar.com/avatar/553b157d82ac2880237566d5a644e5fe?s=400&d=robohash&r=x";
+      locale: "en-UK";
+      data: {
+        isDeveloper : false
+        customKey1: "customValue1"
+      };
+    }
+  ],
+  payload: {},
+  overrides:{} ,
+  actor: "actorId"
+  tenant: "tenantIdentifier"
+});
+```
+
+- #### Bulk trigger multiple workflows to multiple subscribers
+
+There is a limit of 100 items in the array of bulkTrigger.
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.subscribers.bulkTrigger([
+  {
+    name: "workflowIdentifier_1",
+    to: "subscriberId_1",
+    payload: {
+      customKey: "customValue",
+      customKey1: {
+        nestedkey1: "nestedValue1"
+      }
+    },
+    overrides: {
+      email: {
+        from: "support@novu.co"
+      }
+    },
+    // actorId is subscriberId of actor
+    actor: "actorId"
+    tenant: "tenantIdentifier"
+  },
+  {
+    name: "workflowIdentifier_2",
+    to: "subscriberId_2",
+    payload: {
+      customKey: "customValue",
+      customKey1: {
+        nestedkey1: "nestedValue1"
+      }
+    },
+    overrides: {
+      email: {
+        from: "support@novu.co"
+      }
+    },
+    // actorId is subscriberId of actor
+    actor: "actorId"
+    tenant: "tenantIdentifier"
+  }
+])
+```
+
+- #### Broadcast to all subscribers
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.subscribers.broadcast("workflowIdentifier", {
+  payload: {
+    customKey: "customValue",
+    customKey1: {
+      nestedkey1: "nestedValue1"
+    }
+  },
+  overrides: {
+    email: {
+      from: "support@novu.co"
+    }
+  },
+  tenant: "tenantIdentifier"
+})
+```
+
+- #### Cancel the triggered workflow
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.subscribers.cancel("transactionId");
+```
+### Messages
+
+- #### List all messages 
+
+```ts
+import { Novu, ChannelTypeEnum } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+const params = {
+  page: 0, // optional
+  limit: 20, // optional
+  subscriberId: "subscriberId"  //optional
+  channel: ChannelTypeEnum.EMAIL //optional
+  transactionIds : ["txnId1","txnId2"] //optional
+}
+
+await novu.messages.list(params)
+```
+
+- #### Delete a message by messageId
+
+```ts
+import { Novu, ChannelTypeEnum } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.messages.deleteById("messageId");
+```
+
+### Layouts
+
+- #### Create a layout
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+const payload = {
+  content: "<h1>Layout Start</h1>{{{body}}}<h1>Layout End</h1>",
+  description: "Organisation's first layout",
+  name: "First Layout",
+  identifier: "firstlayout",
+  variables: [
+    {
+      type: "String",
+      name: "body"
+      required: true
+      defValue: ""
+    }
+  ]
+  isDefault: "false"
+}
+await novu.layouts.create(payload);
+```
+
+- #### Update a layout
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+const payloadToUpdate = {
+  content: "<h1>Layout Start</h1>{{{body}}}<h1>Layout End</h1>",
+  description: "Organisation's first layout",
+  name: "First Layout",
+  identifier: "firstlayout",
+  variables: [
+    {
+      type: "String",
+      name: "body"
+      required: true
+      defValue: ""
+    }
+  ]
+  isDefault: false
+}
+await novu.layouts.update("layoutId", payloadToUpdate);
+```
+
+- #### Set a layout as default
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.layouts.setDefault("layoutId");
+```
+
+- #### Get a layout by layoutId
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.layouts.get("layoutId");
+```
+
+- #### Delete a layout by layoutId
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.layouts.delete("layoutId");
+```
+
+- #### List all layouts
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+const params = {
+  page: 0, // optional
+  pageSize: 20, // optional
+  sortBy: "_id"
+  orderBy: -1 //optional
+}
+
+await novu.layouts.list(params);
+```
+
+### Notification Groups
+
+- #### Create a new notification group
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+const notificationGroupName = "Product Updates"
+
+await novu.notificationGroups.create(notificationGroupName)
+```
+
+- #### Update a notification group
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.notificationGroups.update("notificationGroupId", { name: "Changelog Updates"})
+```
+
+- #### List all notification groups
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.notificationGroups.get()
+```
+
+- #### Get one notification group
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.notificationGroups.getOne("notificationGroupId")
+```
+
+- #### Delete a notification group
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.notificationGroups.delete("notificationGroupId")
+```
+
+### Topics
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+const payloadToCreate = {
+  key: "first-topic",
+  name: "First Topic"
+}
+
+// create new topic
+await novu.topics.create(payloadToCreate)
+
+// add subscribers
+await novu.topics.addSubscribers("topicKey", { subscribers: ["subscriberId1", "subscriberId2"] })
+
+// check if subscriber is present in topic
+await novu.topics.checkSubscriber("topicKey", "subscriberId")
+
+// remove subscribers from topic
+await novu.topics.removeSubscribers("topicKey", { subscribers: ["subscriberId1", "subscriberId2"] } )
+
+const topicsListParams = {
+  page: 0, //optional
+  pageSize: 20,
+  key: "topicKey"
+}
+
+// list all topics
+await novu.topics.list(topicsListParams)
+
+// get a topic
+await novu.topics.get("topicKey")
+
+// delete a topic
+await novu.topics.delete("topicKey")
+
+// get a topic
+await novu.topics.rename("topicKey", "New Topic Name")
+```
+
+### Integrations
+
+```ts
+import { Novu, ChannelTypeEnum, ProvidersIdEnum } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+const updatePayload = {
+  name: "SendGrid",
+  identifier: "sendgrid-identifier",
+  credentials: {
+    apiKey: "SUPER_SECRET_API_KEY",
+    from: "sales@novu.co",
+    senderName: "Novu Sales Team"
+    // ... other credentials as per provider
+  },
+  active: true,
+  check: false
+}
+
+const createPayload: {
+  ...updatePayload,
+  channel: ChannelTypeEnum.EMAIL,
+}
+
+// create a new integration
+await novu.integrations.create(ProvidersIdEnum.SendGrid, createPayload)
+
+// update integration
+await novu.integrations.update("integrationId", updatePayload)
+
+// get all integrations
+await novu.integrations.getAll()
+
+// get only active integrations
+await novu.integrations.getActive()
+
+// get webhook provider status
+await novu.integrations.getWebhookProviderStatus(ProvidersIdEnum.SendGrid)
+
+// delete existing integration
+await novu.integrations.delete("integrationId")
+
+// get novu in-app status
+await novu.integrations.getInAppStatus()
+```

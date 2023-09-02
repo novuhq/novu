@@ -1,6 +1,9 @@
 export {
   ChatProviderIdEnum,
   PushProviderIdEnum,
+  EmailProviderIdEnum,
+  SmsProviderIdEnum,
+  ProvidersIdEnum,
   ChannelCTATypeEnum,
   TemplateVariableTypeEnum,
   IMessageTemplate,
