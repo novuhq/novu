@@ -3,8 +3,6 @@ import {
   EnvironmentId,
   ISubscribersDefine,
   ITopic,
-  LogCodeEnum,
-  LogStatusEnum,
   OrganizationId,
   TopicKey,
   TopicSubscribersDto,
@@ -13,14 +11,13 @@ import {
   TriggerRecipientTopics,
   TriggerRecipientsTypeEnum,
   UserId,
+  TriggerRecipient,
 } from '@novu/shared';
+import { InstrumentUsecase, FeatureFlagCommand, GetFeatureFlag } from '@novu/application-generic';
 
 import { MapTriggerRecipientsCommand } from './map-trigger-recipients.command';
-
-import { CreateLog, CreateLogCommand } from '../../../logs/usecases/create-log';
+import { CreateLog } from '../../../logs/usecases/create-log';
 import { GetTopicSubscribersCommand, GetTopicSubscribersUseCase } from '../../../topics/use-cases';
-import { InstrumentUsecase } from '@novu/application-generic';
-import { FeatureFlagCommand, GetFeatureFlag } from '../../../feature-flags/use-cases';
 
 interface ILogTopicSubscribersPayload {
   environmentId: EnvironmentId;
@@ -30,10 +27,10 @@ interface ILogTopicSubscribersPayload {
   userId: UserId;
 }
 
-const isNotTopic = (recipient: TriggerRecipientSubscriber): recipient is TriggerRecipientSubscriber =>
-  typeof recipient === 'string' || recipient?.type !== TriggerRecipientsTypeEnum.TOPIC;
+const isNotTopic = (recipient: TriggerRecipient) => !isTopic(recipient);
 
-const isTopic = (recipient: ITopic): recipient is ITopic => recipient?.type === TriggerRecipientsTypeEnum.TOPIC;
+const isTopic = (recipient: TriggerRecipient): recipient is ITopic =>
+  (recipient as ITopic).type && (recipient as ITopic).type === TriggerRecipientsTypeEnum.TOPIC;
 
 @Injectable()
 export class MapTriggerRecipients {

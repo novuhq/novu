@@ -3,9 +3,15 @@ import * as Sentry from '@sentry/node';
 import * as hat from 'hat';
 import { merge } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
-import { AnalyticsService, Instrument, InstrumentUsecase } from '@novu/application-generic';
-import { NotificationTemplateRepository } from '@novu/dal';
-import { ISubscribersDefine } from '@novu/shared';
+import { Instrument, InstrumentUsecase } from '@novu/application-generic';
+import { NotificationTemplateRepository, NotificationTemplateEntity } from '@novu/dal';
+import {
+  ISubscribersDefine,
+  ITenantDefine,
+  ReservedVariablesMap,
+  TriggerContextTypeEnum,
+  TriggerTenantContext,
+} from '@novu/shared';
 import { StorageHelperService, CachedEntity, buildNotificationTemplateIdentifierKey } from '@novu/application-generic';
 
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -19,7 +25,6 @@ export class ParseEventRequest {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
     private verifyPayload: VerifyPayload,
-    private analyticsService: AnalyticsService,
     private storageHelperService: StorageHelperService,
     private triggerHandlerQueueService: TriggerHandlerQueueService,
     private mapTriggerRecipients: MapTriggerRecipients
@@ -56,7 +61,10 @@ export class ParseEventRequest {
       throw new UnprocessableEntityException('workflow_not_found');
     }
 
-    if (!template.active || template.draft) {
+    const reservedVariablesTypes = this.getReservedVariablesTypes(template);
+    this.validateTriggerContext(command, reservedVariablesTypes);
+
+    if (!template.active) {
       return {
         acknowledged: true,
         status: 'trigger_not_active',
@@ -143,12 +151,40 @@ export class ParseEventRequest {
 
       if (!subscriberIdExists) {
         throw new ApiException(
-          'subscriberId under property to is not configured, please make sure all the subscriber contains subscriberId property'
+          'subscriberId under property to is not configured, please make sure all subscribers contains subscriberId property'
         );
       }
     }
 
     return true;
+  }
+
+  @Instrument()
+  private validateTriggerContext(
+    command: ParseEventRequestCommand,
+    reservedVariablesTypes: TriggerContextTypeEnum[]
+  ): void {
+    const invalidKeys: string[] = [];
+
+    for (const reservedVariableType of reservedVariablesTypes) {
+      const payload = command[reservedVariableType];
+      if (!payload) {
+        invalidKeys.push(`${reservedVariableType} object`);
+        continue;
+      }
+      const reservedVariableFields = ReservedVariablesMap[reservedVariableType].map((variable) => variable.name);
+      for (const variableName of reservedVariableFields) {
+        const variableNameExists = payload[variableName];
+
+        if (!variableNameExists) {
+          invalidKeys.push(`${variableName} property of ${reservedVariableType}`);
+        }
+      }
+    }
+
+    if (invalidKeys.length) {
+      throw new ApiException(`Trigger is missing: ${invalidKeys.join(', ')}`);
+    }
   }
 
   private modifyAttachments(command: ParseEventRequestCommand) {
@@ -158,5 +194,19 @@ export class ParseEventRequest {
       file: Buffer.from(attachment.file, 'base64'),
       storagePath: `${command.organizationId}/${command.environmentId}/${hat()}/${attachment.name}`,
     }));
+  }
+
+  public mapTenant(tenant: TriggerTenantContext): ITenantDefine {
+    if (typeof tenant === 'string') {
+      return { identifier: tenant };
+    }
+
+    return tenant;
+  }
+
+  public getReservedVariablesTypes(template: NotificationTemplateEntity): TriggerContextTypeEnum[] {
+    const reservedVariables = template.triggers[0].reservedVariables;
+
+    return reservedVariables?.map((reservedVariable) => reservedVariable.type) || [];
   }
 }

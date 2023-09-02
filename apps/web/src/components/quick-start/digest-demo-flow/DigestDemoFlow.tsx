@@ -1,10 +1,8 @@
 import { useEffect } from 'react';
-import styled from '@emotion/styled';
-import { Skeleton, useMantineColorScheme } from '@mantine/core';
+import { Skeleton } from '@mantine/core';
 import { useResizeObserver } from '@mantine/hooks';
 import ReactFlow, { Edge, Node, useReactFlow } from 'react-flow-renderer';
 
-import { colors } from '../../../design-system';
 import { TriggerNode } from './TriggerNode';
 import { DigestNode } from './DigestNode';
 import { EmailNode } from './EmailNode';
@@ -26,7 +24,6 @@ export function DigestDemoFlow({
   onDigestIntervalChange?: (interval: number) => void;
 }) {
   const [ref, rect] = useResizeObserver();
-  const { colorScheme } = useMantineColorScheme();
   const reactFlowInstance = useReactFlow();
   const { isInitialLoading: isLoadingTemplate } = useTemplateFetcher(
     { templateId },
@@ -35,7 +32,7 @@ export function DigestDemoFlow({
 
   useEffect(() => {
     reactFlowInstance.fitView({ minZoom: 1, maxZoom: 1 });
-  }, [rect.width, rect.height]);
+  }, [reactFlowInstance, rect.width, rect.height]);
 
   return (
     <DigestDemoFlowProvider

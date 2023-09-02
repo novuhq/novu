@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { expect } from 'chai';
 import axios from 'axios';
-import { addSeconds, differenceInMilliseconds, subMonths } from 'date-fns';
+import { addSeconds, differenceInMilliseconds, subDays } from 'date-fns';
 import {
   MessageRepository,
   NotificationTemplateEntity,
@@ -91,8 +91,8 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     const expireAt = new Date(delayedJob?.expireAt as string);
     const createdAt = new Date(delayedJob?.createdAt as string);
 
-    const subExpireMonths = subMonths(expireAt, 1);
-    const diff = differenceInMilliseconds(subExpireMonths, createdAt);
+    const subExpire30Days = subDays(expireAt, 30);
+    const diff = differenceInMilliseconds(subExpire30Days, createdAt);
 
     expect(diff).to.approximately(100, 200);
 

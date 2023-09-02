@@ -1,5 +1,4 @@
-import { ChannelTypeEnum } from '@novu/shared';
-import { ICredentials } from '@novu/dal';
+import { ChannelTypeEnum, ICredentials } from '@novu/shared';
 import { Outlook365Provider } from '@novu/outlook365';
 import { BaseHandler } from './base.handler';
 

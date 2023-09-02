@@ -4,7 +4,6 @@ import { ReactFlowProvider } from 'react-flow-renderer';
 import { FieldErrors, useFormContext } from 'react-hook-form';
 
 import PageContainer from '../../../components/layout/components/PageContainer';
-import PageMeta from '../../../components/layout/components/PageMeta';
 import type { IForm } from '../components/formTypes';
 import WorkflowEditor from '../workflow/WorkflowEditor';
 import { useEnvController, usePrompt } from '../../../hooks';
@@ -70,13 +69,12 @@ function BaseTemplateEditorPage() {
   return (
     <>
       <TourProvider />
-      <PageContainer>
-        <PageMeta title={template?.name ?? 'Create Template'} />
+      <PageContainer title={template?.name ?? 'Create Template'}>
         <form
           name="template-form"
           noValidate
           onSubmit={handleSubmit(onSubmitHandler, onInvalid)}
-          style={{ minHeight: '100%' }}
+          style={{ height: '100%', display: 'grid', gridTemplateColumns: '1fr' }}
         >
           <ReactFlowProvider>
             <WorkflowEditor />

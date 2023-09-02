@@ -80,19 +80,20 @@ $novu->getSubscriberPreferences('111')->toArray();
   <TabItem value="js" label="Node.js">
 
 ```javascript
-import { Novu } from '@novu/node';
+import { Novu, ChannelTypeEnum } from '@novu/node';
 
 const novu = new Novu('<NOVU_API_KEY>');
 
+// enable in_app channel
 await novu.subscribers.updatePreference('subscriberId', 'workflowIdentifier', {
   enabled: true,
-  channel: {
-    in_app: true,
-    email: true,
-    push: true,
-    sms: false,
-    chat: false,
-  },
+  channel: { type: ChannelTypeEnum.IN_APP, enabled: true },
+});
+
+// enable email channel
+await novu.subscribers.updatePreference('subscriberId', 'workflowIdentifier', {
+  enabled: true,
+  channel: { type: ChannelTypeEnum.EMAIL, enabled: true },
 });
 ```
 
@@ -104,14 +105,21 @@ use Novu\SDK\Novu;
 
 $novu = new Novu('<NOVU_API_KEY>');
 
+// enable in_app channel
 $novu->updateSubscriberPreference('subscriberId', 'templateIdentfier', [
     'enabled' => true
     'channel' => [
-    'in_app' => true,
-       'email' => true,
-       'push' => true,
-       'sms'  => false,
-       'chat' => false,
+      'type' => 'in_app',
+      'enabled' => true
+    ]
+]);
+
+// enable email channel
+$novu->updateSubscriberPreference('subscriberId', 'templateIdentfier', [
+    'enabled' => true
+    'channel' => [
+      'type' => 'email',
+      'enabled' => true
     ]
 ]);
 ```

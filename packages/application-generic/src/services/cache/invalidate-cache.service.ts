@@ -20,9 +20,9 @@ export class InvalidateCacheService {
       await this.cacheService.del(key);
     } catch (err) {
       Logger.error(
+        err,
         `An error has occurred when deleting "key: ${key}",`,
-        LOG_CONTEXT,
-        err
+        LOG_CONTEXT
       );
     }
   }
@@ -34,9 +34,9 @@ export class InvalidateCacheService {
       await this.cacheService.delQuery(key);
     } catch (err) {
       Logger.error(
+        err,
         `An error has occurred when deleting "key: ${key}",`,
-        LOG_CONTEXT,
-        err
+        LOG_CONTEXT
       );
     }
   }
@@ -66,9 +66,9 @@ export class InvalidateCacheService {
       Logger.verbose('Finished cache delete by pattern');
     } catch (err) {
       Logger.error(
+        err,
         `An error has occurred when deleting "key: ${cacheKey}",`,
-        LOG_CONTEXT,
-        err
+        LOG_CONTEXT
       );
     }
   }

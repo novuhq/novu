@@ -16,8 +16,7 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, Response<T>> {
 
     return next.handle().pipe(
       map((data) => {
-        // For paginated results that already contain the data wrapper, return the whole object
-        if (data?.data) {
+        if (this.returnWholeObject(data)) {
           return {
             ...data,
             data: isObject(data.data) ? this.transformResponse(data.data) : data.data,
@@ -29,6 +28,20 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, Response<T>> {
         };
       })
     );
+  }
+
+  /**
+   * This method is used to determine if the entire object should be returned or just the data property
+   *   for paginated results that already contain the data wrapper, true.
+   *   for single entity result that *could* contain data object, false.
+   * @param data
+   * @private
+   */
+  private returnWholeObject(data) {
+    const isPaginatedResult = data?.data;
+    const isEntityObject = data?._id;
+
+    return isPaginatedResult && !isEntityObject;
   }
 
   private transformResponse(response) {

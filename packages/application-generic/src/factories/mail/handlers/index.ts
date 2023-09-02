@@ -12,5 +12,7 @@ export * from './infobip.handler';
 export * from './mailersend.handler';
 export * from './outlook365.handler';
 export * from './resend.handler';
+export * from './plunk.handler';
 export * from './sparkpost.handler';
 export * from './email-webhook.handler';
+export * from './novu.handler';

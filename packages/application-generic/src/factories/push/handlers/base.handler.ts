@@ -1,6 +1,6 @@
 import { IPushOptions, IPushProvider } from '@novu/stateless';
-import { ChannelTypeEnum } from '@novu/shared';
-import { ICredentials } from '@novu/dal';
+import { ChannelTypeEnum, ICredentials } from '@novu/shared';
+import {} from '@novu/dal';
 import { IPushHandler } from '../interfaces';
 
 export abstract class BasePushHandler implements IPushHandler {

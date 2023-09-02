@@ -1,82 +1,94 @@
-import React, { useEffect } from 'react';
-import { TableProps, Table as MantineTable, LoadingOverlay, Pagination } from '@mantine/core';
+import React, { useEffect, useMemo } from 'react';
+import { Skeleton, TableProps, Table as MantineTable, Pagination, Button } from '@mantine/core';
 import styled from '@emotion/styled';
 import {
   useTable,
   Column,
-  ColumnWithStrictAccessor,
   usePagination,
   TableInstance,
   UsePaginationInstanceProps,
   UsePaginationState,
+  Row,
+  CellProps,
+  IdType,
+  useRowSelect,
+  UseRowSelectInstanceProps,
+  UseRowSelectState,
 } from 'react-table';
 
 import useStyles from './Table.styles';
 import { colors } from '../config';
+import { DefaultCell } from './DefaultCell';
+import { useDataRef } from '../../hooks';
+import { ChevronLeft, ChevronRight } from '../icons';
+import { Radio } from '../radio/Radio';
 
 const NoDataPlaceholder = styled.div`
   padding: 0 30px;
   flex: 1;
 `;
 
-export type Data = Record<string, any>;
+export const RadioSkeleton = styled(Skeleton)`
+  width: 20px;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 100%;
+`;
 
-export interface ITableProps {
-  columns?: ColumnWithStrictAccessor<Data>[];
-  data?: Data[];
+export type IExtendedCellProps<T extends object = {}> = CellProps<T> & { isLoading: boolean };
+
+export type IExtendedColumn<T extends object = {}> = Column<T> & {
+  Cell?: (props: IExtendedCellProps<T>) => React.ReactNode;
+};
+
+const defaultColumn: Partial<IExtendedColumn> = {
+  Cell: DefaultCell,
+};
+
+export interface ITableProps<T extends object> {
+  columns?: IExtendedColumn<T>[];
+  data?: T[];
   loading?: boolean;
   pagination?: any;
-  onRowClick?: (row: Data) => void;
   noDataPlaceholder?: React.ReactNode;
+  loadingItems?: number;
+  hasMore?: boolean;
+  minimalPagination?: boolean;
+  withSelection?: boolean;
+  withRowClickSelection?: boolean;
+  initialSelectedRows?: Record<IdType<T>, boolean>;
+  onRowClick?: (row: Row<T>) => void;
+  onRowSelect?: (row: Row<T>) => void;
 }
 
-type UseTableProps = UsePaginationInstanceProps<Data> &
-  TableInstance<Data> & {
-    state: UsePaginationState<Data>;
+type UseTableProps<T extends object> = UsePaginationInstanceProps<T> &
+  UseRowSelectInstanceProps<T> &
+  TableInstance<T> & {
+    state: UsePaginationState<T> & UseRowSelectState<T>;
   };
 
 /**
  * Table component
  *
  */
-export function Table({
+export function Table<T extends object>({
   columns: userColumns,
   data: userData,
   pagination = false,
   loading = false,
-  onRowClick,
   noDataPlaceholder,
+  loadingItems = 10,
+  withSelection = false,
+  initialSelectedRows,
+  onRowClick,
+  onRowSelect,
   ...props
-}: ITableProps) {
+}: ITableProps<T>) {
   const { pageSize, total, onPageChange, current } = pagination;
-
-  const columns = React.useMemo(
-    () =>
-      userColumns?.map((col) => {
-        const column = {
-          Header: col.Header,
-          accessor: col.accessor,
-          width: col.width,
-          maxWidth: col.maxWidth,
-        };
-        if (col?.Cell) {
-          return {
-            ...column,
-            /**
-             * Due to an issue with the Column accessor interface from react-table
-             * We decided to ignore the Cell type for now.
-             */
-            // eslint-disable-next-line
-            Cell: ({ row }) => (col?.Cell ? (col?.Cell as any)(row.original) : null),
-          };
-        }
-
-        return column;
-      }) as Column<Data>[],
-    [userColumns]
-  );
-
-  const data = React.useMemo(() => (userData || [])?.map((row) => ({ ...row })) as Data[], [userData]);
+  const columns = useMemo(() => userColumns?.map((col) => ({ ...col })), [userColumns]);
+  const data = useMemo(() => (userData || [])?.map((row) => ({ ...row })), [userData]);
+  const fakeData = useMemo(() => Array.from({ length: loadingItems }).map((_, index) => ({ index })), [loadingItems]);
+  const onPageChangeRef = useDataRef(onPageChange);
 
   const {
     getTableProps,
@@ -86,51 +98,86 @@ export function Table({
     prepareRow,
     page,
     gotoPage,
+    toggleAllRowsSelected,
     state: { pageIndex },
   } = useTable(
     {
       columns,
-      data,
-      ...(pagination
+      defaultColumn,
+      data: loading ? fakeData : data,
+      ...(pagination && !pagination?.minimalPagination
         ? {
             initialState: { pageIndex: current, pageSize },
             manualPagination: true,
             pageCount: Math.ceil(total / pageSize),
           }
         : {}),
+      ...(withSelection && {
+        autoResetSelectedRows: false,
+        initialState: { selectedRowIds: initialSelectedRows ?? {} },
+      }),
     } as any,
-    usePagination
-  ) as UseTableProps;
+    usePagination,
+    useRowSelect,
+    (hooks) => {
+      if (!withSelection) {
+        return;
+      }
+
+      const selectionRow = {
+        id: 'selection',
+        Header: () => null,
+        Cell: ({ row, isLoading }) => {
+          if (isLoading) {
+            return <RadioSkeleton />;
+          }
+
+          const { checked } = row.getToggleRowSelectedProps();
+
+          return (
+            <Radio
+              checked={checked}
+              onChange={(e) => {
+                e.stopPropagation();
+
+                toggleAllRowsSelected(false);
+                row.toggleRowSelected(true);
+                onRowSelect?.(row);
+              }}
+              size="sm"
+              styles={{ radio: { margin: '0 !important', cursor: 'pointer' } }}
+            />
+          );
+        },
+        width: 30,
+        maxWidth: 30,
+      };
+      hooks.visibleColumns.push((visibleColumns) => [selectionRow, ...visibleColumns]);
+    }
+  ) as unknown as UseTableProps<T>;
 
   useEffect(() => {
-    if (onPageChange) {
-      onPageChange(pageIndex);
-    }
-  }, [pageIndex]);
+    onPageChangeRef.current?.(pageIndex);
+  }, [onPageChangeRef, pageIndex]);
 
   const handlePageChange = (pageNumber) => {
-    gotoPage(pageNumber - 1);
+    if (pagination?.minimalPagination) {
+      onPageChange(pageNumber);
+    } else {
+      gotoPage(pageNumber - 1);
+    }
   };
   const getPageCount = () => {
     return Math.ceil(total / pageSize);
   };
 
-  const { classes, theme } = useStyles();
+  const { classes } = useStyles({ withSelection });
   const defaultDesign = { verticalSpacing: 'sm', horizontalSpacing: 'sm', highlightOnHover: true } as TableProps;
   const rows = pagination ? page : allRows;
   const noData = rows.length === 0;
 
   return (
-    <div style={{ position: 'relative', minHeight: 500, display: 'flex', flexDirection: 'column' }}>
-      <LoadingOverlay
-        visible={loading}
-        zIndex={1}
-        overlayColor={theme.colorScheme === 'dark' ? colors.B30 : colors.B98}
-        loaderProps={{
-          color: colors.error,
-        }}
-      />
-
+    <div style={{ position: 'relative', minHeight: 500, display: 'flex', flexDirection: 'column' }} data-table-holder>
       <MantineTable className={classes.root} {...defaultDesign} {...getTableProps()} {...props}>
         <thead>
           {headerGroups.map((headerGroup, i) => {
@@ -149,9 +196,15 @@ export function Table({
 
             return (
               <tr
-                onClick={() => (onRowClick ? onRowClick(row) : null)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!loading && onRowClick) {
+                    onRowClick(row);
+                  }
+                }}
                 {...row.getRowProps()}
                 className={classes.tableRow}
+                data-disabled={loading || !onRowClick}
               >
                 {row.cells.map((cell, i) => (
                   <td
@@ -162,7 +215,7 @@ export function Table({
                       },
                     })}
                   >
-                    {cell.render('Cell')}
+                    {cell.render('Cell', { isLoading: loading })}
                   </td>
                 ))}
               </tr>
@@ -171,7 +224,7 @@ export function Table({
         </tbody>
       </MantineTable>
       {!loading && noData && noDataPlaceholder && <NoDataPlaceholder>{noDataPlaceholder}</NoDataPlaceholder>}
-      {pagination && total > 0 && pageSize > 1 && getPageCount() > 1 && (
+      {!loading && pagination && total > 0 && pageSize > 1 && getPageCount() > 1 && !pagination?.minimalPagination && (
         <div style={{ marginTop: 'auto' }}>
           <Pagination
             styles={{
@@ -190,6 +243,36 @@ export function Table({
             onChange={handlePageChange}
             position="center"
           />
+        </div>
+      )}
+
+      {!loading && pagination && pageSize > 1 && pagination?.minimalPagination && (
+        <div
+          style={{
+            display: 'flex',
+            width: '100%',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: '15px',
+          }}
+        >
+          <Button.Group>
+            <Button
+              variant="outline"
+              disabled={pagination?.current === 0 || loading}
+              onClick={() => handlePageChange(pagination?.current - 1)}
+            >
+              <ChevronLeft />
+            </Button>
+            <Button
+              loading={loading}
+              variant="outline"
+              disabled={!pagination?.hasMore || loading}
+              onClick={() => handlePageChange(pagination?.current + 1)}
+            >
+              <ChevronRight />
+            </Button>
+          </Button.Group>
         </div>
       )}
     </div>

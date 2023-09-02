@@ -62,7 +62,7 @@ export const NotificationSettingsForm = ({ trigger }: { trigger?: INotificationT
 
   return (
     <>
-      <Grid gutter={0}>
+      <Grid gutter={0} mt={-8} mb={-8}>
         <Grid.Col span={6}>
           <Stack
             justify="center"
@@ -109,6 +109,7 @@ export const NotificationSettingsForm = ({ trigger }: { trigger?: INotificationT
           />
         </Grid.Col>
       </Grid>
+
       <Controller
         control={control}
         name="name"
@@ -136,7 +137,8 @@ export const NotificationSettingsForm = ({ trigger }: { trigger?: INotificationT
               data-test-id="trigger-id"
               value={field.value || ''}
               error={fieldState.error?.message}
-              label="Identifier"
+              label="Trigger identifier"
+              description={'Used to identify your workflow when triggering it via the API'}
               disabled={readonly}
               rightSection={
                 <Tooltip data-test-id={'Tooltip'} label={idClipboard.copied ? 'Copied!' : 'Copy Key'}>
@@ -164,6 +166,33 @@ export const NotificationSettingsForm = ({ trigger }: { trigger?: INotificationT
             placeholder="Describe your workflow..."
           />
         )}
+      />
+
+      <Controller
+        name="tags"
+        control={control}
+        render={({ field }) => {
+          return (
+            <>
+              <Select
+                {...field}
+                data-test-id="tagsSelector"
+                disabled={readonly}
+                creatable
+                label={'Tags'}
+                description={
+                  'Use tags to organize your workflows, e.g. to filter them when displaying user preferences in the notification center'
+                }
+                searchable
+                type={'multiselect'}
+                error={errors.tags?.message}
+                getCreateLabel={(tag) => <div data-test-id="submit-tags-btn">+ Create Tag {tag}</div>}
+                placeholder="Attach a tag to identify workflow"
+                data={(field.value || [])?.map((item) => ({ label: item, value: item })) || []}
+              />
+            </>
+          );
+        }}
       />
     </>
   );

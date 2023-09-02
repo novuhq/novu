@@ -1,7 +1,6 @@
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, ICredentials } from '@novu/shared';
 import { OneSignalPushProvider } from '@novu/one-signal';
 import { BasePushHandler } from './base.handler';
-import { ICredentials } from '@novu/dal';
 
 export class OneSignalHandler extends BasePushHandler {
   constructor() {

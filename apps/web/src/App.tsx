@@ -18,7 +18,7 @@ import LoginPage from './pages/auth/LoginPage';
 import SignUpPage from './pages/auth/SignUpPage';
 import HomePage from './pages/HomePage';
 import TemplateEditorPage from './pages/templates/editor/TemplateEditorPage';
-import NotificationList from './pages/templates/TemplatesListPage';
+import WorkflowListPage from './pages/templates/WorkflowListPage';
 import SubscribersList from './pages/subscribers/SubscribersListPage';
 import { SettingsPage } from './pages/settings/SettingsPage';
 import InvitationPage from './pages/auth/InvitationPage';
@@ -26,7 +26,6 @@ import { api } from './api/api.client';
 import { PasswordResetPage } from './pages/auth/PasswordResetPage';
 import { AppLayout } from './components/layout/AppLayout';
 import { MembersInvitePage } from './pages/invites/MembersInvitePage';
-import { IntegrationsStore } from './pages/integrations/IntegrationsStorePage';
 import CreateOrganizationPage from './pages/auth/CreateOrganizationPage';
 import { ENV, LAUNCH_DARKLY_CLIENT_SIDE_ID, SENTRY_DSN, CONTEXT_PATH, LOGROCKET_ID } from './config';
 import { PromoteChangesPage } from './pages/changes/PromoteChangesPage';
@@ -46,9 +45,22 @@ import { TemplateSettings } from './pages/templates/components/TemplateSettings'
 import { UserPreference } from './pages/templates/components/UserPreference';
 import { TestWorkflowPage } from './pages/templates/components/TestWorkflowPage';
 import { SnippetPage } from './pages/templates/components/SnippetPage';
-import { TemplateEditor } from './pages/templates/components/TemplateEditor';
+import { ChannelStepEditor } from './pages/templates/components/ChannelStepEditor';
 import { ProvidersPage } from './pages/templates/components/ProvidersPage';
 import { InAppSuccess } from './pages/quick-start/steps/InAppSuccess';
+import { IntegrationsListPage } from './pages/integrations/IntegrationsListPage';
+import { CreateProviderPage } from './pages/integrations/CreateProviderPage';
+import { UpdateProviderPage } from './pages/integrations/UpdateProviderPage';
+import { SelectProviderPage } from './pages/integrations/components/SelectProviderPage';
+import { TenantsPage } from './pages/tenants/TenantsPage';
+import { CreateTenantPage } from './pages/tenants/CreateTenantPage';
+import { UpdateTenantPage } from './pages/tenants/UpdateTenantPage';
+import { ApiKeysCard } from './pages/settings/tabs';
+import { EmailSettings } from './pages/settings/tabs/EmailSettings';
+import { ProductLead } from './components/utils/ProductLead';
+import { SSO, UserAccess } from './design-system/icons';
+import { Cloud } from './design-system/icons/general/Cloud';
+import { BrandingForm, LayoutsListPage } from './pages/brand/tabs';
 
 library.add(far, fas);
 
@@ -194,9 +206,13 @@ function App() {
                     <Route path="test-workflow" element={<TestWorkflowPage />} />
                     <Route path="snippet" element={<SnippetPage />} />
                     <Route path="providers" element={<ProvidersPage />} />
-                    <Route path=":channel/:stepUuid" element={<TemplateEditor />} />
+                    <Route path=":channel/:stepUuid" element={<ChannelStepEditor />} />
                   </Route>
-                  <Route path={ROUTES.WORKFLOWS} element={<NotificationList />} />
+                  <Route path={ROUTES.WORKFLOWS} element={<WorkflowListPage />} />
+                  <Route path={ROUTES.TENANTS} element={<TenantsPage />}>
+                    <Route path="create" element={<CreateTenantPage />} />
+                    <Route path=":identifier" element={<UpdateTenantPage />} />
+                  </Route>
                   <Route path={ROUTES.GET_STARTED} element={<GetStarted />} />
                   <Route path={ROUTES.GET_STARTED_PREVIEW} element={<DigestPreview />} />
                   <Route path={ROUTES.QUICK_START_NOTIFICATION_CENTER} element={<NotificationCenter />} />
@@ -204,12 +220,58 @@ function App() {
                   <Route path={ROUTES.QUICK_START_SETUP_FRAMEWORK} element={<Setup />} />
                   <Route path={ROUTES.QUICK_START_SETUP_SUCCESS} element={<InAppSuccess />} />
                   <Route path={ROUTES.ACTIVITIES} element={<ActivitiesPage />} />
-                  <Route path={ROUTES.SETTINGS} element={<SettingsPage />} />
-                  <Route path={ROUTES.INTEGRATIONS} element={<IntegrationsStore />} />
+                  <Route path={ROUTES.SETTINGS} element={<SettingsPage />}>
+                    <Route path="" element={<ApiKeysCard />} />
+                    <Route path="email" element={<EmailSettings />} />
+                    <Route
+                      path="permissions"
+                      element={
+                        <ProductLead
+                          icon={<UserAccess />}
+                          id="rbac-permissions"
+                          title="Role-based access control"
+                          text="Securely manage users' permissions to access system resources."
+                          closeable={false}
+                        />
+                      }
+                    />
+                    <Route
+                      path="sso"
+                      element={
+                        <ProductLead
+                          icon={<SSO />}
+                          id="sso-settings"
+                          title="Single Sign-On (SSO)"
+                          text="Simplify user authentication and enhance security."
+                          closeable={false}
+                        />
+                      }
+                    />
+                    <Route
+                      path="data-integrations"
+                      element={
+                        <ProductLead
+                          icon={<Cloud />}
+                          id="data-integrations-settings"
+                          title="Data Integrations"
+                          text="Share data with 3rd party services via Segment and Datadog integrations to monitor analytics."
+                          closeable={false}
+                        />
+                      }
+                    />
+                  </Route>
+                  <Route path={ROUTES.INTEGRATIONS} element={<IntegrationsListPage />}>
+                    <Route path="create" element={<SelectProviderPage />} />
+                    <Route path="create/:channel/:providerId" element={<CreateProviderPage />} />
+                    <Route path=":integrationId" element={<UpdateProviderPage />} />
+                  </Route>
                   <Route path={ROUTES.TEAM} element={<MembersInvitePage />} />
                   <Route path={ROUTES.CHANGES} element={<PromoteChangesPage />} />
                   <Route path={ROUTES.SUBSCRIBERS} element={<SubscribersList />} />
-                  <Route path="/brand" element={<BrandPage />} />
+                  <Route path={ROUTES.BRAND} element={<BrandPage />}>
+                    <Route path="" element={<BrandingForm />} />
+                    <Route path="layouts" element={<LayoutsListPage />} />
+                  </Route>
                 </Route>
               </Routes>
             </AuthProvider>

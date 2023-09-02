@@ -88,6 +88,7 @@ export class EnvironmentsController {
   async getMyEnvironments(@UserSession() user: IJwtPayload): Promise<EnvironmentResponseDto[]> {
     return await this.getMyEnvironmentsUsecase.execute(
       GetMyEnvironmentsCommand.create({
+        environmentId: user.environmentId,
         userId: user._id,
         organizationId: user.organizationId,
       })

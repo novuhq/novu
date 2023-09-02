@@ -6,6 +6,7 @@ import {
   SubscriberRepository,
   MessageEntity,
   IntegrationEntity,
+  TenantRepository,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -19,11 +20,11 @@ import {
   DetailEnum,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-  GetDecryptedIntegrations,
-  GetDecryptedIntegrationsCommand,
+  SelectIntegration,
   CompileTemplate,
   CompileTemplateCommand,
   PushFactory,
+  GetNovuProviderCredentials,
 } from '@novu/application-generic';
 import type { IPushOptions } from '@novu/stateless';
 
@@ -39,17 +40,21 @@ export class SendMessagePush extends SendMessageBase {
   constructor(
     protected subscriberRepository: SubscriberRepository,
     protected messageRepository: MessageRepository,
+    protected tenantRepository: TenantRepository,
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
-    protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
+    protected selectIntegration: SelectIntegration,
+    protected getNovuProviderCredentials: GetNovuProviderCredentials
   ) {
     super(
       messageRepository,
       createLogUsecase,
       createExecutionDetails,
       subscriberRepository,
-      getDecryptedIntegrationsUsecase
+      tenantRepository,
+      selectIntegration,
+      getNovuProviderCredentials
     );
   }
 
@@ -72,9 +77,12 @@ export class SendMessagePush extends SendMessageBase {
       events: command.events,
       total_count: command.events?.length,
     };
+    const tenant = await this.handleTenantExecution(command.job);
+
     const data = {
       subscriber: subscriber,
       step: stepData,
+      ...(tenant ? { tenant: { name: tenant.name, ...tenant.data } } : {}),
       ...command.payload,
     };
     let content = '';
@@ -130,17 +138,14 @@ export class SendMessagePush extends SendMessageBase {
         continue;
       }
 
-      const integration = await this.getIntegration(
-        GetDecryptedIntegrationsCommand.create({
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          channelType: ChannelTypeEnum.PUSH,
-          providerId: channel.providerId,
-          findOne: true,
-          active: true,
-          userId: command.userId,
-        })
-      );
+      const integration = await this.getIntegration({
+        id: channel._integrationId,
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        channelType: ChannelTypeEnum.PUSH,
+        providerId: channel.providerId,
+        userId: command.userId,
+      });
 
       if (!integration) {
         await this.createExecutionDetails.execute(
@@ -156,6 +161,8 @@ export class SendMessagePush extends SendMessageBase {
 
         continue;
       }
+
+      await this.sendSelectedIntegrationExecution(command.job, integration);
 
       const overrides = command.overrides[integration.providerId] || {};
 

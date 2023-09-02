@@ -76,7 +76,7 @@ export const SpotLight = ({ children }) => {
         icon: <Chat />,
       },
     ]);
-  }, []);
+  }, [navigate, addItem]);
 
   return (
     <SpotlightProvider limit={7} shortcut={['mod + K']} actions={items}>

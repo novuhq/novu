@@ -25,6 +25,9 @@ describe('GET /widget/preferences', function () {
 
     expect(data.preference.channels.email).to.equal(true);
     expect(data.preference.channels.in_app).to.equal(true);
+
+    expect(data.preference.overrides.find((sources) => sources.channel === 'email').source).to.equal('template');
+    expect(data.preference.overrides.find((sources) => sources.channel === 'email').source).to.equal('template');
   });
 
   it('should fetch according to template preferences defaults ', async function () {
@@ -38,6 +41,9 @@ describe('GET /widget/preferences', function () {
 
     expect(data.preference.channels.email).to.equal(true);
     expect(data.preference.channels.in_app).to.equal(false);
+
+    expect(data.preference.overrides.find((sources) => sources.channel === 'email').source).to.equal('template');
+    expect(data.preference.overrides.find((sources) => sources.channel === 'email').source).to.equal('template');
   });
 
   it('should fetch according to merged subscriber and template preferences ', async function () {
@@ -61,6 +67,18 @@ describe('GET /widget/preferences', function () {
 
     expect(data.preference.channels.email).to.equal(false);
     expect(data.preference.channels.in_app).to.equal(false);
+
+    expect(data.preference.overrides.find((sources) => sources.channel === 'email').source).to.equal('subscriber');
+    expect(data.preference.overrides.find((sources) => sources.channel === 'in_app').source).to.equal('template');
+  });
+
+  it('should filter not active channels and sources', async function () {
+    const response = await getSubscriberPreference(session.subscriberToken);
+
+    const data = response.data.data[0];
+
+    expect(Object.keys(data.preference.channels).length).to.equal(2);
+    expect(data.preference.overrides.length).to.equal(2);
   });
 });
 

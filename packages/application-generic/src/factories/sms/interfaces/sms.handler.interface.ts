@@ -3,8 +3,7 @@ import {
   ISmsOptions,
   ISmsProvider,
 } from '@novu/stateless';
-import { ICredentials } from '@novu/dal';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, ICredentials } from '@novu/shared';
 
 export interface ISmsHandler {
   canHandle(providerId: string, channelType: ChannelTypeEnum);

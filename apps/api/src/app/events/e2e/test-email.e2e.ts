@@ -38,9 +38,9 @@ describe('Events - Test email - /v1/events/test/email (POST)', function () {
   const deleteEmailIntegration = async () => {
     const emailIntegration = await integrationRepository.findOne({
       channel: ChannelTypeEnum.EMAIL,
-      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
     });
-    await integrationRepository.delete({ _id: emailIntegration._id, _environmentId: session.environment._id });
+    await integrationRepository.delete({ _id: emailIntegration._id, _organizationId: session.organization._id });
   };
 
   const deactivateEmailIntegration = async () => {

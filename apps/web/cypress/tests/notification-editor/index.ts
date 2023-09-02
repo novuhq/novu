@@ -1,4 +1,4 @@
-type Channel = 'inApp' | 'email' | 'sms' | 'digest';
+type Channel = 'inApp' | 'email' | 'sms' | 'digest' | 'delay';
 
 export function addAndEditChannel(channel: Channel) {
   cy.waitForNetworkIdle(500);
@@ -26,6 +26,7 @@ export function goBack() {
 }
 
 export function fillBasicNotificationDetails(title?: string) {
+  cy.waitForNetworkIdle(500);
   cy.getByTestId('settings-page').click();
   cy.getByTestId('title')
     .first()

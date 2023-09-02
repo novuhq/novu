@@ -25,11 +25,30 @@ const DESCRIPTION = [
 const TooltipHolder = styled.div`
   display: flex;
   flex-direction: column;
-  width: 300px;
-  padding: 32px;
+  padding: 20px;
+  width: 280px;
   background-color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B30 : colors.B98)};
   filter: drop-shadow(0px 5px 20px rgba(0, 0, 0, 0.1));
   border-radius: 8px;
+
+  [data-tooltip-icon] {
+    width: 80px;
+    height: 80px;
+    align-self: center;
+    margin-top: 20px;
+    margin-bottom: 20px;
+  }
+
+  @media screen and (min-width: 1440px) {
+    padding: 32px;
+
+    [data-tooltip-icon] {
+      width: 120px;
+      height: 120px;
+      margin-top: 40px;
+      margin-bottom: 40px;
+    }
+  }
 `;
 
 const Title = styled.p`
@@ -116,7 +135,7 @@ export const DigestWorkflowTourTooltip = ({
 
   return (
     <TooltipHolder ref={tooltipProps.ref} data-test-id="digest-workflow-tooltip">
-      <Icon width={120} height={120} style={{ alignSelf: 'center', marginTop: '40px', marginBottom: '40px' }} />
+      <Icon data-tooltip-icon />
       <Title>{TITLE[index]}</Title>
       <Description>{DESCRIPTION[index]}</Description>
       <ButtonsHolder>

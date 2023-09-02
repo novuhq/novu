@@ -30,7 +30,7 @@ export class OrganizationService {
     });
   }
 
-  async getOrganization(organizationId: any) {
+  async getOrganization(organizationId: string) {
     return await this.organizationRepository.findOne({
       _id: organizationId,
     });

@@ -1,6 +1,6 @@
 {
   "name": "@novu/embed",
-  "version": "0.16.3",
+  "version": "0.19.0",
   "private": true,
   "description": "",
   "keywords": [],
@@ -53,11 +53,6 @@
       "prettier --ignore-path .eslintignore --single-quote --write"
     ]
   },
-  "config": {
-    "commitizen": {
-      "path": "node_modules/cz-conventional-changelog"
-    }
-  },
   "jest": {
     "transform": {
       ".(ts|tsx)": "ts-jest"
@@ -98,16 +93,13 @@
     "@types/jest": "29.5.2",
     "@types/node": "^14.14.16",
     "colors": "1.4.0",
-    "commitizen": "^3.0.0",
     "concurrently": "^5.3.0",
     "coveralls": "^3.0.2",
     "cross-env": "^5.2.0",
-    "cz-conventional-changelog": "^2.1.0",
     "http-server": "^0.13.0",
     "husky": "^1.0.1",
     "jest": "^27.0.6",
     "jest-config": "^27.4.7",
-    "lint-staged": "^8.0.0",
     "lodash.camelcase": "^4.3.0",
     "prettier": "~2.8.0",
     "prompt": "^1.0.0",
@@ -128,7 +120,7 @@
     "typescript": "4.9.5"
   },
   "dependencies": {
-    "@novu/notification-center": "^0.16.3",
+    "@novu/notification-center": "^0.19.0",
     "@types/iframe-resizer": "^3.5.8",
     "iframe-resizer": "^4.3.1"
   }

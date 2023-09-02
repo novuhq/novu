@@ -21,6 +21,7 @@ import {
   SubscriberPreferenceRepository,
   TopicRepository,
   TopicSubscribersRepository,
+  TenantRepository,
 } from '@novu/dal';
 import {
   InMemoryProviderService,
@@ -35,8 +36,10 @@ import {
   StorageService,
   WsQueueService,
   DistributedLockService,
-  PerformanceService,
   TriggerQueueService,
+  GetFeatureFlag,
+  LaunchDarklyService,
+  FeatureFlagsService,
 } from '@novu/application-generic';
 
 import * as packageJson from '../../../package.json';
@@ -62,6 +65,7 @@ const DAL_MODELS = [
   SubscriberPreferenceRepository,
   TopicRepository,
   TopicSubscribersRepository,
+  TenantRepository,
 ];
 
 function getStorageServiceClass() {
@@ -77,10 +81,43 @@ function getStorageServiceClass() {
 
 const dalService = new DalService();
 
+const launchDarklyService = {
+  provide: LaunchDarklyService,
+  useFactory: (): LaunchDarklyService => {
+    const service = new LaunchDarklyService();
+
+    return service;
+  },
+};
+
+const featureFlagsService = {
+  provide: FeatureFlagsService,
+  useFactory: async (): Promise<FeatureFlagsService> => {
+    const instance = new FeatureFlagsService();
+
+    await instance.service.initialize();
+
+    return instance;
+  },
+};
+
+const getFeatureFlagUseCase = {
+  provide: GetFeatureFlag,
+  useFactory: async (): Promise<GetFeatureFlag> => {
+    const featureFlagsServiceFactory = await featureFlagsService.useFactory();
+    const getFeatureFlag = new GetFeatureFlag(featureFlagsServiceFactory);
+
+    return getFeatureFlag;
+  },
+};
+
 const inMemoryProviderService = {
   provide: InMemoryProviderService,
-  useFactory: (enableAutoPipelining?: boolean) => {
-    return new InMemoryProviderService(enableAutoPipelining);
+  useFactory: (enableAutoPipelining?: boolean): InMemoryProviderService => {
+    const inMemoryProvider = new InMemoryProviderService(enableAutoPipelining);
+    inMemoryProvider.initialize();
+
+    return inMemoryProvider;
   },
 };
 
@@ -105,9 +142,12 @@ const distributedLockService = {
 };
 
 const PROVIDERS = [
+  launchDarklyService,
+  featureFlagsService,
+  getFeatureFlagUseCase,
+  inMemoryProviderService,
   cacheService,
   distributedLockService,
-  inMemoryProviderService,
   {
     provide: WsQueueService,
     useClass: WsQueueService,
@@ -118,12 +158,6 @@ const PROVIDERS = [
       await dalService.connect(process.env.MONGO_URL);
 
       return dalService;
-    },
-  },
-  {
-    provide: PerformanceService,
-    useFactory: () => {
-      return new PerformanceService();
     },
   },
   InvalidateCacheService,
@@ -143,6 +177,7 @@ const PROVIDERS = [
     },
   },
   TriggerQueueService,
+  ...DAL_MODELS,
 ];
 
 @Module({

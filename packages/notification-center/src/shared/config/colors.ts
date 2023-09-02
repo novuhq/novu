@@ -16,6 +16,7 @@ export const colors = {
   error: '#E54545',
   vertical: 'linear-gradient(0deg,#FF512F 0%,#DD2476 100%)',
   horizontal: 'linear-gradient(99deg,#DD2476 0% 0%,#FF512F 100% 100%)',
+  loader: '#ef3f5a',
 };
 
 export declare type ColorScheme = 'light' | 'dark';

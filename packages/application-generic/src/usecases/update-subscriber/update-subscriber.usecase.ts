@@ -32,7 +32,8 @@ export class UpdateSubscriber {
     }
 
     const updatePayload: Partial<SubscriberEntity> = {};
-    if (command.email != null) {
+
+    if (command.email !== undefined) {
       updatePayload.email = command.email;
     }
 
@@ -78,7 +79,9 @@ export class UpdateSubscriber {
         _environmentId: command.environmentId,
         _id: foundSubscriber._id,
       },
-      { $set: updatePayload }
+      {
+        $set: updatePayload,
+      }
     );
 
     return {

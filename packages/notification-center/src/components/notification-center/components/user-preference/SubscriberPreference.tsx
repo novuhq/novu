@@ -1,13 +1,13 @@
-import React, { useLayoutEffect } from 'react';
+import React, { useEffect, useLayoutEffect } from 'react';
 import { Accordion, ScrollArea } from '@mantine/core';
 import { css, cx } from '@emotion/css';
 
-import { useNovuTheme, useFetchUserPreferences, useNovuContext } from '../../../../hooks';
+import { useNovuTheme, useFetchUserPreferences, useNovuContext, useNotificationCenter } from '../../../../hooks';
 import { accordionStyles } from './styles';
-import image from '../../../../images/no-settings.png';
 import { useStyles } from '../../../../store/styles';
 import { UserPreferenceItem } from './UserPreferenceItem';
 import { Loader } from '../Loader';
+import { NoSettings } from '../../../../images/NoSettings';
 
 const rootClassName = css`
   padding: 15px;
@@ -17,13 +17,19 @@ export function SubscriberPreference() {
   const { setFetchingStrategy } = useNovuContext();
   const { theme, common } = useNovuTheme();
   const { data, isLoading: arePreferencesLoading } = useFetchUserPreferences();
+  const { preferenceFilter } = useNotificationCenter();
   const [rootStyles, accordionItemStyles, accordionContentStyles, accordionControlStyles, accordionChevronStyles] =
     useStyles(['preferences.root', 'accordion.item', 'accordion.content', 'accordion.control', 'accordion.chevron']);
 
   const baseTheme = theme?.userPreferences;
-  const preferences = data
+  let preferences = data
     ?.filter((item) => !item.template.critical)
     ?.filter((pref) => Object.keys(pref.preference.channels).length > 0);
+
+  if (preferenceFilter && preferences) {
+    preferences = preferences.filter((pref) => preferenceFilter(pref));
+  }
+
   const styles = accordionStyles(baseTheme, common.fontFamily);
   const accordionClassNames: Record<'item' | 'content' | 'control' | 'chevron', string> = {
     item: css(accordionItemStyles),
@@ -51,7 +57,7 @@ export function SubscriberPreference() {
             justifyContent: 'center',
           }}
         >
-          <img src={image as any} alt="logo" style={{ maxWidth: 300 }} />
+          <NoSettings style={{ maxWidth: 300 }} />
         </div>
       ) : (
         <ScrollArea style={{ height: 400 }}>
