@@ -55,6 +55,8 @@ export class APNSPushProvider implements IPushProvider {
       );
     }
 
+    this.provider.shutdown();
+
     return {
       ids: res.sent?.map((response) => response.device),
       date: new Date().toISOString(),
