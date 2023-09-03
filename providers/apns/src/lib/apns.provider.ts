@@ -4,7 +4,7 @@ import {
   IPushProvider,
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
-import apn from 'node-apn';
+import apn from '@parse/node-apn';
 
 export class APNSPushProvider implements IPushProvider {
   id = 'apns';
