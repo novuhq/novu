@@ -106,7 +106,7 @@ export const ProductLead = ({
             mt={variant === ProductLeadVariants.DEFAULT ? 16 : undefined}
             onClick={() => {
               segment.track('Scheduled call clicked - [Product lead]', {
-                id,
+                feature: id,
               });
               window.open(
                 `https://calendly.com/novuhq/novu-meeting?full_name=${currentUser?.firstName}&email=${
@@ -126,7 +126,7 @@ export const ProductLead = ({
               onClick={() => {
                 setOpen(false);
                 segment.track('Banner hidden - [Product lead]', {
-                  id,
+                  feature: id,
                 });
               }}
             >
