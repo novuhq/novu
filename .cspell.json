@@ -423,6 +423,7 @@
     "stddev",
     "shortid",
     "upsert",
+    "upserted",
     "cond",
     "redismaster",
     "appendonly",
@@ -497,7 +498,8 @@
     "reactjs",
     "nextjs",
     "vanillajs",
-    "quckstart"
+    "quckstart",
+    "errmsg"
   ],
   "flagWords": [],
   "patterns": [

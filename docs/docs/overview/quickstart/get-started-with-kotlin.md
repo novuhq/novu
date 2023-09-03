@@ -1,6 +1,6 @@
 ---
 sidebar_position: 9
-sidebar_label: Get started with Kotlin
+sidebar_label: Kotlin
 ---
 
 # Kotlin Quickstart
@@ -9,12 +9,18 @@ Learn how to integrate Novu into your Kotlin project on the fly and send notific
 
 In this Quickstart, you will learn how to:
 
-- [Install and Set up the Novu Kotlin SDK.](#install-and-set-up-the-novu-kotlin-sdk-in-your-project)
-- [Configure a Notification Channel Provider.](#set-up-a-channel-provider)
-- [Set up a Notification Workflow.](#create-a-notification-workflow)
-- [Create a Subscriber and update a Subscriber's information.](#create-a-subscriber-and-update-a-subscribers-information)
-- [Send your first Notification to a Subscriber.](#trigger-a-notification)
-- [Send Notifications via Topics.](#topics)
+- [Kotlin Quickstart](#kotlin-quickstart)
+  - [Requirements](#requirements)
+  - [Install and Set up the Novu Kotlin SDK in your project](#install-and-set-up-the-novu-kotlin-sdk-in-your-project)
+  - [Set up a Channel Provider](#set-up-a-channel-provider)
+  - [Create a Notification Workflow](#create-a-notification-workflow)
+  - [Create a Subscriber and Update a Subscriber's information](#create-a-subscriber-and-update-a-subscribers-information)
+  - [Trigger a Notification](#trigger-a-notification)
+  - [Topics](#topics)
+    - [Create a Topic](#create-a-topic)
+    - [Add subscribers to a Topic](#add-subscribers-to-a-topic)
+    - [Sending a Notification to a Topic](#sending-a-notification-to-a-topic)
+  - [Next Steps](#next-steps)
 
 Let's get started! :muscle:
 

@@ -173,8 +173,8 @@ export class InMemoryProviderService {
           });
         } catch (e) {
           Logger.error(
-            'Connecting to cluster executing intervals has failed',
             e,
+            'Connecting to cluster executing intervals has failed',
             LOG_CONTEXT
           );
         }
@@ -202,8 +202,8 @@ export class InMemoryProviderService {
 
       inMemoryProviderClient.on('error', (error) => {
         Logger.error(
-          'There has been an error in the InMemory Cluster provider client',
           error,
+          'There has been an error in the InMemory Cluster provider client',
           LOG_CONTEXT
         );
       });
@@ -252,8 +252,8 @@ export class InMemoryProviderService {
 
       inMemoryProviderClient.on('error', (error) => {
         Logger.error(
-          'There has been an error in the InMemory provider client',
           error,
+          'There has been an error in the InMemory provider client',
           LOG_CONTEXT
         );
       });

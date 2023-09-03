@@ -4,6 +4,7 @@ import {
   ISubscriberPayload,
   ButtonTypeEnum,
   MessageActionStatusEnum,
+  ISubscribersDefine,
 } from '@novu/shared';
 
 export { ISubscriberPayload, ButtonTypeEnum, MessageActionStatusEnum };
@@ -12,6 +13,7 @@ export interface ISubscribers {
   list(page: number, limit: number);
   get(subscriberId: string);
   identify(subscriberId: string, data: ISubscriberPayload);
+  bulkCreate(subscribers: ISubscribersDefine[]);
   update(subscriberId: string, data: ISubscriberPayload);
   delete(subscriberId: string);
   setCredentials(

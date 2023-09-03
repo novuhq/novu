@@ -1,6 +1,6 @@
 ---
 sidebar_position: 7
-sidebar_label: Get started with Node.js
+sidebar_label: Node.js
 ---
 
 # Node.js Quickstart

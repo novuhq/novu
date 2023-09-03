@@ -59,17 +59,32 @@ export class AddJob {
       job.type === StepTypeEnum.DIGEST
         ? await this.addDigestJob.execute(AddDigestJobCommand.create({ job }))
         : undefined;
-    Logger.debug(`DigestAmount is: ${digestAmount}`, LOG_CONTEXT);
+
+    if (job.type === StepTypeEnum.DIGEST) {
+      Logger.debug(`DigestAmount is: ${digestAmount}`, LOG_CONTEXT);
+    }
+
+    if (job.type === StepTypeEnum.DIGEST && digestAmount === undefined) {
+      Logger.warn(
+        `Digest Amount does not exist on a digest job ${job._id}`,
+        LOG_CONTEXT
+      );
+
+      return;
+    }
 
     const delayAmount =
       job.type === StepTypeEnum.DELAY
         ? await this.addDelayJob.execute(command)
         : undefined;
-    Logger.debug(`DelayAmount is: ${delayAmount}`, LOG_CONTEXT);
 
-    if (job.type === StepTypeEnum.DIGEST && digestAmount === undefined) {
+    if (job.type === StepTypeEnum.DELAY) {
+      Logger.debug(`Delay Amount is: ${delayAmount}`, LOG_CONTEXT);
+    }
+
+    if (job.type === StepTypeEnum.DELAY && delayAmount === undefined) {
       Logger.warn(
-        `Digest Amount does not exist on a digest job ${job._id}`,
+        `Delay Amount does not exist on a delay job ${job._id}`,
         LOG_CONTEXT
       );
 
@@ -88,9 +103,6 @@ export class AddJob {
       );
     }
 
-    const delay = digestAmount ?? delayAmount;
-    Logger.debug('Delay is: ' + delay, LOG_CONTEXT);
-
     this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
@@ -102,12 +114,7 @@ export class AddJob {
       })
     );
 
-    if (delay === null) {
-      Logger.warn(
-        'Variable delay is null which is not apart of the definition',
-        LOG_CONTEXT
-      );
-    }
+    const delay = digestAmount ?? delayAmount;
 
     Logger.verbose(`Adding Job ${job._id} to Queue`, LOG_CONTEXT);
     const stepContainsWebhookFilter = this.stepContainsFilter(job, 'webhook');
@@ -136,14 +143,21 @@ export class AddJob {
     );
 
     if (delay) {
-      Logger.verbose(
-        'Delay is active, Creating execution details',
-        LOG_CONTEXT
-      );
+      const logMessage =
+        job.type === StepTypeEnum.DELAY
+          ? 'Delay is active, Creating execution details'
+          : job.type === StepTypeEnum.DIGEST
+          ? 'Digest is active, Creating execution details'
+          : 'Unexpected job type, Creating execution details';
+
+      Logger.verbose(logMessage, LOG_CONTEXT);
       this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
-          detail: DetailEnum.STEP_DELAYED,
+          detail:
+            job.type === StepTypeEnum.DELAY
+              ? DetailEnum.STEP_DELAYED
+              : DetailEnum.STEP_DIGESTED,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.PENDING,
           isTest: false,

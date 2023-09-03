@@ -4,6 +4,7 @@ import type { ILayoutEntity } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
 
 import { deleteLayoutById } from '../../../api/layouts';
 import { QueryKeys } from '../../../api/query.keys';
@@ -21,11 +22,12 @@ const enum ActivePageEnum {
   EDIT_LAYOUT = 'edit_layout',
   CREATE_LAYOUT = 'create_layout',
 }
-type LayoutsListPageProps = {
+type LayoutsListPageContext = {
   handleLayoutAnalytics: (event: string, data?: Record<string, unknown>) => void;
 };
 
-export function LayoutsListPage({ handleLayoutAnalytics }: LayoutsListPageProps) {
+export function LayoutsListPage() {
+  const { handleLayoutAnalytics } = useOutletContext<LayoutsListPageContext>();
   const theme = useMantineTheme();
   const queryClient = useQueryClient();
   const { readonly } = useEnvController();
@@ -88,6 +90,9 @@ export function LayoutsListPage({ handleLayoutAnalytics }: LayoutsListPageProps)
         <Tooltip label={original.name}>
           <div>
             <Text rows={1}>{original.name}</Text>
+            <Text rows={1} size="xs" color={colors.B40}>
+              {original.identifier}
+            </Text>
           </div>
         </Tooltip>
       )),
