@@ -16,7 +16,7 @@ To find your Telnyx API key:
 - You can copy API key from there.
 - Alternatively, you can create an API key by tapping on the Create API Key button.
 
-Before copying it, make sure it's status is showing active.
+Before copying it, make sure its status is showing active.
 
 ## Find the Message profile ID
 
