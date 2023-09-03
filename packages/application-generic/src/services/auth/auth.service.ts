@@ -115,56 +115,11 @@ export class AuthService {
         origin: origin,
       });
     } else {
-      if (authProvider === AuthProviderEnum.GITHUB) {
-        const withoutUsername = user.tokens.find(
-          (i) =>
-            i.provider === AuthProviderEnum.GITHUB &&
-            !i.username &&
-            String(i.providerId) === String(profile.id)
-        );
-
-        if (withoutUsername) {
-          await this.userRepository.update(
-            {
-              _id: user._id,
-              'tokens.providerId': profile.id,
-            },
-            {
-              $set: {
-                'tokens.$.username': profile.login,
-              },
-            }
-          );
-
-          user = await this.userRepository.findById(user._id);
-          if (!user) throw new ApiException('User not found');
-        }
-      }
-
-      if (authProvider === AuthProviderEnum.GOOGLE) {
-        const withoutUsername = user.tokens.find(
-          (token) =>
-            token.provider === AuthProviderEnum.GOOGLE &&
-            !token.username &&
-            String(token.providerId) === String(profile.id)
-        );
-
-        if (withoutUsername) {
-          await this.userRepository.update(
-            {
-              _id: user._id,
-              'tokens.providerId': profile.id,
-            },
-            {
-              $set: {
-                'tokens.$.username': profile.login,
-              },
-            }
-          );
-
-          user = await this.userRepository.findById(user._id);
-          if (!user) throw new ApiException('User not found');
-        }
+      if (
+        authProvider === AuthProviderEnum.GITHUB ||
+        authProvider === AuthProviderEnum.GOOGLE
+      ) {
+        user = await this.updateUserUsername(user, profile, authProvider);
       }
 
       this.analyticsService.track('[Authentication] - Login', user._id, {
@@ -178,6 +133,44 @@ export class AuthService {
       newUser,
       token: await this.generateUserToken(user),
     };
+  }
+
+  private async updateUserUsername(
+    user: UserEntity,
+    profile: {
+      name: string;
+      login: string;
+      email: string;
+      avatar_url: string;
+      id: string;
+    },
+    authProvider: AuthProviderEnum
+  ) {
+    const withoutUsername = user.tokens.find(
+      (token) =>
+        token.provider === authProvider &&
+        !token.username &&
+        String(token.providerId) === String(profile.id)
+    );
+
+    if (withoutUsername) {
+      await this.userRepository.update(
+        {
+          _id: user._id,
+          'tokens.providerId': profile.id,
+        },
+        {
+          $set: {
+            'tokens.$.username': profile.login,
+          },
+        }
+      );
+
+      user = await this.userRepository.findById(user._id);
+      if (!user) throw new ApiException('User not found');
+    }
+
+    return user;
   }
 
   async refreshToken(userId: string) {
