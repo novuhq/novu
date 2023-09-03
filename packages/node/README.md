@@ -29,8 +29,7 @@ The ultimate service for managing multi-channel notifications with a single API.
     ·
     <a href="https://twitter.com/novuhq">Twitter</a>
     ·
-    <a href="https://notifications.directory">Notifications Directory</a>
-    .
+    <a href="https://notifications.directory">Notifications Directory</a>.
     <a href="https://novu.co/blog">Read our blog</a>
   </p>
 
@@ -146,11 +145,11 @@ Novu provides a single API to manage providers across multiple channels with a s
 - Workflows
 - [Notification Groups](#notification-groups)
 - [Topics](#topics)
-- Feeds
-- Tenants
+- [Feeds](#feeds)
+- [Tenants](#tenants)
 - [Messages](#messages)
-- Changes
-- Environments
+- [Changes](#changes)
+- [Environments](#environments)
 - [Layouts](#layouts)
 - [Integrations](#integrations)
 
@@ -533,9 +532,24 @@ await novu.subscribers.trigger("workflowIdentifier", {
 });
 ```
 
+- #### Trigger to a topic
+```ts
+import { Novu, TriggerRecipientsTypeEnum } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.events.trigger("workflowIdentifier", {
+  to: {
+    type: TriggerRecipientsTypeEnum.TOPIC;
+    topicKey: TopicKey;
+  }
+})
+```
+
 - #### Bulk trigger multiple workflows to multiple subscribers
 
 There is a limit of 100 items in the array of bulkTrigger.
+
 ```ts
 import { Novu } from '@novu/node';
 
@@ -633,7 +647,7 @@ const params = {
 await novu.messages.list(params)
 ```
 
-- #### Delete a message by messageId
+- #### Delete a message by `messageId`
 
 ```ts
 import { Novu, ChannelTypeEnum } from '@novu/node';
@@ -695,7 +709,7 @@ const payloadToUpdate = {
 await novu.layouts.update("layoutId", payloadToUpdate);
 ```
 
-- #### Set a layout as default
+- #### Set a layout as the default layout
 
 ```ts
 import { Novu } from '@novu/node';
@@ -705,7 +719,7 @@ const novu = new Novu('<NOVU_API_KEY>');
 await novu.layouts.setDefault("layoutId");
 ```
 
-- #### Get a layout by layoutId
+- #### Get a layout by `layoutId`
 
 ```ts
 import { Novu } from '@novu/node';
@@ -715,7 +729,7 @@ const novu = new Novu('<NOVU_API_KEY>');
 await novu.layouts.get("layoutId");
 ```
 
-- #### Delete a layout by layoutId
+- #### Delete a layout by `layoutId`
 
 ```ts
 import { Novu } from '@novu/node';
@@ -744,53 +758,24 @@ await novu.layouts.list(params);
 
 ### Notification Groups
 
-- #### Create a new notification group
-
 ```ts
 import { Novu } from '@novu/node';
 
 const novu = new Novu('<NOVU_API_KEY>');
 
-const notificationGroupName = "Product Updates"
+// create a new notification group
+await novu.notificationGroups.create("Product Updates")
 
-await novu.notificationGroups.create(notificationGroupName)
-```
-
-- #### Update a notification group
-```ts
-import { Novu } from '@novu/node';
-
-const novu = new Novu('<NOVU_API_KEY>');
-
+// update an exisiting notification group
 await novu.notificationGroups.update("notificationGroupId", { name: "Changelog Updates"})
-```
 
-- #### List all notification groups
-```ts
-import { Novu } from '@novu/node';
-
-const novu = new Novu('<NOVU_API_KEY>');
-
+// list all notification groups
 await novu.notificationGroups.get()
-```
 
-- #### Get one notification group
-
-```ts
-import { Novu } from '@novu/node';
-
-const novu = new Novu('<NOVU_API_KEY>');
-
+// get one exisiting notification group
 await novu.notificationGroups.getOne("notificationGroupId")
-```
 
-- #### Delete a notification group
-
-```ts
-import { Novu } from '@novu/node';
-
-const novu = new Novu('<NOVU_API_KEY>');
-
+// delete an existing notification group
 await novu.notificationGroups.delete("notificationGroupId")
 ```
 
@@ -882,4 +867,220 @@ await novu.integrations.delete("integrationId")
 
 // get novu in-app status
 await novu.integrations.getInAppStatus()
+```
+
+### Feeds
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+// create new in-app feed
+await novu.feeds.create("Product Updates")
+
+/**
+ * get all in-app feeds 
+ * feeds methods returns only feed information
+ * use subscriber.notificationsFeed() for in-app messages
+ */
+await novu.feeds.get()
+
+// delete a feed
+await novu.feeds.delete("feedId")
+```
+
+### Changes
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+// get all changes
+await novu.changes.get()
+
+// get changes count
+await novu.changes.getCount()
+
+// apply only one change
+await novu.changes.applyOne("changeId")
+
+// apply many changes
+await novu.changes.applyMany(["changeId1", "changeId2"])
+```
+
+### Environments
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+// get current environmet
+await novu.environmets.getCurrent()
+
+// create new environment
+await novu.environmets.create({
+  name: "Stagging"
+  parentId: "parentEnvironmentId"
+})
+
+// get all environmemts
+await novu.environmets.getAll()
+
+// update one environment
+await novu.environmets.updateOne("environmentId", {
+  name: "Stagging" // optional
+  parentId: "parentEnvironmentId", // optional
+  identifier: "environmentIdentifier" // optional
+})
+
+// get api keys of environmet
+await novu.environmets.getApiKeys()
+
+// regenrate api keys
+await novu.environmets.regenerateApiKeys()
+```
+
+### Tenants
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+// create new tenat
+await novu.tenants.create("tenantIdentifier", {
+  name: "First Tenant",
+  // optional
+  data: {
+    country: "US",
+    tokens: ["token1", "token2"],
+    isDeveloperTenant : true,
+    numberOfMembers: 2,
+    isSales : undefined
+  }
+})
+
+// update existing tenant
+await novu.tenants.update("tenantIdentifier", {
+  identifier: "tenantIdentifier1",
+  name: "Second Tenant",
+  // optional
+  data: {
+    country: "India",
+    tokens: ["token1", "token2"],
+    isDeveloperTenant : true,
+    numberOfMembers: 2,
+    isSales : undefined
+  }
+})
+
+// list all tenants
+await novu.tenants.list({
+  page: 0, // optional
+  limit: 20 // optional
+})
+
+// delete a tenant
+await novu.tenants.delete("tenantIdentifier")
+
+// get one tenant
+await novu.tenants.get("tenantIdentifier")
+```
+
+### Workflows
+
+- #### Create a new workflow
+
+```ts
+import { Novu, TemplateVariableTypeEnum, FilterPartTypeEnum, StepTypeEnum } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+// List all workflow groups
+const { data: workflowGroupsData } = await novu.notificationGroups.get();
+
+// Create a new workflow
+await novu.notificationTemplates.create({
+  name: 'Onboarding Workflow',
+  // taking first workflow group id
+  notificationGroupId: workflowGroupsData.data[0]._id,
+  steps: [
+    // Adding one chat step
+    {
+      active: true,
+      shouldStopOnFail: false,
+      // UUID is optional.
+      uuid: '78ab8c72-46de-49e4-8464-257085960f9e',
+      name: 'Chat',
+      filters: [
+        {
+          value: 'AND',
+          children: [
+            {
+              field: '{{chatContent}}',
+              value: 'flag',
+              operator: 'NOT_IN',
+              // 'payload'
+              on: FilterPartTypeEnum.PAYLOAD,
+            },
+          ],
+        },
+      ],
+      template: {
+        // 'chat'
+        type: StepTypeEnum.CHAT,
+        active: true,
+        subject: '',
+        variables: [
+          {
+            name: 'chatContent',
+            // 'String'
+            type: TemplateVariableTypeEnum.STRING,
+            required: true,
+          },
+        ],
+        content: '{{chatContent}}',
+        contentType: 'editor',
+      },
+    },
+  ],
+  description: 'Onboarding workflow to trigger after user sign up',
+  active: true,
+  draft: false,
+  critical: false,
+});
+```
+
+- #### Other Methods
+
+```ts
+import { Novu, TemplateVariableTypeEnum, FilterPartTypeEnum, StepTypeEnum } from '@novu/node';
+
+// update a workflow
+
+await novu.notificationTemplates.update("workflowId", {
+  name: "Send daily digest email update",
+  description: "This workflow will send daily digest email to user at 9:00 AM"
+  /**
+   * all other fields from create workflow payload
+   */
+})
+
+// get one workflow
+await novu.notificationTemplates.getOne("workflowId")
+
+// delete one workflow
+await novu.notificationTemplates.delete("workflowId")
+
+// update status of one workflow
+await novu.notificationTemplates.updateStatus("workflowId", false)
+
+// list all workflows
+await novu.notificationTemplates.getAll({
+  page: 0, // optional
+  limit: 20 // optional
+})
 ```
