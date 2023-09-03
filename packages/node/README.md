@@ -142,7 +142,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 - [Subscribers](#subscribers)
 - [Events](#events)
-- Workflows
+- [Workflows](#workflows)
 - [Notification Groups](#notification-groups)
 - [Topics](#topics)
 - [Feeds](#feeds)
