@@ -154,6 +154,10 @@ export class WidgetsController {
   ): Promise<UnseenCountResponse> {
     const feedsQuery = this.toArray(feedId);
 
+    if (read === undefined) {
+      read = false;
+    }
+
     const command = GetFeedCountCommand.create({
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession.subscriberId,
