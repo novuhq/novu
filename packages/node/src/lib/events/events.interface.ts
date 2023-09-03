@@ -25,7 +25,7 @@ export interface ITriggerPayloadOptions extends IBroadcastPayloadOptions {
   transactionId?: string;
 }
 export interface IIntegrationOverride {
-  integrationIdentifier: string;
+  integrationIdentifier?: string;
 }
 export interface IEmailOverrides extends IIntegrationOverride {
   to?: string[];

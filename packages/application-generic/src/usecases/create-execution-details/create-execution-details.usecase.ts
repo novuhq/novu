@@ -21,7 +21,8 @@ export class CreateExecutionDetails {
     entity = this.cleanFromNulls(entity);
 
     const { _id, createdAt } = await this.executionDetailsRepository.create(
-      entity
+      entity,
+      { writeConcern: 1 }
     );
 
     if (command.status === ExecutionDetailsStatusEnum.FAILED) {

@@ -92,14 +92,13 @@
     "@typescript-eslint/parser": "^5.50.0",
     "auto": "^10.36.5",
     "chalk": "4.1.2",
-    "cross-spawn": "^7.0.3",
     "chalk-animation": "^1.6.0",
-    "commitizen": "^4.2.4",
+    "commitizen": "^4.3.0",
     "cpx": "^1.5.0",
     "cross-env": "^7.0.3",
+    "cross-spawn": "^7.0.3",
     "cspell": "^6.19.2",
     "cypress-intellij-reporter": "^0.0.7",
-    "cz-conventional-changelog": "3.3.0",
     "deep-extend": "^0.6.0",
     "detect-port": "^1.3.0",
     "eslint": "^8.33.0",
@@ -193,5 +192,11 @@
   "dependencies": {
     "nx": "^15.9.2",
     "tslib": "^2.4.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "proxy-agent": "^6.3.0",
+      "nth-check": "^2.1.1"
+    }
   }
 }
