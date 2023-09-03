@@ -32,6 +32,14 @@ import { InboundParseModule } from './app/inbound-parse/inbound-parse.module';
 import { BlueprintModule } from './app/blueprint/blueprint.module';
 import { TenantModule } from './app/tenant/tenant.module';
 
+const enterpriseImport = (path: string): any | undefined => {
+  if (process.env.NOVU_MANAGED_SERVICE === 'true') {
+    return require(path);
+  }
+
+  return undefined;
+};
+
 const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
   InboundParseModule,
   OrganizationModule,
@@ -60,6 +68,12 @@ const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardRefe
   BlueprintModule,
   TenantModule,
 ];
+
+const eeAuthModule = enterpriseImport('@novu/ee-auth');
+
+if (eeAuthModule) {
+  modules.push(eeAuthModule);
+}
 
 const providers: Provider[] = [];
 

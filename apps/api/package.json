@@ -111,6 +111,9 @@
     "tsconfig-paths": "~4.1.0",
     "typescript": "4.9.5"
   },
+  "optionalDependencies": {
+    "@novu/ee-auth": "^0.18.0"
+  },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
       "eslint"
