@@ -58,7 +58,7 @@ async acceptNovuPushWebHookRequest(request, response){
     // handle the notification
     console.log("Request sent by Novu")
   } else {
-    throw new Error("Not a valod request")
+    throw new Error("Not a valid request")
   }
 }
 ```
