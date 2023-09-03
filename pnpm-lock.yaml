@@ -172,6 +172,7 @@ importers:
       '@nestjs/testing': 9.3.12
       '@novu/application-generic': ^0.18.0
       '@novu/dal': ^0.18.0
+      '@novu/ee-auth': ^0.18.0
       '@novu/node': ^0.18.0
       '@novu/shared': ^0.18.0
       '@novu/stateless': ^0.18.0
@@ -296,6 +297,8 @@ importers:
       swagger-ui-express: 4.6.2_express@4.18.2
       twilio: 4.15.0
       uuid: 8.3.2
+    optionalDependencies:
+      '@novu/ee-auth': link:../../enterprise/packages/auth
     devDependencies:
       '@faker-js/faker': 6.3.1
       '@nestjs/cli': 9.5.0
@@ -381,7 +384,7 @@ importers:
       cross-env: 7.0.3
       nodemon: 2.0.22
       prettier: 2.8.7
-      ts-jest: 27.1.5_4aafjbpmnrfjtrzkyohogv4jce
+      ts-jest: 27.1.5_cnngzrja2umb46xxazlucyx2qu
       ts-loader: 9.4.2_rggdtlzfqxxwxudp3onsqdyocm
       ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
       tsconfig-paths: 4.1.2
@@ -1157,6 +1160,84 @@ importers:
       stylelint-config-standard: 25.0.0_stylelint@15.10.1
       stylelint-order: 5.0.0_stylelint@15.10.1
       stylelint-scss: 4.6.0_stylelint@15.10.1
+      typescript: 4.9.5
+
+  enterprise/packages/auth:
+    specifiers:
+      '@nestjs/common': '>=9.3.x'
+      '@nestjs/jwt': '>=9'
+      '@nestjs/passport': 9.0.3
+      '@novu/application-generic': ^0.18.0
+      '@novu/dal': ^0.18.0
+      '@novu/shared': ^0.18.0
+      '@types/chai': ^4.2.11
+      '@types/mocha': ^8.0.1
+      '@types/node': ^14.6.0
+      '@types/sinon': ^9.0.0
+      chai: ^4.2.0
+      cross-env: ^7.0.3
+      mocha: ^8.1.1
+      nodemon: ^2.0.3
+      passport: 0.6.0
+      passport-google-oauth: ^2.0.0
+      passport-oauth2: ^1.6.1
+      sinon: ^9.2.4
+      ts-node: ~10.9.1
+      typescript: 4.9.5
+    dependencies:
+      '@nestjs/common': 9.3.12_atc7tu2sld2m3nk4hmwkqn6qde
+      '@nestjs/jwt': 10.1.0_@nestjs+common@9.3.12
+      '@nestjs/passport': 9.0.3_ajy2slul3age3kopk444psnhqq
+      '@novu/application-generic': link:../../../packages/application-generic
+      '@novu/dal': link:../../../libs/dal
+      '@novu/shared': link:../../../libs/shared
+      passport: 0.6.0
+      passport-google-oauth: 2.0.0
+      passport-oauth2: 1.7.0
+    devDependencies:
+      '@types/chai': 4.3.4
+      '@types/mocha': 8.2.3
+      '@types/node': 14.18.42
+      '@types/sinon': 9.0.11
+      chai: 4.3.7
+      cross-env: 7.0.3
+      mocha: 8.4.0
+      nodemon: 2.0.22
+      sinon: 9.2.4
+      ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
+      typescript: 4.9.5
+
+  enterprise/packages/digest-schedule:
+    specifiers:
+      '@novu/shared': ^0.18.0
+      '@types/chai': ^4.2.11
+      '@types/mocha': ^8.0.1
+      '@types/node': ^14.6.0
+      '@types/sinon': ^9.0.0
+      chai: ^4.2.0
+      cross-env: ^7.0.3
+      date-fns: ^2.29.2
+      mocha: ^8.1.1
+      nodemon: ^2.0.3
+      rrule: ^2.7.2
+      sinon: ^9.2.4
+      ts-node: ~10.9.1
+      typescript: 4.9.5
+    dependencies:
+      '@novu/shared': link:../../../libs/shared
+      date-fns: 2.29.3
+      rrule: 2.7.2
+    devDependencies:
+      '@types/chai': 4.3.4
+      '@types/mocha': 8.2.3
+      '@types/node': 14.18.42
+      '@types/sinon': 9.0.11
+      chai: 4.3.7
+      cross-env: 7.0.3
+      mocha: 8.4.0
+      nodemon: 2.0.22
+      sinon: 9.2.4
+      ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
       typescript: 4.9.5
 
   libs/dal:
@@ -3881,7 +3962,7 @@ packages:
     engines: {node: '>=6.0.0'}
     dependencies:
       '@jridgewell/gen-mapping': 0.1.1
-      '@jridgewell/trace-mapping': 0.3.18
+      '@jridgewell/trace-mapping': 0.3.19
     dev: true
 
   /@ampproject/remapping/2.2.1:
@@ -3889,7 +3970,7 @@ packages:
     engines: {node: '>=6.0.0'}
     dependencies:
       '@jridgewell/gen-mapping': 0.3.3
-      '@jridgewell/trace-mapping': 0.3.18
+      '@jridgewell/trace-mapping': 0.3.19
 
   /@angular-devkit/architect/0.1502.5:
     resolution: {integrity: sha512-6KVrXQ/X7W88WSJvYe69ed/2QzQNlObKpj3BWzmcKnA+IvJB37/mvw8VaGFP9y+pDa/b1D1yCDtAJLeP5QY3xg==}
@@ -6559,7 +6640,7 @@ packages:
     dependencies:
       '@babel/types': 7.21.4
       '@jridgewell/gen-mapping': 0.3.3
-      '@jridgewell/trace-mapping': 0.3.18
+      '@jridgewell/trace-mapping': 0.3.19
       jsesc: 2.5.2
 
   /@babel/generator/7.22.10:
@@ -6636,7 +6717,7 @@ packages:
       '@babel/helper-validator-option': 7.21.0
       browserslist: 4.21.5
       lru-cache: 5.1.1
-      semver: 6.3.0
+      semver: 6.3.1
 
   /@babel/helper-compilation-targets/7.22.10:
     resolution: {integrity: sha512-JMSwHD4J7SLod0idLq5PKgI+6g/hLD/iuWBq08ZX49xE14VpVEojJ5rHWptpirV2j020MvypRLAXAO50igCJ5Q==}
@@ -13707,7 +13788,7 @@ packages:
       '@jest/test-result': 29.5.0
       '@jest/transform': 29.5.0
       '@jest/types': 29.5.0
-      '@jridgewell/trace-mapping': 0.3.18
+      '@jridgewell/trace-mapping': 0.3.19
       '@types/node': 14.18.42
       chalk: 4.1.2
       collect-v8-coverage: 1.0.1
@@ -13754,7 +13835,7 @@ packages:
     resolution: {integrity: sha512-qyt/mb6rLyd9j1jUts4EQncvS6Yy3PM9HghnNv86QBlV+zdL2inCdK1tuVlL+J+lpiw2BI67qXOrX3UurBqQ1w==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
     dependencies:
-      '@jridgewell/trace-mapping': 0.3.18
+      '@jridgewell/trace-mapping': 0.3.19
       callsites: 3.1.0
       graceful-fs: 4.2.11
     dev: true
@@ -13868,7 +13949,7 @@ packages:
     dependencies:
       '@babel/core': 7.21.4
       '@jest/types': 29.5.0
-      '@jridgewell/trace-mapping': 0.3.18
+      '@jridgewell/trace-mapping': 0.3.19
       babel-plugin-istanbul: 6.1.1
       chalk: 4.1.2
       convert-source-map: 2.0.0
@@ -13954,7 +14035,7 @@ packages:
     dependencies:
       '@jridgewell/set-array': 1.1.2
       '@jridgewell/sourcemap-codec': 1.4.15
-      '@jridgewell/trace-mapping': 0.3.18
+      '@jridgewell/trace-mapping': 0.3.19
 
   /@jridgewell/resolve-uri/3.1.0:
     resolution: {integrity: sha512-F2msla3tad+Mfht5cJq7LSXcdudKTWCVYUgw6pLFOOHSTtZlj6SWNYAp+AhuqLmWdBO2X5hPrLcu8cVP8fy28w==}
@@ -13972,7 +14053,7 @@ packages:
     resolution: {integrity: sha512-b+fsZXeLYi9fEULmfBrhxn4IrPlINf8fiNarzTof004v3lFdntdwa9PF7vFJqm3mg7s+ScJMxXaE3Acp1irZcg==}
     dependencies:
       '@jridgewell/gen-mapping': 0.3.3
-      '@jridgewell/trace-mapping': 0.3.18
+      '@jridgewell/trace-mapping': 0.3.19
 
   /@jridgewell/sourcemap-codec/1.4.14:
     resolution: {integrity: sha512-XPSJHWmi394fuUuzDnGz1wiKqWfo1yXecHQMRf2l6hztTO+nPru658AyDngaBe7isIxEkRsPR3FZh+s7iVa4Uw==}
@@ -14928,7 +15009,7 @@ packages:
       nopt: 5.0.0
       npmlog: 5.0.1
       rimraf: 3.0.2
-      semver: 7.5.2
+      semver: 7.5.4
       tar: 6.1.13
     transitivePeerDependencies:
       - encoding
@@ -15146,6 +15227,29 @@ packages:
       uuid: 8.3.2
     transitivePeerDependencies:
       - debug
+    dev: false
+
+  /@nestjs/common/9.3.12_atc7tu2sld2m3nk4hmwkqn6qde:
+    resolution: {integrity: sha512-NtrUG2VgCbhmZEO1yRt/Utq16uFRV+xeHAOtdYIsfHGG0ssAV2lVLlvFFAQYh0SQ+KuYY1Gsxd3GK2JFoJCNqQ==}
+    peerDependencies:
+      cache-manager: <=5
+      class-transformer: '*'
+      class-validator: '*'
+      reflect-metadata: ^0.1.12
+      rxjs: ^7.1.0
+    peerDependenciesMeta:
+      cache-manager:
+        optional: true
+      class-transformer:
+        optional: true
+      class-validator:
+        optional: true
+    dependencies:
+      iterare: 1.2.1
+      reflect-metadata: 0.1.13
+      rxjs: 7.8.1
+      tslib: 2.5.0
+      uid: 2.0.1
     dev: false
 
   /@nestjs/common/9.3.12_j3td4gnlgk75ora6o6suo62byy:
@@ -23624,6 +23728,7 @@ packages:
 
   /@types/node/18.15.11:
     resolution: {integrity: sha512-E5Kwq2n4SbMzQOn6wnmBjuK9ouqlURrcZDVfbo9ftDDTFt3nk7ZKK4GMOzoYgnpQJKcxwQw+lGaBvvlMo0qN/Q==}
+    dev: true
 
   /@types/node/20.4.7:
     resolution: {integrity: sha512-bUBrPjEry2QUTsnuEjzjbS7voGWCc30W0qzgMf90GPeDGFRakvrz47ju+oqDAKCXLUCe39u57/ORMl/O/04/9g==}
@@ -24983,7 +25088,6 @@ packages:
       acorn: ^8
     dependencies:
       acorn: 8.10.0
-    dev: true
 
   /acorn-import-assertions/1.8.0_acorn@8.8.2:
     resolution: {integrity: sha512-m7VZ3jwz4eK6A4Vtt8Ew1/mNbP24u0FhdyfA7fSvnJR6LMdfOYnmuIrrJAgrYfYJ10F/otaHTtrtrtmHdMNzEw==}
@@ -25013,8 +25117,6 @@ packages:
       acorn: ^6.0.0 || ^7.0.0 || ^8.0.0
     dependencies:
       acorn: 8.10.0
-    dev: false
-    optional: true
 
   /acorn-jsx/5.3.2_acorn@8.8.2:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
@@ -25022,6 +25124,7 @@ packages:
       acorn: ^6.0.0 || ^7.0.0 || ^8.0.0
     dependencies:
       acorn: 8.8.2
+    dev: false
 
   /acorn-walk/7.2.0:
     resolution: {integrity: sha512-OPdCF6GsMIP+Az+aWfAAOEt2/+iVDKE7oy6lJ098aoe59oAmK76qV6Gw60SbZ8jHuG2wH058GF4pLFbYamYrVA==}
@@ -26392,7 +26495,7 @@ packages:
       '@babel/compat-data': 7.21.4
       '@babel/core': 7.20.12
       '@babel/helper-define-polyfill-provider': 0.3.3_@babel+core@7.20.12
-      semver: 6.3.0
+      semver: 6.3.1
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -26405,7 +26508,7 @@ packages:
       '@babel/compat-data': 7.21.4
       '@babel/core': 7.21.4
       '@babel/helper-define-polyfill-provider': 0.3.3_@babel+core@7.21.4
-      semver: 6.3.0
+      semver: 6.3.1
     transitivePeerDependencies:
       - supports-color
 
@@ -26417,7 +26520,7 @@ packages:
       '@babel/compat-data': 7.21.4
       '@babel/core': 7.22.11
       '@babel/helper-define-polyfill-provider': 0.3.3_@babel+core@7.22.11
-      semver: 6.3.0
+      semver: 6.3.1
     transitivePeerDependencies:
       - supports-color
 
@@ -31544,7 +31647,7 @@ packages:
       minimatch: 3.1.2
       object.values: 1.1.6
       resolve: 1.22.2
-      semver: 6.3.0
+      semver: 6.3.1
       tsconfig-paths: 3.14.2
     transitivePeerDependencies:
       - eslint-import-resolver-typescript
@@ -31921,8 +32024,8 @@ packages:
     resolution: {integrity: sha512-5yxtHSZXRSW5pvv3hAlXM5+/Oswi1AUFqBmbibKb5s6bp3rGIDkyXU6xCoyuuLhijr4SFwPrXRoZjz0AZDN9tg==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dependencies:
-      acorn: 8.8.2
-      acorn-jsx: 5.3.2_acorn@8.8.2
+      acorn: 8.10.0
+      acorn-jsx: 5.3.2_acorn@8.10.0
       eslint-visitor-keys: 3.4.0
 
   /espree/9.6.1:
@@ -33185,7 +33288,7 @@ packages:
       minimatch: 3.1.2
       node-abort-controller: 3.1.1
       schema-utils: 3.1.2
-      semver: 7.5.2
+      semver: 7.5.4
       tapable: 2.2.1
       typescript: 4.9.5
       webpack: 5.76.2
@@ -34736,7 +34839,7 @@ packages:
       he: 1.2.0
       param-case: 3.0.4
       relateurl: 0.2.7
-      terser: 5.16.9
+      terser: 5.19.2
 
   /html-tags/3.3.1:
     resolution: {integrity: sha512-ztqyC3kLto0e9WbNp0aeP+M3kTt+nbaIveGmUxAtZa+8iFgKLUOD4YKM5j+f3QD89bra7UeumolZHKuOXnTmeQ==}
@@ -37385,7 +37488,7 @@ packages:
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
     dependencies:
       '@jest/types': 27.5.1
-      '@types/node': 18.15.11
+      '@types/node': 14.18.42
       chalk: 4.1.2
       ci-info: 3.8.0
       graceful-fs: 4.2.11
@@ -37773,7 +37876,7 @@ packages:
         optional: true
     dependencies:
       abab: 2.0.6
-      acorn: 8.8.2
+      acorn: 8.10.0
       acorn-globals: 7.0.1
       cssom: 0.5.0
       cssstyle: 2.3.0
@@ -42291,11 +42394,41 @@ packages:
       passport-oauth2: 1.7.0
     dev: false
 
+  /passport-google-oauth/2.0.0:
+    resolution: {integrity: sha512-JKxZpBx6wBQXX1/a1s7VmdBgwOugohH+IxCy84aPTZNq/iIPX6u7Mqov1zY7MKRz3niFPol0KJz8zPLBoHKtYA==}
+    engines: {node: '>= 0.4.0'}
+    dependencies:
+      passport-google-oauth1: 1.0.0
+      passport-google-oauth20: 2.0.0
+    dev: false
+
+  /passport-google-oauth1/1.0.0:
+    resolution: {integrity: sha512-qpCEhuflJgYrdg5zZIpAq/K3gTqa1CtHjbubsEsidIdpBPLkEVq6tB1I8kBNcH89RdSiYbnKpCBXAZXX/dtx1Q==}
+    dependencies:
+      passport-oauth1: 1.3.0
+    dev: false
+
+  /passport-google-oauth20/2.0.0:
+    resolution: {integrity: sha512-KSk6IJ15RoxuGq7D1UKK/8qKhNfzbLeLrG3gkLZ7p4A6DBCcv7xpyQwuXtWdpyR0+E0mwkpjY1VfPOhxQrKzdQ==}
+    engines: {node: '>= 0.4.0'}
+    dependencies:
+      passport-oauth2: 1.7.0
+    dev: false
+
   /passport-jwt/4.0.1:
     resolution: {integrity: sha512-UCKMDYhNuGOBE9/9Ycuoyh7vP6jpeTp/+sfMJl7nLff/t6dps+iaeE0hhNkKN8/HZHcJ7lCdOyDxHdDoxoSvdQ==}
     dependencies:
       jsonwebtoken: 9.0.0
       passport-strategy: 1.0.0
+    dev: false
+
+  /passport-oauth1/1.3.0:
+    resolution: {integrity: sha512-8T/nX4gwKTw0PjxP1xfD0QhrydQNakzeOpZ6M5Uqdgz9/a/Ag62RmJxnZQ4LkbdXGrRehQHIAHNAu11rCP46Sw==}
+    engines: {node: '>= 0.4.0'}
+    dependencies:
+      oauth: 0.9.15
+      passport-strategy: 1.0.0
+      utils-merge: 1.0.1
     dev: false
 
   /passport-oauth2/1.7.0:
@@ -42458,7 +42591,7 @@ packages:
     dev: false
 
   /pause/0.0.1:
-    resolution: {integrity: sha512-KG8UEiEVkR3wGEb4m5yZkVCzigAD+cVEJck2CzYZO37ZGJfctvVptVO192MwrtPhzONn6go8ylnOdMhKqi4nfg==}
+    resolution: {integrity: sha1-HUCLP9t2kjuVQ9lvtMnf1TXZy10=}
     dev: false
 
   /pbkdf2/3.1.2:
@@ -47361,6 +47494,7 @@ packages:
     hasBin: true
     dependencies:
       lru-cache: 6.0.0
+    dev: true
 
   /semver/7.5.4:
     resolution: {integrity: sha512-1bCSESV6Pv+i21Hvpxp3Dx+pSD8lIPt8uVjRrxAUt/nbswYc+tK6Y2btiULjd4+fnq15PX+nqQDC7Oft7WkwcA==}
@@ -49386,7 +49520,7 @@ packages:
       uglify-js:
         optional: true
     dependencies:
-      '@jridgewell/trace-mapping': 0.3.18
+      '@jridgewell/trace-mapping': 0.3.19
       jest-worker: 27.5.1
       schema-utils: 3.1.2
       serialize-javascript: 6.0.1
@@ -49410,7 +49544,7 @@ packages:
       uglify-js:
         optional: true
     dependencies:
-      '@jridgewell/trace-mapping': 0.3.18
+      '@jridgewell/trace-mapping': 0.3.19
       jest-worker: 27.5.1
       schema-utils: 3.1.2
       serialize-javascript: 6.0.1
@@ -49434,7 +49568,7 @@ packages:
       uglify-js:
         optional: true
     dependencies:
-      '@jridgewell/trace-mapping': 0.3.18
+      '@jridgewell/trace-mapping': 0.3.19
       jest-worker: 27.5.1
       schema-utils: 3.1.2
       serialize-javascript: 6.0.1
@@ -49457,7 +49591,7 @@ packages:
       uglify-js:
         optional: true
     dependencies:
-      '@jridgewell/trace-mapping': 0.3.18
+      '@jridgewell/trace-mapping': 0.3.19
       jest-worker: 27.5.1
       schema-utils: 3.1.2
       serialize-javascript: 6.0.1
@@ -49563,7 +49697,7 @@ packages:
     hasBin: true
     dependencies:
       '@jridgewell/source-map': 0.3.3
-      acorn: 8.8.2
+      acorn: 8.10.0
       commander: 2.20.3
       source-map-support: 0.5.21
 
@@ -49576,7 +49710,6 @@ packages:
       acorn: 8.10.0
       commander: 2.20.3
       source-map-support: 0.5.21
-    dev: true
 
   /test-exclude/6.0.0:
     resolution: {integrity: sha512-cAGWPIyOHU6zlmg88jwm7VRyXnMN7iV68OGAbYDk/Mh/xC/pzVPlQtY6ngoIH/5/tciuhGfvESU8GrHrcxD56w==}
@@ -49970,7 +50103,7 @@ packages:
       yargs-parser: 20.2.9
     dev: true
 
-  /ts-jest/27.1.5_4aafjbpmnrfjtrzkyohogv4jce:
+  /ts-jest/27.1.5_cnngzrja2umb46xxazlucyx2qu:
     resolution: {integrity: sha512-Xv6jBQPoBEvBq/5i2TeSG9tt/nqkbpcurrEG1b+2yfBrcJelOZF9Ml6dmyMh7bcW9JyFbRYpR5rxROSlBLTZHA==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
     hasBin: true
@@ -49991,7 +50124,6 @@ packages:
       esbuild:
         optional: true
     dependencies:
-      '@babel/core': 7.22.11
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
       jest: 27.5.1_ts-node@10.9.1
@@ -51276,7 +51408,7 @@ packages:
     resolution: {integrity: sha512-6z3GW9x8G1gd+JIIgQQQxXuiJtCXeAjp6RaPEPLv62mH3iPHPxV6W3robxtCzNErRo6ZwTmzWhsbNvjyEBKzKA==}
     engines: {node: '>=10.12.0'}
     dependencies:
-      '@jridgewell/trace-mapping': 0.3.18
+      '@jridgewell/trace-mapping': 0.3.19
       '@types/istanbul-lib-coverage': 2.0.4
       convert-source-map: 1.9.0
     dev: true
@@ -52060,8 +52192,8 @@ packages:
       '@webassemblyjs/ast': 1.11.1
       '@webassemblyjs/wasm-edit': 1.11.1
       '@webassemblyjs/wasm-parser': 1.11.1
-      acorn: 8.8.2
-      acorn-import-assertions: 1.8.0_acorn@8.8.2
+      acorn: 8.10.0
+      acorn-import-assertions: 1.8.0_acorn@8.10.0
       browserslist: 4.21.5
       chrome-trace-event: 1.0.3
       enhanced-resolve: 5.15.0
@@ -52180,8 +52312,8 @@ packages:
       '@webassemblyjs/ast': 1.11.5
       '@webassemblyjs/wasm-edit': 1.11.5
       '@webassemblyjs/wasm-parser': 1.11.5
-      acorn: 8.8.2
-      acorn-import-assertions: 1.8.0_acorn@8.8.2
+      acorn: 8.10.0
+      acorn-import-assertions: 1.8.0_acorn@8.10.0
       browserslist: 4.21.5
       chrome-trace-event: 1.0.3
       enhanced-resolve: 5.15.0
@@ -52219,8 +52351,8 @@ packages:
       '@webassemblyjs/ast': 1.11.5
       '@webassemblyjs/wasm-edit': 1.11.5
       '@webassemblyjs/wasm-parser': 1.11.5
-      acorn: 8.8.2
-      acorn-import-assertions: 1.8.0_acorn@8.8.2
+      acorn: 8.10.0
+      acorn-import-assertions: 1.8.0_acorn@8.10.0
       browserslist: 4.21.5
       chrome-trace-event: 1.0.3
       enhanced-resolve: 5.15.0
@@ -53033,6 +53165,7 @@ packages:
   /yargs-parser/20.2.4:
     resolution: {integrity: sha512-WOkpgNhPTlE73h4VFAFsOnomJVaovO8VqLDzy5saChRBFQFBoMYirowyW+Q9HB4HFF4Z7VZTiG3iSzJJA29yRA==}
     engines: {node: '>=10'}
+    dev: true
 
   /yargs-parser/20.2.9:
     resolution: {integrity: sha512-y11nGElTIV+CT3Zv9t7VKl+Q3hTQoT9a1Qzezhhl6Rp21gJ/IVTW7Z3y9EWXhuUBC2Shnf+DX0antecpAwSP8w==}
@@ -53115,7 +53248,7 @@ packages:
       require-directory: 2.1.1
       string-width: 4.2.3
       y18n: 5.0.8
-      yargs-parser: 20.2.4
+      yargs-parser: 20.2.9
 
   /yargs/17.6.2:
     resolution: {integrity: sha512-1/9UrdHjDZc0eOU0HxOHoS78C69UD3JRMvzlJ7S79S2nTaWRA/whGCTV8o9e/N/1Va9YIV7Q4sOxD8VV4pCWOw==}
