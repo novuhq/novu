@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { faker } from '@faker-js/faker';
+
+import { AuthService } from '@novu/application-generic';
+
 import { SeedDataCommand } from './seed-data.command';
-import { AuthService } from '../../../auth/services/auth.service';
 import { UserRegister } from '../../../auth/usecases/register/user-register.usecase';
 import { UserRegisterCommand } from '../../../auth/usecases/register/user-register.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';

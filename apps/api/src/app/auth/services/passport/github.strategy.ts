@@ -3,10 +3,10 @@ import { PassportStrategy } from '@nestjs/passport';
 import * as githubPassport from 'passport-github2';
 import { Metadata, StateStoreStoreCallback, StateStoreVerifyCallback } from 'passport-oauth2';
 import { AuthProviderEnum } from '@novu/shared';
-import { AuthService } from '../auth.service';
+import { AuthService } from '@novu/application-generic';
 
 @Injectable()
-export class GitHubStrategy extends PassportStrategy(githubPassport.Strategy, 'github') {
+export class GitHubStrategy extends PassportStrategy(githubPassport.Strategy, AuthProviderEnum.GITHUB) {
   constructor(private authService: AuthService) {
     super({
       clientID: process.env.GITHUB_OAUTH_CLIENT_ID,
