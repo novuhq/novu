@@ -4,8 +4,6 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { Type } from '@nestjs/common/interfaces/type.interface';
 import { ForwardReference } from '@nestjs/common/interfaces/modules/forward-reference.interface';
 
-import { EEAuthModule } from '@novu/ee-auth';
-
 import { SharedModule } from './app/shared/shared.module';
 import { UserModule } from './app/user/user.module';
 import { AuthModule } from './app/auth/auth.module';
@@ -34,10 +32,15 @@ import { InboundParseModule } from './app/inbound-parse/inbound-parse.module';
 import { BlueprintModule } from './app/blueprint/blueprint.module';
 import { TenantModule } from './app/tenant/tenant.module';
 
-const externalModules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [EEAuthModule];
+const importWhen = ({ path, condition }: { path: string; condition: boolean | undefined }): any | undefined => {
+  if (condition) {
+    return require(path);
+  }
+
+  return undefined;
+};
 
 const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
-  ...externalModules,
   InboundParseModule,
   OrganizationModule,
   SharedModule,
@@ -65,6 +68,12 @@ const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardRefe
   BlueprintModule,
   TenantModule,
 ];
+
+const eeAuthModule = importWhen({ path: '@novu/ee-auth', condition: process.env.NOVU_MANAGED_SERVICE === 'true' });
+
+if (eeAuthModule) {
+  modules.push(eeAuthModule);
+}
 
 const providers: Provider[] = [];
 
