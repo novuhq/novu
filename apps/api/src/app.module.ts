@@ -32,8 +32,8 @@ import { InboundParseModule } from './app/inbound-parse/inbound-parse.module';
 import { BlueprintModule } from './app/blueprint/blueprint.module';
 import { TenantModule } from './app/tenant/tenant.module';
 
-const importWhen = ({ path, condition }: { path: string; condition: boolean | undefined }): any | undefined => {
-  if (condition) {
+const enterpriseImport = (path: string): any | undefined => {
+  if (process.env.NOVU_MANAGED_SERVICE === 'true') {
     return require(path);
   }
 
@@ -69,7 +69,7 @@ const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardRefe
   TenantModule,
 ];
 
-const eeAuthModule = importWhen({ path: '@novu/ee-auth', condition: process.env.NOVU_MANAGED_SERVICE === 'true' });
+const eeAuthModule = enterpriseImport('@novu/ee-auth');
 
 if (eeAuthModule) {
   modules.push(eeAuthModule);
