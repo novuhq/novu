@@ -5,9 +5,12 @@ import slugify from 'slugify';
 import { Controller, FormProvider, useForm, useWatch } from 'react-hook-form';
 import { useIntercom } from 'react-use-intercom';
 import {
+  BuilderFieldType,
+  BuilderGroupValues,
   CHANNELS_WITH_PRIMARY,
   CredentialsKeyEnum,
   EmailProviderIdEnum,
+  FilterParts,
   IConfigCredentials,
   IConstructIntegrationDto,
   ICredentialsDto,
@@ -36,12 +39,20 @@ import { NovuInAppSetupWarning } from '../NovuInAppSetupWarning';
 import { NovuProviderSidebarContent } from './NovuProviderSidebarContent';
 import { useSelectPrimaryIntegrationModal } from './useSelectPrimaryIntegrationModal';
 import { ShareableUrl } from '../Modal/ConnectIntegrationForm';
+import { Conditions } from '../../../../components/conditions/Conditions';
+import { ConditionPlus } from '../../../../design-system/icons';
 
 interface IProviderForm {
   name: string;
   credentials: ICredentialsDto;
   active: boolean;
   identifier: string;
+  conditions: {
+    isNegated?: boolean;
+    type?: BuilderFieldType;
+    value?: BuilderGroupValues;
+    children?: FilterParts[];
+  }[];
 }
 
 enum SidebarStateEnum {
@@ -62,6 +73,7 @@ export function UpdateProviderSidebar({
   const { isLoading: areEnvironmentsLoading } = useFetchEnvironments();
   const [selectedProvider, setSelectedProvider] = useState<IIntegratedProvider | null>(null);
   const [sidebarState, setSidebarState] = useState<SidebarStateEnum>(SidebarStateEnum.NORMAL);
+  const [openConditions, setOpenConditions] = useState(false);
   const [framework, setFramework] = useState<FrameworkEnum | null>(null);
   const { providers, isLoading: areProvidersLoading } = useProviders();
   const isNovuInAppProvider = selectedProvider?.providerId === InAppProviderIdEnum.Novu;
@@ -79,6 +91,7 @@ export function UpdateProviderSidebar({
       credentials: {},
       active: false,
       identifier: '',
+      conditions: [],
     },
   });
   const {
@@ -87,6 +100,7 @@ export function UpdateProviderSidebar({
     reset,
     watch,
     setValue,
+    getValues,
     formState: { errors, isDirty, dirtyFields },
   } = methods;
 
@@ -138,6 +152,7 @@ export function UpdateProviderSidebar({
 
         return prev;
       }, {} as any),
+      conditions: foundProvider.conditions,
       active: foundProvider.active,
     });
   }, [integrationId, providers]);
@@ -205,6 +220,19 @@ export function UpdateProviderSidebar({
     control,
     name: `credentials.${CredentialsKeyEnum.Hmac}`,
   });
+
+  if (openConditions) {
+    return (
+      <Conditions
+        conditions={getValues('conditions')}
+        isOpened={openConditions}
+        setConditions={(data) => {
+          setValue('conditions', data.conditions);
+        }}
+        onClose={() => setOpenConditions(false)}
+      />
+    );
+  }
 
   if (
     SmsProviderIdEnum.Novu === selectedProvider?.providerId ||
@@ -326,6 +354,9 @@ export function UpdateProviderSidebar({
             <Faq />
           </Box>
         </When>
+        <Button variant="outline" onClick={() => setOpenConditions(true)} icon={<ConditionPlus />}>
+          Add condition
+        </Button>
       </Sidebar>
       <SelectPrimaryIntegrationModal />
     </FormProvider>

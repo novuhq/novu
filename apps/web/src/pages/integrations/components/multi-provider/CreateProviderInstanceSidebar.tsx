@@ -1,12 +1,21 @@
 import { ActionIcon, Group, Radio, Text } from '@mantine/core';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
-import { ChannelTypeEnum, ICreateIntegrationBodyDto, InAppProviderIdEnum, providers } from '@novu/shared';
+import {
+  BuilderFieldType,
+  BuilderGroupValues,
+  ChannelTypeEnum,
+  FilterParts,
+  FilterPartTypeEnum,
+  ICreateIntegrationBodyDto,
+  InAppProviderIdEnum,
+  providers,
+} from '@novu/shared';
 
 import { Button, colors, NameInput, Sidebar } from '../../../../design-system';
-import { ArrowLeft } from '../../../../design-system/icons';
+import { ArrowLeft, ConditionPlus } from '../../../../design-system/icons';
 import { inputStyles } from '../../../../design-system/config/inputs.styles';
 import { useFetchEnvironments } from '../../../../hooks/useFetchEnvironments';
 import { useSegment } from '../../../../components/providers/SegmentProvider';
@@ -19,10 +28,17 @@ import { CHANNEL_TYPE_TO_STRING } from '../../../../utils/channels';
 import type { IntegrationEntity } from '../../types';
 import { useProviders } from '../../useProviders';
 import { When } from '../../../../components/utils/When';
+import { Conditions } from '../../../../components/conditions/Conditions';
 
 interface ICreateProviderInstanceForm {
   name: string;
   environmentId: string;
+  conditions: {
+    isNegated?: boolean;
+    type?: BuilderFieldType;
+    value?: BuilderGroupValues;
+    children?: FilterParts[];
+  }[];
 }
 
 export function CreateProviderInstanceSidebar({
@@ -42,6 +58,7 @@ export function CreateProviderInstanceSidebar({
 }) {
   const { environments, isLoading: areEnvironmentsLoading } = useFetchEnvironments();
   const { isLoading: areIntegrationsLoading, providers: integrations } = useProviders();
+  const [openConditions, setOpenConditions] = useState(false);
   const isLoading = areEnvironmentsLoading || areIntegrationsLoading;
   const queryClient = useQueryClient();
   const segment = useSegment();
@@ -57,15 +74,17 @@ export function CreateProviderInstanceSidebar({
     ICreateIntegrationBodyDto
   >(createIntegration);
 
-  const { handleSubmit, control, reset, watch } = useForm<ICreateProviderInstanceForm>({
+  const { handleSubmit, control, reset, watch, setValue, getValues } = useForm<ICreateProviderInstanceForm>({
     shouldUseNativeValidation: false,
     defaultValues: {
       name: '',
       environmentId: '',
+      conditions: [],
     },
   });
 
   const selectedEnvironmentId = watch('environmentId');
+  const conditions = watch('conditions');
 
   const showInAppErrorMessage = useMemo(() => {
     if (!provider || integrations.length === 0 || provider.id !== InAppProviderIdEnum.Novu) {
@@ -86,7 +105,8 @@ export function CreateProviderInstanceSidebar({
       }
 
       const { channel: selectedChannel } = provider;
-      const { environmentId } = data;
+      const { environmentId, conditions: cond } = data;
+      console.log('data', cond);
 
       const { _id: integrationId } = await createIntegrationApi({
         providerId: provider.id,
@@ -95,6 +115,7 @@ export function CreateProviderInstanceSidebar({
         credentials: {},
         active: provider.channel === ChannelTypeEnum.IN_APP ? true : false,
         check: false,
+        conditions: cond,
         _environmentId: environmentId,
       });
 
@@ -124,11 +145,41 @@ export function CreateProviderInstanceSidebar({
     reset({
       name: provider?.displayName ?? '',
       environmentId: environments.find((env) => env.name === 'Development')?._id || '',
+      conditions: [
+        {
+          isNegated: false,
+          type: 'GROUP',
+          value: 'AND',
+          children: [
+            {
+              on: FilterPartTypeEnum.TENANT,
+              field: 'identifier',
+              value: 'pawan',
+              operator: 'EQUAL',
+            },
+          ],
+        },
+      ],
     });
   }, [environments, provider]);
 
   if (!provider) {
     return null;
+  }
+
+  console.log(conditions);
+
+  if (openConditions) {
+    return (
+      <Conditions
+        conditions={getValues('conditions')}
+        isOpened={openConditions}
+        setConditions={(data) => {
+          setValue('conditions', data.conditions);
+        }}
+        onClose={() => setOpenConditions(false)}
+      />
+    );
   }
 
   return (
@@ -231,6 +282,10 @@ export function CreateProviderInstanceSidebar({
           );
         }}
       />
+
+      <Button variant="outline" onClick={() => setOpenConditions(true)} icon={<ConditionPlus />}>
+        Add condition
+      </Button>
       <When truthy={showInAppErrorMessage}>
         <WarningMessage>
           <Text>You can only create one {provider.displayName} per environment.</Text>

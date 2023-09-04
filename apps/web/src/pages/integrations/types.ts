@@ -1,5 +1,8 @@
 import type {
+  BuilderFieldType,
+  BuilderGroupValues,
   ChannelTypeEnum,
+  FilterParts,
   IConfigCredentials,
   ICredentials,
   ILogoFileName,
@@ -33,6 +36,12 @@ export interface IIntegratedProvider {
   comingSoon: boolean;
   active: boolean;
   connected: boolean;
+  conditions?: {
+    isNegated?: boolean;
+    type?: BuilderFieldType;
+    value?: BuilderGroupValues;
+    children?: FilterParts[];
+  }[];
   logoFileName: ILogoFileName;
   betaVersion: boolean;
   novu?: boolean;
@@ -51,6 +60,12 @@ export interface IntegrationEntity {
   providerId: ProvidersIdEnum;
   channel: ChannelTypeEnum;
   credentials: ICredentials;
+  conditions?: {
+    isNegated?: boolean;
+    type?: BuilderFieldType;
+    value?: BuilderGroupValues;
+    children?: FilterParts[];
+  }[];
   active: boolean;
   deleted: boolean;
   order: number;

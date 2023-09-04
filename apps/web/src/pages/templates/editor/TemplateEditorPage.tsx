@@ -82,11 +82,11 @@ function BaseTemplateEditorPage() {
         </form>
       </PageContainer>
       <BlueprintModal />
-      <NavigateValidatorModal
-        isOpen={showNavigateValidatorModal}
-        onConfirm={confirmNavigate}
-        onCancel={cancelNavigate}
-      />
+      {/*<NavigateValidatorModal*/}
+      {/*  isOpen={showNavigateValidatorModal}*/}
+      {/*  onConfirm={confirmNavigate}*/}
+      {/*  onCancel={cancelNavigate}*/}
+      {/*/>*/}
     </>
   );
 }
