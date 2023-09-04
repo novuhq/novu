@@ -20,6 +20,7 @@ import type { IConditions, IntegrationEntity } from '../../types';
 import { useProviders } from '../../useProviders';
 import { When } from '../../../../components/utils/When';
 import { Conditions } from '../../../../components/conditions/Conditions';
+import { ConditionIconButton } from '../ConditionIconButton';
 
 interface ICreateProviderInstanceForm {
   name: string;
@@ -161,7 +162,7 @@ export function CreateProviderInstanceSidebar({
       }}
       onClose={onClose}
       customHeader={
-        <Group spacing={12} w="100%" h={40}>
+        <Group spacing={12} w="100%" h={40} noWrap>
           <ActionIcon onClick={onGoBack} variant={'transparent'} data-test-id="create-provider-instance-sidebar-back">
             <ArrowLeft color={colors.B80} />
           </ActionIcon>
@@ -182,6 +183,9 @@ export function CreateProviderInstanceSidebar({
               );
             }}
           />
+          <Group mt={-10} spacing={12} align="start" noWrap ml="auto">
+            <ConditionIconButton onClick={() => {}} />
+          </Group>
         </Group>
       }
       customFooter={

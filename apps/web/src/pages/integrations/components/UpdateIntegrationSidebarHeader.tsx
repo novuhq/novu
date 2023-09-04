@@ -14,6 +14,8 @@ import { DotsHorizontal, StarEmpty, Trash } from '../../../design-system/icons';
 import { ProviderInfo } from './multi-provider/ProviderInfo';
 import { useSelectPrimaryIntegrationModal } from './multi-provider/useSelectPrimaryIntegrationModal';
 import { useMakePrimaryIntegration } from '../../../api/hooks/useMakePrimaryIntegration';
+import { ConditionIconButton } from './ConditionIconButton';
+import { PrimaryIconButton } from './PrimaryIconButton';
 
 export const UpdateIntegrationSidebarHeader = ({
   provider,
@@ -107,6 +109,14 @@ export const UpdateIntegrationSidebarHeader = ({
         />
         <Group spacing={12} noWrap ml="auto">
           {children}
+          <PrimaryIconButton
+            primary={provider.primary}
+            onClick={() => {
+              makePrimaryIntegration({ id: provider.integrationId });
+            }}
+            conditions={provider.conditions}
+          />
+          <ConditionIconButton primary={provider.primary} onClick={() => {}} conditions={provider.conditions} />
           <div>
             <Dropdown
               withArrow={false}
@@ -124,7 +134,7 @@ export const UpdateIntegrationSidebarHeader = ({
                   onClick={() => {
                     makePrimaryIntegration({ id: provider.integrationId });
                   }}
-                  icon={<StarEmpty />}
+                  icon={<StarEmpty color={colors.white} />}
                   disabled={isLoading || isMarkingPrimary}
                 >
                   Mark as primary

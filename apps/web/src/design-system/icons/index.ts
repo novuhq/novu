@@ -82,6 +82,9 @@ export { UserAccess } from './general/UserAccess';
 export { SSO } from './general/SSO';
 export { Cloud } from './general/Cloud';
 export { Condition } from './general/Condition';
+export { AddCondition } from './general/AddCondition';
+export { RemoveCondition } from './general/RemoveCondition';
+export { Warning } from './general/Warning';
 
 export { Copy } from './actions/Copy';
 export { Close } from './actions/Close';
