@@ -6,7 +6,7 @@ import styled from '@emotion/styled';
 import { ChannelTypeEnum, ICreateIntegrationBodyDto, InAppProviderIdEnum, providers } from '@novu/shared';
 
 import { Button, colors, NameInput, Sidebar } from '../../../../design-system';
-import { ArrowLeft, ConditionPlus } from '../../../../design-system/icons';
+import { AddCondition, ConditionPlus, ArrowLeft, Condition } from '../../../../design-system/icons';
 import { inputStyles } from '../../../../design-system/config/inputs.styles';
 import { useFetchEnvironments } from '../../../../hooks/useFetchEnvironments';
 import { useSegment } from '../../../../components/providers/SegmentProvider';
@@ -264,6 +264,20 @@ export function CreateProviderInstanceSidebar({
           <Text>You can only create one {provider.displayName} per environment.</Text>
         </WarningMessage>
       </When>
+      <Group position="left">
+        <Button variant="outline">
+          <Group spacing={8}>
+            <AddCondition /> Add conditions
+          </Group>
+          <Group spacing={8}>
+            <Group spacing={2}>
+              <Condition color={colors.white} />
+              {7}
+            </Group>
+            Edit conditions
+          </Group>
+        </Button>
+      </Group>
     </Sidebar>
   );
 }
