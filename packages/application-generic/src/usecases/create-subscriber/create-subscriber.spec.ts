@@ -2,28 +2,38 @@ import { Test } from '@nestjs/testing';
 import { UserSession } from '@novu/testing';
 import { SubscriberRepository } from '@novu/dal';
 
-import { CacheService, InvalidateCacheService } from '../../services/cache';
 import { CreateSubscriber } from './create-subscriber.usecase';
 import { CreateSubscriberCommand } from './create-subscriber.command';
+
+import {
+  CacheService,
+  InMemoryProviderEnum,
+  InMemoryProviderService,
+  InvalidateCacheService,
+} from '../../services';
 import { UpdateSubscriber } from '../update-subscriber';
-import { InMemoryProviderService } from '../../services';
 
 const inMemoryProviderService = {
   provide: InMemoryProviderService,
-  useFactory: () => {
-    const service = new InMemoryProviderService();
-    service.initialize();
+  useFactory: async (): Promise<InMemoryProviderService> => {
+    const inMemoryProvider = new InMemoryProviderService(
+      InMemoryProviderEnum.REDIS
+    );
 
-    return service;
+    return inMemoryProvider;
   },
 };
 
 const cacheService = {
   provide: CacheService,
-  useFactory: () => {
-    const factoryInMemoryProviderService = inMemoryProviderService.useFactory();
+  useFactory: async () => {
+    const factoryInMemoryProviderService =
+      await inMemoryProviderService.useFactory();
 
-    return new CacheService(factoryInMemoryProviderService);
+    const service = new CacheService(factoryInMemoryProviderService);
+    await service.initialize();
+
+    return service;
   },
 };
 

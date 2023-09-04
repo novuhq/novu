@@ -4,10 +4,11 @@ import { MessageRepository, NotificationTemplateEntity, SubscriberRepository } f
 import { UserSession } from '@novu/testing';
 import { ChannelTypeEnum } from '@novu/shared';
 import {
-  InMemoryProviderService,
   buildFeedKey,
   buildMessageCountKey,
   CacheService,
+  InMemoryProviderEnum,
+  InMemoryProviderService,
   InvalidateCacheService,
 } from '@novu/application-generic';
 
@@ -21,13 +22,20 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
     _id: string;
   } | null = null;
 
-  const inMemoryProviderService = new InMemoryProviderService();
-  inMemoryProviderService.initialize();
-  const invalidateCache = new InvalidateCacheService(new CacheService(inMemoryProviderService));
+  let inMemoryProviderService: InMemoryProviderService;
+  let invalidateCache: InvalidateCacheService;
+
+  before(async () => {
+    inMemoryProviderService = new InMemoryProviderService(InMemoryProviderEnum.REDIS);
+    const cacheService = new CacheService(inMemoryProviderService);
+    await cacheService.initialize();
+    invalidateCache = new InvalidateCacheService(cacheService);
+  });
 
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
+
     subscriberId = SubscriberRepository.createObjectId();
 
     template = await session.createTemplate({

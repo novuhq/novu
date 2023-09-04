@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { addMilliseconds } from 'date-fns';
 import {
   JobEntity,
@@ -30,6 +30,7 @@ export class CreateNotificationJobs {
   constructor(
     private digestFilterSteps: DigestFilterSteps,
     private notificationRepository: NotificationRepository,
+    @Inject(forwardRef(() => CalculateDelayService))
     private calculateDelayService: CalculateDelayService
   ) {}
 

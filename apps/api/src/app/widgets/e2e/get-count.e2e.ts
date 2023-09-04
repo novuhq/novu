@@ -4,10 +4,11 @@ import { MessageRepository, NotificationTemplateEntity, SubscriberRepository } f
 import { UserSession } from '@novu/testing';
 import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import {
-  InMemoryProviderService,
   buildFeedKey,
   buildMessageCountKey,
   CacheService,
+  InMemoryProviderEnum,
+  InMemoryProviderService,
   InvalidateCacheService,
 } from '@novu/application-generic';
 
@@ -21,13 +22,20 @@ describe('Count - GET /widget/notifications/count', function () {
     _id: string;
   } | null = null;
 
-  const inMemoryProviderService = new InMemoryProviderService();
-  inMemoryProviderService.initialize();
-  const invalidateCache = new InvalidateCacheService(new CacheService(inMemoryProviderService));
+  let invalidateCache: InvalidateCacheService;
+  let inMemoryProviderService: InMemoryProviderService;
+
+  before(async () => {
+    inMemoryProviderService = new InMemoryProviderService(InMemoryProviderEnum.REDIS);
+    const cacheService = new CacheService(inMemoryProviderService);
+    await cacheService.initialize();
+    invalidateCache = new InvalidateCacheService(cacheService);
+  });
 
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
+
     subscriberId = SubscriberRepository.createObjectId();
 
     template = await session.createTemplate({
@@ -60,7 +68,7 @@ describe('Count - GET /widget/notifications/count', function () {
 
     const messages = await messageRepository.findBySubscriberChannel(
       session.environment._id,
-      subscriberProfile!._id,
+      String(subscriberProfile?._id),
       ChannelTypeEnum.IN_APP
     );
     const messageId = messages[0]._id;
@@ -77,7 +85,7 @@ describe('Count - GET /widget/notifications/count', function () {
 
     const messages = await messageRepository.findBySubscriberChannel(
       session.environment._id,
-      subscriberProfile!._id,
+      String(subscriberProfile?._id),
       ChannelTypeEnum.IN_APP
     );
 
@@ -107,7 +115,7 @@ describe('Count - GET /widget/notifications/count', function () {
 
     const messages = await messageRepository.findBySubscriberChannel(
       session.environment._id,
-      subscriberProfile!._id,
+      String(subscriberProfile?._id),
       ChannelTypeEnum.IN_APP
     );
 
