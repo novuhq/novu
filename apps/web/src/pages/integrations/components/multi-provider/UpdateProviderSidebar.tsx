@@ -173,16 +173,18 @@ export function UpdateProviderSidebar({
       .filter((el) => !NOVU_PROVIDERS.includes(el.providerId) && el.integrationId !== selectedProvider.integrationId)
       .find((el) => el.active && el.channel === selectedChannel && el.environmentId === environmentId);
     const isChannelSupportPrimary = CHANNELS_WITH_PRIMARY.includes(selectedChannel);
-    const hasAddedCondition = primary && conditions && conditions.length > 0; // show modal
-    const hasNotAddedConditionOnActive = !(isActive && conditions && conditions.length > 0); // show modal
 
-    if (
-      isActiveFieldChanged &&
-      isChannelSupportPrimary &&
-      hasAddedCondition &&
-      hasNotAddedConditionOnActive &&
-      ((isActive && hasSameChannelActiveIntegration) || (!isActive && primary && hasSameChannelActiveIntegration))
-    ) {
+    const isChangedToActive =
+      isActiveFieldChanged && isChannelSupportPrimary && isActive && hasSameChannelActiveIntegration;
+
+    const isChangedToInactiveAndIsPrimary =
+      isActiveFieldChanged && isChannelSupportPrimary && !isActive && primary && hasSameChannelActiveIntegration;
+
+    const isPrimaryAndHasConditionsApplied = primary && conditions && conditions.length > 0;
+
+    const hasNoConditions = !conditions || conditions.length === 0;
+
+    if ((hasNoConditions && isChangedToActive) || isChangedToInactiveAndIsPrimary || isPrimaryAndHasConditionsApplied) {
       openSelectPrimaryIntegrationModal({
         environmentId: selectedProvider?.environmentId,
         channelType: selectedProvider?.channel,
