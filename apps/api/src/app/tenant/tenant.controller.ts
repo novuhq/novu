@@ -55,7 +55,6 @@ import {
 @ApiTags('Tenants')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
-@ApiExcludeController()
 export class TenantController {
   constructor(
     private createTenantUsecase: CreateTenant,
