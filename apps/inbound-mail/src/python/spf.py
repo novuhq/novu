@@ -982,7 +982,7 @@ class query(object):
         else:
             # no matches
             if redirect:
-                #Catch redirect to a non-existant SPF record.
+                #Catch redirect to a non-existent SPF record.
                 redirect_record = self.dns_spf(redirect)
                 if not redirect_record:
                     raise PermError('redirect domain has no SPF record',

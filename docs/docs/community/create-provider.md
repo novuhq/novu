@@ -163,7 +163,7 @@ export const exampleProviderConfig: IConfigCredentials[] = [
 
 ### 2. Add ProviderId Enum
 
-Add this new provider id in respective channel proider id enum in file `libs/shared/src/consts/providers/provider.enum.ts`. As our `example-provider` is of email type, add this in `EmailProviderIdEnum` with all existing providers like below
+Add this new provider id in respective channel provider id enum in file `libs/shared/src/consts/providers/provider.enum.ts`. As our `example-provider` is of email type, add this in `EmailProviderIdEnum` with all existing providers like below
 
 ```typescript title='libs/shared/src/consts/providers/provider.enum.ts'
 export enum EmailProviderIdEnum {
