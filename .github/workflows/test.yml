@@ -29,6 +29,7 @@ jobs:
     outputs:
       test-unit: ${{ steps.get-projects-arrays.outputs.test-unit }}
       test-e2e: ${{ steps.get-projects-arrays.outputs.test-e2e }}
+      test-e2e-ee: ${{ steps.get-projects-arrays.outputs.test-e2e-ee }}
       test-cypress: ${{ steps.get-projects-arrays.outputs.test-cypress }}
       test-providers: ${{ steps.get-projects-arrays.outputs.test-providers }}
       test-packages: ${{ steps.get-projects-arrays.outputs.test-packages }}
