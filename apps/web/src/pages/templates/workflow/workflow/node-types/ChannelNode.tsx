@@ -112,16 +112,8 @@ export default memo(
 function delaySubtitle(data: NodeData) {
   if (data.channelType === StepTypeEnum.DELAY && data.delayMetadata) {
     if (data.delayMetadata.type === DelayTypeEnum.REGULAR) {
-      if (!data.delayMetadata.regular?.amount || !data.delayMetadata.regular?.unit) {
-        return 'Time interval is missing!';
-      }
-
       return `Delay all events for ${data.delayMetadata.regular?.amount} ${data.delayMetadata.regular?.unit}`;
     } else {
-      if (!data.delayMetadata.scheduled?.delayPath) {
-        return 'Path scheduled is missing!';
-      }
-
       return `Delay all events on the basis of ${data.delayMetadata.scheduled?.delayPath} path`;
     }
   }

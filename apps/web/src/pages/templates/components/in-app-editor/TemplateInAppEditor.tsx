@@ -1,13 +1,15 @@
 import { Stack } from '@mantine/core';
-import { Control, Controller, useFormContext } from 'react-hook-form';
 import { useState } from 'react';
+import { Control, Controller, useFormContext } from 'react-hook-form';
 
-import type { IForm, ITemplates } from '../formTypes';
+import { ChannelTypeEnum } from '@novu/shared';
 import { Input } from '../../../../design-system';
-import { useEnvController, useVariablesManager } from '../../../../hooks';
-import { InAppContentCard } from './InAppContentCard';
-import { VariableManagerModal } from '../VariableManagerModal';
+import { useEnvController, useHasActiveIntegrations, useVariablesManager } from '../../../../hooks';
 import { StepSettings } from '../../workflow/SideBar/StepSettings';
+import type { IForm, ITemplates } from '../formTypes';
+import { LackIntegrationAlert } from '../LackIntegrationAlert';
+import { VariableManagerModal } from '../VariableManagerModal';
+import { InAppContentCard } from './InAppContentCard';
 
 const getVariableContents = (template: ITemplates) => {
   const baseContent = ['content'];
@@ -32,9 +34,13 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
   const variableContents = getVariableContents(template);
 
   const variablesArray = useVariablesManager(index, variableContents);
+  const { hasActiveIntegration } = useHasActiveIntegrations({
+    channelType: ChannelTypeEnum.IN_APP,
+  });
 
   return (
     <>
+      {!hasActiveIntegration && <LackIntegrationAlert channelType={ChannelTypeEnum.IN_APP} />}
       <StepSettings index={index} />
       <Stack spacing={24}>
         <Controller
