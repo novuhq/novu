@@ -42,7 +42,7 @@ export const ConditionIconButton = ({
     <Tooltip
       label={
         <>
-          Add Conditions
+          {conditions && conditions.length > 0 ? 'Edit' : 'Add'} Conditions
           <When truthy={primary}>
             <RemovesPrimary />
           </When>
