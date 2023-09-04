@@ -50,8 +50,8 @@ module.exports = (on, config) => {
       }
 
       while (
-        (await jobsService.jobQueue.queue.getWaitingCount()) ||
-        (await jobsService.jobQueue.queue.getActiveCount())
+        (await jobsService.standardQueue.getWaitingCount()) ||
+        (await jobsService.standardQueue.getActiveCount())
       ) {
         await new Promise((resolve) => setTimeout(resolve, 50));
       }

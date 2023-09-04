@@ -1,36 +1,28 @@
-import { Control, Controller, useFormContext } from 'react-hook-form';
 import { ChannelTypeEnum } from '@novu/shared';
+import { Control, Controller, useFormContext } from 'react-hook-form';
 
-import { useEnvController, useVariablesManager } from '../../../../hooks';
+import { Textarea } from '../../../../design-system';
+import { useEnvController, useHasActiveIntegrations, useVariablesManager } from '../../../../hooks';
+import { StepSettings } from '../../workflow/SideBar/StepSettings';
 import type { IForm } from '../formTypes';
 import { LackIntegrationAlert } from '../LackIntegrationAlert';
-import { Textarea } from '../../../../design-system';
 import { VariableManager } from '../VariableManager';
-import { StepSettings } from '../../workflow/SideBar/StepSettings';
 
 const templateFields = ['content'];
 
-export function TemplateChatEditor({
-  control,
-  index,
-  isIntegrationActive,
-}: {
-  control: Control<IForm>;
-  index: number;
-  errors: any;
-  isIntegrationActive: boolean;
-}) {
+export function TemplateChatEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {
   const { readonly } = useEnvController();
   const {
     formState: { errors },
   } = useFormContext<IForm>();
   const variablesArray = useVariablesManager(index, templateFields);
+  const { hasActiveIntegration } = useHasActiveIntegrations({
+    channelType: ChannelTypeEnum.CHAT,
+  });
 
   return (
     <>
-      {!isIntegrationActive ? (
-        <LackIntegrationAlert channelType={ChannelTypeEnum.CHAT} iconHeight={34} iconWidth={34} />
-      ) : null}
+      {!hasActiveIntegration ? <LackIntegrationAlert channelType={ChannelTypeEnum.CHAT} /> : null}
       <StepSettings index={index} />
       <Controller
         name={`steps.${index}.template.content`}
