@@ -155,7 +155,7 @@ export const SelectPrimaryIntegrationModal = ({
       return el.channel === channelType && isNotExcluded;
     });
 
-    return filteredIntegrations.filter((el) => el.active).map((el) => mapToTableIntegration(el, environments));
+    return filteredIntegrations.map((el) => mapToTableIntegration(el, environments));
   }, [integrations, environments, channelType, environmentId, exclude]);
 
   const initialSelectedIndex = useMemo(() => {

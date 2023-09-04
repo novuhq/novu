@@ -64,11 +64,7 @@ export const UpdateIntegrationSidebarHeader = ({
         environmentId: provider.environmentId,
         channelType: provider.channel,
         exclude: (el: IntegrationEntity) => {
-          if (el._id === provider.integrationId || (el.conditions && el.conditions.length > 0)) {
-            return true;
-          }
-
-          return false;
+          return el._id === provider.integrationId;
         },
         onClose: () => {
           deleteIntegration({
