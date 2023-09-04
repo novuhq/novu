@@ -1,4 +1,4 @@
-import { ActionIcon, Group, Radio, Text } from '@mantine/core';
+import { ActionIcon, Group, Radio, Text, UnstyledButton } from '@mantine/core';
 import { useEffect, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
@@ -19,6 +19,7 @@ import { CHANNEL_TYPE_TO_STRING } from '../../../../utils/channels';
 import type { IntegrationEntity } from '../../types';
 import { useProviders } from '../../useProviders';
 import { When } from '../../../../components/utils/When';
+import { ConditionIconButton } from '../ConditionIconButton';
 
 interface ICreateProviderInstanceForm {
   name: string;
@@ -141,7 +142,7 @@ export function CreateProviderInstanceSidebar({
       }}
       onClose={onClose}
       customHeader={
-        <Group spacing={12} w="100%" h={40}>
+        <Group spacing={12} w="100%" h={40} noWrap>
           <ActionIcon onClick={onGoBack} variant={'transparent'} data-test-id="create-provider-instance-sidebar-back">
             <ArrowLeft color={colors.B80} />
           </ActionIcon>
@@ -162,6 +163,9 @@ export function CreateProviderInstanceSidebar({
               );
             }}
           />
+          <Group mt={-10} spacing={12} align="start" noWrap ml="auto">
+            <ConditionIconButton onClick={() => {}} />
+          </Group>
         </Group>
       }
       customFooter={
