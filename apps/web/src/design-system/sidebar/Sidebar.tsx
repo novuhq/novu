@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import { ActionIcon, Box, createStyles, Drawer, Loader, MantineTheme, Stack } from '@mantine/core';
+import { ActionIcon, createStyles, Drawer, Loader, MantineTheme, Stack } from '@mantine/core';
 import { ReactNode } from 'react';
 import { HEADER_HEIGHT } from '../../components/layout/constants';
 
@@ -46,11 +46,10 @@ const useDrawerStyles = createStyles((theme: MantineTheme) => {
   return {
     root: {
       position: 'absolute',
-      // zIndex: 1,
+      zIndex: 1,
     },
     drawer: {
       position: 'fixed',
-      // zIndex: 9999,
       top: `${INTEGRATION_SETTING_TOP}px`,
       right: 0,
       bottom: 0,
@@ -123,10 +122,9 @@ export const Sidebar = ({
       closeOnEscape={false}
       withinPortal={false}
       trapFocus={false}
-      zIndex={999}
       data-expanded={isExpanded}
     >
-      <Form noValidate onSubmit={onSubmit} data-test-id={dataTestId}>
+      <Form name="form-name" noValidate onSubmit={onSubmit} data-test-id={dataTestId}>
         <HeaderHolder>
           {isExpanded && onBack && (
             <ActionIcon variant="transparent" onClick={onBack} data-test-id="sidebar-back">

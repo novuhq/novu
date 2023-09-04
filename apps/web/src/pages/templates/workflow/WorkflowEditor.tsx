@@ -61,7 +61,6 @@ const WorkflowEditor = () => {
       event.preventDefault();
 
       if (node.type === 'channelNode') {
-        console.log('node.data.uuid', node.data.uuid);
         navigate(basePath + `/${node.data.channelType}/${node.data.uuid}`);
       }
       if (node.type === 'triggerNode') {

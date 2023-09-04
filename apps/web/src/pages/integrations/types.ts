@@ -23,7 +23,7 @@ export interface ITableIntegration {
   environment: string;
   active: boolean;
   logoFileName: IProviderConfig['logoFileName'];
-  conditions?: any[];
+  conditions?: IConditions[];
 }
 
 export interface IIntegratedProvider {
@@ -36,12 +36,7 @@ export interface IIntegratedProvider {
   comingSoon: boolean;
   active: boolean;
   connected: boolean;
-  conditions?: {
-    isNegated?: boolean;
-    type?: BuilderFieldType;
-    value?: BuilderGroupValues;
-    children?: FilterParts[];
-  }[];
+  conditions?: IConditions[];
   logoFileName: ILogoFileName;
   betaVersion: boolean;
   novu?: boolean;
@@ -60,16 +55,18 @@ export interface IntegrationEntity {
   providerId: ProvidersIdEnum;
   channel: ChannelTypeEnum;
   credentials: ICredentials;
-  conditions?: {
-    isNegated?: boolean;
-    type?: BuilderFieldType;
-    value?: BuilderGroupValues;
-    children?: FilterParts[];
-  }[];
+  conditions?: IConditions[];
   active: boolean;
   deleted: boolean;
   order: number;
   primary: boolean;
   deletedAt: string;
   deletedBy: string;
+}
+
+export interface IConditions {
+  isNegated?: boolean;
+  type?: BuilderFieldType;
+  value?: BuilderGroupValues;
+  children?: FilterParts[];
 }

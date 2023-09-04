@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import * as cloneDeep from 'lodash.clonedeep';
 import {
   ChannelTypeEnum,
-  FilterPartTypeEnum,
   IConfigCredentials,
   IProviderConfig,
   NOVU_SMS_EMAIL_PROVIDERS,
@@ -117,21 +116,7 @@ function initializeProvidersByIntegration(integrations: IntegrationEntity[]): II
         name: integrationItem?.name,
         identifier: integrationItem?.identifier,
         primary: integrationItem?.primary ?? false,
-        conditions: integrationItem?.conditions ?? [
-          {
-            isNegated: false,
-            type: 'GROUP',
-            value: 'AND',
-            children: [
-              {
-                on: FilterPartTypeEnum.TENANT,
-                field: 'identifier',
-                value: 'pawan',
-                operator: 'EQUAL',
-              },
-            ],
-          },
-        ],
+        conditions: integrationItem?.conditions ?? [],
       };
     });
 }

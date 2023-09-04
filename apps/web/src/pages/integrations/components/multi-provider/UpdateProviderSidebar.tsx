@@ -5,12 +5,9 @@ import slugify from 'slugify';
 import { Controller, FormProvider, useForm, useWatch } from 'react-hook-form';
 import { useIntercom } from 'react-use-intercom';
 import {
-  BuilderFieldType,
-  BuilderGroupValues,
   CHANNELS_WITH_PRIMARY,
   CredentialsKeyEnum,
   EmailProviderIdEnum,
-  FilterParts,
   IConfigCredentials,
   IConstructIntegrationDto,
   ICredentialsDto,
@@ -21,7 +18,7 @@ import {
 
 import { Button, colors, Sidebar, Text } from '../../../../design-system';
 import { useProviders } from '../../useProviders';
-import type { IIntegratedProvider } from '../../types';
+import type { IConditions, IIntegratedProvider } from '../../types';
 import { IntegrationInput } from '../IntegrationInput';
 import { useFetchEnvironments } from '../../../../hooks/useFetchEnvironments';
 import { useUpdateIntegration } from '../../../../api/hooks/useUpdateIntegration';
@@ -47,12 +44,7 @@ interface IProviderForm {
   credentials: ICredentialsDto;
   active: boolean;
   identifier: string;
-  conditions: {
-    isNegated?: boolean;
-    type?: BuilderFieldType;
-    value?: BuilderGroupValues;
-    children?: FilterParts[];
-  }[];
+  conditions: IConditions[];
 }
 
 enum SidebarStateEnum {
@@ -225,9 +217,10 @@ export function UpdateProviderSidebar({
     return (
       <Conditions
         conditions={getValues('conditions')}
+        name={getValues('name')}
         isOpened={openConditions}
         setConditions={(data) => {
-          setValue('conditions', data.conditions);
+          setValue('conditions', data, { shouldDirty: true });
         }}
         onClose={() => setOpenConditions(false)}
       />

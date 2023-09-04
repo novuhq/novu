@@ -6,7 +6,7 @@ import type { ITableIntegration } from '../types';
 const ConditionCellBase = ({ row: { original } }: IExtendedCellProps<ITableIntegration>) => {
   const { colorScheme } = useMantineColorScheme();
 
-  if (!original.conditions) {
+  if (!original.conditions || original.conditions.length < 1) {
     return (
       <div
         style={{
@@ -30,7 +30,9 @@ const ConditionCellBase = ({ row: { original } }: IExtendedCellProps<ITableInteg
       spacing={4}
     >
       <Condition />
-      <div style={{ color: colorScheme === 'dark' ? colors.B80 : colors.B40 }}>{original.conditions.length}</div>
+      <div style={{ color: colorScheme === 'dark' ? colors.B80 : colors.B40 }}>
+        {original.conditions?.[0]?.children?.length}
+      </div>
     </Group>
   );
 };
