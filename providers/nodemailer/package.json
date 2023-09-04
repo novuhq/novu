@@ -1,6 +1,6 @@
 {
   "name": "@novu/nodemailer",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "description": "A nodemailer wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -45,7 +45,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@novu/stateless": "^0.18.0",
+    "@novu/stateless": "^0.19.0",
     "nodemailer": "^6.6.5"
   },
   "devDependencies": {

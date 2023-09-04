@@ -225,7 +225,7 @@ const TemplateEditorFormProvider = ({ children }) => {
     (id: string, stepIndex: number) => {
       const index = steps.fields.findIndex(({ _id: stepId }) => id === stepId);
       if (index !== -1) {
-        steps.move(index, stepIndex);
+        steps.swap(index, stepIndex);
       }
     },
     [steps]

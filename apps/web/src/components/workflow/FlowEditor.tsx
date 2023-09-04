@@ -216,6 +216,7 @@ export function FlowEditor({
         // If no swapping occurred, update the edges & return.
         if (sourcePosition === targetPosition) {
           updateNodeConnections(newNodes);
+          setOnRepositioning(false);
 
           return;
         }
@@ -225,7 +226,7 @@ export function FlowEditor({
 
       setOnRepositioning(false);
     },
-    [nodes, onRepositioning, edges]
+    [nodes, onRepositioning, setOnRepositioning, edges]
   );
 
   const onNodeDragStart = useCallback(
@@ -247,14 +248,16 @@ export function FlowEditor({
        * When the user tries to reposition a node, the connecting edge is removed so that it doesn't
        * cause confusion for the user, making them think they are repositioning the node and all its descendants.
        */
-      setEdges((newEdges) =>
-        newEdges.map((edge) => {
-          let source = node.id === edge.target ? '' : edge.source;
-          if (edge.source === node.id) source = '';
 
-          return { ...edge, source };
+      setEdges((previousEdges) =>
+        previousEdges.map((edge) => {
+          const source = node.id === edge.source ? ClonedNodeId : edge.source;
+          const target = node.id === edge.target ? ClonedNodeId : edge.target;
+
+          return { ...edge, source, target };
         })
       );
+
       setNodes([...clonedNodes, clonedNode]);
 
       const nodeDocument = document.querySelector(`.react-flow__node[data-id="${node.id}"]`);

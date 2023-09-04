@@ -416,8 +416,13 @@ export class SubscribersController {
     @Query('limit', new DefaultValuePipe(100)) limit: number
   ): Promise<UnseenCountResponse> {
     let feedsQuery: string[] | undefined;
+
     if (feedId) {
       feedsQuery = Array.isArray(feedId) ? feedId : [feedId];
+    }
+
+    if (seen === undefined) {
+      seen = false;
     }
 
     const command = GetFeedCountCommand.create({

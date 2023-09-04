@@ -19,8 +19,9 @@ export function CachedEntity({
     injectCache(target, 'cacheService');
 
     descriptor.value = async function (...args: any[]) {
-      if (!this.cacheService?.cacheEnabled())
+      if (!this.cacheService?.cacheEnabled()) {
         return await originalMethod.apply(this, args);
+      }
 
       const cacheService = this.cacheService as CacheService;
 

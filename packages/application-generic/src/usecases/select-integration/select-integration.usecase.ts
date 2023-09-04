@@ -3,18 +3,23 @@ import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
 
 import { SelectIntegrationCommand } from './select-integration.command';
-import { buildIntegrationKey, CachedQuery } from '../../services';
-import { FeatureFlagCommand, GetFeatureFlag } from '../get-feature-flag';
+import { buildIntegrationKey, CachedQuery } from '../../services/cache';
+import {
+  FeatureFlagCommand,
+  GetIsMultiProviderConfigurationEnabled,
+} from '../get-feature-flag';
 import {
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
 } from '../get-decrypted-integrations';
 
+const LOG_CONTEXT = 'SelectIntegration';
+
 @Injectable()
 export class SelectIntegration {
   constructor(
     private integrationRepository: IntegrationRepository,
-    protected getFeatureFlag: GetFeatureFlag,
+    protected getIsMultiProviderConfigurationEnabled: GetIsMultiProviderConfigurationEnabled,
     protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {}
 
@@ -29,7 +34,7 @@ export class SelectIntegration {
     command: SelectIntegrationCommand
   ): Promise<IntegrationEntity | undefined> {
     const isMultiProviderConfigurationEnabled =
-      await this.getFeatureFlag.isMultiProviderConfigurationEnabled(
+      await this.getIsMultiProviderConfigurationEnabled.execute(
         FeatureFlagCommand.create({
           userId: command.userId,
           organizationId: command.organizationId,

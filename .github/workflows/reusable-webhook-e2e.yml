@@ -26,7 +26,7 @@ jobs:
     - uses: ./.github/actions/start-localstack
 
       # Runs a single command using the runners shell
-    - name: Build API
+    - name: Build Webhook
       run: CI='' pnpm build:webhook
 
     # Runs a set of commands using the runners shell

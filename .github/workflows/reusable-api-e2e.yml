@@ -64,8 +64,6 @@ jobs:
         run: CI='' pnpm build:api
 
       - name: Run E2E tests
-        env:
-          IN_MEMORY_CLUSTER_MODE_ENABLED: true
         run: |
           cd apps/api && pnpm test:e2e
 

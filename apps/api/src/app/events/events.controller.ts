@@ -28,6 +28,7 @@ import { ExternalApiAccessible } from '../auth/framework/external-api.decorator'
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ApiResponse } from '../shared/framework/response.decorator';
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
+
 @Controller({
   path: 'events',
   scope: Scope.REQUEST,
