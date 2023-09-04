@@ -4,9 +4,9 @@ import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
 import {
   AnalyticsService,
   buildIntegrationKey,
-  InvalidateCacheService,
-  GetFeatureFlag,
   FeatureFlagCommand,
+  GetIsMultiProviderConfigurationEnabled,
+  InvalidateCacheService,
 } from '@novu/application-generic';
 
 import { SetIntegrationAsPrimaryCommand } from './set-integration-as-primary.command';
@@ -17,7 +17,7 @@ export class SetIntegrationAsPrimary {
     private invalidateCache: InvalidateCacheService,
     private integrationRepository: IntegrationRepository,
     private analyticsService: AnalyticsService,
-    private getFeatureFlag: GetFeatureFlag
+    private getIsMultiProviderConfigurationEnabled: GetIsMultiProviderConfigurationEnabled
   ) {}
 
   private async updatePrimaryFlag({ existingIntegration }: { existingIntegration: IntegrationEntity }) {
@@ -64,7 +64,7 @@ export class SetIntegrationAsPrimary {
     }
 
     const { _organizationId, _environmentId, channel, providerId } = existingIntegration;
-    const isMultiProviderConfigurationEnabled = await this.getFeatureFlag.isMultiProviderConfigurationEnabled(
+    const isMultiProviderConfigurationEnabled = await this.getIsMultiProviderConfigurationEnabled.execute(
       FeatureFlagCommand.create({
         userId: command.userId,
         organizationId: _organizationId,

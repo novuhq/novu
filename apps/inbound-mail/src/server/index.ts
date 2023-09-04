@@ -10,15 +10,16 @@ import * as util from 'util';
 import { SMTPServer } from 'smtp-server';
 import * as uuid from 'node-uuid';
 import * as dns from 'dns';
-import logger from './logger';
 import * as extend from 'extend';
-import { QueueService } from './queue-service';
 import { BullMqService } from '@novu/application-generic';
+
+import { InboundMailQueueService } from './inbound-mail-queue.service';
+import logger from './logger';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const LanguageDetect = require('languagedetect');
 const mailUtilities = Promise.promisifyAll(require('./mailUtilities'));
-const queueService = new QueueService();
+const inboundMailQueueService = new InboundMailQueueService();
 BullMqService.haveProInstalled();
 
 class Mailin extends events.EventEmitter {
@@ -377,7 +378,7 @@ class Mailin extends events.EventEmitter {
         const username: string = parts[0];
         const environmentId = username.split('-nv-e=').at(-1);
 
-        queueService.bullMqService.add(
+        inboundMailQueueService.bullMqService.add(
           finalizedMessage.messageId,
           finalizedMessage,
           {

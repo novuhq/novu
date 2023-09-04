@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { SubscriberRepository } from '@novu/dal';
 import { SubscriberEntity } from '@novu/dal';
 
@@ -37,7 +37,7 @@ export class CreateSubscriber {
         }),
       });
 
-      subscriber = await this.subscriberRepository.create({
+      const subscriberPayload = {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
         firstName: command.firstName,
@@ -48,7 +48,9 @@ export class CreateSubscriber {
         avatar: command.avatar,
         locale: command.locale,
         data: command.data,
-      });
+      };
+
+      subscriber = await this.subscriberRepository.create(subscriberPayload);
     } else {
       subscriber = await this.updateSubscriber.execute(
         UpdateSubscriberCommand.create({
