@@ -16,6 +16,7 @@ export class GetActiveIntegrations {
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         userId: command.userId,
+        filterByEnvironment: command.filterByEnvironment,
         active: true,
       })
     );

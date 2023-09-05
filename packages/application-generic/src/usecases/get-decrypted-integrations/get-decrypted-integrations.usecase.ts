@@ -31,7 +31,10 @@ export class GetDecryptedIntegrations {
       _organizationId: command.organizationId,
     };
 
-    if (command.environmentId && !isMultiProviderConfigurationEnabled) {
+    if (
+      (command.filterByEnvironment && command.environmentId) ||
+      (command.environmentId && !isMultiProviderConfigurationEnabled)
+    ) {
       query._environmentId = command.environmentId;
     }
 
