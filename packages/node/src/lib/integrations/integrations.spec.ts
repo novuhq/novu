@@ -116,7 +116,8 @@ describe('test use of novus node package - Integrations class', () => {
 
     expect(mockedAxios.post).toHaveBeenCalled();
     expect(mockedAxios.post).toHaveBeenCalledWith(
-      '/integrations/INTEGRATION_ID/set-primary'
+      '/integrations/INTEGRATION_ID/set-primary',
+      {}
     );
   });
 
