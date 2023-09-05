@@ -115,7 +115,7 @@ export interface ISelectPrimaryIntegrationModalProps {
   environmentId?: string;
   channelType?: ChannelTypeEnum;
   exclude?: (integration: IntegrationEntity) => boolean;
-  onClose: () => void;
+  onClose: (cancel?: boolean) => void;
 }
 
 export const SelectPrimaryIntegrationModal = ({
@@ -132,14 +132,17 @@ export const SelectPrimaryIntegrationModal = ({
   const { environments, isLoading: areEnvironmentsLoading } = useFetchEnvironments();
   const environmentName = environments?.find((el) => el._id === environmentId)?.name ?? '';
 
-  const onCloseCallback = useCallback(() => {
-    setSelectedState(initialState);
-    onClose();
-  }, [onClose]);
+  const onCloseCallback = useCallback(
+    (cancel?: boolean) => {
+      setSelectedState(initialState);
+      onClose(cancel);
+    },
+    [onClose]
+  );
 
   const { integrations, loading: areIntegrationsLoading } = useIntegrations();
   const { makePrimaryIntegration, isLoading: isMarkingPrimaryIntegration } = useMakePrimaryIntegration({
-    onSuccess: onCloseCallback,
+    onSuccess: () => onCloseCallback(),
   });
   const integrationsByEnvAndChannel = useMemo<ITableIntegration[]>(() => {
     const filteredIntegrations = (integrations ?? []).filter((el) => {
@@ -209,7 +212,7 @@ export const SelectPrimaryIntegrationModal = ({
       shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.medium}
       radius="md"
       size="lg"
-      onClose={onCloseCallback}
+      onClose={() => onCloseCallback()}
     >
       <ModalBodyHolder data-test-id="select-primary-integration-modal">
         <Description>
@@ -249,7 +252,7 @@ export const SelectPrimaryIntegrationModal = ({
               The selected provider instance will be activated as the primary provider cannot be disabled.
             </Warning>
           )}
-          <Button variant="outline" onClick={onCloseCallback}>
+          <Button variant="outline" onClick={() => onCloseCallback(true)}>
             Cancel
           </Button>
           <Popover
