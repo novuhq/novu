@@ -36,7 +36,7 @@ export const PrimaryIconButton = ({
   primary?: boolean;
   onClick: () => void;
 }) => {
-  const [modalOpen, setModalOpen] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
 
   if (primary) {
     return null;

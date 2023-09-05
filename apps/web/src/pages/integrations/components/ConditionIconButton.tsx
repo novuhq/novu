@@ -1,12 +1,12 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import styled from '@emotion/styled';
-import { Group, UnstyledButton, ActionIcon } from '@mantine/core';
+import { Group, ActionIcon, Title } from '@mantine/core';
 import { When } from '../../../components/utils/When';
-import { colors, Tooltip, Text } from '../../../design-system';
-import { Condition, ConditionPlus } from '../../../design-system/icons';
+import { colors, Tooltip, Text, Modal, Button } from '../../../design-system';
+import { Condition, ConditionPlus, Warning } from '../../../design-system/icons';
 import { IConditions } from '../types';
 
-const Button = styled(Group)`
+const IconButton = styled(Group)`
   text-align: center;
   border-radius: 8px;
   width: 32px;
@@ -37,6 +37,7 @@ export const ConditionIconButton = ({
   primary?: boolean;
   onClick: () => void;
 }) => {
+  const [modalOpen, setModalOpen] = useState(true);
   const numOfConditions: number = useMemo(() => {
     if (conditions && conditions[0] && conditions[0].children) {
       return conditions[0].children.length;
@@ -46,28 +47,76 @@ export const ConditionIconButton = ({
   }, [conditions]);
 
   return (
-    <Tooltip
-      label={
-        <>
-          {numOfConditions > 0 ? 'Edit' : 'Add'} Conditions
-          <When truthy={primary}>
-            <RemovesPrimary />
-          </When>
-        </>
-      }
-      position="bottom"
-    >
-      <ActionIcon onClick={onClick} variant="transparent">
-        <Button position="center" spacing={4}>
-          <When truthy={numOfConditions === 0}>
-            <ConditionPlus />
-          </When>
-          <When truthy={numOfConditions > 0}>
-            <Condition />
-            <div>{numOfConditions}</div>
-          </When>
-        </Button>
-      </ActionIcon>
-    </Tooltip>
+    <>
+      <Tooltip
+        label={
+          <>
+            {numOfConditions > 0 ? 'Edit' : 'Add'} Conditions
+            <When truthy={primary}>
+              <RemovesPrimary />
+            </When>
+          </>
+        }
+        position="bottom"
+      >
+        <ActionIcon
+          onClick={() => {
+            if (primary) {
+              setModalOpen(true);
+
+              return;
+            }
+            onClick();
+          }}
+          variant="transparent"
+        >
+          <IconButton position="center" spacing={4}>
+            <When truthy={numOfConditions === 0}>
+              <ConditionPlus />
+            </When>
+            <When truthy={numOfConditions > 0}>
+              <Condition />
+              <div>{numOfConditions}</div>
+            </When>
+          </IconButton>
+        </ActionIcon>
+      </Tooltip>
+      <Modal
+        opened={modalOpen}
+        title={
+          <Group spacing={8}>
+            <Warning color="#EAA900" />
+            <Title color="#EAA900">Primary will be removed</Title>
+          </Group>
+        }
+        size="lg"
+        onClose={() => {
+          setModalOpen(false);
+        }}
+      >
+        <Text color={colors.B60}>
+          Adding conditions to this instance will remove it as primary since primary instances cannot have any
+          conditions.
+        </Text>
+        <Group mt={30} position="right">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setModalOpen(false);
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              onClick();
+              setModalOpen(false);
+            }}
+          >
+            <Group spacing={8}>Remove as primary</Group>
+          </Button>
+        </Group>
+      </Modal>
+    </>
   );
 };

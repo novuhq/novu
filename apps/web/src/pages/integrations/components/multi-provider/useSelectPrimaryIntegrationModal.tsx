@@ -12,13 +12,10 @@ export const useSelectPrimaryIntegrationModal = () => {
   const isMultiProviderConfigurationEnabled = useIsMultiProviderConfigurationEnabled();
   const isOpened = opened && isMultiProviderConfigurationEnabled;
 
-  const onCloseCallback = useCallback(
-    (cancel?: boolean) => {
-      close();
-      onClose?.(cancel);
-    },
-    [close, onClose]
-  );
+  const onCloseCallback = useCallback(() => {
+    close();
+    onClose?.();
+  }, [close, onClose]);
 
   const Component = useInlineComponent<ISelectPrimaryIntegrationModalProps>(SelectPrimaryIntegrationModal, {
     isOpened,

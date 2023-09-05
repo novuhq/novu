@@ -115,7 +115,7 @@ export interface ISelectPrimaryIntegrationModalProps {
   environmentId?: string;
   channelType?: ChannelTypeEnum;
   exclude?: (integration: IntegrationEntity) => boolean;
-  onClose: (cancel?: boolean) => void;
+  onClose: () => void;
 }
 
 export const SelectPrimaryIntegrationModal = ({
@@ -132,13 +132,10 @@ export const SelectPrimaryIntegrationModal = ({
   const { environments, isLoading: areEnvironmentsLoading } = useFetchEnvironments();
   const environmentName = environments?.find((el) => el._id === environmentId)?.name ?? '';
 
-  const onCloseCallback = useCallback(
-    (cancel?: boolean) => {
-      setSelectedState(initialState);
-      onClose(cancel);
-    },
-    [onClose]
-  );
+  const onCloseCallback = useCallback(() => {
+    setSelectedState(initialState);
+    onClose();
+  }, [onClose]);
 
   const { integrations, loading: areIntegrationsLoading } = useIntegrations();
   const { makePrimaryIntegration, isLoading: isMarkingPrimaryIntegration } = useMakePrimaryIntegration({
@@ -252,7 +249,7 @@ export const SelectPrimaryIntegrationModal = ({
               The selected provider instance will be activated as the primary provider cannot be disabled.
             </Warning>
           )}
-          <Button variant="outline" onClick={() => onCloseCallback(true)}>
+          <Button variant="outline" onClick={onCloseCallback}>
             Cancel
           </Button>
           <Popover
