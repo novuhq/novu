@@ -32,15 +32,20 @@ import { InboundParseModule } from './app/inbound-parse/inbound-parse.module';
 import { BlueprintModule } from './app/blueprint/blueprint.module';
 import { TenantModule } from './app/tenant/tenant.module';
 
-const enterpriseImport = (path: string): any | undefined => {
-  if (process.env.NOVU_MANAGED_SERVICE === 'true') {
-    return require(path);
+const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
+  const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
+  try {
+    if (process.env.NOVU_MANAGED_SERVICE === 'true' || process.env.CI_EE_TEST === 'true') {
+      modules.push(require('@novu/ee-auth')?.EEAuthModule);
+    }
+  } catch (e) {
+    Logger.error(e, `Unexpected error while importing enterprise modules`, 'EnterpriseImport');
   }
 
-  return undefined;
+  return modules;
 };
 
-const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
+const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
   InboundParseModule,
   OrganizationModule,
   SharedModule,
@@ -69,11 +74,9 @@ const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardRefe
   TenantModule,
 ];
 
-const eeAuthModule = enterpriseImport('@novu/ee-auth');
+const enterpriseModules = enterpriseImports();
 
-if (eeAuthModule) {
-  modules.push(eeAuthModule);
-}
+const modules = baseModules.concat(enterpriseModules);
 
 const providers: Provider[] = [];
 
