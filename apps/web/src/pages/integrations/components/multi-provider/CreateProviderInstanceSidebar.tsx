@@ -1,12 +1,11 @@
-import { ActionIcon, Group, Radio, Text } from '@mantine/core';
+import { ActionIcon, Group, Radio, Text, Input } from '@mantine/core';
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { ChannelTypeEnum, ICreateIntegrationBodyDto, InAppProviderIdEnum, providers } from '@novu/shared';
-
 import { Button, colors, NameInput, Sidebar } from '../../../../design-system';
-import { AddCondition, ConditionPlus, ArrowLeft, Condition } from '../../../../design-system/icons';
+import { ConditionPlus, ArrowLeft, Condition } from '../../../../design-system/icons';
 import { inputStyles } from '../../../../design-system/config/inputs.styles';
 import { useFetchEnvironments } from '../../../../hooks/useFetchEnvironments';
 import { useSegment } from '../../../../components/providers/SegmentProvider';
@@ -70,6 +69,7 @@ export function CreateProviderInstanceSidebar({
     },
   });
 
+  const watchedConditions = watch('conditions');
   const selectedEnvironmentId = watch('environmentId');
 
   const showInAppErrorMessage = useMemo(() => {
@@ -184,7 +184,7 @@ export function CreateProviderInstanceSidebar({
             }}
           />
           <Group mt={-10} spacing={12} align="start" noWrap ml="auto">
-            <ConditionIconButton onClick={() => {}} />
+            <ConditionIconButton onClick={() => setOpenConditions(true)} />
           </Group>
         </Group>
       }
@@ -256,28 +256,44 @@ export function CreateProviderInstanceSidebar({
         }}
       />
 
-      <Button variant="outline" onClick={() => setOpenConditions(true)} icon={<ConditionPlus />}>
-        Add condition
-      </Button>
+      <Input.Wrapper
+        label={
+          <>
+            <Group spacing={5}>
+              Conditions
+              <Text color={colors.B40} style={{ fontWeight: 'normal' }}>
+                (optional)
+              </Text>
+            </Group>
+          </>
+        }
+        description="Add a condition if you want to apply the provider instance to a specific tenant, subscriber, workflow, etc."
+        styles={inputStyles}
+      >
+        <Group mt={16} position="left">
+          <Button variant="outline" onClick={() => setOpenConditions(true)}>
+            <When truthy={watchedConditions.length === 0}>
+              <Group spacing={8}>
+                <ConditionPlus /> Add conditions
+              </Group>
+            </When>
+            <When truthy={watchedConditions.length > 0}>
+              <Group spacing={8}>
+                <Group spacing={2}>
+                  <Condition color={colors.white} />
+                  {watchedConditions.length}
+                </Group>
+                Edit conditions
+              </Group>
+            </When>
+          </Button>
+        </Group>
+      </Input.Wrapper>
       <When truthy={showInAppErrorMessage}>
         <WarningMessage>
           <Text>You can only create one {provider.displayName} per environment.</Text>
         </WarningMessage>
       </When>
-      <Group position="left">
-        <Button variant="outline">
-          <Group spacing={8}>
-            <AddCondition /> Add conditions
-          </Group>
-          <Group spacing={8}>
-            <Group spacing={2}>
-              <Condition color={colors.white} />
-              {7}
-            </Group>
-            Edit conditions
-          </Group>
-        </Button>
-      </Group>
     </Sidebar>
   );
 }

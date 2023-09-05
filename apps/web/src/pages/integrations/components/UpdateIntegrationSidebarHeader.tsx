@@ -21,10 +21,12 @@ export const UpdateIntegrationSidebarHeader = ({
   provider,
   onSuccessDelete,
   children = null,
+  openConditions,
 }: {
   provider: IIntegratedProvider | null;
   onSuccessDelete: () => void;
   children?: ReactNode | null;
+  openConditions: () => void;
 }) => {
   const [isModalOpened, setModalIsOpened] = useState(false);
   const { control } = useFormContext();
@@ -116,7 +118,7 @@ export const UpdateIntegrationSidebarHeader = ({
             }}
             conditions={provider.conditions}
           />
-          <ConditionIconButton primary={provider.primary} onClick={() => {}} conditions={provider.conditions} />
+          <ConditionIconButton primary={provider.primary} onClick={openConditions} conditions={provider.conditions} />
           <div>
             <Dropdown
               withArrow={false}

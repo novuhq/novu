@@ -3,7 +3,7 @@ import { Group, UnstyledButton, Text } from '@mantine/core';
 import { colors } from '@novu/notification-center';
 import { When } from '../../../components/utils/When';
 import { Tooltip } from '../../../design-system';
-import { AddCondition, Condition } from '../../../design-system/icons';
+import { Condition, ConditionPlus } from '../../../design-system/icons';
 
 const Button = styled(Group)`
   text-align: center;
@@ -53,7 +53,7 @@ export const ConditionIconButton = ({
       <UnstyledButton onClick={onClick}>
         <Button position="center" spacing={4}>
           <When truthy={!conditions || conditions.length === 0}>
-            <AddCondition />
+            <ConditionPlus />
           </When>
           <When truthy={conditions && conditions.length > 0}>
             <Condition />

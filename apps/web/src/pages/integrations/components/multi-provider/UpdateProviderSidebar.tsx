@@ -37,8 +37,9 @@ import { NovuProviderSidebarContent } from './NovuProviderSidebarContent';
 import { useSelectPrimaryIntegrationModal } from './useSelectPrimaryIntegrationModal';
 import { ShareableUrl } from '../Modal/ConnectIntegrationForm';
 import { Conditions } from '../../../../components/conditions/Conditions';
-import { ConditionPlus } from '../../../../design-system/icons';
+import { useNavigate } from 'react-router-dom';
 import { Warning } from '../../../../design-system/icons';
+import { ROUTES } from '../../../../constants/routes.enum';
 
 interface IProviderForm {
   name: string;
@@ -62,7 +63,7 @@ export function UpdateProviderSidebar({
   integrationId?: string;
   onClose: () => void;
 }) {
-  const [modalOpen, setModalOpen] = useState(false);
+  const [missingProviderModalOpen, setMissingProviderModalOpen] = useState(true);
   const theme = useMantineTheme();
   const { update } = useIntercom();
   const { isLoading: areEnvironmentsLoading } = useFetchEnvironments();
@@ -72,7 +73,7 @@ export function UpdateProviderSidebar({
   const [framework, setFramework] = useState<FrameworkEnum | null>(null);
   const { providers, isLoading: areProvidersLoading } = useProviders();
   const isNovuInAppProvider = selectedProvider?.providerId === InAppProviderIdEnum.Novu;
-
+  const navigate = useNavigate();
   const { openModal: openSelectPrimaryIntegrationModal, SelectPrimaryIntegrationModal } =
     useSelectPrimaryIntegrationModal();
 
@@ -201,8 +202,8 @@ export function UpdateProviderSidebar({
         channelType: selectedProvider?.channel,
         exclude: !isActive ? (el) => el._id === selectedProvider.integrationId : undefined,
         onClose: (cancel?: boolean) => {
-          if (cancel === true) {
-            setModalOpen(true);
+          if (cancel === true && primary && conditions && conditions?.length > 0) {
+            setMissingProviderModalOpen(true);
           }
           updateIntegration(data);
         },
@@ -252,7 +253,11 @@ export function UpdateProviderSidebar({
           onClose={onSidebarClose}
           onSubmit={onSubmit}
           customHeader={
-            <UpdateIntegrationSidebarHeader provider={selectedProvider} onSuccessDelete={onSidebarClose}>
+            <UpdateIntegrationSidebarHeader
+              openConditions={() => setOpenConditions(true)}
+              provider={selectedProvider}
+              onSuccessDelete={onSidebarClose}
+            >
               <Free>Test Provider</Free>
             </UpdateIntegrationSidebarHeader>
           }
@@ -288,7 +293,11 @@ export function UpdateProviderSidebar({
         onBack={onBack}
         customHeader={
           sidebarState === SidebarStateEnum.NORMAL ? (
-            <UpdateIntegrationSidebarHeader provider={selectedProvider} onSuccessDelete={onSidebarClose} />
+            <UpdateIntegrationSidebarHeader
+              openConditions={() => setOpenConditions(true)}
+              provider={selectedProvider}
+              onSuccessDelete={onSidebarClose}
+            />
           ) : (
             <>
               <When truthy={isNovuInAppProvider}>
@@ -360,13 +369,10 @@ export function UpdateProviderSidebar({
             <Faq />
           </Box>
         </When>
-        <Button variant="outline" onClick={() => setOpenConditions(true)} icon={<ConditionPlus />}>
-          Add condition
-        </Button>
       </Sidebar>
       <SelectPrimaryIntegrationModal />
       <Modal
-        opened={modalOpen}
+        opened={missingProviderModalOpen}
         overlayColor={theme.colorScheme === 'dark' ? colors.BGDark : colors.BGLight}
         overlayOpacity={0.7}
         styles={{
@@ -389,7 +395,7 @@ export function UpdateProviderSidebar({
         radius="md"
         size="lg"
         onClose={() => {
-          setModalOpen(false);
+          setMissingProviderModalOpen(false);
         }}
         centered
         overflow="inside"
@@ -402,14 +408,15 @@ export function UpdateProviderSidebar({
           <Button
             variant="outline"
             onClick={() => {
-              setModalOpen(false);
+              setMissingProviderModalOpen(false);
             }}
           >
             Remind me later
           </Button>
           <Button
             onClick={() => {
-              setModalOpen(false);
+              setMissingProviderModalOpen(false);
+              navigate(ROUTES.INTEGRATIONS + '/create');
             }}
           >
             <Group spacing={8}>Add a provider</Group>
