@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import styled from '@emotion/styled';
-import { Group, ActionIcon, Title } from '@mantine/core';
+import { Group, ActionIcon, Title, Center } from '@mantine/core';
 import { When } from '../../../components/utils/When';
 import { colors, Tooltip, Text, Modal, Button } from '../../../design-system';
 import { Condition, ConditionPlus, Warning } from '../../../design-system/icons';
-import { IConditions } from '../types';
+import { IConditions } from '../../../components/conditions';
 
 const IconButton = styled(Group)`
   text-align: center;
@@ -75,10 +75,10 @@ export const ConditionIconButton = ({
               <ConditionPlus />
             </When>
             <When truthy={numOfConditions > 0}>
-              <Group spacing={4}>
+              <Center inline>
                 <Condition />
                 <div>{numOfConditions}</div>
-              </Group>
+              </Center>
             </When>
           </IconButton>
         </ActionIcon>

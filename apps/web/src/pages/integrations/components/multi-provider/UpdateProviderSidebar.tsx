@@ -18,7 +18,7 @@ import {
 
 import { Button, colors, Sidebar, Text } from '../../../../design-system';
 import { useProviders } from '../../useProviders';
-import type { IConditions, IIntegratedProvider } from '../../types';
+import type { IIntegratedProvider } from '../../types';
 import { IntegrationInput } from '../IntegrationInput';
 import { useFetchEnvironments } from '../../../../hooks/useFetchEnvironments';
 import { useUpdateIntegration } from '../../../../api/hooks/useUpdateIntegration';
@@ -36,7 +36,8 @@ import { NovuInAppSetupWarning } from '../NovuInAppSetupWarning';
 import { NovuProviderSidebarContent } from './NovuProviderSidebarContent';
 import { useSelectPrimaryIntegrationModal } from './useSelectPrimaryIntegrationModal';
 import { ShareableUrl } from '../Modal/ConnectIntegrationForm';
-import { Conditions } from '../../../../components/conditions/Conditions';
+import { Conditions, IConditions } from '../../../../components/conditions';
+import { useDisclosure } from '@mantine/hooks';
 
 interface IProviderForm {
   name: string;
@@ -64,12 +65,12 @@ export function UpdateProviderSidebar({
   const { isLoading: areEnvironmentsLoading } = useFetchEnvironments();
   const [selectedProvider, setSelectedProvider] = useState<IIntegratedProvider | null>(null);
   const [sidebarState, setSidebarState] = useState<SidebarStateEnum>(SidebarStateEnum.NORMAL);
-  const [openConditions, setOpenConditions] = useState(false);
   const [framework, setFramework] = useState<FrameworkEnum | null>(null);
   const { providers, isLoading: areProvidersLoading } = useProviders();
   const isNovuInAppProvider = selectedProvider?.providerId === InAppProviderIdEnum.Novu;
   const { openModal: openSelectPrimaryIntegrationModal, SelectPrimaryIntegrationModal } =
     useSelectPrimaryIntegrationModal();
+  const [conditionsFormOpened, { close: closeConditionsForm, open: openConditionsForm }] = useDisclosure(false);
 
   const { updateIntegration, isLoadingUpdate } = useUpdateIntegration(selectedProvider?.integrationId || '');
 
@@ -218,16 +219,20 @@ export function UpdateProviderSidebar({
     name: `credentials.${CredentialsKeyEnum.Hmac}`,
   });
 
-  if (openConditions) {
+  const updateConditions = (conditions: IConditions[]) => {
+    setValue('conditions', conditions, { shouldDirty: true });
+  };
+
+  if (conditionsFormOpened) {
+    const [conditions, name] = getValues(['conditions', 'name']);
+
     return (
       <Conditions
-        conditions={getValues('conditions')}
-        name={getValues('name')}
-        isOpened={openConditions}
-        setConditions={(data) => {
-          setValue('conditions', data, { shouldDirty: true });
-        }}
-        onClose={() => setOpenConditions(false)}
+        conditions={conditions}
+        name={name}
+        isOpened={conditionsFormOpened}
+        setConditions={updateConditions}
+        onClose={closeConditionsForm}
       />
     );
   }
@@ -245,7 +250,7 @@ export function UpdateProviderSidebar({
           onSubmit={onSubmit}
           customHeader={
             <UpdateIntegrationSidebarHeader
-              openConditions={() => setOpenConditions(true)}
+              openConditions={openConditionsForm}
               provider={selectedProvider}
               onSuccessDelete={onSidebarClose}
             >
@@ -285,7 +290,7 @@ export function UpdateProviderSidebar({
         customHeader={
           sidebarState === SidebarStateEnum.NORMAL ? (
             <UpdateIntegrationSidebarHeader
-              openConditions={() => setOpenConditions(true)}
+              openConditions={openConditionsForm}
               provider={selectedProvider}
               onSuccessDelete={onSidebarClose}
             />

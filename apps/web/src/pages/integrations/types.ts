@@ -1,14 +1,12 @@
 import type {
-  BuilderFieldType,
-  BuilderGroupValues,
   ChannelTypeEnum,
-  FilterParts,
   IConfigCredentials,
   ICredentials,
   ILogoFileName,
   IProviderConfig,
   ProvidersIdEnum,
 } from '@novu/shared';
+import { IConditions } from '../../components/conditions';
 
 export interface ITableIntegration {
   name: string;
@@ -62,11 +60,4 @@ export interface IntegrationEntity {
   primary: boolean;
   deletedAt: string;
   deletedBy: string;
-}
-
-export interface IConditions {
-  isNegated?: boolean;
-  type?: BuilderFieldType;
-  value?: BuilderGroupValues;
-  children?: FilterParts[];
 }
