@@ -101,19 +101,13 @@ export class ActiveJobsMetricService {
             Logger.log('Recording active, waiting, and delayed metrics');
 
             const nr = require('newrelic');
-            nr.recordMetric(`ActiveJobsMetricQueueService/${deploymentName}/${queueService.topic}/waiting`, waitCount);
-            nr.recordMetric(
-              `ActiveJobsMetricQueueService/${deploymentName}/${queueService.topic}/delayed`,
-              delayedCount
-            );
-            nr.recordMetric(`ActiveJobsMetricQueueService/${deploymentName}/${queueService.topic}/active`, activeCount);
+            nr.recordMetric(`Queue/${deploymentName}/${queueService.topic}/waiting`, waitCount);
+            nr.recordMetric(`Queue/${deploymentName}/${queueService.topic}/delayed`, delayedCount);
+            nr.recordMetric(`Queue/${deploymentName}/${queueService.topic}/active`, activeCount);
 
-            Logger.verbose(`ActiveJobsMetricQueueService/${deploymentName}/${queueService.topic}/waiting`, waitCount);
-            Logger.verbose(
-              `ActiveJobsMetricQueueService/${deploymentName}/${queueService.topic}/delayed`,
-              delayedCount
-            );
-            Logger.verbose(`ActiveJobsMetricQueueService/${deploymentName}/${queueService.topic}/active`, activeCount);
+            Logger.verbose(`Queue/${deploymentName}/${queueService.topic}/waiting`, waitCount);
+            Logger.verbose(`Queue/${deploymentName}/${queueService.topic}/delayed`, delayedCount);
+            Logger.verbose(`Queue/${deploymentName}/${queueService.topic}/active`, activeCount);
           }
 
           return resolve();

@@ -101,20 +101,11 @@ export class CompletedJobsMetricService {
             Logger.log('Recording active, waiting, and delayed metrics');
 
             const nr = require('newrelic');
-            nr.recordMetric(
-              `CompletedJobsMetricQueueService${deploymentName}/${queueService.topic}/completed`,
-              completeNumber
-            );
-            nr.recordMetric(
-              `CompletedJobsMetricQueueService${deploymentName}/${queueService.topic}/failed`,
-              failNumber
-            );
+            nr.recordMetric(`Queue/${deploymentName}/${queueService.topic}/completed`, completeNumber);
+            nr.recordMetric(`Queue/${deploymentName}/${queueService.topic}/failed`, failNumber);
 
-            Logger.verbose(
-              `CompletedJobsMetricQueueService${deploymentName}/${queueService.topic}/completed`,
-              completeNumber
-            );
-            Logger.verbose(`CompletedJobsMetricQueueService${deploymentName}/${queueService.topic}/failed`, failNumber);
+            Logger.verbose(`Queue/${deploymentName}/${queueService.topic}/completed`, completeNumber);
+            Logger.verbose(`Queue/${deploymentName}/${queueService.topic}/failed`, failNumber);
           }
 
           return resolve();
