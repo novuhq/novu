@@ -37,7 +37,6 @@ import { NovuProviderSidebarContent } from './NovuProviderSidebarContent';
 import { useSelectPrimaryIntegrationModal } from './useSelectPrimaryIntegrationModal';
 import { ShareableUrl } from '../Modal/ConnectIntegrationForm';
 import { Conditions } from '../../../../components/conditions/Conditions';
-import { ConditionPlus } from '../../../../design-system/icons';
 
 interface IProviderForm {
   name: string;
@@ -69,7 +68,6 @@ export function UpdateProviderSidebar({
   const [framework, setFramework] = useState<FrameworkEnum | null>(null);
   const { providers, isLoading: areProvidersLoading } = useProviders();
   const isNovuInAppProvider = selectedProvider?.providerId === InAppProviderIdEnum.Novu;
-
   const { openModal: openSelectPrimaryIntegrationModal, SelectPrimaryIntegrationModal } =
     useSelectPrimaryIntegrationModal();
 
@@ -246,7 +244,11 @@ export function UpdateProviderSidebar({
           onClose={onSidebarClose}
           onSubmit={onSubmit}
           customHeader={
-            <UpdateIntegrationSidebarHeader provider={selectedProvider} onSuccessDelete={onSidebarClose}>
+            <UpdateIntegrationSidebarHeader
+              openConditions={() => setOpenConditions(true)}
+              provider={selectedProvider}
+              onSuccessDelete={onSidebarClose}
+            >
               <Free>Test Provider</Free>
             </UpdateIntegrationSidebarHeader>
           }
@@ -282,7 +284,11 @@ export function UpdateProviderSidebar({
         onBack={onBack}
         customHeader={
           sidebarState === SidebarStateEnum.NORMAL ? (
-            <UpdateIntegrationSidebarHeader provider={selectedProvider} onSuccessDelete={onSidebarClose} />
+            <UpdateIntegrationSidebarHeader
+              openConditions={() => setOpenConditions(true)}
+              provider={selectedProvider}
+              onSuccessDelete={onSidebarClose}
+            />
           ) : (
             <>
               <When truthy={isNovuInAppProvider}>
@@ -354,9 +360,6 @@ export function UpdateProviderSidebar({
             <Faq />
           </Box>
         </When>
-        <Button variant="outline" onClick={() => setOpenConditions(true)} icon={<ConditionPlus />}>
-          Add condition
-        </Button>
       </Sidebar>
       <SelectPrimaryIntegrationModal />
     </FormProvider>

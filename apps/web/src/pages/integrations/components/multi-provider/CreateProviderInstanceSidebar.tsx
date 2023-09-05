@@ -1,12 +1,11 @@
-import { ActionIcon, Group, Radio, Text } from '@mantine/core';
+import { ActionIcon, Group, Radio, Text, Input, useMantineTheme } from '@mantine/core';
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { ChannelTypeEnum, ICreateIntegrationBodyDto, InAppProviderIdEnum, providers } from '@novu/shared';
-
 import { Button, colors, NameInput, Sidebar } from '../../../../design-system';
-import { ArrowLeft, ConditionPlus } from '../../../../design-system/icons';
+import { ConditionPlus, ArrowLeft, Condition } from '../../../../design-system/icons';
 import { inputStyles } from '../../../../design-system/config/inputs.styles';
 import { useFetchEnvironments } from '../../../../hooks/useFetchEnvironments';
 import { useSegment } from '../../../../components/providers/SegmentProvider';
@@ -20,6 +19,7 @@ import type { IConditions, IntegrationEntity } from '../../types';
 import { useProviders } from '../../useProviders';
 import { When } from '../../../../components/utils/When';
 import { Conditions } from '../../../../components/conditions/Conditions';
+import { ConditionIconButton } from '../ConditionIconButton';
 
 interface ICreateProviderInstanceForm {
   name: string;
@@ -42,6 +42,7 @@ export function CreateProviderInstanceSidebar({
   onGoBack: () => void;
   onIntegrationCreated: (id: string) => void;
 }) {
+  const { colorScheme } = useMantineTheme();
   const { environments, isLoading: areEnvironmentsLoading } = useFetchEnvironments();
   const { isLoading: areIntegrationsLoading, providers: integrations } = useProviders();
   const [openConditions, setOpenConditions] = useState(false);
@@ -69,6 +70,14 @@ export function CreateProviderInstanceSidebar({
     },
   });
 
+  const watchedConditions = watch('conditions');
+  const numOfConditions: number = useMemo(() => {
+    if (watchedConditions && watchedConditions[0] && watchedConditions[0].children) {
+      return watchedConditions[0].children.length;
+    }
+
+    return 0;
+  }, [watchedConditions]);
   const selectedEnvironmentId = watch('environmentId');
 
   const showInAppErrorMessage = useMemo(() => {
@@ -161,7 +170,7 @@ export function CreateProviderInstanceSidebar({
       }}
       onClose={onClose}
       customHeader={
-        <Group spacing={12} w="100%" h={40}>
+        <Group spacing={12} w="100%" h={40} noWrap>
           <ActionIcon onClick={onGoBack} variant={'transparent'} data-test-id="create-provider-instance-sidebar-back">
             <ArrowLeft color={colors.B80} />
           </ActionIcon>
@@ -182,6 +191,9 @@ export function CreateProviderInstanceSidebar({
               );
             }}
           />
+          <Group mt={-10} spacing={12} align="start" noWrap ml="auto">
+            <ConditionIconButton onClick={() => setOpenConditions(true)} />
+          </Group>
         </Group>
       }
       customFooter={
@@ -252,9 +264,44 @@ export function CreateProviderInstanceSidebar({
         }}
       />
 
-      <Button variant="outline" onClick={() => setOpenConditions(true)} icon={<ConditionPlus />}>
-        Add condition
-      </Button>
+      <Input.Wrapper
+        label={
+          <>
+            <Group spacing={5}>
+              Conditions
+              <Text color={colors.B40} style={{ fontWeight: 'normal' }}>
+                (optional)
+              </Text>
+            </Group>
+          </>
+        }
+        description="Add a condition if you want to apply the provider instance to a specific tenant."
+        styles={inputStyles}
+      >
+        <Group mt={16} position="left">
+          <Button
+            variant="outline"
+            onClick={() => setOpenConditions(true)}
+            icon={
+              <>
+                <When truthy={numOfConditions === 0}>
+                  <Group spacing={8}>
+                    <ConditionPlus />
+                  </Group>
+                </When>
+                <When truthy={numOfConditions > 0}>
+                  <Group spacing={2} color={colorScheme === 'dark' ? colors.white : colors.B30}>
+                    <Condition />
+                    {numOfConditions}
+                  </Group>
+                </When>
+              </>
+            }
+          >
+            {numOfConditions === 0 ? 'Add' : 'Edit'} conditions
+          </Button>
+        </Group>
+      </Input.Wrapper>
       <When truthy={showInAppErrorMessage}>
         <WarningMessage>
           <Text>You can only create one {provider.displayName} per environment.</Text>
