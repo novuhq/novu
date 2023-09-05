@@ -11,11 +11,9 @@ import {
   MessageRepository,
   MemberRepository,
 } from '@novu/dal';
-import { AnalyticsService } from '@novu/application-generic';
+import { AnalyticsService, DalServiceHealthIndicator } from '@novu/application-generic';
 
 import { SubscriberOnlineService } from './subscriber-online';
-
-export const ANALYTICS_SERVICE = 'AnalyticsService';
 
 const DAL_MODELS = [
   UserRepository,
@@ -28,30 +26,27 @@ const DAL_MODELS = [
   MemberRepository,
 ];
 
-const dalService = new DalService();
+const dalService = {
+  provide: DalService,
+  useFactory: async () => {
+    const service = new DalService();
+    await service.connect(String(process.env.MONGO_URL));
 
-const PROVIDERS = [
-  {
-    provide: DalService,
-    useFactory: async () => {
-      await dalService.connect(process.env.MONGO_URL as string);
-
-      return dalService;
-    },
+    return service;
   },
-  ...DAL_MODELS,
-  SubscriberOnlineService,
-  {
-    provide: AnalyticsService,
-    useFactory: async () => {
-      const analyticsService = new AnalyticsService(process.env.SEGMENT_TOKEN, 500);
+};
 
-      await analyticsService.initialize();
+const analyticsService = {
+  provide: AnalyticsService,
+  useFactory: async () => {
+    const service = new AnalyticsService(process.env.SEGMENT_TOKEN, 500);
+    await service.initialize();
 
-      return analyticsService;
-    },
+    return service;
   },
-];
+};
+
+const PROVIDERS = [analyticsService, dalService, DalServiceHealthIndicator, SubscriberOnlineService, ...DAL_MODELS];
 
 @Module({
   imports: [

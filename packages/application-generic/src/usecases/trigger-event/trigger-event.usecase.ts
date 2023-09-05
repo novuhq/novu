@@ -32,11 +32,11 @@ import {
 import { PinoLogger } from '../../logging';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 
+import { AnalyticsService } from '../../services/analytics.service';
 import {
-  AnalyticsService,
   buildNotificationTemplateIdentifierKey,
   CachedEntity,
-} from '../../services';
+} from '../../services/cache';
 import { ApiException } from '../../utils/exceptions';
 import { ProcessTenant, ProcessTenantCommand } from '../process-tenant';
 
@@ -98,7 +98,6 @@ export class TriggerEvent {
     if (!template) {
       const message = 'Notification template could not be found';
       const error = new ApiException(message);
-      Logger.error(error, message, LOG_CONTEXT);
       throw error;
     }
 

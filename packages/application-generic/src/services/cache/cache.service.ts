@@ -1,11 +1,11 @@
-import { Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import { QUERY_PREFIX } from './key-builders';
 import {
   InMemoryProviderClient,
   InMemoryProviderService,
   Pipeline,
-} from '../index';
+} from '../in-memory-provider';
 import { addJitter } from '../../resilience';
 
 const LOG_CONTEXT = 'CacheService';
@@ -30,22 +30,26 @@ export type CachingConfig = {
 };
 
 export class CacheService implements ICacheService {
-  private readonly client: InMemoryProviderClient;
-  private readonly cacheTtl: number;
+  private client: InMemoryProviderClient;
+  private cacheTtl: number;
   private readonly TTL_VARIANT_PERCENTAGE = 0.1;
 
-  constructor(private inMemoryProviderService: InMemoryProviderService) {
+  constructor(private inMemoryProviderService: InMemoryProviderService) {}
+
+  public async initialize(): Promise<void> {
     Logger.log('Initiated cache service', LOG_CONTEXT);
+
+    await this.inMemoryProviderService.delayUntilReadiness();
 
     this.client = this.inMemoryProviderService.inMemoryProviderClient;
     this.cacheTtl = this.inMemoryProviderService.inMemoryProviderConfig.ttl;
   }
 
-  public getStatus() {
+  public getStatus(): string {
     return this.client?.status;
   }
 
-  public getTtl() {
+  public getTtl(): number {
     return this.cacheTtl;
   }
 
@@ -80,7 +84,11 @@ export class CacheService implements ICacheService {
     return result;
   }
 
-  public async setQuery(key: string, value: string, options?: CachingConfig) {
+  public async setQuery(
+    key: string,
+    value: string,
+    options?: CachingConfig
+  ): Promise<void | unknown[]> {
     if (this.client) {
       const { credentials, query } = splitKey(key);
 
@@ -95,28 +103,32 @@ export class CacheService implements ICacheService {
 
       pipeline.set(key, value, 'EX', this.getTtlInSeconds(options));
 
-      await this.capturedExec(pipeline, CacheServiceActionsEnum.SET_QUERY, key);
+      return await this.capturedExec(
+        pipeline,
+        CacheServiceActionsEnum.SET_QUERY,
+        key
+      );
     }
   }
 
-  public async keys(pattern?: string) {
+  public async keys(pattern?: string): Promise<string[]> {
     const ALL_KEYS = '*';
     const queryPattern = pattern ?? ALL_KEYS;
 
     return this.client?.keys(queryPattern);
   }
 
-  public async get(key: string) {
+  public async get(key: string): Promise<string> {
     return this.client?.get(key);
   }
 
-  public async del(key: string | string[]) {
+  public async del(key: string | string[]): Promise<number> {
     const keys = Array.isArray(key) ? key : [key];
 
     return this.client?.del(keys);
   }
 
-  public async delQuery(key: string) {
+  public async delQuery(key: string): Promise<void | unknown[]> {
     if (this.client) {
       const queries = await this.client.smembers(key);
 
@@ -131,7 +143,11 @@ export class CacheService implements ICacheService {
       // invalidate queries set
       pipeline.del(key);
 
-      await this.capturedExec(pipeline, CacheServiceActionsEnum.DEL_QUERY, key);
+      return await this.capturedExec(
+        pipeline,
+        CacheServiceActionsEnum.DEL_QUERY,
+        key
+      );
     }
   }
 
@@ -139,9 +155,9 @@ export class CacheService implements ICacheService {
     pipeline: Pipeline,
     action: CacheServiceActionsEnum,
     key: string
-  ): Promise<void> {
+  ): Promise<unknown[]> {
     try {
-      await pipeline.exec();
+      return await pipeline.exec();
     } catch (error) {
       Logger.error(
         error,
@@ -152,7 +168,7 @@ export class CacheService implements ICacheService {
     }
   }
 
-  public delByPattern(pattern: string) {
+  public delByPattern(pattern: string): Promise<unknown> {
     const client = this.client;
 
     if (client) {

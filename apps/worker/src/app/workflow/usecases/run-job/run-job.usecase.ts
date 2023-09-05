@@ -9,6 +9,8 @@ import { QueueNextJob, QueueNextJobCommand } from '../queue-next-job';
 import { SendMessage, SendMessageCommand } from '../send-message';
 import { PlatformException, EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER } from '../../../shared/utils';
 
+const LOG_CONTEXT = 'RunJob';
+
 @Injectable()
 export class RunJob {
   constructor(
@@ -43,8 +45,11 @@ export class RunJob {
 
     const canceled = await this.delayedEventIsCanceled(job);
     if (canceled) {
+      Logger.verbose({ canceled }, `Job ${job._id} that had been delayed has been cancelled`, LOG_CONTEXT);
+
       return;
     }
+
     let shouldQueueNextJob = true;
 
     try {
@@ -73,6 +78,7 @@ export class RunJob {
         })
       );
     } catch (error: any) {
+      Logger.error({ error }, `Running job ${job._id} has thrown an error`, LOG_CONTEXT);
       if (job.step.shouldStopOnFail || this.shouldBackoff(error)) {
         shouldQueueNextJob = false;
       }

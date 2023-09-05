@@ -10,7 +10,7 @@ export const TranslateProductLead = ({ id, style = {} }: { id: string; style?: C
       title="Translation management"
       // eslint-disable-next-line max-len
       text="Translate your notification content to multiple languages using a connection with a preferred i18n localization provider."
-      variant={ProductLeadVariants.COLUMN}
+      variant={ProductLeadVariants.DEFAULT}
       style={style}
     />
   );
