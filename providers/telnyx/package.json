@@ -1,6 +1,6 @@
 {
   "name": "@novu/telnyx",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "description": "A telnyx wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -32,7 +32,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@novu/stateless": "^0.18.0",
+    "@novu/stateless": "^0.19.0",
     "telnyx": "^1.23.0"
   },
   "devDependencies": {

@@ -1,6 +1,6 @@
 ---
 sidebar_position: 3
-sidebar_label: Get started with Vue
+sidebar_label: Vue
 ---
 
 # Vue Quickstart

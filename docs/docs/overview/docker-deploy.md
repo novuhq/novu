@@ -108,4 +108,4 @@ we can improve performance in the near future.
 
 ## Next steps
 
-- Got a question? [Ask here](https://github.com/novuhq/novu/discussions).
+- Got a question? [Ask here](https://discord.gg/novu).

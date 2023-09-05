@@ -2,7 +2,7 @@
 import { expect } from 'chai';
 import axios from 'axios';
 import { v4 as uuid } from 'uuid';
-import { differenceInMilliseconds, subMonths } from 'date-fns';
+import { differenceInMilliseconds, subDays } from 'date-fns';
 import {
   MessageRepository,
   NotificationRepository,
@@ -30,11 +30,10 @@ import {
   DelayTypeEnum,
   PreviousStepTypeEnum,
   InAppProviderIdEnum,
+  MESSAGE_IN_APP_RETENTION_DAYS,
+  MESSAGE_GENERIC_RETENTION_DAYS,
 } from '@novu/shared';
 import { EmailEventStatusEnum } from '@novu/stateless';
-
-const IN_APP_MESSAGE_EXPIRE_MONTHS = 12;
-const MESSAGE_EXPIRE_MONTHS = 1;
 
 const axiosInstance = axios.create();
 
@@ -473,14 +472,8 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       let expireAt = new Date(message?.expireAt as string);
       let createdAt = new Date(message?.createdAt as string);
 
-      console.log('expireAt', expireAt);
-      console.log('createdAt', createdAt);
-
-      let subExpireMonths = subMonths(expireAt, IN_APP_MESSAGE_EXPIRE_MONTHS);
-
-      console.log('subExpireMonths', subExpireMonths);
-
-      let diff = differenceInMilliseconds(subExpireMonths, createdAt);
+      const subExpireYear = subDays(expireAt, MESSAGE_IN_APP_RETENTION_DAYS);
+      let diff = differenceInMilliseconds(subExpireYear, createdAt);
 
       expect(diff).to.approximately(0, 100);
 
@@ -496,8 +489,8 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       expireAt = new Date(email?.expireAt as string);
       createdAt = new Date(email?.createdAt as string);
 
-      subExpireMonths = subMonths(expireAt, MESSAGE_EXPIRE_MONTHS);
-      diff = differenceInMilliseconds(subExpireMonths, createdAt);
+      const subExpireMonth = subDays(expireAt, MESSAGE_GENERIC_RETENTION_DAYS);
+      diff = differenceInMilliseconds(subExpireMonth, createdAt);
 
       expect(diff).to.approximately(0, 100);
     });

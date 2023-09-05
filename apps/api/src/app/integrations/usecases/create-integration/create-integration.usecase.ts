@@ -185,6 +185,14 @@ export class CreateIntegration {
 
       const isActiveAndChannelSupportsPrimary = command.active && CHANNELS_WITH_PRIMARY.includes(command.channel);
       if (isMultiProviderConfigurationEnabled && isActiveAndChannelSupportsPrimary) {
+        await this.disableNovuIntegration.execute({
+          channel: command.channel,
+          providerId: command.providerId,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          userId: command.userId,
+        });
+
         const { primary, priority } = await this.calculatePriorityAndPrimary(command);
 
         query.primary = primary;
@@ -203,16 +211,6 @@ export class CreateIntegration {
           organizationId: command.organizationId,
           integrationId: integrationEntity._id,
           channel: command.channel,
-          userId: command.userId,
-        });
-      }
-
-      if (integrationEntity.active) {
-        await this.disableNovuIntegration.execute({
-          channel: command.channel,
-          providerId: command.providerId,
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
           userId: command.userId,
         });
       }

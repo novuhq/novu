@@ -173,7 +173,7 @@ export function UpdateProviderSidebar({
     const { channel: selectedChannel, environmentId, primary } = selectedProvider;
     const isActiveFieldChanged = dirtyFields.active;
     const hasSameChannelActiveIntegration = !!providers
-      .filter((el) => !NOVU_PROVIDERS.includes(el.providerId) && el.integrationId !== selectedProvider.integrationId)
+      .filter((el) => el.integrationId !== selectedProvider.integrationId)
       .find((el) => el.active && el.channel === selectedChannel && el.environmentId === environmentId);
     const isChannelSupportPrimary = CHANNELS_WITH_PRIMARY.includes(selectedChannel);
 
@@ -304,7 +304,7 @@ export function UpdateProviderSidebar({
               <Controller
                 name={`credentials.${credential.key}`}
                 control={control}
-                defaultValue={credential.type === 'boolean' || credential.type === 'switch' ? false : ''}
+                {...(credential.type === 'boolean' || credential.type === 'switch' ? { defaultValue: false } : {})}
                 rules={{
                   required: credential.required ? `Please enter a ${credential.displayName.toLowerCase()}` : undefined,
                 }}

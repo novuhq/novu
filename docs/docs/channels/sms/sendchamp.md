@@ -33,7 +33,7 @@ The Sender ID represents the sender of the message to your customers.
 To get your Sender's ID:
 
 - On the sidebar (on the menu on your left), click on `SMS`. This will display a dropdown. Click on `Sender ID` from the dropdown options.
-- On the the page that appears, you'll find a list of your Sender IDs
+- On the page that appears, you'll find a list of your Sender IDs
 
 ![Image showing SMS page where you can view the list of your Sender IDs](/img/providers/sms/sendchamp/sender-id.png)
 

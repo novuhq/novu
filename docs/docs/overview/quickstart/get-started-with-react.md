@@ -1,6 +1,6 @@
 ---
 sidebar_position: 5
-sidebar_label: Get started with React
+sidebar_label: React
 ---
 
 import Tabs from '@theme/Tabs';

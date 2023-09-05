@@ -30,7 +30,7 @@ Sender IDs allow you to brand your messages as you send them to your customers.
 To get your Sender's ID:
 
 - On the sidebar (on the menu on your left), click on `Rental`. This will display a dropdown. Click on `SMS Sender IDs` from the dropdown options.
-- On the the page that appears, you'll find a list of your Sender IDs
+- On the page that appears, you'll find a list of your Sender IDs
 
 ![Image showing Rental page where you can view the list of your Sender IDs](/img/providers/sms/termii/sender-id.png)
 
