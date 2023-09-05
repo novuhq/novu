@@ -10,7 +10,7 @@ describe('User login - /auth/google (GET)', async () => {
     await session.initialize();
   });
 
-  it('should redirect to google oath', async () => {
+  it('should redirect to google oauth', async () => {
     const res = await session.testAgent.get('/v1/auth/google').send();
 
     expect(res.statusCode).to.equal(302);
