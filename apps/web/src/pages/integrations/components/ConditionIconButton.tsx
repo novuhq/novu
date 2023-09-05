@@ -37,7 +37,7 @@ export const ConditionIconButton = ({
   primary?: boolean;
   onClick: () => void;
 }) => {
-  const [modalOpen, setModalOpen] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
   const numOfConditions: number = useMemo(() => {
     if (conditions && conditions[0] && conditions[0].children) {
       return conditions[0].children.length;
