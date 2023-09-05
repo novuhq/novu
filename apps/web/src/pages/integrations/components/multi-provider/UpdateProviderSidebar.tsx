@@ -174,22 +174,29 @@ export function UpdateProviderSidebar({
       return;
     }
 
-    const { channel: selectedChannel, environmentId, primary } = selectedProvider;
+    const { channel: selectedChannel, environmentId, primary, conditions } = selectedProvider;
     const isActiveFieldChanged = dirtyFields.active;
     const hasSameChannelActiveIntegration = !!providers
       .filter((el) => !NOVU_PROVIDERS.includes(el.providerId) && el.integrationId !== selectedProvider.integrationId)
       .find((el) => el.active && el.channel === selectedChannel && el.environmentId === environmentId);
     const isChannelSupportPrimary = CHANNELS_WITH_PRIMARY.includes(selectedChannel);
 
-    if (
-      isActiveFieldChanged &&
-      isChannelSupportPrimary &&
-      ((isActive && hasSameChannelActiveIntegration) || (!isActive && primary && hasSameChannelActiveIntegration))
-    ) {
+    const isChangedToActive =
+      isActiveFieldChanged && isChannelSupportPrimary && isActive && hasSameChannelActiveIntegration;
+
+    const isChangedToInactiveAndIsPrimary =
+      isActiveFieldChanged && isChannelSupportPrimary && !isActive && primary && hasSameChannelActiveIntegration;
+
+    const isPrimaryAndHasConditionsApplied =
+      primary && conditions && conditions.length > 0 && hasSameChannelActiveIntegration;
+
+    const hasNoConditions = !conditions || conditions.length === 0;
+
+    if ((hasNoConditions && isChangedToActive) || isChangedToInactiveAndIsPrimary || isPrimaryAndHasConditionsApplied) {
       openSelectPrimaryIntegrationModal({
         environmentId: selectedProvider?.environmentId,
         channelType: selectedProvider?.channel,
-        exclude: !isActive ? [selectedProvider.integrationId] : undefined,
+        exclude: !isActive ? (el) => el._id === selectedProvider.integrationId : undefined,
         onClose: () => {
           updateIntegration(data);
         },

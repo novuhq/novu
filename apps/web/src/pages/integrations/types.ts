@@ -44,6 +44,12 @@ export interface IIntegratedProvider {
   name?: string;
   identifier?: string;
   primary: boolean;
+  conditions?: {
+    isNegated?: boolean;
+    type?: BuilderFieldType;
+    value?: BuilderGroupValues;
+    children?: FilterParts[];
+  }[];
 }
 
 export interface IntegrationEntity {
@@ -62,6 +68,12 @@ export interface IntegrationEntity {
   primary: boolean;
   deletedAt: string;
   deletedBy: string;
+  conditions?: {
+    isNegated?: boolean;
+    type?: BuilderFieldType;
+    value?: BuilderGroupValues;
+    children?: FilterParts[];
+  }[];
 }
 
 export interface IConditions {
