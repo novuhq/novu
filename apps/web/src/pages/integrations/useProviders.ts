@@ -41,7 +41,10 @@ function initializeProviders(integrations: IntegrationEntity[]): IIntegratedProv
       if (integration?.credentials && Object.keys(clonedCredentials).length !== 0) {
         clonedCredentials.forEach((credential) => {
           // eslint-disable-next-line no-param-reassign
-          credential.value = integration.credentials[credential.key]?.toString();
+          credential.value =
+            credential.type === 'boolean' || credential.type === 'switch'
+              ? integration.credentials[credential.key]
+              : integration.credentials[credential.key]?.toString();
         });
       }
 

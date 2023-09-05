@@ -1,12 +1,11 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
-import { HealthCheck, HealthCheckResult, HealthCheckService } from '@nestjs/terminus';
-import { HealthIndicatorFunction } from '@nestjs/terminus/dist/health-indicator';
+import { HealthCheck, HealthCheckResult, HealthCheckService, HealthIndicatorFunction } from '@nestjs/terminus';
 import {
   CacheServiceHealthIndicator,
   DalServiceHealthIndicator,
-  InMemoryProviderServiceHealthIndicator,
-  TriggerQueueServiceHealthIndicator,
+  StandardQueueServiceHealthIndicator,
+  WorkflowQueueServiceHealthIndicator,
 } from '@novu/application-generic';
 
 import { version } from '../../../package.json';
@@ -18,16 +17,17 @@ export class HealthController {
     private healthCheckService: HealthCheckService,
     private cacheHealthIndicator: CacheServiceHealthIndicator,
     private dalHealthIndicator: DalServiceHealthIndicator,
-    private inMemoryHealthIndicator: InMemoryProviderServiceHealthIndicator,
-    private triggerQueueHealthIndicator: TriggerQueueServiceHealthIndicator
+    private standardQueueHealthIndicator: StandardQueueServiceHealthIndicator,
+    private workflowQueueHealthIndicator: WorkflowQueueServiceHealthIndicator
   ) {}
 
   @Get()
   @HealthCheck()
   healthCheck(): Promise<HealthCheckResult> {
     const checks: HealthIndicatorFunction[] = [
-      () => this.dalHealthIndicator.isHealthy(),
-      () => this.inMemoryHealthIndicator.isHealthy(),
+      async () => this.dalHealthIndicator.isHealthy(),
+      async () => this.standardQueueHealthIndicator.isHealthy(),
+      async () => this.workflowQueueHealthIndicator.isHealthy(),
       async () => {
         return {
           apiVersion: {
@@ -36,11 +36,10 @@ export class HealthController {
           },
         };
       },
-      () => this.triggerQueueHealthIndicator.isHealthy(),
     ];
 
     if (process.env.ELASTICACHE_CLUSTER_SERVICE_HOST) {
-      checks.push(() => this.cacheHealthIndicator.isHealthy());
+      checks.push(async () => this.cacheHealthIndicator.isHealthy());
     }
 
     return this.healthCheckService.check(checks);

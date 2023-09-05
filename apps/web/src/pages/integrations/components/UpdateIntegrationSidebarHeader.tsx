@@ -1,7 +1,7 @@
 import { ReactNode, useMemo, useState } from 'react';
 import { Group, useMantineTheme } from '@mantine/core';
 import { Controller, useFormContext } from 'react-hook-form';
-import { CHANNELS_WITH_PRIMARY, NOVU_PROVIDERS } from '@novu/shared';
+import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
 
 import { Button, colors, Dropdown, Modal, NameInput, Text, Title } from '../../../design-system';
 import { useFetchEnvironments } from '../../../hooks/useFetchEnvironments';
@@ -41,7 +41,7 @@ export const UpdateIntegrationSidebarHeader = ({
 
     const { channel: selectedChannel, environmentId, integrationId, primary } = provider;
     const hasSameChannelActiveIntegration = !!providers
-      .filter((el) => !NOVU_PROVIDERS.includes(el.providerId) && el.integrationId !== integrationId)
+      .filter((el) => el.integrationId !== integrationId)
       .find((el) => el.active && el.channel === selectedChannel && el.environmentId === environmentId);
 
     return hasSameChannelActiveIntegration && primary;
@@ -64,7 +64,7 @@ export const UpdateIntegrationSidebarHeader = ({
       return;
     }
 
-    if (provider.primary) {
+    if (shouldSetNewPrimary) {
       openModal({
         environmentId: provider.environmentId,
         channelType: provider.channel,
@@ -168,7 +168,9 @@ export const UpdateIntegrationSidebarHeader = ({
           {shouldSetNewPrimary
             ? 'Deleting the primary provider instance will cause to select another primary one. ' +
               'All workflows relying on its configuration will be linked to the selected primary provider instance.'
-            : 'Deleting a provider instance will fail workflows relying on its configuration, leading to undelivered notifications.'}
+            : `Deleting a ${
+                provider.primary ? 'primary ' : ''
+              }provider instance will fail workflows relying on its configuration, leading to undelivered notifications.`}
         </Text>
         <Group position="right">
           <Button variant="outline" onClick={() => setModalIsOpened(false)}>

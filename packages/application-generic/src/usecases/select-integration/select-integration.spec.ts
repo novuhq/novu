@@ -8,9 +8,13 @@ import {
 
 import { SelectIntegration } from './select-integration.usecase';
 import { SelectIntegrationCommand } from './select-integration.command';
-import { GetFeatureFlag } from '../get-feature-flag';
+import {
+  GetFeatureFlag,
+  GetIsMultiProviderConfigurationEnabled,
+} from '../get-feature-flag';
 import { GetDecryptedIntegrations } from '../get-decrypted-integrations';
 import { ConditionsFilter } from '../conditions-filter';
+import { FeatureFlagsService } from '../../services';
 
 const testIntegration: IntegrationEntity = {
   _environmentId: 'env-test-123',
@@ -75,8 +79,8 @@ jest.mock('@novu/dal', () => ({
 
 jest.mock('../get-feature-flag', () => ({
   ...jest.requireActual('../get-feature-flag'),
-  GetFeatureFlag: jest.fn(() => ({
-    isMultiProviderConfigurationEnabled: jest.fn(() => true),
+  GetIsMultiProviderConfigurationEnabled: jest.fn(() => ({
+    execute: jest.fn(() => true),
   })),
 }));
 
@@ -94,12 +98,13 @@ describe('select integration', function () {
   beforeEach(async function () {
     useCase = new SelectIntegration(
       new IntegrationRepository() as any,
-      // @ts-ignore
-      new GetFeatureFlag(),
+      new GetFeatureFlag(new FeatureFlagsService()),
       // @ts-ignore
       new GetDecryptedIntegrations(),
       new ConditionsFilter(),
-      new TenantRepository()
+      new TenantRepository(),
+      // @ts-ignore
+      new GetIsMultiProviderConfigurationEnabled()
     );
     jest.clearAllMocks();
   });

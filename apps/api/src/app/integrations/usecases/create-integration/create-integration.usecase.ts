@@ -15,7 +15,7 @@ import {
   encryptCredentials,
   buildIntegrationKey,
   InvalidateCacheService,
-  GetFeatureFlag,
+  GetIsMultiProviderConfigurationEnabled,
   FeatureFlagCommand,
 } from '@novu/application-generic';
 
@@ -35,8 +35,8 @@ export class CreateIntegration {
     private integrationRepository: IntegrationRepository,
     private deactivateSimilarChannelIntegrations: DeactivateSimilarChannelIntegrations,
     private analyticsService: AnalyticsService,
-    private getFeatureFlag: GetFeatureFlag,
-    private disableNovuIntegration: DisableNovuIntegration
+    private disableNovuIntegration: DisableNovuIntegration,
+    private getIsMultiProviderConfigurationEnabled: GetIsMultiProviderConfigurationEnabled
   ) {}
 
   private async calculatePriorityAndPrimary(command: CreateIntegrationCommand) {
@@ -87,7 +87,7 @@ export class CreateIntegration {
   }
 
   async execute(command: CreateIntegrationCommand): Promise<IntegrationEntity> {
-    const isMultiProviderConfigurationEnabled = await this.getFeatureFlag.isMultiProviderConfigurationEnabled(
+    const isMultiProviderConfigurationEnabled = await this.getIsMultiProviderConfigurationEnabled.execute(
       FeatureFlagCommand.create({
         userId: command.userId,
         organizationId: command.organizationId,
@@ -185,6 +185,14 @@ export class CreateIntegration {
 
       const isActiveAndChannelSupportsPrimary = command.active && CHANNELS_WITH_PRIMARY.includes(command.channel);
       if (isMultiProviderConfigurationEnabled && isActiveAndChannelSupportsPrimary) {
+        await this.disableNovuIntegration.execute({
+          channel: command.channel,
+          providerId: command.providerId,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          userId: command.userId,
+        });
+
         const { primary, priority } = await this.calculatePriorityAndPrimary(command);
 
         query.primary = primary;
@@ -203,16 +211,6 @@ export class CreateIntegration {
           organizationId: command.organizationId,
           integrationId: integrationEntity._id,
           channel: command.channel,
-          userId: command.userId,
-        });
-      }
-
-      if (integrationEntity.active) {
-        await this.disableNovuIntegration.execute({
-          channel: command.channel,
-          providerId: command.providerId,
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
           userId: command.userId,
         });
       }

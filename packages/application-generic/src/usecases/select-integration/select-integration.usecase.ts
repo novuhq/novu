@@ -8,14 +8,20 @@ import {
 import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
 
 import { SelectIntegrationCommand } from './select-integration.command';
-import { buildIntegrationKey, CachedQuery } from '../../services';
-import { FeatureFlagCommand, GetFeatureFlag } from '../get-feature-flag';
 import { ConditionsFilter } from '../conditions-filter/conditions-filter.usecase';
+import { buildIntegrationKey, CachedQuery } from '../../services/cache';
+import {
+  GetFeatureFlag,
+  FeatureFlagCommand,
+  GetIsMultiProviderConfigurationEnabled,
+} from '../get-feature-flag';
 import {
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
 } from '../get-decrypted-integrations';
 import { ConditionsFilterCommand } from '../conditions-filter';
+
+const LOG_CONTEXT = 'SelectIntegration';
 
 @Injectable()
 export class SelectIntegration {
@@ -24,7 +30,8 @@ export class SelectIntegration {
     protected getFeatureFlag: GetFeatureFlag,
     protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations,
     protected conditionsFilter: ConditionsFilter,
-    private tenantRepository: TenantRepository
+    private tenantRepository: TenantRepository,
+    protected getIsMultiProviderConfigurationEnabled: GetIsMultiProviderConfigurationEnabled
   ) {}
 
   @CachedQuery({
@@ -38,7 +45,7 @@ export class SelectIntegration {
     command: SelectIntegrationCommand
   ): Promise<IntegrationEntity | undefined> {
     const isMultiProviderConfigurationEnabled =
-      await this.getFeatureFlag.isMultiProviderConfigurationEnabled(
+      await this.getIsMultiProviderConfigurationEnabled.execute(
         FeatureFlagCommand.create({
           userId: command.userId,
           organizationId: command.organizationId,

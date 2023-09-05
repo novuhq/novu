@@ -5,7 +5,7 @@ import { ProviderMissing } from '../../../design-system/icons';
 
 type DisplayPrimaryProviderIconProps = {
   isChannelStep: boolean;
-  getPrimaryIntegration?: ProvidersIdEnum;
+  providerIntegration?: ProvidersIdEnum;
   logoSrc?: string;
   disabledProp: any;
   Icon: React.FC<any>;
@@ -13,7 +13,7 @@ type DisplayPrimaryProviderIconProps = {
 
 export function DisplayPrimaryProviderIcon({
   isChannelStep,
-  getPrimaryIntegration,
+  providerIntegration,
   logoSrc,
   disabledProp,
   Icon,
@@ -24,11 +24,11 @@ export function DisplayPrimaryProviderIcon({
         label={<Icon width="16px" height="16px" {...disabledProp} />}
         position="bottom-end"
         size={16}
-        offset={getPrimaryIntegration ? 8 : 4}
+        offset={providerIntegration ? 8 : 4}
         inline
       >
         <AvatarWrapper>
-          {getPrimaryIntegration ? (
+          {providerIntegration ? (
             <Avatar src={logoSrc} size={32} radius={0} color="white" />
           ) : (
             <Avatar radius="xl">

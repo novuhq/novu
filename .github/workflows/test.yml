@@ -163,7 +163,6 @@ jobs:
       - uses: ./.github/actions/setup-redis-cluster
       - uses: mansagroup/nrwl-nx-action@v3
         env:
-          IN_MEMORY_CLUSTER_MODE_ENABLED: true
           LOGGING_LEVEL: 'info'
         with:
           targets: lint,build,test
@@ -213,14 +212,13 @@ jobs:
       - uses: ./.github/actions/start-localstack
 
       - uses: ./.github/actions/run-worker
-        if: ${{matrix.projectName == '@novu/api' }}
+        if: ${{matrix.projectName != '@novu/worker' }}
         with:
           launch_darkly_sdk_key: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
 
       - uses: mansagroup/nrwl-nx-action@v3
         name: Running the E2E tests
         env:
-          IN_MEMORY_CLUSTER_MODE_ENABLED: true
           LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
         with:
           targets: test:e2e
@@ -275,4 +273,3 @@ jobs:
           launch_darkly_sdk_key: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
 
       - uses: ./.github/actions/validate-swagger
-

@@ -1,6 +1,6 @@
 {
   "name": "@novu/africas-talking",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "description": "An Africa's Talking wrapper for Novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -34,7 +34,7 @@
     "pnpm": "^7.26.0"
   },
   "dependencies": {
-    "@novu/stateless": "^0.18.0",
+    "@novu/stateless": "^0.19.0",
     "africastalking": "^0.6.2"
   },
   "devDependencies": {
