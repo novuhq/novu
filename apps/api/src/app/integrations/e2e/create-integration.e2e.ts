@@ -291,8 +291,8 @@ describe('Create Integration - /integration (POST)', function () {
   });
 
   it(
-    'should set the integration as primary when its active ' +
-      'and there are no other active integrations excluding Novu',
+    'should not set the integration as primary when its active ' +
+      'and there are no other active integrations other than Novu',
     async function () {
       await integrationRepository.deleteMany({
         _organizationId: session.organization._id,
@@ -305,7 +305,7 @@ describe('Create Integration - /integration (POST)', function () {
         providerId: EmailProviderIdEnum.Novu,
         channel: ChannelTypeEnum.EMAIL,
         active: true,
-        primary: false,
+        primary: true,
         priority: 1,
         _organizationId: session.organization._id,
         _environmentId: session.environment._id,
@@ -323,10 +323,10 @@ describe('Create Integration - /integration (POST)', function () {
       } = await session.testAgent.post('/v1/integrations').send(payload);
 
       expect(data.priority).to.equal(1);
-      expect(data.primary).to.equal(true);
+      expect(data.primary).to.equal(false);
       expect(data.active).to.equal(true);
 
-      const [first, second] = await await integrationRepository.find(
+      const [first, second] = await integrationRepository.find(
         {
           _organizationId: session.organization._id,
           _environmentId: session.environment._id,
@@ -336,15 +336,15 @@ describe('Create Integration - /integration (POST)', function () {
         { sort: { priority: -1 } }
       );
 
-      expect(first._id).to.equal(data._id);
+      expect(first._id).to.equal(novuEmail._id);
       expect(first.primary).to.equal(true);
       expect(first.active).to.equal(true);
-      expect(first.priority).to.equal(1);
+      expect(first.priority).to.equal(2);
 
-      expect(second._id).to.equal(novuEmail._id);
+      expect(second._id).to.equal(data._id);
       expect(second.primary).to.equal(false);
-      expect(second.active).to.equal(false);
-      expect(second.priority).to.equal(0);
+      expect(second.active).to.equal(true);
+      expect(second.priority).to.equal(1);
     }
   );
 
@@ -456,7 +456,7 @@ describe('Create Integration - /integration (POST)', function () {
     expect(second.priority).to.equal(1);
   });
 
-  it('should disable the novu integration and clear the primary flag if the new integration is created', async function () {
+  it('should not disable the novu integration and clear the primary flag if the new integration is created', async function () {
     await integrationRepository.deleteMany({
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
@@ -485,7 +485,7 @@ describe('Create Integration - /integration (POST)', function () {
       body: { data },
     } = await session.testAgent.post('/v1/integrations').send(payload);
 
-    const [first, second] = await await integrationRepository.find(
+    const [first, second] = await integrationRepository.find(
       {
         _organizationId: session.organization._id,
         _environmentId: session.environment._id,
@@ -495,15 +495,15 @@ describe('Create Integration - /integration (POST)', function () {
       { sort: { priority: -1 } }
     );
 
-    expect(first._id).to.equal(data._id);
+    expect(first._id).to.equal(novuIntegration._id);
     expect(first.primary).to.equal(true);
     expect(first.active).to.equal(true);
-    expect(first.priority).to.equal(1);
+    expect(first.priority).to.equal(2);
 
-    expect(second._id).to.equal(novuIntegration._id);
+    expect(second._id).to.equal(data._id);
     expect(second.primary).to.equal(false);
-    expect(second.active).to.equal(false);
-    expect(second.priority).to.equal(0);
+    expect(second.active).to.equal(true);
+    expect(second.priority).to.equal(1);
   });
 });
 
