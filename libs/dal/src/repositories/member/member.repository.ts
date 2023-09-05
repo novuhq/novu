@@ -20,8 +20,16 @@ export class MemberRepository extends BaseRepository<MemberDBModel, MemberEntity
     super(Member, MemberEntity);
   }
 
-  async removeMemberById(organizationId: string, memberId: string) {
-    return this.MongooseModel.remove({
+  async removeMemberById(
+    organizationId: string,
+    memberId: string
+  ): Promise<{
+    /** Indicates whether this write result was acknowledged. If not, then all other members of this result will be undefined. */
+    acknowledged: boolean;
+    /** The number of documents that were deleted */
+    deletedCount: number;
+  }> {
+    return this.MongooseModel.deleteOne({
       _id: memberId,
       _organizationId: organizationId,
     });
