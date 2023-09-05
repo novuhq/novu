@@ -35,7 +35,7 @@ import { TenantModule } from './app/tenant/tenant.module';
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
   try {
-    if (process.env.NOVU_MANAGED_SERVICE === 'true') {
+    if (process.env.NOVU_MANAGED_SERVICE === 'true' || process.env.CI_EE_TEST === 'true') {
       modules.push(require('@novu/ee-auth')?.EEAuthModule);
     }
   } catch (e) {
