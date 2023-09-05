@@ -63,7 +63,7 @@ export function UpdateProviderSidebar({
   integrationId?: string;
   onClose: () => void;
 }) {
-  const [missingProviderModalOpen, setMissingProviderModalOpen] = useState(true);
+  const [missingProviderModalOpen, setMissingProviderModalOpen] = useState(false);
   const theme = useMantineTheme();
   const { update } = useIntercom();
   const { isLoading: areEnvironmentsLoading } = useFetchEnvironments();
@@ -416,7 +416,7 @@ export function UpdateProviderSidebar({
           <Button
             onClick={() => {
               setMissingProviderModalOpen(false);
-              navigate(ROUTES.INTEGRATIONS + '/create');
+              navigate(ROUTES.INTEGRATIONS_CREATE);
             }}
           >
             <Group spacing={8}>Add a provider</Group>

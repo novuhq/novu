@@ -1,5 +1,5 @@
 import { ReactNode, useMemo, useState } from 'react';
-import { Group } from '@mantine/core';
+import { Group, useMantineTheme } from '@mantine/core';
 import { Controller, useFormContext } from 'react-hook-form';
 import { CHANNELS_WITH_PRIMARY, NOVU_PROVIDERS } from '@novu/shared';
 
@@ -31,6 +31,7 @@ export const UpdateIntegrationSidebarHeader = ({
   const [isModalOpened, setModalIsOpened] = useState(false);
   const { control } = useFormContext();
   const { environments } = useFetchEnvironments();
+  const { colorScheme } = useMantineTheme();
   const { providers, isLoading } = useProviders();
   const canMarkAsPrimary = provider && !provider.primary && CHANNELS_WITH_PRIMARY.includes(provider.channel);
   const { openModal, SelectPrimaryIntegrationModal } = useSelectPrimaryIntegrationModal();
@@ -136,7 +137,7 @@ export const UpdateIntegrationSidebarHeader = ({
                   onClick={() => {
                     makePrimaryIntegration({ id: provider.integrationId });
                   }}
-                  icon={<StarEmpty color={colors.white} />}
+                  icon={<StarEmpty color={colorScheme === 'dark' ? colors.white : colors.B30} />}
                   disabled={isLoading || isMarkingPrimary}
                 >
                   Mark as primary

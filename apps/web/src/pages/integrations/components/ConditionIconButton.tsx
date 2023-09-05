@@ -1,9 +1,10 @@
+import { useMemo } from 'react';
 import styled from '@emotion/styled';
-import { Group, UnstyledButton, Text } from '@mantine/core';
-import { colors } from '@novu/notification-center';
+import { Group, UnstyledButton, ActionIcon } from '@mantine/core';
 import { When } from '../../../components/utils/When';
-import { Tooltip } from '../../../design-system';
+import { colors, Tooltip, Text } from '../../../design-system';
 import { Condition, ConditionPlus } from '../../../design-system/icons';
+import { IConditions } from '../types';
 
 const Button = styled(Group)`
   text-align: center;
@@ -20,11 +21,9 @@ const Button = styled(Group)`
 
 const RemovesPrimary = () => {
   return (
-    <Text mt={4} lineClamp={3} color="#EAA900">
+    <Text mt={4} color="#EAA900">
       This action replaces
       <br /> the primary provider
-      <br />
-      Learn more...{' '}
     </Text>
   );
 };
@@ -34,15 +33,23 @@ export const ConditionIconButton = ({
   primary = false,
   onClick,
 }: {
-  conditions?: any[];
+  conditions?: IConditions[];
   primary?: boolean;
   onClick: () => void;
 }) => {
+  const numOfConditions: number = useMemo(() => {
+    if (conditions && conditions[0] && conditions[0].children) {
+      return conditions[0].children.length;
+    }
+
+    return 0;
+  }, [conditions]);
+
   return (
     <Tooltip
       label={
         <>
-          {conditions && conditions.length > 0 ? 'Edit' : 'Add'} Conditions
+          {numOfConditions > 0 ? 'Edit' : 'Add'} Conditions
           <When truthy={primary}>
             <RemovesPrimary />
           </When>
@@ -50,17 +57,17 @@ export const ConditionIconButton = ({
       }
       position="bottom"
     >
-      <UnstyledButton onClick={onClick}>
+      <ActionIcon onClick={onClick} variant="transparent">
         <Button position="center" spacing={4}>
-          <When truthy={!conditions || conditions.length === 0}>
+          <When truthy={numOfConditions === 0}>
             <ConditionPlus />
           </When>
-          <When truthy={conditions && conditions.length > 0}>
+          <When truthy={numOfConditions > 0}>
             <Condition />
-            <div>{conditions?.length || 0}</div>
+            <div>{numOfConditions}</div>
           </When>
         </Button>
-      </UnstyledButton>
+      </ActionIcon>
     </Tooltip>
   );
 };

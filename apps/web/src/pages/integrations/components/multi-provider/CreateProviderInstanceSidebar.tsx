@@ -1,4 +1,4 @@
-import { ActionIcon, Group, Radio, Text, Input } from '@mantine/core';
+import { ActionIcon, Group, Radio, Text, Input, useMantineTheme } from '@mantine/core';
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
@@ -42,6 +42,7 @@ export function CreateProviderInstanceSidebar({
   onGoBack: () => void;
   onIntegrationCreated: (id: string) => void;
 }) {
+  const { colorScheme } = useMantineTheme();
   const { environments, isLoading: areEnvironmentsLoading } = useFetchEnvironments();
   const { isLoading: areIntegrationsLoading, providers: integrations } = useProviders();
   const [openConditions, setOpenConditions] = useState(false);
@@ -70,6 +71,13 @@ export function CreateProviderInstanceSidebar({
   });
 
   const watchedConditions = watch('conditions');
+  const numOfConditions: number = useMemo(() => {
+    if (watchedConditions && watchedConditions[0] && watchedConditions[0].children) {
+      return watchedConditions[0].children.length;
+    }
+
+    return 0;
+  }, [watchedConditions]);
   const selectedEnvironmentId = watch('environmentId');
 
   const showInAppErrorMessage = useMemo(() => {
@@ -267,25 +275,30 @@ export function CreateProviderInstanceSidebar({
             </Group>
           </>
         }
-        description="Add a condition if you want to apply the provider instance to a specific tenant, subscriber, workflow, etc."
+        description="Add a condition if you want to apply the provider instance to a specific tenant."
         styles={inputStyles}
       >
         <Group mt={16} position="left">
-          <Button variant="outline" onClick={() => setOpenConditions(true)}>
-            <When truthy={watchedConditions.length === 0}>
-              <Group spacing={8}>
-                <ConditionPlus /> Add conditions
-              </Group>
-            </When>
-            <When truthy={watchedConditions.length > 0}>
-              <Group spacing={8}>
-                <Group spacing={2}>
-                  <Condition color={colors.white} />
-                  {watchedConditions.length}
-                </Group>
-                Edit conditions
-              </Group>
-            </When>
+          <Button
+            variant="outline"
+            onClick={() => setOpenConditions(true)}
+            icon={
+              <>
+                <When truthy={numOfConditions === 0}>
+                  <Group spacing={8}>
+                    <ConditionPlus /> Add conditions
+                  </Group>
+                </When>
+                <When truthy={numOfConditions > 0}>
+                  <Group spacing={2}>
+                    <Condition color={colorScheme === 'dark' ? colors.white : colors.B30} />
+                    {numOfConditions}
+                  </Group>
+                </When>
+              </>
+            }
+          >
+            {numOfConditions === 0 ? 'Add' : 'Edit'} conditions
           </Button>
         </Group>
       </Input.Wrapper>

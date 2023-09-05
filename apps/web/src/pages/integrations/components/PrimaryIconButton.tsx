@@ -1,9 +1,8 @@
 import styled from '@emotion/styled';
-import { Group, UnstyledButton, Text, Title, useMantineTheme, Modal } from '@mantine/core';
-import { colors } from '@novu/notification-center';
+import { Group, ActionIcon, Text, Title } from '@mantine/core';
 import { useState } from 'react';
 import { When } from '../../../components/utils/When';
-import { shadows, Tooltip, Button } from '../../../design-system';
+import { Tooltip, Button, colors, Modal } from '../../../design-system';
 import { RemoveCondition, StarEmpty, Warning } from '../../../design-system/icons';
 
 const IconButton = styled(Group)`
@@ -24,8 +23,6 @@ const RemovesCondition = () => {
     <Text mt={4} lineClamp={3} color="#EAA900">
       This action remove
       <br /> applied conditions
-      <br />
-      Learn more...
     </Text>
   );
 };
@@ -39,8 +36,7 @@ export const PrimaryIconButton = ({
   primary?: boolean;
   onClick: () => void;
 }) => {
-  const [modalOpen, setModalOpen] = useState(false);
-  const theme = useMantineTheme();
+  const [modalOpen, setModalOpen] = useState(true);
 
   if (primary) {
     return null;
@@ -59,7 +55,7 @@ export const PrimaryIconButton = ({
         }
         position="bottom"
       >
-        <UnstyledButton
+        <ActionIcon
           onClick={() => {
             if (conditions && conditions.length > 0) {
               setModalOpen(true);
@@ -68,40 +64,25 @@ export const PrimaryIconButton = ({
             }
             onClick();
           }}
+          variant="transparent"
         >
           <IconButton position="center" spacing={4}>
             <StarEmpty />
           </IconButton>
-        </UnstyledButton>
+        </ActionIcon>
       </Tooltip>
       <Modal
         opened={modalOpen}
-        overlayColor={theme.colorScheme === 'dark' ? colors.BGDark : colors.BGLight}
-        overlayOpacity={0.7}
-        styles={{
-          modal: {
-            backgroundColor: theme.colorScheme === 'dark' ? colors.B15 : colors.white,
-          },
-          body: {
-            paddingTop: '5px',
-            paddingInline: '8px',
-          },
-        }}
         title={
           <Group spacing={8}>
             <Warning color="#EAA900" />
             <Title color="#EAA900">Conditions will be removed</Title>
           </Group>
         }
-        sx={{ backdropFilter: 'blur(10px)' }}
-        shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.medium}
-        radius="md"
         size="lg"
         onClose={() => {
           setModalOpen(false);
         }}
-        centered
-        overflow="inside"
       >
         <Text color={colors.B60}>
           Marking this instance as primary will remove all conditions since primary instances cannot have any
