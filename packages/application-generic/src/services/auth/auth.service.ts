@@ -54,6 +54,7 @@ export class AuthService {
     private logger: PinoLogger,
     private userRepository: UserRepository,
     private subscriberRepository: SubscriberRepository,
+    @Inject(forwardRef(() => CreateUser))
     private createUserUsecase: CreateUser,
     private jwtService: JwtService,
     private analyticsService: AnalyticsService,
