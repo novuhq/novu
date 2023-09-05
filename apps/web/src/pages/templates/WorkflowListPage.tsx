@@ -41,7 +41,7 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
       <Group spacing={8}>
         <TooltipContainer>
           <Tooltip
-            label="Some steps are missing a provider configuration, 
+            label="Some steps are missing a provider configuration or a primary provider, 
           causing some notifications to fail."
             width={300}
             multiline

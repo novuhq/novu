@@ -4,10 +4,11 @@ import { MessageRepository, NotificationTemplateEntity, SubscriberRepository } f
 import { UserSession } from '@novu/testing';
 import { ChannelTypeEnum } from '@novu/shared';
 import {
-  InMemoryProviderService,
   buildFeedKey,
   buildMessageCountKey,
   CacheService,
+  InMemoryProviderEnum,
+  InMemoryProviderService,
   InvalidateCacheService,
 } from '@novu/application-generic';
 
@@ -21,13 +22,20 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
     _id: string;
   } | null = null;
 
-  const inMemoryProviderService = new InMemoryProviderService();
-  inMemoryProviderService.initialize();
-  const invalidateCache = new InvalidateCacheService(new CacheService(inMemoryProviderService));
+  let inMemoryProviderService: InMemoryProviderService;
+  let invalidateCache: InvalidateCacheService;
+
+  before(async () => {
+    inMemoryProviderService = new InMemoryProviderService(InMemoryProviderEnum.REDIS);
+    const cacheService = new CacheService(inMemoryProviderService);
+    await cacheService.initialize();
+    invalidateCache = new InvalidateCacheService(cacheService);
+  });
 
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
+
     subscriberId = SubscriberRepository.createObjectId();
 
     template = await session.createTemplate({
@@ -51,7 +59,7 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
     subscriberProfile = profile;
   });
 
-  it('should return unseen count with a seen filter', async function () {
+  it('should return unseen count with no query', async function () {
     await session.triggerEvent(template.triggers[0].identifier, subscriberId);
     await session.triggerEvent(template.triggers[0].identifier, subscriberId);
     await session.triggerEvent(template.triggers[0].identifier, subscriberId);
@@ -76,30 +84,28 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
       }
     );
 
-    const unseenFeed = await getFeedCount({ seen: false });
+    const unseenFeed = await getUnseenCount();
     expect(unseenFeed.data.count).to.equal(2);
   });
 
-  it('should return unread count with a read filter', async function () {
+  it('should return unseen count with query seen false', async function () {
     await session.triggerEvent(template.triggers[0].identifier, subscriberId);
     await session.triggerEvent(template.triggers[0].identifier, subscriberId);
     await session.triggerEvent(template.triggers[0].identifier, subscriberId);
 
     await session.awaitRunningJobs(template._id);
-    if (!subscriberProfile) throw new Error('Subscriber profile is null');
 
     const messages = await messageRepository.findBySubscriberChannel(
       session.environment._id,
-      subscriberProfile._id,
+      subscriberProfile!._id,
       ChannelTypeEnum.IN_APP
     );
-
     const messageId = messages[0]._id;
-    expect(messages[0].read).to.equal(false);
+    expect(messages[0].seen).to.equal(false);
 
     await axios.post(
       `http://localhost:${process.env.PORT}/v1/widgets/messages/markAs`,
-      { messageId, mark: { seen: true, read: true } },
+      { messageId, mark: { seen: true } },
       {
         headers: {
           Authorization: `Bearer ${subscriberToken}`,
@@ -107,11 +113,37 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
       }
     );
 
-    const readFeed = await getFeedCount({ read: true });
-    expect(readFeed.data.count).to.equal(1);
+    const unseenFeed = await getUnseenCount({ seen: false });
+    expect(unseenFeed.data.count).to.equal(2);
+  });
 
-    const unreadFeed = await getFeedCount({ read: false });
-    expect(unreadFeed.data.count).to.equal(2);
+  it('should return unseen count with query seen true', async function () {
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+
+    await session.awaitRunningJobs(template._id);
+
+    const messages = await messageRepository.findBySubscriberChannel(
+      session.environment._id,
+      subscriberProfile!._id,
+      ChannelTypeEnum.IN_APP
+    );
+    const messageId = messages[0]._id;
+    expect(messages[0].seen).to.equal(false);
+
+    await axios.post(
+      `http://localhost:${process.env.PORT}/v1/widgets/messages/markAs`,
+      { messageId, mark: { seen: true } },
+      {
+        headers: {
+          Authorization: `Bearer ${subscriberToken}`,
+        },
+      }
+    );
+
+    const seenFeed = await getUnseenCount({ seen: true });
+    expect(seenFeed.data.count).to.equal(1);
   });
 
   it('should return unseen count after mark as request', async function () {
@@ -128,7 +160,7 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
     );
     const messageId = messages[0]._id;
 
-    let seenCount = (await getFeedCount({ seen: false })).data.count;
+    let seenCount = (await getUnseenCount({ seen: false })).data.count;
     expect(seenCount).to.equal(3);
 
     await invalidateCache.invalidateQuery({
@@ -155,12 +187,12 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
       }
     );
 
-    seenCount = (await getFeedCount({ seen: false })).data.count;
+    seenCount = (await getUnseenCount({ seen: false })).data.count;
     expect(seenCount).to.equal(2);
   });
 
-  async function getFeedCount(query = {}) {
-    const response = await axios.get(`http://localhost:${process.env.PORT}/v1/widgets/notifications/count`, {
+  async function getUnseenCount(query = {}) {
+    const response = await axios.get(`http://localhost:${process.env.PORT}/v1/widgets/notifications/unseen`, {
       params: {
         ...query,
       },

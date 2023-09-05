@@ -33,11 +33,11 @@ Novu will manage the OAuth flow and store the credentials
    ```
 
    - SUBSCRIBER_ID is a custom identifier used when identifying your users within the Novu platform. [Read more here](/platform/subscribers). <br/>
-   - ENVIRONMENT_ID is a context of an environment you can locate your environment id in the setting in the dashboard . <a href="https://web.novu.co/settings" style={{textDecoration: "underline"}}>Settings</a>.
+   - ENVIRONMENT_ID is a context of an environment you can locate your environment id in the setting in the dashboard. <a href="https://web.novu.co/settings" style={{textDecoration: "underline"}}>Settings</a>.
      <br/>
    - INTEGRATION_IDENTIFIER optional, is a unique identifier of the integration. You can locate your integration identifier in the <a href="https://web.novu.co/integrations" style={{textDecoration: "underline"}}>Integration Store</a>. When not provided the last created integration will be used.
 
-If you are using the `Add to Slack` button you have to provide the `Shareable URL` as the `redirect_uri` parameter like in this example. Make sure that the `Sharaeble URL` is url encoded.
+If you are using the `Add to Slack` button you have to provide the `Shareable URL` as the `redirect_uri` parameter like in this example. Make sure that the `Shareable URL` is url encoded.
 
 ```html
 <a
