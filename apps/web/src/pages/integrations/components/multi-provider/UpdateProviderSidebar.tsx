@@ -180,7 +180,8 @@ export function UpdateProviderSidebar({
     const isChangedToInactiveAndIsPrimary =
       isActiveFieldChanged && isChannelSupportPrimary && !isActive && primary && hasSameChannelActiveIntegration;
 
-    const isPrimaryAndHasConditionsApplied = primary && conditions && conditions.length > 0;
+    const isPrimaryAndHasConditionsApplied =
+      primary && conditions && conditions.length > 0 && hasSameChannelActiveIntegration;
 
     const hasNoConditions = !conditions || conditions.length === 0;
 
