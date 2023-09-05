@@ -37,6 +37,9 @@ describe('test use of novus node package - Integrations class', () => {
       active: true,
       channel: ChannelTypeEnum.EMAIL,
       check: true,
+      conditions: [
+        { isNegated: false, type: 'GROUP', value: 'AND', children: [] },
+      ],
     });
 
     expect(mockedAxios.post).toHaveBeenCalled();
@@ -49,6 +52,9 @@ describe('test use of novus node package - Integrations class', () => {
       active: true,
       channel: ChannelTypeEnum.EMAIL,
       check: true,
+      conditions: [
+        { isNegated: false, type: 'GROUP', value: 'AND', children: [] },
+      ],
     });
   });
 
@@ -82,6 +88,9 @@ describe('test use of novus node package - Integrations class', () => {
         apiKey: 'newApiKey',
         secretKey: 'newApiSecret',
       },
+      conditions: [
+        { isNegated: false, type: 'GROUP', value: 'AND', children: [] },
+      ],
     });
 
     expect(mockedAxios.put).toHaveBeenCalled();
@@ -94,6 +103,9 @@ describe('test use of novus node package - Integrations class', () => {
           apiKey: 'newApiKey',
           secretKey: 'newApiSecret',
         },
+        conditions: [
+          { isNegated: false, type: 'GROUP', value: 'AND', children: [] },
+        ],
       }
     );
   });
