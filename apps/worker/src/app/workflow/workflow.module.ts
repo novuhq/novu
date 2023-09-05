@@ -25,6 +25,7 @@ import {
   StoreSubscriberJobs,
   ConditionsFilter,
   TriggerEvent,
+  GetFeatureFlag,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
@@ -94,6 +95,7 @@ const USE_CASES = [
   TriggerEvent,
   UpdateJobStatus,
   WebhookFilterBackoffStrategy,
+  GetFeatureFlag,
 ];
 
 const PROVIDERS: Provider[] = [
