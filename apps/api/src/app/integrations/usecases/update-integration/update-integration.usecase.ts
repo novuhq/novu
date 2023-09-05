@@ -14,7 +14,6 @@ import { UpdateIntegrationCommand } from './update-integration.command';
 import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/deactivate-integration.usecase';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
-import { DisableNovuIntegration } from '../disable-novu-integration/disable-novu-integration.usecase';
 
 @Injectable()
 export class UpdateIntegration {
@@ -25,7 +24,6 @@ export class UpdateIntegration {
     private integrationRepository: IntegrationRepository,
     private deactivateSimilarChannelIntegrations: DeactivateSimilarChannelIntegrations,
     private analyticsService: AnalyticsService,
-    private disableNovuIntegration: DisableNovuIntegration,
     private getIsMultiProviderConfigurationEnabled: GetIsMultiProviderConfigurationEnabled
   ) {}
 
@@ -196,16 +194,6 @@ export class UpdateIntegration {
 
     const isChannelSupportsPrimary = CHANNELS_WITH_PRIMARY.includes(existingIntegration.channel);
     if (isMultiProviderConfigurationEnabled && isActiveChanged && isChannelSupportsPrimary) {
-      if (command.active) {
-        await this.disableNovuIntegration.execute({
-          channel: existingIntegration.channel,
-          providerId: existingIntegration.providerId,
-          environmentId: existingIntegration._environmentId,
-          organizationId: existingIntegration._organizationId,
-          userId: command.userId,
-        });
-      }
-
       const { primary, priority } = await this.calculatePriorityAndPrimary({
         existingIntegration,
         active: !!command.active,

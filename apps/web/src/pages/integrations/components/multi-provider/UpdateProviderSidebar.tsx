@@ -237,8 +237,9 @@ export function UpdateProviderSidebar({
           }
         >
           <NovuProviderSidebarContent provider={selectedProvider} />
-          <UpdateIntegrationCommonFields provider={selectedProvider} showActive={false} />
+          <UpdateIntegrationCommonFields provider={selectedProvider} showActive={true} />
         </Sidebar>
+        <SelectPrimaryIntegrationModal />
       </FormProvider>
     );
   }
