@@ -286,12 +286,12 @@ export function CreateProviderInstanceSidebar({
               <>
                 <When truthy={numOfConditions === 0}>
                   <Group spacing={8}>
-                    <ConditionPlus /> Add conditions
+                    <ConditionPlus />
                   </Group>
                 </When>
                 <When truthy={numOfConditions > 0}>
-                  <Group spacing={2}>
-                    <Condition color={colorScheme === 'dark' ? colors.white : colors.B30} />
+                  <Group spacing={2} color={colorScheme === 'dark' ? colors.white : colors.B30}>
+                    <Condition />
                     {numOfConditions}
                   </Group>
                 </When>

@@ -75,8 +75,10 @@ export const ConditionIconButton = ({
               <ConditionPlus />
             </When>
             <When truthy={numOfConditions > 0}>
-              <Condition />
-              <div>{numOfConditions}</div>
+              <Group spacing={4}>
+                <Condition />
+                <div>{numOfConditions}</div>
+              </Group>
             </When>
           </IconButton>
         </ActionIcon>
@@ -95,7 +97,7 @@ export const ConditionIconButton = ({
         }}
       >
         <Text color={colors.B60}>
-          Adding conditions to this instance will remove it as primary since primary instances cannot have any
+          Adding conditions to this instance will remove it as primary since primary instances can not have any
           conditions.
         </Text>
         <Group mt={30} position="right">

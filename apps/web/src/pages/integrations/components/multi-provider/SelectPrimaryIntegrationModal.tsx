@@ -246,7 +246,7 @@ export const SelectPrimaryIntegrationModal = ({
         <ButtonsHolder>
           {!isActive && !isInitialProviderSelected && (
             <Warning>
-              The selected provider instance will be activated as the primary provider cannot be disabled.
+              The selected provider instance will be activated as the primary provider can not be disabled.
             </Warning>
           )}
           <Button variant="outline" onClick={onCloseCallback}>

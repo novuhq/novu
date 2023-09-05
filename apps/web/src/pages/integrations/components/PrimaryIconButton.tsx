@@ -85,7 +85,7 @@ export const PrimaryIconButton = ({
         }}
       >
         <Text color={colors.B60}>
-          Marking this instance as primary will remove all conditions since primary instances cannot have any
+          Marking this instance as primary will remove all conditions since primary instances can not have any
           conditions.
         </Text>
         <Group mt={30} position="right">
