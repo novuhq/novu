@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Group, Center, Box } from '@mantine/core';
+import { Group, Center, Box, Title, Modal, useMantineTheme } from '@mantine/core';
 import styled from '@emotion/styled';
 import slugify from 'slugify';
 import { Controller, FormProvider, useForm, useWatch } from 'react-hook-form';
@@ -16,7 +16,7 @@ import {
   SmsProviderIdEnum,
 } from '@novu/shared';
 
-import { Button, colors, Sidebar, Text } from '../../../../design-system';
+import { Button, colors, shadows, Sidebar, Text } from '../../../../design-system';
 import { useProviders } from '../../useProviders';
 import type { IIntegratedProvider } from '../../types';
 import { IntegrationInput } from '../IntegrationInput';
@@ -36,6 +36,7 @@ import { NovuInAppSetupWarning } from '../NovuInAppSetupWarning';
 import { NovuProviderSidebarContent } from './NovuProviderSidebarContent';
 import { useSelectPrimaryIntegrationModal } from './useSelectPrimaryIntegrationModal';
 import { ShareableUrl } from '../Modal/ConnectIntegrationForm';
+import { Warning } from '../../../../design-system/icons';
 
 interface IProviderForm {
   name: string;
@@ -58,6 +59,8 @@ export function UpdateProviderSidebar({
   integrationId?: string;
   onClose: () => void;
 }) {
+  const [modalOpen, setModalOpen] = useState(false);
+  const theme = useMantineTheme();
   const { update } = useIntercom();
   const { isLoading: areEnvironmentsLoading } = useFetchEnvironments();
   const [selectedProvider, setSelectedProvider] = useState<IIntegratedProvider | null>(null);
@@ -183,7 +186,10 @@ export function UpdateProviderSidebar({
         environmentId: selectedProvider?.environmentId,
         channelType: selectedProvider?.channel,
         exclude: !isActive ? [selectedProvider.integrationId] : undefined,
-        onClose: () => {
+        onClose: (cancel?: boolean) => {
+          if (cancel === true) {
+            setModalOpen(true);
+          }
           updateIntegration(data);
         },
       });
@@ -328,6 +334,57 @@ export function UpdateProviderSidebar({
         </When>
       </Sidebar>
       <SelectPrimaryIntegrationModal />
+      <Modal
+        opened={modalOpen}
+        overlayColor={theme.colorScheme === 'dark' ? colors.BGDark : colors.BGLight}
+        overlayOpacity={0.7}
+        styles={{
+          modal: {
+            backgroundColor: theme.colorScheme === 'dark' ? colors.B15 : colors.white,
+          },
+          body: {
+            paddingTop: '5px',
+            paddingInline: '8px',
+          },
+        }}
+        title={
+          <Group spacing={8}>
+            <Warning color="#EAA900" />
+            <Title color="#EAA900">Some nodes missing provider</Title>
+          </Group>
+        }
+        sx={{ backdropFilter: 'blur(10px)' }}
+        shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.medium}
+        radius="md"
+        size="lg"
+        onClose={() => {
+          setModalOpen(false);
+        }}
+        centered
+        overflow="inside"
+      >
+        <Text color={colors.B60}>
+          Conditions applied to all instances designate them to specific nodes, while nodes lacking conditions remain
+          provider-less. Add a provider instance without conditions to cover all nodes.
+        </Text>
+        <Group mt={30} position="right">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setModalOpen(false);
+            }}
+          >
+            Remind me later
+          </Button>
+          <Button
+            onClick={() => {
+              setModalOpen(false);
+            }}
+          >
+            <Group spacing={8}>Add a provider</Group>
+          </Button>
+        </Group>
+      </Modal>
     </FormProvider>
   );
 }
