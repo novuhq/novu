@@ -11,7 +11,6 @@ import { SelectIntegrationCommand } from './select-integration.command';
 import { ConditionsFilter } from '../conditions-filter/conditions-filter.usecase';
 import { buildIntegrationKey, CachedQuery } from '../../services/cache';
 import {
-  GetFeatureFlag,
   FeatureFlagCommand,
   GetIsMultiProviderConfigurationEnabled,
 } from '../get-feature-flag';
@@ -27,7 +26,6 @@ const LOG_CONTEXT = 'SelectIntegration';
 export class SelectIntegration {
   constructor(
     private integrationRepository: IntegrationRepository,
-    protected getFeatureFlag: GetFeatureFlag,
     protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations,
     protected conditionsFilter: ConditionsFilter,
     private tenantRepository: TenantRepository,

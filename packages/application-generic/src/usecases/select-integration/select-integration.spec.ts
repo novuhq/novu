@@ -8,13 +8,9 @@ import {
 
 import { SelectIntegration } from './select-integration.usecase';
 import { SelectIntegrationCommand } from './select-integration.command';
-import {
-  GetFeatureFlag,
-  GetIsMultiProviderConfigurationEnabled,
-} from '../get-feature-flag';
+import { GetIsMultiProviderConfigurationEnabled } from '../get-feature-flag';
 import { GetDecryptedIntegrations } from '../get-decrypted-integrations';
 import { ConditionsFilter } from '../conditions-filter';
-import { FeatureFlagsService } from '../../services';
 
 const testIntegration: IntegrationEntity = {
   _environmentId: 'env-test-123',
@@ -98,7 +94,6 @@ describe('select integration', function () {
   beforeEach(async function () {
     useCase = new SelectIntegration(
       new IntegrationRepository() as any,
-      new GetFeatureFlag(new FeatureFlagsService()),
       // @ts-ignore
       new GetDecryptedIntegrations(),
       new ConditionsFilter(),
