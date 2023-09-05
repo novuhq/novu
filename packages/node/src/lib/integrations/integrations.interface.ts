@@ -6,7 +6,7 @@ import {
   ICredentialsDto,
 } from '@novu/shared';
 
-interface ICondition {
+export interface IConditions {
   isNegated: boolean;
   type: BuilderFieldType;
   value: BuilderGroupValues;
@@ -32,5 +32,5 @@ export interface IIntegrationsUpdatePayload {
   credentials?: ICredentialsDto;
   active?: boolean;
   check?: boolean;
-  conditions?: ICondition[];
+  conditions?: IConditions[];
 }
