@@ -94,6 +94,8 @@ export { Edit } from './actions/Edit';
 export { Upload } from './actions/Upload';
 export { Invite } from './actions/Invite';
 export { PlusFilled } from './actions/PlusFilled';
+export { ConditionPlus } from './actions/ConditionPlus';
+export { Duplicate } from './actions/Duplicate';
 
 export { ArrowDown } from './arrows/ArrowDown';
 export { DoubleArrowRight } from './arrows/DoubleArrowRight';

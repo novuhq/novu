@@ -1,5 +1,5 @@
 import React from 'react';
-/* eslint-disable */
+
 export function Condition(props: React.ComponentPropsWithoutRef<'svg'>) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" {...props}>
@@ -19,7 +19,7 @@ export function Condition(props: React.ComponentPropsWithoutRef<'svg'>) {
       </g>
       <defs>
         <clipPath id="clip0_5047_8523">
-          <rect width="16" height="16" fill="white" />
+          <rect width="16" height="16" fill="currentColor" />
         </clipPath>
       </defs>
     </svg>

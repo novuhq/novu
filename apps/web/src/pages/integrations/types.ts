@@ -1,5 +1,8 @@
 import type {
+  BuilderFieldType,
+  BuilderGroupValues,
   ChannelTypeEnum,
+  FilterParts,
   IConfigCredentials,
   ICredentials,
   ILogoFileName,
@@ -20,7 +23,7 @@ export interface ITableIntegration {
   environment: string;
   active: boolean;
   logoFileName: IProviderConfig['logoFileName'];
-  conditions?: any[];
+  conditions?: IConditions[];
 }
 
 export interface IIntegratedProvider {
@@ -33,6 +36,7 @@ export interface IIntegratedProvider {
   comingSoon: boolean;
   active: boolean;
   connected: boolean;
+  conditions?: IConditions[];
   logoFileName: ILogoFileName;
   betaVersion: boolean;
   novu?: boolean;
@@ -51,10 +55,18 @@ export interface IntegrationEntity {
   providerId: ProvidersIdEnum;
   channel: ChannelTypeEnum;
   credentials: ICredentials;
+  conditions?: IConditions[];
   active: boolean;
   deleted: boolean;
   order: number;
   primary: boolean;
   deletedAt: string;
   deletedBy: string;
+}
+
+export interface IConditions {
+  isNegated?: boolean;
+  type?: BuilderFieldType;
+  value?: BuilderGroupValues;
+  children?: FilterParts[];
 }

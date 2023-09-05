@@ -1,12 +1,12 @@
 import { ActionIcon, Group, Radio, Text } from '@mantine/core';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { ChannelTypeEnum, ICreateIntegrationBodyDto, InAppProviderIdEnum, providers } from '@novu/shared';
 
 import { Button, colors, NameInput, Sidebar } from '../../../../design-system';
-import { ArrowLeft } from '../../../../design-system/icons';
+import { ArrowLeft, ConditionPlus } from '../../../../design-system/icons';
 import { inputStyles } from '../../../../design-system/config/inputs.styles';
 import { useFetchEnvironments } from '../../../../hooks/useFetchEnvironments';
 import { useSegment } from '../../../../components/providers/SegmentProvider';
@@ -16,13 +16,15 @@ import { errorMessage, successMessage } from '../../../../utils/notifications';
 import { QueryKeys } from '../../../../api/query.keys';
 import { ProviderImage } from './SelectProviderSidebar';
 import { CHANNEL_TYPE_TO_STRING } from '../../../../utils/channels';
-import type { IntegrationEntity } from '../../types';
+import type { IConditions, IntegrationEntity } from '../../types';
 import { useProviders } from '../../useProviders';
 import { When } from '../../../../components/utils/When';
+import { Conditions } from '../../../../components/conditions/Conditions';
 
 interface ICreateProviderInstanceForm {
   name: string;
   environmentId: string;
+  conditions: IConditions[];
 }
 
 export function CreateProviderInstanceSidebar({
@@ -42,6 +44,7 @@ export function CreateProviderInstanceSidebar({
 }) {
   const { environments, isLoading: areEnvironmentsLoading } = useFetchEnvironments();
   const { isLoading: areIntegrationsLoading, providers: integrations } = useProviders();
+  const [openConditions, setOpenConditions] = useState(false);
   const isLoading = areEnvironmentsLoading || areIntegrationsLoading;
   const queryClient = useQueryClient();
   const segment = useSegment();
@@ -57,11 +60,12 @@ export function CreateProviderInstanceSidebar({
     ICreateIntegrationBodyDto
   >(createIntegration);
 
-  const { handleSubmit, control, reset, watch } = useForm<ICreateProviderInstanceForm>({
+  const { handleSubmit, control, reset, watch, setValue, getValues } = useForm<ICreateProviderInstanceForm>({
     shouldUseNativeValidation: false,
     defaultValues: {
       name: '',
       environmentId: '',
+      conditions: [],
     },
   });
 
@@ -86,7 +90,7 @@ export function CreateProviderInstanceSidebar({
       }
 
       const { channel: selectedChannel } = provider;
-      const { environmentId } = data;
+      const { environmentId, conditions } = data;
 
       const { _id: integrationId } = await createIntegrationApi({
         providerId: provider.id,
@@ -95,6 +99,7 @@ export function CreateProviderInstanceSidebar({
         credentials: {},
         active: provider.channel === ChannelTypeEnum.IN_APP ? true : false,
         check: false,
+        conditions,
         _environmentId: environmentId,
       });
 
@@ -124,11 +129,26 @@ export function CreateProviderInstanceSidebar({
     reset({
       name: provider?.displayName ?? '',
       environmentId: environments.find((env) => env.name === 'Development')?._id || '',
+      conditions: [],
     });
   }, [environments, provider]);
 
   if (!provider) {
     return null;
+  }
+
+  if (openConditions) {
+    return (
+      <Conditions
+        conditions={getValues('conditions')}
+        name={getValues('name')}
+        isOpened={openConditions}
+        setConditions={(data) => {
+          setValue('conditions', data, { shouldDirty: true });
+        }}
+        onClose={() => setOpenConditions(false)}
+      />
+    );
   }
 
   return (
@@ -231,6 +251,10 @@ export function CreateProviderInstanceSidebar({
           );
         }}
       />
+
+      <Button variant="outline" onClick={() => setOpenConditions(true)} icon={<ConditionPlus />}>
+        Add condition
+      </Button>
       <When truthy={showInAppErrorMessage}>
         <WarningMessage>
           <Text>You can only create one {provider.displayName} per environment.</Text>
