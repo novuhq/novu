@@ -70,21 +70,27 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
     const payload = {
       providerId: EmailProviderIdEnum.SendGrid,
       channel: ChannelTypeEnum.EMAIL,
-      credentials: { apiKey: 'new_key', secretKey: 'new_secret' },
+      credentials: { apiKey: 'SG.123', secretKey: 'abc' },
       active: true,
       check: false,
       conditions: [{}],
     };
 
-    const integration = (await session.testAgent.get(`/v1/integrations`)).body.data.find((i) => i.channel === 'email');
+    const data = (await session.testAgent.get(`/v1/integrations`)).body.data;
+
+    const integration = data.find((i) => i.primary && i.channel === 'email');
 
     expect(integration.conditions.length).to.equal(0);
 
     await session.testAgent.put(`/v1/integrations/${integration._id}`).send(payload);
 
-    const result = (await session.testAgent.get(`/v1/integrations`)).body.data[0];
+    const result = await integrationRepository.findOne({
+      _id: integration._id,
+      _organizationId: session.organization._id,
+    });
 
-    expect(result.conditions.length).to.equal(1);
+    expect(result?.conditions?.length).to.equal(1);
+    expect(result?.primary).to.equal(false);
   });
 
   it('should not allow to update the integration with same identifier', async function () {
