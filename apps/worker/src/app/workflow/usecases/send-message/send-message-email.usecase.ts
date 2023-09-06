@@ -77,14 +77,6 @@ export class SendMessageEmail extends SendMessageBase {
 
     const overrideSelectedIntegration = command.overrides?.email?.integrationIdentifier;
     try {
-      const getIntegrationCommand = {
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        channelType: ChannelTypeEnum.EMAIL,
-        userId: command.userId,
-        identifier: overrideSelectedIntegration as string,
-      };
-
       integration = await this.getIntegration({
         organizationId: command.organizationId,
         environmentId: command.environmentId,
