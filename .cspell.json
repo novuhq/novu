@@ -500,7 +500,9 @@
     "nextjs",
     "vanillajs",
     "errmsg",
-    "springboot"
+    "springboot",
+    "errmsg",
+    "shelljs"
   ],
   "flagWords": [],
   "patterns": [
