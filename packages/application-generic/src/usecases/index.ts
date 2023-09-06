@@ -27,3 +27,6 @@ export * from './process-tenant';
 export * from './map-trigger-recipients';
 export * from './get-topic-subscribers';
 export * from './create-log';
+export * from './switch-environment';
+export * from './switch-organization';
+export * from './create-user';

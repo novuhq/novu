@@ -1,8 +1,18 @@
-import { forwardRef, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
-import { MemberRepository, OrganizationRepository, UserRepository, EnvironmentRepository } from '@novu/dal';
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
+import {
+  MemberRepository,
+  OrganizationRepository,
+  UserRepository,
+  EnvironmentRepository,
+} from '@novu/dal';
 import { SwitchOrganizationCommand } from './switch-organization.command';
-import { AuthService } from '../../services/auth.service';
-import { ApiException } from '../../../shared/exceptions/api.exception';
+import { AuthService } from '../../services/auth/auth.service';
+import { ApiException } from '../../utils/exceptions';
 
 @Injectable()
 export class SwitchOrganization {
@@ -15,15 +25,21 @@ export class SwitchOrganization {
   ) {}
 
   async execute(command: SwitchOrganizationCommand): Promise<string> {
-    const isAuthenticated = await this.authService.isAuthenticatedForOrganization(
-      command.userId,
-      command.newOrganizationId
-    );
+    const isAuthenticated =
+      await this.authService.isAuthenticatedForOrganization(
+        command.userId,
+        command.newOrganizationId
+      );
     if (!isAuthenticated) {
-      throw new UnauthorizedException(`Not authorized for organization ${command.newOrganizationId}`);
+      throw new UnauthorizedException(
+        `Not authorized for organization ${command.newOrganizationId}`
+      );
     }
 
-    const member = await this.memberRepository.findMemberByUserId(command.newOrganizationId, command.userId);
+    const member = await this.memberRepository.findMemberByUserId(
+      command.newOrganizationId,
+      command.userId
+    );
     if (!member) throw new ApiException('Member not found');
 
     const user = await this.userRepository.findById(command.userId);
@@ -34,7 +50,12 @@ export class SwitchOrganization {
       _parentId: { $exists: false },
     });
 
-    const token = await this.authService.getSignedToken(user, command.newOrganizationId, member, environment?._id);
+    const token = await this.authService.getSignedToken(
+      user,
+      command.newOrganizationId,
+      member,
+      environment?._id
+    );
 
     return token;
   }

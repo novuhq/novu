@@ -38,6 +38,7 @@
     "@nestjs/swagger": ">=6",
     "@nestjs/terminus": ">=10",
     "@nestjs/testing": ">=10",
+    "@nestjs/jwt": "^10.1.0",
     "newrelic": "^9",
     "reflect-metadata": "^0.1.13"
   },

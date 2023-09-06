@@ -82,7 +82,7 @@ export class SendMessagePush extends SendMessageBase {
     const data = {
       subscriber: subscriber,
       step: stepData,
-      ...(tenant ? { tenant: { name: tenant.name, ...tenant.data } } : {}),
+      ...(tenant && { tenant }),
       ...command.payload,
     };
     let content = '';
