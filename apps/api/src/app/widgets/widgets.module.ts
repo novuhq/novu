@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+
 import { USE_CASES } from './usecases';
 import { WidgetsController } from './widgets.controller';
 import { SharedModule } from '../shared/shared.module';

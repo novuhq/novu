@@ -60,6 +60,7 @@ jobs:
           cypress_version: 12.9.0
           cypress: true
       - uses: ./.github/actions/setup-redis-cluster
+
       - uses: mansagroup/nrwl-nx-action@v3
         with:
           targets: lint

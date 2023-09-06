@@ -101,7 +101,7 @@ export const IntegrationNameCell = ({ row: { original }, isLoading }: IExtendedC
       <DetailsHolder>
         <NameHolder>
           <Text rows={1}>{original.name}</Text>
-          {original.name.toLowerCase().includes('novu') && original.channelType !== ChannelTypeEnum.IN_APP && (
+          {original.name?.toLowerCase().includes('novu') && original.channelType !== ChannelTypeEnum.IN_APP && (
             <Free>Test Provider</Free>
           )}
         </NameHolder>

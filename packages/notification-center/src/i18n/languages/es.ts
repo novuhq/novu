@@ -3,10 +3,13 @@ import { ITranslationEntry } from '../lang';
 export const ES: ITranslationEntry = {
   translations: {
     notifications: 'Notificaciones',
-    markAllAsRead: 'marcar todo como leído',
+    markAllAsRead: 'Marcar todo como leído',
     poweredBy: 'Con tecnología de',
     settings: 'Configuración',
-    noNewNotification: 'Nada nuevo que ver aquí todavía',
+    removeMessage: 'Eliminar mensaje',
+    markAsRead: 'Marcar como leído',
+    markAsUnRead: 'Marcar como no leído',
+    noNewNotification: 'Nada nuevo por aquí',
   },
   lang: 'es',
 };

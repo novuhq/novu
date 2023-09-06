@@ -1,6 +1,6 @@
 ---
 sidebar_position: 10
-sidebar_label: Get started with Ruby
+sidebar_label: Ruby
 ---
 
 # Ruby Quickstart
@@ -9,12 +9,19 @@ Learn how to use Novu to quickly send multi-channel (SMS, Email, Chat, Push) not
 
 In this Quickstart guide, you’ll learn how to:
 
-- [Install and use the Novu Ruby SDK via RubyGems or Bundle.](#install-novu-ruby-sdk)
-- [Configure a Notification Channel Provider.](#set-up-a-channel-provider)
-- [Set up a notification workflow.](#create-a-workflow)
-- [Create subscribers and update subscriber information.](#create-a-subscriber)
-- [Send your first notification.](#trigger-a-notification)
-- [Send notifications via topics.](#topics)
+- [Ruby Quickstart](#ruby-quickstart)
+  - [Requirements](#requirements)
+  - [Install Novu Ruby SDK](#install-novu-ruby-sdk)
+  - [Initialize \& Configure the Novu Ruby SDK](#initialize--configure-the-novu-ruby-sdk)
+  - [Set Up A Channel Provider](#set-up-a-channel-provider)
+  - [Create A workflow](#create-a-workflow)
+  - [Create A Subscriber](#create-a-subscriber)
+  - [Trigger A Notification](#trigger-a-notification)
+  - [Topics](#topics)
+    - [Create a Topic](#create-a-topic)
+    - [Add and Remove subscribers to a Topic](#add-and-remove-subscribers-to-a-topic)
+    - [Sending a notification to a Topic](#sending-a-notification-to-a-topic)
+  - [Next Steps](#next-steps)
 
 ## Requirements
 
