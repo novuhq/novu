@@ -233,19 +233,6 @@ export class SendMessageInApp extends SendMessageBase {
 
     if (!message) throw new PlatformException('Message not found');
 
-    await this.webSocketsQueueService.bullMqService.add(
-      'sendMessage',
-      {
-        event: WebSocketEventEnum.RECEIVED,
-        userId: command._subscriberId,
-        payload: {
-          message,
-        },
-      },
-      {},
-      command.organizationId
-    );
-
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -260,7 +247,20 @@ export class SendMessageInApp extends SendMessageBase {
     );
 
     await this.webSocketsQueueService.bullMqService.add(
-      'sendMessage',
+      'sendMessage-received-' + message._id,
+      {
+        event: WebSocketEventEnum.RECEIVED,
+        userId: command._subscriberId,
+        payload: {
+          message,
+        },
+      },
+      {},
+      command.organizationId
+    );
+
+    await this.webSocketsQueueService.bullMqService.add(
+      'sendMessage-unseen-' + message._id,
       {
         event: WebSocketEventEnum.UNSEEN,
         userId: command._subscriberId,
@@ -271,7 +271,7 @@ export class SendMessageInApp extends SendMessageBase {
     );
 
     await this.webSocketsQueueService.bullMqService.add(
-      'sendMessage',
+      'sendMessage-unread-' + message._id,
       {
         event: WebSocketEventEnum.UNREAD,
         userId: command._subscriberId,
