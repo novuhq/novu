@@ -100,7 +100,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
       <When truthy={!IS_DOCKER_HOSTED}>
         <>
           <OAuth>
-            <GitHubButton
+            <GoogleButton
               component="a"
               href={githubLink}
               my={30}
@@ -112,8 +112,8 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
               data-test-id="github-button"
             >
               Sign In with GitHub
-            </GitHubButton>
-            <GitHubButton
+            </GoogleButton>
+            <GoogleButton
               component="a"
               href={googleLink}
               my={30}
@@ -125,7 +125,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
               sx={{ color: colors.B40, fontSize: '16px', fontWeight: 700, height: '50px', marginLeft: 10 }}
             >
               Sign In with Google
-            </GitHubButton>
+            </GoogleButton>
           </OAuth>
           <Divider label={<Text color={colors.B40}>Or</Text>} color={colors.B30} labelPosition="center" my="md" />
         </>
@@ -196,7 +196,7 @@ const OAuth = styled.div`
   justify-content: space-between;
 `;
 
-const GitHubButton = styled(MantineButton)<{
+const GoogleButton = styled(MantineButton)<{
   component: 'a';
   my: number;
   href: string;

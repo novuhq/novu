@@ -86,16 +86,19 @@ export class AuthService {
     let newUser = false;
 
     if (!user) {
+      const firstName = profile.name
+        ? profile.name.split(' ').slice(0, -1).join(' ')
+        : profile.login;
+      const lastName = profile.name
+        ? profile.name.split(' ').slice(-1).join(' ')
+        : null;
+
       user = await this.createUserUsecase.execute(
         CreateUserCommand.create({
           picture: profile.avatar_url,
           email,
-          lastName: profile.name
-            ? profile.name.split(' ').slice(-1).join(' ')
-            : null,
-          firstName: profile.name
-            ? profile.name.split(' ').slice(0, -1).join(' ')
-            : profile.login,
+          firstName,
+          lastName,
           auth: {
             username: profile.login,
             profileId: profile.id,
@@ -418,7 +421,7 @@ export class AuthService {
   }: {
     subscriberId: string;
     _environmentId: string;
-  }) {
+  }): Promise<SubscriberEntity> {
     return await this.subscriberRepository.findBySubscriberId(
       _environmentId,
       subscriberId

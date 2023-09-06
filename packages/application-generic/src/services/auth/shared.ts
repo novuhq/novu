@@ -1,11 +1,10 @@
 export const buildOauthRedirectUrl = (request): string => {
+  let url = process.env.FRONT_BASE_URL + '/auth/login';
+
   if (!request.user || !request.user.token) {
-    return `${
-      process.env.FRONT_BASE_URL + '/auth/login'
-    }?error=AuthenticationError`;
+    return `${url}?error=AuthenticationError`;
   }
 
-  let url = process.env.FRONT_BASE_URL + '/auth/login';
   const redirectUrl = JSON.parse(request.query.state).redirectUrl;
 
   /**
