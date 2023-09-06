@@ -34,15 +34,13 @@ export function Conditions({
     control,
     getValues,
     trigger,
-    formState: { errors, isValid },
+    formState: { errors, isValid, isDirty },
   } = useForm<IConditionsForm>({
     defaultValues: { conditions },
-    shouldUseNativeValidation: false,
     mode: 'onChange',
-    reValidateMode: 'onChange',
   });
 
-  const { fields, append, update, remove, insert } = useFieldArray({
+  const { fields, append, remove, insert } = useFieldArray({
     control,
     name: `conditions.0.children`,
   });
@@ -58,13 +56,6 @@ export function Conditions({
     });
   }, [context]);
 
-  function handleOnChildOnChange(index: number) {
-    return (data) => {
-      const newField = Object.assign({}, fields[index], { on: data });
-      update(index, newField);
-    };
-  }
-
   function handleDuplicate(index: number) {
     insert(index + 1, getValues(`conditions.0.children.${index}`));
   }
@@ -75,7 +66,7 @@ export function Conditions({
 
   const onApplyConditions = async () => {
     await trigger('conditions');
-    if (!errors.conditions && fields.length > 0) {
+    if (!errors.conditions) {
       updateConditions(getValues('conditions'));
     }
   };
@@ -103,14 +94,13 @@ export function Conditions({
           <Button variant="outline" onClick={onClose} data-test-id="conditions-form-cancel-btn">
             Cancel
           </Button>
-          <Tooltip
-            position="top"
-            error
-            disabled={isValid && fields.length > 0}
-            label={!isValid ? 'Some conditions are missing values' : 'Add at least one condition'}
-          >
+          <Tooltip position="top" error disabled={isValid} label={'Some conditions are missing values'}>
             <div>
-              <Button onClick={onApplyConditions} data-test-id="apply-conditions-btn">
+              <Button
+                disabled={!isDirty || (conditions?.length === 0 && fields?.length === 0)}
+                onClick={onApplyConditions}
+                data-test-id="apply-conditions-btn"
+              >
                 Apply conditions
               </Button>
             </div>
@@ -160,7 +150,6 @@ export function Conditions({
                         placeholder="On"
                         data={FilterPartTypeList}
                         {...field}
-                        onChange={handleOnChildOnChange(index)}
                         data-test-id="conditions-form-on-dropdown"
                       />
                     );
@@ -286,7 +275,6 @@ function EqualityForm({ control, index }: { control: Control<IConditionsForm>; i
                       </Tooltip>
                     </When>
                   }
-                  required
                   error={!!fieldState.error}
                   placeholder="Value"
                   data-test-id="conditions-form-value-input"
