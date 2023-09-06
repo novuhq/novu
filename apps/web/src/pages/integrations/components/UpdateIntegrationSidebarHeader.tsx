@@ -16,6 +16,8 @@ import { useSelectPrimaryIntegrationModal } from './multi-provider/useSelectPrim
 import { useMakePrimaryIntegration } from '../../../api/hooks/useMakePrimaryIntegration';
 import { ConditionIconButton } from './ConditionIconButton';
 import { PrimaryIconButton } from './PrimaryIconButton';
+import { useQueryClient } from '@tanstack/react-query';
+import { QueryKeys } from '../../../api/query.keys';
 
 export const UpdateIntegrationSidebarHeader = ({
   provider,
@@ -29,22 +31,24 @@ export const UpdateIntegrationSidebarHeader = ({
   openConditions: () => void;
 }) => {
   const [isModalOpened, setModalIsOpened] = useState(false);
-  const { control } = useFormContext();
+  const { control, setValue, watch } = useFormContext();
+  const queryClient = useQueryClient();
   const { environments } = useFetchEnvironments();
   const { colorScheme } = useMantineTheme();
   const { providers, isLoading } = useProviders();
-  const canMarkAsPrimary = provider && !provider.primary && CHANNELS_WITH_PRIMARY.includes(provider.channel);
+  const primary = watch('primary');
+  const canMarkAsPrimary = provider && !primary && CHANNELS_WITH_PRIMARY.includes(provider.channel);
   const { openModal, SelectPrimaryIntegrationModal } = useSelectPrimaryIntegrationModal();
 
   const shouldSetNewPrimary = useMemo(() => {
     if (!provider) return false;
 
-    const { channel: selectedChannel, environmentId, integrationId, primary } = provider;
+    const { channel: selectedChannel, environmentId, integrationId } = provider;
     const hasSameChannelActiveIntegration = !!providers
       .filter((el) => el.integrationId !== integrationId)
       .find((el) => el.active && el.channel === selectedChannel && el.environmentId === environmentId);
 
-    return hasSameChannelActiveIntegration && primary;
+    return hasSameChannelActiveIntegration && provider.primary;
   }, [provider, providers]);
 
   const { makePrimaryIntegration, isLoading: isMarkingPrimary } = useMakePrimaryIntegration();
@@ -113,13 +117,45 @@ export const UpdateIntegrationSidebarHeader = ({
         <Group spacing={12} noWrap ml="auto">
           {children}
           <PrimaryIconButton
-            primary={provider.primary}
+            primary={primary}
             onClick={() => {
-              makePrimaryIntegration({ id: provider.integrationId });
+              setValue('conditions', []);
+              setValue('primary', true);
+              queryClient.setQueryData([QueryKeys.integrationsList], (oldData: any[] | undefined) => {
+                return oldData?.map((item) => {
+                  if (item._id === provider.integrationId) {
+                    return {
+                      ...item,
+                      primary: true,
+                    };
+                  }
+
+                  return item;
+                });
+              });
             }}
             conditions={provider.conditions}
           />
-          <ConditionIconButton primary={provider.primary} onClick={openConditions} conditions={provider.conditions} />
+          <ConditionIconButton
+            primary={primary}
+            onClick={() => {
+              setValue('primary', false);
+              queryClient.setQueryData([QueryKeys.integrationsList], (oldData: any[] | undefined) => {
+                return oldData?.map((item) => {
+                  if (item._id === provider.integrationId) {
+                    return {
+                      ...item,
+                      primary: false,
+                    };
+                  }
+
+                  return item;
+                });
+              });
+              openConditions();
+            }}
+            conditions={provider.conditions}
+          />
           <div>
             <Dropdown
               withArrow={false}
@@ -169,7 +205,7 @@ export const UpdateIntegrationSidebarHeader = ({
             ? 'Deleting the primary provider instance will cause to select another primary one. ' +
               'All workflows relying on its configuration will be linked to the selected primary provider instance.'
             : `Deleting a ${
-                provider.primary ? 'primary ' : ''
+                primary ? 'primary ' : ''
               }provider instance will fail workflows relying on its configuration, leading to undelivered notifications.`}
         </Text>
         <Group position="right">

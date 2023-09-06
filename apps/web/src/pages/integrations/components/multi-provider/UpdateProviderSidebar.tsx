@@ -22,7 +22,7 @@ import type { IConditions, IIntegratedProvider } from '../../types';
 import { IntegrationInput } from '../IntegrationInput';
 import { useFetchEnvironments } from '../../../../hooks/useFetchEnvironments';
 import { useUpdateIntegration } from '../../../../api/hooks/useUpdateIntegration';
-import { successMessage } from '../../../../utils/notifications';
+import { errorMessage, successMessage } from '../../../../utils/notifications';
 import { UpdateIntegrationSidebarHeader } from '../UpdateIntegrationSidebarHeader';
 import { SetupWarning } from '../SetupWarning';
 import { UpdateIntegrationCommonFields } from '../UpdateIntegrationCommonFields';
@@ -37,6 +37,7 @@ import { NovuProviderSidebarContent } from './NovuProviderSidebarContent';
 import { useSelectPrimaryIntegrationModal } from './useSelectPrimaryIntegrationModal';
 import { ShareableUrl } from '../Modal/ConnectIntegrationForm';
 import { Conditions } from '../../../../components/conditions/Conditions';
+import { useMakePrimaryIntegration } from '../../../../api/hooks/useMakePrimaryIntegration';
 
 interface IProviderForm {
   name: string;
@@ -44,6 +45,7 @@ interface IProviderForm {
   active: boolean;
   identifier: string;
   conditions: IConditions[];
+  primary: boolean;
 }
 
 enum SidebarStateEnum {
@@ -68,6 +70,11 @@ export function UpdateProviderSidebar({
   const [framework, setFramework] = useState<FrameworkEnum | null>(null);
   const { providers, isLoading: areProvidersLoading } = useProviders();
   const isNovuInAppProvider = selectedProvider?.providerId === InAppProviderIdEnum.Novu;
+  const { makePrimaryIntegration } = useMakePrimaryIntegration({
+    onError: () => {
+      errorMessage('Integration could not be marked as primary please try again');
+    },
+  });
   const { openModal: openSelectPrimaryIntegrationModal, SelectPrimaryIntegrationModal } =
     useSelectPrimaryIntegrationModal();
 
@@ -82,6 +89,7 @@ export function UpdateProviderSidebar({
       active: false,
       identifier: '',
       conditions: [],
+      primary: false,
     },
   });
   const {
@@ -144,6 +152,7 @@ export function UpdateProviderSidebar({
       }, {} as any),
       conditions: foundProvider.conditions,
       active: foundProvider.active,
+      primary: foundProvider.primary,
     });
   }, [integrationId, providers]);
 
@@ -201,6 +210,14 @@ export function UpdateProviderSidebar({
       });
 
       return;
+    }
+
+    const isPrimaryFieldChanged = dirtyFields.primary;
+
+    if (isPrimaryFieldChanged && primary) {
+      makePrimaryIntegration({
+        id: selectedProvider.integrationId,
+      });
     }
 
     updateIntegration(data);
