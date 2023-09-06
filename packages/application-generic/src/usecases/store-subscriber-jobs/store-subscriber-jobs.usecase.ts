@@ -19,6 +19,8 @@ import {
 } from '../bulk-create-execution-details';
 import { PlatformException } from '../../utils/exceptions';
 
+const LOG_CONTEXT = 'StoreSubscriberJobs';
+
 @Injectable()
 export class StoreSubscriberJobs {
   constructor(
@@ -42,13 +44,15 @@ export class StoreSubscriberJobs {
     this.createJobsExecutionDetails(storedJobs);
     const firstJob = storedJobs[0];
 
-    await this.addJob.execute({
+    const addJobCommand = {
       userId: firstJob._userId,
       environmentId: firstJob._environmentId,
       organizationId: firstJob._organizationId,
       jobId: firstJob._id,
       job: firstJob,
-    });
+    };
+
+    await this.addJob.execute(addJobCommand);
   }
 
   @Instrument()

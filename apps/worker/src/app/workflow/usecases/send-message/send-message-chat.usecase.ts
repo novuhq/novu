@@ -84,7 +84,7 @@ export class SendMessageChat extends SendMessageBase {
         events: command.events,
         total_count: command.events?.length,
       },
-      ...(tenant ? { tenant: { name: tenant.name, ...tenant.data } } : {}),
+      ...(tenant && { tenant }),
       ...command.payload,
     };
 

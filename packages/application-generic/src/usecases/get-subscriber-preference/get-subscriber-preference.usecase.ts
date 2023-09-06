@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import {
   NotificationTemplateRepository,
   NotificationTemplateEntity,
@@ -10,7 +10,7 @@ import {
   ISubscriberPreferenceResponse,
 } from '@novu/shared';
 
-import { AnalyticsService } from '../../services';
+import { AnalyticsService } from '../../services/analytics.service';
 import { GetSubscriberPreferenceCommand } from './get-subscriber-preference.command';
 import {
   GetSubscriberTemplatePreference,

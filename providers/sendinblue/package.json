@@ -1,6 +1,6 @@
 {
   "name": "@novu/sendinblue",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "description": "A sendinblue wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -32,7 +32,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@novu/stateless": "^0.18.0",
+    "@novu/stateless": "^0.19.0",
     "@sendinblue/client": "^3.0.1"
   },
   "devDependencies": {

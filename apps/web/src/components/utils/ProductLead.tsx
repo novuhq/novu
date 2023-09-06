@@ -79,7 +79,7 @@ export const ProductLead = ({
                 {title}
               </Title>
             </Group>
-            <When truthy={closeable && variant === ProductLeadVariants.COLUMN}>
+            <When truthy={closeable && variant === ProductLeadVariants.DEFAULT}>
               <ActionIcon
                 variant={'transparent'}
                 sx={{ transform: 'translate(14px, -14px)' }}
@@ -102,7 +102,7 @@ export const ProductLead = ({
           <Button
             onClick={() => {
               segment.track('Scheduled call clicked - [Product lead]', {
-                id,
+                feature: id,
               });
               window.open(
                 `https://calendly.com/novuhq/novu-meeting?full_name=${currentUser?.firstName}&email=${
@@ -116,13 +116,13 @@ export const ProductLead = ({
               <Calendar color={dark ? theme.white : colors.B60} /> Schedule a call
             </Group>
           </Button>
-          <When truthy={closeable && variant === ProductLeadVariants.DEFAULT}>
+          <When truthy={closeable && variant === ProductLeadVariants.COLUMN}>
             <ActionIcon
               variant={'transparent'}
               onClick={() => {
                 setOpen(false);
                 segment.track('Banner hidden - [Product lead]', {
-                  id,
+                  feature: id,
                 });
               }}
             >

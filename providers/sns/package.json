@@ -1,6 +1,6 @@
 {
   "name": "@novu/sns",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "description": "A sns wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-sns": "^3.382.0",
-    "@novu/stateless": "^0.18.0"
+    "@novu/stateless": "^0.19.0"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",

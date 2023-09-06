@@ -1,12 +1,15 @@
 import { MiddlewareConsumer, Module, NestModule, Provider, RequestMethod } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
-import { PassportModule, PassportStrategy } from '@nestjs/passport';
+import { PassportModule } from '@nestjs/passport';
 import * as passport from 'passport';
+
+import { AuthProviderEnum } from '@novu/shared';
+import { AuthService } from '@novu/application-generic';
+
 import { RolesGuard } from './framework/roles.guard';
 import { JwtStrategy } from './services/passport/jwt.strategy';
 import { AuthController } from './auth.controller';
 import { UserModule } from '../user/user.module';
-import { AuthService } from './services/auth.service';
 import { USE_CASES } from './usecases';
 import { SharedModule } from '../shared/shared.module';
 import { GitHubStrategy } from './services/passport/github.strategy';
@@ -56,7 +59,7 @@ export class AuthModule implements NestModule {
     if (process.env.GITHUB_OAUTH_CLIENT_ID) {
       consumer
         .apply(
-          passport.authenticate('github', {
+          passport.authenticate(AuthProviderEnum.GITHUB, {
             session: false,
             scope: ['user:email'],
           })

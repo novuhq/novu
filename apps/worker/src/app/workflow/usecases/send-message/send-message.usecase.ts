@@ -215,7 +215,9 @@ export class SendMessage {
       _id: job._templateId,
       environmentId: job._environmentId,
     });
-    if (!template) throw new PlatformException(`Notification template ${job._templateId} is not found`);
+    if (!template) {
+      throw new PlatformException(`Notification template ${job._templateId} is not found`);
+    }
 
     if (template.critical || this.isActionStep(job)) {
       return true;
