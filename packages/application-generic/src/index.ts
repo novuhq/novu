@@ -8,5 +8,7 @@ export * from './logging/index';
 export * from './modules';
 export * from './usecases';
 export * from './instrumentation/index';
-export * from './utils/subscriber';
 export * from './resilience';
+export * from './utils/subscriber';
+export * from './utils/exceptions';
+export * from './utils/email-normalization';

@@ -24,3 +24,6 @@ export * from './update-tenant';
 export * from './create-tenant';
 export * from './get-tenant';
 export * from './process-tenant';
+export * from './switch-environment';
+export * from './switch-organization';
+export * from './create-user';
