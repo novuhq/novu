@@ -36,7 +36,7 @@ export class WebSocketWorker extends WebSocketsWorkerService implements INovuWor
   private getWorkerOpts() {
     return {
       lockDuration: 90000,
-      concurrency: 5,
+      concurrency: 50,
     };
   }
 }
