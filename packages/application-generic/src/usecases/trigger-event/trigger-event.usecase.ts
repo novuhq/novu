@@ -31,11 +31,11 @@ import {
 } from '../store-subscriber-jobs';
 import { PinoLogger } from '../../logging';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
+import { AnalyticsService } from '../../services/analytics.service';
 import {
-  AnalyticsService,
   buildNotificationTemplateIdentifierKey,
   CachedEntity,
-} from '../../services';
+} from '../../services/cache';
 import { ApiException } from '../../utils/exceptions';
 import { ProcessTenant, ProcessTenantCommand } from '../process-tenant';
 import {
@@ -94,6 +94,16 @@ export class TriggerEvent {
       environmentId: command.environmentId,
       triggerIdentifier: command.identifier,
     });
+
+    /*
+     * Makes no sense to execute anything if template doesn't exist
+     * TODO: Send a 404?
+     */
+    if (!template) {
+      const message = 'Notification template could not be found';
+      const error = new ApiException(message);
+      throw error;
+    }
 
     if (tenant) {
       const tenantProcessed = await this.processTenant.execute(

@@ -5,7 +5,7 @@ import { NotificationTemplateCustomData } from '@novu/shared';
 
 import { NotificationStep } from '../../shared/dtos/notification-step';
 import { PreferenceChannels } from '../../shared/dtos/preference-channels';
-import { ChannelTypeEnum } from '@novu/shared';
+import { WorkflowIntegrationStatus } from '@novu/shared';
 
 class NotificationGroup {
   @ApiPropertyOptional()
@@ -117,7 +117,5 @@ export class WorkflowResponse {
   @IsOptional()
   data?: NotificationTemplateCustomData;
 
-  activeIntegrationStatus?: ActiveIntegrationsChannelsStatus;
+  workflowIntegrationStatus?: WorkflowIntegrationStatus;
 }
-
-export type ActiveIntegrationsChannelsStatus = { isActive: boolean; channels: { [key in ChannelTypeEnum]: boolean } };

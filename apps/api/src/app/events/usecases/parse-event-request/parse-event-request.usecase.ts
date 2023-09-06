@@ -4,15 +4,22 @@ import * as hat from 'hat';
 import { merge } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 
-import { Instrument, InstrumentUsecase } from '@novu/application-generic';
+import {
+  buildNotificationTemplateIdentifierKey,
+  CachedEntity,
+  Instrument,
+  InstrumentUsecase,
+  StorageHelperService,
+  WorkflowQueueService,
+} from '@novu/application-generic';
 import { NotificationTemplateRepository, NotificationTemplateEntity } from '@novu/dal';
 import { ITenantDefine, ReservedVariablesMap, TriggerContextTypeEnum, TriggerTenantContext } from '@novu/shared';
-import { StorageHelperService, CachedEntity, buildNotificationTemplateIdentifierKey } from '@novu/application-generic';
 
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { VerifyPayload, VerifyPayloadCommand } from '../verify-payload';
 import { ParseEventRequestCommand } from './parse-event-request.command';
-import { TriggerHandlerQueueService } from '../../services/workflow-queue/trigger-handler-queue.service';
+
+const LOG_CONTEXT = 'ParseEventRequest';
 
 @Injectable()
 export class ParseEventRequest {
@@ -20,13 +27,12 @@ export class ParseEventRequest {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private verifyPayload: VerifyPayload,
     private storageHelperService: StorageHelperService,
-    private triggerHandlerQueueService: TriggerHandlerQueueService
+    private workflowQueueService: WorkflowQueueService
   ) {}
 
   @InstrumentUsecase()
   async execute(command: ParseEventRequestCommand) {
     const transactionId = command.transactionId || uuidv4();
-    Logger.log('Starting Trigger');
 
     const template = await this.getNotificationTemplateByTriggerIdentifier({
       environmentId: command.environmentId,
@@ -84,16 +90,13 @@ export class ParseEventRequest {
 
     command.payload = merge({}, defaultPayload, command.payload);
 
-    await this.triggerHandlerQueueService.add(
+    const jobData = {
+      ...command,
+      to: command.to,
+      actor: command.actor,
       transactionId,
-      {
-        ...command,
-        to: command.to,
-        actor: command.actor,
-        transactionId,
-      },
-      command.organizationId
-    );
+    };
+    await this.workflowQueueService.add(transactionId, jobData, command.organizationId);
 
     return {
       acknowledged: true,

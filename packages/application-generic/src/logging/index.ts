@@ -111,7 +111,6 @@ export function createNestLoggingModuleOptions(settings: ILoggerSettings) {
       redact: {
         paths: redactFields,
         censor: '[REDACTED]',
-        remove: true,
       },
       base: {
         pid: process.pid,

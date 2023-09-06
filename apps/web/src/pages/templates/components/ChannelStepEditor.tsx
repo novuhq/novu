@@ -20,6 +20,7 @@ import { TranslateProductLead } from './TranslateProductLead';
 
 export const ChannelStepEditor = () => {
   const { readonly } = useEnvController();
+
   const { channel, stepUuid = '' } = useParams<{
     channel: StepTypeEnum | undefined;
     stepUuid: string;
@@ -83,10 +84,7 @@ export const ChannelStepEditor = () => {
           paddingBottom: 24,
         }}
       >
-        <EmailMessagesCards
-          index={index}
-          isIntegrationActive={!!integrations?.some((integration) => integration.channel === ChannelTypeEnum.EMAIL)}
-        />
+        <EmailMessagesCards index={index} />
         <DeleteStepRow />
       </SubPageWrapper>
     );
@@ -102,37 +100,19 @@ export const ChannelStepEditor = () => {
       >
         {channel === StepTypeEnum.SMS && (
           <>
-            <TemplateSMSEditor
-              key={index}
-              control={control}
-              index={index}
-              errors={errors}
-              isIntegrationActive={!!integrations?.some((integration) => integration.channel === ChannelTypeEnum.SMS)}
-            />
+            <TemplateSMSEditor key={index} control={control} index={index} errors={errors} />
             <TranslateProductLead id="translate-sms-editor" />
           </>
         )}
         {channel === StepTypeEnum.PUSH && (
           <>
-            <TemplatePushEditor
-              key={index}
-              control={control}
-              index={index}
-              errors={errors}
-              isIntegrationActive={!!integrations?.some((integration) => integration.channel === ChannelTypeEnum.PUSH)}
-            />
+            <TemplatePushEditor key={index} control={control} index={index} errors={errors} />
             <TranslateProductLead id="translate-push-editor" />
           </>
         )}
         {channel === StepTypeEnum.CHAT && (
           <>
-            <TemplateChatEditor
-              key={index}
-              errors={errors}
-              control={control}
-              index={index}
-              isIntegrationActive={!!integrations?.some((integration) => integration.channel === ChannelTypeEnum.CHAT)}
-            />
+            <TemplateChatEditor key={index} errors={errors} control={control} index={index} />
             <TranslateProductLead id="translate-chat-editor" />
           </>
         )}

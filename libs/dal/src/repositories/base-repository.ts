@@ -1,6 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ClassConstructor, plainToInstance } from 'class-transformer';
-import { addMonths } from 'date-fns';
+import { addDays } from 'date-fns';
+import {
+  MESSAGE_GENERIC_RETENTION_DAYS,
+  MESSAGE_IN_APP_RETENTION_DAYS,
+  NOTIFICATION_RETENTION_DAYS,
+} from '@novu/shared';
 import { Model, Types, ProjectionType, FilterQuery, UpdateQuery, QueryOptions } from 'mongoose';
 import { DalException } from '../shared';
 
@@ -98,12 +103,12 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
     switch (modelName) {
       case 'Message':
         if (data.channel === 'in_app') {
-          return addMonths(startDate, 12);
+          return addDays(startDate, MESSAGE_IN_APP_RETENTION_DAYS);
         } else {
-          return addMonths(startDate, 1);
+          return addDays(startDate, MESSAGE_GENERIC_RETENTION_DAYS);
         }
       case 'Notification':
-        return addMonths(startDate, 1);
+        return addDays(startDate, NOTIFICATION_RETENTION_DAYS);
       default:
         return null;
     }

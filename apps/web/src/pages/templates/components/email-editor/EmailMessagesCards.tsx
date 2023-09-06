@@ -4,17 +4,25 @@ import { useAuthContext } from '../../../../components/providers/AuthProvider';
 import { When } from '../../../../components/utils/When';
 import { Preview } from '../../editor/Preview';
 import { EditorPreviewSwitch } from '../EditorPreviewSwitch';
-import { Grid, Group, SegmentedControl, useMantineTheme } from '@mantine/core';
+import { Grid, SegmentedControl, useMantineTheme } from '@mantine/core';
 import { TestSendEmail } from './TestSendEmail';
 import { colors } from '../../../../design-system';
 import { MobileIcon } from '../../editor/PreviewSegment/MobileIcon';
 import { WebIcon } from '../../editor/PreviewSegment/WebIcon';
 import { useHotkeys } from '@mantine/hooks';
 import { VariablesManagement } from './variables-management/VariablesManagement';
-import { useVariablesManager } from '../../../../hooks';
+import {
+  useHasActiveIntegrations,
+  useGetPrimaryIntegration,
+  useIntegrationLimit,
+  useVariablesManager,
+  useEnvController,
+} from '../../../../hooks';
 import { VariableManagerModal } from '../VariableManagerModal';
 import { StepSettings } from '../../workflow/SideBar/StepSettings';
 import { TranslateProductLead } from '../TranslateProductLead';
+import { ChannelTypeEnum } from '@novu/shared';
+import { LackIntegrationAlert } from '../LackIntegrationAlert';
 
 export enum ViewEnum {
   EDIT = 'Edit',
@@ -23,14 +31,21 @@ export enum ViewEnum {
 }
 const templateFields = ['content', 'htmlContent', 'subject', 'preheader', 'senderName'];
 
-export function EmailMessagesCards({ index, isIntegrationActive }: { index: number; isIntegrationActive: boolean }) {
+export function EmailMessagesCards({ index }: { index: number }) {
   const { currentOrganization } = useAuthContext();
   const [view, setView] = useState<ViewEnum>(ViewEnum.EDIT);
   const [preview, setPreview] = useState<'mobile' | 'web'>('web');
   const theme = useMantineTheme();
   const [modalOpen, setModalOpen] = useState(false);
   const variablesArray = useVariablesManager(index, templateFields);
-
+  const { isLimitReached } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
+  const { hasActiveIntegration } = useHasActiveIntegrations({
+    channelType: ChannelTypeEnum.EMAIL,
+  });
+  const { primaryIntegration } = useGetPrimaryIntegration({
+    channelType: ChannelTypeEnum.EMAIL,
+  });
+  const { environment } = useEnvController();
   useHotkeys([
     [
       '1',
@@ -67,6 +82,15 @@ export function EmailMessagesCards({ index, isIntegrationActive }: { index: numb
           position: 'relative',
         }}
       >
+        {!hasActiveIntegration && isLimitReached && <LackIntegrationAlert channelType={ChannelTypeEnum.EMAIL} />}
+        {hasActiveIntegration && !primaryIntegration && (
+          <LackIntegrationAlert
+            channelType={ChannelTypeEnum.EMAIL}
+            text={`You have multiple provider instances for Email in the ${environment?.name} environment. 
+            Please select the primary instance.`}
+            isPrimaryMissing
+          />
+        )}
         <StepSettings index={index} />
         <Grid m={0} mt={24}>
           <Grid.Col p={0} mr={20} span={7}>
@@ -121,17 +145,12 @@ export function EmailMessagesCards({ index, isIntegrationActive }: { index: numb
         <Preview activeStep={index} view={preview} />
       </When>
       <When truthy={view === ViewEnum.TEST}>
-        <TestSendEmail isIntegrationActive={isIntegrationActive} index={index} />
+        <TestSendEmail isIntegrationActive={hasActiveIntegration} index={index} />
       </When>
       <When truthy={view === ViewEnum.EDIT}>
         <Grid grow>
           <Grid.Col span={9}>
-            <EmailContentCard
-              key={index}
-              organization={currentOrganization}
-              index={index}
-              isIntegrationActive={isIntegrationActive}
-            />
+            <EmailContentCard key={index} organization={currentOrganization} index={index} />
             <TranslateProductLead
               id="translate-email-editor"
               style={{

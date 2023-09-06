@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   MessageRepository,
   NotificationStepEntity,
@@ -36,6 +36,8 @@ import * as inlineCss from 'inline-css';
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageBase } from './send-message.base';
 import { PlatformException } from '../../../shared/utils';
+
+const LOG_CONTEXT = 'SendMessageEmail';
 
 @Injectable()
 export class SendMessageEmail extends SendMessageBase {
@@ -76,6 +78,14 @@ export class SendMessageEmail extends SendMessageBase {
 
     const overrideSelectedIntegration = command.overrides?.email?.integrationIdentifier;
     try {
+      const getIntegrationCommand = {
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        channelType: ChannelTypeEnum.EMAIL,
+        userId: command.userId,
+        identifier: overrideSelectedIntegration as string,
+      };
+
       integration = await this.getIntegration({
         organizationId: command.organizationId,
         environmentId: command.environmentId,
@@ -225,10 +235,11 @@ export class SendMessageEmail extends SendMessageBase {
       }
 
       html = await inlineCss(html, {
-        // Used for stylesheet links that starts with / so should not be needed in our case.
+        // Used for style sheet links that starts with / so should not be needed in our case.
         url: ' ',
       });
     } catch (e) {
+      Logger.error({ payload }, 'Compiling the email template or storing it or inlining it has failed', LOG_CONTEXT);
       await this.sendErrorHandlebars(command.job, e.message);
 
       return;
@@ -376,6 +387,7 @@ export class SendMessageEmail extends SendMessageBase {
 
       return;
     }
+
     if (!integration) {
       const integrationError = `${errorMessage} active email integration not found`;
 
@@ -417,6 +429,8 @@ export class SendMessageEmail extends SendMessageBase {
     try {
       const result = await mailHandler.send(mailData);
 
+      Logger.verbose({ command }, 'Email message has been sent', LOG_CONTEXT);
+
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -429,6 +443,8 @@ export class SendMessageEmail extends SendMessageBase {
           raw: JSON.stringify(result),
         })
       );
+
+      Logger.verbose({ command }, 'Execution details of sending an email message have been stored', LOG_CONTEXT);
 
       if (!result?.id) {
         return;

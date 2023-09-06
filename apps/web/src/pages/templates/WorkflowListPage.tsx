@@ -41,15 +41,19 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
       <Group spacing={8}>
         <TooltipContainer>
           <Tooltip
-            label="Some steps are missing a provider configuration, 
+            label="Some steps are missing a provider configuration or a primary provider, 
           causing some notifications to fail."
             width={300}
             multiline
-            disabled={original.activeIntegrationStatus?.isActive}
+            disabled={
+              original.workflowIntegrationStatus?.hasActiveIntegrations &&
+              original.workflowIntegrationStatus?.hasPrimaryIntegrations !== false
+            }
             position="top"
           >
             <div>
-              {original.activeIntegrationStatus?.isActive ? (
+              {original.workflowIntegrationStatus?.hasActiveIntegrations &&
+              original.workflowIntegrationStatus?.hasPrimaryIntegrations !== false ? (
                 <Bolt color={colors.B40} width="24px" height="24px" />
               ) : (
                 <ProviderMissing width="24px" height="24px" />

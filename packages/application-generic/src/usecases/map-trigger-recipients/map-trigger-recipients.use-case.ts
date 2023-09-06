@@ -18,7 +18,10 @@ import {
   GetTopicSubscribersCommand,
   GetTopicSubscribersUseCase,
 } from '../get-topic-subscribers';
-import { FeatureFlagCommand, GetFeatureFlag } from '../get-feature-flag';
+import {
+  FeatureFlagCommand,
+  GetIsTopicNotificationEnabled,
+} from '../get-feature-flag';
 import { InstrumentUsecase } from '../../instrumentation';
 import { MapTriggerRecipientsCommand } from './map-trigger-recipients.command';
 
@@ -43,7 +46,7 @@ export class MapTriggerRecipients {
   constructor(
     private createLog: CreateLog,
     private getTopicSubscribers: GetTopicSubscribersUseCase,
-    private getFeatureFlag: GetFeatureFlag
+    private getIsTopicNotificationEnabled: GetIsTopicNotificationEnabled
   ) {}
 
   @InstrumentUsecase()
@@ -58,7 +61,6 @@ export class MapTriggerRecipients {
       userId,
       actor,
     } = command;
-
     const mappedRecipients = Array.isArray(recipients)
       ? recipients
       : [recipients];
@@ -125,7 +127,7 @@ export class MapTriggerRecipients {
       organizationId,
       userId,
     });
-    const isEnabled = await this.getFeatureFlag.isTopicNotificationEnabled(
+    const isEnabled = await this.getIsTopicNotificationEnabled.execute(
       featureFlagCommand
     );
 

@@ -24,8 +24,8 @@ import { MapTriggerRecipients } from './map-trigger-recipients.use-case';
 import { CreateLog } from '../create-log';
 import { GetTopicSubscribersUseCase } from '../get-topic-subscribers';
 import { GetFeatureFlag } from '../get-feature-flag';
-import { FeatureFlagsService } from '../../services';
 import { MapTriggerRecipientsCommand } from './map-trigger-recipients.command';
+import { FeatureFlagsService } from '../../services';
 
 const originalLaunchDarklySdkKey = process.env.LAUNCH_DARKLY_SDK_KEY;
 
@@ -37,7 +37,10 @@ describe('MapTriggerRecipientsUseCase', () => {
   let useCase: MapTriggerRecipients;
 
   describe('When feature disabled', () => {
-    beforeEach(async () => {
+    beforeAll(async () => {
+      const featureFlagsService = new FeatureFlagsService();
+      await featureFlagsService.initialize();
+
       process.env.LAUNCH_DARKLY_SDK_KEY = '';
       process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'false';
 
@@ -67,7 +70,7 @@ describe('MapTriggerRecipientsUseCase', () => {
       topicSubscribersRepository = new TopicSubscribersRepository();
     });
 
-    afterEach(() => {
+    afterAll(() => {
       process.env.LAUNCH_DARKLY_SDK_KEY = originalLaunchDarklySdkKey;
     });
 
@@ -216,7 +219,7 @@ describe('MapTriggerRecipientsUseCase', () => {
   });
 
   describe('When feature enabled', () => {
-    beforeEach(async () => {
+    beforeAll(async () => {
       process.env.LAUNCH_DARKLY_SDK_KEY = '';
       process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'true';
 
@@ -237,7 +240,9 @@ describe('MapTriggerRecipientsUseCase', () => {
       session = new UserSession();
       await session.initialize();
 
-      useCase = moduleRef.get<MapTriggerRecipients>(MapTriggerRecipients);
+      useCase = moduleRef.get<MapTriggerRecipients>(MapTriggerRecipients, {
+        strict: false,
+      });
       subscribersService = new SubscribersService(
         session.organization._id,
         session.environment._id
@@ -246,7 +251,7 @@ describe('MapTriggerRecipientsUseCase', () => {
       topicSubscribersRepository = new TopicSubscribersRepository();
     });
 
-    afterEach(() => {
+    afterAll(() => {
       process.env.LAUNCH_DARKLY_SDK_KEY = originalLaunchDarklySdkKey;
     });
 
