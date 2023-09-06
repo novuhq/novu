@@ -317,7 +317,7 @@ export class SendMessageInApp extends SendMessageBase {
             logo: organization?.branding?.logo,
             color: organization?.branding?.color || '#f47373',
           },
-          ...(tenant ? { tenant: { name: tenant.name, ...tenant.data } } : {}),
+          ...(tenant && { tenant }),
           ...payload,
         },
       })
