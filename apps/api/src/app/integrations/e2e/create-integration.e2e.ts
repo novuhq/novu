@@ -104,6 +104,21 @@ describe('Create Integration - /integration (POST)', function () {
     }
   });
 
+  it('should create integration with conditions', async function () {
+    const payload = {
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      identifier: 'identifier-conditions',
+      active: false,
+      check: false,
+      conditions: [{}],
+    };
+
+    const { body } = await session.testAgent.post('/v1/integrations').send(payload);
+
+    expect(body.data.conditions.length).to.equal(1);
+  });
+
   it('should not allow to create integration with same identifier', async function () {
     const payload = {
       providerId: EmailProviderIdEnum.SendGrid,
