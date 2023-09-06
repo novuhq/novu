@@ -1,8 +1,8 @@
 import styled from '@emotion/styled';
-import { Group, ActionIcon, Text, Title } from '@mantine/core';
+import { Group, ActionIcon, Text } from '@mantine/core';
 import { useState } from 'react';
 import { When } from '../../../components/utils/When';
-import { Tooltip, Button, colors, Modal } from '../../../design-system';
+import { Tooltip, Button, colors, Modal, Title } from '../../../design-system';
 import { RemoveCondition, StarEmpty, Warning } from '../../../design-system/icons';
 
 const IconButton = styled(Group)`
@@ -28,11 +28,11 @@ const RemovesCondition = () => {
 };
 
 export const PrimaryIconButton = ({
-  conditions,
+  conditions = 0,
   primary = false,
   onClick,
 }: {
-  conditions?: any[];
+  conditions?: number;
   primary?: boolean;
   onClick: () => void;
 }) => {
@@ -48,7 +48,7 @@ export const PrimaryIconButton = ({
         label={
           <>
             Mark as Primary
-            <When truthy={conditions && conditions.length > 0}>
+            <When truthy={conditions > 0}>
               <RemovesCondition />
             </When>
           </>
@@ -57,7 +57,7 @@ export const PrimaryIconButton = ({
       >
         <ActionIcon
           onClick={() => {
-            if (conditions && conditions.length > 0) {
+            if (conditions > 0) {
               setModalOpen(true);
 
               return;

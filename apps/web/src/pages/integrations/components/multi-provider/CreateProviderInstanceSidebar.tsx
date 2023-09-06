@@ -1,8 +1,9 @@
 import { ActionIcon, Group, Radio, Text, Input, useMantineTheme } from '@mantine/core';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
+import { useDisclosure } from '@mantine/hooks';
 import { ChannelTypeEnum, ICreateIntegrationBodyDto, InAppProviderIdEnum, providers } from '@novu/shared';
 import { Button, colors, NameInput, Sidebar } from '../../../../design-system';
 import { ConditionPlus, ArrowLeft, Condition } from '../../../../design-system/icons';
@@ -15,10 +16,10 @@ import { errorMessage, successMessage } from '../../../../utils/notifications';
 import { QueryKeys } from '../../../../api/query.keys';
 import { ProviderImage } from './SelectProviderSidebar';
 import { CHANNEL_TYPE_TO_STRING } from '../../../../utils/channels';
-import type { IConditions, IntegrationEntity } from '../../types';
+import type { IntegrationEntity } from '../../types';
 import { useProviders } from '../../useProviders';
 import { When } from '../../../../components/utils/When';
-import { Conditions } from '../../../../components/conditions/Conditions';
+import { Conditions, IConditions } from '../../../../components/conditions';
 import { ConditionIconButton } from '../ConditionIconButton';
 
 interface ICreateProviderInstanceForm {
@@ -45,10 +46,10 @@ export function CreateProviderInstanceSidebar({
   const { colorScheme } = useMantineTheme();
   const { environments, isLoading: areEnvironmentsLoading } = useFetchEnvironments();
   const { isLoading: areIntegrationsLoading, providers: integrations } = useProviders();
-  const [openConditions, setOpenConditions] = useState(false);
   const isLoading = areEnvironmentsLoading || areIntegrationsLoading;
   const queryClient = useQueryClient();
   const segment = useSegment();
+  const [conditionsFormOpened, { close: closeConditionsForm, open: openConditionsForm }] = useDisclosure(false);
 
   const provider = useMemo(
     () => providers.find((el) => el.channel === channel && el.id === providerId),
@@ -145,17 +146,20 @@ export function CreateProviderInstanceSidebar({
   if (!provider) {
     return null;
   }
+  const updateConditions = (conditions: IConditions[]) => {
+    setValue('conditions', conditions, { shouldDirty: true });
+  };
 
-  if (openConditions) {
+  if (conditionsFormOpened) {
+    const [conditions, name] = getValues(['conditions', 'name']);
+
     return (
       <Conditions
-        conditions={getValues('conditions')}
-        name={getValues('name')}
-        isOpened={openConditions}
-        setConditions={(data) => {
-          setValue('conditions', data, { shouldDirty: true });
-        }}
-        onClose={() => setOpenConditions(false)}
+        conditions={conditions}
+        name={name}
+        isOpened={conditionsFormOpened}
+        setConditions={updateConditions}
+        onClose={closeConditionsForm}
       />
     );
   }
@@ -192,7 +196,7 @@ export function CreateProviderInstanceSidebar({
             }}
           />
           <Group mt={-10} spacing={12} align="start" noWrap ml="auto">
-            <ConditionIconButton onClick={() => setOpenConditions(true)} />
+            <ConditionIconButton onClick={openConditionsForm} />
           </Group>
         </Group>
       }
@@ -281,7 +285,7 @@ export function CreateProviderInstanceSidebar({
         <Group mt={16} position="left">
           <Button
             variant="outline"
-            onClick={() => setOpenConditions(true)}
+            onClick={openConditionsForm}
             icon={
               <>
                 <When truthy={numOfConditions === 0}>

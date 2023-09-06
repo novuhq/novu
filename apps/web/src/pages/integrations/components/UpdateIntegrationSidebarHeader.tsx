@@ -1,6 +1,6 @@
 import { ReactNode, useMemo, useState } from 'react';
 import { Group, useMantineTheme } from '@mantine/core';
-import { Controller, useFormContext } from 'react-hook-form';
+import { Controller, useFormContext, useWatch } from 'react-hook-form';
 import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
 
 import { Button, colors, Dropdown, Modal, NameInput, Text, Title } from '../../../design-system';
@@ -35,6 +35,15 @@ export const UpdateIntegrationSidebarHeader = ({
   const { providers, isLoading } = useProviders();
   const canMarkAsPrimary = provider && !provider.primary && CHANNELS_WITH_PRIMARY.includes(provider.channel);
   const { openModal, SelectPrimaryIntegrationModal } = useSelectPrimaryIntegrationModal();
+
+  const watchedConditions = useWatch({ control, name: 'conditions' });
+  const numOfConditions: number = useMemo(() => {
+    if (watchedConditions && watchedConditions[0] && watchedConditions[0].children) {
+      return watchedConditions[0].children.length;
+    }
+
+    return 0;
+  }, [watchedConditions]);
 
   const shouldSetNewPrimary = useMemo(() => {
     if (!provider) return false;
@@ -117,9 +126,9 @@ export const UpdateIntegrationSidebarHeader = ({
             onClick={() => {
               makePrimaryIntegration({ id: provider.integrationId });
             }}
-            conditions={provider.conditions}
+            conditions={numOfConditions}
           />
-          <ConditionIconButton primary={provider.primary} onClick={openConditions} conditions={provider.conditions} />
+          <ConditionIconButton primary={provider.primary} onClick={openConditions} conditions={numOfConditions} />
           <div>
             <Dropdown
               withArrow={false}
