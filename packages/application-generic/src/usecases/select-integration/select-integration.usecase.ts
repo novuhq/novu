@@ -90,7 +90,10 @@ export class SelectIntegration {
       const integrations = await this.integrationRepository.find(query);
 
       for (const currentIntegration of integrations) {
-        if (currentIntegration.conditions.length === 0) {
+        if (
+          !currentIntegration.conditions ||
+          currentIntegration.conditions.length === 0
+        ) {
           continue;
         }
 
