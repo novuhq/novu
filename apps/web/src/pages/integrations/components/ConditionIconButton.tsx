@@ -53,7 +53,7 @@ export const ConditionIconButton = ({
       >
         <ActionIcon
           onClick={() => {
-            if (primary) {
+            if (primary && conditions === 0) {
               setModalOpen(true);
 
               return;
@@ -81,7 +81,7 @@ export const ConditionIconButton = ({
           <Group spacing={8}>
             <Warning color="#EAA900" />
             <Title size={2} color="#EAA900">
-              Primary will be removed
+              Primary flag will be removed
             </Title>
           </Group>
         }
@@ -91,8 +91,8 @@ export const ConditionIconButton = ({
         }}
       >
         <Text color={colors.B60}>
-          Adding conditions to this instance will remove it as primary since primary instances can not have any
-          conditions.
+          Adding conditions to the primary provider instance removes its primary status on update, potentially causing
+          notification failures for the steps that were using the primary provider.
         </Text>
         <Group mt={30} position="right">
           <Button
@@ -109,7 +109,7 @@ export const ConditionIconButton = ({
               setModalOpen(false);
             }}
           >
-            <Group spacing={8}>Remove as primary</Group>
+            <Group spacing={8}>Got it</Group>
           </Button>
         </Group>
       </Modal>
