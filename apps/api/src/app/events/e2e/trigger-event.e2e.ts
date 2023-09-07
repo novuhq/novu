@@ -34,6 +34,7 @@ import {
   MESSAGE_GENERIC_RETENTION_DAYS,
 } from '@novu/shared';
 import { EmailEventStatusEnum } from '@novu/stateless';
+import { createTenant } from '../../tenant/e2e/create-tenant.e2e';
 
 const axiosInstance = axios.create();
 
@@ -63,6 +64,45 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       template = await session.createTemplate();
       subscriberService = new SubscribersService(session.organization._id, session.environment._id);
       subscriber = await subscriberService.createSubscriber();
+    });
+
+    it('should use conditions to select integration', async function () {
+      const payload = {
+        providerId: EmailProviderIdEnum.Mailgun,
+        channel: 'email',
+        credentials: { apiKey: '123', secretKey: 'abc' },
+        _environmentId: session.environment._id,
+        conditions: [
+          {
+            cildren: [{ field: 'identifier', value: 'test', operator: 'EQUAL', on: 'tenant' }],
+          },
+        ],
+        active: true,
+        check: false,
+      };
+
+      await session.testAgent.post('/v1/integrations').send(payload);
+
+      template = await createTemplate(session, ChannelTypeEnum.EMAIL);
+
+      createTenant({ session, identifier: 'test', name: 'test' });
+
+      await sendTrigger(session, template, subscriber.subscriberId, {}, {}, 'test');
+
+      await session.awaitRunningJobs(template._id);
+
+      const createdSubscriber = await subscriberRepository.findBySubscriberId(
+        session.environment._id,
+        subscriber.subscriberId
+      );
+
+      const message = await messageRepository.findOne({
+        _environmentId: session.environment._id,
+        _subscriberId: createdSubscriber?._id,
+        channel: ChannelTypeEnum.EMAIL,
+      });
+
+      expect(message?.providerId).to.equal(payload.providerId);
     });
 
     it('should trigger an event successfully', async function () {
@@ -1848,7 +1888,8 @@ export async function sendTrigger(
   template,
   newSubscriberIdInAppNotification: string,
   payload: Record<string, unknown> = {},
-  overrides: Record<string, unknown> = {}
+  overrides: Record<string, unknown> = {},
+  tenant?: string
 ): Promise<AxiosResponse> {
   return await axiosInstance.post(
     `${session.serverUrl}${eventTriggerPath}`,
@@ -1861,6 +1902,7 @@ export async function sendTrigger(
         ...payload,
       },
       overrides,
+      tenant,
     },
     {
       headers: {
