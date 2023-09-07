@@ -248,6 +248,7 @@ jobs:
         with:
           submodules: true
           token: ${{ secrets.SUBMODULES_TOKEN }}
+          ref: "main"
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/setup-redis-cluster
       - uses: mansagroup/nrwl-nx-action@v3
