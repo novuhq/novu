@@ -251,7 +251,7 @@ jobs:
           token: ${{ secrets.SUBMODULES_TOKEN }}
           repository: novuhq/packages-enterprise
           path: enterprise/packages
-          ref: 'main'
+          ref: 'next'
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/setup-redis-cluster
       - uses: mansagroup/nrwl-nx-action@v3
