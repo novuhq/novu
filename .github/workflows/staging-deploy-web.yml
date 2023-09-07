@@ -55,7 +55,7 @@ jobs:
           echo REACT_APP_NOVU_APP_ID=${{ secrets.NOVU_APP_ID }} >> .env
           echo REACT_APP_SEGMENT_KEY=${{ secrets.WEB_SEGMENT_KEY }} >> .env
           echo REACT_APP_SENTRY_DSN="https://8054d521cff2e73d32b8edfe4793d05c@o1161119.ingest.sentry.io/4505829158158336" >> .env
-          echo REACT_APP_ENVIRONMENT=dev >> .env
+          echo REACT_APP_ENVIRONMENT=staging >> .env
           echo REACT_APP_MAIL_SERVER_DOMAIN="staging.inbound-mail.novu.co" >> .env
           echo REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID=${{ secrets.DEV_LAUNCH_DARKLY_CLIENT_SIDE_ID }} >> .env
 
