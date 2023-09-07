@@ -31,14 +31,15 @@ import { PinoLogger } from '../../logging';
 import { AnalyticsService } from '../analytics.service';
 import { ApiException } from '../../utils/exceptions';
 import { Instrument } from '../../instrumentation';
+import { CreateUser, CreateUserCommand } from '../../usecases/create-user';
 import {
-  CreateUser,
   SwitchEnvironment,
   SwitchEnvironmentCommand,
+} from '../../usecases/switch-environment';
+import {
   SwitchOrganization,
   SwitchOrganizationCommand,
-  CreateUserCommand,
-} from '../../usecases';
+} from '../../usecases/switch-organization';
 import {
   buildAuthServiceKey,
   buildEnvironmentByApiKey,
@@ -54,7 +55,6 @@ export class AuthService {
     private logger: PinoLogger,
     private userRepository: UserRepository,
     private subscriberRepository: SubscriberRepository,
-    @Inject(forwardRef(() => CreateUser))
     private createUserUsecase: CreateUser,
     private jwtService: JwtService,
     private analyticsService: AnalyticsService,
