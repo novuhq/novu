@@ -1,56 +1,78 @@
-import { Grid, Group, ActionIcon, Center } from '@mantine/core';
+import { Grid, Group, ActionIcon, Center, useMantineTheme } from '@mantine/core';
 import styled from '@emotion/styled';
-import { Controller, useFieldArray, useForm } from 'react-hook-form';
+import { useMemo } from 'react';
+import { Control, Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 
 import { FILTER_TO_LABEL, FilterPartTypeEnum } from '@novu/shared';
 
 import { Button, colors, Dropdown, Input, Select, Sidebar, Text, Title, Tooltip } from '../../design-system';
 import { ConditionPlus, DotsHorizontal, Duplicate, Trash, Condition, ErrorIcon } from '../../design-system/icons';
 import { When } from '../utils/When';
-import { IConditions } from '../../pages/integrations/types';
+import { ConditionsContextEnum, ConditionsContextFields, IConditions } from './types';
 
+interface IConditionsForm {
+  conditions: IConditions[];
+}
 export function Conditions({
   isOpened,
   conditions,
   onClose,
   setConditions,
   name,
+  context = ConditionsContextEnum.INTEGRATIONS,
 }: {
   isOpened: boolean;
   onClose: () => void;
   setConditions: (data: IConditions[]) => void;
   conditions?: IConditions[];
   name: string;
+  context?: ConditionsContextEnum;
 }) {
+  const { colorScheme } = useMantineTheme();
+
   const {
     control,
-    setValue,
     getValues,
     trigger,
-    formState: { errors, isValid },
-  } = useForm({
+    formState: { errors, isValid, isDirty },
+  } = useForm<IConditionsForm>({
     defaultValues: { conditions },
-    shouldUseNativeValidation: false,
     mode: 'onChange',
-    reValidateMode: 'onChange',
   });
 
-  const { fields, append, update, remove, insert } = useFieldArray({
+  const { fields, append, remove, insert } = useFieldArray({
     control,
     name: `conditions.0.children`,
   });
 
-  const FilterPartTypeList = [{ value: FilterPartTypeEnum.TENANT, label: FILTER_TO_LABEL[FilterPartTypeEnum.TENANT] }];
+  const { label, filterPartsList } = ConditionsContextFields[context];
 
-  function handleOnChildOnChange(index: number) {
-    return (data) => {
-      const newField = Object.assign({}, fields[index], { on: data });
-      update(index, newField);
-    };
+  const FilterPartTypeList = useMemo(() => {
+    return filterPartsList.map((filterType) => {
+      return {
+        value: filterType,
+        label: FILTER_TO_LABEL[filterType],
+      };
+    });
+  }, [context]);
+
+  function handleDuplicate(index: number) {
+    insert(index + 1, getValues(`conditions.0.children.${index}`));
   }
 
+  function handleDelete(index: number) {
+    remove(index);
+  }
+
+  const onApplyConditions = async () => {
+    await trigger('conditions');
+    if (!errors.conditions) {
+      updateConditions(getValues('conditions'));
+    }
+  };
+
   function updateConditions(data) {
-    setConditions(data.conditions);
+    setConditions(data);
     onClose();
   }
 
@@ -61,38 +83,28 @@ export function Conditions({
       isExpanded
       customHeader={
         <Center inline>
-          <Condition />
-          <Title ml={8} size={2}>
-            Condition for {name} provider instance
+          <Condition color={colorScheme === 'dark' ? colors.white : colors.B30} />
+          <Title ml={8} size={2} data-test-id="conditions-form-title">
+            Conditions for {name} {label}
           </Title>
         </Center>
       }
       customFooter={
         <Group ml="auto">
-          <Button variant="outline" onClick={onClose} data-test-id="create-provider-instance-sidebar-cancel">
+          <Button variant="outline" onClick={onClose} data-test-id="conditions-form-cancel-btn">
             Cancel
           </Button>
-          <TooltipContainer>
-            <Tooltip
-              position={'top'}
-              disabled={isValid && fields.length > 0}
-              label={!isValid ? 'Some conditions are missing values' : 'Add at least one condition'}
-            >
-              <div>
-                <Button
-                  onClick={async () => {
-                    await trigger('conditions');
-                    if (!errors.conditions && fields.length > 0) {
-                      updateConditions(getValues());
-                    }
-                  }}
-                  data-test-id="create-provider-instance-sidebar-create"
-                >
-                  Apply conditions
-                </Button>
-              </div>
-            </Tooltip>
-          </TooltipContainer>
+          <Tooltip position="top" error disabled={isValid} label={'Some conditions are missing values'}>
+            <div>
+              <Button
+                disabled={!isDirty || (conditions?.length === 0 && fields?.length === 0)}
+                onClick={onApplyConditions}
+                data-test-id="apply-conditions-btn"
+              >
+                Apply conditions
+              </Button>
+            </div>
+          </Tooltip>
         </Group>
       }
     >
@@ -110,13 +122,12 @@ export function Conditions({
                       render={({ field }) => {
                         return (
                           <Select
-                            placeholder="How to group rules?"
                             data={[
                               { value: 'AND', label: 'And' },
                               { value: 'OR', label: 'Or' },
                             ]}
                             {...field}
-                            data-test-id="group-rules-dropdown"
+                            data-test-id="conditions-form-value-dropdown"
                           />
                         );
                       }}
@@ -139,96 +150,13 @@ export function Conditions({
                         placeholder="On"
                         data={FilterPartTypeList}
                         {...field}
-                        onChange={handleOnChildOnChange(index)}
-                        data-test-id="filter-on-dropdown"
+                        data-test-id="conditions-form-on-dropdown"
                       />
                     );
                   }}
                 />
               </Grid.Col>
-              <Grid.Col span={5}>
-                <Controller
-                  control={control}
-                  name={`conditions.0.children.${index}.field`}
-                  defaultValue="identifier"
-                  render={({ field }) => {
-                    return (
-                      <Select
-                        placeholder="Key"
-                        data={[
-                          { value: 'name', label: 'Name' },
-                          { value: 'identifier', label: 'Identifier' },
-                        ]}
-                        {...field}
-                        data-test-id="group-rules-dropdown"
-                      />
-                    );
-                  }}
-                />
-              </Grid.Col>
-              <Grid.Col span={3}>
-                <Controller
-                  control={control}
-                  name={`conditions.0.children.${index}.operator`}
-                  defaultValue="EQUAL"
-                  render={({ field }) => {
-                    return (
-                      <Select
-                        placeholder="Operator"
-                        data={[
-                          { value: 'EQUAL', label: 'Equal' },
-                          { value: 'NOT_EQUAL', label: 'Does not equal' },
-                          { value: 'IN', label: 'Contains' },
-                          { value: 'NOT_IN', label: 'Does not contain' },
-                          { value: 'IS_DEFINED', label: 'Is not empty' },
-                        ]}
-                        {...field}
-                        data-test-id="filter-operator-dropdown"
-                        onChange={(value) => {
-                          field.onChange(value);
-                          if (value === 'IS_DEFINED') {
-                            setValue(`conditions.0.children.${index}.value`, '');
-                          }
-                        }}
-                      />
-                    );
-                  }}
-                />
-              </Grid.Col>
-              <Grid.Col span={6}>
-                {getValues(`conditions.0.children.${index}.operator`) !== 'IS_DEFINED' && (
-                  <Controller
-                    control={control}
-                    name={`conditions.0.children.${index}.value`}
-                    defaultValue=""
-                    rules={{ required: true }}
-                    render={({ field, fieldState }) => {
-                      return (
-                        <Input
-                          {...field}
-                          value={field.value as string}
-                          rightSection={
-                            <When truthy={!!fieldState.error}>
-                              <TooltipContainer>
-                                <Tooltip position="top" offset={15} label={'Value is missing'}>
-                                  <span>
-                                    <ErrorIcon color={colors.error} />
-                                  </span>
-                                </Tooltip>
-                              </TooltipContainer>
-                            </When>
-                          }
-                          required
-                          disabled={getValues(`conditions.0.children.${index}.operator`) === 'IS_DEFINED'}
-                          error={!!fieldState.error}
-                          placeholder="Value"
-                          data-test-id="filter-value-input"
-                        />
-                      );
-                    }}
-                  />
-                )}
-              </Grid.Col>
+              <EqualityForm control={control} index={index} />
               <Grid.Col span={1}>
                 <Dropdown
                   withArrow={false}
@@ -241,20 +169,10 @@ export function Conditions({
                   middlewares={{ flip: false, shift: false }}
                   position="bottom-end"
                 >
-                  <Dropdown.Item
-                    onClick={() => {
-                      insert(index + 1, getValues(`conditions.0.children.${index}`));
-                    }}
-                    icon={<Duplicate />}
-                  >
+                  <Dropdown.Item onClick={() => handleDuplicate(index)} icon={<Duplicate />}>
                     Duplicate
                   </Dropdown.Item>
-                  <Dropdown.Item
-                    onClick={() => {
-                      remove(index);
-                    }}
-                    icon={<Trash />}
-                  >
+                  <Dropdown.Item onClick={() => handleDelete(index)} icon={<Trash />}>
                     Delete
                   </Dropdown.Item>
                 </Dropdown>
@@ -284,6 +202,92 @@ export function Conditions({
   );
 }
 
+function EqualityForm({ control, index }: { control: Control<IConditionsForm>; index: number }) {
+  const operator = useWatch({
+    control,
+    name: `conditions.0.children.${index}.operator`,
+  });
+
+  return (
+    <>
+      <Grid.Col span={5}>
+        <Controller
+          control={control}
+          name={`conditions.0.children.${index}.field`}
+          defaultValue="identifier"
+          render={({ field }) => {
+            return (
+              <Select
+                placeholder="Key"
+                data={[
+                  { value: 'name', label: 'Name' },
+                  { value: 'identifier', label: 'Identifier' },
+                ]}
+                {...field}
+                data-test-id="conditions-form-field-dropdown"
+              />
+            );
+          }}
+        />
+      </Grid.Col>
+      <Grid.Col span={3}>
+        <Controller
+          control={control}
+          name={`conditions.0.children.${index}.operator`}
+          defaultValue="EQUAL"
+          render={({ field }) => {
+            return (
+              <Select
+                placeholder="Operator"
+                data={[
+                  { value: 'EQUAL', label: 'Equal' },
+                  { value: 'NOT_EQUAL', label: 'Does not equal' },
+                  { value: 'IN', label: 'Contains' },
+                  { value: 'NOT_IN', label: 'Does not contain' },
+                  { value: 'IS_DEFINED', label: 'Is defined' },
+                ]}
+                {...field}
+                data-test-id="conditions-form-operator-dropdown"
+              />
+            );
+          }}
+        />
+      </Grid.Col>
+
+      <Grid.Col span={6}>
+        {operator !== 'IS_DEFINED' && (
+          <Controller
+            control={control}
+            name={`conditions.0.children.${index}.value`}
+            defaultValue=""
+            rules={{ required: true }}
+            render={({ field, fieldState }) => {
+              return (
+                <Input
+                  {...field}
+                  value={field.value as string}
+                  rightSection={
+                    <When truthy={!!fieldState.error}>
+                      <Tooltip error position="top" offset={15} label={'Value is missing'}>
+                        <span>
+                          <ErrorIcon color={colors.error} />
+                        </span>
+                      </Tooltip>
+                    </When>
+                  }
+                  error={!!fieldState.error}
+                  placeholder="Value"
+                  data-test-id="conditions-form-value-input"
+                />
+              );
+            }}
+          />
+        )}
+      </Grid.Col>
+    </>
+  );
+}
+
 const Wrapper = styled.div`
   .mantine-Select-wrapper:not(:hover) {
     .mantine-Select-input {
@@ -295,26 +299,5 @@ const Wrapper = styled.div`
         display: none;
       }
     }
-  }
-`;
-
-const TooltipContainer = styled.div`
-  & .mantine-Tooltip-tooltip {
-    color: ${colors.error};
-    padding: 16px;
-    font-size: 14px;
-    font-weight: 400;
-    border-radius: 8px;
-    background: ${({ theme }) =>
-      `linear-gradient(0deg, rgba(229, 69, 69, 0.2) 0%, rgba(229, 69, 69, 0.2) 100%),  ${
-        theme.colorScheme === 'dark' ? '#23232b' : colors.white
-      } !important`};
-  }
-
-  & .mantine-Tooltip-arrow {
-    background: ${({ theme }) =>
-      `linear-gradient(0deg, rgba(229, 69, 69, 0.2) 0%, rgba(229, 69, 69, 0.2) 100%),  ${
-        theme.colorScheme === 'dark' ? '#23232b' : colors.white
-      } !important`};
   }
 `;

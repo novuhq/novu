@@ -1,10 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import styled from '@emotion/styled';
-import { Group, ActionIcon, Title } from '@mantine/core';
+import { Group, ActionIcon, Center } from '@mantine/core';
 import { When } from '../../../components/utils/When';
-import { colors, Tooltip, Text, Modal, Button } from '../../../design-system';
+import { colors, Tooltip, Text, Modal, Button, Title } from '../../../design-system';
 import { Condition, ConditionPlus, Warning } from '../../../design-system/icons';
-import { IConditions } from '../types';
 
 const IconButton = styled(Group)`
   text-align: center;
@@ -29,29 +28,22 @@ const RemovesPrimary = () => {
 };
 
 export const ConditionIconButton = ({
-  conditions,
+  conditions = 0,
   primary = false,
   onClick,
 }: {
-  conditions?: IConditions[];
+  conditions?: number;
   primary?: boolean;
   onClick: () => void;
 }) => {
   const [modalOpen, setModalOpen] = useState(false);
-  const numOfConditions: number = useMemo(() => {
-    if (conditions && conditions[0] && conditions[0].children) {
-      return conditions[0].children.length;
-    }
-
-    return 0;
-  }, [conditions]);
 
   return (
     <>
       <Tooltip
         label={
           <>
-            {numOfConditions > 0 ? 'Edit' : 'Add'} Conditions
+            {conditions > 0 ? 'Edit' : 'Add'} Conditions
             <When truthy={primary}>
               <RemovesPrimary />
             </When>
@@ -71,14 +63,14 @@ export const ConditionIconButton = ({
           variant="transparent"
         >
           <IconButton position="center" spacing={4}>
-            <When truthy={numOfConditions === 0}>
+            <When truthy={conditions === 0}>
               <ConditionPlus />
             </When>
-            <When truthy={numOfConditions > 0}>
-              <Group spacing={4}>
+            <When truthy={conditions > 0}>
+              <Center inline>
                 <Condition />
-                <div>{numOfConditions}</div>
-              </Group>
+                <div>{conditions}</div>
+              </Center>
             </When>
           </IconButton>
         </ActionIcon>
@@ -88,7 +80,9 @@ export const ConditionIconButton = ({
         title={
           <Group spacing={8}>
             <Warning color="#EAA900" />
-            <Title color="#EAA900">Primary will be removed</Title>
+            <Title size={2} color="#EAA900">
+              Primary will be removed
+            </Title>
           </Group>
         }
         size="lg"

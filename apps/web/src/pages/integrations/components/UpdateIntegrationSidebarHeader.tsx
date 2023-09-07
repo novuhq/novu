@@ -1,6 +1,6 @@
 import { ReactNode, useMemo, useState } from 'react';
 import { Group, useMantineTheme } from '@mantine/core';
-import { Controller, useFormContext } from 'react-hook-form';
+import { Controller, useFormContext, useWatch } from 'react-hook-form';
 import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
 
 import { Button, colors, Dropdown, Modal, NameInput, Text, Title } from '../../../design-system';
@@ -39,6 +39,15 @@ export const UpdateIntegrationSidebarHeader = ({
   const primary = watch('primary');
   const canMarkAsPrimary = provider && !primary && CHANNELS_WITH_PRIMARY.includes(provider.channel);
   const { openModal, SelectPrimaryIntegrationModal } = useSelectPrimaryIntegrationModal();
+
+  const watchedConditions = useWatch({ control, name: 'conditions' });
+  const numOfConditions: number = useMemo(() => {
+    if (watchedConditions && watchedConditions[0] && watchedConditions[0].children) {
+      return watchedConditions[0].children.length;
+    }
+
+    return 0;
+  }, [watchedConditions]);
 
   const shouldSetNewPrimary = useMemo(() => {
     if (!provider) return false;
@@ -154,7 +163,7 @@ export const UpdateIntegrationSidebarHeader = ({
               });
               openConditions();
             }}
-            conditions={provider.conditions}
+            conditions={numOfConditions}
           />
           <div>
             <Dropdown
