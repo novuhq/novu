@@ -248,7 +248,7 @@ jobs:
         with:
           submodules: true
           token: ${{ secrets.SUBMODULES_TOKEN }}
-        name: Checkout main on all submodules
+      - name: Checkout main on all submodules
         run: |
           git submodule foreach git checkout main
           git submodule foreach git pull origin main
