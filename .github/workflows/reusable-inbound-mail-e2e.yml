@@ -33,7 +33,7 @@ jobs:
     steps:
       # checkout with submodules if token is provided
       - uses: actions/checkout@v3
-       if: steps.setup.outputs.has_token == 'true'
+        if: steps.setup.outputs.has_token == 'true'
         with:
           submodules: ${{ inputs.submodules }}
           token: ${{ secrets.SUBMODULES_TOKEN }}
