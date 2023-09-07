@@ -245,9 +245,6 @@ jobs:
     steps:
       - run: echo ${{ matrix.projectName }}
       - uses: actions/checkout@v3
-        with:
-          submodules: true
-          token: ${{ secrets.SUBMODULES_TOKEN }}
       - name: Checkout submodule
         uses: actions/checkout@v3
         with:
