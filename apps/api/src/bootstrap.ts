@@ -43,7 +43,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   BullMqService.haveProInstalled();
 
   // eslint-disable-next-line no-console
-  console.log('trigger ci test 2');
+  console.log('trigger ci test 3');
 
   let app: INestApplication;
   if (expressApp) {
