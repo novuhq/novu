@@ -74,7 +74,7 @@ jobs:
           REACT_APP_WIDGET_EMBED_PATH: https://staging.embed.novu.co/embed.umd.min.js
           REACT_APP_NOVU_APP_ID: ${{ secrets.NOVU_APP_ID }}
           REACT_APP_SENTRY_DSN: https://8054d521cff2e73d32b8edfe4793d05c@o1161119.ingest.sentry.io/4505829158158336
-          REACT_APP_ENVIRONMENT: dev
+          REACT_APP_ENVIRONMENT: staging
           REACT_APP_MAIL_SERVER_DOMAIN: staging.inbound-mail.novu.co
           REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID: ${{ secrets.DEV_LAUNCH_DARKLY_CLIENT_SIDE_ID }}
         working-directory: apps/web
