@@ -191,11 +191,20 @@ export function UpdateProviderSidebar({
 
     const hasNoConditions = !conditions || conditions.length === 0;
 
-    if ((hasNoConditions && isChangedToActive) || isChangedToInactiveAndIsPrimary || isPrimaryAndHasConditionsApplied) {
+    const hasUpdatedConditions = data.conditions && data.conditions.length > 0;
+
+    const hasConditionsAndIsPrimary = hasUpdatedConditions && primary && dirtyFields.conditions;
+
+    if (
+      (hasNoConditions && isChangedToActive) ||
+      isChangedToInactiveAndIsPrimary ||
+      isPrimaryAndHasConditionsApplied ||
+      hasConditionsAndIsPrimary
+    ) {
       openSelectPrimaryIntegrationModal({
         environmentId: selectedProvider?.environmentId,
         channelType: selectedProvider?.channel,
-        exclude: !isActive ? (el) => el._id === selectedProvider.integrationId : undefined,
+        exclude: !isActive || hasConditionsAndIsPrimary ? (el) => el._id === selectedProvider.integrationId : undefined,
         onClose: () => {
           updateIntegration(data);
         },
