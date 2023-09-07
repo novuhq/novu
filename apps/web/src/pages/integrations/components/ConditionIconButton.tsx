@@ -21,8 +21,9 @@ const IconButton = styled(Group)`
 const RemovesPrimary = () => {
   return (
     <Text mt={4} color="#EAA900">
-      This action replaces
-      <br /> the primary provider
+      This action replaces the
+      <br />
+      primary provider flag
     </Text>
   );
 };
@@ -91,8 +92,9 @@ export const ConditionIconButton = ({
         }}
       >
         <Text color={colors.B60}>
-          Adding conditions to the primary provider instance removes its primary status on update, potentially causing
-          notification failures for the steps that were using the primary provider.
+          Adding conditions to the primary provider instance removes its primary status when a user applies changes by
+          clicking the Update button. This can potentially cause notification failures for the steps that were using the
+          primary provider.
         </Text>
         <Group mt={30} position="right">
           <Button
