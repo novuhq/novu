@@ -918,29 +918,29 @@ import { Novu } from '@novu/node';
 const novu = new Novu('<NOVU_API_KEY>');
 
 // get current environmet
-await novu.environmets.getCurrent()
+await novu.environments.getCurrent()
 
 // create new environment
-await novu.environmets.create({
+await novu.environments.create({
   name: "Stagging"
   parentId: "parentEnvironmentId"
 })
 
 // get all environmemts
-await novu.environmets.getAll()
+await novu.environments.getAll()
 
 // update one environment
-await novu.environmets.updateOne("environmentId", {
+await novu.environments.updateOne("environmentId", {
   name: "Stagging" // optional
   parentId: "parentEnvironmentId", // optional
   identifier: "environmentIdentifier" // optional
 })
 
 // get api keys of environmet
-await novu.environmets.getApiKeys()
+await novu.environments.getApiKeys()
 
 // regenrate api keys
-await novu.environmets.regenerateApiKeys()
+await novu.environments.regenerateApiKeys()
 ```
 
 ### Tenants
