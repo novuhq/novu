@@ -61,6 +61,10 @@ export class TestingController {
     if (process.env.NODE_ENV !== 'test') throw new NotFoundException();
     const command = SeedDataCommand.create({});
 
+    const faceFunction = () => {};
+
+    faceFunction();
+
     return await this.seedDataUsecase.execute(command);
   }
 }
