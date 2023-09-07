@@ -248,10 +248,13 @@ jobs:
         with:
           submodules: true
           token: ${{ secrets.SUBMODULES_TOKEN }}
-      - name: Checkout main on all submodules
-        run: |
-          git submodule foreach git checkout main
-          git submodule foreach git pull origin main
+      - name: Checkout submodule
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.SUBMODULES_TOKEN }}
+          repository: novuhq/packages-enterprise
+          path: enterprise/packages
+          ref: 'main'
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/setup-redis-cluster
       - uses: mansagroup/nrwl-nx-action@v3
