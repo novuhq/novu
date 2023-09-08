@@ -244,7 +244,8 @@ jobs:
       id-token: write
     steps:
       - run: echo ${{ matrix.projectName }}
-      - uses: ./.github/actions/checkout-with-submodules
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/checkout-submodules
         with:
           submodule_branch: "next"
       - uses: ./.github/actions/setup-project

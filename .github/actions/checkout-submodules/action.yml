@@ -1,6 +1,6 @@
-name: Checkout With Submodule
+name: Checkout Submodules
 
-description: Checkout main project with private enterprise submodule
+description: Checkout private enterprise submodule
 
 inputs:
   submodule_branch:
@@ -11,7 +11,6 @@ runs:
   using: composite
 
   steps:
-    - uses: actions/checkout@v3
     - name: Checkout submodule
       uses: actions/checkout@v3
       with:
