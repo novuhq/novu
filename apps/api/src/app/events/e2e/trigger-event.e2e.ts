@@ -85,7 +85,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
 
       template = await createTemplate(session, ChannelTypeEnum.EMAIL);
 
-      createTenant({ session, identifier: 'test', name: 'test' });
+      await createTenant({ session, identifier: 'test', name: 'test' });
 
       await sendTrigger(session, template, subscriber.subscriberId, {}, {}, 'test');
 
@@ -103,6 +103,30 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       });
 
       expect(message?.providerId).to.equal(payload.providerId);
+    });
+
+    it('should use throw when using a non existing tenant', async function () {
+      const payload = {
+        providerId: EmailProviderIdEnum.Mailgun,
+        channel: 'email',
+        credentials: { apiKey: '123', secretKey: 'abc' },
+        _environmentId: session.environment._id,
+        conditions: [
+          {
+            children: [{ field: 'identifier', value: 'test', operator: 'EQUAL', on: 'tenant' }],
+          },
+        ],
+        active: true,
+        check: false,
+      };
+
+      await session.testAgent.post('/v1/integrations').send(payload);
+
+      template = await createTemplate(session, ChannelTypeEnum.EMAIL);
+
+      const result = await sendTrigger(session, template, subscriber.subscriberId, {}, {}, 'test');
+
+      expect(result.data.data.status).to.equal('no_tenant_found');
     });
 
     it('should trigger an event successfully', async function () {

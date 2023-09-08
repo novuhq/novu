@@ -90,6 +90,7 @@ describe('Set Integration As Primary - /integrations/:integrationId/set-primary 
     });
 
     expect(found?.conditions).to.deep.equal([]);
+    expect(found?.primary).to.equal(true);
   });
 
   it('push channel does not support primary flag, then for integration it should throw bad request exception', async () => {

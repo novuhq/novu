@@ -6,6 +6,7 @@ import {
   ChatProviderIdEnum,
   EmailProviderIdEnum,
   InAppProviderIdEnum,
+  ITenantFilterPart,
   PushProviderIdEnum,
 } from '@novu/shared';
 
@@ -73,7 +74,11 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
       credentials: { apiKey: 'SG.123', secretKey: 'abc' },
       active: true,
       check: false,
-      conditions: [{}],
+      conditions: [
+        {
+          children: [{ field: 'identifier', value: 'test', operator: 'EQUAL', on: 'tenant' }],
+        },
+      ],
     };
 
     const data = (await session.testAgent.get(`/v1/integrations`)).body.data;
@@ -91,6 +96,37 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
 
     expect(result?.conditions?.length).to.equal(1);
     expect(result?.primary).to.equal(false);
+    expect(result?.conditions?.at(0)?.children.length).to.equal(1);
+    expect(result?.conditions?.at(0)?.children.at(0)?.on).to.equal('tenant');
+    expect((result?.conditions?.at(0)?.children.at(0) as ITenantFilterPart)?.field).to.equal('identifier');
+    expect((result?.conditions?.at(0)?.children.at(0) as ITenantFilterPart)?.value).to.equal('test');
+    expect((result?.conditions?.at(0)?.children.at(0) as ITenantFilterPart)?.operator).to.equal('EQUAL');
+  });
+
+  it('should return error with malformed conditions', async function () {
+    const payload = {
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      credentials: { apiKey: 'SG.123', secretKey: 'abc' },
+      active: true,
+      check: false,
+      conditions: [
+        {
+          children: 'test',
+        },
+      ],
+    };
+
+    const data = (await session.testAgent.get(`/v1/integrations`)).body.data;
+
+    const integration = data.find((i) => i.primary && i.channel === 'email');
+
+    expect(integration.conditions.length).to.equal(0);
+
+    const { body } = await session.testAgent.put(`/v1/integrations/${integration._id}`).send(payload);
+
+    expect(body.statusCode).to.equal(400);
+    expect(body.error).to.equal('Bad Request');
   });
 
   it('should not allow to update the integration with same identifier', async function () {
