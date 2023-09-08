@@ -1,4 +1,13 @@
-import { IsBoolean, IsDefined, IsEnum, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsDefined,
+  IsEnum,
+  IsMongoId,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { ChannelTypeEnum, ICreateIntegrationBodyDto } from '@novu/shared';
@@ -58,6 +67,8 @@ export class CreateIntegrationRequestDto implements ICreateIntegrationBodyDto {
   @ApiPropertyOptional({
     type: [StepFilter],
   })
+  @IsArray()
+  @IsOptional()
   @ValidateNested({ each: true })
   conditions?: StepFilter[];
 }
