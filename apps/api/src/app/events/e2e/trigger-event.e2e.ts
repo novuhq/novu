@@ -105,7 +105,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       expect(message?.providerId).to.equal(payload.providerId);
     });
 
-    it('should use throw when using a non existing tenant', async function () {
+    it('should return correct status when using a non existing tenant', async function () {
       const payload = {
         providerId: EmailProviderIdEnum.Mailgun,
         channel: 'email',
