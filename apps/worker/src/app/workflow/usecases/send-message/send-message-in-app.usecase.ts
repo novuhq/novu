@@ -250,12 +250,13 @@ export class SendMessageInApp extends SendMessageBase {
     );
 
     await this.webSocketsQueueService.bullMqService.add(
-      'sendMessage-received-' + message._id,
+      `sendMessage-received-${message._id}`,
       {
         event: WebSocketEventEnum.RECEIVED,
         userId: command._subscriberId,
+        _environmentId: command.environmentId,
         payload: {
-          message,
+          messageId: message._id,
         },
       },
       {},
@@ -263,7 +264,7 @@ export class SendMessageInApp extends SendMessageBase {
     );
 
     await this.webSocketsQueueService.bullMqService.add(
-      'sendMessage-unseen-' + message._id,
+      `sendMessage-unseen-${message._id}`,
       {
         event: WebSocketEventEnum.UNSEEN,
         userId: command._subscriberId,
@@ -274,7 +275,7 @@ export class SendMessageInApp extends SendMessageBase {
     );
 
     await this.webSocketsQueueService.bullMqService.add(
-      'sendMessage-unread-' + message._id,
+      `sendMessage-unread-${message._id}`,
       {
         event: WebSocketEventEnum.UNREAD,
         userId: command._subscriberId,
