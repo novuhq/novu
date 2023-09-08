@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import { MessageRepository } from '@novu/dal';
 import { ChannelTypeEnum, WebSocketEventEnum } from '@novu/shared';
@@ -7,6 +7,8 @@ import { BullMqService } from '@novu/application-generic';
 import { ExternalServicesRouteCommand } from './external-services-route.command';
 import { WSGateway } from '../../ws.gateway';
 import { IUnreadCountPaginationIndication, IUnseenCountPaginationIndication } from './types';
+
+const LOG_CONTEXT = 'ExternalServicesRoute';
 
 @Injectable()
 export class ExternalServicesRoute {
@@ -28,7 +30,25 @@ export class ExternalServicesRoute {
       return;
     }
 
-    await this.wsGateway.sendMessage(command.userId, command.event, command.payload);
+    if (command.event === WebSocketEventEnum.RECEIVED) {
+      // TODO: Retro-compatibility for a bit just in case stalled messages
+      if (command.payload?.message) {
+        Logger.verbose('Sending full message in the payload', LOG_CONTEXT);
+        await this.wsGateway.sendMessage(command.userId, command.event, command.payload);
+
+        return;
+      }
+
+      // Now we will only send the messageId in the event to reduce RAM consumption in-memory
+      const messageId = command.payload?.messageId;
+      if (messageId) {
+        Logger.verbose('Sending messageId in the payload, we need to retrieve the full message', LOG_CONTEXT);
+        const message = await this.messageRepository.findById(messageId);
+        await this.wsGateway.sendMessage(command.userId, command.event, { message });
+
+        return;
+      }
+    }
   }
 
   private async sendUnreadCountChange(command: ExternalServicesRouteCommand) {
