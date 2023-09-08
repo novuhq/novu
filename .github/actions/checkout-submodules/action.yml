@@ -3,6 +3,9 @@ name: Checkout Submodules
 description: Checkout private enterprise submodule
 
 inputs:
+  submodule_token:
+    description: 'Submodule token to use for checkout'
+    required: true
   submodule_branch:
     description: 'Submodule branch to checkout to'
     required: true
@@ -14,7 +17,7 @@ runs:
     - name: Checkout submodule
       uses: actions/checkout@v3
       with:
-        token: ${{ secrets.SUBMODULES_TOKEN }}
+        token: ${{ inputs.submodule_token }}
         repository: novuhq/packages-enterprise
         path: enterprise/packages
         ref: ${{ inputs.submodule_branch }}
