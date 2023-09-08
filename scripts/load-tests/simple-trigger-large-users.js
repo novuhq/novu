@@ -30,7 +30,7 @@ export const options = {
         { target: 20, duration: '1m' },
       ],
       gracefulRampDown: '30s',
-      exec: 'scenario_in_app',
+      exec: 'scenarioInApp',
     },
   },
 };
