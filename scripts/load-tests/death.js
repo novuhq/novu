@@ -1,7 +1,5 @@
 import { check } from 'k6';
 import http from 'k6/http';
-// eslint-disable-next-line import/extensions
-import { uuidv4 } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
 
 const apiKey = 'ApiKey ' + __ENV.staging_api_token;
 
@@ -24,10 +22,10 @@ export const options = {
       executor: 'ramping-vus',
       gracefulStop: '30s',
       stages: [
-        { target: 20, duration: '1m' },
-        { target: 50, duration: '1m' },
-        { target: 100, duration: '10m' },
-        { target: 20, duration: '1m' },
+        { target: 100, duration: '1m' },
+        { target: 500, duration: '1m' },
+        { target: 1000, duration: '10m' },
+        { target: 200, duration: '1m' },
       ],
       gracefulRampDown: '30s',
       exec: 'scenarioInApp',
@@ -38,18 +36,7 @@ export const options = {
 export function scenarioInApp() {
   let response = http.post(
     'https://staging.api.novu.co/v1/events/trigger',
-    JSON.stringify({
-      name: 'only-in-app',
-      to: [
-        {
-          subscriberId: uuidv4(),
-          email: 'email@email.com',
-          firstName: 'John',
-          lastName: 'Doe',
-        },
-      ],
-      payload: { cta: 'test' },
-    }),
+    JSON.stringify({ name: 'only-in-app-digest', to: [{ subscriberId: '533' }], payload: { cta: 'test' } }),
     {
       headers: {
         Authorization: apiKey,
@@ -59,4 +46,17 @@ export function scenarioInApp() {
   );
 
   check(response, { 'status equals 201': (res) => res.status.toString() === '201' });
+
+  let response2 = http.post(
+    'https://staging.api.novu.co/v1/events/trigger',
+    JSON.stringify({ name: 'only-in-app', to: [{ subscriberId: '1' }], payload: { cta: 'test' } }),
+    {
+      headers: {
+        Authorization: apiKey,
+        'content-type': 'application/json',
+      },
+    }
+  );
+
+  check(response2, { 'status equals 201': (res) => res.status.toString() === '201' });
 }
