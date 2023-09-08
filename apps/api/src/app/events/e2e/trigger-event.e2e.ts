@@ -113,7 +113,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
         _environmentId: session.environment._id,
         conditions: [
           {
-            children: [{ field: 'identifier', value: 'test', operator: 'EQUAL', on: 'tenant' }],
+            children: [{ field: 'identifier', value: 'test1', operator: 'EQUAL', on: 'tenant' }],
           },
         ],
         active: true,
@@ -124,7 +124,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
 
       template = await createTemplate(session, ChannelTypeEnum.EMAIL);
 
-      const result = await sendTrigger(session, template, subscriber.subscriberId, {}, {}, 'test');
+      const result = await sendTrigger(session, template, subscriber.subscriberId, {}, {}, 'test1');
 
       expect(result.data.data.status).to.equal('no_tenant_found');
     });
