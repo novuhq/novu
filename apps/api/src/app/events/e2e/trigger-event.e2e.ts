@@ -128,7 +128,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
 
       template = await createTemplate(session, ChannelTypeEnum.EMAIL);
 
-      await createTenant({ session, identifier: 'test', name: 'test3' });
+      await createTenant({ session, identifier: 'test3', name: 'test3' });
       await createTenant({ session, identifier: 'test2', name: 'test2' });
 
       await sendTrigger(session, template, subscriber.subscriberId, {}, {}, 'test3');
