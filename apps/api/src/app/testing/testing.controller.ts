@@ -47,24 +47,4 @@ export class TestingController {
 
     return await this.seedDataUsecase.execute(command);
   }
-
-  @Post('/seed')
-  async seedData3(@Body() body: SeedDataBodyDto): Promise<{ password_user: IUserEntity }> {
-    if (process.env.NODE_ENV !== 'test') throw new NotFoundException();
-    const command = SeedDataCommand.create({});
-
-    return await this.seedDataUsecase.execute(command);
-  }
-
-  @Post('/seed')
-  async seedData4(@Body() body: SeedDataBodyDto): Promise<{ password_user: IUserEntity }> {
-    if (process.env.NODE_ENV !== 'test') throw new NotFoundException();
-    const command = SeedDataCommand.create({});
-
-    const faceFunction = () => {};
-
-    faceFunction();
-
-    return await this.seedDataUsecase.execute(command);
-  }
 }
