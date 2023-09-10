@@ -48,7 +48,7 @@ jobs:
     # checkout with submodules if token is provided
     - uses: ./.github/actions/checkout-submodules
       with:
-        run: ${{ steps.setup.outputs.has_token == 'true' }}
+        enabled: ${{ steps.setup.outputs.has_token == 'true' }}
         submodule_token: ${{ secrets.SUBMODULES_TOKEN }}
         submodule_branch: ${{ inputs.submodule_branch }}
     - uses: ./.github/actions/setup-project

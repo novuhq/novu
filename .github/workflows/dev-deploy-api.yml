@@ -48,7 +48,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/checkout-submodules
         with:
-          run: ${{ contains (matrix.name,'ee') }}
+          enabled: ${{ contains (matrix.name,'ee') }}
           submodule_token: ${{ secrets.SUBMODULES_TOKEN }}
           submodule_branch: "next"
       - uses: ./.github/actions/setup-project

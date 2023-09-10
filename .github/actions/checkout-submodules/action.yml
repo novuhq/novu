@@ -3,7 +3,7 @@ name: Checkout Submodules
 description: Checkout private enterprise submodule
 
 inputs:
-  run:
+  enabled:
     description: 'Run the action'
     required: false
     default: 'true'
