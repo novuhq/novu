@@ -11,6 +11,11 @@ on:
         required: false
         default: false
         type: boolean
+      submodule_branch:
+        description: 'Submodule branch to checkout to'
+        required: false
+        default: 'main'
+        type: string
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -45,15 +50,13 @@ jobs:
             echo ::set-output has_token=false
           fi
 
+      - uses: actions/checkout@v3
       # checkout with submodules if token is provided
-      - uses: actions/checkout@v3
-        if: steps.setup.outputs.has_token == 'true'
+      - uses: ./.github/actions/checkout-submodules
         with:
-          submodules: ${{ inputs.submodules }}
-          token: ${{ secrets.SUBMODULES_TOKEN }}
-       # checkout without submodules
-      - uses: actions/checkout@v3
-        if: steps.setup.outputs.has_token != 'true'
+          enabled: ${{ steps.setup.outputs.has_token == 'true' }}
+          submodule_token: ${{ secrets.SUBMODULES_TOKEN }}
+          submodule_branch: ${{ inputs.submodule_branch }}
       - uses: ./.github/actions/setup-project
         id: setup-project
         with:
