@@ -151,7 +151,7 @@ export class UpdateIntegration {
         CheckIntegrationCommand.create({
           environmentId,
           organizationId: command.organizationId,
-          credentials: command.credentials,
+          credentials: command.credentials ?? existingIntegration.credentials,
           providerId: existingIntegration.providerId,
           channel: existingIntegration.channel,
         })
