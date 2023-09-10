@@ -3,7 +3,15 @@ import { useEffect, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
-import { ChannelTypeEnum, ICreateIntegrationBodyDto, InAppProviderIdEnum, providers } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  EmailProviderIdEnum,
+  ICreateIntegrationBodyDto,
+  InAppProviderIdEnum,
+  providers,
+  ProvidersIdEnum,
+  SmsProviderIdEnum,
+} from '@novu/shared';
 
 import { Button, colors, NameInput, Sidebar } from '../../../../design-system';
 import { ArrowLeft } from '../../../../design-system/icons';
@@ -67,8 +75,13 @@ export function CreateProviderInstanceSidebar({
 
   const selectedEnvironmentId = watch('environmentId');
 
-  const showInAppErrorMessage = useMemo(() => {
-    if (!provider || integrations.length === 0 || provider.id !== InAppProviderIdEnum.Novu) {
+  const showNovuProvidersErrorMessage = useMemo(() => {
+    const novuProviders: ProvidersIdEnum[] = [
+      InAppProviderIdEnum.Novu,
+      SmsProviderIdEnum.Novu,
+      EmailProviderIdEnum.Novu,
+    ];
+    if (!provider || integrations.length === 0 || !novuProviders.includes(provider.id)) {
       return false;
     }
 
@@ -170,7 +183,7 @@ export function CreateProviderInstanceSidebar({
             Cancel
           </Button>
           <Button
-            disabled={isLoading || isLoadingCreate || showInAppErrorMessage}
+            disabled={isLoading || isLoadingCreate || showNovuProvidersErrorMessage}
             loading={isLoadingCreate}
             submit
             data-test-id="create-provider-instance-sidebar-create"
@@ -231,9 +244,11 @@ export function CreateProviderInstanceSidebar({
           );
         }}
       />
-      <When truthy={showInAppErrorMessage}>
+      <When truthy={showNovuProvidersErrorMessage}>
         <WarningMessage>
-          <Text>You can only create one {provider.displayName} per environment.</Text>
+          <Text data-test-id="novu-provider-error">
+            You can only create one {provider.displayName} per environment.
+          </Text>
         </WarningMessage>
       </When>
     </Sidebar>
