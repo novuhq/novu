@@ -42,11 +42,6 @@ validateEnv();
 export async function bootstrap(expressApp?): Promise<INestApplication> {
   BullMqService.haveProInstalled();
 
-  // eslint-disable-next-line no-console
-  console.log('trigger ci test 4');
-
-  const func = () => {};
-
   let app: INestApplication;
   if (expressApp) {
     app = await NestFactory.create(AppModule, new ExpressAdapter(expressApp));
