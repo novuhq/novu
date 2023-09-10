@@ -105,6 +105,66 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       expect(message?.providerId).to.equal(payload.providerId);
     });
 
+    it('should use or conditions to select integration', async function () {
+      const payload = {
+        providerId: EmailProviderIdEnum.Mailgun,
+        channel: 'email',
+        credentials: { apiKey: '123', secretKey: 'abc' },
+        _environmentId: session.environment._id,
+        conditions: [
+          {
+            value: 'OR',
+            children: [
+              { field: 'identifier', value: 'test3', operator: 'EQUAL', on: 'tenant' },
+              { field: 'identifier', value: 'test2', operator: 'EQUAL', on: 'tenant' },
+            ],
+          },
+        ],
+        active: true,
+        check: false,
+      };
+
+      await session.testAgent.post('/v1/integrations').send(payload);
+
+      template = await createTemplate(session, ChannelTypeEnum.EMAIL);
+
+      await createTenant({ session, identifier: 'test', name: 'test3' });
+      await createTenant({ session, identifier: 'test2', name: 'test2' });
+
+      await sendTrigger(session, template, subscriber.subscriberId, {}, {}, 'test3');
+
+      await session.awaitRunningJobs(template._id);
+
+      const createdSubscriber = await subscriberRepository.findBySubscriberId(
+        session.environment._id,
+        subscriber.subscriberId
+      );
+
+      const firstMessage = await messageRepository.findOne({
+        _environmentId: session.environment._id,
+        _subscriberId: createdSubscriber?._id,
+        channel: ChannelTypeEnum.EMAIL,
+      });
+
+      expect(firstMessage?.providerId).to.equal(payload.providerId);
+
+      await sendTrigger(session, template, subscriber.subscriberId, {}, {}, 'test2');
+
+      await session.awaitRunningJobs(template._id);
+
+      const secondMessage = await messageRepository.findOne({
+        _environmentId: session.environment._id,
+        _subscriberId: createdSubscriber?._id,
+        channel: ChannelTypeEnum.EMAIL,
+        _id: {
+          $ne: firstMessage?._id,
+        },
+      });
+
+      expect(secondMessage?.providerId).to.equal(payload.providerId);
+      expect(firstMessage?._id).to.not.equal(secondMessage?._id);
+    });
+
     it('should return correct status when using a non existing tenant', async function () {
       const payload = {
         providerId: EmailProviderIdEnum.Mailgun,
