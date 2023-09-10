@@ -3,6 +3,10 @@ name: Checkout Submodules
 description: Checkout private enterprise submodule
 
 inputs:
+  run:
+    description: 'Run the action'
+    required: false
+    default: 'true'
   submodule_token:
     description: 'Submodule token to use for checkout'
     required: true
@@ -15,6 +19,7 @@ runs:
 
   steps:
     - name: Checkout submodule
+      if: ${{ inputs.run == 'true' }}
       uses: actions/checkout@v3
       with:
         token: ${{ inputs.submodule_token }}
