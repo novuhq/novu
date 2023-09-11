@@ -1,24 +1,24 @@
-import { ActionIcon, Group, Radio, Text } from '@mantine/core';
-import { useEffect, useMemo } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Controller, useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
-import { ChannelTypeEnum, ICreateIntegrationBodyDto, InAppProviderIdEnum, providers } from '@novu/shared';
+import { ActionIcon, Group, Radio, Text } from '@mantine/core';
+import { ChannelTypeEnum, ICreateIntegrationBodyDto, NOVU_PROVIDERS, providers } from '@novu/shared';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 
-import { Button, colors, NameInput, Sidebar } from '../../../../design-system';
-import { ArrowLeft } from '../../../../design-system/icons';
-import { inputStyles } from '../../../../design-system/config/inputs.styles';
-import { useFetchEnvironments } from '../../../../hooks/useFetchEnvironments';
-import { useSegment } from '../../../../components/providers/SegmentProvider';
 import { createIntegration } from '../../../../api/integration';
-import { IntegrationsStoreModalAnalytics } from '../../constants';
-import { errorMessage, successMessage } from '../../../../utils/notifications';
 import { QueryKeys } from '../../../../api/query.keys';
-import { ProviderImage } from './SelectProviderSidebar';
+import { useSegment } from '../../../../components/providers/SegmentProvider';
+import { When } from '../../../../components/utils/When';
+import { Button, colors, NameInput, Sidebar } from '../../../../design-system';
+import { inputStyles } from '../../../../design-system/config/inputs.styles';
+import { ArrowLeft } from '../../../../design-system/icons';
+import { useFetchEnvironments } from '../../../../hooks/useFetchEnvironments';
 import { CHANNEL_TYPE_TO_STRING } from '../../../../utils/channels';
+import { errorMessage, successMessage } from '../../../../utils/notifications';
+import { IntegrationsStoreModalAnalytics } from '../../constants';
 import type { IntegrationEntity } from '../../types';
 import { useProviders } from '../../useProviders';
-import { When } from '../../../../components/utils/When';
+import { ProviderImage } from './SelectProviderSidebar';
 
 interface ICreateProviderInstanceForm {
   name: string;
@@ -67,8 +67,8 @@ export function CreateProviderInstanceSidebar({
 
   const selectedEnvironmentId = watch('environmentId');
 
-  const showInAppErrorMessage = useMemo(() => {
-    if (!provider || integrations.length === 0 || provider.id !== InAppProviderIdEnum.Novu) {
+  const showNovuProvidersErrorMessage = useMemo(() => {
+    if (!provider || integrations.length === 0 || !NOVU_PROVIDERS.includes(provider.id)) {
       return false;
     }
 
@@ -170,7 +170,7 @@ export function CreateProviderInstanceSidebar({
             Cancel
           </Button>
           <Button
-            disabled={isLoading || isLoadingCreate || showInAppErrorMessage}
+            disabled={isLoading || isLoadingCreate || showNovuProvidersErrorMessage}
             loading={isLoadingCreate}
             submit
             data-test-id="create-provider-instance-sidebar-create"
@@ -231,9 +231,11 @@ export function CreateProviderInstanceSidebar({
           );
         }}
       />
-      <When truthy={showInAppErrorMessage}>
+      <When truthy={showNovuProvidersErrorMessage}>
         <WarningMessage>
-          <Text>You can only create one {provider.displayName} per environment.</Text>
+          <Text data-test-id="novu-provider-error">
+            You can only create one {provider.displayName} per environment.
+          </Text>
         </WarningMessage>
       </When>
     </Sidebar>
