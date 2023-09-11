@@ -75,6 +75,7 @@ export enum SmsProviderIdEnum {
 
 export enum ChatProviderIdEnum {
   Slack = 'slack',
+  SlackDm = 'slack-dm',
   Discord = 'discord',
   MsTeams = 'msteams',
   Mattermost = 'mattermost',

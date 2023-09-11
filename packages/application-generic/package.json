@@ -82,6 +82,7 @@
     "@novu/ses": "^0.18.0",
     "@novu/shared": "^0.18.0",
     "@novu/slack": "^0.18.0",
+    "@novu/slack-dm": "^0.16.3",
     "@novu/sms-central": "^0.18.0",
     "@novu/sms77": "^0.18.0",
     "@novu/sns": "^0.18.0",

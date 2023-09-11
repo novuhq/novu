@@ -8,6 +8,8 @@ import {
   IWebhookFilterPart,
   IRealtimeOnlineFilterPart,
   IOnlineInLastFilterPart,
+  IIsOfficeHours,
+  IIsOnlineSlack,
   FILTER_TO_LABEL,
   FilterPartTypeEnum,
   ICondition,
@@ -17,6 +19,7 @@ import {
   PreviousStepTypeEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  ICredentials,
 } from '@novu/shared';
 import {
   SubscriberEntity,
@@ -26,14 +29,22 @@ import {
   ExecutionDetailsRepository,
   MessageRepository,
   JobRepository,
+  IntegrationRepository,
 } from '@novu/dal';
-import { DetailEnum, CreateExecutionDetails, CreateExecutionDetailsCommand } from '@novu/application-generic';
+import {
+  DetailEnum,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+  decryptCredentials,
+} from '@novu/application-generic';
 import { EmailEventStatusEnum } from '@novu/stateless';
 
 import { IFilterVariables } from './types';
 import { FilterProcessingDetails } from './filter-processing-details';
 import { SendMessageCommand } from '../send-message/send-message.command';
 import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER, createHash, PlatformException } from '../../../shared/utils';
+// import { getSlackWebClientInstance } from 'providers/slack-dm/src/services/SlackWebClientService';
+import { getSlackWebClientInstance } from '../../../../../../../providers/slack-dm/src/services/SlackWebClientService';
 
 const differenceIn = (currentDate: Date, lastDate: Date, timeOperator: TimeOperatorEnum) => {
   if (timeOperator === TimeOperatorEnum.MINUTES) {
@@ -55,7 +66,8 @@ export class MessageMatcher {
     private environmentRepository: EnvironmentRepository,
     private executionDetailsRepository: ExecutionDetailsRepository,
     private messageRepository: MessageRepository,
-    private jobRepository: JobRepository
+    private jobRepository: JobRepository,
+    private integrationRepository: IntegrationRepository
   ) {}
 
   public async filter(
@@ -313,6 +325,73 @@ export class MessageMatcher {
     return passed;
   }
 
+  private async processIsOfficeHours(
+    filter: IIsOfficeHours,
+    command: SendMessageCommand,
+    filterProcessingDetails: FilterProcessingDetails
+  ): Promise<boolean> {
+    const tz = command.payload.timezone;
+
+    const today = new Date().toLocaleString('en-US', { timeZone: tz, hour12: false });
+    const currentHour = parseInt(today.split(',')[1].trim().split(':')[0]);
+
+    const isOfficeHours = currentHour >= 9 && currentHour < 17 ? true : false;
+    const expected = filter.value;
+    const passed = isOfficeHours == expected ? true : false;
+
+    filterProcessingDetails.addCondition({
+      filter: FILTER_TO_LABEL[filter.on],
+      field: 'isOfficeHours',
+      expected: `${filter.value}`,
+      actual: `${isOfficeHours}`,
+      operator: 'EQUAL',
+      passed: passed,
+    });
+
+    return passed;
+  }
+
+  private async processIsOnlineSlack(
+    filter: IIsOnlineSlack,
+    command: SendMessageCommand,
+    filterProcessingDetails: FilterProcessingDetails
+  ): Promise<boolean> {
+    const slackMemberId = command.payload.slackMemberId;
+    const expected = filter.value;
+
+    const foundIntegration = await this.integrationRepository.findOne({
+      _environmentId: command.environmentId,
+      providerId: 'slack-dm',
+    });
+
+    let decryptedCredentials: ICredentials | undefined;
+    if (foundIntegration?.credentials) {
+      decryptedCredentials = decryptCredentials(foundIntegration.credentials);
+    }
+
+    let isOnlineSlack = false;
+
+    if (decryptedCredentials?.apiKey) {
+      const slackWebClient = getSlackWebClientInstance(decryptedCredentials?.apiKey || '');
+
+      const status = await slackWebClient.users.getPresence({ user: slackMemberId });
+      isOnlineSlack = status.presence === 'active' ? true : false;
+    }
+
+    const passed = isOnlineSlack === expected ? true : false;
+
+    filterProcessingDetails.addCondition({
+      filter: FILTER_TO_LABEL[filter.on],
+      field: 'isOnlineSlack',
+      expected: `${filter.value}`,
+      actual: `${isOnlineSlack}`,
+      operator: 'EQUAL',
+      passed: passed,
+    });
+
+    return passed;
+  }
+
   private async processIsOnline(
     filter: IRealtimeOnlineFilterPart | IOnlineInLastFilterPart,
     command: SendMessageCommand,
@@ -517,6 +596,14 @@ export class MessageMatcher {
 
     if (child.on === FilterPartTypeEnum.PAYLOAD || child.on === FilterPartTypeEnum.SUBSCRIBER) {
       passed = this.processFilterEquality(variables, child, filterProcessingDetails);
+    }
+
+    if (child.on === FilterPartTypeEnum.IS_OFFICE_HOURS) {
+      passed = await this.processIsOfficeHours(child, command, filterProcessingDetails);
+    }
+
+    if (child.on === FilterPartTypeEnum.IS_ONLINE_SLACK) {
+      passed = await this.processIsOnlineSlack(child, command, filterProcessingDetails);
     }
 
     if (child.on === FilterPartTypeEnum.IS_ONLINE || child.on === FilterPartTypeEnum.IS_ONLINE_IN_LAST) {

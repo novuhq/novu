@@ -13,6 +13,8 @@ export enum FilterPartTypeEnum {
   IS_ONLINE = 'isOnline',
   IS_ONLINE_IN_LAST = 'isOnlineInLast',
   PREVIOUS_STEP = 'previousStep',
+  IS_OFFICE_HOURS = 'isOfficeHours',
+  IS_ONLINE_SLACK = 'isOnlineSlack',
 }
 
 export enum PreviousStepTypeEnum {
@@ -56,6 +58,16 @@ export interface IRealtimeOnlineFilterPart extends IBaseFilterPart {
   value: boolean;
 }
 
+export interface IIsOfficeHours extends IBaseFilterPart {
+  on: FilterPartTypeEnum.IS_OFFICE_HOURS;
+  value: boolean;
+}
+
+export interface IIsOnlineSlack extends IBaseFilterPart {
+  on: FilterPartTypeEnum.IS_ONLINE_SLACK;
+  value: boolean;
+}
+
 export interface IOnlineInLastFilterPart extends IBaseFilterPart {
   on: FilterPartTypeEnum.IS_ONLINE_IN_LAST;
   timeOperator: TimeOperatorEnum;
@@ -67,7 +79,9 @@ export type FilterParts =
   | IWebhookFilterPart
   | IRealtimeOnlineFilterPart
   | IOnlineInLastFilterPart
-  | IPreviousStepFilterPart;
+  | IPreviousStepFilterPart
+  | IIsOfficeHours
+  | IIsOnlineSlack;
 
 export type Operator = BuilderFieldOperator | TimeOperatorEnum;
 

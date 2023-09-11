@@ -24,7 +24,7 @@ export function OnlineFiltersForms({
 }) {
   return (
     <>
-      {fieldOn === 'isOnline' ? (
+      {fieldOn === 'isOnline' || fieldOn === 'isOfficeHours' || fieldOn === 'isOnlineSlack' ? (
         <OnlineRightNowForm control={control} stepIndex={stepIndex} index={index} />
       ) : (
         <OnlineInTheLastForm control={control} stepIndex={stepIndex} index={index} />

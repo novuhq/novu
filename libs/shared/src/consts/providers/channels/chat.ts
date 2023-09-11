@@ -1,5 +1,5 @@
 import { IConfigCredentials, IProviderConfig } from '../provider.interface';
-import { slackConfig } from '../credentials';
+import { slackConfig, slackDmConfig } from '../credentials';
 import { ChatProviderIdEnum } from '../provider.enum';
 
 import { ChannelTypeEnum } from '../../../types';
@@ -12,6 +12,14 @@ export const chatProviders: IProviderConfig[] = [
     credentials: slackConfig,
     docReference: 'https://docs.novu.co/channels/chat/slack',
     logoFileName: { light: 'slack.svg', dark: 'slack.svg' },
+  },
+  {
+    id: ChatProviderIdEnum.SlackDm,
+    displayName: 'Slack Dm',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: slackDmConfig,
+    docReference: 'https://docs.example-provider.com/',
+    logoFileName: { light: 'slack-dm.svg', dark: 'slack-dm.svg' },
   },
   {
     id: ChatProviderIdEnum.Discord,
