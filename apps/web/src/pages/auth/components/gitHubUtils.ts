@@ -12,6 +12,16 @@ export const buildGithubLink = ({ invitationToken }: { invitationToken?: string 
   return `${API_ROOT}/v1/auth/github?${queryParams.toString()}`;
 };
 
+export const buildGoogleLink = ({ invitationToken }: { invitationToken?: string }) => {
+  const queryParams = new URLSearchParams();
+  queryParams.append('source', SignUpOriginEnum.WEB);
+  if (invitationToken) {
+    queryParams.append('invitationToken', invitationToken);
+  }
+
+  return `${API_ROOT}/v1/auth/google?${queryParams.toString()}`;
+};
+
 export const buildVercelGithubLink = ({
   code,
   next,

@@ -16,7 +16,7 @@ To follow the steps in this quickstart, you'll need:
 
 - A Novu account. [Sign up for free](http://web.novu.co) if you don’t have one yet.
 - Angular CLI (Command Line Interface) installed on your machine
-- Angular version > 0.15.0
+- Angular version 15
 
 You can also [view the completed code](https://github.com/novuhq/angular-quickstart) of this quick start in a GitHub repo.
 

@@ -1,8 +1,10 @@
+const nr = require('newrelic');
 import { Injectable, Logger } from '@nestjs/common';
 
 import { INovuWorker, WebSocketsWorkerService } from '@novu/application-generic';
 
 import { ExternalServicesRoute, ExternalServicesRouteCommand } from '../usecases/external-services-route';
+import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 
 const LOG_CONTEXT = 'WebSocketWorker';
 
@@ -16,27 +18,48 @@ export class WebSocketWorker extends WebSocketsWorkerService implements INovuWor
 
   private getWorkerProcessor() {
     return async (job) => {
-      try {
-        await this.externalServicesRoute.execute(
-          ExternalServicesRouteCommand.create({
-            userId: job.data.userId,
-            event: job.data.event,
-            payload: job.data.payload,
-            _environmentId: job.data._environmentId,
-          })
-        );
-      } catch (e) {
-        Logger.error('Unexpected exception occurred while handling external services route ', e, LOG_CONTEXT);
+      return new Promise((resolve, reject) => {
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        const _this = this;
 
-        throw e;
-      }
+        nr.startBackgroundTransaction(
+          ObservabilityBackgroundTransactionEnum.WS_SOCKET_QUEUE,
+          'WS Service',
+          function () {
+            const transaction = nr.getTransaction();
+
+            _this.externalServicesRoute
+              .execute(
+                ExternalServicesRouteCommand.create({
+                  userId: job.data.userId,
+                  event: job.data.event,
+                  payload: job.data.payload,
+                  _environmentId: job.data._environmentId,
+                })
+              )
+              .then(resolve)
+              .catch((error) => {
+                Logger.error(
+                  'Unexpected exception occurred while handling external services route ',
+                  error,
+                  LOG_CONTEXT
+                );
+
+                reject(error);
+              })
+              .finally(() => {
+                transaction.end();
+              });
+          }
+        );
+      });
     };
   }
 
   private getWorkerOpts() {
     return {
       lockDuration: 90000,
-      concurrency: 5,
+      concurrency: 100,
     };
   }
 }

@@ -9,4 +9,5 @@ export enum JobTopicNameEnum {
 export enum ObservabilityBackgroundTransactionEnum {
   JOB_PROCESSING_QUEUE = 'job-processing-queue',
   TRIGGER_HANDLER_QUEUE = 'trigger-handler-queue',
+  WS_SOCKET_QUEUE = 'ws_socket_queue',
 }

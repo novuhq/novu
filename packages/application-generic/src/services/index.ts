@@ -23,3 +23,4 @@ export {
   WorkerOptions,
   OldInstanceBullMqService,
 } from './bull-mq';
+export * from './auth';

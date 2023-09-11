@@ -44,7 +44,7 @@ describe('WebSocket Worker', () => {
       workerIsRunning: true,
     });
     expect(webSocketWorker.worker.opts).to.deep.include({
-      concurrency: 5,
+      concurrency: 100,
       lockDuration: 90000,
     });
   });

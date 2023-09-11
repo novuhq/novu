@@ -12,3 +12,5 @@ export * from './utils/subscriber';
 export * from './utils/filter';
 export * from './utils/filter-processing-details';
 export * from './resilience';
+export * from './utils/exceptions';
+export * from './utils/email-normalization';

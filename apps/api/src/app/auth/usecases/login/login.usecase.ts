@@ -2,12 +2,11 @@ import * as bcrypt from 'bcrypt';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { differenceInMinutes, parseISO } from 'date-fns';
 import { UserRepository, UserEntity, OrganizationRepository } from '@novu/dal';
-import { AnalyticsService } from '@novu/application-generic';
+import { AnalyticsService, AuthService } from '@novu/application-generic';
 
 import { LoginCommand } from './login.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { normalizeEmail } from '../../../shared/helpers/email-normalization.service';
-import { AuthService } from '../../services/auth.service';
 import { createHash } from '../../../shared/helpers/hmac.service';
 
 @Injectable()

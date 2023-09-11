@@ -139,3 +139,4 @@ export { DisconnectGradient } from './gradient/DisconnectGradient';
 export { BoltOutlinedGradient } from './gradient/BoltOutlinedGradient';
 
 export { GitHub } from './social/GitHub';
+export { Google } from './social/Google';

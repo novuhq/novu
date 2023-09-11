@@ -8,9 +8,9 @@ import {
   CreateSubscriberCommand,
   SelectIntegrationCommand,
   SelectIntegration,
+  AuthService,
 } from '@novu/application-generic';
 
-import { AuthService } from '../../../auth/services/auth.service';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { InitializeSessionCommand } from './initialize-session.command';
 
