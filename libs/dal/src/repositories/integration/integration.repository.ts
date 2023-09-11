@@ -66,6 +66,19 @@ export class IntegrationRepository extends BaseRepository<IntegrationDBModel, In
     });
   }
 
+  async countActiveIncludingNovu({
+    _organizationId,
+    _environmentId,
+    channel,
+  }: Pick<IntegrationEntity, '_environmentId' | '_organizationId' | 'channel'>) {
+    return await this.count({
+      _organizationId,
+      _environmentId,
+      channel,
+      active: true,
+    });
+  }
+
   async create(data: IntegrationQuery): Promise<IntegrationEntity> {
     return await super.create(data);
   }
