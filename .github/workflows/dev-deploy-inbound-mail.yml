@@ -26,6 +26,7 @@ jobs:
     with:
       ee: ${{ contains (matrix.name,'ee') }}
       submodules: ${{ contains (matrix.name,'ee') }}
+      submodule_branch: "next"
     secrets: inherit
 
   dev_deploy_inbound_mail:
