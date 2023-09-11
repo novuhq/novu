@@ -26,6 +26,7 @@ jobs:
     with:
       ee: ${{ contains (matrix.name,'ee') }}
       submodules: ${{ contains (matrix.name,'ee') }}
+      submodule_branch: "next"
     secrets: inherit
 
   deploy_dev_api:
@@ -45,9 +46,11 @@ jobs:
         name: ['novu/api-ee', 'novu/api']
     steps:
       - uses: actions/checkout@v3
+      - uses: ./.github/actions/checkout-submodules
         with:
-          submodules: ${{ contains (matrix.name,'ee') }}
-          token: ${{ secrets.SUBMODULES_TOKEN }}
+          enabled: ${{ contains (matrix.name,'ee') }}
+          submodule_token: ${{ secrets.SUBMODULES_TOKEN }}
+          submodule_branch: "next"
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/docker/build-api
         id: docker_build

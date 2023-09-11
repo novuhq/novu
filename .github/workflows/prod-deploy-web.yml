@@ -13,6 +13,7 @@ jobs:
     uses: ./.github/workflows/reusable-web-e2e.yml
     with:
       submodules: true
+      submodule_branch: 'main'
     secrets: inherit
 
   deploy_web_eu:
