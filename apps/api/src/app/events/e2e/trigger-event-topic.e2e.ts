@@ -495,7 +495,7 @@ describe('Topic Trigger Event', () => {
       }
     });
 
-    it.only('should not contain events from a different digestKey ', async () => {
+    it('should not contain events from a different digestKey ', async () => {
       template = await session.createTemplate({
         steps: [
           {
