@@ -373,7 +373,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
     expect(data.active).to.equal(true);
   });
 
-  it('should set the primary if there are no other active integrations', async function () {
+  it('should not set the primary if there are no other active integrations', async function () {
     await integrationRepository.deleteMany({
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
@@ -401,7 +401,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
     } = await session.testAgent.put(`/v1/integrations/${integration._id}`).send(payload);
 
     expect(data.priority).to.equal(1);
-    expect(data.primary).to.equal(true);
+    expect(data.primary).to.equal(false);
     expect(data.active).to.equal(true);
   });
 

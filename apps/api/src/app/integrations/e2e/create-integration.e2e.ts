@@ -268,7 +268,7 @@ describe('Create Integration - /integration (POST)', function () {
     expect(data.active).to.equal(true);
   });
 
-  it('should set the integration as primary when its active and there are no other active integrations', async function () {
+  it('should not set the integration as primary when its active and there are no other active integrations', async function () {
     await integrationRepository.deleteMany({
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
@@ -286,7 +286,7 @@ describe('Create Integration - /integration (POST)', function () {
     } = await session.testAgent.post('/v1/integrations').send(payload);
 
     expect(data.priority).to.equal(1);
-    expect(data.primary).to.equal(true);
+    expect(data.primary).to.equal(false);
     expect(data.active).to.equal(true);
   });
 
