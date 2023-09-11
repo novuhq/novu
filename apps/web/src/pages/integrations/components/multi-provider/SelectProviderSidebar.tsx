@@ -9,7 +9,6 @@ import {
   inAppProviders,
   chatProviders,
   InAppProviderIdEnum,
-  NOVU_SMS_EMAIL_PROVIDERS,
 } from '@novu/shared';
 
 import { colors, Sidebar } from '../../../../design-system';
@@ -32,14 +31,12 @@ const filterSearch = (list, search: string) =>
   list.filter((prov) => prov.displayName.toLowerCase().includes(search.toLowerCase()));
 
 const mapStructure = (listProv): IIntegratedProvider[] =>
-  listProv
-    .filter((providerItem) => !NOVU_SMS_EMAIL_PROVIDERS.includes(providerItem.id))
-    .map((providerItem) => ({
-      providerId: providerItem.id,
-      displayName: providerItem.displayName,
-      channel: providerItem.channel,
-      docReference: providerItem.docReference,
-    }));
+  listProv.map((providerItem) => ({
+    providerId: providerItem.id,
+    displayName: providerItem.displayName,
+    channel: providerItem.channel,
+    docReference: providerItem.docReference,
+  }));
 
 const initialProvidersList = {
   [ChannelTypeEnum.EMAIL]: mapStructure(emailProviders),

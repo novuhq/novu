@@ -15,7 +15,7 @@ import DotnetLogo from '/static/img/quickstarts/dotnet.svg';
 import NovuLogo from '/static/img/quickstarts/novu.svg';
 import ArrowIcon from '/static/img/arrow-md.svg';
 
-const quckstartItems = [
+const quickstartItems = [
   {
     title: 'ReactJS',
     description: 'Connect a ReactJS application to Novu',
@@ -87,7 +87,7 @@ const quckstartItems = [
 export default function Quickstarts() {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const filteredItems = quckstartItems.filter((_, index) => isExpanded || index < 4);
+  const filteredItems = quickstartItems.filter((_, index) => isExpanded || index < 4);
 
   return (
     <div className={styles.quickstartsWrapper}>

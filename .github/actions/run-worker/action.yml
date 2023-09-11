@@ -20,7 +20,6 @@ runs:
     - name: Start worker
       shell: bash
       env:
-        IN_MEMORY_CLUSTER_MODE_ENABLED: true
         LAUNCH_DARKLY_SDK_KEY: ${{ inputs.launch_darkly_sdk_key }}
       run: cd apps/worker && pnpm start:test &
 

@@ -19,7 +19,6 @@ runs:
     - name: Start API
       shell: bash
       env:
-        IS_IN_MEMORY_CLUSTER_MODE_ENABLED: true
         LAUNCH_DARKLY_SDK_KEY: ${{ inputs.launch_darkly_sdk_key }}
       run: cd apps/api && pnpm start:test &
 

@@ -5,7 +5,7 @@ import {
   encryptCredentials,
   buildIntegrationKey,
   InvalidateCacheService,
-  GetFeatureFlag,
+  GetIsMultiProviderConfigurationEnabled,
   FeatureFlagCommand,
 } from '@novu/application-generic';
 import { ChannelTypeEnum, CHANNELS_WITH_PRIMARY } from '@novu/shared';
@@ -25,8 +25,8 @@ export class UpdateIntegration {
     private integrationRepository: IntegrationRepository,
     private deactivateSimilarChannelIntegrations: DeactivateSimilarChannelIntegrations,
     private analyticsService: AnalyticsService,
-    private getFeatureFlag: GetFeatureFlag,
-    private disableNovuIntegration: DisableNovuIntegration
+    private disableNovuIntegration: DisableNovuIntegration,
+    private getIsMultiProviderConfigurationEnabled: GetIsMultiProviderConfigurationEnabled
   ) {}
 
   private async calculatePriorityAndPrimaryForActive({
@@ -186,7 +186,7 @@ export class UpdateIntegration {
       throw new BadRequestException('No properties found for update');
     }
 
-    const isMultiProviderConfigurationEnabled = await this.getFeatureFlag.isMultiProviderConfigurationEnabled(
+    const isMultiProviderConfigurationEnabled = await this.getIsMultiProviderConfigurationEnabled.execute(
       FeatureFlagCommand.create({
         userId: command.userId,
         organizationId: command.organizationId,
@@ -196,6 +196,16 @@ export class UpdateIntegration {
 
     const isChannelSupportsPrimary = CHANNELS_WITH_PRIMARY.includes(existingIntegration.channel);
     if (isMultiProviderConfigurationEnabled && isActiveChanged && isChannelSupportsPrimary) {
+      if (command.active) {
+        await this.disableNovuIntegration.execute({
+          channel: existingIntegration.channel,
+          providerId: existingIntegration.providerId,
+          environmentId: existingIntegration._environmentId,
+          organizationId: existingIntegration._organizationId,
+          userId: command.userId,
+        });
+      }
+
       const { primary, priority } = await this.calculatePriorityAndPrimary({
         existingIntegration,
         active: !!command.active,
@@ -235,16 +245,6 @@ export class UpdateIntegration {
     });
     if (!updatedIntegration) {
       throw new NotFoundException(`Integration with id ${command.integrationId} is not found`);
-    }
-
-    if (updatedIntegration.active) {
-      await this.disableNovuIntegration.execute({
-        channel: updatedIntegration.channel,
-        providerId: updatedIntegration.providerId,
-        environmentId: updatedIntegration._environmentId,
-        organizationId: updatedIntegration._organizationId,
-        userId: command.userId,
-      });
     }
 
     return updatedIntegration;

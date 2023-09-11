@@ -13,7 +13,7 @@ import {
   UserId,
   TriggerRecipient,
 } from '@novu/shared';
-import { InstrumentUsecase, FeatureFlagCommand, GetFeatureFlag } from '@novu/application-generic';
+import { InstrumentUsecase, FeatureFlagCommand, GetIsTopicNotificationEnabled } from '@novu/application-generic';
 
 import { MapTriggerRecipientsCommand } from './map-trigger-recipients.command';
 import { CreateLog } from '../../../logs/usecases/create-log';
@@ -37,13 +37,12 @@ export class MapTriggerRecipients {
   constructor(
     private createLog: CreateLog,
     private getTopicSubscribers: GetTopicSubscribersUseCase,
-    private getFeatureFlag: GetFeatureFlag
+    private getIsTopicNotificationEnabled: GetIsTopicNotificationEnabled
   ) {}
 
   @InstrumentUsecase()
   async execute(command: MapTriggerRecipientsCommand): Promise<ISubscribersDefine[]> {
     const { environmentId, organizationId, recipients, transactionId, userId, actor } = command;
-
     const mappedRecipients = Array.isArray(recipients) ? recipients : [recipients];
 
     const simpleSubscribers: ISubscribersDefine[] = this.findSubscribers(mappedRecipients);
@@ -96,7 +95,7 @@ export class MapTriggerRecipients {
       organizationId,
       userId,
     });
-    const isEnabled = await this.getFeatureFlag.isTopicNotificationEnabled(featureFlagCommand);
+    const isEnabled = await this.getIsTopicNotificationEnabled.execute(featureFlagCommand);
 
     if (isEnabled) {
       const topics = this.findTopics(recipients);

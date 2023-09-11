@@ -29,6 +29,10 @@ export class LaunchDarklyService implements IFeatureFlagsService {
       this.isEnabled = true;
       await this.clientInitialization();
     } else {
+      Logger.log(
+        'Missing Launch Darkly SDK key. Launch Darkly is not initialized',
+        LOG_CONTEXT
+      );
       this.isEnabled = false;
     }
   }
@@ -42,19 +46,35 @@ export class LaunchDarklyService implements IFeatureFlagsService {
       );
     } catch (error) {
       Logger.error(
-        'Launch Darkly SDK has failed when initialized',
         error,
+        'Launch Darkly SDK has failed when initialized',
         LOG_CONTEXT
       );
       throw error;
     }
   }
+
   private async get<T>(
     key: FeatureFlagsKeysEnum,
     context: LDSingleKindContext,
     defaultValue: T
   ): Promise<T> {
     return await this.client.variation(key, context, defaultValue);
+  }
+
+  public async getWithAnonymousContext<T>(
+    key: FeatureFlagsKeysEnum,
+    defaultValue: T
+  ): Promise<T> {
+    const anonymousUserContext = {
+      key,
+      kind: 'user',
+      anonymous: true,
+    };
+
+    const result = await this.get(key, anonymousUserContext, defaultValue);
+
+    return result;
   }
 
   public async getWithEnvironmentContext<T>(
@@ -98,8 +118,8 @@ export class LaunchDarklyService implements IFeatureFlagsService {
         );
       } catch (error) {
         Logger.error(
-          'Launch Darkly SDK has failed when shut down',
           error,
+          'Launch Darkly SDK has failed when shut down',
           LOG_CONTEXT
         );
         throw error;

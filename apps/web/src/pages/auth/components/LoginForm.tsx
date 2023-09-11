@@ -9,12 +9,13 @@ import { Divider, Button as MantineButton, Center } from '@mantine/core';
 import { useAuthContext } from '../../../components/providers/AuthProvider';
 import { api } from '../../../api/api.client';
 import { PasswordInput, Button, colors, Input, Text } from '../../../design-system';
-import { GitHub } from '../../../design-system/icons';
+import { GitHub, Google } from '../../../design-system/icons';
 import { IS_DOCKER_HOSTED } from '../../../config';
 import { useVercelParams } from '../../../hooks';
 import { useAcceptInvite } from './useAcceptInvite';
-import { buildGithubLink, buildVercelGithubLink } from './gitHubUtils';
+import { buildGithubLink, buildGoogleLink, buildVercelGithubLink } from './gitHubUtils';
 import { ROUTES } from '../../../constants/routes.enum';
+import { When } from '../../../components/utils/When';
 
 type LoginFormProps = {
   invitationToken?: string;
@@ -41,6 +42,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
   const githubLink = isFromVercel
     ? buildVercelGithubLink({ code, next, configurationId })
     : buildGithubLink({ invitationToken });
+  const googleLink = buildGoogleLink({ invitationToken });
 
   const {
     register,
@@ -95,24 +97,39 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
 
   return (
     <>
-      {!IS_DOCKER_HOSTED && (
+      <When truthy={!IS_DOCKER_HOSTED}>
         <>
-          <GitHubButton
-            component="a"
-            href={githubLink}
-            my={30}
-            variant="white"
-            fullWidth
-            radius="md"
-            leftIcon={<GitHub />}
-            sx={{ color: colors.B40, fontSize: '16px', fontWeight: 700, height: '50px' }}
-            data-test-id="github-button"
-          >
-            Sign In with GitHub
-          </GitHubButton>
+          <OAuth>
+            <GoogleButton
+              component="a"
+              href={githubLink}
+              my={30}
+              variant="white"
+              fullWidth
+              radius="md"
+              leftIcon={<GitHub />}
+              sx={{ color: colors.B40, fontSize: '16px', fontWeight: 700, height: '50px', marginRight: 10 }}
+              data-test-id="github-button"
+            >
+              Sign In with GitHub
+            </GoogleButton>
+            <GoogleButton
+              component="a"
+              href={googleLink}
+              my={30}
+              variant="white"
+              fullWidth
+              radius="md"
+              leftIcon={<Google />}
+              data-test-id="google-button"
+              sx={{ color: colors.B40, fontSize: '16px', fontWeight: 700, height: '50px', marginLeft: 10 }}
+            >
+              Sign In with Google
+            </GoogleButton>
+          </OAuth>
           <Divider label={<Text color={colors.B40}>Or</Text>} color={colors.B30} labelPosition="center" my="md" />
         </>
-      )}
+      </When>
       <form noValidate onSubmit={handleSubmit(onLogin)}>
         <Input
           error={errors.email?.message || emailServerError}
@@ -174,7 +191,12 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
   );
 }
 
-const GitHubButton = styled(MantineButton)<{
+const OAuth = styled.div`
+  display: flex;
+  justify-content: space-between;
+`;
+
+const GoogleButton = styled(MantineButton)<{
   component: 'a';
   my: number;
   href: string;
