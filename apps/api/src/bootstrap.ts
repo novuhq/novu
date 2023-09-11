@@ -39,9 +39,6 @@ if (process.env.SENTRY_DSN) {
 // Validate the ENV variables after launching SENTRY, so missing variables will report to sentry
 validateEnv();
 
-// eslint-disable-next-line no-console
-console.log();
-
 export async function bootstrap(expressApp?): Promise<INestApplication> {
   BullMqService.haveProInstalled();
 
