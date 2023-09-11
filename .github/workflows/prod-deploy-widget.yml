@@ -12,6 +12,7 @@ jobs:
     uses: ./.github/workflows/reusable-widget-e2e.yml
     with:
       submodules: true
+      submodule_branch: "main"
     secrets: inherit
 
   deploy_widget_eu:

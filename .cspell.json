@@ -502,7 +502,10 @@
     "quckstart",
     "errmsg",
     "devcontainer",
-    "INITDB"
+    "INITDB",
+    "springboot",
+    "errmsg",
+    "shelljs"
   ],
   "flagWords": [],
   "patterns": [

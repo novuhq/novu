@@ -16,7 +16,7 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test": "echo \"No e2e tests, only build tests\""
+    "test": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --trace-warnings --timeout 10000 --require ts-node/register --exit --file e2e/setup.ts src/**/**/*.spec.ts"
   },
   "dependencies": {
     "@novu/application-generic": "^0.19.0",
@@ -31,21 +31,27 @@
     "lodash": "^4.17.15",
     "mailparser": "^0.6.0",
     "newrelic": "^9.15.0",
-    "node-uuid": "^1.4.3",
     "rimraf": "^3.0.2",
     "shelljs": "^0.8.5",
     "smtp-server": "^1.4.0",
     "spamc": "0.0.5",
-    "winston": "^1.0.0"
+    "uuid": "^9.0.0",
+    "winston": "^3.9.0"
   },
   "devDependencies": {
+    "@novu/testing": "^0.19.0",
+    "@types/chai": "^4.2.11",
     "@types/express": "^4.17.8",
     "@types/html-to-text": "^9.0.1",
+    "@types/mocha": "^8.2.3",
     "@types/node": "^14.14.6",
+    "@types/sinon": "^9.0.0",
     "@types/smtp-server": "^3.5.7",
     "cross-env": "^7.0.3",
+    "mocha": "^8.4.0",
     "nodemon": "^2.0.7",
     "prettier": "~2.8.0",
+    "sinon": "^9.2.4",
     "ts-jest": "^27.0.7",
     "ts-loader": "~9.4.0",
     "ts-node": "~10.9.1",

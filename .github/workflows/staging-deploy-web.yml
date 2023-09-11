@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: Deploy DEV WEB
+name: Deploy Staging WEB
 
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
@@ -20,7 +20,6 @@ jobs:
     uses: ./.github/workflows/reusable-web-e2e.yml
     with:
       submodules: true
-      submodule_branch: 'next'
     secrets: inherit
 
   # This workflow contains a single job called "build"
@@ -49,15 +48,15 @@ jobs:
         working-directory: apps/web
         run: |
           touch .env
-          echo REACT_APP_API_URL="https://dev.api.novu.co" >> .env
-          echo REACT_APP_WS_URL="https://dev.ws.novu.co" >> .env
-          echo REACT_APP_WEBHOOK_URL="https://dev.webhook.novu.co" >> .env
-          echo REACT_APP_WIDGET_EMBED_PATH="https://dev.embed.novu.co/embed.umd.min.js" >> .env
+          echo REACT_APP_API_URL="https://staging.api.novu.co" >> .env
+          echo REACT_APP_WS_URL="https://staging.ws.novu.co" >> .env
+          echo REACT_APP_WEBHOOK_URL="https://staging.webhook.novu.co" >> .env
+          echo REACT_APP_WIDGET_EMBED_PATH="https://staging.embed.novu.co/embed.umd.min.js" >> .env
           echo REACT_APP_NOVU_APP_ID=${{ secrets.NOVU_APP_ID }} >> .env
           echo REACT_APP_SEGMENT_KEY=${{ secrets.WEB_SEGMENT_KEY }} >> .env
-          echo REACT_APP_SENTRY_DSN="https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907" >> .env
-          echo REACT_APP_ENVIRONMENT=dev >> .env
-          echo REACT_APP_MAIL_SERVER_DOMAIN="dev.inbound-mail.novu.co" >> .env
+          echo REACT_APP_SENTRY_DSN="https://8054d521cff2e73d32b8edfe4793d05c@o1161119.ingest.sentry.io/4505829158158336" >> .env
+          echo REACT_APP_ENVIRONMENT=staging >> .env
+          echo REACT_APP_MAIL_SERVER_DOMAIN="staging.inbound-mail.novu.co" >> .env
           echo REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID=${{ secrets.DEV_LAUNCH_DARKLY_CLIENT_SIDE_ID }} >> .env
 
       - name: Envsetup
@@ -69,32 +68,32 @@ jobs:
         env:
           REACT_APP_SEGMENT_KEY: ${{ secrets.WEB_SEGMENT_KEY }}
           REACT_APP_INTERCOM_APP_ID: ${{ secrets.INTERCOM_APP_ID }}
-          REACT_APP_API_URL: https://dev.api.novu.co
-          REACT_APP_WS_URL: https://dev.ws.novu.co
-          REACT_APP_WEBHOOK_URL: https://dev.webhook.novu.co
-          REACT_APP_WIDGET_EMBED_PATH: https://dev.embed.novu.co/embed.umd.min.js
+          REACT_APP_API_URL: https://staging.api.novu.co
+          REACT_APP_WS_URL: https://staging.ws.novu.co
+          REACT_APP_WEBHOOK_URL: https://staging.webhook.novu.co
+          REACT_APP_WIDGET_EMBED_PATH: https://staging.embed.novu.co/embed.umd.min.js
           REACT_APP_NOVU_APP_ID: ${{ secrets.NOVU_APP_ID }}
-          REACT_APP_SENTRY_DSN: https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907
-          REACT_APP_ENVIRONMENT: dev
-          REACT_APP_MAIL_SERVER_DOMAIN: dev.inbound-mail.novu.co
+          REACT_APP_SENTRY_DSN: https://8054d521cff2e73d32b8edfe4793d05c@o1161119.ingest.sentry.io/4505829158158336
+          REACT_APP_ENVIRONMENT: staging
+          REACT_APP_MAIL_SERVER_DOMAIN: staging.inbound-mail.novu.co
           REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID: ${{ secrets.DEV_LAUNCH_DARKLY_CLIENT_SIDE_ID }}
         working-directory: apps/web
         run: npm run build
 
-      - name: Deploy WEB to DEV
+      - name: Deploy WEB to Staging
         uses: nwtgck/actions-netlify@v1.2
         with:
           publish-dir: apps/web/build
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          deploy-message: Dev deployment
+          deploy-message: Staging deployment
           production-deploy: true
           alias: dev
-          github-deployment-environment: development
+          github-deployment-environment: staging
           github-deployment-description: Web Deployment
           netlify-config-path: apps/web/netlify.toml
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: 45396446-dc86-4ad6-81e4-86d3eb78d06f
+          NETLIFY_SITE_ID: 8010b875-9f6e-4bcc-ba67-c090c1cc2e05
         timeout-minutes: 1
 
       - name: Setup Depot

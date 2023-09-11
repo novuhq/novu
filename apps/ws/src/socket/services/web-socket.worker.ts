@@ -19,13 +19,16 @@ export class WebSocketWorker extends WebSocketsWorkerService implements INovuWor
   private getWorkerProcessor() {
     return async (job) => {
       return new Promise((resolve, reject) => {
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        const _this = this;
+
         nr.startBackgroundTransaction(
           ObservabilityBackgroundTransactionEnum.WS_SOCKET_QUEUE,
           'WS Service',
           function () {
             const transaction = nr.getTransaction();
 
-            this.externalServicesRoute
+            _this.externalServicesRoute
               .execute(
                 ExternalServicesRouteCommand.create({
                   userId: job.data.userId,
@@ -56,7 +59,7 @@ export class WebSocketWorker extends WebSocketsWorkerService implements INovuWor
   private getWorkerOpts() {
     return {
       lockDuration: 90000,
-      concurrency: 200,
+      concurrency: 100,
     };
   }
 }

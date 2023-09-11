@@ -245,9 +245,10 @@ jobs:
     steps:
       - run: echo ${{ matrix.projectName }}
       - uses: actions/checkout@v3
+      - uses: ./.github/actions/checkout-submodules
         with:
-          submodules: true
-          token: ${{ secrets.SUBMODULES_TOKEN }}
+          submodule_token: ${{ secrets.SUBMODULES_TOKEN }}
+          submodule_branch: "next"
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/setup-redis-cluster
       - uses: mansagroup/nrwl-nx-action@v3
@@ -266,7 +267,6 @@ jobs:
       - uses: mansagroup/nrwl-nx-action@v3
         name: Running the E2E tests
         env:
-          IN_MEMORY_CLUSTER_MODE_ENABLED: true
           LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
           GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
           GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
@@ -296,7 +296,7 @@ jobs:
       - uses: ./.github/actions/setup-project
         with:
           # Don't run redis and etc... for other unit tests
-          slim: ${{ !contains(matrix.projectName, '@novu/api') && !contains(matrix.projectName, '@novu/worker') && !contains(matrix.projectName, '@novu/ws') }}
+          slim: ${{ !contains(matrix.projectName, '@novu/api') && !contains(matrix.projectName, '@novu/worker') && !contains(matrix.projectName, '@novu/ws') && !contains(matrix.projectName, '@novu/inbound-mail')}}
       - uses: ./.github/actions/setup-redis-cluster
       - uses: mansagroup/nrwl-nx-action@v3
         name: Lint and build and test
