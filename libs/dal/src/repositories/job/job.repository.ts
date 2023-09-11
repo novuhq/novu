@@ -246,7 +246,9 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
         }
       );
 
-      updatedJobs.push(childJob);
+      if (childJob) {
+        updatedJobs.push(childJob);
+      }
     }
 
     return updatedJobs;
