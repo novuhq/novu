@@ -1162,84 +1162,6 @@ importers:
       stylelint-scss: 4.6.0_stylelint@15.10.1
       typescript: 4.9.5
 
-  enterprise/packages/auth:
-    specifiers:
-      '@nestjs/common': '>=9.3.x'
-      '@nestjs/jwt': '>=9'
-      '@nestjs/passport': 9.0.3
-      '@novu/application-generic': ^0.19.0
-      '@novu/dal': ^0.19.0
-      '@novu/shared': ^0.19.0
-      '@types/chai': ^4.2.11
-      '@types/mocha': ^8.0.1
-      '@types/node': ^14.6.0
-      '@types/sinon': ^9.0.0
-      chai: ^4.2.0
-      cross-env: ^7.0.3
-      mocha: ^8.1.1
-      nodemon: ^2.0.3
-      passport: 0.6.0
-      passport-google-oauth: ^2.0.0
-      passport-oauth2: ^1.6.1
-      sinon: ^9.2.4
-      ts-node: ~10.9.1
-      typescript: 4.9.5
-    dependencies:
-      '@nestjs/common': 10.2.2_atc7tu2sld2m3nk4hmwkqn6qde
-      '@nestjs/jwt': 10.1.0_@nestjs+common@10.2.2
-      '@nestjs/passport': 9.0.3_kn4ljbedllcoqpuu4ifhphsdsu
-      '@novu/application-generic': link:../../../packages/application-generic
-      '@novu/dal': link:../../../libs/dal
-      '@novu/shared': link:../../../libs/shared
-      passport: 0.6.0
-      passport-google-oauth: 2.0.0
-      passport-oauth2: 1.7.0
-    devDependencies:
-      '@types/chai': 4.3.4
-      '@types/mocha': 8.2.3
-      '@types/node': 14.18.42
-      '@types/sinon': 9.0.11
-      chai: 4.3.7
-      cross-env: 7.0.3
-      mocha: 8.4.0
-      nodemon: 2.0.22
-      sinon: 9.2.4
-      ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
-      typescript: 4.9.5
-
-  enterprise/packages/digest-schedule:
-    specifiers:
-      '@novu/shared': ^0.19.0
-      '@types/chai': ^4.2.11
-      '@types/mocha': ^8.0.1
-      '@types/node': ^14.6.0
-      '@types/sinon': ^9.0.0
-      chai: ^4.2.0
-      cross-env: ^7.0.3
-      date-fns: ^2.29.2
-      mocha: ^8.1.1
-      nodemon: ^2.0.3
-      rrule: ^2.7.2
-      sinon: ^9.2.4
-      ts-node: ~10.9.1
-      typescript: 4.9.5
-    dependencies:
-      '@novu/shared': link:../../../libs/shared
-      date-fns: 2.29.3
-      rrule: 2.7.2
-    devDependencies:
-      '@types/chai': 4.3.4
-      '@types/mocha': 8.2.3
-      '@types/node': 14.18.42
-      '@types/sinon': 9.0.11
-      chai: 4.3.7
-      cross-env: 7.0.3
-      mocha: 8.4.0
-      nodemon: 2.0.22
-      sinon: 9.2.4
-      ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
-      typescript: 4.9.5
-
   libs/dal:
     specifiers:
       '@aws-sdk/client-s3': ^3.382.0
@@ -16153,26 +16075,6 @@ packages:
       - webpack-cli
     dev: true
 
-  /@nestjs/common/10.2.2_atc7tu2sld2m3nk4hmwkqn6qde:
-    resolution: {integrity: sha512-TCOJK2K4FDT3GxFfURjngnjBewS/hizKNFSLBXtX4TTQm0dVQOtESnnVdP14sEiPM6suuWlrGnXW9UDqItGWiQ==}
-    peerDependencies:
-      class-transformer: '*'
-      class-validator: '*'
-      reflect-metadata: ^0.1.12
-      rxjs: ^7.1.0
-    peerDependenciesMeta:
-      class-transformer:
-        optional: true
-      class-validator:
-        optional: true
-    dependencies:
-      iterare: 1.2.1
-      reflect-metadata: 0.1.13
-      rxjs: 7.8.1
-      tslib: 2.6.2
-      uid: 2.0.2
-    dev: false
-
   /@nestjs/common/10.2.2_j3td4gnlgk75ora6o6suo62byy:
     resolution: {integrity: sha512-TCOJK2K4FDT3GxFfURjngnjBewS/hizKNFSLBXtX4TTQm0dVQOtESnnVdP14sEiPM6suuWlrGnXW9UDqItGWiQ==}
     peerDependencies:
@@ -16397,16 +16299,6 @@ packages:
       passport: ^0.4.0 || ^0.5.0 || ^0.6.0
     dependencies:
       '@nestjs/common': 10.2.2_j3td4gnlgk75ora6o6suo62byy
-      passport: 0.6.0
-    dev: false
-
-  /@nestjs/passport/9.0.3_kn4ljbedllcoqpuu4ifhphsdsu:
-    resolution: {integrity: sha512-HplSJaimEAz1IOZEu+pdJHHJhQyBOPAYWXYHfAPQvRqWtw4FJF1VXl1Qtk9dcXQX1eKytDtH+qBzNQc19GWNEg==}
-    peerDependencies:
-      '@nestjs/common': ^8.0.0 || ^9.0.0
-      passport: ^0.4.0 || ^0.5.0 || ^0.6.0
-    dependencies:
-      '@nestjs/common': 10.2.2_atc7tu2sld2m3nk4hmwkqn6qde
       passport: 0.6.0
     dev: false
 
@@ -42277,41 +42169,11 @@ packages:
       passport-oauth2: 1.7.0
     dev: false
 
-  /passport-google-oauth/2.0.0:
-    resolution: {integrity: sha512-JKxZpBx6wBQXX1/a1s7VmdBgwOugohH+IxCy84aPTZNq/iIPX6u7Mqov1zY7MKRz3niFPol0KJz8zPLBoHKtYA==}
-    engines: {node: '>= 0.4.0'}
-    dependencies:
-      passport-google-oauth1: 1.0.0
-      passport-google-oauth20: 2.0.0
-    dev: false
-
-  /passport-google-oauth1/1.0.0:
-    resolution: {integrity: sha512-qpCEhuflJgYrdg5zZIpAq/K3gTqa1CtHjbubsEsidIdpBPLkEVq6tB1I8kBNcH89RdSiYbnKpCBXAZXX/dtx1Q==}
-    dependencies:
-      passport-oauth1: 1.3.0
-    dev: false
-
-  /passport-google-oauth20/2.0.0:
-    resolution: {integrity: sha512-KSk6IJ15RoxuGq7D1UKK/8qKhNfzbLeLrG3gkLZ7p4A6DBCcv7xpyQwuXtWdpyR0+E0mwkpjY1VfPOhxQrKzdQ==}
-    engines: {node: '>= 0.4.0'}
-    dependencies:
-      passport-oauth2: 1.7.0
-    dev: false
-
   /passport-jwt/4.0.1:
     resolution: {integrity: sha512-UCKMDYhNuGOBE9/9Ycuoyh7vP6jpeTp/+sfMJl7nLff/t6dps+iaeE0hhNkKN8/HZHcJ7lCdOyDxHdDoxoSvdQ==}
     dependencies:
       jsonwebtoken: 9.0.0
       passport-strategy: 1.0.0
-    dev: false
-
-  /passport-oauth1/1.3.0:
-    resolution: {integrity: sha512-8T/nX4gwKTw0PjxP1xfD0QhrydQNakzeOpZ6M5Uqdgz9/a/Ag62RmJxnZQ4LkbdXGrRehQHIAHNAu11rCP46Sw==}
-    engines: {node: '>= 0.4.0'}
-    dependencies:
-      oauth: 0.9.15
-      passport-strategy: 1.0.0
-      utils-merge: 1.0.1
     dev: false
 
   /passport-oauth2/1.7.0:

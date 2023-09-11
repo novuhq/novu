@@ -71,4 +71,26 @@ export class MessagesController {
       })
     );
   }
+
+  @Delete('/:messageId')
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  @ApiResponse(DeleteMessageResponseDto)
+  @ApiOperation({
+    summary: 'Delete message',
+    description: 'Deletes a message entity from the Novu platform',
+  })
+  @ApiParam({ name: 'messageId', type: String, required: true })
+  async deleteMessagesByTransactionId(
+    @UserSession() user: IJwtPayload,
+    @Param() { messageId }: DeleteMessageParams
+  ): Promise<DeleteMessageResponseDto> {
+    return await this.removeMessage.execute(
+      RemoveMessageCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        messageId,
+      })
+    );
+  }
 }
