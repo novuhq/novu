@@ -405,6 +405,70 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
     expect(data.active).to.equal(true);
   });
 
+  it('should not set the primary if there is only Novu active integration', async function () {
+    await integrationRepository.deleteMany({
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+    });
+
+    const novuEmail = await integrationRepository.create({
+      name: 'novuEmail',
+      identifier: 'novuEmail',
+      providerId: EmailProviderIdEnum.Novu,
+      channel: ChannelTypeEnum.EMAIL,
+      active: true,
+      primary: true,
+      priority: 1,
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+    });
+
+    const integration = await integrationRepository.create({
+      name: 'integration',
+      identifier: 'integration',
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      active: false,
+      primary: false,
+      priority: 0,
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+    });
+
+    const payload = {
+      active: true,
+      check: false,
+    };
+
+    const {
+      body: { data },
+    } = await session.testAgent.put(`/v1/integrations/${integration._id}`).send(payload);
+
+    expect(data.priority).to.equal(1);
+    expect(data.primary).to.equal(false);
+    expect(data.active).to.equal(true);
+
+    const [first, second] = await integrationRepository.find(
+      {
+        _organizationId: session.organization._id,
+        _environmentId: session.environment._id,
+        channel: ChannelTypeEnum.EMAIL,
+      },
+      undefined,
+      { sort: { priority: -1 } }
+    );
+
+    expect(first._id).to.equal(novuEmail._id);
+    expect(first.primary).to.equal(true);
+    expect(first.active).to.equal(true);
+    expect(first.priority).to.equal(2);
+
+    expect(second._id).to.equal(integration._id);
+    expect(second.primary).to.equal(false);
+    expect(second.active).to.equal(true);
+    expect(second.priority).to.equal(1);
+  });
+
   it('should calculate the highest priority but not set primary if there is another active integration', async function () {
     await integrationRepository.deleteMany({
       _organizationId: session.organization._id,
