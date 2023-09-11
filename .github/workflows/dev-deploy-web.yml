@@ -20,6 +20,7 @@ jobs:
     uses: ./.github/workflows/reusable-web-e2e.yml
     with:
       submodules: true
+      submodule_branch: 'next'
     secrets: inherit
 
   # This workflow contains a single job called "build"

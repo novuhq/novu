@@ -114,7 +114,7 @@ export class CreateIntegration {
     if (command.providerId === SmsProviderIdEnum.Novu || command.providerId === EmailProviderIdEnum.Novu) {
       const count = await this.integrationRepository.count({
         _environmentId: command.environmentId,
-        providerId: EmailProviderIdEnum.Novu,
+        providerId: command.providerId,
         channel: command.channel,
       });
 
