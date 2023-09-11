@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { MessageRepository } from '@novu/dal';
 import { ChannelTypeEnum, WebSocketEventEnum } from '@novu/shared';
-import { BullMqService } from '@novu/application-generic';
 
 import { ExternalServicesRouteCommand } from './external-services-route.command';
 import { WSGateway } from '../../ws.gateway';
@@ -12,42 +11,41 @@ const LOG_CONTEXT = 'ExternalServicesRoute';
 
 @Injectable()
 export class ExternalServicesRoute {
-  public readonly bullMqService: BullMqService;
+  constructor(private wsGateway: WSGateway, private messageRepository: MessageRepository) {}
 
-  constructor(private wsGateway: WSGateway, private messageRepository: MessageRepository) {
-    this.bullMqService = new BullMqService();
-  }
   public async execute(command: ExternalServicesRouteCommand) {
-    if (command.event === WebSocketEventEnum.UNSEEN) {
+    const isOnline = await this.connectionExist(command);
+    if (isOnline) {
+      if (command.event === WebSocketEventEnum.RECEIVED) {
+        await this.processReceivedEvent(command);
+      }
+
+      if (command.event === WebSocketEventEnum.UNSEEN) {
+        await this.sendUnseenCountChange(command);
+      }
+
+      if (command.event === WebSocketEventEnum.UNREAD) {
+        await this.sendUnreadCountChange(command);
+      }
+    }
+  }
+
+  private async processReceivedEvent(command: ExternalServicesRouteCommand): Promise<void> {
+    const { message, messageId } = command.payload || {};
+    // TODO: Retro-compatibility for a bit just in case stalled messages
+    if (message) {
+      Logger.verbose('Sending full message in the payload', LOG_CONTEXT);
+      await this.wsGateway.sendMessage(command.userId, command.event, command.payload);
+    } else if (messageId) {
+      Logger.verbose('Sending messageId in the payload, we need to retrieve the full message', LOG_CONTEXT);
+      const storedMessage = await this.messageRepository.findById(messageId);
+      await this.wsGateway.sendMessage(command.userId, command.event, { message: storedMessage });
+    }
+
+    // Only recalculate the counts if we send a messageId/message.
+    if (message || messageId) {
       await this.sendUnseenCountChange(command);
-
-      return;
-    }
-
-    if (command.event === WebSocketEventEnum.UNREAD) {
       await this.sendUnreadCountChange(command);
-
-      return;
-    }
-
-    if (command.event === WebSocketEventEnum.RECEIVED) {
-      // TODO: Retro-compatibility for a bit just in case stalled messages
-      if (command.payload?.message) {
-        Logger.verbose('Sending full message in the payload', LOG_CONTEXT);
-        await this.wsGateway.sendMessage(command.userId, command.event, command.payload);
-
-        return;
-      }
-
-      // Now we will only send the messageId in the event to reduce RAM consumption in-memory
-      const messageId = command.payload?.messageId;
-      if (messageId) {
-        Logger.verbose('Sending messageId in the payload, we need to retrieve the full message', LOG_CONTEXT);
-        const message = await this.messageRepository.findById(messageId);
-        await this.wsGateway.sendMessage(command.userId, command.event, { message });
-
-        return;
-      }
     }
   }
 
