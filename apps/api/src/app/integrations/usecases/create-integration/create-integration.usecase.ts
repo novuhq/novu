@@ -24,8 +24,6 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/deactivate-integration.usecase';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
-import { GetActiveIntegrations } from '../get-active-integration/get-active-integration.usecase';
-import { GetActiveIntegrationsCommand } from '../get-active-integration/get-active-integration.command';
 
 @Injectable()
 export class CreateIntegration {
@@ -36,8 +34,7 @@ export class CreateIntegration {
     private integrationRepository: IntegrationRepository,
     private deactivateSimilarChannelIntegrations: DeactivateSimilarChannelIntegrations,
     private analyticsService: AnalyticsService,
-    private getIsMultiProviderConfigurationEnabled: GetIsMultiProviderConfigurationEnabled,
-    private getActiveIntegrations: GetActiveIntegrations
+    private getIsMultiProviderConfigurationEnabled: GetIsMultiProviderConfigurationEnabled
   ) {}
 
   private async calculatePriorityAndPrimary(command: CreateIntegrationCommand) {
@@ -70,16 +67,13 @@ export class CreateIntegration {
       result.priority = highestPriorityIntegration ? highestPriorityIntegration.priority + 1 : 1;
     }
 
-    const activeIntegrations = await this.getActiveIntegrations.execute(
-      GetActiveIntegrationsCommand.create({
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        userId: command.userId,
-        filterByEnvironment: true,
-      })
-    );
+    const activeIntegrationsCount = await this.integrationRepository.countActiveIncludingNovu({
+      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
+      channel: command.channel,
+    });
 
-    if (activeIntegrations.length === 0) {
+    if (activeIntegrationsCount === 0) {
       result.primary = true;
     }
 
