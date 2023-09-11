@@ -56,6 +56,7 @@ export const PrimaryIconButton = ({
         position="bottom"
       >
         <ActionIcon
+          data-test-id="header-make-primary-btn"
           onClick={() => {
             if (conditions > 0) {
               setModalOpen(true);
@@ -72,6 +73,7 @@ export const PrimaryIconButton = ({
         </ActionIcon>
       </Tooltip>
       <Modal
+        data-test-id="remove-conditions-modal"
         opened={modalOpen}
         title={
           <Group spacing={8}>

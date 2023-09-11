@@ -30,6 +30,21 @@ describe('Integrations List Page', function () {
       .as('session');
   });
 
+  const interceptIntegrationRequests = () => {
+    cy.intercept('GET', '*/integrations', async () => {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }).as('getIntegrations');
+    cy.intercept('POST', '*/integrations', async () => {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }).as('createIntegration');
+    cy.intercept('*/environments').as('getEnvironments');
+
+    cy.visit('/integrations');
+
+    cy.wait('@getIntegrations');
+    cy.wait('@getEnvironments');
+  };
+
   const checkTableLoading = () => {
     cy.getByTestId('integration-name-cell-loading').should('have.length', 10).first().should('be.visible');
     cy.getByTestId('integration-provider-cell-loading').should('have.length', 10).first().should('be.visible');
@@ -46,6 +61,7 @@ describe('Integrations List Page', function () {
       channel,
       environment,
       status,
+      conditions,
     }: {
       name: string;
       isFree?: boolean;
@@ -53,6 +69,7 @@ describe('Integrations List Page', function () {
       channel: string;
       environment?: string;
       status: string;
+      conditions?: number;
     },
     nth: number
   ) => {
@@ -94,6 +111,14 @@ describe('Integrations List Page', function () {
         .getByTestId('integration-environment-cell')
         .should('be.visible')
         .contains(environment);
+    }
+    if (conditions) {
+      cy.get('@integrations-table')
+        .get('tr')
+        .eq(nth)
+        .getByTestId('integration-conditions-cell')
+        .should('be.visible')
+        .contains(conditions);
     }
 
     cy.get('@integrations-table')
@@ -398,7 +423,7 @@ describe('Integrations List Page', function () {
     cy.getByTestId('select-provider-sidebar-next').should('be.disabled').contains('Next');
   });
 
-  it('should show emply search results', () => {
+  it('should show empty search results', () => {
     cy.intercept('*/integrations', async () => {
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }).as('getIntegrations');
@@ -535,18 +560,7 @@ describe('Integrations List Page', function () {
   });
 
   it('should create a new mailjet integration', () => {
-    cy.intercept('GET', '*/integrations', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    }).as('getIntegrations');
-    cy.intercept('POST', '*/integrations', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    }).as('createIntegration');
-    cy.intercept('*/environments').as('getEnvironments');
-
-    cy.visit('/integrations');
-
-    cy.wait('@getIntegrations');
-    cy.wait('@getEnvironments');
+    interceptIntegrationRequests();
 
     cy.getByTestId('add-provider').should('be.enabled').click();
     cy.location('pathname').should('equal', '/integrations/create');
@@ -577,19 +591,138 @@ describe('Integrations List Page', function () {
     );
   });
 
+  it('should create a new mailjet integration with conditions', () => {
+    interceptIntegrationRequests();
+
+    cy.getByTestId('add-provider').should('be.enabled').click();
+    cy.location('pathname').should('equal', '/integrations/create');
+    cy.getByTestId('select-provider-sidebar').should('be.visible');
+
+    cy.getByTestId(`provider-${EmailProviderIdEnum.Mailjet}`).contains('Mailjet').click();
+    cy.getByTestId('select-provider-sidebar-next').should('not.be.disabled').contains('Next').click();
+
+    cy.location('pathname').should('equal', '/integrations/create/email/mailjet');
+    cy.getByTestId('provider-instance-name').clear().type('Mailjet Integration');
+    cy.getByTestId('add-conditions-btn').click();
+    cy.getByTestId('conditions-form-title').contains('Conditions for Mailjet Integration provider instance');
+    cy.getByTestId('add-new-condition').click();
+    cy.getByTestId('conditions-form-on').should('have.value', 'Tenant');
+    cy.getByTestId('conditions-form-key').should('have.value', 'Identifier');
+    cy.getByTestId('conditions-form-operator').should('have.value', 'Equal');
+    cy.getByTestId('conditions-form-value').type('tenant123');
+    cy.getByTestId('apply-conditions-btn').click();
+    cy.getByTestId('add-conditions-btn').contains('Edit conditions');
+
+    cy.getByTestId('create-provider-instance-sidebar-create').should('not.be.disabled').contains('Create').click();
+    cy.getByTestId('create-provider-instance-sidebar-create').should('be.disabled');
+
+    cy.wait('@createIntegration');
+
+    cy.getByTestId('update-provider-sidebar').should('be.visible');
+    cy.getByTestId('header-add-conditions-btn').contains('1').click();
+    cy.getByTestId('add-new-condition').click();
+    cy.getByTestId('conditions-form-value').last().type('tenant456');
+    cy.getByTestId('apply-conditions-btn').click();
+    cy.getByTestId('header-add-conditions-btn').contains('2');
+    cy.location('pathname').should('contain', '/integrations/');
+
+    checkTableRow(
+      {
+        name: 'Mailjet Integration',
+        provider: 'Mailjet',
+        channel: 'Email',
+        environment: 'Development',
+        status: 'Disabled',
+        conditions: 1,
+      },
+      6
+    );
+  });
+
+  it('should remove as primary when adding conditions', () => {
+    interceptIntegrationRequests();
+
+    cy.getByTestId('integrations-list-table')
+      .getByTestId('integration-name-cell')
+      .contains('SendGrid')
+      .getByTestId('integration-name-cell-primary')
+      .should('be.visible');
+
+    clickOnListRow('SendGrid');
+    cy.getByTestId('header-add-conditions-btn').click();
+
+    cy.getByTestId('remove-primary-flag-modal').should('be.visible');
+    cy.getByTestId('remove-primary-flag-modal').contains('Primary flag will be removed');
+    cy.getByTestId('remove-primary-flag-modal').contains(
+      'Adding conditions to the primary provider instance removes its primary status when a user applies changes by'
+    );
+    cy.getByTestId('remove-primary-flag-modal').find('button').contains('Cancel').should('be.visible');
+    cy.getByTestId('remove-primary-flag-modal').find('button').contains('Got it').should('be.visible').click();
+
+    cy.getByTestId('conditions-form-title').contains('Conditions for SendGrid provider instance');
+    cy.getByTestId('add-new-condition').click();
+    cy.getByTestId('conditions-form-on').should('have.value', 'Tenant');
+    cy.getByTestId('conditions-form-key').should('have.value', 'Identifier');
+    cy.getByTestId('conditions-form-operator').should('have.value', 'Equal');
+    cy.getByTestId('conditions-form-value').type('tenant123');
+
+    cy.getByTestId('apply-conditions-btn').click();
+    cy.getByTestId('provider-instance-name').first().clear().type('SendGrid test');
+
+    cy.getByTestId('from').type('info@novu.co');
+    cy.getByTestId('senderName').type('Novu');
+
+    cy.getByTestId('update-provider-sidebar-update').should('not.be.disabled').contains('Update').click();
+    cy.get('.mantine-Modal-modal button').contains('Make primary');
+
+    cy.get('.mantine-Modal-close').click();
+  });
+
+  it('should remove conditions when set to primary', () => {
+    interceptIntegrationRequests();
+
+    cy.getByTestId('add-provider').should('be.enabled').click();
+    cy.location('pathname').should('equal', '/integrations/create');
+    cy.getByTestId('select-provider-sidebar').should('be.visible');
+
+    cy.getByTestId(`provider-${EmailProviderIdEnum.Mailjet}`).contains('Mailjet').click();
+    cy.getByTestId('select-provider-sidebar-next').should('not.be.disabled').contains('Next').click();
+
+    cy.location('pathname').should('equal', '/integrations/create/email/mailjet');
+    cy.getByTestId('provider-instance-name').clear().type('Mailjet Integration');
+    cy.getByTestId('add-conditions-btn').click();
+    cy.getByTestId('conditions-form-title').contains('Conditions for Mailjet Integration provider instance');
+    cy.getByTestId('add-new-condition').click();
+
+    cy.getByTestId('conditions-form-value').type('tenant123');
+    cy.getByTestId('apply-conditions-btn').click();
+
+    cy.getByTestId('create-provider-instance-sidebar-create').should('not.be.disabled').contains('Create').click();
+
+    cy.wait('@createIntegration');
+
+    cy.getByTestId('update-provider-sidebar').should('be.visible');
+    cy.getByTestId('header-add-conditions-btn').contains('1');
+
+    cy.getByTestId('header-make-primary-btn').click();
+
+    cy.getByTestId('remove-conditions-modal').should('be.visible');
+    cy.getByTestId('remove-conditions-modal').contains('Conditions will be removed');
+    cy.getByTestId('remove-conditions-modal').contains('Marking this instance as primary will remove all conditions');
+    cy.getByTestId('remove-conditions-modal').find('button').contains('Cancel').should('be.visible');
+    cy.getByTestId('remove-conditions-modal').find('button').contains('Remove conditions').should('be.visible').click();
+
+    cy.getByTestId('header-make-primary-btn').should('not.exist');
+
+    cy.getByTestId('integrations-list-table')
+      .getByTestId('integration-name-cell')
+      .contains('Mailjet Integration')
+      .getByTestId('integration-name-cell-primary')
+      .should('be.visible');
+  });
+
   it('should update the mailjet integration', () => {
-    cy.intercept('GET', '*/integrations', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    }).as('getIntegrations');
-    cy.intercept('POST', '*/integrations', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    }).as('createIntegration');
-    cy.intercept('*/environments').as('getEnvironments');
-
-    cy.visit('/integrations');
-
-    cy.wait('@getIntegrations');
-    cy.wait('@getEnvironments');
+    interceptIntegrationRequests();
 
     cy.getByTestId('add-provider').should('be.enabled').click();
     cy.location('pathname').should('equal', '/integrations/create');
@@ -641,18 +774,7 @@ describe('Integrations List Page', function () {
   });
 
   it('should update the mailjet integration from the list', () => {
-    cy.intercept('GET', '*/integrations', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    }).as('getIntegrations');
-    cy.intercept('POST', '*/integrations', async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    }).as('createIntegration');
-    cy.intercept('*/environments').as('getEnvironments');
-
-    cy.visit('/integrations');
-
-    cy.wait('@getIntegrations');
-    cy.wait('@getEnvironments');
+    interceptIntegrationRequests();
 
     cy.getByTestId('add-provider').should('be.enabled').click();
     cy.location('pathname').should('equal', '/integrations/create');

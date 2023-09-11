@@ -110,7 +110,7 @@ export function Conditions({
     >
       {fields.map((item, index) => {
         return (
-          <div key={item.id}>
+          <div data-test-id="conditions-form-item" key={item.id}>
             <Grid columns={20} align="center" gutter="xs">
               <Grid.Col span={2}>
                 {index > 0 ? (
@@ -146,12 +146,7 @@ export function Conditions({
                   defaultValue={FilterPartTypeEnum.TENANT}
                   render={({ field }) => {
                     return (
-                      <Select
-                        placeholder="On"
-                        data={FilterPartTypeList}
-                        {...field}
-                        data-test-id="conditions-form-on-dropdown"
-                      />
+                      <Select placeholder="On" data={FilterPartTypeList} {...field} data-test-id="conditions-form-on" />
                     );
                   }}
                 />
@@ -162,17 +157,25 @@ export function Conditions({
                   withArrow={false}
                   offset={0}
                   control={
-                    <ActionIcon variant={'transparent'}>
+                    <ActionIcon data-test-id="conditions-row-btn" variant={'transparent'}>
                       <DotsHorizontal color={colors.B60} />
                     </ActionIcon>
                   }
                   middlewares={{ flip: false, shift: false }}
                   position="bottom-end"
                 >
-                  <Dropdown.Item onClick={() => handleDuplicate(index)} icon={<Duplicate />}>
+                  <Dropdown.Item
+                    data-test-id="conditions-row-duplicate"
+                    onClick={() => handleDuplicate(index)}
+                    icon={<Duplicate />}
+                  >
                     Duplicate
                   </Dropdown.Item>
-                  <Dropdown.Item onClick={() => handleDelete(index)} icon={<Trash />}>
+                  <Dropdown.Item
+                    data-test-id="conditions-row-delete"
+                    onClick={() => handleDelete(index)}
+                    icon={<Trash />}
+                  >
                     Delete
                   </Dropdown.Item>
                 </Dropdown>
@@ -194,6 +197,7 @@ export function Conditions({
             });
           }}
           icon={<ConditionPlus />}
+          data-test-id="add-new-condition"
         >
           Add condition
         </Button>
@@ -224,7 +228,7 @@ function EqualityForm({ control, index }: { control: Control<IConditionsForm>; i
                   { value: 'identifier', label: 'Identifier' },
                 ]}
                 {...field}
-                data-test-id="conditions-form-field-dropdown"
+                data-test-id="conditions-form-key"
               />
             );
           }}
@@ -247,7 +251,7 @@ function EqualityForm({ control, index }: { control: Control<IConditionsForm>; i
                   { value: 'IS_DEFINED', label: 'Is defined' },
                 ]}
                 {...field}
-                data-test-id="conditions-form-operator-dropdown"
+                data-test-id="conditions-form-operator"
               />
             );
           }}
@@ -268,16 +272,23 @@ function EqualityForm({ control, index }: { control: Control<IConditionsForm>; i
                   value={field.value as string}
                   rightSection={
                     <When truthy={!!fieldState.error}>
-                      <Tooltip error position="top" offset={15} label={'Value is missing'}>
+                      <Tooltip
+                        opened
+                        data-test-id="conditions-form-tooltip-error"
+                        error
+                        position="top"
+                        offset={15}
+                        label={'Value is missing'}
+                      >
                         <span>
-                          <ErrorIcon color={colors.error} />
+                          <ErrorIcon data-test-id="conditions-form-value-error" color={colors.error} />
                         </span>
                       </Tooltip>
                     </When>
                   }
                   error={!!fieldState.error}
                   placeholder="Value"
-                  data-test-id="conditions-form-value-input"
+                  data-test-id="conditions-form-value"
                 />
               );
             }}
