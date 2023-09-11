@@ -590,7 +590,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     expect(jobCount).to.equal(15);
   });
 
-  it.skip('should create multiple digests based on different nested digestKeys', async function () {
+  it('should create multiple digests based on different nested digestKeys', async function () {
     const postId = MessageRepository.createObjectId();
     const postId2 = MessageRepository.createObjectId();
 
@@ -631,7 +631,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     });
     await triggerEvent({
       customVar: 'digest key1 repeat',
-      nested: { postId: postId },
+      nested: { postId },
     });
 
     await session.awaitRunningJobs(template?._id, false, 5);
@@ -643,10 +643,17 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     });
 
     expect(digests.length).to.eql(5);
-    expect(digests[0].payload.nested?.postId).to.equal(undefined);
-    expect(digests[1].payload.nested.postId).not.to.equal(digests[2].payload.nested.postId);
-    expect(digests[3].payload.nested?.postId).to.equal(undefined);
-    expect(digests[1].payload.nested.postId).to.equal(digests[4].payload.nested.postId);
+
+    const noPostIdJobs = digests.filter((job) => !job.payload.nested);
+    expect(noPostIdJobs.length).to.equal(2);
+
+    const postId1Jobs = digests.filter((job) => job.payload.nested?.postId === postId);
+    const postId2Jobs = digests.filter((job) => job.payload.nested?.postId === postId2);
+    const postId1MergedJobs = postId1Jobs.filter((job) => job.status === JobStatusEnum.MERGED);
+
+    expect(postId1MergedJobs.length).to.equal(1);
+    expect(postId1Jobs.length).to.equal(2);
+    expect(postId2Jobs.length).to.equal(1);
 
     await session.awaitRunningJobs(template?._id, false, 0);
 
@@ -656,10 +663,13 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       _subscriberId: subscriber._id,
     });
 
-    expect(messages.length).to.eql(5);
-    expect(messages[1].content).to.include(digests[1].payload.nested.postId);
-    expect(messages[2].content).to.include(digests[2].payload.nested.postId);
-    expect(messages[4].content).to.include(digests[4].payload.nested.postId);
+    expect(messages.length).to.eql(3);
+    const postId1Content = messages.find((message) => (message.content as string).includes(postId));
+    const postId2Content = messages.find((message) => (message.content as string).includes(postId2));
+    const noDigestKeyContent = messages.find((message) => message.content === 'Hello world ');
+    expect(postId1Content).to.be.ok;
+    expect(postId2Content).to.be.ok;
+    expect(noDigestKeyContent).to.be.ok;
 
     const jobCount = await jobRepository.count({
       _environmentId: session.environment._id,
@@ -721,7 +731,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     await triggerEvent({
       customVar: 'sixth',
     });
-    await session.awaitRunningJobs(template?._id, false, 3);
+    await session.awaitRunningJobs(template?._id, false, 0);
 
     const digests = await jobRepository.find({
       _environmentId: session.environment._id,
