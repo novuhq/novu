@@ -20,10 +20,17 @@ export class JobsService {
   public async awaitParsingEvents() {
     let waitingCount = 0;
     let parsedEvents = 0;
+
+    let waitingCountJobs = 0;
+    let activeCountJobs = 0;
+
     do {
       waitingCount = await this.workflowQueue.getWaitingCount();
       parsedEvents = await this.workflowQueue.getActiveCount();
-    } while (parsedEvents > 0 || waitingCount > 0);
+
+      waitingCountJobs = await this.standardQueue.getWaitingCount();
+      activeCountJobs = await this.standardQueue.getActiveCount();
+    } while (parsedEvents > 0 || waitingCount > 0 || waitingCountJobs > 0 || activeCountJobs > 0);
   }
 
   public async awaitRunningJobs({
