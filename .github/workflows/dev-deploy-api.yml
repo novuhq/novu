@@ -88,13 +88,11 @@ jobs:
         name: ['novu/api-ee', 'novu/api']
     steps:
       - uses: actions/checkout@v3
-      - name: Checkout submodule
-        uses: actions/checkout@v3
+      - uses: ./.github/actions/checkout-submodules
         with:
-          token: ${{ secrets.SUBMODULES_TOKEN }}
-          repository: novuhq/packages-enterprise
-          path: enterprise/packages
-          ref: "next"
+          enabled: ${{ contains (matrix.name,'ee') }}
+          submodule_token: ${{ secrets.SUBMODULES_TOKEN }}
+          submodule_branch: "next"
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/docker/build-api
         id: docker_build
