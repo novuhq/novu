@@ -18,6 +18,7 @@ import {
   termiiConfig,
   africasTalkingConfig,
   sendchampConfig,
+  zenviaConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -178,5 +179,13 @@ export const smsProviders: IProviderConfig[] = [
     credentials: sendchampConfig,
     docReference: 'https://sendchamp.readme.io/reference/api-structure',
     logoFileName: { light: 'sendchamp.svg', dark: 'sendchamp.svg' },
+  },
+  {
+    id: SmsProviderIdEnum.Zenvia,
+    displayName: 'Zenvia',
+    channel: ChannelTypeEnum.SMS,
+    credentials: zenviaConfig,
+    docReference: 'https://zenvia.github.io/zenvia-openapi-spec/v2/',
+    logoFileName: { light: 'zenvia.svg', dark: 'zenvia.svg' },
   },
 ];

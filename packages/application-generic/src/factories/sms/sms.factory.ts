@@ -18,6 +18,7 @@ import {
   SmsCentralHandler,
   AfricasTalkingSmsHandler,
   SendchampSmsHandler,
+  ZenviaHandler,
   NovuSmsHandler,
 } from './handlers';
 
@@ -40,6 +41,7 @@ export class SmsFactory implements ISmsFactory {
     new SmsCentralHandler(),
     new AfricasTalkingSmsHandler(),
     new SendchampSmsHandler(),
+    new ZenviaHandler(),
     new NovuSmsHandler(),
   ];
 

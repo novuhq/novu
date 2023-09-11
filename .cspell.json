@@ -502,7 +502,9 @@
     "errmsg",
     "springboot",
     "errmsg",
-    "shelljs"
+    "shelljs",
+    "zenvia",
+    "Zenvia"
   ],
   "flagWords": [],
   "patterns": [
