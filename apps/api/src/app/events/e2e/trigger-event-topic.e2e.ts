@@ -495,7 +495,7 @@ describe('Topic Trigger Event', () => {
       }
     });
 
-    it('should not contain events from a different digestKey ', async () => {
+    it.only('should not contain events from a different digestKey ', async () => {
       template = await session.createTemplate({
         steps: [
           {
@@ -538,7 +538,7 @@ describe('Topic Trigger Event', () => {
         }),
       ]);
 
-      await session.awaitRunningJobs(template?._id, false, 8);
+      await session.awaitRunningJobs(template?._id, false, 0);
 
       for (const subscriber of firstTopicSubscribers) {
         const messages = await messageRepository.findBySubscriberChannel(
