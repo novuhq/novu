@@ -505,6 +505,50 @@ describe('Create Integration - /integration (POST)', function () {
     expect(second.active).to.equal(false);
     expect(second.priority).to.equal(0);
   });
+
+  it('should not allow creating the same novu provider on same environment twice', async function () {
+    const inAppPayload = {
+      name: InAppProviderIdEnum.Novu,
+      providerId: InAppProviderIdEnum.Novu,
+      channel: ChannelTypeEnum.IN_APP,
+      credentials: {},
+      active: true,
+      check: false,
+    };
+
+    const inAppResult = await session.testAgent.post('/v1/integrations').send(inAppPayload);
+
+    expect(inAppResult.body.statusCode).to.equal(400);
+    expect(inAppResult.body.message).to.equal('One environment can only have one In app provider');
+
+    const emailPayload = {
+      name: EmailProviderIdEnum.Novu,
+      providerId: EmailProviderIdEnum.Novu,
+      channel: ChannelTypeEnum.EMAIL,
+      credentials: {},
+      active: true,
+      check: false,
+    };
+
+    const emailResult = await session.testAgent.post('/v1/integrations').send(emailPayload);
+
+    expect(emailResult.body.statusCode).to.equal(409);
+    expect(emailResult.body.message).to.equal('Integration with novu provider for email channel already exists');
+
+    const smsPayload = {
+      name: SmsProviderIdEnum.Novu,
+      providerId: SmsProviderIdEnum.Novu,
+      channel: ChannelTypeEnum.SMS,
+      credentials: {},
+      active: true,
+      check: false,
+    };
+
+    const smsResult = await session.testAgent.post('/v1/integrations').send(smsPayload);
+
+    expect(smsResult.body.statusCode).to.equal(409);
+    expect(smsResult.body.message).to.equal('Integration with novu provider for sms channel already exists');
+  });
 });
 
 async function insertIntegrationTwice(

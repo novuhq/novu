@@ -52,7 +52,9 @@ export const getElasticacheClusterProviderConfig =
     };
 
     const host = redisClusterConfig.host;
-    const port = Number(redisClusterConfig.port);
+    const port = redisClusterConfig.port
+      ? Number(redisClusterConfig.port)
+      : undefined;
     const password = redisClusterConfig.password;
     const connectTimeout = redisClusterConfig.connectTimeout
       ? Number(redisClusterConfig.connectTimeout)

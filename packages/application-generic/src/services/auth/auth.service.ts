@@ -1,5 +1,12 @@
-import { forwardRef, Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+
 import {
   EnvironmentRepository,
   MemberEntity,
@@ -12,26 +19,35 @@ import {
   EnvironmentEntity,
   IApiKey,
 } from '@novu/dal';
-import { AuthProviderEnum, IJwtPayload, ISubscriberJwt, MemberRoleEnum, SignUpOriginEnum } from '@novu/shared';
 import {
-  AnalyticsService,
-  Instrument,
-  PinoLogger,
-  CachedEntity,
+  AuthProviderEnum,
+  IJwtPayload,
+  ISubscriberJwt,
+  MemberRoleEnum,
+  SignUpOriginEnum,
+} from '@novu/shared';
+
+import { PinoLogger } from '../../logging';
+import { AnalyticsService } from '../analytics.service';
+import { ApiException } from '../../utils/exceptions';
+import { Instrument } from '../../instrumentation';
+import { CreateUser, CreateUserCommand } from '../../usecases/create-user';
+import {
+  SwitchEnvironment,
+  SwitchEnvironmentCommand,
+} from '../../usecases/switch-environment';
+import {
+  SwitchOrganization,
+  SwitchOrganizationCommand,
+} from '../../usecases/switch-organization';
+import {
+  buildAuthServiceKey,
   buildEnvironmentByApiKey,
   buildSubscriberKey,
   buildUserKey,
-  buildAuthServiceKey,
-} from '@novu/application-generic';
-
-import { CreateUserCommand } from '../../user/usecases/create-user/create-user.dto';
-import { CreateUser } from '../../user/usecases/create-user/create-user.usecase';
-import { SwitchEnvironmentCommand } from '../usecases/switch-environment/switch-environment.command';
-import { SwitchEnvironment } from '../usecases/switch-environment/switch-environment.usecase';
-import { SwitchOrganization } from '../usecases/switch-organization/switch-organization.usecase';
-import { SwitchOrganizationCommand } from '../usecases/switch-organization/switch-organization.command';
-import { normalizeEmail } from '../../shared/helpers/email-normalization.service';
-import { ApiException } from '../../shared/exceptions/api.exception';
+  CachedEntity,
+} from '../cache';
+import { normalizeEmail } from '../../utils/email-normalization';
 
 @Injectable()
 export class AuthService {
@@ -45,15 +61,23 @@ export class AuthService {
     private organizationRepository: OrganizationRepository,
     private environmentRepository: EnvironmentRepository,
     private memberRepository: MemberRepository,
-    @Inject(forwardRef(() => SwitchOrganization)) private switchOrganizationUsecase: SwitchOrganization,
-    @Inject(forwardRef(() => SwitchEnvironment)) private switchEnvironmentUsecase: SwitchEnvironment
+    @Inject(forwardRef(() => SwitchOrganization))
+    private switchOrganizationUsecase: SwitchOrganization,
+    @Inject(forwardRef(() => SwitchEnvironment))
+    private switchEnvironmentUsecase: SwitchEnvironment
   ) {}
 
   async authenticate(
     authProvider: AuthProviderEnum,
     accessToken: string,
     refreshToken: string,
-    profile: { name: string; login: string; email: string; avatar_url: string; id: string },
+    profile: {
+      name: string;
+      login: string;
+      email: string;
+      avatar_url: string;
+      id: string;
+    },
     distinctId: string,
     origin?: SignUpOriginEnum
   ) {
@@ -62,12 +86,19 @@ export class AuthService {
     let newUser = false;
 
     if (!user) {
+      const firstName = profile.name
+        ? profile.name.split(' ').slice(0, -1).join(' ')
+        : profile.login;
+      const lastName = profile.name
+        ? profile.name.split(' ').slice(-1).join(' ')
+        : null;
+
       user = await this.createUserUsecase.execute(
         CreateUserCommand.create({
           picture: profile.avatar_url,
           email,
-          lastName: profile.name ? profile.name.split(' ').slice(-1).join(' ') : null,
-          firstName: profile.name ? profile.name.split(' ').slice(0, -1).join(' ') : profile.login,
+          firstName,
+          lastName,
           auth: {
             username: profile.login,
             profileId: profile.id,
@@ -88,27 +119,11 @@ export class AuthService {
         origin: origin,
       });
     } else {
-      if (authProvider === AuthProviderEnum.GITHUB) {
-        const withoutUsername = user.tokens.find(
-          (i) => i.provider === AuthProviderEnum.GITHUB && !i.username && String(i.providerId) === String(profile.id)
-        );
-
-        if (withoutUsername) {
-          await this.userRepository.update(
-            {
-              _id: user._id,
-              'tokens.providerId': profile.id,
-            },
-            {
-              $set: {
-                'tokens.$.username': profile.login,
-              },
-            }
-          );
-
-          user = await this.userRepository.findById(user._id);
-          if (!user) throw new ApiException('User not found');
-        }
+      if (
+        authProvider === AuthProviderEnum.GITHUB ||
+        authProvider === AuthProviderEnum.GOOGLE
+      ) {
+        user = await this.updateUserUsername(user, profile, authProvider);
       }
 
       this.analyticsService.track('[Authentication] - Login', user._id, {
@@ -124,6 +139,44 @@ export class AuthService {
     };
   }
 
+  private async updateUserUsername(
+    user: UserEntity,
+    profile: {
+      name: string;
+      login: string;
+      email: string;
+      avatar_url: string;
+      id: string;
+    },
+    authProvider: AuthProviderEnum
+  ) {
+    const withoutUsername = user.tokens.find(
+      (token) =>
+        token.provider === authProvider &&
+        !token.username &&
+        String(token.providerId) === String(profile.id)
+    );
+
+    if (withoutUsername) {
+      await this.userRepository.update(
+        {
+          _id: user._id,
+          'tokens.providerId': profile.id,
+        },
+        {
+          $set: {
+            'tokens.$.username': profile.login,
+          },
+        }
+      );
+
+      user = await this.userRepository.findById(user._id);
+      if (!user) throw new ApiException('User not found');
+    }
+
+    return user;
+  }
+
   async refreshToken(userId: string) {
     const user = await this.getUser({ _id: userId });
     if (!user) throw new UnauthorizedException('User not found');
@@ -132,13 +185,21 @@ export class AuthService {
   }
 
   @Instrument()
-  async isAuthenticatedForOrganization(userId: string, organizationId: string): Promise<boolean> {
-    return !!(await this.memberRepository.isMemberOfOrganization(organizationId, userId));
+  async isAuthenticatedForOrganization(
+    userId: string,
+    organizationId: string
+  ): Promise<boolean> {
+    return !!(await this.memberRepository.isMemberOfOrganization(
+      organizationId,
+      userId
+    ));
   }
 
   @Instrument()
   async apiKeyAuthenticate(apiKey: string) {
-    const { environment, user, key, error } = await this.getUserData({ apiKey });
+    const { environment, user, key, error } = await this.getUserData({
+      apiKey,
+    });
 
     if (error) throw new UnauthorizedException(error);
     if (!environment) throw new UnauthorizedException('API Key not found');
@@ -152,10 +213,17 @@ export class AuthService {
 
     if (!key) throw new UnauthorizedException('API Key not found');
 
-    return await this.getApiSignedToken(user, environment._organizationId, environment._id, key.key);
+    return await this.getApiSignedToken(
+      user,
+      environment._organizationId,
+      environment._id,
+      key.key
+    );
   }
 
-  async getSubscriberWidgetToken(subscriber: SubscriberEntity): Promise<string> {
+  async getSubscriberWidgetToken(
+    subscriber: SubscriberEntity
+  ): Promise<string> {
     return this.jwtService.sign(
       {
         _id: subscriber._id,
@@ -201,20 +269,26 @@ export class AuthService {
   }
 
   async generateUserToken(user: UserEntity) {
-    const userActiveOrganizations = await this.organizationRepository.findUserActiveOrganizations(user._id);
+    const userActiveOrganizations =
+      await this.organizationRepository.findUserActiveOrganizations(user._id);
 
     if (userActiveOrganizations && userActiveOrganizations.length) {
       const organizationToSwitch = userActiveOrganizations[0];
 
-      const userActiveProjects = await this.environmentRepository.findOrganizationEnvironments(
-        organizationToSwitch._id
-      );
+      const userActiveProjects =
+        await this.environmentRepository.findOrganizationEnvironments(
+          organizationToSwitch._id
+        );
       let environmentToSwitch = userActiveProjects[0];
 
-      const reduceEnvsToOnlyDevelopment = (prev, current) => (current.name === 'Development' ? current : prev);
+      const reduceEnvsToOnlyDevelopment = (prev, current) =>
+        current.name === 'Development' ? current : prev;
 
       if (userActiveProjects.length > 1) {
-        environmentToSwitch = userActiveProjects.reduce(reduceEnvsToOnlyDevelopment, environmentToSwitch);
+        environmentToSwitch = userActiveProjects.reduce(
+          reduceEnvsToOnlyDevelopment,
+          environmentToSwitch
+        );
       }
 
       if (environmentToSwitch) {
@@ -278,14 +352,21 @@ export class AuthService {
 
     if (!user) throw new UnauthorizedException('User not found');
     if (payload.organizationId && !isMember) {
-      throw new UnauthorizedException(`No authorized for organization ${payload.organizationId}`);
+      throw new UnauthorizedException(
+        `No authorized for organization ${payload.organizationId}`
+      );
     }
 
     return user;
   }
 
-  async validateSubscriber(payload: ISubscriberJwt): Promise<SubscriberEntity | null> {
-    return await this.getSubscriber({ _environmentId: payload.environmentId, subscriberId: payload.subscriberId });
+  async validateSubscriber(
+    payload: ISubscriberJwt
+  ): Promise<SubscriberEntity | null> {
+    return await this.getSubscriber({
+      _environmentId: payload.environmentId,
+      subscriberId: payload.subscriberId,
+    });
   }
 
   async decodeJwt<T>(token: string) {
@@ -334,8 +415,17 @@ export class AuthService {
         subscriberId: command.subscriberId,
       }),
   })
-  private async getSubscriber({ subscriberId, _environmentId }: { subscriberId: string; _environmentId: string }) {
-    return await this.subscriberRepository.findBySubscriberId(_environmentId, subscriberId);
+  private async getSubscriber({
+    subscriberId,
+    _environmentId,
+  }: {
+    subscriberId: string;
+    _environmentId: string;
+  }): Promise<SubscriberEntity> {
+    return await this.subscriberRepository.findBySubscriberId(
+      _environmentId,
+      subscriberId
+    );
   }
 
   @CachedEntity({
@@ -344,11 +434,12 @@ export class AuthService {
         apiKey: apiKey,
       }),
   })
-  private async getUserData({
-    apiKey,
-  }: {
-    apiKey: string;
-  }): Promise<{ environment?: EnvironmentEntity; user?: UserEntity; key?: IApiKey; error?: string }> {
+  private async getUserData({ apiKey }: { apiKey: string }): Promise<{
+    environment?: EnvironmentEntity;
+    user?: UserEntity;
+    key?: IApiKey;
+    error?: string;
+  }> {
     const environment = await this.environmentRepository.findByApiKey(apiKey);
     if (!environment) {
       return { error: 'API Key not found' };

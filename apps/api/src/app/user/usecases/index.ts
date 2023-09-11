@@ -1,4 +1,5 @@
-import { CreateUser } from './create-user/create-user.usecase';
+import { CreateUser } from '@novu/application-generic';
+
 import { GetMyProfileUsecase } from './get-my-profile/get-my-profile.usecase';
 import { UpdateOnBoardingUsecase } from './update-on-boarding/update-on-boarding.usecase';
 import { UpdateOnBoardingTourUsecase } from './update-on-boarding-tour/update-on-boarding-tour.usecase';
