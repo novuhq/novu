@@ -9,6 +9,7 @@ const ConditionCellBase = ({ row: { original } }: IExtendedCellProps<ITableInteg
   if (!original.conditions || original.conditions.length < 1) {
     return (
       <div
+        data-test-id="integration-conditions-cell"
         style={{
           color: colorScheme === 'dark' ? colors.B40 : colors.B80,
         }}
@@ -20,6 +21,7 @@ const ConditionCellBase = ({ row: { original } }: IExtendedCellProps<ITableInteg
 
   return (
     <Group
+      data-test-id="integration-conditions-cell"
       style={{
         padding: '4px 8px',
         textAlign: 'center',

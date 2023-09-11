@@ -93,7 +93,7 @@ export const IntegrationNameCell = ({ row: { original }, isLoading }: IExtendedC
         target={
           <IconHolder onMouseEnter={() => setPopoverOpened(true)} onMouseLeave={() => setPopoverOpened(false)}>
             <Image src={original.logoFileName[`${colorScheme}`]} alt={original.name} />
-            {original.primary && <Star />}
+            {original.primary && <Star data-test-id="integration-name-cell-primary" />}
           </IconHolder>
         }
       />

@@ -53,6 +53,7 @@ export const ConditionIconButton = ({
         position="bottom"
       >
         <ActionIcon
+          data-test-id="header-add-conditions-btn"
           onClick={() => {
             if (primary && conditions === 0) {
               setModalOpen(true);
@@ -78,6 +79,7 @@ export const ConditionIconButton = ({
       </Tooltip>
       <Modal
         opened={modalOpen}
+        data-test-id="remove-primary-flag-modal"
         title={
           <Group spacing={8}>
             <Warning color="#EAA900" />

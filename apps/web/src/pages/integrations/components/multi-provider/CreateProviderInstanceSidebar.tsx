@@ -196,7 +196,7 @@ export function CreateProviderInstanceSidebar({
             }}
           />
           <Group mt={-10} spacing={12} align="start" noWrap ml="auto">
-            <ConditionIconButton onClick={openConditionsForm} />
+            <ConditionIconButton data-test-id="add-conditions-icon-btn" onClick={openConditionsForm} />
           </Group>
         </Group>
       }
@@ -285,6 +285,7 @@ export function CreateProviderInstanceSidebar({
         <Group mt={16} position="left">
           <Button
             variant="outline"
+            data-test-id="add-conditions-btn"
             onClick={openConditionsForm}
             icon={
               <>
