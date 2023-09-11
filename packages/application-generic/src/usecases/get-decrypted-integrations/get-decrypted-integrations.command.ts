@@ -18,10 +18,6 @@ export class GetDecryptedIntegrationsCommand extends EnvironmentWithUserCommand 
 
   @IsOptional()
   providerId?: ProvidersIdEnum;
-
-  @IsBoolean()
-  @IsOptional()
-  filterByEnvironment?: boolean;
 }
 
 export class GetEnvironmentDecryptedIntegrationsCommand extends EnvironmentWithUserCommand {

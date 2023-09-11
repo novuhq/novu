@@ -63,15 +63,6 @@ export class UpdateIntegration {
       result.priority = highestPriorityIntegration ? highestPriorityIntegration.priority + 1 : 1;
     }
 
-    const activeIntegrationsCount = await this.integrationRepository.countActiveIncludingNovu({
-      _organizationId: existingIntegration._organizationId,
-      _environmentId: existingIntegration._environmentId,
-      channel: existingIntegration.channel,
-    });
-    if (activeIntegrationsCount === 0 && isChannelSupportsPrimary) {
-      result.primary = true;
-    }
-
     return result;
   }
 
