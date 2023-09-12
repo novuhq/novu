@@ -35,6 +35,11 @@ jobs:
     needs: test_inbound_mail
     timeout-minutes: 80
     environment: Development
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
     if: "!contains(github.event.head_commit.message, 'ci skip')"
     strategy:
       matrix:
