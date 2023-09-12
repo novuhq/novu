@@ -71,8 +71,6 @@ export class AddDigestJob {
 
     // We merged the digest job as there was an existing delayed digest job for this subscriber and template in the same time frame
     if (matched > 0 && modified === 0) {
-      await this.digestMergedExecutionDetails(job);
-
       await this.jobRepository.update(
         {
           _environmentId: job._environmentId,
@@ -89,6 +87,8 @@ export class AddDigestJob {
         job,
         JobStatusEnum.MERGED
       );
+
+      await this.digestMergedExecutionDetails(job);
 
       return undefined;
     }
