@@ -12,7 +12,6 @@ import { StepTypeEnum } from '@novu/shared';
 import { When } from '../../../../components/utils/When';
 import { FilterModal } from '../../filter/FilterModal';
 import { useState } from 'react';
-import { Filter } from '../../../../design-system/icons/actions/Filter';
 import { FilterGradient } from '../../../../design-system/icons/gradient/FilterGradient';
 import { FilterOutlined } from '../../../../design-system/icons/gradient/FilterOutlined';
 
@@ -69,7 +68,7 @@ export function StepSettings({ index }: { index: number }) {
             {filters?.length} filter{filters && filters?.length < 2 ? '' : 's'}
           </When>
           <When truthy={filters && filters?.length === 0}>
-            <Filter
+            <FilterOutlined
               style={{
                 marginRight: '7px',
               }}
