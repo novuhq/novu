@@ -186,6 +186,6 @@ export const smsProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.SMS,
     credentials: zenviaConfig,
     docReference: 'https://zenvia.github.io/zenvia-openapi-spec/v2/',
-    logoFileName: { light: 'zenvia.svg', dark: 'zenvia.svg' },
+    logoFileName: { light: 'zenvia.png', dark: 'zenvia.svg' },
   },
 ];
