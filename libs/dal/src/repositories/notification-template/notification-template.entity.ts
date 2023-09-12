@@ -85,7 +85,7 @@ export class NotificationTriggerEntity {
   reservedVariables?: ITriggerReservedVariable[];
 }
 
-export class NotificationStepEntity {
+export class StepVariantEntity {
   _id?: string;
 
   uuid?: string;
@@ -110,6 +110,10 @@ export class NotificationStepEntity {
   metadata?: IWorkflowStepMetadata;
 
   shouldStopOnFail?: boolean;
+}
+
+export class NotificationStepEntity extends StepVariantEntity {
+  variants?: StepVariantEntity[];
 }
 
 export class StepFilter {
