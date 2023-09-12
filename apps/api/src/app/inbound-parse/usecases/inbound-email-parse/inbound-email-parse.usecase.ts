@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InboundEmailParseCommand } from './inbound-email-parse.command';
 import {
   JobEntity,
@@ -12,6 +12,8 @@ import axios from 'axios';
 import { createHash } from '../../../shared/helpers/hmac.service';
 import { CompileTemplate, CompileTemplateCommand } from '@novu/application-generic';
 
+const LOG_CONTEXT = 'InboundEmailParse';
+
 @Injectable()
 export class InboundEmailParse {
   constructor(
@@ -21,43 +23,26 @@ export class InboundEmailParse {
   ) {}
 
   async execute(command: InboundEmailParseCommand) {
-    const { toDomain, toTransactionId, toEnvironmentId } = this.splitTo(command.to[0].address);
+    const { domain, transactionId, environmentId } = this.splitTo(command.to[0].address);
 
-    Logger.debug('toDomain in InboundEmailParse is: ' + toDomain);
-    Logger.debug('toTransactionId in InboundEmailParse is: ' + toTransactionId);
-
-    if (!toTransactionId) {
-      Logger.warn(`missing transactionId on address ${command.to[0].address}`);
-
-      return;
-    }
-
-    Logger.debug('toEnvironmentId in InboundEmailParse is: ' + toEnvironmentId);
-
-    if (!toEnvironmentId) {
-      Logger.warn(`missing environmentId on address ${command.to[0].address}`);
-
-      return;
-    }
+    Logger.log({ domain, transactionId, environmentId }, `Received new email to parse`, LOG_CONTEXT);
 
     const { template, notification, subscriber, environment, job, message } = await this.getEntities(
-      toTransactionId,
-      toEnvironmentId
+      transactionId,
+      environmentId
     );
 
-    if (toDomain !== environment?.dns?.inboundParseDomain) {
-      Logger.warn('to domain is not in environment white list');
-
-      return;
+    if (domain !== environment?.dns?.inboundParseDomain) {
+      this.throwMiddleware('Domain is not in environment white list');
     }
 
     const currentParseWebhook = template.steps.find((step) => step?._id?.toString() === job?.step?._id)?.replyCallback
       ?.url;
 
     if (!currentParseWebhook) {
-      Logger.warn(`missing parse webhook on template ${template._id} job ${job._id} transactionId ${toTransactionId}.`);
-
-      return;
+      this.throwMiddleware(
+        `Missing parse webhook on template ${template._id} job ${job._id} transactionId ${transactionId}.`
+      );
     }
 
     const compiledDomain = await this.compileTemplate.execute(
@@ -69,7 +54,7 @@ export class InboundEmailParse {
 
     const userPayload: IUserWebhookPayload = {
       hmac: createHash(environment?.apiKeys[0]?.key, subscriber.subscriberId),
-      transactionId: toTransactionId,
+      transactionId: transactionId,
       payload: job.payload,
       templateIdentifier: job.identifier,
       template,
@@ -84,11 +69,29 @@ export class InboundEmailParse {
   private splitTo(address: string) {
     const userNameDelimiter = '-nv-e=';
 
-    const [toUser, toDomain] = address.split('@');
-    const toMetaIds = toUser.split('+')[1];
-    const [toTransactionId, toEnvironmentId] = toMetaIds.split(userNameDelimiter);
+    const [user, domain] = address.split('@');
+    const toMetaIds = user.split('+')[1];
+    const [transactionId, environmentId] = toMetaIds.split(userNameDelimiter);
 
-    return { toDomain, toTransactionId, toEnvironmentId };
+    if (!transactionId) {
+      this.throwMiddleware(`Missing transactionId on address ${address}`);
+    }
+
+    if (!domain) {
+      this.throwMiddleware(`Missing domain  on address ${address}`);
+    }
+
+    if (!environmentId) {
+      this.throwMiddleware(`Missing environmentId on address ${address}`);
+    }
+
+    return { domain, transactionId, environmentId };
+  }
+
+  private throwMiddleware(error: string) {
+    Logger.error(error, LOG_CONTEXT);
+
+    throw new BadRequestException(error);
   }
 
   private async getEntities(transactionId: string, environmentId: string) {
