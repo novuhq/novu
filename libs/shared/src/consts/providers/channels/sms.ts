@@ -18,6 +18,7 @@ import {
   termiiConfig,
   africasTalkingConfig,
   sendchampConfig,
+  customSmsConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -178,5 +179,13 @@ export const smsProviders: IProviderConfig[] = [
     credentials: sendchampConfig,
     docReference: 'https://sendchamp.readme.io/reference/api-structure',
     logoFileName: { light: 'sendchamp.svg', dark: 'sendchamp.svg' },
+  },
+  {
+    id: SmsProviderIdEnum.CustomSms,
+    displayName: `Custom SMS`,
+    channel: ChannelTypeEnum.SMS,
+    credentials: customSmsConfig,
+    docReference: '',
+    logoFileName: { light: 'custom-sms.svg', dark: 'custom-sms.svg' },
   },
 ];

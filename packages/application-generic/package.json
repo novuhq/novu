@@ -35,10 +35,10 @@
   "peerDependencies": {
     "@nestjs/common": ">=10",
     "@nestjs/core": ">=10",
+    "@nestjs/jwt": "^10.1.0",
     "@nestjs/swagger": ">=6",
     "@nestjs/terminus": ">=10",
     "@nestjs/testing": ">=10",
-    "@nestjs/jwt": "^10.1.0",
     "newrelic": "^9",
     "reflect-metadata": "^0.1.13"
   },
@@ -51,6 +51,7 @@
     "@novu/apns": "^0.19.0",
     "@novu/burst-sms": "^0.19.0",
     "@novu/clickatell": "^0.19.0",
+    "@novu/custom-sms": "^0.19.0",
     "@novu/dal": "^0.19.0",
     "@novu/discord": "^0.19.0",
     "@novu/email-webhook": "^0.19.0",
