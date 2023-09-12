@@ -35,7 +35,10 @@ export function ExecutionDetailsModal({
   const status = useNotificationStatus(response?.data);
 
   useEffect(() => {
-    if (status && [JobStatusEnum.FAILED, JobStatusEnum.COMPLETED, JobStatusEnum.CANCELED].includes(status)) {
+    if (
+      status &&
+      [JobStatusEnum.FAILED, JobStatusEnum.COMPLETED, JobStatusEnum.CANCELED, JobStatusEnum.MERGED].includes(status)
+    ) {
       setShouldRefetch(false);
     }
   }, [status]);

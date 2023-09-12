@@ -6,4 +6,5 @@ export enum JobStatusEnum {
   FAILED = 'failed',
   DELAYED = 'delayed',
   CANCELED = 'canceled',
+  MERGED = 'merged',
 }
