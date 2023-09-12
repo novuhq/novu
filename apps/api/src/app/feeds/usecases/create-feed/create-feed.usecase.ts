@@ -10,7 +10,7 @@ export class CreateFeed {
 
   async execute(command: CreateFeedCommand): Promise<FeedEntity> {
     const feedExist = await this.feedRepository.findOne({
-      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
       identifier: command.name,
     });
 
