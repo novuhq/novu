@@ -39,28 +39,27 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
     maxWidth: 340,
     Cell: withCellLoading(({ row: { original } }) => (
       <Group spacing={8}>
-        <TooltipContainer>
-          <Tooltip
-            label="Some steps are missing a provider configuration or a primary provider, 
+        <Tooltip
+          error
+          label="Some steps are missing a provider configuration or a primary provider,
           causing some notifications to fail."
-            width={300}
-            multiline
-            disabled={
-              original.workflowIntegrationStatus?.hasActiveIntegrations &&
-              original.workflowIntegrationStatus?.hasPrimaryIntegrations !== false
-            }
-            position="top"
-          >
-            <div>
-              {original.workflowIntegrationStatus?.hasActiveIntegrations &&
-              original.workflowIntegrationStatus?.hasPrimaryIntegrations !== false ? (
-                <Bolt color={colors.B40} width="24px" height="24px" />
-              ) : (
-                <ProviderMissing width="24px" height="24px" />
-              )}
-            </div>
-          </Tooltip>
-        </TooltipContainer>
+          width={300}
+          multiline
+          disabled={
+            original.workflowIntegrationStatus?.hasActiveIntegrations &&
+            original.workflowIntegrationStatus?.hasPrimaryIntegrations !== false
+          }
+          position="top"
+        >
+          <div>
+            {original.workflowIntegrationStatus?.hasActiveIntegrations &&
+            original.workflowIntegrationStatus?.hasPrimaryIntegrations !== false ? (
+              <Bolt color={colors.B40} width="24px" height="24px" />
+            ) : (
+              <ProviderMissing width="24px" height="24px" />
+            )}
+          </div>
+        </Tooltip>
 
         <Tooltip label={original.name}>
           <div>
@@ -304,20 +303,5 @@ const StyledTag = styled(Tag)`
 
   span {
     max-width: 100%;
-  }
-`;
-
-const TooltipContainer = styled.div`
-  & .mantine-Tooltip-tooltip {
-    color: ${colors.error};
-    padding: 16px;
-    font-size: 14px;
-    font-weight: 400;
-    border-radius: 8px;
-    background: linear-gradient(0deg, rgba(229, 69, 69, 0.2) 0%, rgba(229, 69, 69, 0.2) 100%), #23232b !important;
-  }
-
-  & .mantine-Tooltip-arrow {
-    background: linear-gradient(0deg, rgba(229, 69, 69, 0.2) 0%, rgba(229, 69, 69, 0.2) 100%), #23232b !important;
   }
 `;

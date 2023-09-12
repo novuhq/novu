@@ -1,5 +1,9 @@
 import { Group } from '@mantine/core';
+import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
+import { useParams } from 'react-router-dom';
+
+import { StepTypeEnum } from '@novu/shared';
 
 import { Button } from '../../../../design-system';
 import type { IForm } from '../../components/formTypes';
@@ -7,13 +11,9 @@ import { StepActiveSwitch } from '../StepActiveSwitch';
 import { useEnvController } from '../../../../hooks';
 import { ShouldStopOnFailSwitch } from '../ShouldStopOnFailSwitch';
 import { ReplyCallback, ReplyCallbackSwitch } from '../ReplyCallback';
-import { useParams } from 'react-router-dom';
-import { StepTypeEnum } from '@novu/shared';
 import { When } from '../../../../components/utils/When';
 import { FilterModal } from '../../filter/FilterModal';
-import { useState } from 'react';
-import { Filter } from '../../../../design-system/icons/actions/Filter';
-import { FilterGradient } from '../../../../design-system/icons/gradient/FilterGradient';
+import { FilterGradient, Filter } from '../../../../design-system/icons';
 import { FilterOutlined } from '../../../../design-system/icons/gradient/FilterOutlined';
 
 export function StepSettings({ index }: { index: number }) {
