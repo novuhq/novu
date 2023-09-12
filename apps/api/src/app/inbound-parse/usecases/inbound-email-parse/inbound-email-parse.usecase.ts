@@ -47,7 +47,7 @@ export class InboundEmailParse {
 
     const compiledDomain = await this.compileTemplate.execute(
       CompileTemplateCommand.create({
-        template: currentParseWebhook,
+        template: currentParseWebhook as string,
         data: job.payload,
       })
     );
