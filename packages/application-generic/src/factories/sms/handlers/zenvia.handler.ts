@@ -1,6 +1,6 @@
+import { ZenviaProvider } from '@novu/zenvia';
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
 import { BaseSmsHandler } from './base.handler';
-import { ZenviaProvider } from '@novu/zenvia';
 
 export class ZenviaHandler extends BaseSmsHandler {
   constructor() {
