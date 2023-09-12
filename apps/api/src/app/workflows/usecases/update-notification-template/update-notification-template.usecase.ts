@@ -340,7 +340,7 @@ export class UpdateNotificationTemplate {
     return notificationTemplate;
   }
 
-  private getRemovedSteps(existingSteps: NotificationStepEntity[], newSteps: INotificationTemplateStep[]) {
+  private getRemovedSteps(existingSteps: NotificationStepEntity[], newSteps: NotificationStep[]) {
     const existingStepsIds = existingSteps.map((i) => i._templateId);
     const newStepsIds = newSteps.map((i) => i._templateId);
 
