@@ -69,6 +69,22 @@ export class AddJob {
         `Digest Amount does not exist on a digest job ${job._id}`,
         LOG_CONTEXT
       );
+      const nextJobToSchedule = await this.jobRepository.findOne({
+        _environmentId: command.environmentId,
+        _parentId: job._id,
+      });
+
+      if (!nextJobToSchedule) {
+        return;
+      }
+
+      await this.execute({
+        userId: job._userId,
+        environmentId: job._environmentId,
+        organizationId: command.organizationId,
+        jobId: nextJobToSchedule._id,
+        job: nextJobToSchedule,
+      });
 
       return;
     }

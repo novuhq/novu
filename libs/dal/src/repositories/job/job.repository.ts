@@ -1,5 +1,5 @@
 import { ProjectionType } from 'mongoose';
-import { StepTypeEnum } from '@novu/shared';
+import { DigestTypeEnum, IDigestRegularMetadata, StepTypeEnum } from '@novu/shared';
 
 import { BaseRepository } from '../base-repository';
 import { JobEntity, JobDBModel, JobStatusEnum } from './job.entity';
@@ -10,6 +10,7 @@ import { NotificationEntity } from '../notification';
 import { EnvironmentEntity } from '../environment';
 import type { EnforceEnvOrOrgIds, IUpdateResult } from '../../types';
 import { DalException } from '../../shared';
+import { sub, isBefore } from 'date-fns';
 
 type JobEntityPopulated = JobEntity & {
   template: NotificationTemplateEntity;
@@ -174,12 +175,29 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
   public async shouldDelayDigestJobOrMerge(
     job: JobEntity,
     digestKey?: string,
-    digestValue?: string | number
-  ): Promise<{ matched: number; modified: number }> {
+    digestValue?: string | number,
+    digestMeta?: IDigestRegularMetadata
+  ): Promise<{ matched: number; modified: number; execute: boolean }> {
     const execution = {
       matched: 0,
       modified: 0,
+      execute: true,
     };
+    const isBackoff = job.digest?.type === DigestTypeEnum.BACKOFF || (job.digest as IDigestRegularMetadata)?.backoff;
+    if (isBackoff) {
+      const trigger = await this.getTrigger(job, digestMeta, digestKey, digestValue);
+      if (!trigger) {
+        execution.execute = false;
+
+        return execution;
+      } else {
+        if (isBefore(new Date(job.createdAt), new Date(trigger.createdAt))) {
+          execution.execute = false;
+
+          return execution;
+        }
+      }
+    }
 
     const delayedDigestJobs = await this._model.find({
       status: JobStatusEnum.DELAYED,
@@ -212,6 +230,36 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     }
 
     return execution;
+  }
+
+  private getBackoffDate(metadata: IDigestRegularMetadata | undefined) {
+    return sub(new Date(), {
+      [metadata?.backoffUnit as string]: metadata?.backoffAmount,
+    });
+  }
+
+  private getTrigger(
+    job: JobEntity,
+    metadata?: IDigestRegularMetadata,
+    digestKey?: string,
+    digestValue?: string | number
+  ) {
+    const query = {
+      updatedAt: {
+        $gte: this.getBackoffDate(metadata),
+      },
+      _notificationId: {
+        $ne: job._notificationId,
+      },
+      _templateId: job._templateId,
+      status: JobStatusEnum.COMPLETED,
+      type: StepTypeEnum.TRIGGER,
+      _environmentId: job._environmentId,
+      _subscriberId: job._subscriberId,
+      ...(digestKey && { [`payload.${digestKey}`]: digestValue }),
+    };
+
+    return this.findOne(query);
   }
 
   async updateAllChildJobStatus(job: JobEntity, status: JobStatusEnum): Promise<JobEntity[]> {

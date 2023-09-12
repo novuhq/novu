@@ -7,4 +7,5 @@ export enum JobStatusEnum {
   DELAYED = 'delayed',
   CANCELED = 'canceled',
   MERGED = 'merged',
+  SKIPPED = 'skipped',
 }

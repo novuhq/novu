@@ -678,7 +678,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     expect(jobCount).to.equal(15);
   });
 
-  it.skip('should create multiple digest based on different digestKeys with backoff', async function () {
+  it('should create multiple digest based on different digestKeys with backoff', async function () {
     const postId = MessageRepository.createObjectId();
     const postId2 = MessageRepository.createObjectId();
 
@@ -688,11 +688,10 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
           type: StepTypeEnum.DIGEST,
           content: '',
           metadata: {
-            unit: DigestUnitEnum.MINUTES,
-            amount: 5,
+            unit: DigestUnitEnum.SECONDS,
+            amount: 2,
             digestKey: 'postId',
-            type: DigestTypeEnum.REGULAR,
-            backoff: true,
+            type: DigestTypeEnum.BACKOFF,
             backoffUnit: DigestUnitEnum.MINUTES,
             backoffAmount: 5,
           },
@@ -704,33 +703,18 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       ],
     });
 
-    await triggerEvent({
-      customVar: 'first',
-      postId,
-    });
+    await Promise.all([
+      triggerEvent({ customVar: 'first', postId }),
+      triggerEvent({ customVar: 'second', postId }),
+      triggerEvent({ customVar: 'third' }),
+      triggerEvent({ customVar: 'fourth', postId: postId2 }),
+      triggerEvent({ customVar: 'fifth', postId: postId2 }),
+      triggerEvent({ customVar: 'sixth' }),
+      triggerEvent({ customVar: 'seventh' }),
+      triggerEvent({ customVar: 'eight' }),
+      triggerEvent({ customVar: 'nineth', postId: postId2 }),
+    ]);
 
-    await triggerEvent({
-      customVar: 'second',
-      postId,
-    });
-
-    await triggerEvent({
-      customVar: 'third',
-    });
-
-    await triggerEvent({
-      customVar: 'fourth',
-      postId: postId2,
-    });
-
-    await triggerEvent({
-      customVar: 'fifth',
-      postId: postId2,
-    });
-
-    await triggerEvent({
-      customVar: 'sixth',
-    });
     await session.awaitRunningJobs(template?._id, false, 0);
 
     const digests = await jobRepository.find({
@@ -739,7 +723,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       type: StepTypeEnum.DIGEST,
     });
 
-    expect(digests.length).to.equal(3);
+    expect(digests.length).to.equal(6);
     expect(digests[0]?.payload.postId).not.to.equal(digests[1]?.payload.postId);
     expect(digests[2]?.payload.postId).to.equal(undefined);
 

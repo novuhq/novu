@@ -13,7 +13,6 @@ const LOG_CONTEXT = 'DigestFilterSteps';
 @Injectable()
 export class DigestFilterSteps {
   constructor(
-    private filterStepsBackoff: DigestFilterStepsBackoff,
     private filterStepsRegular: DigestFilterStepsRegular,
     private filterStepsTimed: DigestFilterStepsTimed
   ) {}
@@ -22,15 +21,16 @@ export class DigestFilterSteps {
     command: DigestFilterStepsCommand
   ): Promise<NotificationStepEntity[]> {
     const actions = {
-      [DigestTypeEnum.BACKOFF]: this.filterStepsBackoff,
+      [DigestTypeEnum.BACKOFF]: this.filterStepsRegular,
       [DigestTypeEnum.REGULAR]: this.filterStepsRegular,
       [DigestTypeEnum.TIMED]: this.filterStepsTimed,
     };
 
     let action = actions[command.type];
 
+    // Backwards compatability flag for digest, as it was moved to a type enum
     if (command.backoff) {
-      action = this.filterStepsBackoff;
+      action = this.filterStepsRegular;
     }
 
     const steps = await action.execute({

@@ -26,6 +26,7 @@ import { validateDigest } from './validation';
 interface IFindAndUpdateResponse {
   matched: number;
   modified: number;
+  execute: boolean;
 }
 
 type AddDigestJobResult = number | undefined;
@@ -63,11 +64,29 @@ export class AddDigestJob {
       digestKey
     );
 
-    const { matched, modified } = await this.shouldDelayDigestOrMergeWithLock(
-      job,
-      digestKey,
-      digestValue
-    );
+    const { matched, modified, execute } =
+      await this.shouldDelayDigestOrMergeWithLock(
+        job,
+        digestKey,
+        digestValue,
+        digestMeta
+      );
+
+    if (!execute) {
+      await this.jobRepository.update(
+        {
+          _environmentId: job._environmentId,
+          _id: job._id,
+        },
+        {
+          $set: {
+            status: JobStatusEnum.SKIPPED,
+          },
+        }
+      );
+
+      return undefined;
+    }
 
     // We merged the digest job as there was an existing delayed digest job for this subscriber and template in the same time frame
     if (matched > 0 && modified === 0) {
@@ -117,7 +136,8 @@ export class AddDigestJob {
   private async shouldDelayDigestOrMergeWithLock(
     job: JobEntity,
     digestKey?: string,
-    digestValue?: string | number
+    digestValue?: string | number,
+    digestMeta?: any
   ): Promise<IFindAndUpdateResponse> {
     const TTL = 1500;
     let resource = `environment:${job._environmentId}:template:${job._templateId}:subscriber:${job._subscriberId}`;
@@ -129,7 +149,8 @@ export class AddDigestJob {
       this.jobRepository.shouldDelayDigestJobOrMerge(
         job,
         digestKey,
-        digestValue
+        digestValue,
+        digestMeta
       );
 
     const result =
