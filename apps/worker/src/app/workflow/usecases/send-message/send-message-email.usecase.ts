@@ -539,6 +539,7 @@ export const createMailData = (options: IEmailOptions, overrides: Record<string,
     cc: overrides?.cc || [],
     bcc: overrides?.bcc || [],
     ...ipPoolName,
+    customData: overrides?.customData || {},
   };
 };
 
