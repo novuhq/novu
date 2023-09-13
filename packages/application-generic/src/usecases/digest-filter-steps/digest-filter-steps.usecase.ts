@@ -3,7 +3,6 @@ import { NotificationStepEntity } from '@novu/dal';
 import { DigestTypeEnum, StepTypeEnum } from '@novu/shared';
 
 import { DigestFilterStepsCommand } from './digest-filter-steps.command';
-import { DigestFilterStepsBackoff } from './digest-filter-steps-backoff.usecase';
 import { DigestFilterStepsRegular } from './digest-filter-steps-regular.usecase';
 import { DigestFilterStepsTimed } from './digest-filter-steps-timed.usecase';
 
@@ -20,18 +19,10 @@ export class DigestFilterSteps {
   public async execute(
     command: DigestFilterStepsCommand
   ): Promise<NotificationStepEntity[]> {
-    const actions = {
-      [DigestTypeEnum.BACKOFF]: this.filterStepsRegular,
-      [DigestTypeEnum.REGULAR]: this.filterStepsRegular,
-      [DigestTypeEnum.TIMED]: this.filterStepsTimed,
-    };
-
-    let action = actions[command.type];
-
-    // Backwards compatability flag for digest, as it was moved to a type enum
-    if (command.backoff) {
-      action = this.filterStepsRegular;
-    }
+    const action: DigestFilterStepsRegular | DigestFilterStepsTimed =
+      command.type === DigestTypeEnum.TIMED
+        ? this.filterStepsTimed
+        : this.filterStepsRegular;
 
     const steps = await action.execute({
       ...command,
