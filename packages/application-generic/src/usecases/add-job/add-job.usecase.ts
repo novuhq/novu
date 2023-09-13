@@ -62,13 +62,22 @@ export class AddJob {
 
     if (job.type === StepTypeEnum.DIGEST) {
       Logger.debug(`DigestAmount is: ${digestAmount}`, LOG_CONTEXT);
+
+      if (digestAmount === undefined) {
+        Logger.warn(
+          `Digest Amount does not exist on a digest job ${job._id}`,
+          LOG_CONTEXT
+        );
+
+        return;
+      }
     }
 
-    if (job.type === StepTypeEnum.DIGEST && digestAmount === undefined) {
-      Logger.warn(
-        `Digest Amount does not exist on a digest job ${job._id}`,
-        LOG_CONTEXT
-      );
+    if (
+      job.type === StepTypeEnum.DIGEST &&
+      digestAmount === ('skipped' as any)
+    ) {
+      console.log('Skipping by scheduling next job', job.type, digestAmount);
       const nextJobToSchedule = await this.jobRepository.findOne({
         _environmentId: command.environmentId,
         _parentId: job._id,
@@ -156,6 +165,7 @@ export class AddJob {
       'Going to add a minimal job in Standard Queue',
       LOG_CONTEXT
     );
+
     await this.standardQueueService.addMinimalJob(
       job._id,
       jobData,

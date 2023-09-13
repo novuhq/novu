@@ -85,7 +85,7 @@ export class AddDigestJob {
         }
       );
 
-      return undefined;
+      return 'skipped' as any;
     }
 
     // We merged the digest job as there was an existing delayed digest job for this subscriber and template in the same time frame

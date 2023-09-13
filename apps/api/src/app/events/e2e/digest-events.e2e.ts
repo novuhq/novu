@@ -498,8 +498,23 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     const mergedJob = jobs.find((elem) => elem.status === JobStatusEnum.MERGED);
     expect(mergedJob).to.ok;
 
-    expect(completedJob?.digest?.events?.length).to.equal(1);
-    expect(completedJob?.digest?.events?.[0].customVar).to.equal('digest');
+    const generatedMessageJob = await jobRepository.find({
+      _environmentId: session.environment._id,
+      _templateId: template._id,
+      _subscriberId: subscriber._id,
+      type: StepTypeEnum.IN_APP,
+    });
+
+    expect(generatedMessageJob.length).to.equal(3);
+
+    const mergedInApp = generatedMessageJob.find((elem) => elem.status === JobStatusEnum.MERGED);
+    expect(mergedInApp).to.ok;
+
+    const completedInApp = generatedMessageJob.filter((elem) => elem.status === JobStatusEnum.COMPLETED);
+    expect(completedInApp.length).to.equal(2);
+
+    expect(completedInApp.find((i) => i.digest?.events?.length === 2)).to.be.ok;
+    expect(completedInApp.find((i) => i.digest?.events?.length === 0)).to.be.ok;
   });
 
   it('should create multiple digest based on different digestKeys', async function () {
