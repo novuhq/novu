@@ -119,6 +119,7 @@ function initializeProvidersByIntegration(integrations: IntegrationEntity[]): II
         name: integrationItem?.name,
         identifier: integrationItem?.identifier,
         primary: integrationItem?.primary ?? false,
+        conditions: integrationItem?.conditions ?? [],
       };
     });
 }
