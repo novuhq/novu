@@ -31,10 +31,12 @@ export function StepSettings({ index }: { index: number }) {
     <>
       <Group position="apart" spacing={8}>
         <Group spacing={12}>
-          <StepActiveSwitch index={index} control={control} />
-          <ShouldStopOnFailSwitch index={index} control={control} />
-          <When truthy={channel === StepTypeEnum.EMAIL}>
-            <ReplyCallbackSwitch index={index} control={control} />
+          <When truthy={channel !== StepTypeEnum.DIGEST}>
+            <StepActiveSwitch index={index} control={control} />
+            <ShouldStopOnFailSwitch index={index} control={control} />
+            <When truthy={channel === StepTypeEnum.EMAIL}>
+              <ReplyCallbackSwitch index={index} control={control} />
+            </When>
           </When>
         </Group>
         <Button
