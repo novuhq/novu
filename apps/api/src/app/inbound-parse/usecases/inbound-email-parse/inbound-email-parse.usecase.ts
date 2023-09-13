@@ -25,7 +25,7 @@ export class InboundEmailParse {
   async execute(command: InboundEmailParseCommand) {
     const { domain, transactionId, environmentId } = this.splitTo(command.to[0].address);
 
-    Logger.log({ domain, transactionId, environmentId }, `Received new email to parse`, LOG_CONTEXT);
+    Logger.debug({ domain, transactionId, environmentId }, `Received new email to parse`, LOG_CONTEXT);
 
     const { template, notification, subscriber, environment, job, message } = await this.getEntities(
       transactionId,
