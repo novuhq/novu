@@ -81,9 +81,11 @@ export const IntegrationsList = ({
   return (
     <PageContainer title="Integrations">
       <PageHeader title="Integrations Store" />
-      <Container fluid sx={{ padding: '0 30px 8px 30px' }}>
-        <IntegrationsListToolbar onAddProviderClick={onAddProviderClick} areIntegrationsLoading={isLoading} />
-      </Container>
+      <When truthy={hasIntegrations}>
+        <Container fluid sx={{ padding: '0 30px 8px 30px' }}>
+          <IntegrationsListToolbar onAddProviderClick={onAddProviderClick} areIntegrationsLoading={isLoading} />
+        </Container>
+      </When>
       <When truthy={hasIntegrations || isLoading}>
         <Table
           onRowClick={onRowClickCallback}

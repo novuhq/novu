@@ -42,8 +42,8 @@ export function Cached(storeKeyPrefix: CacheKeyPrefixEnum) {
         }
       } catch (err) {
         Logger.error(
-          `An error has occurred when extracting "key: ${cacheKey}" in "method: ${methodName}"`,
           err,
+          `An error has occurred when extracting "key: ${cacheKey}" in "method: ${methodName}"`,
           LOG_CONTEXT
         );
       }
@@ -54,8 +54,8 @@ export function Cached(storeKeyPrefix: CacheKeyPrefixEnum) {
         await this.cacheService.set(cacheKey, JSON.stringify(response));
       } catch (err) {
         Logger.error(
-          `An error has occurred when inserting "key: ${cacheKey}" in "method: ${methodName}" with "value: ${response}"`,
           err,
+          `An error has occurred when inserting key: ${cacheKey} in "method: ${methodName}`,
           LOG_CONTEXT
         );
       }

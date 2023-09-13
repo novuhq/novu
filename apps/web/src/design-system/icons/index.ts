@@ -75,6 +75,12 @@ export { PushFilled } from './general/PushFilled';
 export { BoltFilled } from './general/BoltFilled';
 export { BoltOffFilled } from './general/BoltOffFilled';
 export { Question } from './general/Question';
+export { ProviderMissing } from './general/ProviderMissing';
+export { Calendar } from './general/Calendar';
+export { Translate } from './general/Translate';
+export { UserAccess } from './general/UserAccess';
+export { SSO } from './general/SSO';
+export { Cloud } from './general/Cloud';
 
 export { Copy } from './actions/Copy';
 export { Close } from './actions/Close';
@@ -128,3 +134,4 @@ export { DisconnectGradient } from './gradient/DisconnectGradient';
 export { BoltOutlinedGradient } from './gradient/BoltOutlinedGradient';
 
 export { GitHub } from './social/GitHub';
+export { Google } from './social/Google';

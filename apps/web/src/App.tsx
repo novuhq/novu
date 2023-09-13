@@ -55,6 +55,12 @@ import { SelectProviderPage } from './pages/integrations/components/SelectProvid
 import { TenantsPage } from './pages/tenants/TenantsPage';
 import { CreateTenantPage } from './pages/tenants/CreateTenantPage';
 import { UpdateTenantPage } from './pages/tenants/UpdateTenantPage';
+import { ApiKeysCard } from './pages/settings/tabs';
+import { EmailSettings } from './pages/settings/tabs/EmailSettings';
+import { ProductLead } from './components/utils/ProductLead';
+import { SSO, UserAccess } from './design-system/icons';
+import { Cloud } from './design-system/icons/general/Cloud';
+import { BrandingForm, LayoutsListPage } from './pages/brand/tabs';
 
 library.add(far, fas);
 
@@ -214,7 +220,46 @@ function App() {
                   <Route path={ROUTES.QUICK_START_SETUP_FRAMEWORK} element={<Setup />} />
                   <Route path={ROUTES.QUICK_START_SETUP_SUCCESS} element={<InAppSuccess />} />
                   <Route path={ROUTES.ACTIVITIES} element={<ActivitiesPage />} />
-                  <Route path={ROUTES.SETTINGS} element={<SettingsPage />} />
+                  <Route path={ROUTES.SETTINGS} element={<SettingsPage />}>
+                    <Route path="" element={<ApiKeysCard />} />
+                    <Route path="email" element={<EmailSettings />} />
+                    <Route
+                      path="permissions"
+                      element={
+                        <ProductLead
+                          icon={<UserAccess />}
+                          id="rbac-permissions"
+                          title="Role-based access control"
+                          text="Securely manage users' permissions to access system resources."
+                          closeable={false}
+                        />
+                      }
+                    />
+                    <Route
+                      path="sso"
+                      element={
+                        <ProductLead
+                          icon={<SSO />}
+                          id="sso-settings"
+                          title="Single Sign-On (SSO)"
+                          text="Simplify user authentication and enhance security."
+                          closeable={false}
+                        />
+                      }
+                    />
+                    <Route
+                      path="data-integrations"
+                      element={
+                        <ProductLead
+                          icon={<Cloud />}
+                          id="data-integrations-settings"
+                          title="Data Integrations"
+                          text="Share data with 3rd party services via Segment and Datadog integrations to monitor analytics."
+                          closeable={false}
+                        />
+                      }
+                    />
+                  </Route>
                   <Route path={ROUTES.INTEGRATIONS} element={<IntegrationsListPage />}>
                     <Route path="create" element={<SelectProviderPage />} />
                     <Route path="create/:channel/:providerId" element={<CreateProviderPage />} />
@@ -223,7 +268,10 @@ function App() {
                   <Route path={ROUTES.TEAM} element={<MembersInvitePage />} />
                   <Route path={ROUTES.CHANGES} element={<PromoteChangesPage />} />
                   <Route path={ROUTES.SUBSCRIBERS} element={<SubscribersList />} />
-                  <Route path="/brand" element={<BrandPage />} />
+                  <Route path={ROUTES.BRAND} element={<BrandPage />}>
+                    <Route path="" element={<BrandingForm />} />
+                    <Route path="layouts" element={<LayoutsListPage />} />
+                  </Route>
                 </Route>
               </Routes>
             </AuthProvider>

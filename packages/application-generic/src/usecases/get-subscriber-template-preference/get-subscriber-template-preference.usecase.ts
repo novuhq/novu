@@ -19,7 +19,7 @@ import {
 import { GetSubscriberTemplatePreferenceCommand } from './get-subscriber-template-preference.command';
 
 import { ApiException } from '../../utils/exceptions';
-import { CachedEntity, buildSubscriberKey } from '../../services';
+import { CachedEntity, buildSubscriberKey } from '../../services/cache';
 
 const PRIORITY_ORDER = [
   PreferenceOverrideSourceEnum.TEMPLATE,
@@ -251,6 +251,7 @@ function mapTemplateConfiguration(
   return {
     _id: template._id,
     name: template.name,
+    tags: template?.tags || [],
     critical: template.critical != null ? template.critical : true,
     ...(template.data ? { data: template.data } : {}),
   };

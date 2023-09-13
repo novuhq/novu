@@ -50,6 +50,26 @@ describe('test use of novus node package - Subscribers class', () => {
     );
   });
 
+  test('should create subscriber correctly', async () => {
+    mockedAxios.put.mockResolvedValue({});
+
+    await novu.subscribers.create('test-create-subscriber', {
+      phone: '8989898',
+      locale: 'en',
+      data: { custom1: 'custom value1', custom2: 'custom value2' },
+    });
+
+    expect(mockedAxios.post).toHaveBeenCalled();
+    expect(mockedAxios.post).toHaveBeenCalledWith(
+      `/subscribers/test-create-subscriber`,
+      {
+        phone: '8891736',
+        locale: 'en',
+        data: { value1: 'custom value1', value2: 'custom value2' },
+      }
+    );
+  });
+
   test('should delete subscriber correctly', async () => {
     mockedAxios.delete.mockResolvedValue({});
 

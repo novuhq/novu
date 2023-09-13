@@ -126,13 +126,11 @@ describe('Integrations List Page', function () {
     cy.visit('/integrations');
     cy.location('pathname').should('equal', '/integrations');
 
-    cy.getByTestId('add-provider').should('be.disabled').contains('Add a provider');
-    checkTableLoading();
-
     cy.wait('@getIntegrations');
     cy.wait('@getEnvironments');
 
-    cy.getByTestId('add-provider').should('be.enabled');
+    checkTableLoading();
+
     cy.getByTestId('no-integrations-placeholder').should('be.visible');
     cy.contains('Choose a channel you want to start sending notifications');
 
@@ -151,10 +149,10 @@ describe('Integrations List Page', function () {
     cy.visit('/integrations');
     cy.location('pathname').should('equal', '/integrations');
 
-    cy.getByTestId('add-provider').should('be.disabled').contains('Add a provider');
     checkTableLoading();
 
     cy.wait('@getIntegrations');
+    cy.getByTestId('add-provider').should('be.enabled').contains('Add a provider');
 
     checkTableRow(
       {
@@ -315,12 +313,10 @@ describe('Integrations List Page', function () {
       cy.visit('/integrations');
       cy.location('pathname').should('equal', '/integrations');
 
-      cy.getByTestId('add-provider').should('be.disabled').contains('Add a provider');
-
       cy.wait('@getIntegrations');
       cy.wait('@getEnvironments');
 
-      cy.getByTestId('add-provider').should('be.enabled').click();
+      cy.getByTestId('add-provider').should('be.enabled').contains('Add a provider').click();
 
       cy.location('pathname').should('equal', '/integrations/create');
       cy.getByTestId('select-provider-sidebar').should('be.visible').as('selectProviderSidebar');
@@ -1003,5 +999,44 @@ describe('Integrations List Page', function () {
     cy.getByTestId('limitbar-limit').then((el) => {
       expect(el.get(0).innerText).to.eq('20 messages per month');
     });
+  });
+
+  it('should not allow creating a novu provider for the same environment if it already exists', () => {
+    cy.intercept('*/integrations', async () => {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }).as('getIntegrations');
+    cy.intercept('*/environments').as('getEnvironments');
+
+    cy.visit('/integrations');
+
+    cy.wait('@getIntegrations');
+    cy.wait('@getEnvironments');
+
+    cy.getByTestId('add-provider').should('be.enabled').click();
+    cy.getByTestId('select-provider-sidebar').should('be.visible');
+
+    cy.getByTestId(`provider-${EmailProviderIdEnum.Novu}`).contains('Novu').click();
+
+    cy.window().then((win) => {
+      if (win.isDarkTheme) {
+        cy.getByTestId(`selected-provider-image-${EmailProviderIdEnum.Novu}`).should(
+          'have.attr',
+          'src',
+          `/static/images/providers/dark/square/${EmailProviderIdEnum.Novu}.svg`
+        );
+        return;
+      }
+
+      cy.getByTestId(`selected-provider-image-${EmailProviderIdEnum.Novu}`).should(
+        'have.attr',
+        'src',
+        `/static/images/providers/light/square/${EmailProviderIdEnum.Novu}.svg`
+      );
+    });
+    cy.getByTestId('selected-provider-name').should('be.visible').contains('Novu');
+
+    cy.getByTestId('select-provider-sidebar-next').should('not.be.disabled').contains('Next').click();
+    cy.getByTestId('novu-provider-error').contains('You can only create one Novu Email per environment.');
+    cy.getByTestId('create-provider-instance-sidebar-create').should('be.disabled');
   });
 });

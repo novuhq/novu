@@ -17,7 +17,7 @@ export class Events extends WithHttp implements IEvents {
       transactionId: data.transactionId,
       overrides: data.overrides || {},
       ...(data.actor && { actor: data.actor }),
-      data,
+      ...(data.tenant && { tenant: data.tenant }),
     });
   }
 
@@ -34,6 +34,7 @@ export class Events extends WithHttp implements IEvents {
         ...data?.payload,
       },
       overrides: data.overrides || {},
+      ...(data.tenant && { tenant: data.tenant }),
     });
   }
 
