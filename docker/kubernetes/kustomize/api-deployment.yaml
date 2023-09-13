@@ -24,7 +24,7 @@ spec:
         - envFrom:
             - configMapRef:
                 name: novu-env
-          image: ghcr.io/novuhq/novu/api:0.17.1
+          image: ghcr.io/novuhq/novu/api:0.18.0
           name: api
           ports:
             - containerPort: 3000
