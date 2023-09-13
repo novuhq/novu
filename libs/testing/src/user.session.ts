@@ -290,10 +290,6 @@ export class UserSession {
     });
   }
 
-  public async awaitParsingEvents() {
-    await this.jobsService.awaitParsingEvents();
-  }
-
   public async awaitRunningJobs(
     templateId?: string | string[],
     delay?: boolean,

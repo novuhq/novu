@@ -17,22 +17,6 @@ export class JobsService {
     this.standardQueue = new TestingQueueService(JobTopicNameEnum.STANDARD).queue;
   }
 
-  public async awaitParsingEvents() {
-    let waitingCount = 0;
-    let parsedEvents = 0;
-
-    let waitingStandardJobsCount = 0;
-    let activeStandardJobsCount = 0;
-
-    do {
-      waitingCount = await this.workflowQueue.getWaitingCount();
-      parsedEvents = await this.workflowQueue.getActiveCount();
-
-      waitingStandardJobsCount = await this.standardQueue.getWaitingCount();
-      activeStandardJobsCount = await this.standardQueue.getActiveCount();
-    } while (parsedEvents > 0 || waitingCount > 0 || waitingStandardJobsCount > 0 || activeStandardJobsCount > 0);
-  }
-
   public async awaitRunningJobs({
     templateId,
     organizationId,

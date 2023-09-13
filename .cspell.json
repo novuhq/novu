@@ -502,7 +502,8 @@
     "errmsg",
     "springboot",
     "errmsg",
-    "shelljs"
+    "shelljs",
+    "compatability"
   ],
   "flagWords": [],
   "patterns": [
