@@ -1,9 +1,9 @@
 import { Group } from '@mantine/core';
 import { useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
 
-import { StepTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 
 import { Button } from '../../../../design-system';
 import type { IForm } from '../../components/formTypes';
@@ -12,20 +12,27 @@ import { useEnvController } from '../../../../hooks';
 import { ShouldStopOnFailSwitch } from '../ShouldStopOnFailSwitch';
 import { ReplyCallback, ReplyCallbackSwitch } from '../ReplyCallback';
 import { When } from '../../../../components/utils/When';
-import { FilterModal } from '../../filter/FilterModal';
-import { FilterGradient, Filter } from '../../../../design-system/icons';
+import { Filter, FilterGradient } from '../../../../design-system/icons';
 import { FilterOutlined } from '../../../../design-system/icons/gradient/FilterOutlined';
+import { Conditions, ConditionsContextEnum } from '../../../../components/conditions';
+import { FilterModal } from '../../filter/FilterModal';
 
 export function StepSettings({ index }: { index: number }) {
   const { readonly } = useEnvController();
-  const { control, watch, setValue } = useFormContext<IForm>();
+  const { control, watch, setValue, getValues } = useFormContext<IForm>();
   const [filterOpen, setFilterOpen] = useState(false);
   const { channel } = useParams<{
     channel: StepTypeEnum;
   }>();
   const [filterHover, setFilterHover] = useState(false);
 
+  const steps = useWatch({ name: 'steps', control });
   const filters = watch(`steps.${index}.filters.0.children`);
+
+  const stepsBeforeSelectedStep = steps.slice(0, index);
+  const selectableSteps = stepsBeforeSelectedStep.filter((step: any) => {
+    return [ChannelTypeEnum.EMAIL, ChannelTypeEnum.IN_APP].includes(step.template.type);
+  });
 
   return (
     <>
@@ -68,7 +75,7 @@ export function StepSettings({ index }: { index: number }) {
             </When>
             {filters?.length} filter{filters && filters?.length < 2 ? '' : 's'}
           </When>
-          <When truthy={filters && filters?.length === 0}>
+          <When truthy={(filters && filters?.length === 0) || !filters}>
             <Filter
               style={{
                 marginRight: '7px',
@@ -79,8 +86,23 @@ export function StepSettings({ index }: { index: number }) {
         </Button>
       </Group>
       <ReplyCallback index={index} control={control} />
+
+      <Conditions
+        isOpened={filterOpen}
+        name={getValues('name')}
+        context={ConditionsContextEnum.WORKFLOW}
+        onClose={() => {
+          setFilterOpen(false);
+        }}
+        setConditions={(data) => {
+          setValue(`steps.${index}.filters`, data, { shouldDirty: true });
+        }}
+        conditions={getValues(`steps.${index}.filters`)}
+        selectableSteps={selectableSteps}
+      />
+
       <FilterModal
-        isOpen={filterOpen}
+        isOpen={false}
         cancel={() => {
           setFilterOpen(false);
         }}

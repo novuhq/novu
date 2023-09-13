@@ -46,7 +46,7 @@ const useDrawerStyles = createStyles((theme: MantineTheme) => {
   return {
     root: {
       position: 'absolute',
-      zIndex: 1,
+      // zIndex: 1,
     },
     drawer: {
       position: 'fixed',
@@ -123,6 +123,7 @@ export const Sidebar = ({
       withinPortal={false}
       trapFocus={false}
       data-expanded={isExpanded}
+      zIndex={999}
     >
       <Form name="form-name" noValidate onSubmit={onSubmit} data-test-id={dataTestId}>
         <HeaderHolder>

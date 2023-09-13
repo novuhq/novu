@@ -9,11 +9,26 @@ export interface IConditions {
 
 export enum ConditionsContextEnum {
   INTEGRATIONS = 'INTEGRATIONS',
+  WORKFLOW = 'WORKFLOW',
 }
 
 export const ConditionsContextFields = {
   [ConditionsContextEnum.INTEGRATIONS]: {
     label: 'provider instance',
     filterPartsList: [FilterPartTypeEnum.TENANT],
+    defaultFilter: FilterPartTypeEnum.TENANT,
+  },
+  [ConditionsContextEnum.WORKFLOW]: {
+    label: '',
+    filterPartsList: [
+      FilterPartTypeEnum.TENANT,
+      FilterPartTypeEnum.PAYLOAD,
+      FilterPartTypeEnum.SUBSCRIBER,
+      FilterPartTypeEnum.WEBHOOK,
+      FilterPartTypeEnum.IS_ONLINE,
+      FilterPartTypeEnum.IS_ONLINE_IN_LAST,
+      FilterPartTypeEnum.PREVIOUS_STEP,
+    ],
+    defaultFilter: FilterPartTypeEnum.PAYLOAD,
   },
 };
