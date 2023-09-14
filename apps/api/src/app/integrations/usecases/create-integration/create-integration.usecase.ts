@@ -69,6 +69,10 @@ export class CreateIntegration {
       result.priority = highestPriorityIntegration ? highestPriorityIntegration.priority + 1 : 1;
     }
 
+    if (command.conditions && command.conditions.length > 0) {
+      return result;
+    }
+
     const activeIntegrationsCount = await this.integrationRepository.countActiveExcludingNovu({
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
@@ -114,7 +118,7 @@ export class CreateIntegration {
     if (command.providerId === SmsProviderIdEnum.Novu || command.providerId === EmailProviderIdEnum.Novu) {
       const count = await this.integrationRepository.count({
         _environmentId: command.environmentId,
-        providerId: EmailProviderIdEnum.Novu,
+        providerId: command.providerId,
         channel: command.channel,
       });
 
@@ -176,6 +180,7 @@ export class CreateIntegration {
         channel: command.channel,
         credentials: encryptCredentials(command.credentials ?? {}),
         active: command.active,
+        conditions: command.conditions,
       };
 
       const isActiveAndChannelSupportsPrimary = command.active && CHANNELS_WITH_PRIMARY.includes(command.channel);

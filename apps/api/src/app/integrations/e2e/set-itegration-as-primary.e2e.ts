@@ -65,6 +65,34 @@ describe('Set Integration As Primary - /integrations/:integrationId/set-primary 
     expect(body.message).to.equal(`Channel ${inAppIntegration.channel} does not support primary`);
   });
 
+  it('clears conditions when set as primary', async () => {
+    await integrationRepository.deleteMany({
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+    });
+
+    const integration = await integrationRepository.create({
+      name: 'Email with conditions',
+      identifier: 'identifier1',
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      active: false,
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+      conditions: [{}],
+    });
+
+    await session.testAgent.post(`/v1/integrations/${integration._id}/set-primary`).send({});
+
+    const found = await integrationRepository.findOne({
+      _id: integration._id,
+      _organizationId: session.organization._id,
+    });
+
+    expect(found?.conditions).to.deep.equal([]);
+    expect(found?.primary).to.equal(true);
+  });
+
   it('push channel does not support primary flag, then for integration it should throw bad request exception', async () => {
     await integrationRepository.deleteMany({
       _organizationId: session.organization._id,
