@@ -1,5 +1,5 @@
 import { ProjectionType } from 'mongoose';
-import { DigestTypeEnum, IDigestRegularMetadata, StepTypeEnum } from '@novu/shared';
+import { DigestTypeEnum, IDigestRegularMetadata, StepTypeEnum, DigestCreationResultEnum } from '@novu/shared';
 
 import { BaseRepository } from '../base-repository';
 import { JobEntity, JobDBModel, JobStatusEnum } from './job.entity';
@@ -177,42 +177,40 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     digestKey?: string,
     digestValue?: string | number,
     digestMeta?: IDigestRegularMetadata
-  ): Promise<{ matched: number; modified: number; execute: boolean }> {
-    const execution = {
-      matched: 0,
-      modified: 0,
-      execute: true,
-    };
+  ): Promise<DigestCreationResultEnum> {
     const isBackoff = job.digest?.type === DigestTypeEnum.BACKOFF || (job.digest as IDigestRegularMetadata)?.backoff;
     if (isBackoff) {
       const trigger = await this.getTrigger(job, digestMeta, digestKey, digestValue);
       if (!trigger) {
-        execution.execute = false;
+        return DigestCreationResultEnum.SKIPPED;
+      }
 
-        return execution;
-      } else {
-        if (isBefore(new Date(job.createdAt), new Date(trigger.createdAt))) {
-          execution.execute = false;
-
-          return execution;
-        }
+      /**
+       * In case of 2 triggers happened concurrently,
+       * we want ony one of those jobs to be skipped, while the second to be creating a digest.
+       * This is an issue, since we are relying on the Trigger job existence,
+       * that is created earlier in the workflow execution.
+       */
+      const lockedPriorityJob = isBefore(new Date(job.createdAt), new Date(trigger.createdAt));
+      if (lockedPriorityJob) {
+        return DigestCreationResultEnum.SKIPPED;
       }
     }
 
-    const delayedDigestJobs = await this._model.find({
-      status: JobStatusEnum.DELAYED,
-      type: StepTypeEnum.DIGEST,
-      _templateId: job._templateId,
-      _environmentId: this.convertStringToObjectId(job._environmentId),
-      _subscriberId: this.convertStringToObjectId(job._subscriberId),
-      ...(digestKey && { [`payload.${digestKey}`]: digestValue }),
-    });
+    const delayedDigestJob = await this._model.findOne(
+      {
+        status: JobStatusEnum.DELAYED,
+        type: StepTypeEnum.DIGEST,
+        _templateId: job._templateId,
+        _environmentId: this.convertStringToObjectId(job._environmentId),
+        _subscriberId: this.convertStringToObjectId(job._subscriberId),
+        ...(digestKey && { [`payload.${digestKey}`]: digestValue }),
+      },
+      '_id'
+    );
 
-    const matched = delayedDigestJobs.length;
-    execution.matched = matched;
-
-    if (execution.matched === 0) {
-      const updatedDigestJob = await this._model.updateOne(
+    if (!delayedDigestJob) {
+      await this._model.updateOne(
         {
           _environmentId: job._environmentId,
           _templateId: job._templateId,
@@ -226,10 +224,10 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
         }
       );
 
-      execution.modified = updatedDigestJob.modifiedCount;
+      return DigestCreationResultEnum.CREATED;
     }
 
-    return execution;
+    return DigestCreationResultEnum.MERGED;
   }
 
   private getBackoffDate(metadata: IDigestRegularMetadata | undefined) {

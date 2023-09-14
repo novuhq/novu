@@ -4,7 +4,7 @@ import { TerminusModule } from '@nestjs/terminus';
 import {
   AddJob,
   AddDelayJob,
-  AddDigestJob,
+  MergeOrCreateDigest,
   CreateExecutionDetails,
   CreateNotificationJobs,
   DigestFilterSteps,
@@ -40,7 +40,7 @@ import { TenantModule } from '../tenant/tenant.module';
 const PROVIDERS = [
   AddJob,
   AddDelayJob,
-  AddDigestJob,
+  MergeOrCreateDigest,
   CreateExecutionDetails,
   CreateNotificationJobs,
   DigestFilterSteps,

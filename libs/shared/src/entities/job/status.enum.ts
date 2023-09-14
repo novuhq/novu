@@ -9,3 +9,9 @@ export enum JobStatusEnum {
   MERGED = 'merged',
   SKIPPED = 'skipped',
 }
+
+export enum DigestCreationResultEnum {
+  MERGED = 'MERGED',
+  CREATED = 'CREATED',
+  SKIPPED = 'SKIPPED',
+}
