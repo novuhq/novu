@@ -104,6 +104,50 @@ describe('Create Integration - /integration (POST)', function () {
     }
   });
 
+  it('should create integration with conditions', async function () {
+    const payload = {
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      identifier: 'identifier-conditions',
+      active: false,
+      check: false,
+      conditions: [
+        {
+          children: [{ field: 'identifier', value: 'test', operator: 'EQUAL', on: 'tenant' }],
+        },
+      ],
+    };
+
+    const { body } = await session.testAgent.post('/v1/integrations').send(payload);
+
+    expect(body.data.conditions.length).to.equal(1);
+    expect(body.data.conditions[0].children.length).to.equal(1);
+    expect(body.data.conditions[0].children[0].on).to.equal('tenant');
+    expect(body.data.conditions[0].children[0].field).to.equal('identifier');
+    expect(body.data.conditions[0].children[0].value).to.equal('test');
+    expect(body.data.conditions[0].children[0].operator).to.equal('EQUAL');
+  });
+
+  it('should return error with malformed conditions', async function () {
+    const payload = {
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      identifier: 'identifier-conditions',
+      active: false,
+      check: false,
+      conditions: [
+        {
+          children: 'test',
+        },
+      ],
+    };
+
+    const { body } = await session.testAgent.post('/v1/integrations').send(payload);
+
+    expect(body.statusCode).to.equal(400);
+    expect(body.error).to.equal('Bad Request');
+  });
+
   it('should not allow to create integration with same identifier', async function () {
     const payload = {
       providerId: EmailProviderIdEnum.SendGrid,

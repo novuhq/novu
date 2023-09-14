@@ -35,16 +35,12 @@ export const AvatarFeedFields = ({ index, control }) => {
   useEffect(() => {
     const feed = getValues(`steps.${index}.template.feedId`);
     if (feeds?.length && !feed) {
-      selectDefaultFeed();
+      setTimeout(() => {
+        setValue(`steps.${index}.template.feedId`, '');
+      }, 0);
       setShowFeed(false);
     }
-  }, [feeds]);
-
-  function selectDefaultFeed() {
-    setTimeout(() => {
-      setValue(`steps.${index}.template.feedId`, '');
-    }, 0);
-  }
+  }, [getValues, setValue, index, feeds]);
 
   async function addNewFeed() {
     if (newFeed) {

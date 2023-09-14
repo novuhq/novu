@@ -15,7 +15,7 @@ export function TenantsPage() {
 
   useEffect(() => {
     segment.track('Page Visit - [Tenants]');
-  }, []);
+  }, [segment]);
 
   const onAddTenantClickCallback = useCallback(() => {
     navigate(ROUTES.TENANTS_CREATE);

@@ -37,8 +37,6 @@ export class UpdateIntegration {
       priority: existingIntegration.priority,
     };
 
-    const isChannelSupportsPrimary = CHANNELS_WITH_PRIMARY.includes(existingIntegration.channel);
-
     const highestPriorityIntegration = await this.integrationRepository.findHighestPriorityIntegration({
       _organizationId: existingIntegration._organizationId,
       _environmentId: existingIntegration._environmentId,
@@ -171,6 +169,10 @@ export class UpdateIntegration {
       updatePayload.credentials = encryptCredentials(command.credentials);
     }
 
+    if (command.conditions) {
+      updatePayload.conditions = command.conditions;
+    }
+
     if (!Object.keys(updatePayload).length) {
       throw new BadRequestException('No properties found for update');
     }
@@ -183,6 +185,8 @@ export class UpdateIntegration {
       })
     );
 
+    const haveConditions = updatePayload.conditions && updatePayload.conditions?.length > 0;
+
     const isChannelSupportsPrimary = CHANNELS_WITH_PRIMARY.includes(existingIntegration.channel);
     if (isMultiProviderConfigurationEnabled && isActiveChanged && isChannelSupportsPrimary) {
       const { primary, priority } = await this.calculatePriorityAndPrimary({
@@ -194,6 +198,11 @@ export class UpdateIntegration {
       updatePayload.priority = priority;
     }
 
+    const shouldRemovePrimary = haveConditions && existingIntegration.primary;
+    if (shouldRemovePrimary) {
+      updatePayload.primary = false;
+    }
+
     await this.integrationRepository.update(
       {
         _id: existingIntegration._id,
@@ -203,6 +212,15 @@ export class UpdateIntegration {
         $set: updatePayload,
       }
     );
+
+    if (shouldRemovePrimary) {
+      await this.integrationRepository.recalculatePriorityForAllActive({
+        _id: existingIntegration._id,
+        _organizationId: existingIntegration._organizationId,
+        _environmentId: existingIntegration._organizationId,
+        channel: existingIntegration.channel,
+      });
+    }
 
     if (
       !isMultiProviderConfigurationEnabled &&

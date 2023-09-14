@@ -164,6 +164,7 @@ export class CreateIntegration {
         channel: command.channel,
         credentials: encryptCredentials(command.credentials ?? {}),
         active: command.active,
+        conditions: command.conditions,
       };
 
       const isActiveAndChannelSupportsPrimary = command.active && CHANNELS_WITH_PRIMARY.includes(command.channel);
