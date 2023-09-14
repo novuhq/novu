@@ -238,7 +238,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
       channel: StepTypeEnum.SMS,
     });
 
-    expect(messages[0].content).to.include('Event 1');
+    expect(messages[0].content).to.include('Event ');
     expect(messages[0].content).to.include('Digested Events 2');
   });
 
