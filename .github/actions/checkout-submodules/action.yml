@@ -19,7 +19,7 @@ runs:
 
   steps:
     - name: Checkout submodule
-      if: ${{ inputs.run == 'true' }}
+      if: ${{ inputs.enabled == 'true' }}
       uses: actions/checkout@v3
       with:
         token: ${{ inputs.submodule_token }}

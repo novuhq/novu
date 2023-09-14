@@ -37,7 +37,7 @@ export function GetStarted() {
 
   useEffect(() => {
     segment.track(OnBoardingAnalyticsEnum.CONFIGURE_PROVIDER_VISIT);
-  }, []);
+  }, [segment]);
 
   function handleOnClick() {
     segment.track(OnBoardingAnalyticsEnum.CONFIGURE_PROVIDER_NAVIGATION_NEXT_PAGE_CLICK);
