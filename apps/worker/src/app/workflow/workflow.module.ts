@@ -28,7 +28,14 @@ import {
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
-import { StandardWorker, WorkflowWorker, OldInstanceWorkflowWorker } from './services';
+import {
+  ActiveJobsMetricService,
+  CompletedJobsMetricService,
+  StandardWorker,
+  WorkflowWorker,
+  OldInstanceWorkflowWorker,
+} from './services';
+
 import {
   MessageMatcher,
   SendMessage,
@@ -97,8 +104,10 @@ const USE_CASES = [
 ];
 
 const PROVIDERS: Provider[] = [
+  ActiveJobsMetricService,
   BullMqService,
   bullMqTokenList,
+  CompletedJobsMetricService,
   StandardWorker,
   WorkflowWorker,
   OldInstanceBullMqService,
