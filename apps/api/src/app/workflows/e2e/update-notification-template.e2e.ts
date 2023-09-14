@@ -29,6 +29,14 @@ describe('Update workflow by id - /workflows/:workflowId (PUT)', async () => {
             type: StepTypeEnum.IN_APP,
             content: 'This is new content for notification',
           },
+          variants: [
+            {
+              template: {
+                type: StepTypeEnum.IN_APP,
+                content: 'This is new content for notification variant',
+              },
+            },
+          ],
         },
       ],
     };
@@ -39,7 +47,13 @@ describe('Update workflow by id - /workflows/:workflowId (PUT)', async () => {
     expect(foundTemplate.name).to.equal('new name for notification');
     expect(foundTemplate.description).to.equal(template.description);
     expect(foundTemplate.steps.length).to.equal(1);
-    expect(foundTemplate.steps[0].template.content).to.equal(update.steps[0].template.content);
+
+    const updateRequestStep = update.steps ? update.steps[0] : undefined;
+    expect(foundTemplate.steps[0].template?.content).to.equal(updateRequestStep?.template?.content);
+
+    const fountVariant = foundTemplate.steps[0].variants ? foundTemplate.steps[0].variants[0] : undefined;
+    const updateRequestStepVariant = updateRequestStep?.variants ? updateRequestStep?.variants[0] : undefined;
+    expect(fountVariant?.template?.content).to.equal(updateRequestStepVariant?.template?.content);
 
     const change = await changeRepository.findOne({
       _environmentId: session.environment._id,

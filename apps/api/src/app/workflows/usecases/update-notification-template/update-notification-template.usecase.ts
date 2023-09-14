@@ -2,18 +2,19 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   ChangeRepository,
+  NotificationGroupRepository,
   NotificationStepEntity,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
-  NotificationGroupRepository,
+  StepVariantEntity,
 } from '@novu/dal';
-import { ChangeEntityTypeEnum, INotificationTemplateStep } from '@novu/shared';
+import { ChangeEntityTypeEnum } from '@novu/shared';
 import {
   AnalyticsService,
-  InvalidateCacheService,
-  CacheService,
   buildNotificationTemplateIdentifierKey,
   buildNotificationTemplateKey,
+  CacheService,
+  InvalidateCacheService,
 } from '@novu/application-generic';
 
 import { UpdateNotificationTemplateCommand } from './update-notification-template.command';
@@ -21,8 +22,8 @@ import { ContentService } from '../../../shared/helpers/content.service';
 import {
   CreateMessageTemplate,
   CreateMessageTemplateCommand,
-  UpdateMessageTemplateCommand,
   UpdateMessageTemplate,
+  UpdateMessageTemplateCommand,
 } from '../../../message-template/usecases';
 import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -54,7 +55,7 @@ export class UpdateNotificationTemplate {
     const existingTemplate = await this.notificationTemplateRepository.findById(command.id, command.environmentId);
     if (!existingTemplate) throw new NotFoundException(`Notification template with id ${command.id} not found`);
 
-    const updatePayload: Partial<NotificationTemplateEntity> = {};
+    let updatePayload: Partial<NotificationTemplateEntity> = {};
     if (command.name) {
       updatePayload.name = command.name;
     }
@@ -122,103 +123,9 @@ export class UpdateNotificationTemplate {
     );
 
     if (command.steps) {
-      const contentService = new ContentService();
-      const { steps } = command;
+      updatePayload = this.updateTriggers(updatePayload, command.steps);
 
-      const { variables, reservedVariables } = contentService.extractMessageVariables(command.steps);
-      updatePayload['triggers.0.variables'] = variables.map((i) => {
-        return {
-          name: i.name,
-          type: i.type,
-        };
-      });
-
-      updatePayload['triggers.0.reservedVariables'] = reservedVariables.map((i) => {
-        return {
-          type: i.type,
-          variables: i.variables.map((variable) => {
-            return {
-              name: variable.name,
-              type: variable.type,
-            };
-          }),
-        };
-      });
-
-      const subscribersVariables = contentService.extractSubscriberMessageVariables(command.steps);
-
-      updatePayload['triggers.0.subscriberVariables'] = subscribersVariables.map((i) => {
-        return {
-          name: i,
-        };
-      });
-
-      const templateMessages: NotificationStepEntity[] = [];
-      let parentStepId: string | null = null;
-
-      for (const message of steps) {
-        let stepId = message._id;
-        if (message._templateId) {
-          if (!message.template) throw new ApiException(`Something un-expected happened, template couldn't be found`);
-
-          const template = await this.updateMessageTemplate.execute(
-            UpdateMessageTemplateCommand.create({
-              templateId: message._templateId,
-              type: message.template.type,
-              name: message.template.name,
-              content: message.template.content,
-              variables: message.template.variables,
-              organizationId: command.organizationId,
-              environmentId: command.environmentId,
-              userId: command.userId,
-              contentType: message.template.contentType,
-              cta: message.template.cta,
-              feedId: message.template.feedId ? message.template.feedId : null,
-              layoutId: message.template.layoutId || null,
-              subject: message.template.subject,
-              title: message.template.title,
-              preheader: message.template.preheader,
-              senderName: message.template.senderName,
-              actor: message.template.actor,
-              parentChangeId,
-            })
-          );
-          stepId = template._id;
-        } else {
-          if (!message.template) throw new ApiException("Something un-expected happened, template couldn't be found");
-
-          const template = await this.createMessageTemplate.execute(
-            CreateMessageTemplateCommand.create({
-              type: message.template.type,
-              name: message.template.name,
-              content: message.template.content,
-              variables: message.template.variables,
-              organizationId: command.organizationId,
-              environmentId: command.environmentId,
-              contentType: message.template.contentType,
-              userId: command.userId,
-              cta: message.template.cta,
-              feedId: message.template.feedId,
-              layoutId: message.template.layoutId,
-              subject: message.template.subject,
-              title: message.template.title,
-              preheader: message.template.preheader,
-              senderName: message.template.senderName,
-              actor: message.template.actor,
-              parentChangeId,
-            })
-          );
-
-          stepId = template._id;
-        }
-
-        const partialNotificationStep = this.getPartialTemplateStep(stepId, parentStepId, message);
-
-        templateMessages.push(partialNotificationStep as NotificationStepEntity);
-
-        parentStepId = stepId || null;
-      }
-      updatePayload.steps = templateMessages;
+      updatePayload.steps = await this.updateMessageTemplates(command.steps, command, parentChangeId);
 
       await this.deleteRemovedSteps(existingTemplate.steps, command, parentChangeId);
     }
@@ -290,7 +197,110 @@ export class UpdateNotificationTemplate {
     return notificationTemplateWithStepTemplate;
   }
 
-  private getPartialTemplateStep(stepId: string | undefined, parentStepId: string | null, message: NotificationStep) {
+  private async updateMessageTemplates(
+    steps: NotificationStep[],
+    command: UpdateNotificationTemplateCommand,
+    parentChangeId: string
+  ) {
+    let parentStepId: string | null = null;
+    const templateMessages: NotificationStepEntity[] = [];
+
+    for (const message of steps) {
+      let stepId = message._id;
+      if (!message.template) throw new ApiException(`Something un-expected happened, template couldn't be found`);
+
+      // todo check if stepId could be null
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const updatedVariants = await this.updateVariants(message, command, parentChangeId, stepId!);
+
+      const messageTemplatePayload: CreateMessageTemplateCommand | UpdateMessageTemplateCommand = {
+        type: message.template.type,
+        name: message.template.name,
+        content: message.template.content,
+        variables: message.template.variables,
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        userId: command.userId,
+        contentType: message.template.contentType,
+        cta: message.template.cta,
+        feedId: message.template.feedId ? message.template.feedId : undefined,
+        layoutId: message.template.layoutId || null,
+        subject: message.template.subject,
+        title: message.template.title,
+        preheader: message.template.preheader,
+        senderName: message.template.senderName,
+        actor: message.template.actor,
+        parentChangeId,
+      };
+
+      const messageTemplateExist = message._templateId;
+      const updatedTemplate = messageTemplateExist
+        ? await this.updateMessageTemplate.execute(
+            UpdateMessageTemplateCommand.create({
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+              templateId: message._templateId!,
+              ...messageTemplatePayload,
+            })
+          )
+        : await this.createMessageTemplate.execute(CreateMessageTemplateCommand.create(messageTemplatePayload));
+
+      stepId = updatedTemplate._id;
+
+      const partialNotificationStep = this.getPartialTemplateStep(stepId, parentStepId, message, updatedVariants);
+
+      templateMessages.push(partialNotificationStep as NotificationStepEntity);
+
+      parentStepId = stepId || null;
+    }
+
+    return templateMessages;
+  }
+
+  private updateTriggers(
+    updatePayload: Partial<NotificationTemplateEntity>,
+    steps: NotificationStep[]
+  ): Partial<NotificationTemplateEntity> {
+    const updatePayloadResult: Partial<NotificationTemplateEntity> = { ...updatePayload };
+
+    const contentService = new ContentService();
+    const { variables, reservedVariables } = contentService.extractMessageVariables(steps);
+
+    updatePayloadResult['triggers.0.variables'] = variables.map((i) => {
+      return {
+        name: i.name,
+        type: i.type,
+      };
+    });
+
+    updatePayloadResult['triggers.0.reservedVariables'] = reservedVariables.map((i) => {
+      return {
+        type: i.type,
+        variables: i.variables.map((variable) => {
+          return {
+            name: variable.name,
+            type: variable.type,
+          };
+        }),
+      };
+    });
+
+    const subscribersVariables = contentService.extractSubscriberMessageVariables(steps);
+
+    updatePayloadResult['triggers.0.subscriberVariables'] = subscribersVariables.map((i) => {
+      return {
+        name: i,
+      };
+    });
+
+    return updatePayloadResult;
+  }
+
+  private getPartialTemplateStep(
+    stepId: string | undefined,
+    parentStepId: string | null,
+    message: NotificationStep,
+    updatedVariants: StepVariantEntity[]
+  ) {
     const partialNotificationStep: Partial<NotificationStepEntity> = {
       _id: stepId,
       _templateId: stepId,
@@ -325,6 +335,10 @@ export class UpdateNotificationTemplate {
       partialNotificationStep.name = message.name;
     }
 
+    if (updatedVariants.length) {
+      partialNotificationStep.variants = updatedVariants;
+    }
+
     return partialNotificationStep;
   }
 
@@ -347,6 +361,65 @@ export class UpdateNotificationTemplate {
     const removedStepsIds = existingStepsIds.filter((id) => !newStepsIds.includes(id));
 
     return removedStepsIds;
+  }
+
+  private async updateVariants(
+    message: NotificationStep,
+    command: UpdateNotificationTemplateCommand,
+    parentChangeId: string,
+    parentStepId: string | null
+  ): Promise<StepVariantEntity[]> {
+    if (!message.variants?.length) return [];
+
+    const variantsList: StepVariantEntity[] = [];
+    let parentVariantId: string | null = null;
+
+    for (const variant of message.variants) {
+      if (!variant.template) throw new ApiException(`Unexpected error: variants message template is missing`);
+
+      const variantTemplate = await this.createMessageTemplate.execute(
+        CreateMessageTemplateCommand.create({
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          userId: command.userId,
+          type: variant.template.type,
+          name: variant.template.name,
+          content: variant.template.content,
+          variables: variant.template.variables,
+          contentType: variant.template.contentType,
+          cta: variant.template.cta,
+          subject: variant.template.subject,
+          title: variant.template.title,
+          feedId: variant.template.feedId,
+          layoutId: variant.template.layoutId,
+          preheader: variant.template.preheader,
+          senderName: variant.template.senderName,
+          actor: variant.template.actor,
+          parentChangeId,
+        })
+      );
+
+      if (!variantTemplate._id) throw new ApiException(`Unexpected error: variants message template was not created`);
+
+      variantsList.push({
+        _id: variantTemplate._id,
+        _templateId: variantTemplate._id,
+        filters: variant.filters,
+        _parentId: parentStepId,
+        active: variant.active,
+        shouldStopOnFail: variant.shouldStopOnFail,
+        replyCallback: variant.replyCallback,
+        uuid: variant.uuid,
+        name: variant.name,
+        metadata: variant.metadata,
+      });
+
+      if (variantTemplate._id) {
+        parentVariantId = variantTemplate._id;
+      }
+    }
+
+    return variantsList;
   }
 
   private async deleteRemovedSteps(
