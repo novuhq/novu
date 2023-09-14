@@ -47,13 +47,13 @@ export default function InvitationPage() {
     if (isLoggedInAsInvitedUser) {
       submitToken(tokensRef.current.token as string, tokensRef.current.invitationToken as string, true);
     }
-  }, [isLoggedInAsInvitedUser]);
+  }, [isLoggedInAsInvitedUser, submitToken]);
 
   useEffect(() => {
     return () => {
       queryClient.removeQueries(['getInviteTokenData']);
     };
-  }, []);
+  }, [queryClient]);
 
   return (
     <AuthLayout>

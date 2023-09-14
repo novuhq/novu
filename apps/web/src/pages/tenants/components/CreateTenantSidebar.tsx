@@ -65,6 +65,7 @@ export function CreateTenantSidebar({
     }
 
     setValue('identifier', newIdentifier);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [name]);
 
   const onCreateTenant = async (data) => {
