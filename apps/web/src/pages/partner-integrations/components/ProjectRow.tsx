@@ -81,7 +81,7 @@ export function ProjectRow(props: ProjectRowProps) {
     if (entry?.isIntersecting && !isFetchingNextPage && hasNextPage) {
       fetchNextPage();
     }
-  }, [entry, isFetchingNextPage, hasNextPage]);
+  }, [fetchNextPage, entry, isFetchingNextPage, hasNextPage]);
 
   return (
     <Group position="center" grow>

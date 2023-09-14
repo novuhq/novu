@@ -10,7 +10,6 @@ import {
   CompileEmailTemplate,
   CompileTemplate,
   CreateExecutionDetails,
-  CreateSubscriber,
   GetDecryptedIntegrations,
   GetLayoutUseCase,
   GetNovuLayout,
@@ -24,12 +23,12 @@ import {
   SendTestEmail,
   SendTestEmailCommand,
   StoreSubscriberJobs,
+  ConditionsFilter,
   TriggerEvent,
-  UpdateSubscriber,
 } from '@novu/application-generic';
-import { JobRepository, MessageRepository, OrganizationRepository, SubscriberRepository } from '@novu/dal';
+import { JobRepository } from '@novu/dal';
 
-import { JobMetricService, StandardWorker, WorkflowWorker, OldInstanceWorkflowWorker } from './services';
+import { StandardWorker, WorkflowWorker, OldInstanceWorkflowWorker } from './services';
 import {
   MessageMatcher,
   SendMessage,
@@ -51,7 +50,6 @@ import {
   WebhookFilterBackoffStrategy,
 } from './usecases';
 
-import { CreateLog } from '../shared/logs';
 import { SharedModule } from '../shared/shared.module';
 
 const REPOSITORIES = [JobRepository];
@@ -64,6 +62,8 @@ const USE_CASES = [
   CompileEmailTemplate,
   CompileTemplate,
   CreateExecutionDetails,
+  ConditionsFilter,
+  BulkCreateExecutionDetails,
   Digest,
   GetDecryptedIntegrations,
   GetDigestEventsBackoff,

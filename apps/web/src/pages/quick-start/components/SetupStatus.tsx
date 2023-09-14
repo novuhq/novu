@@ -5,6 +5,7 @@ import styled from '@emotion/styled';
 import { Button, colors, Text } from '../../../design-system';
 import { Label } from '../../../design-system/typography/label';
 import { When } from '../../../components/utils/When';
+import { useDataRef } from '../../../hooks';
 
 export function SetupStatus({
   appInitialized,
@@ -15,6 +16,7 @@ export function SetupStatus({
   onDone: () => void;
   onConfigureLater?: () => void;
 }) {
+  const onDoneRef = useDataRef(onDone);
   function handleConfigureLater() {
     if (!onConfigureLater) {
       return;
@@ -26,14 +28,14 @@ export function SetupStatus({
     let timer;
     if (appInitialized) {
       timer = setTimeout(() => {
-        onDone();
+        onDoneRef.current();
       }, 1000);
     }
 
     return () => {
       clearTimeout(timer);
     };
-  }, [appInitialized]);
+  }, [onDoneRef, appInitialized]);
 
   return (
     <Stack>

@@ -449,7 +449,11 @@ await novu.subscribers.trigger("workflowIdentifier", {
   },
   overrides: {
     email: {
-      from: "support@novu.co"
+      from: "support@novu.co",
+      // customData will work only for sendgrid
+      customData: {
+        "customKey": "customValue"
+      }
     }
   },
   // actorId is subscriberId of actor
@@ -867,6 +871,9 @@ await novu.integrations.delete("integrationId")
 
 // get novu in-app status
 await novu.integrations.getInAppStatus()
+
+// set an integration as primary
+await novu.integrations.setIntegrationAsPrimary("integrationId")
 ```
 
 ### Feeds

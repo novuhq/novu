@@ -61,6 +61,23 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       type: Schema.Types.Boolean,
       default: false,
     },
+    conditions: [
+      {
+        isNegated: Schema.Types.Boolean,
+        type: {
+          type: Schema.Types.String,
+        },
+        value: Schema.Types.String,
+        children: [
+          {
+            field: Schema.Types.String,
+            value: Schema.Types.Mixed,
+            operator: Schema.Types.String,
+            on: Schema.Types.String,
+          },
+        ],
+      },
+    ],
   },
   schemaOptions
 );

@@ -86,6 +86,9 @@ export class SendMessageInApp extends SendMessageBase {
       environmentId: command.environmentId,
       channelType: ChannelTypeEnum.IN_APP,
       userId: command.userId,
+      filterData: {
+        tenant: command.job.tenant,
+      },
     });
 
     if (!integration) {
