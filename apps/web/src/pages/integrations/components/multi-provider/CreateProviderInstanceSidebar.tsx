@@ -5,7 +5,7 @@ import { Controller, useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { useDisclosure } from '@mantine/hooks';
 
-import { ChannelTypeEnum, ICreateIntegrationBodyDto, InAppProviderIdEnum, providers } from '@novu/shared';
+import { ChannelTypeEnum, ICreateIntegrationBodyDto, NOVU_PROVIDERS, providers } from '@novu/shared';
 
 import { Button, colors, NameInput, Sidebar } from '../../../../design-system';
 import { ConditionPlus, ArrowLeft, Condition } from '../../../../design-system/icons';
@@ -81,10 +81,11 @@ export function CreateProviderInstanceSidebar({
 
     return 0;
   }, [watchedConditions]);
+
   const selectedEnvironmentId = watch('environmentId');
 
-  const showInAppErrorMessage = useMemo(() => {
-    if (!provider || integrations.length === 0 || provider.id !== InAppProviderIdEnum.Novu) {
+  const showNovuProvidersErrorMessage = useMemo(() => {
+    if (!provider || integrations.length === 0 || !NOVU_PROVIDERS.includes(provider.id)) {
       return false;
     }
 
@@ -210,7 +211,7 @@ export function CreateProviderInstanceSidebar({
             Cancel
           </Button>
           <Button
-            disabled={isLoading || isLoadingCreate || showInAppErrorMessage}
+            disabled={isLoading || isLoadingCreate || showNovuProvidersErrorMessage}
             loading={isLoadingCreate}
             submit
             data-test-id="create-provider-instance-sidebar-create"
@@ -271,7 +272,6 @@ export function CreateProviderInstanceSidebar({
           );
         }}
       />
-
       <Input.Wrapper
         label={
           <>
@@ -311,9 +311,11 @@ export function CreateProviderInstanceSidebar({
           </Button>
         </Group>
       </Input.Wrapper>
-      <When truthy={showInAppErrorMessage}>
+      <When truthy={showNovuProvidersErrorMessage}>
         <WarningMessage>
-          <Text>You can only create one {provider.displayName} per environment.</Text>
+          <Text data-test-id="novu-provider-error">
+            You can only create one {provider.displayName} per environment.
+          </Text>
         </WarningMessage>
       </When>
     </Sidebar>

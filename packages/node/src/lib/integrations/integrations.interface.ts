@@ -20,6 +20,7 @@ export interface IIntegrations {
   update(integrationId: string, data: IIntegrationsUpdatePayload);
   delete(integrationId: string);
   getInAppStatus();
+  setIntegrationAsPrimary(integrationId: string);
 }
 
 export interface IIntegrationsPayload extends IIntegrationsUpdatePayload {

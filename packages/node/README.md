@@ -867,6 +867,9 @@ await novu.integrations.delete("integrationId")
 
 // get novu in-app status
 await novu.integrations.getInAppStatus()
+
+// set an integration as primary
+await novu.integrations.setIntegrationAsPrimary("integrationId")
 ```
 
 ### Feeds
