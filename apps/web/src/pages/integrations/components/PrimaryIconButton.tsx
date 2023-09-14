@@ -73,6 +73,7 @@ export const PrimaryIconButton = ({
         </ActionIcon>
       </Tooltip>
       <Modal
+        zIndex={999}
         data-test-id="remove-conditions-modal"
         opened={modalOpen}
         title={
