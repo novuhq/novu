@@ -46,7 +46,6 @@ const useDrawerStyles = createStyles((theme: MantineTheme) => {
   return {
     root: {
       position: 'absolute',
-      // zIndex: 1,
     },
     drawer: {
       position: 'fixed',
