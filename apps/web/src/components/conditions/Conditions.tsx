@@ -3,34 +3,34 @@ import styled from '@emotion/styled';
 import { useMemo } from 'react';
 import { Control, Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 
-import { FILTER_TO_LABEL, FilterPartTypeEnum, PreviousStepTypeEnum, TimeOperatorEnum } from '@novu/shared';
+import { FilterPartTypeEnum } from '@novu/shared';
 
 import { Button, colors, Dropdown, Input, Select, Sidebar, Text, Title, Tooltip } from '../../design-system';
 import { ConditionPlus, DotsHorizontal, Duplicate, Trash, Condition, ErrorIcon } from '../../design-system/icons';
 import { When } from '../utils/When';
-import { ConditionsContextEnum, ConditionsContextFields, IConditions } from './types';
-import { channels } from '../../utils/channels';
-import { IFormStep } from '../../pages/templates/components/formTypes';
+import { DataSelect, IConditions, IConditionsForm, IConditionsProps, IFilterTypeList } from './types';
+import { OnlineConditionRow } from './OnlineConditionRow';
+import { DefaultGroupOperatorData, DefaultOperatorData } from './constants';
+import { PreviousStepsConditionRow } from './PreviousStepsConditionRow';
 
-interface IConditionsForm {
-  conditions: IConditions[];
-}
 export function Conditions({
   isOpened,
   conditions,
   onClose,
-  setConditions,
+  updateConditions,
   name,
-  context = ConditionsContextEnum.INTEGRATIONS,
-  selectableSteps,
+  label = '',
+  filterPartsList,
+  defaultFilter,
 }: {
   isOpened: boolean;
   onClose: () => void;
-  setConditions: (data: IConditions[]) => void;
+  updateConditions: (data: IConditions[]) => void;
   conditions?: IConditions[];
   name: string;
-  context?: ConditionsContextEnum;
-  selectableSteps?: any[];
+  label?: string;
+  filterPartsList: IFilterTypeList[];
+  defaultFilter?: FilterPartTypeEnum;
 }) {
   const { colorScheme } = useMantineTheme();
 
@@ -38,39 +38,36 @@ export function Conditions({
     control,
     getValues,
     trigger,
-    setValue,
     formState: { errors, isValid, isDirty },
   } = useForm<IConditionsForm>({
     defaultValues: { conditions },
     mode: 'onChange',
   });
 
+  const defaultOnFilter = useMemo(() => {
+    return defaultFilter ?? filterPartsList[0].value;
+  }, [filterPartsList]);
+
   const { fields, append, remove, insert, update } = useFieldArray({
     control,
     name: `conditions.0.children` as 'conditions.0.children',
   });
 
-  const { label, filterPartsList, defaultFilter } = ConditionsContextFields[context];
-
   const FilterPartTypeList = useMemo(() => {
-    return filterPartsList.map((filterType) => {
+    return filterPartsList?.map(({ value, label: filterLabel }) => {
       return {
-        value: filterType,
-        label: FILTER_TO_LABEL[filterType],
+        value,
+        label: filterLabel,
       };
     });
-  }, [context]);
+  }, [filterPartsList]);
 
   function handleOnChildOnChange(index: number) {
     return (data) => {
-      const newField = Object.assign({}, fields[index], { on: data });
-      console.log(fields[index], newField);
+      const defaultValue = data === FilterPartTypeEnum.IS_ONLINE ? true : '';
+      const newField = Object.assign({}, fields[index], { on: data, value: defaultValue });
 
       update(index, newField);
-
-      if (data === 'isOnline') {
-        setValue(`conditions.0.children.${index}.value`, true);
-      }
     };
   }
 
@@ -84,17 +81,11 @@ export function Conditions({
 
   const onApplyConditions = async () => {
     await trigger('conditions');
-    console.log(errors.conditions);
-    console.log(fields);
     if (!errors.conditions) {
       updateConditions(getValues('conditions'));
+      onClose();
     }
   };
-
-  function updateConditions(data) {
-    setConditions(data);
-    onClose();
-  }
 
   return (
     <Sidebar
@@ -131,7 +122,8 @@ export function Conditions({
       <div>
         {fields.map((item, index) => {
           const filterFieldOn = item.on;
-          // const filterFieldOn = (fields[index] as any).on;
+
+          const customData = filterPartsList?.find((filter) => filter.value === filterFieldOn)?.data;
 
           return (
             <div data-test-id="conditions-form-item" key={item.id}>
@@ -148,10 +140,7 @@ export function Conditions({
                             render={({ field }) => {
                               return (
                                 <Select
-                                  data={[
-                                    { value: 'AND', label: 'And' },
-                                    { value: 'OR', label: 'Or' },
-                                  ]}
+                                  data={DefaultGroupOperatorData}
                                   {...field}
                                   data-test-id="conditions-form-value-dropdown"
                                 />
@@ -169,7 +158,7 @@ export function Conditions({
                       <Controller
                         control={control}
                         name={`conditions.0.children.${index}.on`}
-                        defaultValue={defaultFilter}
+                        defaultValue={defaultOnFilter}
                         render={({ field }) => {
                           return (
                             <Select
@@ -185,17 +174,17 @@ export function Conditions({
                     </Grid.Col>
                     <When truthy={filterFieldOn === FilterPartTypeEnum.WEBHOOK}>
                       <WebHookUrlForm control={control} index={index} />
-                      <EqualityForm filterFieldOn={filterFieldOn} control={control} index={index} />
+                      <EqualityForm webhook control={control} index={index} />
                     </When>
                     <When truthy={filterFieldOn === FilterPartTypeEnum.PREVIOUS_STEP}>
-                      <PreviousStepFiltersForm control={control} index={index} selectableSteps={selectableSteps} />
+                      <PreviousStepsConditionRow customData={customData} control={control} index={index} />
                     </When>
                     <When
                       truthy={[FilterPartTypeEnum.IS_ONLINE, FilterPartTypeEnum.IS_ONLINE_IN_LAST].includes(
                         filterFieldOn
                       )}
                     >
-                      <OnlineFiltersForms fieldOn={filterFieldOn} control={control} index={index} />
+                      <OnlineConditionRow fieldOn={filterFieldOn} control={control} index={index} />
                     </When>
                     <When
                       truthy={[
@@ -204,38 +193,11 @@ export function Conditions({
                         FilterPartTypeEnum.TENANT,
                       ].includes(filterFieldOn)}
                     >
-                      <EqualityForm control={control} index={index} />
+                      <EqualityForm customData={customData} control={control} index={index} />
                     </When>
                   </Grid>
                 </Grid.Col>
-                <Grid.Col span={'content'}>
-                  <Dropdown
-                    withArrow={false}
-                    offset={0}
-                    control={
-                      <ActionIcon data-test-id="conditions-row-btn" variant={'transparent'}>
-                        <DotsHorizontal color={colors.B60} />
-                      </ActionIcon>
-                    }
-                    middlewares={{ flip: false, shift: false }}
-                    position="bottom-end"
-                  >
-                    <Dropdown.Item
-                      data-test-id="conditions-row-duplicate"
-                      onClick={() => handleDuplicate(index)}
-                      icon={<Duplicate />}
-                    >
-                      Duplicate
-                    </Dropdown.Item>
-                    <Dropdown.Item
-                      data-test-id="conditions-row-delete"
-                      onClick={() => handleDelete(index)}
-                      icon={<Trash />}
-                    >
-                      Delete
-                    </Dropdown.Item>
-                  </Dropdown>
-                </Grid.Col>
+                <ConditionRowMenu onDuplicate={() => handleDuplicate(index)} onDelete={() => handleDelete(index)} />
               </Grid>
             </div>
           );
@@ -250,8 +212,7 @@ export function Conditions({
               operator: 'EQUAL',
               // eslint-disable-next-line @typescript-eslint/ban-ts-comment
               // @ts-ignore
-              on: defaultFilter,
-              // value: '',
+              on: defaultOnFilter,
             });
           }}
           icon={<ConditionPlus />}
@@ -267,17 +228,18 @@ export function Conditions({
 function EqualityForm({
   control,
   index,
-  filterFieldOn,
+  webhook = false,
+  customData,
 }: {
   control: Control<IConditionsForm>;
   index: number;
-  filterFieldOn?: string;
+  webhook?: boolean;
+  customData?: DataSelect[];
 }) {
   const operator = useWatch({
     control,
     name: `conditions.0.children.${index}.operator`,
   });
-  const webhook = filterFieldOn === FilterPartTypeEnum.WEBHOOK;
 
   return (
     <>
@@ -292,22 +254,7 @@ function EqualityForm({
               <Input
                 placeholder="Key"
                 {...field}
-                rightSection={
-                  <When truthy={!!fieldState.error}>
-                    <Tooltip
-                      opened
-                      data-test-id="conditions-form-tooltip-error"
-                      error
-                      position="top"
-                      offset={15}
-                      label={'Key is missing'}
-                    >
-                      <span>
-                        <ErrorIcon data-test-id="conditions-form-value-error" color={colors.error} />
-                      </span>
-                    </Tooltip>
-                  </When>
-                }
+                rightSection={<RightSectionError showError={!!fieldState.error} label="Key is missing" />}
                 error={!!fieldState.error}
                 data-test-id="conditions-form-key"
               />
@@ -324,17 +271,7 @@ function EqualityForm({
             return (
               <Select
                 placeholder="Operator"
-                data={[
-                  { value: 'EQUAL', label: 'Equal' },
-                  { value: 'NOT_EQUAL', label: 'Not equal' },
-                  { value: 'IN', label: 'Contains' },
-                  { value: 'NOT_IN', label: 'Does not contain' },
-                  { value: 'IS_DEFINED', label: 'Is defined' },
-                  { value: 'LARGER', label: 'Greater than' },
-                  { value: 'SMALLER', label: 'Less than' },
-                  { value: 'LARGER_EQUAL', label: 'Greater or Equal' },
-                  { value: 'SMALLER_EQUAL', label: 'Less or Equal' },
-                ]}
+                data={customData ?? DefaultOperatorData}
                 {...field}
                 data-test-id="conditions-form-operator"
               />
@@ -344,7 +281,6 @@ function EqualityForm({
       </Grid.Col>
 
       <Grid.Col span="auto">
-        {/*<Grid.Col span={6}>*/}
         {operator !== 'IS_DEFINED' && (
           <Controller
             control={control}
@@ -352,29 +288,11 @@ function EqualityForm({
             defaultValue=""
             rules={{ required: true }}
             render={({ field, fieldState }) => {
-              console.log('field.value', field.value);
-              console.log('error', !!fieldState.error);
-
               return (
                 <Input
                   {...field}
                   value={field.value as string}
-                  rightSection={
-                    <When truthy={!!fieldState.error}>
-                      <Tooltip
-                        opened
-                        data-test-id="conditions-form-tooltip-error"
-                        error
-                        position="top"
-                        offset={15}
-                        label={'Value is missing'}
-                      >
-                        <span>
-                          <ErrorIcon data-test-id="conditions-form-value-error" color={colors.error} />
-                        </span>
-                      </Tooltip>
-                    </When>
-                  }
+                  rightSection={<RightSectionError showError={!!fieldState.error} label={'Value is missing'} />}
                   error={!!fieldState.error}
                   placeholder="Value"
                   data-test-id="conditions-form-value"
@@ -388,7 +306,7 @@ function EqualityForm({
   );
 }
 
-function WebHookUrlForm({ control, index }: { control: Control<IConditionsForm>; index: number }) {
+function WebHookUrlForm({ control, index }: IConditionsProps) {
   return (
     <>
       <Grid.Col span={4}>
@@ -401,22 +319,7 @@ function WebHookUrlForm({ control, index }: { control: Control<IConditionsForm>;
             return (
               <Input
                 {...field}
-                rightSection={
-                  <When truthy={!!fieldState.error}>
-                    <Tooltip
-                      opened
-                      data-test-id="conditions-form-tooltip-error"
-                      error
-                      position="top"
-                      offset={15}
-                      label={'Url is missing'}
-                    >
-                      <span>
-                        <ErrorIcon data-test-id="conditions-form-value-error" color={colors.error} />
-                      </span>
-                    </Tooltip>
-                  </When>
-                }
+                rightSection={<RightSectionError showError={!!fieldState.error} label="Url is missing" />}
                 error={!!fieldState.error}
                 placeholder="Url"
                 data-test-id="webhook-filter-url-input"
@@ -429,195 +332,43 @@ function WebHookUrlForm({ control, index }: { control: Control<IConditionsForm>;
   );
 }
 
-function OnlineFiltersForms({ fieldOn, control, index }: { fieldOn: string; control; index: number }) {
+export function RightSectionError({ showError, label }: { showError: boolean; label: string }) {
   return (
-    <>
-      {fieldOn === FilterPartTypeEnum.IS_ONLINE ? (
-        <OnlineRightNowForm control={control} index={index} />
-      ) : (
-        <OnlineInTheLastForm control={control} index={index} />
-      )}
-    </>
+    <When truthy={showError}>
+      <Tooltip opened data-test-id="conditions-form-tooltip-error" error position="top" offset={15} label={label}>
+        <span>
+          <ErrorIcon data-test-id="conditions-form-value-error" color={colors.error} />
+        </span>
+      </Tooltip>
+    </When>
   );
 }
 
-function PreviousStepFiltersForm({
-  control,
-  index,
-  selectableSteps,
-}: {
-  control;
-  index: number;
-  selectableSteps: any;
-}) {
+function ConditionRowMenu({ onDuplicate, onDelete }: { onDuplicate: () => void; onDelete: () => void }) {
   return (
-    <>
-      <Grid.Col span={4}>
-        <Controller
-          control={control}
-          name={`conditions.0.children.${index}.step`}
-          defaultValue=""
-          render={({ field }) => {
-            return (
-              <Select
-                placeholder="Select previous step"
-                data={
-                  selectableSteps
-                    ?.map((selectable: any, itemIndex: number, list: any[]) => {
-                      const labelSelectable = channels.find(
-                        (channel) => channel.channelType === selectable.template.type
-                      )?.label;
-
-                      return {
-                        label: selectable.name ? selectable.name : labelSelectable,
-                        value: selectable.uuid,
-                      };
-                    })
-                    .filter((temp) => temp !== undefined) as any[]
-                }
-                {...field}
-                data-test-id="previous-step-dropdown"
-              />
-            );
-          }}
-        />
-      </Grid.Col>
-      <Grid.Col span={3}>
-        <Controller
-          control={control}
-          name={`conditions.0.children.${index}.stepType`}
-          defaultValue={PreviousStepTypeEnum.READ}
-          render={({ field }) => {
-            return (
-              <Select
-                placeholder="Select type"
-                data={[
-                  {
-                    label: 'Read',
-                    value: PreviousStepTypeEnum.READ,
-                  },
-                  {
-                    label: 'Unread',
-                    value: PreviousStepTypeEnum.UNREAD,
-                  },
-                  {
-                    label: 'Seen',
-                    value: PreviousStepTypeEnum.SEEN,
-                  },
-                  {
-                    label: 'Unseen',
-                    value: PreviousStepTypeEnum.UNSEEN,
-                  },
-                ]}
-                {...field}
-                data-test-id="previous-step-type-dropdown"
-              />
-            );
-          }}
-        />
-      </Grid.Col>
-    </>
+    <Grid.Col span={'content'}>
+      <Dropdown
+        withArrow={false}
+        offset={0}
+        control={
+          <ActionIcon data-test-id="conditions-row-btn" variant={'transparent'}>
+            <DotsHorizontal color={colors.B60} />
+          </ActionIcon>
+        }
+        middlewares={{ flip: false, shift: false }}
+        position="bottom-end"
+      >
+        <Dropdown.Item data-test-id="conditions-row-duplicate" onClick={onDuplicate} icon={<Duplicate />}>
+          Duplicate
+        </Dropdown.Item>
+        <Dropdown.Item data-test-id="conditions-row-delete" onClick={onDelete} icon={<Trash />}>
+          Delete
+        </Dropdown.Item>
+      </Dropdown>
+    </Grid.Col>
   );
 }
 
-function OnlineRightNowForm({ control, index }: { control: Control<IConditionsForm>; index: number }) {
-  return (
-    <>
-      <Grid.Col span={4}>
-        <Controller
-          control={control}
-          name={`conditions.0.children.${index}.value`}
-          defaultValue={'true'}
-          rules={{ required: false }}
-          render={({ field }) => {
-            // const value = typeof field.value !== 'undefined' ? `${field.value}` : 'true';
-            const value = typeof field.value === 'boolean' ? `${field.value}` : `${field.value === 'true'}`;
-            console.log(field.value, typeof field.value === 'boolean', value);
-
-            return (
-              <Select
-                placeholder="value"
-                data={[
-                  { value: 'true', label: 'Yes' },
-                  { value: 'false', label: 'No' },
-                ]}
-                {...field}
-                onChange={(val) => {
-                  console.log('val', val, val === 'true');
-                  field.onChange(val === 'true');
-                }}
-                value={value}
-                data-test-id="online-now-value-dropdown"
-              />
-            );
-          }}
-        />
-      </Grid.Col>
-    </>
-  );
-}
-
-function OnlineInTheLastForm({ control, index }: { control: Control<IConditionsForm>; index: number }) {
-  return (
-    <>
-      <Grid.Col span={4}>
-        <Controller
-          control={control}
-          name={`conditions.0.children.${index}.value`}
-          defaultValue=""
-          render={({ field, fieldState }) => {
-            return (
-              <Input
-                {...field}
-                value={field.value as string}
-                rightSection={
-                  <When truthy={!!fieldState.error}>
-                    <Tooltip
-                      opened
-                      data-test-id="conditions-form-tooltip-error"
-                      error
-                      position="top"
-                      offset={15}
-                      label={'Value is missing'}
-                    >
-                      <span>
-                        <ErrorIcon data-test-id="conditions-form-value-error" color={colors.error} />
-                      </span>
-                    </Tooltip>
-                  </When>
-                }
-                error={!!fieldState.error}
-                placeholder="Value"
-                type="number"
-                data-test-id="online-in-last-value-input"
-              />
-            );
-          }}
-        />
-      </Grid.Col>
-      <Grid.Col span={3}>
-        <Controller
-          control={control}
-          name={`conditions.0.children.${index}.timeOperator`}
-          defaultValue={TimeOperatorEnum.MINUTES}
-          render={({ field }) => {
-            return (
-              <Select
-                data={[
-                  { value: TimeOperatorEnum.MINUTES, label: 'Minutes' },
-                  { value: TimeOperatorEnum.HOURS, label: 'Hours' },
-                  { value: TimeOperatorEnum.DAYS, label: 'Days' },
-                ]}
-                {...field}
-                data-test-id="online-in-last-operator-dropdown"
-              />
-            );
-          }}
-        />
-      </Grid.Col>
-    </>
-  );
-}
 const Wrapper = styled.div`
   .mantine-Select-wrapper:not(:hover) {
     .mantine-Select-input {

@@ -4,14 +4,16 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { useDisclosure } from '@mantine/hooks';
+
 import { ChannelTypeEnum, ICreateIntegrationBodyDto, InAppProviderIdEnum, providers } from '@novu/shared';
+
 import { Button, colors, NameInput, Sidebar } from '../../../../design-system';
 import { ConditionPlus, ArrowLeft, Condition } from '../../../../design-system/icons';
 import { inputStyles } from '../../../../design-system/config/inputs.styles';
 import { useFetchEnvironments } from '../../../../hooks/useFetchEnvironments';
 import { useSegment } from '../../../../components/providers/SegmentProvider';
 import { createIntegration } from '../../../../api/integration';
-import { IntegrationsStoreModalAnalytics } from '../../constants';
+import { defaultIntegrationConditionsProps, IntegrationsStoreModalAnalytics } from '../../constants';
 import { errorMessage, successMessage } from '../../../../utils/notifications';
 import { QueryKeys } from '../../../../api/query.keys';
 import { ProviderImage } from './SelectProviderSidebar';
@@ -146,6 +148,7 @@ export function CreateProviderInstanceSidebar({
   if (!provider) {
     return null;
   }
+
   const updateConditions = (conditions: IConditions[]) => {
     setValue('conditions', conditions, { shouldDirty: true });
   };
@@ -158,8 +161,9 @@ export function CreateProviderInstanceSidebar({
         conditions={conditions}
         name={name}
         isOpened={conditionsFormOpened}
-        setConditions={updateConditions}
+        updateConditions={updateConditions}
         onClose={closeConditionsForm}
+        {...defaultIntegrationConditionsProps}
       />
     );
   }

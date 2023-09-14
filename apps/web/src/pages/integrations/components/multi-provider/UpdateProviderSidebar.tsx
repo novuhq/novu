@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Group, Center, Box } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
 import styled from '@emotion/styled';
 import slugify from 'slugify';
 import { Controller, FormProvider, useForm, useWatch } from 'react-hook-form';
@@ -12,7 +13,6 @@ import {
   IConstructIntegrationDto,
   ICredentialsDto,
   InAppProviderIdEnum,
-  NOVU_PROVIDERS,
   SmsProviderIdEnum,
 } from '@novu/shared';
 
@@ -37,7 +37,7 @@ import { NovuProviderSidebarContent } from './NovuProviderSidebarContent';
 import { useSelectPrimaryIntegrationModal } from './useSelectPrimaryIntegrationModal';
 import { ShareableUrl } from '../Modal/ConnectIntegrationForm';
 import { Conditions, IConditions } from '../../../../components/conditions';
-import { useDisclosure } from '@mantine/hooks';
+import { defaultIntegrationConditionsProps } from '../../constants';
 
 interface IProviderForm {
   name: string;
@@ -240,8 +240,9 @@ export function UpdateProviderSidebar({
         conditions={conditions}
         name={name}
         isOpened={conditionsFormOpened}
-        setConditions={updateConditions}
+        updateConditions={updateConditions}
         onClose={closeConditionsForm}
+        {...defaultIntegrationConditionsProps}
       />
     );
   }
