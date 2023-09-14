@@ -33,7 +33,6 @@ export const DelayMetadata = ({ control, index }) => {
               {...field}
               sx={{
                 maxWidth: '100% !important',
-                marginTop: 16,
               }}
               fullWidth
               disabled={readonly}
