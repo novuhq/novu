@@ -252,13 +252,6 @@ export class InMemoryProviderService {
 
     const { getClient, getConfig, isClientReady } = getClientAndConfig();
 
-    console.log(
-      getClient(),
-      getConfig(),
-      isClientReady(this.provider),
-      LOG_CONTEXT
-    );
-
     this.isProviderClientReady = isClientReady;
     this.inMemoryProviderConfig = getConfig();
     const { host, port, ttl } = getConfig();

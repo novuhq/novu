@@ -1,5 +1,17 @@
-import { ChannelTypeEnum, ICredentialsDto } from '@novu/shared';
+import {
+  BuilderFieldType,
+  BuilderGroupValues,
+  ChannelTypeEnum,
+  FilterParts,
+  ICredentialsDto,
+} from '@novu/shared';
 
+export interface IConditions {
+  isNegated: boolean;
+  type: BuilderFieldType;
+  value: BuilderGroupValues;
+  children: FilterParts[];
+}
 export interface IIntegrations {
   getAll();
   create(providerId: string, data: IIntegrationsPayload);
@@ -21,4 +33,5 @@ export interface IIntegrationsUpdatePayload {
   credentials?: ICredentialsDto;
   active?: boolean;
   check?: boolean;
+  conditions?: IConditions[];
 }

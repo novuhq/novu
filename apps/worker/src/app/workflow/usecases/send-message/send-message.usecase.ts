@@ -67,7 +67,7 @@ export class SendMessage {
 
     if (!command.payload?.$on_boarding_trigger) {
       const usedFilters = shouldRun.conditions.reduce(MessageMatcher.sumFilters, {
-        stepFilters: [],
+        filters: [],
         failedFilters: [],
         passedFilters: [],
       });

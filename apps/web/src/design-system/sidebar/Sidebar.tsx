@@ -124,9 +124,9 @@ export const Sidebar = ({
       trapFocus={false}
       data-expanded={isExpanded}
     >
-      <Form noValidate onSubmit={onSubmit} data-test-id={dataTestId}>
+      <Form name="form-name" noValidate onSubmit={onSubmit} data-test-id={dataTestId}>
         <HeaderHolder>
-          {isExpanded && (
+          {isExpanded && onBack && (
             <ActionIcon variant="transparent" onClick={onBack} data-test-id="sidebar-back">
               <ArrowLeft color={colors.B40} />
             </ActionIcon>

@@ -18,6 +18,7 @@ import { IntegrationStatusCell } from './components/IntegrationStatusCell';
 import { When } from '../../components/utils/When';
 import { IntegrationsListNoData } from './components/IntegrationsListNoData';
 import { mapToTableIntegration } from './utils';
+import { ConditionCell } from './components/ConditionCell';
 
 const columns: IExtendedColumn<ITableIntegration>[] = [
   {
@@ -48,6 +49,13 @@ const columns: IExtendedColumn<ITableIntegration>[] = [
     accessor: 'environment',
     Header: 'Environment',
     Cell: IntegrationEnvironmentCell,
+  },
+  {
+    accessor: 'conditions',
+    Header: 'Condition',
+    width: 100,
+    maxWidth: 100,
+    Cell: ConditionCell,
   },
   {
     accessor: 'active',

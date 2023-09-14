@@ -3,7 +3,6 @@ import axios from 'axios';
 import { Injectable } from '@nestjs/common';
 import { parseISO, differenceInMinutes, differenceInHours, differenceInDays } from 'date-fns';
 import {
-  IBaseFieldFilterPart,
   FilterParts,
   IWebhookFilterPart,
   IRealtimeOnlineFilterPart,
@@ -34,11 +33,12 @@ import {
   buildSubscriberKey,
   CachedEntity,
   Instrument,
+  Filter,
+  FilterProcessingDetails,
+  IFilterVariables,
 } from '@novu/application-generic';
 import { EmailEventStatusEnum } from '@novu/stateless';
 
-import { IFilterVariables } from './types';
-import { FilterProcessingDetails } from './filter-processing-details';
 import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER, createHash, PlatformException } from '../../../shared/utils';
 import { MessageMatcherCommand } from './message-matcher.command';
 
@@ -55,7 +55,7 @@ const differenceIn = (currentDate: Date, lastDate: Date, timeOperator: TimeOpera
 };
 
 @Injectable()
-export class MessageMatcher {
+export class MessageMatcher extends Filter {
   constructor(
     private subscriberRepository: SubscriberRepository,
     private createExecutionDetails: CreateExecutionDetails,
@@ -63,7 +63,9 @@ export class MessageMatcher {
     private executionDetailsRepository: ExecutionDetailsRepository,
     private messageRepository: MessageRepository,
     private jobRepository: JobRepository
-  ) {}
+  ) {
+    super();
+  }
 
   public async filter(
     command: MessageMatcherCommand,
@@ -83,7 +85,7 @@ export class MessageMatcher {
     if (step.filters?.length) {
       const details: FilterProcessingDetails[] = [];
 
-      const foundFilter = await findAsync(step.filters, async (filter) => {
+      const foundFilter = await this.findAsync(step.filters, async (filter) => {
         const filterProcessingDetails = new FilterProcessingDetails();
         filterProcessingDetails.addFilter(filter, variables);
 
@@ -153,7 +155,7 @@ export class MessageMatcher {
 
   public static sumFilters(
     summary: {
-      stepFilters: string[];
+      filters: string[];
       failedFilters: string[];
       passedFilters: string[];
     },
@@ -165,19 +167,7 @@ export class MessageMatcher {
       type = 'online';
     }
 
-    if (condition.passed && !summary.passedFilters.includes(type)) {
-      summary.passedFilters.push(type);
-    }
-
-    if (!condition.passed && !summary.failedFilters.includes(type)) {
-      summary.failedFilters.push(type);
-    }
-
-    if (!summary.stepFilters.includes(type)) {
-      summary.stepFilters.push(type);
-    }
-
-    return summary;
+    return Filter.sumFilters(summary, condition, type);
   }
 
   private async handleGroupFilters(
@@ -213,14 +203,14 @@ export class MessageMatcher {
   ): Promise<boolean> {
     const { webhookFilters, otherFilters } = this.splitFilters(filter);
 
-    const matchedOtherFilters = await filterAsync(otherFilters, (i) =>
+    const matchedOtherFilters = await this.filterAsync(otherFilters, (i) =>
       this.processFilter(variables, i, command, filterProcessingDetails)
     );
     if (otherFilters.length !== matchedOtherFilters.length) {
       return false;
     }
 
-    const matchedWebhookFilters = await filterAsync(webhookFilters, (i) =>
+    const matchedWebhookFilters = await this.filterAsync(webhookFilters, (i) =>
       this.processFilter(variables, i, command, filterProcessingDetails)
     );
 
@@ -235,14 +225,14 @@ export class MessageMatcher {
   ): Promise<boolean> {
     const { webhookFilters, otherFilters } = this.splitFilters(filter);
 
-    const foundFilter = await findAsync(otherFilters, (i) =>
+    const foundFilter = await this.findAsync(otherFilters, (i) =>
       this.processFilter(variables, i, command, filterProcessingDetails)
     );
     if (foundFilter) {
       return true;
     }
 
-    return !!(await findAsync(webhookFilters, (i) =>
+    return !!(await this.findAsync(webhookFilters, (i) =>
       this.processFilter(variables, i, command, filterProcessingDetails)
     ));
   }
@@ -385,56 +375,6 @@ export class MessageMatcher {
     return result;
   }
 
-  private processFilterEquality(
-    variables: IFilterVariables,
-    fieldFilter: IBaseFieldFilterPart,
-    filterProcessingDetails: FilterProcessingDetails
-  ): boolean {
-    const actualValue = _.get(variables, `${fieldFilter.on}.${fieldFilter.field}`);
-    const filterValue = this.parseValue(actualValue, fieldFilter.value);
-    let result = false;
-
-    if (fieldFilter.operator === 'EQUAL') {
-      result = actualValue === filterValue;
-    }
-    if (fieldFilter.operator === 'NOT_EQUAL') {
-      result = actualValue !== filterValue;
-    }
-    if (fieldFilter.operator === 'LARGER') {
-      result = actualValue > filterValue;
-    }
-    if (fieldFilter.operator === 'SMALLER') {
-      result = actualValue < filterValue;
-    }
-    if (fieldFilter.operator === 'LARGER_EQUAL') {
-      result = actualValue >= filterValue;
-    }
-    if (fieldFilter.operator === 'SMALLER_EQUAL') {
-      result = actualValue <= filterValue;
-    }
-    if (fieldFilter.operator === 'NOT_IN') {
-      result = !actualValue.includes(filterValue);
-    }
-    if (fieldFilter.operator === 'IN') {
-      result = actualValue.includes(filterValue);
-    }
-    if (fieldFilter.operator === 'IS_DEFINED') {
-      result = actualValue !== undefined;
-    }
-    const actualValueString: string = Array.isArray(actualValue) ? JSON.stringify(actualValue) : `${actualValue ?? ''}`;
-
-    filterProcessingDetails.addCondition({
-      filter: FILTER_TO_LABEL[fieldFilter.on],
-      field: fieldFilter.field,
-      expected: `${filterValue}`,
-      actual: `${actualValueString}`,
-      operator: `${fieldFilter.operator}`,
-      passed: result,
-    });
-
-    return result;
-  }
-
   private async getWebhookResponse(
     child: IWebhookFilterPart,
     variables: IFilterVariables,
@@ -542,21 +482,6 @@ export class MessageMatcher {
     return passed;
   }
 
-  private parseValue(originValue, parsingValue) {
-    switch (typeof originValue) {
-      case 'number':
-        return Number(parsingValue);
-      case 'string':
-        return String(parsingValue);
-      case 'boolean':
-        return parsingValue === 'true';
-      case 'bigint':
-        return Number(parsingValue);
-      default:
-        return parsingValue;
-    }
-  }
-
   @Instrument()
   public async getFilterData(command: MessageMatcherCommand) {
     const subscriberFilterExist = command.step?.filters?.find((filter) => {
@@ -597,22 +522,4 @@ export class MessageMatcher {
       subscriberId,
     });
   }
-}
-
-async function findAsync<T>(array: T[], predicate: (t: T) => Promise<boolean>): Promise<T | undefined> {
-  for (const t of array) {
-    if (await predicate(t)) {
-      return t;
-    }
-  }
-
-  return undefined;
-}
-
-async function filterAsync<T>(arr: T[], callback: (item: T) => Promise<boolean>): Promise<T[]> {
-  const fail = Symbol('Filter Async failure');
-
-  return (await Promise.all(arr.map(async (item) => ((await callback(item)) ? item : fail)))).filter(
-    (i) => i !== fail
-  ) as T[];
 }
