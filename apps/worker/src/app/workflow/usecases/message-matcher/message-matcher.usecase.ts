@@ -67,7 +67,8 @@ export class MessageMatcher {
 
   public async filter(
     command: MessageMatcherCommand,
-    variables: IFilterVariables
+    variables: IFilterVariables,
+    prefiltering = false
   ): Promise<{
     passed: boolean;
     conditions: ICondition[];
@@ -95,6 +96,27 @@ export class MessageMatcher {
         const singleRule = !children || (Array.isArray(children) && children.length === 1);
         if (singleRule) {
           const result = await this.processFilter(variables, children[0], command, filterProcessingDetails);
+          if (!prefiltering) {
+            await this.createExecutionDetails.execute(
+              CreateExecutionDetailsCommand.create({
+                ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+                detail: DetailEnum.PROCESSING_STEP_FILTER,
+                source: ExecutionDetailsSourceEnum.INTERNAL,
+                status: ExecutionDetailsStatusEnum.PENDING,
+                isTest: false,
+                isRetry: false,
+                raw: filterProcessingDetails.toString(),
+              })
+            );
+          }
+
+          details.push(filterProcessingDetails);
+
+          return result;
+        }
+
+        const result = await this.handleGroupFilters(filter, variables, command, filterProcessingDetails);
+        if (!prefiltering) {
           await this.createExecutionDetails.execute(
             CreateExecutionDetailsCommand.create({
               ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -106,24 +128,7 @@ export class MessageMatcher {
               raw: filterProcessingDetails.toString(),
             })
           );
-
-          details.push(filterProcessingDetails);
-
-          return result;
         }
-
-        const result = await this.handleGroupFilters(filter, variables, command, filterProcessingDetails);
-        await this.createExecutionDetails.execute(
-          CreateExecutionDetailsCommand.create({
-            ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-            detail: DetailEnum.PROCESSING_STEP_FILTER,
-            source: ExecutionDetailsSourceEnum.INTERNAL,
-            status: ExecutionDetailsStatusEnum.PENDING,
-            isTest: false,
-            isRetry: false,
-            raw: filterProcessingDetails.toString(),
-          })
-        );
 
         details.push(filterProcessingDetails);
 

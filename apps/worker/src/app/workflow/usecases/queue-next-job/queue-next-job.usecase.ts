@@ -41,7 +41,7 @@ export class QueueNextJob {
         identifier: job.identifier,
       });
       const payload = await this.messageMatcher.getFilterData(messageMatcherCommand);
-      const shouldRun = await this.messageMatcher.filter(messageMatcherCommand, payload);
+      const shouldRun = await this.messageMatcher.filter(messageMatcherCommand, payload, true);
 
       filtered = !shouldRun.passed;
     }
