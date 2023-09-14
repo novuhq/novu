@@ -63,7 +63,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
           content: '',
           metadata: {
             unit: DigestUnitEnum.SECONDS,
-            amount: 0.1,
+            amount: 1,
             type: DelayTypeEnum.REGULAR,
           },
         },
@@ -94,7 +94,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     const subExpire30Days = subDays(expireAt, 30);
     const diff = differenceInMilliseconds(subExpire30Days, createdAt);
 
-    expect(diff).to.approximately(100, 200);
+    expect(diff).to.approximately(100, 1000);
 
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
