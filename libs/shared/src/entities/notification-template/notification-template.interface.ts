@@ -11,7 +11,7 @@ export interface INotificationTemplate {
   _parentId?: string;
   _environmentId: string;
   tags: string[];
-  draft: boolean;
+  draft?: boolean;
   active: boolean;
   critical: boolean;
   preferenceSettings: IPreferenceChannels;

@@ -60,5 +60,5 @@ export class MessageTemplate {
   };
 
   @IsOptional()
-  _creatorId: string;
+  _creatorId?: string;
 }
