@@ -40,8 +40,7 @@ export class AddJob {
   @LogDecorator()
   public async execute(command: AddJobCommand): Promise<void> {
     Logger.verbose('Getting Job', LOG_CONTEXT);
-    const job =
-      command.job ?? (await this.jobRepository.findById(command.jobId));
+    const job = command.job;
     Logger.debug(`Job contents for job ${job._id}`, job, LOG_CONTEXT);
 
     if (!job) {
@@ -114,7 +113,7 @@ export class AddJob {
       })
     );
 
-    const delay = digestAmount ?? delayAmount;
+    const delay = command.filtered ? 0 : digestAmount ?? delayAmount;
 
     Logger.verbose(`Adding Job ${job._id} to Queue`, LOG_CONTEXT);
     const stepContainsWebhookFilter = this.stepContainsFilter(job, 'webhook');

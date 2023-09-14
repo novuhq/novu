@@ -38,6 +38,7 @@ import { SendMessagePush } from './send-message-push.usecase';
 import { Digest } from './digest';
 import { PlatformException } from '../../../shared/utils';
 import { MessageMatcher } from '../message-matcher';
+import { MessageMatcherCommand } from '../message-matcher/message-matcher.command';
 
 @Injectable()
 export class SendMessage {
@@ -48,7 +49,6 @@ export class SendMessage {
     private sendMessageChat: SendMessageChat,
     private sendMessagePush: SendMessagePush,
     private digest: Digest,
-    private subscriberRepository: SubscriberRepository,
     private createExecutionDetails: CreateExecutionDetails,
     private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
     private notificationTemplateRepository: NotificationTemplateRepository,
@@ -144,9 +144,21 @@ export class SendMessage {
   }
 
   private async filter(command: SendMessageCommand) {
-    const data = await this.getFilterData(command);
+    const messageMatcherCommand = MessageMatcherCommand.create({
+      step: command.job.step,
+      job: command.job,
+      userId: command.userId,
+      transactionId: command.job.transactionId,
+      _subscriberId: command.job._subscriberId,
+      environmentId: command.job._environmentId,
+      organizationId: command.job._organizationId,
+      subscriberId: command.job.subscriberId,
+      identifier: command.job.identifier,
+    });
 
-    const shouldRun = await this.matchMessage.filter(command, data);
+    const data = await this.matchMessage.getFilterData(messageMatcherCommand);
+
+    const shouldRun = await this.matchMessage.filter(messageMatcherCommand, data);
 
     if (!shouldRun.passed) {
       await this.createExecutionDetails.execute(
@@ -169,47 +181,6 @@ export class SendMessage {
   }
 
   @Instrument()
-  private async getFilterData(command: SendMessageCommand) {
-    const subscriberFilterExist = command.step?.filters?.find((filter) => {
-      return filter?.children?.find((item) => item?.on === 'subscriber');
-    });
-
-    let subscriber;
-
-    if (subscriberFilterExist) {
-      subscriber = await this.getSubscriberBySubscriberId({
-        subscriberId: command.subscriberId,
-        _environmentId: command.environmentId,
-      });
-    }
-
-    return {
-      subscriber,
-      payload: command.payload,
-    };
-  }
-
-  @CachedEntity({
-    builder: (command: { subscriberId: string; _environmentId: string }) =>
-      buildSubscriberKey({
-        _environmentId: command._environmentId,
-        subscriberId: command.subscriberId,
-      }),
-  })
-  private async getSubscriberBySubscriberId({
-    subscriberId,
-    _environmentId,
-  }: {
-    subscriberId: string;
-    _environmentId: string;
-  }) {
-    return await this.subscriberRepository.findOne({
-      _environmentId,
-      subscriberId,
-    });
-  }
-
-  @Instrument()
   private async filterPreferredChannels(job: JobEntity): Promise<boolean> {
     const template = await this.getNotificationTemplate({
       _id: job._templateId,
@@ -223,7 +194,7 @@ export class SendMessage {
       return true;
     }
 
-    const subscriber = await this.getSubscriberBySubscriberId({
+    const subscriber = await this.matchMessage.getSubscriberBySubscriberId({
       _environmentId: job._environmentId,
       subscriberId: job.subscriberId,
     });
