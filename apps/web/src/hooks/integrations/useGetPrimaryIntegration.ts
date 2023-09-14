@@ -32,7 +32,7 @@ export function useGetPrimaryIntegration({ filterByEnv = true, channelType }: Us
 
     return activeIntegrationsByEnv?.find((integration) => integration.primary && integration.channel === channelType)
       ?.providerId;
-  }, [hasActiveIntegration, activeIntegrationsByEnv, channelType, isPrimaryStep]);
+  }, [isMultiProviderConfigurationEnabled, hasActiveIntegration, activeIntegrationsByEnv, channelType, isPrimaryStep]);
 
   return {
     primaryIntegration: getPrimaryIntegration,

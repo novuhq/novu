@@ -1,7 +1,12 @@
-import { StepFilter } from '@novu/dal';
-import { ICondition } from '@novu/shared';
+import { StepFilter, SubscriberEntity, TenantEntity } from '@novu/dal';
+import { ICondition, ITenantDefine, ITriggerPayload } from '@novu/shared';
 
-import { IFilterVariables } from './types';
+export interface IFilterVariables {
+  payload?: ITriggerPayload;
+  subscriber?: SubscriberEntity;
+  webhook?: Record<string, unknown>;
+  tenant?: TenantEntity;
+}
 
 export class FilterProcessingDetails {
   private conditions: ICondition[] = [];

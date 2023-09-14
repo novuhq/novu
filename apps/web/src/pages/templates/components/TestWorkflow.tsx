@@ -76,10 +76,11 @@ export function TestWorkflow({ trigger }) {
       overridesValue: jsonValidator,
     },
   });
+  const { setValues } = form;
 
   useEffect(() => {
-    form.setValues({ toValue: makeToValue(subscriberVariables, currentUser) });
-  }, [subscriberVariables, currentUser]);
+    setValues({ toValue: makeToValue(subscriberVariables, currentUser) });
+  }, [setValues, subscriberVariables, currentUser]);
 
   const onTrigger = async ({ toValue, payloadValue, overridesValue, snippetValue }) => {
     const to = JSON.parse(toValue);

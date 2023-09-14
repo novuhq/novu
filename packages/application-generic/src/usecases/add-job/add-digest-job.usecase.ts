@@ -5,6 +5,7 @@ import {
   ExecutionDetailsStatusEnum,
   IDigestBaseMetadata,
   IDigestRegularMetadata,
+  JobStatusEnum,
 } from '@novu/shared';
 
 import { AddDigestJobCommand } from './add-digest-job.command';
@@ -70,6 +71,23 @@ export class AddDigestJob {
 
     // We merged the digest job as there was an existing delayed digest job for this subscriber and template in the same time frame
     if (matched > 0 && modified === 0) {
+      await this.jobRepository.update(
+        {
+          _environmentId: job._environmentId,
+          _id: job._id,
+        },
+        {
+          $set: {
+            status: JobStatusEnum.MERGED,
+          },
+        }
+      );
+
+      await this.jobRepository.updateAllChildJobStatus(
+        job,
+        JobStatusEnum.MERGED
+      );
+
       await this.digestMergedExecutionDetails(job);
 
       return undefined;

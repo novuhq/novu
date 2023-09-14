@@ -1,11 +1,11 @@
 import { Flex, Grid, Group, Input, LoadingOverlay, Stack, useMantineTheme } from '@mantine/core';
 import { Dropzone } from '@mantine/dropzone';
-import { IOrganizationEntity } from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
 import axios from 'axios';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useOutletContext } from 'react-router-dom';
+import { IOrganizationEntity } from '@novu/shared';
 
 import { updateBrandingSettings } from '../../../api/organization';
 import { getSignedUrl } from '../../../api/storage';
@@ -24,14 +24,20 @@ export function BrandingForm() {
   const { currentOrganization: organization } = useOutletContext<{
     currentOrganization: IOrganizationEntity | undefined;
   }>();
-  const [image, setImage] = useState<string>();
-  const [file, setFile] = useState<File>();
-  const [imageLoading, setImageLoading] = useState<boolean>(false);
   const { mutateAsync: getSignedUrlAction } = useMutation<
     { signedUrl: string; path: string; additionalHeaders: object },
     { error: string; message: string; statusCode: number },
     string
   >(getSignedUrl);
+  const { setValue, handleSubmit, control } = useForm({
+    defaultValues: {
+      fontFamily: organization?.branding?.fontFamily || 'inherit',
+      color: organization?.branding?.color || '#f47373',
+      image: organization?.branding?.logo || '',
+      file: '',
+    },
+  });
+  const theme = useMantineTheme();
 
   const { mutateAsync: updateBrandingSettingsMutation, isLoading: isUpdateBrandingLoading } = useMutation<
     { logo: string; path: string },
@@ -42,7 +48,7 @@ export function BrandingForm() {
   useEffect(() => {
     if (organization) {
       if (organization.branding?.logo) {
-        setImage(organization.branding.logo);
+        setValue('image', organization.branding.logo);
       }
       if (organization.branding?.color) {
         setValue('color', organization?.branding?.color);
@@ -51,26 +57,17 @@ export function BrandingForm() {
         setValue('fontFamily', organization?.branding?.fontFamily);
       }
     }
-  }, [organization]);
+  }, [organization, setValue]);
 
-  function beforeUpload(files: File[]) {
-    setFile(files[0]);
-  }
-
-  useEffect(() => {
-    if (file) {
-      handleUpload();
-    }
-  }, [file]);
-
-  async function handleUpload() {
+  async function handleUpload(files: File[]) {
+    const file = files[0];
     if (!file) return;
 
-    setImageLoading(true);
     const { signedUrl, path, additionalHeaders } = await getSignedUrlAction(mimeTypes[file.type]);
     const contentTypeHeaders = {
       'Content-Type': file.type,
     };
+
     const mergedHeaders = Object.assign({}, contentTypeHeaders, additionalHeaders || {});
     await axios.put(signedUrl, file, {
       headers: mergedHeaders,
@@ -86,11 +83,10 @@ export function BrandingForm() {
       ],
     });
 
-    setImage(path);
-    setImageLoading(false);
+    setValue('image', path);
   }
 
-  async function saveBrandsForm({ color, fontFamily }) {
+  async function saveBrandsForm({ color, fontFamily, image }) {
     const brandData = {
       color,
       logo: image,
@@ -101,16 +97,6 @@ export function BrandingForm() {
 
     successMessage('Branding info updated successfully');
   }
-
-  const { setValue, handleSubmit, control } = useForm({
-    defaultValues: {
-      fontFamily: organization?.branding?.fontFamily || 'inherit',
-      color: organization?.branding?.color || '#f47373',
-      image: image || '',
-      file: file || '',
-    },
-  });
-  const theme = useMantineTheme();
 
   return (
     <Stack h="100%">
@@ -140,8 +126,7 @@ export function BrandingForm() {
                           }}
                           accept={Object.keys(mimeTypes)}
                           multiple={false}
-                          onDrop={beforeUpload}
-                          {...field}
+                          onDrop={handleUpload}
                           data-test-id="upload-image-button"
                         >
                           <Group
@@ -149,12 +134,12 @@ export function BrandingForm() {
                             spacing="xl"
                             style={{ minHeight: 100, minWidth: 100, pointerEvents: 'none' }}
                           >
-                            {!image ? (
+                            {!field.value ? (
                               <Upload style={{ width: 80, height: 80, color: colors.B60 }} />
                             ) : (
                               <img
                                 data-test-id="logo-image-wrapper"
-                                src={image}
+                                src={field.value}
                                 style={{ width: 100, height: 100, objectFit: 'contain' }}
                                 alt="avatar"
                               />

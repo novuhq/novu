@@ -213,4 +213,44 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
 
     return execution;
   }
+
+  async updateAllChildJobStatus(job: JobEntity, status: JobStatusEnum): Promise<JobEntity[]> {
+    const updatedJobs: JobEntity[] = [];
+
+    let childJob: JobEntity | null = await this.MongooseModel.findOneAndUpdate<JobEntity>(
+      {
+        _environmentId: job._environmentId,
+        _parentId: job._id,
+      },
+      {
+        $set: {
+          status,
+        },
+      }
+    );
+
+    if (childJob) {
+      updatedJobs.push(childJob);
+    }
+
+    while (childJob) {
+      childJob = await this.MongooseModel.findOneAndUpdate<JobEntity>(
+        {
+          _environmentId: job._environmentId,
+          _parentId: childJob._id,
+        },
+        {
+          $set: {
+            status,
+          },
+        }
+      );
+
+      if (childJob) {
+        updatedJobs.push(childJob);
+      }
+    }
+
+    return updatedJobs;
+  }
 }

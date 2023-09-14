@@ -181,7 +181,7 @@ export function ConnectIntegrationForm({
         },
       });
     }
-  }, [provider]);
+  }, [setValue, provider]);
 
   async function onCreateIntegration(credentials: ICredentialsDto) {
     try {
