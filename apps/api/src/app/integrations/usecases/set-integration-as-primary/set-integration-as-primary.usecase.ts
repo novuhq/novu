@@ -46,6 +46,7 @@ export class SetIntegrationAsPrimary {
         $set: {
           active: true,
           primary: true,
+          conditions: [],
         },
       }
     );
