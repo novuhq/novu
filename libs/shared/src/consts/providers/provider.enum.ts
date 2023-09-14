@@ -27,6 +27,11 @@ export enum CredentialsKeyEnum {
   RedirectUrl = 'redirectUrl',
   Hmac = 'hmac',
   IpPoolName = 'ipPoolName',
+  Method = 'method',
+  ApiKeyAttribute = 'apiKeyAttribute',
+  SecretKeyAttribute = 'secretKeyAttribute',
+  IdPath = 'idPath',
+  DatePath = 'datePath',
 }
 
 export enum EmailProviderIdEnum {

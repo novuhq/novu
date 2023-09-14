@@ -136,4 +136,29 @@ export class CredentialsDto implements ICredentials {
   @IsString()
   @IsOptional()
   ipPoolName?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  method?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  apiKeyAttribute?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  secretKeyAttribute?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  idPath?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  datePath?: string;
 }
