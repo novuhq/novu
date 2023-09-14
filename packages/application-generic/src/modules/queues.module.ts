@@ -34,10 +34,12 @@ import {
 
 const PROVIDERS: Provider[] = [
   ActiveJobsMetricQueueService,
+  ActiveJobsMetricQueueServiceHealthIndicator,
   ActiveJobsMetricWorkerService,
   bullMqTokenList,
   BullMqService,
   CompletedJobsMetricQueueService,
+  CompletedJobsMetricQueueServiceHealthIndicator,
   CompletedJobsMetricWorkerService,
   InboundParseQueue,
   InboundParseWorker,
