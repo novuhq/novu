@@ -84,6 +84,7 @@ export class SendgridEmailProvider implements IEmailProvider {
         novuMessageId: options.id,
         novuWorkflowIdentifier: options.notificationDetails?.workflowIdentifier,
         novuSubscriberId: options.notificationDetails?.subscriberId,
+        ...options.customData,
       },
       attachments: options.attachments?.map((attachment) => {
         return {
