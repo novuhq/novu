@@ -458,7 +458,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
             amount: 1,
             type: DigestTypeEnum.BACKOFF,
             backoffUnit: DigestUnitEnum.SECONDS,
-            backoffAmount: 1,
+            backoffAmount: 5,
           },
         },
         {
@@ -512,6 +512,8 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
 
     const completedInApp = generatedMessageJob.filter((elem) => elem.status === JobStatusEnum.COMPLETED);
     expect(completedInApp.length).to.equal(2);
+
+    console.log(JSON.stringify(completedInApp, null, 2));
 
     expect(completedInApp.find((i) => i.digest?.events?.length === 2)).to.be.ok;
     expect(completedInApp.find((i) => i.digest?.events?.length === 0)).to.be.ok;
