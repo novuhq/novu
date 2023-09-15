@@ -77,20 +77,15 @@ export class SendMessageEmail extends SendMessageBase {
 
     const overrideSelectedIntegration = command.overrides?.email?.integrationIdentifier;
     try {
-      const getIntegrationCommand = {
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        channelType: ChannelTypeEnum.EMAIL,
-        userId: command.userId,
-        identifier: overrideSelectedIntegration as string,
-      };
-
       integration = await this.getIntegration({
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         channelType: ChannelTypeEnum.EMAIL,
         userId: command.userId,
         identifier: overrideSelectedIntegration as string,
+        filterData: {
+          tenant: command.job.tenant,
+        },
       });
     } catch (e) {
       await this.createExecutionDetails.execute(
@@ -544,6 +539,7 @@ export const createMailData = (options: IEmailOptions, overrides: Record<string,
     cc: overrides?.cc || [],
     bcc: overrides?.bcc || [],
     ...ipPoolName,
+    customData: overrides?.customData || {},
   };
 };
 

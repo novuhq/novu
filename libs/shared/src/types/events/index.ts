@@ -22,6 +22,7 @@ export interface IEmailOptions {
   payloadDetails?: any;
   notificationDetails?: any;
   ipPoolName?: string;
+  customData?: Record<string, Record<string, unknown>>;
 }
 
 export interface ITriggerPayload {

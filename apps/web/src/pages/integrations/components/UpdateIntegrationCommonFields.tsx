@@ -14,13 +14,7 @@ const CopyWrapper = styled.div`
   }
 `;
 
-export const UpdateIntegrationCommonFields = ({
-  provider,
-  showActive = true,
-}: {
-  provider: IIntegratedProvider | null;
-  showActive?: boolean;
-}) => {
+export const UpdateIntegrationCommonFields = ({ provider }: { provider: IIntegratedProvider | null }) => {
   const {
     control,
     formState: { errors },
@@ -31,21 +25,19 @@ export const UpdateIntegrationCommonFields = ({
 
   return (
     <>
-      <When truthy={showActive}>
-        <Controller
-          control={control}
-          name="active"
-          defaultValue={false}
-          render={({ field }) => (
-            <Switch
-              checked={field.value}
-              label={field.value ? 'Active' : 'Disabled'}
-              data-test-id="is_active_id"
-              {...field}
-            />
-          )}
-        />
-      </When>
+      <Controller
+        control={control}
+        name="active"
+        defaultValue={false}
+        render={({ field }) => (
+          <Switch
+            checked={field.value}
+            label={field.value ? 'Active' : 'Disabled'}
+            data-test-id="is_active_id"
+            {...field}
+          />
+        )}
+      />
       <Controller
         control={control}
         name="name"

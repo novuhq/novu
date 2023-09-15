@@ -36,7 +36,7 @@ describe('BullMQ Service', () => {
       });
 
       it('should create a queue properly with the default configuration', async () => {
-        const queueName = JobTopicNameEnum.METRICS;
+        const queueName = JobTopicNameEnum.ACTIVE_JOBS_METRIC;
         const queueOptions: QueueBaseOptions = {};
         await bullMqService.createQueue(queueName, queueOptions);
 
@@ -52,7 +52,7 @@ describe('BullMQ Service', () => {
       });
 
       it('should create a worker properly with the default configuration', async () => {
-        const workerName = JobTopicNameEnum.METRICS;
+        const workerName = JobTopicNameEnum.ACTIVE_JOBS_METRIC;
         await bullMqService.createWorker(workerName, undefined, {});
 
         expect(bullMqService.worker.name).toEqual(workerName);
@@ -66,8 +66,11 @@ describe('BullMQ Service', () => {
       process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
 
       bullMqService = new BullMqService();
-      const queue = bullMqService.createQueue(JobTopicNameEnum.METRICS, {});
-      expect(queue.opts.prefix).toEqual('{metric}');
+      const queue = bullMqService.createQueue(
+        JobTopicNameEnum.ACTIVE_JOBS_METRIC,
+        {}
+      );
+      expect(queue.opts.prefix).toEqual('{metric-active-jobs}');
     });
 
     it('should not use prefix if a Redis provider is used and not in Cluster mode', async () => {
@@ -75,7 +78,10 @@ describe('BullMQ Service', () => {
       process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
 
       bullMqService = new BullMqService();
-      const queue = bullMqService.createQueue(JobTopicNameEnum.METRICS, {});
+      const queue = bullMqService.createQueue(
+        JobTopicNameEnum.ACTIVE_JOBS_METRIC,
+        {}
+      );
       expect(queue.opts.prefix).toEqual('bull');
     });
 
@@ -84,8 +90,11 @@ describe('BullMQ Service', () => {
       process.env.MEMORY_DB_CLUSTER_SERVICE_HOST = '';
 
       bullMqService = new BullMqService();
-      const queue = bullMqService.createQueue(JobTopicNameEnum.METRICS, {});
-      expect(queue.opts.prefix).toEqual('{metric}');
+      const queue = bullMqService.createQueue(
+        JobTopicNameEnum.ACTIVE_JOBS_METRIC,
+        {}
+      );
+      expect(queue.opts.prefix).toEqual('{metric-active-jobs}');
     });
   });
 });

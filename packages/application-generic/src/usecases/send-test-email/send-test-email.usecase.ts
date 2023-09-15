@@ -49,6 +49,7 @@ export class SendTestEmail {
         environmentId: command.environmentId,
         channelType: ChannelTypeEnum.EMAIL,
         userId: command.userId,
+        filterData: {},
       })
     );
 
