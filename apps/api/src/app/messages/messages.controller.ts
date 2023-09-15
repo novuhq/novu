@@ -12,11 +12,18 @@ import { MessagesResponseDto } from '../widgets/dtos/message-response.dto';
 import { DeleteMessageParams } from './params/delete-message.param';
 import { ApiResponse } from '../shared/framework/response.decorator';
 import { GetMessagesRequestDto } from './dtos/get-messages-requests.dto';
+import { RemoveMessagesByTransactionId } from './usecases/remove-messages-by-transactionId/remove-messages-by-transactionId.usecase';
+import { RemoveMessagesByTransactionIdCommand } from './usecases/remove-messages-by-transactionId/remove-messages-by-transactionId.command';
+import { DeleteMessageByTransactionIdRequestDto } from './dtos/remove-messages-by-transactionId-request.dto';
 
 @Controller('/messages')
 @ApiTags('Messages')
 export class MessagesController {
-  constructor(private removeMessage: RemoveMessage, private getMessagesUsecase: GetMessages) {}
+  constructor(
+    private removeMessage: RemoveMessage,
+    private getMessagesUsecase: GetMessages,
+    private removeMessagesByTransactionId: RemoveMessagesByTransactionId
+  ) {}
 
   @Get('')
   @ExternalApiAccessible()
@@ -72,24 +79,24 @@ export class MessagesController {
     );
   }
 
-  @Delete('/:messageId')
+  @Delete('')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
   @ApiResponse(DeleteMessageResponseDto)
   @ApiOperation({
-    summary: 'Delete message',
-    description: 'Deletes a message entity from the Novu platform',
+    summary: 'Delete messages by transactionId',
+    description: 'Deletes messages entity from the Novu platform using TransactionId of message',
   })
-  @ApiParam({ name: 'messageId', type: String, required: true })
   async deleteMessagesByTransactionId(
     @UserSession() user: IJwtPayload,
-    @Param() { messageId }: DeleteMessageParams
+    @Query() query: DeleteMessageByTransactionIdRequestDto
   ): Promise<DeleteMessageResponseDto> {
-    return await this.removeMessage.execute(
-      RemoveMessageCommand.create({
+    return await this.removeMessagesByTransactionId.execute(
+      RemoveMessagesByTransactionIdCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
-        messageId,
+        transactionId: query.transactionId,
+        channel: query.channel,
       })
     );
   }
