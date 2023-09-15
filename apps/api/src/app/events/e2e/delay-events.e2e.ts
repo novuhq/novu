@@ -211,7 +211,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
           content: '',
           metadata: {
             unit: DigestUnitEnum.SECONDS,
-            amount: 2,
+            amount: 5,
             type: DigestTypeEnum.REGULAR,
           },
         },
@@ -225,6 +225,8 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     await triggerEvent({
       eventNumber: '1',
     });
+
+    await session.awaitRunningJobs(template?._id, true, 2);
 
     await triggerEvent({
       eventNumber: '2',
