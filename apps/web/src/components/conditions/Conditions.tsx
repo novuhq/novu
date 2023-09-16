@@ -54,7 +54,7 @@ export function Conditions({
         label: FILTER_TO_LABEL[filterType],
       };
     });
-  }, [context]);
+  }, [filterPartsList]);
 
   function handleDuplicate(index: number) {
     insert(index + 1, getValues(`conditions.0.children.${index}`));
