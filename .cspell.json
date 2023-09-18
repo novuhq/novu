@@ -505,7 +505,8 @@
     "INITDB",
     "springboot",
     "errmsg",
-    "shelljs"
+    "shelljs",
+    "prefiltering"
   ],
   "flagWords": [],
   "patterns": [

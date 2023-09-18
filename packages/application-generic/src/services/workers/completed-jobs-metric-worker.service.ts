@@ -3,12 +3,12 @@ import { JobTopicNameEnum } from '@novu/shared';
 
 import { WorkerBaseService } from './index';
 
-const LOG_CONTEXT = 'JobMetricsWorkerService';
+const LOG_CONTEXT = 'CompletedJobsMetricWorkerService';
 
 @Injectable()
-export class JobMetricsWorkerService extends WorkerBaseService {
+export class CompletedJobsMetricWorkerService extends WorkerBaseService {
   constructor() {
-    super(JobTopicNameEnum.METRICS);
+    super(JobTopicNameEnum.COMPLETED_JOBS_METRIC);
     Logger.log(`Worker ${this.topic} instantiated`, LOG_CONTEXT);
   }
 }

@@ -40,8 +40,7 @@ export class AddJob {
   @LogDecorator()
   public async execute(command: AddJobCommand): Promise<void> {
     Logger.verbose('Getting Job', LOG_CONTEXT);
-    const job =
-      command.job ?? (await this.jobRepository.findById(command.jobId));
+    const job = command.job;
     Logger.debug(`Job contents for job ${job._id}`, job, LOG_CONTEXT);
 
     if (!job) {
@@ -61,7 +60,7 @@ export class AddJob {
         : undefined;
 
     if (job.type === StepTypeEnum.DIGEST) {
-      Logger.debug(`DigestAmount is: ${digestAmount}`, LOG_CONTEXT);
+      Logger.debug(`Digest step amount is: ${digestAmount}`, LOG_CONTEXT);
     }
 
     if (job.type === StepTypeEnum.DIGEST && digestAmount === undefined) {
@@ -79,7 +78,7 @@ export class AddJob {
         : undefined;
 
     if (job.type === StepTypeEnum.DELAY) {
-      Logger.debug(`Delay Amount is: ${delayAmount}`, LOG_CONTEXT);
+      Logger.debug(`Delay step Amount is: ${delayAmount}`, LOG_CONTEXT);
     }
 
     if (job.type === StepTypeEnum.DELAY && delayAmount === undefined) {
@@ -114,7 +113,14 @@ export class AddJob {
       })
     );
 
-    const delay = digestAmount ?? delayAmount;
+    const delay = command.filtered ? 0 : digestAmount ?? delayAmount;
+
+    if ((digestAmount || delayAmount) && command.filtered) {
+      Logger.verbose(
+        `Delay for job ${job._id} will be 0 because job was filtered`,
+        LOG_CONTEXT
+      );
+    }
 
     Logger.verbose(`Adding Job ${job._id} to Queue`, LOG_CONTEXT);
     const stepContainsWebhookFilter = this.stepContainsFilter(job, 'webhook');
