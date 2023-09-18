@@ -30,14 +30,17 @@ import {
   DetailEnum,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
+  buildSubscriberKey,
+  CachedEntity,
+  Instrument,
   Filter,
-  IFilterVariables,
   FilterProcessingDetails,
+  IFilterVariables,
 } from '@novu/application-generic';
 import { EmailEventStatusEnum } from '@novu/stateless';
 
-import { SendMessageCommand } from '../send-message/send-message.command';
 import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER, createHash, PlatformException } from '../../../shared/utils';
+import { MessageMatcherCommand } from './message-matcher.command';
 
 const differenceIn = (currentDate: Date, lastDate: Date, timeOperator: TimeOperatorEnum) => {
   if (timeOperator === TimeOperatorEnum.MINUTES) {
@@ -65,8 +68,9 @@ export class MessageMatcher extends Filter {
   }
 
   public async filter(
-    command: SendMessageCommand,
-    variables: IFilterVariables
+    command: MessageMatcherCommand,
+    variables: IFilterVariables,
+    prefiltering = false
   ): Promise<{
     passed: boolean;
     conditions: ICondition[];
@@ -94,6 +98,27 @@ export class MessageMatcher extends Filter {
         const singleRule = !children || (Array.isArray(children) && children.length === 1);
         if (singleRule) {
           const result = await this.processFilter(variables, children[0], command, filterProcessingDetails);
+          if (!prefiltering) {
+            await this.createExecutionDetails.execute(
+              CreateExecutionDetailsCommand.create({
+                ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+                detail: DetailEnum.PROCESSING_STEP_FILTER,
+                source: ExecutionDetailsSourceEnum.INTERNAL,
+                status: ExecutionDetailsStatusEnum.PENDING,
+                isTest: false,
+                isRetry: false,
+                raw: filterProcessingDetails.toString(),
+              })
+            );
+          }
+
+          details.push(filterProcessingDetails);
+
+          return result;
+        }
+
+        const result = await this.handleGroupFilters(filter, variables, command, filterProcessingDetails);
+        if (!prefiltering) {
           await this.createExecutionDetails.execute(
             CreateExecutionDetailsCommand.create({
               ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -105,24 +130,7 @@ export class MessageMatcher extends Filter {
               raw: filterProcessingDetails.toString(),
             })
           );
-
-          details.push(filterProcessingDetails);
-
-          return result;
         }
-
-        const result = await this.handleGroupFilters(filter, variables, command, filterProcessingDetails);
-        await this.createExecutionDetails.execute(
-          CreateExecutionDetailsCommand.create({
-            ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-            detail: DetailEnum.PROCESSING_STEP_FILTER,
-            source: ExecutionDetailsSourceEnum.INTERNAL,
-            status: ExecutionDetailsStatusEnum.PENDING,
-            isTest: false,
-            isRetry: false,
-            raw: filterProcessingDetails.toString(),
-          })
-        );
 
         details.push(filterProcessingDetails);
 
@@ -165,7 +173,7 @@ export class MessageMatcher extends Filter {
   private async handleGroupFilters(
     filter: StepFilter,
     variables: IFilterVariables,
-    command: SendMessageCommand,
+    command: MessageMatcherCommand,
     filterProcessingDetails: FilterProcessingDetails
   ): Promise<boolean> {
     if (filter.value === 'OR') {
@@ -190,7 +198,7 @@ export class MessageMatcher extends Filter {
   private async handleAndFilters(
     filter: StepFilter,
     variables: IFilterVariables,
-    command: SendMessageCommand,
+    command: MessageMatcherCommand,
     filterProcessingDetails: FilterProcessingDetails
   ): Promise<boolean> {
     const { webhookFilters, otherFilters } = this.splitFilters(filter);
@@ -212,7 +220,7 @@ export class MessageMatcher extends Filter {
   private async handleOrFilters(
     filter: StepFilter,
     variables: IFilterVariables,
-    command: SendMessageCommand,
+    command: MessageMatcherCommand,
     filterProcessingDetails: FilterProcessingDetails
   ): Promise<boolean> {
     const { webhookFilters, otherFilters } = this.splitFilters(filter);
@@ -231,7 +239,7 @@ export class MessageMatcher extends Filter {
 
   private async processPreviousStep(
     filter: IPreviousStepFilterPart,
-    command: SendMessageCommand,
+    command: MessageMatcherCommand,
     filterProcessingDetails: FilterProcessingDetails
   ): Promise<boolean> {
     const job = await this.jobRepository.findOne({
@@ -309,7 +317,7 @@ export class MessageMatcher extends Filter {
 
   private async processIsOnline(
     filter: IRealtimeOnlineFilterPart | IOnlineInLastFilterPart,
-    command: SendMessageCommand,
+    command: MessageMatcherCommand,
     filterProcessingDetails: FilterProcessingDetails
   ): Promise<boolean> {
     const subscriber = await this.subscriberRepository.findOne({
@@ -370,7 +378,7 @@ export class MessageMatcher extends Filter {
   private async getWebhookResponse(
     child: IWebhookFilterPart,
     variables: IFilterVariables,
-    command: SendMessageCommand
+    command: MessageMatcherCommand
   ): Promise<Record<string, unknown> | undefined> {
     if (!child.webhookUrl) return undefined;
 
@@ -398,7 +406,7 @@ export class MessageMatcher extends Filter {
     }
   }
 
-  private async buildPayload(variables: IFilterVariables, command: SendMessageCommand) {
+  private async buildPayload(variables: IFilterVariables, command: MessageMatcherCommand) {
     if (process.env.NODE_ENV === 'test') return variables;
 
     const payload: Partial<{
@@ -432,7 +440,7 @@ export class MessageMatcher extends Filter {
     return payload;
   }
 
-  private async buildHmac(command: SendMessageCommand): Promise<string> {
+  private async buildHmac(command: MessageMatcherCommand): Promise<string> {
     if (process.env.NODE_ENV === 'test') return '';
 
     const environment = await this.environmentRepository.findOne({
@@ -447,7 +455,7 @@ export class MessageMatcher extends Filter {
   private async processFilter(
     variables: IFilterVariables,
     child: FilterParts,
-    command: SendMessageCommand,
+    command: MessageMatcherCommand,
     filterProcessingDetails: FilterProcessingDetails
   ): Promise<boolean> {
     let passed = false;
@@ -472,5 +480,46 @@ export class MessageMatcher extends Filter {
     }
 
     return passed;
+  }
+
+  @Instrument()
+  public async getFilterData(command: MessageMatcherCommand) {
+    const subscriberFilterExist = command.step?.filters?.find((filter) => {
+      return filter?.children?.find((item) => item?.on === 'subscriber');
+    });
+
+    let subscriber;
+
+    if (subscriberFilterExist) {
+      subscriber = await this.getSubscriberBySubscriberId({
+        subscriberId: command.subscriberId,
+        _environmentId: command.environmentId,
+      });
+    }
+
+    return {
+      subscriber,
+      payload: command.job.payload,
+    };
+  }
+
+  @CachedEntity({
+    builder: (command: { subscriberId: string; _environmentId: string }) =>
+      buildSubscriberKey({
+        _environmentId: command._environmentId,
+        subscriberId: command.subscriberId,
+      }),
+  })
+  public async getSubscriberBySubscriberId({
+    subscriberId,
+    _environmentId,
+  }: {
+    subscriberId: string;
+    _environmentId: string;
+  }) {
+    return await this.subscriberRepository.findOne({
+      _environmentId,
+      subscriberId,
+    });
   }
 }
