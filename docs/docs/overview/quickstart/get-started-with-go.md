@@ -217,7 +217,7 @@ func main() {
    "logo": "https://happycorp.com/logo.png",
   },
  }
- 
+
  novuClient := novu.NewAPIClient(apiKey, &novu.Config{})
  triggerResp, err := novuClient.EventApi.Trigger(ctx, eventId, novu.ITriggerPayloadOptions{
   To:      to,
@@ -379,7 +379,7 @@ func main() {
  apiKey := "<REPLACE_WITH_YOUR_API_KEY>"
  eventId := "<REPLACE_WITH_YOUR_EVENT_ID>"
  ctx := context.Background()
- 
+
  to := map[string]interface{}{
   "type":     "Topic",
   "topicKey":    topicKey
@@ -390,7 +390,7 @@ func main() {
    "logo": "https://happycorp.com/logo.png",
   },
  }
- 
+
  novuClient := novu.NewAPIClient(apiKey, &novu.Config{})
     triggerResp, err := novuClient.EventApi.Trigger(ctx, eventId, novu.ITriggerPayloadOptions{
       To:      to,

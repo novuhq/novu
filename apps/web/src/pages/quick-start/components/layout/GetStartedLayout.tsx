@@ -23,14 +23,10 @@ export function GetStartedLayout({ children, footer }: IGetStartedLayoutProps) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    onRouteChangeUpdateNavigationStore();
+    currentOnboardingStep().set(location.pathname);
   }, [location.pathname]);
 
   useEffect(() => {
-    onStepMountNavigateToCurrentStep();
-  }, []);
-
-  function onStepMountNavigateToCurrentStep() {
     const route = currentOnboardingStep().get();
 
     if (route) {
@@ -38,11 +34,7 @@ export function GetStartedLayout({ children, footer }: IGetStartedLayoutProps) {
     } else {
       navigate(ROUTES.GET_STARTED);
     }
-  }
-
-  function onRouteChangeUpdateNavigationStore() {
-    currentOnboardingStep().set(location.pathname);
-  }
+  }, [navigate]);
 
   return (
     <>

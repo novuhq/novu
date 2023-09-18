@@ -22,6 +22,7 @@
     "lint:fix": "pnpm lint -- --fix",
     "test": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --timeout 10000 --require ts-node/register --exit --file e2e/setup.ts src/**/**/*.spec.ts",
     "test:e2e": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --timeout 10000 --require ts-node/register --exit --file e2e/setup.ts src/**/*.e2e.ts",
+    "test:e2e:ee": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --timeout 10000 --require ts-node/register --exit --file e2e/setup.ts src/**/*.e2e-ee.ts",
     "migration": "cross-env NODE_ENV=local MIGRATION=true ts-node --transpileOnly ./migrations/expire-at/expire-at.migration.ts",
     "migration:in-app": "cross-env NODE_ENV=local MIGRATION=true ts-node --transpileOnly ./migrations/integration-scheme-update/add-primary-priority-migration.ts",
     "migration:primary-provider": "cross-env NODE_ENV=local MIGRATION=true ts-node --transpileOnly ./migrations/integration-scheme-update/add-primary-priority-migration.ts"
@@ -109,6 +110,12 @@
     "ts-node": "~10.9.1",
     "tsconfig-paths": "~4.1.0",
     "typescript": "4.9.5"
+  },
+  "optionalDependencies": {
+    "@novu/ee-auth": "^0.19.0"
+  },
+  "nx": {
+    "implicitDependencies": ["@novu/ee-auth"]
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [

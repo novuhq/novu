@@ -19,8 +19,18 @@ export class QueueBaseService {
     return this.instance;
   }
 
-  public createQueue(): void {
-    this.queue = this.instance.createQueue(this.topic, this.getQueueOptions());
+  public createQueue(overrideOptions?: QueueOptions): void {
+    const options = {
+      ...this.getQueueOptions(),
+      ...(overrideOptions && {
+        defaultJobOptions: {
+          ...this.getQueueOptions().defaultJobOptions,
+          ...overrideOptions.defaultJobOptions,
+        },
+      }),
+    };
+
+    this.queue = this.instance.createQueue(this.topic, options);
   }
 
   private getQueueOptions(): QueueOptions {

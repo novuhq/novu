@@ -67,6 +67,9 @@ export class SendMessageSms extends SendMessageBase {
       channelType: ChannelTypeEnum.SMS,
       userId: command.userId,
       identifier: overrideSelectedIntegration as string,
+      filterData: {
+        tenant: command.job.tenant,
+      },
     });
 
     Sentry.addBreadcrumb({
@@ -85,7 +88,7 @@ export class SendMessageSms extends SendMessageBase {
         events: command.events,
         total_count: command.events?.length,
       },
-      ...(tenant ? { tenant: { name: tenant.name, ...tenant.data } } : {}),
+      ...(tenant && { tenant }),
       ...command.payload,
     };
 

@@ -34,6 +34,8 @@ import {
   MESSAGE_GENERIC_RETENTION_DAYS,
 } from '@novu/shared';
 import { EmailEventStatusEnum } from '@novu/stateless';
+import { createTenant } from '../../tenant/e2e/create-tenant.e2e';
+import { DetailEnum } from '@novu/application-generic';
 
 const axiosInstance = axios.create();
 
@@ -63,6 +65,451 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       template = await session.createTemplate();
       subscriberService = new SubscribersService(session.organization._id, session.environment._id);
       subscriber = await subscriberService.createSubscriber();
+    });
+
+    it('should filter delay step', async function () {
+      const firstStepUuid = uuid();
+      template = await session.createTemplate({
+        steps: [
+          {
+            type: StepTypeEnum.EMAIL,
+            name: 'Message Name',
+            subject: 'Test email subject',
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
+            uuid: firstStepUuid,
+          },
+          {
+            type: StepTypeEnum.DELAY,
+            content: '',
+            metadata: {
+              unit: DigestUnitEnum.SECONDS,
+              amount: 1,
+              type: DelayTypeEnum.REGULAR,
+            },
+            filters: [
+              {
+                isNegated: false,
+                type: 'GROUP',
+                value: 'AND',
+                children: [
+                  {
+                    on: FilterPartTypeEnum.PAYLOAD,
+                    operator: 'IS_DEFINED',
+                    field: 'exclude',
+                    value: '',
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            type: StepTypeEnum.EMAIL,
+            name: 'Message Name',
+            subject: 'Test email subject',
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
+          },
+        ],
+      });
+
+      await axiosInstance.post(
+        `${session.serverUrl}${eventTriggerPath}`,
+        {
+          name: template.triggers[0].identifier,
+          to: [subscriber.subscriberId],
+          payload: {
+            customVar: 'Testing of User Name',
+          },
+        },
+        {
+          headers: {
+            authorization: `ApiKey ${session.apiKey}`,
+          },
+        }
+      );
+
+      await session.awaitRunningJobs(template?._id, true, 0);
+
+      const messagesAfter = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        channel: StepTypeEnum.EMAIL,
+      });
+
+      expect(messagesAfter.length).to.equal(2);
+
+      const executionDetails = await executionDetailsRepository.find({
+        _environmentId: session.environment._id,
+        _notificationTemplateId: template?._id,
+        channel: StepTypeEnum.DELAY,
+        detail: DetailEnum.FILTER_STEPS,
+      });
+
+      expect(executionDetails.length).to.equal(1);
+    });
+
+    it('should filter digest step', async function () {
+      const firstStepUuid = uuid();
+      template = await session.createTemplate({
+        steps: [
+          {
+            type: StepTypeEnum.EMAIL,
+            name: 'Message Name',
+            subject: 'Test email subject',
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
+            uuid: firstStepUuid,
+          },
+          {
+            type: StepTypeEnum.DIGEST,
+            content: '',
+            metadata: {
+              unit: DigestUnitEnum.SECONDS,
+              amount: 1,
+              type: DelayTypeEnum.REGULAR,
+            },
+            filters: [
+              {
+                isNegated: false,
+                type: 'GROUP',
+                value: 'AND',
+                children: [
+                  {
+                    on: FilterPartTypeEnum.PAYLOAD,
+                    operator: 'IS_DEFINED',
+                    field: 'exclude',
+                    value: '',
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            type: StepTypeEnum.EMAIL,
+            name: 'Message Name',
+            subject: 'Test email subject',
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
+          },
+        ],
+      });
+
+      await axiosInstance.post(
+        `${session.serverUrl}${eventTriggerPath}`,
+        {
+          name: template.triggers[0].identifier,
+          to: [subscriber.subscriberId],
+          payload: {
+            customVar: 'Testing of User Name',
+          },
+        },
+        {
+          headers: {
+            authorization: `ApiKey ${session.apiKey}`,
+          },
+        }
+      );
+
+      await session.awaitRunningJobs(template?._id, true, 0);
+
+      const messagesAfter = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        channel: StepTypeEnum.EMAIL,
+      });
+
+      expect(messagesAfter.length).to.equal(2);
+
+      const executionDetails = await executionDetailsRepository.find({
+        _environmentId: session.environment._id,
+        _notificationTemplateId: template?._id,
+        channel: StepTypeEnum.DIGEST,
+        detail: DetailEnum.FILTER_STEPS,
+      });
+
+      expect(executionDetails.length).to.equal(1);
+    });
+
+    it('should not filter digest step', async function () {
+      const firstStepUuid = uuid();
+      template = await session.createTemplate({
+        steps: [
+          {
+            type: StepTypeEnum.EMAIL,
+            name: 'Message Name',
+            subject: 'Test email subject',
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
+            uuid: firstStepUuid,
+          },
+          {
+            type: StepTypeEnum.DIGEST,
+            content: '',
+            metadata: {
+              unit: DigestUnitEnum.SECONDS,
+              amount: 1,
+              type: DelayTypeEnum.REGULAR,
+            },
+            filters: [
+              {
+                isNegated: false,
+                type: 'GROUP',
+                value: 'AND',
+                children: [
+                  {
+                    on: FilterPartTypeEnum.PAYLOAD,
+                    operator: 'IS_DEFINED',
+                    field: 'exclude',
+                    value: '',
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            type: StepTypeEnum.EMAIL,
+            name: 'Message Name',
+            subject: 'Test email subject',
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
+          },
+        ],
+      });
+
+      await axiosInstance.post(
+        `${session.serverUrl}${eventTriggerPath}`,
+        {
+          name: template.triggers[0].identifier,
+          to: [subscriber.subscriberId],
+          payload: {
+            customVar: 'Testing of User Name',
+            exclude: false,
+          },
+        },
+        {
+          headers: {
+            authorization: `ApiKey ${session.apiKey}`,
+          },
+        }
+      );
+
+      await session.awaitRunningJobs(template?._id, true, 0);
+
+      const messagesAfter = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        channel: StepTypeEnum.EMAIL,
+      });
+
+      expect(messagesAfter.length).to.equal(2);
+
+      const executionDetails = await executionDetailsRepository.findOne({
+        _environmentId: session.environment._id,
+        _notificationTemplateId: template?._id,
+        channel: StepTypeEnum.DIGEST,
+        detail: DetailEnum.FILTER_STEPS,
+      });
+
+      expect(executionDetails).to.not.be.ok;
+    });
+
+    it('should not filter delay step', async function () {
+      const firstStepUuid = uuid();
+      template = await session.createTemplate({
+        steps: [
+          {
+            type: StepTypeEnum.EMAIL,
+            name: 'Message Name',
+            subject: 'Test email subject',
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
+            uuid: firstStepUuid,
+          },
+          {
+            type: StepTypeEnum.DELAY,
+            content: '',
+            metadata: {
+              unit: DigestUnitEnum.SECONDS,
+              amount: 1,
+              type: DelayTypeEnum.REGULAR,
+            },
+            filters: [
+              {
+                isNegated: false,
+                type: 'GROUP',
+                value: 'AND',
+                children: [
+                  {
+                    on: FilterPartTypeEnum.PAYLOAD,
+                    operator: 'IS_DEFINED',
+                    field: 'exclude',
+                    value: '',
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            type: StepTypeEnum.EMAIL,
+            name: 'Message Name',
+            subject: 'Test email subject',
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
+          },
+        ],
+      });
+
+      await axiosInstance.post(
+        `${session.serverUrl}${eventTriggerPath}`,
+        {
+          name: template.triggers[0].identifier,
+          to: [subscriber.subscriberId],
+          payload: {
+            customVar: 'Testing of User Name',
+            exclude: false,
+          },
+        },
+        {
+          headers: {
+            authorization: `ApiKey ${session.apiKey}`,
+          },
+        }
+      );
+
+      await session.awaitRunningJobs(template?._id, true, 0);
+
+      const messagesAfter = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        channel: StepTypeEnum.EMAIL,
+      });
+
+      expect(messagesAfter.length).to.equal(2);
+
+      const executionDetails = await executionDetailsRepository.findOne({
+        _environmentId: session.environment._id,
+        _notificationTemplateId: template?._id,
+        channel: StepTypeEnum.DELAY,
+        detail: DetailEnum.FILTER_STEPS,
+      });
+
+      expect(executionDetails).to.not.be.ok;
+    });
+
+    it('should use conditions to select integration', async function () {
+      const payload = {
+        providerId: EmailProviderIdEnum.Mailgun,
+        channel: 'email',
+        credentials: { apiKey: '123', secretKey: 'abc' },
+        _environmentId: session.environment._id,
+        conditions: [
+          {
+            children: [{ field: 'identifier', value: 'test', operator: 'EQUAL', on: 'tenant' }],
+          },
+        ],
+        active: true,
+        check: false,
+      };
+
+      await session.testAgent.post('/v1/integrations').send(payload);
+
+      template = await createTemplate(session, ChannelTypeEnum.EMAIL);
+
+      await createTenant({ session, identifier: 'test', name: 'test' });
+
+      await sendTrigger(session, template, subscriber.subscriberId, {}, {}, 'test');
+
+      await session.awaitRunningJobs(template._id);
+
+      const createdSubscriber = await subscriberRepository.findBySubscriberId(
+        session.environment._id,
+        subscriber.subscriberId
+      );
+
+      const message = await messageRepository.findOne({
+        _environmentId: session.environment._id,
+        _subscriberId: createdSubscriber?._id,
+        channel: ChannelTypeEnum.EMAIL,
+      });
+
+      expect(message?.providerId).to.equal(payload.providerId);
+    });
+
+    it('should use or conditions to select integration', async function () {
+      const payload = {
+        providerId: EmailProviderIdEnum.Mailgun,
+        channel: 'email',
+        credentials: { apiKey: '123', secretKey: 'abc' },
+        _environmentId: session.environment._id,
+        conditions: [
+          {
+            value: 'OR',
+            children: [
+              { field: 'identifier', value: 'test3', operator: 'EQUAL', on: 'tenant' },
+              { field: 'identifier', value: 'test2', operator: 'EQUAL', on: 'tenant' },
+            ],
+          },
+        ],
+        active: true,
+        check: false,
+      };
+
+      await session.testAgent.post('/v1/integrations').send(payload);
+
+      template = await createTemplate(session, ChannelTypeEnum.EMAIL);
+
+      await createTenant({ session, identifier: 'test3', name: 'test3' });
+      await createTenant({ session, identifier: 'test2', name: 'test2' });
+
+      await sendTrigger(session, template, subscriber.subscriberId, {}, {}, 'test3');
+
+      await session.awaitRunningJobs(template._id);
+
+      const createdSubscriber = await subscriberRepository.findBySubscriberId(
+        session.environment._id,
+        subscriber.subscriberId
+      );
+
+      const firstMessage = await messageRepository.findOne({
+        _environmentId: session.environment._id,
+        _subscriberId: createdSubscriber?._id,
+        channel: ChannelTypeEnum.EMAIL,
+      });
+
+      expect(firstMessage?.providerId).to.equal(payload.providerId);
+
+      await sendTrigger(session, template, subscriber.subscriberId, {}, {}, 'test2');
+
+      await session.awaitRunningJobs(template._id);
+
+      const secondMessage = await messageRepository.findOne({
+        _environmentId: session.environment._id,
+        _subscriberId: createdSubscriber?._id,
+        channel: ChannelTypeEnum.EMAIL,
+        _id: {
+          $ne: firstMessage?._id,
+        },
+      });
+
+      expect(secondMessage?.providerId).to.equal(payload.providerId);
+      expect(firstMessage?._id).to.not.equal(secondMessage?._id);
+    });
+
+    it('should return correct status when using a non existing tenant', async function () {
+      const payload = {
+        providerId: EmailProviderIdEnum.Mailgun,
+        channel: 'email',
+        credentials: { apiKey: '123', secretKey: 'abc' },
+        _environmentId: session.environment._id,
+        conditions: [
+          {
+            children: [{ field: 'identifier', value: 'test1', operator: 'EQUAL', on: 'tenant' }],
+          },
+        ],
+        active: true,
+        check: false,
+      };
+
+      await session.testAgent.post('/v1/integrations').send(payload);
+
+      template = await createTemplate(session, ChannelTypeEnum.EMAIL);
+
+      const result = await sendTrigger(session, template, subscriber.subscriberId, {}, {}, 'test1');
+
+      expect(result.data.data.status).to.equal('no_tenant_found');
     });
 
     it('should trigger an event successfully', async function () {
@@ -1848,7 +2295,8 @@ export async function sendTrigger(
   template,
   newSubscriberIdInAppNotification: string,
   payload: Record<string, unknown> = {},
-  overrides: Record<string, unknown> = {}
+  overrides: Record<string, unknown> = {},
+  tenant?: string
 ): Promise<AxiosResponse> {
   return await axiosInstance.post(
     `${session.serverUrl}${eventTriggerPath}`,
@@ -1861,6 +2309,7 @@ export async function sendTrigger(
         ...payload,
       },
       overrides,
+      tenant,
     },
     {
       headers: {
