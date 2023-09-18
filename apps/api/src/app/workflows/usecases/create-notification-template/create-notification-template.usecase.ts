@@ -49,9 +49,10 @@ export class CreateNotificationTemplate {
     })}`;
     const parentChangeId: string = NotificationTemplateRepository.createObjectId();
 
-    const templateSteps = await this.storeTemplateSteps(command, parentChangeId);
-
-    const trigger = await this.createNotificationTrigger(command, triggerIdentifier);
+    const [templateSteps, trigger] = await Promise.all([
+      await this.storeTemplateSteps(command, parentChangeId),
+      await this.createNotificationTrigger(command, triggerIdentifier),
+    ]);
 
     const storedWorkflow = await this.storeWorkflow(command, templateSteps, trigger, triggerIdentifier);
 
