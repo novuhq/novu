@@ -8,6 +8,7 @@ import { useEnvController } from '../../../hooks';
 import { When } from '../../../components/utils/When';
 import { IntervalRadios } from './IntervalRadios';
 import { LabelWithTooltip } from './LabelWithTooltip';
+import { StepSettings } from './SideBar/StepSettings';
 
 export const DelayMetadata = ({ control, index }) => {
   const { readonly } = useEnvController();
@@ -21,6 +22,7 @@ export const DelayMetadata = ({ control, index }) => {
 
   return (
     <>
+      <StepSettings index={index} />
       <Controller
         control={control}
         defaultValue={DelayTypeEnum.REGULAR}
