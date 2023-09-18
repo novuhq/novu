@@ -88,6 +88,10 @@ export class ChannelCTACommand {
 }
 
 export class NotificationStep {
+  @IsString()
+  @IsOptional()
+  _templateId?: string;
+
   @ValidateNested()
   @IsOptional()
   template?: MessageTemplate;

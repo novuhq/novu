@@ -53,7 +53,7 @@ const mapToInAppFormStep = (item: INotificationTemplateStep): IFormStep => ({
     cta: {
       data: item?.template?.cta?.data ?? { url: '' },
       type: ChannelCTATypeEnum.REDIRECT,
-      action: item?.template?.cta?.action ?? '',
+      ...(item?.template?.cta?.action ? { action: item?.template?.cta?.action } : {}),
     },
   },
 });
