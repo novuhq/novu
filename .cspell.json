@@ -503,7 +503,8 @@
     "springboot",
     "errmsg",
     "shelljs",
-    "prefiltering"
+    "prefiltering",
+    "virtuals"
   ],
   "flagWords": [],
   "patterns": [
