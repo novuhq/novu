@@ -6,6 +6,17 @@ on:
   workflow_dispatch:
 
 jobs:
+  test_ws:
+    strategy:
+      matrix:
+        name: [ 'novu/ws-ee', 'novu/ws' ]
+    uses: ./.github/workflows/reusable-ws-e2e.yml
+    with:
+      ee: ${{ contains (matrix.name,'ee') }}
+      submodules: ${{ contains (matrix.name,'ee') }}
+      submodule_branch: 'main'
+    secrets: inherit
+
   # This workflow contains a single job called "build"
   build_prod_image:
     # The type of runner that the job will run on

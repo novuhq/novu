@@ -145,6 +145,9 @@ export class SendMessagePush extends SendMessageBase {
         channelType: ChannelTypeEnum.PUSH,
         providerId: channel.providerId,
         userId: command.userId,
+        filterData: {
+          tenant: command.job.tenant,
+        },
       });
 
       if (!integration) {

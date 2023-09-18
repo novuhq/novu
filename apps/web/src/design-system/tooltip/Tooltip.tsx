@@ -2,30 +2,29 @@ import { Tooltip as MantineTooltip, TooltipProps } from '@mantine/core';
 
 import useStyles from './Tooltip.styles';
 
+interface ITooltipProps
+  extends Pick<
+    TooltipProps,
+    | 'multiline'
+    | 'width'
+    | 'label'
+    | 'opened'
+    | 'position'
+    | 'disabled'
+    | 'children'
+    | 'sx'
+    | 'withinPortal'
+    | 'offset'
+    | 'classNames'
+  > {
+  error?: boolean;
+}
 /**
  * Tooltip component
  *
  */
-export function Tooltip({
-  children,
-  label,
-  opened = undefined,
-  ...props
-}: Pick<
-  TooltipProps,
-  | 'multiline'
-  | 'width'
-  | 'label'
-  | 'opened'
-  | 'position'
-  | 'disabled'
-  | 'children'
-  | 'sx'
-  | 'withinPortal'
-  | 'offset'
-  | 'classNames'
->) {
-  const { classes } = useStyles();
+export function Tooltip({ children, label, opened = undefined, error = false, ...props }: ITooltipProps) {
+  const { classes } = useStyles({ error });
 
   return (
     <MantineTooltip

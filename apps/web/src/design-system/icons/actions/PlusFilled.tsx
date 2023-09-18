@@ -7,14 +7,14 @@ export function PlusFilled(props: React.ComponentPropsWithoutRef<'svg'>) {
       <path
         d="M7.19995 12H16.8M12 7.20001V16.8"
         stroke="white"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
       <defs>
         <linearGradient id="paint0_linear_375_800" x1="0" y1="12" x2="24" y2="12" gradientUnits="userSpaceOnUse">
-          <stop stop-color="#DD2476" />
-          <stop offset="1" stop-color="#FF512F" />
+          <stop stopColor="#DD2476" />
+          <stop offset="1" stopColor="#FF512F" />
         </linearGradient>
       </defs>
     </svg>
