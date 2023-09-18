@@ -538,7 +538,7 @@ describe('Topic Trigger Event', () => {
         }),
       ]);
 
-      await session.awaitRunningJobs(template?._id, false, 8);
+      await session.awaitRunningJobs(template?._id, false, 0);
 
       for (const subscriber of firstTopicSubscribers) {
         const messages = await messageRepository.findBySubscriberChannel(

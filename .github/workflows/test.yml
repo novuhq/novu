@@ -227,11 +227,26 @@ jobs:
           targets: test:e2e
           projects: ${{matrix.projectName}}
 
+  check_submodule_token:
+    name: Check if the secret exists or not.
+    runs-on: ubuntu-latest
+    outputs:
+      has_token: ${{ steps.secret-check.outputs.has_token }}
+    steps:
+      - name: Check if secret exists
+        id: secret-check
+        run: |
+          if [[ -n "${{ secrets.SUBMODULES_TOKEN }}" ]]; then
+            echo "::set-output name=has_token::true"
+          else
+            echo "::set-output name=has_token::false"
+          fi
+  
   test_e2e_ee:
     name: Test E2E EE
     runs-on: ubuntu-latest
-    needs: [get-affected]
-    if:  ${{ fromJson(needs.get-affected.outputs.test-e2e-ee)[0] }}
+    needs: [get-affected, check_submodule_token]
+    if:  ${{ fromJson(needs.get-affected.outputs.test-e2e-ee)[0] && needs.check_submodule_token.outputs.has_token == 'true'  }}
     timeout-minutes: 80
     strategy:
       # One job for each different project and node version
