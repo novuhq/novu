@@ -21,7 +21,7 @@ export function DigestPreview() {
 
   useEffect(() => {
     segment.track(OnBoardingAnalyticsEnum.BUILD_WORKFLOW_VISIT);
-  }, []);
+  }, [segment]);
 
   return (
     <GetStartedLayout

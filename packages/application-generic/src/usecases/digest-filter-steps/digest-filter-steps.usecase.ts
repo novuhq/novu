@@ -69,6 +69,9 @@ export class DigestFilterSteps {
       const keys = path.split('.');
 
       for (const key of keys) {
+        if (result === undefined) {
+          return undefined;
+        }
         result = result[key];
       }
 
