@@ -1,16 +1,14 @@
-import { useEffect, useMemo } from 'react';
-import { Controller, useForm } from 'react-hook-form';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import styled from '@emotion/styled';
 import { ActionIcon, Group, Radio, Text, Input, useMantineTheme } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-
 import { ChannelTypeEnum, ICreateIntegrationBodyDto, NOVU_PROVIDERS, providers } from '@novu/shared';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 
 import { createIntegration } from '../../../../api/integration';
 import { QueryKeys } from '../../../../api/query.keys';
 import { useSegment } from '../../../../components/providers/SegmentProvider';
-import { When } from '../../../../components/utils/When';
 import { Button, colors, NameInput, Sidebar } from '../../../../design-system';
 import { ConditionPlus, ArrowLeft, Condition } from '../../../../design-system/icons';
 import { inputStyles } from '../../../../design-system/config/inputs.styles';
@@ -20,9 +18,10 @@ import { errorMessage, successMessage } from '../../../../utils/notifications';
 import { IntegrationsStoreModalAnalytics } from '../../constants';
 import type { IntegrationEntity } from '../../types';
 import { useProviders } from '../../useProviders';
-import { ProviderImage } from './SelectProviderSidebar';
+import { When } from '../../../../components/utils/When';
 import { Conditions, IConditions } from '../../../../components/conditions';
 import { ConditionIconButton } from '../ConditionIconButton';
+import { ProviderImage } from './SelectProviderSidebar';
 
 interface ICreateProviderInstanceForm {
   name: string;
@@ -81,6 +80,7 @@ export function CreateProviderInstanceSidebar({
 
     return 0;
   }, [watchedConditions]);
+
   const selectedEnvironmentId = watch('environmentId');
 
   const showNovuProvidersErrorMessage = useMemo(() => {
@@ -269,7 +269,6 @@ export function CreateProviderInstanceSidebar({
           );
         }}
       />
-
       <Input.Wrapper
         label={
           <>

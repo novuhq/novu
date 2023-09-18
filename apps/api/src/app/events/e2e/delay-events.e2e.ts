@@ -281,7 +281,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
       eventNumber: '2',
       sendAt: dateValue,
     });
-    await session.awaitRunningJobs(template?._id, true, 1);
+    await session.awaitRunningJobs(template?._id, true, 0);
 
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,

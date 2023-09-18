@@ -18,7 +18,7 @@ import {
 } from '@novu/shared';
 import { AnalyticsService } from '@novu/application-generic';
 
-import { CreateNotificationTemplateCommand, NotificationStep } from './create-notification-template.command';
+import { CreateNotificationTemplateCommand, NotificationStepVariant } from './create-notification-template.command';
 import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateMessageTemplate, CreateMessageTemplateCommand } from '../../../message-template/usecases';
 import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
@@ -49,9 +49,10 @@ export class CreateNotificationTemplate {
     })}`;
     const parentChangeId: string = NotificationTemplateRepository.createObjectId();
 
-    const templateSteps = await this.storeTemplateSteps(command, parentChangeId);
-
-    const trigger = await this.createNotificationTrigger(command, triggerIdentifier);
+    const [templateSteps, trigger] = await Promise.all([
+      await this.storeTemplateSteps(command, parentChangeId),
+      await this.createNotificationTrigger(command, triggerIdentifier),
+    ]);
 
     const storedWorkflow = await this.storeWorkflow(command, templateSteps, trigger, triggerIdentifier);
 
@@ -134,7 +135,7 @@ export class CreateNotificationTemplate {
     trigger: INotificationTrigger,
     triggerIdentifier: string
   ) {
-    const tmp = {
+    const savedWorkflow = await this.notificationTemplateRepository.create({
       _organizationId: command.organizationId,
       _creatorId: command.userId,
       _environmentId: command.environmentId,
@@ -150,12 +151,10 @@ export class CreateNotificationTemplate {
       _notificationGroupId: command.notificationGroupId,
       blueprintId: command.blueprintId,
       ...(command.data ? { data: command.data } : {}),
-    };
+    });
 
-    const savedTemplate = await this.notificationTemplateRepository.create(tmp);
-
-    const item = await this.notificationTemplateRepository.findById(savedTemplate._id, command.environmentId);
-    if (!item) throw new NotFoundException(`Notification template ${savedTemplate._id} is not found`);
+    const item = await this.notificationTemplateRepository.findById(savedWorkflow._id, command.environmentId);
+    if (!item) throw new NotFoundException(`Workflow ${savedWorkflow._id} is not found`);
 
     this.sendTemplateCreationEvent(command, triggerIdentifier);
 
@@ -172,29 +171,36 @@ export class CreateNotificationTemplate {
     for (const message of command.steps) {
       if (!message.template) throw new ApiException(`Unexpected error: message template is missing`);
 
-      const template = await this.createMessageTemplate.execute(
-        CreateMessageTemplateCommand.create({
+      const [template, storedVariants] = await Promise.all([
+        await this.createMessageTemplate.execute(
+          CreateMessageTemplateCommand.create({
+            organizationId: command.organizationId,
+            environmentId: command.environmentId,
+            userId: command.userId,
+            type: message.template.type,
+            name: message.template.name,
+            content: message.template.content,
+            variables: message.template.variables,
+            contentType: message.template.contentType,
+            cta: message.template.cta,
+            subject: message.template.subject,
+            title: message.template.title,
+            feedId: message.template.feedId,
+            layoutId: message.template.layoutId,
+            preheader: message.template.preheader,
+            senderName: message.template.senderName,
+            actor: message.template.actor,
+            parentChangeId,
+          })
+        ),
+        await this.storeVariantSteps({
+          variants: message.variants,
+          parentChangeId: parentChangeId,
           organizationId: command.organizationId,
           environmentId: command.environmentId,
           userId: command.userId,
-          type: message.template.type,
-          name: message.template.name,
-          content: message.template.content,
-          variables: message.template.variables,
-          contentType: message.template.contentType,
-          cta: message.template.cta,
-          subject: message.template.subject,
-          title: message.template.title,
-          feedId: message.template.feedId,
-          layoutId: message.template.layoutId,
-          preheader: message.template.preheader,
-          senderName: message.template.senderName,
-          actor: message.template.actor,
-          parentChangeId,
-        })
-      );
-
-      const storedVariants = await this.storeVariantSteps(message, command, parentChangeId, parentStepId);
+        }),
+      ]);
 
       const stepId = template._id;
       const templateStep: Partial<INotificationTemplateStep> = {
@@ -224,25 +230,32 @@ export class CreateNotificationTemplate {
     return templateSteps;
   }
 
-  private async storeVariantSteps(
-    message: NotificationStep,
-    command: CreateNotificationTemplateCommand,
-    parentChangeId: string,
-    parentStepId: string | null
-  ): Promise<IStepVariant[]> {
-    if (!message.variants?.length) return [];
+  private async storeVariantSteps({
+    variants,
+    parentChangeId,
+    organizationId,
+    environmentId,
+    userId,
+  }: {
+    variants: NotificationStepVariant[] | undefined;
+    parentChangeId: string;
+    organizationId: string;
+    environmentId: string;
+    userId: string;
+  }): Promise<IStepVariant[]> {
+    if (!variants?.length) return [];
 
     const variantsList: IStepVariant[] = [];
     let parentVariantId: string | null = null;
 
-    for (const variant of message.variants) {
+    for (const variant of variants) {
       if (!variant.template) throw new ApiException(`Unexpected error: variants message template is missing`);
 
       const variantTemplate = await this.createMessageTemplate.execute(
         CreateMessageTemplateCommand.create({
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          userId: command.userId,
+          organizationId: organizationId,
+          environmentId: environmentId,
+          userId: userId,
           type: variant.template.type,
           name: variant.template.name,
           content: variant.template.content,
@@ -264,7 +277,7 @@ export class CreateNotificationTemplate {
         _id: variantTemplate._id,
         _templateId: variantTemplate._id,
         filters: variant.filters,
-        _parentId: parentStepId,
+        _parentId: parentVariantId,
         active: variant.active,
         shouldStopOnFail: variant.shouldStopOnFail,
         replyCallback: variant.replyCallback,
