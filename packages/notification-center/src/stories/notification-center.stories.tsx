@@ -1,5 +1,5 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import { NotificationCenter } from '../components';
 
 export default {
@@ -8,8 +8,8 @@ export default {
   parameters: {
     layout: 'fullscreen',
   },
-} as ComponentMeta<typeof NotificationCenter>;
+} as Meta<typeof NotificationCenter>;
 
-const templateElement: ComponentStory<typeof NotificationCenter> = (args) => <NotificationCenter {...args} />;
+const templateElement: StoryFn<typeof NotificationCenter> = (args) => <NotificationCenter {...args} />;
 
 export const template = templateElement.bind({});
