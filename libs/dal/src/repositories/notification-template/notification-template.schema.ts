@@ -301,8 +301,18 @@ notificationTemplateSchema.virtual('steps.template', {
   justOne: true,
 });
 
+notificationTemplateSchema.virtual('steps.variants.template', {
+  ref: 'MessageTemplate',
+  localField: 'steps.variants._templateId',
+  foreignField: '_id',
+  justOne: true,
+});
+
 notificationTemplateSchema.path('steps').schema.set('toJSON', { virtuals: true });
 notificationTemplateSchema.path('steps').schema.set('toObject', { virtuals: true });
+
+notificationTemplateSchema.path('steps.variants').schema.set('toJSON', { virtuals: true });
+notificationTemplateSchema.path('steps.variants').schema.set('toObject', { virtuals: true });
 
 notificationTemplateSchema.virtual('notificationGroup', {
   ref: 'NotificationGroup',

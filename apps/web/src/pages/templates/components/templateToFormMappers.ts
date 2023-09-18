@@ -208,7 +208,7 @@ export const mapNotificationTemplateToForm = (template: INotificationTemplate): 
 export const mapFormToCreateNotificationTemplate = (form: IForm): ICreateNotificationTemplateDto => {
   const steps = form.steps.map((formStep: IFormStep) => {
     const { digestMetadata, delayMetadata, template, ...rest } = formStep;
-    const step: NotificationStepDto = { ...rest };
+    const step: Omit<IFormStep, 'digestMetadata' | 'delayMetadata' | 'template'> = { ...rest };
 
     if (template.type === StepTypeEnum.EMAIL && template.contentType === 'customHtml') {
       template.content = template.htmlContent as string;
