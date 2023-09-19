@@ -1,14 +1,14 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import { Select } from './Select';
 
 export default {
   title: 'Inputs/Select',
   component: Select,
   argTypes: {},
-} as ComponentMeta<typeof Select>;
+} as Meta<typeof Select>;
 
-const Template: ComponentStory<typeof Select> = ({ ...args }) => <Select {...args} />;
+const Template: StoryFn<typeof Select> = ({ ...args }) => <Select {...args} />;
 
 const data = [
   { value: 'Arial', label: 'Arial' },

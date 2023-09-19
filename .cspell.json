@@ -504,7 +504,11 @@
     "errmsg",
     "shelljs",
     "prefiltering",
-    "virtuals"
+    "virtuals",
+    "autodocs",
+    "stackalt",
+    "mediumdark",
+    "Docgen"
   ],
   "flagWords": [],
   "patterns": [
