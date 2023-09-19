@@ -150,19 +150,17 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.clickWorkflowNode(`node-inAppSelector`);
 
     cy.getByTestId('add-filter-btn').click();
-    cy.getByTestId('group-rules-dropdown').click();
-    cy.get('.mantine-Select-item').contains('And').click();
+    cy.getByTestId('add-new-condition').click();
 
-    cy.getByTestId('create-rule-btn').click();
-    cy.getByTestId('filter-on-dropdown').click();
+    cy.getByTestId('conditions-form-on').click();
     cy.get('.mantine-Select-item').contains('Subscriber').click();
 
-    cy.getByTestId('filter-key-input').type('filter-key');
-    cy.getByTestId('filter-operator-dropdown').click();
+    cy.getByTestId('conditions-form-key').type('filter-key');
+    cy.getByTestId('conditions-form-operator').click();
     cy.get('.mantine-Select-item').contains('Equal').click();
-    cy.getByTestId('filter-value-input').type('filter-value');
+    cy.getByTestId('conditions-form-value').type('filter-value');
 
-    cy.getByTestId('filter-confirm-btn').click();
+    cy.getByTestId('apply-conditions-btn').click();
 
     cy.getByTestId('add-filter-btn').contains('1 filter');
   });
@@ -177,19 +175,17 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.clickWorkflowNode(`node-emailSelector`);
 
     cy.getByTestId('add-filter-btn').click();
-    cy.getByTestId('group-rules-dropdown').click();
-    cy.get('.mantine-Select-item').contains('And').click();
+    cy.getByTestId('add-new-condition').click();
 
-    cy.getByTestId('create-rule-btn').click();
-    cy.getByTestId('filter-on-dropdown').click();
+    cy.getByTestId('conditions-form-on').click();
     cy.get('.mantine-Select-item').contains('Previous step').click();
 
     cy.getByTestId('previous-step-dropdown').click();
     cy.get('.mantine-Select-item').contains('In-App').click();
     cy.getByTestId('previous-step-type-dropdown').click();
-    cy.get('.mantine-Select-item').contains('Read').click();
+    cy.get('.mantine-Select-item').contains('Seen').click();
 
-    cy.getByTestId('filter-confirm-btn').click();
+    cy.getByTestId('apply-conditions-btn').click();
 
     cy.getByTestId('add-filter-btn').contains('1 filter');
   });
@@ -204,11 +200,9 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.clickWorkflowNode(`node-inAppSelector`);
 
     cy.getByTestId('add-filter-btn').click();
-    cy.getByTestId('group-rules-dropdown').click();
-    cy.get('.mantine-Select-item').contains('And').click();
 
-    cy.getByTestId('create-rule-btn').click();
-    cy.getByTestId('filter-on-dropdown').click();
+    cy.getByTestId('add-new-condition').click();
+    cy.getByTestId('conditions-form-on').click();
     cy.get('.mantine-Select-item').contains('Previous step').should('not.exist');
   });
 
@@ -222,23 +216,23 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.clickWorkflowNode(`node-inAppSelector`);
 
     cy.getByTestId('add-filter-btn').click();
-    cy.getByTestId('group-rules-dropdown').click();
-    cy.get('.mantine-Select-item').contains('And').click();
 
-    cy.getByTestId('create-rule-btn').click();
+    cy.getByTestId('add-new-condition').click();
 
-    cy.getByTestId('filter-key-input').type('filter-key');
-    cy.getByTestId('filter-operator-dropdown').click();
+    cy.getByTestId('conditions-form-key').type('filter-key');
+    cy.getByTestId('conditions-form-operator').click();
     cy.get('.mantine-Select-item').contains('Equal').click();
-    cy.getByTestId('filter-value-input').type('filter-value');
+    cy.getByTestId('conditions-form-value').type('filter-value');
 
-    cy.getByTestId('filter-confirm-btn').click();
+    cy.getByTestId('apply-conditions-btn').click();
 
     cy.getByTestId('add-filter-btn').contains('1 filter');
 
     cy.getByTestId('add-filter-btn').click();
-    cy.getByTestId('filter-remove-btn').click();
-    cy.getByTestId('filter-confirm-btn').click();
+    cy.getByTestId('conditions-row-btn').click();
+    cy.getByTestId('conditions-row-delete').click();
+
+    cy.getByTestId('apply-conditions-btn').click();
 
     cy.getByTestId('add-filter-btn').contains('Add filter');
   });
@@ -253,21 +247,19 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.clickWorkflowNode(`node-inAppSelector`);
 
     cy.getByTestId('add-filter-btn').click();
-    cy.getByTestId('group-rules-dropdown').click();
-    cy.get('.mantine-Select-item').contains('Or').click();
 
-    cy.getByTestId('create-rule-btn').click();
+    cy.getByTestId('add-new-condition').click();
 
-    cy.getByTestId('filter-on-dropdown').click();
+    cy.getByTestId('conditions-form-on').click();
     cy.get('.mantine-Select-item').contains('Webhook').click();
 
     cy.getByTestId('webhook-filter-url-input').type('www.example.com');
-    cy.getByTestId('filter-key-input').type('filter-key');
-    cy.getByTestId('filter-operator-dropdown').click();
+    cy.getByTestId('conditions-form-key').type('filter-key');
+    cy.getByTestId('conditions-form-operator').click();
     cy.get('.mantine-Select-item').contains('Equal').click();
-    cy.getByTestId('filter-value-input').type('filter-value');
+    cy.getByTestId('conditions-form-value').type('filter-value');
 
-    cy.getByTestId('filter-confirm-btn').click();
+    cy.getByTestId('apply-conditions-btn').click();
 
     cy.getByTestId('add-filter-btn').contains('1 filter');
   });
@@ -282,17 +274,15 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.clickWorkflowNode(`node-inAppSelector`);
 
     cy.getByTestId('add-filter-btn').click();
-    cy.getByTestId('group-rules-dropdown').click();
-    cy.get('.mantine-Select-item').contains('And').click();
 
-    cy.getByTestId('create-rule-btn').click();
+    cy.getByTestId('add-new-condition').click();
 
-    cy.getByTestId('filter-on-dropdown').click();
-    cy.get('.mantine-Select-item').contains('Online right now').click();
+    cy.getByTestId('conditions-form-on').click();
+    cy.get('.mantine-Select-item').contains('Is online').click();
     cy.getByTestId('online-now-value-dropdown').click();
     cy.get('.mantine-Select-item').contains('Yes').click();
 
-    cy.getByTestId('filter-confirm-btn').click();
+    cy.getByTestId('apply-conditions-btn').click();
 
     cy.getByTestId('add-filter-btn').contains('1 filter');
   });
@@ -307,18 +297,16 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.clickWorkflowNode(`node-inAppSelector`);
 
     cy.getByTestId('add-filter-btn').click();
-    cy.getByTestId('group-rules-dropdown').click();
-    cy.get('.mantine-Select-item').contains('And').click();
 
-    cy.getByTestId('create-rule-btn').click();
+    cy.getByTestId('add-new-condition').click();
 
-    cy.getByTestId('filter-on-dropdown').click();
-    cy.get('.mantine-Select-item').contains("Online in the last 'X' time period").click();
+    cy.getByTestId('conditions-form-on').click();
+    cy.get('.mantine-Select-item').contains('Last time was online').click();
     cy.getByTestId('online-in-last-operator-dropdown').click();
     cy.get('.mantine-Select-item').contains('Hours').click();
     cy.getByTestId('online-in-last-value-input').type('1');
 
-    cy.getByTestId('filter-confirm-btn').click();
+    cy.getByTestId('apply-conditions-btn').click();
 
     cy.getByTestId('add-filter-btn').contains('1 filter');
   });
@@ -333,25 +321,23 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.clickWorkflowNode(`node-inAppSelector`);
 
     cy.getByTestId('add-filter-btn').click();
-    cy.getByTestId('group-rules-dropdown').click();
-    cy.get('.mantine-Select-item').contains('And').click();
 
-    cy.getByTestId('create-rule-btn').click();
-    cy.getByTestId('filter-on-dropdown').click();
+    cy.getByTestId('add-new-condition').click();
+    cy.getByTestId('conditions-form-on').click();
     cy.get('.mantine-Select-item').contains('Subscriber').click();
 
-    cy.getByTestId('filter-key-input').type('filter-key');
-    cy.getByTestId('filter-operator-dropdown').click();
+    cy.getByTestId('conditions-form-key').type('filter-key');
+    cy.getByTestId('conditions-form-operator').click();
     cy.get('.mantine-Select-item').contains('Equal').click();
-    cy.getByTestId('filter-value-input').type('filter-value');
+    cy.getByTestId('conditions-form-value').type('filter-value');
 
-    cy.getByTestId('create-rule-btn').click();
-    cy.getByTestId('filter-on-dropdown').eq(1).click();
-    cy.get('.mantine-Select-item').contains('Online right now').click();
+    cy.getByTestId('add-new-condition').click();
+    cy.getByTestId('conditions-form-on').eq(1).click();
+    cy.get('.mantine-Select-item').contains('Is online').click();
     cy.getByTestId('online-now-value-dropdown').click();
     cy.get('.mantine-Select-item').contains('Yes').click();
 
-    cy.getByTestId('filter-confirm-btn').click();
+    cy.getByTestId('apply-conditions-btn').click();
 
     cy.getByTestId('add-filter-btn').contains('2 filters');
   });
