@@ -81,6 +81,9 @@ export { Translate } from './general/Translate';
 export { UserAccess } from './general/UserAccess';
 export { SSO } from './general/SSO';
 export { Cloud } from './general/Cloud';
+export { Condition } from './general/Condition';
+export { RemoveCondition } from './general/RemoveCondition';
+export { Warning } from './general/Warning';
 
 export { Copy } from './actions/Copy';
 export { Close } from './actions/Close';
@@ -93,6 +96,8 @@ export { Edit } from './actions/Edit';
 export { Upload } from './actions/Upload';
 export { Invite } from './actions/Invite';
 export { PlusFilled } from './actions/PlusFilled';
+export { ConditionPlus } from './actions/ConditionPlus';
+export { Duplicate } from './actions/Duplicate';
 
 export { ArrowDown } from './arrows/ArrowDown';
 export { DoubleArrowRight } from './arrows/DoubleArrowRight';

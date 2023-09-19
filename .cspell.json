@@ -502,7 +502,12 @@
     "errmsg",
     "springboot",
     "errmsg",
-    "shelljs"
+    "shelljs",
+    "prefiltering",
+    "autodocs",
+    "stackalt",
+    "mediumdark",
+    "Docgen"
   ],
   "flagWords": [],
   "patterns": [

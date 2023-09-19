@@ -136,7 +136,7 @@ export function ConnectIntegrationForm({
         setValue(credential.key, credential.value);
       }
     }
-  }, [provider]);
+  }, [setValue, provider]);
 
   async function onCreateIntegration(credentials: ICredentialsDto) {
     try {

@@ -20,10 +20,17 @@ export class JobsService {
   public async awaitParsingEvents() {
     let waitingCount = 0;
     let parsedEvents = 0;
+
+    let waitingStandardJobsCount = 0;
+    let activeStandardJobsCount = 0;
+
     do {
       waitingCount = await this.workflowQueue.getWaitingCount();
       parsedEvents = await this.workflowQueue.getActiveCount();
-    } while (parsedEvents > 0 || waitingCount > 0);
+
+      waitingStandardJobsCount = await this.standardQueue.getWaitingCount();
+      activeStandardJobsCount = await this.standardQueue.getActiveCount();
+    } while (parsedEvents > 0 || waitingCount > 0 || waitingStandardJobsCount > 0 || activeStandardJobsCount > 0);
   }
 
   public async awaitRunningJobs({
@@ -41,15 +48,15 @@ export class JobsService {
     let waitingCount = 0;
     let parsedEvents = 0;
 
-    let waitingCountJobs = 0;
-    let activeCountJobs = 0;
+    let waitingStandardJobsCount = 0;
+    let activeStandardJobsCount = 0;
 
     do {
       waitingCount = await this.workflowQueue.getWaitingCount();
       parsedEvents = await this.workflowQueue.getActiveCount();
 
-      waitingCountJobs = await this.standardQueue.getWaitingCount();
-      activeCountJobs = await this.standardQueue.getActiveCount();
+      waitingStandardJobsCount = await this.standardQueue.getWaitingCount();
+      activeStandardJobsCount = await this.standardQueue.getActiveCount();
 
       runningJobs = await this.jobRepository.count({
         _organizationId: organizationId,
@@ -62,8 +69,8 @@ export class JobsService {
         },
       });
     } while (
-      waitingCountJobs > 0 ||
-      activeCountJobs > 0 ||
+      waitingStandardJobsCount > 0 ||
+      activeStandardJobsCount > 0 ||
       parsedEvents > 0 ||
       waitingCount > 0 ||
       runningJobs > unfinishedJobs
