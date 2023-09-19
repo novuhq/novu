@@ -29,6 +29,7 @@ import {
   CompileEmailTemplateCommand,
   MailFactory,
   GetNovuProviderCredentials,
+  SelectVariant,
 } from '@novu/application-generic';
 import * as inlineCss from 'inline-css';
 import { CreateLog } from '../../../shared/logs';
@@ -52,7 +53,8 @@ export class SendMessageEmail extends SendMessageBase {
     protected createExecutionDetails: CreateExecutionDetails,
     private compileEmailTemplateUsecase: CompileEmailTemplate,
     protected selectIntegration: SelectIntegration,
-    protected getNovuProviderCredentials: GetNovuProviderCredentials
+    protected getNovuProviderCredentials: GetNovuProviderCredentials,
+    protected selectVariant: SelectVariant
   ) {
     super(
       messageRepository,
@@ -61,7 +63,8 @@ export class SendMessageEmail extends SendMessageBase {
       subscriberRepository,
       tenantRepository,
       selectIntegration,
-      getNovuProviderCredentials
+      getNovuProviderCredentials,
+      selectVariant
     );
   }
 
@@ -103,9 +106,10 @@ export class SendMessageEmail extends SendMessageBase {
       return;
     }
 
-    const emailChannel: NotificationStepEntity = command.step;
-    if (!emailChannel) throw new PlatformException('Email channel step not found');
-    if (!emailChannel.template) throw new PlatformException('Email channel template not found');
+    const step: NotificationStepEntity = command.step;
+
+    if (!step) throw new PlatformException('Email channel step not found');
+    if (!step.template) throw new PlatformException('Email channel template not found');
 
     const email = command.payload.email || subscriber.email;
 
@@ -141,6 +145,12 @@ export class SendMessageEmail extends SendMessageBase {
       this.sendSelectedIntegrationExecution(command.job, integration),
     ]);
 
+    const template = await this.processVariants(command, tenant, subscriber, command.payload);
+
+    if (template) {
+      step.template = template;
+    }
+
     const overrides: Record<string, any> = Object.assign(
       {},
       command.overrides.email || {},
@@ -148,15 +158,15 @@ export class SendMessageEmail extends SendMessageBase {
     );
 
     let html;
-    let subject = '';
+    let subject = step?.template?.subject || '';
     let content;
 
     const payload = {
-      subject: emailChannel.template.subject || '',
-      preheader: emailChannel.template.preheader,
-      content: emailChannel.template.content,
-      layoutId: overrideLayoutId ?? emailChannel.template._layoutId,
-      contentType: emailChannel.template.contentType ? emailChannel.template.contentType : 'editor',
+      subject,
+      preheader: step.template.preheader,
+      content: step.template.content,
+      layoutId: overrideLayoutId ?? step.template._layoutId,
+      contentType: step.template.contentType ? step.template.contentType : 'editor',
       payload: {
         ...command.payload,
         step: {
@@ -178,7 +188,7 @@ export class SendMessageEmail extends SendMessageBase {
       _organizationId: command.organizationId,
       _subscriberId: command._subscriberId,
       _templateId: command._templateId,
-      _messageTemplateId: emailChannel.template._id,
+      _messageTemplateId: step.template._id,
       subject,
       channel: ChannelTypeEnum.EMAIL,
       transactionId: command.transactionId,
@@ -294,7 +304,7 @@ export class SendMessageEmail extends SendMessageBase {
         mailData,
         message,
         command,
-        overrides?.senderName || emailChannel.template.senderName
+        overrides?.senderName || step.template.senderName
       );
 
       return;

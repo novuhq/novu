@@ -1,9 +1,14 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 import {
+  EnvironmentRepository,
+  ExecutionDetailsRepository,
   IntegrationEntity,
   IntegrationRepository,
+  JobRepository,
+  SubscriberRepository,
   TenantRepository,
+  MessageRepository,
 } from '@novu/dal';
 
 import { SelectIntegration } from './select-integration.usecase';
@@ -96,7 +101,13 @@ describe('select integration', function () {
       new IntegrationRepository() as any,
       // @ts-ignore
       new GetDecryptedIntegrations(),
-      new ConditionsFilter(),
+      new ConditionsFilter(
+        new MessageRepository(),
+        new ExecutionDetailsRepository(),
+        new SubscriberRepository(),
+        new JobRepository(),
+        new EnvironmentRepository()
+      ),
       new TenantRepository(),
       // @ts-ignore
       new GetIsMultiProviderConfigurationEnabled()

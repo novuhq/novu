@@ -25,6 +25,7 @@ import {
   StoreSubscriberJobs,
   ConditionsFilter,
   TriggerEvent,
+  SelectVariant,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
@@ -72,6 +73,7 @@ const USE_CASES = [
   GetNovuLayout,
   GetNovuProviderCredentials,
   SelectIntegration,
+  SelectVariant,
   GetSubscriberPreference,
   GetSubscriberTemplatePreference,
   HandleLastFailedJob,

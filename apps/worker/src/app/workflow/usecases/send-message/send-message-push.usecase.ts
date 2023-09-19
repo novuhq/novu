@@ -25,6 +25,7 @@ import {
   CompileTemplateCommand,
   PushFactory,
   GetNovuProviderCredentials,
+  SelectVariant,
 } from '@novu/application-generic';
 import type { IPushOptions } from '@novu/stateless';
 
@@ -45,7 +46,8 @@ export class SendMessagePush extends SendMessageBase {
     protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
     protected selectIntegration: SelectIntegration,
-    protected getNovuProviderCredentials: GetNovuProviderCredentials
+    protected getNovuProviderCredentials: GetNovuProviderCredentials,
+    protected selectVariant: SelectVariant
   ) {
     super(
       messageRepository,
@@ -54,7 +56,8 @@ export class SendMessagePush extends SendMessageBase {
       subscriberRepository,
       tenantRepository,
       selectIntegration,
-      getNovuProviderCredentials
+      getNovuProviderCredentials,
+      selectVariant
     );
   }
 
@@ -70,7 +73,7 @@ export class SendMessagePush extends SendMessageBase {
       message: 'Sending Push',
     });
 
-    const pushChannel: NotificationStepEntity = command.step;
+    const step: NotificationStepEntity = command.step;
 
     const stepData: IPushOptions['step'] = {
       digest: !!command.events?.length,
@@ -78,6 +81,12 @@ export class SendMessagePush extends SendMessageBase {
       total_count: command.events?.length,
     };
     const tenant = await this.handleTenantExecution(command.job);
+
+    const template = await this.processVariants(command, tenant, subscriber, command.payload);
+
+    if (template) {
+      step.template = template;
+    }
 
     const data = {
       subscriber: subscriber,
@@ -91,14 +100,14 @@ export class SendMessagePush extends SendMessageBase {
     try {
       content = await this.compileTemplate.execute(
         CompileTemplateCommand.create({
-          template: pushChannel.template?.content as string,
+          template: step.template?.content as string,
           data,
         })
       );
 
       title = await this.compileTemplate.execute(
         CompileTemplateCommand.create({
-          template: pushChannel.template?.title as string,
+          template: step.template?.title as string,
           data,
         })
       );
