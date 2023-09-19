@@ -1,14 +1,14 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import { Tooltip } from './Tooltip';
 
 export default {
   title: 'Components/Tooltip',
   component: Tooltip,
   argTypes: {},
-} as ComponentMeta<typeof Tooltip>;
+} as Meta<typeof Tooltip>;
 
-const Template: ComponentStory<typeof Tooltip> = ({ ...args }) => <Tooltip {...args}>Hover Here</Tooltip>;
+const Template: StoryFn<typeof Tooltip> = ({ ...args }) => <Tooltip {...args}>Hover Here</Tooltip>;
 
 export const Label = Template.bind({});
 Label.args = {
