@@ -74,7 +74,7 @@ export class ExternalServicesRoute {
     const paginationIndication: IUnreadCountPaginationIndication =
       unreadCount > 100 ? { unreadCount: 100, hasMore: true } : { unreadCount: unreadCount, hasMore: false };
 
-    await this.wsGateway.sendMessage(command.userId, command.event, {
+    await this.wsGateway.sendMessage(command.userId, WebSocketEventEnum.UNREAD, {
       unreadCount: paginationIndication.unreadCount,
       hasMore: paginationIndication.hasMore,
     });
@@ -106,7 +106,7 @@ export class ExternalServicesRoute {
     const paginationIndication: IUnseenCountPaginationIndication =
       unseenCount > 100 ? { unseenCount: 100, hasMore: true } : { unseenCount: unseenCount, hasMore: false };
 
-    await this.wsGateway.sendMessage(command.userId, command.event, {
+    await this.wsGateway.sendMessage(command.userId, WebSocketEventEnum.UNSEEN, {
       unseenCount: paginationIndication.unseenCount,
       hasMore: paginationIndication.hasMore,
     });
