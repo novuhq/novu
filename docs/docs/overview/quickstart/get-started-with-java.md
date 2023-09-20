@@ -33,23 +33,20 @@ First, you need to import the library into your application.
 If you use Maven, add the dependency to the `pom.xml` file;
 
 ```xml
-<dependencies>
-  ...
-  <dependency>
-    <groupId>co.novu</groupId>
-    <artifactId>novu-java</artifactId>
-    <version>1.1.0</version>
-  </dependency>
-</dependencies>
+<dependency>
+  <groupId>co.novu</groupId>
+  <artifactId>novu-java</artifactId>
+  <version>{latest-version}</version>
+</dependency>
 ```
+The latest version can be found [here](https://github.com/novuhq/novu-java#installation)
 
 If you use Gradle, add the dependency to the `build.gradle` file;
 
 ```groovy
-dependencies {
-  implementation 'co.novu:novu-java:1.1.0'
-}
+implementation 'co.novu:novu-java:{latest-version}'
 ```
+The latest version can be found [here](https://github.com/novuhq/novu-java#installation)
 
 Sync your project, and you should have the artifacts downloaded.
 
