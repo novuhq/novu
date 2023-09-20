@@ -27,7 +27,7 @@ import {
 } from '../../../message-template/usecases';
 import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { NotificationStep } from '../create-notification-template';
+import { NotificationStep, NotificationStepVariant } from '../create-notification-template';
 import { DeleteMessageTemplate } from '../../../message-template/usecases/delete-message-template/delete-message-template.usecase';
 import { DeleteMessageTemplateCommand } from '../../../message-template/usecases/delete-message-template/delete-message-template.command';
 
@@ -127,6 +127,7 @@ export class UpdateNotificationTemplate {
 
       updatePayload.steps = await this.updateMessageTemplates(command.steps, command, parentChangeId);
 
+      await this.deleteRemovedVariants(existingTemplate.steps, command, parentChangeId);
       await this.deleteRemovedSteps(existingTemplate.steps, command, parentChangeId);
     }
 
@@ -197,6 +198,16 @@ export class UpdateNotificationTemplate {
     return notificationTemplateWithStepTemplate;
   }
 
+  private async deleteRemovedVariants(
+    steps: NotificationStepEntity[],
+    command: UpdateNotificationTemplateCommand,
+    parentChangeId: string
+  ) {
+    for (const step of steps) {
+      await this.deleteRemovedSteps(step.variants, command, parentChangeId);
+    }
+  }
+
   private async updateMessageTemplates(
     steps: NotificationStep[],
     command: UpdateNotificationTemplateCommand,
@@ -209,9 +220,8 @@ export class UpdateNotificationTemplate {
       let stepId = message._id;
       if (!message.template) throw new ApiException(`Something un-expected happened, template couldn't be found`);
 
-      // todo check if stepId could be null
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const updatedVariants = await this.updateVariants(message, command, parentChangeId, stepId!);
+      const updatedVariants = await this.updateVariants(message.variants, command, parentChangeId!);
 
       const messageTemplatePayload: CreateMessageTemplateCommand | UpdateMessageTemplateCommand = {
         type: message.template.type,
@@ -364,48 +374,56 @@ export class UpdateNotificationTemplate {
   }
 
   private async updateVariants(
-    message: NotificationStep,
+    variants: NotificationStepVariant[] | undefined,
     command: UpdateNotificationTemplateCommand,
-    parentChangeId: string,
-    parentStepId: string | null
+    parentChangeId: string
   ): Promise<StepVariantEntity[]> {
-    if (!message.variants?.length) return [];
+    if (!variants?.length) return [];
 
     const variantsList: StepVariantEntity[] = [];
     let parentVariantId: string | null = null;
 
-    for (const variant of message.variants) {
+    for (const variant of variants) {
       if (!variant.template) throw new ApiException(`Unexpected error: variants message template is missing`);
 
-      const variantTemplate = await this.createMessageTemplate.execute(
-        CreateMessageTemplateCommand.create({
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          userId: command.userId,
-          type: variant.template.type,
-          name: variant.template.name,
-          content: variant.template.content,
-          variables: variant.template.variables,
-          contentType: variant.template.contentType,
-          cta: variant.template.cta,
-          subject: variant.template.subject,
-          title: variant.template.title,
-          feedId: variant.template.feedId,
-          layoutId: variant.template.layoutId,
-          preheader: variant.template.preheader,
-          senderName: variant.template.senderName,
-          actor: variant.template.actor,
-          parentChangeId,
-        })
-      );
+      const messageTemplatePayload: CreateMessageTemplateCommand | UpdateMessageTemplateCommand = {
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        userId: command.userId,
+        type: variant.template.type,
+        name: variant.template.name,
+        content: variant.template.content,
+        variables: variant.template.variables,
+        contentType: variant.template.contentType,
+        cta: variant.template.cta,
+        subject: variant.template.subject,
+        title: variant.template.title,
+        feedId: variant.template.feedId ? variant.template.feedId : undefined,
+        layoutId: variant.template.layoutId || null,
+        preheader: variant.template.preheader,
+        senderName: variant.template.senderName,
+        actor: variant.template.actor,
+        parentChangeId,
+      };
 
-      if (!variantTemplate._id) throw new ApiException(`Unexpected error: variants message template was not created`);
+      const messageTemplateExist = variant._templateId;
+      const updatedVariant = messageTemplateExist
+        ? await this.updateMessageTemplate.execute(
+            UpdateMessageTemplateCommand.create({
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+              templateId: variant._templateId!,
+              ...messageTemplatePayload,
+            })
+          )
+        : await this.createMessageTemplate.execute(CreateMessageTemplateCommand.create(messageTemplatePayload));
+
+      if (!updatedVariant._id) throw new ApiException(`Unexpected error: variants message template was not created`);
 
       variantsList.push({
-        _id: variantTemplate._id,
-        _templateId: variantTemplate._id,
+        _id: updatedVariant._id,
+        _templateId: updatedVariant._id,
         filters: variant.filters,
-        _parentId: parentStepId,
+        _parentId: parentVariantId,
         active: variant.active,
         shouldStopOnFail: variant.shouldStopOnFail,
         replyCallback: variant.replyCallback,
@@ -414,8 +432,8 @@ export class UpdateNotificationTemplate {
         metadata: variant.metadata,
       });
 
-      if (variantTemplate._id) {
-        parentVariantId = variantTemplate._id;
+      if (updatedVariant._id) {
+        parentVariantId = updatedVariant._id;
       }
     }
 
@@ -423,7 +441,7 @@ export class UpdateNotificationTemplate {
   }
 
   private async deleteRemovedSteps(
-    existingSteps: NotificationStepEntity[],
+    existingSteps: NotificationStepEntity[] | StepVariantEntity[] | undefined,
     command: UpdateNotificationTemplateCommand,
     parentChangeId: string
   ) {
