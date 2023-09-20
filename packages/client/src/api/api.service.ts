@@ -166,4 +166,17 @@ export class ApiService {
       channel: { type: channelType, enabled },
     });
   }
+
+  async updateSubscriberGlobalPreference(
+    preferences: { channelType: string; enabled: boolean }[],
+    enabled?: boolean
+  ): Promise<IUserPreferenceSettings> {
+    return await this.httpClient.patch(`/widgets/preferences`, {
+      preferences: preferences.map((preference) => ({
+        ...preference,
+        type: preference.channelType,
+      })),
+      enabled,
+    });
+  }
 }

@@ -22,6 +22,11 @@ export interface IUpdateUserPreferencesVariables {
   checked: boolean;
 }
 
+export interface IUpdateUserGlobalPreferencesVariables {
+  preferences: { channelType: string; enabled: boolean }[];
+  enabled?: boolean;
+}
+
 export interface IUpdateActionVariables {
   messageId: string;
   actionButtonType: ButtonTypeEnum;

@@ -54,6 +54,11 @@ import { LimitPipe } from './pipes/limit-pipe/limit-pipe';
 import { RemoveAllMessagesCommand } from './usecases/remove-messages/remove-all-messages.command';
 import { RemoveAllMessages } from './usecases/remove-messages/remove-all-messages.usecase';
 import { RemoveAllMessagesDto } from './dtos/remove-all-messages.dto';
+import {
+  UpdateSubscriberGlobalPreferences,
+  UpdateSubscriberGlobalPreferencesCommand,
+} from '../subscribers/usecases/update-subscriber-global-preferences';
+import { UpdateSubscriberGlobalPreferencesRequestDto } from '../subscribers/dtos/update-subscriber-global-preferences-request.dto';
 
 @Controller('/widgets')
 @ApiExcludeController()
@@ -69,6 +74,7 @@ export class WidgetsController {
     private getOrganizationUsecase: GetOrganizationData,
     private getSubscriberPreferenceUsecase: GetSubscriberPreference,
     private updateSubscriberPreferenceUsecase: UpdateSubscriberPreference,
+    private updateSubscriberGlobalPreferenceUsecase: UpdateSubscriberGlobalPreferences,
     private markAllMessagesAsUsecase: MarkAllMessagesAs,
     private analyticsService: AnalyticsService
   ) {}
@@ -367,6 +373,23 @@ export class WidgetsController {
     });
 
     return await this.updateSubscriberPreferenceUsecase.execute(command);
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Patch('/preferences')
+  async updateSubscriberGlobalPreference(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Body() body: UpdateSubscriberGlobalPreferencesRequestDto
+  ) {
+    const command = UpdateSubscriberGlobalPreferencesCommand.create({
+      organizationId: subscriberSession._organizationId,
+      subscriberId: subscriberSession.subscriberId,
+      environmentId: subscriberSession._environmentId,
+      preferences: body.preferences,
+      enabled: body.enabled,
+    });
+
+    return await this.updateSubscriberGlobalPreferenceUsecase.execute(command);
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))

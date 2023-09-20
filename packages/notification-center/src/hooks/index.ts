@@ -6,6 +6,7 @@ export * from './useNovuTheme';
 export * from './useNotificationCenter';
 export * from './useTranslations';
 export * from './useUpdateUserPreferences';
+export * from './useUpdateUserGlobalPreferences';
 export * from './useUpdateAction';
 export * from './useFetchNotifications';
 export * from './useFetchOrganization';

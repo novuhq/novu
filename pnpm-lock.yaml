@@ -1073,82 +1073,81 @@ importers:
       tsconfig-paths: 4.1.2
       typescript: 4.9.5
 
-  enterprise/packages/auth:
+  docs:
     specifiers:
-      '@nestjs/common': '>=9.3.x'
-      '@nestjs/jwt': '>=9'
-      '@nestjs/passport': 9.0.3
-      '@novu/application-generic': ^0.19.0
-      '@novu/dal': ^0.19.0
-      '@novu/shared': ^0.19.0
-      '@types/chai': ^4.2.11
-      '@types/mocha': ^8.0.1
-      '@types/node': ^14.6.0
-      '@types/sinon': ^9.0.0
-      chai: ^4.2.0
-      cross-env: ^7.0.3
-      mocha: ^8.1.1
-      nodemon: ^2.0.3
-      passport: 0.6.0
-      passport-google-oauth: ^2.0.0
-      passport-oauth2: ^1.6.1
-      sinon: ^9.2.4
-      ts-node: ~10.9.1
+      '@docusaurus/core': 2.3.1
+      '@docusaurus/module-type-aliases': 2.3.1
+      '@docusaurus/plugin-google-gtag': 2.3.1
+      '@docusaurus/preset-classic': 2.3.1
+      '@docusaurus/theme-common': 2.3.1
+      '@mdx-js/react': ^1.6.21
+      '@svgr/webpack': ^6.2.1
+      '@tsconfig/docusaurus': 1.0.7
+      '@types/react': ^17.0.14
+      '@types/react-helmet': 6.1.6
+      '@types/react-router-dom': 5.3.3
+      clsx: ^1.1.1
+      docusaurus-plugin-plausible: ^0.0.5
+      docusaurus-plugin-sass: 0.2.4
+      eslint-config-airbnb-typescript: ^17.0.0
+      eslint-config-prettier: ^8.5.0
+      file-loader: ^6.2.0
+      husky: ^8.0.0
+      markdownlint-cli: ^0.33.0
+      prettier: ~2.8.0
+      prism-react-renderer: ^1.3.1
+      react: ^17.0.1
+      react-dom: ^17.0.1
+      sass: ^1.51.0
+      sass-loader: ^13.0.0
+      sharp: ^0.31.0
+      styled-components: 5.3.11
+      stylelint: ^15.0.0
+      stylelint-config-css-modules: ^4.1.0
+      stylelint-config-recess-order: ^3.0.0
+      stylelint-config-recommended-scss: ^6.0.0
+      stylelint-config-standard: ^25.0.0
+      stylelint-order: ^5.0.0
+      stylelint-scss: ^4.2.0
       typescript: 4.9.5
+      url-loader: ^4.1.1
     dependencies:
-      '@nestjs/common': 10.2.2_atc7tu2sld2m3nk4hmwkqn6qde
-      '@nestjs/jwt': 10.1.0_@nestjs+common@10.2.2
-      '@nestjs/passport': 9.0.3_kn4ljbedllcoqpuu4ifhphsdsu
-      '@novu/application-generic': link:../../../packages/application-generic
-      '@novu/dal': link:../../../libs/dal
-      '@novu/shared': link:../../../libs/shared
-      passport: 0.6.0
-      passport-google-oauth: 2.0.0
-      passport-oauth2: 1.7.0
+      '@docusaurus/core': 2.3.1_7kevo6ecmq3m3j5csvldmvt63m
+      '@docusaurus/plugin-google-gtag': 2.3.1_7kevo6ecmq3m3j5csvldmvt63m
+      '@docusaurus/preset-classic': 2.3.1_7hckhe4e7aa4xxsjqgrzg66tfu
+      '@docusaurus/theme-common': 2.3.1_7kevo6ecmq3m3j5csvldmvt63m
+      '@mdx-js/react': 1.6.22_react@17.0.2
+      '@svgr/webpack': 6.5.1
+      clsx: 1.2.1
+      docusaurus-plugin-plausible: 0.0.5
+      docusaurus-plugin-sass: 0.2.4_wsi5ihigezmhyhjqwfpsgagmau
+      file-loader: 6.2.0_webpack@5.88.2
+      prism-react-renderer: 1.3.5_react@17.0.2
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+      sass: 1.61.0
+      sharp: 0.31.3
+      styled-components: 5.3.11_v5ja746gkdtknuc6tj46sve3be
+      stylelint-config-css-modules: 4.2.0_stylelint@15.10.1
+      url-loader: 4.1.1_pbpjnf4ifq5edsddxe3xbm7czm
     devDependencies:
-      '@types/chai': 4.3.4
-      '@types/mocha': 8.2.3
-      '@types/node': 14.18.42
-      '@types/sinon': 9.0.11
-      chai: 4.3.7
-      cross-env: 7.0.3
-      mocha: 8.4.0
-      nodemon: 2.0.22
-      sinon: 9.2.4
-      ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
-      typescript: 4.9.5
-
-  enterprise/packages/digest-schedule:
-    specifiers:
-      '@novu/shared': ^0.19.0
-      '@types/chai': ^4.2.11
-      '@types/mocha': ^8.0.1
-      '@types/node': ^14.6.0
-      '@types/sinon': ^9.0.0
-      chai: ^4.2.0
-      cross-env: ^7.0.3
-      date-fns: ^2.29.2
-      mocha: ^8.1.1
-      nodemon: ^2.0.3
-      rrule: ^2.7.2
-      sinon: ^9.2.4
-      ts-node: ~10.9.1
-      typescript: 4.9.5
-    dependencies:
-      '@novu/shared': link:../../../libs/shared
-      date-fns: 2.29.3
-      rrule: 2.7.2
-    devDependencies:
-      '@types/chai': 4.3.4
-      '@types/mocha': 8.2.3
-      '@types/node': 14.18.42
-      '@types/sinon': 9.0.11
-      chai: 4.3.7
-      cross-env: 7.0.3
-      mocha: 8.4.0
-      nodemon: 2.0.22
-      sinon: 9.2.4
-      ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
+      '@docusaurus/module-type-aliases': 2.3.1_sfoxds7t5ydpegc3knd667wn6m
+      '@tsconfig/docusaurus': 1.0.7
+      '@types/react': 17.0.53
+      '@types/react-helmet': 6.1.6
+      '@types/react-router-dom': 5.3.3
+      eslint-config-airbnb-typescript: 17.0.0_3z3emvisdmqtp5iprvlfwthfia
+      eslint-config-prettier: 8.8.0_eslint@8.48.0
+      husky: 8.0.3
+      markdownlint-cli: 0.33.0
+      prettier: 2.8.7
+      sass-loader: 13.2.2_sass@1.61.0+webpack@5.88.2
+      stylelint: 15.10.1
+      stylelint-config-recess-order: 3.1.0_stylelint@15.10.1
+      stylelint-config-recommended-scss: 6.0.0_2tsnhd7ow7ykkzxj2ufbjyh2ru
+      stylelint-config-standard: 25.0.0_stylelint@15.10.1
+      stylelint-order: 5.0.0_stylelint@15.10.1
+      stylelint-scss: 4.6.0_stylelint@15.10.1
       typescript: 4.9.5
 
   libs/dal:
@@ -13103,26 +13102,6 @@ packages:
       - webpack-cli
     dev: true
 
-  /@nestjs/common/10.2.2_atc7tu2sld2m3nk4hmwkqn6qde:
-    resolution: {integrity: sha512-TCOJK2K4FDT3GxFfURjngnjBewS/hizKNFSLBXtX4TTQm0dVQOtESnnVdP14sEiPM6suuWlrGnXW9UDqItGWiQ==}
-    peerDependencies:
-      class-transformer: '*'
-      class-validator: '*'
-      reflect-metadata: ^0.1.12
-      rxjs: ^7.1.0
-    peerDependenciesMeta:
-      class-transformer:
-        optional: true
-      class-validator:
-        optional: true
-    dependencies:
-      iterare: 1.2.1
-      reflect-metadata: 0.1.13
-      rxjs: 7.8.1
-      tslib: 2.6.2
-      uid: 2.0.2
-    dev: false
-
   /@nestjs/common/10.2.2_j3td4gnlgk75ora6o6suo62byy:
     resolution: {integrity: sha512-TCOJK2K4FDT3GxFfURjngnjBewS/hizKNFSLBXtX4TTQm0dVQOtESnnVdP14sEiPM6suuWlrGnXW9UDqItGWiQ==}
     peerDependencies:
@@ -13349,16 +13328,6 @@ packages:
       passport: ^0.4.0 || ^0.5.0 || ^0.6.0
     dependencies:
       '@nestjs/common': 10.2.2_j3td4gnlgk75ora6o6suo62byy
-      passport: 0.6.0
-    dev: false
-
-  /@nestjs/passport/9.0.3_kn4ljbedllcoqpuu4ifhphsdsu:
-    resolution: {integrity: sha512-HplSJaimEAz1IOZEu+pdJHHJhQyBOPAYWXYHfAPQvRqWtw4FJF1VXl1Qtk9dcXQX1eKytDtH+qBzNQc19GWNEg==}
-    peerDependencies:
-      '@nestjs/common': ^8.0.0 || ^9.0.0
-      passport: ^0.4.0 || ^0.5.0 || ^0.6.0
-    dependencies:
-      '@nestjs/common': 10.2.2_atc7tu2sld2m3nk4hmwkqn6qde
       passport: 0.6.0
     dev: false
 
@@ -27659,7 +27628,7 @@ packages:
       minimatch: 3.1.2
       object.values: 1.1.6
       resolve: 1.22.2
-      semver: 6.3.0
+      semver: 6.3.1
       tsconfig-paths: 3.14.2
     transitivePeerDependencies:
       - eslint-import-resolver-typescript
@@ -37903,41 +37872,11 @@ packages:
       passport-oauth2: 1.7.0
     dev: false
 
-  /passport-google-oauth/2.0.0:
-    resolution: {integrity: sha512-JKxZpBx6wBQXX1/a1s7VmdBgwOugohH+IxCy84aPTZNq/iIPX6u7Mqov1zY7MKRz3niFPol0KJz8zPLBoHKtYA==}
-    engines: {node: '>= 0.4.0'}
-    dependencies:
-      passport-google-oauth1: 1.0.0
-      passport-google-oauth20: 2.0.0
-    dev: false
-
-  /passport-google-oauth1/1.0.0:
-    resolution: {integrity: sha512-qpCEhuflJgYrdg5zZIpAq/K3gTqa1CtHjbubsEsidIdpBPLkEVq6tB1I8kBNcH89RdSiYbnKpCBXAZXX/dtx1Q==}
-    dependencies:
-      passport-oauth1: 1.3.0
-    dev: false
-
-  /passport-google-oauth20/2.0.0:
-    resolution: {integrity: sha512-KSk6IJ15RoxuGq7D1UKK/8qKhNfzbLeLrG3gkLZ7p4A6DBCcv7xpyQwuXtWdpyR0+E0mwkpjY1VfPOhxQrKzdQ==}
-    engines: {node: '>= 0.4.0'}
-    dependencies:
-      passport-oauth2: 1.7.0
-    dev: false
-
   /passport-jwt/4.0.1:
     resolution: {integrity: sha512-UCKMDYhNuGOBE9/9Ycuoyh7vP6jpeTp/+sfMJl7nLff/t6dps+iaeE0hhNkKN8/HZHcJ7lCdOyDxHdDoxoSvdQ==}
     dependencies:
       jsonwebtoken: 9.0.0
       passport-strategy: 1.0.0
-    dev: false
-
-  /passport-oauth1/1.3.0:
-    resolution: {integrity: sha512-8T/nX4gwKTw0PjxP1xfD0QhrydQNakzeOpZ6M5Uqdgz9/a/Ag62RmJxnZQ4LkbdXGrRehQHIAHNAu11rCP46Sw==}
-    engines: {node: '>= 0.4.0'}
-    dependencies:
-      oauth: 0.9.15
-      passport-strategy: 1.0.0
-      utils-merge: 1.0.1
     dev: false
 
   /passport-oauth2/1.7.0:

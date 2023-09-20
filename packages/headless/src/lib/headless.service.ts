@@ -5,7 +5,12 @@ import {
   MutationObserverResult,
 } from '@tanstack/query-core';
 import io from 'socket.io-client';
-import { ApiService, IUserPreferenceSettings, IStoreQuery } from '@novu/client';
+import {
+  ApiService,
+  IUserPreferenceSettings,
+  IStoreQuery,
+  IUserGlobalPreferenceSettings,
+} from '@novu/client';
 import {
   IOrganizationEntity,
   IMessage,
@@ -21,6 +26,7 @@ import {
   SESSION_QUERY_KEY,
   UNREAD_COUNT_QUERY_KEY,
   UNSEEN_COUNT_QUERY_KEY,
+  USER_GLOBAL_PREFERENCES_QUERY_KEY,
   USER_PREFERENCES_QUERY_KEY,
 } from '../utils';
 import {
@@ -30,6 +36,7 @@ import {
   IMessageId,
   IUpdateActionVariables,
   IUpdateUserPreferencesVariables,
+  IUpdateUserGlobalPreferencesVariables,
   UpdateResult,
 } from './types';
 
@@ -510,6 +517,63 @@ export class HeadlessService {
 
     result
       .mutate({ templateId, channelType, checked })
+      .then((data) => {
+        onSuccess?.(data);
+
+        return data;
+      })
+      .catch((error) => {
+        onError?.(error);
+      })
+      .finally(() => {
+        unsubscribe();
+      });
+  }
+
+  public async updateUserGlobalPreferences({
+    preferences,
+    enabled,
+    listener,
+    onSuccess,
+    onError,
+  }: {
+    preferences: IUpdateUserGlobalPreferencesVariables['preferences'];
+    enabled?: IUpdateUserGlobalPreferencesVariables['enabled'];
+    listener: (
+      result: UpdateResult<
+        IUserGlobalPreferenceSettings,
+        unknown,
+        IUpdateUserGlobalPreferencesVariables
+      >
+    ) => void;
+    onSuccess?: (settings: IUserGlobalPreferenceSettings) => void;
+    onError?: (error: unknown) => void;
+  }) {
+    this.assertSessionInitialized();
+
+    const { result, unsubscribe } = this.queryService.subscribeMutation<
+      IUserGlobalPreferenceSettings,
+      unknown,
+      IUpdateUserGlobalPreferencesVariables
+    >({
+      options: {
+        mutationFn: (variables) =>
+          this.api.updateSubscriberGlobalPreference(
+            variables.preferences,
+            variables.enabled
+          ),
+        onSuccess: (data) => {
+          this.queryClient.setQueryData<IUserGlobalPreferenceSettings>(
+            USER_GLOBAL_PREFERENCES_QUERY_KEY,
+            () => data
+          );
+        },
+      },
+      listener: (res) => this.callUpdateListener(res, listener),
+    });
+
+    result
+      .mutate({ preferences, enabled })
       .then((data) => {
         onSuccess?.(data);
 
