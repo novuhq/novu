@@ -156,6 +156,12 @@
     "webpack": "^5.74.0",
     "webpack-bundle-analyzer": "^4.9.0"
   },
+  "optionalDependencies": {
+    "@novu/ee-components": "^0.19.0"
+  },
+  "nx": {
+    "implicitDependencies": ["@novu/ee-components"]
+  },
   "browserslist": {
     "production": [
       ">0.2%",

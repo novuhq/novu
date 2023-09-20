@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { Suspense, useState } from 'react';
 import { ActionIcon, useMantineTheme, Group } from '@mantine/core';
 import { Link, useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
@@ -30,6 +30,14 @@ import { TemplateCreationSourceEnum } from './shared';
 import { TemplatesListNoDataOld } from './TemplatesListNoDataOld';
 import { useCreateDigestDemoWorkflow } from '../../api/hooks/notification-templates/useCreateDigestDemoWorkflow';
 import { When } from '../../components/utils/When';
+
+const LazyHelloWorld = React.lazy(() =>
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  import('@novu/ee-components').then((module) => ({
+    default: module.HelloWorld,
+  }))
+);
 
 const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
   {
@@ -191,6 +199,9 @@ function WorkflowListPage() {
   return (
     <PageContainer title="Workflows">
       <PageHeader title="Workflows" />
+      <Suspense fallback={<div>Loading...</div>}>
+        <LazyHelloWorld />
+      </Suspense>
       <Container fluid sx={{ padding: '0 24px 8px 24px' }}>
         {isTemplateStoreEnabled ? (
           <div>
