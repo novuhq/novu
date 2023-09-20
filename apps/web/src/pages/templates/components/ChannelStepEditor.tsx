@@ -46,7 +46,7 @@ export const ChannelStepEditor = () => {
       return;
     }
     navigate(basePath);
-  }, [index, steps]);
+  }, [navigate, basePath, index, steps]);
 
   if (index === -1 || channel === undefined) {
     return null;

@@ -3,7 +3,7 @@ import { ActionIcon, useMantineTheme } from '@mantine/core';
 import type { ILayoutEntity } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 
 import { deleteLayoutById } from '../../../api/layouts';
@@ -69,10 +69,10 @@ export function LayoutsListPage() {
     }
   };
 
-  const goBack = async () => {
+  const goBack = useCallback(() => {
     setEditId('');
     setActiveScreen(ActivePageEnum.LAYOUTS_LIST);
-  };
+  }, []);
 
   const editLayout = (id?: string) => {
     if (typeof id === 'undefined') return;

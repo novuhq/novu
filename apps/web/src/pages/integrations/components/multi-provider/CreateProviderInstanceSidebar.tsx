@@ -1,5 +1,6 @@
 import styled from '@emotion/styled';
-import { ActionIcon, Group, Radio, Text } from '@mantine/core';
+import { ActionIcon, Group, Radio, Text, Input, useMantineTheme } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
 import { ChannelTypeEnum, ICreateIntegrationBodyDto, NOVU_PROVIDERS, providers } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo } from 'react';
@@ -8,21 +9,24 @@ import { Controller, useForm } from 'react-hook-form';
 import { createIntegration } from '../../../../api/integration';
 import { QueryKeys } from '../../../../api/query.keys';
 import { useSegment } from '../../../../components/providers/SegmentProvider';
-import { When } from '../../../../components/utils/When';
 import { Button, colors, NameInput, Sidebar } from '../../../../design-system';
+import { ConditionPlus, ArrowLeft, Condition } from '../../../../design-system/icons';
 import { inputStyles } from '../../../../design-system/config/inputs.styles';
-import { ArrowLeft } from '../../../../design-system/icons';
 import { useFetchEnvironments } from '../../../../hooks/useFetchEnvironments';
 import { CHANNEL_TYPE_TO_STRING } from '../../../../utils/channels';
 import { errorMessage, successMessage } from '../../../../utils/notifications';
 import { IntegrationsStoreModalAnalytics } from '../../constants';
 import type { IntegrationEntity } from '../../types';
 import { useProviders } from '../../useProviders';
+import { When } from '../../../../components/utils/When';
+import { Conditions, IConditions } from '../../../../components/conditions';
+import { ConditionIconButton } from '../ConditionIconButton';
 import { ProviderImage } from './SelectProviderSidebar';
 
 interface ICreateProviderInstanceForm {
   name: string;
   environmentId: string;
+  conditions: IConditions[];
 }
 
 export function CreateProviderInstanceSidebar({
@@ -40,11 +44,13 @@ export function CreateProviderInstanceSidebar({
   onGoBack: () => void;
   onIntegrationCreated: (id: string) => void;
 }) {
+  const { colorScheme } = useMantineTheme();
   const { environments, isLoading: areEnvironmentsLoading } = useFetchEnvironments();
   const { isLoading: areIntegrationsLoading, providers: integrations } = useProviders();
   const isLoading = areEnvironmentsLoading || areIntegrationsLoading;
   const queryClient = useQueryClient();
   const segment = useSegment();
+  const [conditionsFormOpened, { close: closeConditionsForm, open: openConditionsForm }] = useDisclosure(false);
 
   const provider = useMemo(
     () => providers.find((el) => el.channel === channel && el.id === providerId),
@@ -57,13 +63,23 @@ export function CreateProviderInstanceSidebar({
     ICreateIntegrationBodyDto
   >(createIntegration);
 
-  const { handleSubmit, control, reset, watch } = useForm<ICreateProviderInstanceForm>({
+  const { handleSubmit, control, reset, watch, setValue, getValues } = useForm<ICreateProviderInstanceForm>({
     shouldUseNativeValidation: false,
     defaultValues: {
       name: '',
       environmentId: '',
+      conditions: [],
     },
   });
+
+  const watchedConditions = watch('conditions');
+  const numOfConditions: number = useMemo(() => {
+    if (watchedConditions && watchedConditions[0] && watchedConditions[0].children) {
+      return watchedConditions[0].children.length;
+    }
+
+    return 0;
+  }, [watchedConditions]);
 
   const selectedEnvironmentId = watch('environmentId');
 
@@ -86,7 +102,7 @@ export function CreateProviderInstanceSidebar({
       }
 
       const { channel: selectedChannel } = provider;
-      const { environmentId } = data;
+      const { environmentId, conditions } = data;
 
       const { _id: integrationId } = await createIntegrationApi({
         providerId: provider.id,
@@ -95,6 +111,7 @@ export function CreateProviderInstanceSidebar({
         credentials: {},
         active: provider.channel === ChannelTypeEnum.IN_APP ? true : false,
         check: false,
+        conditions,
         _environmentId: environmentId,
       });
 
@@ -124,11 +141,29 @@ export function CreateProviderInstanceSidebar({
     reset({
       name: provider?.displayName ?? '',
       environmentId: environments.find((env) => env.name === 'Development')?._id || '',
+      conditions: [],
     });
-  }, [environments, provider]);
+  }, [reset, environments, provider]);
 
   if (!provider) {
     return null;
+  }
+  const updateConditions = (conditions: IConditions[]) => {
+    setValue('conditions', conditions, { shouldDirty: true });
+  };
+
+  if (conditionsFormOpened) {
+    const [conditions, name] = getValues(['conditions', 'name']);
+
+    return (
+      <Conditions
+        conditions={conditions}
+        name={name}
+        isOpened={conditionsFormOpened}
+        setConditions={updateConditions}
+        onClose={closeConditionsForm}
+      />
+    );
   }
 
   return (
@@ -141,7 +176,7 @@ export function CreateProviderInstanceSidebar({
       }}
       onClose={onClose}
       customHeader={
-        <Group spacing={12} w="100%" h={40}>
+        <Group spacing={12} w="100%" h={40} noWrap>
           <ActionIcon onClick={onGoBack} variant={'transparent'} data-test-id="create-provider-instance-sidebar-back">
             <ArrowLeft color={colors.B80} />
           </ActionIcon>
@@ -162,6 +197,9 @@ export function CreateProviderInstanceSidebar({
               );
             }}
           />
+          <Group mt={-10} spacing={12} align="start" noWrap ml="auto">
+            <ConditionIconButton data-test-id="add-conditions-icon-btn" onClick={openConditionsForm} />
+          </Group>
         </Group>
       }
       customFooter={
@@ -231,6 +269,45 @@ export function CreateProviderInstanceSidebar({
           );
         }}
       />
+      <Input.Wrapper
+        label={
+          <>
+            <Group spacing={5}>
+              Conditions
+              <Text color={colors.B40} style={{ fontWeight: 'normal' }}>
+                (optional)
+              </Text>
+            </Group>
+          </>
+        }
+        description="Add a condition if you want to apply the provider instance to a specific tenant."
+        styles={inputStyles}
+      >
+        <Group mt={16} position="left">
+          <Button
+            variant="outline"
+            data-test-id="add-conditions-btn"
+            onClick={openConditionsForm}
+            icon={
+              <>
+                <When truthy={numOfConditions === 0}>
+                  <Group spacing={8}>
+                    <ConditionPlus />
+                  </Group>
+                </When>
+                <When truthy={numOfConditions > 0}>
+                  <Group spacing={2} color={colorScheme === 'dark' ? colors.white : colors.B30}>
+                    <Condition />
+                    {numOfConditions}
+                  </Group>
+                </When>
+              </>
+            }
+          >
+            {numOfConditions === 0 ? 'Add' : 'Edit'} conditions
+          </Button>
+        </Group>
+      </Input.Wrapper>
       <When truthy={showNovuProvidersErrorMessage}>
         <WarningMessage>
           <Text data-test-id="novu-provider-error">

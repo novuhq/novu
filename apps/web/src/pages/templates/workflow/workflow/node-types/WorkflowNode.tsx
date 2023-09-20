@@ -125,7 +125,7 @@ export function WorkflowNode({
     });
 
     return () => subscription.unsubscribe();
-  }, [watch]);
+  }, [watch, id]);
 
   const providerIntegration = isPrimaryStep
     ? primaryIntegration

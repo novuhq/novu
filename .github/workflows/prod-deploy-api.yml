@@ -18,6 +18,48 @@ jobs:
       submodule_branch: "main"
     secrets: inherit
 
+  test_e2e_ee:
+    name: Test E2E EE
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
+    steps:
+      - run: echo ${{ matrix.projectName }}
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/checkout-submodules
+        with:
+          submodule_token: ${{ secrets.SUBMODULES_TOKEN }}
+          submodule_branch: "next"
+      - uses: ./.github/actions/setup-project
+      - uses: ./.github/actions/setup-redis-cluster
+      - uses: mansagroup/nrwl-nx-action@v3
+        name: Lint and build
+        with:
+          targets: lint,build
+          projects: ${{matrix.projectName}}
+
+      - uses: ./.github/actions/start-localstack
+
+      - uses: ./.github/actions/run-worker
+        if: ${{matrix.projectName == '@novu/api' }}
+        with:
+          launch_darkly_sdk_key: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
+
+      - uses: mansagroup/nrwl-nx-action@v3
+        name: Running the E2E tests
+        env:
+          LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
+          GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
+          GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
+          CI_EE_TEST: true
+        with:
+          targets: test:e2e:ee
+          projects: ${{matrix.projectName}}
+
   build_prod_image:
     if: "!contains(github.event.head_commit.message, 'ci skip')"
     # The type of runner that the job will run on

@@ -7,7 +7,7 @@ import { colors, Text, Input, Tooltip, Button } from '../../../design-system';
 import { Check, CheckCircle, Copy } from '../../../design-system/icons';
 import React, { useEffect } from 'react';
 import { Control, Controller, useForm } from 'react-hook-form';
-import { useEnvController } from '../../../hooks';
+import { useEffectOnce, useEnvController } from '../../../hooks';
 import { useMutation } from '@tanstack/react-query';
 import { updateDnsSettings } from '../../../api/environment';
 import { showNotification } from '@mantine/notifications';
@@ -39,11 +39,11 @@ export const EmailSettings = () => {
       setValue('inboundParseDomain', environment.dns?.inboundParseDomain || '');
       setValue('mxRecordConfigured', environment.dns?.mxRecordConfigured || false);
     }
-  }, [environment]);
+  }, [setValue, environment]);
 
-  useEffect(() => {
+  useEffectOnce(() => {
     handleCheckRecords();
-  }, []);
+  }, true);
 
   async function handleUpdateDnsSettings({ inboundParseDomain }) {
     const payload = {
