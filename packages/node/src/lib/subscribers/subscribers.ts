@@ -48,12 +48,6 @@ export class Subscribers extends WithHttp implements ISubscribers {
     });
   }
 
-  async create(subscriberId: string, data: ISubscriberPayload) {
-    return await this.http.post(`/subscribers/${subscriberId}`, {
-      ...data,
-    });
-  }
-
   async setCredentials(
     subscriberId: string,
     providerId: string,

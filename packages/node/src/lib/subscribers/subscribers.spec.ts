@@ -53,7 +53,7 @@ describe('test use of novus node package - Subscribers class', () => {
   test('should create subscriber correctly', async () => {
     mockedAxios.put.mockResolvedValue({});
 
-    await novu.subscribers.create('test-create-subscriber', {
+    await novu.subscribers.identify('test-create-subscriber', {
       phone: '8989898',
       locale: 'en',
       data: { custom1: 'custom value1', custom2: 'custom value2' },
