@@ -1,4 +1,4 @@
-import { IsBoolean, IsDefined, IsOptional } from 'class-validator';
+import { IsBoolean, IsOptional } from 'class-validator';
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 import { ChannelPreference } from '../../../shared/dtos/channel-preference';
 
@@ -7,6 +7,6 @@ export class UpdateSubscriberGlobalPreferencesCommand extends EnvironmentWithSub
   @IsOptional()
   enabled?: boolean;
 
-  @IsDefined()
+  @IsOptional()
   preferences?: ChannelPreference[];
 }

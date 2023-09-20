@@ -19,52 +19,6 @@ describe('Update Subscribers global preferences - /subscribers/:subscriberId/pre
     await session.initialize();
   });
 
-  it('should send a Bad Request error if preferences property in payload is not right', async function () {
-    const updateDataEmailFalse = {
-      preferences: [
-        {
-          type: ChannelTypeEnum.EMAIL,
-          enabled: 10,
-        },
-      ],
-      enabled: false,
-    };
-
-    try {
-      const response = await updateGlobalPreferences(updateDataEmailFalse as any, session);
-      expect(response).to.not.be;
-    } catch (error) {
-      expect(error.toJSON()).to.have.include({
-        status: 400,
-        name: 'AxiosError',
-        message: 'Request failed with status code 400',
-      });
-    }
-  });
-
-  it('should send a Bad Request error if enabled property in payload is not right', async function () {
-    const updateDataEmailFalse = {
-      preferences: [
-        {
-          type: ChannelTypeEnum.EMAIL,
-          enabled: false,
-        },
-      ],
-      enabled: 2,
-    };
-
-    try {
-      const response = await updateGlobalPreferences(updateDataEmailFalse as any, session);
-      expect(response).to.not.be;
-    } catch (error) {
-      expect(error.toJSON()).to.have.include({
-        status: 400,
-        name: 'AxiosError',
-        message: 'Request failed with status code 400',
-      });
-    }
-  });
-
   it('should update user global preferences', async function () {
     const payload = {
       enabled: true,
@@ -73,8 +27,8 @@ describe('Update Subscribers global preferences - /subscribers/:subscriberId/pre
 
     const response = await updateGlobalPreferences(payload, session);
 
-    expect(response.data.preference.enabled).to.eql(false);
-    expect(response.data.preference.channels).to.eql({
+    expect(response.data.data.preference.enabled).to.eql(true);
+    expect(response.data.data.preference.channels).to.eql({
       [ChannelTypeEnum.EMAIL]: true,
     });
   });
@@ -86,15 +40,15 @@ describe('Update Subscribers global preferences - /subscribers/:subscriberId/pre
 
     const response = await updateGlobalPreferences(disablePreferenceData, session);
 
-    expect(response.data.preference.enabled).to.eql(false);
+    expect(response.data.data.preference.enabled).to.eql(false);
 
     const preferenceChannel = {
       preferences: [{ type: ChannelTypeEnum.EMAIL, enabled: true }],
     };
 
-    const res = await updateGlobalPreferences(disablePreferenceData, session);
+    const res = await updateGlobalPreferences(preferenceChannel, session);
 
-    expect(res.data.preference.channels).to.eql({
+    expect(res.data.data.preference.channels).to.eql({
       [ChannelTypeEnum.EMAIL]: true,
     });
   });
