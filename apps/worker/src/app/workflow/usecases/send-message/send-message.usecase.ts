@@ -212,7 +212,10 @@ export class SendMessage {
     );
 
     const globalPreferenceResult = this.stepPreferred(globalPreference, job);
-
+    console.log({
+      globalPreferenceResult,
+      globalPreference,
+    });
     if (!globalPreferenceResult) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
@@ -272,9 +275,12 @@ export class SendMessage {
   private stepPreferred(preference: { enabled: boolean; channels: IPreferenceChannels }, job: JobEntity) {
     const templatePreferred = preference.enabled;
 
-    const channelPreferred = Object.keys(preference.channels).some(
-      (channelKey) => channelKey === job.type && preference.channels[job.type]
-    );
+    const channels = Object.keys(preference.channels);
+    // Handles the case where the channel is not defined in the preference. i.e, channels = {}
+    const channelPreferred =
+      channels.length > 0
+        ? channels.some((channelKey) => channelKey === job.type && preference.channels[job.type])
+        : true;
 
     return templatePreferred && channelPreferred;
   }
