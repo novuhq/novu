@@ -3,6 +3,7 @@ import {
   GetSubscriberTemplatePreference,
   UpdateSubscriber,
   CreateSubscriber,
+  GetSubscriberGlobalPreference,
 } from '@novu/application-generic';
 
 import { GetSubscribers } from './get-subscribers';
@@ -18,6 +19,7 @@ import { ChatOauth } from './chat-oauth/chat-oauth.usecase';
 import { ChatOauthCallback } from './chat-oauth-callback/chat-oauth-callback.usecase';
 import { DeleteSubscriberCredentials } from './delete-subscriber-credentials/delete-subscriber-credentials.usecase';
 import { BulkCreateSubscribers } from './bulk-create-subscribers/bulk-create-subscribers.usecase';
+import { UpdateSubscriberGlobalPreferences } from './update-subscriber-global-preferences';
 
 export {
   SearchByExternalSubscriberIds,
@@ -42,4 +44,6 @@ export const USE_CASES = [
   ChatOauth,
   DeleteSubscriberCredentials,
   BulkCreateSubscribers,
+  UpdateSubscriberGlobalPreferences,
+  GetSubscriberGlobalPreference,
 ];

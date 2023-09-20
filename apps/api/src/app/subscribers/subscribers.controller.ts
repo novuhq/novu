@@ -83,6 +83,11 @@ import { MarkAllMessagesAs } from '../widgets/usecases/mark-all-messages-as/mark
 import { MarkAllMessageAsRequestDto } from './dtos/mark-all-messages-as-request.dto';
 import { BulkCreateSubscribers } from './usecases/bulk-create-subscribers/bulk-create-subscribers.usecase';
 import { BulkCreateSubscribersCommand } from './usecases/bulk-create-subscribers';
+import {
+  UpdateSubscriberGlobalPreferences,
+  UpdateSubscriberGlobalPreferencesCommand,
+} from './usecases/update-subscriber-global-preferences';
+import { UpdateSubscriberGlobalPreferencesRequestDto } from './dtos/update-subscriber-global-preferences-request.dto';
 
 @Controller('/subscribers')
 @ApiTags('Subscribers')
@@ -97,6 +102,7 @@ export class SubscribersController {
     private getSubscribersUsecase: GetSubscribers,
     private getPreferenceUsecase: GetPreferences,
     private updatePreferenceUsecase: UpdatePreference,
+    private updateGlobalPreferenceUsecase: UpdateSubscriberGlobalPreferences,
     private getNotificationsFeedUsecase: GetNotificationsFeed,
     private getFeedCountUsecase: GetFeedCount,
     private markMessageAsUsecase: MarkMessageAs,
@@ -368,6 +374,29 @@ export class SubscribersController {
     });
 
     return await this.updatePreferenceUsecase.execute(command);
+  }
+
+  @Patch('/:subscriberId/preferences')
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  @ApiResponse(UpdateSubscriberPreferenceResponseDto)
+  @ApiOperation({
+    summary: 'Update subscriber global preferences',
+  })
+  async updateSubscriberGlobalPreferences(
+    @UserSession() user: IJwtPayload,
+    @Param('subscriberId') subscriberId: string,
+    @Body() body: UpdateSubscriberGlobalPreferencesRequestDto
+  ) {
+    const command = UpdateSubscriberGlobalPreferencesCommand.create({
+      organizationId: user.organizationId,
+      subscriberId: subscriberId,
+      environmentId: user.environmentId,
+      enabled: body.enabled,
+      preferences: body.preferences,
+    });
+
+    return await this.updateGlobalPreferenceUsecase.execute(command);
   }
 
   @ExternalApiAccessible()
