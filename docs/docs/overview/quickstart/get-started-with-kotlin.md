@@ -39,43 +39,22 @@ First, you need to import the library into your application.
 If you use Maven, add the dependency to the `pom.xml` file;
 
 ```xml
-<dependencies>
-  ...
-  <dependency>
-    <groupId>io.github.crashiv</groupId>
-    <artifactId>novu-kotlin</artifactId>
-    <version>0.1.1-SNAPSHOT</version>
-  </dependency>
-</dependencies>
+<dependency>
+  <groupId>co.novu</groupId>
+  <artifactId>novu-kotlin</artifactId>
+  <version>{latest-version}</version>
+</dependency>
 ```
-
-Then add the repository;
-
-```xml
-<repositories>
-    ...
-    <repository>
-        <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
-    </repository>
-</repositories>
-```
+The latest version can be found [here](https://github.com/novuhq/novu-kotlin#installation)
 
 If you use Gradle, add the dependency to the `build.gradle` file;
 
 ```groovy
-implementation 'io.github.crashiv:novu-kotlin:0.1.1-SNAPSHOT' //Groovy
+implementation 'co.novu:novu-kotlin:{latest-version}' //Groovy
 
-implementation ("io.github.crashiv:novu-kotlin:0.1.1-SNAPSHOT") //Kotlin
+implementation ("co.novu:novu-kotlin:{latest-version}") //Kotlin
 ```
-
-Then add the repository;
-
-```groovy
-repositories {
-    ...
-    maven { url "https://s01.oss.sonatype.org/content/repositories/releases/" }
-}
-```
+The latest version can be found [here](https://github.com/novuhq/novu-kotlin#installation)
 
 Sync your project, and you should have the artifacts downloaded.
 
@@ -297,9 +276,27 @@ suspend fun removeSubscriberFromTopic(): Any? {
 
 Thanks to the topics feature, it is possible to trigger a notification to all subscribers assigned to a topic. This helps avoid listing all subscriber identifiers in the `to` field of the notification trigger.
 
-:::info
-This feature is not yet available on the Kotlin SDK, this doc will be updated once it is released on Kotlin.
-:::
+To trigger a notification to all subscribers of a topic, copy and paste the code below:
+
+```kotlin
+suspend fun triggerNotificationToTopic(): Any? {
+        val novu = Novu(apiKey = "API_KEY")
+        val triggerEventRequest = TriggerEventRequest(
+                name = "test",
+                to = listOf(
+                        Topic(
+                                type = "Topic",
+                                topicKey = "posts:comment:12345"
+                        )
+                ),
+                payload = mapOf("customVariables" to "Hello")
+        )
+
+        return CoroutineScope(Dispatchers.IO).async {
+            novu.trigger(triggerEventRequest)
+        }.await()
+    }
+```
 
 ## Next Steps
 
