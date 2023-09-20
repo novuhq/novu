@@ -15,7 +15,6 @@ export class UpdateSubscriberGlobalPreferencesRequestDto {
   @ApiPropertyOptional({
     type: [ChannelPreference],
     description: 'The subscriber global preferences for every ChannelTypeEnum.',
-    isArray: true,
   })
   @IsOptional()
   preferences?: ChannelPreference[];
