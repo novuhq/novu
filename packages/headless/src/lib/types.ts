@@ -23,7 +23,7 @@ export interface IUpdateUserPreferencesVariables {
 }
 
 export interface IUpdateUserGlobalPreferencesVariables {
-  preferences: { channelType: string; enabled: boolean }[];
+  preferences?: { channelType: string; enabled: boolean }[];
   enabled?: boolean;
 }
 

@@ -11,6 +11,7 @@ import {
   IMarkMessageActionFields,
   ISubscriberPayload,
   ISubscribers,
+  IUpdateSubscriberGlobalPreferencePayload,
   IUpdateSubscriberPreferencePayload,
 } from './subscriber.interface';
 import { WithHttp } from '../novu.interface';
@@ -102,6 +103,15 @@ export class Subscribers extends WithHttp implements ISubscribers {
         ...data,
       }
     );
+  }
+
+  async updateGlobalPreference(
+    subscriberId: string,
+    data: IUpdateSubscriberGlobalPreferencePayload
+  ) {
+    return await this.http.patch(`/subscribers/${subscriberId}/preferences`, {
+      ...data,
+    });
   }
 
   async getNotificationsFeed(

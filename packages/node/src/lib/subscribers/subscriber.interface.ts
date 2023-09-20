@@ -62,6 +62,14 @@ export interface IUpdateSubscriberPreferencePayload {
   };
   enabled?: boolean;
 }
+
+export interface IUpdateSubscriberGlobalPreferencePayload {
+  preferences?: {
+    type: ChannelTypeEnum;
+    enabled: boolean;
+  }[];
+  enabled?: boolean;
+}
 export interface IGetSubscriberNotificationFeedParams {
   page?: number;
   limit?: number;
