@@ -25,7 +25,7 @@ export function ActionBlockContainer({
   onRemoveTemplate: () => void;
   isButtonsTemplateSelected: boolean;
   onChange: (data: any) => void;
-  value: IMessageAction;
+  value: IMessageAction | undefined;
   readonly: boolean;
 }) {
   return (
@@ -45,7 +45,7 @@ export function ActionBlockContainer({
 }
 
 interface ISelectedButtonTemplateProps {
-  value: IMessageAction;
+  value?: IMessageAction;
   onRemoveTemplate: () => void;
   onChange: (actions: any) => void;
   readonly: boolean;

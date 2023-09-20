@@ -158,6 +158,97 @@ const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
             },
           },
         },
+        variants: [
+          {
+            active: {
+              type: Schema.Types.Boolean,
+              default: true,
+            },
+            replyCallback: {
+              active: Schema.Types.Boolean,
+              url: Schema.Types.String,
+            },
+            shouldStopOnFail: {
+              type: Schema.Types.Boolean,
+              default: false,
+            },
+            uuid: Schema.Types.String,
+            name: Schema.Types.String,
+            filters: [
+              {
+                isNegated: Schema.Types.Boolean,
+                type: {
+                  type: Schema.Types.String,
+                },
+                value: Schema.Types.String,
+                children: [
+                  {
+                    field: Schema.Types.String,
+                    value: Schema.Types.Mixed,
+                    operator: Schema.Types.String,
+                    on: Schema.Types.String,
+                    webhookUrl: Schema.Types.String,
+                    timeOperator: Schema.Types.String,
+                    step: Schema.Types.String,
+                    stepType: Schema.Types.String,
+                  },
+                ],
+              },
+            ],
+            _templateId: {
+              type: Schema.Types.ObjectId,
+              ref: 'MessageTemplate',
+            },
+            _parentId: {
+              type: Schema.Types.ObjectId,
+            },
+            metadata: {
+              amount: {
+                type: Schema.Types.Number,
+              },
+              unit: {
+                type: Schema.Types.String,
+              },
+              digestKey: {
+                type: Schema.Types.String,
+              },
+              delayPath: {
+                type: Schema.Types.String,
+              },
+              type: {
+                type: Schema.Types.String,
+              },
+              backoffUnit: {
+                type: Schema.Types.String,
+              },
+              backoffAmount: {
+                type: Schema.Types.Number,
+              },
+              updateMode: {
+                type: Schema.Types.Boolean,
+              },
+              backoff: {
+                type: Schema.Types.Boolean,
+              },
+              timed: {
+                atTime: {
+                  type: Schema.Types.String,
+                },
+                weekDays: [Schema.Types.String],
+                monthDays: [Schema.Types.Number],
+                ordinal: {
+                  type: Schema.Types.String,
+                },
+                ordinalValue: {
+                  type: Schema.Types.String,
+                },
+                monthlyType: {
+                  type: Schema.Types.String,
+                },
+              },
+            },
+          },
+        ],
       },
     ],
     preferenceSettings: {
@@ -210,8 +301,18 @@ notificationTemplateSchema.virtual('steps.template', {
   justOne: true,
 });
 
+notificationTemplateSchema.virtual('steps.variants.template', {
+  ref: 'MessageTemplate',
+  localField: 'steps.variants._templateId',
+  foreignField: '_id',
+  justOne: true,
+});
+
 notificationTemplateSchema.path('steps').schema.set('toJSON', { virtuals: true });
 notificationTemplateSchema.path('steps').schema.set('toObject', { virtuals: true });
+
+notificationTemplateSchema.path('steps.variants').schema.set('toJSON', { virtuals: true });
+notificationTemplateSchema.path('steps.variants').schema.set('toObject', { virtuals: true });
 
 notificationTemplateSchema.virtual('notificationGroup', {
   ref: 'NotificationGroup',

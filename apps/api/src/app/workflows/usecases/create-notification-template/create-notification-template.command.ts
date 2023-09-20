@@ -87,7 +87,11 @@ export class ChannelCTACommand {
   action?: IMessageAction[];
 }
 
-export class NotificationStep {
+export class NotificationStepVariant {
+  @IsString()
+  @IsOptional()
+  _templateId?: string;
+
   @ValidateNested()
   @IsOptional()
   template?: MessageTemplate;
@@ -122,6 +126,13 @@ export class NotificationStep {
 
   @IsOptional()
   metadata?: IWorkflowStepMetadata;
+}
+
+export class NotificationStep extends NotificationStepVariant {
+  @IsOptional()
+  @IsArray()
+  @ValidateNested()
+  variants?: NotificationStepVariant[];
 }
 
 export class MessageFilter {
