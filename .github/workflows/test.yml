@@ -101,7 +101,7 @@ jobs:
     name: Test Widget Cypress
     needs: [ get-affected ]
     uses: ./.github/workflows/reusable-widget-e2e.yml
-    if: ${{ contains(fromJson(needs.get-affected.outputs.test-cypress), '@novu/widget') || contains(fromJson(needs.get-affected.outputs.test-unit), '@novu/notification-center') }}
+    if: ${{ contains(fromJson(needs.get-affected.outputs.test-cypress), '@novu/widget') || contains(fromJson(needs.get-affected.outputs.test-unit), '@novu/notification-center') || contains(fromJson(needs.get-affected.outputs.test-unit), '@novu/ws') }}
     secrets: inherit
 
   build_docker_api:

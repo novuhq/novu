@@ -3,12 +3,12 @@ import { JobTopicNameEnum } from '@novu/shared';
 
 import { QueueBaseService } from './index';
 
-const LOG_CONTEXT = 'JobMetricsQueueService';
+const LOG_CONTEXT = 'ActiveJobsMetricQueueService';
 
 @Injectable()
-export class JobMetricsQueueService extends QueueBaseService {
+export class ActiveJobsMetricQueueService extends QueueBaseService {
   constructor() {
-    super(JobTopicNameEnum.METRICS);
+    super(JobTopicNameEnum.ACTIVE_JOBS_METRIC);
 
     Logger.log(`Creating queue ${this.topic}`, LOG_CONTEXT);
 
