@@ -212,10 +212,7 @@ export class SendMessage {
     );
 
     const globalPreferenceResult = this.stepPreferred(globalPreference, job);
-    console.log({
-      globalPreferenceResult,
-      globalPreference,
-    });
+
     if (!globalPreferenceResult) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
