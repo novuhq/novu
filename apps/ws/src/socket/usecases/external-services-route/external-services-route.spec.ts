@@ -87,11 +87,11 @@ describe('ExternalServicesRoute', () => {
           _id: messageId,
         },
       });
-      sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(1), userId, WebSocketEventEnum.RECEIVED, {
+      sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(1), userId, WebSocketEventEnum.UNSEEN, {
         unseenCount: 5,
         hasMore: false,
       });
-      sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(2), userId, WebSocketEventEnum.RECEIVED, {
+      sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(2), userId, WebSocketEventEnum.UNREAD, {
         unreadCount: 5,
         hasMore: false,
       });
