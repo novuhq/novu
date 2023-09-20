@@ -31,7 +31,7 @@ export class SelectVariant {
     }
 
     for (const variant of command.step.variants) {
-      if (!variant.filters?.length) {
+      if (!variant.filters?.length || !variant.active) {
         continue;
       }
 
