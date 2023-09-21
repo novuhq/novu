@@ -28,7 +28,7 @@ export class CompletedJobsMetricService {
       this.completedJobsMetricWorkerService.createWorker(this.getWorkerProcessor(), this.getWorkerOptions());
 
       this.completedJobsMetricWorkerService.worker.on('completed', async (job) => {
-        await checkingForCronJob(process.env.ACTIVE_CRON_ID);
+        await checkingForCronJob(process.env.COMPLETED_CRON_ID);
         Logger.verbose('Metric Completed Job', job.id, LOG_CONTEXT);
       });
 
@@ -64,7 +64,7 @@ export class CompletedJobsMetricService {
             repeatJobKey: METRIC_JOB_ID,
             repeat: {
               immediately: true,
-              pattern: '* * * * * *',
+              pattern: '0 * * * * *',
             },
             removeOnFail: true,
             removeOnComplete: true,
