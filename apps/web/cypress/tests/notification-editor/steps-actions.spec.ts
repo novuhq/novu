@@ -151,19 +151,18 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.clickWorkflowNode(`node-digestSelector`);
 
     cy.getByTestId('add-filter-btn').click();
-    cy.getByTestId('group-rules-dropdown').click();
-    cy.get('.mantine-Select-item').contains('And').click();
+    cy.getByTestId('add-new-condition').click();
 
-    cy.getByTestId('create-rule-btn').click();
-    cy.getByTestId('filter-on-dropdown').click();
+    cy.getByTestId('conditions-form-on').click();
+
     cy.get('.mantine-Select-item').contains('Subscriber').click();
 
-    cy.getByTestId('filter-key-input').type('filter-key');
-    cy.getByTestId('filter-operator-dropdown').click();
+    cy.getByTestId('conditions-form-key').type('filter-key');
+    cy.getByTestId('conditions-form-operator').click();
     cy.get('.mantine-Select-item').contains('Equal').click();
-    cy.getByTestId('filter-value-input').type('filter-value');
+    cy.getByTestId('conditions-form-value').type('filter-value');
 
-    cy.getByTestId('filter-confirm-btn').click();
+    cy.getByTestId('apply-conditions-btn').click();
 
     cy.getByTestId('add-filter-btn').contains('1 filter');
 
@@ -186,19 +185,18 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.clickWorkflowNode(`node-delaySelector`);
 
     cy.getByTestId('add-filter-btn').click();
-    cy.getByTestId('group-rules-dropdown').click();
-    cy.get('.mantine-Select-item').contains('And').click();
+    cy.getByTestId('add-new-condition').click();
 
-    cy.getByTestId('create-rule-btn').click();
-    cy.getByTestId('filter-on-dropdown').click();
+    cy.getByTestId('conditions-form-on').click();
+
     cy.get('.mantine-Select-item').contains('Subscriber').click();
 
-    cy.getByTestId('filter-key-input').type('filter-key');
-    cy.getByTestId('filter-operator-dropdown').click();
+    cy.getByTestId('conditions-form-key').type('filter-key');
+    cy.getByTestId('conditions-form-operator').click();
     cy.get('.mantine-Select-item').contains('Equal').click();
-    cy.getByTestId('filter-value-input').type('filter-value');
+    cy.getByTestId('conditions-form-value').type('filter-value');
 
-    cy.getByTestId('filter-confirm-btn').click();
+    cy.getByTestId('apply-conditions-btn').click();
 
     cy.getByTestId('add-filter-btn').contains('1 filter');
 
