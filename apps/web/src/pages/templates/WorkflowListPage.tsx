@@ -31,13 +31,23 @@ import { TemplatesListNoDataOld } from './TemplatesListNoDataOld';
 import { useCreateDigestDemoWorkflow } from '../../api/hooks/notification-templates/useCreateDigestDemoWorkflow';
 import { When } from '../../components/utils/When';
 
-const LazyHelloWorld = React.lazy(() =>
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  import('@novu/ee-components').then((module) => ({
-    default: module.HelloWorld,
-  }))
-);
+/*
+ * const LazyHelloWorld = React.lazy(() =>
+ *   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+ *   // @ts-ignore
+ *   import('@novu/ee-components').then((module) => ({
+ *     default: module.HelloWorld,
+ *   }))
+ * );
+ */
+
+let HelloWorld;
+try {
+  const module = require('@novu/ee-components');
+  HelloWorld = module.HelloWorld;
+} catch (error) {
+  console.log(error);
+}
 
 const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
   {
@@ -199,9 +209,10 @@ function WorkflowListPage() {
   return (
     <PageContainer title="Workflows">
       <PageHeader title="Workflows" />
-      <Suspense fallback={<div>Loading...</div>}>
+      {/* <Suspense fallback={<div>Loading...</div>}>
         <LazyHelloWorld />
-      </Suspense>
+      </Suspense> */}
+      {HelloWorld && <HelloWorld />}
       <Container fluid sx={{ padding: '0 24px 8px 24px' }}>
         {isTemplateStoreEnabled ? (
           <div>
