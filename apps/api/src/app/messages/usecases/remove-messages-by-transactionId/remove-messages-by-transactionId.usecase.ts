@@ -8,35 +8,34 @@ export class RemoveMessagesByTransactionId {
   constructor(private messageRepository: MessageRepository, private invalidateCache: InvalidateCacheService) {}
 
   async execute(command: RemoveMessagesByTransactionIdCommand) {
-    const subscriberIds = await this.messageRepository.find(
-      {
-        transactionId: command.transactionId,
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-        deleted: false,
-        ...(command.channel && { channel: command.channel }),
-      },
-      '_subscriberId'
-    );
+    const messages = await this.messageRepository.findMessagesByTransactionId({
+      transactionId: [command.transactionId],
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
+      ...(command.channel && { channel: command.channel }),
+    });
 
-    if (subscriberIds.length === 0) {
+    if (!messages) {
       throw new NotFoundException('Invalid transactionId or channel');
     }
 
-    for (const subscriberId of subscriberIds) {
-      await this.invalidateCache.invalidateQuery({
-        key: buildFeedKey().invalidate({
-          subscriberId: subscriberId._subscriberId,
-          _environmentId: command.environmentId,
-        }),
-      });
+    for (const message of messages) {
+      const subscriberId = message.subscriber?.subscriberId;
+      if (subscriberId) {
+        await this.invalidateCache.invalidateQuery({
+          key: buildFeedKey().invalidate({
+            subscriberId,
+            _environmentId: command.environmentId,
+          }),
+        });
 
-      await this.invalidateCache.invalidateQuery({
-        key: buildMessageCountKey().invalidate({
-          subscriberId: subscriberId._subscriberId,
-          _environmentId: command.environmentId,
-        }),
-      });
+        await this.invalidateCache.invalidateQuery({
+          key: buildMessageCountKey().invalidate({
+            subscriberId,
+            _environmentId: command.environmentId,
+          }),
+        });
+      }
     }
 
     const deleteQuery: Partial<MessageEntity> = {

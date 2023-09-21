@@ -353,6 +353,31 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     return this.mapEntity(res);
   }
 
+  async findMessagesByTransactionId(
+    query: {
+      transactionId: string[];
+      _environmentId: string;
+    } & Partial<Omit<MessageEntity, 'transactionId'>>
+  ) {
+    const res = await this.MongooseModel.find({
+      transactionId: {
+        $in: query.transactionId,
+      },
+      _environmentId: query._environmentId,
+    })
+      .populate('subscriber')
+      .populate({
+        path: 'actorSubscriber',
+        match: {
+          'actor.type': ActorTypeEnum.USER,
+          _actorId: { $exists: true },
+        },
+        select: '_id firstName lastName avatar subscriberId',
+      });
+
+    return this.mapEntities(res);
+  }
+
   async getMessages(
     query: Partial<Omit<MessageEntity, 'transactionId'>> & {
       _environmentId: string;
