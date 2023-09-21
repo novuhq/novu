@@ -8,6 +8,7 @@ import { RunJobCommand } from './run-job.command';
 import { QueueNextJob, QueueNextJobCommand } from '../queue-next-job';
 import { SendMessage, SendMessageCommand } from '../send-message';
 import { PlatformException, EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER } from '../../../shared/utils';
+import { SetJobAsCommand, SetJobAsCompleted } from '../update-job-status';
 
 const LOG_CONTEXT = 'RunJob';
 
@@ -18,6 +19,7 @@ export class RunJob {
     private sendMessage: SendMessage,
     private queueNextJob: QueueNextJob,
     private storageHelperService: StorageHelperService,
+    private setJobAsCompleted: SetJobAsCompleted,
     private logger?: PinoLogger
   ) {}
 
@@ -78,7 +80,14 @@ export class RunJob {
         })
       );
 
-      await this.jobRepository.updateStatus(job._environmentId, job._id, JobStatusEnum.COMPLETED);
+      await this.setJobAsCompleted.execute(
+        SetJobAsCommand.create({
+          jobId: job._id,
+          environmentId: job._environmentId,
+          organizationId: job._organizationId,
+          userId: job._userId,
+        })
+      );
     } catch (error: any) {
       Logger.error({ error }, `Running job ${job._id} has thrown an error`, LOG_CONTEXT);
       if (job.step.shouldStopOnFail || this.shouldBackoff(error)) {

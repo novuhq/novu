@@ -187,7 +187,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
 
       /**
        * In case of 2 triggers happened concurrently,
-       * we want ony one of those jobs to be skipped, while the second to be creating a digest.
+       * we want only one of those jobs to be skipped, while the second to be creating a digest.
        * This is an issue, since we are relying on the Trigger job existence,
        * that is created earlier in the workflow execution.
        */
