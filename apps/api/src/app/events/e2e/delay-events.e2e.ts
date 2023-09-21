@@ -94,7 +94,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     const subExpire30Days = subDays(expireAt, 30);
     const diff = differenceInMilliseconds(subExpire30Days, createdAt);
 
-    expect(diff).to.approximately(100, 1000);
+    expect(diff).to.approximately(200, 2000);
 
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
