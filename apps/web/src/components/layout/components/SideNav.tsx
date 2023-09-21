@@ -30,7 +30,7 @@ import { currentOnboardingStep } from '../../../pages/quick-start/components/rou
 import { useSpotlightContext } from '../../providers/SpotlightProvider';
 import { ChangesCountBadge } from './ChangesCountBadge';
 import OrganizationSelect from './OrganizationSelect';
-import { version } from '../../../../package.json';
+import packageInfo from '../../../../package.json';
 
 const usePopoverStyles = createStyles(({ colorScheme }) => ({
   dropdown: {
@@ -228,7 +228,7 @@ export function SideNav({}: Props) {
           </a>
         </BottomNav>
         <BottomNav dark={dark} data-test-id="side-nav-bottom-links">
-          <p>v{version}</p>
+          <p>v{packageInfo.version}</p>
         </BottomNav>
       </Navbar.Section>
     </Navbar>
