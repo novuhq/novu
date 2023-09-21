@@ -64,7 +64,7 @@ export class CompletedJobsMetricService {
             repeatJobKey: METRIC_JOB_ID,
             repeat: {
               immediately: true,
-              pattern: '* * * * * *',
+              pattern: '0 * * * * *',
             },
             removeOnFail: true,
             removeOnComplete: true,
