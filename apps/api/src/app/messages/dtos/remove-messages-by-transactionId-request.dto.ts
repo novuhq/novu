@@ -10,10 +10,4 @@ export class DeleteMessageByTransactionIdRequestDto {
   @IsOptional()
   @IsEnum(ChannelTypeEnum)
   channel?: ChannelTypeEnum;
-
-  @ApiProperty({
-    description: 'The transactionId of the message to be deleted',
-  })
-  @IsString()
-  transactionId: string;
 }

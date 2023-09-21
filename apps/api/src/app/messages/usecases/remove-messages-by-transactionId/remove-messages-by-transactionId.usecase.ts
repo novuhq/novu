@@ -15,7 +15,7 @@ export class RemoveMessagesByTransactionId {
       ...(command.channel && { channel: command.channel }),
     });
 
-    if (!messages) {
+    if (messages.length === 0) {
       throw new NotFoundException('Invalid transactionId or channel');
     }
 

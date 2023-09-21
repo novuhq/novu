@@ -79,7 +79,7 @@ export class MessagesController {
     );
   }
 
-  @Delete('')
+  @Delete('/transaction/:transactionId')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
   @ApiResponse(DeleteMessageResponseDto)
@@ -89,13 +89,14 @@ export class MessagesController {
   })
   async deleteMessagesByTransactionId(
     @UserSession() user: IJwtPayload,
+    @Param() { transactionId }: { transactionId: string },
     @Query() query: DeleteMessageByTransactionIdRequestDto
   ): Promise<DeleteMessageResponseDto> {
     return await this.removeMessagesByTransactionId.execute(
       RemoveMessagesByTransactionIdCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
-        transactionId: query.transactionId,
+        transactionId: transactionId,
         channel: query.channel,
       })
     );
