@@ -12,7 +12,7 @@ export function FrameworkSetup() {
 
   useEffect(() => {
     segment.track(OnBoardingAnalyticsEnum.FRAMEWORKS_SETUP_VISIT);
-  }, []);
+  }, [segment]);
 
   return (
     <QuickStartWrapper title={frameworkSetupTitle} goBackPath={ROUTES.QUICK_START_NOTIFICATION_CENTER}>

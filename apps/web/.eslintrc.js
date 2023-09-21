@@ -36,7 +36,7 @@ module.exports = {
       },
     ],
     "react-hooks/rules-of-hooks": 'error',
-    "react-hooks/exhaustive-deps": 'off'
+    "react-hooks/exhaustive-deps": 'warn'
   },
   env: {
     'cypress/globals': true,

@@ -1,6 +1,8 @@
 import { ActionIcon, Group, Title, useMantineTheme } from '@mantine/core';
 import { useLocalStorage } from '@mantine/hooks';
 import { CSSProperties, ReactNode, useEffect } from 'react';
+import styled from '@emotion/styled';
+
 import { IS_DOCKER_HOSTED } from '../../config';
 import { Button, colors, Text } from '../../design-system';
 import { Calendar, Close } from '../../design-system/icons';
@@ -13,23 +15,12 @@ export enum ProductLeadVariants {
   COLUMN = 'column',
 }
 
-const Wrapper = ({ children, variant, id }: { children: any; variant: ProductLeadVariants; id: string }) => {
-  const segment = useSegment();
-
-  useEffect(() => {
-    segment.track('Banner seen - [Product lead]', {
-      id,
-    });
-  }, []);
-
-  return variant === ProductLeadVariants.COLUMN ? (
-    <Group position="apart" align="center">
-      {children}
-    </Group>
-  ) : (
-    children
-  );
-};
+const WrapperHolder = styled.div<{ variant: ProductLeadVariants }>`
+  display: flex;
+  flex-direction: ${({ variant }) => (variant === ProductLeadVariants.COLUMN ? 'column' : 'row')};
+  justify-content: space-between;
+  gap: 24px;
+`;
 
 export const ProductLead = ({
   title,
@@ -54,11 +45,16 @@ export const ProductLead = ({
     defaultValue: true,
     getInitialValueInEffect: true,
   });
-
+  const segment = useSegment();
   const theme = useMantineTheme();
   const dark = theme.colorScheme === 'dark';
   const isSelfHosted = IS_DOCKER_HOSTED;
-  const segment = useSegment();
+
+  useEffect(() => {
+    segment.track('Banner seen - [Product lead]', {
+      id,
+    });
+  }, [segment, id]);
 
   if (open === false) {
     return null;
@@ -74,7 +70,7 @@ export const ProductLead = ({
         ...style,
       }}
     >
-      <Wrapper variant={variant} id={id}>
+      <WrapperHolder variant={variant}>
         <div>
           <Group position="apart">
             <Group spacing={8}>
@@ -86,6 +82,7 @@ export const ProductLead = ({
             <When truthy={closeable && variant === ProductLeadVariants.DEFAULT}>
               <ActionIcon
                 variant={'transparent'}
+                sx={{ transform: 'translate(14px, -14px)' }}
                 onClick={() => {
                   setOpen(false);
                   segment.track('Banner hidden - [Product lead]', {
@@ -101,9 +98,8 @@ export const ProductLead = ({
             {text}
           </Text>
         </div>
-        <Group spacing={24}>
+        <Group spacing={24} align="center">
           <Button
-            mt={variant === ProductLeadVariants.DEFAULT ? 16 : undefined}
             onClick={() => {
               segment.track('Scheduled call clicked - [Product lead]', {
                 feature: id,
@@ -134,7 +130,7 @@ export const ProductLead = ({
             </ActionIcon>
           </When>
         </Group>
-      </Wrapper>
+      </WrapperHolder>
     </div>
   );
 };

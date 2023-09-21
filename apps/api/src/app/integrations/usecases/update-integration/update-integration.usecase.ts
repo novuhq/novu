@@ -14,7 +14,6 @@ import { UpdateIntegrationCommand } from './update-integration.command';
 import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/deactivate-integration.usecase';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
-import { DisableNovuIntegration } from '../disable-novu-integration/disable-novu-integration.usecase';
 
 @Injectable()
 export class UpdateIntegration {
@@ -25,23 +24,18 @@ export class UpdateIntegration {
     private integrationRepository: IntegrationRepository,
     private deactivateSimilarChannelIntegrations: DeactivateSimilarChannelIntegrations,
     private analyticsService: AnalyticsService,
-    private disableNovuIntegration: DisableNovuIntegration,
     private getIsMultiProviderConfigurationEnabled: GetIsMultiProviderConfigurationEnabled
   ) {}
 
   private async calculatePriorityAndPrimaryForActive({
     existingIntegration,
-    conditionsApplied = false,
   }: {
     existingIntegration: IntegrationEntity;
-    conditionsApplied?: boolean;
   }) {
     const result: { primary: boolean; priority: number } = {
       primary: existingIntegration.primary,
       priority: existingIntegration.priority,
     };
-
-    const isChannelSupportsPrimary = CHANNELS_WITH_PRIMARY.includes(existingIntegration.channel);
 
     const highestPriorityIntegration = await this.integrationRepository.findHighestPriorityIntegration({
       _organizationId: existingIntegration._organizationId,
@@ -67,30 +61,15 @@ export class UpdateIntegration {
       result.priority = highestPriorityIntegration ? highestPriorityIntegration.priority + 1 : 1;
     }
 
-    const activeIntegrationsCount = await this.integrationRepository.countActiveExcludingNovu({
-      _organizationId: existingIntegration._organizationId,
-      _environmentId: existingIntegration._environmentId,
-      channel: existingIntegration.channel,
-    });
-    if (activeIntegrationsCount === 0 && isChannelSupportsPrimary) {
-      result.primary = true;
-    }
-
-    if (conditionsApplied) {
-      result.primary = false;
-    }
-
     return result;
   }
 
   private async calculatePriorityAndPrimary({
     existingIntegration,
     active,
-    conditionsApplied = false,
   }: {
     existingIntegration: IntegrationEntity;
     active: boolean;
-    conditionsApplied?: boolean;
   }) {
     let result: { primary: boolean; priority: number } = {
       primary: existingIntegration.primary,
@@ -100,7 +79,6 @@ export class UpdateIntegration {
     if (active) {
       result = await this.calculatePriorityAndPrimaryForActive({
         existingIntegration,
-        conditionsApplied,
       });
     } else {
       await this.integrationRepository.recalculatePriorityForAllActive({
@@ -211,20 +189,9 @@ export class UpdateIntegration {
 
     const isChannelSupportsPrimary = CHANNELS_WITH_PRIMARY.includes(existingIntegration.channel);
     if (isMultiProviderConfigurationEnabled && isActiveChanged && isChannelSupportsPrimary) {
-      if (command.active) {
-        await this.disableNovuIntegration.execute({
-          channel: existingIntegration.channel,
-          providerId: existingIntegration.providerId,
-          environmentId: existingIntegration._environmentId,
-          organizationId: existingIntegration._organizationId,
-          userId: command.userId,
-        });
-      }
-
       const { primary, priority } = await this.calculatePriorityAndPrimary({
         existingIntegration,
         active: !!command.active,
-        conditionsApplied: haveConditions,
       });
 
       updatePayload.primary = primary;
@@ -232,7 +199,6 @@ export class UpdateIntegration {
     }
 
     const shouldRemovePrimary = haveConditions && existingIntegration.primary;
-
     if (shouldRemovePrimary) {
       updatePayload.primary = false;
     }
