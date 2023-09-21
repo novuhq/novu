@@ -3,10 +3,11 @@ import { ResendEmailProvider } from './resend.provider';
 const mockConfig = {
   apiKey: 'this-api-key-from-resend',
   from: 'test@test.com',
+  senderName: 'Test Sender',
 };
 
 const mockNovuMessage = {
-  from: 'test@test.com',
+  from: 'Test Sender <test@test.com>',
   to: ['test@test.com'],
   html: '<div> Mail Content </div>',
   subject: 'Test subject',
