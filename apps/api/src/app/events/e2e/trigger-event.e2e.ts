@@ -14,6 +14,7 @@ import {
   IntegrationRepository,
   ExecutionDetailsRepository,
   EnvironmentRepository,
+  TenantRepository,
 } from '@novu/dal';
 import { UserSession, SubscribersService } from '@novu/testing';
 import {
@@ -56,6 +57,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
   const jobRepository = new JobRepository();
   const executionDetailsRepository = new ExecutionDetailsRepository();
   const environmentRepository = new EnvironmentRepository();
+  const tenantRepository = new TenantRepository();
 
   describe(`Trigger Event - ${eventTriggerPath} (POST)`, function () {
     beforeEach(async () => {
@@ -1695,6 +1697,104 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       // expect(messages).to.equal(1);
       expect(messages).to.equal(2);
       // axiosPostStub.restore();
+    });
+
+    it('should choose variant by tenant data', async function () {
+      const tenant = await tenantRepository.create({
+        _organizationId: session.organization._id,
+        _environmentId: session.environment._id,
+        identifier: 'one_123',
+        name: 'The one and only tenant',
+        data: { value1: 'Best fighter', value2: 'Ever' },
+      });
+
+      const templateWithVariants = await session.createTemplate({
+        name: 'test email template',
+        description: 'This is a test description',
+        steps: [
+          {
+            name: 'Root Message Name',
+            subject: 'Root Test email subject',
+            preheader: 'Root Test email preheader',
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'Root This is a sample text block' }],
+            type: StepTypeEnum.EMAIL,
+            filters: [],
+            variants: [
+              {
+                name: 'Bad Variant Message Template',
+                subject: 'Bad Variant subject',
+                preheader: 'Bad Variant pre header',
+                content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample of Bad Variant text block' }],
+                type: StepTypeEnum.EMAIL,
+                active: true,
+                filters: [
+                  {
+                    isNegated: false,
+                    type: 'GROUP',
+                    value: 'AND',
+                    children: [
+                      {
+                        on: FilterPartTypeEnum.TENANT,
+                        field: 'name',
+                        value: 'Titans',
+                        operator: 'EQUAL',
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                name: 'Better Variant Message Template',
+                subject: 'Better Variant subject',
+                preheader: 'Better Variant pre header',
+                content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample of Better Variant text block' }],
+                type: StepTypeEnum.EMAIL,
+                active: true,
+                filters: [
+                  {
+                    isNegated: false,
+                    type: 'GROUP',
+                    value: 'AND',
+                    children: [
+                      {
+                        on: FilterPartTypeEnum.TENANT,
+                        field: 'name',
+                        value: 'The one and only tenant',
+                        operator: 'EQUAL',
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+
+      await axiosInstance.post(
+        `${session.serverUrl}${eventTriggerPath}`,
+        {
+          name: templateWithVariants.triggers[0].identifier,
+          to: subscriber.subscriberId,
+          payload: {},
+          tenant: { identifier: tenant.identifier },
+        },
+        {
+          headers: {
+            authorization: `ApiKey ${session.apiKey}`,
+          },
+        }
+      );
+
+      await session.awaitRunningJobs(templateWithVariants._id);
+
+      const messages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _templateId: templateWithVariants._id,
+      });
+
+      expect(messages.length).to.equal(1);
+      expect(messages[0].subject).to.equal('Better Variant subject');
     });
 
     describe('seen/read filter', () => {

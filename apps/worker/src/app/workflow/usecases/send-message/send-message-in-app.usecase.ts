@@ -33,6 +33,7 @@ import {
   buildFeedKey,
   buildMessageCountKey,
   GetNovuProviderCredentials,
+  SelectVariant,
 } from '@novu/application-generic';
 
 import { CreateLog } from '../../../shared/logs';
@@ -55,7 +56,8 @@ export class SendMessageInApp extends SendMessageBase {
     private compileTemplate: CompileTemplate,
     private organizationRepository: OrganizationRepository,
     protected selectIntegration: SelectIntegration,
-    protected getNovuProviderCredentials: GetNovuProviderCredentials
+    protected getNovuProviderCredentials: GetNovuProviderCredentials,
+    protected selectVariant: SelectVariant
   ) {
     super(
       messageRepository,
@@ -64,7 +66,8 @@ export class SendMessageInApp extends SendMessageBase {
       subscriberRepository,
       tenantRepository,
       selectIntegration,
-      getNovuProviderCredentials
+      getNovuProviderCredentials,
+      selectVariant
     );
   }
 
@@ -106,8 +109,8 @@ export class SendMessageInApp extends SendMessageBase {
       return;
     }
 
-    const inAppChannel: NotificationStepEntity = command.step;
-    if (!inAppChannel.template) throw new PlatformException('Template not found');
+    const step: NotificationStepEntity = command.step;
+    if (!step.template) throw new PlatformException('Template not found');
 
     let content = '';
 
@@ -118,9 +121,15 @@ export class SendMessageInApp extends SendMessageBase {
       this.organizationRepository.findById(command.organizationId, 'branding'),
     ]);
 
+    const template = await this.processVariants(command, tenant, subscriber, command.payload);
+
+    if (template) {
+      step.template = template;
+    }
+
     try {
       content = await this.compileInAppTemplate(
-        inAppChannel.template.content,
+        step.template.content,
         command.payload,
         subscriber,
         command,
@@ -128,9 +137,9 @@ export class SendMessageInApp extends SendMessageBase {
         tenant
       );
 
-      if (inAppChannel.template.cta?.data?.url) {
-        inAppChannel.template.cta.data.url = await this.compileInAppTemplate(
-          inAppChannel.template.cta?.data?.url,
+      if (step.template.cta?.data?.url) {
+        step.template.cta.data.url = await this.compileInAppTemplate(
+          step.template.cta?.data?.url,
           command.payload,
           subscriber,
           command,
@@ -139,10 +148,10 @@ export class SendMessageInApp extends SendMessageBase {
         );
       }
 
-      if (inAppChannel.template.cta?.action?.buttons) {
+      if (step.template.cta?.action?.buttons) {
         const ctaButtons: IMessageButton[] = [];
 
-        for (const action of inAppChannel.template.cta.action.buttons) {
+        for (const action of step.template.cta.action.buttons) {
           const buttonContent = await this.compileInAppTemplate(
             action.content,
             command.payload,
@@ -154,7 +163,7 @@ export class SendMessageInApp extends SendMessageBase {
           ctaButtons.push({ type: action.type, content: buttonContent });
         }
 
-        inAppChannel.template.cta.action.buttons = ctaButtons;
+        step.template.cta.action.buttons = ctaButtons;
       }
     } catch (e) {
       await this.sendErrorHandlebars(command.job, e.message);
@@ -170,11 +179,11 @@ export class SendMessageInApp extends SendMessageBase {
       _environmentId: command.environmentId,
       _subscriberId: command._subscriberId,
       _templateId: command._templateId,
-      _messageTemplateId: inAppChannel.template._id,
+      _messageTemplateId: step.template._id,
       channel: ChannelTypeEnum.IN_APP,
       transactionId: command.transactionId,
       providerId: integration.providerId,
-      _feedId: inAppChannel.template._feedId,
+      _feedId: step.template._feedId,
     });
 
     let message: MessageEntity | null = null;
@@ -200,10 +209,10 @@ export class SendMessageInApp extends SendMessageBase {
         _organizationId: command.organizationId,
         _subscriberId: command._subscriberId,
         _templateId: command._templateId,
-        _messageTemplateId: inAppChannel.template._id,
+        _messageTemplateId: step.template._id,
         channel: ChannelTypeEnum.IN_APP,
-        cta: inAppChannel.template.cta,
-        _feedId: inAppChannel.template._feedId,
+        cta: step.template.cta,
+        _feedId: step.template._feedId,
         transactionId: command.transactionId,
         content: this.storeContent() ? content : null,
         payload: messagePayload,
@@ -224,7 +233,7 @@ export class SendMessageInApp extends SendMessageBase {
         {
           $set: {
             seen: false,
-            cta: inAppChannel.template.cta,
+            cta: step.template.cta,
             content,
             payload: messagePayload,
             createdAt: new Date(),
