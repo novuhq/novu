@@ -122,7 +122,6 @@ export const Sidebar = ({
       withinPortal={false}
       trapFocus={false}
       data-expanded={isExpanded}
-      zIndex={900}
     >
       <Form name="form-name" noValidate onSubmit={onSubmit} data-test-id={dataTestId}>
         <HeaderHolder>

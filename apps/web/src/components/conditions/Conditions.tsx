@@ -1,9 +1,8 @@
 import { Grid, Group, ActionIcon, Center, useMantineTheme } from '@mantine/core';
 import styled from '@emotion/styled';
-import { useMemo } from 'react';
 import { Control, Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 
-import { FilterPartTypeEnum } from '@novu/shared';
+import { FilterPartTypeEnum, IFieldFilterPart } from '@novu/shared';
 
 import { Button, colors, Dropdown, Input, Select, Sidebar, Text, Title, Tooltip } from '../../design-system';
 import { ConditionPlus, DotsHorizontal, Duplicate, Trash, Condition, ErrorIcon } from '../../design-system/icons';
@@ -44,23 +43,19 @@ export function Conditions({
     mode: 'onChange',
   });
 
-  const defaultOnFilter = useMemo(() => {
-    return defaultFilter ?? filterPartsList[0].value;
-  }, [filterPartsList]);
+  const defaultOnFilter = defaultFilter ?? filterPartsList[0].value;
 
   const { fields, append, remove, insert, update } = useFieldArray({
     control,
     name: `conditions.0.children` as 'conditions.0.children',
   });
 
-  const FilterPartTypeList = useMemo(() => {
-    return filterPartsList?.map(({ value, label: filterLabel }) => {
-      return {
-        value,
-        label: filterLabel,
-      };
-    });
-  }, [filterPartsList]);
+  const filterPartTypeList = filterPartsList?.map(({ value, label: filterLabel }) => {
+    return {
+      value,
+      label: filterLabel,
+    };
+  });
 
   function handleOnChildOnChange(index: number) {
     return (data) => {
@@ -163,7 +158,7 @@ export function Conditions({
                           return (
                             <Select
                               placeholder="On"
-                              data={FilterPartTypeList}
+                              data={filterPartTypeList}
                               {...field}
                               onChange={handleOnChildOnChange(index)}
                               data-test-id="conditions-form-on"
@@ -210,10 +205,8 @@ export function Conditions({
           onClick={() => {
             append({
               operator: 'EQUAL',
-              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-              // @ts-ignore
               on: defaultOnFilter,
-            });
+            } as IFieldFilterPart);
           }}
           icon={<ConditionPlus />}
           data-test-id="add-new-condition"

@@ -168,7 +168,6 @@ export const UpdateIntegrationSidebarHeader = ({
       </Group>
       <ProviderInfo provider={provider} environments={environments} />
       <Modal
-        zIndex={999}
         title={<Title size={2}>Delete {provider.name || provider.displayName} instance?</Title>}
         opened={isModalOpened}
         onClose={() => setModalIsOpened(false)}

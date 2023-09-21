@@ -209,7 +209,6 @@ export const SelectPrimaryIntegrationModal = ({
       shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.medium}
       radius="md"
       size="lg"
-      zIndex={999}
       onClose={() => onCloseCallback()}
     >
       <ModalBodyHolder data-test-id="select-primary-integration-modal">
