@@ -63,7 +63,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
           content: '',
           metadata: {
             unit: DigestUnitEnum.SECONDS,
-            amount: 1,
+            amount: 2,
             type: DelayTypeEnum.REGULAR,
           },
         },
@@ -141,7 +141,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
         customVar: 'Testing of User Name',
       },
       id,
-      { delay: { amount: 1, unit: DigestUnitEnum.SECONDS } }
+      { delay: { amount: 2, unit: DigestUnitEnum.SECONDS } }
     );
     await session.awaitRunningJobs(template?._id, true, 0);
     const messages = await messageRepository.find({
@@ -258,7 +258,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
           content: '',
           metadata: {
             unit: DigestUnitEnum.SECONDS,
-            amount: 1,
+            amount: 2,
             type: DigestTypeEnum.REGULAR,
           },
         },
