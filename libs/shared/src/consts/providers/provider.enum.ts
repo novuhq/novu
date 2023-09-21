@@ -28,8 +28,8 @@ export enum CredentialsKeyEnum {
   Hmac = 'hmac',
   IpPoolName = 'ipPoolName',
   Method = 'method',
-  ApiKeyAttribute = 'apiKeyAttribute',
-  SecretKeyAttribute = 'secretKeyAttribute',
+  ApiKeyRequestHeader = 'apiKeyRequestHeader',
+  SecretKeyRequestHeader = 'secretKeyRequestHeader',
   IdPath = 'idPath',
   DatePath = 'datePath',
 }

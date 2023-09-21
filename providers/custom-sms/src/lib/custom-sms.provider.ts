@@ -13,23 +13,22 @@ export class CustomSmsProvider implements ISmsProvider {
 
   constructor(
     private config: {
-      baseUrl?: string;
-      apiKey?: string;
+      baseUrl: string;
+      apiKeyRequestHeader: string;
+      apiKey: string;
+      secretKeyRequestHeader?: string;
       secretKey?: string;
-      from?: string;
-      method?: string;
-      apiKeyAttribute?: string;
-      secretKeyAttribute?: string;
+      from: string;
       idPath?: string;
       datePath?: string;
     }
   ) {
     const headers = {
-      [this.config?.apiKeyAttribute]: config.apiKey,
+      [this.config?.apiKeyRequestHeader]: config.apiKey,
     };
 
-    if (this.config?.secretKeyAttribute && this.config?.secretKey) {
-      headers[this.config?.secretKeyAttribute] = config.secretKey;
+    if (this.config?.secretKeyRequestHeader && this.config?.secretKey) {
+      headers[this.config?.secretKeyRequestHeader] = config.secretKey;
     }
 
     this.axiosInstance = axios.create({
@@ -42,31 +41,28 @@ export class CustomSmsProvider implements ISmsProvider {
     options: ISmsOptions
   ): Promise<ISendMessageSuccessResponse> {
     const response = await this.axiosInstance.request({
-      method: this.config?.method || 'POST',
+      method: 'POST',
       data: {
         ...options,
         from: this.config.from,
       },
     });
 
-    let id = null;
-    let date = null;
     const responseData = response.data;
 
-    if (this.config.idPath) {
-      const path = this.config.idPath.split('.');
-      id = path.reduce((acc, curr) => acc[curr], responseData);
-    } else {
-      id = responseData.id;
-    }
+    return {
+      id: this.getResponseValue(this.config.idPath, responseData, 'id'),
+      date: this.getResponseValue(this.config.datePath, responseData, 'date'),
+    };
+  }
 
-    if (this.config.datePath) {
-      const path = this.config.datePath.split('.');
-      date = path.reduce((acc, curr) => acc[curr], responseData);
-    } else {
-      date = responseData.date;
-    }
+  private getResponseValue(path: string, data: any, attribute: string) {
+    if (path) {
+      const pathArray = path.split('.');
 
-    return { id, date };
+      return pathArray.reduce((acc, curr) => acc[curr], data);
+    } else {
+      return data[attribute];
+    }
   }
 }

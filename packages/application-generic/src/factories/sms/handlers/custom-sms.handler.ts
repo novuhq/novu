@@ -13,9 +13,8 @@ export class CustomSmsHandler extends BaseSmsHandler {
       apiKey: credentials.apiKey,
       secretKey: credentials.secretKey,
       from: credentials.from,
-      method: credentials.method,
-      apiKeyAttribute: credentials.apiKeyAttribute,
-      secretKeyAttribute: credentials.secretKeyAttribute,
+      apiKeyRequestHeader: credentials.apiKeyRequestHeader,
+      secretKeyRequestHeader: credentials.secretKeyRequestHeader,
       idPath: credentials.idPath,
       datePath: credentials.datePath,
     });

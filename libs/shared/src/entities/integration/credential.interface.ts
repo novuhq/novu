@@ -26,8 +26,8 @@ export interface ICredentials {
   hmac?: boolean;
   ipPoolName?: string;
   method?: string;
-  apiKeyAttribute?: string;
-  secretKeyAttribute?: string;
+  apiKeyRequestHeader?: string;
+  secretKeyRequestHeader?: string;
   idPath?: string;
   datePath?: string;
 }

@@ -749,15 +749,7 @@ export const customSmsConfig: IConfigCredentials[] = [
     required: true,
   },
   {
-    key: CredentialsKeyEnum.Method,
-    displayName: 'HTTP Method',
-    type: 'string',
-    value: 'POST',
-    description: 'The HTTP method to use when calling the API (GET, POST)',
-    required: true,
-  },
-  {
-    key: CredentialsKeyEnum.ApiKeyAttribute,
+    key: CredentialsKeyEnum.ApiKeyRequestHeader,
     displayName: 'API Key Attribute',
     type: 'string',
     description: 'The name of the header attribute to use for the API key ex. (X-API-KEY, apiKey, ...)',
@@ -771,7 +763,7 @@ export const customSmsConfig: IConfigCredentials[] = [
     required: true,
   },
   {
-    key: CredentialsKeyEnum.SecretKeyAttribute,
+    key: CredentialsKeyEnum.SecretKeyRequestHeader,
     displayName: 'Secret Key Attribute',
     type: 'string',
     description: 'The name of the header attribute to use for the secret key ex. (X-API-SECRET, apiSecret, ...)',
@@ -800,10 +792,5 @@ export const customSmsConfig: IConfigCredentials[] = [
     description: 'The path to the date field in the response data ex. (date, message.date, ...)',
     required: true,
   },
-  {
-    key: CredentialsKeyEnum.From,
-    displayName: 'From',
-    type: 'string',
-    required: false,
-  },
+  ...smsConfigBase,
 ];
