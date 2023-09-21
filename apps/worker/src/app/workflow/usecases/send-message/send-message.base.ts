@@ -5,6 +5,8 @@ import {
   MessageRepository,
   SubscriberRepository,
   TenantEntity,
+  MessageTemplateEntity,
+  SubscriberEntity,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -22,10 +24,13 @@ import {
   SelectIntegration,
   SelectIntegrationCommand,
   GetNovuProviderCredentials,
+  SelectVariantCommand,
+  SelectVariant,
 } from '@novu/application-generic';
 
 import { SendMessageType } from './send-message-type.usecase';
 import { CreateLog } from '../../../shared/logs';
+import { SendMessageCommand } from './send-message.command';
 
 export abstract class SendMessageBase extends SendMessageType {
   abstract readonly channelType: ChannelTypeEnum;
@@ -36,7 +41,8 @@ export abstract class SendMessageBase extends SendMessageType {
     protected subscriberRepository: SubscriberRepository,
     protected tenantRepository: TenantRepository,
     protected selectIntegration: SelectIntegration,
-    protected getNovuProviderCredentials: GetNovuProviderCredentials
+    protected getNovuProviderCredentials: GetNovuProviderCredentials,
+    protected selectVariant: SelectVariant
   ) {
     super(messageRepository, createLogUsecase, createExecutionDetails);
   }
@@ -173,5 +179,39 @@ export abstract class SendMessageBase extends SendMessageType {
     }
 
     return tenant;
+  }
+
+  protected async processVariants(
+    command: SendMessageCommand,
+    tenant: TenantEntity | null,
+    subscriber: SubscriberEntity,
+    payload: any
+  ): Promise<MessageTemplateEntity> {
+    const { messageTemplate, conditions } = await this.selectVariant.execute(
+      SelectVariantCommand.create({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        userId: command.userId,
+        step: command.step,
+        job: command.job,
+        filterData: { tenant: tenant ?? undefined, subscriber: subscriber ?? undefined, payload: payload ?? undefined },
+      })
+    );
+
+    if (conditions) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.VARIANT_CHOSEN,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.PENDING,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify(conditions),
+        })
+      );
+    }
+
+    return messageTemplate;
   }
 }

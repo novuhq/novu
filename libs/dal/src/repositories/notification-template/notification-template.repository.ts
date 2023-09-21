@@ -40,7 +40,9 @@ export class NotificationTemplateRepository extends BaseRepository<
       _environmentId: environmentId,
     };
 
-    const item = await this.MongooseModel.findOne(requestQuery).populate('steps.template');
+    const item = await this.MongooseModel.findOne(requestQuery)
+      .populate('steps.template')
+      .populate('steps.variants.template');
 
     return this.mapEntity(item);
   }

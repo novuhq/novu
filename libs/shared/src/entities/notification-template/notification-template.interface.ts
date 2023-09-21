@@ -11,7 +11,7 @@ export interface INotificationTemplate {
   _parentId?: string;
   _environmentId: string;
   tags: string[];
-  draft: boolean;
+  draft?: boolean;
   active: boolean;
   critical: boolean;
   preferenceSettings: IPreferenceChannels;
@@ -54,7 +54,7 @@ export interface INotificationTriggerVariable {
   type?: TemplateVariableTypeEnum;
 }
 
-export interface INotificationTemplateStep {
+export interface IStepVariant {
   _id?: string;
   uuid?: string;
   name?: string;
@@ -69,6 +69,10 @@ export interface INotificationTemplateStep {
     url: string;
   };
   metadata?: IWorkflowStepMetadata;
+}
+
+export interface INotificationTemplateStep extends IStepVariant {
+  variants?: IStepVariant[];
 }
 
 export interface IMessageFilter {

@@ -70,14 +70,9 @@ export class SelectIntegration {
       await this.getPrimaryIntegration(command);
 
     if (!command.identifier && command.filterData.tenant) {
-      const query: Partial<IntegrationEntity> & { _organizationId: string } = {
-        ...(command.id ? { id: command.id } : {}),
-        _organizationId: command.organizationId,
-        _environmentId: command.environmentId,
-        channel: command.channelType,
-        ...(command.providerId ? { providerId: command.providerId } : {}),
-        active: true,
-      };
+      const query = this.getIntegrationQuery(command);
+
+      const integrations = await this.integrationRepository.find(query);
 
       let tenant: TenantEntity | null = null;
 
@@ -86,8 +81,6 @@ export class SelectIntegration {
           identifier: command.filterData.tenant.identifier,
         });
       }
-
-      const integrations = await this.integrationRepository.find(query);
 
       for (const currentIntegration of integrations) {
         if (
@@ -129,29 +122,44 @@ export class SelectIntegration {
       command.channelType
     );
 
-    let query: Partial<IntegrationEntity> & { _organizationId: string } = {
-      ...(command.id ? { id: command.id } : {}),
-      _organizationId: command.organizationId,
-      _environmentId: command.environmentId,
-      channel: command.channelType,
-      ...(command.providerId ? { providerId: command.providerId } : {}),
-      active: true,
-      ...(isChannelSupportsPrimary && {
-        primary: true,
-      }),
-    };
-
-    if (command.identifier) {
-      query = {
-        _organizationId: command.organizationId,
-        channel: command.channelType,
-        identifier: command.identifier,
-        active: true,
-      };
-    }
+    const query: Partial<IntegrationEntity> & { _organizationId: string } =
+      command.identifier
+        ? {
+            _organizationId: command.organizationId,
+            channel: command.channelType,
+            identifier: command.identifier,
+            active: true,
+          }
+        : this.getIntegrationQuery(command, isChannelSupportsPrimary);
 
     return await this.integrationRepository.findOne(query, undefined, {
       query: { sort: { createdAt: -1 } },
     });
+  }
+
+  private getIntegrationQuery(
+    command: SelectIntegrationCommand,
+    isChannelSupportsPrimary = false
+  ) {
+    const query: Partial<IntegrationEntity> & { _organizationId: string } = {
+      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
+      channel: command.channelType,
+      active: true,
+    };
+
+    if (command.id) {
+      query._id = command.id;
+    }
+
+    if (command.providerId) {
+      query.providerId = command.providerId;
+    }
+
+    if (isChannelSupportsPrimary) {
+      query.primary = true;
+    }
+
+    return query;
   }
 }

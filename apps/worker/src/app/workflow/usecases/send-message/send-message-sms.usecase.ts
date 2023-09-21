@@ -19,6 +19,7 @@ import {
   CompileTemplateCommand,
   SmsFactory,
   GetNovuProviderCredentials,
+  SelectVariant,
 } from '@novu/application-generic';
 
 import { CreateLog } from '../../../shared/logs';
@@ -38,7 +39,8 @@ export class SendMessageSms extends SendMessageBase {
     protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
     protected selectIntegration: SelectIntegration,
-    protected getNovuProviderCredentials: GetNovuProviderCredentials
+    protected getNovuProviderCredentials: GetNovuProviderCredentials,
+    protected selectVariant: SelectVariant
   ) {
     super(
       messageRepository,
@@ -47,7 +49,8 @@ export class SendMessageSms extends SendMessageBase {
       subscriberRepository,
       tenantRepository,
       selectIntegration,
-      getNovuProviderCredentials
+      getNovuProviderCredentials,
+      selectVariant
     );
   }
 
@@ -76,10 +79,17 @@ export class SendMessageSms extends SendMessageBase {
       message: 'Sending SMS',
     });
 
-    const smsChannel: NotificationStepEntity = command.step;
-    if (!smsChannel.template) throw new PlatformException(`Unexpected error: SMS template is missing`);
+    const step: NotificationStepEntity = command.step;
+
+    if (!step.template) throw new PlatformException(`Unexpected error: SMS template is missing`);
 
     const tenant = await this.handleTenantExecution(command.job);
+
+    const template = await this.processVariants(command, tenant, subscriber, command.payload);
+
+    if (template) {
+      step.template = template;
+    }
 
     const payload = {
       subscriber: subscriber,
@@ -97,7 +107,7 @@ export class SendMessageSms extends SendMessageBase {
     try {
       content = await this.compileTemplate.execute(
         CompileTemplateCommand.create({
-          template: smsChannel.template.content as string,
+          template: step.template.content as string,
           data: payload,
         })
       );
@@ -148,7 +158,7 @@ export class SendMessageSms extends SendMessageBase {
       _organizationId: command.organizationId,
       _subscriberId: command._subscriberId,
       _templateId: command._templateId,
-      _messageTemplateId: smsChannel.template._id,
+      _messageTemplateId: step.template._id,
       channel: ChannelTypeEnum.SMS,
       transactionId: command.transactionId,
       phone,

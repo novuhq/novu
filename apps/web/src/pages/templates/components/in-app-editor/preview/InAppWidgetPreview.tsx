@@ -25,7 +25,7 @@ export function InAppWidgetPreview({
   readonly: boolean;
   preview?: boolean;
   children: JSX.Element;
-  value: IMessageAction;
+  value: IMessageAction | undefined;
   onChange: (data: any) => void;
   index: number;
   enableAvatar: boolean;

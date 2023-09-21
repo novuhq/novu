@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { EmailCustomCodeEditor } from '../email-editor/EmailCustomCodeEditor';
 import { When } from '../../../../components/utils/When';
 import Handlebars from 'handlebars/dist/handlebars';
+import { IMessageAction } from '@novu/shared';
 
 export function InAppEditorBlock({
   control,
@@ -28,7 +29,7 @@ export function InAppEditorBlock({
   return (
     <Controller
       name={`steps.${index}.template.cta.action`}
-      defaultValue=""
+      defaultValue={{} as IMessageAction}
       data-test-id="in-app-content-form-item"
       control={control}
       render={({ field }) => {

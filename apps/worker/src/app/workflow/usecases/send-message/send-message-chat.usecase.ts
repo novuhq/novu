@@ -26,6 +26,7 @@ import {
   ChatFactory,
   SelectIntegration,
   GetNovuProviderCredentials,
+  SelectVariant,
 } from '@novu/application-generic';
 
 import { CreateLog } from '../../../shared/logs';
@@ -47,7 +48,8 @@ export class SendMessageChat extends SendMessageBase {
     protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
     protected selectIntegration: SelectIntegration,
-    protected getNovuProviderCredentials: GetNovuProviderCredentials
+    protected getNovuProviderCredentials: GetNovuProviderCredentials,
+    protected selectVariant: SelectVariant
   ) {
     super(
       messageRepository,
@@ -56,7 +58,8 @@ export class SendMessageChat extends SendMessageBase {
       subscriberRepository,
       tenantRepository,
       selectIntegration,
-      getNovuProviderCredentials
+      getNovuProviderCredentials,
+      selectVariant
     );
   }
 
@@ -71,10 +74,16 @@ export class SendMessageChat extends SendMessageBase {
     Sentry.addBreadcrumb({
       message: 'Sending Chat',
     });
-    const chatChannel: NotificationStepEntity = command.step;
-    if (!chatChannel?.template) throw new PlatformException('Chat channel template not found');
+    const step: NotificationStepEntity = command.step;
+    if (!step?.template) throw new PlatformException('Chat channel template not found');
 
     const tenant = await this.handleTenantExecution(command.job);
+
+    const template = await this.processVariants(command, tenant, subscriber, command.payload);
+
+    if (template) {
+      step.template = template;
+    }
 
     let content = '';
     const data = {
@@ -91,7 +100,7 @@ export class SendMessageChat extends SendMessageBase {
     try {
       content = await this.compileTemplate.execute(
         CompileTemplateCommand.create({
-          template: chatChannel.template.content as string,
+          template: step.template.content as string,
           data,
         })
       );
@@ -124,7 +133,7 @@ export class SendMessageChat extends SendMessageBase {
     let allFailed = true;
     for (const channel of chatChannels) {
       try {
-        await this.sendChannelMessage(command, channel, chatChannel, content);
+        await this.sendChannelMessage(command, channel, step, content);
         allFailed = false;
       } catch (e) {
         /*

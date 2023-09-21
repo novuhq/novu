@@ -71,7 +71,7 @@ export function UpdateTenantSidebar({
     if (!tenant) return;
 
     reset({ name: tenant.name, identifier: tenant.identifier, data: JSON.stringify(tenant.data, null, 2) });
-  }, [tenant]);
+  }, [reset, tenant]);
 
   const onUpdateTenant = async (form) => {
     await updateTenantMutate({
