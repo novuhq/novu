@@ -16,4 +16,4 @@ export * from './sms-central.handler';
 export * from './africas-talking.handler';
 export * from './sendchamp.handler';
 export * from './novu.handler';
-export * from './custom-sms.handler';
+export * from './generic-sms.handler';

@@ -181,8 +181,8 @@
       "path": "providers/maqsam"
     },
     {
-      "name": "🔔 @novu/custom-sms",
-      "path": "providers/custom-sms"
+      "name": "🔔 @novu/generic-sms",
+      "path": "providers/generic-sms"
     }
   ],
   "settings": {

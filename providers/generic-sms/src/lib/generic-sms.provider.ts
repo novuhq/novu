@@ -6,8 +6,8 @@ import {
 } from '@novu/stateless';
 import axios, { AxiosInstance } from 'axios';
 
-export class CustomSmsProvider implements ISmsProvider {
-  id = 'custom-sms';
+export class GenericSmsProvider implements ISmsProvider {
+  id = 'generic-sms';
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   private axiosInstance: AxiosInstance;
 

@@ -1,14 +1,14 @@
-import { CustomSmsProvider } from '@novu/custom-sms';
+import { GenericSmsProvider } from '@novu/generic-sms';
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
 import { BaseSmsHandler } from './base.handler';
 
-export class CustomSmsHandler extends BaseSmsHandler {
+export class GenericSmsHandler extends BaseSmsHandler {
   constructor() {
-    super('custom-sms', ChannelTypeEnum.SMS);
+    super('generic-sms', ChannelTypeEnum.SMS);
   }
 
   buildProvider(credentials: ICredentials) {
-    this.provider = new CustomSmsProvider({
+    this.provider = new GenericSmsProvider({
       baseUrl: credentials.baseUrl,
       apiKey: credentials.apiKey,
       secretKey: credentials.secretKey,

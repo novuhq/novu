@@ -1,4 +1,4 @@
-# Custom SMS
+# Generic SMS
 
 The Custom SMS provider allows you to send transactional SMS messages through your own SMS service using the Novu Platform.
 

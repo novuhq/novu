@@ -741,7 +741,7 @@ export const sendchampConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
-export const customSmsConfig: IConfigCredentials[] = [
+export const genericSmsConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.BaseUrl,
     displayName: 'Base URL',
@@ -750,7 +750,7 @@ export const customSmsConfig: IConfigCredentials[] = [
   },
   {
     key: CredentialsKeyEnum.ApiKeyRequestHeader,
-    displayName: 'API Key Attribute',
+    displayName: 'API Key Request Header',
     type: 'string',
     description: 'The name of the header attribute to use for the API key ex. (X-API-KEY, apiKey, ...)',
     required: true,
@@ -764,9 +764,9 @@ export const customSmsConfig: IConfigCredentials[] = [
   },
   {
     key: CredentialsKeyEnum.SecretKeyRequestHeader,
-    displayName: 'Secret Key Attribute',
+    displayName: 'Secret Key Request Header',
     type: 'string',
-    description: 'The name of the header attribute to use for the secret key ex. (X-API-SECRET, apiSecret, ...)',
+    description: 'The name of the header attribute to use for the secret key ex. (X-SECRET-KEY, secretKey, ...)',
     required: false,
   },
   {
