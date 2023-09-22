@@ -87,6 +87,7 @@ export class MessagesController {
     summary: 'Delete messages by transactionId',
     description: 'Deletes messages entity from the Novu platform using TransactionId of message',
   })
+  @ApiParam({ name: 'transactionId', type: String, required: true })
   async deleteMessagesByTransactionId(
     @UserSession() user: IJwtPayload,
     @Param() { transactionId }: { transactionId: string },

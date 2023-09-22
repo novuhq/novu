@@ -22,7 +22,7 @@ describe('Delete Messages By TransactionId - /messages/?transactionId= (DELETE)'
   });
 
   it('should fail to delete non existing message', async function () {
-    const response = await session.testAgent.delete(`/v1/messages?transactionId=abc-1234`);
+    const response = await session.testAgent.delete(`/v1/messages/transaction/abc-1234`);
 
     expect(response.statusCode).to.equal(404);
     expect(response.body.error).to.equal('Not Found');
@@ -71,7 +71,7 @@ describe('Delete Messages By TransactionId - /messages/?transactionId= (DELETE)'
 
     expect(messages.length).to.be.greaterThan(0);
 
-    await axiosInstance.delete(`${session.serverUrl}/v1/messages?transactionId=` + transactionId, {
+    await axiosInstance.delete(`${session.serverUrl}/v1/messages/transaction/${transactionId}`, {
       headers: {
         authorization: `ApiKey ${session.apiKey}`,
       },
@@ -117,7 +117,7 @@ describe('Delete Messages By TransactionId - /messages/?transactionId= (DELETE)'
     expect(messages.length).to.be.greaterThan(0);
 
     await axiosInstance.delete(
-      `${session.serverUrl}/v1/messages?transactionId=` + transactionId + '&channel=' + ChannelTypeEnum.EMAIL,
+      `${session.serverUrl}/v1/messages/transaction/` + transactionId + '?channel=' + ChannelTypeEnum.EMAIL,
       {
         headers: {
           authorization: `ApiKey ${session.apiKey}`,
