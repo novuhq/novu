@@ -4,12 +4,13 @@ import {
   ISmsOptions,
   ISmsProvider,
 } from '@novu/stateless';
+
 import axios, { AxiosInstance } from 'axios';
 
 export class GenericSmsProvider implements ISmsProvider {
   id = 'generic-sms';
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
-  private axiosInstance: AxiosInstance;
+  axiosInstance: AxiosInstance;
 
   constructor(
     private config: {
@@ -44,25 +45,21 @@ export class GenericSmsProvider implements ISmsProvider {
       method: 'POST',
       data: {
         ...options,
-        from: this.config.from,
+        sender: this.config.from,
       },
     });
 
     const responseData = response.data;
 
     return {
-      id: this.getResponseValue(this.config.idPath, responseData, 'id'),
-      date: this.getResponseValue(this.config.datePath, responseData, 'date'),
+      id: this.getResponseValue(this.config.idPath || 'id', responseData),
+      date: this.getResponseValue(this.config.datePath || 'date', responseData),
     };
   }
 
-  private getResponseValue(path: string, data: any, attribute: string) {
-    if (path) {
-      const pathArray = path.split('.');
+  private getResponseValue(path: string, data: any) {
+    const pathArray = path.split('.');
 
-      return pathArray.reduce((acc, curr) => acc[curr], data);
-    } else {
-      return data[attribute];
-    }
+    return pathArray.reduce((acc, curr) => acc[curr], data);
   }
 }
