@@ -1,5 +1,6 @@
 export * from './useSocket';
 export * from './useUnseenCount';
+export * from './useUnreadCount';
 export * from './useNotifications';
 export * from './useNovuContext';
 export * from './useNovuTheme';

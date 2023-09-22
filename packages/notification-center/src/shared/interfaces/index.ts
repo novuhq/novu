@@ -104,6 +104,7 @@ export interface IStoreContext {
 
 export interface INotificationsContext extends IStoreContext {
   unseenCount: number;
+  unreadCount: number;
   notifications: IMessage[];
   hasNextPage: boolean;
   isLoading: boolean;
