@@ -185,7 +185,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: `Generic SMS`,
     channel: ChannelTypeEnum.SMS,
     credentials: genericSmsConfig,
-    docReference: '',
+    docReference: 'https://docs.novu.co/channels/sms/generic-sms',
     logoFileName: { light: 'generic-sms.svg', dark: 'generic-sms.svg' },
   },
 ];
