@@ -101,6 +101,21 @@ describe('Create Workflow - /workflows (POST)', async () => {
                 type: StepTypeEnum.EMAIL,
               },
               active: defaultMessageIsActive,
+              filters: [
+                {
+                  isNegated: false,
+                  type: 'GROUP',
+                  value: 'AND',
+                  children: [
+                    {
+                      on: FilterPartTypeEnum.TENANT,
+                      field: 'name',
+                      value: 'Titans',
+                      operator: 'EQUAL',
+                    },
+                  ],
+                },
+              ],
             },
           ],
         },

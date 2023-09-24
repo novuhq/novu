@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { UserSession, NotificationTemplateService } from '@novu/testing';
-import { StepTypeEnum, INotificationTemplate, IUpdateNotificationTemplateDto } from '@novu/shared';
+import { StepTypeEnum, INotificationTemplate, IUpdateNotificationTemplateDto, FilterPartTypeEnum } from '@novu/shared';
 import { ChangeRepository } from '@novu/dal';
 import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from '../dto';
 import { WorkflowResponse } from '../dto/workflow-response.dto';
@@ -31,12 +31,42 @@ describe('Update workflow by id - /workflows/:workflowId (PUT)', async () => {
           },
           variants: [
             {
+              filters: [
+                {
+                  isNegated: false,
+                  type: 'GROUP',
+                  value: 'AND',
+                  children: [
+                    {
+                      on: FilterPartTypeEnum.TENANT,
+                      field: 'name',
+                      value: 'Titans',
+                      operator: 'EQUAL',
+                    },
+                  ],
+                },
+              ],
               template: {
                 type: StepTypeEnum.IN_APP,
                 content: 'first content',
               },
             },
             {
+              filters: [
+                {
+                  isNegated: false,
+                  type: 'GROUP',
+                  value: 'AND',
+                  children: [
+                    {
+                      on: FilterPartTypeEnum.TENANT,
+                      field: 'name',
+                      value: 'Titans',
+                      operator: 'EQUAL',
+                    },
+                  ],
+                },
+              ],
               template: {
                 type: StepTypeEnum.IN_APP,
                 content: 'second content',
