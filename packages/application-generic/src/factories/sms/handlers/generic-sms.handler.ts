@@ -17,6 +17,9 @@ export class GenericSmsHandler extends BaseSmsHandler {
       secretKeyRequestHeader: credentials.secretKeyRequestHeader,
       idPath: credentials.idPath,
       datePath: credentials.datePath,
+      domain: credentials.domain,
+      authenticateByToken: credentials.authenticateByToken,
+      authenticationTokenKey: credentials.authenticationTokenKey,
     });
   }
 }

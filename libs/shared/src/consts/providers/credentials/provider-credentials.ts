@@ -759,7 +759,7 @@ export const genericSmsConfig: IConfigCredentials[] = [
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
     type: 'string',
-    description: 'The value of the header attribute to use for the API key',
+    description: 'The value of the header attribute to use for the API key.',
     required: true,
   },
   {
@@ -791,6 +791,32 @@ export const genericSmsConfig: IConfigCredentials[] = [
     value: 'data.date',
     description: 'The path to the date field in the response data ex. (date, message.date, ...)',
     required: true,
+  },
+  {
+    key: CredentialsKeyEnum.AuthenticateByToken,
+    displayName: 'Authenticate by token',
+    type: 'switch',
+    description: 'If enabled, the API key and secret key will be sent as a token in the Authorization header',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Domain,
+    displayName: 'Auth URL',
+    type: 'string',
+    description: 'The URL to use for authentication in case the Authenticate by token option is enabled',
+    required: false,
+    tooltip: {
+      text: 'The URL to use for authentication in case the Authenticate by token option is enabled',
+      when: true,
+    },
+  },
+  {
+    key: CredentialsKeyEnum.AuthenticationTokenKey,
+    displayName: 'Authentication Token Key',
+    type: 'string',
+    description:
+      'The name of the header attribute to use for the authentication token ex. (X-AUTH-TOKEN, auth-token, ...)',
+    required: false,
   },
   ...smsConfigBase,
 ];

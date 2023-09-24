@@ -11,6 +11,7 @@ export class GenericSmsProvider implements ISmsProvider {
   id = 'generic-sms';
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   axiosInstance: AxiosInstance;
+  headers: Record<string, string>;
 
   constructor(
     private config: {
@@ -22,25 +23,48 @@ export class GenericSmsProvider implements ISmsProvider {
       from: string;
       idPath?: string;
       datePath?: string;
+      authenticateByToken?: boolean;
+      domain?: string;
+      authenticationTokenKey?: string;
     }
   ) {
-    const headers = {
+    this.headers = {
       [this.config?.apiKeyRequestHeader]: config.apiKey,
     };
 
     if (this.config?.secretKeyRequestHeader && this.config?.secretKey) {
-      headers[this.config?.secretKeyRequestHeader] = config.secretKey;
+      this.headers[this.config?.secretKeyRequestHeader] = config.secretKey;
     }
 
-    this.axiosInstance = axios.create({
-      baseURL: config.baseUrl,
-      headers,
-    });
+    if (!this.config?.authenticateByToken) {
+      this.axiosInstance = axios.create({
+        baseURL: config.baseUrl,
+        headers: this.headers,
+      });
+    }
   }
 
   async sendMessage(
     options: ISmsOptions
   ): Promise<ISendMessageSuccessResponse> {
+    if (this.config?.authenticateByToken) {
+      const tokenAxiosInstance = await axios.request({
+        method: 'POST',
+        baseURL: this.config.domain,
+        headers: this.headers,
+      });
+
+      const token =
+        tokenAxiosInstance.data.data[this.config.authenticationTokenKey];
+
+      this.axiosInstance = axios.create({
+        baseURL: this.config.baseUrl,
+        headers: {
+          [this.config.authenticationTokenKey]: token,
+        },
+      });
+    }
+
     const response = await this.axiosInstance.request({
       method: 'POST',
       data: {

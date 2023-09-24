@@ -32,6 +32,8 @@ export enum CredentialsKeyEnum {
   SecretKeyRequestHeader = 'secretKeyRequestHeader',
   IdPath = 'idPath',
   DatePath = 'datePath',
+  AuthenticateByToken = 'authenticateByToken',
+  AuthenticationTokenKey = 'authenticationTokenKey',
 }
 
 export enum EmailProviderIdEnum {

@@ -30,4 +30,6 @@ export interface ICredentials {
   secretKeyRequestHeader?: string;
   idPath?: string;
   datePath?: string;
+  authenticateByToken?: boolean;
+  authenticationTokenKey?: string;
 }

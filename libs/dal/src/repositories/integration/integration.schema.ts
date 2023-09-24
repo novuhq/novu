@@ -51,6 +51,8 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       secretKeyRequestHeader: Schema.Types.String,
       idPath: Schema.Types.String,
       datePath: Schema.Types.String,
+      authenticateByToken: Schema.Types.Boolean,
+      authenticationTokenKey: Schema.Types.String,
     },
     active: {
       type: Schema.Types.Boolean,
