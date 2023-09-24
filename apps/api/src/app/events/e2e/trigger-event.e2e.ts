@@ -307,7 +307,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
         detail: DetailEnum.FILTER_STEPS,
       });
 
-      expect(executionDetails).to.not.be.ok;
+      expect(executionDetails?.detail).to.be.equal('Step was filtered based on steps filters');
     });
 
     it('should not filter delay step', async function () {
@@ -388,7 +388,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
         detail: DetailEnum.FILTER_STEPS,
       });
 
-      expect(executionDetails).to.not.be.ok;
+      expect(executionDetails?.detail).to.be.equal('Step was filtered based on steps filters');
     });
 
     it('should use conditions to select integration', async function () {

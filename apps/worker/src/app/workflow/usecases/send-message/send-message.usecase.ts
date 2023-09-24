@@ -19,6 +19,8 @@ import {
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
   Instrument,
+  ConditionsFilterCommand,
+  ConditionsFilter,
 } from '@novu/application-generic';
 import {
   JobEntity,
@@ -37,8 +39,6 @@ import { SendMessageChat } from './send-message-chat.usecase';
 import { SendMessagePush } from './send-message-push.usecase';
 import { Digest } from './digest';
 import { PlatformException } from '../../../shared/utils';
-import { MessageMatcher } from '../message-matcher';
-import { MessageMatcherCommand } from '../message-matcher/message-matcher.command';
 
 @Injectable()
 export class SendMessage {
@@ -54,7 +54,8 @@ export class SendMessage {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private jobRepository: JobRepository,
     private sendMessageDelay: SendMessageDelay,
-    private matchMessage: MessageMatcher,
+    private conditionsFilter: ConditionsFilter,
+    private subscriberRepository: SubscriberRepository,
     private analyticsService: AnalyticsService
   ) {}
 
@@ -66,7 +67,7 @@ export class SendMessage {
     const stepType = command.step?.template?.type;
 
     if (!command.payload?.$on_boarding_trigger) {
-      const usedFilters = shouldRun.conditions.reduce(MessageMatcher.sumFilters, {
+      const usedFilters = shouldRun.conditions.reduce(ConditionsFilter.sumFilters, {
         filters: [],
         failedFilters: [],
         passedFilters: [],
@@ -144,21 +145,14 @@ export class SendMessage {
   }
 
   private async filter(command: SendMessageCommand) {
-    const messageMatcherCommand = MessageMatcherCommand.create({
-      step: command.job.step,
-      job: command.job,
-      userId: command.userId,
-      transactionId: command.job.transactionId,
-      _subscriberId: command.job._subscriberId,
-      environmentId: command.job._environmentId,
-      organizationId: command.job._organizationId,
-      subscriberId: command.job.subscriberId,
-      identifier: command.job.identifier,
-    });
-
-    const data = await this.matchMessage.getFilterData(messageMatcherCommand);
-
-    const shouldRun = await this.matchMessage.filter(messageMatcherCommand, data);
+    const shouldRun = await this.conditionsFilter.filter(
+      ConditionsFilterCommand.create({
+        filters: command.job.step.filters || [],
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        userId: command.userId,
+      })
+    );
 
     if (!shouldRun.passed) {
       await this.createExecutionDetails.execute(
@@ -170,7 +164,7 @@ export class SendMessage {
           isTest: false,
           isRetry: false,
           raw: JSON.stringify({
-            payload: data,
+            payload: shouldRun.variables,
             filters: command.step.filters,
           }),
         })
@@ -194,7 +188,7 @@ export class SendMessage {
       return true;
     }
 
-    const subscriber = await this.matchMessage.getSubscriberBySubscriberId({
+    const subscriber = await this.getSubscriberBySubscriberId({
       _environmentId: job._environmentId,
       subscriberId: job.subscriberId,
     });
@@ -238,6 +232,26 @@ export class SendMessage {
   })
   private async getNotificationTemplate({ _id, environmentId }: { _id: string; environmentId: string }) {
     return await this.notificationTemplateRepository.findById(_id, environmentId);
+  }
+
+  @CachedEntity({
+    builder: (command: { subscriberId: string; _environmentId: string }) =>
+      buildSubscriberKey({
+        _environmentId: command._environmentId,
+        subscriberId: command.subscriberId,
+      }),
+  })
+  public async getSubscriberBySubscriberId({
+    subscriberId,
+    _environmentId,
+  }: {
+    subscriberId: string;
+    _environmentId: string;
+  }) {
+    return await this.subscriberRepository.findOne({
+      _environmentId,
+      subscriberId,
+    });
   }
 
   @Instrument()

@@ -8,6 +8,8 @@ import {
   SubscriberEntity,
   SubscriberRepository,
   JobRepository,
+  TenantEntity,
+  TenantRepository,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -37,31 +39,38 @@ import {
 import { EmailEventStatusEnum } from '@novu/stateless';
 import { PlatformException } from '../../utils/exceptions';
 import { createHash } from '../../utils/hmac';
-
+import { Instrument } from '../../instrumentation';
+import { CachedEntity } from '../../services/cache/interceptors/cached-entity.interceptor';
+import { buildSubscriberKey } from '../../services/cache/key-builders/entities';
 @Injectable()
 export class ConditionsFilter extends Filter {
   constructor(
+    private subscriberRepository: SubscriberRepository,
     private messageRepository: MessageRepository,
     private executionDetailsRepository: ExecutionDetailsRepository,
-    private subscriberRepository: SubscriberRepository,
     private jobRepository: JobRepository,
+    private tenantRepository: TenantRepository,
     private environmentRepository: EnvironmentRepository
   ) {
     super();
   }
 
-  public async filter(
-    command: ConditionsFilterCommand,
-    variables: IFilterVariables
-  ): Promise<{
+  public async filter(command: ConditionsFilterCommand): Promise<{
     passed: boolean;
     conditions: ICondition[];
+    variables: IFilterVariables;
   }> {
-    const { filters } = command;
+    const variables = await this.normalizeVariablesData(command);
+    const filters = command.filters?.length
+      ? command.filters
+      : command.step?.filters?.length
+      ? command.step.filters
+      : [];
     if (!filters || !Array.isArray(filters) || filters.length === 0) {
       return {
         passed: true,
         conditions: [],
+        variables: variables,
       };
     }
 
@@ -114,8 +123,29 @@ export class ConditionsFilter extends Filter {
 
     return {
       passed: !!foundFilter,
-      conditions: conditions,
+      conditions,
+      variables,
     };
+  }
+
+  public static sumFilters(
+    summary: {
+      filters: string[];
+      failedFilters: string[];
+      passedFilters: string[];
+    },
+    condition: ICondition
+  ) {
+    let type: string = condition.filter?.toLowerCase();
+
+    if (
+      condition.filter === FILTER_TO_LABEL.isOnline ||
+      condition.filter === FILTER_TO_LABEL.isOnlineInLast
+    ) {
+      type = 'online';
+    }
+
+    return Filter.sumFilters(summary, condition, type);
   }
 
   private async processPreviousStep(
@@ -214,9 +244,8 @@ export class ConditionsFilter extends Filter {
     command: ConditionsFilterCommand,
     filterProcessingDetails: FilterProcessingDetails
   ): Promise<boolean> {
-    const subscriber = await this.subscriberRepository.findOne({
-      _id: command.job.subscriberId,
-      _organizationId: command.organizationId,
+    const subscriber = await this.getSubscriberBySubscriberId({
+      subscriberId: command.job.subscriberId,
       _environmentId: command.environmentId,
     });
 
@@ -448,11 +477,32 @@ export class ConditionsFilter extends Filter {
     command: ConditionsFilterCommand,
     filterProcessingDetails: FilterProcessingDetails
   ): Promise<boolean> {
-    const matchedOtherFilters = await this.filterAsync(filter.children, (i) =>
+    const { webhookFilters, otherFilters } = this.splitFilters(filter);
+
+    const matchedOtherFilters = await this.filterAsync(otherFilters, (i) =>
+      this.processFilter(variables, i, command, filterProcessingDetails)
+    );
+    if (otherFilters.length !== matchedOtherFilters.length) {
+      return false;
+    }
+
+    const matchedWebhookFilters = await this.filterAsync(webhookFilters, (i) =>
       this.processFilter(variables, i, command, filterProcessingDetails)
     );
 
-    return filter.children.length === matchedOtherFilters.length;
+    return matchedWebhookFilters.length === webhookFilters.length;
+  }
+
+  private splitFilters(filter: StepFilter) {
+    const webhookFilters = filter.children.filter(
+      (childFilter) => childFilter.on === 'webhook'
+    );
+
+    const otherFilters = filter.children.filter(
+      (childFilter) => childFilter.on !== 'webhook'
+    );
+
+    return { webhookFilters, otherFilters };
   }
 
   private async handleOrFilters(
@@ -461,11 +511,98 @@ export class ConditionsFilter extends Filter {
     command: ConditionsFilterCommand,
     filterProcessingDetails: FilterProcessingDetails
   ): Promise<boolean> {
-    const foundFilter = await this.findAsync(filter.children, (i) =>
+    const { webhookFilters, otherFilters } = this.splitFilters(filter);
+
+    const foundFilter = await this.findAsync(otherFilters, (i) =>
       this.processFilter(variables, i, command, filterProcessingDetails)
     );
+    if (foundFilter) {
+      return true;
+    }
 
-    return !!foundFilter;
+    return !!(await this.findAsync(webhookFilters, (i) =>
+      this.processFilter(variables, i, command, filterProcessingDetails)
+    ));
+  }
+
+  @Instrument()
+  private async normalizeVariablesData(command: ConditionsFilterCommand) {
+    const filterVariables: IFilterVariables = {};
+
+    filterVariables.subscriber = await this.fetchSubscriberIfMissing(command);
+    filterVariables.tenant = await this.fetchTenantIfMissing(command);
+    filterVariables.payload = command.variables?.payload
+      ? command.variables?.payload
+      : command.job?.payload ?? undefined;
+
+    return filterVariables;
+  }
+
+  private async fetchSubscriberIfMissing(
+    command: ConditionsFilterCommand
+  ): Promise<SubscriberEntity | undefined> {
+    if (command.variables?.subscriber) {
+      return command.variables.subscriber;
+    }
+
+    const subscriberFilterExist = command.step?.filters?.find((filter) => {
+      return filter?.children?.find((item) => item?.on === 'subscriber');
+    });
+
+    if (subscriberFilterExist && command.job) {
+      return (
+        (await this.getSubscriberBySubscriberId({
+          subscriberId: command.job.subscriberId,
+          _environmentId: command.environmentId,
+        })) ?? undefined
+      );
+    }
+
+    return undefined;
+  }
+
+  private async fetchTenantIfMissing(
+    command: ConditionsFilterCommand
+  ): Promise<TenantEntity | undefined> {
+    if (command.variables?.tenant) {
+      return command.variables.tenant;
+    }
+
+    const tenantIdentifier = command.job?.tenant?.identifier;
+    const tenantFilterExist = command.step?.filters?.find((filter) => {
+      return filter?.children?.find((item) => item?.on === 'subscriber');
+    });
+
+    if (tenantFilterExist && tenantIdentifier && command.job) {
+      return (
+        (await this.tenantRepository.findOne({
+          _environmentId: command.job._environmentId,
+          identifier: tenantIdentifier,
+        })) ?? undefined
+      );
+    }
+
+    return undefined;
+  }
+
+  @CachedEntity({
+    builder: (command: { subscriberId: string; _environmentId: string }) =>
+      buildSubscriberKey({
+        _environmentId: command._environmentId,
+        subscriberId: command.subscriberId,
+      }),
+  })
+  public async getSubscriberBySubscriberId({
+    subscriberId,
+    _environmentId,
+  }: {
+    subscriberId: string;
+    _environmentId: string;
+  }) {
+    return await this.subscriberRepository.findOne({
+      _environmentId,
+      subscriberId,
+    });
   }
 }
 

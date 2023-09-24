@@ -38,7 +38,6 @@ import {
 } from './services';
 
 import {
-  MessageMatcher,
   SendMessage,
   SendMessageChat,
   SendMessageDelay,
@@ -84,7 +83,6 @@ const USE_CASES = [
   GetSubscriberPreference,
   GetSubscriberTemplatePreference,
   HandleLastFailedJob,
-  MessageMatcher,
   ProcessTenant,
   QueueNextJob,
   RunJob,

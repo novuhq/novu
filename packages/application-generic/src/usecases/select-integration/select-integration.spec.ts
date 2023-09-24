@@ -106,6 +106,7 @@ describe('select integration', function () {
         new ExecutionDetailsRepository(),
         new SubscriberRepository(),
         new JobRepository(),
+        new TenantRepository(),
         new EnvironmentRepository()
       ),
       new TenantRepository(),

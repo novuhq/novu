@@ -2,7 +2,7 @@ import { IsDefined, IsString } from 'class-validator';
 import { NotificationStepEntity, JobEntity } from '@novu/dal';
 import { EnvironmentWithUserCommand } from '@novu/application-generic';
 
-export class MessageMatcherCommand extends EnvironmentWithUserCommand {
+class MessageMatcherCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   @IsString()
   identifier: string;
