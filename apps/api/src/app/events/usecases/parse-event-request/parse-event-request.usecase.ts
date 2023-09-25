@@ -3,16 +3,30 @@ import * as Sentry from '@sentry/node';
 import * as hat from 'hat';
 import { merge } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
-import { Instrument, InstrumentUsecase } from '@novu/application-generic';
-import { NotificationTemplateRepository } from '@novu/dal';
-import { ISubscribersDefine } from '@novu/shared';
-import { StorageHelperService, CachedEntity, buildNotificationTemplateIdentifierKey } from '@novu/application-generic';
+import {
+  buildNotificationTemplateIdentifierKey,
+  CachedEntity,
+  Instrument,
+  InstrumentUsecase,
+  StorageHelperService,
+  WorkflowQueueService,
+} from '@novu/application-generic';
+import { NotificationTemplateRepository, NotificationTemplateEntity, TenantRepository } from '@novu/dal';
+import {
+  ISubscribersDefine,
+  ITenantDefine,
+  ReservedVariablesMap,
+  TriggerContextTypeEnum,
+  TriggerTenantContext,
+} from '@novu/shared';
+
+import { ParseEventRequestCommand } from './parse-event-request.command';
 
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { VerifyPayload, VerifyPayloadCommand } from '../verify-payload';
-import { ParseEventRequestCommand } from './parse-event-request.command';
-import { TriggerHandlerQueueService } from '../../services/workflow-queue/trigger-handler-queue.service';
 import { MapTriggerRecipients, MapTriggerRecipientsCommand } from '../map-trigger-recipients';
+
+const LOG_CONTEXT = 'ParseEventRequest';
 
 @Injectable()
 export class ParseEventRequest {
@@ -20,18 +34,16 @@ export class ParseEventRequest {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private verifyPayload: VerifyPayload,
     private storageHelperService: StorageHelperService,
-    private triggerHandlerQueueService: TriggerHandlerQueueService,
-    private mapTriggerRecipients: MapTriggerRecipients
+    private workflowQueueService: WorkflowQueueService,
+    private mapTriggerRecipients: MapTriggerRecipients,
+    private tenantRepository: TenantRepository
   ) {}
 
   @InstrumentUsecase()
   async execute(command: ParseEventRequestCommand) {
     const transactionId = command.transactionId || uuidv4();
-    Logger.log('Starting Trigger');
 
     const mappedActor = command.actor ? this.mapTriggerRecipients.mapSubscriber(command.actor) : undefined;
-
-    Logger.debug(mappedActor);
 
     const mappedRecipients = await this.mapTriggerRecipients.execute(
       MapTriggerRecipientsCommand.create({
@@ -55,6 +67,9 @@ export class ParseEventRequest {
       throw new UnprocessableEntityException('workflow_not_found');
     }
 
+    const reservedVariablesTypes = this.getReservedVariablesTypes(template);
+    this.validateTriggerContext(command, reservedVariablesTypes);
+
     if (!template.active) {
       return {
         acknowledged: true,
@@ -74,6 +89,17 @@ export class ParseEventRequest {
         acknowledged: true,
         status: 'no_workflow_active_steps_defined',
       };
+    }
+
+    if (command.tenant) {
+      try {
+        await this.validateTenant(typeof command.tenant === 'string' ? command.tenant : command.tenant.identifier);
+      } catch (e) {
+        return {
+          acknowledged: true,
+          status: 'no_tenant_found',
+        };
+      }
     }
 
     Sentry.addBreadcrumb({
@@ -99,16 +125,13 @@ export class ParseEventRequest {
 
     command.payload = merge({}, defaultPayload, command.payload);
 
-    await this.triggerHandlerQueueService.add(
+    const jobData = {
+      ...command,
+      to: mappedRecipients,
+      actor: mappedActor,
       transactionId,
-      {
-        ...command,
-        to: mappedRecipients,
-        actor: mappedActor,
-        transactionId,
-      },
-      command.organizationId
-    );
+    };
+    await this.workflowQueueService.add(transactionId, jobData, command.organizationId);
 
     return {
       acknowledged: true,
@@ -135,6 +158,15 @@ export class ParseEventRequest {
     );
   }
 
+  private async validateTenant(identifier: string) {
+    const found = await this.tenantRepository.findOne({
+      identifier,
+    });
+    if (!found) {
+      throw new ApiException(`Tenant with identifier ${identifier} cound not be found`);
+    }
+  }
+
   @Instrument()
   private async validateSubscriberIdProperty(to: ISubscribersDefine[]): Promise<boolean> {
     for (const subscriber of to) {
@@ -142,12 +174,40 @@ export class ParseEventRequest {
 
       if (!subscriberIdExists) {
         throw new ApiException(
-          'subscriberId under property to is not configured, please make sure all the subscriber contains subscriberId property'
+          'subscriberId under property to is not configured, please make sure all subscribers contains subscriberId property'
         );
       }
     }
 
     return true;
+  }
+
+  @Instrument()
+  private validateTriggerContext(
+    command: ParseEventRequestCommand,
+    reservedVariablesTypes: TriggerContextTypeEnum[]
+  ): void {
+    const invalidKeys: string[] = [];
+
+    for (const reservedVariableType of reservedVariablesTypes) {
+      const payload = command[reservedVariableType];
+      if (!payload) {
+        invalidKeys.push(`${reservedVariableType} object`);
+        continue;
+      }
+      const reservedVariableFields = ReservedVariablesMap[reservedVariableType].map((variable) => variable.name);
+      for (const variableName of reservedVariableFields) {
+        const variableNameExists = payload[variableName];
+
+        if (!variableNameExists) {
+          invalidKeys.push(`${variableName} property of ${reservedVariableType}`);
+        }
+      }
+    }
+
+    if (invalidKeys.length) {
+      throw new ApiException(`Trigger is missing: ${invalidKeys.join(', ')}`);
+    }
   }
 
   private modifyAttachments(command: ParseEventRequestCommand) {
@@ -157,5 +217,19 @@ export class ParseEventRequest {
       file: Buffer.from(attachment.file, 'base64'),
       storagePath: `${command.organizationId}/${command.environmentId}/${hat()}/${attachment.name}`,
     }));
+  }
+
+  public mapTenant(tenant: TriggerTenantContext): ITenantDefine {
+    if (typeof tenant === 'string') {
+      return { identifier: tenant };
+    }
+
+    return tenant;
+  }
+
+  public getReservedVariablesTypes(template: NotificationTemplateEntity): TriggerContextTypeEnum[] {
+    const reservedVariables = template.triggers[0].reservedVariables;
+
+    return reservedVariables?.map((reservedVariable) => reservedVariable.type) || [];
   }
 }

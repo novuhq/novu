@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import { Badge } from '@mantine/core';
 
 import { Switch } from '../switch/Switch';
@@ -16,7 +16,7 @@ export default {
       control: false,
     },
   },
-} as ComponentMeta<typeof Table>;
+} as Meta<typeof Table>;
 
 const SwitchCell = (props) => {
   const [status, setStatus] = useState(props.status);
@@ -68,9 +68,7 @@ const data: IExampleData[] = [
   { name: 'Whats up?', category: 'Done', status: 'Enabled', creationDate: '01/01/2021 16:36' },
 ];
 
-const Template: ComponentStory<typeof Table> = ({ ...args }) => (
-  <Table columns={columns as any} data={data} {...args} />
-);
+const Template: StoryFn<typeof Table> = ({ ...args }) => <Table columns={columns as any} data={data} {...args} />;
 
 export const PrimaryUse = Template.bind({});
 PrimaryUse.args = {};

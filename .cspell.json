@@ -3,6 +3,7 @@
   "version": "0.2",
   "language": "en",
   "words": [
+    "Springboot",
     "tmproj",
     "hgignore",
     "bzrignore",
@@ -498,8 +499,15 @@
     "reactjs",
     "nextjs",
     "vanillajs",
-    "quckstart",
-    "errmsg"
+    "errmsg",
+    "springboot",
+    "errmsg",
+    "shelljs",
+    "prefiltering",
+    "autodocs",
+    "stackalt",
+    "mediumdark",
+    "Docgen"
   ],
   "flagWords": [],
   "patterns": [

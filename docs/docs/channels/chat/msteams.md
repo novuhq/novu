@@ -40,7 +40,7 @@ where:
 - `providerId` is a unique provider identifier, we recommend using our ChatProviderIdEnum to specify the provider.
 - The third parameter is the credentials object, in this case we use the `webhookUrl` property to specify the MS Teams channel webhook URL.
 
-or by calling the `Update Subscriber Credentials` endpoint on Novu API. Check endpoint details [here](https://docs.novu.co/api/update-subscriber-credentials/).
+or by calling the `Update Subscriber Credentials` endpoint on Novu API. Check endpoint details [here](https://docs.novu.co/api-reference/subscribers/update-subscriber-credentials).
 
 <!-- markdownlint-disable MD029 -->
 

@@ -11,6 +11,7 @@ import { WillBeSentHeader } from './digest/WillBeSentHeader';
 import { RegularInfo } from './digest/icons/RegularInfo';
 import { TimedDigestMetadata } from './TimedDigestMetadata';
 import { RegularDigestMetadata } from './RegularDigestMetadata';
+import { StepSettings } from './SideBar/StepSettings';
 
 const GroupStyled = styled(Group)`
   gap: 18px;
@@ -26,7 +27,8 @@ export const DigestMetadata = ({ index, readonly }: { index: number; readonly: b
 
   return (
     <div data-test-id="digest-step-settings-interval">
-      <Accordion styles={{ item: { '&:last-of-type': { marginBottom: 0 } } }}>
+      <StepSettings index={index} />
+      <Accordion mt={16} styles={{ item: { '&:last-of-type': { marginBottom: 0 } } }}>
         <Tooltip
           position="left"
           width={227}

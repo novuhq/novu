@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   ClassSerializerInterceptor,
   Controller,
@@ -135,20 +136,29 @@ export class IntegrationsController {
     @UserSession() user: IJwtPayload,
     @Body() body: CreateIntegrationRequestDto
   ): Promise<IntegrationResponseDto> {
-    return await this.createIntegrationUsecase.execute(
-      CreateIntegrationCommand.create({
-        userId: user._id,
-        name: body.name,
-        identifier: body.identifier,
-        environmentId: body._environmentId ?? user.environmentId,
-        organizationId: user.organizationId,
-        providerId: body.providerId,
-        channel: body.channel,
-        credentials: body.credentials,
-        active: body.active ?? false,
-        check: body.check ?? true,
-      })
-    );
+    try {
+      return await this.createIntegrationUsecase.execute(
+        CreateIntegrationCommand.create({
+          userId: user._id,
+          name: body.name,
+          identifier: body.identifier,
+          environmentId: body._environmentId ?? user.environmentId,
+          organizationId: user.organizationId,
+          providerId: body.providerId,
+          channel: body.channel,
+          credentials: body.credentials,
+          active: body.active ?? false,
+          check: body.check ?? true,
+          conditions: body.conditions,
+        })
+      );
+    } catch (e) {
+      if (e.message.includes('Integration validation failed') || e.message.includes('Cast to embedded')) {
+        throw new BadRequestException(e.message);
+      }
+
+      throw e;
+    }
   }
 
   @Put('/:integrationId')
@@ -161,25 +171,34 @@ export class IntegrationsController {
     summary: 'Update integration',
   })
   @ExternalApiAccessible()
-  updateIntegrationById(
+  async updateIntegrationById(
     @UserSession() user: IJwtPayload,
     @Param('integrationId') integrationId: string,
     @Body() body: UpdateIntegrationRequestDto
   ): Promise<IntegrationResponseDto> {
-    return this.updateIntegrationUsecase.execute(
-      UpdateIntegrationCommand.create({
-        userId: user._id,
-        name: body.name,
-        identifier: body.identifier,
-        environmentId: body._environmentId,
-        userEnvironmentId: user.environmentId,
-        organizationId: user.organizationId,
-        integrationId,
-        credentials: body.credentials,
-        active: body.active,
-        check: body.check ?? true,
-      })
-    );
+    try {
+      return await this.updateIntegrationUsecase.execute(
+        UpdateIntegrationCommand.create({
+          userId: user._id,
+          name: body.name,
+          identifier: body.identifier,
+          environmentId: body._environmentId,
+          userEnvironmentId: user.environmentId,
+          organizationId: user.organizationId,
+          integrationId,
+          credentials: body.credentials,
+          active: body.active,
+          check: body.check ?? true,
+          conditions: body.conditions,
+        })
+      );
+    } catch (e) {
+      if (e.message.includes('Integration validation failed') || e.message.includes('Cast to embedded')) {
+        throw new BadRequestException(e.message);
+      }
+
+      throw e;
+    }
   }
 
   @Post('/:integrationId/set-primary')

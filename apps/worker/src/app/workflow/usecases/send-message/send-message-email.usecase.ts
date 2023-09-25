@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   MessageRepository,
   NotificationStepEntity,
@@ -7,6 +7,7 @@ import {
   IntegrationEntity,
   MessageEntity,
   LayoutRepository,
+  TenantRepository,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -35,6 +36,8 @@ import { SendMessageCommand } from './send-message.command';
 import { SendMessageBase } from './send-message.base';
 import { PlatformException } from '../../../shared/utils';
 
+const LOG_CONTEXT = 'SendMessageEmail';
+
 @Injectable()
 export class SendMessageEmail extends SendMessageBase {
   channelType = ChannelTypeEnum.EMAIL;
@@ -44,6 +47,7 @@ export class SendMessageEmail extends SendMessageBase {
     protected subscriberRepository: SubscriberRepository,
     protected messageRepository: MessageRepository,
     protected layoutRepository: LayoutRepository,
+    protected tenantRepository: TenantRepository,
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     private compileEmailTemplateUsecase: CompileEmailTemplate,
@@ -55,6 +59,7 @@ export class SendMessageEmail extends SendMessageBase {
       createLogUsecase,
       createExecutionDetails,
       subscriberRepository,
+      tenantRepository,
       selectIntegration,
       getNovuProviderCredentials
     );
@@ -78,6 +83,9 @@ export class SendMessageEmail extends SendMessageBase {
         channelType: ChannelTypeEnum.EMAIL,
         userId: command.userId,
         identifier: overrideSelectedIntegration as string,
+        filterData: {
+          tenant: command.job.tenant,
+        },
       });
     } catch (e) {
       await this.createExecutionDetails.execute(
@@ -127,15 +135,17 @@ export class SendMessageEmail extends SendMessageBase {
       return;
     }
 
-    await this.sendSelectedIntegrationExecution(command.job, integration);
+    const [tenant, overrideLayoutId] = await Promise.all([
+      this.handleTenantExecution(command.job),
+      this.getOverrideLayoutId(command),
+      this.sendSelectedIntegrationExecution(command.job, integration),
+    ]);
 
     const overrides: Record<string, any> = Object.assign(
       {},
       command.overrides.email || {},
       command.overrides[integration?.providerId] || {}
     );
-
-    const overrideLayoutId = await this.getOverrideLayoutId(command);
 
     let html;
     let subject = '';
@@ -154,6 +164,7 @@ export class SendMessageEmail extends SendMessageBase {
           events: command.events,
           total_count: command.events?.length,
         },
+        ...(tenant && { tenant }),
         subscriber,
       },
     };
@@ -218,10 +229,11 @@ export class SendMessageEmail extends SendMessageBase {
       }
 
       html = await inlineCss(html, {
-        // Used for stylesheet links that starts with / so should not be needed in our case.
+        // Used for style sheet links that starts with / so should not be needed in our case.
         url: ' ',
       });
     } catch (e) {
+      Logger.error({ payload }, 'Compiling the email template or storing it or inlining it has failed', LOG_CONTEXT);
       await this.sendErrorHandlebars(command.job, e.message);
 
       return;
@@ -369,6 +381,7 @@ export class SendMessageEmail extends SendMessageBase {
 
       return;
     }
+
     if (!integration) {
       const integrationError = `${errorMessage} active email integration not found`;
 
@@ -410,6 +423,8 @@ export class SendMessageEmail extends SendMessageBase {
     try {
       const result = await mailHandler.send(mailData);
 
+      Logger.verbose({ command }, 'Email message has been sent', LOG_CONTEXT);
+
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -422,6 +437,8 @@ export class SendMessageEmail extends SendMessageBase {
           raw: JSON.stringify(result),
         })
       );
+
+      Logger.verbose({ command }, 'Execution details of sending an email message have been stored', LOG_CONTEXT);
 
       if (!result?.id) {
         return;
@@ -522,6 +539,7 @@ export const createMailData = (options: IEmailOptions, overrides: Record<string,
     cc: overrides?.cc || [],
     bcc: overrides?.bcc || [],
     ...ipPoolName,
+    customData: overrides?.customData || {},
   };
 };
 

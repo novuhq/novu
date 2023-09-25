@@ -1,4 +1,4 @@
-import { IMessage, ButtonTypeEnum } from '@novu/shared';
+import { IMessage, ButtonTypeEnum, WebSocketEventEnum } from '@novu/shared';
 
 export function sendUrlChange(url: string) {
   if (!window.parentIFrame) return;
@@ -20,7 +20,7 @@ export function unseenChanged(unseenCount: number) {
   if ('parentIFrame' in window) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (window as any).parentIFrame.sendMessage({
-      type: 'unseen_count_changed',
+      type: WebSocketEventEnum.UNSEEN,
       count: unseenCount,
     });
   }

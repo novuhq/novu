@@ -20,7 +20,7 @@ To use the Amazon SES provider in the email channel, you will need to create a S
 - Choose Amazon Simple Email Service.
 - Create new identity.
 - Either choose domain or email.
-- Verify your domain (by addding few DNS records as mentioned in SES instructions) or email (AWS sends a verification email to your email).
+- Verify your domain (by adding few DNS records as mentioned in SES instructions) or email (AWS sends a verification email to your email).
 - Verify recipient email also by creating new email identity type [only in sandbox mode].
 - Test if your SES is setup correctly using test email feature.
 
