@@ -394,7 +394,7 @@ importers:
       nodemon: 2.0.22
       prettier: 2.8.7
       sinon: 9.2.4
-      ts-jest: 27.1.5_cnngzrja2umb46xxazlucyx2qu
+      ts-jest: 27.1.5_4aafjbpmnrfjtrzkyohogv4jce
       ts-loader: 9.4.2_rggdtlzfqxxwxudp3onsqdyocm
       ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
       tsconfig-paths: 4.1.2
@@ -1162,6 +1162,84 @@ importers:
       stylelint-scss: 4.6.0_stylelint@15.10.1
       typescript: 4.9.5
 
+  enterprise/packages/auth:
+    specifiers:
+      '@nestjs/common': '>=9.3.x'
+      '@nestjs/jwt': '>=9'
+      '@nestjs/passport': 9.0.3
+      '@novu/application-generic': ^0.19.0
+      '@novu/dal': ^0.19.0
+      '@novu/shared': ^0.19.0
+      '@types/chai': ^4.2.11
+      '@types/mocha': ^8.0.1
+      '@types/node': ^14.6.0
+      '@types/sinon': ^9.0.0
+      chai: ^4.2.0
+      cross-env: ^7.0.3
+      mocha: ^8.1.1
+      nodemon: ^2.0.3
+      passport: 0.6.0
+      passport-google-oauth: ^2.0.0
+      passport-oauth2: ^1.6.1
+      sinon: ^9.2.4
+      ts-node: ~10.9.1
+      typescript: 4.9.5
+    dependencies:
+      '@nestjs/common': 10.2.2_atc7tu2sld2m3nk4hmwkqn6qde
+      '@nestjs/jwt': 10.1.0_@nestjs+common@10.2.2
+      '@nestjs/passport': 9.0.3_kn4ljbedllcoqpuu4ifhphsdsu
+      '@novu/application-generic': link:../../../packages/application-generic
+      '@novu/dal': link:../../../libs/dal
+      '@novu/shared': link:../../../libs/shared
+      passport: 0.6.0
+      passport-google-oauth: 2.0.0
+      passport-oauth2: 1.7.0
+    devDependencies:
+      '@types/chai': 4.3.4
+      '@types/mocha': 8.2.3
+      '@types/node': 14.18.42
+      '@types/sinon': 9.0.11
+      chai: 4.3.7
+      cross-env: 7.0.3
+      mocha: 8.4.0
+      nodemon: 2.0.22
+      sinon: 9.2.4
+      ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
+      typescript: 4.9.5
+
+  enterprise/packages/digest-schedule:
+    specifiers:
+      '@novu/shared': ^0.19.0
+      '@types/chai': ^4.2.11
+      '@types/mocha': ^8.0.1
+      '@types/node': ^14.6.0
+      '@types/sinon': ^9.0.0
+      chai: ^4.2.0
+      cross-env: ^7.0.3
+      date-fns: ^2.29.2
+      mocha: ^8.1.1
+      nodemon: ^2.0.3
+      rrule: ^2.7.2
+      sinon: ^9.2.4
+      ts-node: ~10.9.1
+      typescript: 4.9.5
+    dependencies:
+      '@novu/shared': link:../../../libs/shared
+      date-fns: 2.29.3
+      rrule: 2.7.2
+    devDependencies:
+      '@types/chai': 4.3.4
+      '@types/mocha': 8.2.3
+      '@types/node': 14.18.42
+      '@types/sinon': 9.0.11
+      chai: 4.3.7
+      cross-env: 7.0.3
+      mocha: 8.4.0
+      nodemon: 2.0.22
+      sinon: 9.2.4
+      ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
+      typescript: 4.9.5
+
   libs/dal:
     specifiers:
       '@aws-sdk/client-s3': ^3.382.0
@@ -1311,7 +1389,7 @@ importers:
       semantic-release: 19.0.5
       shelljs: 0.8.5
       travis-deploy-once: 5.0.11
-      ts-jest: 27.1.5_vo4wq6ee3uui4qxegzikesohne
+      ts-jest: 27.1.5_jt6hjr4g6reedzkbayzypxjbqa
       ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
       tslib: 2.5.0
       typescript: 4.9.5
@@ -7074,7 +7152,6 @@ packages:
   /@babel/helper-validator-option/7.22.5:
     resolution: {integrity: sha512-R3oB6xlIVKUnxNUxbmgq7pKjxpru24zlimpE8WK47fACIlM0II/Hm1RS8IaOI7NgCr6LNS+jl5l75m20npAziw==}
     engines: {node: '>=6.9.0'}
-    dev: false
 
   /@babel/helper-wrap-function/7.20.5:
     resolution: {integrity: sha512-bYMxIWK5mh+TgXGVqAtnu5Yn1un+v8DDZtqyzKRLUzrh70Eal2O3aZ7aPYiMADO4uKlkzOiRiZ6GX5q3qxvW9Q==}
@@ -8539,8 +8616,8 @@ packages:
     dependencies:
       '@babel/core': 7.20.12
       '@babel/helper-annotate-as-pure': 7.22.5
-      '@babel/helper-compilation-targets': 7.22.15
-      '@babel/helper-environment-visitor': 7.22.20
+      '@babel/helper-compilation-targets': 7.22.10
+      '@babel/helper-environment-visitor': 7.22.5
       '@babel/helper-function-name': 7.22.5
       '@babel/helper-optimise-call-expression': 7.18.6
       '@babel/helper-plugin-utils': 7.22.5
@@ -8559,8 +8636,8 @@ packages:
     dependencies:
       '@babel/core': 7.21.4
       '@babel/helper-annotate-as-pure': 7.22.5
-      '@babel/helper-compilation-targets': 7.22.15
-      '@babel/helper-environment-visitor': 7.22.20
+      '@babel/helper-compilation-targets': 7.22.10
+      '@babel/helper-environment-visitor': 7.22.5
       '@babel/helper-function-name': 7.22.5
       '@babel/helper-optimise-call-expression': 7.18.6
       '@babel/helper-plugin-utils': 7.22.5
@@ -10235,11 +10312,11 @@ packages:
     peerDependencies:
       '@babel/core': ^7.0.0-0
     dependencies:
-      '@babel/compat-data': 7.22.20
+      '@babel/compat-data': 7.21.4
       '@babel/core': 7.21.4
-      '@babel/helper-compilation-targets': 7.22.15
+      '@babel/helper-compilation-targets': 7.22.10
       '@babel/helper-plugin-utils': 7.22.5
-      '@babel/helper-validator-option': 7.22.15
+      '@babel/helper-validator-option': 7.22.5
       '@babel/plugin-bugfix-safari-id-destructuring-collision-in-function-expression': 7.18.6_@babel+core@7.21.4
       '@babel/plugin-bugfix-v8-spread-parameters-in-optional-chaining': 7.20.7_@babel+core@7.21.4
       '@babel/plugin-proposal-async-generator-functions': 7.20.7_@babel+core@7.21.4
@@ -10305,7 +10382,7 @@ packages:
       '@babel/plugin-transform-unicode-escapes': 7.18.10_@babel+core@7.21.4
       '@babel/plugin-transform-unicode-regex': 7.18.6_@babel+core@7.21.4
       '@babel/preset-modules': 0.1.5_@babel+core@7.21.4
-      '@babel/types': 7.22.19
+      '@babel/types': 7.22.11
       babel-plugin-polyfill-corejs2: 0.3.3_@babel+core@7.21.4
       babel-plugin-polyfill-corejs3: 0.6.0_@babel+core@7.21.4
       babel-plugin-polyfill-regenerator: 0.4.1_@babel+core@7.21.4
@@ -16076,6 +16153,26 @@ packages:
       - webpack-cli
     dev: true
 
+  /@nestjs/common/10.2.2_atc7tu2sld2m3nk4hmwkqn6qde:
+    resolution: {integrity: sha512-TCOJK2K4FDT3GxFfURjngnjBewS/hizKNFSLBXtX4TTQm0dVQOtESnnVdP14sEiPM6suuWlrGnXW9UDqItGWiQ==}
+    peerDependencies:
+      class-transformer: '*'
+      class-validator: '*'
+      reflect-metadata: ^0.1.12
+      rxjs: ^7.1.0
+    peerDependenciesMeta:
+      class-transformer:
+        optional: true
+      class-validator:
+        optional: true
+    dependencies:
+      iterare: 1.2.1
+      reflect-metadata: 0.1.13
+      rxjs: 7.8.1
+      tslib: 2.6.2
+      uid: 2.0.2
+    dev: false
+
   /@nestjs/common/10.2.2_j3td4gnlgk75ora6o6suo62byy:
     resolution: {integrity: sha512-TCOJK2K4FDT3GxFfURjngnjBewS/hizKNFSLBXtX4TTQm0dVQOtESnnVdP14sEiPM6suuWlrGnXW9UDqItGWiQ==}
     peerDependencies:
@@ -16300,6 +16397,16 @@ packages:
       passport: ^0.4.0 || ^0.5.0 || ^0.6.0
     dependencies:
       '@nestjs/common': 10.2.2_j3td4gnlgk75ora6o6suo62byy
+      passport: 0.6.0
+    dev: false
+
+  /@nestjs/passport/9.0.3_kn4ljbedllcoqpuu4ifhphsdsu:
+    resolution: {integrity: sha512-HplSJaimEAz1IOZEu+pdJHHJhQyBOPAYWXYHfAPQvRqWtw4FJF1VXl1Qtk9dcXQX1eKytDtH+qBzNQc19GWNEg==}
+    peerDependencies:
+      '@nestjs/common': ^8.0.0 || ^9.0.0
+      passport: ^0.4.0 || ^0.5.0 || ^0.6.0
+    dependencies:
+      '@nestjs/common': 10.2.2_atc7tu2sld2m3nk4hmwkqn6qde
       passport: 0.6.0
     dev: false
 
@@ -42170,11 +42277,41 @@ packages:
       passport-oauth2: 1.7.0
     dev: false
 
+  /passport-google-oauth/2.0.0:
+    resolution: {integrity: sha512-JKxZpBx6wBQXX1/a1s7VmdBgwOugohH+IxCy84aPTZNq/iIPX6u7Mqov1zY7MKRz3niFPol0KJz8zPLBoHKtYA==}
+    engines: {node: '>= 0.4.0'}
+    dependencies:
+      passport-google-oauth1: 1.0.0
+      passport-google-oauth20: 2.0.0
+    dev: false
+
+  /passport-google-oauth1/1.0.0:
+    resolution: {integrity: sha512-qpCEhuflJgYrdg5zZIpAq/K3gTqa1CtHjbubsEsidIdpBPLkEVq6tB1I8kBNcH89RdSiYbnKpCBXAZXX/dtx1Q==}
+    dependencies:
+      passport-oauth1: 1.3.0
+    dev: false
+
+  /passport-google-oauth20/2.0.0:
+    resolution: {integrity: sha512-KSk6IJ15RoxuGq7D1UKK/8qKhNfzbLeLrG3gkLZ7p4A6DBCcv7xpyQwuXtWdpyR0+E0mwkpjY1VfPOhxQrKzdQ==}
+    engines: {node: '>= 0.4.0'}
+    dependencies:
+      passport-oauth2: 1.7.0
+    dev: false
+
   /passport-jwt/4.0.1:
     resolution: {integrity: sha512-UCKMDYhNuGOBE9/9Ycuoyh7vP6jpeTp/+sfMJl7nLff/t6dps+iaeE0hhNkKN8/HZHcJ7lCdOyDxHdDoxoSvdQ==}
     dependencies:
       jsonwebtoken: 9.0.0
       passport-strategy: 1.0.0
+    dev: false
+
+  /passport-oauth1/1.3.0:
+    resolution: {integrity: sha512-8T/nX4gwKTw0PjxP1xfD0QhrydQNakzeOpZ6M5Uqdgz9/a/Ag62RmJxnZQ4LkbdXGrRehQHIAHNAu11rCP46Sw==}
+    engines: {node: '>= 0.4.0'}
+    dependencies:
+      oauth: 0.9.15
+      passport-strategy: 1.0.0
+      utils-merge: 1.0.1
     dev: false
 
   /passport-oauth2/1.7.0:
@@ -47014,7 +47151,7 @@ packages:
       jest-worker: 26.6.2
       rollup: 2.79.1
       serialize-javascript: 4.0.0
-      terser: 5.19.3
+      terser: 5.16.9
 
   /rollup-plugin-terser/7.0.2_rollup@3.20.2:
     resolution: {integrity: sha512-w3iIaU4OxcF52UUXiZNsNeuXIMDvFrr+ZXK6bFZ0Q60qyVfq4uLptoS4bbq3paG3x216eQllFZX7zt6TIImguQ==}
@@ -49748,7 +49885,6 @@ packages:
       acorn: 8.10.0
       commander: 2.20.3
       source-map-support: 0.5.21
-    dev: true
 
   /terser/5.19.3:
     resolution: {integrity: sha512-pQzJ9UJzM0IgmT4FAtYI6+VqFf0lj/to58AV0Xfgg0Up37RyPG7Al+1cepC6/BVuAxR9oNb41/DL4DEoHJvTdg==}
@@ -50154,7 +50290,7 @@ packages:
       yargs-parser: 20.2.9
     dev: true
 
-  /ts-jest/27.1.5_cnngzrja2umb46xxazlucyx2qu:
+  /ts-jest/27.1.5_4aafjbpmnrfjtrzkyohogv4jce:
     resolution: {integrity: sha512-Xv6jBQPoBEvBq/5i2TeSG9tt/nqkbpcurrEG1b+2yfBrcJelOZF9Ml6dmyMh7bcW9JyFbRYpR5rxROSlBLTZHA==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
     hasBin: true
@@ -50175,6 +50311,7 @@ packages:
       esbuild:
         optional: true
     dependencies:
+      '@babel/core': 7.22.11
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
       jest: 27.5.1_ts-node@10.9.1
@@ -50245,41 +50382,6 @@ packages:
     dependencies:
       '@babel/core': 7.22.11
       '@types/jest': 27.5.2
-      bs-logger: 0.2.6
-      fast-json-stable-stringify: 2.1.0
-      jest: 27.5.1_ts-node@10.9.1
-      jest-util: 27.5.1
-      json5: 2.2.3
-      lodash.memoize: 4.1.2
-      make-error: 1.3.6
-      semver: 7.4.0
-      typescript: 4.9.5
-      yargs-parser: 20.2.9
-    dev: true
-
-  /ts-jest/27.1.5_vo4wq6ee3uui4qxegzikesohne:
-    resolution: {integrity: sha512-Xv6jBQPoBEvBq/5i2TeSG9tt/nqkbpcurrEG1b+2yfBrcJelOZF9Ml6dmyMh7bcW9JyFbRYpR5rxROSlBLTZHA==}
-    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
-    hasBin: true
-    peerDependencies:
-      '@babel/core': '>=7.0.0-beta.0 <8'
-      '@types/jest': ^27.0.0
-      babel-jest: '>=27.0.0 <28'
-      esbuild: '*'
-      jest: ^27.0.0
-      typescript: '>=3.8 <5.0'
-    peerDependenciesMeta:
-      '@babel/core':
-        optional: true
-      '@types/jest':
-        optional: true
-      babel-jest:
-        optional: true
-      esbuild:
-        optional: true
-    dependencies:
-      '@babel/core': 7.21.4
-      '@types/jest': 29.5.2
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
       jest: 27.5.1_ts-node@10.9.1
