@@ -1,10 +1,10 @@
-import { Controller, Delete, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Delete, Get, HttpCode, HttpStatus, Param, Query, UseGuards } from '@nestjs/common';
 import { RemoveMessage, RemoveMessageCommand } from './usecases/remove-message';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import { IJwtPayload } from '@novu/shared';
-import { ApiTags, ApiOkResponse, ApiOperation, ApiQuery, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiOkResponse, ApiOperation, ApiParam, ApiNoContentResponse } from '@nestjs/swagger';
 import { DeleteMessageResponseDto } from './dtos/delete-message-response.dto';
 import { ActivitiesResponseDto } from '../notifications/dtos/activities-response.dto';
 import { GetMessages, GetMessagesCommand } from './usecases/get-messages';
@@ -80,9 +80,10 @@ export class MessagesController {
   }
 
   @Delete('/transaction/:transactionId')
+  @HttpCode(HttpStatus.NO_CONTENT)
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  @ApiResponse(DeleteMessageResponseDto)
+  @ApiNoContentResponse()
   @ApiOperation({
     summary: 'Delete messages by transactionId',
     description: 'Deletes messages entity from the Novu platform using TransactionId of message',
@@ -92,7 +93,7 @@ export class MessagesController {
     @UserSession() user: IJwtPayload,
     @Param() { transactionId }: { transactionId: string },
     @Query() query: DeleteMessageByTransactionIdRequestDto
-  ): Promise<DeleteMessageResponseDto> {
+  ) {
     return await this.removeMessagesByTransactionId.execute(
       RemoveMessagesByTransactionIdCommand.create({
         environmentId: user.environmentId,

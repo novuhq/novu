@@ -1,8 +1,8 @@
-import { SubscribersService, UserSession } from '@novu/testing';
 import { MessageRepository, NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
-import { expect } from 'chai';
-import axios from 'axios';
 import { ChannelTypeEnum } from '@novu/shared';
+import { SubscribersService, UserSession } from '@novu/testing';
+import axios from 'axios';
+import { expect } from 'chai';
 
 const axiosInstance = axios.create();
 
@@ -111,10 +111,15 @@ describe('Delete Messages By TransactionId - /messages/?transactionId= (DELETE)'
       _environmentId: session.environment._id,
       _organizationId: session.organization._id,
       transactionId: transactionId,
-      channel: ChannelTypeEnum.EMAIL,
     });
 
+    const emailMessages = messages.filter((message) => message.channel === ChannelTypeEnum.EMAIL);
+    const inAppMessages = messages.filter((message) => message.channel === ChannelTypeEnum.IN_APP);
+    const inAppMessagesCount = inAppMessages.length;
+
     expect(messages.length).to.be.greaterThan(0);
+    expect(emailMessages.length).to.be.greaterThan(0);
+    expect(inAppMessagesCount).to.be.greaterThan(0);
 
     await axiosInstance.delete(
       `${session.serverUrl}/v1/messages/transaction/` + transactionId + '?channel=' + ChannelTypeEnum.EMAIL,
@@ -129,9 +134,15 @@ describe('Delete Messages By TransactionId - /messages/?transactionId= (DELETE)'
       transactionId: transactionId,
       _environmentId: session.environment._id,
       _organizationId: session.organization._id,
-      channel: ChannelTypeEnum.EMAIL,
     });
 
-    expect(result.length).to.equal(0);
+    const emailResult = result.filter((message) => message.channel === ChannelTypeEnum.EMAIL);
+    const inAppResult = result.filter((message) => message.channel === ChannelTypeEnum.IN_APP);
+    const inAppResultCount = inAppResult.length;
+
+    expect(result.length).to.be.greaterThan(0);
+    expect(emailResult.length).to.equal(0);
+    expect(inAppResultCount).to.be.greaterThan(0);
+    expect(inAppResultCount).to.equal(inAppMessagesCount);
   });
 });

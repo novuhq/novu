@@ -49,10 +49,5 @@ export class RemoveMessagesByTransactionId {
     }
 
     await this.messageRepository.deleteMany(deleteQuery);
-
-    return {
-      acknowledged: true,
-      status: 'deleted',
-    };
   }
 }
