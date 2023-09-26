@@ -28,3 +28,5 @@ export * from './conditions-filter';
 export * from './switch-environment';
 export * from './switch-organization';
 export * from './create-user';
+export * from './map-trigger-recipients';
+export * from './get-topic-subscribers';

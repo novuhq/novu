@@ -25,6 +25,10 @@ import {
   StoreSubscriberJobs,
   ConditionsFilter,
   TriggerEvent,
+  MapTriggerRecipients,
+  GetTopicSubscribersUseCase,
+  GetIsTopicNotificationEnabled,
+  FeatureFlagsService,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
@@ -60,6 +64,16 @@ import {
 import { SharedModule } from '../shared/shared.module';
 
 const REPOSITORIES = [JobRepository];
+
+export const getIsTopicNotificationEnabled = {
+  provide: GetIsTopicNotificationEnabled,
+  useFactory: async (featureFlagsServiceItem: FeatureFlagsService): Promise<GetIsTopicNotificationEnabled> => {
+    const useCase = new GetIsTopicNotificationEnabled(featureFlagsServiceItem);
+
+    return useCase;
+  },
+  inject: [FeatureFlagsService],
+};
 
 const USE_CASES = [
   AddDelayJob,
@@ -101,6 +115,9 @@ const USE_CASES = [
   TriggerEvent,
   UpdateJobStatus,
   WebhookFilterBackoffStrategy,
+  MapTriggerRecipients,
+  GetTopicSubscribersUseCase,
+  getIsTopicNotificationEnabled,
 ];
 
 const PROVIDERS: Provider[] = [
