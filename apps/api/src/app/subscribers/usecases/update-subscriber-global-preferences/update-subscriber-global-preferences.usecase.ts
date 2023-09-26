@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { GetSubscriberGlobalPreference, GetSubscriberGlobalPreferenceCommand } from '@novu/application-generic';
 import {
+  ChannelTypeEnum,
   PreferenceLevelEnum,
   SubscriberEntity,
   SubscriberPreferenceEntity,
@@ -48,7 +49,7 @@ export class UpdateSubscriberGlobalPreferences {
     command: UpdateSubscriberGlobalPreferencesCommand,
     subscriber: SubscriberEntity
   ): Promise<void> {
-    const channelObj = {} as Record<'email' | 'sms' | 'in_app' | 'chat' | 'push', boolean>;
+    const channelObj = {} as Record<ChannelTypeEnum, boolean>;
     if (command.preferences && command.preferences.length > 0) {
       for (const preference of command.preferences) {
         if (preference.type) {
