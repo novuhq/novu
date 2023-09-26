@@ -18,6 +18,7 @@ export { Lock } from './general/Lock';
 export { Bell } from './general/Bell';
 export { Mail } from './general/Mail';
 export { Trash } from './general/Trash';
+export { SignOut } from './general/SignOut'
 export { Check } from './general/Check';
 export { TextAlignment } from './general/TextAlignment';
 export { CheckCircle } from './general/CheckCircle';
