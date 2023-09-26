@@ -126,7 +126,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 #### 📱 In-App
 
-- [x] [Novu](https://docs.novu.co/notification-center/getting-started)
+- [x] [Novu](https://docs.novu.co/notification-center/introduction)
 - [ ] MagicBell
 
 #### Other (Coming Soon...)

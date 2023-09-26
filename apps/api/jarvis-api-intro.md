@@ -11,7 +11,7 @@ This issue was tagged as related to `@novu/api` and the related code is located 
   If that's the first time you want to contribute to Novu here are a few simple steps to get you started:
   1. Fork the repository and clone your fork to your local machine.
   2. Install the dependencies using `npm run setup:project`.
-  3. Create a new branch with the number of the issue, for example: `1454-fix-something-cool` and start contributing based on the [Contributing Guide](https://docs.novu.co/community/run-locally) or the short guide in the section below.
+  3. Create a new branch with the number of the issue, for example: `1454-fix-something-cool` and start contributing based on the [Contributing Guide](https://docs.novu.co/community/run-in-local-machine) or the short guide in the section below.
   4. Create a Pull request and follow the template of creation 
 </details>
 

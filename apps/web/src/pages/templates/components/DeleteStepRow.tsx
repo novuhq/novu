@@ -29,7 +29,7 @@ export const DeleteStepRow = () => {
           target={'_blank'}
           style={{ color: 'rgb(221, 36, 118)', textDecoration: 'underline', fontSize: '18px' }}
           rel="noopener noreferrer"
-          href={'https://docs.novu.co/platform/digest'}
+          href={'https://docs.novu.co/workflows/digest'}
         >
           Learn more in the docs
         </a>
@@ -39,7 +39,7 @@ export const DeleteStepRow = () => {
           target={'_blank'}
           style={{ color: 'rgb(221, 36, 118)', textDecoration: 'underline', fontSize: '18px' }}
           rel="noopener noreferrer"
-          href={'https://docs.novu.co/platform/delay'}
+          href={'https://docs.novu.co/workflows/delay-action'}
         >
           Learn more in the docs
         </a>
