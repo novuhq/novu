@@ -24,7 +24,7 @@ spec:
         - envFrom:
             - configMapRef:
                 name: novu-env
-          image: ghcr.io/novuhq/novu/ws:0.18.0
+          image: ghcr.io/novuhq/novu/ws:0.19.0
           name: ws
           ports:
             - containerPort: 3002

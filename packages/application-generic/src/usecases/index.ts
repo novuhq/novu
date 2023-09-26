@@ -18,6 +18,7 @@ export * from './trigger-event';
 export * from './create-notification-jobs';
 export * from './process-subscriber';
 export * from './select-integration';
+export * from './select-variant';
 export * from './get-feature-flag';
 export * from './get-novu-provider-credentials';
 export * from './update-tenant';

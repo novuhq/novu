@@ -78,7 +78,6 @@ export const ConditionIconButton = ({
         </ActionIcon>
       </Tooltip>
       <Modal
-        zIndex={999}
         opened={modalOpen}
         data-test-id="remove-primary-flag-modal"
         title={

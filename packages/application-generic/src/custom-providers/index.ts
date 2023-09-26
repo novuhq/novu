@@ -1,8 +1,4 @@
 import {
-  StandardQueueServiceHealthIndicator,
-  WorkflowQueueServiceHealthIndicator,
-} from '../health';
-import {
   AnalyticsService,
   BullMqService,
   CacheService,

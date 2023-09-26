@@ -38,7 +38,6 @@ const SideBarWrapper = styled.div<{ dark: boolean }>`
   top: ${TOP_ROW_HEIGHT}px;
   bottom: 0;
   background: transparent;
-  height: 100%;
   right: 8px;
-  z-index: 99;
+  z-index: 5;
 `;
