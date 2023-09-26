@@ -321,7 +321,7 @@ export class MessageMatcher extends Filter {
     filterProcessingDetails: FilterProcessingDetails
   ): Promise<boolean> {
     const subscriber = await this.subscriberRepository.findOne({
-      _id: command.subscriberId,
+      subscriberId: command.subscriberId,
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
     });
