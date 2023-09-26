@@ -1,15 +1,8 @@
+import { ChannelTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { NotificationTemplateEntity } from '@novu/dal';
-import {
-  ChannelTypeEnum,
-  DigestTypeEnum,
-  DigestUnitEnum,
-  IUpdateNotificationTemplateDto,
-  StepTypeEnum,
-} from '@novu/shared';
 
-import { getNotificationTemplate, updateNotificationTemplate, getPreference, updateGlobalPreferences } from './helpers';
+import { updateGlobalPreferences } from './helpers';
 
 describe('Update Subscribers global preferences - /subscribers/:subscriberId/preferences (PATCH)', function () {
   let session: UserSession;

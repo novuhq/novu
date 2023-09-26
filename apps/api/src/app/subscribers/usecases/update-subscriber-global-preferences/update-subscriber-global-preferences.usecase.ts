@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { GetSubscriberGlobalPreference, GetSubscriberGlobalPreferenceCommand } from '@novu/application-generic';
 import {
   PreferenceLevelEnum,
   SubscriberEntity,
@@ -6,7 +7,6 @@ import {
   SubscriberPreferenceRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { GetSubscriberGlobalPreference, GetSubscriberGlobalPreferenceCommand } from '@novu/application-generic';
 
 import { UpdateSubscriberGlobalPreferencesCommand } from './update-subscriber-global-preferences.command';
 
@@ -26,7 +26,6 @@ export class UpdateSubscriberGlobalPreferences {
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
       _subscriberId: subscriber._id,
-
       level: PreferenceLevelEnum.GLOBAL,
     });
 
