@@ -1,4 +1,5 @@
-import { IsBoolean, IsOptional } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsBoolean, IsOptional, ValidateNested } from 'class-validator';
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 import { ChannelPreference } from '../../../shared/dtos/channel-preference';
 
@@ -8,5 +9,7 @@ export class UpdateSubscriberGlobalPreferencesCommand extends EnvironmentWithSub
   enabled?: boolean;
 
   @IsOptional()
+  @ValidateNested()
+  @Type(() => ChannelPreference)
   preferences?: ChannelPreference[];
 }
