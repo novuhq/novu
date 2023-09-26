@@ -156,6 +156,17 @@ export class SendMessageInApp extends SendMessageBase {
 
         inAppChannel.template.cta.action.buttons = ctaButtons;
       }
+
+      if (actor && actor.data) {
+        actor.data = await this.compileInAppTemplate(
+          actor.data,
+          command.payload,
+          subscriber,
+          command,
+          organization,
+          tenant
+        );
+      }
     } catch (e) {
       await this.sendErrorHandlebars(command.job, e.message);
 
