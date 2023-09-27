@@ -8,7 +8,7 @@ import {
   PinoLogger,
   storage,
   Store,
-  OldInstanceWorkflowWorkerService,
+  OldInstanceStandardWorkerService,
   WorkerOptions,
 } from '@novu/application-generic';
 
@@ -30,7 +30,7 @@ const LOG_CONTEXT = 'OldInstanceWorkflowWorker';
  * TODO: Temporary for migration to MemoryDB
  */
 @Injectable()
-export class OldInstanceWorkflowWorker extends OldInstanceWorkflowWorkerService implements INovuWorker {
+export class OldInstanceStandardWorker extends OldInstanceStandardWorkerService implements INovuWorker {
   constructor(
     private handleLastFailedJob: HandleLastFailedJob,
     private runJob: RunJob,

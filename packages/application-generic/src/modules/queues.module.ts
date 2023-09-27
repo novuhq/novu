@@ -24,7 +24,7 @@ import {
   StandardWorkerService,
   WebSocketsWorkerService,
   WorkflowWorkerService,
-  OldInstanceWorkflowWorkerService,
+  OldInstanceStandardWorkerService,
 } from '../services/workers';
 
 const PROVIDERS: Provider[] = [
@@ -43,7 +43,7 @@ const PROVIDERS: Provider[] = [
   WorkflowQueueService,
   WorkflowQueueServiceHealthIndicator,
   WorkflowWorkerService,
-  OldInstanceWorkflowWorkerService,
+  OldInstanceStandardWorkerService,
   OldInstanceBullMqService,
 ];
 
