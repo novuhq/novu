@@ -17,6 +17,10 @@ export class TestSendEmailRequestDto {
   @IsString()
   preheader?: string;
 
+  @IsOptional()
+  @IsString()
+  senderName?: string;
+
   @IsDefined()
   content: string | IEmailBlock[];
 

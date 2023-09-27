@@ -67,21 +67,22 @@ export class SendTestEmail {
       });
     }
 
-    const { html, subject } = await this.compileEmailTemplateUsecase.execute(
-      CompileEmailTemplateCommand.create({
-        ...command,
-        payload: {
-          ...command.payload,
-          step: {
-            digest: true,
-            events: [],
-            total_count: 1,
-            ...this.getSystemVariables('step', command),
+    const { html, subject, senderName } =
+      await this.compileEmailTemplateUsecase.execute(
+        CompileEmailTemplateCommand.create({
+          ...command,
+          payload: {
+            ...command.payload,
+            step: {
+              digest: true,
+              events: [],
+              total_count: 1,
+              ...this.getSystemVariables('step', command),
+            },
+            subscriber: this.getSystemVariables('subscriber', command),
           },
-          subscriber: this.getSystemVariables('subscriber', command),
-        },
-      })
-    );
+        })
+      );
 
     if (email && integration) {
       const mailData: IEmailOptions = {
@@ -89,6 +90,7 @@ export class SendTestEmail {
         subject,
         html: html as string,
         from:
+          senderName ||
           command.payload.$sender_email ||
           integration?.credentials.from ||
           'no-reply@novu.co',

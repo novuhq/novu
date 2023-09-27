@@ -149,6 +149,8 @@ export class ContentService {
         yield message.template.title as string;
       } else if (Array.isArray(message.template?.content)) {
         yield message.template.subject || '';
+        yield message.template.senderName || '';
+        yield message.template.preheader || '';
 
         for (const block of message.template.content) {
           yield block.url || '';

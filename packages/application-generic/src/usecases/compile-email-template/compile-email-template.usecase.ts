@@ -64,6 +64,7 @@ export class CompileEmailTemplate {
     let subject = '';
     const content: string | IEmailBlock[] = command.content;
     let preheader = command.preheader;
+    let senderName = command.senderName ?? '';
 
     command.payload = merge({}, defaultPayload, command.payload);
 
@@ -83,6 +84,10 @@ export class CompileEmailTemplate {
       if (preheader) {
         preheader = await this.renderContent(preheader, payload);
       }
+
+      if (senderName) {
+        senderName = await this.renderContent(senderName, payload);
+      }
     } catch (e: any) {
       throw new ApiException(
         e?.message || `Message content could not be generated`
@@ -97,6 +102,7 @@ export class CompileEmailTemplate {
       ...payload,
       subject,
       preheader,
+      senderName,
       body: '',
       blocks: isEditorMode ? content : [],
     };
@@ -128,7 +134,7 @@ export class CompileEmailTemplate {
         )
       : body;
 
-    return { html, content, subject };
+    return { html, content, subject, senderName };
   }
 
   private async renderContent(
