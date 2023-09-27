@@ -130,7 +130,7 @@ export class SelectIntegration {
     );
 
     let query: Partial<IntegrationEntity> & { _organizationId: string } = {
-      ...(command.id ? { id: command.id } : {}),
+      ...(command.id ? { _id: command.id } : {}),
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
       channel: command.channelType,

@@ -504,6 +504,7 @@
     "errmsg",
     "shelljs",
     "prefiltering",
+    "virtuals",
     "autodocs",
     "stackalt",
     "mediumdark",
