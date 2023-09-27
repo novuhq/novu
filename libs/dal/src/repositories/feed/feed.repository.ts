@@ -25,7 +25,7 @@ export class FeedRepository extends BaseRepository<FeedDBModel, FeedEntity, Enfo
     );
     if (relatedMessages.length) throw new DalException(`Can not delete feed that has existing message`);
 
-    await this.feed.delete({ _id: feed._id, _environmentId: feed._environmentId });
+    return await this.feed.delete({ _id: feed._id, _environmentId: feed._environmentId });
   }
 
   async findDeleted(query: FilterQuery<FeedEntity>): Promise<FeedEntity> {
