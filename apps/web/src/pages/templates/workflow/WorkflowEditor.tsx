@@ -3,6 +3,7 @@ import { FilterPartTypeEnum, StepTypeEnum } from '@novu/shared';
 import { useCallback, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Link, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { v4 as uuid4 } from 'uuid';
 
 import { useDidUpdate, useTimeout } from '@mantine/hooks';
 import { When } from '../../../components/utils/When';
@@ -14,7 +15,7 @@ import { channels } from '../../../utils/channels';
 import { errorMessage } from '../../../utils/notifications';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import type { IForm } from '../components/formTypes';
-import { useTemplateEditorForm } from '../components/TemplateEditorFormProvider';
+import { makeVariant, useTemplateEditorForm } from '../components/TemplateEditorFormProvider';
 import { UpdateButton } from '../components/UpdateButton';
 import { useBasePath } from '../hooks/useBasePath';
 import { getFormattedStepErrors } from '../shared/errors';
@@ -23,11 +24,13 @@ import { AddNodeEdge } from './workflow/edge-types/AddNodeEdge';
 import AddNode from './workflow/node-types/AddNode';
 import ChannelNode from './workflow/node-types/ChannelNode';
 import TriggerNode from './workflow/node-types/TriggerNode';
+import VariantlNode from './workflow/node-types/VariantlNode';
 
 export const TOP_ROW_HEIGHT = 74;
 
 const nodeTypes = {
   channelNode: ChannelNode,
+  variantNode: VariantlNode,
   triggerNode: TriggerNode,
   addNode: AddNode,
 };
@@ -44,6 +47,8 @@ const WorkflowEditor = () => {
   const {
     trigger,
     watch,
+    setValue,
+    getValues,
     formState: { errors, isDirty },
   } = useFormContext<IForm>();
   const { readonly } = useEnvController();
@@ -59,7 +64,9 @@ const WorkflowEditor = () => {
   const onNodeClick = useCallback(
     (event, node) => {
       event.preventDefault();
-
+      if (node.type === 'variantNode') {
+        navigate(basePath + `/${node.data.channelType}/${node.data.uuid}/variants`);
+      }
       if (node.type === 'channelNode') {
         navigate(basePath + `/${node.data.channelType}/${node.data.uuid}`);
       }
@@ -69,6 +76,21 @@ const WorkflowEditor = () => {
     },
     [navigate, basePath]
   );
+
+  const onAddVariant = (uuid) => {
+    const newId = uuid4();
+    const stepToVariant = steps.find((step) => step.uuid === uuid);
+    const index = steps.findIndex((item) => item.uuid === uuid);
+
+    const variantName = stepToVariant?.name + 'V1';
+    const newVariant = makeVariant(stepToVariant?.template.type as StepTypeEnum, newId);
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    setValue(`steps.${index}.variants`, [...getValues(`steps.${index}.variants`), newVariant], { shouldDirty: true });
+    console.log('var', getValues(`steps.${index}.variants`));
+    console.log('step', stepToVariant);
+    navigate(basePath + `/${stepToVariant?.template.type}/${uuid}/variants/${newVariant.uuid}`);
+  };
 
   const confirmDelete = () => {
     const index = steps.findIndex((item) => item.uuid === toDelete);
@@ -184,6 +206,7 @@ const WorkflowEditor = () => {
             onStepInit={onStepInit}
             onGetStepError={onGetStepError}
             onNodeClick={onNodeClick}
+            onAddVariant={onAddVariant}
           />
         </div>
       </div>
@@ -218,9 +241,11 @@ const WorkflowEditor = () => {
               >
                 <Group>
                   <NameInput />
-                  <Group>
-                    <UpdateButton />
-                  </Group>
+                  <When truthy={!channel}>
+                    <Group>
+                      <UpdateButton />
+                    </Group>
+                  </When>
                   <When truthy={pathname === basePath}>
                     <Button
                       pulse={shouldPulse}
@@ -249,6 +274,7 @@ const WorkflowEditor = () => {
               onStepInit={onStepInit}
               onGetStepError={onGetStepError}
               onNodeClick={onNodeClick}
+              onAddVariant={onAddVariant}
             />
           </div>
           <Outlet

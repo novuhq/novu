@@ -55,6 +55,57 @@ const makeStep = (channelType: StepTypeEnum, id: string): IFormStep => {
     active: true,
     shouldStopOnFail: false,
     filters: [],
+    variants: [],
+    ...(channelType === StepTypeEnum.EMAIL && {
+      replyCallback: {
+        active: false,
+      },
+    }),
+    ...(channelType === StepTypeEnum.DIGEST && {
+      digestMetadata: {
+        digestKey: '',
+        type: DigestTypeEnum.REGULAR,
+        regular: {
+          unit: DigestUnitEnum.MINUTES,
+          amount: '5',
+          backoff: false,
+        },
+      },
+    }),
+    ...(channelType === StepTypeEnum.DELAY && {
+      delayMetadata: {
+        type: DelayTypeEnum.REGULAR,
+        regular: {
+          unit: DigestUnitEnum.MINUTES,
+          amount: '5',
+        },
+      },
+    }),
+  };
+};
+
+export const makeVariant = (channelType: StepTypeEnum, id: string): IFormStep => {
+  return {
+    _id: id,
+    uuid: uuid4(),
+    name: stepNames[channelType],
+    template: {
+      subject: '',
+      type: channelType,
+      content: channelType === StepTypeEnum.EMAIL ? defaultEmailBlocks : '',
+      contentType: 'editor',
+      variables: [],
+      ...(channelType === StepTypeEnum.IN_APP && {
+        actor: {
+          type: ActorTypeEnum.NONE,
+          data: null,
+        },
+        enableAvatar: false,
+      }),
+    },
+    active: true,
+    shouldStopOnFail: false,
+    filters: [],
     ...(channelType === StepTypeEnum.EMAIL && {
       replyCallback: {
         active: false,

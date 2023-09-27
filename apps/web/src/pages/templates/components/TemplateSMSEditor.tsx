@@ -15,8 +15,18 @@ import { StepSettings } from '../workflow/SideBar/StepSettings';
 
 const templateFields = ['content'];
 
-export function TemplateSMSEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {
+export function TemplateSMSEditor({
+  control,
+  index,
+  variantIndex,
+}: {
+  control: Control<IForm>;
+  index: number;
+  variantIndex?: number;
+  errors: any;
+}) {
   const { readonly, environment } = useEnvController();
+  const path = variantIndex ? `steps.${index}.variants.${variantIndex}` : `steps.${index}`;
   const {
     formState: { errors },
   } = useFormContext();
@@ -38,16 +48,16 @@ export function TemplateSMSEditor({ control, index }: { control: Control<IForm>;
           isPrimaryMissing
         />
       ) : null}
-      <StepSettings index={index} />
+      <StepSettings path={path} index={index} />
       <Controller
-        name={`steps.${index}.template.content` as any}
+        name={`${path}.template.content` as any}
         defaultValue=""
         control={control}
-        render={({ field }) => (
+        render={({ field, fieldState }) => (
           <Textarea
             {...field}
             data-test-id="smsNotificationContent"
-            error={errors?.steps ? errors.steps[index]?.template?.content?.message : undefined}
+            error={fieldState.error?.message}
             disabled={readonly}
             minRows={4}
             value={field.value || ''}

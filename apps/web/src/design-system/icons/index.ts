@@ -84,6 +84,9 @@ export { Cloud } from './general/Cloud';
 export { Condition } from './general/Condition';
 export { RemoveCondition } from './general/RemoveCondition';
 export { Warning } from './general/Warning';
+export { VariantsFile } from './general/VariantsFile';
+export { ConditionsFile } from './general/ConditionsFile';
+export { Variant } from './general/Variant';
 
 export { Copy } from './actions/Copy';
 export { Close } from './actions/Close';
@@ -98,6 +101,8 @@ export { Invite } from './actions/Invite';
 export { PlusFilled } from './actions/PlusFilled';
 export { ConditionPlus } from './actions/ConditionPlus';
 export { Duplicate } from './actions/Duplicate';
+export { PencilOutlined } from './actions/PencilOutlined';
+export { VariantPlus } from './actions/VariantPlus';
 
 export { ArrowDown } from './arrows/ArrowDown';
 export { DoubleArrowRight } from './arrows/DoubleArrowRight';

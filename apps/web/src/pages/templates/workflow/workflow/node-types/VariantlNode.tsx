@@ -58,9 +58,9 @@ export default memo(
       }
 
       setCount(foundIndex + 1);
-    }, [nodes, data, id]);
-
+    }, [nodes.length, data, id]);
     const subtitle = useMemo(() => {
+      console.log('nn');
       const content = data.content;
       if (StepTypeEnum.DELAY === data.channelType) {
         return delaySubtitle(data);
@@ -96,6 +96,7 @@ export default memo(
             data.onAddVariant(data.uuid);
           }}
           tabKey={data.tabKey}
+          variant={true}
           channelType={data.channelType}
           Icon={data.Icon}
           label={data.name ? data.name : data.label + (count > 0 ? ` (${count})` : '')}

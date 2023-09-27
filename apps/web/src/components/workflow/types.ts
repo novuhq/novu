@@ -19,6 +19,7 @@ export interface IFlowStep {
     content?: string | IEmailBlock[];
     htmlContent?: string;
   };
+  variants?: Omit<IFlowStep, 'variants'>[];
   digestMetadata?: IFormStep['digestMetadata'];
   delayMetadata?: IFormStep['delayMetadata'];
 }

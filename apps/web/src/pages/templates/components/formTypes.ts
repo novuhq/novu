@@ -39,6 +39,7 @@ export interface IFormStep {
     active: boolean;
     url?: string;
   };
+  variants?: Omit<IFormStep, 'variants'>[];
   digestMetadata?: {
     type: DigestTypeEnum;
     digestKey?: string;

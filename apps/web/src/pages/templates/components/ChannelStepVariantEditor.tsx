@@ -28,12 +28,17 @@ import { CONTEXT_PATH } from '../../../config';
 import { useMantineColorScheme } from '@mantine/core';
 import styled from '@emotion/styled';
 
-export const ChannelStepEditor = () => {
+export const ChannelStepVariantEditor = () => {
   const { readonly } = useEnvController();
 
-  const { channel, stepUuid = '' } = useParams<{
+  const {
+    channel,
+    stepUuid = '',
+    variantUuid = '',
+  } = useParams<{
     channel: StepTypeEnum | undefined;
     stepUuid: string;
+    variantUuid: string;
   }>();
   const { integrations } = useActiveIntegrations();
   const {
@@ -56,7 +61,12 @@ export const ChannelStepEditor = () => {
       return;
     }
     navigate(basePath);
-  }, [navigate, basePath, index, steps]);
+  }, [index, steps]);
+
+  const variantIndex = useMemo(
+    () => steps?.[index]?.variants?.findIndex((message) => message.uuid === variantUuid),
+    [channel, stepUuid, variantUuid, steps]
+  );
 
   if (index === -1 || channel === undefined) {
     return null;
@@ -85,9 +95,10 @@ export const ChannelStepEditor = () => {
     return (
       <SubPageWrapper
         key={index}
-        index={index}
         color={colors.white}
-        title={<StepName index={index} color={colors.B60} channel={channel} />}
+        variantIndex={variantIndex}
+        index={index}
+        title={<StepName variantIndex={variantIndex} index={index} color={colors.B60} channel={channel} />}
         style={{
           width: '100%',
           borderTopLeftRadius: 7,
@@ -106,19 +117,32 @@ export const ChannelStepEditor = () => {
       <SubPageWrapper
         key={index}
         index={index}
+        variantIndex={variantIndex}
         color={colors.white}
-        title={<StepName index={index} color={colors.B60} channel={channel} />}
+        title={<StepName variantIndex={variantIndex} index={index} color={colors.B60} channel={channel} />}
         style={{ paddingBottom: 24 }}
       >
         {channel === StepTypeEnum.SMS && (
           <>
-            <TemplateSMSEditor key={index} control={control} index={index} errors={errors} />
+            <TemplateSMSEditor
+              variantIndex={variantIndex}
+              key={index}
+              control={control}
+              index={index}
+              errors={errors}
+            />
             <TranslateProductLead id="translate-sms-editor" />
           </>
         )}
         {channel === StepTypeEnum.PUSH && (
           <>
-            <TemplatePushEditor key={index} control={control} index={index} errors={errors} />
+            <TemplatePushEditor
+              variantIndex={variantIndex}
+              key={index}
+              control={control}
+              index={index}
+              errors={errors}
+            />
             <TranslateProductLead id="translate-push-editor" />
           </>
         )}
@@ -135,3 +159,11 @@ export const ChannelStepEditor = () => {
     </>
   );
 };
+
+const LeftContainerWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  //gap: 16px;
+  //flex: 1;
+  flex: 1 1 auto;
+`;

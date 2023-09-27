@@ -12,13 +12,21 @@ export const useStyles = createStyles((theme) => {
       } border-box`,
       boxShadow: dark ? shadows.dark : shadows.light,
     },
+    variant: {
+      height: '120px',
+    },
+    header: {
+      padding: '8px 0',
+      marginLeft: '-8px',
+      height: '40px',
+    },
     button: {
       height: '80px',
       width: '100%',
       margin: '0px',
       marginBottom: '20px',
       padding: '0 20px',
-      paddingLeft: '10px',
+      paddingRight: '10px',
       backgroundColor: dark ? colors.B17 : colors.B98,
       borderRadius: '7px',
       fontWeight: 700,
