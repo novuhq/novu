@@ -39,7 +39,7 @@ export class OldInstanceWorkflowWorker extends OldInstanceWorkflowWorkerService 
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const _this = this;
 
-        Logger.verbose(`Job ${data.id} is being processed in the old instance workflow worker`, LOG_CONTEXT);
+        Logger.verbose(`Job ${data._id} is being processed in the old instance workflow worker`, LOG_CONTEXT);
 
         nr.startBackgroundTransaction(
           ObservabilityBackgroundTransactionEnum.TRIGGER_HANDLER_QUEUE,
