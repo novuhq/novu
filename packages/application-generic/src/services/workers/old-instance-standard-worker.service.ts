@@ -9,14 +9,14 @@ import {
   WorkerOptions,
 } from '../bull-mq';
 
-const LOG_CONTEXT = 'OldInstanceWorkerService';
+const LOG_CONTEXT = 'OldInstanceStandardWorkerService';
 
 type WorkerProcessor = string | Processor<any, unknown, string> | undefined;
 
 /**
  * TODO: Temporary for migration to MemoryDB
  */
-export class OldInstanceWorkflowWorkerService {
+export class OldInstanceStandardWorkerService {
   private instance: OldInstanceBullMqService;
 
   public readonly DEFAULT_ATTEMPTS = 3;
@@ -29,7 +29,7 @@ export class OldInstanceWorkflowWorkerService {
       Logger.log(`Worker ${this.topic} instantiated`, LOG_CONTEXT);
     } else {
       Logger.warn(
-        `Old instance workflow worker not instantiated as it is only needed for MemoryDB migration`,
+        `Old instance standard worker not instantiated as it is only needed for MemoryDB migration`,
         LOG_CONTEXT
       );
     }
@@ -58,7 +58,7 @@ export class OldInstanceWorkflowWorkerService {
     } else {
       Logger.log(
         { enabled: this.instance.enabled },
-        'We are not running OldInstanceWorkflowWorkerService as it is not needed in this environment',
+        'We are not running OldInstanceStandardWorkerService as it is not needed in this environment',
         LOG_CONTEXT
       );
     }
@@ -86,11 +86,17 @@ export class OldInstanceWorkflowWorkerService {
 
   public async gracefulShutdown(): Promise<void> {
     if (this.instance.enabled) {
-      Logger.log('Shutting the Worker service down', LOG_CONTEXT);
+      Logger.log(
+        'Shutting the old instance standard worker service down',
+        LOG_CONTEXT
+      );
 
       await this.instance.gracefulShutdown();
 
-      Logger.log('Shutting down the Worker service has finished', LOG_CONTEXT);
+      Logger.log(
+        'Shutting down the old instance standard worker service has finished',
+        LOG_CONTEXT
+      );
     }
   }
 

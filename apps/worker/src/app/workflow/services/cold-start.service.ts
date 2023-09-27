@@ -3,7 +3,7 @@ import { INovuWorker, ReadinessService } from '@novu/application-generic';
 
 import { StandardWorker } from './standard.worker';
 import { WorkflowWorker } from './workflow.worker';
-import { OldInstanceWorkflowWorker } from './old-instance-workflow.worker';
+import { OldInstanceStandardWorker } from './old-instance-standard.worker';
 
 /**
  * TODO: Temporary engage OldInstanceWorkflowWorker while migrating to MemoryDB
@@ -11,9 +11,9 @@ import { OldInstanceWorkflowWorker } from './old-instance-workflow.worker';
 const getWorkers = (app: INestApplication): INovuWorker[] => {
   const standardWorker = app.get(StandardWorker, { strict: false });
   const workflowWorker = app.get(WorkflowWorker, { strict: false });
-  const oldInstanceWorkflowWorker = app.get(OldInstanceWorkflowWorker, { strict: false });
+  const oldInstanceStandardWorker = app.get(OldInstanceStandardWorker, { strict: false });
 
-  const workers: INovuWorker[] = [standardWorker, workflowWorker, oldInstanceWorkflowWorker];
+  const workers: INovuWorker[] = [standardWorker, workflowWorker, oldInstanceStandardWorker];
 
   return workers;
 };
