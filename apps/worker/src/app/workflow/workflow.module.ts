@@ -29,7 +29,13 @@ import {
 } from '@novu/application-generic';
 import { JobRepository, MessageRepository, OrganizationRepository, SubscriberRepository } from '@novu/dal';
 
-import { JobMetricService, StandardWorker, WorkflowWorker, OldInstanceStandardWorker } from './services';
+import {
+  JobMetricService,
+  StandardWorker,
+  WorkflowWorker,
+  OldInstanceStandardWorker,
+  OldInstanceWorkflowWorker,
+} from './services';
 import {
   MessageMatcher,
   SendMessage,
@@ -103,6 +109,7 @@ const PROVIDERS: Provider[] = [
   WorkflowWorker,
   OldInstanceBullMqService,
   OldInstanceStandardWorker,
+  OldInstanceWorkflowWorker,
 ];
 
 @Module({

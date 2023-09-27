@@ -24,7 +24,7 @@ import {
   HandleLastFailedJob,
 } from '../usecases';
 
-const LOG_CONTEXT = 'OldInstanceWorkflowWorker';
+const LOG_CONTEXT = 'OldInstanceStandardWorker';
 
 /**
  * TODO: Temporary for migration to MemoryDB
@@ -94,6 +94,8 @@ export class OldInstanceStandardWorker extends OldInstanceStandardWorkerService 
   private getWorkerProcessor() {
     return async ({ data }: { data: IJobData | any }) => {
       const minimalJobData = this.extractMinimalJobData(data);
+
+      Logger.verbose(`Job ${minimalJobData.jobId} is being processed in the old instance standard worker`, LOG_CONTEXT);
 
       return await new Promise(async (resolve, reject) => {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
