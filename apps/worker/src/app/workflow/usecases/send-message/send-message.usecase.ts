@@ -85,7 +85,7 @@ export class SendMessage {
         };
       }
 
-      this.analyticsService.track('Process Workflow Step - [Triggers]', command.userId, {
+      this.analyticsService.mixpanelTrack('Process Workflow Step - [Triggers]', '', {
         _template: command.job._templateId,
         _organization: command.organizationId,
         _environment: command.environmentId,
