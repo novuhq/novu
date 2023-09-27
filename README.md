@@ -167,9 +167,9 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [x] [Burst SMS](https://github.com/novuhq/novu/tree/main/providers/burst-sms)
 - [x] [Firetext](https://github.com/novuhq/novu/tree/main/providers/firetext)
 - [x] [Infobip](https://github.com/novuhq/novu/tree/main/providers/infobip)
-- [x] [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
 - [ ] Bandwidth
 - [ ] RingCentral
+
 
 #### 📱 Push
 
