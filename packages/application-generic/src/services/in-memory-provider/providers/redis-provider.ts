@@ -53,8 +53,8 @@ export const getRedisProviderConfig = (): IRedisProviderConfig => {
     tls: process.env.REDIS_TLS as ConnectionOptions,
   };
 
-  const db = Number(redisConfig.db);
-  const port = Number(redisConfig.port) || DEFAULT_PORT;
+  const db = redisConfig.db ? Number(redisConfig.db) : undefined;
+  const port = redisConfig.port ? Number(redisConfig.port) : DEFAULT_PORT;
   const host = redisConfig.host || DEFAULT_HOST;
   const password = redisConfig.password;
   const connectTimeout = redisConfig.connectTimeout

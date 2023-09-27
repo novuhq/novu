@@ -14,6 +14,11 @@ on:
         required: false
         default: false
         type: boolean
+      submodule_branch:
+        description: 'Submodule branch to checkout to'
+        required: false
+        default: 'main'
+        type: string
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -31,10 +36,20 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
+      - id: setup
+        run: |
+          if ! [[ -z "${{ secrets.SUBMODULES_TOKEN }}" ]]; then
+             echo ::set-output has_token=true
+          else
+             echo ::set-output has_token=false
+          fi
+      - uses: actions/checkout@v3
       # checkout with submodules if token is provided
-      - uses: actions/checkout@v3
-       # checkout without submodules
-      - uses: actions/checkout@v3
+      - uses: ./.github/actions/checkout-submodules
+        with:
+          enabled: ${{ steps.setup.outputs.has_token == 'true' }}
+          submodule_token: ${{ secrets.SUBMODULES_TOKEN }}
+          submodule_branch: ${{ inputs.submodule_branch }}
       - uses: ./.github/actions/setup-project
       - uses: mansagroup/nrwl-nx-action@v3
         with:
@@ -46,7 +61,5 @@ jobs:
         run: CI='' pnpm build:ws
 
       - name: Run unit tests
-        env:
-          IN_MEMORY_CLUSTER_MODE_ENABLED: false
         run: |
           cd apps/ws && pnpm test

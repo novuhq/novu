@@ -58,7 +58,7 @@ function BaseTemplateEditorPage() {
         navigate(ROUTES.WORKFLOWS);
       }
     }
-  }, [environment, template]);
+  }, [navigate, environment, template]);
 
   if (environment && environment?.name === 'Production' && isCreateTemplatePage) {
     navigate(ROUTES.WORKFLOWS);

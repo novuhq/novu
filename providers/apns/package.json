@@ -37,7 +37,7 @@
   },
   "dependencies": {
     "@novu/stateless": "^0.19.0",
-    "node-apn": "^3.0.0"
+    "@parse/node-apn": "^5.2.3"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",

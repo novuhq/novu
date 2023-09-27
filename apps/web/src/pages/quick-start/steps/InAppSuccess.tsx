@@ -21,7 +21,7 @@ export function InAppSuccess() {
   useEffect(() => {
     segment.track(OnBoardingAnalyticsEnum.IN_APP_SANDBOX_SUCCESS_VISIT, { flow: FlowTypeEnum.IN_APP, framework });
     currentOnboardingStep().set(location.pathname);
-  }, []);
+  }, [segment, framework, location.pathname]);
 
   return (
     <PageContainer

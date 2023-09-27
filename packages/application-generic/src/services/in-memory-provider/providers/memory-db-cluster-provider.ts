@@ -55,7 +55,9 @@ export const getMemoryDbClusterProviderConfig =
     };
 
     const host = redisClusterConfig.host;
-    const port = Number(redisClusterConfig.port);
+    const port = redisClusterConfig.port
+      ? Number(redisClusterConfig.port)
+      : undefined;
     const username = redisClusterConfig.username;
     const password = redisClusterConfig.password;
     const connectTimeout = redisClusterConfig.connectTimeout

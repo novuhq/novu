@@ -86,6 +86,9 @@ export class SendMessageInApp extends SendMessageBase {
       environmentId: command.environmentId,
       channelType: ChannelTypeEnum.IN_APP,
       userId: command.userId,
+      filterData: {
+        tenant: command.job.tenant,
+      },
     });
 
     if (!integration) {
@@ -233,19 +236,6 @@ export class SendMessageInApp extends SendMessageBase {
 
     if (!message) throw new PlatformException('Message not found');
 
-    await this.webSocketsQueueService.bullMqService.add(
-      'sendMessage',
-      {
-        event: WebSocketEventEnum.RECEIVED,
-        userId: command._subscriberId,
-        payload: {
-          message,
-        },
-      },
-      {},
-      command.organizationId
-    );
-
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -260,22 +250,14 @@ export class SendMessageInApp extends SendMessageBase {
     );
 
     await this.webSocketsQueueService.bullMqService.add(
-      'sendMessage',
+      message._id,
       {
-        event: WebSocketEventEnum.UNSEEN,
+        event: WebSocketEventEnum.RECEIVED,
         userId: command._subscriberId,
         _environmentId: command.environmentId,
-      },
-      {},
-      command.organizationId
-    );
-
-    await this.webSocketsQueueService.bullMqService.add(
-      'sendMessage',
-      {
-        event: WebSocketEventEnum.UNREAD,
-        userId: command._subscriberId,
-        _environmentId: command.environmentId,
+        payload: {
+          messageId: message._id,
+        },
       },
       {},
       command.organizationId
@@ -317,7 +299,7 @@ export class SendMessageInApp extends SendMessageBase {
             logo: organization?.branding?.logo,
             color: organization?.branding?.color || '#f47373',
           },
-          ...(tenant ? { tenant: { name: tenant.name, ...tenant.data } } : {}),
+          ...(tenant && { tenant }),
           ...payload,
         },
       })

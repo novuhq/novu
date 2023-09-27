@@ -116,6 +116,7 @@ export class InMemoryProviderService {
 
   public isClusterMode(): boolean {
     const isClusterModeEnabled = this.getIsInMemoryClusterModeEnabled.execute();
+
     Logger.log(
       this.descriptiveLogMessage(
         `Cluster mode ${
