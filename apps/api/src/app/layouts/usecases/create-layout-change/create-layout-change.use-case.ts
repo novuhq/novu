@@ -1,5 +1,5 @@
 import { LayoutRepository, ChangeRepository } from '@novu/dal';
-import { ChangeEntityTypeEnum } from '@novu/shared';
+import { ChangeEntityActionEnum, ChangeEntityTypeEnum } from '@novu/shared';
 import { Injectable } from '@nestjs/common';
 
 import { CreateLayoutChangeCommand } from './create-layout-change.command';
@@ -41,6 +41,7 @@ export class CreateLayoutChangeUseCase {
           type: ChangeEntityTypeEnum.LAYOUT,
           item,
           changeId: parentChangeId,
+          action: ChangeEntityActionEnum.CREATE,
         })
       );
     }

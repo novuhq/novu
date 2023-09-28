@@ -7,7 +7,7 @@ import {
   NotificationTemplateRepository,
   NotificationGroupRepository,
 } from '@novu/dal';
-import { ChangeEntityTypeEnum, INotificationTemplateStep } from '@novu/shared';
+import { ChangeEntityActionEnum, ChangeEntityTypeEnum, INotificationTemplateStep } from '@novu/shared';
 import {
   AnalyticsService,
   InvalidateCacheService,
@@ -277,6 +277,7 @@ export class UpdateNotificationTemplate {
         type: ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
         item: notificationTemplate,
         changeId: parentChangeId,
+        action: ChangeEntityActionEnum.UPDATE,
       })
     );
 

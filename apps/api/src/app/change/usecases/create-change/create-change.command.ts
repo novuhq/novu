@@ -1,4 +1,4 @@
-import { ChangeEntityTypeEnum } from '@novu/shared';
+import { ChangeEntityActionEnum, ChangeEntityTypeEnum } from '@novu/shared';
 import { IsDefined, IsMongoId, IsOptional, IsString } from 'class-validator';
 import { Document } from 'mongoose';
 
@@ -23,4 +23,8 @@ export class CreateChangeCommand extends EnvironmentWithUserCommand {
   @IsMongoId()
   @IsOptional()
   parentChangeId?: string;
+
+  @IsDefined()
+  @IsString()
+  action: ChangeEntityActionEnum;
 }

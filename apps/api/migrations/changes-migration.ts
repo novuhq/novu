@@ -11,7 +11,7 @@ import {
   MemberRepository,
   OrganizationRepository,
 } from '@novu/dal';
-import { ChangeEntityTypeEnum, MemberRoleEnum } from '@novu/shared';
+import { ChangeEntityActionEnum, ChangeEntityTypeEnum, MemberRoleEnum } from '@novu/shared';
 import { CreateChange } from '../src/app/change/usecases/create-change/create-change.usecase';
 import { CreateChangeCommand } from '../src/app/change/usecases/create-change/create-change.command';
 import { CreateEnvironment } from '../src/app/environments/usecases/create-environment/create-environment.usecase';
@@ -110,6 +110,7 @@ export async function run(): Promise<void> {
             environmentId: group._environmentId,
             organizationId: group._organizationId,
             userId: member._userId,
+            action: ChangeEntityActionEnum.CREATE,
           })
         );
         console.log(`Change for group ${group._id} created`);
@@ -148,6 +149,7 @@ export async function run(): Promise<void> {
             environmentId: messageTemplate._environmentId,
             organizationId: messageTemplate._organizationId,
             userId: member._userId,
+            action: ChangeEntityActionEnum.CREATE,
           })
         );
         console.log(`Change for message template ${messageTemplate._id} created`);
@@ -186,6 +188,7 @@ export async function run(): Promise<void> {
             environmentId: notificationTemplate._environmentId,
             organizationId: notificationTemplate._organizationId,
             userId: member._userId,
+            action: ChangeEntityActionEnum.CREATE,
           })
         );
         console.log(`Change for notification template ${notificationTemplate._id} created`);

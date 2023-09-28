@@ -9,7 +9,13 @@ import {
   FeedRepository,
   NotificationGroupRepository,
 } from '@novu/dal';
-import { ChangeEntityTypeEnum, INotificationTemplateStep, INotificationTrigger, TriggerTypeEnum } from '@novu/shared';
+import {
+  ChangeEntityActionEnum,
+  ChangeEntityTypeEnum,
+  INotificationTemplateStep,
+  INotificationTrigger,
+  TriggerTypeEnum,
+} from '@novu/shared';
 import { AnalyticsService } from '@novu/application-generic';
 
 import { CreateNotificationTemplateCommand } from './create-notification-template.command';
@@ -156,6 +162,7 @@ export class CreateNotificationTemplate {
         type: ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
         item,
         changeId: parentChangeId,
+        action: ChangeEntityActionEnum.CREATE,
       })
     );
 

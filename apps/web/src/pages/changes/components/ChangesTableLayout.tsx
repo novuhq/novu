@@ -91,6 +91,13 @@ export const ChangesTable = ({
       ),
     },
     {
+      accessor: 'action',
+      Header: 'Action',
+      Cell: withCellLoading(({ row: { original } }) =>
+        original.action ? <Text rows={1}>{capitalize(original.action)}</Text> : null
+      ),
+    },
+    {
       accessor: 'user',
       Header: 'Changed By',
       Cell: withCellLoading(({ row: { original } }) => (

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ChangeRepository, DalException, MessageTemplateEntity, MessageTemplateRepository } from '@novu/dal';
-import { ChangeEntityTypeEnum } from '@novu/shared';
+import { ChangeEntityActionEnum, ChangeEntityTypeEnum } from '@novu/shared';
 
 import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -41,6 +41,7 @@ export class DeleteMessageTemplate {
           item: deletedMessageTemplate[0],
           type: ChangeEntityTypeEnum.MESSAGE_TEMPLATE,
           parentChangeId: command.parentChangeId,
+          action: ChangeEntityActionEnum.DELETE,
         })
       );
 

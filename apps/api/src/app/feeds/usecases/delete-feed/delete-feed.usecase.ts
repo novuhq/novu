@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { FeedRepository, ChangeRepository, DalException } from '@novu/dal';
-import { ChangeEntityTypeEnum } from '@novu/shared';
+import { ChangeEntityActionEnum, ChangeEntityTypeEnum } from '@novu/shared';
 
 import { DeleteFeedCommand } from './delete-feed.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -41,6 +41,7 @@ export class DeleteFeed {
           item,
           type: ChangeEntityTypeEnum.FEED,
           changeId: parentChangeId,
+          action: ChangeEntityActionEnum.DELETE,
         })
       );
     } catch (e) {

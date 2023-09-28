@@ -1,5 +1,5 @@
 import { Types } from 'mongoose';
-import { ChangeEntityTypeEnum } from '@novu/shared';
+import { ChangeEntityActionEnum, ChangeEntityTypeEnum } from '@novu/shared';
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
 import type { ChangePropsValueType } from '../../types/helpers';
@@ -17,6 +17,8 @@ export class ChangeEntity {
   _entityId: string;
 
   enabled: boolean;
+
+  action?: ChangeEntityActionEnum;
 
   type: ChangeEntityTypeEnum;
 

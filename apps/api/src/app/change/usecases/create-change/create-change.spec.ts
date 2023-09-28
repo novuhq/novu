@@ -1,6 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { UserSession } from '@novu/testing';
-import { ChangeEntityTypeEnum } from '@novu/shared';
+import { ChangeEntityActionEnum, ChangeEntityTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 
 import { CreateChange, CreateChangeCommand } from './index';
@@ -36,6 +36,7 @@ describe('Create Change', function () {
         item: {
           _id,
         },
+        action: ChangeEntityActionEnum.CREATE,
       })
     );
     expect(result.enabled).to.be.eq(false);
@@ -59,6 +60,7 @@ describe('Create Change', function () {
         item: {
           _id,
         },
+        action: ChangeEntityActionEnum.CREATE,
       })
     );
     const change = await useCase.execute(
@@ -72,6 +74,7 @@ describe('Create Change', function () {
           _id,
           name: 'test',
         },
+        action: ChangeEntityActionEnum.CREATE,
       })
     );
 

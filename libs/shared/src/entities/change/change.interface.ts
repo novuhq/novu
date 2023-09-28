@@ -6,3 +6,9 @@ export enum ChangeEntityTypeEnum {
   NOTIFICATION_TEMPLATE = 'NotificationTemplate',
   NOTIFICATION_GROUP = 'NotificationGroup',
 }
+
+export enum ChangeEntityActionEnum {
+  CREATE = 'Create',
+  UPDATE = 'Update',
+  DELETE = 'Delete',
+}

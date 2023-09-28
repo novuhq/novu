@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { MessageTemplateEntity, MessageTemplateRepository } from '@novu/dal';
-import { ChangeEntityTypeEnum } from '@novu/shared';
+import { ChangeEntityActionEnum, ChangeEntityTypeEnum } from '@novu/shared';
 
 import { CreateMessageTemplateCommand } from './create-message-template.command';
 import { sanitizeMessageContent } from '../../shared/sanitizer.service';
@@ -50,6 +50,7 @@ export class CreateMessageTemplate {
         type: ChangeEntityTypeEnum.MESSAGE_TEMPLATE,
         parentChangeId: command.parentChangeId,
         changeId: MessageTemplateRepository.createObjectId(),
+        action: ChangeEntityActionEnum.CREATE,
       })
     );
 

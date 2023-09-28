@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ChangeRepository, MessageTemplateEntity, MessageTemplateRepository, MessageRepository } from '@novu/dal';
-import { ChangeEntityTypeEnum, ITemplateVariable } from '@novu/shared';
+import { ChangeEntityActionEnum, ChangeEntityTypeEnum, ITemplateVariable } from '@novu/shared';
 
 import { UpdateMessageTemplateCommand } from './update-message-template.command';
 import { sanitizeMessageContent } from '../../shared/sanitizer.service';
@@ -130,6 +130,7 @@ export class UpdateMessageTemplate {
           type: ChangeEntityTypeEnum.MESSAGE_TEMPLATE,
           parentChangeId: command.parentChangeId,
           changeId,
+          action: ChangeEntityActionEnum.UPDATE,
         })
       );
     }

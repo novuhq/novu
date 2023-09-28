@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ChangeRepository } from '@novu/dal';
+import { ChangeEntityActionEnum } from '@novu/shared';
 import { getDiff, applyDiff } from 'recursive-diff';
 
 import { CreateChangeCommand } from './create-change.command';
@@ -30,6 +31,10 @@ export class CreateChange {
     if (change) {
       change.change = changePayload;
 
+      if (command.action === ChangeEntityActionEnum.DELETE) {
+        change.action = command.action;
+      }
+
       await this.changeRepository.update(
         { _environmentId: command.environmentId, _id: command.changeId },
         {
@@ -50,6 +55,7 @@ export class CreateChange {
       enabled: false,
       _parentId: command.parentChangeId,
       _id: command.changeId,
+      action: command.action,
     });
 
     return item;
