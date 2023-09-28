@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "@novu/stateless": "^0.19.0",
-    "@sendinblue/client": "^3.0.1"
+    "@sendinblue/client": "^3.3.1"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
