@@ -90,7 +90,7 @@ jobs:
           cd apps/ws && pnpm start:test &
 
       - name: Wait on Services
-        run: wait-on --timeout=180000 http://localhost:1340/v1/health-check http://localhost:4200
+        run: wait-on --timeout=180000 http://localhost:1340/v1/health-check tcp:4200
 
       # run cypress install only when cache was not hit
       - name: Cypress install
