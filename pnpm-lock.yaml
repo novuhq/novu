@@ -215,7 +215,7 @@ importers:
       nanoid: ^3.1.20
       nest-raven: ^10.0.0
       newrelic: ^9.15.0
-      nodemon: ^2.0.3
+      nodemon: ^3.0.1
       passport: 0.6.0
       passport-github2: ^0.1.12
       passport-jwt: ^4.0.0
@@ -312,7 +312,7 @@ importers:
       '@types/supertest': 2.0.12
       chai: 4.3.7
       mocha: 8.4.0
-      nodemon: 2.0.22
+      nodemon: 3.0.1
       sinon: 9.2.4
       ts-loader: 9.4.2_rggdtlzfqxxwxudp3onsqdyocm
       ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
@@ -343,7 +343,7 @@ importers:
       mailparser: ^0.6.0
       mocha: ^8.4.0
       newrelic: ^9.15.0
-      nodemon: ^2.0.7
+      nodemon: ^3.0.1
       prettier: ~2.8.0
       rimraf: ^3.0.2
       shelljs: ^0.8.5
@@ -387,7 +387,7 @@ importers:
       '@types/smtp-server': 3.5.7
       cross-env: 7.0.3
       mocha: 8.4.0
-      nodemon: 2.0.22
+      nodemon: 3.0.1
       prettier: 2.8.7
       sinon: 9.2.4
       ts-jest: 27.1.5_4aafjbpmnrfjtrzkyohogv4jce
@@ -487,7 +487,7 @@ importers:
       lodash.set: ^4.3.2
       logrocket: ^3.0.1
       logrocket-react: ^5.0.1
-      nodemon: ^2.0.15
+      nodemon: ^3.0.1
       polished: ^4.1.3
       react: ^17.0.1
       react-ace: ^9.4.3
@@ -646,7 +646,7 @@ importers:
       eslint-plugin-storybook: 0.6.13_cgvy6hrg3pjeapqw5wnuqcmdo4
       http-server: 0.13.0
       less-loader: 4.1.0_less@4.1.3+webpack@5.78.0
-      nodemon: 2.0.22
+      nodemon: 3.0.1
       react-error-overlay: 6.0.11
       react-joyride: 2.5.3_sfoxds7t5ydpegc3knd667wn6m
       storybook: 7.4.2
@@ -689,7 +689,7 @@ importers:
       mocha: ^8.1.1
       nest-raven: ^10.0.0
       newrelic: ^9.15.0
-      nodemon: ^2.0.7
+      nodemon: ^3.0.1
       prettier: ~2.8.0
       reflect-metadata: ^0.1.13
       rimraf: ^3.0.2
@@ -740,7 +740,7 @@ importers:
       cross-env: 7.0.3
       jest: 27.5.1_ts-node@10.9.1
       mocha: 8.4.0
-      nodemon: 2.0.22
+      nodemon: 3.0.1
       prettier: 2.8.7
       sinon: 9.2.4
       supertest: 6.3.3
@@ -896,7 +896,7 @@ importers:
       mocha: ^8.1.1
       nest-raven: ^10.0.0
       newrelic: ^9.15.0
-      nodemon: ^2.0.3
+      nodemon: ^3.0.1
       reflect-metadata: ^0.1.13
       rimraf: ^3.0.2
       rxjs: 7.8.1
@@ -959,7 +959,7 @@ importers:
       '@types/supertest': 2.0.12
       chai: 4.3.7
       mocha: 8.4.0
-      nodemon: 2.0.22
+      nodemon: 3.0.1
       sinon: 9.2.4
       superagent-defaults: 0.1.14_superagent@8.0.9
       supertest: 5.0.0
@@ -1008,7 +1008,7 @@ importers:
       mocha: ^8.4.0
       nest-raven: ^10.0.0
       newrelic: ^9.15.0
-      nodemon: ^2.0.7
+      nodemon: ^3.0.1
       prettier: ~2.8.0
       reflect-metadata: ^0.1.13
       rimraf: ^3.0.2
@@ -1065,7 +1065,7 @@ importers:
       chai: 4.3.7
       cross-env: 7.0.3
       mocha: 8.4.0
-      nodemon: 2.0.22
+      nodemon: 3.0.1
       prettier: 2.8.7
       supertest: 6.3.3
       ts-loader: 9.4.2_rggdtlzfqxxwxudp3onsqdyocm
@@ -1088,7 +1088,7 @@ importers:
       chai: ^4.2.0
       cross-env: ^7.0.3
       mocha: ^8.1.1
-      nodemon: ^2.0.3
+      nodemon: ^3.0.1
       passport: 0.6.0
       passport-google-oauth: ^2.0.0
       passport-oauth2: ^1.6.1
@@ -1113,7 +1113,7 @@ importers:
       chai: 4.3.7
       cross-env: 7.0.3
       mocha: 8.4.0
-      nodemon: 2.0.22
+      nodemon: 3.0.1
       sinon: 9.2.4
       ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
       typescript: 4.9.5
@@ -1129,7 +1129,7 @@ importers:
       cross-env: ^7.0.3
       date-fns: ^2.29.2
       mocha: ^8.1.1
-      nodemon: ^2.0.3
+      nodemon: ^3.0.1
       rrule: ^2.7.2
       sinon: ^9.2.4
       ts-node: ~10.9.1
@@ -1146,7 +1146,7 @@ importers:
       chai: 4.3.7
       cross-env: 7.0.3
       mocha: 8.4.0
-      nodemon: 2.0.22
+      nodemon: 3.0.1
       sinon: 9.2.4
       ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
       typescript: 4.9.5
@@ -1180,7 +1180,7 @@ importers:
       mongoose: ^7.5.0
       mongoose-delete: ^1.0.1
       ng-intercom: ^8.0.2
-      nodemon: ^2.0.3
+      nodemon: ^3.0.1
       reflect-metadata: ^0.1.13
       rimraf: ^3.0.2
       superagent-defaults: ^0.1.14
@@ -1223,7 +1223,7 @@ importers:
       '@typescript-eslint/parser': 4.33.0_jofidmxrjzhj7l6vknpw5ecvfe
       apollo-boost: 0.4.9_graphql@15.8.0
       eslint-plugin-prettier: 4.2.1_6l7kvkw7pbq7sx3iiqo67pyozi
-      nodemon: 2.0.22
+      nodemon: 3.0.1
       ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
       tsconfig-paths: 4.1.2
       typescript: 4.9.5
@@ -1343,7 +1343,7 @@ importers:
       jsonfile: ^6.0.1
       mongoose: ^7.5.0
       ng-intercom: ^8.0.2
-      nodemon: ^2.0.3
+      nodemon: ^3.0.1
       reflect-metadata: ^0.1.13
       rimraf: ^3.0.2
       shortid: ^2.2.16
@@ -1384,7 +1384,7 @@ importers:
       '@typescript-eslint/parser': 4.33.0_jofidmxrjzhj7l6vknpw5ecvfe
       apollo-boost: 0.4.9_graphql@15.8.0
       eslint-plugin-prettier: 4.2.1_6l7kvkw7pbq7sx3iiqo67pyozi
-      nodemon: 2.0.22
+      nodemon: 3.0.1
       ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
       tsconfig-paths: 4.1.2
       typescript: 4.9.5
@@ -1595,7 +1595,7 @@ importers:
       gradient-string: ^2.0.0
       inquirer: ^8.2.0
       jwt-decode: ^3.1.2
-      nodemon: ^2.0.15
+      nodemon: ^3.0.1
       open: ^8.4.0
       ora: ^5.4.1
       ts-node: ~10.9.1
@@ -1623,7 +1623,7 @@ importers:
       '@types/configstore': 5.0.1
       '@types/inquirer': 8.2.6
       '@types/mocha': 9.1.1
-      nodemon: 2.0.22
+      nodemon: 3.0.1
       typescript: 4.9.5
 
   packages/client:
@@ -7449,8 +7449,8 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.20.12
-      '@babel/helper-module-imports': 7.21.4
-      '@babel/helper-plugin-utils': 7.20.2
+      '@babel/helper-module-imports': 7.22.15
+      '@babel/helper-plugin-utils': 7.22.5
       '@babel/helper-remap-async-to-generator': 7.18.9_@babel+core@7.20.12
     transitivePeerDependencies:
       - supports-color
@@ -28845,7 +28845,7 @@ packages:
       object.values: 1.1.6
       prop-types: 15.8.1
       resolve: 2.0.0-next.4
-      semver: 6.3.0
+      semver: 6.3.1
       string.prototype.matchall: 4.0.8
 
   /eslint-plugin-spellcheck/0.0.20_eslint@8.38.0:
@@ -37602,9 +37602,9 @@ packages:
     engines: {node: '>=6.0.0'}
     dev: false
 
-  /nodemon/2.0.22:
-    resolution: {integrity: sha512-B8YqaKMmyuCO7BowF1Z1/mkPqLk6cs/l63Ojtd6otKjMx47Dq1utxfRxcavH1I7VSaL8n5BUaoutadnsX3AAVQ==}
-    engines: {node: '>=8.10.0'}
+  /nodemon/3.0.1:
+    resolution: {integrity: sha512-g9AZ7HmkhQkqXkRc20w+ZfQ73cHLbE8hnPbtaFbFtCumZsjyMhKk9LajQ07U5Ux28lvFjZ5X7HvWR1xzU8jHVw==}
+    engines: {node: '>=10'}
     hasBin: true
     dependencies:
       chokidar: 3.5.3
@@ -37612,8 +37612,8 @@ packages:
       ignore-by-default: 1.0.1
       minimatch: 3.1.2
       pstree.remy: 1.1.8
-      semver: 5.7.1
-      simple-update-notifier: 1.1.0
+      semver: 7.5.4
+      simple-update-notifier: 2.0.0
       supports-color: 5.5.0
       touch: 3.1.0
       undefsafe: 2.0.5
@@ -43522,11 +43522,6 @@ packages:
     resolution: {integrity: sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA==}
     hasBin: true
 
-  /semver/7.0.0:
-    resolution: {integrity: sha512-+GB6zVA9LWh6zovYQLALHwv5rb2PHGlJi3lfiqIHxR0uuwCgefcOJc59v9fv1w8GbStwxuuqqAjI9NMAOOgq1A==}
-    hasBin: true
-    dev: true
-
   /semver/7.3.4:
     resolution: {integrity: sha512-tCfb2WLjqFAtXn4KEdxIhalnRtoKFN7nAwj0B3ZXCbQloV2tq5eDbcTmT68JJD3nRJq24/XgxtQKFIpQdtvmVw==}
     engines: {node: '>=10'}
@@ -43784,13 +43779,6 @@ packages:
     dependencies:
       is-arrayish: 0.3.2
     dev: false
-
-  /simple-update-notifier/1.1.0:
-    resolution: {integrity: sha512-VpsrsJSUcJEseSbMHkrsrAVSdvVS5I96Qo1QAQ4FxQ9wXFcB+pjj7FB7/us9+GcgfW4ziHtYMc1J0PLczb55mg==}
-    engines: {node: '>=8.10.0'}
-    dependencies:
-      semver: 7.0.0
-    dev: true
 
   /simple-update-notifier/2.0.0:
     resolution: {integrity: sha512-a2B9Y0KlNXl9u/vsW6sTIu9vGEpfKu2wRV6l1H3XEas/0gUIzGzBoP/IouTcUQbm9JWZLH3COxyn03TYlFax6w==}
