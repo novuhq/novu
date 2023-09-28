@@ -74,7 +74,7 @@ export class IntegrationRepository extends BaseRepository<IntegrationDBModel, In
     const integration = await this.findOne({ _id: query._id, _organizationId: query._organizationId });
     if (!integration) throw new DalException(`Could not find integration with id ${query._id}`);
 
-    await this.integration.delete({ _id: integration._id, _organizationId: integration._organizationId });
+    return await this.integration.delete({ _id: integration._id, _organizationId: integration._organizationId });
   }
 
   async deleteMany(query: IntegrationQuery): Promise<IDeleteResult> {
