@@ -36,7 +36,6 @@
     "chalk": "4.1.2",
     "commander": "^9.0.0",
     "configstore": "^5.0.0",
-    "cp-cli": "^2.0.0",
     "dotenv": "^8.2.0",
     "get-port": "^5.1.1",
     "gradient-string": "^2.0.0",

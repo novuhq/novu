@@ -39,9 +39,9 @@ jobs:
       - id: setup
         run: |
           if ! [[ -z "${{ secrets.SUBMODULES_TOKEN }}" ]]; then
-             echo ::set-output has_token=true
+             echo "has_token=true" >> $GITHUB_OUTPUT
           else
-             echo ::set-output has_token=false
+             echo "has_token=false" >> $GITHUB_OUTPUT
           fi
       - uses: actions/checkout@v3
       # checkout with submodules if token is provided

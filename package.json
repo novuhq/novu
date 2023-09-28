@@ -9,7 +9,6 @@
     "prepare": "husky install",
     "publish": "lerna publish from-package",
     "setup:project": "npx --yes pnpm@7.33.4 i && node scripts/setup-env-files.js && pnpm build",
-    "install:docs": "pnpm install --filter @novu/docs",
     "clean": "lerna clean --yes && npm run prebuild",
     "commit": "cz",
     "nx": "nx",
@@ -21,7 +20,6 @@
     "start:web": "cross-env nx run @novu/web:start",
     "start:ws": "cross-env nx run @novu/ws:start",
     "start:webhook": "cross-env nx run @novu/webhook:start",
-    "start:docs": "cross-env nx run @novu/docs:start",
     "start:widget": "cross-env nx run @novu/widget:start",
     "start:api": "cross-env nx run @novu/api:start",
     "start:api:dev": "cross-env nx run @novu/api:start:dev",
@@ -169,10 +167,6 @@
       "prettier --ignore-path ./.prettierignore --write",
       "eslint",
       "stop-only --file"
-    ],
-    "docs/**/*.{md,mdx}": [
-      "prettier --ignore-path ./.prettierignore --write",
-      "markdownlint --ignore-path ./.gitignore --fix -c ./.markdownlint.jsonc"
     ],
     "libs/**/*.{ts,js,json}": [
       "prettier --ignore-path ./.prettierignore --write",

@@ -13,6 +13,27 @@
 The ultimate service for managing multi-channel notifications with a single API.
 </div>
 
+<h1 align="center">🎉 We're participating in Hacktoberfest 2023! 🎉</h1>
+
+Interested in participating in Hacktoberfest? We extend a warm invitation! You also get the opportunity to win some swag 😁
+
+> ⭐️ If you're new to Hacktoberfest, you can learn more and register to participate [here](https://hacktoberfest.com/participation/). Registration is from **September 26th - October 31st**.
+
+- Our Hacktoberfest kickoff event is happening on October 2, 2023. 🚀
+- Check out our website for [hacktoberfest instructions](https://novu.co/hacktoberfest/).
+- Join our [Discord and engage with our community](https://discord.com/invite/novu), get answers to your challenges, stay updated on events, announcements & prizes.
+
+In addition to this repository, here are the other Novu repositories you can contribute to for Hacktoberfest:
+- [Novu docs](https://github.com/novuhq/docs/issues)
+- [Novu PHP SDK](https://github.com/novuhq/novu-php/issues)
+- [Novu Ruby SDK](https://github.com/novuhq/novu-ruby/issues)
+- [Novu Python SDK](https://github.com/novuhq/novu-python/issues)
+- [Novu Go SDK](https://github.com/novuhq/go-novu/issues)
+- [Novu Java SDK](https://github.com/novuhq/novu-java/issues)
+- [Novu Kotlin SDK](https://github.com/novuhq/novu-kotlin/issues)
+
+Your contribution, no matter its size, holds immense value. We eagerly await to see the impact you'll make in our community! 🚀
+
   <p align="center">
     <br />
     <a href="https://docs.novu.co" rel="dofollow"><strong>Explore the docs »</strong></a>
@@ -167,9 +188,9 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [x] [Burst SMS](https://github.com/novuhq/novu/tree/main/providers/burst-sms)
 - [x] [Firetext](https://github.com/novuhq/novu/tree/main/providers/firetext)
 - [x] [Infobip](https://github.com/novuhq/novu/tree/main/providers/infobip)
-- [x] [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
 - [ ] Bandwidth
 - [ ] RingCentral
+
 
 #### 📱 Push
 

@@ -11,7 +11,7 @@ export const inAppProviders: IProviderConfig[] = [
     displayName: 'Novu In-App',
     channel: ChannelTypeEnum.IN_APP,
     credentials: novuInAppConfig,
-    docReference: 'https://docs.novu.co/notification-center/getting-started',
+    docReference: 'https://docs.novu.co/notification-center/introduction',
     logoFileName: { light: 'novu.png', dark: 'novu.png' },
   },
 ];

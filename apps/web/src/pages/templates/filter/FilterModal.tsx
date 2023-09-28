@@ -75,8 +75,8 @@ export function FilterModal({
 
   function handleOnChildOnChange(index: number) {
     return (data) => {
-      const newField = Object.assign({}, fields[index], { on: data });
-      update(index, newField);
+      const { id: _, ...rest } = fields[index];
+      update(index, { ...rest, on: data });
     };
   }
 
