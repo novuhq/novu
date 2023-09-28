@@ -5,7 +5,7 @@ import {
   ISmsProvider,
 } from '@novu/stateless';
 
-import Vonage from '@vonage/server-sdk';
+import { Vonage, Auth } from '@vonage/server-sdk';
 
 export class NexmoSmsProvider implements ISmsProvider {
   id = 'nexmo';
@@ -19,31 +19,25 @@ export class NexmoSmsProvider implements ISmsProvider {
       from: string;
     }
   ) {
-    this.vonageClient = new Vonage({
-      apiKey: config.apiKey,
-      apiSecret: config.apiSecret,
-    });
+    this.vonageClient = new Vonage(
+      new Auth({
+        apiKey: config.apiKey,
+        apiSecret: config.apiSecret,
+      })
+    );
   }
 
   async sendMessage(
     options: ISmsOptions
   ): Promise<ISendMessageSuccessResponse> {
-    const vonageResponseId: string = await new Promise((resolve, reject) => {
-      this.vonageClient.message.sendSms(
-        this.config.from,
-        options.to,
-        options.content,
-        {},
-        (err, responseData) => {
-          if (err) return reject(err);
-
-          return resolve(responseData.messages[0]['message-id']);
-        }
-      );
+    const response = await this.vonageClient.sms.send({
+      from: this.config.from,
+      to: options.to,
+      text: options.content,
     });
 
     return {
-      id: vonageResponseId,
+      id: response.messages[0]?.messageId,
       date: new Date().toISOString(),
     };
   }
