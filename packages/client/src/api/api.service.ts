@@ -12,6 +12,7 @@ import {
   IUserPreferenceSettings,
   IUnseenCountQuery,
   IUnreadCountQuery,
+  IUserGlobalPreferenceSettings,
 } from '../index';
 
 export class ApiService {
@@ -155,6 +156,10 @@ export class ApiService {
 
   async getUserPreference(): Promise<IUserPreferenceSettings[]> {
     return this.httpClient.get('/widgets/preferences');
+  }
+
+  async getUserGlobalPreference(): Promise<IUserGlobalPreferenceSettings[]> {
+    return this.httpClient.get('/widgets/preferences/global');
   }
 
   async updateSubscriberPreference(

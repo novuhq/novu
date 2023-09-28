@@ -2,7 +2,7 @@ import { IsDefined, IsEnum, IsString } from 'class-validator';
 import { PreferenceLevelEnum } from '@novu/dal';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
-export class GetPreferencesCommand extends EnvironmentCommand {
+export class GetPreferencesByLevelCommand extends EnvironmentCommand {
   @IsString()
   @IsDefined()
   subscriberId: string;

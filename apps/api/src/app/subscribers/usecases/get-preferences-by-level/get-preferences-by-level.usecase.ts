@@ -7,16 +7,16 @@ import {
 } from '@novu/application-generic';
 import { PreferenceLevelEnum } from '@novu/dal';
 
-import { GetPreferencesCommand } from './get-preferences.command';
+import { GetPreferencesByLevelCommand } from './get-preferences-by-level.command';
 
 @Injectable()
-export class GetPreferences {
+export class GetPreferencesByLevel {
   constructor(
     private getSubscriberPreferenceUsecase: GetSubscriberPreference,
     private getSubscriberGlobalPreference: GetSubscriberGlobalPreference
   ) {}
 
-  async execute(command: GetPreferencesCommand) {
+  async execute(command: GetPreferencesByLevelCommand) {
     if (command.level === PreferenceLevelEnum.GLOBAL) {
       const globalPreferenceCommand = GetSubscriberGlobalPreferenceCommand.create({
         organizationId: command.organizationId,

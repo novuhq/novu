@@ -16,7 +16,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeController, ApiNoContentResponse, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { AnalyticsService, GetSubscriberPreference, GetSubscriberPreferenceCommand } from '@novu/application-generic';
-import { MessageEntity, SubscriberEntity } from '@novu/dal';
+import { MessageEntity, PreferenceLevelEnum, SubscriberEntity } from '@novu/dal';
 import { MarkMessagesAsEnum, ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 
 import { SubscriberSession } from '../shared/framework/user.decorator';
@@ -59,6 +59,8 @@ import {
   UpdateSubscriberGlobalPreferencesCommand,
 } from '../subscribers/usecases/update-subscriber-global-preferences';
 import { UpdateSubscriberGlobalPreferencesRequestDto } from '../subscribers/dtos/update-subscriber-global-preferences-request.dto';
+import { GetPreferencesByLevel } from '../subscribers/usecases/get-preferences-by-level/get-preferences-by-level.usecase';
+import { GetPreferencesByLevelCommand } from '../subscribers/usecases/get-preferences-by-level/get-preferences-by-level.command';
 
 @Controller('/widgets')
 @ApiExcludeController()
@@ -73,6 +75,7 @@ export class WidgetsController {
     private updateMessageActionsUsecase: UpdateMessageActions,
     private getOrganizationUsecase: GetOrganizationData,
     private getSubscriberPreferenceUsecase: GetSubscriberPreference,
+    private getSubscriberPreferenceByLevelUsecase: GetPreferencesByLevel,
     private updateSubscriberPreferenceUsecase: UpdateSubscriberPreference,
     private updateSubscriberGlobalPreferenceUsecase: UpdateSubscriberGlobalPreferences,
     private markAllMessagesAsUsecase: MarkAllMessagesAs,
@@ -354,6 +357,22 @@ export class WidgetsController {
     });
 
     return await this.getSubscriberPreferenceUsecase.execute(command);
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Get('/preferences/:level')
+  async getSubscriberPreferenceByLevel(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Param('level') level: PreferenceLevelEnum
+  ) {
+    const command = GetPreferencesByLevelCommand.create({
+      organizationId: subscriberSession._organizationId,
+      subscriberId: subscriberSession.subscriberId,
+      environmentId: subscriberSession._environmentId,
+      level,
+    });
+
+    return await this.getSubscriberPreferenceByLevelUsecase.execute(command);
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))

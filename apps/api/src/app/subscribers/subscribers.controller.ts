@@ -42,8 +42,8 @@ import {
 import { UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from './usecases/update-subscriber-channel';
 import { GetSubscribers, GetSubscribersCommand } from './usecases/get-subscribers';
 import { GetSubscriber, GetSubscriberCommand } from './usecases/get-subscriber';
-import { GetPreferencesCommand } from './usecases/get-preferences/get-preferences.command';
-import { GetPreferences } from './usecases/get-preferences/get-preferences.usecase';
+import { GetPreferencesByLevelCommand } from './usecases/get-preferences-by-level/get-preferences-by-level.command';
+import { GetPreferencesByLevel } from './usecases/get-preferences-by-level/get-preferences-by-level.usecase';
 import { UpdatePreference } from './usecases/update-preference/update-preference.usecase';
 import { UpdateSubscriberPreferenceCommand } from './usecases/update-subscriber-preference';
 import { UpdateSubscriberPreferenceResponseDto } from '../widgets/dtos/update-subscriber-preference-response.dto';
@@ -102,7 +102,7 @@ export class SubscribersController {
     private removeSubscriberUsecase: RemoveSubscriber,
     private getSubscriberUseCase: GetSubscriber,
     private getSubscribersUsecase: GetSubscribers,
-    private getPreferenceUsecase: GetPreferences,
+    private getPreferenceUsecase: GetPreferencesByLevel,
     private updatePreferenceUsecase: UpdatePreference,
     private updateGlobalPreferenceUsecase: UpdateSubscriberGlobalPreferences,
     private getNotificationsFeedUsecase: GetNotificationsFeed,
@@ -344,7 +344,7 @@ export class SubscribersController {
     @UserSession() user: IJwtPayload,
     @Param('subscriberId') subscriberId: string
   ): Promise<UpdateSubscriberPreferenceResponseDto[]> {
-    const command = GetPreferencesCommand.create({
+    const command = GetPreferencesByLevelCommand.create({
       organizationId: user.organizationId,
       subscriberId: subscriberId,
       environmentId: user.environmentId,
@@ -365,7 +365,7 @@ export class SubscribersController {
     @UserSession() user: IJwtPayload,
     @Param() { level, subscriberId }: GetSubscriberPreferencesByLevelParams
   ): Promise<GetSubscriberPreferencesResponseDto[]> {
-    const command = GetPreferencesCommand.create({
+    const command = GetPreferencesByLevelCommand.create({
       organizationId: user.organizationId,
       subscriberId: subscriberId,
       environmentId: user.environmentId,
