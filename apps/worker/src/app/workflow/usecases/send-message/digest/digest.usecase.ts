@@ -78,8 +78,7 @@ export class Digest extends SendMessageType {
 
     const digestEventsCommand = DigestEventsCommand.create({
       currentJob,
-      // backward compatibility - ternary needed to be removed once the queue renewed
-      _subscriberId: command._subscriberId ? command._subscriberId : command.subscriberId,
+      _subscriberId: command._subscriberId,
     });
 
     if (

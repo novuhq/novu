@@ -468,17 +468,17 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       ],
     });
 
-    await triggerEvent({
-      customVar: 'Testing of User Name',
-    });
+    const events = [
+      { customVar: 'Testing of User Name' },
+      { customVar: 'digest' },
+      { customVar: 'merged' },
+      { customVar: 'digest' },
+      { customVar: 'merged' },
+      { customVar: 'digest' },
+      { customVar: 'merged' },
+    ];
 
-    await triggerEvent({
-      customVar: 'digest',
-    });
-
-    await triggerEvent({
-      customVar: 'merged',
-    });
+    await Promise.all(events.map((event) => triggerEvent(event)));
 
     await session.awaitRunningJobs(template?._id, false, 0);
 
@@ -489,7 +489,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       type: StepTypeEnum.DIGEST,
     });
 
-    expect(jobs.length).to.eql(3);
+    expect(jobs.length).to.eql(7);
 
     const completedJob = jobs.find((elem) => elem.status === JobStatusEnum.COMPLETED);
     expect(completedJob).to.ok;
@@ -505,15 +505,15 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       type: StepTypeEnum.IN_APP,
     });
 
-    expect(generatedMessageJob.length).to.equal(3);
+    expect(generatedMessageJob.length).to.equal(7);
 
-    const mergedInApp = generatedMessageJob.find((elem) => elem.status === JobStatusEnum.MERGED);
-    expect(mergedInApp).to.ok;
+    const mergedInApp = generatedMessageJob.filter((elem) => elem.status === JobStatusEnum.MERGED);
+    expect(mergedInApp.length).to.equal(5);
 
     const completedInApp = generatedMessageJob.filter((elem) => elem.status === JobStatusEnum.COMPLETED);
     expect(completedInApp.length).to.equal(2);
 
-    expect(completedInApp.find((i) => i.digest?.events?.length === 2)).to.be.ok;
+    expect(completedInApp.find((i) => i.digest?.events?.length === 6)).to.be.ok;
     expect(completedInApp.find((i) => i.digest?.events?.length === 0)).to.be.ok;
   });
 
