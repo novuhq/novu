@@ -23,7 +23,7 @@ import {
 } from '@novu/application-generic';
 import { ApiOperation, ApiTags, ApiNoContentResponse } from '@nestjs/swagger';
 import { ButtonTypeEnum, ChatProviderIdEnum, IJwtPayload } from '@novu/shared';
-import { MessageEntity } from '@novu/dal';
+import { MessageEntity, PreferenceLevelEnum } from '@novu/dal';
 
 import { RemoveSubscriber, RemoveSubscriberCommand } from './usecases/remove-subscriber';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
@@ -33,8 +33,10 @@ import {
   BulkSubscriberCreateDto,
   CreateSubscriberRequestDto,
   DeleteSubscriberResponseDto,
+  GetSubscriberPreferencesResponseDto,
   SubscriberResponseDto,
   UpdateSubscriberChannelRequestDto,
+  UpdateSubscriberGlobalPreferencesRequestDto,
   UpdateSubscriberRequestDto,
 } from './dtos';
 import { UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from './usecases/update-subscriber-channel';
@@ -87,7 +89,7 @@ import {
   UpdateSubscriberGlobalPreferences,
   UpdateSubscriberGlobalPreferencesCommand,
 } from './usecases/update-subscriber-global-preferences';
-import { UpdateSubscriberGlobalPreferencesRequestDto } from './dtos/update-subscriber-global-preferences-request.dto';
+import { GetSubscriberPreferencesByLevelParams } from './params';
 
 @Controller('/subscribers')
 @ApiTags('Subscribers')
@@ -346,6 +348,28 @@ export class SubscribersController {
       organizationId: user.organizationId,
       subscriberId: subscriberId,
       environmentId: user.environmentId,
+      level: PreferenceLevelEnum.TEMPLATE,
+    });
+
+    return (await this.getPreferenceUsecase.execute(command)) as UpdateSubscriberPreferenceResponseDto[];
+  }
+
+  @Get('/:subscriberId/preferences/:level')
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  @ApiResponse(GetSubscriberPreferencesResponseDto, 200, true)
+  @ApiOperation({
+    summary: 'Get subscriber preferences by level',
+  })
+  async getSubscriberPreferenceByLevel(
+    @UserSession() user: IJwtPayload,
+    @Param() { level, subscriberId }: GetSubscriberPreferencesByLevelParams
+  ): Promise<GetSubscriberPreferencesResponseDto[]> {
+    const command = GetPreferencesCommand.create({
+      organizationId: user.organizationId,
+      subscriberId: subscriberId,
+      environmentId: user.environmentId,
+      level: level,
     });
 
     return await this.getPreferenceUsecase.execute(command);

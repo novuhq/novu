@@ -2,7 +2,11 @@ import {
   QueryObserverResult,
   MutationObserverResult,
 } from '@tanstack/query-core';
-import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
+import {
+  ButtonTypeEnum,
+  ChannelTypeEnum,
+  MessageActionStatusEnum,
+} from '@novu/shared';
 
 export interface IHeadlessServiceOptions {
   backendUrl?: string;
@@ -23,7 +27,7 @@ export interface IUpdateUserPreferencesVariables {
 }
 
 export interface IUpdateUserGlobalPreferencesVariables {
-  preferences?: { channelType: string; enabled: boolean }[];
+  preferences?: { channelType: ChannelTypeEnum; enabled: boolean }[];
   enabled?: boolean;
 }
 

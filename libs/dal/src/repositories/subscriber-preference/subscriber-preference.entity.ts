@@ -28,6 +28,6 @@ export type SubscriberPreferenceDBModel = ChangePropsValueType<
 >;
 
 export enum PreferenceLevelEnum {
-  GLOBAL = 'GLOBAL',
-  TEMPLATE = 'TEMPLATE',
+  GLOBAL = 'global',
+  TEMPLATE = 'template',
 }
