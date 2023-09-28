@@ -42,6 +42,7 @@ import { ApiException } from '../../utils/exceptions';
 import { ProcessTenant, ProcessTenantCommand } from '../process-tenant';
 import { MapTriggerRecipients } from '../map-trigger-recipients/map-trigger-recipients.use-case';
 import { MapTriggerRecipientsCommand } from '../map-trigger-recipients/map-trigger-recipients.command';
+import { SubscriberProcessQueueService } from '../../services/queues/subscriber-process-queue.service';
 
 const LOG_CONTEXT = 'TriggerEventUseCase';
 
@@ -57,7 +58,8 @@ export class TriggerEvent {
     private processTenant: ProcessTenant,
     private logger: PinoLogger,
     private analyticsService: AnalyticsService,
-    private mapTriggerRecipients: MapTriggerRecipients
+    private mapTriggerRecipients: MapTriggerRecipients,
+    private subscriberProcessQueueService: SubscriberProcessQueueService
   ) {}
 
   @InstrumentUsecase()
@@ -164,72 +166,28 @@ export class TriggerEvent {
       template
     );
 
-    for (const subscriber of mappedRecipients) {
-      this.analyticsService.track(
-        'Notification event trigger - [Triggers]',
-        command.userId,
-        {
-          transactionId: command.transactionId,
-          _template: template._id,
-          _organization: command.organizationId,
-          channels: template?.steps.map((step) => step.template?.type),
-          source: command.payload.__source || 'api',
-        }
-      );
-
-      const subscriberProcessed = await this.processSubscriber.execute(
-        ProcessSubscriberCommand.create({
-          environmentId,
-          organizationId,
-          userId,
-          subscriber,
-        })
-      );
-
-      // If no subscriber makes no sense to try to create notification
-      if (!subscriberProcessed) {
-        /**
-         * TODO: Potentially add a CreateExecutionDetails entry. Right now we
-         * have the limitation we need a job to be created for that. Here there
-         * is no job at this point.
-         */
-        Logger.warn(
-          `Subscriber ${JSON.stringify(
-            subscriber.subscriberId
-          )} of organization ${command.organizationId} in transaction ${
-            command.transactionId
-          } was not processed. No jobs are created.`,
-          LOG_CONTEXT
+    await Promise.all(
+      mappedRecipients.map((subscriber) => {
+        this.subscriberProcessQueueService.add(
+          command.transactionId + subscriber.subscriberId,
+          {
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
+            userId: command.userId,
+            transactionId: command.transactionId,
+            identifier: command.identifier,
+            payload: command.payload,
+            overrides: command.overrides,
+            tenant: command.tenant,
+            ...(actor && actorProcessed && { actor: actorProcessed }),
+            template,
+            templateProviderIds,
+            subscriber,
+          },
+          command.organizationId
         );
-
-        return;
-      }
-
-      const notificationJobs = await this.createNotificationJobs.execute(
-        CreateNotificationJobsCommand.create({
-          environmentId,
-          identifier,
-          organizationId,
-          overrides: command.overrides,
-          payload: command.payload,
-          subscriber: subscriberProcessed,
-          template,
-          templateProviderIds,
-          to: subscriber,
-          transactionId: command.transactionId,
-          userId,
-          ...(actor && actorProcessed && { actor: actorProcessed }),
-          tenant,
-        })
-      );
-
-      const storeSubscriberJobsCommand = StoreSubscriberJobsCommand.create({
-        environmentId: command.environmentId,
-        jobs: notificationJobs,
-        organizationId: command.organizationId,
-      });
-      await this.storeSubscriberJobs.execute(storeSubscriberJobsCommand);
-    }
+      })
+    );
   }
 
   @CachedEntity({

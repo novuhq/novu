@@ -11,6 +11,7 @@ import { StandardWorkerService } from './standard-worker.service';
 import { WebSocketsWorkerService } from './web-sockets-worker.service';
 import { WorkflowWorkerService } from './workflow-worker.service';
 import { OldInstanceWorkflowWorkerService } from './old-instance-workflow-worker.service';
+import { SubscriberProcessWorkerService } from './subscriber-process-worker.service';
 
 export {
   ActiveJobsMetricWorkerService,
@@ -23,4 +24,5 @@ export {
   WorkerProcessor,
   WorkflowWorkerService,
   OldInstanceWorkflowWorkerService,
+  SubscriberProcessWorkerService,
 };

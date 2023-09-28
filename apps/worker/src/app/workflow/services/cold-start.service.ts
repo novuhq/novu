@@ -1,5 +1,5 @@
 import { INestApplication } from '@nestjs/common';
-import { INovuWorker, ReadinessService } from '@novu/application-generic';
+import { INovuWorker, ReadinessService, SubscriberProcessWorkerService } from '@novu/application-generic';
 
 import { StandardWorker } from './standard.worker';
 import { WorkflowWorker } from './workflow.worker';
@@ -12,8 +12,14 @@ const getWorkers = (app: INestApplication): INovuWorker[] => {
   const standardWorker = app.get(StandardWorker, { strict: false });
   const workflowWorker = app.get(WorkflowWorker, { strict: false });
   const oldInstanceWorkflowWorker = app.get(OldInstanceWorkflowWorker, { strict: false });
+  const subscriberProcessWorkerService = app.get(SubscriberProcessWorkerService, { strict: false });
 
-  const workers: INovuWorker[] = [standardWorker, workflowWorker, oldInstanceWorkflowWorker];
+  const workers: INovuWorker[] = [
+    standardWorker,
+    workflowWorker,
+    oldInstanceWorkflowWorker,
+    subscriberProcessWorkerService,
+  ];
 
   return workers;
 };

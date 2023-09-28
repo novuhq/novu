@@ -29,6 +29,7 @@ import {
   GetTopicSubscribersUseCase,
   GetIsTopicNotificationEnabled,
   FeatureFlagsService,
+  SubscriberJobBoundUsecase,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
@@ -118,6 +119,7 @@ const USE_CASES = [
   MapTriggerRecipients,
   GetTopicSubscribersUseCase,
   getIsTopicNotificationEnabled,
+  SubscriberJobBoundUsecase,
 ];
 
 const PROVIDERS: Provider[] = [
