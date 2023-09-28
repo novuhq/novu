@@ -19,6 +19,11 @@ type JobEntityPopulated = JobEntity & {
   environment: EnvironmentEntity;
 };
 
+export interface IDelayOrDigestJobResult {
+  digestResult: DigestCreationResultEnum;
+  activeDigestId?: string;
+}
+
 export class JobRepository extends BaseRepository<JobDBModel, JobEntity, EnforceEnvOrOrgIds> {
   constructor() {
     super(Job, JobEntity);
@@ -177,12 +182,14 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     digestKey?: string,
     digestValue?: string | number,
     digestMeta?: IDigestRegularMetadata
-  ): Promise<DigestCreationResultEnum> {
+  ): Promise<IDelayOrDigestJobResult> {
     const isBackoff = job.digest?.type === DigestTypeEnum.BACKOFF || (job.digest as IDigestRegularMetadata)?.backoff;
     if (isBackoff) {
       const trigger = await this.getTrigger(job, digestMeta, digestKey, digestValue);
       if (!trigger) {
-        return DigestCreationResultEnum.SKIPPED;
+        return {
+          digestResult: DigestCreationResultEnum.SKIPPED,
+        };
       }
 
       /**
@@ -193,7 +200,9 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
        */
       const lockedPriorityJob = isBefore(new Date(job.createdAt), new Date(trigger.createdAt));
       if (lockedPriorityJob) {
-        return DigestCreationResultEnum.SKIPPED;
+        return {
+          digestResult: DigestCreationResultEnum.SKIPPED,
+        };
       }
     }
 
@@ -224,10 +233,16 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
         }
       );
 
-      return DigestCreationResultEnum.CREATED;
+      return {
+        activeDigestId: job._id,
+        digestResult: DigestCreationResultEnum.CREATED,
+      };
     }
 
-    return DigestCreationResultEnum.MERGED;
+    return {
+      activeDigestId: delayedDigestJob._id,
+      digestResult: DigestCreationResultEnum.MERGED,
+    };
   }
 
   private getBackoffDate(metadata: IDigestRegularMetadata | undefined) {
@@ -260,7 +275,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     return this.findOne(query);
   }
 
-  async updateAllChildJobStatus(job: JobEntity, status: JobStatusEnum): Promise<JobEntity[]> {
+  async updateAllChildJobStatus(job: JobEntity, status: JobStatusEnum, activeDigestId: string): Promise<JobEntity[]> {
     const updatedJobs: JobEntity[] = [];
 
     let childJob: JobEntity | null = await this.MongooseModel.findOneAndUpdate<JobEntity>(
@@ -271,6 +286,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
       {
         $set: {
           status,
+          _mergedDigestId: activeDigestId,
         },
       }
     );
@@ -288,6 +304,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
         {
           $set: {
             status,
+            _mergedDigestId: activeDigestId,
           },
         }
       );

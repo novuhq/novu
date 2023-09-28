@@ -1,15 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { MessageRepository, JobRepository, JobStatusEnum } from '@novu/dal';
-import {
-  StepTypeEnum,
-  DigestTypeEnum,
-  ExecutionDetailsSourceEnum,
-  ExecutionDetailsStatusEnum,
-  IDigestRegularMetadata,
-} from '@novu/shared';
+import { StepTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import { DetailEnum, CreateExecutionDetails, CreateExecutionDetailsCommand } from '@novu/application-generic';
 
-import { DigestEventsCommand } from './digest-events.command';
 import { GetDigestEventsRegular } from './get-digest-events-regular.usecase';
 import { GetDigestEventsBackoff } from './get-digest-events-backoff.usecase';
 
@@ -76,19 +69,18 @@ export class Digest extends SendMessageType {
       throw new PlatformException(message);
     }
 
-    const digestEventsCommand = DigestEventsCommand.create({
-      currentJob,
-      _subscriberId: command._subscriberId,
-    });
+    const jobs = await this.jobRepository.find(
+      {
+        _mergedDigestId: currentJob._id,
+        status: JobStatusEnum.MERGED,
+        type: StepTypeEnum.DIGEST,
+        _environmentId: currentJob._environmentId,
+        _subscriberId: command._subscriberId,
+      },
+      'payload'
+    );
 
-    if (
-      currentJob?.digest?.type === DigestTypeEnum.BACKOFF ||
-      (currentJob?.digest as IDigestRegularMetadata)?.backoff
-    ) {
-      return this.getDigestEventsBackoff.execute(digestEventsCommand);
-    }
-
-    return this.getDigestEventsRegular.execute(digestEventsCommand);
+    return [currentJob.payload, ...jobs.map((job) => job.payload)];
   }
 
   private async getJobsToUpdate(command: SendMessageCommand) {

@@ -1,5 +1,5 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { JobEntity, JobRepository } from '@novu/dal';
+import { JobEntity, JobRepository, IDelayOrDigestJobResult } from '@novu/dal';
 import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
@@ -57,9 +57,9 @@ export class MergeOrCreateDigest {
       digestMeta
     );
 
-    switch (digestAction) {
+    switch (digestAction.digestResult) {
       case DigestCreationResultEnum.MERGED:
-        return await this.processMergedDigest(job);
+        return await this.processMergedDigest(job, digestAction.activeDigestId);
       case DigestCreationResultEnum.SKIPPED:
         return await this.processSkippedDigest(job);
       case DigestCreationResultEnum.CREATED:
@@ -86,7 +86,8 @@ export class MergeOrCreateDigest {
 
   @Instrument()
   private async processMergedDigest(
-    job: JobEntity
+    job: JobEntity,
+    activeDigestId: string
   ): Promise<DigestCreationResultEnum> {
     await this.jobRepository.update(
       {
@@ -96,11 +97,16 @@ export class MergeOrCreateDigest {
       {
         $set: {
           status: JobStatusEnum.MERGED,
+          _mergedDigestId: activeDigestId,
         },
       }
     );
 
-    await this.jobRepository.updateAllChildJobStatus(job, JobStatusEnum.MERGED);
+    await this.jobRepository.updateAllChildJobStatus(
+      job,
+      JobStatusEnum.MERGED,
+      activeDigestId
+    );
 
     await this.digestMergedExecutionDetails(job);
 
@@ -144,7 +150,7 @@ export class MergeOrCreateDigest {
     digestKey?: string,
     digestValue?: string | number,
     digestMeta?: any
-  ): Promise<DigestCreationResultEnum> {
+  ): Promise<IDelayOrDigestJobResult> {
     const TTL = 1500;
     const resourceKey = this.getLockKey(job, digestKey, digestValue);
 
@@ -157,7 +163,7 @@ export class MergeOrCreateDigest {
       );
 
     const result =
-      await this.eventsDistributedLockService.applyLock<DigestCreationResultEnum>(
+      await this.eventsDistributedLockService.applyLock<IDelayOrDigestJobResult>(
         {
           resource: resourceKey,
           ttl: TTL,
