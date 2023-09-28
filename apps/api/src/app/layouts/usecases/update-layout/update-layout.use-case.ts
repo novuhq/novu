@@ -84,7 +84,7 @@ export class UpdateLayoutUseCase {
       userId: command.userId,
     });
 
-    await this.createLayoutChange.execute(createLayoutChangeCommand);
+    await this.createLayoutChange.execute(createLayoutChangeCommand, false, true);
   }
 
   private applyUpdatesToEntity(layout: LayoutEntity, updates: UpdateLayoutCommand): LayoutEntity {

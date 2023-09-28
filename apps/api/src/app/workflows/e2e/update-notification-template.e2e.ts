@@ -1,6 +1,11 @@
 import { expect } from 'chai';
 import { UserSession, NotificationTemplateService } from '@novu/testing';
-import { StepTypeEnum, INotificationTemplate, IUpdateNotificationTemplateDto } from '@novu/shared';
+import {
+  StepTypeEnum,
+  INotificationTemplate,
+  IUpdateNotificationTemplateDto,
+  ChangeEntityActionEnum,
+} from '@novu/shared';
 import { ChangeRepository } from '@novu/dal';
 import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from '../dto';
 import { WorkflowResponse } from '../dto/workflow-response.dto';
@@ -14,7 +19,7 @@ describe('Update workflow by id - /workflows/:workflowId (PUT)', async () => {
     await session.initialize();
   });
 
-  it('should update the workflow', async function () {
+  it.only('should update the workflow', async function () {
     const notificationTemplateService = new NotificationTemplateService(
       session.user._id,
       session.organization._id,
@@ -46,6 +51,7 @@ describe('Update workflow by id - /workflows/:workflowId (PUT)', async () => {
       _entityId: foundTemplate._id,
     });
     expect(change._entityId).to.eq(foundTemplate._id);
+    expect(change?.action).to.be.equal(ChangeEntityActionEnum.UPDATE);
   });
 
   it('should throw error if trigger identifier already exists', async function () {

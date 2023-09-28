@@ -45,6 +45,7 @@ describe('Create Change', function () {
     expect(result._environmentId).to.be.eq(session.environment._id);
     expect(result._organizationId).to.be.eq(session.organization._id);
     expect(result.type).to.be.eq(ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE);
+    expect(result.action).to.be.eq(ChangeEntityActionEnum.CREATE);
   });
 
   it('should find diff for item', async function () {
@@ -74,12 +75,13 @@ describe('Create Change', function () {
           _id,
           name: 'test',
         },
-        action: ChangeEntityActionEnum.CREATE,
+        action: ChangeEntityActionEnum.UPDATE,
       })
     );
 
     expect(change.change[1].op).to.eq('add');
     expect(change.change[1].val).to.eq('test');
     expect(change.change[1].path).to.eql(['name']);
+    expect(change.action).to.be.eq(ChangeEntityActionEnum.CREATE);
   });
 });

@@ -17,7 +17,7 @@ export class CreateLayoutChangeUseCase {
     private changeRepository: ChangeRepository
   ) {}
 
-  async execute(command: CreateLayoutChangeCommand, isDeleteChange = false): Promise<void> {
+  async execute(command: CreateLayoutChangeCommand, isDeleteChange = false, isUpdateChange = false): Promise<void> {
     const item = isDeleteChange
       ? await this.findDeletedLayout.execute(FindDeletedLayoutCommand.create(command))
       : await this.layoutRepository.findOne({
@@ -41,7 +41,11 @@ export class CreateLayoutChangeUseCase {
           type: ChangeEntityTypeEnum.LAYOUT,
           item,
           changeId: parentChangeId,
-          action: ChangeEntityActionEnum.CREATE,
+          action: isDeleteChange
+            ? ChangeEntityActionEnum.DELETE
+            : isUpdateChange
+            ? ChangeEntityActionEnum.UPDATE
+            : ChangeEntityActionEnum.CREATE,
         })
       );
     }

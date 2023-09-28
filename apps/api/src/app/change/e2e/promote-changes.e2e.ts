@@ -16,6 +16,7 @@ import {
   StepTypeEnum,
   FilterPartTypeEnum,
   TemplateVariableTypeEnum,
+  ChangeEntityActionEnum,
 } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 
@@ -586,6 +587,9 @@ describe('Promote changes', () => {
         }
       );
 
+      expect(changes.length).to.be.equal(1);
+      expect(changes[0].action).to.be.equal(ChangeEntityActionEnum.CREATE);
+
       await changes.reduce(async (prev, change) => {
         await session.testAgent.post(`/v1/changes/${change._id}/apply`);
       }, Promise.resolve());
@@ -693,6 +697,7 @@ describe('Promote changes', () => {
       );
 
       expect(changes.length).to.eq(1);
+      expect(changes[0].action).to.be.equal(ChangeEntityActionEnum.CREATE);
     });
 
     it('should not have feed in production after feed delete', async () => {
@@ -709,6 +714,20 @@ describe('Promote changes', () => {
       await session.applyChanges({
         enabled: false,
       });
+
+      const changes = await changeRepository.find(
+        {
+          _environmentId: session.environment._id,
+          _organizationId: session.organization._id,
+        },
+        '',
+        {
+          sort: { createdAt: 1 },
+        }
+      );
+
+      expect(changes.length).to.be.equal(1);
+      expect(changes[0].action).to.be.equal(ChangeEntityActionEnum.DELETE);
 
       const devFeeds = await feedRepository.find({
         _environmentId: session.environment._id,
