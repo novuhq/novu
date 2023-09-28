@@ -150,8 +150,10 @@ export class SendMessageEmail extends SendMessageBase {
     let html;
     let subject = '';
     let content;
+    let senderName = overrides?.senderName || emailChannel.template.senderName;
 
     const payload = {
+      senderName: emailChannel.template.senderName || '',
       subject: emailChannel.template.subject || '',
       preheader: emailChannel.template.preheader,
       content: emailChannel.template.content,
@@ -204,7 +206,7 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     try {
-      ({ html, content, subject } = await this.compileEmailTemplateUsecase.execute(
+      ({ html, content, subject, senderName } = await this.compileEmailTemplateUsecase.execute(
         CompileEmailTemplateCommand.create({
           environmentId: command.environmentId,
           organizationId: command.organizationId,
@@ -289,13 +291,7 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     if (email && integration) {
-      await this.sendMessage(
-        integration,
-        mailData,
-        message,
-        command,
-        overrides?.senderName || emailChannel.template.senderName
-      );
+      await this.sendMessage(integration, mailData, message, command, senderName);
 
       return;
     }
