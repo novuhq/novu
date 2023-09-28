@@ -30,7 +30,7 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=18.17.1 <19",
+    "node": ">=18 <19",
     "pnpm": "^7.26.0"
   },
   "dependencies": {
