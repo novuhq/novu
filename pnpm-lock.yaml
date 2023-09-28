@@ -164,7 +164,6 @@ importers:
       '@nestjs/cli': ^10.1.16
       '@nestjs/common': ^10.2.2
       '@nestjs/core': ^10.2.2
-      '@nestjs/graphql': ^12.0.8
       '@nestjs/jwt': ^10.1.0
       '@nestjs/passport': ^10.0.1
       '@nestjs/platform-express': ^10.2.2
@@ -243,7 +242,6 @@ importers:
       '@nestjs/axios': 2.0.0_qwvj576sbz4hzeal5kp76dqnsi
       '@nestjs/common': 10.2.2_j3td4gnlgk75ora6o6suo62byy
       '@nestjs/core': 10.2.2_v4fpnjri37dvafci5vzkvgo4ne
-      '@nestjs/graphql': 12.0.8_vwvzqo7zbf7canbr2urjqmzihy
       '@nestjs/jwt': 10.1.0_@nestjs+common@10.2.2
       '@nestjs/passport': 10.0.1_kn4ljbedllcoqpuu4ifhphsdsu
       '@nestjs/platform-express': 10.2.2_h33h3l6i5mruhsbo3bha6vy2fi
@@ -473,7 +471,6 @@ importers:
       eslint-plugin-cypress: ^2.12.1
       eslint-plugin-react-hooks: ^4.4.0
       eslint-plugin-storybook: ^0.6.13
-      graphql: ^15.4.0
       handlebars: ^4.7.7
       html-webpack-plugin: 5.5.3
       http-server: ^0.13.0
@@ -578,7 +575,6 @@ importers:
       customize-cra: 1.0.0
       date-fns: 2.29.3
       eslint-plugin-react-hooks: 4.6.0_eslint@8.48.0
-      graphql: 15.8.0
       handlebars: 4.7.7
       html-webpack-plugin: 5.5.3_webpack@5.78.0
       jwt-decode: 3.1.2
@@ -12012,6 +12008,7 @@ packages:
       graphql: 16.8.0
       tslib: 2.6.2
     dev: false
+    optional: true
 
   /@graphql-tools/schema/10.0.0_graphql@16.8.0:
     resolution: {integrity: sha512-kf3qOXMFcMs2f/S8Y3A8fm/2w+GaHAkfr3Gnhh2LOug/JgpY/ywgFVxO3jOeSpSEdoYcDKLcXVjMigNbY4AdQg==}
@@ -12025,6 +12022,7 @@ packages:
       tslib: 2.6.2
       value-or-promise: 1.0.12
     dev: false
+    optional: true
 
   /@graphql-tools/utils/10.0.1_graphql@16.8.0:
     resolution: {integrity: sha512-i1FozbDGHgdsFA47V/JvQZ0FE8NAy0Eiz7HGCJO2MkNdZAKNnwei66gOq0JWYVFztwpwbVQ09GkKhq7Kjcq5Cw==}
@@ -12036,6 +12034,7 @@ packages:
       graphql: 16.8.0
       tslib: 2.6.2
     dev: false
+    optional: true
 
   /@graphql-typed-document-node/core/3.2.0_graphql@16.8.0:
     resolution: {integrity: sha512-mB9oAsNCm9aM3/SOv4YtBMqZbYj10R7dkq8byBqxGY/ncFwhf2oQzMV+LCRlWoDSEBJ3COiR1yeDvMtsoOsuFQ==}
@@ -12044,6 +12043,7 @@ packages:
     dependencies:
       graphql: 16.8.0
     dev: false
+    optional: true
 
   /@grpc/grpc-js/1.8.21:
     resolution: {integrity: sha512-KeyQeZpxeEBSqFVTi3q2K7PiPXmgBfECc4updA1ejCLjYmoAlvvM3ZMp5ztTDUCUQmoY3CpDxvchjO1+rFkoHg==}
@@ -14120,6 +14120,7 @@ packages:
       - bufferutil
       - utf-8-validate
     dev: false
+    optional: true
 
   /@nestjs/jwt/10.1.0_@nestjs+common@10.2.2:
     resolution: {integrity: sha512-iLwCGS25ybUxGS7i5j/Mwuyzvp/WxJftHlm8aLEBv5GV92apz6L1QVjxLdZrqXbzo++C8gdJauhzil8qitY+6w==}
@@ -24318,6 +24319,7 @@ packages:
   /backo2/1.0.2:
     resolution: {integrity: sha512-zj6Z6M7Eq+PBZ7PQxl5NT665MvJdAkzp0f60nAJ+sLaSCBPMwVak5ZegFbgVCzFcCJTKFoMizvM5Ld7+JrRJHA==}
     dev: false
+    optional: true
 
   /bail/2.0.2:
     resolution: {integrity: sha512-0xO6mYd7JB2YesxDKplafRpsiOzPt9V02ddPCLbY1xYGPOX24NTyN50qnUxgCPcSoYMhKpAuBTjQoRZCAkUDRw==}
@@ -29267,6 +29269,7 @@ packages:
   /eventemitter3/3.1.2:
     resolution: {integrity: sha512-tvtQIeLVHjDkJYnzf2dgVMxfuSGJeM/7UCG17TT4EumTfNtF+0nebF/4zWOIkCreAbtNqhGEboB6BWrwqNaw4Q==}
     dev: false
+    optional: true
 
   /eventemitter3/4.0.7:
     resolution: {integrity: sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw==}
@@ -31241,6 +31244,7 @@ packages:
       graphql: 16.8.0
       tslib: 2.6.2
     dev: false
+    optional: true
 
   /graphql-ws/5.14.0_graphql@16.8.0:
     resolution: {integrity: sha512-itrUTQZP/TgswR4GSSYuwWUzrE/w5GhbwM2GX3ic2U7aw33jgEsayfIlvaj7/GcIvZgNMzsPTrE5hqPuFUiE5g==}
@@ -31250,15 +31254,18 @@ packages:
     dependencies:
       graphql: 16.8.0
     dev: false
+    optional: true
 
   /graphql/15.8.0:
     resolution: {integrity: sha512-5gghUc24tP9HRznNpV2+FIoq3xKkj5dTQqf4v0CpdPbFVwFkWoxOM+o+2OC9ZSvjEMTjfmG9QT+gcvggTwW1zw==}
     engines: {node: '>= 10.x'}
+    dev: true
 
   /graphql/16.8.0:
     resolution: {integrity: sha512-0oKGaR+y3qcS5mCu1vb7KG+a89vjn06C7Ihq/dDl3jA+A8B3TKomvi3CiEcVLJQGalbu8F52LxkOym7U5sSfbg==}
     engines: {node: ^12.22.0 || ^14.16.0 || ^16.0.0 || >=17.0.0}
     dev: false
+    optional: true
 
   /growl/1.10.5:
     resolution: {integrity: sha512-qBr4OuELkhPenW6goKVXiv47US3clb3/IbuWF9KNKEijAy9oeHxU9IgzjvJhHkUzhaj7rOUD7+YGWqUjLp5oSA==}
@@ -33045,6 +33052,7 @@ packages:
   /iterall/1.3.0:
     resolution: {integrity: sha512-QZ9qOMdF+QLHxy1QIpUHUU1D5pS2CG2P69LF6L6CPjPYA/XMOmKV3PZpawHoAjHNyB0swdVTRxdYT4tbBbxqwg==}
     dev: false
+    optional: true
 
   /iterare/1.2.1:
     resolution: {integrity: sha512-RKYVTCjAnRthyJes037NX/IiqeidgN1xc3j1RjFfECFp28A1GVwK9nA+i0rJPaHqSZwygLzRnFlzUuHFoWWy+Q==}
@@ -44792,6 +44800,7 @@ packages:
       - bufferutil
       - utf-8-validate
     dev: false
+    optional: true
 
   /sucrase/3.32.0:
     resolution: {integrity: sha512-ydQOU34rpSyj2TGyz4D2p8rbktIOZ8QY9s+DGLvFU1i5pWJE8vkpruCjGCMHsdXwnD7JDcS+noSwM/a7zyNFDQ==}
@@ -46315,6 +46324,7 @@ packages:
   /tslib/2.6.0:
     resolution: {integrity: sha512-7At1WUettjcSRHXCyYtTselblcHl9PJFFVKiCAy/bY97+BPZXSQ2wbq0P9s8tK2G7dFQfNnlJnPAiArVBVBsfA==}
     dev: false
+    optional: true
 
   /tslib/2.6.2:
     resolution: {integrity: sha512-AEYxH93jGFPn/a2iVAwW87VuUIkR1FVUKB77NwMF7nBTDkDrrT/Hpt/IrCJ0QXhW27jTBDcf5ZY7w6RiqTMw2Q==}
@@ -47177,6 +47187,7 @@ packages:
     resolution: {integrity: sha512-Z6Uz+TYwEqE7ZN50gwn+1LCVo9ZVrpxRPOhOLnncYkY1ZzOYtrX8Fwf/rFktZ8R5mJms6EZf5TqNOMeZmnPq9Q==}
     engines: {node: '>=12'}
     dev: false
+    optional: true
 
   /vary/1.1.2:
     resolution: {integrity: sha512-BNGbWLfd0eUPabhkXUVm0j8uuvREyTh5ovRa/dyow/BqAbZJyC+5fU+IzQOzmAKzYqYRAISoRhdQr3eIZ/PXqg==}
