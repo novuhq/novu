@@ -1,0 +1,30 @@
+{
+  "unversionedId": "notification-center/vue-component",
+  "id": "notification-center/vue-component",
+  "title": "Vue Component",
+  "description": "The @novu/notification-center-vue package provides a Vue component wrapper over the Notification Center Web Component that you can use to integrate the notification center into your Vue application.",
+  "source": "@site/docs/notification-center/vue-component.md",
+  "sourceDirName": "notification-center",
+  "slug": "/notification-center/vue-component",
+  "permalink": "/notification-center/vue-component",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/notification-center/vue-component.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Biswajeet Das",
+  "lastUpdatedAt": 1681201865,
+  "formattedLastUpdatedAt": "Apr 11, 2023",
+  "sidebarPosition": 5,
+  "frontMatter": {
+    "sidebar_position": 5
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Web Component",
+    "permalink": "/notification-center/web-component"
+  },
+  "next": {
+    "title": "Angular Component",
+    "permalink": "/notification-center/angular-component"
+  }
+}

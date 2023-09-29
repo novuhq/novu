@@ -1,0 +1,30 @@
+{
+  "unversionedId": "notification-center/iframe-embed",
+  "id": "notification-center/iframe-embed",
+  "title": "iFrame Embed",
+  "description": "If you are using a (currently) unsupported client framework, you can use our embedded script. This will generate the notification center inside an iframe.",
+  "source": "@site/docs/notification-center/iframe-embed.md",
+  "sourceDirName": "notification-center",
+  "slug": "/notification-center/iframe-embed",
+  "permalink": "/notification-center/iframe-embed",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/notification-center/iframe-embed.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Biswajeet Das",
+  "lastUpdatedAt": 1681201865,
+  "formattedLastUpdatedAt": "Apr 11, 2023",
+  "sidebarPosition": 7,
+  "frontMatter": {
+    "sidebar_position": 7
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Angular Component",
+    "permalink": "/notification-center/angular-component"
+  },
+  "next": {
+    "title": "Custom styling",
+    "permalink": "/notification-center/custom-styling"
+  }
+}

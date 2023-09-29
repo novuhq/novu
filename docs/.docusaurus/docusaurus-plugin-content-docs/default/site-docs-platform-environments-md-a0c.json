@@ -1,0 +1,30 @@
+{
+  "unversionedId": "platform/environments",
+  "id": "platform/environments",
+  "title": "Environments",
+  "description": "Novu runs all your requests in the context of an environment. By default, Novu creates two environments when your account was just created, development and production.",
+  "source": "@site/docs/platform/environments.md",
+  "sourceDirName": "platform",
+  "slug": "/platform/environments",
+  "permalink": "/platform/environments",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/platform/environments.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "ainouzgali",
+  "lastUpdatedAt": 1684845522,
+  "formattedLastUpdatedAt": "May 23, 2023",
+  "sidebarPosition": 5,
+  "frontMatter": {
+    "sidebar_position": 5
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Topics",
+    "permalink": "/platform/topics"
+  },
+  "next": {
+    "title": "Digest Engine",
+    "permalink": "/platform/digest"
+  }
+}

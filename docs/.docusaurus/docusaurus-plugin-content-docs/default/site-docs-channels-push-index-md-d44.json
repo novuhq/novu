@@ -1,0 +1,27 @@
+{
+  "unversionedId": "channels/push/index",
+  "id": "channels/push/index",
+  "title": "Push Notifications",
+  "description": "Novu can be used to deliver push notifications to your customers devices using a unified delivery API. Both Mobile and Web push notifications are supported.",
+  "source": "@site/docs/channels/push/index.md",
+  "sourceDirName": "channels/push",
+  "slug": "/channels/push/",
+  "permalink": "/channels/push/",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/channels/push/index.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "shane",
+  "lastUpdatedAt": 1684391305,
+  "formattedLastUpdatedAt": "May 18, 2023",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Custom SMTP",
+    "permalink": "/channels/email/custom-smtp"
+  },
+  "next": {
+    "title": "FCM",
+    "permalink": "/channels/push/fcm"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "unversionedId": "notification-center/FAQ",
+  "id": "notification-center/FAQ",
+  "title": "FAQs",
+  "description": "Possible causes for the notification center not loading properly:",
+  "source": "@site/docs/notification-center/FAQ.md",
+  "sourceDirName": "notification-center",
+  "slug": "/notification-center/FAQ",
+  "permalink": "/notification-center/FAQ",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/notification-center/FAQ.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "americano98",
+  "lastUpdatedAt": 1684938806,
+  "formattedLastUpdatedAt": "May 24, 2023",
+  "sidebarPosition": 9,
+  "frontMatter": {
+    "sidebar_position": 9
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Custom styling",
+    "permalink": "/notification-center/custom-styling"
+  },
+  "next": {
+    "title": "Chat Channel",
+    "permalink": "/channels/chat/"
+  }
+}

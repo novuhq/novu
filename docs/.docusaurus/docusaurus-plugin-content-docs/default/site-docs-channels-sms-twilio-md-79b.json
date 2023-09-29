@@ -1,0 +1,31 @@
+{
+  "unversionedId": "channels/sms/twilio",
+  "id": "channels/sms/twilio",
+  "title": "Twilio SMS",
+  "description": "You can utilize the Twilio API to communicate in all sorts of ways with your customers. Mainly though, using SMS messaging will you get the best value.",
+  "source": "@site/docs/channels/sms/twilio.md",
+  "sourceDirName": "channels/sms",
+  "slug": "/channels/sms/twilio",
+  "permalink": "/channels/sms/twilio",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/channels/sms/twilio.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Pawan Jain",
+  "lastUpdatedAt": 1679483135,
+  "formattedLastUpdatedAt": "Mar 22, 2023",
+  "sidebarPosition": 1,
+  "frontMatter": {
+    "sidebar_label": "Twilio",
+    "sidebar_position": 1
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "SMS",
+    "permalink": "/channels/sms/"
+  },
+  "next": {
+    "title": "SMS77",
+    "permalink": "/channels/sms/SMS77"
+  }
+}

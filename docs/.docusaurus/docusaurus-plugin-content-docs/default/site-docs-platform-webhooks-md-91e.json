@@ -1,0 +1,30 @@
+{
+  "unversionedId": "platform/webhooks",
+  "id": "platform/webhooks",
+  "title": "Webhooks",
+  "description": "Novu provides an URL that you can use to setup webhook support for your integrated provider.",
+  "source": "@site/docs/platform/webhooks.md",
+  "sourceDirName": "platform",
+  "slug": "/platform/webhooks",
+  "permalink": "/platform/webhooks",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/platform/webhooks.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Biswajeet Das",
+  "lastUpdatedAt": 1678703826,
+  "formattedLastUpdatedAt": "Mar 13, 2023",
+  "sidebarPosition": 10,
+  "frontMatter": {
+    "sidebar_position": 10
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Step Filter",
+    "permalink": "/platform/step-filter"
+  },
+  "next": {
+    "title": "Integrations Store",
+    "permalink": "/platform/integrations"
+  }
+}

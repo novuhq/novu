@@ -1,0 +1,27 @@
+{
+  "unversionedId": "channels/sms/plivo",
+  "id": "channels/sms/plivo",
+  "title": "Plivo",
+  "description": "You can use the Plivo provider to send SMS messages to your customers using the Novu Platform with a single API to create multi-channel experiences.",
+  "source": "@site/docs/channels/sms/plivo.md",
+  "sourceDirName": "channels/sms",
+  "slug": "/channels/sms/plivo",
+  "permalink": "/channels/sms/plivo",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/channels/sms/plivo.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "peoray",
+  "lastUpdatedAt": 1683798700,
+  "formattedLastUpdatedAt": "May 11, 2023",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Nexmo",
+    "permalink": "/channels/sms/nexmo"
+  },
+  "next": {
+    "title": "Sendchamp",
+    "permalink": "/channels/sms/sendchamp"
+  }
+}

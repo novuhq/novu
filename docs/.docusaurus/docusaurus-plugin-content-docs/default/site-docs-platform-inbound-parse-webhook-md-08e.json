@@ -1,0 +1,31 @@
+{
+  "unversionedId": "platform/inbound-parse-webhook",
+  "id": "platform/inbound-parse-webhook",
+  "title": "Inbound Parse Webhook",
+  "description": "Inbound Webhook is a feature that allows processing of incoming emails for a domain or subdomain.",
+  "source": "@site/docs/platform/inbound-parse-webhook.md",
+  "sourceDirName": "platform",
+  "slug": "/platform/inbound-parse-webhook",
+  "permalink": "/platform/inbound-parse-webhook",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/platform/inbound-parse-webhook.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Pawan Jain",
+  "lastUpdatedAt": 1687428040,
+  "formattedLastUpdatedAt": "Jun 22, 2023",
+  "sidebarPosition": 12,
+  "frontMatter": {
+    "sidebar_position": 12,
+    "sidebar_label": "Inbound Webhook"
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Layouts",
+    "permalink": "/platform/layouts"
+  },
+  "next": {
+    "title": "Messages",
+    "permalink": "/platform/messages"
+  }
+}

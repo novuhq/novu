@@ -1,0 +1,31 @@
+{
+  "unversionedId": "channels/push/expo",
+  "id": "channels/push/expo",
+  "title": "Expo Push",
+  "description": "Expo Push is a notification delivery service provided by Expo.",
+  "source": "@site/docs/channels/push/expo.md",
+  "sourceDirName": "channels/push",
+  "slug": "/channels/push/expo",
+  "permalink": "/channels/push/expo",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/channels/push/expo.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Pawan Jain",
+  "lastUpdatedAt": 1679483135,
+  "formattedLastUpdatedAt": "Mar 22, 2023",
+  "sidebarPosition": 2,
+  "frontMatter": {
+    "sidebar_label": "Expo Push",
+    "sidebar_position": 2
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "FCM",
+    "permalink": "/channels/push/fcm"
+  },
+  "next": {
+    "title": "APNS",
+    "permalink": "/channels/push/apns"
+  }
+}

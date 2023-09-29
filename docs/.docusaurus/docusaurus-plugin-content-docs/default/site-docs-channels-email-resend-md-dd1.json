@@ -1,0 +1,30 @@
+{
+  "unversionedId": "channels/email/resend",
+  "id": "channels/email/resend",
+  "title": "Resend",
+  "description": "You can use the Resend provider to send transactional emails to your customers using the Novu Platform with a single API to create multi-channel experiences.",
+  "source": "@site/docs/channels/email/resend.md",
+  "sourceDirName": "channels/email",
+  "slug": "/channels/email/resend",
+  "permalink": "/channels/email/resend",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/channels/email/resend.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "peoray",
+  "lastUpdatedAt": 1682509192,
+  "formattedLastUpdatedAt": "Apr 26, 2023",
+  "sidebarPosition": 4,
+  "frontMatter": {
+    "sidebar_position": 4
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Sendinblue",
+    "permalink": "/channels/email/sendinblue"
+  },
+  "next": {
+    "title": "SparkPost",
+    "permalink": "/channels/email/sparkpost"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "unversionedId": "channels/sms/termii",
+  "id": "channels/sms/termii",
+  "title": "Termii",
+  "description": "You can use the Termii provider to send SMS messages to your customers using the Novu Platform with a single API to create multi-channel experiences.",
+  "source": "@site/docs/channels/sms/termii.md",
+  "sourceDirName": "channels/sms",
+  "slug": "/channels/sms/termii",
+  "permalink": "/channels/sms/termii",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/channels/sms/termii.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Dima Grossman",
+  "lastUpdatedAt": 1690266683,
+  "formattedLastUpdatedAt": "Jul 25, 2023",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Telnyx",
+    "permalink": "/channels/sms/telnyx"
+  },
+  "next": {
+    "title": "Notification Center",
+    "permalink": "/channels/notification-center"
+  }
+}

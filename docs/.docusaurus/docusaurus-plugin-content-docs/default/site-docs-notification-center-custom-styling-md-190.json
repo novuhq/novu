@@ -1,0 +1,30 @@
+{
+  "unversionedId": "notification-center/custom-styling",
+  "id": "notification-center/custom-styling",
+  "title": "Custom styling",
+  "description": "The Notification Center Component allows you to customize the look of the component. You can do that by using the styles property, but depending on the wrapper UI library we support, the styles prop will be applied to different components, check the examples. The styles object interface and all the props can be found here.",
+  "source": "@site/docs/notification-center/custom-styling.md",
+  "sourceDirName": "notification-center",
+  "slug": "/notification-center/custom-styling",
+  "permalink": "/notification-center/custom-styling",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/notification-center/custom-styling.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Pawan Jain",
+  "lastUpdatedAt": 1684683202,
+  "formattedLastUpdatedAt": "May 21, 2023",
+  "sidebarPosition": 8,
+  "frontMatter": {
+    "sidebar_position": 8
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "iFrame Embed",
+    "permalink": "/notification-center/iframe-embed"
+  },
+  "next": {
+    "title": "FAQs",
+    "permalink": "/notification-center/FAQ"
+  }
+}

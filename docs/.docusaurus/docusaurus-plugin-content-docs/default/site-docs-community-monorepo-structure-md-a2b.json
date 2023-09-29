@@ -1,0 +1,30 @@
+{
+  "unversionedId": "community/monorepo-structure",
+  "id": "community/monorepo-structure",
+  "title": "Monorepo structure",
+  "description": "In this guide, we will explore the Novu mono-repo structure and high-level structure of the different libraries and services we use.",
+  "source": "@site/docs/community/monorepo-structure.md",
+  "sourceDirName": "community",
+  "slug": "/community/monorepo-structure",
+  "permalink": "/community/monorepo-structure",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/community/monorepo-structure.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "ainouzgali",
+  "lastUpdatedAt": 1684911830,
+  "formattedLastUpdatedAt": "May 24, 2023",
+  "sidebarPosition": 2,
+  "frontMatter": {
+    "sidebar_position": 2
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Run Novu locally",
+    "permalink": "/community/run-locally"
+  },
+  "next": {
+    "title": "Add a new provider",
+    "permalink": "/community/create-provider"
+  }
+}

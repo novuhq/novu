@@ -1,0 +1,27 @@
+{
+  "unversionedId": "channels/chat/msteams",
+  "id": "channels/chat/msteams",
+  "title": "MS Teams",
+  "description": "MS Teams does not need any API Key or client ID to push messages in it. All it needs is the webhook url",
+  "source": "@site/docs/channels/chat/msteams.md",
+  "sourceDirName": "channels/chat",
+  "slug": "/channels/chat/msteams",
+  "permalink": "/channels/chat/msteams",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/channels/chat/msteams.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "camarasad",
+  "lastUpdatedAt": 1663051443,
+  "formattedLastUpdatedAt": "Sep 13, 2022",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Discord",
+    "permalink": "/channels/chat/discord"
+  },
+  "next": {
+    "title": "Slack",
+    "permalink": "/channels/chat/slack"
+  }
+}

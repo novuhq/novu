@@ -1,0 +1,30 @@
+{
+  "unversionedId": "channels/email/ses",
+  "id": "channels/email/ses",
+  "title": "Amazon SES",
+  "description": "You can use the Amazon SES provider to send transactional emails to your customers using the Novu Platform with a single API to create multi-channel experiences.",
+  "source": "@site/docs/channels/email/ses.md",
+  "sourceDirName": "channels/email",
+  "slug": "/channels/email/ses",
+  "permalink": "/channels/email/ses",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/channels/email/ses.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "americano98",
+  "lastUpdatedAt": 1684938806,
+  "formattedLastUpdatedAt": "May 24, 2023",
+  "sidebarPosition": 2,
+  "frontMatter": {
+    "sidebar_position": 2
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "SendGrid",
+    "permalink": "/channels/email/sendgrid"
+  },
+  "next": {
+    "title": "Sendinblue",
+    "permalink": "/channels/email/sendinblue"
+  }
+}

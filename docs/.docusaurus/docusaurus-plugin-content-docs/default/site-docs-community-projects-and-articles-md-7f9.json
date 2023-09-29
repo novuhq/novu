@@ -1,0 +1,30 @@
+{
+  "unversionedId": "community/projects-and-articles",
+  "id": "community/projects-and-articles",
+  "title": "Projects and articles",
+  "description": "Here we will showcase some of the projects and articles our community have done with or about Novu.",
+  "source": "@site/docs/community/projects-and-articles.md",
+  "sourceDirName": "community",
+  "slug": "/community/projects-and-articles",
+  "permalink": "/community/projects-and-articles",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/community/projects-and-articles.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Dima Grossman",
+  "lastUpdatedAt": 1669689829,
+  "formattedLastUpdatedAt": "Nov 29, 2022",
+  "sidebarPosition": 7,
+  "frontMatter": {
+    "sidebar_position": 7
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Code of Conduct",
+    "permalink": "/community/code-conduct"
+  },
+  "next": {
+    "title": "FAQ",
+    "permalink": "/community/faq"
+  }
+}

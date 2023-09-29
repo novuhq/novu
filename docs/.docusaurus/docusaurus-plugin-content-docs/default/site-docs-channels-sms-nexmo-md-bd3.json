@@ -1,0 +1,27 @@
+{
+  "unversionedId": "channels/sms/nexmo",
+  "id": "channels/sms/nexmo",
+  "title": "Nexmo",
+  "description": "You can use the Nexmo By Vonage provider to send SMS messages to your customers using the Novu Platform with a single API to create multi-channel experiences.",
+  "source": "@site/docs/channels/sms/nexmo.md",
+  "sourceDirName": "channels/sms",
+  "slug": "/channels/sms/nexmo",
+  "permalink": "/channels/sms/nexmo",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/channels/sms/nexmo.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "peoray",
+  "lastUpdatedAt": 1682509192,
+  "formattedLastUpdatedAt": "Apr 26, 2023",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Infobip",
+    "permalink": "/channels/sms/infobip"
+  },
+  "next": {
+    "title": "Plivo",
+    "permalink": "/channels/sms/plivo"
+  }
+}

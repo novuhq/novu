@@ -1,0 +1,30 @@
+{
+  "unversionedId": "channels/email/plunk",
+  "id": "channels/email/plunk",
+  "title": "Plunk",
+  "description": "You can use the Plunk provider to send transactional emails to your customers using the Novu Platform with a single API to create multi-channel experiences.",
+  "source": "@site/docs/channels/email/plunk.md",
+  "sourceDirName": "channels/email",
+  "slug": "/channels/email/plunk",
+  "permalink": "/channels/email/plunk",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/channels/email/plunk.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Pablo Fernández",
+  "lastUpdatedAt": 1689590722,
+  "formattedLastUpdatedAt": "Jul 17, 2023",
+  "sidebarPosition": 14,
+  "frontMatter": {
+    "sidebar_position": 14
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Infobip",
+    "permalink": "/channels/email/infobip"
+  },
+  "next": {
+    "title": "Custom SMTP",
+    "permalink": "/channels/email/custom-smtp"
+  }
+}

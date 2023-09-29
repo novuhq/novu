@@ -1,0 +1,30 @@
+{
+  "unversionedId": "channels/email/mailjet",
+  "id": "channels/email/mailjet",
+  "title": "Mailjet",
+  "description": "You can use the Mailjet provider to send transactional emails to your customers using the Novu Platform with a single API.",
+  "source": "@site/docs/channels/email/mailjet.md",
+  "sourceDirName": "channels/email",
+  "slug": "/channels/email/mailjet",
+  "permalink": "/channels/email/mailjet",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/channels/email/mailjet.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "peoray",
+  "lastUpdatedAt": 1682509192,
+  "formattedLastUpdatedAt": "Apr 26, 2023",
+  "sidebarPosition": 7,
+  "frontMatter": {
+    "sidebar_position": 7
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Postmark",
+    "permalink": "/channels/email/postmark"
+  },
+  "next": {
+    "title": "MailerSend",
+    "permalink": "/channels/email/mailersend"
+  }
+}

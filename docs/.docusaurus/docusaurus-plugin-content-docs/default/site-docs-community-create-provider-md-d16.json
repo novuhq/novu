@@ -1,0 +1,31 @@
+{
+  "unversionedId": "community/create-provider",
+  "id": "community/create-provider",
+  "title": "How to add a new provider?",
+  "description": "Novu currently supports five channels inapp, push, email, chat and sms. For inapp we support only our own provider, so new providers cannot be added for this channel. For the other four channels we support integration of external providers. This guide will help in adding new providers for any of these 4 channels. In this guide, we are adding a new provider for email channel, but all of the mentioned steps are similar for other channels as well.",
+  "source": "@site/docs/community/create-provider.md",
+  "sourceDirName": "community",
+  "slug": "/community/create-provider",
+  "permalink": "/community/create-provider",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/community/create-provider.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Pawan Jain",
+  "lastUpdatedAt": 1687880622,
+  "formattedLastUpdatedAt": "Jun 27, 2023",
+  "sidebarPosition": 4,
+  "frontMatter": {
+    "sidebar_position": 4,
+    "sidebar_label": "Add a new provider"
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Monorepo structure",
+    "permalink": "/community/monorepo-structure"
+  },
+  "next": {
+    "title": "Code of Conduct",
+    "permalink": "/community/code-conduct"
+  }
+}

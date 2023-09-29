@@ -1,0 +1,31 @@
+{
+  "unversionedId": "overview/quickstart/get-started-with-angular",
+  "id": "overview/quickstart/get-started-with-angular",
+  "title": "Angular Quickstart",
+  "description": "Learn how to use Novu to quickly send multi-channel (SMS, Email, Chat, Push) notifications and integrate a rich, customizable and ready-to-use real-time UI In-App notification center in Angular apps.",
+  "source": "@site/docs/overview/quickstart/get-started-with-angular.md",
+  "sourceDirName": "overview/quickstart",
+  "slug": "/overview/quickstart/get-started-with-angular",
+  "permalink": "/overview/quickstart/get-started-with-angular",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/overview/quickstart/get-started-with-angular.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "mayorjay",
+  "lastUpdatedAt": 1688753386,
+  "formattedLastUpdatedAt": "Jul 7, 2023",
+  "sidebarPosition": 4,
+  "frontMatter": {
+    "sidebar_position": 4,
+    "sidebar_label": "Angular"
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Vue",
+    "permalink": "/overview/quickstart/get-started-with-vue"
+  },
+  "next": {
+    "title": "React",
+    "permalink": "/overview/quickstart/get-started-with-react"
+  }
+}

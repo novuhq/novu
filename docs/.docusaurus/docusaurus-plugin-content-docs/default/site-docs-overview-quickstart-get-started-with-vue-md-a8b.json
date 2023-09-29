@@ -1,0 +1,31 @@
+{
+  "unversionedId": "overview/quickstart/get-started-with-vue",
+  "id": "overview/quickstart/get-started-with-vue",
+  "title": "Vue Quickstart",
+  "description": "Learn how to use Novu to quickly send multi-channel (SMS, Email, Chat, Push) notifications and integrate a rich, customizable and ready-to-use realtime UI In-App notification center in Vue apps.",
+  "source": "@site/docs/overview/quickstart/get-started-with-vue.md",
+  "sourceDirName": "overview/quickstart",
+  "slug": "/overview/quickstart/get-started-with-vue",
+  "permalink": "/overview/quickstart/get-started-with-vue",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/overview/quickstart/get-started-with-vue.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "mayorjay",
+  "lastUpdatedAt": 1688753386,
+  "formattedLastUpdatedAt": "Jul 7, 2023",
+  "sidebarPosition": 3,
+  "frontMatter": {
+    "sidebar_position": 3,
+    "sidebar_label": "Vue"
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "PHP",
+    "permalink": "/overview/quickstart/get-started-with-php"
+  },
+  "next": {
+    "title": "Angular",
+    "permalink": "/overview/quickstart/get-started-with-angular"
+  }
+}

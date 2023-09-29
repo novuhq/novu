@@ -1,0 +1,30 @@
+{
+  "unversionedId": "notification-center/web-component",
+  "id": "notification-center/web-component",
+  "title": "Web Component",
+  "description": "The Notification Center Web Component is a custom element that can be used in any web application. It is built by wrapping the React components and consists from its core the three pieces: NovuProvider, PopoverNotificationCenter, and NotificationBell combined together into one.",
+  "source": "@site/docs/notification-center/web-component.md",
+  "sourceDirName": "notification-center",
+  "slug": "/notification-center/web-component",
+  "permalink": "/notification-center/web-component",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/notification-center/web-component.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Paweł Tymczuk",
+  "lastUpdatedAt": 1688979471,
+  "formattedLastUpdatedAt": "Jul 10, 2023",
+  "sidebarPosition": 4,
+  "frontMatter": {
+    "sidebar_position": 4
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "API Reference",
+    "permalink": "/notification-center/headless/api-reference"
+  },
+  "next": {
+    "title": "Vue Component",
+    "permalink": "/notification-center/vue-component"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "unversionedId": "platform/delay",
+  "id": "platform/delay",
+  "title": "Delay Actions",
+  "description": "The delay action awaits a specified amount of time before moving on to trigger the following steps of the workflow.",
+  "source": "@site/docs/platform/delay.md",
+  "sourceDirName": "platform",
+  "slug": "/platform/delay",
+  "permalink": "/platform/delay",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/platform/delay.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Emillien Pearce",
+  "lastUpdatedAt": 1688639354,
+  "formattedLastUpdatedAt": "Jul 6, 2023",
+  "sidebarPosition": 8,
+  "frontMatter": {
+    "sidebar_position": 8
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Subscriber Preferences",
+    "permalink": "/platform/preferences"
+  },
+  "next": {
+    "title": "Step Filter",
+    "permalink": "/platform/step-filter"
+  }
+}

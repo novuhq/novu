@@ -1,0 +1,30 @@
+{
+  "unversionedId": "platform/activity-feed",
+  "id": "platform/activity-feed",
+  "title": "Activity Feed",
+  "description": "Novu provides a notification activity feed that monitors every outgoing message associated with its relevant metadata.",
+  "source": "@site/docs/platform/activity-feed.md",
+  "sourceDirName": "platform",
+  "slug": "/platform/activity-feed",
+  "permalink": "/platform/activity-feed",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/platform/activity-feed.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "ainouzgali",
+  "lastUpdatedAt": 1684845522,
+  "formattedLastUpdatedAt": "May 23, 2023",
+  "sidebarPosition": 1,
+  "frontMatter": {
+    "sidebar_position": 1
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Deploy using Docker",
+    "permalink": "/overview/docker-deploy"
+  },
+  "next": {
+    "title": "Workflows",
+    "permalink": "/platform/workflows"
+  }
+}

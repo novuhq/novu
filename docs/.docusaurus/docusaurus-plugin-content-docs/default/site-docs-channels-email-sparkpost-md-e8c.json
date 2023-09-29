@@ -1,0 +1,30 @@
+{
+  "unversionedId": "channels/email/sparkpost",
+  "id": "channels/email/sparkpost",
+  "title": "SparkPost",
+  "description": "You can use the SparkPost provider to send transactional emails to your customers using the Novu Platform with a single API.",
+  "source": "@site/docs/channels/email/sparkpost.md",
+  "sourceDirName": "channels/email",
+  "slug": "/channels/email/sparkpost",
+  "permalink": "/channels/email/sparkpost",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/channels/email/sparkpost.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "peoray",
+  "lastUpdatedAt": 1682509192,
+  "formattedLastUpdatedAt": "Apr 26, 2023",
+  "sidebarPosition": 5,
+  "frontMatter": {
+    "sidebar_position": 5
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Resend",
+    "permalink": "/channels/email/resend"
+  },
+  "next": {
+    "title": "Postmark",
+    "permalink": "/channels/email/postmark"
+  }
+}

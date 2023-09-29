@@ -1,0 +1,30 @@
+{
+  "unversionedId": "channels/email/mailersend",
+  "id": "channels/email/mailersend",
+  "title": "MailerSend",
+  "description": "MailerSend is an email delivery service that allows you to send emails from your application.",
+  "source": "@site/docs/channels/email/mailersend.md",
+  "sourceDirName": "channels/email",
+  "slug": "/channels/email/mailersend",
+  "permalink": "/channels/email/mailersend",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/channels/email/mailersend.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "peoray",
+  "lastUpdatedAt": 1682509192,
+  "formattedLastUpdatedAt": "Apr 26, 2023",
+  "sidebarPosition": 8,
+  "frontMatter": {
+    "sidebar_position": 8
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Mailjet",
+    "permalink": "/channels/email/mailjet"
+  },
+  "next": {
+    "title": "Outlook 365",
+    "permalink": "/channels/email/outlook365"
+  }
+}

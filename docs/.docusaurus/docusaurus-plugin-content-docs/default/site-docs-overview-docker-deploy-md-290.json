@@ -1,0 +1,27 @@
+{
+  "unversionedId": "overview/docker-deploy",
+  "id": "overview/docker-deploy",
+  "title": "Deploy using Docker",
+  "description": "Docker compose is the easiest way to get started with self-hosted Novu.",
+  "source": "@site/docs/overview/docker-deploy.md",
+  "sourceDirName": "overview",
+  "slug": "/overview/docker-deploy",
+  "permalink": "/overview/docker-deploy",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/overview/docker-deploy.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Pawan Jain",
+  "lastUpdatedAt": 1684683202,
+  "formattedLastUpdatedAt": "May 21, 2023",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Architecture",
+    "permalink": "/overview/architecture"
+  },
+  "next": {
+    "title": "Activity Feed",
+    "permalink": "/platform/activity-feed"
+  }
+}

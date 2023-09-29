@@ -1,0 +1,28 @@
+{
+  "unversionedId": "overview/quickstart/get-started-with-nestjs",
+  "id": "overview/quickstart/get-started-with-nestjs",
+  "title": "NestJS Quickstart",
+  "description": "Learn how to use Novu to quickly send multi-channel (SMS, Email, Chat, Push) notifications from a NestJS app.",
+  "source": "@site/docs/overview/quickstart/get-started-with-nestjs.md",
+  "sourceDirName": "overview/quickstart",
+  "slug": "/overview/quickstart/get-started-with-nestjs",
+  "permalink": "/overview/quickstart/get-started-with-nestjs",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/overview/quickstart/get-started-with-nestjs.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 13,
+  "frontMatter": {
+    "sidebar_position": 13,
+    "sidebar_label": "Get started with NestJS"
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Get started with Python",
+    "permalink": "/overview/quickstart/get-started-with-python"
+  },
+  "next": {
+    "title": "Architecture",
+    "permalink": "/overview/architecture"
+  }
+}

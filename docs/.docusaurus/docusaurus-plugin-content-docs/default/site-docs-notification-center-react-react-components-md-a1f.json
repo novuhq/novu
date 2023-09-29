@@ -1,0 +1,30 @@
+{
+  "unversionedId": "notification-center/react/react-components",
+  "id": "notification-center/react/react-components",
+  "title": "React Component",
+  "description": "Novu provides the @novu/notification-center a React library that helps to add a fully functioning notification center to your web application in minutes. Let's do a quick recap on how we can easily use it in your application.",
+  "source": "@site/docs/notification-center/react/react-components.md",
+  "sourceDirName": "notification-center/react",
+  "slug": "/notification-center/react/react-components",
+  "permalink": "/notification-center/react/react-components",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/notification-center/react/react-components.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Dima Grossman",
+  "lastUpdatedAt": 1690266683,
+  "formattedLastUpdatedAt": "Jul 25, 2023",
+  "sidebarPosition": 1,
+  "frontMatter": {
+    "sidebar_position": 1
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Getting Started",
+    "permalink": "/notification-center/getting-started"
+  },
+  "next": {
+    "title": "API Reference",
+    "permalink": "/notification-center/react/api-reference"
+  }
+}

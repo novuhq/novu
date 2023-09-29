@@ -1,0 +1,27 @@
+{
+  "unversionedId": "channels/chat/discord",
+  "id": "channels/chat/discord",
+  "title": "Discord",
+  "description": "When using Discord, you will have to save the integration credentials on the subscriber entity. Discord supports two ways to do this:",
+  "source": "@site/docs/channels/chat/discord.md",
+  "sourceDirName": "channels/chat",
+  "slug": "/channels/chat/discord",
+  "permalink": "/channels/chat/discord",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/channels/chat/discord.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Precious Luke",
+  "lastUpdatedAt": 1682714726,
+  "formattedLastUpdatedAt": "Apr 28, 2023",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Chat Channel",
+    "permalink": "/channels/chat/"
+  },
+  "next": {
+    "title": "MS Teams",
+    "permalink": "/channels/chat/msteams"
+  }
+}

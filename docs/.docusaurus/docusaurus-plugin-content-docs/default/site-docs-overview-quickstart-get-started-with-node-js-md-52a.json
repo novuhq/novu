@@ -1,0 +1,31 @@
+{
+  "unversionedId": "overview/quickstart/get-started-with-node.js",
+  "id": "overview/quickstart/get-started-with-node.js",
+  "title": "Node.js Quickstart",
+  "description": "Welcome to the Node.js Quickstart guide for Novu, a powerful notification service that enables you to send multi-channel (SMS, Email, Chat, Push) notifications from your Node.js applications. In this Quickstart, you'll learn how to seamlessly integrate Novu into your app and perform various essential tasks. Let's get started!",
+  "source": "@site/docs/overview/quickstart/get-started-with-node.js.md",
+  "sourceDirName": "overview/quickstart",
+  "slug": "/overview/quickstart/get-started-with-node.js",
+  "permalink": "/overview/quickstart/get-started-with-node.js",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/overview/quickstart/get-started-with-node.js.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "mayorjay",
+  "lastUpdatedAt": 1688753386,
+  "formattedLastUpdatedAt": "Jul 7, 2023",
+  "sidebarPosition": 7,
+  "frontMatter": {
+    "sidebar_position": 7,
+    "sidebar_label": "Node.js"
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "NextJS",
+    "permalink": "/overview/quickstart/get-started-with-nextjs"
+  },
+  "next": {
+    "title": "Vanilla JS",
+    "permalink": "/overview/quickstart/get-started-with-vanilla-js"
+  }
+}

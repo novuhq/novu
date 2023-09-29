@@ -1,0 +1,27 @@
+{
+  "unversionedId": "channels/sms/sns",
+  "id": "channels/sms/sns",
+  "title": "AWS SNS",
+  "description": "You can use the AWS SNS provider to send transactional emails to your customers using the Novu Platform with a single API to create multi-channel experiences.",
+  "source": "@site/docs/channels/sms/sns.md",
+  "sourceDirName": "channels/sms",
+  "slug": "/channels/sms/sns",
+  "permalink": "/channels/sms/sns",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/channels/sms/sns.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Joey Eamigh",
+  "lastUpdatedAt": 1674255028,
+  "formattedLastUpdatedAt": "Jan 20, 2023",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Sendchamp",
+    "permalink": "/channels/sms/sendchamp"
+  },
+  "next": {
+    "title": "Telnyx",
+    "permalink": "/channels/sms/telnyx"
+  }
+}

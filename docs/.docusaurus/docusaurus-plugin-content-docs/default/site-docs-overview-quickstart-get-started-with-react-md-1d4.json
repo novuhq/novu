@@ -1,0 +1,31 @@
+{
+  "unversionedId": "overview/quickstart/get-started-with-react",
+  "id": "overview/quickstart/get-started-with-react",
+  "title": "React Quickstart",
+  "description": "Send notifications across different channels (SMS, Email, Chat, Push) and enable real-time In-App notifications with the help of a rich and customizable Notification Center.",
+  "source": "@site/docs/overview/quickstart/get-started-with-react.md",
+  "sourceDirName": "overview/quickstart",
+  "slug": "/overview/quickstart/get-started-with-react",
+  "permalink": "/overview/quickstart/get-started-with-react",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/overview/quickstart/get-started-with-react.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "mayorjay",
+  "lastUpdatedAt": 1688752434,
+  "formattedLastUpdatedAt": "Jul 7, 2023",
+  "sidebarPosition": 5,
+  "frontMatter": {
+    "sidebar_position": 5,
+    "sidebar_label": "React"
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Angular",
+    "permalink": "/overview/quickstart/get-started-with-angular"
+  },
+  "next": {
+    "title": "NextJS",
+    "permalink": "/overview/quickstart/get-started-with-nextjs"
+  }
+}

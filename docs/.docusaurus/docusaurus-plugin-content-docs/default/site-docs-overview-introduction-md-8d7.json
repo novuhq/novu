@@ -1,0 +1,30 @@
+{
+  "unversionedId": "overview/introduction",
+  "id": "overview/introduction",
+  "title": "Introduction",
+  "description": "Novu is an open-source notification infrastructure, built for engineering teams to help them build rich product notification experiences without constantly reinventing the wheel.",
+  "source": "@site/docs/overview/introduction.md",
+  "sourceDirName": "overview",
+  "slug": "/overview/introduction",
+  "permalink": "/overview/introduction",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/overview/introduction.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Sumit Saurabh",
+  "lastUpdatedAt": 1680245081,
+  "formattedLastUpdatedAt": "Mar 31, 2023",
+  "sidebarPosition": 1,
+  "frontMatter": {
+    "sidebar_position": 1
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Home",
+    "permalink": "/"
+  },
+  "next": {
+    "title": "General Quickstart",
+    "permalink": "/overview/quickstart/general-quickstart"
+  }
+}

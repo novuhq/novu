@@ -1,0 +1,23 @@
+{
+  "unversionedId": "community/faq",
+  "id": "community/faq",
+  "title": "FAQ",
+  "description": "Here we will outline some of the most common questions we get asked about the project. Missing a question? Feel free to open an issue or PR to add it to the list.",
+  "source": "@site/docs/community/faq.md",
+  "sourceDirName": "community",
+  "slug": "/community/faq",
+  "permalink": "/community/faq",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/community/faq.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "americano98",
+  "lastUpdatedAt": 1684938806,
+  "formattedLastUpdatedAt": "May 24, 2023",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Projects and articles",
+    "permalink": "/community/projects-and-articles"
+  }
+}

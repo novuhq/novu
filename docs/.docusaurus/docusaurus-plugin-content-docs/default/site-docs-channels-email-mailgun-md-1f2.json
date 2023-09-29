@@ -1,0 +1,30 @@
+{
+  "unversionedId": "channels/email/mailgun",
+  "id": "channels/email/mailgun",
+  "title": "Mailgun",
+  "description": "You can use the Mailgun provider to send transactional emails to your customers using the Novu Platform with a single API to create multi-channel experiences.",
+  "source": "@site/docs/channels/email/mailgun.md",
+  "sourceDirName": "channels/email",
+  "slug": "/channels/email/mailgun",
+  "permalink": "/channels/email/mailgun",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/channels/email/mailgun.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "peoray",
+  "lastUpdatedAt": 1682509192,
+  "formattedLastUpdatedAt": "Apr 26, 2023",
+  "sidebarPosition": 10,
+  "frontMatter": {
+    "sidebar_position": 10
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Outlook 365",
+    "permalink": "/channels/email/outlook365"
+  },
+  "next": {
+    "title": "Mandrill",
+    "permalink": "/channels/email/mandrill"
+  }
+}

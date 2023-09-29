@@ -1,0 +1,31 @@
+{
+  "unversionedId": "channels/push/apns",
+  "id": "channels/push/apns",
+  "title": "Apple Push Notification Service",
+  "description": "Apple Push Notification Service is a notification delivery service provided by Apple.",
+  "source": "@site/docs/channels/push/apns.md",
+  "sourceDirName": "channels/push",
+  "slug": "/channels/push/apns",
+  "permalink": "/channels/push/apns",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/channels/push/apns.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Michał Dziuba",
+  "lastUpdatedAt": 1684252830,
+  "formattedLastUpdatedAt": "May 16, 2023",
+  "sidebarPosition": 3,
+  "frontMatter": {
+    "sidebar_label": "APNS",
+    "sidebar_position": 3
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Expo Push",
+    "permalink": "/channels/push/expo"
+  },
+  "next": {
+    "title": "One Signal",
+    "permalink": "/channels/push/one-signal"
+  }
+}

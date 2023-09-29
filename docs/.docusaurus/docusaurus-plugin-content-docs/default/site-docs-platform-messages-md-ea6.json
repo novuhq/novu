@@ -1,0 +1,31 @@
+{
+  "unversionedId": "platform/messages",
+  "id": "platform/messages",
+  "title": "Messages",
+  "description": "Each workflow has one or more than one step. Each step is either a channel (inapp, email, push, chat) or an action (digest, delay). Within the workflow, every channel has a separate template. Email channel step content can be different than inapp channel step content. When a workflow is triggered, Novu generates separate messages for every channel step and sends that message to the recipient. A triggered event (notification) is a collection of step information, its message, and job execution details.",
+  "source": "@site/docs/platform/messages.md",
+  "sourceDirName": "platform",
+  "slug": "/platform/messages",
+  "permalink": "/platform/messages",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/platform/messages.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Pawan Jain",
+  "lastUpdatedAt": 1687428040,
+  "formattedLastUpdatedAt": "Jun 22, 2023",
+  "sidebarPosition": 13,
+  "frontMatter": {
+    "sidebar_position": 13,
+    "sidebar_label": "Messages"
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Inbound Webhook",
+    "permalink": "/platform/inbound-parse-webhook"
+  },
+  "next": {
+    "title": "Handlebars",
+    "permalink": "/platform/handlebars"
+  }
+}

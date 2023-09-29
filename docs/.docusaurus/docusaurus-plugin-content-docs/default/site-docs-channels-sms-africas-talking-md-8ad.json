@@ -1,0 +1,27 @@
+{
+  "unversionedId": "channels/sms/africas-talking",
+  "id": "channels/sms/africas-talking",
+  "title": "Africa's Talking",
+  "description": "You can use Africa's Talking provider to send SMS messages to your customers using the Novu platform with a single API to create multi-channel experiences.",
+  "source": "@site/docs/channels/sms/africas-talking.md",
+  "sourceDirName": "channels/sms",
+  "slug": "/channels/sms/africas-talking",
+  "permalink": "/channels/sms/africas-talking",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/channels/sms/africas-talking.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Pawan Jain",
+  "lastUpdatedAt": 1684725630,
+  "formattedLastUpdatedAt": "May 22, 2023",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "SMS77",
+    "permalink": "/channels/sms/SMS77"
+  },
+  "next": {
+    "title": "Infobip",
+    "permalink": "/channels/sms/infobip"
+  }
+}

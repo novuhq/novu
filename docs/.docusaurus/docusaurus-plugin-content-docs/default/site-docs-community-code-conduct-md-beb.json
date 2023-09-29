@@ -1,0 +1,30 @@
+{
+  "unversionedId": "community/code-conduct",
+  "id": "community/code-conduct",
+  "title": "Code of Conduct",
+  "description": "Our Pledge",
+  "source": "@site/docs/community/code-conduct.md",
+  "sourceDirName": "community",
+  "slug": "/community/code-conduct",
+  "permalink": "/community/code-conduct",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/community/code-conduct.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "kaustav202",
+  "lastUpdatedAt": 1665897652,
+  "formattedLastUpdatedAt": "Oct 16, 2022",
+  "sidebarPosition": 6,
+  "frontMatter": {
+    "sidebar_position": 6
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Add a new provider",
+    "permalink": "/community/create-provider"
+  },
+  "next": {
+    "title": "Projects and articles",
+    "permalink": "/community/projects-and-articles"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "unversionedId": "channels/email/custom-smtp",
+  "id": "channels/email/custom-smtp",
+  "title": "Custom SMTP",
+  "description": "You can use the Custom SMTP provider like Nodemailer to send transactional emails through your custom SMTP server to your customers using the Novu Platform with a single API.",
+  "source": "@site/docs/channels/email/custom-smtp.md",
+  "sourceDirName": "channels/email",
+  "slug": "/channels/email/custom-smtp",
+  "permalink": "/channels/email/custom-smtp",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/channels/email/custom-smtp.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "peoray",
+  "lastUpdatedAt": 1682509192,
+  "formattedLastUpdatedAt": "Apr 26, 2023",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Plunk",
+    "permalink": "/channels/email/plunk"
+  },
+  "next": {
+    "title": "Push Notifications",
+    "permalink": "/channels/push/"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "unversionedId": "platform/integrations",
+  "id": "platform/integrations",
+  "title": "Integrations Store",
+  "description": "Novu's integrations page is used to configure the final delivery providers for each channel. Novu is an open-source project that allows you to submit a new provider entry whenever you miss a particular provider. You can read more about it here.",
+  "source": "@site/docs/platform/integrations.md",
+  "sourceDirName": "platform",
+  "slug": "/platform/integrations",
+  "permalink": "/platform/integrations",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/platform/integrations.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Dima Grossman",
+  "lastUpdatedAt": 1690266683,
+  "formattedLastUpdatedAt": "Jul 25, 2023",
+  "sidebarPosition": 11,
+  "frontMatter": {
+    "sidebar_position": 11
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Webhooks",
+    "permalink": "/platform/webhooks"
+  },
+  "next": {
+    "title": "Layouts",
+    "permalink": "/platform/layouts"
+  }
+}

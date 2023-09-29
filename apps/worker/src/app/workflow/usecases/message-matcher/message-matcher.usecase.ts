@@ -324,10 +324,10 @@ export class MessageMatcher extends Filter {
 
   private async processIsOfficeHours(
     filter: IIsOfficeHours,
-    command: SendMessageCommand,
+    command: MessageMatcherCommand,
     filterProcessingDetails: FilterProcessingDetails
   ): Promise<boolean> {
-    const tz = command.payload.timezone;
+    const tz = command.job.payload.timezone;
 
     const today = new Date().toLocaleString('en-US', { timeZone: tz, hour12: false });
     const currentHour = parseInt(today.split(',')[1].trim().split(':')[0]);
@@ -350,10 +350,10 @@ export class MessageMatcher extends Filter {
 
   private async processIsOnlineSlack(
     filter: IIsOnlineSlack,
-    command: SendMessageCommand,
+    command: MessageMatcherCommand,
     filterProcessingDetails: FilterProcessingDetails
   ): Promise<boolean> {
-    const slackMemberId = command.payload.slackMemberId;
+    const slackMemberId = command.job.payload.slackMemberId;
     const expected = filter.value;
 
     const foundIntegration = await this.integrationRepository.findOne({

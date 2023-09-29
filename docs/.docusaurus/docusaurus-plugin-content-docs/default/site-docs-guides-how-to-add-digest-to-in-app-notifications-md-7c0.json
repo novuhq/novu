@@ -1,0 +1,31 @@
+{
+  "unversionedId": "guides/how-to-add-digest-to-in-app-notifications",
+  "id": "guides/how-to-add-digest-to-in-app-notifications",
+  "title": "How to Add Digest to In-App Notifications",
+  "description": "Introduction",
+  "source": "@site/docs/guides/how-to-add-digest-to-in-app-notifications.md",
+  "sourceDirName": "guides",
+  "slug": "/guides/how-to-add-digest-to-in-app-notifications",
+  "permalink": "/guides/how-to-add-digest-to-in-app-notifications",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/guides/how-to-add-digest-to-in-app-notifications.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Sumit Saurabh",
+  "lastUpdatedAt": 1688148399,
+  "formattedLastUpdatedAt": "Jun 30, 2023",
+  "sidebarPosition": 1,
+  "frontMatter": {
+    "sidebar_position": 1,
+    "sidebar_label": "How to Add Digest to In-App Notifications"
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Introduction",
+    "permalink": "/cookbook/introduction"
+  },
+  "next": {
+    "title": "How to Add Digest to Email Notifications",
+    "permalink": "/guides/how-to-add-digest-to-email-notifications"
+  }
+}

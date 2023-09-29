@@ -1,0 +1,30 @@
+{
+  "unversionedId": "platform/topics",
+  "id": "platform/topics",
+  "title": "Topics",
+  "description": "Novu offers a simple API providing an easy interface for triggering notifications to multiple subscribers at once. It is called Topics and allows the users to manage their bulk notifications without having to do complex loop implementations.",
+  "source": "@site/docs/platform/topics.md",
+  "sourceDirName": "platform",
+  "slug": "/platform/topics",
+  "permalink": "/platform/topics",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/platform/topics.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "unicodeveloper",
+  "lastUpdatedAt": 1685472454,
+  "formattedLastUpdatedAt": "May 30, 2023",
+  "sidebarPosition": 3,
+  "frontMatter": {
+    "sidebar_position": 3
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Subscribers",
+    "permalink": "/platform/subscribers"
+  },
+  "next": {
+    "title": "Environments",
+    "permalink": "/platform/environments"
+  }
+}

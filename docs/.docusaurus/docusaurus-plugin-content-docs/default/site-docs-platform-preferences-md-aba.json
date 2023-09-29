@@ -1,0 +1,30 @@
+{
+  "unversionedId": "platform/preferences",
+  "id": "platform/preferences",
+  "title": "Subscriber Preferences",
+  "description": "Novu provides a way to store user preferences in the subscribers data model.",
+  "source": "@site/docs/platform/preferences.md",
+  "sourceDirName": "platform",
+  "slug": "/platform/preferences",
+  "permalink": "/platform/preferences",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/platform/preferences.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Dima Grossman",
+  "lastUpdatedAt": 1690266683,
+  "formattedLastUpdatedAt": "Jul 25, 2023",
+  "sidebarPosition": 7,
+  "frontMatter": {
+    "sidebar_position": 7
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Digest Engine",
+    "permalink": "/platform/digest"
+  },
+  "next": {
+    "title": "Delay Actions",
+    "permalink": "/platform/delay"
+  }
+}

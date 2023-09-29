@@ -1,0 +1,30 @@
+{
+  "unversionedId": "platform/layouts",
+  "id": "platform/layouts",
+  "title": "Layouts",
+  "description": "Novu allows the creation of layouts - a specific HTML design or structure to wrap content of email notifications.",
+  "source": "@site/docs/platform/layouts.md",
+  "sourceDirName": "platform",
+  "slug": "/platform/layouts",
+  "permalink": "/platform/layouts",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/platform/layouts.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "ainouzgali",
+  "lastUpdatedAt": 1691997806,
+  "formattedLastUpdatedAt": "Aug 14, 2023",
+  "sidebarPosition": 11,
+  "frontMatter": {
+    "sidebar_position": 11
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Integrations Store",
+    "permalink": "/platform/integrations"
+  },
+  "next": {
+    "title": "Inbound Webhook",
+    "permalink": "/platform/inbound-parse-webhook"
+  }
+}

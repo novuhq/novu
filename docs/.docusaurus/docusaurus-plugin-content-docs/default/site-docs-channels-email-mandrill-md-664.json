@@ -1,0 +1,30 @@
+{
+  "unversionedId": "channels/email/mandrill",
+  "id": "channels/email/mandrill",
+  "title": "Mandrill",
+  "description": "You can use the Mandrill by Mailchimp provider to send transactional emails to your customers using the Novu Platform with a single API.",
+  "source": "@site/docs/channels/email/mandrill.md",
+  "sourceDirName": "channels/email",
+  "slug": "/channels/email/mandrill",
+  "permalink": "/channels/email/mandrill",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/channels/email/mandrill.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "peoray",
+  "lastUpdatedAt": 1682509192,
+  "formattedLastUpdatedAt": "Apr 26, 2023",
+  "sidebarPosition": 11,
+  "frontMatter": {
+    "sidebar_position": 11
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Mailgun",
+    "permalink": "/channels/email/mailgun"
+  },
+  "next": {
+    "title": "Netcore",
+    "permalink": "/channels/email/netcore"
+  }
+}

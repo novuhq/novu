@@ -1,0 +1,27 @@
+{
+  "unversionedId": "overview/architecture",
+  "id": "overview/architecture",
+  "title": "Architecture",
+  "description": "OCL was built around the idea of separation of concerns (SoC). The idea is that transactional communication is composed of many different parts, each of which is responsible for a specific task. Modeling the communication layer is the key for easy maintenance and integration of new functionality.",
+  "source": "@site/docs/overview/architecture.md",
+  "sourceDirName": "overview",
+  "slug": "/overview/architecture",
+  "permalink": "/overview/architecture",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/overview/architecture.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "americano98",
+  "lastUpdatedAt": 1690191247,
+  "formattedLastUpdatedAt": "Jul 24, 2023",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Get started with NestJS",
+    "permalink": "/overview/quickstart/get-started-with-nestjs"
+  },
+  "next": {
+    "title": "Deploy using Docker",
+    "permalink": "/overview/docker-deploy"
+  }
+}

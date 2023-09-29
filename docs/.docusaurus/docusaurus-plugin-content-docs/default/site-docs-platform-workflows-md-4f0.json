@@ -1,0 +1,30 @@
+{
+  "unversionedId": "platform/workflows",
+  "id": "platform/workflows",
+  "title": "Workflows",
+  "description": "A workflow holds the entire flow of messages sent to the subscriber. This is where all the different channels are tied together under a single entity.",
+  "source": "@site/docs/platform/workflows.md",
+  "sourceDirName": "platform",
+  "slug": "/platform/workflows",
+  "permalink": "/platform/workflows",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/platform/workflows.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "deepsource-autofix[bot]",
+  "lastUpdatedAt": 1685108803,
+  "formattedLastUpdatedAt": "May 26, 2023",
+  "sidebarPosition": 1,
+  "frontMatter": {
+    "sidebar_position": 1
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Activity Feed",
+    "permalink": "/platform/activity-feed"
+  },
+  "next": {
+    "title": "Subscribers",
+    "permalink": "/platform/subscribers"
+  }
+}

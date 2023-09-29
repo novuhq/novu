@@ -1,0 +1,27 @@
+{
+  "unversionedId": "channels/chat/index",
+  "id": "channels/chat/index",
+  "title": "Chat Channel",
+  "description": "You can send chat messages on popular chat integrations like Discord and Slack.",
+  "source": "@site/docs/channels/chat/index.md",
+  "sourceDirName": "channels/chat",
+  "slug": "/channels/chat/",
+  "permalink": "/channels/chat/",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/channels/chat/index.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "ainouzgali",
+  "lastUpdatedAt": 1664703422,
+  "formattedLastUpdatedAt": "Oct 2, 2022",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "FAQs",
+    "permalink": "/notification-center/FAQ"
+  },
+  "next": {
+    "title": "Discord",
+    "permalink": "/channels/chat/discord"
+  }
+}

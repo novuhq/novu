@@ -1,0 +1,31 @@
+{
+  "unversionedId": "channels/push/fcm",
+  "id": "channels/push/fcm",
+  "title": "Firebase Cloud Messaging",
+  "description": "Firebase Cloud Messaging is a free notification delivery service provided by Google Firebase.",
+  "source": "@site/docs/channels/push/fcm.md",
+  "sourceDirName": "channels/push",
+  "slug": "/channels/push/fcm",
+  "permalink": "/channels/push/fcm",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/channels/push/fcm.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "deepsource-autofix[bot]",
+  "lastUpdatedAt": 1679489680,
+  "formattedLastUpdatedAt": "Mar 22, 2023",
+  "sidebarPosition": 1,
+  "frontMatter": {
+    "sidebar_label": "FCM",
+    "sidebar_position": 1
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Push Notifications",
+    "permalink": "/channels/push/"
+  },
+  "next": {
+    "title": "Expo Push",
+    "permalink": "/channels/push/expo"
+  }
+}

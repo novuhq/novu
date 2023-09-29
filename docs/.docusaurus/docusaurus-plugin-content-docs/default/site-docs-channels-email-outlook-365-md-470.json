@@ -1,0 +1,31 @@
+{
+  "unversionedId": "channels/email/outlook365",
+  "id": "channels/email/outlook365",
+  "title": "Outlook365 ( based in custom SMTP server)",
+  "description": "You can use the Outlook 365 provider to send transactional emails through your instance of Office 365 to your customers using the Novu Platform with a single API.",
+  "source": "@site/docs/channels/email/outlook365.md",
+  "sourceDirName": "channels/email",
+  "slug": "/channels/email/outlook365",
+  "permalink": "/channels/email/outlook365",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/channels/email/outlook365.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "peoray",
+  "lastUpdatedAt": 1682509192,
+  "formattedLastUpdatedAt": "Apr 26, 2023",
+  "sidebarPosition": 9,
+  "frontMatter": {
+    "sidebar_label": "Outlook 365",
+    "sidebar_position": 9
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "MailerSend",
+    "permalink": "/channels/email/mailersend"
+  },
+  "next": {
+    "title": "Mailgun",
+    "permalink": "/channels/email/mailgun"
+  }
+}

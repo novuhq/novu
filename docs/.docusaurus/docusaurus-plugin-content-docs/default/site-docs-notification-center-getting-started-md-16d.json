@@ -1,0 +1,30 @@
+{
+  "unversionedId": "notification-center/getting-started",
+  "id": "notification-center/getting-started",
+  "title": "Getting Started",
+  "description": "Novu provides you with a set of APIs and components to create rich customized notification center experiences. You can either choose to work headless with our notification feed API and create your own custom notification center user interface, or use our ready-to-use UI and customize it partially.",
+  "source": "@site/docs/notification-center/getting-started.md",
+  "sourceDirName": "notification-center",
+  "slug": "/notification-center/getting-started",
+  "permalink": "/notification-center/getting-started",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/notification-center/getting-started.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "ainouzgali",
+  "lastUpdatedAt": 1684911830,
+  "formattedLastUpdatedAt": "May 24, 2023",
+  "sidebarPosition": 1,
+  "frontMatter": {
+    "sidebar_position": 1
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Handlebars",
+    "permalink": "/platform/handlebars"
+  },
+  "next": {
+    "title": "React Component",
+    "permalink": "/notification-center/react/react-components"
+  }
+}

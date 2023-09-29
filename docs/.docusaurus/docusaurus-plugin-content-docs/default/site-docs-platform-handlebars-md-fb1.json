@@ -1,0 +1,31 @@
+{
+  "unversionedId": "platform/handlebars",
+  "id": "platform/handlebars",
+  "title": "Handlebars Template",
+  "description": "You can customize the notification (appearance and structure) the end users get using Handlebars. This is crucial for many cases, for example, when using the digest engine.",
+  "source": "@site/docs/platform/handlebars.md",
+  "sourceDirName": "platform",
+  "slug": "/platform/handlebars",
+  "permalink": "/platform/handlebars",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/platform/handlebars.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "David Söderberg",
+  "lastUpdatedAt": 1692177449,
+  "formattedLastUpdatedAt": "Aug 16, 2023",
+  "sidebarPosition": 14,
+  "frontMatter": {
+    "sidebar_position": 14,
+    "sidebar_label": "Handlebars"
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Messages",
+    "permalink": "/platform/messages"
+  },
+  "next": {
+    "title": "Getting Started",
+    "permalink": "/notification-center/getting-started"
+  }
+}

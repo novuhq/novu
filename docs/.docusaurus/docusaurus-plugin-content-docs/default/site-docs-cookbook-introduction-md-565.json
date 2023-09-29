@@ -1,0 +1,31 @@
+{
+  "unversionedId": "cookbook/introduction",
+  "id": "cookbook/introduction",
+  "title": "Cookbook",
+  "description": "This cookbook contains recipes and code samples demonstrating how to accomplish everyday tasks with Novu in your application. Each code example uses our libraries and SDKs.",
+  "source": "@site/docs/cookbook/introduction.md",
+  "sourceDirName": "cookbook",
+  "slug": "/cookbook/introduction",
+  "permalink": "/cookbook/introduction",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/cookbook/introduction.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Pawan Jain",
+  "lastUpdatedAt": 1690438029,
+  "formattedLastUpdatedAt": "Jul 27, 2023",
+  "sidebarPosition": 6,
+  "frontMatter": {
+    "sidebar_position": 6,
+    "sidebar_label": "Introduction"
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Notification Center",
+    "permalink": "/channels/notification-center"
+  },
+  "next": {
+    "title": "How to Add Digest to In-App Notifications",
+    "permalink": "/guides/how-to-add-digest-to-in-app-notifications"
+  }
+}

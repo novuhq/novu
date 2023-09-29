@@ -1,0 +1,27 @@
+{
+  "unversionedId": "channels/sms/sendchamp",
+  "id": "channels/sms/sendchamp",
+  "title": "Sendchamp",
+  "description": "You can use the Sendchamp provider to send SMS messages to your customers using the Novu Platform with a single API to create multi-channel experiences.",
+  "source": "@site/docs/channels/sms/sendchamp.md",
+  "sourceDirName": "channels/sms",
+  "slug": "/channels/sms/sendchamp",
+  "permalink": "/channels/sms/sendchamp",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/channels/sms/sendchamp.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Dima Grossman",
+  "lastUpdatedAt": 1690266683,
+  "formattedLastUpdatedAt": "Jul 25, 2023",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Plivo",
+    "permalink": "/channels/sms/plivo"
+  },
+  "next": {
+    "title": "AWS SNS",
+    "permalink": "/channels/sms/sns"
+  }
+}

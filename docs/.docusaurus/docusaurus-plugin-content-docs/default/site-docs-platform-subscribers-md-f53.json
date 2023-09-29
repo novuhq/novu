@@ -1,0 +1,30 @@
+{
+  "unversionedId": "platform/subscribers",
+  "id": "platform/subscribers",
+  "title": "Subscribers",
+  "description": "Subscriber is a user to whom Novu will send a notification. Each subscriber in Novu is uniquely identified by subscriberId. Novu manages your users in the form of subscribers. Novu stores some user-specific information that helps you send multichannel notifications to your users.",
+  "source": "@site/docs/platform/subscribers.md",
+  "sourceDirName": "platform",
+  "slug": "/platform/subscribers",
+  "permalink": "/platform/subscribers",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/platform/subscribers.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Pawan Jain",
+  "lastUpdatedAt": 1689502449,
+  "formattedLastUpdatedAt": "Jul 16, 2023",
+  "sidebarPosition": 2,
+  "frontMatter": {
+    "sidebar_position": 2
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Workflows",
+    "permalink": "/platform/workflows"
+  },
+  "next": {
+    "title": "Topics",
+    "permalink": "/platform/topics"
+  }
+}

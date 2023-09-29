@@ -1,0 +1,27 @@
+{
+  "unversionedId": "channels/notification-center",
+  "id": "channels/notification-center",
+  "title": "Notification Center",
+  "description": "This document is still under construction",
+  "source": "@site/docs/channels/notification-center.md",
+  "sourceDirName": "channels",
+  "slug": "/channels/notification-center",
+  "permalink": "/channels/notification-center",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/channels/notification-center.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Dima Grossman",
+  "lastUpdatedAt": 1655649005,
+  "formattedLastUpdatedAt": "Jun 19, 2022",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Termii",
+    "permalink": "/channels/sms/termii"
+  },
+  "next": {
+    "title": "Introduction",
+    "permalink": "/cookbook/introduction"
+  }
+}

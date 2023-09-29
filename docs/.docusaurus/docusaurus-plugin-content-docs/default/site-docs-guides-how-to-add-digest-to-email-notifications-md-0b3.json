@@ -1,0 +1,31 @@
+{
+  "unversionedId": "guides/how-to-add-digest-to-email-notifications",
+  "id": "guides/how-to-add-digest-to-email-notifications",
+  "title": "How to Add Digest to Email Notifications",
+  "description": "Introduction",
+  "source": "@site/docs/guides/how-to-add-digest-to-email-notifications.md",
+  "sourceDirName": "guides",
+  "slug": "/guides/how-to-add-digest-to-email-notifications",
+  "permalink": "/guides/how-to-add-digest-to-email-notifications",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/guides/how-to-add-digest-to-email-notifications.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Dima Grossman",
+  "lastUpdatedAt": 1690266683,
+  "formattedLastUpdatedAt": "Jul 25, 2023",
+  "sidebarPosition": 2,
+  "frontMatter": {
+    "sidebar_position": 2,
+    "sidebar_label": "How to Add Digest to Email Notifications"
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "How to Add Digest to In-App Notifications",
+    "permalink": "/guides/how-to-add-digest-to-in-app-notifications"
+  },
+  "next": {
+    "title": "Subscribers Migration",
+    "permalink": "/guides/subscribers-migration"
+  }
+}

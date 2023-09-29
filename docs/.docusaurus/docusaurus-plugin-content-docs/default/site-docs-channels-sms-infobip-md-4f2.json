@@ -1,0 +1,27 @@
+{
+  "unversionedId": "channels/sms/infobip",
+  "id": "channels/sms/infobip",
+  "title": "Infobip",
+  "description": "You can use the Infobip provider to send SMS messages to your customers using the Novu Platform with a single API to create multi-channel experiences.",
+  "source": "@site/docs/channels/sms/infobip.md",
+  "sourceDirName": "channels/sms",
+  "slug": "/channels/sms/infobip",
+  "permalink": "/channels/sms/infobip",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/channels/sms/infobip.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Dima Grossman",
+  "lastUpdatedAt": 1690266683,
+  "formattedLastUpdatedAt": "Jul 25, 2023",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Africa's Talking",
+    "permalink": "/channels/sms/africas-talking"
+  },
+  "next": {
+    "title": "Nexmo",
+    "permalink": "/channels/sms/nexmo"
+  }
+}

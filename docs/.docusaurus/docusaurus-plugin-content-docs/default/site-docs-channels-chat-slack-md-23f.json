@@ -1,0 +1,27 @@
+{
+  "unversionedId": "channels/chat/slack",
+  "id": "channels/chat/slack",
+  "title": "Slack",
+  "description": "When using Slack you will have to save the integration credentials on the subscriber entity.",
+  "source": "@site/docs/channels/chat/slack.md",
+  "sourceDirName": "channels/chat",
+  "slug": "/channels/chat/slack",
+  "permalink": "/channels/chat/slack",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/channels/chat/slack.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Dima Grossman",
+  "lastUpdatedAt": 1690266683,
+  "formattedLastUpdatedAt": "Jul 25, 2023",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "MS Teams",
+    "permalink": "/channels/chat/msteams"
+  },
+  "next": {
+    "title": "Email",
+    "permalink": "/channels/email/"
+  }
+}

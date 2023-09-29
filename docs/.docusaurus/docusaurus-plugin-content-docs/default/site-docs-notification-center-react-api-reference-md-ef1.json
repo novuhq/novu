@@ -1,0 +1,31 @@
+{
+  "unversionedId": "notification-center/react/api-reference",
+  "id": "notification-center/react/api-reference",
+  "title": "React Notification Center API Reference",
+  "description": "This page contains the complete documentation about the React Notification Center package. You can find here the list of all the components, hooks and props that you can use.",
+  "source": "@site/docs/notification-center/react/api-reference.md",
+  "sourceDirName": "notification-center/react",
+  "slug": "/notification-center/react/api-reference",
+  "permalink": "/notification-center/react/api-reference",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/notification-center/react/api-reference.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Gosha",
+  "lastUpdatedAt": 1690974584,
+  "formattedLastUpdatedAt": "Aug 2, 2023",
+  "sidebarPosition": 2,
+  "frontMatter": {
+    "sidebar_position": 2,
+    "sidebar_label": "API Reference"
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "React Component",
+    "permalink": "/notification-center/react/react-components"
+  },
+  "next": {
+    "title": "Headless Notification Center",
+    "permalink": "/notification-center/headless/headless-service"
+  }
+}

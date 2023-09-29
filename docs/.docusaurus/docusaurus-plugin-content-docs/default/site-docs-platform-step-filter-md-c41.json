@@ -1,0 +1,30 @@
+{
+  "unversionedId": "platform/step-filter",
+  "id": "platform/step-filter",
+  "title": "Step Filter",
+  "description": "Workflow step filtering allows you to customize the flow of notifications in your",
+  "source": "@site/docs/platform/step-filter.md",
+  "sourceDirName": "platform",
+  "slug": "/platform/step-filter",
+  "permalink": "/platform/step-filter",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/platform/step-filter.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Pawan Jain",
+  "lastUpdatedAt": 1687341179,
+  "formattedLastUpdatedAt": "Jun 21, 2023",
+  "sidebarPosition": 9,
+  "frontMatter": {
+    "sidebar_position": 9
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Delay Actions",
+    "permalink": "/platform/delay"
+  },
+  "next": {
+    "title": "Webhooks",
+    "permalink": "/platform/webhooks"
+  }
+}

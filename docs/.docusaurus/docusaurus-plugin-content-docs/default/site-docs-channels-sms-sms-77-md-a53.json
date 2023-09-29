@@ -1,0 +1,27 @@
+{
+  "unversionedId": "channels/sms/SMS77",
+  "id": "channels/sms/SMS77",
+  "title": "SMS77",
+  "description": "It is possible to use the SMS77 provider to send SMS messages to the customers using the Novu Platform with a single API to create multi-channel experiences.",
+  "source": "@site/docs/channels/sms/SMS77.md",
+  "sourceDirName": "channels/sms",
+  "slug": "/channels/sms/SMS77",
+  "permalink": "/channels/sms/SMS77",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/channels/sms/SMS77.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "peoray",
+  "lastUpdatedAt": 1682509192,
+  "formattedLastUpdatedAt": "Apr 26, 2023",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Twilio",
+    "permalink": "/channels/sms/twilio"
+  },
+  "next": {
+    "title": "Africa's Talking",
+    "permalink": "/channels/sms/africas-talking"
+  }
+}

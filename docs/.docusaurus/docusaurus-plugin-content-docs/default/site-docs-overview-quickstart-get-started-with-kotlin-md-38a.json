@@ -1,0 +1,31 @@
+{
+  "unversionedId": "overview/quickstart/get-started-with-kotlin",
+  "id": "overview/quickstart/get-started-with-kotlin",
+  "title": "Kotlin Quickstart",
+  "description": "Learn how to integrate Novu into your Kotlin project on the fly and send notifications across different channels (SMS, Email, Chat, Push).",
+  "source": "@site/docs/overview/quickstart/get-started-with-kotlin.md",
+  "sourceDirName": "overview/quickstart",
+  "slug": "/overview/quickstart/get-started-with-kotlin",
+  "permalink": "/overview/quickstart/get-started-with-kotlin",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/overview/quickstart/get-started-with-kotlin.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Dima Grossman",
+  "lastUpdatedAt": 1690266683,
+  "formattedLastUpdatedAt": "Jul 25, 2023",
+  "sidebarPosition": 9,
+  "frontMatter": {
+    "sidebar_position": 9,
+    "sidebar_label": "Kotlin"
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Vanilla JS",
+    "permalink": "/overview/quickstart/get-started-with-vanilla-js"
+  },
+  "next": {
+    "title": "Ruby",
+    "permalink": "/overview/quickstart/get-started-with-ruby"
+  }
+}

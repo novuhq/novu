@@ -1,0 +1,30 @@
+{
+  "unversionedId": "platform/digest",
+  "id": "platform/digest",
+  "title": "Digest Engine",
+  "description": "The digest engine collects multiple trigger events, aggregates them into a single message, and delivers it to the subscriber. Another name of the digest can be batch.",
+  "source": "@site/docs/platform/digest.md",
+  "sourceDirName": "platform",
+  "slug": "/platform/digest",
+  "permalink": "/platform/digest",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/platform/digest.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "ainouzgali",
+  "lastUpdatedAt": 1684845522,
+  "formattedLastUpdatedAt": "May 23, 2023",
+  "sidebarPosition": 6,
+  "frontMatter": {
+    "sidebar_position": 6
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Environments",
+    "permalink": "/platform/environments"
+  },
+  "next": {
+    "title": "Subscriber Preferences",
+    "permalink": "/platform/preferences"
+  }
+}

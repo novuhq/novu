@@ -1,0 +1,27 @@
+{
+  "unversionedId": "channels/email/index",
+  "id": "channels/email/index",
+  "title": "Email",
+  "description": "Novu can be used to deliver email messages to your customers using a unified delivery API. You can easily integrate your favorite delivery provider using the built-in integration store.",
+  "source": "@site/docs/channels/email/index.mdx",
+  "sourceDirName": "channels/email",
+  "slug": "/channels/email/",
+  "permalink": "/channels/email/",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/channels/email/index.mdx",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Dima Grossman",
+  "lastUpdatedAt": 1690266683,
+  "formattedLastUpdatedAt": "Jul 25, 2023",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Slack",
+    "permalink": "/channels/chat/slack"
+  },
+  "next": {
+    "title": "SendGrid",
+    "permalink": "/channels/email/sendgrid"
+  }
+}

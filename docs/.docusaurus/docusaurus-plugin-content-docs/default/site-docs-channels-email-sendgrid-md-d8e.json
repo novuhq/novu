@@ -1,0 +1,30 @@
+{
+  "unversionedId": "channels/email/sendgrid",
+  "id": "channels/email/sendgrid",
+  "title": "SendGrid",
+  "description": "You can use the SendGrid provider to send transactional emails to your customers using the Novu Platform with a single API to create multi-channel experiences.",
+  "source": "@site/docs/channels/email/sendgrid.md",
+  "sourceDirName": "channels/email",
+  "slug": "/channels/email/sendgrid",
+  "permalink": "/channels/email/sendgrid",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/channels/email/sendgrid.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "peoray",
+  "lastUpdatedAt": 1682509192,
+  "formattedLastUpdatedAt": "Apr 26, 2023",
+  "sidebarPosition": 1,
+  "frontMatter": {
+    "sidebar_position": 1
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Email",
+    "permalink": "/channels/email/"
+  },
+  "next": {
+    "title": "Amazon SES",
+    "permalink": "/channels/email/ses"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "unversionedId": "notification-center/headless/api-reference",
+  "id": "notification-center/headless/api-reference",
+  "title": "Headless Notification Center API Reference",
+  "description": "This page contains the complete documentation about the Headless Notification Center package. You can find here the list of all the methods that you can use.",
+  "source": "@site/docs/notification-center/headless/api-reference.md",
+  "sourceDirName": "notification-center/headless",
+  "slug": "/notification-center/headless/api-reference",
+  "permalink": "/notification-center/headless/api-reference",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/notification-center/headless/api-reference.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Dima Grossman",
+  "lastUpdatedAt": 1690266683,
+  "formattedLastUpdatedAt": "Jul 25, 2023",
+  "sidebarPosition": 2,
+  "frontMatter": {
+    "sidebar_position": 2,
+    "sidebar_label": "API Reference"
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Headless Notification Center",
+    "permalink": "/notification-center/headless/headless-service"
+  },
+  "next": {
+    "title": "Web Component",
+    "permalink": "/notification-center/web-component"
+  }
+}

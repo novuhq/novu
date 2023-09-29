@@ -1,0 +1,30 @@
+{
+  "unversionedId": "channels/email/postmark",
+  "id": "channels/email/postmark",
+  "title": "Postmark",
+  "description": "It is possible to use Postmark as a provider to send transactional emails to the customers using the Novu Platform with a single API.",
+  "source": "@site/docs/channels/email/postmark.md",
+  "sourceDirName": "channels/email",
+  "slug": "/channels/email/postmark",
+  "permalink": "/channels/email/postmark",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/channels/email/postmark.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "peoray",
+  "lastUpdatedAt": 1682509192,
+  "formattedLastUpdatedAt": "Apr 26, 2023",
+  "sidebarPosition": 6,
+  "frontMatter": {
+    "sidebar_position": 6
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "SparkPost",
+    "permalink": "/channels/email/sparkpost"
+  },
+  "next": {
+    "title": "Mailjet",
+    "permalink": "/channels/email/mailjet"
+  }
+}

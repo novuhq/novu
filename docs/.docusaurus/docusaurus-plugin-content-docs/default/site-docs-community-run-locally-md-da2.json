@@ -1,0 +1,30 @@
+{
+  "unversionedId": "community/run-locally",
+  "id": "community/run-locally",
+  "title": "Run Novu locally",
+  "description": "⚡ Immediate working space with Gitpod",
+  "source": "@site/docs/community/run-locally.md",
+  "sourceDirName": "community",
+  "slug": "/community/run-locally",
+  "permalink": "/community/run-locally",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/community/run-locally.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Dominic Preap",
+  "lastUpdatedAt": 1686141195,
+  "formattedLastUpdatedAt": "Jun 7, 2023",
+  "sidebarPosition": 1,
+  "frontMatter": {
+    "sidebar_position": 1
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Subscribers Migration",
+    "permalink": "/guides/subscribers-migration"
+  },
+  "next": {
+    "title": "Monorepo structure",
+    "permalink": "/community/monorepo-structure"
+  }
+}

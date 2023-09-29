@@ -1,0 +1,28 @@
+{
+  "unversionedId": "overview/quickstart/get-started-with-go",
+  "id": "overview/quickstart/get-started-with-go",
+  "title": "Go Quickstart",
+  "description": "Welcome to Go Quickstart guide for Novu. In this guide, you'll learn how to use Novu in a Go application. Novu is a powerful notification service that enables you to send multi-channel (SMS, Email, Chat, Push) notifications. Let's see how you can seamlessly integrate Novu into your Go project!",
+  "source": "@site/docs/overview/quickstart/get-started-with-go.md",
+  "sourceDirName": "overview/quickstart",
+  "slug": "/overview/quickstart/get-started-with-go",
+  "permalink": "/overview/quickstart/get-started-with-go",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/overview/quickstart/get-started-with-go.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 12,
+  "frontMatter": {
+    "sidebar_position": 12,
+    "sidebar_label": "Get started with Go"
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Get started with .NET",
+    "permalink": "/overview/quickstart/get-started-with-dotnet"
+  },
+  "next": {
+    "title": "Get started with Java",
+    "permalink": "/overview/quickstart/get-started-with-java"
+  }
+}

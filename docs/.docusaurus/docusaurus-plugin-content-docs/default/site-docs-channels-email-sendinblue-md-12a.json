@@ -1,0 +1,30 @@
+{
+  "unversionedId": "channels/email/sendinblue",
+  "id": "channels/email/sendinblue",
+  "title": "Sendinblue",
+  "description": "You can use the Sendinblue provider to send transactional emails to your customers using the Novu Platform with a single API.",
+  "source": "@site/docs/channels/email/sendinblue.md",
+  "sourceDirName": "channels/email",
+  "slug": "/channels/email/sendinblue",
+  "permalink": "/channels/email/sendinblue",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/channels/email/sendinblue.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "peoray",
+  "lastUpdatedAt": 1682509192,
+  "formattedLastUpdatedAt": "Apr 26, 2023",
+  "sidebarPosition": 3,
+  "frontMatter": {
+    "sidebar_position": 3
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Amazon SES",
+    "permalink": "/channels/email/ses"
+  },
+  "next": {
+    "title": "Resend",
+    "permalink": "/channels/email/resend"
+  }
+}

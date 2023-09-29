@@ -1,0 +1,30 @@
+{
+  "unversionedId": "channels/email/netcore",
+  "id": "channels/email/netcore",
+  "title": "Netcore",
+  "description": "You can use the Netcore provider to send transactional emails to your customers using the Novu Platform with a single API to create multi-channel experiences.",
+  "source": "@site/docs/channels/email/netcore.md",
+  "sourceDirName": "channels/email",
+  "slug": "/channels/email/netcore",
+  "permalink": "/channels/email/netcore",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/channels/email/netcore.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "peoray",
+  "lastUpdatedAt": 1682509192,
+  "formattedLastUpdatedAt": "Apr 26, 2023",
+  "sidebarPosition": 12,
+  "frontMatter": {
+    "sidebar_position": 12
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Mandrill",
+    "permalink": "/channels/email/mandrill"
+  },
+  "next": {
+    "title": "Infobip",
+    "permalink": "/channels/email/infobip"
+  }
+}

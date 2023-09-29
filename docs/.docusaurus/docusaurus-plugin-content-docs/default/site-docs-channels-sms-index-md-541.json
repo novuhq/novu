@@ -1,0 +1,27 @@
+{
+  "unversionedId": "channels/sms/index",
+  "id": "channels/sms/index",
+  "title": "SMS",
+  "description": "Novu can be used to send SMS to your customers using a unified delivery API. You can easily integrate your favorite delivery provider using the built-in integration store.",
+  "source": "@site/docs/channels/sms/index.md",
+  "sourceDirName": "channels/sms",
+  "slug": "/channels/sms/",
+  "permalink": "/channels/sms/",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/channels/sms/index.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "Dima Grossman",
+  "lastUpdatedAt": 1690266683,
+  "formattedLastUpdatedAt": "Jul 25, 2023",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Push Webhook",
+    "permalink": "/channels/push/webhook"
+  },
+  "next": {
+    "title": "Twilio",
+    "permalink": "/channels/sms/twilio"
+  }
+}

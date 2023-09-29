@@ -1,0 +1,28 @@
+{
+  "unversionedId": "home",
+  "id": "home",
+  "title": "Home",
+  "description": "Explore our guides and examples to integrate Novu.",
+  "source": "@site/docs/home.md",
+  "sourceDirName": ".",
+  "slug": "/",
+  "permalink": "/",
+  "draft": false,
+  "editUrl": null,
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "americano98",
+  "lastUpdatedAt": 1689859014,
+  "formattedLastUpdatedAt": "Jul 20, 2023",
+  "sidebarPosition": 1,
+  "frontMatter": {
+    "title": "Home",
+    "slug": "/",
+    "sidebar_position": 1,
+    "sidebar_class_name": "menu-home",
+    "pagination_prev": null,
+    "pagination_next": null,
+    "custom_edit_url": null
+  },
+  "sidebar": "tutorialSidebar"
+}

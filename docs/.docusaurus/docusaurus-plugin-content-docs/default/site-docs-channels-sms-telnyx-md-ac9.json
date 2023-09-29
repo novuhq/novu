@@ -1,0 +1,27 @@
+{
+  "unversionedId": "channels/sms/telnyx",
+  "id": "channels/sms/telnyx",
+  "title": "Telnyx",
+  "description": "You can use the Telnyx provider to send transactional emails to your customers using the Novu Platform with a single API to create multi-channel experiences.",
+  "source": "@site/docs/channels/sms/telnyx.md",
+  "sourceDirName": "channels/sms",
+  "slug": "/channels/sms/telnyx",
+  "permalink": "/channels/sms/telnyx",
+  "draft": false,
+  "editUrl": "https://github.com/novuhq/novu/blob/main/docs/docs/channels/sms/telnyx.md",
+  "tags": [],
+  "version": "current",
+  "lastUpdatedBy": "peoray",
+  "lastUpdatedAt": 1682509192,
+  "formattedLastUpdatedAt": "Apr 26, 2023",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "AWS SNS",
+    "permalink": "/channels/sms/sns"
+  },
+  "next": {
+    "title": "Termii",
+    "permalink": "/channels/sms/termii"
+  }
+}
