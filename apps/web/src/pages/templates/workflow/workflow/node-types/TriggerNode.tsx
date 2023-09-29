@@ -91,7 +91,7 @@ export default memo(({ selected }: { selected: boolean }) => {
         label="Workflow trigger"
         active={selected}
         channelType={StepTypeEnum.TRIGGER}
-        description="Notification call"
+        subtitle="Notification call"
       />
       <Handle style={noChildStyle} type="source" id="a" position={Position.Bottom} />
     </div>

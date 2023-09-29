@@ -2,10 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { Group, Center, Box } from '@mantine/core';
 import styled from '@emotion/styled';
 import slugify from 'slugify';
-import { Controller, FormProvider, useForm } from 'react-hook-form';
+import { Controller, FormProvider, useForm, useWatch } from 'react-hook-form';
 import { useIntercom } from 'react-use-intercom';
 import {
   CHANNELS_WITH_PRIMARY,
+  CredentialsKeyEnum,
   EmailProviderIdEnum,
   IConfigCredentials,
   IConstructIntegrationDto,
@@ -18,28 +19,32 @@ import {
 import { Button, colors, Sidebar, Text } from '../../../../design-system';
 import { useProviders } from '../../useProviders';
 import type { IIntegratedProvider } from '../../types';
-import { IntegrationInput } from '../../components/IntegrationInput';
+import { IntegrationInput } from '../IntegrationInput';
 import { useFetchEnvironments } from '../../../../hooks/useFetchEnvironments';
 import { useUpdateIntegration } from '../../../../api/hooks/useUpdateIntegration';
 import { successMessage } from '../../../../utils/notifications';
-import { UpdateIntegrationSidebarHeader } from '../../components/UpdateIntegrationSidebarHeader';
-import { SetupWarning } from '../../components/SetupWarning';
-import { UpdateIntegrationCommonFields } from '../../components/UpdateIntegrationCommonFields';
-import { NovuInAppFrameworks } from '../../components/NovuInAppFrameworks';
+import { UpdateIntegrationSidebarHeader } from '../UpdateIntegrationSidebarHeader';
+import { SetupWarning } from '../SetupWarning';
+import { UpdateIntegrationCommonFields } from '../UpdateIntegrationCommonFields';
+import { NovuInAppFrameworks } from '../NovuInAppFrameworks';
 import { FrameworkEnum } from '../../../quick-start/consts';
 import { When } from '../../../../components/utils/When';
 import { SetupTimeline } from '../../../quick-start/components/SetupTimeline';
 import { Faq } from '../../../quick-start/components/QuickStartWrapper';
-import { NovuInAppFrameworkHeader } from '../../components/NovuInAppFrameworkHeader';
-import { NovuInAppSetupWarning } from '../../components/NovuInAppSetupWarning';
-import { NovuProviderSidebarContent } from '../../components/multi-provider/NovuProviderSidebarContent';
+import { NovuInAppFrameworkHeader } from '../NovuInAppFrameworkHeader';
+import { NovuInAppSetupWarning } from '../NovuInAppSetupWarning';
+import { NovuProviderSidebarContent } from './NovuProviderSidebarContent';
 import { useSelectPrimaryIntegrationModal } from './useSelectPrimaryIntegrationModal';
+import { ShareableUrl } from '../Modal/ConnectIntegrationForm';
+import { Conditions, IConditions } from '../../../../components/conditions';
+import { useDisclosure } from '@mantine/hooks';
 
 interface IProviderForm {
   name: string;
   credentials: ICredentialsDto;
   active: boolean;
   identifier: string;
+  conditions: IConditions[];
 }
 
 enum SidebarStateEnum {
@@ -63,9 +68,9 @@ export function UpdateProviderSidebar({
   const [framework, setFramework] = useState<FrameworkEnum | null>(null);
   const { providers, isLoading: areProvidersLoading } = useProviders();
   const isNovuInAppProvider = selectedProvider?.providerId === InAppProviderIdEnum.Novu;
-
   const { openModal: openSelectPrimaryIntegrationModal, SelectPrimaryIntegrationModal } =
     useSelectPrimaryIntegrationModal();
+  const [conditionsFormOpened, { close: closeConditionsForm, open: openConditionsForm }] = useDisclosure(false);
 
   const { updateIntegration, isLoadingUpdate } = useUpdateIntegration(selectedProvider?.integrationId || '');
 
@@ -77,6 +82,7 @@ export function UpdateProviderSidebar({
       credentials: {},
       active: false,
       identifier: '',
+      conditions: [],
     },
   });
   const {
@@ -85,6 +91,7 @@ export function UpdateProviderSidebar({
     reset,
     watch,
     setValue,
+    getValues,
     formState: { errors, isDirty, dirtyFields },
   } = methods;
 
@@ -116,7 +123,7 @@ export function UpdateProviderSidebar({
 
       setValue('identifier', newIdentifier);
     }
-  }, [selectedProvider]);
+  }, [setValue, selectedProvider]);
 
   useEffect(() => {
     if (integrationId === undefined || providers.length === 0) {
@@ -136,9 +143,10 @@ export function UpdateProviderSidebar({
 
         return prev;
       }, {} as any),
+      conditions: foundProvider.conditions,
       active: foundProvider.active,
     });
-  }, [integrationId, providers]);
+  }, [reset, integrationId, providers]);
 
   const onFrameworkClickCallback = (newFramework: FrameworkEnum) => {
     setSidebarState(SidebarStateEnum.EXPANDED);
@@ -165,22 +173,38 @@ export function UpdateProviderSidebar({
       return;
     }
 
-    const { channel: selectedChannel, environmentId, primary } = selectedProvider;
+    const { channel: selectedChannel, environmentId, primary, conditions } = selectedProvider;
     const isActiveFieldChanged = dirtyFields.active;
     const hasSameChannelActiveIntegration = !!providers
-      .filter((el) => !NOVU_PROVIDERS.includes(el.providerId) && el.integrationId !== selectedProvider.integrationId)
+      .filter((el) => el.integrationId !== selectedProvider.integrationId)
       .find((el) => el.active && el.channel === selectedChannel && el.environmentId === environmentId);
     const isChannelSupportPrimary = CHANNELS_WITH_PRIMARY.includes(selectedChannel);
 
+    const isChangedToActive =
+      isActiveFieldChanged && isChannelSupportPrimary && isActive && hasSameChannelActiveIntegration;
+
+    const isChangedToInactiveAndIsPrimary =
+      isActiveFieldChanged && isChannelSupportPrimary && !isActive && primary && hasSameChannelActiveIntegration;
+
+    const isPrimaryAndHasConditionsApplied =
+      primary && conditions && conditions.length > 0 && hasSameChannelActiveIntegration;
+
+    const hasNoConditions = !conditions || conditions.length === 0;
+
+    const hasUpdatedConditions = data.conditions && data.conditions.length > 0;
+
+    const hasConditionsAndIsPrimary = hasUpdatedConditions && primary && dirtyFields.conditions;
+
     if (
-      isActiveFieldChanged &&
-      isChannelSupportPrimary &&
-      ((isActive && hasSameChannelActiveIntegration) || (!isActive && primary && hasSameChannelActiveIntegration))
+      (hasNoConditions && isChangedToActive) ||
+      isChangedToInactiveAndIsPrimary ||
+      isPrimaryAndHasConditionsApplied ||
+      hasConditionsAndIsPrimary
     ) {
       openSelectPrimaryIntegrationModal({
         environmentId: selectedProvider?.environmentId,
         channelType: selectedProvider?.channel,
-        exclude: !isActive ? [selectedProvider.integrationId] : undefined,
+        exclude: !isActive || hasConditionsAndIsPrimary ? (el) => el._id === selectedProvider.integrationId : undefined,
         onClose: () => {
           updateIntegration(data);
         },
@@ -199,6 +223,29 @@ export function UpdateProviderSidebar({
     handleSubmit(updateAndSelectPrimaryIntegration)(e);
   };
 
+  const hmacEnabled = useWatch({
+    control,
+    name: `credentials.${CredentialsKeyEnum.Hmac}`,
+  });
+
+  const updateConditions = (conditions: IConditions[]) => {
+    setValue('conditions', conditions, { shouldDirty: true });
+  };
+
+  if (conditionsFormOpened) {
+    const [conditions, name] = getValues(['conditions', 'name']);
+
+    return (
+      <Conditions
+        conditions={conditions}
+        name={name}
+        isOpened={conditionsFormOpened}
+        setConditions={updateConditions}
+        onClose={closeConditionsForm}
+      />
+    );
+  }
+
   if (
     SmsProviderIdEnum.Novu === selectedProvider?.providerId ||
     EmailProviderIdEnum.Novu === selectedProvider?.providerId
@@ -211,7 +258,11 @@ export function UpdateProviderSidebar({
           onClose={onSidebarClose}
           onSubmit={onSubmit}
           customHeader={
-            <UpdateIntegrationSidebarHeader provider={selectedProvider} onSuccessDelete={onSidebarClose}>
+            <UpdateIntegrationSidebarHeader
+              openConditions={openConditionsForm}
+              provider={selectedProvider}
+              onSuccessDelete={onSidebarClose}
+            >
               <Free>Test Provider</Free>
             </UpdateIntegrationSidebarHeader>
           }
@@ -230,8 +281,9 @@ export function UpdateProviderSidebar({
           }
         >
           <NovuProviderSidebarContent provider={selectedProvider} />
-          <UpdateIntegrationCommonFields provider={selectedProvider} showActive={false} />
+          <UpdateIntegrationCommonFields provider={selectedProvider} />
         </Sidebar>
+        <SelectPrimaryIntegrationModal />
       </FormProvider>
     );
   }
@@ -247,7 +299,11 @@ export function UpdateProviderSidebar({
         onBack={onBack}
         customHeader={
           sidebarState === SidebarStateEnum.NORMAL ? (
-            <UpdateIntegrationSidebarHeader provider={selectedProvider} onSuccessDelete={onSidebarClose} />
+            <UpdateIntegrationSidebarHeader
+              openConditions={openConditionsForm}
+              provider={selectedProvider}
+              onSuccessDelete={onSidebarClose}
+            />
           ) : (
             <>
               <When truthy={isNovuInAppProvider}>
@@ -291,7 +347,7 @@ export function UpdateProviderSidebar({
               <Controller
                 name={`credentials.${credential.key}`}
                 control={control}
-                defaultValue={credential.type === 'boolean' || credential.type === 'switch' ? false : ''}
+                {...(credential.type === 'boolean' || credential.type === 'switch' ? { defaultValue: false } : {})}
                 rules={{
                   required: credential.required ? `Please enter a ${credential.displayName.toLowerCase()}` : undefined,
                 }}
@@ -301,6 +357,7 @@ export function UpdateProviderSidebar({
               />
             </InputWrapper>
           ))}
+          <ShareableUrl provider={selectedProvider?.providerId} hmacEnabled={!!hmacEnabled} />
           {isNovuInAppProvider && <NovuInAppFrameworks onFrameworkClick={onFrameworkClickCallback} />}
         </When>
         <When truthy={isNovuInAppProvider && sidebarState === SidebarStateEnum.EXPANDED}>

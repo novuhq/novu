@@ -1,12 +1,14 @@
 import { Module } from '@nestjs/common';
 import { RavenInterceptor, RavenModule } from 'nest-raven';
 import { APP_INTERCEPTOR } from '@nestjs/core';
+import { createNestLoggingModuleOptions, LoggerModule } from '@novu/application-generic';
+
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { SharedModule } from './shared/shared.module';
 import { HealthModule } from './health/health.module';
 import { SocketModule } from './socket/socket.module';
-import { createNestLoggingModuleOptions, LoggerModule } from '@novu/application-generic';
+
 const packageJson = require('../package.json');
 
 const modules = [

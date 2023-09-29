@@ -4,7 +4,7 @@ import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
 import {
   buildIntegrationKey,
   FeatureFlagCommand,
-  GetFeatureFlag,
+  GetIsMultiProviderConfigurationEnabled,
   InvalidateCacheService,
 } from '@novu/application-generic';
 
@@ -18,7 +18,7 @@ export class RemoveIntegration {
   constructor(
     private invalidateCache: InvalidateCacheService,
     private integrationRepository: IntegrationRepository,
-    private getFeatureFlag: GetFeatureFlag
+    private getIsMultiProviderConfigurationEnabled: GetIsMultiProviderConfigurationEnabled
   ) {}
 
   async execute(command: RemoveIntegrationCommand) {
@@ -39,7 +39,7 @@ export class RemoveIntegration {
         _organizationId: existingIntegration._organizationId,
       });
 
-      const isMultiProviderConfigurationEnabled = await this.getFeatureFlag.isMultiProviderConfigurationEnabled(
+      const isMultiProviderConfigurationEnabled = await this.getIsMultiProviderConfigurationEnabled.execute(
         FeatureFlagCommand.create({
           userId: command.userId,
           organizationId: command.organizationId,

@@ -20,7 +20,7 @@ import { IntegrationEnvironmentPill } from '../IntegrationEnvironmentPill';
 import { useFetchEnvironments } from '../../../../hooks/useFetchEnvironments';
 import { CHANNEL_TYPE_TO_STRING } from '../../../../utils/channels';
 import { useIntegrations } from '../../../../hooks';
-import { ITableIntegration } from '../../types';
+import { IntegrationEntity, ITableIntegration } from '../../types';
 import { mapToTableIntegration } from '../../utils';
 import { IntegrationStatusCell } from '../IntegrationStatusCell';
 import { IntegrationNameCell } from '../IntegrationNameCell';
@@ -114,7 +114,7 @@ export interface ISelectPrimaryIntegrationModalProps {
   isOpened: boolean;
   environmentId?: string;
   channelType?: ChannelTypeEnum;
-  exclude?: string[];
+  exclude?: (integration: IntegrationEntity) => boolean;
   onClose: () => void;
 }
 
@@ -139,11 +139,14 @@ export const SelectPrimaryIntegrationModal = ({
 
   const { integrations, loading: areIntegrationsLoading } = useIntegrations();
   const { makePrimaryIntegration, isLoading: isMarkingPrimaryIntegration } = useMakePrimaryIntegration({
-    onSuccess: onCloseCallback,
+    onSuccess: () => onCloseCallback(),
   });
   const integrationsByEnvAndChannel = useMemo<ITableIntegration[]>(() => {
     const filteredIntegrations = (integrations ?? []).filter((el) => {
-      const isNotExcluded = !exclude?.includes(el._id ?? '');
+      let isNotExcluded = true;
+      if (exclude) {
+        isNotExcluded = !exclude(el);
+      }
 
       if (environmentId) {
         return el.channel === channelType && el._environmentId === environmentId && isNotExcluded;
@@ -206,7 +209,7 @@ export const SelectPrimaryIntegrationModal = ({
       shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.medium}
       radius="md"
       size="lg"
-      onClose={onCloseCallback}
+      onClose={() => onCloseCallback()}
     >
       <ModalBodyHolder data-test-id="select-primary-integration-modal">
         <Description>
@@ -243,7 +246,7 @@ export const SelectPrimaryIntegrationModal = ({
         <ButtonsHolder>
           {!isActive && !isInitialProviderSelected && (
             <Warning>
-              The selected provider instance will be activated as the primary provider cannot be disabled.
+              The selected provider instance will be activated as the primary provider can not be disabled.
             </Warning>
           )}
           <Button variant="outline" onClick={onCloseCallback}>

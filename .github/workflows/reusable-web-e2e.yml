@@ -11,6 +11,11 @@ on:
         required: false
         default: false
         type: boolean
+      submodule_branch:
+        description: 'Submodule branch to checkout to'
+        required: false
+        default: 'main'
+        type: string
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -24,9 +29,6 @@ jobs:
       # leaving the Dashboard hanging ...
       # https://github.com/cypress-io/github-action/issues/48
       fail-fast: false
-      matrix:
-        # run 3 copies of the current job in parallel
-        containers: [1, 2, 3, 4, 5, 6, 7]
 
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
@@ -43,19 +45,18 @@ jobs:
       - id: setup
         run: |
           if ! [[ -z "${{ secrets.SUBMODULES_TOKEN }}" ]]; then
-            echo ::set-output has_token=true
+            echo "has_token=true" >> $GITHUB_OUTPUT
           else
-            echo ::set-output has_token=false
+            echo "has_token=false" >> $GITHUB_OUTPUT
           fi
+
+      - uses: actions/checkout@v3
       # checkout with submodules if token is provided
-      - uses: actions/checkout@v3
-        if: steps.setup.outputs.has_token == 'true'
+      - uses: ./.github/actions/checkout-submodules
         with:
-          submodules: ${{ inputs.submodules }}
-          token: ${{ secrets.SUBMODULES_TOKEN }}
-       # checkout without submodules
-      - uses: actions/checkout@v3
-        if: steps.setup.outputs.has_token != 'true'
+          enabled: ${{ steps.setup.outputs.has_token == 'true' }}
+          submodule_token: ${{ secrets.SUBMODULES_TOKEN }}
+          submodule_branch: ${{ inputs.submodule_branch }}
       - uses: ./.github/actions/setup-project
         id: setup-project
         with:
@@ -67,6 +68,7 @@ jobs:
           projects: '@novu/web,@novu/api,@novu/worker'
 
       - uses: ./.github/actions/start-localstack
+      - uses: ./.github/actions/setup-redis-cluster
 
       - uses: ./.github/actions/run-backend
         with:
@@ -115,7 +117,7 @@ jobs:
           working-directory: apps/web
           browser: "${{ env.BROWSER_PATH }}"
           record: true
-          parallel: true
+          parallel: false
           install: false
           config-file: cypress.config.ts
 

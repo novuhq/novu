@@ -1,36 +1,29 @@
-import { Control, Controller, useFormContext } from 'react-hook-form';
 import { ChannelTypeEnum } from '@novu/shared';
+import { Control, Controller, useFormContext } from 'react-hook-form';
 
-import { LackIntegrationAlert } from './LackIntegrationAlert';
-import type { IForm } from './formTypes';
 import { Textarea } from '../../../design-system';
-import { useEnvController, useVariablesManager } from '../../../hooks';
-import { VariableManager } from './VariableManager';
+import { useEnvController, useHasActiveIntegrations, useVariablesManager } from '../../../hooks';
 import { StepSettings } from '../workflow/SideBar/StepSettings';
+import type { IForm } from './formTypes';
+import { LackIntegrationAlert } from './LackIntegrationAlert';
+import { VariableManager } from './VariableManager';
 
 const templateFields = ['content', 'title'];
 
-export function TemplatePushEditor({
-  control,
-  index,
-  isIntegrationActive,
-}: {
-  control: Control<IForm>;
-  index: number;
-  errors: any;
-  isIntegrationActive: boolean;
-}) {
+export function TemplatePushEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {
   const { readonly } = useEnvController();
   const {
     formState: { errors },
   } = useFormContext();
   const variablesArray = useVariablesManager(index, templateFields);
 
+  const { hasActiveIntegration } = useHasActiveIntegrations({
+    channelType: ChannelTypeEnum.PUSH,
+  });
+
   return (
     <>
-      {!isIntegrationActive ? (
-        <LackIntegrationAlert channelType={ChannelTypeEnum.PUSH} iconHeight={34} iconWidth={34} />
-      ) : null}
+      {!hasActiveIntegration ? <LackIntegrationAlert channelType={ChannelTypeEnum.PUSH} /> : null}
       <StepSettings index={index} />
       <Controller
         name={`steps.${index}.template.title` as any}

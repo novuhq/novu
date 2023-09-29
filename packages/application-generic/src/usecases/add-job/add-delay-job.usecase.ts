@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { JobRepository, JobStatusEnum } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 
@@ -11,13 +11,13 @@ import { InstrumentUsecase } from '../../instrumentation';
 export class AddDelayJob {
   constructor(
     private jobRepository: JobRepository,
+    @Inject(forwardRef(() => CalculateDelayService))
     private calculateDelayService: CalculateDelayService
   ) {}
 
   @InstrumentUsecase()
   public async execute(command: AddJobCommand): Promise<number | undefined> {
-    const data =
-      command.job ?? (await this.jobRepository.findById(command.jobId));
+    const data = command.job;
 
     if (!data) throw new ApiException(`Job with id ${command.jobId} not found`);
 

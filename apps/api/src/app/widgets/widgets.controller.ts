@@ -128,6 +128,10 @@ export class WidgetsController {
   ): Promise<UnseenCountResponse> {
     const feedsQuery = this.toArray(feedId);
 
+    if (seen === undefined) {
+      seen = false;
+    }
+
     const command = GetFeedCountCommand.create({
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession.subscriberId,
@@ -149,6 +153,10 @@ export class WidgetsController {
     @Query('limit', new DefaultValuePipe(100), new LimitPipe(1, 100, true)) limit: number
   ): Promise<UnseenCountResponse> {
     const feedsQuery = this.toArray(feedId);
+
+    if (read === undefined) {
+      read = false;
+    }
 
     const command = GetFeedCountCommand.create({
       organizationId: subscriberSession._organizationId,
