@@ -60,6 +60,10 @@ describe('Update Subscribers global preferences - /subscribers/:subscriberId/pre
     });
     expect(response.data.data.preference.channels).to.eql({
       [ChannelTypeEnum.EMAIL]: true,
+      [ChannelTypeEnum.SMS]: true,
+      [ChannelTypeEnum.CHAT]: true,
+      [ChannelTypeEnum.PUSH]: true,
+      [ChannelTypeEnum.IN_APP]: true,
     });
   });
 
@@ -80,6 +84,8 @@ describe('Update Subscribers global preferences - /subscribers/:subscriberId/pre
       [ChannelTypeEnum.PUSH]: true,
       [ChannelTypeEnum.IN_APP]: false,
       [ChannelTypeEnum.SMS]: true,
+      [ChannelTypeEnum.EMAIL]: true,
+      [ChannelTypeEnum.CHAT]: true,
     });
   });
 
@@ -100,6 +106,10 @@ describe('Update Subscribers global preferences - /subscribers/:subscriberId/pre
 
     expect(res.data.data.preference.channels).to.eql({
       [ChannelTypeEnum.EMAIL]: true,
+      [ChannelTypeEnum.SMS]: true,
+      [ChannelTypeEnum.CHAT]: true,
+      [ChannelTypeEnum.PUSH]: true,
+      [ChannelTypeEnum.IN_APP]: true,
     });
   });
 });
