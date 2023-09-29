@@ -1,6 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { MessageRepository, JobRepository, JobStatusEnum } from '@novu/dal';
-import { StepTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
+import {
+  StepTypeEnum,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  DigestTypeEnum,
+  IDigestRegularMetadata,
+} from '@novu/shared';
 import { DetailEnum, CreateExecutionDetails, CreateExecutionDetailsCommand } from '@novu/application-generic';
 
 import { GetDigestEventsRegular } from './get-digest-events-regular.usecase';
@@ -11,6 +17,7 @@ import { PlatformException } from '../../../../shared/utils';
 
 import { SendMessageCommand } from '../send-message.command';
 import { SendMessageType } from '../send-message-type.usecase';
+import { DigestEventsCommand } from './digest-events.command';
 
 const LOG_CONTEXT = 'Digest';
 
@@ -60,14 +67,8 @@ export class Digest extends SendMessageType {
     );
   }
 
-  private async getEvents(command: SendMessageCommand) {
-    const currentJob = await this.jobRepository.findOne({ _environmentId: command.environmentId, _id: command.jobId });
-
-    if (!currentJob) {
-      const message = `Digest job ${command.jobId} is not found`;
-      Logger.error(message, LOG_CONTEXT);
-      throw new PlatformException(message);
-    }
+  private async newGetEvents(command: SendMessageCommand) {
+    const currentJob = await this.getCurrentJob(command);
 
     const jobs = await this.jobRepository.find(
       {
@@ -81,6 +82,36 @@ export class Digest extends SendMessageType {
     );
 
     return [currentJob.payload, ...jobs.map((job) => job.payload)];
+  }
+
+  private async getEvents(command: SendMessageCommand) {
+    const currentJob = await this.getCurrentJob(command);
+
+    const digestEventsCommand = DigestEventsCommand.create({
+      currentJob,
+      _subscriberId: command._subscriberId,
+    });
+
+    if (
+      currentJob?.digest?.type === DigestTypeEnum.BACKOFF ||
+      (currentJob?.digest as IDigestRegularMetadata)?.backoff
+    ) {
+      return this.getDigestEventsBackoff.execute(digestEventsCommand);
+    }
+
+    return this.getDigestEventsRegular.execute(digestEventsCommand);
+  }
+
+  private async getCurrentJob(command: SendMessageCommand) {
+    const currentJob = await this.jobRepository.findOne({ _environmentId: command.environmentId, _id: command.jobId });
+
+    if (!currentJob) {
+      const message = `Digest job ${command.jobId} is not found`;
+      Logger.error(message, LOG_CONTEXT);
+      throw new PlatformException(message);
+    }
+
+    return currentJob;
   }
 
   private async getJobsToUpdate(command: SendMessageCommand) {

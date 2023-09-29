@@ -10,19 +10,22 @@ import { GetDigestEvents } from './get-digest-events.usecase';
 export class GetDigestEventsBackoff extends GetDigestEvents {
   @InstrumentUsecase()
   public async execute(command: DigestEventsCommand) {
-    const activeDigestJob = command.currentJob;
+    const currentJob = command.currentJob;
+
+    const { digestKey, digestMeta, digestValue } = this.getJobDigest(currentJob);
 
     const jobs = await this.jobRepository.find(
       {
-        _mergedDigestId: activeDigestJob._id,
+        _templateId: currentJob._templateId,
         status: JobStatusEnum.MERGED,
         type: StepTypeEnum.DIGEST,
-        _environmentId: activeDigestJob._environmentId,
+        _environmentId: currentJob._environmentId,
+        ...(digestKey && { [`payload.${digestKey}`]: digestValue }),
         _subscriberId: command._subscriberId,
       },
       'payload'
     );
 
-    return [activeDigestJob.payload, ...jobs.map((job) => job.payload)];
+    return this.filterJobs(currentJob, currentJob.transactionId, jobs);
   }
 }
