@@ -361,6 +361,7 @@ export class SubscribersController {
   @ApiOperation({
     summary: 'Get subscriber preferences by level',
   })
+  @ApiParam({ name: 'subscriberId', type: String, required: true })
   @ApiParam({ name: 'level', type: String, required: true })
   async getSubscriberPreferenceByLevel(
     @UserSession() user: IJwtPayload,
