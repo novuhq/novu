@@ -47,7 +47,7 @@ export const useUpdateUserGlobalPreferences = ({
   >((variables) => apiService.updateSubscriberGlobalPreference(variables.preferences, variables.enabled), {
     ...options,
     onSuccess: (data, variables, context) => {
-      queryClient.setQueryData<IUserGlobalPreferenceSettings>(userGlobalPreferencesQueryKey, () => data);
+      queryClient.setQueryData<IUserGlobalPreferenceSettings[]>(userGlobalPreferencesQueryKey, () => [data]);
       onSuccess?.(data, variables, context);
     },
     onError: (error, variables, context) => {

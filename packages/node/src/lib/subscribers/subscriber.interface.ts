@@ -5,9 +5,15 @@ import {
   ButtonTypeEnum,
   MessageActionStatusEnum,
   ISubscribersDefine,
+  PreferenceLevelEnum,
 } from '@novu/shared';
 
-export { ISubscriberPayload, ButtonTypeEnum, MessageActionStatusEnum };
+export {
+  ISubscriberPayload,
+  ButtonTypeEnum,
+  MessageActionStatusEnum,
+  PreferenceLevelEnum,
+};
 
 export interface ISubscribers {
   list(page: number, limit: number);
@@ -28,6 +34,8 @@ export interface ISubscribers {
   unsetCredentials(subscriberId: string, providerId: string);
   updateOnlineStatus(subscriberId: string, online: boolean);
   getPreference(subscriberId: string);
+  getGlobalPreference(subscriberId: string);
+  getPreferenceByLevel(subscriberId: string, level: PreferenceLevelEnum);
   updatePreference(
     subscriberId: string,
     templateId: string,

@@ -111,6 +111,14 @@ export class HeadlessService {
     queryFn: () => this.api.getUserPreference(),
   };
 
+  private userGlobalPreferencesQueryOptions: QueryObserverOptions<
+    IUserGlobalPreferenceSettings[],
+    unknown
+  > = {
+    queryKey: USER_GLOBAL_PREFERENCES_QUERY_KEY,
+    queryFn: () => this.api.getUserGlobalPreference(),
+  };
+
   constructor(private options: IHeadlessServiceOptions) {
     const backendUrl = options.backendUrl ?? 'https://api.novu.co';
     const token = getToken();
@@ -463,6 +471,29 @@ export class HeadlessService {
     return unsubscribe;
   }
 
+  public fetchUserGlobalPreferences({
+    listener,
+    onSuccess,
+    onError,
+  }: {
+    listener: (result: FetchResult<IUserGlobalPreferenceSettings[]>) => void;
+    onSuccess?: (settings: IUserGlobalPreferenceSettings[]) => void;
+    onError?: (error: unknown) => void;
+  }) {
+    this.assertSessionInitialized();
+
+    const { unsubscribe } = this.queryService.subscribeQuery({
+      options: {
+        ...this.userGlobalPreferencesQueryOptions,
+        onSuccess,
+        onError,
+      },
+      listener: (result) => this.callFetchListener(result, listener),
+    });
+
+    return unsubscribe;
+  }
+
   public async updateUserPreferences({
     templateId,
     channelType,
@@ -563,9 +594,9 @@ export class HeadlessService {
             variables.enabled
           ),
         onSuccess: (data) => {
-          this.queryClient.setQueryData<IUserGlobalPreferenceSettings>(
+          this.queryClient.setQueryData<IUserGlobalPreferenceSettings[]>(
             USER_GLOBAL_PREFERENCES_QUERY_KEY,
-            () => data
+            () => [data]
           );
         },
       },

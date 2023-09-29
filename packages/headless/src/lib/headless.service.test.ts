@@ -950,7 +950,7 @@ describe('headless.service', () => {
         enabled: true,
         preferences: [
           {
-            channelType: 'email',
+            channelType: ChannelTypeEnum.EMAIL,
             enabled: false,
           },
         ],
@@ -1000,7 +1000,7 @@ describe('headless.service', () => {
         enabled: true,
         preferences: [
           {
-            channelType: 'email',
+            channelType: ChannelTypeEnum.EMAIL,
             enabled: true,
           },
         ],

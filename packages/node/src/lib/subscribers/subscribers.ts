@@ -4,7 +4,7 @@ import {
   IChannelCredentials,
   ISubscribersDefine,
 } from '@novu/shared';
-import { MarkMessagesAsEnum } from '@novu/shared';
+import { MarkMessagesAsEnum, PreferenceLevelEnum } from '@novu/shared';
 import {
   IGetSubscriberNotificationFeedParams,
   IMarkFields,
@@ -90,6 +90,18 @@ export class Subscribers extends WithHttp implements ISubscribers {
 
   async getPreference(subscriberId: string) {
     return await this.http.get(`/subscribers/${subscriberId}/preferences`);
+  }
+
+  async getGlobalPreference(subscriberId: string) {
+    return await this.http.get(
+      `/subscribers/${subscriberId}/preferences/${PreferenceLevelEnum.GLOBAL}`
+    );
+  }
+
+  async getPreferenceByLevel(subscriberId: string, level: PreferenceLevelEnum) {
+    return await this.http.get(
+      `/subscribers/${subscriberId}/preferences/${level}`
+    );
   }
 
   async updatePreference(

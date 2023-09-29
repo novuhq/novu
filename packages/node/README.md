@@ -319,6 +319,27 @@ const novu = new Novu('<NOVU_API_KEY>');
 await novu.subscribers.getPreference("subscriberId")
 ```
 
+- #### Get subscriber global preference
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.subscribers.getGlobalPreference("subscriberId" )
+```
+
+
+- #### Get subscriber preference by level
+```ts
+import { Novu, PreferenceLevelEnum } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+// Get global level preference
+await novu.subscribers.getPreferenceByLevel("subscriberId", PreferenceLevelEnum.GLOBAL)
+
+// Get template level preference
+await novu.subscribers.getPreferenceByLevel("subscriberId", PreferenceLevelEnum.TEMPLATE)
+```
 - #### Update subscriber preference for a workflow
 ```ts
 import { Novu } from '@novu/node';
