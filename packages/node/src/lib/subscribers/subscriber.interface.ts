@@ -41,6 +41,10 @@ export interface ISubscribers {
     templateId: string,
     data: IUpdateSubscriberPreferencePayload
   );
+  updateGlobalPreference(
+    subscriberId: string,
+    data: IUpdateSubscriberGlobalPreferencePayload
+  );
   getNotificationsFeed(
     subscriberId: string,
     params: IGetSubscriberNotificationFeedParams
