@@ -9,6 +9,7 @@ import {
 import { GetSubscriberGlobalPreferenceCommand } from './get-subscriber-global-preference.command';
 import { buildSubscriberKey, CachedEntity } from '../../services/cache';
 import { ApiException } from '../../utils/exceptions';
+import { IPreferenceChannels } from '@novu/shared';
 
 @Injectable()
 export class GetSubscriberGlobalPreference {
@@ -37,11 +38,15 @@ export class GetSubscriberGlobalPreference {
       });
 
     const subscriberChannelPreference = subscriberPreference?.channels;
+    const channels = this.updatePreferenceStateWithDefault(
+      subscriberChannelPreference ?? {}
+    );
+    console.log('channels, banda', channels);
 
     return {
       preference: {
         enabled: subscriberPreference?.enabled ?? true,
-        channels: subscriberChannelPreference ?? {},
+        channels,
       },
     };
   }
@@ -64,5 +69,17 @@ export class GetSubscriberGlobalPreference {
       _environmentId,
       subscriberId
     );
+  }
+  // adds default state for missing channels
+  private updatePreferenceStateWithDefault(preference: IPreferenceChannels) {
+    const defaultPreference: IPreferenceChannels = {
+      email: true,
+      sms: true,
+      in_app: true,
+      chat: true,
+      push: true,
+    };
+
+    return { ...defaultPreference, ...preference };
   }
 }
