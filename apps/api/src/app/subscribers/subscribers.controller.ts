@@ -21,7 +21,7 @@ import {
   UpdateSubscriber,
   UpdateSubscriberCommand,
 } from '@novu/application-generic';
-import { ApiOperation, ApiTags, ApiNoContentResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiTags, ApiNoContentResponse, ApiParam } from '@nestjs/swagger';
 import { ButtonTypeEnum, ChatProviderIdEnum, IJwtPayload } from '@novu/shared';
 import { MessageEntity, PreferenceLevelEnum } from '@novu/dal';
 
@@ -361,6 +361,7 @@ export class SubscribersController {
   @ApiOperation({
     summary: 'Get subscriber preferences by level',
   })
+  @ApiParam({ name: 'level', type: String, required: true })
   async getSubscriberPreferenceByLevel(
     @UserSession() user: IJwtPayload,
     @Param() { level, subscriberId }: GetSubscriberPreferencesByLevelParams
