@@ -50,6 +50,8 @@ export function FilterModal({
         value: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
         label: FILTER_TO_LABEL[FilterPartTypeEnum.IS_ONLINE_IN_LAST],
       },
+      { value: FilterPartTypeEnum.IS_OFFICE_HOURS, label: FILTER_TO_LABEL[FilterPartTypeEnum.IS_OFFICE_HOURS] },
+      { value: FilterPartTypeEnum.IS_ONLINE_SLACK, label: FILTER_TO_LABEL[FilterPartTypeEnum.IS_ONLINE_SLACK] },
     ];
 
     if (steps.length < 2) {
@@ -75,8 +77,8 @@ export function FilterModal({
 
   function handleOnChildOnChange(index: number) {
     return (data) => {
-      const newField = Object.assign({}, fields[index], { on: data });
-      update(index, newField);
+      const { id: _, ...rest } = fields[index];
+      update(index, { ...rest, on: data });
     };
   }
 
@@ -190,7 +192,9 @@ export function FilterModal({
               <When
                 truthy={
                   filterFieldOn === FilterPartTypeEnum.IS_ONLINE ||
-                  filterFieldOn === FilterPartTypeEnum.IS_ONLINE_IN_LAST
+                  filterFieldOn === FilterPartTypeEnum.IS_ONLINE_IN_LAST ||
+                  filterFieldOn === FilterPartTypeEnum.IS_OFFICE_HOURS ||
+                  filterFieldOn === FilterPartTypeEnum.IS_ONLINE_SLACK
                 }
               >
                 <OnlineFiltersForms

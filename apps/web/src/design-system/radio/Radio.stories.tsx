@@ -1,12 +1,12 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { ComponentStory, Meta } from '@storybook/react';
 import { Radio, RadioProps } from './Radio';
 
 export default {
   title: 'Components/Radio',
   component: Radio,
   argTypes: {},
-} as ComponentMeta<typeof Radio>;
+} as Meta<typeof Radio>;
 
 const Template: ComponentStory<typeof Radio> = ({ children, ...args }: RadioProps) => <Radio {...args}>Button</Radio>;
 

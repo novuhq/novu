@@ -76,6 +76,12 @@ export const getFilterLabel = (filter: FilterParts, steps: IFormStep[]): string 
   if (filter.on === FilterPartTypeEnum.IS_ONLINE) {
     return `is online right now ${translateOperator('EQUAL')}`;
   }
+  if (filter.on === FilterPartTypeEnum.IS_OFFICE_HOURS) {
+    return `is office hours ${translateOperator('EQUAL')}`;
+  }
+  if (filter.on === FilterPartTypeEnum.IS_ONLINE_SLACK) {
+    return `is online slack ${translateOperator('EQUAL')}`;
+  }
   if (filter.on === FilterPartTypeEnum.IS_ONLINE_IN_LAST) {
     return `online in the last "X" ${filter.timeOperator}`;
   }

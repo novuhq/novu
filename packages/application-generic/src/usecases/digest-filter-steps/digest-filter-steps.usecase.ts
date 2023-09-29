@@ -59,7 +59,10 @@ export class DigestFilterSteps {
     };
   }
 
-  public static getNestedValue<ObjectType>(payload: ObjectType, path?: string) {
+  public static getNestedValue<ObjectType>(
+    payload: ObjectType,
+    path?: string
+  ): ObjectType | undefined {
     if (!path || !payload) {
       return undefined;
     }
@@ -69,14 +72,17 @@ export class DigestFilterSteps {
       const keys = path.split('.');
 
       for (const key of keys) {
+        if (result === undefined) {
+          return undefined;
+        }
         result = result[key];
       }
 
       return result;
     } catch (error) {
       Logger.error(
-        'Failure when parsing digest payload nested key',
         error,
+        'Failure when parsing digest payload nested key',
         LOG_CONTEXT
       );
 

@@ -67,6 +67,26 @@ class RealtimeOnlineFilterPart extends BaseFilterPart {
   value: boolean;
 }
 
+class IsOfficeHours extends BaseFilterPart {
+  @ApiProperty({
+    enum: [FilterPartTypeEnum.IS_OFFICE_HOURS],
+  })
+  on: FilterPartTypeEnum.IS_OFFICE_HOURS;
+
+  @ApiProperty()
+  value: boolean;
+}
+
+class IsOnlineSlack extends BaseFilterPart {
+  @ApiProperty({
+    enum: [FilterPartTypeEnum.IS_ONLINE_SLACK],
+  })
+  on: FilterPartTypeEnum.IS_ONLINE_SLACK;
+
+  @ApiProperty()
+  value: boolean;
+}
+
 class OnlineInLastFilterPart extends BaseFilterPart {
   @ApiProperty({
     enum: [FilterPartTypeEnum.IS_ONLINE_IN_LAST],
@@ -97,12 +117,23 @@ class PreviousStepFilterPart extends BaseFilterPart {
   stepType: PreviousStepTypeEnum;
 }
 
+class TenantFilterPart extends BaseFieldFilterPart {
+  @ApiProperty({
+    enum: [FilterPartTypeEnum.TENANT],
+    description: 'Only on integrations right now',
+  })
+  on: FilterPartTypeEnum.TENANT;
+}
+
 type FilterParts =
   | FieldFilterPart
   | WebhookFilterPart
   | RealtimeOnlineFilterPart
   | OnlineInLastFilterPart
-  | PreviousStepFilterPart;
+  | PreviousStepFilterPart
+  | IsOfficeHours
+  | IsOnlineSlack
+  | TenantFilterPart;
 
 export class StepFilter {
   @ApiProperty()
@@ -125,6 +156,9 @@ export class StepFilter {
       RealtimeOnlineFilterPart,
       OnlineInLastFilterPart,
       PreviousStepFilterPart,
+      IsOfficeHours,
+      IsOnlineSlack,
+      TenantFilterPart,
     ],
   })
   children: FilterParts[];

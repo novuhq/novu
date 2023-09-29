@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
-import { HealthCheck, HealthCheckResult, HealthCheckService } from '@nestjs/terminus';
-import { DalServiceHealthIndicator, WsQueueServiceHealthIndicator } from '@novu/application-generic';
+import { HealthCheck, HealthCheckResult, HealthCheckService, HttpHealthIndicator } from '@nestjs/terminus';
+import { DalServiceHealthIndicator, WebSocketsQueueServiceHealthIndicator } from '@novu/application-generic';
 
 import { version } from '../../package.json';
 
@@ -9,15 +9,15 @@ export class HealthController {
   constructor(
     private healthCheckService: HealthCheckService,
     private dalHealthIndicator: DalServiceHealthIndicator,
-    private wsQueueHealthIndicator: WsQueueServiceHealthIndicator
+    private webSocketsQueueHealthIndicator: WebSocketsQueueServiceHealthIndicator
   ) {}
 
   @Get()
   @HealthCheck()
   async healthCheck(): Promise<HealthCheckResult> {
     const result = await this.healthCheckService.check([
-      () => this.dalHealthIndicator.isHealthy(),
-      () => this.wsQueueHealthIndicator.isHealthy(),
+      async () => this.dalHealthIndicator.isHealthy(),
+      async () => this.webSocketsQueueHealthIndicator.isHealthy(),
       async () => {
         return {
           apiVersion: {

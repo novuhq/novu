@@ -1,4 +1,5 @@
 import { IsBoolean, IsDefined, IsString } from 'class-validator';
+import { TriggerEventStatusEnum } from '@novu/shared';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class TriggerEventResponseDto {
@@ -11,11 +12,10 @@ export class TriggerEventResponseDto {
 
   @ApiProperty({
     description: 'Status for trigger',
-    enum: ['processed', 'trigger_not_active', 'subscriber_id_missing', 'error'],
+    enum: TriggerEventStatusEnum,
   })
-  @IsString()
   @IsDefined()
-  status: string;
+  status: TriggerEventStatusEnum;
 
   @ApiProperty({
     description: 'In case of an error, this field will contain the error message',

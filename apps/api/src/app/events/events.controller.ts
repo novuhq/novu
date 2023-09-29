@@ -1,7 +1,13 @@
 import { Body, Controller, Delete, Param, Post, Scope, UseGuards } from '@nestjs/common';
 import { ApiOkResponse, ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { v4 as uuidv4 } from 'uuid';
-import { IJwtPayload, ISubscribersDefine, TriggerRecipientSubscriber } from '@novu/shared';
+import {
+  IJwtPayload,
+  ISubscribersDefine,
+  ITenantDefine,
+  TriggerRecipientSubscriber,
+  TriggerTenantContext,
+} from '@novu/shared';
 import { SendTestEmail, SendTestEmailCommand } from '@novu/application-generic';
 
 import {
@@ -22,6 +28,7 @@ import { ExternalApiAccessible } from '../auth/framework/external-api.decorator'
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ApiResponse } from '../shared/framework/response.decorator';
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
+
 @Controller({
   path: 'events',
   scope: Scope.REQUEST,
@@ -53,6 +60,8 @@ export class EventsController {
     @UserSession() user: IJwtPayload,
     @Body() body: TriggerEventRequestDto
   ): Promise<TriggerEventResponseDto> {
+    const mappedTenant = body.tenant ? this.mapTenant(body.tenant) : null;
+
     const result = await this.parseEventRequest.execute(
       ParseEventRequestCommand.create({
         userId: user._id,
@@ -63,6 +72,7 @@ export class EventsController {
         overrides: body.overrides || {},
         to: body.to,
         actor: body.actor,
+        tenant: mappedTenant,
         transactionId: body.transactionId,
       })
     );
@@ -110,6 +120,7 @@ export class EventsController {
   ): Promise<TriggerEventResponseDto> {
     const transactionId = body.transactionId || uuidv4();
     const mappedActor = body.actor ? this.mapActor(body.actor) : null;
+    const mappedTenant = body.tenant ? this.mapTenant(body.tenant) : null;
 
     return this.triggerEventToAll.execute(
       TriggerEventToAllCommand.create({
@@ -118,6 +129,7 @@ export class EventsController {
         organizationId: user.organizationId,
         identifier: body.name,
         payload: body.payload,
+        tenant: mappedTenant,
         transactionId,
         overrides: body.overrides || {},
         actor: mappedActor,
@@ -176,5 +188,11 @@ export class EventsController {
     if (!actor) return null;
 
     return this.mapTriggerRecipients.mapSubscriber(actor);
+  }
+
+  private mapTenant(tenant?: TriggerTenantContext | null): ITenantDefine | null {
+    if (!tenant) return null;
+
+    return this.parseEventRequest.mapTenant(tenant);
   }
 }

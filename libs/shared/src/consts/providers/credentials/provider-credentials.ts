@@ -446,6 +446,16 @@ export const slackConfig: IConfigCredentials[] = [
   },
 ];
 
+export const slackDmConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'Bot User OAuth Token',
+    description: 'Under "OAuth & Permissions"',
+    type: 'string',
+    required: true,
+  },
+];
+
 export const fcmConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ServiceAccount,

@@ -12,7 +12,7 @@ const condition: ICondition = {
 };
 
 describe('Execution Details Condition Component', function () {
-  it('should render ExecutionDetailsCondtions properly', function () {
+  it('should render ExecutionDetailsConditions properly', function () {
     cy.mount(
       <TestWrapper>
         <ExecutionDetailsConditionItem condition={condition} />

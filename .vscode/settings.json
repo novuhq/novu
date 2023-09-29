@@ -17,5 +17,8 @@
   },
   "cSpell.words": ["mantine"],
   "vsicons.presets.nestjs": true,
-  "jest.rootPath": "./packages/nest"
+  "jest.rootPath": "./packages/nest",
+  "[markdown]": {
+    "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
+  }
 }

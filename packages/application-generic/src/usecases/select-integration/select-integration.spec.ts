@@ -1,11 +1,16 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
-import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import {
+  IntegrationEntity,
+  IntegrationRepository,
+  TenantRepository,
+} from '@novu/dal';
 
 import { SelectIntegration } from './select-integration.usecase';
 import { SelectIntegrationCommand } from './select-integration.command';
-import { GetFeatureFlag } from '../get-feature-flag';
+import { GetIsMultiProviderConfigurationEnabled } from '../get-feature-flag';
 import { GetDecryptedIntegrations } from '../get-decrypted-integrations';
+import { ConditionsFilter } from '../conditions-filter';
 
 const testIntegration: IntegrationEntity = {
   _environmentId: 'env-test-123',
@@ -70,8 +75,8 @@ jest.mock('@novu/dal', () => ({
 
 jest.mock('../get-feature-flag', () => ({
   ...jest.requireActual('../get-feature-flag'),
-  GetFeatureFlag: jest.fn(() => ({
-    isMultiProviderConfigurationEnabled: jest.fn(() => true),
+  GetIsMultiProviderConfigurationEnabled: jest.fn(() => ({
+    execute: jest.fn(() => true),
   })),
 }));
 
@@ -90,9 +95,11 @@ describe('select integration', function () {
     useCase = new SelectIntegration(
       new IntegrationRepository() as any,
       // @ts-ignore
-      new GetFeatureFlag(),
+      new GetDecryptedIntegrations(),
+      new ConditionsFilter(),
+      new TenantRepository(),
       // @ts-ignore
-      new GetDecryptedIntegrations()
+      new GetIsMultiProviderConfigurationEnabled()
     );
     jest.clearAllMocks();
   });
@@ -104,6 +111,7 @@ describe('select integration', function () {
         environmentId: 'environmentId',
         organizationId: 'organizationId',
         userId: 'userId',
+        filterData: {},
       })
     );
 
@@ -120,6 +128,7 @@ describe('select integration', function () {
         environmentId: 'environmentId',
         organizationId: 'organizationId',
         userId: 'userId',
+        filterData: {},
       })
     );
 
@@ -151,6 +160,7 @@ describe('select integration', function () {
           environmentId,
           organizationId,
           userId,
+          filterData: {},
         })
       );
 

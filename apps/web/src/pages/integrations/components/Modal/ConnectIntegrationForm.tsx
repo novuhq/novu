@@ -21,7 +21,7 @@ import { keyframes } from '@emotion/react';
 import { Button, colors, Input, shadows, Switch, Text } from '../../../../design-system';
 import type { IIntegratedProvider } from '../../types';
 import { createIntegration, getWebhookSupportStatus, updateIntegration } from '../../../../api/integration';
-import { Close } from '../../../../design-system/icons/actions/Close';
+import { Close } from '../../../../design-system/icons';
 import { IntegrationInput } from '../IntegrationInput';
 import { API_ROOT, CONTEXT_PATH } from '../../../../config';
 import { Check, Copy } from '../../../../design-system/icons';
@@ -181,7 +181,7 @@ export function ConnectIntegrationForm({
         },
       });
     }
-  }, [provider]);
+  }, [setValue, provider]);
 
   async function onCreateIntegration(credentials: ICredentialsDto) {
     try {
@@ -334,7 +334,13 @@ export function ConnectIntegrationForm({
               />
             </InputWrapper>
           )}
-        <ShareableUrl provider={provider?.providerId} control={control} />
+        <ShareableUrl
+          provider={provider?.providerId}
+          hmacEnabled={useWatch({
+            control,
+            name: CredentialsKeyEnum.Hmac,
+          })}
+        />
 
         <Stack my={20}>
           <ActiveWrapper active={isActive}>
@@ -491,16 +497,13 @@ const CenterDiv = styled.div`
 
 export function ShareableUrl({
   provider,
-  control,
+  hmacEnabled,
 }: {
   provider: ProvidersIdEnum | undefined;
-  control: Control<FieldValues, any>;
+  hmacEnabled: boolean;
 }) {
   const { environment } = useEnvController();
-  const hmacEnabled = useWatch({
-    control,
-    name: CredentialsKeyEnum.Hmac,
-  });
+
   const oauthUrlClipboard = useClipboard({ timeout: 1000 });
   const display = provider === ChatProviderIdEnum.Slack;
 

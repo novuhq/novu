@@ -1,5 +1,6 @@
 import { IChatFactory, IChatHandler } from './interfaces';
 import { SlackHandler } from './handlers/slack.handler';
+import { SlackDmHandler } from './handlers/slack-dm.handler';
 import { IntegrationEntity } from '@novu/dal';
 import { DiscordHandler } from './handlers/discord.handler';
 import { MSTeamsHandler } from './handlers/msteams.handler';
@@ -8,6 +9,7 @@ import { MattermostHandler } from './handlers/mattermost.handler';
 export class ChatFactory implements IChatFactory {
   handlers: IChatHandler[] = [
     new SlackHandler(),
+    new SlackDmHandler(),
     new DiscordHandler(),
     new MSTeamsHandler(),
     new MattermostHandler(),

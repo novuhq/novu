@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { MessageRepository, JobRepository, JobStatusEnum } from '@novu/dal';
 import {
   StepTypeEnum,
@@ -9,11 +9,17 @@ import {
 } from '@novu/shared';
 import { DetailEnum, CreateExecutionDetails, CreateExecutionDetailsCommand } from '@novu/application-generic';
 
-import { CreateLog } from '../../../../shared/logs';
-import { SendMessageCommand } from '../send-message.command';
-import { SendMessageType } from '../send-message-type.usecase';
+import { DigestEventsCommand } from './digest-events.command';
 import { GetDigestEventsRegular } from './get-digest-events-regular.usecase';
 import { GetDigestEventsBackoff } from './get-digest-events-backoff.usecase';
+
+import { CreateLog } from '../../../../shared/logs';
+import { PlatformException } from '../../../../shared/utils';
+
+import { SendMessageCommand } from '../send-message.command';
+import { SendMessageType } from '../send-message-type.usecase';
+
+const LOG_CONTEXT = 'Digest';
 
 @Injectable()
 export class Digest extends SendMessageType {
@@ -64,14 +70,26 @@ export class Digest extends SendMessageType {
   private async getEvents(command: SendMessageCommand) {
     const currentJob = await this.jobRepository.findOne({ _environmentId: command.environmentId, _id: command.jobId });
 
+    if (!currentJob) {
+      const message = `Digest job ${command.jobId} is not found`;
+      Logger.error(message, LOG_CONTEXT);
+      throw new PlatformException(message);
+    }
+
+    const digestEventsCommand = DigestEventsCommand.create({
+      currentJob,
+      // backward compatibility - ternary needed to be removed once the queue renewed
+      _subscriberId: command._subscriberId ? command._subscriberId : command.subscriberId,
+    });
+
     if (
       currentJob?.digest?.type === DigestTypeEnum.BACKOFF ||
       (currentJob?.digest as IDigestRegularMetadata)?.backoff
     ) {
-      return this.getDigestEventsBackoff.execute(command);
+      return this.getDigestEventsBackoff.execute(digestEventsCommand);
     }
 
-    return this.getDigestEventsRegular.execute(command);
+    return this.getDigestEventsRegular.execute(digestEventsCommand);
   }
 
   private async getJobsToUpdate(command: SendMessageCommand) {
