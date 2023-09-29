@@ -1,6 +1,7 @@
 import { IsDefined, IsOptional, IsString } from 'class-validator';
 
 import { BaseCommand } from '@novu/application-generic';
+import { MessageEntity } from '@novu/dal';
 
 export class ExternalServicesRouteCommand extends BaseCommand {
   @IsDefined()
@@ -12,7 +13,16 @@ export class ExternalServicesRouteCommand extends BaseCommand {
   event: string;
 
   @IsOptional()
-  payload: Record<string, unknown>;
+  payload?: {
+    /*
+     * TODO: We shouldn't import DAL here but this is temporary as we will remove
+     * the ability of send full message
+     */
+    message?: MessageEntity;
+    messageId?: string;
+    unreadCount?: number;
+    unseenCount?: number;
+  };
 
   @IsString()
   @IsOptional()

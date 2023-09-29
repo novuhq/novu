@@ -1,5 +1,4 @@
-import { Logger, Injectable } from '@nestjs/common';
-import { JobsOptions } from 'bullmq';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import {
   StepTypeEnum,
@@ -15,8 +14,8 @@ import {
   DetailEnum,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-} from '../create-execution-details';
-import { QueueService } from '../../services';
+} from '../../usecases';
+import { JobsOptions, StandardQueueService } from '../../services';
 import { LogDecorator } from '../../logging';
 import { InstrumentUsecase } from '../../instrumentation';
 
@@ -30,18 +29,18 @@ const LOG_CONTEXT = 'AddJob';
 export class AddJob {
   constructor(
     private jobRepository: JobRepository,
+    @Inject(forwardRef(() => StandardQueueService))
+    private standardQueueService: StandardQueueService,
     private createExecutionDetails: CreateExecutionDetails,
     private addDigestJob: AddDigestJob,
-    private addDelayJob: AddDelayJob,
-    public readonly queueService: QueueService
+    private addDelayJob: AddDelayJob
   ) {}
 
   @InstrumentUsecase()
   @LogDecorator()
   public async execute(command: AddJobCommand): Promise<void> {
     Logger.verbose('Getting Job', LOG_CONTEXT);
-    const job =
-      command.job ?? (await this.jobRepository.findById(command.jobId));
+    const job = command.job;
     Logger.debug(`Job contents for job ${job._id}`, job, LOG_CONTEXT);
 
     if (!job) {
@@ -59,17 +58,32 @@ export class AddJob {
       job.type === StepTypeEnum.DIGEST
         ? await this.addDigestJob.execute(AddDigestJobCommand.create({ job }))
         : undefined;
-    Logger.debug(`DigestAmount is: ${digestAmount}`, LOG_CONTEXT);
+
+    if (job.type === StepTypeEnum.DIGEST) {
+      Logger.debug(`Digest step amount is: ${digestAmount}`, LOG_CONTEXT);
+    }
+
+    if (job.type === StepTypeEnum.DIGEST && digestAmount === undefined) {
+      Logger.warn(
+        `Digest Amount does not exist on a digest job ${job._id}`,
+        LOG_CONTEXT
+      );
+
+      return;
+    }
 
     const delayAmount =
       job.type === StepTypeEnum.DELAY
         ? await this.addDelayJob.execute(command)
         : undefined;
-    Logger.debug(`DelayAmount is: ${delayAmount}`, LOG_CONTEXT);
 
-    if (job.type === StepTypeEnum.DIGEST && digestAmount === undefined) {
+    if (job.type === StepTypeEnum.DELAY) {
+      Logger.debug(`Delay step Amount is: ${delayAmount}`, LOG_CONTEXT);
+    }
+
+    if (job.type === StepTypeEnum.DELAY && delayAmount === undefined) {
       Logger.warn(
-        `Digest Amount does not exist on a digest job ${job._id}`,
+        `Delay Amount does not exist on a delay job ${job._id}`,
         LOG_CONTEXT
       );
 
@@ -88,9 +102,6 @@ export class AddJob {
       );
     }
 
-    const delay = digestAmount ?? delayAmount;
-    Logger.debug('Delay is: ' + delay, LOG_CONTEXT);
-
     this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
@@ -102,9 +113,11 @@ export class AddJob {
       })
     );
 
-    if (delay === null) {
-      Logger.warn(
-        'Variable delay is null which is not apart of the definition',
+    const delay = command.filtered ? 0 : digestAmount ?? delayAmount;
+
+    if ((digestAmount || delayAmount) && command.filtered) {
+      Logger.verbose(
+        `Delay for job ${job._id} will be 0 because job was filtered`,
         LOG_CONTEXT
       );
     }
@@ -118,7 +131,7 @@ export class AddJob {
       options.backoff = {
         type: BackoffStrategiesEnum.WEBHOOK_FILTER_BACKOFF,
       };
-      options.attempts = this.queueService.DEFAULT_ATTEMPTS;
+      options.attempts = this.standardQueueService.DEFAULT_ATTEMPTS;
     }
 
     const jobData = {
@@ -128,7 +141,12 @@ export class AddJob {
       _userId: job._userId,
     };
 
-    await this.queueService.addToQueue(
+    Logger.verbose(
+      jobData,
+      'Going to add a minimal job in Standard Queue',
+      LOG_CONTEXT
+    );
+    await this.standardQueueService.addMinimalJob(
       job._id,
       jobData,
       command.organizationId,
@@ -136,14 +154,21 @@ export class AddJob {
     );
 
     if (delay) {
-      Logger.verbose(
-        'Delay is active, Creating execution details',
-        LOG_CONTEXT
-      );
+      const logMessage =
+        job.type === StepTypeEnum.DELAY
+          ? 'Delay is active, Creating execution details'
+          : job.type === StepTypeEnum.DIGEST
+          ? 'Digest is active, Creating execution details'
+          : 'Unexpected job type, Creating execution details';
+
+      Logger.verbose(logMessage, LOG_CONTEXT);
       this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
-          detail: DetailEnum.STEP_DELAYED,
+          detail:
+            job.type === StepTypeEnum.DELAY
+              ? DetailEnum.STEP_DELAYED
+              : DetailEnum.STEP_DIGESTED,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.PENDING,
           isTest: false,

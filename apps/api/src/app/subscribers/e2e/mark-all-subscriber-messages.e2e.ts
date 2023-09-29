@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import axios from 'axios';
 import { ChannelTypeEnum, MarkMessagesAsEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
-import { NotificationTemplateEntity, MessageRepository } from '@novu/dal';
+import { NotificationTemplateEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
 
 const axiosInstance = axios.create();
 
@@ -10,6 +10,7 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
   let session: UserSession;
   let template: NotificationTemplateEntity;
   const messageRepository = new MessageRepository();
+  const subscriberRepository = new SubscriberRepository();
 
   beforeEach(async () => {
     session = new UserSession();
@@ -36,27 +37,29 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
   });
 
   it('should mark all the subscriber messages as read', async function () {
-    await session.triggerEvent(template.triggers[0].identifier, session.subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, session.subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, session.subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, session.subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, session.subscriberId);
+    const subscriberId = session.subscriberId;
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
 
     await session.awaitRunningJobs(template._id);
 
-    const notificationsFeedResponse = await getSubscriberNotifications(session, session.subscriberId);
+    const notificationsFeedResponse = await getSubscriberNotifications(session, subscriberId);
     expect(notificationsFeedResponse.totalCount).to.equal(5);
 
     const messagesMarkedAsReadResponse = await markAllSubscriberMessagesAs(
       session,
-      session.subscriberId,
+      subscriberId,
       MarkMessagesAsEnum.READ
     );
     expect(messagesMarkedAsReadResponse.data).to.equal(5);
 
+    const subscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
     const feed = await messageRepository.find({
       _environmentId: session.environment._id,
-      subscriberId: session.subscriberId,
+      _subscriberId: subscriber?._id,
       channel: ChannelTypeEnum.IN_APP,
       seen: true,
       read: true,
@@ -70,21 +73,23 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
   });
 
   it('should not mark all the messages as read if they are already read', async function () {
-    await session.triggerEvent(template.triggers[0].identifier, session.subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, session.subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, session.subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, session.subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, session.subscriberId);
+    const subscriberId = session.subscriberId;
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
 
     await session.awaitRunningJobs(template._id);
 
-    const notificationsFeedResponse = await getSubscriberNotifications(session, session.subscriberId);
+    const notificationsFeedResponse = await getSubscriberNotifications(session, subscriberId);
     expect(notificationsFeedResponse.totalCount).to.equal(5);
 
+    const subscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
     await messageRepository.update(
       {
         _environmentId: session.environment._id,
-        subscriberId: session.subscriberId,
+        _subscriberId: subscriber?._id,
         channel: ChannelTypeEnum.IN_APP,
         seen: false,
         read: false,
@@ -94,14 +99,14 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
 
     const messagesMarkedAsReadResponse = await markAllSubscriberMessagesAs(
       session,
-      session.subscriberId,
+      subscriberId,
       MarkMessagesAsEnum.READ
     );
     expect(messagesMarkedAsReadResponse.data).to.equal(0);
 
     const feed = await messageRepository.find({
       _environmentId: session.environment._id,
-      subscriberId: session.subscriberId,
+      _subscriberId: subscriber?._id,
       channel: ChannelTypeEnum.IN_APP,
       seen: true,
       read: true,
@@ -115,21 +120,23 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
   });
 
   it('should mark all the subscriber messages as unread', async function () {
-    await session.triggerEvent(template.triggers[0].identifier, session.subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, session.subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, session.subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, session.subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, session.subscriberId);
+    const subscriberId = session.subscriberId;
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
 
     await session.awaitRunningJobs(template._id);
 
-    const notificationsFeedResponse = await getSubscriberNotifications(session, session.subscriberId);
+    const notificationsFeedResponse = await getSubscriberNotifications(session, subscriberId);
     expect(notificationsFeedResponse.totalCount).to.equal(5);
 
+    const subscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
     await messageRepository.update(
       {
         _environmentId: session.environment._id,
-        subscriberId: session.subscriberId,
+        _subscriberId: subscriber?._id,
         channel: ChannelTypeEnum.IN_APP,
         seen: false,
         read: false,
@@ -139,14 +146,14 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
 
     const messagesMarkedAsReadResponse = await markAllSubscriberMessagesAs(
       session,
-      session.subscriberId,
+      subscriberId,
       MarkMessagesAsEnum.UNREAD
     );
     expect(messagesMarkedAsReadResponse.data).to.equal(5);
 
     const feed = await messageRepository.find({
       _environmentId: session.environment._id,
-      subscriberId: session.subscriberId,
+      _subscriberId: subscriber?._id,
       channel: ChannelTypeEnum.IN_APP,
       seen: true,
       read: false,
@@ -160,27 +167,29 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
   });
 
   it('should mark all the subscriber messages as seen', async function () {
-    await session.triggerEvent(template.triggers[0].identifier, session.subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, session.subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, session.subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, session.subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, session.subscriberId);
+    const subscriberId = session.subscriberId;
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
 
     await session.awaitRunningJobs(template._id);
 
-    const notificationsFeedResponse = await getSubscriberNotifications(session, session.subscriberId);
+    const notificationsFeedResponse = await getSubscriberNotifications(session, subscriberId);
     expect(notificationsFeedResponse.totalCount).to.equal(5);
 
     const messagesMarkedAsReadResponse = await markAllSubscriberMessagesAs(
       session,
-      session.subscriberId,
+      subscriberId,
       MarkMessagesAsEnum.SEEN
     );
     expect(messagesMarkedAsReadResponse.data).to.equal(5);
 
+    const subscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
     const feed = await messageRepository.find({
       _environmentId: session.environment._id,
-      subscriberId: session.subscriberId,
+      _subscriberId: subscriber?._id,
       channel: ChannelTypeEnum.IN_APP,
       seen: true,
       read: false,
@@ -194,21 +203,23 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
   });
 
   it('should mark all the subscriber messages as unseen', async function () {
-    await session.triggerEvent(template.triggers[0].identifier, session.subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, session.subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, session.subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, session.subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, session.subscriberId);
+    const subscriberId = session.subscriberId;
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
 
     await session.awaitRunningJobs(template._id);
 
-    const notificationsFeedResponse = await getSubscriberNotifications(session, session.subscriberId);
+    const notificationsFeedResponse = await getSubscriberNotifications(session, subscriberId);
     expect(notificationsFeedResponse.totalCount).to.equal(5);
 
+    const subscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
     await messageRepository.update(
       {
         _environmentId: session.environment._id,
-        subscriberId: session.subscriberId,
+        _subscriberId: subscriber?._id,
         channel: ChannelTypeEnum.IN_APP,
         seen: false,
         read: false,
@@ -218,14 +229,14 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
 
     const messagesMarkedAsReadResponse = await markAllSubscriberMessagesAs(
       session,
-      session.subscriberId,
+      subscriberId,
       MarkMessagesAsEnum.UNSEEN
     );
     expect(messagesMarkedAsReadResponse.data).to.equal(5);
 
     const feed = await messageRepository.find({
       _environmentId: session.environment._id,
-      subscriberId: session.subscriberId,
+      _subscriberId: subscriber?._id,
       channel: ChannelTypeEnum.IN_APP,
       seen: false,
       read: false,
@@ -256,7 +267,7 @@ async function markAllSubscriberMessagesAs(session: UserSession, subscriberId: s
 }
 
 async function getSubscriberNotifications(session: UserSession, subscriberId: string) {
-  const response = await axios.get(`${session.serverUrl}/v1/subscribers/${session.subscriberId}/notifications/feed`, {
+  const response = await axios.get(`${session.serverUrl}/v1/subscribers/${subscriberId}/notifications/feed`, {
     params: {
       limit: 100,
     },

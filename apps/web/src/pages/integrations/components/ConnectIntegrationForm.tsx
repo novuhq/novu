@@ -1,12 +1,18 @@
 import { useEffect, useState, useReducer } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import styled from '@emotion/styled/macro';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { showNotification } from '@mantine/notifications';
 import { useClipboard } from '@mantine/hooks';
 import { Image, useMantineColorScheme, Stack, Alert } from '@mantine/core';
 import { WarningOutlined } from '@ant-design/icons';
-import { ChannelTypeEnum, ICredentialsDto, IConfigCredentials, ICreateIntegrationBodyDto } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  ICredentialsDto,
+  IConfigCredentials,
+  ICreateIntegrationBodyDto,
+  CredentialsKeyEnum,
+} from '@novu/shared';
 
 import { Button, colors, Input, Switch, Text } from '../../../design-system';
 import type { IIntegratedProvider } from '../types';
@@ -130,7 +136,7 @@ export function ConnectIntegrationForm({
         setValue(credential.key, credential.value);
       }
     }
-  }, [provider]);
+  }, [setValue, provider]);
 
   async function onCreateIntegration(credentials: ICredentialsDto) {
     try {
@@ -263,7 +269,13 @@ export function ConnectIntegrationForm({
             </InputWrapper>
           )}
 
-          <ShareableUrl provider={provider?.providerId} control={control} />
+          <ShareableUrl
+            provider={provider?.providerId}
+            hmacEnabled={useWatch({
+              control,
+              name: CredentialsKeyEnum.Hmac,
+            })}
+          />
 
           <Stack my={30}>
             <ActiveWrapper active={isActive}>

@@ -10,11 +10,13 @@ import {
   ITriggerPayload,
   TriggerRecipientSubscriber,
   TriggerRecipientsPayload,
+  ITenantDefine,
 } from '@novu/shared';
 
 export interface IBroadcastPayloadOptions {
   payload: ITriggerPayload;
   overrides?: ITriggerOverrides;
+  tenant?: ITriggerTenant;
 }
 
 export interface ITriggerPayloadOptions extends IBroadcastPayloadOptions {
@@ -23,7 +25,7 @@ export interface ITriggerPayloadOptions extends IBroadcastPayloadOptions {
   transactionId?: string;
 }
 export interface IIntegrationOverride {
-  integrationIdentifier: string;
+  integrationIdentifier?: string;
 }
 export interface IEmailOverrides extends IIntegrationOverride {
   to?: string[];
@@ -33,7 +35,10 @@ export interface IEmailOverrides extends IIntegrationOverride {
   cc?: string[];
   bcc?: string[];
   senderName?: string;
+  customData?: Record<string, Record<string, unknown>>;
 }
+
+export type ITriggerTenant = string | ITenantDefine;
 
 export type ITriggerOverrides = {
   [key in

@@ -19,8 +19,8 @@ export const BACKEND_SOCKET_URL = '<BACKEND_SOCKET_URL>';
 export const setupProject = `cd notification-center-demo && npm run setup:onboarding -- ${APPLICATION_IDENTIFIER} ${API_KEY} ${BACKEND_API_URL} ${BACKEND_SOCKET_URL}`;
 export const npmRunCommand = 'npm run dev';
 export const frameworkSetupTitle = 'Choose your go-to framework';
-export const faqUrl = 'https://docs.novu.co/notification-center/FAQ';
-export const notificationCenterDocsUrl = 'https://docs.novu.co/notification-center/getting-started';
+export const faqUrl = 'https://docs.novu.co/notification-center/introduction';
+export const notificationCenterDocsUrl = 'https://docs.novu.co/notification-center/introduction';
 export const discordInviteUrl = 'https://discord.gg/novu';
 export const demoSetupSecondaryTitle = 'Follow the installation steps to connect your app';
 

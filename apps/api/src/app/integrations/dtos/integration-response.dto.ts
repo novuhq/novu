@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ChannelTypeEnum } from '@novu/shared';
+import { StepFilter } from '../../shared/dtos/step-filter';
 import { CredentialsDto } from './credentials.dto';
 
 export class IntegrationResponseDto {
@@ -42,4 +43,12 @@ export class IntegrationResponseDto {
 
   @ApiProperty()
   deletedBy: string;
+
+  @ApiProperty()
+  primary: boolean;
+
+  @ApiPropertyOptional({
+    type: [StepFilter],
+  })
+  conditions?: StepFilter[];
 }

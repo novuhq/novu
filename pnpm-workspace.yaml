@@ -5,6 +5,5 @@ packages:
   - 'enterprise/packages/*'
   - 'apps/*'
   - 'libs/*'
-  - 'docs'
   # exclude packages that are inside test directories
   - '!**/test/**'

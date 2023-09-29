@@ -10,15 +10,8 @@
 // ***********************************************************
 
 import { DalService, EnvironmentEntity } from '@novu/dal';
-import {
-  EnvironmentService,
-  NotificationsService,
-  NotificationTemplateService,
-  UserSession,
-  JobsService,
-} from '@novu/testing';
+import { EnvironmentService, NotificationsService, NotificationTemplateService, UserSession } from '@novu/testing';
 
-const jobsService = new JobsService();
 /**
  * @type {Cypress.PluginConfig}
  */
@@ -49,7 +42,7 @@ module.exports = (on, config) => {
       for (let i = 0; i < count; i++) {
         const num = enumerate ? ` ${i}` : '';
         await service.triggerEvent(triggerIdentifier, subscriberId, {
-          firstName: 'John' + num,
+          firstName: `John${num}`,
         });
       }
 

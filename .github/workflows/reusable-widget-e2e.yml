@@ -10,6 +10,11 @@ on:
         required: false
         default: false
         type: boolean
+      submodule_branch:
+        description: 'Submodule branch to checkout to'
+        required: false
+        default: 'main'
+        type: string
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -40,25 +45,25 @@ jobs:
       - id: setup
         run: |
           if ! [[ -z "${{ secrets.SUBMODULES_TOKEN }}" ]]; then
-            echo ::set-output has_token=true
+            echo "has_token=true" >> $GITHUB_OUTPUT
           else
-            echo ::set-output has_token=false
+            echo "has_token=false" >> $GITHUB_OUTPUT
           fi
+      - uses: actions/checkout@v3
       # checkout with submodules if token is provided
-      - uses: actions/checkout@v3
-        if: steps.setup.outputs.has_token == 'true'
+      - uses: ./.github/actions/checkout-submodules
         with:
-          submodules: ${{ inputs.submodules }}
-          token: ${{ secrets.SUBMODULES_TOKEN }}
-       # checkout without submodules
-      - uses: actions/checkout@v3
-        if: steps.setup.outputs.has_token != 'true'
+          enabled: ${{ steps.setup.outputs.has_token == 'true' }}
+          submodule_token: ${{ secrets.SUBMODULES_TOKEN }}
+          submodule_branch: ${{ inputs.submodule_branch }}
 
       - uses: ./.github/actions/setup-project
         id: setup-project
         with:
           cypress_version: 12.9.0
           cypress: true
+      - uses: ./.github/actions/setup-redis-cluster
+
       - uses: mansagroup/nrwl-nx-action@v3
         with:
           targets: lint
@@ -71,6 +76,8 @@ jobs:
 
       - uses: ./.github/actions/run-backend
         with:
+          cypress_github_oauth_client_id: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_ID }}
+          cypress_github_oauth_client_secret: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_SECRET }}
           launch_darkly_sdk_key: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
 
       # Runs a single command using the runners shell
@@ -85,7 +92,7 @@ jobs:
           cp apps/ws/src/.env.test apps/ws/dist/src/.env.test
           cd apps/ws && pnpm start:prod &
 
-       - name: Wait on Widget and WS Services
+      - name: Wait on Widget and WS Services
         run: wait-on --timeout=180000 http://localhost:1340/v1/health-check http://localhost:3500
 
       - name: Cypress install

@@ -7,6 +7,7 @@ import { EmailBlockTypeEnum, FilterPartTypeEnum, INotificationTemplate, StepType
 import {
   buildGroupedBlueprintsKey,
   CacheService,
+  InMemoryProviderEnum,
   InMemoryProviderService,
   InvalidateCacheService,
 } from '@novu/application-generic';
@@ -21,14 +22,16 @@ describe('Get grouped notification template blueprints - /blueprints/group-by-ca
   const notificationTemplateRepository: NotificationTemplateRepository = new NotificationTemplateRepository();
   const environmentRepository: EnvironmentRepository = new EnvironmentRepository();
 
-  const inMemoryProviderService = new InMemoryProviderService();
-  inMemoryProviderService.initialize();
-  const invalidateCache = new InvalidateCacheService(new CacheService(inMemoryProviderService));
-
+  let invalidateCache: InvalidateCacheService;
   let getGroupedBlueprints: GetGroupedBlueprints;
   let indexModuleStub: sinon.SinonStub;
 
   before(async () => {
+    const inMemoryProviderService = new InMemoryProviderService(InMemoryProviderEnum.REDIS);
+    const cacheService = new CacheService(inMemoryProviderService);
+    await cacheService.initialize();
+    invalidateCache = new InvalidateCacheService(cacheService);
+
     session = new UserSession();
     await session.initialize();
 
