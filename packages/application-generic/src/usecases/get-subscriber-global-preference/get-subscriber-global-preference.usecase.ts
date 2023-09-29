@@ -41,7 +41,6 @@ export class GetSubscriberGlobalPreference {
     const channels = this.updatePreferenceStateWithDefault(
       subscriberChannelPreference ?? {}
     );
-    console.log('channels, banda', channels);
 
     return {
       preference: {
