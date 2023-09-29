@@ -19,7 +19,7 @@ import { mapNotificationTemplateToForm, mapFormToCreateNotificationTemplate } fr
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { schema } from './notificationTemplateSchema';
 import { v4 as uuid4 } from 'uuid';
-import { useNotificationGroup } from '../../../hooks';
+import { useEffectOnce, useNotificationGroup } from '../../../hooks';
 import { useCreate } from '../hooks/useCreate';
 import { stepNames } from '../constants';
 
@@ -162,18 +162,21 @@ const TemplateEditorFormProvider = ({ children }) => {
         identifier: newIdentifier,
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [name]);
 
-  const { template, isLoading, isCreating, isUpdating, isDeleting, updateNotificationTemplate } = useTemplateController(
-    templateId,
-    {
-      onFetchSuccess: (fetchedTemplate) => {
-        setTrigger(fetchedTemplate.triggers[0]);
-        const form = mapNotificationTemplateToForm(fetchedTemplate);
-        reset(form);
-      },
-    }
-  );
+  const { template, isLoading, isCreating, isUpdating, isDeleting, updateNotificationTemplate } =
+    useTemplateController(templateId);
+
+  useEffectOnce(() => {
+    if (!template) return;
+
+    // we don't call this on success because the templates might be fetched before
+    setTrigger(template.triggers[0]);
+    const form = mapNotificationTemplateToForm(template);
+    reset(form);
+  }, !!template);
+
   const { groups, loading: loadingGroups } = useNotificationGroup();
 
   useCreate(templateId, groups, setTrigger, methods.getValues);
@@ -190,7 +193,8 @@ const TemplateEditorFormProvider = ({ children }) => {
           },
         });
         setTrigger(response.triggers[0]);
-        reset(form);
+        reset(mapNotificationTemplateToForm(response));
+
         if (showMessage) {
           successMessage('Trigger code is updated successfully', 'workflowSaved');
         }
@@ -200,7 +204,7 @@ const TemplateEditorFormProvider = ({ children }) => {
         errorMessage(e.message || 'Unexpected error occurred');
       }
     },
-    [templateId, updateNotificationTemplate, setTrigger]
+    [templateId, updateNotificationTemplate, setTrigger, reset]
   );
 
   const addStep = useCallback(

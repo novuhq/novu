@@ -1,12 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import {
   NotificationTemplateRepository,
   NotificationTemplateEntity,
   MemberRepository,
 } from '@novu/dal';
-import { IPreferenceChannels } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  IPreferenceChannels,
+  ISubscriberPreferenceResponse,
+} from '@novu/shared';
 
-import { AnalyticsService } from '../../services';
+import { AnalyticsService } from '../../services/analytics.service';
 import { GetSubscriberPreferenceCommand } from './get-subscriber-preference.command';
 import {
   GetSubscriberTemplatePreference,
@@ -49,38 +53,15 @@ export class GetSubscriberPreference {
 
     return await Promise.all(
       templateList.map(async (template) =>
-        this.getTemplatePreference(template, command)
+        this.getSubscriberTemplatePreferenceUsecase.execute(
+          GetSubscriberTemplatePreferenceCommand.create({
+            organizationId: command.organizationId,
+            subscriberId: command.subscriberId,
+            environmentId: command.environmentId,
+            template,
+          })
+        )
       )
     );
   }
-
-  async getTemplatePreference(
-    template: NotificationTemplateEntity,
-    command: GetSubscriberPreferenceCommand
-  ) {
-    const buildCommand = GetSubscriberTemplatePreferenceCommand.create({
-      organizationId: command.organizationId,
-      subscriberId: command.subscriberId,
-      environmentId: command.environmentId,
-      template,
-    });
-
-    return await this.getSubscriberTemplatePreferenceUsecase.execute(
-      buildCommand
-    );
-  }
-}
-
-export interface ISubscriberPreferenceResponse {
-  template: IGetSubscriberPreferenceTemplateResponse;
-  preference: {
-    enabled: boolean;
-    channels: IPreferenceChannels;
-  };
-}
-
-export interface IGetSubscriberPreferenceTemplateResponse {
-  _id: string;
-  name: string;
-  critical: boolean;
 }

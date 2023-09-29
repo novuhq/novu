@@ -6,6 +6,7 @@ import {
   SubscriberRepository,
   MessageEntity,
   IntegrationEntity,
+  TenantRepository,
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import {
@@ -13,11 +14,11 @@ import {
   DetailEnum,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-  GetDecryptedIntegrations,
-  GetDecryptedIntegrationsCommand,
+  SelectIntegration,
   CompileTemplate,
   CompileTemplateCommand,
   SmsFactory,
+  GetNovuProviderCredentials,
 } from '@novu/application-generic';
 
 import { CreateLog } from '../../../shared/logs';
@@ -32,17 +33,21 @@ export class SendMessageSms extends SendMessageBase {
   constructor(
     protected subscriberRepository: SubscriberRepository,
     protected messageRepository: MessageRepository,
+    protected tenantRepository: TenantRepository,
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
-    protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
+    protected selectIntegration: SelectIntegration,
+    protected getNovuProviderCredentials: GetNovuProviderCredentials
   ) {
     super(
       messageRepository,
       createLogUsecase,
       createExecutionDetails,
       subscriberRepository,
-      getDecryptedIntegrationsUsecase
+      tenantRepository,
+      selectIntegration,
+      getNovuProviderCredentials
     );
   }
 
@@ -54,16 +59,18 @@ export class SendMessageSms extends SendMessageBase {
     });
     if (!subscriber) throw new PlatformException('Subscriber not found');
 
-    const integration = await this.getIntegration(
-      GetDecryptedIntegrationsCommand.create({
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        channelType: ChannelTypeEnum.SMS,
-        findOne: true,
-        active: true,
-        userId: command.userId,
-      })
-    );
+    const overrideSelectedIntegration = command.overrides?.sms?.integrationIdentifier;
+
+    const integration = await this.getIntegration({
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+      channelType: ChannelTypeEnum.SMS,
+      userId: command.userId,
+      identifier: overrideSelectedIntegration as string,
+      filterData: {
+        tenant: command.job.tenant,
+      },
+    });
 
     Sentry.addBreadcrumb({
       message: 'Sending SMS',
@@ -72,6 +79,8 @@ export class SendMessageSms extends SendMessageBase {
     const smsChannel: NotificationStepEntity = command.step;
     if (!smsChannel.template) throw new PlatformException(`Unexpected error: SMS template is missing`);
 
+    const tenant = await this.handleTenantExecution(command.job);
+
     const payload = {
       subscriber: subscriber,
       step: {
@@ -79,6 +88,7 @@ export class SendMessageSms extends SendMessageBase {
         events: command.events,
         total_count: command.events?.length,
       },
+      ...(tenant && { tenant }),
       ...command.payload,
     };
 
@@ -112,11 +122,20 @@ export class SendMessageSms extends SendMessageBase {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
+          ...(overrideSelectedIntegration
+            ? {
+                raw: JSON.stringify({
+                  integrationIdentifier: overrideSelectedIntegration,
+                }),
+              }
+            : {}),
         })
       );
 
       return;
     }
+
+    await this.sendSelectedIntegrationExecution(command.job, integration);
 
     const overrides = command.overrides[integration?.providerId] || {};
 
@@ -247,7 +266,7 @@ export class SendMessageSms extends SendMessageBase {
   ) {
     try {
       const smsFactory = new SmsFactory();
-      const smsHandler = smsFactory.getHandler(integration);
+      const smsHandler = smsFactory.getHandler(this.buildFactoryIntegration(integration));
       if (!smsHandler) {
         throw new PlatformException(`Sms handler for provider ${integration.providerId} is  not found`);
       }
@@ -308,5 +327,12 @@ export class SendMessageSms extends SendMessageBase {
         })
       );
     }
+  }
+
+  public buildFactoryIntegration(integration: IntegrationEntity, senderName?: string) {
+    return {
+      ...integration,
+      providerId: integration.providerId,
+    };
   }
 }

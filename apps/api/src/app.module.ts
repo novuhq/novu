@@ -12,12 +12,10 @@ import { HealthModule } from './app/health/health.module';
 import { OrganizationModule } from './app/organization/organization.module';
 import { EnvironmentsModule } from './app/environments/environments.module';
 import { ExecutionDetailsModule } from './app/execution-details/execution-details.module';
-import { FeatureFlagsModule } from './app/feature-flags/feature-flags.module';
-import { NotificationTemplateModule } from './app/notification-template/notification-template.module';
+import { WorkflowModule } from './app/workflows/workflow.module';
 import { EventsModule } from './app/events/events.module';
 import { WidgetsModule } from './app/widgets/widgets.module';
 import { NotificationModule } from './app/notifications/notification.module';
-import { ChannelsModule } from './app/channels/channels.module';
 import { StorageModule } from './app/storage/storage.module';
 import { NotificationGroupsModule } from './app/notification-groups/notification-groups.module';
 import { InvitesModule } from './app/invites/invites.module';
@@ -31,8 +29,23 @@ import { MessagesModule } from './app/messages/messages.module';
 import { PartnerIntegrationsModule } from './app/partner-integrations/partner-integrations.module';
 import { TopicsModule } from './app/topics/topics.module';
 import { InboundParseModule } from './app/inbound-parse/inbound-parse.module';
+import { BlueprintModule } from './app/blueprint/blueprint.module';
+import { TenantModule } from './app/tenant/tenant.module';
 
-const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
+const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
+  const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
+  try {
+    if (process.env.NOVU_MANAGED_SERVICE === 'true' || process.env.CI_EE_TEST === 'true') {
+      modules.push(require('@novu/ee-auth')?.EEAuthModule);
+    }
+  } catch (e) {
+    Logger.error(e, `Unexpected error while importing enterprise modules`, 'EnterpriseImport');
+  }
+
+  return modules;
+};
+
+const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
   InboundParseModule,
   OrganizationModule,
   SharedModule,
@@ -41,12 +54,10 @@ const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardRefe
   HealthModule,
   EnvironmentsModule,
   ExecutionDetailsModule,
-  FeatureFlagsModule,
-  NotificationTemplateModule,
+  WorkflowModule,
   EventsModule,
   WidgetsModule,
   NotificationModule,
-  ChannelsModule,
   StorageModule,
   NotificationGroupsModule,
   InvitesModule,
@@ -59,7 +70,13 @@ const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardRefe
   MessagesModule,
   PartnerIntegrationsModule,
   TopicsModule,
+  BlueprintModule,
+  TenantModule,
 ];
+
+const enterpriseModules = enterpriseImports();
+
+const modules = baseModules.concat(enterpriseModules);
 
 const providers: Provider[] = [];
 

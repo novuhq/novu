@@ -1,10 +1,14 @@
 import axios from 'axios';
+import { IParamObject } from '@novu/shared';
 import { API_ROOT } from '../config';
 
+interface IOptions {
+  absoluteUrl: boolean;
+}
 export const api = {
-  get(url: string) {
+  get(url: string, options: IOptions = { absoluteUrl: false }) {
     return axios
-      .get(`${API_ROOT}${url}`)
+      .get(buildUrl(url, options.absoluteUrl))
       .then((response) => {
         return response.data?.data;
       })
@@ -33,9 +37,9 @@ export const api = {
         return Promise.reject(error?.response?.data || error?.response || error);
       });
   },
-  post(url: string, payload) {
+  post(url: string, payload, params?: IParamObject) {
     return axios
-      .post(`${API_ROOT}${url}`, payload)
+      .post(`${API_ROOT}${url}`, payload, { params })
       .then((response) => response.data?.data)
       .catch((error) => {
         // eslint-disable-next-line promise/no-return-wrap
@@ -61,3 +65,7 @@ export const api = {
       });
   },
 };
+
+function buildUrl(url: string, absoluteUrl: boolean) {
+  return absoluteUrl ? url : `${API_ROOT}${url}`;
+}

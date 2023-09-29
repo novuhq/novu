@@ -201,10 +201,26 @@ export const sendgridConfig: IConfigCredentials[] = [
     type: 'string',
     required: true,
   },
+  {
+    key: CredentialsKeyEnum.IpPoolName,
+    displayName: 'IP Pool Name',
+    type: 'string',
+    required: false,
+  },
   ...mailConfigBase,
 ];
 
 export const resendConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  ...mailConfigBase,
+];
+
+export const plunkConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
@@ -668,6 +684,24 @@ export const smsCentralConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
+export const emailWebhookConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.WebhookUrl,
+    displayName: 'Webhook URL',
+    type: 'string',
+    description: 'the webhook URL to call instead of sending the email',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Secret Hmac Key',
+    type: 'string',
+    description: 'the secret used to sign webhooks calls',
+    required: true,
+  },
+  ...mailConfigBase,
+];
+
 export const africasTalkingConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
@@ -678,6 +712,29 @@ export const africasTalkingConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.User,
     displayName: 'Username',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+];
+
+export const novuInAppConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.Hmac,
+    displayName: 'Security HMAC encryption',
+    type: 'switch',
+    required: false,
+    tooltip: {
+      text: 'When active it verifies if a request is performed by a specific user',
+      when: false,
+    },
+  },
+];
+
+export const sendchampConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
     type: 'string',
     required: true,
   },

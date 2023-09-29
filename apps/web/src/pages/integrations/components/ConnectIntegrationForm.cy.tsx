@@ -3,7 +3,7 @@ import { ChannelTypeEnum, CredentialsKeyEnum, EmailProviderIdEnum } from '@novu/
 
 import { ConnectIntegrationForm } from './ConnectIntegrationForm';
 import { TestWrapper } from '../../../testing';
-import { IIntegratedProvider } from '../IntegrationsStorePage';
+import type { IIntegratedProvider } from '../types';
 
 const exampleProvider: IIntegratedProvider = {
   providerId: EmailProviderIdEnum.EmailJS,
@@ -17,14 +17,15 @@ const exampleProvider: IIntegratedProvider = {
   docReference: 'https://www.emailjs.com/docs',
   logoFileName: { light: 'emailjs.svg', dark: 'emailjs.svg' },
   integrationId: '',
+  primary: false,
 };
 
 const defaultProps: {
-  provider: IIntegratedProvider | null;
+  provider: IIntegratedProvider;
   showModal: (visible: boolean) => void;
   createModel: boolean;
   onClose: () => void;
-} = { provider: null, showModal: () => {}, onClose: () => {}, createModel: false };
+} = { provider: exampleProvider, showModal: () => {}, onClose: () => {}, createModel: false };
 
 const queryClient = new QueryClient();
 
@@ -110,7 +111,7 @@ it('shows the configuration for the selected provider', () => {
   cy.get(`img[alt="emailjs image"]`)
     .then((e) => e.attr('src'))
     .should('match', /.*emailjs\.svg$/);
-  cy.get('a').should('have.text', 'here.').and('have.attr', 'href', 'https://www.emailjs.com/docs');
+  cy.get('a').should('have.text', 'our guide').and('have.attr', 'href', 'https://www.emailjs.com/docs');
 
   // We may use a for-loop here since order of checks is not important
   for (const cred of credentials) {

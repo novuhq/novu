@@ -8,6 +8,7 @@ export enum TemplateAnalyticsEnum {
 
 export enum TemplateEditorAnalyticsEnum {
   CONFIGURE_PROVIDER_BANNER_CLICK = 'Configure Provider Banner Click - [Template Editor]',
+  CONFIGURE_PRIMARY_PROVIDER_BANNER_CLICK = 'Configure Primary Provider Banner Click - [Template Editor]',
   CONFIGURE_PROVIDER_POPOVER_CLICK = 'Configure Provider Popover Click - [Template Editor]',
 }
 

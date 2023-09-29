@@ -60,7 +60,7 @@ export class UpdateMessageTemplate {
     }
 
     if (!command.feedId && existingTemplate._feedId) {
-      updatePayload._feedId = undefined;
+      unsetPayload._feedId = '';
     }
 
     if (command.layoutId) {

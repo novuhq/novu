@@ -1,7 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ClassConstructor, plainToInstance } from 'class-transformer';
-import { addMonths } from 'date-fns';
-import { Model, Types, ProjectionType, FilterQuery, UpdateQuery } from 'mongoose';
+import { addDays } from 'date-fns';
+import {
+  MESSAGE_GENERIC_RETENTION_DAYS,
+  MESSAGE_IN_APP_RETENTION_DAYS,
+  NOTIFICATION_RETENTION_DAYS,
+} from '@novu/shared';
+import { Model, Types, ProjectionType, FilterQuery, UpdateQuery, QueryOptions } from 'mongoose';
 import { DalException } from '../shared';
 
 export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
@@ -43,16 +48,23 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
   async findOne(
     query: FilterQuery<T_DBModel> & T_Enforcement,
     select?: ProjectionType<T_MappedEntity>,
-    options: { readPreference?: 'secondaryPreferred' | 'primary' } = {}
+    options: { readPreference?: 'secondaryPreferred' | 'primary'; query?: QueryOptions<T_DBModel> } = {}
   ): Promise<T_MappedEntity | null> {
-    const data = await this.MongooseModel.findOne(query, select).read(options.readPreference || 'primary');
+    const data = await this.MongooseModel.findOne(query, select, options.query).read(
+      options.readPreference || 'primary'
+    );
     if (!data) return null;
 
     return this.mapEntity(data.toObject());
   }
 
-  async delete(query: FilterQuery<T_DBModel> & T_Enforcement): Promise<void> {
-    return await this.MongooseModel.remove(query);
+  async delete(query: FilterQuery<T_DBModel> & T_Enforcement): Promise<{
+    /** Indicates whether this writes result was acknowledged. If not, then all other members of this result will be undefined. */
+    acknowledged: boolean;
+    /** The number of documents that were deleted */
+    deletedCount: number;
+  }> {
+    return await this.MongooseModel.deleteMany(query);
   }
 
   async find(
@@ -96,24 +108,27 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
     switch (modelName) {
       case 'Message':
         if (data.channel === 'in_app') {
-          return addMonths(startDate, 12);
+          return addDays(startDate, MESSAGE_IN_APP_RETENTION_DAYS);
         } else {
-          return addMonths(startDate, 1);
+          return addDays(startDate, MESSAGE_GENERIC_RETENTION_DAYS);
         }
       case 'Notification':
-        return addMonths(startDate, 1);
+        return addDays(startDate, NOTIFICATION_RETENTION_DAYS);
       default:
         return null;
     }
   }
 
-  async create(data: FilterQuery<T_DBModel> & T_Enforcement): Promise<T_MappedEntity> {
+  async create(data: FilterQuery<T_DBModel> & T_Enforcement, options: IOptions = {}): Promise<T_MappedEntity> {
     const expireAt = this.calcExpireDate(this.MongooseModel.modelName, data);
     if (expireAt) {
       data = { ...data, expireAt };
     }
     const newEntity = new this.MongooseModel(data);
-    const saved = await newEntity.save();
+
+    const saveOptions = options?.writeConcern ? { w: options?.writeConcern } : {};
+
+    const saved = await newEntity.save(saveOptions);
 
     return this.mapEntity(saved);
   }
@@ -161,8 +176,8 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
     return await Promise.all(promises);
   }
 
-  async bulkWrite(bulkOperations: any) {
-    await this.MongooseModel.bulkWrite(bulkOperations);
+  async bulkWrite(bulkOperations: any, ordered = false): Promise<any> {
+    return await this.MongooseModel.bulkWrite(bulkOperations, { ordered });
   }
 
   protected mapEntity<TData>(data: TData): TData extends null ? null : T_MappedEntity {
@@ -172,4 +187,8 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
   protected mapEntities(data: any): T_MappedEntity[] {
     return plainToInstance<T_MappedEntity, T_MappedEntity[]>(this.entity, JSON.parse(JSON.stringify(data)));
   }
+}
+
+interface IOptions {
+  writeConcern?: number | 'majority';
 }

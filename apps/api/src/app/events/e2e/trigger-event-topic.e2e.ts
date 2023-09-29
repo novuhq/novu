@@ -5,17 +5,20 @@ import {
   NotificationTemplateEntity,
   SubscriberEntity,
 } from '@novu/dal';
-import { ITopic, TriggerRecipients } from '@novu/node';
 import {
   ChannelTypeEnum,
   StepTypeEnum,
   IEmailBlock,
   ISubscribersDefine,
+  ITopic,
   TopicId,
   TopicKey,
   TopicName,
+  TriggerRecipients,
   TriggerRecipientsTypeEnum,
   ExternalSubscriberId,
+  DigestUnitEnum,
+  DigestTypeEnum,
 } from '@novu/shared';
 import { SubscribersService, UserSession } from '@novu/testing';
 import axios from 'axios';
@@ -27,6 +30,8 @@ const axiosInstance = axios.create();
 
 const TOPIC_PATH = '/v1/topics';
 const TRIGGER_ENDPOINT = '/v1/events/trigger';
+
+const originalLaunchDarklySdkKey = process.env.LAUNCH_DARKLY_SDK_KEY;
 
 describe('Topic Trigger Event', () => {
   describe('Trigger event for a topic - /v1/events/trigger (POST)', () => {
@@ -43,6 +48,7 @@ describe('Topic Trigger Event', () => {
     const messageRepository = new MessageRepository();
 
     beforeEach(async () => {
+      process.env.LAUNCH_DARKLY_SDK_KEY = '';
       process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'true';
       session = new UserSession();
       await session.initialize();
@@ -63,6 +69,7 @@ describe('Topic Trigger Event', () => {
     });
 
     afterEach(() => {
+      process.env.LAUNCH_DARKLY_SDK_KEY = originalLaunchDarklySdkKey;
       process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'false';
     });
 
@@ -288,8 +295,8 @@ describe('Topic Trigger Event', () => {
           channel: ChannelTypeEnum.SMS,
         });
 
-        expect(message._subscriberId.toString()).to.be.eql(subscriber._id);
-        expect(message.phone).to.equal(subscriber.phone);
+        expect(message?._subscriberId.toString()).to.be.eql(subscriber._id);
+        expect(message?.phone).to.equal(subscriber.phone);
       }
     });
   });
@@ -303,6 +310,7 @@ describe('Topic Trigger Event', () => {
     let fourthSubscriber: SubscriberEntity;
     let fifthSubscriber: SubscriberEntity;
     let sixthSubscriber: SubscriberEntity;
+    let firstTopicSubscribers: SubscriberEntity[];
     let subscribers: SubscriberEntity[];
     let subscriberService: SubscribersService;
     let firstTopicDto: { _id: TopicId; key: TopicKey };
@@ -314,6 +322,7 @@ describe('Topic Trigger Event', () => {
     const logRepository = new LogRepository();
 
     beforeEach(async () => {
+      process.env.LAUNCH_DARKLY_SDK_KEY = '';
       process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'true';
       session = new UserSession();
       await session.initialize();
@@ -324,7 +333,7 @@ describe('Topic Trigger Event', () => {
       subscriberService = new SubscribersService(session.organization._id, session.environment._id);
       firstSubscriber = await subscriberService.createSubscriber();
       secondSubscriber = await subscriberService.createSubscriber();
-      const firstTopicSubscribers = [firstSubscriber, secondSubscriber];
+      firstTopicSubscribers = [firstSubscriber, secondSubscriber];
 
       const firstTopicKey = 'topic-key-1-trigger-event';
       const firstTopicName = 'topic-name-1-trigger-event';
@@ -367,6 +376,7 @@ describe('Topic Trigger Event', () => {
     });
 
     afterEach(() => {
+      process.env.LAUNCH_DARKLY_SDK_KEY = originalLaunchDarklySdkKey;
       process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'false';
     });
 
@@ -480,8 +490,67 @@ describe('Topic Trigger Event', () => {
           channel: ChannelTypeEnum.SMS,
         });
 
-        expect(message._subscriberId.toString()).to.be.eql(subscriber._id);
-        expect(message.phone).to.equal(subscriber.phone);
+        expect(message?._subscriberId.toString()).to.be.eql(subscriber._id);
+        expect(message?.phone).to.equal(subscriber.phone);
+      }
+    });
+
+    it('should not contain events from a different digestKey ', async () => {
+      template = await session.createTemplate({
+        steps: [
+          {
+            type: StepTypeEnum.DIGEST,
+            content: '',
+            metadata: {
+              unit: DigestUnitEnum.SECONDS,
+              amount: 5,
+              digestKey: 'id',
+              type: DigestTypeEnum.REGULAR,
+            },
+          },
+          {
+            type: StepTypeEnum.IN_APP,
+            content: '{{#each step.events}}{{id}} {{/each}}' as string,
+          },
+        ],
+      });
+
+      const toFirstTopic: TriggerRecipients = [{ type: TriggerRecipientsTypeEnum.TOPIC, topicKey: firstTopicDto.key }];
+
+      await Promise.all([
+        triggerEvent(session, template, toFirstTopic, {
+          id: 'key-1',
+        }),
+        triggerEvent(session, template, toFirstTopic, {
+          id: 'key-1',
+        }),
+        triggerEvent(session, template, toFirstTopic, {
+          id: 'key-1',
+        }),
+        triggerEvent(session, template, toFirstTopic, {
+          id: 'key-2',
+        }),
+        triggerEvent(session, template, toFirstTopic, {
+          id: 'key-2',
+        }),
+        triggerEvent(session, template, toFirstTopic, {
+          id: 'key-2',
+        }),
+      ]);
+
+      await session.awaitRunningJobs(template?._id, false, 0);
+
+      for (const subscriber of firstTopicSubscribers) {
+        const messages = await messageRepository.findBySubscriberChannel(
+          session.environment._id,
+          subscriber._id,
+          ChannelTypeEnum.IN_APP
+        );
+        expect(messages.length).to.equal(2);
+        for (const message of messages) {
+          const digestKey = message.payload.id;
+          expect(message.content).to.equal(`${digestKey} ${digestKey} ${digestKey} `);
+        }
       }
     });
   });
@@ -563,3 +632,24 @@ const buildTriggerRequestHeaders = (session: UserSession) => ({
     authorization: `ApiKey ${session.apiKey}`,
   },
 });
+
+const triggerEvent = async (
+  session: UserSession,
+  template: NotificationTemplateEntity,
+  to: (string | ITopic | ISubscribersDefine)[],
+  payload: Record<string, unknown> = {}
+): Promise<void> => {
+  await axiosInstance.post(
+    `${session.serverUrl}/v1/events/trigger`,
+    {
+      name: template.triggers[0].identifier,
+      to,
+      payload,
+    },
+    {
+      headers: {
+        authorization: `ApiKey ${session.apiKey}`,
+      },
+    }
+  );
+};

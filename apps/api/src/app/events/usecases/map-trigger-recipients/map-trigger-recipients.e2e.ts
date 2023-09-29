@@ -1,5 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { SubscribersService, UserSession } from '@novu/testing';
+import { FeatureFlagsService, GetIsTopicNotificationEnabled, LaunchDarklyService } from '@novu/application-generic';
 import {
   SubscriberEntity,
   SubscriberRepository,
@@ -8,8 +9,15 @@ import {
   CreateTopicSubscribersEntity,
   TopicSubscribersRepository,
 } from '@novu/dal';
-import { ITopic, TriggerRecipientsPayload } from '@novu/node';
-import { ISubscribersDefine, TopicId, TopicKey, TopicName, TriggerRecipientsTypeEnum } from '@novu/shared';
+import {
+  ISubscribersDefine,
+  ITopic,
+  TopicId,
+  TopicKey,
+  TopicName,
+  TriggerRecipientsPayload,
+  TriggerRecipientsTypeEnum,
+} from '@novu/shared';
 import { expect } from 'chai';
 import { v4 as uuid } from 'uuid';
 
@@ -19,6 +27,11 @@ import { MapTriggerRecipientsCommand } from './map-trigger-recipients.command';
 import { SharedModule } from '../../../shared/shared.module';
 import { EventsModule } from '../../events.module';
 
+import { GetTopicSubscribersUseCase } from '../../../topics/use-cases';
+import { CreateLog } from '../../../logs/usecases/create-log';
+
+const originalLaunchDarklySdkKey = process.env.LAUNCH_DARKLY_SDK_KEY;
+
 describe('MapTriggerRecipientsUseCase', () => {
   let session: UserSession;
   let subscribersService: SubscribersService;
@@ -26,24 +39,30 @@ describe('MapTriggerRecipientsUseCase', () => {
   let topicSubscribersRepository: TopicSubscribersRepository;
   let useCase: MapTriggerRecipients;
 
-  beforeEach(async () => {
-    const moduleRef = await Test.createTestingModule({
-      imports: [SharedModule, EventsModule],
-      providers: [],
-    }).compile();
-
-    session = new UserSession();
-    await session.initialize();
-
-    useCase = moduleRef.get<MapTriggerRecipients>(MapTriggerRecipients);
-    subscribersService = new SubscribersService(session.organization._id, session.environment._id);
-    topicRepository = new TopicRepository();
-    topicSubscribersRepository = new TopicSubscribersRepository();
-  });
-
   describe('When feature disabled', () => {
-    beforeEach(() => {
+    before(async () => {
+      const featureFlagsService = new FeatureFlagsService();
+      await featureFlagsService.initialize();
+
+      process.env.LAUNCH_DARKLY_SDK_KEY = '';
       process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'false';
+
+      const moduleRef = await Test.createTestingModule({
+        imports: [SharedModule, EventsModule],
+        providers: [],
+      }).compile();
+
+      session = new UserSession();
+      await session.initialize();
+
+      useCase = moduleRef.get<MapTriggerRecipients>(MapTriggerRecipients);
+      subscribersService = new SubscribersService(session.organization._id, session.environment._id);
+      topicRepository = new TopicRepository();
+      topicSubscribersRepository = new TopicSubscribersRepository();
+    });
+
+    after(() => {
+      process.env.LAUNCH_DARKLY_SDK_KEY = originalLaunchDarklySdkKey;
     });
 
     it('should map properly a single subscriber id as string', async () => {
@@ -170,12 +189,26 @@ describe('MapTriggerRecipientsUseCase', () => {
   });
 
   describe('When feature enabled', () => {
-    beforeEach(() => {
+    before(async () => {
+      process.env.LAUNCH_DARKLY_SDK_KEY = '';
       process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'true';
+
+      const moduleRef = await Test.createTestingModule({
+        imports: [SharedModule, EventsModule],
+        providers: [],
+      }).compile();
+
+      session = new UserSession();
+      await session.initialize();
+
+      useCase = moduleRef.get<MapTriggerRecipients>(MapTriggerRecipients, { strict: false });
+      subscribersService = new SubscribersService(session.organization._id, session.environment._id);
+      topicRepository = new TopicRepository();
+      topicSubscribersRepository = new TopicSubscribersRepository();
     });
 
-    afterEach(() => {
-      process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'false';
+    after(() => {
+      process.env.LAUNCH_DARKLY_SDK_KEY = originalLaunchDarklySdkKey;
     });
 
     it('should map properly a single subscriber id as string', async () => {
@@ -605,8 +638,8 @@ const addSubscribersToTopic = async (
 
   const result = await topicRepository.findTopic(topicKey, _environmentId);
 
-  expect(result.subscribers.length).to.be.eql(subscribers.length);
-  expect(result.subscribers).to.have.members(subscribers.map((subscriber) => subscriber.subscriberId));
+  expect(result?.subscribers.length).to.be.eql(subscribers.length);
+  expect(result?.subscribers).to.have.members(subscribers.map((subscriber) => subscriber.subscriberId));
 };
 
 const buildCommand = (

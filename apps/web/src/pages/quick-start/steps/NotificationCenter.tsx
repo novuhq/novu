@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { InAppSandbox, SandboxFooter } from '../../../components/quick-start/in-app-onboarding';
 import { ROUTES } from '../../../constants/routes.enum';
@@ -11,7 +10,7 @@ export function NotificationCenter() {
 
   useEffect(() => {
     segment.track(OnBoardingAnalyticsEnum.FLOW_SELECTED, { flow: FlowTypeEnum.IN_APP });
-  }, []);
+  }, [segment]);
 
   return (
     <QuickStartWrapper

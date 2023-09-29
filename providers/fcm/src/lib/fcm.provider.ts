@@ -49,6 +49,7 @@ export class FcmPushProvider implements IPushProvider {
     delete (options.overrides as { deviceTokens?: string[] })?.deviceTokens;
 
     const overridesData = options.overrides || ({} as any);
+    const payload = this.cleanPayload(options.payload);
 
     const androidData: AndroidConfig = overridesData.android;
     const apnsData: ApnsConfig = overridesData.apns;
@@ -65,7 +66,7 @@ export class FcmPushProvider implements IPushProvider {
       delete (options.overrides as { type?: string })?.type;
       res = await this.messaging.sendMulticast({
         tokens: options.target,
-        data: options.payload as { [key: string]: string },
+        data: { ...payload, title: options.title, body: options.content },
         ...(androidData ? { android: androidData } : {}),
         ...(apnsData ? { apns: apnsData } : {}),
         ...(fcmOptionsData ? { fcmOptions: fcmOptionsData } : {}),
@@ -89,7 +90,7 @@ export class FcmPushProvider implements IPushProvider {
       });
     }
 
-    if (res.failureCount > 0) {
+    if (res.successCount === 0) {
       throw new Error(
         `Sending message failed due to "${
           res.responses.find((i) => i.success === false).error.message
@@ -101,8 +102,26 @@ export class FcmPushProvider implements IPushProvider {
     await deleteApp(app);
 
     return {
-      ids: res?.responses?.map((response) => response.messageId),
+      ids: res?.responses?.map((response, index) =>
+        response.success
+          ? response.messageId
+          : `${response.error.message}. Invalid token:- ${options.target[index]}`
+      ),
       date: new Date().toISOString(),
     };
+  }
+
+  private cleanPayload(payload: object): Record<string, string> {
+    const cleanedPayload: Record<string, string> = {};
+
+    Object.keys(payload).forEach((key) => {
+      if (typeof payload[key] === 'string') {
+        cleanedPayload[key] = payload[key];
+      } else {
+        cleanedPayload[key] = JSON.stringify(payload[key]);
+      }
+    });
+
+    return cleanedPayload;
   }
 }

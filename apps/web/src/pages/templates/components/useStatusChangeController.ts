@@ -1,16 +1,22 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { INotificationTemplate } from '@novu/shared';
 import { useEffect, useState } from 'react';
-import { showNotification } from '@mantine/notifications';
 import { updateTemplateStatus } from '../../../api/notification-templates';
+import { QueryKeys } from '../../../api/query.keys';
+import { successMessage } from '../../../utils/notifications';
 
 export function useStatusChangeControllerHook(templateId: string, template: INotificationTemplate | undefined) {
+  const queryClient = useQueryClient();
   const [isTemplateActive, setIsTemplateActive] = useState<boolean>();
   const { isLoading: isStatusChangeLoading, mutateAsync: updateNotificationStatus } = useMutation<
     INotificationTemplate,
     { error: string; message: string; statusCode: number },
     { id: string; active: boolean }
-  >(({ id, active }) => updateTemplateStatus(id, active));
+  >(({ id, active }) => updateTemplateStatus(id, active), {
+    onSuccess: () => {
+      queryClient.refetchQueries([QueryKeys.changesCount]);
+    },
+  });
 
   useEffect(() => {
     if (template) {
@@ -26,10 +32,7 @@ export function useStatusChangeControllerHook(templateId: string, template: INot
       active: selected,
     });
 
-    showNotification({
-      message: 'Status changed successfully',
-      color: 'green',
-    });
+    successMessage('Status changed successfully');
   }
 
   return {

@@ -1,5 +1,9 @@
 import { Group } from '@mantine/core';
+import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
+import { useParams } from 'react-router-dom';
+
+import { StepTypeEnum } from '@novu/shared';
 
 import { Button } from '../../../../design-system';
 import type { IForm } from '../../components/formTypes';
@@ -7,18 +11,14 @@ import { StepActiveSwitch } from '../StepActiveSwitch';
 import { useEnvController } from '../../../../hooks';
 import { ShouldStopOnFailSwitch } from '../ShouldStopOnFailSwitch';
 import { ReplyCallback, ReplyCallbackSwitch } from '../ReplyCallback';
-import { useParams } from 'react-router-dom';
-import { StepTypeEnum } from '@novu/shared';
 import { When } from '../../../../components/utils/When';
 import { FilterModal } from '../../filter/FilterModal';
-import { useState } from 'react';
-import { Filter } from '../../../../design-system/icons/actions/Filter';
-import { FilterGradient } from '../../../../design-system/icons/gradient/FilterGradient';
+import { FilterGradient, Filter } from '../../../../design-system/icons';
 import { FilterOutlined } from '../../../../design-system/icons/gradient/FilterOutlined';
 
 export function StepSettings({ index }: { index: number }) {
   const { readonly } = useEnvController();
-  const { control, watch } = useFormContext<IForm>();
+  const { control, watch, setValue } = useFormContext<IForm>();
   const [filterOpen, setFilterOpen] = useState(false);
   const { channel } = useParams<{
     channel: StepTypeEnum;
@@ -31,10 +31,12 @@ export function StepSettings({ index }: { index: number }) {
     <>
       <Group position="apart" spacing={8}>
         <Group spacing={12}>
-          <StepActiveSwitch index={index} control={control} />
-          <ShouldStopOnFailSwitch index={index} control={control} />
-          <When truthy={channel === StepTypeEnum.EMAIL}>
-            <ReplyCallbackSwitch index={index} control={control} />
+          <When truthy={channel !== StepTypeEnum.DIGEST && channel !== StepTypeEnum.DELAY}>
+            <StepActiveSwitch index={index} control={control} />
+            <ShouldStopOnFailSwitch index={index} control={control} />
+            <When truthy={channel === StepTypeEnum.EMAIL}>
+              <ReplyCallbackSwitch index={index} control={control} />
+            </When>
           </When>
         </Group>
         <Button
@@ -89,6 +91,7 @@ export function StepSettings({ index }: { index: number }) {
         }}
         control={control}
         stepIndex={index}
+        setValue={setValue}
       />
     </>
   );

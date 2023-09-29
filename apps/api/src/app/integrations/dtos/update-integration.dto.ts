@@ -1,25 +1,52 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IUpdateIntegrationBodyDto } from '@novu/shared';
-import { IsBoolean, IsDefined, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { CredentialsDto } from './credentials.dto';
 import { Type } from 'class-transformer';
+import { StepFilter } from '../../shared/dtos/step-filter';
 
 export class UpdateIntegrationRequestDto implements IUpdateIntegrationBodyDto {
-  @ApiProperty()
-  @IsDefined()
-  @IsBoolean()
-  active: boolean;
+  @ApiPropertyOptional({ type: String })
+  @IsOptional()
+  @IsString()
+  name?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({ type: String })
+  @IsOptional()
+  @IsString()
+  identifier?: string;
+
+  @ApiPropertyOptional({ type: String })
+  @IsOptional()
+  @IsMongoId()
+  _environmentId?: string;
+
+  @ApiPropertyOptional({
+    type: Boolean,
+    description: 'If the integration is active the validation on the credentials field will run',
+  })
+  @IsOptional()
+  @IsBoolean()
+  active?: boolean;
+
+  @ApiPropertyOptional({
     type: CredentialsDto,
   })
-  @IsDefined()
+  @IsOptional()
   @Type(() => CredentialsDto)
   @ValidateNested()
-  credentials: CredentialsDto;
+  credentials?: CredentialsDto;
 
-  @ApiProperty()
-  @IsDefined()
+  @ApiPropertyOptional({ type: Boolean })
+  @IsOptional()
   @IsBoolean()
-  check: boolean;
+  check?: boolean;
+
+  @ApiPropertyOptional({
+    type: [StepFilter],
+  })
+  @IsArray()
+  @IsOptional()
+  @ValidateNested({ each: true })
+  conditions?: StepFilter[];
 }

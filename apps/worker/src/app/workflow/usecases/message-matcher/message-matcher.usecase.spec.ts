@@ -251,6 +251,61 @@ describe('Message filter matcher', function () {
 
     expect(matchedMessage.passed).to.equal(true);
   });
+  it('should check if value is defined in payload', async function () {
+    const matchedMessage = await messageMatcher.filter(
+      sendMessageCommand({
+        step: makeStep('Correct Match', 'AND', [
+          {
+            operator: 'IS_DEFINED',
+            value: '',
+            field: 'emailMessage',
+            on: FilterPartTypeEnum.PAYLOAD,
+          },
+        ]),
+      }),
+      {
+        payload: {
+          emailMessage: '<b>This works</b>',
+        },
+      }
+    );
+
+    expect(matchedMessage.passed).to.equal(true);
+  });
+
+  it('should check if key is defined or not in subscriber data', async function () {
+    const matchedMessage = await messageMatcher.filter(
+      sendMessageCommand({
+        step: makeStep('Correct Match', 'AND', [
+          {
+            operator: 'IS_DEFINED',
+            value: '',
+            field: 'data.nestedKey',
+            on: FilterPartTypeEnum.SUBSCRIBER,
+          },
+        ]),
+      }),
+      {
+        subscriber: {
+          firstName: '',
+          lastName: '',
+          email: '',
+          subscriberId: '',
+          deleted: false,
+          createdAt: '',
+          updatedAt: '',
+          _id: '',
+          _organizationId: '',
+          _environmentId: '',
+          data: {
+            nested_Key: 'nestedValue',
+          },
+        },
+      }
+    );
+
+    expect(matchedMessage.passed).to.equal(false);
+  });
 
   it('should get nested custom subscriber data', async function () {
     const matchedMessage = await messageMatcher.filter(
@@ -998,7 +1053,7 @@ describe('Message filter matcher', function () {
     it('should add a passed condition', () => {
       const result = MessageMatcher.sumFilters(
         {
-          stepFilters: [],
+          filters: [],
           failedFilters: [],
           passedFilters: ['payload'],
         },
@@ -1014,14 +1069,14 @@ describe('Message filter matcher', function () {
 
       expect(result.passedFilters).to.contain('payload');
       expect(result.passedFilters.length).to.eq(1);
-      expect(result.stepFilters.length).to.eq(1);
-      expect(result.stepFilters).to.contain('payload');
+      expect(result.filters.length).to.eq(1);
+      expect(result.filters).to.contain('payload');
     });
 
     it('should add a failed condition', () => {
       const result = MessageMatcher.sumFilters(
         {
-          stepFilters: [],
+          filters: [],
           failedFilters: [],
           passedFilters: [],
         },
@@ -1037,14 +1092,14 @@ describe('Message filter matcher', function () {
 
       expect(result.failedFilters).to.contain('payload');
       expect(result.failedFilters.length).to.eq(1);
-      expect(result.stepFilters.length).to.eq(1);
-      expect(result.stepFilters).to.contain('payload');
+      expect(result.filters.length).to.eq(1);
+      expect(result.filters).to.contain('payload');
     });
 
     it('should add online for both cases of online', () => {
       let result = MessageMatcher.sumFilters(
         {
-          stepFilters: [],
+          filters: [],
           failedFilters: [],
           passedFilters: [],
         },
@@ -1060,12 +1115,12 @@ describe('Message filter matcher', function () {
 
       expect(result.passedFilters).to.contain('online');
       expect(result.passedFilters.length).to.eq(1);
-      expect(result.stepFilters.length).to.eq(1);
-      expect(result.stepFilters).to.contain('online');
+      expect(result.filters.length).to.eq(1);
+      expect(result.filters).to.contain('online');
 
       result = MessageMatcher.sumFilters(
         {
-          stepFilters: [],
+          filters: [],
           failedFilters: [],
           passedFilters: [],
         },
@@ -1081,8 +1136,8 @@ describe('Message filter matcher', function () {
 
       expect(result.passedFilters).to.contain('online');
       expect(result.passedFilters.length).to.eq(1);
-      expect(result.stepFilters.length).to.eq(1);
-      expect(result.stepFilters).to.contain('online');
+      expect(result.filters.length).to.eq(1);
+      expect(result.filters).to.contain('online');
     });
   });
 });

@@ -1,13 +1,15 @@
 import { FilterQuery } from 'mongoose';
 import { SoftDeleteModel } from 'mongoose-delete';
+import { NOVU_PROVIDERS } from '@novu/shared';
 
-import { BaseRepository } from '../base-repository';
 import { IntegrationEntity, IntegrationDBModel } from './integration.entity';
 import { Integration } from './integration.schema';
-import { DalException } from '../../shared';
-import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 
-type IntegrationQuery = FilterQuery<IntegrationDBModel> & EnforceEnvOrOrgIds;
+import { BaseRepository } from '../base-repository';
+import { DalException } from '../../shared';
+import type { EnforceEnvOrOrgIds, IDeleteResult } from '../../types';
+
+export type IntegrationQuery = FilterQuery<IntegrationDBModel> & EnforceEnvOrOrgIds;
 
 export class IntegrationRepository extends BaseRepository<IntegrationDBModel, IntegrationEntity, EnforceEnvOrOrgIds> {
   private integration: SoftDeleteModel;
@@ -31,28 +33,122 @@ export class IntegrationRepository extends BaseRepository<IntegrationDBModel, In
     });
   }
 
-  async create(data: IntegrationQuery): Promise<IntegrationEntity> {
-    const existingIntegration = await this.findOne({
-      _environmentId: data._environmentId,
-      providerId: data.providerId,
-      channel: data.channel,
-    });
-    if (existingIntegration) {
-      throw new DalException('Duplicate key - One environment may not have two providers of the same channel type');
-    }
+  async findHighestPriorityIntegration({
+    _organizationId,
+    _environmentId,
+    channel,
+  }: Pick<IntegrationEntity, '_environmentId' | '_organizationId' | 'channel'>) {
+    return await this.findOne(
+      {
+        _organizationId,
+        _environmentId,
+        channel,
+        active: true,
+      },
+      undefined,
+      { query: { sort: { priority: -1 } } }
+    );
+  }
 
+  async countActiveExcludingNovu({
+    _organizationId,
+    _environmentId,
+    channel,
+  }: Pick<IntegrationEntity, '_environmentId' | '_organizationId' | 'channel'>) {
+    return await this.count({
+      _organizationId,
+      _environmentId,
+      channel,
+      active: true,
+      providerId: {
+        $nin: NOVU_PROVIDERS,
+      },
+    });
+  }
+
+  async create(data: IntegrationQuery): Promise<IntegrationEntity> {
     return await super.create(data);
   }
+
   async delete(query: IntegrationQuery) {
-    const integration = await this.findOne({ _id: query._id, _environmentId: query._environmentId });
+    const integration = await this.findOne({ _id: query._id, _organizationId: query._organizationId });
     if (!integration) throw new DalException(`Could not find integration with id ${query._id}`);
 
-    await this.integration.delete({ _id: integration._id, _environmentId: integration._environmentId });
+    return await this.integration.delete({ _id: integration._id, _organizationId: integration._organizationId });
+  }
+
+  async deleteMany(query: IntegrationQuery): Promise<IDeleteResult> {
+    const { _environmentId, _organizationId } = query || {};
+    if (!_environmentId || !_organizationId) {
+      throw new DalException(
+        'Deletion operation blocked for missing any of these properties: [_environmentId, _organizationId]. We are avoiding a potential unexpected multiple deletion'
+      );
+    }
+
+    const { acknowledged, modifiedCount, matchedCount } = await this.integration.delete(query);
+
+    if (matchedCount === 0 || modifiedCount === 0) {
+      throw new DalException(
+        `Deletion of many integrations in environment ${_environmentId} and organization ${_organizationId}  was not performed properly`
+      );
+    }
+
+    return {
+      modifiedCount,
+      matchedCount,
+    };
   }
 
   async findDeleted(query: IntegrationQuery): Promise<IntegrationEntity> {
     const res: IntegrationEntity = await this.integration.findDeleted(query);
 
     return this.mapEntity(res);
+  }
+
+  async recalculatePriorityForAllActive({
+    _id,
+    _organizationId,
+    _environmentId,
+    channel,
+  }: Pick<IntegrationEntity, '_environmentId' | '_organizationId' | 'channel'> & {
+    _id?: string;
+    exclude?: boolean;
+  }) {
+    const otherActiveIntegrations = await this.find(
+      {
+        _organizationId,
+        _environmentId,
+        channel,
+        active: true,
+        ...(_id && {
+          _id: {
+            $nin: [_id],
+          },
+        }),
+      },
+      '_id',
+      { sort: { priority: -1 } }
+    );
+
+    let ids = otherActiveIntegrations.map((integration) => integration._id);
+    if (_id) {
+      ids = [_id, ...otherActiveIntegrations.map((integration) => integration._id)];
+    }
+
+    const promises = ids.map((id, index) =>
+      this.update(
+        {
+          _id: id,
+          _organizationId,
+          _environmentId,
+        },
+        {
+          $set: {
+            priority: ids.length - index,
+          },
+        }
+      )
+    );
+    await Promise.all(promises);
   }
 }

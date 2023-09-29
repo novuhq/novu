@@ -15,7 +15,7 @@ describe('TimedDigestDelayService', () => {
 
     beforeEach(() => {
       const date = new Date('2023-05-04T12:00:00Z');
-      clock = jest.useFakeTimers('modern');
+      clock = jest.useFakeTimers('modern' as FakeTimersConfig);
       clock.setSystemTime(date.getTime());
     });
 

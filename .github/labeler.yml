@@ -6,8 +6,8 @@
   - apps/web/**/*
 '@novu/ws':
   - apps/ws/**/*
-'documentation':
-  - docs/**/*
+'@novu/inbound-mail':
+  - apps/inbound-mail/**/*
 '@novu/webhook':
   - apps/webhook/**/*
 '@novu/dal':
@@ -22,3 +22,13 @@
   - packages/notification-center-angular/**/*
 'providers':
   - providers/**/*
+'CI/CD':
+  - .github/**/*
+'helm':
+  - docker/kubernetes/helm/**/*
+'kustomize':
+  - docker/kubernetes/kustomize/**/*
+'docker':
+  - docker/**/*
+'scripts':
+  - scripts/**/*

@@ -11,6 +11,7 @@ import { DigestDemoFlow } from '../../components';
 import { useSegment } from '../../components/providers/SegmentProvider';
 import { DigestPlaygroundAnalyticsEnum } from './constants';
 import { useTourStorage } from './hooks/useTourStorage';
+import { useCallback } from 'react';
 
 const Heading = styled(Title)`
   color: ${colors.B40};
@@ -41,20 +42,23 @@ export const TemplatesDigestPlaygroundPage = () => {
   const handleSetupDigestWorkflowClick = () => {
     segment.track(DigestPlaygroundAnalyticsEnum.SETUP_DIGEST_WORKFLOW_CLICK);
     tourStorage.setTour('digest', templateId, 0);
-    navigate(`${parseUrl(ROUTES.TEMPLATES_EDIT_TEMPLATEID, { templateId })}`);
+    navigate(`${parseUrl(ROUTES.WORKFLOWS_EDIT_TEMPLATEID, { templateId })}`);
   };
 
   const handleLearnMoreClick = () => {
     segment.track(DigestPlaygroundAnalyticsEnum.LEARN_MORE_IN_DOCS_CLICK);
   };
 
-  const handleRunTriggerClick = () => {
+  const handleRunTriggerClick = useCallback(() => {
     segment.track(DigestPlaygroundAnalyticsEnum.RUN_TRIGGER_CLICK);
-  };
+  }, [segment]);
 
-  const handleDigestIntervalChange = (interval: number) => {
-    segment.track(DigestPlaygroundAnalyticsEnum.DIGEST_INTERVAL_CHANGE, { interval });
-  };
+  const handleDigestIntervalChange = useCallback(
+    (interval: number) => {
+      segment.track(DigestPlaygroundAnalyticsEnum.DIGEST_INTERVAL_CHANGE, { interval });
+    },
+    [segment]
+  );
 
   return (
     <ReactFlowProvider>
@@ -77,7 +81,7 @@ export const TemplatesDigestPlaygroundPage = () => {
           <LinkStyled
             target="_blank"
             rel="noopener noreferrer"
-            href="https://docs.novu.co/platform/digest"
+            href="https://docs.novu.co/workflows/digest"
             onClick={handleLearnMoreClick}
           >
             Learn more in docs

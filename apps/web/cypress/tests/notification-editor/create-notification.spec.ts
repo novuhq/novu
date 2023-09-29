@@ -2,13 +2,14 @@ import { addAndEditChannel, clickWorkflow, dragAndDrop, editChannel, fillBasicNo
 
 describe('Creation functionality', function () {
   beforeEach(function () {
-    cy.initializeSession().as('session');
+    cy.initializeSession({ showOnBoardingTour: false }).as('session');
   });
 
   it('should create in-app notification', function () {
     cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
+      cy.visit('/workflows/create');
     });
+    cy.waitForNetworkIdle(500);
     cy.getByTestId('settings-page').click();
     cy.waitForNetworkIdle(500);
     cy.getByTestId('title').clear().first().type('Test Notification Title');
@@ -20,11 +21,13 @@ describe('Creation functionality', function () {
     addAndEditChannel('inApp');
     cy.waitForNetworkIdle(500);
 
-    cy.get('.ace_text-input').first().type('{{firstName}} someone assigned you to {{taskName}}', {
+    cy.get('.ace_text-input').first().type('<p>{{firstName}} someone assigned you to {{taskName}}', {
       parseSpecialCharSequences: false,
       force: true,
     });
     cy.getByTestId('inAppRedirect').type('/example/test');
+    cy.getByTestId('editor-mode-switch').find('label').last().click();
+    cy.getByTestId('in-app-content-preview').contains('firstName someone assigned you to taskName');
 
     goBack();
     cy.getByTestId('notification-template-submit-btn').click();
@@ -40,8 +43,9 @@ describe('Creation functionality', function () {
 
   it('should create multiline in-app notification, send it and receive', function () {
     cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
+      cy.visit('/workflows/create');
     });
+    cy.waitForNetworkIdle(500);
 
     cy.getByTestId('settings-page').click();
 
@@ -88,8 +92,9 @@ describe('Creation functionality', function () {
 
   it('should manage variables', function () {
     cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
+      cy.visit('/workflows/create');
     });
+    cy.waitForNetworkIdle(500);
     cy.getByTestId('settings-page').click();
     cy.getByTestId('title').clear().first().type('Test Notification Title');
     cy.getByTestId('description').type('This is a test description for a test title');
@@ -176,10 +181,78 @@ describe('Creation functionality', function () {
     cy.get('.mantine-Notification-root').contains('Test sent successfully!');
   });
 
+  it('should not clear the set default values of variables on update', function () {
+    cy.waitLoadTemplatePage(() => {
+      cy.visit('/workflows/create');
+    });
+
+    cy.waitForNetworkIdle(500);
+
+    dragAndDrop('email');
+    cy.waitForNetworkIdle(500);
+
+    cy.clickWorkflowNode('node-emailSelector');
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('emailSubject').type('this is email subject');
+    cy.getByTestId('email-editor').getByTestId('editor-row').click();
+    cy.getByTestId('editable-text-content').clear().type('This text is written from a test {{firstName}}', {
+      parseSpecialCharSequences: false,
+    });
+
+    cy.getByTestId('open-edit-variables-btn').click();
+    cy.getByTestId('variable-default-value').type('Test Var Value');
+    cy.getByTestId('close-var-manager-modal').click();
+    cy.getByTestId('notification-template-submit-btn').click();
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('open-edit-variables-btn').click();
+    cy.getByTestId('variable-default-value').should('have.value', 'Test Var Value');
+    cy.getByTestId('close-var-manager-modal').click();
+    goBack();
+    dragAndDrop('sms');
+    cy.waitForNetworkIdle(500);
+
+    cy.clickWorkflowNode('node-smsSelector');
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('smsNotificationContent').type('This text is written from a test {{var}}', {
+      parseSpecialCharSequences: false,
+    });
+    cy.getByTestId('variable-default-value').type('Test');
+
+    cy.getByTestId('notification-template-submit-btn').click();
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('variable-default-value').should('have.value', 'Test');
+  });
+
+  it('should not throw error for using array variable with index greater than 0', function () {
+    cy.waitLoadTemplatePage(() => {
+      cy.visit('/workflows/create');
+    });
+
+    dragAndDrop('email');
+    cy.waitForNetworkIdle(500);
+
+    cy.clickWorkflowNode('node-emailSelector');
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('emailSubject').type('this is email subject');
+    cy.getByTestId('email-editor').getByTestId('editor-row').click();
+    cy.getByTestId('editable-text-content').clear().type('This tests array var {{array.[1].name}}', {
+      parseSpecialCharSequences: false,
+    });
+
+    cy.getByTestId('var-items-array').contains('array').contains('object');
+  });
+
   it('should create email notification', function () {
     cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
+      cy.visit('/workflows/create');
     });
+    cy.waitForNetworkIdle(500);
+
     cy.getByTestId('settings-page').click();
 
     cy.getByTestId('title').first().clear().type('Test Notification Title');
@@ -218,6 +291,9 @@ describe('Creation functionality', function () {
 
     goBack();
     cy.getByTestId('notification-template-submit-btn').click();
+    cy.getByTestId('node-emailSelector')
+      .getByTestId('workflow-node-subtitle')
+      .should('contain.text', 'This text is written from a test {{firstName}}');
     cy.getByTestId('get-snippet-btn').click();
     cy.getByTestId('trigger-code-snippet').should('be.visible');
     cy.getByTestId('trigger-code-snippet').contains('test-notification-title');
@@ -225,10 +301,44 @@ describe('Creation functionality', function () {
     cy.getByTestId('trigger-code-snippet').contains('customVariable:');
   });
 
+  it('should not reset action steps values on update', function () {
+    cy.waitLoadTemplatePage(() => {
+      cy.visit('/workflows/create');
+    });
+    cy.waitForNetworkIdle(500);
+
+    dragAndDrop('digest');
+
+    cy.clickWorkflowNode('node-digestSelector');
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('digest-send-options').click();
+    cy.getByTestId('time-amount').clear().type('30');
+    cy.getByTestId('time-unit').click();
+    cy.get('.mantine-Select-item').contains('sec (s)').click();
+
+    cy.getByTestId('digest-group-by-options').click();
+
+    cy.getByTestId('batch-key').type('id');
+
+    cy.getByTestId('digest-send-options').click();
+
+    cy.clickWorkflowNode('node-digestSelector');
+    cy.getByTestId('notification-template-submit-btn').click();
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('digest-send-options').click();
+
+    cy.getByTestId('time-amount').should('have.value', '30');
+    cy.getByTestId('batch-key').should('have.value', 'id');
+    cy.getByTestId('time-unit').should('have.value', 'sec (s)');
+  });
+
   it('should add digest node', function () {
     cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
+      cy.visit('/workflows/create');
     });
+    cy.waitForNetworkIdle(500);
 
     cy.getByTestId('settings-page').click();
     cy.getByTestId('title').first().clear().type('Test Notification Title');
@@ -305,11 +415,14 @@ describe('Creation functionality', function () {
     cy.getByTestId('backoff-amount').should('have.value', '20');
     cy.getByTestId('time-unit').should('have.value', 'min (s)');
     cy.getByTestId('time-unit-backoff').should('have.value', 'min (s)');
+    cy.getByTestId('node-digestSelector')
+      .getByTestId('workflow-node-subtitle')
+      .should('contain.text', 'after 20 minutes');
   });
 
   it('should create and edit group id', function () {
     const template = this.session.templates[0];
-    cy.visit('/templates/edit/' + template._id);
+    cy.visit('/workflows/edit/' + template._id);
     cy.waitForNetworkIdle(500);
     cy.getByTestId('settings-page').click();
     cy.waitForNetworkIdle(500);
@@ -325,9 +438,9 @@ describe('Creation functionality', function () {
     cy.getByTestId('notification-template-submit-btn').click();
     cy.waitForNetworkIdle(500);
 
-    cy.visit('/templates');
+    cy.visit('/workflows');
     cy.getByTestId('template-edit-link');
-    cy.visit('/templates/edit/' + template._id);
+    cy.visit('/workflows/edit/' + template._id);
     cy.waitForNetworkIdle(500);
     cy.getByTestId('settings-page').click();
     cy.getByTestId('groupSelector').should('have.value', 'New Test Category');
@@ -335,7 +448,7 @@ describe('Creation functionality', function () {
 
   it('should show delay settings in side menu', function () {
     cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
+      cy.visit('/workflows/create');
     });
     fillBasicNotificationDetails('Test Added Delay');
     goBack();
@@ -348,9 +461,10 @@ describe('Creation functionality', function () {
 
   it('should be able to add huge amount of nodes.', function () {
     cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
+      cy.visit('/workflows/create');
     });
-    cy.getByTestId('scratch-workflow-tooltip-skip-button').should('have.text', 'Watch later').click();
+    cy.waitForNetworkIdle(500);
+
     fillBasicNotificationDetails('Test 15 Nodes');
     goBack();
     cy.waitForNetworkIdle(500);

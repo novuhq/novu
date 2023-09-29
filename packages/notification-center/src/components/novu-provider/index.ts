@@ -1,1 +1,2 @@
-export * from './NovuProvider';
+export type { INovuProviderProps } from './NovuProvider';
+export { NovuProvider } from './NovuProvider';

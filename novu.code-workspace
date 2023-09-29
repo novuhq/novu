@@ -29,10 +29,6 @@
       "path": "apps/widget"
     },
     {
-      "name": "📜 @novu/docs",
-      "path": "docs"
-    },
-    {
       "name": "📦 @novu/dal",
       "path": "libs/dal"
     },

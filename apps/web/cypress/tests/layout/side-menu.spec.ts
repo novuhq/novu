@@ -5,7 +5,7 @@ describe('Side Menu', function () {
   });
 
   it('should navigate correctly to notification-templates', function () {
-    cy.getByTestId('side-nav-templates-link').should('have.attr', 'href').should('include', '/templates');
+    cy.getByTestId('side-nav-templates-link').should('have.attr', 'href').should('include', '/workflows');
   });
 
   it('should navigate correctly to settings', function () {

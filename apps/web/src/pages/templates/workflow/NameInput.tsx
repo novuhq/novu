@@ -62,7 +62,7 @@ export const NameInput = () => {
             error={showErrors && fieldState.error?.message}
             type="text"
             data-test-id="title"
-            placeholder="Enter notification name"
+            placeholder="Enter workflow name"
             disabled={readonly}
           />
         );

@@ -1,8 +1,3 @@
-declare module '*.png' {
-  const value: any;
-  export = value;
-}
-
 interface IMessagePayload {
   type: string;
   [key: string]: any; // eslint-disable-line @typescript-eslint/no-explicit-any

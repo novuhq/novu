@@ -1,7 +1,6 @@
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, ICredentials } from '@novu/shared';
 import { PushWebhookPushProvider } from '@novu/push-webhook';
 import { BasePushHandler } from './base.handler';
-import { ICredentials } from '@novu/dal';
 
 export class PushWebhookHandler extends BasePushHandler {
   constructor() {

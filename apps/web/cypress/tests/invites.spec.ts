@@ -33,7 +33,7 @@ describe('Invites module', function () {
 
       cy.loginWithGitHub();
 
-      cy.url().should('include', '/templates');
+      cy.url().should('include', '/workflows');
     });
   });
 
@@ -73,7 +73,7 @@ describe('Invites module', function () {
       });
       cy.getByTestId('github-button').click();
 
-      cy.url().should('include', '/templates');
+      cy.url().should('include', '/workflows');
     });
   });
 
@@ -89,7 +89,7 @@ describe('Invites module', function () {
       cy.getByTestId('password').type('asd#Faf4fd');
       cy.getByTestId('submit-btn').click();
 
-      cy.url().should('include', '/templates');
+      cy.url().should('include', '/workflows');
 
       cy.getByTestId('header-profile-avatar').click();
       cy.getByTestId('organization-switch').focus();
@@ -107,7 +107,7 @@ describe('Invites module', function () {
 
       cy.visit('/auth/invitation/' + this.token);
 
-      cy.url().should('include', '/templates');
+      cy.url().should('include', '/workflows');
 
       cy.getByTestId('header-profile-avatar').click();
       cy.getByTestId('organization-switch').focus();
@@ -138,7 +138,7 @@ function doRegister(token: string) {
   cy.getByTestId('accept-cb').click({ force: true });
   cy.getByTestId('submitButton').click();
 
-  cy.url().should('include', '/templates');
+  cy.url().should('include', '/workflows');
 }
 
 function doLogin(email: string, password: string) {
@@ -147,5 +147,5 @@ function doLogin(email: string, password: string) {
   cy.getByTestId('password').type(password);
   cy.getByTestId('submit-btn').click();
 
-  cy.url().should('include', '/templates');
+  cy.url().should('include', '/workflows');
 }

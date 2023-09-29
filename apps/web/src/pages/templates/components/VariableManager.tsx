@@ -5,6 +5,7 @@ import styled from '@emotion/styled';
 
 import { colors, Input, Switch, Text } from '../../../design-system';
 import { When } from '../../../components/utils/When';
+import { useEnvController } from '../../../hooks';
 
 interface VariableManagerProps {
   index: number;
@@ -17,11 +18,12 @@ interface VariableManagerProps {
 interface VariableComponentProps {
   index: number;
   template: string;
+  readonly: boolean;
   control?: any;
   path?: string;
 }
 
-export const VariableComponent = ({ index, template, control, path }: VariableComponentProps) => {
+export const VariableComponent = ({ index, template, control, path, readonly }: VariableComponentProps) => {
   const formPrefix = path ? `${path}variables.${index}` : `${template}.variables.${index}`;
   const variableName = useWatch({
     name: `${formPrefix}.name`,
@@ -75,9 +77,11 @@ export const VariableComponent = ({ index, template, control, path }: VariableCo
                 <Input
                   error={fieldState.error?.message}
                   type="text"
+                  data-test-id="variable-default-value"
                   placeholder="Default Value"
                   value={field.value}
                   onChange={field.onChange}
+                  disabled={readonly}
                 />
               );
             }}
@@ -91,9 +95,11 @@ export const VariableComponent = ({ index, template, control, path }: VariableCo
             render={({ field }) => {
               return (
                 <Switch
+                  data-test-id="variable-required-value"
                   label={field.value ? 'True' : 'False'}
                   checked={field.value === true}
                   onChange={field.onChange}
+                  disabled={readonly}
                 />
               );
             }}
@@ -116,7 +122,7 @@ export const VariableComponent = ({ index, template, control, path }: VariableCo
                 label="is&nbsp;required"
                 checked={field.value === true}
                 onChange={field.onChange}
-                disabled={isSystemVariable}
+                disabled={isSystemVariable || readonly}
               />
             );
           }}
@@ -127,6 +133,8 @@ export const VariableComponent = ({ index, template, control, path }: VariableCo
 };
 
 export function VariableManager({ variablesArray, index, hideLabel = false, path, control }: VariableManagerProps) {
+  const { readonly } = useEnvController();
+
   if (!variablesArray.fields.length) return null;
 
   return (
@@ -154,6 +162,7 @@ export function VariableManager({ variablesArray, index, hideLabel = false, path
               path={''}
               template={path ?? `steps.${index}.template`}
               control={control}
+              readonly={readonly}
             />
           ))}
         </tbody>

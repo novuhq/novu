@@ -51,30 +51,6 @@ export class ApiService {
     );
   }
 
-  /**
-   * @deprecated The method should not be used - Use markMessageAs instead.
-   */
-  async markMessageAsSeen(messageId: string | string[]): Promise<any> {
-    const messageIdString = messageId ? messageId.toString() : '';
-
-    return await this.httpClient.post(
-      `/widgets/messages/${messageIdString}/seen`,
-      {}
-    );
-  }
-
-  /**
-   * @deprecated The method should not be used - Use markMessageAs instead.
-   */
-  async markMessageAsRead(messageId: string | string[]): Promise<any> {
-    const messageIdString = messageId ? messageId.toString() : '';
-
-    return await this.httpClient.post(
-      `/widgets/messages/${messageIdString}/read`,
-      {}
-    );
-  }
-
   async markMessageAs(
     messageId: string | string[],
     mark: { seen?: boolean; read?: boolean }
@@ -94,6 +70,14 @@ export class ApiService {
     return await this.httpClient.delete(`/widgets/messages/${messageId}`, {});
   }
 
+  async removeAllMessages(feedId?: string): Promise<any> {
+    const url = feedId
+      ? `/widgets/messages?feedId=${feedId}`
+      : `/widgets/messages`;
+
+    return await this.httpClient.delete(url);
+  }
+
   async markAllMessagesAsRead(feedId?: string | string[]): Promise<any> {
     return await this.httpClient.post(`/widgets/messages/read`, {
       feedId,
@@ -108,13 +92,16 @@ export class ApiService {
 
   async getNotificationsList(
     page: number,
-    query: IStoreQuery = {}
+    { payload, ...rest }: IStoreQuery = {}
   ): Promise<IPaginatedResponse<IMessage>> {
+    const payloadString = payload ? btoa(JSON.stringify(payload)) : undefined;
+
     return await this.httpClient.getFullResponse(
       `/widgets/notifications/feed`,
       {
         page,
-        ...query,
+        payload: payloadString,
+        ...rest,
       }
     );
   }

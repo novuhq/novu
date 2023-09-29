@@ -1,9 +1,7 @@
 import React from 'react';
 import { Loader as MantineLoader } from '@mantine/core';
 import { cx, css } from '@emotion/css';
-import chroma from 'chroma-js';
 
-import { getLinearGradientColorStopValues } from '../../../shared/utils/getLinearGradientColorStopValues';
 import { useNovuTheme } from '../../../hooks';
 import { useStyles } from '../../../store/styles';
 
@@ -22,14 +20,7 @@ export const Loader = ({ color }: { color?: string }) => {
         justifyContent: 'center',
       }}
     >
-      <MantineLoader
-        className={cx('nc-loader', css(loaderStyles))}
-        color={
-          loaderColor.indexOf('gradient') === -1
-            ? loaderColor
-            : chroma.average(getLinearGradientColorStopValues(loaderColor))
-        }
-      />
+      <MantineLoader className={cx('nc-loader', css(loaderStyles))} color={loaderColor} />
     </div>
   );
 };

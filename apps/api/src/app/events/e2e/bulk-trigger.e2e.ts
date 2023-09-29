@@ -276,7 +276,7 @@ describe('Trigger bulk events - /v1/events/trigger/bulk (POST)', function () {
     expect(body.data.length).to.equal(3);
 
     const errorEvent = body.data[0];
-    expect(errorEvent.error[0]).to.equal('template_not_found');
+    expect(errorEvent.error[0]).to.equal('workflow_not_found');
     expect(errorEvent.status).to.equal('error');
 
     expect(body.data[1].status).to.equal('processed');

@@ -10,13 +10,15 @@ import { ActiveLabel } from '../../../design-system/icons/general/ActiveLabel';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { useActiveIntegrations, useIntegrationLimit } from '../../../hooks';
 import { Button, colors } from '../../../design-system';
-import { IntegrationEntity } from '../../integrations/IntegrationsStorePage';
+import type { IntegrationEntity } from '../../integrations/types';
+import { useCreateInAppIntegration } from '../../../hooks/useCreateInAppIntegration';
 
 export function ChannelsConfiguration({ setClickedChannel }: { setClickedChannel: Dispatch<any> }) {
   const segment = useSegment();
   const navigate = useNavigate();
   const { integrations } = useActiveIntegrations();
   const { isLimitReached } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
+  const { create, isLoading } = useCreateInAppIntegration((data: any) => {});
 
   function trackClick(channel: IQuickStartChannelConfiguration, integrationActive: boolean) {
     if (integrationActive) {
@@ -52,7 +54,7 @@ export function ChannelsConfiguration({ setClickedChannel }: { setClickedChannel
               <IconContainer>
                 <Icon style={{ width: '28px', height: '32px' }} />
               </IconContainer>
-              <ChannelCard>
+              <ChannelCard data-test-id={`channel-card-${channel.type}`}>
                 <TitleRow>
                   {channel.title}
                   <When truthy={isIntegrationActive}>
@@ -61,9 +63,14 @@ export function ChannelsConfiguration({ setClickedChannel }: { setClickedChannel
                 </TitleRow>
                 <Description>{channel.description}</Description>
                 <StyledButton
+                  loading={isLoading}
                   variant={'outline'}
-                  onClick={() => {
+                  onClick={async () => {
                     trackClick(channel, isIntegrationActive);
+
+                    if (channel.type === ChannelTypeEnum.IN_APP) {
+                      await create();
+                    }
 
                     channel.clickHandler({
                       navigate,

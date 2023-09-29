@@ -16,7 +16,8 @@ import { parseUrl } from '../../../utils/routeUtils';
 import { OnBoardingAnalyticsEnum } from '../../../pages/quick-start/consts';
 import { useSegment } from '../../providers/SegmentProvider';
 import { useDigestDemoFlowContext } from './DigestDemoFlowProvider';
-import { NodeStep } from '../common';
+import { NodeStep } from '../../workflow';
+import styled from '@emotion/styled';
 
 const getOpacity = (id: string, hoveredHintId?: string, sequence?: { opacity: number }): number => {
   if (hoveredHintId) {
@@ -47,7 +48,7 @@ export function NodeStepWithPopover({
   const [sequence, setSequence] = useState<IBeat>();
   const { pathname } = useLocation();
   const { templateId = '' } = useParams<{ templateId: string }>();
-  const digestPlaygroundPathname = parseUrl(ROUTES.TEMPLATES_DIGEST_PLAYGROUND, { templateId });
+  const digestPlaygroundPathname = parseUrl(ROUTES.WORKFLOWS_DIGEST_PLAYGROUND, { templateId });
   const isDigestPlayground = pathname === digestPlaygroundPathname;
 
   const label = data.label.toLowerCase();
@@ -70,7 +71,7 @@ export function NodeStepWithPopover({
 
   useEffect(() => {
     setSequence(popoverData.sequence[counter.toString()] as IBeat);
-  }, [counter]);
+  }, [counter, popoverData]);
 
   const onDropdownMouseEnter = () => {
     setHoveredHintId(id);
@@ -89,9 +90,9 @@ export function NodeStepWithPopover({
       transitionDuration={600}
       opacity={getOpacity(id, hoveredHintId, sequence)}
       target={
-        <div>
+        <StyledDiv>
           <NodeStep Handlers={Handlers} Icon={Icon} data={data} ActionItem={ActionItem} ContentItem={ContentItem} />
-        </div>
+        </StyledDiv>
       }
       title={popoverData.title}
       titleGradient={titleGradient}
@@ -126,3 +127,23 @@ function useCounter() {
 
   return { counter };
 }
+
+const StyledDiv = styled.div`
+  svg {
+    stop:first-child {
+      stop-color: #dd2476 !important;
+    }
+    stop:last-child {
+      stop-color: #ff512f !important;
+    }
+  }
+
+  [data-blue-gradient-svg] {
+    stop:first-child {
+      stop-color: #4c6dd4 !important;
+    }
+    stop:last-child {
+      stop-color: #66d9e8 !important;
+    }
+  }
+`;

@@ -1,8 +1,10 @@
 import {
+  BLUEPRINT_IDENTIFIER,
   buildCommonKey,
   CacheKeyPrefixEnum,
   CacheKeyTypeEnum,
   IdentifierPrefixEnum,
+  OrgScopePrefixEnum,
   prefixWrapper,
 } from './shared';
 
@@ -79,6 +81,24 @@ const buildKeyById = ({
 }): string =>
   prefixWrapper(`${type}:${keyEntity}:${identifierPrefix}=${identifier}`);
 
+const buildGroupedBlueprintsKey = (): string =>
+  buildCommonKey({
+    type: CacheKeyTypeEnum.ENTITY,
+    keyEntity: CacheKeyPrefixEnum.GROUPED_BLUEPRINTS,
+    environmentIdPrefix: OrgScopePrefixEnum.ORGANIZATION_ID,
+    environmentId: process.env.BLUEPRINT_CREATOR,
+    identifierPrefix: IdentifierPrefixEnum.GROUPED_BLUEPRINT,
+    identifier: BLUEPRINT_IDENTIFIER,
+  });
+
+const buildAuthServiceKey = ({ apiKey }: { apiKey: string }): string =>
+  buildKeyById({
+    type: CacheKeyTypeEnum.ENTITY,
+    keyEntity: CacheKeyPrefixEnum.AUTH_SERVICE,
+    identifier: apiKey,
+    identifierPrefix: IdentifierPrefixEnum.API_KEY,
+  });
+
 export {
   buildUserKey,
   buildSubscriberKey,
@@ -86,4 +106,6 @@ export {
   buildNotificationTemplateIdentifierKey,
   buildEnvironmentByApiKey,
   buildKeyById,
+  buildGroupedBlueprintsKey,
+  buildAuthServiceKey,
 };

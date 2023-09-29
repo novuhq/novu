@@ -1,71 +1,42 @@
 import styled from '@emotion/styled/macro';
-import { Center, Title, Text } from '@mantine/core';
-import { colors } from '../../../design-system';
-import { Close } from '../../../design-system/icons/actions/Close';
-import { LimitBar } from './LimitBar';
+import { List, Text } from '@mantine/core';
+import { ChannelTypeEnum } from '@novu/shared';
 import { useAuthContext } from '../../../components/providers/AuthProvider';
+import { colors } from '../../../design-system';
+import { NovuProviderBase } from './NovuProviderBase';
 
 export function NovuEmailProviderModal({ onClose }: { onClose: () => void }) {
+  return (
+    <NovuProviderBase
+      onClose={onClose}
+      channel={ChannelTypeEnum.EMAIL}
+      senderInformation={<EmailSenderInformation />}
+    />
+  );
+}
+
+function EmailSenderInformation() {
   const { currentOrganization } = useAuthContext();
 
   return (
-    <div
-      style={{
-        position: 'relative',
-      }}
-    >
-      <CloseButton data-test-id="connection-integration-form-close" type="button" onClick={onClose}>
-        <Close />
-      </CloseButton>
-
-      <ColumnDiv>
-        <Title align="center" order={2}>
-          Our E-mail gift to you
-        </Title>
-        <InlineDiv>
+    <div>
+      <Text>Emails are sent on behalf of the:</Text>
+      <List pl={5}>
+        <List.Item>
           <Text>
-            Get ready to take your email game to the next level! We've set up an email provider for you. You can try it
-            out for free.
+            Sender name: <SenderDetailSpan>{currentOrganization?.name || 'Novu'}</SenderDetailSpan>
           </Text>
-          <Text mt={16}>
-            Using this provider your emails will be sent from no-reply@novu.co and with sender name{' '}
-            {currentOrganization?.name || 'Novu'}.
+        </List.Item>
+        <List.Item>
+          <Text>
+            Sender's email address: <SenderDetailSpan>no-reply@novu.co</SenderDetailSpan>
           </Text>
-        </InlineDiv>
-        <Center>
-          <LimitBar label={'Email credits used'} />
-        </Center>
-      </ColumnDiv>
+        </List.Item>
+      </List>
     </div>
   );
 }
 
-const ColumnDiv = styled.div`
-  display: flex;
-  flex-direction: column;
-`;
-
-const InlineDiv = styled.div`
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 30px;
-  margin-top: 30px;
-
-  span {
-    margin-right: 5px;
-  }
-`;
-
-const CloseButton = styled.button`
-  position: absolute;
-  right: 0;
-  top: 0;
-  background: transparent;
-  border: none;
-  color: ${colors.B40};
-  outline: none;
-
-  &:hover {
-    cursor: pointer;
-  }
+const SenderDetailSpan = styled.span`
+  color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B60 : colors.B40)};
 `;

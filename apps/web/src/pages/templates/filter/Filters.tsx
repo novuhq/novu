@@ -6,7 +6,7 @@ import type { IFormStep } from '../components/formTypes';
 import { colors } from '../../../design-system';
 import { useWatch } from 'react-hook-form';
 import { useMemo } from 'react';
-import { channels } from '../shared/channels';
+import { channels } from '../../../utils/channels';
 
 export const Filters = ({ step }: { step?: IFormStep }) => {
   if (!step || !step.filters || !Array.isArray(step.filters)) {

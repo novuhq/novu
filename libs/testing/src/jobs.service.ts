@@ -1,29 +1,36 @@
 import { Queue } from 'bullmq';
 import { JobRepository, JobStatusEnum } from '@novu/dal';
-import { StepTypeEnum } from '@novu/shared';
+import { JobTopicNameEnum, StepTypeEnum } from '@novu/shared';
 
-import { QueueService } from './queue.service';
+import { TestingQueueService } from './testing-queue.service';
+
+const LOG_CONTEXT = 'TestingJobsService';
 
 export class JobsService {
   private jobRepository = new JobRepository();
-  public queueService: QueueService;
-  public queue: Queue;
-  public jobQueue: QueueService;
 
-  constructor() {
-    this.queueService = new QueueService('trigger-handler');
-    this.queue = this.queueService.queue;
+  public standardQueue: Queue;
+  public workflowQueue: Queue;
 
-    this.jobQueue = new QueueService('standard');
+  constructor(private isClusterMode?: boolean) {
+    this.workflowQueue = new TestingQueueService(JobTopicNameEnum.WORKFLOW).queue;
+    this.standardQueue = new TestingQueueService(JobTopicNameEnum.STANDARD).queue;
   }
 
   public async awaitParsingEvents() {
     let waitingCount = 0;
     let parsedEvents = 0;
+
+    let waitingStandardJobsCount = 0;
+    let activeStandardJobsCount = 0;
+
     do {
-      waitingCount = await this.queue.getWaitingCount();
-      parsedEvents = await this.queue.getActiveCount();
-    } while (parsedEvents > 0 || waitingCount > 0);
+      waitingCount = await this.workflowQueue.getWaitingCount();
+      parsedEvents = await this.workflowQueue.getActiveCount();
+
+      waitingStandardJobsCount = await this.standardQueue.getWaitingCount();
+      activeStandardJobsCount = await this.standardQueue.getActiveCount();
+    } while (parsedEvents > 0 || waitingCount > 0 || waitingStandardJobsCount > 0 || activeStandardJobsCount > 0);
   }
 
   public async awaitRunningJobs({
@@ -41,15 +48,15 @@ export class JobsService {
     let waitingCount = 0;
     let parsedEvents = 0;
 
-    let waitingCountJobs = 0;
-    let activeCountJobs = 0;
+    let waitingStandardJobsCount = 0;
+    let activeStandardJobsCount = 0;
 
     do {
-      waitingCount = await this.queue.getWaitingCount();
-      parsedEvents = await this.queue.getActiveCount();
+      waitingCount = await this.workflowQueue.getWaitingCount();
+      parsedEvents = await this.workflowQueue.getActiveCount();
 
-      waitingCountJobs = await this.jobQueue.queue.getWaitingCount();
-      activeCountJobs = await this.jobQueue.queue.getActiveCount();
+      waitingStandardJobsCount = await this.standardQueue.getWaitingCount();
+      activeStandardJobsCount = await this.standardQueue.getActiveCount();
 
       runningJobs = await this.jobRepository.count({
         _organizationId: organizationId,
@@ -62,8 +69,8 @@ export class JobsService {
         },
       });
     } while (
-      waitingCountJobs > 0 ||
-      activeCountJobs > 0 ||
+      waitingStandardJobsCount > 0 ||
+      activeStandardJobsCount > 0 ||
       parsedEvents > 0 ||
       waitingCount > 0 ||
       runningJobs > unfinishedJobs

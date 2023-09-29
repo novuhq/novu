@@ -32,9 +32,9 @@ export function CachedQuery({ builder }: { builder: (...args) => string }) {
         }
       } catch (err) {
         Logger.error(
+          err,
           `An error has occurred when extracting "key: ${cacheKey}" in "method: ${methodName}"`,
-          LOG_CONTEXT,
-          err
+          LOG_CONTEXT
         );
       }
 
@@ -44,9 +44,9 @@ export function CachedQuery({ builder }: { builder: (...args) => string }) {
         await cacheService.setQuery(cacheKey, JSON.stringify(response));
       } catch (err) {
         Logger.error(
-          `An error has occurred when inserting "key: ${cacheKey}" in "method: ${methodName}" with "value: ${response}"`,
-          LOG_CONTEXT,
-          err
+          err,
+          `An error has occurred when inserting key: ${cacheKey} in method: ${methodName}`,
+          LOG_CONTEXT
         );
       }
 

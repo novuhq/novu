@@ -6,6 +6,7 @@ import {
   SubscriberRepository,
   MessageEntity,
   IntegrationEntity,
+  TenantRepository,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -19,12 +20,13 @@ import {
   DetailEnum,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-  GetDecryptedIntegrations,
-  GetDecryptedIntegrationsCommand,
+  SelectIntegration,
   CompileTemplate,
   CompileTemplateCommand,
   PushFactory,
+  GetNovuProviderCredentials,
 } from '@novu/application-generic';
+import type { IPushOptions } from '@novu/stateless';
 
 import { CreateLog } from '../../../shared/logs';
 import { SendMessageCommand } from './send-message.command';
@@ -38,17 +40,21 @@ export class SendMessagePush extends SendMessageBase {
   constructor(
     protected subscriberRepository: SubscriberRepository,
     protected messageRepository: MessageRepository,
+    protected tenantRepository: TenantRepository,
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
-    protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
+    protected selectIntegration: SelectIntegration,
+    protected getNovuProviderCredentials: GetNovuProviderCredentials
   ) {
     super(
       messageRepository,
       createLogUsecase,
       createExecutionDetails,
       subscriberRepository,
-      getDecryptedIntegrationsUsecase
+      tenantRepository,
+      selectIntegration,
+      getNovuProviderCredentials
     );
   }
 
@@ -66,13 +72,17 @@ export class SendMessagePush extends SendMessageBase {
 
     const pushChannel: NotificationStepEntity = command.step;
 
+    const stepData: IPushOptions['step'] = {
+      digest: !!command.events?.length,
+      events: command.events,
+      total_count: command.events?.length,
+    };
+    const tenant = await this.handleTenantExecution(command.job);
+
     const data = {
       subscriber: subscriber,
-      step: {
-        digest: !!command.events?.length,
-        events: command.events,
-        total_count: command.events?.length,
-      },
+      step: stepData,
+      ...(tenant && { tenant }),
       ...command.payload,
     };
     let content = '';
@@ -128,17 +138,17 @@ export class SendMessagePush extends SendMessageBase {
         continue;
       }
 
-      const integration = await this.getIntegration(
-        GetDecryptedIntegrationsCommand.create({
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          channelType: ChannelTypeEnum.PUSH,
-          providerId: channel.providerId,
-          findOne: true,
-          active: true,
-          userId: command.userId,
-        })
-      );
+      const integration = await this.getIntegration({
+        id: channel._integrationId,
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        channelType: ChannelTypeEnum.PUSH,
+        providerId: channel.providerId,
+        userId: command.userId,
+        filterData: {
+          tenant: command.job.tenant,
+        },
+      });
 
       if (!integration) {
         await this.createExecutionDetails.execute(
@@ -155,16 +165,20 @@ export class SendMessagePush extends SendMessageBase {
         continue;
       }
 
+      await this.sendSelectedIntegrationExecution(command.job, integration);
+
       const overrides = command.overrides[integration.providerId] || {};
 
       await this.sendMessage(
+        subscriber,
         integration,
         channel.credentials.deviceTokens,
         title,
         content,
         command,
         command.payload,
-        overrides
+        overrides,
+        stepData
       );
     }
   }
@@ -183,13 +197,15 @@ export class SendMessagePush extends SendMessageBase {
   }
 
   private async sendMessage(
+    subscriber: IPushOptions['subscriber'],
     integration: IntegrationEntity,
     target: string[],
     title: string,
     content: string,
     command: SendMessageCommand,
     payload: object,
-    overrides: object
+    overrides: object,
+    step: IPushOptions['step']
   ) {
     const message: MessageEntity = await this.messageRepository.create({
       _notificationId: command.notificationId,
@@ -235,6 +251,8 @@ export class SendMessagePush extends SendMessageBase {
         content,
         payload,
         overrides,
+        subscriber,
+        step,
       });
 
       await this.createExecutionDetails.execute(
@@ -269,7 +287,7 @@ export class SendMessagePush extends SendMessageBase {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-          raw: JSON.stringify(e),
+          raw: JSON.stringify(e) !== JSON.stringify({}) ? JSON.stringify(e) : JSON.stringify(e.message),
         })
       );
 

@@ -16,4 +16,5 @@ export type BuilderFieldOperator =
   | 'NOT_BETWEEN'
   | 'LIKE'
   | 'NOT_LIKE'
-  | 'IN';
+  | 'IN'
+  | 'IS_DEFINED';

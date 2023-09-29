@@ -15,6 +15,7 @@ const integrationSchema = new Schema<IntegrationDBModel>(
     _organizationId: {
       type: Schema.Types.ObjectId,
       ref: 'Organization',
+      index: true,
     },
     providerId: Schema.Types.String,
     channel: Schema.Types.String,
@@ -26,7 +27,7 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       password: Schema.Types.String,
       host: Schema.Types.String,
       port: Schema.Types.String,
-      secure: Schema.Types.String,
+      secure: Schema.Types.Boolean,
       region: Schema.Types.String,
       accountSid: Schema.Types.String,
       messageProfileId: Schema.Types.String,
@@ -44,12 +45,39 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       tlsOptions: Schema.Types.Mixed,
       redirectUrl: Schema.Types.String,
       hmac: Schema.Types.Boolean,
+      ipPoolName: Schema.Types.String,
     },
-
     active: {
       type: Schema.Types.Boolean,
       default: false,
     },
+    name: Schema.Types.String,
+    identifier: Schema.Types.String,
+    priority: {
+      type: Schema.Types.Number,
+      default: 0,
+    },
+    primary: {
+      type: Schema.Types.Boolean,
+      default: false,
+    },
+    conditions: [
+      {
+        isNegated: Schema.Types.Boolean,
+        type: {
+          type: Schema.Types.String,
+        },
+        value: Schema.Types.String,
+        children: [
+          {
+            field: Schema.Types.String,
+            value: Schema.Types.Mixed,
+            operator: Schema.Types.String,
+            on: Schema.Types.String,
+          },
+        ],
+      },
+    ],
   },
   schemaOptions
 );

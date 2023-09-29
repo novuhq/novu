@@ -7,13 +7,19 @@ export class OrganizationService {
 
   private memberRepository = new MemberRepository();
 
-  async createOrganization() {
-    const organization = await this.organizationRepository.create({
+  async createOrganization(options?: Parameters<OrganizationRepository['create']>[0]) {
+    if (options) {
+      return await this.organizationRepository.create({
+        logo: faker.image.avatar(),
+        name: faker.company.companyName(),
+        ...options,
+      });
+    }
+
+    return await this.organizationRepository.create({
       logo: faker.image.avatar(),
       name: faker.company.companyName(),
     });
-
-    return organization;
   }
 
   async addMember(organizationId: string, userId: string) {
@@ -21,6 +27,12 @@ export class OrganizationService {
       _userId: userId,
       roles: [MemberRoleEnum.ADMIN],
       memberStatus: MemberStatusEnum.ACTIVE,
+    });
+  }
+
+  async getOrganization(organizationId: string) {
+    return await this.organizationRepository.findOne({
+      _id: organizationId,
     });
   }
 }

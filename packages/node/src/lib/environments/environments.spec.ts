@@ -84,19 +84,4 @@ describe('test use of novus node package - Environments class', () => {
       '/environments/api-keys/regenerate'
     );
   });
-
-  test('should update widget setting correctly', async () => {
-    mockedAxios.put.mockResolvedValue({});
-    await novu.environments.updateWidget({
-      notificationCenterEncryption: true,
-    });
-
-    expect(mockedAxios.put).toHaveBeenCalled();
-    expect(mockedAxios.put).toHaveBeenCalledWith(
-      '/environments/widget/settings',
-      {
-        notificationCenterEncryption: true,
-      }
-    );
-  });
 });

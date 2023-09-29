@@ -3,7 +3,7 @@ import { ChannelTypeEnum, PreviousStepTypeEnum } from '@novu/shared';
 import { Controller, useFieldArray } from 'react-hook-form';
 import { Select } from '../../../design-system';
 import { Trash } from '../../../design-system/icons';
-import { channels } from '../shared/channels';
+import { channels } from '../../../utils/channels';
 import { DeleteStepButton } from './FilterModal.styles';
 
 export const PreviousStepFiltersForm = ({

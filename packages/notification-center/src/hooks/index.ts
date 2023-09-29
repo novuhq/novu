@@ -13,3 +13,4 @@ export * from './useFeedUnseenCount';
 export * from './useFetchUserPreferences';
 export * from './useMarkNotificationsAs';
 export * from './useRemoveNotification';
+export * from './useRemoveAllNotifications';

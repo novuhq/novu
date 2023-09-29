@@ -13,7 +13,7 @@ import { UnseenBadge } from '../../UnseenBadge';
 
 export function Header({ onCogClick }: { onCogClick?: () => void }) {
   const [allRead, setAllRead] = useState<boolean>(true);
-  const { markAllNotificationsAsReadByFeed, notifications, unseenCount } = useNotifications();
+  const { markAllNotificationsAsRead, notifications, unseenCount } = useNotifications();
   const { theme } = useNovuTheme();
   const { tabs, showUserPreferences } = useContext<INotificationCenterContext>(NotificationCenterContext);
   const { t } = useTranslations();
@@ -49,9 +49,10 @@ export function Header({ onCogClick }: { onCogClick?: () => void }) {
             markAsReadClassName(!allRead, theme.header?.markAllAsReadButtonColor),
             css(headerMarkAsReadStyles)
           )}
-          onClick={markAllNotificationsAsReadByFeed}
+          onClick={markAllNotificationsAsRead}
           role="button"
           tabIndex={0}
+          data-test-id="notifications-header-mark-all-as-read"
         >
           {t('markAllAsRead')}
         </div>

@@ -19,18 +19,6 @@ export class UpdateSubscriberOnlineFlag {
     };
   }
 
-  private async trackIsOnlineUpdate(command: UpdateSubscriberOnlineFlagCommand, subscriber: SubscriberEntity) {
-    const admin = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
-    if (admin) {
-      this.analyticsService.track('Update online flag - [Subscriber]', admin._userId, {
-        _organizationId: command.organizationId,
-        _environmentId: command.environmentId,
-        _subscriberId: subscriber._id,
-        ...this.getUpdatedFields(command.isOnline),
-      });
-    }
-  }
-
   async execute(command: UpdateSubscriberOnlineFlagCommand) {
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
     if (!subscriber) throw new NotFoundException(`Subscriber not found`);
@@ -41,7 +29,6 @@ export class UpdateSubscriberOnlineFlag {
         $set: this.getUpdatedFields(command.isOnline),
       }
     );
-    this.trackIsOnlineUpdate(command, subscriber);
 
     return (await this.subscriberRepository.findBySubscriberId(
       command.environmentId,

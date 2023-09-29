@@ -6,12 +6,12 @@ import { INestApplication, Logger, NestInterceptor, ValidationPipe } from '@nest
 import { NestFactory } from '@nestjs/core';
 import * as bodyParser from 'body-parser';
 import * as Sentry from '@sentry/node';
-import { BullMqService } from '@novu/application-generic';
-import { getErrorInterceptor, Logger as PinoLogger } from '@novu/application-generic';
+import { BullMqService, getErrorInterceptor, Logger as PinoLogger } from '@novu/application-generic';
 
 import { AppModule } from './app.module';
 import { ResponseInterceptor } from './app/shared/response.interceptor';
 import { validateEnv } from './config/env-validator';
+import { prepareAppInfra, startAppInfra } from './app/workflow/services/cold-start.service';
 import * as packageJson from '../package.json';
 
 const extendedBodySizeRoutes = ['/v1/events', '/v1/notification-templates', '/v1/layouts'];
@@ -39,6 +39,8 @@ export async function bootstrap(): Promise<INestApplication> {
 
   app.useLogger(app.get(PinoLogger));
   app.flushLogs();
+
+  await prepareAppInfra(app);
 
   if (process.env.SENTRY_DSN) {
     app.use(Sentry.Handlers.requestHandler());
@@ -70,6 +72,8 @@ export async function bootstrap(): Promise<INestApplication> {
   Logger.log('BOOTSTRAPPED SUCCESSFULLY');
 
   await app.listen(process.env.PORT);
+
+  await startAppInfra(app);
 
   Logger.log(`Started application in NODE_ENV=${process.env.NODE_ENV} on port ${process.env.PORT}`);
 

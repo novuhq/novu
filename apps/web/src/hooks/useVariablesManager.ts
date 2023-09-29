@@ -8,7 +8,7 @@ import { IForm, ITemplates } from '../pages/templates/components/formTypes';
 export const useVariablesManager = (index: number, contents: string[]) => {
   const { watch, control, getValues } = useFormContext<IForm>();
   const variablesArray = useFieldArray({ control, name: `steps.${index}.template.variables` });
-  const variableArray = watch(`steps.${index}.template.variables`, []);
+  const variableArray = watch(`steps.${index}.template.variables`);
 
   const getTextContent = useCallback(
     ({ templateToParse, fields }: { templateToParse?: ITemplates; fields: string[] }): string => {
@@ -62,6 +62,7 @@ export const useVariablesManager = (index: number, contents: string[]) => {
     } catch (e) {
       return;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [textContent, variableArray]);
 
   return variablesArray;

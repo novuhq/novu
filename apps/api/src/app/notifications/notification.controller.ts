@@ -53,9 +53,14 @@ export class NotificationsController {
       templatesQuery = Array.isArray(query.templates) ? query.templates : [query.templates];
     }
 
-    let emailsQuery: string[] | null = null;
+    let emailsQuery: string[] = [];
     if (query.emails) {
       emailsQuery = Array.isArray(query.emails) ? query.emails : [query.emails];
+    }
+
+    let subscribersQuery: string[] = [];
+    if (query.subscriberIds) {
+      subscribersQuery = Array.isArray(query.subscriberIds) ? query.subscriberIds : [query.subscriberIds];
     }
 
     return this.getActivityFeedUsecase.execute(
@@ -68,6 +73,7 @@ export class NotificationsController {
         templates: templatesQuery,
         emails: emailsQuery,
         search: query.search,
+        subscriberIds: subscribersQuery,
         transactionId: query.transactionId,
       })
     );

@@ -35,7 +35,7 @@ export const TemplateSettings = () => {
       await deleteTemplateById(templateId);
       setIsDeleting(false);
       setToDelete(false);
-      navigate(ROUTES.TEMPLATES);
+      navigate(ROUTES.WORKFLOWS);
     } catch (e: any) {
       setIsDeleting(false);
       setIsError(e?.message || 'Unknown error');
@@ -56,10 +56,8 @@ export const TemplateSettings = () => {
     <SubPageWrapper title="Workflow Settings">
       <WorkflowSettingsTabs />
       <NotificationSettingsForm trigger={trigger} />
-
-      <Group position="right">
+      <Group position="right" mt={'auto'}>
         <DeleteNotificationButton
-          mt={48}
           variant="outline"
           disabled={readonly}
           data-test-id="delete-notification-button"

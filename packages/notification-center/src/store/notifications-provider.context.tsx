@@ -1,12 +1,14 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import type { IStoreQuery } from '@novu/client';
+import React, { useCallback, useMemo } from 'react';
 import type { IMessage } from '@novu/shared';
 
 import { NotificationsContext } from './notifications.context';
 import type { IStore } from '../shared/interfaces';
-import { useFetchNotifications, useRemoveNotification, useUnseenCount } from '../hooks';
+import { useFetchNotifications, useRemoveNotification, useRemoveAllNotifications, useUnseenCount } from '../hooks';
 import { useMarkNotificationsAs } from '../hooks';
-import { useMarkNotificationsAsReadByFeed } from '../hooks/useMarkNotificationAsReadByFeed';
+import { useMarkNotificationsAsRead } from '../hooks/useMarkNotificationAsRead';
+import { useMarkNotificationsAsSeen } from '../hooks/useMarkNotificationAsSeen';
+import { useStore } from '../hooks/useStore';
+import { StoreProvider } from './store-provider.context';
 
 const DEFAULT_STORES = [{ storeId: 'default_store' }];
 
@@ -17,17 +19,15 @@ export function NotificationsProvider({
   children: React.ReactNode;
   stores?: IStore[];
 }) {
-  const firstStore = stores[0];
-  const [storeQuery, setStoreQuery] = useState<IStoreQuery>(() => firstStore.query ?? {});
-  const [storeId, setStoreId] = useState(firstStore.storeId ?? 'default_store');
-  const setStore = useCallback(
-    (newStoreId: string) => {
-      const foundQuery = stores?.find((store) => store.storeId === newStoreId)?.query || {};
-      setStoreId(newStoreId);
-      setStoreQuery(foundQuery);
-    },
-    [stores, setStoreId, setStoreQuery]
+  return (
+    <StoreProvider stores={stores}>
+      <NotificationsProviderInternal>{children}</NotificationsProviderInternal>
+    </StoreProvider>
   );
+}
+
+function NotificationsProviderInternal({ children }: { children: React.ReactNode }) {
+  const { storeQuery, storeId, stores, setStore } = useStore();
   const {
     data: notificationsPages,
     hasNextPage,
@@ -40,7 +40,9 @@ export function NotificationsProvider({
   const { data: unseenCountData } = useUnseenCount();
   const { markNotificationsAs } = useMarkNotificationsAs();
   const { removeNotification } = useRemoveNotification();
-  const { markNotificationsAsReadByFeed } = useMarkNotificationsAsReadByFeed();
+  const { removeAllNotifications } = useRemoveAllNotifications();
+  const { markNotificationsAsRead } = useMarkNotificationsAsRead();
+  const { markNotificationsAsSeen } = useMarkNotificationsAsSeen();
 
   const markNotificationAsRead = useCallback(
     (messageId: string) => markNotificationsAs({ messageId, seen: true, read: true }),
@@ -52,17 +54,24 @@ export function NotificationsProvider({
     [markNotificationsAs]
   );
   const removeMessage = useCallback((messageId: string) => removeNotification({ messageId }), [removeNotification]);
+  const removeAllMessages = useCallback(
+    (feedId?: string) => removeAllNotifications({ feedId }),
+    [removeAllNotifications]
+  );
+  const markAllNotificationsAsRead = useCallback(() => {
+    markNotificationsAsRead({ feedId: storeQuery?.feedIdentifier });
+  }, [markNotificationsAsRead, storeQuery?.feedIdentifier]);
 
-  const markAllNotificationsAsReadByFeed = useCallback(() => {
-    markNotificationsAsReadByFeed({ feedId: storeQuery?.feedIdentifier });
-  }, [markNotificationsAsReadByFeed, storeQuery?.feedIdentifier]);
+  const markAllNotificationsAsSeen = useCallback(() => {
+    markNotificationsAsSeen({ feedId: storeQuery?.feedIdentifier });
+  }, [markNotificationsAsSeen, storeQuery?.feedIdentifier]);
 
   const markNotificationAsSeen = useCallback(
     (messageId: string) => markNotificationsAs({ messageId, seen: true, read: false }),
     [markNotificationsAs]
   );
 
-  const markAllNotificationsAsRead = useCallback(() => {
+  const markFetchedNotificationsAsRead = useCallback(() => {
     if (!notificationsPages) {
       return;
     }
@@ -78,7 +87,7 @@ export function NotificationsProvider({
     }
   }, [markNotificationsAs, notificationsPages]);
 
-  const markAllNotificationsAsSeen = useCallback(() => {
+  const markFetchedNotificationsAsSeen = useCallback(() => {
     if (!notificationsPages) {
       return;
     }
@@ -103,6 +112,7 @@ export function NotificationsProvider({
 
   const contextValue = useMemo(
     () => ({
+      storeQuery,
       storeId,
       stores,
       unseenCount: unseenCountData?.count ?? 0,
@@ -117,12 +127,15 @@ export function NotificationsProvider({
       markNotificationAsSeen,
       markNotificationAsRead,
       markNotificationAsUnRead,
+      markFetchedNotificationsAsRead,
+      markFetchedNotificationsAsSeen,
+      removeMessage,
+      removeAllMessages,
       markAllNotificationsAsRead,
       markAllNotificationsAsSeen,
-      removeMessage,
-      markAllNotificationsAsReadByFeed,
     }),
     [
+      storeQuery,
       storeId,
       stores,
       unseenCountData?.count,
@@ -137,10 +150,12 @@ export function NotificationsProvider({
       markNotificationAsSeen,
       markNotificationAsRead,
       markNotificationAsUnRead,
+      markFetchedNotificationsAsRead,
+      markFetchedNotificationsAsSeen,
+      removeMessage,
+      removeAllMessages,
       markAllNotificationsAsRead,
       markAllNotificationsAsSeen,
-      removeMessage,
-      markAllNotificationsAsReadByFeed,
     ]
   );
 

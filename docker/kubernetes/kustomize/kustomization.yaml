@@ -2,6 +2,9 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
+  - mongodb-volume.yaml
+  - mongodb-deployment.yaml
+  - mongodb-service.yaml
   - api-deployment.yaml
   - api-service.yaml
   - embed-deployment.yaml
@@ -16,6 +19,7 @@ resources:
   - ws-service.yaml
   - worker-deployment.yaml
   - worker-service.yaml
+ 
 
 # namespace
 # Adds namespace to all resources.

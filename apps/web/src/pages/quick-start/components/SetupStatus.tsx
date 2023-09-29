@@ -1,43 +1,41 @@
-import { Group, Stack, useMantineColorScheme, useMantineTheme } from '@mantine/core';
+import { Group, Stack } from '@mantine/core';
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 import styled from '@emotion/styled';
 import { Button, colors, Text } from '../../../design-system';
-import { ROUTES } from '../../../constants/routes.enum';
-import { OnBoardingAnalyticsEnum } from '../consts';
-import { useSegment } from '../../../components/providers/SegmentProvider';
 import { Label } from '../../../design-system/typography/label';
+import { When } from '../../../components/utils/When';
+import { useDataRef } from '../../../hooks';
 
 export function SetupStatus({
   appInitialized,
-  navigatePath,
-  framework,
+  onDone,
+  onConfigureLater,
 }: {
   appInitialized: boolean;
-  navigatePath: string;
-  framework: string | undefined;
+  onDone: () => void;
+  onConfigureLater?: () => void;
 }) {
-  const navigate = useNavigate();
-  const segment = useSegment();
-
+  const onDoneRef = useDataRef(onDone);
   function handleConfigureLater() {
-    navigate(ROUTES.TEMPLATES);
-    segment.track(OnBoardingAnalyticsEnum.CONFIGURE_LATER_CLICK, { screen: 'framework instructions', framework });
+    if (!onConfigureLater) {
+      return;
+    }
+    onConfigureLater();
   }
 
   useEffect(() => {
     let timer;
     if (appInitialized) {
       timer = setTimeout(() => {
-        navigate(navigatePath);
+        onDoneRef.current();
       }, 1000);
     }
 
     return () => {
       clearTimeout(timer);
     };
-  }, [appInitialized]);
+  }, [onDoneRef, appInitialized]);
 
   return (
     <Stack>
@@ -48,15 +46,17 @@ export function SetupStatus({
         </TextStyled>
       </Stack>
 
-      <Group>
-        <Stack spacing={8}>
-          <TextStyled>Don't want to configure the In-App center now?</TextStyled>
-          <TextStyled>Configure it later in a notification workflow builder.</TextStyled>
-        </Stack>
-        <Button variant="outline" onClick={handleConfigureLater}>
-          Configure Later
-        </Button>
-      </Group>
+      <When truthy={onConfigureLater !== undefined && typeof onConfigureLater === 'function'}>
+        <Group spacing={128}>
+          <Stack spacing={8}>
+            <TextStyled>Don't want to configure the In-App center now?</TextStyled>
+            <TextStyled>Configure it later in a notification workflow builder.</TextStyled>
+          </Stack>
+          <Button variant="outline" onClick={handleConfigureLater}>
+            Configure Later
+          </Button>
+        </Group>
+      </When>
     </Stack>
   );
 }

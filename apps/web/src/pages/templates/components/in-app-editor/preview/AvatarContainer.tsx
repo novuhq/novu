@@ -106,7 +106,12 @@ const AvatarContainer = ({
         <Popover.Target>
           <span>
             <Tooltip disabled={readonly} label={<TooltipLabel />} position="left" opened={tooltipOpened}>
-              <AvatarWrapper onClick={handleAvatarPopover} dark={dark} readonly={readonly}>
+              <AvatarWrapper
+                data-test-id="choose-avatar-btn"
+                onClick={handleAvatarPopover}
+                dark={dark}
+                readonly={readonly}
+              >
                 <RenderAvatar actor={value} />
               </AvatarWrapper>
             </Tooltip>
@@ -164,6 +169,7 @@ const AvatarContainer = ({
             <Group position="center" spacing={20}>
               {systemIcons.map((icon) => (
                 <IconWrapper
+                  data-test-id={`avatar-icon-${icon.type}`}
                   iconColor={icon.iconColor}
                   containerBgColor={icon.containerBgColor}
                   onClick={() =>
@@ -203,7 +209,12 @@ function RenderAvatar({ actor }: { actor: IActor }) {
     const selectedIcon = systemIcons.filter((data) => data.type === actor.data);
 
     return selectedIcon.length > 0 ? (
-      <IconWrapper size={40} iconColor={selectedIcon[0].iconColor} containerBgColor={selectedIcon[0].containerBgColor}>
+      <IconWrapper
+        data-test-id={`avatar-icon-${selectedIcon[0].type}`}
+        size={40}
+        iconColor={selectedIcon[0].iconColor}
+        containerBgColor={selectedIcon[0].containerBgColor}
+      >
         {selectedIcon[0].icon}
       </IconWrapper>
     ) : (

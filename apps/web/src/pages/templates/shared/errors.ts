@@ -44,7 +44,7 @@ function findMessages(obj: object): string[] {
   return messages;
 }
 
-export function getStepErrors(index: number | string, errors: FieldErrors<IForm>): string[] {
+export function getStepErrors(index: number | string, errors?: FieldErrors<IForm>): string[] {
   if (errors?.steps) {
     const stepErrors = errors.steps[index]?.template;
 
@@ -59,28 +59,27 @@ export function getStepErrors(index: number | string, errors: FieldErrors<IForm>
       return findMessages(digestMetadataErrors);
     }
 
-    const delayMetadataErrors = errors.steps[index]?.digestMetadata;
+    const delayMetadataErrors = errors.steps[index]?.delayMetadata;
+
     if (delayMetadataErrors) {
       return findMessages(delayMetadataErrors);
-    }
-
-    const nameError = errors.steps[index]?.name;
-
-    if (nameError) {
-      return [nameError?.message];
     }
   }
 
   return [];
 }
 
-export function getFormattedStepErrors(index: number, errors: FieldErrors<IForm>): string {
+export function getFormattedStepErrors(index: number, errors?: FieldErrors<IForm>): string {
   return formatErrorMessage(getStepErrors(index, errors));
 }
 
 export function formatErrorMessage(errorsArray: string[]): string {
   const uniqueErrors = Array.from(new Set(errorsArray));
-  const arr1 = uniqueErrors.map((errMessage) => errMessage.replace('Required - ', ''));
+  if (uniqueErrors.length > 1) {
+    const combinedErrors = uniqueErrors.map((errMessage) => errMessage.replace(/(Message)|(is missing!)/g, ''));
 
-  return arr1.length ? 'Required - ' + arr1.join(', ') : '';
+    return combinedErrors.length ? 'Message ' + combinedErrors.join(' and ') + 'are missing!' : '';
+  }
+
+  return uniqueErrors.join('');
 }

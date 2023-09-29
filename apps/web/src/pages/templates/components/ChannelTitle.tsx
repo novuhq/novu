@@ -1,6 +1,6 @@
 import { Group } from '@mantine/core';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
-import { Bell, Chat, DigestGradient, Mail, Mobile, Sms, TimerGradient } from '../../../design-system/icons';
+import { Chat, DigestGradient, InApp, Mail, Mobile, Sms, TimerGradient } from '../../../design-system/icons';
 
 export const ChannelTitle = ({
   channel,
@@ -22,7 +22,7 @@ export const ChannelTitle = ({
   if (channel === StepTypeEnum.IN_APP || channel === ChannelTypeEnum.IN_APP) {
     return (
       <Group align="center" spacing={spacing}>
-        <Bell color={color} /> <span>In-App</span>
+        <InApp color={color} /> <span>In-App</span>
       </Group>
     );
   }

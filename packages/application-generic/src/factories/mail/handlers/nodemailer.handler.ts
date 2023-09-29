@@ -1,5 +1,4 @@
-import { ChannelTypeEnum } from '@novu/shared';
-import { ICredentials } from '@novu/dal';
+import { ChannelTypeEnum, ICredentials } from '@novu/shared';
 import { NodemailerProvider } from '@novu/nodemailer';
 import { BaseHandler } from './base.handler';
 

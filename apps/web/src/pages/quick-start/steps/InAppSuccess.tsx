@@ -21,7 +21,7 @@ export function InAppSuccess() {
   useEffect(() => {
     segment.track(OnBoardingAnalyticsEnum.IN_APP_SANDBOX_SUCCESS_VISIT, { flow: FlowTypeEnum.IN_APP, framework });
     currentOnboardingStep().set(location.pathname);
-  }, []);
+  }, [segment, framework, location.pathname]);
 
   return (
     <PageContainer
@@ -56,7 +56,7 @@ function ActionItem() {
     <Button
       variant="gradient"
       onClick={() => {
-        navigate(ROUTES.TEMPLATES_CREATE);
+        navigate(ROUTES.WORKFLOWS_CREATE);
       }}
     >
       Create a Workflow

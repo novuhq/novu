@@ -17,6 +17,10 @@ export class PromoteFeedChange {
     }
 
     if (!item) {
+      if (command.item.deleted) {
+        return;
+      }
+
       return this.feedRepository.create({
         name: command.item.name,
         identifier: command.item.name,

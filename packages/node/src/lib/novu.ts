@@ -11,6 +11,8 @@ import { Environments } from './environments/environments';
 import { Feeds } from './feeds/feeds';
 import { Topics } from './topics/topics';
 import { Integrations } from './integrations/integrations';
+import { Messages } from './messages/messages';
+import { Tenants } from './tenants/tenants';
 
 export class Novu extends EventEmitter {
   private readonly apiKey?: string;
@@ -25,6 +27,8 @@ export class Novu extends EventEmitter {
   readonly feeds: Feeds;
   readonly topics: Topics;
   readonly integrations: Integrations;
+  readonly messages: Messages;
+  readonly tenants: Tenants;
 
   constructor(apiKey: string, config?: INovuConfiguration) {
     super();
@@ -40,9 +44,6 @@ export class Novu extends EventEmitter {
     this.subscribers = new Subscribers(this.http);
     this.environments = new Environments(this.http);
     this.events = new Events(this.http);
-    this.trigger = this.events.trigger;
-    this.bulkTrigger = this.events.bulkTrigger;
-    this.broadcast = this.events.broadcast;
     this.changes = new Changes(this.http);
     this.layouts = new Layouts(this.http);
     this.notificationGroups = new NotificationGroups(this.http);
@@ -50,6 +51,12 @@ export class Novu extends EventEmitter {
     this.feeds = new Feeds(this.http);
     this.topics = new Topics(this.http);
     this.integrations = new Integrations(this.http);
+    this.messages = new Messages(this.http);
+    this.tenants = new Tenants(this.http);
+
+    this.trigger = this.events.trigger;
+    this.bulkTrigger = this.events.bulkTrigger;
+    this.broadcast = this.events.broadcast;
   }
 
   public trigger: typeof Events.prototype.trigger;
@@ -59,14 +66,14 @@ export class Novu extends EventEmitter {
   public broadcast: typeof Events.prototype.broadcast;
 
   private buildBackendUrl(config?: INovuConfiguration) {
-    const novuVersion = 'v1';
+    const novuApiVersion = 'v1';
 
     if (!config?.backendUrl) {
-      return `https://api.novu.co/${novuVersion}`;
+      return `https://api.novu.co/${novuApiVersion}`;
     }
 
     return config?.backendUrl.includes('novu.co/v')
       ? config?.backendUrl
-      : config?.backendUrl + `/${novuVersion}`;
+      : config?.backendUrl + `/${novuApiVersion}`;
   }
 }

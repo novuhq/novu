@@ -1,6 +1,5 @@
 import { ISmsOptions, ISmsProvider } from '@novu/stateless';
-import { ChannelTypeEnum } from '@novu/shared';
-import { ICredentials } from '@novu/dal';
+import { ChannelTypeEnum, ICredentials } from '@novu/shared';
 import { ISmsHandler } from '../interfaces';
 
 export abstract class BaseSmsHandler implements ISmsHandler {

@@ -1,6 +1,7 @@
 import * as mongoose from 'mongoose';
 import { Schema } from 'mongoose';
 import { ActorTypeEnum } from '@novu/shared';
+import * as mongooseDelete from 'mongoose-delete';
 
 import { schemaOptions } from '../schema-default.options';
 import { MessageTemplateDBModel } from './message-template.entity';
@@ -85,6 +86,8 @@ messageTemplateSchema.index({
   _organizationId: 1,
   'triggers.identifier': 1,
 });
+
+messageTemplateSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const MessageTemplate =

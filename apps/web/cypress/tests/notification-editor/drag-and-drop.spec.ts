@@ -7,7 +7,7 @@ describe('Workflow Editor - Drag and Drop', function () {
 
   it('should drag and drop channel', function () {
     cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
+      cy.visit('/workflows/create');
     });
     fillBasicNotificationDetails('Test drag and drop channel');
     goBack();
@@ -19,7 +19,7 @@ describe('Workflow Editor - Drag and Drop', function () {
 
   it('should not be able to drop when not on last node', function () {
     cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
+      cy.visit('/workflows/create');
     });
     fillBasicNotificationDetails('Test only drop on last node');
     goBack();
@@ -31,13 +31,13 @@ describe('Workflow Editor - Drag and Drop', function () {
 
   it('should add a step with plus button', function () {
     cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
+      cy.visit('/workflows/create');
     });
     fillBasicNotificationDetails('Test Plus Button');
     goBack();
     cy.getByTestId('button-add').click();
     cy.getByTestId('add-sms-node').click();
     cy.get('.react-flow__node').should('have.length', 3);
-    cy.get('.react-flow__node').first().should('contain', 'Trigger').next().should('contain', 'SMS');
+    cy.get('.react-flow__node').first().should('contain', 'Workflow trigger').next().should('contain', 'SMS');
   });
 });

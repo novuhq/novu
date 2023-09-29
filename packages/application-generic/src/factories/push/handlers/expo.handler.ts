@@ -1,7 +1,6 @@
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, ICredentials } from '@novu/shared';
 import { ExpoPushProvider } from '@novu/expo';
 import { BasePushHandler } from './base.handler';
-import { ICredentials } from '@novu/dal';
 
 export class ExpoHandler extends BasePushHandler {
   constructor() {

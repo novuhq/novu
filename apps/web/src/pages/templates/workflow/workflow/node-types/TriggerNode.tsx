@@ -2,15 +2,14 @@ import { StepTypeEnum } from '@novu/shared';
 import { memo, useState } from 'react';
 import { Handle, Position, useReactFlow } from 'react-flow-renderer';
 
-import { WorkflowNode } from './WorkflowNode';
-import { Check, TapeGradient } from '../../../../../design-system/icons';
-import { Stack, useMantineColorScheme } from '@mantine/core';
-import { colors, Tooltip } from '../../../../../design-system';
-import { useFormContext } from 'react-hook-form';
-import { IForm } from '../../../components/formTypes';
-import { When } from '../../../../../components/utils/When';
-import { createStyles } from '@mantine/core';
+import { createStyles, Stack, useMantineColorScheme } from '@mantine/core';
 import { useDidUpdate } from '@mantine/hooks';
+import { useFormContext } from 'react-hook-form';
+import { When } from '../../../../../components/utils/When';
+import { colors, Tooltip } from '../../../../../design-system';
+import { BoltOutlinedGradient, Check } from '../../../../../design-system/icons';
+import { IForm } from '../../../components/formTypes';
+import { WorkflowNode } from './WorkflowNode';
 
 const useStyles = createStyles(
   (
@@ -70,7 +69,7 @@ export default memo(({ selected }: { selected: boolean }) => {
   }, [isDirty]);
 
   return (
-    <div data-test-id={'node-triggerSelector'} style={{ pointerEvents: 'none' }}>
+    <div data-test-id={'node-triggerSelector'} style={{ pointerEvents: 'none', width: '100%' }}>
       <When truthy={!isDirty}>
         <Tooltip label="Workflow is saved">
           <div className={classes.savedIcon}>
@@ -88,10 +87,11 @@ export default memo(({ selected }: { selected: boolean }) => {
       </When>
       <WorkflowNode
         showDelete={false}
-        Icon={TapeGradient}
-        label={'Trigger'}
+        Icon={BoltOutlinedGradient}
+        label="Workflow trigger"
         active={selected}
         channelType={StepTypeEnum.TRIGGER}
+        subtitle="Notification call"
       />
       <Handle style={noChildStyle} type="source" id="a" position={Position.Bottom} />
     </div>

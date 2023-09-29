@@ -13,8 +13,8 @@ export const SpotLight = ({ children }) => {
     addItem([
       {
         id: 'navigate-templates',
-        title: 'Go to Notification Template',
-        onTrigger: () => navigate(ROUTES.TEMPLATES),
+        title: 'Go to Workflows',
+        onTrigger: () => navigate(ROUTES.WORKFLOWS),
         icon: <Bolt />,
       },
       {
@@ -76,7 +76,7 @@ export const SpotLight = ({ children }) => {
         icon: <Chat />,
       },
     ]);
-  }, []);
+  }, [navigate, addItem]);
 
   return (
     <SpotlightProvider limit={7} shortcut={['mod + K']} actions={items}>

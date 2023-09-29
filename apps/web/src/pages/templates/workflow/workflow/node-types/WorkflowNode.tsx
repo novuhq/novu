@@ -1,30 +1,33 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Popover as MantinePopover, createStyles, UnstyledButton } from '@mantine/core';
 import styled from '@emotion/styled';
-import { useFormContext } from 'react-hook-form';
-import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
-import { Text } from '../../../../../design-system/typography/text/Text';
-import { Switch } from '../../../../../design-system/switch/Switch';
-import { useStyles } from '../../../../../design-system/template-button/TemplateButton.styles';
-import { colors } from '../../../../../design-system/config';
-import { Trash } from '../../../../../design-system/icons';
-import { When } from '../../../../../components/utils/When';
-import { useActiveIntegrations, useEnvController, useIntegrationLimit } from '../../../../../hooks';
+import { Group, UnstyledButton, useMantineColorScheme } from '@mantine/core';
+import { ChannelTypeEnum, providers, StepTypeEnum } from '@novu/shared';
+import React, { useEffect, useState } from 'react';
 import { useViewport } from 'react-flow-renderer';
-import { getFormattedStepErrors } from '../../../shared/errors';
-import { Popover } from '../../../../../design-system/popover';
-import { Button } from '../../../../../design-system/button/Button';
-import { IntegrationsStoreModal } from '../../../../integrations/IntegrationsStoreModal';
-import { useSegment } from '../../../../../components/providers/SegmentProvider';
-import { TemplateEditorAnalyticsEnum } from '../../../constants';
+import { useFormContext } from 'react-hook-form';
 
-const CHANNEL_TYPE_TO_TEXT = {
-  [ChannelTypeEnum.IN_APP]: 'in-app',
-  [ChannelTypeEnum.EMAIL]: 'email',
-  [ChannelTypeEnum.SMS]: 'sms',
-  [ChannelTypeEnum.CHAT]: 'chat',
-  [ChannelTypeEnum.PUSH]: 'push',
-};
+import { useSegment } from '../../../../../components/providers/SegmentProvider';
+import { When } from '../../../../../components/utils/When';
+import { CONTEXT_PATH } from '../../../../../config';
+import { Switch } from '../../../../../design-system';
+import { Button } from '../../../../../design-system/button/Button';
+import { colors } from '../../../../../design-system/config';
+import { ProviderMissing, Trash } from '../../../../../design-system/icons';
+import { useStyles } from '../../../../../design-system/template-button/TemplateButton.styles';
+import { Text } from '../../../../../design-system/typography/text/Text';
+import {
+  useEnvController,
+  useGetPrimaryIntegration,
+  useHasActiveIntegrations,
+  useIsMultiProviderConfigurationEnabled,
+} from '../../../../../hooks';
+import { CHANNEL_TYPE_TO_STRING } from '../../../../../utils/channels';
+import { useSelectPrimaryIntegrationModal } from '../../../../integrations/components/multi-provider/useSelectPrimaryIntegrationModal';
+import { IntegrationsListModal } from '../../../../integrations/IntegrationsListModal';
+import { IntegrationsStoreModal } from '../../../../integrations/IntegrationsStoreModal';
+import { TemplateEditorAnalyticsEnum } from '../../../constants';
+import { getFormattedStepErrors } from '../../../shared/errors';
+import { DisplayPrimaryProviderIcon } from '../../DisplayPrimaryProviderIcon';
+import { NodeErrorPopover } from '../../NodeErrorPopover';
 
 interface ITemplateButtonProps {
   Icon: React.FC<any>;
@@ -45,23 +48,8 @@ interface ITemplateButtonProps {
   onDelete?: () => void;
   dragging?: boolean;
   disabled?: boolean;
+  subtitle?: string | React.ReactNode;
 }
-
-const usePopoverStyles = createStyles(() => ({
-  dropdown: {
-    padding: '12px 15px 14px',
-    backgroundColor: colors.error,
-    color: colors.white,
-    border: 'none',
-    maxWidth: 300,
-  },
-  arrow: {
-    backgroundColor: colors.error,
-    width: '7px',
-    height: '7px',
-    margin: '0px',
-  },
-}));
 
 const MENU_CLICK_OUTSIDE_EVENTS = ['click', 'mousedown', 'touchstart'];
 
@@ -83,36 +71,38 @@ export function WorkflowNode({
   onDelete = () => {},
   dragging = false,
   disabled: initDisabled,
+  subtitle,
 }: ITemplateButtonProps) {
   const segment = useSegment();
-  const { readonly: readonlyEnv } = useEnvController();
-  const { integrations } = useActiveIntegrations({ refetchOnMount: false, refetchOnWindowFocus: false });
+  const { readonly: readonlyEnv, environment } = useEnvController();
   const { cx, classes, theme } = useStyles();
   const [popoverOpened, setPopoverOpened] = useState(false);
   const [disabled, setDisabled] = useState(initDisabled);
   const [isIntegrationsModalVisible, setIntegrationsModalVisible] = useState(false);
   const disabledColor = disabled ? { color: theme.colorScheme === 'dark' ? colors.B40 : colors.B70 } : {};
   const disabledProp = disabled ? { disabled: disabled } : {};
-  const { classes: popoverClasses } = usePopoverStyles();
+
   const viewport = useViewport();
   const channelKey = tabKey ?? '';
-  const { isLimitReached } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
   const [hover, setHover] = useState(false);
+  const isMultiProviderConfigurationEnabled = useIsMultiProviderConfigurationEnabled();
+  const { colorScheme } = useMantineColorScheme();
+  const { openModal: openSelectPrimaryIntegrationModal, SelectPrimaryIntegrationModal } =
+    useSelectPrimaryIntegrationModal();
 
-  const hasActiveIntegration = useMemo(() => {
-    const isChannelStep = [StepTypeEnum.EMAIL, StepTypeEnum.PUSH, StepTypeEnum.SMS, StepTypeEnum.CHAT].includes(
-      channelType
-    );
-    const isEmailStep = channelType === StepTypeEnum.EMAIL;
+  const { hasActiveIntegration, isChannelStep, activeIntegrationsByEnv } = useHasActiveIntegrations({
+    filterByEnv: true,
+    channelType: channelType as unknown as ChannelTypeEnum,
+  });
+  const { primaryIntegration, isPrimaryStep } = useGetPrimaryIntegration({
+    filterByEnv: true,
+    channelType: channelType as unknown as ChannelTypeEnum,
+  });
 
-    if (isChannelStep) {
-      const isActive = !!integrations?.some((integration) => integration.channel === tabKey);
-
-      return isActive || (isEmailStep && !isLimitReached);
-    }
-
-    return true;
-  }, [integrations, tabKey, isLimitReached]);
+  const onIntegrationModalClose = () => {
+    setIntegrationsModalVisible(false);
+    setPopoverOpened(false);
+  };
 
   const {
     watch,
@@ -135,7 +125,15 @@ export function WorkflowNode({
     });
 
     return () => subscription.unsubscribe();
-  }, [watch]);
+  }, [watch, id]);
+
+  const providerIntegration = isPrimaryStep
+    ? primaryIntegration
+    : activeIntegrationsByEnv?.find((integration) => integration.channel === channelKey)?.providerId;
+
+  const provider = providers.find((_provider) => _provider.id === providerIntegration);
+
+  const logoSrc = provider && `${CONTEXT_PATH}/static/images/providers/${colorScheme}/square/${provider?.id}.svg`;
 
   return (
     <>
@@ -152,13 +150,30 @@ export function WorkflowNode({
         data-test-id={testId}
         className={cx(classes.button, { [classes.active]: active })}
       >
-        <ButtonWrapper>
+        <Group w="100%" noWrap>
           <LeftContainerWrapper>
-            <IconWrapper className={classes.linkIcon}>{Icon ? <Icon {...disabledProp} /> : null}</IconWrapper>
+            <DisplayPrimaryProviderIcon
+              Icon={Icon}
+              disabledProp={disabledProp}
+              providerIntegration={providerIntegration}
+              isChannelStep={isChannelStep}
+              logoSrc={logoSrc}
+            />
+
             <StyledContentWrapper>
-              <Text {...disabledColor} weight="bold">
+              <Text {...disabledColor} weight="bold" size={16} data-test-id="workflow-node-label">
                 {label}
               </Text>
+              {Object.keys(stepErrorContent).length > 0 && (
+                <Text {...disabledColor} size={12} color={colors.error} rows={1} data-test-id="workflow-node-error">
+                  {stepErrorContent}
+                </Text>
+              )}
+              {!(Object.keys(stepErrorContent).length > 0) && subtitle && (
+                <Text {...disabledColor} size={12} color={colors.B60} rows={1} data-test-id="workflow-node-subtitle">
+                  {subtitle}
+                </Text>
+              )}
             </StyledContentWrapper>
           </LeftContainerWrapper>
 
@@ -186,35 +201,72 @@ export function WorkflowNode({
               </UnstyledButton>
             </When>
           </ActionWrapper>
-        </ButtonWrapper>
+        </Group>
+
         {!hasActiveIntegration && (
-          <Popover
+          <NodeErrorPopover
             opened={popoverOpened}
             withinPortal
             transition="rotate-left"
             transitionDuration={250}
             offset={theme.spacing.xs}
             target={<ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />}
-            title="Connect provider"
-            titleGradient="red"
-            description={`Please configure a ${CHANNEL_TYPE_TO_TEXT[channelKey]} provider to send notifications over this channel`}
+            titleIcon={<ProviderMissing />}
+            title={`${CHANNEL_TYPE_TO_STRING[channelKey]} provider is not connected`}
             content={
-              <ConfigureProviderButton
+              'Please configure or activate a provider instance for the ' +
+              CHANNEL_TYPE_TO_STRING[channelKey] +
+              ' channel to send notifications over this node'
+            }
+            actionItem={
+              <Button
                 onClick={() => {
                   segment.track(TemplateEditorAnalyticsEnum.CONFIGURE_PROVIDER_POPOVER_CLICK);
                   setIntegrationsModalVisible(true);
                   setPopoverOpened(false);
                 }}
               >
-                Configure
-              </ConfigureProviderButton>
+                Open integration store
+              </Button>
+            }
+          />
+        )}
+        {hasActiveIntegration && !primaryIntegration && isPrimaryStep && (
+          <NodeErrorPopover
+            opened={popoverOpened}
+            withinPortal
+            transition="rotate-left"
+            transitionDuration={250}
+            offset={theme.spacing.xs}
+            target={<ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />}
+            titleIcon={<ProviderMissing />}
+            title="Select primary provider"
+            content={
+              'You have multiple provider instances for' +
+              CHANNEL_TYPE_TO_STRING[channelKey] +
+              `in the ${environment?.name} environment. Please select the primary instance.
+            `
+            }
+            actionItem={
+              <Button
+                onClick={() => {
+                  segment.track(TemplateEditorAnalyticsEnum.CONFIGURE_PROVIDER_POPOVER_CLICK);
+                  openSelectPrimaryIntegrationModal({
+                    environmentId: environment?._id,
+                    channelType: tabKey,
+                    onClose: () => {},
+                  });
+                  setPopoverOpened(false);
+                }}
+              >
+                Select primary provider
+              </Button>
             }
           />
         )}
         {hasActiveIntegration && stepErrorContent && (
-          <MantinePopover
+          <NodeErrorPopover
             withinPortal
-            classNames={popoverClasses}
             withArrow
             opened={popoverOpened && Object.keys(stepErrorContent).length > 0}
             transition="rotate-left"
@@ -224,33 +276,33 @@ export function WorkflowNode({
             zIndex={4}
             positionDependencies={[dragging, viewport]}
             clickOutsideEvents={MENU_CLICK_OUTSIDE_EVENTS}
-          >
-            <MantinePopover.Target>
-              <ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />
-            </MantinePopover.Target>
-            <MantinePopover.Dropdown>
-              <Text rows={1} color={colors.white}>
-                {stepErrorContent || 'Something is missing here'}
-              </Text>
-            </MantinePopover.Dropdown>
-          </MantinePopover>
+            target={<ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />}
+            title={stepErrorContent || 'Something is missing here'}
+            content={
+              `Please specify a ${(stepErrorContent as string)
+                .replace(/(is|are) missing!/g, '')
+                .toLowerCase()} to prevent sending empty notifications.` || 'Something is missing here'
+            }
+          />
         )}
       </UnstyledButtonStyled>
-      <IntegrationsStoreModal
-        openIntegration={isIntegrationsModalVisible}
-        closeIntegration={() => {
-          setIntegrationsModalVisible(false);
-          setPopoverOpened(false);
-        }}
-        scrollTo={tabKey}
-      />
+      {isMultiProviderConfigurationEnabled ? (
+        <IntegrationsListModal
+          isOpen={isIntegrationsModalVisible}
+          onClose={onIntegrationModalClose}
+          scrollTo={tabKey}
+        />
+      ) : (
+        <IntegrationsStoreModal
+          openIntegration={isIntegrationsModalVisible}
+          closeIntegration={onIntegrationModalClose}
+          scrollTo={tabKey}
+        />
+      )}
+      <SelectPrimaryIntegrationModal />
     </>
   );
 }
-
-const ConfigureProviderButton = styled(Button)`
-  margin-top: 16px;
-`;
 
 const ErrorCircle = styled.div<{ dark: boolean }>`
   width: 11px;
@@ -264,18 +316,6 @@ const ErrorCircle = styled.div<{ dark: boolean }>`
   border: 3px solid ${({ dark }) => (dark ? colors.B15 : 'white')};
 `;
 
-const IconWrapper = styled.div`
-  padding-right: 15px;
-  @media screen and (max-width: 1400px) {
-    padding-right: 5px;
-
-    svg {
-      width: 20px;
-      height: 20px;
-    }
-  }
-`;
-
 const ActionWrapper = styled.div`
   display: flex;
   align-items: center;
@@ -284,17 +324,18 @@ const ActionWrapper = styled.div`
 const LeftContainerWrapper = styled.div`
   display: flex;
   align-items: center;
-  overflow: hidden;
-`;
-
-const ButtonWrapper = styled.div`
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
+  gap: 16px;
+  flex: 1 1 auto;
 `;
 
 const StyledContentWrapper = styled.div`
-  padding-right: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: hidden;
+  justify-content: flex-start;
+  width: 100%;
+  flex: 1;
 `;
 
 const UnstyledButtonStyled = styled.div`
@@ -304,8 +345,6 @@ const UnstyledButtonStyled = styled.div`
   position: relative;
   pointer-events: all;
   background-color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B17 : colors.white)};
-
-  @media screen and (max-width: 1400px) {
-    padding: 0 5px;
-  }
+  width: 280px;
+  padding: 20px;
 `;

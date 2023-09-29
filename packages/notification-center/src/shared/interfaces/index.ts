@@ -1,7 +1,7 @@
-import { ButtonTypeEnum, IMessage, IMessageAction, IOrganizationEntity, ISubscriberJwt } from '@novu/shared';
-import type { ApiService, IStoreQuery } from '@novu/client';
 import { RefetchOptions, RefetchQueryFilters } from '@tanstack/react-query';
 
+import { ButtonTypeEnum, IMessage, IMessageAction, IOrganizationEntity, ISubscriberJwt } from '@novu/shared';
+import type { ApiService, IStoreQuery, IUserPreferenceSettings } from '@novu/client';
 export {
   IMessage,
   IMessageAction,
@@ -55,16 +55,17 @@ export interface INotificationCenterContext {
   onUrlChange: (url: string) => void;
   onNotificationClick: (notification: IMessage) => void;
   onActionClick: (identifier: string, type: ButtonTypeEnum, message: IMessage) => void;
+  actionsResultBlock: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
+  onTabClick?: (tab: ITab) => void;
+  preferenceFilter?: (userPreference: IUserPreferenceSettings) => boolean;
   isLoading: boolean;
   header: ({ setScreen }: { setScreen: (screen: ScreensEnum) => void }) => JSX.Element;
   footer: () => JSX.Element;
   emptyState: JSX.Element;
   listItem: ListItem;
-  actionsResultBlock: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
   tabs?: ITab[];
   showUserPreferences?: boolean;
   allowedNotificationActions?: boolean;
-  onTabClick?: (tab: ITab) => void;
 }
 
 export interface IStore {
@@ -94,16 +95,20 @@ export interface INovuProviderContext {
   logout: VoidFunction;
 }
 
-export interface INotificationsContext {
+export interface IStoreContext {
+  storeQuery: IStoreQuery;
   storeId: string;
   stores: IStore[];
+  setStore: (storeId?: string) => void;
+}
+
+export interface INotificationsContext extends IStoreContext {
   unseenCount: number;
   notifications: IMessage[];
   hasNextPage: boolean;
   isLoading: boolean;
   isFetching: boolean;
   isFetchingNextPage: boolean;
-  setStore: (storeId?: string) => void;
   fetchNextPage: () => void;
   refetch: <TPageData>({
     page,
@@ -116,9 +121,11 @@ export interface INotificationsContext {
   markNotificationAsUnRead: (messageId: string) => void;
   markNotificationAsSeen: (messageId: string) => void;
   removeMessage: (messageId: string) => void;
+  removeAllMessages: (feedId?: string) => void;
+  markFetchedNotificationsAsRead: () => void;
+  markFetchedNotificationsAsSeen: () => void;
   markAllNotificationsAsRead: () => void;
   markAllNotificationsAsSeen: () => void;
-  markAllNotificationsAsReadByFeed: () => void;
 }
 
 export interface ITab {
