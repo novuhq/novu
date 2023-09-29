@@ -7,7 +7,13 @@ import {
   DigestTypeEnum,
   IDigestRegularMetadata,
 } from '@novu/shared';
-import { DetailEnum, CreateExecutionDetails, CreateExecutionDetailsCommand } from '@novu/application-generic';
+import {
+  DetailEnum,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+  GetUseMergedDigestId,
+  FeatureFlagCommand,
+} from '@novu/application-generic';
 
 import { GetDigestEventsRegular } from './get-digest-events-regular.usecase';
 import { GetDigestEventsBackoff } from './get-digest-events-backoff.usecase';
@@ -29,13 +35,24 @@ export class Digest extends SendMessageType {
     protected createExecutionDetails: CreateExecutionDetails,
     protected jobRepository: JobRepository,
     private getDigestEventsRegular: GetDigestEventsRegular,
-    private getDigestEventsBackoff: GetDigestEventsBackoff
+    private getDigestEventsBackoff: GetDigestEventsBackoff,
+    private getUseMergedDigestId: GetUseMergedDigestId
   ) {
     super(messageRepository, createLogUsecase, createExecutionDetails);
   }
 
   public async execute(command: SendMessageCommand) {
-    const events = await this.getEvents(command);
+    const useMegedDigestId = await this.getUseMergedDigestId.execute(
+      FeatureFlagCommand.create({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        userId: command.userId,
+      })
+    );
+
+    const getEvents = useMegedDigestId ? this.getEvents : this.backwardCompatibleGetEvents;
+
+    const events = await getEvents(command);
     const nextJobs = await this.getJobsToUpdate(command);
 
     await this.createExecutionDetails.execute(
@@ -67,7 +84,7 @@ export class Digest extends SendMessageType {
     );
   }
 
-  private async newGetEvents(command: SendMessageCommand) {
+  private async getEvents(command: SendMessageCommand) {
     const currentJob = await this.getCurrentJob(command);
 
     const jobs = await this.jobRepository.find(
@@ -84,7 +101,7 @@ export class Digest extends SendMessageType {
     return [currentJob.payload, ...jobs.map((job) => job.payload)];
   }
 
-  private async getEvents(command: SendMessageCommand) {
+  private async backwardCompatibleGetEvents(command: SendMessageCommand) {
     const currentJob = await this.getCurrentJob(command);
 
     const digestEventsCommand = DigestEventsCommand.create({
