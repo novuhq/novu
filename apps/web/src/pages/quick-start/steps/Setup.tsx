@@ -17,7 +17,7 @@ export function Setup() {
 
   useEffect(() => {
     segment.track(OnBoardingAnalyticsEnum.FRAMEWORK_SETUP_VISIT, { framework });
-  }, []);
+  }, [segment, framework]);
 
   function handleOnCopy(copiedStepIndex: number) {
     const stepNumber = (copiedStepIndex + 1).toString();

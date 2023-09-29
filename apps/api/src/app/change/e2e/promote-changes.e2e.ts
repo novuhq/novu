@@ -270,7 +270,7 @@ describe('Promote changes', () => {
 
       const prodVersion = await notificationTemplateRepository.findOne({
         _organizationId: session.organization._id,
-        _notificationId: prodEnv._id,
+        _environmentId: prodEnv._id,
         _parentId: notificationTemplateId,
       });
 

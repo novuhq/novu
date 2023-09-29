@@ -1,5 +1,5 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import { ColorInput } from './ColorInput';
 
 export default {
@@ -17,9 +17,9 @@ export default {
       },
     },
   },
-} as ComponentMeta<typeof ColorInput>;
+} as Meta<typeof ColorInput>;
 
-const Template: ComponentStory<typeof ColorInput> = ({ ...args }) => <ColorInput {...args} />;
+const Template: StoryFn<typeof ColorInput> = ({ ...args }) => <ColorInput {...args} />;
 
 export const PrimaryUse = Template.bind({});
 PrimaryUse.args = {

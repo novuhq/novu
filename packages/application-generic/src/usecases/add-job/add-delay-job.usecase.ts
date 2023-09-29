@@ -17,8 +17,7 @@ export class AddDelayJob {
 
   @InstrumentUsecase()
   public async execute(command: AddJobCommand): Promise<number | undefined> {
-    const data =
-      command.job ?? (await this.jobRepository.findById(command.jobId));
+    const data = command.job;
 
     if (!data) throw new ApiException(`Job with id ${command.jobId} not found`);
 

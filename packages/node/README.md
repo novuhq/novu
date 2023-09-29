@@ -126,7 +126,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 #### 📱 In-App
 
-- [x] [Novu](https://docs.novu.co/notification-center/getting-started)
+- [x] [Novu](https://docs.novu.co/notification-center/introduction)
 - [ ] MagicBell
 
 #### Other (Coming Soon...)
@@ -449,7 +449,11 @@ await novu.subscribers.trigger("workflowIdentifier", {
   },
   overrides: {
     email: {
-      from: "support@novu.co"
+      from: "support@novu.co",
+      // customData will work only for sendgrid
+      customData: {
+        "customKey": "customValue"
+      }
     }
   },
   // actorId is subscriberId of actor

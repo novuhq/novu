@@ -42,6 +42,7 @@ export class InitializeSession {
         userId: command.subscriberId,
         channelType: ChannelTypeEnum.IN_APP,
         providerId: InAppProviderIdEnum.Novu,
+        filterData: {},
       })
     );
 

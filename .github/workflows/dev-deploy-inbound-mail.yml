@@ -35,6 +35,11 @@ jobs:
     needs: test_inbound_mail
     timeout-minutes: 80
     environment: Development
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
     if: "!contains(github.event.head_commit.message, 'ci skip')"
     strategy:
       matrix:
@@ -74,7 +79,7 @@ jobs:
 
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:dev
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
-          echo "::set-output name=IMAGE::ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
+          echo "IMAGE=ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
       - name: Checkout cloud infra
         uses: actions/checkout@master

@@ -130,7 +130,7 @@ export const NovuInAppForm = ({
           </Text>
           <CircleArrowRightStyled
             onClick={() => {
-              window.open('https://docs.novu.co/notification-center/iframe-embed/#enabling-hmac-encryption');
+              window.open('https://docs.novu.co/notification-center/client/iframe#enabling-hmac-encryption');
             }}
           />
         </WarningMessage>

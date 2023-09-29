@@ -135,4 +135,15 @@ describe('Create A Feed - /feeds (POST)', async () => {
     });
     expect(feedsCount).to.equal(2);
   });
+
+  it('should throw error if a feed already exist', async function () {
+    await session.testAgent.post(`/v1/feeds`).send({
+      name: 'identifier_123',
+    });
+    const { body } = await session.testAgent.post(`/v1/feeds`).send({
+      name: 'identifier_123',
+    });
+    expect(body.statusCode).to.equal(409);
+    expect(body.message).to.equal('Feed with identifier: identifier_123 already exists');
+  });
 });
