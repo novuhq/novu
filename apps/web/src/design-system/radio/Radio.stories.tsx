@@ -1,5 +1,5 @@
 import React from 'react';
-import { StoryFn, Meta } from '@storybook/react';
+import { ComponentStory, Meta } from '@storybook/react';
 import { Radio, RadioProps } from './Radio';
 
 export default {
@@ -8,7 +8,7 @@ export default {
   argTypes: {},
 } as Meta<typeof Radio>;
 
-const Template: StoryFn<typeof Radio> = ({ children, ...args }: RadioProps) => <Radio {...args}>Button</Radio>;
+const Template: ComponentStory<typeof Radio> = ({ children, ...args }: RadioProps) => <Radio {...args}>Button</Radio>;
 
 export const Default = Template.bind({});
 Default.args = {

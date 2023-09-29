@@ -1,4 +1,4 @@
-import { StoryFn, Meta } from '@storybook/react';
+import { ComponentStory, ComponentMeta } from '@storybook/react';
 import { SegmentedControl } from './SegmentedControl';
 
 export default {
@@ -16,9 +16,9 @@ export default {
       },
     },
   },
-} as Meta<typeof SegmentedControl>;
+} as ComponentMeta<typeof SegmentedControl>;
 
-const Template: StoryFn<typeof SegmentedControl> = ({ ...args }) => <SegmentedControl {...args} />;
+const Template: ComponentStory<typeof SegmentedControl> = ({ ...args }) => <SegmentedControl {...args} />;
 
 export const Default = Template.bind({});
 Default.args = {

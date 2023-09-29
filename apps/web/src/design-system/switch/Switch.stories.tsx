@@ -1,5 +1,5 @@
 import React from 'react';
-import { StoryFn, Meta } from '@storybook/react';
+import { ComponentStory, ComponentMeta } from '@storybook/react';
 import { Switch } from './Switch';
 
 export default {
@@ -15,9 +15,9 @@ export default {
       },
     },
   },
-} as Meta<typeof Switch>;
+} as ComponentMeta<typeof Switch>;
 
-const Template: StoryFn<typeof Switch> = ({ ...args }) => <Switch {...args} />;
+const Template: ComponentStory<typeof Switch> = ({ ...args }) => <Switch {...args} />;
 
 export const Default = Template.bind({});
 Default.args = {};

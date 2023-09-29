@@ -1,14 +1,14 @@
 import React from 'react';
-import { StoryFn, Meta } from '@storybook/react';
+import { ComponentStory, ComponentMeta } from '@storybook/react';
 import { Text } from './Text';
 
 export default {
   title: 'Components/Typography/Text',
   component: Text,
   argTypes: {},
-} as Meta<typeof Text>;
+} as ComponentMeta<typeof Text>;
 
-const Template: StoryFn<typeof Text> = ({ ...args }) => <Text {...args}>Example Text</Text>;
+const Template: ComponentStory<typeof Text> = ({ ...args }) => <Text {...args}>Example Text</Text>;
 
 export const all = () => (
   <div>
