@@ -43,21 +43,21 @@ export const ApiKeysCard = () => {
             type={hidden ? 'password' : 'text'}
             rightSection={
               <Tooltip label={clipboardApiKey.copied ? 'Copied!' : 'Copy Key'}>
+                <UnstyledButton
+                  onClick={() => {
+                    setHidden(!hidden);
+                  }}
+                  sx={{
+                    fontSize: '20px',
+                  }}
+                >
+                  {hidden ? <EyeOutlined size={20} /> : <EyeInvisibleOutlined size={20} />}
+                </UnstyledButton>
                 <ActionIcon
                   data-test-id={'api-key-copy'}
                   variant="transparent"
                   onClick={() => clipboardApiKey.copy(apiKey)}
                 >
-                  <UnstyledButton
-                    onClick={() => {
-                      setHidden(!hidden);
-                    }}
-                    sx={{
-                      fontSize: '20px',
-                    }}
-                  >
-                    {hidden ? <EyeOutlined size={20} /> : <EyeInvisibleOutlined size={20} />}
-                  </UnstyledButton>
                   {clipboardApiKey.copied ? <Check /> : <Copy />}
                 </ActionIcon>
               </Tooltip>
