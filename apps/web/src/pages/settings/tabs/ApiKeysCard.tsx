@@ -5,6 +5,10 @@ import styled from '@emotion/styled';
 
 import { Input, Tooltip } from '../../../design-system';
 import { Check, Copy } from '../../../design-system/icons';
+import { EyeInvisibleOutlined, EyeOutlined } from '@ant-design/icons';
+import { UnstyledButton } from '@mantine/core';
+import { useState } from 'react';
+
 import { getApiKeys } from '../../../api/environment';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { useEnvController } from '../../../hooks';
@@ -21,6 +25,10 @@ export const ApiKeysCard = () => {
   const apiKey = apiKeys?.length ? apiKeys[0].key : '';
   const environmentIdentifier = environment?.identifier ? environment.identifier : '';
   const environmentId = environment?._id ? environment._id : '';
+  const [hidden, setHidden] = useState(true);
+  const togglePasswordVisibility = () => {
+    setHidden(!hidden);
+  };
 
   return (
     <>
@@ -32,7 +40,7 @@ export const ApiKeysCard = () => {
         >
           <Input
             readOnly
-            type={'password'}
+            type={hidden ? 'password' : 'text'}
             rightSection={
               <Tooltip label={clipboardApiKey.copied ? 'Copied!' : 'Copy Key'}>
                 <ActionIcon
@@ -40,6 +48,16 @@ export const ApiKeysCard = () => {
                   variant="transparent"
                   onClick={() => clipboardApiKey.copy(apiKey)}
                 >
+                  <UnstyledButton
+                    onClick={() => {
+                      setHidden(!hidden);
+                    }}
+                    sx={{
+                      fontSize: '20px',
+                    }}
+                  >
+                    {hidden ? <EyeOutlined size={20} /> : <EyeInvisibleOutlined size={20} />}
+                  </UnstyledButton>
                   {clipboardApiKey.copied ? <Check /> : <Copy />}
                 </ActionIcon>
               </Tooltip>
