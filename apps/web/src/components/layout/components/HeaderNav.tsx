@@ -158,6 +158,20 @@ export function HeaderNav({ isIntercomOpened }: Props) {
     </Dropdown.Item>,
   ];
 
+  isSelfHosted &&
+    profileMenuMantine.push(
+      <Dropdown.Item
+        style={{
+          padding: '10px 20px',
+          fontSize: '12px',
+        }}
+        disabled
+        key="version"
+      >
+        <Text color={colors.B40}>Version: {process.env.REACT_APP_VERSION}</Text>
+      </Dropdown.Item>
+    );
+
   return (
     <Header
       height={`${HEADER_HEIGHT}px`}
