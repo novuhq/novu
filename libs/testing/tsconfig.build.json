@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es6",
+    "declaration": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "esModuleInterop": false,
+    "types": ["node"]
+  },
+  "include": [
+    "src/**/*"
+  ]
+}
+

@@ -1,0 +1,27 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.208.0/containers/javascript-node-mongo
+// Update the VARIANT arg in docker-compose.redis-cluster.yml to pick a Node.js version
+{
+  "name": "Novu",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspace",
+
+  // Set *default* container specific settings.json values on container create.
+  "settings": {},
+
+  // Add the IDs of extensions you want installed when the container is created.
+  "extensions": ["dbaeumer.vscode-eslint", "mongodb.mongodb-vscode"],
+
+  // Use 'forwardPorts' to make a list of ports inside the container available locally.
+  "forwardPorts": [4200, 3000, 27017],
+
+  "onCreateCommand": "pnpm install && npm run setup:project",
+  "postCreateCommand": [],
+
+  // Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
+  "remoteUser": "node",
+  "features": {
+    "github-cli": "latest"
+  }
+}

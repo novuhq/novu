@@ -1,0 +1,12 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="WIDGET - TEST" type="js.build_tools.npm">
+    <package-json value="$PROJECT_DIR$/apps/widget/package.json" />
+    <command value="run" />
+    <scripts>
+      <script value="start:test" />
+    </scripts>
+    <node-interpreter value="project" />
+    <envs />
+    <method v="2" />
+  </configuration>
+</component>

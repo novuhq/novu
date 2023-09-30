@@ -1,0 +1,172 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Test WEB
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+on:
+  workflow_call:
+    inputs:
+      submodules:
+        description: 'The flag controlling whether we want submodules to checkout'
+        required: false
+        default: false
+        type: boolean
+      submodule_branch:
+        description: 'Submodule branch to checkout to'
+        required: false
+        default: 'main'
+        type: string
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  e2e_web:
+    if: "!contains(github.event.head_commit.message, 'ci skip')"
+
+    strategy:
+      # when one test fails, DO NOT cancel the other
+      # containers, because this will kill Cypress processes
+      # leaving the Dashboard hanging ...
+      # https://github.com/cypress-io/github-action/issues/48
+      fail-fast: false
+
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - id: setup
+        run: |
+          if ! [[ -z "${{ secrets.SUBMODULES_TOKEN }}" ]]; then
+            echo "has_token=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_token=false" >> $GITHUB_OUTPUT
+          fi
+
+      - uses: actions/checkout@v3
+      # checkout with submodules if token is provided
+      - uses: ./.github/actions/checkout-submodules
+        with:
+          enabled: ${{ steps.setup.outputs.has_token == 'true' }}
+          submodule_token: ${{ secrets.SUBMODULES_TOKEN }}
+          submodule_branch: ${{ inputs.submodule_branch }}
+      - uses: ./.github/actions/setup-project
+        id: setup-project
+        with:
+          cypress: true
+
+      - uses: mansagroup/nrwl-nx-action@v3
+        with:
+          targets: lint,build
+          projects: '@novu/web,@novu/api,@novu/worker'
+
+      - uses: ./.github/actions/start-localstack
+      - uses: ./.github/actions/setup-redis-cluster
+
+      - uses: ./.github/actions/run-backend
+        with:
+          cypress_github_oauth_client_id: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_ID }}
+          cypress_github_oauth_client_secret: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_SECRET }}
+          launch_darkly_sdk_key: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
+
+      - name: Start Client
+        working-directory: apps/web
+        env:
+          REACT_APP_API_URL: http://localhost:1336
+          REACT_APP_WS_URL: http://localhost:1340
+          REACT_APP_WEBHOOK_URL: http://localhost:1341
+          REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID: ${{ secrets.TEST_LAUNCH_DARKLY_CLIENT_SIDE_ID }}
+        run: pnpm start:static:build &
+
+      - name: Start WS
+        run: |
+          cd apps/ws && pnpm start:test &
+
+      - name: Wait on Services
+        run: wait-on --timeout=180000 http://localhost:1340/v1/health-check http://localhost:4200
+
+      # run cypress install only when cache was not hit
+      - name: Cypress install
+        if: steps.setup-project.outputs.cypress_cache_hit != 'true'
+        working-directory: apps/web
+        run: pnpm cypress install
+
+      - uses: browser-actions/setup-chrome@latest
+        with:
+          chrome-version: "stable"
+      - run: |
+          echo "BROWSER_PATH=$(which chrome)" >> $GITHUB_ENV
+
+      - name: Cypress run e2e
+        uses: cypress-io/github-action@v5
+        env:
+          NODE_ENV: test
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_WEB_KEY }}
+          CYPRESS_GITHUB_USER_EMAIL: ${{ secrets.CYPRESS_GITHUB_USER_EMAIL }}
+          CYPRESS_GITHUB_USER_PASSWORD: ${{ secrets.CYPRESS_GITHUB_USER_PASSWORD }}
+          CYPRESS_IS_CI: true
+        with:
+          working-directory: apps/web
+          browser: "${{ env.BROWSER_PATH }}"
+          record: true
+          parallel: false
+          install: false
+          config-file: cypress.config.ts
+
+      - uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: cypress-screenshots
+          path: apps/web/cypress/screenshots
+
+  component_web:
+    if: "!contains(github.event.head_commit.message, 'ci skip')"
+
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+
+      - uses: ./.github/actions/setup-project
+        id: setup-project
+
+      # Runs a single command using the runners shell
+      - name: Build
+        run: CI='' pnpm build:web
+
+      # run cypress install only when cache was not hit
+      - name: Cypress install
+        if: steps.setup-project.outputs.cypress_cache_hit != 'true'
+        working-directory: apps/web
+        run: pnpm cypress install
+
+      - name: Run Component tests 🧪
+        uses: cypress-io/github-action@v5
+        env:
+          NODE_ENV: test
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_WEB_KEY }}
+          NODE_OPTIONS: --max_old_space_size=4096
+        with:
+          browser: chrome
+          working-directory: apps/web
+          install: false
+          component: true
+
+      - uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: cypress-screenshots
+          path: apps/web/cypress/screenshots

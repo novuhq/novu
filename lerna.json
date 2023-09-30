@@ -1,0 +1,12 @@
+{
+  "npmClient": "pnpm",
+  "useNx": true,
+  "useWorkspaces": true,
+  "packages": ["apps/*", "libs/*", "packages/*", "enterprise/packages/*", "providers/*"],
+  "command": {
+    "publish": {
+      "message": "chore(release): publish - ci skip"
+    }
+  },
+  "version": "0.19.0"
+}

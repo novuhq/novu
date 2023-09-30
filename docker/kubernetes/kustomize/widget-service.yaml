@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.26.1 (HEAD)
+  labels:
+    app.novu.co/name: widget
+  name: widget
+spec:
+  ports:
+    - name: "4500"
+      port: 4500
+      targetPort: 4500
+  selector:
+    app.novu.co/name: widget

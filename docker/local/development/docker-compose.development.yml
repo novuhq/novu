@@ -1,0 +1,26 @@
+version: "3"
+services:
+  api:
+    build:
+      dockerfile: "./apps/api/Dockerfile"
+      context: "../../.."
+  worker:
+    build:
+      dockerfile: "./apps/worker/Dockerfile"
+      context: "../../.."
+  web:
+    build:
+      dockerfile: "./apps/web/Dockerfile"
+      context: "../../.."
+  ws:
+    build:
+      dockerfile: "./apps/ws/Dockerfile"
+      context: "../../.."
+  widget:
+    build:
+      dockerfile: "./apps/widget/Dockerfile"
+      context: "../../.."
+  embed:
+    build:
+      dockerfile: "./libs/embed/Dockerfile"
+      context: "../../.."

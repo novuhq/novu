@@ -1,0 +1,13 @@
+import { Meta, ColorPalette, ColorItem,  } from '@storybook/addon-docs';
+import { colors } from './config';
+
+<Meta title="Components/Colors" />
+
+# Colors
+
+<ColorPalette>
+  <ColorItem title="Gradient Horizontal" subtitle="theme.colors.gradient" colors={{ horizontal: colors.horizontal }} />
+  <ColorItem title="Gradient Vertical" subtitle="theme.colors.gradient" colors={{ vertical: colors.vertical }} />
+  <ColorItem title='Gray' subtitle='theme.colors.gray' colors={{ BGLight: colors.BGLight, B98: colors.B98, B80: colors.B80, B70: colors.B70, B60: colors.B60, B40: colors.B40 }} />
+  <ColorItem title='Dark' subtitle='theme.colors.dark' colors={{ B40: colors.B40, B30: colors.B30, B20: colors.B20, B15: colors.B15, B17: colors.B17, BGDark: colors.BGDark }} />
+</ColorPalette>

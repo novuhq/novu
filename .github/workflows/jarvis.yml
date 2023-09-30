@@ -1,0 +1,26 @@
+name: Add comment
+on:
+  issues:
+    types:
+      - labeled
+jobs:
+  add-comment:
+    if: github.event.label.name == '@novu/api'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/checkout@v3
+      - id: get-comment-body
+        run: |
+          ls -la
+          body="$(cat apps/api/jarvis-api-intro.md)"
+          body="${body//'%'/'%25'}"
+          body="${body//$'\n'/'%0A'}"
+          body="${body//$'\r'/'%0D'}" 
+          echo "body=$body" >> $GITHUB_OUTPUT
+      - name: Add comment
+        uses: peter-evans/create-or-update-comment@v2
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          body: ${{ steps.get-comment-body.outputs.body }}

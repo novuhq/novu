@@ -1,0 +1,65 @@
+image:
+  file: .gitpod.dockerfile
+tasks:
+  - init: npm_config_yes=true pnpm setup:project && gp sync-done setup
+    command: mkdir -p /workspace/data && mongod --dbpath /workspace/data 
+  - init: gp sync-await setup
+    command: redis-server
+  - name: Shared Library
+    init: gp sync-await setup
+    command: cd libs/shared && pnpm start
+  - name: DAL
+    init: gp sync-await setup
+    command: cd libs/dal && pnpm start
+  - name: TESTING LIB
+    init: gp sync-await setup
+    command: cd libs/testing && pnpm start
+  - name: API
+    init: gp sync-await setup
+    command: cd apps/api && pnpm start
+  - name: WS
+    init: gp sync-await setup
+    command: cd apps/ws && pnpm start
+  - name: WEB
+    init: gp sync-await setup
+    command: |
+      cd apps/web
+      API_URL=`gp url 3000`
+      WS_URL=`gp url 3002`
+      sed -i "/REACT_APP_API_URL=/c\REACT_APP_API_URL=$API_URL" .env
+      echo "REACT_APP_WS_URL=$WS_URL" >> .env
+      pnpm envsetup && pnpm start
+  - name: WIDGET
+    init: gp sync-await setup
+    command: |
+      cd apps/widget
+      API_URL=`gp url 3000`
+      WS_URL=`gp url 3002`
+      sed -i "/REACT_APP_API_URL=/c\REACT_APP_API_URL=$API_URL" .env
+      sed -i "/REACT_APP_WS_URL=/c\REACT_APP_WS_URL=$WS_URL" .env
+      pnpm envsetup && pnpm start:dev
+ports:
+  - port: 4200
+    onOpen: open-preview
+    visibility: public
+  - port: 4500
+    onOpen: notify
+    visibility: public
+  - port: 3000
+    onOpen: notify
+    visibility: public
+  - port: 3002
+    onOpen: notify
+    visibility: public
+github:
+  prebuilds:
+    # enable for the master/default branch (defaults to true)
+    master: true
+    # enable for all branches in this repo (defaults to false)
+    branches: true
+    # enable for pull requests coming from this repo (defaults to true)
+    pullRequests: true
+    # add a check to pull requests (defaults to true)
+    addCheck: true
+    # add a "Review in Gitpod" button as a comment to pull requests (defaults to false)
+    addComment: true

@@ -1,0 +1,7 @@
+{
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "src",
+  "compilerOptions": {
+    "assets": [".env.test", ".env.development"]
+  }
+}

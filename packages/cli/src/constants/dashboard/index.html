@@ -1,0 +1,445 @@
+<html>
+<head>
+  <title>Getting Started</title>
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://unpkg.com/@highlightjs/cdn-assets@11.4.0/styles/atom-one-dark.min.css">
+  <script src="https://unpkg.com/@highlightjs/cdn-assets@11.4.0/highlight.min.js"></script>
+  <!-- and it's easy to individually load additional languages -->
+  <script src="https://unpkg.com/jquery@3.3.1/dist/jquery.min.js"></script>
+
+
+  <script src="https://unpkg.com/axios@0.2.1/dist/axios.min.js"></script>
+  <script src="https://unpkg.com/@highlightjs/cdn-assets@11.4.0/languages/shell.min.js"></script>
+  <link href="https://fonts.googleapis.com/css?family=Nunito:wght@300;400;700" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+  <script>
+    !function(){var analytics=window.analytics=window.analytics||[];if(!analytics.initialize)if(analytics.invoked)window.console&&console.error&&console.error("Segment snippet included twice.");else{analytics.invoked=!0;analytics.methods=["trackSubmit","trackClick","trackLink","trackForm","identify","reset","group","track","ready","alias","debug","once","off","on","addSourceMiddleware","addIntegrationMiddleware","setAnonymousId","addDestinationMiddleware"];analytics.factory=function(e){return function(){var t=Array.prototype.slice.call(arguments);t.unshift(e);analytics.push(t);return analytics}};for(var e=0;e<analytics.methods.length;e++){var key=analytics.methods[e];analytics[key]=analytics.factory(key)}analytics.load=function(key,e){var t=document.createElement("script");t.type="text/javascript";t.async=!0;t.src="https://cdn.segment.com/analytics.js/v1/" + key + "/analytics.min.js";var n=document.getElementsByTagName("script")[0];n.parentNode.insertBefore(t,n);analytics._loadOptions=e};analytics._writeKey="tz68K6ytWx6AUqDl30XAwiIoUfr7iWVW";;analytics.SNIPPET_VERSION="4.15.3";
+    analytics.load("tz68K6ytWx6AUqDl30XAwiIoUfr7iWVW");
+    analytics.page();
+    }}();
+  </script>
+
+  <script>
+    (function(c){var k={init:function(a){var b={color:c(this).css("background-color"),reach:20,speed:1E3,pause:0,glow:!0,repeat:!0,onHover:!1};c(this).css({"-moz-outline-radius":c(this).css("border-top-left-radius"),"-webkit-outline-radius":c(this).css("border-top-left-radius"),"outline-radius":c(this).css("border-top-left-radius")});a&&c.extend(b,a);b.color=c("<div style='background:"+b.color+"'></div>").css("background-color");!0!==b.repeat&&!isNaN(b.repeat)&&0<b.repeat&&(b.repeat-=1);return this.each(function(){b.onHover?
+        c(this).bind("mouseover",function(){g(b,this,0)}).bind("mouseout",function(){c(this).pulsate("destroy")}):g(b,this,0)})},destroy:function(){return this.each(function(){clearTimeout(this.timer);c(this).css("outline",0)})}},g=function(a,b,d){var e=a.reach;d=d>e?0:d;var h=(e-d)/e,f=a.color.split(","),h="rgba("+f[0].split("(")[1]+","+f[1]+","+f[2].split(")")[0]+","+h+")",f={outline:"2px solid "+h};a.glow&&(f["box-shadow"]="0px 0px "+parseInt(d/1.5)+"px "+h);f["outline-offset"]=d+"px";c(b).css(f);b.timer&&
+    clearTimeout(b.timer);b.timer=setTimeout(function(){if(d>=e&&!a.repeat)return c(b).pulsate("destroy"),!1;if(d>=e&&!0!==a.repeat&&!isNaN(a.repeat)&&0<a.repeat)a.repeat-=1;else if(a.pause&&d>=e)return l(a,b,d+1),!1;g(a,b,d+1)},a.speed/e)},l=function(a,b,c){innerfunc=function(){g(a,b,c)};b.timer=setTimeout(innerfunc,a.pause)};c.fn.pulsate=function(a){if(k[a])return k[a].apply(this,Array.prototype.slice.call(arguments,1));if("object"!==typeof a&&a)c.error("Method "+a+" does not exist on jQuery.pulsate");
+    else return k.init.apply(this,arguments)}})(jQuery);
+  </script>
+  <script src="https://unpkg.com/toastr@2.1.4/build/toastr.min.js"></script>
+  <link href="https://unpkg.com/toastr@2.1.4/build/toastr.min.css" rel="stylesheet">
+
+  <script>hljs.highlightAll();</script>
+
+  <style>
+    .visible {
+      display: inline-block;
+    }
+
+    .not-visible {
+      display: none;
+    }
+
+    .token.attr-value, .token.class, .token.string, .token.property {
+      color: rgb(125 211 252/1);
+    }
+
+    #trigger-button:disabled {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .toast {
+      zoom: 0.8;
+    }
+
+    #unseen-badge {
+      position: absolute;
+      left: 19px !important;
+      top: 3px !important;
+    }
+
+    .code-snippet-wrapper {
+      user-select: none;
+      -moz-user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .code-snippet-wrapper:hover {
+      cursor: pointer;
+    }
+
+    .toast-success {
+      background-color: #241d1d;
+    }
+
+    .toast-title {
+      font-weight: 700;
+    }
+
+    .copy-snippet-button {
+      top: 50px;
+    }
+
+    .copy-snippet-button button {
+      background: rgba(52, 52, 52, 0.77);
+      border-radius: 2px;
+      width: 100px;
+      margin-top: 10px;
+    }
+
+    .copy-snippet-button button svg {
+      display: inline-block !important;
+    }
+  </style>
+</head>
+
+<body style="font-family: 'Nunito', sans-serif;" class="bg-gray-100">
+<!-- This example requires Tailwind CSS v2.0+ -->
+<div>
+  <nav class="bg-gray-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center">
+          <div class="flex-shrink-0"> <img class="h-8 w-8" src="https://tailwindui.com/img/logos/workflow-mark-indigo-500.svg" alt="Workflow"> </div>
+          <div class="hidden md:block">
+            <div class="ml-10 flex items-baseline space-x-4">
+
+            </div>
+          </div>
+        </div>
+        <div class="hidden md:block">
+          <div class="ml-4 flex items-center md:ml-6">
+            <button style='position: relative' class="bg-gray-800 p-1 rounded-full text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white" id="notification-bell"> <span id='unseen-badge-span' style='position: absolute; top: -5px'></span> <span class="sr-only">View notifications</span>
+              <!-- Heroicon name: bell -->
+              <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /> </svg>
+              <span id="unseen-badge"></span>
+            </button>
+            <!-- Profile dropdown -->
+            <div class="ml-3 relative">
+
+              <!--
+              Profile dropdown panel, show/hide based on dropdown state.
+
+              Entering: "transition ease-out duration-100"
+                From: "transform opacity-0 scale-95"
+                To: "transform opacity-100 scale-100"
+              Leaving: "transition ease-in duration-75"
+                From: "transform opacity-100 scale-100"
+                To: "transform opacity-0 scale-95"
+            -->
+            </div>
+          </div>
+        </div>
+        <div class="-mr-2 flex md:hidden">
+          <!-- Mobile menu button -->
+          <button class="bg-gray-800 inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white"> <span class="sr-only">Open main menu</span>
+            <!--
+            Heroicon name: menu
+
+            Menu open: "hidden", Menu closed: "block"
+          -->
+            <svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /> </svg>
+            <!--
+            Heroicon name: x
+
+            Menu open: "block", Menu closed: "hidden"
+          -->
+            <svg class="hidden h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /> </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    <!--
+    Mobile menu, toggle classes based on menu state.
+
+    Open: "block", closed: "hidden"
+  -->
+    <div class="hidden md:hidden">
+      <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+        <!-- Current: "bg-gray-900 text-white", Default: "text-gray-300 hover:bg-gray-700 hover:text-white" --><a href="#" class="bg-gray-900 text-white block px-3 py-2 rounded-md text-base font-medium">Acme Corp.</a> <a href="#" class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Team</a> <a href="#" class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Projects</a> <a href="#" class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Calendar</a> <a href="#" class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Reports</a> </div>
+      <div class="pt-4 pb-3 border-t border-gray-700">
+        <div class="flex items-center px-5">
+          <div class="ml-3">
+            <div class="text-base font-medium leading-none text-white">Tom Cook</div>
+            <div class="text-sm font-medium leading-none text-gray-400">tom@example.com</div>
+          </div>
+          <button class="ml-auto bg-gray-800 flex-shrink-0 p-1 rounded-full text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white"> <span class="sr-only">View notifications</span>
+            <!-- Heroicon name: bell -->
+            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /> </svg>
+          </button>
+        </div>
+        <div class="mt-3 px-2 space-y-1">
+          <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">Your Profile</a>
+           <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">Settings</a>
+           <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">Signout</a>
+          </div>
+      </div>
+    </div>
+  </nav>
+  <header class="bg-white shadow">
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <h1 class="text-3xl font-bold leading-tight text-gray-900">
+        Acme Corp. Demo Dashboard
+      </h1> </div>
+  </header>
+  <main>
+
+    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <!-- Replace with your content -->
+      <div class="px-4 py-6 sm:px-0">
+        <div class="rounded-lg h-96">
+          <div class="ant-tabs-content-holder">
+            <div class="ant-tabs-content ant-tabs-content-top">
+
+              <div role="tabpanel" tabindex="0" aria-hidden="false" class="ant-tabs-tabpane ant-tabs-tabpane-active" id="rc-tabs-1-panel-2" aria-labelledby="rc-tabs-1-tab-2" style="">
+                <div class="  ">
+                  <div class="max-w-screen-2xl px-4 mx-auto">
+                    <div class="flex flex-col sm:flex-row justify-between items-center bg-gray-100 rounded-lg gap-4 p-4">
+                      <div>
+                        <h2 class="text-indigo-500 text-xl md:text-2xl font-bold">Welcome to your demo web environment</h2>
+                        <p class="text-gray-600">
+                          Here you can test the Novu in-app notification center and see it in action.
+                          <br />
+                          Feel free to skip the tutorial and go straight to your admin panel.
+                        </p>
+                      </div>
+
+                      <a href="REPLACE_WITH_dashboardURL&source_widget=skip-tutorial" id="skip-tutorial-link" target="_blank" class="inline-block  focus-visible:ring ring-indigo-300  text-sm md:text-base font-semibold text-center rounded-lg outline-none transition duration-100 px-8 py-3">Skip Tutorial</a>
+                    </div>
+                  </div>
+                </div>
+                <section class="text-gray-600 body-font">
+                  <div class="container px-5  mx-auto flex flex-wrap">
+                    <div class="flex flex-wrap w-full">
+                      <div class="lg:w-2/5 md:w-1/2 md:pr-10 md:py-6">
+                        <div class="flex relative pb-12">
+                          <div class="h-full w-10 absolute inset-0 flex items-center justify-center">
+                            <div class="h-full w-1 bg-gray-200 pointer-events-none"></div>
+                          </div>
+                          <div class="flex-shrink-0 w-10 h-10 rounded-full bg-indigo-500 inline-flex items-center justify-center text-white relative z-10">
+                            <svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="w-5 h-5" viewBox="0 0 24 24">
+                              <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                            </svg>
+                          </div>
+                          <div class="flex-grow pl-4">
+                            <h2 class="font-bold title-font text-sm text-gray-900 mb-1 tracking-wider"><b>STEP 1</b></h2>
+                            <p class="leading-relaxed">
+                              <b>Trigger</b> your first notification using the provided curl command from your terminal. <!--or click the trigger button to trigger it from here.-->
+                            </p>
+                            <button type="button" id="trigger-button" onclick="triggerNotification()" class="mt-3 text-white bg-gray-800 hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center mr-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-800 dark:border-gray-700">Trigger</button>
+                          </div>
+                        </div>
+                        <div class="flex relative pb-12">
+                          <div class="h-full w-10 absolute inset-0 flex items-center justify-center">
+                            <div class="h-full w-1 bg-gray-200 pointer-events-none"></div>
+                          </div>
+                          <div class="flex-shrink-0 w-10 h-10 rounded-full bg-indigo-500 inline-flex items-center justify-center text-white relative z-10">
+                            <svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="w-5 h-5" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"></path><path d="M22 4L12 14.01l-3-3"></path></svg>
+                          </div>
+                          <div class="flex-grow pl-4">
+                            <h2 class="font-medium title-font text-sm text-gray-900 mb-1 tracking-wider">STEP 2</h2>
+                            <p class="leading-relaxed">
+                              Click on the received in-app notification to visit your management admin panel. Didn't get it?
+                              <a href="REPLACE_WITH_dashboardURL&source_widget=didnt-get-notification" >Click here</a>
+                            </p>
+                          </div>
+                        </div>
+
+                      </div>
+
+                      <div class="lg:w-3/5 md:w-1/2 object-cover object-center rounded-lg md:mt-0 mt-12" style="position: relative">
+                        <div class="absolute top-2 right-0 h-8 flex items-center pr-4 copy-snippet-button">
+                          <div class="relative flex -mr-2">
+                            <button type="button" class="text-white hover:text-slate-400"  onclick="copyToClipboard('curl-user-snippet2');return false;">
+                              Copy
+                              <svg fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="w-8 h-8"><path d="M13 10.75h-1.25a2 2 0 0 0-2 2v8.5a2 2 0 0 0 2 2h8.5a2 2 0 0 0 2-2v-8.5a2 2 0 0 0-2-2H19"></path><path d="M18 12.25h-4a1 1 0 0 1-1-1v-1.5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1.5a1 1 0 0 1-1 1ZM13.75 16.25h4.5M13.75 19.25h4.5"></path>
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                         <pre class="rounder-lg code-snippet-wrapper" onclick="copyToClipboard('curl-user-snippet2');return false;">
+
+                  <code id="curl-user-snippet" class="language-bash ">curl --location --request POST 'REPLACE_WITH_url' \
+ --header 'Authorization: ApiKey *********' \
+ --header 'Content-Type: application/json' \
+ --data-raw '{
+    "name": "REPLACE_WITH_name",
+    "to": {
+        "subscriberId": "REPLACE_WITH_subscriberId",
+        "firstName": "REPLACE_WITH_firstName",
+        "lastName": "REPLACE_WITH_lastName"
+    },
+    "payload": {
+        "token": "*********"
+    }
+  }'</code></pre>
+                        <div style="text-align: center">
+                                  <span id="custom-copy-tooltip" style="
+                                  display: none;
+                                  padding: 5px 12px;
+                                  margin-top: 10px;
+                                  color: #0fa80f;
+                                  border-radius: 4px;
+                                  " >
+                                    Copied curl command successfully <i class="fa fa-check"></i>
+                                  </span>
+                        </div>
+
+                      </div>
+                    </div>
+                  </div>
+                </section>
+                <!--
+                              <hr class="my-10">
+                           <div style="text-align: right">
+                                <a href="REPLACE_WITH_dashboardURL" target="_blank" class="inline-block  focus-visible:ring ring-indigo-300  text-sm md:text-base font-semibold text-center rounded-lg outline-none transition duration-100 px-8 py-3">Go to Admin Panel</a>
+
+                              </div>-->
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- /End replace -->
+
+</div>
+</main>
+</div>
+</code></pre>
+</div>
+
+
+
+  <div id="curl-user-snippet2" style="-webkit-touch-callout: none;
+                                                        -webkit-user-select: none;
+                                                         -khtml-user-select: none;
+                                                           -moz-user-select: none;
+                                                            -ms-user-select: none;
+                                                                user-select: none;
+  visibility: hidden">
+                  <pre data-test-id="trigger-curl-snippet" style="color: white; background: rgb(77, 64, 51); text-shadow: black 0px -0.1em 0.2em; font-family: Consolas, Monaco, &quot;Andale Mono&quot;, &quot;Ubuntu Mono&quot;, monospace; font-size: 1em; text-align: left; white-space: pre; word-spacing: normal; word-break: normal; overflow-wrap: normal; line-height: 1.5; tab-size: 4; hyphens: none; padding: 1em; margin: 0.5em 0px; overflow: auto; border: 0.3em solid rgb(122, 102, 82); border-radius: 0.5em; box-shadow: black 1px 1px 0.5em inset;"><code class="language-shell" style="color: white; background: none; text-shadow: black 0px -0.1em 0.2em; font-family: Consolas, Monaco, &quot;Andale Mono&quot;, &quot;Ubuntu Mono&quot;, monospace; font-size: 1em; text-align: left; white-space: pre; word-spacing: normal; word-break: normal; overflow-wrap: normal; line-height: 1.5; tab-size: 4; hyphens: none;"><span class="token function">curl</span><span> --location --request POST </span><span class="token" style="color: rgb(189, 224, 82);">'REPLACE_WITH_url'</span><span> </span><span class="token">\</span><span>
+                    </span><span>     --header </span><span class="token" style="color: rgb(189, 224, 82);">'Authorization: ApiKey REPLACE_WITH_apiKey'</span><span> </span><span class="token">\</span><span>
+                    </span><span>     --header </span><span class="token" style="color: rgb(189, 224, 82);">'Content-Type: application/json'</span><span> </span><span class="token">\</span><span>
+                    </span><span>     --data-raw </span><span class="token" style="color: rgb(189, 224, 82);">'{
+                    </span><span class="token" style="color: rgb(189, 224, 82);">        "name": "REPLACE_WITH_name",
+                    </span><span class="token" style="color: rgb(189, 224, 82);">        "to": {
+                    </span><span class="token" style="color: rgb(189, 224, 82);">            "</span><span class="token" style="color: rgb(245, 184, 61);">subscriberId</span><span class="token" style="color: rgb(189, 224, 82);">": "REPLACE_WITH_subscriberId",
+                    </span><span class="token" style="color: rgb(189, 224, 82);">            "firstName": "REPLACE_WITH_firstName",
+                    </span><span class="token" style="color: rgb(189, 224, 82);">            "lastName": "REPLACE_WITH_lastName"
+                    </span><span class="token" style="color: rgb(189, 224, 82);">        },
+                    </span><span class="token" style="color: rgb(189, 224, 82);">        "payload": {
+                    </span><span class="token" style="color: rgb(189, 224, 82);">            "$on_boarding_trigger": "true",
+                    </span><span class="token" style="color: rgb(189, 224, 82);">            "token": "REPLACE_WITH_token"
+                    </span><span class="token" style="color: rgb(189, 224, 82);">        }
+                    </span><span class="token" style="color: rgb(189, 224, 82);">    }'</span><span>
+                    </span>
+                  </code>
+                  </pre>
+  </div>
+</div>
+<script>
+
+analytics.identify('REPLACE_WITH_subscriberId');
+analytics.track('REPLACE_WITH_dashboardOpened')
+
+$('#skip-tutorial-link').click(function(){
+  analytics.track('REPLACE_WITH_skipTutorial')
+})
+function copyToClipboard(id) {
+  const r = document.createRange();
+  let element = document.getElementById(id)
+  element.style.cssText = "-webkit-touch-callout: auto; -webkit-user-select: auto; -khtml-user-select: auto; -moz-user-select: auto; -ms-user-select: auto; user-select: auto; visibility: none";
+  r.selectNode(document.getElementById(id));
+  window.getSelection().removeAllRanges();
+  window.getSelection().addRange(r);
+  document.execCommand('copy');
+
+  document.getElementById("custom-copy-tooltip").style.display = "inline-block";
+
+  window.getSelection().removeAllRanges();
+  element.style.cssText = "-webkit-touch-callout: none; -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; visibility: hidden";
+
+  setTimeout( function() {
+    document.getElementById("custom-copy-tooltip").style.display = "none";
+  }, 5000);
+  analytics.track('REPLACE_WITH_copySnippet')
+}
+
+function triggerNotification() {
+  toastr.options = {
+    "position": "bottom",
+  }
+
+  $('#trigger-button').prop('disabled', true);
+  axios.post('/trigger', {}).then(() => {
+    toastr.success( 'Check the notification bell to continue', 'Triggered Successfully', {
+      positionClass: 'toast-bottom-right'
+    });
+    $('#trigger-button').prop('disabled', false);
+    pulsateBell();
+    analytics.track('REPLACE_WITH_triggerButton')
+  });
+}
+
+function pulsateBell() {
+  $('#notification-bell').pulsate({
+    color: '#ffffff', // set the color of the pulse
+    reach: 15,                              // how far the pulse goes in px
+    speed: 1000,                            // how long one pulse takes in ms
+    pause: 500,                               // how long the pause between pulses is in ms
+    glow: true,                             // if the glow should be shown too
+    repeat: true,                           // will repeat forever if true, if given a number will repeat for that many times
+    onHover: false                          // if true only pulsate if user hovers over the element
+  });
+
+  $([document.documentElement, document.body]).animate({
+    scrollTop: 0
+  }, 300);
+}
+
+(function(n, o, t, i, f) {
+    n[i] = {}, m = ["init", "on"];
+    n[i]._c = [];
+    m.forEach(me => n[i][me] = function() {
+      n[i]._c.push([me, arguments]);
+    });
+    var elt = o.createElement(f);
+    elt.type = "text/javascript";
+    elt.async = true;
+    elt.src = t;
+    var before = o.getElementsByTagName(f)[0];
+    before.parentNode.insertBefore(elt, before);
+  })(window, document, "REPLACE_WITH_embedPath", "novu", "script");
+
+  novu.init('REPLACE_WITH_environmentId', { bellSelector: '#notification-bell', unseenBadgeSelector: '#unseen-badge' }, {
+    subscriberId: 'REPLACE_WITH_subscriberId',
+    firstName: 'REPLACE_WITH_firstName',
+    lastName: 'REPLACE_WITH_lastName',
+  });
+
+  var activeListener = false;
+  novu.on('on_notification_count_change', () => {
+    if (!activeListener) return;
+
+    pulsateBell();
+  });
+
+/**
+ * This is a workaround to solve an issue where the pulse is triggered when page loads
+ * It's not happening always, probably because to an initial trigger by the widget.
+ * Later we might need to find the root cause for this, but for now solved it with a hack.
+ */
+setTimeout(() => {
+    activeListener = true;
+  }, 2000);
+</script>
+</body>
+
+</html>

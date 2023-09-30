@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.26.1 (HEAD)
+  labels:
+    app.novu.co/name: mongodb
+  name: mongodb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.novu.co/name: mongodb
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.26.1 (HEAD)
+      labels:
+        app.novu.co/name: mongodb
+    spec:
+      containers:
+        - envFrom:
+            - configMapRef:
+                name: novu-env
+          image: mongo
+          name: mongodb
+          ports:
+            - containerPort: 27017
+          volumeMounts: 
+              - name: "mongodb-persistent-storage"
+                mountPath: "/data/db"
+      volumes: 
+          - name: "mongodb-persistent-storage"
+            persistentVolumeClaim: 
+              claimName: "novu-mongodb-pvc"

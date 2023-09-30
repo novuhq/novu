@@ -1,0 +1,10 @@
+{
+  "extends": "apps/api/tsconfig.json",
+  "compilerOptions": {
+    "strictNullChecks": false,
+    "types": ["mocha", "node"],
+    "esModuleInterop": false,
+    "skipLibCheck": true
+  },
+  "exclude": ["node_modules"]
+}

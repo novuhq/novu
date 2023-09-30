@@ -1,0 +1,5 @@
+auto-install-peers=true
+strict-peer-dependencies=false
+@taskforcesh:registry=https://npm.taskforce.sh/
+//npm.taskforce.sh/:_authToken=${BULL_MQ_PRO_NPM_TOKEN}
+always-auth=true

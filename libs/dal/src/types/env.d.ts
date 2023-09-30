@@ -1,0 +1,9 @@
+declare namespace NodeJS {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  export interface ProcessEnv {
+    REDIS_URL: string;
+    REDIS_ARENA_PORT: string;
+    NODE_ENV: 'test' | 'production' | 'dev';
+    MONGO_MAX_POOL_SIZE: number;
+  }
+}

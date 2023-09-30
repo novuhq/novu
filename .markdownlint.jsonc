@@ -1,0 +1,54 @@
+{
+  // MD013/line-length - Line length
+  "MD013": false,
+
+  // MD024/no-duplicate-heading/no-duplicate-header - Multiple headings with the same content
+  "MD024": {
+    "siblings_only": true
+  },
+
+  // no-multiple-blanks
+  "MD012": false,
+  
+  // MD032/blanks-around-lists - Lists should be surrounded by blank lines
+  "MD032": false,
+
+  // MD033/no-inline-html - Inline HTML
+  "MD033": false,
+
+  // MD041/first-line-heading/first-line-h1 - First line in a file should be a top-level heading
+  "MD041": false,
+
+  // MD009/no-trailing-spaces - Trailing spaces
+  "MD009": false,
+
+  // MD025/single-title/single-h1 - Multiple top-level headings in the same document
+  "MD025": false,
+
+  // MD014/commands-show-output - Dollar signs used before commands without showing output
+  "MD014": false,
+
+  "MD013/line-length": false,
+
+  // MD044/proper-names - Proper names should have the correct capitalization
+  "MD044": {
+    "code_blocks": false,
+    "names": [
+      "Cake.Markdownlint",
+      "CommonMark",
+      "JavaScript",
+      "Markdown",
+      "markdown-it",
+      "markdownlint",
+      "Node.js"
+    ]
+  },
+
+  // MD-46/code-block-style
+  "MD046": {
+    "style": "fenced"
+  },
+
+  // MD031/blanks-around-fences Fenced code blocks should be surrounded by blank lines
+  "MD031": false
+}

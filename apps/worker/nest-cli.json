@@ -1,0 +1,37 @@
+{
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "src",
+  "compilerOptions": {
+    "assets": [
+      {
+        "include": ".env",
+        "outDir": "dist/src"
+      },
+      {
+        "include": ".env.development",
+        "outDir": "dist/src"
+      },
+      {
+        "include": ".env.test",
+        "outDir": "dist/src"
+      },
+      {
+        "include": ".env.production",
+        "outDir": "dist/src"
+      }
+    ],
+    "plugins": [],
+    "webpack": true
+  },
+  "projects": {
+    "dal": {
+      "type": "library",
+      "root": "../../../libs/dal",
+      "entryFile": "index",
+      "sourceRoot": "../../../libs/dal/src",
+      "compilerOptions": {
+        "tsConfigPath": "../../../libs/dal/tsconfig.build.json"
+      }
+    }
+  }
+}

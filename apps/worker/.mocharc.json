@@ -1,0 +1,7 @@
+{
+  "timeout": 10000,
+  "require": "ts-node/register",
+  "file": ["e2e/setup.ts"],
+  "exit": true,
+  "files": ["src/**/*.e2e.ts", "src/**/**/*.spec.ts"]
+}

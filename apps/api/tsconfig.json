@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "strictNullChecks": true,
+    "module": "commonjs",
+    "sourceMap": true,
+    "allowSyntheticDefaultImports": true,
+    "emitDecoratorMetadata": true,
+    "types": ["node", "mocha", "chai", "sinon"],
+    "target": "es2017",
+    "allowJs": false,
+    "esModuleInterop": false,
+    "declarationMap": true,
+    "skipLibCheck": true
+  },
+  "exclude": ["node_modules"]
+}

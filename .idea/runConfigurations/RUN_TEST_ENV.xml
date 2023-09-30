@@ -1,0 +1,13 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="RUN TEST ENV" type="CompoundRunConfigurationType">
+    <toRun name="API - TEST" type="js.build_tools.npm" />
+    <toRun name="DAL" type="js.build_tools.npm" />
+    <toRun name="SHARED" type="js.build_tools.npm" />
+    <toRun name="TESTING" type="js.build_tools.npm" />
+    <toRun name="WEB" type="js.build_tools.npm" />
+    <toRun name="WIDGET - TEST" type="js.build_tools.npm" />
+    <toRun name="WORKER - TEST" type="js.build_tools.npm" />
+    <toRun name="WS - TEST" type="js.build_tools.npm" />
+    <method v="2" />
+  </configuration>
+</component>
