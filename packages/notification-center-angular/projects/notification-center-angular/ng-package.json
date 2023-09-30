@@ -1,7 +1,0 @@
-{
-  "$schema": "../../node_modules/ng-packagr/ng-package.schema.json",
-  "dest": "../../dist/notification-center-angular",
-  "lib": {
-    "entryFile": "src/index.ts"
-  }
-}
