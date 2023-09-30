@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { useIntercom } from 'react-use-intercom';
 
 import LogRocket from 'logrocket';
-import { CONTEXT_PATH, INTERCOM_APP_ID, IS_DOCKER_HOSTED, LOGROCKET_ID } from '../../../config';
+import { CONTEXT_PATH, INTERCOM_APP_ID, IS_DOCKER_HOSTED, LOGROCKET_ID, REACT_APP_VERSION } from '../../../config';
 import { ROUTES } from '../../../constants/routes.enum';
 import { colors, Dropdown, shadows, Text, Tooltip } from '../../../design-system';
 import { Ellipse, Mail, Moon, Question, Sun, Trash } from '../../../design-system/icons';
@@ -163,12 +163,11 @@ export function HeaderNav({ isIntercomOpened }: Props) {
       <Dropdown.Item
         style={{
           padding: '10px 20px',
-          fontSize: '12px',
         }}
         disabled
         key="version"
       >
-        <Text color={colors.B40}>Version: {process.env.REACT_APP_VERSION}</Text>
+        <Text color={colors.B40}>Version: {REACT_APP_VERSION}</Text>
       </Dropdown.Item>
     );
 
