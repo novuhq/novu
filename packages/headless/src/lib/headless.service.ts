@@ -623,11 +623,11 @@ export class HeadlessService {
   }
 
   public async markNotificationsAs({
-   messageId,
-   mark,
-   listener,
-   onSuccess,
-   onError,
+    messageId,
+    mark,
+    listener,
+    onSuccess,
+    onError,
   }: {
     messageId: IMessageId;
     mark: { seen?: boolean; read?: boolean };
