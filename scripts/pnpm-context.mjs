@@ -216,11 +216,14 @@ async function withTmpdir(callable) {
  */
 async function getFiles(dir) {
   async function* yieldFiles(dirPath) {
-    const paths = await fs.readdir(dirPath, { withFileTypes: true });
+    const paths = await readdir(dirPath, { withFileTypes: true });
     for (const path of paths) {
       const res = resolve(dirPath, path.name);
       if (path.isDirectory()) {
-        yield* yieldFiles(res);
+        // Manually iterate over the nested async generator
+        for await (const file of yieldFiles(res)) {
+          yield file;
+        }
       } else {
         yield res;
       }
