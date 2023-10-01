@@ -346,7 +346,7 @@ const Wrapper = styled.div<{ dark: boolean }>`
     cursor: pointer;
 
     [data-blue-gradient-svg] {
-      stop:first-child {
+      stop:first-of-type {
         stop-color: #4c6dd4 !important;
       }
       stop:last-child {
@@ -407,7 +407,7 @@ const Wrapper = styled.div<{ dark: boolean }>`
   }
 
   [data-template-store-editor] [data-workflow-node-icon] {
-    stop:first-child {
+    stop:first-of-type {
       stop-color: #dd2476 !important;
     }
     stop:last-child {
