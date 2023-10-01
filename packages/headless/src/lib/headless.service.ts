@@ -622,6 +622,55 @@ export class HeadlessService {
       });
   }
 
+  public async markNotificationsAs({
+    messageId,
+    mark,
+    listener,
+    onSuccess,
+    onError,
+  }: {
+    messageId: IMessageId;
+    mark: { seen?: boolean; read?: boolean };
+    listener: (
+      result: UpdateResult<IMessage[], unknown, { messageId: IMessageId }>
+    ) => void;
+    onSuccess?: (message: IMessage[]) => void;
+    onError?: (error: unknown) => void;
+  }) {
+    this.assertSessionInitialized();
+
+    const { result, unsubscribe } = this.queryService.subscribeMutation<
+      IMessage[],
+      unknown,
+      { messageId: IMessageId }
+    >({
+      options: {
+        mutationFn: (variables) =>
+          this.api.markMessageAs(variables.messageId, mark),
+        onSuccess: (data) => {
+          this.queryClient.refetchQueries(NOTIFICATIONS_QUERY_KEY, {
+            exact: false,
+          });
+        },
+      },
+      listener: (res) => this.callUpdateListener(res, listener),
+    });
+
+    result
+      .mutate({ messageId })
+      .then((data) => {
+        onSuccess?.(data);
+
+        return data;
+      })
+      .catch((error) => {
+        onError?.(error);
+      })
+      .finally(() => {
+        unsubscribe();
+      });
+  }
+
   public async removeNotification({
     messageId,
     listener,
