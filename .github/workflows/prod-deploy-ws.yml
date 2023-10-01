@@ -23,6 +23,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 80
     environment: Production
+    needs:
+      - test_ws
     strategy:
       matrix:
         name: [ 'novu/ws-ee', 'novu/ws' ]
