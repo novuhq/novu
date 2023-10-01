@@ -2,49 +2,44 @@ import { MessageRepository } from '@novu/dal';
 
 const messageRepository = new MessageRepository();
 
-export async function updateSeenRead() {
-  // eslint-disable-next-line no-console
-  console.log('start migration - update seen to read & add seen-true');
+const log = (message) => console.log(message);
 
-  // eslint-disable-next-line no-console
-  console.log('rename all seen to read');
+const updateSeenRead = async () => {
+  log('start migration - update seen to read & add seen-true');
 
+  log('rename all seen to read');
   await seenToRead();
 
-  // eslint-disable-next-line no-console
-  console.log('add in_app messages as seen');
-
+  log('add in_app messages as seen');
   await inAppAsSeen();
 
-  // eslint-disable-next-line no-console
-  console.log('add not in_app messages as unseen (due the missing feature seen/unseen on other channels)');
-
+  log('add not in_app messages as unseen (due the missing feature seen/unseen on other channels)');
   await notInAppAsUnseen();
 
-  // eslint-disable-next-line no-console
-  console.log('end migration');
+  log('end migration');
 }
 
-export async function seenToRead() {
+const seenToRead = async () => {
   await messageRepository.update({ read: { $exists: false } }, { $rename: { seen: 'read' } });
 }
 
-export async function inAppAsSeen() {
-  await messageRepository.update(
-    {
-      channel: 'in_app',
-      seen: { $exists: false },
-    },
-    { $set: { seen: true } }
-  );
+const inAppAsSeen = async () => {
+  await messageRepository.update({
+    channel: 'in_app',
+    seen: { $exists: false },
+  }, { $set: { seen: true } });
 }
 
-export async function notInAppAsUnseen() {
-  await messageRepository.update(
-    {
-      channel: { $ne: 'in_app' },
-      seen: { $exists: false },
-    },
-    { $set: { seen: false } }
-  );
+const notInAppAsUnseen = async () => {
+  await messageRepository.update({
+    channel: { $ne: 'in_app' },
+    seen: { $exists: false },
+  }, { $set: { seen: false } });
 }
+
+export {
+  updateSeenRead,
+  seenToRead,
+  inAppAsSeen,
+  notInAppAsUnseen,
+};
