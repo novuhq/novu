@@ -28,3 +28,10 @@ spec:
           name: mongodb
           ports:
             - containerPort: 27017
+          volumeMounts: 
+              - name: "mongodb-persistent-storage"
+                mountPath: "/data/db"
+      volumes: 
+          - name: "mongodb-persistent-storage"
+            persistentVolumeClaim: 
+              claimName: "novu-mongodb-pvc"

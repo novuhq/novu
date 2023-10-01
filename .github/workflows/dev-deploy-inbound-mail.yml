@@ -12,17 +12,27 @@ on:
       - 'package.json'
       - 'pnpm-lock.yaml'
       - 'apps/inbound-mail/**'
-      - 'libs/dal/**'
       - 'libs/shared/**'
       - 'libs/testing/**'
 env:
   TF_WORKSPACE: novu-dev
 
 jobs:
-  deploy_dev_inbound_mail:
-    if: "!contains(github.event.head_commit.message, 'ci skip')"
+  test_inbound_mail:
+    strategy:
+      matrix:
+        name: ['novu/inbound-mail-ee', 'novu/inbound-mail']
+    uses: ./.github/workflows/reusable-inbound-mail-e2e.yml
+    with:
+      ee: ${{ contains (matrix.name,'ee') }}
+      submodules: ${{ contains (matrix.name,'ee') }}
+      submodule_branch: "next"
+    secrets: inherit
+
+  dev_deploy_inbound_mail:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
+    needs: test_inbound_mail
     timeout-minutes: 80
     environment: Development
     permissions:
@@ -30,13 +40,12 @@ jobs:
       packages: write
       deployments: write
       id-token: write
+    if: "!contains(github.event.head_commit.message, 'ci skip')"
     strategy:
       matrix:
-        # Only should be deploying inbound-mail-ee to dev
-        #name: ['novu/inbound-mail', 'novu/inbound-mail-ee']
         name: ['novu/inbound-mail-ee']
+
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-project
 
@@ -44,7 +53,6 @@ jobs:
         uses: depot/setup-action@v1
         with:
           oidc: true
-
 
       - name: Set Bull MQ Env variable for EE
         shell: bash

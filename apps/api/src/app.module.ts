@@ -32,7 +32,20 @@ import { InboundParseModule } from './app/inbound-parse/inbound-parse.module';
 import { BlueprintModule } from './app/blueprint/blueprint.module';
 import { TenantModule } from './app/tenant/tenant.module';
 
-const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
+const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
+  const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
+  try {
+    if (process.env.NOVU_MANAGED_SERVICE === 'true' || process.env.CI_EE_TEST === 'true') {
+      modules.push(require('@novu/ee-auth')?.EEAuthModule);
+    }
+  } catch (e) {
+    Logger.error(e, `Unexpected error while importing enterprise modules`, 'EnterpriseImport');
+  }
+
+  return modules;
+};
+
+const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
   InboundParseModule,
   OrganizationModule,
   SharedModule,
@@ -60,6 +73,10 @@ const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardRefe
   BlueprintModule,
   TenantModule,
 ];
+
+const enterpriseModules = enterpriseImports();
+
+const modules = baseModules.concat(enterpriseModules);
 
 const providers: Provider[] = [];
 

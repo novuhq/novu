@@ -1,9 +1,10 @@
+import { ChannelTypeEnum } from '@novu/shared';
+import { WithHttp } from '../novu.interface';
 import {
   IIntegrations,
   IIntegrationsPayload,
   IIntegrationsUpdatePayload,
 } from './integrations.interface';
-import { WithHttp } from '../novu.interface';
 
 export class Integrations extends WithHttp implements IIntegrations {
   async getAll() {
@@ -12,6 +13,10 @@ export class Integrations extends WithHttp implements IIntegrations {
 
   async getActive() {
     return await this.http.get('/integrations/active');
+  }
+
+  async getInAppStatus() {
+    return await this.http.get('/integrations/in-app/status');
   }
 
   /**
@@ -45,13 +50,19 @@ export class Integrations extends WithHttp implements IIntegrations {
   }
 
   /**
+   * @param {string} integrationId - integrationId of the integration to set it as primary
+   */
+  async setIntegrationAsPrimary(integrationId: string) {
+    return await this.http.post(
+      `/integrations/${integrationId}/set-primary`,
+      {}
+    );
+  }
+
+  /**
    * @param {string} integrationId - integrationId of the integration to delete
    */
   async delete(integrationId: string) {
     return await this.http.delete(`/integrations/${integrationId}`);
-  }
-
-  async getInAppStatus() {
-    return await this.http.get('/integrations/in-app/status');
   }
 }

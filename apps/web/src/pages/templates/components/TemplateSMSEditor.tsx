@@ -4,32 +4,39 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { LackIntegrationAlert } from './LackIntegrationAlert';
 import type { IForm } from './formTypes';
 import { Textarea } from '../../../design-system';
-import { useEnvController, useVariablesManager } from '../../../hooks';
+import {
+  useEnvController,
+  useHasActiveIntegrations,
+  useGetPrimaryIntegration,
+  useVariablesManager,
+} from '../../../hooks';
 import { VariableManager } from './VariableManager';
 import { StepSettings } from '../workflow/SideBar/StepSettings';
 
 const templateFields = ['content'];
 
-export function TemplateSMSEditor({
-  control,
-  index,
-  isIntegrationActive,
-}: {
-  control: Control<IForm>;
-  index: number;
-  errors: any;
-  isIntegrationActive: boolean;
-}) {
-  const { readonly } = useEnvController();
+export function TemplateSMSEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {
+  const { readonly, environment } = useEnvController();
   const {
     formState: { errors },
   } = useFormContext();
   const variablesArray = useVariablesManager(index, templateFields);
+  const { hasActiveIntegration } = useHasActiveIntegrations({
+    channelType: ChannelTypeEnum.SMS,
+  });
+  const { primaryIntegration } = useGetPrimaryIntegration({
+    channelType: ChannelTypeEnum.SMS,
+  });
 
   return (
     <>
-      {!isIntegrationActive ? (
-        <LackIntegrationAlert channelType={ChannelTypeEnum.SMS} iconHeight={34} iconWidth={34} />
+      {!hasActiveIntegration ? <LackIntegrationAlert channelType={ChannelTypeEnum.SMS} /> : null}
+      {hasActiveIntegration && !primaryIntegration ? (
+        <LackIntegrationAlert
+          channelType={ChannelTypeEnum.SMS}
+          text={`You have multiple provider instances for SMS in the ${environment?.name} environment. Please select the primary instance.`}
+          isPrimaryMissing
+        />
       ) : null}
       <StepSettings index={index} />
       <Controller

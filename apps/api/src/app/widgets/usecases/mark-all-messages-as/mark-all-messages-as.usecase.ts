@@ -1,7 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { MessageRepository, SubscriberRepository } from '@novu/dal';
 import {
-  WsQueueService,
+  WebSocketsQueueService,
   AnalyticsService,
   InvalidateCacheService,
   buildFeedKey,
@@ -14,9 +14,10 @@ import { MarkAllMessagesAsCommand } from './mark-all-messages-as.command';
 @Injectable()
 export class MarkAllMessagesAs {
   constructor(
+    @Inject(InvalidateCacheService)
     private invalidateCache: InvalidateCacheService,
     private messageRepository: MessageRepository,
-    private wsQueueService: WsQueueService,
+    private webSocketsQueueService: WebSocketsQueueService,
     private subscriberRepository: SubscriberRepository,
     private analyticsService: AnalyticsService
   ) {}
@@ -55,14 +56,23 @@ export class MarkAllMessagesAs {
     const isUnreadCountChanged =
       command.markAs === MarkMessagesAsEnum.READ || command.markAs === MarkMessagesAsEnum.UNREAD;
 
-    this.wsQueueService.bullMqService.add(
+    const countQuery = isUnreadCountChanged ? { read: false } : { seen: false };
+
+    const count = await this.messageRepository.getCount(
+      command.environmentId,
+      subscriber._id,
+      ChannelTypeEnum.IN_APP,
+      countQuery
+    );
+
+    this.webSocketsQueueService.add(
       'sendMessage',
       {
         event: isUnreadCountChanged ? WebSocketEventEnum.UNREAD : WebSocketEventEnum.UNSEEN,
         userId: subscriber._id,
         _environmentId: command.environmentId,
       },
-      {},
+      undefined,
       subscriber._organizationId
     );
 

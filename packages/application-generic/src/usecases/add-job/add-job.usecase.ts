@@ -1,5 +1,4 @@
-import { Logger, Injectable } from '@nestjs/common';
-import { JobsOptions } from 'bullmq';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import {
   StepTypeEnum,
@@ -15,8 +14,8 @@ import {
   DetailEnum,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-} from '../create-execution-details';
-import { QueueService } from '../../services';
+} from '../../usecases';
+import { JobsOptions, StandardQueueService } from '../../services';
 import { LogDecorator } from '../../logging';
 import { InstrumentUsecase } from '../../instrumentation';
 
@@ -30,10 +29,11 @@ const LOG_CONTEXT = 'AddJob';
 export class AddJob {
   constructor(
     private jobRepository: JobRepository,
+    @Inject(forwardRef(() => StandardQueueService))
+    private standardQueueService: StandardQueueService,
     private createExecutionDetails: CreateExecutionDetails,
     private addDigestJob: AddDigestJob,
-    private addDelayJob: AddDelayJob,
-    public readonly queueService: QueueService
+    private addDelayJob: AddDelayJob
   ) {}
 
   @InstrumentUsecase()
@@ -125,7 +125,7 @@ export class AddJob {
       options.backoff = {
         type: BackoffStrategiesEnum.WEBHOOK_FILTER_BACKOFF,
       };
-      options.attempts = this.queueService.DEFAULT_ATTEMPTS;
+      options.attempts = this.standardQueueService.DEFAULT_ATTEMPTS;
     }
 
     const jobData = {
@@ -135,7 +135,12 @@ export class AddJob {
       _userId: job._userId,
     };
 
-    await this.queueService.addToQueue(
+    Logger.verbose(
+      jobData,
+      'Going to add a minimal job in Standard Queue',
+      LOG_CONTEXT
+    );
+    await this.standardQueueService.addMinimalJob(
       job._id,
       jobData,
       command.organizationId,
