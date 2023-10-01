@@ -38,11 +38,6 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v3
-      - uses: ./.github/actions/checkout-submodules
-        with:
-          enabled: ${{ contains (matrix.name,'ee') }}
-          submodule_token: ${{ secrets.SUBMODULES_TOKEN }}
-          submodule_branch: "main"
       - uses: ./.github/actions/setup-project
 
       - name: build worker
