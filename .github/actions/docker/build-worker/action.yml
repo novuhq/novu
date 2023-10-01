@@ -106,7 +106,7 @@ runs:
         docker run --network=host --name worker -dit --env NODE_ENV=test ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
         docker run --network=host appropriate/curl --retry 10 --retry-delay 5 --retry-connrefused http://localhost:1342/v1/health-check | grep 'ok'
 
-        echo "::set-output name=IMAGE::ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
+        echo "IMAGE=ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
     - name: Optionally tag docker image
       if: ${{ inputs.tag }}
