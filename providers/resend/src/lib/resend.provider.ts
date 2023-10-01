@@ -23,8 +23,11 @@ export class ResendEmailProvider implements IEmailProvider {
   }
 
   async sendMessage(
-    options: IEmailOptions
+    options: IEmailOptions & { senderName?: string }
   ): Promise<ISendMessageSuccessResponse> {
+    const senderName: string = options.senderName || 'Default Sender';
+    const senderEmail: string = options.from || this.config.from;
+    options.from = `${senderName} <${senderEmail}`;
     const response: any = await this.resendClient.sendEmail({
       from: options.from || this.config.from,
       to: options.to,
