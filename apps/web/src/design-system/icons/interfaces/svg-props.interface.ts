@@ -6,5 +6,4 @@ export interface ISvgPropsInterface extends React.ComponentPropsWithoutRef<'svg'
   height?: string;
   stopColor?: string;
   offSetStopColor?: string;
-  rectFillColor?: string;
 }
