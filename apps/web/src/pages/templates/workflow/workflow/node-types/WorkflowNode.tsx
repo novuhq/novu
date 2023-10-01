@@ -214,7 +214,7 @@ export function WorkflowNode({
             titleIcon={<ProviderMissing />}
             title={`${CHANNEL_TYPE_TO_STRING[channelKey]} provider is not connected`}
             content={
-              'Please configure or activate a provider instance for the ' +
+              ' or activate a provider instance for the ' +
               CHANNEL_TYPE_TO_STRING[channelKey] +
               ' channel to send notifications over this node'
             }
