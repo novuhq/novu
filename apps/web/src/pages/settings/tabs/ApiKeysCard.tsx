@@ -47,7 +47,7 @@ export const ApiKeysCard = () => {
                   <When truthy={hidden}>
                     <EyeOutlined
                       style={{
-                        color: colorScheme === 'dark' ? colors.B60 : colors.B80,
+                        color: colors.B60,
                         fontSize: '16px',
                       }}
                     />
@@ -55,7 +55,7 @@ export const ApiKeysCard = () => {
                   <When truthy={!hidden}>
                     <EyeInvisibleOutlined
                       style={{
-                        color: colorScheme === 'dark' ? colors.B60 : colors.B80,
+                        color: colors.B60,
                         fontSize: '16px',
                       }}
                     />
@@ -68,11 +68,15 @@ export const ApiKeysCard = () => {
                     onClick={() => clipboardApiKey.copy(apiKey)}
                   >
                     {clipboardApiKey.copied ? (
-                      <Check />
+                      <Check
+                        style={{
+                          color: colors.B60,
+                        }}
+                      />
                     ) : (
                       <Copy
                         style={{
-                          color: colorScheme === 'dark' ? colors.B60 : colors.B80,
+                          color: colors.B60,
                         }}
                       />
                     )}
@@ -102,11 +106,15 @@ export const ApiKeysCard = () => {
                   onClick={() => clipboardEnvironmentIdentifier.copy(environmentIdentifier)}
                 >
                   {clipboardEnvironmentIdentifier.copied ? (
-                    <Check />
+                    <Check
+                      style={{
+                        color: colors.B60,
+                      }}
+                    />
                   ) : (
                     <Copy
                       style={{
-                        color: colorScheme === 'dark' ? colors.B60 : colors.B80,
+                        color: colors.B60,
                       }}
                     />
                   )}
@@ -130,11 +138,15 @@ export const ApiKeysCard = () => {
                   onClick={() => clipboardEnvironmentId.copy(environmentId)}
                 >
                   {clipboardEnvironmentId.copied ? (
-                    <Check />
+                    <Check
+                      style={{
+                        color: colors.B60,
+                      }}
+                    />
                   ) : (
                     <Copy
                       style={{
-                        color: colorScheme === 'dark' ? colors.B60 : colors.B80,
+                        color: colors.B60,
                       }}
                     />
                   )}
