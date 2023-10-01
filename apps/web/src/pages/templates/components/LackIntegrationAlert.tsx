@@ -38,26 +38,26 @@ export function LackIntegrationAlert({
 
   return (
     <>
-      <WarningMessage backgroundColor={alertTypeToMessageBackgroundColor(type)}>
+      <WarningMessage
+        backgroundColor={alertTypeToMessageBackgroundColor(type)}
+        onClick={() => {
+          if (isPrimaryMissing) {
+            openSelectPrimaryIntegrationModal({
+              environmentId: environment?._id,
+              channelType: channelType,
+              onClose: () => {
+                segment.track(TemplateEditorAnalyticsEnum.CONFIGURE_PRIMARY_PROVIDER_BANNER_CLICK);
+              },
+            });
+          } else {
+            openIntegrationsModal(true);
+            segment.track(TemplateEditorAnalyticsEnum.CONFIGURE_PROVIDER_BANNER_CLICK);
+          }
+        }}
+      >
         <Group spacing={12} noWrap>
           <div>
-            <MissingIcon
-              color={alertTypeToDoubleArrowColor(type)}
-              onClick={() => {
-                if (isPrimaryMissing) {
-                  openSelectPrimaryIntegrationModal({
-                    environmentId: environment?._id,
-                    channelType: channelType,
-                    onClose: () => {
-                      segment.track(TemplateEditorAnalyticsEnum.CONFIGURE_PRIMARY_PROVIDER_BANNER_CLICK);
-                    },
-                  });
-                } else {
-                  openIntegrationsModal(true);
-                  segment.track(TemplateEditorAnalyticsEnum.CONFIGURE_PROVIDER_BANNER_CLICK);
-                }
-              }}
-            />
+            <MissingIcon color={alertTypeToDoubleArrowColor(type)} />
           </div>
           <Text color={alertTypeToMessageTextColor(type)}>
             {text
@@ -97,7 +97,7 @@ const WarningMessage = styled.div<{ backgroundColor: string }>`
   padding: 15px;
   margin-bottom: 40px;
   color: #e54545;
-
+  cursor: pointer;
   background: ${({ backgroundColor }) => backgroundColor};
   border-radius: 7px;
 `;

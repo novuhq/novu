@@ -62,7 +62,6 @@ const useStyles = createStyles(() => ({
     border: 'none',
     maxWidth: '300px',
     background: 'linear-gradient(0deg, rgba(229, 69, 69, 0.20) 0%, rgba(229, 69, 69, 0.20) 100%), #23232B',
-    cursor: 'pointer',
   },
   arrow: {
     width: '7px',
