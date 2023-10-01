@@ -9,6 +9,7 @@ import { DeleteStepButton, FilterButton } from './FilterModal.styles';
 import { OnlineFiltersForms } from './OnlineFiltersForms';
 import { PreviousStepFiltersForm } from './PreviousStepFiltersForm';
 import { useMemo } from 'react';
+import { boolean } from 'zod';
 
 export function FilterModal({
   isOpen,
@@ -17,6 +18,7 @@ export function FilterModal({
   control,
   stepIndex,
   setValue,
+  readonly,
 }: {
   isOpen: boolean;
   cancel: () => void;
@@ -24,6 +26,7 @@ export function FilterModal({
   control: any;
   stepIndex: number;
   setValue: any;
+  readonly: boolean;
 }) {
   const theme = useMantineTheme();
 
@@ -121,6 +124,7 @@ export function FilterModal({
                   ]}
                   {...field}
                   data-test-id="group-rules-dropdown"
+                  disabled={readonly}
                 />
               );
             }}
@@ -131,6 +135,7 @@ export function FilterModal({
           <FilterButton
             variant="outline"
             size="md"
+            disabled={readonly}
             mt={30}
             onClick={() => {
               append({
