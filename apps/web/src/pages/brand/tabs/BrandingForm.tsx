@@ -1,13 +1,13 @@
 import { Flex, Grid, Group, Input, LoadingOverlay, Stack, useMantineTheme } from '@mantine/core';
 import { Dropzone } from '@mantine/dropzone';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useOutletContext } from 'react-router-dom';
 import { IOrganizationEntity } from '@novu/shared';
 
-import { updateBrandingSettings } from '../../../api/organization';
+import { getOrganizations, updateBrandingSettings } from '../../../api/organization';
 import { getSignedUrl } from '../../../api/storage';
 import Card from '../../../components/layout/components/Card';
 import { Button, ColorInput, colors, Select } from '../../../design-system';
@@ -47,15 +47,11 @@ export function BrandingForm() {
 
   useEffect(() => {
     if (organization) {
-      if (organization.branding?.logo) {
-        setValue('image', organization.branding.logo);
-      }
-      if (organization.branding?.color) {
-        setValue('color', organization?.branding?.color);
-      }
-      if (organization.branding?.fontFamily) {
-        setValue('fontFamily', organization?.branding?.fontFamily);
-      }
+      organization?.branding?.logo ? setValue('image', organization.branding.logo) : setValue('image', '');
+      organization?.branding?.color ? setValue('color', organization?.branding?.color) : setValue('color', '#f47373');
+      organization?.branding?.fontFamily
+        ? setValue('fontFamily', organization?.branding?.fontFamily)
+        : setValue('fontFamily', 'inherit');
     }
   }, [organization, setValue]);
 
