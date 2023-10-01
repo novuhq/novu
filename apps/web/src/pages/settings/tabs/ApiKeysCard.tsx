@@ -40,7 +40,7 @@ export const ApiKeysCard = () => {
           <Input
             readOnly
             type={hidden ? 'password' : 'text'}
-            rightSectionWidth={70}
+            rightSectionWidth={78}
             rightSection={
               <>
                 <ActionIcon variant="transparent" onClick={() => setHidden(!hidden)}>
