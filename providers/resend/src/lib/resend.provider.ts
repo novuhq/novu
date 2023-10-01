@@ -17,6 +17,7 @@ export class ResendEmailProvider implements IEmailProvider {
     private config: {
       apiKey: string;
       from: string;
+      senderName?: string;
     }
   ) {
     this.resendClient = new Resend(this.config.apiKey);
@@ -26,7 +27,9 @@ export class ResendEmailProvider implements IEmailProvider {
     options: IEmailOptions
   ): Promise<ISendMessageSuccessResponse> {
     const response: any = await this.resendClient.sendEmail({
-      from: options.from || this.config.from,
+      from: `${this.config?.senderName}`
+        ? `${this.config?.senderName} <${options.from || this.config.from}>`
+        : options.from || this.config.from,
       to: options.to,
       subject: options.subject,
       text: options.text,
