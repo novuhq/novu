@@ -1,6 +1,11 @@
 import { Module, Provider } from '@nestjs/common';
 
-import { bullMqTokenList } from '../custom-providers';
+import {
+  analyticsService,
+  bullMqTokenList,
+  cacheService,
+  distributedLockService,
+} from '../custom-providers';
 import {
   ActiveJobsMetricQueueServiceHealthIndicator,
   CompletedJobsMetricQueueServiceHealthIndicator,
@@ -10,13 +15,9 @@ import {
   WorkflowQueueServiceHealthIndicator,
 } from '../health';
 import {
-  AnalyticsService,
-  BullMqService,
-  CacheService,
   CalculateDelayService,
   DistributedLockService,
   EventsDistributedLockService,
-  InMemoryProviderService,
   InvalidateCacheService,
   OldInstanceBullMqService,
   ReadinessService,
@@ -76,7 +77,6 @@ const PROVIDERS: Provider[] = [
   ActiveJobsMetricQueueServiceHealthIndicator,
   ActiveJobsMetricWorkerService,
   bullMqTokenList,
-  BullMqService,
   CompletedJobsMetricQueueService,
   CompletedJobsMetricQueueServiceHealthIndicator,
   CompletedJobsMetricWorkerService,
@@ -104,7 +104,6 @@ const PROVIDERS: Provider[] = [
   IntegrationRepository,
   UpdateSubscriber,
   SubscriberRepository,
-  CacheService,
   InvalidateCacheService,
   CreateSubscriber,
   ProcessSubscriber,
@@ -117,7 +116,6 @@ const PROVIDERS: Provider[] = [
   BulkCreateExecutionDetails,
   AddDelayJob,
   CalculateDelayService,
-  InMemoryProviderService,
   DistributedLockService,
   EventsDistributedLockService,
   AddDigestJob,
@@ -126,10 +124,12 @@ const PROVIDERS: Provider[] = [
   JobRepository,
   AddJob,
   StoreSubscriberJobs,
-  AnalyticsService,
   SubscriberJobBoundUsecase,
   SubscriberProcessQueueService,
   SubscriberProcessWorkerService,
+  analyticsService,
+  cacheService,
+  distributedLockService,
 ];
 
 @Module({
