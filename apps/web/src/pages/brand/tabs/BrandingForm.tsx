@@ -1,13 +1,13 @@
 import { Flex, Grid, Group, Input, LoadingOverlay, Stack, useMantineTheme } from '@mantine/core';
 import { Dropzone } from '@mantine/dropzone';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useOutletContext } from 'react-router-dom';
 import { IOrganizationEntity } from '@novu/shared';
 
-import { getOrganizations, updateBrandingSettings } from '../../../api/organization';
+import { updateBrandingSettings } from '../../../api/organization';
 import { getSignedUrl } from '../../../api/storage';
 import Card from '../../../components/layout/components/Card';
 import { Button, ColorInput, colors, Select } from '../../../design-system';
