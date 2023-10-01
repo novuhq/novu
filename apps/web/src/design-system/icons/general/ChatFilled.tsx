@@ -1,7 +1,10 @@
 /* eslint-disable max-len */
 import React from 'react';
+import { colors } from '../../config';
+import { useMantineTheme } from '@mantine/core';
 
 export function ChatFilled(props: React.ComponentPropsWithoutRef<'svg'>) {
+  const theme = useMantineTheme();
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
