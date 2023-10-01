@@ -10,7 +10,11 @@ import type { IIntegratedProvider } from '../../integrations/types';
 import { stepNames } from '../constants';
 import { ChannelTitle } from './ChannelTitle';
 import { LackIntegrationAlert } from './LackIntegrationAlert';
+import { Warning, WarningIcon } from '../../../design-system/icons';
+import ReactDOMServer from 'react-dom/server';
 
+const warningString = ReactDOMServer.renderToString(<Warning />);
+const warningIconString = ReactDOMServer.renderToString(<WarningIcon />);
 export const ListProviders = ({
   channel,
   providers,
@@ -156,7 +160,7 @@ const LackIntegrationByType = ({
           }}
         >
           <LackIntegrationAlert
-            text={`Please configure ${stepNames[channel]} provider to activate the channel`}
+            text={`${warningString}Please configure ${stepNames[channel]} provider to activate the channel`}
             channelType={channel}
           />
         </div>
@@ -167,7 +171,11 @@ const LackIntegrationByType = ({
             marginBottom: -28,
           }}
         >
-          <LackIntegrationAlert text={'Connect a provider for this channel'} channelType={channel} type={'warning'} />
+          <LackIntegrationAlert
+            text={`${warningIconString}Connect a provider for this channel`}
+            channelType={channel}
+            type={'warning'}
+          />
         </div>
       </When>
     </>
