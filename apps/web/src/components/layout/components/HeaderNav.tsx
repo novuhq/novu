@@ -158,6 +158,8 @@ export function HeaderNav({ isIntercomOpened }: Props) {
     </Dropdown.Item>,
   ];
 
+  const profileMenuMantineZ = <div style={{ zIndex: 999 }}>{profileMenuMantine}</div>;
+
   return (
     <Header
       height={`${HEADER_HEIGHT}px`}
@@ -206,7 +208,7 @@ export function HeaderNav({ isIntercomOpened }: Props) {
               </ActionIcon>
             }
           >
-            {profileMenuMantine}
+            {profileMenuMantineZ}
           </Dropdown>
         </Group>
       </Container>
