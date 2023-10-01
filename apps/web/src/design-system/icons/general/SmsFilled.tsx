@@ -13,7 +13,7 @@ export function SmsFilled(props: React.ComponentPropsWithoutRef<'svg'>) {
       {...props}
     >
       <path
-        fill="url(#paint0_linear_528_4476)"
+        fill={theme.colorScheme === 'light' ? colors.B60 : 'white'}
         d="M18.75 3H5.25A2.252 2.252 0 003 5.25v10.124c0 1.241 1.009 2.25 2.25 2.25h3.375v2.953c0 .345.393.545.671.341l4.39-3.294h5.063c1.241 0 2.25-1.009 2.25-2.25V5.25c0-1.241-1.009-2.25-2.25-2.25z"
       ></path>
       <defs>
