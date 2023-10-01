@@ -28,6 +28,32 @@ const LinkStyled = styled.a`
   text-decoration: underline;
 `;
 
+// Define styles for the StepContainer
+const StepContainer = styled.div`
+  position: relative;
+  padding: 16px;
+  border: 1px solid #ccc;
+  transition: background-color 0.3s ease-in-out;
+
+  &:hover {
+    background-color: #f0f0f0; /* Highlight color for steps */
+    cursor: pointer;
+  }
+`;
+
+// Define styles for hints
+const HintContainer = styled.div`
+  position: relative;
+  padding: 8px;
+  border: 1px solid #ccc;
+  transition: background-color 0.3s ease-in-out;
+
+  &:hover {
+    background-color: #f0f0f0; /* Highlight color for hints */
+    cursor: pointer;
+  }
+`;
+
 export const TemplatesDigestPlaygroundPage = () => {
   const segment = useSegment();
   const { templateId = '' } = useParams<{ templateId: string }>();
@@ -69,12 +95,16 @@ export const TemplatesDigestPlaygroundPage = () => {
           <SubHeading>The digest engine aggregates multiple events into a precise notification</SubHeading>
         </Stack>
         <Stack mt={40} align="center">
-          <DigestDemoFlow
-            isReadOnly={false}
-            templateId={templateId}
-            onRunTriggerClick={handleRunTriggerClick}
-            onDigestIntervalChange={handleDigestIntervalChange}
-          />
+          <StepContainer>
+            {' '}
+            {/* Wrap your step content with StepContainer */}
+            <DigestDemoFlow
+              isReadOnly={false}
+              templateId={templateId}
+              onRunTriggerClick={handleRunTriggerClick}
+              onDigestIntervalChange={handleDigestIntervalChange}
+            />
+          </StepContainer>
         </Stack>
         <Stack mt={40} mb={40} align="center">
           <Button onClick={handleSetupDigestWorkflowClick}>Set Up Digest Workflow</Button>
