@@ -48,7 +48,7 @@ export default memo(({ data }: { data: NodeData }) => {
             }}
             variant="transparent"
           >
-            <PlusCircleOutlined />
+            <PlusCircleOutlined rectFillColor={theme.colorScheme === 'dark' ? colors.B15 : 'transparent'} />
           </ActionIcon>
         }
       >
