@@ -7,6 +7,7 @@ import {
   MessageEntity,
   IntegrationEntity,
   TenantRepository,
+  SubscriberEntity,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -78,11 +79,19 @@ export class SendMessagePush extends SendMessageBase {
       total_count: command.events?.length,
     };
     const tenant = await this.handleTenantExecution(command.job);
+    let actor: SubscriberEntity | null = null;
+    if (command.job.actorId) {
+      actor = await this.getSubscriberBySubscriberId({
+        subscriberId: command.job.actorId,
+        _environmentId: command.environmentId,
+      });
+    }
 
     const data = {
       subscriber: subscriber,
       step: stepData,
       ...(tenant && { tenant }),
+      ...(actor && { actor }),
       ...command.payload,
     };
     let content = '';

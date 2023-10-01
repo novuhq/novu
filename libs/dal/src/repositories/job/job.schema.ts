@@ -119,6 +119,9 @@ const jobSchema = new Schema<JobDBModel>(
       type: Schema.Types.ObjectId,
       ref: 'Subscriber',
     },
+    actorId: {
+      type: Schema.Types.String,
+    },
     expireAt: Schema.Types.Date,
   },
   schemaOptions

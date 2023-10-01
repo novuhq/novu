@@ -39,6 +39,7 @@ export class JobEntity {
   };
   type?: StepTypeEnum;
   _actorId?: string;
+  actorId?: string;
 }
 
 export type JobDBModel = ChangePropsValueType<
