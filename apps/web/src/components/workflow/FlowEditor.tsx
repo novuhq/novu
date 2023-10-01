@@ -245,14 +245,14 @@ export function FlowEditor({
     };
   }
 
-  const handleMouseEnterEdge = (edgeId: string) => {
+  const handleMouseEnterEdgeOrNode = (edgeId: string) => {
     const edgeElement = document.getElementById(edgeId);
     if (!edgeElement) return;
 
     edgeElement.classList.add('fade');
   };
 
-  const handleMouseLeaveEdge = (edgeId: string) => {
+  const handleMouseLeaveEdgeOrNode = (edgeId: string) => {
     const edgeElement = document.getElementById(edgeId);
     if (!edgeElement) return;
 
@@ -274,22 +274,22 @@ export function FlowEditor({
             onDragOver={onDragOver}
             onNodeMouseEnter={(event, node) => {
               if (!readonly) {
-                handleMouseEnterEdge(`edge-button-${node.id}`);
+                handleMouseEnterEdgeOrNode(`edge-button-${node.id}`);
               }
             }}
             onNodeMouseLeave={(event, node) => {
               if (!readonly) {
-                handleMouseLeaveEdge(`edge-button-${node.id}`);
+                handleMouseLeaveEdgeOrNode(`edge-button-${node.id}`);
               }
             }}
             onEdgeMouseEnter={(event: ReactMouseEvent, edge: Edge) => {
               if (!readonly) {
-                handleMouseEnterEdge(`edge-button-${edge.source}`);
+                handleMouseEnterEdgeOrNode(`edge-button-${edge.source}`);
               }
             }}
             onEdgeMouseLeave={(event: ReactMouseEvent, edge: Edge) => {
               if (!readonly) {
-                handleMouseLeaveEdge(`edge-button-${edge.source}`);
+                handleMouseLeaveEdgeOrNode(`edge-button-${edge.source}`);
               }
             }}
             /*
