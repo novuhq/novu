@@ -8,7 +8,7 @@ export function WidgetShell({ children }: { children: JSX.Element }) {
 }
 
 function TransparentShell({ children }: { children: JSX.Element }) {
-  return <div style={{ padding: 7 }}>{children}</div>;
+  return <div className="transparent-shell">{children}</div>;
 }
 
 function MockPreviewShell({ children }: { children: JSX.Element }) {
@@ -38,5 +38,18 @@ const ShellWrapper = styled.div`
 
   & > div {
     width: 420px;
+  }
+`;
+
+// Additional CSS for reset and modular styling
+const GlobalStyles = styled.div`
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Arial', sans-serif;
+  }
+
+  .transparent-shell {
+    padding: 7px;
   }
 `;
