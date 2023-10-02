@@ -1,6 +1,6 @@
 {
   "name": "@novu/inbound-mail",
-  "version": "0.19.0",
+  "version": "0.20.0-alpha.0",
   "description": "",
   "author": "",
   "private": true,
@@ -19,8 +19,8 @@
     "test": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --trace-warnings --timeout 10000 --require ts-node/register --exit --file e2e/setup.ts src/**/**/*.spec.ts"
   },
   "dependencies": {
-    "@novu/application-generic": "^0.19.0",
-    "@novu/shared": "^0.19.0",
+    "@novu/application-generic": "^0.20.0-alpha.0",
+    "@novu/shared": "^0.20.0-alpha.0",
     "@sentry/node": "^7.12.1",
     "bluebird": "^2.9.30",
     "dotenv": "^8.6.0",
@@ -39,7 +39,7 @@
     "winston": "^3.9.0"
   },
   "devDependencies": {
-    "@novu/testing": "^0.19.0",
+    "@novu/testing": "^0.20.0-alpha.0",
     "@types/chai": "^4.2.11",
     "@types/express": "^4.17.8",
     "@types/html-to-text": "^9.0.1",
