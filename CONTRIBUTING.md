@@ -20,7 +20,7 @@ You can open a new issue with this [issue form](https://github.com/novuhq/novu/i
 
 ### Requirements
 
-- Node.js version v14.19.3
+- Node.js version >v16.15.1
 - MongoDB
 - Redis. To install Redis on your O.S, please follow the below guides
   - [To install Redis on Windows](https://redis.io/docs/getting-started/installation/install-redis-on-windows/)
