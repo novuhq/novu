@@ -1,18 +1,14 @@
 const nr = require('newrelic');
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import {
-  ExecutionDetailsSourceEnum,
-  ExecutionDetailsStatusEnum,
-  IJobData,
-  ObservabilityBackgroundTransactionEnum,
-} from '@novu/shared';
+import { IJobData, ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import {
   INovuWorker,
   Job,
+  OldInstanceBullMqService,
   PinoLogger,
-  StandardWorkerService,
   storage,
   Store,
+  OldInstanceStandardWorkerService,
   WorkerOptions,
 } from '@novu/application-generic';
 
@@ -28,10 +24,13 @@ import {
   HandleLastFailedJob,
 } from '../usecases';
 
-const LOG_CONTEXT = 'StandardWorker';
+const LOG_CONTEXT = 'OldInstanceStandardWorker';
 
+/**
+ * TODO: Temporary for migration to MemoryDB
+ */
 @Injectable()
-export class StandardWorker extends StandardWorkerService implements INovuWorker {
+export class OldInstanceStandardWorker extends OldInstanceStandardWorkerService implements INovuWorker {
   constructor(
     private handleLastFailedJob: HandleLastFailedJob,
     private runJob: RunJob,
@@ -44,13 +43,15 @@ export class StandardWorker extends StandardWorkerService implements INovuWorker
 
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOptions());
 
-    this.worker.on('completed', async (job: Job<IJobData, void, string>): Promise<void> => {
-      await this.jobHasCompleted(job);
-    });
+    if (this.bullMqService.enabled) {
+      this.worker.on('completed', async (job: Job<IJobData, void, string>): Promise<void> => {
+        await this.jobHasCompleted(job);
+      });
 
-    this.worker.on('failed', async (job: Job<IJobData, void, string>, error: Error): Promise<void> => {
-      await this.jobHasFailed(job, error);
-    });
+      this.worker.on('failed', async (job: Job<IJobData, void, string>, error: Error): Promise<void> => {
+        await this.jobHasFailed(job, error);
+      });
+    }
   }
 
   private getWorkerOptions(): WorkerOptions {
@@ -94,7 +95,7 @@ export class StandardWorker extends StandardWorkerService implements INovuWorker
     return async ({ data }: { data: IJobData | any }) => {
       const minimalJobData = this.extractMinimalJobData(data);
 
-      Logger.verbose(`Job ${minimalJobData.jobId} is being processed in the new instance standard worker`, LOG_CONTEXT);
+      Logger.verbose(`Job ${minimalJobData.jobId} is being processed in the old instance standard worker`, LOG_CONTEXT);
 
       return await new Promise(async (resolve, reject) => {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
@@ -145,6 +146,7 @@ export class StandardWorker extends StandardWorkerService implements INovuWorker
           userId,
         })
       );
+      Logger.verbose({ job }, `Job ${jobId} set as completed`, LOG_CONTEXT);
     } catch (error) {
       Logger.error(error, `Failed to set job ${jobId} as completed`, LOG_CONTEXT);
     }
@@ -174,6 +176,7 @@ export class StandardWorker extends StandardWorkerService implements INovuWorker
 
         await this.handleLastFailedJob.execute(handleLastFailedJobCommand);
       }
+      Logger.verbose({ job }, `Job ${jobId} set as failed`, LOG_CONTEXT);
     } catch (anotherError) {
       Logger.error(anotherError, `Failed to set job ${jobId} as failed`, LOG_CONTEXT);
     }

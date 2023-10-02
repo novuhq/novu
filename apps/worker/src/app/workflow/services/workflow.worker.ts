@@ -36,6 +36,8 @@ export class WorkflowWorker extends WorkflowWorkerService implements INovuWorker
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const _this = this;
 
+        Logger.verbose(`Job ${data.identifier} is being processed in the new instance workflow worker`, LOG_CONTEXT);
+
         nr.startBackgroundTransaction(
           ObservabilityBackgroundTransactionEnum.TRIGGER_HANDLER_QUEUE,
           'Trigger Engine',
