@@ -57,7 +57,7 @@ const StepCard: any = styled.div`
   position: relative;
   display: flex;
   width: 280px;
-  height: 80px;
+  height: 105px;
   box-shadow: ${({ theme }) => (theme.colorScheme === 'dark' ? shadows.dark : shadows.light)};
   border-radius: 7px;
   pointer-events: none;
