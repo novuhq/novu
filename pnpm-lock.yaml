@@ -1073,84 +1073,6 @@ importers:
       tsconfig-paths: 4.1.2
       typescript: 4.9.5
 
-  enterprise/packages/auth:
-    specifiers:
-      '@nestjs/common': '>=9.3.x'
-      '@nestjs/jwt': '>=9'
-      '@nestjs/passport': 9.0.3
-      '@novu/application-generic': ^0.19.0
-      '@novu/dal': ^0.19.0
-      '@novu/shared': ^0.19.0
-      '@types/chai': ^4.2.11
-      '@types/mocha': ^8.0.1
-      '@types/node': ^14.6.0
-      '@types/sinon': ^9.0.0
-      chai: ^4.2.0
-      cross-env: ^7.0.3
-      mocha: ^8.1.1
-      nodemon: ^2.0.3
-      passport: 0.6.0
-      passport-google-oauth: ^2.0.0
-      passport-oauth2: ^1.6.1
-      sinon: ^9.2.4
-      ts-node: ~10.9.1
-      typescript: 4.9.5
-    dependencies:
-      '@nestjs/common': 10.2.2_atc7tu2sld2m3nk4hmwkqn6qde
-      '@nestjs/jwt': 10.1.0_@nestjs+common@10.2.2
-      '@nestjs/passport': 9.0.3_kn4ljbedllcoqpuu4ifhphsdsu
-      '@novu/application-generic': link:../../../packages/application-generic
-      '@novu/dal': link:../../../libs/dal
-      '@novu/shared': link:../../../libs/shared
-      passport: 0.6.0
-      passport-google-oauth: 2.0.0
-      passport-oauth2: 1.7.0
-    devDependencies:
-      '@types/chai': 4.3.4
-      '@types/mocha': 8.2.3
-      '@types/node': 14.18.42
-      '@types/sinon': 9.0.11
-      chai: 4.3.7
-      cross-env: 7.0.3
-      mocha: 8.4.0
-      nodemon: 2.0.22
-      sinon: 9.2.4
-      ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
-      typescript: 4.9.5
-
-  enterprise/packages/digest-schedule:
-    specifiers:
-      '@novu/shared': ^0.19.0
-      '@types/chai': ^4.2.11
-      '@types/mocha': ^8.0.1
-      '@types/node': ^14.6.0
-      '@types/sinon': ^9.0.0
-      chai: ^4.2.0
-      cross-env: ^7.0.3
-      date-fns: ^2.29.2
-      mocha: ^8.1.1
-      nodemon: ^2.0.3
-      rrule: ^2.7.2
-      sinon: ^9.2.4
-      ts-node: ~10.9.1
-      typescript: 4.9.5
-    dependencies:
-      '@novu/shared': link:../../../libs/shared
-      date-fns: 2.29.3
-      rrule: 2.7.2
-    devDependencies:
-      '@types/chai': 4.3.4
-      '@types/mocha': 8.2.3
-      '@types/node': 14.18.42
-      '@types/sinon': 9.0.11
-      chai: 4.3.7
-      cross-env: 7.0.3
-      mocha: 8.4.0
-      nodemon: 2.0.22
-      sinon: 9.2.4
-      ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
-      typescript: 4.9.5
-
   libs/dal:
     specifiers:
       '@aws-sdk/client-s3': ^3.382.0
@@ -24840,7 +24762,7 @@ packages:
     resolution: {integrity: sha512-UCB0ioiyj8CRjtrvaceBLqqhZCVP+1B8+NWQhmdsm0VXOJtobBCf1dBQmebCCo34qZmUwZfIH2MZLqNHazrfjg==}
 
   /concat-map/0.0.1:
-    resolution: {integrity: sha1-2Klr13/Wjfd5OnMDajug1UBdR3s=}
+    resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
 
   /concat-stream/1.6.2:
     resolution: {integrity: sha512-27HBghJxjiZtIk3Ycvn/4kbJk/1uZuJFfuPEns6LaEvpvG1f0hTea8lilrouyo9mVc2GWdcEZ8OLoGmSADlrCw==}
