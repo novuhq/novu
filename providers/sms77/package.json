@@ -1,6 +1,6 @@
 {
   "name": "@novu/sms77",
-  "version": "0.19.0",
+  "version": "0.20.0-alpha.0",
   "description": "A sms77 wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -32,7 +32,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@novu/stateless": "^0.19.0",
+    "@novu/stateless": "^0.20.0-alpha.0",
     "node-fetch": "^2.6.7",
     "sms77-client": "^2.14.0"
   },

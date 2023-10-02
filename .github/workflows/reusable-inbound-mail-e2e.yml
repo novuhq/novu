@@ -38,11 +38,6 @@ jobs:
     steps:
       # checkout with submodules if token is provided
       - uses: actions/checkout@v3
-      - uses: ./.github/actions/checkout-submodules
-        with:
-          enabled: ${{ steps.setup.outputs.has_token == 'true' }}
-          submodule_token: ${{ secrets.SUBMODULES_TOKEN }}
-          submodule_branch: ${{ inputs.submodule_branch }}
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/setup-redis-cluster
       - uses: mansagroup/nrwl-nx-action@v3
