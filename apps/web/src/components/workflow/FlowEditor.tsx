@@ -355,8 +355,11 @@ const Wrapper = styled.div<{ dark: boolean }>`
     }
 
     [data-workflow-node-icon] {
-      stop {
-        stop-color: white !important;
+      stop:first-child {
+        stop-color: #dd2476 !important;
+      }
+      stop:last-child {
+        stop-color: #ff512f !important;
       }
     }
   }
