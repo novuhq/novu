@@ -14,3 +14,4 @@ export * from './utils/filter-processing-details';
 export * from './resilience';
 export * from './utils/exceptions';
 export * from './utils/email-normalization';
+export * from './utils/validation';

@@ -204,7 +204,7 @@ describe('Create Workflow - /workflows (POST)', async () => {
 
     const prodVersionVariant = await messageTemplateRepository.findOne({
       _environmentId: prodEnv._id,
-      _parentId: variantResult._templateId,
+      _parentId: variantResult?._templateId,
     });
 
     expect(variantResult?.template?.name).to.equal(prodVersionVariant?.name);
@@ -212,6 +212,47 @@ describe('Create Workflow - /workflows (POST)', async () => {
     expect(variantResult?.template?.type).to.equal(prodVersionVariant?.type);
     expect(variantResult?.template?.content).to.deep.equal(prodVersionVariant?.content);
     expect(variantResult?.template?.active).to.equal(prodVersionVariant?.active);
+  });
+
+  it('should throw exception on empty variant filters', async function () {
+    const defaultMessageIsActive = true;
+
+    const templateRequestPayload: Partial<CreateWorkflowRequestDto> = {
+      name: 'test email template',
+      description: 'This is a test description',
+      tags: ['test-tag'],
+      notificationGroupId: session.notificationGroups[0]._id,
+      steps: [
+        {
+          template: {
+            name: 'Message Name',
+            subject: 'Test email subject',
+            preheader: 'Test email preheader',
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
+            type: StepTypeEnum.EMAIL,
+          },
+          variants: [
+            {
+              template: {
+                name: 'Better Message Template',
+                subject: 'Better subject',
+                preheader: 'Better pre header',
+                content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample of Better text block' }],
+                type: StepTypeEnum.EMAIL,
+              },
+              active: defaultMessageIsActive,
+            },
+          ],
+        },
+      ],
+    };
+
+    const { body } = await session.testAgent.post(`/v1/workflows`).send(templateRequestPayload);
+
+    expect(body.message[0].path).to.deep.equal(['steps', '0', 'variants', '0']);
+    expect(body.message[0].constraint).to.deep.equal([
+      'Variant conditions are required, by providing a variant please make sure to add at least one condition.',
+    ]);
   });
 
   it('should create a valid notification', async () => {
