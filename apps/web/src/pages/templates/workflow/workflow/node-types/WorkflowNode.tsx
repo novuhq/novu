@@ -170,20 +170,7 @@ export function WorkflowNode({
                 </Text>
               )}
               {!(Object.keys(stepErrorContent).length > 0) && subtitle && (
-                <Text
-                  {...disabledColor}
-                  size={12}
-                  color={colors.B60}
-                  rows={1}
-                  data-test-id="workflow-node-subtitle"
-                  style={{
-                    overflow: 'hidden',
-                    whiteSpace: 'nowrap',
-                    textOverflow: 'ellipsis',
-                    maxWidth: '60%',
-                    display: 'inline-block',
-                  }}
-                >
+                <Text {...disabledColor} size={12} color={colors.B60} rows={1} data-test-id="workflow-node-subtitle">
                   {subtitle}
                 </Text>
               )}
@@ -349,6 +336,12 @@ const StyledContentWrapper = styled.div`
   justify-content: flex-start;
   width: 100%;
   flex: 1;
+  .workflow-node-subtitle {
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+    textOverflow: 'ellipsis',
+    maxWidth: '60%',
+  }
 `;
 
 const UnstyledButtonStyled = styled.div`
