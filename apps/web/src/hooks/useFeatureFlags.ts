@@ -5,6 +5,7 @@ import {
   IS_TEMPLATE_STORE_ENABLED,
   IS_MULTI_PROVIDER_CONFIGURATION_ENABLED,
   IS_MULTI_TENANCY_ENABLED,
+  IS_TRANSLATION_MANAGER_ENABLED,
 } from '../config';
 
 const prepareBooleanStringFeatureFlag = (value: string | undefined, defaultValue: boolean): boolean => {
@@ -49,4 +50,14 @@ export const useIsMultiTenancyEnabled = (): boolean => {
   const isMultiTenancyEnabled = useGetFlagByKey<boolean>(FeatureFlagsKeysEnum.IS_MULTI_TENANCY_ENABLED);
 
   return isMultiTenancyEnabled ?? defaultValue;
+};
+
+export const useIsTranslationManagerEnabled = (): boolean => {
+  const value = IS_TRANSLATION_MANAGER_ENABLED;
+  const fallbackValue = false;
+  const defaultValue = prepareBooleanStringFeatureFlag(value, fallbackValue);
+
+  const isTranslationManagerEnabled = useGetFlagByKey<boolean>(FeatureFlagsKeysEnum.IS_TRANSLATION_MANAGER_ENABLED);
+
+  return isTranslationManagerEnabled ?? defaultValue;
 };
