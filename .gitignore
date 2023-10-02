@@ -102,5 +102,3 @@ docker/.env
 .vercel
 
 .pnpm-store/
-
-docker/local/deployment/docker-compose-local-macos.yml
