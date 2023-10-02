@@ -1,6 +1,6 @@
 {
   "name": "@novu/node",
-  "version": "0.19.0",
+  "version": "0.20.0-alpha.0",
   "description": "Notification Management Framework",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -42,7 +42,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@novu/shared": "^0.19.0",
+    "@novu/shared": "^0.20.0-alpha.0",
     "handlebars": "^4.7.7",
     "lodash.get": "^4.4.2",
     "lodash.merge": "^4.6.2"

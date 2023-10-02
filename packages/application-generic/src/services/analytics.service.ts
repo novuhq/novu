@@ -1,5 +1,6 @@
 import Analytics from 'analytics-node';
 import { Logger } from '@nestjs/common';
+import * as Mixpanel from 'mixpanel';
 
 // Due to problematic analytics-node types, we need to use require
 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -23,7 +24,7 @@ const LOG_CONTEXT = 'AnalyticsService';
 
 export class AnalyticsService {
   private segment: Analytics;
-
+  private mixpanel: Mixpanel.Mixpanel;
   constructor(private segmentToken?: string | null, private batchSize = 100) {}
 
   async initialize() {
@@ -31,6 +32,10 @@ export class AnalyticsService {
       this.segment = new AnalyticsClass(this.segmentToken, {
         flushAt: this.batchSize,
       });
+    }
+
+    if (process.env.MIXPANEL_TOKEN) {
+      this.mixpanel = Mixpanel.init(process.env.MIXPANEL_TOKEN);
     }
   }
 
@@ -104,6 +109,7 @@ export class AnalyticsService {
         {
           name,
           data,
+          source: 'segment',
         },
         LOG_CONTEXT
       );
@@ -128,7 +134,46 @@ export class AnalyticsService {
     }
   }
 
+  mixpanelTrack(
+    name: string,
+    userId: string,
+    data: Record<string, unknown> = {}
+  ) {
+    if (this.mixpanelEnabled) {
+      Logger.log(
+        'Tracking event: ' + name,
+        {
+          name,
+          data,
+          source: 'mixpanel',
+        },
+        LOG_CONTEXT
+      );
+
+      try {
+        this.mixpanel.track(name, {
+          distinct_id: userId,
+          ...data,
+        });
+      } catch (error: any) {
+        Logger.error(
+          {
+            eventName: name,
+            usedId: userId,
+            message: error?.message,
+          },
+          'There has been an error when tracking mixpanel',
+          LOG_CONTEXT
+        );
+      }
+    }
+  }
+
   private get segmentEnabled() {
     return process.env.NODE_ENV !== 'test' && this.segment;
+  }
+
+  private get mixpanelEnabled() {
+    return process.env.NODE_ENV !== 'test' && this.mixpanel;
   }
 }
