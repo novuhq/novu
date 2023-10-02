@@ -375,6 +375,7 @@ const Wrapper = styled.div<{ dark: boolean }>`
   .react-flow__attribution {
     background: transparent;
     opacity: 0.5;
+    right: 133px;
   }
   .react-flow__edge-path {
     stroke: ${colors.B60};
