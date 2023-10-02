@@ -241,7 +241,7 @@ jobs:
           else
             echo "::set-output name=has_token::false"
           fi
-  
+
   test_e2e_ee:
     name: Test E2E EE
     runs-on: ubuntu-latest
@@ -260,10 +260,6 @@ jobs:
     steps:
       - run: echo ${{ matrix.projectName }}
       - uses: actions/checkout@v3
-      - uses: ./.github/actions/checkout-submodules
-        with:
-          submodule_token: ${{ secrets.SUBMODULES_TOKEN }}
-          submodule_branch: "next"
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/setup-redis-cluster
       - uses: mansagroup/nrwl-nx-action@v3

@@ -16,6 +16,7 @@ export {
   BullMqService,
   Job,
   JobsOptions,
+  Processor,
   Queue,
   QueueBaseOptions,
   QueueOptions,

@@ -50,11 +50,6 @@ jobs:
         name: ['novu/worker-ee', 'novu/worker']
     steps:
       - uses: actions/checkout@v3
-      - uses: ./.github/actions/checkout-submodules
-        with:
-          enabled: ${{ contains (matrix.name,'ee') }}
-          submodule_token: ${{ secrets.SUBMODULES_TOKEN }}
-          submodule_branch: "next"
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/docker/build-worker
         id: docker_build
