@@ -34,19 +34,18 @@ export class RunJob {
     const job = await this.jobRepository.findById(command.jobId);
     if (!job) throw new PlatformException(`Job with id ${command.jobId} not found`);
 
-    nr.addCustomAttributes({
-      jobType: job.type,
-      organizationId: job._organizationId,
-      transactionId: job.transactionId,
-    });
-
     try {
-      this.logger?.assign({
+      const contextData = {
         transactionId: job.transactionId,
         environmentId: job._environmentId,
         organizationId: job._organizationId,
         jobId: job._id,
-      });
+        jobType: job.type,
+      };
+
+      nr.addCustomAttributes(contextData);
+
+      this.logger?.assign(contextData);
     } catch (e) {
       Logger.error(e, 'RunJob');
     }
