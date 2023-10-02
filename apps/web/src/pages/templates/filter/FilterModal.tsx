@@ -182,7 +182,7 @@ export function FilterModal({
               </Grid.Col>
 
               <When truthy={filterFieldOn === FilterPartTypeEnum.WEBHOOK}>
-                <WebHookUrlForm control={control} stepIndex={stepIndex} index={index} />
+                <WebHookUrlForm control={control} stepIndex={stepIndex} index={index} readonly={readonly} />
                 <EqualityForm
                   fieldOn={filterFieldOn}
                   control={control}
@@ -206,6 +206,7 @@ export function FilterModal({
                   stepIndex={stepIndex}
                   index={index}
                   remove={remove}
+                  readonly={readonly}
                 />
               </When>
               <When
@@ -222,7 +223,13 @@ export function FilterModal({
                 />
               </When>
               <When truthy={filterFieldOn === FilterPartTypeEnum.PREVIOUS_STEP}>
-                <PreviousStepFiltersForm control={control} stepIndex={stepIndex} index={index} remove={remove} />
+                <PreviousStepFiltersForm
+                  control={control}
+                  stepIndex={stepIndex}
+                  index={index}
+                  remove={remove}
+                  readonly={readonly}
+                />
               </When>
             </Grid>
             <When truthy={fields.length > index + 1}>
@@ -245,7 +252,17 @@ export function FilterModal({
   );
 }
 
-function WebHookUrlForm({ control, stepIndex, index }: { control; stepIndex: number; index: number }) {
+function WebHookUrlForm({
+  control,
+  stepIndex,
+  index,
+  readonly,
+}: {
+  control: any;
+  stepIndex: number;
+  index: number;
+  readonly: boolean;
+}) {
   return (
     <>
       <Grid.Col span={6}>
@@ -260,6 +277,7 @@ function WebHookUrlForm({ control, stepIndex, index }: { control; stepIndex: num
                 error={fieldState.error?.message}
                 placeholder="Url"
                 data-test-id="webhook-filter-url-input"
+                disabled={readonly}
               />
             );
           }}
