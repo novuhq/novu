@@ -84,6 +84,8 @@ export { Cloud } from './general/Cloud';
 export { Condition } from './general/Condition';
 export { RemoveCondition } from './general/RemoveCondition';
 export { Warning } from './general/Warning';
+export { InviteMembersLogo } from './general/InviteMembersLogo';
+export { LogoutLogo } from './general/LogoutLogo';
 
 export { Copy } from './actions/Copy';
 export { Close } from './actions/Close';

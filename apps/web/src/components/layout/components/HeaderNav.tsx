@@ -8,7 +8,7 @@ import LogRocket from 'logrocket';
 import { CONTEXT_PATH, INTERCOM_APP_ID, IS_DOCKER_HOSTED, LOGROCKET_ID } from '../../../config';
 import { ROUTES } from '../../../constants/routes.enum';
 import { colors, Dropdown, shadows, Text, Tooltip } from '../../../design-system';
-import { Ellipse, Mail, Moon, Question, Sun, Trash } from '../../../design-system/icons';
+import { Ellipse, Mail, Moon, Question, Sun, Trash, LogoutLogo, InviteMembersLogo } from '../../../design-system/icons';
 import { useLocalThemePreference } from '../../../hooks';
 import { discordInviteUrl } from '../../../pages/quick-start/consts';
 import { useAuthContext } from '../../providers/AuthProvider';
@@ -20,7 +20,7 @@ type Props = { isIntercomOpened: boolean };
 const menuItem = [
   {
     title: 'Invite Members',
-    icon: <Mail />,
+    icon: <InviteMembersLogo />,
     path: ROUTES.TEAM,
   },
 ];
@@ -110,8 +110,8 @@ export function HeaderNav({ isIntercomOpened }: Props) {
       },
       {
         id: 'sign-out',
-        title: 'Sign out',
-        icon: <Trash />,
+        title: 'Log out',
+        icon: <LogoutLogo />,
         onTrigger: () => {
           logout();
         },
@@ -153,7 +153,7 @@ export function HeaderNav({ isIntercomOpened }: Props) {
         </Dropdown.Item>
       </Link>
     )),
-    <Dropdown.Item key="logout" icon={<Trash />} onClick={logout} data-test-id="logout-button">
+    <Dropdown.Item key="logout" icon={<LogoutLogo />} onClick={logout} data-test-id="logout-button">
       Sign Out
     </Dropdown.Item>,
   ];
