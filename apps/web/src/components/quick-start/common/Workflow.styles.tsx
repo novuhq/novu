@@ -17,6 +17,26 @@ export const WorkflowWrapper = styled.div<{ height: string }>`
     opacity: 0.5;
   }
 
+  .react-flow__attribution a {
+    color: deeppink !important;
+    text-decoration: underline;
+    font-size: initial;
+    margin-top: 15px;
+  }
+
+  .react-flow__attribution.right {
+    right: 173px;
+  }
+
+  .react-flow__attribution.bottom {
+    bottom: -5px;
+  }
+
+  .react-flow__attribution a:hover {
+    color: lightpink !important;
+    text-decoration: underline;
+  }
+
   .react-flow__handle {
     background: transparent;
     border: 1px solid ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B40 : colors.B60)};
