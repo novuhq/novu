@@ -1176,6 +1176,44 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       expect(message!.subject).to.equal('Test email a subject nested');
     });
 
+    it('should trigger E-Mail notification with actor data', async function () {
+      const newSubscriberId = SubscriberRepository.createObjectId();
+      const channelType = ChannelTypeEnum.EMAIL;
+      const actorSubscriber = await subscriberService.createSubscriber({ firstName: 'Actor' });
+
+      template = await session.createTemplate({
+        steps: [
+          {
+            name: 'Message Name',
+            subject: 'Test email',
+            type: StepTypeEnum.EMAIL,
+            content: [
+              {
+                type: EmailBlockTypeEnum.TEXT,
+                content: 'Hello {{actor.firstName}}, Welcome to {{organizationName}}' as string,
+              },
+            ],
+          },
+        ],
+      });
+
+      await sendTrigger(session, template, newSubscriberId, {}, {}, '', actorSubscriber.subscriberId);
+
+      await session.awaitRunningJobs(template._id);
+
+      const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, newSubscriberId);
+
+      const message = await messageRepository.findOne({
+        _environmentId: session.environment._id,
+        _subscriberId: createdSubscriber?._id,
+        channel: channelType,
+      });
+
+      const block = message!.content[0] as IEmailBlock;
+
+      expect(block.content).to.equal('Hello Actor, Welcome to Umbrella Corp');
+    });
+
     it('should not trigger notification with subscriber data if integration is inactive', async function () {
       const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
       const channelType = ChannelTypeEnum.SMS;
@@ -2298,7 +2336,8 @@ export async function sendTrigger(
   newSubscriberIdInAppNotification: string,
   payload: Record<string, unknown> = {},
   overrides: Record<string, unknown> = {},
-  tenant?: string
+  tenant?: string,
+  actor?: string
 ): Promise<AxiosResponse> {
   return await axiosInstance.post(
     `${session.serverUrl}${eventTriggerPath}`,
@@ -2312,6 +2351,7 @@ export async function sendTrigger(
       },
       overrides,
       tenant,
+      actor,
     },
     {
       headers: {
