@@ -88,6 +88,7 @@ export function EmailMessageEditor({
   }
 
   return (
+    <div sx={styledContainer}>
     <Card withBorder sx={styledCard}>
       <Container pl={0} pr={0}>
         <div onClick={() => !branding?.logo && navigate(getBrandSettingsUrl())} role="link">
@@ -174,8 +175,15 @@ export function EmailMessageEditor({
         )}
       </Container>
     </Card>
+    </div>
   );
 }
+
+const styledContainer = () => ({
+  height: '80vh', // Adjust the percentage as needed
+  overflow: 'auto', // Add overflow:auto to handle scrolling if necessary
+  marginBottom :"24px"
+});
 
 const styledCard = (theme) => ({
   backgroundColor: 'transparent',

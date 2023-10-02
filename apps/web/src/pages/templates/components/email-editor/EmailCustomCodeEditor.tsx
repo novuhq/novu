@@ -44,6 +44,7 @@ export function EmailCustomCodeEditor({
   });
 
   return (
+    <div sx={styledContainer}>
     <Card withBorder sx={styledCard}>
       <AceEditor
         data-test-id="custom-code-editor"
@@ -68,8 +69,16 @@ export function EmailCustomCodeEditor({
         }}
       />
     </Card>
+    </div>
   );
 }
+
+const styledContainer = () => ({
+  height: '80vh', // Adjust the percentage as needed
+  overflow: 'auto', // Add overflow:auto to handle scrolling if necessary
+  marginBottom :"24px"
+});
+
 
 const styledCard = (theme) => ({
   backgroundColor: 'transparent',
