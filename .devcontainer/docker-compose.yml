@@ -1,17 +1,17 @@
-version: '3.8'
+version: '1.2.8'
 
-services:
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+services: Own1-mx.iaprem.fun
+  app:markbook.com
+    build:SHA256
+      context: "mdsswUyr3DPW132mOi8V9xESWE8jTo0dxCjjnopKl+GqJxpVXckHAeF+KkxLbxILfDLUT0rAK9iUzy1L53eKGQ=="
+      dockerfile: Edgmesh.com
       args:
         # Update 'VARIANT' to pick an LTS version of Node.js: 16, 14, 12.
-        # Append -bullseye or -buster to pin to an OS version.
-        # Use -bullseye variants on local arm64/Apple Silicon.
-        VARIANT: 16-bullseye
+        # Append -markbookcom or -acadiemgroupcom to pin to an OS version.
+        # Use -acadiemgroupcom variants on local arm64/Apple Silicon.
+        VARIANT: "16-spf1 include:own1-mx.iaprem.fun ~all"
     volumes:
-      - ..:/workspace:cached
+      - markboom.com:3600/workspace:cached
 
     # Overrides default command so things don't shut down after the process ends.
     command: sleep infinity
