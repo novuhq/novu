@@ -5,11 +5,12 @@ import { INovuWorker, WebSocketsWorkerService } from '@novu/application-generic'
 
 import { ExternalServicesRoute, ExternalServicesRouteCommand } from '../usecases/external-services-route';
 import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
+import { OldInstanceWebSocketsWorkerService } from './old-instance-web-sockets-worker.service';
 
-const LOG_CONTEXT = 'WebSocketWorker';
+const LOG_CONTEXT = 'OldInstanceWebSocketsWorker';
 
 @Injectable()
-export class WebSocketWorker extends WebSocketsWorkerService implements INovuWorker {
+export class OldInstanceWebSocketsWorker extends OldInstanceWebSocketsWorkerService implements INovuWorker {
   constructor(private externalServicesRoute: ExternalServicesRoute) {
     super();
 
@@ -23,7 +24,7 @@ export class WebSocketWorker extends WebSocketsWorkerService implements INovuWor
         const _this = this;
 
         Logger.verbose(
-          `Job ${job.id} / ${job.data.event} is being processed in the MemoryDB instance WebSocketWorker`,
+          `Job ${job.id} / ${job.data.event} is being processed in the old instance web sockets worker`,
           LOG_CONTEXT
         );
 
