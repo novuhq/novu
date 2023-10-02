@@ -1,5 +1,4 @@
 export { ActiveLabel } from './general/ActiveLabel';
-import { Logout } from './general/Logout';
 export { Activity } from './general/Activity';
 export { Brand } from './general/Brand';
 export { Buildings } from './general/Buildings';
