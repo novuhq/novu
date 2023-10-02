@@ -57,8 +57,8 @@ function chartStyles(isTriggerSent: boolean, isDark: boolean) {
 
       color: #ff512f;
       background: -webkit-linear-gradient(90deg, #dd2476 0%, #ff512f 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      WebkitBackgroundClip: text;
+      WebkitTextFillColor: transparent;
     }
   `;
 }

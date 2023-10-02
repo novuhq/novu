@@ -40,8 +40,8 @@ const ActiveWrapper = styled(SideElementBase)<{ active: boolean }>`
       : `${StyledText},
       {
       background: ${colors.success};
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      WebkitBackgroundClip: text;
+      WebkitTextFillColor: transparent;
         svg {
           fill: url(#paint0_linear_1062_464);
         }

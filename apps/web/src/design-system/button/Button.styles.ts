@@ -27,9 +27,8 @@ export const getOutlineStyles = (theme) => {
 
   return {
     border: '1px solid transparent',
-    background: `${dark ? getGradient(colors.B17) : getGradient(colors.white)} padding-box, ${
-      colors.horizontal
-    } border-box`,
+    background: `${dark ? getGradient(colors.B17) : getGradient(colors.white)} padding-box, ${colors.horizontal
+      } border-box`,
     color: dark ? theme.white : 'transparent',
     boxShadow: dark ? shadows.dark : shadows.medium,
   };
@@ -66,7 +65,7 @@ export const getSubtleStyles = (theme) => {
           backgroundColor: dark ? theme.white : 'transparent',
           backgroundClip: 'none !important',
           color: 'transparent',
-          '-webkit-text-fill-color': 'initial !important',
+          WebkitTextFillColor: 'initial !important',
         },
       },
     },
@@ -85,7 +84,7 @@ export const getSubtleStyles = (theme) => {
           backgroundColor: dark ? theme.white : 'transparent',
           backgroundClip: 'none !important',
           color: 'transparent',
-          '-webkit-text-fill-color': 'initial !important',
+          WebkitTextFillColor: 'initial !important',
         },
       },
     },

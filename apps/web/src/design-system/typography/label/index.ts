@@ -15,14 +15,13 @@ export const Label = styled.div<{ gradientColor?: 'red' | 'blue' | 'none' }>`
     return (
       gradientColor !== 'none' &&
       `
-    background: ${
-      gradientColor === 'red'
+    background: ${gradientColor === 'red'
         ? 'linear-gradient(90deg, #DD2476 0%, #FF512F 100%)'
         : 'linear-gradient(0deg, #14deeb 0%, #446edc 100%)'
-    };
+      };
         
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;  
+    WebkitBackgroundClip: text;
+    WebkitTextFillColor: transparent;  
       `
     );
   }};
