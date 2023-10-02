@@ -1,0 +1,127 @@
+name: deploy (next)
+on:
+  push:
+    branches:
+      - next
+
+jobs:
+  build:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+        - uses: actions/checkout@v1
+
+        - name: Setup Git user
+          env:
+            GIT_HUB_TOKEN_GLOBAL: ${{ secrets.GIT_HUB_TOKEN_GLOBAL }}
+          run: |
+            git config --global user.email "development@expandonline.nl"
+            git config --global user.name "Dept"
+            git remote set-url origin https://${GIT_HUB_TOKEN_GLOBAL}:x-oauth-basic@github.com/${{ github.repository }}.git
+
+        - name: Configure AWS credentials
+          uses: aws-actions/configure-aws-credentials@v1
+          with:
+              aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+              aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+              aws-region: eu-central-1
+
+        - name: Login to Amazon ECR
+          id: login-ecr
+          uses: aws-actions/amazon-ecr-login@v1
+
+        - name: Build ws image
+          env:
+            SSH_PRIVATE_KEY:  ${{ secrets.SSH_PRIVATE_KEY }}
+            DOCKER_DIR_WS: ${{ secrets.DOCKER_DIR_WS }}
+          run: |
+            eval "$(ssh-agent -s)"
+            echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
+            docker build --progress plain -t dept-novu-ws -f ${DOCKER_DIR_WS}/Dockerfile --ssh default .
+        
+        - name: Build web image
+          env:
+            SSH_PRIVATE_KEY:  ${{ secrets.SSH_PRIVATE_KEY }}
+            DOCKER_DIR_WEB: ${{ secrets.DOCKER_DIR_WEB }}
+          run: |
+            eval "$(ssh-agent -s)"
+            echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
+            docker build --progress plain -t dept-novu-web -f ${DOCKER_DIR_WEB}/Dockerfile --ssh default .
+
+        - name: Build widget image
+          env:
+            SSH_PRIVATE_KEY:  ${{ secrets.SSH_PRIVATE_KEY }}
+            DOCKER_DIR_WIDGET: ${{ secrets.DOCKER_DIR_WIDGET }}
+          run: |
+            eval "$(ssh-agent -s)"
+            echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
+            docker build --progress plain -t dept-novu-widget -f ${DOCKER_DIR_WIDGET}/Dockerfile --ssh default .
+
+        - name: Build embed image
+          env:
+            SSH_PRIVATE_KEY:  ${{ secrets.SSH_PRIVATE_KEY }}
+            DOCKER_DIR_EMBED: ${{ secrets.DOCKER_DIR_EMBED }}
+          run: |
+            eval "$(ssh-agent -s)"
+            echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
+            docker build --progress plain -t dept-novu-embed -f ${DOCKER_DIR_EMBED}/Dockerfile --ssh default .
+
+        - name: Build api image
+          env:
+            SSH_PRIVATE_KEY:  ${{ secrets.SSH_PRIVATE_KEY }}
+            DOCKER_DIR_API: ${{ secrets.DOCKER_DIR_API }}
+          run: |
+            eval "$(ssh-agent -s)"
+            echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
+            docker build --progress plain -t dept-novu-api -f ${DOCKER_DIR_API}/Dockerfile --ssh default .
+
+        - name: Build worker image
+          env:
+            SSH_PRIVATE_KEY:  ${{ secrets.SSH_PRIVATE_KEY }}
+            DOCKER_DIR_WORKER: ${{ secrets.DOCKER_DIR_WORKER }}
+          run: |
+            eval "$(ssh-agent -s)"
+            echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
+            docker build --progress plain -t dept-novu-worker -f ${DOCKER_DIR_WORKER}/Dockerfile --ssh default .
+        
+
+        - name: Push images
+          env:
+            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            GIT_COMMIT: ${{ github.sha }}
+            DOCKER_TAG: ${{ secrets.DOCKER_TAG }}
+            IMAGE_WS: ${{ secrets.IMAGE_WS }}
+            IMAGE_WEB: ${{ secrets.IMAGE_WEB }}
+            IMAGE_WIDGET: ${{ secrets.IMAGE_WIDGET }}
+            IMAGE_EMBED: ${{ secrets.IMAGE_EMBED }}
+            IMAGE_API: ${{ secrets.IMAGE_API }}
+            IMAGE_WORKER: ${{ secrets.IMAGE_WORKER }}
+          run: |
+            docker tag ${DOCKER_TAG} ${IMAGE_WS}:$GIT_COMMIT
+            docker push ${IMAGE_WS}:$GIT_COMMIT
+            docker tag ${DOCKER_TAG} ${IMAGE_WEB}:$GIT_COMMIT
+            docker push ${IMAGE_WEB}:$GIT_COMMIT
+            docker tag ${DOCKER_TAG} ${IMAGE_WIDGET}:$GIT_COMMIT
+            docker push ${IMAGE_WIDGET}:$GIT_COMMIT
+            docker tag ${DOCKER_TAG} ${IMAGE_EMBED}:$GIT_COMMIT
+            docker push ${IMAGE_EMBED}:$GIT_COMMIT
+            docker tag ${DOCKER_TAG} ${IMAGE_API}:$GIT_COMMIT
+            docker push ${IMAGE_API}:$GIT_COMMIT
+            docker tag ${DOCKER_TAG} ${IMAGE_WORKER}:$GIT_COMMIT
+            docker push ${IMAGE_WORKER}:$GIT_COMMIT
+        - name: Deploy
+          env:
+            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            GIT_COMMIT: ${{ github.sha }}
+            DOCKER_DIR: ${{ secrets.DOCKER_DIR }}
+          run: |
+            cd ${DOCKER_DIR}/deploy
+            BRANCH=`echo ${{github.ref}} | sed "s/refs\/heads\///"`
+            for f in ${BRANCH}-*.json; do
+              envsubst < $f > fixed_$f
+              REVISION=`aws ecs register-task-definition --region eu-central-1 --cli-input-json file://fixed_$f | grep -oP '"revision": \K([0-9]+)'`;
+              NAME=`cat fixed_$f | jq -r .containerDefinitions[0].name`;
+              aws ecs update-service --region eu-central-1 --service ${NAME} --cluster Dept-Tools --task-definition ${NAME}:${REVISION};
+            done
