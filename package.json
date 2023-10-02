@@ -9,6 +9,7 @@
     "prepare": "husky install",
     "publish": "lerna publish from-package",
     "setup:project": "npx --yes pnpm@7.33.4 i && node scripts/setup-env-files.js && pnpm build",
+
     "clean": "lerna clean --yes && npm run prebuild",
     "commit": "cz",
     "nx": "nx",
