@@ -73,8 +73,7 @@
     "less": "^4.1.0",
     "less-loader": "4.1.0",
     "typescript": "4.9.5",
-    "webpack-dev-server": "4.11.1",
-    "webpack": "^5.78.0"
+    "webpack-dev-server": "4.11.1"
   },
   "browserslist": {
     "production": [
