@@ -43,6 +43,9 @@ export class CreateNotificationTemplate {
   async execute(usecaseCommand: CreateNotificationTemplateCommand) {
     const blueprintCommand = await this.processBlueprint(usecaseCommand);
     const command = blueprintCommand ?? usecaseCommand;
+
+    this.validatePayload(command);
+
     const triggerIdentifier = `${slugify(command.name, {
       lower: true,
       strict: true,
@@ -59,6 +62,16 @@ export class CreateNotificationTemplate {
     await this.createWorkflowChange(command, storedWorkflow, parentChangeId);
 
     return storedWorkflow;
+  }
+
+  private validatePayload(command: CreateNotificationTemplateCommand) {
+    const variants = command.steps ? command.steps?.flatMap((step) => step.variants || []) : [];
+
+    for (const variant of variants) {
+      if (!variant.filters?.length) {
+        throw new ApiException(`Variant conditions are required, variant name ${variant.name} id ${variant._id}`);
+      }
+    }
   }
 
   private async createNotificationTrigger(

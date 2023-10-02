@@ -52,6 +52,8 @@ export class UpdateNotificationTemplate {
   ) {}
 
   async execute(command: UpdateNotificationTemplateCommand): Promise<NotificationTemplateEntity> {
+    this.validatePayload(command);
+
     const existingTemplate = await this.notificationTemplateRepository.findById(command.id, command.environmentId);
     if (!existingTemplate) throw new NotFoundException(`Notification template with id ${command.id} not found`);
 
@@ -205,6 +207,16 @@ export class UpdateNotificationTemplate {
   ) {
     for (const step of steps) {
       await this.deleteRemovedSteps(step.variants, command, parentChangeId);
+    }
+  }
+
+  private validatePayload(command: UpdateNotificationTemplateCommand) {
+    const variants = command.steps ? command.steps?.flatMap((step) => step.variants || []) : [];
+
+    for (const variant of variants) {
+      if (!variant.filters?.length) {
+        throw new ApiException(`Variant filters are required, variant name ${variant.name} id ${variant._id}`);
+      }
     }
   }
 
