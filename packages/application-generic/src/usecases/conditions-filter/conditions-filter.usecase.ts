@@ -23,6 +23,8 @@ import {
   IWebhookFilterPart,
   PreviousStepTypeEnum,
   TimeOperatorEnum,
+  IMessageFilter,
+  INotificationTemplateStep,
 } from '@novu/shared';
 import { Filter } from '../../utils/filter';
 import {
@@ -42,6 +44,7 @@ import { createHash } from '../../utils/hmac';
 import { Instrument } from '../../instrumentation';
 import { CachedEntity } from '../../services/cache/interceptors/cached-entity.interceptor';
 import { buildSubscriberKey } from '../../services/cache/key-builders/entities';
+
 @Injectable()
 export class ConditionsFilter extends Filter {
   constructor(
@@ -61,11 +64,8 @@ export class ConditionsFilter extends Filter {
     variables: IFilterVariables;
   }> {
     const variables = await this.normalizeVariablesData(command);
-    const filters = command.filters?.length
-      ? command.filters
-      : command.step?.filters?.length
-      ? command.step.filters
-      : [];
+    const filters = this.extractFilters(command);
+
     if (!filters || !Array.isArray(filters) || filters.length === 0) {
       return {
         passed: true,
@@ -126,6 +126,14 @@ export class ConditionsFilter extends Filter {
       conditions,
       variables,
     };
+  }
+
+  private extractFilters(command: ConditionsFilterCommand) {
+    return command.filters?.length
+      ? command.filters
+      : command.step?.filters?.length
+      ? command.step.filters
+      : [];
   }
 
   public static sumFilters(
@@ -529,8 +537,19 @@ export class ConditionsFilter extends Filter {
   private async normalizeVariablesData(command: ConditionsFilterCommand) {
     const filterVariables: IFilterVariables = {};
 
-    filterVariables.subscriber = await this.fetchSubscriberIfMissing(command);
-    filterVariables.tenant = await this.fetchTenantIfMissing(command);
+    const combinedFilters = [
+      command.step,
+      ...(command.step?.variants || []),
+    ].flatMap((variant) => (variant?.filters ? variant?.filters : []));
+
+    filterVariables.subscriber = await this.fetchSubscriberIfMissing(
+      command,
+      combinedFilters
+    );
+    filterVariables.tenant = await this.fetchTenantIfMissing(
+      command,
+      combinedFilters
+    );
     filterVariables.payload = command.variables?.payload
       ? command.variables?.payload
       : command.job?.payload ?? undefined;
@@ -539,13 +558,14 @@ export class ConditionsFilter extends Filter {
   }
 
   private async fetchSubscriberIfMissing(
-    command: ConditionsFilterCommand
+    command: ConditionsFilterCommand,
+    filters: IMessageFilter[]
   ): Promise<SubscriberEntity | undefined> {
     if (command.variables?.subscriber) {
       return command.variables.subscriber;
     }
 
-    const subscriberFilterExist = command.step?.filters?.find((filter) => {
+    const subscriberFilterExist = filters?.find((filter) => {
       return filter?.children?.find((item) => item?.on === 'subscriber');
     });
 
@@ -562,15 +582,16 @@ export class ConditionsFilter extends Filter {
   }
 
   private async fetchTenantIfMissing(
-    command: ConditionsFilterCommand
+    command: ConditionsFilterCommand,
+    filters: IMessageFilter[]
   ): Promise<TenantEntity | undefined> {
     if (command.variables?.tenant) {
       return command.variables.tenant;
     }
 
     const tenantIdentifier = command.job?.tenant?.identifier;
-    const tenantFilterExist = command.step?.filters?.find((filter) => {
-      return filter?.children?.find((item) => item?.on === 'subscriber');
+    const tenantFilterExist = filters?.find((filter) => {
+      return filter?.children?.find((item) => item?.on === 'tenant');
     });
 
     if (tenantFilterExist && tenantIdentifier && command.job) {
