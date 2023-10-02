@@ -178,6 +178,7 @@ export function WorkflowNode({
                   data-test-id="workflow-node-subtitle"
                   style={{
                     overflow: 'hidden',
+                    whiteSpace: 'nowrap',
                     textOverflow: 'ellipsis',
                     maxWidth: '60%',
                     display: 'inline-block',
