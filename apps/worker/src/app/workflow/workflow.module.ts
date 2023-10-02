@@ -34,6 +34,7 @@ import {
   StandardWorker,
   WorkflowWorker,
   OldInstanceWorkflowWorker,
+  OldInstanceStandardWorker,
 } from './services';
 
 import {
@@ -111,6 +112,7 @@ const PROVIDERS: Provider[] = [
   StandardWorker,
   WorkflowWorker,
   OldInstanceBullMqService,
+  OldInstanceStandardWorker,
   OldInstanceWorkflowWorker,
 ];
 

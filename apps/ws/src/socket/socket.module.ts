@@ -6,11 +6,17 @@ import { WSGateway } from './ws.gateway';
 import { SharedModule } from '../shared/shared.module';
 import { ExternalServicesRoute } from './usecases/external-services-route';
 
-import { WebSocketWorker } from './services';
+import { OldInstanceWebSocketsWorker, OldInstanceWebSocketsWorkerService, WebSocketWorker } from './services';
 
 const USE_CASES: Provider[] = [ExternalServicesRoute];
 
-const PROVIDERS: Provider[] = [WSGateway, WebSocketsWorkerService, WebSocketWorker];
+const PROVIDERS: Provider[] = [
+  WSGateway,
+  OldInstanceWebSocketsWorker,
+  OldInstanceWebSocketsWorkerService,
+  WebSocketsWorkerService,
+  WebSocketWorker,
+];
 
 @Module({
   imports: [SharedModule],
