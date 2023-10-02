@@ -154,7 +154,7 @@ export function HeaderNav({ isIntercomOpened }: Props) {
       </Link>
     )),
     <Dropdown.Item key="logout" icon={<Logout />} onClick={logout} data-test-id="logout-button">
-      Sign Out
+      Log Out
     </Dropdown.Item>,
   ];
 
