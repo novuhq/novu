@@ -9,7 +9,6 @@ import { getApiKeys } from '../../../api/environment';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { useEnvController } from '../../../hooks';
 import { Regenerate } from './components/Regenerate';
-import { useMantineTheme } from '@mantine/core';
 import { When } from '../../../components/utils/When';
 import { EyeInvisibleOutlined, EyeOutlined } from '@ant-design/icons';
 import { useState } from 'react';
@@ -26,7 +25,6 @@ export const ApiKeysCard = () => {
   const environmentIdentifier = environment?.identifier ? environment.identifier : '';
   const environmentId = environment?._id ? environment._id : '';
 
-  const { colorScheme } = useMantineTheme();
   const [hidden, setHidden] = useState(true);
 
   return (
