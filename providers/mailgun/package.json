@@ -1,6 +1,6 @@
 {
   "name": "@novu/mailgun",
-  "version": "0.19.0",
+  "version": "0.20.0-alpha.0",
   "description": "A mailgun wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -44,7 +44,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@novu/stateless": "^0.19.0",
+    "@novu/stateless": "^0.20.0-alpha.0",
     "form-data": "^4.0.0",
     "mailgun.js": "^8.0.1",
     "nock": "^13.1.3"

@@ -1,35 +1,29 @@
 import { IJobData, JobTopicNameEnum } from '@novu/shared';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import {
-  JobsOptions,
-  OldInstanceBullMqService,
-  Processor,
-  Worker,
-  WorkerOptions,
-} from '../bull-mq';
+import { JobsOptions, OldInstanceBullMqService, Processor, Worker, WorkerOptions } from '@novu/application-generic';
 
-const LOG_CONTEXT = 'OldInstanceWorkflowWorkerService';
+const LOG_CONTEXT = 'OldInstanceWebSocketsWorkerService';
 
 type WorkerProcessor = string | Processor<any, unknown, string> | undefined;
 
 /**
  * TODO: Temporary for migration to MemoryDB
  */
-export class OldInstanceWorkflowWorkerService {
+export class OldInstanceWebSocketsWorkerService {
   private instance: OldInstanceBullMqService;
 
   public readonly DEFAULT_ATTEMPTS = 3;
   public readonly topic: JobTopicNameEnum;
 
   constructor() {
-    this.topic = JobTopicNameEnum.WORKFLOW;
+    this.topic = JobTopicNameEnum.WEB_SOCKETS;
     this.instance = new OldInstanceBullMqService();
     if (this.instance.enabled) {
-      Logger.log(`Worker ${this.topic} instantiated`, LOG_CONTEXT);
+      Logger.log(`Old instance Worker ${this.topic} instantiated`, LOG_CONTEXT);
     } else {
       Logger.warn(
-        `Old instance workflow worker not instantiated as it is only needed for MemoryDB migration`,
+        `Old instance web sockets worker not instantiated as it is only needed for MemoryDB migration`,
         LOG_CONTEXT
       );
     }
@@ -49,10 +43,7 @@ export class OldInstanceWorkflowWorkerService {
     }
   }
 
-  public createWorker(
-    processor: WorkerProcessor,
-    options: WorkerOptions
-  ): void {
+  public createWorker(processor: WorkerProcessor, options?: WorkerOptions): void {
     if (this.instance.enabled) {
       this.instance.createWorker(this.topic, processor, options);
     } else {
@@ -86,17 +77,11 @@ export class OldInstanceWorkflowWorkerService {
 
   public async gracefulShutdown(): Promise<void> {
     if (this.instance.enabled) {
-      Logger.log(
-        'Shutting the old instance workflow worker service down',
-        LOG_CONTEXT
-      );
+      Logger.log('Shutting the old web sockets Worker service down', LOG_CONTEXT);
 
       await this.instance.gracefulShutdown();
 
-      Logger.log(
-        'Shutting down the old instance workflow worker service has finished',
-        LOG_CONTEXT
-      );
+      Logger.log('Shutting down the old web sockets Worker service has finished', LOG_CONTEXT);
     }
   }
 
