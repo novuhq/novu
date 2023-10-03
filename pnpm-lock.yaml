@@ -174,6 +174,7 @@ importers:
       '@novu/application-generic': ^0.20.0-alpha.0
       '@novu/dal': ^0.20.0-alpha.0
       '@novu/ee-auth': ^0.20.0-alpha.0
+      '@novu/ee-translation': ^0.20.0-alpha.0
       '@novu/node': ^0.20.0-alpha.0
       '@novu/shared': ^0.20.0-alpha.0
       '@novu/stateless': ^0.20.0-alpha.0
@@ -295,6 +296,7 @@ importers:
       uuid: 8.3.2
     optionalDependencies:
       '@novu/ee-auth': link:../../enterprise/packages/auth
+      '@novu/ee-translation': link:../../enterprise/packages/translation
     devDependencies:
       '@faker-js/faker': 6.3.1
       '@nestjs/cli': 10.1.16
