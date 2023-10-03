@@ -61,11 +61,11 @@ export const ChannelStepVariantEditor = () => {
       return;
     }
     navigate(basePath);
-  }, [index, steps]);
+  }, [index, steps, basePath, navigate]);
 
   const variantIndex = useMemo(
     () => steps?.[index]?.variants?.findIndex((message) => message.uuid === variantUuid),
-    [channel, stepUuid, variantUuid, steps]
+    [index, variantUuid, steps]
   );
 
   if (index === -1 || channel === undefined) {

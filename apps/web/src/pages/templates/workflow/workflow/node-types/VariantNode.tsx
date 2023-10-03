@@ -58,7 +58,7 @@ export default memo(
       }
 
       setCount(foundIndex + 1);
-    }, [nodes.length, data, id]);
+    }, [nodes, data, id]);
     const subtitle = useMemo(() => {
       const content = data.content;
       if (StepTypeEnum.DELAY === data.channelType) {
