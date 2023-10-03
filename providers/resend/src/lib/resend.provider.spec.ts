@@ -3,6 +3,7 @@ import { ResendEmailProvider } from './resend.provider';
 const mockConfig = {
   apiKey: 'this-api-key-from-resend',
   from: 'test@test.com',
+  senderName: 'Test User',
 };
 
 const mockNovuMessage = {
@@ -32,7 +33,7 @@ test('should trigger resend library correctly', async () => {
 
   expect(spy).toBeCalled();
   expect(spy).toBeCalledWith({
-    from: mockNovuMessage.from,
+    from: `${mockConfig.senderName} ${mockNovuMessage.from}`,
     to: mockNovuMessage.to,
     html: mockNovuMessage.html,
     subject: mockNovuMessage.subject,
