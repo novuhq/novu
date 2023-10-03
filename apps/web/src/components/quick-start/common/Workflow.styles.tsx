@@ -25,7 +25,7 @@ export const WorkflowWrapper = styled.div<{ height: string }>`
     position: relative;
     text-decoration: underline;
     font-size: initial;
-    top: 11px;
+    top: 25px;
     right: 173px;
   }
 
