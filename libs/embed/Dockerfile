@@ -22,7 +22,7 @@ COPY nx.json .
 COPY pnpm-workspace.yaml .
 COPY pnpm-lock.yaml .
 
-RUN pnpm install --reporter=silent
+RUN pnpm install
 RUN pnpm build
 
 CMD [ "pnpm", "start:docker:embed" ]
