@@ -2,7 +2,7 @@ import * as mongoose from 'mongoose';
 import { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
-import { SubscriberPreferenceDBModel } from './subscriber-preference.entity';
+import { PreferenceLevelEnum, SubscriberPreferenceDBModel } from './subscriber-preference.entity';
 
 const subscriberPreferenceSchema = new Schema<SubscriberPreferenceDBModel>(
   {
@@ -46,6 +46,10 @@ const subscriberPreferenceSchema = new Schema<SubscriberPreferenceDBModel>(
       push: {
         type: Schema.Types.Boolean,
       },
+    },
+    level: {
+      type: Schema.Types.String,
+      enum: PreferenceLevelEnum,
     },
   },
   schemaOptions

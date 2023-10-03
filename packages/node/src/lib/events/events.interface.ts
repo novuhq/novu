@@ -11,6 +11,7 @@ import {
   TriggerRecipientSubscriber,
   TriggerRecipientsPayload,
   ITenantDefine,
+  SmsProviderIdEnum,
 } from '@novu/shared';
 
 export interface IBroadcastPayloadOptions {
@@ -61,7 +62,9 @@ export type ITriggerOverrides = {
 } & {
   [key in 'email']?: IEmailOverrides;
 } & {
-  [key in 'sms']?: IIntegrationOverride;
+  [key in 'sms']?: ITriggerOverrideSMS;
+} & {
+  [key in SmsProviderIdEnum]?: ITriggerOverrideSMS;
 };
 
 export type ITriggerOverrideDelayAction = {
@@ -125,6 +128,12 @@ export type ITriggerOverrideAPNS = {
   mutableContent?: boolean;
   mdm?: string | Record<string, unknown>;
   urlArgs?: string[];
+};
+
+export type ITriggerOverrideSMS = {
+  to?: string;
+  content?: string;
+  from?: string;
 };
 
 export type ITriggerOverrideExpo = {
