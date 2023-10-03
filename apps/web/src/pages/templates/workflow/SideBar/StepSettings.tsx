@@ -1,11 +1,11 @@
-import { Group } from '@mantine/core';
+import { Group, useMantineTheme } from '@mantine/core';
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
 
 import { StepTypeEnum } from '@novu/shared';
 
-import { Button } from '../../../../design-system';
+import { Button, colors } from '../../../../design-system';
 import type { IForm } from '../../components/formTypes';
 import { StepActiveSwitch } from '../StepActiveSwitch';
 import { useEnvController } from '../../../../hooks';
@@ -24,7 +24,7 @@ export function StepSettings({ index }: { index: number }) {
     channel: StepTypeEnum;
   }>();
   const [filterHover, setFilterHover] = useState(false);
-
+  const theme = useMantineTheme();
   const filters = watch(`steps.${index}.filters.0.children`);
 
   return (
@@ -72,6 +72,7 @@ export function StepSettings({ index }: { index: number }) {
           </When>
           <When truthy={filters && filters?.length === 0}>
             <Filter
+              color={theme.colorScheme === 'dark' ? theme.white : colors.B60}
               style={{
                 marginRight: '7px',
               }}

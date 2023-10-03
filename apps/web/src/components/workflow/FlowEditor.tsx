@@ -356,7 +356,7 @@ const Wrapper = styled.div<{ dark: boolean }>`
 
     [data-workflow-node-icon] {
       stop {
-        stop-color: white !important;
+        stop-color: ${({ dark }) => (dark ? 'white' : colors.B60)} !important;
       }
     }
   }
