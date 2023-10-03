@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import * as _ from 'lodash';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { TriggerEvent, TriggerEventCommand } from '@novu/application-generic';
+import { TriggerEventStatusEnum } from '@novu/shared';
 
 import { TriggerEventToAllCommand } from './trigger-event-to-all.command';
 
@@ -35,7 +36,7 @@ export class TriggerEventToAll {
 
     return {
       acknowledged: true,
-      status: 'processed',
+      status: TriggerEventStatusEnum.PROCESSED,
       transactionId: command.transactionId,
     };
   }

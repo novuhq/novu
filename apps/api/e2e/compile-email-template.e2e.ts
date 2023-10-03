@@ -140,8 +140,37 @@ describe('Compile E-mail Template', function () {
     expect(subject).to.equal(subjectText);
   });
 
-  describe('Backwards compatability', function () {
-    it('should compile e-mail template for custom html without layouts attached for backwards compatability', async function () {
+  it('should apply sender name variable if provided', async function () {
+    const senderNameTest = 'Novu Test';
+    const { html, senderName } = await useCase.execute(
+      CompileEmailTemplateCommand.create({
+        organizationId: session.organization._id,
+        environmentId: session.environment._id,
+        layoutId: null,
+        preheader: null,
+        content: [
+          {
+            content: '<p>{{senderName}}</p>',
+            type: EmailBlockTypeEnum.TEXT,
+          },
+        ],
+        payload: { senderName: senderNameTest },
+        userId: session.user._id,
+        contentType: 'editor',
+        subject: 'sub',
+        senderName: '{{senderName}}',
+      })
+    );
+
+    expect(html).to.contain('<!DOCTYPE html');
+    expect(html).not.to.contain('{{senderName}}');
+    expect(html).to.contain(`<p>${senderNameTest}</p>`);
+
+    expect(senderName).to.equal(senderNameTest);
+  });
+
+  describe('Backwards compatibility', function () {
+    it('should compile e-mail template for custom html without layouts attached for backwards compatibility', async function () {
       const { html, subject } = await useCase.execute(
         CompileEmailTemplateCommand.create({
           organizationId: session.organization._id,

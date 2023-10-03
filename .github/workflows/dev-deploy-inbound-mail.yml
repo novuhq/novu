@@ -79,7 +79,7 @@ jobs:
 
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:dev
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
-          echo "::set-output name=IMAGE::ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
+          echo "IMAGE=ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
       - name: Checkout cloud infra
         uses: actions/checkout@master

@@ -94,6 +94,8 @@ export class StandardWorker extends StandardWorkerService implements INovuWorker
     return async ({ data }: { data: IJobData | any }) => {
       const minimalJobData = this.extractMinimalJobData(data);
 
+      Logger.verbose(`Job ${minimalJobData.jobId} is being processed in the new instance standard worker`, LOG_CONTEXT);
+
       return await new Promise(async (resolve, reject) => {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const _this = this;

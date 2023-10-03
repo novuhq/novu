@@ -58,8 +58,13 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
     return this.mapEntity(data.toObject());
   }
 
-  async delete(query: FilterQuery<T_DBModel> & T_Enforcement): Promise<void> {
-    return await this.MongooseModel.remove(query);
+  async delete(query: FilterQuery<T_DBModel> & T_Enforcement): Promise<{
+    /** Indicates whether this writes result was acknowledged. If not, then all other members of this result will be undefined. */
+    acknowledged: boolean;
+    /** The number of documents that were deleted */
+    deletedCount: number;
+  }> {
+    return await this.MongooseModel.deleteMany(query);
   }
 
   async find(

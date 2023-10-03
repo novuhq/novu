@@ -59,7 +59,10 @@ export class DigestFilterSteps {
     };
   }
 
-  public static getNestedValue<ObjectType>(payload: ObjectType, path?: string) {
+  public static getNestedValue<ObjectType>(
+    payload: ObjectType,
+    path?: string
+  ): ObjectType | undefined {
     if (!path || !payload) {
       return undefined;
     }

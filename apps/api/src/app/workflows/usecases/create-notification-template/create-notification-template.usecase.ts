@@ -344,7 +344,7 @@ export class CreateNotificationTemplate {
 
       const blueprintFeed = await this.feedRepository.findOne({
         _organizationId: this.getBlueprintOrganizationId,
-        id: step.template._feedId,
+        _id: step.template._feedId,
       });
 
       if (!blueprintFeed) {

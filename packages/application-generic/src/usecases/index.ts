@@ -29,3 +29,4 @@ export * from './conditions-filter';
 export * from './switch-environment';
 export * from './switch-organization';
 export * from './create-user';
+export * from './get-subscriber-global-preference';
