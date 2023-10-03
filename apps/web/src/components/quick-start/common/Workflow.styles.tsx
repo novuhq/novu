@@ -23,7 +23,6 @@ export const WorkflowWrapper = styled.div<{ height: string }>`
 
   .react-flow__attribution a {
     position: relative;
-    text-decoration: underline;
     font-size: initial;
     top: 25px;
     right: 173px;
