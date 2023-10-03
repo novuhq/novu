@@ -86,6 +86,7 @@
     "@novu/slack": "^0.20.0-alpha.0",
     "@novu/sms-central": "^0.20.0-alpha.0",
     "@novu/sms77": "^0.20.0-alpha.0",
+    "@novu/sms-to": "^0.16.3-alpha.0",
     "@novu/sns": "^0.20.0-alpha.0",
     "@novu/sparkpost": "^0.20.0-alpha.0",
     "@novu/stateless": "^0.20.0-alpha.0",
