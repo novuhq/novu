@@ -164,7 +164,7 @@ export class ParseEventRequest {
       identifier,
     });
     if (!found) {
-      throw new ApiException(`Tenant with identifier ${identifier} cound not be found`);
+      throw new ApiException(`Tenant with identifier ${identifier} could not be found`);
     }
   }
 
