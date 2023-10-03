@@ -1,6 +1,6 @@
 {
   "name": "@novu/nexmo",
-  "version": "0.19.0",
+  "version": "0.20.0-alpha.0",
   "description": "A nexmo wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -32,7 +32,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@novu/stateless": "^0.19.0",
+    "@novu/stateless": "^0.20.0-alpha.0",
     "@vonage/server-sdk": "^2.10.10"
   },
   "devDependencies": {

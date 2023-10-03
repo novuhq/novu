@@ -113,7 +113,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
             >
               Sign In with GitHub
             </GoogleButton>
-            <GoogleButton
+            {/*      <GoogleButton
               component="a"
               href={googleLink}
               my={30}
@@ -125,7 +125,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
               sx={{ color: colors.B40, fontSize: '16px', fontWeight: 700, height: '50px', marginLeft: 10 }}
             >
               Sign In with Google
-            </GoogleButton>
+            </GoogleButton>*/}
           </OAuth>
           <Divider label={<Text color={colors.B40}>Or</Text>} color={colors.B30} labelPosition="center" my="md" />
         </>
