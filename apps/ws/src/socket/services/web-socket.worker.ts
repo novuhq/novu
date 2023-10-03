@@ -22,6 +22,11 @@ export class WebSocketWorker extends WebSocketsWorkerService implements INovuWor
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const _this = this;
 
+        Logger.verbose(
+          `Job ${job.id} / ${job.data.event} is being processed in the MemoryDB instance WebSocketWorker`,
+          LOG_CONTEXT
+        );
+
         nr.startBackgroundTransaction(
           ObservabilityBackgroundTransactionEnum.WS_SOCKET_QUEUE,
           'WS Service',

@@ -87,7 +87,19 @@ export const EmailSettings = () => {
                     data-test-id={'mail-server-domiain-copy'}
                     onClick={() => clipboardEnvironmentIdentifier.copy(mailServerDomain)}
                   >
-                    {clipboardEnvironmentIdentifier.copied ? <Check /> : <Copy />}
+                    {clipboardEnvironmentIdentifier.copied ? (
+                      <Check
+                        style={{
+                          color: colors.B60,
+                        }}
+                      />
+                    ) : (
+                      <Copy
+                        style={{
+                          color: colors.B60,
+                        }}
+                      />
+                    )}
                   </ActionIcon>
                 </Tooltip>
               }
