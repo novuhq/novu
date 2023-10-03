@@ -20,7 +20,7 @@ export class DeleteTenant {
     );
 
     try {
-      return await this.tenantRepository.delete({
+      await this.tenantRepository.delete({
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
         identifier: command.identifier,

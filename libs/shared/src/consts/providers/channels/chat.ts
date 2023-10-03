@@ -10,7 +10,7 @@ export const chatProviders: IProviderConfig[] = [
     displayName: 'Slack',
     channel: ChannelTypeEnum.CHAT,
     credentials: slackConfig,
-    docReference: 'https://docs.novu.co/channels/chat/slack',
+    docReference: 'https://docs.novu.co/channels-and-providers/chat/slack',
     logoFileName: { light: 'slack.svg', dark: 'slack.svg' },
   },
   {
@@ -18,7 +18,7 @@ export const chatProviders: IProviderConfig[] = [
     displayName: 'Discord',
     channel: ChannelTypeEnum.CHAT,
     credentials: [] as IConfigCredentials[],
-    docReference: 'https://docs.novu.co/channels/chat/discord',
+    docReference: 'https://docs.novu.co/channels-and-providers/chat/discord',
     logoFileName: { light: 'discord.svg', dark: 'discord.svg' },
   },
   {
@@ -26,7 +26,7 @@ export const chatProviders: IProviderConfig[] = [
     displayName: 'MSTeams',
     channel: ChannelTypeEnum.CHAT,
     credentials: [] as IConfigCredentials[],
-    docReference: 'https://docs.novu.co/channels/chat/msteams',
+    docReference: 'https://docs.novu.co/channels-and-providers/chat/ms-teams',
     logoFileName: { light: 'msteams.svg', dark: 'msteams.svg' },
   },
   {

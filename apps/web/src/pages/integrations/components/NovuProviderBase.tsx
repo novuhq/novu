@@ -54,7 +54,7 @@ export function NovuProviderBase({ onClose, senderInformation, channel }: NovuPr
           <InlineDiv>
             <span>Read more about Integrations in</span>
             <a
-              href="https://docs.novu.co/platform/integrations"
+              href="https://docs.novu.co/channels-and-providers/integration-store"
               target="_blank"
               rel="noreferrer"
               style={{ color: '#DD2476 ', textDecoration: 'underline' }}

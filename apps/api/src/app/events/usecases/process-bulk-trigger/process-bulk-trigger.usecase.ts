@@ -1,5 +1,8 @@
 import { Injectable } from '@nestjs/common';
+import { TriggerEventStatusEnum } from '@novu/shared';
+
 import { ProcessBulkTriggerCommand } from './process-bulk-trigger.command';
+
 import { TriggerEventResponseDto } from '../../dtos';
 import { MapTriggerRecipients } from '../map-trigger-recipients';
 import { ParseEventRequestCommand } from '../parse-event-request/parse-event-request.command';
@@ -40,9 +43,9 @@ export class ProcessBulkTrigger {
         }
 
         result = {
-          status: 'error',
-          error: error,
           acknowledged: true,
+          status: TriggerEventStatusEnum.ERROR,
+          error,
         };
       }
 

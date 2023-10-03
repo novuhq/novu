@@ -17,6 +17,7 @@ import {
   ITenantDefine,
   ReservedVariablesMap,
   TriggerContextTypeEnum,
+  TriggerEventStatusEnum,
   TriggerTenantContext,
 } from '@novu/shared';
 
@@ -73,21 +74,21 @@ export class ParseEventRequest {
     if (!template.active) {
       return {
         acknowledged: true,
-        status: 'trigger_not_active',
+        status: TriggerEventStatusEnum.NOT_ACTIVE,
       };
     }
 
     if (!template.steps?.length) {
       return {
         acknowledged: true,
-        status: 'no_workflow_steps_defined',
+        status: TriggerEventStatusEnum.NO_WORKFLOW_STEPS,
       };
     }
 
     if (!template.steps?.some((step) => step.active)) {
       return {
         acknowledged: true,
-        status: 'no_workflow_active_steps_defined',
+        status: TriggerEventStatusEnum.NO_WORKFLOW_ACTIVE_STEPS,
       };
     }
 
@@ -97,7 +98,7 @@ export class ParseEventRequest {
       } catch (e) {
         return {
           acknowledged: true,
-          status: 'no_tenant_found',
+          status: TriggerEventStatusEnum.TENANT_MISSING,
         };
       }
     }
@@ -135,8 +136,8 @@ export class ParseEventRequest {
 
     return {
       acknowledged: true,
-      status: 'processed',
-      transactionId: transactionId,
+      status: TriggerEventStatusEnum.PROCESSED,
+      transactionId,
     };
   }
 
@@ -171,6 +172,12 @@ export class ParseEventRequest {
   private async validateSubscriberIdProperty(to: ISubscribersDefine[]): Promise<boolean> {
     for (const subscriber of to) {
       const subscriberIdExists = typeof subscriber === 'string' ? subscriber : subscriber.subscriberId;
+
+      if (Array.isArray(subscriberIdExists)) {
+        throw new ApiException(
+          'subscriberId under property to is type array, which is not allowed please make sure all subscribers ids are strings'
+        );
+      }
 
       if (!subscriberIdExists) {
         throw new ApiException(
