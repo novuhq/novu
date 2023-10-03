@@ -58,7 +58,7 @@ test('should trigger resend email with From Name', async () => {
 
   expect(spy).toBeCalled();
   expect(spy).toBeCalledWith({
-    from: `${mockConfigWithSenderName.senderName} ${mockNovuMessage.from}`,
+    from: `${mockConfigWithSenderName.senderName} <${mockNovuMessage.from}>`,
     to: mockNovuMessage.to,
     html: mockNovuMessage.html,
     subject: mockNovuMessage.subject,
