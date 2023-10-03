@@ -1,18 +1,10 @@
-import { useMemo, useState } from 'react';
-import { Center, Loader, ScrollArea } from '@mantine/core';
-import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
-
-import { colors, TemplateButton } from '../../../design-system';
-import { IntegrationsStoreModal } from '../../integrations/IntegrationsStoreModal';
-import type { IIntegratedProvider } from '../../integrations/types';
-import { useProviders } from '../../integrations/useProviders';
-import { ListProviders } from './ListProviders';
-import { SubPageWrapper } from './SubPageWrapper';
-import { WorkflowSettingsTabs } from './WorkflowSettingsTabs';
-import { useIsMultiProviderConfigurationEnabled } from '../../../hooks';
-import { IntegrationsListModal } from '../../integrations/IntegrationsListModal';
+import { useMemo } from 'react';
+import { ScrollArea } from '@mantine/core';
+import { StepTypeEnum } from '@novu/shared';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
+
+import { SubPageWrapper } from './SubPageWrapper';
 import { WorkflowNode } from '../workflow/workflow/node-types/WorkflowNode';
 import { stepIcon } from '../constants';
 import { useBasePath } from '../hooks/useBasePath';
@@ -38,7 +30,6 @@ export function VariantsPage() {
     return null;
   }
 
-  console.log(index, variants);
   const Icon = stepIcon[channel];
 
   return (
@@ -68,8 +59,6 @@ export function VariantsPage() {
           {/*  />*/}
           {/*</div>*/}
           {variants?.map((variant) => {
-            console.log(variant);
-
             return (
               <div
                 key={variant._id}
