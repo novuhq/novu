@@ -8,8 +8,9 @@ import {
 import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
 
 import { SelectIntegrationCommand } from './select-integration.command';
-import { ConditionsFilter } from '../conditions-filter/conditions-filter.usecase';
-import { buildIntegrationKey, CachedQuery } from '../../services/cache';
+import { ConditionsFilter } from '../conditions-filter';
+import { CachedQuery } from '../../services/cache/interceptors/cached-query.interceptor';
+import { buildIntegrationKey } from '../../services/cache/key-builders/queries';
 import {
   FeatureFlagCommand,
   GetIsMultiProviderConfigurationEnabled,
@@ -96,11 +97,12 @@ export class SelectIntegration {
             environmentId: command.environmentId,
             organizationId: command.organizationId,
             userId: command.userId,
-          }),
-          {
-            tenant,
-          }
+            variables: {
+              tenant,
+            },
+          })
         );
+
         if (passed) {
           integration = currentIntegration;
           break;

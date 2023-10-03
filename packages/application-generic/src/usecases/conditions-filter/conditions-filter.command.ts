@@ -1,7 +1,10 @@
-import { StepFilter } from '@novu/dal';
 import { IsDefined } from 'class-validator';
-import { EnvironmentWithUserCommand } from '../../commands';
+
+import { StepFilter } from '@novu/dal';
 import { IJob, INotificationTemplateStep } from '@novu/shared';
+
+import { EnvironmentWithUserCommand } from '../../commands';
+import { IFilterVariables } from '../../utils/filter-processing-details';
 
 export class ConditionsFilterCommand extends EnvironmentWithUserCommand {
   @IsDefined()
@@ -10,4 +13,6 @@ export class ConditionsFilterCommand extends EnvironmentWithUserCommand {
   job?: IJob;
 
   step?: INotificationTemplateStep;
+
+  variables?: IFilterVariables;
 }

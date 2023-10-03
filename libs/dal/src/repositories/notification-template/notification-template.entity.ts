@@ -13,6 +13,7 @@ import {
   IStepVariant,
   INotificationTrigger,
   TriggerTypeEnum,
+  IMessageFilter,
 } from '@novu/shared';
 
 import { MessageTemplateEntity } from '../message-template';
@@ -121,13 +122,10 @@ export class NotificationStepEntity extends StepVariantEntity implements INotifi
   variants?: StepVariantEntity[];
 }
 
-export class StepFilter {
-  isNegated: boolean;
-
-  type: BuilderFieldType;
-
+export class StepFilter implements IMessageFilter {
+  isNegated?: boolean;
+  type?: BuilderFieldType;
   value: BuilderGroupValues;
-
   children: FilterParts[];
 }
 

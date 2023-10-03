@@ -102,10 +102,11 @@ describe('select integration', function () {
       // @ts-ignore
       new GetDecryptedIntegrations(),
       new ConditionsFilter(
+        new SubscriberRepository(),
         new MessageRepository(),
         new ExecutionDetailsRepository(),
-        new SubscriberRepository(),
         new JobRepository(),
+        new TenantRepository(),
         new EnvironmentRepository()
       ),
       new TenantRepository(),
