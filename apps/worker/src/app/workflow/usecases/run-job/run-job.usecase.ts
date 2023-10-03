@@ -40,7 +40,7 @@ export class RunJob {
         jobId: job._id,
       });
     } catch (e) {
-      Logger.error(e, 'RunJob');
+      Logger.error(e, 'RunJob', LOG_CONTEXT);
     }
 
     const canceled = await this.delayedEventIsCanceled(job);
