@@ -8,6 +8,7 @@ interface IModalProps extends JSX.ElementChildrenAttribute {
   title: ReactNode | string;
   onClose: () => void;
   size?: 'lg' | 'xl' | 'md';
+  zIndex?: number;
 }
 
 export function Modal({ children, ...props }: IModalProps) {

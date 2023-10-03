@@ -607,7 +607,7 @@ describe('Integrations List Page', function () {
     cy.getByTestId('conditions-form-title').contains('Conditions for Mailjet Integration provider instance');
     cy.getByTestId('add-new-condition').click();
     cy.getByTestId('conditions-form-on').should('have.value', 'Tenant');
-    cy.getByTestId('conditions-form-key').should('have.value', 'Identifier');
+    cy.getByTestId('conditions-form-key').type('identifier');
     cy.getByTestId('conditions-form-operator').should('have.value', 'Equal');
     cy.getByTestId('conditions-form-value').type('tenant123');
     cy.getByTestId('apply-conditions-btn').click();
@@ -621,6 +621,7 @@ describe('Integrations List Page', function () {
     cy.getByTestId('update-provider-sidebar').should('be.visible');
     cy.getByTestId('header-add-conditions-btn').contains('1').click();
     cy.getByTestId('add-new-condition').click();
+    cy.getByTestId('conditions-form-key').last().type('identifier');
     cy.getByTestId('conditions-form-value').last().type('tenant456');
     cy.getByTestId('apply-conditions-btn').click();
     cy.getByTestId('header-add-conditions-btn').contains('2');
@@ -662,7 +663,7 @@ describe('Integrations List Page', function () {
     cy.getByTestId('conditions-form-title').contains('Conditions for SendGrid provider instance');
     cy.getByTestId('add-new-condition').click();
     cy.getByTestId('conditions-form-on').should('have.value', 'Tenant');
-    cy.getByTestId('conditions-form-key').should('have.value', 'Identifier');
+    cy.getByTestId('conditions-form-key').type('identifier');
     cy.getByTestId('conditions-form-operator').should('have.value', 'Equal');
     cy.getByTestId('conditions-form-value').type('tenant123');
 
@@ -692,9 +693,12 @@ describe('Integrations List Page', function () {
     cy.getByTestId('provider-instance-name').clear().type('Mailjet Integration');
     cy.getByTestId('add-conditions-btn').click();
     cy.getByTestId('conditions-form-title').contains('Conditions for Mailjet Integration provider instance');
+
     cy.getByTestId('add-new-condition').click();
 
+    cy.getByTestId('conditions-form-key').type('identifier');
     cy.getByTestId('conditions-form-value').type('tenant123');
+
     cy.getByTestId('apply-conditions-btn').click();
 
     cy.getByTestId('create-provider-instance-sidebar-create').should('not.be.disabled').contains('Create').click();

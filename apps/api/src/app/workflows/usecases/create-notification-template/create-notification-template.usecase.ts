@@ -69,7 +69,7 @@ export class CreateNotificationTemplate {
 
     for (const variant of variants) {
       if (!variant.filters?.length) {
-        throw new ApiException(`Variant filters are required, variant name ${variant.name} id ${variant._id}`);
+        throw new ApiException(`Variant conditions are required, variant name ${variant.name} id ${variant._id}`);
       }
     }
   }
