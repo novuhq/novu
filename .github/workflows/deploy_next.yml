@@ -90,7 +90,6 @@ jobs:
             AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
             AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
             GIT_COMMIT: ${{ github.sha }}
-            DOCKER_TAG: ${{ secrets.DOCKER_TAG }}
             IMAGE_WS: ${{ secrets.IMAGE_WS }}
             IMAGE_WEB: ${{ secrets.IMAGE_WEB }}
             IMAGE_WIDGET: ${{ secrets.IMAGE_WIDGET }}
@@ -98,17 +97,17 @@ jobs:
             IMAGE_API: ${{ secrets.IMAGE_API }}
             IMAGE_WORKER: ${{ secrets.IMAGE_WORKER }}
           run: |
-            docker tag ${DOCKER_TAG} ${IMAGE_WS}:$GIT_COMMIT
+            docker tag dept-novu-ws ${IMAGE_WS}:$GIT_COMMIT
             docker push ${IMAGE_WS}:$GIT_COMMIT
-            docker tag ${DOCKER_TAG} ${IMAGE_WEB}:$GIT_COMMIT
+            docker tag dept-novu-web ${IMAGE_WEB}:$GIT_COMMIT
             docker push ${IMAGE_WEB}:$GIT_COMMIT
-            docker tag ${DOCKER_TAG} ${IMAGE_WIDGET}:$GIT_COMMIT
+            docker tag dept-novu-widget ${IMAGE_WIDGET}:$GIT_COMMIT
             docker push ${IMAGE_WIDGET}:$GIT_COMMIT
-            docker tag ${DOCKER_TAG} ${IMAGE_EMBED}:$GIT_COMMIT
+            docker tag dept-novu-embed ${IMAGE_EMBED}:$GIT_COMMIT
             docker push ${IMAGE_EMBED}:$GIT_COMMIT
-            docker tag ${DOCKER_TAG} ${IMAGE_API}:$GIT_COMMIT
+            docker tag dept-novu-api ${IMAGE_API}:$GIT_COMMIT
             docker push ${IMAGE_API}:$GIT_COMMIT
-            docker tag ${DOCKER_TAG} ${IMAGE_WORKER}:$GIT_COMMIT
+            docker tag dept-novu-worker ${IMAGE_WORKER}:$GIT_COMMIT
             docker push ${IMAGE_WORKER}:$GIT_COMMIT
         - name: Deploy
           env:
