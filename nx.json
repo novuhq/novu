@@ -1,11 +1,11 @@
 {
   "extends": "@nrwl/workspace/presets/npm.json",
   "npmScope": "novuhq",
-  "useDaemonProcess": false,
   "tasksRunnerOptions": {
     "default": {
       "runner": "@nrwl/nx-cloud",
       "options": {
+        "useDaemonProcess": false,
         "cacheableOperations": [
           "build",
           "test",
