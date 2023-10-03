@@ -392,7 +392,7 @@ importers:
       nodemon: 2.0.22
       prettier: 2.8.7
       sinon: 9.2.4
-      ts-jest: 27.1.5_4aafjbpmnrfjtrzkyohogv4jce
+      ts-jest: 27.1.5_cnngzrja2umb46xxazlucyx2qu
       ts-loader: 9.4.2_fejcc7gjbwtmwzggoernzojija
       ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
       tsconfig-paths: 4.1.2
@@ -1167,6 +1167,33 @@ importers:
       nodemon: 2.0.22
       sinon: 9.2.4
       ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
+      typescript: 4.9.5
+
+  enterprise/packages/libs/dal:
+    specifiers:
+      '@nestjs/common': '>=9.3.x'
+      '@novu/shared': ^0.20.0-alpha.0
+      '@types/node': ^14.6.0
+      '@typescript-eslint/parser': ^4.14.2
+      eslint-plugin-prettier: ^4.2.1
+      mongoose: ^7.5.0
+      mongoose-delete: ^1.0.1
+      rimraf: ^3.0.2
+      ts-node: ~10.9.1
+      tsconfig-paths: ~4.1.0
+      typescript: 4.9.5
+    dependencies:
+      '@nestjs/common': 10.2.2_atc7tu2sld2m3nk4hmwkqn6qde
+      '@novu/shared': link:../../../../libs/shared
+      mongoose: 7.5.2
+      mongoose-delete: 1.0.1_mongoose@7.5.2
+      rimraf: 3.0.2
+    devDependencies:
+      '@types/node': 14.18.42
+      '@typescript-eslint/parser': 4.33.0_jofidmxrjzhj7l6vknpw5ecvfe
+      eslint-plugin-prettier: 4.2.1_6l7kvkw7pbq7sx3iiqo67pyozi
+      ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
+      tsconfig-paths: 4.1.2
       typescript: 4.9.5
 
   enterprise/packages/translation:
@@ -27302,7 +27329,7 @@ packages:
       minimatch: 3.1.2
       object.values: 1.1.6
       resolve: 1.22.2
-      semver: 6.3.0
+      semver: 6.3.1
       tsconfig-paths: 3.14.2
     transitivePeerDependencies:
       - eslint-import-resolver-typescript
@@ -41799,6 +41826,7 @@ packages:
   /semver/6.3.0:
     resolution: {integrity: sha512-b39TBaTSfV6yBrapU89p5fKekE2m/NwnDocOVruQFS1/veMgdzuPcnOM34M6CwxW8jH/lxEa5rBoDeUwu5HHTw==}
     hasBin: true
+    dev: true
 
   /semver/6.3.1:
     resolution: {integrity: sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA==}
@@ -44090,7 +44118,7 @@ packages:
       yargs-parser: 20.2.9
     dev: true
 
-  /ts-jest/27.1.5_4aafjbpmnrfjtrzkyohogv4jce:
+  /ts-jest/27.1.5_cnngzrja2umb46xxazlucyx2qu:
     resolution: {integrity: sha512-Xv6jBQPoBEvBq/5i2TeSG9tt/nqkbpcurrEG1b+2yfBrcJelOZF9Ml6dmyMh7bcW9JyFbRYpR5rxROSlBLTZHA==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
     hasBin: true
@@ -44111,7 +44139,6 @@ packages:
       esbuild:
         optional: true
     dependencies:
-      '@babel/core': 7.22.11
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
       jest: 27.5.1_ts-node@10.9.1
