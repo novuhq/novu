@@ -3,6 +3,7 @@ import { INovuWorker, ReadinessService, SubscriberProcessWorkerService } from '@
 
 import { StandardWorker } from './standard.worker';
 import { WorkflowWorker } from './workflow.worker';
+import { OldInstanceStandardWorker } from './old-instance-standard.worker';
 import { OldInstanceWorkflowWorker } from './old-instance-workflow.worker';
 
 /**
@@ -11,12 +12,14 @@ import { OldInstanceWorkflowWorker } from './old-instance-workflow.worker';
 const getWorkers = (app: INestApplication): INovuWorker[] => {
   const standardWorker = app.get(StandardWorker, { strict: false });
   const workflowWorker = app.get(WorkflowWorker, { strict: false });
+  const oldInstanceStandardWorker = app.get(OldInstanceStandardWorker, { strict: false });
   const oldInstanceWorkflowWorker = app.get(OldInstanceWorkflowWorker, { strict: false });
   const subscriberProcessWorkerService = app.get(SubscriberProcessWorkerService, { strict: false });
 
   const workers: INovuWorker[] = [
     standardWorker,
     workflowWorker,
+    oldInstanceStandardWorker,
     oldInstanceWorkflowWorker,
     subscriberProcessWorkerService,
   ];

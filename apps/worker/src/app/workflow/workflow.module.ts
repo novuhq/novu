@@ -15,6 +15,7 @@ import {
   GetNovuLayout,
   GetNovuProviderCredentials,
   GetSubscriberPreference,
+  GetSubscriberGlobalPreference,
   GetSubscriberTemplatePreference,
   ProcessTenant,
   OldInstanceBullMqService,
@@ -39,6 +40,7 @@ import {
   StandardWorker,
   WorkflowWorker,
   OldInstanceWorkflowWorker,
+  OldInstanceStandardWorker,
 } from './services';
 
 import {
@@ -95,6 +97,7 @@ const USE_CASES = [
   GetNovuProviderCredentials,
   SelectIntegration,
   GetSubscriberPreference,
+  GetSubscriberGlobalPreference,
   GetSubscriberTemplatePreference,
   HandleLastFailedJob,
   MessageMatcher,
@@ -130,6 +133,7 @@ const PROVIDERS: Provider[] = [
   StandardWorker,
   WorkflowWorker,
   OldInstanceBullMqService,
+  OldInstanceStandardWorker,
   OldInstanceWorkflowWorker,
 ];
 

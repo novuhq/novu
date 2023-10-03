@@ -1,6 +1,6 @@
 {
   "name": "@novu/plivo",
-  "version": "0.19.0",
+  "version": "0.20.0-alpha.0",
   "description": "A plivo wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -44,7 +44,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@novu/stateless": "^0.19.0",
+    "@novu/stateless": "^0.20.0-alpha.0",
     "plivo": "^4.22.4"
   },
   "devDependencies": {

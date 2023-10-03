@@ -13,14 +13,21 @@ export class SubscriberPreferenceEntity {
 
   _subscriberId: string;
 
-  _templateId: string;
+  _templateId?: string;
 
   enabled: boolean;
 
   channels: IPreferenceChannels;
+
+  level: PreferenceLevelEnum;
 }
 
 export type SubscriberPreferenceDBModel = ChangePropsValueType<
   SubscriberPreferenceEntity,
   '_environmentId' | '_organizationId' | '_subscriberId' | '_templateId'
 >;
+
+export enum PreferenceLevelEnum {
+  GLOBAL = 'global',
+  TEMPLATE = 'template',
+}

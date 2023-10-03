@@ -78,6 +78,7 @@ export interface IFetchingStrategy {
   fetchOrganization: boolean;
   fetchNotifications: boolean;
   fetchUserPreferences: boolean;
+  fetchUserGlobalPreferences: boolean;
 }
 
 export interface INovuProviderContext {
