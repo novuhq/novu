@@ -36,7 +36,12 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
   try {
     if (process.env.NOVU_MANAGED_SERVICE === 'true' || process.env.CI_EE_TEST === 'true') {
-      modules.push(require('@novu/ee-auth')?.EEAuthModule);
+      if (require('@novu/ee-auth')?.EEAuthModule) {
+        modules.push(require('@novu/ee-auth')?.EEAuthModule);
+      }
+      if (require('@novu/ee-translation')?.EETranslationModule) {
+        modules.push(require('@novu/ee-translation')?.EETranslationModule);
+      }
     }
   } catch (e) {
     Logger.error(e, `Unexpected error while importing enterprise modules`, 'EnterpriseImport');
