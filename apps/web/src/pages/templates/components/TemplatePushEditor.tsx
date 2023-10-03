@@ -10,12 +10,22 @@ import { VariableManager } from './VariableManager';
 
 const templateFields = ['content', 'title'];
 
-export function TemplatePushEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {
+export function TemplatePushEditor({
+  control,
+  index,
+  variantIndex,
+}: {
+  control: Control<IForm>;
+  index: number;
+  errors: any;
+  variantIndex?: number;
+}) {
   const { readonly } = useEnvController();
   const {
     formState: { errors },
   } = useFormContext();
   const variablesArray = useVariablesManager(index, templateFields);
+  const path = variantIndex ? `steps.${index}.variants.${variantIndex}.template` : `steps.${index}.template`;
 
   const { hasActiveIntegration } = useHasActiveIntegrations({
     channelType: ChannelTypeEnum.PUSH,
@@ -26,7 +36,7 @@ export function TemplatePushEditor({ control, index }: { control: Control<IForm>
       {!hasActiveIntegration ? <LackIntegrationAlert channelType={ChannelTypeEnum.PUSH} /> : null}
       <StepSettings index={index} />
       <Controller
-        name={`steps.${index}.template.title` as any}
+        name={`${path}.title` as any}
         defaultValue=""
         control={control}
         render={({ field }) => (
@@ -43,7 +53,7 @@ export function TemplatePushEditor({ control, index }: { control: Control<IForm>
         )}
       />
       <Controller
-        name={`steps.${index}.template.content` as any}
+        name={`${path}.content` as any}
         defaultValue=""
         control={control}
         render={({ field }) => (

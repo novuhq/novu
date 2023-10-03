@@ -53,6 +53,7 @@ interface IFlowEditorProps extends ReactFlowProps {
   withControls?: boolean;
   wrapperStyles?: React.CSSProperties;
   onDelete?: (id: string) => void;
+  onAddVariant?: (id: string) => void;
   onStepInit?: (step: IFlowStep) => Promise<void>;
   onGetStepError?: (i: number, errors: any) => string;
   addStep?: (channelType: StepTypeEnum, id: string, index?: number) => void;
@@ -80,6 +81,7 @@ export function FlowEditor({
   onGetStepError,
   addStep,
   onDelete,
+  onAddVariant,
   ...restProps
 }: IFlowEditorProps) {
   const { colorScheme } = useMantineColorScheme();
@@ -193,10 +195,11 @@ export function FlowEditor({
     i: number
   ): Node {
     const channel = getChannel(step.template?.type);
+    const hasVariants = step.variants && step.variants?.length > 0;
 
     return {
       id: newId,
-      type: 'channelNode',
+      type: hasVariants ? 'variantNode' : 'channelNode',
       position: { x: position.x, y: position.y },
       parentNode: parentId,
       data: {
@@ -205,6 +208,7 @@ export function FlowEditor({
         index: i,
         error: onGetStepError?.(i, errors) ?? '',
         onDelete,
+        onAddVariant,
         uuid: step.uuid,
         name: step.name,
         content: step.template?.content,
@@ -359,6 +363,9 @@ const Wrapper = styled.div<{ dark: boolean }>`
         stop-color: white !important;
       }
     }
+  }
+  .react-flow__node.react-flow__node-variantNode {
+    height: 120px;
   }
 
   .react-flow__node.react-flow__node-addNode {

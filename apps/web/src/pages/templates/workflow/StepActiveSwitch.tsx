@@ -3,13 +3,13 @@ import { Controller } from 'react-hook-form';
 import { Switch } from '../../../design-system';
 import { useEnvController } from '../../../hooks';
 
-export const StepActiveSwitch = ({ control, index }) => {
+export const StepActiveSwitch = ({ control, index, path = '' }) => {
   const { readonly } = useEnvController();
 
   return (
     <Controller
       control={control}
-      name={`steps.${index}.active`}
+      name={`${path ? path : `steps.${index}`}.active`}
       defaultValue={true}
       render={({ field: { value, ...field } }) => {
         return (

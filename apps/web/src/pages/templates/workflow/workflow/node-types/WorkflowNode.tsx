@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import { Group, UnstyledButton, useMantineColorScheme } from '@mantine/core';
+import { Group, Center, useMantineColorScheme, ActionIcon, Container, Stack, Divider } from '@mantine/core';
 import { ChannelTypeEnum, providers, StepTypeEnum } from '@novu/shared';
 import React, { useEffect, useState } from 'react';
 import { useViewport } from 'react-flow-renderer';
@@ -8,12 +8,20 @@ import { useFormContext } from 'react-hook-form';
 import { useSegment } from '../../../../../components/providers/SegmentProvider';
 import { When } from '../../../../../components/utils/When';
 import { CONTEXT_PATH } from '../../../../../config';
-import { Switch } from '../../../../../design-system';
-import { Button } from '../../../../../design-system/button/Button';
-import { colors } from '../../../../../design-system/config';
-import { ProviderMissing, Trash } from '../../../../../design-system/icons';
+import { Dropdown, Switch, Text, Tooltip, colors, Button } from '../../../../../design-system';
+
+import {
+  ConditionPlus,
+  ConditionsFile,
+  DotsHorizontal,
+  Edit,
+  PencilOutlined,
+  ProviderMissing,
+  Trash,
+  VariantPlus,
+  VariantsFile,
+} from '../../../../../design-system/icons';
 import { useStyles } from '../../../../../design-system/template-button/TemplateButton.styles';
-import { Text } from '../../../../../design-system/typography/text/Text';
 import {
   useEnvController,
   useGetPrimaryIntegration,
@@ -46,8 +54,10 @@ interface ITemplateButtonProps {
   id?: string;
   index?: number;
   onDelete?: () => void;
+  onAddVariant?: () => void;
   dragging?: boolean;
   disabled?: boolean;
+  variant?: boolean;
   subtitle?: string | React.ReactNode;
 }
 
@@ -67,13 +77,16 @@ export function WorkflowNode({
   testId,
   errors: initialErrors = false,
   showDelete = true,
+  variant = false,
   id = undefined,
   onDelete = () => {},
+  onAddVariant = () => {},
   dragging = false,
   disabled: initDisabled,
   subtitle,
 }: ITemplateButtonProps) {
   const segment = useSegment();
+
   const { readonly: readonlyEnv, environment } = useEnvController();
   const { cx, classes, theme } = useStyles();
   const [popoverOpened, setPopoverOpened] = useState(false);
@@ -81,6 +94,7 @@ export function WorkflowNode({
   const [isIntegrationsModalVisible, setIntegrationsModalVisible] = useState(false);
   const disabledColor = disabled ? { color: theme.colorScheme === 'dark' ? colors.B40 : colors.B70 } : {};
   const disabledProp = disabled ? { disabled: disabled } : {};
+  const conditionsCount = 7;
 
   const viewport = useViewport();
   const channelKey = tabKey ?? '';
@@ -115,6 +129,8 @@ export function WorkflowNode({
     stepErrorContent = getFormattedStepErrors(index, errors);
   }
 
+  const showMenu = showDelete && !readonlyEnv && !dragging && hover;
+
   useEffect(() => {
     const subscription = watch((values) => {
       const thisStep = values.steps.find((step) => step._id === id);
@@ -148,60 +164,120 @@ export function WorkflowNode({
           setHover(false);
         }}
         data-test-id={testId}
-        className={cx(classes.button, { [classes.active]: active })}
+        className={cx(classes.button, { [classes.active]: active }, { [classes.variant]: variant })}
       >
-        <Group w="100%" noWrap>
-          <LeftContainerWrapper>
-            <DisplayPrimaryProviderIcon
-              Icon={Icon}
-              disabledProp={disabledProp}
-              providerIntegration={providerIntegration}
-              isChannelStep={isChannelStep}
-              logoSrc={logoSrc}
-            />
-
-            <StyledContentWrapper>
-              <Text {...disabledColor} weight="bold" size={16} data-test-id="workflow-node-label">
-                {label}
-              </Text>
-              {Object.keys(stepErrorContent).length > 0 && (
-                <Text {...disabledColor} size={12} color={colors.error} rows={1} data-test-id="workflow-node-error">
-                  {stepErrorContent}
-                </Text>
-              )}
-              {!(Object.keys(stepErrorContent).length > 0) && subtitle && (
-                <Text {...disabledColor} size={12} color={colors.B60} rows={1} data-test-id="workflow-node-subtitle">
-                  {subtitle}
-                </Text>
-              )}
-            </StyledContentWrapper>
-          </LeftContainerWrapper>
-
-          <ActionWrapper>
-            {action && !readonly && (
-              <Switch checked={checked} onChange={(e) => switchButton && switchButton(e.target.checked)} />
-            )}
-            <When truthy={showDelete && !readonlyEnv && !dragging && hover}>
-              <UnstyledButton
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete();
-                }}
-                sx={{
-                  lineHeight: 1,
-                  zIndex: 9999,
-                }}
-                data-test-id="delete-step-action"
-              >
-                <Trash
-                  style={{
-                    background: 'transparent',
-                  }}
+        <Stack
+          style={{
+            flex: '1 1 auto',
+          }}
+          spacing={0}
+        >
+          <When truthy={variant}>
+            <div className={classes.header}>
+              <Group h={30} align={'center'}>
+                <IconText
+                  color={colors.B60}
+                  Icon={VariantsFile}
+                  label={
+                    <>
+                      12 <span style={{ fontSize: '12px' }}>variants</span>
+                    </>
+                  }
                 />
-              </UnstyledButton>
-            </When>
-          </ActionWrapper>
-        </Group>
+                <ContainerButton>
+                  <When truthy={!showMenu && conditionsCount > 0}>
+                    <IconText color={colors.B60} Icon={ConditionsFile} label={conditionsCount} />
+                  </When>
+                  <When truthy={showMenu}>
+                    <Group noWrap spacing={5}>
+                      <ActionIconWithTooltip onClick={(e) => e.stopPropagation()} label={'Edit root step'}>
+                        <PencilOutlined />
+                      </ActionIconWithTooltip>
+                      <ActionIconWithTooltip
+                        onClick={(e) => e.stopPropagation()}
+                        label={`${conditionsCount > 0 ? 'Edit' : 'Add'} group conditions`}
+                      >
+                        {conditionsCount > 0 ? (
+                          <IconText
+                            Icon={ConditionsFile}
+                            label={conditionsCount}
+                            color={colorScheme === 'dark' ? colors.white : colors.B60}
+                          />
+                        ) : (
+                          <ConditionsFile />
+                        )}
+                      </ActionIconWithTooltip>
+                      <DotsMenu onDelete={onDelete} onAddVariant={onAddVariant} />
+                    </Group>
+                  </When>
+                </ContainerButton>
+              </Group>
+            </div>
+            <Divider
+              ml={-18}
+              mr={-8}
+              size={2}
+              my={0}
+              variant={'dashed'}
+              color={colorScheme === 'dark' ? colors.BGDark : colors.BGLight}
+            />
+          </When>
+
+          <Group w="100%" noWrap>
+            <LeftContainerWrapper>
+              <DisplayPrimaryProviderIcon
+                Icon={Icon}
+                disabledProp={disabledProp}
+                providerIntegration={providerIntegration}
+                isChannelStep={isChannelStep}
+                logoSrc={logoSrc}
+              />
+
+              <StyledContentWrapper>
+                <Text {...disabledColor} weight="bold" rows={1} size={16} data-test-id="workflow-node-label">
+                  {label}
+                </Text>
+
+                {Object.keys(stepErrorContent).length > 0 && (
+                  <Text {...disabledColor} size={12} color={colors.error} rows={1} data-test-id="workflow-node-error">
+                    {stepErrorContent}
+                  </Text>
+                )}
+                {!(Object.keys(stepErrorContent).length > 0) && subtitle && (
+                  <Text
+                    {...disabledColor}
+                    style={{ ...(!variant && showMenu && { maxWidth: 50 }) }}
+                    size={12}
+                    color={colors.B60}
+                    rows={1}
+                    data-test-id="workflow-node-subtitle"
+                  >
+                    {subtitle}
+                  </Text>
+                )}
+              </StyledContentWrapper>
+            </LeftContainerWrapper>
+
+            <ActionWrapper>
+              {action && !readonly && (
+                <Switch checked={checked} onChange={(e) => switchButton && switchButton(e.target.checked)} />
+              )}
+              <When truthy={!variant && showMenu}>
+                <ContainerButton mt={-40}>
+                  <Group noWrap spacing={5}>
+                    <ActionIconWithTooltip onClick={(e) => e.stopPropagation()} label={'Edit step'}>
+                      <PencilOutlined />
+                    </ActionIconWithTooltip>
+                    <ActionIconWithTooltip onClick={(e) => e.stopPropagation()} label={'Add conditions'}>
+                      <ConditionPlus />
+                    </ActionIconWithTooltip>
+                    <DotsMenu onDelete={onDelete} onAddVariant={onAddVariant} />
+                  </Group>
+                </ContainerButton>
+              </When>
+            </ActionWrapper>
+          </Group>
+        </Stack>
 
         {!hasActiveIntegration && (
           <NodeErrorPopover
@@ -304,6 +380,74 @@ export function WorkflowNode({
   );
 }
 
+const DotsMenu = ({ onDelete, onAddVariant }) => {
+  return (
+    <Dropdown
+      withArrow={false}
+      offset={0}
+      control={
+        <ActionIcon onClick={(e) => e.stopPropagation()} variant={'transparent'}>
+          <DotsHorizontal />
+        </ActionIcon>
+      }
+      middlewares={{ flip: false, shift: false }}
+    >
+      <Dropdown.Item
+        icon={<VariantPlus />}
+        onClick={(e) => {
+          e.stopPropagation();
+          onAddVariant();
+        }}
+      >
+        Add variant
+      </Dropdown.Item>
+      <Dropdown.Item
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete();
+        }}
+        icon={<Trash width="16px" height="16px" />}
+        data-test-id="delete-step-action"
+      >
+        Delete step
+      </Dropdown.Item>
+    </Dropdown>
+  );
+};
+const ActionIconWithTooltip = ({ label, onClick, children }) => {
+  return (
+    <Tooltip label={label}>
+      <ActionIcon
+        sx={(theme) => ({
+          '&:hover': {
+            background: theme.colorScheme === 'dark' ? colors.B40 : colors.B85,
+            borderRadius: '8px',
+          },
+        })}
+        variant={'transparent'}
+        onClick={onClick}
+      >
+        {children}
+      </ActionIcon>
+    </Tooltip>
+  );
+};
+const IconText = ({ color, label, Icon }: { color?: string; label: any; Icon: React.FC<any> }) => {
+  return (
+    <Center inline>
+      <Icon color={color} />
+      <Text color={color} weight={'bold'} ml={5} size={14}>
+        {label}
+      </Text>
+    </Center>
+  );
+};
+
+const ContainerButton = styled(Container)`
+  padding: 0;
+  margin-left: auto;
+  margin-right: 0;
+`;
 const ErrorCircle = styled.div<{ dark: boolean }>`
   width: 11px;
   height: 11px;
@@ -326,6 +470,7 @@ const LeftContainerWrapper = styled.div`
   align-items: center;
   gap: 16px;
   flex: 1 1 auto;
+  height: 80px;
 `;
 
 const StyledContentWrapper = styled.div`
@@ -346,5 +491,4 @@ const UnstyledButtonStyled = styled.div`
   pointer-events: all;
   background-color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B17 : colors.white)};
   width: 280px;
-  padding: 20px;
 `;

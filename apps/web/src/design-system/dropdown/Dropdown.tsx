@@ -18,6 +18,7 @@ interface IDropdownProps
     | 'disabled'
     | 'width'
     | 'styles'
+    | 'zIndex'
   > {
   control: React.ReactNode;
   children: React.ReactNode;
