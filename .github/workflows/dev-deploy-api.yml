@@ -25,6 +25,7 @@ jobs:
     uses: ./.github/workflows/reusable-api-e2e.yml
     with:
       ee: ${{ contains (matrix.name,'-ee') }}
+      job-name: ${{ matrix.name }}
     secrets: inherit
 
   deploy_dev_api:

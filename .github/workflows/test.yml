@@ -199,6 +199,7 @@ jobs:
       ee: ${{ contains (matrix.name,'-ee') }}
       test-e2e-affected: ${{ fromJson(needs.get-affected.outputs.test-e2e)[0] }}
       test-e2e-ee-affected: ${{ fromJson(needs.get-affected.outputs.test-e2e-ee)[0] }}
+      job-name: ${{ matrix.name }}
     secrets: inherit
 
 
