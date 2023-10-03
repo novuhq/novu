@@ -9,8 +9,6 @@ import {
   PushProviderIdEnum,
 } from '@novu/shared';
 
-const ORIGINAL_IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
-
 describe('Set Integration As Primary - /integrations/:integrationId/set-primary (POST)', function () {
   let session: UserSession;
   const integrationRepository = new IntegrationRepository();
@@ -18,11 +16,6 @@ describe('Set Integration As Primary - /integrations/:integrationId/set-primary 
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
-    process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = 'true';
-  });
-
-  afterEach(async () => {
-    process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = ORIGINAL_IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
   });
 
   it('when integration id is not valid should throw bad request exception', async () => {

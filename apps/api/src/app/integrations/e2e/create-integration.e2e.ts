@@ -10,8 +10,6 @@ import {
 } from '@novu/shared';
 import { expect } from 'chai';
 
-const ORIGINAL_IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
-
 describe('Create Integration - /integration (POST)', function () {
   let session: UserSession;
   const integrationRepository = new IntegrationRepository();
@@ -20,11 +18,6 @@ describe('Create Integration - /integration (POST)', function () {
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
-    process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = 'true';
-  });
-
-  afterEach(async () => {
-    process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = ORIGINAL_IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
   });
 
   it('should get the email integration successfully', async function () {
