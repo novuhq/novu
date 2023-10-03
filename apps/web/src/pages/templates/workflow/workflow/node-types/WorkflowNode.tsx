@@ -14,16 +14,10 @@ import { colors } from '../../../../../design-system/config';
 import { ProviderMissing, Trash } from '../../../../../design-system/icons';
 import { useStyles } from '../../../../../design-system/template-button/TemplateButton.styles';
 import { Text } from '../../../../../design-system/typography/text/Text';
-import {
-  useEnvController,
-  useGetPrimaryIntegration,
-  useHasActiveIntegrations,
-  useIsMultiProviderConfigurationEnabled,
-} from '../../../../../hooks';
+import { useEnvController, useGetPrimaryIntegration, useHasActiveIntegrations } from '../../../../../hooks';
 import { CHANNEL_TYPE_TO_STRING } from '../../../../../utils/channels';
 import { useSelectPrimaryIntegrationModal } from '../../../../integrations/components/multi-provider/useSelectPrimaryIntegrationModal';
 import { IntegrationsListModal } from '../../../../integrations/IntegrationsListModal';
-import { IntegrationsStoreModal } from '../../../../integrations/IntegrationsStoreModal';
 import { TemplateEditorAnalyticsEnum } from '../../../constants';
 import { getFormattedStepErrors } from '../../../shared/errors';
 import { DisplayPrimaryProviderIcon } from '../../DisplayPrimaryProviderIcon';
@@ -85,7 +79,6 @@ export function WorkflowNode({
   const viewport = useViewport();
   const channelKey = tabKey ?? '';
   const [hover, setHover] = useState(false);
-  const isMultiProviderConfigurationEnabled = useIsMultiProviderConfigurationEnabled();
   const { colorScheme } = useMantineColorScheme();
   const { openModal: openSelectPrimaryIntegrationModal, SelectPrimaryIntegrationModal } =
     useSelectPrimaryIntegrationModal();
@@ -286,19 +279,7 @@ export function WorkflowNode({
           />
         )}
       </UnstyledButtonStyled>
-      {isMultiProviderConfigurationEnabled ? (
-        <IntegrationsListModal
-          isOpen={isIntegrationsModalVisible}
-          onClose={onIntegrationModalClose}
-          scrollTo={tabKey}
-        />
-      ) : (
-        <IntegrationsStoreModal
-          openIntegration={isIntegrationsModalVisible}
-          closeIntegration={onIntegrationModalClose}
-          scrollTo={tabKey}
-        />
-      )}
+      <IntegrationsListModal isOpen={isIntegrationsModalVisible} onClose={onIntegrationModalClose} scrollTo={tabKey} />
       <SelectPrimaryIntegrationModal />
     </>
   );
