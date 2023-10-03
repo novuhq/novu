@@ -9,7 +9,6 @@ import { DeleteStepButton, FilterButton } from './FilterModal.styles';
 import { OnlineFiltersForms } from './OnlineFiltersForms';
 import { PreviousStepFiltersForm } from './PreviousStepFiltersForm';
 import { useMemo } from 'react';
-import { boolean } from 'zod';
 
 export function FilterModal({
   isOpen,
