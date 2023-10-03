@@ -12,10 +12,7 @@ import {
   WebSocketsQueueService,
   WorkflowQueueService,
 } from '../services';
-import {
-  GetIsMultiProviderConfigurationEnabled,
-  GetIsTopicNotificationEnabled,
-} from '../usecases';
+import { GetIsTopicNotificationEnabled } from '../usecases';
 
 export const featureFlagsService = {
   provide: FeatureFlagsService,
@@ -25,20 +22,6 @@ export const featureFlagsService = {
 
     return instance;
   },
-};
-
-export const getIsMultiProviderConfigurationEnabled = {
-  provide: GetIsMultiProviderConfigurationEnabled,
-  useFactory: async (
-    featureFlagServiceItem: FeatureFlagsService
-  ): Promise<GetIsMultiProviderConfigurationEnabled> => {
-    const useCase = new GetIsMultiProviderConfigurationEnabled(
-      featureFlagServiceItem
-    );
-
-    return useCase;
-  },
-  inject: [FeatureFlagsService],
 };
 
 export const getIsTopicNotificationEnabled = {
