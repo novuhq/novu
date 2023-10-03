@@ -60,7 +60,6 @@ export default memo(
       setCount(foundIndex + 1);
     }, [nodes.length, data, id]);
     const subtitle = useMemo(() => {
-      console.log('nn');
       const content = data.content;
       if (StepTypeEnum.DELAY === data.channelType) {
         return delaySubtitle(data);

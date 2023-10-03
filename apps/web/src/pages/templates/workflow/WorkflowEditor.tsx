@@ -24,13 +24,13 @@ import { AddNodeEdge } from './workflow/edge-types/AddNodeEdge';
 import AddNode from './workflow/node-types/AddNode';
 import ChannelNode from './workflow/node-types/ChannelNode';
 import TriggerNode from './workflow/node-types/TriggerNode';
-import VariantlNode from './workflow/node-types/VariantlNode';
+import VariantNode from './workflow/node-types/VariantNode';
 
 export const TOP_ROW_HEIGHT = 74;
 
 const nodeTypes = {
   channelNode: ChannelNode,
-  variantNode: VariantlNode,
+  variantNode: VariantNode,
   triggerNode: TriggerNode,
   addNode: AddNode,
 };
@@ -87,8 +87,6 @@ const WorkflowEditor = () => {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     setValue(`steps.${index}.variants`, [...getValues(`steps.${index}.variants`), newVariant], { shouldDirty: true });
-    console.log('var', getValues(`steps.${index}.variants`));
-    console.log('step', stepToVariant);
     navigate(basePath + `/${stepToVariant?.template.type}/${uuid}/variants/${newVariant.uuid}`);
   };
 
