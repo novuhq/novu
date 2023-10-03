@@ -31,7 +31,6 @@ export const WorkflowWrapper = styled.div<{ height: string }>`
 
   .react-flow__attribution a:hover {
     color: lightpink !important;
-    text-decoration: underline;
   }
 
   .react-flow__handle {
