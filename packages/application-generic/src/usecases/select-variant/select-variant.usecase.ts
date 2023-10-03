@@ -43,8 +43,8 @@ export class SelectVariant {
           userId: command.userId,
           step: command.step,
           job: command.job,
-        }),
-        command.filterData
+          variables: command.filterData,
+        })
       );
 
       if (passed) {

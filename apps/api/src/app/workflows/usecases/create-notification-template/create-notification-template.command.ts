@@ -136,10 +136,10 @@ export class NotificationStep extends NotificationStepVariant {
 }
 
 export class MessageFilter {
-  isNegated: boolean;
+  isNegated?: boolean;
 
   @IsString()
-  type: BuilderFieldType;
+  type?: BuilderFieldType;
 
   @IsString()
   value: BuilderGroupValues;
