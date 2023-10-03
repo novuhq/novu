@@ -588,6 +588,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
         lastName: 'Last of name',
         email: 'test@email.novu',
         locale: 'en',
+        data: { custom1: 'custom value1', custom2: 'custom value2' },
       };
       const { data: body } = await axiosInstance.post(
         `${session.serverUrl}${eventTriggerPath}`,
@@ -615,6 +616,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       expect(createdSubscriber?.lastName).to.equal(payload.lastName);
       expect(createdSubscriber?.email).to.equal(payload.email);
       expect(createdSubscriber?.locale).to.equal(payload.locale);
+      expect(createdSubscriber?.data).to.deep.equal(payload.data);
     });
 
     it('should update a subscribers email if one dont exists', async function () {

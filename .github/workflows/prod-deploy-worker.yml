@@ -38,11 +38,6 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v3
-      - uses: ./.github/actions/checkout-submodules
-        with:
-          enabled: ${{ contains (matrix.name,'ee') }}
-          submodule_token: ${{ secrets.SUBMODULES_TOKEN }}
-          submodule_branch: "main"
       - uses: ./.github/actions/setup-project
 
       - name: build worker
@@ -81,7 +76,7 @@ jobs:
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:prod
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
-          echo "::set-output name=IMAGE::ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
+          echo "IMAGE=ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
   deploy_prod_worker_eu:
     needs: build_prod_image

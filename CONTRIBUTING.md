@@ -20,7 +20,7 @@ You can open a new issue with this [issue form](https://github.com/novuhq/novu/i
 
 ### Requirements
 
-- Node.js version v14.19.3
+- Node.js version v16.15.1
 - MongoDB
 - Redis. To install Redis on your O.S, please follow the below guides
   - [To install Redis on Windows](https://redis.io/docs/getting-started/installation/install-redis-on-windows/)
@@ -33,11 +33,11 @@ You can open a new issue with this [issue form](https://github.com/novuhq/novu/i
 
 The project is a monorepo, meaning that it is a collection of multiple packages managed in the same repository.
 
-To learn more about the project structure visit [https://docs.novu.co/community/monorepo-structure](https://docs.novu.co/community/monorepo-structure).
 
+To learn more about the project structure and running the project locally, please have a look [here](https://docs.novu.co/community-support/introduction#run-novu-locally).
 After cloning your fork, you will need to run the `npm run setup:project` command to install and build all dependencies.
 
-To learn a detailed guide on running the project locally, visit [https://docs.novu.co/community/run-locally](https://docs.novu.co/community/run-locally).
+To learn a detailed guide on running the project locally, checkout our guide on [how to run novu in local machine](https://docs.novu.co/community/run-in-local-machine).
 
 ## Missing a Feature?
 
@@ -68,4 +68,4 @@ Questions, suggestions, and thoughts are most welcome. Feel free to open a [GitH
 
 ## Missing a provider?
 
-If you are in need of a provider we do not yet have, you can request a new one by [submitting an issue](#submitting-an-issue). Or you can build a new one by following our [create a provider guide](https://docs.novu.co/community/create-provider).
+If you are in need of a provider we do not yet have, you can request a new one by [submitting an issue](#submitting-an-issue). Or you can build a new one by following our [create a provider guide](https://docs.novu.co/community/add-a-new-provider).
