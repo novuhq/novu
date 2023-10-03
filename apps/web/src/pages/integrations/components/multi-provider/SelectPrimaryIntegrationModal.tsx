@@ -272,6 +272,7 @@ export const SelectPrimaryIntegrationModal = ({
                   disabled={makePrimaryButtonDisabled}
                   onClick={() => makePrimaryIntegration({ id: selectedIntegrationId ?? '' })}
                   data-test-id="make-primary-button"
+                  style={{ display: 'block', marginBottom: '10px' }} // Adjust styles as needed
                 >
                   Make primary
                 </Button>
