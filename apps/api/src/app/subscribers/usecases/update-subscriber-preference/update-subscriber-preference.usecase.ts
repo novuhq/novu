@@ -6,6 +6,7 @@ import {
   SubscriberEntity,
   SubscriberRepository,
   MemberRepository,
+  PreferenceLevelEnum,
 } from '@novu/dal';
 import {
   AnalyticsService,
@@ -91,6 +92,7 @@ export class UpdateSubscriberPreference {
        */
       enabled: command.enabled !== false,
       channels: command.channel?.type ? channelObj : null,
+      level: PreferenceLevelEnum.TEMPLATE,
     });
   }
 
@@ -118,6 +120,7 @@ export class UpdateSubscriberPreference {
         _organizationId: command.organizationId,
         _subscriberId: subscriber._id,
         _templateId: command.templateId,
+        level: PreferenceLevelEnum.TEMPLATE,
       },
       {
         $set: updatePayload,

@@ -5,6 +5,7 @@ import {
   SubscriberRepository,
   SubscriberEntity,
   MessageTemplateRepository,
+  PreferenceLevelEnum,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -53,6 +54,7 @@ export class GetSubscriberTemplatePreference {
         _environmentId: command.environmentId,
         _subscriberId: subscriber._id,
         _templateId: command.template._id,
+        level: PreferenceLevelEnum.TEMPLATE,
       });
 
     const subscriberChannelPreference = subscriberPreference?.channels;
