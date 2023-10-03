@@ -244,7 +244,14 @@ export function WorkflowNode({
                   </Text>
                 )}
                 {!(Object.keys(stepErrorContent).length > 0) && subtitle && (
-                  <Text {...disabledColor} size={12} color={colors.B60} rows={1} data-test-id="workflow-node-subtitle">
+                  <Text
+                    {...disabledColor}
+                    style={{ ...(!variant && showMenu && { maxWidth: 50 }) }}
+                    size={12}
+                    color={colors.B60}
+                    rows={1}
+                    data-test-id="workflow-node-subtitle"
+                  >
                     {subtitle}
                   </Text>
                 )}

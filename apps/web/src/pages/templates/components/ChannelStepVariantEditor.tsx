@@ -77,7 +77,9 @@ export const ChannelStepVariantEditor = () => {
       <SubPageWrapper
         key={index}
         color={colors.white}
-        title={<StepName index={index} color={colors.B60} channel={channel} />}
+        variantIndex={variantIndex}
+        index={index}
+        title={<StepName variantIndex={variantIndex} index={index} color={colors.B60} channel={channel} />}
         style={{
           width: '100%',
           borderTopLeftRadius: 7,
@@ -159,11 +161,3 @@ export const ChannelStepVariantEditor = () => {
     </>
   );
 };
-
-const LeftContainerWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  //gap: 16px;
-  //flex: 1;
-  flex: 1 1 auto;
-`;
