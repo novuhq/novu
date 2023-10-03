@@ -12,6 +12,7 @@ import {
   IUserPreferenceSettings,
   IUnseenCountQuery,
   IUnreadCountQuery,
+  IUserGlobalPreferenceSettings,
 } from '../index';
 
 export class ApiService {
@@ -157,6 +158,10 @@ export class ApiService {
     return this.httpClient.get('/widgets/preferences');
   }
 
+  async getUserGlobalPreference(): Promise<IUserGlobalPreferenceSettings[]> {
+    return this.httpClient.get('/widgets/preferences/global');
+  }
+
   async updateSubscriberPreference(
     templateId: string,
     channelType: string,
@@ -164,6 +169,19 @@ export class ApiService {
   ): Promise<IUserPreferenceSettings> {
     return await this.httpClient.patch(`/widgets/preferences/${templateId}`, {
       channel: { type: channelType, enabled },
+    });
+  }
+
+  async updateSubscriberGlobalPreference(
+    preferences: { channelType: string; enabled: boolean }[],
+    enabled?: boolean
+  ): Promise<IUserPreferenceSettings> {
+    return await this.httpClient.patch(`/widgets/preferences`, {
+      preferences: preferences.map((preference) => ({
+        ...preference,
+        type: preference.channelType,
+      })),
+      enabled,
     });
   }
 }
