@@ -30,6 +30,15 @@ jobs:
           id: login-ecr
           uses: aws-actions/amazon-ecr-login@v1
 
+        - name: Build api image
+          env:
+            SSH_PRIVATE_KEY:  ${{ secrets.SSH_PRIVATE_KEY }}
+            DOCKER_DIR_API: ${{ secrets.DOCKER_DIR_API }}
+          run: |
+            eval "$(ssh-agent -s)"
+            echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
+            docker build --progress plain -t dept-novu-api -f ${DOCKER_DIR_API}/Dockerfile --ssh default --build-arg PACKAGE_PATH=apps/api .
+
         - name: Build ws image
           env:
             SSH_PRIVATE_KEY:  ${{ secrets.SSH_PRIVATE_KEY }}
@@ -65,15 +74,6 @@ jobs:
             eval "$(ssh-agent -s)"
             echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
             docker build --progress plain -t dept-novu-embed -f ${DOCKER_DIR_EMBED}/Dockerfile --ssh default .
-
-        - name: Build api image
-          env:
-            SSH_PRIVATE_KEY:  ${{ secrets.SSH_PRIVATE_KEY }}
-            DOCKER_DIR_API: ${{ secrets.DOCKER_DIR_API }}
-          run: |
-            eval "$(ssh-agent -s)"
-            echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
-            docker build --progress plain -t dept-novu-api -f ${DOCKER_DIR_API}/Dockerfile --ssh default .
 
         - name: Build worker image
           env:
