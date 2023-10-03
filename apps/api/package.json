@@ -111,12 +111,12 @@
   },
   "optionalDependencies": {
     "@novu/ee-auth": "^0.20.0-alpha.0",
-    "@novu/@novu/ee-translation": "^0.20.0-alpha.0"
+    "@novu/ee-translation": "^0.20.0-alpha.0"
   },
   "nx": {
     "implicitDependencies": [
       "@novu/ee-auth",
-      "@novu/@novu/ee-translation"
+      "@novu/ee-translation"
     ]
   },
   "lint-staged": {
