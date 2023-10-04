@@ -275,7 +275,6 @@ export function LayoutEditor({
             }}
           >
             <VariablesManagement
-              index={0}
               openVariablesModal={() => {
                 setModalOpen(true);
               }}
@@ -331,7 +330,7 @@ export function LayoutEditor({
         centered
         overflow="inside"
       >
-        <VariableManager index={0} variablesArray={variablesArray} path="" control={control} />
+        <VariableManager variablesArray={variablesArray} path="" control={control} />
         <Group position="right">
           <Button
             data-test-id="close-var-manager-modal"

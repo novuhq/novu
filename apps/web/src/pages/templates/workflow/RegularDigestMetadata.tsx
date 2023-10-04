@@ -6,17 +6,22 @@ import { colors, Input } from '../../../design-system';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { IntervalSelect } from './digest/IntervalSelect';
 import { BackOffFields } from './digest/BackOffFields';
+import { useStepFormPath } from '../hooks/useStepFormPath';
+import { useEnvController } from '../../../hooks';
 
 const amountDefaultValue = '5';
 
-export const RegularDigestMetadata = ({ index, readonly }: { index: number; readonly: boolean }) => {
+export const RegularDigestMetadata = () => {
+  const { readonly } = useEnvController();
   const {
     control,
     formState: { errors, isSubmitted },
     setValue,
   } = useFormContext();
+  const stepFormPath = useStepFormPath();
+
   const showErrors = isSubmitted && errors?.steps;
-  const amountFieldName = `steps.${index}.digestMetadata.${DigestTypeEnum.REGULAR}.amount`;
+  const amountFieldName = `${stepFormPath}.digestMetadata.${DigestTypeEnum.REGULAR}.amount`;
 
   return (
     <>
@@ -67,13 +72,13 @@ export const RegularDigestMetadata = ({ index, readonly }: { index: number; read
           <IntervalSelect
             readonly={readonly}
             control={control}
-            name={`steps.${index}.digestMetadata.${DigestTypeEnum.REGULAR}.unit`}
+            name={`${stepFormPath}.digestMetadata.${DigestTypeEnum.REGULAR}.unit`}
             showErrors={showErrors}
           />
         </div>
         <span>before send</span>
       </Group>
-      <BackOffFields index={index} control={control} readonly={readonly} />
+      <BackOffFields />
     </>
   );
 };

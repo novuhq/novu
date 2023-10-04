@@ -1,7 +1,7 @@
 import styled from '@emotion/styled';
 import { Group, Center, useMantineColorScheme, ActionIcon, Container, Stack, Divider } from '@mantine/core';
 import { ChannelTypeEnum, providers, StepTypeEnum } from '@novu/shared';
-import React, { useEffect, useState } from 'react';
+import React, { MouseEventHandler, useEffect, useState } from 'react';
 import { useViewport } from 'react-flow-renderer';
 import { useFormContext } from 'react-hook-form';
 
@@ -9,12 +9,10 @@ import { useSegment } from '../../../../../components/providers/SegmentProvider'
 import { When } from '../../../../../components/utils/When';
 import { CONTEXT_PATH } from '../../../../../config';
 import { Dropdown, Switch, Text, Tooltip, colors, Button } from '../../../../../design-system';
-
 import {
   ConditionPlus,
   ConditionsFile,
   DotsHorizontal,
-  Edit,
   PencilOutlined,
   ProviderMissing,
   Trash,
@@ -55,9 +53,10 @@ interface ITemplateButtonProps {
   index?: number;
   onDelete?: () => void;
   onAddVariant?: () => void;
+  onEdit?: MouseEventHandler<HTMLButtonElement>;
   dragging?: boolean;
   disabled?: boolean;
-  variant?: boolean;
+  variantsCount?: number;
   subtitle?: string | React.ReactNode;
 }
 
@@ -77,10 +76,11 @@ export function WorkflowNode({
   testId,
   errors: initialErrors = false,
   showDelete = true,
-  variant = false,
+  variantsCount = 0,
   id = undefined,
   onDelete = () => {},
   onAddVariant = () => {},
+  onEdit = () => {},
   dragging = false,
   disabled: initDisabled,
   subtitle,
@@ -95,6 +95,7 @@ export function WorkflowNode({
   const disabledColor = disabled ? { color: theme.colorScheme === 'dark' ? colors.B40 : colors.B70 } : {};
   const disabledProp = disabled ? { disabled: disabled } : {};
   const conditionsCount = 7;
+  const isVariant = variantsCount > 0;
 
   const viewport = useViewport();
   const channelKey = tabKey ?? '';
@@ -164,7 +165,7 @@ export function WorkflowNode({
           setHover(false);
         }}
         data-test-id={testId}
-        className={cx(classes.button, { [classes.active]: active }, { [classes.variant]: variant })}
+        className={cx(classes.button, { [classes.active]: active }, { [classes.variant]: isVariant })}
       >
         <Stack
           style={{
@@ -172,7 +173,7 @@ export function WorkflowNode({
           }}
           spacing={0}
         >
-          <When truthy={variant}>
+          <When truthy={isVariant}>
             <div className={classes.header}>
               <Group h={30} align={'center'}>
                 <IconText
@@ -180,7 +181,7 @@ export function WorkflowNode({
                   Icon={VariantsFile}
                   label={
                     <>
-                      12 <span style={{ fontSize: '12px' }}>variants</span>
+                      {variantsCount} <span style={{ fontSize: '12px' }}>variants</span>
                     </>
                   }
                 />
@@ -190,7 +191,7 @@ export function WorkflowNode({
                   </When>
                   <When truthy={showMenu}>
                     <Group noWrap spacing={5}>
-                      <ActionIconWithTooltip onClick={(e) => e.stopPropagation()} label={'Edit root step'}>
+                      <ActionIconWithTooltip onClick={onEdit} label={'Edit root step'}>
                         <PencilOutlined />
                       </ActionIconWithTooltip>
                       <ActionIconWithTooltip
@@ -246,7 +247,7 @@ export function WorkflowNode({
                 {!(Object.keys(stepErrorContent).length > 0) && subtitle && (
                   <Text
                     {...disabledColor}
-                    style={{ ...(!variant && showMenu && { maxWidth: 50 }) }}
+                    style={{ ...(!isVariant && showMenu && { maxWidth: 50 }) }}
                     size={12}
                     color={colors.B60}
                     rows={1}
@@ -262,10 +263,10 @@ export function WorkflowNode({
               {action && !readonly && (
                 <Switch checked={checked} onChange={(e) => switchButton && switchButton(e.target.checked)} />
               )}
-              <When truthy={!variant && showMenu}>
+              <When truthy={!isVariant && showMenu}>
                 <ContainerButton mt={-40}>
                   <Group noWrap spacing={5}>
-                    <ActionIconWithTooltip onClick={(e) => e.stopPropagation()} label={'Edit step'}>
+                    <ActionIconWithTooltip onClick={onEdit} label={'Edit step'}>
                       <PencilOutlined />
                     </ActionIconWithTooltip>
                     <ActionIconWithTooltip onClick={(e) => e.stopPropagation()} label={'Add conditions'}>

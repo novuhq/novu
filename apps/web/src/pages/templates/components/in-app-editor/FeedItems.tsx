@@ -5,6 +5,7 @@ import styled from '@emotion/styled';
 import * as Sentry from '@sentry/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { showNotification } from '@mantine/notifications';
+import type { UseFormSetValue } from 'react-hook-form';
 import { IFeedEntity } from '@novu/shared';
 
 import { FeedChip } from './FeedChip';
@@ -12,11 +13,11 @@ import { colors, shadows, Text, Tooltip, Button } from '../../../../design-syste
 import { Copy, Trash } from '../../../../design-system/icons';
 import { deleteFeed, getFeeds } from '../../../../api/feeds';
 import { QueryKeys } from '../../../../api/query.keys';
+import type { IForm } from '../formTypes';
 
 interface IFeedItemPopoverProps {
   showFeed: boolean;
-  index: number;
-  setValue: (key: string, value: string, options: { shouldDirty: boolean }) => void;
+  setValue: UseFormSetValue<IForm>;
   field: any;
 }
 
@@ -34,7 +35,6 @@ export function FeedItems(props: IFeedItemPopoverProps) {
                 item={item}
                 feedIndex={feedIndex}
                 showFeed={props.showFeed}
-                index={props.index}
                 setValue={props.setValue}
               />
             </Grid.Col>
@@ -77,7 +77,6 @@ function FeedPopover(props: IFeedPopoverProps) {
             item={props.item}
             feedIndex={props.feedIndex}
             setOpened={setOpened}
-            index={props.index}
             showFeed={props.showFeed}
             field={props.field}
             setValue={props.setValue}
@@ -229,10 +228,9 @@ const FeedsBlock = styled.div`
 `;
 
 interface IFeedPopoverProps {
-  setValue: (key: string, value: string, options: { shouldDirty: boolean }) => void;
+  setValue: UseFormSetValue<IForm>;
   showFeed: boolean;
   feedIndex: number;
-  index: number;
   item: IFeedEntity;
   field: any;
 }

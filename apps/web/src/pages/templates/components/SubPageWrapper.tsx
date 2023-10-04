@@ -1,12 +1,11 @@
-import { ActionIcon, Center, Group, Stack, Title, UnstyledButton, useMantineColorScheme } from '@mantine/core';
-import React, { CSSProperties } from 'react';
-import { useNavigate, useOutletContext, useParams } from 'react-router-dom';
+import { ActionIcon, Group, Stack, Title, UnstyledButton, useMantineColorScheme } from '@mantine/core';
+import { CSSProperties } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-import { colors, Text, Tooltip } from '../../../design-system';
+import { colors, Tooltip } from '../../../design-system';
 import { Close } from '../../../design-system/icons/actions/Close';
 import { useBasePath } from '../hooks/useBasePath';
-import { Condition, Trash, VariantPlus } from '../../../design-system/icons';
-import { StepTypeEnum } from '@novu/shared';
+import { Trash, VariantPlus } from '../../../design-system/icons';
 import { ConditionsSettings } from './ConditionsSettings';
 import { When } from '../../../components/utils/When';
 
@@ -15,16 +14,12 @@ export const SubPageWrapper = ({
   title,
   style,
   color = colors.B60,
-  index,
-  variantIndex,
   root = false,
 }: {
   children: any;
   title: string | any;
   style?: CSSProperties | undefined;
   color?: string;
-  index?: number;
-  variantIndex?: number;
   root?: boolean;
 }) => {
   const navigate = useNavigate();
@@ -75,7 +70,7 @@ export const SubPageWrapper = ({
               </ActionIcon>
             </Tooltip>
           </When>
-          <ConditionsSettings root={root} variantIndex={variantIndex} index={index || 0} />
+          <ConditionsSettings root={root} />
           <Tooltip label={'Delete step'}>
             <ActionIcon variant={'transparent'}>
               <Trash color={colors.B60} />

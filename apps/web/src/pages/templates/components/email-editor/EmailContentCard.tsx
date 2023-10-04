@@ -4,6 +4,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { Tabs } from '../../../../design-system';
 import { useActiveIntegrations, useEnvController, useIsMultiProviderConfigurationEnabled } from '../../../../hooks';
+import { useStepFormPath } from '../../hooks/useStepFormPath';
 import { EmailCustomCodeEditor } from './EmailCustomCodeEditor';
 import { EmailInboxContent } from './EmailInboxContent';
 import { EmailMessageEditor } from './EmailMessageEditor';
@@ -11,16 +12,11 @@ import { EmailMessageEditor } from './EmailMessageEditor';
 const EDITOR = 'Editor';
 const CUSTOM_CODE = 'Custom Code';
 
-export function EmailContentCard({
-  index,
-  organization,
-}: {
-  index: number;
-  organization: IOrganizationEntity | undefined;
-}) {
+export function EmailContentCard({ organization }: { organization: IOrganizationEntity | undefined }) {
   const { readonly } = useEnvController();
+  const stepFormPath = useStepFormPath();
   const { control, setValue, watch } = useFormContext(); // retrieve all hook methods
-  const contentType = watch(`steps.${index}.template.contentType`);
+  const contentType = watch(`${stepFormPath}.template.contentType`);
   const activeTab = contentType === 'customHtml' ? CUSTOM_CODE : EDITOR;
   const isMultiProviderConfigEnabled = useIsMultiProviderConfigurationEnabled();
   const { integrations = [] } = useActiveIntegrations();
@@ -38,19 +34,19 @@ export function EmailContentCard({
   }, [isMultiProviderConfigEnabled, integrations, setIntegration]);
 
   const onTabChange = (value: string | null) => {
-    setValue(`steps.${index}.template.contentType`, value === EDITOR ? 'editor' : 'customHtml');
+    setValue(`${stepFormPath}.template.contentType`, value === EDITOR ? 'editor' : 'customHtml');
   };
 
   const menuTabs = [
     {
       value: EDITOR,
-      content: <EmailMessageEditor branding={organization?.branding} readonly={readonly} stepIndex={index} />,
+      content: <EmailMessageEditor branding={organization?.branding} readonly={readonly} />,
     },
     {
       value: CUSTOM_CODE,
       content: (
         <Controller
-          name={`steps.${index}.template.htmlContent`}
+          name={`${stepFormPath}.template.htmlContent`}
           defaultValue=""
           control={control}
           render={({ field }) => {
@@ -63,7 +59,7 @@ export function EmailContentCard({
 
   return (
     <>
-      <EmailInboxContent integration={integration} index={index} readonly={readonly} />
+      <EmailInboxContent integration={integration} readonly={readonly} />
       <div data-test-id="email-step-settings-edit">
         <div data-test-id="editor-type-selector">
           <Tabs value={activeTab} onTabChange={onTabChange} menuTabs={menuTabs} keepMounted={false} />

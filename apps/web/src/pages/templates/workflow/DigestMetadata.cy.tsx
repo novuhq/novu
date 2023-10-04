@@ -21,7 +21,7 @@ const DigestWrapper = ({ data }) => {
 
   return (
     <FormProvider {...methods}>
-      <DigestMetadata readonly={false} index={0} />
+      <DigestMetadata />
     </FormProvider>
   );
 };

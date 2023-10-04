@@ -1,81 +1,26 @@
-import { Group, ActionIcon, Center } from '@mantine/core';
-import React, { useMemo, useState } from 'react';
-import { useFormContext, useWatch } from 'react-hook-form';
-import { useParams } from 'react-router-dom';
-
-import { ChannelTypeEnum, FILTER_TO_LABEL, FilterPartTypeEnum, StepTypeEnum } from '@novu/shared';
+import { ActionIcon, Center } from '@mantine/core';
+import { useState } from 'react';
+import { useFormContext } from 'react-hook-form';
+import { FilterPartTypeEnum } from '@novu/shared';
 
 import type { IForm } from './formTypes';
-import { channels } from '../../../utils/channels';
-import { Conditions, DataSelect, IConditions, IFilterTypeList } from '../../../components/conditions';
+import { Conditions, IConditions } from '../../../components/conditions';
 import { When } from '../../../components/utils/When';
 import { Condition, ConditionPlus, ConditionsFile } from '../../../design-system/icons';
 import { colors, Text, Tooltip } from '../../../design-system';
+import { useStepFormPath } from '../hooks/useStepFormPath';
+import { useFilterPartsList } from '../hooks/useFilterPartsList';
 
-export function ConditionsSettings({
-  index,
-  variantIndex,
-  root = false,
-}: {
-  index: number;
-  variantIndex?: number;
-  root?: boolean;
-}) {
-  const { control, watch, setValue, getValues } = useFormContext<IForm>();
+export function ConditionsSettings({ root = false }: { root?: boolean }) {
+  const { watch, setValue, getValues } = useFormContext<IForm>();
   const [filterOpen, setFilterOpen] = useState(false);
-  const steps = useWatch({ name: 'steps', control });
 
-  const path = variantIndex ? `steps.${index}.variants.${variantIndex}` : `steps.${index}`;
+  const path = useStepFormPath();
   const filters = watch(`${path}.filters.0.children` as any);
+  const filterPartsList = useFilterPartsList();
 
   const PlusIcon = root ? ConditionsFile : ConditionPlus;
   const ConditionsIcon = root ? ConditionsFile : Condition;
-
-  const FilterPartTypeList = useMemo(() => {
-    const filterPartList: IFilterTypeList[] = [
-      { value: FilterPartTypeEnum.PAYLOAD, label: FILTER_TO_LABEL[FilterPartTypeEnum.PAYLOAD] },
-      {
-        value: FilterPartTypeEnum.SUBSCRIBER,
-        label: FILTER_TO_LABEL[FilterPartTypeEnum.SUBSCRIBER],
-      },
-      { value: FilterPartTypeEnum.WEBHOOK, label: FILTER_TO_LABEL[FilterPartTypeEnum.WEBHOOK] },
-      { value: FilterPartTypeEnum.IS_ONLINE, label: FILTER_TO_LABEL[FilterPartTypeEnum.IS_ONLINE] },
-      {
-        value: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
-        label: FILTER_TO_LABEL[FilterPartTypeEnum.IS_ONLINE_IN_LAST],
-      },
-    ];
-
-    if (steps.length < 2) {
-      return filterPartList;
-    }
-
-    const stepsBeforeSelectedStep = steps.slice(0, index);
-    const selectableSteps = stepsBeforeSelectedStep.filter((step) => {
-      return [ChannelTypeEnum.EMAIL, ChannelTypeEnum.IN_APP].includes(step.template.type as unknown as ChannelTypeEnum);
-    });
-
-    if (selectableSteps.length === 0) {
-      return filterPartList;
-    }
-
-    const data = selectableSteps.map((item) => {
-      const label = channels.find((channel) => channel.channelType === item.template.type)?.label;
-
-      return {
-        label: item.name ?? label,
-        value: item.uuid,
-      };
-    }) as DataSelect[];
-
-    filterPartList.push({
-      value: FilterPartTypeEnum.PREVIOUS_STEP,
-      label: FILTER_TO_LABEL[FilterPartTypeEnum.PREVIOUS_STEP],
-      data,
-    });
-
-    return filterPartList;
-  }, [steps, index]);
 
   const updateConditions = (conditions: IConditions[]) => {
     setValue(`${path}.filters` as any, conditions, { shouldDirty: true });
@@ -93,7 +38,7 @@ export function ConditionsSettings({
         }}
         updateConditions={updateConditions}
         conditions={conditions}
-        filterPartsList={FilterPartTypeList}
+        filterPartsList={filterPartsList}
         defaultFilter={FilterPartTypeEnum.PAYLOAD}
       />
     );

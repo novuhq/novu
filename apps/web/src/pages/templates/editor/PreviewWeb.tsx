@@ -75,7 +75,7 @@ export const PreviewWeb = ({
   loading = false,
 }: {
   integration: any;
-  subject: string;
+  subject?: string;
   content: string;
   loading?: boolean;
 }) => {

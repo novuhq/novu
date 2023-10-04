@@ -1,25 +1,16 @@
 import { Center, TextInput, useMantineColorScheme } from '@mantine/core';
 import { Controller, useFormContext } from 'react-hook-form';
+
 import { useEnvController } from '../../../hooks';
 import { IForm } from './formTypes';
 import { Variant } from '../../../design-system/icons';
 import { Text, colors } from '../../../design-system';
-import React from 'react';
 
-export const StepNameInput = ({
-  index,
-  defaultValue,
-  variantIndex,
-}: {
-  index: number;
-  variantIndex?: number;
-  defaultValue: string;
-}) => {
+export const StepNameInput = ({ path, defaultValue }: { path?: string; defaultValue: string }) => {
   const {
     control,
     formState: { errors, isSubmitted },
   } = useFormContext<IForm>();
-  const path = variantIndex ? `steps.${index}.variants.${variantIndex}` : `steps.${index}`;
 
   const { readonly } = useEnvController();
   const showErrors = isSubmitted && errors?.steps;

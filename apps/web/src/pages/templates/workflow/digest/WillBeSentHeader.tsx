@@ -5,6 +5,7 @@ import { DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
 import { colors } from '../../../../design-system';
 import { pluralizeTime } from '../../../../utils';
 import { TimedDigestWillBeSentHeader } from './TimedDigestWillBeSentHeader';
+import { useStepFormPath } from '../../hooks/useStepFormPath';
 
 const DIGEST_UNIT_TYPE_TO_SINGULAR = {
   [DigestUnitEnum.SECONDS]: 'second',
@@ -32,18 +33,19 @@ const Highlight = ({ children, isHighlight }) => {
   );
 };
 
-export const WillBeSentHeader = ({ index, isHighlight = true }: { index: number; isHighlight?: boolean }) => {
+export const WillBeSentHeader = ({ isHighlight = true }: { isHighlight?: boolean }) => {
   const { watch } = useFormContext();
+  const stepFormPath = useStepFormPath();
 
-  const type = watch(`steps.${index}.digestMetadata.type`);
+  const type = watch(`${stepFormPath}.digestMetadata.type`);
 
   if (type === DigestTypeEnum.TIMED) {
-    return <TimedDigestWillBeSentHeader index={index} isHighlight={isHighlight} />;
+    return <TimedDigestWillBeSentHeader isHighlight={isHighlight} />;
   }
 
-  const unit = watch(`steps.${index}.digestMetadata.regular.unit`);
-  const amount = watch(`steps.${index}.digestMetadata.regular.amount`);
-  const backoff = watch(`steps.${index}.digestMetadata.regular.backoff`);
+  const unit = watch(`${stepFormPath}.digestMetadata.regular.unit`);
+  const amount = watch(`${stepFormPath}.digestMetadata.regular.amount`);
+  const backoff = watch(`${stepFormPath}.digestMetadata.regular.backoff`);
 
   return (
     <>

@@ -1,7 +1,4 @@
 import { Group, useMantineColorScheme } from '@mantine/core';
-import React from 'react';
-import { useOutletContext } from 'react-router-dom';
-
 import { ChannelTypeEnum, providers, StepTypeEnum } from '@novu/shared';
 
 import { StepNameInput } from './StepNameInput';
@@ -9,23 +6,13 @@ import { stepIcon, stepNames } from '../constants';
 import { useGetPrimaryIntegration, useHasActiveIntegrations } from '../../../hooks';
 import { CONTEXT_PATH } from '../../../config';
 import { DisplayPrimaryProviderIcon } from '../workflow/DisplayPrimaryProviderIcon';
+import { useStepFormPath } from '../hooks/useStepFormPath';
 
-export const StepName = ({
-  channel,
-  color = undefined,
-  index,
-  variantIndex,
-}: {
-  channel: StepTypeEnum | ChannelTypeEnum;
-  index: number;
-  variantIndex?: number;
-  color?: any;
-}) => {
+export const StepName = ({ channel }: { channel: StepTypeEnum | ChannelTypeEnum }) => {
   const { colorScheme } = useMantineColorScheme();
-  const { onDelete }: any = useOutletContext();
-  const path = variantIndex ? `steps.${index}.variants.${variantIndex}` : `steps.${index}`;
+  const path = useStepFormPath();
 
-  const { hasActiveIntegration, isChannelStep, activeIntegrationsByEnv } = useHasActiveIntegrations({
+  const { isChannelStep, activeIntegrationsByEnv } = useHasActiveIntegrations({
     filterByEnv: true,
     channelType: channel as unknown as ChannelTypeEnum,
   });
@@ -53,7 +40,7 @@ export const StepName = ({
         isChannelStep={isChannelStep}
         logoSrc={logoSrc}
       />
-      <StepNameInput variantIndex={variantIndex} defaultValue={stepNames[channel]} index={index} />
+      <StepNameInput path={path} defaultValue={stepNames[channel]} />
     </Group>
   );
 };
