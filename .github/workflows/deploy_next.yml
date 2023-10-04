@@ -33,6 +33,9 @@ jobs:
             restore-keys: |
               ${{ runner.os }}-pnpm-store-
 
+        - name: Install dependencies
+          run: pnpm install
+
         - name: Setup Git user
           env:
             GIT_HUB_TOKEN_GLOBAL: ${{ secrets.GIT_HUB_TOKEN_GLOBAL }}
