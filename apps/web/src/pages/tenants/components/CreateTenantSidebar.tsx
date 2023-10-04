@@ -12,6 +12,7 @@ import { errorMessage, successMessage } from '../../../utils/notifications';
 import { QueryKeys } from '../../../api/query.keys';
 import { TenantFormCommonFields } from './TenantFormCommonFields';
 import { defaultFormValues, ITenantForm } from './UpdateTenantSidebar';
+import { BuildingsPlus } from '../../../design-system/icons/general/BuildingsPlus';
 
 export function CreateTenantSidebar({
   isOpened,
@@ -86,6 +87,7 @@ export function CreateTenantSidebar({
     <Sidebar
       isOpened={isOpened}
       onClose={onClose}
+      givenWidth={'45vw'}
       onSubmit={(e) => {
         handleSubmit(onCreateTenant)(e);
         e.stopPropagation();
@@ -93,6 +95,13 @@ export function CreateTenantSidebar({
       customHeader={
         <Stack h={80} spacing={8}>
           <Group h={40}>
+            <BuildingsPlus
+              style={{
+                color: colors.B30,
+                width: '50px',
+                height: '50px',
+              }}
+            />
             <Title size={2}>Create a tenant</Title>
           </Group>
           <Text color={colors.B40}>
@@ -108,6 +117,8 @@ export function CreateTenantSidebar({
           <Tooltip
             sx={{ position: 'absolute' }}
             disabled={isDirty}
+            width={220}
+            multiline={true}
             label={'Fill in the name and identifier to create the tenant'}
           >
             <span>
