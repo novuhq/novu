@@ -2,7 +2,7 @@ import { ChannelTypeEnum, ICredentials } from '@novu/shared';
 import { SmsToSmsProvider } from '@novu/sms-to';
 import { BaseSmsHandler } from './base.handler';
 
-export class SmstoSmsHandler extends BaseSmsHandler {
+export class SmsToSmsHandler extends BaseSmsHandler {
   constructor() {
     super('sms-to', ChannelTypeEnum.SMS);
   }

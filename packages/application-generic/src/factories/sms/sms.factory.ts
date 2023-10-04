@@ -19,7 +19,7 @@ import {
   AfricasTalkingSmsHandler,
   SendchampSmsHandler,
   NovuSmsHandler,
-  SmstoSmsHandler,
+  SmsToSmsHandler,
 } from './handlers';
 
 export class SmsFactory implements ISmsFactory {
@@ -42,7 +42,7 @@ export class SmsFactory implements ISmsFactory {
     new AfricasTalkingSmsHandler(),
     new SendchampSmsHandler(),
     new NovuSmsHandler(),
-    new SmstoSmsHandler(),
+    new SmsToSmsHandler(),
   ];
 
   getHandler(integration: IntegrationEntity) {
