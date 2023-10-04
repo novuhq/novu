@@ -2914,6 +2914,7 @@ importers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
       '@novu/stateless': ^0.20.0-alpha.0
       '@types/jest': ^29.5.0
+      '@types/nodemailer': ^6.4.11
       codecov: ^3.5.0
       cspell: ^4.1.0
       gh-pages: ^3.1.0
@@ -2934,6 +2935,7 @@ importers:
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
       '@types/jest': 29.5.1
+      '@types/nodemailer': 6.4.11
       codecov: 3.8.3
       cspell: 4.2.8
       gh-pages: 3.2.3
@@ -20231,6 +20233,12 @@ packages:
     resolution: {integrity: sha512-bUBrPjEry2QUTsnuEjzjbS7voGWCc30W0qzgMf90GPeDGFRakvrz47ju+oqDAKCXLUCe39u57/ORMl/O/04/9g==}
     dev: true
     optional: true
+
+  /@types/nodemailer/6.4.11:
+    resolution: {integrity: sha512-Ld2c0frwpGT4VseuoeboCXQ7UJIkK3X7Lx/4YsZEiUHtHsthWAOCYtf6PAiLhMtfwV0cWJRabLBS3+LD8x6Nrw==}
+    dependencies:
+      '@types/node': 14.18.42
+    dev: true
 
   /@types/nodemailer/6.4.7:
     resolution: {integrity: sha512-f5qCBGAn/f0qtRcd4SEn88c8Fp3Swct1731X4ryPKqS61/A3LmmzN8zaEz7hneJvpjFbUUgY7lru/B/7ODTazg==}
