@@ -37,9 +37,9 @@ jobs:
           run: |
             eval "$(ssh-agent -s)"
             echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
-            mkdir meta
-            mkdir deps
-            mkdir pkg
+            mkdir apps/api/meta
+            mkdir apps/api/deps
+            mkdir apps/api/pkg
             docker buildx build -t dept-novu-api --build-arg PACKAGE_PATH=apps/api apps/api/
 
         - name: Build ws image
