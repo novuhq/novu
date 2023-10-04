@@ -63,7 +63,7 @@ jobs:
             eval "$(ssh-agent -s)"
             echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
             cd apps/api/
-            pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | docker buildx build -t novu-api --build-arg PACKAGE_PATH=apps/api -
+            pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | docker buildx build -t dept-novu-api --build-arg PACKAGE_PATH=apps/api -
 
         - name: Build ws image
           env:
@@ -108,7 +108,7 @@ jobs:
           run: |
             eval "$(ssh-agent -s)"
             echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
-            docker build --progress plain -t dept-novu-worker -f ${DOCKER_DIR_WORKER}/Dockerfile --ssh default .
+            pnpm --silent --workspace-root pnpm-context -- apps/worker/Dockerfile | docker buildx build --build-arg PACKAGE_PATH=apps/worker - -t dept-novu-worker --load
         
 
         - name: Push images
