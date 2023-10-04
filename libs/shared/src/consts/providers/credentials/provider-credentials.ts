@@ -750,3 +750,13 @@ export const sendchampConfig: IConfigCredentials[] = [
   },
   ...smsConfigBase,
 ];
+
+export const d7Config: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'Auth Token',
+    type: 'text',
+    required: true,
+  },
+  ...smsConfigBase,
+];

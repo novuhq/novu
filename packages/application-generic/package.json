@@ -51,6 +51,7 @@
     "@novu/apns": "^0.20.0-alpha.0",
     "@novu/burst-sms": "^0.20.0-alpha.0",
     "@novu/clickatell": "^0.20.0-alpha.0",
+    "@novu/d7": "^0.16.3",
     "@novu/dal": "^0.20.0-alpha.0",
     "@novu/discord": "^0.20.0-alpha.0",
     "@novu/email-webhook": "^0.20.0-alpha.0",
