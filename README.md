@@ -144,7 +144,7 @@ Using the Novu API and admin panel, you can easily add a real-time notification 
 Read more about how to add a notification center to your app with the Novu API [here](https://docs.novu.co/notification-center/getting-started)
 
 <p align="center">
-  <a href="https://docs.novu.co/notification-center/getting-started">React Component</a>
+  <a href="https://docs.novu.co/sdks/react">React Component</a>
   · <a href="https://docs.novu.co/notification-center/vue-component">Vue Component</a>
   · <a href="https://github.com/novuhq/novu/tree/next/packages/notification-center-angular">Angular Component</a>
   </p>
