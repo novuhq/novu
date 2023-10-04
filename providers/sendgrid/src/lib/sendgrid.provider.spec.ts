@@ -58,6 +58,19 @@ test('should trigger sendgrid correctly', async () => {
       novuTransactionId: undefined,
       novuWorkflowIdentifier: undefined,
     },
+    personalizations: [
+      {
+        to: [
+          {
+            email: mockNovuMessage.to[0],
+          },
+        ],
+        cc: undefined,
+        bcc: undefined,
+        dynamicTemplateData: undefined,
+      },
+    ],
+    templateId: undefined,
   });
 });
 
