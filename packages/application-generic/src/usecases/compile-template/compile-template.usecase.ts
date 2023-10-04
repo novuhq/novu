@@ -116,4 +116,11 @@ export class CompileTemplate {
 
     return result.replace(/&#x27;/g, "'");
   }
+
+  containsHandlebarsVariable(input: string): boolean {
+    // Regular expression to match Handlebars variables
+    const handlebarsVariableRegex = /\{\{[^{}]+\}\}/g;
+
+    return handlebarsVariableRegex.test(input);
+  }
 }

@@ -157,7 +157,7 @@ export class SendMessageInApp extends SendMessageBase {
         inAppChannel.template.cta.action.buttons = ctaButtons;
       }
 
-      if (actor && actor.data) {
+      if (actor && actor.data && this.compileTemplate.containsHandlebarsVariable(actor.data)) {
         actor.data = await this.compileInAppTemplate(
           actor.data,
           command.payload,
