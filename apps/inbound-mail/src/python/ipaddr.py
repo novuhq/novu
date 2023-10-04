@@ -1287,7 +1287,7 @@ class IPv4Network(_BaseV4, _BaseNet):
               '192.168.1.1'
               '192.168.1.1/255.255.255.255'
               '192.168.1.1/32'
-              are also functionaly equivalent. That is to say, failing to
+              are also functionally equivalent. That is to say, failing to
               provide a subnetmask will create an object with a mask of /32.
 
               If the mask (portion after the / in the argument) is given in
