@@ -102,4 +102,4 @@ docker/.env
 .vercel
 
 .pnpm-store/
-.gitmodules
+
