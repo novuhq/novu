@@ -11,6 +11,28 @@ jobs:
     steps:
         - uses: actions/checkout@v1
 
+        - name: Install Node.js
+          uses: actions/setup-node@v3
+          with:
+            node-version: 16.15.1
+  
+        - uses: pnpm/action-setup@v2
+          with:
+            version: 7.33.4
+
+        - name: Get pnpm store directory
+          shell: bash
+          run: |
+            echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+  
+        - uses: actions/cache@v3
+          name: Setup pnpm cache
+          with:
+            path: ${{ env.STORE_PATH }}
+            key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+            restore-keys: |
+              ${{ runner.os }}-pnpm-store-
+
         - name: Setup Git user
           env:
             GIT_HUB_TOKEN_GLOBAL: ${{ secrets.GIT_HUB_TOKEN_GLOBAL }}
@@ -37,10 +59,8 @@ jobs:
           run: |
             eval "$(ssh-agent -s)"
             echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
-            mkdir meta
-            mkdir deps
-            mkdir pkg
-            docker buildx build -t dept-novu-api -f apps/api/Dockerfile --build-arg PACKAGE_PATH=apps/api --build-arg BULL_MQ_PRO_TOKEN= .
+            cd apps/api/
+            pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | docker buildx build -t novu-api --build-arg PACKAGE_PATH=apps/api -
 
         - name: Build ws image
           env:
