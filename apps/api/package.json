@@ -1,6 +1,6 @@
 {
   "name": "@novu/api",
-  "version": "0.19.0",
+  "version": "0.20.0-alpha.0",
   "description": "description",
   "author": "",
   "private": "true",
@@ -33,24 +33,22 @@
     "@nestjs/axios": "~2.0.0",
     "@nestjs/common": "^10.2.2",
     "@nestjs/core": "^10.2.2",
-    "@nestjs/graphql": "^12.0.8",
     "@nestjs/jwt": "^10.1.0",
     "@nestjs/passport": "^10.0.1",
     "@nestjs/platform-express": "^10.2.2",
     "@nestjs/swagger": "^7.1.8",
     "@nestjs/terminus": "^10.0.1",
-    "@novu/application-generic": "^0.19.0",
-    "@novu/dal": "^0.19.0",
-    "@novu/node": "^0.19.0",
-    "@novu/shared": "^0.19.0",
-    "@novu/stateless": "^0.19.0",
-    "@novu/testing": "^0.19.0",
+    "@novu/application-generic": "^0.20.0-alpha.0",
+    "@novu/dal": "^0.20.0-alpha.0",
+    "@novu/node": "^0.20.0-alpha.0",
+    "@novu/shared": "^0.20.0-alpha.0",
+    "@novu/stateless": "^0.20.0-alpha.0",
+    "@novu/testing": "^0.20.0-alpha.0",
     "@sendgrid/mail": "^7.6.0",
     "@sentry/hub": "^7.40.0",
     "@sentry/node": "^7.40.0",
     "@sentry/tracing": "^7.40.0",
     "@types/newrelic": "^9.14.0",
-    "agenda": "^4.2.1",
     "axios": "^1.3.3",
     "bcrypt": "^5.0.0",
     "body-parser": "^1.20.0",
@@ -115,7 +113,9 @@
     "@novu/ee-auth": "^0.19.0"
   },
   "nx": {
-    "implicitDependencies": ["@novu/ee-auth"]
+    "implicitDependencies": [
+      "@novu/ee-auth"
+    ]
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [

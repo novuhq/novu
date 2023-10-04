@@ -41,10 +41,6 @@ jobs:
     steps:
       - run: echo ${{ matrix.projectName }}
       - uses: actions/checkout@v3
-      - uses: ./.github/actions/checkout-submodules
-        with:
-          submodule_token: ${{ secrets.SUBMODULES_TOKEN }}
-          submodule_branch: "next"
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/setup-redis-cluster
       - uses: mansagroup/nrwl-nx-action@v3
@@ -88,11 +84,6 @@ jobs:
         name: ['novu/api-ee', 'novu/api']
     steps:
       - uses: actions/checkout@v3
-      - uses: ./.github/actions/checkout-submodules
-        with:
-          enabled: ${{ contains (matrix.name,'ee') }}
-          submodule_token: ${{ secrets.SUBMODULES_TOKEN }}
-          submodule_branch: "next"
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/docker/build-api
         id: docker_build

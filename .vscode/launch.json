@@ -87,20 +87,6 @@
       "type": "pwa-node"
     },
     {
-      "name": "DOCS",
-      "request": "launch",
-      "runtimeArgs": [
-        "run-script",
-        "start"
-      ],
-      "runtimeExecutable": "npm",
-      "cwd": "${workspaceFolder}/docs",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "type": "pwa-node"
-    },
-    {
       "name": "WS",
       "request": "launch",
       "runtimeArgs": [
