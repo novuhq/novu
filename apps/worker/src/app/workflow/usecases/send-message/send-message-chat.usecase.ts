@@ -168,15 +168,17 @@ export class SendMessageChat extends SendMessageBase {
     });
 
     const chatWebhookUrl = command.payload.webhookUrl || subscriberChannel.credentials?.webhookUrl;
+    const chatUserId = command.payload.userId || subscriberChannel.credentials?.chatUserId;
     const channelSpecification = subscriberChannel.credentials?.channel;
 
-    if (!chatWebhookUrl) {
+    if (!chatWebhookUrl && !chatUserId) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.CHAT_WEBHOOK_URL_MISSING,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
+          chatUserId: chatUserId,
           isTest: false,
           isRetry: false,
         })
@@ -228,22 +230,23 @@ export class SendMessageChat extends SendMessageBase {
       })
     );
 
-    if (chatWebhookUrl && integration) {
-      await this.sendMessage(chatWebhookUrl, integration, content, message, command, channelSpecification);
+    if ((chatWebhookUrl || chatUserId) && integration) {
+      await this.sendMessage(chatWebhookUrl, chatUserId, integration, content, message, command, channelSpecification);
 
       return;
     }
 
-    await this.sendErrors(chatWebhookUrl, integration, message, command);
+    await this.sendErrors(chatWebhookUrl, chatUserId, integration, message, command);
   }
 
   private async sendErrors(
     chatWebhookUrl,
+    chatUserId,
     integration: IntegrationEntity,
     message: MessageEntity,
     command: SendMessageCommand
   ) {
-    if (!chatWebhookUrl) {
+    if (!chatWebhookUrl && !chatUserId) {
       await this.messageRepository.updateMessageStatus(
         command.environmentId,
         message._id,
@@ -294,6 +297,7 @@ export class SendMessageChat extends SendMessageBase {
 
   private async sendMessage(
     chatWebhookUrl: string,
+    chatUserId: string,
     integration: IntegrationEntity,
     content: string,
     message: MessageEntity,
@@ -310,6 +314,7 @@ export class SendMessageChat extends SendMessageBase {
       const result = await chatHandler.send({
         webhookUrl: chatWebhookUrl,
         channel: channelSpecification,
+        chatUserId: chatUserId,
         content,
       });
 

@@ -78,9 +78,11 @@ export interface IPushOptions {
 }
 
 export interface IChatOptions {
-  webhookUrl: string;
+  webhookUrl?: string;
   channel?: string;
   content: string;
+  chatUserId?: string;
+  botToken?: string;
 }
 
 export interface ISendMessageSuccessResponse {

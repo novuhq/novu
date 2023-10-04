@@ -11,6 +11,7 @@ export interface ICredentials {
   accountSid?: string;
   messageProfileId?: string;
   token?: string;
+  botToken?: string;
   from?: string;
   senderName?: string;
   applicationId?: string;

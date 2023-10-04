@@ -43,6 +43,7 @@
     "@novu/node": "^0.20.0-alpha.0",
     "@novu/shared": "^0.20.0-alpha.0",
     "@novu/stateless": "^0.20.0-alpha.0",
+    "@novu/telegram": "^0.20.0-alpha.0",
     "@novu/testing": "^0.20.0-alpha.0",
     "@sendgrid/mail": "^7.6.0",
     "@sentry/hub": "^7.40.0",

@@ -13,6 +13,7 @@ export enum CredentialsKeyEnum {
   AccountSid = 'accountSid',
   MessageProfileId = 'messageProfileId',
   Token = 'token',
+  BotToken = 'botToken',
   From = 'from',
   SenderName = 'senderName',
   ApplicationId = 'applicationId',
@@ -78,6 +79,7 @@ export enum ChatProviderIdEnum {
   Discord = 'discord',
   MsTeams = 'msteams',
   Mattermost = 'mattermost',
+  Telegram = 'telegram',
 }
 
 export enum PushProviderIdEnum {

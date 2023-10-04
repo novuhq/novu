@@ -57,6 +57,10 @@ export class CreateExecutionDetailsCommand extends EnvironmentWithSubscriber {
   @IsString()
   _subscriberId?: string;
 
+  @IsString()
+  @IsOptional()
+  chatUserId?: string;
+
   webhookStatus?: EmailEventStatusEnum | SmsEventStatusEnum;
 
   static getDetailsFromJob(
