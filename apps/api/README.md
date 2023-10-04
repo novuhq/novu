@@ -13,7 +13,7 @@ A RESTful API for accessing the Novu platform, built using [NestJS](https://nest
 
 ## OpenAPI (formerly Swagger)
 
-The Novu API utilises the [`@nestjs/swagger`](https://github.com/nestjs/swagger) package to generate up-to-date OpenAPI specifications.
+The Novu API utilizes the [`@nestjs/swagger`](https://github.com/nestjs/swagger) package to generate up-to-date OpenAPI specifications.
 
 A web interface to browse the available endpoints is available at [api.novu.co/api](https://api.novu.co/api). An OpenAPI specification can be retrieved at [api.novu.co/api-json](https://api.novu.co/api-json).
 
