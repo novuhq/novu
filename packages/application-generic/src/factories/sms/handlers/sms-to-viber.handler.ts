@@ -1,6 +1,6 @@
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
 import { BaseSmsHandler } from './base.handler';
-import { SmsToViberSmsProvider } from 'providers/sms-to-viber/build/main';
+import { SmsToViberSmsProvider } from '@novu/sms-to-viber';
 
 export class SmsToViberSmsHandler extends BaseSmsHandler {
   constructor() {

@@ -1,6 +1,6 @@
 {
   "name": "@novu/sms-to-viber",
-  "version": "0.16.3",
+  "version": "0.16.3-alpha.0",
   "description": "A sms-to-viber wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
