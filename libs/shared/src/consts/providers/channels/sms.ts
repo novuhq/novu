@@ -18,6 +18,7 @@ import {
   termiiConfig,
   africasTalkingConfig,
   sendchampConfig,
+  smsToViberConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -178,5 +179,13 @@ export const smsProviders: IProviderConfig[] = [
     credentials: sendchampConfig,
     docReference: 'https://docs.novu.co/channels-and-providers/sms/sendchamp',
     logoFileName: { light: 'sendchamp.svg', dark: 'sendchamp.svg' },
+  },
+  {
+    id: SmsProviderIdEnum.SmsToViber,
+    displayName: 'SmsTo Viber',
+    channel: ChannelTypeEnum.SMS,
+    credentials: smsToViberConfig,
+    docReference: '',
+    logoFileName: { light: 'sms-to.svg', dark: 'sms-to.svg' },
   },
 ];
