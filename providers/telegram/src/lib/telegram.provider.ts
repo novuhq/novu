@@ -4,18 +4,20 @@ import {
   IChatOptions,
   IChatProvider,
 } from '@novu/stateless';
-import axios from 'axios';
+import axios, { AxiosInstance } from 'axios';
 
 export class TelegramProvider implements IChatProvider {
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
   public id = 'telegram';
-  private axiosInstance = axios.create();
+  private axiosInstance: AxiosInstance;
 
   constructor(
     private config: {
       botToken?: string;
     }
-  ) {}
+  ) {
+    this.axiosInstance = axios.create();
+  }
   async sendMessage(
     options: IChatOptions
   ): Promise<ISendMessageSuccessResponse> {
