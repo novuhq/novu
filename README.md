@@ -205,7 +205,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 - [x] [Slack](https://github.com/novuhq/novu/tree/main/providers/slack)
 - [x] [Discord](https://github.com/novuhq/novu/tree/main/providers/discord)
-- [x] MS Teams
+- [x] [MS Teams](https://github.com/novuhq/novu/tree/main/providers/ms-teams)
 - [x] Mattermost
 
 #### 📱 In-App
