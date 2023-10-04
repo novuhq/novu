@@ -32,6 +32,7 @@ In addition to this repository, here are the other Novu repositories you can con
 - [Novu Java SDK](https://github.com/novuhq/novu-java/issues)
 - [Novu Kotlin SDK](https://github.com/novuhq/novu-kotlin/issues)
 - [Novu Elixir SDK](https://github.com/novuhq/novu-elixir/issues)
+- [Novu Rust SDK](https://github.com/novuhq/novu-rust/issues)
 
 Your contribution, no matter its size, holds immense value. We eagerly await to see the impact you'll make in our community! 🚀
 
