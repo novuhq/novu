@@ -3,7 +3,8 @@
   "compilerOptions": {
     "outDir": "build/main",
     "rootDir": "src",
-    "types": ["node", "jest"]
+    "types": ["node", "jest"],
+    "ignoreDeprecations": "5.0"
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules/**"]
