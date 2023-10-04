@@ -5,7 +5,7 @@ import styled from '@emotion/styled';
 import { ChannelTypeEnum } from '@novu/shared';
 
 import { colors, Text } from '../../../design-system';
-import { ProviderMissing } from '../../../design-system/icons';
+import { ErrorIcon, WarningIcon } from '../../../design-system/icons';
 import { IntegrationsStoreModal } from '../../integrations/IntegrationsStoreModal';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { stepNames, TemplateEditorAnalyticsEnum } from '../constants';
@@ -41,8 +41,9 @@ export function LackIntegrationAlert({
       <WarningMessage backgroundColor={alertTypeToMessageBackgroundColor(type)}>
         <Group spacing={12} noWrap>
           <div>
-            <MissingIcon
+            <AlertIcon
               color={alertTypeToDoubleArrowColor(type)}
+              alertType={type}
               onClick={() => {
                 if (isPrimaryMissing) {
                   openSelectPrimaryIntegrationModal({
@@ -84,10 +85,22 @@ export function LackIntegrationAlert({
   );
 }
 
-const MissingIcon = styled(ProviderMissing)<{ color?: string | undefined }>`
-  cursor: pointer;
-  color: ${({ color }) => color};
-`;
+const AlertIcon = ({
+  color,
+  alertType,
+  onClick,
+}: {
+  color?: string | undefined;
+  alertType: alertType;
+  onClick: () => void;
+}) => {
+  switch (alertType) {
+    case 'warning':
+      return <WarningIcon color={color} onClick={onClick} />;
+    default:
+      return <ErrorIcon color={color} onClick={onClick} />;
+  }
+};
 
 const WarningMessage = styled.div<{ backgroundColor: string }>`
   display: flex;
