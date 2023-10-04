@@ -49,12 +49,18 @@ export function BrandingForm() {
     if (organization) {
       if (organization.branding?.logo) {
         setValue('image', organization.branding.logo);
+      } else {
+        setValue('image', '');
       }
       if (organization.branding?.color) {
         setValue('color', organization?.branding?.color);
+      } else {
+        setValue('color', '#f47373');
       }
       if (organization.branding?.fontFamily) {
         setValue('fontFamily', organization?.branding?.fontFamily);
+      } else {
+        setValue('fontFamily', 'inherit');
       }
     }
   }, [organization, setValue]);
@@ -89,7 +95,7 @@ export function BrandingForm() {
   async function saveBrandsForm({ color, fontFamily, image }) {
     const brandData = {
       color,
-      logo: image,
+      logo: image == '' ? undefined : image,
       fontFamily,
     };
 
