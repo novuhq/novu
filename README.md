@@ -145,7 +145,7 @@ Read more about how to add a notification center to your app with the Novu API [
 
 <p align="center">
   <a href="https://docs.novu.co/sdks/react">React Component</a>
-  · <a href="https://docs.novu.co/notification-center/vue-component">Vue Component</a>
+  · <a href="https://docs.novu.co/sdks/vue">Vue Component</a>
   · <a href="https://docs.novu.co/sdks/angular">Angular Component</a>
   </p>
   
