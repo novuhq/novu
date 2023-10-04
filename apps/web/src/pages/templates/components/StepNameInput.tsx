@@ -1,12 +1,20 @@
-import { Center, TextInput, useMantineColorScheme } from '@mantine/core';
+import { ReactNode } from 'react';
+import { TextInput, useMantineColorScheme } from '@mantine/core';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { useEnvController } from '../../../hooks';
-import { IForm } from './formTypes';
-import { Variant } from '../../../design-system/icons';
-import { Text, colors } from '../../../design-system';
+import type { IForm } from './formTypes';
+import { colors } from '../../../design-system';
 
-export const StepNameInput = ({ path, defaultValue }: { path?: string; defaultValue: string }) => {
+export const StepNameInput = ({
+  path,
+  defaultValue,
+  label,
+}: {
+  path?: string;
+  defaultValue: string;
+  label?: ReactNode;
+}) => {
   const {
     control,
     formState: { errors, isSubmitted },
@@ -26,8 +34,11 @@ export const StepNameInput = ({ path, defaultValue }: { path?: string; defaultVa
           <TextInput
             styles={(theme) => ({
               root: {
+                display: 'flex',
+                flexDirection: 'column-reverse',
+                gap: 4,
                 flex: '1 1 auto',
-                marginRight: 16,
+                width: '100%',
               },
               wrapper: {
                 background: 'transparent',
@@ -44,7 +55,7 @@ export const StepNameInput = ({ path, defaultValue }: { path?: string; defaultVa
                 // paddingTop: 20,
                 lineHeight: '28px',
                 minHeight: 'auto',
-                height: '54px',
+                height: '40px',
                 width: '100%',
                 textOverflow: 'ellipsis',
                 '&:not(:placeholder-shown)': {
@@ -61,26 +72,13 @@ export const StepNameInput = ({ path, defaultValue }: { path?: string; defaultVa
                   opacity: 1,
                 },
               },
-
               label: {
-                position: 'absolute',
-                pointerEvents: 'none',
                 fontSize: '14px',
-                paddingLeft: '10px',
-                paddingTop: '40px',
                 lineHeight: '20px',
-                zIndex: 1,
               },
             })}
             {...field}
-            label={
-              <Center inline>
-                <Variant />
-                <Text ml={4} color={colors.B60}>
-                  Variant 12
-                </Text>
-              </Center>
-            }
+            label={label}
             value={field.value !== undefined ? field.value : defaultValue}
             error={showErrors && fieldState.error?.message}
             type="text"

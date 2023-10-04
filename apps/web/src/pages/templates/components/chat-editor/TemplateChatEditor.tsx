@@ -9,6 +9,7 @@ import { StepSettings } from '../../workflow/SideBar/StepSettings';
 import type { IForm } from '../formTypes';
 import { LackIntegrationAlert } from '../LackIntegrationAlert';
 import { VariableManager } from '../VariableManager';
+import { TranslateProductLead } from '../TranslateProductLead';
 
 const templateFields = ['content'];
 
@@ -44,6 +45,7 @@ export function TemplateChatEditor() {
         )}
       />
       <VariableManager variablesArray={variablesArray} path={`${stepFormPath}.template`} />
+      <TranslateProductLead id="translate-chat-editor" />
     </>
   );
 }

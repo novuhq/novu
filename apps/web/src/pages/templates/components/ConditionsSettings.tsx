@@ -15,19 +15,19 @@ export function ConditionsSettings({ root = false }: { root?: boolean }) {
   const { watch, setValue, getValues } = useFormContext<IForm>();
   const [filterOpen, setFilterOpen] = useState(false);
 
-  const path = useStepFormPath();
-  const filters = watch(`${path}.filters.0.children` as any);
+  const stepFormPath = useStepFormPath();
+  const filters = watch(`${stepFormPath}.filters.0.children` as any);
   const filterPartsList = useFilterPartsList();
 
   const PlusIcon = root ? ConditionsFile : ConditionPlus;
   const ConditionsIcon = root ? ConditionsFile : Condition;
 
   const updateConditions = (conditions: IConditions[]) => {
-    setValue(`${path}.filters` as any, conditions, { shouldDirty: true });
+    setValue(`${stepFormPath}.filters` as any, conditions, { shouldDirty: true });
   };
 
   if (filterOpen) {
-    const [conditions, name] = getValues([`${path}.filters` as any, `${path}.name` as any]);
+    const [conditions, name] = getValues([`${stepFormPath}.filters` as any, `${stepFormPath}.name` as any]);
 
     return (
       <Conditions
@@ -49,7 +49,6 @@ export function ConditionsSettings({ root = false }: { root?: boolean }) {
       <When truthy={(filters && filters?.length === 0) || !filters}>
         <Tooltip label={`Add ${root ? 'group' : ''} conditions`}>
           <ActionIcon
-            variant="transparent"
             onClick={(e) => {
               e.stopPropagation();
               setFilterOpen(true);
@@ -62,7 +61,6 @@ export function ConditionsSettings({ root = false }: { root?: boolean }) {
       <When truthy={filters && filters?.length > 0}>
         <Tooltip label={`Edit ${root ? 'group' : ''} conditions`}>
           <ActionIcon
-            variant={'transparent'}
             onClick={(e) => {
               e.stopPropagation();
               setFilterOpen(true);

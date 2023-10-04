@@ -1,5 +1,5 @@
 import { ChannelTypeEnum } from '@novu/shared';
-import { Control, Controller, useFormContext } from 'react-hook-form';
+import { Controller, useFormContext } from 'react-hook-form';
 
 import { Textarea } from '../../../design-system';
 import { useEnvController, useHasActiveIntegrations, useVariablesManager } from '../../../hooks';
@@ -8,6 +8,7 @@ import { useStepFormPath } from '../hooks/useStepFormPath';
 import { StepSettings } from '../workflow/SideBar/StepSettings';
 import { LackIntegrationAlert } from './LackIntegrationAlert';
 import { VariableManager } from './VariableManager';
+import { TranslateProductLead } from './TranslateProductLead';
 
 const templateFields = ['content', 'title'];
 
@@ -61,6 +62,7 @@ export function TemplatePushEditor() {
         )}
       />
       <VariableManager variablesArray={variablesArray} path={`${stepFormPath}.template`} />
+      <TranslateProductLead id="translate-push-editor" />
     </>
   );
 }
