@@ -16,7 +16,6 @@ import { CheckIntegrationEMail } from './check-integration/check-integration-ema
 import { GetInAppActivated } from './get-in-app-activated/get-in-app-activated.usecase';
 import { SetIntegrationAsPrimary } from './set-integration-as-primary/set-integration-as-primary.usecase';
 import { CreateNovuIntegrations } from './create-novu-integrations/create-novu-integrations.usecase';
-import { DisableNovuIntegration } from './disable-novu-integration/disable-novu-integration.usecase';
 
 export const USE_CASES = [
   GetInAppActivated,
@@ -34,5 +33,4 @@ export const USE_CASES = [
   CalculateLimitNovuIntegration,
   SetIntegrationAsPrimary,
   CreateNovuIntegrations,
-  DisableNovuIntegration,
 ];
