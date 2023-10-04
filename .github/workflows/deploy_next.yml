@@ -40,7 +40,7 @@ jobs:
             mkdir apps/api/meta
             mkdir apps/api/deps
             mkdir apps/api/pkg
-            docker buildx build -t dept-novu-api -f apps/api/Dockerfile --build-arg PACKAGE_PATH=apps/api --build-arg BULL_MQ_PRO_TOKEN= /apps/api
+            docker buildx build -t dept-novu-api -f apps/api/Dockerfile --build-arg PACKAGE_PATH=apps/api --build-arg BULL_MQ_PRO_TOKEN= /apps/api/Dockerfile
 
         - name: Build ws image
           env:
