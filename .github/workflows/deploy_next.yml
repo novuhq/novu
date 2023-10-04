@@ -40,7 +40,7 @@ jobs:
             mkdir meta
             mkdir deps
             mkdir pkg
-            docker buildx build -t dept-novu-api -f apps/api/Dockerfile --build-arg PACKAGE_PATH=apps/api .
+            docker buildx build -t dept-novu-api --build-arg PACKAGE_PATH=apps/api apps/api/
 
         - name: Build ws image
           env:
