@@ -165,6 +165,7 @@ export class NotificationTemplateRepository extends BaseRepository<
       .limit(limit)
       .populate({ path: 'notificationGroup' })
       .populate('steps.template', { type: 1 })
+      .select('-steps.variants') // Excludes Variants from the list
       .lean();
 
     return { totalCount: totalItemsCount, data: this.mapEntities(items) };
