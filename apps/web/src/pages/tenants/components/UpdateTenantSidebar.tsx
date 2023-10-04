@@ -11,7 +11,8 @@ import { getTenantByIdentifier, deleteTenant, updateTenant } from '../../../api/
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { QueryKeys } from '../../../api/query.keys';
 import { TenantFormCommonFields } from './TenantFormCommonFields';
-import { Trash, WarningIcon } from '../../../design-system/icons';
+import { Buildings, Trash, WarningIcon } from '../../../design-system/icons';
+import { BuildingsPlus } from '../../../design-system/icons/general/BuildingsPlus';
 
 export interface ITenantForm {
   identifier: string;
@@ -72,7 +73,11 @@ export function UpdateTenantSidebar({
   useEffect(() => {
     if (!tenant) return;
 
-    reset({ name: tenant.name, identifier: tenant.identifier, data: JSON.stringify(tenant.data, null, 2) });
+    reset({
+      name: tenant.name,
+      identifier: tenant.identifier,
+      data: JSON.stringify(tenant.data, null, 2),
+    });
   }, [reset, tenant]);
 
   const onUpdateTenant = async (form) => {
@@ -119,13 +124,21 @@ export function UpdateTenantSidebar({
         isOpened={isOpened}
         onClose={onClose}
         isLoading={isLoadingTenant}
+        givenWidth={'45vw'}
         onSubmit={(e) => {
           handleSubmit(onUpdateTenant)(e);
           e.stopPropagation();
         }}
         customHeader={
-          <Stack h={80}>
-            <Group position="apart" spacing={130}>
+          <Group spacing={12} h={100} w="100%">
+            <Group spacing={12} w="100%" h={28} noWrap>
+              <Buildings
+                style={{
+                  color: colors.B30,
+                  width: '35px',
+                  height: '35px',
+                }}
+              />
               <Controller
                 control={control}
                 name="name"
@@ -142,37 +155,36 @@ export function UpdateTenantSidebar({
                   );
                 }}
               />
-
-              <Tooltip label={'Delete tenant'} position="bottom">
+              <Group spacing={12} noWrap ml="auto">
                 <div
                   onClick={() => {
                     setModalIsOpened(true);
                   }}
                 >
-                  <Trash />
+                  <Tooltip label={'Delete tenant'} position="bottom">
+                    <Trash />
+                  </Tooltip>
                 </div>
-              </Tooltip>
+              </Group>
             </Group>
-          </Stack>
-        }
-        customFooter={
-          <Group position="apart" w="100%">
-            <Stack spacing={0}>
-              <Text size={'sm'} color={colors.B40}>
-                Updated at {format(new Date(tenant.updatedAt), 'dd/MM/yyyy HH:mm')}
-              </Text>
-              <Text size={'sm'} color={colors.B40}>
-                Created at {format(new Date(tenant.createdAt), 'dd/MM/yyyy HH:mm')}
-              </Text>
-            </Stack>
-            <Button
-              disabled={!isDirty || !isValid || isLoadingUpdate}
-              submit
-              loading={isLoadingUpdate}
-              data-test-id="update-tenant-sidebar-submit"
-            >
-              Update
-            </Button>
+            <Group position="apart" w="100%">
+              <Stack spacing={0}>
+                <Text size={'sm'} color={colors.B40}>
+                  Updated at {format(new Date(tenant.updatedAt), 'dd/MM/yyyy HH:mm')}
+                </Text>
+                <Text size={'sm'} color={colors.B40}>
+                  Created at {format(new Date(tenant.createdAt), 'dd/MM/yyyy HH:mm')}
+                </Text>
+              </Stack>
+              <Button
+                disabled={!isDirty || !isValid || isLoadingUpdate}
+                submit
+                loading={isLoadingUpdate}
+                data-test-id="update-tenant-sidebar-submit"
+              >
+                Update
+              </Button>
+            </Group>
           </Group>
         }
       >

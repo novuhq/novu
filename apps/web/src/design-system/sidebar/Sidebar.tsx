@@ -13,7 +13,6 @@ const HeaderHolder = styled.div`
   flex-wrap: nowrap;
   gap: 12px;
   margin: 24px;
-  margin-bottom: 0;
 `;
 
 const BodyHolder = styled.div`
@@ -83,6 +82,7 @@ export const Sidebar = ({
   onClose,
   onBack,
   onSubmit,
+  givenWidth,
 }: {
   customHeader?: ReactNode;
   customFooter?: ReactNode;
@@ -94,6 +94,7 @@ export const Sidebar = ({
   onBack?: () => void;
   onSubmit?: React.FormEventHandler<HTMLFormElement>;
   'data-test-id'?: string;
+  givenWidth?: String;
 }) => {
   const { classes: drawerClasses } = useDrawerStyles();
   const onCloseCallback = () => {
@@ -108,7 +109,7 @@ export const Sidebar = ({
       position="right"
       styles={{
         drawer: {
-          width: isExpanded ? `calc(100% - ${NAVIGATION_WIDTH}px)` : COLLAPSED_WIDTH,
+          width: isExpanded ? `${NAVIGATION_WIDTH}px` : givenWidth ? `${givenWidth}` : COLLAPSED_WIDTH,
           transition: 'all 300ms ease !important',
           '@media screen and (max-width: 768px)': {
             width: isExpanded ? `100%` : COLLAPSED_WIDTH,
