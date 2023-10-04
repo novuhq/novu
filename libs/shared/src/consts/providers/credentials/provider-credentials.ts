@@ -740,3 +740,12 @@ export const sendchampConfig: IConfigCredentials[] = [
   },
   ...smsConfigBase,
 ];
+
+export const zulipConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+];

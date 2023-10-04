@@ -4,13 +4,14 @@ import { IntegrationEntity } from '@novu/dal';
 import { DiscordHandler } from './handlers/discord.handler';
 import { MSTeamsHandler } from './handlers/msteams.handler';
 import { MattermostHandler } from './handlers/mattermost.handler';
-
+import { ZulipHandler } from './handlers/zulip.handler';
 export class ChatFactory implements IChatFactory {
   handlers: IChatHandler[] = [
     new SlackHandler(),
     new DiscordHandler(),
     new MSTeamsHandler(),
     new MattermostHandler(),
+    new ZulipHandler(),
   ];
 
   getHandler(integration: IntegrationEntity) {
