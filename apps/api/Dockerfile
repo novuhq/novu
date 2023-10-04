@@ -14,9 +14,9 @@ WORKDIR /usr/src/app
 FROM dev_base AS dev
 ARG PACKAGE_PATH
 
-COPY /usr/src/app/meta .
-COPY /usr/src/app/deps .
-COPY /usr/src/app/pkg .
+COPY /meta .
+COPY /deps .
+COPY /pkg .
 
 RUN if [ -n '${BULL_MQ_PRO_NPM_TOKEN}' ] ; then echo 'Building with Enterprise Edition of Novu' ; fi
 RUN if [ -n '${BULL_MQ_PRO_NPM_TOKEN}' ]; then rm -f .npmrc ; fi
