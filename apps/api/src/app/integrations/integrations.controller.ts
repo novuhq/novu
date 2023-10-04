@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { ChannelTypeEnum, IJwtPayload, MemberRoleEnum } from '@novu/shared';
 import { CalculateLimitNovuIntegration, CalculateLimitNovuIntegrationCommand } from '@novu/application-generic';
-import { ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiExcludeEndpoint, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -246,7 +246,7 @@ export class IntegrationsController {
   }
 
   @Get('/:channelType/limit')
-  @ApiResponse(ChannelTypeLimitDto)
+  @ApiExcludeEndpoint()
   async getProviderLimit(
     @UserSession() user: IJwtPayload,
     @Param('channelType') channelType: ChannelTypeEnum
@@ -267,6 +267,7 @@ export class IntegrationsController {
   }
 
   @Get('/in-app/status')
+  @ApiExcludeEndpoint()
   async getInAppActivated(@UserSession() user: IJwtPayload) {
     return await this.getInAppActivatedUsecase.execute(
       GetInAppActivatedCommand.create({
