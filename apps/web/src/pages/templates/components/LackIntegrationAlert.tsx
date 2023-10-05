@@ -118,7 +118,7 @@ const WarningMessage = styled.div<{ backgroundColor: string }>`
 function alertTypeToDoubleArrowColor(type: alertType) {
   switch (type) {
     case 'warning':
-      return 'rgba(234, 169, 0, 1)';
+      return 'rgb(234, 169, 0)';
     default:
       return 'undefined';
   }
@@ -139,7 +139,8 @@ function alertTypeToMessageTextColor(type: alertType) {
   switch (type) {
     case 'error':
       return colors.error;
-
+    case 'warning':
+      return 'rgb(234, 169, 0)';
     default:
       return undefined;
   }
