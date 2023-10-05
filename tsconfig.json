@@ -13,5 +13,5 @@
     "sinon",
     "cypress",
     "jest"
-  ]
+  ],
 }

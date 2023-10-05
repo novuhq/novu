@@ -15,6 +15,7 @@ import {
   plunkConfig,
   sparkpostConfig,
   emailWebhookConfig,
+  hashmailConfig,
 } from '../credentials';
 import { IProviderConfig } from '../provider.interface';
 import { EmailProviderIdEnum } from '../provider.enum';
@@ -158,5 +159,13 @@ export const emailProviders: IProviderConfig[] = [
     betaVersion: true,
     docReference: 'https://docs.novu.co/channels/email/email-webhook/',
     logoFileName: { light: 'email_webhook.svg', dark: 'email_webhook.svg' },
+  },
+  {
+    id: EmailProviderIdEnum.Hashmail,
+    displayName: 'Hashmail',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: hashmailConfig,
+    docReference: 'https://docs.hashmail.dev/',
+    logoFileName: { light: 'hashmail.svg', dark: 'hashmail.svg' },
   },
 ];

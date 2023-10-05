@@ -88,6 +88,16 @@ export const mailjetConfig: IConfigCredentials[] = [
   ...mailConfigBase,
 ];
 
+export const hashmailConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  ...mailConfigBase,
+];
+
 export const nexmoConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
