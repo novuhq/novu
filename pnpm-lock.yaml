@@ -1350,7 +1350,7 @@ importers:
       '@novu/fcm': ^0.20.0-alpha.0
       '@novu/firetext': ^0.20.0-alpha.0
       '@novu/forty-six-elks': ^0.20.0-alpha.0
-      '@novu/guilded': ^0.16.3-alpha.0
+      '@novu/guilded': ^0.20.0-alpha.0
       '@novu/gupshup': ^0.20.0-alpha.0
       '@novu/infobip': ^0.20.0-alpha.0
       '@novu/kannel': ^0.20.0-alpha.0
@@ -2374,7 +2374,7 @@ importers:
   providers/guilded:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ~1.0.1
-      '@novu/stateless': 0.16.3
+      '@novu/stateless': 0.20.0-alpha.0
       '@types/jest': ~27.5.2
       axios: ^1.3.3
       cspell: ~6.19.2
@@ -2387,7 +2387,7 @@ importers:
       ts-node: ~10.9.1
       typescript: 4.9.5
     dependencies:
-      '@novu/stateless': 0.16.3
+      '@novu/stateless': link:../../packages/stateless
       axios: 1.4.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -13404,15 +13404,6 @@ packages:
 
   /@novu/stateless/0.15.0:
     resolution: {integrity: sha512-NS7n34dlEB48EthLek0NWZXh+nJtbOUVkWdyprGF2f/WCCG/wT+yUtYLOauMffrySpnXEjY9zimyGgIWJQRl0g==}
-    engines: {node: '>=10'}
-    dependencies:
-      handlebars: 4.7.7
-      lodash.get: 4.4.2
-      lodash.merge: 4.6.2
-    dev: false
-
-  /@novu/stateless/0.16.3:
-    resolution: {integrity: sha512-9wrqUluSaR9rCdDp4oUWFBwsk6OSM4P+yMaEtFGHrGmSPMcspnvXQaQoARKakuUpCXFvQlPPJq5+yaicv4o/hA==}
     engines: {node: '>=10'}
     dependencies:
       handlebars: 4.7.7
@@ -43508,7 +43499,7 @@ packages:
       jest-worker: 27.5.1
       schema-utils: 3.1.2
       serialize-javascript: 6.0.1
-      terser: 5.16.9
+      terser: 5.19.3
       webpack: 5.78.0_u5c4qderjagc6tepfyiby6xhau
 
   /terser-webpack-plugin/5.3.9_webpack@5.76.1:
@@ -43531,7 +43522,7 @@ packages:
       jest-worker: 27.5.1
       schema-utils: 3.1.2
       serialize-javascript: 6.0.1
-      terser: 5.16.9
+      terser: 5.19.3
       webpack: 5.76.1
     dev: true
 
@@ -43555,7 +43546,7 @@ packages:
       jest-worker: 27.5.1
       schema-utils: 3.1.2
       serialize-javascript: 6.0.1
-      terser: 5.16.9
+      terser: 5.19.3
       webpack: 5.78.0
 
   /terser-webpack-plugin/5.3.9_webpack@5.88.2:
@@ -43578,7 +43569,7 @@ packages:
       jest-worker: 27.5.1
       schema-utils: 3.1.2
       serialize-javascript: 6.0.1
-      terser: 5.16.9
+      terser: 5.19.3
       webpack: 5.88.2
     dev: true
 
@@ -43603,7 +43594,7 @@ packages:
       jest-worker: 27.5.1
       schema-utils: 3.1.2
       serialize-javascript: 6.0.1
-      terser: 5.16.9
+      terser: 5.19.3
       webpack: 5.78.0_@swc+core@1.3.49
     dev: true
 
