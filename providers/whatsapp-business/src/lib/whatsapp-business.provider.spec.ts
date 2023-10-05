@@ -47,7 +47,7 @@ const mockMessage = {
 				"parameters": [
 					{
 						"type": "payload",
-						"payload": "test"
+						"payload": "ACCEPT_LESSON_REQUEST#b9765a82-272c-4f6a-9344-38f86c8e3622"
 					}
 				]
 			}
