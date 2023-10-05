@@ -1,9 +1,10 @@
 {
-  "taskDefinitionArn": "arn:aws:ecs:eu-central-1:544740809775:task-definition/novu:6",
+  "executionRoleArn": "arn:aws:iam::544740809775:role/ecs_secrets",
+  "taskRoleArn": "arn:aws:iam::544740809775:role/ecs_secrets",
   "containerDefinitions": [
       {
           "name": "ws",
-          "image": "${IMAGE_WS}:$GIT_COMMIT",
+          "image": "${REPO_WS}:$GIT_COMMIT",
           "cpu": 0,
           "memory": 512,
           "portMappings": [
@@ -66,7 +67,7 @@
       },
       {
           "name": "web",
-          "image": "${IMAGE_WEB}:$GIT_COMMIT",
+          "image": "${REPO_WEB}:$GIT_COMMIT",
           "cpu": 0,
           "memory": 512,
           "portMappings": [
@@ -117,7 +118,7 @@
       },
       {
           "name": "widget",
-          "image": "${IMAGE_WIDGET}:$GIT_COMMIT",
+          "image": "${REPO_WIDGET}:$GIT_COMMIT",
           "cpu": 0,
           "memory": 512,
           "portMappings": [
@@ -164,7 +165,7 @@
       },
       {
           "name": "embed",
-          "image": "${IMAGE_EMBED}:$GIT_COMMIT",
+          "image": "${REPO_EMBED}:$GIT_COMMIT",
           "cpu": 0,
           "memory": 512,
           "portMappings": [
@@ -270,7 +271,7 @@
       },
       {
           "name": "api",
-          "image": "${IMAGE_API}:$GIT_COMMIT",
+          "image": "${REPO_API}:$GIT_COMMIT",
           "cpu": 0,
           "memory": 512,
           "links": [
@@ -406,7 +407,7 @@
       },
       {
           "name": "worker",
-          "image": "${IMAGE_WORKER}:$GIT_COMMIT",
+          "image": "${REPO_WORKER}:$GIT_COMMIT",
           "cpu": 0,
           "memory": 512,
           "portMappings": [],
@@ -499,31 +500,12 @@
       }
   ],
   "family": "novu",
-  "revision": 6,
   "volumes": [
       {
           "name": "mongodb",
           "host": {}
       }
   ],
-  "status": "ACTIVE",
-  "requiresAttributes": [
-      {
-          "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
-      },
-      {
-          "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
-      },
-      {
-          "name": "com.amazonaws.ecs.capability.logging-driver.json-file"
-      }
-  ],
   "placementConstraints": [],
-  "compatibilities": [
-      "EXTERNAL",
-      "EC2"
-  ],
-  "registeredAt": "2023-09-25T14:18:40.554Z",
-  "registeredBy": "arn:aws:iam::544740809775:user/hatice",
   "tags": []
 }

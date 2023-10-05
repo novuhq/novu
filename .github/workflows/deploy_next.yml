@@ -116,25 +116,25 @@ jobs:
             AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
             AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
             GIT_COMMIT: ${{ github.sha }}
-            IMAGE_WS: ${{ secrets.IMAGE_WS }}
-            IMAGE_WEB: ${{ secrets.IMAGE_WEB }}
-            IMAGE_WIDGET: ${{ secrets.IMAGE_WIDGET }}
-            IMAGE_EMBED: ${{ secrets.IMAGE_EMBED }}
-            IMAGE_API: ${{ secrets.IMAGE_API }}
-            IMAGE_WORKER: ${{ secrets.IMAGE_WORKER }}
+            REPO_WS: ${{ secrets.REPO_WS }}
+            REPO_WEB: ${{ secrets.REPO_WEB }}
+            REPO_WIDGET: ${{ secrets.REPO_WIDGET }}
+            REPO_EMBED: ${{ secrets.REPO_EMBED }}
+            REPO_API: ${{ secrets.REPO_API }}
+            REPO_WORKER: ${{ secrets.REPO_WORKER }}
           run: |
-            docker tag dept-novu-ws ${IMAGE_WS}:$GIT_COMMIT
-            docker push ${IMAGE_WS}:$GIT_COMMIT
-            docker tag dept-novu-web ${IMAGE_WEB}:$GIT_COMMIT
-            docker push ${IMAGE_WEB}:$GIT_COMMIT
-            docker tag dept-novu-widget ${IMAGE_WIDGET}:$GIT_COMMIT
-            docker push ${IMAGE_WIDGET}:$GIT_COMMIT
-            docker tag dept-novu-embed ${IMAGE_EMBED}:$GIT_COMMIT
-            docker push ${IMAGE_EMBED}:$GIT_COMMIT
-            docker tag dept-novu-api ${IMAGE_API}:$GIT_COMMIT
-            docker push ${IMAGE_API}:$GIT_COMMIT
-            docker tag dept-novu-worker ${IMAGE_WORKER}:$GIT_COMMIT
-            docker push ${IMAGE_WORKER}:$GIT_COMMIT
+            docker tag dept-novu-ws ${REPO_WS}:$GIT_COMMIT
+            docker push ${REPO_WS}:$GIT_COMMIT
+            docker tag dept-novu-web ${REPO_WEB}:$GIT_COMMIT
+            docker push ${REPO_WEB}:$GIT_COMMIT
+            docker tag dept-novu-widget ${REPO_WIDGET}:$GIT_COMMIT
+            docker push ${REPO_WIDGET}:$GIT_COMMIT
+            docker tag dept-novu-embed ${REPO_EMBED}:$GIT_COMMIT
+            docker push ${REPO_EMBED}:$GIT_COMMIT
+            docker tag dept-novu-api ${REPO_API}:$GIT_COMMIT
+            docker push ${REPO_API}:$GIT_COMMIT
+            docker tag dept-novu-worker ${REPO_WORKER}:$GIT_COMMIT
+            docker push ${REPO_WORKER}:$GIT_COMMIT
         - name: Deploy
           env:
             AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
