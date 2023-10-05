@@ -6,24 +6,30 @@ import {
   CheckIntegrationResponseEnum,
   ICheckIntegrationResponse,
 } from '@novu/stateless';
+import axios, { AxiosInstance } from 'axios';
 
 export class HashmailEmailProvider implements IEmailProvider {
   id = 'hashmail';
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
-  private myHeaders: Headers;
   private formData: FormData;
+  private axiosInstance: AxiosInstance;
 
   constructor(private config: { apiKey: string; from: string }) {
-    this.myHeaders = new Headers();
-    this.myHeaders.append('authorization', `Bearer ${this.config.apiKey}`);
+    this.axiosInstance = axios.create({
+      baseURL: 'https://api.hashmail.dev/app/messages/send',
+      headers: {
+        authorization: `Bearer ${this.config.apiKey}`,
+        'Content-Type': 'multipart/form-data',
+      },
+    });
   }
 
   async sendMessage(
     options: IEmailOptions
   ): Promise<ISendMessageSuccessResponse> {
     const requestOptions = this.createRequestOptions(options);
-    const response = await this.sendWithHashMail(requestOptions);
-    const result = await response.json();
+    const response = await this.axiosInstance.request(requestOptions);
+    const result = await response.data;
 
     return {
       id: result.key,
@@ -36,12 +42,8 @@ export class HashmailEmailProvider implements IEmailProvider {
   ): Promise<ICheckIntegrationResponse> {
     try {
       const requestOptions = this.createRequestOptions(options);
-      const response = await this.sendWithHashMail(requestOptions);
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message);
-      }
+      const response = await this.axiosInstance.request(requestOptions);
+      const result = await response.data;
 
       return {
         success: true,
@@ -51,7 +53,7 @@ export class HashmailEmailProvider implements IEmailProvider {
     } catch (error) {
       return {
         success: false,
-        message: error || error?.message || 'Integration check failed.',
+        message: error || 'Integration check failed.',
         code: CheckIntegrationResponseEnum.FAILED,
       };
     }
@@ -59,33 +61,18 @@ export class HashmailEmailProvider implements IEmailProvider {
 
   private createRequestOptions(options: IEmailOptions): {
     method: string;
-    headers: Headers;
-    body: FormData;
+    data: FormData;
   } {
     this.formData.append('sender_address', options.from || this.config.from);
-    this.formData.append('to_address', options.to);
+    this.formData.append('to_address', options.to.join(', '));
     this.formData.append('subject', options.subject);
     this.formData.append('content', options.text);
-    this.formData.append('bcc_address', options.bcc);
-    this.formData.append('cc_address', options.cc);
+    this.formData.append('bcc_address', options.bcc.join(', '));
+    this.formData.append('cc_address', options.cc.join(', '));
 
     return {
-      method: 'POST',
-      headers: this.myHeaders,
-      body: this.formData,
+      method: 'post',
+      data: this.formData,
     };
-  }
-
-  private async sendWithHashMail(requestOptions: {
-    method: string;
-    headers: Headers;
-    body: FormData;
-  }) {
-    const response = await fetch(
-      'https://api.hashmail.dev/dapp/messages/send',
-      requestOptions
-    );
-
-    return response;
   }
 }

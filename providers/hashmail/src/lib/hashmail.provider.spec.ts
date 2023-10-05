@@ -8,8 +8,8 @@ const mockConfig = {
 };
 
 const mockNovuMessage = {
-  from: 'test@test.com',
-  to: ['bibaswanprasai12@gmail.com'],
+  from: 'bibaswanprasai12@gmail.com',
+  to: ['bibaswanprasai@gmail.com'],
   html: '<div> Mail Content </div>',
   subject: 'Test subject',
   attachments: [
