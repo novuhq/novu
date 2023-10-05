@@ -5,7 +5,6 @@ import { Row } from 'react-table';
 import { ROUTES } from '../../constants/routes.enum';
 
 import { IntegrationsList } from './IntegrationsList';
-import { IntegrationsStore } from './IntegrationsStorePage';
 import { ITableIntegration } from './types';
 
 export const IntegrationsListPage = () => {
