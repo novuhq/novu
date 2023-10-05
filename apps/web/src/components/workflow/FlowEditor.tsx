@@ -158,17 +158,20 @@ export function FlowEditor({
     let parentId = '1';
     const finalNodes = [cloneDeep(triggerNode)];
     let finalEdges: Edge<any>[] = [];
+    let isParentVariantNode = false;
 
     if (steps.length) {
       for (let i = 0; i < steps.length; i++) {
         const step = steps[i];
         const oldNode = nodes[i + 1];
-        const position = oldNode && oldNode.type !== 'addNode' ? oldNode.position : { x: 0, y: 120 };
+        const position =
+          oldNode && oldNode.type !== 'addNode' ? oldNode.position : { x: 0, y: isParentVariantNode ? 160 : 120 };
         const newId = (step._id || step.id) as string;
 
         await onStepInit?.(step);
 
         const newNode = buildNewNode(newId, position, parentId, step, i);
+        isParentVariantNode = newNode.type === 'variantNode';
         finalNodes.push(newNode);
 
         const edgeType = edgeTypes ? 'special' : 'default';
@@ -179,7 +182,7 @@ export function FlowEditor({
       }
     }
     if (!readonly && nodeTypes.addNode) {
-      const addNodeButton = buildAddNodeButton(parentId);
+      const addNodeButton = buildAddNodeButton(parentId, isParentVariantNode);
       finalNodes.push(addNodeButton);
     }
 
@@ -231,7 +234,7 @@ export function FlowEditor({
     };
   }
 
-  function buildAddNodeButton(parentId: string): Node {
+  function buildAddNodeButton(parentId: string, isParentVariantNode = false): Node {
     return {
       id: '2',
       type: 'addNode',
@@ -245,7 +248,7 @@ export function FlowEditor({
       className: 'nodrag',
       connectable: false,
       parentNode: parentId,
-      position: { x: 0, y: 90 },
+      position: { x: 0, y: isParentVariantNode ? 130 : 90 },
     };
   }
 
