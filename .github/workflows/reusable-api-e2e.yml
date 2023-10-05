@@ -15,6 +15,11 @@ on:
         required: false
         default: false
         type: boolean
+      submodule_branch:
+        description: 'Submodule branch to checkout to'
+        required: false
+        default: 'main'
+        type: string
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -35,19 +40,12 @@ jobs:
       - id: setup
         run: |
           if ! [[ -z "${{ secrets.SUBMODULES_TOKEN }}" ]]; then
-            echo ::set-output has_token=true
+            echo "has_token=true" >> $GITHUB_OUTPUT
           else
-            echo ::set-output has_token=false
+            echo "has_token=false" >> $GITHUB_OUTPUT
           fi
+      - uses: actions/checkout@v3
       # checkout with submodules if token is provided
-      - uses: actions/checkout@v3
-        if: steps.setup.outputs.has_token == 'true'
-        with:
-          submodules: ${{ inputs.submodules }}
-          token: ${{ secrets.SUBMODULES_TOKEN }}
-       # checkout without submodules
-      - uses: actions/checkout@v3
-        if: steps.setup.outputs.has_token != 'true'
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/setup-redis-cluster
       - uses: mansagroup/nrwl-nx-action@v3
@@ -57,27 +55,13 @@ jobs:
 
       - uses: ./.github/actions/start-localstack
 
-      - name: Install wait-on plugin
-        run: npm i -g wait-on
-
-      - name: Build worker
-        run: CI='' pnpm build:worker
-
-      - name: Start worker
-        env:
-          IN_MEMORY_CLUSTER_MODE_ENABLED: true
-        run: cd apps/worker && pnpm start:test &
-
-      - name: Wait on worker
-        run: wait-on --timeout=180000 http://localhost:1342/v1/health-check
+      - uses: ./.github/actions/run-worker
 
         # Runs a single command using the runners shell
       - name: Build API
         run: CI='' pnpm build:api
 
       - name: Run E2E tests
-        env:
-          IN_MEMORY_CLUSTER_MODE_ENABLED: true
         run: |
           cd apps/api && pnpm test:e2e
 

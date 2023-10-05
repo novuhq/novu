@@ -5,7 +5,7 @@ import { subMonths, subWeeks } from 'date-fns';
 import { BaseRepository } from '../base-repository';
 import { NotificationEntity, NotificationDBModel } from './notification.entity';
 import { Notification } from './notification.schema';
-import type { EnforceEnvOrOrgIds } from '../../types/enforce';
+import type { EnforceEnvOrOrgIds } from '../../types';
 import { EnvironmentId } from '../environment';
 
 export class NotificationRepository extends BaseRepository<
@@ -110,7 +110,7 @@ export class NotificationRepository extends BaseRepository<
             $nin: [StepTypeEnum.TRIGGER],
           },
         },
-        select: 'createdAt digest payload overrides to providerId step status type updatedAt',
+        select: 'createdAt digest payload overrides to tenant providerId step status type updatedAt',
         populate: [
           {
             path: 'executionDetails',

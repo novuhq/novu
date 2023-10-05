@@ -1,5 +1,8 @@
 import { Injectable } from '@nestjs/common';
+import { TriggerEventStatusEnum } from '@novu/shared';
+
 import { ProcessBulkTriggerCommand } from './process-bulk-trigger.command';
+
 import { TriggerEventResponseDto } from '../../dtos';
 import { MapTriggerRecipients } from '../map-trigger-recipients';
 import { ParseEventRequestCommand } from '../parse-event-request/parse-event-request.command';
@@ -14,6 +17,7 @@ export class ProcessBulkTrigger {
 
     for (const event of command.events) {
       let result: TriggerEventResponseDto;
+      const mappedTenant = event.tenant ? this.parseEventRequest.mapTenant(event.tenant) : null;
 
       try {
         result = (await this.parseEventRequest.execute(
@@ -26,6 +30,7 @@ export class ProcessBulkTrigger {
             overrides: event.overrides || {},
             to: event.to,
             actor: event.actor,
+            tenant: mappedTenant,
             transactionId: event.transactionId,
           })
         )) as unknown as TriggerEventResponseDto;
@@ -38,9 +43,9 @@ export class ProcessBulkTrigger {
         }
 
         result = {
-          status: 'error',
-          error: error,
           acknowledged: true,
+          status: TriggerEventStatusEnum.ERROR,
+          error,
         };
       }
 

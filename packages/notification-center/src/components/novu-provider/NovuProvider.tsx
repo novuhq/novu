@@ -29,6 +29,7 @@ const DEFAULT_FETCHING_STRATEGY: IFetchingStrategy = {
   fetchOrganization: true,
   fetchNotifications: false,
   fetchUserPreferences: false,
+  fetchUserGlobalPreferences: false,
 };
 
 export interface INovuProviderProps {

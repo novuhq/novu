@@ -30,6 +30,7 @@ jobs:
     with:
       ee: ${{ contains (matrix.name,'ee') }}
       submodules: ${{ contains (matrix.name,'ee') }}
+      submodule_branch: "next"
     secrets: inherit
 
   deploy_dev_worker:
@@ -49,9 +50,6 @@ jobs:
         name: ['novu/worker-ee', 'novu/worker']
     steps:
       - uses: actions/checkout@v3
-        with:
-          submodules: ${{ contains (matrix.name,'ee') }}
-          token: ${{ secrets.SUBMODULES_TOKEN }}
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/docker/build-worker
         id: docker_build

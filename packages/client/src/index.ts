@@ -35,9 +35,18 @@ export interface IUserPreferenceSettings {
     _id: string;
     name: string;
     critical: boolean;
+    tags?: string[];
     data?: NotificationTemplateCustomData;
   };
-  preference: { enabled: boolean; channels: IPreferenceChannels };
+  preference: PreferenceSettingsType;
 }
 
+export interface IUserGlobalPreferenceSettings {
+  preference: PreferenceSettingsType;
+}
+
+export type PreferenceSettingsType = {
+  enabled: boolean;
+  channels: IPreferenceChannels;
+};
 export { ApiService } from './api/api.service';

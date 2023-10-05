@@ -1,29 +1,37 @@
 import { Controller, Get } from '@nestjs/common';
+import { ApiExcludeController } from '@nestjs/swagger';
 import { HealthCheck, HealthCheckResult, HealthCheckService } from '@nestjs/terminus';
 import {
   DalServiceHealthIndicator,
-  QueueServiceHealthIndicator,
-  TriggerQueueServiceHealthIndicator,
+  StandardQueueServiceHealthIndicator,
+  WorkflowQueueServiceHealthIndicator,
+  ActiveJobsMetricQueueServiceHealthIndicator,
+  CompletedJobsMetricQueueServiceHealthIndicator,
 } from '@novu/application-generic';
 
 import { version } from '../../../package.json';
 
 @Controller('health-check')
+@ApiExcludeController()
 export class HealthController {
   constructor(
     private healthCheckService: HealthCheckService,
     private dalHealthIndicator: DalServiceHealthIndicator,
-    private queueHealthIndicator: QueueServiceHealthIndicator,
-    private triggerQueueHealthIndicator: TriggerQueueServiceHealthIndicator
+    private standardQueueHealthIndicator: StandardQueueServiceHealthIndicator,
+    private workflowQueueHealthIndicator: WorkflowQueueServiceHealthIndicator,
+    private activeJobsMetricQueueServiceHealthIndicator: ActiveJobsMetricQueueServiceHealthIndicator,
+    private completedJobsMetricQueueServiceHealthIndicator: CompletedJobsMetricQueueServiceHealthIndicator
   ) {}
 
   @Get()
   @HealthCheck()
   healthCheck(): Promise<HealthCheckResult> {
     return this.healthCheckService.check([
-      () => this.dalHealthIndicator.isHealthy(),
-      () => this.queueHealthIndicator.isHealthy(),
-      () => this.triggerQueueHealthIndicator.isHealthy(),
+      async () => this.dalHealthIndicator.isHealthy(),
+      async () => this.standardQueueHealthIndicator.isHealthy(),
+      async () => this.workflowQueueHealthIndicator.isHealthy(),
+      async () => this.activeJobsMetricQueueServiceHealthIndicator.isHealthy(),
+      async () => this.completedJobsMetricQueueServiceHealthIndicator.isHealthy(),
       async () => {
         return {
           apiVersion: {

@@ -6,7 +6,8 @@ import { Subscriber } from './subscriber.schema';
 import { IExternalSubscribersEntity } from './types';
 import { BaseRepository } from '../base-repository';
 import { DalException } from '../../shared';
-import type { EnforceEnvOrOrgIds } from '../../types/enforce';
+import type { EnforceEnvOrOrgIds } from '../../types';
+import { EnvironmentId, ISubscribersDefine, OrganizationId } from '@novu/shared';
 
 type SubscriberQuery = FilterQuery<SubscriberDBModel> & EnforceEnvOrOrgIds;
 
@@ -30,6 +31,68 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
       undefined,
       { readPreference: secondaryRead ? 'secondaryPreferred' : 'primary' }
     );
+  }
+
+  async bulkCreateSubscribers(
+    subscribers: ISubscribersDefine[],
+    environmentId: EnvironmentId,
+    organizationId: OrganizationId
+  ) {
+    const bulkWriteOps = subscribers.map((subscriber) => {
+      const { subscriberId, ...rest } = subscriber;
+
+      return {
+        updateOne: {
+          filter: { subscriberId, _environmentId: environmentId, _organizationId: organizationId },
+          update: { $set: rest },
+          upsert: true,
+        },
+      };
+    });
+
+    let bulkResponse;
+    try {
+      bulkResponse = await this.bulkWrite(bulkWriteOps);
+    } catch (e) {
+      if (!e.writeErrors) {
+        throw new DalException(e.message);
+      }
+      bulkResponse = e.result;
+    }
+    const created = bulkResponse.getUpsertedIds();
+    const writeErrors = bulkResponse.getWriteErrors();
+
+    const indexes: number[] = [];
+
+    const insertedSubscribers = created.map((inserted) => {
+      indexes.push(inserted.index);
+
+      return mapToSubscriberObject(subscribers[inserted.index]?.subscriberId);
+    });
+
+    let failed = [];
+    if (writeErrors.length > 0) {
+      failed = writeErrors.map((error) => {
+        indexes.push(error.err.index);
+
+        return {
+          message: error.err.errmsg,
+          subscriberId: error.err.op?.subscriberId,
+        };
+      });
+    }
+
+    const updatedSubscribers = subscribers
+      .filter((subId, index) => !indexes.includes(index))
+      .map((subscriber) => {
+        return mapToSubscriberObject(subscriber.subscriberId);
+      });
+
+    return {
+      updated: updatedSubscribers,
+      created: insertedSubscribers,
+      failed,
+    };
   }
 
   async searchByExternalSubscriberIds(
@@ -103,7 +166,7 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
       subscriberId: foundSubscriber.subscriberId,
     };
 
-    await this.subscriber.delete(requestQuery);
+    return await this.subscriber.delete(requestQuery);
   }
 
   async findDeleted(query: SubscriberQuery) {
@@ -117,7 +180,9 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
     return this.mapEntity(res);
   }
 }
-
+function mapToSubscriberObject(subscriberId: string) {
+  return { subscriberId };
+}
 function regExpEscape(literalString: string): string {
   return literalString.replace(/[-[\]{}()*+!<=:?./\\^$|#\s,]/g, '\\$&');
 }

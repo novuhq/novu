@@ -12,11 +12,7 @@ import { Feeds } from './feeds/feeds';
 import { Topics } from './topics/topics';
 import { Integrations } from './integrations/integrations';
 import { Messages } from './messages/messages';
-import {
-  ITriggerPayloadOptions,
-  IBulkEvents,
-  IBroadcastPayloadOptions,
-} from './events/events.interface';
+import { Tenants } from './tenants/tenants';
 
 export class Novu extends EventEmitter {
   private readonly apiKey?: string;
@@ -32,6 +28,7 @@ export class Novu extends EventEmitter {
   readonly topics: Topics;
   readonly integrations: Integrations;
   readonly messages: Messages;
+  readonly tenants: Tenants;
 
   constructor(apiKey: string, config?: INovuConfiguration) {
     super();
@@ -55,6 +52,7 @@ export class Novu extends EventEmitter {
     this.topics = new Topics(this.http);
     this.integrations = new Integrations(this.http);
     this.messages = new Messages(this.http);
+    this.tenants = new Tenants(this.http);
 
     this.trigger = this.events.trigger;
     this.bulkTrigger = this.events.bulkTrigger;

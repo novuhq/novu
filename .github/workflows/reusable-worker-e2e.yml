@@ -15,6 +15,11 @@ on:
         required: false
         default: false
         type: boolean
+      submodule_branch:
+        description: 'Submodule branch to checkout to'
+        required: false
+        default: 'main'
+        type: string
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -35,20 +40,15 @@ jobs:
     - id: setup
       run: |
         if ! [[ -z "${{ secrets.SUBMODULES_TOKEN }}" ]]; then
-           echo ::set-output has_token=true
+           echo "has_token=true" >> $GITHUB_OUTPUT
         else
-           echo ::set-output has_token=false
+           echo "has_token=false" >> $GITHUB_OUTPUT
         fi
+    - uses: actions/checkout@v3
     # checkout with submodules if token is provided
-    - uses: actions/checkout@v3
-      if: steps.setup.outputs.has_token == 'true'
-      with:
-        submodules: ${{ inputs.submodules }}
-        token: ${{ secrets.SUBMODULES_TOKEN }}
-      # checkout without submodules
-    - uses: actions/checkout@v3
-      if: steps.setup.outputs.has_token != 'true'
+
     - uses: ./.github/actions/setup-project
+
     - uses: ./.github/actions/setup-redis-cluster
     - uses: mansagroup/nrwl-nx-action@v3
       with:

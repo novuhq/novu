@@ -15,7 +15,46 @@ jobs:
     with:
       ee: ${{ contains (matrix.name,'ee') }}
       submodules: ${{ contains (matrix.name,'ee') }}
+      submodule_branch: "main"
     secrets: inherit
+
+  test_e2e_ee:
+    name: Test E2E EE
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
+    steps:
+      - run: echo ${{ matrix.projectName }}
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-project
+      - uses: ./.github/actions/setup-redis-cluster
+      - uses: mansagroup/nrwl-nx-action@v3
+        name: Lint and build
+        with:
+          targets: lint,build
+          projects: ${{matrix.projectName}}
+
+      - uses: ./.github/actions/start-localstack
+
+      - uses: ./.github/actions/run-worker
+        if: ${{matrix.projectName == '@novu/api' }}
+        with:
+          launch_darkly_sdk_key: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
+
+      - uses: mansagroup/nrwl-nx-action@v3
+        name: Running the E2E tests
+        env:
+          LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
+          GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
+          GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
+          CI_EE_TEST: true
+        with:
+          targets: test:e2e:ee
+          projects: ${{matrix.projectName}}
 
   build_prod_image:
     if: "!contains(github.event.head_commit.message, 'ci skip')"
@@ -36,9 +75,6 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v3
-        with:
-          submodules: ${{ contains (matrix.name,'ee') }}
-          token: ${{ secrets.SUBMODULES_TOKEN }}
       - uses: ./.github/actions/setup-project
 
       - name: build api
@@ -77,7 +113,7 @@ jobs:
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:prod
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
-          echo "::set-output name=IMAGE::ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
+          echo "IMAGE=ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
   deploy_prod_api_eu:
     needs: build_prod_image

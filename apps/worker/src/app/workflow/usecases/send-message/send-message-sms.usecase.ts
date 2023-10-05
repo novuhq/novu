@@ -6,6 +6,7 @@ import {
   SubscriberRepository,
   MessageEntity,
   IntegrationEntity,
+  TenantRepository,
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import {
@@ -32,6 +33,7 @@ export class SendMessageSms extends SendMessageBase {
   constructor(
     protected subscriberRepository: SubscriberRepository,
     protected messageRepository: MessageRepository,
+    protected tenantRepository: TenantRepository,
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
@@ -43,6 +45,7 @@ export class SendMessageSms extends SendMessageBase {
       createLogUsecase,
       createExecutionDetails,
       subscriberRepository,
+      tenantRepository,
       selectIntegration,
       getNovuProviderCredentials
     );
@@ -64,6 +67,9 @@ export class SendMessageSms extends SendMessageBase {
       channelType: ChannelTypeEnum.SMS,
       userId: command.userId,
       identifier: overrideSelectedIntegration as string,
+      filterData: {
+        tenant: command.job.tenant,
+      },
     });
 
     Sentry.addBreadcrumb({
@@ -73,6 +79,8 @@ export class SendMessageSms extends SendMessageBase {
     const smsChannel: NotificationStepEntity = command.step;
     if (!smsChannel.template) throw new PlatformException(`Unexpected error: SMS template is missing`);
 
+    const tenant = await this.handleTenantExecution(command.job);
+
     const payload = {
       subscriber: subscriber,
       step: {
@@ -80,6 +88,7 @@ export class SendMessageSms extends SendMessageBase {
         events: command.events,
         total_count: command.events?.length,
       },
+      ...(tenant && { tenant }),
       ...command.payload,
     };
 
@@ -128,7 +137,10 @@ export class SendMessageSms extends SendMessageBase {
 
     await this.sendSelectedIntegrationExecution(command.job, integration);
 
-    const overrides = command.overrides[integration?.providerId] || {};
+    const overrides = {
+      ...(command.overrides[integration?.channel] || {}),
+      ...(command.overrides[integration?.providerId] || {}),
+    };
 
     const messagePayload = Object.assign({}, command.payload);
     delete messagePayload.attachments;
@@ -253,7 +265,7 @@ export class SendMessageSms extends SendMessageBase {
     content: string,
     message: MessageEntity,
     command: SendMessageCommand,
-    overrides: object
+    overrides: Record<string, any> = {}
   ) {
     try {
       const smsFactory = new SmsFactory();
@@ -263,9 +275,9 @@ export class SendMessageSms extends SendMessageBase {
       }
 
       const result = await smsHandler.send({
-        to: phone,
-        from: integration.credentials.from,
-        content,
+        to: overrides.to || phone,
+        from: overrides.from || integration.credentials.from,
+        content: overrides.content || content,
         id: message._id,
       });
 

@@ -26,4 +26,10 @@ export interface ITemplateConfiguration {
   _id: string;
   name: string;
   critical: boolean;
+  tags?: string[];
+}
+
+export enum PreferenceLevelEnum {
+  GLOBAL = 'global',
+  TEMPLATE = 'template',
 }

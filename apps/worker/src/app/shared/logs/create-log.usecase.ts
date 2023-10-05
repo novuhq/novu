@@ -15,7 +15,7 @@ export class CreateLog {
       try {
         rawData = JSON.stringify(command.raw);
       } catch (error) {
-        Logger.error('Parsing raw data when creating a log failed', error, LOG_CONTEXT);
+        Logger.error(error, 'Parsing raw data when creating a log failed', LOG_CONTEXT);
       }
     }
 

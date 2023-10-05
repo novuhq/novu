@@ -137,7 +137,7 @@ export const schema = z
                     minimum: 1,
                     type: 'string',
                     inclusive: true,
-                    message: `Required - ${getChannel(template.type)?.label} Content`,
+                    message: `Message content is missing!`,
                     path: ['content'],
                   });
                 }
@@ -148,7 +148,7 @@ export const schema = z
                       minimum: 1,
                       type: 'string',
                       inclusive: true,
-                      message: 'Required - Email Subject',
+                      message: 'Email subject is missing!',
                       path: ['subject'],
                     });
                   }
@@ -160,7 +160,7 @@ export const schema = z
                     minimum: 1,
                     type: 'string',
                     inclusive: true,
-                    message: 'Required - Push Title',
+                    message: 'Message title is missing!',
                     path: ['title'],
                   });
                 }
@@ -308,7 +308,7 @@ export const schema = z
               validateUnit({
                 ctx,
                 unit: step.delayMetadata?.regular?.unit,
-                message: `Required - ${getChannel(step.template.type)?.label} Unit`,
+                message: 'Time interval is missing!',
                 path: ['delayMetadata', 'regular', 'unit'],
               });
 
@@ -322,7 +322,7 @@ export const schema = z
                   minimum: 1,
                   type: 'string',
                   inclusive: true,
-                  message: 'Required - Delay Path',
+                  message: 'Path scheduled is missing!',
                   path: ['delayMetadata', 'scheduled', 'delayPath'],
                 });
               }
