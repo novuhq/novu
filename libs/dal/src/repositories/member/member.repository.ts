@@ -1,5 +1,5 @@
 import { FilterQuery } from 'mongoose';
-import { IMemberInvite, MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
+import { CustomDataType, IMemberInvite, MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 
 import { MemberEntity, MemberDBModel } from './member.entity';
 import { BaseRepository } from '../base-repository';
@@ -11,6 +11,7 @@ export interface IAddMemberData {
   roles: MemberRoleEnum[];
   invite?: IMemberInvite;
   memberStatus: MemberStatusEnum;
+  config?: CustomDataType;
 }
 
 type MemberQuery = FilterQuery<MemberDBModel> & EnforceOrgId;
@@ -165,6 +166,7 @@ export class MemberRepository extends BaseRepository<MemberDBModel, MemberEntity
       invite: member.invite,
       memberStatus: member.memberStatus,
       _organizationId: organizationId,
+      config: member.config,
     });
   }
 

@@ -3,6 +3,7 @@ import axios from 'axios';
 
 const mockConfig = {
   apiKey: '1234',
+  baseUrl: 'https://test.com',
 };
 
 jest.mock('axios');
@@ -13,7 +14,7 @@ describe('test use of novu node package', () => {
 
   beforeEach(() => {
     mockedAxios.create.mockReturnThis();
-    novu = new Novu(mockConfig.apiKey);
+    novu = new Novu(mockConfig.apiKey, { backendUrl: mockConfig.baseUrl });
   });
 
   test('should trigger correctly', async () => {

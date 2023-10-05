@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { differenceInHours, differenceInSeconds, parseISO } from 'date-fns';
 import { Novu } from '@novu/node';
-import { UserRepository, UserEntity, IUserResetTokenCount } from '@novu/dal';
+import { UserRepository, UserEntity, IUserResetTokenCount, MemberRepository } from '@novu/dal';
 import { buildUserKey, InvalidateCacheService } from '@novu/application-generic';
 
 import { normalizeEmail } from '../../../shared/helpers/email-normalization.service';
@@ -14,13 +14,21 @@ export class PasswordResetRequest {
   private MAX_ATTEMPTS_IN_A_DAY = 15;
   private RATE_LIMIT_IN_SECONDS = 60;
   private RATE_LIMIT_IN_HOURS = 24;
-  constructor(private invalidateCache: InvalidateCacheService, private userRepository: UserRepository) {}
+  constructor(
+    private invalidateCache: InvalidateCacheService,
+    private userRepository: UserRepository,
+    private memberRepository: MemberRepository
+  ) {}
 
   async execute(command: PasswordResetRequestCommand): Promise<{ success: boolean }> {
     const email = normalizeEmail(command.email);
     const foundUser = await this.userRepository.findByEmail(email);
+
     if (foundUser && foundUser.email) {
       const { error, isBlocked } = this.isRequestBlocked(foundUser);
+
+      const member = await this.memberRepository.findById(foundUser._id);
+
       if (isBlocked) {
         throw new UnauthorizedException(error);
       }
@@ -36,7 +44,7 @@ export class PasswordResetRequest {
       await this.userRepository.updatePasswordResetToken(foundUser._id, token, resetTokenCount);
 
       if ((process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'production') && process.env.NOVU_API_KEY) {
-        const novu = new Novu(process.env.NOVU_API_KEY);
+        const novu = new Novu(process.env.NOVU_API_KEY, member?.config);
 
         novu.trigger(process.env.NOVU_TEMPLATEID_PASSWORD_RESET || 'password-reset-llS-wzWMq', {
           to: {

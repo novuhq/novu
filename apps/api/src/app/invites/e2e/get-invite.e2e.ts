@@ -66,4 +66,30 @@ describe('Get invite object - /invites/:inviteToken (GET)', async () => {
       expect(body.message).to.contain('expired');
     });
   });
+
+  describe('add config parameters', async () => {
+    before(async () => {
+      session = new UserSession();
+      await session.initialize();
+
+      await session.testAgent
+        .post('/v1/invites')
+        .send({
+          invitees: [
+            {
+              email: 'asdas@dasdas.com',
+            },
+          ],
+          config: { test: 'test' },
+        })
+        .expect(201);
+    });
+
+    it('check the value for config is not empty', async () => {
+      const members = await memberRepository.getOrganizationMembers(session.organization._id);
+      const member = members.find((i) => i.memberStatus === MemberStatusEnum.INVITED);
+
+      expect(member.config).to.deep.equal({ test: 'test' });
+    });
+  });
 });
