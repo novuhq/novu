@@ -118,7 +118,7 @@
     "uuid": "8.3.2",
     "web-vitals": "^1.0.1",
     "webpack-dev-server": "4.11.1",
-    "zod": "^3.17.3"
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@babel/polyfill": "^7.12.1",
