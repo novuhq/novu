@@ -31,7 +31,7 @@ export const useIsTemplateStoreEnabled = (): boolean => {
 
 export const useIsMultiProviderConfigurationEnabled = (): boolean => {
   const value = IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
-  const fallbackValue = true;
+  const fallbackValue = false;
   const defaultValue = prepareBooleanStringFeatureFlag(value, fallbackValue);
 
   const isMultiProviderConfigurationEnabled = useGetFlagByKey<boolean>(
