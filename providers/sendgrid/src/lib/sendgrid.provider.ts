@@ -65,6 +65,15 @@ export class SendgridEmailProvider implements IEmailProvider {
   }
 
   private createMailData(options: IEmailOptions) {
+    const dynamicTemplateData = options.customData?.dynamicTemplateData;
+    const templateId = options.customData?.templateId as unknown as string;
+    /*
+     * deleted below values from customData to avoid passing them
+     * in customArgs because customArgs has max limit of 10,000 bytes
+     */
+    delete options.customData?.dynamicTemplateData;
+    delete options.customData?.templateId;
+
     const mailData: Partial<MailDataRequired> = {
       from: {
         email: options.from || this.config.from,
@@ -84,6 +93,7 @@ export class SendgridEmailProvider implements IEmailProvider {
         novuMessageId: options.id,
         novuWorkflowIdentifier: options.notificationDetails?.workflowIdentifier,
         novuSubscriberId: options.notificationDetails?.subscriberId,
+        ...options.customData,
       },
       attachments: options.attachments?.map((attachment) => {
         return {
@@ -92,6 +102,15 @@ export class SendgridEmailProvider implements IEmailProvider {
           type: attachment.mime,
         };
       }),
+      personalizations: [
+        {
+          to: options.to.map((email) => ({ email })),
+          cc: options.cc?.map((ccItem) => ({ email: ccItem })),
+          bcc: options.bcc?.map((bccItem) => ({ email: bccItem })),
+          dynamicTemplateData: dynamicTemplateData,
+        },
+      ],
+      templateId: templateId,
     };
 
     if (options.replyTo) {

@@ -1,8 +1,9 @@
-import { ChannelTypeEnum, ICredentials } from '@novu/shared';
+import { BuilderFieldType, BuilderGroupValues, ChannelTypeEnum, FilterParts, ICredentials } from '@novu/shared';
 
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
 import { ChangePropsValueType } from '../../types/helpers';
+import { StepFilter } from '../notification-template';
 
 export class IntegrationEntity {
   _id: string;
@@ -32,6 +33,8 @@ export class IntegrationEntity {
   deletedAt: string;
 
   deletedBy: string;
+
+  conditions?: StepFilter[];
 }
 
 export type ICredentialsEntity = ICredentials;

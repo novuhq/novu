@@ -11,12 +11,13 @@ import {
   StorageHelperService,
   WorkflowQueueService,
 } from '@novu/application-generic';
-import { NotificationTemplateRepository, NotificationTemplateEntity } from '@novu/dal';
+import { NotificationTemplateRepository, NotificationTemplateEntity, TenantRepository } from '@novu/dal';
 import {
   ISubscribersDefine,
   ITenantDefine,
   ReservedVariablesMap,
   TriggerContextTypeEnum,
+  TriggerEventStatusEnum,
   TriggerTenantContext,
 } from '@novu/shared';
 
@@ -35,7 +36,8 @@ export class ParseEventRequest {
     private verifyPayload: VerifyPayload,
     private storageHelperService: StorageHelperService,
     private workflowQueueService: WorkflowQueueService,
-    private mapTriggerRecipients: MapTriggerRecipients
+    private mapTriggerRecipients: MapTriggerRecipients,
+    private tenantRepository: TenantRepository
   ) {}
 
   @InstrumentUsecase()
@@ -72,22 +74,33 @@ export class ParseEventRequest {
     if (!template.active) {
       return {
         acknowledged: true,
-        status: 'trigger_not_active',
+        status: TriggerEventStatusEnum.NOT_ACTIVE,
       };
     }
 
     if (!template.steps?.length) {
       return {
         acknowledged: true,
-        status: 'no_workflow_steps_defined',
+        status: TriggerEventStatusEnum.NO_WORKFLOW_STEPS,
       };
     }
 
     if (!template.steps?.some((step) => step.active)) {
       return {
         acknowledged: true,
-        status: 'no_workflow_active_steps_defined',
+        status: TriggerEventStatusEnum.NO_WORKFLOW_ACTIVE_STEPS,
       };
+    }
+
+    if (command.tenant) {
+      try {
+        await this.validateTenant(typeof command.tenant === 'string' ? command.tenant : command.tenant.identifier);
+      } catch (e) {
+        return {
+          acknowledged: true,
+          status: TriggerEventStatusEnum.TENANT_MISSING,
+        };
+      }
     }
 
     Sentry.addBreadcrumb({
@@ -123,8 +136,8 @@ export class ParseEventRequest {
 
     return {
       acknowledged: true,
-      status: 'processed',
-      transactionId: transactionId,
+      status: TriggerEventStatusEnum.PROCESSED,
+      transactionId,
     };
   }
 
@@ -144,6 +157,15 @@ export class ParseEventRequest {
       command.environmentId,
       command.triggerIdentifier
     );
+  }
+
+  private async validateTenant(identifier: string) {
+    const found = await this.tenantRepository.findOne({
+      identifier,
+    });
+    if (!found) {
+      throw new ApiException(`Tenant with identifier ${identifier} could not be found`);
+    }
   }
 
   @Instrument()

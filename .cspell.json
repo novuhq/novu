@@ -502,7 +502,13 @@
     "errmsg",
     "springboot",
     "errmsg",
-    "shelljs"
+    "shelljs",
+    "prefiltering",
+    "virtuals",
+    "autodocs",
+    "stackalt",
+    "mediumdark",
+    "Docgen"
   ],
   "flagWords": [],
   "patterns": [
@@ -581,8 +587,6 @@
     ".eslintrc.js",
     ".vscode/settings.json",
     "*/**/.vscode/settings.json",
-    "docs/src/usage-examples.md",
-    "docs/static/csv/mock_data.csv",
     "apps/worker/README.md",
     ".gitignore",
     "angular.json",

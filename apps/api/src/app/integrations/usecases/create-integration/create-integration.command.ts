@@ -1,7 +1,8 @@
-import { IsDefined, IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsDefined, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { ChannelTypeEnum, ICredentialsDto } from '@novu/shared';
 
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
+import { MessageFilter } from '../../../workflows/usecases/create-notification-template';
 
 export class CreateIntegrationCommand extends EnvironmentCommand {
   @IsOptional()
@@ -31,4 +32,9 @@ export class CreateIntegrationCommand extends EnvironmentCommand {
 
   @IsDefined()
   userId: string;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  conditions?: MessageFilter[];
 }

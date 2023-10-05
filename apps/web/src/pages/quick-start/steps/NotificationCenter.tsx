@@ -10,7 +10,7 @@ export function NotificationCenter() {
 
   useEffect(() => {
     segment.track(OnBoardingAnalyticsEnum.FLOW_SELECTED, { flow: FlowTypeEnum.IN_APP });
-  }, []);
+  }, [segment]);
 
   return (
     <QuickStartWrapper

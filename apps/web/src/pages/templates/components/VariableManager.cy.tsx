@@ -133,6 +133,7 @@ function FormTester({ content }: { content: string }) {
 
   useLayoutEffect(() => {
     steps.append({ template: { content } });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return <></>;

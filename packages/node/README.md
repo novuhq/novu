@@ -126,7 +126,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 #### 📱 In-App
 
-- [x] [Novu](https://docs.novu.co/notification-center/getting-started)
+- [x] [Novu](https://docs.novu.co/notification-center/introduction)
 - [ ] MagicBell
 
 #### Other (Coming Soon...)
@@ -319,6 +319,27 @@ const novu = new Novu('<NOVU_API_KEY>');
 await novu.subscribers.getPreference("subscriberId")
 ```
 
+- #### Get subscriber global preference
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.subscribers.getGlobalPreference("subscriberId" )
+```
+
+
+- #### Get subscriber preference by level
+```ts
+import { Novu, PreferenceLevelEnum } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+// Get global level preference
+await novu.subscribers.getPreferenceByLevel("subscriberId", PreferenceLevelEnum.GLOBAL)
+
+// Get template level preference
+await novu.subscribers.getPreferenceByLevel("subscriberId", PreferenceLevelEnum.TEMPLATE)
+```
 - #### Update subscriber preference for a workflow
 ```ts
 import { Novu } from '@novu/node';
@@ -338,8 +359,27 @@ await novu.subscribers.updatePreference("subscriberId", "workflowId", {
 await novu.subscribers.updatePreference("subscriberId", "workflowId", {
   channel: {
     type: "email"
-    enabled: 
+    enabled: false
   }
+})
+```
+
+- #### Update subscriber preference globally
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+// enable in-app channel and disable email channel
+await novu.subscribers.updateGlobalPreference("subscriberId", {
+  enabled: true,
+  preferences: [{
+    type: "in_app"
+    enabled: true
+  }, {
+    type: "email"
+    enabled: false
+  }]
 })
 ```
 
@@ -449,7 +489,11 @@ await novu.subscribers.trigger("workflowIdentifier", {
   },
   overrides: {
     email: {
-      from: "support@novu.co"
+      from: "support@novu.co",
+      // customData will work only for sendgrid
+      customData: {
+        "customKey": "customValue"
+      }
     }
   },
   // actorId is subscriberId of actor

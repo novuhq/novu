@@ -39,8 +39,7 @@
     "commit": "git-cz",
     "semantic-release": "semantic-release",
     "semantic-release-prepare": "ts-node tools/semantic-release-prepare",
-    "precommit": "lint-staged",
-    "travis-deploy-once": "travis-deploy-once"
+    "precommit": "lint-staged"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
@@ -113,7 +112,6 @@
     "rollup-plugin-typescript2": "^0.34.1",
     "semantic-release": "^19.0.3",
     "shelljs": "^0.8.3",
-    "travis-deploy-once": "^5.0.9",
     "ts-jest": "^27.1.3",
     "ts-node": "~10.9.1",
     "tslib": "^2.3.1",

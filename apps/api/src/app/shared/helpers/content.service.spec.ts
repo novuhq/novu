@@ -335,4 +335,99 @@ describe('ContentService', function () {
       expect(extractVariables[0].name).to.include('lastName');
     });
   });
+
+  describe('extractStepVariables', () => {
+    it('should not fail if no filters available', () => {
+      const contentService = new ContentService();
+      const messages = [
+        {
+          template: {
+            type: StepTypeEnum.EMAIL,
+            subject: 'Test {{subscriber.firstName}}',
+            content: [
+              {
+                content: 'Test of {{subscriber.firstName}} {{lastName}}',
+                type: 'text',
+              },
+            ],
+          },
+        },
+      ] as INotificationTemplateStep[];
+      const variables = contentService.extractStepVariables(messages);
+
+      expect(variables.length).to.equal(0);
+    });
+
+    it('should not fail if filters are set as non array', () => {
+      const contentService = new ContentService();
+      const messages = [
+        {
+          template: {
+            type: StepTypeEnum.EMAIL,
+            subject: 'Test {{subscriber.firstName}}',
+            content: [
+              {
+                content: 'Test of {{subscriber.firstName}} {{lastName}}',
+                type: 'text',
+              },
+            ],
+          },
+          filters: {},
+        },
+      ] as INotificationTemplateStep[];
+      const variables = contentService.extractStepVariables(messages);
+
+      expect(variables.length).to.equal(0);
+    });
+
+    it('should not fail if filters are an empty array', () => {
+      const contentService = new ContentService();
+      const messages = [
+        {
+          template: {
+            type: StepTypeEnum.EMAIL,
+            subject: 'Test {{subscriber.firstName}}',
+            content: [
+              {
+                content: 'Test of {{subscriber.firstName}} {{lastName}}',
+                type: 'text',
+              },
+            ],
+          },
+          filters: [],
+        },
+      ] as INotificationTemplateStep[];
+      const variables = contentService.extractStepVariables(messages);
+
+      expect(variables.length).to.equal(0);
+    });
+
+    it('should not fail if filters have some wrong settings like missing children in filters', () => {
+      const contentService = new ContentService();
+      const messages = [
+        {
+          template: {
+            type: StepTypeEnum.EMAIL,
+            subject: 'Test {{subscriber.firstName}}',
+            content: [
+              {
+                content: 'Test of {{subscriber.firstName}} {{lastName}}',
+                type: 'text',
+              },
+            ],
+          },
+          filters: [
+            {
+              isNegated: false,
+              type: 'GROUP',
+              value: 'AND',
+            },
+          ],
+        },
+      ] as INotificationTemplateStep[];
+      const variables = contentService.extractStepVariables(messages);
+
+      expect(variables.length).to.equal(0);
+    });
+  });
 });

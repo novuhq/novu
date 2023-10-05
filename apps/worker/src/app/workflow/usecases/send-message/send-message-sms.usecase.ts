@@ -67,6 +67,9 @@ export class SendMessageSms extends SendMessageBase {
       channelType: ChannelTypeEnum.SMS,
       userId: command.userId,
       identifier: overrideSelectedIntegration as string,
+      filterData: {
+        tenant: command.job.tenant,
+      },
     });
 
     Sentry.addBreadcrumb({
@@ -134,7 +137,10 @@ export class SendMessageSms extends SendMessageBase {
 
     await this.sendSelectedIntegrationExecution(command.job, integration);
 
-    const overrides = command.overrides[integration?.providerId] || {};
+    const overrides = {
+      ...(command.overrides[integration?.channel] || {}),
+      ...(command.overrides[integration?.providerId] || {}),
+    };
 
     const messagePayload = Object.assign({}, command.payload);
     delete messagePayload.attachments;
@@ -259,7 +265,7 @@ export class SendMessageSms extends SendMessageBase {
     content: string,
     message: MessageEntity,
     command: SendMessageCommand,
-    overrides: object
+    overrides: Record<string, any> = {}
   ) {
     try {
       const smsFactory = new SmsFactory();
@@ -269,9 +275,9 @@ export class SendMessageSms extends SendMessageBase {
       }
 
       const result = await smsHandler.send({
-        to: phone,
-        from: integration.credentials.from,
-        content,
+        to: overrides.to || phone,
+        from: overrides.from || integration.credentials.from,
+        content: overrides.content || content,
         id: message._id,
       });
 
