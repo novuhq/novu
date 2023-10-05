@@ -62,6 +62,7 @@
     "@novu/gupshup": "^0.20.0-alpha.0",
     "@novu/infobip": "^0.20.0-alpha.0",
     "@novu/kannel": "^0.20.0-alpha.0",
+    "@novu/mailchain" : "0.16.3",
     "@novu/mailersend": "^0.20.0-alpha.0",
     "@novu/mailgun": "^0.20.0-alpha.0",
     "@novu/mailjet": "^0.20.0-alpha.0",

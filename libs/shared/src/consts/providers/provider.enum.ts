@@ -27,6 +27,7 @@ export enum CredentialsKeyEnum {
   RedirectUrl = 'redirectUrl',
   Hmac = 'hmac',
   IpPoolName = 'ipPoolName',
+  SecretPhrase = 'secretPhrase',
 }
 
 export enum EmailProviderIdEnum {
@@ -49,6 +50,7 @@ export enum EmailProviderIdEnum {
   Novu = 'novu-email',
   SparkPost = 'sparkpost',
   EmailWebhook = 'email-webhook',
+  Mailchain = 'mailchain',
 }
 
 export enum SmsProviderIdEnum {
