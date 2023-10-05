@@ -253,8 +253,8 @@ export class TriggerEvent {
       if (!type) continue;
 
       const channelType = STEP_TYPE_TO_CHANNEL_TYPE.get(type);
-      if (!channelType) continue;
-      if (providers[channelType]) continue;
+
+      if (providers[channelType] || !channelType) continue;
 
       if (channelType === ChannelTypeEnum.IN_APP) {
         providers[channelType] = InAppProviderIdEnum.Novu;
