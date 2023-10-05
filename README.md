@@ -142,7 +142,7 @@ Using the Novu API and admin panel, you can easily add a real-time notification 
 <div align="center">
 <img width="762" alt="notification-center-912bb96e009fb3a69bafec23bcde00b0" src="https://user-images.githubusercontent.com/80174214/193887395-f1c95042-b4e6-480e-a89c-a78aa247fa90.gif">
 
-Read more about how to add a notification center to your app with the Novu API [here](https://docs.novu.co/notification-center/getting-started)
+Read more about how to add a notification center to your app with the Novu API [here](https://docs.novu.co/notification-center/introduction)
 
 <p align="center">
   <a href="https://docs.novu.co/notification-center/getting-started">React Component</a>
@@ -220,7 +220,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 ## 📋 Read Our Code Of Conduct
 
-Before you begin coding and collaborating, please read our [Code of Conduct](https://github.com/novuhq/novu/blob/main/CODE_OF_CONDUCT.md) thoroughly to understand the standards (that you are required to adhere to) for community engagement. As part of our open-source community, we hold ourselves and other contributors to a high standard of communication. As a participant and contributor to this project, you are agreeing to abide by our [Code of Conduct](https://github.com/novuhq/novu/blob/main/CODE_OF_CONDUCT.md).
+Before you begin coding and collaborating, please read our [Code of Conduct](https://github.com/novuhq/novu/blob/next/CODE_OF_CONDUCT.md) thoroughly to understand the standards (that you are required to adhere to) for community engagement. As part of our open-source community, we hold ourselves and other contributors to a high standard of communication. As a participant and contributor to this project, you are agreeing to abide by our [Code of Conduct](https://github.com/novuhq/novu/blob/next/CODE_OF_CONDUCT.md).
 
 ## 💻 Need Help?
 
@@ -233,8 +233,8 @@ We are more than happy to help you. If you are getting any errors or facing prob
 ## 🔗 Links
 
 - [Home page](https://novu.co/)
-- [Contribution Guidelines](https://github.com/novuhq/novu/blob/main/CONTRIBUTING.md)
-- [Run Novu Locally](https://docs.novu.co/community/run-locally)
+- [Contribution Guidelines](https://github.com/novuhq/novu/blob/next/CODE_OF_CONDUCT.md)
+- [Run Novu Locally](https://docs.novu.co/community/run-in-local-machine)
 
 ## 🛡️ License
 
