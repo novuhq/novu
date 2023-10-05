@@ -14,6 +14,7 @@ interface IInputProps extends SpacingProps {
   description?: string;
   onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
   rightSection?: React.ReactNode;
+  rightSectionWidth?: React.CSSProperties['width'];
   type?: 'text' | 'password' | 'email' | 'search' | 'tel' | 'url' | 'number' | 'time';
   min?: string | number;
   max?: string | number;
@@ -26,13 +27,25 @@ interface IInputProps extends SpacingProps {
  *
  */
 export const Input = React.forwardRef<HTMLInputElement, IInputProps>(
-  ({ value, rightSection, onChange, readOnly = false, disabled = false, type, ...props }: IInputProps, ref) => {
+  (
+    {
+      value,
+      rightSection,
+      rightSectionWidth,
+      onChange,
+      readOnly = false,
+      disabled = false,
+      type,
+      ...props
+    }: IInputProps,
+    ref
+  ) => {
     const defaultDesign = { radius: 'md', size: 'md', styles: inputStyles, type: 'text' } as TextInputProps;
 
     return (
       <MantineTextInput
         ref={ref}
-        {...(rightSection ? { rightSection, rightSectionWidth: 50 } : {})}
+        {...(rightSection ? { rightSection, rightSectionWidth: rightSectionWidth ?? 50 } : {})}
         {...defaultDesign}
         onChange={onChange}
         autoComplete="off"
