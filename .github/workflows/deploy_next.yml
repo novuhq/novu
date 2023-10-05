@@ -141,6 +141,12 @@ jobs:
             AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
             GIT_COMMIT: ${{ github.sha }}
             DOCKER_DIR: ${{ secrets.DOCKER_DIR }}
+            REPO_WS: ${{ secrets.REPO_WS }}
+            REPO_WEB: ${{ secrets.REPO_WEB }}
+            REPO_WIDGET: ${{ secrets.REPO_WIDGET }}
+            REPO_EMBED: ${{ secrets.REPO_EMBED }}
+            REPO_API: ${{ secrets.REPO_API }}
+            REPO_WORKER: ${{ secrets.REPO_WORKER }}
           run: |
             cd ${DOCKER_DIR}/deploy
             BRANCH=`echo ${{github.ref}} | sed "s/refs\/heads\///"`
