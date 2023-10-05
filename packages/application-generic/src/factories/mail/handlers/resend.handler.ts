@@ -7,7 +7,7 @@ export class ResendHandler extends BaseHandler {
     super('resend', ChannelTypeEnum.EMAIL);
   }
   buildProvider(credentials: ICredentials, from?: string, senderName?: string) {
-    const config: { apiKey: string; from: string; senderName: string } = {
+    const config: { apiKey: string; from: string; senderName?: string } = {
       from: from as string,
       apiKey: credentials.apiKey as string,
       senderName,
