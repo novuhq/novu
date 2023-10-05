@@ -147,6 +147,5 @@ jobs:
             for f in ${BRANCH}-*.json; do
               envsubst < $f > fixed_$f
               REVISION=`aws ecs register-task-definition --region eu-central-1 --cli-input-json file://fixed_$f | grep -oP '"revision": \K([0-9]+)'`;
-              NAME=`cat fixed_$f | jq -r .containerDefinitions[0].name`;
-              aws ecs update-service --region eu-central-1 --service ${NAME} --cluster Dept-Tools --task-definition ${NAME}:${REVISION};
+              aws ecs update-service --region eu-central-1 --service novu --cluster novu --task-definition novu:${REVISION};
             done
