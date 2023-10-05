@@ -23,7 +23,7 @@ jobs:
         target_sync_branch: upstream-sync
         # REQUIRED 'target_repo_token' exactly like this!
         target_repo_token: ${{ secrets.GITHUB_TOKEN }}
-        upstream_sync_branch: main
+        upstream_sync_branch: next
         upstream_sync_repo: novuhq/novu
 
         test_mode: false
