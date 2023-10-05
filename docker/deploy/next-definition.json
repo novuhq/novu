@@ -506,6 +506,5 @@
           "host": {}
       }
   ],
-  "placementConstraints": [],
-  "tags": []
+  "placementConstraints": []
 }
