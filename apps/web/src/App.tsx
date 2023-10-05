@@ -48,7 +48,7 @@ import { SnippetPage } from './pages/templates/components/SnippetPage';
 import { ChannelStepEditor } from './pages/templates/components/ChannelStepEditor';
 import { ProvidersPage } from './pages/templates/components/ProvidersPage';
 import { InAppSuccess } from './pages/quick-start/steps/InAppSuccess';
-import { IntegrationsStore } from './pages/integrations/IntegrationsStorePage';
+import { IntegrationsListPage } from './pages/integrations/IntegrationsListPage';
 import { CreateProviderPage } from './pages/integrations/CreateProviderPage';
 import { UpdateProviderPage } from './pages/integrations/UpdateProviderPage';
 import { SelectProviderPage } from './pages/integrations/components/SelectProviderPage';
@@ -260,7 +260,7 @@ function App() {
                       }
                     />
                   </Route>
-                  <Route path={ROUTES.INTEGRATIONS} element={<IntegrationsStore />}>
+                  <Route path={ROUTES.INTEGRATIONS} element={<IntegrationsListPage />}>
                     <Route path="create" element={<SelectProviderPage />} />
                     <Route path="create/:channel/:providerId" element={<CreateProviderPage />} />
                     <Route path=":integrationId" element={<UpdateProviderPage />} />
