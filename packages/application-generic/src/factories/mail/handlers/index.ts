@@ -2,6 +2,7 @@ export * from './sendgrid.handler';
 export * from './mailgun.handler';
 export * from './emailjs.handler';
 export * from './mailjet.handler';
+export * from './mailtrap.handler';
 export * from './mandrill.handler';
 export * from './nodemailer.handler';
 export * from './postmark.handler';
