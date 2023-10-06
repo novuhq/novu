@@ -4,6 +4,7 @@
   "compilerOptions": {
     "builder": "swc",
     "typeCheck": true,
+    "webpack": true,
     "assets": [
       {
         "include": ".env",

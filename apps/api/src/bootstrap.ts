@@ -116,7 +116,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
     .build();
   const document = SwaggerModule.createDocument(app, options);
 
-  await SwaggerModule.loadPluginMetadata(metadata);
+  // await SwaggerModule.loadPluginMetadata(metadata);
   SwaggerModule.setup('api', app, document);
 
   Logger.log('BOOTSTRAPPED SUCCESSFULLY');

@@ -9,7 +9,7 @@
     "allowSyntheticDefaultImports": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    // "suppressImplicitAnyIndexErrors": true,
+    "suppressImplicitAnyIndexErrors": true,
     "lib": [
       "es2015",
       "dom"
