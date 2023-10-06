@@ -114,9 +114,11 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
     .addTag('Messages')
     .addTag('Execution Details')
     .build();
+
+  // await SwaggerModule.loadPluginMetadata(metadata); // <-- here
+
   const document = SwaggerModule.createDocument(app, options);
 
-  // await SwaggerModule.loadPluginMetadata(metadata);
   SwaggerModule.setup('api', app, document);
 
   Logger.log('BOOTSTRAPPED SUCCESSFULLY');

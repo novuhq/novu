@@ -235,9 +235,9 @@ importers:
       swc-loader: ^0.2.3
       ts-loader: ~9.4.0
       ts-node: ~10.9.1
-      tsconfig-paths: 3.14.2
+      tsconfig-paths: ~4.1.0
       twilio: ^4.14.1
-      typescript: 5.1.3
+      typescript: 4.9.5
       uuid: ^8.3.2
     dependencies:
       '@godaddy/terminus': 4.12.1
@@ -301,7 +301,7 @@ importers:
     devDependencies:
       '@faker-js/faker': 6.3.1
       '@nestjs/cli': 10.1.16_kl4y5m6xaiewdqsiawklzgnlwa
-      '@nestjs/schematics': 10.0.2_typescript@5.1.3
+      '@nestjs/schematics': 10.0.2_typescript@4.9.5
       '@nestjs/testing': 10.2.2_atmp46a5rgegz5v7qiffjhuro4
       '@swc/cli': 0.1.62_@swc+core@1.3.92
       '@swc/core': 1.3.92
@@ -320,10 +320,10 @@ importers:
       nodemon: 2.0.22
       sinon: 9.2.4
       swc-loader: 0.2.3_wg6jh6qqzy5ej6cj6suxsoiphm
-      ts-loader: 9.4.2_qc6ojyyjkqlsywcyaf5x72otuu
-      ts-node: 10.9.1_33lq53csao5pt626zfqi2zwfq4
-      tsconfig-paths: 3.14.2
-      typescript: 5.1.3
+      ts-loader: 9.4.2_fejcc7gjbwtmwzggoernzojija
+      ts-node: 10.9.1_ab76fc4jwdx3pkict4h3oeujsa
+      tsconfig-paths: 4.1.2
+      typescript: 4.9.5
 
   apps/inbound-mail:
     specifiers:
@@ -13149,21 +13149,6 @@ packages:
       jsonc-parser: 3.2.0
       pluralize: 8.0.0
       typescript: 4.9.5
-    transitivePeerDependencies:
-      - chokidar
-    dev: true
-
-  /@nestjs/schematics/10.0.2_typescript@5.1.3:
-    resolution: {integrity: sha512-DaZZjymYoIfRqC5W62lnYXIIods1PDY6CGc8+IpRwyinzffjKxZ3DF3exu+mdyvllzkXo9DTXkoX4zOPSJHCkw==}
-    peerDependencies:
-      typescript: '>=4.8.2'
-    dependencies:
-      '@angular-devkit/core': 16.1.8
-      '@angular-devkit/schematics': 16.1.8
-      comment-json: 4.2.3
-      jsonc-parser: 3.2.0
-      pluralize: 8.0.0
-      typescript: 5.1.3
     transitivePeerDependencies:
       - chokidar
     dev: true
@@ -44637,7 +44622,7 @@ packages:
       micromatch: 4.0.5
       semver: 7.5.2
       typescript: 4.9.5
-      webpack: 5.78.0
+      webpack: 5.78.0_@swc+core@1.3.92
     dev: true
 
   /ts-loader/9.4.2_hybrf64lftnf5l2xwgg7goi2iu:
@@ -44653,53 +44638,6 @@ packages:
       semver: 7.5.2
       typescript: 4.9.5
       webpack: 5.82.1_xdodxy24ils74ldfs5naixsqxm
-    dev: true
-
-  /ts-loader/9.4.2_qc6ojyyjkqlsywcyaf5x72otuu:
-    resolution: {integrity: sha512-OmlC4WVmFv5I0PpaxYb+qGeGOdm5giHU7HwDDUjw59emP2UYMHy9fFSDcYgSNoH8sXcj4hGCSEhlDZ9ULeDraA==}
-    engines: {node: '>=12.0.0'}
-    peerDependencies:
-      typescript: '*'
-      webpack: ^5.0.0
-    dependencies:
-      chalk: 4.1.2
-      enhanced-resolve: 5.15.0
-      micromatch: 4.0.5
-      semver: 7.5.2
-      typescript: 5.1.3
-      webpack: 5.78.0_@swc+core@1.3.92
-    dev: true
-
-  /ts-node/10.9.1_33lq53csao5pt626zfqi2zwfq4:
-    resolution: {integrity: sha512-NtVysVPkxxrwFGUUxGYhfux8k78pQB3JqYBXlLRZgdGUqTO5wU/UyHop5p70iEbGhB7q5KmiZiU0Y3KlJrScEw==}
-    hasBin: true
-    peerDependencies:
-      '@swc/core': '>=1.2.50'
-      '@swc/wasm': '>=1.2.50'
-      '@types/node': '*'
-      typescript: '>=2.7'
-    peerDependenciesMeta:
-      '@swc/core':
-        optional: true
-      '@swc/wasm':
-        optional: true
-    dependencies:
-      '@cspotcode/source-map-support': 0.8.1
-      '@swc/core': 1.3.92
-      '@tsconfig/node10': 1.0.9
-      '@tsconfig/node12': 1.0.11
-      '@tsconfig/node14': 1.0.3
-      '@tsconfig/node16': 1.0.3
-      '@types/node': 14.18.42
-      acorn: 8.10.0
-      acorn-walk: 8.2.0
-      arg: 4.1.3
-      create-require: 1.1.1
-      diff: 4.0.2
-      make-error: 1.3.6
-      typescript: 5.1.3
-      v8-compile-cache-lib: 3.0.1
-      yn: 3.1.1
     dev: true
 
   /ts-node/10.9.1_ab76fc4jwdx3pkict4h3oeujsa:
@@ -45114,12 +45052,6 @@ packages:
     resolution: {integrity: sha512-1FXk9E2Hm+QzZQ7z+McJiHL4NW1F2EzMu9Nq9i3zAaGqibafqYwCVU6WyWAuyQRRzOlxou8xZSyXLEN8oKj24g==}
     engines: {node: '>=4.2.0'}
     hasBin: true
-
-  /typescript/5.1.3:
-    resolution: {integrity: sha512-XH627E9vkeqhlZFQuL+UsyAXEnibT0kWR2FWONlr4sTjvxyJYnyefgrkyECLzM5NenmKzRAy2rR/OlYLA1HkZw==}
-    engines: {node: '>=14.17'}
-    hasBin: true
-    dev: true
 
   /typescript/5.1.6:
     resolution: {integrity: sha512-zaWCozRZ6DLEWAWFrVDz1H6FVXzUSfTy5FUMWsQlU8Ym5JP9eO4xkTIROFCQvhQf61z6O/G6ugw3SgAnvvm+HA==}
