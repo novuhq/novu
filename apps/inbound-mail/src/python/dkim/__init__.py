@@ -467,7 +467,7 @@ class DKIM(object):
         sig2 = RSASSA_PKCS1_v1_5_sign(h, pk)
     except DigestTooLargeError:
         raise ParameterError("digest too large for modulus")
-    # Folding b= is explicity allowed, but yahoo and live.com are broken
+    # Folding b= is explicitly allowed, but yahoo and live.com are broken
     #sig_value += base64.b64encode(bytes(sig2))
     # Instead of leaving unfolded (which lets an MTA fold it later and still
     # breaks yahoo and live.com), we change the default signing mode to
