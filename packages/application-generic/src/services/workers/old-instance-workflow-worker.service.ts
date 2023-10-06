@@ -9,7 +9,7 @@ import {
   WorkerOptions,
 } from '../bull-mq';
 
-const LOG_CONTEXT = 'OldInstanceWorkerService';
+const LOG_CONTEXT = 'OldInstanceWorkflowWorkerService';
 
 type WorkerProcessor = string | Processor<any, unknown, string> | undefined;
 
@@ -23,7 +23,7 @@ export class OldInstanceWorkflowWorkerService {
   public readonly topic: JobTopicNameEnum;
 
   constructor() {
-    this.topic = JobTopicNameEnum.STANDARD;
+    this.topic = JobTopicNameEnum.WORKFLOW;
     this.instance = new OldInstanceBullMqService();
     if (this.instance.enabled) {
       Logger.log(`Worker ${this.topic} instantiated`, LOG_CONTEXT);
@@ -86,11 +86,17 @@ export class OldInstanceWorkflowWorkerService {
 
   public async gracefulShutdown(): Promise<void> {
     if (this.instance.enabled) {
-      Logger.log('Shutting the Worker service down', LOG_CONTEXT);
+      Logger.log(
+        'Shutting the old instance workflow worker service down',
+        LOG_CONTEXT
+      );
 
       await this.instance.gracefulShutdown();
 
-      Logger.log('Shutting down the Worker service has finished', LOG_CONTEXT);
+      Logger.log(
+        'Shutting down the old instance workflow worker service has finished',
+        LOG_CONTEXT
+      );
     }
   }
 

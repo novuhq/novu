@@ -52,7 +52,7 @@ export const ProductLead = ({
 
   useEffect(() => {
     segment.track('Banner seen - [Product lead]', {
-      id,
+      feature: id,
     });
   }, [segment, id]);
 
@@ -79,7 +79,7 @@ export const ProductLead = ({
                 {title}
               </Title>
             </Group>
-            <When truthy={closeable && variant === ProductLeadVariants.DEFAULT}>
+            <When truthy={closeable && variant === ProductLeadVariants.COLUMN}>
               <ActionIcon
                 variant={'transparent'}
                 sx={{ transform: 'translate(14px, -14px)' }}
@@ -116,7 +116,7 @@ export const ProductLead = ({
               <Calendar color={dark ? theme.white : colors.B60} /> Schedule a call
             </Group>
           </Button>
-          <When truthy={closeable && variant === ProductLeadVariants.COLUMN}>
+          <When truthy={closeable && variant === ProductLeadVariants.DEFAULT}>
             <ActionIcon
               variant={'transparent'}
               onClick={() => {
