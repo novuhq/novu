@@ -1,5 +1,5 @@
 import { IConfigCredentials, IProviderConfig } from '../provider.interface';
-import { slackConfig } from '../credentials';
+import { slackConfig, ryverConfig } from '../credentials';
 import { ChatProviderIdEnum } from '../provider.enum';
 
 import { ChannelTypeEnum } from '../../../types';
@@ -36,5 +36,13 @@ export const chatProviders: IProviderConfig[] = [
     credentials: [] as IConfigCredentials[],
     docReference: 'https://developers.mattermost.com/integrate/webhooks/incoming/',
     logoFileName: { light: 'mattermost.svg', dark: 'mattermost.svg' },
+  },
+  {
+    id: ChatProviderIdEnum.Ryver,
+    displayName: 'Ryver',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: ryverConfig,
+    docReference: 'https://api.ryver.com/ryvrest_api_examples.html#create-chat-message',
+    logoFileName: { light: 'ryver.png', dark: 'ryver.png' },
   },
 ];

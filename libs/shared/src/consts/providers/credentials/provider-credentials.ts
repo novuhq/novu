@@ -456,6 +456,21 @@ export const slackConfig: IConfigCredentials[] = [
   },
 ];
 
+export const ryverConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.MessageProfileId,
+    displayName: 'Channel ID',
+    type: 'string',
+    required: true,
+  },
+];
+
 export const fcmConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ServiceAccount,
