@@ -220,6 +220,16 @@ export const resendConfig: IConfigCredentials[] = [
   ...mailConfigBase,
 ];
 
+export const mailtrapConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  ...mailConfigBase,
+];
+
 export const plunkConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
