@@ -112,7 +112,7 @@ export class ActiveJobsMetricService {
 
           return resolve();
         } catch (error) {
-          Logger.error({ error }, 'Error occured while processing metrics', LOG_CONTEXT);
+          Logger.error({ error }, 'Error occurred while processing metrics', LOG_CONTEXT);
 
           return reject(error);
         }
