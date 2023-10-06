@@ -1,15 +1,13 @@
 import { ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { StepTypeEnum } from '@novu/shared';
-import { ActionIcon, Group } from '@mantine/core';
 
 import { useStepIndex } from '../hooks/useStepIndex';
 import { StepName } from './StepName';
-import { colors, Sidebar, Tooltip } from '../../../design-system';
+import { Sidebar } from '../../../design-system';
 import { useBasePath } from '../hooks/useBasePath';
-import { Trash } from '../../../design-system/icons';
-import { ConditionsSettings } from './ConditionsSettings';
 import { DeleteStepRow } from './DeleteStepRow';
+import { EditorSidebarHeaderActions } from './EditorSidebarHeaderActions';
 
 const StepSidebarHeader = () => {
   const { channel } = useParams<{
@@ -23,14 +21,7 @@ const StepSidebarHeader = () => {
   return (
     <div style={{ display: 'flex', width: '100%', gap: 12 }}>
       <StepName channel={channel} />
-      <Group noWrap spacing={12} ml={'auto'} sx={{ alignItems: 'flex-start' }}>
-        <ConditionsSettings />
-        <Tooltip label={'Delete step'}>
-          <ActionIcon>
-            <Trash color={colors.B60} />
-          </ActionIcon>
-        </Tooltip>
-      </Group>
+      <EditorSidebarHeaderActions />
     </div>
   );
 };

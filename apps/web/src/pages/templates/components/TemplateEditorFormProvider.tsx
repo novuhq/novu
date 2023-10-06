@@ -3,6 +3,7 @@ import slugify from 'slugify';
 import { FormProvider, useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useParams } from 'react-router-dom';
+import * as cloneDeep from 'lodash.clonedeep';
 import {
   DelayTypeEnum,
   DigestTypeEnum,
@@ -13,7 +14,7 @@ import {
 import * as Sentry from '@sentry/react';
 import { StepTypeEnum, ActorTypeEnum, EmailBlockTypeEnum, IEmailBlock, TextAlignEnum } from '@novu/shared';
 
-import type { IForm, IFormStep } from './formTypes';
+import type { IForm, IFormStep, ITemplates } from './formTypes';
 import { useTemplateController } from './useTemplateController';
 import { mapNotificationTemplateToForm, mapFormToCreateNotificationTemplate } from './templateToFormMappers';
 import { errorMessage, successMessage } from '../../../utils/notifications';
@@ -84,53 +85,32 @@ const makeStep = (channelType: StepTypeEnum, id: string): IFormStep => {
   };
 };
 
-export const makeVariant = (channelType: StepTypeEnum, id: string): IFormStep => {
+const makeTemplateCopy = ({
+  _id,
+  id,
+  _environmentId,
+  _organizationId,
+  _creatorId,
+  _parentId,
+  createdAt,
+  updatedAt,
+  ...rest
+}: ITemplates) => ({
+  ...rest,
+});
+
+export const makeVariantFromStep = (stepToVariant: IFormStep): IFormStep => {
+  const { id: _, variants, template, ...rest } = stepToVariant;
+  const variantsCount = variants?.length ?? 0;
+  const variantName = `V${variantsCount + 1} ${stepToVariant?.name}`;
+
   return {
-    _id: id,
+    ...rest,
+    _id: uuid4(),
     uuid: uuid4(),
-    name: stepNames[channelType],
-    template: {
-      subject: '',
-      type: channelType,
-      content: channelType === StepTypeEnum.EMAIL ? defaultEmailBlocks : '',
-      contentType: 'editor',
-      variables: [],
-      ...(channelType === StepTypeEnum.IN_APP && {
-        actor: {
-          type: ActorTypeEnum.NONE,
-          data: null,
-        },
-        enableAvatar: false,
-      }),
-    },
-    active: true,
-    shouldStopOnFail: false,
+    name: variantName,
     filters: [],
-    ...(channelType === StepTypeEnum.EMAIL && {
-      replyCallback: {
-        active: false,
-      },
-    }),
-    ...(channelType === StepTypeEnum.DIGEST && {
-      digestMetadata: {
-        digestKey: '',
-        type: DigestTypeEnum.REGULAR,
-        regular: {
-          unit: DigestUnitEnum.MINUTES,
-          amount: '5',
-          backoff: false,
-        },
-      },
-    }),
-    ...(channelType === StepTypeEnum.DELAY && {
-      delayMetadata: {
-        type: DelayTypeEnum.REGULAR,
-        regular: {
-          unit: DigestUnitEnum.MINUTES,
-          amount: '5',
-        },
-      },
-    }),
+    template: cloneDeep(makeTemplateCopy(template)),
   };
 };
 
@@ -144,6 +124,7 @@ interface ITemplateEditorFormContext {
   onSubmit: (data: IForm) => Promise<void>;
   addStep: (channelType: StepTypeEnum, id: string, stepIndex?: number) => void;
   deleteStep: (index: number) => void;
+  addVariant: (uuid: string) => IFormStep | undefined;
 }
 
 const TemplateEditorFormContext = createContext<ITemplateEditorFormContext>({
@@ -155,6 +136,7 @@ const TemplateEditorFormContext = createContext<ITemplateEditorFormContext>({
   onSubmit: (() => {}) as any,
   addStep: () => {},
   deleteStep: () => {},
+  addVariant: () => undefined,
 });
 
 const defaultValues: IForm = {
@@ -278,6 +260,27 @@ const TemplateEditorFormProvider = ({ children }) => {
     [steps]
   );
 
+  const addVariant = useCallback(
+    (uuid: string) => {
+      const workflowSteps = methods.getValues('steps');
+      const stepToVariant = workflowSteps.find((step) => step.uuid === uuid);
+      const index = workflowSteps.findIndex((item) => item.uuid === uuid);
+      if (!stepToVariant) {
+        return;
+      }
+
+      const newVariant = makeVariantFromStep(stepToVariant);
+      const newVariants = [...(stepToVariant?.variants ?? []), newVariant];
+
+      methods.setValue(`steps.${index}.variants`, newVariants, {
+        shouldDirty: true,
+      });
+
+      return newVariant;
+    },
+    [methods]
+  );
+
   const value = useMemo<ITemplateEditorFormContext>(
     () => ({
       template,
@@ -289,8 +292,21 @@ const TemplateEditorFormProvider = ({ children }) => {
       onSubmit,
       addStep,
       deleteStep,
+      addVariant,
     }),
-    [template, isLoading, isCreating, isUpdating, isDeleting, trigger, onSubmit, addStep, deleteStep, loadingGroups]
+    [
+      template,
+      isLoading,
+      isCreating,
+      isUpdating,
+      isDeleting,
+      trigger,
+      onSubmit,
+      addStep,
+      deleteStep,
+      addVariant,
+      loadingGroups,
+    ]
   );
 
   return (

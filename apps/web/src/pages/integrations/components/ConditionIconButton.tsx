@@ -2,7 +2,7 @@ import { useState } from 'react';
 import styled from '@emotion/styled';
 import { Group, ActionIcon, Center } from '@mantine/core';
 import { When } from '../../../components/utils/When';
-import { colors, Tooltip, Text, Modal, Button, Title } from '../../../design-system';
+import { colors, Tooltip, Text, Modal, Button, Title, ActionButton } from '../../../design-system';
 import { Condition, ConditionPlus, Warning } from '../../../design-system/icons';
 
 const IconButton = styled(Group)`
@@ -41,8 +41,8 @@ export const ConditionIconButton = ({
 
   return (
     <>
-      <Tooltip
-        label={
+      <ActionButton
+        tooltip={
           <>
             {conditions > 0 ? 'Edit' : 'Add'} Conditions
             <When truthy={primary}>
@@ -50,33 +50,19 @@ export const ConditionIconButton = ({
             </When>
           </>
         }
-        position="bottom"
-      >
-        <ActionIcon
-          data-test-id="header-add-conditions-btn"
-          onClick={() => {
-            if (primary && conditions === 0) {
-              setModalOpen(true);
+        tooltipPosition="bottom"
+        Icon={conditions === 0 ? ConditionPlus : Condition}
+        text={conditions > 0 ? `${conditions}` : undefined}
+        onClick={() => {
+          if (primary && conditions === 0) {
+            setModalOpen(true);
 
-              return;
-            }
-            onClick();
-          }}
-          variant="transparent"
-        >
-          <IconButton position="center" spacing={4}>
-            <When truthy={conditions === 0}>
-              <ConditionPlus />
-            </When>
-            <When truthy={conditions > 0}>
-              <Center inline>
-                <Condition />
-                <div>{conditions}</div>
-              </Center>
-            </When>
-          </IconButton>
-        </ActionIcon>
-      </Tooltip>
+            return;
+          }
+          onClick();
+        }}
+        data-test-id="header-add-conditions-btn"
+      />
       <Modal
         opened={modalOpen}
         data-test-id="remove-primary-flag-modal"

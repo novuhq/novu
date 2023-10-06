@@ -2,7 +2,6 @@ import { Container, Group, Stack, useMantineColorScheme } from '@mantine/core';
 import { ComponentType, useCallback, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { Link, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { v4 as uuid4 } from 'uuid';
 import { NodeProps } from 'react-flow-renderer';
 import { FilterPartTypeEnum, StepTypeEnum } from '@novu/shared';
 
@@ -17,7 +16,7 @@ import { channels } from '../../../utils/channels';
 import { errorMessage } from '../../../utils/notifications';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import type { IForm } from '../components/formTypes';
-import { makeVariant, useTemplateEditorForm } from '../components/TemplateEditorFormProvider';
+import { useTemplateEditorForm } from '../components/TemplateEditorFormProvider';
 import { UpdateButton } from '../components/UpdateButton';
 import { useBasePath } from '../hooks/useBasePath';
 import { getFormattedStepErrors } from '../shared/errors';
@@ -39,7 +38,7 @@ const nodeTypes: Record<string, ComponentType<NodeProps>> = {
 const edgeTypes = { special: AddNodeEdge };
 
 const WorkflowEditor = () => {
-  const { addStep, deleteStep } = useTemplateEditorForm();
+  const { addStep, deleteStep, addVariant } = useTemplateEditorForm();
   const { channel } = useParams<{
     channel: StepTypeEnum | undefined;
   }>();
@@ -48,8 +47,6 @@ const WorkflowEditor = () => {
   const {
     control,
     trigger,
-    setValue,
-    getValues,
     formState: { errors, isDirty },
   } = useFormContext<IForm>();
   const { readonly } = useEnvController();
@@ -88,16 +85,11 @@ const WorkflowEditor = () => {
   };
 
   const onAddVariant = (uuid) => {
-    const newId = uuid4();
-    const stepToVariant = steps.find((step) => step.uuid === uuid);
-    const index = steps.findIndex((item) => item.uuid === uuid);
-
-    const variantName = stepToVariant?.name + 'V1';
-    const newVariant = makeVariant(stepToVariant?.template.type as StepTypeEnum, newId);
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    setValue(`steps.${index}.variants`, [...getValues(`steps.${index}.variants`), newVariant], { shouldDirty: true });
-    navigate(basePath + `/${stepToVariant?.template.type}/${uuid}/variants/${newVariant.uuid}`);
+    const newVariant = addVariant(uuid);
+    if (newVariant) {
+      // TODO: show the conditions sidebar first and then when conditions are applied show the variant editor
+      navigate(basePath + `/${newVariant?.template.type}/${uuid}/variants/${newVariant.uuid}`);
+    }
   };
 
   const confirmDelete = () => {

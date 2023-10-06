@@ -1,4 +1,5 @@
 export { Button } from './button/Button';
+export { ActionButton } from './button/ActionButton';
 export { PlusButton } from './button/PlusButton';
 export type { IButtonProps } from './button/Button';
 export type { Size } from './button/Button';

@@ -9,7 +9,7 @@ import { useStepSubtitle } from '../../../hooks/useStepSubtitle';
 export default memo((node: INode) => {
   const { data, id, dragging } = node;
   const { testId, error, channelType, step, label, index, tabKey, Icon, onAddVariant, onDelete, onEdit } = data;
-  const { active, uuid, name, template } = step;
+  const { active, uuid, name } = step;
   const variantsCount = step.variants?.length;
 
   const { getNode, getEdges, getNodes } = useReactFlow();
