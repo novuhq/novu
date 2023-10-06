@@ -1,8 +1,8 @@
 name: 'Upstream Sync'
 
 on:
-  # schedule:
-    # - cron:  '0 7 * * 1,2,3,4,5'
+  schedule:
+    - cron:  '0 7 * * 1,2,3,4,5'
   workflow_dispatch: 
 
 jobs:
