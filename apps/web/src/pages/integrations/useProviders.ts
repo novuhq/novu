@@ -51,11 +51,14 @@ function initializeProviders(integrations: IntegrationEntity[]): IIntegratedProv
       // Remove this like after the run of the fcm-credentials-migration script
       fcmFallback(integration, clonedCredentials);
 
+      const hasCredentials = integration?.credentials && Object.keys(integration?.credentials).length !== 0;
+
       return {
         providerId: providerItem.id,
         integrationId: integration?._id ? integration._id : '',
         displayName: providerItem.displayName,
         channel: providerItem.channel,
+        hasCredentials,
         credentials: integration?.credentials ? clonedCredentials : providerItem.credentials,
         docReference: providerItem.docReference,
         comingSoon: !!providerItem.comingSoon,
@@ -103,11 +106,14 @@ function initializeProvidersByIntegration(integrations: IntegrationEntity[]): II
       // Remove this like after the run of the fcm-credentials-migration script
       fcmFallback(integrationItem, clonedCredentials);
 
+      const hasCredentials = integrationItem?.credentials && Object.keys(integrationItem?.credentials).length !== 0;
+
       return {
         providerId: providerItem?.id || integrationItem.providerId,
         integrationId: integrationItem?._id ? integrationItem._id : '',
         displayName: providerItem?.displayName || integrationItem.name,
         channel: providerItem?.channel || integrationItem.channel,
+        hasCredentials,
         credentials: (integrationItem?.credentials ? clonedCredentials : providerItem?.credentials) || [],
         docReference: providerItem?.docReference || '',
         comingSoon: !!providerItem?.comingSoon,
