@@ -4,7 +4,6 @@ import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useIntercom } from 'react-use-intercom';
 
-import LogRocket from 'logrocket';
 import { CONTEXT_PATH, INTERCOM_APP_ID, IS_DOCKER_HOSTED, LOGROCKET_ID } from '../../../config';
 import { ROUTES } from '../../../constants/routes.enum';
 import { colors, Dropdown, shadows, Text, Tooltip } from '../../../design-system';
@@ -87,7 +86,7 @@ export function HeaderNav({ isIntercomOpened }: Props) {
         };
       }
 
-      LogRocket.identify(currentUser?._id, logrocketTraits);
+      LOGROCKET_ID.identify(currentUser?._id, logrocketTraits);
     }
   }, [currentUser, currentOrganization]);
 
