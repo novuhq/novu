@@ -5,5 +5,9 @@ A Mailchain email provider library for [@novu/node](https://github.com/novuhq/no
 ## Usage
 
 ```javascript
-    FILL IN THE INITIALIZATION USAGE
+    import {MailchainEmailProvider} from '@novu/mailchain'
+
+    const provider = new MailchainEmailProvider({
+        secretRecoveryPhrase : process.env.MAILCHAIN_SECRET_PHRASE
+    });
 ```
