@@ -84,6 +84,7 @@ export { Cloud } from './general/Cloud';
 export { Condition } from './general/Condition';
 export { RemoveCondition } from './general/RemoveCondition';
 export { Warning } from './general/Warning';
+export { BoxArrowRight } from './general/BoxArrowRight';
 
 export { Copy } from './actions/Copy';
 export { Close } from './actions/Close';
