@@ -19,6 +19,8 @@ import {
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
   Instrument,
+  GetSubscriberGlobalPreference,
+  GetSubscriberGlobalPreferenceCommand,
 } from '@novu/application-generic';
 import {
   JobEntity,
@@ -51,6 +53,7 @@ export class SendMessage {
     private digest: Digest,
     private createExecutionDetails: CreateExecutionDetails,
     private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
+    private getSubscriberGlobalPreferenceUsecase: GetSubscriberGlobalPreference,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private jobRepository: JobRepository,
     private sendMessageDelay: SendMessageDelay,
@@ -200,6 +203,32 @@ export class SendMessage {
     });
     if (!subscriber) throw new PlatformException('Subscriber not found with id ' + job._subscriberId);
 
+    const { preference: globalPreference } = await this.getSubscriberGlobalPreferenceUsecase.execute(
+      GetSubscriberGlobalPreferenceCommand.create({
+        organizationId: job._organizationId,
+        environmentId: job._environmentId,
+        subscriberId: job.subscriberId,
+      })
+    );
+
+    const globalPreferenceResult = this.stepPreferred(globalPreference, job);
+
+    if (!globalPreferenceResult) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+          detail: DetailEnum.STEP_FILTERED_BY_GLOBAL_PREFERENCES,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.SUCCESS,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify(globalPreference),
+        })
+      );
+
+      return false;
+    }
+
     const buildCommand = GetSubscriberTemplatePreferenceCommand.create({
       organizationId: job._organizationId,
       subscriberId: subscriber.subscriberId,
@@ -209,7 +238,6 @@ export class SendMessage {
     });
 
     const { preference } = await this.getSubscriberTemplatePreferenceUsecase.execute(buildCommand);
-
     const result = this.stepPreferred(preference, job);
 
     if (!result) {
@@ -244,9 +272,12 @@ export class SendMessage {
   private stepPreferred(preference: { enabled: boolean; channels: IPreferenceChannels }, job: JobEntity) {
     const templatePreferred = preference.enabled;
 
-    const channelPreferred = Object.keys(preference.channels).some(
-      (channelKey) => channelKey === job.type && preference.channels[job.type]
-    );
+    const channels = Object.keys(preference.channels);
+    // Handles the case where the channel is not defined in the preference. i.e, channels = {}
+    const channelPreferred =
+      channels.length > 0
+        ? channels.some((channelKey) => channelKey === job.type && preference.channels[job.type])
+        : true;
 
     return templatePreferred && channelPreferred;
   }

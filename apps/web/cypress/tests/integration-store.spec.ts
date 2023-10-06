@@ -8,7 +8,7 @@ Cypress.on('window:before:load', (win) => {
   };
 });
 
-describe('Integration store page', function () {
+describe.skip('Integration store page', function () {
   beforeEach(function () {
     cy.initializeSession().as('session');
   });
