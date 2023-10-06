@@ -250,9 +250,14 @@ export const sparkpostConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.Region,
     displayName: 'Region',
-    description: 'Use `eu` if your account is registered to SparkPost EU',
-    type: 'string',
+    description: 'Use EU if your account is registered to SparkPost EU',
+    type: 'dropdown',
     required: false,
+    value: null,
+    dropdown: [
+      { name: 'Default', value: null },
+      { name: 'EU', value: 'eu' },
+    ],
   },
   ...mailConfigBase,
 ];
