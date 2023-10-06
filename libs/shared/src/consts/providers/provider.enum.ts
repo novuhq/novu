@@ -27,6 +27,7 @@ export enum CredentialsKeyEnum {
   RedirectUrl = 'redirectUrl',
   Hmac = 'hmac',
   IpPoolName = 'ipPoolName',
+  ApiVersion = 'apiVersion',
 }
 
 export enum EmailProviderIdEnum {
@@ -79,6 +80,7 @@ export enum ChatProviderIdEnum {
   Discord = 'discord',
   MsTeams = 'msteams',
   Mattermost = 'mattermost',
+  WhatsApp = 'whatsapp-business',
 }
 
 export enum PushProviderIdEnum {
