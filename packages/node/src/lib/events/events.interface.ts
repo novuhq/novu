@@ -18,12 +18,12 @@ export interface IBroadcastPayloadOptions {
   payload: ITriggerPayload;
   overrides?: ITriggerOverrides;
   tenant?: ITriggerTenant;
+  transactionId?: string;
 }
 
 export interface ITriggerPayloadOptions extends IBroadcastPayloadOptions {
   to: TriggerRecipientsPayload;
   actor?: TriggerRecipientSubscriber;
-  transactionId?: string;
 }
 export interface IIntegrationOverride {
   integrationIdentifier?: string;
