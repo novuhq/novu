@@ -2,7 +2,7 @@ import { Flex, Grid, Group, Input, LoadingOverlay, Stack, UnstyledButton, useMan
 import { Dropzone } from '@mantine/dropzone';
 import { useMutation } from '@tanstack/react-query';
 import axios from 'axios';
-import { ReactElement, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { useOutletContext } from 'react-router-dom';
@@ -267,7 +267,7 @@ const DropzoneOverlay = styled('div')`
   top: 0;
   left: 0;
   background-color: ${colors.BGDark + 'D6'};
-  backdrop-filter: blur(3px);
+  backdrop-filter: blur(5px);
   width: 100%;
   height: 100%;
 `;
