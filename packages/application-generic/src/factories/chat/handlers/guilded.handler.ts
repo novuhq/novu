@@ -9,7 +9,7 @@ export class GuildedHandler extends BaseChatHandler {
   }
 
   buildProvider(_credentials: ICredentials) {
-    this.provider = new GuildedChatProvider({});
+    this.provider = new GuildedChatProvider();
   }
 }
 
