@@ -43985,7 +43985,7 @@ packages:
       json5: 2.2.3
       lodash.memoize: 4.1.2
       make-error: 1.3.6
-      semver: 7.5.4
+      semver: 7.4.0
       typescript: 4.9.5
       yargs-parser: 20.2.9
     dev: true
@@ -44054,7 +44054,7 @@ packages:
       json5: 2.2.3
       lodash.memoize: 4.1.2
       make-error: 1.3.6
-      semver: 7.5.4
+      semver: 7.4.0
       typescript: 4.9.5
       yargs-parser: 20.2.9
     dev: true
@@ -44089,7 +44089,7 @@ packages:
       json5: 2.2.3
       lodash.memoize: 4.1.2
       make-error: 1.3.6
-      semver: 7.5.4
+      semver: 7.4.0
       typescript: 4.9.5
       yargs-parser: 20.2.9
     dev: true
