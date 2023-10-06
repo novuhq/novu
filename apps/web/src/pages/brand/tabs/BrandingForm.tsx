@@ -47,15 +47,11 @@ export function BrandingForm() {
 
   useEffect(() => {
     if (organization) {
-      if (organization.branding?.logo) {
-        setValue('image', organization.branding.logo);
-      }
-      if (organization.branding?.color) {
-        setValue('color', organization?.branding?.color);
-      }
-      if (organization.branding?.fontFamily) {
-        setValue('fontFamily', organization?.branding?.fontFamily);
-      }
+      organization?.branding?.logo ? setValue('image', organization.branding.logo) : setValue('image', '');
+      organization?.branding?.color ? setValue('color', organization?.branding?.color) : setValue('color', '#f47373');
+      organization?.branding?.fontFamily
+        ? setValue('fontFamily', organization?.branding?.fontFamily)
+        : setValue('fontFamily', 'inherit');
     }
   }, [organization, setValue]);
 
