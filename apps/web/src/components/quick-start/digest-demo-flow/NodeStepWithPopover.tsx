@@ -73,11 +73,11 @@ export function NodeStepWithPopover({
     setSequence(popoverData.sequence[counter.toString()] as IBeat);
   }, [counter, popoverData]);
 
-  const onDropdownMouseEnter = () => {
+  const onHoverEnter = () => {
     setHoveredHintId(id);
   };
 
-  const onDropdownMouseLeave = () => {
+  const onHoverLeave = () => {
     setHoveredHintId(undefined);
   };
 
@@ -90,7 +90,10 @@ export function NodeStepWithPopover({
       transitionDuration={600}
       opacity={getOpacity(id, hoveredHintId, sequence)}
       target={
-        <StyledDiv>
+        <StyledDiv
+          onMouseEnter={onHoverEnter} // Added hover event handlers to the target div
+          onMouseLeave={onHoverLeave}
+        >
           <NodeStep Handlers={Handlers} Icon={Icon} data={data} ActionItem={ActionItem} ContentItem={ContentItem} />
         </StyledDiv>
       }
@@ -99,11 +102,12 @@ export function NodeStepWithPopover({
       description={description}
       url={popoverData.docsUrl}
       onUrlClick={onUrlClickHandler}
-      onDropdownMouseEnter={onDropdownMouseEnter}
-      onDropdownMouseLeave={onDropdownMouseLeave}
+      onDropdownMouseEnter={onHoverEnter} // Added hover event handlers to the popover
+      onDropdownMouseLeave={onHoverLeave}
     />
   );
 }
+
 
 function useCounter() {
   const INTERVAL = 1500;
