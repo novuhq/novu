@@ -39,8 +39,10 @@
     "@nestjs/swagger": ">=6",
     "@nestjs/terminus": ">=10",
     "@nestjs/testing": ">=10",
+    "@nestjs/passport": "^10.0.1",
     "newrelic": "^9",
-    "reflect-metadata": "^0.1.13"
+    "reflect-metadata": "^0.1.13",
+    "jsonwebtoken": "9.0.0"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.382.0",
