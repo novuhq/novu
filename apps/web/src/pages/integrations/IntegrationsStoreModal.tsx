@@ -1,13 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import styled from '@emotion/styled';
 import { Grid, Group, Modal, ActionIcon, createStyles, MantineTheme, Drawer } from '@mantine/core';
-import {
-  ChannelTypeEnum,
-  EmailProviderIdEnum,
-  InAppProviderIdEnum,
-  SmsProviderIdEnum,
-  ICredentials,
-} from '@novu/shared';
+import { ChannelTypeEnum, EmailProviderIdEnum, InAppProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
 
 import { useAuthController, useEnvController } from '../../hooks';
 import { When } from '../../components/utils/When';
@@ -22,7 +16,7 @@ import { useSegment } from '../../components/providers/SegmentProvider';
 import { IntegrationsStoreModalAnalytics } from './constants';
 import { NovuSmsProviderModal } from './components/NovuSmsProviderModal';
 import { useCreateInAppIntegration } from '../../hooks/useCreateInAppIntegration';
-import { IIntegratedProvider } from './IntegrationsStorePage';
+import type { IIntegratedProvider } from './types';
 
 export function IntegrationsStoreModal({
   scrollTo,
@@ -82,7 +76,7 @@ export function IntegrationsStoreModal({
     setFormIsOpened(false);
     setProvider(null);
     segment.track(IntegrationsStoreModalAnalytics.CLOSE_MODAL);
-  }, [closeIntegration]);
+  }, [segment, closeIntegration]);
 
   const handleCloseForm = useCallback(() => {
     if (isFormOpened) {
@@ -94,7 +88,7 @@ export function IntegrationsStoreModal({
 
     closeIntegration();
     segment.track(IntegrationsStoreModalAnalytics.CLOSE_MODAL);
-  }, [isFormOpened, setProvider, setFormIsOpened, closeIntegration]);
+  }, [segment, isFormOpened, setProvider, setFormIsOpened, closeIntegration]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -311,25 +305,3 @@ const useDrawerStyles = createStyles((theme: MantineTheme) => {
     },
   };
 });
-
-export interface IntegrationEntity {
-  _id?: string;
-
-  _environmentId: string;
-
-  _organizationId: string;
-
-  providerId: string;
-
-  channel: ChannelTypeEnum;
-
-  credentials: ICredentials;
-
-  active: boolean;
-
-  deleted: boolean;
-
-  deletedAt: string;
-
-  deletedBy: string;
-}

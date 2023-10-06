@@ -4,11 +4,12 @@ import axios from 'axios';
 
 import { UpdateSubscriberOnlineFlagRequestDto } from '../../dtos/update-subscriber-online-flag-request.dto';
 import { UpdateSubscriberPreferenceRequestDto } from '../../../widgets/dtos/update-subscriber-preference-request.dto';
+import { UpdateSubscriberGlobalPreferencesRequestDto } from '../../dtos/update-subscriber-global-preferences-request.dto';
 
 const axiosInstance = axios.create();
 
 export async function getNotificationTemplate(session: UserSession, id: string) {
-  return await axiosInstance.get(`${session.serverUrl}/v1/notification-templates/${id}`, {
+  return await axiosInstance.get(`${session.serverUrl}/v1/workflows/${id}`, {
     headers: {
       authorization: `ApiKey ${session.apiKey}`,
     },
@@ -20,7 +21,7 @@ export async function updateNotificationTemplate(
   id: string,
   data: IUpdateNotificationTemplateDto
 ) {
-  return await axiosInstance.put(`${session.serverUrl}/v1/notification-templates/${id}`, data, {
+  return await axiosInstance.put(`${session.serverUrl}/v1/workflows/${id}`, data, {
     headers: {
       authorization: `ApiKey ${session.apiKey}`,
     },
@@ -64,4 +65,12 @@ export async function updatePreference(
       },
     }
   );
+}
+
+export async function updateGlobalPreferences(data: UpdateSubscriberGlobalPreferencesRequestDto, session: UserSession) {
+  return await axiosInstance.patch(`${session.serverUrl}/v1/subscribers/${session.subscriberId}/preferences`, data, {
+    headers: {
+      authorization: `ApiKey ${session.apiKey}`,
+    },
+  });
 }

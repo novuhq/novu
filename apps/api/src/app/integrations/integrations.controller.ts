@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   ClassSerializerInterceptor,
   Controller,
@@ -36,6 +37,9 @@ import { GetInAppActivatedCommand } from './usecases/get-in-app-activated/get-in
 import { GetInAppActivated } from './usecases/get-in-app-activated/get-in-app-activated.usecase';
 import { ApiResponse } from '../shared/framework/response.decorator';
 import { ChannelTypeLimitDto } from './dtos/get-channel-type-limit.sto';
+import { GetActiveIntegrationsCommand } from './usecases/get-active-integration/get-active-integration.command';
+import { SetIntegrationAsPrimary } from './usecases/set-integration-as-primary/set-integration-as-primary.usecase';
+import { SetIntegrationAsPrimaryCommand } from './usecases/set-integration-as-primary/set-integration-as-primary.command';
 
 @Controller('/integrations')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -49,6 +53,7 @@ export class IntegrationsController {
     private getWebhookSupportStatusUsecase: GetWebhookSupportStatus,
     private createIntegrationUsecase: CreateIntegration,
     private updateIntegrationUsecase: UpdateIntegration,
+    private setIntegrationAsPrimaryUsecase: SetIntegrationAsPrimary,
     private removeIntegrationUsecase: RemoveIntegration,
     private calculateLimitNovuIntegration: CalculateLimitNovuIntegration
   ) {}
@@ -87,7 +92,7 @@ export class IntegrationsController {
   @ExternalApiAccessible()
   async getActiveIntegrations(@UserSession() user: IJwtPayload): Promise<IntegrationResponseDto[]> {
     return await this.getActiveIntegrationsUsecase.execute(
-      GetIntegrationsCommand.create({
+      GetActiveIntegrationsCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
@@ -131,20 +136,29 @@ export class IntegrationsController {
     @UserSession() user: IJwtPayload,
     @Body() body: CreateIntegrationRequestDto
   ): Promise<IntegrationResponseDto> {
-    return await this.createIntegrationUsecase.execute(
-      CreateIntegrationCommand.create({
-        userId: user._id,
-        name: body.name,
-        identifier: body.identifier,
-        environmentId: body._environmentId ?? user.environmentId,
-        organizationId: user.organizationId,
-        providerId: body.providerId,
-        channel: body.channel,
-        credentials: body.credentials,
-        active: body.active ?? false,
-        check: body.check ?? true,
-      })
-    );
+    try {
+      return await this.createIntegrationUsecase.execute(
+        CreateIntegrationCommand.create({
+          userId: user._id,
+          name: body.name,
+          identifier: body.identifier,
+          environmentId: body._environmentId ?? user.environmentId,
+          organizationId: user.organizationId,
+          providerId: body.providerId,
+          channel: body.channel,
+          credentials: body.credentials,
+          active: body.active ?? false,
+          check: body.check ?? true,
+          conditions: body.conditions,
+        })
+      );
+    } catch (e) {
+      if (e.message.includes('Integration validation failed') || e.message.includes('Cast to embedded')) {
+        throw new BadRequestException(e.message);
+      }
+
+      throw e;
+    }
   }
 
   @Put('/:integrationId')
@@ -157,23 +171,56 @@ export class IntegrationsController {
     summary: 'Update integration',
   })
   @ExternalApiAccessible()
-  updateIntegrationById(
+  async updateIntegrationById(
     @UserSession() user: IJwtPayload,
     @Param('integrationId') integrationId: string,
     @Body() body: UpdateIntegrationRequestDto
   ): Promise<IntegrationResponseDto> {
-    return this.updateIntegrationUsecase.execute(
-      UpdateIntegrationCommand.create({
+    try {
+      return await this.updateIntegrationUsecase.execute(
+        UpdateIntegrationCommand.create({
+          userId: user._id,
+          name: body.name,
+          identifier: body.identifier,
+          environmentId: body._environmentId,
+          userEnvironmentId: user.environmentId,
+          organizationId: user.organizationId,
+          integrationId,
+          credentials: body.credentials,
+          active: body.active,
+          check: body.check ?? true,
+          conditions: body.conditions,
+        })
+      );
+    } catch (e) {
+      if (e.message.includes('Integration validation failed') || e.message.includes('Cast to embedded')) {
+        throw new BadRequestException(e.message);
+      }
+
+      throw e;
+    }
+  }
+
+  @Post('/:integrationId/set-primary')
+  @Roles(MemberRoleEnum.ADMIN)
+  @ApiResponse(IntegrationResponseDto)
+  @ApiNotFoundResponse({
+    description: 'The integration with the integrationId provided does not exist in the database.',
+  })
+  @ApiOperation({
+    summary: 'Set integration as primary',
+  })
+  @ExternalApiAccessible()
+  setIntegrationAsPrimary(
+    @UserSession() user: IJwtPayload,
+    @Param('integrationId') integrationId: string
+  ): Promise<IntegrationResponseDto> {
+    return this.setIntegrationAsPrimaryUsecase.execute(
+      SetIntegrationAsPrimaryCommand.create({
         userId: user._id,
-        name: body.name,
-        identifier: body.identifier,
-        environmentId: body._environmentId,
-        userEnvironmentId: user.environmentId,
+        environmentId: user.environmentId,
         organizationId: user.organizationId,
         integrationId,
-        credentials: body.credentials,
-        active: body.active,
-        check: body.check ?? true,
       })
     );
   }
@@ -190,6 +237,7 @@ export class IntegrationsController {
   ): Promise<IntegrationResponseDto[]> {
     return await this.removeIntegrationUsecase.execute(
       RemoveIntegrationCommand.create({
+        userId: user._id,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         integrationId,

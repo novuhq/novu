@@ -6,13 +6,14 @@ import {
   SubscriberEntity,
   SubscriberRepository,
   MemberRepository,
+  PreferenceLevelEnum,
 } from '@novu/dal';
 import {
   AnalyticsService,
-  ISubscriberPreferenceResponse,
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
 } from '@novu/application-generic';
+import { ISubscriberPreferenceResponse } from '@novu/shared';
 
 import { UpdateSubscriberPreferenceCommand } from './update-subscriber-preference.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -91,6 +92,7 @@ export class UpdateSubscriberPreference {
        */
       enabled: command.enabled !== false,
       channels: command.channel?.type ? channelObj : null,
+      level: PreferenceLevelEnum.TEMPLATE,
     });
   }
 

@@ -3,7 +3,7 @@ import { IUpdateIntegrationBodyDto } from '@novu/shared';
 
 import { errorMessage } from '../../utils/notifications';
 import { updateIntegration } from '../integration';
-import { IntegrationEntity } from '../../pages/integrations/IntegrationsStorePage';
+import type { IntegrationEntity } from '../../pages/integrations/types';
 import { successMessage } from '../../utils/notifications';
 import { QueryKeys } from '../query.keys';
 
@@ -20,7 +20,8 @@ export const useUpdateIntegration = (integrationId: string) => {
   >(({ id, data }) => updateIntegration(id, data), {
     onSuccess: async () => {
       await queryClient.refetchQueries({
-        predicate: ({ queryKey }) => queryKey.includes(QueryKeys.integrationsList),
+        predicate: ({ queryKey }) =>
+          queryKey.includes(QueryKeys.integrationsList) || queryKey.includes(QueryKeys.activeIntegrations),
       });
       successMessage('Instance configuration updated');
     },
@@ -29,7 +30,7 @@ export const useUpdateIntegration = (integrationId: string) => {
     },
   });
 
-  const onUpdateIntegration = async (data: IUpdateIntegrationBodyDto) => {
+  const updateIntegrationCallback = async (data: IUpdateIntegrationBodyDto) => {
     await updateIntegrationMutation({
       id: integrationId,
       data: { ...data, check: false },
@@ -37,7 +38,7 @@ export const useUpdateIntegration = (integrationId: string) => {
   };
 
   return {
-    onUpdateIntegration,
+    updateIntegration: updateIntegrationCallback,
     isLoadingUpdate,
   };
 };

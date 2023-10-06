@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { MessageEntity, MessageRepository, SubscriberRepository, SubscriberEntity, MemberRepository } from '@novu/dal';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, WebSocketEventEnum } from '@novu/shared';
 import {
-  WsQueueService,
+  WebSocketsQueueService,
   AnalyticsService,
   InvalidateCacheService,
   CachedEntity,
@@ -18,7 +18,7 @@ export class MarkMessageAs {
   constructor(
     private invalidateCache: InvalidateCacheService,
     private messageRepository: MessageRepository,
-    private wsQueueService: WsQueueService,
+    private webSocketsQueueService: WebSocketsQueueService,
     private analyticsService: AnalyticsService,
     private subscriberRepository: SubscriberRepository,
     private memberRepository: MemberRepository
@@ -66,15 +66,10 @@ export class MarkMessageAs {
     return messages;
   }
 
-  private async updateServices(command: MarkMessageAsCommand, subscriber, messages, marked: string) {
-    const [admin, count] = await Promise.all([
-      this.memberRepository.getOrganizationAdminAccount(command.organizationId),
-      this.messageRepository.getCount(command.environmentId, subscriber._id, ChannelTypeEnum.IN_APP, {
-        [marked]: false,
-      }),
-    ]);
+  private async updateServices(command: MarkMessageAsCommand, subscriber, messages, marked: MarkEnum) {
+    const admin = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
 
-    this.updateSocketCount(subscriber, count, marked);
+    this.updateSocketCount(subscriber, marked);
 
     if (admin) {
       for (const message of messages) {
@@ -87,20 +82,17 @@ export class MarkMessageAs {
     }
   }
 
-  private updateSocketCount(subscriber: SubscriberEntity, count: number, mark: string) {
-    const eventMessage = `un${mark}_count_changed`;
-    const countKey = `un${mark}Count`;
+  private updateSocketCount(subscriber: SubscriberEntity, mark: MarkEnum) {
+    const eventMessage = mark === MarkEnum.READ ? WebSocketEventEnum.UNREAD : WebSocketEventEnum.UNSEEN;
 
-    this.wsQueueService.bullMqService.add(
+    this.webSocketsQueueService.add(
       'sendMessage',
       {
         event: eventMessage,
         userId: subscriber._id,
-        payload: {
-          [countKey]: count,
-        },
+        _environmentId: subscriber._environmentId,
       },
-      {},
+      undefined,
       subscriber._organizationId
     );
   }

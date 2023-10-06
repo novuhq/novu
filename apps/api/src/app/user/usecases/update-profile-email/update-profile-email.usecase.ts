@@ -1,6 +1,8 @@
 import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
+
 import { UserRepository } from '@novu/dal';
-import { AnalyticsService, buildUserKey, InvalidateCacheService } from '@novu/application-generic';
+import { AnalyticsService, buildAuthServiceKey, buildUserKey, InvalidateCacheService } from '@novu/application-generic';
+import { EnvironmentRepository } from '@novu/dal';
 
 import { UpdateProfileEmailCommand } from './update-profile-email.command';
 import { normalizeEmail } from '../../../shared/helpers/email-normalization.service';
@@ -10,6 +12,7 @@ export class UpdateProfileEmail {
   constructor(
     private invalidateCache: InvalidateCacheService,
     private readonly userRepository: UserRepository,
+    private readonly environmentRepository: EnvironmentRepository,
     @Inject(forwardRef(() => AnalyticsService))
     private analyticsService: AnalyticsService
   ) {}
@@ -33,6 +36,13 @@ export class UpdateProfileEmail {
     await this.invalidateCache.invalidateByKey({
       key: buildUserKey({
         _id: command.userId,
+      }),
+    });
+
+    const apiKeys = await this.environmentRepository.getApiKeys(command.environmentId);
+    await this.invalidateCache.invalidateByKey({
+      key: buildAuthServiceKey({
+        apiKey: apiKeys[0].key,
       }),
     });
 

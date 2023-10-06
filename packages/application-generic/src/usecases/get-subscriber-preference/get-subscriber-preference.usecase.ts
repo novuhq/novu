@@ -1,12 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import {
   NotificationTemplateRepository,
   NotificationTemplateEntity,
   MemberRepository,
 } from '@novu/dal';
-import { ChannelTypeEnum, IPreferenceChannels } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  IPreferenceChannels,
+  ISubscriberPreferenceResponse,
+} from '@novu/shared';
 
-import { AnalyticsService } from '../../services';
+import { AnalyticsService } from '../../services/analytics.service';
 import { GetSubscriberPreferenceCommand } from './get-subscriber-preference.command';
 import {
   GetSubscriberTemplatePreference,
@@ -60,24 +64,4 @@ export class GetSubscriberPreference {
       )
     );
   }
-}
-
-export interface ISubscriberPreferenceResponse {
-  template: ITemplateConfiguration;
-  preference: {
-    enabled: boolean;
-    channels: IPreferenceChannels;
-    overrides: IPreferenceOverride[];
-  };
-}
-
-export interface ITemplateConfiguration {
-  _id: string;
-  name: string;
-  critical: boolean;
-}
-
-export interface IPreferenceOverride {
-  channel: ChannelTypeEnum;
-  source: 'template' | 'subscriber';
 }

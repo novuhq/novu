@@ -6,6 +6,17 @@ on:
   workflow_dispatch:
 
 jobs:
+  test_inbound_mail:
+    strategy:
+      matrix:
+        name: [ 'novu/inbound-mail-ee', 'novu/inbound-mail' ]
+    uses: ./.github/workflows/reusable-inbound-mail-e2e.yml
+    with:
+      ee: ${{ contains (matrix.name,'ee') }}
+      submodules: ${{ contains (matrix.name,'ee') }}
+      submodule_branch: "main"
+    secrets: inherit
+
   build_prod_image:
     runs-on: ubuntu-latest
     timeout-minutes: 80
@@ -59,7 +70,7 @@ jobs:
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:prod
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
-          echo "::set-output name=IMAGE::ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
+          echo "IMAGE=ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
   deploy_prod_inbound_mail_eu:
     needs:

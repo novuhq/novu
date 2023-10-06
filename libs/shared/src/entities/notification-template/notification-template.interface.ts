@@ -36,6 +36,16 @@ export interface INotificationTrigger {
   identifier: string;
   variables: INotificationTriggerVariable[];
   subscriberVariables?: INotificationTriggerVariable[];
+  reservedVariables?: ITriggerReservedVariable[];
+}
+
+export enum TriggerContextTypeEnum {
+  TENANT = 'tenant',
+}
+
+export interface ITriggerReservedVariable {
+  type: TriggerContextTypeEnum;
+  variables: INotificationTriggerVariable[];
 }
 
 export interface INotificationTriggerVariable {
@@ -63,7 +73,7 @@ export interface INotificationTemplateStep {
 
 export interface IMessageFilter {
   isNegated?: boolean;
-  type: BuilderFieldType;
+  type?: BuilderFieldType;
   value: BuilderGroupValues;
   children: FilterParts[];
 }

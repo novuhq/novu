@@ -16,7 +16,7 @@ describe('Digest Playground Workflow Page', function () {
     cy.url().should('include', '/digest-playground');
     cy.contains('Digest Workflow Playground');
 
-    cy.get('a[href="https://docs.novu.co/platform/digest"]').contains('Learn more in docs');
+    cy.get('a[href="https://docs.novu.co/workflows/digest"]').contains('Learn more in docs');
   });
 
   it('the set up digest workflow should redirect to template edit page', function () {

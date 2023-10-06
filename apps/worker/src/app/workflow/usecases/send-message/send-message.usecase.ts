@@ -19,6 +19,8 @@ import {
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
   Instrument,
+  GetSubscriberGlobalPreference,
+  GetSubscriberGlobalPreferenceCommand,
 } from '@novu/application-generic';
 import {
   JobEntity,
@@ -38,6 +40,7 @@ import { SendMessagePush } from './send-message-push.usecase';
 import { Digest } from './digest';
 import { PlatformException } from '../../../shared/utils';
 import { MessageMatcher } from '../message-matcher';
+import { MessageMatcherCommand } from '../message-matcher/message-matcher.command';
 
 @Injectable()
 export class SendMessage {
@@ -48,9 +51,9 @@ export class SendMessage {
     private sendMessageChat: SendMessageChat,
     private sendMessagePush: SendMessagePush,
     private digest: Digest,
-    private subscriberRepository: SubscriberRepository,
     private createExecutionDetails: CreateExecutionDetails,
     private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
+    private getSubscriberGlobalPreferenceUsecase: GetSubscriberGlobalPreference,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private jobRepository: JobRepository,
     private sendMessageDelay: SendMessageDelay,
@@ -67,7 +70,7 @@ export class SendMessage {
 
     if (!command.payload?.$on_boarding_trigger) {
       const usedFilters = shouldRun.conditions.reduce(MessageMatcher.sumFilters, {
-        stepFilters: [],
+        filters: [],
         failedFilters: [],
         passedFilters: [],
       });
@@ -85,7 +88,7 @@ export class SendMessage {
         };
       }
 
-      this.analyticsService.track('Process Workflow Step - [Triggers]', command.userId, {
+      this.analyticsService.mixpanelTrack('Process Workflow Step - [Triggers]', '', {
         _template: command.job._templateId,
         _organization: command.organizationId,
         _environment: command.environmentId,
@@ -144,9 +147,21 @@ export class SendMessage {
   }
 
   private async filter(command: SendMessageCommand) {
-    const data = await this.getFilterData(command);
+    const messageMatcherCommand = MessageMatcherCommand.create({
+      step: command.job.step,
+      job: command.job,
+      userId: command.userId,
+      transactionId: command.job.transactionId,
+      _subscriberId: command.job._subscriberId,
+      environmentId: command.job._environmentId,
+      organizationId: command.job._organizationId,
+      subscriberId: command.job.subscriberId,
+      identifier: command.job.identifier,
+    });
 
-    const shouldRun = await this.matchMessage.filter(command, data);
+    const data = await this.matchMessage.getFilterData(messageMatcherCommand);
+
+    const shouldRun = await this.matchMessage.filter(messageMatcherCommand, data);
 
     if (!shouldRun.passed) {
       await this.createExecutionDetails.execute(
@@ -169,63 +184,50 @@ export class SendMessage {
   }
 
   @Instrument()
-  private async getFilterData(command: SendMessageCommand) {
-    const subscriberFilterExist = command.step?.filters?.find((filter) => {
-      return filter?.children?.find((item) => item?.on === 'subscriber');
-    });
-
-    let subscriber;
-
-    if (subscriberFilterExist) {
-      subscriber = await this.getSubscriberBySubscriberId({
-        subscriberId: command.subscriberId,
-        _environmentId: command.environmentId,
-      });
-    }
-
-    return {
-      subscriber,
-      payload: command.payload,
-    };
-  }
-
-  @CachedEntity({
-    builder: (command: { subscriberId: string; _environmentId: string }) =>
-      buildSubscriberKey({
-        _environmentId: command._environmentId,
-        subscriberId: command.subscriberId,
-      }),
-  })
-  private async getSubscriberBySubscriberId({
-    subscriberId,
-    _environmentId,
-  }: {
-    subscriberId: string;
-    _environmentId: string;
-  }) {
-    return await this.subscriberRepository.findOne({
-      _environmentId,
-      subscriberId,
-    });
-  }
-
-  @Instrument()
   private async filterPreferredChannels(job: JobEntity): Promise<boolean> {
     const template = await this.getNotificationTemplate({
       _id: job._templateId,
       environmentId: job._environmentId,
     });
-    if (!template) throw new PlatformException(`Notification template ${job._templateId} is not found`);
+    if (!template) {
+      throw new PlatformException(`Notification template ${job._templateId} is not found`);
+    }
 
     if (template.critical || this.isActionStep(job)) {
       return true;
     }
 
-    const subscriber = await this.getSubscriberBySubscriberId({
+    const subscriber = await this.matchMessage.getSubscriberBySubscriberId({
       _environmentId: job._environmentId,
       subscriberId: job.subscriberId,
     });
     if (!subscriber) throw new PlatformException('Subscriber not found with id ' + job._subscriberId);
+
+    const { preference: globalPreference } = await this.getSubscriberGlobalPreferenceUsecase.execute(
+      GetSubscriberGlobalPreferenceCommand.create({
+        organizationId: job._organizationId,
+        environmentId: job._environmentId,
+        subscriberId: job.subscriberId,
+      })
+    );
+
+    const globalPreferenceResult = this.stepPreferred(globalPreference, job);
+
+    if (!globalPreferenceResult) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+          detail: DetailEnum.STEP_FILTERED_BY_GLOBAL_PREFERENCES,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.SUCCESS,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify(globalPreference),
+        })
+      );
+
+      return false;
+    }
 
     const buildCommand = GetSubscriberTemplatePreferenceCommand.create({
       organizationId: job._organizationId,
@@ -236,7 +238,6 @@ export class SendMessage {
     });
 
     const { preference } = await this.getSubscriberTemplatePreferenceUsecase.execute(buildCommand);
-
     const result = this.stepPreferred(preference, job);
 
     if (!result) {
@@ -271,9 +272,12 @@ export class SendMessage {
   private stepPreferred(preference: { enabled: boolean; channels: IPreferenceChannels }, job: JobEntity) {
     const templatePreferred = preference.enabled;
 
-    const channelPreferred = Object.keys(preference.channels).some(
-      (channelKey) => channelKey === job.type && preference.channels[job.type]
-    );
+    const channels = Object.keys(preference.channels);
+    // Handles the case where the channel is not defined in the preference. i.e, channels = {}
+    const channelPreferred =
+      channels.length > 0
+        ? channels.some((channelKey) => channelKey === job.type && preference.channels[job.type])
+        : true;
 
     return templatePreferred && channelPreferred;
   }

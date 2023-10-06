@@ -14,16 +14,28 @@ env:
   TF_WORKSPACE: novu-dev
 
 jobs:
+  test_ws:
+    strategy:
+      matrix:
+        name: ['novu/ws-ee', 'novu/ws']
+    uses: ./.github/workflows/reusable-ws-e2e.yml
+    with:
+      ee: ${{ contains (matrix.name,'ee') }}
+      submodules: ${{ contains (matrix.name,'ee') }}
+      submodule_branch: 'next'
+    secrets: inherit
+
   # This workflow contains a single job called "build"
   deploy_ws:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
+    needs: test_ws
     timeout-minutes: 80
     environment: Development
     if: "!contains(github.event.head_commit.message, 'ci skip')"
     strategy:
       matrix:
-        name: ['novu/ws', 'novu/ws-ee']
+        name: ['novu/ws-ee']
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -48,14 +60,14 @@ jobs:
         uses: hashicorp/setup-terraform@v1
         with:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
-          terraform_version: 1.4.4
+          terraform_version: 1.5.5
           terraform_wrapper: false
       - name: Terraform Init
-        working-directory: cloud-infra/terraform
+        working-directory: cloud-infra/terraform/novu
         run: terraform init
 
       - name: Terraform get output
-        working-directory: cloud-infra/terraform
+        working-directory: cloud-infra/terraform/novu
         id: terraform
         run: |
           echo "ws_ecs_container_name=$(terraform output -json ws_ecs_container_name | jq -r .)" >> $GITHUB_ENV
@@ -91,7 +103,7 @@ jobs:
           docker tag ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:dev
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:dev
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
-          echo "::set-output name=IMAGE::ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
+          echo "IMAGE=ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
       - name: Render Amazon ECS task definition
         id: render-container
@@ -102,6 +114,7 @@ jobs:
           image: ${{ steps.build-image.outputs.IMAGE }}
 
       - name: Deploy to Amazon ECS service
+        if: ${{contains(matrix.name, 'ee')}}
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.render-container.outputs.task-definition }}

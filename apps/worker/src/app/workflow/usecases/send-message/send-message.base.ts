@@ -1,5 +1,18 @@
-import { IntegrationEntity, JobEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
-import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
+import {
+  IntegrationEntity,
+  JobEntity,
+  TenantRepository,
+  MessageRepository,
+  SubscriberRepository,
+  TenantEntity,
+} from '@novu/dal';
+import {
+  ChannelTypeEnum,
+  EmailProviderIdEnum,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  SmsProviderIdEnum,
+} from '@novu/shared';
 import {
   buildSubscriberKey,
   CachedEntity,
@@ -8,6 +21,7 @@ import {
   CreateExecutionDetailsCommand,
   SelectIntegration,
   SelectIntegrationCommand,
+  GetNovuProviderCredentials,
 } from '@novu/application-generic';
 
 import { SendMessageType } from './send-message-type.usecase';
@@ -20,7 +34,9 @@ export abstract class SendMessageBase extends SendMessageType {
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     protected subscriberRepository: SubscriberRepository,
-    protected selectIntegration: SelectIntegration
+    protected tenantRepository: TenantRepository,
+    protected selectIntegration: SelectIntegration,
+    protected getNovuProviderCredentials: GetNovuProviderCredentials
   ) {
     super(messageRepository, createLogUsecase, createExecutionDetails);
   }
@@ -48,7 +64,23 @@ export abstract class SendMessageBase extends SendMessageType {
   protected async getIntegration(
     selectIntegrationCommand: SelectIntegrationCommand
   ): Promise<IntegrationEntity | undefined> {
-    return this.selectIntegration.execute(SelectIntegrationCommand.create(selectIntegrationCommand));
+    const integration = await this.selectIntegration.execute(SelectIntegrationCommand.create(selectIntegrationCommand));
+
+    if (!integration) {
+      return;
+    }
+
+    if (integration.providerId === EmailProviderIdEnum.Novu || integration.providerId === SmsProviderIdEnum.Novu) {
+      integration.credentials = await this.getNovuProviderCredentials.execute({
+        channelType: integration.channel,
+        providerId: integration.providerId,
+        environmentId: integration._environmentId,
+        organizationId: integration._organizationId,
+        userId: selectIntegrationCommand.userId,
+      });
+    }
+
+    return integration;
   }
 
   protected storeContent(): boolean {
@@ -87,5 +119,59 @@ export abstract class SendMessageBase extends SendMessageType {
         }),
       })
     );
+  }
+
+  protected async sendSelectedTenantExecution(job: JobEntity, tenant: TenantEntity) {
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+        detail: DetailEnum.TENANT_CONTEXT_SELECTED,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.PENDING,
+        isTest: false,
+        isRetry: false,
+        raw: JSON.stringify({
+          identifier: tenant?.identifier,
+          name: tenant?.name,
+          data: tenant?.data,
+          createdAt: tenant?.createdAt,
+          updatedAt: tenant?.updatedAt,
+          _environmentId: tenant?._environmentId,
+          _id: tenant?._id,
+        }),
+      })
+    );
+  }
+
+  protected async handleTenantExecution(job: JobEntity): Promise<TenantEntity | null> {
+    const tenantIdentifier = job.tenant?.identifier;
+
+    let tenant: TenantEntity | null = null;
+    if (tenantIdentifier) {
+      tenant = await this.tenantRepository.findOne({
+        _environmentId: job._environmentId,
+        identifier: tenantIdentifier,
+      });
+      if (!tenant) {
+        await this.createExecutionDetails.execute(
+          CreateExecutionDetailsCommand.create({
+            ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+            detail: DetailEnum.TENANT_NOT_FOUND,
+            source: ExecutionDetailsSourceEnum.INTERNAL,
+            status: ExecutionDetailsStatusEnum.FAILED,
+            isTest: false,
+            isRetry: false,
+            raw: JSON.stringify({
+              tenantIdentifier: tenantIdentifier,
+            }),
+          })
+        );
+
+        return null;
+      }
+      await this.sendSelectedTenantExecution(job, tenant);
+    }
+
+    return tenant;
   }
 }

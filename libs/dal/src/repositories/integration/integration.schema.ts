@@ -15,6 +15,7 @@ const integrationSchema = new Schema<IntegrationDBModel>(
     _organizationId: {
       type: Schema.Types.ObjectId,
       ref: 'Organization',
+      index: true,
     },
     providerId: Schema.Types.String,
     channel: Schema.Types.String,
@@ -52,6 +53,31 @@ const integrationSchema = new Schema<IntegrationDBModel>(
     },
     name: Schema.Types.String,
     identifier: Schema.Types.String,
+    priority: {
+      type: Schema.Types.Number,
+      default: 0,
+    },
+    primary: {
+      type: Schema.Types.Boolean,
+      default: false,
+    },
+    conditions: [
+      {
+        isNegated: Schema.Types.Boolean,
+        type: {
+          type: Schema.Types.String,
+        },
+        value: Schema.Types.String,
+        children: [
+          {
+            field: Schema.Types.String,
+            value: Schema.Types.Mixed,
+            operator: Schema.Types.String,
+            on: Schema.Types.String,
+          },
+        ],
+      },
+    ],
   },
   schemaOptions
 );

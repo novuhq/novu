@@ -7,6 +7,9 @@ export class AddJobCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   jobId: string;
 
+  @IsDefined()
+  job: JobEntity;
+
   @IsOptional()
-  job?: JobEntity;
+  filtered?: boolean;
 }

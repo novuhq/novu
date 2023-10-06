@@ -2,6 +2,7 @@ import {
   mailerSendConfig,
   mailgunConfig,
   mailjetConfig,
+  mailtrapConfig,
   mandrillConfig,
   netCoreConfig,
   nodemailerConfig,
@@ -12,6 +13,7 @@ import {
   outlook365Config,
   infobipEmailConfig,
   resendConfig,
+  plunkConfig,
   sparkpostConfig,
   emailWebhookConfig,
 } from '../credentials';
@@ -22,11 +24,19 @@ import { ChannelTypeEnum } from '../../../types';
 
 export const emailProviders: IProviderConfig[] = [
   {
+    id: EmailProviderIdEnum.Novu,
+    displayName: 'Novu Email',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: [],
+    docReference: 'https://docs.novu.co/channels-and-providers/default-providers#novu-email-provider',
+    logoFileName: { light: 'novu.png', dark: 'novu.png' },
+  },
+  {
     id: EmailProviderIdEnum.Mailgun,
     displayName: 'Mailgun',
     channel: ChannelTypeEnum.EMAIL,
     credentials: mailgunConfig,
-    docReference: 'https://docs.novu.co/channels/email/mailgun',
+    docReference: 'https://docs.novu.co/channels-and-providers/email/mailgun',
     logoFileName: { light: 'mailgun.svg', dark: 'mailgun.svg' },
   },
   {
@@ -34,15 +44,23 @@ export const emailProviders: IProviderConfig[] = [
     displayName: 'Mailjet',
     channel: ChannelTypeEnum.EMAIL,
     credentials: mailjetConfig,
-    docReference: 'https://docs.novu.co/channels/email/mailjet',
+    docReference: 'https://docs.novu.co/channels-and-providers/email/mailjet',
     logoFileName: { light: 'mailjet.png', dark: 'mailjet.png' },
+  },
+  {
+    id: EmailProviderIdEnum.Mailtrap,
+    displayName: 'Mailtrap',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: mailtrapConfig,
+    docReference: 'https://docs.novu.co/channels-and-providers/email/mailtrap',
+    logoFileName: { light: 'mailtrap.svg', dark: 'mailtrap.svg' },
   },
   {
     id: EmailProviderIdEnum.Mandrill,
     displayName: 'Mandrill',
     channel: ChannelTypeEnum.EMAIL,
     credentials: mandrillConfig,
-    docReference: 'https://docs.novu.co/channels/email/mandrill',
+    docReference: 'https://docs.novu.co/channels-and-providers/email/mandrill',
     logoFileName: { light: 'mandrill.svg', dark: 'mandrill.svg' },
   },
   {
@@ -50,7 +68,7 @@ export const emailProviders: IProviderConfig[] = [
     displayName: 'Postmark',
     channel: ChannelTypeEnum.EMAIL,
     credentials: postmarkConfig,
-    docReference: 'https://docs.novu.co/channels/email/postmark',
+    docReference: 'https://docs.novu.co/channels-and-providers/email/postmark',
     logoFileName: { light: 'postmark.png', dark: 'postmark.png' },
   },
   {
@@ -58,7 +76,7 @@ export const emailProviders: IProviderConfig[] = [
     displayName: 'SendGrid',
     channel: ChannelTypeEnum.EMAIL,
     credentials: sendgridConfig,
-    docReference: 'https://docs.novu.co/channels/email/sendgrid',
+    docReference: 'https://docs.novu.co/channels-and-providers/email/sendgrid',
     logoFileName: { light: 'sendgrid.png', dark: 'sendgrid.png' },
   },
   {
@@ -66,7 +84,7 @@ export const emailProviders: IProviderConfig[] = [
     displayName: 'Sendinblue',
     channel: ChannelTypeEnum.EMAIL,
     credentials: sendinblueConfig,
-    docReference: 'https://docs.novu.co/channels/email/sendinblue',
+    docReference: 'https://docs.novu.co/channels-and-providers/email/sendinblue',
     logoFileName: { light: 'sendinblue.png', dark: 'sendinblue.png' },
   },
   {
@@ -74,15 +92,15 @@ export const emailProviders: IProviderConfig[] = [
     displayName: 'SES',
     channel: ChannelTypeEnum.EMAIL,
     credentials: sesConfig,
-    docReference: 'https://docs.novu.co/channels/email/ses',
+    docReference: 'https://docs.novu.co/channels-and-providers/email/amazonses',
     logoFileName: { light: 'ses.svg', dark: 'ses.svg' },
   },
   {
     id: EmailProviderIdEnum.NetCore,
-    displayName: 'NetCore',
+    displayName: 'Netcore',
     channel: ChannelTypeEnum.EMAIL,
     credentials: netCoreConfig,
-    docReference: 'https://docs.novu.co/channels/email/netcore',
+    docReference: 'https://docs.novu.co/channels-and-providers/email/netcore',
     logoFileName: { light: 'netcore.png', dark: 'netcore.png' },
   },
   {
@@ -90,7 +108,7 @@ export const emailProviders: IProviderConfig[] = [
     displayName: 'Custom SMTP',
     channel: ChannelTypeEnum.EMAIL,
     credentials: nodemailerConfig,
-    docReference: 'https://docs.novu.co/channels/email/custom-smtp',
+    docReference: 'https://docs.novu.co/channels-and-providers/email/custom-smtp',
     logoFileName: { light: 'custom_smtp.svg', dark: 'custom_smtp.svg' },
   },
   {
@@ -98,7 +116,7 @@ export const emailProviders: IProviderConfig[] = [
     displayName: 'MailerSend',
     channel: ChannelTypeEnum.EMAIL,
     credentials: mailerSendConfig,
-    docReference: 'https://docs.novu.co/channels/email/mailersend',
+    docReference: 'https://docs.novu.co/channels-and-providers/email/mailersend',
     logoFileName: { light: 'mailersend.svg', dark: 'mailersend.svg' },
   },
   {
@@ -106,7 +124,7 @@ export const emailProviders: IProviderConfig[] = [
     displayName: 'Microsoft Outlook365',
     channel: ChannelTypeEnum.EMAIL,
     credentials: outlook365Config,
-    docReference: 'https://docs.novu.co/channels/email/outlook365',
+    docReference: 'https://docs.novu.co/channels-and-providers/email/outlook365',
     logoFileName: { light: 'outlook365.png', dark: 'outlook365.png' },
   },
   {
@@ -114,7 +132,7 @@ export const emailProviders: IProviderConfig[] = [
     displayName: 'Infobip',
     channel: ChannelTypeEnum.EMAIL,
     credentials: infobipEmailConfig,
-    docReference: 'https://docs.novu.co/channels/email/infobip',
+    docReference: 'https://docs.novu.co/channels-and-providers/email/infobip',
     logoFileName: { light: 'infobip.png', dark: 'infobip.png' },
   },
   {
@@ -122,15 +140,23 @@ export const emailProviders: IProviderConfig[] = [
     displayName: 'Resend',
     channel: ChannelTypeEnum.EMAIL,
     credentials: resendConfig,
-    docReference: 'https://docs.novu.co/channels/email/resend',
+    docReference: 'https://docs.novu.co/channels-and-providers/email/resend',
     logoFileName: { light: 'resend.svg', dark: 'resend.svg' },
+  },
+  {
+    id: EmailProviderIdEnum.Plunk,
+    displayName: 'Plunk',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: plunkConfig,
+    docReference: 'https://docs.novu.co/channels/email/plunk',
+    logoFileName: { light: 'plunk.png', dark: 'plunk.png' },
   },
   {
     id: EmailProviderIdEnum.SparkPost,
     displayName: 'SparkPost',
     channel: ChannelTypeEnum.EMAIL,
     credentials: sparkpostConfig,
-    docReference: 'https://docs.novu.co/channels/email/sparkpost',
+    docReference: 'https://docs.novu.co/channels-and-providers/email/sparkpost',
     logoFileName: { light: 'sparkpost.svg', dark: 'sparkpost.svg' },
   },
   {

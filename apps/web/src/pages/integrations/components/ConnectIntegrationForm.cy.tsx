@@ -3,7 +3,7 @@ import { ChannelTypeEnum, CredentialsKeyEnum, EmailProviderIdEnum } from '@novu/
 
 import { ConnectIntegrationForm } from './ConnectIntegrationForm';
 import { TestWrapper } from '../../../testing';
-import { IIntegratedProvider } from '../IntegrationsStorePage';
+import type { IIntegratedProvider } from '../types';
 
 const exampleProvider: IIntegratedProvider = {
   providerId: EmailProviderIdEnum.EmailJS,
@@ -17,6 +17,7 @@ const exampleProvider: IIntegratedProvider = {
   docReference: 'https://www.emailjs.com/docs',
   logoFileName: { light: 'emailjs.svg', dark: 'emailjs.svg' },
   integrationId: '',
+  primary: false,
 };
 
 const defaultProps: {

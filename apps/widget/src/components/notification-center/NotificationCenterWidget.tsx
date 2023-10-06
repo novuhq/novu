@@ -9,11 +9,13 @@ import {
   IStore,
   useNovuContext,
   ColorScheme,
+  IUserPreferenceSettings,
 } from '@novu/notification-center';
 import type { INovuThemeProvider, INotificationCenterStyles } from '@novu/notification-center';
 import { IMessage, IOrganizationEntity, ButtonTypeEnum } from '@novu/shared';
 
 import { API_URL, WS_URL } from '../../config';
+import { isCypress } from '../../utils/browser';
 
 const DEFAULT_FONT_FAMILY = 'inherit';
 interface INotificationCenterWidgetProps {
@@ -37,6 +39,7 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
   const [styles, setStyles] = useState<INotificationCenterStyles>();
   const [colorScheme, setColorScheme] = useState<ColorScheme>('light');
   const [doLogout, setDoLogout] = useState(false);
+  const [preferenceFilter, setPreferenceFilter] = useState<(userPreference: IUserPreferenceSettings) => boolean>();
 
   useEffect(() => {
     if (fontFamily !== DEFAULT_FONT_FAMILY) {
@@ -88,6 +91,10 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
           setColorScheme(data.value.colorScheme);
         }
 
+        if (data.value.preferenceFilter) {
+          setPreferenceFilter(() => data.value.preferenceFilter);
+        }
+
         setFrameInitialized(true);
       }
 
@@ -96,7 +103,7 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
       }
     };
 
-    if (process.env.NODE_ENV === 'test') {
+    if (process.env.NODE_ENV === 'test' || isCypress) {
       // eslint-disable-next-line
       (window as any).initHandler = handler;
     }
@@ -136,6 +143,7 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
               onUrlChange={props.onUrlChange}
               onUnseenCountChanged={props.onUnseenCountChanged}
               onActionClick={props.onActionClick}
+              preferenceFilter={preferenceFilter}
               theme={theme}
               tabs={tabs}
             />

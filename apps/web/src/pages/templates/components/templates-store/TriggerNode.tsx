@@ -1,18 +1,13 @@
 import { Handle, NodeProps, Position } from 'react-flow-renderer';
-import styled from '@emotion/styled';
 
 import { NodeStep } from '../../../../components/workflow';
-import { TurnOnGradient } from '../../../../design-system/icons';
-
-const NodeStepStyled = styled(NodeStep)`
-  width: 200px;
-`;
+import { BoltOutlinedGradient } from '../../../../design-system/icons';
 
 export const TriggerNode = ({ data }: NodeProps) => {
   return (
-    <NodeStepStyled
+    <NodeStep
       data={data}
-      Icon={TurnOnGradient}
+      Icon={BoltOutlinedGradient}
       Handlers={() => {
         return (
           <>

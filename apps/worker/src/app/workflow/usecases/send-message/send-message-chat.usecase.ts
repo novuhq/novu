@@ -7,6 +7,7 @@ import {
   MessageEntity,
   IntegrationEntity,
   IChannelSettings,
+  TenantRepository,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -24,6 +25,7 @@ import {
   CompileTemplateCommand,
   ChatFactory,
   SelectIntegration,
+  GetNovuProviderCredentials,
 } from '@novu/application-generic';
 
 import { CreateLog } from '../../../shared/logs';
@@ -40,12 +42,22 @@ export class SendMessageChat extends SendMessageBase {
   constructor(
     protected subscriberRepository: SubscriberRepository,
     protected messageRepository: MessageRepository,
+    protected tenantRepository: TenantRepository,
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
-    protected selectIntegration: SelectIntegration
+    protected selectIntegration: SelectIntegration,
+    protected getNovuProviderCredentials: GetNovuProviderCredentials
   ) {
-    super(messageRepository, createLogUsecase, createExecutionDetails, subscriberRepository, selectIntegration);
+    super(
+      messageRepository,
+      createLogUsecase,
+      createExecutionDetails,
+      subscriberRepository,
+      tenantRepository,
+      selectIntegration,
+      getNovuProviderCredentials
+    );
   }
 
   @InstrumentUsecase()
@@ -62,6 +74,8 @@ export class SendMessageChat extends SendMessageBase {
     const chatChannel: NotificationStepEntity = command.step;
     if (!chatChannel?.template) throw new PlatformException('Chat channel template not found');
 
+    const tenant = await this.handleTenantExecution(command.job);
+
     let content = '';
     const data = {
       subscriber: subscriber,
@@ -70,6 +84,7 @@ export class SendMessageChat extends SendMessageBase {
         events: command.events,
         total_count: command.events?.length,
       },
+      ...(tenant && { tenant }),
       ...command.payload,
     };
 
@@ -116,7 +131,7 @@ export class SendMessageChat extends SendMessageBase {
          * Do nothing, one chat channel failed, perhaps another one succeeds
          * The failed message has been created
          */
-        Logger.error(`Sending chat message to the chat channel ${channel.providerId} failed`, e, LOG_CONTEXT);
+        Logger.error(e, `Sending chat message to the chat channel ${channel.providerId} failed`, LOG_CONTEXT);
       }
     }
 
@@ -147,6 +162,9 @@ export class SendMessageChat extends SendMessageBase {
       providerId: subscriberChannel.providerId,
       channelType: ChannelTypeEnum.CHAT,
       userId: command.userId,
+      filterData: {
+        tenant: command.job.tenant,
+      },
     });
 
     const chatWebhookUrl = command.payload.webhookUrl || subscriberChannel.credentials?.webhookUrl;

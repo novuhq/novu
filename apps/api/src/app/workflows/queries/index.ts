@@ -1,1 +1,1 @@
-export * from './CreateNotificationTemplateQuery';
+export * from './CreateWorkflowQuery';

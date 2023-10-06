@@ -9,19 +9,22 @@ import {
 import {
   ChannelTypeEnum,
   IPreferenceChannels,
+  IPreferenceOverride,
+  ISubscriberPreferenceResponse,
+  ITemplateConfiguration,
+  PreferenceOverrideSourceEnum,
   StepTypeEnum,
 } from '@novu/shared';
 
-import {
-  ITemplateConfiguration,
-  ISubscriberPreferenceResponse,
-  IPreferenceOverride,
-} from '../get-subscriber-preference';
 import { GetSubscriberTemplatePreferenceCommand } from './get-subscriber-template-preference.command';
-import { ApiException } from '../../utils/exceptions';
-import { CachedEntity, buildSubscriberKey } from '../../services';
 
-const PRIORITY_ORDER = ['template', 'subscriber'];
+import { ApiException } from '../../utils/exceptions';
+import { CachedEntity, buildSubscriberKey } from '../../services/cache';
+
+const PRIORITY_ORDER = [
+  PreferenceOverrideSourceEnum.TEMPLATE,
+  PreferenceOverrideSourceEnum.SUBSCRIBER,
+];
 
 @Injectable()
 export class GetSubscriberTemplatePreference {
@@ -156,21 +159,21 @@ export class GetSubscriberTemplatePreference {
 
 function updateOverrideReasons(
   channelName,
-  sourceName: string,
+  sourceName: PreferenceOverrideSourceEnum,
   index: number,
   overrideReasons: IPreferenceOverride[]
 ) {
-  const currOverride: IPreferenceOverride = {
+  const currentOverride: IPreferenceOverride = {
     channel: channelName as ChannelTypeEnum,
-    source: sourceName as 'template' | 'subscriber',
+    source: sourceName,
   };
 
   const notFoundFlag = -1;
   const existsInOverrideReasons = index !== notFoundFlag;
   if (existsInOverrideReasons) {
-    overrideReasons[index] = currOverride;
+    overrideReasons[index] = currentOverride;
   } else {
-    overrideReasons.push(currOverride);
+    overrideReasons.push(currentOverride);
   }
 }
 
@@ -180,7 +183,7 @@ function overridePreference(
     channels: IPreferenceChannels;
   },
   sourcePreference: IPreferenceChannels,
-  sourceName: string
+  sourceName: PreferenceOverrideSourceEnum
 ) {
   const channels = { ...oldPreferenceState.channels };
   const overrides = [...oldPreferenceState.overrides];
@@ -207,7 +210,7 @@ function overridePreference(
 }
 
 export function overridePreferences(
-  preferenceSources: Record<'template' | 'subscriber', IPreferenceChannels>,
+  preferenceSources: Record<PreferenceOverrideSourceEnum, IPreferenceChannels>,
   initialActiveChannels: IPreferenceChannels
 ) {
   let result: {
@@ -248,6 +251,8 @@ function mapTemplateConfiguration(
   return {
     _id: template._id,
     name: template.name,
+    tags: template?.tags || [],
     critical: template.critical != null ? template.critical : true,
+    ...(template.data ? { data: template.data } : {}),
   };
 }

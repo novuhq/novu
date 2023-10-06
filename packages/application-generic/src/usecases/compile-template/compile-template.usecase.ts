@@ -51,22 +51,7 @@ Handlebars.registerHelper(
 );
 
 Handlebars.registerHelper(
-  HandlebarHelpersEnum.UNIQUE,
-  function (array, property) {
-    if (!Array.isArray(array)) return '';
-
-    return array
-      .map((item) => {
-        if (item[property]) {
-          return item[property];
-        }
-      })
-      .filter((value, index, self) => self.indexOf(value) === index);
-  }
-);
-
-Handlebars.registerHelper(
-  HandlebarHelpersEnum.GROUPBY,
+  HandlebarHelpersEnum.GROUP_BY,
   function (array, property) {
     if (!Array.isArray(array)) return [];
     const map = {};
@@ -102,6 +87,21 @@ Handlebars.registerHelper(
         }
       })
       .filter((value, index, self) => self.indexOf(value) === index);
+  }
+);
+
+Handlebars.registerHelper(
+  HandlebarHelpersEnum.SORT_BY,
+  function (array, property) {
+    if (!Array.isArray(array)) return '';
+    if (!property) return array.sort();
+
+    return array.sort(function (a, b) {
+      const _x = a[property];
+      const _y = b[property];
+
+      return _x < _y ? -1 : _x > _y ? 1 : 0;
+    });
   }
 );
 

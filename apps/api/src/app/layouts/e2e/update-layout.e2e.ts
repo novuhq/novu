@@ -14,7 +14,7 @@ describe('Layout update - /layouts (PATCH)', async () => {
   before(async () => {
     session = new UserSession();
     await session.initialize();
-    createdLayout = await createLayout(session, 'layout-name-update', true);
+    createdLayout = await createLayout(session, 'layout-name-update', true, 'layout-identifier-update');
   });
 
   it('should throw validation error for empty payload when not sending a body', async () => {
@@ -40,6 +40,7 @@ describe('Layout update - /layouts (PATCH)', async () => {
   it('should throw a not found error when the layout ID does not exist in the database when trying to update it', async () => {
     const nonExistingLayoutId = 'ab12345678901234567890ab';
     const updatedLayoutName = 'layout-name-update';
+    const updatedLayoutIdentifier = 'layout-identifier-update';
     const updatedDescription = 'We thought it was more amazing than it is';
     const updatedContent = `{{{body}}}`;
     const updatedVariables = [];
@@ -47,6 +48,7 @@ describe('Layout update - /layouts (PATCH)', async () => {
     const url = `${BASE_PATH}/${nonExistingLayoutId}`;
     const { body } = await session.testAgent.patch(url).send({
       name: updatedLayoutName,
+      identifier: updatedLayoutIdentifier,
       description: updatedDescription,
       content: updatedContent,
       variables: updatedVariables,
@@ -62,13 +64,15 @@ describe('Layout update - /layouts (PATCH)', async () => {
   it('should update a new layout successfully', async () => {
     const url = `${BASE_PATH}/${createdLayout._id}`;
 
-    const updatedLayoutName = 'layout-name-update';
+    const updatedLayoutName = 'layout-name-update-1';
+    const updatedLayoutIdentifier = 'layout-identifier-update-1';
     const updatedDescription = 'We thought it was more amazing than it is';
     const updatedContent = `{{{body}}}`;
     const updatedVariables = [];
 
     const updateResponse = await session.testAgent.patch(url).send({
       name: updatedLayoutName,
+      identifier: updatedLayoutIdentifier,
       description: updatedDescription,
       content: updatedContent,
       variables: updatedVariables,
@@ -82,6 +86,7 @@ describe('Layout update - /layouts (PATCH)', async () => {
     expect(updatedBody._organizationId).to.eql(session.organization._id);
     expect(updatedBody._creatorId).to.eql(session.user._id);
     expect(updatedBody.name).to.eql(updatedLayoutName);
+    expect(updatedBody.identifier).to.eql(updatedLayoutIdentifier);
     expect(updatedBody.description).to.eql(updatedDescription);
     expect(updatedBody.content).to.eql(updatedContent);
     expect(updatedBody.variables).to.eql(updatedVariables);
@@ -108,9 +113,36 @@ describe('Layout update - /layouts (PATCH)', async () => {
     });
   });
 
+  it('should throw error for an update of layout identifier that already exists in the environment', async function () {
+    const updatedLayoutIdentifier = 'second-layout-identifier-update';
+
+    await createLayout(session, 'second-layout-name-update', false, updatedLayoutIdentifier);
+    const url = `${BASE_PATH}/${createdLayout._id}`;
+
+    const updateResponse = await session.testAgent.patch(url).send({
+      identifier: updatedLayoutIdentifier,
+    });
+    expect(updateResponse.statusCode).to.eql(409);
+    expect(updateResponse.body).to.eql({
+      error: 'Conflict',
+      message: `Layout with identifier: ${updatedLayoutIdentifier} already exists under environment ${session.environment._id}`,
+      statusCode: 409,
+    });
+  });
+
   it('if the layout updated is assigned as default it should set as non default the existing default layout', async () => {
-    const firstLayout = await createLayout(session, 'layout-name-update-first-created', true);
-    const secondLayout = await createLayout(session, 'layout-name-update-second-created', false);
+    const firstLayout = await createLayout(
+      session,
+      'layout-name-update-first-created',
+      true,
+      'layout-identifier-update-first-created'
+    );
+    const secondLayout = await createLayout(
+      session,
+      'layout-name-update-second-created',
+      false,
+      'layout-identifier-update-second-created'
+    );
 
     const firstLayoutUrl = `${BASE_PATH}/${firstLayout._id}`;
     const firstLayoutResponse = await session.testAgent.get(firstLayoutUrl);

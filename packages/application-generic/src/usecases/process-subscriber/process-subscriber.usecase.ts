@@ -9,7 +9,7 @@ import {
 import { InstrumentUsecase } from '../../instrumentation';
 import { subscriberNeedUpdate } from '../../utils/subscriber';
 import { ProcessSubscriberCommand } from './process-subscriber.command';
-import { buildSubscriberKey, CachedEntity } from '../../services';
+import { buildSubscriberKey, CachedEntity } from '../../services/cache';
 
 @Injectable()
 export class ProcessSubscriber {
@@ -78,6 +78,7 @@ export class ProcessSubscriber {
         avatar: subscriberPayload?.avatar,
         locale: subscriberPayload?.locale,
         subscriber: subscriber ?? undefined,
+        data: subscriberPayload?.data,
       })
     );
   }

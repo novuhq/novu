@@ -9,7 +9,6 @@ import {
   Param,
   Patch,
   Post,
-  Put,
   Query,
   UseGuards,
   UseInterceptors,
@@ -24,19 +23,21 @@ import {
 } from '@nestjs/swagger';
 
 import { IJwtPayload } from '@novu/shared';
+import {
+  UpdateTenant,
+  UpdateTenantCommand,
+  GetTenant,
+  GetTenantCommand,
+  CreateTenant,
+  CreateTenantCommand,
+} from '@novu/application-generic';
 
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { UserSession } from '../shared/framework/user.decorator';
-import { CreateTenant } from './usecases/create-tenant/create-tenant.usecase';
-import { CreateTenantCommand } from './usecases/create-tenant/create-tenant.command';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ApiResponse } from '../shared/framework/response.decorator';
-import { GetTenant } from './usecases/get-tenant/get-tenant.usecase';
-import { GetTenantCommand } from './usecases/get-tenant/get-tenant.command';
-import { UpdateTenant } from './usecases/update-tenant/update-tenant.usecase';
 import { DeleteTenantCommand } from './usecases/delete-tenant/delete-tenant.command';
 import { DeleteTenant } from './usecases/delete-tenant/delete-tenant.usecase';
-import { UpdateTenantCommand } from './usecases/update-tenant/update-tenant.command';
 import { ApiOkPaginatedResponse } from '../shared/framework/paginated-ok-response.decorator';
 import { PaginatedResponseDto } from '../shared/dtos/pagination-response';
 import { GetTenants } from './usecases/get-tenants/get-tenants.usecase';
@@ -54,7 +55,6 @@ import {
 @ApiTags('Tenants')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
-@ApiExcludeController()
 export class TenantController {
   constructor(
     private createTenantUsecase: CreateTenant,
@@ -93,14 +93,14 @@ export class TenantController {
     description: `Get tenant by your internal id used to identify the tenant`,
   })
   @ApiNotFoundResponse({
-    description: 'The tenant with the identifier provided does not exist in the database so it can not be deleted.',
+    description: 'The tenant with the identifier provided does not exist in the database.',
   })
   @ExternalApiAccessible()
-  getTenantById(
+  async getTenantById(
     @UserSession() user: IJwtPayload,
     @Param('identifier') identifier: string
   ): Promise<GetTenantResponseDto> {
-    return this.getTenantUsecase.execute(
+    return await this.getTenantUsecase.execute(
       GetTenantCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
@@ -125,6 +125,7 @@ export class TenantController {
   ): Promise<CreateTenantResponseDto> {
     return await this.createTenantUsecase.execute(
       CreateTenantCommand.create({
+        userId: user._id,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         identifier: body.identifier,
@@ -142,7 +143,7 @@ export class TenantController {
     description: 'Update tenant by your internal id used to identify the tenant',
   })
   @ApiNotFoundResponse({
-    description: 'The tenant with the identifier provided does not exist in the database so it can not be deleted.',
+    description: 'The tenant with the identifier provided does not exist in the database.',
   })
   async updateTenant(
     @UserSession() user: IJwtPayload,
@@ -151,6 +152,7 @@ export class TenantController {
   ): Promise<UpdateTenantResponseDto> {
     return await this.updateTenantUsecase.execute(
       UpdateTenantCommand.create({
+        userId: user._id,
         identifier: identifier,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
@@ -178,6 +180,7 @@ export class TenantController {
   async removeTenant(@UserSession() user: IJwtPayload, @Param('identifier') identifier: string): Promise<void> {
     return await this.deleteTenantUsecase.execute(
       DeleteTenantCommand.create({
+        userId: user._id,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         identifier: identifier,

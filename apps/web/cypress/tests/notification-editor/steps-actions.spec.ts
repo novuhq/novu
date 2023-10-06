@@ -29,7 +29,7 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.get('.mantine-Modal-modal button').contains('Delete step').click();
     cy.getByTestId(`node-inAppSelector`).should('not.exist');
     cy.get('.react-flow__node').should('have.length', 3);
-    cy.get('.react-flow__node').first().should('contain', 'Trigger').next().should('contain', 'Email');
+    cy.get('.react-flow__node').first().should('contain', 'Workflow trigger').next().should('contain', 'Email');
     cy.getByTestId('notification-template-submit-btn').click();
 
     cy.visit('/workflows/edit/' + template._id);
@@ -99,7 +99,7 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.get('.react-flow__node').should('have.length', 5);
     cy.get('.react-flow__node')
       .first()
-      .should('contain', 'Trigger')
+      .should('contain', 'Workflow trigger')
       .next()
       .should('contain', 'In-App')
       .next()
@@ -138,6 +138,76 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.clickWorkflowNode(`node-inAppSelector`);
     cy.getByTestId(`step-should-stop-on-fail-switch`).should('be.checked');
+  });
+
+  it('should be able to add filters to a digest step', function () {
+    const template = this.session.templates[0];
+
+    cy.visit('/workflows/edit/' + template._id);
+
+    cy.waitForNetworkIdle(500);
+    dragAndDrop('digest');
+
+    cy.clickWorkflowNode(`node-digestSelector`);
+
+    cy.getByTestId('add-filter-btn').click();
+    cy.getByTestId('group-rules-dropdown').click();
+    cy.get('.mantine-Select-item').contains('And').click();
+
+    cy.getByTestId('create-rule-btn').click();
+    cy.getByTestId('filter-on-dropdown').click();
+    cy.get('.mantine-Select-item').contains('Subscriber').click();
+
+    cy.getByTestId('filter-key-input').type('filter-key');
+    cy.getByTestId('filter-operator-dropdown').click();
+    cy.get('.mantine-Select-item').contains('Equal').click();
+    cy.getByTestId('filter-value-input').type('filter-value');
+
+    cy.getByTestId('filter-confirm-btn').click();
+
+    cy.getByTestId('add-filter-btn').contains('1 filter');
+
+    cy.getByTestId('notification-template-submit-btn').click();
+    cy.waitForNetworkIdle(500);
+    cy.visit('/workflows/edit/' + template._id);
+    cy.waitForNetworkIdle(500);
+    cy.clickWorkflowNode(`node-digestSelector`);
+    cy.getByTestId('add-filter-btn').contains('1 filter');
+  });
+
+  it('should be able to add filters to a delay step', function () {
+    const template = this.session.templates[0];
+
+    cy.visit('/workflows/edit/' + template._id);
+
+    cy.waitForNetworkIdle(500);
+    dragAndDrop('delay');
+
+    cy.clickWorkflowNode(`node-delaySelector`);
+
+    cy.getByTestId('add-filter-btn').click();
+    cy.getByTestId('group-rules-dropdown').click();
+    cy.get('.mantine-Select-item').contains('And').click();
+
+    cy.getByTestId('create-rule-btn').click();
+    cy.getByTestId('filter-on-dropdown').click();
+    cy.get('.mantine-Select-item').contains('Subscriber').click();
+
+    cy.getByTestId('filter-key-input').type('filter-key');
+    cy.getByTestId('filter-operator-dropdown').click();
+    cy.get('.mantine-Select-item').contains('Equal').click();
+    cy.getByTestId('filter-value-input').type('filter-value');
+
+    cy.getByTestId('filter-confirm-btn').click();
+
+    cy.getByTestId('add-filter-btn').contains('1 filter');
+
+    cy.getByTestId('notification-template-submit-btn').click();
+    cy.waitForNetworkIdle(500);
+    cy.visit('/workflows/edit/' + template._id);
+    cy.waitForNetworkIdle(500);
+    cy.clickWorkflowNode(`node-delaySelector`);
+    cy.getByTestId('add-filter-btn').contains('1 filter');
   });
 
   it('should be able to add filters to a particular step', function () {
@@ -360,13 +430,15 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.waitLoadTemplatePage(() => {
       cy.visit('/workflows/create');
     });
+    cy.waitForNetworkIdle(500);
 
     dragAndDrop('sms');
-    cy.waitForNetworkIdle(500);
 
     dragAndDrop('delay');
 
     dragAndDrop('sms');
+
+    cy.waitForNetworkIdle(500);
 
     const firstContent = 'first content for sms';
     const lastContent = 'last content for sms';

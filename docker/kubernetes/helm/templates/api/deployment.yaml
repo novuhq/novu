@@ -113,8 +113,6 @@ spec:
               value : "{{ include "novu.redis.host" .}}"
             - name: REDIS_CACHE_SERVICE_PORT
               value : "{{ include "novu.redis.port" . }}"
-            - name: IN_MEMORY_CLUSTER_MODE_ENABLED
-              value: 'false'
             - name: REDIS_PASSWORD
               valueFrom :
                 secretKeyRef:

@@ -55,7 +55,7 @@ jobs:
 
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:dev
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
-          echo "::set-output name=IMAGE::ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
+          echo "IMAGE=ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
       - name: Checkout cloud infra
         uses: actions/checkout@master
@@ -75,15 +75,15 @@ jobs:
         uses: hashicorp/setup-terraform@v1
         with:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
-          terraform_version: 1.4.4
+          terraform_version: 1.5.5
           terraform_wrapper: false
 
       - name: Terraform Init
-        working-directory: cloud-infra/terraform
+        working-directory: cloud-infra/terraform/novu
         run: terraform init
 
       - name: Terraform get output
-        working-directory: cloud-infra/terraform
+        working-directory: cloud-infra/terraform/novu
         id: terraform
         run: |
           echo "webhook_ecs_container_name=$(terraform output -json webhook_ecs_container_name | jq -r .)" >> $GITHUB_ENV

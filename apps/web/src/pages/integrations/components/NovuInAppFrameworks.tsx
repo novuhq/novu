@@ -44,11 +44,15 @@ const FrameworkHolderLink = styled.a`
 const frameworks = [
   { icon: ReactLogo, name: 'React', frameworkEnum: FrameworkEnum.REACT },
   { icon: AngularLogo, name: 'Angular', frameworkEnum: FrameworkEnum.ANGULAR },
-  { icon: JavaScriptLogo, name: 'Web Component', href: 'https://docs.novu.co/notification-center/web-component/' },
+  {
+    icon: JavaScriptLogo,
+    name: 'Web Component',
+    href: 'https://docs.novu.co/notification-center/client/web-component',
+  },
   {
     icon: JavaScriptLogo,
     name: 'Headless',
-    href: 'https://docs.novu.co/notification-center/headless/headless-service/',
+    href: 'https://docs.novu.co/notification-center/client/headless/get-started',
   },
   { icon: VueLogo, name: 'Vue', frameworkEnum: FrameworkEnum.VUE },
   { icon: IframeLogo, name: 'iFrame', frameworkEnum: FrameworkEnum.JS },
@@ -56,7 +60,7 @@ const frameworks = [
 
 export const NovuInAppFrameworks = ({ onFrameworkClick }: { onFrameworkClick: (framework: FrameworkEnum) => void }) => {
   return (
-    <NovuInAppFrameworksHolder>
+    <NovuInAppFrameworksHolder data-test-id="novu-in-app-frameworks">
       <Text>Integrate In-App using a framework below</Text>
       <FrameworksGrid>
         {frameworks.map(({ name, icon: Icon, frameworkEnum, href }) =>

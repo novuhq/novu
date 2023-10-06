@@ -25,6 +25,7 @@ describe('Create Tenant - /tenants (POST)', function () {
     expect(response.data).to.be.ok;
 
     const createdTenant = await tenantRepository.findOne({
+      _organizationId: session.organization._id,
       _environmentId: session.environment._id,
       identifier: 'identifier_123',
     });
@@ -38,12 +39,14 @@ describe('Create Tenant - /tenants (POST)', function () {
     await createTenant({
       session,
       identifier: 'identifier_123',
+      name: 'name_123',
     });
 
     try {
       await createTenant({
         session,
         identifier: 'identifier_123',
+        name: 'name_123',
       });
 
       throw new Error('');

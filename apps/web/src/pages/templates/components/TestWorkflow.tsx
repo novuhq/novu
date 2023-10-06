@@ -3,6 +3,8 @@ import { Group, JsonInput, Text } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useMutation } from '@tanstack/react-query';
 import * as Sentry from '@sentry/react';
+import * as capitalize from 'lodash.capitalize';
+
 import { IUserEntity, INotificationTriggerVariable } from '@novu/shared';
 import { Button, colors } from '../../../design-system';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
@@ -47,6 +49,7 @@ export function TestWorkflow({ trigger }) {
     return [{ name: 'subscriberId' }, ...(trigger?.subscriberVariables || [])];
   }, [trigger]);
   const variables = useMemo(() => [...(trigger?.variables || [])], [trigger]);
+  const reservedVariables = useMemo(() => [...(trigger?.reservedVariables || [])], [trigger]);
 
   const overridesTrigger = '{\n\n}';
 
@@ -62,6 +65,9 @@ export function TestWorkflow({ trigger }) {
     initialValues: {
       toValue: makeToValue(subscriberVariables, currentUser),
       payloadValue: makePayloadValue(variables) === '{}' ? '{\n\n}' : makePayloadValue(variables),
+      snippetValue: reservedVariables.map((variable) => {
+        return { ...variable, variables: makePayloadValue(variable.variables) };
+      }),
       overridesValue: overridesTrigger,
     },
     validate: {
@@ -70,15 +76,21 @@ export function TestWorkflow({ trigger }) {
       overridesValue: jsonValidator,
     },
   });
+  const { setValues } = form;
 
   useEffect(() => {
-    form.setValues({ toValue: makeToValue(subscriberVariables, currentUser) });
-  }, [subscriberVariables, currentUser]);
+    setValues({ toValue: makeToValue(subscriberVariables, currentUser) });
+  }, [setValues, subscriberVariables, currentUser]);
 
-  const onTrigger = async ({ toValue, payloadValue, overridesValue }) => {
+  const onTrigger = async ({ toValue, payloadValue, overridesValue, snippetValue }) => {
     const to = JSON.parse(toValue);
     const payload = JSON.parse(payloadValue);
     const overrides = JSON.parse(overridesValue);
+    const snippet = snippetValue.reduce((acc, variable) => {
+      acc[variable.type] = JSON.parse(variable.variables);
+
+      return acc;
+    }, {});
 
     try {
       const response = await triggerTestEvent({
@@ -88,6 +100,7 @@ export function TestWorkflow({ trigger }) {
           ...payload,
           __source: 'test-workflow',
         },
+        ...snippet,
         overrides,
       });
 
@@ -103,7 +116,7 @@ export function TestWorkflow({ trigger }) {
   return (
     <>
       <SubPageWrapper title="Trigger">
-        <Text color={colors.B60} mt={-16} mb={24}>
+        <Text color={colors.B60} mt={-16}>
           Test trigger as if you sent it from your API or implement it by copy/pasting it into the codebase of your
           application.
         </Text>
@@ -117,7 +130,6 @@ export function TestWorkflow({ trigger }) {
           label="To"
           {...form.getInputProps('toValue')}
           minRows={3}
-          mb={15}
           validationError="Invalid JSON"
         />
         <JsonInput
@@ -129,7 +141,6 @@ export function TestWorkflow({ trigger }) {
           {...form.getInputProps('payloadValue')}
           minRows={3}
           validationError="Invalid JSON"
-          mb={15}
         />
         <JsonInput
           data-test-id="test-trigger-overrides-param"
@@ -141,7 +152,20 @@ export function TestWorkflow({ trigger }) {
           minRows={3}
           validationError="Invalid JSON"
         />
-        <Group mt={30} position="right">
+        {form.values.snippetValue.map((variable, index) => (
+          <JsonInput
+            key={index}
+            data-test-id="test-trigger-overrides-param"
+            formatOnBlur
+            autosize
+            styles={inputStyles}
+            label={`${capitalize(variable.type)}`}
+            {...form.getInputProps(`snippetValue.${index}.variables`)}
+            minRows={3}
+            validationError="Invalid JSON"
+          />
+        ))}
+        <Group position="right" mt={'auto'}>
           <div data-test-id="test-workflow-btn">
             <Button
               sx={{

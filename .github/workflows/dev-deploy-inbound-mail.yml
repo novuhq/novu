@@ -12,17 +12,27 @@ on:
       - 'package.json'
       - 'pnpm-lock.yaml'
       - 'apps/inbound-mail/**'
-      - 'libs/dal/**'
       - 'libs/shared/**'
       - 'libs/testing/**'
 env:
   TF_WORKSPACE: novu-dev
 
 jobs:
-  deploy_dev_inbound_mail:
-    if: "!contains(github.event.head_commit.message, 'ci skip')"
+  test_inbound_mail:
+    strategy:
+      matrix:
+        name: ['novu/inbound-mail-ee', 'novu/inbound-mail']
+    uses: ./.github/workflows/reusable-inbound-mail-e2e.yml
+    with:
+      ee: ${{ contains (matrix.name,'ee') }}
+      submodules: ${{ contains (matrix.name,'ee') }}
+      submodule_branch: "next"
+    secrets: inherit
+
+  dev_deploy_inbound_mail:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
+    needs: test_inbound_mail
     timeout-minutes: 80
     environment: Development
     permissions:
@@ -30,13 +40,12 @@ jobs:
       packages: write
       deployments: write
       id-token: write
+    if: "!contains(github.event.head_commit.message, 'ci skip')"
     strategy:
       matrix:
-        # Only should be deploying inbound-mail-ee to dev
-        #name: ['novu/inbound-mail', 'novu/inbound-mail-ee']
         name: ['novu/inbound-mail-ee']
+
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-project
 
@@ -44,7 +53,6 @@ jobs:
         uses: depot/setup-action@v1
         with:
           oidc: true
-
 
       - name: Set Bull MQ Env variable for EE
         shell: bash
@@ -71,7 +79,7 @@ jobs:
 
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:dev
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
-          echo "::set-output name=IMAGE::ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
+          echo "IMAGE=ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
       - name: Checkout cloud infra
         uses: actions/checkout@master
@@ -91,15 +99,15 @@ jobs:
         uses: hashicorp/setup-terraform@v1
         with:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
-          terraform_version: 1.4.4
+          terraform_version: 1.5.5
           terraform_wrapper: false
 
       - name: Terraform Init
-        working-directory: cloud-infra/terraform
+        working-directory: cloud-infra/terraform/novu
         run: terraform init
 
       - name: Terraform get output
-        working-directory: cloud-infra/terraform
+        working-directory: cloud-infra/terraform/novu
         id: terraform
         run: |
           echo "inbound_mail_ecs_container_name=$(terraform output -json inbound_mail_ecs_container_name | jq -r .)" >> $GITHUB_ENV

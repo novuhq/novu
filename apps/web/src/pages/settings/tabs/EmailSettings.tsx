@@ -7,7 +7,7 @@ import { colors, Text, Input, Tooltip, Button } from '../../../design-system';
 import { Check, CheckCircle, Copy } from '../../../design-system/icons';
 import React, { useEffect } from 'react';
 import { Control, Controller, useForm } from 'react-hook-form';
-import { useEnvController } from '../../../hooks';
+import { useEffectOnce, useEnvController } from '../../../hooks';
 import { useMutation } from '@tanstack/react-query';
 import { updateDnsSettings } from '../../../api/environment';
 import { showNotification } from '@mantine/notifications';
@@ -39,11 +39,11 @@ export const EmailSettings = () => {
       setValue('inboundParseDomain', environment.dns?.inboundParseDomain || '');
       setValue('mxRecordConfigured', environment.dns?.mxRecordConfigured || false);
     }
-  }, [environment]);
+  }, [setValue, environment]);
 
-  useEffect(() => {
+  useEffectOnce(() => {
     handleCheckRecords();
-  }, []);
+  }, true);
 
   async function handleUpdateDnsSettings({ inboundParseDomain }) {
     const payload = {
@@ -61,7 +61,7 @@ export const EmailSettings = () => {
   async function handleCheckRecords() {
     const record = await validateMxRecord();
 
-    if (record.mxRecordConfigured !== environment?.dns?.mxRecordConfigured) {
+    if (environment?.dns && record.mxRecordConfigured !== environment.dns.mxRecordConfigured) {
       await refetchEnvironment();
     }
   }
@@ -87,7 +87,19 @@ export const EmailSettings = () => {
                     data-test-id={'mail-server-domiain-copy'}
                     onClick={() => clipboardEnvironmentIdentifier.copy(mailServerDomain)}
                   >
-                    {clipboardEnvironmentIdentifier.copied ? <Check /> : <Copy />}
+                    {clipboardEnvironmentIdentifier.copied ? (
+                      <Check
+                        style={{
+                          color: colors.B60,
+                        }}
+                      />
+                    ) : (
+                      <Copy
+                        style={{
+                          color: colors.B60,
+                        }}
+                      />
+                    )}
                   </ActionIcon>
                 </Tooltip>
               }

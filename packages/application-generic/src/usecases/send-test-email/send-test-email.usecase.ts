@@ -1,13 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 import { OrganizationRepository, IntegrationEntity } from '@novu/dal';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 import { IEmailOptions } from '@novu/stateless';
 
 import { AnalyticsService } from '../../services/analytics.service';
 import { InstrumentUsecase } from '../../instrumentation';
 import { MailFactory } from '../../factories/mail/mail.factory';
-import { GetNovuIntegration } from '../get-novu-integration';
 import {
   CompileEmailTemplate,
   CompileEmailTemplateCommand,
@@ -18,6 +17,7 @@ import {
   SelectIntegration,
   SelectIntegrationCommand,
 } from '../select-integration';
+import { GetNovuProviderCredentials } from '../get-novu-provider-credentials';
 
 @Injectable()
 export class SendTestEmail {
@@ -25,7 +25,8 @@ export class SendTestEmail {
     private compileEmailTemplateUsecase: CompileEmailTemplate,
     private organizationRepository: OrganizationRepository,
     private selectIntegration: SelectIntegration,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    protected getNovuProviderCredentials: GetNovuProviderCredentials
   ) {}
 
   @InstrumentUsecase()
@@ -48,11 +49,22 @@ export class SendTestEmail {
         environmentId: command.environmentId,
         channelType: ChannelTypeEnum.EMAIL,
         userId: command.userId,
+        filterData: {},
       })
     );
 
     if (!integration) {
       throw new ApiException(`Missing an active email integration`);
+    }
+
+    if (integration.providerId === EmailProviderIdEnum.Novu) {
+      integration.credentials = await this.getNovuProviderCredentials.execute({
+        channelType: integration.channel,
+        providerId: integration.providerId,
+        environmentId: integration._environmentId,
+        organizationId: integration._organizationId,
+        userId: command.userId,
+      });
     }
 
     const { html, subject } = await this.compileEmailTemplateUsecase.execute(
@@ -97,16 +109,7 @@ export class SendTestEmail {
     const { providerId } = integration;
 
     try {
-      const mailHandler = mailFactory.getHandler(
-        {
-          ...integration,
-          providerId: GetNovuIntegration.mapProviders(
-            ChannelTypeEnum.EMAIL,
-            providerId
-          ),
-        },
-        mailData.from
-      );
+      const mailHandler = mailFactory.getHandler(integration, mailData.from);
       await mailHandler.send(mailData);
       this.analyticsService.track(
         'Test Email Sent - [Events]',

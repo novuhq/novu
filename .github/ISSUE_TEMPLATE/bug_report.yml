@@ -24,7 +24,7 @@ body:
       placeholder: "1. Go to '...'
                     2. Click on '....'
                     3. Scroll down to '....'
-                    4. See error"
+                    4. See the error"
   - type: textarea
     id: expected-behavior
     validations:
@@ -41,6 +41,30 @@ body:
       label: "👎 Actual Behavior with Screenshots"
       description: "What did actually happen? Add screenshots, if applicable."
       placeholder: "It actually ..."
+  - type: input
+    id: novu-version
+    validations:
+      required: true
+    attributes:
+      label: Novu version
+      description: In case of self-hosting or local installation mention the Novu version like 0.17.0. If using our cloud-managed solution, mention Novu SaaS.
+      placeholder: Novu SaaS
+  - type: input
+    id: npm-version
+    validations:
+      required: false
+    attributes:
+      label: npm version
+      description: In case of self-hosting or local installation mention the npm version. If using our cloud-managed solution, mention NA.
+      placeholder: 7.0.0
+  - type: input
+    id: node-version
+    validations:
+      required: false
+    attributes:
+      label: node version
+      description: In case of self-hosting or local installation mention the node version. If using our cloud-managed solution, mention NA.
+      placeholder: 16.0.0
   - type: textarea
     id: additional-context
     validations:
@@ -54,7 +78,7 @@ body:
     attributes:
       label: "👀 Have you spent some time to check if this bug has been raised before?"
       options:
-        - label: "I checked and didn't find similar issue"
+        - label: "I checked and didn't find a similar issue"
           required: true
   - type: checkboxes
     id: read-code-of-conduct

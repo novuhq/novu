@@ -1,8 +1,8 @@
 import styled from '@emotion/styled';
 import { Stack, Timeline, useMantineColorScheme } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
+
 import { getApiKeys } from '../../../api/environment';
-import { getInAppActivated } from '../../../api/integration';
 import { When } from '../../../components/utils/When';
 import { API_ROOT, ENV, IS_DOCKER_HOSTED, WS_URL } from '../../../config';
 import { colors, shadows, Text } from '../../../design-system';
@@ -36,7 +36,7 @@ export const SetupTimeline = ({
   const environmentIdentifier = environment?.identifier ?? '';
 
   return (
-    <Stack align="center" sx={{ width: '100%' }}>
+    <Stack align="center" sx={{ width: '100%' }} data-test-id="setup-timeline">
       <TimelineWrapper isDark={isDark}>
         <Timeline
           active={instructions?.length + 1}

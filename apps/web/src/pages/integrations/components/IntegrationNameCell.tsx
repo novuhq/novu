@@ -1,9 +1,11 @@
 import styled from '@emotion/styled';
-import { Skeleton } from '@mantine/core';
-import { useMantineColorScheme } from '@mantine/core';
+import { Skeleton, useMantineColorScheme } from '@mantine/core';
+import { useState } from 'react';
 
-import { colors, IExtendedCellProps, Text } from '../../../design-system';
+import { colors, IExtendedCellProps, Popover, Text } from '../../../design-system';
+import { Star } from '../../../design-system/icons';
 import type { ITableIntegration } from '../types';
+import { ChannelTypeEnum } from '@novu/shared';
 
 const CellHolder = styled.div`
   display: flex;
@@ -36,14 +38,27 @@ const Identifier = styled.span`
   overflow: hidden;
 `;
 
+const IconHolder = styled.div`
+  position: relative;
+  display: flex;
+`;
+
 const Image = styled.img`
   width: 24px;
   min-width: 24px;
   height: 24px;
 `;
 
+const Description = styled(Text)`
+  color: ${colors.B60};
+  font-size: 14px;
+  line-height: 20px;
+`;
+
 export const IntegrationNameCell = ({ row: { original }, isLoading }: IExtendedCellProps<ITableIntegration>) => {
   const { colorScheme } = useMantineColorScheme();
+  const [isPopoverOpened, setPopoverOpened] = useState(false);
+
   if (isLoading) {
     return (
       <CellHolder data-test-id="integration-name-cell-loading">
@@ -60,13 +75,37 @@ export const IntegrationNameCell = ({ row: { original }, isLoading }: IExtendedC
 
   return (
     <CellHolder data-test-id="integration-name-cell">
-      <Image src={original.logoFileName[`${colorScheme}`]} alt={original.name} />
+      <Popover
+        opened={isPopoverOpened && original.primary}
+        withArrow
+        withinPortal
+        offset={10}
+        transitionDuration={300}
+        position="top"
+        width={230}
+        styles={{ dropdown: { minHeight: 'initial !important' } }}
+        content={
+          <Description>
+            {`The primary provider instance within the ${original.channel.toLowerCase()} ` +
+              `channel in the ${original.environment.toLowerCase()} environment.`}
+          </Description>
+        }
+        target={
+          <IconHolder onMouseEnter={() => setPopoverOpened(true)} onMouseLeave={() => setPopoverOpened(false)}>
+            <Image src={original.logoFileName[`${colorScheme}`]} alt={original.name} />
+            {original.primary && <Star data-test-id="integration-name-cell-primary" />}
+          </IconHolder>
+        }
+      />
+
       <DetailsHolder>
         <NameHolder>
           <Text rows={1}>{original.name}</Text>
-          {original.name.toLowerCase().includes('novu') && <Free>🎉 Free</Free>}
+          {original.name?.toLowerCase().includes('novu') && original.channelType !== ChannelTypeEnum.IN_APP && (
+            <Free>Test Provider</Free>
+          )}
         </NameHolder>
-        {original.identifier && <Identifier>Key: {original.identifier}</Identifier>}
+        {original.identifier && <Identifier>Provider identifier: {original.identifier}</Identifier>}
       </DetailsHolder>
     </CellHolder>
   );

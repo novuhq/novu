@@ -1,4 +1,8 @@
-import { INotificationTemplateStep, IPreferenceChannels } from '@novu/shared';
+import {
+  INotificationTemplateStep,
+  IPreferenceChannels,
+  NotificationTemplateCustomData,
+} from '@novu/shared';
 
 export interface INotificationTemplates {
   create(data: INotificationTemplatePayload);
@@ -6,6 +10,7 @@ export interface INotificationTemplates {
   delete(templateId: string);
   getOne(templateId: string);
   updateStatus(templateId: string, active: boolean);
+  getAll(page?: number, limit?: number);
 }
 
 export interface INotificationTemplatePayload {
@@ -18,4 +23,5 @@ export interface INotificationTemplatePayload {
   draft?: boolean;
   critical?: boolean;
   preferenceSettings?: IPreferenceChannels;
+  data?: NotificationTemplateCustomData;
 }

@@ -30,6 +30,7 @@ jobs:
     with:
       ee: ${{ contains (matrix.name,'ee') }}
       submodules: ${{ contains (matrix.name,'ee') }}
+      submodule_branch: "next"
     secrets: inherit
 
   deploy_dev_worker:
@@ -49,9 +50,6 @@ jobs:
         name: ['novu/worker-ee', 'novu/worker']
     steps:
       - uses: actions/checkout@v3
-        with:
-          submodules: ${{ contains (matrix.name,'ee') }}
-          token: ${{ secrets.SUBMODULES_TOKEN }}
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/docker/build-worker
         id: docker_build
@@ -83,16 +81,16 @@ jobs:
         if: ${{ contains (matrix.name,'ee') }}
         with:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
-          terraform_version: 1.4.4
+          terraform_version: 1.5.5
           terraform_wrapper: false
 
       - name: Terraform Init
         if: ${{ contains (matrix.name,'ee') }}
-        working-directory: cloud-infra/terraform
+        working-directory: cloud-infra/terraform/novu
         run: terraform init
 
       - name: Terraform get output
-        working-directory: cloud-infra/terraform
+        working-directory: cloud-infra/terraform/novu
         if: ${{ contains (matrix.name,'ee') }}
         id: terraform
         run: |

@@ -2,7 +2,7 @@ import { IntegrationRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
-import { GetFeatureFlag } from '@novu/application-generic';
+import { GetIsMultiProviderConfigurationEnabled } from '@novu/application-generic';
 
 describe('Deactivate Integration', function () {
   let session: UserSession;
@@ -11,8 +11,8 @@ describe('Deactivate Integration', function () {
 
   beforeEach(async () => {
     session = new UserSession();
-    const service = session.testServer?.getService(GetFeatureFlag);
-    stub = sinon.stub(service, 'isMultiProviderConfigurationEnabled');
+    const service = session.testServer?.getService(GetIsMultiProviderConfigurationEnabled);
+    stub = sinon.stub(service, 'execute');
     stub.callsFake(() => {
       return true;
     });

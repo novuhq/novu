@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Badge, ActionIcon, useMantineTheme } from '@mantine/core';
+import { ActionIcon, useMantineTheme, Group } from '@mantine/core';
 import { Link, useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { format } from 'date-fns';
@@ -13,8 +13,8 @@ import {
 } from '../../hooks';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
-import { Tag, Table, colors, Text, Button, IExtendedColumn, withCellLoading } from '../../design-system';
-import { Edit, PlusCircle } from '../../design-system/icons';
+import { Tag, Table, colors, Text, IExtendedColumn, withCellLoading, PlusButton, Container } from '../../design-system';
+import { Bolt, BoltFilled, BoltOffFilled, Edit, ProviderMissing } from '../../design-system/icons';
 import { Tooltip } from '../../design-system';
 import { ROUTES } from '../../constants/routes.enum';
 import { parseUrl } from '../../utils/routeUtils';
@@ -33,28 +33,50 @@ import { When } from '../../components/utils/When';
 
 const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
   {
-    accessor: 'id',
-    Header: 'Trigger ID',
-    Cell: withCellLoading(({ row: { original } }) => (
-      <Tooltip label={original.triggers ? original.triggers[0].identifier : 'Unknown'}>
-        <Text rows={1}>{original.triggers ? original.triggers[0].identifier : 'Unknown'}</Text>
-      </Tooltip>
-    )),
-  },
-  {
     accessor: 'name',
-    Header: 'Name',
+    Header: 'Name & Trigger Identifier',
+    width: 340,
+    maxWidth: 340,
     Cell: withCellLoading(({ row: { original } }) => (
-      <Tooltip label={original.name}>
-        <Text rows={1}>{original.name}</Text>
-      </Tooltip>
+      <Group spacing={8}>
+        <Tooltip
+          error
+          label="Some steps are missing a provider configuration or a primary provider,
+          causing some notifications to fail."
+          width={300}
+          multiline
+          disabled={
+            original.workflowIntegrationStatus?.hasActiveIntegrations &&
+            original.workflowIntegrationStatus?.hasPrimaryIntegrations !== false
+          }
+          position="top"
+        >
+          <div>
+            {original.workflowIntegrationStatus?.hasActiveIntegrations &&
+            original.workflowIntegrationStatus?.hasPrimaryIntegrations !== false ? (
+              <Bolt color={colors.B40} width="24px" height="24px" />
+            ) : (
+              <ProviderMissing width="24px" height="24px" />
+            )}
+          </div>
+        </Tooltip>
+
+        <Tooltip label={original.name}>
+          <div>
+            <Text rows={1}>{original.name}</Text>
+            <Text rows={1} size="xs" color={colors.B40}>
+              {original.triggers ? original.triggers[0].identifier : 'Unknown'}
+            </Text>
+          </div>
+        </Tooltip>
+      </Group>
     )),
   },
   {
     accessor: 'notificationGroup',
-    Header: 'Category',
-    width: 150,
-    maxWidth: 150,
+    Header: 'Group',
+    width: 240,
+    maxWidth: 240,
     Cell: withCellLoading(({ row: { original } }) => (
       <StyledTag data-test-id="category-label"> {original.notificationGroup?.name}</StyledTag>
     )),
@@ -62,6 +84,8 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
   {
     accessor: 'createdAt',
     Header: 'Created At',
+    width: 314,
+    maxWidth: 314,
     Cell: withCellLoading(({ row: { original } }) => (
       <Text rows={1}>{format(new Date(original.createdAt ?? ''), 'dd/MM/yyyy HH:mm')}</Text>
     )),
@@ -69,19 +93,24 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
   {
     accessor: 'status',
     Header: 'Status',
-    width: 125,
-    maxWidth: 125,
+    maxWidth: 100,
     Cell: withCellLoading(({ row: { original } }) => (
       <>
         {!original.active ? (
-          <Badge variant="outline" size="md" color="yellow">
-            Disabled
-          </Badge>
+          <Group spacing={0} data-test-id="disabled-status-label">
+            <BoltOffFilled color={colors.B40} />
+            <Text rows={1} color={colors.B40}>
+              Disabled
+            </Text>
+          </Group>
         ) : null}{' '}
         {original.active ? (
-          <Badge variant="outline" size="md" color="green" data-test-id="active-status-label">
-            Active
-          </Badge>
+          <Group spacing={0} data-test-id="active-status-label">
+            <BoltFilled color={colors.success} />
+            <Text rows={1} color={colors.success}>
+              Active
+            </Text>
+          </Group>
         ) : null}{' '}
       </>
     )),
@@ -89,7 +118,7 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
   {
     accessor: '_id',
     Header: '',
-    maxWidth: 50,
+    maxWidth: 75,
     Cell: withCellLoading(({ row: { original } }) => {
       const theme = useMantineTheme();
 
@@ -161,10 +190,10 @@ function WorkflowListPage() {
 
   return (
     <PageContainer title="Workflows">
-      <PageHeader
-        title="Workflows"
-        actions={
-          isTemplateStoreEnabled ? (
+      <PageHeader title="Workflows" />
+      <Container fluid sx={{ padding: '0 24px 8px 24px' }}>
+        {isTemplateStoreEnabled ? (
+          <div>
             <CreateWorkflowDropdown
               readonly={readonly}
               blueprints={popular?.blueprints}
@@ -175,18 +204,18 @@ function WorkflowListPage() {
               onTemplateClick={handleOnBlueprintClick}
               onAllTemplatesClick={openModal}
             />
-          ) : (
-            <Button
+          </div>
+        ) : (
+          <>
+            <PlusButton
+              label="Add a workflow"
               disabled={readonly}
               onClick={() => handleRedirectToCreateTemplate(true)}
-              icon={<PlusCircle />}
-              data-test-id="create-template-btn"
-            >
-              Create Workflow
-            </Button>
-          )
-        }
-      />
+              data-test-id="create-workflow-btn"
+            />
+          </>
+        )}
+      </Container>
 
       <TemplateListTableWrapper>
         {isTemplateStoreEnabled ? (
@@ -251,7 +280,7 @@ export default WorkflowListPage;
 
 const ActionButtonWrapper = styled.div`
   text-align: right;
-
+  padding-right: 8px;
   a {
     display: inline-block;
     opacity: 0;

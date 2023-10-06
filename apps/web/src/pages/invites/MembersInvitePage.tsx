@@ -1,5 +1,4 @@
 import { Form } from 'antd';
-import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import styled from '@emotion/styled';
 import { showNotification } from '@mantine/notifications';
@@ -18,15 +17,15 @@ import {
 } from '../../api/organization';
 import { MembersTable } from './components/MembersTable';
 import { Button, Input } from '../../design-system';
-import { Invite } from '../../design-system/icons';
+import { Invite, UserAccess } from '../../design-system/icons';
 import { useAuthContext } from '../../components/providers/AuthProvider';
 import { parseUrl } from '../../utils/routeUtils';
 import { ROUTES } from '../../constants/routes.enum';
+import { ProductLead } from '../../components/utils/ProductLead';
 
 export function MembersInvitePage() {
   const [form] = Form.useForm();
   const clipboardInviteLink = useClipboard({ timeout: 1000 });
-  const [invitedMemberEmail, setInvitedMemberEmail] = useState<string>('');
   const selfHosted = process.env.REACT_APP_DOCKER_HOSTED_ENV === 'true';
   const { currentOrganization, currentUser } = useAuthContext();
 
@@ -42,19 +41,11 @@ export function MembersInvitePage() {
     string
   >((email) => inviteMember(email));
 
-  useEffect(() => {
-    if (!invitedMemberEmail) return;
-
-    inviteByLink(invitedMemberEmail);
-
-    setInvitedMemberEmail('');
-  }, [members]);
-
   async function onSubmit({ email }) {
     if (!email) return;
 
     if (selfHosted) {
-      setInvitedMemberEmail(email);
+      inviteByLink(email);
     }
 
     try {
@@ -188,6 +179,14 @@ export function MembersInvitePage() {
         }
       />
 
+      <Container fluid ml={5}>
+        <ProductLead
+          icon={<UserAccess />}
+          id="rbac-team-page"
+          title="Role-based access control"
+          text="Securely manage users' permissions to access system resources."
+        />
+      </Container>
       <Container fluid mt={15} ml={5}>
         <MembersTable
           loading={loadingMembers}

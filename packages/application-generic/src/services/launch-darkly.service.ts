@@ -20,15 +20,37 @@ export class LaunchDarklyService implements IFeatureFlagsService {
   private client: LDClient;
   public isEnabled: boolean;
 
-  constructor() {
-    Logger.verbose('Launch Darkly service initialized', LOG_CONTEXT);
+  public async initialize(): Promise<void> {
+    Logger.log('Launch Darkly service initialized', LOG_CONTEXT);
     const launchDarklySdkKey = process.env.LAUNCH_DARKLY_SDK_KEY;
 
     if (launchDarklySdkKey) {
       this.client = init(launchDarklySdkKey);
       this.isEnabled = true;
+      await this.clientInitialization();
     } else {
+      Logger.log(
+        'Missing Launch Darkly SDK key. Launch Darkly is not initialized',
+        LOG_CONTEXT
+      );
       this.isEnabled = false;
+    }
+  }
+
+  private async clientInitialization(): Promise<void> {
+    try {
+      await this.client.waitForInitialization();
+      Logger.log(
+        'Launch Darkly SDK has been successfully initialized',
+        LOG_CONTEXT
+      );
+    } catch (error) {
+      Logger.error(
+        error,
+        'Launch Darkly SDK has failed when initialized',
+        LOG_CONTEXT
+      );
+      throw error;
     }
   }
 
@@ -38,6 +60,21 @@ export class LaunchDarklyService implements IFeatureFlagsService {
     defaultValue: T
   ): Promise<T> {
     return await this.client.variation(key, context, defaultValue);
+  }
+
+  public async getWithAnonymousContext<T>(
+    key: FeatureFlagsKeysEnum,
+    defaultValue: T
+  ): Promise<T> {
+    const anonymousUserContext = {
+      key,
+      kind: 'user',
+      anonymous: true,
+    };
+
+    const result = await this.get(key, anonymousUserContext, defaultValue);
+
+    return result;
   }
 
   public async getWithEnvironmentContext<T>(
@@ -81,29 +118,12 @@ export class LaunchDarklyService implements IFeatureFlagsService {
         );
       } catch (error) {
         Logger.error(
-          'Launch Darkly SDK has failed when shut down',
           error,
+          'Launch Darkly SDK has failed when shut down',
           LOG_CONTEXT
         );
         throw error;
       }
-    }
-  }
-
-  public async initialize(): Promise<void> {
-    try {
-      await this.client.waitForInitialization();
-      Logger.log(
-        'Launch Darkly SDK has been successfully initialized',
-        LOG_CONTEXT
-      );
-    } catch (error) {
-      Logger.error(
-        'Launch Darkly SDK has failed when initialized',
-        error,
-        LOG_CONTEXT
-      );
-      throw error;
     }
   }
 

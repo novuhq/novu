@@ -1,4 +1,9 @@
-import { ApiService, IUserPreferenceSettings } from '@novu/client';
+import {
+  ApiService,
+  IUserGlobalPreferenceSettings,
+  IUserPreferenceSettings,
+} from '@novu/client';
+import { WebSocketEventEnum } from '@novu/shared';
 import io from 'socket.io-client';
 
 import {
@@ -75,6 +80,7 @@ const mockNotification: IMessage = {
   payload: {},
 };
 const mockNotificationsList: Array<IMessage> = [mockNotification];
+
 const mockUserPreferenceSetting: IUserPreferenceSettings = {
   template: { _id: templateId, name: 'mock template', critical: false },
   preference: {
@@ -88,6 +94,20 @@ const mockUserPreferenceSetting: IUserPreferenceSettings = {
     },
   },
 };
+
+const mockUserGlobalPreferenceSetting: IUserGlobalPreferenceSettings = {
+  preference: {
+    enabled: true,
+    channels: {
+      email: true,
+      sms: true,
+      in_app: true,
+      chat: true,
+      push: true,
+    },
+  },
+};
+
 const mockUserPreferences = [mockUserPreferenceSetting];
 
 const mockServiceInstance = {
@@ -106,11 +126,15 @@ const mockServiceInstance = {
   updateSubscriberPreference: jest.fn(() =>
     promiseResolveTimeout(0, mockUserPreferenceSetting)
   ),
+  updateSubscriberGlobalPreference: jest.fn(() =>
+    promiseResolveTimeout(0, mockUserGlobalPreferenceSetting)
+  ),
   markMessageAs: jest.fn(),
   removeMessage: jest.fn(),
   updateAction: jest.fn(),
   markAllMessagesAsRead: jest.fn(),
   markAllMessagesAsSeen: jest.fn(),
+  removeAllMessages: jest.fn(),
 };
 
 jest.mock('@novu/client', () => ({
@@ -504,6 +528,90 @@ describe('headless.service', () => {
     });
   });
 
+  describe('listenNotificationReceive', () => {
+    test('calls listenNotificationReceive successfully', async () => {
+      // when
+      const mockedMessage = { test: 'hello' };
+      const headlessService = new HeadlessService(options);
+      const messageListener = jest.fn();
+      const notificationsListener = jest.fn();
+      const mockedSocket = {
+        on: jest.fn((type, callback) => {
+          if (type === WebSocketEventEnum.RECEIVED) {
+            callback({ message: mockedMessage });
+          }
+        }),
+        off: jest.fn(),
+      };
+      (headlessService as any).session = mockSession;
+      (headlessService as any).socket = mockedSocket;
+      // fetch notifications before, the listenNotificationReceive will clear notifications cache
+      headlessService.fetchNotifications({
+        listener: notificationsListener,
+      });
+      await promiseResolveTimeout(0);
+
+      // then
+      headlessService.listenNotificationReceive({
+        listener: messageListener,
+      });
+      await promiseResolveTimeout(0);
+
+      // check results
+      expect(mockedSocket.on).toHaveBeenNthCalledWith(
+        1,
+        WebSocketEventEnum.RECEIVED,
+        expect.any(Function)
+      );
+      expect(messageListener).toHaveBeenCalledWith(mockedMessage);
+
+      // should fetch the notifications again, because the cache should be cleared
+      const onNotificationsListSuccess = jest.fn();
+      headlessService.fetchNotifications({
+        listener: notificationsListener,
+        onSuccess: onNotificationsListSuccess,
+        onError: (error) => {
+          console.log({ error });
+        },
+      });
+      await promiseResolveTimeout(0);
+
+      expect(mockServiceInstance.getNotificationsList).toBeCalledTimes(2);
+      expect(notificationsListener).toHaveBeenCalledTimes(4);
+      expect(notificationsListener).toHaveBeenNthCalledWith(
+        4,
+        expect.objectContaining({
+          isLoading: false,
+          data: mockNotificationsList,
+        })
+      );
+      expect(onNotificationsListSuccess).toHaveBeenNthCalledWith(
+        1,
+        mockNotificationsList
+      );
+    });
+
+    test('should unsubscribe', async () => {
+      // when
+      const headlessService = new HeadlessService(options);
+      const listener = jest.fn();
+      const mockedSocket = {
+        on: jest.fn(),
+        off: jest.fn(),
+      };
+      (headlessService as any).session = mockSession;
+      (headlessService as any).socket = mockedSocket;
+
+      // then
+      const unsubscribe = headlessService.listenUnseenCountChange({
+        listener,
+      });
+      unsubscribe();
+
+      expect(mockedSocket.off).toHaveBeenCalledWith(WebSocketEventEnum.UNSEEN);
+    });
+  });
+
   describe('listenUnseenCountChange', () => {
     test('calls listenUnseenCountChange successfully', async () => {
       // when
@@ -514,7 +622,7 @@ describe('headless.service', () => {
       const notificationsListener = jest.fn();
       const mockedSocket = {
         on: jest.fn((type, callback) => {
-          if (type === 'unseen_count_changed') {
+          if (type === WebSocketEventEnum.UNSEEN) {
             callback(mockedUnseenCount);
           }
         }),
@@ -542,7 +650,7 @@ describe('headless.service', () => {
       // check results
       expect(mockedSocket.on).toHaveBeenNthCalledWith(
         1,
-        'unseen_count_changed',
+        WebSocketEventEnum.UNSEEN,
         expect.any(Function)
       );
       expect(listener).toHaveBeenCalledWith(mockedUnseenCount.unseenCount);
@@ -596,7 +704,7 @@ describe('headless.service', () => {
       });
       unsubscribe();
 
-      expect(mockedSocket.off).toHaveBeenCalledWith('unseen_count_changed');
+      expect(mockedSocket.off).toHaveBeenCalledWith(WebSocketEventEnum.UNSEEN);
     });
   });
 
@@ -610,7 +718,7 @@ describe('headless.service', () => {
       const notificationsListener = jest.fn();
       const mockedSocket = {
         on: jest.fn((type, callback) => {
-          if (type === 'unread_count_changed') {
+          if (type === WebSocketEventEnum.UNREAD) {
             callback(mockedUnreadCount);
           }
         }),
@@ -638,7 +746,7 @@ describe('headless.service', () => {
       // check results
       expect(mockedSocket.on).toHaveBeenNthCalledWith(
         1,
-        'unread_count_changed',
+        WebSocketEventEnum.UNREAD,
         expect.any(Function)
       );
       expect(listener).toHaveBeenCalledWith(mockedUnreadCount.unreadCount);
@@ -692,7 +800,7 @@ describe('headless.service', () => {
       });
       unsubscribe();
 
-      expect(mockedSocket.off).toHaveBeenCalledWith('unread_count_changed');
+      expect(mockedSocket.off).toHaveBeenCalledWith(WebSocketEventEnum.UNREAD);
     });
   });
 
@@ -836,6 +944,99 @@ describe('headless.service', () => {
     });
   });
 
+  describe('updateUserGlobalPreferences', () => {
+    test('calls updateUserGlobalPreferences successfully', async () => {
+      const payload = {
+        enabled: true,
+        preferences: [
+          {
+            channelType: ChannelTypeEnum.EMAIL,
+            enabled: false,
+          },
+        ],
+      };
+
+      const updatedUserGlobalPreferenceSetting = {
+        preference: {
+          enabled: true,
+          channels: {
+            email: false,
+          },
+        },
+      };
+      mockServiceInstance.updateSubscriberGlobalPreference.mockImplementationOnce(
+        () => promiseResolveTimeout(0, updatedUserGlobalPreferenceSetting)
+      );
+      const headlessService = new HeadlessService(options);
+
+      const listener = jest.fn();
+      const onSuccess = jest.fn();
+      (headlessService as any).session = mockSession;
+
+      headlessService.updateUserGlobalPreferences({
+        preferences: payload.preferences,
+        enabled: payload.enabled,
+        listener,
+        onSuccess,
+      });
+
+      expect(listener).toBeCalledWith(
+        expect.objectContaining({ isLoading: true, data: undefined })
+      );
+      await promiseResolveTimeout(100);
+
+      expect(
+        mockServiceInstance.updateSubscriberGlobalPreference
+      ).toBeCalledTimes(1);
+
+      expect(onSuccess).toHaveBeenNthCalledWith(
+        1,
+        updatedUserGlobalPreferenceSetting
+      );
+    });
+
+    test('handles the error', async () => {
+      const payload = {
+        enabled: true,
+        preferences: [
+          {
+            channelType: ChannelTypeEnum.EMAIL,
+            enabled: true,
+          },
+        ],
+      };
+
+      const error = new Error('error');
+      mockServiceInstance.updateSubscriberGlobalPreference.mockImplementationOnce(
+        () => promiseRejectTimeout(0, error)
+      );
+      const headlessService = new HeadlessService(options);
+      const listener = jest.fn();
+      const onError = jest.fn();
+      (headlessService as any).session = mockSession;
+
+      headlessService.updateUserGlobalPreferences({
+        preferences: payload.preferences,
+        enabled: payload.enabled,
+        listener,
+        onError,
+      });
+      expect(listener).toBeCalledWith(
+        expect.objectContaining({ isLoading: true, data: undefined })
+      );
+      await promiseResolveTimeout(100);
+
+      expect(
+        mockServiceInstance.updateSubscriberGlobalPreference
+      ).toBeCalledTimes(1);
+      expect(onError).toHaveBeenCalledWith(error);
+      expect(listener).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({ isLoading: false, data: undefined, error })
+      );
+    });
+  });
+
   describe('markNotificationsAsRead', () => {
     test('calls markNotificationsAsRead successfully', async () => {
       const updatedNotification = {
@@ -844,8 +1045,13 @@ describe('headless.service', () => {
         read: true,
       };
       mockServiceInstance.markMessageAs.mockImplementationOnce(() =>
-        promiseResolveTimeout(0, updatedNotification)
+        promiseResolveTimeout(0, [updatedNotification])
       );
+
+      mockServiceInstance.getNotificationsList.mockImplementationOnce(() =>
+        promiseResolveTimeout(0, [updatedNotification])
+      );
+
       const headlessService = new HeadlessService(options);
       const markNotificationsAsReadListener = jest.fn();
       const fetchNotificationsListener = jest.fn();
@@ -867,14 +1073,19 @@ describe('headless.service', () => {
       expect(markNotificationsAsReadListener).toBeCalledWith(
         expect.objectContaining({ isLoading: true, data: undefined })
       );
-      await promiseResolveTimeout(100);
+      await promiseResolveTimeout(300);
 
       expect(mockServiceInstance.markMessageAs).toBeCalledTimes(1);
-      expect(onSuccess).toHaveBeenNthCalledWith(1, updatedNotification);
+      expect(onSuccess).toHaveBeenNthCalledWith(1, [updatedNotification]);
       expect(fetchNotificationsListener).toHaveBeenNthCalledWith(
         3,
         expect.objectContaining({
           data: [updatedNotification],
+          error: null,
+          isError: false,
+          isFetching: true,
+          isLoading: false,
+          status: 'success',
         })
       );
     });
@@ -906,6 +1117,106 @@ describe('headless.service', () => {
         expect.objectContaining({ isLoading: false, data: undefined, error })
       );
     });
+  });
+
+  describe('markNotificationsAs', () => {
+    const PAYLOADS = [
+      { seen: true },
+      { seen: false },
+      { seen: true, read: false },
+      { seen: false, read: true },
+      { seen: false, read: false },
+      { seen: true, read: true },
+      { read: true },
+      { read: false },
+    ];
+
+    test.each(PAYLOADS)(
+      'calls markNotificationsAs successfully with payload: %s',
+      async (payload) => {
+        const updatedNotification = {
+          ...mockNotification,
+          ...payload,
+        };
+        mockServiceInstance.markMessageAs.mockImplementationOnce(() =>
+          promiseResolveTimeout(0, [updatedNotification])
+        );
+
+        mockServiceInstance.getNotificationsList.mockImplementationOnce(() =>
+          promiseResolveTimeout(0, [updatedNotification])
+        );
+
+        const headlessService = new HeadlessService(options);
+        const markNotificationsAsListener = jest.fn();
+        const fetchNotificationsListener = jest.fn();
+        const onSuccess = jest.fn();
+        (headlessService as any).session = mockSession;
+        headlessService.fetchNotifications({
+          listener: fetchNotificationsListener,
+        });
+        await promiseResolveTimeout(0);
+
+        expect(fetchNotificationsListener).toHaveBeenCalledTimes(2);
+
+        headlessService.markNotificationsAs({
+          messageId: notificationId,
+          mark: payload,
+          listener: markNotificationsAsListener,
+          onSuccess,
+        });
+
+        expect(markNotificationsAsListener).toBeCalledWith(
+          expect.objectContaining({ isLoading: true, data: undefined })
+        );
+        await promiseResolveTimeout(300);
+
+        expect(mockServiceInstance.markMessageAs).toBeCalledTimes(1);
+        expect(onSuccess).toHaveBeenNthCalledWith(1, [updatedNotification]);
+        expect(fetchNotificationsListener).toHaveBeenNthCalledWith(
+          3,
+          expect.objectContaining({
+            data: [updatedNotification],
+            error: null,
+            isError: false,
+            isFetching: true,
+            isLoading: false,
+            status: 'success',
+          })
+        );
+      }
+    );
+
+    test.each(PAYLOADS)(
+      `handles the error with payload: %s`,
+      async (payload) => {
+        const error = new Error('error');
+        mockServiceInstance.markMessageAs.mockImplementationOnce(() =>
+          promiseRejectTimeout(0, error)
+        );
+        const headlessService = new HeadlessService(options);
+        const listener = jest.fn();
+        const onError = jest.fn();
+        (headlessService as any).session = mockSession;
+
+        headlessService.markNotificationsAs({
+          messageId: notificationId,
+          mark: payload,
+          listener,
+          onError,
+        });
+        expect(listener).toBeCalledWith(
+          expect.objectContaining({ isLoading: true, data: undefined })
+        );
+        await promiseResolveTimeout(100);
+
+        expect(mockServiceInstance.markMessageAs).toBeCalledTimes(1);
+        expect(onError).toHaveBeenCalledWith(error);
+        expect(listener).toHaveBeenNthCalledWith(
+          2,
+          expect.objectContaining({ isLoading: false, data: undefined, error })
+        );
+      }
+    );
   });
 
   describe('removeNotification', () => {
@@ -1074,11 +1385,6 @@ describe('headless.service', () => {
 
   describe('markAllMessagesAsRead', () => {
     test('calls markAllMessagesAsRead successfully', async () => {
-      const updatedNotification = {
-        ...mockNotification,
-        seen: true,
-        read: true,
-      };
       mockServiceInstance.markAllMessagesAsRead.mockImplementationOnce(() =>
         promiseResolveTimeout(0)
       );
@@ -1138,11 +1444,6 @@ describe('headless.service', () => {
 
   describe('markAllMessagesAsSeen', () => {
     test('calls markAllMessagesAsSeen successfully', async () => {
-      const updatedNotification = {
-        ...mockNotification,
-        seen: true,
-        read: false,
-      };
       mockServiceInstance.markAllMessagesAsSeen.mockImplementationOnce(() =>
         promiseResolveTimeout(0)
       );
@@ -1192,6 +1493,65 @@ describe('headless.service', () => {
       await promiseResolveTimeout(100);
 
       expect(mockServiceInstance.markAllMessagesAsSeen).toBeCalledTimes(1);
+      expect(onError).toHaveBeenCalledWith(error);
+      expect(listener).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({ isLoading: false, data: undefined, error })
+      );
+    });
+  });
+
+  describe('removeAllNotifications', () => {
+    test('calls removeAllNotifications successfully', async () => {
+      mockServiceInstance.removeAllMessages.mockImplementationOnce(() =>
+        promiseResolveTimeout(0)
+      );
+      const headlessService = new HeadlessService(options);
+      const removeAllNotificationsListener = jest.fn();
+      const fetchNotificationsListener = jest.fn();
+      const onSuccess = jest.fn();
+      (headlessService as any).session = mockSession;
+      headlessService.fetchNotifications({
+        listener: fetchNotificationsListener,
+      });
+      await promiseResolveTimeout(0);
+
+      expect(fetchNotificationsListener).toHaveBeenCalledTimes(2);
+
+      headlessService.removeAllNotifications({
+        listener: removeAllNotificationsListener,
+        onSuccess,
+      });
+
+      expect(removeAllNotificationsListener).toBeCalledWith(
+        expect.objectContaining({ isLoading: true, data: undefined })
+      );
+      await promiseResolveTimeout(100);
+
+      expect(mockServiceInstance.removeAllMessages).toBeCalledTimes(1);
+      expect(onSuccess).toHaveBeenNthCalledWith(1);
+    });
+
+    test('handles the error', async () => {
+      const error = new Error('error');
+      mockServiceInstance.removeAllMessages.mockImplementationOnce(() =>
+        promiseRejectTimeout(0, error)
+      );
+      const headlessService = new HeadlessService(options);
+      const listener = jest.fn();
+      const onError = jest.fn();
+      (headlessService as any).session = mockSession;
+
+      headlessService.removeAllNotifications({
+        listener,
+        onError,
+      });
+      expect(listener).toBeCalledWith(
+        expect.objectContaining({ isLoading: true, data: undefined })
+      );
+      await promiseResolveTimeout(100);
+
+      expect(mockServiceInstance.removeAllMessages).toBeCalledTimes(1);
       expect(onError).toHaveBeenCalledWith(error);
       expect(listener).toHaveBeenNthCalledWith(
         2,

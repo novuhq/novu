@@ -1,37 +1,30 @@
-import React, { useEffect } from 'react';
 import styled from '@emotion/styled';
+import React, { useEffect } from 'react';
 import { ReactFlowProvider } from 'react-flow-renderer';
 
 import { GetStartedLayout } from '../components/layout/GetStartedLayout';
 
-import useStyles from '../components/OnboardingSteps.styles';
+import { useCreateDigestDemoWorkflow } from '../../../api/hooks/notification-templates/useCreateDigestDemoWorkflow';
+import { DigestDemoFlow } from '../../../components';
+import { useSegment } from '../../../components/providers/SegmentProvider';
+import { ROUTES } from '../../../constants/routes.enum';
+import { Button } from '../../../design-system';
 import { ArrowLeft } from '../../../design-system/icons';
 import { ArrowLeftGradient } from '../../../design-system/icons/gradient/ArrowLeftGradient';
-import { getStartedSteps, OnBoardingAnalyticsEnum } from '../consts';
 import { Label } from '../../../design-system/typography/label';
-import { ROUTES } from '../../../constants/routes.enum';
-import { HeaderSecondaryTitle, HeaderTitle } from '../components/layout/HeaderLayout';
 import { NavButton } from '../components/NavButton';
-import { useSegment } from '../../../components/providers/SegmentProvider';
-import { useCreateDigestDemoWorkflow } from '../../../api/hooks/notification-templates/useCreateDigestDemoWorkflow';
-import { Button } from '../../../design-system';
-import { DigestDemoFlow } from '../../../components';
+import useStyles from '../components/OnboardingSteps.styles';
+import { getStartedSteps, OnBoardingAnalyticsEnum } from '../consts';
 
 export function DigestPreview() {
   const segment = useSegment();
 
   useEffect(() => {
     segment.track(OnBoardingAnalyticsEnum.BUILD_WORKFLOW_VISIT);
-  }, []);
+  }, [segment]);
 
   return (
     <GetStartedLayout
-      header={
-        <>
-          <HeaderTitle>Set-up steps to get started</HeaderTitle>
-          <HeaderSecondaryTitle>Quick Start Guide</HeaderSecondaryTitle>
-        </>
-      }
       footer={{
         leftSide: <FooterLeftSide />,
         rightSide: <FooterRightSide />,
@@ -103,7 +96,7 @@ const DigestDemoFlowStyled = styled(DigestDemoFlow)`
 
 const ButtonsHolder = styled.div`
   display: flex;
-  gap: 40px;
+  gap: 20px;
 `;
 
 const DemoContainer = styled.div`

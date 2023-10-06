@@ -1,31 +1,33 @@
-import { useState } from 'react';
 import styled from '@emotion/styled';
-import { format } from 'date-fns';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ActionIcon, useMantineTheme, UnstyledButton } from '@mantine/core';
+import { ActionIcon, useMantineTheme } from '@mantine/core';
 import type { ILayoutEntity } from '@novu/shared';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import { useCallback, useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
 
-import { IExtendedColumn, Table } from '../../../design-system/table/Table';
-import { colors, LoadingOverlay, Text, Tooltip, withCellLoading } from '../../../design-system';
-import { Edit, Trash } from '../../../design-system/icons';
-import { LayoutEditor } from './LayoutEditor';
-import { When } from '../../../components/utils/When';
-import { useLayouts, useEnvController } from '../../../hooks';
 import { deleteLayoutById } from '../../../api/layouts';
-import { errorMessage, successMessage } from '../../../utils/notifications';
 import { QueryKeys } from '../../../api/query.keys';
+import { When } from '../../../components/utils/When';
+import { colors, Text, Tooltip, PlusButton, withCellLoading } from '../../../design-system';
+import { Edit, Trash } from '../../../design-system/icons';
+import { IExtendedColumn, Table } from '../../../design-system/table/Table';
+import { useEnvController, useLayouts } from '../../../hooks';
+import { errorMessage, successMessage } from '../../../utils/notifications';
 import { DeleteConfirmModal } from '../../templates/components/DeleteConfirmModal';
+import { LayoutEditor } from './LayoutEditor';
 
 const enum ActivePageEnum {
   LAYOUTS_LIST = 'layouts_list',
   EDIT_LAYOUT = 'edit_layout',
   CREATE_LAYOUT = 'create_layout',
 }
-type LayoutsListPageProps = {
+type LayoutsListPageContext = {
   handleLayoutAnalytics: (event: string, data?: Record<string, unknown>) => void;
 };
 
-export function LayoutsListPage({ handleLayoutAnalytics }: LayoutsListPageProps) {
+export function LayoutsListPage() {
+  const { handleLayoutAnalytics } = useOutletContext<LayoutsListPageContext>();
   const theme = useMantineTheme();
   const queryClient = useQueryClient();
   const { readonly } = useEnvController();
@@ -67,10 +69,10 @@ export function LayoutsListPage({ handleLayoutAnalytics }: LayoutsListPageProps)
     }
   };
 
-  const goBack = async () => {
+  const goBack = useCallback(() => {
     setEditId('');
     setActiveScreen(ActivePageEnum.LAYOUTS_LIST);
-  };
+  }, []);
 
   const editLayout = (id?: string) => {
     if (typeof id === 'undefined') return;
@@ -88,6 +90,9 @@ export function LayoutsListPage({ handleLayoutAnalytics }: LayoutsListPageProps)
         <Tooltip label={original.name}>
           <div>
             <Text rows={1}>{original.name}</Text>
+            <Text rows={1} size="xs" color={colors.B40}>
+              {original.identifier}
+            </Text>
           </div>
         </Tooltip>
       )),
@@ -159,21 +164,19 @@ export function LayoutsListPage({ handleLayoutAnalytics }: LayoutsListPageProps)
       <When truthy={activeScreen === ActivePageEnum.LAYOUTS_LIST}>
         <div
           style={{
-            textAlign: 'right',
             marginBottom: '10px',
+            marginTop: '10px',
           }}
         >
-          <UnstyledButton
+          <PlusButton
+            isGradient={!readonly}
+            label="Add New Layout"
             disabled={readonly || isLoading || isLoadingDelete}
             onClick={() => {
               setActiveScreen(ActivePageEnum.CREATE_LAYOUT);
               handleLayoutAnalytics('Create new layout btn clicked');
             }}
-          >
-            <Text gradient={!readonly} color={colors.B60}>
-              + Create New Layout
-            </Text>
-          </UnstyledButton>
+          />
         </div>
 
         <TemplateListTableWrapper>
@@ -216,5 +219,8 @@ const TemplateListTableWrapper = styled.div`
         opacity: 1;
       }
     }
+  }
+  [data-table-holder] {
+    margin: 0 -30px;
   }
 `;

@@ -6,6 +6,7 @@ import {
   SubscriberRepository,
   MessageEntity,
   IntegrationEntity,
+  TenantRepository,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -23,6 +24,7 @@ import {
   CompileTemplate,
   CompileTemplateCommand,
   PushFactory,
+  GetNovuProviderCredentials,
 } from '@novu/application-generic';
 import type { IPushOptions } from '@novu/stateless';
 
@@ -38,12 +40,22 @@ export class SendMessagePush extends SendMessageBase {
   constructor(
     protected subscriberRepository: SubscriberRepository,
     protected messageRepository: MessageRepository,
+    protected tenantRepository: TenantRepository,
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
-    protected selectIntegration: SelectIntegration
+    protected selectIntegration: SelectIntegration,
+    protected getNovuProviderCredentials: GetNovuProviderCredentials
   ) {
-    super(messageRepository, createLogUsecase, createExecutionDetails, subscriberRepository, selectIntegration);
+    super(
+      messageRepository,
+      createLogUsecase,
+      createExecutionDetails,
+      subscriberRepository,
+      tenantRepository,
+      selectIntegration,
+      getNovuProviderCredentials
+    );
   }
 
   @InstrumentUsecase()
@@ -65,9 +77,12 @@ export class SendMessagePush extends SendMessageBase {
       events: command.events,
       total_count: command.events?.length,
     };
+    const tenant = await this.handleTenantExecution(command.job);
+
     const data = {
       subscriber: subscriber,
       step: stepData,
+      ...(tenant && { tenant }),
       ...command.payload,
     };
     let content = '';
@@ -130,6 +145,9 @@ export class SendMessagePush extends SendMessageBase {
         channelType: ChannelTypeEnum.PUSH,
         providerId: channel.providerId,
         userId: command.userId,
+        filterData: {
+          tenant: command.job.tenant,
+        },
       });
 
       if (!integration) {

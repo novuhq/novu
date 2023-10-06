@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { addMilliseconds } from 'date-fns';
 import {
   JobEntity,
@@ -8,7 +8,6 @@ import {
   NotificationStepEntity,
 } from '@novu/dal';
 import {
-  ChannelTypeEnum,
   DigestTypeEnum,
   STEP_TYPE_TO_CHANNEL_TYPE,
   StepTypeEnum,
@@ -21,10 +20,7 @@ import {
 import { InstrumentUsecase } from '../../instrumentation';
 import { CreateNotificationJobsCommand } from './create-notification-jobs.command';
 import { PlatformException } from '../../utils/exceptions';
-import {
-  CalculateDelayService,
-  EventsPerformanceService,
-} from '../../services';
+import { CalculateDelayService } from '../../services';
 
 const LOG_CONTEXT = 'CreateNotificationUseCase';
 type NotificationJob = Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>;
@@ -34,20 +30,14 @@ export class CreateNotificationJobs {
   constructor(
     private digestFilterSteps: DigestFilterSteps,
     private notificationRepository: NotificationRepository,
-    private calculateDelayService: CalculateDelayService,
-    protected performanceService: EventsPerformanceService
+    @Inject(forwardRef(() => CalculateDelayService))
+    private calculateDelayService: CalculateDelayService
   ) {}
 
   @InstrumentUsecase()
   public async execute(
     command: CreateNotificationJobsCommand
   ): Promise<NotificationJob[]> {
-    const mark = this.performanceService.buildCreateNotificationJobsMark(
-      command.identifier,
-      command.transactionId,
-      command.to.subscriberId
-    );
-
     const activeSteps = this.filterActiveSteps(command.template.steps);
 
     const channels = activeSteps
@@ -76,7 +66,7 @@ export class CreateNotificationJobs {
     if (!notification) {
       const message = 'Notification could not be created';
       const error = new PlatformException(message);
-      Logger.error(message, error, LOG_CONTEXT);
+      Logger.error(error, message, LOG_CONTEXT);
       throw error;
     }
 
@@ -95,6 +85,7 @@ export class CreateNotificationJobs {
         identifier: command.identifier,
         payload: command.payload,
         overrides: command.overrides,
+        tenant: command.tenant,
         step,
         transactionId: command.transactionId,
         _notificationId: notification._id,
@@ -114,8 +105,6 @@ export class CreateNotificationJobs {
 
       jobs.push(job);
     }
-
-    this.performanceService.setEnd(mark);
 
     return jobs;
   }

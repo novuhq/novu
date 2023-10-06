@@ -1,7 +1,7 @@
 /**
  * @type {Cypress.PluginConfig}
  */
-import { DalService, NotificationGroupRepository, NotificationTemplateEntity } from '@novu/dal';
+import { DalService, IntegrationRepository, NotificationGroupRepository, NotificationTemplateEntity } from '@novu/dal';
 import {
   UserSession,
   SubscribersService,
@@ -12,7 +12,7 @@ import {
   EnvironmentService,
 } from '@novu/testing';
 import { JobsService } from '@novu/testing';
-import { getPopularTemplateIds } from '@novu/shared';
+import { ChannelTypeEnum, getPopularTemplateIds, ProvidersIdEnum } from '@novu/shared';
 
 const jobsService = new JobsService();
 
@@ -50,8 +50,8 @@ module.exports = (on, config) => {
       }
 
       while (
-        (await jobsService.jobQueue.queue.getWaitingCount()) ||
-        (await jobsService.jobQueue.queue.getActiveCount())
+        (await jobsService.standardQueue.getWaitingCount()) ||
+        (await jobsService.standardQueue.getActiveCount())
       ) {
         await new Promise((resolve) => setTimeout(resolve, 50));
       }
@@ -91,6 +91,24 @@ module.exports = (on, config) => {
       await organizationService.addMember(organization._id as string, userId);
 
       return organization;
+    },
+    async deleteProvider(query: {
+      providerId: ProvidersIdEnum;
+      channel: ChannelTypeEnum;
+      environmentId: string;
+      organizationId: string;
+    }) {
+      const dal = new DalService();
+      await dal.connect('mongodb://localhost:27017/novu-test');
+
+      const repository = new IntegrationRepository();
+
+      return await repository.deleteMany({
+        channel: query.channel,
+        providerId: query.providerId,
+        _environmentId: query.environmentId,
+        _organizationId: query.organizationId,
+      });
     },
     async getSession(
       settings: {

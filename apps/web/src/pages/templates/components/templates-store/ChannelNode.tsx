@@ -1,11 +1,6 @@
 import { NodeProps, Handle, Position, getOutgoers, useReactFlow } from 'react-flow-renderer';
-import styled from '@emotion/styled';
 
 import { NodeStep } from '../../../../components/workflow';
-
-const NodeStepStyled = styled(NodeStep)`
-  width: 200px;
-`;
 
 export const ChannelNode = ({ id, data }: NodeProps) => {
   const { getNode, getEdges, getNodes } = useReactFlow();
@@ -14,7 +9,7 @@ export const ChannelNode = ({ id, data }: NodeProps) => {
   const noChildStyle = isParent ? {} : { border: 'none', background: 'transparent' };
 
   return (
-    <NodeStepStyled
+    <NodeStep
       data={data}
       Icon={data.Icon}
       Handlers={() => {

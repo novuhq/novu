@@ -7,11 +7,10 @@ import {
   SubscriberEntity,
   MemberRepository,
   FeedRepository,
-  FeedEntity,
 } from '@novu/dal';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, WebSocketEventEnum } from '@novu/shared';
 import {
-  WsQueueService,
+  WebSocketsQueueService,
   AnalyticsService,
   InvalidateCacheService,
   buildFeedKey,
@@ -27,7 +26,7 @@ export class RemoveAllMessages {
   constructor(
     private invalidateCache: InvalidateCacheService,
     private messageRepository: MessageRepository,
-    private wsQueueService: WsQueueService,
+    private webSocketsQueueService: WebSocketsQueueService,
     private analyticsService: AnalyticsService,
     private subscriberRepository: SubscriberRepository,
     private memberRepository: MemberRepository,
@@ -60,8 +59,8 @@ export class RemoveAllMessages {
 
       await this.messageRepository.deleteMany(deleteMessageQuery);
 
-      await this.updateServices(command, subscriber, MarkEnum.SEEN, feed);
-      await this.updateServices(command, subscriber, MarkEnum.READ, feed);
+      await this.updateServices(command, subscriber, MarkEnum.SEEN);
+      await this.updateServices(command, subscriber, MarkEnum.READ);
 
       const admin = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
       if (admin) {
@@ -94,36 +93,21 @@ export class RemoveAllMessages {
     }
   }
 
-  private async updateServices(command: RemoveAllMessagesCommand, subscriber, marked: string, feed?: FeedEntity) {
-    let count = 0;
-    if (feed) {
-      count = await this.messageRepository.getCount(
-        command.environmentId,
-        subscriber._id,
-        ChannelTypeEnum.IN_APP,
-        {
-          [marked]: false,
-        },
-        { limit: 1000 }
-      );
-    }
-    this.updateSocketCount(subscriber, count, marked);
+  private async updateServices(command: RemoveAllMessagesCommand, subscriber, marked: string) {
+    this.updateSocketCount(subscriber, marked);
   }
 
-  private updateSocketCount(subscriber: SubscriberEntity, count: number, mark: string) {
-    const eventMessage = `un${mark}_count_changed`;
-    const countKey = `un${mark}Count`;
+  private updateSocketCount(subscriber: SubscriberEntity, mark: string) {
+    const eventMessage = mark === MarkEnum.READ ? WebSocketEventEnum.UNREAD : WebSocketEventEnum.UNSEEN;
 
-    this.wsQueueService.bullMqService.add(
+    this.webSocketsQueueService.add(
       'sendMessage',
       {
         event: eventMessage,
         userId: subscriber._id,
-        payload: {
-          [countKey]: count,
-        },
+        _environmentId: subscriber._environmentId,
       },
-      {},
+      undefined,
       subscriber._organizationId
     );
   }

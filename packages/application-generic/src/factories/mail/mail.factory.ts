@@ -4,6 +4,7 @@ import {
   MailgunHandler,
   EmailJsHandler,
   MailjetHandler,
+  MailtrapHandler,
   MandrillHandler,
   NodemailerHandler,
   PostmarkHandler,
@@ -16,6 +17,8 @@ import {
   ResendHandler,
   SparkPostHandler,
   EmailWebhookHandler,
+  NovuEmailHandler,
+  PlunkHandler,
 } from './handlers';
 import { IMailHandler } from './interfaces/send.handler.interface';
 
@@ -26,6 +29,7 @@ export class MailFactory {
     new NetCoreHandler(),
     new EmailJsHandler(),
     new MailjetHandler(),
+    new MailtrapHandler(),
     new MandrillHandler(),
     new NodemailerHandler(),
     new PostmarkHandler(),
@@ -35,8 +39,10 @@ export class MailFactory {
     new MailerSendHandler(),
     new Outlook365Handler(),
     new ResendHandler(),
+    new PlunkHandler(),
     new SparkPostHandler(),
     new EmailWebhookHandler(),
+    new NovuEmailHandler(),
   ];
 
   getHandler(

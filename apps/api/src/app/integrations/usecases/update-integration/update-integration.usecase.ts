@@ -5,10 +5,10 @@ import {
   encryptCredentials,
   buildIntegrationKey,
   InvalidateCacheService,
-  GetFeatureFlag,
+  GetIsMultiProviderConfigurationEnabled,
   FeatureFlagCommand,
 } from '@novu/application-generic';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, CHANNELS_WITH_PRIMARY } from '@novu/shared';
 
 import { UpdateIntegrationCommand } from './update-integration.command';
 import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/deactivate-integration.usecase';
@@ -24,8 +24,79 @@ export class UpdateIntegration {
     private integrationRepository: IntegrationRepository,
     private deactivateSimilarChannelIntegrations: DeactivateSimilarChannelIntegrations,
     private analyticsService: AnalyticsService,
-    private getFeatureFlag: GetFeatureFlag
+    private getIsMultiProviderConfigurationEnabled: GetIsMultiProviderConfigurationEnabled
   ) {}
+
+  private async calculatePriorityAndPrimaryForActive({
+    existingIntegration,
+  }: {
+    existingIntegration: IntegrationEntity;
+  }) {
+    const result: { primary: boolean; priority: number } = {
+      primary: existingIntegration.primary,
+      priority: existingIntegration.priority,
+    };
+
+    const highestPriorityIntegration = await this.integrationRepository.findHighestPriorityIntegration({
+      _organizationId: existingIntegration._organizationId,
+      _environmentId: existingIntegration._environmentId,
+      channel: existingIntegration.channel,
+    });
+
+    if (highestPriorityIntegration?.primary) {
+      result.priority = highestPriorityIntegration.priority;
+      await this.integrationRepository.update(
+        {
+          _id: highestPriorityIntegration._id,
+          _organizationId: highestPriorityIntegration._organizationId,
+          _environmentId: highestPriorityIntegration._environmentId,
+        },
+        {
+          $set: {
+            priority: highestPriorityIntegration.priority + 1,
+          },
+        }
+      );
+    } else {
+      result.priority = highestPriorityIntegration ? highestPriorityIntegration.priority + 1 : 1;
+    }
+
+    return result;
+  }
+
+  private async calculatePriorityAndPrimary({
+    existingIntegration,
+    active,
+  }: {
+    existingIntegration: IntegrationEntity;
+    active: boolean;
+  }) {
+    let result: { primary: boolean; priority: number } = {
+      primary: existingIntegration.primary,
+      priority: existingIntegration.priority,
+    };
+
+    if (active) {
+      result = await this.calculatePriorityAndPrimaryForActive({
+        existingIntegration,
+      });
+    } else {
+      await this.integrationRepository.recalculatePriorityForAllActive({
+        _id: existingIntegration._id,
+        _organizationId: existingIntegration._organizationId,
+        _environmentId: existingIntegration._environmentId,
+        channel: existingIntegration.channel,
+        exclude: true,
+      });
+
+      result = {
+        priority: 0,
+        primary: false,
+      };
+    }
+
+    return result;
+  }
 
   async execute(command: UpdateIntegrationCommand): Promise<IntegrationEntity> {
     Logger.verbose('Executing Update Integration Command');
@@ -45,10 +116,6 @@ export class UpdateIntegration {
       if (existingIntegrationWithIdentifier) {
         throw new ConflictException('Integration with identifier already exists');
       }
-    }
-
-    if (command.active && Object.keys(command.credentials ?? {}).length === 0) {
-      throw new BadRequestException('The credentials are required to activate the integration');
     }
 
     this.analyticsService.track('Update Integration - [Integrations]', command.userId, {
@@ -71,7 +138,7 @@ export class UpdateIntegration {
         CheckIntegrationCommand.create({
           environmentId,
           organizationId: command.organizationId,
-          credentials: command.credentials,
+          credentials: command.credentials ?? existingIntegration.credentials ?? {},
           providerId: existingIntegration.providerId,
           channel: existingIntegration.channel,
         })
@@ -79,6 +146,8 @@ export class UpdateIntegration {
     }
 
     const updatePayload: Partial<IntegrationEntity> = {};
+    const isActiveDefined = typeof command.active !== 'undefined';
+    const isActiveChanged = isActiveDefined && existingIntegration.active !== command.active;
 
     if (command.name) {
       updatePayload.name = command.name;
@@ -92,7 +161,7 @@ export class UpdateIntegration {
       updatePayload._environmentId = environmentId;
     }
 
-    if (typeof command.active !== 'undefined') {
+    if (isActiveDefined) {
       updatePayload.active = command.active;
     }
 
@@ -100,8 +169,38 @@ export class UpdateIntegration {
       updatePayload.credentials = encryptCredentials(command.credentials);
     }
 
+    if (command.conditions) {
+      updatePayload.conditions = command.conditions;
+    }
+
     if (!Object.keys(updatePayload).length) {
       throw new BadRequestException('No properties found for update');
+    }
+
+    const isMultiProviderConfigurationEnabled = await this.getIsMultiProviderConfigurationEnabled.execute(
+      FeatureFlagCommand.create({
+        userId: command.userId,
+        organizationId: command.organizationId,
+        environmentId: command.userEnvironmentId,
+      })
+    );
+
+    const haveConditions = updatePayload.conditions && updatePayload.conditions?.length > 0;
+
+    const isChannelSupportsPrimary = CHANNELS_WITH_PRIMARY.includes(existingIntegration.channel);
+    if (isMultiProviderConfigurationEnabled && isActiveChanged && isChannelSupportsPrimary) {
+      const { primary, priority } = await this.calculatePriorityAndPrimary({
+        existingIntegration,
+        active: !!command.active,
+      });
+
+      updatePayload.primary = primary;
+      updatePayload.priority = priority;
+    }
+
+    const shouldRemovePrimary = haveConditions && existingIntegration.primary;
+    if (shouldRemovePrimary) {
+      updatePayload.primary = false;
     }
 
     await this.integrationRepository.update(
@@ -114,13 +213,14 @@ export class UpdateIntegration {
       }
     );
 
-    const isMultiProviderConfigurationEnabled = await this.getFeatureFlag.isMultiProviderConfigurationEnabled(
-      FeatureFlagCommand.create({
-        userId: command.userId,
-        organizationId: command.organizationId,
-        environmentId: command.userEnvironmentId,
-      })
-    );
+    if (shouldRemovePrimary) {
+      await this.integrationRepository.recalculatePriorityForAllActive({
+        _id: existingIntegration._id,
+        _organizationId: existingIntegration._organizationId,
+        _environmentId: existingIntegration._organizationId,
+        channel: existingIntegration.channel,
+      });
+    }
 
     if (
       !isMultiProviderConfigurationEnabled &&
@@ -140,7 +240,9 @@ export class UpdateIntegration {
       _id: command.integrationId,
       _environmentId: environmentId,
     });
-    if (!updatedIntegration) throw new NotFoundException(`Integration with id ${command.integrationId} is not found`);
+    if (!updatedIntegration) {
+      throw new NotFoundException(`Integration with id ${command.integrationId} is not found`);
+    }
 
     return updatedIntegration;
   }

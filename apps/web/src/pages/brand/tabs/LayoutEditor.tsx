@@ -1,14 +1,17 @@
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
-import { Center, Grid, Group, Modal, Title, useMantineTheme } from '@mantine/core';
-import { ArrowLeft } from '../../../design-system/icons';
-import { Button, Checkbox, colors, Input, Text, LoadingOverlay, shadows } from '../../../design-system';
-import { useEnvController, useLayoutsEditor, usePrompt } from '../../../hooks';
-import { errorMessage, successMessage } from '../../../utils/notifications';
+import { ActionIcon, Center, Grid, Group, Modal, Title, useMantineTheme } from '@mantine/core';
+import slugify from 'slugify';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { parse } from '@handlebars/parser';
+import { useClipboard } from '@mantine/hooks';
+
 import { getTemplateVariables, ITemplateVariable, isReservedVariableName, LayoutId } from '@novu/shared';
 
+import { ArrowLeft, Check, Copy } from '../../../design-system/icons';
+import { Button, Checkbox, colors, Input, Text, LoadingOverlay, shadows, Tooltip } from '../../../design-system';
+import { useEnvController, useLayoutsEditor, usePrompt } from '../../../hooks';
+import { errorMessage, successMessage } from '../../../utils/notifications';
 import { QueryKeys } from '../../../api/query.keys';
 import { VariablesManagement } from '../../templates/components/email-editor/variables-management/VariablesManagement';
 import { UnsavedChangesModal } from '../../templates/components/UnsavedChangesModal';
@@ -18,6 +21,7 @@ import { EmailCustomCodeEditor } from '../../templates/components/email-editor/E
 interface ILayoutForm {
   content: string;
   name: string;
+  identifier: string;
   description: string;
   isDefault: boolean;
   variables: ITemplateVariable[];
@@ -25,6 +29,7 @@ interface ILayoutForm {
 const defaultFormValues = {
   content: '',
   name: '',
+  identifier: '',
   description: '',
   isDefault: false,
   variables: [],
@@ -39,6 +44,7 @@ export function LayoutEditor({
   goBack: () => void;
 }) {
   const { readonly, environment } = useEnvController();
+  const identifierClipboard = useClipboard({ timeout: 1000 });
   const theme = useMantineTheme();
   const queryClient = useQueryClient();
   const [ast, setAst] = useState<any>({ body: [] });
@@ -52,9 +58,10 @@ export function LayoutEditor({
     watch,
     control,
     setValue,
-    formState: { isDirty },
+    formState: { isDirty, errors },
   } = useForm<ILayoutForm>({
     defaultValues: defaultFormValues,
+    shouldUseNativeValidation: false,
   });
   const [showModal, confirmNavigation, cancelNavigation] = usePrompt(isDirty);
 
@@ -70,6 +77,9 @@ export function LayoutEditor({
       if (layout.name) {
         setValue('name', layout?.name);
       }
+      if (layout.identifier) {
+        setValue('identifier', layout?.identifier);
+      }
       if (layout.description) {
         setValue('description', layout?.description);
       }
@@ -80,7 +90,23 @@ export function LayoutEditor({
         setValue('isDefault', layout?.isDefault);
       }
     }
-  }, [layout]);
+  }, [setValue, layout]);
+
+  const layoutName = watch('name');
+  const identifier = watch('identifier');
+
+  useEffect(() => {
+    if (editMode && identifier) {
+      return;
+    }
+
+    const newIdentifier = slugify(layoutName, {
+      lower: true,
+      strict: true,
+    });
+    setValue('identifier', newIdentifier);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editMode, layoutName]);
 
   useEffect(() => {
     if (environment && layout) {
@@ -92,7 +118,7 @@ export function LayoutEditor({
         }
       }
     }
-  }, [environment, layout]);
+  }, [goBack, environment, layout]);
 
   useMemo(() => {
     const variables = getTemplateVariables(ast.body).filter(
@@ -112,6 +138,7 @@ export function LayoutEditor({
     });
 
     variablesArray.replace(arrayFields.filter((field) => !!field));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ast]);
 
   useEffect(() => {
@@ -146,53 +173,98 @@ export function LayoutEditor({
           Go Back
         </Text>
       </Center>
-      <form name={'layout-form'} onSubmit={handleSubmit(onSubmitLayout)}>
+      <form noValidate name={'layout-form'} onSubmit={handleSubmit(onSubmitLayout)}>
         <Grid grow>
           <Grid.Col span={9}>
-            <Grid gutter={30} grow>
-              <Grid.Col md={5} sm={12}>
-                <Controller
-                  control={control}
-                  name="name"
-                  render={({ field }) => (
-                    <Input
-                      {...field}
-                      mb={30}
-                      data-test-id="layout-name"
-                      disabled={readonly}
-                      required
-                      value={field.value || ''}
-                      label="Layout Name"
-                      placeholder="Layout name goes here..."
-                    />
-                  )}
-                />
-              </Grid.Col>
-              <Grid.Col md={5} sm={12}>
-                <Controller
-                  name="description"
-                  control={control}
-                  render={({ field }) => (
-                    <Input
-                      {...field}
-                      value={field.value || ''}
-                      disabled={readonly}
-                      mb={30}
-                      data-test-id="layout-description"
-                      label="Layout Description"
-                      placeholder="Describe your layout..."
-                    />
-                  )}
-                />
-              </Grid.Col>
-            </Grid>
+            <div
+              style={{
+                borderRadius: '7px',
+                marginBottom: '24px',
+                padding: '16px',
+                background: theme.colorScheme === 'dark' ? colors.B20 : colors.B98,
+              }}
+            >
+              <Grid gutter={30} grow>
+                <Grid.Col md={5} sm={12}>
+                  <Controller
+                    control={control}
+                    name="name"
+                    rules={{
+                      required: 'Required - Layout name',
+                    }}
+                    render={({ field }) => (
+                      <Input
+                        {...field}
+                        mb={30}
+                        data-test-id="layout-name"
+                        disabled={readonly}
+                        required
+                        value={field.value || ''}
+                        error={errors?.name?.message}
+                        label="Layout Name"
+                        placeholder="Layout name goes here..."
+                      />
+                    )}
+                  />
+                </Grid.Col>
+                <Grid.Col md={5} sm={12}>
+                  <Controller
+                    control={control}
+                    name="identifier"
+                    rules={{
+                      required: 'Required - Layout identifier',
+                      pattern: {
+                        value: /^[A-Za-z0-9_-]+$/,
+                        message:
+                          'Layout identifier must contains only alphabetical, numeric, dash or underscore characters',
+                      },
+                    }}
+                    render={({ field }) => (
+                      <Input
+                        {...field}
+                        mb={30}
+                        data-test-id="layout-identifier"
+                        disabled={readonly}
+                        required
+                        value={field.value || ''}
+                        error={errors?.identifier?.message}
+                        label="Layout identifier"
+                        placeholder="Layout identifier goes here..."
+                        rightSection={
+                          <Tooltip data-test-id={'Tooltip'} label={identifierClipboard.copied ? 'Copied!' : 'Copy Key'}>
+                            <ActionIcon variant="transparent" onClick={() => identifierClipboard.copy(field.value)}>
+                              {identifierClipboard.copied ? <Check /> : <Copy />}
+                            </ActionIcon>
+                          </Tooltip>
+                        }
+                      />
+                    )}
+                  />
+                </Grid.Col>
+              </Grid>
+              <Controller
+                name="description"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    value={field.value || ''}
+                    disabled={readonly}
+                    mb={30}
+                    data-test-id="layout-description"
+                    label="Layout Description"
+                    placeholder="Describe your layout..."
+                  />
+                )}
+              />
+            </div>
 
             <Controller
               name="content"
               data-test-id="layout-content"
               control={control}
               render={({ field }) => {
-                return <EmailCustomCodeEditor onChange={field.onChange} value={field.value} />;
+                return <EmailCustomCodeEditor onChange={field.onChange} value={field.value} height="380px" />;
               }}
             />
           </Grid.Col>

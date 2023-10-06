@@ -6,7 +6,8 @@ export enum HandlebarHelpersEnum {
   PLURALIZE = 'pluralize',
   DATEFORMAT = 'dateFormat',
   UNIQUE = 'unique',
-  GROUPBY = 'groupBy',
+  GROUP_BY = 'groupBy',
+  SORT_BY = 'sortBy',
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -18,5 +19,6 @@ export const HandlebarHelpers = {
   [HandlebarHelpersEnum.PLURALIZE]: { description: 'pluralize if needed' },
   [HandlebarHelpersEnum.DATEFORMAT]: { description: 'format date' },
   [HandlebarHelpersEnum.UNIQUE]: { description: 'filter unique values in an array' },
-  [HandlebarHelpersEnum.GROUPBY]: { description: 'group by a property' },
+  [HandlebarHelpersEnum.GROUP_BY]: { description: 'group by a property' },
+  [HandlebarHelpersEnum.SORT_BY]: { description: 'sort an array of objects by a property' },
 };

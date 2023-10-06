@@ -1,7 +1,15 @@
 import styled from '@emotion/styled';
+import { Skeleton } from '@mantine/core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 import { colors } from '../../../design-system';
+
+const SkeletonPill = styled(Skeleton)`
+  width: 120px;
+  height: 28px;
+  background-color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B30 : colors.B85)};
+  border-radius: 16px;
+`;
 
 const EnvironmentPillHolder = styled.div`
   width: fit-content;
@@ -23,7 +31,19 @@ const EnvironmentIcon = styled(FontAwesomeIcon)`
   color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B60 : colors.B40)};
 `;
 
-export const IntegrationEnvironmentPill = ({ name, testId }: { name: string; testId?: string }) => {
+export const IntegrationEnvironmentPill = ({
+  name,
+  testId,
+  isLoading,
+}: {
+  name: string;
+  testId?: string;
+  isLoading?: boolean;
+}) => {
+  if (isLoading) {
+    return <SkeletonPill />;
+  }
+
   return (
     <EnvironmentPillHolder data-test-id={testId}>
       <EnvironmentIcon icon={name.toLowerCase() === 'production' ? 'rocket' : 'tools'} />

@@ -17,6 +17,7 @@ import {
   smsCentralConfig,
   termiiConfig,
   africasTalkingConfig,
+  sendchampConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -24,11 +25,19 @@ import { ChannelTypeEnum } from '../../../types';
 
 export const smsProviders: IProviderConfig[] = [
   {
+    id: SmsProviderIdEnum.Novu,
+    displayName: 'Novu SMS',
+    channel: ChannelTypeEnum.SMS,
+    credentials: [],
+    docReference: 'https://docs.novu.co/channels-and-providers/default-providers#novu-sms-provider',
+    logoFileName: { light: 'novu.png', dark: 'novu.png' },
+  },
+  {
     id: SmsProviderIdEnum.Nexmo,
     displayName: 'Nexmo',
     channel: ChannelTypeEnum.SMS,
     credentials: nexmoConfig,
-    docReference: 'https://docs.novu.co/channels/sms/nexmo',
+    docReference: 'https://docs.novu.co/channels-and-providers/sms/nexmo',
     logoFileName: { light: 'nexmo.png', dark: 'nexmo.png' },
   },
   {
@@ -36,7 +45,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'Plivo',
     channel: ChannelTypeEnum.SMS,
     credentials: plivoConfig,
-    docReference: 'https://www.plivo.com/docs/',
+    docReference: 'https://docs.novu.co/channels-and-providers/sms/plivo',
     logoFileName: { light: 'plivo.png', dark: 'plivo.png' },
   },
 
@@ -45,7 +54,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'sms77',
     channel: ChannelTypeEnum.SMS,
     credentials: sms77Config,
-    docReference: 'https://docs.novu.co/channels/sms/SMS77',
+    docReference: 'https://docs.novu.co/channels-and-providers/sms/sms77',
     logoFileName: { light: 'sms77.svg', dark: 'sms77.svg' },
   },
   {
@@ -53,7 +62,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'SNS',
     channel: ChannelTypeEnum.SMS,
     credentials: snsConfig,
-    docReference: 'https://docs.novu.co/channels/sms/sns',
+    docReference: 'https://docs.novu.co/channels-and-providers/sms/aws-sns',
     logoFileName: { light: 'sns.svg', dark: 'sns.svg' },
   },
   {
@@ -61,7 +70,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'Telnyx',
     channel: ChannelTypeEnum.SMS,
     credentials: telnyxConfig,
-    docReference: 'https://docs.novu.co/channels/sms/telnyx',
+    docReference: 'https://docs.novu.co/channels-and-providers/sms/telnyx',
     logoFileName: { light: 'telnyx.png', dark: 'telnyx.png' },
   },
   {
@@ -69,7 +78,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'Twilio',
     channel: ChannelTypeEnum.SMS,
     credentials: twilioConfig,
-    docReference: 'https://docs.novu.co/channels/sms/twilio',
+    docReference: 'https://docs.novu.co/channels-and-providers/sms/twilio',
     logoFileName: { light: 'twilio.png', dark: 'twilio.png' },
   },
   {
@@ -93,7 +102,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'Infobip',
     channel: ChannelTypeEnum.SMS,
     credentials: infobipSMSConfig,
-    docReference: 'https://www.infobip.com/docs',
+    docReference: 'https://docs.novu.co/channels-and-providers/sms/infobip',
     logoFileName: { light: 'infobip.png', dark: 'infobip.png' },
   },
   {
@@ -151,7 +160,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'Termii',
     channel: ChannelTypeEnum.SMS,
     credentials: termiiConfig,
-    docReference: 'https://developers.termii.com/authentication',
+    docReference: 'https://docs.novu.co/channels-and-providers/sms/termii',
     logoFileName: { light: 'termii.png', dark: 'termii.png' },
   },
   {
@@ -159,7 +168,15 @@ export const smsProviders: IProviderConfig[] = [
     displayName: `Africa's Talking`,
     channel: ChannelTypeEnum.SMS,
     credentials: africasTalkingConfig,
-    docReference: 'https://docs.novu.co/channels/sms/africas-talking',
+    docReference: 'https://docs.novu.co/channels-and-providers/sms/africas-talking',
     logoFileName: { light: 'africas-talking.svg', dark: 'africas-talking.svg' },
+  },
+  {
+    id: SmsProviderIdEnum.Sendchamp,
+    displayName: `Sendchamp`,
+    channel: ChannelTypeEnum.SMS,
+    credentials: sendchampConfig,
+    docReference: 'https://docs.novu.co/channels-and-providers/sms/sendchamp',
+    logoFileName: { light: 'sendchamp.svg', dark: 'sendchamp.svg' },
   },
 ];

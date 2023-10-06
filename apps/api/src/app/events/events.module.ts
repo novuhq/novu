@@ -1,16 +1,28 @@
 import { Module } from '@nestjs/common';
 import { TerminusModule } from '@nestjs/terminus';
+
 import {
+  AddJob,
+  AddDelayJob,
+  AddDigestJob,
+  CreateExecutionDetails,
+  CreateNotificationJobs,
+  DigestFilterSteps,
+  DigestFilterStepsBackoff,
+  DigestFilterStepsRegular,
+  DigestFilterStepsTimed,
   EventsDistributedLockService,
-  EventsPerformanceService,
+  GetNovuProviderCredentials,
+  ProcessSubscriber,
+  ProcessTenant,
+  QueuesModule,
   StorageHelperService,
   SendTestEmail,
-  QueueService,
-  CalculateDelayService,
+  StoreSubscriberJobs,
+  TriggerEvent,
 } from '@novu/application-generic';
 
 import { EventsController } from './events.controller';
-import { TriggerHandlerQueueService } from './services/workflow-queue/trigger-handler-queue.service';
 import { USE_CASES } from './usecases';
 
 import { SharedModule } from '../shared/shared.module';
@@ -23,6 +35,27 @@ import { IntegrationModule } from '../integrations/integrations.module';
 import { ExecutionDetailsModule } from '../execution-details/execution-details.module';
 import { TopicsModule } from '../topics/topics.module';
 import { LayoutsModule } from '../layouts/layouts.module';
+import { TenantModule } from '../tenant/tenant.module';
+
+const PROVIDERS = [
+  AddJob,
+  AddDelayJob,
+  AddDigestJob,
+  CreateExecutionDetails,
+  CreateNotificationJobs,
+  DigestFilterSteps,
+  DigestFilterStepsBackoff,
+  DigestFilterStepsRegular,
+  DigestFilterStepsTimed,
+  GetNovuProviderCredentials,
+  StorageHelperService,
+  EventsDistributedLockService,
+  ProcessSubscriber,
+  ProcessTenant,
+  SendTestEmail,
+  StoreSubscriberJobs,
+  TriggerEvent,
+];
 
 @Module({
   imports: [
@@ -37,20 +70,10 @@ import { LayoutsModule } from '../layouts/layouts.module';
     ExecutionDetailsModule,
     TopicsModule,
     LayoutsModule,
+    TenantModule,
+    QueuesModule,
   ],
   controllers: [EventsController],
-  providers: [
-    ...USE_CASES,
-    {
-      provide: QueueService,
-      useClass: QueueService,
-    },
-    StorageHelperService,
-    TriggerHandlerQueueService,
-    EventsDistributedLockService,
-    EventsPerformanceService,
-    SendTestEmail,
-    CalculateDelayService,
-  ],
+  providers: [...PROVIDERS, ...USE_CASES],
 })
 export class EventsModule {}

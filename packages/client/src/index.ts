@@ -1,4 +1,7 @@
-import { IPreferenceChannels } from '@novu/shared';
+import {
+  IPreferenceChannels,
+  NotificationTemplateCustomData,
+} from '@novu/shared';
 
 export interface IUnseenCountQuery {
   feedIdentifier?: string | string[];
@@ -17,6 +20,7 @@ export interface IStoreQuery {
   seen?: boolean;
   read?: boolean;
   limit?: number;
+  payload?: Record<string, unknown>;
 }
 
 export interface ITabCountQuery {
@@ -27,8 +31,22 @@ export interface ITabCountQuery {
 }
 
 export interface IUserPreferenceSettings {
-  template: { _id: string; name: string; critical: boolean };
-  preference: { enabled: boolean; channels: IPreferenceChannels };
+  template: {
+    _id: string;
+    name: string;
+    critical: boolean;
+    tags?: string[];
+    data?: NotificationTemplateCustomData;
+  };
+  preference: PreferenceSettingsType;
 }
 
+export interface IUserGlobalPreferenceSettings {
+  preference: PreferenceSettingsType;
+}
+
+export type PreferenceSettingsType = {
+  enabled: boolean;
+  channels: IPreferenceChannels;
+};
 export { ApiService } from './api/api.service';

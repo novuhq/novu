@@ -36,6 +36,7 @@ type SelectedPopoverProps = Pick<
   | 'tabs'
   | 'showUserPreferences'
   | 'allowedNotificationActions'
+  | 'preferenceFilter'
 > & {
   popoverConfig?: {
     offset?: IPopoverNotificationCenterProps['offset'];
@@ -50,6 +51,7 @@ type SelectedPopoverProps = Pick<
     position?: IPopoverNotificationCenterProps['position'];
   };
 };
+
 type PopoverProps = SelectedPopoverProps & {
   onNotificationClick?: IPopoverNotificationCenterProps['onNotificationClick'];
   colorScheme?: ColorScheme;

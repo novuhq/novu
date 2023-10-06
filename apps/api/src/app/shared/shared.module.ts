@@ -24,23 +24,20 @@ import {
   TenantRepository,
 } from '@novu/dal';
 import {
-  InMemoryProviderService,
-  AnalyticsService,
+  analyticsService,
+  cacheService,
+  CacheServiceHealthIndicator,
+  CalculateDelayService,
   createNestLoggingModuleOptions,
-  LoggerModule,
-  CacheService,
+  DalServiceHealthIndicator,
+  distributedLockService,
+  featureFlagsService,
+  getIsMultiProviderConfigurationEnabled,
+  getIsTopicNotificationEnabled,
   InvalidateCacheService,
-  AzureBlobStorageService,
-  GCSStorageService,
-  S3StorageService,
-  StorageService,
-  WsQueueService,
-  DistributedLockService,
-  PerformanceService,
-  TriggerQueueService,
-  GetFeatureFlag,
-  LaunchDarklyService,
-  FeatureFlagsService,
+  LoggerModule,
+  QueuesModule,
+  storageService,
 } from '@novu/application-generic';
 
 import * as packageJson from '../../../package.json';
@@ -69,88 +66,30 @@ const DAL_MODELS = [
   TenantRepository,
 ];
 
-function getStorageServiceClass() {
-  switch (process.env.STORAGE_SERVICE) {
-    case 'GCS':
-      return GCSStorageService;
-    case 'AZURE':
-      return AzureBlobStorageService;
-    default:
-      return S3StorageService;
-  }
-}
+const dalService = {
+  provide: DalService,
+  useFactory: async () => {
+    const service = new DalService();
+    await service.connect(process.env.MONGO_URL);
 
-const dalService = new DalService();
-
-const inMemoryProviderService = {
-  provide: InMemoryProviderService,
-  useFactory: (enableAutoPipelining?: boolean) => {
-    return new InMemoryProviderService(enableAutoPipelining);
-  },
-};
-
-const cacheService = {
-  provide: CacheService,
-  useFactory: () => {
-    // TODO: Temporary to test in Dev. Should be removed.
-    const enableAutoPipelining = process.env.REDIS_CACHE_ENABLE_AUTOPIPELINING === 'true';
-    const factoryInMemoryProviderService = inMemoryProviderService.useFactory(enableAutoPipelining);
-
-    return new CacheService(factoryInMemoryProviderService);
-  },
-};
-
-const distributedLockService = {
-  provide: DistributedLockService,
-  useFactory: () => {
-    const factoryInMemoryProviderService = inMemoryProviderService.useFactory();
-
-    return new DistributedLockService(factoryInMemoryProviderService);
+    return service;
   },
 };
 
 const PROVIDERS = [
+  analyticsService,
   cacheService,
+  CacheServiceHealthIndicator,
+  CalculateDelayService,
+  dalService,
+  DalServiceHealthIndicator,
   distributedLockService,
-  inMemoryProviderService,
-  {
-    provide: WsQueueService,
-    useClass: WsQueueService,
-  },
-  {
-    provide: DalService,
-    useFactory: async () => {
-      await dalService.connect(process.env.MONGO_URL);
-
-      return dalService;
-    },
-  },
-  {
-    provide: PerformanceService,
-    useFactory: () => {
-      return new PerformanceService();
-    },
-  },
+  featureFlagsService,
+  getIsMultiProviderConfigurationEnabled,
+  getIsTopicNotificationEnabled,
   InvalidateCacheService,
+  storageService,
   ...DAL_MODELS,
-  {
-    provide: StorageService,
-    useClass: getStorageServiceClass(),
-  },
-  {
-    provide: AnalyticsService,
-    useFactory: async () => {
-      const analyticsService = new AnalyticsService(process.env.SEGMENT_TOKEN);
-
-      await analyticsService.initialize();
-
-      return analyticsService;
-    },
-  },
-  TriggerQueueService,
-  LaunchDarklyService,
-  FeatureFlagsService,
-  GetFeatureFlag,
 ];
 
 @Module({
@@ -161,8 +100,9 @@ const PROVIDERS = [
         version: packageJson.version,
       })
     ),
+    QueuesModule,
   ],
   providers: [...PROVIDERS],
-  exports: [...PROVIDERS, LoggerModule],
+  exports: [...PROVIDERS, LoggerModule, QueuesModule],
 })
 export class SharedModule {}
