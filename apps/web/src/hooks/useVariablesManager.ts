@@ -14,7 +14,9 @@ export const useVariablesManager = (index: number, contents: string[]) => {
     ({ templateToParse, fields }: { templateToParse?: ITemplates; fields: string[] }): string => {
       return fields
         .map((con) => con.split('.').reduce((a, b) => a && a[b], templateToParse ?? {}))
-        .map((con) => (Array.isArray(con) ? con.map((innerCon) => innerCon.content).join(' ') : con))
+        .map((con) =>
+          Array.isArray(con) ? con.map((innerCon) => `${innerCon.content} ${innerCon?.url}`).join(' ') : con
+        )
         .join(' ');
     },
     []
