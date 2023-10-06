@@ -19,7 +19,7 @@ type alertType = 'error' | 'warning';
 export function LackIntegrationAlert({
   channelType,
   text,
-  type = 'warning',
+  type = 'error',
   isPrimaryMissing,
 }: {
   channelType: ChannelTypeEnum;
@@ -118,7 +118,7 @@ const WarningMessage = styled.div<{ backgroundColor: string }>`
 function alertTypeToDoubleArrowColor(type: alertType) {
   switch (type) {
     case 'warning':
-      return colors.warning;
+      return 'rgb(234, 169, 0)';
     default:
       return 'undefined';
   }
@@ -140,7 +140,7 @@ function alertTypeToMessageTextColor(type: alertType) {
     case 'error':
       return colors.error;
     case 'warning':
-      return colors.warning;
+      return 'rgb(234, 169, 0)';
     default:
       return undefined;
   }
