@@ -4,6 +4,7 @@ import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useIntercom } from 'react-use-intercom';
 
+
 import { CONTEXT_PATH, INTERCOM_APP_ID, IS_DOCKER_HOSTED, LOGROCKET_ID } from '../../../config';
 import { ROUTES } from '../../../constants/routes.enum';
 import { colors, Dropdown, shadows, Text, Tooltip } from '../../../design-system';
@@ -156,6 +157,19 @@ export function HeaderNav({ isIntercomOpened }: Props) {
       Sign Out
     </Dropdown.Item>,
   ];
+
+  isSelfHosted &&
+    profileMenuMantine.push(
+      <Dropdown.Item
+        style={{
+          padding: '10px 20px',
+        }}
+        disabled
+        key="version"
+      >
+        <Text color={colors.B40}>Version: {REACT_APP_VERSION}</Text>
+      </Dropdown.Item>
+    );
 
   return (
     <Header
