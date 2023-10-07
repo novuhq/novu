@@ -347,3 +347,4 @@ function showWelcomeScreen() {
   console.log(chalk.bold(textGradient(`  Welcome to the codebase of the open-source notification infrastructure\n`)));
   /* eslint-enable  no-console */
 }
+/*done*/
