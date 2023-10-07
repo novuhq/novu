@@ -37,4 +37,12 @@ export const chatProviders: IProviderConfig[] = [
     docReference: 'https://developers.mattermost.com/integrate/webhooks/incoming/',
     logoFileName: { light: 'mattermost.svg', dark: 'mattermost.svg' },
   },
+  {
+    id: ChatProviderIdEnum.Zulip,
+    displayName: 'Zulip',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: [] as IConfigCredentials[],
+    docReference: 'https://docs.novu.co/channels-and-providers/chat/zulip',
+    logoFileName: { light: 'zulip.svg', dark: 'zulip.svg' },
+  },
 ];

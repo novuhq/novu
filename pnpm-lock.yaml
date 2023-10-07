@@ -1385,6 +1385,7 @@ importers:
       '@novu/termii': ^0.20.0-alpha.0
       '@novu/testing': ^0.20.0-alpha.0
       '@novu/twilio': ^0.20.0-alpha.0
+      '@novu/zulip': ^0.20.0-alpha.0
       '@sentry/node': ^7.12.1
       '@taskforcesh/bullmq-pro': 5.1.14
       '@types/analytics-node': ^3.1.9
@@ -1478,6 +1479,7 @@ importers:
       '@novu/termii': link:../../providers/termii
       '@novu/testing': link:../../libs/testing
       '@novu/twilio': link:../../providers/twilio
+      '@novu/zulip': link:../../providers/zulip
       '@sentry/node': 7.47.0
       analytics-node: 6.2.0
       bullmq: 3.10.4
@@ -3624,6 +3626,37 @@ importers:
       ts-jest: 27.1.5_jt6hjr4g6reedzkbayzypxjbqa
       ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
       typedoc: 0.24.6_typescript@4.9.5
+      typescript: 4.9.5
+
+  providers/zulip:
+    specifiers:
+      '@istanbuljs/nyc-config-typescript': ~1.0.1
+      '@novu/stateless': 0.16.3
+      '@types/jest': ~27.5.2
+      axios: ^1.5.1
+      cspell: ~6.19.2
+      jest: ~27.5.1
+      npm-run-all: ^4.1.5
+      nyc: ~15.1.0
+      prettier: ~2.8.0
+      rimraf: ~3.0.2
+      ts-jest: ~27.1.5
+      ts-node: ~10.9.1
+      typescript: 4.9.5
+    dependencies:
+      '@novu/stateless': 0.16.3
+      axios: 1.5.1
+    devDependencies:
+      '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
+      '@types/jest': 27.5.2
+      cspell: 6.19.2
+      jest: 27.5.1_ts-node@10.9.1
+      npm-run-all: 4.1.5
+      nyc: 15.1.0
+      prettier: 2.8.7
+      rimraf: 3.0.2
+      ts-jest: 27.1.5_tdguimvmawsauzyxxfukpkg77i
+      ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
       typescript: 4.9.5
 
 packages:
@@ -11161,7 +11194,7 @@ packages:
       '@jest/test-result': 27.5.1
       '@jest/transform': 27.5.1
       '@jest/types': 27.5.1
-      '@types/node': 14.18.42
+      '@types/node': 16.11.7
       ansi-escapes: 4.3.2
       chalk: 4.1.2
       emittery: 0.8.1
@@ -11205,7 +11238,7 @@ packages:
       '@jest/test-result': 27.5.1
       '@jest/transform': 27.5.1
       '@jest/types': 27.5.1
-      '@types/node': 14.18.42
+      '@types/node': 16.11.7
       ansi-escapes: 4.3.2
       chalk: 4.1.2
       emittery: 0.8.1
@@ -13374,6 +13407,15 @@ packages:
 
   /@novu/stateless/0.15.0:
     resolution: {integrity: sha512-NS7n34dlEB48EthLek0NWZXh+nJtbOUVkWdyprGF2f/WCCG/wT+yUtYLOauMffrySpnXEjY9zimyGgIWJQRl0g==}
+    engines: {node: '>=10'}
+    dependencies:
+      handlebars: 4.7.7
+      lodash.get: 4.4.2
+      lodash.merge: 4.6.2
+    dev: false
+
+  /@novu/stateless/0.16.3:
+    resolution: {integrity: sha512-9wrqUluSaR9rCdDp4oUWFBwsk6OSM4P+yMaEtFGHrGmSPMcspnvXQaQoARKakuUpCXFvQlPPJq5+yaicv4o/hA==}
     engines: {node: '>=10'}
     dependencies:
       handlebars: 4.7.7
@@ -22584,6 +22626,15 @@ packages:
     transitivePeerDependencies:
       - debug
 
+  /axios/1.5.1:
+    resolution: {integrity: sha512-Q28iYCWzNHjAm+yEAot5QaAMxhMghWLFVf7rRdwhUI+c2jix2DUXjAHXVi+s1ibs3mjPO/cCgbA++3BjD0vP/A==}
+    dependencies:
+      follow-redirects: 1.15.2
+      form-data: 4.0.0
+      proxy-from-env: 1.1.0
+    transitivePeerDependencies:
+      - debug
+
   /axobject-query/3.1.1:
     resolution: {integrity: sha512-goKlv8DZrK9hUh975fnHzhNIO4jUnFCfv/dszV5VwUGDFjI6vQ2VwoyjYjYNEbBE8AH87TduWP5uyDR1D+Iteg==}
     dependencies:
@@ -25241,17 +25292,17 @@ packages:
     dependencies:
       '@cspell/cspell-pipe': 6.19.2
       chalk: 4.1.2
-      commander: 10.0.0
+      commander: 10.0.1
       cspell-gitignore: 6.19.2
       cspell-glob: 6.19.2
       cspell-lib: 6.19.2
-      fast-glob: 3.2.12
+      fast-glob: 3.3.0
       fast-json-stable-stringify: 2.1.0
       file-entry-cache: 6.0.1
-      fs-extra: 11.1.0
+      fs-extra: 11.1.1
       get-stdin: 8.0.0
       imurmurhash: 0.1.4
-      semver: 7.5.0
+      semver: 7.5.4
       strip-ansi: 6.0.1
       vscode-uri: 3.0.7
     transitivePeerDependencies:
@@ -31475,7 +31526,7 @@ packages:
       '@jest/environment': 27.5.1
       '@jest/test-result': 27.5.1
       '@jest/types': 27.5.1
-      '@types/node': 14.18.42
+      '@types/node': 16.11.7
       chalk: 4.1.2
       co: 4.6.0
       dedent: 0.7.0
@@ -31942,7 +31993,7 @@ packages:
       '@jest/environment': 27.5.1
       '@jest/fake-timers': 27.5.1
       '@jest/types': 27.5.1
-      '@types/node': 14.18.42
+      '@types/node': 16.11.7
       jest-mock: 27.5.1
       jest-util: 27.5.1
       jsdom: 16.7.0
@@ -32056,7 +32107,7 @@ packages:
       '@jest/source-map': 27.5.1
       '@jest/test-result': 27.5.1
       '@jest/types': 27.5.1
-      '@types/node': 14.18.42
+      '@types/node': 16.11.7
       chalk: 4.1.2
       co: 4.6.0
       expect: 27.5.1
@@ -32497,7 +32548,7 @@ packages:
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
     dependencies:
       '@jest/types': 27.5.1
-      '@types/node': 14.18.42
+      '@types/node': 16.11.7
       chalk: 4.1.2
       ci-info: 3.8.0
       graceful-fs: 4.2.11
@@ -36371,7 +36422,7 @@ packages:
       '@yarnpkg/lockfile': 1.1.0
       '@yarnpkg/parsers': 3.0.0-rc.42
       '@zkochan/js-yaml': 0.0.6
-      axios: 1.4.0
+      axios: 1.5.1
       chalk: 4.1.2
       cli-cursor: 3.1.0
       cli-spinners: 2.6.1
@@ -36433,7 +36484,7 @@ packages:
       '@yarnpkg/lockfile': 1.1.0
       '@yarnpkg/parsers': 3.0.0-rc.42
       '@zkochan/js-yaml': 0.0.6
-      axios: 1.4.0
+      axios: 1.5.1
       chalk: 4.1.2
       cli-cursor: 3.1.0
       cli-spinners: 2.6.1
@@ -36496,7 +36547,7 @@ packages:
       '@yarnpkg/lockfile': 1.1.0
       '@yarnpkg/parsers': 3.0.0-rc.42
       '@zkochan/js-yaml': 0.0.6
-      axios: 1.4.0
+      axios: 1.5.1
       chalk: 4.1.2
       cli-cursor: 3.1.0
       cli-spinners: 2.6.1
@@ -41708,6 +41759,7 @@ packages:
     hasBin: true
     dependencies:
       lru-cache: 6.0.0
+    dev: false
 
   /semver/7.5.2:
     resolution: {integrity: sha512-SoftuTROv/cRjCze/scjGyiDtcUyxw1rgYQSZY7XTmtR5hX+dm76iDbTH8TkLPHCQmlbQVSSbNZCPM2hb0knnQ==}
