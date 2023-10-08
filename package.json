@@ -184,6 +184,7 @@
     "pnpm": "^7.33.4"
   },
   "dependencies": {
+    "@novu/node": "^0.20.0-alpha.0",
     "nx": "^15.9.2",
     "tslib": "^2.4.0"
   },
