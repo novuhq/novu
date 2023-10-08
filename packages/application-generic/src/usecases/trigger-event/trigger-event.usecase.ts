@@ -32,7 +32,7 @@ import { MapTriggerRecipientsCommand } from '../map-trigger-recipients/map-trigg
 import { SubscriberProcessQueueService } from '../../services/queues/subscriber-process-queue.service';
 
 const LOG_CONTEXT = 'TriggerEventUseCase';
-const CHUNK_SIZE = 200;
+const CHUNK_SIZE = 100;
 
 @Injectable()
 export class TriggerEvent {
