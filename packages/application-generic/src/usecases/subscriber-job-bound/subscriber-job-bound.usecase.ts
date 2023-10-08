@@ -31,7 +31,10 @@ import {
 import { AnalyticsService } from '../../services/analytics.service';
 import { ProcessTenant } from '../process-tenant';
 import { SubscriberJobBoundCommand } from './subscriber-job-bound.command';
-import { buildNotificationTemplateKey, CachedEntity } from '../../services';
+import {
+  buildNotificationTemplateKey,
+  CachedEntity,
+} from '../../services/cache';
 
 const LOG_CONTEXT = 'SubscriberJobBoundUseCase';
 
