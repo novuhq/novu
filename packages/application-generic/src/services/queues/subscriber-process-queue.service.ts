@@ -6,7 +6,7 @@ import { QueueBaseService } from './queue-base.service';
 export class SubscriberProcessQueueService extends QueueBaseService {
   private readonly LOG_CONTEXT = 'SubscriberProcessQueueService';
   constructor() {
-    super(JobTopicNameEnum.SUBSCRIBER_PROCESS);
+    super(JobTopicNameEnum.PROCESS_SUBSCRIBER);
 
     Logger.log(`Creating queue ${this.topic}`, this.LOG_CONTEXT);
 

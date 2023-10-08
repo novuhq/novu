@@ -16,7 +16,7 @@ export class JobsService {
   constructor(private isClusterMode?: boolean) {
     this.workflowQueue = new TestingQueueService(JobTopicNameEnum.WORKFLOW).queue;
     this.standardQueue = new TestingQueueService(JobTopicNameEnum.STANDARD).queue;
-    this.subscriberProcessQueue = new TestingQueueService(JobTopicNameEnum.SUBSCRIBER_PROCESS).queue;
+    this.subscriberProcessQueue = new TestingQueueService(JobTopicNameEnum.PROCESS_SUBSCRIBER).queue;
   }
 
   public async awaitParsingEvents() {

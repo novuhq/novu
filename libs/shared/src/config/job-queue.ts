@@ -5,7 +5,7 @@ export enum JobTopicNameEnum {
   STANDARD = 'standard',
   WEB_SOCKETS = 'ws_socket_queue',
   WORKFLOW = 'trigger-handler',
-  SUBSCRIBER_PROCESS = 'subscriber-process',
+  PROCESS_SUBSCRIBER = 'process-subscriber',
 }
 
 export enum ObservabilityBackgroundTransactionEnum {

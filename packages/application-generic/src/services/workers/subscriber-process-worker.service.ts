@@ -12,7 +12,7 @@ export class SubscriberProcessWorkerService
   implements INovuWorker
 {
   constructor() {
-    super(JobTopicNameEnum.SUBSCRIBER_PROCESS);
+    super(JobTopicNameEnum.PROCESS_SUBSCRIBER);
     Logger.log(`Worker ${this.topic} instantiated`, LOG_CONTEXT);
   }
 }
