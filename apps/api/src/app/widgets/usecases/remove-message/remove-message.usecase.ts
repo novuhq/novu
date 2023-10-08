@@ -1,5 +1,4 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { v4 as uuid } from 'uuid';
 import {
   MessageEntity,
   DalException,
@@ -100,7 +99,7 @@ export class RemoveMessage {
     const eventMessage = mark === MarkEnum.READ ? WebSocketEventEnum.UNREAD : WebSocketEventEnum.UNSEEN;
 
     this.webSocketsQueueService.add(
-      uuid(),
+      'sendMessage',
       {
         event: eventMessage,
         userId: subscriber._id,

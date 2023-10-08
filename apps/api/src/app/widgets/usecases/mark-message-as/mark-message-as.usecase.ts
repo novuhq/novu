@@ -1,5 +1,4 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { v4 as uuid } from 'uuid';
 import { MessageEntity, MessageRepository, SubscriberRepository, SubscriberEntity, MemberRepository } from '@novu/dal';
 import { ChannelTypeEnum, WebSocketEventEnum } from '@novu/shared';
 import {
@@ -87,7 +86,7 @@ export class MarkMessageAs {
     const eventMessage = mark === MarkEnum.READ ? WebSocketEventEnum.UNREAD : WebSocketEventEnum.UNSEEN;
 
     this.webSocketsQueueService.add(
-      uuid(),
+      'sendMessage',
       {
         event: eventMessage,
         userId: subscriber._id,
