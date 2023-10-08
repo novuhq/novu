@@ -16,14 +16,17 @@ export class GetDigestEventsBackoff extends GetDigestEvents {
 
     const jobs = await this.jobRepository.find(
       {
+        createdAt: {
+          $gte: currentJob.createdAt,
+        },
         _templateId: currentJob._templateId,
-        status: JobStatusEnum.MERGED,
-        type: StepTypeEnum.DIGEST,
+        status: JobStatusEnum.COMPLETED,
+        type: StepTypeEnum.TRIGGER,
         _environmentId: currentJob._environmentId,
         ...(digestKey && { [`payload.${digestKey}`]: digestValue }),
         _subscriberId: command._subscriberId,
       },
-      'payload'
+      'payload _id'
     );
 
     return this.filterJobs(currentJob, currentJob.transactionId, jobs);
