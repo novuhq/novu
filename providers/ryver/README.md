@@ -8,7 +8,8 @@ A Ryver chat provider library for [@novu/node](https://github.com/novuhq/novu)
 import { RyverProvider } from '@novu/ryver';
 
 const provider = new RyverProvider({
-  apiKey: process.env.API_KEY,
-  channelID: process.env.CHANNEL_ID,
+  username: process.env.username,
+  password: process.env.password,
+  clientId: process.env.clientId,
 });
 ````

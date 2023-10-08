@@ -1,48 +1,67 @@
 import { RyverChatProvider } from './ryver.provider';
-import axios, { AxiosResponse } from 'axios';
+import axios from 'axios';
 
-// Mock axios.post method
+// Create a mock function for Axios post method
 jest.mock('axios');
+const axiosPostMock = jest.fn();
 
-test('RyverChatProvider should send a message successfully', async () => {
-  // Create an instance of RyverChatProvider
-  const ryverProvider = new RyverChatProvider();
+// Replace the Axios post method with the mock function
+axios.post = axiosPostMock;
 
-  // Define mock data and response
-  const mockOptions = {
-    webhookUrl: 'https://example.com/webhook',
-    content: 'Test message',
-  };
-
-  const mockResponse: AxiosResponse = {
-    data: {
-      id: 'messageId',
-      timestamp: '2023-10-06T12:00:00Z',
+// Create a mock response for Axios
+const mockResponse = {
+  data: {
+    d: {
+      id: '12345',
     },
-    status: 200,
-    statusText: 'OK',
-    headers: {}, // Include an empty headers object
-    config: {
-      headers: undefined,
-    },
-  };
+  },
+};
 
-  // Mock the axios.post method to return the mockResponse
-  (axios.post as jest.MockedFunction<typeof axios.post>).mockResolvedValue(
-    mockResponse
-  );
+describe('RyverChatProvider', () => {
+  let ryverProvider;
 
-  // Call the sendMessage method
-  const result = await ryverProvider.sendMessage(mockOptions);
-
-  // Assertions
-  expect(result).toEqual({
-    id: 'messageId',
-    date: '2023-10-06T12:00:00Z',
+  beforeAll(() => {
+    ryverProvider = new RyverChatProvider({
+      userId: 'your-username',
+      password: 'your-password',
+      clientId: 'workrooms-id',
+    });
   });
 
-  // Ensure that axios.post was called with the correct arguments
-  expect(axios.post).toHaveBeenCalledWith('https://example.com/webhook', {
-    content: 'Test message',
+  it('should send a chat message successfully', async () => {
+    // Mock the Axios post method to simulate a resolved Promise
+    axiosPostMock.mockResolvedValue(mockResponse);
+
+    const chatOptions = {
+      content: 'This is an example chat message',
+      password: 'your-password',
+    };
+
+    const result = await ryverProvider.sendMessage(chatOptions);
+    const workroomsPath = `/workrooms(${ryverProvider?.clientId})/Chat.PostMessage()`;
+
+    // Assert that Axios.post was called with the correct arguments
+    expect(axiosPostMock).toHaveBeenCalledWith(
+      RyverChatProvider.BASE_URL + workroomsPath,
+      {
+        createSource: {
+          displayName: 'Ryver API',
+        },
+        body: 'This is an example chat message',
+      },
+      {
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          Authorization: 'Basic eW91ci11c2VybmFtZTp5b3VyLXBhc3N3b3Jk', // Base64-encoded username:password
+        },
+      }
+    );
+
+    // Assert that the result matches the expected response
+    expect(result).toEqual({
+      id: '12345',
+      date: expect.any(String), // We can't predict the exact date in the test
+    });
   });
 });

@@ -9,6 +9,12 @@ export class RyverHandler extends BaseChatHandler {
   }
 
   buildProvider(_credentials: ICredentials) {
-    this.provider = new RyverChatProvider();
+    this.provider = new RyverChatProvider({
+      userId: _credentials.user,
+      password: _credentials.password,
+      clientId: _credentials.clientId,
+    });
   }
 }
+
+export * from './ryver.handler';
