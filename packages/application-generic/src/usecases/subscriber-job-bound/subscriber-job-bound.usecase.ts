@@ -31,6 +31,7 @@ import {
 import { AnalyticsService } from '../../services/analytics.service';
 import { ProcessTenant } from '../process-tenant';
 import { SubscriberJobBoundCommand } from './subscriber-job-bound.command';
+import { buildNotificationTemplateKey, CachedEntity } from '../../services';
 
 const LOG_CONTEXT = 'SubscriberJobBoundUseCase';
 
@@ -58,8 +59,7 @@ export class SubscriberJobBound {
 
     const {
       subscriber,
-      template,
-      templateProviderIds,
+      templateId,
       environmentId,
       organizationId,
       userId,
@@ -67,6 +67,16 @@ export class SubscriberJobBound {
       tenant,
       identifier,
     } = command;
+
+    const template = await this.getNotificationTemplate({
+      _id: templateId,
+      environmentId: environmentId,
+    });
+
+    const templateProviderIds = await this.getProviderIdsForTemplate(
+      environmentId,
+      template
+    );
 
     await this.validateSubscriberIdProperty(subscriber);
 
@@ -168,5 +178,53 @@ export class SubscriberJobBound {
     }
 
     return true;
+  }
+
+  @CachedEntity({
+    builder: (command: { _id: string; environmentId: string }) =>
+      buildNotificationTemplateKey({
+        _environmentId: command.environmentId,
+        _id: command._id,
+      }),
+  })
+  private async getNotificationTemplate({
+    _id,
+    environmentId,
+  }: {
+    _id: string;
+    environmentId: string;
+  }) {
+    return await this.notificationTemplateRepository.findById(
+      _id,
+      environmentId
+    );
+  }
+
+  @InstrumentUsecase()
+  private async getProviderIdsForTemplate(
+    environmentId: string,
+    template: NotificationTemplateEntity
+  ): Promise<Record<ChannelTypeEnum, ProvidersIdEnum>> {
+    const providers = {} as Record<ChannelTypeEnum, ProvidersIdEnum>;
+
+    for (const step of template?.steps) {
+      const type = step.template?.type;
+      if (!type) continue;
+
+      const channelType = STEP_TYPE_TO_CHANNEL_TYPE.get(type);
+
+      if (providers[channelType] || !channelType) continue;
+
+      if (channelType === ChannelTypeEnum.IN_APP) {
+        providers[channelType] = InAppProviderIdEnum.Novu;
+      } else {
+        const provider = await this.getProviderId(environmentId, channelType);
+        if (provider) {
+          providers[channelType] = provider;
+        }
+      }
+    }
+
+    return providers;
   }
 }

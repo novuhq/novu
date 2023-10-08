@@ -3,6 +3,7 @@ import {
   IsString,
   IsOptional,
   ValidateNested,
+  IsMongoId,
 } from 'class-validator';
 import {
   ChannelTypeEnum,
@@ -39,10 +40,8 @@ export class SubscriberJobBoundCommand extends EnvironmentWithUserCommand {
   to: ISubscribersDefine[];
 
   @IsDefined()
-  template: NotificationTemplateEntity;
-
-  @IsDefined()
-  templateProviderIds: Record<ChannelTypeEnum, ProvidersIdEnum>;
+  @IsMongoId()
+  templateId: string;
 
   @IsDefined()
   subscriber: ISubscribersDefine;

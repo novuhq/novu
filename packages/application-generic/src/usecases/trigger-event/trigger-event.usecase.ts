@@ -162,11 +162,6 @@ export class TriggerEvent {
 
       await this.validateSubscriberIdProperty(mappedRecipients);
 
-      const templateProviderIds = await this.getProviderIdsForTemplate(
-        command.environmentId,
-        template
-      );
-
       const jobs = mappedRecipients.map((subscriber) => {
         return {
           name: command.transactionId + subscriber.subscriberId,
@@ -180,8 +175,6 @@ export class TriggerEvent {
             overrides: command.overrides,
             tenant: command.tenant,
             ...(actor && actorProcessed && { actor: actorProcessed }),
-            template,
-            templateProviderIds,
             subscriber,
           },
           groupId: command.organizationId,
@@ -245,34 +238,6 @@ export class TriggerEvent {
         'transactionId property is not unique, please make sure all triggers have a unique transactionId'
       );
     }
-  }
-
-  @InstrumentUsecase()
-  private async getProviderIdsForTemplate(
-    environmentId: string,
-    template: NotificationTemplateEntity
-  ): Promise<Record<ChannelTypeEnum, ProvidersIdEnum>> {
-    const providers = {} as Record<ChannelTypeEnum, ProvidersIdEnum>;
-
-    for (const step of template?.steps) {
-      const type = step.template?.type;
-      if (!type) continue;
-
-      const channelType = STEP_TYPE_TO_CHANNEL_TYPE.get(type);
-
-      if (providers[channelType] || !channelType) continue;
-
-      if (channelType === ChannelTypeEnum.IN_APP) {
-        providers[channelType] = InAppProviderIdEnum.Novu;
-      } else {
-        const provider = await this.getProviderId(environmentId, channelType);
-        if (provider) {
-          providers[channelType] = provider;
-        }
-      }
-    }
-
-    return providers;
   }
 
   @Instrument()
