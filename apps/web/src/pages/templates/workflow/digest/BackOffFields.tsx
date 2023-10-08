@@ -8,18 +8,23 @@ import { inputStyles } from '../../../../design-system/config/inputs.styles';
 import { IntervalSelect } from './IntervalSelect';
 import { BackOffTooltipIcon } from './icons/BackOffTooltipIcon';
 import { When } from '../../../../components/utils/When';
+import { useEnvController } from '../../../../hooks';
+import { useStepFormPath } from '../../hooks/useStepFormPath';
 
 const defaultBackoffAmount = '5';
 
-export const BackOffFields = ({ index, control, readonly }) => {
+export const BackOffFields = () => {
+  const { readonly } = useEnvController();
+  const stepFormPath = useStepFormPath();
   const {
+    control,
     formState: { errors, isSubmitted },
     watch,
     setValue,
   } = useFormContext();
 
-  const backoff = watch(`steps.${index}.digestMetadata.${DigestTypeEnum.REGULAR}.backoff`);
-  const backoffAmountFieldName = `steps.${index}.digestMetadata.${DigestTypeEnum.REGULAR}.backoffAmount`;
+  const backoff = watch(`${stepFormPath}.digestMetadata.${DigestTypeEnum.REGULAR}.backoff`);
+  const backoffAmountFieldName = `${stepFormPath}.digestMetadata.${DigestTypeEnum.REGULAR}.backoffAmount`;
   const showErrors = isSubmitted && errors?.steps;
 
   return (
@@ -40,7 +45,7 @@ export const BackOffFields = ({ index, control, readonly }) => {
       >
         <Group spacing={0} mt={20} sx={{ color: colors.B60 }}>
           <Controller
-            name={`steps.${index}.digestMetadata.${DigestTypeEnum.REGULAR}.backoff`}
+            name={`${stepFormPath}.digestMetadata.${DigestTypeEnum.REGULAR}.backoff`}
             defaultValue={false}
             control={control}
             render={({ field }) => {
@@ -100,7 +105,7 @@ export const BackOffFields = ({ index, control, readonly }) => {
               <IntervalSelect
                 readonly={readonly}
                 control={control}
-                name={`steps.${index}.digestMetadata.${DigestTypeEnum.REGULAR}.backoffUnit`}
+                name={`${stepFormPath}.digestMetadata.${DigestTypeEnum.REGULAR}.backoffUnit`}
                 showErrors={showErrors}
                 testId="time-unit-backoff"
               />

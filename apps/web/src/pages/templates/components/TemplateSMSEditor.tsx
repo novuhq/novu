@@ -1,8 +1,7 @@
-import { Control, Controller, useFormContext } from 'react-hook-form';
+import { Controller, useFormContext } from 'react-hook-form';
 import { ChannelTypeEnum } from '@novu/shared';
 
 import { LackIntegrationAlert } from './LackIntegrationAlert';
-import type { IForm } from './formTypes';
 import { Textarea } from '../../../design-system';
 import {
   useEnvController,
@@ -12,25 +11,16 @@ import {
 } from '../../../hooks';
 import { VariableManager } from './VariableManager';
 import { StepSettings } from '../workflow/SideBar/StepSettings';
+import { useStepFormPath } from '../hooks/useStepFormPath';
+import { TranslateProductLead } from './TranslateProductLead';
 
 const templateFields = ['content'];
 
-export function TemplateSMSEditor({
-  control,
-  index,
-  variantIndex,
-}: {
-  control: Control<IForm>;
-  index: number;
-  variantIndex?: number;
-  errors: any;
-}) {
+export function TemplateSMSEditor() {
   const { readonly, environment } = useEnvController();
-  const path = variantIndex ? `steps.${index}.variants.${variantIndex}` : `steps.${index}`;
-  const {
-    formState: { errors },
-  } = useFormContext();
-  const variablesArray = useVariablesManager(index, templateFields);
+  const stepFormPath = useStepFormPath();
+  const { control } = useFormContext();
+  const variablesArray = useVariablesManager(templateFields);
   const { hasActiveIntegration } = useHasActiveIntegrations({
     channelType: ChannelTypeEnum.SMS,
   });
@@ -48,9 +38,9 @@ export function TemplateSMSEditor({
           isPrimaryMissing
         />
       ) : null}
-      <StepSettings path={path} index={index} />
+      <StepSettings />
       <Controller
-        name={`${path}.template.content` as any}
+        name={`${stepFormPath}.template.content` as any}
         defaultValue=""
         control={control}
         render={({ field, fieldState }) => (
@@ -66,7 +56,8 @@ export function TemplateSMSEditor({
           />
         )}
       />
-      <VariableManager index={index} variablesArray={variablesArray} />
+      <VariableManager variablesArray={variablesArray} path={`${stepFormPath}.template`} />
+      <TranslateProductLead id="translate-sms-editor" />
     </>
   );
 }

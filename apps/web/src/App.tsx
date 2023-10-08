@@ -61,7 +61,6 @@ import { ProductLead } from './components/utils/ProductLead';
 import { SSO, UserAccess } from './design-system/icons';
 import { Cloud } from './design-system/icons/general/Cloud';
 import { BrandingForm, LayoutsListPage } from './pages/brand/tabs';
-import { ChannelStepVariantEditor } from './pages/templates/components/ChannelStepVariantEditor';
 import { VariantsPage } from './pages/templates/components/VariantsPage';
 
 library.add(far, fas);
@@ -210,7 +209,7 @@ function App() {
                     <Route path="providers" element={<ProvidersPage />} />
                     <Route path=":channel/:stepUuid" element={<ChannelStepEditor />} />
                     <Route path=":channel/:stepUuid/variants" element={<VariantsPage />} />
-                    <Route path=":channel/:stepUuid/variants/:variantUuid" element={<ChannelStepVariantEditor />} />
+                    <Route path=":channel/:stepUuid/variants/:variantUuid" element={<ChannelStepEditor />} />
                   </Route>
                   <Route path={ROUTES.WORKFLOWS} element={<WorkflowListPage />} />
                   <Route path={ROUTES.TENANTS} element={<TenantsPage />}>

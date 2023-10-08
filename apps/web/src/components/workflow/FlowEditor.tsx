@@ -1,4 +1,12 @@
-import { ComponentType, MouseEvent as ReactMouseEvent, useCallback, useEffect, useRef, useState } from 'react';
+import {
+  ComponentType,
+  MouseEvent,
+  MouseEvent as ReactMouseEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import ReactFlow, {
   addEdge,
   Background,
@@ -23,7 +31,7 @@ import { StepTypeEnum } from '@novu/shared';
 import { colors } from '../../design-system';
 import { getChannel } from '../../utils/channels';
 import { useEnvController } from '../../hooks';
-import type { IEdge, IFlowStep } from './types';
+import type { IEdge, IFlowStep, INode } from './types';
 
 const triggerNode: Node = {
   id: '1',
@@ -40,18 +48,15 @@ const DEFAULT_WRAPPER_STYLES = {
   minHeight: '600px',
 };
 
-interface IFlowEditorProps extends ReactFlowProps {
+export interface IFlowEditorProps extends ReactFlowProps {
   steps: IFlowStep[];
   dragging?: boolean;
   errors?: any;
-  nodeTypes: {
-    triggerNode: ComponentType<NodeProps>;
-    channelNode: ComponentType<NodeProps>;
-    addNode?: ComponentType<NodeProps>;
-  };
+  nodeTypes: Record<string, ComponentType<NodeProps>>;
   edgeTypes?: { special: ComponentType<EdgeProps> };
   withControls?: boolean;
   wrapperStyles?: React.CSSProperties;
+  onEdit?: (e: MouseEvent<HTMLButtonElement>, node: INode) => void;
   onDelete?: (id: string) => void;
   onAddVariant?: (id: string) => void;
   onStepInit?: (step: IFlowStep) => Promise<void>;
@@ -80,6 +85,7 @@ export function FlowEditor({
   onStepInit,
   onGetStepError,
   addStep,
+  onEdit,
   onDelete,
   onAddVariant,
   ...restProps
@@ -195,26 +201,20 @@ export function FlowEditor({
     i: number
   ): Node {
     const channel = getChannel(step.template?.type);
-    const hasVariants = step.variants && step.variants?.length > 0;
 
     return {
       id: newId,
-      type: hasVariants ? 'variantNode' : 'channelNode',
+      type: 'channelNode',
       position: { x: position.x, y: position.y },
       parentNode: parentId,
       data: {
         ...channel,
-        active: step.active,
         index: i,
         error: onGetStepError?.(i, errors) ?? '',
         onDelete,
         onAddVariant,
-        uuid: step.uuid,
-        name: step.name,
-        content: step.template?.content,
-        htmlContent: step.template?.htmlContent,
-        delayMetadata: step.delayMetadata,
-        digestMetadata: step.digestMetadata,
+        onEdit,
+        step,
       },
     };
   }
@@ -382,6 +382,7 @@ const Wrapper = styled.div<{ dark: boolean }>`
   .react-flow__attribution {
     background: transparent;
     opacity: 0.5;
+    z-index: 1;
   }
   .react-flow__edge-path {
     stroke: ${colors.B60};

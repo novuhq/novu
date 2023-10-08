@@ -8,6 +8,7 @@ import { colors, shadows } from '../../../../design-system';
 import { TextAlignment, Wifi } from '../../../../design-system/icons';
 import { useEnvController } from '../../../../hooks';
 import type { IForm } from '../formTypes';
+import { useStepFormPath } from '../../hooks/useStepFormPath';
 
 const usePopoverStyles = createStyles((theme) => ({
   dropdown: {
@@ -27,17 +28,17 @@ const usePopoverStyles = createStyles((theme) => ({
 }));
 
 export function ButtonRowContent({
-  stepIndex,
   blockIndex,
   brandingColor,
 }: {
-  stepIndex: number;
   blockIndex: number;
   brandingColor: string | undefined;
 }) {
   const methods = useFormContext<IForm>();
-  const content = methods.watch(`steps.${stepIndex}.template.content.${blockIndex}.content`);
-  const textAlign = methods.watch(`steps.${stepIndex}.template.content.${blockIndex}.styles.textAlign`);
+  const stepFormPath = useStepFormPath();
+
+  const content = methods.watch(`${stepFormPath}.template.content.${blockIndex}.content`);
+  const textAlign = methods.watch(`${stepFormPath}.template.content.${blockIndex}.styles.textAlign`);
   const { readonly } = useEnvController();
   const [dropDownVisible, setDropDownVisible] = useState<boolean>(false);
   const { classes } = usePopoverStyles();
@@ -83,7 +84,7 @@ export function ButtonRowContent({
         </Popover.Target>
         <Popover.Dropdown>
           <Controller
-            name={`steps.${stepIndex}.template.content.${blockIndex}.content`}
+            name={`${stepFormPath}.template.content.${blockIndex}.content`}
             defaultValue=""
             control={methods.control}
             render={({ field }) => {
@@ -100,7 +101,7 @@ export function ButtonRowContent({
             }}
           />
           <Controller
-            name={`steps.${stepIndex}.template.content.${blockIndex}.url`}
+            name={`${stepFormPath}.template.content.${blockIndex}.url`}
             defaultValue=""
             control={methods.control}
             render={({ field }) => {

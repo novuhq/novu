@@ -14,6 +14,7 @@ import { SystemAvatarIconEnum, IActor, ActorTypeEnum } from '@novu/shared';
 import { colors, Input, Switch, Text, Tooltip } from '../../../../../design-system';
 import { Avatar, Camera } from '../../../../../design-system/icons';
 import { AvatarWrapper, IconWrapper, useStyles } from './AvatarContainer.styles';
+import { useStepFormPath } from '../../../hooks/useStepFormPath';
 
 const MENU_CLICK_OUTSIDE_EVENTS = ['click', 'mousedown', 'touchstart'];
 
@@ -57,20 +58,19 @@ const systemIcons = [
 ];
 
 const AvatarContainer = ({
-  index,
   opened,
   setOpened,
   readonly,
 }: {
-  index: number;
   opened: boolean;
   setOpened: Dispatch<SetStateAction<boolean>>;
   readonly: boolean;
 }) => {
+  const path = useStepFormPath();
   const {
     field: { value, onChange },
   } = useController({
-    name: `steps.${index}.template.actor` as any,
+    name: `${path}.template.actor` as any,
   });
 
   const [tooltipOpened, setTooltipOpened] = useState(() => {

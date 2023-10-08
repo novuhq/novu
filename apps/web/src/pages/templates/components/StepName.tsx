@@ -1,7 +1,4 @@
 import { Group, useMantineColorScheme } from '@mantine/core';
-import React from 'react';
-import { useOutletContext } from 'react-router-dom';
-
 import { ChannelTypeEnum, providers, StepTypeEnum } from '@novu/shared';
 
 import { StepNameInput } from './StepNameInput';
@@ -9,23 +6,20 @@ import { stepIcon, stepNames } from '../constants';
 import { useGetPrimaryIntegration, useHasActiveIntegrations } from '../../../hooks';
 import { CONTEXT_PATH } from '../../../config';
 import { DisplayPrimaryProviderIcon } from '../workflow/DisplayPrimaryProviderIcon';
+import { useStepFormPath } from '../hooks/useStepFormPath';
+import { StepNameLabel } from './StepNameLabel';
 
 export const StepName = ({
   channel,
-  color = undefined,
-  index,
-  variantIndex,
+  variantsCount,
 }: {
   channel: StepTypeEnum | ChannelTypeEnum;
-  index: number;
-  variantIndex?: number;
-  color?: any;
+  variantsCount?: number;
 }) => {
   const { colorScheme } = useMantineColorScheme();
-  const { onDelete }: any = useOutletContext();
-  const path = variantIndex ? `steps.${index}.variants.${variantIndex}` : `steps.${index}`;
+  const path = useStepFormPath();
 
-  const { hasActiveIntegration, isChannelStep, activeIntegrationsByEnv } = useHasActiveIntegrations({
+  const { isChannelStep, activeIntegrationsByEnv } = useHasActiveIntegrations({
     filterByEnv: true,
     channelType: channel as unknown as ChannelTypeEnum,
   });
@@ -45,7 +39,7 @@ export const StepName = ({
   const Icon = stepIcon[channel];
 
   return (
-    <Group noWrap>
+    <Group noWrap spacing={12} sx={{ alignItems: 'flex-start', maxWidth: 800, width: '100%' }}>
       <DisplayPrimaryProviderIcon
         Icon={Icon}
         disabledProp={{}}
@@ -53,7 +47,11 @@ export const StepName = ({
         isChannelStep={isChannelStep}
         logoSrc={logoSrc}
       />
-      <StepNameInput variantIndex={variantIndex} defaultValue={stepNames[channel]} index={index} />
+      <StepNameInput
+        path={path}
+        defaultValue={stepNames[channel]}
+        label={<StepNameLabel variantsCount={variantsCount} />}
+      />
     </Group>
   );
 };
