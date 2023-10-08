@@ -98,7 +98,7 @@ export class ActiveJobsMetricService {
             const activeCount = await queueService.bullMqService.queue.getActiveCount();
 
             Logger.verbose('active length', process.env.NEW_RELIC_LICENSE_KEY.length);
-            Logger.log('Recording active, waiting, and delayed metrics');
+            Logger.verbose('Recording active, waiting, and delayed metrics');
 
             const nr = require('newrelic');
             nr.recordMetric(`Queue/${deploymentName}/${queueService.topic}/waiting`, waitCount);

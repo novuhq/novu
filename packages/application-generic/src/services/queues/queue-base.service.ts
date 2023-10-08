@@ -88,7 +88,7 @@ export class QueueBaseService {
   }
 
   public async add(
-    id: string,
+    name: string,
     data?: any,
     groupId?: string,
     options: JobsOptions = {}
@@ -99,6 +99,6 @@ export class QueueBaseService {
       ...options,
     };
 
-    await this.instance.add(id, data, jobOptions, groupId);
+    await this.instance.add(name, data, jobOptions, groupId);
   }
 }
