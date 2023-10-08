@@ -50,7 +50,7 @@ export class Digest extends SendMessageType {
       })
     );
 
-    const getEvents = useMergedDigestId ? this.getEvents : this.backwardCompatibleGetEvents;
+    const getEvents = useMergedDigestId ? this.getEvents.bind(this) : this.backwardCompatibleGetEvents.bind(this);
 
     const events = await getEvents(command);
     const nextJobs = await this.getJobsToUpdate(command);
