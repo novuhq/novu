@@ -120,7 +120,6 @@ export class UpdateSubscriberPreference {
         _organizationId: command.organizationId,
         _subscriberId: subscriber._id,
         _templateId: command.templateId,
-        level: PreferenceLevelEnum.TEMPLATE,
       },
       {
         $set: updatePayload,
