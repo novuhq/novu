@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
+import * as _ from 'lodash';
 import {
   JobEntity,
   JobRepository,
@@ -45,6 +46,7 @@ import { MapTriggerRecipientsCommand } from '../map-trigger-recipients/map-trigg
 import { SubscriberProcessQueueService } from '../../services/queues/subscriber-process-queue.service';
 
 const LOG_CONTEXT = 'TriggerEventUseCase';
+const CHUNK_SIZE = 200;
 
 @Injectable()
 export class TriggerEvent {
@@ -165,27 +167,31 @@ export class TriggerEvent {
         template
       );
 
+      const jobs = mappedRecipients.map((subscriber) => {
+        return {
+          name: command.transactionId + subscriber.subscriberId,
+          data: {
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
+            userId: command.userId,
+            transactionId: command.transactionId,
+            identifier: command.identifier,
+            payload: command.payload,
+            overrides: command.overrides,
+            tenant: command.tenant,
+            ...(actor && actorProcessed && { actor: actorProcessed }),
+            template,
+            templateProviderIds,
+            subscriber,
+          },
+          groupId: command.organizationId,
+        };
+      });
+
       await Promise.all(
-        mappedRecipients.map((subscriber) => {
-          this.subscriberProcessQueueService.add(
-            command.transactionId + subscriber.subscriberId,
-            {
-              environmentId: command.environmentId,
-              organizationId: command.organizationId,
-              userId: command.userId,
-              transactionId: command.transactionId,
-              identifier: command.identifier,
-              payload: command.payload,
-              overrides: command.overrides,
-              tenant: command.tenant,
-              ...(actor && actorProcessed && { actor: actorProcessed }),
-              template,
-              templateProviderIds,
-              subscriber,
-            },
-            command.organizationId
-          );
-        })
+        _.chunk(jobs, CHUNK_SIZE).map((chunk) =>
+          this.subscriberProcessQueueService.addBulk(chunk)
+        )
       );
     } catch (e) {
       Logger.error(

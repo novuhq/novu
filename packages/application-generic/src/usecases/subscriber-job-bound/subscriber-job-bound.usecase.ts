@@ -35,7 +35,7 @@ import { SubscriberJobBoundCommand } from './subscriber-job-bound.command';
 const LOG_CONTEXT = 'SubscriberJobBoundUseCase';
 
 @Injectable()
-export class SubscriberJobBoundUsecase {
+export class SubscriberJobBound {
   constructor(
     private storeSubscriberJobs: StoreSubscriberJobs,
     private createNotificationJobs: CreateNotificationJobs,
@@ -135,34 +135,6 @@ export class SubscriberJobBoundUsecase {
         organizationId: command.organizationId,
       })
     );
-  }
-
-  @InstrumentUsecase()
-  private async getProviderIdsForTemplate(
-    environmentId: string,
-    template: NotificationTemplateEntity
-  ): Promise<Record<ChannelTypeEnum, ProvidersIdEnum>> {
-    const providers = {} as Record<ChannelTypeEnum, ProvidersIdEnum>;
-
-    for (const step of template?.steps) {
-      const type = step.template?.type;
-      if (!type) continue;
-
-      const channelType = STEP_TYPE_TO_CHANNEL_TYPE.get(type);
-      if (!channelType) continue;
-      if (providers[channelType]) continue;
-
-      if (channelType === ChannelTypeEnum.IN_APP) {
-        providers[channelType] = InAppProviderIdEnum.Novu;
-      } else {
-        const provider = await this.getProviderId(environmentId, channelType);
-        if (provider) {
-          providers[channelType] = provider;
-        }
-      }
-    }
-
-    return providers;
   }
 
   @Instrument()

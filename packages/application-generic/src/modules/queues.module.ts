@@ -1,11 +1,6 @@
 import { Module, Provider } from '@nestjs/common';
 
-import {
-  analyticsService,
-  bullMqTokenList,
-  cacheService,
-  distributedLockService,
-} from '../custom-providers';
+import { bullMqTokenList } from '../custom-providers';
 import {
   ActiveJobsMetricQueueServiceHealthIndicator,
   CompletedJobsMetricQueueServiceHealthIndicator,
@@ -14,14 +9,7 @@ import {
   WebSocketsQueueServiceHealthIndicator,
   WorkflowQueueServiceHealthIndicator,
 } from '../health';
-import {
-  CalculateDelayService,
-  DistributedLockService,
-  EventsDistributedLockService,
-  InvalidateCacheService,
-  OldInstanceBullMqService,
-  ReadinessService,
-} from '../services';
+import { OldInstanceBullMqService, ReadinessService } from '../services';
 import {
   ActiveJobsMetricQueueService,
   CompletedJobsMetricQueueService,
@@ -40,36 +28,7 @@ import {
   OldInstanceStandardWorkerService,
   OldInstanceWorkflowWorkerService,
 } from '../services/workers';
-import {
-  AddDelayJob,
-  AddDigestJob,
-  AddJob,
-  BulkCreateExecutionDetails,
-  CreateExecutionDetails,
-  CreateNotificationJobs,
-  CreateSubscriber,
-  CreateTenant,
-  DigestFilterSteps,
-  DigestFilterStepsBackoff,
-  DigestFilterStepsRegular,
-  DigestFilterStepsTimed,
-  GetTenant,
-  ProcessSubscriber,
-  ProcessTenant,
-  StoreSubscriberJobs,
-  SubscriberJobBoundUsecase,
-  UpdateSubscriber,
-  UpdateTenant,
-} from '../usecases';
-import {
-  JobRepository,
-  ExecutionDetailsRepository,
-  NotificationRepository,
-  SubscriberRepository,
-  IntegrationRepository,
-  NotificationTemplateRepository,
-  TenantRepository,
-} from '@novu/dal';
+
 import { SubscriberProcessQueueService } from '../services/queues/subscriber-process-queue.service';
 import { SubscriberProcessWorkerService } from '../services/workers/subscriber-process-worker.service';
 
@@ -97,41 +56,8 @@ const PROVIDERS: Provider[] = [
   OldInstanceStandardWorkerService,
   OldInstanceWorkflowWorkerService,
   OldInstanceBullMqService,
-  CreateTenant,
-  GetTenant,
-  TenantRepository,
-  UpdateTenant,
-  ProcessTenant,
-  NotificationTemplateRepository,
-  IntegrationRepository,
-  UpdateSubscriber,
-  SubscriberRepository,
-  InvalidateCacheService,
-  CreateSubscriber,
-  ProcessSubscriber,
-  DigestFilterStepsTimed,
-  DigestFilterStepsRegular,
-  NotificationRepository,
-  DigestFilterStepsBackoff,
-  DigestFilterSteps,
-  CreateNotificationJobs,
-  BulkCreateExecutionDetails,
-  AddDelayJob,
-  CalculateDelayService,
-  DistributedLockService,
-  EventsDistributedLockService,
-  AddDigestJob,
-  ExecutionDetailsRepository,
-  CreateExecutionDetails,
-  JobRepository,
-  AddJob,
-  StoreSubscriberJobs,
-  SubscriberJobBoundUsecase,
   SubscriberProcessQueueService,
   SubscriberProcessWorkerService,
-  analyticsService,
-  cacheService,
-  distributedLockService,
 ];
 
 @Module({

@@ -29,7 +29,7 @@ import {
   MapTriggerRecipients,
   GetTopicSubscribersUseCase,
   getIsTopicNotificationEnabled,
-  SubscriberJobBoundUsecase,
+  SubscriberJobBound,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
@@ -64,6 +64,7 @@ import {
 } from './usecases';
 
 import { SharedModule } from '../shared/shared.module';
+import { SubscriberProcessWorker } from './services/subscriber-process.worker';
 
 const REPOSITORIES = [JobRepository];
 
@@ -111,7 +112,7 @@ const USE_CASES = [
   MapTriggerRecipients,
   GetTopicSubscribersUseCase,
   getIsTopicNotificationEnabled,
-  SubscriberJobBoundUsecase,
+  SubscriberJobBound,
 ];
 
 const PROVIDERS: Provider[] = [
@@ -121,6 +122,7 @@ const PROVIDERS: Provider[] = [
   CompletedJobsMetricService,
   StandardWorker,
   WorkflowWorker,
+  SubscriberProcessWorker,
   OldInstanceBullMqService,
   OldInstanceStandardWorker,
   OldInstanceWorkflowWorker,
