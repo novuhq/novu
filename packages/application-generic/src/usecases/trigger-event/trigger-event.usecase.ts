@@ -159,6 +159,7 @@ export class TriggerEvent {
             tenant: command.tenant,
             ...(actor && actorProcessed && { actor: actorProcessed }),
             subscriber,
+            templateId: template._id,
           },
           groupId: command.organizationId,
         };
