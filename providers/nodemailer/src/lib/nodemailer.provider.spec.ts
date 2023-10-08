@@ -44,6 +44,7 @@ describe('Config is set to secure=false but not user and password set', () => {
 
     expect(nodemailer.createTransport).toHaveBeenCalled();
     expect(nodemailer.createTransport).toHaveBeenCalledWith({
+      name: config.host,
       host: config.host,
       port: config.port,
       secure: config.secure,
@@ -95,6 +96,7 @@ describe('Config is set to secure=false (default; TLS used if server supports ST
 
     expect(nodemailer.createTransport).toHaveBeenCalled();
     expect(nodemailer.createTransport).toHaveBeenCalledWith({
+      name: mockConfig.host,
       host: mockConfig.host,
       port: mockConfig.port,
       secure: mockConfig.secure,
