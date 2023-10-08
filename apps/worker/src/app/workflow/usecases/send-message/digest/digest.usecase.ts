@@ -42,7 +42,7 @@ export class Digest extends SendMessageType {
   }
 
   public async execute(command: SendMessageCommand) {
-    const useMegedDigestId = await this.getUseMergedDigestId.execute(
+    const useMergedDigestId = await this.getUseMergedDigestId.execute(
       FeatureFlagCommand.create({
         environmentId: command.environmentId,
         organizationId: command.organizationId,
@@ -50,7 +50,7 @@ export class Digest extends SendMessageType {
       })
     );
 
-    const getEvents = useMegedDigestId ? this.getEvents : this.backwardCompatibleGetEvents;
+    const getEvents = useMergedDigestId ? this.getEvents : this.backwardCompatibleGetEvents;
 
     const events = await getEvents(command);
     const nextJobs = await this.getJobsToUpdate(command);
