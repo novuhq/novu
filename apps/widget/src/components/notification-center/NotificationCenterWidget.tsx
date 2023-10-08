@@ -15,6 +15,7 @@ import type { INovuThemeProvider, INotificationCenterStyles } from '@novu/notifi
 import { IMessage, IOrganizationEntity, ButtonTypeEnum } from '@novu/shared';
 
 import { API_URL, WS_URL } from '../../config';
+import { isCypress } from '../../utils/browser';
 
 const DEFAULT_FONT_FAMILY = 'inherit';
 interface INotificationCenterWidgetProps {
@@ -102,7 +103,7 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
       }
     };
 
-    if (process.env.NODE_ENV === 'test') {
+    if (process.env.NODE_ENV === 'test' || isCypress) {
       // eslint-disable-next-line
       (window as any).initHandler = handler;
     }

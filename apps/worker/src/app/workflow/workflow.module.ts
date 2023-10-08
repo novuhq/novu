@@ -15,6 +15,7 @@ import {
   GetNovuLayout,
   GetNovuProviderCredentials,
   GetSubscriberPreference,
+  GetSubscriberGlobalPreference,
   GetSubscriberTemplatePreference,
   ProcessTenant,
   OldInstanceBullMqService,
@@ -25,6 +26,9 @@ import {
   StoreSubscriberJobs,
   ConditionsFilter,
   TriggerEvent,
+  MapTriggerRecipients,
+  GetTopicSubscribersUseCase,
+  getIsTopicNotificationEnabled,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
@@ -81,6 +85,7 @@ const USE_CASES = [
   GetNovuProviderCredentials,
   SelectIntegration,
   GetSubscriberPreference,
+  GetSubscriberGlobalPreference,
   GetSubscriberTemplatePreference,
   HandleLastFailedJob,
   MessageMatcher,
@@ -102,6 +107,9 @@ const USE_CASES = [
   TriggerEvent,
   UpdateJobStatus,
   WebhookFilterBackoffStrategy,
+  MapTriggerRecipients,
+  GetTopicSubscribersUseCase,
+  getIsTopicNotificationEnabled,
 ];
 
 const PROVIDERS: Provider[] = [
