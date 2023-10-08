@@ -10,6 +10,7 @@ import {
 import {
   ChannelTypeEnum,
   InAppProviderIdEnum,
+  ISubscribersDefine,
   ProvidersIdEnum,
   STEP_TYPE_TO_CHANNEL_TYPE,
 } from '@novu/shared';
@@ -39,6 +40,8 @@ import {
 } from '../../services/cache';
 import { ApiException } from '../../utils/exceptions';
 import { ProcessTenant, ProcessTenantCommand } from '../process-tenant';
+import { MapTriggerRecipients } from '../map-trigger-recipients/map-trigger-recipients.use-case';
+import { MapTriggerRecipientsCommand } from '../map-trigger-recipients/map-trigger-recipients.command';
 
 const LOG_CONTEXT = 'TriggerEventUseCase';
 
@@ -53,7 +56,8 @@ export class TriggerEvent {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private processTenant: ProcessTenant,
     private logger: PinoLogger,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private mapTriggerRecipients: MapTriggerRecipients
   ) {}
 
   @InstrumentUsecase()
@@ -97,16 +101,8 @@ export class TriggerEvent {
        * TODO: Send a 404?
        */
       if (!template) {
-        const message = 'Notification template could not be found';
-        const error = new ApiException(message);
-        Logger.error(error, message, LOG_CONTEXT);
-        throw error;
+        throw new ApiException('Notification template could not be found');
       }
-
-      const templateProviderIds = await this.getProviderIdsForTemplate(
-        command.environmentId,
-        template
-      );
 
       if (tenant) {
         const tenantProcessed = await this.processTenant.execute(
@@ -130,20 +126,44 @@ export class TriggerEvent {
         }
       }
 
+      const mappedActor = command.actor
+        ? this.mapTriggerRecipients.mapSubscriber(actor)
+        : undefined;
+
+      Logger.debug(mappedActor);
+
       // We might have a single actor for every trigger, so we only need to check for it once
       let actorProcessed;
-      if (actor) {
+      if (mappedActor) {
         actorProcessed = await this.processSubscriber.execute(
           ProcessSubscriberCommand.create({
             environmentId,
             organizationId,
             userId,
-            subscriber: actor,
+            subscriber: mappedActor,
           })
         );
       }
 
-      for (const subscriber of to) {
+      const mappedRecipients = await this.mapTriggerRecipients.execute(
+        MapTriggerRecipientsCommand.create({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          recipients: command.to,
+          transactionId: command.transactionId,
+          userId: command.userId,
+          actor: mappedActor,
+        })
+      );
+
+      await this.validateSubscriberIdProperty(mappedRecipients);
+
+      const templateProviderIds = await this.getProviderIdsForTemplate(
+        command.environmentId,
+        template
+      );
+
+      for (const subscriber of mappedRecipients) {
         this.analyticsService.mixpanelTrack(
           'Notification event trigger - [Triggers]',
           '',
@@ -166,35 +186,7 @@ export class TriggerEvent {
         );
 
         // If no subscriber makes no sense to try to create notification
-        if (subscriberProcessed) {
-          const createNotificationJobsCommand =
-            CreateNotificationJobsCommand.create({
-              environmentId,
-              identifier,
-              organizationId,
-              overrides: command.overrides,
-              payload: command.payload,
-              subscriber: subscriberProcessed,
-              template,
-              templateProviderIds,
-              to: subscriber,
-              transactionId: command.transactionId,
-              userId,
-              ...(actor && actorProcessed && { actor: actorProcessed }),
-              tenant,
-            });
-
-          const notificationJobs = await this.createNotificationJobs.execute(
-            createNotificationJobsCommand
-          );
-
-          const storeSubscriberJobsCommand = StoreSubscriberJobsCommand.create({
-            environmentId: command.environmentId,
-            jobs: notificationJobs,
-            organizationId: command.organizationId,
-          });
-          await this.storeSubscriberJobs.execute(storeSubscriberJobsCommand);
-        } else {
+        if (!subscriberProcessed) {
           /**
            * TODO: Potentially add a CreateExecutionDetails entry. Right now we
            * have the limitation we need a job to be created for that. Here there
@@ -208,7 +200,34 @@ export class TriggerEvent {
             } was not processed. No jobs are created.`,
             LOG_CONTEXT
           );
+
+          return;
         }
+
+        const notificationJobs = await this.createNotificationJobs.execute(
+          CreateNotificationJobsCommand.create({
+            environmentId,
+            identifier,
+            organizationId,
+            overrides: command.overrides,
+            payload: command.payload,
+            subscriber: subscriberProcessed,
+            template,
+            templateProviderIds,
+            to: subscriber,
+            transactionId: command.transactionId,
+            userId,
+            ...(actor && actorProcessed && { actor: actorProcessed }),
+            tenant,
+          })
+        );
+
+        const storeSubscriberJobsCommand = StoreSubscriberJobsCommand.create({
+          environmentId: command.environmentId,
+          jobs: notificationJobs,
+          organizationId: command.organizationId,
+        });
+        await this.storeSubscriberJobs.execute(storeSubscriberJobsCommand);
       }
     } catch (e) {
       Logger.error(
@@ -273,27 +292,47 @@ export class TriggerEvent {
 
     for (const step of template?.steps) {
       const type = step.template?.type;
-      if (type) {
-        const channelType = STEP_TYPE_TO_CHANNEL_TYPE.get(type);
+      if (!type) continue;
 
-        if (channelType) {
-          if (providers[channelType]) continue;
-          if (channelType === ChannelTypeEnum.IN_APP) {
-            providers[channelType] = InAppProviderIdEnum.Novu;
-          } else {
-            const provider = await this.getProviderId(
-              environmentId,
-              channelType
-            );
-            if (provider) {
-              providers[channelType] = provider;
-            }
-          }
+      const channelType = STEP_TYPE_TO_CHANNEL_TYPE.get(type);
+
+      if (providers[channelType] || !channelType) continue;
+
+      if (channelType === ChannelTypeEnum.IN_APP) {
+        providers[channelType] = InAppProviderIdEnum.Novu;
+      } else {
+        const provider = await this.getProviderId(environmentId, channelType);
+        if (provider) {
+          providers[channelType] = provider;
         }
       }
     }
 
     return providers;
+  }
+
+  @Instrument()
+  private async validateSubscriberIdProperty(
+    to: ISubscribersDefine[]
+  ): Promise<boolean> {
+    for (const subscriber of to) {
+      const subscriberIdExists =
+        typeof subscriber === 'string' ? subscriber : subscriber.subscriberId;
+
+      if (Array.isArray(subscriberIdExists)) {
+        throw new ApiException(
+          'subscriberId under property to is type array, which is not allowed please make sure all subscribers ids are strings'
+        );
+      }
+
+      if (!subscriberIdExists) {
+        throw new ApiException(
+          'subscriberId under property to is not configured, please make sure all subscribers contains subscriberId property'
+        );
+      }
+    }
+
+    return true;
   }
 
   @Instrument()
