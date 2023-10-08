@@ -77,7 +77,10 @@ export class ParseEventRequest {
 
     if (command.tenant) {
       try {
-        await this.validateTenant(typeof command.tenant === 'string' ? command.tenant : command.tenant.identifier);
+        await this.validateTenant({
+          identifier: typeof command.tenant === 'string' ? command.tenant : command.tenant.identifier,
+          _environmentId: command.environmentId,
+        });
       } catch (e) {
         return {
           acknowledged: true,
@@ -142,12 +145,13 @@ export class ParseEventRequest {
     );
   }
 
-  private async validateTenant(identifier: string) {
+  private async validateTenant({ identifier, _environmentId }: { identifier: string; _environmentId: string }) {
     const found = await this.tenantRepository.findOne({
-      identifier,
+      _environmentId: _environmentId,
+      identifier: identifier,
     });
     if (!found) {
-      throw new ApiException(`Tenant with identifier ${identifier} cound not be found`);
+      throw new ApiException(`Tenant with identifier ${identifier} could not be found`);
     }
   }
 
