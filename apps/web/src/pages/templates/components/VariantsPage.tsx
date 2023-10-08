@@ -4,9 +4,8 @@ import { StepTypeEnum } from '@novu/shared';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
 
-import { SubPageWrapper } from './SubPageWrapper';
-import { StepName } from './StepName';
 import { VariantItemCard } from './VariantItemCard';
+import { VariantsListSidebar } from './VariantsListSidebar';
 
 export function VariantsPage() {
   const { control, watch } = useFormContext();
@@ -28,14 +27,7 @@ export function VariantsPage() {
 
   return (
     <>
-      <SubPageWrapper
-        title={<StepName channel={channel} />}
-        root={true}
-        style={{
-          display: 'flex',
-          flexFlow: 'column',
-        }}
-      >
+      <VariantsListSidebar variantsCount={variants?.length ?? 0}>
         <ScrollArea h="calc(100vh - 220px)" offsetScrollbars mr={-12}>
           {/*<div*/}
           {/*  key={steps[index]._id}*/}
@@ -56,7 +48,7 @@ export function VariantsPage() {
             return <VariantItemCard key={variant._id} variant={variant} />;
           })}
         </ScrollArea>
-      </SubPageWrapper>
+      </VariantsListSidebar>
     </>
   );
 }

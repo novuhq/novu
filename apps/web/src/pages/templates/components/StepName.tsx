@@ -7,8 +7,15 @@ import { useGetPrimaryIntegration, useHasActiveIntegrations } from '../../../hoo
 import { CONTEXT_PATH } from '../../../config';
 import { DisplayPrimaryProviderIcon } from '../workflow/DisplayPrimaryProviderIcon';
 import { useStepFormPath } from '../hooks/useStepFormPath';
+import { StepNameLabel } from './StepNameLabel';
 
-export const StepName = ({ channel }: { channel: StepTypeEnum | ChannelTypeEnum }) => {
+export const StepName = ({
+  channel,
+  variantsCount,
+}: {
+  channel: StepTypeEnum | ChannelTypeEnum;
+  variantsCount?: number;
+}) => {
   const { colorScheme } = useMantineColorScheme();
   const path = useStepFormPath();
 
@@ -32,7 +39,7 @@ export const StepName = ({ channel }: { channel: StepTypeEnum | ChannelTypeEnum 
   const Icon = stepIcon[channel];
 
   return (
-    <Group noWrap>
+    <Group noWrap spacing={12} sx={{ alignItems: 'flex-start', maxWidth: 800, width: '100%' }}>
       <DisplayPrimaryProviderIcon
         Icon={Icon}
         disabledProp={{}}
@@ -40,7 +47,11 @@ export const StepName = ({ channel }: { channel: StepTypeEnum | ChannelTypeEnum 
         isChannelStep={isChannelStep}
         logoSrc={logoSrc}
       />
-      <StepNameInput path={path} defaultValue={stepNames[channel]} />
+      <StepNameInput
+        path={path}
+        defaultValue={stepNames[channel]}
+        label={<StepNameLabel variantsCount={variantsCount} />}
+      />
     </Group>
   );
 };
