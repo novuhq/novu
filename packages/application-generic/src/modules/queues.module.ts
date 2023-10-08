@@ -31,6 +31,7 @@ import {
 
 import { SubscriberProcessQueueService } from '../services/queues/subscriber-process-queue.service';
 import { SubscriberProcessWorkerService } from '../services/workers/subscriber-process-worker.service';
+import { SubscriberProcessQueueHealthIndicator } from '../health/subscriber-process-queue.health-indicator';
 
 const PROVIDERS: Provider[] = [
   ActiveJobsMetricQueueService,
@@ -58,6 +59,7 @@ const PROVIDERS: Provider[] = [
   OldInstanceBullMqService,
   SubscriberProcessQueueService,
   SubscriberProcessWorkerService,
+  SubscriberProcessQueueHealthIndicator,
 ];
 
 @Module({
