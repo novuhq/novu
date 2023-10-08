@@ -1,40 +1,26 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 import * as _ from 'lodash';
+
 import {
   JobEntity,
   JobRepository,
-  NotificationTemplateEntity,
   NotificationTemplateRepository,
   IntegrationRepository,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
-  InAppProviderIdEnum,
   ISubscribersDefine,
   ProvidersIdEnum,
-  STEP_TYPE_TO_CHANNEL_TYPE,
 } from '@novu/shared';
 
 import { TriggerEventCommand } from './trigger-event.command';
-
-import {
-  CreateNotificationJobsCommand,
-  CreateNotificationJobs,
-} from '../create-notification-jobs';
 import {
   ProcessSubscriber,
   ProcessSubscriberCommand,
 } from '../process-subscriber';
-import {
-  StoreSubscriberJobs,
-  StoreSubscriberJobsCommand,
-} from '../store-subscriber-jobs';
-
 import { PinoLogger } from '../../logging';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
-
-import { AnalyticsService } from '../../services/analytics.service';
 import {
   buildNotificationTemplateIdentifierKey,
   CachedEntity,
@@ -51,15 +37,12 @@ const CHUNK_SIZE = 200;
 @Injectable()
 export class TriggerEvent {
   constructor(
-    private storeSubscriberJobs: StoreSubscriberJobs,
-    private createNotificationJobs: CreateNotificationJobs,
     private processSubscriber: ProcessSubscriber,
     private integrationRepository: IntegrationRepository,
     private jobRepository: JobRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private processTenant: ProcessTenant,
     private logger: PinoLogger,
-    private analyticsService: AnalyticsService,
     private mapTriggerRecipients: MapTriggerRecipients,
     private subscriberProcessQueueService: SubscriberProcessQueueService
   ) {}
