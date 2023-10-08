@@ -53,7 +53,7 @@ export const DelayMetadata = () => {
         }}
       />
       <When truthy={type === DelayTypeEnum.REGULAR}>
-        <Grid>
+        <Grid m={0}>
           <Grid.Col span={4}>
             <Controller
               control={control}

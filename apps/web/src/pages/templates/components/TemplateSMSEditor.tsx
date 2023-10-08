@@ -12,6 +12,7 @@ import {
 import { VariableManager } from './VariableManager';
 import { StepSettings } from '../workflow/SideBar/StepSettings';
 import { useStepFormPath } from '../hooks/useStepFormPath';
+import { TranslateProductLead } from './TranslateProductLead';
 
 const templateFields = ['content'];
 
@@ -56,6 +57,7 @@ export function TemplateSMSEditor() {
         )}
       />
       <VariableManager variablesArray={variablesArray} path={`${stepFormPath}.template`} />
+      <TranslateProductLead id="translate-sms-editor" />
     </>
   );
 }
