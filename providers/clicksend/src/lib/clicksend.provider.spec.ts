@@ -1,7 +1,7 @@
 import { ClicksendSmsProvider } from './clicksend.provider';
 
 const mockConfig = {
-  apiKey: '51A8AAF4-88C1-4391-53EC-BFB711CF7AF0',
+  apiKey: '<api-key>',
   username: 'test-username',
   from: 'clicksend',
 };
