@@ -1,6 +1,6 @@
 {
   "name": "novu",
-  "version": "0.20.0-alpha.0",
+  "version": "0.20.0-alpha.1",
   "description": "On-Boarding Cli",
   "main": "index.js",
   "scripts": {
@@ -26,12 +26,12 @@
     "@types/configstore": "^5.0.1",
     "@types/inquirer": "^8.2.0",
     "@types/mocha": "9.1.1",
+    "ncp": "^2.0.0",
     "nodemon": "^2.0.15",
-    "typescript": "4.9.5",
-    "ncp": "^2.0.0"
+    "typescript": "4.9.5"
   },
   "dependencies": {
-    "@novu/shared": "^0.20.0-alpha.0",
+    "@novu/shared": "^0.20.0-alpha.1",
     "analytics-node": "^6.2.0",
     "axios": "^1.3.3",
     "chalk": "4.1.2",

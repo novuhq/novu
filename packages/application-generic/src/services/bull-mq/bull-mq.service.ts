@@ -213,12 +213,12 @@ export class BullMqService {
   }
 
   public add(
-    id: string,
+    name: string,
     data: BullMqJobData,
     options: JobsOptions = {},
     groupId?: string
   ) {
-    this._queue.add(id, data, {
+    this._queue.add(name, data, {
       ...options,
       ...(BullMqService.pro && groupId
         ? {
