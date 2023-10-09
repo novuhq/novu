@@ -91,7 +91,7 @@ export class ActiveJobsMetricService {
         const deploymentName = process.env.FLEET_NAME ?? 'default';
 
         try {
-          for (const queueService of this.tokenList.reverse()) {
+          for (const queueService of this.tokenList) {
             const waitCount = (queueService.bullMqService.queue as any).getGroupsJobsCount
               ? await (queueService.bullMqService.queue as any).getGroupsJobsCount()
               : await queueService.bullMqService.queue.getWaitingCount();
