@@ -25,6 +25,7 @@ jobs:
         target_repo_token: ${{ secrets.GITHUB_TOKEN }}
         upstream_sync_branch: next
         upstream_sync_repo: novuhq/novu
+        upstream_pull_args: --tags
 
         test_mode: false
       
