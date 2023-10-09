@@ -27,6 +27,7 @@ declare global {
       REDIS_CACHE_KEY_PREFIX?: string;
       REDIS_CACHE_SERVICE_TLS?: ConnectionOptions;
       MONGO_URL: string;
+      MONGO_MIN_POOL_SIZE: number;
       MONGO_MAX_POOL_SIZE: number;
       NEW_RELIC_APP_NAME: string;
       NEW_RELIC_LICENSE_KEY: string;
