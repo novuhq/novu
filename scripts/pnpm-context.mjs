@@ -1,13 +1,8 @@
 #!/usr/bin/env node
 
-/*
- * Beware this script fails when run directly from shell, it must be run via package.json.
- * I believe this is a bug, see https://github.com/pnpm/pnpm/issues/3726 for details.
- */
-
 import meow from 'meow';
 import os from 'os';
-import { basename, dirname, join, relative, resolve } from 'path';
+import { basename, dirname, join, relative } from 'path';
 import { create as createTar } from 'tar';
 import { globby } from 'globby';
 import { parsePackageSelector, readProjects } from '@pnpm/filter-workspace-packages';
@@ -49,18 +44,6 @@ if (cli.flags.help) {
   cli.showHelp(0);
 }
 
-/**
- * @typedef ParsedCLI
- * @type {object}
- * @property {boolean} listFiles
- * @property {string[]} extraPatterns
- * @property {string} dockerFile
- * @property {string} root
- */
-
-/**
- * @param {ParsedCLI} cli
- */
 async function main(cli) {
   const projectPath = dirname(cli.dockerFile);
 
@@ -79,7 +62,6 @@ async function main(cli) {
   await withTmpdir(async (tmpdir) => {
     await Promise.all([
       fs.copyFile(cli.dockerFile, join(tmpdir, 'Dockerfile')),
-      // ↑ Copy target-Dockerfile to context root so Docker can find it by default
       copyFiles(dependencyFiles, join(tmpdir, 'deps')),
       copyFiles(metaFiles, join(tmpdir, 'meta')),
       copyFiles(packageFiles, join(tmpdir, 'pkg')),
@@ -100,10 +82,6 @@ await parseCli(cli)
     throw err;
   });
 
-/**
- * @param {string} path
- * @returns {Promise<boolean>}
- */
 async function fileExists(path) {
   try {
     await fs.stat(path);
@@ -114,13 +92,6 @@ async function fileExists(path) {
   return true;
 }
 
-/**
- * @param {string} selector
- * @param {string} cwd
- * @param {object=} options
- * @param {string[]=} options.extraPatterns
- * @returns {Promise<string[]>}
- */
 async function getFilesFromPnpmSelector(selector, cwd, options = {}) {
   const projectPaths = await getPackagePathsFromPnpmSelector(selector, cwd);
   const patterns = projectPaths.concat(options.extraPatterns || []);
@@ -128,13 +99,6 @@ async function getFilesFromPnpmSelector(selector, cwd, options = {}) {
   return globby(patterns, { cwd, dot: true, gitignore: true });
 }
 
-/**
- * @param {string} selector
- * @param {string} cwd
- * @param {object=} options
- * @param {string[]=} options.extraPatterns
- * @returns {Promise<string[]>}
- */
 async function getMetafilesFromPnpmSelector(selector, cwd, options = {}) {
   const [rootMetas, projectMetas] = await Promise.all([
     globby(
@@ -162,25 +126,15 @@ async function getMetafilesFromPnpmSelector(selector, cwd, options = {}) {
   return rootMetas.concat(projectMetas);
 }
 
-/**
- * @param {string} selector
- * @param {string} cwd
- * @returns {Promise<string[]>}
- */
 async function getPackagePathsFromPnpmSelector(selector, cwd) {
   const projects = await readProjects(cwd, [parsePackageSelector(selector, cwd)]);
 
   return Object.keys(projects.selectedProjectsGraph).map((p) => relative(cwd, p).replace(/\\/g, '/'));
 }
 
-/**
- * @param {string[]} input
- * @param {object} flags
- * @returns {Promise<ParsedCLI>}
- */
 async function parseCli({ input, flags }) {
   const dockerFile = input.shift();
-  if (!dockerFile) throw new Error('Must specify path to Dockerfile');
+  if (!dockerFile) throw new Error('Must specify the path to Dockerfile');
   if (!(await fileExists(dockerFile))) throw new Error(`Dockerfile not found: ${dockerFile}`);
 
   return {
@@ -191,11 +145,6 @@ async function parseCli({ input, flags }) {
   };
 }
 
-/**
- * Call `callable` with a temporary directory that's cleaned up after running
- *
- * @param {function(string):Promise<void>} callable
- */
 async function withTmpdir(callable) {
   const tmpdir = await fs.mkdtemp(join(os.tmpdir(), SCRIPT_PATH));
   let result;
@@ -208,17 +157,11 @@ async function withTmpdir(callable) {
   return result;
 }
 
-/**
- * Get relative files recursively from `dir`
- *
- * @param {string} dir
- * @returns {Promise<string[]>}
- */
 async function getFiles(dir) {
   async function* yieldFiles(dirPath) {
     const paths = await fs.readdir(dirPath, { withFileTypes: true });
     for (const path of paths) {
-      const res = resolve(dirPath, path.name);
+      const res = join(dirPath, path.name);
       if (path.isDirectory()) {
         yield* yieldFiles(res);
       } else {
@@ -235,13 +178,6 @@ async function getFiles(dir) {
   return files;
 }
 
-/**
- * Copy array of `files` to `dstDir`
- *
- * @param {string[]} files
- * @param {string} dstDir
- * @returns {Promise<void>}
- */
 async function copyFiles(files, dstDir) {
   return Promise.all(
     files.map((f) => {
