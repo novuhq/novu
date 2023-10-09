@@ -1,5 +1,6 @@
 import { IConfigCredentials, IProviderConfig } from '../provider.interface';
 import { slackConfig } from '../credentials';
+import { guildedConfig } from '../credentials';
 import { ChatProviderIdEnum } from '../provider.enum';
 
 import { ChannelTypeEnum } from '../../../types';
@@ -36,5 +37,13 @@ export const chatProviders: IProviderConfig[] = [
     credentials: [] as IConfigCredentials[],
     docReference: 'https://developers.mattermost.com/integrate/webhooks/incoming/',
     logoFileName: { light: 'mattermost.svg', dark: 'mattermost.svg' },
+  },
+  {
+    id: ChatProviderIdEnum.Guilded,
+    displayName: 'Guilded',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: guildedConfig,
+    docReference: 'https://www.guilded.gg/docs/api/chat/ChatMessage',
+    logoFileName: { light: 'guilded.svg', dark: 'guilded.svg' },
   },
 ];

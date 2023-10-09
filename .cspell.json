@@ -508,7 +508,11 @@
     "autodocs",
     "stackalt",
     "mediumdark",
-    "Docgen"
+    "Docgen",
+    "guilded",
+    "Guilded",
+    "Wordmark",
+    "Logomark"
   ],
   "flagWords": [],
   "patterns": [

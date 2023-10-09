@@ -85,6 +85,7 @@
     "@novu/ses": "^0.20.0-alpha.0",
     "@novu/shared": "^0.20.0-alpha.0",
     "@novu/slack": "^0.20.0-alpha.0",
+    "@novu/guilded": "^0.20.0-alpha.0",
     "@novu/sms-central": "^0.20.0-alpha.0",
     "@novu/sms77": "^0.20.0-alpha.0",
     "@novu/sns": "^0.20.0-alpha.0",

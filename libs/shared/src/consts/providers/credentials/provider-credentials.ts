@@ -422,6 +422,21 @@ export const twilioConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
+export const guildedConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.MessageProfileId,
+    displayName: 'Channel ID',
+    type: 'string',
+    required: true,
+  },
+];
+
 export const slackConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApplicationId,
