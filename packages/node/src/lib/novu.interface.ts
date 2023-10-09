@@ -1,7 +1,15 @@
 import { AxiosInstance } from 'axios';
 
+interface IRetryConfig {
+  initialDelay: number;
+  waitMin: number;
+  waitMax: number;
+  retryMax: number;
+}
+
 export interface INovuConfiguration {
   backendUrl?: string;
+  retryConfig?: Partial<IRetryConfig>;
 }
 
 export class WithHttp {

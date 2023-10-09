@@ -43,9 +43,11 @@
   },
   "dependencies": {
     "@novu/shared": "^0.20.0-alpha.0",
+    "axios-retry": "^3.8.0",
     "handlebars": "^4.7.7",
     "lodash.get": "^4.4.2",
-    "lodash.merge": "^4.6.2"
+    "lodash.merge": "^4.6.2",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
     "@sendgrid/mail": "^7.4.6",
@@ -53,6 +55,7 @@
     "@types/lodash.get": "^4.4.6",
     "@types/lodash.merge": "^4.6.6",
     "@types/node": "^14.6.0",
+    "@types/uuid": "^8.3.4",
     "axios": "^1.4.0",
     "codecov": "^3.5.0",
     "jest": "^27.0.6",
