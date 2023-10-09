@@ -1,12 +1,11 @@
+const nr = require('newrelic');
+
 import {
   ActiveJobsMetricQueueService,
   ActiveJobsMetricWorkerService,
   QueueBaseService,
   WorkerOptions,
 } from '@novu/application-generic';
-import * as process from 'process';
-import { JobTopicNameEnum } from '@novu/shared';
-
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { checkingForCronJob } from '../../shared/utils';
@@ -92,22 +91,20 @@ export class ActiveJobsMetricService {
         const deploymentName = process.env.FLEET_NAME ?? 'default';
 
         try {
-          for (const queueService of this.tokenList) {
-            const waitCount = await queueService.bullMqService.queue.getWaitingCount();
+          for (const queueService of this.tokenList.reverse()) {
+            const waitCount = (queueService.bullMqService.queue as any).getGroupsJobsCount
+              ? await (queueService.bullMqService.queue as any).getGroupsJobsCount()
+              : await queueService.bullMqService.queue.getWaitingCount();
             const delayedCount = await queueService.bullMqService.queue.getDelayedCount();
             const activeCount = await queueService.bullMqService.queue.getActiveCount();
 
-            Logger.verbose('active length', process.env.NEW_RELIC_LICENSE_KEY.length);
             Logger.verbose('Recording active, waiting, and delayed metrics');
 
-            const nr = require('newrelic');
             nr.recordMetric(`Queue/${deploymentName}/${queueService.topic}/waiting`, waitCount);
             nr.recordMetric(`Queue/${deploymentName}/${queueService.topic}/delayed`, delayedCount);
             nr.recordMetric(`Queue/${deploymentName}/${queueService.topic}/active`, activeCount);
 
-            Logger.verbose(`Queue/${deploymentName}/${queueService.topic}/waiting`, waitCount);
-            Logger.verbose(`Queue/${deploymentName}/${queueService.topic}/delayed`, delayedCount);
-            Logger.verbose(`Queue/${deploymentName}/${queueService.topic}/active`, activeCount);
+            Logger.verbose(`Queue/${deploymentName}/${queueService.topic}`, { waitCount, delayedCount, activeCount });
           }
 
           return resolve();
