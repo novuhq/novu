@@ -26,6 +26,9 @@ import {
   StoreSubscriberJobs,
   ConditionsFilter,
   TriggerEvent,
+  MapTriggerRecipients,
+  GetTopicSubscribersUseCase,
+  getIsTopicNotificationEnabled,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
@@ -104,6 +107,9 @@ const USE_CASES = [
   TriggerEvent,
   UpdateJobStatus,
   WebhookFilterBackoffStrategy,
+  MapTriggerRecipients,
+  GetTopicSubscribersUseCase,
+  getIsTopicNotificationEnabled,
 ];
 
 const PROVIDERS: Provider[] = [
