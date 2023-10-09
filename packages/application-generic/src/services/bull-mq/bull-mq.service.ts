@@ -1,4 +1,5 @@
 import {
+  BulkJobOptions,
   ConnectionOptions as RedisConnectionOptions,
   Job,
   JobsOptions,
@@ -18,7 +19,6 @@ import {
   InMemoryProviderEnum,
   InMemoryProviderService,
 } from '../in-memory-provider';
-import { BulkJobOptions } from 'bullmq/dist/esm/interfaces';
 
 interface IQueueMetrics {
   completed: Metrics;
