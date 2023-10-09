@@ -28,6 +28,9 @@ jobs:
         upstream_pull_args: --tags
 
         test_mode: false
+
+    - name: Log output
+      run: echo ${{ steps.sync.outputs }}
       
     - name: New commits found
       if: steps.sync.outputs.has_new_commits == 'true'
