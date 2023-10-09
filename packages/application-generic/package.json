@@ -79,6 +79,7 @@
     "@novu/postmark": "^0.20.0-alpha.1",
     "@novu/push-webhook": "^0.20.0-alpha.1",
     "@novu/resend": "^0.20.0-alpha.1",
+    "@novu/ryver": "^0.20.0-alpha.0",
     "@novu/sendchamp": "^0.20.0-alpha.1",
     "@novu/sendgrid": "^0.20.0-alpha.1",
     "@novu/sendinblue": "^0.20.0-alpha.1",
