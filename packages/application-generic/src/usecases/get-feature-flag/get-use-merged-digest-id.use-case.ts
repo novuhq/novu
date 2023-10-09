@@ -6,7 +6,7 @@ import { GetFeatureFlag } from './get-feature-flag.use-case';
 @Injectable()
 export class GetUseMergedDigestId extends GetFeatureFlag {
   async execute(featureFlagCommand: FeatureFlagCommand): Promise<boolean> {
-    const value = process.env.IS_USE_MERGED_DIGEST_ID;
+    const value = process.env.IS_USE_MERGED_DIGEST_ID_ENABLED;
     const fallbackValue = false;
     const defaultValue = this.prepareBooleanStringFeatureFlag(
       value,
