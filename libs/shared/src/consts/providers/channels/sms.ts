@@ -186,6 +186,6 @@ export const smsProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.SMS,
     credentials: smsToViberConfig,
     docReference: '',
-    logoFileName: { light: 'sms-to.svg', dark: 'sms-to.svg' },
+    logoFileName: { light: 'sms-to-viber.svg', dark: 'sms-to-viber.svg' },
   },
 ];
