@@ -231,14 +231,12 @@ export class BullMqService {
   }
 
   public async addBulk(
-    data: [
-      {
-        name: string;
-        data: BullMqJobData;
-        options: BulkJobOptions;
-        groupId?: string;
-      }
-    ]
+    data: {
+      name: string;
+      data: BullMqJobData;
+      options: BulkJobOptions;
+      groupId?: string;
+    }[]
   ) {
     const jobs = data.map((job) => {
       const jobOptions = {
