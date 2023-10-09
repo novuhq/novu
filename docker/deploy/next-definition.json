@@ -333,7 +333,7 @@
               },
               {
                   "name": "VIRTUAL_HOST",
-                  "value": "dmnl-novu.dev.deptagency.com"
+                  "value": "dmnl-novu-dev.deptagency.com"
               },
               {
                   "name": "REDIS_HOST",
@@ -349,7 +349,7 @@
               },
               {
                   "name": "APP_SELF_URL",
-                  "value": "https://dmnl-novu.dev.deptagency.com"
+                  "value": "https://dmnl-novu-dev.deptagency.com"
               },
               {
                   "name": "S3_BUCKET_NAME",
