@@ -1,7 +1,13 @@
-import { IJobData, JobTopicNameEnum } from '@novu/shared';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { JobTopicNameEnum } from '@novu/shared';
+import { Logger } from '@nestjs/common';
 
-import { BullMqService, JobsOptions, Queue, QueueOptions } from '../bull-mq';
+import {
+  BullMqService,
+  JobsOptions,
+  BulkJobOptions,
+  Queue,
+  QueueOptions,
+} from '../bull-mq';
 
 const LOG_CONTEXT = 'QueueService';
 
@@ -100,5 +106,17 @@ export class QueueBaseService {
     };
 
     await this.instance.add(id, data, jobOptions, groupId);
+  }
+  public async addBulk(
+    data: [
+      {
+        name: string;
+        data: any;
+        options: BulkJobOptions;
+        groupId?: string;
+      }
+    ]
+  ) {
+    await this.instance.addBulk(data);
   }
 }
