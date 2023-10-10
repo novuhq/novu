@@ -8,7 +8,7 @@ import {
   WebSocketsQueueServiceHealthIndicator,
   WorkflowQueueServiceHealthIndicator,
 } from '../../health';
-
+import { setTimeout } from 'timers/promises';
 export interface INovuWorker {
   readonly DEFAULT_ATTEMPTS: number;
   gracefulShutdown: () => Promise<void>;
@@ -42,8 +42,7 @@ export class ReadinessService {
         return true;
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-loop-func
-      await new Promise((resolve) => setTimeout(resolve, delay));
+      await setTimeout(delay);
     }
 
     return false;
