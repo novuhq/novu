@@ -39,7 +39,6 @@ import {
   DigestFilterStepsTimed,
   distributedLockService,
   EventsDistributedLockService,
-  FeatureFlagsService,
   featureFlagsService,
   getIsMultiProviderConfigurationEnabled,
   InvalidateCacheService,
