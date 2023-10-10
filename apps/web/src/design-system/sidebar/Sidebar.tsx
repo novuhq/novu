@@ -83,6 +83,7 @@ export const Sidebar = ({
   onBack,
   onSubmit,
   givenWidth,
+  closeButton,
 }: {
   customHeader?: ReactNode;
   customFooter?: ReactNode;
@@ -95,6 +96,7 @@ export const Sidebar = ({
   onSubmit?: React.FormEventHandler<HTMLFormElement>;
   'data-test-id'?: string;
   givenWidth?: String;
+  closeButton?: boolean;
 }) => {
   const { classes: drawerClasses } = useDrawerStyles();
   const onCloseCallback = () => {
@@ -133,14 +135,16 @@ export const Sidebar = ({
             </ActionIcon>
           )}
           {customHeader}
-          <ActionIcon
-            variant="transparent"
-            onClick={onCloseCallback}
-            style={{ marginLeft: 'auto' }}
-            data-test-id="sidebar-close"
-          >
-            <Close color={colors.B40} />
-          </ActionIcon>
+          {closeButton ?? (
+            <ActionIcon
+              variant="transparent"
+              onClick={onCloseCallback}
+              style={{ marginLeft: 'auto' }}
+              data-test-id="sidebar-close"
+            >
+              <Close color={colors.B40} />
+            </ActionIcon>
+          )}
         </HeaderHolder>
         <BodyHolder>
           <When truthy={isLoading}>

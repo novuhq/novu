@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Group, Modal, Stack } from '@mantine/core';
+import { ActionIcon, Group, Modal, Stack } from '@mantine/core';
 import { Controller, useForm } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -11,8 +11,7 @@ import { getTenantByIdentifier, deleteTenant, updateTenant } from '../../../api/
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { QueryKeys } from '../../../api/query.keys';
 import { TenantFormCommonFields } from './TenantFormCommonFields';
-import { Buildings, Trash, WarningIcon } from '../../../design-system/icons';
-import { BuildingsPlus } from '../../../design-system/icons/general/BuildingsPlus';
+import { Buildings, Close, Trash, WarningIcon } from '../../../design-system/icons';
 
 export interface ITenantForm {
   identifier: string;
@@ -125,6 +124,7 @@ export function UpdateTenantSidebar({
         onClose={onClose}
         isLoading={isLoadingTenant}
         givenWidth={'45vw'}
+        closeButton={false}
         onSubmit={(e) => {
           handleSubmit(onUpdateTenant)(e);
           e.stopPropagation();
@@ -166,6 +166,14 @@ export function UpdateTenantSidebar({
                   </Tooltip>
                 </div>
               </Group>
+              <ActionIcon
+                variant="transparent"
+                onClick={onClose}
+                style={{ marginLeft: 'auto' }}
+                data-test-id="sidebar-close"
+              >
+                <Close color={colors.B40} />
+              </ActionIcon>
             </Group>
             <Group position="apart" w="100%">
               <Stack spacing={0}>
