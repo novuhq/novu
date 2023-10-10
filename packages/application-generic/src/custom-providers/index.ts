@@ -15,6 +15,7 @@ import {
 import {
   GetIsMultiProviderConfigurationEnabled,
   GetIsTopicNotificationEnabled,
+  GetUseMergedDigestId,
 } from '../usecases';
 import { SubscriberProcessQueueService } from '../services/queues/subscriber-process-queue.service';
 
@@ -26,6 +27,18 @@ export const featureFlagsService = {
 
     return instance;
   },
+};
+
+export const getUseMergedDigestId = {
+  provide: GetUseMergedDigestId,
+  useFactory: async (
+    featureFlagServiceItem: FeatureFlagsService
+  ): Promise<GetUseMergedDigestId> => {
+    const useCase = new GetUseMergedDigestId(featureFlagServiceItem);
+
+    return useCase;
+  },
+  inject: [FeatureFlagsService],
 };
 
 export const getIsMultiProviderConfigurationEnabled = {
