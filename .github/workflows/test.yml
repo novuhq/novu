@@ -49,9 +49,9 @@ jobs:
         id: get-base-branch-name
         run: |
           if [[ "${{github.event.pull_request.base.ref}}" != "" ]]; then
-            echo "::set-output name=branch::${{github.event.pull_request.base.ref}}"
+            echo "branch=${{github.event.pull_request.base.ref}}" >> $GITHUB_OUTPUT
           else
-            echo "::set-output name=branch::main"
+            echo "branch=main" >> $GITHUB_OUTPUT
           fi
       - uses: actions/checkout@v3
         with:
@@ -72,22 +72,22 @@ jobs:
         run: |
           if [[ "${{github.event.pull_request.base.ref}}" == "" && "${{steps.branch-name.outputs.current_branch}}" == "main" ]]; then
             echo "Running ALL"
-            echo "::set-output name=test-unit::$(pnpm run get-affected test:unit --all | tail -n +5)"
-            echo "::set-output name=test-e2e::$(pnpm run get-affected test:e2e --all | tail -n +5)"
-            echo "::set-output name=test-e2e-ee::$(pnpm run get-affected test:e2e:ee --all | tail -n +5)"
-            echo "::set-output name=test-cypress::$(pnpm run get-affected cypress:run --all | tail -n +5)"
-            echo "::set-output name=test-providers::$(pnpm run get-affected test --all providers | tail -n +5)"
-            echo "::set-output name=test-packages::$(pnpm run get-affected test --all packages | tail -n +5)"
-            echo "::set-output name=test-libs::$(pnpm run get-affected test --all libs | tail -n +5)"
+            echo "test-unit=$(pnpm run get-affected test:unit --all | tail -n +5)" >> $GITHUB_OUTPUT
+            echo "test-e2e=$(pnpm run get-affected test:e2e --all | tail -n +5)" >> $GITHUB_OUTPUT
+            echo "test-e2e-ee=$(pnpm run get-affected test:e2e:ee --all | tail -n +5)" >> $GITHUB_OUTPUT
+            echo "test-cypress=$(pnpm run get-affected cypress:run --all | tail -n +5)" >> $GITHUB_OUTPUT
+            echo "test-providers=$(pnpm run get-affected test --all providers | tail -n +5)" >> $GITHUB_OUTPUT
+            echo "test-packages=$(pnpm run get-affected test --all packages | tail -n +5)" >> $GITHUB_OUTPUT
+            echo "test-libs=$(pnpm run get-affected test --all libs | tail -n +5)" >> $GITHUB_OUTPUT
           else
             echo "Running PR origin/${{steps.get-base-branch-name.outputs.branch}}"
-            echo "::set-output name=test-unit::$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} | tail -n +5)"
-            echo "::set-output name=test-e2e::$(pnpm run get-affected test:e2e origin/${{steps.get-base-branch-name.outputs.branch}} | tail -n +5)"
-            echo "::set-output name=test-e2e-ee::$(pnpm run get-affected test:e2e:ee origin/${{steps.get-base-branch-name.outputs.branch}} | tail -n +5)"
-            echo "::set-output name=test-cypress::$(pnpm run get-affected cypress:run origin/${{steps.get-base-branch-name.outputs.branch}} | tail -n +5)"
-            echo "::set-output name=test-providers::$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} providers | tail -n +5)"
-            echo "::set-output name=test-packages::$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} packages | tail -n +5)"
-            echo "::set-output name=test-libs::$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} libs | tail -n +5)"
+            echo "test-unit=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} | tail -n +5)" >> $GITHUB_OUTPUT
+            echo "test-e2e=$(pnpm run get-affected test:e2e origin/${{steps.get-base-branch-name.outputs.branch}} | tail -n +5)" >> $GITHUB_OUTPUT
+            echo "test-e2e-ee=$(pnpm run get-affected test:e2e:ee origin/${{steps.get-base-branch-name.outputs.branch}} | tail -n +5)" >> $GITHUB_OUTPUT
+            echo "test-cypress=$(pnpm run get-affected cypress:run origin/${{steps.get-base-branch-name.outputs.branch}} | tail -n +5)" >> $GITHUB_OUTPUT
+            echo "test-providers=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} providers | tail -n +5)" >> $GITHUB_OUTPUT
+            echo "test-packages=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} packages | tail -n +5)" >> $GITHUB_OUTPUT
+            echo "test-libs=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} libs | tail -n +5)" >> $GITHUB_OUTPUT
           fi
 
   test_web:
@@ -101,7 +101,7 @@ jobs:
     name: Test Widget Cypress
     needs: [ get-affected ]
     uses: ./.github/workflows/reusable-widget-e2e.yml
-    if: ${{ contains(fromJson(needs.get-affected.outputs.test-cypress), '@novu/widget') || contains(fromJson(needs.get-affected.outputs.test-unit), '@novu/notification-center') }}
+    if: ${{ contains(fromJson(needs.get-affected.outputs.test-cypress), '@novu/widget') || contains(fromJson(needs.get-affected.outputs.test-unit), '@novu/notification-center') || contains(fromJson(needs.get-affected.outputs.test-unit), '@novu/ws') }}
     secrets: inherit
 
   build_docker_api:
@@ -241,7 +241,7 @@ jobs:
           else
             echo "::set-output name=has_token::false"
           fi
-  
+
   test_e2e_ee:
     name: Test E2E EE
     runs-on: ubuntu-latest
@@ -260,10 +260,6 @@ jobs:
     steps:
       - run: echo ${{ matrix.projectName }}
       - uses: actions/checkout@v3
-      - uses: ./.github/actions/checkout-submodules
-        with:
-          submodule_token: ${{ secrets.SUBMODULES_TOKEN }}
-          submodule_branch: "next"
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/setup-redis-cluster
       - uses: mansagroup/nrwl-nx-action@v3

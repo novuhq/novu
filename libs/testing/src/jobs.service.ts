@@ -11,19 +11,20 @@ export class JobsService {
 
   public standardQueue: Queue;
   public workflowQueue: Queue;
+  public subscriberProcessQueue: Queue;
 
   constructor(private isClusterMode?: boolean) {
     this.workflowQueue = new TestingQueueService(JobTopicNameEnum.WORKFLOW).queue;
     this.standardQueue = new TestingQueueService(JobTopicNameEnum.STANDARD).queue;
+    this.subscriberProcessQueue = new TestingQueueService(JobTopicNameEnum.PROCESS_SUBSCRIBER).queue;
   }
 
   public async awaitParsingEvents() {
-    let waitingCount = 0;
-    let parsedEvents = 0;
+    let totalCount = 0;
+
     do {
-      waitingCount = await this.workflowQueue.getWaitingCount();
-      parsedEvents = await this.workflowQueue.getActiveCount();
-    } while (parsedEvents > 0 || waitingCount > 0);
+      totalCount = (await this.getQueueMetric()).totalCount;
+    } while (totalCount > 0);
   }
 
   public async awaitRunningJobs({
@@ -38,19 +39,10 @@ export class JobsService {
     unfinishedJobs?: number;
   }) {
     let runningJobs = 0;
-    let waitingCount = 0;
-    let parsedEvents = 0;
-
-    let waitingCountJobs = 0;
-    let activeCountJobs = 0;
+    let totalCount = 0;
 
     do {
-      waitingCount = await this.workflowQueue.getWaitingCount();
-      parsedEvents = await this.workflowQueue.getActiveCount();
-
-      waitingCountJobs = await this.standardQueue.getWaitingCount();
-      activeCountJobs = await this.standardQueue.getActiveCount();
-
+      totalCount = (await this.getQueueMetric()).totalCount;
       runningJobs = await this.jobRepository.count({
         _organizationId: organizationId,
         type: {
@@ -61,12 +53,44 @@ export class JobsService {
           $in: [JobStatusEnum.PENDING, JobStatusEnum.QUEUED, JobStatusEnum.RUNNING],
         },
       });
-    } while (
-      waitingCountJobs > 0 ||
-      activeCountJobs > 0 ||
-      parsedEvents > 0 ||
-      waitingCount > 0 ||
-      runningJobs > unfinishedJobs
-    );
+    } while (totalCount > 0 || runningJobs > unfinishedJobs);
+  }
+
+  private async getQueueMetric() {
+    const [
+      parsedEvents,
+      waitingCount,
+      waitingStandardJobsCount,
+      activeStandardJobsCount,
+      subscriberProcessQueueWaitingCount,
+      subscriberProcessQueueActiveCount,
+    ] = await Promise.all([
+      this.workflowQueue.getActiveCount(),
+      this.workflowQueue.getWaitingCount(),
+
+      this.standardQueue.getWaitingCount(),
+      this.standardQueue.getActiveCount(),
+
+      this.subscriberProcessQueue.getWaitingCount(),
+      this.subscriberProcessQueue.getActiveCount(),
+    ]);
+
+    const totalCount =
+      parsedEvents +
+      waitingCount +
+      waitingStandardJobsCount +
+      activeStandardJobsCount +
+      subscriberProcessQueueWaitingCount +
+      subscriberProcessQueueActiveCount;
+
+    return {
+      totalCount,
+      parsedEvents,
+      waitingCount,
+      waitingStandardJobsCount,
+      activeStandardJobsCount,
+      subscriberProcessQueueWaitingCount,
+      subscriberProcessQueueActiveCount,
+    };
   }
 }

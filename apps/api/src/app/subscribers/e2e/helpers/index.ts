@@ -4,6 +4,7 @@ import axios from 'axios';
 
 import { UpdateSubscriberOnlineFlagRequestDto } from '../../dtos/update-subscriber-online-flag-request.dto';
 import { UpdateSubscriberPreferenceRequestDto } from '../../../widgets/dtos/update-subscriber-preference-request.dto';
+import { UpdateSubscriberGlobalPreferencesRequestDto } from '../../dtos/update-subscriber-global-preferences-request.dto';
 
 const axiosInstance = axios.create();
 
@@ -64,4 +65,12 @@ export async function updatePreference(
       },
     }
   );
+}
+
+export async function updateGlobalPreferences(data: UpdateSubscriberGlobalPreferencesRequestDto, session: UserSession) {
+  return await axiosInstance.patch(`${session.serverUrl}/v1/subscribers/${session.subscriberId}/preferences`, data, {
+    headers: {
+      authorization: `ApiKey ${session.apiKey}`,
+    },
+  });
 }

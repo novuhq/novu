@@ -11,12 +11,13 @@ import {
   StorageHelperService,
   WorkflowQueueService,
 } from '@novu/application-generic';
-import { NotificationTemplateRepository, NotificationTemplateEntity } from '@novu/dal';
+import { NotificationTemplateRepository, NotificationTemplateEntity, TenantRepository } from '@novu/dal';
 import {
   ISubscribersDefine,
   ITenantDefine,
   ReservedVariablesMap,
   TriggerContextTypeEnum,
+  TriggerEventStatusEnum,
   TriggerTenantContext,
 } from '@novu/shared';
 
@@ -24,7 +25,6 @@ import { ParseEventRequestCommand } from './parse-event-request.command';
 
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { VerifyPayload, VerifyPayloadCommand } from '../verify-payload';
-import { MapTriggerRecipients, MapTriggerRecipientsCommand } from '../map-trigger-recipients';
 
 const LOG_CONTEXT = 'ParseEventRequest';
 
@@ -35,27 +35,12 @@ export class ParseEventRequest {
     private verifyPayload: VerifyPayload,
     private storageHelperService: StorageHelperService,
     private workflowQueueService: WorkflowQueueService,
-    private mapTriggerRecipients: MapTriggerRecipients
+    private tenantRepository: TenantRepository
   ) {}
 
   @InstrumentUsecase()
   async execute(command: ParseEventRequestCommand) {
     const transactionId = command.transactionId || uuidv4();
-
-    const mappedActor = command.actor ? this.mapTriggerRecipients.mapSubscriber(command.actor) : undefined;
-
-    const mappedRecipients = await this.mapTriggerRecipients.execute(
-      MapTriggerRecipientsCommand.create({
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        recipients: command.to,
-        transactionId,
-        userId: command.userId,
-        actor: mappedActor,
-      })
-    );
-
-    await this.validateSubscriberIdProperty(mappedRecipients);
 
     const template = await this.getNotificationTemplateByTriggerIdentifier({
       environmentId: command.environmentId,
@@ -72,22 +57,36 @@ export class ParseEventRequest {
     if (!template.active) {
       return {
         acknowledged: true,
-        status: 'trigger_not_active',
+        status: TriggerEventStatusEnum.NOT_ACTIVE,
       };
     }
 
     if (!template.steps?.length) {
       return {
         acknowledged: true,
-        status: 'no_workflow_steps_defined',
+        status: TriggerEventStatusEnum.NO_WORKFLOW_STEPS,
       };
     }
 
     if (!template.steps?.some((step) => step.active)) {
       return {
         acknowledged: true,
-        status: 'no_workflow_active_steps_defined',
+        status: TriggerEventStatusEnum.NO_WORKFLOW_ACTIVE_STEPS,
       };
+    }
+
+    if (command.tenant) {
+      try {
+        await this.validateTenant({
+          identifier: typeof command.tenant === 'string' ? command.tenant : command.tenant.identifier,
+          _environmentId: command.environmentId,
+        });
+      } catch (e) {
+        return {
+          acknowledged: true,
+          status: TriggerEventStatusEnum.TENANT_MISSING,
+        };
+      }
     }
 
     Sentry.addBreadcrumb({
@@ -115,16 +114,16 @@ export class ParseEventRequest {
 
     const jobData = {
       ...command,
-      to: mappedRecipients,
-      actor: mappedActor,
+      to: command.to,
+      actor: command.actor,
       transactionId,
     };
     await this.workflowQueueService.add(transactionId, jobData, command.organizationId);
 
     return {
       acknowledged: true,
-      status: 'processed',
-      transactionId: transactionId,
+      status: TriggerEventStatusEnum.PROCESSED,
+      transactionId,
     };
   }
 
@@ -146,25 +145,14 @@ export class ParseEventRequest {
     );
   }
 
-  @Instrument()
-  private async validateSubscriberIdProperty(to: ISubscribersDefine[]): Promise<boolean> {
-    for (const subscriber of to) {
-      const subscriberIdExists = typeof subscriber === 'string' ? subscriber : subscriber.subscriberId;
-
-      if (Array.isArray(subscriberIdExists)) {
-        throw new ApiException(
-          'subscriberId under property to is type array, which is not allowed please make sure all subscribers ids are strings'
-        );
-      }
-
-      if (!subscriberIdExists) {
-        throw new ApiException(
-          'subscriberId under property to is not configured, please make sure all subscribers contains subscriberId property'
-        );
-      }
+  private async validateTenant({ identifier, _environmentId }: { identifier: string; _environmentId: string }) {
+    const found = await this.tenantRepository.findOne({
+      _environmentId: _environmentId,
+      identifier: identifier,
+    });
+    if (!found) {
+      throw new ApiException(`Tenant with identifier ${identifier} could not be found`);
     }
-
-    return true;
   }
 
   @Instrument()

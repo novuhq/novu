@@ -90,7 +90,7 @@ export function LayoutEditor({
         setValue('isDefault', layout?.isDefault);
       }
     }
-  }, [layout]);
+  }, [setValue, layout]);
 
   const layoutName = watch('name');
   const identifier = watch('identifier');
@@ -105,6 +105,7 @@ export function LayoutEditor({
       strict: true,
     });
     setValue('identifier', newIdentifier);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editMode, layoutName]);
 
   useEffect(() => {
@@ -117,7 +118,7 @@ export function LayoutEditor({
         }
       }
     }
-  }, [environment, layout]);
+  }, [goBack, environment, layout]);
 
   useMemo(() => {
     const variables = getTemplateVariables(ast.body).filter(
@@ -137,6 +138,7 @@ export function LayoutEditor({
     });
 
     variablesArray.replace(arrayFields.filter((field) => !!field));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ast]);
 
   useEffect(() => {

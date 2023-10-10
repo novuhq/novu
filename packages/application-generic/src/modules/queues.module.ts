@@ -2,25 +2,26 @@ import { Module, Provider } from '@nestjs/common';
 
 import { bullMqTokenList } from '../custom-providers';
 import {
+  ActiveJobsMetricQueueServiceHealthIndicator,
+  CompletedJobsMetricQueueServiceHealthIndicator,
   InboundParseQueueServiceHealthIndicator,
   StandardQueueServiceHealthIndicator,
   WebSocketsQueueServiceHealthIndicator,
   WorkflowQueueServiceHealthIndicator,
 } from '../health';
+import { OldInstanceBullMqService, ReadinessService } from '../services';
 import {
-  BullMqService,
-  OldInstanceBullMqService,
-  ReadinessService,
-} from '../services';
-import {
+  ActiveJobsMetricQueueService,
+  CompletedJobsMetricQueueService,
   InboundParseQueue,
   StandardQueueService,
   WebSocketsQueueService,
   WorkflowQueueService,
 } from '../services/queues';
 import {
+  ActiveJobsMetricWorkerService,
+  CompletedJobsMetricWorkerService,
   InboundParseWorker,
-  JobMetricsWorkerService,
   StandardWorkerService,
   WebSocketsWorkerService,
   WorkflowWorkerService,
@@ -28,9 +29,18 @@ import {
   OldInstanceWorkflowWorkerService,
 } from '../services/workers';
 
+import { SubscriberProcessQueueService } from '../services/queues/subscriber-process-queue.service';
+import { SubscriberProcessWorkerService } from '../services/workers/subscriber-process-worker.service';
+import { SubscriberProcessQueueHealthIndicator } from '../health/subscriber-process-queue.health-indicator';
+
 const PROVIDERS: Provider[] = [
+  ActiveJobsMetricQueueService,
+  ActiveJobsMetricQueueServiceHealthIndicator,
+  ActiveJobsMetricWorkerService,
   bullMqTokenList,
-  BullMqService,
+  CompletedJobsMetricQueueService,
+  CompletedJobsMetricQueueServiceHealthIndicator,
+  CompletedJobsMetricWorkerService,
   InboundParseQueue,
   InboundParseWorker,
   InboundParseQueueServiceHealthIndicator,
@@ -47,6 +57,9 @@ const PROVIDERS: Provider[] = [
   OldInstanceStandardWorkerService,
   OldInstanceWorkflowWorkerService,
   OldInstanceBullMqService,
+  SubscriberProcessQueueService,
+  SubscriberProcessWorkerService,
+  SubscriberProcessQueueHealthIndicator,
 ];
 
 @Module({

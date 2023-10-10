@@ -43,5 +43,6 @@ export const useCreate = (
     };
 
     submit();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [templateId, groups, localStorage.getItem('blueprintId')]);
 };

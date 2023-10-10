@@ -36,12 +36,15 @@ import { NovuInAppSetupWarning } from '../NovuInAppSetupWarning';
 import { NovuProviderSidebarContent } from './NovuProviderSidebarContent';
 import { useSelectPrimaryIntegrationModal } from './useSelectPrimaryIntegrationModal';
 import { ShareableUrl } from '../Modal/ConnectIntegrationForm';
+import { Conditions, IConditions } from '../../../../components/conditions';
+import { useDisclosure } from '@mantine/hooks';
 
 interface IProviderForm {
   name: string;
   credentials: ICredentialsDto;
   active: boolean;
   identifier: string;
+  conditions: IConditions[];
 }
 
 enum SidebarStateEnum {
@@ -65,9 +68,9 @@ export function UpdateProviderSidebar({
   const [framework, setFramework] = useState<FrameworkEnum | null>(null);
   const { providers, isLoading: areProvidersLoading } = useProviders();
   const isNovuInAppProvider = selectedProvider?.providerId === InAppProviderIdEnum.Novu;
-
   const { openModal: openSelectPrimaryIntegrationModal, SelectPrimaryIntegrationModal } =
     useSelectPrimaryIntegrationModal();
+  const [conditionsFormOpened, { close: closeConditionsForm, open: openConditionsForm }] = useDisclosure(false);
 
   const { updateIntegration, isLoadingUpdate } = useUpdateIntegration(selectedProvider?.integrationId || '');
 
@@ -79,6 +82,7 @@ export function UpdateProviderSidebar({
       credentials: {},
       active: false,
       identifier: '',
+      conditions: [],
     },
   });
   const {
@@ -87,6 +91,7 @@ export function UpdateProviderSidebar({
     reset,
     watch,
     setValue,
+    getValues,
     formState: { errors, isDirty, dirtyFields },
   } = methods;
 
@@ -118,7 +123,7 @@ export function UpdateProviderSidebar({
 
       setValue('identifier', newIdentifier);
     }
-  }, [selectedProvider]);
+  }, [setValue, selectedProvider]);
 
   useEffect(() => {
     if (integrationId === undefined || providers.length === 0) {
@@ -138,9 +143,10 @@ export function UpdateProviderSidebar({
 
         return prev;
       }, {} as any),
+      conditions: foundProvider.conditions,
       active: foundProvider.active,
     });
-  }, [integrationId, providers]);
+  }, [reset, integrationId, providers]);
 
   const onFrameworkClickCallback = (newFramework: FrameworkEnum) => {
     setSidebarState(SidebarStateEnum.EXPANDED);
@@ -167,22 +173,38 @@ export function UpdateProviderSidebar({
       return;
     }
 
-    const { channel: selectedChannel, environmentId, primary } = selectedProvider;
+    const { channel: selectedChannel, environmentId, primary, conditions } = selectedProvider;
     const isActiveFieldChanged = dirtyFields.active;
     const hasSameChannelActiveIntegration = !!providers
       .filter((el) => el.integrationId !== selectedProvider.integrationId)
       .find((el) => el.active && el.channel === selectedChannel && el.environmentId === environmentId);
     const isChannelSupportPrimary = CHANNELS_WITH_PRIMARY.includes(selectedChannel);
 
+    const isChangedToActive =
+      isActiveFieldChanged && isChannelSupportPrimary && isActive && hasSameChannelActiveIntegration;
+
+    const isChangedToInactiveAndIsPrimary =
+      isActiveFieldChanged && isChannelSupportPrimary && !isActive && primary && hasSameChannelActiveIntegration;
+
+    const isPrimaryAndHasConditionsApplied =
+      primary && conditions && conditions.length > 0 && hasSameChannelActiveIntegration;
+
+    const hasNoConditions = !conditions || conditions.length === 0;
+
+    const hasUpdatedConditions = data.conditions && data.conditions.length > 0;
+
+    const hasConditionsAndIsPrimary = hasUpdatedConditions && primary && dirtyFields.conditions;
+
     if (
-      isActiveFieldChanged &&
-      isChannelSupportPrimary &&
-      ((isActive && hasSameChannelActiveIntegration) || (!isActive && primary && hasSameChannelActiveIntegration))
+      (hasNoConditions && isChangedToActive) ||
+      isChangedToInactiveAndIsPrimary ||
+      isPrimaryAndHasConditionsApplied ||
+      hasConditionsAndIsPrimary
     ) {
       openSelectPrimaryIntegrationModal({
         environmentId: selectedProvider?.environmentId,
         channelType: selectedProvider?.channel,
-        exclude: !isActive ? [selectedProvider.integrationId] : undefined,
+        exclude: !isActive || hasConditionsAndIsPrimary ? (el) => el._id === selectedProvider.integrationId : undefined,
         onClose: () => {
           updateIntegration(data);
         },
@@ -206,6 +228,24 @@ export function UpdateProviderSidebar({
     name: `credentials.${CredentialsKeyEnum.Hmac}`,
   });
 
+  const updateConditions = (conditions: IConditions[]) => {
+    setValue('conditions', conditions, { shouldDirty: true });
+  };
+
+  if (conditionsFormOpened) {
+    const [conditions, name] = getValues(['conditions', 'name']);
+
+    return (
+      <Conditions
+        conditions={conditions}
+        name={name}
+        isOpened={conditionsFormOpened}
+        setConditions={updateConditions}
+        onClose={closeConditionsForm}
+      />
+    );
+  }
+
   if (
     SmsProviderIdEnum.Novu === selectedProvider?.providerId ||
     EmailProviderIdEnum.Novu === selectedProvider?.providerId
@@ -218,7 +258,11 @@ export function UpdateProviderSidebar({
           onClose={onSidebarClose}
           onSubmit={onSubmit}
           customHeader={
-            <UpdateIntegrationSidebarHeader provider={selectedProvider} onSuccessDelete={onSidebarClose}>
+            <UpdateIntegrationSidebarHeader
+              openConditions={openConditionsForm}
+              provider={selectedProvider}
+              onSuccessDelete={onSidebarClose}
+            >
               <Free>Test Provider</Free>
             </UpdateIntegrationSidebarHeader>
           }
@@ -237,8 +281,9 @@ export function UpdateProviderSidebar({
           }
         >
           <NovuProviderSidebarContent provider={selectedProvider} />
-          <UpdateIntegrationCommonFields provider={selectedProvider} showActive={false} />
+          <UpdateIntegrationCommonFields provider={selectedProvider} />
         </Sidebar>
+        <SelectPrimaryIntegrationModal />
       </FormProvider>
     );
   }
@@ -254,7 +299,11 @@ export function UpdateProviderSidebar({
         onBack={onBack}
         customHeader={
           sidebarState === SidebarStateEnum.NORMAL ? (
-            <UpdateIntegrationSidebarHeader provider={selectedProvider} onSuccessDelete={onSidebarClose} />
+            <UpdateIntegrationSidebarHeader
+              openConditions={openConditionsForm}
+              provider={selectedProvider}
+              onSuccessDelete={onSidebarClose}
+            />
           ) : (
             <>
               <When truthy={isNovuInAppProvider}>

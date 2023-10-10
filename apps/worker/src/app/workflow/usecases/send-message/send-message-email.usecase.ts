@@ -77,20 +77,15 @@ export class SendMessageEmail extends SendMessageBase {
 
     const overrideSelectedIntegration = command.overrides?.email?.integrationIdentifier;
     try {
-      const getIntegrationCommand = {
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        channelType: ChannelTypeEnum.EMAIL,
-        userId: command.userId,
-        identifier: overrideSelectedIntegration as string,
-      };
-
       integration = await this.getIntegration({
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         channelType: ChannelTypeEnum.EMAIL,
         userId: command.userId,
         identifier: overrideSelectedIntegration as string,
+        filterData: {
+          tenant: command.job.tenant,
+        },
       });
     } catch (e) {
       await this.createExecutionDetails.execute(
@@ -155,8 +150,10 @@ export class SendMessageEmail extends SendMessageBase {
     let html;
     let subject = '';
     let content;
+    let senderName = overrides?.senderName || emailChannel.template.senderName;
 
     const payload = {
+      senderName: emailChannel.template.senderName || '',
       subject: emailChannel.template.subject || '',
       preheader: emailChannel.template.preheader,
       content: emailChannel.template.content,
@@ -209,7 +206,7 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     try {
-      ({ html, content, subject } = await this.compileEmailTemplateUsecase.execute(
+      ({ html, content, subject, senderName } = await this.compileEmailTemplateUsecase.execute(
         CompileEmailTemplateCommand.create({
           environmentId: command.environmentId,
           organizationId: command.organizationId,
@@ -294,13 +291,7 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     if (email && integration) {
-      await this.sendMessage(
-        integration,
-        mailData,
-        message,
-        command,
-        overrides?.senderName || emailChannel.template.senderName
-      );
+      await this.sendMessage(integration, mailData, message, command, senderName);
 
       return;
     }
@@ -544,6 +535,7 @@ export const createMailData = (options: IEmailOptions, overrides: Record<string,
     cc: overrides?.cc || [],
     bcc: overrides?.bcc || [],
     ...ipPoolName,
+    customData: overrides?.customData || {},
   };
 };
 

@@ -24,7 +24,6 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/deactivate-integration.usecase';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
-import { DisableNovuIntegration } from '../disable-novu-integration/disable-novu-integration.usecase';
 
 @Injectable()
 export class CreateIntegration {
@@ -35,7 +34,6 @@ export class CreateIntegration {
     private integrationRepository: IntegrationRepository,
     private deactivateSimilarChannelIntegrations: DeactivateSimilarChannelIntegrations,
     private analyticsService: AnalyticsService,
-    private disableNovuIntegration: DisableNovuIntegration,
     private getIsMultiProviderConfigurationEnabled: GetIsMultiProviderConfigurationEnabled
   ) {}
 
@@ -67,16 +65,6 @@ export class CreateIntegration {
       );
     } else {
       result.priority = highestPriorityIntegration ? highestPriorityIntegration.priority + 1 : 1;
-    }
-
-    const activeIntegrationsCount = await this.integrationRepository.countActiveExcludingNovu({
-      _organizationId: command.organizationId,
-      _environmentId: command.environmentId,
-      channel: command.channel,
-    });
-
-    if (activeIntegrationsCount === 0) {
-      result.primary = true;
     }
 
     return result;
@@ -176,18 +164,12 @@ export class CreateIntegration {
         channel: command.channel,
         credentials: encryptCredentials(command.credentials ?? {}),
         active: command.active,
+        conditions: command.conditions,
       };
 
       const isActiveAndChannelSupportsPrimary = command.active && CHANNELS_WITH_PRIMARY.includes(command.channel);
-      if (isMultiProviderConfigurationEnabled && isActiveAndChannelSupportsPrimary) {
-        await this.disableNovuIntegration.execute({
-          channel: command.channel,
-          providerId: command.providerId,
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          userId: command.userId,
-        });
 
+      if (isMultiProviderConfigurationEnabled && isActiveAndChannelSupportsPrimary) {
         const { primary, priority } = await this.calculatePriorityAndPrimary(command);
 
         query.primary = primary;

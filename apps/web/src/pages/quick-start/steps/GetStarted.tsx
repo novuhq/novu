@@ -37,7 +37,7 @@ export function GetStarted() {
 
   useEffect(() => {
     segment.track(OnBoardingAnalyticsEnum.CONFIGURE_PROVIDER_VISIT);
-  }, []);
+  }, [segment]);
 
   function handleOnClick() {
     segment.track(OnBoardingAnalyticsEnum.CONFIGURE_PROVIDER_NAVIGATION_NEXT_PAGE_CLICK);
@@ -85,7 +85,7 @@ function LearnMoreRef() {
 
   return (
     <a
-      href={'https://docs.novu.co/overview/quickstart/general-quickstart'}
+      href={'https://docs.novu.co/quickstarts/01-introduction'}
       style={{ color: '#DD2476', textDecoration: 'underline', fontSize: '18px' }}
       onClick={() => handleOnClick}
       target="_blank"

@@ -29,5 +29,6 @@ export const mapToTableIntegration = (
     active: integration.active,
     logoFileName,
     providerId: integration.providerId,
+    conditions: integration.conditions,
   };
 };

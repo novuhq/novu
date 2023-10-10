@@ -86,6 +86,9 @@ export class SendMessageInApp extends SendMessageBase {
       environmentId: command.environmentId,
       channelType: ChannelTypeEnum.IN_APP,
       userId: command.userId,
+      filterData: {
+        tenant: command.job.tenant,
+      },
     });
 
     if (!integration) {
@@ -247,37 +250,19 @@ export class SendMessageInApp extends SendMessageBase {
     );
 
     await this.webSocketsQueueService.bullMqService.add(
-      'sendMessage-received-' + message._id,
+      'sendMessage',
       {
         event: WebSocketEventEnum.RECEIVED,
         userId: command._subscriberId,
+        _environmentId: command.environmentId,
         payload: {
-          message,
+          messageId: message._id,
         },
       },
-      {},
-      command.organizationId
-    );
-
-    await this.webSocketsQueueService.bullMqService.add(
-      'sendMessage-unseen-' + message._id,
       {
-        event: WebSocketEventEnum.UNSEEN,
-        userId: command._subscriberId,
-        _environmentId: command.environmentId,
+        removeOnComplete: true,
+        removeOnFail: true,
       },
-      {},
-      command.organizationId
-    );
-
-    await this.webSocketsQueueService.bullMqService.add(
-      'sendMessage-unread-' + message._id,
-      {
-        event: WebSocketEventEnum.UNREAD,
-        userId: command._subscriberId,
-        _environmentId: command.environmentId,
-      },
-      {},
       command.organizationId
     );
 
