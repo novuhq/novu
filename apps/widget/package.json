@@ -72,7 +72,7 @@
     "@types/react-router-dom": "^5.1.7",
     "cross-env": "^7.0.3",
     "customize-cra": "^1.0.0",
-    "cypress": "^12.17.2",
+    "cypress": "^13.3.0",
     "cypress-intellij-reporter": "^0.0.7",
     "cypress-network-idle": "^1.10.0",
     "html-webpack-plugin": "5.5.3",
