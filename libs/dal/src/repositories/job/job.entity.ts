@@ -21,6 +21,7 @@ export class JobEntity {
   _notificationId: string;
   subscriberId: string;
   _subscriberId: string;
+  _mergedDigestId?: string;
   _environmentId: EnvironmentId;
   _organizationId: OrganizationId;
   providerId?: string;
