@@ -2,6 +2,7 @@ import {
   GetIsMultiProviderConfigurationEnabled,
   GetIsTemplateStoreEnabled,
   GetIsTopicNotificationEnabled,
+  GetIsTranslationManagerEnabled,
 } from './index';
 import { FeatureFlagCommand } from './get-feature-flag.command';
 import { FeatureFlagsService } from '../../services';
@@ -106,6 +107,32 @@ describe('Get Feature Flag', () => {
           expect(result).toEqual(false);
         });
       });
+
+      describe('IS_TRANSLATION_MANAGER_ENABLED', () => {
+        it('should return default hardcoded value when no SDK env is set and no feature flag is set', async () => {
+          process.env.IS_TRANSLATION_MANAGER_ENABLED = '';
+
+          const getIsTranslationManagerEnabled =
+            new GetIsTranslationManagerEnabled(new FeatureFlagsService());
+
+          const result = await getIsTranslationManagerEnabled.execute(
+            featureFlagCommand
+          );
+          expect(result).toEqual(true);
+        });
+
+        it('should return env variable value when no SDK env is set but the feature flag is set', async () => {
+          process.env.IS_TRANSLATION_MANAGER_ENABLED = 'false';
+
+          const getIsTranslationManagerEnabled =
+            new GetIsTranslationManagerEnabled(new FeatureFlagsService());
+
+          const result = await getIsTranslationManagerEnabled.execute(
+            featureFlagCommand
+          );
+          expect(result).toEqual(false);
+        });
+      });
     });
 
     describe('SDK key environment variable is set', () => {
@@ -161,6 +188,21 @@ describe('Get Feature Flag', () => {
             new GetIsTopicNotificationEnabled(new FeatureFlagsService());
 
           const result = await getIsTopicNotificationEnabled.execute(
+            featureFlagCommand
+          );
+          expect(result).toEqual(true);
+        });
+      });
+
+      describe('IS_TRANSLATION_MANAGER_ENABLED', () => {
+        it(`should get the feature flag value stored in Launch Darkly (enabled)
+           when the SDK key env variable is set regardless of the feature flag set`, async () => {
+          process.env.IS_TRANSLATION_MANAGER_ENABLED = 'false';
+
+          const getIsTranslationManagerEnabled =
+            new GetIsTranslationManagerEnabled(new FeatureFlagsService());
+
+          const result = await getIsTranslationManagerEnabled.execute(
             featureFlagCommand
           );
           expect(result).toEqual(true);
