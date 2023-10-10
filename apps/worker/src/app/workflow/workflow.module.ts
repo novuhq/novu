@@ -1,7 +1,7 @@
 import { Module, Provider } from '@nestjs/common';
 import {
   AddDelayJob,
-  AddDigestJob,
+  MergeOrCreateDigest,
   AddJob,
   BullMqService,
   bullMqTokenList,
@@ -70,7 +70,7 @@ const REPOSITORIES = [JobRepository];
 
 const USE_CASES = [
   AddDelayJob,
-  AddDigestJob,
+  MergeOrCreateDigest,
   AddJob,
   CalculateLimitNovuIntegration,
   CompileEmailTemplate,
