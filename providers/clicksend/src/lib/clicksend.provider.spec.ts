@@ -5,8 +5,8 @@ describe('ClicksendSMSProvider', () => {
 
   beforeEach(() => {
     provider = new ClicksendSmsProvider({
-      username: 'parvesh@novu.com',
-      apiKey: '51A8AAF4-88C1-4391-53EC-BFB711CF7AF0',
+      username: '<your-clicksend-username>',
+      apiKey: '<your-clicksend-APIkey>',
     });
   });
 
