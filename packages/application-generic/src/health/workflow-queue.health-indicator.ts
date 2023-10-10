@@ -19,8 +19,9 @@ export class WorkflowQueueServiceHealthIndicator extends HealthIndicator {
 
   async isHealthy(): Promise<HealthIndicatorResult> {
     const isReady = this.workflowQueueService.isReady();
+    const isPaused = this.workflowQueueService.isPaused();
 
-    if (isReady) {
+    if (isReady && !isPaused) {
       Logger.verbose('WorkflowQueueService is ready', LOG_CONTEXT);
 
       return this.getStatus(this.INDICATOR_KEY, true);

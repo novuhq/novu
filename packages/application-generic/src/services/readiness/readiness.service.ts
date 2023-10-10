@@ -4,6 +4,7 @@ import { Worker } from '../bull-mq';
 
 import {
   StandardQueueServiceHealthIndicator,
+  SubscriberProcessQueueHealthIndicator,
   WebSocketsQueueServiceHealthIndicator,
   WorkflowQueueServiceHealthIndicator,
 } from '../../health';
@@ -24,16 +25,36 @@ const LOG_CONTEXT = 'ReadinessService';
 export class ReadinessService {
   constructor(
     private standardQueueServiceHealthIndicator: StandardQueueServiceHealthIndicator,
-    private workflowQueueServiceHealthIndicator: WorkflowQueueServiceHealthIndicator
+    private workflowQueueServiceHealthIndicator: WorkflowQueueServiceHealthIndicator,
+    private subscriberProcessQueueHealthIndicator: SubscriberProcessQueueHealthIndicator
   ) {}
 
   async areQueuesEnabled(): Promise<boolean> {
     Logger.log('Enabling queues as workers are meant to be ready', LOG_CONTEXT);
 
+    const maxRetries = 10;
+    const delay = 1000; // 1 seconds
+
+    for (let i = 0; i < maxRetries; i++) {
+      const result = await this.checkServicesHealth();
+
+      if (result) {
+        return true;
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-loop-func
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+
+    return false;
+  }
+
+  private async checkServicesHealth() {
     try {
       const healths = await Promise.all([
         this.standardQueueServiceHealthIndicator.isHealthy(),
         this.workflowQueueServiceHealthIndicator.isHealthy(),
+        this.subscriberProcessQueueHealthIndicator.isHealthy(),
       ]);
 
       return healths.every((health) => !!health === true);
@@ -85,6 +106,12 @@ export class ReadinessService {
           throw error;
         }
       }
+    } else {
+      const error = new Error('Queues are not enabled');
+
+      Logger.error(error, 'Queues are not enabled', LOG_CONTEXT);
+
+      throw error;
     }
   }
 }

@@ -19,8 +19,9 @@ export class WebSocketsQueueServiceHealthIndicator extends HealthIndicator {
 
   async isHealthy(): Promise<HealthIndicatorResult> {
     const isReady = this.webSocketsQueueService.isReady();
+    const isPaused = this.webSocketsQueueService.isPaused();
 
-    if (isReady) {
+    if (isReady && !isPaused) {
       Logger.verbose('WebSocketsQueueService is ready', LOG_CONTEXT);
 
       return this.getStatus(this.INDICATOR_KEY, true);
