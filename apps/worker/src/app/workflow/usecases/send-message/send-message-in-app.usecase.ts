@@ -261,7 +261,7 @@ export class SendMessageInApp extends SendMessageBase {
     );
 
     await this.webSocketsQueueService.bullMqService.add(
-      message._id,
+      'sendMessage',
       {
         event: WebSocketEventEnum.RECEIVED,
         userId: command._subscriberId,
@@ -270,7 +270,10 @@ export class SendMessageInApp extends SendMessageBase {
           messageId: message._id,
         },
       },
-      {},
+      {
+        removeOnComplete: true,
+        removeOnFail: true,
+      },
       command.organizationId
     );
 
