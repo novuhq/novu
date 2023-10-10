@@ -12,7 +12,7 @@ import {
   IUserPreferenceSettings,
 } from '@novu/notification-center';
 import type { INovuThemeProvider, INotificationCenterStyles } from '@novu/notification-center';
-import { IMessage, IOrganizationEntity, ButtonTypeEnum } from '@novu/shared';
+import { IMessage, IOrganizationEntity, ButtonTypeEnum, isBrowser } from '@novu/shared';
 
 import { API_URL, WS_URL } from '../../config';
 
@@ -102,7 +102,7 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
       }
     };
 
-    if (process.env.NODE_ENV === 'test') {
+    if (process.env.NODE_ENV === 'test' || (isBrowser() && (window as any).Cypress)) {
       // eslint-disable-next-line
       (window as any).initHandler = handler;
     }
