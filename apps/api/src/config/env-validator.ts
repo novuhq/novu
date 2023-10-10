@@ -31,6 +31,9 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
     default: '',
   }),
   MONGO_URL: str(),
+  MONGO_MIN_POOL_SIZE: num({
+    default: 10,
+  }),
   MONGO_MAX_POOL_SIZE: num({
     default: 500,
   }),

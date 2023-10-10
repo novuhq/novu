@@ -1,7 +1,7 @@
 import { IsDefined, IsString } from 'class-validator';
 
-import { EnvironmentCommand } from '../../../shared/commands/project.command';
 import { TopicKey } from '@novu/shared';
+import { EnvironmentCommand } from '../../commands';
 
 export class GetTopicSubscribersCommand extends EnvironmentCommand {
   @IsString()

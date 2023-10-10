@@ -32,6 +32,7 @@ In addition to this repository, here are the other Novu repositories you can con
 - [Novu Java SDK](https://github.com/novuhq/novu-java/issues)
 - [Novu Kotlin SDK](https://github.com/novuhq/novu-kotlin/issues)
 - [Novu Elixir SDK](https://github.com/novuhq/novu-elixir/issues)
+- [Novu Rust SDK](https://github.com/novuhq/novu-rust/issues)
 
 Your contribution, no matter its size, holds immense value. We eagerly await to see the impact you'll make in our community! 🚀
 
@@ -203,10 +204,10 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 #### 👇 Chat
 
-- [x] Slack
-- [x] Discord
-- [x] MS Teams
-- [x] Mattermost
+- [x] [Slack](https://github.com/novuhq/novu/tree/main/providers/slack)
+- [x] [Discord](https://github.com/novuhq/novu/tree/main/providers/discord)
+- [x] [MS Teams](https://github.com/novuhq/novu/tree/main/providers/ms-teams)
+- [x] [Mattermost](https://github.com/novuhq/novu/tree/main/providers/mattermost)
 
 #### 📱 In-App
 
@@ -233,7 +234,7 @@ We are more than happy to help you. If you are getting any errors or facing prob
 
 - [Home page](https://novu.co/)
 - [Contribution Guidelines](https://github.com/novuhq/novu/blob/main/CONTRIBUTING.md)
-- [Run Novu Locally](https://docs.novu.co/community/run-locally)
+- [Run Novu Locally](https://docs.novu.co/community/run-in-local-machine)
 
 ## 🛡️ License
 

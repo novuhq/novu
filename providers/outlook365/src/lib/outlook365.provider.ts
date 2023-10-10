@@ -24,7 +24,7 @@ export class Outlook365Provider implements IEmailProvider {
       host: 'smtp.office365.com',
       port: 587,
       requireTLS: true,
-      connectionTImeout: 30000,
+      connectionTimeout: 30000,
       auth: {
         user: this.config.from,
         pass: this.config.password,
