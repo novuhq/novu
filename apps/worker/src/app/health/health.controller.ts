@@ -7,6 +7,7 @@ import {
   WorkflowQueueServiceHealthIndicator,
   ActiveJobsMetricQueueServiceHealthIndicator,
   CompletedJobsMetricQueueServiceHealthIndicator,
+  SubscriberProcessQueueHealthIndicator,
 } from '@novu/application-generic';
 
 import { version } from '../../../package.json';
@@ -20,7 +21,8 @@ export class HealthController {
     private standardQueueHealthIndicator: StandardQueueServiceHealthIndicator,
     private workflowQueueHealthIndicator: WorkflowQueueServiceHealthIndicator,
     private activeJobsMetricQueueServiceHealthIndicator: ActiveJobsMetricQueueServiceHealthIndicator,
-    private completedJobsMetricQueueServiceHealthIndicator: CompletedJobsMetricQueueServiceHealthIndicator
+    private completedJobsMetricQueueServiceHealthIndicator: CompletedJobsMetricQueueServiceHealthIndicator,
+    private subscriberProcessQueueHealthIndicator: SubscriberProcessQueueHealthIndicator
   ) {}
 
   @Get()
@@ -32,6 +34,7 @@ export class HealthController {
       async () => this.workflowQueueHealthIndicator.isHealthy(),
       async () => this.activeJobsMetricQueueServiceHealthIndicator.isHealthy(),
       async () => this.completedJobsMetricQueueServiceHealthIndicator.isHealthy(),
+      async () => this.subscriberProcessQueueHealthIndicator.isHealthy(),
       async () => {
         return {
           apiVersion: {

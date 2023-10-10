@@ -1,7 +1,7 @@
 import { Module, Provider } from '@nestjs/common';
 import {
   AddDelayJob,
-  AddDigestJob,
+  MergeOrCreateDigest,
   AddJob,
   BullMqService,
   bullMqTokenList,
@@ -27,6 +27,10 @@ import {
   ConditionsFilter,
   TriggerEvent,
   SelectVariant,
+  MapTriggerRecipients,
+  GetTopicSubscribersUseCase,
+  getIsTopicNotificationEnabled,
+  SubscriberJobBound,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
@@ -60,12 +64,13 @@ import {
 } from './usecases';
 
 import { SharedModule } from '../shared/shared.module';
+import { SubscriberProcessWorker } from './services/subscriber-process.worker';
 
 const REPOSITORIES = [JobRepository];
 
 const USE_CASES = [
   AddDelayJob,
-  AddDigestJob,
+  MergeOrCreateDigest,
   AddJob,
   CalculateLimitNovuIntegration,
   CompileEmailTemplate,
@@ -104,6 +109,10 @@ const USE_CASES = [
   TriggerEvent,
   UpdateJobStatus,
   WebhookFilterBackoffStrategy,
+  MapTriggerRecipients,
+  GetTopicSubscribersUseCase,
+  getIsTopicNotificationEnabled,
+  SubscriberJobBound,
 ];
 
 const PROVIDERS: Provider[] = [
@@ -113,6 +122,7 @@ const PROVIDERS: Provider[] = [
   CompletedJobsMetricService,
   StandardWorker,
   WorkflowWorker,
+  SubscriberProcessWorker,
   OldInstanceBullMqService,
   OldInstanceStandardWorker,
   OldInstanceWorkflowWorker,

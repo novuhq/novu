@@ -1,6 +1,6 @@
 {
   "name": "@novu/one-signal",
-  "version": "0.20.0-alpha.0",
+  "version": "0.20.0-alpha.1",
   "description": "A OneSignal wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -34,7 +34,7 @@
     "pnpm": "^7.26.0"
   },
   "dependencies": {
-    "@novu/stateless": "^0.20.0-alpha.0",
+    "@novu/stateless": "^0.20.0-alpha.1",
     "onesignal-node": "^3.4.0"
   },
   "devDependencies": {
