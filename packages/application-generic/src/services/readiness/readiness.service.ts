@@ -108,9 +108,7 @@ export class ReadinessService {
       }
     } else {
       const error = new Error('Queues are not enabled');
-
       Logger.error(error, 'Queues are not enabled', LOG_CONTEXT);
-
       throw error;
     }
   }

@@ -30,11 +30,11 @@ export class HealthController {
   healthCheck(): Promise<HealthCheckResult> {
     return this.healthCheckService.check([
       async () => this.dalHealthIndicator.isHealthy(),
-      async () => this.standardQueueHealthIndicator.isHealthy(),
-      async () => this.workflowQueueHealthIndicator.isHealthy(),
-      async () => this.activeJobsMetricQueueServiceHealthIndicator.isHealthy(),
-      async () => this.completedJobsMetricQueueServiceHealthIndicator.isHealthy(),
-      async () => this.subscriberProcessQueueHealthIndicator.isHealthy(),
+      async () => this.standardQueueHealthIndicator.isWorkerHealthy(),
+      async () => this.workflowQueueHealthIndicator.isWorkerHealthy(),
+      async () => this.activeJobsMetricQueueServiceHealthIndicator.isWorkerHealthy(),
+      async () => this.completedJobsMetricQueueServiceHealthIndicator.isWorkerHealthy(),
+      async () => this.subscriberProcessQueueHealthIndicator.isWorkerHealthy(),
       async () => {
         return {
           apiVersion: {

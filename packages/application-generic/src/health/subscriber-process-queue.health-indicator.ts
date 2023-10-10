@@ -23,7 +23,24 @@ export class SubscriberProcessQueueHealthIndicator extends HealthIndicator {
 
   async isHealthy(): Promise<HealthIndicatorResult> {
     const isReady = this.subscriberProcessQueueService.isReady();
-    const isPaused = this.subscriberProcessQueueService.isPaused();
+
+    if (isReady) {
+      Logger.verbose('SubscriberProcessQueueService is ready', LOG_CONTEXT);
+
+      return this.getStatus(this.INDICATOR_KEY, true);
+    }
+
+    Logger.verbose('SubscriberProcessQueueService is not ready', LOG_CONTEXT);
+
+    throw new HealthCheckError(
+      'Subscriber Process Queue Service Health',
+      this.getStatus(this.INDICATOR_KEY, false)
+    );
+  }
+
+  async isWorkerHealthy(): Promise<HealthIndicatorResult> {
+    const isReady = this.subscriberProcessQueueService.isReady();
+    const isPaused = await this.subscriberProcessQueueService.isPaused();
 
     if (isReady && !isPaused) {
       Logger.verbose('SubscriberProcessQueueService is ready', LOG_CONTEXT);
