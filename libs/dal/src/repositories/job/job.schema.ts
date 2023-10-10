@@ -40,6 +40,10 @@ const jobSchema = new Schema<JobDBModel>(
       type: Schema.Types.ObjectId,
       ref: 'Notification',
     },
+    _mergedDigestId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Job',
+    },
     subscriberId: {
       type: Schema.Types.String,
     },
@@ -379,6 +383,15 @@ jobSchema.index({
 jobSchema.index({
   _environmentId: 1,
 });
+
+jobSchema.index(
+  {
+    _mergedDigestId: 1,
+  },
+  {
+    sparse: true,
+  }
+);
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const Job = (mongoose.models.Job as mongoose.Model<JobDBModel>) || mongoose.model<JobDBModel>('Job', jobSchema);
