@@ -1,8 +1,35 @@
 import {
-  QueryObserverResult,
+  ButtonTypeEnum,
+  ChannelTypeEnum,
+  IMessage,
+  IOrganizationEntity,
+  IPaginatedResponse,
+  MessageActionStatusEnum,
+  WebSocketEventEnum,
+} from '@novu/shared';
+import {
   MutationObserverResult,
+  QueryObserverResult,
 } from '@tanstack/query-core';
-import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
+
+import {
+  IStoreQuery,
+  IUserGlobalPreferenceSettings,
+  IUserPreferenceSettings,
+} from '@novu/client';
+
+export {
+  ButtonTypeEnum,
+  ChannelTypeEnum,
+  IMessage,
+  IOrganizationEntity,
+  IPaginatedResponse,
+  IStoreQuery,
+  IUserGlobalPreferenceSettings,
+  IUserPreferenceSettings,
+  MessageActionStatusEnum,
+  WebSocketEventEnum,
+};
 
 export interface IHeadlessServiceOptions {
   backendUrl?: string;
@@ -20,6 +47,11 @@ export interface IUpdateUserPreferencesVariables {
   templateId: string;
   channelType: string;
   checked: boolean;
+}
+
+export interface IUpdateUserGlobalPreferencesVariables {
+  preferences?: { channelType: ChannelTypeEnum; enabled: boolean }[];
+  enabled?: boolean;
 }
 
 export interface IUpdateActionVariables {
