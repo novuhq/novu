@@ -43,7 +43,7 @@ enum ReqStatusEnum {
 
 @Injectable()
 export class IdempotencyInterceptor implements NestInterceptor {
-  constructor(private readonly cacheService: CacheService) {}
+  constructor(private readonly cacheService: CacheService) { }
 
   async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
     const request = context.switchToHttp().getRequest();
@@ -232,7 +232,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
             data: error,
           },
           IDEMPOTENCY_CACHE_TTL
-        ).catch(() => {});
+        ).catch(() => { });
         Logger.verbose(`cached the error response for idempotency key:${idempotencyKey}`, LOG_CONTEXT);
         this.setHeaders(context.switchToHttp().getResponse(), { [HEADER_KEYS.IDEMPOTENCY_KEY]: idempotencyKey });
 
