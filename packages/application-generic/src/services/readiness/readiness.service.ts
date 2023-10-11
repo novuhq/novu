@@ -32,15 +32,23 @@ export class ReadinessService {
   async areQueuesEnabled(): Promise<boolean> {
     Logger.log('Enabling queues as workers are meant to be ready', LOG_CONTEXT);
 
-    const maxRetries = 10;
+    const retries = 10;
     const delay = 1000; // 1 seconds
 
-    for (let i = 0; i < maxRetries; i++) {
+    for (let i = 1; i < retries + 1; i++) {
       const result = await this.checkServicesHealth();
 
       if (result) {
         return true;
       }
+
+      Logger.warn(
+        {
+          attempt: i,
+          message: `Some health indicator returned false when checking if queues are enabled ${i}/${retries}`,
+        },
+        LOG_CONTEXT
+      );
 
       await setTimeout(delay);
     }
