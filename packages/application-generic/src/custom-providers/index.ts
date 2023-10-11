@@ -15,7 +15,9 @@ import {
 import {
   GetIsMultiProviderConfigurationEnabled,
   GetIsTopicNotificationEnabled,
+  GetUseMergedDigestId,
 } from '../usecases';
+import { SubscriberProcessQueueService } from '../services/queues/subscriber-process-queue.service';
 
 export const featureFlagsService = {
   provide: FeatureFlagsService,
@@ -25,6 +27,18 @@ export const featureFlagsService = {
 
     return instance;
   },
+};
+
+export const getUseMergedDigestId = {
+  provide: GetUseMergedDigestId,
+  useFactory: async (
+    featureFlagServiceItem: FeatureFlagsService
+  ): Promise<GetUseMergedDigestId> => {
+    const useCase = new GetUseMergedDigestId(featureFlagServiceItem);
+
+    return useCase;
+  },
+  inject: [FeatureFlagsService],
 };
 
 export const getIsMultiProviderConfigurationEnabled = {
@@ -133,9 +147,20 @@ export const bullMqTokenList = {
   useFactory: (
     standardQueueService: StandardQueueService,
     webSocketsQueueService: WebSocketsQueueService,
-    workflowQueueService: WorkflowQueueService
+    workflowQueueService: WorkflowQueueService,
+    subscriberProcessQueueService: SubscriberProcessQueueService
   ) => {
-    return [standardQueueService, webSocketsQueueService, workflowQueueService];
+    return [
+      standardQueueService,
+      webSocketsQueueService,
+      workflowQueueService,
+      subscriberProcessQueueService,
+    ];
   },
-  inject: [StandardQueueService, WebSocketsQueueService, WorkflowQueueService],
+  inject: [
+    StandardQueueService,
+    WebSocketsQueueService,
+    WorkflowQueueService,
+    SubscriberProcessQueueService,
+  ],
 };
