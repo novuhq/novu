@@ -112,7 +112,7 @@
     "redlock": "4.2.0",
     "reflect-metadata": "^0.1.13",
     "rrule": "^2.7.2",
-    "@novu/clicksend": "^0.16.3"
+    "@novu/clicksend": "0.20.0-alpha.1"
   },
   "optionalDependencies": {
     "@taskforcesh/bullmq-pro": "5.1.14"
