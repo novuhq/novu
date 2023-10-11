@@ -10,4 +10,5 @@ A Clicksend sms provider library for [@novu/node](https://github.com/novuhq/novu
     const provider = new ClicksendSmsProvider({
         username: process.env.CLICKSEND_USERNAME,
         apiKey: process.env.CLICKSEND_API_KEY,
-```
+        })
+    ```

@@ -20,7 +20,6 @@ export class GetDigestEventsRegular extends GetDigestEvents {
         : parseInt(digestMeta.amount, 10)
       : undefined;
 
-    const createdDate = new Date(currentJob.createdAt);
     const subtractedTime = digestMeta
       ? {
           [digestMeta.unit]: amount,
