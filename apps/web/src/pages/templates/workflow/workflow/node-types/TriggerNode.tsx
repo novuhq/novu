@@ -86,7 +86,6 @@ export default memo(({ selected }: { selected: boolean }) => {
         </Tooltip>
       </When>
       <WorkflowNode
-        showDelete={false}
         Icon={BoltOutlinedGradient}
         label="Workflow trigger"
         active={selected}

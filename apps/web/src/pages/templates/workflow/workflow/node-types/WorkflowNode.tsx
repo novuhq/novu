@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import { Group, Center, useMantineColorScheme, ActionIcon, Container, Stack, Divider } from '@mantine/core';
+import { Group, useMantineColorScheme, Container, Divider } from '@mantine/core';
 import { ChannelTypeEnum, providers, StepTypeEnum } from '@novu/shared';
 import React, { MouseEventHandler, useEffect, useState } from 'react';
 import { useViewport } from 'react-flow-renderer';
@@ -8,11 +8,12 @@ import { useFormContext } from 'react-hook-form';
 import { useSegment } from '../../../../../components/providers/SegmentProvider';
 import { When } from '../../../../../components/utils/When';
 import { CONTEXT_PATH } from '../../../../../config';
-import { Dropdown, Switch, Text, colors, Button } from '../../../../../design-system';
+import { Dropdown, Text, colors, Button, IDropdownProps } from '../../../../../design-system';
 import {
   ConditionPlus,
   ConditionsFile,
   DotsHorizontal,
+  NoConditions,
   PencilOutlined,
   ProviderMissing,
   Trash,
@@ -36,39 +37,65 @@ import { getFormattedStepErrors } from '../../../shared/errors';
 import { DisplayPrimaryProviderIcon } from '../../DisplayPrimaryProviderIcon';
 import { NodeErrorPopover } from '../../NodeErrorPopover';
 
-interface ITemplateButtonProps {
+export type NodeType = 'step' | 'stepRoot' | 'variant' | 'variantRoot';
+
+const VARIANT_TYPE_TO_EDIT: Record<NodeType, string> = {
+  step: 'Edit step',
+  stepRoot: 'Edit root step',
+  variant: 'Edit variant',
+  variantRoot: 'Edit root step',
+};
+
+const VARIANT_TYPE_TO_ADD_CONDITIONS: Record<NodeType, string> = {
+  step: 'Add conditions',
+  stepRoot: 'Add group conditions',
+  variant: 'Add variant conditions',
+  variantRoot: 'Add group conditions',
+};
+
+const VARIANT_TYPE_TO_EDIT_CONDITIONS: Record<NodeType, string> = {
+  step: 'Edit conditions',
+  stepRoot: 'Edit group conditions',
+  variant: 'Edit conditions',
+  variantRoot: 'Edit group conditions',
+};
+
+const VARIANT_TYPE_TO_DELETE: Record<NodeType, string> = {
+  step: 'Delete step',
+  stepRoot: 'Delete step',
+  variant: 'Delete variant',
+  variantRoot: 'Delete step',
+};
+
+interface IWorkflowNodeProps {
   Icon: React.FC<any>;
   label: string;
   active?: boolean;
-  action?: boolean;
   testId?: string;
   tabKey?: ChannelTypeEnum;
   channelType: StepTypeEnum;
-  checked?: boolean;
-  readonly?: boolean;
-  switchButton?: (boolean) => void;
   changeTab?: (string) => void;
   errors?: boolean | string;
-  showDelete?: boolean;
   id?: string;
   index?: number;
   onDelete?: () => void;
   onAddVariant?: () => void;
   onEdit?: MouseEventHandler<HTMLButtonElement>;
+  onAddConditions?: MouseEventHandler<HTMLButtonElement>;
   dragging?: boolean;
   disabled?: boolean;
   variantsCount?: number;
+  conditionsCount?: number;
   subtitle?: string | React.ReactNode;
+  className?: string;
+  menuPosition?: IDropdownProps['position'];
+  nodeType?: NodeType;
 }
 
 const MENU_CLICK_OUTSIDE_EVENTS = ['click', 'mousedown', 'touchstart'];
 
 export function WorkflowNode({
   active = false,
-  action = false,
-  switchButton,
-  checked = false,
-  readonly = false,
   label,
   Icon,
   tabKey,
@@ -76,16 +103,20 @@ export function WorkflowNode({
   index,
   testId,
   errors: initialErrors = false,
-  showDelete = true,
   variantsCount = 0,
+  conditionsCount = 0,
   id = undefined,
-  onDelete = () => {},
-  onAddVariant = () => {},
-  onEdit = () => {},
+  onDelete,
+  onAddVariant,
+  onEdit,
+  onAddConditions,
   dragging = false,
   disabled: initDisabled,
   subtitle,
-}: ITemplateButtonProps) {
+  className,
+  menuPosition,
+  nodeType = 'step',
+}: IWorkflowNodeProps) {
   const segment = useSegment();
 
   const { readonly: readonlyEnv, environment } = useEnvController();
@@ -95,8 +126,8 @@ export function WorkflowNode({
   const [isIntegrationsModalVisible, setIntegrationsModalVisible] = useState(false);
   const disabledColor = disabled ? { color: theme.colorScheme === 'dark' ? colors.B40 : colors.B70 } : {};
   const disabledProp = disabled ? { disabled: disabled } : {};
-  const conditionsCount = 7;
-  const isVariant = variantsCount > 0;
+  const isStepRoot = nodeType === 'stepRoot';
+  const isVariantRoot = nodeType === 'variantRoot';
 
   const viewport = useViewport();
   const channelKey = tabKey ?? '';
@@ -131,7 +162,7 @@ export function WorkflowNode({
     stepErrorContent = getFormattedStepErrors(index, errors);
   }
 
-  const showMenu = showDelete && !readonlyEnv && !dragging && hover;
+  const showMenu = !readonlyEnv && !dragging && hover;
 
   useEffect(() => {
     const subscription = watch((values) => {
@@ -155,7 +186,7 @@ export function WorkflowNode({
 
   return (
     <>
-      <UnstyledButtonStyled
+      <WorkflowNodeButton
         role={'button'}
         onMouseEnter={() => {
           setPopoverOpened(true);
@@ -166,48 +197,40 @@ export function WorkflowNode({
           setHover(false);
         }}
         data-test-id={testId}
-        className={cx(classes.button, { [classes.active]: active }, { [classes.variant]: isVariant })}
+        className={cx(
+          className,
+          classes.button,
+          { [classes.active]: active },
+          { [classes.variant]: isStepRoot },
+          { [classes.variantRoot]: isVariantRoot }
+        )}
       >
-        <Stack
-          style={{
-            flex: '1 1 auto',
-          }}
-          spacing={0}
-        >
-          <When truthy={isVariant}>
-            <div className={classes.header}>
-              <Group h={30} align={'center'}>
-                <IconText
-                  color={colors.B60}
-                  Icon={VariantsFile}
-                  label={
-                    <>
-                      {variantsCount} <span style={{ fontSize: '12px' }}>variants</span>
-                    </>
-                  }
-                />
-                <ContainerButton>
-                  <When truthy={!showMenu && conditionsCount > 0}>
-                    <IconText color={colors.B60} Icon={ConditionsFile} label={conditionsCount} />
-                  </When>
-                  <When truthy={showMenu}>
-                    <Group noWrap spacing={5}>
-                      <ActionButton onClick={onEdit} tooltip={'Edit root step'} Icon={PencilOutlined} />
-                      <ActionButton
-                        onClick={(e) => e.stopPropagation()}
-                        tooltip={`${conditionsCount > 0 ? 'Edit' : 'Add'} group conditions`}
-                        text={`${conditionsCount}`}
-                        Icon={ConditionsFile}
-                      />
-                      <DotsMenu onDelete={onDelete} onAddVariant={onAddVariant} />
-                    </Group>
-                  </When>
-                </ContainerButton>
-              </Group>
-            </div>
+        <WorkflowNodeWrapper>
+          <When truthy={isStepRoot}>
+            <ActionWrapper>
+              <IconText
+                color={colors.B60}
+                Icon={VariantsFile}
+                label={
+                  <>
+                    {variantsCount} <span style={{ fontSize: '12px' }}>variants</span>
+                  </>
+                }
+              />
+              <Actions
+                nodeType={nodeType}
+                showMenu={showMenu}
+                menuPosition={menuPosition}
+                conditionsCount={conditionsCount}
+                onEdit={onEdit}
+                onAddConditions={onAddConditions}
+                onAddVariant={onAddVariant}
+                onDelete={onDelete}
+              />
+            </ActionWrapper>
             <Divider
-              ml={-18}
-              mr={-8}
+              ml={-7}
+              mr={-7}
               size={2}
               my={0}
               variant={'dashed'}
@@ -215,61 +238,48 @@ export function WorkflowNode({
             />
           </When>
 
-          <Group w="100%" noWrap>
-            <LeftContainerWrapper>
-              <DisplayPrimaryProviderIcon
-                Icon={Icon}
-                disabledProp={disabledProp}
-                providerIntegration={providerIntegration}
-                isChannelStep={isChannelStep}
-                logoSrc={logoSrc}
-              />
+          <BodyWrapper>
+            <DisplayPrimaryProviderIcon
+              Icon={Icon}
+              disabledProp={disabledProp}
+              providerIntegration={providerIntegration}
+              isChannelStep={isChannelStep}
+              logoSrc={logoSrc}
+            />
 
-              <StyledContentWrapper>
-                <Text {...disabledColor} weight="bold" rows={1} size={16} data-test-id="workflow-node-label">
-                  {label}
+            <StyledContentWrapper>
+              <Text {...disabledColor} weight="bold" rows={1} size={16} data-test-id="workflow-node-label">
+                {label}
+              </Text>
+
+              {Object.keys(stepErrorContent).length > 0 && (
+                <Text {...disabledColor} size={12} color={colors.error} rows={1} data-test-id="workflow-node-error">
+                  {stepErrorContent}
                 </Text>
-
-                {Object.keys(stepErrorContent).length > 0 && (
-                  <Text {...disabledColor} size={12} color={colors.error} rows={1} data-test-id="workflow-node-error">
-                    {stepErrorContent}
-                  </Text>
-                )}
-                {!(Object.keys(stepErrorContent).length > 0) && subtitle && (
-                  <Text
-                    {...disabledColor}
-                    style={{ ...(!isVariant && showMenu && { maxWidth: 50 }) }}
-                    size={12}
-                    color={colors.B60}
-                    rows={1}
-                    data-test-id="workflow-node-subtitle"
-                  >
-                    {subtitle}
-                  </Text>
-                )}
-              </StyledContentWrapper>
-            </LeftContainerWrapper>
-
-            <ActionWrapper>
-              {action && !readonly && (
-                <Switch checked={checked} onChange={(e) => switchButton && switchButton(e.target.checked)} />
               )}
-              <When truthy={!isVariant && showMenu}>
-                <ContainerButton mt={-40}>
-                  <Group noWrap spacing={5}>
-                    <ActionButton onClick={onEdit} tooltip={'Edit step'} Icon={PencilOutlined} />
-                    <ActionButton
-                      onClick={(e) => e.stopPropagation()}
-                      tooltip={'Add conditions'}
-                      Icon={ConditionPlus}
-                    />
-                    <DotsMenu onDelete={onDelete} onAddVariant={onAddVariant} />
-                  </Group>
-                </ContainerButton>
-              </When>
-            </ActionWrapper>
-          </Group>
-        </Stack>
+              {!(Object.keys(stepErrorContent).length > 0) && subtitle && (
+                <Text {...disabledColor} size={12} color={colors.B60} rows={1} data-test-id="workflow-node-subtitle">
+                  {subtitle}
+                </Text>
+              )}
+            </StyledContentWrapper>
+
+            <When truthy={!isStepRoot}>
+              <ActionTopWrapper>
+                <Actions
+                  nodeType={nodeType}
+                  showMenu={showMenu}
+                  menuPosition={menuPosition}
+                  conditionsCount={conditionsCount}
+                  onEdit={onEdit}
+                  onAddConditions={onAddConditions}
+                  onAddVariant={onAddVariant}
+                  onDelete={onDelete}
+                />
+              </ActionTopWrapper>
+            </When>
+          </BodyWrapper>
+        </WorkflowNodeWrapper>
 
         {!hasActiveIntegration && (
           <NodeErrorPopover
@@ -353,7 +363,7 @@ export function WorkflowNode({
             }
           />
         )}
-      </UnstyledButtonStyled>
+      </WorkflowNodeButton>
       {isMultiProviderConfigurationEnabled ? (
         <IntegrationsListModal
           isOpen={isIntegrationsModalVisible}
@@ -372,53 +382,156 @@ export function WorkflowNode({
   );
 }
 
-const DotsMenu = ({ onDelete, onAddVariant }) => {
+const Actions = ({
+  showMenu,
+  menuPosition,
+  conditionsCount,
+  nodeType = 'step',
+  onEdit,
+  onAddConditions,
+  onAddVariant,
+  onDelete,
+}: Pick<
+  IWorkflowNodeProps,
+  'nodeType' | 'menuPosition' | 'onEdit' | 'onAddConditions' | 'onAddVariant' | 'onDelete'
+> & {
+  showMenu: boolean;
+  conditionsCount: number;
+}) => {
+  if (!onEdit && !onAddConditions) {
+    return null;
+  }
+
+  if (nodeType === 'variantRoot') {
+    return (
+      <ContainerButton>
+        <When truthy={!showMenu}>
+          <ActionButton
+            onClick={onAddConditions}
+            tooltip={
+              conditionsCount > 0 ? VARIANT_TYPE_TO_EDIT_CONDITIONS[nodeType] : VARIANT_TYPE_TO_ADD_CONDITIONS[nodeType]
+            }
+            text="No"
+            Icon={NoConditions}
+          />
+        </When>
+        <When truthy={showMenu}>
+          <Group noWrap spacing={5}>
+            {onEdit && <ActionButton onClick={onEdit} tooltip={VARIANT_TYPE_TO_EDIT[nodeType]} Icon={PencilOutlined} />}
+          </Group>
+        </When>
+      </ContainerButton>
+    );
+  }
+
+  return (
+    <ContainerButton>
+      <When truthy={!showMenu && conditionsCount > 0}>
+        <ActionButton
+          onClick={onAddConditions}
+          tooltip={
+            conditionsCount > 0 ? VARIANT_TYPE_TO_EDIT_CONDITIONS[nodeType] : VARIANT_TYPE_TO_ADD_CONDITIONS[nodeType]
+          }
+          text={`${conditionsCount > 0 ? conditionsCount : ''}`}
+          Icon={conditionsCount > 0 ? ConditionsFile : ConditionPlus}
+        />
+      </When>
+      <When truthy={showMenu}>
+        <Group noWrap spacing={5}>
+          {onEdit && <ActionButton onClick={onEdit} tooltip={VARIANT_TYPE_TO_EDIT[nodeType]} Icon={PencilOutlined} />}
+          {onAddConditions && (
+            <ActionButton
+              onClick={onAddConditions}
+              tooltip={
+                conditionsCount > 0
+                  ? VARIANT_TYPE_TO_EDIT_CONDITIONS[nodeType]
+                  : VARIANT_TYPE_TO_ADD_CONDITIONS[nodeType]
+              }
+              text={`${conditionsCount > 0 ? conditionsCount : ''}`}
+              Icon={conditionsCount > 0 ? ConditionsFile : ConditionPlus}
+            />
+          )}
+          <DotsMenu onDelete={onDelete} onAddVariant={onAddVariant} menuPosition={menuPosition} nodeType={nodeType} />
+        </Group>
+      </When>
+    </ContainerButton>
+  );
+};
+
+const DotsMenu = ({
+  menuPosition,
+  nodeType = 'step',
+  onDelete,
+  onAddVariant,
+}: Pick<IWorkflowNodeProps, 'onDelete' | 'onAddVariant' | 'menuPosition' | 'nodeType'>) => {
+  if (!onDelete && !onAddVariant) {
+    return null;
+  }
+
   return (
     <Dropdown
+      position={menuPosition}
       withArrow={false}
       offset={0}
       control={<ActionButton onClick={(e) => e.stopPropagation()} Icon={DotsHorizontal} />}
-      middlewares={{ flip: false, shift: false }}
     >
-      <Dropdown.Item
-        icon={<VariantPlus />}
-        onClick={(e) => {
-          e.stopPropagation();
-          onAddVariant();
-        }}
-      >
-        Add variant
-      </Dropdown.Item>
-      <Dropdown.Item
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete();
-        }}
-        icon={<Trash width="16px" height="16px" />}
-        data-test-id="delete-step-action"
-      >
-        Delete step
-      </Dropdown.Item>
+      {onAddVariant && (
+        <Dropdown.Item
+          icon={<VariantPlus />}
+          onClick={(e) => {
+            e.stopPropagation();
+            onAddVariant();
+          }}
+        >
+          Add variant
+        </Dropdown.Item>
+      )}
+      {onDelete && (
+        <Dropdown.Item
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          icon={<Trash width="16px" height="16px" />}
+          data-test-id="delete-step-action"
+        >
+          {VARIANT_TYPE_TO_DELETE[nodeType]}
+        </Dropdown.Item>
+      )}
     </Dropdown>
   );
 };
 
 const IconText = ({ color, label, Icon }: { color?: string; label: any; Icon: React.FC<any> }) => {
   return (
-    <Center inline>
-      <Icon color={color} />
-      <Text color={color} weight={'bold'} ml={5} size={14}>
+    <IconTextWrapper>
+      <Icon color={color} width="20px" height="20px" />
+      <Text color={color} weight={'bold'} size={14}>
         {label}
       </Text>
-    </Center>
+    </IconTextWrapper>
   );
 };
+
+const IconTextWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+`;
+
+const WorkflowNodeWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+`;
 
 const ContainerButton = styled(Container)`
   padding: 0;
   margin-left: auto;
   margin-right: 0;
 `;
+
 const ErrorCircle = styled.div<{ dark: boolean }>`
   width: 11px;
   height: 11px;
@@ -433,15 +546,21 @@ const ErrorCircle = styled.div<{ dark: boolean }>`
 
 const ActionWrapper = styled.div`
   display: flex;
-  align-items: center;
+  height: 28px;
+  margin: 4px 0 4px 4px;
 `;
 
-const LeftContainerWrapper = styled.div`
+const ActionTopWrapper = styled(ActionWrapper)`
+  align-self: flex-start;
+`;
+
+const BodyWrapper = styled.div`
   display: flex;
-  align-items: center;
-  gap: 16px;
   flex: 1 1 auto;
-  height: 80px;
+  gap: 16px;
+  height: 100%;
+  margin-left: 12px;
+  align-items: center;
 `;
 
 const StyledContentWrapper = styled.div`
@@ -454,9 +573,8 @@ const StyledContentWrapper = styled.div`
   flex: 1;
 `;
 
-const UnstyledButtonStyled = styled.div`
+const WorkflowNodeButton = styled.div`
   display: flex;
-  align-items: center;
   justify-content: space-between;
   position: relative;
   pointer-events: all;

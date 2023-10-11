@@ -92,6 +92,10 @@ const WorkflowEditor = () => {
     }
   };
 
+  const onAddConditions = (uuid: string) => {
+    // TODO: show the conditions sidebar
+  };
+
   const confirmDelete = () => {
     const index = steps.findIndex((item) => item.uuid === toDelete);
     deleteStep(index);
@@ -208,6 +212,7 @@ const WorkflowEditor = () => {
             onNodeClick={onNodeClick}
             onEdit={onEdit}
             onAddVariant={onAddVariant}
+            onAddConditions={onAddConditions}
           />
         </div>
       </div>

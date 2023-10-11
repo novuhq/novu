@@ -15,22 +15,20 @@ export const useStyles = createStyles((theme) => {
     variant: {
       height: '120px',
     },
-    header: {
-      padding: '8px 0',
-      marginLeft: '-8px',
-      height: '40px',
+    variantRoot: {
+      border: `2px dashed ${dark ? colors.B40 : colors.B60}`,
     },
     button: {
       height: '80px',
       width: '100%',
       margin: '0px',
-      marginBottom: '20px',
-      padding: '0 20px',
+      padding: '0 8px',
       paddingRight: '10px',
       backgroundColor: dark ? colors.B17 : colors.B98,
       borderRadius: '7px',
       fontWeight: 700,
       border: '1px solid transparent',
+      boxShadow: dark ? shadows.dark : shadows.light,
 
       '&:hover': {
         backgroundColor: dark ? colors.B20 : colors.BGLight,

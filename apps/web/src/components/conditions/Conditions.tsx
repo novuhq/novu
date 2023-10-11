@@ -199,7 +199,7 @@ export function Conditions({
         })}
       </div>
 
-      <Group position="left">
+      <Group position="left" mb={8}>
         <Button
           variant="outline"
           onClick={() => {

@@ -143,7 +143,7 @@ export const Sidebar = ({
         data-test-id={dataTestId}
         isParentScrollable={isParentScrollable}
       >
-        <HeaderHolder>
+        <HeaderHolder className="sidebar-header-holder">
           {isExpanded && onBack && (
             <ActionButton
               onClick={onBack}
@@ -171,7 +171,7 @@ export const Sidebar = ({
             data-test-id="sidebar-close"
           />
         </HeaderHolder>
-        <BodyHolder isParentScrollable={isParentScrollable}>
+        <BodyHolder isParentScrollable={isParentScrollable} className="sidebar-body-holder">
           <When truthy={isLoading}>
             <Stack
               align="center"
@@ -185,7 +185,7 @@ export const Sidebar = ({
           </When>
           <When truthy={!isLoading}>{children}</When>
         </BodyHolder>
-        {customFooter && <FooterHolder>{customFooter}</FooterHolder>}
+        {customFooter && <FooterHolder className="sidebar-footer-holder">{customFooter}</FooterHolder>}
       </Form>
     </Drawer>
   );
