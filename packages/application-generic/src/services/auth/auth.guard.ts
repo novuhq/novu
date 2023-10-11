@@ -8,17 +8,17 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { Reflector } from '@nestjs/core';
 import { AuthService } from './auth.service';
-import { PinoLogger } from '../../logging';
 import { Instrument } from '../../instrumentation';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
+  private readonly reflector: Reflector;
+
   constructor(
-    @Inject(forwardRef(() => AuthService)) private authService: AuthService,
-    private readonly reflector: Reflector,
-    private readonly logger: PinoLogger
+    @Inject(forwardRef(() => AuthService)) private authService: AuthService
   ) {
     super();
+    this.reflector = new Reflector();
   }
 
   @Instrument()
