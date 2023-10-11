@@ -48,4 +48,12 @@ export const pushProviders: IProviderConfig[] = [
     logoFileName: { light: 'push-webhook.svg', dark: 'push-webhook.svg' },
     betaVersion: true,
   },
+  {
+    id: PushProviderIdEnum.Pushed,
+    displayName: 'Pushed',
+    channel: ChannelTypeEnum.PUSH,
+    credentials: pushedConfig,
+    docReference: 'https://docs.novu.co/channels-and-providers/push/pushed', // Update with the correct documentation URL.
+    logoFileName: { light: 'pushed.svg', dark: 'pushed.svg' }, // Update with the logo file names.
+  },
 ];
