@@ -1,39 +1,26 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
+import * as _ from 'lodash';
+
 import {
   JobEntity,
   JobRepository,
-  NotificationTemplateEntity,
   NotificationTemplateRepository,
   IntegrationRepository,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
-  InAppProviderIdEnum,
   ISubscribersDefine,
   ProvidersIdEnum,
-  STEP_TYPE_TO_CHANNEL_TYPE,
 } from '@novu/shared';
 
 import { TriggerEventCommand } from './trigger-event.command';
-
-import {
-  CreateNotificationJobsCommand,
-  CreateNotificationJobs,
-} from '../create-notification-jobs';
 import {
   ProcessSubscriber,
   ProcessSubscriberCommand,
 } from '../process-subscriber';
-import {
-  StoreSubscriberJobs,
-  StoreSubscriberJobsCommand,
-} from '../store-subscriber-jobs';
-
 import { PinoLogger } from '../../logging';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
-
-import { AnalyticsService } from '../../services/analytics.service';
 import {
   buildNotificationTemplateIdentifierKey,
   CachedEntity,
@@ -42,22 +29,22 @@ import { ApiException } from '../../utils/exceptions';
 import { ProcessTenant, ProcessTenantCommand } from '../process-tenant';
 import { MapTriggerRecipients } from '../map-trigger-recipients/map-trigger-recipients.use-case';
 import { MapTriggerRecipientsCommand } from '../map-trigger-recipients/map-trigger-recipients.command';
+import { SubscriberProcessQueueService } from '../../services/queues/subscriber-process-queue.service';
 
 const LOG_CONTEXT = 'TriggerEventUseCase';
+const CHUNK_SIZE = 100;
 
 @Injectable()
 export class TriggerEvent {
   constructor(
-    private storeSubscriberJobs: StoreSubscriberJobs,
-    private createNotificationJobs: CreateNotificationJobs,
     private processSubscriber: ProcessSubscriber,
     private integrationRepository: IntegrationRepository,
     private jobRepository: JobRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private processTenant: ProcessTenant,
     private logger: PinoLogger,
-    private analyticsService: AnalyticsService,
-    private mapTriggerRecipients: MapTriggerRecipients
+    private mapTriggerRecipients: MapTriggerRecipients,
+    private subscriberProcessQueueService: SubscriberProcessQueueService
   ) {}
 
   @InstrumentUsecase()
@@ -158,77 +145,31 @@ export class TriggerEvent {
 
       await this.validateSubscriberIdProperty(mappedRecipients);
 
-      const templateProviderIds = await this.getProviderIdsForTemplate(
-        command.environmentId,
-        template
-      );
-
-      for (const subscriber of mappedRecipients) {
-        this.analyticsService.mixpanelTrack(
-          'Notification event trigger - [Triggers]',
-          '',
-          {
+      const jobs = mappedRecipients.map((subscriber) => {
+        return {
+          name: command.transactionId + subscriber.subscriberId,
+          data: {
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
+            userId: command.userId,
             transactionId: command.transactionId,
-            _template: template._id,
-            _organization: command.organizationId,
-            channels: template?.steps.map((step) => step.template?.type),
-            source: command.payload.__source || 'api',
-          }
-        );
-
-        const subscriberProcessed = await this.processSubscriber.execute(
-          ProcessSubscriberCommand.create({
-            environmentId,
-            organizationId,
-            userId,
-            subscriber,
-          })
-        );
-
-        // If no subscriber makes no sense to try to create notification
-        if (!subscriberProcessed) {
-          /**
-           * TODO: Potentially add a CreateExecutionDetails entry. Right now we
-           * have the limitation we need a job to be created for that. Here there
-           * is no job at this point.
-           */
-          Logger.warn(
-            `Subscriber ${JSON.stringify(
-              subscriber.subscriberId
-            )} of organization ${command.organizationId} in transaction ${
-              command.transactionId
-            } was not processed. No jobs are created.`,
-            LOG_CONTEXT
-          );
-
-          return;
-        }
-
-        const notificationJobs = await this.createNotificationJobs.execute(
-          CreateNotificationJobsCommand.create({
-            environmentId,
-            identifier,
-            organizationId,
-            overrides: command.overrides,
+            identifier: command.identifier,
             payload: command.payload,
-            subscriber: subscriberProcessed,
-            template,
-            templateProviderIds,
-            to: subscriber,
-            transactionId: command.transactionId,
-            userId,
+            overrides: command.overrides,
+            tenant: command.tenant,
             ...(actor && actorProcessed && { actor: actorProcessed }),
-            tenant,
-          })
-        );
+            subscriber,
+            templateId: template._id,
+          },
+          groupId: command.organizationId,
+        };
+      });
 
-        const storeSubscriberJobsCommand = StoreSubscriberJobsCommand.create({
-          environmentId: command.environmentId,
-          jobs: notificationJobs,
-          organizationId: command.organizationId,
-        });
-        await this.storeSubscriberJobs.execute(storeSubscriberJobsCommand);
-      }
+      await Promise.all(
+        _.chunk(jobs, CHUNK_SIZE).map((chunk) =>
+          this.subscriberProcessQueueService.addBulk(chunk)
+        )
+      );
     } catch (e) {
       Logger.error(
         {
@@ -281,34 +222,6 @@ export class TriggerEvent {
         'transactionId property is not unique, please make sure all triggers have a unique transactionId'
       );
     }
-  }
-
-  @InstrumentUsecase()
-  private async getProviderIdsForTemplate(
-    environmentId: string,
-    template: NotificationTemplateEntity
-  ): Promise<Record<ChannelTypeEnum, ProvidersIdEnum>> {
-    const providers = {} as Record<ChannelTypeEnum, ProvidersIdEnum>;
-
-    for (const step of template?.steps) {
-      const type = step.template?.type;
-      if (!type) continue;
-
-      const channelType = STEP_TYPE_TO_CHANNEL_TYPE.get(type);
-
-      if (providers[channelType] || !channelType) continue;
-
-      if (channelType === ChannelTypeEnum.IN_APP) {
-        providers[channelType] = InAppProviderIdEnum.Novu;
-      } else {
-        const provider = await this.getProviderId(environmentId, channelType);
-        if (provider) {
-          providers[channelType] = provider;
-        }
-      }
-    }
-
-    return providers;
   }
 
   @Instrument()
