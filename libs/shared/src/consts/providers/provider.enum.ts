@@ -79,6 +79,7 @@ export enum ChatProviderIdEnum {
   Discord = 'discord',
   MsTeams = 'msteams',
   Mattermost = 'mattermost',
+  Guilded = 'guilded',
 }
 
 export enum PushProviderIdEnum {

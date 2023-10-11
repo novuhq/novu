@@ -84,6 +84,7 @@
     "@novu/sendinblue": "^0.20.0-alpha.1",
     "@novu/ses": "^0.20.0-alpha.1",
     "@novu/shared": "^0.20.0-alpha.1",
+    "@novu/guilded": "^0.20.0-alpha.1",
     "@novu/slack": "^0.20.0-alpha.1",
     "@novu/sms-central": "^0.20.0-alpha.0",
     "@novu/sms77": "^0.20.0-alpha.1",
