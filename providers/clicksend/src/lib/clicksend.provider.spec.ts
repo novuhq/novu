@@ -2,8 +2,8 @@ import { ClicksendSmsProvider } from './clicksend.provider';
 
 test('should trigger ClicksendSmsProvider library correctly', async () => {
   const provider = new ClicksendSmsProvider({
-    username: '<your-clciksend-username>',
-    apiKey: '<your-clciksend-APIkey>',
+    username: '<your-clicksend-username>',
+    apiKey: '<your-clicksend-API>',
   });
 
   const spy = jest
