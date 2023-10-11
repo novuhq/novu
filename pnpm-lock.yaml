@@ -1342,7 +1342,7 @@ importers:
       '@novu/apns': ^0.20.0-alpha.1
       '@novu/burst-sms': ^0.20.0-alpha.1
       '@novu/clickatell': ^0.20.0-alpha.1
-      '@novu/clicksend': ^0.16.3
+      '@novu/clicksend': ^0.20.0-alpha.1
       '@novu/dal': ^0.20.0-alpha.1
       '@novu/discord': ^0.20.0-alpha.1
       '@novu/email-webhook': ^0.20.0-alpha.0
