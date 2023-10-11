@@ -30514,7 +30514,7 @@ packages:
       object.groupby: 1.0.1
       object.values: 1.1.6
       resolve: 1.22.2
-      semver: 6.3.0
+      semver: 6.3.1
       tsconfig-paths: 3.14.2
     transitivePeerDependencies:
       - eslint-import-resolver-typescript
@@ -47212,7 +47212,7 @@ packages:
       yargs-parser: 20.2.9
     dev: true
 
-  /ts-jest/27.1.5_4aafjbpmnrfjtrzkyohogv4jce:
+  /ts-jest/27.1.5_cnngzrja2umb46xxazlucyx2qu:
     resolution: {integrity: sha512-Xv6jBQPoBEvBq/5i2TeSG9tt/nqkbpcurrEG1b+2yfBrcJelOZF9Ml6dmyMh7bcW9JyFbRYpR5rxROSlBLTZHA==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
     hasBin: true
@@ -47233,7 +47233,6 @@ packages:
       esbuild:
         optional: true
     dependencies:
-      '@babel/core': 7.22.11
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
       jest: 27.5.1(ts-node@10.9.1)
