@@ -18,6 +18,7 @@ import {
   termiiConfig,
   africasTalkingConfig,
   sendchampConfig,
+  smsToConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -56,6 +57,14 @@ export const smsProviders: IProviderConfig[] = [
     credentials: sms77Config,
     docReference: 'https://docs.novu.co/channels-and-providers/sms/sms77',
     logoFileName: { light: 'sms77.svg', dark: 'sms77.svg' },
+  },
+  {
+    id: SmsProviderIdEnum.SmsTo,
+    displayName: 'SmsTo',
+    channel: ChannelTypeEnum.SMS,
+    credentials: smsToConfig,
+    docReference: '',
+    logoFileName: { light: 'sms-to.svg', dark: 'sms-to.svg' },
   },
   {
     id: SmsProviderIdEnum.SNS,
