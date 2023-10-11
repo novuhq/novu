@@ -513,7 +513,10 @@
     "Clicksend",
     "Kamil",
     "Myśliwiec",
-    "nestframework"
+    "nestframework",
+    "idempotency", 
+    "IDEMPOTENCY", 
+    "Idempotency"
   ],
   "flagWords": [],
   "patterns": [
