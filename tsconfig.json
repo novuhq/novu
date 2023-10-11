@@ -4,7 +4,14 @@
     "moduleResolution": "node",
     "baseUrl": ".",
     "paths": {
-    }
+      "@/*": ["src/*"]
+    },
+    "target": "ESNext",
+    "module": "CommonJS",
+    "strict": false,
+    "declarationMap": true,
+    "outDir": "./dist",
+    "rootDir": "./src"
   },
   "types": [
     "node",
