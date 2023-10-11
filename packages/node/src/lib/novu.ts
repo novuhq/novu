@@ -1,6 +1,4 @@
 import axios, { AxiosInstance } from 'axios';
-import axiosRetry from 'axios-retry';
-import { v4 as uuid } from 'uuid';
 import { Subscribers } from './subscribers/subscribers';
 import { EventEmitter } from 'events';
 import { Changes } from './changes/changes';
@@ -15,6 +13,7 @@ import { Topics } from './topics/topics';
 import { Integrations } from './integrations/integrations';
 import { Messages } from './messages/messages';
 import { Tenants } from './tenants/tenants';
+import { makeRetriable } from './retries';
 
 export class Novu extends EventEmitter {
   private readonly apiKey?: string;
@@ -35,7 +34,6 @@ export class Novu extends EventEmitter {
   constructor(apiKey: string, config?: INovuConfiguration) {
     super();
     this.apiKey = apiKey;
-
     const axiosInstance = axios.create({
       baseURL: this.buildBackendUrl(config),
       headers: {
@@ -43,43 +41,7 @@ export class Novu extends EventEmitter {
       },
     });
 
-    axiosInstance.interceptors.request.use((axiosConfig) => {
-      const idempotencyKey = axiosConfig.headers['Idempotency-Key'];
-      // that means intercepted request is retried, so don't generate new idempotency key
-      if (idempotencyKey) {
-        return axiosConfig;
-      }
-
-      axiosConfig.headers['Idempotency-Key'] = uuid();
-
-      return axiosConfig;
-    });
-
-    const retryConfig = config?.retryConfig || {};
-    const retries = retryConfig.retryMax || 0;
-    const minDelay = retryConfig.waitMin || 1;
-    const maxDelay = retryConfig.waitMax || 30;
-    const initialDelay = retryConfig.initialDelay || minDelay;
-
-    function backoff(retryCount: number) {
-      if (retryCount === 1) {
-        return initialDelay;
-      }
-
-      const delay = retryCount * minDelay;
-      if (delay > maxDelay) {
-        return maxDelay;
-      }
-
-      return delay;
-    }
-
-    axiosRetry(axiosInstance, {
-      retries,
-      retryDelay(retryCount) {
-        return backoff(retryCount) * 1000; // return delay in milliseconds
-      },
-    });
+    makeRetriable(axiosInstance, config);
 
     this.http = axiosInstance;
 
