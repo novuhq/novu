@@ -242,7 +242,19 @@ We are more than happy to help you. If you are getting any errors or facing prob
 
 ## 🛡️ License
 
-Novu is licensed under the MIT License - see the [LICENSE](https://github.com/novuhq/novu/blob/main/LICENSE) file for details.
+<table>
+  <tr>
+     <td>
+       <p align="center"> <img src="https://user-images.githubusercontent.com/66154908/175827109-a9f2f54a-f63e-4e07-bd83-a1f760246b56.png" width="80%"></img>
+    </td>
+    <td> 
+      <img src="https://img.shields.io/badge/License-MIT-yellow.svg"/> <br> 
+Novu is licensed under the MIT License - see the  <a href="https://github.com/novuhq/novu/blob/main/LICENSE">LICENSE</a> file for details. <img width=2300/>
+    </td>
+  </tr>
+</table>
+
+
 
 ## 💪 Thanks To All Contributors
 
