@@ -51,6 +51,7 @@ import {
   GetTenant,
   CreateTenant,
   ProcessTenant,
+  getUseMergedDigestId,
 } from '@novu/application-generic';
 
 import * as packageJson from '../../../package.json';
@@ -109,6 +110,7 @@ const PROVIDERS = [
   distributedLockService,
   EventsDistributedLockService,
   featureFlagsService,
+  getUseMergedDigestId,
   getIsMultiProviderConfigurationEnabled,
   InvalidateCacheService,
   ProcessSubscriber,
