@@ -136,7 +136,7 @@ export class SubscriberJobBound {
         to: subscriber,
         transactionId: command.transactionId,
         userId,
-        ...(actor ? actor : {}),
+        ...(actor && { actor }),
         tenant,
       })
     );
