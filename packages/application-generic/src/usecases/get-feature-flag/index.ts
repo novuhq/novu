@@ -7,3 +7,4 @@ export { GetIsInMemoryClusterModeEnabled } from './get-is-in-memory-cluster-mode
 export { GetIsMultiProviderConfigurationEnabled } from './get-is-multi-provider-configuration-enabled.use-case';
 export { GetIsTemplateStoreEnabled } from './get-is-template-store-enabled.use-case';
 export { GetIsTopicNotificationEnabled } from './get-is-topic-notification-enabled.use-case';
+export { GetUseMergedDigestId } from './get-use-merged-digest-id.use-case';
