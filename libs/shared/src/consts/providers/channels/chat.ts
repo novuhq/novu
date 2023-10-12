@@ -37,4 +37,12 @@ export const chatProviders: IProviderConfig[] = [
     docReference: 'https://developers.mattermost.com/integrate/webhooks/incoming/',
     logoFileName: { light: 'mattermost.svg', dark: 'mattermost.svg' },
   },
+  {
+    id: ChatProviderIdEnum.GoogleChat,
+    displayName: 'Google Chat',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: [] as IConfigCredentials[],
+    docReference: 'https://developers.google.com/chat/how-tos/webhooks',
+    logoFileName: { light: 'google-chat.png', dark: 'google-chat.png' },
+  },
 ];

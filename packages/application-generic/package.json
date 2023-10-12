@@ -59,6 +59,7 @@
     "@novu/fcm": "^0.20.0-alpha.1",
     "@novu/firetext": "^0.20.0-alpha.1",
     "@novu/forty-six-elks": "^0.20.0-alpha.1",
+    "@novu/google-chat": "^0.20.0-alpha.1",
     "@novu/gupshup": "^0.20.0-alpha.1",
     "@novu/infobip": "^0.20.0-alpha.1",
     "@novu/kannel": "^0.20.0-alpha.1",
