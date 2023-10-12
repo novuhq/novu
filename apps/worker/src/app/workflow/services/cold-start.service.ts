@@ -5,6 +5,7 @@ import { StandardWorker } from './standard.worker';
 import { WorkflowWorker } from './workflow.worker';
 import { OldInstanceStandardWorker } from './old-instance-standard.worker';
 import { OldInstanceWorkflowWorker } from './old-instance-workflow.worker';
+import { SubscriberProcessWorker } from './subscriber-process.worker';
 
 /**
  * TODO: Temporary engage OldInstanceWorkflowWorker while migrating to MemoryDB
@@ -14,8 +15,15 @@ const getWorkers = (app: INestApplication): INovuWorker[] => {
   const workflowWorker = app.get(WorkflowWorker, { strict: false });
   const oldInstanceStandardWorker = app.get(OldInstanceStandardWorker, { strict: false });
   const oldInstanceWorkflowWorker = app.get(OldInstanceWorkflowWorker, { strict: false });
+  const subscriberProcessWorker = app.get(SubscriberProcessWorker, { strict: false });
 
-  const workers: INovuWorker[] = [standardWorker, workflowWorker, oldInstanceStandardWorker, oldInstanceWorkflowWorker];
+  const workers: INovuWorker[] = [
+    standardWorker,
+    workflowWorker,
+    oldInstanceStandardWorker,
+    oldInstanceWorkflowWorker,
+    subscriberProcessWorker,
+  ];
 
   return workers;
 };

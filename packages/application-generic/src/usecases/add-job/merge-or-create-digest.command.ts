@@ -3,7 +3,7 @@ import { JobEntity } from '@novu/dal';
 
 import { BaseCommand } from '../../commands/base.command';
 
-export class AddDigestJobCommand extends BaseCommand {
+export class MergeOrCreateDigestCommand extends BaseCommand {
   @IsDefined()
   job: JobEntity;
 }

@@ -9,11 +9,7 @@ import {
   WebSocketsQueueServiceHealthIndicator,
   WorkflowQueueServiceHealthIndicator,
 } from '../health';
-import {
-  BullMqService,
-  OldInstanceBullMqService,
-  ReadinessService,
-} from '../services';
+import { OldInstanceBullMqService, ReadinessService } from '../services';
 import {
   ActiveJobsMetricQueueService,
   CompletedJobsMetricQueueService,
@@ -33,12 +29,15 @@ import {
   OldInstanceWorkflowWorkerService,
 } from '../services/workers';
 
+import { SubscriberProcessQueueService } from '../services/queues/subscriber-process-queue.service';
+import { SubscriberProcessWorkerService } from '../services/workers/subscriber-process-worker.service';
+import { SubscriberProcessQueueHealthIndicator } from '../health/subscriber-process-queue.health-indicator';
+
 const PROVIDERS: Provider[] = [
   ActiveJobsMetricQueueService,
   ActiveJobsMetricQueueServiceHealthIndicator,
   ActiveJobsMetricWorkerService,
   bullMqTokenList,
-  BullMqService,
   CompletedJobsMetricQueueService,
   CompletedJobsMetricQueueServiceHealthIndicator,
   CompletedJobsMetricWorkerService,
@@ -58,6 +57,9 @@ const PROVIDERS: Provider[] = [
   OldInstanceStandardWorkerService,
   OldInstanceWorkflowWorkerService,
   OldInstanceBullMqService,
+  SubscriberProcessQueueService,
+  SubscriberProcessWorkerService,
+  SubscriberProcessQueueHealthIndicator,
 ];
 
 @Module({
