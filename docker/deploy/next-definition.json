@@ -203,7 +203,13 @@
           "image": "redis:alpine",
           "cpu": 0,
           "memory": 512,
-          "portMappings": [],
+          "portMappings": [
+            {
+                "containerPort": 6379,
+                "hostPort": 6379,
+                "protocol": "tcp"
+            }
+        ],
           "essential": true,
           "environment": [],
           "mountPoints": [],
