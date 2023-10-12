@@ -72,6 +72,7 @@ export enum SmsProviderIdEnum {
   AfricasTalking = 'africas-talking',
   Novu = 'novu-sms',
   Sendchamp = 'sendchamp',
+  Clicksend = 'clicksend',
 }
 
 export enum ChatProviderIdEnum {
