@@ -1,5 +1,5 @@
-import { AxiosInstance } from 'axios';
-import axiosRetry, { isNetworkError, isRetryableError } from 'axios-retry';
+import { AxiosError, AxiosInstance } from 'axios';
+import axiosRetry, { isNetworkError } from 'axios-retry';
 import { v4 as uuid } from 'uuid';
 import { INovuConfiguration } from './novu.interface';
 
@@ -34,6 +34,7 @@ export function makeRetriable(
   const minDelay = retryConfig.waitMin || 1;
   const maxDelay = retryConfig.waitMax || 30;
   const initialDelay = retryConfig.initialDelay || minDelay;
+  const retryCondition = retryConfig.retryCondition || defaultRetryCondition;
 
   function backoff(retryCount: number) {
     if (retryCount === 1) {
@@ -53,8 +54,33 @@ export function makeRetriable(
     retryDelay(retryCount) {
       return backoff(retryCount) * 1000; // return delay in milliseconds
     },
-    retryCondition(err) {
-      return isNetworkError(err) || isRetryableError(err);
-    },
+    retryCondition,
   });
+}
+
+const RETRIABLE_HTTP_CODES = [408, 429];
+
+export function defaultRetryCondition(err: AxiosError): boolean {
+  // retry on TCP/IP error codes like ECONNRESET
+  if (isNetworkError(err)) {
+    return true;
+  }
+
+  if (err.code === 'ECONNABORTED') {
+    return false;
+  }
+
+  if (!err.response) {
+    return true;
+  }
+
+  if (err.response.status >= 500 && err.response.status <= 599) {
+    return true;
+  }
+
+  if (RETRIABLE_HTTP_CODES.includes(err.response.status)) {
+    return true;
+  }
+
+  return false;
 }

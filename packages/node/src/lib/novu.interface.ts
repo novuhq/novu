@@ -1,15 +1,16 @@
-import { AxiosInstance } from 'axios';
+import { AxiosError, AxiosInstance } from 'axios';
 
-interface IRetryConfig {
-  initialDelay: number;
-  waitMin: number;
-  waitMax: number;
-  retryMax: number;
+export interface IRetryConfig {
+  initialDelay?: number;
+  waitMin?: number;
+  waitMax?: number;
+  retryMax?: number;
+  retryCondition?: (err: AxiosError) => boolean;
 }
 
 export interface INovuConfiguration {
   backendUrl?: string;
-  retryConfig?: Partial<IRetryConfig>;
+  retryConfig?: IRetryConfig;
 }
 
 export class WithHttp {

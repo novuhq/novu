@@ -41,7 +41,9 @@ export class Novu extends EventEmitter {
       },
     });
 
-    makeRetriable(axiosInstance, config);
+    if (config?.retryConfig) {
+      makeRetriable(axiosInstance, config);
+    }
 
     this.http = axiosInstance;
 
