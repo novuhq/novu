@@ -77,8 +77,12 @@ export class SendTestEmail {
             events: [],
             total_count: 1,
             ...this.getSystemVariables('step', command),
+            ...command.payload.step,
           },
-          subscriber: this.getSystemVariables('subscriber', command),
+          subscriber: {
+            ...this.getSystemVariables('subscriber', command),
+            ...command.payload.subscriber,
+          },
         },
       })
     );
