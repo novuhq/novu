@@ -79,6 +79,7 @@ export enum SmsProviderIdEnum {
   Novu = 'novu-sms',
   Sendchamp = 'sendchamp',
   GenericSms = 'generic-sms',
+  Clicksend = 'clicksend',
 }
 
 export enum ChatProviderIdEnum {

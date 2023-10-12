@@ -19,6 +19,7 @@ import {
   africasTalkingConfig,
   sendchampConfig,
   genericSmsConfig,
+  clickSendConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -187,5 +188,13 @@ export const smsProviders: IProviderConfig[] = [
     credentials: genericSmsConfig,
     docReference: 'https://docs.novu.co/channels/sms/generic-sms',
     logoFileName: { light: 'generic-sms.svg', dark: 'generic-sms.svg' },
+  },
+  {
+    id: SmsProviderIdEnum.Clicksend,
+    displayName: `Clicksend`,
+    channel: ChannelTypeEnum.SMS,
+    credentials: clickSendConfig,
+    docReference: 'https://developers.clicksend.com/docs/rest/v3/?javascript--nodejs#send-sms',
+    logoFileName: { light: 'clicksend.png', dark: 'clicksend.png' },
   },
 ];

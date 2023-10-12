@@ -95,6 +95,7 @@
     "@novu/termii": "^0.20.0-alpha.1",
     "@novu/testing": "^0.20.0-alpha.1",
     "@novu/twilio": "^0.20.0-alpha.1",
+    "@novu/clicksend": "^0.20.0-alpha.1",
     "@sentry/node": "^7.12.1",
     "analytics-node": "^6.2.0",
     "bullmq": "^3.10.2",
