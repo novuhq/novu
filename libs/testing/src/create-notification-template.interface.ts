@@ -6,6 +6,7 @@ import {
   DigestTypeEnum,
   DigestUnitEnum,
   DelayTypeEnum,
+  ActorTypeEnum,
 } from '@novu/shared';
 import { NotificationTemplateEntity, StepFilter } from '@novu/dal';
 
@@ -36,6 +37,10 @@ interface IVariant {
     backoffUnit?: DigestUnitEnum;
     backoffAmount?: number;
     updateMode?: boolean;
+  };
+  actor?: {
+    type: ActorTypeEnum;
+    data: string | null;
   };
 }
 

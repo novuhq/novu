@@ -5,13 +5,9 @@ import {
   ValidateNested,
   IsMongoId,
 } from 'class-validator';
-import {
-  ChannelTypeEnum,
-  ISubscribersDefine,
-  ITenantDefine,
-  ProvidersIdEnum,
-} from '@novu/shared';
-import { NotificationTemplateEntity } from '@novu/dal';
+import { ISubscribersDefine, ITenantDefine } from '@novu/shared';
+import { SubscriberEntity } from '@novu/dal';
+
 import { EnvironmentWithUserCommand } from '../../commands';
 
 export class SubscriberJobBoundCommand extends EnvironmentWithUserCommand {
@@ -34,7 +30,7 @@ export class SubscriberJobBoundCommand extends EnvironmentWithUserCommand {
   tenant?: ITenantDefine | null;
 
   @IsOptional()
-  actor?: ISubscribersDefine | null;
+  actor?: SubscriberEntity | undefined;
 
   @IsDefined()
   to: ISubscribersDefine[];
