@@ -1,6 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { SubscribersService, UserSession } from '@novu/testing';
-import { FeatureFlagsService, GetIsTopicNotificationEnabled, LaunchDarklyService } from '@novu/application-generic';
+import { FeatureFlagsService, MapTriggerRecipients, MapTriggerRecipientsCommand } from '@novu/application-generic';
 import {
   SubscriberEntity,
   SubscriberRepository,
@@ -20,15 +20,8 @@ import {
 } from '@novu/shared';
 import { expect } from 'chai';
 import { v4 as uuid } from 'uuid';
-
-import { MapTriggerRecipients } from './map-trigger-recipients.use-case';
-import { MapTriggerRecipientsCommand } from './map-trigger-recipients.command';
-
-import { SharedModule } from '../../../shared/shared.module';
-import { EventsModule } from '../../events.module';
-
-import { GetTopicSubscribersUseCase } from '../../../topics/use-cases';
-import { CreateLog } from '../../../logs/usecases/create-log';
+import { SharedModule } from '../../shared/shared.module';
+import { EventsModule } from '../events.module';
 
 const originalLaunchDarklySdkKey = process.env.LAUNCH_DARKLY_SDK_KEY;
 

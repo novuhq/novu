@@ -83,6 +83,8 @@ export class SelectIntegration {
 
       if (command.filterData.tenant.identifier) {
         tenant = await this.tenantRepository.findOne({
+          _organizationId: command.organizationId,
+          _environmentId: command.environmentId,
           identifier: command.filterData.tenant.identifier,
         });
       }

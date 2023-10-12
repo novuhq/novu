@@ -1,6 +1,6 @@
 {
   "name": "@novu/client",
-  "version": "0.20.0-alpha.0",
+  "version": "0.20.0-alpha.1",
   "repository": "https://github.com/novuhq/novu",
   "description": "API client to be used in end user environments",
   "main": "dist/cjs/index.js",
@@ -44,7 +44,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@novu/shared": "^0.20.0-alpha.0"
+    "@novu/shared": "^0.20.0-alpha.1"
   },
   "devDependencies": {
     "@types/jest": "29.5.2",

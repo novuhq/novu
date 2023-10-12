@@ -9,7 +9,7 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 describe('Verify Payload Usecase', function () {
   const verifyPayload = new VerifyPayload();
 
-  it('should handle empty and undefiend strings', function () {
+  it('should handle empty and undefined strings', function () {
     const template = createTemplate([
       { name: 'user.firstName', type: TemplateVariableTypeEnum.STRING, defaultValue: 'John', required: false },
       { name: 'user.hej', type: TemplateVariableTypeEnum.STRING, required: false, defaultValue: '' },
