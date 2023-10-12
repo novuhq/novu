@@ -210,6 +210,7 @@ function App() {
                     <Route path=":channel/:stepUuid" element={<ChannelStepEditor />} />
                     <Route path=":channel/:stepUuid/variants" element={<VariantsPage />} />
                     <Route path=":channel/:stepUuid/variants/:variantUuid" element={<ChannelStepEditor />} />
+                    <Route path=":channel/:stepUuid/variants/:variantUuid/conditions" element={<ChannelStepEditor />} />
                   </Route>
                   <Route path={ROUTES.WORKFLOWS} element={<WorkflowListPage />} />
                   <Route path={ROUTES.TENANTS} element={<TenantsPage />}>

@@ -1,7 +1,7 @@
 import { Group } from '@mantine/core';
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { FilterPartTypeEnum } from '@novu/shared';
 
 import { Conditions, IConditions } from '../../../components/conditions';
@@ -18,7 +18,6 @@ import { useEnvController } from '../../../hooks';
 
 export const EditorSidebarHeaderActions = () => {
   const { watch, setValue } = useFormContext<IForm>();
-  const [areConditionsOpened, setConditionsOpened] = useState(false);
   const { addVariant } = useTemplateEditorForm();
   const { readonly: isReadonly } = useEnvController();
   const { stepUuid = '' } = useParams<{
@@ -26,6 +25,8 @@ export const EditorSidebarHeaderActions = () => {
   }>();
   const basePath = useBasePath();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const [areConditionsOpened, setConditionsOpened] = useState(() => pathname.endsWith('/conditions'));
 
   const stepFormPath = useStepFormPath();
   const filterPartsList = useFilterPartsList();
@@ -40,15 +41,24 @@ export const EditorSidebarHeaderActions = () => {
   const hasNoFilters = (filters && filters?.length === 0) || !filters;
 
   const onAddVariant = () => {
-    const newVariant = addVariant(stepUuid);
-    if (newVariant) {
-      // TODO: show the conditions sidebar first and then when conditions are applied show the variant editor
-      navigate(basePath + `/${newVariant?.template.type}/${stepUuid}/variants/${newVariant.uuid}`);
+    const variant = addVariant(stepUuid);
+    if (variant) {
+      navigate(basePath + `/${variant?.template.type}/${stepUuid}/variants/${variant?.uuid}/conditions`);
     }
   };
 
   const updateConditions = (newConditions: IConditions[]) => {
     setValue(`${stepFormPath}.filters`, newConditions, { shouldDirty: true });
+  };
+
+  const onConditionsClose = () => {
+    setConditionsOpened(false);
+
+    const isConditionUrl = pathname.endsWith('/conditions');
+    if (isConditionUrl) {
+      const newPath = pathname.replace('/conditions', '');
+      navigate(newPath, { replace: true });
+    }
   };
 
   return (
@@ -81,7 +91,7 @@ export const EditorSidebarHeaderActions = () => {
           isOpened={areConditionsOpened}
           isReadonly={isReadonly}
           name={name ?? ''}
-          onClose={() => setConditionsOpened(false)}
+          onClose={onConditionsClose}
           updateConditions={updateConditions}
           conditions={conditions}
           filterPartsList={filterPartsList}
