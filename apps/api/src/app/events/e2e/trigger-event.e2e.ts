@@ -83,7 +83,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
             content: '',
             metadata: {
               unit: DigestUnitEnum.SECONDS,
-              amount: 1,
+              amount: 2,
               type: DelayTypeEnum.REGULAR,
             },
             filters: [
@@ -163,7 +163,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
             content: '',
             metadata: {
               unit: DigestUnitEnum.SECONDS,
-              amount: 1,
+              amount: 2,
               type: DelayTypeEnum.REGULAR,
             },
             filters: [
@@ -243,7 +243,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
             content: '',
             metadata: {
               unit: DigestUnitEnum.SECONDS,
-              amount: 1,
+              amount: 2,
               type: DelayTypeEnum.REGULAR,
             },
             filters: [
@@ -324,7 +324,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
             content: '',
             metadata: {
               unit: DigestUnitEnum.SECONDS,
-              amount: 1,
+              amount: 2,
               type: DelayTypeEnum.REGULAR,
             },
             filters: [
@@ -2075,7 +2075,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
               content: '',
               metadata: {
                 unit: DigestUnitEnum.SECONDS,
-                amount: 1,
+                amount: 2,
                 type: DelayTypeEnum.REGULAR,
               },
             },
@@ -2165,7 +2165,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
               content: '',
               metadata: {
                 unit: DigestUnitEnum.SECONDS,
-                amount: 1,
+                amount: 2,
                 type: DelayTypeEnum.REGULAR,
               },
             },
