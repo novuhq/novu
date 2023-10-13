@@ -21,7 +21,7 @@ export function editChannel(channel: Channel, last = false) {
 }
 
 export function goBack() {
-  cy.getByTestId('close-step-page').click();
+  cy.getByTestId('sidebar-close').click();
   cy.waitForNetworkIdle(500);
 }
 

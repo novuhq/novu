@@ -50,8 +50,9 @@ describe('Workflow Editor - Steps Actions', function () {
       .getByTestId('channel-node')
       .first()
       .trigger('mouseover', { force: true })
-      .getByTestId('delete-step-action')
+      .getByTestId('step-actions-menu')
       .click();
+    cy.getByTestId('node-inAppSelector').getByTestId('channel-node').first().getByTestId('delete-step-action').click();
     cy.get('.mantine-Modal-modal button').contains('Delete step').click();
     cy.getByTestId(`node-inAppSelector`).should('not.exist');
     cy.get('.react-flow__node').should('have.length', 3);
@@ -66,14 +67,10 @@ describe('Workflow Editor - Steps Actions', function () {
     waitForEditTemplateRequests();
     dragAndDrop('digest');
     cy.get('.react-flow__node').should('have.length', 5);
-    cy.clickWorkflowNode('node-digestSelector');
 
-    cy.getByTestId('node-digestSelector')
-      .getByTestId('channel-node')
-      .last()
-      .trigger('mouseover', { force: true })
-      .getByTestId('delete-step-action')
-      .click();
+    cy.clickWorkflowNode('node-digestSelector');
+    cy.getByTestId('delete-step-button').click();
+
     cy.get('.mantine-Modal-modal button').contains('Delete step').click();
     cy.getByTestId(`node-digestSelector`).should('not.exist');
     cy.get('.react-flow__node').should('have.length', 4);
@@ -150,7 +147,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.clickWorkflowNode(`node-digestSelector`);
 
-    cy.getByTestId('add-filter-btn').click();
+    cy.getByTestId('editor-sidebar-add-conditions').click();
     cy.getByTestId('add-new-condition').click();
 
     cy.getByTestId('conditions-form-on').click();
@@ -164,14 +161,14 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.getByTestId('apply-conditions-btn').click();
 
-    cy.getByTestId('add-filter-btn').contains('1 filter');
+    cy.getByTestId('editor-sidebar-edit-conditions').contains('1');
 
     cy.getByTestId('notification-template-submit-btn').click();
     cy.waitForNetworkIdle(500);
     cy.visit('/workflows/edit/' + template._id);
     cy.waitForNetworkIdle(500);
     cy.clickWorkflowNode(`node-digestSelector`);
-    cy.getByTestId('add-filter-btn').contains('1 filter');
+    cy.getByTestId('editor-sidebar-edit-conditions').contains('1');
   });
 
   it('should be able to add filters to a delay step', function () {
@@ -184,7 +181,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.clickWorkflowNode(`node-delaySelector`);
 
-    cy.getByTestId('add-filter-btn').click();
+    cy.getByTestId('editor-sidebar-add-conditions').click();
     cy.getByTestId('add-new-condition').click();
 
     cy.getByTestId('conditions-form-on').click();
@@ -198,14 +195,14 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.getByTestId('apply-conditions-btn').click();
 
-    cy.getByTestId('add-filter-btn').contains('1 filter');
+    cy.getByTestId('editor-sidebar-edit-conditions').contains('1');
 
     cy.getByTestId('notification-template-submit-btn').click();
     cy.waitForNetworkIdle(500);
     cy.visit('/workflows/edit/' + template._id);
     cy.waitForNetworkIdle(500);
     cy.clickWorkflowNode(`node-delaySelector`);
-    cy.getByTestId('add-filter-btn').contains('1 filter');
+    cy.getByTestId('editor-sidebar-edit-conditions').contains('1');
   });
 
   it('should be able to add filters to a particular step', function () {
@@ -217,7 +214,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.clickWorkflowNode(`node-inAppSelector`);
 
-    cy.getByTestId('add-filter-btn').click();
+    cy.getByTestId('editor-sidebar-add-conditions').click();
     cy.getByTestId('add-new-condition').click();
 
     cy.getByTestId('conditions-form-on').click();
@@ -230,7 +227,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.getByTestId('apply-conditions-btn').click();
 
-    cy.getByTestId('add-filter-btn').contains('1 filter');
+    cy.getByTestId('editor-sidebar-edit-conditions').contains('1');
   });
 
   it('should be able to add read/seen filters to a particular step', function () {
@@ -242,7 +239,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.clickWorkflowNode(`node-emailSelector`);
 
-    cy.getByTestId('add-filter-btn').click();
+    cy.getByTestId('editor-sidebar-add-conditions').click();
     cy.getByTestId('add-new-condition').click();
 
     cy.getByTestId('conditions-form-on').click();
@@ -255,7 +252,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.getByTestId('apply-conditions-btn').click();
 
-    cy.getByTestId('add-filter-btn').contains('1 filter');
+    cy.getByTestId('editor-sidebar-edit-conditions').contains('1');
   });
 
   it('should be able to not add read/seen filters to first step', function () {
@@ -267,7 +264,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.clickWorkflowNode(`node-inAppSelector`);
 
-    cy.getByTestId('add-filter-btn').click();
+    cy.getByTestId('editor-sidebar-add-conditions').click();
 
     cy.getByTestId('add-new-condition').click();
     cy.getByTestId('conditions-form-on').click();
@@ -283,7 +280,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.clickWorkflowNode(`node-inAppSelector`);
 
-    cy.getByTestId('add-filter-btn').click();
+    cy.getByTestId('editor-sidebar-add-conditions').click();
 
     cy.getByTestId('add-new-condition').click();
 
@@ -294,15 +291,15 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.getByTestId('apply-conditions-btn').click();
 
-    cy.getByTestId('add-filter-btn').contains('1 filter');
+    cy.getByTestId('editor-sidebar-edit-conditions').contains('1');
 
-    cy.getByTestId('add-filter-btn').click();
+    cy.getByTestId('editor-sidebar-edit-conditions').click();
     cy.getByTestId('conditions-row-btn').click();
     cy.getByTestId('conditions-row-delete').click();
 
     cy.getByTestId('apply-conditions-btn').click();
 
-    cy.getByTestId('add-filter-btn').contains('Add filter');
+    cy.getByTestId('editor-sidebar-add-conditions').should('not.contain', '1');
   });
 
   it('should be able to add webhook filter for a particular step', function () {
@@ -314,7 +311,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.clickWorkflowNode(`node-inAppSelector`);
 
-    cy.getByTestId('add-filter-btn').click();
+    cy.getByTestId('editor-sidebar-add-conditions').click();
 
     cy.getByTestId('add-new-condition').click();
 
@@ -329,7 +326,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.getByTestId('apply-conditions-btn').click();
 
-    cy.getByTestId('add-filter-btn').contains('1 filter');
+    cy.getByTestId('editor-sidebar-edit-conditions').contains('1');
   });
 
   it('should be able to add online right now filter for a particular step', function () {
@@ -341,7 +338,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.clickWorkflowNode(`node-inAppSelector`);
 
-    cy.getByTestId('add-filter-btn').click();
+    cy.getByTestId('editor-sidebar-add-conditions').click();
 
     cy.getByTestId('add-new-condition').click();
 
@@ -352,7 +349,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.getByTestId('apply-conditions-btn').click();
 
-    cy.getByTestId('add-filter-btn').contains('1 filter');
+    cy.getByTestId('editor-sidebar-edit-conditions').contains('1');
   });
 
   it('should be able to add online in the last X time period filter for a particular step', function () {
@@ -364,7 +361,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.clickWorkflowNode(`node-inAppSelector`);
 
-    cy.getByTestId('add-filter-btn').click();
+    cy.getByTestId('editor-sidebar-add-conditions').click();
 
     cy.getByTestId('add-new-condition').click();
 
@@ -376,7 +373,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.getByTestId('apply-conditions-btn').click();
 
-    cy.getByTestId('add-filter-btn').contains('1 filter');
+    cy.getByTestId('editor-sidebar-edit-conditions').contains('1');
   });
 
   it('should be able to add multiple filters to a particular step', function () {
@@ -388,7 +385,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.clickWorkflowNode(`node-inAppSelector`);
 
-    cy.getByTestId('add-filter-btn').click();
+    cy.getByTestId('editor-sidebar-add-conditions').click();
 
     cy.getByTestId('add-new-condition').click();
     cy.getByTestId('conditions-form-on').click();
@@ -407,7 +404,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.getByTestId('apply-conditions-btn').click();
 
-    cy.getByTestId('add-filter-btn').contains('2 filters');
+    cy.getByTestId('editor-sidebar-edit-conditions').contains('2');
   });
 
   it('should re-render content on between step click', function () {

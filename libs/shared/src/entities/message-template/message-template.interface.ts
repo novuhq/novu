@@ -13,6 +13,7 @@ import { IActor } from '../messages';
 export type MessageTemplateContentType = 'editor' | 'customHtml';
 
 export interface IMessageTemplate {
+  id?: string;
   _id?: string;
   _environmentId?: EnvironmentId;
   _organizationId?: OrganizationId;
@@ -39,6 +40,8 @@ export interface IMessageTemplate {
   preheader?: string;
   senderName?: string;
   actor?: IActor;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention

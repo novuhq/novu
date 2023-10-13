@@ -8,7 +8,7 @@ import { useFormContext } from 'react-hook-form';
 import { useSegment } from '../../../../../components/providers/SegmentProvider';
 import { When } from '../../../../../components/utils/When';
 import { CONTEXT_PATH } from '../../../../../config';
-import { Dropdown, Switch, Text, Tooltip, colors, Button } from '../../../../../design-system';
+import { Dropdown, Switch, Text, colors, Button } from '../../../../../design-system';
 import {
   ConditionPlus,
   ConditionsFile,
@@ -30,6 +30,7 @@ import { CHANNEL_TYPE_TO_STRING } from '../../../../../utils/channels';
 import { useSelectPrimaryIntegrationModal } from '../../../../integrations/components/multi-provider/useSelectPrimaryIntegrationModal';
 import { IntegrationsListModal } from '../../../../integrations/IntegrationsListModal';
 import { IntegrationsStoreModal } from '../../../../integrations/IntegrationsStoreModal';
+import { ActionButton } from '../../../../../design-system/button/ActionButton';
 import { TemplateEditorAnalyticsEnum } from '../../../constants';
 import { getFormattedStepErrors } from '../../../shared/errors';
 import { DisplayPrimaryProviderIcon } from '../../DisplayPrimaryProviderIcon';
@@ -191,23 +192,13 @@ export function WorkflowNode({
                   </When>
                   <When truthy={showMenu}>
                     <Group noWrap spacing={5}>
-                      <ActionIconWithTooltip onClick={onEdit} label={'Edit root step'}>
-                        <PencilOutlined />
-                      </ActionIconWithTooltip>
-                      <ActionIconWithTooltip
+                      <ActionButton onClick={onEdit} tooltip={'Edit root step'} Icon={PencilOutlined} />
+                      <ActionButton
                         onClick={(e) => e.stopPropagation()}
-                        label={`${conditionsCount > 0 ? 'Edit' : 'Add'} group conditions`}
-                      >
-                        {conditionsCount > 0 ? (
-                          <IconText
-                            Icon={ConditionsFile}
-                            label={conditionsCount}
-                            color={colorScheme === 'dark' ? colors.white : colors.B60}
-                          />
-                        ) : (
-                          <ConditionsFile />
-                        )}
-                      </ActionIconWithTooltip>
+                        tooltip={`${conditionsCount > 0 ? 'Edit' : 'Add'} group conditions`}
+                        text={`${conditionsCount}`}
+                        Icon={ConditionsFile}
+                      />
                       <DotsMenu onDelete={onDelete} onAddVariant={onAddVariant} />
                     </Group>
                   </When>
@@ -266,12 +257,12 @@ export function WorkflowNode({
               <When truthy={!isVariant && showMenu}>
                 <ContainerButton mt={-40}>
                   <Group noWrap spacing={5}>
-                    <ActionIconWithTooltip onClick={onEdit} label={'Edit step'}>
-                      <PencilOutlined />
-                    </ActionIconWithTooltip>
-                    <ActionIconWithTooltip onClick={(e) => e.stopPropagation()} label={'Add conditions'}>
-                      <ConditionPlus />
-                    </ActionIconWithTooltip>
+                    <ActionButton onClick={onEdit} tooltip={'Edit step'} Icon={PencilOutlined} />
+                    <ActionButton
+                      onClick={(e) => e.stopPropagation()}
+                      tooltip={'Add conditions'}
+                      Icon={ConditionPlus}
+                    />
                     <DotsMenu onDelete={onDelete} onAddVariant={onAddVariant} />
                   </Group>
                 </ContainerButton>
@@ -387,9 +378,7 @@ const DotsMenu = ({ onDelete, onAddVariant }) => {
       withArrow={false}
       offset={0}
       control={
-        <ActionIcon onClick={(e) => e.stopPropagation()} variant={'transparent'}>
-          <DotsHorizontal />
-        </ActionIcon>
+        <ActionButton onClick={(e) => e.stopPropagation()} Icon={DotsHorizontal} data-test-id="step-actions-menu" />
       }
       middlewares={{ flip: false, shift: false }}
     >
@@ -399,6 +388,7 @@ const DotsMenu = ({ onDelete, onAddVariant }) => {
           e.stopPropagation();
           onAddVariant();
         }}
+        data-test-id="add-variant-action"
       >
         Add variant
       </Dropdown.Item>
@@ -415,24 +405,7 @@ const DotsMenu = ({ onDelete, onAddVariant }) => {
     </Dropdown>
   );
 };
-const ActionIconWithTooltip = ({ label, onClick, children }) => {
-  return (
-    <Tooltip label={label}>
-      <ActionIcon
-        sx={(theme) => ({
-          '&:hover': {
-            background: theme.colorScheme === 'dark' ? colors.B40 : colors.B85,
-            borderRadius: '8px',
-          },
-        })}
-        variant={'transparent'}
-        onClick={onClick}
-      >
-        {children}
-      </ActionIcon>
-    </Tooltip>
-  );
-};
+
 const IconText = ({ color, label, Icon }: { color?: string; label: any; Icon: React.FC<any> }) => {
   return (
     <Center inline>

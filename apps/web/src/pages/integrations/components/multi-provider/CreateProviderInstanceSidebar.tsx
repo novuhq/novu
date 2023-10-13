@@ -7,7 +7,7 @@ import { useDisclosure } from '@mantine/hooks';
 
 import { ChannelTypeEnum, ICreateIntegrationBodyDto, NOVU_PROVIDERS, providers } from '@novu/shared';
 
-import { Button, colors, NameInput, Sidebar } from '../../../../design-system';
+import { ActionButton, Button, colors, NameInput, Sidebar } from '../../../../design-system';
 import { ConditionPlus, ArrowLeft, Condition } from '../../../../design-system/icons';
 import { inputStyles } from '../../../../design-system/config/inputs.styles';
 import { useFetchEnvironments } from '../../../../hooks/useFetchEnvironments';
@@ -180,9 +180,17 @@ export function CreateProviderInstanceSidebar({
       onClose={onClose}
       customHeader={
         <Group spacing={12} w="100%" h={40} noWrap>
-          <ActionIcon onClick={onGoBack} variant={'transparent'} data-test-id="create-provider-instance-sidebar-back">
-            <ArrowLeft color={colors.B80} />
-          </ActionIcon>
+          <ActionButton
+            Icon={ArrowLeft}
+            onClick={onGoBack}
+            data-test-id="create-provider-instance-sidebar-back"
+            sx={{
+              '> svg': {
+                width: 16,
+                height: 16,
+              },
+            }}
+          />
           <ProviderImage providerId={provider?.id ?? ''} />
           <Controller
             control={control}

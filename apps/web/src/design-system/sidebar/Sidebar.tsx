@@ -1,23 +1,15 @@
 import { css } from '@emotion/react';
 import styled from '@emotion/styled';
-import {
-  ActionIcon,
-  createStyles,
-  CSSObject,
-  Drawer,
-  DrawerStylesNames,
-  Loader,
-  MantineTheme,
-  Stack,
-  Styles,
-} from '@mantine/core';
+import { createStyles, CSSObject, Drawer, DrawerStylesNames, Loader, MantineTheme, Stack, Styles } from '@mantine/core';
 import { ReactNode } from 'react';
 import { HEADER_HEIGHT } from '../../components/layout/constants';
 
 import { When } from '../../components/utils/When';
 import { useKeyDown } from '../../hooks';
+import { ActionButton } from '../button/ActionButton';
 import { colors, shadows } from '../config';
-import { ArrowLeft, Close } from '../icons';
+import { ArrowLeft } from '../icons';
+import { Close } from './Close';
 
 const HeaderHolder = styled.div`
   display: flex;
@@ -153,14 +145,31 @@ export const Sidebar = ({
       >
         <HeaderHolder>
           {isExpanded && onBack && (
-            <ActionIcon onClick={onBack} data-test-id="sidebar-back">
-              <ArrowLeft color={colors.B40} />
-            </ActionIcon>
+            <ActionButton
+              onClick={onBack}
+              Icon={ArrowLeft}
+              data-test-id="sidebar-back"
+              sx={{
+                '> svg': {
+                  width: 16,
+                  height: 16,
+                },
+              }}
+            />
           )}
           {customHeader}
-          <ActionIcon onClick={onCloseCallback} style={{ marginLeft: 'auto' }} data-test-id="sidebar-close">
-            <Close color={colors.B40} />
-          </ActionIcon>
+          <ActionButton
+            onClick={onCloseCallback}
+            Icon={Close}
+            sx={{
+              marginLeft: 'auto',
+              '> svg': {
+                width: 14,
+                height: 14,
+              },
+            }}
+            data-test-id="sidebar-close"
+          />
         </HeaderHolder>
         <BodyHolder isParentScrollable={isParentScrollable}>
           <When truthy={isLoading}>
