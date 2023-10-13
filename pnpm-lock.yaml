@@ -1361,6 +1361,7 @@ importers:
       '@novu/mandrill': ^0.20.0-alpha.1
       '@novu/maqsam': ^0.20.0-alpha.1
       '@novu/mattermost': ^0.20.0-alpha.1
+      '@novu/messagebird': ^0.20.0-alpha.1
       '@novu/ms-teams': ^0.20.0-alpha.0
       '@novu/netcore': ^0.20.0-alpha.1
       '@novu/nodemailer': ^0.20.0-alpha.1
@@ -1455,6 +1456,7 @@ importers:
       '@novu/mandrill': link:../../providers/mandrill
       '@novu/maqsam': link:../../providers/maqsam
       '@novu/mattermost': link:../../providers/mattermost
+      '@novu/messagebird': link:../../providers/messagebird
       '@novu/ms-teams': link:../../providers/ms-teams
       '@novu/netcore': link:../../providers/netcore
       '@novu/nodemailer': link:../../providers/nodemailer
@@ -2781,6 +2783,37 @@ importers:
       prettier: 2.8.7
       rimraf: 3.0.2
       ts-jest: 27.1.5_46h2nya7z2u3ruciguirufjle4
+      ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
+      typescript: 4.9.5
+
+  providers/messagebird:
+    specifiers:
+      '@istanbuljs/nyc-config-typescript': ~1.0.1
+      '@novu/stateless': 0.16.3
+      '@types/jest': ~27.5.2
+      axios: ^1.5.1
+      cspell: ~6.19.2
+      jest: ~27.5.1
+      npm-run-all: ^4.1.5
+      nyc: ~15.1.0
+      prettier: ~2.8.0
+      rimraf: ~3.0.2
+      ts-jest: ~27.1.5
+      ts-node: ~10.9.1
+      typescript: 4.9.5
+    dependencies:
+      '@novu/stateless': 0.16.3
+      axios: 1.5.1
+    devDependencies:
+      '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
+      '@types/jest': 27.5.2
+      cspell: 6.19.2
+      jest: 27.5.1_ts-node@10.9.1
+      npm-run-all: 4.1.5
+      nyc: 15.1.0
+      prettier: 2.8.7
+      rimraf: 3.0.2
+      ts-jest: 27.1.5_tdguimvmawsauzyxxfukpkg77i
       ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
       typescript: 4.9.5
 
@@ -22727,6 +22760,15 @@ packages:
     transitivePeerDependencies:
       - debug
 
+  /axios/1.5.1:
+    resolution: {integrity: sha512-Q28iYCWzNHjAm+yEAot5QaAMxhMghWLFVf7rRdwhUI+c2jix2DUXjAHXVi+s1ibs3mjPO/cCgbA++3BjD0vP/A==}
+    dependencies:
+      follow-redirects: 1.15.2
+      form-data: 4.0.0
+      proxy-from-env: 1.1.0
+    transitivePeerDependencies:
+      - debug
+
   /axobject-query/3.1.1:
     resolution: {integrity: sha512-goKlv8DZrK9hUh975fnHzhNIO4jUnFCfv/dszV5VwUGDFjI6vQ2VwoyjYjYNEbBE8AH87TduWP5uyDR1D+Iteg==}
     dependencies:
@@ -27546,7 +27588,7 @@ packages:
       object.values: 1.1.6
       prop-types: 15.8.1
       resolve: 2.0.0-next.4
-      semver: 6.3.1
+      semver: 6.3.0
       string.prototype.matchall: 4.0.8
 
   /eslint-plugin-spellcheck/0.0.20_eslint@8.38.0:
@@ -36526,7 +36568,7 @@ packages:
       '@yarnpkg/lockfile': 1.1.0
       '@yarnpkg/parsers': 3.0.0-rc.42
       '@zkochan/js-yaml': 0.0.6
-      axios: 1.4.0
+      axios: 1.5.1
       chalk: 4.1.2
       cli-cursor: 3.1.0
       cli-spinners: 2.6.1
@@ -36588,7 +36630,7 @@ packages:
       '@yarnpkg/lockfile': 1.1.0
       '@yarnpkg/parsers': 3.0.0-rc.42
       '@zkochan/js-yaml': 0.0.6
-      axios: 1.4.0
+      axios: 1.5.1
       chalk: 4.1.2
       cli-cursor: 3.1.0
       cli-spinners: 2.6.1
@@ -36651,7 +36693,7 @@ packages:
       '@yarnpkg/lockfile': 1.1.0
       '@yarnpkg/parsers': 3.0.0-rc.42
       '@zkochan/js-yaml': 0.0.6
-      axios: 1.4.0
+      axios: 1.5.1
       chalk: 4.1.2
       cli-cursor: 3.1.0
       cli-spinners: 2.6.1
@@ -44116,7 +44158,7 @@ packages:
       json5: 2.2.3
       lodash.memoize: 4.1.2
       make-error: 1.3.6
-      semver: 7.4.0
+      semver: 7.5.4
       typescript: 4.9.5
       yargs-parser: 20.2.9
     dev: true
@@ -44185,7 +44227,7 @@ packages:
       json5: 2.2.3
       lodash.memoize: 4.1.2
       make-error: 1.3.6
-      semver: 7.4.0
+      semver: 7.5.4
       typescript: 4.9.5
       yargs-parser: 20.2.9
     dev: true
@@ -44220,7 +44262,7 @@ packages:
       json5: 2.2.3
       lodash.memoize: 4.1.2
       make-error: 1.3.6
-      semver: 7.4.0
+      semver: 7.5.4
       typescript: 4.9.5
       yargs-parser: 20.2.9
     dev: true

@@ -767,3 +767,11 @@ export const clickSendConfig: IConfigCredentials[] = [
   },
   ...smsConfigBase,
 ];
+export const messagebirdConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+];
