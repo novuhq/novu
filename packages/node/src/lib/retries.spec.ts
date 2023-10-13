@@ -7,6 +7,8 @@ const TRIGGER_PATH = '/v1/events/trigger';
 
 jest.setTimeout(15000);
 
+const allEqual = (arr: Array<any>) => arr.every((val) => val === arr[0]);
+
 class NetworkError extends Error {
   constructor(public code: string) {
     super('Network Error');
@@ -30,10 +32,16 @@ describe('Novu Node.js package - Retries and idempotency key', () => {
 
   it('should retry trigger', async () => {
     // prepare backend api mock endpoints:
+    const idepotencyKeys: string[] = [];
+
     nock(BACKEND_URL)
       .post(TRIGGER_PATH)
       .times(3)
-      .reply(500, { message: 'Server Exception' });
+      .reply(function (_url, _body) {
+        idepotencyKeys.push(this.req.getHeader('idempotency-key') as string);
+
+        return [500, { message: 'Server Exception' }];
+      });
 
     nock(BACKEND_URL)
       .post(TRIGGER_PATH)
@@ -44,6 +52,33 @@ describe('Novu Node.js package - Retries and idempotency key', () => {
       payload: {},
     });
 
+    expect(allEqual(idepotencyKeys)).toBeTruthy();
+    expect(result.status).toEqual(201);
+    expect(result.request.headers['idempotency-key']).toBeDefined();
+  });
+
+  it('should retry and regenerate idempotency key on status 422', async () => {
+    const idepotencyKeys: string[] = [];
+
+    nock(BACKEND_URL)
+      .post(TRIGGER_PATH)
+      .times(3)
+      .reply(function (_url, _body) {
+        idepotencyKeys.push(this.req.getHeader('idempotency-key') as string);
+
+        return [422, { message: 'Unprocessable Content' }];
+      });
+
+    nock(BACKEND_URL)
+      .post(TRIGGER_PATH)
+      .reply(201, { acknowledged: true, transactionId: '1003' });
+
+    const result = await novu.trigger('fake-workflow', {
+      to: { subscriberId: '123' },
+      payload: {},
+    });
+
+    expect(allEqual(idepotencyKeys)).toBeFalsy();
     expect(result.status).toEqual(201);
     expect(result.request.headers['idempotency-key']).toBeDefined();
   });
@@ -87,6 +122,10 @@ describe('Novu Node.js package - Retries and idempotency key', () => {
       .get(TOPICS_PATH)
       .reply(504, { message: 'Gateway timeout' });
 
+    nock(BACKEND_URL)
+      .get(TOPICS_PATH)
+      .reply(422, { message: 'Unprocessable Content' });
+
     nock(BACKEND_URL).get(TOPICS_PATH).reply(200, [{}, {}]);
 
     const novuClient = new Novu('fake-key', {
@@ -95,7 +134,7 @@ describe('Novu Node.js package - Retries and idempotency key', () => {
         initialDelay: 0,
         waitMin: 1,
         waitMax: 1,
-        retryMax: 6,
+        retryMax: 7,
       },
     });
 

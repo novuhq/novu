@@ -51,14 +51,24 @@ export function makeRetriable(
 
   axiosRetry(axios, {
     retries,
+    retryCondition,
     retryDelay(retryCount) {
       return backoff(retryCount) * 1000; // return delay in milliseconds
     },
-    retryCondition,
+    onRetry(_retryCount, error, requestConfig) {
+      if (
+        error.response?.status === 422 &&
+        requestConfig.headers &&
+        requestConfig.method &&
+        NON_IDEMPOTENT_METHODS.includes(requestConfig.method)
+      ) {
+        requestConfig.headers['Idempotency-Key'] = uuid();
+      }
+    },
   });
 }
 
-const RETRIABLE_HTTP_CODES = [408, 429];
+const RETRIABLE_HTTP_CODES = [408, 429, 422];
 
 export function defaultRetryCondition(err: AxiosError): boolean {
   // retry on TCP/IP error codes like ECONNRESET
