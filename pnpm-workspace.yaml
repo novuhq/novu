@@ -2,6 +2,8 @@ packages:
   # all packages in subdirs of packages/ and components/
   - 'providers/*'
   - 'packages/*'
+  # Angular projects
+  - 'packages/notification-center-angular/projects/*'
   - 'enterprise/packages/*'
   - 'apps/*'
   - 'libs/*'
