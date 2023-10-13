@@ -72,7 +72,6 @@ export class MarkAllMessagesAs {
         userId: subscriber._id,
         _environmentId: command.environmentId,
       },
-      undefined,
       subscriber._organizationId
     );
 

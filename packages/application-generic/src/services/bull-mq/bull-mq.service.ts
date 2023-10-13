@@ -1,4 +1,5 @@
 import {
+  BulkJobOptions,
   ConnectionOptions as RedisConnectionOptions,
   Job,
   JobsOptions,
@@ -18,7 +19,6 @@ import {
   InMemoryProviderEnum,
   InMemoryProviderService,
 } from '../in-memory-provider';
-import { validateMemoryDbClusterProviderConfig } from '../in-memory-provider/providers/memory-db-cluster-provider';
 
 interface IQueueMetrics {
   completed: Metrics;
@@ -39,6 +39,7 @@ export {
   RedisConnectionOptions as BullMqConnectionOptions,
   Worker,
   WorkerOptions,
+  BulkJobOptions,
 };
 
 @Injectable()
@@ -212,12 +213,12 @@ export class BullMqService {
   }
 
   public add(
-    id: string,
+    name: string,
     data: BullMqJobData,
     options: JobsOptions = {},
     groupId?: string
   ) {
-    this._queue.add(id, data, {
+    this._queue.add(name, data, {
       ...options,
       ...(BullMqService.pro && groupId
         ? {
@@ -227,6 +228,36 @@ export class BullMqService {
           }
         : {}),
     });
+  }
+
+  public async addBulk(
+    data: {
+      name: string;
+      data: BullMqJobData;
+      options: BulkJobOptions;
+      groupId?: string;
+    }[]
+  ) {
+    const jobs = data.map((job) => {
+      const jobOptions = {
+        removeOnComplete: true,
+        removeOnFail: true,
+        ...job?.options,
+      };
+
+      if (BullMqService.pro && job?.groupId) {
+        // BulkJobOptions.group is not defined in BullMQ types, it is defined in BullMQ Pro
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        jobOptions.group = {
+          id: job.groupId,
+        };
+      }
+
+      return { name: job.name, data: job.data, options: jobOptions };
+    });
+
+    await this._queue.addBulk(jobs);
   }
 
   public async gracefulShutdown(): Promise<void> {
