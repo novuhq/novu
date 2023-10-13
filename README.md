@@ -82,11 +82,16 @@ With Novu, you can create custom workflows and define conditions for each channe
 - 🛡 Debug and analyze multi-channel messages in a single dashboard
 - 📦 Embeddable notification center with real-time updates
 - 👨‍💻 Community driven
+- 📝 Customizable templates for different notification types and scenarios
+- 📊 Analytics and insights on notification performance and user behavior
+- 🚨 Alert management and escalation policies for critical notifications
+- 🔌 Easy integration with popular services and platforms
+- 🌍 Localization and internationalization support for multilingual notifications
 
 ## 📚 Table Of Contents
 
 - [Getting Started](https://github.com/novuhq/novu#-getting-started)
-- [Embeddable notification center](https://github.com/novuhq/novu#embeddable-notification-center)
+- [Embeddable notification cente](https://github.com/novuhq/novu#embeddable-notification-center)
 - [Providers](https://github.com/novuhq/novu#providers)
   - [Email](https://github.com/novuhq/novu#-email)
   - [SMS](https://github.com/novuhq/novu#-sms)
@@ -247,3 +252,4 @@ Thanks a lot for spending your time helping Novu grow. Keep rocking 🥂
 <a href="https://novu.co/contributors">
   <img src="https://contributors-img.web.app/image?repo=novuhq/novu" alt="Contributors"/>
 </a>
+
