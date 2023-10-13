@@ -2,10 +2,10 @@ import { Container, Group, Stack, useMantineColorScheme } from '@mantine/core';
 import { ComponentType, useCallback, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { Link, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { NodeProps } from 'react-flow-renderer';
+import { Node, NodeProps } from 'react-flow-renderer';
+import { useDidUpdate, useTimeout } from '@mantine/hooks';
 import { FilterPartTypeEnum, StepTypeEnum } from '@novu/shared';
 
-import { useDidUpdate, useTimeout } from '@mantine/hooks';
 import { When } from '../../../components/utils/When';
 import type { IFlowEditorProps } from '../../../components/workflow';
 import { FlowEditor } from '../../../components/workflow';
@@ -25,7 +25,7 @@ import { AddNodeEdge } from './workflow/edge-types/AddNodeEdge';
 import AddNode from './workflow/node-types/AddNode';
 import ChannelNode from './workflow/node-types/ChannelNode';
 import TriggerNode from './workflow/node-types/TriggerNode';
-import { NodeType } from '../../../components/workflow/types';
+import { NodeType, NodeData } from '../../../components/workflow/types';
 
 export const TOP_ROW_HEIGHT = 74;
 
@@ -63,14 +63,14 @@ const WorkflowEditor = () => {
   const dark = colorScheme === 'dark';
 
   const onNodeClick = useCallback(
-    (event, node) => {
+    (event, node: Node<NodeData>) => {
       event.preventDefault();
       const { step, channelType } = node.data;
-      const isVariant = step.variants && step.variants?.length > 0;
+      const isVariant = step && step.variants && step.variants?.length > 0;
       if (isVariant) {
         navigate(basePath + `/${channelType}/${step.uuid}/variants`);
       } else if (node.type === NodeType.CHANNEL) {
-        navigate(basePath + `/${channelType}/${step.uuid}`);
+        navigate(basePath + `/${channelType}/${step?.uuid ?? ''}`);
       } else if (node.type === NodeType.TRIGGER) {
         navigate(basePath + '/test-workflow');
       }
@@ -80,7 +80,7 @@ const WorkflowEditor = () => {
 
   const onEdit: IFlowEditorProps['onEdit'] = (_, node) => {
     if (node.type === NodeType.CHANNEL) {
-      navigate(basePath + `/${node.data.channelType}/${node.data.step.uuid}`);
+      navigate(basePath + `/${node.data.channelType}/${node.data.step?.uuid ?? ''}`);
     }
   };
 

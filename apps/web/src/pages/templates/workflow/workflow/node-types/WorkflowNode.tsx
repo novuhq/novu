@@ -377,7 +377,9 @@ const DotsMenu = ({ onDelete, onAddVariant }) => {
     <Dropdown
       withArrow={false}
       offset={0}
-      control={<ActionButton onClick={(e) => e.stopPropagation()} Icon={DotsHorizontal} />}
+      control={
+        <ActionButton onClick={(e) => e.stopPropagation()} Icon={DotsHorizontal} data-test-id="step-actions-menu" />
+      }
       middlewares={{ flip: false, shift: false }}
     >
       <Dropdown.Item
@@ -386,6 +388,7 @@ const DotsMenu = ({ onDelete, onAddVariant }) => {
           e.stopPropagation();
           onAddVariant();
         }}
+        data-test-id="add-variant-action"
       >
         Add variant
       </Dropdown.Item>

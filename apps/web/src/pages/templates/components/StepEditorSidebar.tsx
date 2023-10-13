@@ -47,6 +47,7 @@ export const StepEditorSidebar = ({ children }: { children: ReactNode }) => {
       onClose={() => {
         navigate(path);
       }}
+      data-test-id="step-editor-sidebar"
     >
       {children}
     </Sidebar>

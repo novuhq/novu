@@ -60,6 +60,7 @@ export const EditorSidebarHeaderActions = () => {
             tooltip={`Add ${isUnderVariantsListPath ? 'group' : ''} conditions`}
             onClick={() => setConditionsOpened(true)}
             Icon={PlusIcon}
+            data-test-id="editor-sidebar-add-conditions"
           />
         </When>
         <When truthy={!hasNoFilters}>
@@ -68,9 +69,10 @@ export const EditorSidebarHeaderActions = () => {
             text={`${filters?.length ?? ''}`}
             onClick={() => setConditionsOpened(true)}
             Icon={ConditionsIcon}
+            data-test-id="editor-sidebar-edit-conditions"
           />
         </When>
-        <ActionButton tooltip="Delete step" onClick={() => {}} Icon={Trash} />
+        <ActionButton tooltip="Delete step" onClick={() => {}} Icon={Trash} data-test-id="editor-sidebar-delete" />
       </Group>
       {areConditionsOpened && (
         <Conditions

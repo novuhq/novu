@@ -182,6 +182,7 @@ export function CreateProviderInstanceSidebar({
         <Group spacing={12} w="100%" h={40} noWrap>
           <ActionButton
             Icon={ArrowLeft}
+            onClick={onGoBack}
             data-test-id="create-provider-instance-sidebar-back"
             sx={{
               '> svg': {
