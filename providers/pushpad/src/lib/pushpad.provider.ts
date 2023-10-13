@@ -27,11 +27,7 @@ export class PushpadPushProvider implements IPushProvider {
   async sendMessage(
     options: IPushOptions
   ): Promise<ISendMessageSuccessResponse> {
-    const notification = new Pushpad.Notification({
-      project: this.pushpad,
-      body: options.content,
-      title: options.title,
-    });
+    const notification = this.buildNotification(options);
 
     let notificationId = null;
 
@@ -55,5 +51,13 @@ export class PushpadPushProvider implements IPushProvider {
       id: notificationId,
       date: new Date().toISOString(),
     };
+  }
+
+  private buildNotification(options: IPushOptions): Pushpad.Notification {
+    return new Pushpad.Notification({
+      project: this.pushpad,
+      body: options.content,
+      title: options.title,
+    });
   }
 }
