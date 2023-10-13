@@ -110,7 +110,7 @@
     "rollup-plugin-sourcemaps": "^0.6.3",
     "rollup-plugin-terser": "^7.0.2",
     "rollup-plugin-typescript2": "^0.34.1",
-    "semantic-release": "^19.0.3",
+    "semantic-release": "^22.0.5",
     "shelljs": "^0.8.3",
     "ts-jest": "^27.1.3",
     "ts-node": "~10.9.1",
@@ -119,7 +119,16 @@
   },
   "dependencies": {
     "@novu/notification-center": "^0.20.0-alpha.0",
+    "@nrwl/eslint-plugin-nx": "15.9.7",
+    "@nrwl/workspace": "16.10.0",
     "@types/iframe-resizer": "^3.5.8",
-    "iframe-resizer": "^4.3.1"
+    "@vonage/server-sdk": "3.9.3",
+    "autoprefixer": "10.4.16",
+    "chalk-animation": "2.0.3",
+    "cypress": "13.3.0",
+    "iframe-resizer": "^4.3.1",
+    "intercom-client": "4.0.0",
+    "open-cli": "7.2.0",
+    "react-scripts": "3.0.1"
   }
 }

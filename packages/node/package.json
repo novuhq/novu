@@ -43,6 +43,10 @@
   },
   "dependencies": {
     "@novu/shared": "^0.20.0-alpha.0",
+    "@nrwl/eslint-plugin-nx": "15.9.7",
+    "@nrwl/workspace": "16.10.0",
+    "autoprefixer": "10.4.16",
+    "cypress": "13.3.0",
     "handlebars": "^4.7.7",
     "lodash.get": "^4.4.2",
     "lodash.merge": "^4.6.2"
@@ -57,7 +61,7 @@
     "codecov": "^3.5.0",
     "jest": "^27.0.6",
     "npm-run-all": "^4.1.5",
-    "open-cli": "^6.0.1",
+    "open-cli": "^7.2.0",
     "rimraf": "^3.0.2",
     "run-p": "0.0.0",
     "ts-jest": "^27.0.5",

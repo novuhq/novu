@@ -19,9 +19,9 @@
   "vsicons.presets.nestjs": true,
   "[markdown]": {
     "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
+},
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "[python]": {
-    "editor.defaultFormatter": "ms-python.autopep8"
-  },
-  "python.formatting.provider": "none"
+  "javascript.formatting.provider": "esbenp.prettier-vscode"
 }
