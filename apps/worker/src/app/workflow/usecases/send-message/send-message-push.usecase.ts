@@ -26,6 +26,7 @@ import {
   SelectIntegration,
   CompileTemplate,
   CompileTemplateCommand,
+  IPushHandler,
   PushFactory,
   GetNovuProviderCredentials,
 } from '@novu/application-generic';
@@ -148,21 +149,26 @@ export class SendMessagePush extends SendMessageBase {
       await this.sendSelectedIntegrationExecution(command.job, integration);
 
       const overrides = command.overrides[integration.providerId] || {};
+      const target = (overrides as { deviceTokens?: string[] }).deviceTokens || deviceTokens;
 
-      const result = await this.sendMessage(
-        subscriber,
-        integration,
-        deviceTokens,
-        title,
-        content,
-        command,
-        command.payload,
-        overrides,
-        stepData
-      );
+      const message = await this.createMessage(command, integration, title, content, target, overrides);
 
-      if (!result) {
-        integrationsWithErrors++;
+      for (const deviceToken of target) {
+        const result = await this.sendMessage(
+          command,
+          message,
+          subscriber,
+          integration,
+          deviceToken,
+          title,
+          content,
+          overrides,
+          stepData
+        );
+
+        if (!result) {
+          integrationsWithErrors++;
+        }
       }
     }
 
@@ -273,59 +279,24 @@ export class SendMessagePush extends SendMessageBase {
   }
 
   private async sendMessage(
+    command: SendMessageCommand,
+    message: MessageEntity,
     subscriber: IPushOptions['subscriber'],
     integration: IntegrationEntity,
-    target: string[],
+    deviceToken: string,
     title: string,
     content: string,
-    command: SendMessageCommand,
-    payload: object,
     overrides: object,
     step: IPushOptions['step']
   ): Promise<boolean> {
-    const message: MessageEntity = await this.messageRepository.create({
-      _notificationId: command.notificationId,
-      _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
-      _subscriberId: command._subscriberId,
-      _templateId: command._templateId,
-      _messageTemplateId: command.step?.template?._id,
-      channel: ChannelTypeEnum.PUSH,
-      transactionId: command.transactionId,
-      deviceTokens: target,
-      content: this.storeContent() ? content : null,
-      title,
-      payload: payload as never,
-      overrides: overrides as never,
-      providerId: integration.providerId,
-      _jobId: command.jobId,
-    });
-
-    await this.createExecutionDetails.execute(
-      CreateExecutionDetailsCommand.create({
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-        detail: `${DetailEnum.MESSAGE_CREATED}: ${integration.providerId}`,
-        source: ExecutionDetailsSourceEnum.INTERNAL,
-        status: ExecutionDetailsStatusEnum.PENDING,
-        messageId: message._id,
-        isTest: false,
-        isRetry: false,
-        raw: this.storeContent() ? JSON.stringify(content) : null,
-      })
-    );
-
     try {
-      const pushFactory = new PushFactory();
-      const pushHandler = pushFactory.getHandler(integration);
-      if (!pushHandler) {
-        throw new PlatformException(`Push handler for provider ${integration.providerId} is  not found`);
-      }
+      const pushHandler = this.getIntegrationHandler(integration);
 
       const result = await pushHandler.send({
-        target: (overrides as { deviceTokens?: string[] }).deviceTokens || target,
+        target: [deviceToken],
         title,
         content,
-        payload,
+        payload: command.payload,
         overrides,
         subscriber,
         step,
@@ -340,7 +311,7 @@ export class SendMessagePush extends SendMessageBase {
           status: ExecutionDetailsStatusEnum.SUCCESS,
           isTest: false,
           isRetry: false,
-          raw: JSON.stringify(result),
+          raw: JSON.stringify({ result, deviceToken }),
         })
       );
 
@@ -362,5 +333,59 @@ export class SendMessagePush extends SendMessageBase {
 
       return false;
     }
+  }
+
+  private async createMessage(
+    command: SendMessageCommand,
+    integration: IntegrationEntity,
+    title: string,
+    content: string,
+    deviceTokens: string[],
+    overrides: object
+  ): Promise<MessageEntity> {
+    const message = await this.messageRepository.create({
+      _notificationId: command.notificationId,
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
+      _subscriberId: command._subscriberId,
+      _templateId: command._templateId,
+      _messageTemplateId: command.step?.template?._id,
+      channel: ChannelTypeEnum.PUSH,
+      transactionId: command.transactionId,
+      deviceTokens,
+      content: this.storeContent() ? content : null,
+      title,
+      payload: command.payload as never,
+      overrides: overrides as never,
+      providerId: integration.providerId,
+      _jobId: command.jobId,
+    });
+
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+        detail: `${DetailEnum.MESSAGE_CREATED}: ${integration.providerId}`,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.PENDING,
+        messageId: message._id,
+        isTest: false,
+        isRetry: false,
+        raw: this.storeContent() ? JSON.stringify(content) : null,
+      })
+    );
+
+    return message;
+  }
+
+  private getIntegrationHandler(integration): IPushHandler {
+    const pushFactory = new PushFactory();
+    const pushHandler = pushFactory.getHandler(integration);
+
+    if (!pushHandler) {
+      const message = `Push handler for provider ${integration.providerId} is  not found`;
+      throw new PlatformException(message);
+    }
+
+    return pushHandler;
   }
 }
