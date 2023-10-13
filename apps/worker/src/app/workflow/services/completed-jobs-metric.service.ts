@@ -98,7 +98,7 @@ export class CompletedJobsMetricService {
             const failNumber = metrics.failed.count;
 
             Logger.verbose('active length', process.env.NEW_RELIC_LICENSE_KEY.length);
-            Logger.log('Recording active, waiting, and delayed metrics');
+            Logger.verbose('Recording active, waiting, and delayed metrics');
 
             const nr = require('newrelic');
             nr.recordMetric(`Queue/${deploymentName}/${queueService.topic}/completed`, completeNumber);

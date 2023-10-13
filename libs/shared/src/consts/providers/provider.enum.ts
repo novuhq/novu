@@ -44,6 +44,7 @@ export enum EmailProviderIdEnum {
   Resend = 'resend',
   Plunk = 'plunk',
   MailerSend = 'mailersend',
+  Mailtrap = 'mailtrap',
   Clickatell = 'clickatell',
   Outlook365 = 'outlook365',
   Novu = 'novu-email',
@@ -72,6 +73,7 @@ export enum SmsProviderIdEnum {
   AfricasTalking = 'africas-talking',
   Novu = 'novu-sms',
   Sendchamp = 'sendchamp',
+  Clicksend = 'clicksend',
 }
 
 export enum ChatProviderIdEnum {

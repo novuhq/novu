@@ -2,6 +2,7 @@ import {
   mailerSendConfig,
   mailgunConfig,
   mailjetConfig,
+  mailtrapConfig,
   mandrillConfig,
   netCoreConfig,
   nodemailerConfig,
@@ -46,6 +47,14 @@ export const emailProviders: IProviderConfig[] = [
     credentials: mailjetConfig,
     docReference: 'https://docs.novu.co/channels-and-providers/email/mailjet',
     logoFileName: { light: 'mailjet.png', dark: 'mailjet.png' },
+  },
+  {
+    id: EmailProviderIdEnum.Mailtrap,
+    displayName: 'Mailtrap',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: mailtrapConfig,
+    docReference: 'https://docs.novu.co/channels-and-providers/email/mailtrap',
+    logoFileName: { light: 'mailtrap.svg', dark: 'mailtrap.svg' },
   },
   {
     id: EmailProviderIdEnum.Mandrill,
