@@ -78,6 +78,7 @@
     "@novu/plunk": "^0.20.0-alpha.1",
     "@novu/postmark": "^0.20.0-alpha.1",
     "@novu/push-webhook": "^0.20.0-alpha.1",
+    "@novu/pushpad": "^0.20.0-alpha.1",
     "@novu/resend": "^0.20.0-alpha.1",
     "@novu/sendchamp": "^0.20.0-alpha.1",
     "@novu/sendgrid": "^0.20.0-alpha.1",
