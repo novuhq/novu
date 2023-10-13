@@ -59,10 +59,15 @@ export function Conditions({
 
   function handleOnChildOnChange(index: number) {
     return (data) => {
-      const defaultValue = data === FilterPartTypeEnum.IS_ONLINE ? true : '';
-      const newField = Object.assign({}, fields[index], { on: data, value: defaultValue });
+      const { id: _, ...rest } = fields[index];
 
-      update(index, newField);
+      if (data === FilterPartTypeEnum.IS_ONLINE) {
+        update(index, { ...rest, on: data, value: true });
+
+        return;
+      }
+
+      update(index, { ...rest, on: data });
     };
   }
 

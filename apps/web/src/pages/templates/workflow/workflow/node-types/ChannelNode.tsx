@@ -22,8 +22,6 @@ export default memo((node: INode) => {
     onEdit,
     onAddConditions,
   } = data;
-  const { active, uuid, name } = step;
-  const variantsCount = step.variants?.length;
 
   const { getNode, getEdges, getNodes } = useReactFlow();
   const nodes = useNodes<INode['data']>();
@@ -58,6 +56,13 @@ export default memo((node: INode) => {
   }, [nodes, channelType, id]);
 
   const subtitle = useStepSubtitle(step, channelType);
+
+  if (!step) {
+    return null;
+  }
+
+  const { active, uuid, name } = step;
+  const variantsCount = step.variants?.length;
 
   return (
     <div data-test-id={`node-${testId}`} style={{ pointerEvents: 'none' }}>

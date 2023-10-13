@@ -26,7 +26,7 @@ export interface IFlowStep {
   delayMetadata?: IFormStep['delayMetadata'];
 }
 
-interface NodeData {
+export interface NodeData {
   Icon: React.FC<any>;
   label: string;
   tabKey: ChannelTypeEnum;
@@ -38,7 +38,7 @@ interface NodeData {
   onEdit: (e: MouseEvent<HTMLButtonElement>, node: INode) => void;
   error: string;
   channelType: StepTypeEnum;
-  step: IFlowStep;
+  step?: IFlowStep;
 }
 
 export enum NodeType {

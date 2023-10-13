@@ -31,6 +31,7 @@ export const WorkflowSidebar = ({ children, title }: { children: ReactNode; titl
       onClose={() => {
         navigate(path);
       }}
+      data-test-id="workflow-sidebar"
     >
       {children}
     </Sidebar>
