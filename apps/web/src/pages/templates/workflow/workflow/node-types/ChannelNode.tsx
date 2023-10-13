@@ -8,7 +8,20 @@ import { useStepSubtitle } from '../../../hooks/useStepSubtitle';
 
 export default memo((node: INode) => {
   const { data, id, dragging } = node;
-  const { testId, error, channelType, step, label, index, tabKey, Icon, onAddVariant, onDelete, onEdit } = data;
+  const {
+    testId,
+    error,
+    channelType,
+    step,
+    label,
+    index,
+    tabKey,
+    Icon,
+    onAddVariant,
+    onDelete,
+    onEdit,
+    onAddConditions,
+  } = data;
 
   const { getNode, getEdges, getNodes } = useReactFlow();
   const nodes = useNodes<INode['data']>();
@@ -67,6 +80,10 @@ export default memo((node: INode) => {
         onAddVariant={() => {
           onAddVariant(uuid ?? '');
         }}
+        onAddConditions={() => {
+          onAddConditions(uuid ?? '');
+        }}
+        nodeType={variantsCount && variantsCount > 0 ? 'stepRoot' : 'step'}
         variantsCount={variantsCount}
         tabKey={tabKey}
         channelType={channelType}

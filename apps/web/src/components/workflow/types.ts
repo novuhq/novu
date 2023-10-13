@@ -34,6 +34,7 @@ export interface NodeData {
   testId: string;
   onDelete: (uuid: string) => void;
   onAddVariant: (uuid: string) => void;
+  onAddConditions: (uuid: string) => void;
   onEdit: (e: MouseEvent<HTMLButtonElement>, node: INode) => void;
   error: string;
   channelType: StepTypeEnum;

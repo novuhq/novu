@@ -38,6 +38,17 @@ export const VariantsListSidebar = ({ children, variantsCount }: { children: Rea
       onClose={() => {
         navigate(path);
       }}
+      styles={{
+        body: {
+          '> form': {
+            gap: 0,
+          },
+          '.sidebar-body-holder': {
+            marginRight: 0,
+            paddingRight: 0,
+          },
+        },
+      }}
     >
       {children}
     </Sidebar>

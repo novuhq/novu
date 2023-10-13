@@ -270,7 +270,7 @@ const TemplateEditorFormProvider = ({ children }) => {
       }
 
       const newVariant = makeVariantFromStep(stepToVariant);
-      const newVariants = [...(stepToVariant?.variants ?? []), newVariant];
+      const newVariants = [newVariant, ...(stepToVariant?.variants ?? [])];
 
       methods.setValue(`steps.${index}.variants`, newVariants, {
         shouldDirty: true,

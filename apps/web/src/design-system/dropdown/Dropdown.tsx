@@ -4,7 +4,7 @@ import { Menu, MenuProps } from '@mantine/core';
 import useStyles from './Dropdown.styles';
 import { shadows } from '../config';
 
-interface IDropdownProps
+export interface IDropdownProps
   extends Pick<
     MenuProps,
     | 'withArrow'

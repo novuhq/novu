@@ -87,7 +87,6 @@ export default memo(({ selected }: INode) => {
         </Tooltip>
       </When>
       <WorkflowNode
-        showDelete={false}
         Icon={BoltOutlinedGradient}
         label="Workflow trigger"
         active={selected}
