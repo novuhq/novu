@@ -13515,8 +13515,8 @@ packages:
       lodash.merge: 4.6.2
     dev: false
 
-  /@novu/stateless/0.16.3:
-    resolution: {integrity: sha512-9wrqUluSaR9rCdDp4oUWFBwsk6OSM4P+yMaEtFGHrGmSPMcspnvXQaQoARKakuUpCXFvQlPPJq5+yaicv4o/hA==}
+  /@novu/stateless/0.20.0-alpha.1:
+    resolution: {integrity: sha512-cTK1yXEg//gI51BT29oNKDPeO8g9JDDjtOaoJyAAwp3uiZjU6TgqXAFb/WYo5kgs7dlIMiyPVmd27pzwbcs3rA==}
     engines: {node: '>=10'}
     dependencies:
       handlebars: 4.7.7
