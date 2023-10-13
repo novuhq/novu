@@ -1824,7 +1824,6 @@ importers:
   packages/notification-center-angular:
     specifiers:
       '@angular-devkit/build-angular': ^16.2.5
-      '@angular-devkit/schematics': ^16.2.5
       '@angular/animations': ^16.2.0
       '@angular/cli': ^16.2.5
       '@angular/common': ^16.2.0
@@ -1835,9 +1834,7 @@ importers:
       '@angular/platform-browser': ^16.2.0
       '@angular/platform-browser-dynamic': ^16.2.0
       '@angular/router': ^16.2.0
-      '@schematics/angular': ^16.2.5
       '@types/jasmine': ~4.3.0
-      copyfiles: ^2.4.1
       jasmine-core: ~4.6.0
       karma: ~6.4.0
       karma-chrome-launcher: ~3.2.0
@@ -1858,14 +1855,11 @@ importers:
       '@angular/platform-browser': 16.2.9_vxuo3gd642ds24koptq6pfqhzu
       '@angular/platform-browser-dynamic': 16.2.9_tyut522avfl7rq4bpu7uh7owsq
       '@angular/router': 16.2.9_wr3mkvf63mwheqi365gahwb7xe
-      '@schematics/angular': 16.2.6
-      copyfiles: 2.4.1
       rxjs: 7.8.1
       tslib: 2.5.0
       zone.js: 0.13.3
     devDependencies:
       '@angular-devkit/build-angular': 16.2.6_qczruuzsia2wfmgh6vil662e6a
-      '@angular-devkit/schematics': 16.2.6
       '@angular/cli': 16.2.6
       '@angular/compiler-cli': 16.2.9_izja73vm7on2v27turk3jvumz4
       '@types/jasmine': 4.3.1
@@ -1886,10 +1880,9 @@ importers:
       '@angular/platform-browser-dynamic': ^15.0.0 || ^16.0.0 || ^17.0.0
       '@novu/notification-center': ^0.20.0-alpha.1
       '@types/react': ^17.0.1
-      copyfiles: file:../../node_modules/copyfiles
       react: ^17.0.1
       react-dom: ^17.0.1
-      typescript: file:../../node_modules/typescript
+      tslib: ^2.3.0
     dependencies:
       '@angular/common': 16.2.9_lg6ouezroff26ctlkgdzqjjtuq
       '@angular/core': 16.2.9_rxjs@7.8.1+zone.js@0.13.3
@@ -1899,9 +1892,7 @@ importers:
       '@types/react': 17.0.62
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
-    devDependencies:
-      copyfiles: file:packages/notification-center-angular/node_modules/copyfiles
-      typescript: file:packages/notification-center-angular/node_modules/typescript
+      tslib: 2.6.2
 
   packages/notification-center-vue:
     specifiers:
@@ -3929,6 +3920,7 @@ packages:
       picomatch: 2.3.1
       rxjs: 7.8.1
       source-map: 0.7.4
+    dev: true
 
   /@angular-devkit/core/16.2.6_chokidar@3.5.3:
     resolution: {integrity: sha512-iez/8NYXQT6fqVQLlKmZUIRkFUEZ88ACKbTwD4lBmk0+hXW+bQBxI7JOnE3C4zkcM2YeuTXIYsC5SebTKYiR4Q==}
@@ -4013,6 +4005,7 @@ packages:
       rxjs: 7.8.1
     transitivePeerDependencies:
       - chokidar
+    dev: true
 
   /@angular/animations/16.2.9_@angular+core@16.2.9:
     resolution: {integrity: sha512-J+nsc2x/ZQuh+YwwTzxXUrV+7SBpJq6DDStfTFkZls9PWGRj9fjqQeRCWrfNLllpxopAEjhFkoyK06oSjcwqAw==}
@@ -4556,7 +4549,7 @@ packages:
       '@smithy/util-utf8': 2.0.0
       '@smithy/util-waiter': 2.0.3
       fast-xml-parser: 4.2.5
-      tslib: 2.5.0
+      tslib: 2.6.2
     transitivePeerDependencies:
       - aws-crt
     dev: false
@@ -4601,7 +4594,7 @@ packages:
       '@smithy/util-retry': 2.0.0
       '@smithy/util-utf8': 2.0.0
       fast-xml-parser: 4.2.5
-      tslib: 2.5.0
+      tslib: 2.6.2
     transitivePeerDependencies:
       - aws-crt
     dev: false
@@ -13994,7 +13987,7 @@ packages:
       jest-resolve: 29.5.0
       jest-util: 29.5.0
       resolve.exports: 1.1.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     transitivePeerDependencies:
       - '@babel/traverse'
       - '@swc-node/register'
@@ -14081,7 +14074,7 @@ packages:
       '@phenomnomnominal/tsquery': 4.1.1_typescript@4.9.5
       eslint: 8.38.0
       tmp: 0.2.1
-      tslib: 2.5.0
+      tslib: 2.6.2
     transitivePeerDependencies:
       - '@babel/traverse'
       - '@swc-node/register'
@@ -14423,7 +14416,7 @@ packages:
       rxjs: 6.6.7
       semver: 7.3.4
       tmp: 0.2.1
-      tslib: 2.5.0
+      tslib: 2.6.2
       yargs: 17.7.1
       yargs-parser: 21.0.1
     transitivePeerDependencies:
@@ -14785,7 +14778,7 @@ packages:
     resolution: {integrity: sha512-53lgots3fWGAo1QdS18BdEpJl7A29O1F9rYVn/7DfJ07SpJ1ZlzUeeWGVrWGL7PRRZb4a9Tw7Tt8Wnw0Xorhjg==}
     dependencies:
       native-fetch: 4.0.2_undici@5.23.0
-      tslib: 2.5.0
+      tslib: 2.6.2
       undici: 5.23.0
     dev: false
 
@@ -16307,6 +16300,7 @@ packages:
       jsonc-parser: 3.2.0
     transitivePeerDependencies:
       - chokidar
+    dev: true
 
   /@segment/analytics-core/1.2.3:
     resolution: {integrity: sha512-/B4f4Hxmwd9WpEba/ChYkUwhILz5cPhG4Sto03IlLc8vbV7gAOCGH021EKvU3Wv70WlRK6EgJkuDLPnRl2a2aA==}
@@ -25071,19 +25065,6 @@ packages:
       serialize-javascript: 6.0.1
       webpack: 5.88.2
     dev: true
-
-  /copyfiles/2.4.1:
-    resolution: {integrity: sha512-fereAvAvxDrQDOXybk3Qu3dPbOoKoysFMWtkY3mv5BsL8//OSZVL5DCLYqgRfY5cWirgRzlC+WSrxp6Bo3eNZg==}
-    hasBin: true
-    dependencies:
-      glob: 7.2.3
-      minimatch: 3.1.2
-      mkdirp: 1.0.4
-      noms: 0.0.0
-      through2: 2.0.5
-      untildify: 4.0.0
-      yargs: 16.2.0
-    dev: false
 
   /core-js-compat/3.30.0:
     resolution: {integrity: sha512-P5A2h/9mRYZFIAP+5Ab8ns6083IyVpSclU74UNvbGVQ8VM7n3n3/g2yF3AkKQ9NXz2O+ioxLbEWKnDtgsFamhg==}
@@ -34496,6 +34477,7 @@ packages:
     engines: {node: '>=12'}
     dependencies:
       '@jridgewell/sourcemap-codec': 1.4.15
+    dev: true
 
   /mailersend/1.4.6:
     resolution: {integrity: sha512-H01TEAQIS2xciqow401yNjvFeooCH0BHF6DuSl7H9wsiP2GEvjeuiMaeSdUOGNd2N45t+qyKCuBeyxu7J0xWEg==}
@@ -36360,12 +36342,6 @@ packages:
       undefsafe: 2.0.5
     dev: true
 
-  /noms/0.0.0:
-    resolution: {integrity: sha512-lNDU9VJaOPxUmXcLb+HQFeUgQQPtMI24Gt6hgfuMHRJgMRHMF/qZ4HJD3GDru4sSw9IQl2jPjAYnQrdIeLbwow==}
-    dependencies:
-      inherits: 2.0.4
-      readable-stream: 1.0.34
-
   /nopt/1.0.10:
     resolution: {integrity: sha512-NWmpvLSqUrgrAC9HCuxEvb+PSloHpqVu+FqcO4eeF2h5qYRhA7ev6KvelyQAKtegUbC6RypJnlEOhd8vloNKYg==}
     hasBin: true
@@ -36839,7 +36815,7 @@ packages:
       tar-stream: 2.2.0
       tmp: 0.2.1
       tsconfig-paths: 4.1.2
-      tslib: 2.5.0
+      tslib: 2.6.2
       v8-compile-cache: 2.3.0
       yargs: 17.7.1
       yargs-parser: 21.1.1
@@ -41001,14 +40977,6 @@ packages:
       mute-stream: 0.0.8
     dev: true
 
-  /readable-stream/1.0.34:
-    resolution: {integrity: sha512-ok1qVCJuRkNmvebYikljxJA/UEsKwLl2nI1OmaqAu4/UE+h0wKCHok4XkL/gvi39OacXvw59RJUOFUkDib2rHg==}
-    dependencies:
-      core-util-is: 1.0.3
-      inherits: 2.0.4
-      isarray: 0.0.1
-      string_decoder: 0.10.31
-
   /readable-stream/2.3.8:
     resolution: {integrity: sha512-8p0AUk4XODgIewSi0l8Epjs+EVnWiK7NoDIEGU0HhE7+ZyY8D1IMY7odu5lRrFXGg71L15KG8QrPmum45RTtdA==}
     dependencies:
@@ -43217,9 +43185,6 @@ packages:
       define-properties: 1.2.0
       es-abstract: 1.22.1
 
-  /string_decoder/0.10.31:
-    resolution: {integrity: sha512-ev2QzSzWPYmy9GuqfIVildA4OdcGLeFZQrq5ys6RtiuF+RQQiZWr8TZNyAcuVXyQRYfEO+MsoB/1BuQVhOJuoQ==}
-
   /string_decoder/1.1.1:
     resolution: {integrity: sha512-n/ShnvDi6FHbbVfviro+WojiFzv+s8MPMHBczVePfUpDJLwoLT0ht1l4YwBCbi8pJAveEEdnkHyPyTP/mzRfwg==}
     dependencies:
@@ -44137,6 +44102,7 @@ packages:
     dependencies:
       readable-stream: 2.3.8
       xtend: 4.0.2
+    dev: true
 
   /through2/3.0.2:
     resolution: {integrity: sha512-enaDQ4MUyP2W6ZyT6EsMzqBPZaM/avg8iuo+l2d3QCs0J+6RaqkHV/2/lOwDTueBHeJ/2LG9lrLW3d5rWPucuQ==}
@@ -47264,26 +47230,3 @@ packages:
   /zxcvbn/4.4.2:
     resolution: {integrity: sha512-Bq0B+ixT/DMyG8kgX2xWcI5jUvCwqrMxSFam7m0lAf78nf04hv6lNCsyLYdyYTrCVMqNDY/206K7eExYCeSyUQ==}
     dev: false
-
-  file:packages/notification-center-angular/node_modules/copyfiles:
-    resolution: {directory: packages/notification-center-angular/node_modules/copyfiles, type: directory}
-    name: copyfiles
-    version: 2.4.1
-    hasBin: true
-    dependencies:
-      glob: 7.2.3
-      minimatch: 3.1.2
-      mkdirp: 1.0.4
-      noms: 0.0.0
-      through2: 2.0.5
-      untildify: 4.0.0
-      yargs: 16.2.0
-    dev: true
-
-  file:packages/notification-center-angular/node_modules/typescript:
-    resolution: {directory: packages/notification-center-angular/node_modules/typescript, type: directory}
-    name: typescript
-    version: 5.1.6
-    engines: {node: '>=14.17'}
-    hasBin: true
-    dev: true
