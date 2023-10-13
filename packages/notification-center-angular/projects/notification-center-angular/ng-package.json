@@ -4,5 +4,5 @@
   "lib": {
     "entryFile": "src/index.ts"
   },
-  "allowedNonPeerDependencies": ["react", "react-dom", "@novu/notification-center-angular"]
+  "allowedNonPeerDependencies": ["react", "react-dom", "@novu/notification-center"]
 }
