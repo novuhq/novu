@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import { Group, useMantineColorScheme, Container, Divider } from '@mantine/core';
+import { useMantineColorScheme, Divider } from '@mantine/core';
 import { ChannelTypeEnum, providers, StepTypeEnum } from '@novu/shared';
 import React, { MouseEventHandler, useEffect, useState } from 'react';
 import { useViewport } from 'react-flow-renderer';
@@ -8,18 +8,8 @@ import { useFormContext } from 'react-hook-form';
 import { useSegment } from '../../../../../components/providers/SegmentProvider';
 import { When } from '../../../../../components/utils/When';
 import { CONTEXT_PATH } from '../../../../../config';
-import { Dropdown, Text, colors, Button, IDropdownProps } from '../../../../../design-system';
-import {
-  ConditionPlus,
-  ConditionsFile,
-  DotsHorizontal,
-  NoConditions,
-  PencilOutlined,
-  ProviderMissing,
-  Trash,
-  VariantPlus,
-  VariantsFile,
-} from '../../../../../design-system/icons';
+import { Text, colors, Button, IDropdownProps } from '../../../../../design-system';
+import { ProviderMissing, VariantsFile } from '../../../../../design-system/icons';
 import { useStyles } from '../../../../../design-system/template-button/TemplateButton.styles';
 import {
   useEnvController,
@@ -31,41 +21,13 @@ import { CHANNEL_TYPE_TO_STRING } from '../../../../../utils/channels';
 import { useSelectPrimaryIntegrationModal } from '../../../../integrations/components/multi-provider/useSelectPrimaryIntegrationModal';
 import { IntegrationsListModal } from '../../../../integrations/IntegrationsListModal';
 import { IntegrationsStoreModal } from '../../../../integrations/IntegrationsStoreModal';
-import { ActionButton } from '../../../../../design-system/button/ActionButton';
 import { TemplateEditorAnalyticsEnum } from '../../../constants';
 import { getFormattedStepErrors } from '../../../shared/errors';
 import { DisplayPrimaryProviderIcon } from '../../DisplayPrimaryProviderIcon';
 import { NodeErrorPopover } from '../../NodeErrorPopover';
+import { WorkflowNodeActions } from './WorkflowNodeActions';
 
 export type NodeType = 'step' | 'stepRoot' | 'variant' | 'variantRoot';
-
-const VARIANT_TYPE_TO_EDIT: Record<NodeType, string> = {
-  step: 'Edit step',
-  stepRoot: 'Edit root step',
-  variant: 'Edit variant',
-  variantRoot: 'Edit root step',
-};
-
-const VARIANT_TYPE_TO_ADD_CONDITIONS: Record<NodeType, string> = {
-  step: 'Add conditions',
-  stepRoot: 'Add group conditions',
-  variant: 'Add variant conditions',
-  variantRoot: 'Add group conditions',
-};
-
-const VARIANT_TYPE_TO_EDIT_CONDITIONS: Record<NodeType, string> = {
-  step: 'Edit conditions',
-  stepRoot: 'Edit group conditions',
-  variant: 'Edit conditions',
-  variantRoot: 'Edit group conditions',
-};
-
-const VARIANT_TYPE_TO_DELETE: Record<NodeType, string> = {
-  step: 'Delete step',
-  stepRoot: 'Delete step',
-  variant: 'Delete variant',
-  variantRoot: 'Delete step',
-};
 
 interface IWorkflowNodeProps {
   Icon: React.FC<any>;
@@ -217,7 +179,7 @@ export function WorkflowNode({
                   </>
                 }
               />
-              <Actions
+              <WorkflowNodeActions
                 nodeType={nodeType}
                 showMenu={showMenu}
                 menuPosition={menuPosition}
@@ -266,7 +228,7 @@ export function WorkflowNode({
 
             <When truthy={!isStepRoot}>
               <ActionTopWrapper>
-                <Actions
+                <WorkflowNodeActions
                   nodeType={nodeType}
                   showMenu={showMenu}
                   menuPosition={menuPosition}
@@ -382,130 +344,6 @@ export function WorkflowNode({
   );
 }
 
-const Actions = ({
-  showMenu,
-  menuPosition,
-  conditionsCount,
-  nodeType = 'step',
-  onEdit,
-  onAddConditions,
-  onAddVariant,
-  onDelete,
-}: Pick<
-  IWorkflowNodeProps,
-  'nodeType' | 'menuPosition' | 'onEdit' | 'onAddConditions' | 'onAddVariant' | 'onDelete'
-> & {
-  showMenu: boolean;
-  conditionsCount: number;
-}) => {
-  if (!onEdit && !onAddConditions) {
-    return null;
-  }
-
-  if (nodeType === 'variantRoot') {
-    return (
-      <ContainerButton>
-        <When truthy={!showMenu}>
-          <ActionButton
-            onClick={onAddConditions}
-            tooltip={
-              conditionsCount > 0 ? VARIANT_TYPE_TO_EDIT_CONDITIONS[nodeType] : VARIANT_TYPE_TO_ADD_CONDITIONS[nodeType]
-            }
-            text="No"
-            Icon={NoConditions}
-          />
-        </When>
-        <When truthy={showMenu}>
-          <Group noWrap spacing={5}>
-            {onEdit && <ActionButton onClick={onEdit} tooltip={VARIANT_TYPE_TO_EDIT[nodeType]} Icon={PencilOutlined} />}
-          </Group>
-        </When>
-      </ContainerButton>
-    );
-  }
-
-  return (
-    <ContainerButton>
-      <When truthy={!showMenu && conditionsCount > 0}>
-        <ActionButton
-          onClick={onAddConditions}
-          tooltip={
-            conditionsCount > 0 ? VARIANT_TYPE_TO_EDIT_CONDITIONS[nodeType] : VARIANT_TYPE_TO_ADD_CONDITIONS[nodeType]
-          }
-          text={`${conditionsCount > 0 ? conditionsCount : ''}`}
-          Icon={conditionsCount > 0 ? ConditionsFile : ConditionPlus}
-        />
-      </When>
-      <When truthy={showMenu}>
-        <Group noWrap spacing={5}>
-          {onEdit && <ActionButton onClick={onEdit} tooltip={VARIANT_TYPE_TO_EDIT[nodeType]} Icon={PencilOutlined} />}
-          {onAddConditions && (
-            <ActionButton
-              onClick={onAddConditions}
-              tooltip={
-                conditionsCount > 0
-                  ? VARIANT_TYPE_TO_EDIT_CONDITIONS[nodeType]
-                  : VARIANT_TYPE_TO_ADD_CONDITIONS[nodeType]
-              }
-              text={`${conditionsCount > 0 ? conditionsCount : ''}`}
-              Icon={conditionsCount > 0 ? ConditionsFile : ConditionPlus}
-            />
-          )}
-          <DotsMenu onDelete={onDelete} onAddVariant={onAddVariant} menuPosition={menuPosition} nodeType={nodeType} />
-        </Group>
-      </When>
-    </ContainerButton>
-  );
-};
-
-const DotsMenu = ({
-  menuPosition,
-  nodeType = 'step',
-  onDelete,
-  onAddVariant,
-}: Pick<IWorkflowNodeProps, 'onDelete' | 'onAddVariant' | 'menuPosition' | 'nodeType'>) => {
-  if (!onDelete && !onAddVariant) {
-    return null;
-  }
-
-  return (
-    <Dropdown
-      position={menuPosition}
-      withArrow={false}
-      offset={0}
-      control={
-        <ActionButton onClick={(e) => e.stopPropagation()} Icon={DotsHorizontal} data-test-id="step-actions-menu" />
-      }
-      middlewares={{ flip: false, shift: false }}
-    >
-      {onAddVariant && (
-        <Dropdown.Item
-          icon={<VariantPlus />}
-          onClick={(e) => {
-            e.stopPropagation();
-            onAddVariant();
-          }}
-          data-test-id="add-variant-action"
-        >
-          Add variant
-        </Dropdown.Item>
-      )}
-      {onDelete && (
-        <Dropdown.Item
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete();
-          }}
-          icon={<Trash width="16px" height="16px" />}
-          data-test-id="delete-step-action"
-        >
-          {VARIANT_TYPE_TO_DELETE[nodeType]}
-        </Dropdown.Item>
-      )}
-    </Dropdown>
-  );
-};
-
 const IconText = ({ color, label, Icon }: { color?: string; label: any; Icon: React.FC<any> }) => {
   return (
     <IconTextWrapper>
@@ -528,12 +366,6 @@ const WorkflowNodeWrapper = styled.div`
   display: flex;
   flex-direction: column;
   width: 100%;
-`;
-
-const ContainerButton = styled(Container)`
-  padding: 0;
-  margin-left: auto;
-  margin-right: 0;
 `;
 
 const ErrorCircle = styled.div<{ dark: boolean }>`
