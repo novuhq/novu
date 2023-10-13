@@ -34,17 +34,17 @@ export class StandardQueueServiceHealthIndicator extends HealthIndicator {
     );
   }
 
-  async isWorkerHealthy(): Promise<HealthIndicatorResult> {
+  async isActive(): Promise<HealthIndicatorResult> {
     const isReady = this.standardQueueService.isReady();
     const isPaused = await this.standardQueueService.isPaused();
 
     if (isReady && !isPaused) {
-      Logger.verbose('StandardQueueService is ready', LOG_CONTEXT);
+      Logger.verbose('StandardQueueService is active', LOG_CONTEXT);
 
       return this.getStatus(this.INDICATOR_KEY, true);
     }
 
-    Logger.verbose('StandardQueueService is not ready', LOG_CONTEXT);
+    Logger.verbose('StandardQueueService is not active', LOG_CONTEXT);
 
     throw new HealthCheckError(
       'Standard Queue Health',

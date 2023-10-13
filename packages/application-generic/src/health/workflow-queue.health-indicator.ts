@@ -34,17 +34,17 @@ export class WorkflowQueueServiceHealthIndicator extends HealthIndicator {
     );
   }
 
-  async isWorkerHealthy(): Promise<HealthIndicatorResult> {
+  async isActive(): Promise<HealthIndicatorResult> {
     const isReady = this.workflowQueueService.isReady();
     const isPaused = await this.workflowQueueService.isPaused();
 
     if (isReady && !isPaused) {
-      Logger.verbose('WorkflowQueueService is ready', LOG_CONTEXT);
+      Logger.verbose('WorkflowQueueService is active', LOG_CONTEXT);
 
       return this.getStatus(this.INDICATOR_KEY, true);
     }
 
-    Logger.verbose('WorkflowQueueService is not ready', LOG_CONTEXT);
+    Logger.verbose('WorkflowQueueService is not active', LOG_CONTEXT);
 
     throw new HealthCheckError(
       'Workflow Queue Health',

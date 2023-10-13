@@ -36,17 +36,17 @@ export class ActiveJobsMetricQueueServiceHealthIndicator extends HealthIndicator
     );
   }
 
-  async isWorkerHealthy(): Promise<HealthIndicatorResult> {
+  async isActive(): Promise<HealthIndicatorResult> {
     const isReady = this.activeJobsMetricQueueService.isReady();
     const isPaused = await this.activeJobsMetricQueueService.isPaused();
 
     if (isReady && !isPaused) {
-      Logger.verbose('ActiveJobsMetricQueueService is ready', LOG_CONTEXT);
+      Logger.verbose('ActiveJobsMetricQueueService is active', LOG_CONTEXT);
 
       return this.getStatus(this.INDICATOR_KEY, true);
     }
 
-    Logger.verbose('ActiveJobsMetricQueueService is not ready', LOG_CONTEXT);
+    Logger.verbose('ActiveJobsMetricQueueService is not active', LOG_CONTEXT);
 
     throw new HealthCheckError(
       'ActiveJobsMetric Queue Health',
