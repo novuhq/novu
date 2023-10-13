@@ -7,13 +7,9 @@ test('should trigger pushpad library correctly', async () => {
   });
 
   const mockDeliverTo = jest.fn();
-  const mockBroadcast = jest.fn();
   const mockBuildNotification = jest
     .spyOn(provider, 'buildNotification' as any)
-    .mockReturnValue({
-      deliverTo: mockDeliverTo,
-      broadcast: mockBroadcast,
-    });
+    .mockReturnValue({ deliverTo: mockDeliverTo });
 
   const result = await provider.sendMessage({
     title: 'Test',
@@ -30,7 +26,6 @@ test('should trigger pushpad library correctly', async () => {
 
   expect(mockBuildNotification).toHaveBeenCalled();
   expect(mockDeliverTo).toHaveBeenCalledTimes(1);
-  expect(mockBroadcast).not.toHaveBeenCalled();
 
   expect(result).toHaveProperty('id');
   expect(result).toHaveProperty('date');

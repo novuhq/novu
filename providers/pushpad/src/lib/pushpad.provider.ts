@@ -31,21 +31,12 @@ export class PushpadPushProvider implements IPushProvider {
 
     let notificationId = null;
 
-    if (options.target) {
-      notification.deliverTo(options.target, function (err, result) {
-        if (err) {
-          throw Error(err);
-        }
-        notificationId = result.id;
-      });
-    } else {
-      notification.broadcast(function (err, result) {
-        if (err) {
-          throw Error(err);
-        }
-        notificationId = result.id;
-      });
-    }
+    notification.deliverTo(options.target, function (err, result) {
+      if (err) {
+        throw Error(err);
+      }
+      notificationId = result.id;
+    });
 
     return {
       id: notificationId,
