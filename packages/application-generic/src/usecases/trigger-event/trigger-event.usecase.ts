@@ -7,6 +7,7 @@ import {
   JobRepository,
   NotificationTemplateRepository,
   IntegrationRepository,
+  SubscriberEntity,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -120,7 +121,7 @@ export class TriggerEvent {
       Logger.debug(mappedActor);
 
       // We might have a single actor for every trigger, so we only need to check for it once
-      let actorProcessed;
+      let actorProcessed: SubscriberEntity | undefined;
       if (mappedActor) {
         actorProcessed = await this.processSubscriber.execute(
           ProcessSubscriberCommand.create({
