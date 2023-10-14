@@ -106,7 +106,11 @@ We are excited to launch the complete Novu API and admin panel. Want to give it 
 npx novu init
 ```
 
-After setting up your account using the cloud or docker version you can trigger the API using the `@novu/node` package.
+After setting up your account using the cloud or docker version, you can trigger the API using the `@novu/node` package.
+
+For API documentation and reference, please visit [Novu API Reference](https://docs.novu.co/api-reference/events/trigger-event).
+
+To get started with the Node.js package, you can install it using npm:
 
 ```bash
 npm install @novu/node
