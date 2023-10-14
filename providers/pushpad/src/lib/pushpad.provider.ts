@@ -29,17 +29,18 @@ export class PushpadPushProvider implements IPushProvider {
   ): Promise<ISendMessageSuccessResponse> {
     const notification = this.buildNotification(options);
 
-    let notificationId = null;
+    const notificationId = await new Promise((resolve, reject) => {
+      notification.deliverTo(options.target, function (err, result) {
+        if (err) {
+          return reject(err);
+        }
 
-    notification.deliverTo(options.target, function (err, result) {
-      if (err) {
-        throw Error(err);
-      }
-      notificationId = result.id;
+        return resolve(result.id);
+      });
     });
 
     return {
-      id: notificationId,
+      id: String(notificationId),
       date: new Date().toISOString(),
     };
   }

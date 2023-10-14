@@ -1,15 +1,25 @@
 import { PushpadPushProvider } from './pushpad.provider';
 
+jest.mock('pushpad', () => {
+  class MockNotification {
+    deliverTo(target, callback) {
+      setTimeout(() => {
+        callback(null, { id: 12345 });
+      }, 100);
+    }
+  }
+
+  return {
+    ...jest.requireActual('pushpad'),
+    Notification: MockNotification,
+  };
+});
+
 test('should trigger pushpad library correctly', async () => {
   const provider = new PushpadPushProvider({
-    apiKey: 'test-token',
-    appId: '012345',
+    apiKey: 'api-key-123',
+    appId: '841',
   });
-
-  const mockDeliverTo = jest.fn();
-  const mockBuildNotification = jest
-    .spyOn(provider, 'buildNotification' as any)
-    .mockReturnValue({ deliverTo: mockDeliverTo });
 
   const result = await provider.sendMessage({
     title: 'Test',
@@ -24,9 +34,5 @@ test('should trigger pushpad library correctly', async () => {
     },
   });
 
-  expect(mockBuildNotification).toHaveBeenCalled();
-  expect(mockDeliverTo).toHaveBeenCalledTimes(1);
-
-  expect(result).toHaveProperty('id');
-  expect(result).toHaveProperty('date');
+  expect(result.id).toBe('12345');
 });
