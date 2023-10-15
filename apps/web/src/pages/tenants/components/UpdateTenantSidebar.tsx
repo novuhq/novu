@@ -1,17 +1,31 @@
 import { useEffect, useState } from 'react';
-import { Group, Modal, Stack } from '@mantine/core';
+import { ActionIcon, Group, Stack } from '@mantine/core';
 import { Controller, useForm } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 
 import { ITenantEntity, IUpdateTenantDto } from '@novu/shared';
 
-import { Button, colors, NameInput, Sidebar, Text, Title, Tooltip } from '../../../design-system';
+import { Button, colors, NameInput, Sidebar, Text, Title, Tooltip, Modal } from '../../../design-system';
 import { getTenantByIdentifier, deleteTenant, updateTenant } from '../../../api/tenants';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { QueryKeys } from '../../../api/query.keys';
 import { TenantFormCommonFields } from './TenantFormCommonFields';
 import { Trash, WarningIcon } from '../../../design-system/icons';
+import styled from '@emotion/styled';
+
+const TrashButton = styled(Group)`
+  text-align: center;
+  border-radius: 8px;
+  width: 20px;
+  height: 32px;
+  color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B60 : colors.B30)};
+
+  &:hover {
+    background: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B30 : colors.B85)};
+    color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.white : colors.B30)};
+  }
+`;
 
 export interface ITenantForm {
   identifier: string;
@@ -101,7 +115,6 @@ export function UpdateTenantSidebar({
   });
 
   const onDeleteTenant = async (identifier) => {
-    console.log(tenant);
     await deleteTenantMutate({
       identifier: identifier,
     });
@@ -125,7 +138,7 @@ export function UpdateTenantSidebar({
         }}
         customHeader={
           <Stack h={80}>
-            <Group position="apart" spacing={130}>
+            <Group position="apart" spacing={120}>
               <Controller
                 control={control}
                 name="name"
@@ -142,15 +155,18 @@ export function UpdateTenantSidebar({
                   );
                 }}
               />
-
               <Tooltip label={'Delete tenant'} position="bottom">
-                <div
+                <ActionIcon
                   onClick={() => {
                     setModalIsOpened(true);
                   }}
+                  data-test-id="tenant-delete-btn"
+                  variant="transparent"
                 >
-                  <Trash />
-                </div>
+                  <TrashButton>
+                    <Trash />
+                  </TrashButton>
+                </ActionIcon>
               </Tooltip>
             </Group>
           </Stack>
