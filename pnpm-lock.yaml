@@ -71,6 +71,7 @@ importers:
       ora: ~5.4.1
       pnpm: 7.33.4
       prettier: ~2.8.0
+      process: ^0.11.10
       rimraf: ^3.0.2
       shelljs: ^0.8.5
       stop-only: ^3.1.2
@@ -146,6 +147,7 @@ importers:
       ora: 5.4.1
       pnpm: 7.33.4
       prettier: 2.8.7
+      process: 0.11.10
       rimraf: 3.0.2
       shelljs: 0.8.5
       stop-only: 3.3.1
@@ -530,7 +532,7 @@ importers:
       '@babel/plugin-transform-react-display-name': 7.18.6_@babel+core@7.22.11
       '@babel/plugin-transform-runtime': 7.21.4_@babel+core@7.22.11
       '@cypress/react': 7.0.3_bfinbys3vemhhivbg2jouyjph4
-      '@cypress/webpack-dev-server': 3.4.1_webpack@5.78.0
+      '@cypress/webpack-dev-server': 3.6.1_webpack@5.78.0
       '@editorjs/editorjs': 2.26.5
       '@editorjs/paragraph': 2.9.0
       '@emotion/babel-plugin': 11.10.6
@@ -9761,16 +9763,17 @@ packages:
       tunnel-agent: 0.6.0
       uuid: 8.3.2
 
-  /@cypress/webpack-dev-server/3.4.1_webpack@5.78.0:
-    resolution: {integrity: sha512-S6IUklDXIkcajtkjtLZz8nzVMuG/kjEKnRVkAiIyJL3EZ+EHcXgrUQegfRb15poFlk4SZ/AMLRMqLSB6KCCxkg==}
+  /@cypress/webpack-dev-server/3.6.1_webpack@5.78.0:
+    resolution: {integrity: sha512-v9tn8SW5ot9jxlei0LqnU1hmR8Cy/A4mOKJOmrcU8KI0qWH6cadwmtiifRMgn8obQCJxiBSAeSWP3l2P4XoSAA==}
     dependencies:
       find-up: 6.3.0
       fs-extra: 9.1.0
       html-webpack-plugin-4: /html-webpack-plugin/4.5.2_webpack@5.78.0
       html-webpack-plugin-5: /html-webpack-plugin/5.5.3_webpack@5.78.0
       local-pkg: 0.4.1
+      semver: 7.5.4
       speed-measure-webpack-plugin: 1.4.2_webpack@5.78.0
-      tslib: 2.5.0
+      tslib: 2.6.2
       webpack-dev-server: 4.11.1_webpack@5.78.0
       webpack-merge: 5.8.0
     transitivePeerDependencies:
@@ -19830,7 +19833,7 @@ packages:
     resolution: {integrity: sha512-ALYone6pm6QmwZoAgeyNksccT9Q4AWZQ6PvfwR37GT6r6FWUPguq6sUmNGSMV2Wr761oQoBxwGGa6DR5o1DC9g==}
     dependencies:
       '@types/connect': 3.4.35
-      '@types/node': 14.18.42
+      '@types/node': 12.20.55
 
   /@types/bonjour/3.5.10:
     resolution: {integrity: sha512-p7ienRMiS41Nu2/igbJxxLDWrSZ0WxM8UQgCeO9KhoVF7cOVFkrKsiDr1EsJIla8vV3oEEjGcz11jc5yimhzZw==}
@@ -20126,7 +20129,7 @@ packages:
   /@types/express-serve-static-core/4.17.33:
     resolution: {integrity: sha512-TPBqmR/HRYI3eC2E5hmiivIzv+bidAfXofM+sbonAGvyDhySGw9/PQZFt2BLOrjUUR++4eJVpx6KnLQK1Fk9tA==}
     dependencies:
-      '@types/node': 14.18.42
+      '@types/node': 12.20.55
       '@types/qs': 6.9.7
       '@types/range-parser': 1.2.4
 
@@ -24606,7 +24609,7 @@ packages:
     dev: false
 
   /concat-map/0.0.1:
-    resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
+    resolution: {integrity: sha1-2Klr13/Wjfd5OnMDajug1UBdR3s=}
 
   /concat-stream/1.6.2:
     resolution: {integrity: sha512-27HBghJxjiZtIk3Ycvn/4kbJk/1uZuJFfuPEns6LaEvpvG1f0hTea8lilrouyo9mVc2GWdcEZ8OLoGmSADlrCw==}
@@ -27334,7 +27337,7 @@ packages:
       minimatch: 3.1.2
       object.values: 1.1.6
       resolve: 1.22.2
-      semver: 6.3.0
+      semver: 6.3.1
       tsconfig-paths: 3.14.2
     transitivePeerDependencies:
       - eslint-import-resolver-typescript
@@ -31627,7 +31630,7 @@ packages:
       '@jest/environment': 27.5.1
       '@jest/test-result': 27.5.1
       '@jest/types': 27.5.1
-      '@types/node': 14.18.42
+      '@types/node': 12.20.55
       chalk: 4.1.2
       co: 4.6.0
       dedent: 0.7.0
@@ -32208,7 +32211,7 @@ packages:
       '@jest/source-map': 27.5.1
       '@jest/test-result': 27.5.1
       '@jest/types': 27.5.1
-      '@types/node': 14.18.42
+      '@types/node': 12.20.55
       chalk: 4.1.2
       co: 4.6.0
       expect: 27.5.1
@@ -32649,7 +32652,7 @@ packages:
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
     dependencies:
       '@jest/types': 27.5.1
-      '@types/node': 14.18.42
+      '@types/node': 12.20.55
       chalk: 4.1.2
       ci-info: 3.8.0
       graceful-fs: 4.2.11
@@ -32758,7 +32761,7 @@ packages:
     resolution: {integrity: sha512-KWYVV1c4i+jbMpaBC+U++4Va0cp8OisU185o73T1vo99hqi7w8tSJfUXYswwqqrjzwxa6KpRK54WhPvwf5w6PQ==}
     engines: {node: '>= 10.13.0'}
     dependencies:
-      '@types/node': 14.18.42
+      '@types/node': 12.20.55
       merge-stream: 2.0.0
       supports-color: 7.2.0
 
@@ -41827,6 +41830,7 @@ packages:
   /semver/6.3.0:
     resolution: {integrity: sha512-b39TBaTSfV6yBrapU89p5fKekE2m/NwnDocOVruQFS1/veMgdzuPcnOM34M6CwxW8jH/lxEa5rBoDeUwu5HHTw==}
     hasBin: true
+    dev: true
 
   /semver/6.3.1:
     resolution: {integrity: sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA==}
