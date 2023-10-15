@@ -88,7 +88,6 @@ export function FlowEditor({
   const [edges, setEdges, onEdgesChange] = useEdgesState<IEdge>([]);
   const reactFlowInstance = useReactFlow();
   const { readonly } = useEnvController();
-  const [displayEdgeTimeout, setDisplayEdgeTimeout] = useState<Map<string, NodeJS.Timeout | null>>(new Map());
 
   useEffect(() => {
     const clientWidth = reactFlowWrapper.current?.clientWidth;
@@ -245,39 +244,16 @@ export function FlowEditor({
     };
   }
 
-  const handleDisplayAddNodeOnEdge = (edgeId: string) => {
+  const handleMouseEnterEdgeOrNode = (edgeId: string) => {
     const edgeElement = document.getElementById(edgeId);
-
     if (!edgeElement) return;
-    const ADD_NODE_DISPLAY_TIMEOUT = 10000;
+    edgeElement.classList.add('fade');
+  };
 
-    if (isEdgeAddNodeButtonVisible(edgeElement)) {
-      const nodeTimeout = displayEdgeTimeout.get(edgeId);
-
-      if (nodeTimeout) {
-        clearTimeout(nodeTimeout);
-        setDisplayEdgeTimeout(displayEdgeTimeout.set(edgeId, null));
-      }
-    } else {
-      toggleAddNodeButtonOpacity(edgeElement);
-    }
-
-    setDisplayEdgeTimeout(
-      displayEdgeTimeout.set(
-        edgeId,
-        setTimeout(() => {
-          toggleAddNodeButtonOpacity(edgeElement);
-        }, ADD_NODE_DISPLAY_TIMEOUT)
-      )
-    );
-
-    function toggleAddNodeButtonOpacity(target) {
-      target.classList.toggle('fade');
-    }
-
-    function isEdgeAddNodeButtonVisible(element: HTMLElement) {
-      return element?.classList.contains('fade');
-    }
+  const handleMouseLeaveEdgeOrNode = (edgeId: string) => {
+    const edgeElement = document.getElementById(edgeId);
+    if (!edgeElement) return;
+    edgeElement.classList.remove('fade');
   };
 
   return (
@@ -293,14 +269,24 @@ export function FlowEditor({
             onEdgesChange={onEdgesChange}
             onDrop={onDrop}
             onDragOver={onDragOver}
-            onNodeMouseMove={(event, node) => {
+            onNodeMouseEnter={(event, node) => {
               if (!readonly) {
-                handleDisplayAddNodeOnEdge(`edge-button-${node.id}`);
+                handleMouseEnterEdgeOrNode(`edge-button-${node.id}`);
               }
             }}
-            onEdgeMouseMove={(event: ReactMouseEvent, edge: Edge) => {
+            onNodeMouseLeave={(event, node) => {
               if (!readonly) {
-                handleDisplayAddNodeOnEdge(`edge-button-${edge.source}`);
+                handleMouseLeaveEdgeOrNode(`edge-button-${node.id}`);
+              }
+            }}
+            onEdgeMouseEnter={(event: ReactMouseEvent, edge: Edge) => {
+              if (!readonly) {
+                handleMouseEnterEdgeOrNode(`edge-button-${edge.source}`);
+              }
+            }}
+            onEdgeMouseLeave={(event: ReactMouseEvent, edge: Edge) => {
+              if (!readonly) {
+                handleMouseLeaveEdgeOrNode(`edge-button-${edge.source}`);
               }
             }}
             /*

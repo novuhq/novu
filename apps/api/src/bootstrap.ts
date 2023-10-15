@@ -140,6 +140,7 @@ const corsOptionsDelegate = function (req, callback) {
   const corsOptions = {
     origin: false as boolean | string | string[],
     preflightContinue: false,
+    maxAge: 86400,
     allowedHeaders: ['Content-Type', 'Authorization', 'sentry-trace'],
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   };
