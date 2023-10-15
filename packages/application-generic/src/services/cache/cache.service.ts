@@ -84,6 +84,22 @@ export class CacheService implements ICacheService {
     return result;
   }
 
+  public async setIfNotExist(
+    key: string,
+    value: string,
+    options?: CachingConfig
+  ): Promise<string | null> {
+    const result = await this.client?.set(
+      key,
+      value,
+      'EX',
+      this.getTtlInSeconds(options),
+      'NX'
+    );
+
+    return result;
+  }
+
   public async setQuery(
     key: string,
     value: string,
