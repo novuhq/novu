@@ -103,7 +103,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
   private buildError(error: any): HttpException {
     const statusCode = error.status || error.response?.statusCode || 500;
     if (statusCode == 500 && !error.response) {
-      //some unhandled exception occured
+      //some unhandled exception occurred
       return new InternalServerErrorException();
     }
 

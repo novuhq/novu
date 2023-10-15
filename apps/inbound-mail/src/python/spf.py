@@ -102,7 +102,7 @@ For news, bugfixes, etc. visit the home page for this implementation at
 # Move old (pre-2.0.7) spf.py commit messages to pyspf_changelog.txt.
 #
 # Revision 1.108.2.86  2013/05/25 22:39:19  kitterma
-# Use ipaddr/ipaddress instead of custome code.
+# Use ipaddr/ipaddress instead of custom code.
 #
 # Revision 1.108.2.85  2013/05/25 00:06:03  kitterma
 # Fix return type detection for bytes/string for python3 compatibility in dns_txt.

@@ -2025,7 +2025,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
     });
 
     describe('in-app avatar', () => {
-      it('should send the message with choosed system avatar', async () => {
+      it('should send the message with chosed system avatar', async () => {
         const firstStepUuid = uuid();
         template = await session.createTemplate({
           steps: [
