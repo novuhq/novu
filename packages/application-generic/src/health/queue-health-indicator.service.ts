@@ -14,7 +14,7 @@ export abstract class QueueHealthIndicator
   implements IHealthIndicator
 {
   constructor(
-    private queueBaseService: QueueBaseService,
+    private queueService: QueueBaseService,
     private indicatorKey: string,
     private serviceName: string,
     private logContext: string
@@ -31,7 +31,7 @@ export abstract class QueueHealthIndicator
   }
 
   async handleHealthCheck(checkActive = false) {
-    const isReady = this.queueBaseService.isReady();
+    const isReady = this.queueService.isReady();
 
     if (!isReady) {
       Logger.verbose(`${this.serviceName} is not ready`, this.logContext);
@@ -48,7 +48,7 @@ export abstract class QueueHealthIndicator
       return this.getStatus(this.indicatorKey, true);
     }
 
-    const isPaused = await this.queueBaseService.isPaused();
+    const isPaused = await this.queueService.isPaused();
     const isActive = isReady && !isPaused;
 
     if (!isActive) {
