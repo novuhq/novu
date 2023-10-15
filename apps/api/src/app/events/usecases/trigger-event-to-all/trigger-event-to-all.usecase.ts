@@ -1,14 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import * as _ from 'lodash';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
-import { TriggerEvent, TriggerEventCommand } from '@novu/application-generic';
 import { TriggerEventStatusEnum } from '@novu/shared';
 
 import { TriggerEventToAllCommand } from './trigger-event-to-all.command';
+import { ParseEventRequest, ParseEventRequestCommand } from '../parse-event-request';
 
 @Injectable()
 export class TriggerEventToAll {
-  constructor(private triggerEvent: TriggerEvent, private subscriberRepository: SubscriberRepository) {}
+  constructor(private subscriberRepository: SubscriberRepository, private parseEventRequest: ParseEventRequest) {}
 
   public async execute(command: TriggerEventToAllCommand) {
     const batchSize = 500;
@@ -42,18 +41,18 @@ export class TriggerEventToAll {
   }
 
   private async trigger(command: TriggerEventToAllCommand, list: SubscriberEntity[]) {
-    await this.triggerEvent.execute(
-      TriggerEventCommand.create({
+    await this.parseEventRequest.execute(
+      ParseEventRequestCommand.create({
         userId: command.userId,
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         identifier: command.identifier,
-        payload: command.payload,
+        payload: command.payload || {},
         to: list.map((item) => ({
           subscriberId: item.subscriberId,
         })),
         transactionId: command.transactionId,
-        overrides: command.overrides,
+        overrides: command.overrides || {},
         actor: command.actor,
         tenant: command.tenant,
       })
