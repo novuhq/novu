@@ -102,7 +102,7 @@
     "@types/supertest": "^2.0.8",
     "chai": "^4.2.0",
     "mocha": "^8.4.0",
-    "nodemon": "^2.0.3",
+    "nodemon": "^3.0.1",
     "sinon": "^9.2.4",
     "ts-loader": "~9.4.0",
     "ts-node": "~10.9.1",
