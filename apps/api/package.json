@@ -112,11 +112,6 @@
   "optionalDependencies": {
     "@novu/ee-auth": "^0.19.0"
   },
-  "nx": {
-    "implicitDependencies": [
-      "@novu/ee-auth"
-    ]
-  },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
       "eslint"
