@@ -510,11 +510,7 @@
     "mediumdark",
     "Docgen",
     "clicksend",
-    "Clicksend",
-    "idempotency", 
-    "IDEMPOTENCY", 
-    "Idempotency",
-    "occured"
+    "Clicksend"
   ],
   "flagWords": [],
   "patterns": [
