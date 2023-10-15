@@ -59,7 +59,7 @@
     "cross-env": "^7.0.3",
     "jest": "^27.0.6",
     "mocha": "^8.1.1",
-    "nodemon": "^2.0.7",
+    "nodemon": "^3.0.1",
     "prettier": "~2.8.0",
     "sinon": "^9.2.4",
     "supertest": "^6.0.0",
