@@ -49,6 +49,7 @@
     "@google-cloud/storage": "^6.2.3",
     "@novu/africas-talking": "^0.20.0-alpha.1",
     "@novu/apns": "^0.20.0-alpha.1",
+    "@novu/bandwidth": "^0.20.0-alpha.1",
     "@novu/burst-sms": "^0.20.0-alpha.1",
     "@novu/clickatell": "^0.20.0-alpha.1",
     "@novu/dal": "^0.20.0-alpha.1",
