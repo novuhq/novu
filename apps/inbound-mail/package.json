@@ -49,7 +49,7 @@
     "@types/smtp-server": "^3.5.7",
     "cross-env": "^7.0.3",
     "mocha": "^8.4.0",
-    "nodemon": "^2.0.7",
+    "nodemon": "^3.0.1",
     "prettier": "~2.8.0",
     "sinon": "^9.2.4",
     "ts-jest": "^27.0.7",
