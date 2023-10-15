@@ -105,7 +105,6 @@ export function UpdateTenantSidebar({
   });
 
   const onDeleteTenant = async (identifier) => {
-    console.log(tenant);
     await deleteTenantMutate({
       identifier: identifier,
     });
