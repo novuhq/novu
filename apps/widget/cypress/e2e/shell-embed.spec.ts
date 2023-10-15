@@ -61,6 +61,89 @@ describe('Shell Embed', function () {
     });
     cy.get('#notification-bell .ntf-counter').should('be.visible');
   });
+
+  it('should display unseen count label in header', function () {
+    cy.task('createNotifications', {
+      identifier: this.session.templates[0].triggers[0].identifier,
+      token: this.session.token,
+      subscriberId: this.session.subscriber.subscriberId,
+      count: 5,
+    });
+
+    cy.get('#notification-bell').click();
+    cy.get('#novu-iframe-element')
+      .its('0.contentDocument.body')
+      .should('not.be.empty')
+      .then((body) => {
+        cy.wrap(body).find('[data-test-id="unseen-count-label"]').should('be.visible').contains('5');
+        cy.wrap(body).find('.nc-notifications-list-item-unread').should('have.length', 5);
+      });
+  });
+
+  it('should change unseen count label in header when message is read', function () {
+    cy.intercept('*/widgets/notifications/unseen*').as('fetchUnseenCount');
+
+    cy.task('createNotifications', {
+      identifier: this.session.templates[0].triggers[0].identifier,
+      token: this.session.token,
+      subscriberId: this.session.subscriber.subscriberId,
+      count: 5,
+    });
+
+    cy.get('#notification-bell').click();
+    cy.get('#novu-iframe-element')
+      .its('0.contentDocument.body')
+      .should('not.be.empty')
+      .then((body) => {
+        cy.wrap(body).find('[data-test-id="notification-list-item"]').first().trigger('mouseover');
+        cy.wrap(body)
+          .find('[data-test-id="notification-list-item"]')
+          .first()
+          .find('[data-test-id="notification-dots-button"]')
+          .click();
+        cy.wrap(body)
+          .find('[data-test-id="notification-list-item"]')
+          .first()
+          .find('[data-test-id="notification-mark-as-read"]')
+          .click();
+        cy.wait('@fetchUnseenCount');
+      });
+
+    cy.get('#novu-iframe-element')
+      .its('0.contentDocument.body')
+      .should('not.be.empty')
+      .then((body) => {
+        cy.wrap(body).find('[data-test-id="unseen-count-label"]').should('be.visible').contains('4');
+        cy.wrap(body).find('.nc-notifications-list-item-unread').should('have.length', 4);
+      });
+  });
+
+  it('should change unseen count label in header when all messages are read', function () {
+    cy.intercept('*/widgets/notifications/unseen*').as('fetchUnseenCount');
+
+    cy.task('createNotifications', {
+      identifier: this.session.templates[0].triggers[0].identifier,
+      token: this.session.token,
+      subscriberId: this.session.subscriber.subscriberId,
+      count: 5,
+    });
+
+    cy.get('#notification-bell').click();
+    cy.get('#novu-iframe-element')
+      .its('0.contentDocument.body')
+      .should('not.be.empty')
+      .then((body) => {
+        cy.wrap(body).find('[data-test-id="notifications-header-mark-all-as-read"]').click();
+        cy.wait('@fetchUnseenCount');
+      });
+
+    cy.get('#novu-iframe-element')
+      .its('0.contentDocument.body')
+      .should('not.be.empty')
+      .then((body) => {
+        cy.wrap(body).find('[data-test-id="unseen-count-label"]').eq(0);
+      });
+  });
 });
 
 describe('Shell Embed - Seen Read', function () {

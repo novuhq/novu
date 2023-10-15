@@ -1,6 +1,6 @@
 {
   "name": "@novu/shared",
-  "version": "0.20.0-alpha.0",
+  "version": "0.20.0-alpha.1",
   "description": "",
   "scripts": {
     "start": "npm run start:dev",
