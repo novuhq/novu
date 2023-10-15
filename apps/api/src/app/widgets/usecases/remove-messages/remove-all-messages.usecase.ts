@@ -107,7 +107,6 @@ export class RemoveAllMessages {
         userId: subscriber._id,
         _environmentId: subscriber._environmentId,
       },
-      undefined,
       subscriber._organizationId
     );
   }
