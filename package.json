@@ -144,7 +144,7 @@
       "apps/*",
       "libs/*",
       "packages/*",
-      "enterprise/packages/*",
+      "enterprise/packages/*/*",
       "providers/*"
     ]
   },
