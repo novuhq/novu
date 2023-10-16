@@ -1,6 +1,6 @@
 # Contributing to Novu
 
-Thank you for showing an interest in contributing to Novu! All kinds of contributions are valuable to us. In this guide, we will cover how you can quickly onboard and make your first contribution.
+Thank you for showing an interest in contributing to [Novu](https://github.com/novuhq/novu)! All kinds of contributions are valuable to us. In this guide, we will cover how you can quickly onboard and make your first contribution.
 
 ## Submitting an issue
 
@@ -20,7 +20,7 @@ You can open a new issue with this [issue form](https://github.com/novuhq/novu/i
 
 ### Requirements
 
-- Node.js version v16.15.1
+- Node.js version v16.15.1 or Above
 - MongoDB
 - Redis. To install Redis on your O.S, please follow the below guides
   - [To install Redis on Windows](https://redis.io/docs/getting-started/installation/install-redis-on-windows/)
@@ -57,7 +57,7 @@ Questions, suggestions, and thoughts are most welcome. Feel free to open a [GitH
 
 ## Ways to contribute
 
-- Try the Novu API and platform and give feedback
+- Try the Novu API and platform and give feedback to us. Those feedbacks are more valuable for us.
 - Add new providers
 - Help with open [issues](https://github.com/novuhq/novu/issues) or [create your own](https://github.com/novuhq/novu/issues/new/choose)
 - Share your thoughts and suggestions with us
