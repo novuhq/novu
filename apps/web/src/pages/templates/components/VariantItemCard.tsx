@@ -128,12 +128,19 @@ export const VariantItemCard = ({
   const isRoot = nodeType === 'variantRoot';
 
   const onEdit = () => {
+    if (isRoot) {
+      navigate(basePath + `/${channel}/${stepUuid}`);
+
+      return;
+    }
     navigate(basePath + `/${channel}/${stepUuid}/variants/${variant.uuid}`);
   };
 
   const onDelete = () => {};
 
-  const onAddConditions = () => {};
+  const onAddConditions = () => {
+    navigate(basePath + `/${channel}/${stepUuid}/variants/${variant.uuid}/conditions`);
+  };
 
   return (
     <VariantItemCardHolder>

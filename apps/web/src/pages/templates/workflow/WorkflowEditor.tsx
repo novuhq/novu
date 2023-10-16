@@ -84,16 +84,19 @@ const WorkflowEditor = () => {
     }
   };
 
-  const onAddVariant = (uuid) => {
+  const onAddVariant = (uuid: string) => {
     const newVariant = addVariant(uuid);
     if (newVariant) {
-      // TODO: show the conditions sidebar first and then when conditions are applied show the variant editor
-      navigate(basePath + `/${newVariant?.template.type}/${uuid}/variants/${newVariant.uuid}`);
+      navigate(basePath + `/${newVariant?.template.type}/${uuid}/variants/${newVariant.uuid}/conditions/create`);
     }
   };
 
   const onAddConditions = (uuid: string) => {
-    // TODO: show the conditions sidebar
+    const channelStep = steps.find((step) => step.uuid === uuid);
+
+    if (channelStep) {
+      navigate(basePath + `/${channelStep.template.type}/${uuid}/variants/conditions`);
+    }
   };
 
   const confirmDelete = () => {
@@ -285,6 +288,7 @@ const WorkflowEditor = () => {
               onGetStepError={onGetStepError}
               onNodeClick={onNodeClick}
               onAddVariant={onAddVariant}
+              onAddConditions={onAddConditions}
             />
           </div>
           <Outlet
