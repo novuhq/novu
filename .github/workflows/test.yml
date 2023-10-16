@@ -61,6 +61,9 @@ jobs:
       - name: Build API
         run: CI='' pnpm build:api
 
+      - name: Build Submodules
+        run: CI='' pnpm build:ee-auth
+
       - uses: mansagroup/nrwl-nx-action@v3
         name: Run E2E EE tests
         env:
