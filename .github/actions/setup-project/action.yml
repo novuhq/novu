@@ -68,7 +68,9 @@ runs:
     - name: 🛟 Install submodules dependencies
       shell: bash
       if: ${{ inputs.submodules == 'true' }}
-      run: pnpm --dir enterprise/packages install
+      run: |
+        cd enterprise/packages
+        pnpm install --frozen-lockfile
 
     - name: Link submodules
       shell: bash
