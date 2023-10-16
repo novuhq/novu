@@ -13,6 +13,7 @@ export interface IConditionsForm {
 
 export interface IConditionsProps {
   control: Control<IConditionsForm>;
+  isReadonly?: boolean;
   index: number;
 }
 export type DataSelect = { value: string; label: string };

@@ -11,10 +11,12 @@ export function PreviousStepsConditionRow({
   control,
   index,
   customData,
+  isReadonly = false,
 }: {
   control: Control<IConditionsForm>;
   index: number;
   customData?: DataSelect[];
+  isReadonly?: boolean;
 }) {
   const defaultValue = customData?.[0].value;
 
@@ -31,6 +33,7 @@ export function PreviousStepsConditionRow({
                 placeholder="Select previous step"
                 data={customData ?? []}
                 {...field}
+                disabled={isReadonly}
                 data-test-id="previous-step-dropdown"
               />
             );
@@ -48,6 +51,7 @@ export function PreviousStepsConditionRow({
                 placeholder="Select type"
                 data={DefaultPreviousStepTypeData}
                 {...field}
+                disabled={isReadonly}
                 data-test-id="previous-step-type-dropdown"
               />
             );

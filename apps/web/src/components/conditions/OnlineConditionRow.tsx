@@ -12,23 +12,25 @@ export function OnlineConditionRow({
   fieldOn,
   control,
   index,
+  isReadonly = false,
 }: {
   fieldOn: string;
   control: Control<IConditionsForm>;
   index: number;
+  isReadonly?: boolean;
 }) {
   return (
     <>
       {fieldOn === FilterPartTypeEnum.IS_ONLINE ? (
-        <OnlineRightNowForm control={control} index={index} />
+        <OnlineRightNowForm control={control} index={index} isReadonly={isReadonly} />
       ) : (
-        <OnlineInTheLastForm control={control} index={index} />
+        <OnlineInTheLastForm control={control} index={index} isReadonly={isReadonly} />
       )}
     </>
   );
 }
 
-function OnlineRightNowForm({ control, index }: IConditionsProps) {
+function OnlineRightNowForm({ control, index, isReadonly }: IConditionsProps) {
   return (
     <>
       <Grid.Col span={4}>
@@ -50,6 +52,7 @@ function OnlineRightNowForm({ control, index }: IConditionsProps) {
                 {...field}
                 onChange={(val) => field.onChange(val === 'true')}
                 value={value}
+                disabled={isReadonly}
                 data-test-id="online-now-value-dropdown"
               />
             );
@@ -60,7 +63,7 @@ function OnlineRightNowForm({ control, index }: IConditionsProps) {
   );
 }
 
-function OnlineInTheLastForm({ control, index }: IConditionsProps) {
+function OnlineInTheLastForm({ control, index, isReadonly }: IConditionsProps) {
   return (
     <>
       <Grid.Col span={4}>
@@ -77,6 +80,7 @@ function OnlineInTheLastForm({ control, index }: IConditionsProps) {
                 error={!!fieldState.error}
                 placeholder="Value"
                 type="number"
+                disabled={isReadonly}
                 data-test-id="online-in-last-value-input"
               />
             );
@@ -89,7 +93,14 @@ function OnlineInTheLastForm({ control, index }: IConditionsProps) {
           name={`conditions.0.children.${index}.timeOperator`}
           defaultValue={TimeOperatorEnum.MINUTES}
           render={({ field }) => {
-            return <Select data={DefaultTimeOperatorData} {...field} data-test-id="online-in-last-operator-dropdown" />;
+            return (
+              <Select
+                data={DefaultTimeOperatorData}
+                {...field}
+                disabled={isReadonly}
+                data-test-id="online-in-last-operator-dropdown"
+              />
+            );
           }}
         />
       </Grid.Col>

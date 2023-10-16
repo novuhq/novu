@@ -14,6 +14,7 @@ import { PreviousStepsConditionRow } from './PreviousStepsConditionRow';
 
 export function Conditions({
   isOpened,
+  isReadonly = false,
   conditions,
   onClose,
   updateConditions,
@@ -23,6 +24,7 @@ export function Conditions({
   defaultFilter,
 }: {
   isOpened: boolean;
+  isReadonly?: boolean;
   onClose: () => void;
   updateConditions: (data: IConditions[]) => void;
   conditions?: IConditions[];
@@ -108,7 +110,7 @@ export function Conditions({
           <Tooltip position="top" error disabled={isValid} label={'Some conditions are missing values'}>
             <div>
               <Button
-                disabled={!isDirty || (conditions?.length === 0 && fields?.length === 0)}
+                disabled={!isDirty || isReadonly || (conditions?.length === 0 && fields?.length === 0)}
                 onClick={onApplyConditions}
                 data-test-id="apply-conditions-btn"
               >
@@ -142,6 +144,7 @@ export function Conditions({
                                 <Select
                                   data={DefaultGroupOperatorData}
                                   {...field}
+                                  disabled={isReadonly}
                                   data-test-id="conditions-form-value-dropdown"
                                 />
                               );
@@ -166,6 +169,7 @@ export function Conditions({
                               data={filterPartTypeList}
                               {...field}
                               onChange={handleOnChildOnChange(index)}
+                              disabled={isReadonly}
                               data-test-id="conditions-form-on"
                             />
                           );
@@ -173,18 +177,28 @@ export function Conditions({
                       />
                     </Grid.Col>
                     <When truthy={filterFieldOn === FilterPartTypeEnum.WEBHOOK}>
-                      <WebHookUrlForm control={control} index={index} />
-                      <EqualityForm webhook control={control} index={index} />
+                      <WebHookUrlForm control={control} index={index} isReadonly={isReadonly} />
+                      <EqualityForm webhook control={control} index={index} isReadonly={isReadonly} />
                     </When>
                     <When truthy={filterFieldOn === FilterPartTypeEnum.PREVIOUS_STEP}>
-                      <PreviousStepsConditionRow customData={customData} control={control} index={index} />
+                      <PreviousStepsConditionRow
+                        customData={customData}
+                        control={control}
+                        index={index}
+                        isReadonly={isReadonly}
+                      />
                     </When>
                     <When
                       truthy={[FilterPartTypeEnum.IS_ONLINE, FilterPartTypeEnum.IS_ONLINE_IN_LAST].includes(
                         filterFieldOn
                       )}
                     >
-                      <OnlineConditionRow fieldOn={filterFieldOn} control={control} index={index} />
+                      <OnlineConditionRow
+                        fieldOn={filterFieldOn}
+                        control={control}
+                        index={index}
+                        isReadonly={isReadonly}
+                      />
                     </When>
                     <When
                       truthy={[
@@ -193,11 +207,15 @@ export function Conditions({
                         FilterPartTypeEnum.TENANT,
                       ].includes(filterFieldOn)}
                     >
-                      <EqualityForm customData={customData} control={control} index={index} />
+                      <EqualityForm customData={customData} control={control} index={index} isReadonly={isReadonly} />
                     </When>
                   </Grid>
                 </Grid.Col>
-                <ConditionRowMenu onDuplicate={() => handleDuplicate(index)} onDelete={() => handleDelete(index)} />
+                <ConditionRowMenu
+                  onDuplicate={() => handleDuplicate(index)}
+                  onDelete={() => handleDelete(index)}
+                  isReadonly={isReadonly}
+                />
               </Grid>
             </div>
           );
@@ -214,6 +232,7 @@ export function Conditions({
             } as IFieldFilterPart);
           }}
           icon={<ConditionPlus />}
+          disabled={isReadonly}
           data-test-id="add-new-condition"
         >
           Add condition
@@ -227,11 +246,13 @@ function EqualityForm({
   control,
   index,
   webhook = false,
+  isReadonly = false,
   customData,
 }: {
   control: Control<IConditionsForm>;
   index: number;
   webhook?: boolean;
+  isReadonly?: boolean;
   customData?: DataSelect[];
 }) {
   const operator = useWatch({
@@ -254,6 +275,7 @@ function EqualityForm({
                 {...field}
                 rightSection={<RightSectionError showError={!!fieldState.error} label="Key is missing" />}
                 error={!!fieldState.error}
+                disabled={isReadonly}
                 data-test-id="conditions-form-key"
               />
             );
@@ -271,6 +293,7 @@ function EqualityForm({
                 placeholder="Operator"
                 data={customData ?? DefaultOperatorData}
                 {...field}
+                disabled={isReadonly}
                 data-test-id="conditions-form-operator"
               />
             );
@@ -293,6 +316,7 @@ function EqualityForm({
                   rightSection={<RightSectionError showError={!!fieldState.error} label={'Value is missing'} />}
                   error={!!fieldState.error}
                   placeholder="Value"
+                  disabled={isReadonly}
                   data-test-id="conditions-form-value"
                 />
               );
@@ -304,7 +328,7 @@ function EqualityForm({
   );
 }
 
-function WebHookUrlForm({ control, index }: IConditionsProps) {
+function WebHookUrlForm({ control, index, isReadonly = false }: IConditionsProps) {
   return (
     <>
       <Grid.Col span={4}>
@@ -320,6 +344,7 @@ function WebHookUrlForm({ control, index }: IConditionsProps) {
                 rightSection={<RightSectionError showError={!!fieldState.error} label="Url is missing" />}
                 error={!!fieldState.error}
                 placeholder="Url"
+                disabled={isReadonly}
                 data-test-id="webhook-filter-url-input"
               />
             );
@@ -342,7 +367,15 @@ export function RightSectionError({ showError, label }: { showError: boolean; la
   );
 }
 
-function ConditionRowMenu({ onDuplicate, onDelete }: { onDuplicate: () => void; onDelete: () => void }) {
+function ConditionRowMenu({
+  isReadonly,
+  onDuplicate,
+  onDelete,
+}: {
+  onDuplicate: () => void;
+  onDelete: () => void;
+  isReadonly?: boolean;
+}) {
   return (
     <Grid.Col span={'content'}>
       <Dropdown
@@ -355,6 +388,7 @@ function ConditionRowMenu({ onDuplicate, onDelete }: { onDuplicate: () => void; 
         }
         middlewares={{ flip: false, shift: false }}
         position="bottom-end"
+        disabled={isReadonly}
       >
         <Dropdown.Item data-test-id="conditions-row-duplicate" onClick={onDuplicate} icon={<Duplicate />}>
           Duplicate

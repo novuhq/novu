@@ -14,11 +14,13 @@ import { useStepInfoPath } from '../hooks/useStepInfoPath';
 import { useTemplateEditorForm } from './TemplateEditorFormProvider';
 import { useBasePath } from '../hooks/useBasePath';
 import { ActionButton } from '../../../design-system/button/ActionButton';
+import { useEnvController } from '../../../hooks';
 
 export const EditorSidebarHeaderActions = () => {
   const { watch, setValue } = useFormContext<IForm>();
   const [areConditionsOpened, setConditionsOpened] = useState(false);
   const { addVariant } = useTemplateEditorForm();
+  const { readonly: isReadonly } = useEnvController();
   const { stepUuid = '' } = useParams<{
     stepUuid: string;
   }>();
@@ -77,6 +79,7 @@ export const EditorSidebarHeaderActions = () => {
       {areConditionsOpened && (
         <Conditions
           isOpened={areConditionsOpened}
+          isReadonly={isReadonly}
           name={name ?? ''}
           onClose={() => setConditionsOpened(false)}
           updateConditions={updateConditions}
