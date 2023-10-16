@@ -7,6 +7,48 @@ on:
   pull_request:
 
 jobs:
+  trigger-e2e-ee:
+    name: RUN E2E-EE TESTS
+    runs-on: ubuntu-latest
+    steps:
+      # checkout with submodules if token is provided
+      - uses: actions/checkout@v3
+        if: ${{ needs.check_submodule_token.outputs.has_token == 'true' &&  contains (inputs.job-name,'-ee')  }}
+        with:
+          submodules: ${{ inputs.ee }}
+          token: ${{ secrets.SUBMODULES_TOKEN }}
+      # else checkout without submodules if the token is not provided
+      - uses: actions/checkout@v3
+        if: ${{ needs.check_submodule_token.outputs.has_token != 'true' }}
+      - uses: ./.github/actions/setup-project
+      - uses: ./.github/actions/setup-redis-cluster
+      - uses: mansagroup/nrwl-nx-action@v3
+        with:
+          targets: lint
+          projects: "@novu/api"
+
+      - uses: ./.github/actions/start-localstack
+
+      - uses: ./.github/actions/run-worker
+        with:
+          launch_darkly_sdk_key: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
+
+        # Runs a single command using the runners shell
+      - name: Build API
+        run: CI='' pnpm build:api
+
+      - uses: mansagroup/nrwl-nx-action@v3
+        name: Run E2E EE tests
+        env:
+          LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
+          GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
+          GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
+          CI_EE_TEST: true
+        with:
+          targets: test:e2e:ee
+          projects: ${{matrix.projectName}}
+
+
   dependency-review:
     name: Dependency review
     runs-on: ubuntu-latest
