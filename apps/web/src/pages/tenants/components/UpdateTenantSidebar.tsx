@@ -19,6 +19,7 @@ const TrashButton = styled(Group)`
   border-radius: 8px;
   width: 20px;
   height: 32px;
+  margin-bottom: 8px;
   color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B60 : colors.B30)};
 
   &:hover {
@@ -196,10 +197,12 @@ export function UpdateTenantSidebar({
       </Sidebar>
       <Modal
         title={
-          <Title size={2} color={colors.warning}>
-            {' '}
-            <WarningIcon /> Delete tenant {tenant.name}?
-          </Title>
+          <Group spacing={8}>
+            <WarningIcon color="#EAA900" width={'23'} height={'20'} />
+            <Title size={2} color="#EAA900">
+              Delete tenant {tenant.name}?
+            </Title>
+          </Group>
         }
         opened={isModalOpened}
         onClose={() => setModalIsOpened(false)}
