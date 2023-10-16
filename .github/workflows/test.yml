@@ -7,15 +7,37 @@ on:
   pull_request:
 
 jobs:
+  check_submodule_token:
+    name: Check if the secret exists or not.
+    runs-on: ubuntu-latest
+    outputs:
+      has_token: ${{ steps.secret-check.outputs.has_token }}
+    steps:
+      - name: Check if secret exists
+        id: secret-check
+        run: |
+          if [[ -n "${{ secrets.SUBMODULES_TOKEN }}" ]]; then
+            echo "::set-output name=has_token::true"
+          else
+            echo "::set-output name=has_token::false"
+          fi
+
   trigger-e2e-ee:
     name: RUN E2E-EE TESTS
     runs-on: ubuntu-latest
+    timeout-minutes: 80
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
+    needs: [check_submodule_token]
     steps:
       # checkout with submodules if token is provided
       - uses: actions/checkout@v3
-        if: ${{ needs.check_submodule_token.outputs.has_token == 'true' &&  contains (inputs.job-name,'-ee')  }}
+        if: ${{ needs.check_submodule_token.outputs.has_token == 'true' }}
         with:
-          submodules: ${{ inputs.ee }}
+          submodules: true
           token: ${{ secrets.SUBMODULES_TOKEN }}
       # else checkout without submodules if the token is not provided
       - uses: actions/checkout@v3
