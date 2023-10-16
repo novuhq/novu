@@ -28,3 +28,8 @@ export interface ITemplateConfiguration {
   critical: boolean;
   tags?: string[];
 }
+
+export enum PreferenceLevelEnum {
+  GLOBAL = 'global',
+  TEMPLATE = 'template',
+}

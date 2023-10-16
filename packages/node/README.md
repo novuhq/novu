@@ -319,6 +319,27 @@ const novu = new Novu('<NOVU_API_KEY>');
 await novu.subscribers.getPreference("subscriberId")
 ```
 
+- #### Get subscriber global preference
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.subscribers.getGlobalPreference("subscriberId" )
+```
+
+
+- #### Get subscriber preference by level
+```ts
+import { Novu, PreferenceLevelEnum } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+// Get global level preference
+await novu.subscribers.getPreferenceByLevel("subscriberId", PreferenceLevelEnum.GLOBAL)
+
+// Get template level preference
+await novu.subscribers.getPreferenceByLevel("subscriberId", PreferenceLevelEnum.TEMPLATE)
+```
 - #### Update subscriber preference for a workflow
 ```ts
 import { Novu } from '@novu/node';
@@ -338,8 +359,27 @@ await novu.subscribers.updatePreference("subscriberId", "workflowId", {
 await novu.subscribers.updatePreference("subscriberId", "workflowId", {
   channel: {
     type: "email"
-    enabled: 
+    enabled: false
   }
+})
+```
+
+- #### Update subscriber preference globally
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+// enable in-app channel and disable email channel
+await novu.subscribers.updateGlobalPreference("subscriberId", {
+  enabled: true,
+  preferences: [{
+    type: "in_app"
+    enabled: true
+  }, {
+    type: "email"
+    enabled: false
+  }]
 })
 ```
 
@@ -770,13 +810,13 @@ const novu = new Novu('<NOVU_API_KEY>');
 // create a new notification group
 await novu.notificationGroups.create("Product Updates")
 
-// update an exisiting notification group
+// update an existing notification group
 await novu.notificationGroups.update("notificationGroupId", { name: "Changelog Updates"})
 
 // list all notification groups
 await novu.notificationGroups.get()
 
-// get one exisiting notification group
+// get one existing notification group
 await novu.notificationGroups.getOne("notificationGroupId")
 
 // delete an existing notification group
@@ -924,7 +964,7 @@ import { Novu } from '@novu/node';
 
 const novu = new Novu('<NOVU_API_KEY>');
 
-// get current environmet
+// get current environment
 await novu.environments.getCurrent()
 
 // create new environment
@@ -943,7 +983,7 @@ await novu.environments.updateOne("environmentId", {
   identifier: "environmentIdentifier" // optional
 })
 
-// get api keys of environmet
+// get api keys of environment
 await novu.environments.getApiKeys()
 
 // regenrate api keys
