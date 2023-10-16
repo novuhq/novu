@@ -68,7 +68,7 @@ jobs:
           CI_EE_TEST: true
         with:
           targets: test:e2e:ee
-          projects: ${{matrix.projectName}}
+          projects: "@novu/api"
 
 
   dependency-review:
