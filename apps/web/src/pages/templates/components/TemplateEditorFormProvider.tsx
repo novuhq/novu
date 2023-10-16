@@ -100,7 +100,7 @@ const makeTemplateCopy = ({
 });
 
 export const makeVariantFromStep = (stepToVariant: IFormStep): IFormStep => {
-  const { id: _, variants, template, ...rest } = stepToVariant;
+  const { id: _, variants, template, _templateId, ...rest } = stepToVariant;
   const variantsCount = variants?.length ?? 0;
   const variantName = `V${variantsCount + 1} ${stepToVariant?.name}`;
 
