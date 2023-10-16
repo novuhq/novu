@@ -24,7 +24,7 @@ Interested in participating in Hacktoberfest? We extend a warm invitation! You a
 - Join our [Discord and engage with our community](https://discord.com/invite/novu), get answers to your challenges, stay updated on events, announcements & prizes.
 
 In addition to this repository, here are the other Novu repositories you can contribute to for Hacktoberfest:
-- [Novu docs](https://github.com/novuhq/docs/issues)
+- [Novu Docs](https://github.com/novuhq/docs/issues)
 - [Novu PHP SDK](https://github.com/novuhq/novu-php/issues)
 - [Novu Ruby SDK](https://github.com/novuhq/novu-ruby/issues)
 - [Novu Python SDK](https://github.com/novuhq/novu-python/issues)
@@ -228,7 +228,7 @@ Before you begin coding and collaborating, please read our [Code of Conduct](htt
 
 ## 💻 Need Help?
 
-We are more than happy to help you. If you are getting any errors or facing problems while working on this project, join our [Discord server](https://discord.novu.co) and ask for help. We are open to discussing anything related to the project.
+We are more than happy to help you. If you are getting any errors or facing problems while working on this project, join our [Discord server](https://discord.novu.co) and ask for help. We are open to discuss anything related to the project.
 
 ## ⚡ Immediate working space with Gitpod
 
