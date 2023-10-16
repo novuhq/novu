@@ -36,33 +36,34 @@ export function LackIntegrationAlert({
 
   const onIntegrationModalClose = () => openIntegrationsModal(false);
 
+  function handleErrorRectangleClick() {
+    if (isPrimaryMissing) {
+      openSelectPrimaryIntegrationModal({
+        environmentId: environment?._id,
+        channelType: channelType,
+        onClose: () => {
+          segment.track(TemplateEditorAnalyticsEnum.CONFIGURE_PRIMARY_PROVIDER_BANNER_CLICK);
+        },
+      });
+    } else {
+      openIntegrationsModal(true);
+      segment.track(TemplateEditorAnalyticsEnum.CONFIGURE_PROVIDER_BANNER_CLICK);
+    }
+  }
+
   return (
     <>
-      <WarningMessage
-        backgroundColor={alertTypeToMessageBackgroundColor(type)}
-        onClick={() => {
-          if (isPrimaryMissing) {
-            openSelectPrimaryIntegrationModal({
-              environmentId: environment?._id,
-              channelType: channelType,
-              onClose: () => {
-                segment.track(TemplateEditorAnalyticsEnum.CONFIGURE_PRIMARY_PROVIDER_BANNER_CLICK);
-              },
-            });
-          } else {
-            openIntegrationsModal(true);
-            segment.track(TemplateEditorAnalyticsEnum.CONFIGURE_PROVIDER_BANNER_CLICK);
-          }
-        }}
-      >
-        <Group spacing={12} noWrap>
+      <WarningMessage onClick={handleErrorRectangleClick} backgroundColor={alertTypeToMessageBackgroundColor(type)}>
+        <Group style={{ width: `100%` }} spacing={12} noWrap>
           <AlertIcon color={alertTypeToDoubleArrowColor(type)} alertType={type} />
-          <Text color={alertTypeToMessageTextColor(type)}>
-            {text
-              ? text
-              : `Please configure or activate a provider instance for the ${stepNames[channelType]} channel to send notifications over this node`}
-          </Text>
-          <CircleArrowRight />
+          <div style={{ flex: 1 }}>
+            <Text color={alertTypeToMessageTextColor(type)}>
+              {text
+                ? text
+                : `Please configure or activate a provider instance for the ${stepNames[channelType]} channel to send notifications over this node`}
+            </Text>
+          </div>
+          <CircleArrowRight color={alertTypeToDoubleArrowColor(type)} />
         </Group>
       </WarningMessage>
       {isMultiProviderConfigurationEnabled ? (
