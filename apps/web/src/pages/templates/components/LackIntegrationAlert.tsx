@@ -35,29 +35,27 @@ export function LackIntegrationAlert({
     useSelectPrimaryIntegrationModal();
 
   const onIntegrationModalClose = () => openIntegrationsModal(false);
+  const handleErrorRectangleClick = () => {
+    if (isPrimaryMissing) {
+      openSelectPrimaryIntegrationModal({
+        environmentId: environment?._id,
+        channelType: channelType,
+        onClose: () => {
+          segment.track(TemplateEditorAnalyticsEnum.CONFIGURE_PRIMARY_PROVIDER_BANNER_CLICK);
+        },
+      });
+    } else {
+      openIntegrationsModal(true);
+      segment.track(TemplateEditorAnalyticsEnum.CONFIGURE_PROVIDER_BANNER_CLICK);
+    }
+  };
 
   return (
     <>
-      <WarningMessage backgroundColor={alertTypeToMessageBackgroundColor(type)}>
+      <WarningMessage onClick={handleErrorRectangleClick} backgroundColor={alertTypeToMessageBackgroundColor(type)}>
         <Group spacing={12} noWrap>
           <div>
-            <MissingIcon
-              color={alertTypeToDoubleArrowColor(type)}
-              onClick={() => {
-                if (isPrimaryMissing) {
-                  openSelectPrimaryIntegrationModal({
-                    environmentId: environment?._id,
-                    channelType: channelType,
-                    onClose: () => {
-                      segment.track(TemplateEditorAnalyticsEnum.CONFIGURE_PRIMARY_PROVIDER_BANNER_CLICK);
-                    },
-                  });
-                } else {
-                  openIntegrationsModal(true);
-                  segment.track(TemplateEditorAnalyticsEnum.CONFIGURE_PROVIDER_BANNER_CLICK);
-                }
-              }}
-            />
+            <MissingIcon color={alertTypeToDoubleArrowColor(type)} />
           </div>
           <Text color={alertTypeToMessageTextColor(type)}>
             {text
@@ -100,6 +98,7 @@ const WarningMessage = styled.div<{ backgroundColor: string }>`
 
   background: ${({ backgroundColor }) => backgroundColor};
   border-radius: 7px;
+  cursor: pointer;
 `;
 
 function alertTypeToDoubleArrowColor(type: alertType) {
