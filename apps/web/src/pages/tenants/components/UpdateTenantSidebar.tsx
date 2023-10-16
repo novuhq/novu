@@ -209,7 +209,7 @@ export function UpdateTenantSidebar({
         data-test-id="delete-tenant-modal"
       >
         <Text mb={30} size="lg" color={colors.B60}>
-          {'Deleting the tenant will stop sending notifications to all the subscribers associated with that tenant.'}
+          {'Deleting the tenant will lead to its context being unavailable during trigger event execution.'}
         </Text>
         <Group position="right">
           <Button variant="outline" onClick={() => setModalIsOpened(false)}>
