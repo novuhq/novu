@@ -6,7 +6,8 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "publish:npm": "npm run build && cd dist/notification-center-angular && npm publish"
   },
   "private": true,
   "dependencies": {
