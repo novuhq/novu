@@ -35,6 +35,20 @@ export function LackIntegrationAlert({
     useSelectPrimaryIntegrationModal();
 
   const onIntegrationModalClose = () => openIntegrationsModal(false);
+  const handleErrorRectangleClick = () => {
+    if (isPrimaryMissing) {
+      openSelectPrimaryIntegrationModal({
+        environmentId: environment?._id,
+        channelType: channelType,
+        onClose: () => {
+          segment.track(TemplateEditorAnalyticsEnum.CONFIGURE_PRIMARY_PROVIDER_BANNER_CLICK);
+        },
+      });
+    } else {
+      openIntegrationsModal(true);
+      segment.track(TemplateEditorAnalyticsEnum.CONFIGURE_PROVIDER_BANNER_CLICK);
+    }
+  };
 
   function handleErrorRectangleClick() {
     if (isPrimaryMissing) {
@@ -105,6 +119,7 @@ const WarningMessage = styled.div<{ backgroundColor: string }>`
 
   background: ${({ backgroundColor }) => backgroundColor};
   border-radius: 7px;
+  cursor: pointer;
 `;
 
 function alertTypeToDoubleArrowColor(type: alertType) {
