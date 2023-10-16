@@ -55,23 +55,7 @@ export function LackIntegrationAlert({
       <WarningMessage onClick={handleErrorRectangleClick} backgroundColor={alertTypeToMessageBackgroundColor(type)}>
         <Group spacing={12} noWrap>
           <div>
-            <MissingIcon
-              color={alertTypeToDoubleArrowColor(type)}
-              onClick={() => {
-                if (isPrimaryMissing) {
-                  openSelectPrimaryIntegrationModal({
-                    environmentId: environment?._id,
-                    channelType: channelType,
-                    onClose: () => {
-                      segment.track(TemplateEditorAnalyticsEnum.CONFIGURE_PRIMARY_PROVIDER_BANNER_CLICK);
-                    },
-                  });
-                } else {
-                  openIntegrationsModal(true);
-                  segment.track(TemplateEditorAnalyticsEnum.CONFIGURE_PROVIDER_BANNER_CLICK);
-                }
-              }}
-            />
+            <MissingIcon color={alertTypeToDoubleArrowColor(type)} />
           </div>
           <Text color={alertTypeToMessageTextColor(type)}>
             {text
