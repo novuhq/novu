@@ -22,7 +22,6 @@ export const EditorSidebarHeaderActions = () => {
   const { readonly: isReadonly } = useEnvController();
   const { stepUuid = '' } = useParams<{
     stepUuid: string;
-    channel: string;
   }>();
   const basePath = useBasePath();
   const navigate = useNavigate();
