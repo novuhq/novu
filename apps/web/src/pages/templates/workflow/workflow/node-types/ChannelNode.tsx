@@ -80,7 +80,9 @@ export default memo((node: INode) => {
         onAddVariant={() => {
           onAddVariant(uuid ?? '');
         }}
-        onAddConditions={() => {
+        onAddConditions={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
           onAddConditions(uuid ?? '');
         }}
         nodeType={variantsCount && variantsCount > 0 ? 'stepRoot' : 'step'}

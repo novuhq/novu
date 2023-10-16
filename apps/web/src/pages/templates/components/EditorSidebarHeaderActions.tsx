@@ -22,11 +22,14 @@ export const EditorSidebarHeaderActions = () => {
   const { readonly: isReadonly } = useEnvController();
   const { stepUuid = '' } = useParams<{
     stepUuid: string;
+    channel: string;
   }>();
   const basePath = useBasePath();
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const [areConditionsOpened, setConditionsOpened] = useState(() => pathname.endsWith('/conditions'));
+  const [areConditionsOpened, setConditionsOpened] = useState(
+    () => pathname.endsWith('/conditions') || pathname.endsWith('/conditions/create')
+  );
 
   const stepFormPath = useStepFormPath();
   const filterPartsList = useFilterPartsList();
@@ -43,7 +46,7 @@ export const EditorSidebarHeaderActions = () => {
   const onAddVariant = () => {
     const variant = addVariant(stepUuid);
     if (variant) {
-      navigate(basePath + `/${variant?.template.type}/${stepUuid}/variants/${variant?.uuid}/conditions`);
+      navigate(basePath + `/${variant?.template.type}/${stepUuid}/variants/${variant?.uuid}/conditions/create`);
     }
   };
 
@@ -54,10 +57,17 @@ export const EditorSidebarHeaderActions = () => {
   const onConditionsClose = () => {
     setConditionsOpened(false);
 
+    const isNewVariantConditionUrl = pathname.endsWith('/conditions/create');
     const isConditionUrl = pathname.endsWith('/conditions');
+
+    if (isNewVariantConditionUrl) {
+      const newPath = pathname.replace('/conditions/create', '');
+      navigate(newPath);
+    }
+
     if (isConditionUrl) {
-      const newPath = pathname.replace('/conditions', '');
-      navigate(newPath, { replace: true });
+      const newPath = basePath.replace('/conditions', '');
+      navigate(newPath);
     }
   };
 
