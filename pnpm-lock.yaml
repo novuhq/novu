@@ -2761,7 +2761,7 @@ importers:
         specifier: ^15.0.0 || ^16.0.0 || ^17.0.0
         version: 16.2.9(@angular/common@16.2.9)(@angular/compiler@16.2.9)(@angular/core@16.2.9)(@angular/platform-browser@16.2.9)
       '@novu/notification-center':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../../notification-center
       '@types/react':
         specifier: ^17.0.1
