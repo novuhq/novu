@@ -42,7 +42,7 @@ export function StepSettings({ index }: { index: number }) {
           onClick={() => {
             setFilterOpen(true);
           }}
-          disabled={readonly}
+          disabled={false}
           data-test-id="add-filter-btn"
           onMouseEnter={() => {
             setFilterHover(true);
@@ -90,6 +90,7 @@ export function StepSettings({ index }: { index: number }) {
         control={control}
         stepIndex={index}
         setValue={setValue}
+        readonly={readonly}
       />
     </>
   );

@@ -16,6 +16,7 @@ export function FilterModal({
   control,
   stepIndex,
   setValue,
+  readonly,
 }: {
   isOpen: boolean;
   cancel: () => void;
@@ -23,6 +24,7 @@ export function FilterModal({
   control: any;
   stepIndex: number;
   setValue: any;
+  readonly: boolean;
 }) {
   const theme = useMantineTheme();
 
@@ -120,6 +122,7 @@ export function FilterModal({
                   ]}
                   {...field}
                   data-test-id="group-rules-dropdown"
+                  disabled={readonly}
                 />
               );
             }}
@@ -138,6 +141,7 @@ export function FilterModal({
               });
             }}
             data-test-id="create-rule-btn"
+            disabled={readonly}
           >
             Create rule
           </FilterButton>
@@ -168,6 +172,7 @@ export function FilterModal({
                         {...field}
                         onChange={handleOnChildOnChange(index)}
                         data-test-id="filter-on-dropdown"
+                        disabled={readonly}
                       />
                     );
                   }}
@@ -175,7 +180,7 @@ export function FilterModal({
               </Grid.Col>
 
               <When truthy={filterFieldOn === FilterPartTypeEnum.WEBHOOK}>
-                <WebHookUrlForm control={control} stepIndex={stepIndex} index={index} />
+                <WebHookUrlForm control={control} stepIndex={stepIndex} index={index} readonly={readonly} />
                 <EqualityForm
                   fieldOn={filterFieldOn}
                   control={control}
@@ -183,6 +188,7 @@ export function FilterModal({
                   index={index}
                   remove={remove}
                   setValue={setValue}
+                  readonly={readonly}
                 />
               </When>
 
@@ -198,6 +204,7 @@ export function FilterModal({
                   stepIndex={stepIndex}
                   index={index}
                   remove={remove}
+                  readonly={readonly}
                 />
               </When>
               <When
@@ -210,10 +217,17 @@ export function FilterModal({
                   index={index}
                   remove={remove}
                   setValue={setValue}
+                  readonly={readonly}
                 />
               </When>
               <When truthy={filterFieldOn === FilterPartTypeEnum.PREVIOUS_STEP}>
-                <PreviousStepFiltersForm control={control} stepIndex={stepIndex} index={index} remove={remove} />
+                <PreviousStepFiltersForm
+                  control={control}
+                  stepIndex={stepIndex}
+                  index={index}
+                  remove={remove}
+                  readonly={readonly}
+                />
               </When>
             </Grid>
             <When truthy={fields.length > index + 1}>
@@ -227,7 +241,7 @@ export function FilterModal({
           <Button variant="outline" size="md" mt={30} onClick={() => cancel()}>
             Cancel
           </Button>
-          <Button mt={30} size="md" onClick={() => confirm()} data-test-id="filter-confirm-btn">
+          <Button mt={30} size="md" onClick={() => confirm()} data-test-id="filter-confirm-btn" disabled={readonly}>
             Add
           </Button>
         </Group>
@@ -236,7 +250,17 @@ export function FilterModal({
   );
 }
 
-function WebHookUrlForm({ control, stepIndex, index }: { control; stepIndex: number; index: number }) {
+function WebHookUrlForm({
+  control,
+  stepIndex,
+  index,
+  readonly,
+}: {
+  control: any;
+  stepIndex: number;
+  index: number;
+  readonly: boolean;
+}) {
   return (
     <>
       <Grid.Col span={6}>
@@ -251,6 +275,7 @@ function WebHookUrlForm({ control, stepIndex, index }: { control; stepIndex: num
                 error={fieldState.error?.message}
                 placeholder="Url"
                 data-test-id="webhook-filter-url-input"
+                disabled={readonly}
               />
             );
           }}
@@ -267,13 +292,15 @@ function EqualityForm({
   index,
   remove,
   setValue,
+  readonly,
 }: {
   fieldOn: string;
-  control;
+  control: any;
   stepIndex: number;
   index: number;
   remove: (index?: number | number[]) => void;
   setValue;
+  readonly: boolean;
 }) {
   const spaSize = fieldOn === 'webhook' ? 3 : 2;
   const operator = useWatch({
@@ -290,7 +317,13 @@ function EqualityForm({
           defaultValue=""
           render={({ field, fieldState }) => {
             return (
-              <Input {...field} error={fieldState.error?.message} placeholder="Key" data-test-id="filter-key-input" />
+              <Input
+                {...field}
+                error={fieldState.error?.message}
+                placeholder="Key"
+                data-test-id="filter-key-input"
+                disabled={readonly}
+              />
             );
           }}
         />
@@ -317,6 +350,7 @@ function EqualityForm({
                 ]}
                 {...field}
                 data-test-id="filter-operator-dropdown"
+                disabled={readonly}
                 onChange={(value) => {
                   field.onChange(value);
                   if (value === 'IS_DEFINED') {
@@ -342,6 +376,7 @@ function EqualityForm({
                   error={fieldState.error?.message}
                   placeholder="Value"
                   data-test-id="filter-value-input"
+                  disabled={readonly}
                 />
               );
             }}
@@ -357,6 +392,7 @@ function EqualityForm({
             remove(index);
           }}
           data-test-id="filter-remove-btn"
+          disabled={readonly}
         >
           <Trash />
         </DeleteStepButton>
