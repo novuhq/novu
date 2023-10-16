@@ -11,7 +11,6 @@ declare namespace NodeJS {
     NODE_ENV: 'test' | 'production' | 'dev' | 'ci' | 'local';
     PORT: string;
     DISABLE_USER_REGISTRATION: 'true' | 'false';
-    API_IDEMPOTENCY_ENABLED: 'true' | 'false';
     FRONT_BASE_URL: string;
     SENTRY_DSN: string;
   }
