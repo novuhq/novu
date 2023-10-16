@@ -266,22 +266,22 @@ importers:
         specifier: ^10.0.1
         version: 10.0.1(@nestjs/axios@2.0.0)(@nestjs/common@10.2.2)(@nestjs/core@10.2.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@novu/application-generic':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/application-generic
       '@novu/dal':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../libs/dal
       '@novu/node':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/node
       '@novu/shared':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../libs/shared
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       '@novu/testing':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../libs/testing
       '@sendgrid/mail':
         specifier: ^7.6.0
@@ -474,10 +474,10 @@ importers:
   apps/inbound-mail:
     dependencies:
       '@novu/application-generic':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/application-generic
       '@novu/shared':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../libs/shared
       '@sentry/node':
         specifier: ^7.12.1
@@ -529,7 +529,7 @@ importers:
         version: 3.10.0
     devDependencies:
       '@novu/testing':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../libs/testing
       '@types/chai':
         specifier: ^4.2.11
@@ -661,10 +661,10 @@ importers:
         specifier: ^5.7.1
         version: 5.10.5(@mantine/core@5.10.5)(@mantine/hooks@5.10.5)(react-dom@17.0.2)(react@17.0.2)
       '@novu/notification-center':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/notification-center
       '@novu/shared':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../libs/shared
       '@segment/analytics-next':
         specifier: ^1.48.0
@@ -884,10 +884,10 @@ importers:
         specifier: ^7.20.13
         version: 7.21.0
       '@novu/dal':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../libs/dal
       '@novu/testing':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../libs/testing
       '@storybook/addon-actions':
         specifier: ^7.4.2
@@ -983,19 +983,19 @@ importers:
         specifier: ^10.0.1
         version: 10.0.1(@nestjs/axios@2.0.0)(@nestjs/common@10.2.2)(@nestjs/core@10.2.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@novu/application-generic':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/application-generic
       '@novu/dal':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../libs/dal
       '@novu/shared':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../libs/shared
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       '@novu/testing':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../libs/testing
       '@sentry/node':
         specifier: ^7.66.0
@@ -1125,10 +1125,10 @@ importers:
         specifier: 4.2.12
         version: 4.2.12(react@17.0.2)
       '@novu/notification-center':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/notification-center
       '@novu/shared':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../libs/shared
       antd:
         specifier: ^4.10.0
@@ -1219,10 +1219,10 @@ importers:
         specifier: ^6.0.0
         version: 6.3.1
       '@novu/dal':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../libs/dal
       '@novu/testing':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../libs/testing
       '@types/jest':
         specifier: ^29.5.0
@@ -1303,19 +1303,19 @@ importers:
         specifier: ^10.0.1
         version: 10.0.1(@nestjs/axios@2.0.0)(@nestjs/common@10.2.2)(@nestjs/core@10.2.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@novu/application-generic':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/application-generic
       '@novu/dal':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../libs/dal
       '@novu/shared':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../libs/shared
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       '@novu/testing':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../libs/testing
       '@sentry/node':
         specifier: ^7.40.0
@@ -1481,16 +1481,16 @@ importers:
         specifier: ^10.2.2
         version: 10.2.2(@nestjs/common@10.2.2)(@nestjs/core@10.2.2)(@nestjs/platform-socket.io@10.2.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@novu/application-generic':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/application-generic
       '@novu/dal':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../libs/dal
       '@novu/shared':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../libs/shared
       '@novu/testing':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../libs/testing
       '@sentry/node':
         specifier: ^7.30.0
@@ -1605,116 +1605,6 @@ importers:
         specifier: 4.9.5
         version: 4.9.5
 
-  enterprise/packages/auth:
-    dependencies:
-      '@nestjs/common':
-        specifier: '>=9.3.x'
-        version: 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
-      '@nestjs/jwt':
-        specifier: '>=9'
-        version: 10.1.0(@nestjs/common@10.2.2)
-      '@nestjs/passport':
-        specifier: 9.0.3
-        version: 9.0.3(@nestjs/common@10.2.2)(passport@0.6.0)
-      '@novu/application-generic':
-        specifier: ^0.20.0-alpha.1
-        version: link:../../../packages/application-generic
-      '@novu/dal':
-        specifier: ^0.20.0-alpha.1
-        version: link:../../../libs/dal
-      '@novu/shared':
-        specifier: ^0.20.0-alpha.1
-        version: link:../../../libs/shared
-      passport:
-        specifier: 0.6.0
-        version: 0.6.0
-      passport-google-oauth:
-        specifier: ^2.0.0
-        version: 2.0.0
-      passport-oauth2:
-        specifier: ^1.6.1
-        version: 1.7.0
-    devDependencies:
-      '@types/chai':
-        specifier: ^4.2.11
-        version: 4.3.4
-      '@types/mocha':
-        specifier: ^8.0.1
-        version: 8.2.3
-      '@types/node':
-        specifier: ^14.6.0
-        version: 14.18.42
-      '@types/sinon':
-        specifier: ^9.0.0
-        version: 9.0.11
-      chai:
-        specifier: ^4.2.0
-        version: 4.3.7
-      cross-env:
-        specifier: ^7.0.3
-        version: 7.0.3
-      mocha:
-        specifier: ^8.1.1
-        version: 8.4.0
-      nodemon:
-        specifier: ^2.0.3
-        version: 2.0.22
-      sinon:
-        specifier: ^9.2.4
-        version: 9.2.4
-      ts-node:
-        specifier: ~10.9.1
-        version: 10.9.1(@swc/core@1.3.49)(@types/node@14.18.42)(typescript@4.9.5)
-      typescript:
-        specifier: 4.9.5
-        version: 4.9.5
-
-  enterprise/packages/digest-schedule:
-    dependencies:
-      '@novu/shared':
-        specifier: ^0.19.0
-        version: 0.19.0
-      date-fns:
-        specifier: ^2.29.2
-        version: 2.29.3
-      rrule:
-        specifier: ^2.7.2
-        version: 2.7.2
-    devDependencies:
-      '@types/chai':
-        specifier: ^4.2.11
-        version: 4.3.4
-      '@types/mocha':
-        specifier: ^8.0.1
-        version: 8.2.3
-      '@types/node':
-        specifier: ^14.6.0
-        version: 14.18.42
-      '@types/sinon':
-        specifier: ^9.0.0
-        version: 9.0.11
-      chai:
-        specifier: ^4.2.0
-        version: 4.3.7
-      cross-env:
-        specifier: ^7.0.3
-        version: 7.0.3
-      mocha:
-        specifier: ^8.1.1
-        version: 8.4.0
-      nodemon:
-        specifier: ^2.0.3
-        version: 2.0.22
-      sinon:
-        specifier: ^9.2.4
-        version: 9.2.4
-      ts-node:
-        specifier: ~10.9.1
-        version: 10.9.1(@swc/core@1.3.49)(@types/node@14.18.42)(typescript@4.9.5)
-      typescript:
-        specifier: 4.9.5
-        version: 4.9.5
-
   libs/dal:
     dependencies:
       '@aws-sdk/client-s3':
@@ -1727,7 +1617,7 @@ importers:
         specifier: ^6.0.0
         version: 6.3.1
       '@novu/shared':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../shared
       '@sendgrid/mail':
         specifier: ^7.4.2
@@ -1827,7 +1717,7 @@ importers:
   libs/embed:
     dependencies:
       '@novu/notification-center':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/notification-center
       '@types/iframe-resizer':
         specifier: ^3.5.8
@@ -1958,10 +1848,10 @@ importers:
         specifier: ^6.0.0
         version: 6.3.1
       '@novu/dal':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../dal
       '@novu/shared':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../shared
       JSONStream:
         specifier: ^1.3.5
@@ -2082,148 +1972,148 @@ importers:
         specifier: '>=10'
         version: 10.2.2(@nestjs/common@10.2.2)(@nestjs/core@10.2.2)(@nestjs/platform-express@10.2.2)
       '@novu/africas-talking':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/africas-talking
       '@novu/apns':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/apns
       '@novu/burst-sms':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/burst-sms
       '@novu/clickatell':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/clickatell
       '@novu/clicksend':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/clicksend
       '@novu/dal':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../libs/dal
       '@novu/discord':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/discord
       '@novu/email-webhook':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/email-webhook
       '@novu/emailjs':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/emailjs
       '@novu/expo':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/expo
       '@novu/fcm':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/fcm
       '@novu/firetext':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/firetext
       '@novu/forty-six-elks':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/forty-six-elks
       '@novu/gupshup':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/gupshup
       '@novu/infobip':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/infobip
       '@novu/kannel':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/kannel
       '@novu/mailersend':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/mailersend
       '@novu/mailgun':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/mailgun
       '@novu/mailjet':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/mailjet
       '@novu/mailtrap':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/mailtrap
       '@novu/mandrill':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/mandrill
       '@novu/maqsam':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/maqsam
       '@novu/mattermost':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/mattermost
       '@novu/ms-teams':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/ms-teams
       '@novu/netcore':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/netcore
       '@novu/nodemailer':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/nodemailer
       '@novu/one-signal':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/one-signal
       '@novu/outlook365':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/outlook365
       '@novu/plivo':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/plivo
       '@novu/plunk':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/plunk
       '@novu/postmark':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/postmark
       '@novu/push-webhook':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/push-webhook
       '@novu/resend':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/resend
       '@novu/sendchamp':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/sendchamp
       '@novu/sendgrid':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/sendgrid
       '@novu/sendinblue':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/sendinblue
       '@novu/ses':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/ses
       '@novu/shared':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../libs/shared
       '@novu/slack':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/slack
       '@novu/sms-central':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/sms-central
       '@novu/sms77':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/sms77
       '@novu/sns':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/sns
       '@novu/sparkpost':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/sparkpost
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../stateless
       '@novu/telnyx':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/telnyx
       '@novu/termii':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/termii
       '@novu/testing':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../libs/testing
       '@novu/twilio':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../providers/twilio
       '@sentry/node':
         specifier: ^7.12.1
@@ -2339,7 +2229,7 @@ importers:
   packages/cli:
     dependencies:
       '@novu/shared':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../libs/shared
       analytics-node:
         specifier: ^6.2.0
@@ -2409,7 +2299,7 @@ importers:
   packages/client:
     dependencies:
       '@novu/shared':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../libs/shared
     devDependencies:
       '@types/jest':
@@ -2443,10 +2333,10 @@ importers:
   packages/headless:
     dependencies:
       '@novu/client':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../client
       '@novu/shared':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../libs/shared
       '@tanstack/query-core':
         specifier: ^4.15.1
@@ -2489,7 +2379,7 @@ importers:
         specifier: ^8.2.0
         version: 8.4.7(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../stateless
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
@@ -2541,7 +2431,7 @@ importers:
   packages/node:
     dependencies:
       '@novu/shared':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../libs/shared
       handlebars:
         specifier: ^4.7.7
@@ -2617,10 +2507,10 @@ importers:
         specifier: ^5.7.1
         version: 5.10.5(react@17.0.2)
       '@novu/client':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../client
       '@novu/shared':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../libs/shared
       '@tanstack/react-query':
         specifier: ^4.20.4
@@ -2786,7 +2676,7 @@ importers:
         specifier: ~15.2.0
         version: 15.2.6(@angular/common@15.2.6)(@angular/compiler@15.2.6)(@angular/core@15.2.6)(@angular/platform-browser@15.2.6)
       '@novu/notification-center':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../notification-center
       react:
         specifier: ^17.0.1
@@ -2847,7 +2737,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3(vue@3.2.47)
       '@novu/notification-center':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../notification-center
       react:
         specifier: ^17.0.1
@@ -2960,7 +2850,7 @@ importers:
   providers/africas-talking:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       africastalking:
         specifier: ^0.6.2
@@ -3003,7 +2893,7 @@ importers:
   providers/apns:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       '@parse/node-apn':
         specifier: ^5.2.3
@@ -3055,7 +2945,7 @@ importers:
   providers/burst-sms:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.3.3
@@ -3116,7 +3006,7 @@ importers:
   providers/clickatell:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.3.3
@@ -3211,7 +3101,7 @@ importers:
   providers/discord:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.3.3
@@ -3309,7 +3199,7 @@ importers:
   providers/emailjs:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       emailjs:
         specifier: ^3.6.0
@@ -3364,7 +3254,7 @@ importers:
   providers/expo:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       expo-server-sdk:
         specifier: ^3.6.0
@@ -3419,7 +3309,7 @@ importers:
   providers/fcm:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       firebase-admin:
         specifier: ^11.10.1
@@ -3483,7 +3373,7 @@ importers:
   providers/firetext:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       node-fetch:
         specifier: ^3.2.10
@@ -3547,7 +3437,7 @@ importers:
   providers/forty-six-elks:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.3.4
@@ -3590,7 +3480,7 @@ importers:
   providers/gupshup:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       node-fetch:
         specifier: ^3.2.10
@@ -3651,7 +3541,7 @@ importers:
         specifier: ^0.2.0
         version: 0.2.0
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
@@ -3703,7 +3593,7 @@ importers:
   providers/kannel:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       axios:
         specifier: ^0.27.2
@@ -3758,7 +3648,7 @@ importers:
   providers/mailersend:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       mailersend:
         specifier: ^1.3.1
@@ -3813,7 +3703,7 @@ importers:
   providers/mailgun:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       form-data:
         specifier: ^4.0.0
@@ -3874,7 +3764,7 @@ importers:
   providers/mailjet:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       node-mailjet:
         specifier: ^6.0.4
@@ -3932,7 +3822,7 @@ importers:
   providers/mailtrap:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       mailtrap:
         specifier: ^3.1.1
@@ -3978,7 +3868,7 @@ importers:
         specifier: ^1.0.46
         version: 1.0.50
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
@@ -4036,7 +3926,7 @@ importers:
   providers/maqsam:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.3.4
@@ -4085,7 +3975,7 @@ importers:
   providers/mattermost:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.3.3
@@ -4186,7 +4076,7 @@ importers:
   providers/netcore:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       pepipost:
         specifier: ^5.0.0
@@ -4241,7 +4131,7 @@ importers:
   providers/nexmo:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       '@vonage/server-sdk':
         specifier: ^2.10.10
@@ -4296,7 +4186,7 @@ importers:
   providers/nodemailer:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       nodemailer:
         specifier: ^6.6.5
@@ -4354,7 +4244,7 @@ importers:
   providers/one-signal:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       onesignal-node:
         specifier: ^3.4.0
@@ -4397,7 +4287,7 @@ importers:
   providers/outlook365:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       nodemailer:
         specifier: ^6.6.5
@@ -4455,7 +4345,7 @@ importers:
   providers/plivo:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       plivo:
         specifier: ^4.22.4
@@ -4510,7 +4400,7 @@ importers:
   providers/plunk:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       '@plunk/node':
         specifier: 2.0.0
@@ -4553,7 +4443,7 @@ importers:
   providers/postmark:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.3.6
@@ -4611,7 +4501,7 @@ importers:
   providers/push-webhook:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.3.5
@@ -4654,7 +4544,7 @@ importers:
   providers/resend:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       resend:
         specifier: ^0.11.0
@@ -4709,7 +4599,7 @@ importers:
   providers/sendchamp:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.4.0
@@ -4752,7 +4642,7 @@ importers:
   providers/sendgrid:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       '@sendgrid/mail':
         specifier: ^7.4.6
@@ -4807,7 +4697,7 @@ importers:
   providers/sendinblue:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       '@sendinblue/client':
         specifier: ^3.0.1
@@ -4865,7 +4755,7 @@ importers:
         specifier: 3.382.0
         version: 3.382.0
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       nodemailer:
         specifier: ^6.6.5
@@ -4920,7 +4810,7 @@ importers:
   providers/slack:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.3.3
@@ -5018,7 +4908,7 @@ importers:
   providers/sms77:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       node-fetch:
         specifier: ^2.6.7
@@ -5082,7 +4972,7 @@ importers:
         specifier: ^3.382.0
         version: 3.388.0
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
@@ -5134,7 +5024,7 @@ importers:
   providers/sparkpost:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       sparkpost:
         specifier: ^2.1.4
@@ -5192,7 +5082,7 @@ importers:
   providers/telnyx:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       telnyx:
         specifier: ^1.23.0
@@ -5247,7 +5137,7 @@ importers:
   providers/termii:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       node-fetch:
         specifier: ^3.2.10
@@ -5305,7 +5195,7 @@ importers:
   providers/twilio:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/stateless
       twilio:
         specifier: ^4.14.1
@@ -15919,16 +15809,6 @@ packages:
       passport: 0.6.0
     dev: false
 
-  /@nestjs/passport@9.0.3(@nestjs/common@10.2.2)(passport@0.6.0):
-    resolution: {integrity: sha512-HplSJaimEAz1IOZEu+pdJHHJhQyBOPAYWXYHfAPQvRqWtw4FJF1VXl1Qtk9dcXQX1eKytDtH+qBzNQc19GWNEg==}
-    peerDependencies:
-      '@nestjs/common': ^8.0.0 || ^9.0.0
-      passport: ^0.4.0 || ^0.5.0 || ^0.6.0
-    dependencies:
-      '@nestjs/common': 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
-      passport: 0.6.0
-    dev: false
-
   /@nestjs/platform-express@10.2.2(@nestjs/common@10.2.2)(@nestjs/core@10.2.2):
     resolution: {integrity: sha512-g5AeXgPQrVm62JOl9FXk0w3Tq1tD4f6ouGikLYs/Aahy0q/Z2HNP9NjXZYpqcjHrpafPYnc3bfBuUwedKW1oHg==}
     peerDependencies:
@@ -16201,16 +16081,6 @@ packages:
       '@floating-ui/dom': 0.1.10
       vue: 3.2.47
       vue-resize: 2.0.0-alpha.1(vue@3.2.47)
-    dev: false
-
-  /@novu/shared@0.19.0:
-    resolution: {integrity: sha512-qvauixX5OOMcIduxnsF+Kh8CIB7r14kjB9Dt4SLgkWIGGrxVFmiSpJjaOEjUZ4RAHsO7CZEdmAPQDJj2wwNDOQ==}
-    dependencies:
-      axios: 1.4.0
-      class-transformer: 0.5.1
-      class-validator: 0.14.0
-    transitivePeerDependencies:
-      - debug
     dev: false
 
   /@novu/stateless@0.12.0:
@@ -17434,8 +17304,47 @@ packages:
       react-refresh: 0.11.0
       schema-utils: 3.3.0
       source-map: 0.7.4
-      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+      webpack: 5.78.0(@swc/core@1.3.49)
       webpack-dev-server: 4.11.1(webpack@5.78.0)
+
+  /@pmmmwh/react-refresh-webpack-plugin@0.5.10(react-refresh@0.11.0)(webpack@5.78.0):
+    resolution: {integrity: sha512-j0Ya0hCFZPd4x40qLzbhGsh9TMtdb+CJQiso+WxLOPNasohq9cc5SNUcwsZaRH6++Xh91Xkm/xHCkuIiIu0LUA==}
+    engines: {node: '>= 10.13'}
+    peerDependencies:
+      '@types/webpack': 4.x || 5.x
+      react-refresh: '>=0.10.0 <1.0.0'
+      sockjs-client: ^1.4.0
+      type-fest: '>=0.17.0 <4.0.0'
+      webpack: '>=4.43.0 <6.0.0'
+      webpack-dev-server: 3.x || 4.x
+      webpack-hot-middleware: 2.x
+      webpack-plugin-serve: 0.x || 1.x
+    peerDependenciesMeta:
+      '@types/webpack':
+        optional: true
+      sockjs-client:
+        optional: true
+      type-fest:
+        optional: true
+      webpack-dev-server:
+        optional: true
+      webpack-hot-middleware:
+        optional: true
+      webpack-plugin-serve:
+        optional: true
+    dependencies:
+      ansi-html-community: 0.0.8
+      common-path-prefix: 3.0.0
+      core-js-pure: 3.30.0
+      error-stack-parser: 2.1.4
+      find-up: 5.0.0
+      html-entities: 2.3.3
+      loader-utils: 2.0.4
+      react-refresh: 0.11.0
+      schema-utils: 3.3.0
+      source-map: 0.7.4
+      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+    dev: true
 
   /@pmmmwh/react-refresh-webpack-plugin@0.5.10(react-refresh@0.14.0)(webpack-dev-server@4.11.1)(webpack@5.78.0):
     resolution: {integrity: sha512-j0Ya0hCFZPd4x40qLzbhGsh9TMtdb+CJQiso+WxLOPNasohq9cc5SNUcwsZaRH6++Xh91Xkm/xHCkuIiIu0LUA==}
@@ -21623,7 +21532,7 @@ packages:
       '@babel/core': 7.23.2
       '@babel/preset-flow': 7.22.15(@babel/core@7.23.2)
       '@babel/preset-react': 7.22.15(@babel/core@7.23.2)
-      '@pmmmwh/react-refresh-webpack-plugin': 0.5.10(react-refresh@0.11.0)(webpack-dev-server@4.11.1)(webpack@5.78.0)
+      '@pmmmwh/react-refresh-webpack-plugin': 0.5.10(react-refresh@0.11.0)(webpack@5.78.0)
       '@storybook/core-webpack': 7.4.2
       '@storybook/docs-tools': 7.4.2
       '@storybook/node-logger': 7.4.2
@@ -25422,7 +25331,7 @@ packages:
       loader-utils: 2.0.4
       make-dir: 3.1.0
       schema-utils: 2.7.1
-      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+      webpack: 5.78.0(@swc/core@1.3.49)
 
   /babel-loader@8.3.0(@babel/core@7.23.2)(webpack@5.82.1):
     resolution: {integrity: sha512-H8SvsMF+m9t15HNLMipppzkC+Y2Yq+v3SonZyU70RBL/h1gxPkH08Ot8pEE9Z4Kd+czyWJClmFS8qzIP9OZ04Q==}
@@ -28154,7 +28063,7 @@ packages:
       postcss-modules-values: 4.0.0(postcss@8.4.29)
       postcss-value-parser: 4.2.0
       semver: 7.5.4
-      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+      webpack: 5.78.0(@swc/core@1.3.49)
 
   /css-minimizer-webpack-plugin@3.4.1(esbuild@0.18.20)(webpack@5.78.0):
     resolution: {integrity: sha512-1u6D71zeIfgngN2XNRJefc/hY7Ybsxd74Jm4qngIXyUEk7fss3VUzuHxLAq/R8NAba4QU9OUSaMZlbpRc7bM4Q==}
@@ -28210,7 +28119,6 @@ packages:
       serialize-javascript: 6.0.1
       source-map: 0.6.1
       webpack: 5.78.0(@swc/core@1.3.49)
-    dev: false
 
   /css-prefers-color-scheme@6.0.3(postcss@8.4.21):
     resolution: {integrity: sha512-4BqMbZksRkJQx2zAjrokiGMd07RqOa2IxIrrN10lyBe9xhn9DEvjUK79J6jkeiv9D9hQFXKb6g1jwU62jziJZA==}
@@ -30339,7 +30247,7 @@ packages:
       micromatch: 4.0.5
       normalize-path: 3.0.0
       schema-utils: 4.0.0
-      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+      webpack: 5.78.0(@swc/core@1.3.49)
 
   /eslint@7.32.0:
     resolution: {integrity: sha512-VHZ8gX+EDfz+97jGcgyGCyRia/dPOd6Xh9yPv8Bl1+SoaIwD+a/vlrOmGRUyOYu7MwUhc7CxqeaDZU13S4+EpA==}
@@ -31106,7 +31014,7 @@ packages:
     dependencies:
       loader-utils: 2.0.4
       schema-utils: 3.3.0
-      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+      webpack: 5.78.0(@swc/core@1.3.49)
 
   /file-selector@0.6.0:
     resolution: {integrity: sha512-QlZ5yJC0VxHxQQsQhXvBaC7VRJ2uaxTf+Tfpu4Z/OcVQJVpZO+DGU0rkoVW5ce2SccxugvpBJoMvUs59iILYdw==}
@@ -31444,7 +31352,7 @@ packages:
       semver: 7.5.4
       tapable: 1.1.3
       typescript: 4.9.5
-      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+      webpack: 5.78.0(@swc/core@1.3.49)
 
   /fork-ts-checker-webpack-plugin@8.0.0(typescript@4.9.5)(webpack@5.78.0):
     resolution: {integrity: sha512-mX3qW3idpueT2klaQXBzrIM/pHw+T0B/V9KHEvNrqijTq9NFnMZU6oreVxDYcf33P8a5cW+67PjodNHthGnNVg==}
@@ -32931,7 +32839,7 @@ packages:
       lodash: 4.17.21
       pretty-error: 4.0.0
       tapable: 2.2.1
-      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+      webpack: 5.78.0(@swc/core@1.3.49)
 
   /htmlencode@0.0.4:
     resolution: {integrity: sha512-0uDvNVpzj/E2TfvLLyyXhKBRvF1y84aZsyRxRXFsQobnHaL4pcaXk+Y9cnFlvnxrBLeXDNq/VJBD+ngdBgQG1w==}
@@ -36169,7 +36077,7 @@ packages:
       less: 4.1.3
       loader-utils: 1.4.2
       pify: 3.0.0
-      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+      webpack: 5.78.0(@swc/core@1.3.49)
     dev: true
 
   /less@4.1.3:
@@ -37745,7 +37653,7 @@ packages:
       webpack: ^5.0.0
     dependencies:
       schema-utils: 4.0.0
-      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+      webpack: 5.78.0(@swc/core@1.3.49)
 
   /minimalistic-assert@1.0.1:
     resolution: {integrity: sha512-UtJcAD4yEaGtjPezWuO9wC4nwUnVH/8/Im3yEHQP4b67cXlD/Qr9hdITCU1xDbSEXg2XKNaP8jsReV7vQd00/A==}
@@ -38669,23 +38577,6 @@ packages:
     resolution: {integrity: sha512-qHw7dOiU5UKNnQpXktdgQ1d3OFgRAekuvbJLcdG5dnEo/GtcTHRYM7+UfJARdOFU9WUQO8OiIamgWPmiSFHYAA==}
     engines: {node: '>=6.0.0'}
     dev: false
-
-  /nodemon@2.0.22:
-    resolution: {integrity: sha512-B8YqaKMmyuCO7BowF1Z1/mkPqLk6cs/l63Ojtd6otKjMx47Dq1utxfRxcavH1I7VSaL8n5BUaoutadnsX3AAVQ==}
-    engines: {node: '>=8.10.0'}
-    hasBin: true
-    dependencies:
-      chokidar: 3.5.3
-      debug: 3.2.7(supports-color@5.5.0)
-      ignore-by-default: 1.0.1
-      minimatch: 3.1.2
-      pstree.remy: 1.1.8
-      semver: 5.7.2
-      simple-update-notifier: 1.1.0
-      supports-color: 5.5.0
-      touch: 3.1.0
-      undefsafe: 2.0.5
-    dev: true
 
   /nodemon@3.0.1:
     resolution: {integrity: sha512-g9AZ7HmkhQkqXkRc20w+ZfQ73cHLbE8hnPbtaFbFtCumZsjyMhKk9LajQ07U5Ux28lvFjZ5X7HvWR1xzU8jHVw==}
@@ -40120,41 +40011,11 @@ packages:
       passport-oauth2: 1.7.0
     dev: false
 
-  /passport-google-oauth1@1.0.0:
-    resolution: {integrity: sha512-qpCEhuflJgYrdg5zZIpAq/K3gTqa1CtHjbubsEsidIdpBPLkEVq6tB1I8kBNcH89RdSiYbnKpCBXAZXX/dtx1Q==}
-    dependencies:
-      passport-oauth1: 1.3.0
-    dev: false
-
-  /passport-google-oauth20@2.0.0:
-    resolution: {integrity: sha512-KSk6IJ15RoxuGq7D1UKK/8qKhNfzbLeLrG3gkLZ7p4A6DBCcv7xpyQwuXtWdpyR0+E0mwkpjY1VfPOhxQrKzdQ==}
-    engines: {node: '>= 0.4.0'}
-    dependencies:
-      passport-oauth2: 1.7.0
-    dev: false
-
-  /passport-google-oauth@2.0.0:
-    resolution: {integrity: sha512-JKxZpBx6wBQXX1/a1s7VmdBgwOugohH+IxCy84aPTZNq/iIPX6u7Mqov1zY7MKRz3niFPol0KJz8zPLBoHKtYA==}
-    engines: {node: '>= 0.4.0'}
-    dependencies:
-      passport-google-oauth1: 1.0.0
-      passport-google-oauth20: 2.0.0
-    dev: false
-
   /passport-jwt@4.0.1:
     resolution: {integrity: sha512-UCKMDYhNuGOBE9/9Ycuoyh7vP6jpeTp/+sfMJl7nLff/t6dps+iaeE0hhNkKN8/HZHcJ7lCdOyDxHdDoxoSvdQ==}
     dependencies:
       jsonwebtoken: 9.0.0
       passport-strategy: 1.0.0
-    dev: false
-
-  /passport-oauth1@1.3.0:
-    resolution: {integrity: sha512-8T/nX4gwKTw0PjxP1xfD0QhrydQNakzeOpZ6M5Uqdgz9/a/Ag62RmJxnZQ4LkbdXGrRehQHIAHNAu11rCP46Sw==}
-    engines: {node: '>= 0.4.0'}
-    dependencies:
-      oauth: 0.9.15
-      passport-strategy: 1.0.0
-      utils-merge: 1.0.1
     dev: false
 
   /passport-oauth2@1.7.0:
@@ -40857,7 +40718,7 @@ packages:
       klona: 2.0.6
       postcss: 8.4.21
       semver: 7.5.4
-      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+      webpack: 5.78.0(@swc/core@1.3.49)
 
   /postcss-loader@7.0.2(postcss@8.4.21)(webpack@5.76.1):
     resolution: {integrity: sha512-fUJzV/QH7NXUAqV8dWJ9Lg4aTkDCezpTS5HgJ2DvqznexTbSTxgi/dTECvTZ15BwKTtk8G/bqI/QTu2HPd3ZCg==}
@@ -42443,7 +42304,7 @@ packages:
     peerDependencies:
       react-scripts: '>=2.1.3'
     dependencies:
-      react-scripts: 5.0.1(@babel/plugin-syntax-flow@7.22.5)(@babel/plugin-transform-react-jsx@7.22.15)(@swc/core@1.3.49)(esbuild@0.18.20)(eslint-import-resolver-webpack@0.13.7)(eslint@8.51.0)(react@17.0.2)(ts-node@10.9.1)(typescript@4.9.5)
+      react-scripts: 5.0.1(@babel/plugin-syntax-flow@7.22.5)(@babel/plugin-transform-react-jsx@7.22.15)(@swc/core@1.3.49)(eslint-import-resolver-webpack@0.13.7)(eslint@8.51.0)(react@17.0.2)(ts-node@10.9.1)(typescript@4.9.5)
       semver: 5.7.2
     dev: true
 
@@ -42538,7 +42399,7 @@ packages:
       strip-ansi: 6.0.1
       text-table: 0.2.0
       typescript: 4.9.5
-      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+      webpack: 5.78.0(@swc/core@1.3.49)
     transitivePeerDependencies:
       - eslint
       - supports-color
@@ -43078,7 +42939,6 @@ packages:
       - webpack-cli
       - webpack-hot-middleware
       - webpack-plugin-serve
-    dev: false
 
   /react-simple-animate@3.5.2(react-dom@17.0.2):
     resolution: {integrity: sha512-xLE65euP920QMTOmv5haPlml+hmOPDkbIr5WeF7ADIXWBYt5kW/vwpNfWg8EKMab8aeDxIZ6QjffVh8v2dUyhg==}
@@ -44269,7 +44129,7 @@ packages:
     dependencies:
       klona: 2.0.6
       neo-async: 2.6.2
-      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+      webpack: 5.78.0(@swc/core@1.3.49)
 
   /sass-loader@13.2.0(sass@1.58.1)(webpack@5.76.1):
     resolution: {integrity: sha512-JWEp48djQA4nbZxmgC02/Wh0eroSUutulROUusYJO9P9zltRbNN80JCBHqRGzjd4cmZCa/r88xgfkjGD0TXsHg==}
@@ -44497,11 +44357,6 @@ packages:
   /semver@6.3.1:
     resolution: {integrity: sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA==}
     hasBin: true
-
-  /semver@7.0.0:
-    resolution: {integrity: sha512-+GB6zVA9LWh6zovYQLALHwv5rb2PHGlJi3lfiqIHxR0uuwCgefcOJc59v9fv1w8GbStwxuuqqAjI9NMAOOgq1A==}
-    hasBin: true
-    dev: true
 
   /semver@7.3.4:
     resolution: {integrity: sha512-tCfb2WLjqFAtXn4KEdxIhalnRtoKFN7nAwj0B3ZXCbQloV2tq5eDbcTmT68JJD3nRJq24/XgxtQKFIpQdtvmVw==}
@@ -44773,13 +44628,6 @@ packages:
       is-arrayish: 0.3.2
     dev: false
 
-  /simple-update-notifier@1.1.0:
-    resolution: {integrity: sha512-VpsrsJSUcJEseSbMHkrsrAVSdvVS5I96Qo1QAQ4FxQ9wXFcB+pjj7FB7/us9+GcgfW4ziHtYMc1J0PLczb55mg==}
-    engines: {node: '>=8.10.0'}
-    dependencies:
-      semver: 7.0.0
-    dev: true
-
   /simple-update-notifier@2.0.0:
     resolution: {integrity: sha512-a2B9Y0KlNXl9u/vsW6sTIu9vGEpfKu2wRV6l1H3XEas/0gUIzGzBoP/IouTcUQbm9JWZLH3COxyn03TYlFax6w==}
     engines: {node: '>=10'}
@@ -45037,7 +44885,7 @@ packages:
       abab: 2.0.6
       iconv-lite: 0.6.3
       source-map-js: 1.0.2
-      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+      webpack: 5.78.0(@swc/core@1.3.49)
 
   /source-map-loader@4.0.1(webpack@5.76.1):
     resolution: {integrity: sha512-oqXpzDIByKONVY8g1NUPOTQhe0UTU5bWUl32GSkqK2LjJj0HmwTMVKxcUip0RgAYhY1mqgOxjbQM48a0mmeNfA==}
@@ -45721,7 +45569,7 @@ packages:
     peerDependencies:
       webpack: ^5.0.0
     dependencies:
-      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+      webpack: 5.78.0(@swc/core@1.3.49)
 
   /stylehacks@5.1.1(postcss@8.4.29):
     resolution: {integrity: sha512-sBpcd5Hx7G6seo7b1LkpttvTz7ikD0LlH5RmdcBNb6fFR0Fl7LQwHDFr300q4cwUqi+IYrFGmsIHieMBfnN/Bw==}
@@ -46276,7 +46124,6 @@ packages:
       serialize-javascript: 6.0.1
       terser: 5.19.3
       webpack: 5.78.0(@swc/core@1.3.49)
-    dev: false
 
   /terser-webpack-plugin@5.3.9(@swc/core@1.3.49)(esbuild@0.17.8)(webpack@5.76.1):
     resolution: {integrity: sha512-ZuXsqE07EcggTWQjXUj+Aot/OMcD0bMKGgF63f7UxYcu5/AJF53aIpK1YoP5xR9l6s/Hy2b+t1AM0bLNPRuhwA==}
@@ -48306,7 +48153,7 @@ packages:
       mime-types: 2.1.35
       range-parser: 1.2.1
       schema-utils: 4.0.0
-      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+      webpack: 5.78.0(@swc/core@1.3.49)
 
   /webpack-dev-middleware@6.0.1(webpack@5.76.1):
     resolution: {integrity: sha512-PZPZ6jFinmqVPJZbisfggDiC+2EeGZ1ZByyMP5sOFJcPPWSexalISz+cvm+j+oYPT7FIJyxT76esjnw9DhE5sw==}
@@ -48425,7 +48272,7 @@ packages:
       serve-index: 1.9.1
       sockjs: 0.3.24
       spdy: 4.0.2
-      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+      webpack: 5.78.0(@swc/core@1.3.49)
       webpack-dev-middleware: 5.3.3(webpack@5.78.0)
       ws: 8.13.0
     transitivePeerDependencies:
@@ -48449,7 +48296,7 @@ packages:
       webpack: ^4.44.2 || ^5.47.0
     dependencies:
       tapable: 2.2.1
-      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+      webpack: 5.78.0(@swc/core@1.3.49)
       webpack-sources: 2.3.1
 
   /webpack-merge@5.8.0:
@@ -49033,7 +48880,7 @@ packages:
       fast-json-stable-stringify: 2.1.0
       pretty-bytes: 5.6.0
       upath: 1.2.0
-      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+      webpack: 5.78.0(@swc/core@1.3.49)
       webpack-sources: 1.4.3
       workbox-build: 6.5.4
     transitivePeerDependencies:

@@ -1,6 +1,6 @@
 {
   "name": "@novu/api",
-  "version": "0.20.0-alpha.1",
+  "version": "0.20.0",
   "description": "description",
   "author": "",
   "private": "true",
@@ -26,7 +26,7 @@
     "migration": "cross-env NODE_ENV=local MIGRATION=true ts-node --transpileOnly ./migrations/expire-at/expire-at.migration.ts",
     "migration:in-app": "cross-env NODE_ENV=local MIGRATION=true ts-node --transpileOnly ./migrations/integration-scheme-update/add-primary-priority-migration.ts",
     "migration:primary-provider": "cross-env NODE_ENV=local MIGRATION=true ts-node --transpileOnly ./migrations/integration-scheme-update/add-primary-priority-migration.ts",
-    "link:submodules": "pnpm link @novu/ee-auth"
+    "link:submodules": "cd ../../enterprise/packages/packages/auth && yarn link && cd ../../../../apps/api && yarn link @novu/ee-auth"
   },
   "dependencies": {
     "@godaddy/terminus": "^4.12.1",
@@ -39,12 +39,12 @@
     "@nestjs/platform-express": "^10.2.2",
     "@nestjs/swagger": "^7.1.8",
     "@nestjs/terminus": "^10.0.1",
-    "@novu/application-generic": "^0.20.0-alpha.1",
-    "@novu/dal": "^0.20.0-alpha.1",
-    "@novu/node": "^0.20.0-alpha.1",
-    "@novu/shared": "^0.20.0-alpha.1",
-    "@novu/stateless": "^0.20.0-alpha.1",
-    "@novu/testing": "^0.20.0-alpha.1",
+    "@novu/application-generic": "^0.20.0",
+    "@novu/dal": "^0.20.0",
+    "@novu/node": "^0.20.0",
+    "@novu/shared": "^0.20.0",
+    "@novu/stateless": "^0.20.0",
+    "@novu/testing": "^0.20.0",
     "@sendgrid/mail": "^7.6.0",
     "@sentry/hub": "^7.40.0",
     "@sentry/node": "^7.40.0",
