@@ -3,7 +3,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { DigestUnitEnum, OrdinalEnum, OrdinalValueEnum, MonthlyTypeEnum, DigestTypeEnum } from '@novu/shared';
 
 import { When } from '../../../../components/utils/When';
-import { colors, Select } from '../../../../design-system';
+import { colors, Select } from '@novu/design-system';
 import { DaySelect } from './DaySelect';
 
 export const ScheduleMonthlyFields = ({ index, control, readonly }) => {

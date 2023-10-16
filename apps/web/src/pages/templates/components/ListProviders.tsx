@@ -2,7 +2,7 @@ import { Group, Stack, Text, UnstyledButton, useMantineColorScheme } from '@mant
 import { ChannelTypeEnum, NOVU_SMS_EMAIL_PROVIDERS } from '@novu/shared';
 
 import { When } from '../../../components/utils/When';
-import { Button, colors, Tooltip } from '../../../design-system';
+import { Button, colors, Tooltip } from '@novu/design-system';
 import { useEnvController, useIsMultiProviderConfigurationEnabled } from '../../../hooks';
 import { IntegrationEnvironmentPill } from '../../integrations/components/IntegrationEnvironmentPill';
 import { IntegrationStatus } from '../../integrations/components/IntegrationStatus';

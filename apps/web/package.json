@@ -51,6 +51,7 @@
     "@mantine/spotlight": "^5.7.1",
     "@novu/notification-center": "^0.20.0-alpha.1",
     "@novu/shared": "^0.20.0-alpha.1",
+    "@novu/design-system": "^0.20.0-alpha.1",
     "@segment/analytics-next": "^1.48.0",
     "@sentry/react": "^7.40.0",
     "@sentry/tracing": "^7.40.0",

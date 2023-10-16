@@ -16,7 +16,7 @@ import {
   SmsProviderIdEnum,
 } from '@novu/shared';
 
-import { Button, colors, Sidebar, Text } from '../../../../design-system';
+import { Button, colors, Sidebar, Text } from '@novu/design-system';
 import { useProviders } from '../../useProviders';
 import type { IIntegratedProvider } from '../../types';
 import { IntegrationInput } from '../IntegrationInput';

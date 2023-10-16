@@ -5,9 +5,24 @@ import { Control, Controller, useFieldArray, useForm, useWatch } from 'react-hoo
 
 import { FILTER_TO_LABEL, FilterPartTypeEnum } from '@novu/shared';
 
-import { Button, colors, Dropdown, Input, Select, Sidebar, Text, Title, Tooltip } from '../../design-system';
-import { ConditionPlus, DotsHorizontal, Duplicate, Trash, Condition, ErrorIcon } from '../../design-system/icons';
-import { When } from '../utils/When';
+import {
+  Button,
+  colors,
+  Dropdown,
+  Input,
+  Select,
+  Sidebar,
+  Text,
+  Title,
+  Tooltip,
+  ConditionPlus,
+  DotsHorizontal,
+  Duplicate,
+  Trash,
+  Condition,
+  ErrorIcon,
+  When,
+} from '@novu/design-system';
 import { ConditionsContextEnum, ConditionsContextFields, IConditions } from './types';
 
 interface IConditionsForm {

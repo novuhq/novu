@@ -4,8 +4,7 @@ import styled from '@emotion/styled';
 
 import { ChannelTypeEnum } from '@novu/shared';
 
-import { colors, Text } from '../../../design-system';
-import { ProviderMissing } from '../../../design-system/icons';
+import { colors, Text, ProviderMissing } from '@novu/design-system';
 import { IntegrationsStoreModal } from '../../integrations/IntegrationsStoreModal';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { stepNames, TemplateEditorAnalyticsEnum } from '../constants';

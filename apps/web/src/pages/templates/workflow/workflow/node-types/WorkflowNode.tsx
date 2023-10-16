@@ -8,12 +8,7 @@ import { useFormContext } from 'react-hook-form';
 import { useSegment } from '../../../../../components/providers/SegmentProvider';
 import { When } from '../../../../../components/utils/When';
 import { CONTEXT_PATH } from '../../../../../config';
-import { Switch } from '../../../../../design-system';
-import { Button } from '../../../../../design-system/button/Button';
-import { colors } from '../../../../../design-system/config';
-import { ProviderMissing, Trash } from '../../../../../design-system/icons';
-import { useStyles } from '../../../../../design-system/template-button/TemplateButton.styles';
-import { Text } from '../../../../../design-system/typography/text/Text';
+import { Switch, Button, colors, ProviderMissing, Trash, Text, useTemplateButtonStyles } from '@novu/design-system';
 import {
   useEnvController,
   useGetPrimaryIntegration,
@@ -75,7 +70,7 @@ export function WorkflowNode({
 }: ITemplateButtonProps) {
   const segment = useSegment();
   const { readonly: readonlyEnv, environment } = useEnvController();
-  const { cx, classes, theme } = useStyles();
+  const { cx, classes, theme } = useTemplateButtonStyles();
   const [popoverOpened, setPopoverOpened] = useState(false);
   const [disabled, setDisabled] = useState(initDisabled);
   const [isIntegrationsModalVisible, setIntegrationsModalVisible] = useState(false);

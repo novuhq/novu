@@ -1,8 +1,7 @@
 import { Grid } from '@mantine/core';
 import { ChannelTypeEnum, PreviousStepTypeEnum } from '@novu/shared';
 import { Controller, useFieldArray } from 'react-hook-form';
-import { Select } from '../../../design-system';
-import { Trash } from '../../../design-system/icons';
+import { Select, Trash } from '@novu/design-system';
 import { channels } from '../../../utils/channels';
 import { DeleteStepButton } from './FilterModal.styles';
 

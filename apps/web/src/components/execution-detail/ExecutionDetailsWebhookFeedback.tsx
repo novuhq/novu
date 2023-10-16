@@ -2,7 +2,7 @@ import { Group } from '@mantine/core';
 import styled from '@emotion/styled';
 import { format, parseISO } from 'date-fns';
 
-import { colors, Container, Text, Tooltip } from '../../design-system';
+import { colors, Container, Text, Tooltip } from '@novu/design-system';
 import { mappedWebhookStatuses } from './helpers';
 
 const WebhookFeedbackWrapper = styled(Container)`

@@ -20,7 +20,7 @@ import { v4 as uuid4 } from 'uuid';
 import cloneDeep from 'lodash.clonedeep';
 import { StepTypeEnum } from '@novu/shared';
 
-import { colors } from '../../design-system';
+import { colors } from '@novu/design-system';
 import { getChannel } from '../../utils/channels';
 import { useEnvController } from '../../hooks';
 import type { IEdge, IFlowStep } from './types';

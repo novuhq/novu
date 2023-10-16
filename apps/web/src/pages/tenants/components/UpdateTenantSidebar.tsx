@@ -6,7 +6,7 @@ import { format } from 'date-fns';
 
 import { ITenantEntity, IUpdateTenantDto } from '@novu/shared';
 
-import { Button, colors, NameInput, Sidebar, Text } from '../../../design-system';
+import { Button, colors, NameInput, Sidebar, Text } from '@novu/design-system';
 import { getTenantByIdentifier, updateTenant } from '../../../api/tenants';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { QueryKeys } from '../../../api/query.keys';
