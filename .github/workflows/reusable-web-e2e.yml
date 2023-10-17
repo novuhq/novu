@@ -100,7 +100,7 @@ jobs:
           echo "BROWSER_PATH=$(which chrome)" >> $GITHUB_ENV
 
       - name: Cypress run e2e
-        uses: cypress-io/github-action@v5
+        uses: cypress-io/github-action@v6
         env:
           NODE_ENV: test
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -111,7 +111,7 @@ jobs:
         with:
           working-directory: apps/web
           browser: "${{ env.BROWSER_PATH }}"
-          record: true
+          record: false
           parallel: false
           install: false
           config-file: cypress.config.ts
@@ -148,7 +148,7 @@ jobs:
         run: pnpm cypress install
 
       - name: Run Component tests 🧪
-        uses: cypress-io/github-action@v5
+        uses: cypress-io/github-action@v6
         env:
           NODE_ENV: test
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
