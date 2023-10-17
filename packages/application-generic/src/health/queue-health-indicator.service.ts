@@ -37,7 +37,7 @@ export abstract class QueueHealthIndicator
       Logger.verbose(`${this.serviceName} is not ready`, this.logContext);
 
       throw new HealthCheckError(
-        `${this.serviceName} Health`,
+        `${this.serviceName} Health is not ready`,
         this.getStatus(this.indicatorKey, false)
       );
     }
@@ -55,7 +55,7 @@ export abstract class QueueHealthIndicator
       Logger.verbose(`${this.serviceName} is not active`, this.logContext);
 
       throw new HealthCheckError(
-        `${this.serviceName} Health`,
+        `${this.serviceName} Health is not active`,
         this.getStatus(this.indicatorKey, false)
       );
     }
