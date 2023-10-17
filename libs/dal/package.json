@@ -37,7 +37,6 @@
     "event-stream": "^4.0.1",
     "fs-extra": "^9.0.0",
     "googleapis": "^60.0.1",
-    "intercom-client": "^2.11.0",
     "jsonfile": "^6.0.1",
     "mongoose": "^7.5.0",
     "mongoose-delete": "^1.0.1",
