@@ -844,8 +844,8 @@ importers:
         specifier: ^0.4.1
         version: 0.4.1(react-dom@17.0.2)(react@17.0.2)
       react-router-dom:
-        specifier: ^6.2.2
-        version: 6.2.2(react-dom@17.0.2)(react@17.0.2)
+        specifier: ^6.10.0
+        version: 6.10.0(react-dom@17.0.2)(react@17.0.2)
       react-syntax-highlighter:
         specifier: ^15.4.3
         version: 15.5.0(react@17.0.2)
@@ -1188,7 +1188,7 @@ importers:
         specifier: ^0.14.0
         version: 0.14.0
       react-router-dom:
-        specifier: ^6.2.2
+        specifier: ^6.10.0
         version: 6.10.0(react-dom@17.0.2)(react@17.0.2)
       rimraf:
         specifier: ^3.0.2
@@ -1978,9 +1978,6 @@ importers:
       react-hook-form:
         specifier: 7.43.9
         version: 7.43.9(react@17.0.2)
-      react-router-dom:
-        specifier: ^6.2.2
-        version: 6.10.0(react-dom@17.0.2)(react@17.0.2)
       react-table:
         specifier: ^7.8.0
         version: 7.8.0(react@17.0.2)
@@ -2042,6 +2039,9 @@ importers:
       react-dom:
         specifier: ^17.0.1
         version: 17.0.2(react@17.0.2)
+      react-router-dom:
+        specifier: ^6.10.0
+        version: 6.10.0(react-dom@17.0.2)(react@17.0.2)
       rimraf:
         specifier: ^3.0.2
         version: 3.0.2
@@ -18614,7 +18614,6 @@ packages:
   /@remix-run/router@1.5.0:
     resolution: {integrity: sha512-bkUDCp8o1MvFO+qxkODcbhSqRa6P2GXgrGZVpt0dCXNW2HCSCqYI0ZoAqEOSAjRWmmlKcYgFvN4B4S+zo/f8kg==}
     engines: {node: '>=14'}
-    dev: false
 
   /@rollup/plugin-babel@5.3.1(@babel/core@7.22.11)(rollup@2.79.1):
     resolution: {integrity: sha512-WFfdLWU/xVWKeRQnKmIAQULUI7Il0gZnBIH/ZFO069wYIfPu+8zrfp/KMW0atmELoRDq8FbiP3VCss9MhCut7Q==}
@@ -33409,12 +33408,6 @@ packages:
     resolution: {integrity: sha512-tzcUFauisWKNHaRkN4Wjl/ZA07gENAjFl3J/c480dprkGTg5EQstgaNFqBfUqCq54kZRIEcreTsAgF/m2quD7A==}
     dev: false
 
-  /history@5.3.0:
-    resolution: {integrity: sha512-ZqaKwjjrAYUYfLG+htGaIIZ4nioX2L70ZUMIFysS3xvBsSG4x/n1V6TXV3N8ZYNuFGlDirFg32T7B6WOUPDYcQ==}
-    dependencies:
-      '@babel/runtime': 7.21.0
-    dev: false
-
   /hoist-non-react-statics@3.3.2:
     resolution: {integrity: sha512-/gGivxi8JPKWNm/W0jSmzcMPpfpPLc3dY/6GxhX2hQ9iGj3aDfklV4ET7NjKpSinLpJ5vafa9iiGIEZg10SfBw==}
     dependencies:
@@ -43564,19 +43557,6 @@ packages:
       react: 17.0.2
       react-dom: 17.0.2(react@17.0.2)
       react-router: 6.10.0(react@17.0.2)
-    dev: false
-
-  /react-router-dom@6.2.2(react-dom@17.0.2)(react@17.0.2):
-    resolution: {integrity: sha512-AtYEsAST7bDD4dLSQHDnk/qxWLJdad5t1HFa1qJyUrCeGgEuCSw0VB/27ARbF9Fi/W5598ujvJOm3ujUCVzuYQ==}
-    peerDependencies:
-      react: '>=16.8'
-      react-dom: '>=16.8'
-    dependencies:
-      history: 5.3.0
-      react: 17.0.2
-      react-dom: 17.0.2(react@17.0.2)
-      react-router: 6.2.2(react@17.0.2)
-    dev: false
 
   /react-router@6.10.0(react@17.0.2):
     resolution: {integrity: sha512-Nrg0BWpQqrC3ZFFkyewrflCud9dio9ME3ojHCF/WLsprJVzkq3q3UeEhMCAW1dobjeGbWgjNn/PVF6m46ANxXQ==}
@@ -43586,16 +43566,6 @@ packages:
     dependencies:
       '@remix-run/router': 1.5.0
       react: 17.0.2
-    dev: false
-
-  /react-router@6.2.2(react@17.0.2):
-    resolution: {integrity: sha512-/MbxyLzd7Q7amp4gDOGaYvXwhEojkJD5BtExkuKmj39VEE0m3l/zipf6h2WIB2jyAO0lI6NGETh4RDcktRm4AQ==}
-    peerDependencies:
-      react: '>=16.8'
-    dependencies:
-      history: 5.3.0
-      react: 17.0.2
-    dev: false
 
   /react-scripts@5.0.1(@babel/plugin-syntax-flow@7.22.5)(@babel/plugin-transform-react-jsx@7.22.15)(@swc/core@1.3.49)(esbuild@0.18.20)(eslint-import-resolver-webpack@0.13.7)(eslint@8.48.0)(react@17.0.2)(ts-node@10.9.1)(typescript@4.9.5):
     resolution: {integrity: sha512-8VAmEm/ZAwQzJ+GOMLbBsTdDKOpuZh7RPs0UymvBR2vRk4iZWCskjbFnxqjrzoIvlNNRZ3QJFx6/qDSi6zSnaQ==}
