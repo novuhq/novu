@@ -336,6 +336,12 @@ const StyledContentWrapper = styled.div`
   justify-content: flex-start;
   width: 100%;
   flex: 1;
+    .workflow-node-subtitle {
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+    textOverflow: 'ellipsis',
+    maxWidth: '60%',
+  }
 `;
 
 const UnstyledButtonStyled = styled.div`
