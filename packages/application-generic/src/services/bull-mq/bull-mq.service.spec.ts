@@ -62,7 +62,7 @@ describe('BullMQ Service', () => {
 
   describe('Prefix functionality', () => {
     it('should use prefix if any Cluster provider enabled', async () => {
-      process.env.MEMORY_DB_CLUSTER_SERVICE_HOST = 'localhost';
+      process.env.MEMORY_DB_CLUSTER_SERVICE_HOST = '127.0.0.1';
       process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
 
       bullMqService = new BullMqService();
