@@ -83,9 +83,9 @@ export class SubscriberJobBound {
 
     await this.validateSubscriberIdProperty(subscriber);
 
-    this.analyticsService.track(
+    this.analyticsService.mixpanelTrack(
       'Notification event trigger - [Triggers]',
-      command.userId,
+      '',
       {
         transactionId: command.transactionId,
         _template: template._id,
@@ -136,7 +136,7 @@ export class SubscriberJobBound {
         to: subscriber,
         transactionId: command.transactionId,
         userId,
-        ...(actor ? actor : {}),
+        ...(actor && { actor }),
         tenant,
       })
     );

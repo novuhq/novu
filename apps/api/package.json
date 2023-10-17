@@ -1,6 +1,6 @@
 {
   "name": "@novu/api",
-  "version": "0.20.0-alpha.1",
+  "version": "0.20.0",
   "description": "description",
   "author": "",
   "private": "true",
@@ -38,12 +38,12 @@
     "@nestjs/platform-express": "^10.2.2",
     "@nestjs/swagger": "^7.1.8",
     "@nestjs/terminus": "^10.0.1",
-    "@novu/application-generic": "^0.20.0-alpha.1",
-    "@novu/dal": "^0.20.0-alpha.1",
-    "@novu/node": "^0.20.0-alpha.1",
-    "@novu/shared": "^0.20.0-alpha.1",
-    "@novu/stateless": "^0.20.0-alpha.1",
-    "@novu/testing": "^0.20.0-alpha.1",
+    "@novu/application-generic": "^0.20.0",
+    "@novu/dal": "^0.20.0",
+    "@novu/node": "^0.20.0",
+    "@novu/shared": "^0.20.0",
+    "@novu/stateless": "^0.20.0",
+    "@novu/testing": "^0.20.0",
     "@sendgrid/mail": "^7.6.0",
     "@sentry/hub": "^7.40.0",
     "@sentry/node": "^7.40.0",
@@ -94,15 +94,15 @@
     "@types/bull": "^3.15.8",
     "@types/chai": "^4.2.11",
     "@types/express": "4.17.17",
-    "@types/mocha": "^8.2.3",
+    "@types/mocha": "^10.0.2",
     "@types/node": "^14.6.0",
     "@types/passport-github": "^1.1.5",
     "@types/passport-jwt": "^3.0.3",
     "@types/sinon": "^9.0.0",
     "@types/supertest": "^2.0.8",
     "chai": "^4.2.0",
-    "mocha": "^8.4.0",
-    "nodemon": "^2.0.3",
+    "mocha": "^10.2.0",
+    "nodemon": "^3.0.1",
     "sinon": "^9.2.4",
     "ts-loader": "~9.4.0",
     "ts-node": "~10.9.1",
@@ -111,11 +111,6 @@
   },
   "optionalDependencies": {
     "@novu/ee-auth": "^0.19.0"
-  },
-  "nx": {
-    "implicitDependencies": [
-      "@novu/ee-auth"
-    ]
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
