@@ -31,7 +31,7 @@ import { ID } from './languages/id';
 import { IG } from './languages/ig';
 import { IT } from './languages/it';
 import { JA } from './languages/ja';
-import { KA } from './languages/ka';
+import { KA } from './languages/kn';
 import { KK } from './languages/kk';
 import { KM } from './languages/km';
 import { KO } from './languages/ko';
