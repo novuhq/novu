@@ -1,21 +1,20 @@
 {
   "name": "@novu/design-system",
-  "version": "0.20.0-alpha.1",
+  "version": "0.20.0",
   "repository": "https://github.com/novuhq/novu",
   "description": "",
   "scripts": {
     "start": "npm run build:watch",
     "prebuild": "rimraf dist",
     "lint": "eslint --ext .ts,.tsx src",
-    "build": "cross-env node_modules/.bin/tsc -p tsconfig.json && npm run build:types",
-    "build:types": "tsc --declaration --emitDeclarationOnly --declarationMap --declarationDir dist/types -p tsconfig.json",
+    "build": "cross-env tsc",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
   "author": "",
   "license": "ISC",
   "main": "dist/index.js",
-  "types": "dist/types/index.d.ts",
+  "types": "dist/index.d.ts",
   "sideEffects": false,
   "devDependencies": {
     "@storybook/addon-actions": "^7.4.2",
@@ -53,6 +52,7 @@
     "react-router-dom": "^6.2.2"
   },
   "dependencies": {
+    "@cypress/react": "^7.0.2",
     "@emotion/css": "^11.10.5",
     "@emotion/react": "^11.7.1",
     "@emotion/styled": "^11.6.0",

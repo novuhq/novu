@@ -33,6 +33,10 @@
       "path": "libs/dal"
     },
     {
+      "name": "📦 @novu/design-system",
+      "path": "libs/design-system"
+    },
+    {
       "name": "📦 @novu/embed",
       "path": "libs/embed"
     },

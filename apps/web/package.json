@@ -49,7 +49,7 @@
     "@mantine/notifications": "^5.7.1",
     "@mantine/prism": "^5.7.1",
     "@mantine/spotlight": "^5.7.1",
-    "@novu/design-system": "^0.20.0-alpha.1",
+    "@novu/design-system": "^0.20.0",
     "@novu/notification-center": "^0.20.0",
     "@novu/shared": "^0.20.0",
     "@segment/analytics-next": "^1.48.0",
@@ -172,9 +172,6 @@
     "*.{js,jsx,ts,tsx}": [
       "eslint"
     ]
-  },
-  "resolutions": {
-    "react-error-overlay": "6.0.11"
   },
   "eslintConfig": {
     "overrides": [
