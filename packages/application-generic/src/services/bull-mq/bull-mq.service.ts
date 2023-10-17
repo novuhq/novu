@@ -254,7 +254,13 @@ export class BullMqService {
         };
       }
 
-      return { name: job.name, data: job.data, options: jobOptions };
+      const jobResult: {
+        name: string;
+        data: any;
+        opts?: BulkJobOptions;
+      } = { name: job.name, data: job.data, opts: jobOptions };
+
+      return jobResult;
     });
 
     await this._queue.addBulk(jobs);
