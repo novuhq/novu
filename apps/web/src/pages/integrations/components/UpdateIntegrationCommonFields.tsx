@@ -2,10 +2,17 @@ import { Controller, useFormContext } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { useClipboard } from '@mantine/hooks';
 
-import { Input, Switch } from '../../../design-system';
+import { colors, Input, Switch, Tooltip } from '../../../design-system';
 import { Check, Copy } from '../../../design-system/icons';
 import type { IIntegratedProvider } from '../types';
-import { When } from '../../../components/utils/When';
+import { useIsMultiProviderConfigurationEnabled } from '../../../hooks';
+
+const tooltipLabel = (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+    <div style={{ color: colors.B60 }}>Disable instance</div>
+    <div style={{ color: '#EAA900', fontSize: '12px' }}>This action replaces the primary provider flag.</div>
+  </div>
+);
 
 const CopyWrapper = styled.div`
   cursor: pointer;
@@ -20,6 +27,7 @@ export const UpdateIntegrationCommonFields = ({ provider }: { provider: IIntegra
     formState: { errors },
   } = useFormContext();
   const identifierClipboard = useClipboard({ timeout: 1000 });
+  const isMultiProviderConfigurationEnabled = useIsMultiProviderConfigurationEnabled();
 
   if (!provider) return null;
 
@@ -29,14 +37,26 @@ export const UpdateIntegrationCommonFields = ({ provider }: { provider: IIntegra
         control={control}
         name="active"
         defaultValue={false}
-        render={({ field }) => (
-          <Switch
-            checked={field.value}
-            label={field.value ? 'Active' : 'Disabled'}
-            data-test-id="is_active_id"
-            {...field}
-          />
-        )}
+        render={({ field }) => {
+          const switchComponent = (
+            <Switch
+              checked={field.value}
+              label={field.value ? 'Active' : 'Disabled'}
+              data-test-id="is_active_id"
+              {...field}
+            />
+          );
+
+          if (isMultiProviderConfigurationEnabled && field.value && provider.primary) {
+            return (
+              <Tooltip label={tooltipLabel} position="bottom-start" multiline width={147}>
+                <div style={{ width: 'fit-content' }}>{switchComponent}</div>
+              </Tooltip>
+            );
+          }
+
+          return switchComponent;
+        }}
       />
       <Controller
         control={control}

@@ -12,7 +12,6 @@ import {
   IConstructIntegrationDto,
   ICredentialsDto,
   InAppProviderIdEnum,
-  NOVU_PROVIDERS,
   SmsProviderIdEnum,
 } from '@novu/shared';
 
@@ -38,6 +37,7 @@ import { useSelectPrimaryIntegrationModal } from './useSelectPrimaryIntegrationM
 import { ShareableUrl } from '../Modal/ConnectIntegrationForm';
 import { Conditions, IConditions } from '../../../../components/conditions';
 import { useDisclosure } from '@mantine/hooks';
+import { useDisablePrimaryStatusModal } from './useDisablePrimaryStatusModal';
 
 interface IProviderForm {
   name: string;
@@ -168,7 +168,9 @@ export function UpdateProviderSidebar({
     update({ hideDefaultLauncher: false });
   };
 
-  const updateAndSelectPrimaryIntegration = async (data: IConstructIntegrationDto) => {
+  const { DisablePrimaryStatusModal, openModal: openDisablePrimaryStatusModal } = useDisablePrimaryStatusModal();
+
+  const updateAndSelectPrimaryIntegration = async (data: IConstructIntegrationDto, isConfirmed?: boolean) => {
     if (!selectedProvider) {
       return;
     }
@@ -195,6 +197,14 @@ export function UpdateProviderSidebar({
 
     const hasConditionsAndIsPrimary = hasUpdatedConditions && primary && dirtyFields.conditions;
 
+    if (isChangedToInactiveAndIsPrimary && !isConfirmed) {
+      openDisablePrimaryStatusModal({
+        onConfirm: () => updateAndSelectPrimaryIntegration(data, true),
+      });
+
+      return;
+    }
+
     if (
       (hasNoConditions && isChangedToActive) ||
       isChangedToInactiveAndIsPrimary ||
@@ -220,7 +230,7 @@ export function UpdateProviderSidebar({
     e.stopPropagation();
     e.preventDefault();
 
-    handleSubmit(updateAndSelectPrimaryIntegration)(e);
+    handleSubmit((data) => updateAndSelectPrimaryIntegration(data))(e);
   };
 
   const hmacEnabled = useWatch({
@@ -283,6 +293,7 @@ export function UpdateProviderSidebar({
           <NovuProviderSidebarContent provider={selectedProvider} />
           <UpdateIntegrationCommonFields provider={selectedProvider} />
         </Sidebar>
+        <DisablePrimaryStatusModal />
         <SelectPrimaryIntegrationModal />
       </FormProvider>
     );
@@ -376,6 +387,7 @@ export function UpdateProviderSidebar({
           </Box>
         </When>
       </Sidebar>
+      <DisablePrimaryStatusModal />
       <SelectPrimaryIntegrationModal />
     </FormProvider>
   );
