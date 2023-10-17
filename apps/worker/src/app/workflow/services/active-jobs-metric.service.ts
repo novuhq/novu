@@ -120,8 +120,12 @@ export class ActiveJobsMetricService {
   public async gracefulShutdown(): Promise<void> {
     Logger.log('Shutting the Active Jobs Metric service down', LOG_CONTEXT);
 
-    await this.activeJobsMetricQueueService.gracefulShutdown();
-    await this.activeJobsMetricWorkerService.gracefulShutdown();
+    if (this.activeJobsMetricQueueService) {
+      await this.activeJobsMetricQueueService.gracefulShutdown();
+    }
+    if (this.activeJobsMetricWorkerService) {
+      await this.activeJobsMetricWorkerService.gracefulShutdown();
+    }
 
     Logger.log('Shutting down the Active Jobs Metric service has finished', LOG_CONTEXT);
   }
