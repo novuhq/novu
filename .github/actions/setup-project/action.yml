@@ -70,7 +70,7 @@ runs:
       if: ${{ inputs.submodules == 'true' }}
       run: |
         cd enterprise/packages
-        pnpm install --no-frozen-lockfile
+        pnpm install --frozen-lockfile
 
     - name: Link submodules
       shell: bash
