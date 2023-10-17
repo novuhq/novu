@@ -1,5 +1,5 @@
 # start build stage
-FROM nikolaik/python-nodejs:python3.10-nodejs18-alpine as builder
+FROM nikolaik/python-nodejs:python3.10-nodejs20-alpine as builder
 ENV NX_DAEMON=false
 
 WORKDIR /usr/src/app
@@ -37,7 +37,11 @@ RUN NX_DAEMON=false pnpm build:web
 # end build stage
 
 # start production stage
+<<<<<<< HEAD
 FROM node:18-alpine
+=======
+FROM node:20-alpine
+>>>>>>> b893e8d22bacbe09f19357b1d72b9509eb3a58cc
 
 WORKDIR /app
 

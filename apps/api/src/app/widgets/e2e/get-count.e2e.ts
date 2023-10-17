@@ -263,7 +263,7 @@ describe('Count - GET /widget/notifications/count', function () {
     expect(messages[0].seen).to.equal(false);
 
     await axios.post(
-      `http://localhost:${process.env.PORT}/v1/widgets/messages/markAs`,
+      `http://127.0.0.1:${process.env.PORT}/v1/widgets/messages/markAs`,
       { messageId, mark: { seen: true } },
       {
         headers: {
@@ -294,7 +294,7 @@ describe('Count - GET /widget/notifications/count', function () {
     expect(messages[0].read).to.equal(false);
 
     await axios.post(
-      `http://localhost:${process.env.PORT}/v1/widgets/messages/markAs`,
+      `http://127.0.0.1:${process.env.PORT}/v1/widgets/messages/markAs`,
       { messageId, mark: { seen: true, read: true } },
       {
         headers: {
@@ -342,7 +342,7 @@ describe('Count - GET /widget/notifications/count', function () {
     });
 
     await axios.post(
-      `http://localhost:${process.env.PORT}/v1/widgets/messages/markAs`,
+      `http://127.0.0.1:${process.env.PORT}/v1/widgets/messages/markAs`,
       { messageId, mark: { seen: true } },
       {
         headers: {
@@ -356,7 +356,7 @@ describe('Count - GET /widget/notifications/count', function () {
   });
 
   async function getFeedCount(query = {}) {
-    const response = await axios.get(`http://localhost:${process.env.PORT}/v1/widgets/notifications/count`, {
+    const response = await axios.get(`http://127.0.0.1:${process.env.PORT}/v1/widgets/notifications/count`, {
       params: {
         ...query,
       },

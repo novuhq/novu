@@ -10,7 +10,7 @@ describe('Health-check', () => {
     const inMemoryProviderService = new InMemoryProviderService(InMemoryProviderEnum.REDIS);
     await inMemoryProviderService.delayUntilReadiness();
 
-    testAgent = defaults(request(`http://localhost:${process.env.PORT}`));
+    testAgent = defaults(request(`http://127.0.0.1:${process.env.PORT}`));
   });
 
   describe('/health-check (GET)', () => {

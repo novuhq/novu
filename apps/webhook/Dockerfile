@@ -1,4 +1,4 @@
-FROM nikolaik/python-nodejs:python3.10-nodejs18-alpine as dev_base
+FROM nikolaik/python-nodejs:python3.10-nodejs20-alpine as dev_base
 ENV NX_DAEMON=false
 
 RUN npm i pm2 -g
@@ -65,4 +65,4 @@ RUN --mount=type=cache,id=pnpm-store-webhook,target=/root/.pnpm-store\
 RUN chown -R 1000:root .
 
 WORKDIR /usr/src/app/apps/webhook
-CMD [ "pm2-runtime", "dist/src/main.js" ]
+CMD [ "pm2-runtime", "dist/main.js" ]

@@ -26,7 +26,7 @@ runs:
         NODE_ENV: "test"
         PORT: "1336"
         TZ: "UTC"
-        GITHUB_OAUTH_REDIRECT: "http://localhost:1336/v1/auth/github/callback"
+        GITHUB_OAUTH_REDIRECT: "http://127.0.0.1:1336/v1/auth/github/callback"
         LAUNCH_DARKLY_SDK_KEY: ${{ inputs.launch_darkly_sdk_key }}
       run: cd apps/api && pnpm start:build &
 
@@ -41,4 +41,4 @@ runs:
 
     - name: Wait on API and Worker
       shell: bash
-      run: wait-on --timeout=180000 http://localhost:1336/v1/health-check http://localhost:1342/v1/health-check
+      run: wait-on --timeout=180000 http://127.0.0.1:1336/v1/health-check http://127.0.0.1:1342/v1/health-check

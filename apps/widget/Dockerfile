@@ -1,4 +1,4 @@
-FROM nikolaik/python-nodejs:python3.10-nodejs18-alpine
+FROM nikolaik/python-nodejs:python3.10-nodejs20-alpine
 ENV NX_DAEMON=false
 
 WORKDIR /usr/src/app
