@@ -27,6 +27,7 @@ export interface ITemplateConfiguration {
   name: string;
   critical: boolean;
   tags?: string[];
+  identifier: string;
 }
 
 export enum PreferenceLevelEnum {
