@@ -15,13 +15,13 @@ The ultimate service for managing multi-channel notifications with a single API.
 
 <h1 align="center">🎉 We're participating in Hacktoberfest 2023! 🎉</h1>
 
-Interested in participating in Hacktoberfest? We extend a warm invitation! You also get the opportunity to win some swag 😁
+Are you interested in participating in Hacktoberfest? We extend a warm invitation! You also get the opportunity to win some swag 😁
 
 > ⭐️ If you're new to Hacktoberfest, you can learn more and register to participate [here](https://hacktoberfest.com/participation/). Registration is from **September 26th - October 31st**.
 
 - Our Hacktoberfest kickoff event is happening on October 2, 2023. 🚀
 - Check out our website for [hacktoberfest instructions](https://novu.co/hacktoberfest/).
-- Join our [Discord and engage with our community](https://discord.com/invite/novu), get answers to your challenges, stay updated on events, announcements & prizes.
+- Join our [Discord and engage with our Community](https://discord.com/invite/novu), get answers to your challenges, and stay updated on events, announcements, and prizes.
 
 In addition to this repository, here are the other Novu repositories you can contribute to for Hacktoberfest:
 - [Novu Docs](https://github.com/novuhq/docs/issues)
@@ -34,7 +34,7 @@ In addition to this repository, here are the other Novu repositories you can con
 - [Novu Elixir SDK](https://github.com/novuhq/novu-elixir/issues)
 - [Novu Rust SDK](https://github.com/novuhq/novu-rust/issues)
 
-Your contribution, no matter its size, holds immense value. We eagerly await to see the impact you'll make in our community! 🚀
+Your contribution, no matter its size, holds immense value. We eagerly await to see the impact you'll make in our Community! 🚀
 
   <p align="center">
     <br />
@@ -70,7 +70,7 @@ Your contribution, no matter its size, holds immense value. We eagerly await to 
 ## ⭐️ Why Novu?
 
 Novu provides a unified API that makes it simple to send notifications through multiple channels, including In-App, Push, Email, SMS, and Chat.
-With Novu, you can create custom workflows and define conditions for each channel, ensuring that your notifications are delivered in the most effective way possible.
+With Novu, you can create custom workflows and define conditions for each channel, ensuring that your notifications are delivered most effectively.
 
 ## ✨ Features
 
@@ -108,7 +108,7 @@ npx novu init
 
 After setting up your account using the cloud or docker version, you can trigger the API using the `@novu/node` package.
 
-For API documentation and reference, please visit [Novu API Reference](https://docs.novu.co/api-reference/events/trigger-event).
+Please visit [Novu API Reference](https://docs.novu.co/api-reference/events/trigger-event) for API documentation and reference.
 
 To get started with the Node.js package, you can install it using npm:
 
@@ -224,7 +224,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 ## 📋 Read Our Code Of Conduct
 
-Before you begin coding and collaborating, please read our [Code of Conduct](https://github.com/novuhq/novu/blob/main/CODE_OF_CONDUCT.md) thoroughly to understand the standards (that you are required to adhere to) for community engagement. As part of our open-source community, we hold ourselves and other contributors to a high standard of communication. As a participant and contributor to this project, you are agreeing to abide by our [Code of Conduct](https://github.com/novuhq/novu/blob/main/CODE_OF_CONDUCT.md).
+Before you begin coding and collaborating, please read our [Code of Conduct](https://github.com/novuhq/novu/blob/main/CODE_OF_CONDUCT.md) thoroughly to understand the standards (that you are required to adhere to) for community engagement. As part of our open-source Community, we hold ourselves and other contributors to a high standard of communication. As a participant and contributor to this project, you are agreeing to abide by our [Code of Conduct](https://github.com/novuhq/novu/blob/main/CODE_OF_CONDUCT.md).
 
 ## 💻 Need Help?
 
