@@ -6,7 +6,7 @@
     "allowSyntheticDefaultImports": true,
     "types": ["node", "mocha", "chai"],
     "esModuleInterop": false,
-    "target": "es2017",
+    "target": "ESNext",
     "allowJs": false,
     "declarationMap": true
   }

@@ -3,13 +3,10 @@
   "compilerOptions": {
     "moduleResolution": "node",
     "baseUrl": ".",
-    "paths": {
-    }
   },
   "types": [
     "node",
     "mocha",
-    "chai",
     "sinon",
     "cypress",
     "jest"

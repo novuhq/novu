@@ -5,6 +5,7 @@ import { API_ROOT } from '../config';
 interface IOptions {
   absoluteUrl: boolean;
 }
+
 export const api = {
   get(url: string, options: IOptions = { absoluteUrl: false }) {
     return axios

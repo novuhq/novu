@@ -64,7 +64,8 @@
     "get-packages-folder": "node scripts/get-packages-folder.mjs",
     "jarvis": "node scripts/jarvis.js",
     "dev-environment-setup": "sh ./scripts/dev-environment-setup.sh",
-    "get-affected": "node scripts/print-affected-array.mjs"
+    "get-affected": "node scripts/print-affected-array.mjs",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@auto-it/npm": "^10.36.5",
@@ -85,7 +86,7 @@
     "@pnpm/logger": "^5.0.0",
     "@types/inquirer": "8.2.7",
     "@types/jest": "29.5.2",
-    "@types/node": "16.11.7",
+    "@types/node": "^18.0.0 || >=20.0.0",
     "@typescript-eslint/eslint-plugin": "^5.50.0",
     "@typescript-eslint/parser": "^5.50.0",
     "auto": "^10.36.5",
@@ -181,7 +182,7 @@
     }
   },
   "engines": {
-    "node": ">=13.0.0 <17.0.0",
+    "node": "^18.0.0 || >=20.0.0",
     "pnpm": "^8.9.0"
   },
   "dependencies": {

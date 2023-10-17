@@ -42,11 +42,11 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=10"
+    "node": ">=12"
   },
   "dependencies": {
     "@novu/stateless": "^0.20.0",
-    "emailjs": "^3.6.0"
+    "emailjs": "^4.0.3"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "1.0.2",

@@ -44,7 +44,7 @@
     "@types/express": "^4.17.8",
     "@types/html-to-text": "^9.0.1",
     "@types/mocha": "^10.0.2",
-    "@types/node": "^14.14.6",
+    "@types/node": "^18.0.0 || >=20.0.0",
     "@types/sinon": "^9.0.0",
     "@types/smtp-server": "^3.5.7",
     "cross-env": "^7.0.3",
