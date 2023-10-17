@@ -12,10 +12,25 @@ export const WorkflowWrapper = styled.div<{ height: string }>`
     cursor: default;
   }
 
+  .react-flow {
+    overflow: visible;
+  }
+
   .react-flow__attribution {
     background: transparent;
     opacity: 0.5;
     right: 133px;
+  }
+
+  .react-flow__attribution a {
+    position: relative;
+    font-size: initial;
+    top: 25px;
+    right: 173px;
+  }
+
+  .react-flow__attribution a:hover {
+    color: lightpink !important;
   }
 
   .react-flow__handle {

@@ -25,7 +25,6 @@ import { ParseEventRequestCommand } from './parse-event-request.command';
 
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { VerifyPayload, VerifyPayloadCommand } from '../verify-payload';
-import { MapTriggerRecipients, MapTriggerRecipientsCommand } from '../map-trigger-recipients';
 
 const LOG_CONTEXT = 'ParseEventRequest';
 
@@ -36,28 +35,12 @@ export class ParseEventRequest {
     private verifyPayload: VerifyPayload,
     private storageHelperService: StorageHelperService,
     private workflowQueueService: WorkflowQueueService,
-    private mapTriggerRecipients: MapTriggerRecipients,
     private tenantRepository: TenantRepository
   ) {}
 
   @InstrumentUsecase()
   async execute(command: ParseEventRequestCommand) {
     const transactionId = command.transactionId || uuidv4();
-
-    const mappedActor = command.actor ? this.mapTriggerRecipients.mapSubscriber(command.actor) : undefined;
-
-    const mappedRecipients = await this.mapTriggerRecipients.execute(
-      MapTriggerRecipientsCommand.create({
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        recipients: command.to,
-        transactionId,
-        userId: command.userId,
-        actor: mappedActor,
-      })
-    );
-
-    await this.validateSubscriberIdProperty(mappedRecipients);
 
     const template = await this.getNotificationTemplateByTriggerIdentifier({
       environmentId: command.environmentId,
@@ -94,7 +77,10 @@ export class ParseEventRequest {
 
     if (command.tenant) {
       try {
-        await this.validateTenant(typeof command.tenant === 'string' ? command.tenant : command.tenant.identifier);
+        await this.validateTenant({
+          identifier: typeof command.tenant === 'string' ? command.tenant : command.tenant.identifier,
+          _environmentId: command.environmentId,
+        });
       } catch (e) {
         return {
           acknowledged: true,
@@ -128,8 +114,8 @@ export class ParseEventRequest {
 
     const jobData = {
       ...command,
-      to: mappedRecipients,
-      actor: mappedActor,
+      to: command.to,
+      actor: command.actor,
       transactionId,
     };
     await this.workflowQueueService.add(transactionId, jobData, command.organizationId);
@@ -159,34 +145,14 @@ export class ParseEventRequest {
     );
   }
 
-  private async validateTenant(identifier: string) {
+  private async validateTenant({ identifier, _environmentId }: { identifier: string; _environmentId: string }) {
     const found = await this.tenantRepository.findOne({
-      identifier,
+      _environmentId: _environmentId,
+      identifier: identifier,
     });
     if (!found) {
-      throw new ApiException(`Tenant with identifier ${identifier} cound not be found`);
+      throw new ApiException(`Tenant with identifier ${identifier} could not be found`);
     }
-  }
-
-  @Instrument()
-  private async validateSubscriberIdProperty(to: ISubscribersDefine[]): Promise<boolean> {
-    for (const subscriber of to) {
-      const subscriberIdExists = typeof subscriber === 'string' ? subscriber : subscriber.subscriberId;
-
-      if (Array.isArray(subscriberIdExists)) {
-        throw new ApiException(
-          'subscriberId under property to is type array, which is not allowed please make sure all subscribers ids are strings'
-        );
-      }
-
-      if (!subscriberIdExists) {
-        throw new ApiException(
-          'subscriberId under property to is not configured, please make sure all subscribers contains subscriberId property'
-        );
-      }
-    }
-
-    return true;
   }
 
   @Instrument()
