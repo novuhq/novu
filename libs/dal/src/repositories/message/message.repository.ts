@@ -321,7 +321,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       throw new DalException(`Could not find a message with id ${query._id}`);
     }
 
-    await this.message.delete({ _id: message._id, _environmentId: message._environmentId });
+    return await this.message.delete({ _id: message._id, _environmentId: message._environmentId });
   }
 
   async deleteMany(query: MessageQuery) {

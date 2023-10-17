@@ -62,6 +62,7 @@ export class CompileEmailTemplate {
     }
 
     let subject = '';
+    let senderName = '';
     const content: string | IEmailBlock[] = command.content;
     let preheader = command.preheader;
 
@@ -82,6 +83,9 @@ export class CompileEmailTemplate {
 
       if (preheader) {
         preheader = await this.renderContent(preheader, payload);
+      }
+      if (command.senderName) {
+        senderName = await this.renderContent(command.senderName, payload);
       }
     } catch (e: any) {
       throw new ApiException(
@@ -128,7 +132,7 @@ export class CompileEmailTemplate {
         )
       : body;
 
-    return { html, content, subject };
+    return { html, content, subject, senderName };
   }
 
   private async renderContent(

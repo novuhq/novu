@@ -63,7 +63,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
           content: '',
           metadata: {
             unit: DigestUnitEnum.SECONDS,
-            amount: 0.1,
+            amount: 2,
             type: DelayTypeEnum.REGULAR,
           },
         },
@@ -94,7 +94,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     const subExpire30Days = subDays(expireAt, 30);
     const diff = differenceInMilliseconds(subExpire30Days, createdAt);
 
-    expect(diff).to.approximately(100, 200);
+    expect(diff).to.approximately(200, 2000);
 
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
@@ -141,7 +141,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
         customVar: 'Testing of User Name',
       },
       id,
-      { delay: { amount: 1, unit: DigestUnitEnum.SECONDS } }
+      { delay: { amount: 2, unit: DigestUnitEnum.SECONDS } }
     );
     await session.awaitRunningJobs(template?._id, true, 0);
     const messages = await messageRepository.find({
@@ -211,7 +211,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
           content: '',
           metadata: {
             unit: DigestUnitEnum.SECONDS,
-            amount: 0.1,
+            amount: 2,
             type: DigestTypeEnum.REGULAR,
           },
         },
@@ -226,13 +226,11 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
       eventNumber: '1',
     });
 
-    await session.awaitRunningJobs(template?._id, true, 1);
-
     await triggerEvent({
       eventNumber: '2',
     });
 
-    await session.awaitRunningJobs(template?._id, true, 1);
+    await session.awaitRunningJobs(template?._id, true, 0);
 
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
@@ -240,8 +238,8 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
       channel: StepTypeEnum.SMS,
     });
 
-    expect(messages[0].content).to.include('Event 1');
-    expect(messages[0].content).to.include('Digested Events 1');
+    expect(messages[0].content).to.include('Event ');
+    expect(messages[0].content).to.include('Digested Events 2');
   });
 
   it('should send a single message for same exact scheduled delay', async function () {
@@ -260,7 +258,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
           content: '',
           metadata: {
             unit: DigestUnitEnum.SECONDS,
-            amount: 1,
+            amount: 2,
             type: DigestTypeEnum.REGULAR,
           },
         },

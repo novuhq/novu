@@ -13,6 +13,29 @@
 The ultimate service for managing multi-channel notifications with a single API.
 </div>
 
+<h1 align="center">🎉 We're participating in Hacktoberfest 2023! 🎉</h1>
+
+Interested in participating in Hacktoberfest? We extend a warm invitation! You also get the opportunity to win some swag 😁
+
+> ⭐️ If you're new to Hacktoberfest, you can learn more and register to participate [here](https://hacktoberfest.com/participation/). Registration is from **September 26th - October 31st**.
+
+- Our Hacktoberfest kickoff event is happening on October 2, 2023. 🚀
+- Check out our website for [hacktoberfest instructions](https://novu.co/hacktoberfest/).
+- Join our [Discord and engage with our community](https://discord.com/invite/novu), get answers to your challenges, stay updated on events, announcements & prizes.
+
+In addition to this repository, here are the other Novu repositories you can contribute to for Hacktoberfest:
+- [Novu Docs](https://github.com/novuhq/docs/issues)
+- [Novu PHP SDK](https://github.com/novuhq/novu-php/issues)
+- [Novu Ruby SDK](https://github.com/novuhq/novu-ruby/issues)
+- [Novu Python SDK](https://github.com/novuhq/novu-python/issues)
+- [Novu Go SDK](https://github.com/novuhq/go-novu/issues)
+- [Novu Java SDK](https://github.com/novuhq/novu-java/issues)
+- [Novu Kotlin SDK](https://github.com/novuhq/novu-kotlin/issues)
+- [Novu Elixir SDK](https://github.com/novuhq/novu-elixir/issues)
+- [Novu Rust SDK](https://github.com/novuhq/novu-rust/issues)
+
+Your contribution, no matter its size, holds immense value. We eagerly await to see the impact you'll make in our community! 🚀
+
   <p align="center">
     <br />
     <a href="https://docs.novu.co" rel="dofollow"><strong>Explore the docs »</strong></a>
@@ -83,7 +106,11 @@ We are excited to launch the complete Novu API and admin panel. Want to give it 
 npx novu init
 ```
 
-After setting up your account using the cloud or docker version you can trigger the API using the `@novu/node` package.
+After setting up your account using the cloud or docker version, you can trigger the API using the `@novu/node` package.
+
+For API documentation and reference, please visit [Novu API Reference](https://docs.novu.co/api-reference/events/trigger-event).
+
+To get started with the Node.js package, you can install it using npm:
 
 ```bash
 npm install @novu/node
@@ -122,9 +149,9 @@ Using the Novu API and admin panel, you can easily add a real-time notification 
 Read more about how to add a notification center to your app with the Novu API [here](https://docs.novu.co/notification-center/getting-started)
 
 <p align="center">
-  <a href="https://docs.novu.co/notification-center/getting-started">React Component</a>
-  · <a href="https://docs.novu.co/notification-center/vue-component">Vue Component</a>
-  · <a href="https://github.com/novuhq/novu/tree/next/packages/notification-center-angular">Angular Component</a>
+  <a href="https://docs.novu.co/sdks/react">React Component</a>
+  · <a href="https://docs.novu.co/sdks/vue">Vue Component</a>
+  · <a href="https://docs.novu.co/sdks/angular">Angular Component</a>
   </p>
   
 </div>
@@ -181,10 +208,10 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 #### 👇 Chat
 
-- [x] Slack
-- [x] Discord
-- [x] MS Teams
-- [x] Mattermost
+- [x] [Slack](https://github.com/novuhq/novu/tree/main/providers/slack)
+- [x] [Discord](https://github.com/novuhq/novu/tree/main/providers/discord)
+- [x] [MS Teams](https://github.com/novuhq/novu/tree/main/providers/ms-teams)
+- [x] [Mattermost](https://github.com/novuhq/novu/tree/main/providers/mattermost)
 
 #### 📱 In-App
 
@@ -201,7 +228,7 @@ Before you begin coding and collaborating, please read our [Code of Conduct](htt
 
 ## 💻 Need Help?
 
-We are more than happy to help you. If you are getting any errors or facing problems while working on this project, join our [Discord server](https://discord.novu.co) and ask for help. We are open to discussing anything related to the project.
+We are more than happy to help you. If you are getting any errors or facing problems while working on this project, join our [Discord server](https://discord.novu.co) and ask for help. We are open to discuss anything related to the project.
 
 ## ⚡ Immediate working space with Gitpod
 
@@ -211,7 +238,7 @@ We are more than happy to help you. If you are getting any errors or facing prob
 
 - [Home page](https://novu.co/)
 - [Contribution Guidelines](https://github.com/novuhq/novu/blob/main/CONTRIBUTING.md)
-- [Run Novu Locally](https://docs.novu.co/community/run-locally)
+- [Run Novu Locally](https://docs.novu.co/community/run-in-local-machine)
 
 ## 🛡️ License
 

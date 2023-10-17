@@ -83,6 +83,8 @@ export class SelectIntegration {
 
       if (command.filterData.tenant.identifier) {
         tenant = await this.tenantRepository.findOne({
+          _organizationId: command.organizationId,
+          _environmentId: command.environmentId,
           identifier: command.filterData.tenant.identifier,
         });
       }
@@ -130,7 +132,7 @@ export class SelectIntegration {
     );
 
     let query: Partial<IntegrationEntity> & { _organizationId: string } = {
-      ...(command.id ? { id: command.id } : {}),
+      ...(command.id ? { _id: command.id } : {}),
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
       channel: command.channelType,

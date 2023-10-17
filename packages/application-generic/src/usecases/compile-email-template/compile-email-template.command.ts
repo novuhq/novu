@@ -24,4 +24,8 @@ export class CompileEmailTemplateCommand extends EnvironmentWithUserCommand {
   @IsString()
   @IsOptional()
   preheader?: string | null;
+
+  @IsString()
+  @IsOptional()
+  senderName?: string | null;
 }
