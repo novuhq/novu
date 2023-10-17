@@ -1,7 +1,13 @@
 import { Body, Controller, Delete, Param, Post, Scope, UseGuards } from '@nestjs/common';
 import { ApiOkResponse, ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { v4 as uuidv4 } from 'uuid';
-import { IJwtPayload, ITenantDefine, TriggerTenantContext } from '@novu/shared';
+import {
+  IJwtPayload,
+  ISubscribersDefine,
+  ITenantDefine,
+  TriggerRecipientSubscriber,
+  TriggerTenantContext,
+} from '@novu/shared';
 import { SendTestEmail, SendTestEmailCommand } from '@novu/application-generic';
 
 import {
@@ -111,7 +117,7 @@ export class EventsController {
     @Body() body: TriggerEventToAllRequestDto
   ): Promise<TriggerEventResponseDto> {
     const transactionId = body.transactionId || uuidv4();
-    const mappedActor = typeof body.actor === 'string' ? { subscriberId: body.actor } : null;
+    const mappedActor = this.mapActor(body.actor);
     const mappedTenant = body.tenant ? this.mapTenant(body.tenant) : null;
 
     return this.triggerEventToAll.execute(
@@ -174,6 +180,16 @@ export class EventsController {
         transactionId,
       })
     );
+  }
+
+  private mapActor(actor?: TriggerRecipientSubscriber | null): ISubscribersDefine | null {
+    if (!actor) return null;
+
+    if (typeof actor === 'string') {
+      return { subscriberId: actor };
+    }
+
+    return actor;
   }
 
   private mapTenant(tenant?: TriggerTenantContext | null): ITenantDefine | null {
