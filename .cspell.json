@@ -511,7 +511,12 @@
     "autodocs",
     "stackalt",
     "mediumdark",
-    "Docgen"
+    "Docgen",
+    "clicksend",
+    "Clicksend",
+    "Kamil",
+    "Myśliwiec",
+    "nestframework"
   ],
   "flagWords": [],
   "patterns": [
