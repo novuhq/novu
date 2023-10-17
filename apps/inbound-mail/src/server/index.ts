@@ -33,7 +33,7 @@ class Mailin extends events.EventEmitter {
     super();
 
     this.configuration = {
-      host: '127.0.0.1',
+      host: '0.0.0.0',
       port: 2500,
       tmp: '.tmp',
       disableWebhook: true,

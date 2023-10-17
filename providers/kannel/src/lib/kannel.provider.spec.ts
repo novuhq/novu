@@ -9,7 +9,7 @@ test('should trigger Kannel SMS axios request correctly', async () => {
   jest.spyOn(axios, 'get').mockImplementation(fakeGet);
 
   const provider = new KannelSmsProvider({
-    host: '127.0.0.1',
+    host: '0.0.0.0',
     port: '13000',
     from: '0000',
   });
@@ -29,10 +29,7 @@ test('should trigger Kannel SMS axios request correctly', async () => {
   });
 
   expect(fakeGet).toHaveBeenCalled();
-  expect(fakeGet).toHaveBeenCalledWith(
-    'http://127.0.0.1:13000/cgi-bin/sendsms',
-    {
-      params: testQueryParams,
-    }
-  );
+  expect(fakeGet).toHaveBeenCalledWith('http://0.0.0.0:13000/cgi-bin/sendsms', {
+    params: testQueryParams,
+  });
 });
