@@ -13,5 +13,25 @@
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "tslib": "^2.3.0"
-  }
+  },
+  "files": [
+    "dist/esm2022",
+    "dist/fesm2022",
+    "dist/lib",
+    "dist/index.d.ts"
+  ],
+  "module": "dist/fesm2022/novu-notification-center-angular.mjs",
+  "typings": "dist/index.d.ts",
+  "exports": {
+    "./package.json": {
+      "default": "./package.json"
+    },
+    ".": {
+      "types": "./dist/index.d.ts",
+      "esm2022": "./dist/esm2022/novu-notification-center-angular.mjs",
+      "esm": "./dist/esm2022/novu-notification-center-angular.mjs",
+      "default": "./dist/fesm2022/novu-notification-center-angular.mjs"
+    }
+  },
+  "sideEffects": false
 }

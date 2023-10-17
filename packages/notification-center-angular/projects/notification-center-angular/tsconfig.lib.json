@@ -2,7 +2,7 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../dist/notification-center-angular",
+    "outDir": "dist",
     "declaration": true,
     "declarationMap": true,
     "inlineSources": true,
