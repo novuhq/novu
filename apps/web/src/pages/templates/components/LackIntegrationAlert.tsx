@@ -50,21 +50,6 @@ export function LackIntegrationAlert({
     }
   };
 
-  function handleErrorRectangleClick() {
-    if (isPrimaryMissing) {
-      openSelectPrimaryIntegrationModal({
-        environmentId: environment?._id,
-        channelType: channelType,
-        onClose: () => {
-          segment.track(TemplateEditorAnalyticsEnum.CONFIGURE_PRIMARY_PROVIDER_BANNER_CLICK);
-        },
-      });
-    } else {
-      openIntegrationsModal(true);
-      segment.track(TemplateEditorAnalyticsEnum.CONFIGURE_PROVIDER_BANNER_CLICK);
-    }
-  }
-
   return (
     <>
       <WarningMessage onClick={handleErrorRectangleClick} backgroundColor={alertTypeToMessageBackgroundColor(type)}>
