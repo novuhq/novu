@@ -4,7 +4,7 @@ import { TerminusModule } from '@nestjs/terminus';
 import {
   AddJob,
   AddDelayJob,
-  AddDigestJob,
+  MergeOrCreateDigest,
   CreateExecutionDetails,
   CreateNotificationJobs,
   DigestFilterSteps,
@@ -20,6 +20,7 @@ import {
   SendTestEmail,
   StoreSubscriberJobs,
   TriggerEvent,
+  MapTriggerRecipients,
 } from '@novu/application-generic';
 
 import { EventsController } from './events.controller';
@@ -40,7 +41,7 @@ import { TenantModule } from '../tenant/tenant.module';
 const PROVIDERS = [
   AddJob,
   AddDelayJob,
-  AddDigestJob,
+  MergeOrCreateDigest,
   CreateExecutionDetails,
   CreateNotificationJobs,
   DigestFilterSteps,
@@ -55,6 +56,7 @@ const PROVIDERS = [
   SendTestEmail,
   StoreSubscriberJobs,
   TriggerEvent,
+  MapTriggerRecipients,
 ];
 
 @Module({

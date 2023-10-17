@@ -33,10 +33,6 @@
   "publishConfig": {
     "access": "public"
   },
-  "engines": {
-    "node": ">=13.0.0 <17.0.0",
-    "pnpm": "^7.26.0"
-  },
   "dependencies": {
     "@novu/stateless": "<%= version %>"
   },
