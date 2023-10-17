@@ -13,7 +13,7 @@ jobs:
         with:
           repo-token: "${{ secrets.GITHUB_TOKEN }}"
 
-      - uses: microsoft/PR-Metrics@v1.5.4
+      - uses: microsoft/PR-Metrics@v1.5.7
         name: PR Metrics
         env:
           PR_METRICS_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
