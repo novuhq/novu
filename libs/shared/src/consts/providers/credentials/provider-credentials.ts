@@ -220,6 +220,16 @@ export const resendConfig: IConfigCredentials[] = [
   ...mailConfigBase,
 ];
 
+export const mailtrapConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  ...mailConfigBase,
+];
+
 export const plunkConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
@@ -736,6 +746,23 @@ export const sendchampConfig: IConfigCredentials[] = [
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
     type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+];
+
+export const clickSendConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.User,
+    displayName: 'Username',
+    description: 'Your Clicksend API username',
+    type: 'text',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'text',
     required: true,
   },
   ...smsConfigBase,
