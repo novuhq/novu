@@ -1,3 +1,4 @@
+import { ApiController } from '@bandwidth/messaging';
 import { BandwidthSmsProvider } from './bandwidth.provider';
 
 test('should trigger BandwidthSmsProvider library correctly', async () => {
@@ -8,11 +9,13 @@ test('should trigger BandwidthSmsProvider library correctly', async () => {
   });
 
   const spy = jest
-    .spyOn(provider, 'sendMessage')
+    .spyOn(provider.controller, 'createMessage')
     .mockImplementation(async () => {
       return {
-        id: '12345-67a8',
-        date: new Date().toISOString(),
+        result: {
+          id: '12345-67a8',
+          time: new Date().toISOString(),
+        },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any;
     });
@@ -24,8 +27,10 @@ test('should trigger BandwidthSmsProvider library correctly', async () => {
 
   expect(spy).toHaveBeenCalled();
 
-  expect(spy).toHaveBeenCalledWith({
-    to: '+12345678902',
-    content: 'test message',
+  expect(spy).toHaveBeenCalledWith('<your-bandwidth-accountId>', {
+    applicationId: '<your-bandwidth-accountId>',
+    to: ['+12345678902'],
+    from: undefined,
+    text: 'test message',
   });
 });

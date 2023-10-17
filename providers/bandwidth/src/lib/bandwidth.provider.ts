@@ -5,13 +5,12 @@ import {
   ISmsProvider,
 } from '@novu/stateless';
 
-import { Client, ApiController, MessageRequest } from '@bandwidth/messaging';
-
+import { Client, ApiController } from '@bandwidth/messaging';
 export class BandwidthSmsProvider implements ISmsProvider {
   id = 'bandwidth';
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
 
-  private controller: ApiController;
+  public controller: ApiController;
 
   constructor(
     private config: {
