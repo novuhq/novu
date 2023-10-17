@@ -4,7 +4,7 @@ import { Skeleton } from '@mantine/core';
 import { IExtendedCellProps } from './Table';
 import { Renderer } from 'react-table';
 
-export const SkeletonStyled = styled(Skeleton)`
+const SkeletonStyled = styled(Skeleton)`
   width: 100%;
 `;
 

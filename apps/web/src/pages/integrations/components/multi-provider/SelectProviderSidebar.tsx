@@ -33,6 +33,7 @@ import { sortProviders } from './sort-providers';
 import { When } from '../../../../components/utils/When';
 import { CONTEXT_PATH } from '../../../../config';
 import { useProviders } from '../../useProviders';
+import { HEADER_HEIGHT } from '../../../../components/layout/constants';
 
 const filterSearch = (list, search: string) =>
   list.filter((prov) => prov.displayName.toLowerCase().includes(search.toLowerCase()));
@@ -130,6 +131,7 @@ export function SelectProviderSidebar({
     <Sidebar
       isOpened={isOpened}
       isLoading={isIntegrationsLoading}
+      headerHeight={HEADER_HEIGHT}
       onClose={onSidebarClose}
       customHeader={
         <Stack spacing={8}>

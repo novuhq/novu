@@ -1,14 +1,10 @@
 import styled from '@emotion/styled';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-
 import { ThemeProvider } from '../ThemeProvider';
 import { MemoryRouter } from 'react-router-dom';
 
-const queryClient = new QueryClient();
 
 export function TestWrapper({ children }) {
   return (
-    <QueryClientProvider client={queryClient}>
       <MemoryRouter>
         <Wrapper>
           <Frame>
@@ -16,7 +12,6 @@ export function TestWrapper({ children }) {
           </Frame>
         </Wrapper>
       </MemoryRouter>
-    </QueryClientProvider>
   );
 }
 

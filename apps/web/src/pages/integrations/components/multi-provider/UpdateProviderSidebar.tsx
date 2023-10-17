@@ -38,6 +38,7 @@ import { useSelectPrimaryIntegrationModal } from './useSelectPrimaryIntegrationM
 import { ShareableUrl } from '../Modal/ConnectIntegrationForm';
 import { Conditions, IConditions } from '../../../../components/conditions';
 import { useDisclosure } from '@mantine/hooks';
+import { HEADER_HEIGHT } from '../../../../components/layout/constants';
 
 interface IProviderForm {
   name: string;
@@ -253,6 +254,7 @@ export function UpdateProviderSidebar({
     return (
       <FormProvider {...methods}>
         <Sidebar
+          headerHeight={HEADER_HEIGHT}
           isOpened={isSidebarOpened}
           isLoading={areProvidersLoading || areEnvironmentsLoading}
           onClose={onSidebarClose}
@@ -291,6 +293,7 @@ export function UpdateProviderSidebar({
   return (
     <FormProvider {...methods}>
       <Sidebar
+        headerHeight={HEADER_HEIGHT}
         isOpened={isSidebarOpened}
         isLoading={areProvidersLoading || areEnvironmentsLoading}
         isExpanded={sidebarState === SidebarStateEnum.EXPANDED}

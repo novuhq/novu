@@ -24,6 +24,7 @@ import {
   When,
 } from '@novu/design-system';
 import { ConditionsContextEnum, ConditionsContextFields, IConditions } from './types';
+import { HEADER_HEIGHT } from '../layout/constants';
 
 interface IConditionsForm {
   conditions: IConditions[];
@@ -93,6 +94,7 @@ export function Conditions({
 
   return (
     <Sidebar
+      headerHeight={HEADER_HEIGHT}
       isOpened={isOpened}
       onClose={onClose}
       isExpanded

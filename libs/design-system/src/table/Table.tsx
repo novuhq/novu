@@ -28,7 +28,7 @@ const NoDataPlaceholder = styled.div`
   flex: 1;
 `;
 
-export const RadioSkeleton = styled(Skeleton)`
+const RadioSkeleton = styled(Skeleton)`
   width: 20px;
   min-width: 20px;
   height: 20px;

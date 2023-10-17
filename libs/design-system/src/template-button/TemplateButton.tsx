@@ -7,8 +7,22 @@ import { Text } from '../typography/text/Text';
 import { Switch } from '../switch/Switch';
 import { useTemplateButtonStyles } from './TemplateButton.styles';
 import { colors } from '../config';
-import { Button } from './Button';
 import { IconWrapper } from './IconWrapper';
+import { UnstyledButton, UnstyledButtonProps, createPolymorphicComponent } from '@mantine/core';
+
+const Button = createPolymorphicComponent<'button', UnstyledButtonProps>(
+  React.forwardRef<HTMLButtonElement, UnstyledButtonProps>((props, ref) => {
+    return <WrapperButton ref={ref} {...props} />;
+  })
+);
+
+const WrapperButton: any = styled(UnstyledButton)`
+  position: relative;
+
+  @media screen and (max-width: 1400px) {
+    padding: 0 5px;
+  }
+`;
 
 const usePopoverStyles = createStyles(() => ({
   dropdown: {

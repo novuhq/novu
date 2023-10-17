@@ -19,5 +19,5 @@
     "types": ["cypress"]
   },
   "include": ["src", "cypress/global.d.ts"],
-  "exclude": ["src/**/*.test.*", "src/*.test.*", "node_modules", "**/node_modules/*"]
+  "exclude": ["src/**/*.test.*", "src/*.test.*", "node_modules", "**/node_modules/*", "**/*.stories.*"]
 }

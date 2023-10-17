@@ -29,6 +29,7 @@ import { When } from '../../../../components/utils/When';
 import { Conditions, IConditions } from '../../../../components/conditions';
 import { ConditionIconButton } from '../ConditionIconButton';
 import { ProviderImage } from './SelectProviderSidebar';
+import { HEADER_HEIGHT } from '../../../../components/layout/constants';
 
 interface ICreateProviderInstanceForm {
   name: string;
@@ -177,6 +178,7 @@ export function CreateProviderInstanceSidebar({
     <Sidebar
       isOpened={isOpened}
       isLoading={isLoading}
+      headerHeight={HEADER_HEIGHT}
       onSubmit={(e) => {
         handleSubmit(onCreateIntegrationInstance)(e);
         e.stopPropagation();
