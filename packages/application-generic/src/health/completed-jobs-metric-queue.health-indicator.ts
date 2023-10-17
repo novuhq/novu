@@ -35,4 +35,24 @@ export class CompletedJobsMetricQueueServiceHealthIndicator extends HealthIndica
       this.getStatus(this.INDICATOR_KEY, false)
     );
   }
+  async isActive(): Promise<HealthIndicatorResult> {
+    const isReady = this.completedJobsMetricQueueService.isReady();
+    const isPaused = await this.completedJobsMetricQueueService.isPaused();
+
+    if (isReady && !isPaused) {
+      Logger.verbose('CompletedJobsMetricQueueService is active', LOG_CONTEXT);
+
+      return this.getStatus(this.INDICATOR_KEY, true);
+    }
+
+    Logger.verbose(
+      'CompletedJobsMetricQueueService is not active',
+      LOG_CONTEXT
+    );
+
+    throw new HealthCheckError(
+      'CompletedJobsMetric Queue Health',
+      this.getStatus(this.INDICATOR_KEY, false)
+    );
+  }
 }
