@@ -1,22 +1,22 @@
 import { Group } from '@mantine/core';
-import { useState } from 'react';
+import { FilterPartTypeEnum } from '@novu/shared';
+import { useEffect, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { FilterPartTypeEnum } from '@novu/shared';
 
 import { Conditions, IConditions } from '../../../components/conditions';
+import { When } from '../../../components/utils/When';
+import { ActionButton } from '../../../design-system/button/ActionButton';
 import { Condition, ConditionPlus, ConditionsFile, Trash, VariantPlus } from '../../../design-system/icons';
+import { useEnvController } from '../../../hooks';
+import { useBasePath } from '../hooks/useBasePath';
 import { useFilterPartsList } from '../hooks/useFilterPartsList';
 import { useStepFormPath } from '../hooks/useStepFormPath';
-import { IForm } from './formTypes';
-import { When } from '../../../components/utils/When';
-import { useStepInfoPath } from '../hooks/useStepInfoPath';
-import { useTemplateEditorForm } from './TemplateEditorFormProvider';
-import { useBasePath } from '../hooks/useBasePath';
-import { ActionButton } from '../../../design-system/button/ActionButton';
-import { useEnvController } from '../../../hooks';
 import { useStepIndex } from '../hooks/useStepIndex';
+import { useStepInfoPath } from '../hooks/useStepInfoPath';
 import { useStepVariantsCount } from '../hooks/useStepVariantsCount';
+import { IForm } from './formTypes';
+import { useTemplateEditorForm } from './TemplateEditorFormProvider';
 
 export const EditorSidebarHeaderActions = () => {
   const { watch, setValue } = useFormContext<IForm>();
@@ -29,10 +29,13 @@ export const EditorSidebarHeaderActions = () => {
   const basePath = useBasePath();
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const [areConditionsOpened, setConditionsOpened] = useState(
-    () => pathname.endsWith('/conditions') || pathname.endsWith('variants/create')
-  );
-  const [proceedToNewVariant, setProceedToNewVariant] = useState(false);
+  const [areConditionsOpened, setConditionsOpened] = useState(false);
+
+  useEffect(() => {
+    setConditionsOpened(pathname.endsWith('/conditions') || pathname.endsWith('variants/create'));
+  }, [pathname]);
+  // we need to know if we are creating a new variant to continue redirection to the new variant page
+  const proceedToNewVariant = useRef(false);
 
   const stepFormPath = useStepFormPath();
   const filterPartsList = useFilterPartsList();
@@ -58,7 +61,7 @@ export const EditorSidebarHeaderActions = () => {
 
   const updateConditions = (newConditions: IConditions[]) => {
     if (isNewVariantCreationUrl) {
-      setProceedToNewVariant(true);
+      proceedToNewVariant.current = true;
       const variant = addVariant(stepUuid);
       if (variant) {
         const variantIndex = 0; // we add the variant at the beginning of the array
@@ -72,15 +75,24 @@ export const EditorSidebarHeaderActions = () => {
 
   const onConditionsClose = () => {
     setConditionsOpened(false);
+    const isRootConditionUrl = pathname.endsWith('/variants/conditions');
+    const isVariantConditionUrl = !isRootConditionUrl && pathname.endsWith('/conditions');
 
-    const isConditionUrl = pathname.endsWith('/conditions');
-
-    if (isConditionUrl) {
-      const newPath = basePath.replace('/conditions', '');
+    if (isVariantConditionUrl) {
+      const newPath = basePath + `/${channel}/${stepUuid}/variants`;
       navigate(newPath);
+
+      return;
     }
 
-    if (isNewVariantCreationUrl && !proceedToNewVariant) {
+    if (isRootConditionUrl) {
+      const newPath = basePath.replace('/conditions', '');
+      navigate(newPath);
+
+      return;
+    }
+
+    if (isNewVariantCreationUrl && !proceedToNewVariant.current) {
       const newPath = pathname.replace('/create', '');
       navigate(newPath);
     }
