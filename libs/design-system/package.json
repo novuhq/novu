@@ -35,7 +35,7 @@
     "eslint-plugin-storybook": "^0.6.13",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
-    "react-router-dom": "^6.10.0",
+    "react-router-dom": "6.2.2",
     "rimraf": "^3.0.2",
     "storybook": "^7.4.2",
     "terser-webpack-plugin": "^5.3.9",
