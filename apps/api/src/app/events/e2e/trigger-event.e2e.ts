@@ -32,6 +32,8 @@ import {
   InAppProviderIdEnum,
   MESSAGE_IN_APP_RETENTION_DAYS,
   MESSAGE_GENERIC_RETENTION_DAYS,
+  ActorTypeEnum,
+  SystemAvatarIconEnum,
 } from '@novu/shared';
 import { EmailEventStatusEnum } from '@novu/stateless';
 import { createTenant } from '../../tenant/e2e/create-tenant.e2e';
@@ -83,7 +85,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
             content: '',
             metadata: {
               unit: DigestUnitEnum.SECONDS,
-              amount: 1,
+              amount: 2,
               type: DelayTypeEnum.REGULAR,
             },
             filters: [
@@ -163,7 +165,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
             content: '',
             metadata: {
               unit: DigestUnitEnum.SECONDS,
-              amount: 1,
+              amount: 2,
               type: DelayTypeEnum.REGULAR,
             },
             filters: [
@@ -243,7 +245,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
             content: '',
             metadata: {
               unit: DigestUnitEnum.SECONDS,
-              amount: 1,
+              amount: 2,
               type: DelayTypeEnum.REGULAR,
             },
             filters: [
@@ -324,7 +326,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
             content: '',
             metadata: {
               unit: DigestUnitEnum.SECONDS,
-              amount: 1,
+              amount: 2,
               type: DelayTypeEnum.REGULAR,
             },
             filters: [
@@ -2022,6 +2024,148 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       // axiosPostStub.restore();
     });
 
+    describe('in-app avatar', () => {
+      it('should send the message with choosed system avatar', async () => {
+        const firstStepUuid = uuid();
+        template = await session.createTemplate({
+          steps: [
+            {
+              type: StepTypeEnum.IN_APP,
+              content: 'Hello world!',
+              uuid: firstStepUuid,
+              actor: {
+                type: ActorTypeEnum.SYSTEM_ICON,
+                data: SystemAvatarIconEnum.WARNING,
+              },
+            },
+          ],
+        });
+
+        await axiosInstance.post(
+          `${session.serverUrl}${eventTriggerPath}`,
+          {
+            name: template.triggers[0].identifier,
+            to: [subscriber.subscriberId],
+            payload: {},
+          },
+          {
+            headers: {
+              authorization: `ApiKey ${session.apiKey}`,
+            },
+          }
+        );
+
+        await session.awaitRunningJobs(template?._id, true, 1);
+
+        const messages = await messageRepository.find({
+          _environmentId: session.environment._id,
+          _subscriberId: subscriber._id,
+          channel: StepTypeEnum.IN_APP,
+        });
+
+        expect(messages.length).to.equal(1);
+        expect(messages[0].actor).to.be.ok;
+        expect(messages[0].actor?.type).to.eq(ActorTypeEnum.SYSTEM_ICON);
+        expect(messages[0].actor?.data).to.eq(SystemAvatarIconEnum.WARNING);
+      });
+
+      it('should send the message with custom system avatar url', async () => {
+        const firstStepUuid = uuid();
+        const avatarUrl = 'https://gravatar.com/avatar/5246ec47a6a90ef2bcd29f0ef7d2faa6?s=400&d=robohash&r=x';
+
+        template = await session.createTemplate({
+          steps: [
+            {
+              type: StepTypeEnum.IN_APP,
+              content: 'Hello world!',
+              uuid: firstStepUuid,
+              actor: {
+                type: ActorTypeEnum.SYSTEM_CUSTOM,
+                data: avatarUrl,
+              },
+            },
+          ],
+        });
+
+        await axiosInstance.post(
+          `${session.serverUrl}${eventTriggerPath}`,
+          {
+            name: template.triggers[0].identifier,
+            to: [subscriber.subscriberId],
+            payload: {},
+          },
+          {
+            headers: {
+              authorization: `ApiKey ${session.apiKey}`,
+            },
+          }
+        );
+
+        await session.awaitRunningJobs(template?._id, true, 1);
+
+        const messages = await messageRepository.find({
+          _environmentId: session.environment._id,
+          _subscriberId: subscriber._id,
+          channel: StepTypeEnum.IN_APP,
+        });
+
+        expect(messages.length).to.equal(1);
+        expect(messages[0].actor).to.be.ok;
+        expect(messages[0].actor?.type).to.eq(ActorTypeEnum.SYSTEM_CUSTOM);
+        expect(messages[0].actor?.data).to.eq(avatarUrl);
+      });
+
+      it('should send the message with the actor avatar', async () => {
+        const firstStepUuid = uuid();
+        const avatarUrl = 'https://gravatar.com/avatar/5246ec47a6a90ef2bcd29f0ef7d2faa6?s=400&d=robohash&r=x';
+
+        const actor = await subscriberService.createSubscriber({ avatar: avatarUrl });
+
+        template = await session.createTemplate({
+          steps: [
+            {
+              type: StepTypeEnum.IN_APP,
+              content: 'Hello world!',
+              uuid: firstStepUuid,
+              actor: {
+                type: ActorTypeEnum.USER,
+                data: null,
+              },
+            },
+          ],
+        });
+
+        await axiosInstance.post(
+          `${session.serverUrl}${eventTriggerPath}`,
+          {
+            name: template.triggers[0].identifier,
+            to: [subscriber.subscriberId],
+            payload: {},
+            actor: actor.subscriberId,
+          },
+          {
+            headers: {
+              authorization: `ApiKey ${session.apiKey}`,
+            },
+          }
+        );
+
+        await session.awaitRunningJobs(template?._id, true, 1);
+
+        const messages = await messageRepository.find({
+          _environmentId: session.environment._id,
+          _subscriberId: subscriber._id,
+          channel: StepTypeEnum.IN_APP,
+        });
+
+        expect(messages.length).to.equal(1);
+        expect(messages[0].actor).to.be.ok;
+        expect(messages[0].actor?.type).to.eq(ActorTypeEnum.USER);
+        expect(messages[0].actor?.data).to.eq(null);
+        expect(messages[0]._actorId).to.eq(actor._id);
+      });
+    });
+
     describe('seen/read filter', () => {
       it('should filter in app seen/read step', async function () {
         const firstStepUuid = uuid();
@@ -2037,7 +2181,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
               content: '',
               metadata: {
                 unit: DigestUnitEnum.SECONDS,
-                amount: 1,
+                amount: 2,
                 type: DelayTypeEnum.REGULAR,
               },
             },
@@ -2127,7 +2271,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
               content: '',
               metadata: {
                 unit: DigestUnitEnum.SECONDS,
-                amount: 1,
+                amount: 2,
                 type: DelayTypeEnum.REGULAR,
               },
             },

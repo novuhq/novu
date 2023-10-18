@@ -35,4 +35,5 @@ export enum DetailEnum {
   DIGEST_MERGED = 'Digest was merged with other digest',
   DELAY_FINISHED = 'Delay is finished',
   PUSH_MISSING_DEVICE_TOKENS = 'Subscriber credentials is missing the tokens for sending a push notification message',
+  NOTIFICATION_ERROR = 'There was one or more errors when trying to execute the notification',
 }

@@ -1,36 +1,15 @@
-import {
-  HealthCheckError,
-  HealthIndicator,
-  HealthIndicatorResult,
-} from '@nestjs/terminus';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import { InboundParseQueue } from '../services';
+import { QueueHealthIndicator } from './queue-health-indicator.service';
 
 const LOG_CONTEXT = 'InboundParseQueueServiceHealthIndicator';
+const INDICATOR_KEY = 'inboundParseQueue';
+const SERVICE_NAME = 'InboundParseQueueService';
 
 @Injectable()
-export class InboundParseQueueServiceHealthIndicator extends HealthIndicator {
-  private INDICATOR_KEY = 'inboundParseQueue';
-
+export class InboundParseQueueServiceHealthIndicator extends QueueHealthIndicator {
   constructor(private inboundParseQueueService: InboundParseQueue) {
-    super();
-  }
-
-  async isHealthy(): Promise<HealthIndicatorResult> {
-    const isReady = this.inboundParseQueueService.isReady();
-
-    if (isReady) {
-      Logger.verbose('InboundParseQueueService is ready', LOG_CONTEXT);
-
-      return this.getStatus(this.INDICATOR_KEY, true);
-    }
-
-    Logger.verbose('InboundParseQueueService is not ready', LOG_CONTEXT);
-
-    throw new HealthCheckError(
-      'InboundParse Queue Health',
-      this.getStatus(this.INDICATOR_KEY, false)
-    );
+    super(inboundParseQueueService, INDICATOR_KEY, SERVICE_NAME, LOG_CONTEXT);
   }
 }

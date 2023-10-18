@@ -751,6 +751,23 @@ export const sendchampConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
+export const clickSendConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.User,
+    displayName: 'Username',
+    description: 'Your Clicksend API username',
+    type: 'text',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'text',
+    required: true,
+  },
+  ...smsConfigBase,
+];
+
 export const telegramConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.BotToken,
