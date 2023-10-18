@@ -49,7 +49,7 @@ export function VariantsPage() {
     return null;
   }
 
-  const { variants } = step;
+  const variants = step?.variants ?? [];
 
   return (
     <VariantsListSidebar variantsCount={variants?.length ?? 0}>

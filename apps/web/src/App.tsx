@@ -211,10 +211,7 @@ function App() {
                     <Route path=":channel/:stepUuid/variants" element={<VariantsPage />} />
                     <Route path=":channel/:stepUuid/variants/:variantUuid" element={<ChannelStepEditor />} />
                     <Route path=":channel/:stepUuid/variants/:variantUuid/conditions" element={<VariantsPage />} />
-                    <Route
-                      path=":channel/:stepUuid/variants/:variantUuid/conditions/create"
-                      element={<VariantsPage />}
-                    />
+                    <Route path=":channel/:stepUuid/variants/create" element={<VariantsPage />} />
                     <Route path=":channel/:stepUuid/variants/conditions" element={<VariantsPage />} />
                   </Route>
                   <Route path={ROUTES.WORKFLOWS} element={<WorkflowListPage />} />

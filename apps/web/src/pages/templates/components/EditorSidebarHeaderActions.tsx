@@ -15,57 +15,73 @@ import { useTemplateEditorForm } from './TemplateEditorFormProvider';
 import { useBasePath } from '../hooks/useBasePath';
 import { ActionButton } from '../../../design-system/button/ActionButton';
 import { useEnvController } from '../../../hooks';
+import { useStepIndex } from '../hooks/useStepIndex';
+import { useStepVariantsCount } from '../hooks/useStepVariantsCount';
 
 export const EditorSidebarHeaderActions = () => {
   const { watch, setValue } = useFormContext<IForm>();
   const { addVariant } = useTemplateEditorForm();
   const { readonly: isReadonly } = useEnvController();
-  const { stepUuid = '' } = useParams<{
+  const { stepUuid = '', channel = '' } = useParams<{
     stepUuid: string;
+    channel: string;
   }>();
   const basePath = useBasePath();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [areConditionsOpened, setConditionsOpened] = useState(
-    () => pathname.endsWith('/conditions') || pathname.endsWith('/conditions/create')
+    () => pathname.endsWith('/conditions') || pathname.endsWith('variants/create')
   );
+  const [proceedToNewVariant, setProceedToNewVariant] = useState(false);
 
   const stepFormPath = useStepFormPath();
   const filterPartsList = useFilterPartsList();
   const { isUnderTheStepPath, isUnderVariantsListPath } = useStepInfoPath();
+  const { stepIndex } = useStepIndex();
+  const { variantsCount } = useStepVariantsCount();
 
-  const filters = watch(`${stepFormPath}.filters.0.children`);
-  const conditions = watch(`${stepFormPath}.filters`);
-  const name = watch(`${stepFormPath}.name`);
+  const isNewVariantCreationUrl = pathname.endsWith('/variants/create');
+  // [] is the default value for filters for the new variants
+  const filters = isNewVariantCreationUrl ? [] : watch(`${stepFormPath}.filters.0.children`);
+  const conditions = isNewVariantCreationUrl ? [] : watch(`${stepFormPath}.filters`);
+  const formPathName = watch(`${stepFormPath}.name`);
+  const name = isNewVariantCreationUrl ? `V${variantsCount + 1} ${formPathName}` : formPathName;
 
   const PlusIcon = isUnderVariantsListPath ? ConditionsFile : ConditionPlus;
   const ConditionsIcon = isUnderVariantsListPath ? ConditionsFile : Condition;
-  const hasNoFilters = (filters && filters?.length === 0) || !filters;
+  const hasNoFilters = (filters && filters?.length === 0) || !filters || isNewVariantCreationUrl;
 
   const onAddVariant = () => {
-    const variant = addVariant(stepUuid);
-    if (variant) {
-      navigate(basePath + `/${variant?.template.type}/${stepUuid}/variants/${variant?.uuid}/conditions/create`);
-    }
+    const newPath = basePath + `/${channel}/${stepUuid}/variants/create`;
+    navigate(newPath);
   };
 
   const updateConditions = (newConditions: IConditions[]) => {
-    setValue(`${stepFormPath}.filters`, newConditions, { shouldDirty: true });
+    if (isNewVariantCreationUrl) {
+      setProceedToNewVariant(true);
+      const variant = addVariant(stepUuid);
+      if (variant) {
+        const variantIndex = 0; // we add the variant at the beginning of the array
+        setValue(`steps.${stepIndex}.variants.${variantIndex}.filters`, newConditions, { shouldDirty: true });
+        navigate(basePath + `/${variant.template.type}/${stepUuid}/variants/${variant.uuid}`);
+      }
+    } else {
+      setValue(`${stepFormPath}.filters`, newConditions, { shouldDirty: true });
+    }
   };
 
   const onConditionsClose = () => {
     setConditionsOpened(false);
 
-    const isNewVariantConditionUrl = pathname.endsWith('/conditions/create');
     const isConditionUrl = pathname.endsWith('/conditions');
-
-    if (isNewVariantConditionUrl) {
-      const newPath = pathname.replace('/conditions/create', '');
-      navigate(newPath);
-    }
 
     if (isConditionUrl) {
       const newPath = basePath.replace('/conditions', '');
+      navigate(newPath);
+    }
+
+    if (isNewVariantCreationUrl && !proceedToNewVariant) {
+      const newPath = pathname.replace('/create', '');
       navigate(newPath);
     }
   };

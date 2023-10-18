@@ -85,9 +85,10 @@ const WorkflowEditor = () => {
   };
 
   const onAddVariant = (uuid: string) => {
-    const newVariant = addVariant(uuid);
-    if (newVariant) {
-      navigate(basePath + `/${newVariant?.template.type}/${uuid}/variants/${newVariant.uuid}/conditions/create`);
+    const channelStep = steps.find((step) => step.uuid === uuid);
+
+    if (channelStep) {
+      navigate(basePath + `/${channelStep.template.type}/${uuid}/variants/create`);
     }
   };
 
