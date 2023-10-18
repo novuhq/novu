@@ -79,8 +79,8 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0
       '@types/inquirer':
-        specifier: 8.2.6
-        version: 8.2.6
+        specifier: 8.2.7
+        version: 8.2.7
       '@types/jest':
         specifier: 29.5.2
         version: 29.5.2
@@ -181,8 +181,8 @@ importers:
         specifier: ^6.2.0
         version: 6.2.11
       inquirer:
-        specifier: 8.2.5
-        version: 8.2.5
+        specifier: 8.2.6
+        version: 8.2.6
       jest:
         specifier: 27.5.1
         version: 27.5.1(ts-node@10.9.1)
@@ -6261,7 +6261,7 @@ packages:
       '@smithy/util-retry': 2.0.0
       '@smithy/util-utf8': 2.0.0
       fast-xml-parser: 4.2.5
-      tslib: 2.5.0
+      tslib: 2.6.2
     transitivePeerDependencies:
       - aws-crt
     dev: false
@@ -6355,7 +6355,7 @@ packages:
       '@smithy/property-provider': 2.0.3
       '@smithy/shared-ini-file-loader': 2.0.3
       '@smithy/types': 2.2.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     transitivePeerDependencies:
       - aws-crt
     dev: false
@@ -6441,7 +6441,7 @@ packages:
       '@smithy/protocol-http': 2.0.3
       '@smithy/types': 2.2.0
       '@smithy/util-config-provider': 2.0.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@aws-sdk/middleware-expect-continue@3.387.0:
@@ -6451,7 +6451,7 @@ packages:
       '@aws-sdk/types': 3.387.0
       '@smithy/protocol-http': 2.0.3
       '@smithy/types': 2.2.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@aws-sdk/middleware-flexible-checksums@3.387.0:
@@ -6465,7 +6465,7 @@ packages:
       '@smithy/protocol-http': 2.0.3
       '@smithy/types': 2.2.0
       '@smithy/util-utf8': 2.0.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@aws-sdk/middleware-host-header@3.379.1:
@@ -6485,7 +6485,7 @@ packages:
       '@aws-sdk/types': 3.387.0
       '@smithy/protocol-http': 2.0.3
       '@smithy/types': 2.2.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@aws-sdk/middleware-location-constraint@3.387.0:
@@ -6494,7 +6494,7 @@ packages:
     dependencies:
       '@aws-sdk/types': 3.387.0
       '@smithy/types': 2.2.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@aws-sdk/middleware-logger@3.378.0:
@@ -6512,7 +6512,7 @@ packages:
     dependencies:
       '@aws-sdk/types': 3.387.0
       '@smithy/types': 2.2.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@aws-sdk/middleware-recursion-detection@3.378.0:
@@ -6532,7 +6532,7 @@ packages:
       '@aws-sdk/types': 3.387.0
       '@smithy/protocol-http': 2.0.3
       '@smithy/types': 2.2.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@aws-sdk/middleware-sdk-s3@3.387.0:
@@ -6543,7 +6543,7 @@ packages:
       '@aws-sdk/util-arn-parser': 3.310.0
       '@smithy/protocol-http': 2.0.3
       '@smithy/types': 2.2.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@aws-sdk/middleware-sdk-sts@3.379.1:
@@ -6589,7 +6589,7 @@ packages:
       '@smithy/signature-v4': 2.0.3
       '@smithy/types': 2.2.0
       '@smithy/util-middleware': 2.0.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@aws-sdk/middleware-ssec@3.387.0:
@@ -6598,7 +6598,7 @@ packages:
     dependencies:
       '@aws-sdk/types': 3.387.0
       '@smithy/types': 2.2.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@aws-sdk/middleware-user-agent@3.382.0:
@@ -6620,7 +6620,7 @@ packages:
       '@aws-sdk/util-endpoints': 3.387.0
       '@smithy/protocol-http': 2.0.3
       '@smithy/types': 2.2.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@aws-sdk/s3-request-presigner@3.388.0:
@@ -6652,7 +6652,7 @@ packages:
       '@smithy/protocol-http': 2.0.3
       '@smithy/signature-v4': 2.0.3
       '@smithy/types': 2.2.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@aws-sdk/token-providers@3.382.0:
@@ -6725,7 +6725,7 @@ packages:
     engines: {node: '>=14.0.0'}
     dependencies:
       '@smithy/types': 2.2.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@aws-sdk/util-arn-parser@3.310.0:
@@ -6748,7 +6748,7 @@ packages:
     engines: {node: '>=14.0.0'}
     dependencies:
       '@aws-sdk/types': 3.387.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@aws-sdk/util-format-url@3.387.0:
@@ -6783,7 +6783,7 @@ packages:
       '@aws-sdk/types': 3.387.0
       '@smithy/types': 2.2.0
       bowser: 2.11.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@aws-sdk/util-user-agent-node@3.378.0:
@@ -6813,7 +6813,7 @@ packages:
       '@aws-sdk/types': 3.387.0
       '@smithy/node-config-provider': 2.0.3
       '@smithy/types': 2.2.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@aws-sdk/util-utf8-browser@3.259.0:
@@ -6826,7 +6826,7 @@ packages:
     resolution: {integrity: sha512-TqELu4mOuSIKQCqj63fGVs86Yh+vBx5nHRpWKNUNhB2nPTpfbziTs5c1X358be3peVWA4wPxW7Nt53KIg1tnNw==}
     engines: {node: '>=14.0.0'}
     dependencies:
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@azure/abort-controller@1.1.0:
@@ -14323,7 +14323,7 @@ packages:
       '@jest/test-result': 27.5.1
       '@jest/transform': 27.5.1
       '@jest/types': 27.5.1
-      '@types/node': 16.11.7
+      '@types/node': 14.18.42
       ansi-escapes: 4.3.2
       chalk: 4.1.2
       emittery: 0.8.1
@@ -15325,7 +15325,7 @@ packages:
     resolution: {integrity: sha512-4hTNmVYADEr0GJTMegWV+GW6n+dzKx1vN9v2ISqyle283Myv930WxuyO0PeYGqTrkneJsyPreCMovuEGCvZ0iQ==}
     engines: {node: ^14.15.0 || >=16.0.0}
     dependencies:
-      inquirer: 8.2.5
+      inquirer: 8.2.6
       npmlog: 6.0.2
     dev: true
 
@@ -17580,8 +17580,47 @@ packages:
       react-refresh: 0.11.0
       schema-utils: 3.3.0
       source-map: 0.7.4
-      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+      webpack: 5.78.0
       webpack-dev-server: 4.11.1(webpack@5.78.0)
+    dev: true
+
+  /@pmmmwh/react-refresh-webpack-plugin@0.5.10(react-refresh@0.11.0)(webpack@5.78.0):
+    resolution: {integrity: sha512-j0Ya0hCFZPd4x40qLzbhGsh9TMtdb+CJQiso+WxLOPNasohq9cc5SNUcwsZaRH6++Xh91Xkm/xHCkuIiIu0LUA==}
+    engines: {node: '>= 10.13'}
+    peerDependencies:
+      '@types/webpack': 4.x || 5.x
+      react-refresh: '>=0.10.0 <1.0.0'
+      sockjs-client: ^1.4.0
+      type-fest: '>=0.17.0 <4.0.0'
+      webpack: '>=4.43.0 <6.0.0'
+      webpack-dev-server: 3.x || 4.x
+      webpack-hot-middleware: 2.x
+      webpack-plugin-serve: 0.x || 1.x
+    peerDependenciesMeta:
+      '@types/webpack':
+        optional: true
+      sockjs-client:
+        optional: true
+      type-fest:
+        optional: true
+      webpack-dev-server:
+        optional: true
+      webpack-hot-middleware:
+        optional: true
+      webpack-plugin-serve:
+        optional: true
+    dependencies:
+      ansi-html-community: 0.0.8
+      common-path-prefix: 3.0.0
+      core-js-pure: 3.30.0
+      error-stack-parser: 2.1.4
+      find-up: 5.0.0
+      html-entities: 2.3.3
+      loader-utils: 2.0.4
+      react-refresh: 0.11.0
+      schema-utils: 3.3.0
+      source-map: 0.7.4
+      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
     dev: true
 
   /@pmmmwh/react-refresh-webpack-plugin@0.5.10(react-refresh@0.14.0)(webpack-dev-server@4.11.1)(webpack@5.78.0):
@@ -19454,7 +19493,7 @@ packages:
       '@smithy/types': 2.2.0
       '@smithy/util-config-provider': 2.0.0
       '@smithy/util-middleware': 2.0.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@smithy/credential-provider-imds@2.0.3:
@@ -19483,7 +19522,7 @@ packages:
     dependencies:
       '@smithy/eventstream-serde-universal': 2.0.3
       '@smithy/types': 2.2.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@smithy/eventstream-serde-config-resolver@2.0.3:
@@ -19491,7 +19530,7 @@ packages:
     engines: {node: '>=14.0.0'}
     dependencies:
       '@smithy/types': 2.2.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@smithy/eventstream-serde-node@2.0.3:
@@ -19500,7 +19539,7 @@ packages:
     dependencies:
       '@smithy/eventstream-serde-universal': 2.0.3
       '@smithy/types': 2.2.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@smithy/eventstream-serde-universal@2.0.3:
@@ -19519,7 +19558,7 @@ packages:
       '@smithy/querystring-builder': 2.0.3
       '@smithy/types': 2.2.0
       '@smithy/util-base64': 2.0.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@smithy/hash-blob-browser@2.0.3:
@@ -19528,7 +19567,7 @@ packages:
       '@smithy/chunked-blob-reader': 2.0.0
       '@smithy/chunked-blob-reader-native': 2.0.0
       '@smithy/types': 2.2.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@smithy/hash-node@2.0.3:
@@ -19538,7 +19577,7 @@ packages:
       '@smithy/types': 2.2.0
       '@smithy/util-buffer-from': 2.0.0
       '@smithy/util-utf8': 2.0.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@smithy/hash-stream-node@2.0.3:
@@ -19547,14 +19586,14 @@ packages:
     dependencies:
       '@smithy/types': 2.2.0
       '@smithy/util-utf8': 2.0.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@smithy/invalid-dependency@2.0.3:
     resolution: {integrity: sha512-GtmVXD/s+OZlFG1o3HfUI55aBJZXX5/iznAQkgjRGf8prYoO8GvSZLDWHXJp91arybaJxYd133oJORGf4YxGAg==}
     dependencies:
       '@smithy/types': 2.2.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@smithy/is-array-buffer@2.0.0:
@@ -19569,7 +19608,7 @@ packages:
     dependencies:
       '@smithy/types': 2.2.0
       '@smithy/util-utf8': 2.0.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@smithy/middleware-content-length@2.0.3:
@@ -19578,7 +19617,7 @@ packages:
     dependencies:
       '@smithy/protocol-http': 2.0.3
       '@smithy/types': 2.2.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@smithy/middleware-endpoint@2.0.3:
@@ -19589,7 +19628,7 @@ packages:
       '@smithy/types': 2.2.0
       '@smithy/url-parser': 2.0.3
       '@smithy/util-middleware': 2.0.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@smithy/middleware-retry@2.0.3:
@@ -19601,7 +19640,7 @@ packages:
       '@smithy/types': 2.2.0
       '@smithy/util-middleware': 2.0.0
       '@smithy/util-retry': 2.0.0
-      tslib: 2.5.0
+      tslib: 2.6.2
       uuid: 8.3.2
     dev: false
 
@@ -19610,14 +19649,14 @@ packages:
     engines: {node: '>=14.0.0'}
     dependencies:
       '@smithy/types': 2.2.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@smithy/middleware-stack@2.0.0:
     resolution: {integrity: sha512-31XC1xNF65nlbc16yuh3wwTudmqs6qy4EseQUGF8A/p2m/5wdd/cnXJqpniy/XvXVwkHPz/GwV36HqzHtIKATQ==}
     engines: {node: '>=14.0.0'}
     dependencies:
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@smithy/node-config-provider@2.0.3:
@@ -19627,7 +19666,7 @@ packages:
       '@smithy/property-provider': 2.0.3
       '@smithy/shared-ini-file-loader': 2.0.3
       '@smithy/types': 2.2.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@smithy/node-http-handler@2.0.3:
@@ -19638,7 +19677,7 @@ packages:
       '@smithy/protocol-http': 2.0.3
       '@smithy/querystring-builder': 2.0.3
       '@smithy/types': 2.2.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@smithy/property-provider@2.0.3:
@@ -19654,7 +19693,7 @@ packages:
     engines: {node: '>=14.0.0'}
     dependencies:
       '@smithy/types': 2.2.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@smithy/querystring-builder@2.0.3:
@@ -19716,14 +19755,14 @@ packages:
       '@smithy/middleware-stack': 2.0.0
       '@smithy/types': 2.2.0
       '@smithy/util-stream': 2.0.3
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@smithy/types@2.2.0:
     resolution: {integrity: sha512-Ahpt9KvD0mWeWiyaGo5EBE7KOByLl3jl4CD9Ps/r8qySgzVzo/4qsa+vvstOU3ZEriALmrPqUKIhqHt0Rn+m6g==}
     engines: {node: '>=14.0.0'}
     dependencies:
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@smithy/types@2.2.2:
@@ -19738,7 +19777,7 @@ packages:
     dependencies:
       '@smithy/querystring-parser': 2.0.3
       '@smithy/types': 2.2.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@smithy/url-parser@2.0.5:
@@ -19754,20 +19793,20 @@ packages:
     engines: {node: '>=14.0.0'}
     dependencies:
       '@smithy/util-buffer-from': 2.0.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@smithy/util-body-length-browser@2.0.0:
     resolution: {integrity: sha512-JdDuS4ircJt+FDnaQj88TzZY3+njZ6O+D3uakS32f2VNnDo3vyEuNdBOh/oFd8Df1zSZOuH1HEChk2AOYDezZg==}
     dependencies:
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@smithy/util-body-length-node@2.0.0:
     resolution: {integrity: sha512-ZV7Z/WHTMxHJe/xL/56qZwSUcl63/5aaPAGjkfynJm4poILjdD4GmFI+V+YWabh2WJIjwTKZ5PNsuvPQKt93Mg==}
     engines: {node: '>=14.0.0'}
     dependencies:
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@smithy/util-buffer-from@2.0.0:
@@ -19792,7 +19831,7 @@ packages:
       '@smithy/property-provider': 2.0.3
       '@smithy/types': 2.2.0
       bowser: 2.11.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@smithy/util-defaults-mode-node@2.0.3:
@@ -19804,7 +19843,7 @@ packages:
       '@smithy/node-config-provider': 2.0.3
       '@smithy/property-provider': 2.0.3
       '@smithy/types': 2.2.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@smithy/util-hex-encoding@2.0.0:
@@ -19826,7 +19865,7 @@ packages:
     engines: {node: '>= 14.0.0'}
     dependencies:
       '@smithy/service-error-classification': 2.0.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@smithy/util-stream@2.0.3:
@@ -19840,7 +19879,7 @@ packages:
       '@smithy/util-buffer-from': 2.0.0
       '@smithy/util-hex-encoding': 2.0.0
       '@smithy/util-utf8': 2.0.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@smithy/util-uri-escape@2.0.0:
@@ -19855,7 +19894,7 @@ packages:
     engines: {node: '>=14.0.0'}
     dependencies:
       '@smithy/util-buffer-from': 2.0.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@smithy/util-waiter@2.0.3:
@@ -19864,7 +19903,7 @@ packages:
     dependencies:
       '@smithy/abort-controller': 2.0.3
       '@smithy/types': 2.2.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@socket.io/component-emitter@3.1.0:
@@ -21777,7 +21816,7 @@ packages:
       '@babel/core': 7.23.2
       '@babel/preset-flow': 7.22.15(@babel/core@7.23.2)
       '@babel/preset-react': 7.22.15(@babel/core@7.23.2)
-      '@pmmmwh/react-refresh-webpack-plugin': 0.5.10(react-refresh@0.11.0)(webpack-dev-server@4.11.1)(webpack@5.78.0)
+      '@pmmmwh/react-refresh-webpack-plugin': 0.5.10(react-refresh@0.11.0)(webpack@5.78.0)
       '@storybook/core-webpack': 7.4.2
       '@storybook/docs-tools': 7.4.2
       '@storybook/node-logger': 7.4.2
@@ -22574,7 +22613,7 @@ packages:
   /@types/bonjour@3.5.10:
     resolution: {integrity: sha512-p7ienRMiS41Nu2/igbJxxLDWrSZ0WxM8UQgCeO9KhoVF7cOVFkrKsiDr1EsJIla8vV3oEEjGcz11jc5yimhzZw==}
     dependencies:
-      '@types/node': 12.20.55
+      '@types/node': 14.18.42
 
   /@types/bull@3.15.9:
     resolution: {integrity: sha512-MPUcyPPQauAmynoO3ezHAmCOhbB0pWmYyijr/5ctaCqhbKWsjW0YCod38ZcLzUBprosfZ9dPqfYIcfdKjk7RNQ==}
@@ -22608,7 +22647,7 @@ packages:
     resolution: {integrity: sha512-h8QJa8xSb1WD4fpKBDcATDNGXghFj6/3GRWG6dhmRcu0RX1Ubasur2Uvx5aeEwlf0MwblEC2bMzzMQntxnw/Cw==}
     dependencies:
       '@types/express-serve-static-core': 4.17.33
-      '@types/node': 20.8.6
+      '@types/node': 14.18.42
 
   /@types/connect@3.4.35:
     resolution: {integrity: sha512-cdeYyv4KWoEgpBISTxWvqYsVy444DOqehiF3fM3ne10AmJ62RSyNkUnxMJXHQWRQQX2eR94m5y1IZyDwBjV9FQ==}
@@ -22930,6 +22969,13 @@ packages:
 
   /@types/inquirer@8.2.6:
     resolution: {integrity: sha512-3uT88kxg8lNzY8ay2ZjP44DKcRaTGztqeIvN2zHvhzIBH/uAPaL75aBtdNRKbA7xXoMbBt5kX0M00VKAnfOYlA==}
+    dependencies:
+      '@types/through': 0.0.30
+      rxjs: 7.8.1
+    dev: true
+
+  /@types/inquirer@8.2.7:
+    resolution: {integrity: sha512-uICJEaJOf6MsKyyAf8p58+QxTS6dwy91QVfXk1hnQ0rUT+u7KpkeFx5dxQ/oju0BaOKB284brEMBHLpNf4bZDQ==}
     dependencies:
       '@types/through': 0.0.30
       rxjs: 7.8.1
@@ -23388,7 +23434,7 @@ packages:
   /@types/sockjs@0.3.33:
     resolution: {integrity: sha512-f0KEEe05NvUnat+boPTZ0dgaLZ4SfSouXUgv5noUiefG2ajgKjmETo9ZJyuqsl7dfl2aHlLJUiki6B4ZYldiiw==}
     dependencies:
-      '@types/node': 12.20.55
+      '@types/node': 14.18.42
 
   /@types/source-list-map@0.1.3:
     resolution: {integrity: sha512-I9R/7fUjzUOyDy6AFkehCK711wWoAXEaBi80AfjZt1lIkbe6AcXKd3ckQc3liMvQExWvfOeh/8CtKzrfUFN5gA==}
@@ -23436,7 +23482,7 @@ packages:
   /@types/through@0.0.30:
     resolution: {integrity: sha512-FvnCJljyxhPM3gkRgWmxmDZyAQSiBQQWLI0A0VFL0K7W1oRUrPJSqNO0NvTnLkBcotdlp3lKvaT0JrnyRDkzOg==}
     dependencies:
-      '@types/node': 20.8.6
+      '@types/node': 14.18.42
     dev: true
 
   /@types/tinycolor2@1.4.3:
@@ -23508,7 +23554,7 @@ packages:
   /@types/ws@8.5.4:
     resolution: {integrity: sha512-zdQDHKUgcX/zBc4GrwsE/7dVdAD8JR4EuiAXiiUhhfyIJXXb2+PrGshFyeXWQPMmmZ2XxgaqclgpIC7eTXc1mg==}
     dependencies:
-      '@types/node': 12.20.55
+      '@types/node': 14.18.42
 
   /@types/yargs-parser@21.0.0:
     resolution: {integrity: sha512-iO9ZQHkZxHn4mSakYV0vFHAVDyEOIJQrV2uZ06HxEPcx+mt8swXoZHIbaaJ2crJYFfErySgktuTZ3BeLz+XmFA==}
@@ -25694,7 +25740,7 @@ packages:
       loader-utils: 2.0.4
       make-dir: 3.1.0
       schema-utils: 2.7.1
-      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+      webpack: 5.78.0
     dev: true
 
   /babel-loader@8.3.0(@babel/core@7.23.2)(webpack@5.82.1):
@@ -28475,7 +28521,7 @@ packages:
       postcss-modules-values: 4.0.0(postcss@8.4.31)
       postcss-value-parser: 4.2.0
       semver: 7.5.4
-      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+      webpack: 5.78.0
     dev: true
 
   /css-minimizer-webpack-plugin@3.4.1(esbuild@0.18.20)(webpack@5.78.0):
@@ -30701,7 +30747,7 @@ packages:
       micromatch: 4.0.5
       normalize-path: 3.0.0
       schema-utils: 4.0.0
-      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+      webpack: 5.78.0
     dev: true
 
   /eslint@7.32.0:
@@ -31469,7 +31515,7 @@ packages:
     dependencies:
       loader-utils: 2.0.4
       schema-utils: 3.3.0
-      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+      webpack: 5.78.0
     dev: true
 
   /file-selector@0.6.0:
@@ -31799,7 +31845,7 @@ packages:
       semver: 7.5.4
       tapable: 1.1.3
       typescript: 4.9.5
-      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+      webpack: 5.78.0
     dev: true
 
   /fork-ts-checker-webpack-plugin@8.0.0(typescript@4.9.5)(webpack@5.78.0):
@@ -33300,7 +33346,7 @@ packages:
       lodash: 4.17.21
       pretty-error: 4.0.0
       tapable: 2.2.1
-      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+      webpack: 5.78.0
 
   /htmlparser2@6.1.0:
     resolution: {integrity: sha512-gyyPk6rgonLFEDGoeRgQNaEUvdJ4ktTmmUh/h2t7s+M8oPpIPxgNACWa+6ESR57kXstwqPiCut0V8NRpcwgU7A==}
@@ -36454,7 +36500,7 @@ packages:
       '@lerna/version': 5.6.2(nx@15.9.4)
       '@nrwl/devkit': 15.9.2(nx@15.9.4)
       import-local: 3.1.0
-      inquirer: 8.2.5
+      inquirer: 8.2.6
       npmlog: 6.0.2
       nx: 15.9.4
       typescript: 4.9.5
@@ -36490,7 +36536,7 @@ packages:
       less: 4.1.3
       loader-utils: 1.4.2
       pify: 3.0.0
-      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+      webpack: 5.78.0
     dev: true
 
   /less@4.1.3:
@@ -38063,7 +38109,7 @@ packages:
       webpack: ^5.0.0
     dependencies:
       schema-utils: 4.0.0
-      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+      webpack: 5.78.0
     dev: true
 
   /minimalistic-assert@1.0.1:
@@ -41117,7 +41163,7 @@ packages:
       klona: 2.0.6
       postcss: 8.4.31
       semver: 7.5.4
-      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+      webpack: 5.78.0
     dev: true
 
   /postcss-loader@7.0.2(postcss@8.4.31)(webpack@5.76.1):
@@ -42720,7 +42766,7 @@ packages:
     peerDependencies:
       react-scripts: '>=2.1.3'
     dependencies:
-      react-scripts: 5.0.1(@babel/plugin-syntax-flow@7.22.5)(@babel/plugin-transform-react-jsx@7.22.15)(@swc/core@1.3.49)(esbuild@0.18.20)(eslint-import-resolver-webpack@0.13.7)(eslint@8.51.0)(react@17.0.2)(ts-node@10.9.1)(typescript@4.9.5)
+      react-scripts: 5.0.1(@babel/plugin-syntax-flow@7.22.5)(@babel/plugin-transform-react-jsx@7.22.15)(eslint-import-resolver-webpack@0.13.7)(eslint@8.51.0)(react@17.0.2)(ts-node@10.9.1)(typescript@4.9.5)
       semver: 5.7.2
     dev: true
 
@@ -42815,7 +42861,7 @@ packages:
       strip-ansi: 6.0.1
       text-table: 0.2.0
       typescript: 4.9.5
-      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+      webpack: 5.78.0
     transitivePeerDependencies:
       - eslint
       - supports-color
@@ -44552,7 +44598,7 @@ packages:
     dependencies:
       klona: 2.0.6
       neo-async: 2.6.2
-      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+      webpack: 5.78.0
     dev: true
 
   /sass-loader@13.2.0(sass@1.58.1)(webpack@5.76.1):
@@ -45288,7 +45334,7 @@ packages:
       abab: 2.0.6
       iconv-lite: 0.6.3
       source-map-js: 1.0.2
-      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+      webpack: 5.78.0
     dev: true
 
   /source-map-loader@4.0.1(webpack@5.76.1):
@@ -45977,7 +46023,7 @@ packages:
     peerDependencies:
       webpack: ^5.0.0
     dependencies:
-      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+      webpack: 5.78.0
     dev: true
 
   /stylehacks@5.1.1(postcss@8.4.31):
@@ -46644,7 +46690,6 @@ packages:
       serialize-javascript: 6.0.1
       terser: 5.22.0
       webpack: 5.78.0
-    dev: true
 
   /terser-webpack-plugin@5.3.9(webpack@5.88.2):
     resolution: {integrity: sha512-ZuXsqE07EcggTWQjXUj+Aot/OMcD0bMKGgF63f7UxYcu5/AJF53aIpK1YoP5xR9l6s/Hy2b+t1AM0bLNPRuhwA==}
@@ -48608,7 +48653,7 @@ packages:
       mime-types: 2.1.35
       range-parser: 1.2.1
       schema-utils: 4.0.0
-      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+      webpack: 5.78.0
 
   /webpack-dev-middleware@6.0.1(webpack@5.76.1):
     resolution: {integrity: sha512-PZPZ6jFinmqVPJZbisfggDiC+2EeGZ1ZByyMP5sOFJcPPWSexalISz+cvm+j+oYPT7FIJyxT76esjnw9DhE5sw==}
@@ -48727,7 +48772,7 @@ packages:
       serve-index: 1.9.1
       sockjs: 0.3.24
       spdy: 4.0.2
-      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+      webpack: 5.78.0
       webpack-dev-middleware: 5.3.3(webpack@5.78.0)
       ws: 8.13.0
     transitivePeerDependencies:
@@ -48751,7 +48796,7 @@ packages:
       webpack: ^4.44.2 || ^5.47.0
     dependencies:
       tapable: 2.2.1
-      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+      webpack: 5.78.0
       webpack-sources: 2.3.1
     dev: true
 
@@ -48881,7 +48926,6 @@ packages:
       - '@swc/core'
       - esbuild
       - uglify-js
-    dev: true
 
   /webpack@5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4):
     resolution: {integrity: sha512-gT5DP72KInmE/3azEaQrISjTvLYlSM0j1Ezhht/KLVkrqtv10JoP/RXhwmX/frrutOPuSq3o5Vq0ehR/4Vmd1g==}
@@ -49354,7 +49398,7 @@ packages:
       fast-json-stable-stringify: 2.1.0
       pretty-bytes: 5.6.0
       upath: 1.2.0
-      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+      webpack: 5.78.0
       webpack-sources: 1.4.3
       workbox-build: 6.5.4
     transitivePeerDependencies:
