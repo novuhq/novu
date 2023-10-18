@@ -511,14 +511,14 @@
     "Docgen",
     "clicksend",
     "Clicksend",
-    "Kamil",
-    "Myśliwiec",
-    "nestframework"
-    "Clicksend",
     "guilded",
     "Guilded",
     "Wordmark",
-    "Logomark"
+    "Logomark",
+    "Clicksend",
+    "Kamil",
+    "Myśliwiec",
+    "nestframework"
   ],
   "flagWords": [],
   "patterns": [
