@@ -2,16 +2,15 @@ import styled from '@emotion/styled';
 import { ThemeProvider } from '../ThemeProvider';
 import { MemoryRouter } from 'react-router-dom';
 
-
 export function TestWrapper({ children }) {
   return (
-      <MemoryRouter>
-        <Wrapper>
-          <Frame>
-            <ThemeProvider>{children}</ThemeProvider>
-          </Frame>
-        </Wrapper>
-      </MemoryRouter>
+    <MemoryRouter>
+      <Wrapper>
+        <Frame>
+          <ThemeProvider>{children}</ThemeProvider>
+        </Frame>
+      </Wrapper>
+    </MemoryRouter>
   );
 }
 

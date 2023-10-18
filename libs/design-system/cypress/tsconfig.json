@@ -6,7 +6,6 @@
     "types": ["cypress"],
     "lib": ["es2015", "dom"],
     "isolatedModules": false,
-    "allowJs": true,
-    "noEmit": true
+    "allowJs": true
   }
 }
