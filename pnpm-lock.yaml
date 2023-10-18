@@ -5937,7 +5937,7 @@ packages:
       endent: 2.1.0
       enquirer: 2.3.6
       env-ci: 5.5.0
-      fast-glob: 3.3.0
+      fast-glob: 3.3.1
       fp-ts: 2.13.1
       fromentries: 1.3.2
       gitlog: 4.0.4
@@ -6975,7 +6975,7 @@ packages:
       '@aws-sdk/types': 3.387.0
       '@smithy/querystring-builder': 2.0.3
       '@smithy/types': 2.2.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@aws-sdk/util-locate-window@3.310.0:
@@ -7050,7 +7050,7 @@ packages:
     resolution: {integrity: sha512-TrRLIoSQVzfAJX9H1JeFjzAoDGcoK1IYX1UImfceTZpsyYfWr09Ss1aHW1y5TrrR3iq6RZLBwJ3E24uwPhwahw==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@azure/core-auth@1.4.0:
@@ -7075,7 +7075,7 @@ packages:
       form-data: 4.0.0
       node-fetch: 2.7.0
       process: 0.11.10
-      tslib: 2.5.0
+      tslib: 2.6.2
       tunnel: 0.0.6
       uuid: 8.3.2
       xml2js: 0.5.0
@@ -7090,14 +7090,14 @@ packages:
       '@azure/abort-controller': 1.1.0
       '@azure/core-util': 1.3.0
       '@azure/logger': 1.0.4
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@azure/core-paging@1.5.0:
     resolution: {integrity: sha512-zqWdVIt+2Z+3wqxEOGzR5hXFZ8MGKK52x4vFLw8n58pR6ZfKRx3EXYTxTaYxYHc/PexPUTyimcTWFJbji9Z6Iw==}
     engines: {node: '>=14.0.0'}
     dependencies:
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@azure/core-tracing@1.0.0-preview.13:
@@ -7105,7 +7105,7 @@ packages:
     engines: {node: '>=12.0.0'}
     dependencies:
       '@opentelemetry/api': 1.4.1
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@azure/core-util@1.3.0:
@@ -7120,7 +7120,7 @@ packages:
     resolution: {integrity: sha512-ustrPY8MryhloQj7OWGe+HrYx+aoiOxzbXTtgblbV3xwCqpzUK36phH3XNHQKj3EPonyFUuDTfR3qFhTEAuZEg==}
     engines: {node: '>=14.0.0'}
     dependencies:
-      tslib: 2.5.0
+      tslib: 2.6.2
     dev: false
 
   /@azure/storage-blob@12.13.0:
@@ -28197,7 +28197,7 @@ packages:
     peerDependencies:
       webpack: ^5.1.0
     dependencies:
-      fast-glob: 3.3.0
+      fast-glob: 3.3.1
       glob-parent: 6.0.2
       globby: 13.1.3
       normalize-path: 3.0.0
@@ -31214,7 +31214,7 @@ packages:
     dependencies:
       acorn: 8.10.0
       acorn-jsx: 5.3.2(acorn@8.10.0)
-      eslint-visitor-keys: 3.4.0
+      eslint-visitor-keys: 3.4.3
     dev: true
 
   /espree@9.6.1:
@@ -34419,7 +34419,7 @@ packages:
   /is-core-module@2.13.0:
     resolution: {integrity: sha512-Z7dk6Qo8pOCp3l4tsX2C5ZVas4V+UxwQodwZhLopL91TX8UyyHEXafPcyoeeWuLrwzHcr3igO78wNLwHJHsMCQ==}
     dependencies:
-      has: 1.0.3
+      has: 1.0.4
     dev: true
 
   /is-data-descriptor@0.1.4:
@@ -48853,7 +48853,7 @@ packages:
       debug: 4.3.4(supports-color@8.1.1)
       eslint: 8.38.0
       eslint-scope: 7.2.2
-      eslint-visitor-keys: 3.4.0
+      eslint-visitor-keys: 3.4.3
       espree: 9.5.1
       esquery: 1.5.0
       lodash: 4.17.21
