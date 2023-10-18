@@ -16,3 +16,6 @@ ReactDOM.render(
  * or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals .
  */
 reportWebVitals();
+
+// eslint-disable-next-line no-console
+console.log('Test affected apps');
