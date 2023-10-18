@@ -74,14 +74,14 @@ With Novu, you can create custom workflows and define conditions for each channe
 
 ## ✨ Features
 
-- 🌈 Single API for all messaging providers (In-App, Email, SMS, Push, Chat)
-- 💅 Easily manage notifications over multiple channels
-- 🚀 Equipped with a CMS for advanced layouts and design management
+- 🌐 Single API for all messaging providers (In-App, Email, SMS, Push, Chat)
+- 📊 Easily manage notifications over multiple channels
+- ✏️ Equipped with a CMS for advanced layouts and design management
 - 🛡 Built-in protection for missing variables (Coming Soon)
-- 📦 Easy to set up and integrate
-- 🛡 Debug and analyze multi-channel messages in a single dashboard
+- 🔌 Easy to set up and integrate
+- 🔍 Debug and analyze multi-channel messages in a single dashboard
 - 📦 Embeddable notification center with real-time updates
-- 👨‍💻 Community driven
+- 👥 Community driven
 
 ## 📚 Table Of Contents
 
