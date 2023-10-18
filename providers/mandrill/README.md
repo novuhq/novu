@@ -10,5 +10,6 @@ import { MandrillProvider } from '@novu/mandrill';
 const provider = new MandrillProvider({
   apiKey: process.env.apiKey,
   from: process.env.email,
+  senderName: process.env.senderName;
 });
 ```
