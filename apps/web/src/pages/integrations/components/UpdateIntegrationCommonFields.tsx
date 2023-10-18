@@ -7,13 +7,6 @@ import { Check, Copy } from '../../../design-system/icons';
 import type { IIntegratedProvider } from '../types';
 import { useIsMultiProviderConfigurationEnabled } from '../../../hooks';
 
-const tooltipLabel = (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-    <div style={{ color: colors.B60 }}>Disable instance</div>
-    <div style={{ color: '#EAA900', fontSize: '12px' }}>This action replaces the primary provider flag.</div>
-  </div>
-);
-
 const CopyWrapper = styled.div`
   cursor: pointer;
   &:hover {
@@ -49,7 +42,17 @@ export const UpdateIntegrationCommonFields = ({ provider }: { provider: IIntegra
 
           if (isMultiProviderConfigurationEnabled && field.value && provider.primary) {
             return (
-              <Tooltip label={tooltipLabel} position="bottom-start" multiline width={147}>
+              <Tooltip
+                label={
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div style={{ color: colors.B60 }}>Disable instance</div>
+                    <div style={{ color: '#EAA900' }}>This action replaces the primary provider flag.</div>
+                  </div>
+                }
+                position="bottom-start"
+                multiline
+                width={147}
+              >
                 <div style={{ width: 'fit-content' }}>{switchComponent}</div>
               </Tooltip>
             );

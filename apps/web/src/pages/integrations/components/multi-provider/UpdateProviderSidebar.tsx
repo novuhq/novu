@@ -170,7 +170,7 @@ export function UpdateProviderSidebar({
 
   const { DisablePrimaryStatusModal, openModal: openDisablePrimaryStatusModal } = useDisablePrimaryStatusModal();
 
-  const updateAndSelectPrimaryIntegration = async (data: IConstructIntegrationDto, isConfirmed?: boolean) => {
+  const updateAndSelectPrimaryIntegration = async (data: IConstructIntegrationDto) => {
     if (!selectedProvider) {
       return;
     }
@@ -197,21 +197,8 @@ export function UpdateProviderSidebar({
 
     const hasConditionsAndIsPrimary = hasUpdatedConditions && primary && dirtyFields.conditions;
 
-    if (isChangedToInactiveAndIsPrimary && !isConfirmed) {
-      openDisablePrimaryStatusModal({
-        onConfirm: () => updateAndSelectPrimaryIntegration(data, true),
-      });
-
-      return;
-    }
-
-    if (
-      (hasNoConditions && isChangedToActive) ||
-      isChangedToInactiveAndIsPrimary ||
-      isPrimaryAndHasConditionsApplied ||
-      hasConditionsAndIsPrimary
-    ) {
-      openSelectPrimaryIntegrationModal({
+    const selectPrimaryIntegration = () => {
+      return openSelectPrimaryIntegrationModal({
         environmentId: selectedProvider?.environmentId,
         channelType: selectedProvider?.channel,
         exclude: !isActive || hasConditionsAndIsPrimary ? (el) => el._id === selectedProvider.integrationId : undefined,
@@ -219,6 +206,18 @@ export function UpdateProviderSidebar({
           updateIntegration(data);
         },
       });
+    };
+
+    if (isChangedToInactiveAndIsPrimary) {
+      openDisablePrimaryStatusModal({
+        onConfirm: () => selectPrimaryIntegration(),
+      });
+
+      return;
+    }
+
+    if ((hasNoConditions && isChangedToActive) || isPrimaryAndHasConditionsApplied || hasConditionsAndIsPrimary) {
+      selectPrimaryIntegration();
 
       return;
     }
@@ -230,7 +229,7 @@ export function UpdateProviderSidebar({
     e.stopPropagation();
     e.preventDefault();
 
-    handleSubmit((data) => updateAndSelectPrimaryIntegration(data))(e);
+    handleSubmit(updateAndSelectPrimaryIntegration)(e);
   };
 
   const hmacEnabled = useWatch({
