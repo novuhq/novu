@@ -3,6 +3,7 @@ import { MandrillProvider } from './mandrill.provider';
 const mockConfig = {
   apiKey: 'API_KEY',
   from: 'test@test.com',
+  senderName: 'Test Sender',
 };
 
 test('should trigger mandrill correctly', async () => {
