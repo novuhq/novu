@@ -3,6 +3,8 @@ packages:
   - 'providers/*'
   - 'packages/*'
   - 'enterprise/packages/*'
+  # This needs to be moved one level down when changes in submodule done
+  - 'enterprise/packages/libs/*'
   - 'apps/*'
   - 'libs/*'
   # exclude packages that are inside test directories
