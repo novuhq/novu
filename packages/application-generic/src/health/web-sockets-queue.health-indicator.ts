@@ -1,36 +1,15 @@
-import {
-  HealthCheckError,
-  HealthIndicator,
-  HealthIndicatorResult,
-} from '@nestjs/terminus';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import { WebSocketsQueueService } from '../services';
+import { QueueHealthIndicator } from './queue-health-indicator.service';
 
 const LOG_CONTEXT = 'WebSocketsQueueServiceHealthIndicator';
+const INDICATOR_KEY = 'webSocketsQueue';
+const SERVICE_NAME = 'WebSocketsQueueService';
 
 @Injectable()
-export class WebSocketsQueueServiceHealthIndicator extends HealthIndicator {
-  private INDICATOR_KEY = 'webSocketsQueue';
-
+export class WebSocketsQueueServiceHealthIndicator extends QueueHealthIndicator {
   constructor(private webSocketsQueueService: WebSocketsQueueService) {
-    super();
-  }
-
-  async isHealthy(): Promise<HealthIndicatorResult> {
-    const isReady = this.webSocketsQueueService.isReady();
-
-    if (isReady) {
-      Logger.verbose('WebSocketsQueueService is ready', LOG_CONTEXT);
-
-      return this.getStatus(this.INDICATOR_KEY, true);
-    }
-
-    Logger.verbose('WebSocketsQueueService is not ready', LOG_CONTEXT);
-
-    throw new HealthCheckError(
-      'Ws Queue Health',
-      this.getStatus(this.INDICATOR_KEY, false)
-    );
+    super(webSocketsQueueService, INDICATOR_KEY, SERVICE_NAME, LOG_CONTEXT);
   }
 }
