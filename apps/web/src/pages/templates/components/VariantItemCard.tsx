@@ -1,19 +1,21 @@
+import styled from '@emotion/styled';
+import { FilterPartTypeEnum, StepTypeEnum, STEP_TYPE_TO_CHANNEL_TYPE } from '@novu/shared';
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
-import styled from '@emotion/styled';
-import { StepTypeEnum, FilterPartTypeEnum, STEP_TYPE_TO_CHANNEL_TYPE } from '@novu/shared';
 
-import { stepIcon } from '../constants';
-import { useBasePath } from '../hooks/useBasePath';
-import { useStepSubtitle } from '../hooks/useStepSubtitle';
-import { NodeType, WorkflowNode } from '../workflow/workflow/node-types/WorkflowNode';
-import { IForm, IFormStep, IVariantStep } from './formTypes';
+import { Conditions } from '../../../components/conditions';
+import { When } from '../../../components/utils/When';
 import { colors } from '../../../design-system';
 import { Check, Conditions as ConditionsIcon } from '../../../design-system/icons';
-import { When } from '../../../components/utils/When';
+import { stepIcon } from '../constants';
+import { useBasePath } from '../hooks/useBasePath';
 import { useFilterPartsList } from '../hooks/useFilterPartsList';
-import { Conditions } from '../../../components/conditions';
+import { useStepSubtitle } from '../hooks/useStepSubtitle';
+import { NodeType, WorkflowNode } from '../workflow/workflow/node-types/WorkflowNode';
+import { DeleteConfirmModal } from './DeleteConfirmModal';
+import { IForm, IFormStep, IVariantStep } from './formTypes';
+import { useTemplateEditorForm } from './TemplateEditorFormProvider';
 
 const VariantItemCardHolder = styled.div`
   display: grid;
@@ -135,6 +137,8 @@ export const VariantItemCard = ({
   const basePath = useBasePath();
   const [areConditionsOpened, setConditionsOpened] = useState(false);
   const filterPartsList = useFilterPartsList({ index: stepIndex });
+  const { deleteVariant } = useTemplateEditorForm();
+  const [isDeleteModalOpened, setIsDeleteModalOpened] = useState(false);
 
   const Icon = stepIcon[channel ?? ''];
   const variantsCount = ('variants' in variant ? variant.variants?.length : 0) ?? 0;
@@ -151,7 +155,22 @@ export const VariantItemCard = ({
     navigate(basePath + `/${channel}/${stepUuid}/variants/${variant.uuid}`);
   };
 
-  const onDelete = () => {};
+  const onDeleteIcon = () => {
+    setIsDeleteModalOpened(true);
+  };
+
+  const confirmDelete = () => {
+    setIsDeleteModalOpened(false);
+    if (!stepUuid || !variant?.uuid) {
+      return;
+    }
+
+    deleteVariant(stepUuid, variant.uuid);
+  };
+
+  const cancelDelete = () => {
+    setIsDeleteModalOpened(false);
+  };
 
   const onAddConditions = (e) => {
     e.preventDefault();
@@ -207,7 +226,7 @@ export const VariantItemCard = ({
         variantsCount={variantsCount}
         conditionsCount={conditionsCount}
         onEdit={onEdit}
-        onDelete={onDelete}
+        onDelete={onDeleteIcon}
         onAddConditions={onAddConditions}
         menuPosition="bottom-end"
         nodeType={nodeType}
@@ -224,6 +243,19 @@ export const VariantItemCard = ({
           defaultFilter={FilterPartTypeEnum.PAYLOAD}
         />
       )}
+      <DeleteConfirmModal
+        description={
+          'This cannot be undone. ' +
+          'The trigger code will be updated and this variant will no longer participate in the notification workflow.'
+        }
+        target="variant"
+        title={`Delete variant?`}
+        isOpen={isDeleteModalOpened}
+        confirm={confirmDelete}
+        cancel={cancelDelete}
+        confirmButtonText="Delete variant"
+        cancelButtonText="Cancel"
+      />
     </VariantItemCardHolder>
   );
 };
