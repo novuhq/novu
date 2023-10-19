@@ -25,7 +25,7 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.get('.react-flow__node').should('have.length', 4);
     cy.clickWorkflowNode(`node-inAppSelector`);
     cy.waitForNetworkIdle(500);
-    cy.getByTestId('delete-step-button').click();
+    cy.getByTestId('editor-sidebar-delete').click();
     cy.get('.mantine-Modal-modal button').contains('Delete step').click();
     cy.getByTestId(`node-inAppSelector`).should('not.exist');
     cy.get('.react-flow__node').should('have.length', 3);
@@ -69,7 +69,7 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.get('.react-flow__node').should('have.length', 5);
 
     cy.clickWorkflowNode('node-digestSelector');
-    cy.getByTestId('delete-step-button').click();
+    cy.getByTestId('editor-sidebar-delete').click();
 
     cy.get('.mantine-Modal-modal button').contains('Delete step').click();
     cy.getByTestId(`node-digestSelector`).should('not.exist');
