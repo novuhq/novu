@@ -1,6 +1,6 @@
 {
   "name": "@novu/d7-viber-chat",
-  "version": "0.16.3",
+  "version": "0.20.0",
   "description": "A d7-viber-chat wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
