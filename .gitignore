@@ -102,3 +102,4 @@ docker/.env
 .vercel
 
 .pnpm-store/
+pnpm-lock.yaml
