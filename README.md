@@ -228,7 +228,7 @@ Before you begin coding and collaborating, please read our [Code of Conduct](htt
 
 ## 💻 Need Help?
 
-We are more than happy to help you. If you are getting any errors or facing problems while working on this project, join our [Discord server](https://discord.novu.co) and ask for help. We are open to discuss anything related to the project.
+We are more than happy to help you. If you are getting any errors or facing problems while working on this project, join our [Discord server](https://discord.novu.co) and ask for help. We are open to discussing anything related to the project.
 
 ## ⚡ Immediate working space with Gitpod
 
