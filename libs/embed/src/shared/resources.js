@@ -24,7 +24,4 @@ if (process.env.ENVIRONMENT === 'production') {
 }
 
 export const DEBUG = false;
-export const { API_URL } = resourcesConstants;
-export const { IFRAME_URL } = resourcesConstants;
-export const { WWW_URL } = resourcesConstants;
-export const { SENTRY_DSN } = resourcesConstants;
+export const { API_URL, IFRAME_URL, SENTRY_DSN, WWW_URL } = resourcesConstants;
