@@ -15,21 +15,28 @@ import { useStepFormPath } from '../hooks/useStepFormPath';
 import { useStepIndex } from '../hooks/useStepIndex';
 import { useStepInfoPath } from '../hooks/useStepInfoPath';
 import { useStepVariantsCount } from '../hooks/useStepVariantsCount';
+import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { IForm } from './formTypes';
 import { useTemplateEditorForm } from './TemplateEditorFormProvider';
 
 export const EditorSidebarHeaderActions = () => {
   const { watch, setValue } = useFormContext<IForm>();
-  const { addVariant } = useTemplateEditorForm();
+  const { addVariant, deleteStep, deleteVariant } = useTemplateEditorForm();
   const { readonly: isReadonly } = useEnvController();
-  const { stepUuid = '', channel = '' } = useParams<{
+  const {
+    stepUuid = '',
+    channel = '',
+    variantUuid = '',
+  } = useParams<{
     stepUuid: string;
     channel: string;
+    variantUuid: string;
   }>();
   const basePath = useBasePath();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [areConditionsOpened, setConditionsOpened] = useState(false);
+  const [isDeleteModalOpened, setIsDeleteModalOpened] = useState(false);
 
   useEffect(() => {
     setConditionsOpened(pathname.endsWith('/conditions') || pathname.endsWith('variants/create'));
@@ -39,7 +46,8 @@ export const EditorSidebarHeaderActions = () => {
 
   const stepFormPath = useStepFormPath();
   const filterPartsList = useFilterPartsList();
-  const { isUnderTheStepPath, isUnderVariantsListPath } = useStepInfoPath();
+  const { isUnderTheStepPath, isUnderVariantsListPath, isUnderVariantPath } = useStepInfoPath();
+
   const { stepIndex } = useStepIndex();
   const { variantsCount } = useStepVariantsCount();
 
@@ -98,6 +106,27 @@ export const EditorSidebarHeaderActions = () => {
     }
   };
 
+  const openDeleteModal = () => {
+    setIsDeleteModalOpened(true);
+  };
+
+  const confirmDelete = () => {
+    if (isUnderVariantPath) {
+      deleteVariant(stepUuid, variantUuid);
+      navigate(basePath);
+    }
+
+    if (isUnderTheStepPath || isUnderVariantsListPath) {
+      deleteStep(stepIndex);
+      navigate(basePath);
+    }
+    setIsDeleteModalOpened(false);
+  };
+
+  const cancelDelete = () => {
+    setIsDeleteModalOpened(false);
+  };
+
   return (
     <>
       <Group noWrap spacing={12} ml={'auto'} sx={{ alignItems: 'flex-start' }}>
@@ -121,7 +150,12 @@ export const EditorSidebarHeaderActions = () => {
             data-test-id="editor-sidebar-edit-conditions"
           />
         </When>
-        <ActionButton tooltip="Delete step" onClick={() => {}} Icon={Trash} data-test-id="editor-sidebar-delete" />
+        <ActionButton
+          tooltip={`Delete ${isUnderVariantPath ? 'variant' : 'step'}`}
+          onClick={openDeleteModal}
+          Icon={Trash}
+          data-test-id="editor-sidebar-delete"
+        />
       </Group>
       {areConditionsOpened && (
         <Conditions
@@ -135,6 +169,22 @@ export const EditorSidebarHeaderActions = () => {
           defaultFilter={FilterPartTypeEnum.PAYLOAD}
         />
       )}
+
+      <DeleteConfirmModal
+        description={
+          'This cannot be undone. ' +
+          `The trigger code will be updated and this ${
+            isUnderVariantPath ? 'variant' : 'step'
+          } will no longer participate in the notification workflow.`
+        }
+        target={isUnderVariantPath ? 'variant' : 'step'}
+        title={`Delete ${isUnderVariantPath ? 'variant' : 'step'}?`}
+        isOpen={isDeleteModalOpened}
+        confirm={confirmDelete}
+        cancel={cancelDelete}
+        confirmButtonText={`Delete ${isUnderVariantPath ? 'variant' : 'step'}`}
+        cancelButtonText="Cancel"
+      />
     </>
   );
 };

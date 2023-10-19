@@ -10,6 +10,9 @@ import { IFormStep, IVariantStep } from './formTypes';
 import { colors } from '../../../design-system';
 import { Check, Conditions } from '../../../design-system/icons';
 import { When } from '../../../components/utils/When';
+import { useTemplateEditorForm } from './TemplateEditorFormProvider';
+import { DeleteConfirmModal } from './DeleteConfirmModal';
+import { useState } from 'react';
 
 const VariantItemCardHolder = styled.div`
   display: grid;
@@ -122,6 +125,8 @@ export const VariantItemCard = ({
   const subtitle = useStepSubtitle(variant, channel);
   const navigate = useNavigate();
   const basePath = useBasePath();
+  const { deleteVariant } = useTemplateEditorForm();
+  const [isDeleteModalOpened, setIsDeleteModalOpened] = useState(false);
 
   const Icon = stepIcon[channel ?? ''];
   const variantsCount = 'variants' in variant ? variant.variants?.length : 0;
@@ -136,7 +141,22 @@ export const VariantItemCard = ({
     navigate(basePath + `/${channel}/${stepUuid}/variants/${variant.uuid}`);
   };
 
-  const onDelete = () => {};
+  const onDeleteIcon = () => {
+    setIsDeleteModalOpened(true);
+  };
+
+  const confirmDelete = () => {
+    setIsDeleteModalOpened(false);
+    if (!stepUuid || !variant?.uuid) {
+      return;
+    }
+
+    deleteVariant(stepUuid, variant.uuid);
+  };
+
+  const cancelDelete = () => {
+    setIsDeleteModalOpened(false);
+  };
 
   const onAddConditions = () => {
     navigate(basePath + `/${channel}/${stepUuid}/variants/${variant.uuid}/conditions`);
@@ -183,10 +203,23 @@ export const VariantItemCard = ({
         variantsCount={variantsCount}
         conditionsCount={variant.filters?.length ?? 0}
         onEdit={onEdit}
-        onDelete={onDelete}
+        onDelete={onDeleteIcon}
         onAddConditions={onAddConditions}
         menuPosition="bottom-end"
         nodeType={nodeType}
+      />
+      <DeleteConfirmModal
+        description={
+          'This cannot be undone. ' +
+          'The trigger code will be updated and this variant will no longer participate in the notification workflow.'
+        }
+        target="variant"
+        title={`Delete variant?`}
+        isOpen={isDeleteModalOpened}
+        confirm={confirmDelete}
+        cancel={cancelDelete}
+        confirmButtonText="Delete variant"
+        cancelButtonText="Cancel"
       />
     </VariantItemCardHolder>
   );
