@@ -1,23 +1,29 @@
 {
+  "include": ["src"],
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "target": "es5",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
+    "outDir": "./dist/cjs",
     "forceConsistentCasingInFileNames": true,
-    "noFallthroughCasesInSwitch": true,
-    "module": "esnext",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
+    "target": "es6",
+    "strict": true,
+    "typeRoots": ["./node_modules/@types"],
     "jsx": "react-jsx",
-    "noImplicitAny": false,
-    "noEmit": true,
-    "types": ["cypress"]
+    "module": "commonjs",
+    "lib": ["ESNext", "dom"],
+    "skipLibCheck": true,
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": true,
+    "removeComments": false,
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": "."
   },
-  "include": ["src", "cypress/global.d.ts"],
-  "exclude": ["src/**/*.test.*", "src/*.test.*", "node_modules", "**/node_modules/*", "**/*.stories.*"]
+  "exclude": [
+    "src/**/*.test.*",
+    "src/**/*.cy.*",
+    "src/**/*.stories.*",
+    "src/*.test.*",
+    "node_modules",
+    "**/node_modules/*"
+  ]
 }
