@@ -1,12 +1,8 @@
 {
   "compilerOptions": {
-    "outDir": "./dist",
     "target": "es5",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
-    "declaration": true,
-    "declarationDir": "dist",
-    "declarationMap": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
@@ -19,6 +15,7 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "noImplicitAny": false,
+    "noEmit": true,
     "types": ["cypress"]
   },
   "include": ["src", "cypress/global.d.ts"],
