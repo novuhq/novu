@@ -767,3 +767,14 @@ export const clickSendConfig: IConfigCredentials[] = [
   },
   ...smsConfigBase,
 ];
+
+export const mailchainConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.SecretPhrase,
+    displayName: 'mnemonic phrase is a list of 12-24 words. ',
+    description: 'This phrase is used to initialise the Mailchain SDK',
+    type: 'string',
+    required: true,
+  },
+  ...mailConfigBase,
+];

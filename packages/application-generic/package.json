@@ -68,6 +68,7 @@
     "@novu/mailjet": "^0.20.0",
     "@novu/mailtrap": "^0.20.0",
     "@novu/mandrill": "^0.20.0",
+    "@novu/mailchain" : "^0.20.0",
     "@novu/maqsam": "^0.20.0",
     "@novu/mattermost": "^0.20.0",
     "@novu/ms-teams": "^0.20.0",
