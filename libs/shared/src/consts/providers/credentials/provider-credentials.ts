@@ -767,3 +767,20 @@ export const clickSendConfig: IConfigCredentials[] = [
   },
   ...smsConfigBase,
 ];
+
+export const simpleTextingConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'text',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.From,
+    displayName: 'Account Phone',
+    description: 'The account phone number to send from',
+    type: 'text',
+    required: true,
+  },
+  ...smsConfigBase,
+];

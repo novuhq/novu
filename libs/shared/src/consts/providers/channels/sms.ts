@@ -19,6 +19,7 @@ import {
   africasTalkingConfig,
   sendchampConfig,
   clickSendConfig,
+  simpleTextingConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -187,5 +188,13 @@ export const smsProviders: IProviderConfig[] = [
     credentials: clickSendConfig,
     docReference: 'https://developers.clicksend.com/docs/rest/v3/?javascript--nodejs#send-sms',
     logoFileName: { light: 'clicksend.png', dark: 'clicksend.png' },
+  },
+  {
+    id: SmsProviderIdEnum.Simpletexting,
+    displayName: `SimpleTexting`,
+    channel: ChannelTypeEnum.SMS,
+    credentials: simpleTextingConfig,
+    docReference: 'https://simpletexting.com/api/docs/v2/',
+    logoFileName: { light: 'simpletexting.png', dark: 'simpletexting.png' },
   },
 ];
