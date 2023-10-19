@@ -72,7 +72,7 @@ const edges: Edge[] = [
 
 const NODE_INITIAL_X = 20;
 const NODE_INITIAL_Y = 20;
-const NODE_DIST = 150;
+const NODE_DIST = 140;
 
 const nodes: Node[] = [
   {

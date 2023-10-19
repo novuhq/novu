@@ -19,13 +19,14 @@ export const WorkflowWrapper = styled.div<{ height: string }>`
   .react-flow__attribution {
     background: transparent;
     opacity: 0.5;
+    width: 100%;
+    text-align: center;
   }
 
   .react-flow__attribution a {
     position: relative;
     font-size: initial;
     top: 25px;
-    right: 173px;
   }
 
   .react-flow__attribution a:hover {
