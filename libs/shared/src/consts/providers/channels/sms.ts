@@ -194,7 +194,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: `Messagebird`,
     channel: ChannelTypeEnum.SMS,
     credentials: messagebirdConfig,
-    docReference: 'https://docs.novu.co/channels-and-providers/sms/sendchamp',
+    docReference: 'https://developers.messagebird.com/api/sms-messaging/#send-outbound-sms',
     logoFileName: { light: 'messagebird.png', dark: 'messagebird.png' },
   },
 ];
