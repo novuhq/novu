@@ -135,7 +135,7 @@ export const Sidebar = ({
           <ActionIcon
             variant="transparent"
             onClick={onCloseCallback}
-            style={{ marginLeft: '1rem' }}
+            style={{ marginLeft: 'auto' }}
             data-test-id="sidebar-close"
           >
             <Close color={colors.B40} />
