@@ -65,4 +65,4 @@ RUN --mount=type=cache,id=pnpm-store-webhook,target=/root/.pnpm-store\
 RUN chown -R 1000:root .
 
 WORKDIR /usr/src/app/apps/webhook
-CMD [ "pm2-runtime", "dist/src/main.js" ]
+CMD [ "pm2-runtime", "dist/main.js" ]

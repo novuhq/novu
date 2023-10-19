@@ -4,29 +4,18 @@ import { str, port } from 'envalid';
 
 dotenv.config();
 
-let path;
+const envFileMapper = {
+  production: '.env.production',
+  test: '.env.test',
+  ci: '.env.ci',
+  local: '.env',
+  dev: '.env.development',
+};
+const selectedEnvFile = envFileMapper[process.env.NODE_ENV as any] || '.env';
 
-switch (process.env.NODE_ENV) {
-  case 'production':
-    path = `${__dirname}/../.env.production`;
-    break;
-  case 'test':
-    path = `${__dirname}/../.env.test`;
-    break;
-  case 'ci':
-    path = `${__dirname}/../.env.ci`;
-    break;
-  case 'local':
-    path = `${__dirname}/../.env`;
-    break;
-  case 'dev':
-    path = `${__dirname}/../.env.development`;
-    break;
-  default:
-    path = `${__dirname}/../.env`;
-}
+const pathToDotEnv = `${__dirname}/${process.env.E2E_RUNNER ? '..' : 'src'}/${selectedEnvFile}`;
 
-const { error } = dotenv.config({ path });
+const { error } = dotenv.config({ path: pathToDotEnv });
 
 if (error && !process.env.LAMBDA_TASK_ROOT) throw error;
 
