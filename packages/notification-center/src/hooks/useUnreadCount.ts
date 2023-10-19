@@ -66,7 +66,7 @@ export const useUnreadCount = ({ onSuccess, ...restOptions }: UseQueryOptions<IC
     );
 
     return () => {
-      socket.off(WebSocketEventEnum.UNSEEN);
+      socket.off(WebSocketEventEnum.UNREAD);
     };
   }, [socket, queryClient, setQueryKey]);
 
