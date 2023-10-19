@@ -6,7 +6,6 @@ import { useStepIndex } from '../hooks/useStepIndex';
 import { StepName } from './StepName';
 import { Sidebar } from '../../../design-system';
 import { useBasePath } from '../hooks/useBasePath';
-import { DeleteStepRow } from './DeleteStepRow';
 import { EditorSidebarHeaderActions } from './EditorSidebarHeaderActions';
 
 const StepSidebarHeader = () => {
@@ -42,7 +41,6 @@ export const StepEditorSidebar = ({ children }: { children: ReactNode }) => {
       isOpened
       isExpanded={isEmailOrInApp}
       customHeader={<StepSidebarHeader />}
-      customFooter={<DeleteStepRow />}
       isParentScrollable={isEmailOrInApp}
       onClose={() => {
         navigate(path);
