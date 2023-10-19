@@ -13,6 +13,14 @@
 The ultimate service for managing multi-channel notifications with a single API.
 </div>
 
+<h1 align="center">🎉 Novu is live on Product Hunt! 🎉</h1>
+<p align="center">
+We are on Product Hunt and would appreciate any help you can give us 🩷<br />
+BONUS: watch our video, answer the riddle, and win awesome swag!<br /><br />
+<a href="https://www.producthunt.com/posts/novu?utm_source=badge-featured&utm_medium=badge&utm_souce=badge-novu" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=420313&theme=light" alt="Novu - The&#0032;open&#0045;source&#0032;notification&#0032;infrastructure&#0032;for&#0032;developers | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
+<br /><br />
+</p>
+
 <h1 align="center">🎉 We're participating in Hacktoberfest 2023! 🎉</h1>
 
 Interested in participating in Hacktoberfest? We extend a warm invitation! You also get the opportunity to win some swag 😁
@@ -149,9 +157,9 @@ Using the Novu API and admin panel, you can easily add a real-time notification 
 Read more about how to add a notification center to your app with the Novu API [here](https://docs.novu.co/notification-center/getting-started)
 
 <p align="center">
-  <a href="https://docs.novu.co/notification-center/getting-started">React Component</a>
-  · <a href="https://docs.novu.co/notification-center/vue-component">Vue Component</a>
-  · <a href="https://github.com/novuhq/novu/tree/next/packages/notification-center-angular">Angular Component</a>
+  <a href="https://docs.novu.co/sdks/react">React Component</a>
+  · <a href="https://docs.novu.co/sdks/vue">Vue Component</a>
+  · <a href="https://docs.novu.co/sdks/angular">Angular Component</a>
   </p>
   
 </div>
