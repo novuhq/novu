@@ -58,7 +58,7 @@ export class GetSubscriberTemplatePreference {
     const subscriberChannelPreference = subscriberPreference?.channels;
     const templateChannelPreference = command.template.preferenceSettings;
 
-    const { channels, overrides } = overridePreferences(
+    const { channels, overrides, triggers } = overridePreferences(
       {
         template: templateChannelPreference,
         subscriber: subscriberChannelPreference,
@@ -72,6 +72,7 @@ export class GetSubscriberTemplatePreference {
         enabled: subscriberPreference?.enabled ?? true,
         channels,
         overrides,
+        triggers, // Add the triggers field here
       },
     };
   }
@@ -254,5 +255,6 @@ function mapTemplateConfiguration(
     tags: template?.tags || [],
     critical: template.critical != null ? template.critical : true,
     ...(template.data ? { data: template.data } : {}),
+    triggers: template.triggers || [], // Add the triggers field here
   };
 }
