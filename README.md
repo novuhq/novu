@@ -2,7 +2,7 @@
   <a href="https://novu.co" target="_blank">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/2233092/213641039-220ac15f-f367-4d13-9eaf-56e79433b8c1.png">
-    <img src="https://user-images.githubusercontent.com/2233092/213641043-3bbb3f21-3c53-4e67-afe5-755aeb222159.png" width="280" alt="Logo"/>
+    ![Novu Logo]<img src="https://user-images.githubusercontent.com/2233092/213641043-3bbb3f21-3c53-4e67-afe5-755aeb222159.png" width="280"/>
   </picture>
   </a>
 </div>
@@ -17,7 +17,7 @@ The ultimate service for managing multi-channel notifications with a single API.
 <p align="center">
 We are on Product Hunt and would appreciate any help you can give us 🩷<br />
 BONUS: watch our video, answer the riddle, and win awesome swag!<br /><br />
-<a href="https://www.producthunt.com/posts/novu?utm_source=badge-featured&utm_medium=badge&utm_souce=badge-novu" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=420313&theme=light" alt="Novu - The&#0032;open&#0045;source&#0032;notification&#0032;infrastructure&#0032;for&#0032;developers | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
+<a href="https://www.producthunt.com/posts/novu?utm_source=badge-featured&utm_medium=badge&utm_souce=badge-novu" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=420313&theme=light"  The&#0032;open&#0045;source&#0032;notification&#0032;infrastructure&#0032;for&#0032;developers | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" alt-text="Novu is featured on Product Hunt" /></a>
 <br /><br />
 </p>
 
@@ -152,7 +152,7 @@ await novu.trigger('<TRIGGER_NAME>', {
 Using the Novu API and admin panel, you can easily add a real-time notification center to your web app without building it yourself. You can use our React / Vue / Angular component or an iframe embed.
 
 <div align="center">
-<img width="762" alt="notification-center-912bb96e009fb3a69bafec23bcde00b0" src="https://user-images.githubusercontent.com/80174214/193887395-f1c95042-b4e6-480e-a89c-a78aa247fa90.gif">
+<img width="762" alt="notification-center-912bb96e009fb3a69bafec23bcde00b0" src="https://user-images.githubusercontent.com/80174214/193887395-f1c95042-b4e6-480e-a89c-a78aa247fa90.gif" alt-text="GIF of Novu's Embeddable Notification Center">
 
 Read more about how to add a notification center to your app with the Novu API [here](https://docs.novu.co/notification-center/getting-started)
 
