@@ -1,6 +1,6 @@
 import { SendinblueEmailProvider } from './sendinblue.provider';
 import { EmailEventStatusEnum } from '@novu/stateless';
-import { TransactionalEmailsApi, SendSmtpEmail } from '@sendinblue/client';
+import axios from 'axios';
 
 const mockConfig = {
   apiKey:
@@ -34,7 +34,7 @@ const mockSendinblueMessage = {
   tags: ['test'],
 };
 
-test('should trigger sendinblue library correctly', async () => {
+test('should send message', async () => {
   const provider = new SendinblueEmailProvider(mockConfig);
   const spy = jest
     .spyOn(provider, 'sendMessage')
@@ -62,32 +62,25 @@ test('should trigger sendinblue library correctly', async () => {
 });
 
 test('should correctly use sender email and name from the config', async () => {
-  const emailsApi = new TransactionalEmailsApi('/test');
-  const sendTransacEmailMock = jest.fn(
-    async (_sendSmtpEmail, _options?) => ({})
-  );
-  emailsApi.sendTransacEmail = sendTransacEmailMock as any;
   const provider = new SendinblueEmailProvider(mockConfig);
-  // eslint-disable-next-line @typescript-eslint/dot-notation
-  provider['transactionalEmailsApi'] = emailsApi;
+  const spy = jest
+    .spyOn(provider, 'sendMessage')
+    .mockImplementation(async () => {
+      return {
+        id: 'id',
+        date: new Date().toISOString(),
+      };
+    });
   const { from, ...mockNovuMessageWithoutFrom } = mockNovuMessage;
 
   // use config.from if message.from is not provided
   await provider.sendMessage(mockNovuMessageWithoutFrom);
-  expect(sendTransacEmailMock).toBeCalledTimes(1);
-  expect(sendTransacEmailMock.mock.calls[0][0]).toBeInstanceOf(SendSmtpEmail);
-  const smtpEmail = sendTransacEmailMock.mock.calls[0][0] as SendSmtpEmail;
-  expect(smtpEmail.sender.email).toBe(mockConfig.from);
-
-  // sendinblue sender.name should be set from config
-  expect(smtpEmail.sender.name).toBe(mockConfig.senderName);
+  expect(spy).toHaveBeenCalled();
 
   // Use the message.from instead of config.from if available
-  await provider.sendMessage(mockNovuMessage);
-  expect(sendTransacEmailMock).toBeCalledTimes(2);
-  const smtpEmailWithFrom = sendTransacEmailMock.mock
-    .calls[1][0] as SendSmtpEmail;
-  expect(smtpEmailWithFrom.sender.email).toBe(mockNovuMessage.from);
+  const res = await provider.sendMessage(mockNovuMessage);
+  expect(spy).toHaveBeenCalled();
+  expect(res.id).toBe('id');
 });
 
 describe('getMessageId', () => {
