@@ -46,7 +46,7 @@ Your contribution, no matter its size, holds immense value. We eagerly await to 
 
   <p align="center">
     <br />
-    <a href="https://docs.novu.co" rel="dofollow"><strong>Explore the docs »</strong></a>
+    <a href="https://docs.novu.co" rel="dofollow"><strong>Explore the Docs »</strong></a>
     <br />
 
   <br/>
