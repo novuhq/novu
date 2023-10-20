@@ -10,7 +10,7 @@ import {
 
 const LOG_CONTEXT = 'DistributedLock';
 
-interface ILockOptions {
+export interface ILockOptions {
   resource: string;
   ttl: number;
 }
