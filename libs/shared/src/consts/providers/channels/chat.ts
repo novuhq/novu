@@ -1,5 +1,6 @@
 import { IConfigCredentials, IProviderConfig } from '../provider.interface';
 import { slackConfig } from '../credentials';
+import { telegramConfig } from '../credentials';
 import { ChatProviderIdEnum } from '../provider.enum';
 
 import { ChannelTypeEnum } from '../../../types';
@@ -36,5 +37,14 @@ export const chatProviders: IProviderConfig[] = [
     credentials: [] as IConfigCredentials[],
     docReference: 'https://developers.mattermost.com/integrate/webhooks/incoming/',
     logoFileName: { light: 'mattermost.svg', dark: 'mattermost.svg' },
+  },
+  {
+    id: ChatProviderIdEnum.Telegram,
+    displayName: 'Telegram',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: telegramConfig,
+    docReference: 'https://core.telegram.org/bots/api',
+    logoFileName: { light: 'telegram.svg', dark: 'telegram.svg' },
+    betaVersion: true,
   },
 ];

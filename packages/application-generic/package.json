@@ -73,6 +73,7 @@
     "@novu/ms-teams": "^0.20.0",
     "@novu/netcore": "^0.20.0",
     "@novu/nodemailer": "^0.20.0",
+    "@novu/telegram": "^0.20.0",
     "@novu/one-signal": "^0.20.0",
     "@novu/outlook365": "^0.20.0",
     "@novu/plivo": "^0.20.0",

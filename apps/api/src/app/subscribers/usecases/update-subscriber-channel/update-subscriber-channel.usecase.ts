@@ -177,6 +177,9 @@ export class UpdateSubscriberChannel {
       if (command.credentials.deviceTokens != null && updatePayload.credentials) {
         updatePayload.credentials.deviceTokens = [...new Set([...command.credentials.deviceTokens])];
       }
+      if (command.credentials.chatUserId != null && updatePayload.credentials) {
+        updatePayload.credentials.chatUserId = command.credentials.chatUserId;
+      }
       if (command.credentials.channel != null && updatePayload.credentials) {
         updatePayload.credentials.channel = command.credentials.channel;
       }

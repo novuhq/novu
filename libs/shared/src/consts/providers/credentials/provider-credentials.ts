@@ -767,3 +767,12 @@ export const clickSendConfig: IConfigCredentials[] = [
   },
   ...smsConfigBase,
 ];
+
+export const telegramConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.BotToken,
+    displayName: 'Bot Token',
+    type: 'string',
+    required: true,
+  },
+];
