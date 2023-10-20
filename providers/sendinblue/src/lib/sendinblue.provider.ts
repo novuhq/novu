@@ -8,17 +8,13 @@ import {
   IEmailProvider,
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
-import {
-  SendSmtpEmail,
-  SendSmtpEmailTo,
-  TransactionalEmailsApi,
-  TransactionalEmailsApiApiKeys,
-} from '@sendinblue/client';
+import axios, { AxiosInstance } from 'axios';
 
 export class SendinblueEmailProvider implements IEmailProvider {
   id = 'sendinblue';
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
-  private transactionalEmailsApi: TransactionalEmailsApi;
+  public readonly BASE_URL = 'https://api.brevo.com/v3';
+  private axiosInstance: AxiosInstance;
 
   constructor(
     private config: {
@@ -27,48 +23,46 @@ export class SendinblueEmailProvider implements IEmailProvider {
       senderName: string;
     }
   ) {
-    this.transactionalEmailsApi = new TransactionalEmailsApi();
-    this.transactionalEmailsApi.setApiKey(
-      TransactionalEmailsApiApiKeys.apiKey,
-      this.config.apiKey
-    );
+    this.axiosInstance = axios.create({
+      baseURL: this.BASE_URL,
+    });
   }
 
   async sendMessage(
     options: IEmailOptions
   ): Promise<ISendMessageSuccessResponse> {
-    const email = new SendSmtpEmail();
-    email.sender = {
-      email: options.from || this.config.from,
-      name: this.config.senderName,
+    const emailOptions = {
+      method: 'POST',
+      headers: {
+        'api-key': this.config.apiKey,
+        accept: 'application/json',
+        'content-type': 'application/json',
+      },
+      data: {
+        sender: {
+          name: options.from || this.config.from,
+          email: this.config.senderName,
+        },
+        to: getFormattedTo(options.to),
+        bcc: options.bcc?.map((bccItem) => ({ email: bccItem })),
+        cc: options.cc?.map((ccItem) => ({ email: ccItem })),
+        replyTo: {
+          email: options.replyTo,
+        },
+        htmlContent: options.html,
+        textContent: options.text,
+        subject: options.subject,
+        attachment: options.attachments?.map((attachment) => ({
+          name: attachment?.name,
+          content: attachment?.file.toString('base64'),
+        })),
+      },
     };
-    email.to = getFormattedTo(options.to);
-    email.subject = options.subject;
-    email.htmlContent = options.html;
-    email.textContent = options.text;
-    email.attachment = options.attachments?.map((attachment) => ({
-      name: attachment?.name,
-      content: attachment?.file.toString('base64'),
-      contentType: attachment.mime,
-    }));
 
-    if (options.cc?.length) {
-      email.cc = options.cc?.map((ccItem) => ({ email: ccItem }));
-    }
-
-    if (options?.bcc?.length) {
-      email.bcc = options.bcc?.map((ccItem) => ({ email: ccItem }));
-    }
-
-    if (options.replyTo) {
-      email.replyTo.email = options.replyTo;
-    }
-
-    const { response, body } =
-      await this.transactionalEmailsApi.sendTransacEmail(email);
+    const response = await this.axiosInstance.post('/smtp/email', emailOptions);
 
     return {
-      id: body?.messageId,
+      id: response.data?.messageId,
       date: response?.headers?.date,
     };
   }
@@ -142,7 +136,7 @@ export class SendinblueEmailProvider implements IEmailProvider {
   }
 }
 
-function getFormattedTo(to: string | string[]): SendSmtpEmailTo[] {
+function getFormattedTo(to: string | string[]): { email: string }[] {
   if (typeof to === 'string') {
     return [{ email: to }];
   }
