@@ -46,6 +46,7 @@
   },
   "dependencies": {
     "@novu/stateless": "^0.20.0",
+     "axios": "^1.3.4",
     "pepipost": "^5.0.0"
   },
   "devDependencies": {
