@@ -19,6 +19,7 @@ import {
   africasTalkingConfig,
   sendchampConfig,
   clickSendConfig,
+  bulkSmsConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -187,5 +188,13 @@ export const smsProviders: IProviderConfig[] = [
     credentials: clickSendConfig,
     docReference: 'https://developers.clicksend.com/docs/rest/v3/?javascript--nodejs#send-sms',
     logoFileName: { light: 'clicksend.png', dark: 'clicksend.png' },
+  },
+  {
+    id: SmsProviderIdEnum.BulkSms,
+    displayName: `BulkSms`,
+    channel: ChannelTypeEnum.SMS,
+    credentials: bulkSmsConfig,
+    docReference: 'https://www.bulksms.com/developer/json/v1/#tag/Message',
+    logoFileName: { light: 'bulksms.png', dark: 'bulksms.png' },
   },
 ];

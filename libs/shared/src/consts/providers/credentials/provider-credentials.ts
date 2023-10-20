@@ -767,3 +767,19 @@ export const clickSendConfig: IConfigCredentials[] = [
   },
   ...smsConfigBase,
 ];
+
+export const bulkSmsConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.User,
+    displayName: 'Username',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Password,
+    displayName: 'Password',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+];

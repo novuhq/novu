@@ -20,6 +20,7 @@ import {
   SendchampSmsHandler,
   ClicksendSmsHandler,
   NovuSmsHandler,
+  BulkSmsHandler,
 } from './handlers';
 
 export class SmsFactory implements ISmsFactory {
@@ -43,6 +44,7 @@ export class SmsFactory implements ISmsFactory {
     new SendchampSmsHandler(),
     new ClicksendSmsHandler(),
     new NovuSmsHandler(),
+    new BulkSmsHandler(),
   ];
 
   getHandler(integration: IntegrationEntity) {
