@@ -13,6 +13,14 @@
 The ultimate service for managing multi-channel notifications with a single API.
 </div>
 
+<h1 align="center">🎉 Novu is live on Product Hunt! 🎉</h1>
+<p align="center">
+We are on Product Hunt and would appreciate any help you can give us 🩷<br />
+BONUS: watch our video, answer the riddle, and win awesome swag!<br /><br />
+<a href="https://www.producthunt.com/posts/novu?utm_source=badge-featured&utm_medium=badge&utm_souce=badge-novu" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=420313&theme=light" alt="Novu - The&#0032;open&#0045;source&#0032;notification&#0032;infrastructure&#0032;for&#0032;developers | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
+<br /><br />
+</p>
+
 <h1 align="center">🎉 We're participating in Hacktoberfest 2023! 🎉</h1>
 
 Interested in participating in Hacktoberfest? We extend a warm invitation! You also get the opportunity to win some swag 😁
@@ -24,7 +32,7 @@ Interested in participating in Hacktoberfest? We extend a warm invitation! You a
 - Join our [Discord and engage with our community](https://discord.com/invite/novu), get answers to your challenges, stay updated on events, announcements & prizes.
 
 In addition to this repository, here are the other Novu repositories you can contribute to for Hacktoberfest:
-- [Novu docs](https://github.com/novuhq/docs/issues)
+- [Novu Docs](https://github.com/novuhq/docs/issues)
 - [Novu PHP SDK](https://github.com/novuhq/novu-php/issues)
 - [Novu Ruby SDK](https://github.com/novuhq/novu-ruby/issues)
 - [Novu Python SDK](https://github.com/novuhq/novu-python/issues)
@@ -149,9 +157,9 @@ Using the Novu API and admin panel, you can easily add a real-time notification 
 Read more about how to add a notification center to your app with the Novu API [here](https://docs.novu.co/notification-center/getting-started)
 
 <p align="center">
-  <a href="https://docs.novu.co/notification-center/getting-started">React Component</a>
-  · <a href="https://docs.novu.co/notification-center/vue-component">Vue Component</a>
-  · <a href="https://github.com/novuhq/novu/tree/next/packages/notification-center-angular">Angular Component</a>
+  <a href="https://docs.novu.co/sdks/react">React Component</a>
+  · <a href="https://docs.novu.co/sdks/vue">Vue Component</a>
+  · <a href="https://docs.novu.co/sdks/angular">Angular Component</a>
   </p>
   
 </div>
@@ -228,7 +236,7 @@ Before you begin coding and collaborating, please read our [Code of Conduct](htt
 
 ## 💻 Need Help?
 
-We are more than happy to help you. If you are getting any errors or facing problems while working on this project, join our [Discord server](https://discord.novu.co) and ask for help. We are open to discussing anything related to the project.
+We are more than happy to help you. If you are getting any errors or facing problems while working on this project, join our [Discord server](https://discord.novu.co) and ask for help. We are open to discuss anything related to the project.
 
 ## ⚡ Immediate working space with Gitpod
 
