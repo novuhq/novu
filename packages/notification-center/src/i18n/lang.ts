@@ -31,7 +31,7 @@ import { ID } from './languages/id';
 import { IG } from './languages/ig';
 import { IT } from './languages/it';
 import { JA } from './languages/ja';
-import { KA } from './languages/kn';
+import { KN } from './languages/kn';
 import { KK } from './languages/kk';
 import { KM } from './languages/km';
 import { KO } from './languages/ko';
@@ -120,9 +120,9 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   ig: IG,
   it: IT,
   ja: JA,
-  ka: KA,
   kk: KK,
   km: KM,
+  kn: KN,
   ko: KO,
   ku: KU,
   lo: LO,
@@ -206,9 +206,9 @@ export type I18NLanguage =
   | 'ig'
   | 'it'
   | 'ja'
-  | 'ka'
   | 'kk'
   | 'km'
+  | 'kn'
   | 'ko'
   | 'ku'
   | 'lo'
