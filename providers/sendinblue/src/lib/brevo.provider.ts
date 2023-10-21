@@ -8,13 +8,19 @@ import {
   IEmailProvider,
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
-import axios, { AxiosInstance } from 'axios';
 
-export class SendinblueEmailProvider implements IEmailProvider {
-  id = 'sendinblue';
+const brevo = require('@getbrevo/brevo');
+
+export class BrevoEmailProvider implements IEmailProvider {
+  id = 'brevo';
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
-  public readonly BASE_URL = 'https://api.brevo.com/v3';
-  private axiosInstance: AxiosInstance;
+  apiKey: {
+    apiKey: string;
+  };
+  private defaultClient: any;
+  private transactionalEmailsApi: {
+    sendTransacEmail: (email: unknown) => Promise<unknown>;
+  };
 
   constructor(
     private config: {
@@ -23,46 +29,46 @@ export class SendinblueEmailProvider implements IEmailProvider {
       senderName: string;
     }
   ) {
-    this.axiosInstance = axios.create({
-      baseURL: this.BASE_URL,
-    });
+    this.defaultClient = brevo.ApiClient.instance;
+    this.apiKey = this.defaultClient.authentications['api-key'];
+    this.apiKey.apiKey = config.apiKey;
+    this.transactionalEmailsApi = new brevo.TransactionalEmailsApi();
   }
 
   async sendMessage(
     options: IEmailOptions
   ): Promise<ISendMessageSuccessResponse> {
-    const emailOptions = {
-      method: 'POST',
-      headers: {
-        'api-key': this.config.apiKey,
-        accept: 'application/json',
-        'content-type': 'application/json',
-      },
-      data: {
-        sender: {
-          name: options.from || this.config.from,
-          email: this.config.senderName,
-        },
-        to: getFormattedTo(options.to),
-        bcc: options.bcc?.map((bccItem) => ({ email: bccItem })),
-        cc: options.cc?.map((ccItem) => ({ email: ccItem })),
-        replyTo: {
-          email: options.replyTo,
-        },
-        htmlContent: options.html,
-        textContent: options.text,
-        subject: options.subject,
-        attachment: options.attachments?.map((attachment) => ({
-          name: attachment?.name,
-          content: attachment?.file.toString('base64'),
-        })),
-      },
+    const email = new brevo.SendSmtpEmail();
+    email.sender = {
+      email: options.from || this.config.from,
+      name: this.config.senderName,
     };
+    email.to = getFormattedTo(options.to);
+    email.subject = options.subject;
+    email.htmlContent = options.html;
+    email.textContent = options.text;
+    email.attachment = options.attachments?.map((attachment) => ({
+      name: attachment?.name,
+      content: attachment?.file.toString('base64'),
+    }));
 
-    const response = await this.axiosInstance.post('/smtp/email', emailOptions);
+    if (options.cc?.length) {
+      email.cc = options.cc?.map((ccItem) => ({ email: ccItem }));
+    }
+
+    if (options?.bcc?.length) {
+      email.bcc = options.bcc?.map((ccItem) => ({ email: ccItem }));
+    }
+
+    if (options.replyTo) {
+      email.replyTo.email = options.replyTo;
+    }
+
+    const response: Record<string, any> =
+      await this.transactionalEmailsApi.sendTransacEmail(email);
 
     return {
-      id: response.data?.messageId,
+      id: response?.messageId,
       date: response?.headers?.date,
     };
   }
