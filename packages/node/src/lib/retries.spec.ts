@@ -1,3 +1,4 @@
+import { AxiosError } from 'axios';
 import nock from 'nock';
 import { Novu } from '../index';
 
@@ -95,6 +96,22 @@ describe('Novu Node.js package - Retries and idempotency key', () => {
 
     expect(result.status).toEqual(200);
     expect(result.request.headers['idempotency-key']).toBeUndefined();
+  });
+
+  it('should not retry on common 4xx errors', async () => {
+    nock(BACKEND_URL)
+      .get(TOPICS_PATH)
+      .times(3)
+      .reply(404, { message: 'Not Found' });
+
+    nock(BACKEND_URL).get(TOPICS_PATH).reply(200, [{}, {}]);
+
+    try {
+      await novu.topics.list({});
+      throw new Error();
+    } catch (err) {
+      expect((err as AxiosError).response?.status).toEqual(404);
+    }
   });
 
   it('should retry on various errors until it reach successfull response', async () => {

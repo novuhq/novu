@@ -76,10 +76,6 @@ export function defaultRetryCondition(err: AxiosError): boolean {
     return true;
   }
 
-  if (err.code === 'ECONNABORTED') {
-    return false;
-  }
-
   if (!err.response) {
     return true;
   }
