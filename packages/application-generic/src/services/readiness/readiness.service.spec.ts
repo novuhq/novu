@@ -1,16 +1,22 @@
 import { ReadinessService } from './readiness.service';
 
 import { BullMqService } from '../bull-mq';
-import { StandardQueueService, WorkflowQueueService } from '../queues';
+import {
+  StandardQueueService,
+  SubscriberProcessQueueService,
+  WorkflowQueueService,
+} from '../queues';
 import { StandardWorkerService, WorkerBaseService } from '../workers';
 import {
   StandardQueueServiceHealthIndicator,
+  SubscriberProcessQueueHealthIndicator,
   WorkflowQueueServiceHealthIndicator,
 } from '../../health';
 
 let readinessService: ReadinessService;
 let standardQueueService: StandardQueueService;
 let workflowQueueService: WorkflowQueueService;
+let subscriberProcessQueueService: SubscriberProcessQueueService;
 let testWorker: WorkerBaseService;
 
 describe('Readiness Service', () => {
@@ -20,20 +26,25 @@ describe('Readiness Service', () => {
 
     standardQueueService = new StandardQueueService();
     workflowQueueService = new WorkflowQueueService();
+    subscriberProcessQueueService = new SubscriberProcessQueueService();
 
     await Promise.all([
       standardQueueService.bullMqService.initialize(),
       workflowQueueService.bullMqService.initialize(),
+      subscriberProcessQueueService.bullMqService.initialize(),
     ]);
 
     const standardQueueServiceHealthIndicator =
       new StandardQueueServiceHealthIndicator(standardQueueService);
     const workflowQueueServiceHealthIndicator =
       new WorkflowQueueServiceHealthIndicator(workflowQueueService);
+    const subscriberProcessQueueHealthIndicator =
+      new SubscriberProcessQueueHealthIndicator(subscriberProcessQueueService);
 
     readinessService = new ReadinessService(
       standardQueueServiceHealthIndicator,
-      workflowQueueServiceHealthIndicator
+      workflowQueueServiceHealthIndicator,
+      subscriberProcessQueueHealthIndicator
     );
   });
 
@@ -49,6 +60,7 @@ describe('Readiness Service', () => {
         expect.arrayContaining([
           'standardQueueServiceHealthIndicator',
           'workflowQueueServiceHealthIndicator',
+          'subscriberProcessQueueHealthIndicator',
         ])
       );
 
