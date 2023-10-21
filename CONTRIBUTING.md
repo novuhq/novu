@@ -4,6 +4,7 @@ Thank you for showing an interest in contributing to Novu! All kinds of contribu
 
 ## Submitting an issue
 
+
 Before submitting a new issue, please search the existing [issues](https://github.com/novuhq/novu/issues). Maybe an issue already exists and might inform you of workarounds. Otherwise, you can give new information.
 
 While we want to fix all the [issues](https://github.com/novuhq/novu/issues), before fixing a bug we need to be able to reproduce and confirm it. Please provide us with a minimal reproduction scenario using a repository or [Gist](https://gist.github.com/). Having a live, reproducible scenario gives us the information without asking questions back & forth with additional questions like:
@@ -32,31 +33,16 @@ You can open a new issue with this [issue form](https://github.com/novuhq/novu/i
 
 The project is a monorepo, meaning that it is a collection of multiple packages managed in the same repository.
 
-To learn more about the project structure and running the project locally, please have a look [here](https://docs.novu.co/community-support/introduction#run-novu-locally). After cloning your fork, you will need to run the `npm run setup:project` command to install and build all dependencies.
+
+To learn more about the project structure and running the project locally, please have a look [here](https://docs.novu.co/community-support/introduction#run-novu-locally).
+After cloning your fork, you will need to run the `npm run setup:project` command to install and build all dependencies.
 
 To learn a detailed guide on running the project locally, checkout our guide on [how to run novu in local machine](https://docs.novu.co/community/run-in-local-machine).
 
-## Accessing Repositories After Setting Up Docker Containers
-
-If you have successfully set up the project using Docker containers but are unsure how to access the different repositories such as web, API, and workers for development, follow these steps:
-
-### Web Repository
-
-After running the Docker containers, the web repository can be accessed at [http://localhost:4200](http://localhost:4200). This URL points to the local development instance of the Novu web management platform. You can use this URL to access and contribute to the web repository.
-
-### API Repository
-
-To access the API repository for development, you can use [http://localhost:3000](http://localhost:3000). This URL corresponds to the local development instance of the Novu API. Use this URL to contribute to the API repository.
-
-### Workers Repository
-
-For the workers repository, you can access the development instance using [http://localhost:3004](http://localhost:3004). This URL is associated with the local development instance of the Novu worker service. Utilize this URL for contributing to the workers repository.
-
-Feel free to explore and contribute to other repositories based on the corresponding URLs and ports mentioned above. If you encounter any issues or need further assistance, don't hesitate to reach out on our [Discord Server](https://discord.novu.co) or open a [GitHub Issue](https://github.com/novuhq/novu/issues/new/choose).
-
 ## Missing a Feature?
 
-If a feature is missing, you can directly _request_ a new one [here](https://github.com/novuhq/novu/issues/new?assignees=&labels=feature&template=feature_request.yml&title=%F0%9F%9A%80+Feature%3A+). You also can do the same by choosing "🚀 Feature" when raising a [New Issue](https://github.com/novuhq/novu/issues/new/choose) on our GitHub Repository. If you would like to _implement_ it, an issue with your proposal must be submitted first, to be sure that we can use it. Please consider the guidelines given below.
+If a feature is missing, you can directly _request_ a new one [here](https://github.com/novuhq/novu/issues/new?assignees=&labels=feature&template=feature_request.yml&title=%F0%9F%9A%80+Feature%3A+). You also can do the same by choosing "🚀 Feature" when raising a [New Issue](https://github.com/novuhq/novu/issues/new/choose) on our GitHub Repository.
+If you would like to _implement_ it, an issue with your proposal must be submitted first, to be sure that we can use it. Please consider the guidelines given below.
 
 ## Coding guidelines
 
