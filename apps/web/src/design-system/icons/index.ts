@@ -95,6 +95,8 @@ export { Search } from './actions/Search';
 export { Edit } from './actions/Edit';
 export { Upload } from './actions/Upload';
 export { Invite } from './actions/Invite';
+export { Logout } from './actions/Logout';
+export { InviteMembers } from './actions/InviteMembers';
 export { PlusFilled } from './actions/PlusFilled';
 export { ConditionPlus } from './actions/ConditionPlus';
 export { Duplicate } from './actions/Duplicate';
