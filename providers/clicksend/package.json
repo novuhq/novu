@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "@novu/stateless": "0.16.3",
-    "clicksend": "^5.0.37"
+    "axios": "^1.5.1"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "~1.0.1",
