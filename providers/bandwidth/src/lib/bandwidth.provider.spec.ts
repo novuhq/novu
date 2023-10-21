@@ -31,7 +31,7 @@ test('should trigger BandwidthSmsProvider library correctly', async () => {
   expect(spy).toHaveBeenCalledWith('<your-bandwidth-accountId>', {
     applicationId: '<your-bandwidth-accountId>',
     to: ['+12345678902'],
-    from: undefined,
+    from: '+1234567890',
     text: 'test message',
   });
 });
