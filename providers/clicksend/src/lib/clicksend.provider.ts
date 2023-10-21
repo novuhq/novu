@@ -4,15 +4,16 @@ import {
   ISmsOptions,
   ISmsProvider,
 } from '@novu/stateless';
+import axios from 'axios';
 
-// eslint-disable-next-line import/extensions
-import * as api from 'clicksend/api';
+
 
 export class ClicksendSmsProvider implements ISmsProvider {
   id = 'clicksend';
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
 
-  private smsApi: any;
+  private axiosInstance: any;
+
 
   constructor(
     private config: {
@@ -20,25 +21,31 @@ export class ClicksendSmsProvider implements ISmsProvider {
       apiKey: string;
     }
   ) {
-    this.smsApi = new api.SMSApi(config.username, config.apiKey);
+   
+    this.axiosInstance = axios.create({
+      baseURL: "https://rest.clicksend.com/v3",
+      headers: {
+        username: config.username,
+        password: config.apiKey
+      }
+    })
   }
 
   async sendMessage(
     options: ISmsOptions
   ): Promise<ISendMessageSuccessResponse> {
-    const smsMessage = new api.SmsMessage();
-    smsMessage.source = 'sdk';
-    smsMessage.to = options.to;
-    smsMessage.body = options.content;
 
-    const smsCollection = new api.SmsMessageCollection();
-    smsCollection.messages = [smsMessage];
+    const smsOptions = {
+      source: "sdk",
+      to: options.to,
+      body: options.content
+    }
 
-    const response = await this.smsApi.smsSendPost(smsCollection);
+    const res = await this.axiosInstance.post("/sms/send", { messages: [smsOptions] });
 
     return {
-      id: response.body.data.messages[0].message_id,
-      date: response.body.data.messages[0].date,
+      id: res.response.data.data.messages[0].message_id,
+      date: res.response.data.data.messages[0].date,
     };
   }
 }
