@@ -254,7 +254,7 @@ function mapTemplateConfiguration(
     name: template.name,
     tags: template?.tags || [],
     critical: template.critical != null ? template.critical : true,
-    identifier: template.triggers[0].identifier,
+    triggers: template.triggers,
     ...(template.data ? { data: template.data } : {}),
   };
 }
