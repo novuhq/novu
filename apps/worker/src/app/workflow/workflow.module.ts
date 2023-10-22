@@ -30,6 +30,7 @@ import {
   GetTopicSubscribersUseCase,
   getIsTopicNotificationEnabled,
   SubscriberJobBound,
+  SchedulerService,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
@@ -126,6 +127,7 @@ const PROVIDERS: Provider[] = [
   OldInstanceBullMqService,
   OldInstanceStandardWorker,
   OldInstanceWorkflowWorker,
+  SchedulerService,
 ];
 
 @Module({

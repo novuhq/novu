@@ -25,3 +25,4 @@ export {
   OldInstanceBullMqService,
 } from './bull-mq';
 export * from './auth';
+export * from './scheduler/scheduler.service';

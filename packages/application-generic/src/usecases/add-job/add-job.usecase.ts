@@ -19,6 +19,7 @@ import {
 import {
   CalculateDelayService,
   JobsOptions,
+  SchedulerService,
   StandardQueueService,
 } from '../../services';
 import { LogDecorator } from '../../logging';
@@ -41,7 +42,9 @@ export class AddJob {
     private mergeOrCreateDigestUsecase: MergeOrCreateDigest,
     private addDelayJob: AddDelayJob,
     @Inject(forwardRef(() => CalculateDelayService))
-    private calculateDelayService: CalculateDelayService
+    private calculateDelayService: CalculateDelayService,
+    @Inject(forwardRef(() => SchedulerService))
+    private schedulerService: SchedulerService
   ) {}
 
   @InstrumentUsecase()
@@ -183,12 +186,19 @@ export class AddJob {
       LOG_CONTEXT
     );
 
-    await this.standardQueueService.addMinimalJob(
-      job._id,
-      jobData,
-      command.organizationId,
-      options
-    );
+    if (delay) {
+      await this.schedulerService.scheduleJob(new Date(Date.now() + delay), {
+        id: job._id,
+        ...jobData,
+      });
+    } else {
+      await this.standardQueueService.addMinimalJob(
+        job._id,
+        jobData,
+        command.organizationId,
+        options
+      );
+    }
 
     if (delay) {
       const logMessage =

@@ -21,6 +21,7 @@ import {
   StoreSubscriberJobs,
   TriggerEvent,
   MapTriggerRecipients,
+  SchedulerService,
 } from '@novu/application-generic';
 
 import { EventsController } from './events.controller';
@@ -57,6 +58,7 @@ const PROVIDERS = [
   StoreSubscriberJobs,
   TriggerEvent,
   MapTriggerRecipients,
+  SchedulerService,
 ];
 
 @Module({
