@@ -93,7 +93,15 @@ export class SparkPostEmailProvider implements IEmailProvider {
     }
   }
 
-  private getEndpoint(region: string) {
+  private transformLegacyRegion(region: string | boolean) {
+    if (region === 'true' || region === true) return 'eu';
+
+    return region;
+  }
+
+  private getEndpoint(_region: string) {
+    const region = this.transformLegacyRegion(_region);
+
     switch (region) {
       case 'eu':
         return 'https://api.eu.sparkpost.com:443';
