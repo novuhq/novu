@@ -23,7 +23,7 @@ test('should trigger BandwidthSmsProvider library correctly', async () => {
   await provider.sendMessage({
     to: '+12345678902',
     content: 'test message',
-    from: '+1234567890'
+    from: '+1234567890',
   });
 
   expect(spy).toHaveBeenCalled();
