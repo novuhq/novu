@@ -23,13 +23,13 @@ BONUS: watch our video, answer the riddle, and win awesome swag!<br /><br />
 
 <h1 align="center">🎉 We're participating in Hacktoberfest 2023! 🎉</h1>
 
-Interested in participating in Hacktoberfest? We extend a warm invitation! You also get the opportunity to win some swag 😁
+Are you interested in participating in Hacktoberfest? We extend a warm invitation! You also get the opportunity to win some swag 😁
 
 > ⭐️ If you're new to Hacktoberfest, you can learn more and register to participate [here](https://hacktoberfest.com/participation/). Registration is from **September 26th - October 31st**.
 
 - Our Hacktoberfest kickoff event is happening on October 2, 2023. 🚀
 - Check out our website for [hacktoberfest instructions](https://novu.co/hacktoberfest/).
-- Join our [Discord and engage with our community](https://discord.com/invite/novu), get answers to your challenges, stay updated on events, announcements & prizes.
+- Join our [Discord and engage with our community](https://discord.com/invite/novu), get answers to your challenges, and stay updated on events, announcements, and prizes.
 
 In addition to this repository, here are the other Novu repositories you can contribute to for Hacktoberfest:
 - [Novu Docs](https://github.com/novuhq/docs/issues)
@@ -89,7 +89,7 @@ With Novu, you can create custom workflows and define conditions for each channe
 - 📦 Easy to set up and integrate
 - 🛡 Debug and analyze multi-channel messages in a single dashboard
 - 📦 Embeddable notification center with real-time updates
-- 👨‍💻 Community driven
+- 👨‍💻 community-driven
 
 ## 📚 Table Of Contents
 
@@ -108,7 +108,7 @@ With Novu, you can create custom workflows and define conditions for each channe
 
 ## 🚀 Getting Started
 
-We are excited to launch the complete Novu API and admin panel. Want to give it a test before the official release? Here is how:
+We are excited to launch the complete Novu API and admin panel. Do you want to give it a test before the official release? Here is how:
 
 ```
 npx novu init
@@ -116,7 +116,7 @@ npx novu init
 
 After setting up your account using the cloud or docker version, you can trigger the API using the `@novu/node` package.
 
-For API documentation and reference, please visit [Novu API Reference](https://docs.novu.co/api-reference/events/trigger-event).
+Please visit [Novu API Reference](https://docs.novu.co/api-reference/events/trigger-event) for API documentation and reference.
 
 To get started with the Node.js package, you can install it using npm:
 
@@ -232,11 +232,11 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 ## 📋 Read Our Code Of Conduct
 
-Before you begin coding and collaborating, please read our [Code of Conduct](https://github.com/novuhq/novu/blob/main/CODE_OF_CONDUCT.md) thoroughly to understand the standards (that you are required to adhere to) for community engagement. As part of our open-source community, we hold ourselves and other contributors to a high standard of communication. As a participant and contributor to this project, you are agreeing to abide by our [Code of Conduct](https://github.com/novuhq/novu/blob/main/CODE_OF_CONDUCT.md).
+Before you begin coding and collaborating, please read our [Code of Conduct](https://github.com/novuhq/novu/blob/main/CODE_OF_CONDUCT.md) thoroughly to understand the standards (that you are required to adhere to) for community engagement. As part of our open-source community, we hold ourselves and other contributors to a high standard of communication. As a participant and contributor to this project, you agree to abide by our [Code of Conduct](https://github.com/novuhq/novu/blob/main/CODE_OF_CONDUCT.md).
 
 ## 💻 Need Help?
 
-We are more than happy to help you. If you are getting any errors or facing problems while working on this project, join our [Discord server](https://discord.novu.co) and ask for help. We are open to discuss anything related to the project.
+We are more than happy to help you. If you are getting any errors or facing problems while working on this project, join our [Discord server](https://discord.novu.co) and ask for help. We are open to discussing anything related to the project.
 
 ## ⚡ Immediate working space with Gitpod
 
