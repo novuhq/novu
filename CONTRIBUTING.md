@@ -69,3 +69,6 @@ Questions, suggestions, and thoughts are most welcome. Feel free to open a [GitH
 ## Missing a provider?
 
 If you are in need of a provider we do not yet have, you can request a new one by [submitting an issue](#submitting-an-issue). Or you can build a new one by following our [create a provider guide](https://docs.novu.co/community/add-a-new-provider).
+Contributor Novu: [Check your contributions](https://novu.co/contributors/)
+
+
