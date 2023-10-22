@@ -16,6 +16,7 @@ import {
   plunkConfig,
   sparkpostConfig,
   emailWebhookConfig,
+  mailchainConfig,
 } from '../credentials';
 import { IProviderConfig } from '../provider.interface';
 import { EmailProviderIdEnum } from '../provider.enum';
@@ -167,5 +168,13 @@ export const emailProviders: IProviderConfig[] = [
     betaVersion: true,
     docReference: 'https://docs.novu.co/channels/email/email-webhook/',
     logoFileName: { light: 'email_webhook.svg', dark: 'email_webhook.svg' },
+  },
+  {
+    id: EmailProviderIdEnum.Mailchain,
+    displayName: 'Mailchain',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: mailchainConfig,
+    docReference: 'https://docs.mailchain.com/',
+    logoFileName: { light: 'mailchain.png', dark: 'mailchain.png' },
   },
 ];

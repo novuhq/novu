@@ -13,6 +13,7 @@ import {
   NetCoreHandler,
   InfobipEmailHandler,
   MailerSendHandler,
+  MailchainHandler,
   Outlook365Handler,
   ResendHandler,
   SparkPostHandler,
@@ -43,6 +44,7 @@ export class MailFactory {
     new SparkPostHandler(),
     new EmailWebhookHandler(),
     new NovuEmailHandler(),
+    new MailchainHandler(),
   ];
 
   getHandler(
