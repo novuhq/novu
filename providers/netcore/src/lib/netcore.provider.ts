@@ -8,7 +8,7 @@ import {
   IEmailEventBody,
   EmailEventStatusEnum,
 } from '@novu/stateless';
-
+import { INetCoreEmail } from 'netcore';
 import axios, { AxiosInstance } from 'axios';
 
 export enum NetCoreStatusEnum {
@@ -42,6 +42,49 @@ export class NetCoreProvider implements IEmailProvider {
   async sendMessage(
     options: IEmailOptions
   ): Promise<ISendMessageSuccessResponse> {
+    const data: INetCoreEmail['body'] = {
+      from: { email: options.from || this.config.from },
+      subject: options.subject,
+      content: [
+        {
+          type: 'html',
+          value: options.html,
+        },
+      ],
+      personalizations: [
+        {
+          to: options.to.map((email) => ({ email })),
+        },
+      ],
+    };
+
+    if (options.replyTo) {
+      data.reply_to = options.replyTo;
+    }
+
+    if (options.cc) {
+      data.personalizations[0].cc = options.cc.map((email) => ({
+        email,
+      }));
+    }
+
+    if (options.bcc) {
+      data.personalizations[0].bcc = options.bcc.map((email) => ({
+        email,
+      }));
+    }
+
+    if (options.attachments) {
+      data.personalizations[0].attachments = options.attachments?.map(
+        (attachment) => {
+          return {
+            name: attachment.name,
+            content: attachment.file.toString('base64'),
+          };
+        }
+      );
+    }
+
     const emailOptions = {
       method: 'POST',
       headers: {
@@ -49,36 +92,16 @@ export class NetCoreProvider implements IEmailProvider {
         'Content-Type': 'application/json',
         Accept: 'application/json',
       },
-      data: {
-        from: { email: options.from || this.config.from, name: 'Lesley Knope' },
-        reply_to: options.replyTo,
-        subject: options.subject,
-        content: [
-          {
-            type: 'html',
-            value: options.html,
-          },
-        ],
-        personalizations: [
-          {
-            to: options.to.map((email) => ({ email })),
-            cc: options.cc.map((email) => ({ email })),
-            bcc: options.bcc.map((email) => ({ email })),
-            attachments: options.attachments?.map((attachment) => {
-              return {
-                name: attachment.name,
-                content: attachment.file.toString('base64'),
-              };
-            }),
-          },
-        ],
-      },
+      data,
     };
 
-    const response = await this.axiosInstance.post('/mail/send', emailOptions);
+    const response: INetCoreEmail['response'] = await this.axiosInstance.post(
+      '/mail/send',
+      emailOptions
+    );
 
     return {
-      id: response?.data?.TRANSID,
+      id: response?.data?.message_id,
       date: new Date().toISOString(),
     };
   }
