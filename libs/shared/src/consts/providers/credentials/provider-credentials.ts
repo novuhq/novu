@@ -772,6 +772,7 @@ export const bandwidthConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.User,
     displayName: 'Username',
+    description: 'Your Bandwidth account username',
     type: 'text',
     required: true,
   },

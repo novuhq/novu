@@ -1,4 +1,3 @@
-import { ApiController } from '@bandwidth/messaging';
 import { BandwidthSmsProvider } from './bandwidth.provider';
 
 test('should trigger BandwidthSmsProvider library correctly', async () => {

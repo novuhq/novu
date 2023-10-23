@@ -9,7 +9,6 @@ import { Client, ApiController } from '@bandwidth/messaging';
 export class BandwidthSmsProvider implements ISmsProvider {
   id = 'bandwidth';
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
-
   public controller: ApiController;
 
   constructor(
@@ -23,7 +22,6 @@ export class BandwidthSmsProvider implements ISmsProvider {
       basicAuthUserName: config.username,
       basicAuthPassword: config.password,
     });
-
     this.controller = new ApiController(client);
   }
 
