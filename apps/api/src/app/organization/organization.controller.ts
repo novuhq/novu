@@ -42,7 +42,7 @@ import { UpdateMemberRolesDto } from './dtos/update-member-roles.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ApiResponse } from '../shared/framework/response.decorator';
 import { OrganizationBrandingResponseDto, OrganizationResponseDto } from './dtos/organization-response.dto';
-
+import { MemberResponseDto } from './dtos/member-repsonse.dto';
 @Controller('/organizations')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
@@ -110,6 +110,7 @@ export class OrganizationController {
   @Delete('/members/:memberId')
   @ExternalApiAccessible()
   @Roles(MemberRoleEnum.ADMIN)
+  @ApiResponse(MemberResponseDto)
   @ApiOperation({
     summary: 'Remove a member from organization using memberId',
   })
@@ -127,6 +128,7 @@ export class OrganizationController {
   @Put('/members/:memberId/roles')
   @ExternalApiAccessible()
   @Roles(MemberRoleEnum.ADMIN)
+  @ApiResponse(MemberResponseDto)
   @ApiOperation({
     summary: 'Update a member role to admin',
   })
@@ -148,6 +150,7 @@ export class OrganizationController {
 
   @Get('/members')
   @ExternalApiAccessible()
+  @ApiResponse(MemberResponseDto, 200, true)
   @ApiOperation({
     summary: 'Fetch all members of current organizations',
   })

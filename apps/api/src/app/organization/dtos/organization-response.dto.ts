@@ -33,17 +33,18 @@ export class OrganizationBrandingResponseDto extends UpdateBrandingDetailsDto {
 }
 
 export class OrganizationResponseDto {
+  @ApiProperty()
   @IsString()
   name: string;
 
+  @ApiPropertyOptional()
   @IsString()
-  @IsOptional()
   logo?: string;
 
   @ApiProperty()
   @IsObject()
   branding: OrganizationBrandingResponseDto;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   partnerConfigurations: IPartnerConfigurationResponseDto[];
 }
