@@ -1,38 +1,21 @@
-import {
-  HealthCheckError,
-  HealthIndicator,
-  HealthIndicatorResult,
-} from '@nestjs/terminus';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import { CompletedJobsMetricQueueService } from '../services';
+import { QueueHealthIndicator } from './queue-health-indicator.service';
 
 const LOG_CONTEXT = 'CompletedJobsMetricQueueServiceHealthIndicator';
-
+const INDICATOR_KEY = 'completedJobsMetricQueue';
+const SERVICE_NAME = 'CompletedJobsMetricQueueService';
 @Injectable()
-export class CompletedJobsMetricQueueServiceHealthIndicator extends HealthIndicator {
-  private INDICATOR_KEY = 'completedJobsMetricQueue';
-
+export class CompletedJobsMetricQueueServiceHealthIndicator extends QueueHealthIndicator {
   constructor(
     private completedJobsMetricQueueService: CompletedJobsMetricQueueService
   ) {
-    super();
-  }
-
-  async isHealthy(): Promise<HealthIndicatorResult> {
-    const isReady = this.completedJobsMetricQueueService.isReady();
-
-    if (isReady) {
-      Logger.verbose('CompletedJobsMetricQueueService is ready', LOG_CONTEXT);
-
-      return this.getStatus(this.INDICATOR_KEY, true);
-    }
-
-    Logger.verbose('CompletedJobsMetricQueueService is not ready', LOG_CONTEXT);
-
-    throw new HealthCheckError(
-      'CompletedJobsMetric Queue Health',
-      this.getStatus(this.INDICATOR_KEY, false)
+    super(
+      completedJobsMetricQueueService,
+      INDICATOR_KEY,
+      SERVICE_NAME,
+      LOG_CONTEXT
     );
   }
 }

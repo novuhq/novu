@@ -1,8 +1,8 @@
 <div align="center">
-  <a href="https://novu.co" target="_blank">
+  <a href="https://novu.co?utm_source=github" target="_blank">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/2233092/213641039-220ac15f-f367-4d13-9eaf-56e79433b8c1.png">
-    <img src="https://user-images.githubusercontent.com/2233092/213641043-3bbb3f21-3c53-4e67-afe5-755aeb222159.png" width="280" alt="Logo"/>
+    ![Novu Logo]<img src="https://user-images.githubusercontent.com/2233092/213641043-3bbb3f21-3c53-4e67-afe5-755aeb222159.png" width="280"/>
   </picture>
   </a>
 </div>
@@ -12,7 +12,7 @@
 <div align="center">
 The ultimate service for managing multi-channel notifications with a single API.
 </div>
-
+<br /><br />
 <h1 align="center">🎉 We're participating in Hacktoberfest 2023! 🎉</h1>
 
 Interested in participating in Hacktoberfest? We extend a warm invitation! You also get the opportunity to win some swag 😁
@@ -24,7 +24,7 @@ Interested in participating in Hacktoberfest? We extend a warm invitation! You a
 - Join our [Discord and engage with our community](https://discord.com/invite/novu), get answers to your challenges, stay updated on events, announcements & prizes.
 
 In addition to this repository, here are the other Novu repositories you can contribute to for Hacktoberfest:
-- [Novu docs](https://github.com/novuhq/docs/issues)
+- [Novu Docs](https://github.com/novuhq/docs/issues)
 - [Novu PHP SDK](https://github.com/novuhq/novu-php/issues)
 - [Novu Ruby SDK](https://github.com/novuhq/novu-ruby/issues)
 - [Novu Python SDK](https://github.com/novuhq/novu-python/issues)
@@ -106,7 +106,11 @@ We are excited to launch the complete Novu API and admin panel. Want to give it 
 npx novu init
 ```
 
-After setting up your account using the cloud or docker version you can trigger the API using the `@novu/node` package.
+After setting up your account using the cloud or docker version, you can trigger the API using the `@novu/node` package.
+
+For API documentation and reference, please visit [Novu API Reference](https://docs.novu.co/api-reference/events/trigger-event).
+
+To get started with the Node.js package, you can install it using npm:
 
 ```bash
 npm install @novu/node
@@ -140,14 +144,14 @@ await novu.trigger('<TRIGGER_NAME>', {
 Using the Novu API and admin panel, you can easily add a real-time notification center to your web app without building it yourself. You can use our React / Vue / Angular component or an iframe embed.
 
 <div align="center">
-<img width="762" alt="notification-center-912bb96e009fb3a69bafec23bcde00b0" src="https://user-images.githubusercontent.com/80174214/193887395-f1c95042-b4e6-480e-a89c-a78aa247fa90.gif">
+<img width="762" alt="notification-center-912bb96e009fb3a69bafec23bcde00b0" src="https://user-images.githubusercontent.com/80174214/193887395-f1c95042-b4e6-480e-a89c-a78aa247fa90.gif" alt-text="GIF of Novu's Embeddable Notification Center">
 
 Read more about how to add a notification center to your app with the Novu API [here](https://docs.novu.co/notification-center/getting-started)
 
 <p align="center">
-  <a href="https://docs.novu.co/notification-center/getting-started">React Component</a>
-  · <a href="https://docs.novu.co/notification-center/vue-component">Vue Component</a>
-  · <a href="https://github.com/novuhq/novu/tree/next/packages/notification-center-angular">Angular Component</a>
+  <a href="https://docs.novu.co/sdks/react">React Component</a>
+  · <a href="https://docs.novu.co/sdks/vue">Vue Component</a>
+  · <a href="https://docs.novu.co/sdks/angular">Angular Component</a>
   </p>
   
 </div>
@@ -224,7 +228,7 @@ Before you begin coding and collaborating, please read our [Code of Conduct](htt
 
 ## 💻 Need Help?
 
-We are more than happy to help you. If you are getting any errors or facing problems while working on this project, join our [Discord server](https://discord.novu.co) and ask for help. We are open to discussing anything related to the project.
+We are more than happy to help you. If you are getting any errors or facing problems while working on this project, join our [Discord server](https://discord.novu.co) and ask for help. We are open to discuss anything related to the project.
 
 ## ⚡ Immediate working space with Gitpod
 
@@ -232,7 +236,7 @@ We are more than happy to help you. If you are getting any errors or facing prob
 
 ## 🔗 Links
 
-- [Home page](https://novu.co/)
+- [Home page](https://novu.co?utm_source=github)
 - [Contribution Guidelines](https://github.com/novuhq/novu/blob/main/CONTRIBUTING.md)
 - [Run Novu Locally](https://docs.novu.co/community/run-in-local-machine)
 
@@ -244,6 +248,6 @@ Novu is licensed under the MIT License - see the [LICENSE](https://github.com/no
 
 Thanks a lot for spending your time helping Novu grow. Keep rocking 🥂
 
-<a href="https://novu.co/contributors">
+<a href="https://novu.co/contributors?utm_source=github">
   <img src="https://contributors-img.web.app/image?repo=novuhq/novu" alt="Contributors"/>
 </a>
