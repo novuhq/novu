@@ -24,8 +24,8 @@ export class TriggerEventCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   overrides: Record<string, Record<string, unknown>>;
 
-  @IsDefined()
-  to: ISubscribersDefine[];
+  @IsOptional()
+  to?: ISubscribersDefine[];
 
   @IsString()
   @IsDefined()
