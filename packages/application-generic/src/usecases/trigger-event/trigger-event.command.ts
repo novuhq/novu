@@ -32,6 +32,7 @@ export class TriggerEventCommand extends EnvironmentWithUserCommand {
   transactionId: string;
 
   @IsOptional()
+  @ValidateNested()
   actor?: ISubscribersDefine | null;
 
   @IsOptional()
