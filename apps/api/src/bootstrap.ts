@@ -94,7 +94,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
 
   const options = new DocumentBuilder()
     .setTitle('Novu API')
-    .setDescription('The Novu API description')
+    .setDescription('Open API Specification for Novu API')
     .setVersion('1.0')
     .addTag('Events')
     .addTag('Subscribers')
