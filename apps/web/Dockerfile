@@ -51,5 +51,8 @@ COPY --from=builder /usr/src/app/apps/web/build /app/build
 COPY --from=builder /usr/src/app/apps/web/public /app/public
 COPY --from=builder /usr/src/app/apps/web/package.json /app/package.json
 
+RUN chown -R 1000:1000 .
+USER 1000
+
 CMD [ "pnpm", "start:static:build" ]
 # end production stage
