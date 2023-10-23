@@ -1,5 +1,5 @@
 <div align="center">
-  <a href="https://novu.co" target="_blank">
+  <a href="https://novu.co?utm_source=github" target="_blank">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/2233092/213641039-220ac15f-f367-4d13-9eaf-56e79433b8c1.png">
     ![Novu Logo]<img src="https://user-images.githubusercontent.com/2233092/213641043-3bbb3f21-3c53-4e67-afe5-755aeb222159.png" width="280"/>
@@ -12,15 +12,7 @@
 <div align="center">
 The ultimate service for managing multi-channel notifications with a single API.
 </div>
-
-<h1 align="center">🎉 Novu is live on Product Hunt! 🎉</h1>
-<p align="center">
-We are on Product Hunt and would appreciate any help you can give us 🩷<br />
-BONUS: watch our video, answer the riddle, and win awesome swag!<br /><br />
-<a href="https://www.producthunt.com/posts/novu?utm_source=badge-featured&utm_medium=badge&utm_souce=badge-novu" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=420313&theme=light"  The&#0032;open&#0045;source&#0032;notification&#0032;infrastructure&#0032;for&#0032;developers | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" alt-text="Novu is featured on Product Hunt" /></a>
 <br /><br />
-</p>
-
 <h1 align="center">🎉 We're participating in Hacktoberfest 2023! 🎉</h1>
 
 Are you interested in participating in Hacktoberfest? We extend a warm invitation! You also get the opportunity to win some swag 😁
@@ -244,7 +236,7 @@ We are more than happy to help you. If you are getting any errors or facing prob
 
 ## 🔗 Links
 
-- [Home page](https://novu.co/)
+- [Home page](https://novu.co?utm_source=github)
 - [Contribution Guidelines](https://github.com/novuhq/novu/blob/main/CONTRIBUTING.md)
 - [Run Novu Locally](https://docs.novu.co/community/run-in-local-machine)
 
@@ -256,6 +248,6 @@ Novu is licensed under the MIT License - see the [LICENSE](https://github.com/no
 
 Thanks a lot for spending your time helping Novu grow. Keep rocking 🥂
 
-<a href="https://novu.co/contributors">
+<a href="https://novu.co/contributors?utm_source=github">
   <img src="https://contributors-img.web.app/image?repo=novuhq/novu" alt="Contributors"/>
 </a>
