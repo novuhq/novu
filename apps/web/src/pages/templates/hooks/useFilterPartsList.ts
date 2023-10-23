@@ -19,8 +19,8 @@ const FILTER_PART_LIST: IFilterTypeList[] = [
   },
 ];
 
-export const useFilterPartsList = () => {
-  const stepsBeforeSelectedStep = useStepsBefore();
+export const useFilterPartsList = ({ index = 0 }: { index?: number }) => {
+  const stepsBeforeSelectedStep = useStepsBefore({ index });
 
   return useMemo(() => {
     const filterPartsList = [...FILTER_PART_LIST];

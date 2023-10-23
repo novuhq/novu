@@ -3,20 +3,18 @@ import { useFormContext, useWatch } from 'react-hook-form';
 import { ChannelTypeEnum } from '@novu/shared';
 
 import { IForm } from '../components/formTypes';
-import { useStepIndex } from './useStepIndex';
 
-export const useStepsBefore = () => {
-  const { stepIndex } = useStepIndex();
+export const useStepsBefore = ({ index = 0 }: { index?: number }) => {
   const { control } = useFormContext<IForm>();
   const steps = useWatch({ name: 'steps', control });
 
   const stepsBefore = useMemo(() => {
-    const stepsBeforeSelectedStep = steps.slice(0, stepIndex);
+    const stepsBeforeSelectedStep = steps.slice(0, index);
 
     return stepsBeforeSelectedStep.filter((step) => {
       return [ChannelTypeEnum.EMAIL, ChannelTypeEnum.IN_APP].includes(step.template.type as unknown as ChannelTypeEnum);
     });
-  }, [steps, stepIndex]);
+  }, [steps, index]);
 
   return stepsBefore;
 };
