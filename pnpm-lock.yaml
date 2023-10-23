@@ -1973,10 +1973,10 @@ importers:
         specifier: ^5.7.1
         version: 5.10.5(@mantine/core@5.10.5)(@mantine/hooks@5.10.5)(react-dom@17.0.2)(react@17.0.2)
       '@novu/client':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../../packages/client
       '@novu/shared':
-        specifier: ^0.20.0-alpha.1
+        specifier: ^0.20.0
         version: link:../shared
       react-hook-form:
         specifier: 7.43.9

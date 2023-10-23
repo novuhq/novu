@@ -68,8 +68,8 @@
     "@mantine/core": "^5.7.1",
     "@mantine/hooks": "^5.7.1",
     "@mantine/notifications": "^5.7.1",
-    "@novu/client": "^0.20.0-alpha.1",
-    "@novu/shared": "^0.20.0-alpha.1",
+    "@novu/client": "^0.20.0",
+    "@novu/shared": "^0.20.0",
     "react-hook-form": "7.43.9",
     "react-table": "^7.8.0",
     "tslib": "^2.3.1"
