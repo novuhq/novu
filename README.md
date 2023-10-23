@@ -81,7 +81,7 @@ With Novu, you can create custom workflows and define conditions for each channe
 - 📦 Easy to set up and integrate
 - 🛡 Debug and analyze multi-channel messages in a single dashboard
 - 📦 Embeddable notification center with real-time updates
-- 👨‍💻 community-driven
+- 👨‍💻 Community-driven
 
 ## 📚 Table Of Contents
 
@@ -108,7 +108,7 @@ npx novu init
 
 After setting up your account using the cloud or docker version, you can trigger the API using the `@novu/node` package.
 
-Please visit [Novu API Reference](https://docs.novu.co/api-reference/events/trigger-event) for API documentation and reference.
+For API documentation and reference, please visit [Novu API Reference] (https://docs.novu.co/api-reference/ events/trigger-event).
 
 To get started with the Node.js package, you can install it using npm:
 
