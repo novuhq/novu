@@ -13,7 +13,6 @@ const HeaderHolder = styled.div`
   flex-wrap: nowrap;
   gap: 36px;
   margin: 24px;
-  margin-bottom: 0;
 `;
 
 const BodyHolder = styled.div`
@@ -83,6 +82,8 @@ export const Sidebar = ({
   onClose,
   onBack,
   onSubmit,
+  givenWidth,
+  closeButton,
 }: {
   customHeader?: ReactNode;
   customFooter?: ReactNode;
@@ -94,6 +95,8 @@ export const Sidebar = ({
   onBack?: () => void;
   onSubmit?: React.FormEventHandler<HTMLFormElement>;
   'data-test-id'?: string;
+  givenWidth?: String;
+  closeButton?: boolean;
 }) => {
   const { classes: drawerClasses } = useDrawerStyles();
   const onCloseCallback = () => {
@@ -108,7 +111,7 @@ export const Sidebar = ({
       position="right"
       styles={{
         drawer: {
-          width: isExpanded ? `calc(100% - ${NAVIGATION_WIDTH}px)` : COLLAPSED_WIDTH,
+          width: isExpanded ? `${NAVIGATION_WIDTH}px` : givenWidth ? `${givenWidth}` : COLLAPSED_WIDTH,
           transition: 'all 300ms ease !important',
           '@media screen and (max-width: 768px)': {
             width: isExpanded ? `100%` : COLLAPSED_WIDTH,
@@ -132,14 +135,16 @@ export const Sidebar = ({
             </ActionIcon>
           )}
           {customHeader}
-          <ActionIcon
-            variant="transparent"
-            onClick={onCloseCallback}
-            style={{ marginLeft: 'auto' }}
-            data-test-id="sidebar-close"
-          >
-            <Close color={colors.B40} />
-          </ActionIcon>
+          {closeButton ?? (
+            <ActionIcon
+              variant="transparent"
+              onClick={onCloseCallback}
+              style={{ marginLeft: 'auto' }}
+              data-test-id="sidebar-close"
+            >
+              <Close color={colors.B40} />
+            </ActionIcon>
+          )}
         </HeaderHolder>
         <BodyHolder>
           <When truthy={isLoading}>

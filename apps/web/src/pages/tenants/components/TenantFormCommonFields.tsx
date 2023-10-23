@@ -1,6 +1,6 @@
 import { Control, Controller } from 'react-hook-form';
 import { useClipboard } from '@mantine/hooks';
-import { JsonInput, ActionIcon } from '@mantine/core';
+import { JsonInput, ActionIcon, Stack } from '@mantine/core';
 
 import { Input } from '../../../design-system';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
@@ -21,7 +21,7 @@ export const TenantFormCommonFields = ({ control }: { control: Control<ITenantFo
   const identifierClipboard = useClipboard({ timeout: 1000 });
 
   return (
-    <>
+    <Stack h={100} spacing={50}>
       <Controller
         control={control}
         name="name"
@@ -89,11 +89,11 @@ export const TenantFormCommonFields = ({ control }: { control: Control<ITenantFo
             styles={inputStyles}
             label="Custom properties"
             description="Set-up custom properties using JSON format"
-            minRows={5}
+            minRows={10}
             validationError="Invalid JSON"
           />
         )}
       />
-    </>
+    </Stack>
   );
 };

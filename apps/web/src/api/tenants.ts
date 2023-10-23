@@ -13,6 +13,10 @@ export function updateTenant(identifier: string, data: IUpdateTenantDto) {
   return api.patch(`/v1/tenants/${identifier}`, data);
 }
 
+export function deleteTenant(identifier: string) {
+  return api.delete(`/v1/tenants/${identifier}`);
+}
+
 export function getTenantByIdentifier(identifier: string) {
   return api.get(`/v1/tenants/${identifier}`);
 }
