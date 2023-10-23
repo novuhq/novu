@@ -8,6 +8,7 @@ import {
   MessageEntity,
   LayoutRepository,
   TenantRepository,
+  SubscriberEntity,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -135,6 +136,14 @@ export class SendMessageEmail extends SendMessageBase {
       return;
     }
 
+    let actor: SubscriberEntity | null = null;
+    if (command.job.actorId) {
+      actor = await this.getSubscriberBySubscriberId({
+        subscriberId: command.job.actorId,
+        _environmentId: command.environmentId,
+      });
+    }
+
     const [tenant, overrideLayoutId] = await Promise.all([
       this.handleTenantExecution(command.job),
       this.getOverrideLayoutId(command),
@@ -167,6 +176,7 @@ export class SendMessageEmail extends SendMessageBase {
           total_count: command.events?.length,
         },
         ...(tenant && { tenant }),
+        ...(actor && { actor }),
         subscriber,
       },
     };
