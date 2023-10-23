@@ -7,6 +7,7 @@ import {
   Navbar,
   Popover,
   useMantineColorScheme,
+  ScrollArea
 } from '@mantine/core';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -136,6 +137,16 @@ export function SideNav({}: Props) {
   }
 
   return (
+    <ScrollArea
+      style={{ maxHeight: '100%', maxWidth: '100%', paddingRight: '8px' }}
+      scrollbarStyle={{
+        width: 8,
+        bodyWidth: 4,
+        bodyBackgroundColor: 'rgba(0, 0, 0, 0.4)',
+        bodyTransition: 'background 250ms',
+        componentBackgroundColor: 'transparent',
+      }}
+    >
     <Navbar
       sx={{
         position: 'sticky',
