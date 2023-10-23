@@ -15,25 +15,28 @@ export function OnlineFiltersForms({
   stepIndex,
   index,
   remove,
+  readonly,
 }: {
   fieldOn: string;
-  control;
+  control: any;
   stepIndex: number;
   index: number;
   remove: (index?: number | number[]) => void;
+  readonly: boolean;
 }) {
   return (
     <>
       {fieldOn === 'isOnline' ? (
-        <OnlineRightNowForm control={control} stepIndex={stepIndex} index={index} />
+        <OnlineRightNowForm control={control} stepIndex={stepIndex} index={index} readonly={readonly} />
       ) : (
-        <OnlineInTheLastForm control={control} stepIndex={stepIndex} index={index} />
+        <OnlineInTheLastForm control={control} stepIndex={stepIndex} index={index} readonly={readonly} />
       )}
       <Grid.Col span={1}>
         <DeleteStepButton
           variant="outline"
           size="md"
           mt={30}
+          disabled={readonly}
           onClick={() => {
             remove(index);
           }}
@@ -45,7 +48,17 @@ export function OnlineFiltersForms({
   );
 }
 
-function OnlineRightNowForm({ control, stepIndex, index }: { control; stepIndex: number; index: number }) {
+function OnlineRightNowForm({
+  control,
+  stepIndex,
+  index,
+  readonly,
+}: {
+  control: any;
+  stepIndex: number;
+  index: number;
+  readonly: boolean;
+}) {
   return (
     <>
       <Grid.Col span={spanSize}>
@@ -70,6 +83,7 @@ function OnlineRightNowForm({ control, stepIndex, index }: { control; stepIndex:
                 onChange={(val) => field.onChange(val === 'true')}
                 value={value}
                 data-test-id="online-now-value-dropdown"
+                disabled={readonly}
               />
             );
           }}
@@ -79,7 +93,17 @@ function OnlineRightNowForm({ control, stepIndex, index }: { control; stepIndex:
   );
 }
 
-function OnlineInTheLastForm({ control, stepIndex, index }: { control; stepIndex: number; index: number }) {
+function OnlineInTheLastForm({
+  control,
+  stepIndex,
+  index,
+  readonly,
+}: {
+  control: any;
+  stepIndex: number;
+  index: number;
+  readonly: boolean;
+}) {
   return (
     <>
       <Grid.Col span={spanSize}>
@@ -98,6 +122,7 @@ function OnlineInTheLastForm({ control, stepIndex, index }: { control; stepIndex
                 ]}
                 {...field}
                 data-test-id="online-in-last-operator-dropdown"
+                disabled={readonly}
               />
             );
           }}
@@ -116,6 +141,7 @@ function OnlineInTheLastForm({ control, stepIndex, index }: { control; stepIndex
                 placeholder="value"
                 type="number"
                 data-test-id="online-in-last-value-input"
+                disabled={readonly}
               />
             );
           }}
