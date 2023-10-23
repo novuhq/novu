@@ -22,11 +22,13 @@ export interface IFlowStep {
     htmlContent?: string;
   };
   variants?: Omit<IFlowStep, 'variants'>[];
+  filters?: IFormStep['filters'];
   digestMetadata?: IFormStep['digestMetadata'];
   delayMetadata?: IFormStep['delayMetadata'];
 }
 
 export interface NodeData {
+  isReadonly: boolean;
   Icon: React.FC<any>;
   label: string;
   tabKey: ChannelTypeEnum;
@@ -34,7 +36,6 @@ export interface NodeData {
   testId: string;
   onDelete: (uuid: string) => void;
   onAddVariant: (uuid: string) => void;
-  onAddConditions: (uuid: string) => void;
   onEdit: (e: MouseEvent<HTMLButtonElement>, node: INode) => void;
   error: string;
   channelType: StepTypeEnum;

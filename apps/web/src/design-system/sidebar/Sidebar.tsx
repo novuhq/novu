@@ -142,6 +142,9 @@ export const Sidebar = ({
         onSubmit={onSubmit}
         data-test-id={dataTestId}
         isParentScrollable={isParentScrollable}
+        onClick={(e) => {
+          e.stopPropagation();
+        }}
       >
         <HeaderHolder className="sidebar-header-holder">
           {isExpanded && onBack && (
