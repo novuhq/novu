@@ -24,13 +24,13 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
   let standardQueueService: StandardQueueService;
   const messageRepository = new MessageRepository();
 
-  const triggerEvent = async (payload, transactionId?: string, overrides = {}) => {
+  const triggerEvent = async (payload, transactionId?: string, overrides = {}, to = [subscriber.subscriberId]) => {
     await axiosInstance.post(
       `${session.serverUrl}/v1/events/trigger`,
       {
         transactionId,
         name: template.triggers[0].identifier,
-        to: [subscriber.subscriberId],
+        to,
         payload,
         overrides,
       },
@@ -330,6 +330,8 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
   });
 
   it('should be able to cancel delay', async function () {
+    const secondSubscriber = await subscriberService.createSubscriber();
+
     const id = MessageRepository.createObjectId();
     template = await session.createTemplate({
       steps: [
@@ -342,7 +344,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
           content: '',
           metadata: {
             unit: DigestUnitEnum.SECONDS,
-            amount: 0.1,
+            amount: 5,
             type: DelayTypeEnum.REGULAR,
           },
         },
@@ -357,17 +359,19 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
       {
         customVar: 'Testing of User Name',
       },
-      id
+      id,
+      {},
+      [subscriber.subscriberId, secondSubscriber.subscriberId]
     );
 
-    await session.awaitRunningJobs(template?._id, true, 1);
+    await session.awaitRunningJobs(template?._id, true, 2);
     await axiosInstance.delete(`${session.serverUrl}/v1/events/trigger/${id}`, {
       headers: {
         authorization: `ApiKey ${session.apiKey}`,
       },
     });
 
-    let delayedJob = await jobRepository.findOne({
+    let delayedJobs = await jobRepository.find({
       _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.DELAY,
@@ -380,14 +384,15 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
       transactionId: id,
     });
 
-    expect(pendingJobs).to.equal(1);
+    expect(pendingJobs).to.equal(2);
 
-    delayedJob = await jobRepository.findOne({
+    delayedJobs = await jobRepository.find({
       _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.DELAY,
       transactionId: id,
     });
-    expect(delayedJob!.status).to.equal(JobStatusEnum.CANCELED);
+    expect(delayedJobs[0]!.status).to.equal(JobStatusEnum.CANCELED);
+    expect(delayedJobs[1]!.status).to.equal(JobStatusEnum.CANCELED);
   });
 });
