@@ -130,7 +130,7 @@ function useCounter() {
 
 const StyledDiv = styled.div`
   svg {
-    stop:first-child {
+    stop:first-of-type {
       stop-color: #dd2476 !important;
     }
     stop:last-child {
@@ -139,7 +139,7 @@ const StyledDiv = styled.div`
   }
 
   [data-blue-gradient-svg] {
-    stop:first-child {
+    stop:first-of-type {
       stop-color: #4c6dd4 !important;
     }
     stop:last-child {
