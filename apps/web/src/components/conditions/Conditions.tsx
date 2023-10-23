@@ -120,6 +120,7 @@ export function Conditions({
           </Tooltip>
         </Group>
       }
+      styles={{ body: { '.sidebar-body-holder': { height: '100%' } } }}
     >
       <div>
         {fields.map((item, index) => {
@@ -132,7 +133,7 @@ export function Conditions({
               <Grid align={'center'}>
                 <Grid.Col span={'auto'}>
                   <Grid columns={21} align="center" gutter={8}>
-                    <Grid.Col span={2}>
+                    <Grid.Col span={2} miw={120}>
                       {index > 0 ? (
                         <Wrapper>
                           <Controller
