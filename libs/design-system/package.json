@@ -60,7 +60,7 @@
     "react-router-dom": "6.2.2"
   },
   "dependencies": {
-    "@cypress/react": "^7.0.2",
+    "@cypress/react": "^7.0.3",
     "@cypress/webpack-preprocessor": "^6.0.0",
     "@emotion/css": "^11.10.5",
     "@emotion/react": "^11.7.1",
