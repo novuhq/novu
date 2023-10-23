@@ -810,13 +810,13 @@ const novu = new Novu('<NOVU_API_KEY>');
 // create a new notification group
 await novu.notificationGroups.create("Product Updates")
 
-// update an exisiting notification group
+// update an existing notification group
 await novu.notificationGroups.update("notificationGroupId", { name: "Changelog Updates"})
 
 // list all notification groups
 await novu.notificationGroups.get()
 
-// get one exisiting notification group
+// get one existing notification group
 await novu.notificationGroups.getOne("notificationGroupId")
 
 // delete an existing notification group
@@ -964,7 +964,7 @@ import { Novu } from '@novu/node';
 
 const novu = new Novu('<NOVU_API_KEY>');
 
-// get current environmet
+// get current environment
 await novu.environments.getCurrent()
 
 // create new environment
@@ -983,7 +983,7 @@ await novu.environments.updateOne("environmentId", {
   identifier: "environmentIdentifier" // optional
 })
 
-// get api keys of environmet
+// get api keys of environment
 await novu.environments.getApiKeys()
 
 // regenrate api keys

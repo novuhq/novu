@@ -60,7 +60,10 @@ export class AddJob {
       return;
     }
 
-    Logger.log(`Starting New Job ${job._id} of type: ${job.type}`, LOG_CONTEXT);
+    Logger.log(
+      `Scheduling New Job ${job._id} of type: ${job.type}`,
+      LOG_CONTEXT
+    );
 
     let digestAmount: number | undefined;
     let digestCreationResult: DigestCreationResultEnum | undefined;

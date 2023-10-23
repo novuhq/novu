@@ -11,11 +11,13 @@ export const PreviousStepFiltersForm = ({
   stepIndex,
   index,
   remove,
+  readonly,
 }: {
   control;
   stepIndex: number;
   index: number;
   remove: (index?: number | number[]) => void;
+  readonly: boolean;
 }) => {
   const { fields } = useFieldArray({
     control,
@@ -62,6 +64,7 @@ export const PreviousStepFiltersForm = ({
                 }
                 {...field}
                 data-test-id="previous-step-dropdown"
+                disabled={readonly}
               />
             );
           }}
@@ -96,6 +99,7 @@ export const PreviousStepFiltersForm = ({
                 ]}
                 {...field}
                 data-test-id="previous-step-type-dropdown"
+                disabled={readonly}
               />
             );
           }}
@@ -106,6 +110,7 @@ export const PreviousStepFiltersForm = ({
           variant="outline"
           size="md"
           mt={30}
+          disabled={readonly}
           onClick={() => {
             remove(index);
           }}
