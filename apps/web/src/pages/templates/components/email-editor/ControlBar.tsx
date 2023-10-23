@@ -32,6 +32,7 @@ export function ControlBar({ top, onBlockAdd }: { top: number; onBlockAdd: (type
       style={{ top: `${top}px` }}
       label={
         <Dropdown
+          style={{zIndex: 999}}
           control={
             <ActionIcon data-test-id="control-add" variant="transparent">
               <PlusCircleOutlined color={colors.B60} />
