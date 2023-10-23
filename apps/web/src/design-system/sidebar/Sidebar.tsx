@@ -143,7 +143,6 @@ export const Sidebar = ({
         data-test-id={dataTestId}
         isParentScrollable={isParentScrollable}
         onClick={(e) => {
-          e.preventDefault();
           e.stopPropagation();
         }}
       >
