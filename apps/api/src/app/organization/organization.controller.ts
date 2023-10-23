@@ -41,7 +41,7 @@ import { UpdateBrandingDetailsDto } from './dtos/update-branding-details.dto';
 import { UpdateMemberRolesDto } from './dtos/update-member-roles.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ApiResponse } from '../shared/framework/response.decorator';
-import { OrganisationBrandingResponseDto, OrganizationResponseDto } from './dtos/organisation-response.dto';
+import { OrganizationBrandingResponseDto, OrganizationResponseDto } from './dtos/organization-response.dto';
 
 @Controller('/organizations')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -163,7 +163,7 @@ export class OrganizationController {
 
   @Put('/branding')
   @ExternalApiAccessible()
-  @ApiResponse(OrganisationBrandingResponseDto)
+  @ApiResponse(OrganizationBrandingResponseDto)
   @ApiOperation({
     summary: 'Update organization branding details',
   })
