@@ -60,6 +60,7 @@ export class EventsController {
     @Body() body: TriggerEventRequestDto
   ): Promise<TriggerEventResponseDto> {
     const mappedTenant = body.tenant ? this.mapTenant(body.tenant) : null;
+    const mappedActor = body.actor ? this.mapActor(body.actor) : null;
 
     const result = await this.parseEventRequest.execute(
       ParseEventRequestCommand.create({
@@ -70,7 +71,7 @@ export class EventsController {
         payload: body.payload || {},
         overrides: body.overrides || {},
         to: body.to,
-        actor: body.actor,
+        actor: mappedActor,
         tenant: mappedTenant,
         transactionId: body.transactionId,
       })
