@@ -24,12 +24,12 @@ export class IPartnerConfigurationResponseDto {
   partnerType: PartnerTypeEnum;
 }
 
-export class OrganisationBrandingResponseDto extends UpdateBrandingDetailsDto {
+export class OrganizationBrandingResponseDto extends UpdateBrandingDetailsDto {
   @ApiPropertyOptional({
     enum: { ...DirectionEnum },
   })
   @IsString()
-  directoon?: DirectionEnum;
+  direction?: DirectionEnum;
 }
 
 export class OrganizationResponseDto {
@@ -42,7 +42,7 @@ export class OrganizationResponseDto {
 
   @ApiProperty()
   @IsObject()
-  branding: OrganisationBrandingResponseDto;
+  branding: OrganizationBrandingResponseDto;
 
   @ApiProperty()
   partnerConfigurations: IPartnerConfigurationResponseDto[];
