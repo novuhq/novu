@@ -1,5 +1,5 @@
 import { IsDefined, IsString, IsOptional, ValidateNested } from 'class-validator';
-import { TriggerRecipients, TriggerRecipientSubscriber, TriggerTenantContext } from '@novu/shared';
+import { AddressingTypeEnum, TriggerRecipients, TriggerRecipientSubscriber, TriggerTenantContext } from '@novu/shared';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
@@ -14,8 +14,8 @@ export class ParseEventRequestCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   overrides: Record<string, Record<string, unknown>>;
 
-  @IsDefined()
-  to: TriggerRecipients;
+  @IsOptional()
+  to?: TriggerRecipients;
 
   @IsString()
   @IsOptional()
@@ -27,4 +27,7 @@ export class ParseEventRequestCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @ValidateNested()
   tenant?: TriggerTenantContext | null;
+
+  @IsOptional()
+  addressingType?: AddressingTypeEnum;
 }

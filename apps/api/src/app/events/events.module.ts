@@ -7,7 +7,7 @@ import {
   GetNovuProviderCredentials,
   StorageHelperService,
   SendTestEmail,
-  BaseAppQueuesModule,
+  BaseApiQueuesModule,
 } from '@novu/application-generic';
 
 import { EventsController } from './events.controller';
@@ -47,7 +47,7 @@ const PROVIDERS = [
     TopicsModule,
     LayoutsModule,
     TenantModule,
-    BaseAppQueuesModule,
+    BaseApiQueuesModule,
   ],
   controllers: [EventsController],
   providers: [...PROVIDERS, ...USE_CASES],

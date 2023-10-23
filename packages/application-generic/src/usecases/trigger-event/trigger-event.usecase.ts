@@ -3,13 +3,16 @@ import * as Sentry from '@sentry/node';
 import * as _ from 'lodash';
 
 import {
+  IntegrationRepository,
   JobEntity,
   JobRepository,
   NotificationTemplateRepository,
-  IntegrationRepository,
   SubscriberEntity,
+  SubscriberRepository,
+  NotificationTemplateEntity,
 } from '@novu/dal';
 import {
+  AddressingTypeEnum,
   ChannelTypeEnum,
   ISubscribersDefine,
   ProvidersIdEnum,
@@ -33,13 +36,14 @@ import { MapTriggerRecipientsCommand } from '../map-trigger-recipients/map-trigg
 import { SubscriberProcessQueueService } from '../../services/queues/subscriber-process-queue.service';
 
 const LOG_CONTEXT = 'TriggerEventUseCase';
-const CHUNK_SIZE = 100;
+const QUEUE_CHUNK_SIZE = 100;
 
 @Injectable()
 export class TriggerEvent {
   constructor(
     private processSubscriber: ProcessSubscriber,
     private integrationRepository: IntegrationRepository,
+    private subscriberRepository: SubscriberRepository,
     private jobRepository: JobRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private processTenant: ProcessTenant,
@@ -133,44 +137,13 @@ export class TriggerEvent {
         );
       }
 
-      const mappedRecipients = await this.mapTriggerRecipients.execute(
-        MapTriggerRecipientsCommand.create({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          recipients: command.to,
-          transactionId: command.transactionId,
-          userId: command.userId,
-          actor: mappedActor,
-        })
-      );
+      if (command.addressingType === AddressingTypeEnum.BROADCAST) {
+        await this.triggerBroadcast(command, actorProcessed, template);
 
-      await this.validateSubscriberIdProperty(mappedRecipients);
+        return;
+      }
 
-      const jobs = mappedRecipients.map((subscriber) => {
-        return {
-          name: command.transactionId + subscriber.subscriberId,
-          data: {
-            environmentId: command.environmentId,
-            organizationId: command.organizationId,
-            userId: command.userId,
-            transactionId: command.transactionId,
-            identifier: command.identifier,
-            payload: command.payload,
-            overrides: command.overrides,
-            tenant: command.tenant,
-            ...(actor && actorProcessed && { actor: actorProcessed }),
-            subscriber,
-            templateId: template._id,
-          },
-          groupId: command.organizationId,
-        };
-      });
-
-      await Promise.all(
-        _.chunk(jobs, CHUNK_SIZE).map((chunk) =>
-          this.subscriberProcessQueueService.addBulk(chunk)
-        )
-      );
+      await this.triggerMulticast(command, actorProcessed, template);
     } catch (e) {
       Logger.error(
         {
@@ -264,5 +237,123 @@ export class TriggerEvent {
     );
 
     return integration?.providerId as ProvidersIdEnum;
+  }
+
+  private async triggerBroadcast(
+    command: TriggerEventCommand,
+    actorProcessed: SubscriberEntity,
+    template: NotificationTemplateEntity
+  ) {
+    const subscriberFetchBatchSize = 500;
+    let subscribers: SubscriberEntity[] = [];
+
+    for await (const subscriber of this.subscriberRepository.findBatch(
+      {
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+      },
+      'subscriberId',
+      {},
+      subscriberFetchBatchSize
+    )) {
+      subscribers.push(subscriber);
+      if (subscribers.length === subscriberFetchBatchSize) {
+        await this.sendToProcessSubscriberService(
+          command,
+          actorProcessed,
+          template,
+          subscribers
+        );
+        subscribers = [];
+      }
+    }
+
+    if (subscribers.length > 0) {
+      await this.sendToProcessSubscriberService(
+        command,
+        actorProcessed,
+        template,
+        subscribers
+      );
+    }
+  }
+
+  private async triggerMulticast(
+    command: TriggerEventCommand,
+    actorProcessed: SubscriberEntity,
+    template: NotificationTemplateEntity
+  ) {
+    const mappedRecipients = await this.mapTriggerRecipients.execute(
+      MapTriggerRecipientsCommand.create({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        recipients: command.to,
+        transactionId: command.transactionId,
+        userId: command.userId,
+        actor: actorProcessed,
+      })
+    );
+
+    await this.validateSubscriberIdProperty(mappedRecipients);
+
+    const jobs = this.mapSubscribersToJobs(
+      mappedRecipients,
+      command,
+      actorProcessed,
+      template
+    );
+
+    await this.subscriberProcessQueueAddBulk(jobs);
+  }
+
+  private async sendToProcessSubscriberService(
+    command: TriggerEventCommand,
+    actorProcessed: SubscriberEntity,
+    template: NotificationTemplateEntity,
+    subscribers: { subscriberId: string }[]
+  ) {
+    const jobs = this.mapSubscribersToJobs(
+      subscribers,
+      command,
+      actorProcessed,
+      template
+    );
+
+    return await this.subscriberProcessQueueAddBulk(jobs);
+  }
+
+  private mapSubscribersToJobs(
+    subscribers: { subscriberId: string }[],
+    command: TriggerEventCommand,
+    actorProcessed,
+    template
+  ) {
+    return subscribers.map((subscriber) => {
+      return {
+        name: command.transactionId + subscriber.subscriberId,
+        data: {
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          userId: command.userId,
+          transactionId: command.transactionId,
+          identifier: command.identifier,
+          payload: command.payload,
+          overrides: command.overrides,
+          tenant: command.tenant,
+          ...(actorProcessed && actorProcessed && { actor: actorProcessed }),
+          subscriber,
+          templateId: template._id,
+        },
+        groupId: command.organizationId,
+      };
+    });
+  }
+
+  private async subscriberProcessQueueAddBulk(jobs) {
+    return await Promise.all(
+      _.chunk(jobs, QUEUE_CHUNK_SIZE).map((chunk) =>
+        this.subscriberProcessQueueService.addBulk(chunk)
+      )
+    );
   }
 }

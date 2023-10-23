@@ -77,8 +77,9 @@ const APP_PROVIDERS: Provider[] = [
   WorkflowQueueService,
   WorkflowQueueServiceHealthIndicator,
 ];
+
 @Module({
   providers: [...APP_PROVIDERS],
   exports: [...APP_PROVIDERS],
 })
-export class BaseAppQueuesModule {}
+export class BaseApiQueuesModule {}

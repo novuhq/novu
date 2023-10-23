@@ -1,5 +1,5 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { BaseAppQueuesModule, CompileTemplate } from '@novu/application-generic';
+import { BaseApiQueuesModule, CompileTemplate } from '@novu/application-generic';
 
 import { USE_CASES } from './usecases';
 import { InboundParseController } from './inbound-parse.controller';
@@ -12,7 +12,7 @@ import { AuthModule } from '../auth/auth.module';
 const PROVIDERS = [InboundParseQueueService, GetMxRecord, CompileTemplate];
 
 @Module({
-  imports: [SharedModule, AuthModule, BaseAppQueuesModule],
+  imports: [SharedModule, AuthModule, BaseApiQueuesModule],
   controllers: [InboundParseController],
   providers: [...PROVIDERS, ...USE_CASES],
   exports: [...USE_CASES],

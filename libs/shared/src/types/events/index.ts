@@ -60,3 +60,8 @@ export interface ITopic {
 }
 
 export type TriggerRecipientTopics = ITopic[];
+
+export enum AddressingTypeEnum {
+  BROADCAST = 'broadcast',
+  MULTICAST = 'multicast',
+}

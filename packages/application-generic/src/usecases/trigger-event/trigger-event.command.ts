@@ -3,8 +3,13 @@ import {
   IsString,
   IsOptional,
   ValidateNested,
+  IsEnum,
 } from 'class-validator';
-import { ISubscribersDefine, ITenantDefine } from '@novu/shared';
+import {
+  AddressingTypeEnum,
+  ISubscribersDefine,
+  ITenantDefine,
+} from '@novu/shared';
 
 import { EnvironmentWithUserCommand } from '../../commands';
 
@@ -32,4 +37,7 @@ export class TriggerEventCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @ValidateNested()
   tenant?: ITenantDefine | null;
+
+  @IsOptional()
+  addressingType?: AddressingTypeEnum;
 }
