@@ -75,6 +75,7 @@ export interface IStore {
 
 export interface IFetchingStrategy {
   fetchUnseenCount: boolean;
+  fetchUnreadCount: boolean;
   fetchOrganization: boolean;
   fetchNotifications: boolean;
   fetchUserPreferences: boolean;

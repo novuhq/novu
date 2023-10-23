@@ -75,7 +75,7 @@ export const useUnreadCount = ({ onSuccess, ...restOptions }: UseQueryOptions<IC
     () => apiService.getUnreadCount({ limit: 100 }),
     {
       ...restOptions,
-      enabled: isSessionInitialized && fetchingStrategy.fetchUnseenCount,
+      enabled: isSessionInitialized && fetchingStrategy.fetchUnreadCount,
       onSuccess: (data) => {
         dispatchUnreadCountEvent(data.count);
         onSuccess?.(data);

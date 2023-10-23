@@ -27,6 +27,7 @@ export const queryClient = new QueryClient({
 const DEFAULT_FETCHING_STRATEGY: IFetchingStrategy = {
   fetchUnseenCount: true,
   fetchOrganization: true,
+  fetchUnreadCount: false,
   fetchNotifications: false,
   fetchUserPreferences: false,
   fetchUserGlobalPreferences: false,
