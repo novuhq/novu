@@ -57,7 +57,6 @@ export const ListProviders = ({
           </Button>
         </Group>
       </div>
-      <LackIntegrationByType providers={providers} channel={channel} />
       {providers
         .filter((provider) => provider.connected && provider.environmentId === currentEnvironment?._id)
         .map((provider) => {
@@ -132,6 +131,7 @@ export const ListProviders = ({
             </UnstyledButton>
           );
         })}
+      <LackIntegrationByType providers={providers} channel={channel} />
     </div>
   );
 };
@@ -143,6 +143,7 @@ const LackIntegrationByType = ({
   providers: IIntegratedProvider[];
   channel: ChannelTypeEnum;
 }) => {
+  const { environment: currentEnvironment } = useEnvController();
   const containsNovuProvider = NOVU_SMS_EMAIL_PROVIDERS.some(
     (providerId) => providerId === providers.find((provider) => provider.connected)?.providerId
   );
@@ -161,7 +162,12 @@ const LackIntegrationByType = ({
           />
         </div>
       </When>
-      <When truthy={providers.filter((provider) => provider.connected).length === 1 && containsNovuProvider}>
+      <When
+        truthy={
+          providers.filter((provider) => provider.connected && provider.environmentId === currentEnvironment?._id)
+            .length === 1 && containsNovuProvider
+        }
+      >
         <div
           style={{
             marginBottom: -28,
