@@ -90,7 +90,7 @@ export function NodeStepWithPopover({
       transitionDuration={600}
       opacity={getOpacity(id, hoveredHintId, sequence)}
       target={
-        <StyledDiv>
+        <StyledDiv onMouseEnter={onDropdownMouseEnter} onMouseLeave={onDropdownMouseLeave}>
           <NodeStep Handlers={Handlers} Icon={Icon} data={data} ActionItem={ActionItem} ContentItem={ContentItem} />
         </StyledDiv>
       }

@@ -5,7 +5,7 @@
   "description": "Vue specific wrapper for notification-center",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ionic-team/ionic.git"
+    "url": "https://github.com/novuhq/novu.git"
   },
   "scripts": {
     "prebuild": "rimraf dist",
