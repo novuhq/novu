@@ -7,20 +7,25 @@ export class CancelDelayed {
   constructor(private jobRepository: JobRepository) {}
 
   public async execute(command: CancelDelayedCommand): Promise<boolean> {
-    const job = await this.jobRepository.findOne({
-      _environmentId: command.environmentId,
-      transactionId: command.transactionId,
-      status: JobStatusEnum.DELAYED,
-    });
+    const jobs = await this.jobRepository.find(
+      {
+        _environmentId: command.environmentId,
+        transactionId: command.transactionId,
+        status: JobStatusEnum.DELAYED,
+      },
+      '_id'
+    );
 
-    if (!job) {
+    if (!jobs?.length) {
       return false;
     }
 
     await this.jobRepository.update(
       {
         _environmentId: command.environmentId,
-        _id: job._id,
+        _id: {
+          $in: jobs.map((job) => job._id),
+        },
       },
       {
         $set: {
