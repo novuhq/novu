@@ -57,7 +57,7 @@
   "peerDependencies": {
     "react": ">=16.8.0",
     "react-dom": ">=16.8.0",
-    "react-router-dom": "^6.10.0"
+    "react-router-dom": "6.2.2"
   },
   "dependencies": {
     "@cypress/react": "^7.0.2",
