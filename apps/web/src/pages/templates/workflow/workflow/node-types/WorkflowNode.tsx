@@ -10,8 +10,8 @@ import { When } from '../../../../../components/utils/When';
 import { CONTEXT_PATH } from '../../../../../config';
 import { Switch } from '../../../../../design-system';
 import { Button } from '../../../../../design-system/button/Button';
-import { colors } from '../../../../../design-system/config';
-import { ProviderMissing, Trash } from '../../../../../design-system/icons';
+import { colors, shadows } from '../../../../../design-system/config';
+import { DragHandle, ProviderMissing, Trash } from '../../../../../design-system/icons';
 import { useStyles } from '../../../../../design-system/template-button/TemplateButton.styles';
 import { Text } from '../../../../../design-system/typography/text/Text';
 import {
@@ -43,6 +43,7 @@ interface ITemplateButtonProps {
   changeTab?: (string) => void;
   errors?: boolean | string;
   showDelete?: boolean;
+  enableDrag?: boolean;
   id?: string;
   index?: number;
   onDelete?: () => void;
@@ -67,6 +68,7 @@ export function WorkflowNode({
   testId,
   errors: initialErrors = false,
   showDelete = true,
+  enableDrag = true,
   id = undefined,
   onDelete = () => {},
   dragging = false,
@@ -78,6 +80,7 @@ export function WorkflowNode({
   const { cx, classes, theme } = useStyles();
   const [popoverOpened, setPopoverOpened] = useState(false);
   const [disabled, setDisabled] = useState(initDisabled);
+  const [isDragMode, setToDragMode] = useState(false);
   const [isIntegrationsModalVisible, setIntegrationsModalVisible] = useState(false);
   const disabledColor = disabled ? { color: theme.colorScheme === 'dark' ? colors.B40 : colors.B70 } : {};
   const disabledProp = disabled ? { disabled: disabled } : {};
@@ -139,6 +142,7 @@ export function WorkflowNode({
     <>
       <UnstyledButtonStyled
         role={'button'}
+        dark={colorScheme === 'dark'}
         onMouseEnter={() => {
           setPopoverOpened(true);
           setHover(true);
@@ -150,6 +154,17 @@ export function WorkflowNode({
         data-test-id={testId}
         className={cx(classes.button, { [classes.active]: active })}
       >
+        <DragWrapper className="node-swap-trigger-wrapper">
+          <When truthy={!readonlyEnv && hover && enableDrag}>
+            <DragHandleButton
+              onMouseDownCapture={() => setToDragMode(true)}
+              onMouseLeave={() => setToDragMode(false)}
+              data-test-id="drag-step-action"
+            >
+              <DragHandle style={{ marginBottom: -10, marginRight: 5 }} />
+            </DragHandleButton>
+          </When>
+        </DragWrapper>
         <Group w="100%" noWrap>
           <LeftContainerWrapper>
             <DisplayPrimaryProviderIcon
@@ -181,7 +196,7 @@ export function WorkflowNode({
             {action && !readonly && (
               <Switch checked={checked} onChange={(e) => switchButton && switchButton(e.target.checked)} />
             )}
-            <When truthy={showDelete && !readonlyEnv && !dragging && hover}>
+            <When truthy={showDelete && !readonlyEnv && !dragging && hover && !isDragMode}>
               <UnstyledButton
                 onClick={(e) => {
                   e.stopPropagation();
@@ -268,7 +283,7 @@ export function WorkflowNode({
           <NodeErrorPopover
             withinPortal
             withArrow
-            opened={popoverOpened && Object.keys(stepErrorContent).length > 0}
+            opened={popoverOpened && Object.keys(stepErrorContent).length > 0 && !isDragMode}
             transition="rotate-left"
             transitionDuration={250}
             offset={theme.spacing.xs}
@@ -338,13 +353,38 @@ const StyledContentWrapper = styled.div`
   flex: 1;
 `;
 
-const UnstyledButtonStyled = styled.div`
+const UnstyledButtonStyled = styled.div<{ dark: boolean }>`
   display: flex;
   align-items: center;
   justify-content: space-between;
   position: relative;
   pointer-events: all;
   background-color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B17 : colors.white)};
+
+  .swap-drag-active & {
+    opacity: 0.6;
+    ${({ dark }) => `box-shadow: ${dark ? shadows.dark : shadows.light};`}
+  }
+
+  @media screen and (max-width: 1400px) {
+    padding: 0 5px;
+  }
   width: 280px;
   padding: 20px;
+`;
+
+const DragWrapper = styled.div`
+  height: 100%;
+  display: flex;
+  position: absolute;
+  left: -20px;
+  opacity: 1;
+`;
+
+const DragHandleButton = styled<'button'>(UnstyledButton as any)`
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 `;

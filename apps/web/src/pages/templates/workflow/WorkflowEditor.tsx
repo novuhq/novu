@@ -10,7 +10,7 @@ import { FlowEditor } from '../../../components/workflow';
 import { Button } from '../../../design-system';
 import { Settings } from '../../../design-system/icons';
 import { useEnvController } from '../../../hooks';
-import { channels } from '../../../utils/channels';
+import { channels, triggerFromReplaceHandle } from '../../../utils/channels';
 import { errorMessage } from '../../../utils/notifications';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import type { IForm } from '../components/formTypes';
@@ -35,7 +35,7 @@ const nodeTypes = {
 const edgeTypes = { special: AddNodeEdge };
 
 const WorkflowEditor = () => {
-  const { addStep, deleteStep } = useTemplateEditorForm();
+  const { addStep, deleteStep, moveStepPosition } = useTemplateEditorForm();
   const { channel } = useParams<{
     channel: StepTypeEnum | undefined;
   }>();
@@ -59,6 +59,7 @@ const WorkflowEditor = () => {
   const onNodeClick = useCallback(
     (event, node) => {
       event.preventDefault();
+      if (triggerFromReplaceHandle(event)) return;
 
       if (node.type === 'channelNode') {
         navigate(basePath + `/${node.data.channelType}/${node.data.uuid}`);
@@ -184,6 +185,7 @@ const WorkflowEditor = () => {
             onStepInit={onStepInit}
             onGetStepError={onGetStepError}
             onNodeClick={onNodeClick}
+            moveStepPosition={moveStepPosition}
           />
         </div>
       </div>
@@ -249,6 +251,7 @@ const WorkflowEditor = () => {
               onStepInit={onStepInit}
               onGetStepError={onGetStepError}
               onNodeClick={onNodeClick}
+              moveStepPosition={moveStepPosition}
             />
           </div>
           <Outlet
