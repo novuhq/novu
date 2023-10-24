@@ -767,3 +767,21 @@ export const clickSendConfig: IConfigCredentials[] = [
   },
   ...smsConfigBase,
 ];
+
+export const pusherBeamsConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.InstanceId,
+    displayName: 'Instance ID',
+    description: 'The unique identifier for your Beams instance',
+    type: 'text',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Secret Key',
+    description: 'The secret key your server will use to access your Beams instance',
+    type: 'text',
+    required: true,
+  },
+  ...pushConfigBase,
+];

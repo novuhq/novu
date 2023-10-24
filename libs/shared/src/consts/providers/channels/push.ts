@@ -1,4 +1,11 @@
-import { apnsConfig, fcmConfig, expoConfig, oneSignalConfig, pushWebhookConfig } from '../credentials';
+import {
+  apnsConfig,
+  expoConfig,
+  fcmConfig,
+  oneSignalConfig,
+  pusherBeamsConfig,
+  pushWebhookConfig,
+} from '../credentials';
 
 import { PushProviderIdEnum } from '../provider.enum';
 import { IProviderConfig } from '../provider.interface';
@@ -47,5 +54,13 @@ export const pushProviders: IProviderConfig[] = [
     docReference: 'https://docs.novu.co/channels-and-providers/push/push-webhook',
     logoFileName: { light: 'push-webhook.svg', dark: 'push-webhook.svg' },
     betaVersion: true,
+  },
+  {
+    id: PushProviderIdEnum.PusherBeams,
+    displayName: 'Pusher Beams',
+    channel: ChannelTypeEnum.PUSH,
+    credentials: pusherBeamsConfig,
+    docReference: 'https://docs.novu.co/channels-and-providers/push/pusher-beams',
+    logoFileName: { light: 'pusher-beams.svg', dark: 'pusher-beams.svg' },
   },
 ];

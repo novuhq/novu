@@ -27,6 +27,7 @@ export enum CredentialsKeyEnum {
   RedirectUrl = 'redirectUrl',
   Hmac = 'hmac',
   IpPoolName = 'ipPoolName',
+  InstanceId = 'instanceId',
 }
 
 export enum EmailProviderIdEnum {
@@ -88,6 +89,7 @@ export enum PushProviderIdEnum {
   EXPO = 'expo',
   OneSignal = 'one-signal',
   PushWebhook = 'push-webhook',
+  PusherBeams = 'pusher-beams',
 }
 
 export enum InAppProviderIdEnum {
