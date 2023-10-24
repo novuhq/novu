@@ -9,9 +9,17 @@ import { useOutletContext } from 'react-router-dom';
 import { deleteLayoutById } from '../../../api/layouts';
 import { QueryKeys } from '../../../api/query.keys';
 import { When } from '../../../components/utils/When';
-import { colors, Text, Tooltip, PlusButton, withCellLoading } from '../../../design-system';
-import { Edit, Trash } from '../../../design-system/icons';
-import { IExtendedColumn, Table } from '../../../design-system/table/Table';
+import {
+  colors,
+  Text,
+  Tooltip,
+  PlusButton,
+  withCellLoading,
+  Edit,
+  Trash,
+  IExtendedColumn,
+  Table,
+} from '@novu/design-system';
 import { useEnvController, useLayouts } from '../../../hooks';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { DeleteConfirmModal } from '../../templates/components/DeleteConfirmModal';

@@ -58,6 +58,9 @@ export class TriggerEventToAllRequestDto {
     ],
   })
   @IsOptional()
+  @ValidateIf((_, value) => typeof value !== 'string')
+  @ValidateNested()
+  @Type(() => SubscriberPayloadDto)
   actor?: TriggerRecipientSubscriber;
 
   @ApiProperty({

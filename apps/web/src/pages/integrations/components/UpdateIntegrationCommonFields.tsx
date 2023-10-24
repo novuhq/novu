@@ -2,10 +2,8 @@ import { Controller, useFormContext } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { useClipboard } from '@mantine/hooks';
 
-import { Input, Switch } from '../../../design-system';
-import { Check, Copy } from '../../../design-system/icons';
+import { Input, Switch, Check, Copy } from '@novu/design-system';
 import type { IIntegratedProvider } from '../types';
-import { When } from '../../../components/utils/When';
 
 const CopyWrapper = styled.div`
   cursor: pointer;

@@ -1,7 +1,7 @@
 import { useMantineColorScheme } from '@mantine/core';
 import React, { useMemo, useCallback } from 'react';
 import Joyride from 'react-joyride';
-import { colors } from '../../../design-system';
+import { colors } from '@novu/design-system';
 
 import { useDigestWorkflowTour } from './useDigestWorkflowTour';
 import { useStartFromScratchTour } from './useStartFromScratchTour';
