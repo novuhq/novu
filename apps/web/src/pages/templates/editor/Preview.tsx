@@ -6,8 +6,7 @@ import type { IEmailBlock, MessageTemplateContentType } from '@novu/shared';
 
 import { previewEmail } from '../../../api/content-templates';
 import { When } from '../../../components/utils/When';
-import { Button, colors } from '../../../design-system';
-import { inputStyles } from '../../../design-system/config/inputs.styles';
+import { Button, colors, inputStyles } from '@novu/design-system';
 import { useProcessVariables } from '../../../hooks';
 import { PreviewMobile } from './PreviewMobile';
 import { PreviewWeb } from './PreviewWeb';

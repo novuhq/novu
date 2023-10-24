@@ -3,8 +3,7 @@ import { Stack } from '@mantine/core';
 import { LinkProjectContainer } from './components/LinkProjectContainer';
 
 import { PartnerIntegrationLayout } from '../../components/layout/components/PartnerIntegrationLayout';
-import { Container, Text, Title } from '../../design-system';
-import { ThemeProvider } from '../../design-system/ThemeProvider';
+import { Container, Text, Title, ThemeProvider } from '@novu/design-system';
 
 export function LinkVercelProjectPage({ type }: { type: 'edit' | 'create' }) {
   return (

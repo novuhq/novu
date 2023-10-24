@@ -101,7 +101,10 @@ export class CreateNotificationJobs {
         type: step.template.type,
         providerId: providerId,
         expireAt: notification.expireAt,
-        ...(command.actor && { _actorId: command.actor?._id }),
+        ...(command.actor && {
+          _actorId: command.actor?._id,
+          actorId: command.actor?.subscriberId,
+        }),
       };
 
       jobs.push(job);
