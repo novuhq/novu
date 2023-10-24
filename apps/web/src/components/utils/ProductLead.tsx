@@ -4,8 +4,7 @@ import { CSSProperties, ReactNode, useEffect } from 'react';
 import styled from '@emotion/styled';
 
 import { IS_DOCKER_HOSTED } from '../../config';
-import { Button, colors, Text } from '../../design-system';
-import { Calendar, Close } from '../../design-system/icons';
+import { Button, colors, Text, Calendar, Close } from '@novu/design-system';
 import { useAuthContext } from '../providers/AuthProvider';
 import { useSegment } from '../providers/SegmentProvider';
 import { When } from './When';

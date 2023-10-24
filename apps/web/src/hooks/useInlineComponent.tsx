@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import type { ComponentType, ReactNode } from 'react';
-
-import { useDataRef } from './useDataRef';
+import { useDataRef } from '@novu/design-system';
 
 export const useInlineComponent: <T>(
   Component: ComponentType<T>,

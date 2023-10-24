@@ -13,7 +13,7 @@ import { NovuInAppProviderModal } from './components/NovuInAppProviderModal';
 import { useProviders } from './useProviders';
 import { NovuSmsProviderModal } from './components/NovuSmsProviderModal';
 import { useCreateInAppIntegration } from '../../hooks/useCreateInAppIntegration';
-import { LoadingOverlay } from '../../design-system';
+import { LoadingOverlay } from '@novu/design-system';
 import type { IIntegratedProvider } from './types';
 
 export function IntegrationsStore() {

@@ -38,7 +38,10 @@ export class ExternalServicesRoute {
       await this.wsGateway.sendMessage(command.userId, command.event, command.payload);
     } else if (messageId) {
       Logger.verbose('Sending messageId in the payload, we need to retrieve the full message', LOG_CONTEXT);
-      const storedMessage = await this.messageRepository.findById(messageId);
+      const storedMessage = await this.messageRepository.findOne({
+        _id: messageId,
+        _environmentId: command._environmentId,
+      });
       await this.wsGateway.sendMessage(command.userId, command.event, { message: storedMessage });
     }
 
