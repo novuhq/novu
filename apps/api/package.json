@@ -26,7 +26,7 @@
     "migration": "cross-env NODE_ENV=local MIGRATION=true ts-node --transpileOnly ./migrations/expire-at/expire-at.migration.ts",
     "migration:in-app": "cross-env NODE_ENV=local MIGRATION=true ts-node --transpileOnly ./migrations/integration-scheme-update/add-primary-priority-migration.ts",
     "migration:primary-provider": "cross-env NODE_ENV=local MIGRATION=true ts-node --transpileOnly ./migrations/integration-scheme-update/add-primary-priority-migration.ts",
-    "link:submodules": "cd ../../enterprise/packages/packages/auth && yarn link && cd ../../../../apps/api && yarn link @novu/ee-auth"
+    "link:submodules": "pnpm link ../../enterprise/packages/packages/auth"
   },
   "dependencies": {
     "@godaddy/terminus": "^4.12.1",
