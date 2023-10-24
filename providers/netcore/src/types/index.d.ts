@@ -72,9 +72,4 @@ declare module 'netcore' {
     message: string;
     status: string;
   }
-
-  export interface INetCoreEmail {
-    body: IEmailBody;
-    response: IEmailResponse;
-  }
 }

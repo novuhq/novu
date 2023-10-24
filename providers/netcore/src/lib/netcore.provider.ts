@@ -8,7 +8,7 @@ import {
   IEmailEventBody,
   EmailEventStatusEnum,
 } from '@novu/stateless';
-import { INetCoreEmail } from 'netcore';
+import { IEmailBody, IEmailResponse } from 'netcore';
 import axios, { AxiosInstance } from 'axios';
 
 export enum NetCoreStatusEnum {
@@ -42,7 +42,7 @@ export class NetCoreProvider implements IEmailProvider {
   async sendMessage(
     options: IEmailOptions
   ): Promise<ISendMessageSuccessResponse> {
-    const data: INetCoreEmail['body'] = {
+    const data: IEmailBody = {
       from: { email: options.from || this.config.from },
       subject: options.subject,
       content: [
@@ -95,7 +95,7 @@ export class NetCoreProvider implements IEmailProvider {
       data,
     };
 
-    const response: INetCoreEmail['response'] = await this.axiosInstance.post(
+    const response: IEmailResponse = await this.axiosInstance.post(
       '/mail/send',
       emailOptions
     );

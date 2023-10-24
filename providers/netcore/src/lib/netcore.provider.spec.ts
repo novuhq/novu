@@ -1,8 +1,8 @@
 // eslint-disable-next-line import/first
 import { NetCoreProvider } from './netcore.provider';
 import axios from 'axios';
-import { INetCoreEmail } from 'netcore';
-import { IEmailOptions } from 'packages/stateless/build/main';
+import { IEmailBody } from 'netcore';
+import { IEmailOptions } from '@novu/stateless';
 
 jest.mock('axios');
 
@@ -23,7 +23,7 @@ const mockEmailOptions: IEmailOptions = {
   ],
 };
 
-const mockNovuMessage: INetCoreEmail['body'] = {
+const mockNovuMessage: IEmailBody = {
   from: { email: mockEmailOptions.from },
   subject: mockEmailOptions.subject,
   content: [{ type: 'html', value: mockEmailOptions.html }],
