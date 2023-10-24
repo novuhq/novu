@@ -44,7 +44,7 @@ const LeftContent = styled.div`
   align-items: center;
   gap: 15px;
   svg {
-    stop:first-child {
+    stop:first-of-type {
       stop-color: #dd2476 !important;
     }
     stop:last-child {
