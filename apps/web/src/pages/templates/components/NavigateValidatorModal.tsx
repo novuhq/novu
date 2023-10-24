@@ -1,7 +1,6 @@
 import React from 'react';
 import { Group, Modal, useMantineTheme } from '@mantine/core';
-import { useNavigate } from 'react-router-dom';
-import { Button, colors, shadows, Title, Text } from '../../../design-system';
+import { Button, colors, shadows, Title, Text } from '@novu/design-system';
 
 export function NavigateValidatorModal({
   isOpen,

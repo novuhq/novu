@@ -5,8 +5,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { INotificationTrigger } from '@novu/shared';
 
 import { api } from '../../../../api/api.client';
-import { Input, Select, Switch, Tooltip } from '../../../../design-system';
-import { Check, Copy } from '../../../../design-system/icons';
+import { Input, Select, Switch, Tooltip, Check, Copy } from '@novu/design-system';
 import { useEnvController, useNotificationGroup } from '../../../../hooks';
 import type { IForm } from '../formTypes';
 import { useTemplateEditorForm } from '../TemplateEditorFormProvider';

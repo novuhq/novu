@@ -55,7 +55,10 @@ export class SetIntegrationAsPrimary {
   async execute(command: SetIntegrationAsPrimaryCommand): Promise<IntegrationEntity> {
     Logger.verbose('Executing Set Integration As Primary Usecase');
 
-    const existingIntegration = await this.integrationRepository.findById(command.integrationId);
+    const existingIntegration = await this.integrationRepository.findOne({
+      _id: command.integrationId,
+      _organizationId: command.organizationId,
+    });
     if (!existingIntegration) {
       throw new NotFoundException(`Integration with id ${command.integrationId} not found`);
     }
