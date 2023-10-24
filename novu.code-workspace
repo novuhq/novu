@@ -187,7 +187,11 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true,
     "editor.formatOnPaste": true,
-    "cSpell.words": ["Chainable", "usecases"]
+    "cSpell.words": [
+      "Chainable",
+      "usecases"
+    ],
+    "vsicons.presets.nestjs": true
   },
   "extensions": {
     "recommendations": [

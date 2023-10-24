@@ -11,9 +11,12 @@ const TriggerTitle = styled(Text)`
 `;
 
 export const ExecutionDetailTrigger = ({ identifier, step, subscriberVariables }) => {
-  const { payload, overrides, tenant } = step || {};
+  const { payload, overrides, tenant, actorId } = step || {};
 
-  const curlSnippet = getCurlTriggerSnippet(identifier, subscriberVariables, payload, overrides, { tenant });
+  const curlSnippet = getCurlTriggerSnippet(identifier, subscriberVariables, payload, overrides, {
+    ...(tenant && { tenant }),
+    ...(actorId && { actor: { subscriberId: actorId } }),
+  });
 
   return (
     <>
