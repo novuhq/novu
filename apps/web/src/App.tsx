@@ -58,8 +58,7 @@ import { UpdateTenantPage } from './pages/tenants/UpdateTenantPage';
 import { ApiKeysCard } from './pages/settings/tabs';
 import { EmailSettings } from './pages/settings/tabs/EmailSettings';
 import { ProductLead } from './components/utils/ProductLead';
-import { SSO, UserAccess } from './design-system/icons';
-import { Cloud } from './design-system/icons/general/Cloud';
+import { SSO, UserAccess, Cloud } from '@novu/design-system';
 import { BrandingForm, LayoutsListPage } from './pages/brand/tabs';
 
 library.add(far, fas);

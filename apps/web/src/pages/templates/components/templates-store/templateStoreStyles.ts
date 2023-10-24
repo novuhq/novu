@@ -1,8 +1,7 @@
 import { createStyles } from '@mantine/core';
 import styled from '@emotion/styled';
 
-import { colors } from '../../../../design-system';
-import { MadeByNovu } from '../../../../design-system/icons';
+import { colors, MadeByNovu } from '@novu/design-system';
 
 export const ModalBodyHolder = styled.div`
   display: flex;

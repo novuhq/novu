@@ -23,7 +23,10 @@ export class RemoveIntegration {
 
   async execute(command: RemoveIntegrationCommand) {
     try {
-      const existingIntegration = await this.integrationRepository.findById(command.integrationId);
+      const existingIntegration = await this.integrationRepository.findOne({
+        _id: command.integrationId,
+        _organizationId: command.organizationId,
+      });
       if (!existingIntegration) {
         throw new NotFoundException(`Entity with id ${command.integrationId} not found`);
       }
