@@ -2,8 +2,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { Group } from '@mantine/core';
 import { DigestTypeEnum } from '@novu/shared';
 
-import { colors, Input } from '../../../design-system';
-import { inputStyles } from '../../../design-system/config/inputs.styles';
+import { colors, Input, inputStyles } from '@novu/design-system';
 import { IntervalSelect } from './digest/IntervalSelect';
 import { BackOffFields } from './digest/BackOffFields';
 
