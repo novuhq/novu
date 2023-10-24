@@ -7,8 +7,20 @@ import { useIntercom } from 'react-use-intercom';
 import LogRocket from 'logrocket';
 import { CONTEXT_PATH, INTERCOM_APP_ID, IS_DOCKER_HOSTED, LOGROCKET_ID, REACT_APP_VERSION } from '../../../config';
 import { ROUTES } from '../../../constants/routes.enum';
-import { colors, Dropdown, shadows, Text, Tooltip } from '../../../design-system';
-import { Ellipse, Mail, Moon, Question, Sun, Trash, Logout } from '../../../design-system/icons';
+import {
+  colors,
+  Dropdown,
+  shadows,
+  Text,
+  Tooltip,
+  Ellipse,
+  Mail,
+  Moon,
+  Question,
+  Sun,
+  Logout,
+} from '@novu/design-system';
+
 import { useLocalThemePreference } from '../../../hooks';
 import { discordInviteUrl } from '../../../pages/quick-start/consts';
 import { useAuthContext } from '../../providers/AuthProvider';

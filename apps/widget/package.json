@@ -43,7 +43,7 @@
     "react-infinite-scroller": "^1.2.4",
     "react-is": "^18.2.0",
     "react-refresh": "^0.14.0",
-    "react-router-dom": "^6.2.2",
+    "react-router-dom": "6.2.2",
     "rimraf": "^3.0.2",
     "socket.io-client": "4.7.2",
     "web-vitals": "^0.2.4",
