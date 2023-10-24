@@ -1950,7 +1950,7 @@ importers:
     dependencies:
       '@cypress/react':
         specifier: ^7.0.3
-        version: 7.0.3(@types/react@17.0.62)(cypress@12.17.4)(react-dom@17.0.2)(react@17.0.2)
+        version: 7.0.3(@types/react@17.0.62)(cypress@13.3.2)(react-dom@17.0.2)(react@17.0.2)
       '@cypress/webpack-preprocessor':
         specifier: ^6.0.0
         version: 6.0.0(@babel/core@7.23.2)(@babel/preset-env@7.23.2)(babel-loader@8.3.0)(webpack@5.78.0)
@@ -2019,8 +2019,8 @@ importers:
         specifier: ^8.7.1
         version: 8.10.0
       cypress:
-        specifier: ^12.17.2
-        version: 12.17.4
+        specifier: ^13.3.2
+        version: 13.3.2
       eslint-plugin-cypress:
         specifier: ^2.12.1
         version: 2.15.1(eslint@8.51.0)
@@ -12029,7 +12029,7 @@ packages:
       react-dom: 17.0.2(react@17.0.2)
     dev: false
 
-  /@cypress/react@7.0.3(@types/react@17.0.62)(cypress@12.17.4)(react-dom@17.0.2)(react@17.0.2):
+  /@cypress/react@7.0.3(@types/react@17.0.62)(cypress@13.3.2)(react-dom@17.0.2)(react@17.0.2):
     resolution: {integrity: sha512-YseqnMugTbdPV9YCYEMXVqIf+P7x+pfjXOdjv4dnDFqNCZeHaZfOZVFZ4XfEHVxMv0aDszxlaLiIp3QDPhr12w==}
     peerDependencies:
       '@types/react': ^16.9.16 || ^17.0.0
@@ -12041,33 +12041,10 @@ packages:
         optional: true
     dependencies:
       '@types/react': 17.0.62
-      cypress: 12.17.4
+      cypress: 13.3.2
       react: 17.0.2
       react-dom: 17.0.2(react@17.0.2)
     dev: false
-
-  /@cypress/request@2.88.12:
-    resolution: {integrity: sha512-tOn+0mDZxASFM+cuAP9szGUGPI1HwWVSvdzm7V4cCsPdFTx6qMj29CwaQmRAMIEhORIUBFBsYROYJcveK4uOjA==}
-    engines: {node: '>= 6'}
-    dependencies:
-      aws-sign2: 0.7.0
-      aws4: 1.12.0
-      caseless: 0.12.0
-      combined-stream: 1.0.8
-      extend: 3.0.2
-      forever-agent: 0.6.1
-      form-data: 2.3.3
-      http-signature: 1.3.6
-      is-typedarray: 1.0.0
-      isstream: 0.1.2
-      json-stringify-safe: 5.0.1
-      mime-types: 2.1.35
-      performance-now: 2.1.0
-      qs: 6.10.4
-      safe-buffer: 5.2.1
-      tough-cookie: 4.1.3
-      tunnel-agent: 0.6.0
-      uuid: 8.3.2
 
   /@cypress/request@3.0.1:
     resolution: {integrity: sha512-TWivJlJi8ZDx2wGOw1dbLuHJKUYX7bWySw377nlnGOW3hP9/MUKIsEdXT/YngWxVdgNCHRBmFlBipE+5/2ZZlQ==}
@@ -21710,7 +21687,7 @@ packages:
       '@storybook/client-logger': 7.4.2
       '@storybook/core-events': 7.4.2
       '@storybook/global': 5.0.0
-      qs: 6.11.1
+      qs: 6.11.2
       telejson: 7.2.0
       tiny-invariant: 1.3.1
 
@@ -23646,9 +23623,6 @@ packages:
 
   /@types/node@16.11.7:
     resolution: {integrity: sha512-QB5D2sqfSjCmTuWcBWyJ+/44bcjO7VbjSbOE0ucoVbAsSNQc4Lt6QkgkVXkTDwkL4z/beecZNDvVX15D4P8Jbw==}
-
-  /@types/node@16.18.59:
-    resolution: {integrity: sha512-PJ1w2cNeKUEdey4LiPra0ZuxZFOGvetswE8qHRriV/sUkL5Al4tTmPV9D2+Y/TPIxTHHgxTfRjZVKWhPw/ORhQ==}
 
   /@types/node@17.0.45:
     resolution: {integrity: sha512-w+tIMs3rq2afQdsPJlODhoUEKzFP1ayaoyl1CcnwtIlsVe7K7bA1NGm4s3PraqTLlXnbIN84zuBlxBWo1u9BLw==}
@@ -29306,15 +29280,15 @@ packages:
     resolution: {integrity: sha512-+IyVnYNiaX1+C+V/LazrJWAi/CqiwfNoRSrFviECQEyolW1gDRy765PZosL2alSSGK8V10Y7BGfOQyZUDgmnjQ==}
     dev: true
 
-  /cypress@12.17.4:
-    resolution: {integrity: sha512-gAN8Pmns9MA5eCDFSDJXWKUpaL3IDd89N9TtIupjYnzLSmlpVr+ZR+vb4U/qaMp+lB6tBvAmt7504c3Z4RU5KQ==}
-    engines: {node: ^14.0.0 || ^16.0.0 || >=18.0.0}
+  /cypress@13.3.1:
+    resolution: {integrity: sha512-g4mJLZxYN+UAF2LMy3Znd4LBnUmS59Vynd81VES59RdW48Yt+QtR2cush3melOoVNz0PPbADpWr8DcUx6mif8Q==}
+    engines: {node: ^16.0.0 || ^18.0.0 || >=20.0.0}
     hasBin: true
     requiresBuild: true
     dependencies:
-      '@cypress/request': 2.88.12
+      '@cypress/request': 3.0.1
       '@cypress/xvfb': 1.2.4(supports-color@8.1.1)
-      '@types/node': 16.18.59
+      '@types/node': 18.18.5
       '@types/sinonjs__fake-timers': 8.1.1
       '@types/sizzle': 2.3.3
       arch: 2.2.0
@@ -29356,8 +29330,8 @@ packages:
       untildify: 4.0.0
       yauzl: 2.10.0
 
-  /cypress@13.3.1:
-    resolution: {integrity: sha512-g4mJLZxYN+UAF2LMy3Znd4LBnUmS59Vynd81VES59RdW48Yt+QtR2cush3melOoVNz0PPbADpWr8DcUx6mif8Q==}
+  /cypress@13.3.2:
+    resolution: {integrity: sha512-ArLmZObcLC+xxCp7zJZZbhby9FUf5CueLej9dUM4+5j37FTS4iMSgHxQLDu01PydFUvDXcNoIVRCYrHHxD7Ybg==}
     engines: {node: ^16.0.0 || ^18.0.0 || >=20.0.0}
     hasBin: true
     requiresBuild: true
@@ -32510,7 +32484,7 @@ packages:
       dezalgo: 1.0.4
       hexoid: 1.0.0
       once: 1.4.0
-      qs: 6.11.1
+      qs: 6.11.2
 
   /forwarded@0.2.0:
     resolution: {integrity: sha512-buRG0fpBtRHSTCOASe6hD258tEubFoRLb4ZNA6NxMVHNw2gOcwHo9wyablzMzOA5z9xA9L1KNjk/Nt6MT9aYow==}
@@ -33394,7 +33368,7 @@ packages:
       extend: 3.0.2
       gaxios: 4.3.3
       google-auth-library: 6.1.6
-      qs: 6.11.1
+      qs: 6.11.2
       url-template: 2.0.8
       uuid: 8.3.2
     transitivePeerDependencies:
@@ -46857,7 +46831,7 @@ packages:
       formidable: 1.2.6
       methods: 1.1.2
       mime: 2.6.0
-      qs: 6.11.1
+      qs: 6.11.2
       readable-stream: 3.6.2
       semver: 7.5.4
     transitivePeerDependencies:
@@ -46875,7 +46849,7 @@ packages:
       formidable: 2.1.2
       methods: 1.1.2
       mime: 2.6.0
-      qs: 6.11.1
+      qs: 6.11.2
       semver: 7.5.4
     transitivePeerDependencies:
       - supports-color
@@ -49119,7 +49093,7 @@ packages:
     engines: {node: '>= 0.8'}
 
   /verror@1.10.0:
-    resolution: {integrity: sha512-ZZKSmDAEFOijERBLkmYfJ+vmk3w+7hOLYDNkRCuRuMJGEmqYNCNLyBBFwWKVMhfwaEF3WOd0Zlw86U/WC/+nYw==}
+    resolution: {integrity: sha1-OhBcoXBTr1XW4nDB+CiGguGNpAA=}
     engines: {'0': node >=0.6.0}
     dependencies:
       assert-plus: 1.0.0

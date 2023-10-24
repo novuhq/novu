@@ -39,7 +39,7 @@
     "@types/react-dom": "^17.0.0",
     "@vitejs/plugin-react": "^4.0.3",
     "acorn": "^8.7.1",
-    "cypress": "^12.17.2",
+    "cypress": "^13.3.2",
     "eslint-plugin-cypress": "^2.12.1",
     "eslint-plugin-storybook": "^0.6.13",
     "react": "^17.0.1",
