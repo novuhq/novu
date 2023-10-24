@@ -123,7 +123,7 @@ export class SendMessageInApp extends SendMessageBase {
 
     const [tenant, organization] = await Promise.all([
       this.handleTenantExecution(command.job),
-      this.organizationRepository.findById(command.organizationId, 'branding'),
+      this.organizationRepository.findOne({ _id: command.organizationId }, 'branding'),
     ]);
 
     try {
@@ -242,7 +242,7 @@ export class SendMessageInApp extends SendMessageBase {
           },
         }
       );
-      message = await this.messageRepository.findById(oldMessage._id);
+      message = await this.messageRepository.findOne({ _id: oldMessage._id, _environmentId: command.environmentId });
     }
 
     if (!message) throw new PlatformException('Message not found');

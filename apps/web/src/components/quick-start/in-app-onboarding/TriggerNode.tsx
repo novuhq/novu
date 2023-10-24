@@ -1,6 +1,6 @@
 import { Handle, Position } from 'react-flow-renderer';
 
-import { Button, colors, shadows, Text, Title } from '../../../design-system';
+import { Button, colors, shadows, Text, Title, BoltOutlinedGradient, Playground } from '@novu/design-system';
 
 import styled from '@emotion/styled';
 import { createStyles, Group, Popover, Stack, useMantineColorScheme } from '@mantine/core';
@@ -18,7 +18,6 @@ import {
 import { NodeStep } from '../../workflow';
 import { useSegment } from '../../providers/SegmentProvider';
 import { errorMessage } from '../../../utils/notifications';
-import { BoltOutlinedGradient, Playground } from '../../../design-system/icons';
 import { TemplateCreationSourceEnum } from '../../../pages/templates/shared';
 
 const useStyles = createStyles((theme) => ({

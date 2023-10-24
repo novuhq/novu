@@ -103,7 +103,10 @@ export class UpdateMessageTemplate {
       }
     );
 
-    const item = await this.messageTemplateRepository.findById(command.templateId);
+    const item = await this.messageTemplateRepository.findOne({
+      _id: command.templateId,
+      _organizationId: command.organizationId,
+    });
     if (!item) throw new NotFoundException(`Message template with id ${command.templateId} is not found`);
 
     if (command.feedId || (!command.feedId && existingTemplate._feedId)) {

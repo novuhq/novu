@@ -3,7 +3,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { TextAlignEnum } from '@novu/shared';
 
-import { colors } from '../../../../design-system';
+import { colors } from '@novu/design-system';
 import { useEnvController } from '../../../../hooks';
 import type { IForm } from '../formTypes';
 
