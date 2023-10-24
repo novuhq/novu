@@ -46,6 +46,7 @@ const providers: Record<ChannelTypeEnum, ProvidersIdEnum[]> = {
     PushProviderIdEnum.APNS,
     PushProviderIdEnum.PushWebhook,
     PushProviderIdEnum.OneSignal,
+    PushProviderIdEnum.Pushpad,
   ],
   [ChannelTypeEnum.SMS]: [
     SmsProviderIdEnum.Twilio,
