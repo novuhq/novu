@@ -1,11 +1,11 @@
 # Contributing to Novu
 
-Thank you for showing an interest in contributing to Novu! All kinds of contributions are valuable to us. In this guide, we will cover how you can quickly onboard and make your first contribution.
+Thank you for showing your interest in contributing to Novu! All kinds of contributions are valuable to us. In this guide, we will cover how you can quickly join and make your first contribution.
 
 ## Submitting an issue
 
 
-Before submitting a new issue, please search the existing [issues](https://github.com/novuhq/novu/issues). Maybe an issue already exists and might inform you of workarounds. Otherwise, you can give new information.
+Before submitting a new issue, please search the existing [issues](https://github.com/novuhq/novu/issues). Maybe an issue already exists and might inform you of alternatives. Otherwise, you can give new information.
 
 While we want to fix all the [issues](https://github.com/novuhq/novu/issues), before fixing a bug we need to be able to reproduce and confirm it. Please provide us with a minimal reproduction scenario using a repository or [Gist](https://gist.github.com/). Having a live, reproducible scenario gives us the information without asking questions back & forth with additional questions like:
 
@@ -31,7 +31,7 @@ You can open a new issue with this [issue form](https://github.com/novuhq/novu/i
 
 ### Setup the project
 
-The project is a monorepo, meaning that it is a collection of multiple packages managed in the same repository.
+The project is a monorepo which implies that it is a collection of multiple packages managed in the same repository.
 
 
 To learn more about the project structure and running the project locally, please have a look [here](https://docs.novu.co/community-support/introduction#run-novu-locally).
