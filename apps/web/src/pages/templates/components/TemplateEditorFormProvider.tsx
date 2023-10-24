@@ -125,6 +125,7 @@ interface ITemplateEditorFormContext {
   addStep: (channelType: StepTypeEnum, id: string, stepIndex?: number) => void;
   deleteStep: (index: number) => void;
   addVariant: (uuid: string) => IFormStep | undefined;
+  deleteVariant: (stepUuid: string, variantUuid: string) => void;
 }
 
 const TemplateEditorFormContext = createContext<ITemplateEditorFormContext>({
@@ -137,6 +138,7 @@ const TemplateEditorFormContext = createContext<ITemplateEditorFormContext>({
   addStep: () => {},
   deleteStep: () => {},
   addVariant: () => undefined,
+  deleteVariant: () => {},
 });
 
 const defaultValues: IForm = {
@@ -281,6 +283,23 @@ const TemplateEditorFormProvider = ({ children }) => {
     [methods]
   );
 
+  const deleteVariant = useCallback(
+    (stepUuid: string, variantUuid: string) => {
+      const workflowSteps = methods.getValues('steps');
+      const stepToVariant = workflowSteps.find((step) => step.uuid === stepUuid);
+      const index = workflowSteps.findIndex((item) => item.uuid === stepUuid);
+      if (!stepToVariant) {
+        return;
+      }
+      // remove the variant with the variantUuid
+      const newVariants = stepToVariant?.variants?.filter((variant) => variant.uuid !== variantUuid);
+
+      methods.setValue(`steps.${index}.variants`, newVariants, {
+        shouldDirty: true,
+      });
+    },
+    [methods]
+  );
   const value = useMemo<ITemplateEditorFormContext>(
     () => ({
       template,
@@ -293,6 +312,7 @@ const TemplateEditorFormProvider = ({ children }) => {
       addStep,
       deleteStep,
       addVariant,
+      deleteVariant,
     }),
     [
       template,
@@ -306,6 +326,7 @@ const TemplateEditorFormProvider = ({ children }) => {
       deleteStep,
       addVariant,
       loadingGroups,
+      deleteVariant,
     ]
   );
 
