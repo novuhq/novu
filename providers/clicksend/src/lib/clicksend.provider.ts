@@ -4,7 +4,7 @@ import {
   ISmsOptions,
   ISmsProvider,
 } from '@novu/stateless';
-import axios from 'axios';
+import axios, {AxiosInstance} from 'axios';
 
 
 
@@ -12,7 +12,7 @@ export class ClicksendSmsProvider implements ISmsProvider {
   id = 'clicksend';
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
 
-  private axiosInstance: any;
+  private axiosInstance: AxiosInstance;
 
 
   constructor(
@@ -44,8 +44,8 @@ export class ClicksendSmsProvider implements ISmsProvider {
     const res = await this.axiosInstance.post("/sms/send", { messages: [smsOptions] });
 
     return {
-      id: res.response.data.data.messages[0].message_id,
-      date: res.response.data.data.messages[0].date,
+      id: res.data.data.messages[0].message_id,
+      date: res.data.data.messages[0].date,
     };
   }
 }
