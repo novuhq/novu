@@ -1055,7 +1055,10 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
 
     let delayed = delayedJobs[0];
     do {
-      delayed = (await jobRepository.findById(delayedJobs[0]._id)) as JobEntity;
+      delayed = (await jobRepository.findOne({
+        _id: delayedJobs[0]._id,
+        _environmentId: session.environment._id,
+      })) as JobEntity;
       delayedJobUpdateTime = delayed.updatedAt;
       await promiseTimeout(100);
     } while (delayed.status !== JobStatusEnum.COMPLETED);

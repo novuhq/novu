@@ -9,9 +9,16 @@ import { Controller, useForm } from 'react-hook-form';
 import { createIntegration } from '../../../../api/integration';
 import { QueryKeys } from '../../../../api/query.keys';
 import { useSegment } from '../../../../components/providers/SegmentProvider';
-import { Button, colors, NameInput, Sidebar } from '../../../../design-system';
-import { ConditionPlus, ArrowLeft, Condition } from '../../../../design-system/icons';
-import { inputStyles } from '../../../../design-system/config/inputs.styles';
+import {
+  Button,
+  colors,
+  NameInput,
+  Sidebar,
+  ConditionPlus,
+  ArrowLeft,
+  Condition,
+  inputStyles,
+} from '@novu/design-system';
 import { useFetchEnvironments } from '../../../../hooks/useFetchEnvironments';
 import { CHANNEL_TYPE_TO_STRING } from '../../../../utils/channels';
 import { errorMessage, successMessage } from '../../../../utils/notifications';
@@ -22,6 +29,7 @@ import { When } from '../../../../components/utils/When';
 import { Conditions, IConditions } from '../../../../components/conditions';
 import { ConditionIconButton } from '../ConditionIconButton';
 import { ProviderImage } from './SelectProviderSidebar';
+import { HEADER_HEIGHT } from '../../../../components/layout/constants';
 
 interface ICreateProviderInstanceForm {
   name: string;
@@ -170,6 +178,7 @@ export function CreateProviderInstanceSidebar({
     <Sidebar
       isOpened={isOpened}
       isLoading={isLoading}
+      headerHeight={HEADER_HEIGHT}
       onSubmit={(e) => {
         handleSubmit(onCreateIntegrationInstance)(e);
         e.stopPropagation();

@@ -4,8 +4,7 @@ import styled from '@emotion/styled';
 
 import { ChannelTypeEnum } from '@novu/shared';
 
-import { colors, Text } from '../../../design-system';
-import { ErrorIcon, WarningIcon, CircleArrowRight } from '../../../design-system/icons';
+import { colors, Text, ErrorIcon, WarningIcon, CircleArrowRight } from '@novu/design-system';
 import { IntegrationsStoreModal } from '../../integrations/IntegrationsStoreModal';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { stepNames, TemplateEditorAnalyticsEnum } from '../constants';

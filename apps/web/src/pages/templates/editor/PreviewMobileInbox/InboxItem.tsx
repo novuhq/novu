@@ -1,5 +1,5 @@
 import { Skeleton, useMantineTheme } from '@mantine/core';
-import { colors } from '../../../../design-system';
+import { colors } from '@novu/design-system';
 
 export const ItemSkeleton = () => {
   const theme = useMantineTheme();

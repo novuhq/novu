@@ -6,7 +6,7 @@ import * as get from 'lodash.get';
 import { INotificationTrigger, INotificationTriggerVariable, TemplateVariableTypeEnum } from '@novu/shared';
 
 import { API_ROOT } from '../../../config';
-import { colors, Tabs } from '../../../design-system';
+import { colors, Tabs } from '@novu/design-system';
 
 const NODE_JS = 'Node.js';
 const CURL = 'Curl';
