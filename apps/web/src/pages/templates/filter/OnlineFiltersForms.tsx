@@ -4,8 +4,7 @@ import { Controller } from 'react-hook-form';
 
 import { DeleteStepButton } from './FilterModal.styles';
 
-import { Input, Select } from '../../../design-system';
-import { Trash } from '../../../design-system/icons';
+import { Input, Select, Trash } from '@novu/design-system';
 
 const spanSize = 3;
 

@@ -52,7 +52,10 @@ describe('Mark as Seen - /widgets/messages/:messageId/seen (POST)', async () => 
       }
     );
 
-    const modifiedMessage = (await messageRepository.findById(messageId)) as MessageEntity;
+    const modifiedMessage = (await messageRepository.findOne({
+      _id: messageId,
+      _environmentId: session.environment._id,
+    })) as MessageEntity;
 
     expect(modifiedMessage.seen).to.equal(true);
     expect(modifiedMessage.lastSeenDate).to.be.ok;

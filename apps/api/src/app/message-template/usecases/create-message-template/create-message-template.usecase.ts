@@ -38,7 +38,10 @@ export class CreateMessageTemplate {
     });
 
     if (item?._id) {
-      item = (await this.messageTemplateRepository.findById(item._id)) as MessageTemplateEntity;
+      item = (await this.messageTemplateRepository.findOne({
+        _id: item._id,
+        _organizationId: command.organizationId,
+      })) as MessageTemplateEntity;
     }
 
     await this.createChange.execute(

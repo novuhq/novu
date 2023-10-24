@@ -8,10 +8,7 @@ import { useCreateDigestDemoWorkflow } from '../../../api/hooks/notification-tem
 import { DigestDemoFlow } from '../../../components';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { ROUTES } from '../../../constants/routes.enum';
-import { Button } from '../../../design-system';
-import { ArrowLeft } from '../../../design-system/icons';
-import { ArrowLeftGradient } from '../../../design-system/icons/gradient/ArrowLeftGradient';
-import { Label } from '../../../design-system/typography/label';
+import { Button, ArrowLeft, ArrowLeftGradient, Label } from '@novu/design-system';
 import { NavButton } from '../components/NavButton';
 import useStyles from '../components/OnboardingSteps.styles';
 import { getStartedSteps, OnBoardingAnalyticsEnum } from '../consts';
