@@ -74,5 +74,5 @@ export class MemberResponseDto {
 
   @ApiProperty()
   @IsString()
-  _organisationId: string;
+  _organizationId: string;
 }

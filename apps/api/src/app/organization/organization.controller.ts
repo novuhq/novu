@@ -42,7 +42,7 @@ import { UpdateMemberRolesDto } from './dtos/update-member-roles.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ApiResponse } from '../shared/framework/response.decorator';
 import { OrganizationBrandingResponseDto, OrganizationResponseDto } from './dtos/organization-response.dto';
-import { MemberResponseDto } from './dtos/member-repsonse.dto';
+import { MemberResponseDto } from './dtos/member-response.dto';
 @Controller('/organizations')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
