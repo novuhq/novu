@@ -52,6 +52,7 @@
     "@novu/design-system": "^0.20.0",
     "@novu/notification-center": "^0.20.0",
     "@novu/shared": "^0.20.0",
+    "@novu/ee-translation-web": "^0.20.0",
     "@segment/analytics-next": "^1.48.0",
     "@sentry/react": "^7.40.0",
     "@sentry/tracing": "^7.40.0",

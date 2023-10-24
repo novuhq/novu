@@ -46,3 +46,4 @@ export * from './typography/text/Text';
 export * from './hover-card/HoverCard';
 export * from './template-button/TemplateButton.styles';
 export * from './select/Select.styles';
+export * from './layout';

@@ -681,6 +681,9 @@ importers:
       '@novu/design-system':
         specifier: ^0.20.0
         version: link:../../libs/design-system
+      '@novu/ee-translation-web':
+        specifier: ^0.20.0
+        version: link:../../enterprise/packages/translation-web
       '@novu/notification-center':
         specifier: ^0.20.0
         version: link:../../packages/notification-center
@@ -1843,6 +1846,70 @@ importers:
         specifier: 4.9.5
         version: 4.9.5
 
+  enterprise/packages/translation-web:
+    dependencies:
+      '@emotion/css':
+        specifier: ^11.10.5
+        version: 11.10.6
+      '@emotion/react':
+        specifier: ^11.7.1
+        version: 11.10.6(@types/react@17.0.62)(react@17.0.2)
+      '@emotion/styled':
+        specifier: ^11.6.0
+        version: 11.10.6(@emotion/react@11.10.6)(@types/react@17.0.62)(react@17.0.2)
+      '@mantine/core':
+        specifier: ^5.7.1
+        version: 5.10.5(@emotion/react@11.10.6)(@mantine/hooks@5.10.5)(@types/react@17.0.62)(react-dom@17.0.2)(react@17.0.2)
+      '@mantine/hooks':
+        specifier: ^5.7.1
+        version: 5.10.5(react@17.0.2)
+      '@novu/client':
+        specifier: ^0.20.0
+        version: link:../../../packages/client
+      '@novu/design-system':
+        specifier: ^0.20.0
+        version: link:../../../libs/design-system
+      '@novu/shared':
+        specifier: ^0.20.0
+        version: link:../../../libs/shared
+      '@tanstack/react-query':
+        specifier: ^4.20.4
+        version: 4.29.1(react-dom@17.0.2)(react@17.0.2)
+      axios:
+        specifier: ^1.4.0
+        version: 1.4.0
+      tslib:
+        specifier: ^2.3.1
+        version: 2.6.2
+    devDependencies:
+      '@types/node':
+        specifier: ^18.11.12
+        version: 18.18.5
+      '@types/react':
+        specifier: ^17.0.0
+        version: 17.0.62
+      '@types/react-dom':
+        specifier: ^17.0.0
+        version: 17.0.20
+      react:
+        specifier: ^17.0.1
+        version: 17.0.2
+      react-dom:
+        specifier: ^17.0.1
+        version: 17.0.2(react@17.0.2)
+      react-router-dom:
+        specifier: 6.2.2
+        version: 6.2.2(react-dom@17.0.2)(react@17.0.2)
+      rimraf:
+        specifier: ^3.0.2
+        version: 3.0.2
+      ts-loader:
+        specifier: ~9.4.0
+        version: 9.4.2(typescript@4.9.5)(webpack@5.78.0)
+      typescript:
+        specifier: 4.9.5
+        version: 4.9.5
+
   libs/dal:
     dependencies:
       '@aws-sdk/client-s3':
@@ -1981,6 +2048,9 @@ importers:
       '@novu/shared':
         specifier: ^0.20.0
         version: link:../shared
+      react-helmet-async:
+        specifier: ^1.3.0
+        version: 1.3.0(react-dom@17.0.2)(react@17.0.2)
       react-hook-form:
         specifier: 7.43.9
         version: 7.43.9(react@17.0.2)
@@ -6009,7 +6079,7 @@ packages:
     peerDependencies:
       react: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       json2mq: 0.2.0
       lodash: 4.17.21
@@ -6297,7 +6367,7 @@ packages:
       '@smithy/util-utf8': 2.0.0
       '@smithy/util-waiter': 2.0.3
       fast-xml-parser: 4.2.5
-      tslib: 2.5.0
+      tslib: 2.6.2
     transitivePeerDependencies:
       - '@aws-sdk/signature-v4-crt'
       - aws-crt
@@ -6975,7 +7045,7 @@ packages:
       '@smithy/protocol-http': 2.0.3
       '@smithy/smithy-client': 2.0.3
       '@smithy/types': 2.2.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     transitivePeerDependencies:
       - '@aws-sdk/signature-v4-crt'
     dev: false
@@ -13129,10 +13199,6 @@ packages:
     resolution: {integrity: sha512-ensKY7Ub59u16qsVIFEo2hwTCqZ/r9oZZFh51ivcLGHfUwTn8l1Xzng8RJUe91H/UP8PeqeBronAGx0qmzwk2g==}
     dev: false
 
-  /@floating-ui/core@1.2.6:
-    resolution: {integrity: sha512-EvYTiXet5XqweYGClEmpu3BoxmsQ4hkj3QaYA6qEnigCWffTP3vNRwBReTdrwDwo7OoJ3wM8Uoe9Uk4n+d4hfg==}
-    dev: false
-
   /@floating-ui/core@1.5.0:
     resolution: {integrity: sha512-kK1h4m36DQ0UHGj5Ah4db7R0rHemTqqO0QLvUqi1/mUUp3LuAWbWxdxSIf/XsnH9VS6rRVPLJCncjRzUvyCLXg==}
     dependencies:
@@ -13142,12 +13208,6 @@ packages:
     resolution: {integrity: sha512-4kAVoogvQm2N0XE0G6APQJuCNuErjOfPW8Ux7DFxh8+AfugWflwVJ5LDlHOwrwut7z/30NUvdtHzQ3zSip4EzQ==}
     dependencies:
       '@floating-ui/core': 0.3.1
-    dev: false
-
-  /@floating-ui/dom@1.2.6:
-    resolution: {integrity: sha512-02vxFDuvuVPs22iJICacezYJyf7zwwOCWkPNkWNBr1U0Qt1cKFYzWvxts0AmqcOQGwt/3KJWcWIgtbUU38keyw==}
-    dependencies:
-      '@floating-ui/core': 1.2.6
     dev: false
 
   /@floating-ui/dom@1.5.3:
@@ -13162,7 +13222,7 @@ packages:
       react: '>=16.8.0'
       react-dom: '>=16.8.0'
     dependencies:
-      '@floating-ui/dom': 1.2.6
+      '@floating-ui/dom': 1.5.3
       react: 17.0.2
       react-dom: 17.0.2(react@17.0.2)
     dev: false
@@ -18174,7 +18234,7 @@ packages:
     peerDependencies:
       react: ^16.8 || ^17.0
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       '@radix-ui/number': 0.1.0
       '@radix-ui/primitive': 0.1.0
       '@radix-ui/react-compose-refs': 0.1.0(react@17.0.2)
@@ -18193,7 +18253,7 @@ packages:
       react: ^16.8 || ^17.0 || ^18.0
       react-dom: ^16.8 || ^17.0 || ^18.0
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       '@radix-ui/number': 1.0.0
       '@radix-ui/primitive': 1.0.0
       '@radix-ui/react-compose-refs': 1.0.0(react@17.0.2)
@@ -22839,7 +22899,7 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       '@babel/code-frame': 7.22.13
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       '@types/aria-query': 4.2.2
       aria-query: 4.2.2
       chalk: 4.1.2
@@ -22931,7 +22991,7 @@ packages:
     peerDependencies:
       '@testing-library/dom': '>=7.21.4'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       '@testing-library/dom': 9.3.0
     dev: true
 
@@ -26262,7 +26322,7 @@ packages:
     dependencies:
       '@babel/core': 7.23.2
       '@jest/transform': 29.5.0
-      '@types/babel__core': 7.20.0
+      '@types/babel__core': 7.20.3
       babel-plugin-istanbul: 6.1.1
       babel-preset-jest: 29.5.0(@babel/core@7.23.2)
       chalk: 4.1.2
@@ -26367,7 +26427,7 @@ packages:
     dependencies:
       '@babel/core': 7.23.2
       '@babel/helper-plugin-utils': 7.22.5
-      '@babel/plugin-syntax-typescript': 7.21.4(@babel/core@7.23.2)
+      '@babel/plugin-syntax-typescript': 7.22.5(@babel/core@7.23.2)
       '@babel/traverse': 7.23.2
     transitivePeerDependencies:
       - supports-color
@@ -26407,7 +26467,7 @@ packages:
     dependencies:
       '@babel/template': 7.22.15
       '@babel/types': 7.23.0
-      '@types/babel__core': 7.20.0
+      '@types/babel__core': 7.20.3
       '@types/babel__traverse': 7.18.3
     dev: true
 
@@ -26423,7 +26483,7 @@ packages:
     resolution: {integrity: sha512-Cg7TFGpIr01vOQNODXOOaGz2NpCU5gl8x1qJFbb6hbZxR7XrcE2vtbAsTAbJ7/xwJtUuJEw8K8Zr/AE0LHlesg==}
     engines: {node: '>=10', npm: '>=6'}
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       cosmiconfig: 7.1.0
       resolve: 1.22.2
 
@@ -34672,7 +34732,7 @@ packages:
   /is-core-module@2.13.0:
     resolution: {integrity: sha512-Z7dk6Qo8pOCp3l4tsX2C5ZVas4V+UxwQodwZhLopL91TX8UyyHEXafPcyoeeWuLrwzHcr3igO78wNLwHJHsMCQ==}
     dependencies:
-      has: 1.0.3
+      has: 1.0.4
     dev: true
 
   /is-data-descriptor@0.1.4:
@@ -36162,7 +36222,7 @@ packages:
       '@babel/core': 7.23.2
       '@babel/generator': 7.23.0
       '@babel/plugin-syntax-jsx': 7.22.5(@babel/core@7.23.2)
-      '@babel/plugin-syntax-typescript': 7.21.4(@babel/core@7.23.2)
+      '@babel/plugin-syntax-typescript': 7.22.5(@babel/core@7.23.2)
       '@babel/traverse': 7.23.2
       '@babel/types': 7.23.0
       '@jest/expect-utils': 29.5.0
@@ -42884,7 +42944,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       array-tree-filter: 2.1.0
       classnames: 2.3.2
       rc-select: 14.1.17(react-dom@17.0.2)(react@17.0.2)
@@ -42900,7 +42960,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       react: 17.0.2
       react-dom: 17.0.2(react@17.0.2)
@@ -42912,7 +42972,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-motion: 2.6.3(react-dom@17.0.2)(react@17.0.2)
       rc-util: 5.29.3(react-dom@17.0.2)(react@17.0.2)
@@ -42927,7 +42987,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       '@rc-component/portal': 1.1.1(react-dom@17.0.2)(react@17.0.2)
       classnames: 2.3.2
       rc-motion: 2.6.3(react-dom@17.0.2)(react@17.0.2)
@@ -42942,7 +43002,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       '@rc-component/portal': 1.1.1(react-dom@17.0.2)(react@17.0.2)
       classnames: 2.3.2
       rc-motion: 2.6.3(react-dom@17.0.2)(react@17.0.2)
@@ -42957,7 +43017,7 @@ packages:
       react: '>=16.11.0'
       react-dom: '>=16.11.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-trigger: 5.3.4(react-dom@17.0.2)(react@17.0.2)
       rc-util: 5.29.3(react-dom@17.0.2)(react@17.0.2)
@@ -42972,7 +43032,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       async-validator: 4.2.5
       rc-util: 5.29.3(react-dom@17.0.2)(react@17.0.2)
       react: 17.0.2
@@ -42985,7 +43045,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       '@rc-component/portal': 1.1.1(react-dom@17.0.2)(react@17.0.2)
       classnames: 2.3.2
       rc-dialog: 9.0.2(react-dom@17.0.2)(react@17.0.2)
@@ -43001,7 +43061,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-util: 5.29.3(react-dom@17.0.2)(react@17.0.2)
       react: 17.0.2
@@ -43014,7 +43074,7 @@ packages:
       react: '>=16.0.0'
       react-dom: '>=16.0.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-util: 5.29.3(react-dom@17.0.2)(react@17.0.2)
       react: 17.0.2
@@ -43027,7 +43087,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-menu: 9.8.4(react-dom@17.0.2)(react@17.0.2)
       rc-textarea: 0.4.7(react-dom@17.0.2)(react@17.0.2)
@@ -43043,7 +43103,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-motion: 2.6.3(react-dom@17.0.2)(react@17.0.2)
       rc-overflow: 1.3.0(react-dom@17.0.2)(react@17.0.2)
@@ -43059,7 +43119,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-util: 5.29.3(react-dom@17.0.2)(react@17.0.2)
       react: 17.0.2
@@ -43073,7 +43133,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-motion: 2.6.3(react-dom@17.0.2)(react@17.0.2)
       rc-util: 5.29.3(react-dom@17.0.2)(react@17.0.2)
@@ -43101,7 +43161,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       react: 17.0.2
       react-dom: 17.0.2(react@17.0.2)
@@ -43114,7 +43174,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       date-fns: 2.29.3
       dayjs: 1.11.9
@@ -43132,7 +43192,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-util: 5.29.3(react-dom@17.0.2)(react@17.0.2)
       react: 17.0.2
@@ -43146,7 +43206,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-util: 5.29.3(react-dom@17.0.2)(react@17.0.2)
       react: 17.0.2
@@ -43159,7 +43219,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-util: 5.29.3(react-dom@17.0.2)(react@17.0.2)
       react: 17.0.2
@@ -43173,7 +43233,7 @@ packages:
       react: '>=16.0.0'
       react-dom: '>=16.0.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-motion: 2.6.3(react-dom@17.0.2)(react@17.0.2)
       rc-util: 5.29.3(react-dom@17.0.2)(react@17.0.2)
@@ -43188,7 +43248,7 @@ packages:
       react: '*'
       react-dom: '*'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-motion: 2.6.3(react-dom@17.0.2)(react@17.0.2)
       rc-overflow: 1.3.0(react-dom@17.0.2)(react@17.0.2)
@@ -43206,7 +43266,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-util: 5.29.3(react-dom@17.0.2)(react@17.0.2)
       react: 17.0.2
@@ -43221,7 +43281,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-util: 5.29.3(react-dom@17.0.2)(react@17.0.2)
       react: 17.0.2
@@ -43234,7 +43294,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-util: 5.29.3(react-dom@17.0.2)(react@17.0.2)
       react: 17.0.2
@@ -43248,7 +43308,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-resize-observer: 1.3.1(react-dom@17.0.2)(react@17.0.2)
       rc-util: 5.29.3(react-dom@17.0.2)(react@17.0.2)
@@ -43264,7 +43324,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-dropdown: 4.0.1(react-dom@17.0.2)(react@17.0.2)
       rc-menu: 9.8.4(react-dom@17.0.2)(react@17.0.2)
@@ -43281,7 +43341,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-resize-observer: 1.3.1(react-dom@17.0.2)(react@17.0.2)
       rc-util: 5.29.3(react-dom@17.0.2)(react@17.0.2)
@@ -43296,7 +43356,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-trigger: 5.3.4(react-dom@17.0.2)(react@17.0.2)
       react: 17.0.2
@@ -43309,7 +43369,7 @@ packages:
       react: '*'
       react-dom: '*'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-select: 14.1.17(react-dom@17.0.2)(react@17.0.2)
       rc-tree: 5.7.3(react-dom@17.0.2)(react@17.0.2)
@@ -43325,7 +43385,7 @@ packages:
       react: '*'
       react-dom: '*'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-motion: 2.6.3(react-dom@17.0.2)(react@17.0.2)
       rc-util: 5.29.3(react-dom@17.0.2)(react@17.0.2)
@@ -43341,7 +43401,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-align: 4.0.15(react-dom@17.0.2)(react@17.0.2)
       rc-motion: 2.6.3(react-dom@17.0.2)(react@17.0.2)
@@ -43356,7 +43416,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-util: 5.29.3(react-dom@17.0.2)(react@17.0.2)
       react: 17.0.2
@@ -43369,7 +43429,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       react: 17.0.2
       react-dom: 17.0.2(react@17.0.2)
       react-is: 16.13.1
@@ -44152,7 +44212,7 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       react: 17.0.2
       use-composed-ref: 1.3.0(react@17.0.2)
       use-latest: 1.2.1(@types/react@17.0.53)(react@17.0.2)
@@ -44166,7 +44226,7 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       react: 17.0.2
       use-composed-ref: 1.3.0(react@17.0.2)
       use-latest: 1.2.1(@types/react@17.0.62)(react@17.0.2)
@@ -44180,7 +44240,7 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       react: 17.0.2
       use-composed-ref: 1.3.0(react@17.0.2)
       use-latest: 1.2.1(@types/react@17.0.62)(react@17.0.2)
@@ -44194,7 +44254,7 @@ packages:
       react: '>=16.6.0'
       react-dom: '>=16.6.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       dom-helpers: 5.2.1
       loose-envify: 1.4.0
       prop-types: 15.8.1
@@ -48836,7 +48896,7 @@ packages:
     peerDependencies:
       react: '>=16.13'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       dequal: 2.0.3
       react: 17.0.2
     dev: false
