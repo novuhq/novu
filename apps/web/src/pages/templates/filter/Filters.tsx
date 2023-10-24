@@ -3,9 +3,8 @@ import { useMantineColorScheme } from '@mantine/core';
 import { BuilderFieldOperator, FilterParts, FilterPartTypeEnum } from '@novu/shared';
 
 import type { IFormStep } from '../components/formTypes';
-import { colors } from '../../../design-system';
+import { colors } from '@novu/design-system';
 import { useWatch } from 'react-hook-form';
-import { useMemo } from 'react';
 import { channels } from '../../../utils/channels';
 
 export const Filters = ({ step }: { step?: IFormStep }) => {

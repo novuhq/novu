@@ -6,8 +6,7 @@ import * as Sentry from '@sentry/react';
 import * as capitalize from 'lodash.capitalize';
 
 import { IUserEntity, INotificationTriggerVariable } from '@novu/shared';
-import { Button, colors } from '../../../design-system';
-import { inputStyles } from '../../../design-system/config/inputs.styles';
+import { Button, colors, inputStyles } from '@novu/design-system';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { useAuthContext } from '../../../components/providers/AuthProvider';
 import { getSubscriberValue, getPayloadValue } from './TriggerSnippetTabs';

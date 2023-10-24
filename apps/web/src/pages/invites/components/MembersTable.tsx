@@ -4,9 +4,7 @@ import * as capitalize from 'lodash.capitalize';
 import { useClipboard } from '@mantine/hooks';
 import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 
-import { DotsHorizontal, Mail, Trash } from '../../../design-system/icons';
-import { colors, Dropdown, Tag } from '../../../design-system';
-import useStyles from '../../../design-system/config/text.styles';
+import { DotsHorizontal, Mail, Trash, useTextStyles, colors, Dropdown, Tag } from '@novu/design-system';
 import { MemberRole } from './MemberRole';
 import { When } from '../../../components/utils/When';
 import { parseUrl } from '../../../utils/routeUtils';
@@ -21,7 +19,7 @@ export function MembersTable({
   onChangeMemberRole,
   allowChangeRole = false,
 }) {
-  const { classes, theme } = useStyles();
+  const { classes, theme } = useTextStyles();
   const clipboardInviteLink = useClipboard({ timeout: 1000 });
   const selfHosted = process.env.REACT_APP_DOCKER_HOSTED_ENV === 'true';
 

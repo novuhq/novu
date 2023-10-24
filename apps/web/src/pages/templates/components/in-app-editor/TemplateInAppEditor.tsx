@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Control, Controller, useFormContext } from 'react-hook-form';
 
 import { ChannelTypeEnum } from '@novu/shared';
-import { Input } from '../../../../design-system';
+import { Input } from '@novu/design-system';
 import { useEnvController, useHasActiveIntegrations, useVariablesManager } from '../../../../hooks';
 import { StepSettings } from '../../workflow/SideBar/StepSettings';
 import type { IForm, ITemplates } from '../formTypes';

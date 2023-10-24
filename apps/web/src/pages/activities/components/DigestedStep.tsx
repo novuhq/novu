@@ -1,5 +1,5 @@
 import { Center, Grid, UnstyledButton } from '@mantine/core';
-import { colors, Text } from '../../../design-system';
+import { colors, Text } from '@novu/design-system';
 
 export const DigestedStep = ({ digestedId, span = 4, onClick }) => {
   return (
