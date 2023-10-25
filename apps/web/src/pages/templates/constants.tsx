@@ -1,5 +1,5 @@
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
-import { Bell, Chat, DigestGradient, Mail, Mobile, Sms, TimerGradient } from '../../design-system/icons';
+import { Bell, Chat, DigestGradient, Mail, Mobile, Sms, TimerGradient } from '@novu/design-system';
 
 export enum TemplateAnalyticsEnum {
   CREATE_TEMPLATE_CLICK = 'Create Template Click - [Templates]',

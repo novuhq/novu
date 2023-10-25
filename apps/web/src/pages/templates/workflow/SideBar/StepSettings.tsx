@@ -5,7 +5,7 @@ import { useParams } from 'react-router-dom';
 
 import { StepTypeEnum } from '@novu/shared';
 
-import { Button } from '../../../../design-system';
+import { FilterGradient, Filter, FilterOutlined, Button } from '@novu/design-system';
 import type { IForm } from '../../components/formTypes';
 import { StepActiveSwitch } from '../StepActiveSwitch';
 import { useEnvController } from '../../../../hooks';
@@ -13,8 +13,6 @@ import { ShouldStopOnFailSwitch } from '../ShouldStopOnFailSwitch';
 import { ReplyCallback, ReplyCallbackSwitch } from '../ReplyCallback';
 import { When } from '../../../../components/utils/When';
 import { FilterModal } from '../../filter/FilterModal';
-import { FilterGradient, Filter } from '../../../../design-system/icons';
-import { FilterOutlined } from '../../../../design-system/icons/gradient/FilterOutlined';
 
 export function StepSettings({ index }: { index: number }) {
   const { readonly } = useEnvController();
@@ -44,7 +42,7 @@ export function StepSettings({ index }: { index: number }) {
           onClick={() => {
             setFilterOpen(true);
           }}
-          disabled={readonly}
+          disabled={false}
           data-test-id="add-filter-btn"
           onMouseEnter={() => {
             setFilterHover(true);
@@ -92,6 +90,7 @@ export function StepSettings({ index }: { index: number }) {
         control={control}
         stepIndex={index}
         setValue={setValue}
+        readonly={readonly}
       />
     </>
   );

@@ -6,7 +6,7 @@ import { Preview } from '../../editor/Preview';
 import { EditorPreviewSwitch } from '../EditorPreviewSwitch';
 import { Grid, SegmentedControl, useMantineTheme } from '@mantine/core';
 import { TestSendEmail } from './TestSendEmail';
-import { colors } from '../../../../design-system';
+import { colors } from '@novu/design-system';
 import { MobileIcon } from '../../editor/PreviewSegment/MobileIcon';
 import { WebIcon } from '../../editor/PreviewSegment/WebIcon';
 import { useHotkeys } from '@mantine/hooks';

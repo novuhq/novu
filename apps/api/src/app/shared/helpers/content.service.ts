@@ -73,17 +73,19 @@ export class ContentService {
 
     for (const message of messages) {
       if (message.filters) {
-        const filterVariables = message.filters.flatMap((filter) =>
-          filter.children
-            .filter((item) => item.on === FilterPartTypeEnum.PAYLOAD)
-            .map((item: IFieldFilterPart) => {
-              return {
-                name: item.field,
-                type: TemplateVariableTypeEnum.STRING,
-              };
-            })
-        );
-        variables.push(...filterVariables);
+        const filters = Array.isArray(message.filters) ? message.filters : [];
+        const filteredVariables = filters.flatMap((filter) => {
+          const filteredChildren = filter.children?.filter((item) => item.on === FilterPartTypeEnum.PAYLOAD) || [];
+          const mappedChildren = filteredChildren.map((item: IFieldFilterPart) => {
+            return {
+              name: item.field,
+              type: TemplateVariableTypeEnum.STRING,
+            };
+          });
+
+          return mappedChildren;
+        });
+        variables.push(...filteredVariables);
       }
 
       if (message.metadata?.type === DelayTypeEnum.SCHEDULED && message.metadata.delayPath) {

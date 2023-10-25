@@ -3,11 +3,18 @@ import { BaseRepository } from '../base-repository';
 import { Organization } from './organization.schema';
 import { MemberRepository } from '../member';
 
-export class OrganizationRepository extends BaseRepository<OrganizationDBModel, OrganizationEntity> {
+export class OrganizationRepository extends BaseRepository<OrganizationDBModel, OrganizationEntity, object> {
   private memberRepository = new MemberRepository();
 
   constructor() {
     super(Organization, OrganizationEntity);
+  }
+
+  async findById(id: string, select?: string): Promise<OrganizationEntity | null> {
+    const data = await this.MongooseModel.findById(id, select);
+    if (!data) return null;
+
+    return this.mapEntity(data.toObject());
   }
 
   async findOrganizationById(organizationId: string): Promise<OrganizationEntity | null> {

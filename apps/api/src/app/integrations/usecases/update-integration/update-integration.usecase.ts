@@ -96,7 +96,10 @@ export class UpdateIntegration {
   async execute(command: UpdateIntegrationCommand): Promise<IntegrationEntity> {
     Logger.verbose('Executing Update Integration Command');
 
-    const existingIntegration = await this.integrationRepository.findById(command.integrationId);
+    const existingIntegration = await this.integrationRepository.findOne({
+      _id: command.integrationId,
+      _organizationId: command.organizationId,
+    });
     if (!existingIntegration) {
       throw new NotFoundException(`Entity with id ${command.integrationId} not found`);
     }

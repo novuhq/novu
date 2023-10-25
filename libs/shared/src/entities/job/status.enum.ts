@@ -7,4 +7,11 @@ export enum JobStatusEnum {
   DELAYED = 'delayed',
   CANCELED = 'canceled',
   MERGED = 'merged',
+  SKIPPED = 'skipped',
+}
+
+export enum DigestCreationResultEnum {
+  MERGED = 'MERGED',
+  CREATED = 'CREATED',
+  SKIPPED = 'SKIPPED',
 }

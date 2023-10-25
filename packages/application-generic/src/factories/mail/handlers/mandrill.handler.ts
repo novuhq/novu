@@ -7,9 +7,10 @@ export class MandrillHandler extends BaseHandler {
     super('mandrill', ChannelTypeEnum.EMAIL);
   }
   buildProvider(credentials: ICredentials, from?: string) {
-    const config: { apiKey: string; from: string } = {
+    const config: { apiKey: string; from: string; senderName: string } = {
       from: from as string,
       apiKey: credentials.apiKey as string,
+      senderName: credentials.senderName as string,
     };
 
     this.provider = new MandrillProvider(config);

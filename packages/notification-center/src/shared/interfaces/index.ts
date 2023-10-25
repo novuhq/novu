@@ -78,6 +78,7 @@ export interface IFetchingStrategy {
   fetchOrganization: boolean;
   fetchNotifications: boolean;
   fetchUserPreferences: boolean;
+  fetchUserGlobalPreferences: boolean;
 }
 
 export interface INovuProviderContext {
@@ -104,6 +105,7 @@ export interface IStoreContext {
 
 export interface INotificationsContext extends IStoreContext {
   unseenCount: number;
+  unreadCount: number;
   notifications: IMessage[];
   hasNextPage: boolean;
   isLoading: boolean;
