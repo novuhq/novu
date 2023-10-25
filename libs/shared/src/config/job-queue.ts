@@ -13,4 +13,5 @@ export enum ObservabilityBackgroundTransactionEnum {
   SUBSCRIBER_PROCESSING_QUEUE = 'subscriber-processing-queue',
   TRIGGER_HANDLER_QUEUE = 'trigger-handler-queue',
   WS_SOCKET_QUEUE = 'ws_socket_queue',
+  SCHEDULER_PROCESSING_QUEUE = 'scheduler-processing-queue',
 }

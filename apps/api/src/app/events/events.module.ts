@@ -22,6 +22,7 @@ import {
   TriggerEvent,
   MapTriggerRecipients,
   SchedulerService,
+  StandardQueueService,
 } from '@novu/application-generic';
 
 import { EventsController } from './events.controller';
@@ -38,6 +39,17 @@ import { ExecutionDetailsModule } from '../execution-details/execution-details.m
 import { TopicsModule } from '../topics/topics.module';
 import { LayoutsModule } from '../layouts/layouts.module';
 import { TenantModule } from '../tenant/tenant.module';
+
+const schedulerService = {
+  provide: SchedulerService,
+  useFactory: async (standardQueueService: StandardQueueService) => {
+    const service = new SchedulerService(standardQueueService);
+    await service.start();
+
+    return service;
+  },
+  inject: [StandardQueueService],
+};
 
 const PROVIDERS = [
   AddJob,
@@ -58,7 +70,7 @@ const PROVIDERS = [
   StoreSubscriberJobs,
   TriggerEvent,
   MapTriggerRecipients,
-  SchedulerService,
+  schedulerService,
 ];
 
 @Module({

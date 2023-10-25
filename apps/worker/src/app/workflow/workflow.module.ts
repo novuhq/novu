@@ -31,6 +31,7 @@ import {
   getIsTopicNotificationEnabled,
   SubscriberJobBound,
   SchedulerService,
+  StandardQueueService,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
@@ -116,6 +117,17 @@ const USE_CASES = [
   SubscriberJobBound,
 ];
 
+const schedulerService = {
+  provide: SchedulerService,
+  useFactory: async (standardQueueService: StandardQueueService) => {
+    const service = new SchedulerService(standardQueueService);
+    await service.start();
+
+    return service;
+  },
+  inject: [StandardQueueService],
+};
+
 const PROVIDERS: Provider[] = [
   ActiveJobsMetricService,
   BullMqService,
@@ -127,7 +139,7 @@ const PROVIDERS: Provider[] = [
   OldInstanceBullMqService,
   OldInstanceStandardWorker,
   OldInstanceWorkflowWorker,
-  SchedulerService,
+  schedulerService,
 ];
 
 @Module({

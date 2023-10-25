@@ -52,7 +52,6 @@ import {
   CreateTenant,
   ProcessTenant,
   getUseMergedDigestId,
-  SchedulerService,
 } from '@novu/application-generic';
 
 import * as packageJson from '../../../package.json';
