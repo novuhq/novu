@@ -1,7 +1,6 @@
 import { Center } from '@mantine/core';
+import { Text, colors, Variant, VariantsFile } from '@novu/design-system';
 
-import { Variant, VariantsFile } from '../../../design-system/icons';
-import { Text, colors } from '../../../design-system';
 import { useStepInfoPath } from '../hooks/useStepInfoPath';
 import { useStepIndex } from '../hooks/useStepIndex';
 

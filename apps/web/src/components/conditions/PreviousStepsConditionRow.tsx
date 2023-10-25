@@ -1,10 +1,9 @@
 import { Control, Controller } from 'react-hook-form';
 import { Grid } from '@mantine/core';
-
 import { PreviousStepTypeEnum } from '@novu/shared';
+import { Select } from '@novu/design-system';
 
 import { DataSelect, IConditionsForm } from './types';
-import { Select } from '../../design-system';
 import { DefaultPreviousStepTypeData } from './constants';
 
 export function PreviousStepsConditionRow({

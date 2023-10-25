@@ -41,6 +41,7 @@ export interface INotificationTrigger {
 
 export enum TriggerContextTypeEnum {
   TENANT = 'tenant',
+  ACTOR = 'actor',
 }
 
 export interface ITriggerReservedVariable {

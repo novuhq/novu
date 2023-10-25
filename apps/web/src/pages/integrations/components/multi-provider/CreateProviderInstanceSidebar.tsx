@@ -1,15 +1,22 @@
-import { ActionIcon, Group, Radio, Text, Input, useMantineTheme } from '@mantine/core';
+import { Group, Radio, Text, Input, useMantineTheme } from '@mantine/core';
 import { useEffect, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { useDisclosure } from '@mantine/hooks';
-
 import { ChannelTypeEnum, ICreateIntegrationBodyDto, NOVU_PROVIDERS, providers } from '@novu/shared';
+import {
+  ActionButton,
+  Button,
+  colors,
+  NameInput,
+  Sidebar,
+  ConditionPlus,
+  ArrowLeft,
+  Condition,
+  inputStyles,
+} from '@novu/design-system';
 
-import { ActionButton, Button, colors, NameInput, Sidebar } from '../../../../design-system';
-import { ConditionPlus, ArrowLeft, Condition } from '../../../../design-system/icons';
-import { inputStyles } from '../../../../design-system/config/inputs.styles';
 import { useFetchEnvironments } from '../../../../hooks/useFetchEnvironments';
 import { useSegment } from '../../../../components/providers/SegmentProvider';
 import { createIntegration } from '../../../../api/integration';

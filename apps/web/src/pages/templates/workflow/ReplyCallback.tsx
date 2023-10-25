@@ -2,11 +2,10 @@ import styled from '@emotion/styled';
 import { Controller, useFormContext } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { Grid } from '@mantine/core';
+import { Input, Switch, Text, CircleArrowRight } from '@novu/design-system';
 
-import { Input, Switch, Text } from '../../../design-system';
 import { useEnvController } from '../../../hooks';
 import { When } from '../../../components/utils/When';
-import { CircleArrowRight } from '../../../design-system/icons/arrows/CircleArrowRight';
 import { useStepFormPath } from '../hooks/useStepFormPath';
 
 export const ReplyCallback = () => {

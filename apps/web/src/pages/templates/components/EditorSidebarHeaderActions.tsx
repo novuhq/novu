@@ -1,13 +1,12 @@
 import { Group } from '@mantine/core';
-import { FilterPartTypeEnum } from '@novu/shared';
 import { useEffect, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { FilterPartTypeEnum } from '@novu/shared';
+import { ActionButton, Condition, ConditionPlus, ConditionsFile, Trash, VariantPlus } from '@novu/design-system';
 
 import { Conditions, IConditions } from '../../../components/conditions';
 import { When } from '../../../components/utils/When';
-import { ActionButton } from '../../../design-system/button/ActionButton';
-import { Condition, ConditionPlus, ConditionsFile, Trash, VariantPlus } from '../../../design-system/icons';
 import { useEnvController } from '../../../hooks';
 import { useBasePath } from '../hooks/useBasePath';
 import { useFilterPartsList } from '../hooks/useFilterPartsList';

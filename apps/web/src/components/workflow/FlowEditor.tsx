@@ -28,7 +28,7 @@ import { v4 as uuid4 } from 'uuid';
 import cloneDeep from 'lodash.clonedeep';
 import { StepTypeEnum } from '@novu/shared';
 
-import { colors } from '../../design-system';
+import { colors } from '@novu/design-system';
 import { getChannel } from '../../utils/channels';
 import { useEnvController } from '../../hooks';
 import type { IEdge, IFlowStep, INode } from './types';
@@ -346,7 +346,7 @@ const Wrapper = styled.div<{ dark: boolean }>`
     cursor: pointer;
 
     [data-blue-gradient-svg] {
-      stop:first-child {
+      stop:first-of-type {
         stop-color: #4c6dd4 !important;
       }
       stop:last-child {
@@ -411,7 +411,7 @@ const Wrapper = styled.div<{ dark: boolean }>`
   }
 
   [data-template-store-editor] [data-workflow-node-icon] {
-    stop:first-child {
+    stop:first-of-type {
       stop-color: #dd2476 !important;
     }
     stop:last-child {

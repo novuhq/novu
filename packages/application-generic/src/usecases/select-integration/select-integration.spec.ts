@@ -13,7 +13,6 @@ import {
 
 import { SelectIntegration } from './select-integration.usecase';
 import { SelectIntegrationCommand } from './select-integration.command';
-import { GetIsMultiProviderConfigurationEnabled } from '../get-feature-flag';
 import { GetDecryptedIntegrations } from '../get-decrypted-integrations';
 import { ConditionsFilter } from '../conditions-filter';
 
@@ -78,13 +77,6 @@ jest.mock('@novu/dal', () => ({
   })),
 }));
 
-jest.mock('../get-feature-flag', () => ({
-  ...jest.requireActual('../get-feature-flag'),
-  GetIsMultiProviderConfigurationEnabled: jest.fn(() => ({
-    execute: jest.fn(() => true),
-  })),
-}));
-
 jest.mock('../get-decrypted-integrations', () => ({
   ...jest.requireActual('../get-decrypted-integrations'),
   GetDecryptedIntegrations: jest.fn(() => ({
@@ -109,9 +101,7 @@ describe('select integration', function () {
         new TenantRepository(),
         new EnvironmentRepository()
       ),
-      new TenantRepository(),
-      // @ts-ignore
-      new GetIsMultiProviderConfigurationEnabled()
+      new TenantRepository()
     );
     jest.clearAllMocks();
   });

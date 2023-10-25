@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { Grid, useMantineTheme, JsonInput, SegmentedControl } from '@mantine/core';
+import { colors, inputStyles, When } from '@novu/design-system';
 
-import { colors } from '../../../../design-system';
 import { useEnvController, useProcessVariables } from '../../../../hooks';
 import { InAppEditorBlock } from './InAppEditorBlock';
 import { VariablesManagement } from '../email-editor/variables-management/VariablesManagement';
-import { inputStyles } from '../../../../design-system/config/inputs.styles';
 import { AvatarFeedFields } from './AvatarFeedFields';
-import { When } from '../../../../components/utils/When';
 import { TranslateProductLead } from '../TranslateProductLead';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
 

@@ -44,8 +44,6 @@ const axiosInstance = axios.create();
 
 const eventTriggerPath = '/v1/events/trigger';
 
-const ORIGINAL_IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
-
 const promiseTimeout = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
@@ -1178,6 +1176,44 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
 
       expect(block.content).to.equal('Hello Smith, Welcome to Umbrella Corp');
       expect(message!.subject).to.equal('Test email a subject nested');
+    });
+
+    it('should trigger E-Mail notification with actor data', async function () {
+      const newSubscriberId = SubscriberRepository.createObjectId();
+      const channelType = ChannelTypeEnum.EMAIL;
+      const actorSubscriber = await subscriberService.createSubscriber({ firstName: 'Actor' });
+
+      template = await session.createTemplate({
+        steps: [
+          {
+            name: 'Message Name',
+            subject: 'Test email',
+            type: StepTypeEnum.EMAIL,
+            content: [
+              {
+                type: EmailBlockTypeEnum.TEXT,
+                content: 'Hello {{actor.firstName}}, Welcome to {{organizationName}}' as string,
+              },
+            ],
+          },
+        ],
+      });
+
+      await sendTrigger(session, template, newSubscriberId, {}, {}, '', actorSubscriber.subscriberId);
+
+      await session.awaitRunningJobs(template._id);
+
+      const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, newSubscriberId);
+
+      const message = await messageRepository.findOne({
+        _environmentId: session.environment._id,
+        _subscriberId: createdSubscriber?._id,
+        channel: channelType,
+      });
+
+      const block = message!.content[0] as IEmailBlock;
+
+      expect(block.content).to.equal('Hello Actor, Welcome to Umbrella Corp');
     });
 
     it('should not trigger notification with subscriber data if integration is inactive', async function () {
@@ -2451,18 +2487,6 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
         expect(messagesAfter.length).to.equal(1);
       });
     });
-  });
-  describe.skip('Trigger Event - [IS_MULTI_PROVIDER_CONFIGURATION_ENABLED=true]', function () {
-    beforeEach(async () => {
-      process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = 'true';
-      process.env.LAUNCH_DARKLY_SDK_KEY = '';
-      session = new UserSession();
-      await session.initialize();
-    });
-
-    afterEach(async () => {
-      process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = ORIGINAL_IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
-    });
 
     it('should trigger message with override integration identifier', async function () {
       const newSubscriberId = SubscriberRepository.createObjectId();
@@ -2542,7 +2566,8 @@ export async function sendTrigger(
   newSubscriberIdInAppNotification: string,
   payload: Record<string, unknown> = {},
   overrides: Record<string, unknown> = {},
-  tenant?: string
+  tenant?: string,
+  actor?: string
 ): Promise<AxiosResponse> {
   return await axiosInstance.post(
     `${session.serverUrl}${eventTriggerPath}`,
@@ -2556,6 +2581,7 @@ export async function sendTrigger(
       },
       overrides,
       tenant,
+      actor,
     },
     {
       headers: {

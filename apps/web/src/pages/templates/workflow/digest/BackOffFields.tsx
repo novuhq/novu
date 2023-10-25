@@ -3,8 +3,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { Collapse } from '@mantine/core';
 import { DigestTypeEnum } from '@novu/shared';
 
-import { colors, Input, Switch, Tooltip } from '../../../../design-system';
-import { inputStyles } from '../../../../design-system/config/inputs.styles';
+import { colors, Input, Switch, Tooltip, inputStyles } from '@novu/design-system';
 import { IntervalSelect } from './IntervalSelect';
 import { BackOffTooltipIcon } from './icons/BackOffTooltipIcon';
 import { When } from '../../../../components/utils/When';

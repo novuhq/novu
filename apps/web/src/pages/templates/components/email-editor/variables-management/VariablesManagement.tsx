@@ -2,10 +2,9 @@ import { useWatch } from 'react-hook-form';
 import { UnstyledButton } from '@mantine/core';
 import { SystemVariablesWithTypes } from '@novu/shared';
 
-import { Text, Tooltip } from '../../../../../design-system';
+import { Text, Tooltip, EditGradient } from '@novu/design-system';
 import { VarItemsDropdown } from './VarItemsDropdown';
 import { VarLabel } from './VarLabel';
-import { EditGradient } from '../../../../../design-system/icons/gradient/EditGradient';
 import { useProcessVariables } from '../../../../../hooks';
 import { VarItemTooltip } from './VarItemTooltip';
 import { When } from '../../../../../components/utils/When';

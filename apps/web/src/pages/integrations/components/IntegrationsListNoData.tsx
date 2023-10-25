@@ -2,7 +2,7 @@ import styled from '@emotion/styled';
 import { ChannelTypeEnum } from '@novu/shared';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
-import { CardTile, colors } from '../../../design-system';
+import { CardTile, colors } from '@novu/design-system';
 import { CHANNEL_TYPE_TO_ICON_NAME } from '../constants';
 import { CHANNEL_TYPE_TO_STRING } from '../../../utils/channels';
 

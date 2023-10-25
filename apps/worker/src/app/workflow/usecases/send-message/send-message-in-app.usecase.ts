@@ -116,9 +116,17 @@ export class SendMessageInApp extends SendMessageBase {
 
     const { actor } = command.step.template;
 
+    let actorSubscriber: SubscriberEntity | null = null;
+    if (command.job.actorId) {
+      actorSubscriber = await this.getSubscriberBySubscriberId({
+        subscriberId: command.job.actorId,
+        _environmentId: command.environmentId,
+      });
+    }
+
     const [tenant, organization] = await Promise.all([
       this.handleTenantExecution(command.job),
-      this.organizationRepository.findById(command.organizationId, 'branding'),
+      this.organizationRepository.findOne({ _id: command.organizationId }, 'branding'),
     ]);
 
     const template = await this.processVariants(command, tenant, subscriber, command.payload);
@@ -134,7 +142,8 @@ export class SendMessageInApp extends SendMessageBase {
         subscriber,
         command,
         organization,
-        tenant
+        tenant,
+        actorSubscriber
       );
 
       if (step.template.cta?.data?.url) {
@@ -144,7 +153,8 @@ export class SendMessageInApp extends SendMessageBase {
           subscriber,
           command,
           organization,
-          tenant
+          tenant,
+          actorSubscriber
         );
       }
 
@@ -158,7 +168,8 @@ export class SendMessageInApp extends SendMessageBase {
             subscriber,
             command,
             organization,
-            tenant
+            tenant,
+            actorSubscriber
           );
           ctaButtons.push({ type: action.type, content: buttonContent });
         }
@@ -240,7 +251,7 @@ export class SendMessageInApp extends SendMessageBase {
           },
         }
       );
-      message = await this.messageRepository.findById(oldMessage._id);
+      message = await this.messageRepository.findOne({ _id: oldMessage._id, _environmentId: command.environmentId });
     }
 
     if (!message) throw new PlatformException('Message not found');
@@ -295,7 +306,8 @@ export class SendMessageInApp extends SendMessageBase {
     subscriber: SubscriberEntity,
     command: SendMessageCommand,
     organization: OrganizationEntity | null,
-    tenant: TenantEntity | null
+    tenant: TenantEntity | null,
+    actor: SubscriberEntity | null
   ): Promise<string> {
     return await this.compileTemplate.execute(
       CompileTemplateCommand.create({
@@ -312,6 +324,7 @@ export class SendMessageInApp extends SendMessageBase {
             color: organization?.branding?.color || '#f47373',
           },
           ...(tenant && { tenant }),
+          ...(actor && { actor }),
           ...payload,
         },
       })

@@ -1,22 +1,18 @@
 import { useState } from 'react';
 import styled from '@emotion/styled';
-import { Group, ActionIcon, Center } from '@mantine/core';
-import { When } from '../../../components/utils/When';
-import { colors, Tooltip, Text, Modal, Button, Title, ActionButton } from '../../../design-system';
-import { Condition, ConditionPlus, Warning } from '../../../design-system/icons';
-
-const IconButton = styled(Group)`
-  text-align: center;
-  border-radius: 8px;
-  width: 32px;
-  height: 32px;
-  color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B60 : colors.B30)};
-
-  &:hover {
-    background: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B30 : colors.B85)};
-    color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.white : colors.B30)};
-  }
-`;
+import { Group } from '@mantine/core';
+import {
+  colors,
+  When,
+  Text,
+  Modal,
+  Button,
+  Title,
+  ActionButton,
+  Condition,
+  ConditionPlus,
+  Warning,
+} from '@novu/design-system';
 
 const RemovesPrimary = () => {
   return (

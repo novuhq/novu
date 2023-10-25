@@ -1,10 +1,10 @@
 import { ReactNode } from 'react';
 import { TextInput, useMantineColorScheme } from '@mantine/core';
 import { Controller, useFormContext } from 'react-hook-form';
+import { colors } from '@novu/design-system';
 
 import { useEnvController } from '../../../hooks';
 import type { IForm } from './formTypes';
-import { colors } from '../../../design-system';
 
 export const StepNameInput = ({
   path,

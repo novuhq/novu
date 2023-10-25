@@ -1,12 +1,26 @@
 import { Grid, Group, ActionIcon, Center, useMantineTheme } from '@mantine/core';
 import styled from '@emotion/styled';
 import { Control, Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
-
 import { FilterPartTypeEnum, IFieldFilterPart } from '@novu/shared';
+import {
+  Button,
+  colors,
+  Dropdown,
+  Input,
+  Select,
+  Sidebar,
+  Text,
+  Title,
+  Tooltip,
+  ConditionPlus,
+  DotsHorizontal,
+  Duplicate,
+  Trash,
+  Condition,
+  ErrorIcon,
+  When,
+} from '@novu/design-system';
 
-import { Button, colors, Dropdown, Input, Select, Sidebar, Text, Title, Tooltip } from '../../design-system';
-import { ConditionPlus, DotsHorizontal, Duplicate, Trash, Condition, ErrorIcon } from '../../design-system/icons';
-import { When } from '../utils/When';
 import { DataSelect, IConditions, IConditionsForm, IConditionsProps, IFilterTypeList } from './types';
 import { OnlineConditionRow } from './OnlineConditionRow';
 import { DefaultGroupOperatorData, DefaultOperatorData } from './constants';

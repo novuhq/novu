@@ -1,10 +1,10 @@
 import { MouseEventHandler } from 'react';
 import styled from '@emotion/styled';
 import { Group, Container } from '@mantine/core';
-
-import { NodeType } from './WorkflowNode';
-import { Dropdown, IDropdownProps } from '../../../../../design-system';
 import {
+  ActionButton,
+  Dropdown,
+  IDropdownProps,
   ConditionPlus,
   ConditionsFile,
   DotsHorizontal,
@@ -12,8 +12,9 @@ import {
   PencilOutlined,
   Trash,
   VariantPlus,
-} from '../../../../../design-system/icons';
-import { ActionButton } from '../../../../../design-system/button/ActionButton';
+} from '@novu/design-system';
+
+import { NodeType } from './WorkflowNode';
 import { When } from '../../../../../components/utils/When';
 
 const ContainerButton = styled(Container)`

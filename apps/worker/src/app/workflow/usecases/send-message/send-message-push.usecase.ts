@@ -7,6 +7,7 @@ import {
   MessageEntity,
   IntegrationEntity,
   TenantRepository,
+  SubscriberEntity,
   JobEntity,
 } from '@novu/dal';
 import {
@@ -89,6 +90,13 @@ export class SendMessagePush extends SendMessageBase {
       total_count: command.events?.length,
     };
     const tenant = await this.handleTenantExecution(command.job);
+    let actor: SubscriberEntity | null = null;
+    if (command.job.actorId) {
+      actor = await this.getSubscriberBySubscriberId({
+        subscriberId: command.job.actorId,
+        _environmentId: command.environmentId,
+      });
+    }
 
     const template = await this.processVariants(command, tenant, subscriber, command.payload);
 
@@ -100,6 +108,7 @@ export class SendMessagePush extends SendMessageBase {
       subscriber: subscriber,
       step: stepData,
       ...(tenant && { tenant }),
+      ...(actor && { actor }),
       ...command.payload,
     };
     let content = '';
