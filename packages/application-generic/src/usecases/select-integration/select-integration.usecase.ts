@@ -10,14 +10,7 @@ import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
 import { SelectIntegrationCommand } from './select-integration.command';
 import { ConditionsFilter } from '../conditions-filter/conditions-filter.usecase';
 import { buildIntegrationKey, CachedQuery } from '../../services/cache';
-import {
-  FeatureFlagCommand,
-  GetIsMultiProviderConfigurationEnabled,
-} from '../get-feature-flag';
-import {
-  GetDecryptedIntegrations,
-  GetDecryptedIntegrationsCommand,
-} from '../get-decrypted-integrations';
+import { GetDecryptedIntegrations } from '../get-decrypted-integrations';
 import { ConditionsFilterCommand } from '../conditions-filter';
 
 const LOG_CONTEXT = 'SelectIntegration';
@@ -28,8 +21,7 @@ export class SelectIntegration {
     private integrationRepository: IntegrationRepository,
     protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations,
     protected conditionsFilter: ConditionsFilter,
-    private tenantRepository: TenantRepository,
-    protected getIsMultiProviderConfigurationEnabled: GetIsMultiProviderConfigurationEnabled
+    private tenantRepository: TenantRepository
   ) {}
 
   @CachedQuery({
@@ -42,30 +34,6 @@ export class SelectIntegration {
   async execute(
     command: SelectIntegrationCommand
   ): Promise<IntegrationEntity | undefined> {
-    const isMultiProviderConfigurationEnabled =
-      await this.getIsMultiProviderConfigurationEnabled.execute(
-        FeatureFlagCommand.create({
-          userId: command.userId,
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-        })
-      );
-
-    if (!isMultiProviderConfigurationEnabled) {
-      const integrations = await this.getDecryptedIntegrationsUsecase.execute(
-        GetDecryptedIntegrationsCommand.create({
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          channelType: command.channelType,
-          findOne: true,
-          active: true,
-          userId: command.userId,
-        })
-      );
-
-      return integrations[0];
-    }
-
     let integration: IntegrationEntity | null =
       await this.getPrimaryIntegration(command);
 
