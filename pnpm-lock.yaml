@@ -2826,13 +2826,13 @@ importers:
     devDependencies:
       '@angular-devkit/build-angular':
         specifier: ^16.2.5
-        version: 16.2.6(@angular/compiler-cli@16.2.9)(@types/node@16.11.7)(jest@27.5.1)(karma@6.4.1)(ng-packagr@16.2.3)(typescript@5.1.6)
+        version: 16.2.6(@angular/compiler-cli@16.2.9)(@types/node@16.11.7)(jest@27.5.1)(karma@6.4.1)(ng-packagr@16.2.3)(typescript@4.9.5)
       '@angular/cli':
         specifier: ^16.2.5
         version: 16.2.6
       '@angular/compiler-cli':
         specifier: ^16.2.0
-        version: 16.2.9(@angular/compiler@16.2.9)(typescript@5.1.6)
+        version: 16.2.9(@angular/compiler@16.2.9)(typescript@4.9.5)
       '@types/jasmine':
         specifier: ~4.3.0
         version: 4.3.1
@@ -2856,10 +2856,10 @@ importers:
         version: 2.1.0(jasmine-core@4.6.0)(karma-jasmine@5.1.0)(karma@6.4.1)
       ng-packagr:
         specifier: ^16.2.0
-        version: 16.2.3(@angular/compiler-cli@16.2.9)(tslib@2.5.0)(typescript@5.1.6)
+        version: 16.2.3(@angular/compiler-cli@16.2.9)(tslib@2.5.0)(typescript@4.9.5)
       typescript:
-        specifier: ~5.1.3
-        version: 5.1.6
+        specifier: 4.9.5
+        version: 4.9.5
 
   packages/notification-center-angular/projects/notification-center-angular:
     dependencies:
@@ -5476,7 +5476,7 @@ packages:
       - chokidar
     dev: true
 
-  /@angular-devkit/build-angular@16.2.6(@angular/compiler-cli@16.2.9)(@types/node@16.11.7)(jest@27.5.1)(karma@6.4.1)(ng-packagr@16.2.3)(typescript@5.1.6):
+  /@angular-devkit/build-angular@16.2.6(@angular/compiler-cli@16.2.9)(@types/node@16.11.7)(jest@27.5.1)(karma@6.4.1)(ng-packagr@16.2.3)(typescript@4.9.5):
     resolution: {integrity: sha512-QdU/q77K1P8CPEEZGxw1QqLcnA9ofboDWS7vcLRBmFmk2zydtLTApbK0P8GNDRbnmROOKkoaLo+xUTDJz9gvPA==}
     engines: {node: ^16.14.0 || >=18.10.0, npm: ^6.11.0 || ^7.5.6 || >=8.0.0, yarn: '>= 1.13.0'}
     peerDependencies:
@@ -5515,7 +5515,7 @@ packages:
       '@angular-devkit/architect': 0.1602.6(chokidar@3.5.3)
       '@angular-devkit/build-webpack': 0.1602.6(chokidar@3.5.3)(webpack-dev-server@4.15.1)(webpack@5.88.2)
       '@angular-devkit/core': 16.2.6(chokidar@3.5.3)
-      '@angular/compiler-cli': 16.2.9(@angular/compiler@16.2.9)(typescript@5.1.6)
+      '@angular/compiler-cli': 16.2.9(@angular/compiler@16.2.9)(typescript@4.9.5)
       '@babel/core': 7.22.9
       '@babel/generator': 7.22.9
       '@babel/helper-annotate-as-pure': 7.22.5
@@ -5527,7 +5527,7 @@ packages:
       '@babel/runtime': 7.22.6
       '@babel/template': 7.22.5
       '@discoveryjs/json-ext': 0.5.7
-      '@ngtools/webpack': 16.2.6(@angular/compiler-cli@16.2.9)(typescript@5.1.6)(webpack@5.88.2)
+      '@ngtools/webpack': 16.2.6(@angular/compiler-cli@16.2.9)(typescript@4.9.5)(webpack@5.88.2)
       '@vitejs/plugin-basic-ssl': 1.0.1(vite@4.4.7)
       ansi-colors: 4.1.3
       autoprefixer: 10.4.14(postcss@8.4.31)
@@ -5540,7 +5540,7 @@ packages:
       css-loader: 6.8.1(webpack@5.88.2)
       esbuild-wasm: 0.18.17
       fast-glob: 3.3.1
-      guess-parser: 0.4.22(typescript@5.1.6)
+      guess-parser: 0.4.22(typescript@4.9.5)
       https-proxy-agent: 5.0.1
       inquirer: 8.2.4
       jest: 27.5.1(ts-node@10.9.1)
@@ -5554,7 +5554,7 @@ packages:
       magic-string: 0.30.1
       mini-css-extract-plugin: 2.7.6(webpack@5.88.2)
       mrmime: 1.0.1
-      ng-packagr: 16.2.3(@angular/compiler-cli@16.2.9)(tslib@2.5.0)(typescript@5.1.6)
+      ng-packagr: 16.2.3(@angular/compiler-cli@16.2.9)(tslib@2.5.0)(typescript@4.9.5)
       open: 8.4.2
       ora: 5.4.1
       parse5-html-rewriting-stream: 7.0.0
@@ -5573,7 +5573,7 @@ packages:
       text-table: 0.2.0
       tree-kill: 1.2.2
       tslib: 2.6.1
-      typescript: 5.1.6
+      typescript: 4.9.5
       vite: 4.4.7(@types/node@16.11.7)(less@4.1.3)(sass@1.64.1)(terser@5.19.2)
       webpack: 5.88.2(esbuild@0.18.17)
       webpack-dev-middleware: 6.1.1(webpack@5.88.2)
@@ -5773,7 +5773,7 @@ packages:
       tslib: 2.6.2
     dev: false
 
-  /@angular/compiler-cli@16.2.9(@angular/compiler@16.2.9)(typescript@5.1.6):
+  /@angular/compiler-cli@16.2.9(@angular/compiler@16.2.9)(typescript@4.9.5):
     resolution: {integrity: sha512-ecH2oOlijJdDqioD9IfgdqJGoRRHI6hAx5rwBxIaYk01ywj13KzvXWPrXbCIupeWtV/XUZUlbwf47nlmL5gxZg==}
     engines: {node: ^16.14.0 || >=18.10.0}
     hasBin: true
@@ -5789,7 +5789,7 @@ packages:
       reflect-metadata: 0.1.13
       semver: 7.5.4
       tslib: 2.6.2
-      typescript: 5.1.6
+      typescript: 4.9.5
       yargs: 17.7.2
     transitivePeerDependencies:
       - supports-color
@@ -12548,7 +12548,7 @@ packages:
       '@types/react':
         optional: true
     dependencies:
-      '@babel/runtime': 7.22.6
+      '@babel/runtime': 7.21.0
       '@emotion/babel-plugin': 11.10.6
       '@emotion/is-prop-valid': 1.2.0
       '@emotion/react': 11.10.6(@types/react@17.0.62)(react@17.0.2)
@@ -15839,7 +15839,7 @@ packages:
       newrelic: 9.15.0
     dev: false
 
-  /@ngtools/webpack@16.2.6(@angular/compiler-cli@16.2.9)(typescript@5.1.6)(webpack@5.88.2):
+  /@ngtools/webpack@16.2.6(@angular/compiler-cli@16.2.9)(typescript@4.9.5)(webpack@5.88.2):
     resolution: {integrity: sha512-d8ZlZL6dOtWmHdjG9PTGBkdiJMcsXD2tp6WeFRVvTEuvCI3XvKsUXBvJDE+mZOhzn5pUEYt+1TR5DHjDZbME3w==}
     engines: {node: ^16.14.0 || >=18.10.0, npm: ^6.11.0 || ^7.5.6 || >=8.0.0, yarn: '>= 1.13.0'}
     peerDependencies:
@@ -15847,8 +15847,8 @@ packages:
       typescript: '>=4.9.3 <5.2'
       webpack: ^5.54.0
     dependencies:
-      '@angular/compiler-cli': 16.2.9(@angular/compiler@16.2.9)(typescript@5.1.6)
-      typescript: 5.1.6
+      '@angular/compiler-cli': 16.2.9(@angular/compiler@16.2.9)(typescript@4.9.5)
+      typescript: 4.9.5
       webpack: 5.88.2(esbuild@0.18.17)
     dev: true
 
@@ -25128,7 +25128,7 @@ packages:
       webpack: 5.82.1(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
       webpack-cli: 5.1.4(webpack-bundle-analyzer@4.9.0)(webpack@5.82.1)
 
-  /@wessberg/ts-evaluator@0.0.27(typescript@5.1.6):
+  /@wessberg/ts-evaluator@0.0.27(typescript@4.9.5):
     resolution: {integrity: sha512-7gOpVm3yYojUp/Yn7F4ZybJRxyqfMNf0LXK5KJiawbPfL0XTsJV+0mgrEDjOIR6Bi0OYk2Cyg4tjFu1r8MCZaA==}
     engines: {node: '>=10.1.0'}
     deprecated: this package has been renamed to ts-evaluator. Please install ts-evaluator instead
@@ -25139,7 +25139,7 @@ packages:
       jsdom: 16.7.0
       object-path: 0.11.8
       tslib: 2.6.2
-      typescript: 5.1.6
+      typescript: 4.9.5
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -33635,13 +33635,13 @@ packages:
       - supports-color
     dev: false
 
-  /guess-parser@0.4.22(typescript@5.1.6):
+  /guess-parser@0.4.22(typescript@4.9.5):
     resolution: {integrity: sha512-KcUWZ5ACGaBM69SbqwVIuWGoSAgD+9iJnchR9j/IarVI1jHVeXv+bUXBIMeqVMSKt3zrn0Dgf9UpcOEpPBLbSg==}
     peerDependencies:
       typescript: '>=3.7.5'
     dependencies:
-      '@wessberg/ts-evaluator': 0.0.27(typescript@5.1.6)
-      typescript: 5.1.6
+      '@wessberg/ts-evaluator': 0.0.27(typescript@4.9.5)
+      typescript: 4.9.5
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -39487,7 +39487,7 @@ packages:
       tslib: 1.14.1
     dev: false
 
-  /ng-packagr@16.2.3(@angular/compiler-cli@16.2.9)(tslib@2.5.0)(typescript@5.1.6):
+  /ng-packagr@16.2.3(@angular/compiler-cli@16.2.9)(tslib@2.5.0)(typescript@4.9.5):
     resolution: {integrity: sha512-VTJ7Qtge52+1subkhmF5nOqLNbVutA8/igJ0A5vH6Mgpb8Z/3HeZomtD1SHzZF5Dqp+p+QPHE548FWYu1MdMSQ==}
     engines: {node: ^16.14.0 || >=18.10.0}
     hasBin: true
@@ -39500,7 +39500,7 @@ packages:
       tailwindcss:
         optional: true
     dependencies:
-      '@angular/compiler-cli': 16.2.9(@angular/compiler@16.2.9)(typescript@5.1.6)
+      '@angular/compiler-cli': 16.2.9(@angular/compiler@16.2.9)(typescript@4.9.5)
       '@rollup/plugin-json': 6.0.0(rollup@3.28.1)
       '@rollup/plugin-node-resolve': 15.0.2(rollup@3.28.1)
       ajv: 8.12.0
@@ -39526,7 +39526,7 @@ packages:
       rxjs: 7.8.1
       sass: 1.61.0
       tslib: 2.5.0
-      typescript: 5.1.6
+      typescript: 4.9.5
     optionalDependencies:
       esbuild: 0.19.4
     transitivePeerDependencies:
@@ -45183,11 +45183,11 @@ packages:
     peerDependencies:
       rollup: ^2.0.0
     dependencies:
-      '@babel/code-frame': 7.22.13
+      '@babel/code-frame': 7.21.4
       jest-worker: 26.6.2
       rollup: 2.79.1
       serialize-javascript: 4.0.0
-      terser: 5.19.3
+      terser: 5.16.9
     dev: true
 
   /rollup-plugin-terser@7.0.2(rollup@3.20.2):
