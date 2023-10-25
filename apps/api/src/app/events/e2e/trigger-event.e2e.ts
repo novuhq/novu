@@ -60,6 +60,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
 
   describe(`Trigger Event - ${eventTriggerPath} (POST)`, function () {
     beforeEach(async () => {
+      process.env.LAUNCH_DARKLY_SDK_KEY = '';
       session = new UserSession();
       await session.initialize();
       template = await session.createTemplate();
