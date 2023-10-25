@@ -768,6 +768,29 @@ export const clickSendConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
+export const bandwidthConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.User,
+    displayName: 'Username',
+    description: 'Your Bandwidth account username',
+    type: 'text',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Password,
+    displayName: 'Password',
+    type: 'password',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.AccountSid,
+    displayName: 'Account ID',
+    type: 'text',
+    required: true,
+  },
+  ...smsConfigBase,
+];
+
 export const genericSmsConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.BaseUrl,

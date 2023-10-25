@@ -80,6 +80,7 @@ export enum SmsProviderIdEnum {
   Sendchamp = 'sendchamp',
   GenericSms = 'generic-sms',
   Clicksend = 'clicksend',
+  Bandwidth = 'bandwidth',
 }
 
 export enum ChatProviderIdEnum {

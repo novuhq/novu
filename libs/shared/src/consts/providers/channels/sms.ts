@@ -20,6 +20,7 @@ import {
   sendchampConfig,
   genericSmsConfig,
   clickSendConfig,
+  bandwidthConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -196,5 +197,14 @@ export const smsProviders: IProviderConfig[] = [
     credentials: clickSendConfig,
     docReference: 'https://developers.clicksend.com/docs/rest/v3/?javascript--nodejs#send-sms',
     logoFileName: { light: 'clicksend.png', dark: 'clicksend.png' },
+  },
+  {
+    id: SmsProviderIdEnum.Bandwidth,
+    displayName: `Bandwidth`,
+    channel: ChannelTypeEnum.SMS,
+    credentials: bandwidthConfig,
+    betaVersion: true,
+    docReference: 'https://dev.bandwidth.com/docs/messaging/createMessage',
+    logoFileName: { light: 'bandwidth.png', dark: 'bandwidth.png' },
   },
 ];
