@@ -68,14 +68,12 @@ runs:
     - name: 🛟 Install submodules dependencies
       shell: bash
       if: ${{ inputs.submodules == 'true' }}
-      run: |
-        cd enterprise/packages
-        pnpm install --frozen-lockfile
+      run: pnpm install:submodules
 
     - name: Link submodules
       shell: bash
       if: ${{ inputs.submodules == 'true' }}
-      run: pnpm -C apps/api run link:submodules
+      run: pnpm link:submodules
   
     - name: Install wait-on plugin
       shell: bash

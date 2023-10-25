@@ -66,6 +66,7 @@
     "jarvis": "node scripts/jarvis.js",
     "dev-environment-setup": "sh ./scripts/dev-environment-setup.sh",
     "get-affected": "node scripts/print-affected-array.mjs",
+    "install:submodules": "cd enterprise/packages && pnpm install --frozen-lockfile",
     "link:submodules": "nx run-many --target=link:submodules --all"
   },
   "devDependencies": {
