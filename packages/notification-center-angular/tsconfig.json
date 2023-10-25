@@ -15,9 +15,6 @@
     "downlevelIteration": true,
     "experimentalDecorators": true,
     "moduleResolution": "node",
-    "paths": {
-      "notification-center-angular": ["dist/notification-center-angular"]
-    },
     "importHelpers": true,
     "target": "ES2022",
     "module": "ES2022",
@@ -30,6 +27,5 @@
     "strictInjectionParameters": true,
     "strictInputAccessModifiers": true,
     "strictTemplates": true
-  },
-  "exclude": ["node_modules", "../../node_modules"]
+  }
 }
