@@ -8,7 +8,7 @@ on:
 
 jobs:
   dependency-review:
-    name: Dependency review
+    name: Dependency reviews
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout Repository'
