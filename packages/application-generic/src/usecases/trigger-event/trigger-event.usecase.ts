@@ -15,7 +15,9 @@ import {
   AddressingTypeEnum,
   ChannelTypeEnum,
   ISubscribersDefine,
+  ITenantDefine,
   ProvidersIdEnum,
+  TriggerTenantContext,
 } from '@novu/shared';
 
 import { TriggerEventCommand } from './trigger-event.command';
@@ -55,15 +57,7 @@ export class TriggerEvent {
   @InstrumentUsecase()
   async execute(command: TriggerEventCommand) {
     try {
-      const {
-        actor,
-        environmentId,
-        identifier,
-        organizationId,
-        to,
-        userId,
-        tenant,
-      } = command;
+      const { environmentId, identifier, organizationId, userId } = command;
 
       await this.validateTransactionIdProperty(
         command.transactionId,
@@ -96,20 +90,22 @@ export class TriggerEvent {
         throw new ApiException('Notification template could not be found');
       }
 
-      if (tenant) {
+      const mappedTenant = this.mapTenant(command.tenant);
+
+      if (mappedTenant) {
         const tenantProcessed = await this.processTenant.execute(
           ProcessTenantCommand.create({
             environmentId,
             organizationId,
             userId,
-            tenant,
+            tenant: mappedTenant,
           })
         );
 
         if (!tenantProcessed) {
           Logger.warn(
             `Tenant with identifier ${JSON.stringify(
-              tenant.identifier
+              mappedTenant.identifier
             )} of organization ${command.organizationId} in transaction ${
               command.transactionId
             } could not be processed.`,
@@ -118,9 +114,9 @@ export class TriggerEvent {
         }
       }
 
-      const mappedActor = command.actor
-        ? this.mapTriggerRecipients.mapSubscriber(actor)
-        : undefined;
+      const mappedActor = this.mapTriggerRecipients.mapSubscriber(
+        command.actor
+      );
 
       Logger.debug(mappedActor);
 
@@ -340,13 +336,23 @@ export class TriggerEvent {
           payload: command.payload,
           overrides: command.overrides,
           tenant: command.tenant,
-          ...(actorProcessed && actorProcessed && { actor: actorProcessed }),
+          ...(actorProcessed && { actor: actorProcessed }),
           subscriber,
           templateId: template._id,
         },
         groupId: command.organizationId,
       };
     });
+  }
+
+  private mapTenant(tenant: TriggerTenantContext): ITenantDefine | null {
+    if (!tenant) return null;
+
+    if (typeof tenant === 'string') {
+      return { identifier: tenant };
+    }
+
+    return tenant;
   }
 
   private async subscriberProcessQueueAddBulk(jobs) {

@@ -16,8 +16,6 @@ export class ProcessBulkTrigger {
 
     for (const event of command.events) {
       let result: TriggerEventResponseDto;
-      const mappedTenant = event.tenant ? this.parseEventRequest.mapTenant(event.tenant) : null;
-      const mappedActor = event.actor ? this.mapTriggerRecipients.mapSubscriber(event.actor) : null;
 
       try {
         result = (await this.parseEventRequest.execute(
@@ -29,8 +27,8 @@ export class ProcessBulkTrigger {
             payload: event.payload,
             overrides: event.overrides || {},
             to: event.to,
-            actor: mappedActor,
-            tenant: mappedTenant,
+            actor: event.actor,
+            tenant: event.tenant,
             transactionId: event.transactionId,
           })
         )) as unknown as TriggerEventResponseDto;

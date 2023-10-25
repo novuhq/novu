@@ -58,9 +58,6 @@ export class EventsController {
     @UserSession() user: IJwtPayload,
     @Body() body: TriggerEventRequestDto
   ): Promise<TriggerEventResponseDto> {
-    const mappedTenant = body.tenant ? this.mapTenant(body.tenant) : null;
-    const mappedActor = body.actor ? this.mapActor(body.actor) : null;
-
     const result = await this.parseEventRequest.execute(
       ParseEventRequestCommand.create({
         userId: user._id,
@@ -70,8 +67,8 @@ export class EventsController {
         payload: body.payload || {},
         overrides: body.overrides || {},
         to: body.to,
-        actor: mappedActor,
-        tenant: mappedTenant,
+        actor: body.actor,
+        tenant: body.tenant,
         transactionId: body.transactionId,
       })
     );
@@ -118,8 +115,6 @@ export class EventsController {
     @Body() body: TriggerEventToAllRequestDto
   ): Promise<TriggerEventResponseDto> {
     const transactionId = body.transactionId || uuidv4();
-    const mappedActor = this.mapActor(body.actor);
-    const mappedTenant = body.tenant ? this.mapTenant(body.tenant) : null;
 
     return this.triggerEventToAll.execute(
       TriggerEventToAllCommand.create({
@@ -128,10 +123,10 @@ export class EventsController {
         organizationId: user.organizationId,
         identifier: body.name,
         payload: body.payload,
-        tenant: mappedTenant,
+        tenant: body.tenant,
         transactionId,
         overrides: body.overrides || {},
-        actor: mappedActor,
+        actor: body.actor,
       })
     );
   }
@@ -181,21 +176,5 @@ export class EventsController {
         transactionId,
       })
     );
-  }
-
-  private mapActor(actor?: TriggerRecipientSubscriber | null): ISubscribersDefine | null {
-    if (!actor) return null;
-
-    if (typeof actor === 'string') {
-      return { subscriberId: actor };
-    }
-
-    return actor;
-  }
-
-  private mapTenant(tenant?: TriggerTenantContext | null): ITenantDefine | null {
-    if (!tenant) return null;
-
-    return this.parseEventRequest.mapTenant(tenant);
   }
 }

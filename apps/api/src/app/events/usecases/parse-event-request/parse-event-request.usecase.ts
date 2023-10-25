@@ -192,14 +192,6 @@ export class ParseEventRequest {
     }));
   }
 
-  public mapTenant(tenant: TriggerTenantContext): ITenantDefine {
-    if (typeof tenant === 'string') {
-      return { identifier: tenant };
-    }
-
-    return tenant;
-  }
-
   public getReservedVariablesTypes(template: NotificationTemplateEntity): TriggerContextTypeEnum[] {
     const reservedVariables = template.triggers[0].reservedVariables;
 
