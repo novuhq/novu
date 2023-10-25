@@ -2077,7 +2077,7 @@ importers:
         specifier: ^0.20.0
         version: link:../../providers/push-webhook
       '@novu/pusher-beams':
-        specifier: ^0.16.3
+        specifier: ^0.20.0
         version: link:../../providers/pusher-beams
       '@novu/resend':
         specifier: ^0.20.0
@@ -4556,8 +4556,8 @@ importers:
   providers/pusher-beams:
     dependencies:
       '@novu/stateless':
-        specifier: 0.16.3
-        version: 0.16.3
+        specifier: 0.20.0
+        version: link:../../packages/stateless
       '@pusher/push-notifications-server':
         specifier: ^1.2.6
         version: 1.2.6

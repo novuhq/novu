@@ -12,40 +12,61 @@ test('should trigger pusher-beams library correctly', async () => {
     .spyOn(provider.beamsClient, 'publishToUsers')
     .mockImplementation(async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { body: { id: 'result' } } as any;
+      return { publishId: 'pubid-3a7e97ee-a4bc-4d8f-a40b-74915ce808ae' } as any;
     });
 
-  await provider.sendMessage({
+  const result = await provider.sendMessage({
     target: ['tester'],
-    title: '',
+    title: 'Hello',
+    content: 'Hello, world!',
     subscriber: {},
     step: {
       digest: false,
       events: [{}],
       total_count: 1,
     },
-    content: '',
     payload: {
-      apns: {
-        aps: {
-          alert: {
-            title: 'Hello',
-            body: 'Hello, world!',
-          },
-        },
-      },
-      fcm: {
-        notification: {
+      custom_payload_1: 'custom_payload_1',
+    },
+    overrides: {
+      sound: 'custom_sound',
+    },
+  });
+
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-expect-error
+  expect(provider.beamsClient).toBeDefined();
+  expect(spy).toHaveBeenCalled();
+  expect(spy).toHaveBeenCalledWith(['tester'], {
+    apns: {
+      aps: {
+        alert: {
           title: 'Hello',
           body: 'Hello, world!',
         },
+        sound: 'custom_sound',
       },
-      web: {
-        notification: {
-          title: 'Hello',
-          body: 'Hello, world!',
-        },
+    },
+    fcm: {
+      notification: {
+        title: 'Hello',
+        body: 'Hello, world!',
+        sound: 'custom_sound',
+      },
+      data: {
+        custom_payload_1: 'custom_payload_1',
+      },
+    },
+    web: {
+      notification: {
+        title: 'Hello',
+        body: 'Hello, world!',
+      },
+      data: {
+        custom_payload_1: 'custom_payload_1',
       },
     },
   });
+
+  expect(result.id).toEqual('pubid-3a7e97ee-a4bc-4d8f-a40b-74915ce808ae');
 });

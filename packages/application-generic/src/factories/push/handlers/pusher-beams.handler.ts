@@ -9,7 +9,7 @@ export class PusherBeamsHandler extends BasePushHandler {
 
   buildProvider(credentials: ICredentials) {
     if (!credentials.instanceId || !credentials.secretKey) {
-      throw Error('Config is not valid for OneSignal');
+      throw Error('Config is not valid for Pusher Beams');
     }
 
     this.provider = new PusherBeamsPushProvider({
