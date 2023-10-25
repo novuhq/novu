@@ -28895,7 +28895,7 @@ packages:
       eslint: 8.48.0
       eslint-import-resolver-node: 0.3.7
       eslint-module-utils: 2.8.0(@typescript-eslint/parser@5.58.0)(eslint-import-resolver-node@0.3.7)(eslint-import-resolver-webpack@0.13.7)(eslint@8.48.0)
-      has: 1.0.4
+      has: 1.0.3
       is-core-module: 2.13.0
       is-glob: 4.0.3
       minimatch: 3.1.2
@@ -29065,7 +29065,7 @@ packages:
       object.values: 1.1.6
       prop-types: 15.8.1
       resolve: 2.0.0-next.4
-      semver: 6.3.1
+      semver: 6.3.0
       string.prototype.matchall: 4.0.8
     dev: true
 

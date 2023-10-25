@@ -8,6 +8,7 @@ import { VariantItemCard } from './VariantItemCard';
 import { VariantsListSidebar } from './VariantsListSidebar';
 import { IForm } from './formTypes';
 import { FloatingButton } from './FloatingButton';
+import { useEnvController } from '../../../hooks';
 
 export function VariantsPage() {
   const { watch } = useFormContext<IForm>();
@@ -15,17 +16,18 @@ export function VariantsPage() {
     channel: StepTypeEnum | undefined;
     stepUuid: string;
   }>();
+  const { readonly: isReadonly } = useEnvController();
   const viewport = useRef<HTMLDivElement | null>(null);
   const [scrollPosition, setScrollPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isScrollable, setScrollable] = useState(false);
 
   const steps = watch('steps');
 
-  const index = useMemo(
+  const stepIndex = useMemo(
     () => steps.findIndex((message) => message.template.type === channel && message.uuid === stepUuid),
     [channel, stepUuid, steps]
   );
-  const step = watch(`steps.${index}`);
+  const step = watch(`steps.${stepIndex}`);
 
   const setViewportRef = (ref: HTMLDivElement | null) => {
     if (!ref) {
@@ -60,17 +62,20 @@ export function VariantsPage() {
         viewportRef={setViewportRef}
         onScrollPositionChange={setScrollPosition}
       >
-        {variants?.map((variant, idx) => {
+        {variants?.map((variant, variantIndex) => {
           return (
             <VariantItemCard
               key={`${stepUuid}_${variant._id}`}
-              isFirst={idx === 0}
+              isReadonly={isReadonly}
+              isFirst={variantIndex === 0}
               variant={variant}
+              stepIndex={stepIndex}
+              variantIndex={variantIndex}
               nodeType="variant"
             />
           );
         })}
-        <VariantItemCard key={stepUuid} variant={step} nodeType="variantRoot" />
+        <VariantItemCard isReadonly={isReadonly} key={stepUuid} variant={step} nodeType="variantRoot" />
         {isScrollable && <FloatingButton isUp={scrollPosition.y > 0} onClick={scrollTo} />}
       </ScrollArea>
     </VariantsListSidebar>

@@ -92,14 +92,6 @@ const WorkflowEditor = () => {
     }
   };
 
-  const onAddConditions = (uuid: string) => {
-    const channelStep = steps.find((step) => step.uuid === uuid);
-
-    if (channelStep) {
-      navigate(basePath + `/${channelStep.template.type}/${uuid}/variants/conditions`);
-    }
-  };
-
   const confirmDelete = () => {
     const index = steps.findIndex((item) => item.uuid === toDelete);
     deleteStep(index);
@@ -204,6 +196,7 @@ const WorkflowEditor = () => {
             </Stack>
           </Container>
           <FlowEditor
+            isReadonly
             onDelete={onDelete}
             dragging={dragging}
             errors={errors}
@@ -216,7 +209,6 @@ const WorkflowEditor = () => {
             onNodeClick={onNodeClick}
             onEdit={onEdit}
             onAddVariant={onAddVariant}
-            onAddConditions={onAddConditions}
           />
         </div>
       </div>
@@ -277,6 +269,7 @@ const WorkflowEditor = () => {
               </Stack>
             </Container>
             <FlowEditor
+              isReadonly={readonly}
               onEdit={onEdit}
               onDelete={onDelete}
               dragging={dragging}
@@ -289,7 +282,6 @@ const WorkflowEditor = () => {
               onGetStepError={onGetStepError}
               onNodeClick={onNodeClick}
               onAddVariant={onAddVariant}
-              onAddConditions={onAddConditions}
             />
           </div>
           <Outlet

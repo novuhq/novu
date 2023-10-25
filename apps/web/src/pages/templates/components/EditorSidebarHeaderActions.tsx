@@ -19,6 +19,8 @@ import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { IForm } from './formTypes';
 import { useTemplateEditorForm } from './TemplateEditorFormProvider';
 
+const variantsCreatePath = '/variants/create';
+
 export const EditorSidebarHeaderActions = () => {
   const { watch, setValue } = useFormContext<IForm>();
   const { addVariant, deleteStep, deleteVariant } = useTemplateEditorForm();
@@ -35,23 +37,23 @@ export const EditorSidebarHeaderActions = () => {
   const basePath = useBasePath();
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const [areConditionsOpened, setConditionsOpened] = useState(false);
+  const [areConditionsOpened, setConditionsOpened] = useState(pathname.endsWith(variantsCreatePath));
   const [isDeleteModalOpened, setIsDeleteModalOpened] = useState(false);
 
   useEffect(() => {
-    setConditionsOpened(pathname.endsWith('/conditions') || pathname.endsWith('variants/create'));
+    setConditionsOpened(pathname.endsWith(variantsCreatePath));
   }, [pathname]);
   // we need to know if we are creating a new variant to continue redirection to the new variant page
   const proceedToNewVariant = useRef(false);
 
   const stepFormPath = useStepFormPath();
-  const filterPartsList = useFilterPartsList();
-  const { isUnderTheStepPath, isUnderVariantsListPath, isUnderVariantPath } = useStepInfoPath();
 
   const { stepIndex } = useStepIndex();
+  const filterPartsList = useFilterPartsList({ index: stepIndex });
+  const { isUnderTheStepPath, isUnderVariantsListPath, isUnderVariantPath } = useStepInfoPath();
   const { variantsCount } = useStepVariantsCount();
 
-  const isNewVariantCreationUrl = pathname.endsWith('/variants/create');
+  const isNewVariantCreationUrl = pathname.endsWith(variantsCreatePath);
   // [] is the default value for filters for the new variants
   const filters = isNewVariantCreationUrl ? [] : watch(`${stepFormPath}.filters.0.children`);
   const conditions = isNewVariantCreationUrl ? [] : watch(`${stepFormPath}.filters`);
@@ -83,22 +85,6 @@ export const EditorSidebarHeaderActions = () => {
 
   const onConditionsClose = () => {
     setConditionsOpened(false);
-    const isRootConditionUrl = pathname.endsWith('/variants/conditions');
-    const isVariantConditionUrl = !isRootConditionUrl && pathname.endsWith('/conditions');
-
-    if (isVariantConditionUrl) {
-      const newPath = basePath + `/${channel}/${stepUuid}/variants`;
-      navigate(newPath);
-
-      return;
-    }
-
-    if (isRootConditionUrl) {
-      const newPath = basePath.replace('/conditions', '');
-      navigate(newPath);
-
-      return;
-    }
 
     if (isNewVariantCreationUrl && !proceedToNewVariant.current) {
       const newPath = pathname.replace('/create', '');

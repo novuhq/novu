@@ -1,18 +1,21 @@
-import { useNavigate, useParams } from 'react-router-dom';
 import styled from '@emotion/styled';
-import { StepTypeEnum, STEP_TYPE_TO_CHANNEL_TYPE } from '@novu/shared';
+import { FilterPartTypeEnum, StepTypeEnum, STEP_TYPE_TO_CHANNEL_TYPE } from '@novu/shared';
+import { useState } from 'react';
+import { useFormContext } from 'react-hook-form';
+import { useNavigate, useParams } from 'react-router-dom';
 
+import { Conditions } from '../../../components/conditions';
+import { When } from '../../../components/utils/When';
+import { colors } from '../../../design-system';
+import { Check, Conditions as ConditionsIcon } from '../../../design-system/icons';
 import { stepIcon } from '../constants';
 import { useBasePath } from '../hooks/useBasePath';
+import { useFilterPartsList } from '../hooks/useFilterPartsList';
 import { useStepSubtitle } from '../hooks/useStepSubtitle';
 import { NodeType, WorkflowNode } from '../workflow/workflow/node-types/WorkflowNode';
-import { IFormStep, IVariantStep } from './formTypes';
-import { colors } from '../../../design-system';
-import { Check, Conditions } from '../../../design-system/icons';
-import { When } from '../../../components/utils/When';
-import { useTemplateEditorForm } from './TemplateEditorFormProvider';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
-import { useState } from 'react';
+import { IForm, IFormStep, IVariantStep } from './formTypes';
+import { useTemplateEditorForm } from './TemplateEditorFormProvider';
 
 const VariantItemCardHolder = styled.div`
   display: grid;
@@ -72,7 +75,7 @@ const ConditionsItem = styled(FlexContainer)`
   grid-row: 3 / span 1;
 `;
 
-const ConditionsIcon = styled(Conditions)`
+const ConditionsIconStyled = styled(ConditionsIcon)`
   width: 16px;
   height: 16px;
   color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B40 : colors.B60)};
@@ -110,14 +113,21 @@ const RightCheckLine = styled(FlexContainer)`
 `;
 
 export const VariantItemCard = ({
+  isReadonly = false,
+  stepIndex = 0,
+  variantIndex = 0,
   isFirst = false,
   nodeType,
   variant,
 }: {
+  isReadonly?: boolean;
+  stepIndex?: number;
+  variantIndex?: number;
   isFirst?: boolean;
   variant: IFormStep | IVariantStep;
   nodeType: NodeType;
 }) => {
+  const { setValue } = useFormContext<IForm>();
   const { channel, stepUuid = '' } = useParams<{
     channel: StepTypeEnum;
     stepUuid: string;
@@ -125,12 +135,16 @@ export const VariantItemCard = ({
   const subtitle = useStepSubtitle(variant, channel);
   const navigate = useNavigate();
   const basePath = useBasePath();
+  const [areConditionsOpened, setConditionsOpened] = useState(false);
+  const filterPartsList = useFilterPartsList({ index: stepIndex });
   const { deleteVariant } = useTemplateEditorForm();
   const [isDeleteModalOpened, setIsDeleteModalOpened] = useState(false);
 
   const Icon = stepIcon[channel ?? ''];
-  const variantsCount = 'variants' in variant ? variant.variants?.length : 0;
+  const variantsCount = ('variants' in variant ? variant.variants?.length : 0) ?? 0;
   const isRoot = nodeType === 'variantRoot';
+  const conditions = variant.filters ?? [];
+  const conditionsCount = conditions && conditions.length > 0 ? conditions[0].children?.length ?? 0 : 0;
 
   const onEdit = () => {
     if (isRoot) {
@@ -158,8 +172,17 @@ export const VariantItemCard = ({
     setIsDeleteModalOpened(false);
   };
 
-  const onAddConditions = () => {
-    navigate(basePath + `/${channel}/${stepUuid}/variants/${variant.uuid}/conditions`);
+  const onAddConditions = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    setConditionsOpened(true);
+  };
+
+  const onConditionsClose = () => setConditionsOpened(false);
+
+  const onUpdateConditions = (newConditions) => {
+    setValue(`steps.${stepIndex}.variants.${variantIndex}.filters`, newConditions, { shouldDirty: true });
   };
 
   return (
@@ -176,7 +199,7 @@ export const VariantItemCard = ({
           <VerticalLine />
         </BottomNoLine>
         <ConditionsItem>
-          <ConditionsIcon />
+          <ConditionsIconStyled />
         </ConditionsItem>
         <BottomConditionsLine>
           <VerticalLine />
@@ -201,13 +224,25 @@ export const VariantItemCard = ({
         tabKey={STEP_TYPE_TO_CHANNEL_TYPE.get(variant.template.type)}
         channelType={variant.template.type}
         variantsCount={variantsCount}
-        conditionsCount={variant.filters?.length ?? 0}
+        conditionsCount={conditionsCount}
         onEdit={onEdit}
         onDelete={onDeleteIcon}
         onAddConditions={onAddConditions}
         menuPosition="bottom-end"
         nodeType={nodeType}
       />
+      {areConditionsOpened && (
+        <Conditions
+          isOpened
+          isReadonly={isReadonly}
+          name={variant.name ?? ''}
+          onClose={onConditionsClose}
+          updateConditions={onUpdateConditions}
+          conditions={conditions}
+          filterPartsList={filterPartsList}
+          defaultFilter={FilterPartTypeEnum.PAYLOAD}
+        />
+      )}
       <DeleteConfirmModal
         description={
           'This cannot be undone. ' +

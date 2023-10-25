@@ -7,6 +7,7 @@ import { StepName } from './StepName';
 import { Sidebar } from '../../../design-system';
 import { useBasePath } from '../hooks/useBasePath';
 import { EditorSidebarHeaderActions } from './EditorSidebarHeaderActions';
+import { useStepVariantsCount } from '../hooks/useStepVariantsCount';
 
 const StepSidebarHeader = () => {
   const { channel } = useParams<{
@@ -26,12 +27,14 @@ const StepSidebarHeader = () => {
 };
 
 export const StepEditorSidebar = ({ children }: { children: ReactNode }) => {
-  const { channel } = useParams<{
+  const { channel, stepUuid } = useParams<{
     channel: StepTypeEnum;
+    stepUuid: string;
   }>();
   const navigate = useNavigate();
-  const path = useBasePath();
+  const basePath = useBasePath();
   const { stepIndex, variantIndex } = useStepIndex();
+  const { variantsCount } = useStepVariantsCount();
   const key = `${stepIndex}_${variantIndex}`;
   const isEmailOrInApp = channel === StepTypeEnum.IN_APP || channel === StepTypeEnum.EMAIL;
 
@@ -43,7 +46,12 @@ export const StepEditorSidebar = ({ children }: { children: ReactNode }) => {
       customHeader={<StepSidebarHeader />}
       isParentScrollable={isEmailOrInApp}
       onClose={() => {
-        navigate(path);
+        if (variantsCount > 0) {
+          navigate(basePath + `/${channel}/${stepUuid}/variants`);
+
+          return;
+        }
+        navigate(basePath);
       }}
       data-test-id="step-editor-sidebar"
     >

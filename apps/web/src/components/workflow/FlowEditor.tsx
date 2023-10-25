@@ -49,6 +49,7 @@ const DEFAULT_WRAPPER_STYLES = {
 };
 
 export interface IFlowEditorProps extends ReactFlowProps {
+  isReadonly?: boolean;
   steps: IFlowStep[];
   dragging?: boolean;
   errors?: any;
@@ -59,13 +60,13 @@ export interface IFlowEditorProps extends ReactFlowProps {
   onEdit?: (e: MouseEvent<HTMLButtonElement>, node: INode) => void;
   onDelete?: (id: string) => void;
   onAddVariant?: (id: string) => void;
-  onAddConditions?: (id: string) => void;
   onStepInit?: (step: IFlowStep) => Promise<void>;
   onGetStepError?: (i: number, errors: any) => string;
   addStep?: (channelType: StepTypeEnum, id: string, index?: number) => void;
 }
 
 export function FlowEditor({
+  isReadonly = false,
   steps,
   dragging,
   errors,
@@ -89,7 +90,6 @@ export function FlowEditor({
   onEdit,
   onDelete,
   onAddVariant,
-  onAddConditions,
   ...restProps
 }: IFlowEditorProps) {
   const { colorScheme } = useMantineColorScheme();
@@ -215,11 +215,11 @@ export function FlowEditor({
       parentNode: parentId,
       data: {
         ...channel,
+        isReadonly,
         index: i,
         error: onGetStepError?.(i, errors) ?? '',
         onDelete,
         onAddVariant,
-        onAddConditions,
         onEdit,
         step,
       },
