@@ -8,8 +8,7 @@ import { Divider, Button as MantineButton, Center } from '@mantine/core';
 
 import { useAuthContext } from '../../../components/providers/AuthProvider';
 import { api } from '../../../api/api.client';
-import { PasswordInput, Button, colors, Input, Text } from '../../../design-system';
-import { GitHub, Google } from '../../../design-system/icons';
+import { PasswordInput, Button, colors, Input, Text, GitHub } from '@novu/design-system';
 import { IS_DOCKER_HOSTED } from '../../../config';
 import { useVercelParams } from '../../../hooks';
 import { useAcceptInvite } from './useAcceptInvite';

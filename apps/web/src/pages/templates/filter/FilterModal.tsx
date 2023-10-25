@@ -3,8 +3,7 @@ import { Controller, useFieldArray, useWatch } from 'react-hook-form';
 import { FILTER_TO_LABEL, FilterPartTypeEnum, ChannelTypeEnum } from '@novu/shared';
 
 import { When } from '../../../components/utils/When';
-import { Button, colors, Input, Select, shadows, Title } from '../../../design-system';
-import { Trash } from '../../../design-system/icons';
+import { Button, colors, Input, Select, shadows, Title, Trash } from '@novu/design-system';
 import { DeleteStepButton, FilterButton } from './FilterModal.styles';
 import { OnlineFiltersForms } from './OnlineFiltersForms';
 import { PreviousStepFiltersForm } from './PreviousStepFiltersForm';

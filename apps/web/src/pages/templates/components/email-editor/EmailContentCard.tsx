@@ -2,7 +2,7 @@ import { IOrganizationEntity } from '@novu/shared';
 import { useEffect, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { Tabs } from '../../../../design-system';
+import { Tabs } from '@novu/design-system';
 import { useActiveIntegrations, useEnvController, useIsMultiProviderConfigurationEnabled } from '../../../../hooks';
 import { EmailCustomCodeEditor } from './EmailCustomCodeEditor';
 import { EmailInboxContent } from './EmailInboxContent';

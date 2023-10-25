@@ -3,7 +3,7 @@ import * as Sentry from '@sentry/react';
 import { Outlet } from 'react-router-dom';
 import styled from '@emotion/styled';
 
-import { ThemeProvider } from '../../design-system/ThemeProvider';
+import { ThemeProvider } from '@novu/design-system';
 import { HeaderNav } from './components/HeaderNav';
 import { SideNav } from './components/SideNav';
 import { IntercomProvider } from 'react-use-intercom';

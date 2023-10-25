@@ -40,7 +40,7 @@ export class RemoveAllMessages {
     try {
       let feed;
       if (command.feedId) {
-        feed = await this.feedRepository.findById(command.feedId);
+        feed = await this.feedRepository.findOne({ _id: command.feedId, _organizationId: command.organizationId });
         if (!feed) {
           throw new NotFoundException(`Feed with ${command.feedId} not found`);
         }

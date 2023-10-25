@@ -516,7 +516,8 @@
     "nestframework",
     "idempotency", 
     "IDEMPOTENCY", 
-    "Idempotency"
+    "Idempotency",
+    "ryver"
   ],
   "flagWords": [],
   "patterns": [

@@ -2,8 +2,7 @@ import { Stack, Title, UnstyledButton, useMantineColorScheme } from '@mantine/co
 import { CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { colors } from '../../../design-system';
-import { Close } from '../../../design-system/icons/actions/Close';
+import { colors, Close } from '@novu/design-system';
 import { useBasePath } from '../hooks/useBasePath';
 
 export const SubPageWrapper = ({
