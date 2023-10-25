@@ -1,5 +1,5 @@
 import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
-import { IsArray, IsDate, IsObject, IsString } from 'class-validator';
+import { IsArray, IsDate, IsObject, IsString, IsEnum } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class MemberUserDto {
@@ -33,12 +33,12 @@ export class MemberInviteDTO {
   @IsDate()
   invitationDate: Date;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsDate()
   answerDate?: Date;
 
   @ApiProperty()
-  @IsDate()
+  @IsString()
   _inviterId: string;
 }
 
@@ -59,7 +59,7 @@ export class MemberResponseDto {
     enum: MemberRoleEnum,
     isArray: true,
   })
-  @IsArray()
+  @IsEnum(MemberRoleEnum)
   roles?: MemberRoleEnum;
 
   @ApiPropertyOptional()
@@ -69,7 +69,7 @@ export class MemberResponseDto {
   @ApiPropertyOptional({
     enum: { ...MemberStatusEnum },
   })
-  @IsString()
+  @IsEnum(MemberStatusEnum)
   memberStatus?: MemberStatusEnum;
 
   @ApiProperty()
