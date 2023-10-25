@@ -30,3 +30,8 @@ export interface IPartnerConfiguration {
 export enum PartnerTypeEnum {
   VERCEL = 'vercel',
 }
+
+export enum DirectionEnum {
+  LTR = 'ltr',
+  RTL = 'trl',
+}
