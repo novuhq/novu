@@ -513,7 +513,9 @@
     "Clicksend",
     "Kamil",
     "Myśliwiec",
-    "nestframework"
+    "nestframework",
+    "Mailchain",
+    "mailchain"
   ],
   "flagWords": [],
   "patterns": [
