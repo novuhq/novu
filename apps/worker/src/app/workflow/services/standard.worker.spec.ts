@@ -135,7 +135,7 @@ describe('Standard Worker', () => {
     );
     expect(standardWorker.DEFAULT_ATTEMPTS).to.eql(3);
     expect(standardWorker.worker).to.deep.include({
-      _eventsCount: 2,
+      _eventsCount: 1,
       _maxListeners: undefined,
       name: 'standard',
     });

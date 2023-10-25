@@ -2,6 +2,7 @@ declare namespace NodeJS {
   // eslint-disable-next-line @typescript-eslint/naming-convention
   export interface ProcessEnv {
     MONGO_URL: string;
+    MONGO_MIN_POOL_SIZE: number;
     MONGO_MAX_POOL_SIZE: number;
     REDIS_URL: string;
     SYNC_PATH: string;

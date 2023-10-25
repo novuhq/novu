@@ -2,7 +2,7 @@ import styled from '@emotion/styled';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { SegmentProvider } from '../components/providers/SegmentProvider';
-import { ThemeProvider } from '../design-system/ThemeProvider';
+import { ThemeProvider } from '@novu/design-system';
 import { MemoryRouter } from 'react-router-dom';
 
 const queryClient = new QueryClient();

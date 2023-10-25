@@ -3,7 +3,7 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { useEffect, useState } from 'react';
 
 import { useSegment } from '../../../components/providers/SegmentProvider';
-import { ArrowRight } from '../../../design-system/icons/arrows/ArrowRight';
+import { ArrowRight } from '@novu/design-system';
 import { IntegrationsListModal } from '../../integrations/IntegrationsListModal';
 import { ChannelsConfiguration } from '../components/ChannelsConfiguration';
 import { GetStartedLayout } from '../components/layout/GetStartedLayout';

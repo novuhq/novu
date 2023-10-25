@@ -8,7 +8,7 @@ import {
   TriggerRecipientSubscriber,
   TriggerTenantContext,
 } from '@novu/shared';
-import { SendTestEmail, SendTestEmailCommand } from '@novu/application-generic';
+import { MapTriggerRecipients, SendTestEmail, SendTestEmailCommand } from '@novu/application-generic';
 
 import {
   BulkTriggerEventDto,
@@ -18,7 +18,6 @@ import {
   TriggerEventToAllRequestDto,
 } from './dtos';
 import { CancelDelayed, CancelDelayedCommand } from './usecases/cancel-delayed';
-import { MapTriggerRecipients } from './usecases/map-trigger-recipients';
 import { ParseEventRequest, ParseEventRequestCommand } from './usecases/parse-event-request';
 import { ProcessBulkTrigger, ProcessBulkTriggerCommand } from './usecases/process-bulk-trigger';
 import { TriggerEventToAll, TriggerEventToAllCommand } from './usecases/trigger-event-to-all';
@@ -61,6 +60,7 @@ export class EventsController {
     @Body() body: TriggerEventRequestDto
   ): Promise<TriggerEventResponseDto> {
     const mappedTenant = body.tenant ? this.mapTenant(body.tenant) : null;
+    const mappedActor = body.actor ? this.mapActor(body.actor) : null;
 
     const result = await this.parseEventRequest.execute(
       ParseEventRequestCommand.create({
@@ -71,7 +71,7 @@ export class EventsController {
         payload: body.payload || {},
         overrides: body.overrides || {},
         to: body.to,
-        actor: body.actor,
+        actor: mappedActor,
         tenant: mappedTenant,
         transactionId: body.transactionId,
       })

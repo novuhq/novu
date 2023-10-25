@@ -39,7 +39,7 @@ import {
   DigestFilterStepsTimed,
   distributedLockService,
   EventsDistributedLockService,
-  FeatureFlagsService,
+  featureFlagsService,
   getIsMultiProviderConfigurationEnabled,
   InvalidateCacheService,
   LoggerModule,
@@ -51,6 +51,7 @@ import {
   GetTenant,
   CreateTenant,
   ProcessTenant,
+  getUseMergedDigestId,
 } from '@novu/application-generic';
 
 import * as packageJson from '../../../package.json';
@@ -108,7 +109,8 @@ const PROVIDERS = [
   DigestFilterStepsTimed,
   distributedLockService,
   EventsDistributedLockService,
-  FeatureFlagsService,
+  featureFlagsService,
+  getUseMergedDigestId,
   getIsMultiProviderConfigurationEnabled,
   InvalidateCacheService,
   ProcessSubscriber,
