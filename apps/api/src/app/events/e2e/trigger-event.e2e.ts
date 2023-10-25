@@ -2387,13 +2387,6 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
         expect(messagesAfter.length).to.equal(1);
       });
     });
-  });
-  describe('Trigger Event - Multi-Provider Configuration', function () {
-    beforeEach(async () => {
-      process.env.LAUNCH_DARKLY_SDK_KEY = '';
-      session = new UserSession();
-      await session.initialize();
-    });
 
     it('should trigger message with override integration identifier', async function () {
       const newSubscriberId = SubscriberRepository.createObjectId();
