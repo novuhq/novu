@@ -58,7 +58,7 @@ const validateGitWorkingTree = (path?: string) => {
 
     console.log('Step 5: Push changes in submodule');
     runCommand('git add .', submoduleDir);
-    runCommand('git commit -m "chore(release): publish"', submoduleDir);
+    runCommand('git commit -m "chore(release): publish - ci skip"', submoduleDir);
     runCommand('git push', submoduleDir);
 
     console.log('Step 6: Create release tag for submodule');
@@ -67,7 +67,7 @@ const validateGitWorkingTree = (path?: string) => {
 
     console.log('Step 7: Commit version changes and submodule updated hash main repository');
     runCommand('git add .');
-    runCommand('git commit -m "chore(release): publish"');
+    runCommand('git commit -m "chore(release): publish - ci skip"');
     runCommand('git push');
 
     console.log('Step 8: Create release tag for main repo and push');
