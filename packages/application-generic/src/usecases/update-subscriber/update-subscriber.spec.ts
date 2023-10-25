@@ -64,9 +64,10 @@ describe('Update Subscriber', function () {
       })
     );
 
-    const updatedSubscriber = await subscriberRepository.findById(
-      subscriber._id
-    );
+    const updatedSubscriber = await subscriberRepository.findOne({
+      _id: subscriber._id,
+      _environmentId: subscriber._environmentId,
+    });
     expect(updatedSubscriber.lastName).toEqual('Test Last Name');
     expect(updatedSubscriber.firstName).toEqual(subscriber.firstName);
     expect(updatedSubscriber.email).toEqual(subscriber.email);

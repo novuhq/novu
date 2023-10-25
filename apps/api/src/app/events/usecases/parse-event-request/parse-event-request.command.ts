@@ -22,6 +22,7 @@ export class ParseEventRequestCommand extends EnvironmentWithUserCommand {
   transactionId?: string;
 
   @IsOptional()
+  @ValidateNested()
   actor?: TriggerRecipientSubscriber | null;
 
   @IsOptional()

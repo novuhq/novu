@@ -3,8 +3,7 @@ import { Group } from '@mantine/core';
 import { format } from 'date-fns';
 import { DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
 
-import { colors, Input, SegmentedControl } from '../../../design-system';
-import { inputStyles } from '../../../design-system/config/inputs.styles';
+import { colors, Input, SegmentedControl, inputStyles } from '@novu/design-system';
 import { WeekDaySelect } from './digest/WeekDaySelect';
 import { ScheduleMonthlyFields } from './digest/ScheduleMonthlyFields';
 import { When } from '../../../components/utils/When';
