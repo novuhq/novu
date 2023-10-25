@@ -1,26 +1,31 @@
 import { PartnerTypeEnum, DirectionEnum } from '@novu/dal';
-import { IsObject, IsOptional, IsString } from 'class-validator';
+import { IsObject, IsArray, IsString, IsEnum } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UpdateBrandingDetailsDto } from './update-branding-details.dto';
 
 export class IPartnerConfigurationResponseDto {
   @ApiPropertyOptional()
+  @IsArray()
+  @IsString({ each: true })
   projectIds?: string[];
 
   @ApiProperty()
+  @IsString()
   accessToken: string;
 
   @ApiProperty()
+  @IsString()
   configurationId: string;
 
   @ApiPropertyOptional()
+  @IsString()
   teamId: string;
 
   @ApiProperty({
     enum: { ...PartnerTypeEnum },
     description: 'Partner Type Enum',
   })
-  @IsString()
+  @IsEnum(PartnerTypeEnum)
   partnerType: PartnerTypeEnum;
 }
 
@@ -46,5 +51,6 @@ export class OrganizationResponseDto {
   branding: OrganizationBrandingResponseDto;
 
   @ApiPropertyOptional()
+  @IsObject()
   partnerConfigurations: IPartnerConfigurationResponseDto[];
 }
