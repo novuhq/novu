@@ -43,8 +43,6 @@ const axiosInstance = axios.create();
 
 const eventTriggerPath = '/v1/events/trigger';
 
-const ORIGINAL_IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
-
 const promiseTimeout = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
@@ -2388,18 +2386,6 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
 
         expect(messagesAfter.length).to.equal(1);
       });
-    });
-  });
-  describe.skip('Trigger Event - [IS_MULTI_PROVIDER_CONFIGURATION_ENABLED=true]', function () {
-    beforeEach(async () => {
-      process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = 'true';
-      process.env.LAUNCH_DARKLY_SDK_KEY = '';
-      session = new UserSession();
-      await session.initialize();
-    });
-
-    afterEach(async () => {
-      process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = ORIGINAL_IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
     });
 
     it('should trigger message with override integration identifier', async function () {
