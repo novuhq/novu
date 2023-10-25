@@ -1,7 +1,7 @@
 import styled from '@emotion/styled';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../../constants/routes.enum';
-import { Button, colors, shadows } from '../../../design-system';
+import { Button, colors, shadows } from '@novu/design-system';
 import { OnBoardingAnalyticsEnum } from '../../../pages/quick-start/consts';
 import { useSegment } from '../../providers/SegmentProvider';
 

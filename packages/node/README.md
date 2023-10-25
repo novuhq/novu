@@ -712,7 +712,7 @@ const novu = new Novu('<NOVU_API_KEY>');
 
 const payload = {
   content: "<h1>Layout Start</h1>{{{body}}}<h1>Layout End</h1>",
-  description: "Organisation's first layout",
+  description: "Organization's first layout",
   name: "First Layout",
   identifier: "firstlayout",
   variables: [
@@ -737,7 +737,7 @@ const novu = new Novu('<NOVU_API_KEY>');
 
 const payloadToUpdate = {
   content: "<h1>Layout Start</h1>{{{body}}}<h1>Layout End</h1>",
-  description: "Organisation's first layout",
+  description: "Organization's first layout",
   name: "First Layout",
   identifier: "firstlayout",
   variables: [
