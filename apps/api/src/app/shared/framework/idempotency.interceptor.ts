@@ -181,10 +181,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
         [HEADER_KEYS.LINK]: DOCS_LINK,
       });
 
-      return throwError(
-        () =>
-          new UnprocessableEntityException(`Request with key "${idempotencyKey}" is being reused for a different body`)
-      );
+      throw new UnprocessableEntityException(`Request with key "${idempotencyKey}" is being reused for a different body`)
     }
     this.setHeaders(context.switchToHttp().getResponse(), { [HEADER_KEYS.IDEMPOTENCY_REPLAY]: 'true' });
 
