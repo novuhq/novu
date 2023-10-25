@@ -24,7 +24,7 @@ const HEADER_KEYS = {
   IDEMPOTENCY_KEY: 'idempotency-key',
   RETRY_AFTER: 'retry-after',
   IDEMPOTENCY_CONFLICT: 'x-idempotency-conflict',
-  IDEMPOTENCY_REPLAYED: 'idempotency-replayed',
+  IDEMPOTENCY_REPLAY: 'idempotency-replay',
   LINK: 'link',
 };
 
@@ -186,7 +186,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
           new UnprocessableEntityException(`Request with key "${idempotencyKey}" is being reused for a different body`)
       );
     }
-    this.setHeaders(context.switchToHttp().getResponse(), { [HEADER_KEYS.IDEMPOTENCY_REPLAYED]: 'true' });
+    this.setHeaders(context.switchToHttp().getResponse(), { [HEADER_KEYS.IDEMPOTENCY_REPLAY]: 'true' });
 
     //already seen the request return cached response
     if (parsed.status === ReqStatusEnum.ERROR) {
