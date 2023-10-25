@@ -4,7 +4,7 @@ import { ReactFlowProvider } from 'react-flow-renderer';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import PageContainer from '../../components/layout/components/PageContainer';
-import { ArrowButton, colors, Title, Text, Button } from '../../design-system';
+import { ArrowButton, colors, Title, Text, Button } from '@novu/design-system';
 import { parseUrl } from '../../utils/routeUtils';
 import { ROUTES } from '../../constants/routes.enum';
 import { DigestDemoFlow } from '../../components';

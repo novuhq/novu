@@ -1,7 +1,6 @@
 import styled from '@emotion/styled';
 
-import { Cards, colors, Text } from '../../design-system';
-import { PageGradient, DigestGradient } from '../../design-system/icons';
+import { Cards, colors, Text, PageGradient, DigestGradient } from '@novu/design-system';
 
 const NoDataHolder = styled.div`
   display: flex;

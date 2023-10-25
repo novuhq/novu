@@ -73,6 +73,7 @@ export enum SmsProviderIdEnum {
   Novu = 'novu-sms',
   Sendchamp = 'sendchamp',
   Clicksend = 'clicksend',
+  Bandwidth = 'bandwidth',
 }
 
 export enum ChatProviderIdEnum {
@@ -80,6 +81,7 @@ export enum ChatProviderIdEnum {
   Discord = 'discord',
   MsTeams = 'msteams',
   Mattermost = 'mattermost',
+  Ryver = 'ryver',
 }
 
 export enum PushProviderIdEnum {
