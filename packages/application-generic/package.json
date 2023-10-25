@@ -49,6 +49,7 @@
     "@google-cloud/storage": "^6.2.3",
     "@novu/africas-talking": "^0.20.0",
     "@novu/apns": "^0.20.0",
+    "@novu/bandwidth": "^0.20.0",
     "@novu/burst-sms": "^0.20.0",
     "@novu/clickatell": "^0.20.0",
     "@novu/clicksend": "^0.20.0",
