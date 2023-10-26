@@ -15,13 +15,10 @@ import {
   encryptCredentials,
   buildIntegrationKey,
   InvalidateCacheService,
-  GetIsMultiProviderConfigurationEnabled,
-  FeatureFlagCommand,
 } from '@novu/application-generic';
 
 import { CreateIntegrationCommand } from './create-integration.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/deactivate-integration.usecase';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
 
@@ -32,9 +29,7 @@ export class CreateIntegration {
   constructor(
     private invalidateCache: InvalidateCacheService,
     private integrationRepository: IntegrationRepository,
-    private deactivateSimilarChannelIntegrations: DeactivateSimilarChannelIntegrations,
-    private analyticsService: AnalyticsService,
-    private getIsMultiProviderConfigurationEnabled: GetIsMultiProviderConfigurationEnabled
+    private analyticsService: AnalyticsService
   ) {}
 
   private async calculatePriorityAndPrimary(command: CreateIntegrationCommand) {
@@ -71,25 +66,11 @@ export class CreateIntegration {
   }
 
   async execute(command: CreateIntegrationCommand): Promise<IntegrationEntity> {
-    const isMultiProviderConfigurationEnabled = await this.getIsMultiProviderConfigurationEnabled.execute(
-      FeatureFlagCommand.create({
-        userId: command.userId,
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-      })
-    );
-
     const existingIntegration = await this.integrationRepository.findOne({
       _environmentId: command.environmentId,
       providerId: command.providerId,
       channel: command.channel,
     });
-
-    if (!isMultiProviderConfigurationEnabled && existingIntegration) {
-      throw new BadRequestException(
-        'Duplicate key - One environment may not have two providers of the same channel type'
-      );
-    }
 
     if (
       existingIntegration &&
@@ -169,7 +150,7 @@ export class CreateIntegration {
 
       const isActiveAndChannelSupportsPrimary = command.active && CHANNELS_WITH_PRIMARY.includes(command.channel);
 
-      if (isMultiProviderConfigurationEnabled && isActiveAndChannelSupportsPrimary) {
+      if (isActiveAndChannelSupportsPrimary) {
         const { primary, priority } = await this.calculatePriorityAndPrimary(command);
 
         query.primary = primary;
@@ -177,20 +158,6 @@ export class CreateIntegration {
       }
 
       const integrationEntity = await this.integrationRepository.create(query);
-
-      if (
-        !isMultiProviderConfigurationEnabled &&
-        command.active &&
-        ![ChannelTypeEnum.CHAT, ChannelTypeEnum.PUSH].includes(command.channel)
-      ) {
-        await this.deactivateSimilarChannelIntegrations.execute({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          integrationId: integrationEntity._id,
-          channel: command.channel,
-          userId: command.userId,
-        });
-      }
 
       return integrationEntity;
     } catch (e) {
