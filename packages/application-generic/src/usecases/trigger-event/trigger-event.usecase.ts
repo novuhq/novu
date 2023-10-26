@@ -57,10 +57,19 @@ export class TriggerEvent {
   @InstrumentUsecase()
   async execute(command: TriggerEventCommand) {
     try {
-      const { environmentId, identifier, organizationId, userId } = command;
+      const mappedCommand = {
+        ...command,
+        tenant: this.mapTenant(command.tenant),
+        actor: this.mapTriggerRecipients.mapSubscriber(command.actor),
+      };
+
+      Logger.debug(mappedCommand.actor);
+
+      const { environmentId, identifier, organizationId, userId } =
+        mappedCommand;
 
       await this.validateTransactionIdProperty(
-        command.transactionId,
+        mappedCommand.transactionId,
         environmentId
       );
 
@@ -72,14 +81,14 @@ export class TriggerEvent {
       });
 
       this.logger.assign({
-        transactionId: command.transactionId,
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
+        transactionId: mappedCommand.transactionId,
+        environmentId: mappedCommand.environmentId,
+        organizationId: mappedCommand.organizationId,
       });
 
       const template = await this.getNotificationTemplateByTriggerIdentifier({
-        environmentId: command.environmentId,
-        triggerIdentifier: command.identifier,
+        environmentId: mappedCommand.environmentId,
+        triggerIdentifier: mappedCommand.identifier,
       });
 
       /*
@@ -90,56 +99,48 @@ export class TriggerEvent {
         throw new ApiException('Notification template could not be found');
       }
 
-      const mappedTenant = this.mapTenant(command.tenant);
-
-      if (mappedTenant) {
+      if (mappedCommand.tenant) {
         const tenantProcessed = await this.processTenant.execute(
           ProcessTenantCommand.create({
             environmentId,
             organizationId,
             userId,
-            tenant: mappedTenant,
+            tenant: mappedCommand.tenant,
           })
         );
 
         if (!tenantProcessed) {
           Logger.warn(
             `Tenant with identifier ${JSON.stringify(
-              mappedTenant.identifier
-            )} of organization ${command.organizationId} in transaction ${
-              command.transactionId
+              mappedCommand.tenant.identifier
+            )} of organization ${mappedCommand.organizationId} in transaction ${
+              mappedCommand.transactionId
             } could not be processed.`,
             LOG_CONTEXT
           );
         }
       }
 
-      const mappedActor = this.mapTriggerRecipients.mapSubscriber(
-        command.actor
-      );
-
-      Logger.debug(mappedActor);
-
       // We might have a single actor for every trigger, so we only need to check for it once
       let actorProcessed: SubscriberEntity | undefined;
-      if (mappedActor) {
+      if (mappedCommand.actor) {
         actorProcessed = await this.processSubscriber.execute(
           ProcessSubscriberCommand.create({
             environmentId,
             organizationId,
             userId,
-            subscriber: mappedActor,
+            subscriber: mappedCommand.actor,
           })
         );
       }
 
-      if (command.addressingType === AddressingTypeEnum.BROADCAST) {
-        await this.triggerBroadcast(command, actorProcessed, template);
+      if (mappedCommand.addressingType === AddressingTypeEnum.BROADCAST) {
+        await this.triggerBroadcast(mappedCommand, actorProcessed, template);
 
         return;
       }
 
-      await this.triggerMulticast(command, actorProcessed, template);
+      await this.triggerMulticast(mappedCommand, actorProcessed, template);
     } catch (e) {
       Logger.error(
         {

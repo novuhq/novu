@@ -3,7 +3,7 @@ import {
   IsString,
   IsOptional,
   ValidateNested,
-  IsEnum,
+  ValidateIf,
 } from 'class-validator';
 import {
   AddressingTypeEnum,
@@ -32,10 +32,12 @@ export class TriggerEventCommand extends EnvironmentWithUserCommand {
   transactionId: string;
 
   @IsOptional()
+  @ValidateIf((_, value) => typeof value !== 'string')
   @ValidateNested()
   actor?: ISubscribersDefine | null;
 
   @IsOptional()
+  @ValidateIf((_, value) => typeof value !== 'string')
   @ValidateNested()
   tenant?: ITenantDefine | null;
 
