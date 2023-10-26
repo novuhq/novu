@@ -2197,6 +2197,9 @@ importers:
       '@novu/push-webhook':
         specifier: ^0.20.0
         version: link:../../providers/push-webhook
+      '@novu/pushpad':
+        specifier: ^0.20.0
+        version: link:../../providers/pushpad
       '@novu/resend':
         specifier: ^0.20.0
         version: link:../../providers/resend
@@ -4796,6 +4799,49 @@ importers:
         specifier: 4.9.5
         version: 4.9.5
 
+  providers/pushpad:
+    dependencies:
+      '@novu/stateless':
+        specifier: ^0.20.0
+        version: link:../../packages/stateless
+      pushpad:
+        specifier: 1.0.0
+        version: 1.0.0
+    devDependencies:
+      '@istanbuljs/nyc-config-typescript':
+        specifier: ~1.0.1
+        version: 1.0.2(nyc@15.1.0)
+      '@types/jest':
+        specifier: ~27.5.2
+        version: 27.5.2
+      cspell:
+        specifier: ~6.19.2
+        version: 6.19.2
+      jest:
+        specifier: ~27.5.1
+        version: 27.5.1(ts-node@10.9.1)
+      npm-run-all:
+        specifier: ^4.1.5
+        version: 4.1.5
+      nyc:
+        specifier: ~15.1.0
+        version: 15.1.0
+      prettier:
+        specifier: ~2.8.0
+        version: 2.8.7
+      rimraf:
+        specifier: ~3.0.2
+        version: 3.0.2
+      ts-jest:
+        specifier: ~27.1.5
+        version: 27.1.5(@babel/core@7.23.2)(@types/jest@27.5.2)(jest@27.5.1)(typescript@4.9.5)
+      ts-node:
+        specifier: ~10.9.1
+        version: 10.9.1(@types/node@14.18.42)(typescript@4.9.5)
+      typescript:
+        specifier: 4.9.5
+        version: 4.9.5
+
   providers/resend:
     dependencies:
       '@novu/stateless':
@@ -6065,7 +6111,7 @@ packages:
       endent: 2.1.0
       enquirer: 2.3.6
       env-ci: 5.5.0
-      fast-glob: 3.3.0
+      fast-glob: 3.3.1
       fp-ts: 2.13.1
       fromentries: 1.3.2
       gitlog: 4.0.4
@@ -16315,7 +16361,7 @@ packages:
       '@pnpm/read-project-manifest': 5.0.0
       '@pnpm/types': 9.0.0
       '@pnpm/util.lex-comparator': 1.0.0
-      fast-glob: 3.3.0
+      fast-glob: 3.3.1
       p-filter: 2.1.0
     dev: true
 
@@ -32136,7 +32182,7 @@ packages:
     dependencies:
       array-union: 2.1.0
       dir-glob: 3.0.1
-      fast-glob: 3.3.0
+      fast-glob: 3.3.1
       ignore: 5.2.4
       merge2: 1.4.1
       slash: 3.0.0
@@ -41632,6 +41678,14 @@ packages:
   /pure-rand@6.0.1:
     resolution: {integrity: sha512-t+x1zEHDjBwkDGY5v5ApnZ/utcd4XYDiJsaQQoptTXgUXX95sDg1elCdJghzicm7n2mbCBJ3uYWr6M22SO19rg==}
     dev: true
+
+  /pushpad@1.0.0:
+    resolution: {integrity: sha512-hOaqVpS/b6pZXsYTf2avGoBl1Z4pVjtCyKta57Pdfm189NdMJ/6ZdLL0vFs+/GKuOA5g60/GLRRSqO5zMqr4Eg==}
+    dependencies:
+      superagent: 8.0.9
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
 
   /q@1.5.1:
     resolution: {integrity: sha512-kV/CThkXo6xyFEZUugw/+pIOywXcDbFYgSct5cT3gqlbkBE1SJdwy6UQoZvodiWF/ckQLZyDE/Bu1M6gVu5lVw==}
