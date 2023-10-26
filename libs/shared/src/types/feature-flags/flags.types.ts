@@ -3,8 +3,6 @@
  */
 export type IFlagKey = `IS_${Uppercase<string>}_ENABLED`;
 
-// export type IFlags = Record<IFlagKey, IFlagKey>;
-
 /**
  * Helper function to test that enum keys and values match correct format.
  *
