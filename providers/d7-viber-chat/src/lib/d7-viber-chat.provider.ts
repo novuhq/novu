@@ -27,11 +27,13 @@ export class D7ViberChatChatProvider implements IChatProvider {
     options: IChatOptions
   ): Promise<ISendMessageSuccessResponse> {
     try {
-      const messages = options.destinations.map((destination) => ({
-        recipients: [destination.recipient],
-        content: destination.content,
-        label: 'test',
-      }));
+      const messages = [
+        {
+          recipients: [options.webhookUrl],
+          content: options.content,
+          label: 'test',
+        },
+      ];
 
       const response = await axios.post(
         'https://api.d7networks.com/viber/v1/send',
@@ -58,3 +60,5 @@ export class D7ViberChatChatProvider implements IChatProvider {
     }
   }
 }
+
+export const apiKey = '<api_key>';

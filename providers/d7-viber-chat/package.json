@@ -33,10 +33,12 @@
     "pnpm": "^7.26.0"
   },
   "dependencies": {
-    "@novu/stateless": "0.16.3"
+    "@novu/stateless": "0.16.3",
+    "axios": "^1.5.1"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "~1.0.1",
+    "@types/axios": "^0.14.0",
     "@types/jest": "~27.5.2",
     "cspell": "~6.19.2",
     "jest": "~27.5.1",

@@ -1,5 +1,5 @@
 import { D7ViberChatChatProvider } from './d7-viber-chat.provider';
-
+import { apiKey } from './d7-viber-chat.provider';
 describe('D7ViberChatChatProvider', () => {
   it('should send a Viber message correctly', async () => {
     const provider = new D7ViberChatChatProvider({
