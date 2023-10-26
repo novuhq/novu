@@ -220,6 +220,7 @@
     "plivo",
     "Plivo",
     "prettierignore",
+    "Pushpad",
     "Pushwoosh",
     "sandboxed",
     "sendgrid",
@@ -513,7 +514,8 @@
     "Clicksend",
     "Kamil",
     "Myśliwiec",
-    "nestframework"
+    "nestframework",
+    "ryver"
   ],
   "flagWords": [],
   "patterns": [

@@ -1,4 +1,4 @@
-import { Button } from '../../../design-system';
+import { Button } from '@novu/design-system';
 import { IForm } from './formTypes';
 import { useFormContext } from 'react-hook-form';
 import { useEnvController } from '../../../hooks';

@@ -2,10 +2,8 @@ import { Control, Controller } from 'react-hook-form';
 import { useClipboard } from '@mantine/hooks';
 import { JsonInput, ActionIcon } from '@mantine/core';
 
-import { Input } from '../../../design-system';
-import { inputStyles } from '../../../design-system/config/inputs.styles';
+import { Input, inputStyles, Check, Copy } from '@novu/design-system';
 import { ITenantForm } from './UpdateTenantSidebar';
-import { Check, Copy } from '../../../design-system/icons';
 
 function jsonValidator(value?: string) {
   if (!value) {
