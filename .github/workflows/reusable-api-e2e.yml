@@ -46,11 +46,6 @@ jobs:
           fi
       - uses: actions/checkout@v3
       # checkout with submodules if token is provided
-      - uses: ./.github/actions/checkout-submodules
-        with:
-          enabled: ${{ steps.setup.outputs.has_token == 'true' }}
-          submodule_token: ${{ secrets.SUBMODULES_TOKEN }}
-          submodule_branch: ${{ inputs.submodule_branch }}
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/setup-redis-cluster
       - uses: mansagroup/nrwl-nx-action@v3
@@ -61,12 +56,16 @@ jobs:
       - uses: ./.github/actions/start-localstack
 
       - uses: ./.github/actions/run-worker
+        with:
+          launch_darkly_sdk_key: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
 
         # Runs a single command using the runners shell
       - name: Build API
         run: CI='' pnpm build:api
 
       - name: Run E2E tests
+        env:
+          LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
         run: |
           cd apps/api && pnpm test:e2e
 

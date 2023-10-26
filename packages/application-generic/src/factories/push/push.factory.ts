@@ -5,6 +5,7 @@ import {
   FCMHandler,
   ExpoHandler,
   OneSignalHandler,
+  PushpadHandler,
   PushWebhookHandler,
 } from './handlers';
 
@@ -14,10 +15,11 @@ export class PushFactory implements IPushFactory {
     new ExpoHandler(),
     new APNSHandler(),
     new OneSignalHandler(),
+    new PushpadHandler(),
     new PushWebhookHandler(),
   ];
 
-  getHandler(integration: IntegrationEntity) {
+  getHandler(integration: IntegrationEntity): IPushHandler {
     const handler =
       this.handlers.find((handlerItem) =>
         handlerItem.canHandle(integration.providerId, integration.channel)

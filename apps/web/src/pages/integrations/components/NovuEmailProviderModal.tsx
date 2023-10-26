@@ -2,7 +2,7 @@ import styled from '@emotion/styled/macro';
 import { List, Text } from '@mantine/core';
 import { ChannelTypeEnum } from '@novu/shared';
 import { useAuthContext } from '../../../components/providers/AuthProvider';
-import { colors } from '../../../design-system';
+import { colors } from '@novu/design-system';
 import { NovuProviderBase } from './NovuProviderBase';
 
 export function NovuEmailProviderModal({ onClose }: { onClose: () => void }) {

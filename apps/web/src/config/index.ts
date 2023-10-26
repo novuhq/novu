@@ -40,6 +40,8 @@ export const WIDGET_EMBED_PATH =
 export const IS_DOCKER_HOSTED =
   window._env_.REACT_APP_DOCKER_HOSTED_ENV === 'true' || process.env.REACT_APP_DOCKER_HOSTED_ENV === 'true';
 
+export const REACT_APP_VERSION = window._env_.REACT_APP_VERSION || process.env.REACT_APP_VERSION;
+
 export const INTERCOM_APP_ID = window._env_.REACT_APP_INTERCOM_APP_ID || process.env.REACT_APP_INTERCOM_APP_ID;
 
 export const CONTEXT_PATH = getContextPath(NovuComponentEnum.WEB);
@@ -59,15 +61,6 @@ export const LAUNCH_DARKLY_CLIENT_SIDE_ID =
 export const IS_TEMPLATE_STORE_ENABLED = isCypress
   ? window._env_.IS_TEMPLATE_STORE_ENABLED || process.env.IS_TEMPLATE_STORE_ENABLED || 'true'
   : window._env_.IS_TEMPLATE_STORE_ENABLED || process.env.IS_TEMPLATE_STORE_ENABLED || 'false';
-
-export const IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = isCypress
-  ? window._cypress?.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED ||
-    window._env_.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED ||
-    process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED ||
-    'true'
-  : window._env_.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED ||
-    process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED ||
-    'false';
 
 export const IS_MULTI_TENANCY_ENABLED = isCypress
   ? window._env_.IS_MULTI_TENANCY_ENABLED || process.env.IS_MULTI_TENANCY_ENABLED || 'true'

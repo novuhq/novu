@@ -1,13 +1,7 @@
 import { Injectable, NotFoundException, Logger, BadRequestException } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
-import {
-  AnalyticsService,
-  buildIntegrationKey,
-  FeatureFlagCommand,
-  GetIsMultiProviderConfigurationEnabled,
-  InvalidateCacheService,
-} from '@novu/application-generic';
+import { AnalyticsService, buildIntegrationKey, InvalidateCacheService } from '@novu/application-generic';
 
 import { SetIntegrationAsPrimaryCommand } from './set-integration-as-primary.command';
 
@@ -16,8 +10,7 @@ export class SetIntegrationAsPrimary {
   constructor(
     private invalidateCache: InvalidateCacheService,
     private integrationRepository: IntegrationRepository,
-    private analyticsService: AnalyticsService,
-    private getIsMultiProviderConfigurationEnabled: GetIsMultiProviderConfigurationEnabled
+    private analyticsService: AnalyticsService
   ) {}
 
   private async updatePrimaryFlag({ existingIntegration }: { existingIntegration: IntegrationEntity }) {
@@ -55,7 +48,10 @@ export class SetIntegrationAsPrimary {
   async execute(command: SetIntegrationAsPrimaryCommand): Promise<IntegrationEntity> {
     Logger.verbose('Executing Set Integration As Primary Usecase');
 
-    const existingIntegration = await this.integrationRepository.findById(command.integrationId);
+    const existingIntegration = await this.integrationRepository.findOne({
+      _id: command.integrationId,
+      _organizationId: command.organizationId,
+    });
     if (!existingIntegration) {
       throw new NotFoundException(`Integration with id ${command.integrationId} not found`);
     }
@@ -65,14 +61,7 @@ export class SetIntegrationAsPrimary {
     }
 
     const { _organizationId, _environmentId, channel, providerId } = existingIntegration;
-    const isMultiProviderConfigurationEnabled = await this.getIsMultiProviderConfigurationEnabled.execute(
-      FeatureFlagCommand.create({
-        userId: command.userId,
-        organizationId: _organizationId,
-        environmentId: _environmentId,
-      })
-    );
-    if (!isMultiProviderConfigurationEnabled || existingIntegration.primary) {
+    if (existingIntegration.primary) {
       return existingIntegration;
     }
 

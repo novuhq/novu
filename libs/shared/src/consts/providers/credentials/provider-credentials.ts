@@ -220,6 +220,16 @@ export const resendConfig: IConfigCredentials[] = [
   ...mailConfigBase,
 ];
 
+export const mailtrapConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  ...mailConfigBase,
+];
+
 export const plunkConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
@@ -500,6 +510,22 @@ export const oneSignalConfig: IConfigCredentials[] = [
   ...pushConfigBase,
 ];
 
+export const pushpadConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'Auth Token',
+    type: 'text',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ApplicationId,
+    displayName: 'Project ID',
+    type: 'text',
+    required: true,
+  },
+  ...pushConfigBase,
+];
+
 export const apnsConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.SecretKey,
@@ -736,6 +762,46 @@ export const sendchampConfig: IConfigCredentials[] = [
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
     type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+];
+
+export const clickSendConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.User,
+    displayName: 'Username',
+    description: 'Your Clicksend API username',
+    type: 'text',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'text',
+    required: true,
+  },
+  ...smsConfigBase,
+];
+
+export const bandwidthConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.User,
+    displayName: 'Username',
+    description: 'Your Bandwidth account username',
+    type: 'text',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Password,
+    displayName: 'Password',
+    type: 'password',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.AccountSid,
+    displayName: 'Account ID',
+    type: 'text',
     required: true,
   },
   ...smsConfigBase,
