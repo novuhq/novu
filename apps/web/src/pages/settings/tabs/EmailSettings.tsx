@@ -1,17 +1,25 @@
 import { useClipboard } from '@mantine/hooks';
 import styled from '@emotion/styled';
-import { inputStyles } from '../../../design-system/config/inputs.styles';
+import {
+  colors,
+  Text,
+  Input,
+  Tooltip,
+  Button,
+  Check,
+  CheckCircle,
+  Copy,
+  WarningIcon,
+  inputStyles,
+} from '@novu/design-system';
 import Card from '../../../components/layout/components/Card';
 import { ActionIcon, Center, Input as MantineInput } from '@mantine/core';
-import { colors, Text, Input, Tooltip, Button } from '../../../design-system';
-import { Check, CheckCircle, Copy } from '../../../design-system/icons';
 import React, { useEffect } from 'react';
 import { Control, Controller, useForm } from 'react-hook-form';
 import { useEffectOnce, useEnvController } from '../../../hooks';
 import { useMutation } from '@tanstack/react-query';
 import { updateDnsSettings } from '../../../api/environment';
 import { showNotification } from '@mantine/notifications';
-import { WarningIcon } from '../../../design-system/icons/general/WarningIcon';
 import { validateMxRecord } from '../../../api/inbound-parse';
 import { MAIL_SERVER_DOMAIN } from '../../../config';
 

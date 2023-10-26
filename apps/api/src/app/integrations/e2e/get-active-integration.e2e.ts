@@ -4,20 +4,14 @@ import { ChannelTypeEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/s
 import { IntegrationService } from '@novu/testing';
 import { IntegrationEntity } from '@novu/dal';
 
-describe('Get Active Integrations [IS_MULTI_PROVIDER_CONFIGURATION_ENABLED=true] - /integrations/active (GET)', function () {
+describe('Get Active Integrations - Multi-Provider Configuration - /integrations/active (GET)', function () {
   let session: UserSession;
   const integrationService = new IntegrationService();
-  const ORIGINAL_IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
 
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
-    process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = 'true';
     process.env.LAUNCH_DARKLY_SDK_KEY = '';
-  });
-
-  afterEach(async () => {
-    process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = ORIGINAL_IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
   });
 
   it('should get active integrations', async function () {
