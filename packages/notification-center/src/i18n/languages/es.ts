@@ -4,12 +4,12 @@ export const ES: ITranslationEntry = {
   translations: {
     notifications: 'Notificaciones',
     markAllAsRead: 'Marcar todo como leído',
-    poweredBy: 'Con tecnología de',
-    settings: 'Configuración',
+    poweredBy: 'Energizado por',
+    settings: 'Ajustes',
     removeMessage: 'Eliminar mensaje',
     markAsRead: 'Marcar como leído',
     markAsUnRead: 'Marcar como no leído',
-    noNewNotification: 'Nada nuevo por aquí',
+    noNewNotification: 'noNuevaNotificación',
   },
   lang: 'es',
 };
