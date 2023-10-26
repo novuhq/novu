@@ -228,7 +228,10 @@ describe('Set Integration As Primary - /integrations/:integrationId/set-primary 
     expect(data.active).to.equal(true);
     expect(data.priority).to.equal(2);
 
-    const updatedOldPrimary = (await integrationRepository.findById(oldPrimaryIntegration._id)) as IntegrationEntity;
+    const updatedOldPrimary = (await integrationRepository.findOne({
+      _id: oldPrimaryIntegration._id,
+      _environmentId: oldPrimaryIntegration._environmentId,
+    })) as IntegrationEntity;
 
     expect(updatedOldPrimary.primary).to.equal(false);
     expect(updatedOldPrimary.active).to.equal(true);

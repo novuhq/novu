@@ -1,7 +1,7 @@
 import { ChannelTypeEnum } from '@novu/shared';
 import { Control, Controller, useFormContext } from 'react-hook-form';
 
-import { Textarea } from '../../../../design-system';
+import { Textarea } from '@novu/design-system';
 import { useEnvController, useHasActiveIntegrations, useVariablesManager } from '../../../../hooks';
 import { StepSettings } from '../../workflow/SideBar/StepSettings';
 import type { IForm } from '../formTypes';
