@@ -18,3 +18,4 @@ export * from './sendchamp.handler';
 export * from './clicksend.handler';
 export * from './bandwidth.handler';
 export * from './novu.handler';
+export * from './generic-sms.handler';

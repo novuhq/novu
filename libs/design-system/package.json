@@ -1,8 +1,9 @@
 {
   "name": "@novu/design-system",
-  "version": "0.20.0",
+  "version": "0.21.0",
   "repository": "https://github.com/novuhq/novu",
   "description": "",
+  "private": true,
   "scripts": {
     "start": "npm run build:watch",
     "prebuild": "rimraf dist",
@@ -31,9 +32,9 @@
   "devDependencies": {
     "@storybook/addon-actions": "^7.5.0",
     "@storybook/addon-docs": "^7.4.2",
-    "@storybook/theming": "^7.4.2",
     "@storybook/react": "^7.4.2",
     "@storybook/react-webpack5": "^7.4.2",
+    "@storybook/theming": "^7.4.2",
     "@types/node": "^18.11.12",
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
@@ -68,8 +69,8 @@
     "@mantine/core": "^5.7.1",
     "@mantine/hooks": "^5.7.1",
     "@mantine/notifications": "^5.7.1",
-    "@novu/client": "^0.20.0",
-    "@novu/shared": "^0.20.0",
+    "@novu/client": "^0.21.0",
+    "@novu/shared": "^0.21.0",
     "react-hook-form": "7.43.9",
     "react-table": "^7.8.0",
     "tslib": "^2.3.1"

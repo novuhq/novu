@@ -179,6 +179,10 @@
     {
       "name": "🔔 @novu/maqsam",
       "path": "providers/maqsam"
+    },
+    {
+      "name": "🔔 @novu/generic-sms",
+      "path": "providers/generic-sms"
     }
   ],
   "settings": {
