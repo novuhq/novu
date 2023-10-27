@@ -3,12 +3,10 @@ import {
   SegmentedControl as MantineSegmentedControl,
   SegmentedControlProps,
   SegmentedControlItem,
-  LoadingOverlay,
   Sx,
 } from '@mantine/core';
 import useStyles from './TypeSegment.styles';
 import styled from '@emotion/styled';
-import { colors } from '../../../../../design-system';
 
 interface ISegmentedControlProps {
   data: string[] | SegmentedControlItem[];

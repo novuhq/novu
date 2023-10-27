@@ -18,7 +18,9 @@ import {
   termiiConfig,
   africasTalkingConfig,
   sendchampConfig,
+  genericSmsConfig,
   clickSendConfig,
+  bandwidthConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -181,11 +183,28 @@ export const smsProviders: IProviderConfig[] = [
     logoFileName: { light: 'sendchamp.svg', dark: 'sendchamp.svg' },
   },
   {
+    id: SmsProviderIdEnum.GenericSms,
+    displayName: `Generic SMS`,
+    channel: ChannelTypeEnum.SMS,
+    credentials: genericSmsConfig,
+    docReference: 'https://docs.novu.co/channels/sms/generic-sms',
+    logoFileName: { light: 'generic-sms.svg', dark: 'generic-sms.svg' },
+  },
+  {
     id: SmsProviderIdEnum.Clicksend,
     displayName: `Clicksend`,
     channel: ChannelTypeEnum.SMS,
     credentials: clickSendConfig,
     docReference: 'https://developers.clicksend.com/docs/rest/v3/?javascript--nodejs#send-sms',
     logoFileName: { light: 'clicksend.png', dark: 'clicksend.png' },
+  },
+  {
+    id: SmsProviderIdEnum.Bandwidth,
+    displayName: `Bandwidth`,
+    channel: ChannelTypeEnum.SMS,
+    credentials: bandwidthConfig,
+    betaVersion: true,
+    docReference: 'https://dev.bandwidth.com/docs/messaging/createMessage',
+    logoFileName: { light: 'bandwidth.png', dark: 'bandwidth.png' },
   },
 ];

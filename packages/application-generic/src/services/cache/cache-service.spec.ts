@@ -113,6 +113,16 @@ describe('Cache Service - Cluster Mode', () => {
     expect(value).toBe('value1');
   });
 
+  it('should be able to add a key / value in the Redis Cluster if key not exist', async () => {
+    const result = await cacheService.setIfNotExist('key1-not-exist', 'value1');
+    expect(result).toBeDefined();
+    const result1 = await cacheService.setIfNotExist(
+      'key1-not-exist',
+      'value1'
+    );
+    expect(result1).toBeFalsy();
+  });
+
   it('should be able to delete a key / value in the Redis Cluster', async () => {
     const result = await cacheService.del('key1');
     expect(result).toBe(1);
