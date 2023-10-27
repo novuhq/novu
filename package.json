@@ -50,7 +50,6 @@
     "build:widget": "nx build @novu/widget",
     "build:embed": "nx build @novu/embed",
     "build:storybook": "nx run @novu/web:build-storybook",
-    "build:ee-auth": "nx build @novu/ee-auth",
     "test:providers": "pnpm --filter './providers/**' test",
     "release:patch": "lerna version patch --no-push",
     "release:minor": "lerna version minor --no-push",
@@ -66,6 +65,7 @@
     "jarvis": "node scripts/jarvis.js",
     "dev-environment-setup": "sh ./scripts/dev-environment-setup.sh",
     "get-affected": "node scripts/print-affected-array.mjs",
+    "build:submodules": "nx run-many --target=ee-build --all",
     "install:submodules": "cd enterprise/packages && pnpm install --frozen-lockfile",
     "link:submodules": "nx run-many --target=link:submodules --all"
   },
