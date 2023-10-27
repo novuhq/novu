@@ -414,10 +414,6 @@ importers:
       uuid:
         specifier: ^8.3.2
         version: 8.3.2
-    optionalDependencies:
-      '@novu/ee-auth':
-        specifier: ^0.19.0
-        version: link:../../enterprise/packages/auth
     devDependencies:
       '@faker-js/faker':
         specifier: ^6.0.0
