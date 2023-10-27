@@ -97,7 +97,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
 
   const options = new DocumentBuilder()
     .setTitle('Novu API')
-    .setDescription('The Novu API description')
+    .setDescription('Open API Specification for Novu API')
     .setVersion('1.0')
     .addTag('Events')
     .addTag('Subscribers')
@@ -114,6 +114,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
     .addTag('Feeds')
     .addTag('Tenants')
     .addTag('Messages')
+    .addTag('Organizations')
     .addTag('Execution Details')
     .build();
   const document = SwaggerModule.createDocument(app, options);

@@ -27,7 +27,7 @@ The ultimate service for managing multi-channel notifications with a single API.
     ·
     <a href="https://github.com/orgs/novuhq/projects/10">Roadmap</a>
     ·
-    <a href="https://twitter.com/novuhq">Twitter</a>
+    <a href="https://twitter.com/novuhq">X</a>
     ·
     <a href="https://notifications.directory">Notifications Directory</a>.
     <a href="https://novu.co/blog">Read our blog</a>
@@ -712,7 +712,7 @@ const novu = new Novu('<NOVU_API_KEY>');
 
 const payload = {
   content: "<h1>Layout Start</h1>{{{body}}}<h1>Layout End</h1>",
-  description: "Organisation's first layout",
+  description: "Organization's first layout",
   name: "First Layout",
   identifier: "firstlayout",
   variables: [
@@ -737,7 +737,7 @@ const novu = new Novu('<NOVU_API_KEY>');
 
 const payloadToUpdate = {
   content: "<h1>Layout Start</h1>{{{body}}}<h1>Layout End</h1>",
-  description: "Organisation's first layout",
+  description: "Organization's first layout",
   name: "First Layout",
   identifier: "firstlayout",
   variables: [

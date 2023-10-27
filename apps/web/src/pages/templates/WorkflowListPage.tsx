@@ -13,9 +13,22 @@ import {
 } from '../../hooks';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
-import { Tag, Table, colors, Text, IExtendedColumn, withCellLoading, PlusButton, Container } from '../../design-system';
-import { Bolt, BoltFilled, BoltOffFilled, Edit, ProviderMissing } from '../../design-system/icons';
-import { Tooltip } from '../../design-system';
+import {
+  Tag,
+  Table,
+  colors,
+  Text,
+  IExtendedColumn,
+  withCellLoading,
+  PlusButton,
+  Container,
+  Bolt,
+  BoltFilled,
+  BoltOffFilled,
+  Edit,
+  ProviderMissing,
+  Tooltip,
+} from '@novu/design-system';
 import { ROUTES } from '../../constants/routes.enum';
 import { parseUrl } from '../../utils/routeUtils';
 import { TemplatesListNoData } from './TemplatesListNoData';
