@@ -5,10 +5,9 @@ import { ApiKeysCard } from './tabs';
 import { Outlet } from 'react-router-dom';
 import { useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import useStyles from '../../design-system/tabs/Tabs.styles';
 import { ROUTES } from '../../constants/routes.enum';
 import { useAuthContext } from '../../components/providers/AuthProvider';
-import { colors } from '../../design-system';
+import { colors, useTabsStyles } from '@novu/design-system';
 
 const SettingsPageWrapper = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -24,7 +23,7 @@ const SettingsPageWrapper = ({ children }: { children: React.ReactNode }) => {
 export function SettingsPage() {
   const { currentOrganization } = useAuthContext();
   const selfHosted = process.env.REACT_APP_DOCKER_HOSTED_ENV === 'true';
-  const { classes } = useStyles(false);
+  const { classes } = useTabsStyles(false);
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const value = useMemo(() => {

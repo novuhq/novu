@@ -4,10 +4,11 @@ import { Worker } from '../bull-mq';
 
 import {
   StandardQueueServiceHealthIndicator,
+  SubscriberProcessQueueHealthIndicator,
   WebSocketsQueueServiceHealthIndicator,
   WorkflowQueueServiceHealthIndicator,
 } from '../../health';
-
+import { setTimeout } from 'timers/promises';
 export interface INovuWorker {
   readonly DEFAULT_ATTEMPTS: number;
   gracefulShutdown: () => Promise<void>;
@@ -24,16 +25,43 @@ const LOG_CONTEXT = 'ReadinessService';
 export class ReadinessService {
   constructor(
     private standardQueueServiceHealthIndicator: StandardQueueServiceHealthIndicator,
-    private workflowQueueServiceHealthIndicator: WorkflowQueueServiceHealthIndicator
+    private workflowQueueServiceHealthIndicator: WorkflowQueueServiceHealthIndicator,
+    private subscriberProcessQueueHealthIndicator: SubscriberProcessQueueHealthIndicator
   ) {}
 
   async areQueuesEnabled(): Promise<boolean> {
     Logger.log('Enabling queues as workers are meant to be ready', LOG_CONTEXT);
 
+    const retries = 5;
+    const delay = 1000;
+
+    for (let i = 1; i < retries + 1; i++) {
+      const result = await this.checkServicesHealth();
+
+      if (result) {
+        return true;
+      }
+
+      Logger.warn(
+        {
+          attempt: i,
+          message: `Some health indicator returned false when checking if queues are enabled ${i}/${retries}`,
+        },
+        LOG_CONTEXT
+      );
+
+      await setTimeout(delay);
+    }
+
+    return false;
+  }
+
+  private async checkServicesHealth() {
     try {
       const healths = await Promise.all([
         this.standardQueueServiceHealthIndicator.isHealthy(),
         this.workflowQueueServiceHealthIndicator.isHealthy(),
+        this.subscriberProcessQueueHealthIndicator.isHealthy(),
       ]);
 
       return healths.every((health) => !!health === true);
@@ -85,6 +113,10 @@ export class ReadinessService {
           throw error;
         }
       }
+    } else {
+      const error = new Error('Queues are not enabled');
+      Logger.error(error, 'Queues are not enabled', LOG_CONTEXT);
+      throw error;
     }
   }
 }

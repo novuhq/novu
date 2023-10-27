@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import { Collapse, UnstyledButton, useMantineTheme } from '@mantine/core';
-import { ChevronUp } from '../../../../../design-system/icons';
-import { ChevronDown } from '../../../../../design-system/icons';
+import { ChevronUp, ChevronDown, colors } from '@novu/design-system';
 import { VarItem } from './VarItem';
-import { colors } from '../../../../../design-system';
 import { VarItemTooltip } from './VarItemTooltip';
 
 export const VarItemsDropdown = ({ name, type }) => {
