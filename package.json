@@ -65,7 +65,10 @@
     "get-packages-folder": "node scripts/get-packages-folder.mjs",
     "jarvis": "node scripts/jarvis.js",
     "dev-environment-setup": "sh ./scripts/dev-environment-setup.sh",
-    "get-affected": "node scripts/print-affected-array.mjs"
+    "get-affected": "node scripts/print-affected-array.mjs",
+    "build:submodules": "nx run-many --target=ee-build --all",
+    "install:submodules": "cd enterprise/packages && pnpm install --frozen-lockfile",
+    "link:submodules": "nx run-many --target=link:submodules --all"
   },
   "devDependencies": {
     "@auto-it/npm": "^10.36.5",
@@ -145,6 +148,7 @@
       "apps/*",
       "libs/*",
       "packages/*",
+      "enterprise/packages/*",
       "enterprise/packages/*/*",
       "packages/notification-center-angular/projects/*",
       "providers/*"
