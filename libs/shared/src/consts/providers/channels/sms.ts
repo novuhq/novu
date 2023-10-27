@@ -18,6 +18,7 @@ import {
   termiiConfig,
   africasTalkingConfig,
   sendchampConfig,
+  genericSmsConfig,
   clickSendConfig,
   bandwidthConfig,
 } from '../credentials';
@@ -180,6 +181,14 @@ export const smsProviders: IProviderConfig[] = [
     credentials: sendchampConfig,
     docReference: 'https://docs.novu.co/channels-and-providers/sms/sendchamp',
     logoFileName: { light: 'sendchamp.svg', dark: 'sendchamp.svg' },
+  },
+  {
+    id: SmsProviderIdEnum.GenericSms,
+    displayName: `Generic SMS`,
+    channel: ChannelTypeEnum.SMS,
+    credentials: genericSmsConfig,
+    docReference: 'https://docs.novu.co/channels/sms/generic-sms',
+    logoFileName: { light: 'generic-sms.svg', dark: 'generic-sms.svg' },
   },
   {
     id: SmsProviderIdEnum.Clicksend,
