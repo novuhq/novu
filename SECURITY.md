@@ -54,7 +54,7 @@ If you come across a vulnerability, please inform us promptly so we can promptly
 
 3. We'll treat your report with utmost confidentiality and won't share your personal information with third parties without your consent.
 
-4. We'll be keping you updated of the progress toward fixing the issue.
+4. We'll be keeping you updated of the progress toward fixing the issue.
 
 5. We'll credit you as the discoverer of the issue (unless you request otherwise), in public disclosures of the reported issue.
 
