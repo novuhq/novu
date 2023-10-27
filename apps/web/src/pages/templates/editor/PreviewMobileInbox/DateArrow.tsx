@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { colors } from '../../../../design-system';
+import { colors } from '@novu/design-system';
 
 export const DateArrow = () => {
   return (
