@@ -2240,7 +2240,7 @@ importers:
         specifier: ^0.20.0
         version: link:../../providers/resend
       '@novu/ryver':
-        specifier: ^0.20.0-alpha.0
+        specifier: ^0.20.0
         version: link:../../providers/ryver
       '@novu/sendchamp':
         specifier: ^0.20.0
@@ -30188,7 +30188,7 @@ packages:
       object.values: 1.1.6
       prop-types: 15.8.1
       resolve: 2.0.0-next.4
-      semver: 6.3.1
+      semver: 6.3.0
       string.prototype.matchall: 4.0.8
     dev: true
 
