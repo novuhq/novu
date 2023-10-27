@@ -12,7 +12,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { ROUTES } from '../../../constants/routes.enum';
-import { colors, NavMenu, SegmentedControl, shadows } from '../../../design-system';
+import { colors, NavMenu, SegmentedControl, shadows } from '@novu/design-system';
 import {
   Activity,
   Bolt,
@@ -24,7 +24,7 @@ import {
   Repeat,
   Settings,
   Team,
-} from '../../../design-system/icons';
+} from '@novu/design-system';
 import { useEnvController, useIsMultiTenancyEnabled } from '../../../hooks';
 import { currentOnboardingStep } from '../../../pages/quick-start/components/route/store';
 import { useSpotlightContext } from '../../providers/SpotlightProvider';

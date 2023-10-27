@@ -31,7 +31,7 @@ export class RunJob {
       environmentId: command.environmentId,
     });
 
-    const job = await this.jobRepository.findById(command.jobId);
+    const job = await this.jobRepository.findOne({ _id: command.jobId, _environmentId: command.environmentId });
     if (!job) throw new PlatformException(`Job with id ${command.jobId} not found`);
 
     try {
@@ -84,6 +84,8 @@ export class RunJob {
           job,
         })
       );
+
+      await this.jobRepository.updateStatus(job._environmentId, job._id, JobStatusEnum.COMPLETED);
     } catch (error: any) {
       Logger.error({ error }, `Running job ${job._id} has thrown an error`, LOG_CONTEXT);
       if (job.step.shouldStopOnFail || this.shouldBackoff(error)) {

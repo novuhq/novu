@@ -22,7 +22,7 @@ describe('Create Environment - /environments (POST)', async () => {
     expect(body.data.name).to.eq(demoEnvironment.name);
     expect(body.data._organizationId).to.eq(session.organization._id);
     expect(body.data.identifier).to.be.ok;
-    const dbApp = await environmentRepository.findById(body.data._id);
+    const dbApp = await environmentRepository.findOne({ _id: body.data._id });
 
     expect(dbApp.apiKeys.length).to.equal(1);
     expect(dbApp.apiKeys[0].key).to.be.ok;

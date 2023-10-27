@@ -77,6 +77,8 @@ jobs:
       - uses: ./.github/actions/start-localstack
 
       - uses: ./.github/actions/run-worker
+        with:
+          launch_darkly_sdk_key: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
 
         # Runs a single command using the runners shell
       - name: Build API
@@ -84,6 +86,8 @@ jobs:
 
 
       - name: Run E2E tests
+        env:
+          LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
         run: |
           cd apps/api && pnpm test:e2e
 
