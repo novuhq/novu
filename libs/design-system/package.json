@@ -3,6 +3,7 @@
   "version": "0.20.0",
   "repository": "https://github.com/novuhq/novu",
   "description": "",
+  "private": true,
   "scripts": {
     "start": "npm run build:watch",
     "prebuild": "rimraf dist",
