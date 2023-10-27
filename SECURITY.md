@@ -2,8 +2,6 @@
 
 **Contact:** security@novu.co
 
-Based on [https://supabase.com/.well-known/security.txt](https://supabase.com/.well-known/security.txt)
-
 Safeguarding our Novu systems is a top concern for us. Nevertheless, despite our best efforts to fortify them, vulnerabilities may still be present.
 
 If you come across a vulnerability, please inform us promptly so we can promptly resolve it. We kindly request your assistance in enhancing the security of both our clients and our systems.
