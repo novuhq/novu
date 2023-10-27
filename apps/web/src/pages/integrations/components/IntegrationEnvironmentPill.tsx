@@ -2,7 +2,7 @@ import styled from '@emotion/styled';
 import { Skeleton } from '@mantine/core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
-import { colors } from '../../../design-system';
+import { colors } from '@novu/design-system';
 
 const SkeletonPill = styled(Skeleton)`
   width: 120px;

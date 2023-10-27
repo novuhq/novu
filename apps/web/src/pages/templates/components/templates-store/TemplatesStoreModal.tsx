@@ -4,8 +4,7 @@ import { ActionIcon, Modal, useMantineTheme } from '@mantine/core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useNavigate } from 'react-router-dom';
 
-import { Button, colors, shadows } from '../../../../design-system';
-import { Close } from '../../../../design-system/icons';
+import { Button, colors, shadows, Close } from '@novu/design-system';
 import {
   CanvasHolder,
   GroupName,

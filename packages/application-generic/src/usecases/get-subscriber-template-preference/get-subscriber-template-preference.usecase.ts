@@ -47,6 +47,7 @@ export class GetSubscriberTemplatePreference {
     if (!subscriber) {
       throw new ApiException(`Subscriber ${command.subscriberId} not found`);
     }
+
     const initialActiveChannels = await this.getActiveChannels(command);
     const subscriberPreference =
       await this.subscriberPreferenceRepository.findOne({
@@ -253,6 +254,7 @@ function mapTemplateConfiguration(
     name: template.name,
     tags: template?.tags || [],
     critical: template.critical != null ? template.critical : true,
+    triggers: template.triggers,
     ...(template.data ? { data: template.data } : {}),
   };
 }

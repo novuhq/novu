@@ -3,7 +3,14 @@ import * as sinon from 'sinon';
 
 import { UserSession } from '@novu/testing';
 import { NotificationTemplateRepository, EnvironmentRepository } from '@novu/dal';
-import { EmailBlockTypeEnum, FilterPartTypeEnum, INotificationTemplate, StepTypeEnum } from '@novu/shared';
+import {
+  EmailBlockTypeEnum,
+  FieldLogicalOperatorEnum,
+  FieldOperatorEnum,
+  FilterPartTypeEnum,
+  INotificationTemplate,
+  StepTypeEnum,
+} from '@novu/shared';
 import {
   buildGroupedBlueprintsKey,
   CacheService,
@@ -177,13 +184,13 @@ export async function createTemplateFromBlueprint({
           {
             isNegated: false,
             type: 'GROUP',
-            value: 'AND',
+            value: FieldLogicalOperatorEnum.AND,
             children: [
               {
                 on: FilterPartTypeEnum.SUBSCRIBER,
                 field: 'firstName',
                 value: 'test value',
-                operator: 'EQUAL',
+                operator: FieldOperatorEnum.EQUAL,
               },
             ],
           },
