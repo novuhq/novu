@@ -414,10 +414,6 @@ importers:
       uuid:
         specifier: ^8.3.2
         version: 8.3.2
-    optionalDependencies:
-      '@novu/ee-auth':
-        specifier: ^0.19.0
-        version: link:../../enterprise/packages/auth
     devDependencies:
       '@faker-js/faker':
         specifier: ^6.0.0
@@ -1623,6 +1619,46 @@ importers:
         specifier: 4.9.5
         version: 4.9.5
 
+  enterprise/packages/libs/dal:
+    dependencies:
+      '@nestjs/common':
+        specifier: '>=9.3.x'
+        version: 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
+      '@novu/dal':
+        specifier: ^0.20.0
+        version: link:../../../../libs/dal
+      '@novu/shared':
+        specifier: ^0.20.0
+        version: link:../../../../libs/shared
+      mongoose:
+        specifier: ^7.5.0
+        version: 7.5.2
+      mongoose-delete:
+        specifier: ^1.0.1
+        version: 1.0.1(mongoose@7.5.2)
+      rimraf:
+        specifier: ^3.0.2
+        version: 3.0.2
+    devDependencies:
+      '@types/node':
+        specifier: ^14.6.0
+        version: 14.18.42
+      '@typescript-eslint/parser':
+        specifier: ^4.14.2
+        version: 4.33.0(eslint@7.32.0)(typescript@4.9.5)
+      eslint-plugin-prettier:
+        specifier: ^4.2.1
+        version: 4.2.1(eslint-config-prettier@8.8.0)(eslint@7.32.0)(prettier@2.8.7)
+      ts-node:
+        specifier: ~10.9.1
+        version: 10.9.1(@types/node@14.18.42)(typescript@4.9.5)
+      tsconfig-paths:
+        specifier: ~4.1.0
+        version: 4.1.2
+      typescript:
+        specifier: 4.9.5
+        version: 4.9.5
+
   libs/dal:
     dependencies:
       '@aws-sdk/client-s3':
@@ -2204,7 +2240,7 @@ importers:
         specifier: ^0.20.0
         version: link:../../providers/resend
       '@novu/ryver':
-        specifier: ^0.20.0-alpha.0
+        specifier: ^0.20.0
         version: link:../../providers/ryver
       '@novu/sendchamp':
         specifier: ^0.20.0
@@ -25334,7 +25370,7 @@ packages:
       '@babel/core': 7.23.2
       '@jest/transform': 27.5.1
       '@jest/types': 27.5.1
-      '@types/babel__core': 7.20.3
+      '@types/babel__core': 7.20.0
       babel-plugin-istanbul: 6.1.1
       babel-preset-jest: 27.5.1(@babel/core@7.23.2)
       chalk: 4.1.2
@@ -30052,6 +30088,23 @@ packages:
       semver: 6.3.1
     dev: true
 
+  /eslint-plugin-prettier@4.2.1(eslint-config-prettier@8.8.0)(eslint@7.32.0)(prettier@2.8.7):
+    resolution: {integrity: sha512-f/0rXLXUt0oFYs8ra4w49wYZBG5GKZpAYsJSm6rnYL5uVDjd+zowwMwVZHnAjf4edNrKpCDYfXDgmRE/Ak7QyQ==}
+    engines: {node: '>=12.0.0'}
+    peerDependencies:
+      eslint: '>=7.28.0'
+      eslint-config-prettier: '*'
+      prettier: '>=2.0.0'
+    peerDependenciesMeta:
+      eslint-config-prettier:
+        optional: true
+    dependencies:
+      eslint: 7.32.0
+      eslint-config-prettier: 8.8.0(eslint@8.38.0)
+      prettier: 2.8.7
+      prettier-linter-helpers: 1.0.0
+    dev: true
+
   /eslint-plugin-prettier@4.2.1(eslint-config-prettier@8.8.0)(eslint@8.38.0)(prettier@2.8.7):
     resolution: {integrity: sha512-f/0rXLXUt0oFYs8ra4w49wYZBG5GKZpAYsJSm6rnYL5uVDjd+zowwMwVZHnAjf4edNrKpCDYfXDgmRE/Ak7QyQ==}
     engines: {node: '>=12.0.0'}
@@ -30135,7 +30188,7 @@ packages:
       object.values: 1.1.6
       prop-types: 15.8.1
       resolve: 2.0.0-next.4
-      semver: 6.3.1
+      semver: 6.3.0
       string.prototype.matchall: 4.0.8
     dev: true
 
@@ -44027,11 +44080,11 @@ packages:
     peerDependencies:
       rollup: ^2.0.0
     dependencies:
-      '@babel/code-frame': 7.22.13
+      '@babel/code-frame': 7.21.4
       jest-worker: 26.6.2
       rollup: 2.79.1
       serialize-javascript: 4.0.0
-      terser: 5.19.3
+      terser: 5.16.9
     dev: true
 
   /rollup-plugin-terser@7.0.2(rollup@3.20.2):
