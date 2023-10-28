@@ -98,6 +98,7 @@
     "@novu/telnyx": "^0.21.0",
     "@novu/termii": "^0.21.0",
     "@novu/testing": "^0.21.0",
+    "@novu/messagebird": "^0.16.3",
     "@novu/twilio": "^0.21.0",
     "@sentry/node": "^7.12.1",
     "analytics-node": "^6.2.0",

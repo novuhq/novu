@@ -21,6 +21,7 @@ import {
   genericSmsConfig,
   clickSendConfig,
   bandwidthConfig,
+  messagebirdConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -75,6 +76,14 @@ export const smsProviders: IProviderConfig[] = [
     credentials: telnyxConfig,
     docReference: 'https://docs.novu.co/channels-and-providers/sms/telnyx',
     logoFileName: { light: 'telnyx.png', dark: 'telnyx.png' },
+  },
+  {
+    id: SmsProviderIdEnum.MessageBird,
+    displayName: 'MessageBird',
+    channel: ChannelTypeEnum.SMS,
+    credentials: messagebirdConfig,
+    docReference: 'https://developers.messagebird.com/quickstarts/sms-overview/',
+    logoFileName: { light: 'messagebird.png', dark: 'messagebird.png' },
   },
   {
     id: SmsProviderIdEnum.Twilio,

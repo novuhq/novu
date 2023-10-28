@@ -2170,6 +2170,9 @@ importers:
       '@novu/mattermost':
         specifier: ^0.21.0
         version: link:../../providers/mattermost
+      '@novu/messagebird':
+        specifier: ^0.16.3
+        version: link:../../providers/messagebird
       '@novu/ms-teams':
         specifier: ^0.21.0
         version: link:../../providers/ms-teams
@@ -4266,6 +4269,49 @@ importers:
       ts-jest:
         specifier: ~27.1.5
         version: 27.1.5(@babel/core@7.23.2)(@types/jest@29.5.1)(jest@27.5.1)(typescript@4.9.5)
+      ts-node:
+        specifier: ~10.9.1
+        version: 10.9.1(@types/node@14.18.42)(typescript@4.9.5)
+      typescript:
+        specifier: 4.9.5
+        version: 4.9.5
+
+  providers/messagebird:
+    dependencies:
+      '@novu/stateless':
+        specifier: 0.16.3
+        version: 0.16.3
+      messagebird:
+        specifier: ^4.0.1
+        version: 4.0.1
+    devDependencies:
+      '@istanbuljs/nyc-config-typescript':
+        specifier: ~1.0.1
+        version: 1.0.2(nyc@15.1.0)
+      '@types/jest':
+        specifier: ~27.5.2
+        version: 27.5.2
+      cspell:
+        specifier: ~6.19.2
+        version: 6.19.2
+      jest:
+        specifier: ~27.5.1
+        version: 27.5.1(ts-node@10.9.1)
+      npm-run-all:
+        specifier: ^4.1.5
+        version: 4.1.5
+      nyc:
+        specifier: ~15.1.0
+        version: 15.1.0
+      prettier:
+        specifier: ~2.8.0
+        version: 2.8.7
+      rimraf:
+        specifier: ~3.0.2
+        version: 3.0.2
+      ts-jest:
+        specifier: ~27.1.5
+        version: 27.1.5(@babel/core@7.23.2)(@types/jest@27.5.2)(jest@27.5.1)(typescript@4.9.5)
       ts-node:
         specifier: ~10.9.1
         version: 10.9.1(@types/node@14.18.42)(typescript@4.9.5)
@@ -10174,7 +10220,7 @@ packages:
       '@babel/helper-function-name': 7.22.5
       '@babel/helper-hoist-variables': 7.22.5
       '@babel/helper-split-export-declaration': 7.22.6
-      '@babel/parser': 7.22.16
+      '@babel/parser': 7.23.0
       '@babel/types': 7.23.0
       debug: 4.3.4(supports-color@8.1.1)
       globals: 11.12.0
@@ -23660,7 +23706,7 @@ packages:
   /@vue/compiler-core@3.2.47:
     resolution: {integrity: sha512-p4D7FDnQb7+YJmO2iPEv0SQNeNzcbHdGByJDsT4lynf63AFkOTFN07HsiRSvjGo0QrxR/o3d0hUyNCUnBU2Tig==}
     dependencies:
-      '@babel/parser': 7.22.16
+      '@babel/parser': 7.23.0
       '@vue/shared': 3.2.47
       estree-walker: 2.0.2
       source-map: 0.6.1
@@ -30022,7 +30068,7 @@ packages:
     peerDependencies:
       eslint: ^3 || ^4 || ^5 || ^6 || ^7 || ^8
     dependencies:
-      '@babel/runtime': 7.23.2
+      '@babel/runtime': 7.21.0
       aria-query: 5.1.3
       array-includes: 3.1.6
       array.prototype.flatmap: 1.3.1
@@ -30124,7 +30170,7 @@ packages:
       object.values: 1.1.6
       prop-types: 15.8.1
       resolve: 2.0.0-next.4
-      semver: 6.3.1
+      semver: 6.3.0
       string.prototype.matchall: 4.0.8
     dev: true
 
@@ -37289,6 +37335,15 @@ packages:
   /merge@2.1.1:
     resolution: {integrity: sha512-jz+Cfrg9GWOZbQAnDQ4hlVnQky+341Yk5ru8bZSe6sIDTCIg8n9i/u7hSQGSVOF3C7lH6mGtqjkiT9G4wFLL0w==}
     dev: true
+
+  /messagebird@4.0.1:
+    resolution: {integrity: sha512-Abn0aoH1Dzsq5KMeI3LNanVETwu4+HvNXZrhWRGzRIJ9ea88sefsVfy98Qj4NDmxGuXLFmT8Lhgw1kStzu7F0g==}
+    engines: {node: '>=10.0.0'}
+    dependencies:
+      jose: 4.13.1
+      safe-buffer: 5.2.1
+      scmp: 2.1.0
+    dev: false
 
   /methods@1.1.2:
     resolution: {integrity: sha512-iclAHeNqNm68zFtnZ0e+1L2yUIdvzNoauKU4WBA3VvH/vPFieF7qfRlwUZU+DA9P9bPXIS90ulxoUoCH23sV2w==}
