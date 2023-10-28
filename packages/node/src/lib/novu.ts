@@ -13,6 +13,7 @@ import { Topics } from './topics/topics';
 import { Integrations } from './integrations/integrations';
 import { Messages } from './messages/messages';
 import { Tenants } from './tenants/tenants';
+import { version } from '../../package.json';
 
 export class Novu extends EventEmitter {
   private readonly apiKey?: string;
@@ -38,6 +39,7 @@ export class Novu extends EventEmitter {
       baseURL: this.buildBackendUrl(config),
       headers: {
         Authorization: `ApiKey ${this.apiKey}`,
+        'User-Agent': `novu/node@${version}`,
       },
     });
 
