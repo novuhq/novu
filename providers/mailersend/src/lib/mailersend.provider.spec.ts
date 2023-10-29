@@ -15,6 +15,10 @@ const mockNovuMessage = {
   attachments: [
     { mime: 'text/plain', file: Buffer.from('dGVzdA=='), name: 'test.txt' },
   ],
+  customData: {
+    templateId: 'template-id',
+    personalization: [{ email: 'test@test1.com', data: { name: 'test1' } }],
+  },
 };
 
 test('should trigger mailerSend with expected parameters', async () => {
@@ -42,6 +46,7 @@ test('should trigger mailerSend with expected parameters', async () => {
         name: 'test.txt',
       },
     ],
+    customData: mockNovuMessage.customData,
   });
 });
 
@@ -80,9 +85,9 @@ test('should trigger mailerSend correctly', async () => {
       subject: mockNovuMessage.subject,
       text: mockNovuMessage.text,
       html: mockNovuMessage.html,
-      template_id: undefined,
+      template_id: mockNovuMessage.customData.templateId,
       variables: undefined,
-      personalization: undefined,
+      personalization: mockNovuMessage.customData.personalization,
       tags: undefined,
     },
   });

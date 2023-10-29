@@ -1563,6 +1563,11 @@ web:
   ##
   port: 4200
 
+  env:
+    ## @param web.env.NODE_ENV The environment of the app.
+    ##
+    NODE_ENV: production
+
   ## @param web.apiExternalEndpoint The external endpoint of the API
   ##
   apiExternalEndpoint: http://localhost:3000

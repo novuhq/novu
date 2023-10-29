@@ -220,6 +220,7 @@
     "plivo",
     "Plivo",
     "prettierignore",
+    "Pushpad",
     "Pushwoosh",
     "sandboxed",
     "sendgrid",
@@ -513,7 +514,13 @@
     "Clicksend",
     "Kamil",
     "Myśliwiec",
-    "nestframework"
+    "nestframework",
+    "ryver",
+    "idempotency", 
+    "IDEMPOTENCY", 
+    "Idempotency",
+    "messagebird",
+    "Datetime"
   ],
   "flagWords": [],
   "patterns": [

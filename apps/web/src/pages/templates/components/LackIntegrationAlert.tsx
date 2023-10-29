@@ -5,10 +5,9 @@ import styled from '@emotion/styled';
 import { ChannelTypeEnum } from '@novu/shared';
 
 import { colors, Text, ErrorIcon, WarningIcon, CircleArrowRight } from '@novu/design-system';
-import { IntegrationsStoreModal } from '../../integrations/IntegrationsStoreModal';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { stepNames, TemplateEditorAnalyticsEnum } from '../constants';
-import { useEnvController, useIsMultiProviderConfigurationEnabled } from '../../../hooks';
+import { useEnvController } from '../../../hooks';
 import { IntegrationsListModal } from '../../integrations/IntegrationsListModal';
 import { Group } from '@mantine/core';
 import { useSelectPrimaryIntegrationModal } from '../../integrations/components/multi-provider/useSelectPrimaryIntegrationModal';
@@ -29,7 +28,6 @@ export function LackIntegrationAlert({
   const segment = useSegment();
   const { environment } = useEnvController();
   const [isIntegrationsModalOpened, openIntegrationsModal] = useState(false);
-  const isMultiProviderConfigurationEnabled = useIsMultiProviderConfigurationEnabled();
   const { openModal: openSelectPrimaryIntegrationModal, SelectPrimaryIntegrationModal } =
     useSelectPrimaryIntegrationModal();
 
@@ -64,19 +62,11 @@ export function LackIntegrationAlert({
           <CircleArrowRight color={alertTypeToDoubleArrowColor(type)} />
         </Group>
       </WarningMessage>
-      {isMultiProviderConfigurationEnabled ? (
-        <IntegrationsListModal
-          isOpen={isIntegrationsModalOpened}
-          onClose={onIntegrationModalClose}
-          scrollTo={channelType}
-        />
-      ) : (
-        <IntegrationsStoreModal
-          openIntegration={isIntegrationsModalOpened}
-          closeIntegration={onIntegrationModalClose}
-          scrollTo={channelType}
-        />
-      )}
+      <IntegrationsListModal
+        isOpen={isIntegrationsModalOpened}
+        onClose={onIntegrationModalClose}
+        scrollTo={channelType}
+      />
       <SelectPrimaryIntegrationModal />
     </>
   );
