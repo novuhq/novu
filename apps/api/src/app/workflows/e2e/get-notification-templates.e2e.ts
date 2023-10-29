@@ -1,7 +1,14 @@
 import { expect } from 'chai';
 import { NotificationTemplateEntity } from '@novu/dal';
 import { UserSession, NotificationTemplateService } from '@novu/testing';
-import { ChannelCTATypeEnum, FilterPartTypeEnum, StepTypeEnum, TemplateVariableTypeEnum } from '@novu/shared';
+import {
+  ChannelCTATypeEnum,
+  FieldLogicalOperatorEnum,
+  FieldOperatorEnum,
+  FilterPartTypeEnum,
+  StepTypeEnum,
+  TemplateVariableTypeEnum,
+} from '@novu/shared';
 
 describe('Get workflows - /workflows (GET)', async () => {
   let session: UserSession;
@@ -49,10 +56,10 @@ describe('Get workflows - /workflows (GET)', async () => {
                 active: true,
                 filters: [
                   {
-                    value: 'OR',
+                    value: FieldLogicalOperatorEnum.OR,
                     children: [
                       {
-                        operator: 'EQUAL',
+                        operator: FieldOperatorEnum.EQUAL,
                         on: FilterPartTypeEnum.PAYLOAD,
                         field: 'ef',
                         value: 'dsf',
