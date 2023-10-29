@@ -2097,13 +2097,13 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
                   {
                     isNegated: false,
                     type: 'GROUP',
-                    value: 'AND',
+                    value: FieldLogicalOperatorEnum.AND,
                     children: [
                       {
                         on: FilterPartTypeEnum.TENANT,
                         field: 'name',
                         value: 'Titans',
-                        operator: 'EQUAL',
+                        operator: FieldOperatorEnum.EQUAL,
                       },
                     ],
                   },
@@ -2120,13 +2120,13 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
                   {
                     isNegated: false,
                     type: 'GROUP',
-                    value: 'AND',
+                    value: FieldLogicalOperatorEnum.AND,
                     children: [
                       {
                         on: FilterPartTypeEnum.TENANT,
                         field: 'name',
                         value: 'The one and only tenant',
-                        operator: 'EQUAL',
+                        operator: FieldOperatorEnum.EQUAL,
                       },
                     ],
                   },

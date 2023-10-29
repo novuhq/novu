@@ -107,13 +107,13 @@ describe('Create Workflow - /workflows (POST)', async () => {
                 {
                   isNegated: false,
                   type: 'GROUP',
-                  value: 'AND',
+                  value: FieldLogicalOperatorEnum.AND,
                   children: [
                     {
                       on: FilterPartTypeEnum.TENANT,
                       field: 'name',
                       value: 'Titans',
-                      operator: 'EQUAL',
+                      operator: FieldOperatorEnum.EQUAL,
                     },
                   ],
                 },
