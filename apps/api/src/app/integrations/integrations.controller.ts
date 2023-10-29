@@ -60,7 +60,7 @@ export class IntegrationsController {
 
   @Get('/')
   @ApiOkResponse({
-    type: IntegrationResponseDto,
+    type: [IntegrationResponseDto],
     description: 'The list of integrations belonging to the organization that are successfully returned.',
   })
   @ApiOperation({
@@ -81,7 +81,7 @@ export class IntegrationsController {
 
   @Get('/active')
   @ApiOkResponse({
-    type: IntegrationResponseDto,
+    type: [IntegrationResponseDto],
     description: 'The list of active integrations belonging to the organization that are successfully returned.',
   })
   @ApiOperation({
