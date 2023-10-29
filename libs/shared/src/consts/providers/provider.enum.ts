@@ -89,6 +89,7 @@ export enum ChatProviderIdEnum {
   MsTeams = 'msteams',
   Mattermost = 'mattermost',
   Ryver = 'ryver',
+  GetStream = 'getstream',
 }
 
 export enum PushProviderIdEnum {

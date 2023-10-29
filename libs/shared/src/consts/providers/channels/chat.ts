@@ -45,4 +45,12 @@ export const chatProviders: IProviderConfig[] = [
     docReference: 'https://api.ryver.com/ryvrest_api_examples.html#create-chat-message',
     logoFileName: { light: 'ryver.png', dark: 'ryver.png' },
   },
+  {
+    id: ChatProviderIdEnum.GetStream,
+    displayName: 'GetStream',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: [] as IConfigCredentials[],
+    docReference: 'https://getstream.io/chat/docs/node/?language=javascript',
+    logoFileName: { light: 'getstream.svg', dark: 'getstream.svg' },
+  },
 ];

@@ -63,6 +63,7 @@
     "@novu/forty-six-elks": "^0.21.0",
     "@novu/generic-sms": "^0.21.0",
     "@novu/gupshup": "^0.21.0",
+    "@novu/getstream": "^0.16.3",
     "@novu/infobip": "^0.21.0",
     "@novu/kannel": "^0.21.0",
     "@novu/mailersend": "^0.21.0",
