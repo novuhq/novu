@@ -30,7 +30,7 @@ The ultimate service for managing multi-channel notifications with a single API.
     ·
     <a href="https://github.com/orgs/novuhq/projects/2">Roadmap</a>
     ·
-    <a href="https://twitter.com/novuhq">Twitter</a>
+    <a href="https://twitter.com/novuhq">X</a>
   </p>
   
 ## ⭐️ Why

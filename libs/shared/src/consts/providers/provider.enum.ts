@@ -27,6 +27,13 @@ export enum CredentialsKeyEnum {
   RedirectUrl = 'redirectUrl',
   Hmac = 'hmac',
   IpPoolName = 'ipPoolName',
+  ApiKeyRequestHeader = 'apiKeyRequestHeader',
+  SecretKeyRequestHeader = 'secretKeyRequestHeader',
+  IdPath = 'idPath',
+  DatePath = 'datePath',
+  AuthenticateByToken = 'authenticateByToken',
+  AuthenticationTokenKey = 'authenticationTokenKey',
+  AccessKey = 'accessKey',
 }
 
 export enum EmailProviderIdEnum {
@@ -72,8 +79,10 @@ export enum SmsProviderIdEnum {
   AfricasTalking = 'africas-talking',
   Novu = 'novu-sms',
   Sendchamp = 'sendchamp',
+  GenericSms = 'generic-sms',
   Clicksend = 'clicksend',
   Bandwidth = 'bandwidth',
+  MessageBird = 'messagebird',
 }
 
 export enum ChatProviderIdEnum {

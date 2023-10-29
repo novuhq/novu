@@ -18,8 +18,10 @@ import {
   termiiConfig,
   africasTalkingConfig,
   sendchampConfig,
+  genericSmsConfig,
   clickSendConfig,
   bandwidthConfig,
+  messagebirdConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -74,6 +76,14 @@ export const smsProviders: IProviderConfig[] = [
     credentials: telnyxConfig,
     docReference: 'https://docs.novu.co/channels-and-providers/sms/telnyx',
     logoFileName: { light: 'telnyx.png', dark: 'telnyx.png' },
+  },
+  {
+    id: SmsProviderIdEnum.MessageBird,
+    displayName: 'MessageBird',
+    channel: ChannelTypeEnum.SMS,
+    credentials: messagebirdConfig,
+    docReference: 'https://developers.messagebird.com/quickstarts/sms-overview/',
+    logoFileName: { light: 'messagebird.png', dark: 'messagebird.png' },
   },
   {
     id: SmsProviderIdEnum.Twilio,
@@ -180,6 +190,14 @@ export const smsProviders: IProviderConfig[] = [
     credentials: sendchampConfig,
     docReference: 'https://docs.novu.co/channels-and-providers/sms/sendchamp',
     logoFileName: { light: 'sendchamp.svg', dark: 'sendchamp.svg' },
+  },
+  {
+    id: SmsProviderIdEnum.GenericSms,
+    displayName: `Generic SMS`,
+    channel: ChannelTypeEnum.SMS,
+    credentials: genericSmsConfig,
+    docReference: 'https://docs.novu.co/channels/sms/generic-sms',
+    logoFileName: { light: 'generic-sms.svg', dark: 'generic-sms.svg' },
   },
   {
     id: SmsProviderIdEnum.Clicksend,
