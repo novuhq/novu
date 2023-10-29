@@ -18,8 +18,11 @@ import {
   termiiConfig,
   africasTalkingConfig,
   sendchampConfig,
+  genericSmsConfig,
   clickSendConfig,
   simpleTextingConfig,
+  bandwidthConfig,
+  messagebirdConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -74,6 +77,14 @@ export const smsProviders: IProviderConfig[] = [
     credentials: telnyxConfig,
     docReference: 'https://docs.novu.co/channels-and-providers/sms/telnyx',
     logoFileName: { light: 'telnyx.png', dark: 'telnyx.png' },
+  },
+  {
+    id: SmsProviderIdEnum.MessageBird,
+    displayName: 'MessageBird',
+    channel: ChannelTypeEnum.SMS,
+    credentials: messagebirdConfig,
+    docReference: 'https://developers.messagebird.com/quickstarts/sms-overview/',
+    logoFileName: { light: 'messagebird.png', dark: 'messagebird.png' },
   },
   {
     id: SmsProviderIdEnum.Twilio,
@@ -182,6 +193,14 @@ export const smsProviders: IProviderConfig[] = [
     logoFileName: { light: 'sendchamp.svg', dark: 'sendchamp.svg' },
   },
   {
+    id: SmsProviderIdEnum.GenericSms,
+    displayName: `Generic SMS`,
+    channel: ChannelTypeEnum.SMS,
+    credentials: genericSmsConfig,
+    docReference: 'https://docs.novu.co/channels/sms/generic-sms',
+    logoFileName: { light: 'generic-sms.svg', dark: 'generic-sms.svg' },
+  },
+  {
     id: SmsProviderIdEnum.Clicksend,
     displayName: `Clicksend`,
     channel: ChannelTypeEnum.SMS,
@@ -196,5 +215,14 @@ export const smsProviders: IProviderConfig[] = [
     credentials: simpleTextingConfig,
     docReference: 'https://simpletexting.com/api/docs/v2/',
     logoFileName: { light: 'simpletexting.png', dark: 'simpletexting.png' },
+  },
+  {
+    id: SmsProviderIdEnum.Bandwidth,
+    displayName: `Bandwidth`,
+    channel: ChannelTypeEnum.SMS,
+    credentials: bandwidthConfig,
+    betaVersion: true,
+    docReference: 'https://dev.bandwidth.com/docs/messaging/createMessage',
+    logoFileName: { light: 'bandwidth.png', dark: 'bandwidth.png' },
   },
 ];

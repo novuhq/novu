@@ -50,7 +50,9 @@ export class MailersendEmailProvider implements IEmailProvider {
       .setSubject(options.subject)
       .setHtml(options.html)
       .setText(options.text)
-      .setAttachments(attachments);
+      .setAttachments(attachments)
+      .setPersonalization(options.customData.personalization)
+      .setTemplateId(options.customData.templateId);
 
     if (options.cc && Array.isArray(options.cc)) {
       emailParams.setCc(options.cc.map((ccItem) => new Recipient(ccItem)));
