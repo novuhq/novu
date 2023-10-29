@@ -220,6 +220,7 @@
     "plivo",
     "Plivo",
     "prettierignore",
+    "Pushpad",
     "Pushwoosh",
     "sandboxed",
     "sendgrid",
@@ -508,7 +509,18 @@
     "autodocs",
     "stackalt",
     "mediumdark",
-    "Docgen"
+    "Docgen",
+    "clicksend",
+    "Clicksend",
+    "Kamil",
+    "Myśliwiec",
+    "nestframework",
+    "ryver",
+    "idempotency", 
+    "IDEMPOTENCY", 
+    "Idempotency",
+    "messagebird",
+    "Datetime"
   ],
   "flagWords": [],
   "patterns": [

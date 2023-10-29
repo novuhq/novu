@@ -98,7 +98,7 @@ export class CompletedJobsMetricService {
             const failNumber = metrics.failed.count;
 
             Logger.verbose('active length', process.env.NEW_RELIC_LICENSE_KEY.length);
-            Logger.log('Recording active, waiting, and delayed metrics');
+            Logger.verbose('Recording active, waiting, and delayed metrics');
 
             const nr = require('newrelic');
             nr.recordMetric(`Queue/${deploymentName}/${queueService.topic}/completed`, completeNumber);
@@ -121,8 +121,12 @@ export class CompletedJobsMetricService {
   public async gracefulShutdown(): Promise<void> {
     Logger.log('Shutting the Completed Jobs Metric service down', LOG_CONTEXT);
 
-    await this.completedJobsMetricQueueService.gracefulShutdown();
-    await this.completedJobsMetricWorkerService.gracefulShutdown();
+    if (this.completedJobsMetricQueueService) {
+      await this.completedJobsMetricQueueService.gracefulShutdown();
+    }
+    if (this.completedJobsMetricWorkerService) {
+      await this.completedJobsMetricWorkerService.gracefulShutdown();
+    }
 
     Logger.log('Shutting down the Completed Jobs Metric service has finished', LOG_CONTEXT);
   }

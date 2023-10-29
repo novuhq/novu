@@ -12,7 +12,7 @@ export class RegenerateApiKeys {
   ) {}
 
   async execute(command: GetApiKeysCommand): Promise<IApiKey[]> {
-    const environment = await this.environmentRepository.findById(command.environmentId);
+    const environment = await this.environmentRepository.findOne({ _id: command.environmentId });
 
     if (!environment) {
       throw new ApiException(`Environment id: ${command.environmentId} not found`);

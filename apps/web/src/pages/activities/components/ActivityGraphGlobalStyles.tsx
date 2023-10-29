@@ -1,5 +1,5 @@
 import { css, Global } from '@emotion/react';
-import { colors } from '../../../design-system';
+import { colors } from '@novu/design-system';
 
 export function ActivityGraphGlobalStyles({ isTriggerSent, isDark }: { isTriggerSent: boolean; isDark: boolean }) {
   return <Global styles={chartStyles(isTriggerSent, isDark)} />;

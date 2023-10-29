@@ -3,7 +3,7 @@ import { Controller, useWatch } from 'react-hook-form';
 import { Code, Space, Table } from '@mantine/core';
 import styled from '@emotion/styled';
 
-import { colors, Input, Switch, Text } from '../../../design-system';
+import { colors, Input, Switch, Text } from '@novu/design-system';
 import { When } from '../../../components/utils/When';
 import { useEnvController } from '../../../hooks';
 
