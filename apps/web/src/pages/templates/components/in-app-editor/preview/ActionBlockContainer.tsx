@@ -8,9 +8,8 @@ import {
   MessageActionStatusEnum,
 } from '@novu/shared';
 import { ColorScheme, TextInput, useMantineColorScheme, useMantineTheme } from '@mantine/core';
-import { RemoveCircle } from '../../../../../design-system/icons/general/RemoveCircle';
+import { RemoveCircle, Button, colors } from '@novu/design-system';
 import styled from '@emotion/styled';
-import { Button, colors } from '../../../../../design-system';
 import { When } from '../../../../../components/utils/When';
 
 export function ActionBlockContainer({

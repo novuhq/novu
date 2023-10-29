@@ -8,8 +8,19 @@ import { useClipboard } from '@mantine/hooks';
 
 import { getTemplateVariables, ITemplateVariable, isReservedVariableName, LayoutId } from '@novu/shared';
 
-import { ArrowLeft, Check, Copy } from '../../../design-system/icons';
-import { Button, Checkbox, colors, Input, Text, LoadingOverlay, shadows, Tooltip } from '../../../design-system';
+import {
+  ArrowLeft,
+  Check,
+  Copy,
+  Button,
+  Checkbox,
+  colors,
+  Input,
+  Text,
+  LoadingOverlay,
+  shadows,
+  Tooltip,
+} from '@novu/design-system';
 import { useEnvController, useLayoutsEditor, usePrompt } from '../../../hooks';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { QueryKeys } from '../../../api/query.keys';

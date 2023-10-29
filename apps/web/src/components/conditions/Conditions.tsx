@@ -1,12 +1,26 @@
 import { Grid, Group, ActionIcon, Center, useMantineTheme } from '@mantine/core';
 import styled from '@emotion/styled';
 import { Control, Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
+import { FilterPartTypeEnum, IFieldFilterPart, FieldLogicalOperatorEnum, FieldOperatorEnum } from '@novu/shared';
+import {
+  Button,
+  colors,
+  Dropdown,
+  Input,
+  Select,
+  Sidebar,
+  Text,
+  Title,
+  Tooltip,
+  ConditionPlus,
+  DotsHorizontal,
+  Duplicate,
+  Trash,
+  Condition,
+  ErrorIcon,
+  When,
+} from '@novu/design-system';
 
-import { FilterPartTypeEnum, IFieldFilterPart } from '@novu/shared';
-
-import { Button, colors, Dropdown, Input, Select, Sidebar, Text, Title, Tooltip } from '../../design-system';
-import { ConditionPlus, DotsHorizontal, Duplicate, Trash, Condition, ErrorIcon } from '../../design-system/icons';
-import { When } from '../utils/When';
 import { DataSelect, IConditions, IConditionsForm, IConditionsProps, IFilterTypeList } from './types';
 import { OnlineConditionRow } from './OnlineConditionRow';
 import { DefaultGroupOperatorData, DefaultOperatorData } from './constants';
@@ -120,6 +134,7 @@ export function Conditions({
           </Tooltip>
         </Group>
       }
+      styles={{ body: { '.sidebar-body-holder': { height: '100%' } } }}
     >
       <div>
         {fields.map((item, index) => {
@@ -132,13 +147,13 @@ export function Conditions({
               <Grid align={'center'}>
                 <Grid.Col span={'auto'}>
                   <Grid columns={21} align="center" gutter={8}>
-                    <Grid.Col span={2}>
+                    <Grid.Col span={2} miw={120}>
                       {index > 0 ? (
                         <Wrapper>
                           <Controller
                             control={control}
                             name={`conditions.0.value`}
-                            defaultValue="AND"
+                            defaultValue={FieldLogicalOperatorEnum.AND}
                             render={({ field }) => {
                               return (
                                 <Select
@@ -227,7 +242,7 @@ export function Conditions({
           variant="outline"
           onClick={() => {
             append({
-              operator: 'EQUAL',
+              operator: FieldOperatorEnum.EQUAL,
               on: defaultOnFilter,
             } as IFieldFilterPart);
           }}
@@ -286,7 +301,7 @@ function EqualityForm({
         <Controller
           control={control}
           name={`conditions.0.children.${index}.operator`}
-          defaultValue="EQUAL"
+          defaultValue={FieldOperatorEnum.EQUAL}
           render={({ field }) => {
             return (
               <Select
@@ -302,7 +317,7 @@ function EqualityForm({
       </Grid.Col>
 
       <Grid.Col span="auto">
-        {operator !== 'IS_DEFINED' && (
+        {operator !== FieldOperatorEnum.IS_DEFINED && (
           <Controller
             control={control}
             name={`conditions.0.children.${index}.value`}

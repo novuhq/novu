@@ -20,13 +20,15 @@ import { UserSession, SubscribersService } from '@novu/testing';
 import {
   ChannelTypeEnum,
   EmailBlockTypeEnum,
+  FieldLogicalOperatorEnum,
+  FieldOperatorEnum,
+  FilterPartTypeEnum,
   StepTypeEnum,
   IEmailBlock,
   ISubscribersDefine,
   TemplateVariableTypeEnum,
   EmailProviderIdEnum,
   SmsProviderIdEnum,
-  FilterPartTypeEnum,
   DigestUnitEnum,
   DelayTypeEnum,
   PreviousStepTypeEnum,
@@ -43,8 +45,6 @@ import { DetailEnum } from '@novu/application-generic';
 const axiosInstance = axios.create();
 
 const eventTriggerPath = '/v1/events/trigger';
-
-const ORIGINAL_IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
 
 const promiseTimeout = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -64,6 +64,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
 
   describe(`Trigger Event - ${eventTriggerPath} (POST)`, function () {
     beforeEach(async () => {
+      process.env.LAUNCH_DARKLY_SDK_KEY = '';
       session = new UserSession();
       await session.initialize();
       template = await session.createTemplate();
@@ -94,11 +95,11 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
               {
                 isNegated: false,
                 type: 'GROUP',
-                value: 'AND',
+                value: FieldLogicalOperatorEnum.AND,
                 children: [
                   {
                     on: FilterPartTypeEnum.PAYLOAD,
-                    operator: 'IS_DEFINED',
+                    operator: FieldOperatorEnum.IS_DEFINED,
                     field: 'exclude',
                     value: '',
                   },
@@ -174,11 +175,11 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
               {
                 isNegated: false,
                 type: 'GROUP',
-                value: 'AND',
+                value: FieldLogicalOperatorEnum.AND,
                 children: [
                   {
                     on: FilterPartTypeEnum.PAYLOAD,
-                    operator: 'IS_DEFINED',
+                    operator: FieldOperatorEnum.IS_DEFINED,
                     field: 'exclude',
                     value: '',
                   },
@@ -254,11 +255,11 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
               {
                 isNegated: false,
                 type: 'GROUP',
-                value: 'AND',
+                value: FieldLogicalOperatorEnum.AND,
                 children: [
                   {
                     on: FilterPartTypeEnum.PAYLOAD,
-                    operator: 'IS_DEFINED',
+                    operator: FieldOperatorEnum.IS_DEFINED,
                     field: 'exclude',
                     value: '',
                   },
@@ -335,11 +336,11 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
               {
                 isNegated: false,
                 type: 'GROUP',
-                value: 'AND',
+                value: FieldLogicalOperatorEnum.AND,
                 children: [
                   {
                     on: FilterPartTypeEnum.PAYLOAD,
-                    operator: 'IS_DEFINED',
+                    operator: FieldOperatorEnum.IS_DEFINED,
                     field: 'exclude',
                     value: '',
                   },
@@ -401,7 +402,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
         _environmentId: session.environment._id,
         conditions: [
           {
-            children: [{ field: 'identifier', value: 'test', operator: 'EQUAL', on: 'tenant' }],
+            children: [{ field: 'identifier', value: 'test', operator: FieldOperatorEnum.EQUAL, on: 'tenant' }],
           },
         ],
         active: true,
@@ -440,10 +441,10 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
         _environmentId: session.environment._id,
         conditions: [
           {
-            value: 'OR',
+            value: FieldLogicalOperatorEnum.OR,
             children: [
-              { field: 'identifier', value: 'test3', operator: 'EQUAL', on: 'tenant' },
-              { field: 'identifier', value: 'test2', operator: 'EQUAL', on: 'tenant' },
+              { field: 'identifier', value: 'test3', operator: FieldOperatorEnum.EQUAL, on: 'tenant' },
+              { field: 'identifier', value: 'test2', operator: FieldOperatorEnum.EQUAL, on: 'tenant' },
             ],
           },
         ],
@@ -500,7 +501,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
         _environmentId: session.environment._id,
         conditions: [
           {
-            children: [{ field: 'identifier', value: 'test1', operator: 'EQUAL', on: 'tenant' }],
+            children: [{ field: 'identifier', value: 'test1', operator: FieldOperatorEnum.EQUAL, on: 'tenant' }],
           },
         ],
         active: true,
@@ -1180,6 +1181,44 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       expect(message!.subject).to.equal('Test email a subject nested');
     });
 
+    it('should trigger E-Mail notification with actor data', async function () {
+      const newSubscriberId = SubscriberRepository.createObjectId();
+      const channelType = ChannelTypeEnum.EMAIL;
+      const actorSubscriber = await subscriberService.createSubscriber({ firstName: 'Actor' });
+
+      template = await session.createTemplate({
+        steps: [
+          {
+            name: 'Message Name',
+            subject: 'Test email',
+            type: StepTypeEnum.EMAIL,
+            content: [
+              {
+                type: EmailBlockTypeEnum.TEXT,
+                content: 'Hello {{actor.firstName}}, Welcome to {{organizationName}}' as string,
+              },
+            ],
+          },
+        ],
+      });
+
+      await sendTrigger(session, template, newSubscriberId, {}, {}, '', actorSubscriber.subscriberId);
+
+      await session.awaitRunningJobs(template._id);
+
+      const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, newSubscriberId);
+
+      const message = await messageRepository.findOne({
+        _environmentId: session.environment._id,
+        _subscriberId: createdSubscriber?._id,
+        channel: channelType,
+      });
+
+      const block = message!.content[0] as IEmailBlock;
+
+      expect(block.content).to.equal('Hello Actor, Welcome to Umbrella Corp');
+    });
+
     it('should not trigger notification with subscriber data if integration is inactive', async function () {
       const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
       const channelType = ChannelTypeEnum.SMS;
@@ -1667,13 +1706,13 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
 
                 type: 'GROUP',
 
-                value: 'AND',
+                value: FieldLogicalOperatorEnum.AND,
 
                 children: [
                   {
                     field: 'run',
                     value: 'true',
-                    operator: 'EQUAL',
+                    operator: FieldOperatorEnum.EQUAL,
                     on: FilterPartTypeEnum.PAYLOAD,
                   },
                 ],
@@ -1700,13 +1739,13 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
 
                 type: 'GROUP',
 
-                value: 'AND',
+                value: FieldLogicalOperatorEnum.AND,
 
                 children: [
                   {
                     field: 'subscriberId',
                     value: subscriber.subscriberId,
-                    operator: 'NOT_EQUAL',
+                    operator: FieldOperatorEnum.NOT_EQUAL,
                     on: FilterPartTypeEnum.SUBSCRIBER,
                   },
                 ],
@@ -1765,12 +1804,12 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
               {
                 isNegated: false,
                 type: 'GROUP',
-                value: 'AND',
+                value: FieldLogicalOperatorEnum.AND,
                 children: [
                   {
                     field: 'isOnline',
                     value: 'true',
-                    operator: 'EQUAL',
+                    operator: FieldOperatorEnum.EQUAL,
                     on: FilterPartTypeEnum.WEBHOOK,
                     webhookUrl: 'www.user.com/webhook',
                   },
@@ -1867,12 +1906,12 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
               {
                 isNegated: false,
                 type: 'GROUP',
-                value: 'AND',
+                value: FieldLogicalOperatorEnum.AND,
                 children: [
                   {
                     field: 'isOnline',
                     value: 'true',
-                    operator: 'EQUAL',
+                    operator: FieldOperatorEnum.EQUAL,
                     on: FilterPartTypeEnum.WEBHOOK,
                     webhookUrl: 'www.user.com/webhook',
                   },
@@ -1932,12 +1971,12 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
               {
                 isNegated: false,
                 type: 'GROUP',
-                value: 'AND',
+                value: FieldLogicalOperatorEnum.AND,
                 children: [
                   {
                     field: 'isOnline',
                     value: 'true',
-                    operator: 'EQUAL',
+                    operator: FieldOperatorEnum.EQUAL,
                     on: FilterPartTypeEnum.WEBHOOK,
                     webhookUrl: 'www.user.com/webhook',
                   },
@@ -2292,7 +2331,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
                 {
                   isNegated: false,
                   type: 'GROUP',
-                  value: 'AND',
+                  value: FieldLogicalOperatorEnum.AND,
                   children: [
                     {
                       on: FilterPartTypeEnum.PREVIOUS_STEP,
@@ -2384,7 +2423,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
                 {
                   isNegated: false,
                   type: 'GROUP',
-                  value: 'AND',
+                  value: FieldLogicalOperatorEnum.AND,
                   children: [
                     {
                       on: FilterPartTypeEnum.PREVIOUS_STEP,
@@ -2450,18 +2489,6 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
 
         expect(messagesAfter.length).to.equal(1);
       });
-    });
-  });
-  describe.skip('Trigger Event - [IS_MULTI_PROVIDER_CONFIGURATION_ENABLED=true]', function () {
-    beforeEach(async () => {
-      process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = 'true';
-      process.env.LAUNCH_DARKLY_SDK_KEY = '';
-      session = new UserSession();
-      await session.initialize();
-    });
-
-    afterEach(async () => {
-      process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = ORIGINAL_IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
     });
 
     it('should trigger message with override integration identifier', async function () {
@@ -2542,7 +2569,8 @@ export async function sendTrigger(
   newSubscriberIdInAppNotification: string,
   payload: Record<string, unknown> = {},
   overrides: Record<string, unknown> = {},
-  tenant?: string
+  tenant?: string,
+  actor?: string
 ): Promise<AxiosResponse> {
   return await axiosInstance.post(
     `${session.serverUrl}${eventTriggerPath}`,
@@ -2556,6 +2584,7 @@ export async function sendTrigger(
       },
       overrides,
       tenant,
+      actor,
     },
     {
       headers: {

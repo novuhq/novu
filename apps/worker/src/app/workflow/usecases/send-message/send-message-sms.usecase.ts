@@ -7,6 +7,7 @@ import {
   MessageEntity,
   IntegrationEntity,
   TenantRepository,
+  SubscriberEntity,
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import {
@@ -83,6 +84,13 @@ export class SendMessageSms extends SendMessageBase {
 
     if (!step.template) throw new PlatformException(`Unexpected error: SMS template is missing`);
 
+    let actor: SubscriberEntity | null = null;
+    if (command.job.actorId) {
+      actor = await this.getSubscriberBySubscriberId({
+        subscriberId: command.job.actorId,
+        _environmentId: command.environmentId,
+      });
+    }
     const tenant = await this.handleTenantExecution(command.job);
 
     const template = await this.processVariants(command, tenant, subscriber, command.payload);
@@ -99,6 +107,7 @@ export class SendMessageSms extends SendMessageBase {
         total_count: command.events?.length,
       },
       ...(tenant && { tenant }),
+      ...(actor && { actor }),
       ...command.payload,
     };
 

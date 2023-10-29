@@ -1,7 +1,7 @@
 import { Center, createStyles, Group, Loader } from '@mantine/core';
 import { format } from 'date-fns';
 import Frame from 'react-frame-component';
-import { colors } from '../../../design-system';
+import { colors } from '@novu/design-system';
 import { PreviewDateIcon } from './PreviewDateIcon';
 import { PreviewUserIcon } from './PreviewUserIcon';
 import { ErrorBoundary } from 'react-error-boundary';

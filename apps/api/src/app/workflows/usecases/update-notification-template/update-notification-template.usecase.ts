@@ -129,7 +129,6 @@ export class UpdateNotificationTemplate {
 
       updatePayload.steps = await this.updateMessageTemplates(command.steps, command, parentChangeId);
 
-      await this.deleteRemovedVariants(existingTemplate.steps, command, parentChangeId);
       await this.deleteRemovedSteps(existingTemplate.steps, command, parentChangeId);
     }
 
@@ -198,16 +197,6 @@ export class UpdateNotificationTemplate {
     });
 
     return notificationTemplateWithStepTemplate;
-  }
-
-  private async deleteRemovedVariants(
-    steps: NotificationStepEntity[],
-    command: UpdateNotificationTemplateCommand,
-    parentChangeId: string
-  ) {
-    for (const step of steps) {
-      await this.deleteRemovedSteps(step.variants, command, parentChangeId);
-    }
   }
 
   private validatePayload(command: UpdateNotificationTemplateCommand) {
@@ -377,8 +366,15 @@ export class UpdateNotificationTemplate {
   }
 
   private getRemovedSteps(existingSteps: NotificationStepEntity[], newSteps: NotificationStep[]) {
-    const existingStepsIds = existingSteps.map((i) => i._templateId);
-    const newStepsIds = newSteps.map((i) => i._templateId);
+    const existingStepsIds = (existingSteps || []).flatMap((step) => [
+      step._templateId,
+      ...(step.variants || []).flatMap((variant) => variant._templateId),
+    ]);
+
+    const newStepsIds = (newSteps || []).flatMap((step) => [
+      step._templateId,
+      ...(step.variants || []).flatMap((variant) => variant._templateId),
+    ]);
 
     const removedStepsIds = existingStepsIds.filter((id) => !newStepsIds.includes(id));
 

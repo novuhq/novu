@@ -422,6 +422,16 @@ export const twilioConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
+export const messagebirdConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.AccessKey,
+    displayName: 'Access key',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+];
+
 export const slackConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApplicationId,
@@ -504,6 +514,22 @@ export const oneSignalConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
+    type: 'text',
+    required: true,
+  },
+  ...pushConfigBase,
+];
+
+export const pushpadConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'Auth Token',
+    type: 'text',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ApplicationId,
+    displayName: 'Project ID',
     type: 'text',
     required: true,
   },
@@ -764,6 +790,109 @@ export const clickSendConfig: IConfigCredentials[] = [
     displayName: 'API Key',
     type: 'text',
     required: true,
+  },
+  ...smsConfigBase,
+];
+
+export const bandwidthConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.User,
+    displayName: 'Username',
+    description: 'Your Bandwidth account username',
+    type: 'text',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Password,
+    displayName: 'Password',
+    type: 'password',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.AccountSid,
+    displayName: 'Account ID',
+    type: 'text',
+    required: true,
+  },
+  ...smsConfigBase,
+];
+
+export const genericSmsConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.BaseUrl,
+    displayName: 'Base URL',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ApiKeyRequestHeader,
+    displayName: 'API Key Request Header',
+    type: 'string',
+    description: 'The name of the header attribute to use for the API key ex. (X-API-KEY, apiKey, ...)',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    description: 'The value of the header attribute to use for the API key.',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.SecretKeyRequestHeader,
+    displayName: 'Secret Key Request Header',
+    type: 'string',
+    description: 'The name of the header attribute to use for the secret key ex. (X-SECRET-KEY, secretKey, ...)',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Secret Key',
+    type: 'string',
+    description: 'The value of the header attribute to use for the secret key',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.IdPath,
+    displayName: 'Id Path',
+    type: 'string',
+    value: 'data.id',
+    description: 'The path to the id field in the response data ex. (id, message.id, ...)',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.DatePath,
+    displayName: 'Date Path',
+    type: 'string',
+    value: 'data.date',
+    description: 'The path to the date field in the response data ex. (date, message.date, ...)',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.AuthenticateByToken,
+    displayName: 'Authenticate by token',
+    type: 'switch',
+    description: 'If enabled, the API key and secret key will be sent as a token in the Authorization header',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Domain,
+    displayName: 'Auth URL',
+    type: 'string',
+    description: 'The URL to use for authentication in case the Authenticate by token option is enabled',
+    required: false,
+    tooltip: {
+      text: 'The URL to use for authentication in case the Authenticate by token option is enabled',
+      when: true,
+    },
+  },
+  {
+    key: CredentialsKeyEnum.AuthenticationTokenKey,
+    displayName: 'Authentication Token Key',
+    type: 'string',
+    description:
+      'The name of the header attribute to use for the authentication token ex. (X-AUTH-TOKEN, auth-token, ...)',
+    required: false,
   },
   ...smsConfigBase,
 ];

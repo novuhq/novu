@@ -9,8 +9,7 @@ import { FilterPartTypeEnum, StepTypeEnum } from '@novu/shared';
 import { When } from '../../../components/utils/When';
 import type { IFlowEditorProps } from '../../../components/workflow';
 import { FlowEditor } from '../../../components/workflow';
-import { Button } from '../../../design-system';
-import { Settings } from '../../../design-system/icons';
+import { Button, Settings } from '@novu/design-system';
 import { useEnvController } from '../../../hooks';
 import { channels } from '../../../utils/channels';
 import { errorMessage } from '../../../utils/notifications';
@@ -84,16 +83,12 @@ const WorkflowEditor = () => {
     }
   };
 
-  const onAddVariant = (uuid) => {
-    const newVariant = addVariant(uuid);
-    if (newVariant) {
-      // TODO: show the conditions sidebar first and then when conditions are applied show the variant editor
-      navigate(basePath + `/${newVariant?.template.type}/${uuid}/variants/${newVariant.uuid}`);
-    }
-  };
+  const onAddVariant = (uuid: string) => {
+    const channelStep = steps.find((step) => step.uuid === uuid);
 
-  const onAddConditions = (uuid: string) => {
-    // TODO: show the conditions sidebar
+    if (channelStep) {
+      navigate(basePath + `/${channelStep.template.type}/${uuid}/variants/create`);
+    }
   };
 
   const confirmDelete = () => {
@@ -200,6 +195,7 @@ const WorkflowEditor = () => {
             </Stack>
           </Container>
           <FlowEditor
+            isReadonly
             onDelete={onDelete}
             dragging={dragging}
             errors={errors}
@@ -212,7 +208,6 @@ const WorkflowEditor = () => {
             onNodeClick={onNodeClick}
             onEdit={onEdit}
             onAddVariant={onAddVariant}
-            onAddConditions={onAddConditions}
           />
         </div>
       </div>
@@ -273,6 +268,7 @@ const WorkflowEditor = () => {
               </Stack>
             </Container>
             <FlowEditor
+              isReadonly={readonly}
               onEdit={onEdit}
               onDelete={onDelete}
               dragging={dragging}

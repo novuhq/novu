@@ -8,6 +8,7 @@ import {
   IntegrationEntity,
   IChannelSettings,
   TenantRepository,
+  SubscriberEntity,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -78,6 +79,13 @@ export class SendMessageChat extends SendMessageBase {
     if (!step?.template) throw new PlatformException('Chat channel template not found');
 
     const tenant = await this.handleTenantExecution(command.job);
+    let actor: SubscriberEntity | null = null;
+    if (command.job.actorId) {
+      actor = await this.getSubscriberBySubscriberId({
+        subscriberId: command.job.actorId,
+        _environmentId: command.environmentId,
+      });
+    }
 
     const template = await this.processVariants(command, tenant, subscriber, command.payload);
 
@@ -94,6 +102,7 @@ export class SendMessageChat extends SendMessageBase {
         total_count: command.events?.length,
       },
       ...(tenant && { tenant }),
+      ...(actor && { actor }),
       ...command.payload,
     };
 

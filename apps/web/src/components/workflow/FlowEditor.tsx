@@ -28,7 +28,7 @@ import { v4 as uuid4 } from 'uuid';
 import cloneDeep from 'lodash.clonedeep';
 import { StepTypeEnum } from '@novu/shared';
 
-import { colors } from '../../design-system';
+import { colors } from '@novu/design-system';
 import { getChannel } from '../../utils/channels';
 import { useEnvController } from '../../hooks';
 import type { IEdge, IFlowStep, INode } from './types';
@@ -49,6 +49,7 @@ const DEFAULT_WRAPPER_STYLES = {
 };
 
 export interface IFlowEditorProps extends ReactFlowProps {
+  isReadonly?: boolean;
   steps: IFlowStep[];
   dragging?: boolean;
   errors?: any;
@@ -59,13 +60,13 @@ export interface IFlowEditorProps extends ReactFlowProps {
   onEdit?: (e: MouseEvent<HTMLButtonElement>, node: INode) => void;
   onDelete?: (id: string) => void;
   onAddVariant?: (id: string) => void;
-  onAddConditions?: (id: string) => void;
   onStepInit?: (step: IFlowStep) => Promise<void>;
   onGetStepError?: (i: number, errors: any) => string;
   addStep?: (channelType: StepTypeEnum, id: string, index?: number) => void;
 }
 
 export function FlowEditor({
+  isReadonly = false,
   steps,
   dragging,
   errors,
@@ -89,7 +90,6 @@ export function FlowEditor({
   onEdit,
   onDelete,
   onAddVariant,
-  onAddConditions,
   ...restProps
 }: IFlowEditorProps) {
   const { colorScheme } = useMantineColorScheme();
@@ -215,11 +215,11 @@ export function FlowEditor({
       parentNode: parentId,
       data: {
         ...channel,
+        isReadonly,
         index: i,
         error: onGetStepError?.(i, errors) ?? '',
         onDelete,
         onAddVariant,
-        onAddConditions,
         onEdit,
         step,
       },
@@ -346,7 +346,7 @@ const Wrapper = styled.div<{ dark: boolean }>`
     cursor: pointer;
 
     [data-blue-gradient-svg] {
-      stop:first-child {
+      stop:first-of-type {
         stop-color: #4c6dd4 !important;
       }
       stop:last-child {
@@ -411,7 +411,7 @@ const Wrapper = styled.div<{ dark: boolean }>`
   }
 
   [data-template-store-editor] [data-workflow-node-icon] {
-    stop:first-child {
+    stop:first-of-type {
       stop-color: #dd2476 !important;
     }
     stop:last-child {

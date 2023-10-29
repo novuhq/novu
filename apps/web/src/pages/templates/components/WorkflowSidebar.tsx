@@ -1,8 +1,8 @@
 import { ReactNode } from 'react';
 import { Title } from '@mantine/core';
 import { useNavigate } from 'react-router-dom';
+import { colors, Sidebar } from '@novu/design-system';
 
-import { colors, Sidebar } from '../../../design-system';
 import { useBasePath } from '../hooks/useBasePath';
 
 export const WorkflowSidebar = ({ children, title }: { children: ReactNode; title: string }) => {

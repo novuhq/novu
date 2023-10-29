@@ -1,8 +1,8 @@
 import { Controller, useFormContext } from 'react-hook-form';
 import { ChannelTypeEnum } from '@novu/shared';
+import { Textarea } from '@novu/design-system';
 
 import { LackIntegrationAlert } from './LackIntegrationAlert';
-import { Textarea } from '../../../design-system';
 import {
   useEnvController,
   useHasActiveIntegrations,

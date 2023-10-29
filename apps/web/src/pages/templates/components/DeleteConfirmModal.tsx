@@ -1,6 +1,6 @@
 import { Alert, Group, Modal, useMantineTheme } from '@mantine/core';
 import { WarningOutlined } from '@ant-design/icons';
-import { Button, colors, shadows, Title, Text } from '../../../design-system';
+import { Button, colors, shadows, Title, Text } from '@novu/design-system';
 
 export function DeleteConfirmModal({
   target,

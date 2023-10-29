@@ -9,8 +9,7 @@ import type { UseFormSetValue } from 'react-hook-form';
 import { IFeedEntity } from '@novu/shared';
 
 import { FeedChip } from './FeedChip';
-import { colors, shadows, Text, Tooltip, Button } from '../../../../design-system';
-import { Copy, Trash } from '../../../../design-system/icons';
+import { colors, shadows, Text, Tooltip, Button, Copy, Trash } from '@novu/design-system';
 import { deleteFeed, getFeeds } from '../../../../api/feeds';
 import { QueryKeys } from '../../../../api/query.keys';
 import type { IForm } from '../formTypes';

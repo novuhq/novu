@@ -4,8 +4,7 @@ import styled from '@emotion/styled';
 import { DigestTypeEnum } from '@novu/shared';
 
 import { When } from '../../../components/utils/When';
-import { colors, Input, Select, Tooltip } from '../../../design-system';
-import { Bell, Digest, Timer } from '../../../design-system/icons';
+import { colors, Input, Select, Tooltip, Bell, Digest, Timer } from '@novu/design-system';
 import { TypeSegmented } from './digest/TypeSegment';
 import { WillBeSentHeader } from './digest/WillBeSentHeader';
 import { RegularInfo } from './digest/icons/RegularInfo';

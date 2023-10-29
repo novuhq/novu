@@ -1,10 +1,10 @@
-import { IOrganizationEntity } from '@novu/shared';
 import { useEffect, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
+import { IOrganizationEntity } from '@novu/shared';
+import { Tabs } from '@novu/design-system';
 
-import { Tabs } from '../../../../design-system';
-import { useActiveIntegrations, useEnvController, useIsMultiProviderConfigurationEnabled } from '../../../../hooks';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
+import { useActiveIntegrations, useEnvController } from '../../../../hooks';
 import { EmailCustomCodeEditor } from './EmailCustomCodeEditor';
 import { EmailInboxContent } from './EmailInboxContent';
 import { EmailMessageEditor } from './EmailMessageEditor';
@@ -18,7 +18,6 @@ export function EmailContentCard({ organization }: { organization: IOrganization
   const { control, setValue, watch } = useFormContext(); // retrieve all hook methods
   const contentType = watch(`${stepFormPath}.template.contentType`);
   const activeTab = contentType === 'customHtml' ? CUSTOM_CODE : EDITOR;
-  const isMultiProviderConfigEnabled = useIsMultiProviderConfigurationEnabled();
   const { integrations = [] } = useActiveIntegrations();
   const [integration, setIntegration]: any = useState(null);
 
@@ -26,12 +25,8 @@ export function EmailContentCard({ organization }: { organization: IOrganization
     if (integrations.length === 0) {
       return;
     }
-    setIntegration(
-      integrations.find((item) =>
-        isMultiProviderConfigEnabled ? item.channel === 'email' && item.primary : item.channel === 'email'
-      ) || null
-    );
-  }, [isMultiProviderConfigEnabled, integrations, setIntegration]);
+    setIntegration(integrations.find((item) => item.channel === 'email' && item.primary) || null);
+  }, [integrations, setIntegration]);
 
   const onTabChange = (value: string | null) => {
     setValue(`${stepFormPath}.template.contentType`, value === EDITOR ? 'editor' : 'customHtml');
