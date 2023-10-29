@@ -11,6 +11,7 @@ const FILTER_PART_LIST: IFilterTypeList[] = [
     value: FilterPartTypeEnum.SUBSCRIBER,
     label: FILTER_TO_LABEL[FilterPartTypeEnum.SUBSCRIBER],
   },
+  { value: FilterPartTypeEnum.TENANT, label: FILTER_TO_LABEL[FilterPartTypeEnum.TENANT] },
   { value: FilterPartTypeEnum.WEBHOOK, label: FILTER_TO_LABEL[FilterPartTypeEnum.WEBHOOK] },
   { value: FilterPartTypeEnum.IS_ONLINE, label: FILTER_TO_LABEL[FilterPartTypeEnum.IS_ONLINE] },
   {

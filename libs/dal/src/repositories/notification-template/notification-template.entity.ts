@@ -5,15 +5,15 @@ import {
   BuilderGroupValues,
   IPreferenceChannels,
   IWorkflowStepMetadata,
-  TemplateVariableTypeEnum,
   NotificationTemplateCustomData,
-  TriggerContextTypeEnum,
-  INotificationTemplate,
   INotificationTemplateStep,
   IStepVariant,
-  INotificationTrigger,
-  TriggerTypeEnum,
   IMessageFilter,
+  INotificationTrigger,
+  INotificationTemplate,
+  TriggerTypeEnum,
+  INotificationTriggerVariable,
+  ITriggerReservedVariable,
 } from '@novu/shared';
 
 import { MessageTemplateEntity } from '../message-template';
@@ -84,9 +84,9 @@ export class NotificationTriggerEntity implements INotificationTrigger {
 
   identifier: string;
 
-  variables: ITriggerVariable[];
+  variables: INotificationTriggerVariable[];
 
-  subscriberVariables?: Pick<ITriggerVariable, 'name'>[];
+  subscriberVariables?: Pick<INotificationTriggerVariable, 'name'>[];
 
   reservedVariables?: ITriggerReservedVariable[];
 }
@@ -127,14 +127,4 @@ export class StepFilter implements IMessageFilter {
   type?: BuilderFieldType;
   value: BuilderGroupValues;
   children: FilterParts[];
-}
-
-export interface ITriggerVariable {
-  name: string;
-  type: TemplateVariableTypeEnum;
-}
-
-export interface ITriggerReservedVariable {
-  type: TriggerContextTypeEnum;
-  variables: ITriggerVariable[];
 }

@@ -8,6 +8,7 @@ import {
   IWorkflowStepMetadata,
   MonthlyTypeEnum,
   IStepVariant,
+  NotificationStepDto,
 } from '@novu/shared';
 import { StepTypeEnum, ActorTypeEnum, ChannelCTATypeEnum } from '@novu/shared';
 import { v4 as uuid4 } from 'uuid';
@@ -223,47 +224,53 @@ export const mapNotificationTemplateToForm = (template: INotificationTemplate): 
   return form;
 };
 
-export const mapFormToCreateNotificationTemplate = (form: IForm): ICreateNotificationTemplateDto => {
-  const steps = form.steps.map((formStep: IFormStep) => {
-    const { digestMetadata, delayMetadata, template, ...rest } = formStep;
-    const step: Omit<IFormStep, 'digestMetadata' | 'delayMetadata' | 'template'> = { ...rest };
+const mapFormStepToDto = (formStep: IFormStep): NotificationStepDto => {
+  const { digestMetadata, delayMetadata, template, ...rest } = formStep;
+  const step: Omit<IFormStep, 'digestMetadata' | 'delayMetadata' | 'template'> = { ...rest };
 
-    if (template.type === StepTypeEnum.EMAIL && template.contentType === 'customHtml') {
-      template.content = template.htmlContent as string;
-    }
+  if (template.type === StepTypeEnum.EMAIL && template.contentType === 'customHtml') {
+    template.content = template.htmlContent as string;
+    delete template.htmlContent;
+  }
 
-    if (template.type === StepTypeEnum.IN_APP) {
-      if (!template.enableAvatar) {
-        template.actor = {
-          type: ActorTypeEnum.NONE,
-          data: null,
-        };
-      }
-
-      delete template.enableAvatar;
-    }
-
-    if (template.type === StepTypeEnum.DIGEST) {
-      return {
-        ...step,
-        template,
-        metadata: mapFormStepDigestMetadata(formStep),
+  if (template.type === StepTypeEnum.IN_APP) {
+    if (!template.enableAvatar) {
+      template.actor = {
+        type: ActorTypeEnum.NONE,
+        data: null,
       };
     }
 
-    if (template.type === StepTypeEnum.DELAY) {
-      return {
-        ...step,
-        template,
-        metadata: mapFormStepDelayMetadata(formStep),
-      };
-    }
+    delete template.enableAvatar;
+  }
 
+  if (template.type === StepTypeEnum.DIGEST) {
     return {
       ...step,
       template,
+      metadata: mapFormStepDigestMetadata(formStep),
     };
-  });
+  }
+
+  if (template.type === StepTypeEnum.DELAY) {
+    return {
+      ...step,
+      template,
+      metadata: mapFormStepDelayMetadata(formStep),
+    };
+  }
+
+  return {
+    ...step,
+    ...(!!('variants' in step) && {
+      variants: step.variants?.map((variant) => mapFormStepToDto(variant)) ?? ([] as any),
+    }),
+    template,
+  };
+};
+
+export const mapFormToCreateNotificationTemplate = (form: IForm): ICreateNotificationTemplateDto => {
+  const steps = form.steps.map(mapFormStepToDto);
 
   return {
     name: form.name,

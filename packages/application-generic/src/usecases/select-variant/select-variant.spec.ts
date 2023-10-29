@@ -1,5 +1,10 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { EmailBlockTypeEnum, StepTypeEnum } from '@novu/shared';
+import {
+  EmailBlockTypeEnum,
+  FieldLogicalOperatorEnum,
+  FieldOperatorEnum,
+  StepTypeEnum,
+} from '@novu/shared';
 import { MessageTemplateEntity } from '@novu/dal';
 
 import { ConditionsFilter } from '../conditions-filter';
@@ -118,12 +123,12 @@ const variantCommand = [
       {
         isNegated: false,
         type: 'GROUP',
-        value: 'AND',
+        value: FieldLogicalOperatorEnum.AND,
         children: [
           {
             field: 'name',
             value: 'Titans',
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             on: 'tenant',
             _id: '6509997c2c2343366ae4a864',
           },
@@ -148,12 +153,12 @@ const variantCommand = [
       {
         isNegated: false,
         type: 'GROUP',
-        value: 'AND',
+        value: FieldLogicalOperatorEnum.AND,
         children: [
           {
             field: 'name',
             value: 'The one and only tenant',
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             on: 'tenant',
             _id: '6509997c2c2343366ae4a867',
           },

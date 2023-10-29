@@ -4,6 +4,7 @@ import {
   ChannelTypeEnum,
   ChatProviderIdEnum,
   EmailProviderIdEnum,
+  FieldOperatorEnum,
   InAppProviderIdEnum,
   PushProviderIdEnum,
   SmsProviderIdEnum,
@@ -106,7 +107,7 @@ describe('Create Integration - /integration (POST)', function () {
       check: false,
       conditions: [
         {
-          children: [{ field: 'identifier', value: 'test', operator: 'EQUAL', on: 'tenant' }],
+          children: [{ field: 'identifier', value: 'test', operator: FieldOperatorEnum.EQUAL, on: 'tenant' }],
         },
       ],
     };

@@ -4,6 +4,8 @@ import {
   ChannelCTATypeEnum,
   ChannelTypeEnum,
   EmailBlockTypeEnum,
+  FieldLogicalOperatorEnum,
+  FieldOperatorEnum,
   StepTypeEnum,
   INotificationTemplate,
   TriggerTypeEnum,
@@ -80,13 +82,13 @@ describe('Create Workflow - /workflows (POST)', async () => {
             {
               isNegated: false,
               type: 'GROUP',
-              value: 'AND',
+              value: FieldLogicalOperatorEnum.AND,
               children: [
                 {
                   on: FilterPartTypeEnum.SUBSCRIBER,
                   field: 'firstName',
                   value: 'test value',
-                  operator: 'EQUAL',
+                  operator: FieldOperatorEnum.EQUAL,
                 },
               ],
             },
@@ -105,13 +107,13 @@ describe('Create Workflow - /workflows (POST)', async () => {
                 {
                   isNegated: false,
                   type: 'GROUP',
-                  value: 'AND',
+                  value: FieldLogicalOperatorEnum.AND,
                   children: [
                     {
                       on: FilterPartTypeEnum.TENANT,
                       field: 'name',
                       value: 'Titans',
-                      operator: 'EQUAL',
+                      operator: FieldOperatorEnum.EQUAL,
                     },
                   ],
                 },
@@ -554,13 +556,13 @@ export async function createTemplateFromBlueprint({
           {
             isNegated: false,
             type: 'GROUP',
-            value: 'AND',
+            value: FieldLogicalOperatorEnum.AND,
             children: [
               {
                 on: FilterPartTypeEnum.SUBSCRIBER,
                 field: 'firstName',
                 value: 'test value',
-                operator: 'EQUAL',
+                operator: FieldOperatorEnum.EQUAL,
               },
             ],
           },

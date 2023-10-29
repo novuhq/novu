@@ -1,6 +1,6 @@
 import { Novu } from '../novu';
 import axios from 'axios';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, FieldLogicalOperatorEnum } from '@novu/shared';
 
 const mockConfig = {
   apiKey: '1234',
@@ -38,7 +38,12 @@ describe('test use of novus node package - Integrations class', () => {
       channel: ChannelTypeEnum.EMAIL,
       check: true,
       conditions: [
-        { isNegated: false, type: 'GROUP', value: 'AND', children: [] },
+        {
+          isNegated: false,
+          type: 'GROUP',
+          value: FieldLogicalOperatorEnum.AND,
+          children: [],
+        },
       ],
     });
 
@@ -53,7 +58,12 @@ describe('test use of novus node package - Integrations class', () => {
       channel: ChannelTypeEnum.EMAIL,
       check: true,
       conditions: [
-        { isNegated: false, type: 'GROUP', value: 'AND', children: [] },
+        {
+          isNegated: false,
+          type: 'GROUP',
+          value: FieldLogicalOperatorEnum.AND,
+          children: [],
+        },
       ],
     });
   });
@@ -89,7 +99,12 @@ describe('test use of novus node package - Integrations class', () => {
         secretKey: 'newApiSecret',
       },
       conditions: [
-        { isNegated: false, type: 'GROUP', value: 'AND', children: [] },
+        {
+          isNegated: false,
+          type: 'GROUP',
+          value: FieldLogicalOperatorEnum.AND,
+          children: [],
+        },
       ],
     });
 
@@ -104,7 +119,12 @@ describe('test use of novus node package - Integrations class', () => {
           secretKey: 'newApiSecret',
         },
         conditions: [
-          { isNegated: false, type: 'GROUP', value: 'AND', children: [] },
+          {
+            isNegated: false,
+            type: 'GROUP',
+            value: FieldLogicalOperatorEnum.AND,
+            children: [],
+          },
         ],
       }
     );
