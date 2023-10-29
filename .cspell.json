@@ -515,7 +515,10 @@
     "Kamil",
     "Myśliwiec",
     "nestframework",
-    "ryver"
+    "ryver",
+    "idempotency", 
+    "IDEMPOTENCY", 
+    "Idempotency"
   ],
   "flagWords": [],
   "patterns": [

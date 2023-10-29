@@ -19,13 +19,15 @@ import { UserSession, SubscribersService } from '@novu/testing';
 import {
   ChannelTypeEnum,
   EmailBlockTypeEnum,
+  FieldLogicalOperatorEnum,
+  FieldOperatorEnum,
+  FilterPartTypeEnum,
   StepTypeEnum,
   IEmailBlock,
   ISubscribersDefine,
   TemplateVariableTypeEnum,
   EmailProviderIdEnum,
   SmsProviderIdEnum,
-  FilterPartTypeEnum,
   DigestUnitEnum,
   DelayTypeEnum,
   PreviousStepTypeEnum,
@@ -60,6 +62,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
 
   describe(`Trigger Event - ${eventTriggerPath} (POST)`, function () {
     beforeEach(async () => {
+      process.env.LAUNCH_DARKLY_SDK_KEY = '';
       session = new UserSession();
       await session.initialize();
       template = await session.createTemplate();
@@ -90,11 +93,11 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
               {
                 isNegated: false,
                 type: 'GROUP',
-                value: 'AND',
+                value: FieldLogicalOperatorEnum.AND,
                 children: [
                   {
                     on: FilterPartTypeEnum.PAYLOAD,
-                    operator: 'IS_DEFINED',
+                    operator: FieldOperatorEnum.IS_DEFINED,
                     field: 'exclude',
                     value: '',
                   },
@@ -170,11 +173,11 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
               {
                 isNegated: false,
                 type: 'GROUP',
-                value: 'AND',
+                value: FieldLogicalOperatorEnum.AND,
                 children: [
                   {
                     on: FilterPartTypeEnum.PAYLOAD,
-                    operator: 'IS_DEFINED',
+                    operator: FieldOperatorEnum.IS_DEFINED,
                     field: 'exclude',
                     value: '',
                   },
@@ -250,11 +253,11 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
               {
                 isNegated: false,
                 type: 'GROUP',
-                value: 'AND',
+                value: FieldLogicalOperatorEnum.AND,
                 children: [
                   {
                     on: FilterPartTypeEnum.PAYLOAD,
-                    operator: 'IS_DEFINED',
+                    operator: FieldOperatorEnum.IS_DEFINED,
                     field: 'exclude',
                     value: '',
                   },
@@ -331,11 +334,11 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
               {
                 isNegated: false,
                 type: 'GROUP',
-                value: 'AND',
+                value: FieldLogicalOperatorEnum.AND,
                 children: [
                   {
                     on: FilterPartTypeEnum.PAYLOAD,
-                    operator: 'IS_DEFINED',
+                    operator: FieldOperatorEnum.IS_DEFINED,
                     field: 'exclude',
                     value: '',
                   },
@@ -397,7 +400,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
         _environmentId: session.environment._id,
         conditions: [
           {
-            children: [{ field: 'identifier', value: 'test', operator: 'EQUAL', on: 'tenant' }],
+            children: [{ field: 'identifier', value: 'test', operator: FieldOperatorEnum.EQUAL, on: 'tenant' }],
           },
         ],
         active: true,
@@ -436,10 +439,10 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
         _environmentId: session.environment._id,
         conditions: [
           {
-            value: 'OR',
+            value: FieldLogicalOperatorEnum.OR,
             children: [
-              { field: 'identifier', value: 'test3', operator: 'EQUAL', on: 'tenant' },
-              { field: 'identifier', value: 'test2', operator: 'EQUAL', on: 'tenant' },
+              { field: 'identifier', value: 'test3', operator: FieldOperatorEnum.EQUAL, on: 'tenant' },
+              { field: 'identifier', value: 'test2', operator: FieldOperatorEnum.EQUAL, on: 'tenant' },
             ],
           },
         ],
@@ -496,7 +499,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
         _environmentId: session.environment._id,
         conditions: [
           {
-            children: [{ field: 'identifier', value: 'test1', operator: 'EQUAL', on: 'tenant' }],
+            children: [{ field: 'identifier', value: 'test1', operator: FieldOperatorEnum.EQUAL, on: 'tenant' }],
           },
         ],
         active: true,
@@ -1701,13 +1704,13 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
 
                 type: 'GROUP',
 
-                value: 'AND',
+                value: FieldLogicalOperatorEnum.AND,
 
                 children: [
                   {
                     field: 'run',
                     value: 'true',
-                    operator: 'EQUAL',
+                    operator: FieldOperatorEnum.EQUAL,
                     on: FilterPartTypeEnum.PAYLOAD,
                   },
                 ],
@@ -1734,13 +1737,13 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
 
                 type: 'GROUP',
 
-                value: 'AND',
+                value: FieldLogicalOperatorEnum.AND,
 
                 children: [
                   {
                     field: 'subscriberId',
                     value: subscriber.subscriberId,
-                    operator: 'NOT_EQUAL',
+                    operator: FieldOperatorEnum.NOT_EQUAL,
                     on: FilterPartTypeEnum.SUBSCRIBER,
                   },
                 ],
@@ -1799,12 +1802,12 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
               {
                 isNegated: false,
                 type: 'GROUP',
-                value: 'AND',
+                value: FieldLogicalOperatorEnum.AND,
                 children: [
                   {
                     field: 'isOnline',
                     value: 'true',
-                    operator: 'EQUAL',
+                    operator: FieldOperatorEnum.EQUAL,
                     on: FilterPartTypeEnum.WEBHOOK,
                     webhookUrl: 'www.user.com/webhook',
                   },
@@ -1901,12 +1904,12 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
               {
                 isNegated: false,
                 type: 'GROUP',
-                value: 'AND',
+                value: FieldLogicalOperatorEnum.AND,
                 children: [
                   {
                     field: 'isOnline',
                     value: 'true',
-                    operator: 'EQUAL',
+                    operator: FieldOperatorEnum.EQUAL,
                     on: FilterPartTypeEnum.WEBHOOK,
                     webhookUrl: 'www.user.com/webhook',
                   },
@@ -1966,12 +1969,12 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
               {
                 isNegated: false,
                 type: 'GROUP',
-                value: 'AND',
+                value: FieldLogicalOperatorEnum.AND,
                 children: [
                   {
                     field: 'isOnline',
                     value: 'true',
-                    operator: 'EQUAL',
+                    operator: FieldOperatorEnum.EQUAL,
                     on: FilterPartTypeEnum.WEBHOOK,
                     webhookUrl: 'www.user.com/webhook',
                   },
@@ -2228,7 +2231,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
                 {
                   isNegated: false,
                   type: 'GROUP',
-                  value: 'AND',
+                  value: FieldLogicalOperatorEnum.AND,
                   children: [
                     {
                       on: FilterPartTypeEnum.PREVIOUS_STEP,
@@ -2320,7 +2323,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
                 {
                   isNegated: false,
                   type: 'GROUP',
-                  value: 'AND',
+                  value: FieldLogicalOperatorEnum.AND,
                   children: [
                     {
                       on: FilterPartTypeEnum.PREVIOUS_STEP,
