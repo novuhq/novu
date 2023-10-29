@@ -22,6 +22,7 @@ import {
   BandwidthHandler,
   NovuSmsHandler,
   GenericSmsHandler,
+  MessageBirdHandler,
 } from './handlers';
 
 export class SmsFactory implements ISmsFactory {
@@ -47,6 +48,7 @@ export class SmsFactory implements ISmsFactory {
     new BandwidthHandler(),
     new NovuSmsHandler(),
     new GenericSmsHandler(),
+    new MessageBirdHandler(),
   ];
 
   getHandler(integration: IntegrationEntity) {

@@ -518,7 +518,9 @@
     "ryver",
     "idempotency", 
     "IDEMPOTENCY", 
-    "Idempotency"
+    "Idempotency",
+    "messagebird",
+    "Datetime"
   ],
   "flagWords": [],
   "patterns": [
