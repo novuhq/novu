@@ -2260,6 +2260,9 @@ importers:
       analytics-node:
         specifier: ^6.2.0
         version: 6.2.0
+      axios:
+        specifier: ^1.5.0
+        version: 1.5.1
       bullmq:
         specifier: ^3.10.2
         version: 3.10.4
@@ -2328,6 +2331,9 @@ importers:
       '@types/sinon':
         specifier: ^9.0.0
         version: 9.0.11
+      chai:
+        specifier: ^4.2.0
+        version: 4.3.7
       codecov:
         specifier: ^3.5.0
         version: 3.8.3
@@ -3159,7 +3165,6 @@ importers:
       typescript:
         specifier: 4.9.5
         version: 4.9.5
-
 
   providers/burst-sms:
     dependencies:
@@ -24319,7 +24324,7 @@ packages:
     engines: {node: '>=6'}
     dependencies:
       '@hapi/joi': 16.1.8
-      axios: 1.4.0
+      axios: 1.5.1
       body-parser: 1.20.2
       lodash: 4.17.21
       phone: 3.1.37
@@ -30171,7 +30176,7 @@ packages:
       object.values: 1.1.6
       prop-types: 15.8.1
       resolve: 2.0.0-next.4
-      semver: 6.3.1
+      semver: 6.3.0
       string.prototype.matchall: 4.0.8
     dev: true
 
@@ -44072,7 +44077,7 @@ packages:
     peerDependencies:
       rollup: ^2.0.0
     dependencies:
-      '@babel/code-frame': 7.22.13
+      '@babel/code-frame': 7.21.4
       jest-worker: 26.6.2
       rollup: 2.79.1
       serialize-javascript: 4.0.0

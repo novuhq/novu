@@ -153,7 +153,7 @@ export function Conditions({
                           <Controller
                             control={control}
                             name={`conditions.0.value`}
-                            defaultValue="AND"
+                            defaultValue={FieldLogicalOperatorEnum.AND}
                             render={({ field }) => {
                               return (
                                 <Select
