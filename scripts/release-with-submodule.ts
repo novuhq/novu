@@ -4,7 +4,7 @@ import { execSync } from 'child_process';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
-const submoduleDir = 'enterprise/packages';
+const submoduleDir = 'enterprise';
 
 function runCommand(command: string, directory?: string) {
   console.log(`Running command: ${command}${directory ? `directory:${directory}` : '.'}`);

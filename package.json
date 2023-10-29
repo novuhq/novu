@@ -68,7 +68,7 @@
     "get-affected": "node scripts/print-affected-array.mjs",
     "install:with-submodules": "pnpm install && pnpm install:submodules",
     "build:submodules": "nx run-many --target=ee-build --all",
-    "install:submodules": "cd enterprise/packages && pnpm install",
+    "install:submodules": "cd enterprise && pnpm install",
     "link:submodules": "nx run-many --target=link:submodules --all"
   },
   "devDependencies": {
