@@ -9,13 +9,7 @@ import { DisplayPrimaryProviderIcon } from '../workflow/DisplayPrimaryProviderIc
 import { useStepFormPath } from '../hooks/useStepFormPath';
 import { StepNameLabel } from './StepNameLabel';
 
-export const StepName = ({
-  channel,
-  variantsCount,
-}: {
-  channel: StepTypeEnum | ChannelTypeEnum;
-  variantsCount?: number;
-}) => {
+export const StepName = ({ channel }: { channel: StepTypeEnum | ChannelTypeEnum }) => {
   const { colorScheme } = useMantineColorScheme();
   const path = useStepFormPath();
 
@@ -47,11 +41,7 @@ export const StepName = ({
         isChannelStep={isChannelStep}
         logoSrc={logoSrc}
       />
-      <StepNameInput
-        path={path}
-        defaultValue={stepNames[channel]}
-        label={<StepNameLabel variantsCount={variantsCount} />}
-      />
+      <StepNameInput path={path} defaultValue={stepNames[channel]} label={<StepNameLabel />} />
     </Group>
   );
 };
