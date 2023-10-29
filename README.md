@@ -251,3 +251,5 @@ Thanks a lot for spending your time helping Novu grow. Keep rocking 🥂
 <a href="https://novu.co/contributors?utm_source=github">
   <img src="https://contributors-img.web.app/image?repo=novuhq/novu" alt="Contributors"/>
 </a>
+
+<p align="right"><a href="#top"><img src="https://cdn-icons-png.flaticon.com/512/892/892692.png" height="50px"></a></p>
