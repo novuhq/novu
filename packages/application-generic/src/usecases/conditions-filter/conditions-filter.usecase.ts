@@ -24,7 +24,8 @@ import {
   PreviousStepTypeEnum,
   TimeOperatorEnum,
   IMessageFilter,
-  INotificationTemplateStep,
+  FieldOperatorEnum,
+  FieldLogicalOperatorEnum,
 } from '@novu/shared';
 import { Filter } from '../../utils/filter';
 import {
@@ -193,7 +194,7 @@ export class ConditionsFilter extends Filter {
     const label = FILTER_TO_LABEL[filter.on];
     const field = filter.stepType;
     const expected = 'true';
-    const operator = 'EQUAL';
+    const operator = FieldOperatorEnum.EQUAL;
 
     if (message?.channel === ChannelTypeEnum.EMAIL) {
       const count = await this.executionDetailsRepository.count({
@@ -275,7 +276,7 @@ export class ConditionsFilter extends Filter {
         }`,
         operator:
           filter.on === FilterPartTypeEnum.IS_ONLINE
-            ? 'EQUAL'
+            ? FieldOperatorEnum.EQUAL
             : filter.timeOperator,
         passed: false,
       });
@@ -290,7 +291,7 @@ export class ConditionsFilter extends Filter {
         field: 'isOnline',
         expected: `${filter.value}`,
         actual: isOnlineString,
-        operator: 'EQUAL',
+        operator: FieldOperatorEnum.EQUAL,
         passed: isOnlineMatch,
       });
 
@@ -458,7 +459,7 @@ export class ConditionsFilter extends Filter {
     command: ConditionsFilterCommand,
     filterProcessingDetails: FilterProcessingDetails
   ): Promise<boolean> {
-    if (filter.value === 'OR') {
+    if (filter.value === FieldLogicalOperatorEnum.OR) {
       return await this.handleOrFilters(
         filter,
         variables,
@@ -467,7 +468,7 @@ export class ConditionsFilter extends Filter {
       );
     }
 
-    if (filter.value === 'AND') {
+    if (filter.value === FieldLogicalOperatorEnum.AND) {
       return await this.handleAndFilters(
         filter,
         variables,

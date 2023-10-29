@@ -2,8 +2,16 @@ import { expect } from 'chai';
 import * as sinon from 'sinon';
 import axios from 'axios';
 import { Duration, sub } from 'date-fns';
-
-import { FilterParts, FilterPartTypeEnum, FILTER_TO_LABEL, StepTypeEnum, TimeOperatorEnum } from '@novu/shared';
+import {
+  BuilderGroupValues,
+  FieldLogicalOperatorEnum,
+  FieldOperatorEnum,
+  FilterParts,
+  FilterPartTypeEnum,
+  FILTER_TO_LABEL,
+  StepTypeEnum,
+  TimeOperatorEnum,
+} from '@novu/shared';
 import { JobEntity, MessageTemplateEntity, NotificationStepEntity } from '@novu/dal';
 import { ConditionsFilter, ConditionsFilterCommand } from '@novu/application-generic';
 
@@ -23,9 +31,9 @@ describe('Message filter matcher', function () {
   it('should filter correct message by the filter value', async function () {
     const matchedMessage = await conditionsFilter.filter(
       mapConditionsFilterCommand({
-        step: makeStep('Correct Match', 'OR', [
+        step: makeStep('Correct Match', FieldLogicalOperatorEnum.OR, [
           {
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             value: 'firstVar',
             field: 'varField',
             on: FilterPartTypeEnum.PAYLOAD,
@@ -45,15 +53,15 @@ describe('Message filter matcher', function () {
   it('should match a message for AND filter group', async function () {
     const matchedMessage = await conditionsFilter.filter(
       mapConditionsFilterCommand({
-        step: makeStep('Correct Match', 'AND', [
+        step: makeStep('Correct Match', FieldLogicalOperatorEnum.AND, [
           {
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             value: 'firstVar',
             field: 'varField',
             on: FilterPartTypeEnum.PAYLOAD,
           },
           {
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             value: 'secondVar',
             field: 'secondField',
             on: FilterPartTypeEnum.PAYLOAD,
@@ -74,15 +82,15 @@ describe('Message filter matcher', function () {
   it('should not match AND group for single bad item', async function () {
     const matchedMessage = await conditionsFilter.filter(
       mapConditionsFilterCommand({
-        step: makeStep('Title', 'AND', [
+        step: makeStep('Title', FieldLogicalOperatorEnum.AND, [
           {
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             value: 'firstVar',
             field: 'varField',
             on: FilterPartTypeEnum.PAYLOAD,
           },
           {
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             value: 'secondVar',
             field: 'secondField',
             on: FilterPartTypeEnum.PAYLOAD,
@@ -103,15 +111,15 @@ describe('Message filter matcher', function () {
   it('should match a NOT_EQUAL for EQUAL var', async function () {
     const matchedMessage = await conditionsFilter.filter(
       mapConditionsFilterCommand({
-        step: makeStep('Correct Match', 'AND', [
+        step: makeStep('Correct Match', FieldLogicalOperatorEnum.AND, [
           {
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             value: 'firstVar',
             field: 'varField',
             on: FilterPartTypeEnum.PAYLOAD,
           },
           {
-            operator: 'NOT_EQUAL',
+            operator: FieldOperatorEnum.NOT_EQUAL,
             value: 'secondVar',
             field: 'secondField',
             on: FilterPartTypeEnum.PAYLOAD,
@@ -132,9 +140,9 @@ describe('Message filter matcher', function () {
   it('should match a EQUAL for a boolean var', async function () {
     const matchedMessage = await conditionsFilter.filter(
       mapConditionsFilterCommand({
-        step: makeStep('Correct Match', 'AND', [
+        step: makeStep('Correct Match', FieldLogicalOperatorEnum.AND, [
           {
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             value: 'true',
             field: 'varField',
             on: FilterPartTypeEnum.PAYLOAD,
@@ -154,7 +162,7 @@ describe('Message filter matcher', function () {
   it('should fall thru for no filters item', async function () {
     const matchedMessage = await conditionsFilter.filter(
       mapConditionsFilterCommand({
-        step: makeStep('Correct Match 2', 'OR', []),
+        step: makeStep('Correct Match 2', FieldLogicalOperatorEnum.OR, []),
         variables: {
           payload: {
             varField: 'firstVar',
@@ -170,9 +178,9 @@ describe('Message filter matcher', function () {
   it('should get larger payload var then filter value', async function () {
     const matchedMessage = await conditionsFilter.filter(
       mapConditionsFilterCommand({
-        step: makeStep('Correct Match', 'AND', [
+        step: makeStep('Correct Match', FieldLogicalOperatorEnum.AND, [
           {
-            operator: 'LARGER',
+            operator: FieldOperatorEnum.LARGER,
             value: '0',
             field: 'varField',
             on: FilterPartTypeEnum.PAYLOAD,
@@ -192,9 +200,9 @@ describe('Message filter matcher', function () {
   it('should get smaller payload var then filter value', async function () {
     const matchedMessage = await conditionsFilter.filter(
       mapConditionsFilterCommand({
-        step: makeStep('Correct Match', 'AND', [
+        step: makeStep('Correct Match', FieldLogicalOperatorEnum.AND, [
           {
-            operator: 'SMALLER',
+            operator: FieldOperatorEnum.SMALLER,
             value: '3',
             field: 'varField',
             on: FilterPartTypeEnum.PAYLOAD,
@@ -214,9 +222,9 @@ describe('Message filter matcher', function () {
   it('should get larger or equal payload var then filter value', async function () {
     let matchedMessage = await conditionsFilter.filter(
       mapConditionsFilterCommand({
-        step: makeStep('Correct Match', 'AND', [
+        step: makeStep('Correct Match', FieldLogicalOperatorEnum.AND, [
           {
-            operator: 'LARGER_EQUAL',
+            operator: FieldOperatorEnum.LARGER_EQUAL,
             value: '0',
             field: 'varField',
             on: FilterPartTypeEnum.PAYLOAD,
@@ -234,9 +242,9 @@ describe('Message filter matcher', function () {
 
     matchedMessage = await conditionsFilter.filter(
       mapConditionsFilterCommand({
-        step: makeStep('Correct Match', 'AND', [
+        step: makeStep('Correct Match', FieldLogicalOperatorEnum.AND, [
           {
-            operator: 'LARGER_EQUAL',
+            operator: FieldOperatorEnum.LARGER_EQUAL,
             value: '3',
             field: 'varField',
             on: FilterPartTypeEnum.PAYLOAD,
@@ -255,9 +263,9 @@ describe('Message filter matcher', function () {
   it('should check if value is defined in payload', async function () {
     const matchedMessage = await conditionsFilter.filter(
       mapConditionsFilterCommand({
-        step: makeStep('Correct Match', 'AND', [
+        step: makeStep('Correct Match', FieldLogicalOperatorEnum.AND, [
           {
-            operator: 'IS_DEFINED',
+            operator: FieldOperatorEnum.IS_DEFINED,
             value: '',
             field: 'emailMessage',
             on: FilterPartTypeEnum.PAYLOAD,
@@ -277,9 +285,9 @@ describe('Message filter matcher', function () {
   it('should check if key is defined or not in subscriber data', async function () {
     const matchedMessage = await conditionsFilter.filter(
       mapConditionsFilterCommand({
-        step: makeStep('Correct Match', 'AND', [
+        step: makeStep('Correct Match', FieldLogicalOperatorEnum.AND, [
           {
-            operator: 'IS_DEFINED',
+            operator: FieldOperatorEnum.IS_DEFINED,
             value: '',
             field: 'data.nestedKey',
             on: FilterPartTypeEnum.SUBSCRIBER,
@@ -311,9 +319,9 @@ describe('Message filter matcher', function () {
   it('should get nested custom subscriber data', async function () {
     const matchedMessage = await conditionsFilter.filter(
       mapConditionsFilterCommand({
-        step: makeStep('Correct Match', 'OR', [
+        step: makeStep('Correct Match', FieldLogicalOperatorEnum.OR, [
           {
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             value: 'nestedValue',
             field: 'data.nestedKey',
             on: FilterPartTypeEnum.SUBSCRIBER,
@@ -345,9 +353,9 @@ describe('Message filter matcher', function () {
   it("should return false with nested data that doesn't exist", async function () {
     const matchedMessage = await conditionsFilter.filter(
       mapConditionsFilterCommand({
-        step: makeStep('Correct Match', 'OR', [
+        step: makeStep('Correct Match', FieldLogicalOperatorEnum.OR, [
           {
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             value: 'nestedValue',
             field: 'data.nestedKey.doesNotExist',
             on: FilterPartTypeEnum.PAYLOAD,
@@ -371,9 +379,9 @@ describe('Message filter matcher', function () {
   it('should get smaller or equal payload var then filter value', async function () {
     let matchedMessage = await conditionsFilter.filter(
       mapConditionsFilterCommand({
-        step: makeStep('Correct Match', 'AND', [
+        step: makeStep('Correct Match', FieldLogicalOperatorEnum.AND, [
           {
-            operator: 'SMALLER_EQUAL',
+            operator: FieldOperatorEnum.SMALLER_EQUAL,
             value: '3',
             field: 'varField',
             on: FilterPartTypeEnum.PAYLOAD,
@@ -391,9 +399,9 @@ describe('Message filter matcher', function () {
 
     matchedMessage = await conditionsFilter.filter(
       mapConditionsFilterCommand({
-        step: makeStep('Correct Match', 'AND', [
+        step: makeStep('Correct Match', FieldLogicalOperatorEnum.AND, [
           {
-            operator: 'SMALLER_EQUAL',
+            operator: FieldOperatorEnum.SMALLER_EQUAL,
             value: '3',
             field: 'varField',
             on: FilterPartTypeEnum.PAYLOAD,
@@ -477,7 +485,7 @@ describe('Message filter matcher', function () {
             {
               isNegated: false,
               type: 'GROUP',
-              value: 'AND',
+              value: FieldLogicalOperatorEnum.AND,
               children: [],
             },
           ],
@@ -508,7 +516,7 @@ describe('Message filter matcher', function () {
             {
               isNegated: false,
               type: 'GROUP',
-              value: 'AND',
+              value: FieldLogicalOperatorEnum.AND,
               children: [],
             },
           ],
@@ -535,7 +543,7 @@ describe('Message filter matcher', function () {
       mapConditionsFilterCommand({
         step: makeStep('Correct Match', undefined, [
           {
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             value: 'true',
             field: 'varField',
             on: FilterPartTypeEnum.WEBHOOK,
@@ -560,15 +568,15 @@ describe('Message filter matcher', function () {
 
     let matchedMessage = await conditionsFilter.filter(
       mapConditionsFilterCommand({
-        step: makeStep('Correct Match', 'OR', [
+        step: makeStep('Correct Match', FieldLogicalOperatorEnum.OR, [
           {
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             value: 'true',
             field: 'payloadVarField',
             on: FilterPartTypeEnum.PAYLOAD,
           },
           {
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             value: 'true',
             field: 'varField',
             on: FilterPartTypeEnum.WEBHOOK,
@@ -588,16 +596,16 @@ describe('Message filter matcher', function () {
 
     matchedMessage = await conditionsFilter.filter(
       mapConditionsFilterCommand({
-        step: makeStep('Correct Match', 'OR', [
+        step: makeStep('Correct Match', FieldLogicalOperatorEnum.OR, [
           {
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             value: 'true',
             field: 'varField',
             on: FilterPartTypeEnum.WEBHOOK,
             webhookUrl: 'www.user.com/webhook',
           },
           {
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             value: 'true',
             field: 'payloadVarField',
             on: FilterPartTypeEnum.PAYLOAD,
@@ -624,15 +632,15 @@ describe('Message filter matcher', function () {
 
     let matchedMessage = await conditionsFilter.filter(
       mapConditionsFilterCommand({
-        step: makeStep('Correct Match', 'AND', [
+        step: makeStep('Correct Match', FieldLogicalOperatorEnum.AND, [
           {
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             value: 'true',
             field: 'payloadVarField',
             on: FilterPartTypeEnum.PAYLOAD,
           },
           {
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             value: 'true',
             field: 'varField',
             on: FilterPartTypeEnum.WEBHOOK,
@@ -652,16 +660,16 @@ describe('Message filter matcher', function () {
 
     matchedMessage = await conditionsFilter.filter(
       mapConditionsFilterCommand({
-        step: makeStep('Correct Match', 'AND', [
+        step: makeStep('Correct Match', FieldLogicalOperatorEnum.AND, [
           {
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             value: 'true',
             field: 'varField',
             on: FilterPartTypeEnum.WEBHOOK,
             webhookUrl: 'www.user.com/webhook',
           },
           {
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             value: 'true',
             field: 'payloadVarField',
             on: FilterPartTypeEnum.PAYLOAD,
@@ -702,13 +710,13 @@ describe('Message filter matcher', function () {
         );
         const matchedMessage = await filter.filter(
           mapConditionsFilterCommand({
-            step: makeStep('Correct Match', 'AND', [
+            step: makeStep('Correct Match', FieldLogicalOperatorEnum.AND, [
               {
                 on: FilterPartTypeEnum.IS_ONLINE,
                 value: true,
               },
               {
-                operator: 'EQUAL',
+                operator: FieldOperatorEnum.EQUAL,
                 value: 'true',
                 field: 'payloadVarField',
                 on: FilterPartTypeEnum.PAYLOAD,
@@ -738,7 +746,7 @@ describe('Message filter matcher', function () {
         );
         const matchedMessage = await filter.filter(
           mapConditionsFilterCommand({
-            step: makeStep('Correct Match', 'AND', [
+            step: makeStep('Correct Match', FieldLogicalOperatorEnum.AND, [
               {
                 on: FilterPartTypeEnum.IS_ONLINE,
                 value: true,
@@ -768,7 +776,7 @@ describe('Message filter matcher', function () {
         );
         const matchedMessage = await filter.filter(
           mapConditionsFilterCommand({
-            step: makeStep('Correct Match', 'AND', [
+            step: makeStep('Correct Match', FieldLogicalOperatorEnum.AND, [
               {
                 on: FilterPartTypeEnum.IS_ONLINE,
                 value: false,
@@ -792,7 +800,7 @@ describe('Message filter matcher', function () {
         );
         const matchedMessage = await filter.filter(
           mapConditionsFilterCommand({
-            step: makeStep('Correct Match', 'AND', [
+            step: makeStep('Correct Match', FieldLogicalOperatorEnum.AND, [
               {
                 on: FilterPartTypeEnum.IS_ONLINE,
                 value: true,
@@ -816,7 +824,7 @@ describe('Message filter matcher', function () {
         );
         const matchedMessage = await filter.filter(
           mapConditionsFilterCommand({
-            step: makeStep('Correct Match', 'AND', [
+            step: makeStep('Correct Match', FieldLogicalOperatorEnum.AND, [
               {
                 on: FilterPartTypeEnum.IS_ONLINE,
                 value: true,
@@ -844,14 +852,14 @@ describe('Message filter matcher', function () {
         );
         const matchedMessage = await filter.filter(
           mapConditionsFilterCommand({
-            step: makeStep('Correct Match', 'AND', [
+            step: makeStep('Correct Match', FieldLogicalOperatorEnum.AND, [
               {
                 on: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
                 value: 5,
                 timeOperator: TimeOperatorEnum.MINUTES,
               },
               {
-                operator: 'EQUAL',
+                operator: FieldOperatorEnum.EQUAL,
                 value: 'true',
                 field: 'payloadVarField',
                 on: FilterPartTypeEnum.PAYLOAD,
@@ -881,7 +889,7 @@ describe('Message filter matcher', function () {
         );
         const matchedMessage = await filter.filter(
           mapConditionsFilterCommand({
-            step: makeStep('Correct Match', 'AND', [
+            step: makeStep('Correct Match', FieldLogicalOperatorEnum.AND, [
               {
                 on: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
                 value: 5,
@@ -908,7 +916,7 @@ describe('Message filter matcher', function () {
         );
         const matchedMessage = await filter.filter(
           mapConditionsFilterCommand({
-            step: makeStep('Correct Match', 'AND', [
+            step: makeStep('Correct Match', FieldLogicalOperatorEnum.AND, [
               {
                 on: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
                 value: 5,
@@ -935,7 +943,7 @@ describe('Message filter matcher', function () {
         );
         const matchedMessage = await filter.filter(
           mapConditionsFilterCommand({
-            step: makeStep('Correct Match', 'AND', [
+            step: makeStep('Correct Match', FieldLogicalOperatorEnum.AND, [
               {
                 on: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
                 value: 5,
@@ -962,7 +970,7 @@ describe('Message filter matcher', function () {
         );
         const matchedMessage = await filter.filter(
           mapConditionsFilterCommand({
-            step: makeStep('Correct Match', 'AND', [
+            step: makeStep('Correct Match', FieldLogicalOperatorEnum.AND, [
               {
                 on: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
                 value: 5,
@@ -989,7 +997,7 @@ describe('Message filter matcher', function () {
         );
         const matchedMessage = await filter.filter(
           mapConditionsFilterCommand({
-            step: makeStep('Correct Match', 'AND', [
+            step: makeStep('Correct Match', FieldLogicalOperatorEnum.AND, [
               {
                 on: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
                 value: 1,
@@ -1016,7 +1024,7 @@ describe('Message filter matcher', function () {
         );
         const matchedMessage = await filter.filter(
           mapConditionsFilterCommand({
-            step: makeStep('Correct Match', 'AND', [
+            step: makeStep('Correct Match', FieldLogicalOperatorEnum.AND, [
               {
                 on: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
                 value: 1,
@@ -1045,7 +1053,7 @@ describe('Message filter matcher', function () {
           field: '',
           expected: '',
           actual: '',
-          operator: 'LARGER',
+          operator: FieldOperatorEnum.LARGER,
           passed: true,
         }
       );
@@ -1068,7 +1076,7 @@ describe('Message filter matcher', function () {
           field: '',
           expected: '',
           actual: '',
-          operator: 'LARGER',
+          operator: FieldOperatorEnum.LARGER,
           passed: false,
         }
       );
@@ -1091,7 +1099,7 @@ describe('Message filter matcher', function () {
           field: '',
           expected: '',
           actual: '',
-          operator: 'LARGER',
+          operator: FieldOperatorEnum.LARGER,
           passed: true,
         }
       );
@@ -1112,7 +1120,7 @@ describe('Message filter matcher', function () {
           field: '',
           expected: '',
           actual: '',
-          operator: 'LARGER',
+          operator: FieldOperatorEnum.LARGER,
           passed: true,
         }
       );
@@ -1127,7 +1135,7 @@ describe('Message filter matcher', function () {
 
 function makeStep(
   name: string,
-  groupOperator: 'AND' | 'OR' = 'AND',
+  groupOperator: BuilderGroupValues = FieldLogicalOperatorEnum.AND,
   filters: FilterParts[],
   channel = StepTypeEnum.EMAIL
 ): NotificationStepEntity {
