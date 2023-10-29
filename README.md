@@ -5,7 +5,17 @@
     ![Novu Logo]<img src="https://user-images.githubusercontent.com/2233092/213641043-3bbb3f21-3c53-4e67-afe5-755aeb222159.png" width="280"/>
   </picture>
   </a>
-</div>
+</div> <br/>
+
+<p align="center">
+    <a href="https://www.npmjs.com/package/novu">
+    <img src="https://img.shields.io/npm/v/novu" alt="NPM">
+  </a>
+    <a href="https://www.npmjs.com/package/novu">
+    <img src="https://img.shields.io/npm/dm/novu" alt="npm downloads">
+  </a>
+  <img src="https://img.shields.io/github/license/novuhq/novu" alt="MIT">
+</p>
 
 <h1 align="center">The open-source notification infrastructure for developers</h1>
 
