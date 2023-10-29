@@ -3,7 +3,7 @@ import { SubscriberRepository } from '@novu/dal';
 import { AddressingTypeEnum, TriggerEventStatusEnum } from '@novu/shared';
 
 import { TriggerEventToAllCommand } from './trigger-event-to-all.command';
-import { ParseEventRequest, ParseEventRequestCommand } from '../parse-event-request';
+import { ParseEventRequest, ParseEventRequestBroadcastCommand } from '../parse-event-request';
 
 @Injectable()
 export class TriggerEventToAll {
@@ -11,7 +11,7 @@ export class TriggerEventToAll {
 
   public async execute(command: TriggerEventToAllCommand) {
     await this.parseEventRequest.execute(
-      ParseEventRequestCommand.create({
+      ParseEventRequestBroadcastCommand.create({
         userId: command.userId,
         environmentId: command.environmentId,
         organizationId: command.organizationId,

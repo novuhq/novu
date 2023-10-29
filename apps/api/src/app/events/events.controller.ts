@@ -18,7 +18,7 @@ import {
   TriggerEventToAllRequestDto,
 } from './dtos';
 import { CancelDelayed, CancelDelayedCommand } from './usecases/cancel-delayed';
-import { ParseEventRequest, ParseEventRequestCommand } from './usecases/parse-event-request';
+import { ParseEventRequest, ParseEventRequestMulticastCommand } from './usecases/parse-event-request';
 import { ProcessBulkTrigger, ProcessBulkTriggerCommand } from './usecases/process-bulk-trigger';
 import { TriggerEventToAll, TriggerEventToAllCommand } from './usecases/trigger-event-to-all';
 
@@ -59,7 +59,7 @@ export class EventsController {
     @Body() body: TriggerEventRequestDto
   ): Promise<TriggerEventResponseDto> {
     const result = await this.parseEventRequest.execute(
-      ParseEventRequestCommand.create({
+      ParseEventRequestMulticastCommand.create({
         userId: user._id,
         environmentId: user.environmentId,
         organizationId: user.organizationId,

@@ -20,7 +20,11 @@ import {
   TriggerTenantContext,
 } from '@novu/shared';
 
-import { TriggerEventCommand } from './trigger-event.command';
+import {
+  TriggerEventBroadcastCommand,
+  TriggerEventCommand,
+  TriggerEventMulticastCommand,
+} from './trigger-event.command';
 import {
   ProcessSubscriber,
   ProcessSubscriberCommand,
@@ -134,13 +138,18 @@ export class TriggerEvent {
         );
       }
 
-      if (mappedCommand.addressingType === AddressingTypeEnum.BROADCAST) {
-        await this.triggerBroadcast(mappedCommand, actorProcessed, template);
+      if (
+        (command as TriggerEventBroadcastCommand).addressingType ===
+        AddressingTypeEnum.BROADCAST
+      ) {
+        const broadcastCommand = command as TriggerEventBroadcastCommand;
+        await this.triggerBroadcast(broadcastCommand, actorProcessed, template);
 
         return;
       }
 
-      await this.triggerMulticast(mappedCommand, actorProcessed, template);
+      const multicastCommand = command as TriggerEventMulticastCommand;
+      await this.triggerMulticast(multicastCommand, actorProcessed, template);
     } catch (e) {
       Logger.error(
         {
@@ -237,7 +246,7 @@ export class TriggerEvent {
   }
 
   private async triggerBroadcast(
-    command: TriggerEventCommand,
+    command: TriggerEventBroadcastCommand,
     actorProcessed: SubscriberEntity,
     template: NotificationTemplateEntity
   ) {
@@ -276,7 +285,7 @@ export class TriggerEvent {
   }
 
   private async triggerMulticast(
-    command: TriggerEventCommand,
+    command: TriggerEventMulticastCommand,
     actorProcessed: SubscriberEntity,
     template: NotificationTemplateEntity
   ) {
@@ -304,7 +313,7 @@ export class TriggerEvent {
   }
 
   private async sendToProcessSubscriberService(
-    command: TriggerEventCommand,
+    command: TriggerEventBroadcastCommand,
     actorProcessed: SubscriberEntity,
     template: NotificationTemplateEntity,
     subscribers: { subscriberId: string }[]

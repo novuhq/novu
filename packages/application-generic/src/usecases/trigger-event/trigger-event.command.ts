@@ -4,6 +4,7 @@ import {
   IsOptional,
   ValidateNested,
   ValidateIf,
+  IsEnum,
 } from 'class-validator';
 import {
   AddressingTypeEnum,
@@ -13,7 +14,7 @@ import {
 
 import { EnvironmentWithUserCommand } from '../../commands';
 
-export class TriggerEventCommand extends EnvironmentWithUserCommand {
+export class TriggerEventBaseCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   @IsString()
   identifier: string;
@@ -23,9 +24,6 @@ export class TriggerEventCommand extends EnvironmentWithUserCommand {
 
   @IsDefined()
   overrides: Record<string, Record<string, unknown>>;
-
-  @IsOptional()
-  to?: ISubscribersDefine[];
 
   @IsString()
   @IsDefined()
@@ -40,7 +38,19 @@ export class TriggerEventCommand extends EnvironmentWithUserCommand {
   @ValidateIf((_, value) => typeof value !== 'string')
   @ValidateNested()
   tenant?: ITenantDefine | null;
-
-  @IsOptional()
-  addressingType?: AddressingTypeEnum;
 }
+
+export class TriggerEventMulticastCommand extends TriggerEventBaseCommand {
+  @IsDefined()
+  to: ISubscribersDefine[];
+}
+
+export class TriggerEventBroadcastCommand extends TriggerEventBaseCommand {
+  @IsDefined()
+  @IsEnum(AddressingTypeEnum)
+  addressingType: AddressingTypeEnum;
+}
+
+export type TriggerEventCommand =
+  | TriggerEventMulticastCommand
+  | TriggerEventBroadcastCommand;

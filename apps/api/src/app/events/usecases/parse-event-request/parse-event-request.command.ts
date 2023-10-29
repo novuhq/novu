@@ -1,9 +1,9 @@
-import { IsDefined, IsString, IsOptional, ValidateNested, ValidateIf } from 'class-validator';
+import { IsDefined, IsString, IsOptional, ValidateNested, ValidateIf, IsEnum } from 'class-validator';
 import { AddressingTypeEnum, TriggerRecipients, TriggerRecipientSubscriber, TriggerTenantContext } from '@novu/shared';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
-export class ParseEventRequestCommand extends EnvironmentWithUserCommand {
+export class ParseEventRequestBaseCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   @IsString()
   identifier: string;
@@ -13,9 +13,6 @@ export class ParseEventRequestCommand extends EnvironmentWithUserCommand {
 
   @IsDefined()
   overrides: Record<string, Record<string, unknown>>;
-
-  @IsOptional()
-  to?: TriggerRecipients;
 
   @IsString()
   @IsOptional()
@@ -30,7 +27,17 @@ export class ParseEventRequestCommand extends EnvironmentWithUserCommand {
   @ValidateNested()
   @ValidateIf((_, value) => typeof value !== 'string')
   tenant?: TriggerTenantContext | null;
-
-  @IsOptional()
-  addressingType?: AddressingTypeEnum;
 }
+
+export class ParseEventRequestMulticastCommand extends ParseEventRequestBaseCommand {
+  @IsDefined()
+  to: TriggerRecipients;
+}
+
+export class ParseEventRequestBroadcastCommand extends ParseEventRequestBaseCommand {
+  @IsDefined()
+  @IsEnum(AddressingTypeEnum)
+  addressingType: AddressingTypeEnum;
+}
+
+export type ParseEventRequestCommand = ParseEventRequestMulticastCommand | ParseEventRequestBroadcastCommand;

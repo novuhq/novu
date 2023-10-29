@@ -4,8 +4,8 @@ import { TriggerEventStatusEnum } from '@novu/shared';
 import { ProcessBulkTriggerCommand } from './process-bulk-trigger.command';
 
 import { TriggerEventResponseDto } from '../../dtos';
-import { ParseEventRequestCommand } from '../parse-event-request/parse-event-request.command';
 import { ParseEventRequest } from '../parse-event-request/parse-event-request.usecase';
+import { ParseEventRequestMulticastCommand } from '../parse-event-request/parse-event-request.command';
 
 @Injectable()
 export class ProcessBulkTrigger {
@@ -19,7 +19,7 @@ export class ProcessBulkTrigger {
 
       try {
         result = (await this.parseEventRequest.execute(
-          ParseEventRequestCommand.create({
+          ParseEventRequestMulticastCommand.create({
             userId: command.userId,
             environmentId: command.environmentId,
             organizationId: command.organizationId,
