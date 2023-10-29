@@ -39,7 +39,7 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
   const [colorScheme, setColorScheme] = useState<ColorScheme>('light');
   const [doLogout, setDoLogout] = useState(false);
   const [preferenceFilter, setPreferenceFilter] = useState<(userPreference: IUserPreferenceSettings) => boolean>();
-  const [showUserPreferences, setShowUserPreferences] = useState<boolean>(false);
+  const [showUserPreferences, setShowUserPreferences] = useState<boolean>(true);
 
   useEffect(() => {
     if (fontFamily !== DEFAULT_FONT_FAMILY) {
