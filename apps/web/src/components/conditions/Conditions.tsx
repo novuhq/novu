@@ -1,7 +1,7 @@
 import { Grid, Group, ActionIcon, Center, useMantineTheme } from '@mantine/core';
 import styled from '@emotion/styled';
 import { Control, Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
-import { FilterPartTypeEnum, IFieldFilterPart } from '@novu/shared';
+import { FilterPartTypeEnum, IFieldFilterPart, FieldLogicalOperatorEnum, FieldOperatorEnum } from '@novu/shared';
 import {
   Button,
   colors,
@@ -242,7 +242,7 @@ export function Conditions({
           variant="outline"
           onClick={() => {
             append({
-              operator: 'EQUAL',
+              operator: FieldOperatorEnum.EQUAL,
               on: defaultOnFilter,
             } as IFieldFilterPart);
           }}
@@ -301,7 +301,7 @@ function EqualityForm({
         <Controller
           control={control}
           name={`conditions.0.children.${index}.operator`}
-          defaultValue="EQUAL"
+          defaultValue={FieldOperatorEnum.EQUAL}
           render={({ field }) => {
             return (
               <Select
@@ -317,7 +317,7 @@ function EqualityForm({
       </Grid.Col>
 
       <Grid.Col span="auto">
-        {operator !== 'IS_DEFINED' && (
+        {operator !== FieldOperatorEnum.IS_DEFINED && (
           <Controller
             control={control}
             name={`conditions.0.children.${index}.value`}

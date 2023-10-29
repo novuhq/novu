@@ -2,8 +2,16 @@ import { expect } from 'chai';
 import * as sinon from 'sinon';
 import axios from 'axios';
 import { Duration, sub } from 'date-fns';
-
-import { FilterParts, FilterPartTypeEnum, FILTER_TO_LABEL, StepTypeEnum, TimeOperatorEnum } from '@novu/shared';
+import {
+  BuilderGroupValues,
+  FieldLogicalOperatorEnum,
+  FieldOperatorEnum,
+  FilterParts,
+  FilterPartTypeEnum,
+  FILTER_TO_LABEL,
+  StepTypeEnum,
+  TimeOperatorEnum,
+} from '@novu/shared';
 import { JobEntity, MessageTemplateEntity, NotificationStepEntity } from '@novu/dal';
 import { ConditionsFilter, ConditionsFilterCommand } from '@novu/application-generic';
 
@@ -25,7 +33,7 @@ describe('Message filter matcher', function () {
       mapConditionsFilterCommand({
         step: makeStep('Correct Match', 'OR', [
           {
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             value: 'firstVar',
             field: 'varField',
             on: FilterPartTypeEnum.PAYLOAD,
@@ -47,13 +55,13 @@ describe('Message filter matcher', function () {
       mapConditionsFilterCommand({
         step: makeStep('Correct Match', 'AND', [
           {
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             value: 'firstVar',
             field: 'varField',
             on: FilterPartTypeEnum.PAYLOAD,
           },
           {
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             value: 'secondVar',
             field: 'secondField',
             on: FilterPartTypeEnum.PAYLOAD,
@@ -76,13 +84,13 @@ describe('Message filter matcher', function () {
       mapConditionsFilterCommand({
         step: makeStep('Title', 'AND', [
           {
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             value: 'firstVar',
             field: 'varField',
             on: FilterPartTypeEnum.PAYLOAD,
           },
           {
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             value: 'secondVar',
             field: 'secondField',
             on: FilterPartTypeEnum.PAYLOAD,
@@ -105,13 +113,13 @@ describe('Message filter matcher', function () {
       mapConditionsFilterCommand({
         step: makeStep('Correct Match', 'AND', [
           {
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             value: 'firstVar',
             field: 'varField',
             on: FilterPartTypeEnum.PAYLOAD,
           },
           {
-            operator: 'NOT_EQUAL',
+            operator: FieldOperatorEnum.NOT_EQUAL,
             value: 'secondVar',
             field: 'secondField',
             on: FilterPartTypeEnum.PAYLOAD,
@@ -134,7 +142,7 @@ describe('Message filter matcher', function () {
       mapConditionsFilterCommand({
         step: makeStep('Correct Match', 'AND', [
           {
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             value: 'true',
             field: 'varField',
             on: FilterPartTypeEnum.PAYLOAD,
@@ -172,7 +180,7 @@ describe('Message filter matcher', function () {
       mapConditionsFilterCommand({
         step: makeStep('Correct Match', 'AND', [
           {
-            operator: 'LARGER',
+            operator: FieldOperatorEnum.LARGER,
             value: '0',
             field: 'varField',
             on: FilterPartTypeEnum.PAYLOAD,
@@ -194,7 +202,7 @@ describe('Message filter matcher', function () {
       mapConditionsFilterCommand({
         step: makeStep('Correct Match', 'AND', [
           {
-            operator: 'SMALLER',
+            operator: FieldOperatorEnum.SMALLER,
             value: '3',
             field: 'varField',
             on: FilterPartTypeEnum.PAYLOAD,
@@ -216,7 +224,7 @@ describe('Message filter matcher', function () {
       mapConditionsFilterCommand({
         step: makeStep('Correct Match', 'AND', [
           {
-            operator: 'LARGER_EQUAL',
+            operator: FieldOperatorEnum.LARGER_EQUAL,
             value: '0',
             field: 'varField',
             on: FilterPartTypeEnum.PAYLOAD,
@@ -236,7 +244,7 @@ describe('Message filter matcher', function () {
       mapConditionsFilterCommand({
         step: makeStep('Correct Match', 'AND', [
           {
-            operator: 'LARGER_EQUAL',
+            operator: FieldOperatorEnum.LARGER_EQUAL,
             value: '3',
             field: 'varField',
             on: FilterPartTypeEnum.PAYLOAD,
@@ -257,7 +265,7 @@ describe('Message filter matcher', function () {
       mapConditionsFilterCommand({
         step: makeStep('Correct Match', 'AND', [
           {
-            operator: 'IS_DEFINED',
+            operator: FieldOperatorEnum.IS_DEFINED,
             value: '',
             field: 'emailMessage',
             on: FilterPartTypeEnum.PAYLOAD,
@@ -279,7 +287,7 @@ describe('Message filter matcher', function () {
       mapConditionsFilterCommand({
         step: makeStep('Correct Match', 'AND', [
           {
-            operator: 'IS_DEFINED',
+            operator: FieldOperatorEnum.IS_DEFINED,
             value: '',
             field: 'data.nestedKey',
             on: FilterPartTypeEnum.SUBSCRIBER,
@@ -313,7 +321,7 @@ describe('Message filter matcher', function () {
       mapConditionsFilterCommand({
         step: makeStep('Correct Match', 'OR', [
           {
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             value: 'nestedValue',
             field: 'data.nestedKey',
             on: FilterPartTypeEnum.SUBSCRIBER,
@@ -347,7 +355,7 @@ describe('Message filter matcher', function () {
       mapConditionsFilterCommand({
         step: makeStep('Correct Match', 'OR', [
           {
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             value: 'nestedValue',
             field: 'data.nestedKey.doesNotExist',
             on: FilterPartTypeEnum.PAYLOAD,
@@ -373,7 +381,7 @@ describe('Message filter matcher', function () {
       mapConditionsFilterCommand({
         step: makeStep('Correct Match', 'AND', [
           {
-            operator: 'SMALLER_EQUAL',
+            operator: FieldOperatorEnum.SMALLER_EQUAL,
             value: '3',
             field: 'varField',
             on: FilterPartTypeEnum.PAYLOAD,
@@ -393,7 +401,7 @@ describe('Message filter matcher', function () {
       mapConditionsFilterCommand({
         step: makeStep('Correct Match', 'AND', [
           {
-            operator: 'SMALLER_EQUAL',
+            operator: FieldOperatorEnum.SMALLER_EQUAL,
             value: '3',
             field: 'varField',
             on: FilterPartTypeEnum.PAYLOAD,
@@ -477,7 +485,7 @@ describe('Message filter matcher', function () {
             {
               isNegated: false,
               type: 'GROUP',
-              value: 'AND',
+              value: FieldLogicalOperatorEnum.AND,
               children: [],
             },
           ],
@@ -508,7 +516,7 @@ describe('Message filter matcher', function () {
             {
               isNegated: false,
               type: 'GROUP',
-              value: 'AND',
+              value: FieldLogicalOperatorEnum.AND,
               children: [],
             },
           ],
@@ -535,7 +543,7 @@ describe('Message filter matcher', function () {
       mapConditionsFilterCommand({
         step: makeStep('Correct Match', undefined, [
           {
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             value: 'true',
             field: 'varField',
             on: FilterPartTypeEnum.WEBHOOK,
@@ -562,13 +570,13 @@ describe('Message filter matcher', function () {
       mapConditionsFilterCommand({
         step: makeStep('Correct Match', 'OR', [
           {
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             value: 'true',
             field: 'payloadVarField',
             on: FilterPartTypeEnum.PAYLOAD,
           },
           {
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             value: 'true',
             field: 'varField',
             on: FilterPartTypeEnum.WEBHOOK,
@@ -590,14 +598,14 @@ describe('Message filter matcher', function () {
       mapConditionsFilterCommand({
         step: makeStep('Correct Match', 'OR', [
           {
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             value: 'true',
             field: 'varField',
             on: FilterPartTypeEnum.WEBHOOK,
             webhookUrl: 'www.user.com/webhook',
           },
           {
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             value: 'true',
             field: 'payloadVarField',
             on: FilterPartTypeEnum.PAYLOAD,
@@ -626,13 +634,13 @@ describe('Message filter matcher', function () {
       mapConditionsFilterCommand({
         step: makeStep('Correct Match', 'AND', [
           {
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             value: 'true',
             field: 'payloadVarField',
             on: FilterPartTypeEnum.PAYLOAD,
           },
           {
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             value: 'true',
             field: 'varField',
             on: FilterPartTypeEnum.WEBHOOK,
@@ -654,14 +662,14 @@ describe('Message filter matcher', function () {
       mapConditionsFilterCommand({
         step: makeStep('Correct Match', 'AND', [
           {
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             value: 'true',
             field: 'varField',
             on: FilterPartTypeEnum.WEBHOOK,
             webhookUrl: 'www.user.com/webhook',
           },
           {
-            operator: 'EQUAL',
+            operator: FieldOperatorEnum.EQUAL,
             value: 'true',
             field: 'payloadVarField',
             on: FilterPartTypeEnum.PAYLOAD,
@@ -708,7 +716,7 @@ describe('Message filter matcher', function () {
                 value: true,
               },
               {
-                operator: 'EQUAL',
+                operator: FieldOperatorEnum.EQUAL,
                 value: 'true',
                 field: 'payloadVarField',
                 on: FilterPartTypeEnum.PAYLOAD,
@@ -851,7 +859,7 @@ describe('Message filter matcher', function () {
                 timeOperator: TimeOperatorEnum.MINUTES,
               },
               {
-                operator: 'EQUAL',
+                operator: FieldOperatorEnum.EQUAL,
                 value: 'true',
                 field: 'payloadVarField',
                 on: FilterPartTypeEnum.PAYLOAD,
@@ -1045,7 +1053,7 @@ describe('Message filter matcher', function () {
           field: '',
           expected: '',
           actual: '',
-          operator: 'LARGER',
+          operator: FieldOperatorEnum.LARGER,
           passed: true,
         }
       );
@@ -1068,7 +1076,7 @@ describe('Message filter matcher', function () {
           field: '',
           expected: '',
           actual: '',
-          operator: 'LARGER',
+          operator: FieldOperatorEnum.LARGER,
           passed: false,
         }
       );
@@ -1091,7 +1099,7 @@ describe('Message filter matcher', function () {
           field: '',
           expected: '',
           actual: '',
-          operator: 'LARGER',
+          operator: FieldOperatorEnum.LARGER,
           passed: true,
         }
       );
@@ -1112,7 +1120,7 @@ describe('Message filter matcher', function () {
           field: '',
           expected: '',
           actual: '',
-          operator: 'LARGER',
+          operator: FieldOperatorEnum.LARGER,
           passed: true,
         }
       );
@@ -1127,7 +1135,7 @@ describe('Message filter matcher', function () {
 
 function makeStep(
   name: string,
-  groupOperator: 'AND' | 'OR' = 'AND',
+  groupOperator: BuilderGroupValues = FieldLogicalOperatorEnum.AND,
   filters: FilterParts[],
   channel = StepTypeEnum.EMAIL
 ): NotificationStepEntity {

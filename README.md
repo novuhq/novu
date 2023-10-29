@@ -50,7 +50,7 @@ Your contribution, no matter its size, holds immense value. We eagerly await to 
     ·
     <a href="https://roadmap.novu.co">Roadmap</a>
     ·
-    <a href="https://twitter.com/novuhq">Twitter</a>
+    <a href="https://twitter.com/novuhq">X</a>
     ·
     <a href="https://notifications.directory">Notifications Directory</a>
   </p>
@@ -141,7 +141,7 @@ await novu.trigger('<TRIGGER_NAME>', {
 
 ## Embeddable Notification Center
 
-Using the Novu API and admin panel, you can easily add a real-time notification center to your web app without building it yourself. You can use our React / Vue / Angular component or an iframe embed.
+Using the Novu API and admin panel, you can easily add a real-time notification center to your web app without building it yourself. You can use our [React](https://docs.novu.co/notification-center/client/react/get-started) / [Vue](https://docs.novu.co/notification-center/client/vue) / [Angular](https://docs.novu.co/notification-center/client/angular) components or an [iframe embed](https://docs.novu.co/notification-center/client/iframe).
 
 <div align="center">
 <img width="762" alt="notification-center-912bb96e009fb3a69bafec23bcde00b0" src="https://user-images.githubusercontent.com/80174214/193887395-f1c95042-b4e6-480e-a89c-a78aa247fa90.gif" alt-text="GIF of Novu's Embeddable Notification Center">
