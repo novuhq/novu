@@ -29,7 +29,7 @@ const HEADER_KEYS = {
   LINK: 'Link',
 };
 
-const DOCS_LINK = 'docs.novu.co/idempotency';
+const DOCS_LINK = 'https://docs.novu.co/additional-resources/idempotency';
 
 enum ReqStatusEnum {
   PROGRESS = 'in-progress',
