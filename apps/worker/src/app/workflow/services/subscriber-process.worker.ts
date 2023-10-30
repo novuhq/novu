@@ -2,12 +2,14 @@ import { Injectable, Logger } from '@nestjs/common';
 const nr = require('newrelic');
 import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import {
+  getSubscriberProcessWorkerOptions,
   SubscriberJobBound,
   SubscriberProcessWorkerService,
   PinoLogger,
   SubscriberJobBoundCommand,
   storage,
   Store,
+  WorkerOptions,
 } from '@novu/application-generic';
 
 const LOG_CONTEXT = 'SubscriberProcessWorker';
@@ -50,10 +52,7 @@ export class SubscriberProcessWorker extends SubscriberProcessWorkerService {
     };
   }
 
-  private getWorkerOpts() {
-    return {
-      lockDuration: 90000,
-      concurrency: 200,
-    };
+  private getWorkerOpts(): WorkerOptions {
+    return getSubscriberProcessWorkerOptions();
   }
 }

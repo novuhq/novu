@@ -1,5 +1,4 @@
-import { json, port, str, num, ValidatorSpec, makeValidator } from 'envalid';
-import * as envalid from 'envalid';
+import { cleanEnv, json, port, str, num, ValidatorSpec, makeValidator } from 'envalid';
 
 const str32 = makeValidator((variable) => {
   if (!(typeof variable === 'string') || variable.length != 32) {
@@ -92,5 +91,5 @@ if (process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'test') {
 }
 
 export function validateEnv() {
-  envalid.cleanEnv(process.env, validators);
+  cleanEnv(process.env, validators);
 }
