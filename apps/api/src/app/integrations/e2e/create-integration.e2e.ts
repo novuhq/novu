@@ -4,13 +4,12 @@ import {
   ChannelTypeEnum,
   ChatProviderIdEnum,
   EmailProviderIdEnum,
+  FieldOperatorEnum,
   InAppProviderIdEnum,
   PushProviderIdEnum,
   SmsProviderIdEnum,
 } from '@novu/shared';
 import { expect } from 'chai';
-
-const ORIGINAL_IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
 
 describe('Create Integration - /integration (POST)', function () {
   let session: UserSession;
@@ -20,11 +19,6 @@ describe('Create Integration - /integration (POST)', function () {
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
-    process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = 'true';
-  });
-
-  afterEach(async () => {
-    process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = ORIGINAL_IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
   });
 
   it('should get the email integration successfully', async function () {
@@ -113,7 +107,7 @@ describe('Create Integration - /integration (POST)', function () {
       check: false,
       conditions: [
         {
-          children: [{ field: 'identifier', value: 'test', operator: 'EQUAL', on: 'tenant' }],
+          children: [{ field: 'identifier', value: 'test', operator: FieldOperatorEnum.EQUAL, on: 'tenant' }],
         },
       ],
     };

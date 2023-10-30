@@ -12,6 +12,8 @@ import { UserSession } from '@novu/testing';
 
 const axiosInstance = axios.create();
 
+const ORIGINAL_IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
+
 describe('Trigger event - Send Push Notification - /v1/events/trigger (POST)', () => {
   let session: UserSession;
   let template: NotificationTemplateEntity;
@@ -39,7 +41,7 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST)', (
   });
 
   after(() => {
-    process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = 'false';
+    process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = ORIGINAL_IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
   });
 
   describe('Multiple providers active', () => {

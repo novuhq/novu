@@ -11,9 +11,8 @@ import { IOrganizationEntity } from '@novu/shared';
 import { updateBrandingSettings } from '../../../api/organization';
 import { getSignedUrl } from '../../../api/storage';
 import Card from '../../../components/layout/components/Card';
-import { Button, ColorInput, colors, Select } from '../../../design-system';
-import { inputStyles } from '../../../design-system/config/inputs.styles';
-import { Trash, Upload } from '../../../design-system/icons';
+import { Button, ColorInput, colors, Select, inputStyles, Upload, Trash } from '@novu/design-system';
+
 import { successMessage } from '../../../utils/notifications';
 
 const mimeTypes = {

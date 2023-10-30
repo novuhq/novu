@@ -1,4 +1,4 @@
-import { apnsConfig, fcmConfig, expoConfig, oneSignalConfig, pushWebhookConfig } from '../credentials';
+import { apnsConfig, fcmConfig, expoConfig, oneSignalConfig, pushpadConfig, pushWebhookConfig } from '../credentials';
 
 import { PushProviderIdEnum } from '../provider.enum';
 import { IProviderConfig } from '../provider.interface';
@@ -13,6 +13,14 @@ export const pushProviders: IProviderConfig[] = [
     credentials: oneSignalConfig,
     docReference: 'https://docs.novu.co/channels-and-providers/push/onesignal',
     logoFileName: { light: 'one-signal.svg', dark: 'one-signal.svg' },
+  },
+  {
+    id: PushProviderIdEnum.Pushpad,
+    displayName: 'Pushpad',
+    channel: ChannelTypeEnum.PUSH,
+    credentials: pushpadConfig,
+    docReference: 'https://docs.novu.co/channels-and-providers/push/pushpad',
+    logoFileName: { light: 'pushpad.svg', dark: 'pushpad.svg' },
   },
   {
     id: PushProviderIdEnum.FCM,
