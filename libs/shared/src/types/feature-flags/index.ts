@@ -1,10 +1,3 @@
-export enum FeatureFlagsKeysEnum {
-  IS_TEMPLATE_STORE_ENABLED = 'IS_TEMPLATE_STORE_ENABLED',
-  IS_TOPIC_NOTIFICATION_ENABLED = 'IS_TOPIC_NOTIFICATION_ENABLED',
-  IS_MULTI_TENANCY_ENABLED = 'IS_MULTI_TENANCY_ENABLED',
-  IS_USE_MERGED_DIGEST_ID = 'IS_USE_MERGED_DIGEST_ID_ENABLED',
-}
-
-export enum SystemCriticalFlagsEnum {
-  IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'IS_IN_MEMORY_CLUSTER_MODE_ENABLED',
-}
+export * from './feature-flags';
+export * from './system-critical-flags';
+export * from './flags.types';

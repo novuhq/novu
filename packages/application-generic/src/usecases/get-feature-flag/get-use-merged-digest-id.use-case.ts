@@ -12,7 +12,7 @@ export class GetUseMergedDigestId extends GetFeatureFlag {
       value,
       fallbackValue
     );
-    const key = FeatureFlagsKeysEnum.IS_USE_MERGED_DIGEST_ID;
+    const key = FeatureFlagsKeysEnum.IS_USE_MERGED_DIGEST_ID_ENABLED;
 
     const command = this.buildCommand(key, defaultValue, featureFlagCommand);
 
