@@ -638,6 +638,28 @@ export const infobipEmailConfig: IConfigCredentials[] = [
   ...mailConfigBase,
 ];
 
+export const brazeEmailConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ApiURL,
+    displayName: 'Base URL',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.AppID,
+    displayName: 'Base URL',
+    type: 'string',
+    required: true,
+  },
+  ...mailConfigBase,
+];
+
 export const fortySixElksConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.User,
