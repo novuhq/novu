@@ -22,6 +22,7 @@ import {
   clickSendConfig,
   bandwidthConfig,
   messagebirdConfig,
+  azureSmsConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -215,5 +216,13 @@ export const smsProviders: IProviderConfig[] = [
     betaVersion: true,
     docReference: 'https://dev.bandwidth.com/docs/messaging/createMessage',
     logoFileName: { light: 'bandwidth.png', dark: 'bandwidth.png' },
+  },
+  {
+    id: SmsProviderIdEnum.AzureSms,
+    displayName: `Azure Sms`,
+    channel: ChannelTypeEnum.SMS,
+    credentials: azureSmsConfig,
+    docReference: 'https://learn.microsoft.com/en-us/azure/communication-services/quickstarts/sms/receive-sms',
+    logoFileName: { light: 'azure.png', dark: 'azure.png' },
   },
 ];

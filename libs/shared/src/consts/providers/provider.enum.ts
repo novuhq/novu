@@ -83,6 +83,7 @@ export enum SmsProviderIdEnum {
   Clicksend = 'clicksend',
   Bandwidth = 'bandwidth',
   MessageBird = 'messagebird',
+  AzureSms = 'azureSms',
 }
 
 export enum ChatProviderIdEnum {

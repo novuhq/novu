@@ -896,3 +896,14 @@ export const genericSmsConfig: IConfigCredentials[] = [
   },
   ...smsConfigBase,
 ];
+
+export const azureSmsConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.AccessKey,
+    displayName: 'Connection string',
+    description: 'Your Azure account connection string',
+    type: 'text',
+    required: true,
+  },
+  ...smsConfigBase,
+];
