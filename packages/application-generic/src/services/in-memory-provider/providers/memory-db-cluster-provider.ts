@@ -51,7 +51,9 @@ export const getMemoryDbClusterProviderConfig =
       keepAlive: process.env.MEMORY_DB_CLUSTER_SERVICE_KEEP_ALIVE,
       family: process.env.MEMORY_DB_CLUSTER_SERVICE_FAMILY,
       keyPrefix: process.env.MEMORY_DB_CLUSTER_SERVICE_KEY_PREFIX,
-      tls: process.env.MEMORY_DB_CLUSTER_SERVICE_TLS as ConnectionOptions,
+      tls: (process.env.MEMORY_DB_CLUSTER_SERVICE_TLS as ConnectionOptions)
+        ? { servername: process.env.MEMORY_DB_CLUSTER_SERVICE_HOST }
+        : {},
     };
 
     const host = redisClusterConfig.host;
@@ -87,20 +89,22 @@ export const getMemoryDbClusterProviderConfig =
       keepAlive,
       keyPrefix,
       ttl,
+      tls: redisClusterConfig.tls,
     };
   };
 
 export const getMemoryDbCluster = (
   enableAutoPipelining?: boolean
 ): Cluster | undefined => {
-  const { instances, password, username } = getMemoryDbClusterProviderConfig();
+  const { instances, password, username, tls } =
+    getMemoryDbClusterProviderConfig();
 
   const options: ClusterOptions = {
     dnsLookup: (address, callback) => callback(null, address),
     enableAutoPipelining: enableAutoPipelining ?? false,
     enableOfflineQueue: false,
     redisOptions: {
-      tls: {},
+      tls,
       connectTimeout: 10000,
       ...(password && { password }),
       ...(username && { username }),
