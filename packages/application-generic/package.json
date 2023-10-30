@@ -73,6 +73,7 @@
     "@novu/mandrill": "^0.21.0",
     "@novu/maqsam": "^0.21.0",
     "@novu/mattermost": "^0.21.0",
+    "@novu/messagebird": "^0.21.0",
     "@novu/ms-teams": "^0.21.0",
     "@novu/netcore": "^0.21.0",
     "@novu/nodemailer": "^0.21.0",

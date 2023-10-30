@@ -31,4 +31,5 @@ export interface ICredentials {
   datePath?: string;
   authenticateByToken?: boolean;
   authenticationTokenKey?: string;
+  accessKey?: string;
 }

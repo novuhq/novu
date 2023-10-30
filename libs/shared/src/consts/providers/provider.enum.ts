@@ -33,6 +33,7 @@ export enum CredentialsKeyEnum {
   DatePath = 'datePath',
   AuthenticateByToken = 'authenticateByToken',
   AuthenticationTokenKey = 'authenticationTokenKey',
+  AccessKey = 'accessKey',
 }
 
 export enum EmailProviderIdEnum {
@@ -81,6 +82,7 @@ export enum SmsProviderIdEnum {
   GenericSms = 'generic-sms',
   Clicksend = 'clicksend',
   Bandwidth = 'bandwidth',
+  MessageBird = 'messagebird',
 }
 
 export enum ChatProviderIdEnum {

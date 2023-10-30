@@ -422,6 +422,16 @@ export const twilioConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
+export const messagebirdConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.AccessKey,
+    displayName: 'Access key',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+];
+
 export const slackConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApplicationId,
