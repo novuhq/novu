@@ -7,12 +7,11 @@ import {
   CheckIntegrationResponseEnum,
 } from '@novu/stateless';
 import { randomUUID } from 'crypto';
-import SparkPost from 'sparkpost';
+import axios from 'axios';
 
 export class SparkPostEmailProvider implements IEmailProvider {
   readonly id = 'sparkpost';
   readonly channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
-  private readonly client: SparkPost;
 
   constructor(
     private config: {
@@ -21,11 +20,7 @@ export class SparkPostEmailProvider implements IEmailProvider {
       from: string;
       senderName: string;
     }
-  ) {
-    this.client = new SparkPost(config.apiKey, {
-      endpoint: config.eu ? 'https://api.eu.sparkpost.com:443' : undefined,
-    });
-  }
+  ) {}
 
   async sendMessage({
     from,
@@ -35,9 +30,13 @@ export class SparkPostEmailProvider implements IEmailProvider {
     html,
     attachments,
   }: IEmailOptions): Promise<ISendMessageSuccessResponse> {
-    const recipients: { address: string }[] = to.map((recipient) => {
-      return { address: recipient };
-    });
+    const recipients: { address: { email: string } }[] = to.map(
+      (recipient) => ({
+        address: {
+          email: recipient,
+        },
+      })
+    );
 
     const files: Array<{ name: string; type: string; data: string }> = [];
 
@@ -49,16 +48,34 @@ export class SparkPostEmailProvider implements IEmailProvider {
       });
     });
 
-    const sent = await this.client.transmissions.send({
+    const endpoint = this.config.eu
+      ? 'https://api.eu.sparkpost.com/api/v1/transmissions'
+      : 'https://api.sparkpost.com/api/v1/transmissions';
+
+    const content = {
+      from: {
+        name: this.config.senderName,
+        email: from || this.config.from,
+      },
+      subject,
+      text,
+      html,
+      attachments: files,
+    };
+
+    const requestData = {
       recipients,
-      content: {
-        from: from || this.config.from,
-        subject,
-        text,
-        html,
-        attachments: files,
+      content,
+    };
+
+    const response = await axios.post(endpoint, requestData, {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.config.apiKey}`,
       },
     });
+
+    const sent = response.data;
 
     return {
       id: sent.results.id,
