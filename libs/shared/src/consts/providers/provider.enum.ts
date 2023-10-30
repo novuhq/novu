@@ -81,9 +81,9 @@ export enum SmsProviderIdEnum {
   Sendchamp = 'sendchamp',
   GenericSms = 'generic-sms',
   Clicksend = 'clicksend',
-  Simpletexting = 'simpletexting',
   Bandwidth = 'bandwidth',
   MessageBird = 'messagebird',
+  Simpletexting = 'simpletexting',
 }
 
 export enum ChatProviderIdEnum {
