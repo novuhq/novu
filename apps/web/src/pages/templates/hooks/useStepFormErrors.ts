@@ -8,7 +8,7 @@ export const useStepFormErrors = () => {
     formState: { errors },
   } = useFormContext<IForm>();
 
-  const hasVariant = variantIndex && variantIndex > -1;
+  const hasVariant = typeof variantIndex !== 'undefined' && variantIndex > -1;
   const stepErrors = errors.steps;
 
   if (!stepErrors) {
@@ -16,8 +16,8 @@ export const useStepFormErrors = () => {
   }
 
   const variantErrors = stepErrors[stepIndex]?.variants;
-  if (hasVariant && variantErrors) {
-    return variantErrors[variantIndex];
+  if (hasVariant) {
+    return variantErrors ? variantErrors[variantIndex] : {};
   }
 
   return stepErrors[stepIndex];
