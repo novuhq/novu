@@ -294,7 +294,7 @@ export const schema = z
         z
           .object({
             ...variantSchema.shape,
-            variants: z.array(variantSchema).optional(),
+            variants: z.array(variantSchema.passthrough()).optional(),
           })
           .passthrough()
           .superRefine((step, ctx) => {
