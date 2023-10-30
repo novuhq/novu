@@ -3,7 +3,7 @@ import { BaseRepository } from '../base-repository';
 import { Organization } from './organization.schema';
 import { MemberRepository } from '../member';
 
-export class OrganizationRepository extends BaseRepository<OrganizationDBModel, OrganizationEntity, object> {
+export class OrganizationRepository extends BaseRepository<OrganizationDBModel, OrganizationEntity, never> {
   private memberRepository = new MemberRepository();
 
   constructor() {

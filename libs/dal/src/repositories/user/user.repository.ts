@@ -4,7 +4,7 @@ import { BaseRepository } from '../base-repository';
 import { IUserResetTokenCount, UserEntity, UserDBModel } from './user.entity';
 import { User } from './user.schema';
 
-export class UserRepository extends BaseRepository<UserDBModel, UserEntity, object> {
+export class UserRepository extends BaseRepository<UserDBModel, UserEntity, never> {
   constructor() {
     super(User, UserEntity);
   }

@@ -2,7 +2,7 @@ import { BaseRepository } from '../base-repository';
 import { IApiKey, EnvironmentEntity, EnvironmentDBModel } from './environment.entity';
 import { Environment } from './environment.schema';
 
-export class EnvironmentRepository extends BaseRepository<EnvironmentDBModel, EnvironmentEntity, object> {
+export class EnvironmentRepository extends BaseRepository<EnvironmentDBModel, EnvironmentEntity, never> {
   constructor() {
     super(Environment, EnvironmentEntity);
   }
