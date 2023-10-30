@@ -223,6 +223,6 @@ export const smsProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.SMS,
     credentials: azureSmsConfig,
     docReference: 'https://learn.microsoft.com/en-us/azure/communication-services/quickstarts/sms/receive-sms',
-    logoFileName: { light: 'azure.png', dark: 'azure.png' },
+    logoFileName: { light: 'azure-sms.png', dark: 'azure-sms.png' },
   },
 ];

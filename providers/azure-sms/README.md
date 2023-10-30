@@ -5,5 +5,9 @@ A AzureSms sms provider library for [@novu/node](https://github.com/novuhq/novu)
 ## Usage
 
 ```javascript
-    FILL IN THE INITIALIZATION USAGE
+    import { AzureSmsProvider } from '@novu/azure-sms'
+
+    const provider = new AzureSmsProvider({
+        connectionString: process.env.AZURE_CONNECTION_STRING
+    });
 ```
