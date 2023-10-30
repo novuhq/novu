@@ -38,3 +38,13 @@ export const chatProviders: IProviderConfig[] = [
     logoFileName: { light: 'mattermost.svg', dark: 'mattermost.svg' },
   },
 ];
+{
+  id: ChatProviderIdEnum.WhatsApp,
+  displayName: 'WhatsApp Business',
+  channel: ChannelTypeEnum.CHAT,
+  betaVersion: true,
+  credentials: [] as IConfigCredentials[],
+  docReference: 'https://developers.facebook.com/docs/whatsapp',
+  logoFileName: { light: 'whatsApp.png', dark: 'whatsApp.png' },
+},
+}
