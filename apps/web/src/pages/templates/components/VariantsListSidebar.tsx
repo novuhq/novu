@@ -8,24 +8,24 @@ import { StepName } from './StepName';
 import { useBasePath } from '../hooks/useBasePath';
 import { EditorSidebarHeaderActions } from './EditorSidebarHeaderActions';
 
-const VariantsSidebarHeader = ({ variantsCount }: { variantsCount: number }) => {
+const VariantsSidebarHeader = ({ isLoading }: { isLoading?: boolean }) => {
   const { channel } = useParams<{
     channel: StepTypeEnum;
   }>();
 
-  if (!channel) {
+  if (!channel || isLoading) {
     return null;
   }
 
   return (
     <div style={{ display: 'flex', width: '100%', gap: 12 }}>
-      <StepName channel={channel} variantsCount={variantsCount} />
+      <StepName channel={channel} />
       <EditorSidebarHeaderActions />
     </div>
   );
 };
 
-export const VariantsListSidebar = ({ children, variantsCount }: { children: ReactNode; variantsCount: number }) => {
+export const VariantsListSidebar = ({ isLoading = false, children }: { isLoading?: boolean; children: ReactNode }) => {
   const navigate = useNavigate();
   const path = useBasePath();
   const { stepIndex } = useStepIndex();
@@ -34,7 +34,8 @@ export const VariantsListSidebar = ({ children, variantsCount }: { children: Rea
     <Sidebar
       key={`${stepIndex}`}
       isOpened
-      customHeader={<VariantsSidebarHeader variantsCount={variantsCount} />}
+      isLoading={isLoading}
+      customHeader={<VariantsSidebarHeader isLoading={isLoading} />}
       onClose={() => {
         navigate(path);
       }}

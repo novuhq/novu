@@ -9,6 +9,7 @@ import { VariantsListSidebar } from './VariantsListSidebar';
 import { IForm } from './formTypes';
 import { FloatingButton } from './FloatingButton';
 import { useEnvController } from '../../../hooks';
+import { useTemplateEditorForm } from './TemplateEditorFormProvider';
 
 export function VariantsPage() {
   const { watch } = useFormContext<IForm>();
@@ -17,6 +18,7 @@ export function VariantsPage() {
     stepUuid: string;
   }>();
   const { readonly: isReadonly } = useEnvController();
+  const { isLoading } = useTemplateEditorForm();
   const viewport = useRef<HTMLDivElement | null>(null);
   const [scrollPosition, setScrollPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isScrollable, setScrollable] = useState(false);
@@ -54,7 +56,7 @@ export function VariantsPage() {
   const variants = step?.variants ?? [];
 
   return (
-    <VariantsListSidebar variantsCount={variants?.length ?? 0}>
+    <VariantsListSidebar isLoading={isLoading}>
       <ScrollArea
         key={stepUuid}
         offsetScrollbars
@@ -75,7 +77,9 @@ export function VariantsPage() {
             />
           );
         })}
-        <VariantItemCard isReadonly={isReadonly} key={stepUuid} variant={step} nodeType="variantRoot" />
+        {step && variants.length > 0 && (
+          <VariantItemCard isReadonly={isReadonly} key={stepUuid} variant={step} nodeType="variantRoot" />
+        )}
         {isScrollable && <FloatingButton isUp={scrollPosition.y > 0} onClick={scrollTo} />}
       </ScrollArea>
     </VariantsListSidebar>
