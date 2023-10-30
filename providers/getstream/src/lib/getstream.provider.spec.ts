@@ -1,7 +1,9 @@
 import { GetstreamChatProvider } from './getstream.provider';
 
 test('should trigger getstream correctly', async () => {
-  const provider = new GetstreamChatProvider();
+  const config = { apiKey: 'test' };
+
+  const provider = new GetstreamChatProvider(config);
   const spy = jest
     .spyOn(provider, 'sendMessage')
     .mockImplementation(async () => {

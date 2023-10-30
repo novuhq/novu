@@ -1,5 +1,5 @@
 import { IConfigCredentials, IProviderConfig } from '../provider.interface';
-import { slackConfig } from '../credentials';
+import { slackConfig, getstreamConfig } from '../credentials';
 import { ChatProviderIdEnum } from '../provider.enum';
 
 import { ChannelTypeEnum } from '../../../types';
@@ -49,7 +49,7 @@ export const chatProviders: IProviderConfig[] = [
     id: ChatProviderIdEnum.GetStream,
     displayName: 'GetStream',
     channel: ChannelTypeEnum.CHAT,
-    credentials: [] as IConfigCredentials[],
+    credentials: getstreamConfig,
     docReference: 'https://getstream.io/chat/docs/node/?language=javascript',
     logoFileName: { light: 'getstream.svg', dark: 'getstream.svg' },
   },
