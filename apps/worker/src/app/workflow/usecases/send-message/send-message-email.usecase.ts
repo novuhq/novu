@@ -30,12 +30,12 @@ import {
   CompileEmailTemplateCommand,
   MailFactory,
   GetNovuProviderCredentials,
+  PlatformException,
 } from '@novu/application-generic';
 import * as inlineCss from 'inline-css';
 import { CreateLog } from '../../../shared/logs';
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageBase } from './send-message.base';
-import { PlatformException } from '../../../shared/utils';
 
 const LOG_CONTEXT = 'SendMessageEmail';
 

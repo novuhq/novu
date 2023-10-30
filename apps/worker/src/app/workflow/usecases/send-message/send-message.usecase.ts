@@ -8,7 +8,6 @@ import {
   StepTypeEnum,
 } from '@novu/shared';
 import {
-  InstrumentUsecase,
   AnalyticsService,
   buildNotificationTemplateKey,
   buildSubscriberKey,
@@ -16,18 +15,26 @@ import {
   DetailEnum,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-  GetSubscriberTemplatePreference,
-  GetSubscriberTemplatePreferenceCommand,
-  Instrument,
+  FilterConditionsService,
+  FilterProcessingDetails,
   GetSubscriberGlobalPreference,
   GetSubscriberGlobalPreferenceCommand,
+  GetSubscriberTemplatePreference,
+  GetSubscriberTemplatePreferenceCommand,
+  IFilterConditionsResponse,
+  IFilterData,
+  Instrument,
+  InstrumentUsecase,
+  PlatformException,
+  BulkCreateExecutionDetails,
+  BulkCreateExecutionDetailsCommand,
 } from '@novu/application-generic';
 import {
   JobEntity,
-  SubscriberRepository,
-  NotificationTemplateRepository,
   JobRepository,
   JobStatusEnum,
+  NotificationTemplateRepository,
+  SubscriberRepository,
 } from '@novu/dal';
 
 import { SendMessageCommand } from './send-message.command';
@@ -38,9 +45,6 @@ import { SendMessageInApp } from './send-message-in-app.usecase';
 import { SendMessageChat } from './send-message-chat.usecase';
 import { SendMessagePush } from './send-message-push.usecase';
 import { Digest } from './digest';
-import { PlatformException } from '../../../shared/utils';
-import { MessageMatcher } from '../message-matcher';
-import { MessageMatcherCommand } from '../message-matcher/message-matcher.command';
 
 @Injectable()
 export class SendMessage {
@@ -52,12 +56,14 @@ export class SendMessage {
     private sendMessagePush: SendMessagePush,
     private digest: Digest,
     private createExecutionDetails: CreateExecutionDetails,
+    private bulkCreateExecutionDetails: BulkCreateExecutionDetails,
     private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
     private getSubscriberGlobalPreferenceUsecase: GetSubscriberGlobalPreference,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private jobRepository: JobRepository,
+    private subscriberRepository: SubscriberRepository,
     private sendMessageDelay: SendMessageDelay,
-    private matchMessage: MessageMatcher,
+    private filterConditions: FilterConditionsService,
     private analyticsService: AnalyticsService
   ) {}
 
@@ -69,12 +75,6 @@ export class SendMessage {
     const stepType = command.step?.template?.type;
 
     if (!command.payload?.$on_boarding_trigger) {
-      const usedFilters = shouldRun.conditions.reduce(MessageMatcher.sumFilters, {
-        filters: [],
-        failedFilters: [],
-        passedFilters: [],
-      });
-
       const digest = command.job.digest;
       let timedInfo: any = {};
 
@@ -104,7 +104,7 @@ export class SendMessage {
         ...timedInfo,
         filterPassed: shouldRun,
         preferencesPassed: preferred,
-        ...(usedFilters || {}),
+        ...(shouldRun.usedFilters || {}),
         source: command.payload.__source || 'api',
       });
     }
@@ -146,34 +146,31 @@ export class SendMessage {
     }
   }
 
-  private async filter(command: SendMessageCommand) {
-    const messageMatcherCommand = MessageMatcherCommand.create({
-      step: command.job.step,
-      job: command.job,
-      userId: command.userId,
-      transactionId: command.job.transactionId,
-      _subscriberId: command.job._subscriberId,
-      environmentId: command.job._environmentId,
-      organizationId: command.job._organizationId,
-      subscriberId: command.job.subscriberId,
-      identifier: command.job.identifier,
+  private async filter(command: SendMessageCommand): Promise<IFilterConditionsResponse> {
+    const { environmentId, identifier, job, organizationId, subscriberId, transactionId } = command;
+    const { step } = job;
+    const shouldRun = await this.filterConditions.filter(step.filters || [], command.payload, {
+      environmentId,
+      identifier,
+      job,
+      organizationId,
+      subscriberId,
+      transactionId,
     });
 
-    const data = await this.matchMessage.getFilterData(messageMatcherCommand);
-
-    const shouldRun = await this.matchMessage.filter(messageMatcherCommand, data);
+    await this.sendBulkProcessingStepFilterExecutionDetails(job, shouldRun.details);
 
     if (!shouldRun.passed) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
           detail: DetailEnum.FILTER_STEPS,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.SUCCESS,
           isTest: false,
           isRetry: false,
           raw: JSON.stringify({
-            payload: data,
+            payload: shouldRun.data,
             filters: command.step.filters,
           }),
         })
@@ -181,6 +178,31 @@ export class SendMessage {
     }
 
     return shouldRun;
+  }
+
+  @Instrument()
+  private async sendBulkProcessingStepFilterExecutionDetails(
+    job: JobEntity,
+    filterProcessingDetails: FilterProcessingDetails[]
+  ): Promise<void> {
+    await this.bulkCreateExecutionDetails.execute(
+      BulkCreateExecutionDetailsCommand.create({
+        organizationId: job._organizationId,
+        environmentId: job._environmentId,
+        subscriberId: job._subscriberId,
+        details: filterProcessingDetails.map((raw) => {
+          return {
+            ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+            detail: DetailEnum.PROCESSING_STEP_FILTER,
+            source: ExecutionDetailsSourceEnum.INTERNAL,
+            status: ExecutionDetailsStatusEnum.PENDING,
+            isTest: false,
+            isRetry: false,
+            details: raw.toString(),
+          };
+        }),
+      })
+    );
   }
 
   @Instrument()
@@ -197,7 +219,7 @@ export class SendMessage {
       return true;
     }
 
-    const subscriber = await this.matchMessage.getSubscriberBySubscriberId({
+    const subscriber = await this.getSubscriberBySubscriberId({
       _environmentId: job._environmentId,
       subscriberId: job.subscriberId,
     });
@@ -266,6 +288,26 @@ export class SendMessage {
   })
   private async getNotificationTemplate({ _id, environmentId }: { _id: string; environmentId: string }) {
     return await this.notificationTemplateRepository.findById(_id, environmentId);
+  }
+
+  @CachedEntity({
+    builder: (command: { subscriberId: string; _environmentId: string }) =>
+      buildSubscriberKey({
+        _environmentId: command._environmentId,
+        subscriberId: command.subscriberId,
+      }),
+  })
+  public async getSubscriberBySubscriberId({
+    subscriberId,
+    _environmentId,
+  }: {
+    subscriberId: string;
+    _environmentId: string;
+  }) {
+    return await this.subscriberRepository.findOne({
+      _environmentId,
+      subscriberId,
+    });
   }
 
   @Instrument()

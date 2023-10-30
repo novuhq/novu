@@ -13,13 +13,13 @@ import {
   CreateExecutionDetailsCommand,
   GetUseMergedDigestId,
   FeatureFlagCommand,
+  PlatformException,
 } from '@novu/application-generic';
 
 import { GetDigestEventsRegular } from './get-digest-events-regular.usecase';
 import { GetDigestEventsBackoff } from './get-digest-events-backoff.usecase';
 
 import { CreateLog } from '../../../../shared/logs';
-import { PlatformException } from '../../../../shared/utils';
 
 import { SendMessageCommand } from '../send-message.command';
 import { SendMessageType } from '../send-message-type.usecase';

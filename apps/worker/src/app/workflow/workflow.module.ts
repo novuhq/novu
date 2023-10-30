@@ -23,7 +23,6 @@ import {
   SendTestEmail,
   SendTestEmailCommand,
   StoreSubscriberJobs,
-  ConditionsFilter,
   TriggerEvent,
   MapTriggerRecipients,
   GetTopicSubscribersUseCase,
@@ -35,7 +34,6 @@ import { JobRepository } from '@novu/dal';
 import { ActiveJobsMetricService, CompletedJobsMetricService, StandardWorker, WorkflowWorker } from './services';
 
 import {
-  MessageMatcher,
   SendMessage,
   SendMessageChat,
   SendMessageDelay,
@@ -68,7 +66,6 @@ const USE_CASES = [
   CompileEmailTemplate,
   CompileTemplate,
   CreateExecutionDetails,
-  ConditionsFilter,
   BulkCreateExecutionDetails,
   Digest,
   GetDecryptedIntegrations,
@@ -82,7 +79,6 @@ const USE_CASES = [
   GetSubscriberGlobalPreference,
   GetSubscriberTemplatePreference,
   HandleLastFailedJob,
-  MessageMatcher,
   ProcessTenant,
   QueueNextJob,
   RunJob,

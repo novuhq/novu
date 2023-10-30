@@ -3,6 +3,7 @@ import { EnvironmentRepository } from '@novu/dal';
 import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import {
   AnalyticsService,
+  createHash,
   LogDecorator,
   CreateSubscriber,
   CreateSubscriberCommand,
@@ -15,7 +16,6 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 import { InitializeSessionCommand } from './initialize-session.command';
 
 import { SessionInitializeResponseDto } from '../../dtos/session-initialize-response.dto';
-import { createHash } from '../../../shared/helpers/hmac.service';
 
 @Injectable()
 export class InitializeSession {

@@ -8,8 +8,9 @@ import {
 
 import { SelectIntegration } from './select-integration.usecase';
 import { SelectIntegrationCommand } from './select-integration.command';
+
 import { GetDecryptedIntegrations } from '../get-decrypted-integrations';
-import { ConditionsFilter } from '../conditions-filter';
+import { FilterConditionsService } from '../../services/filters';
 
 const testIntegration: IntegrationEntity = {
   _environmentId: 'env-test-123',
@@ -88,7 +89,7 @@ describe('select integration', function () {
       new IntegrationRepository() as any,
       // @ts-ignore
       new GetDecryptedIntegrations(),
-      new ConditionsFilter(),
+      new FilterConditionsService(),
       new TenantRepository()
     );
     jest.clearAllMocks();

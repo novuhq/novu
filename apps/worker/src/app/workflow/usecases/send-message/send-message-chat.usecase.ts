@@ -27,12 +27,12 @@ import {
   ChatFactory,
   SelectIntegration,
   GetNovuProviderCredentials,
+  PlatformException,
 } from '@novu/application-generic';
 
 import { CreateLog } from '../../../shared/logs';
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageBase } from './send-message.base';
-import { PlatformException } from '../../../shared/utils';
 
 const LOG_CONTEXT = 'SendMessageChat';
 

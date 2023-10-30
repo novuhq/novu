@@ -30,6 +30,7 @@ import {
   IPushHandler,
   PushFactory,
   GetNovuProviderCredentials,
+  PlatformException,
 } from '@novu/application-generic';
 import type { IPushOptions } from '@novu/stateless';
 
@@ -37,7 +38,6 @@ import { SendMessageCommand } from './send-message.command';
 import { SendMessageBase } from './send-message.base';
 
 import { CreateLog } from '../../../shared/logs';
-import { PlatformException } from '../../../shared/utils';
 
 const LOG_CONTEXT = 'SendMessagePush';
 

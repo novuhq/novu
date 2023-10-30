@@ -7,11 +7,11 @@ import {
 } from '@novu/dal';
 import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
 
-import { SelectIntegrationCommand } from './select-integration.command';
-import { ConditionsFilter } from '../conditions-filter/conditions-filter.usecase';
-import { buildIntegrationKey, CachedQuery } from '../../services/cache';
 import { GetDecryptedIntegrations } from '../get-decrypted-integrations';
-import { ConditionsFilterCommand } from '../conditions-filter';
+import { SelectIntegrationCommand } from './select-integration.command';
+
+import { buildIntegrationKey, CachedQuery } from '../../services/cache';
+import { FilterConditionsService } from '../../services/filters/filter-conditions.service';
 
 const LOG_CONTEXT = 'SelectIntegration';
 
@@ -20,7 +20,7 @@ export class SelectIntegration {
   constructor(
     private integrationRepository: IntegrationRepository,
     protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations,
-    protected conditionsFilter: ConditionsFilter,
+    private filterConditions: FilterConditionsService,
     private tenantRepository: TenantRepository
   ) {}
 
@@ -70,17 +70,13 @@ export class SelectIntegration {
           continue;
         }
 
-        const { passed } = await this.conditionsFilter.filter(
-          ConditionsFilterCommand.create({
-            filters: currentIntegration.conditions,
-            environmentId: command.environmentId,
-            organizationId: command.organizationId,
-            userId: command.userId,
-          }),
+        const { passed } = await this.filterConditions.filter(
+          currentIntegration.conditions,
           {
             tenant,
           }
         );
+
         if (passed) {
           integration = currentIntegration;
           break;

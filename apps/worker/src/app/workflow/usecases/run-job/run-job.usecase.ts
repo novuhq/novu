@@ -4,12 +4,18 @@ import { Injectable, Logger } from '@nestjs/common';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
-import { Instrument, InstrumentUsecase, PinoLogger, StorageHelperService } from '@novu/application-generic';
+import {
+  EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER,
+  Instrument,
+  InstrumentUsecase,
+  PinoLogger,
+  PlatformException,
+  StorageHelperService,
+} from '@novu/application-generic';
 
 import { RunJobCommand } from './run-job.command';
 import { QueueNextJob, QueueNextJobCommand } from '../queue-next-job';
 import { SendMessage, SendMessageCommand } from '../send-message';
-import { PlatformException, EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER } from '../../../shared/utils';
 
 const LOG_CONTEXT = 'RunJob';
 

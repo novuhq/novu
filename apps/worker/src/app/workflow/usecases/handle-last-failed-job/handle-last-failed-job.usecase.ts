@@ -6,12 +6,12 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
   InstrumentUsecase,
+  PlatformException,
 } from '@novu/application-generic';
 
 import { HandleLastFailedJobCommand } from './handle-last-failed-job.command';
 
 import { QueueNextJob, QueueNextJobCommand } from '../queue-next-job';
-import { PlatformException } from '../../../shared/utils';
 import { NotFoundError } from 'rxjs';
 
 const LOG_CONTEXT = 'HandleLastFailedJob';

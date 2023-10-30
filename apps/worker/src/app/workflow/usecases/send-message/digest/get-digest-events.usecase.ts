@@ -14,9 +14,8 @@ import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   Instrument,
+  PlatformException,
 } from '@novu/application-generic';
-
-import { PlatformException } from '../../../../shared/utils';
 
 const LOG_CONTEXT = 'GetDigestEvents';
 

@@ -33,12 +33,12 @@ import {
   buildFeedKey,
   buildMessageCountKey,
   GetNovuProviderCredentials,
+  PlatformException,
 } from '@novu/application-generic';
 
 import { CreateLog } from '../../../shared/logs';
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageBase } from './send-message.base';
-import { PlatformException } from '../../../shared/utils';
 
 @Injectable()
 export class SendMessageInApp extends SendMessageBase {

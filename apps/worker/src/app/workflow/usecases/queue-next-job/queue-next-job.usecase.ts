@@ -1,18 +1,16 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { JobEntity, JobRepository } from '@novu/dal';
-import { AddJob, InstrumentUsecase } from '@novu/application-generic';
+import { AddJob, FilterConditionsService, InstrumentUsecase } from '@novu/application-generic';
 
 import { QueueNextJobCommand } from './queue-next-job.command';
-import { MessageMatcher } from '../message-matcher/message-matcher.usecase';
 import { StepTypeEnum } from '@novu/shared';
-import { MessageMatcherCommand } from '../message-matcher/message-matcher.command';
 
 @Injectable()
 export class QueueNextJob {
   constructor(
     private jobRepository: JobRepository,
     @Inject(forwardRef(() => AddJob)) private addJobUsecase: AddJob,
-    private messageMatcher: MessageMatcher
+    private filterConditions: FilterConditionsService
   ) {}
 
   @InstrumentUsecase()
@@ -29,19 +27,10 @@ export class QueueNextJob {
     let filtered = false;
 
     if ([StepTypeEnum.DELAY, StepTypeEnum.DIGEST].includes(job.type as StepTypeEnum)) {
-      const messageMatcherCommand = MessageMatcherCommand.create({
-        step: job.step,
-        job: job,
-        userId: command.userId,
-        transactionId: job.transactionId,
-        _subscriberId: job._subscriberId,
-        environmentId: job._environmentId,
-        organizationId: job._organizationId,
+      const shouldRun = await this.filterConditions.filter(job.step.filters || [], job.payload, {
         subscriberId: job.subscriberId,
-        identifier: job.identifier,
+        environmentId: job._environmentId,
       });
-      const payload = await this.messageMatcher.getFilterData(messageMatcherCommand);
-      const shouldRun = await this.messageMatcher.filter(messageMatcherCommand, payload, true);
 
       filtered = !shouldRun.passed;
     }
