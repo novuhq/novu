@@ -5,7 +5,6 @@ import {
   ISmsProvider,
 } from '@novu/stateless';
 import axios from 'axios';
-
 export class SimpletextingSmsProvider implements ISmsProvider {
   id = 'simpletexting';
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;

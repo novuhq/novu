@@ -6,8 +6,8 @@ const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 test('should trigger SimpletextingSmsProvider library correctly', async () => {
   const provider = new SimpletextingSmsProvider({
-    apiKey: '<your-simpletexting-apiKey>',
-    accountPhone: '<your-accountPhone>',
+    apiKey: '<YOUR_SIMPLETEXTING_APIKEY>',
+    accountPhone: '<SENDER_PHONE>',
   });
 
   mockedAxios.post.mockResolvedValue({
@@ -27,14 +27,14 @@ test('should trigger SimpletextingSmsProvider library correctly', async () => {
     'https://api-app2.simpletexting.com/v2/api/messages',
     {
       contactPhone: '+12345678902',
-      accountPhone: '<your-accountPhone>',
+      accountPhone: '<SENDER_PHONE>',
       mode: 'SINGLE_SMS_STRICTLY',
       text: 'test message',
     },
     {
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer <your-simpletexting-apiKey>`,
+        Authorization: `Bearer <YOUR_SIMPLETEXTING_APIKEY>`,
       },
     }
   );
