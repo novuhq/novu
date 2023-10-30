@@ -4851,8 +4851,8 @@ importers:
   providers/pusher-beams:
     dependencies:
       '@novu/stateless':
-        specifier: 0.20.0
-        version: 0.20.0
+        specifier: 0.21.0
+        version: link:../../packages/stateless
       '@pusher/push-notifications-server':
         specifier: ^1.2.6
         version: 1.2.6
@@ -15825,15 +15825,6 @@ packages:
 
   /@novu/stateless@0.16.3:
     resolution: {integrity: sha512-9wrqUluSaR9rCdDp4oUWFBwsk6OSM4P+yMaEtFGHrGmSPMcspnvXQaQoARKakuUpCXFvQlPPJq5+yaicv4o/hA==}
-    engines: {node: '>=10'}
-    dependencies:
-      handlebars: 4.7.7
-      lodash.get: 4.4.2
-      lodash.merge: 4.6.2
-    dev: false
-
-  /@novu/stateless@0.20.0:
-    resolution: {integrity: sha512-ebjVTnbfnU1D1ZmKvcB047GbZ+S0u8NPDNetFPxQ7UAppefh5EQ5fE5wj84HDSB3df6FO+6jXEmChUXLxKVK4g==}
     engines: {node: '>=10'}
     dependencies:
       handlebars: 4.7.7
@@ -31059,7 +31050,7 @@ packages:
       eslint: 8.51.0
       eslint-import-resolver-node: 0.3.7
       eslint-module-utils: 2.8.0(@typescript-eslint/parser@5.58.0)(eslint-import-resolver-node@0.3.7)(eslint-import-resolver-webpack@0.13.7)(eslint@8.51.0)
-      has: 1.0.3
+      has: 1.0.4
       is-core-module: 2.13.0
       is-glob: 4.0.3
       minimatch: 3.1.2
