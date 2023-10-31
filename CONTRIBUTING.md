@@ -37,7 +37,7 @@ The project is a monorepo, meaning that it is a collection of multiple packages 
 To learn more about the project structure and running the project locally, please have a look [here](https://docs.novu.co/community-support/introduction#run-novu-locally).
 After cloning your fork, you will need to run the `npm run setup:project` command to install and build all dependencies.
 
-To learn a detailed guide on running the project locally, checkout our guide on [how to run novu in local machine](https://docs.novu.co/community/run-in-local-machine).
+To learn a detailed guide on running the project locally, check out our guide on [how to run novu in local machine](https://docs.novu.co/community/run-in-local-machine).
 
 ## Missing a Feature?
 
