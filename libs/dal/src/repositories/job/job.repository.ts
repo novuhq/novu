@@ -38,7 +38,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
         jobs[index]._parentId = stored[index - 1]._id as string;
       }
 
-      const created = new this.MongooseModel({ ...jobs[index], createdAt: new Date(), expireAt: new Date() });
+      const created = new this.MongooseModel({ ...jobs[index], createdAt: new Date() });
 
       stored.push(created);
     }
