@@ -54,5 +54,5 @@ In the event that you discover a vulnerability, please let us know so we can add
 
 - In the public information concerning the problem reported, we will give your name as the discoverer of the problem (unless you desire otherwise), and
 
-- We strive to resolve all problems as quickly as possible, and we would like to play an active role in the ultimate publication on the problem after it is resolved.
+- We strive to resolve all problems as quickly as possible, and we would like to play an active role in the ultimate publication of the problem after it is resolved.
 
