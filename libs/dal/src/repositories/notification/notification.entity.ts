@@ -3,7 +3,7 @@ import { StepTypeEnum } from '@novu/shared';
 import { NotificationTemplateEntity } from '../notification-template';
 import type { OrganizationId } from '../organization';
 import type { EnvironmentId } from '../environment';
-import type { ChangePropsValueType } from '../../types/helpers';
+import type { TransformEntityToDbModel } from '../../types/helpers';
 
 export class NotificationEntity {
   _id: string;
@@ -35,4 +35,4 @@ export class NotificationEntity {
   expireAt?: string;
 }
 
-export type NotificationDBModel = ChangePropsValueType<NotificationEntity>;
+export type NotificationDBModel = TransformEntityToDbModel<NotificationEntity>;

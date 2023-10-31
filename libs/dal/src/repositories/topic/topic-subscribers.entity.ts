@@ -1,4 +1,4 @@
-import type { ChangePropsValueType } from '../../types/helpers';
+import type { TransformEntityToDbModel } from '../../types/helpers';
 import {
   EnvironmentId,
   ExternalSubscriberId,
@@ -19,6 +19,6 @@ export class TopicSubscribersEntity {
   externalSubscriberId: ExternalSubscriberId;
 }
 
-export type TopicSubscribersDBModel = ChangePropsValueType<TopicSubscribersEntity>;
+export type TopicSubscribersDBModel = TransformEntityToDbModel<TopicSubscribersEntity>;
 
 export type CreateTopicSubscribersEntity = Omit<TopicSubscribersEntity, '_id'>;

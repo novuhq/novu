@@ -6,7 +6,7 @@ import { SubscriberEntity } from '../subscriber';
 import { NotificationTemplateEntity } from '../notification-template';
 import type { OrganizationId } from '../organization';
 import type { EnvironmentId } from '../environment';
-import type { ChangePropsValueType, TransformValues } from '../../types/helpers';
+import type { TransformEntityToDbModel, TransformValues } from '../../types/helpers';
 
 export class MessageEntity {
   _id: string;
@@ -90,4 +90,4 @@ export class MessageEntity {
   _actorId?: string;
 }
 
-export type MessageDBModel = ChangePropsValueType<TransformValues<MessageEntity, 'createdAt', Date>>;
+export type MessageDBModel = TransformEntityToDbModel<MessageEntity>;

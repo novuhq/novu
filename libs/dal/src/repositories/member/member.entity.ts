@@ -3,7 +3,7 @@ import { IMemberInvite, MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 
 import { UserEntity } from '../user';
 import type { OrganizationId } from '../organization';
-import type { ChangePropsValueType, TransformValues } from '../../types/helpers';
+import type { TransformEntityToDbModel, TransformValues } from '../../types/helpers';
 
 export class MemberEntity {
   _id: string;
@@ -21,7 +21,7 @@ export class MemberEntity {
   _organizationId: OrganizationId;
 }
 
-export type MemberDBModel = ChangePropsValueType<
+export type MemberDBModel = TransformEntityToDbModel<
   TransformValues<
     MemberEntity,
     'invite',

@@ -16,7 +16,7 @@ import { MessageTemplateEntity } from '../message-template';
 import { NotificationGroupEntity } from '../notification-group';
 import type { OrganizationId } from '../organization';
 import type { EnvironmentId } from '../environment';
-import type { ChangePropsValueType } from '../../types';
+import type { TransformEntityToDbModel } from '../../types';
 
 export class NotificationTemplateEntity {
   _id: string;
@@ -68,7 +68,7 @@ export class NotificationTemplateEntity {
   data?: NotificationTemplateCustomData;
 }
 
-export type NotificationTemplateDBModel = ChangePropsValueType<NotificationTemplateEntity>;
+export type NotificationTemplateDBModel = TransformEntityToDbModel<NotificationTemplateEntity>;
 
 export class NotificationTriggerEntity implements INotificationTrigger {
   type: TriggerTypeEnum;

@@ -2,7 +2,7 @@ import { IPreferenceChannels } from '@novu/shared';
 
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
-import type { ChangePropsValueType } from '../../types/helpers';
+import type { TransformEntityToDbModel } from '../../types/helpers';
 
 export class SubscriberPreferenceEntity {
   _id: string;
@@ -22,7 +22,7 @@ export class SubscriberPreferenceEntity {
   level: PreferenceLevelEnum;
 }
 
-export type SubscriberPreferenceDBModel = ChangePropsValueType<SubscriberPreferenceEntity>;
+export type SubscriberPreferenceDBModel = TransformEntityToDbModel<SubscriberPreferenceEntity>;
 
 export enum PreferenceLevelEnum {
   GLOBAL = 'global',

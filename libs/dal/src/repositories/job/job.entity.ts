@@ -4,7 +4,7 @@ import { Types } from 'mongoose';
 import { NotificationStepEntity } from '../notification-template';
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
-import type { ChangePropsValueType } from '../../types';
+import type { TransformEntityToDbModel } from '../../types';
 
 export { JobStatusEnum };
 
@@ -43,4 +43,4 @@ export class JobEntity {
   actorId?: string;
 }
 
-export type JobDBModel = ChangePropsValueType<JobEntity>;
+export type JobDBModel = TransformEntityToDbModel<JobEntity>;

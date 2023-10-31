@@ -3,7 +3,7 @@ import { StepTypeEnum, IMessageCTA, IActor } from '@novu/shared';
 import { IEmailBlock, ITemplateVariable } from './types';
 import type { OrganizationId } from '../organization';
 import type { EnvironmentId } from '../environment';
-import type { ChangePropsValueType } from '../../types/helpers';
+import type { TransformEntityToDbModel } from '../../types/helpers';
 
 export class MessageTemplateEntity {
   _id?: string;
@@ -48,4 +48,4 @@ export class MessageTemplateEntity {
   deleted?: boolean;
 }
 
-export type MessageTemplateDBModel = ChangePropsValueType<MessageTemplateEntity>;
+export type MessageTemplateDBModel = TransformEntityToDbModel<MessageTemplateEntity>;

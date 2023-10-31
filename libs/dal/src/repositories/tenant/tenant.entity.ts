@@ -1,7 +1,7 @@
 import { TenantCustomData } from '@novu/shared';
 import { TenantId } from './types';
 import { EnvironmentId } from '../environment';
-import { ChangePropsValueType } from '../../types/helpers';
+import { TransformEntityToDbModel } from '../../types/helpers';
 import { OrganizationId } from '../organization';
 
 export class TenantEntity {
@@ -24,4 +24,4 @@ export class TenantEntity {
   _organizationId: OrganizationId;
 }
 
-export type TenantDBModel = ChangePropsValueType<TenantEntity>;
+export type TenantDBModel = TransformEntityToDbModel<TenantEntity>;

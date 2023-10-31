@@ -2,7 +2,7 @@ import { BuilderFieldType, BuilderGroupValues, ChannelTypeEnum, FilterParts, ICr
 
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
-import { ChangePropsValueType } from '../../types/helpers';
+import { TransformEntityToDbModel } from '../../types/helpers';
 import { StepFilter } from '../notification-template';
 
 export class IntegrationEntity {
@@ -39,4 +39,4 @@ export class IntegrationEntity {
 
 export type ICredentialsEntity = ICredentials;
 
-export type IntegrationDBModel = ChangePropsValueType<IntegrationEntity>;
+export type IntegrationDBModel = TransformEntityToDbModel<IntegrationEntity>;

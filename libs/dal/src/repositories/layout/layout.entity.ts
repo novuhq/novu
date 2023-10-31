@@ -9,7 +9,7 @@ import {
   OrganizationId,
   UserId,
 } from './types';
-import type { ChangePropsValueType } from '../../types/helpers';
+import type { TransformEntityToDbModel } from '../../types/helpers';
 
 export class LayoutEntity {
   _id: LayoutId;
@@ -30,4 +30,4 @@ export class LayoutEntity {
   updatedAt?: string;
 }
 
-export type LayoutDBModel = ChangePropsValueType<LayoutEntity>;
+export type LayoutDBModel = TransformEntityToDbModel<LayoutEntity>;

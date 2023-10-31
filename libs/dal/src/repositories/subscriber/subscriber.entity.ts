@@ -3,7 +3,7 @@ import { SubscriberCustomData, ChatProviderIdEnum, PushProviderIdEnum } from '@n
 import { ExternalSubscriberId } from './types';
 import type { OrganizationId } from '../organization';
 import type { EnvironmentId } from '../environment';
-import type { ChangePropsValueType } from '../../types/helpers';
+import type { TransformEntityToDbModel } from '../../types/helpers';
 
 export class SubscriberEntity {
   // TODO: Use SubscriberId. Means lot of changes across whole codebase. Cool down.
@@ -44,7 +44,7 @@ export class SubscriberEntity {
   data?: SubscriberCustomData;
 }
 
-export type SubscriberDBModel = ChangePropsValueType<SubscriberEntity>;
+export type SubscriberDBModel = TransformEntityToDbModel<SubscriberEntity>;
 
 export class IChannelSettings {
   _integrationId: string;

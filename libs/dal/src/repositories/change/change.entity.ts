@@ -2,7 +2,7 @@ import { Types } from 'mongoose';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
-import type { ChangePropsValueType } from '../../types/helpers';
+import type { TransformEntityToDbModel } from '../../types/helpers';
 import { UserEntity } from '../user';
 
 export class ChangeEntity {
@@ -28,4 +28,4 @@ export class ChangeEntity {
   _parentId?: string;
 }
 
-export type ChangeDBModel = ChangePropsValueType<ChangeEntity>;
+export type ChangeDBModel = TransformEntityToDbModel<ChangeEntity>;
