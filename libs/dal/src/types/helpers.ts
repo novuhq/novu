@@ -37,6 +37,8 @@ export type TransformValues<T, U, V> = Identity<
 >;
 
 /**
- * Transform the values of T with keys in union of type `ObjectIdKey` to type `Types.ObjectId`
+ * Construct a type with the following transforms applied to type T:
+ * - Tranform values of T with keys in union of type `ObjectIdKey` to type `Types.ObjectId`
+ * - Tranform values of T with keys in union of type `DateKey` to type `Date`
  */
 export type TransformEntityToDbModel<T> = TransformValues<TransformValues<T, ObjectIdKey, ObjectIdType>, DateKey, Date>;
