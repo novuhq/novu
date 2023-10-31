@@ -1,5 +1,5 @@
 import { Text } from '@mantine/core';
-import { colors } from '../../../design-system';
+import { colors } from '@novu/design-system';
 import { TriggerSnippetTabs } from './TriggerSnippetTabs';
 import { useTemplateEditorForm } from './TemplateEditorFormProvider';
 import { SubPageWrapper } from './SubPageWrapper';

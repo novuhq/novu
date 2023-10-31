@@ -2,7 +2,7 @@ import { useMantineTheme } from '@mantine/core';
 import styled from '@emotion/styled';
 import { CredentialsKeyEnum, IConfigCredentials, secureCredentials } from '@novu/shared';
 
-import { Input, PasswordInput, Switch, Textarea, Text, Tooltip, Select } from '../../../design-system';
+import { Input, PasswordInput, Switch, Textarea, Text, Tooltip, Select } from '@novu/design-system';
 import { IntegrationSecretTextarea } from './IntegrationSecretTextarea';
 
 const SwitchWrapper = styled.div`

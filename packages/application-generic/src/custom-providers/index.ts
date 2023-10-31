@@ -13,7 +13,6 @@ import {
   WorkflowQueueService,
 } from '../services';
 import {
-  GetIsMultiProviderConfigurationEnabled,
   GetIsTopicNotificationEnabled,
   GetUseMergedDigestId,
 } from '../usecases';
@@ -35,20 +34,6 @@ export const getUseMergedDigestId = {
     featureFlagServiceItem: FeatureFlagsService
   ): Promise<GetUseMergedDigestId> => {
     const useCase = new GetUseMergedDigestId(featureFlagServiceItem);
-
-    return useCase;
-  },
-  inject: [FeatureFlagsService],
-};
-
-export const getIsMultiProviderConfigurationEnabled = {
-  provide: GetIsMultiProviderConfigurationEnabled,
-  useFactory: async (
-    featureFlagServiceItem: FeatureFlagsService
-  ): Promise<GetIsMultiProviderConfigurationEnabled> => {
-    const useCase = new GetIsMultiProviderConfigurationEnabled(
-      featureFlagServiceItem
-    );
 
     return useCase;
   },

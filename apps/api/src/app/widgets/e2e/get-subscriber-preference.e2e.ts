@@ -23,6 +23,11 @@ describe('GET /widget/preferences', function () {
 
     const data = response.data.data[0];
 
+    expect(data.template.name).to.exist;
+    expect(data.template.tags[0]).to.equal('test-tag');
+    expect(data.template.critical).to.equal(false);
+    expect(data.template.triggers[0].identifier).to.contains('test-event-');
+
     expect(data.preference.channels.email).to.equal(true);
     expect(data.preference.channels.in_app).to.equal(true);
 
