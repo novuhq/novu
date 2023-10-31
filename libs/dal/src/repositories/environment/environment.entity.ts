@@ -1,7 +1,7 @@
 import { Types } from 'mongoose';
 
 import type { OrganizationId } from '../organization';
-import type { ChangePropsValueType } from '../../types/helpers';
+import type { ChangePropsValueType, TransformValues } from '../../types/helpers';
 
 export interface IApiKey {
   key: string;
@@ -36,8 +36,5 @@ export class EnvironmentEntity {
 }
 
 export type EnvironmentDBModel = ChangePropsValueType<
-  Omit<EnvironmentEntity, 'apiKeys'>,
-  '_organizationId' | '_parentId'
-> & {
-  apiKeys: IApiKey & { _userId: Types.ObjectId }[];
-};
+  TransformValues<EnvironmentEntity, 'apiKeys', IApiKey & { _userId: Types.ObjectId }[]>
+>;

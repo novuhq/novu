@@ -35,7 +35,4 @@ export class NotificationEntity {
   expireAt?: string;
 }
 
-export type NotificationDBModel = ChangePropsValueType<
-  NotificationEntity,
-  '_environmentId' | '_organizationId' | '_templateId' | '_subscriberId'
->;
+export type NotificationDBModel = ChangePropsValueType<NotificationEntity>;

@@ -44,7 +44,7 @@ export class SubscriberEntity {
   data?: SubscriberCustomData;
 }
 
-export type SubscriberDBModel = ChangePropsValueType<SubscriberEntity, '_environmentId' | '_organizationId'>;
+export type SubscriberDBModel = ChangePropsValueType<SubscriberEntity>;
 
 export class IChannelSettings {
   _integrationId: string;

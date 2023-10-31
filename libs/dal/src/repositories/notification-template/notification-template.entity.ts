@@ -68,12 +68,7 @@ export class NotificationTemplateEntity {
   data?: NotificationTemplateCustomData;
 }
 
-export type NotificationTemplateDBModel = ChangePropsValueType<
-  Omit<NotificationTemplateEntity, '_parentId'>,
-  '_environmentId' | '_organizationId' | '_creatorId' | '_notificationGroupId'
-> & {
-  _parentId?: Types.ObjectId;
-};
+export type NotificationTemplateDBModel = ChangePropsValueType<NotificationTemplateEntity>;
 
 export class NotificationTriggerEntity implements INotificationTrigger {
   type: TriggerTypeEnum;

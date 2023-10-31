@@ -27,7 +27,4 @@ export class ExecutionDetailsEntity {
   webhookStatus?: string;
 }
 
-export type ExecutionDetailsDBModel = ChangePropsValueType<
-  ExecutionDetailsEntity,
-  '_environmentId' | '_organizationId' | '_notificationId' | '_notificationTemplateId' | '_subscriberId'
->;
+export type ExecutionDetailsDBModel = ChangePropsValueType<ExecutionDetailsEntity>;

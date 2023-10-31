@@ -30,7 +30,4 @@ export class LayoutEntity {
   updatedAt?: string;
 }
 
-export type LayoutDBModel = ChangePropsValueType<
-  LayoutEntity,
-  '_environmentId' | '_organizationId' | '_creatorId' | '_parentId'
->;
+export type LayoutDBModel = ChangePropsValueType<LayoutEntity>;

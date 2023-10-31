@@ -39,4 +39,4 @@ export class IntegrationEntity {
 
 export type ICredentialsEntity = ICredentials;
 
-export type IntegrationDBModel = ChangePropsValueType<IntegrationEntity, '_environmentId' | '_organizationId'>;
+export type IntegrationDBModel = ChangePropsValueType<IntegrationEntity>;

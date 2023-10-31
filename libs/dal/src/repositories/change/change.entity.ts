@@ -28,9 +28,4 @@ export class ChangeEntity {
   _parentId?: string;
 }
 
-export type ChangeDBModel = ChangePropsValueType<
-  Omit<ChangeEntity, '_parentId'>,
-  '_creatorId' | '_environmentId' | '_organizationId' | '_entityId'
-> & {
-  _parentId?: Types.ObjectId;
-};
+export type ChangeDBModel = ChangePropsValueType<ChangeEntity>;

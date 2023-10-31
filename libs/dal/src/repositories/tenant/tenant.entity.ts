@@ -24,4 +24,4 @@ export class TenantEntity {
   _organizationId: OrganizationId;
 }
 
-export type TenantDBModel = ChangePropsValueType<TenantEntity, '_environmentId' | '_organizationId'>;
+export type TenantDBModel = ChangePropsValueType<TenantEntity>;

@@ -14,4 +14,4 @@ export class FeedEntity {
   _organizationId: OrganizationId;
 }
 
-export type FeedDBModel = ChangePropsValueType<FeedEntity, '_environmentId' | '_organizationId'>;
+export type FeedDBModel = ChangePropsValueType<FeedEntity>;

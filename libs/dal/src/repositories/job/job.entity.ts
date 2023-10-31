@@ -43,11 +43,4 @@ export class JobEntity {
   actorId?: string;
 }
 
-export type JobDBModel = ChangePropsValueType<
-  Omit<JobEntity, '_parentId' | '_actorId'>,
-  '_notificationId' | '_subscriberId' | '_environmentId' | '_organizationId' | '_userId'
-> & {
-  _parentId?: Types.ObjectId;
-
-  _actorId?: Types.ObjectId;
-};
+export type JobDBModel = ChangePropsValueType<JobEntity>;

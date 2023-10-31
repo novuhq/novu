@@ -22,10 +22,7 @@ export class SubscriberPreferenceEntity {
   level: PreferenceLevelEnum;
 }
 
-export type SubscriberPreferenceDBModel = ChangePropsValueType<
-  SubscriberPreferenceEntity,
-  '_environmentId' | '_organizationId' | '_subscriberId' | '_templateId'
->;
+export type SubscriberPreferenceDBModel = ChangePropsValueType<SubscriberPreferenceEntity>;
 
 export enum PreferenceLevelEnum {
   GLOBAL = 'global',

@@ -48,7 +48,4 @@ export class MessageTemplateEntity {
   deleted?: boolean;
 }
 
-export type MessageTemplateDBModel = ChangePropsValueType<
-  MessageTemplateEntity,
-  '_environmentId' | '_organizationId' | '_creatorId' | '_layoutId' | '_feedId' | '_parentId'
->;
+export type MessageTemplateDBModel = ChangePropsValueType<MessageTemplateEntity>;

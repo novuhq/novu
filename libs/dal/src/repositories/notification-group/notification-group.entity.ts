@@ -14,7 +14,4 @@ export class NotificationGroupEntity {
   _parentId?: string;
 }
 
-export type NotificationGroupDBModel = ChangePropsValueType<
-  NotificationGroupEntity,
-  '_environmentId' | '_organizationId' | '_parentId'
->;
+export type NotificationGroupDBModel = ChangePropsValueType<NotificationGroupEntity>;
