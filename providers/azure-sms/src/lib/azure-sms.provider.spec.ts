@@ -3,7 +3,6 @@ import { AzureSmsProvider } from './azure-sms.provider';
 import { SmsClient } from '@azure/communication-sms';
 
 jest.mock('@azure/communication-sms');
-
 test('should trigger AzureSmsProvider library correctly', async () => {
   const mockSend = jest.fn().mockResolvedValue([
     {
