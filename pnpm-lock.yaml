@@ -2104,12 +2104,12 @@ importers:
       '@novu/bandwidth':
         specifier: ^0.21.0
         version: link:../../providers/bandwidth
-      '@novu/bulk-sms':
-        specifier: ^0.21.0
-        version: link:../../providers/bulk-sms
       '@novu/braze':
         specifier: ^0.21.0
         version: link:../../providers/braze
+      '@novu/bulk-sms':
+        specifier: ^0.21.0
+        version: link:../../providers/bulk-sms
       '@novu/burst-sms':
         specifier: ^0.21.0
         version: link:../../providers/burst-sms
@@ -3166,14 +3166,14 @@ importers:
         specifier: 4.9.5
         version: 4.9.5
 
-  providers/bulk-sms:
+  providers/braze:
     dependencies:
       '@novu/stateless':
         specifier: 0.16.3
         version: 0.16.3
-      axios:
-        specifier: ^1.6.0
-        version: 1.6.0
+      braze-api:
+        specifier: ^2.5.6
+        version: 2.5.6
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
         specifier: ~1.0.1
@@ -3208,14 +3208,15 @@ importers:
       typescript:
         specifier: 4.9.5
         version: 4.9.5
-  providers/braze:
+
+  providers/bulk-sms:
     dependencies:
       '@novu/stateless':
         specifier: 0.16.3
         version: 0.16.3
-      braze-api:
-        specifier: ^2.5.6
-        version: 2.5.6
+      axios:
+        specifier: ^1.6.0
+        version: 1.6.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
         specifier: ~1.0.1
