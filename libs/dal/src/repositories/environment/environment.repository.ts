@@ -1,8 +1,9 @@
+import { NoEnforce } from '../../types';
 import { BaseRepository } from '../base-repository';
 import { IApiKey, EnvironmentEntity, EnvironmentDBModel } from './environment.entity';
 import { Environment } from './environment.schema';
 
-export class EnvironmentRepository extends BaseRepository<EnvironmentDBModel, EnvironmentEntity, never> {
+export class EnvironmentRepository extends BaseRepository<EnvironmentDBModel, EnvironmentEntity, NoEnforce> {
   constructor() {
     super(Environment, EnvironmentEntity);
   }

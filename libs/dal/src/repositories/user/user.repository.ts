@@ -3,8 +3,8 @@ import { createHash } from 'crypto';
 import { BaseRepository } from '../base-repository';
 import { IUserResetTokenCount, UserEntity, UserDBModel } from './user.entity';
 import { User } from './user.schema';
-
-export class UserRepository extends BaseRepository<UserDBModel, UserEntity, never> {
+import { NoEnforce } from '../../types';
+export class UserRepository extends BaseRepository<UserDBModel, UserEntity, NoEnforce> {
   constructor() {
     super(User, UserEntity);
   }

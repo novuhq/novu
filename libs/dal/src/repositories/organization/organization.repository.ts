@@ -2,8 +2,9 @@ import { IPartnerConfiguration, OrganizationEntity, OrganizationDBModel } from '
 import { BaseRepository } from '../base-repository';
 import { Organization } from './organization.schema';
 import { MemberRepository } from '../member';
+import { NoEnforce } from '../../types';
 
-export class OrganizationRepository extends BaseRepository<OrganizationDBModel, OrganizationEntity, never> {
+export class OrganizationRepository extends BaseRepository<OrganizationDBModel, OrganizationEntity, NoEnforce> {
   private memberRepository = new MemberRepository();
 
   constructor() {
