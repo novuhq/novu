@@ -21,3 +21,4 @@ export * from './bandwidth.handler';
 export * from './novu.handler';
 export * from './generic-sms.handler';
 export * from './messagebird.handler';
+export * from './bulk-sms.handler';

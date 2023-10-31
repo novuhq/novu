@@ -23,6 +23,7 @@ import {
   simpleTextingConfig,
   bandwidthConfig,
   messagebirdConfig,
+  bulkSmsConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -125,6 +126,14 @@ export const smsProviders: IProviderConfig[] = [
     credentials: burstSmsConfig,
     docReference: 'https://developer.transmitsms.com/',
     logoFileName: { light: 'burst-sms.svg', dark: 'burst-sms.svg' },
+  },
+  {
+    id: SmsProviderIdEnum.BulkSms,
+    displayName: 'BulkSMS',
+    channel: ChannelTypeEnum.SMS,
+    credentials: bulkSmsConfig,
+    docReference: 'https://www.bulksms.com/developer/json/v1/',
+    logoFileName: { light: 'bulk-sms.png', dark: 'bulk-sms.png' },
   },
   {
     id: SmsProviderIdEnum.Clickatell,
