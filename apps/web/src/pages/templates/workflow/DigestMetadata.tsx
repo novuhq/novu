@@ -133,7 +133,7 @@ export const DigestMetadata = () => {
                   <b>Will be sent</b>
                 </div>
                 <div>
-                  <WillBeSentHeader />
+                  <WillBeSentHeader path={stepFormPath} />
                 </div>
               </div>
             </GroupStyled>

@@ -5,7 +5,15 @@ import { IFlowStep } from '../../../components/workflow/types';
 import { WillBeSentHeader } from '../workflow/digest/WillBeSentHeader';
 import { delaySubtitle } from '../workflow/workflow/node-types/utils';
 
-export const useStepSubtitle = (step?: IFlowStep, channelType?: StepTypeEnum) => {
+export const useStepSubtitle = ({
+  path,
+  step,
+  channelType,
+}: {
+  path: string;
+  step?: IFlowStep;
+  channelType?: StepTypeEnum;
+}) => {
   return useMemo(() => {
     if (!step) {
       return undefined;
@@ -16,7 +24,7 @@ export const useStepSubtitle = (step?: IFlowStep, channelType?: StepTypeEnum) =>
       return delaySubtitle(channelType, step);
     }
     if (StepTypeEnum.DIGEST === channelType) {
-      return <WillBeSentHeader isHighlight={false} />;
+      return <WillBeSentHeader isHighlight={false} path={path} />;
     }
 
     if (typeof content === 'string') {
@@ -33,5 +41,5 @@ export const useStepSubtitle = (step?: IFlowStep, channelType?: StepTypeEnum) =>
     }
 
     return undefined;
-  }, [channelType, step]);
+  }, [channelType, step, path]);
 };
