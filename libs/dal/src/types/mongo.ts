@@ -27,7 +27,7 @@ type RootQuerySelector<T> = {
   /** @see https://www.mongodb.com/docs/manual/reference/operator/query/comment/#op._S_comment */
   $comment?: string;
 } & Partial<{
-  [Key in LeafKeys<T>]: T[Key];
+  [Key in LeafKeys<T>]: T[Key] | T[Key][];
 }>;
 
 /**
