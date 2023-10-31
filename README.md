@@ -31,7 +31,6 @@ Are you interested in participating in Hacktoberfest? We extend a warm invitatio
 
 - Our Hacktoberfest kickoff event is happening on October 2, 2023. 🚀
 - Check out our website for [hacktoberfest instructions](https://novu.co/hacktoberfest/).
-
 - Join our [Discord and engage with our community](https://discord.com/invite/novu), get answers to your challenges, and stay updated on events, announcements, and prizes.
 
 In addition to this repository, here are the other Novu repositories you can contribute to for Hacktoberfest:
