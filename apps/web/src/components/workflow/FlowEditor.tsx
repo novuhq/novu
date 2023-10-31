@@ -91,10 +91,12 @@ export function FlowEditor({
 
   useEffect(() => {
     const clientWidth = reactFlowWrapper.current?.clientWidth;
-    const middle = clientWidth ? clientWidth / 2 - 100 : 0;
+    const clientHeight = reactFlowWrapper.current?.clientHeight;
+    const middleX = clientWidth ? clientWidth / 2 - 100 : 0;
+    const middleY = clientHeight ? clientHeight / 2 : 0;
     const zoomView = 1;
 
-    reactFlowInstance.setViewport({ x: middle, y: 10, zoom: zoomView });
+    reactFlowInstance.setViewport({ x: middleX, y: middleY, zoom: zoomView });
   }, [reactFlowInstance]);
 
   useEffect(() => {
