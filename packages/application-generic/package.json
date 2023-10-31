@@ -89,6 +89,7 @@
     "@novu/sendchamp": "^0.21.0",
     "@novu/sendgrid": "^0.21.0",
     "@novu/sendinblue": "^0.21.0",
+    "@novu/simpletexting": "^0.21.0",
     "@novu/ses": "^0.21.0",
     "@novu/shared": "^0.21.0",
     "@novu/slack": "^0.21.0",

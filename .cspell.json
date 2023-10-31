@@ -521,6 +521,8 @@
     "Idempotency",
     "messagebird",
     "Datetime",
+    "simpletexting",
+    "Simpletexting",
     "Zulip",
     "zulip"
   ],

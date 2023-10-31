@@ -2227,6 +2227,9 @@ importers:
       '@novu/shared':
         specifier: ^0.21.0
         version: link:../../libs/shared
+      '@novu/simpletexting':
+        specifier: ^0.21.0
+        version: link:../../providers/simpletexting
       '@novu/slack':
         specifier: ^0.21.0
         version: link:../../providers/slack
@@ -5244,6 +5247,49 @@ importers:
         version: 0.24.6(typescript@4.9.5)
       typescript:
         specifier: ^4.9.5
+        version: 4.9.5
+
+  providers/simpletexting:
+    dependencies:
+      '@novu/stateless':
+        specifier: 0.21.0
+        version: link:../../packages/stateless
+      axios:
+        specifier: ^1.5.1
+        version: 1.6.0
+    devDependencies:
+      '@istanbuljs/nyc-config-typescript':
+        specifier: ~1.0.1
+        version: 1.0.2(nyc@15.1.0)
+      '@types/jest':
+        specifier: ~27.5.2
+        version: 27.5.2
+      cspell:
+        specifier: ~6.19.2
+        version: 6.19.2
+      jest:
+        specifier: ~27.5.1
+        version: 27.5.1(ts-node@10.9.1)
+      npm-run-all:
+        specifier: ^4.1.5
+        version: 4.1.5
+      nyc:
+        specifier: ~15.1.0
+        version: 15.1.0
+      prettier:
+        specifier: ~2.8.0
+        version: 2.8.7
+      rimraf:
+        specifier: ~3.0.2
+        version: 3.0.2
+      ts-jest:
+        specifier: ~27.1.5
+        version: 27.1.5(@babel/core@7.23.2)(@types/jest@27.5.2)(jest@27.5.1)(typescript@4.9.5)
+      ts-node:
+        specifier: ~10.9.1
+        version: 10.9.1(@types/node@14.18.42)(typescript@4.9.5)
+      typescript:
+        specifier: 4.9.5
         version: 4.9.5
 
   providers/slack:
