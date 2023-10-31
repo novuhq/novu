@@ -825,6 +825,16 @@ export const clickSendConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
+export const simpleTextingConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'text',
+    required: true,
+  },
+  ...smsConfigBase,
+];
+
 export const bandwidthConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.User,
@@ -924,6 +934,17 @@ export const genericSmsConfig: IConfigCredentials[] = [
     description:
       'The name of the header attribute to use for the authentication token ex. (X-AUTH-TOKEN, auth-token, ...)',
     required: false,
+  },
+  ...smsConfigBase,
+];
+
+export const azureSmsConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.AccessKey,
+    displayName: 'Connection string',
+    description: 'Your Azure account connection string',
+    type: 'text',
+    required: true,
   },
   ...smsConfigBase,
 ];

@@ -520,7 +520,11 @@
     "IDEMPOTENCY", 
     "Idempotency",
     "messagebird",
-    "Datetime"
+    "Datetime",
+    "simpletexting",
+    "Simpletexting",
+    "Zulip",
+    "zulip"
   ],
   "flagWords": [],
   "patterns": [
