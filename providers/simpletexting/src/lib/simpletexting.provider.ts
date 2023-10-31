@@ -4,6 +4,7 @@ import {
   ISmsOptions,
   ISmsProvider,
 } from '@novu/stateless';
+
 import axios from 'axios';
 export class SimpletextingSmsProvider implements ISmsProvider {
   id = 'simpletexting';
