@@ -1,10 +1,9 @@
 import { Divider, Grid, Group, Modal, useMantineTheme } from '@mantine/core';
 import { Controller, useFieldArray, useWatch } from 'react-hook-form';
-import { FILTER_TO_LABEL, FilterPartTypeEnum, ChannelTypeEnum } from '@novu/shared';
+import { FILTER_TO_LABEL, FilterPartTypeEnum, ChannelTypeEnum, FieldOperatorEnum } from '@novu/shared';
 
 import { When } from '../../../components/utils/When';
-import { Button, colors, Input, Select, shadows, Title } from '../../../design-system';
-import { Trash } from '../../../design-system/icons';
+import { Button, colors, Input, Select, shadows, Title, Trash } from '@novu/design-system';
 import { DeleteStepButton, FilterButton } from './FilterModal.styles';
 import { OnlineFiltersForms } from './OnlineFiltersForms';
 import { PreviousStepFiltersForm } from './PreviousStepFiltersForm';
@@ -137,7 +136,7 @@ export function FilterModal({
             mt={30}
             onClick={() => {
               append({
-                operator: 'EQUAL',
+                operator: FieldOperatorEnum.EQUAL,
                 on: 'payload',
               });
             }}
@@ -333,28 +332,28 @@ function EqualityForm({
         <Controller
           control={control}
           name={`steps.${stepIndex}.filters.0.children.${index}.operator`}
-          defaultValue="EQUAL"
+          defaultValue={FieldOperatorEnum.EQUAL}
           render={({ field }) => {
             return (
               <Select
                 placeholder="Operator"
                 data={[
-                  { value: 'EQUAL', label: 'Equal' },
-                  { value: 'NOT_EQUAL', label: 'Not equal' },
-                  { value: 'LARGER', label: 'Larger' },
-                  { value: 'SMALLER', label: 'Smaller' },
-                  { value: 'LARGER_EQUAL', label: 'Larger or equal' },
-                  { value: 'SMALLER_EQUAL', label: 'Smaller or equal' },
-                  { value: 'IN', label: 'Contains' },
-                  { value: 'NOT_IN', label: 'Not contains' },
-                  { value: 'IS_DEFINED', label: 'Is Defined' },
+                  { value: FieldOperatorEnum.EQUAL, label: 'Equal' },
+                  { value: FieldOperatorEnum.NOT_EQUAL, label: 'Not equal' },
+                  { value: FieldOperatorEnum.LARGER, label: 'Larger' },
+                  { value: FieldOperatorEnum.SMALLER, label: 'Smaller' },
+                  { value: FieldOperatorEnum.LARGER_EQUAL, label: 'Larger or equal' },
+                  { value: FieldOperatorEnum.SMALLER_EQUAL, label: 'Smaller or equal' },
+                  { value: FieldOperatorEnum.IN, label: 'Contains' },
+                  { value: FieldOperatorEnum.NOT_IN, label: 'Not contains' },
+                  { value: FieldOperatorEnum.IS_DEFINED, label: 'Is Defined' },
                 ]}
                 {...field}
                 data-test-id="filter-operator-dropdown"
                 disabled={readonly}
                 onChange={(value) => {
                   field.onChange(value);
-                  if (value === 'IS_DEFINED') {
+                  if (value === FieldOperatorEnum.IS_DEFINED) {
                     setValue(`steps.${stepIndex}.filters.0.children.${index}.value`, '');
                   }
                 }}
@@ -365,7 +364,7 @@ function EqualityForm({
       </Grid.Col>
 
       <Grid.Col span={spaSize}>
-        {operator !== 'IS_DEFINED' && (
+        {operator !== FieldOperatorEnum.IS_DEFINED && (
           <Controller
             control={control}
             name={`steps.${stepIndex}.filters.0.children.${index}.value`}

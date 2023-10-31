@@ -46,6 +46,7 @@ const providers: Record<ChannelTypeEnum, ProvidersIdEnum[]> = {
     PushProviderIdEnum.APNS,
     PushProviderIdEnum.PushWebhook,
     PushProviderIdEnum.OneSignal,
+    PushProviderIdEnum.Pushpad,
   ],
   [ChannelTypeEnum.SMS]: [
     SmsProviderIdEnum.Twilio,
@@ -67,6 +68,9 @@ const providers: Record<ChannelTypeEnum, ProvidersIdEnum[]> = {
       SmsProviderIdEnum.Termii,
       SmsProviderIdEnum.AfricasTalking,
       SmsProviderIdEnum.Novu,
+      SmsProviderIdEnum.AzureSms,
+      SmsProviderIdEnum.Bandwidth,
+      SmsProviderIdEnum.Simpletexting,
     ].sort(),
   ],
 };
