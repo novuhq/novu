@@ -15,6 +15,7 @@ COPY libs/dal ./libs/dal
 COPY libs/testing ./libs/testing
 COPY packages/client ./packages/client
 COPY libs/shared ./libs/shared
+COPY libs/design-system ./libs/design-system
 COPY packages/notification-center ./packages/notification-center
 COPY packages/stateless ./packages/stateless
 COPY packages/node ./packages/node
@@ -27,7 +28,7 @@ COPY pnpm-workspace.yaml .
 COPY pnpm-lock.yaml .
 
 RUN --mount=type=cache,id=pnpm-store-web,target=/root/.pnpm-store\
-  pnpm install --reporter=silent
+  pnpm install --frozen-lockfile
 
 RUN pnpm add @babel/core -w
 
