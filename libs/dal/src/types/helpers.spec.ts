@@ -1,5 +1,5 @@
 import { Types } from 'mongoose';
-import { ObjectIdKey, TransformValues, TransformEntityToDbModel } from './helpers';
+import { ObjectIdKey, TransformValues, TransformEntityToDbModel, LeafKeys, DotPrefix } from './helpers';
 
 /**
  * ObjectIdKey tests
@@ -110,3 +110,41 @@ export const invalidDateKeysObject: TestChangedObject = {
   // @ts-expect-error - `createdAt` is transformed to type 'Date'.
   createdAt: '2023-10-31T00:20:46.082Z',
 };
+
+/**
+ * DotPrefix tests
+ */
+// Valid dot prefix
+export const validDotPrefix: DotPrefix<'foo'> = '.foo';
+
+// Valid empty string
+export const validEmptyString: DotPrefix<''> = '';
+
+// @ts-expect-error - invalid dot prefix
+export const invalidDotPrefix: DotPrefix<'foo'> = 'foo';
+
+/**
+ * LeafKeys tests
+ */
+type TestLeafObject = {
+  foo: string;
+  bar?: number;
+  dog: {
+    owner: {
+      name: string;
+    };
+  };
+};
+type TestLeafKeys = LeafKeys<TestLeafObject>;
+
+// Valid top level key
+export const validTopLevelKey: TestLeafKeys = 'foo';
+
+// Valid nested key
+export const validnestedLevelKey: TestLeafKeys = 'dog.owner.name';
+
+// @ts-expect-error - invalid nested object key
+export const invalidNestedObjectKey: TestLeafKeys = 'dog.owner';
+
+// @ts-expect-error - bar is optional and should not be captured as undefined
+export const invalidOptionalKey: TestLeafKeys = undefined;

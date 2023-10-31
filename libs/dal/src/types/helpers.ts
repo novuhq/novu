@@ -42,3 +42,22 @@ export type TransformValues<T, U, V> = Identity<
  * - Tranform values of T with keys in union of type `DateKey` to type `Date`
  */
 export type TransformEntityToDbModel<T> = TransformValues<TransformValues<T, ObjectIdKey, ObjectIdType>, DateKey, Date>;
+
+/**
+ * Construct a type with a `.` prefixed to `T` if `T` is not an empty string
+ */
+export type DotPrefix<T extends string> = T extends '' ? '' : `.${T}`;
+
+/**
+ * Construct a union type from the leaf key paths in T
+ *
+ * The following reference specifically mentions Mongo as a use-case for the generic.
+ * @see https://stackoverflow.com/a/68404823
+ */
+export type LeafKeys<T> = (
+  T extends object
+    ? { [K in Exclude<keyof T, symbol>]: `${K}${DotPrefix<LeafKeys<T[K]>>}` }[Exclude<keyof T, symbol>]
+    : ''
+) extends infer D
+  ? Extract<D, string>
+  : never;
