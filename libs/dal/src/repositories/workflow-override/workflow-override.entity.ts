@@ -4,8 +4,8 @@ import type { OrganizationId } from '../organization';
 import type { EnvironmentId } from '../environment';
 import type { ChangePropsValueType } from '../../types';
 import { WorkflowOverrideId } from './types';
-import { NotificationGroupEntity } from '../notification-group';
 import { TenantEntity } from '../tenant';
+import { NotificationTemplateEntity } from '../notification-template';
 
 export class WorkflowOverrideEntity {
   _id: WorkflowOverrideId;
@@ -32,7 +32,7 @@ export class WorkflowOverrideEntity {
 
   deletedBy?: string;
 
-  createdAt?: string;
+  createdAt: string;
 
   updatedAt?: string;
 }
