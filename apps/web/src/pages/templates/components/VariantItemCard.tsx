@@ -131,7 +131,11 @@ export const VariantItemCard = ({
     channel: StepTypeEnum;
     stepUuid: string;
   }>();
-  const subtitle = useStepSubtitle(variant, channel);
+  const subtitle = useStepSubtitle({
+    path: `steps.${stepIndex}.variants.${variantIndex}`,
+    step: variant,
+    channelType: channel,
+  });
   const navigate = useNavigate();
   const basePath = useBasePath();
   const [areConditionsOpened, setConditionsOpened] = useState(false);

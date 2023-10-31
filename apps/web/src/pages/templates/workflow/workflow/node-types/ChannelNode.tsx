@@ -50,7 +50,7 @@ export default memo((node: INode) => {
     setCount(foundIndex + 1);
   }, [nodes, channelType, id]);
 
-  const subtitle = useStepSubtitle(step, channelType);
+  const subtitle = useStepSubtitle({ path: `steps.${index}`, step, channelType });
 
   if (!step) {
     return null;

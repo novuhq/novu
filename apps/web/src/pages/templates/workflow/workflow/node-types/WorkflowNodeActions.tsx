@@ -126,6 +126,7 @@ export const WorkflowNodeActions = ({
             />
           )}
           <Dropdown
+            withinPortal
             position={menuPosition}
             withArrow={false}
             offset={0}

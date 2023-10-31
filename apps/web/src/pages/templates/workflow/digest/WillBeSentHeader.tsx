@@ -1,11 +1,10 @@
 import { useFormContext } from 'react-hook-form';
 import { useMantineColorScheme } from '@mantine/core';
 import { DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
-
 import { colors } from '@novu/design-system';
+
 import { pluralizeTime } from '../../../../utils';
 import { TimedDigestWillBeSentHeader } from './TimedDigestWillBeSentHeader';
-import { useStepFormPath } from '../../hooks/useStepFormPath';
 
 const DIGEST_UNIT_TYPE_TO_SINGULAR = {
   [DigestUnitEnum.SECONDS]: 'second',
@@ -33,19 +32,17 @@ const Highlight = ({ children, isHighlight }) => {
   );
 };
 
-export const WillBeSentHeader = ({ isHighlight = true }: { isHighlight?: boolean }) => {
+export const WillBeSentHeader = ({ path, isHighlight = true }: { path: string; isHighlight?: boolean }) => {
   const { watch } = useFormContext();
-  const stepFormPath = useStepFormPath();
-
-  const type = watch(`${stepFormPath}.digestMetadata.type`);
+  const type = watch(`${path}.digestMetadata.type`);
 
   if (type === DigestTypeEnum.TIMED) {
     return <TimedDigestWillBeSentHeader isHighlight={isHighlight} />;
   }
 
-  const unit = watch(`${stepFormPath}.digestMetadata.regular.unit`);
-  const amount = watch(`${stepFormPath}.digestMetadata.regular.amount`);
-  const backoff = watch(`${stepFormPath}.digestMetadata.regular.backoff`);
+  const unit = watch(`${path}.digestMetadata.regular.unit`);
+  const amount = watch(`${path}.digestMetadata.regular.amount`);
+  const backoff = watch(`${path}.digestMetadata.regular.backoff`);
 
   return (
     <>
