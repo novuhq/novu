@@ -1,5 +1,5 @@
 import { Types } from 'mongoose';
-import { ObjectIdKey, TransformValues, ChangePropsValueType } from './helpers';
+import { ObjectIdKey, TransformValues, TransformEntityToDbModel } from './helpers';
 
 /**
  * ObjectIdKey tests
@@ -57,8 +57,11 @@ type TestChangeObject = {
   _barId?: string;
   baz: string;
   qux?: number;
+  createdAt?: string;
+  updatedAt?: string;
+  deletedAt?: string;
 };
-type TestChangedObject = ChangePropsValueType<TestChangeObject>;
+type TestChangedObject = TransformEntityToDbModel<TestChangeObject>;
 
 // Valid changed object WITHOUT undefined keys and non transformed key
 export const validKeysObject: TestChangedObject = {
@@ -74,8 +77,23 @@ export const validUndefinedKeysObject: TestChangedObject = {
   qux: undefined,
 };
 
+export const validDateKeysObject: TestChangedObject = {
+  _fooId: new Types.ObjectId('12345'),
+  baz: 'something',
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  deletedAt: new Date(),
+};
+
 export const invalidDefinedKeysObject: TestChangedObject = {
   // @ts-expect-error - `foo` is transformed to type 'ObjectId'.
   _fooId: '12345',
   baz: 'something',
+};
+
+export const invalidDateKeysObject: TestChangedObject = {
+  _fooId: new Types.ObjectId('12345'),
+  baz: 'something',
+  // @ts-expect-error - `createdAt` is transformed to type 'Date'.
+  createdAt: '2023-10-31T00:20:46.082Z',
 };

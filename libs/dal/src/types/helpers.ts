@@ -5,6 +5,8 @@ import { Types } from 'mongoose';
  */
 export type ObjectIdKey = `_${string}Id`;
 
+export type DateKey = 'createdAt' | 'updatedAt' | 'deletedAt';
+
 /**
  * Flatten type T to make it easier to read
  */
@@ -22,4 +24,8 @@ export type TransformValues<T, U, V> = Id<
 /**
  * Transform the values of T with keys in union of type `ObjectIdKey` to type `Types.ObjectId`
  */
-export type ChangePropsValueType<T> = TransformValues<T, ObjectIdKey, Types.ObjectId>;
+export type TransformEntityToDbModel<T> = TransformValues<
+  TransformValues<T, ObjectIdKey, Types.ObjectId>,
+  DateKey,
+  Date
+>;
