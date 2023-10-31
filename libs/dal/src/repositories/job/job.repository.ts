@@ -29,16 +29,18 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     super(Job, JobEntity);
   }
 
-  public async storeJobs(jobs: Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>[]): Promise<JobEntity[]> {
-    const stored: JobEntity[] = [];
+  public async storeJobs(
+    jobs: Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt' | 'expireAt'>[]
+  ): Promise<JobDBModel[]> {
+    const stored: JobDBModel[] = [];
     for (let index = 0; index < jobs.length; index++) {
       if (index > 0) {
-        jobs[index]._parentId = stored[index - 1]._id;
+        jobs[index]._parentId = stored[index - 1]._id as string;
       }
 
-      const created = new this.MongooseModel({ ...jobs[index], createdAt: new Date() });
+      const created = new this.MongooseModel({ ...jobs[index], createdAt: new Date(), expireAt: new Date() });
 
-      stored.push(this.mapEntity(created));
+      stored.push(created);
     }
 
     await this.insertMany(stored, true);
