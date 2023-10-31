@@ -53,6 +53,7 @@ export const missingDefinedKeysObject: TestTransformedObject = {};
  * ChangePropsValueType tests
  */
 type TestChangeObject = {
+  _id: string;
   _fooId: string;
   _barId?: string;
   baz: string;
@@ -65,18 +66,21 @@ type TestChangedObject = TransformEntityToDbModel<TestChangeObject>;
 
 // Valid changed object WITHOUT undefined keys and non transformed key
 export const validObjectIdKeysObject: TestChangedObject = {
+  _id: new Types.ObjectId('12345'),
   _fooId: new Types.ObjectId('12345'),
   baz: 'something',
 };
 
 // Valid changed object WITHOUT undefined keys and non transformed key
 export const validStringKeysObject: TestChangedObject = {
+  _id: 'something',
   _fooId: 'something',
   baz: 'something',
 };
 
 // Valid changed object WITH undefined keys and non transformed undefined key
 export const validUndefinedKeysObject: TestChangedObject = {
+  _id: new Types.ObjectId('12345'),
   _fooId: new Types.ObjectId('12345'),
   _barId: undefined,
   baz: 'something',
@@ -84,6 +88,7 @@ export const validUndefinedKeysObject: TestChangedObject = {
 };
 
 export const validDateKeysObject: TestChangedObject = {
+  _id: new Types.ObjectId('12345'),
   _fooId: new Types.ObjectId('12345'),
   baz: 'something',
   createdAt: new Date(),
@@ -92,12 +97,14 @@ export const validDateKeysObject: TestChangedObject = {
 };
 
 export const invalidDefinedKeysObject: TestChangedObject = {
+  _id: new Types.ObjectId('12345'),
   // @ts-expect-error - `foo` is transformed to type 'ObjectId'.
   _fooId: 12345,
   baz: 'something',
 };
 
 export const invalidDateKeysObject: TestChangedObject = {
+  _id: new Types.ObjectId('12345'),
   _fooId: new Types.ObjectId('12345'),
   baz: 'something',
   // @ts-expect-error - `createdAt` is transformed to type 'Date'.
