@@ -35,6 +35,10 @@ import { Roles } from '../auth/framework/roles.decorator';
 import { ApiResponse } from '../shared/framework/response.decorator';
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 import { CreateWorkflowQuery } from './queries';
+import { CreateWorkflowOverrideRequestDto } from './dto/create-workflow-override-request.dto';
+import { CreateWorkflowOverrideResponseDto } from './dto/create-workflow-override-response.dto';
+import { CreateWorkflowOverride } from './usecases/create-workflow-override/create-workflow-override.usecase';
+import { CreateWorkflowOverrideCommand } from './usecases/create-workflow-override/create-workflow-override.command';
 
 @Controller('/workflows')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -47,7 +51,8 @@ export class WorkflowController {
     private getWorkflowUsecase: GetNotificationTemplate,
     private updateWorkflowByIdUsecase: UpdateNotificationTemplate,
     private deleteWorkflowByIdUsecase: DeleteNotificationTemplate,
-    private changeWorkflowActiveStatusUsecase: ChangeTemplateActiveStatus
+    private changeWorkflowActiveStatusUsecase: ChangeTemplateActiveStatus,
+    private createWorkflowOverrideUsecase: CreateWorkflowOverride
   ) {}
 
   @Get('')
@@ -199,6 +204,34 @@ export class WorkflowController {
         environmentId: user.environmentId,
         active: body.active,
         templateId: workflowId,
+      })
+    );
+  }
+
+  @Post('/overrides')
+  @UseGuards(RootEnvironmentGuard)
+  @ApiResponse(CreateWorkflowOverrideResponseDto)
+  @ApiOperation({
+    summary: 'Create workflow override',
+    description:
+      'In order to create workflow override please make sure to identify the workflow by triggerIdentifier or _workflowId, and tenant by tenantIdentifier',
+  })
+  @ExternalApiAccessible()
+  createWorkflowOverride(
+    @UserSession() user: IJwtPayload,
+    @Body() body: CreateWorkflowOverrideRequestDto,
+    @Param('workflowId') workflowId: string
+  ): Promise<CreateWorkflowOverrideResponseDto> {
+    return this.createWorkflowOverrideUsecase.execute(
+      CreateWorkflowOverrideCommand.create({
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+        userId: user._id,
+        active: body.active,
+        preferenceSettings: body.preferenceSettings,
+        triggerIdentifier: body.triggerIdentifier,
+        tenantIdentifier: body.tenantIdentifier,
+        _workflowId: body._workflowId,
       })
     );
   }
