@@ -71,4 +71,5 @@ export const validUndefinedKeysObject: TestChangedObject = {
 export const invalidDefinedKeysObject: TestChangedObject = {
   // @ts-expect-error - `foo` is transformed to type 'ObjectId'.
   _fooId: '12345',
+  baz: 'something',
 };
