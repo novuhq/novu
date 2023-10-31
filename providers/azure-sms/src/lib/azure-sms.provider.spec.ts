@@ -21,7 +21,7 @@ test('should trigger AzureSmsProvider library correctly', async () => {
   });
 
   const provider = new AzureSmsProvider({
-    connectionString: 'mock-connection-string',
+    connectionString: 'MOCK-CONNECTION-STRING',
   });
 
   await provider.sendMessage({
