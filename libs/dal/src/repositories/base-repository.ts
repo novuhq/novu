@@ -7,7 +7,6 @@ import {
   NOTIFICATION_RETENTION_DAYS,
 } from '@novu/shared';
 import { Model, Types, ProjectionType, FilterQuery, UpdateQuery, QueryOptions } from 'mongoose';
-import { DalException } from '../shared';
 import { ObjectIdType } from '../types';
 
 export class BaseRepository<
