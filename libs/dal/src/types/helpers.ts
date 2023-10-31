@@ -13,12 +13,12 @@ import { Types } from 'mongoose';
 export type ObjectIdType = Types.ObjectId | string;
 
 /**
- * The type union of the PK identifier and the templater literal type of an FK identifier
+ * The type union of the PK identifier and the template literal type of an FK identifier
  */
 export type ObjectIdKey = '_id' | `_${string}Id`;
 
 /**
- * The templater literal type of a Date key
+ * The template literal type of a Date key
  */
 export type DateKey = `${string}At`;
 
