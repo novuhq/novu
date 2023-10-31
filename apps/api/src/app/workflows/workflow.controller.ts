@@ -39,6 +39,10 @@ import { CreateWorkflowOverrideRequestDto } from './dto/create-workflow-override
 import { CreateWorkflowOverrideResponseDto } from './dto/create-workflow-override-response.dto';
 import { CreateWorkflowOverride } from './usecases/create-workflow-override/create-workflow-override.usecase';
 import { CreateWorkflowOverrideCommand } from './usecases/create-workflow-override/create-workflow-override.command';
+import { UpdateWorkflowOverrideResponseDto } from './dto/update-workflow-override-response.dto';
+import { UpdateWorkflowOverrideRequestDto } from './dto/update-workflow-override-request.dto';
+import { UpdateWorkflowOverrideCommand } from './usecases/update-workflow-override/update-workflow-override.command';
+import { UpdateWorkflowOverride } from './usecases/update-workflow-override/update-workflow-override.usecase';
 
 @Controller('/workflows')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -52,7 +56,8 @@ export class WorkflowController {
     private updateWorkflowByIdUsecase: UpdateNotificationTemplate,
     private deleteWorkflowByIdUsecase: DeleteNotificationTemplate,
     private changeWorkflowActiveStatusUsecase: ChangeTemplateActiveStatus,
-    private createWorkflowOverrideUsecase: CreateWorkflowOverride
+    private createWorkflowOverrideUsecase: CreateWorkflowOverride,
+    private updateWorkflowOverrideUsecase: UpdateWorkflowOverride
   ) {}
 
   @Get('')
@@ -219,8 +224,7 @@ export class WorkflowController {
   @ExternalApiAccessible()
   createWorkflowOverride(
     @UserSession() user: IJwtPayload,
-    @Body() body: CreateWorkflowOverrideRequestDto,
-    @Param('workflowId') workflowId: string
+    @Body() body: CreateWorkflowOverrideRequestDto
   ): Promise<CreateWorkflowOverrideResponseDto> {
     return this.createWorkflowOverrideUsecase.execute(
       CreateWorkflowOverrideCommand.create({
@@ -232,6 +236,32 @@ export class WorkflowController {
         triggerIdentifier: body.triggerIdentifier,
         tenantIdentifier: body.tenantIdentifier,
         _workflowId: body._workflowId,
+      })
+    );
+  }
+
+  @Put('/:workflowId/tenants/:tenantIdentifier/overrides')
+  @UseGuards(RootEnvironmentGuard)
+  @ApiResponse(UpdateWorkflowOverrideResponseDto)
+  @ApiOperation({
+    summary: 'Update workflow override',
+  })
+  @ExternalApiAccessible()
+  updateWorkflowOverride(
+    @UserSession() user: IJwtPayload,
+    @Body() body: UpdateWorkflowOverrideRequestDto,
+    @Param('workflowId') workflowId: string,
+    @Param('tenantIdentifier') tenantIdentifier: string
+  ): Promise<UpdateWorkflowOverrideResponseDto> {
+    return this.updateWorkflowOverrideUsecase.execute(
+      UpdateWorkflowOverrideCommand.create({
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+        userId: user._id,
+        active: body.active,
+        preferenceSettings: body.preferenceSettings,
+        tenantIdentifier: tenantIdentifier,
+        _workflowId: workflowId,
       })
     );
   }
