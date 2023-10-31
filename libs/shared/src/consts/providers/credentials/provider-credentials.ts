@@ -360,6 +360,15 @@ export const burstSmsConfig: IConfigCredentials[] = [
   },
 ];
 
+export const bulkSmsConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiToken,
+    displayName: 'API Token',
+    type: 'string',
+    required: true,
+  },
+];
+
 export const clickatellConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
