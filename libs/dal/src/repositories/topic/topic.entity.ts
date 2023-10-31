@@ -1,6 +1,7 @@
 import { Types } from 'mongoose';
 
 import { EnvironmentId, OrganizationId, TopicId, TopicKey, TopicName } from './types';
+import { TransformEntityToDbModel } from '../../types';
 
 export class TopicEntity {
   _id: TopicId;
@@ -10,8 +11,4 @@ export class TopicEntity {
   name: TopicName;
 }
 
-export type TopicDBModel = Omit<TopicEntity, '_environmentId' | '_organizationId'> & {
-  _environmentId: Types.ObjectId;
-
-  _organizationId: Types.ObjectId;
-};
+export type TopicDBModel = TransformEntityToDbModel<TopicEntity>;

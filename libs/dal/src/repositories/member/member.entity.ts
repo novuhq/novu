@@ -3,12 +3,12 @@ import { IMemberInvite, MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 
 import { UserEntity } from '../user';
 import type { OrganizationId } from '../organization';
-import type { TransformEntityToDbModel, TransformValues } from '../../types/helpers';
+import type { ObjectIdType, TransformEntityToDbModel, TransformValues } from '../../types/helpers';
 
 export class MemberEntity {
   _id: string;
 
-  _userId: string;
+  _userId?: string;
 
   user?: Pick<UserEntity, 'firstName' | '_id' | 'lastName' | 'email'>;
 
@@ -26,7 +26,7 @@ export type MemberDBModel = TransformEntityToDbModel<
     MemberEntity,
     'invite',
     IMemberInvite & {
-      _inviterId: Types.ObjectId;
+      _inviterId: ObjectIdType;
     }
   >
 >;
