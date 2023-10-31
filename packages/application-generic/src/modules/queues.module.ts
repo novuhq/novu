@@ -6,6 +6,7 @@ import {
   CompletedJobsMetricQueueServiceHealthIndicator,
   InboundParseQueueServiceHealthIndicator,
   StandardQueueServiceHealthIndicator,
+  SubscriberProcessQueueHealthIndicator,
   WebSocketsQueueServiceHealthIndicator,
   WorkflowQueueServiceHealthIndicator,
 } from '../health';
@@ -15,6 +16,7 @@ import {
   CompletedJobsMetricQueueService,
   InboundParseQueue,
   StandardQueueService,
+  SubscriberProcessQueueService,
   WebSocketsQueueService,
   WorkflowQueueService,
 } from '../services/queues';
@@ -23,15 +25,12 @@ import {
   CompletedJobsMetricWorkerService,
   InboundParseWorker,
   StandardWorkerService,
+  SubscriberProcessWorkerService,
   WebSocketsWorkerService,
   WorkflowWorkerService,
   OldInstanceStandardWorkerService,
   OldInstanceWorkflowWorkerService,
 } from '../services/workers';
-
-import { SubscriberProcessQueueService } from '../services/queues/subscriber-process-queue.service';
-import { SubscriberProcessWorkerService } from '../services/workers/subscriber-process-worker.service';
-import { SubscriberProcessQueueHealthIndicator } from '../health/subscriber-process-queue.health-indicator';
 
 const PROVIDERS: Provider[] = [
   ActiveJobsMetricQueueService,
