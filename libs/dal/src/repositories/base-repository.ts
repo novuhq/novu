@@ -13,7 +13,7 @@ import { ObjectIdType } from '../types';
 export class BaseRepository<
   T_DBModel extends { _id: ObjectIdType },
   T_MappedEntity,
-  T_Required extends Partial<T_DBModel>
+  T_Enforcement extends Partial<T_DBModel>
 > {
   public _model: Model<T_DBModel>;
 
@@ -33,7 +33,7 @@ export class BaseRepository<
     return new Types.ObjectId(value);
   }
 
-  async count(query: FilterQuery<T_DBModel> & T_Required, limit?: number): Promise<number> {
+  async count(query: FilterQuery<T_DBModel> & T_Enforcement, limit?: number): Promise<number> {
     return this.MongooseModel.countDocuments(query, {
       limit,
     });
@@ -44,7 +44,7 @@ export class BaseRepository<
   }
 
   async findOne(
-    query: FilterQuery<T_DBModel> & T_Required,
+    query: FilterQuery<T_DBModel> & T_Enforcement,
     select?: ProjectionType<T_MappedEntity>,
     options: { readPreference?: 'secondaryPreferred' | 'primary'; query?: QueryOptions<T_DBModel> } = {}
   ): Promise<T_MappedEntity | null> {
@@ -56,7 +56,7 @@ export class BaseRepository<
     return this.mapEntity(data.toObject());
   }
 
-  async delete(query: FilterQuery<T_DBModel> & T_Required): Promise<{
+  async delete(query: FilterQuery<T_DBModel> & T_Enforcement): Promise<{
     /** Indicates whether this writes result was acknowledged. If not, then all other members of this result will be undefined. */
     acknowledged: boolean;
     /** The number of documents that were deleted */
@@ -66,7 +66,7 @@ export class BaseRepository<
   }
 
   async find(
-    query: FilterQuery<T_DBModel> & T_Required,
+    query: FilterQuery<T_DBModel> & T_Enforcement,
     select: ProjectionType<T_MappedEntity> = '',
     options: { limit?: number; sort?: any; skip?: number } = {}
   ): Promise<T_MappedEntity[]> {
@@ -82,7 +82,7 @@ export class BaseRepository<
   }
 
   async *findBatch(
-    query: FilterQuery<T_DBModel> & T_Required,
+    query: FilterQuery<T_DBModel> & T_Enforcement,
     select = '',
     options: { limit?: number; sort?: any; skip?: number } = {},
     batchSize = 500
@@ -97,7 +97,7 @@ export class BaseRepository<
     }
   }
 
-  private calcExpireDate(modelName: string, data: FilterQuery<T_DBModel> & T_Required) {
+  private calcExpireDate(modelName: string, data: FilterQuery<T_DBModel> & T_Enforcement) {
     let startDate: Date = new Date();
     if (data.expireAt) {
       startDate = new Date(data.expireAt);
@@ -117,7 +117,7 @@ export class BaseRepository<
     }
   }
 
-  async create(data: Omit<T_DBModel, '_id'> & T_Required, options: IOptions = {}): Promise<T_MappedEntity> {
+  async create(data: Omit<T_DBModel, '_id'> & T_Enforcement, options: IOptions = {}): Promise<T_MappedEntity> {
     const expireAt = this.calcExpireDate(this.MongooseModel.modelName, data);
     if (expireAt) {
       data = { ...data, expireAt };
@@ -133,7 +133,7 @@ export class BaseRepository<
   }
 
   async insertMany(
-    data: (Omit<T_DBModel, '_id'> & T_Required)[],
+    data: (Omit<T_DBModel, '_id'> & T_Enforcement)[],
     ordered = false
   ): Promise<{ acknowledged: boolean; insertedCount: number; insertedIds: ObjectIdType[] }> {
     const result = await this.MongooseModel.insertMany(data, { ordered });
@@ -148,7 +148,7 @@ export class BaseRepository<
   }
 
   async update(
-    query: FilterQuery<T_DBModel> & T_Required,
+    query: FilterQuery<T_DBModel> & T_Enforcement,
     updateBody: UpdateQuery<T_DBModel>
   ): Promise<{
     matched: number;
@@ -164,7 +164,7 @@ export class BaseRepository<
     };
   }
 
-  async upsertMany(data: (FilterQuery<T_DBModel> & T_Required)[]) {
+  async upsertMany(data: (FilterQuery<T_DBModel> & T_Enforcement)[]) {
     const promises = data.map((entry) => this.MongooseModel.findOneAndUpdate(entry, entry, { upsert: true }));
 
     return await Promise.all(promises);
