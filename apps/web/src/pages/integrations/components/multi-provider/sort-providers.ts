@@ -68,8 +68,8 @@ const providers: Record<ChannelTypeEnum, ProvidersIdEnum[]> = {
       SmsProviderIdEnum.Termii,
       SmsProviderIdEnum.AfricasTalking,
       SmsProviderIdEnum.Novu,
-      SmsProviderIdEnum.Bandwidth,
       SmsProviderIdEnum.AzureSms,
+      SmsProviderIdEnum.Bandwidth,
     ].sort(),
   ],
 };
