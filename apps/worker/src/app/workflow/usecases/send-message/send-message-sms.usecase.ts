@@ -6,8 +6,6 @@ import {
   SubscriberRepository,
   MessageEntity,
   IntegrationEntity,
-  TenantRepository,
-  SubscriberEntity,
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import {
@@ -35,7 +33,6 @@ export class SendMessageSms extends SendMessageBase {
   constructor(
     protected subscriberRepository: SubscriberRepository,
     protected messageRepository: MessageRepository,
-    protected tenantRepository: TenantRepository,
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
@@ -48,7 +45,6 @@ export class SendMessageSms extends SendMessageBase {
       createLogUsecase,
       createExecutionDetails,
       subscriberRepository,
-      tenantRepository,
       selectIntegration,
       getNovuProviderCredentials,
       selectVariant
@@ -57,12 +53,6 @@ export class SendMessageSms extends SendMessageBase {
 
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
-    const subscriber = await this.getSubscriberBySubscriberId({
-      subscriberId: command.subscriberId,
-      _environmentId: command.environmentId,
-    });
-    if (!subscriber) throw new PlatformException('Subscriber not found');
-
     const overrideSelectedIntegration = command.overrides?.sms?.integrationIdentifier;
 
     const integration = await this.getIntegration({
@@ -84,32 +74,12 @@ export class SendMessageSms extends SendMessageBase {
 
     if (!step.template) throw new PlatformException(`Unexpected error: SMS template is missing`);
 
-    let actor: SubscriberEntity | null = null;
-    if (command.job.actorId) {
-      actor = await this.getSubscriberBySubscriberId({
-        subscriberId: command.job.actorId,
-        _environmentId: command.environmentId,
-      });
-    }
-    const tenant = await this.handleTenantExecution(command.job);
-
-    const template = await this.processVariants(command, tenant, subscriber, command.payload);
+    const { subscriber } = command.compileContext;
+    const template = await this.processVariants(command);
 
     if (template) {
       step.template = template;
     }
-
-    const payload = {
-      subscriber: subscriber,
-      step: {
-        digest: !!command.events?.length,
-        events: command.events,
-        total_count: command.events?.length,
-      },
-      ...(tenant && { tenant }),
-      ...(actor && { actor }),
-      ...command.payload,
-    };
 
     let content: string | null = '';
 
@@ -117,7 +87,7 @@ export class SendMessageSms extends SendMessageBase {
       content = await this.compileTemplate.execute(
         CompileTemplateCommand.create({
           template: step.template.content as string,
-          data: payload,
+          data: this.getCompilePayload(command.compileContext),
         })
       );
     } catch (e) {

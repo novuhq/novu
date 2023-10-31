@@ -303,14 +303,14 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
 
       expect(messagesAfter.length).to.equal(2);
 
-      const executionDetails = await executionDetailsRepository.findOne({
+      const executionDetails = await executionDetailsRepository.find({
         _environmentId: session.environment._id,
         _notificationTemplateId: template?._id,
         channel: StepTypeEnum.DIGEST,
         detail: DetailEnum.FILTER_STEPS,
       });
 
-      expect(executionDetails?.detail).to.be.equal('Step was filtered based on steps filters');
+      expect(executionDetails.length).to.equal(0);
     });
 
     it('should not filter delay step', async function () {
@@ -384,14 +384,14 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
 
       expect(messagesAfter.length).to.equal(2);
 
-      const executionDetails = await executionDetailsRepository.findOne({
+      const executionDetails = await executionDetailsRepository.find({
         _environmentId: session.environment._id,
         _notificationTemplateId: template?._id,
         channel: StepTypeEnum.DELAY,
         detail: DetailEnum.FILTER_STEPS,
       });
 
-      expect(executionDetails?.detail).to.be.equal('Step was filtered based on steps filters');
+      expect(executionDetails.length).to.equal(0);
     });
 
     it('should use conditions to select integration', async function () {
@@ -2161,6 +2161,248 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
 
       expect(messages.length).to.equal(1);
       expect(messages[0].subject).to.equal('Better Variant subject');
+    });
+
+    describe('filters logic', () => {
+      it('should filter a message with variables', async function () {
+        template = await session.createTemplate({
+          steps: [
+            {
+              type: StepTypeEnum.EMAIL,
+              subject: 'Password reset',
+              content: [
+                {
+                  type: EmailBlockTypeEnum.TEXT,
+                  content: 'This are the text contents of the template for {{firstName}}',
+                },
+                {
+                  type: EmailBlockTypeEnum.BUTTON,
+                  content: 'SIGN UP',
+                  url: 'https://url-of-app.com/{{urlVariable}}',
+                },
+              ],
+              filters: [
+                {
+                  isNegated: false,
+                  type: 'GROUP',
+                  value: FieldLogicalOperatorEnum.AND,
+                  children: [
+                    {
+                      field: 'run',
+                      value: '{{payload.var}}',
+                      operator: FieldOperatorEnum.EQUAL,
+                      on: FilterPartTypeEnum.PAYLOAD,
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              type: StepTypeEnum.EMAIL,
+              subject: 'Password reset',
+              content: [
+                {
+                  type: EmailBlockTypeEnum.TEXT,
+                  content: 'This are the text contents of the template for {{firstName}}',
+                },
+              ],
+              filters: [
+                {
+                  isNegated: false,
+                  type: 'GROUP',
+                  value: FieldLogicalOperatorEnum.AND,
+                  children: [
+                    {
+                      field: 'subscriberId',
+                      value: subscriber.subscriberId,
+                      operator: FieldOperatorEnum.NOT_EQUAL,
+                      on: FilterPartTypeEnum.SUBSCRIBER,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        });
+
+        await axiosInstance.post(
+          `${session.serverUrl}${eventTriggerPath}`,
+          {
+            name: template.triggers[0].identifier,
+            to: subscriber.subscriberId,
+            payload: {
+              firstName: 'Testing of User Name',
+              urlVariable: '/test/url/path',
+              run: true,
+              var: true,
+            },
+          },
+          {
+            headers: {
+              authorization: `ApiKey ${session.apiKey}`,
+            },
+          }
+        );
+
+        await session.awaitRunningJobs(template._id);
+
+        const messages = await messageRepository.count({
+          _environmentId: session.environment._id,
+          _templateId: template._id,
+        });
+
+        expect(messages).to.equal(1);
+      });
+
+      it('should filter a message with value that includes variables and strings', async function () {
+        const actorSubscriber = await subscriberService.createSubscriber({
+          firstName: 'Actor',
+        });
+
+        template = await session.createTemplate({
+          steps: [
+            {
+              type: StepTypeEnum.EMAIL,
+              subject: 'Password reset',
+              content: [
+                {
+                  type: EmailBlockTypeEnum.TEXT,
+                  content: 'This are the text contents of the template for {{firstName}}',
+                },
+              ],
+              filters: [
+                {
+                  isNegated: false,
+                  type: 'GROUP',
+                  value: FieldLogicalOperatorEnum.AND,
+                  children: [
+                    {
+                      field: 'name',
+                      value: 'Test {{actor.firstName}}',
+                      operator: FieldOperatorEnum.EQUAL,
+                      on: FilterPartTypeEnum.PAYLOAD,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        });
+
+        await axiosInstance.post(
+          `${session.serverUrl}${eventTriggerPath}`,
+          {
+            name: template.triggers[0].identifier,
+            to: subscriber.subscriberId,
+            payload: {
+              firstName: 'Testing of User Name',
+              urlVariable: '/test/url/path',
+              name: 'Test Actor',
+            },
+            actor: actorSubscriber.subscriberId,
+          },
+          {
+            headers: {
+              authorization: `ApiKey ${session.apiKey}`,
+            },
+          }
+        );
+
+        await session.awaitRunningJobs(template._id);
+
+        const messages = await messageRepository.count({
+          _environmentId: session.environment._id,
+          _templateId: template._id,
+        });
+
+        expect(messages).to.equal(1);
+      });
+
+      it('should filter by tenant variables data', async function () {
+        const tenant = await tenantRepository.create({
+          _organizationId: session.organization._id,
+          _environmentId: session.environment._id,
+          identifier: 'one_123',
+          name: 'The one and only tenant',
+          data: { value1: 'Best fighter', value2: 'Ever', count: 4 },
+        });
+
+        const templateWithVariants = await session.createTemplate({
+          name: 'test email template',
+          description: 'This is a test description',
+          steps: [
+            {
+              name: 'Message Name',
+              subject: 'Test email subject',
+              preheader: 'Test email preheader',
+              content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
+              type: StepTypeEnum.EMAIL,
+              filters: [
+                {
+                  isNegated: false,
+                  type: 'GROUP',
+                  value: FieldLogicalOperatorEnum.AND,
+                  children: [
+                    {
+                      on: FilterPartTypeEnum.TENANT,
+                      field: 'data.count',
+                      value: '{{payload.count}}',
+                      operator: FieldOperatorEnum.LARGER,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        });
+
+        await axiosInstance.post(
+          `${session.serverUrl}${eventTriggerPath}`,
+          {
+            name: templateWithVariants.triggers[0].identifier,
+            to: subscriber.subscriberId,
+            payload: { count: 5 },
+            tenant: { identifier: tenant.identifier },
+          },
+          {
+            headers: {
+              authorization: `ApiKey ${session.apiKey}`,
+            },
+          }
+        );
+
+        await session.awaitRunningJobs(templateWithVariants._id);
+
+        let messages = await messageRepository.find({
+          _environmentId: session.environment._id,
+          _templateId: templateWithVariants._id,
+        });
+
+        expect(messages.length).to.equal(0);
+
+        await axiosInstance.post(
+          `${session.serverUrl}${eventTriggerPath}`,
+          {
+            name: templateWithVariants.triggers[0].identifier,
+            to: subscriber.subscriberId,
+            payload: { count: 1 },
+            tenant: { identifier: tenant.identifier },
+          },
+          {
+            headers: {
+              authorization: `ApiKey ${session.apiKey}`,
+            },
+          }
+        );
+        await session.awaitRunningJobs(templateWithVariants._id);
+
+        messages = await messageRepository.find({
+          _environmentId: session.environment._id,
+          _templateId: templateWithVariants._id,
+        });
+
+        expect(messages.length).to.equal(1);
+      });
     });
 
     describe('in-app avatar', () => {

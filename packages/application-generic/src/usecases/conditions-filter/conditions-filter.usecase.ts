@@ -26,6 +26,9 @@ import {
   IMessageFilter,
   FieldOperatorEnum,
   FieldLogicalOperatorEnum,
+  ExecutionDetailsSourceEnum,
+  IJob,
+  ExecutionDetailsStatusEnum,
 } from '@novu/shared';
 import { Filter } from '../../utils/filter';
 import {
@@ -45,6 +48,12 @@ import { createHash } from '../../utils/hmac';
 import { Instrument } from '../../instrumentation';
 import { CachedEntity } from '../../services/cache/interceptors/cached-entity.interceptor';
 import { buildSubscriberKey } from '../../services/cache/key-builders/entities';
+import { CompileTemplate, CompileTemplateCommand } from '../compile-template';
+import {
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+  DetailEnum,
+} from '../create-execution-details';
 
 @Injectable()
 export class ConditionsFilter extends Filter {
@@ -54,7 +63,9 @@ export class ConditionsFilter extends Filter {
     private executionDetailsRepository: ExecutionDetailsRepository,
     private jobRepository: JobRepository,
     private tenantRepository: TenantRepository,
-    private environmentRepository: EnvironmentRepository
+    private environmentRepository: EnvironmentRepository,
+    private createExecutionDetails: CreateExecutionDetails,
+    private compileTemplate: CompileTemplate
   ) {
     super();
   }
@@ -411,7 +422,11 @@ export class ConditionsFilter extends Filter {
 
     if (child.on === FilterPartTypeEnum.WEBHOOK) {
       if (process.env.NODE_ENV === 'test') return true;
-
+      child.value = await this.compileFilter(
+        child.value,
+        variables,
+        command.job
+      );
       const res = await this.getWebhookResponse(child, variables, command);
       passed = this.processFilterEquality(
         { payload: undefined, webhook: res },
@@ -425,6 +440,12 @@ export class ConditionsFilter extends Filter {
       child.on === FilterPartTypeEnum.PAYLOAD ||
       child.on === FilterPartTypeEnum.SUBSCRIBER
     ) {
+      child.value = await this.compileFilter(
+        child.value,
+        variables,
+        command.job
+      );
+
       passed = this.processFilterEquality(
         variables,
         child,
@@ -555,6 +576,9 @@ export class ConditionsFilter extends Filter {
       ? command.variables?.payload
       : command.job?.payload ?? undefined;
 
+    filterVariables.step = command.variables?.step ?? undefined;
+    filterVariables.actor = command.variables?.actor ?? undefined;
+
     return filterVariables;
   }
 
@@ -605,6 +629,37 @@ export class ConditionsFilter extends Filter {
     }
 
     return undefined;
+  }
+
+  private async compileFilter(
+    value: string,
+    variables: IFilterVariables,
+    job: IJob
+  ): Promise<string | undefined> {
+    try {
+      return await this.compileTemplate.execute(
+        CompileTemplateCommand.create({
+          template: value,
+          data: {
+            ...variables,
+          },
+        })
+      );
+    } catch (e: any) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+          detail: DetailEnum.PROCESSING_STEP_FILTER_ERROR,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({ error: e?.message }),
+        })
+      );
+
+      return;
+    }
   }
 
   @CachedEntity({

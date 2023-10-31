@@ -13,7 +13,7 @@ import {
   TimeOperatorEnum,
 } from '@novu/shared';
 import { JobEntity, MessageTemplateEntity, NotificationStepEntity } from '@novu/dal';
-import { ConditionsFilter, ConditionsFilterCommand } from '@novu/application-generic';
+import { CompileTemplate, ConditionsFilter, ConditionsFilterCommand } from '@novu/application-generic';
 
 describe('Message filter matcher', function () {
   const createExecutionDetails = {
@@ -21,11 +21,13 @@ describe('Message filter matcher', function () {
   };
   const conditionsFilter = new ConditionsFilter(
     undefined as any,
+    undefined as any,
+    undefined as any,
+    undefined as any,
+    undefined as any,
+    undefined as any,
     createExecutionDetails as any,
-    undefined as any,
-    undefined as any,
-    undefined as any,
-    undefined as any
+    new CompileTemplate()
   );
 
   it('should filter correct message by the filter value', async function () {
@@ -42,6 +44,29 @@ describe('Message filter matcher', function () {
         variables: {
           payload: {
             varField: 'firstVar',
+          },
+        },
+      })
+    );
+
+    expect(matchedMessage.passed).to.equal(true);
+  });
+
+  it('should filter correct message by the filter variable value', async function () {
+    const matchedMessage = await conditionsFilter.filter(
+      mapConditionsFilterCommand({
+        step: makeStep('Correct Match', FieldLogicalOperatorEnum.OR, [
+          {
+            operator: FieldOperatorEnum.EQUAL,
+            value: '{{payload.var}}',
+            field: 'varField',
+            on: FilterPartTypeEnum.PAYLOAD,
+          },
+        ]),
+        variables: {
+          payload: {
+            varField: 'firstVar',
+            var: 'firstVar',
           },
         },
       })
@@ -702,11 +727,13 @@ describe('Message filter matcher', function () {
       it('allows to process multiple filter parts', async () => {
         const filter = new ConditionsFilter(
           { findOne: () => Promise.resolve(getSubscriber()) } as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
           createExecutionDetails as any,
-          undefined as any,
-          undefined as any,
-          undefined as any,
-          undefined as any
+          new CompileTemplate()
         );
         const matchedMessage = await filter.filter(
           mapConditionsFilterCommand({
@@ -738,11 +765,13 @@ describe('Message filter matcher', function () {
                 lastName: 'Doe',
               }),
           } as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
           createExecutionDetails as any,
-          undefined as any,
-          undefined as any,
-          undefined as any,
-          undefined as any
+          new CompileTemplate()
         );
         const matchedMessage = await filter.filter(
           mapConditionsFilterCommand({
@@ -768,11 +797,13 @@ describe('Message filter matcher', function () {
                 lastName: 'Doe',
               }),
           } as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
           createExecutionDetails as any,
-          undefined as any,
-          undefined as any,
-          undefined as any,
-          undefined as any
+          new CompileTemplate()
         );
         const matchedMessage = await filter.filter(
           mapConditionsFilterCommand({
@@ -792,11 +823,13 @@ describe('Message filter matcher', function () {
       it('allows to process if the subscriber is online', async () => {
         const filter = new ConditionsFilter(
           { findOne: () => Promise.resolve(getSubscriber()) } as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
           createExecutionDetails as any,
-          undefined as any,
-          undefined as any,
-          undefined as any,
-          undefined as any
+          new CompileTemplate()
         );
         const matchedMessage = await filter.filter(
           mapConditionsFilterCommand({
@@ -816,11 +849,13 @@ describe('Message filter matcher', function () {
       it("doesn't allow to process if the subscriber is not online", async () => {
         const filter = new ConditionsFilter(
           { findOne: () => Promise.resolve(getSubscriber({ isOnline: false })) } as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
           createExecutionDetails as any,
-          undefined as any,
-          undefined as any,
-          undefined as any,
-          undefined as any
+          new CompileTemplate()
         );
         const matchedMessage = await filter.filter(
           mapConditionsFilterCommand({
@@ -844,11 +879,13 @@ describe('Message filter matcher', function () {
           {
             findOne: () => Promise.resolve(getSubscriber({ isOnline: true }, { subDuration: { minutes: 3 } })),
           } as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
           createExecutionDetails as any,
-          undefined as any,
-          undefined as any,
-          undefined as any,
-          undefined as any
+          new CompileTemplate()
         );
         const matchedMessage = await filter.filter(
           mapConditionsFilterCommand({
@@ -881,11 +918,13 @@ describe('Message filter matcher', function () {
                 lastName: 'Doe',
               }),
           } as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
           createExecutionDetails as any,
-          undefined as any,
-          undefined as any,
-          undefined as any,
-          undefined as any
+          new CompileTemplate()
         );
         const matchedMessage = await filter.filter(
           mapConditionsFilterCommand({
@@ -908,11 +947,13 @@ describe('Message filter matcher', function () {
           {
             findOne: () => Promise.resolve(getSubscriber({ isOnline: true }, { subDuration: { minutes: 10 } })),
           } as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
           createExecutionDetails as any,
-          undefined as any,
-          undefined as any,
-          undefined as any,
-          undefined as any
+          new CompileTemplate()
         );
         const matchedMessage = await filter.filter(
           mapConditionsFilterCommand({
@@ -935,11 +976,13 @@ describe('Message filter matcher', function () {
           {
             findOne: () => Promise.resolve(getSubscriber({ isOnline: false }, { subDuration: { minutes: 4 } })),
           } as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
           createExecutionDetails as any,
-          undefined as any,
-          undefined as any,
-          undefined as any,
-          undefined as any
+          new CompileTemplate()
         );
         const matchedMessage = await filter.filter(
           mapConditionsFilterCommand({
@@ -962,11 +1005,13 @@ describe('Message filter matcher', function () {
           {
             findOne: () => Promise.resolve(getSubscriber({ isOnline: false }, { subDuration: { minutes: 6 } })),
           } as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
           createExecutionDetails as any,
-          undefined as any,
-          undefined as any,
-          undefined as any,
-          undefined as any
+          new CompileTemplate()
         );
         const matchedMessage = await filter.filter(
           mapConditionsFilterCommand({
@@ -989,11 +1034,13 @@ describe('Message filter matcher', function () {
           {
             findOne: () => Promise.resolve(getSubscriber({ isOnline: false }, { subDuration: { minutes: 30 } })),
           } as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
           createExecutionDetails as any,
-          undefined as any,
-          undefined as any,
-          undefined as any,
-          undefined as any
+          new CompileTemplate()
         );
         const matchedMessage = await filter.filter(
           mapConditionsFilterCommand({
@@ -1016,11 +1063,13 @@ describe('Message filter matcher', function () {
           {
             findOne: () => Promise.resolve(getSubscriber({ isOnline: false }, { subDuration: { hours: 23 } })),
           } as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
           createExecutionDetails as any,
-          undefined as any,
-          undefined as any,
-          undefined as any,
-          undefined as any
+          new CompileTemplate()
         );
         const matchedMessage = await filter.filter(
           mapConditionsFilterCommand({

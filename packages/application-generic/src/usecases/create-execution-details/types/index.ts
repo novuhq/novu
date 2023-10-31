@@ -25,6 +25,7 @@ export enum DetailEnum {
   START_SENDING = 'Start sending message',
   START_DIGESTING = 'Start digesting',
   PROCESSING_STEP_FILTER = 'Processing step filter',
+  PROCESSING_STEP_FILTER_ERROR = 'Processing step filter failed',
   FILTER_STEPS = 'Step was filtered based on steps filters',
   DIGESTED_EVENTS_PROVIDED = 'Steps to get digest events found',
   DIGEST_TRIGGERED_EVENTS = 'Digest triggered events',

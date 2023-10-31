@@ -7,8 +7,6 @@ import {
   IntegrationEntity,
   MessageEntity,
   LayoutRepository,
-  TenantRepository,
-  SubscriberEntity,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -49,7 +47,6 @@ export class SendMessageEmail extends SendMessageBase {
     protected subscriberRepository: SubscriberRepository,
     protected messageRepository: MessageRepository,
     protected layoutRepository: LayoutRepository,
-    protected tenantRepository: TenantRepository,
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     private compileEmailTemplateUsecase: CompileEmailTemplate,
@@ -62,7 +59,6 @@ export class SendMessageEmail extends SendMessageBase {
       createLogUsecase,
       createExecutionDetails,
       subscriberRepository,
-      tenantRepository,
       selectIntegration,
       getNovuProviderCredentials,
       selectVariant
@@ -71,12 +67,6 @@ export class SendMessageEmail extends SendMessageBase {
 
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
-    const subscriber = await this.getSubscriberBySubscriberId({
-      subscriberId: command.subscriberId,
-      _environmentId: command.environmentId,
-    });
-    if (!subscriber) throw new PlatformException(`Subscriber ${command.subscriberId} not found`);
-
     let integration: IntegrationEntity | undefined = undefined;
 
     const overrideSelectedIntegration = command.overrides?.email?.integrationIdentifier;
@@ -112,6 +102,7 @@ export class SendMessageEmail extends SendMessageBase {
     if (!step) throw new PlatformException('Email channel step not found');
     if (!step.template) throw new PlatformException('Email channel template not found');
 
+    const { subscriber } = command.compileContext;
     const email = command.payload.email || subscriber.email;
 
     Sentry.addBreadcrumb({
@@ -140,21 +131,11 @@ export class SendMessageEmail extends SendMessageBase {
       return;
     }
 
-    let actor: SubscriberEntity | null = null;
-    if (command.job.actorId) {
-      actor = await this.getSubscriberBySubscriberId({
-        subscriberId: command.job.actorId,
-        _environmentId: command.environmentId,
-      });
-    }
-
-    const [tenant, overrideLayoutId] = await Promise.all([
-      this.handleTenantExecution(command.job),
+    const [template, overrideLayoutId] = await Promise.all([
+      this.processVariants(command),
       this.getOverrideLayoutId(command),
       this.sendSelectedIntegrationExecution(command.job, integration),
     ]);
-
-    const template = await this.processVariants(command, tenant, subscriber, command.payload);
 
     if (template) {
       step.template = template;
@@ -176,17 +157,7 @@ export class SendMessageEmail extends SendMessageBase {
       content: step.template.content,
       layoutId: overrideLayoutId ?? step.template._layoutId,
       contentType: step.template.contentType ? step.template.contentType : 'editor',
-      payload: {
-        ...command.payload,
-        step: {
-          digest: !!command.events?.length,
-          events: command.events,
-          total_count: command.events?.length,
-        },
-        ...(tenant && { tenant }),
-        ...(actor && { actor }),
-        subscriber,
-      },
+      payload: this.getCompilePayload(command.compileContext),
     };
 
     const messagePayload = Object.assign({}, command.payload);

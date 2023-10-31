@@ -4,12 +4,9 @@ import {
   MessageRepository,
   NotificationStepEntity,
   SubscriberRepository,
-  SubscriberEntity,
   MessageEntity,
   OrganizationRepository,
   OrganizationEntity,
-  TenantRepository,
-  TenantEntity,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -52,7 +49,6 @@ export class SendMessageInApp extends SendMessageBase {
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     protected subscriberRepository: SubscriberRepository,
-    protected tenantRepository: TenantRepository,
     private compileTemplate: CompileTemplate,
     private organizationRepository: OrganizationRepository,
     protected selectIntegration: SelectIntegration,
@@ -64,7 +60,6 @@ export class SendMessageInApp extends SendMessageBase {
       createLogUsecase,
       createExecutionDetails,
       subscriberRepository,
-      tenantRepository,
       selectIntegration,
       getNovuProviderCredentials,
       selectVariant
@@ -73,11 +68,6 @@ export class SendMessageInApp extends SendMessageBase {
 
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
-    const subscriber = await this.getSubscriberBySubscriberId({
-      subscriberId: command.subscriberId,
-      _environmentId: command.environmentId,
-    });
-    if (!subscriber) throw new PlatformException('Subscriber not found');
     if (!command.step.template) throw new PlatformException('Template not found');
 
     Sentry.addBreadcrumb({
@@ -116,45 +106,23 @@ export class SendMessageInApp extends SendMessageBase {
 
     const { actor } = command.step.template;
 
-    let actorSubscriber: SubscriberEntity | null = null;
-    if (command.job.actorId) {
-      actorSubscriber = await this.getSubscriberBySubscriberId({
-        subscriberId: command.job.actorId,
-        _environmentId: command.environmentId,
-      });
-    }
-
-    const [tenant, organization] = await Promise.all([
-      this.handleTenantExecution(command.job),
+    const [template, organization] = await Promise.all([
+      this.processVariants(command),
       this.organizationRepository.findOne({ _id: command.organizationId }, 'branding'),
     ]);
-
-    const template = await this.processVariants(command, tenant, subscriber, command.payload);
 
     if (template) {
       step.template = template;
     }
 
     try {
-      content = await this.compileInAppTemplate(
-        step.template.content,
-        command.payload,
-        subscriber,
-        command,
-        organization,
-        tenant,
-        actorSubscriber
-      );
+      content = await this.compileInAppTemplate(step.template.content, command.compileContext, organization);
 
       if (step.template.cta?.data?.url) {
         step.template.cta.data.url = await this.compileInAppTemplate(
           step.template.cta?.data?.url,
-          command.payload,
-          subscriber,
-          command,
-          organization,
-          tenant,
-          actorSubscriber
+          command.compileContext,
+          organization
         );
       }
 
@@ -162,15 +130,7 @@ export class SendMessageInApp extends SendMessageBase {
         const ctaButtons: IMessageButton[] = [];
 
         for (const action of step.template.cta.action.buttons) {
-          const buttonContent = await this.compileInAppTemplate(
-            action.content,
-            command.payload,
-            subscriber,
-            command,
-            organization,
-            tenant,
-            actorSubscriber
-          );
+          const buttonContent = await this.compileInAppTemplate(action.content, command.compileContext, organization);
           ctaButtons.push({ type: action.type, content: buttonContent });
         }
 
@@ -201,14 +161,14 @@ export class SendMessageInApp extends SendMessageBase {
 
     await this.invalidateCache.invalidateQuery({
       key: buildFeedKey().invalidate({
-        subscriberId: subscriber.subscriberId,
+        subscriberId: command.subscriberId,
         _environmentId: command.environmentId,
       }),
     });
 
     await this.invalidateCache.invalidateQuery({
       key: buildMessageCountKey().invalidate({
-        subscriberId: subscriber.subscriberId,
+        subscriberId: command.subscriberId,
         _environmentId: command.environmentId,
       }),
     });
@@ -303,29 +263,14 @@ export class SendMessageInApp extends SendMessageBase {
   private async compileInAppTemplate(
     content: string | IEmailBlock[],
     payload: any,
-    subscriber: SubscriberEntity,
-    command: SendMessageCommand,
-    organization: OrganizationEntity | null,
-    tenant: TenantEntity | null,
-    actor: SubscriberEntity | null
+    organization: OrganizationEntity | null
   ): Promise<string> {
     return await this.compileTemplate.execute(
       CompileTemplateCommand.create({
         template: content as string,
         data: {
-          subscriber,
-          step: {
-            digest: !!command.events?.length,
-            events: command.events,
-            total_count: command.events?.length,
-          },
-          branding: {
-            logo: organization?.branding?.logo,
-            color: organization?.branding?.color || '#f47373',
-          },
-          ...(tenant && { tenant }),
-          ...(actor && { actor }),
-          ...payload,
+          ...this.getCompilePayload(payload),
+          branding: { logo: organization?.branding?.logo, color: organization?.branding?.color || '#f47373' },
         },
       })
     );
