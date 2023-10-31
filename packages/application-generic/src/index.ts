@@ -1,4 +1,5 @@
 export * from './commands/index';
+export * from './config';
 export * from './custom-providers';
 export * from './factories/index';
 export * from './health/index';
