@@ -86,6 +86,8 @@ export enum SmsProviderIdEnum {
   Clicksend = 'clicksend',
   Bandwidth = 'bandwidth',
   MessageBird = 'messagebird',
+  Simpletexting = 'simpletexting',
+  AzureSms = 'azureSms',
 }
 
 export enum ChatProviderIdEnum {
@@ -94,6 +96,7 @@ export enum ChatProviderIdEnum {
   MsTeams = 'msteams',
   Mattermost = 'mattermost',
   Ryver = 'ryver',
+  Zulip = 'zulip',
 }
 
 export enum PushProviderIdEnum {
