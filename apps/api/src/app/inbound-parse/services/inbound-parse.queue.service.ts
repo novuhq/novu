@@ -1,4 +1,5 @@
 import {
+  getInboundParseMailWorkerOptions,
   InboundParseQueue,
   InboundParseWorker,
   Queue,
@@ -29,10 +30,7 @@ export class InboundParseQueueService {
   }
 
   private getWorkerOptions(): WorkerOptions {
-    return {
-      lockDuration: 90000,
-      concurrency: 200,
-    };
+    return getInboundParseMailWorkerOptions();
   }
 
   public getWorkerProcessor() {
