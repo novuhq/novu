@@ -21,11 +21,11 @@ const workflowOverrideSchema = new Schema<WorkflowOverrideDBModel>(
     },
     _workflowId: {
       type: Schema.Types.ObjectId,
-      ref: 'Environment',
+      ref: 'NotificationTemplate',
     },
     _tenantId: {
       type: Schema.Types.ObjectId,
-      ref: 'Organization',
+      ref: 'Tenant',
     },
     preferenceSettings: {
       email: {
@@ -77,5 +77,5 @@ workflowOverrideSchema.index({
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const WorkflowOverride =
-  (mongoose.models.NotificationTemplate as mongoose.Model<WorkflowOverrideDBModel>) ||
+  (mongoose.models.WorkflowOverride as mongoose.Model<WorkflowOverrideDBModel>) ||
   mongoose.model<WorkflowOverrideDBModel>('WorkflowOverride', workflowOverrideSchema);

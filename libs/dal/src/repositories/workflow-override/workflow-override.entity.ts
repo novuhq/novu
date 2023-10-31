@@ -16,7 +16,7 @@ export class WorkflowOverrideEntity {
 
   _workflowId: string;
 
-  readonly workflow?: NotificationGroupEntity;
+  readonly workflow?: NotificationTemplateEntity;
 
   _tenantId: string;
 
