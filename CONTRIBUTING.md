@@ -20,8 +20,8 @@ You can open a new issue with this [issue form](https://github.com/novuhq/novu/i
 
 ### Requirements
 
-- Node.js version v16.15.1
-- MongoDB
+- [Node.js](https://nodejs.org/en) 
+- [MongoDB](https://www.mongodb.com/try/download/community)
 - Redis. To install Redis on your O.S, please follow the below guides
   - [To install Redis on Windows](https://redis.io/docs/getting-started/installation/install-redis-on-windows/)
   - [To install Redis on Linux](https://redis.io/docs/getting-started/installation/install-redis-on-linux/)
