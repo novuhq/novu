@@ -34,6 +34,7 @@ export enum CredentialsKeyEnum {
   AuthenticateByToken = 'authenticateByToken',
   AuthenticationTokenKey = 'authenticationTokenKey',
   AccessKey = 'accessKey',
+  ApiToken = 'apiToken',
 }
 
 export enum EmailProviderIdEnum {
@@ -71,6 +72,7 @@ export enum SmsProviderIdEnum {
   Firetext = 'firetext',
   Infobip = 'infobip-sms',
   BurstSms = 'burst-sms',
+  BulkSms = 'bulk-sms',
   Clickatell = 'clickatell',
   FortySixElks = 'forty-six-elks',
   Kannel = 'kannel',
