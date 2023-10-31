@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "@azure/communication-sms": "^1.0.0",
-    "@novu/stateless": "0.16.3"
+    "@novu/stateless": "0.21.0"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "~1.0.1",
