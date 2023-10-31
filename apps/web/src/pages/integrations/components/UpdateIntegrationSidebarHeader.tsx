@@ -3,14 +3,24 @@ import { Group, useMantineTheme } from '@mantine/core';
 import { Controller, useFormContext, useWatch } from 'react-hook-form';
 import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
 
-import { Button, colors, Dropdown, Modal, NameInput, Text, Title } from '../../../design-system';
+import {
+  Button,
+  colors,
+  Dropdown,
+  Modal,
+  NameInput,
+  Text,
+  Title,
+  DotsHorizontal,
+  StarEmpty,
+  Trash,
+} from '@novu/design-system';
 import { useFetchEnvironments } from '../../../hooks/useFetchEnvironments';
 import { ProviderImage } from './multi-provider/SelectProviderSidebar';
 import type { IIntegratedProvider, IntegrationEntity } from '../types';
 import { useProviders } from '../useProviders';
 import { useDeleteIntegration } from '../../../api/hooks';
 import { errorMessage, successMessage } from '../../../utils/notifications';
-import { DotsHorizontal, StarEmpty, Trash } from '../../../design-system/icons';
 import { ProviderInfo } from './multi-provider/ProviderInfo';
 import { useSelectPrimaryIntegrationModal } from './multi-provider/useSelectPrimaryIntegrationModal';
 import { useMakePrimaryIntegration } from '../../../api/hooks/useMakePrimaryIntegration';

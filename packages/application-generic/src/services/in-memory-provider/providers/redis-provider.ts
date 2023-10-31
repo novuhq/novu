@@ -3,6 +3,8 @@ import { ConnectionOptions } from 'tls';
 
 export { Redis, RedisOptions, ScanStream };
 
+import { convertStringValues } from './variable-mappers';
+
 export const CLIENT_READY = 'ready';
 const DEFAULT_TTL_SECONDS = 60 * 60 * 2;
 const DEFAULT_CONNECT_TIMEOUT = 50000;
@@ -41,15 +43,15 @@ export interface IRedisProviderConfig {
 
 export const getRedisProviderConfig = (): IRedisProviderConfig => {
   const redisConfig: IRedisConfig = {
-    db: process.env.REDIS_DB_INDEX,
-    host: process.env.REDIS_HOST,
-    port: process.env.REDIS_PORT,
-    ttl: process.env.REDIS_TTL,
-    password: process.env.REDIS_PASSWORD,
-    connectTimeout: process.env.REDIS_CONNECT_TIMEOUT,
-    keepAlive: process.env.REDIS_KEEP_ALIVE,
-    family: process.env.REDIS_FAMILY,
-    keyPrefix: process.env.REDIS_PREFIX,
+    db: convertStringValues(process.env.REDIS_DB_INDEX),
+    host: convertStringValues(process.env.REDIS_HOST),
+    port: convertStringValues(process.env.REDIS_PORT),
+    ttl: convertStringValues(process.env.REDIS_TTL),
+    password: convertStringValues(process.env.REDIS_PASSWORD),
+    connectTimeout: convertStringValues(process.env.REDIS_CONNECT_TIMEOUT),
+    keepAlive: convertStringValues(process.env.REDIS_KEEP_ALIVE),
+    family: convertStringValues(process.env.REDIS_FAMILY),
+    keyPrefix: convertStringValues(process.env.REDIS_PREFIX),
     tls: process.env.REDIS_TLS as ConnectionOptions,
   };
 
