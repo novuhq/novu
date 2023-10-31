@@ -2,13 +2,11 @@ import {
   EnvironmentId,
   ICreateWorkflowOverrideResponseDto,
   IPreferenceChannels,
-  ITenantEntity,
   OrganizationId,
   WorkflowOverrideId,
 } from '@novu/shared';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PreferenceChannels } from '../../shared/dtos/preference-channels';
-import { WorkflowResponse } from './workflow-response.dto';
 
 export class CreateWorkflowOverrideResponseDto implements ICreateWorkflowOverrideResponseDto {
   @ApiProperty()
@@ -23,16 +21,8 @@ export class CreateWorkflowOverrideResponseDto implements ICreateWorkflowOverrid
   @ApiProperty()
   _workflowId: string;
 
-  @ApiPropertyOptional({
-    type: WorkflowResponse,
-  })
-  readonly workflow?: WorkflowResponse;
-
   @ApiProperty()
   _tenantId: string;
-
-  @ApiPropertyOptional()
-  readonly tenant?: ITenantEntity;
 
   @ApiProperty()
   active: boolean;
