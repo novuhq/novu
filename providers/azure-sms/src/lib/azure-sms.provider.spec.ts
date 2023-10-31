@@ -2,14 +2,10 @@
 import { AzureSmsProvider } from './azure-sms.provider';
 import { SmsClient } from '@azure/communication-sms';
 
-test('should trigger AzureSmsProvider library correctly', async () => {
-  const provider = new AzureSmsProvider({
-    connectionString: '<your-azure-connection-string>',
-  });
+jest.mock('@azure/communication-sms');
 
-  const mockSend = jest.fn();
-  SmsClient.prototype.send = mockSend;
-  mockSend.mockResolvedValue([
+test('should trigger AzureSmsProvider library correctly', async () => {
+  const mockSend = jest.fn().mockResolvedValue([
     {
       messageId: '12345-67a8',
       httpStatusCode: 202,
@@ -17,6 +13,16 @@ test('should trigger AzureSmsProvider library correctly', async () => {
       to: '+12345678902',
     },
   ]);
+
+  (SmsClient as jest.MockedClass<typeof SmsClient>).mockImplementation(() => {
+    return {
+      send: mockSend,
+    } as unknown as SmsClient;
+  });
+
+  const provider = new AzureSmsProvider({
+    connectionString: 'mock-connection-string',
+  });
 
   await provider.sendMessage({
     from: '+1234567890',
@@ -28,7 +34,7 @@ test('should trigger AzureSmsProvider library correctly', async () => {
 
   expect(mockSend).toHaveBeenCalledWith({
     from: '+1234567890',
-    to: '+12345678902',
-    content: 'Test message',
+    to: ['+12345678902'],
+    message: 'Test message',
   });
 });
