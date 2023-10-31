@@ -5,5 +5,7 @@ A Zulip chat provider library for [@novu/node](https://github.com/novuhq/novu)
 ## Usage
 
 ```javascript
-    FILL IN THE INITIALIZATION USAGE
+import { ZulipProvider } from '@novu/zulip';
+
+const provider = new ZulipProvider({});
 ```
