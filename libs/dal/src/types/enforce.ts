@@ -1,6 +1,6 @@
-import type { EnvironmentId } from '../repositories/environment';
-import type { OrganizationId } from '../repositories/organization';
+import { ObjectIdType } from './helpers';
 
-export type EnforceOrgId = '_organizationId';
-export type EnforceEnvId = '_environmentId';
-export type EnforceEnvOrOrgIds = EnforceEnvId | EnforceOrgId;
+export type EnforceOrgId = { _organizationId: ObjectIdType };
+export type EnforceEnvId = { _environmentId: ObjectIdType };
+export type EnforceEnvOrOrgIds = EnforceOrgId | EnforceEnvId;
+export type NoEnforce = Record<string, unknown>;

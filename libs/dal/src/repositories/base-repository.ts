@@ -8,8 +8,13 @@ import {
 } from '@novu/shared';
 import { Model, Types, ProjectionType, FilterQuery, UpdateQuery, QueryOptions } from 'mongoose';
 import { DalException } from '../shared';
+import { ObjectIdType } from '../types';
 
-export class BaseRepository<T_DBModel extends { _id: string }, T_MappedEntity, T_RequiredKeys extends keyof T_DBModel> {
+export class BaseRepository<
+  T_DBModel extends { _id: ObjectIdType },
+  T_MappedEntity,
+  T_Required extends Partial<T_DBModel>
+> {
   public _model: Model<T_DBModel>;
 
   constructor(protected MongooseModel: Model<T_DBModel>, protected entity: ClassConstructor<T_MappedEntity>) {
@@ -28,7 +33,7 @@ export class BaseRepository<T_DBModel extends { _id: string }, T_MappedEntity, T
     return new Types.ObjectId(value);
   }
 
-  async count(query: FilterQuery<T_DBModel> & Pick<T_DBModel, T_RequiredKeys>, limit?: number): Promise<number> {
+  async count(query: FilterQuery<T_DBModel> & T_Required, limit?: number): Promise<number> {
     return this.MongooseModel.countDocuments(query, {
       limit,
     });
@@ -39,7 +44,7 @@ export class BaseRepository<T_DBModel extends { _id: string }, T_MappedEntity, T
   }
 
   async findOne(
-    query: FilterQuery<T_DBModel> & Pick<T_DBModel, T_RequiredKeys>,
+    query: FilterQuery<T_DBModel> & T_Required,
     select?: ProjectionType<T_MappedEntity>,
     options: { readPreference?: 'secondaryPreferred' | 'primary'; query?: QueryOptions<T_DBModel> } = {}
   ): Promise<T_MappedEntity | null> {
@@ -51,7 +56,7 @@ export class BaseRepository<T_DBModel extends { _id: string }, T_MappedEntity, T
     return this.mapEntity(data.toObject());
   }
 
-  async delete(query: FilterQuery<T_DBModel> & Pick<T_DBModel, T_RequiredKeys>): Promise<{
+  async delete(query: FilterQuery<T_DBModel> & T_Required): Promise<{
     /** Indicates whether this writes result was acknowledged. If not, then all other members of this result will be undefined. */
     acknowledged: boolean;
     /** The number of documents that were deleted */
@@ -61,7 +66,7 @@ export class BaseRepository<T_DBModel extends { _id: string }, T_MappedEntity, T
   }
 
   async find(
-    query: FilterQuery<T_DBModel> & Pick<T_DBModel, T_RequiredKeys>,
+    query: FilterQuery<T_DBModel> & T_Required,
     select: ProjectionType<T_MappedEntity> = '',
     options: { limit?: number; sort?: any; skip?: number } = {}
   ): Promise<T_MappedEntity[]> {
@@ -77,7 +82,7 @@ export class BaseRepository<T_DBModel extends { _id: string }, T_MappedEntity, T
   }
 
   async *findBatch(
-    query: FilterQuery<T_DBModel> & Pick<T_DBModel, T_RequiredKeys>,
+    query: FilterQuery<T_DBModel> & T_Required,
     select = '',
     options: { limit?: number; sort?: any; skip?: number } = {},
     batchSize = 500
@@ -92,7 +97,7 @@ export class BaseRepository<T_DBModel extends { _id: string }, T_MappedEntity, T
     }
   }
 
-  private calcExpireDate(modelName: string, data: FilterQuery<T_DBModel> & Pick<T_DBModel, T_RequiredKeys>) {
+  private calcExpireDate(modelName: string, data: FilterQuery<T_DBModel> & T_Required) {
     let startDate: Date = new Date();
     if (data.expireAt) {
       startDate = new Date(data.expireAt);
@@ -112,10 +117,7 @@ export class BaseRepository<T_DBModel extends { _id: string }, T_MappedEntity, T
     }
   }
 
-  async create(
-    data: Omit<T_DBModel, '_id'> & Pick<T_DBModel, T_RequiredKeys>,
-    options: IOptions = {}
-  ): Promise<T_MappedEntity> {
+  async create(data: Omit<T_DBModel, '_id'> & T_Required, options: IOptions = {}): Promise<T_MappedEntity> {
     const expireAt = this.calcExpireDate(this.MongooseModel.modelName, data);
     if (expireAt) {
       data = { ...data, expireAt };
@@ -131,15 +133,10 @@ export class BaseRepository<T_DBModel extends { _id: string }, T_MappedEntity, T
   }
 
   async insertMany(
-    data: FilterQuery<T_DBModel> & Pick<T_DBModel, T_RequiredKeys>[],
+    data: (Omit<T_DBModel, '_id'> & T_Required)[],
     ordered = false
-  ): Promise<{ acknowledged: boolean; insertedCount: number; insertedIds: Types.ObjectId[] }> {
-    let result;
-    try {
-      result = await this.MongooseModel.insertMany(data, { ordered });
-    } catch (e) {
-      throw new DalException(e.message);
-    }
+  ): Promise<{ acknowledged: boolean; insertedCount: number; insertedIds: ObjectIdType[] }> {
+    const result = await this.MongooseModel.insertMany(data, { ordered });
 
     const insertedIds = result.map((inserted) => inserted._id);
 
@@ -151,7 +148,7 @@ export class BaseRepository<T_DBModel extends { _id: string }, T_MappedEntity, T
   }
 
   async update(
-    query: FilterQuery<T_DBModel> & Pick<T_DBModel, T_RequiredKeys>,
+    query: FilterQuery<T_DBModel> & T_Required,
     updateBody: UpdateQuery<T_DBModel>
   ): Promise<{
     matched: number;
@@ -167,7 +164,7 @@ export class BaseRepository<T_DBModel extends { _id: string }, T_MappedEntity, T
     };
   }
 
-  async upsertMany(data: (FilterQuery<T_DBModel> & Pick<T_DBModel, T_RequiredKeys>)[]) {
+  async upsertMany(data: (FilterQuery<T_DBModel> & T_Required)[]) {
     const promises = data.map((entry) => this.MongooseModel.findOneAndUpdate(entry, entry, { upsert: true }));
 
     return await Promise.all(promises);

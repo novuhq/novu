@@ -64,8 +64,14 @@ type TestChangeObject = {
 type TestChangedObject = TransformEntityToDbModel<TestChangeObject>;
 
 // Valid changed object WITHOUT undefined keys and non transformed key
-export const validKeysObject: TestChangedObject = {
+export const validObjectIdKeysObject: TestChangedObject = {
   _fooId: new Types.ObjectId('12345'),
+  baz: 'something',
+};
+
+// Valid changed object WITHOUT undefined keys and non transformed key
+export const validStringKeysObject: TestChangedObject = {
+  _fooId: 'something',
   baz: 'something',
 };
 
@@ -87,7 +93,7 @@ export const validDateKeysObject: TestChangedObject = {
 
 export const invalidDefinedKeysObject: TestChangedObject = {
   // @ts-expect-error - `foo` is transformed to type 'ObjectId'.
-  _fooId: '12345',
+  _fooId: 12345,
   baz: 'something',
 };
 
