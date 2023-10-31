@@ -30,8 +30,14 @@ export const validTransformedUndefinedKeysObject: TestTransformedObject = {
   bar: undefined,
 };
 
-// Valid changed object with union type
-export const validTransformedUnionKeysObject: TransformValues<TestTransformObject, 'foo', number | boolean> = {
+// Valid changed object with type union key
+export const validTransformedUnionKeysObject: TransformValues<TestTransformObject, 'foo' | 'bar', boolean> = {
+  foo: false,
+  bar: true,
+};
+
+// Valid changed object with type union value
+export const validTransformedUnionValuesObject: TransformValues<TestTransformObject, 'foo', number | boolean> = {
   foo: false,
 };
 
