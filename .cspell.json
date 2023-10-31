@@ -522,7 +522,9 @@
     "messagebird",
     "Datetime",
     "simpletexting",
-    "Simpletexting"
+    "Simpletexting",
+    "Zulip",
+    "zulip"
   ],
   "flagWords": [],
   "patterns": [
