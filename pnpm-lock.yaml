@@ -2104,6 +2104,9 @@ importers:
       '@novu/bandwidth':
         specifier: ^0.21.0
         version: link:../../providers/bandwidth
+      '@novu/bulk-sms':
+        specifier: ^0.21.0
+        version: link:../../providers/bulk-sms
       '@novu/braze':
         specifier: ^0.21.0
         version: link:../../providers/braze
@@ -3163,6 +3166,48 @@ importers:
         specifier: 4.9.5
         version: 4.9.5
 
+  providers/bulk-sms:
+    dependencies:
+      '@novu/stateless':
+        specifier: 0.16.3
+        version: 0.16.3
+      axios:
+        specifier: ^1.6.0
+        version: 1.6.0
+    devDependencies:
+      '@istanbuljs/nyc-config-typescript':
+        specifier: ~1.0.1
+        version: 1.0.2(nyc@15.1.0)
+      '@types/jest':
+        specifier: ~27.5.2
+        version: 27.5.2
+      cspell:
+        specifier: ~6.19.2
+        version: 6.19.2
+      jest:
+        specifier: ~27.5.1
+        version: 27.5.1(ts-node@10.9.1)
+      npm-run-all:
+        specifier: ^4.1.5
+        version: 4.1.5
+      nyc:
+        specifier: ~15.1.0
+        version: 15.1.0
+      prettier:
+        specifier: ~2.8.0
+        version: 2.8.7
+      rimraf:
+        specifier: ~3.0.2
+        version: 3.0.2
+      ts-jest:
+        specifier: ~27.1.5
+        version: 27.1.5(@babel/core@7.23.2)(@types/jest@27.5.2)(jest@27.5.1)(typescript@4.9.5)
+      ts-node:
+        specifier: ~10.9.1
+        version: 10.9.1(@types/node@14.18.42)(typescript@4.9.5)
+      typescript:
+        specifier: 4.9.5
+        version: 4.9.5
   providers/braze:
     dependencies:
       '@novu/stateless':
@@ -25372,6 +25417,16 @@ packages:
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
       - debug
+    dev: false
+
+  /axios@1.6.0:
+    resolution: {integrity: sha512-EZ1DYihju9pwVB+jg67ogm+Tmqc6JmhamRN6I4Zt8DfZu5lbcQGw3ozH9lFejSJgs/ibaef3A9PMXPLeefFGJg==}
+    dependencies:
+      follow-redirects: 1.15.2
+      form-data: 4.0.0
+      proxy-from-env: 1.1.0
+    transitivePeerDependencies:
+      - debug
 
   /axobject-query@3.1.1:
     resolution: {integrity: sha512-goKlv8DZrK9hUh975fnHzhNIO4jUnFCfv/dszV5VwUGDFjI6vQ2VwoyjYjYNEbBE8AH87TduWP5uyDR1D+Iteg==}
@@ -36863,7 +36918,7 @@ packages:
   /mailgun.js@8.2.1:
     resolution: {integrity: sha512-iKHCMehdUcWzBAp8KU2idLP7AbsTxQ8DjJev4Gvm430Dujul+ZkzKPgn40uYpb9BXGL5l8/w5jpf2pvw51df/w==}
     dependencies:
-      axios: 1.5.1
+      axios: 1.6.0
       base-64: 1.0.0
       url-join: 4.0.1
     transitivePeerDependencies:
@@ -36892,7 +36947,7 @@ packages:
       nodemailer:
         optional: true
     dependencies:
-      axios: 1.5.1
+      axios: 1.6.0
     transitivePeerDependencies:
       - debug
     dev: false
@@ -39118,7 +39173,7 @@ packages:
       '@yarnpkg/lockfile': 1.1.0
       '@yarnpkg/parsers': 3.0.0-rc.42
       '@zkochan/js-yaml': 0.0.6
-      axios: 1.5.1
+      axios: 1.6.0
       chalk: 4.1.2
       cli-cursor: 3.1.0
       cli-spinners: 2.6.1
@@ -39180,7 +39235,7 @@ packages:
       '@yarnpkg/lockfile': 1.1.0
       '@yarnpkg/parsers': 3.0.0-rc.42
       '@zkochan/js-yaml': 0.0.6
-      axios: 1.5.1
+      axios: 1.6.0
       chalk: 4.1.2
       cli-cursor: 3.1.0
       cli-spinners: 2.6.1
@@ -39241,7 +39296,7 @@ packages:
       '@yarnpkg/lockfile': 1.1.0
       '@yarnpkg/parsers': 3.0.0-rc.46
       '@zkochan/js-yaml': 0.0.6
-      axios: 1.5.1
+      axios: 1.6.0
       chalk: 4.1.2
       cli-cursor: 3.1.0
       cli-spinners: 2.6.1
