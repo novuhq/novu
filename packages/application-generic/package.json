@@ -51,6 +51,7 @@
     "@novu/apns": "^0.21.0",
     "@novu/bandwidth": "^0.21.0",
     "@novu/burst-sms": "^0.21.0",
+    "@novu/bulk-sms": "^0.21.0",
     "@novu/clickatell": "^0.21.0",
     "@novu/clicksend": "^0.21.0",
     "@novu/dal": "^0.21.0",

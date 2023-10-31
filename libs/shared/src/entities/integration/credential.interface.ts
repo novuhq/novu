@@ -33,4 +33,5 @@ export interface ICredentials {
   authenticationTokenKey?: string;
   accessKey?: string;
   instanceId?: string;
+  apiToken?: string;
 }
