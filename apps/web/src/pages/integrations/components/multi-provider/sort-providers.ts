@@ -70,6 +70,7 @@ const providers: Record<ChannelTypeEnum, ProvidersIdEnum[]> = {
       SmsProviderIdEnum.Novu,
       SmsProviderIdEnum.AzureSms,
       SmsProviderIdEnum.Bandwidth,
+      SmsProviderIdEnum.Simpletexting,
     ].sort(),
   ],
 };
