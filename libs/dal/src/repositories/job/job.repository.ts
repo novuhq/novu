@@ -8,7 +8,7 @@ import { NotificationTemplateEntity } from '../notification-template';
 import { SubscriberEntity } from '../subscriber';
 import { NotificationEntity } from '../notification';
 import { EnvironmentEntity } from '../environment';
-import type { EnforceEnvOrOrgIds, IUpdateResult } from '../../types';
+import type { EnforceEnvOrOrgIds, IUpdateResult, ObjectIdType } from '../../types';
 import { DalException } from '../../shared';
 import { sub, isBefore } from 'date-fns';
 
@@ -21,7 +21,7 @@ type JobEntityPopulated = JobEntity & {
 
 export interface IDelayOrDigestJobResult {
   digestResult: DigestCreationResultEnum;
-  activeDigestId?: string;
+  activeDigestId?: ObjectIdType;
 }
 
 export class JobRepository extends BaseRepository<JobDBModel, JobEntity, EnforceEnvOrOrgIds> {
@@ -36,7 +36,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
         jobs[index]._parentId = stored[index - 1]._id;
       }
 
-      const created = new this.MongooseModel({ ...jobs[index], createdAt: Date.now() });
+      const created = new this.MongooseModel({ ...jobs[index], createdAt: new Date() });
 
       stored.push(this.mapEntity(created));
     }

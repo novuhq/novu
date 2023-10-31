@@ -5,9 +5,10 @@ import { MemberEntity, MemberDBModel } from './member.entity';
 import { BaseRepository } from '../base-repository';
 import { Member } from './member.schema';
 import type { EnforceOrgId } from '../../types/enforce';
+import { ObjectIdType } from '../../types';
 
 export interface IAddMemberData {
-  _userId?: string;
+  _userId?: ObjectIdType;
   roles: MemberRoleEnum[];
   invite?: IMemberInvite;
   memberStatus: MemberStatusEnum;
