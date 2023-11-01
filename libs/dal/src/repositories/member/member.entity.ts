@@ -1,5 +1,5 @@
 import { Types } from 'mongoose';
-import { IMemberInvite, MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
+import { CustomDataType, IMemberInvite, MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 
 import { UserEntity } from '../user';
 import type { OrganizationId } from '../organization';
@@ -19,6 +19,8 @@ export class MemberEntity {
   memberStatus: MemberStatusEnum;
 
   _organizationId: OrganizationId;
+
+  config?: CustomDataType;
 }
 
 export type MemberDBModel = ChangePropsValueType<Omit<MemberEntity, 'invite'>, '_userId' | '_organizationId'> & {

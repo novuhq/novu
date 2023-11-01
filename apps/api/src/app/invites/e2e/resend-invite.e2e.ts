@@ -27,6 +27,26 @@ describe('Resend invite - /invites/resend (POST)', async () => {
     invitee = members.find((i) => i.memberStatus === MemberStatusEnum.INVITED);
   }
 
+  async function setupSingleInvite() {
+    session = new UserSession();
+    await session.initialize();
+
+    await session.testAgent
+      .post('/v1/invites')
+      .send({
+        invitees: [
+          {
+            email: 'asdas@dasdas.com',
+          },
+        ],
+        config: { test: 'test' },
+      })
+      .expect(201);
+
+    const members = await memberRepository.getOrganizationMembers(session.organization._id);
+    invitee = members.find((i) => i.memberStatus === MemberStatusEnum.INVITED);
+  }
+
   describe('Valid resend invite flow', async () => {
     before(async () => {
       await setup();
@@ -44,7 +64,7 @@ describe('Resend invite - /invites/resend (POST)', async () => {
     it('should change the inviter id', async () => {
       const member = await memberRepository.findMemberById(session.organization._id, invitee._id);
 
-      expect(member.invite._inviterId).to.equal(session.user._id);
+      expect(member?.invite?._inviterId).to.equal(session.user._id);
     });
   });
 
@@ -78,6 +98,26 @@ describe('Resend invite - /invites/resend (POST)', async () => {
       expect(body.message.length).to.exist;
       expect(body.message).to.equal('Member not found');
       expect(body.error).to.equal('Bad Request');
+    });
+  });
+  describe('Valid resend invite flow - single invite', async () => {
+    before(async () => {
+      await setupSingleInvite();
+
+      const members = await memberRepository.getOrganizationMembers(session.organization._id);
+
+      const invitedMember = members.find((i) => i.memberStatus === MemberStatusEnum.INVITED);
+
+      await session.testAgent
+        .post('/v1/invites/resend')
+        .send({ memberId: invitedMember._id, config: { test1: 'test2' } })
+        .expect(201);
+    });
+
+    it('should change config value', async () => {
+      const member = await memberRepository.findMemberById(session.organization._id, invitee._id);
+
+      expect(member?.config).to.equal({ test1: 'test2' });
     });
   });
 });

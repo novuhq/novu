@@ -1,12 +1,14 @@
-import { IBulkInviteRequestDto } from '@novu/shared';
+import { IBulkInviteRequestDto, CustomDataType } from '@novu/shared';
 import { Type } from 'class-transformer';
-import { ArrayNotEmpty, IsArray, IsDefined, IsEmail, IsNotEmpty, ValidateNested } from 'class-validator';
+import { ArrayNotEmpty, IsArray, IsOptional, IsDefined, IsEmail, IsNotEmpty, ValidateNested } from 'class-validator';
 
 class EmailInvitee {
   @IsDefined()
   @IsNotEmpty()
   @IsEmail()
   email: string;
+  @IsOptional()
+  config?: CustomDataType;
 }
 
 export class BulkInviteMembersDto implements IBulkInviteRequestDto {
@@ -15,4 +17,6 @@ export class BulkInviteMembersDto implements IBulkInviteRequestDto {
   @ValidateNested()
   @Type(() => EmailInvitee)
   invitees: EmailInvitee[];
+  @IsOptional()
+  config?: CustomDataType;
 }
