@@ -50,3 +50,4 @@ export * from './layout';
 export * from './api';
 export * from './providers';
 export * from './config/vars';
+export * from './utils/notifications';
