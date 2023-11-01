@@ -49,7 +49,8 @@ export class OldInstanceBullMqService {
   constructor() {
     if (this.shouldInstantiate()) {
       this.inMemoryProviderService = new InMemoryProviderService(
-        InMemoryProviderEnum.OLD_INSTANCE_REDIS
+        InMemoryProviderEnum.OLD_INSTANCE_REDIS,
+        true
       );
       this.enabled = true;
     } else {
