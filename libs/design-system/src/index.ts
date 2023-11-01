@@ -47,3 +47,6 @@ export * from './hover-card/HoverCard';
 export * from './template-button/TemplateButton.styles';
 export * from './select/Select.styles';
 export * from './layout';
+export * from './api';
+export * from './providers';
+export * from './config/vars';
