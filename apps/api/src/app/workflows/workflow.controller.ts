@@ -46,6 +46,8 @@ import { UpdateWorkflowOverride } from './usecases/update-workflow-override/upda
 import { GetWorkflowOverrideResponseDto } from './dto/get-workflow-override-response.dto';
 import { GetWorkflowOverride } from './usecases/get-workflow-override/get-workflow-override.usecase';
 import { GetWorkflowOverrideCommand } from './usecases/get-workflow-override/get-workflow-override.command';
+import { DeleteWorkflowOverride } from './usecases/delete-workflow-override/delete-workflow-override.usecase';
+import { DeleteWorkflowOverrideCommand } from './usecases/delete-workflow-override/delete-workflow-override.command';
 
 @Controller('/workflows')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -61,7 +63,8 @@ export class WorkflowController {
     private changeWorkflowActiveStatusUsecase: ChangeTemplateActiveStatus,
     private createWorkflowOverrideUsecase: CreateWorkflowOverride,
     private updateWorkflowOverrideUsecase: UpdateWorkflowOverride,
-    private getWorkflowOverrideUsecase: GetWorkflowOverride
+    private getWorkflowOverrideUsecase: GetWorkflowOverride,
+    private deleteWorkflowOverrideUsecase: DeleteWorkflowOverride
   ) {}
 
   @Get('')
@@ -289,6 +292,30 @@ export class WorkflowController {
         userId: user._id,
         tenantIdentifier: tenantIdentifier,
         _workflowId: workflowId,
+      })
+    );
+  }
+
+  @Delete('/overrides/:workflowOverrideId')
+  @UseGuards(RootEnvironmentGuard)
+  @Roles(MemberRoleEnum.ADMIN)
+  @ApiOkResponse({
+    type: DataBooleanDto,
+  })
+  @ApiOperation({
+    summary: 'Delete workflow override',
+  })
+  @ExternalApiAccessible()
+  deleteWorkflowOverride(
+    @UserSession() user: IJwtPayload,
+    @Param('workflowOverrideId') workflowOverrideId: string
+  ): Promise<boolean> {
+    return this.deleteWorkflowOverrideUsecase.execute(
+      DeleteWorkflowOverrideCommand.create({
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+        userId: user._id,
+        _id: workflowOverrideId,
       })
     );
   }
