@@ -35,6 +35,8 @@ export enum CredentialsKeyEnum {
   AuthenticationTokenKey = 'authenticationTokenKey',
   AccessKey = 'accessKey',
   ApiToken = 'apiToken',
+  ApiURL = 'apiURL',
+  AppID = 'appID',
 }
 
 export enum EmailProviderIdEnum {
@@ -58,6 +60,7 @@ export enum EmailProviderIdEnum {
   Novu = 'novu-email',
   SparkPost = 'sparkpost',
   EmailWebhook = 'email-webhook',
+  Braze = 'braze',
 }
 
 export enum SmsProviderIdEnum {
