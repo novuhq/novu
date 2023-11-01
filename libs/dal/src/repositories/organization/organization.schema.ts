@@ -31,6 +31,7 @@ const organizationSchema = new Schema<OrganizationDBModel>(
       ],
       select: false,
     },
+    defaultLocale: Schema.Types.String,
   },
   schemaOptions
 );
