@@ -7,5 +7,7 @@ A Getstream chat provider library for [@novu/node](https://github.com/novuhq/nov
 ```javascript
 import { GetstreamChatProvider } from '@novu/getstream';
 
-const provider = new GetstreamChatProvider({});
+const provider = new GetstreamChatProvider({
+  apikey: process.env.API_KEY,
+});
 ```

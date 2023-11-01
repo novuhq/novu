@@ -2141,7 +2141,7 @@ importers:
         specifier: ^0.21.0
         version: link:../../providers/generic-sms
       '@novu/getstream':
-        specifier: ^0.16.3
+        specifier: ^0.21.0
         version: link:../../providers/getstream
       '@novu/gupshup':
         specifier: ^0.21.0
@@ -3162,7 +3162,6 @@ importers:
       typescript:
         specifier: 4.9.5
         version: 4.9.5
-
 
   providers/burst-sms:
     dependencies:
@@ -44107,7 +44106,7 @@ packages:
     peerDependencies:
       rollup: ^2.0.0
     dependencies:
-      '@babel/code-frame': 7.22.13
+      '@babel/code-frame': 7.21.4
       jest-worker: 26.6.2
       rollup: 2.79.1
       serialize-javascript: 4.0.0
