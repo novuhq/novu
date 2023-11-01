@@ -59,7 +59,7 @@ export class CacheInMemoryProviderService {
     Logger.log(
       this.descriptiveLogMessage(
         `Cluster mode ${
-          isClusterModeEnabled ? 'is' : 'is not'
+          isClusterModeEnabled ? 'IS' : 'IS NOT'
         } enabled for ${LOG_CONTEXT}`
       ),
       LOG_CONTEXT
