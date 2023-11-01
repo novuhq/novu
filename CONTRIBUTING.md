@@ -20,7 +20,36 @@ You can open a new issue with this [issue form](https://github.com/novuhq/novu/i
 
 ### Requirements
 
-- [Node.js](https://nodejs.org/en) 
+- Node.js v16.14.0 
+  - To install Node.js v16.14.0 through NVM (Node Version Manager), follow these steps:
+    1. Open your terminal.
+
+    2. Install NVM if you haven't already. You can install NVM by following the instructions at [NVM GitHub](https://github.com/nvm-sh/nvm).
+
+    3. Once NVM is installed, run the following command to install Node.js v16.14.0:
+       
+
+        ```bash
+        nvm install 16.14.0
+        ```
+
+        ```bash
+        node -v
+        ```
+
+        ```bash
+        v16.14.0
+        ```
+     5. You can set Node.js v16.14.0 as your default version with the following command:
+        ```bash
+        nvm use 16.14.0
+        ```
+
+
+   
+
+
+
 - [MongoDB](https://www.mongodb.com/try/download/community)
 - Redis. To install Redis on your O.S, please follow the below guides
   - [To install Redis on Windows](https://redis.io/docs/getting-started/installation/install-redis-on-windows/)
