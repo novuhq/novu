@@ -31,13 +31,9 @@ You can open a new issue with this [issue form](https://github.com/novuhq/novu/i
 
         ```bash
         nvm install 16.14.0
-        ```
-
-        ```bash
-        node -v
-        ```
-
-        ```bash
+         
+       node -v
+        
         v16.14.0
         ```
      5. You can set Node.js v16.14.0 as your default version with the following command:
