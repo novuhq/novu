@@ -44,8 +44,8 @@ import { UpdateWorkflowOverrideRequestDto } from './dto/update-workflow-override
 import { UpdateWorkflowOverrideCommand } from './usecases/update-workflow-override/update-workflow-override.command';
 import { UpdateWorkflowOverride } from './usecases/update-workflow-override/update-workflow-override.usecase';
 import { GetWorkflowOverrideResponseDto } from './dto/get-workflow-override-response.dto';
-import { GetWorkflowOverride } from './usecases/get-workflow-override/update-workflow-override.usecase';
-import { GetWorkflowOverrideCommand } from './usecases/get-workflow-override/update-workflow-override.command';
+import { GetWorkflowOverride } from './usecases/get-workflow-override/get-workflow-override.usecase';
+import { GetWorkflowOverrideCommand } from './usecases/get-workflow-override/get-workflow-override.command';
 
 @Controller('/workflows')
 @UseInterceptors(ClassSerializerInterceptor)

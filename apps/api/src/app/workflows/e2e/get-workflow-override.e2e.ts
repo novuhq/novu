@@ -13,7 +13,7 @@ describe('Get workflow override - /:workflowId/tenants/:tenantIdentifier/overrid
     await session.initialize();
   });
 
-  it('should return the workflow', async function () {
+  it('should return the workflow override', async function () {
     const workflowOverrideService = new WorkflowOverrideService({
       organizationId: session.organization._id,
       environmentId: session.environment._id,

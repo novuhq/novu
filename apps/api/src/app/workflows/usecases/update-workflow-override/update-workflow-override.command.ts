@@ -7,7 +7,7 @@ import { EnvironmentWithUserCommand } from '../../../shared/commands/project.com
 export class UpdateWorkflowOverrideCommand extends EnvironmentWithUserCommand {
   @IsMongoId()
   @IsDefined()
-  _workflowId?: string;
+  _workflowId: string;
 
   @IsString()
   @IsDefined()
