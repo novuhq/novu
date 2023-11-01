@@ -41,8 +41,10 @@ You can open a new issue with this [issue form](https://github.com/novuhq/novu/i
         v16.14.0
         ```
      5. You can set Node.js v16.14.0 as your default version with the following command:
+
         ```bash
-        nvm use 16.14.0
+        nvm alias default 16
+
         ```
 
 
@@ -51,7 +53,7 @@ You can open a new issue with this [issue form](https://github.com/novuhq/novu/i
 
 
 - [MongoDB](https://www.mongodb.com/try/download/community)
-- Redis. To install Redis on your O.S, please follow the below guides
+- Redis. To install Redis on your Operating System, please follow the below guides
   - [To install Redis on Windows](https://redis.io/docs/getting-started/installation/install-redis-on-windows/)
   - [To install Redis on Linux](https://redis.io/docs/getting-started/installation/install-redis-on-linux/)
   - [To install Redis on macOS](https://redis.io/docs/getting-started/installation/install-redis-on-mac-os/)
