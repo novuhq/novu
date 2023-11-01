@@ -17,3 +17,4 @@ export * from './plunk.handler';
 export * from './sparkpost.handler';
 export * from './email-webhook.handler';
 export * from './novu.handler';
+export * from './braze.handler';
