@@ -15,7 +15,7 @@ import {
   SmsProviderIdEnum,
 } from '@novu/shared';
 
-import { Button, colors, Sidebar, Text } from '../../../../design-system';
+import { Button, colors, Sidebar, Text } from '@novu/design-system';
 import { useProviders } from '../../useProviders';
 import type { IIntegratedProvider } from '../../types';
 import { IntegrationInput } from '../IntegrationInput';
@@ -38,6 +38,7 @@ import { ShareableUrl } from '../Modal/ConnectIntegrationForm';
 import { Conditions, IConditions } from '../../../../components/conditions';
 import { useDisclosure } from '@mantine/hooks';
 import { useDisablePrimaryStatusModal } from './useDisablePrimaryStatusModal';
+import { HEADER_HEIGHT } from '../../../../components/layout/constants';
 
 interface IProviderForm {
   name: string;
@@ -262,6 +263,7 @@ export function UpdateProviderSidebar({
     return (
       <FormProvider {...methods}>
         <Sidebar
+          headerHeight={HEADER_HEIGHT}
           isOpened={isSidebarOpened}
           isLoading={areProvidersLoading || areEnvironmentsLoading}
           onClose={onSidebarClose}
@@ -301,6 +303,7 @@ export function UpdateProviderSidebar({
   return (
     <FormProvider {...methods}>
       <Sidebar
+        headerHeight={HEADER_HEIGHT}
         isOpened={isSidebarOpened}
         isLoading={areProvidersLoading || areEnvironmentsLoading}
         isExpanded={sidebarState === SidebarStateEnum.EXPANDED}

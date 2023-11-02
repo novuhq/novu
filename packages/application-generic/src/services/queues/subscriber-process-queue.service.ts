@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { JobTopicNameEnum } from '@novu/shared';
+
 import { QueueBaseService } from './queue-base.service';
 
 @Injectable()

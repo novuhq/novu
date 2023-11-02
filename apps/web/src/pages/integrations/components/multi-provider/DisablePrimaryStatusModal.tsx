@@ -1,6 +1,5 @@
 import { Group } from '@mantine/core';
-import { colors, Text, Title, Modal, Button } from '../../../../design-system';
-import { Warning } from '../../../../design-system/icons';
+import { colors, Text, Title, Modal, Button, Warning } from '@novu/design-system';
 
 export interface IDisablePrimaryStatusModal {
   isOpened: boolean;

@@ -1,14 +1,12 @@
 import { useState, useCallback } from 'react';
 import { useDisclosure } from '@mantine/hooks';
 
-import { useInlineComponent, useIsMultiProviderConfigurationEnabled } from '../../../../hooks';
+import { useInlineComponent } from '../../../../hooks';
 import { IDisablePrimaryStatusModal, DisablePrimaryStatusModal } from './DisablePrimaryStatusModal';
 
 export const useDisablePrimaryStatusModal = () => {
   const [opened, { open, close }] = useDisclosure(false);
   const [{ onConfirm }, setModalProps] = useState<Partial<Pick<IDisablePrimaryStatusModal, 'onConfirm'>>>({});
-  const isMultiProviderConfigurationEnabled = useIsMultiProviderConfigurationEnabled();
-  const isOpened = opened && isMultiProviderConfigurationEnabled;
 
   const onConfirmCallback = useCallback(() => {
     close();
@@ -16,7 +14,7 @@ export const useDisablePrimaryStatusModal = () => {
   }, [close, onConfirm]);
 
   const Component = useInlineComponent<IDisablePrimaryStatusModal>(DisablePrimaryStatusModal, {
-    isOpened,
+    isOpened: opened,
     onConfirm: onConfirmCallback,
     onDismiss: close,
   });

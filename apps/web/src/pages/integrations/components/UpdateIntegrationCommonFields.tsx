@@ -2,10 +2,8 @@ import { Controller, useFormContext } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { useClipboard } from '@mantine/hooks';
 
-import { colors, Input, Switch, Tooltip } from '../../../design-system';
-import { Check, Copy } from '../../../design-system/icons';
+import { Input, Switch, Check, Copy, colors, Tooltip } from '@novu/design-system';
 import type { IIntegratedProvider } from '../types';
-import { useIsMultiProviderConfigurationEnabled } from '../../../hooks';
 
 const CopyWrapper = styled.div`
   cursor: pointer;
@@ -20,7 +18,6 @@ export const UpdateIntegrationCommonFields = ({ provider }: { provider: IIntegra
     formState: { errors },
   } = useFormContext();
   const identifierClipboard = useClipboard({ timeout: 1000 });
-  const isMultiProviderConfigurationEnabled = useIsMultiProviderConfigurationEnabled();
 
   if (!provider) return null;
 
@@ -40,7 +37,7 @@ export const UpdateIntegrationCommonFields = ({ provider }: { provider: IIntegra
             />
           );
 
-          if (isMultiProviderConfigurationEnabled && field.value && provider.primary) {
+          if (field.value && provider.primary) {
             return (
               <Tooltip
                 label={

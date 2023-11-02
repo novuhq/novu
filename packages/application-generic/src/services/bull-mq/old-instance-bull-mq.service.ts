@@ -49,7 +49,8 @@ export class OldInstanceBullMqService {
   constructor() {
     if (this.shouldInstantiate()) {
       this.inMemoryProviderService = new InMemoryProviderService(
-        InMemoryProviderEnum.OLD_INSTANCE_REDIS
+        InMemoryProviderEnum.OLD_INSTANCE_REDIS,
+        true
       );
       this.enabled = true;
     } else {
@@ -58,9 +59,14 @@ export class OldInstanceBullMqService {
   }
 
   private shouldInstantiate(): boolean {
-    const shouldInstantiate =
-      !process.env.IS_DOCKER_HOSTED &&
+    const isDecommissioned =
+      process.env.IS_OLD_CLUSTER_DECOMMISSIONED === 'true';
+    const isNotDockerHosted = !process.env.IS_DOCKER_HOSTED;
+    const hasMemoryDbClusterServiceHost =
       !!process.env.MEMORY_DB_CLUSTER_SERVICE_HOST;
+
+    const shouldInstantiate =
+      !isDecommissioned && isNotDockerHosted && hasMemoryDbClusterServiceHost;
 
     Logger.warn(
       { shouldInstantiate },
