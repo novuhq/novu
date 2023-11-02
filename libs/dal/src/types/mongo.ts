@@ -1,6 +1,18 @@
-import { Condition } from 'mongoose';
+import { QuerySelector } from 'mongoose';
+import { ExtractDot, NestedDotKeys, DeepKeys } from './helpers';
 
-import { LeafKeys } from './helpers';
+/**
+ * MongoDB Dot Notation: https://www.mongodb.com/docs/manual/core/document/#dot-notation
+ *
+ * Dot Notation generic with Arrays:
+ * https://stackoverflow.com/questions/76546335/dot-notation-key-extraction-for-deeply-nested-objects-arrays-and-arrays-of-obje
+ *
+ * Dot Notation generic WITHOUT Arrays:
+ * https://stackoverflow.com/questions/58434389/typescript-deep-keyof-of-a-nested-object/68404823#68404823
+ */
+
+type ApplyBasicQueryCasting<T> = T | T[];
+type Condition<T> = ApplyBasicQueryCasting<T> | QuerySelector<ApplyBasicQueryCasting<T>>;
 
 /**
  * Modified from original Mongoose typings to introduce stricter typing
@@ -27,7 +39,7 @@ type RootQuerySelector<T> = {
   /** @see https://www.mongodb.com/docs/manual/reference/operator/query/comment/#op._S_comment */
   $comment?: string;
 } & Partial<{
-  [Key in LeafKeys<T>]: T[Key] | T[Key][];
+  [Key in DeepKeys<T>]: ExtractDot<T, Key> | ExtractDot<T, Key>[];
 }>;
 
 /**
@@ -53,7 +65,7 @@ export type UpdateQuery<TSchema> = {
   $max?: Partial<TSchema>;
   $mul?: Partial<TSchema>;
   $rename?: Record<keyof TSchema, string>;
-  $set?: Partial<TSchema>;
+  $set?: Partial<NestedDotKeys<TSchema>>;
   $setOnInsert?: Partial<TSchema>;
   $unset?: Partial<TSchema>;
 

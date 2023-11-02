@@ -1,6 +1,4 @@
 import { Types } from 'mongoose';
-import { UserEntity } from '../repositories/user';
-import { AuthProviderEnum } from 'libs/shared/dist/cjs';
 
 /**
  * The type of an ObjectKey identifier.
@@ -116,12 +114,6 @@ export type ExtractDot<
     : // Else the key does not exist, return never.
       never;
 
-export type FlatKeys<T> = {
+export type NestedDotKeys<T> = {
   [Key in DeepKeys<T>]: ExtractDot<T, Key>;
-};
-
-const partialDotNotedOrg: Partial<FlatKeys<UserEntity>> = {
-  'resetTokenCount.reqInDay': 1,
-  'tokens.provider': AuthProviderEnum.GITHUB,
-  'servicesHashes.intercom': '123',
 };
