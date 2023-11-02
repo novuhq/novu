@@ -1,12 +1,14 @@
 import { IntegrationEntity } from '@novu/dal';
-import { IPushFactory, IPushHandler } from './interfaces';
 import {
   APNSHandler,
-  FCMHandler,
   ExpoHandler,
+  FCMHandler,
   OneSignalHandler,
+  PusherBeamsHandler,
+  PushpadHandler,
   PushWebhookHandler,
 } from './handlers';
+import { IPushFactory, IPushHandler } from './interfaces';
 
 export class PushFactory implements IPushFactory {
   handlers: IPushHandler[] = [
@@ -14,10 +16,12 @@ export class PushFactory implements IPushFactory {
     new ExpoHandler(),
     new APNSHandler(),
     new OneSignalHandler(),
+    new PushpadHandler(),
     new PushWebhookHandler(),
+    new PusherBeamsHandler(),
   ];
 
-  getHandler(integration: IntegrationEntity) {
+  getHandler(integration: IntegrationEntity): IPushHandler {
     const handler =
       this.handlers.find((handlerItem) =>
         handlerItem.canHandle(integration.providerId, integration.channel)

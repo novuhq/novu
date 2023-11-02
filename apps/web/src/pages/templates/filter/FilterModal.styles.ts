@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import { Button, colors } from '../../../design-system';
+import { Button, colors } from '@novu/design-system';
 
 export const FilterButton = styled(Button)`
   margin-top: 0px;

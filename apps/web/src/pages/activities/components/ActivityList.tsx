@@ -2,8 +2,7 @@ import React from 'react';
 import { Button, LoadingOverlay, Pagination, useMantineColorScheme } from '@mantine/core';
 
 import { ActivityItem } from './ActivityItem';
-import { colors } from '../../../design-system';
-import { ChevronLeft, ChevronRight } from '../../../design-system/icons';
+import { colors, ChevronLeft, ChevronRight } from '@novu/design-system';
 
 export type Data = Record<string, any>;
 

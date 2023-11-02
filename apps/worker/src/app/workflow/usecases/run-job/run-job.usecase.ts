@@ -1,3 +1,5 @@
+const nr = require('newrelic');
+
 import { Injectable, Logger } from '@nestjs/common';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
@@ -29,16 +31,21 @@ export class RunJob {
       environmentId: command.environmentId,
     });
 
-    const job = await this.jobRepository.findById(command.jobId);
+    const job = await this.jobRepository.findOne({ _id: command.jobId, _environmentId: command.environmentId });
     if (!job) throw new PlatformException(`Job with id ${command.jobId} not found`);
 
     try {
-      this.logger?.assign({
+      const contextData = {
         transactionId: job.transactionId,
         environmentId: job._environmentId,
         organizationId: job._organizationId,
         jobId: job._id,
-      });
+        jobType: job.type,
+      };
+
+      nr.addCustomAttributes(contextData);
+
+      this.logger?.assign(contextData);
     } catch (e) {
       Logger.error(e, 'RunJob', LOG_CONTEXT);
     }
@@ -77,6 +84,8 @@ export class RunJob {
           job,
         })
       );
+
+      await this.jobRepository.updateStatus(job._environmentId, job._id, JobStatusEnum.COMPLETED);
     } catch (error: any) {
       Logger.error({ error }, `Running job ${job._id} has thrown an error`, LOG_CONTEXT);
       if (job.step.shouldStopOnFail || this.shouldBackoff(error)) {

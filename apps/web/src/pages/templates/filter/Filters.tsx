@@ -1,11 +1,10 @@
 import styled from '@emotion/styled';
 import { useMantineColorScheme } from '@mantine/core';
-import { BuilderFieldOperator, FilterParts, FilterPartTypeEnum } from '@novu/shared';
+import { BuilderFieldOperator, FieldOperatorEnum, FilterParts, FilterPartTypeEnum } from '@novu/shared';
 
 import type { IFormStep } from '../components/formTypes';
-import { colors } from '../../../design-system';
+import { colors } from '@novu/design-system';
 import { useWatch } from 'react-hook-form';
-import { useMemo } from 'react';
 import { channels } from '../../../utils/channels';
 
 export const Filters = ({ step }: { step?: IFormStep }) => {
@@ -47,25 +46,25 @@ export const Filter = ({ filter }: { filter: FilterParts }) => {
 };
 
 export const translateOperator = (operator?: BuilderFieldOperator) => {
-  if (operator === 'NOT_EQUAL') {
+  if (operator === FieldOperatorEnum.NOT_EQUAL) {
     return 'not equal';
   }
-  if (operator === 'LARGER') {
+  if (operator === FieldOperatorEnum.LARGER) {
     return 'larger';
   }
-  if (operator === 'SMALLER') {
+  if (operator === FieldOperatorEnum.SMALLER) {
     return 'smaller';
   }
-  if (operator === 'LARGER_EQUAL') {
+  if (operator === FieldOperatorEnum.LARGER_EQUAL) {
     return 'larger or equal';
   }
-  if (operator === 'SMALLER_EQUAL') {
+  if (operator === FieldOperatorEnum.SMALLER_EQUAL) {
     return 'smaller or equal';
   }
-  if (operator === 'NOT_IN') {
+  if (operator === FieldOperatorEnum.NOT_IN) {
     return 'do not include';
   }
-  if (operator === 'IN') {
+  if (operator === FieldOperatorEnum.IN) {
     return 'includes';
   }
 
@@ -74,7 +73,7 @@ export const translateOperator = (operator?: BuilderFieldOperator) => {
 
 export const getFilterLabel = (filter: FilterParts, steps: IFormStep[]): string => {
   if (filter.on === FilterPartTypeEnum.IS_ONLINE) {
-    return `is online right now ${translateOperator('EQUAL')}`;
+    return `is online right now ${translateOperator(FieldOperatorEnum.EQUAL)}`;
   }
   if (filter.on === FilterPartTypeEnum.IS_ONLINE_IN_LAST) {
     return `online in the last "X" ${filter.timeOperator}`;

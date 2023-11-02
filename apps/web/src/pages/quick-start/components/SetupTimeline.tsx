@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getApiKeys } from '../../../api/environment';
 import { When } from '../../../components/utils/When';
 import { API_ROOT, ENV, IS_DOCKER_HOSTED, WS_URL } from '../../../config';
-import { colors, shadows, Text } from '../../../design-system';
+import { colors, shadows, Text } from '@novu/design-system';
 import { useEnvController } from '../../../hooks';
 import { PrismOnCopy } from '../../settings/tabs/components/Prism';
 import { SetupStatus } from './SetupStatus';
