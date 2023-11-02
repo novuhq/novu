@@ -14,6 +14,7 @@ import { Integrations } from './integrations/integrations';
 import { Messages } from './messages/messages';
 import { Tenants } from './tenants/tenants';
 import { ExecutionDetails } from './execution-details/execution-details';
+import { InboundParse } from './inbound-parse/inbound-parse';
 
 export class Novu extends EventEmitter {
   private readonly apiKey?: string;
@@ -31,6 +32,7 @@ export class Novu extends EventEmitter {
   readonly messages: Messages;
   readonly tenants: Tenants;
   readonly executionDetails: ExecutionDetails;
+  readonly inboundParse: InboundParse;
 
   constructor(apiKey: string, config?: INovuConfiguration) {
     super();
@@ -56,6 +58,7 @@ export class Novu extends EventEmitter {
     this.messages = new Messages(this.http);
     this.tenants = new Tenants(this.http);
     this.executionDetails = new ExecutionDetails(this.http);
+    this.inboundParse = new InboundParse(this.http);
 
     this.trigger = this.events.trigger;
     this.bulkTrigger = this.events.bulkTrigger;
