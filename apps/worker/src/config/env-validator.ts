@@ -1,5 +1,4 @@
-import { json, port, str, num, ValidatorSpec, makeValidator } from 'envalid';
-import * as envalid from 'envalid';
+import { cleanEnv, json, port, str, num, ValidatorSpec, makeValidator } from 'envalid';
 
 const str32 = makeValidator((variable) => {
   if (!(typeof variable === 'string') || variable.length != 32) {
@@ -39,6 +38,9 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   }),
   REDIS_DB_INDEX: num(),
   MONGO_URL: str(),
+  MONGO_MIN_POOL_SIZE: num({
+    default: 10,
+  }),
   MONGO_MAX_POOL_SIZE: num({
     default: 500,
   }),
@@ -89,5 +91,5 @@ if (process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'test') {
 }
 
 export function validateEnv() {
-  envalid.cleanEnv(process.env, validators);
+  cleanEnv(process.env, validators);
 }

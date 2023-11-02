@@ -6,12 +6,13 @@ import slugify from 'slugify';
 
 import { ICreateTenantDto, ITenantEntity } from '@novu/shared';
 
-import { Button, colors, Sidebar, Text, Title, Tooltip } from '../../../design-system';
+import { Button, colors, Sidebar, Text, Title, Tooltip } from '@novu/design-system';
 import { createTenant } from '../../../api/tenants';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { QueryKeys } from '../../../api/query.keys';
 import { TenantFormCommonFields } from './TenantFormCommonFields';
 import { defaultFormValues, ITenantForm } from './UpdateTenantSidebar';
+import { HEADER_HEIGHT } from '../../../components/layout/constants';
 
 export function CreateTenantSidebar({
   isOpened,
@@ -84,6 +85,7 @@ export function CreateTenantSidebar({
 
   return (
     <Sidebar
+      headerHeight={HEADER_HEIGHT}
       isOpened={isOpened}
       onClose={onClose}
       onSubmit={(e) => {

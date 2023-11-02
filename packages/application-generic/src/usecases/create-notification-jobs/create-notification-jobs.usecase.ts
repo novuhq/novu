@@ -75,8 +75,9 @@ export class CreateNotificationJobs {
     const steps = await this.createSteps(command, activeSteps, notification);
 
     for (const step of steps) {
-      if (!step.template)
+      if (!step.template) {
         throw new PlatformException('Step template was not found');
+      }
 
       const channel = STEP_TYPE_TO_CHANNEL_TYPE.get(step.template.type);
       const providerId = command.templateProviderIds[channel];
@@ -100,7 +101,10 @@ export class CreateNotificationJobs {
         type: step.template.type,
         providerId: providerId,
         expireAt: notification.expireAt,
-        ...(command.actor && { _actorId: command.actor?._id }),
+        ...(command.actor && {
+          _actorId: command.actor?._id,
+          actorId: command.actor?.subscriberId,
+        }),
       };
 
       jobs.push(job);

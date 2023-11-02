@@ -7,8 +7,7 @@ import { Link, Outlet, useLocation, useNavigate, useParams } from 'react-router-
 import { useDidUpdate, useTimeout } from '@mantine/hooks';
 import { When } from '../../../components/utils/When';
 import { FlowEditor } from '../../../components/workflow';
-import { Button } from '../../../design-system';
-import { Settings } from '../../../design-system/icons';
+import { Button, Settings } from '@novu/design-system';
 import { useEnvController } from '../../../hooks';
 import { channels } from '../../../utils/channels';
 import { errorMessage } from '../../../utils/notifications';

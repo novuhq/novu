@@ -75,6 +75,7 @@ export interface IStore {
 
 export interface IFetchingStrategy {
   fetchUnseenCount: boolean;
+  fetchUnreadCount: boolean;
   fetchOrganization: boolean;
   fetchNotifications: boolean;
   fetchUserPreferences: boolean;
@@ -105,6 +106,7 @@ export interface IStoreContext {
 
 export interface INotificationsContext extends IStoreContext {
   unseenCount: number;
+  unreadCount: number;
   notifications: IMessage[];
   hasNextPage: boolean;
   isLoading: boolean;
