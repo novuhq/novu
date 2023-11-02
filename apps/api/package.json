@@ -110,8 +110,8 @@
     "typescript": "4.9.5"
   },
   "optionalDependencies": {
-    "@novu/ee-auth": "^0.20.0-alpha.0",
-    "@novu/ee-translation": "^0.20.0-alpha.0"
+    "@novu/ee-auth": "0.21.0",
+    "@novu/ee-translation": "0.21.0"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
