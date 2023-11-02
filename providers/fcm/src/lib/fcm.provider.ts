@@ -66,7 +66,12 @@ export class FcmPushProvider implements IPushProvider {
       delete (options.overrides as { type?: string })?.type;
       res = await this.messaging.sendMulticast({
         tokens: options.target,
-        data: { ...payload, title: options.title, body: options.content },
+        data: {
+          ...payload,
+          title: options.title,
+          body: options.content,
+          message: options.content,
+        },
         ...(androidData ? { android: androidData } : {}),
         ...(apnsData ? { apns: apnsData } : {}),
         ...(fcmOptionsData ? { fcmOptions: fcmOptionsData } : {}),

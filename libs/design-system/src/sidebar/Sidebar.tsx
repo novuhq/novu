@@ -10,7 +10,7 @@ import { ArrowLeft, Close } from '../icons';
 const HeaderHolder = styled.div`
   display: flex;
   flex-wrap: nowrap;
-  gap: 36px;
+  gap: 12px;
   margin: 24px;
   margin-bottom: 0;
 `;
