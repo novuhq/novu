@@ -1,11 +1,12 @@
 name: "Pull Request Labeler"
 
 on:
-  - pull_request
+  - pull_request_target
 
 jobs:
   on_pr:
     permissions:
+      contents: read
       pull-requests: write
       statuses: write
     runs-on: ubuntu-latest
