@@ -9,7 +9,7 @@ test('should trigger pusher-beams library correctly', async () => {
   const spy = jest
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
-    .spyOn(provider.beamsClient, 'publishToUsers')
+    .spyOn(provider.axiosInstance, 'post')
     .mockImplementation(async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return { publishId: 'pubid-3a7e97ee-a4bc-4d8f-a40b-74915ce808ae' } as any;
@@ -35,9 +35,10 @@ test('should trigger pusher-beams library correctly', async () => {
 
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-expect-error
-  expect(provider.beamsClient).toBeDefined();
+  expect(provider.axiosInstance).toBeDefined();
   expect(spy).toHaveBeenCalled();
-  expect(spy).toHaveBeenCalledWith(['tester'], {
+  expect(spy).toHaveBeenCalledWith(`/publishes/users`, {
+    users: ['tester'],
     apns: {
       aps: {
         alert: {

@@ -4,22 +4,26 @@ import {
   IPushProvider,
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
-import PushNotifications from '@pusher/push-notifications-server';
+import axios, { AxiosInstance } from 'axios';
 
 export class PusherBeamsPushProvider implements IPushProvider {
   id = 'pusher-beams';
   channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
 
-  private beamsClient: PushNotifications;
+  private axiosInstance: AxiosInstance;
+
   constructor(
     private config: {
       instanceId: string;
       secretKey: string;
     }
   ) {
-    this.beamsClient = new PushNotifications({
-      instanceId: this.config.instanceId,
-      secretKey: this.config.secretKey,
+    this.axiosInstance = axios.create({
+      baseURL: `https://${this.config.instanceId}.pushnotifications.pusher.com/publish_api/v1/instances/${this.config.instanceId}`,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.config.secretKey}`,
+      },
     });
   }
 
@@ -27,8 +31,8 @@ export class PusherBeamsPushProvider implements IPushProvider {
     options: IPushOptions
   ): Promise<ISendMessageSuccessResponse> {
     const { sound, badge, ...overrides } = options.overrides ?? {};
-
-    const res = await this.beamsClient.publishToUsers(options.target, {
+    const payload = {
+      users: options.target,
       apns: {
         aps: {
           alert: {
@@ -63,10 +67,12 @@ export class PusherBeamsPushProvider implements IPushProvider {
         data: options.payload,
         time_to_live: overrides.ttl,
       },
-    });
+    };
+
+    const response = await this.axiosInstance.post(`/publishes/users`, payload);
 
     return {
-      id: res.publishId,
+      id: response.data.publishId,
       date: new Date().toISOString(),
     };
   }
