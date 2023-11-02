@@ -1,5 +1,5 @@
 import { Grid } from '@mantine/core';
-import { TimeOperatorEnum } from '@novu/shared';
+import { FieldOperatorEnum, TimeOperatorEnum } from '@novu/shared';
 import { Controller } from 'react-hook-form';
 
 import { DeleteStepButton } from './FilterModal.styles';
@@ -61,7 +61,12 @@ function OnlineRightNowForm({
   return (
     <>
       <Grid.Col span={spanSize}>
-        <Select placeholder="Operator" data={[{ value: 'EQUAL', label: 'Equal' }]} value={'EQUAL'} disabled />
+        <Select
+          placeholder="Operator"
+          data={[{ value: FieldOperatorEnum.EQUAL, label: 'Equal' }]}
+          value={FieldOperatorEnum.EQUAL}
+          disabled
+        />
       </Grid.Col>
       <Grid.Col span={spanSize}>
         <Controller

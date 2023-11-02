@@ -3,7 +3,7 @@ import { ChannelTypeEnum, NOVU_SMS_EMAIL_PROVIDERS } from '@novu/shared';
 
 import { When } from '../../../components/utils/When';
 import { Button, colors, Tooltip } from '@novu/design-system';
-import { useEnvController, useIsMultiProviderConfigurationEnabled } from '../../../hooks';
+import { useEnvController } from '../../../hooks';
 import { IntegrationEnvironmentPill } from '../../integrations/components/IntegrationEnvironmentPill';
 import { IntegrationStatus } from '../../integrations/components/IntegrationStatus';
 import type { IIntegratedProvider } from '../../integrations/types';
@@ -23,7 +23,6 @@ export const ListProviders = ({
   setProvider: (provider: IIntegratedProvider) => void;
 }) => {
   const { colorScheme } = useMantineColorScheme();
-  const isMultiProviderConfigurationEnabled = useIsMultiProviderConfigurationEnabled();
   const { environment: currentEnvironment } = useEnvController();
 
   return (
@@ -65,7 +64,7 @@ export const ListProviders = ({
               key={provider.identifier ?? provider.providerId}
               style={{
                 width: '100%',
-                padding: isMultiProviderConfigurationEnabled ? '8px 12px' : 15,
+                padding: '8px 12px',
                 background: colorScheme === 'dark' ? colors.B20 : colors.B98,
                 borderRadius: 8,
                 marginBottom: 12,
@@ -91,19 +90,16 @@ export const ListProviders = ({
 
                   <Stack
                     sx={{
-                      width: isMultiProviderConfigurationEnabled ? '117px' : undefined,
+                      width: '117px',
                     }}
                     spacing={0}
                   >
-                    <Tooltip
-                      label={provider.displayName}
-                      opened={isMultiProviderConfigurationEnabled ? undefined : false}
-                    >
+                    <Tooltip label={provider.displayName}>
                       <Text size="md" truncate="end">
                         {provider.name || provider.displayName}
                       </Text>
                     </Tooltip>
-                    <When truthy={isMultiProviderConfigurationEnabled && provider.identifier !== undefined}>
+                    <When truthy={provider.identifier !== undefined}>
                       <Text
                         sx={{
                           color: colors.B40,
@@ -116,9 +112,7 @@ export const ListProviders = ({
                   </Stack>
                 </Group>
                 <Group spacing={16} position="apart">
-                  <When truthy={isMultiProviderConfigurationEnabled}>
-                    <IntegrationEnvironmentPill name={currentEnvironment?.name || 'Development'} />
-                  </When>
+                  <IntegrationEnvironmentPill name={currentEnvironment?.name || 'Development'} />
                   <div
                     style={{
                       minWidth: 76,

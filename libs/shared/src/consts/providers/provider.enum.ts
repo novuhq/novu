@@ -27,6 +27,16 @@ export enum CredentialsKeyEnum {
   RedirectUrl = 'redirectUrl',
   Hmac = 'hmac',
   IpPoolName = 'ipPoolName',
+  ApiKeyRequestHeader = 'apiKeyRequestHeader',
+  SecretKeyRequestHeader = 'secretKeyRequestHeader',
+  IdPath = 'idPath',
+  DatePath = 'datePath',
+  AuthenticateByToken = 'authenticateByToken',
+  AuthenticationTokenKey = 'authenticationTokenKey',
+  AccessKey = 'accessKey',
+  ApiToken = 'apiToken',
+  ApiURL = 'apiURL',
+  AppID = 'appID',
 }
 
 export enum EmailProviderIdEnum {
@@ -50,6 +60,7 @@ export enum EmailProviderIdEnum {
   Novu = 'novu-email',
   SparkPost = 'sparkpost',
   EmailWebhook = 'email-webhook',
+  Braze = 'braze',
 }
 
 export enum SmsProviderIdEnum {
@@ -64,6 +75,7 @@ export enum SmsProviderIdEnum {
   Firetext = 'firetext',
   Infobip = 'infobip-sms',
   BurstSms = 'burst-sms',
+  BulkSms = 'bulk-sms',
   Clickatell = 'clickatell',
   FortySixElks = 'forty-six-elks',
   Kannel = 'kannel',
@@ -72,7 +84,12 @@ export enum SmsProviderIdEnum {
   AfricasTalking = 'africas-talking',
   Novu = 'novu-sms',
   Sendchamp = 'sendchamp',
+  GenericSms = 'generic-sms',
   Clicksend = 'clicksend',
+  Bandwidth = 'bandwidth',
+  MessageBird = 'messagebird',
+  Simpletexting = 'simpletexting',
+  AzureSms = 'azure-sms',
 }
 
 export enum ChatProviderIdEnum {
@@ -80,6 +97,8 @@ export enum ChatProviderIdEnum {
   Discord = 'discord',
   MsTeams = 'msteams',
   Mattermost = 'mattermost',
+  Ryver = 'ryver',
+  Zulip = 'zulip',
 }
 
 export enum PushProviderIdEnum {
@@ -87,6 +106,7 @@ export enum PushProviderIdEnum {
   APNS = 'apns',
   EXPO = 'expo',
   OneSignal = 'one-signal',
+  Pushpad = 'pushpad',
   PushWebhook = 'push-webhook',
 }
 
