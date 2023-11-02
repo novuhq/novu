@@ -52,6 +52,7 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       datePath: Schema.Types.String,
       authenticateByToken: Schema.Types.Boolean,
       authenticationTokenKey: Schema.Types.String,
+      instanceId: Schema.Types.String,
     },
     active: {
       type: Schema.Types.Boolean,
