@@ -452,9 +452,10 @@ export const invalidNestedObjectNonExistingPropertyValue: ExtractDot<TestDotObj,
   baz: true,
 };
 export const invalidNestedObjectNonExistingPropertiesValue: ExtractDot<TestDotObj, 'hede'> = {
-  garply: 123,
   // @ts-expect-error - 'invalid' does not exist in type 'IBar'
   waldo: { baz: true, invalid: true },
+};
+export const invalidNestedObjectArrayNonExistingPropertiesValue: ExtractDot<TestDotObj, 'hede'> = {
   // @ts-expect-error - 'invalid' does not exist in type 'IBar'
   hogera: [{ baz: true, invalid: true }],
 };
@@ -509,19 +510,18 @@ export const invalidNestedArrayNestedArrayValue: ExtractDot<TestDotObj, 'grault.
 export const invalidNestedArrayValue: ExtractDot<TestDotObj, 'grault.tutu'> = {};
 // @ts-expect-error - missing 'hodo' property
 export const invalidNestedArrayArrayValue: ExtractDot<TestDotObj, 'grault.corge'> = [{}];
-export const invalidNestedArrayNonExistingPropertyValue: ExtractDot<TestDotObj, 'grault.waldo'> = [
+export const invalidNestedArrayObjectNonExistingPropertyValue: ExtractDot<TestDotObj, 'grault.waldo'> = [
   {
     // @ts-expect-error - 'invalid' does not exist in object
     invalid: true,
     baz: true,
   },
 ];
-export const invalidNestedArrayNonExistingPropertiesValue: ExtractDot<TestDotObj, 'grault'> = [
-  {
-    garply: 123,
-    // @ts-expect-error - 'invalid' does not exist in type 'IBar'
-    waldo: { baz: true, invalid: true },
-    // @ts-expect-error - 'invalid' does not exist in type 'IBar'
-    hogera: [{ baz: true, invalid: true }],
-  },
-];
+export const invalidNestedArrayObjectNonExistingPropertiesValue: ExtractDot<TestDotObj, 'hede'> = {
+  // @ts-expect-error - 'invalid' does not exist in type 'IBar'
+  waldo: { baz: true, invalid: true },
+};
+export const invalidNestedArrayArrayNonExistingPropertiesValue: ExtractDot<TestDotObj, 'hede'> = {
+  // @ts-expect-error - 'invalid' does not exist in type 'IBar'
+  hogera: [{ baz: true, invalid: true }],
+};
