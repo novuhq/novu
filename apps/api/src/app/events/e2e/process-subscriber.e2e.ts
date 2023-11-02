@@ -12,9 +12,8 @@ import { ChannelTypeEnum, ISubscribersDefine, IUpdateNotificationTemplateDto, St
 import {
   buildNotificationTemplateIdentifierKey,
   buildNotificationTemplateKey,
+  CacheInMemoryProviderService,
   CacheService,
-  InMemoryProviderEnum,
-  InMemoryProviderService,
   InvalidateCacheService,
 } from '@novu/application-generic';
 
@@ -29,15 +28,15 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
   let subscriberService: SubscribersService;
   let cacheService: CacheService;
   let invalidateCache: InvalidateCacheService;
-  let inMemoryProviderService: InMemoryProviderService;
+  let cacheInMemoryProviderService: CacheInMemoryProviderService;
 
   const subscriberRepository = new SubscriberRepository();
   const messageRepository = new MessageRepository();
   const notificationTemplateRepository = new NotificationTemplateRepository();
 
   before(async () => {
-    inMemoryProviderService = new InMemoryProviderService(InMemoryProviderEnum.REDIS);
-    cacheService = new CacheService(inMemoryProviderService);
+    cacheInMemoryProviderService = new CacheInMemoryProviderService();
+    cacheService = new CacheService(cacheInMemoryProviderService);
     await cacheService.initialize();
     invalidateCache = new InvalidateCacheService(cacheService);
   });
