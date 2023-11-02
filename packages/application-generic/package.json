@@ -85,6 +85,7 @@
     "@novu/plunk": "^0.21.0",
     "@novu/postmark": "^0.21.0",
     "@novu/push-webhook": "^0.21.0",
+    "@novu/pusher-beams": "^0.21.0",
     "@novu/pushpad": "^0.21.0",
     "@novu/resend": "^0.21.0",
     "@novu/ryver": "^0.21.0",
