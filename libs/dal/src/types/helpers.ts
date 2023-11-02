@@ -83,16 +83,10 @@ export type DeepKeys<T> = T extends StopTypes
  * Extract the type of TObject at TPath by dot notation
  */
 export type ExtractDot<
-  /**
-   * The object we want to extract the type from.
-   */
-  TObject extends Record<string, unknown>,
-  /**
-   * The dot notation path to the type we want to extract
-   */
+  TObject,
   TPath extends DeepKeys<TObject>,
   /*
-   * The object that we recurse into. Constrained to `Required` so we don't
+   * The objects that we recurse into. Constrained to `Required` so we don't
    * need to check for optional properties when accessing the object
    */
   TReqObject = Required<TObject>
@@ -105,22 +99,14 @@ export type ExtractDot<
     ? // Check if the value of the key is an array
       TReqObject[TKey] extends readonly unknown[]
       ? // If the value is an array, recurse into the array type. This allows us to flatten the array
-        // Constraining the array object to the required type for array object access
         TRest extends DeepKeys<TReqObject[TKey][number]>
-        ? // Typescript doesn't know that the value is an object if the path extends from the template literal.
-          // So we need to constrain the value
-          TReqObject[TKey][number] extends Record<string, unknown>
-          ? ExtractDot<TReqObject[TKey][number], TRest>
-          : never
+        ? // Constraining the array object to the required type for array object access
+          ExtractDot<TReqObject[TKey][number], TRest>
         : never
       : // Else the value is not an array, recurse into the object type
-      // Constraining the object to the required type for object access
       TRest extends DeepKeys<TReqObject[TKey]>
-      ? // Typescript doesn't know that the value is an object if the path extends from the template literal.
-        // So we need to constrain the value
-        TReqObject[TKey] extends Record<string, unknown>
-        ? ExtractDot<TReqObject[TKey], TRest>
-        : never
+      ? // Constraining the object to the required type for object access
+        ExtractDot<TReqObject[TKey], TRest>
       : never
     : // Else we have arrived at a leaf. Check if the key exists in the object
     TPath extends keyof TReqObject
@@ -128,6 +114,6 @@ export type ExtractDot<
     : // Else the key does not exist, return never.
       never;
 
-export type NestedDotKeys<T extends Record<string, unknown>> = {
+export type NestedDotKeys<T> = {
   [Key in DeepKeys<T>]: ExtractDot<T, Key>;
 };
