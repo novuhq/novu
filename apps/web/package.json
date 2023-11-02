@@ -49,7 +49,6 @@
     "@mantine/notifications": "^5.7.1",
     "@mantine/prism": "^5.7.1",
     "@mantine/spotlight": "^5.7.1",
-    "@novu/ee-translation-web": "^0.21.0",
     "@novu/design-system": "^0.21.0",
     "@novu/notification-center": "^0.21.0",
     "@novu/shared": "^0.21.0",
