@@ -11,8 +11,10 @@ test('should trigger pusher-beams library correctly', async () => {
     // @ts-expect-error
     .spyOn(provider.axiosInstance, 'post')
     .mockImplementation(async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { publishId: 'pubid-3a7e97ee-a4bc-4d8f-a40b-74915ce808ae' } as any;
+      return {
+        data: { publishId: 'pubid-3a7e97ee-a4bc-4d8f-a40b-74915ce808ae' },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any;
     });
 
   const result = await provider.sendMessage({
