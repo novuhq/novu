@@ -34,6 +34,7 @@ export enum CredentialsKeyEnum {
   AuthenticateByToken = 'authenticateByToken',
   AuthenticationTokenKey = 'authenticationTokenKey',
   AccessKey = 'accessKey',
+  InstanceId = 'instanceId',
   ApiToken = 'apiToken',
   ApiURL = 'apiURL',
   AppID = 'appID',
@@ -108,6 +109,7 @@ export enum PushProviderIdEnum {
   OneSignal = 'one-signal',
   Pushpad = 'pushpad',
   PushWebhook = 'push-webhook',
+  PusherBeams = 'pusher-beams',
 }
 
 export enum InAppProviderIdEnum {
