@@ -28,7 +28,20 @@ export class WorkflowOverrideService {
       _environmentId: environmentId,
     });
 
-    const workflow = await this.notificationTemplateRepository.create({
+    const workflowId = override._workflowId || (await this.createWorkflow(groups))._id;
+
+    return await this.workflowOverrideRepository.create({
+      _organizationId: organizationId,
+      _environmentId: environmentId,
+      _workflowId: workflowId,
+      _tenantId: tenant._id,
+    });
+  }
+
+  private async createWorkflow(groups) {
+    const { organizationId, environmentId } = this.config;
+
+    return await this.notificationTemplateRepository.create({
       _organizationId: organizationId,
       _environmentId: environmentId,
       name: 'test api template',
@@ -37,13 +50,6 @@ export class WorkflowOverrideService {
       notificationGroupId: groups[0]._id,
       steps: [],
       triggers: [{ identifier: 'test-trigger-api' }],
-    });
-
-    return await this.workflowOverrideRepository.create({
-      _organizationId: organizationId,
-      _environmentId: environmentId,
-      _workflowId: workflow._id,
-      _tenantId: tenant._id,
     });
   }
 }
