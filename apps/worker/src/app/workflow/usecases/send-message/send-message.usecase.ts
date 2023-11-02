@@ -21,6 +21,7 @@ import {
   Instrument,
   ConditionsFilterCommand,
   ConditionsFilter,
+  IFilterVariables,
 } from '@novu/application-generic';
 import {
   JobEntity,
@@ -28,6 +29,8 @@ import {
   NotificationTemplateRepository,
   JobRepository,
   JobStatusEnum,
+  TenantEntity,
+  TenantRepository,
 } from '@novu/dal';
 
 import { SendMessageCommand } from './send-message.command';
@@ -56,18 +59,23 @@ export class SendMessage {
     private sendMessageDelay: SendMessageDelay,
     private conditionsFilter: ConditionsFilter,
     private subscriberRepository: SubscriberRepository,
+    private tenantRepository: TenantRepository,
     private analyticsService: AnalyticsService
   ) {}
 
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
-    const shouldRun = await this.filter(command);
-    const preferred = await this.filterPreferredChannels(command.job);
+    const payload = await this.buildCompileContext(command);
+
+    const [shouldRun, preferred] = await Promise.all([
+      this.filter(command, payload),
+      this.filterPreferredChannels(command.job),
+    ]);
 
     const stepType = command.step?.template?.type;
 
     if (!command.payload?.$on_boarding_trigger) {
-      const usedFilters = shouldRun.conditions.reduce(ConditionsFilter.sumFilters, {
+      const usedFilters = shouldRun?.conditions.reduce(ConditionsFilter.sumFilters, {
         filters: [],
         failedFilters: [],
         passedFilters: [],
@@ -107,7 +115,7 @@ export class SendMessage {
       });
     }
 
-    if (!shouldRun.passed || !preferred) {
+    if (!shouldRun?.passed || !preferred) {
       await this.jobRepository.updateStatus(command.environmentId, command.jobId, JobStatusEnum.CANCELED);
 
       return;
@@ -126,17 +134,19 @@ export class SendMessage {
       );
     }
 
+    const sendMessageCommand = SendMessageCommand.create({ ...command, compileContext: payload });
+
     switch (stepType) {
       case StepTypeEnum.SMS:
-        return await this.sendMessageSms.execute(command);
+        return await this.sendMessageSms.execute(sendMessageCommand);
       case StepTypeEnum.IN_APP:
-        return await this.sendMessageInApp.execute(command);
+        return await this.sendMessageInApp.execute(sendMessageCommand);
       case StepTypeEnum.EMAIL:
-        return await this.sendMessageEmail.execute(command);
+        return await this.sendMessageEmail.execute(sendMessageCommand);
       case StepTypeEnum.CHAT:
-        return await this.sendMessageChat.execute(command);
+        return await this.sendMessageChat.execute(sendMessageCommand);
       case StepTypeEnum.PUSH:
-        return await this.sendMessagePush.execute(command);
+        return await this.sendMessagePush.execute(sendMessageCommand);
       case StepTypeEnum.DIGEST:
         return await this.digest.execute(command);
       case StepTypeEnum.DELAY:
@@ -144,13 +154,16 @@ export class SendMessage {
     }
   }
 
-  private async filter(command: SendMessageCommand) {
+  private async filter(command: SendMessageCommand, payload: IFilterVariables) {
     const shouldRun = await this.conditionsFilter.filter(
       ConditionsFilterCommand.create({
         filters: command.job.step.filters || [],
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         userId: command.userId,
+        step: command.step,
+        job: command.job,
+        variables: payload,
       })
     );
 
@@ -164,8 +177,7 @@ export class SendMessage {
           isTest: false,
           isRetry: false,
           raw: JSON.stringify({
-            payload: shouldRun.variables,
-            filters: command.step.filters,
+            conditions: shouldRun.conditions,
           }),
         })
       );
@@ -223,6 +235,36 @@ export class SendMessage {
     return result;
   }
 
+  @Instrument()
+  private async buildCompileContext(command: SendMessageCommand): Promise<IFilterVariables> {
+    const [subscriber, actor, tenant] = await Promise.all([
+      this.getSubscriberBySubscriberId({
+        subscriberId: command.subscriberId,
+        _environmentId: command.environmentId,
+      }),
+      command.job.actorId &&
+        this.getSubscriberBySubscriberId({
+          subscriberId: command.job.actorId,
+          _environmentId: command.environmentId,
+        }),
+      this.handleTenantExecution(command.job),
+    ]);
+
+    if (!subscriber) throw new PlatformException('Subscriber not found');
+
+    return {
+      subscriber,
+      payload: command.payload,
+      step: {
+        digest: !!command.events?.length,
+        events: command.events,
+        total_count: command.events?.length,
+      },
+      ...(tenant && { tenant }),
+      ...(actor && { actor }),
+    };
+  }
+
   @CachedEntity({
     builder: (command: { _id: string; environmentId: string }) =>
       buildNotificationTemplateKey({
@@ -269,5 +311,59 @@ export class SendMessage {
     const channels = [StepTypeEnum.IN_APP, StepTypeEnum.EMAIL, StepTypeEnum.SMS, StepTypeEnum.PUSH, StepTypeEnum.CHAT];
 
     return !channels.find((channel) => channel === job.type);
+  }
+
+  protected async sendSelectedTenantExecution(job: JobEntity, tenant: TenantEntity) {
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+        detail: DetailEnum.TENANT_CONTEXT_SELECTED,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.PENDING,
+        isTest: false,
+        isRetry: false,
+        raw: JSON.stringify({
+          identifier: tenant?.identifier,
+          name: tenant?.name,
+          data: tenant?.data,
+          createdAt: tenant?.createdAt,
+          updatedAt: tenant?.updatedAt,
+          _environmentId: tenant?._environmentId,
+          _id: tenant?._id,
+        }),
+      })
+    );
+  }
+
+  protected async handleTenantExecution(job: JobEntity): Promise<TenantEntity | null> {
+    const tenantIdentifier = job.tenant?.identifier;
+
+    let tenant: TenantEntity | null = null;
+    if (tenantIdentifier) {
+      tenant = await this.tenantRepository.findOne({
+        _environmentId: job._environmentId,
+        identifier: tenantIdentifier,
+      });
+      if (!tenant) {
+        await this.createExecutionDetails.execute(
+          CreateExecutionDetailsCommand.create({
+            ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+            detail: DetailEnum.TENANT_NOT_FOUND,
+            source: ExecutionDetailsSourceEnum.INTERNAL,
+            status: ExecutionDetailsStatusEnum.FAILED,
+            isTest: false,
+            isRetry: false,
+            raw: JSON.stringify({
+              tenantIdentifier: tenantIdentifier,
+            }),
+          })
+        );
+
+        return null;
+      }
+      await this.sendSelectedTenantExecution(job, tenant);
+    }
+
+    return tenant;
   }
 }

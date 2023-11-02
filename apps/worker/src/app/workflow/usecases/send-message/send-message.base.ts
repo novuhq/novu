@@ -1,12 +1,9 @@
 import {
   IntegrationEntity,
   JobEntity,
-  TenantRepository,
   MessageRepository,
   SubscriberRepository,
-  TenantEntity,
   MessageTemplateEntity,
-  SubscriberEntity,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -16,8 +13,6 @@ import {
   SmsProviderIdEnum,
 } from '@novu/shared';
 import {
-  buildSubscriberKey,
-  CachedEntity,
   DetailEnum,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
@@ -39,32 +34,11 @@ export abstract class SendMessageBase extends SendMessageType {
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     protected subscriberRepository: SubscriberRepository,
-    protected tenantRepository: TenantRepository,
     protected selectIntegration: SelectIntegration,
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
     protected selectVariant: SelectVariant
   ) {
     super(messageRepository, createLogUsecase, createExecutionDetails);
-  }
-
-  @CachedEntity({
-    builder: (command: { subscriberId: string; _environmentId: string }) =>
-      buildSubscriberKey({
-        _environmentId: command._environmentId,
-        subscriberId: command.subscriberId,
-      }),
-  })
-  protected async getSubscriberBySubscriberId({
-    subscriberId,
-    _environmentId,
-  }: {
-    subscriberId: string;
-    _environmentId: string;
-  }) {
-    return await this.subscriberRepository.findOne({
-      _environmentId,
-      subscriberId,
-    });
   }
 
   protected async getIntegration(
@@ -91,6 +65,12 @@ export abstract class SendMessageBase extends SendMessageType {
 
   protected storeContent(): boolean {
     return this.channelType === ChannelTypeEnum.IN_APP || process.env.STORE_NOTIFICATION_CONTENT === 'true';
+  }
+
+  protected getCompilePayload(compileContext) {
+    const { payload, ...rest } = compileContext;
+
+    return { ...payload, ...rest };
   }
 
   protected async sendErrorHandlebars(job: JobEntity, error: string) {
@@ -127,66 +107,7 @@ export abstract class SendMessageBase extends SendMessageType {
     );
   }
 
-  protected async sendSelectedTenantExecution(job: JobEntity, tenant: TenantEntity) {
-    await this.createExecutionDetails.execute(
-      CreateExecutionDetailsCommand.create({
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
-        detail: DetailEnum.TENANT_CONTEXT_SELECTED,
-        source: ExecutionDetailsSourceEnum.INTERNAL,
-        status: ExecutionDetailsStatusEnum.PENDING,
-        isTest: false,
-        isRetry: false,
-        raw: JSON.stringify({
-          identifier: tenant?.identifier,
-          name: tenant?.name,
-          data: tenant?.data,
-          createdAt: tenant?.createdAt,
-          updatedAt: tenant?.updatedAt,
-          _environmentId: tenant?._environmentId,
-          _id: tenant?._id,
-        }),
-      })
-    );
-  }
-
-  protected async handleTenantExecution(job: JobEntity): Promise<TenantEntity | null> {
-    const tenantIdentifier = job.tenant?.identifier;
-
-    let tenant: TenantEntity | null = null;
-    if (tenantIdentifier) {
-      tenant = await this.tenantRepository.findOne({
-        _environmentId: job._environmentId,
-        identifier: tenantIdentifier,
-      });
-      if (!tenant) {
-        await this.createExecutionDetails.execute(
-          CreateExecutionDetailsCommand.create({
-            ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
-            detail: DetailEnum.TENANT_NOT_FOUND,
-            source: ExecutionDetailsSourceEnum.INTERNAL,
-            status: ExecutionDetailsStatusEnum.FAILED,
-            isTest: false,
-            isRetry: false,
-            raw: JSON.stringify({
-              tenantIdentifier: tenantIdentifier,
-            }),
-          })
-        );
-
-        return null;
-      }
-      await this.sendSelectedTenantExecution(job, tenant);
-    }
-
-    return tenant;
-  }
-
-  protected async processVariants(
-    command: SendMessageCommand,
-    tenant: TenantEntity | null,
-    subscriber: SubscriberEntity,
-    payload: any
-  ): Promise<MessageTemplateEntity> {
+  protected async processVariants(command: SendMessageCommand): Promise<MessageTemplateEntity> {
     const { messageTemplate, conditions } = await this.selectVariant.execute(
       SelectVariantCommand.create({
         organizationId: command.organizationId,
@@ -194,7 +115,7 @@ export abstract class SendMessageBase extends SendMessageType {
         userId: command.userId,
         step: command.step,
         job: command.job,
-        filterData: { tenant: tenant ?? undefined, subscriber: subscriber ?? undefined, payload: payload ?? undefined },
+        filterData: command.compileContext ?? {},
       })
     );
 
@@ -207,7 +128,7 @@ export abstract class SendMessageBase extends SendMessageType {
           status: ExecutionDetailsStatusEnum.PENDING,
           isTest: false,
           isRetry: false,
-          raw: JSON.stringify(conditions),
+          raw: JSON.stringify({ conditions }),
         })
       );
     }

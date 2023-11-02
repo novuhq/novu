@@ -6,8 +6,6 @@ import {
   SubscriberRepository,
   MessageEntity,
   IntegrationEntity,
-  TenantRepository,
-  SubscriberEntity,
   JobEntity,
 } from '@novu/dal';
 import {
@@ -49,7 +47,6 @@ export class SendMessagePush extends SendMessageBase {
   constructor(
     protected subscriberRepository: SubscriberRepository,
     protected messageRepository: MessageRepository,
-    protected tenantRepository: TenantRepository,
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
@@ -62,7 +59,6 @@ export class SendMessagePush extends SendMessageBase {
       createLogUsecase,
       createExecutionDetails,
       subscriberRepository,
-      tenantRepository,
       selectIntegration,
       getNovuProviderCredentials,
       selectVariant
@@ -71,46 +67,20 @@ export class SendMessagePush extends SendMessageBase {
 
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
-    const subscriber = await this.getSubscriberBySubscriberId({
-      subscriberId: command.subscriberId,
-      _environmentId: command.environmentId,
-    });
-
-    if (!subscriber) throw new PlatformException(`Subscriber not found`);
-
     Sentry.addBreadcrumb({
       message: 'Sending Push',
     });
 
     const step: NotificationStepEntity = command.step;
+    const { subscriber, step: stepData } = command.compileContext;
 
-    const stepData: IPushOptions['step'] = {
-      digest: !!command.events?.length,
-      events: command.events,
-      total_count: command.events?.length,
-    };
-    const tenant = await this.handleTenantExecution(command.job);
-    let actor: SubscriberEntity | null = null;
-    if (command.job.actorId) {
-      actor = await this.getSubscriberBySubscriberId({
-        subscriberId: command.job.actorId,
-        _environmentId: command.environmentId,
-      });
-    }
-
-    const template = await this.processVariants(command, tenant, subscriber, command.payload);
+    const template = await this.processVariants(command);
 
     if (template) {
       step.template = template;
     }
 
-    const data = {
-      subscriber: subscriber,
-      step: stepData,
-      ...(tenant && { tenant }),
-      ...(actor && { actor }),
-      ...command.payload,
-    };
+    const data = this.getCompilePayload(command.compileContext);
     let content = '';
     let title = '';
 

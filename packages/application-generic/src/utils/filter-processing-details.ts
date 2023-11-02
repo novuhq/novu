@@ -4,8 +4,14 @@ import { ICondition, IMessageFilter, ITriggerPayload } from '@novu/shared';
 export interface IFilterVariables {
   payload?: ITriggerPayload;
   subscriber?: SubscriberEntity;
+  actor?: SubscriberEntity;
   webhook?: Record<string, unknown>;
   tenant?: TenantEntity;
+  step?: {
+    digest: boolean;
+    events: any[] | undefined;
+    total_count: number | undefined;
+  };
 }
 
 export class FilterProcessingDetails {

@@ -7,8 +7,6 @@ import {
   MessageEntity,
   IntegrationEntity,
   IChannelSettings,
-  TenantRepository,
-  SubscriberEntity,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -44,7 +42,6 @@ export class SendMessageChat extends SendMessageBase {
   constructor(
     protected subscriberRepository: SubscriberRepository,
     protected messageRepository: MessageRepository,
-    protected tenantRepository: TenantRepository,
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
@@ -57,7 +54,6 @@ export class SendMessageChat extends SendMessageBase {
       createLogUsecase,
       createExecutionDetails,
       subscriberRepository,
-      tenantRepository,
       selectIntegration,
       getNovuProviderCredentials,
       selectVariant
@@ -66,51 +62,27 @@ export class SendMessageChat extends SendMessageBase {
 
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
-    const subscriber = await this.getSubscriberBySubscriberId({
-      subscriberId: command.subscriberId,
-      _environmentId: command.environmentId,
-    });
-    if (!subscriber) throw new PlatformException('Subscriber not found');
-
     Sentry.addBreadcrumb({
       message: 'Sending Chat',
     });
     const step: NotificationStepEntity = command.step;
     if (!step?.template) throw new PlatformException('Chat channel template not found');
 
-    const tenant = await this.handleTenantExecution(command.job);
-    let actor: SubscriberEntity | null = null;
-    if (command.job.actorId) {
-      actor = await this.getSubscriberBySubscriberId({
-        subscriberId: command.job.actorId,
-        _environmentId: command.environmentId,
-      });
-    }
+    const { subscriber } = command.compileContext;
 
-    const template = await this.processVariants(command, tenant, subscriber, command.payload);
+    const template = await this.processVariants(command);
 
     if (template) {
       step.template = template;
     }
 
     let content = '';
-    const data = {
-      subscriber: subscriber,
-      step: {
-        digest: !!command.events?.length,
-        events: command.events,
-        total_count: command.events?.length,
-      },
-      ...(tenant && { tenant }),
-      ...(actor && { actor }),
-      ...command.payload,
-    };
 
     try {
       content = await this.compileTemplate.execute(
         CompileTemplateCommand.create({
           template: step.template.content as string,
-          data,
+          data: this.getCompilePayload(command.compileContext),
         })
       );
     } catch (e) {

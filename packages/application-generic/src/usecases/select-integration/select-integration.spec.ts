@@ -15,6 +15,8 @@ import { SelectIntegration } from './select-integration.usecase';
 import { SelectIntegrationCommand } from './select-integration.command';
 import { GetDecryptedIntegrations } from '../get-decrypted-integrations';
 import { ConditionsFilter } from '../conditions-filter';
+import { CompileTemplate } from '../compile-template';
+import { CreateExecutionDetails } from '../create-execution-details';
 
 const testIntegration: IntegrationEntity = {
   _environmentId: 'env-test-123',
@@ -86,20 +88,25 @@ jest.mock('../get-decrypted-integrations', () => ({
 
 describe('select integration', function () {
   let useCase: SelectIntegration;
-  let integrationRepository: IntegrationRepository;
+  const integrationRepository: IntegrationRepository =
+    new IntegrationRepository();
+  const executionDetailsRepository: ExecutionDetailsRepository =
+    new ExecutionDetailsRepository();
 
   beforeEach(async function () {
+    // @ts-ignore
     useCase = new SelectIntegration(
-      new IntegrationRepository() as any,
-      // @ts-ignore
-      new GetDecryptedIntegrations(),
+      integrationRepository,
+      new GetDecryptedIntegrations(integrationRepository),
       new ConditionsFilter(
         new SubscriberRepository(),
         new MessageRepository(),
-        new ExecutionDetailsRepository(),
+        executionDetailsRepository,
         new JobRepository(),
         new TenantRepository(),
-        new EnvironmentRepository()
+        new EnvironmentRepository(),
+        new CreateExecutionDetails(executionDetailsRepository),
+        new CompileTemplate()
       ),
       new TenantRepository()
     );
