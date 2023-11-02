@@ -36,6 +36,8 @@ export enum CredentialsKeyEnum {
   AccessKey = 'accessKey',
   InstanceId = 'instanceId',
   ApiToken = 'apiToken',
+  ApiURL = 'apiURL',
+  AppID = 'appID',
 }
 
 export enum EmailProviderIdEnum {
@@ -59,6 +61,7 @@ export enum EmailProviderIdEnum {
   Novu = 'novu-email',
   SparkPost = 'sparkpost',
   EmailWebhook = 'email-webhook',
+  Braze = 'braze',
 }
 
 export enum SmsProviderIdEnum {
@@ -87,7 +90,7 @@ export enum SmsProviderIdEnum {
   Bandwidth = 'bandwidth',
   MessageBird = 'messagebird',
   Simpletexting = 'simpletexting',
-  AzureSms = 'azureSms',
+  AzureSms = 'azure-sms',
 }
 
 export enum ChatProviderIdEnum {

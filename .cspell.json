@@ -525,7 +525,9 @@
     "simpletexting",
     "Simpletexting",
     "Zulip",
-    "zulip"
+    "zulip",
+    "tspan",
+    "maildata"
   ],
   "flagWords": [],
   "patterns": [

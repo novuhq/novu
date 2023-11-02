@@ -34,4 +34,6 @@ export interface ICredentials {
   accessKey?: string;
   instanceId?: string;
   apiToken?: string;
+  apiURL?: string;
+  appID?: string;
 }
