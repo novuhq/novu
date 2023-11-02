@@ -1,8 +1,9 @@
 {
   "name": "@novu/design-system",
-  "version": "0.20.0",
-  "description": "",
+  "version": "0.21.0",
   "repository": "https://github.com/novuhq/novu",
+  "description": "",
+  "private": true,
   "license": "ISC",
   "author": "",
   "sideEffects": false,

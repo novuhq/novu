@@ -25,4 +25,14 @@ export interface ICredentials {
   redirectUrl?: string;
   hmac?: boolean;
   ipPoolName?: string;
+  apiKeyRequestHeader?: string;
+  secretKeyRequestHeader?: string;
+  idPath?: string;
+  datePath?: string;
+  authenticateByToken?: boolean;
+  authenticationTokenKey?: string;
+  accessKey?: string;
+  apiToken?: string;
+  apiURL?: string;
+  appID?: string;
 }
