@@ -6,4 +6,4 @@ export enum RateLimitCategoryTypeEnum {
   GLOBAL = 'global',
 }
 
-export type IRateLimits = Record<RateLimitCategoryTypeEnum, number>;
+export type IApiRateLimits = Record<RateLimitCategoryTypeEnum, number>;

@@ -51,13 +51,13 @@ describe('Create Environment - /environments (POST)', async () => {
     expect(layouts.data[0].content.length).to.be.greaterThan(20);
   });
 
-  it('should not set rateLimits field on environment by default', async function () {
+  it('should not set apiRateLimits field on environment by default', async function () {
     const demoEnvironment = {
       name: 'Hello App',
     };
     const { body } = await session.testAgent.post('/v1/environments').send(demoEnvironment).expect(201);
     const dbEnvironment = await environmentRepository.findOne({ _id: body.data._id });
 
-    expect(dbEnvironment?.rateLimits).to.be.undefined;
+    expect(dbEnvironment?.apiRateLimits).to.be.undefined;
   });
 });

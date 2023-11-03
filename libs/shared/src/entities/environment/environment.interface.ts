@@ -1,4 +1,4 @@
-import { IRateLimits } from '../../types';
+import { IApiRateLimits } from '../../types';
 
 export interface IEnvironment {
   _id?: string;
@@ -8,7 +8,7 @@ export interface IEnvironment {
   identifier: string;
   widget: IWidgetSettings;
   dns?: IDnsSettings;
-  rateLimits?: IRateLimits;
+  apiRateLimits?: IApiRateLimits;
 
   branding?: {
     color: string;

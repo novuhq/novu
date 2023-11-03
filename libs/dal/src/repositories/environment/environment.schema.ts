@@ -1,6 +1,6 @@
 import * as mongoose from 'mongoose';
 import { Schema } from 'mongoose';
-import { IRateLimits, RateLimitCategoryTypeEnum } from '@novu/shared';
+import { IApiRateLimits, RateLimitCategoryTypeEnum } from '@novu/shared';
 
 import { schemaOptions } from '../schema-default.options';
 import { EnvironmentDBModel } from './environment.entity';
@@ -29,7 +29,7 @@ const environmentSchema = new Schema<EnvironmentDBModel>(
         },
       },
     ],
-    rateLimits: {
+    apiRateLimits: {
       [RateLimitCategoryTypeEnum.TRIGGER]: Schema.Types.Number,
       [RateLimitCategoryTypeEnum.CONFIGURATION]: Schema.Types.Number,
       [RateLimitCategoryTypeEnum.GLOBAL]: Schema.Types.Number,
