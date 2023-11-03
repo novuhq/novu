@@ -7,6 +7,7 @@ export class OrganizationEntity {
 
   logo?: string;
 
+  // TODO: NV-3067 - Remove optional once all organizations have a service level
   apiServiceLevel?: ApiServiceLevelTypeEnum;
 
   branding: {
