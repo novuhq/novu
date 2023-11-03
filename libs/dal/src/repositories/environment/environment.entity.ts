@@ -29,7 +29,7 @@ export class EnvironmentEntity {
 
   apiKeys: IApiKey[];
 
-  apiRateLimits: IApiRateLimits;
+  apiRateLimits?: IApiRateLimits;
 
   widget: IWidgetSettings;
 
