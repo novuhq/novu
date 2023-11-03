@@ -1,3 +1,4 @@
+/* spell-checker: disable */
 import { Types } from 'mongoose';
 import { ObjectIdKey, TransformValues, TransformEntityToDbModel, Dot, DeepKeys, ExtractDot } from './helpers';
 
@@ -181,10 +182,10 @@ export const invalidLeafObjectKey: TestDeepKeys = 'dog.owner.invalid';
 // @ts-expect-error - invalid array object key
 export const invalidArrayLeafObjectKey: TestDeepKeys = 'cats.invalid';
 
-// @ts-expect-error - invalid array object  key
+// @ts-expect-error - invalid array object key
 export const invalidArrayObjectLeafKey: TestDeepKeys = 'cats.address.invalid';
 
-// @ts-expect-error - invalid array object leafkey
+// @ts-expect-error - invalid array object leaf key
 export const invalidArrayObjectObjectLeafKey: TestDeepKeys = 'cats.address.lines.invalid';
 
 // @ts-expect-error - Type 'string' is not assignable to type 'never'
