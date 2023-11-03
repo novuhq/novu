@@ -1,9 +1,13 @@
+import { ApiServiceLevelTypeEnum } from '@novu/shared';
+
 export class OrganizationEntity {
   _id: string;
 
   name: string;
 
   logo?: string;
+
+  apiServiceLevel?: ApiServiceLevelTypeEnum;
 
   branding: {
     fontFamily?: string;

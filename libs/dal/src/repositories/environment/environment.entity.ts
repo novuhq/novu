@@ -2,6 +2,7 @@ import { Types } from 'mongoose';
 
 import type { OrganizationId } from '../organization';
 import type { ChangePropsValueType } from '../../types/helpers';
+import { IRateLimits } from '@novu/shared';
 
 export interface IApiKey {
   key: string;
@@ -27,6 +28,8 @@ export class EnvironmentEntity {
   identifier: string;
 
   apiKeys: IApiKey[];
+
+  rateLimits: IRateLimits;
 
   widget: IWidgetSettings;
 
