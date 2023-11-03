@@ -4,35 +4,37 @@ import { v4 as uuid } from 'uuid';
 import { INovuConfiguration } from './novu.interface';
 
 const NON_IDEMPOTENT_METHODS = ['post', 'patch'];
+const IDEMPOTENCY_KEY = 'Idempotency-Key'; // header key
 
-export function makeRetriable(
+const DEFAULT_RETRY_MAX = 0;
+const DEFAULT_WAIT_MIN = 1;
+const DEFAULT_WAIT_MAX = 30;
+
+export function makeRetryable(
   axios: AxiosInstance,
   config?: INovuConfiguration
 ) {
   axios.interceptors.request.use((axiosConfig) => {
-    // don't attach idempotency key for idempotent methods
     if (
       axiosConfig.method &&
-      !NON_IDEMPOTENT_METHODS.includes(axiosConfig.method)
+      NON_IDEMPOTENT_METHODS.includes(axiosConfig.method)
     ) {
-      return axiosConfig;
-    }
+      const idempotencyKey = axiosConfig.headers[IDEMPOTENCY_KEY];
+      // that means intercepted request is retried, so don't generate new idempotency key
+      if (idempotencyKey) {
+        return axiosConfig;
+      }
 
-    const idempotencyKey = axiosConfig.headers['Idempotency-Key'];
-    // that means intercepted request is retried, so don't generate new idempotency key
-    if (idempotencyKey) {
-      return axiosConfig;
+      axiosConfig.headers[IDEMPOTENCY_KEY] = uuid();
     }
-
-    axiosConfig.headers['Idempotency-Key'] = uuid();
 
     return axiosConfig;
   });
 
   const retryConfig = config?.retryConfig || {};
-  const retries = retryConfig.retryMax || 0;
-  const minDelay = retryConfig.waitMin || 1;
-  const maxDelay = retryConfig.waitMax || 30;
+  const retries = retryConfig.retryMax || DEFAULT_RETRY_MAX;
+  const minDelay = retryConfig.waitMin || DEFAULT_WAIT_MIN;
+  const maxDelay = retryConfig.waitMax || DEFAULT_WAIT_MAX;
   const initialDelay = retryConfig.initialDelay || minDelay;
   const retryCondition = retryConfig.retryCondition || defaultRetryCondition;
 
@@ -62,13 +64,13 @@ export function makeRetriable(
         requestConfig.method &&
         NON_IDEMPOTENT_METHODS.includes(requestConfig.method)
       ) {
-        requestConfig.headers['Idempotency-Key'] = uuid();
+        requestConfig.headers[IDEMPOTENCY_KEY] = uuid();
       }
     },
   });
 }
 
-const RETRIABLE_HTTP_CODES = [408, 429, 422];
+const RETRYABLE_HTTP_CODES = [408, 429, 422];
 
 export function defaultRetryCondition(err: AxiosError): boolean {
   // retry on TCP/IP error codes like ECONNRESET
@@ -76,15 +78,15 @@ export function defaultRetryCondition(err: AxiosError): boolean {
     return true;
   }
 
-  if (!err.response) {
+  if (
+    err.response &&
+    err.response.status >= 500 &&
+    err.response.status <= 599
+  ) {
     return true;
   }
 
-  if (err.response.status >= 500 && err.response.status <= 599) {
-    return true;
-  }
-
-  if (RETRIABLE_HTTP_CODES.includes(err.response.status)) {
+  if (err.response && RETRYABLE_HTTP_CODES.includes(err.response.status)) {
     return true;
   }
 

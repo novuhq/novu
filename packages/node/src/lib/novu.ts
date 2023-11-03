@@ -13,7 +13,7 @@ import { Topics } from './topics/topics';
 import { Integrations } from './integrations/integrations';
 import { Messages } from './messages/messages';
 import { Tenants } from './tenants/tenants';
-import { makeRetriable } from './retries';
+import { makeRetryable } from './retry';
 
 export class Novu extends EventEmitter {
   private readonly apiKey?: string;
@@ -42,7 +42,7 @@ export class Novu extends EventEmitter {
     });
 
     if (config?.retryConfig) {
-      makeRetriable(axiosInstance, config);
+      makeRetryable(axiosInstance, config);
     }
 
     this.http = axiosInstance;
