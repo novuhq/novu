@@ -1,6 +1,13 @@
 import { Logger } from '@nestjs/common';
 
 import {
+  getAzureCacheForRedisCluster,
+  getAzureCacheForRedisClusterProviderConfig,
+  IAzureCacheForRedisClusterProviderConfig,
+  isClientReady as isAzureCacheForRedisClientReady,
+  validateAzureCacheForRedisClusterProviderConfig,
+} from './azure-cache-for-redis-cluster-provider';
+import {
   getElasticacheCluster,
   getElasticacheClusterProviderConfig,
   IElasticacheClusterProviderConfig,
@@ -36,6 +43,7 @@ import { InMemoryProviderEnum, Redis } from '../types';
 import { PlatformException } from '../../../utils/exceptions';
 
 export type InMemoryProviderConfig =
+  | IAzureCacheForRedisClusterProviderConfig
   | IElasticacheClusterProviderConfig
   | IMemoryDbClusterProviderConfig
   | IRedisProviderConfig
@@ -69,6 +77,13 @@ export const getClientAndConfigForCluster = (
   validate: () => boolean;
 } => {
   const clusterProviders = {
+    [InMemoryProviderEnum.AZURE_CACHE_FOR_REDIS]: {
+      getClient: getAzureCacheForRedisCluster,
+      getConfig: getAzureCacheForRedisClusterProviderConfig,
+      isClientReady: isAzureCacheForRedisClientReady,
+      provider: InMemoryProviderEnum.AZURE_CACHE_FOR_REDIS,
+      validate: validateAzureCacheForRedisClusterProviderConfig,
+    },
     [InMemoryProviderEnum.ELASTICACHE]: {
       getClient: getElasticacheCluster,
       getConfig: getElasticacheClusterProviderConfig,

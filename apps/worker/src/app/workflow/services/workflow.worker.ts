@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 const nr = require('newrelic');
 import {
+  getWorkflowWorkerOptions,
   INovuWorker,
   PinoLogger,
   storage,
@@ -24,10 +25,7 @@ export class WorkflowWorker extends WorkflowWorkerService implements INovuWorker
   }
 
   private getWorkerOptions(): WorkerOptions {
-    return {
-      lockDuration: 90000,
-      concurrency: 200,
-    };
+    return getWorkflowWorkerOptions();
   }
 
   private getWorkerProcessor(): WorkerProcessor {
