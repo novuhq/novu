@@ -5,8 +5,8 @@ import {
   MESSAGE_IN_APP_RETENTION_DAYS,
   NOTIFICATION_RETENTION_DAYS,
 } from '@novu/shared';
-import { Model, Types, ProjectionType, QueryOptions } from 'mongoose';
-import { ObjectIdType, FilterQuery, UpdateQuery } from '../types';
+import { Model, Types, ProjectionType, QueryOptions, FilterQuery, UpdateQuery } from 'mongoose';
+import { ObjectIdType } from '../types';
 
 /**
  * The query type used for enforcing the type of the query data payload
