@@ -11,6 +11,12 @@ import { ExtractDot, NestedDotKeys, DeepKeys } from './helpers';
  * https://stackoverflow.com/questions/58434389/typescript-deep-keyof-of-a-nested-object/68404823#68404823
  */
 
+/**
+ * Modified from original Mongoose typings to introduce stricter typing
+ * for the `FilterQuery` generic type
+ *
+ * @see https://github.com/Automattic/mongoose/blob/582156858db3ca7fbaa8950dc997e0d9e8117b21/types/query.d.ts#L4
+ */
 type ApplyBasicQueryCasting<T> = T | T[];
 type Condition<T> = ApplyBasicQueryCasting<T> | QuerySelector<ApplyBasicQueryCasting<T>>;
 
