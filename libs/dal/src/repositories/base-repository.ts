@@ -19,7 +19,7 @@ type QueryData<T_DBModel, T_Enforcement> = FilterQuery<T_DBModel> & T_Enforcemen
 type CreateData<T_DBModel, T_Enforcement> = Omit<T_DBModel, '_id'> & T_Enforcement;
 
 export class BaseRepository<
-  T_DBModel extends { _id: ObjectIdType },
+  T_DBModel extends { _id: Types.ObjectId | string },
   T_MappedEntity,
   T_Enforcement extends Partial<T_DBModel>
 > {
