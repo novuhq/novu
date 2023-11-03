@@ -1,9 +1,9 @@
 export type EnvironmentId = string;
 
-export enum RateLimitCategoryTypeEnum {
+export enum ApiRateLimitCategoryTypeEnum {
   TRIGGER = 'trigger',
   CONFIGURATION = 'configuration',
   GLOBAL = 'global',
 }
 
-export type IApiRateLimits = Record<RateLimitCategoryTypeEnum, number>;
+export type IApiRateLimits = Record<ApiRateLimitCategoryTypeEnum, number>;
