@@ -1,6 +1,6 @@
 import { MemberRepository, OrganizationRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
-import { MemberRoleEnum } from '@novu/shared';
+import { ApiServiceLevelTypeEnum, MemberRoleEnum } from '@novu/shared';
 import { expect } from 'chai';
 
 describe('Create Organization - /organizations (POST)', async () => {
@@ -53,7 +53,7 @@ describe('Create Organization - /organizations (POST)', async () => {
       const { body } = await session.testAgent.post('/v1/organizations').send(testOrganization).expect(201);
       const dbOrganization = await organizationRepository.findById(body.data._id);
 
-      expect(dbOrganization?.apiServiceLevel).to.eq('free');
+      expect(dbOrganization?.apiServiceLevel).to.eq(ApiServiceLevelTypeEnum.FREE);
     });
   });
 });
