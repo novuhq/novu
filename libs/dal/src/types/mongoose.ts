@@ -71,7 +71,7 @@ export type UpdateQuery<TSchema> = {
   $max?: Partial<TSchema>;
   $mul?: Partial<TSchema>;
   $rename?: Record<keyof TSchema, string>;
-  $set?: Partial<NestedDotKeys<TSchema>>;
+  $set?: Partial<TSchema>;
   $setOnInsert?: Partial<TSchema>;
   $unset?: Partial<TSchema>;
 
