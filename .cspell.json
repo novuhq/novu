@@ -515,7 +515,19 @@
     "Kamil",
     "Myśliwiec",
     "nestframework",
-    "ryver"
+    "ryver",
+    "idempotency",
+    "IDEMPOTENCY",
+    "Idempotency",
+    "messagebird",
+    "Datetime",
+    "pubid",
+    "simpletexting",
+    "Simpletexting",
+    "Zulip",
+    "zulip",
+    "tspan",
+    "maildata"
   ],
   "flagWords": [],
   "patterns": [
