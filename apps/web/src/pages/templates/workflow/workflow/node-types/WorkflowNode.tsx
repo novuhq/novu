@@ -178,6 +178,7 @@ export function WorkflowNode({
                     {variantsCount} <span style={{ fontSize: '12px' }}>variants</span>
                   </>
                 }
+                data-test-id="variants-count"
               />
               <WorkflowNodeActions
                 nodeType={nodeType}
@@ -332,9 +333,19 @@ export function WorkflowNode({
   );
 }
 
-const IconText = ({ color, label, Icon }: { color?: string; label: any; Icon: React.FC<any> }) => {
+const IconText = ({
+  color,
+  label,
+  Icon,
+  ['data-test-id']: dataTestId,
+}: {
+  color?: string;
+  label: any;
+  Icon: React.FC<any>;
+  'data-test-id'?: string;
+}) => {
   return (
-    <IconTextWrapper>
+    <IconTextWrapper data-test-id={dataTestId}>
       <Icon color={color} width="20px" height="20px" />
       <Text color={color} weight={'bold'} size={14}>
         {label}

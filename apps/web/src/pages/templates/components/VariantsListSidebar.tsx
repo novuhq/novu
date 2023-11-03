@@ -50,6 +50,7 @@ export const VariantsListSidebar = ({ isLoading = false, children }: { isLoading
           },
         },
       }}
+      data-test-id="variants-list-sidebar"
     >
       {children}
     </Sidebar>
