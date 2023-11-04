@@ -647,6 +647,28 @@ export const infobipEmailConfig: IConfigCredentials[] = [
   ...mailConfigBase,
 ];
 
+export const brazeEmailConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ApiURL,
+    displayName: 'Base URL',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.AppID,
+    displayName: 'Base URL',
+    type: 'string',
+    required: true,
+  },
+  ...mailConfigBase,
+];
+
 export const fortySixElksConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.User,
@@ -914,6 +936,24 @@ export const genericSmsConfig: IConfigCredentials[] = [
     required: false,
   },
   ...smsConfigBase,
+];
+
+export const pusherBeamsConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.InstanceId,
+    displayName: 'Instance ID',
+    description: 'The unique identifier for your Beams instance',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Secret Key',
+    description: 'The secret key your server will use to access your Beams instance',
+    type: 'string',
+    required: true,
+  },
+  ...pushConfigBase,
 ];
 
 export const azureSmsConfig: IConfigCredentials[] = [
