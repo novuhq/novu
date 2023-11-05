@@ -1,4 +1,4 @@
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 
 import {
   ChannelTypeEnum,
@@ -60,24 +60,24 @@ export class BrevoEmailProvider implements IEmailProvider {
       };
     }
 
-    const emailOptions = {
+    const emailOptions: AxiosRequestConfig = {
+      url: '/smtp/email',
       method: 'POST',
       headers: {
         'api-key': this.config.apiKey,
         'Content-Type': 'application/json',
         Accept: 'application/json',
       },
-      data: email,
+      data: JSON.stringify(email),
     };
 
-    const response = await this.axiosInstance.post<{ messageId: string }>(
-      '/smtp/email',
+    const response = await this.axiosInstance.request<{ messageId: string }>(
       emailOptions
     );
 
     return {
       id: response?.data.messageId,
-      date: new Date().toString(),
+      date: new Date().toISOString(),
     };
   }
 

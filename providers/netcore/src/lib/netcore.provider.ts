@@ -87,6 +87,7 @@ export class NetCoreProvider implements IEmailProvider {
 
     const emailOptions = {
       method: 'POST',
+      url: '/mail/send',
       headers: {
         api_key: this.config.apiKey,
         'Content-Type': 'application/json',
@@ -95,8 +96,7 @@ export class NetCoreProvider implements IEmailProvider {
       data,
     };
 
-    const response = await this.axiosInstance.post<IEmailResponse>(
-      '/mail/send',
+    const response = await this.axiosInstance.request<IEmailResponse>(
       emailOptions
     );
 
