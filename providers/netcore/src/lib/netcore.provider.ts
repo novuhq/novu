@@ -95,13 +95,13 @@ export class NetCoreProvider implements IEmailProvider {
       data,
     };
 
-    const response: IEmailResponse = await this.axiosInstance.post(
+    const response = await this.axiosInstance.post<IEmailResponse>(
       '/mail/send',
       emailOptions
     );
 
     return {
-      id: response?.data?.message_id,
+      id: response?.data.data?.message_id,
       date: new Date().toISOString(),
     };
   }
