@@ -52,10 +52,12 @@ describe('test netcore email send api', () => {
   test('should trigger email correctly', async () => {
     const response = {
       data: {
-        message_id: 'fa6cb2977cdfd457b3ac98be710ad763',
+        data: {
+          message_id: 'fa6cb2977cdfd457b3ac98be710ad763',
+        },
+        message: 'OK',
+        status: 'success',
       },
-      message: 'OK',
-      status: 'success',
     };
 
     mockedAxios.post.mockResolvedValue(response);
@@ -80,6 +82,6 @@ describe('test netcore email send api', () => {
     });
     expect(spy).toHaveBeenCalled();
     expect(spy).toBeCalledWith(mockEmailOptions);
-    expect(res.id).toBe(response.data.message_id);
+    expect(res.id).toBe(response.data.data.message_id);
   });
 });
