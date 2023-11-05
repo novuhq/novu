@@ -1,3 +1,5 @@
+import axios, { AxiosInstance } from 'axios';
+
 import {
   ChannelTypeEnum,
   CheckIntegrationResponseEnum,
@@ -9,18 +11,11 @@ import {
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
 
-const brevo = require('@getbrevo/brevo');
-
 export class BrevoEmailProvider implements IEmailProvider {
-  id = 'brevo';
+  id = 'sendinblue';
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
-  apiKey: {
-    apiKey: string;
-  };
-  private defaultClient: any;
-  private transactionalEmailsApi: {
-    sendTransacEmail: (email: unknown) => Promise<unknown>;
-  };
+  private axiosInstance: AxiosInstance;
+  public readonly BASE_URL = ' https://api.brevo.com/v3';
 
   constructor(
     private config: {
@@ -29,16 +24,15 @@ export class BrevoEmailProvider implements IEmailProvider {
       senderName: string;
     }
   ) {
-    this.defaultClient = brevo.ApiClient.instance;
-    this.apiKey = this.defaultClient.authentications['api-key'];
-    this.apiKey.apiKey = config.apiKey;
-    this.transactionalEmailsApi = new brevo.TransactionalEmailsApi();
+    this.axiosInstance = axios.create({
+      baseURL: this.BASE_URL,
+    });
   }
 
   async sendMessage(
     options: IEmailOptions
   ): Promise<ISendMessageSuccessResponse> {
-    const email = new brevo.SendSmtpEmail();
+    const email: any = {};
     email.sender = {
       email: options.from || this.config.from,
       name: this.config.senderName,
@@ -61,15 +55,29 @@ export class BrevoEmailProvider implements IEmailProvider {
     }
 
     if (options.replyTo) {
-      email.replyTo.email = options.replyTo;
+      email.replyTo = {
+        email: options.replyTo,
+      };
     }
 
-    const response: Record<string, any> =
-      await this.transactionalEmailsApi.sendTransacEmail(email);
+    const emailOptions = {
+      method: 'POST',
+      headers: {
+        'api-key': this.config.apiKey,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      data: email,
+    };
+
+    const response = await this.axiosInstance.post<{ messageId: string }>(
+      '/smtp/email',
+      emailOptions
+    );
 
     return {
-      id: response?.messageId,
-      date: response?.headers?.date,
+      id: response?.data.messageId,
+      date: new Date().toString(),
     };
   }
 
