@@ -20,4 +20,5 @@ export * from './repositories/subscriber-preference';
 export * from './repositories/topic';
 export * from './repositories/layout';
 export * from './repositories/tenant';
+export * from './repositories/workflow-override';
 export * from './shared';
