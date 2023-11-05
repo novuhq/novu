@@ -5,7 +5,17 @@
     ![Novu Logo]<img src="https://user-images.githubusercontent.com/2233092/213641043-3bbb3f21-3c53-4e67-afe5-755aeb222159.png" width="280"/>
   </picture>
   </a>
-</div>
+</div> <br/>
+
+<p align="center">
+    <a href="https://www.npmjs.com/package/novu">
+    <img src="https://img.shields.io/npm/v/novu" alt="NPM">
+  </a>
+    <a href="https://www.npmjs.com/package/novu">
+    <img src="https://img.shields.io/npm/dm/novu" alt="npm downloads">
+  </a>
+  <img src="https://img.shields.io/github/license/novuhq/novu" alt="MIT">
+</p>
 
 <h1 align="center">The open-source notification infrastructure for developers</h1>
 
@@ -141,7 +151,7 @@ await novu.trigger('<TRIGGER_NAME>', {
 
 ## Embeddable Notification Center
 
-Using the Novu API and admin panel, you can easily add a real-time notification center to your web app without building it yourself. You can use our [React](https://docs.novu.co/notification-center/client/react/get-started) / [Vue](https://docs.novu.co/notification-center/client/vue) / [Angular](https://docs.novu.co/notification-center/client/angular) components or an [iframe embed](https://docs.novu.co/notification-center/client/iframe).
+Using the Novu API and admin panel, you can easily add a real-time notification center to your web app without building it yourself. You can use our [React](https://docs.novu.co/notification-center/client/react/get-started) / [Vue](https://docs.novu.co/notification-center/client/vue) / [Angular](https://docs.novu.co/notification-center/client/angular) components or an [iframe embed](https://docs.novu.co/notification-center/client/iframe), as well as a [Web component](https://docs.novu.co/notification-center/client/web-component).
 
 <div align="center">
 <img width="762" alt="notification-center-912bb96e009fb3a69bafec23bcde00b0" src="https://user-images.githubusercontent.com/80174214/193887395-f1c95042-b4e6-480e-a89c-a78aa247fa90.gif" alt-text="GIF of Novu's Embeddable Notification Center">
@@ -204,6 +214,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [x] [Expo](https://github.com/novuhq/novu/tree/main/providers/expo)
 - [x] [APNS](https://github.com/novuhq/novu/tree/main/providers/apns)
 - [x] [OneSignal](https://github.com/novuhq/novu/tree/main/providers/one-signal)
+- [x] [Pushpad](https://github.com/novuhq/novu/tree/main/providers/pushpad)
 - [ ] Pushwoosh
 
 #### 👇 Chat
