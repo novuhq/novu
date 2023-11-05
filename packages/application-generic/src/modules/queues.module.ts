@@ -66,3 +66,19 @@ const PROVIDERS: Provider[] = [
   exports: [...PROVIDERS],
 })
 export class QueuesModule {}
+
+const APP_PROVIDERS: Provider[] = [
+  InboundParseQueue,
+  InboundParseWorker,
+  InboundParseQueueServiceHealthIndicator,
+  WebSocketsQueueService,
+  WebSocketsQueueServiceHealthIndicator,
+  WorkflowQueueService,
+  WorkflowQueueServiceHealthIndicator,
+];
+
+@Module({
+  providers: [...APP_PROVIDERS],
+  exports: [...APP_PROVIDERS],
+})
+export class BaseApiQueuesModule {}
