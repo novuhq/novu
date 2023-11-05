@@ -1,6 +1,6 @@
 {
   "name": "@novu/clicksend",
-  "version": "0.20.0",
+  "version": "0.21.0",
   "description": "A clicksend wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
