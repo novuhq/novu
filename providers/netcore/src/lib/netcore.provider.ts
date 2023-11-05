@@ -93,7 +93,7 @@ export class NetCoreProvider implements IEmailProvider {
         'Content-Type': 'application/json',
         Accept: 'application/json',
       },
-      data,
+      data: JSON.stringify(data),
     };
 
     const response = await this.axiosInstance.request<IEmailResponse>(
