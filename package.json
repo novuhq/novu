@@ -145,6 +145,7 @@
       "libs/*",
       "packages/*",
       "enterprise/packages/*",
+      "packages/notification-center-angular/projects/*",
       "providers/*"
     ]
   },
