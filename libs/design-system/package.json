@@ -10,6 +10,8 @@
     "lint": "eslint --ext .ts,.tsx src",
     "build": "npm run build:cjs && npm run build:esm && npm run build:types",
     "build:cjs": "cross-env node_modules/.bin/tsc -p tsconfig.json",
+    "build:cjs:watch": "cross-env node_modules/.bin/tsc -w -p tsconfig.json",
+    "build:watch": "npm run build:esm:watch",
     "build:esm": "cross-env node_modules/.bin/tsc -p tsconfig.esm.json",
     "build:esm:watch": "cross-env node_modules/.bin/tsc -p tsconfig.esm.json -w --preserveWatchOutput",
     "build:types": "tsc --declaration --emitDeclarationOnly --declarationMap --declarationDir dist/types -p tsconfig.json",

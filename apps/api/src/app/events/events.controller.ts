@@ -8,7 +8,7 @@ import {
   TriggerRecipientSubscriber,
   TriggerTenantContext,
 } from '@novu/shared';
-import { MapTriggerRecipients, SendTestEmail, SendTestEmailCommand } from '@novu/application-generic';
+import { SendTestEmail, SendTestEmailCommand } from '@novu/application-generic';
 
 import {
   BulkTriggerEventDto,
@@ -18,7 +18,7 @@ import {
   TriggerEventToAllRequestDto,
 } from './dtos';
 import { CancelDelayed, CancelDelayedCommand } from './usecases/cancel-delayed';
-import { ParseEventRequest, ParseEventRequestCommand } from './usecases/parse-event-request';
+import { ParseEventRequest, ParseEventRequestMulticastCommand } from './usecases/parse-event-request';
 import { ProcessBulkTrigger, ProcessBulkTriggerCommand } from './usecases/process-bulk-trigger';
 import { TriggerEventToAll, TriggerEventToAllCommand } from './usecases/trigger-event-to-all';
 
@@ -35,7 +35,6 @@ import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 @ApiTags('Events')
 export class EventsController {
   constructor(
-    private mapTriggerRecipients: MapTriggerRecipients,
     private cancelDelayedUsecase: CancelDelayed,
     private triggerEventToAll: TriggerEventToAll,
     private sendTestEmail: SendTestEmail,
@@ -59,11 +58,8 @@ export class EventsController {
     @UserSession() user: IJwtPayload,
     @Body() body: TriggerEventRequestDto
   ): Promise<TriggerEventResponseDto> {
-    const mappedTenant = body.tenant ? this.mapTenant(body.tenant) : null;
-    const mappedActor = body.actor ? this.mapActor(body.actor) : null;
-
     const result = await this.parseEventRequest.execute(
-      ParseEventRequestCommand.create({
+      ParseEventRequestMulticastCommand.create({
         userId: user._id,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
@@ -71,8 +67,8 @@ export class EventsController {
         payload: body.payload || {},
         overrides: body.overrides || {},
         to: body.to,
-        actor: mappedActor,
-        tenant: mappedTenant,
+        actor: body.actor,
+        tenant: body.tenant,
         transactionId: body.transactionId,
       })
     );
@@ -119,8 +115,6 @@ export class EventsController {
     @Body() body: TriggerEventToAllRequestDto
   ): Promise<TriggerEventResponseDto> {
     const transactionId = body.transactionId || uuidv4();
-    const mappedActor = body.actor ? this.mapActor(body.actor) : null;
-    const mappedTenant = body.tenant ? this.mapTenant(body.tenant) : null;
 
     return this.triggerEventToAll.execute(
       TriggerEventToAllCommand.create({
@@ -129,10 +123,10 @@ export class EventsController {
         organizationId: user.organizationId,
         identifier: body.name,
         payload: body.payload,
-        tenant: mappedTenant,
+        tenant: body.tenant,
         transactionId,
         overrides: body.overrides || {},
-        actor: mappedActor,
+        actor: body.actor,
       })
     );
   }
@@ -182,17 +176,5 @@ export class EventsController {
         transactionId,
       })
     );
-  }
-
-  private mapActor(actor?: TriggerRecipientSubscriber | null): ISubscribersDefine | null {
-    if (!actor) return null;
-
-    return this.mapTriggerRecipients.mapSubscriber(actor);
-  }
-
-  private mapTenant(tenant?: TriggerTenantContext | null): ITenantDefine | null {
-    if (!tenant) return null;
-
-    return this.parseEventRequest.mapTenant(tenant);
   }
 }
