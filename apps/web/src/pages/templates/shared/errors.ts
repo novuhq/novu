@@ -69,6 +69,30 @@ export function getStepErrors(index: number | string, errors?: FieldErrors<IForm
   return [];
 }
 
+export function getVariantErrors(
+  stepIndex: number | string,
+  errors?: FieldErrors<IForm>
+): { errorMsg: string; variantIndex: number }[] {
+  if (errors?.steps) {
+    const variantsErrors = errors.steps[stepIndex]?.variants?.reduce((acc, variant, variantIndex) => {
+      const variantErrors = variant?.template;
+      if (variantErrors) {
+        const keys = Object.keys(variantErrors);
+
+        const errorMsg = formatErrorMessage(keys.map((key) => variantErrors[key]?.message));
+
+        acc.push({ variantIndex, errorMsg });
+      }
+
+      return acc;
+    }, []);
+
+    return variantsErrors?.sort((a, b) => a.variantIndex - b.variantIndex);
+  }
+
+  return [];
+}
+
 export function getFormattedStepErrors(index: number, errors?: FieldErrors<IForm>): string {
   return formatErrorMessage(getStepErrors(index, errors));
 }

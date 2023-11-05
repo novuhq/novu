@@ -1,5 +1,5 @@
-import { useMemo, useRef, useState } from 'react';
-import { ScrollArea } from '@mantine/core';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ActionIcon, Divider, Grid, Group, ScrollArea } from '@mantine/core';
 import { useFormContext } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
 import { StepTypeEnum } from '@novu/shared';
@@ -10,9 +10,17 @@ import { IForm } from './formTypes';
 import { FloatingButton } from './FloatingButton';
 import { useEnvController } from '../../../hooks';
 import { useTemplateEditorForm } from './TemplateEditorFormProvider';
+import { getFormattedStepErrors, getVariantErrors } from '../shared/errors';
+
+import { ErrorIcon, colors, Text, ChevronPlainDown } from '@novu/design-system';
+import styled from '@emotion/styled';
+import { When } from '../../../components/utils/When';
 
 export function VariantsPage() {
-  const { watch } = useFormContext<IForm>();
+  const {
+    watch,
+    formState: { errors },
+  } = useFormContext<IForm>();
   const { channel, stepUuid = '' } = useParams<{
     channel: StepTypeEnum | undefined;
     stepUuid: string;
@@ -22,6 +30,12 @@ export function VariantsPage() {
   const viewport = useRef<HTMLDivElement | null>(null);
   const [scrollPosition, setScrollPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isScrollable, setScrollable] = useState(false);
+  const [errorState, setErrorState] = useState<{
+    variantIndex: number;
+    errorMessage: string;
+    currentErrorIndex: number;
+    variantErrorsIndex: number;
+  } | null>(null);
 
   const steps = watch('steps');
 
@@ -49,14 +63,86 @@ export function VariantsPage() {
     viewport.current.scrollTo({ top: scrollPosition.y > 0 ? 0 : viewport.current.scrollHeight, behavior: 'smooth' });
   };
 
+  const variants = step?.variants ?? [];
+  const { variantsErrors, variantErrorsCount, variantsErrorMap } = useMemo(() => {
+    const errorData = getVariantErrors(stepIndex, errors);
+
+    const errorMap = errorData?.reduce<Record<string, string>>((acc, error) => {
+      acc[`variant-${error.variantIndex}`] = error.errorMsg;
+
+      return acc;
+    }, {});
+
+    const errorsCount = Object.keys(errorData ?? {}).length;
+
+    return {
+      variantsErrors: errorData,
+      variantsErrorMap: errorMap,
+      variantErrorsCount: errorsCount,
+    };
+  }, [stepIndex, errors]);
+
+  useEffect(() => {
+    if (variantsErrors?.length > 0) {
+      setErrorState({
+        variantIndex: variantsErrors[0].variantIndex,
+        errorMessage: variantsErrors[0].errorMsg,
+        currentErrorIndex: 1,
+        variantErrorsIndex: 0,
+      });
+    } else {
+      setErrorState(null);
+    }
+  }, [variantsErrors]);
+
   if (!channel) {
     return null;
   }
 
-  const variants = step?.variants ?? [];
+  const handleErrorNavigation = (direction: 'up' | 'down') => {
+    if (!errorState || !variantsErrors || !variantsErrorMap) {
+      return;
+    }
+
+    const { currentErrorIndex, variantErrorsIndex } = errorState;
+    const nextErrorIndex = direction === 'up' ? variantErrorsIndex - 1 : variantErrorsIndex + 1;
+
+    if (nextErrorIndex < 0 || nextErrorIndex >= variantErrorsCount) {
+      return;
+    }
+
+    const nextVariantIndex = variantsErrors[nextErrorIndex].variantIndex;
+
+    setErrorState({
+      variantIndex: nextVariantIndex,
+      errorMessage: variantsErrorMap?.[`variant-${nextVariantIndex}`],
+      currentErrorIndex: currentErrorIndex + (direction === 'up' ? -1 : 1),
+      variantErrorsIndex: nextErrorIndex,
+    });
+  };
 
   return (
     <VariantsListSidebar isLoading={isLoading}>
+      <When truthy={errorState}>
+        <Group position="apart" px={12}>
+          <Group position="left" spacing={4}>
+            <ErrorIcon color={colors.error} width="16px" height="16px" />
+            <Text color={colors.error}>{errorState?.errorMessage}</Text>
+          </Group>
+          <Group position="left" spacing={20}>
+            <Text color={colors.error}>
+              {errorState?.currentErrorIndex}/{variantErrorsCount}
+            </Text>
+            <Divider orientation="vertical" size="sm" color="#ffffff33" />
+            <ActionIcon color="gray" radius="xl" size="xs" onClick={() => handleErrorNavigation('up')}>
+              <ChevronPlainUp color={colors.error} />
+            </ActionIcon>
+            <ActionIcon color="gray" radius="xl" size="xs" onClick={() => handleErrorNavigation('down')}>
+              <ChevronPlainDown color={colors.error} />
+            </ActionIcon>
+          </Group>
+        </Group>
+      </When>
       <ScrollArea
         key={stepUuid}
         offsetScrollbars
@@ -65,6 +151,8 @@ export function VariantsPage() {
         onScrollPositionChange={setScrollPosition}
       >
         {variants?.map((variant, variantIndex) => {
+          const errorMessage = variantsErrorMap?.[`variant-${variantIndex}`];
+
           return (
             <VariantItemCard
               key={`${stepUuid}_${variant._id}`}
@@ -75,6 +163,8 @@ export function VariantsPage() {
               variantIndex={variantIndex}
               nodeType="variant"
               data-test-id={`variant-item-card-${variantIndex}`}
+              errorMessage={errorMessage}
+              isError={errorState?.variantIndex === variantIndex}
             />
           );
         })}
@@ -92,3 +182,7 @@ export function VariantsPage() {
     </VariantsListSidebar>
   );
 }
+
+const ChevronPlainUp = styled(ChevronPlainDown)`
+  transform: rotate(180deg);
+`;

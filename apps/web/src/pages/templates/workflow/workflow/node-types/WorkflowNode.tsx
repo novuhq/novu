@@ -90,6 +90,7 @@ export function WorkflowNode({
   const disabledColor = disabled ? { color: theme.colorScheme === 'dark' ? colors.B40 : colors.B70 } : {};
   const disabledProp = disabled ? { disabled: disabled } : {};
   const isStepRoot = nodeType === 'stepRoot';
+  const isVariant = nodeType === 'variant';
   const isVariantRoot = nodeType === 'variantRoot';
 
   const viewport = useViewport();
@@ -244,14 +245,21 @@ export function WorkflowNode({
           </BodyWrapper>
         </WorkflowNodeWrapper>
 
-        {!hasActiveIntegration && (
+        {!hasActiveIntegration && !isVariant && (
           <NodeErrorPopover
             opened={popoverOpened}
             withinPortal
             transition="rotate-left"
             transitionDuration={250}
             offset={theme.spacing.xs}
-            target={<ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />}
+            target={
+              <ErrorCircle
+                data-test-id="error-circle"
+                dark={theme.colorScheme === 'dark'}
+                alignment={isVariant || isVariantRoot ? 'left' : 'right'}
+              />
+            }
+            position={isVariant || isVariantRoot ? 'left' : 'right'}
             titleIcon={<ProviderMissing />}
             title={`${CHANNEL_TYPE_TO_STRING[channelKey]} provider is not connected`}
             content={
@@ -272,14 +280,21 @@ export function WorkflowNode({
             }
           />
         )}
-        {hasActiveIntegration && !primaryIntegration && isPrimaryStep && (
+        {hasActiveIntegration && !primaryIntegration && isPrimaryStep && !isVariant && (
           <NodeErrorPopover
             opened={popoverOpened}
             withinPortal
             transition="rotate-left"
             transitionDuration={250}
             offset={theme.spacing.xs}
-            target={<ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />}
+            target={
+              <ErrorCircle
+                data-test-id="error-circle"
+                dark={theme.colorScheme === 'dark'}
+                alignment={isVariant || isVariantRoot ? 'left' : 'right'}
+              />
+            }
+            position={isVariant || isVariantRoot ? 'left' : 'right'}
             titleIcon={<ProviderMissing />}
             title="Select primary provider"
             content={
@@ -305,19 +320,23 @@ export function WorkflowNode({
             }
           />
         )}
-        {hasActiveIntegration && stepErrorContent && (
+        {(isVariant || hasActiveIntegration) && stepErrorContent && (
           <NodeErrorPopover
             withinPortal
-            withArrow
             opened={popoverOpened && Object.keys(stepErrorContent).length > 0}
             transition="rotate-left"
             transitionDuration={250}
             offset={theme.spacing.xs}
-            position="right"
-            zIndex={4}
             positionDependencies={[dragging, viewport]}
             clickOutsideEvents={MENU_CLICK_OUTSIDE_EVENTS}
-            target={<ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />}
+            target={
+              <ErrorCircle
+                data-test-id="error-circle"
+                dark={theme.colorScheme === 'dark'}
+                alignment={isVariant || isVariantRoot ? 'left' : 'right'}
+              />
+            }
+            position={isVariant || isVariantRoot ? 'left' : 'right'}
             title={stepErrorContent || 'Something is missing here'}
             content={
               `Please specify a ${(stepErrorContent as string)
@@ -367,12 +386,12 @@ const WorkflowNodeWrapper = styled.div`
   width: 100%;
 `;
 
-const ErrorCircle = styled.div<{ dark: boolean }>`
+const ErrorCircle = styled.div<{ dark: boolean; alignment: 'left' | 'right' }>`
   width: 11px;
   height: 11px;
   display: inline-block;
   position: absolute;
-  right: -6px;
+  ${({ alignment }) => alignment}: -6px;
   top: calc(50% - 4px);
   background: ${colors.error};
   border-radius: 50%;
