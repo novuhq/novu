@@ -82,7 +82,7 @@ describe('User registration - /auth/register (POST)', async () => {
 
     // Should generate environment and api keys
     expect(jwtContent.environmentId).to.be.ok;
-    const environment = await environmentRepository.findById(jwtContent.environmentId);
+    const environment = await environmentRepository.findOne({ _id: jwtContent.environmentId });
 
     expect(environment.apiKeys.length).to.equal(1);
     expect(environment.apiKeys[0].key).to.ok;

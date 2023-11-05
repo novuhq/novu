@@ -1,5 +1,4 @@
-import { json, port, str, ValidatorSpec } from 'envalid';
-import * as envalid from 'envalid';
+import { cleanEnv, json, num, port, str, ValidatorSpec } from 'envalid';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
@@ -12,8 +11,14 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   REDIS_TLS: json({
     default: undefined,
   }),
+  WORKER_DEFAULT_CONCURRENCY: num({
+    default: undefined,
+  }),
+  WORKER_DEFAULT_LOCK_DURATION: num({
+    default: undefined,
+  }),
 };
 
 export function validateEnv() {
-  envalid.cleanEnv(process.env, validators);
+  cleanEnv(process.env, validators);
 }

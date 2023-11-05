@@ -1,6 +1,6 @@
 import styled from '@emotion/styled';
 import { Controller } from 'react-hook-form';
-import { Switch } from '../../../design-system';
+import { Switch } from '@novu/design-system';
 import { useEnvController } from '../../../hooks';
 
 export const StepActiveSwitch = ({ control, index }) => {

@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { OrganizationEntity } from '@novu/dal';
 import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
-import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
 import { Roles } from '../auth/framework/roles.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateOrganizationDto } from './dtos/create-organization.dto';
@@ -39,12 +39,14 @@ import { RenameOrganization } from './usecases/rename-organization/rename-organi
 import { RenameOrganizationDto } from './dtos/rename-organization.dto';
 import { UpdateBrandingDetailsDto } from './dtos/update-branding-details.dto';
 import { UpdateMemberRolesDto } from './dtos/update-member-roles.dto';
-
+import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { ApiResponse } from '../shared/framework/response.decorator';
+import { OrganizationBrandingResponseDto, OrganizationResponseDto } from './dtos/organization-response.dto';
+import { MemberResponseDto } from './dtos/member-response.dto';
 @Controller('/organizations')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
 @ApiTags('Organizations')
-@ApiExcludeController()
 export class OrganizationController {
   constructor(
     private createOrganizationUsecase: CreateOrganization,
@@ -58,6 +60,11 @@ export class OrganizationController {
   ) {}
 
   @Post('/')
+  @ExternalApiAccessible()
+  @ApiResponse(OrganizationResponseDto, 201)
+  @ApiOperation({
+    summary: 'Create an organization',
+  })
   async createOrganization(
     @UserSession() user: IJwtPayload,
     @Body() body: CreateOrganizationDto
@@ -72,6 +79,11 @@ export class OrganizationController {
   }
 
   @Get('/')
+  @ExternalApiAccessible()
+  @ApiResponse(OrganizationResponseDto, 200, true)
+  @ApiOperation({
+    summary: 'Fetch all organizations',
+  })
   async getOrganizations(@UserSession() user: IJwtPayload): Promise<IGetOrganizationsDto> {
     const command = GetOrganizationsCommand.create({
       userId: user._id,
@@ -81,6 +93,11 @@ export class OrganizationController {
   }
 
   @Get('/me')
+  @ExternalApiAccessible()
+  @ApiResponse(OrganizationResponseDto)
+  @ApiOperation({
+    summary: 'Fetch current organization details',
+  })
   async getMyOrganization(@UserSession() user: IJwtPayload): Promise<IGetMyOrganizationDto> {
     const command = GetMyOrganizationCommand.create({
       userId: user._id,
@@ -91,7 +108,13 @@ export class OrganizationController {
   }
 
   @Delete('/members/:memberId')
+  @ExternalApiAccessible()
   @Roles(MemberRoleEnum.ADMIN)
+  @ApiResponse(MemberResponseDto)
+  @ApiOperation({
+    summary: 'Remove a member from organization using memberId',
+  })
+  @ApiParam({ name: 'memberId', type: String, required: true })
   async removeMember(@UserSession() user: IJwtPayload, @Param('memberId') memberId: string) {
     return await this.removeMemberUsecase.execute(
       RemoveMemberCommand.create({
@@ -103,7 +126,13 @@ export class OrganizationController {
   }
 
   @Put('/members/:memberId/roles')
+  @ExternalApiAccessible()
   @Roles(MemberRoleEnum.ADMIN)
+  @ApiResponse(MemberResponseDto)
+  @ApiOperation({
+    summary: 'Update a member role to admin',
+  })
+  @ApiParam({ name: 'memberId', type: String, required: true })
   async updateMemberRoles(
     @UserSession() user: IJwtPayload,
     @Param('memberId') memberId: string,
@@ -120,6 +149,11 @@ export class OrganizationController {
   }
 
   @Get('/members')
+  @ExternalApiAccessible()
+  @ApiResponse(MemberResponseDto, 200, true)
+  @ApiOperation({
+    summary: 'Fetch all members of current organizations',
+  })
   async getMember(@UserSession() user: IJwtPayload) {
     return await this.getMembers.execute(
       GetMembersCommand.create({
@@ -130,19 +164,12 @@ export class OrganizationController {
     );
   }
 
-  @Post('/members/invite')
-  @Roles(MemberRoleEnum.ADMIN)
-  async inviteMember(@UserSession() user: IJwtPayload) {
-    return await this.getMembers.execute(
-      GetMembersCommand.create({
-        user,
-        userId: user._id,
-        organizationId: user.organizationId,
-      })
-    );
-  }
-
   @Put('/branding')
+  @ExternalApiAccessible()
+  @ApiResponse(OrganizationBrandingResponseDto)
+  @ApiOperation({
+    summary: 'Update organization branding details',
+  })
   async updateBrandingDetails(@UserSession() user: IJwtPayload, @Body() body: UpdateBrandingDetailsDto) {
     return await this.updateBrandingDetailsUsecase.execute(
       UpdateBrandingDetailsCommand.create({
@@ -158,7 +185,12 @@ export class OrganizationController {
   }
 
   @Patch('/')
+  @ExternalApiAccessible()
   @Roles(MemberRoleEnum.ADMIN)
+  @ApiResponse(RenameOrganizationDto)
+  @ApiOperation({
+    summary: 'Rename organization name',
+  })
   async renameOrganization(@UserSession() user: IJwtPayload, @Body() body: RenameOrganizationDto) {
     return await this.renameOrganizationUsecase.execute(
       RenameOrganizationCommand.create({
