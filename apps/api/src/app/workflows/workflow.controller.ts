@@ -2,21 +2,21 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
-  Get,
   Delete,
+  Get,
   Param,
   Post,
   Put,
+  Query,
   UseGuards,
   UseInterceptors,
-  Query,
 } from '@nestjs/common';
 import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
 import { GetNotificationTemplates } from './usecases/get-notification-templates/get-notification-templates.usecase';
 import { GetNotificationTemplatesCommand } from './usecases/get-notification-templates/get-notification-templates.command';
 import { CreateNotificationTemplate, CreateNotificationTemplateCommand } from './usecases/create-notification-template';
-import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto, ChangeWorkflowStatusRequestDto } from './dto';
+import { ChangeWorkflowStatusRequestDto, CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from './dto';
 import { GetNotificationTemplate } from './usecases/get-notification-template/get-notification-template.usecase';
 import { GetNotificationTemplateCommand } from './usecases/get-notification-template/get-notification-template.command';
 import { UpdateNotificationTemplate } from './usecases/update-notification-template/update-notification-template.usecase';
@@ -48,6 +48,10 @@ import { GetWorkflowOverride } from './usecases/get-workflow-override/get-workfl
 import { GetWorkflowOverrideCommand } from './usecases/get-workflow-override/get-workflow-override.command';
 import { DeleteWorkflowOverride } from './usecases/delete-workflow-override/delete-workflow-override.usecase';
 import { DeleteWorkflowOverrideCommand } from './usecases/delete-workflow-override/delete-workflow-override.command';
+import { GetWorkflowOverridesResponseDto } from './dto/get-workflow-overrides-response.dto';
+import { GetWorkflowOverridesRequestDto } from './dto/get-workflow-overrides-request.dto';
+import { GetWorkflowOverridesCommand } from './usecases/get-workflow-overrides/get-workflow-overrides.command';
+import { GetWorkflowOverrides } from './usecases/get-workflow-overrides/get-workflow-overrides.usecase';
 
 @Controller('/workflows')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -64,7 +68,8 @@ export class WorkflowController {
     private createWorkflowOverrideUsecase: CreateWorkflowOverride,
     private updateWorkflowOverrideUsecase: UpdateWorkflowOverride,
     private getWorkflowOverrideUsecase: GetWorkflowOverride,
-    private deleteWorkflowOverrideUsecase: DeleteWorkflowOverride
+    private deleteWorkflowOverrideUsecase: DeleteWorkflowOverride,
+    private getWorkflowOverridesUsecase: GetWorkflowOverrides
   ) {}
 
   @Get('')
@@ -318,5 +323,31 @@ export class WorkflowController {
         _id: workflowOverrideId,
       })
     );
+  }
+
+  @Get('/:workflowId/overrides')
+  @UseGuards(RootEnvironmentGuard)
+  @ApiResponse(GetWorkflowOverridesResponseDto)
+  @ApiOperation({
+    summary: 'Get workflow overrides',
+  })
+  @ExternalApiAccessible()
+  getWorkflowOverrides(
+    @UserSession() user: IJwtPayload,
+    @Param('workflowId') workflowId: string,
+    @Query() query: GetWorkflowOverridesRequestDto
+  ): Promise<GetWorkflowOverridesResponseDto> {
+    const test = this.getWorkflowOverridesUsecase.execute(
+      GetWorkflowOverridesCommand.create({
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+        userId: user._id,
+        page: query.page ? query.page : 0,
+        limit: query.limit ? query.limit : 10,
+        _workflowId: workflowId,
+      })
+    );
+
+    return test;
   }
 }
