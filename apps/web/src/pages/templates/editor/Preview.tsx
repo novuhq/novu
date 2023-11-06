@@ -6,13 +6,12 @@ import type { IEmailBlock, MessageTemplateContentType } from '@novu/shared';
 
 import { previewEmail } from '../../../api/content-templates';
 import { When } from '../../../components/utils/When';
-import { Button, colors } from '../../../design-system';
-import { inputStyles } from '../../../design-system/config/inputs.styles';
+import { Button, colors, inputStyles } from '@novu/design-system';
 import { useProcessVariables } from '../../../hooks';
 import { PreviewMobile } from './PreviewMobile';
 import { PreviewWeb } from './PreviewWeb';
 import { errorMessage } from '../../../utils/notifications';
-import { useActiveIntegrations, useIsMultiProviderConfigurationEnabled } from '../../../hooks';
+import { useActiveIntegrations } from '../../../hooks';
 
 export const Preview = ({ activeStep, view }: { activeStep: number; view: string }) => {
   const { control } = useFormContext();
@@ -44,7 +43,6 @@ export const Preview = ({ activeStep, view }: { activeStep: number; view: string
   });
 
   const { integrations = [] } = useActiveIntegrations();
-  const isMultiProviderConfigEnabled = useIsMultiProviderConfigurationEnabled();
   const [integration, setIntegration]: any = useState(null);
   const [parsedSubject, setParsedSubject] = useState(subject);
   const [content, setContent] = useState<string>('<html><head></head><body><div></div></body></html>');
@@ -93,12 +91,8 @@ export const Preview = ({ activeStep, view }: { activeStep: number; view: string
     if (integrations.length === 0) {
       return;
     }
-    setIntegration(
-      integrations.find((item) =>
-        isMultiProviderConfigEnabled ? item.channel === 'email' && item.primary : item.channel === 'email'
-      ) || null
-    );
-  }, [isMultiProviderConfigEnabled, integrations, setIntegration]);
+    setIntegration(integrations.find((item) => item.channel === 'email' && item.primary) || null);
+  }, [integrations, setIntegration]);
 
   return (
     <>

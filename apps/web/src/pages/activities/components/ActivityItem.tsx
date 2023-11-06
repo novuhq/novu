@@ -8,8 +8,7 @@ import { ActivityStep } from './ActivityStep';
 import { DigestedStep } from './DigestedStep';
 
 import { When } from '../../../components/utils/When';
-import { colors } from '../../../design-system';
-import { CheckCircle, ErrorIcon, Timer } from '../../../design-system/icons';
+import { colors, CheckCircle, ErrorIcon, Timer } from '@novu/design-system';
 import { useNotificationStatus } from '../hooks/useNotificationStatus';
 
 const JOB_LENGTH_UPPER_THRESHOLD = 3;

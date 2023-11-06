@@ -1,13 +1,10 @@
 import { UserSession } from '@novu/testing';
-import { InMemoryProviderEnum, InMemoryProviderService } from '@novu/application-generic';
 import { expect } from 'chai';
 
 describe('Health-check', () => {
   const session = new UserSession();
 
   before(async () => {
-    const inMemoryProviderService = new InMemoryProviderService(InMemoryProviderEnum.REDIS);
-
     await session.initialize();
   });
 

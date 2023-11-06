@@ -3,6 +3,8 @@ import {
   DelayTypeEnum,
   DigestTypeEnum,
   DigestUnitEnum,
+  FieldLogicalOperatorEnum,
+  FieldOperatorEnum,
   FilterPartTypeEnum,
   StepTypeEnum,
   TriggerContextTypeEnum,
@@ -292,13 +294,13 @@ describe('ContentService', function () {
             {
               isNegated: false,
               type: 'GROUP',
-              value: 'AND',
+              value: FieldLogicalOperatorEnum.AND,
               children: [
                 {
                   on: FilterPartTypeEnum.PAYLOAD,
                   field: 'counter',
                   value: 'test value',
-                  operator: 'EQUAL',
+                  operator: FieldOperatorEnum.EQUAL,
                 },
               ],
             },
