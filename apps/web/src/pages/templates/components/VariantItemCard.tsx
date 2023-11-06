@@ -15,7 +15,6 @@ import { NodeType, WorkflowNode } from '../workflow/workflow/node-types/Workflow
 import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { IForm, IFormStep, IVariantStep } from './formTypes';
 import { useTemplateEditorForm } from './TemplateEditorFormProvider';
-import { use } from 'chai';
 
 const VariantItemCardHolder = styled.div`
   display: grid;
@@ -122,7 +121,7 @@ export const VariantItemCard = ({
   variant,
   'data-test-id': dataTestId,
   errorMessage,
-  isError = false,
+  isActiveError = false,
 }: {
   isReadonly?: boolean;
   stepIndex?: number;
@@ -132,7 +131,7 @@ export const VariantItemCard = ({
   nodeType: NodeType;
   'data-test-id'?: string;
   errorMessage?: string;
-  isError?: boolean;
+  isActiveError?: boolean;
 }) => {
   const { setValue } = useFormContext<IForm>();
   const { channel, stepUuid = '' } = useParams<{
@@ -198,10 +197,10 @@ export const VariantItemCard = ({
   };
 
   useEffect(() => {
-    if (isError) {
+    if (isActiveError) {
       variantItemCardHolderRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-  }, [isError]);
+  }, [isActiveError]);
 
   return (
     <VariantItemCardHolder ref={variantItemCardHolderRef} data-test-id={dataTestId}>
@@ -249,7 +248,7 @@ export const VariantItemCard = ({
         menuPosition="bottom-end"
         nodeType={nodeType}
         errors={errorMessage}
-        isError={isError}
+        isError={isActiveError}
       />
       {areConditionsOpened && (
         <Conditions

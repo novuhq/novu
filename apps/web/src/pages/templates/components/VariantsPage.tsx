@@ -1,19 +1,19 @@
+import { ActionIcon, Divider, Group, ScrollArea } from '@mantine/core';
+import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActionIcon, Divider, Grid, Group, ScrollArea } from '@mantine/core';
 import { useFormContext } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
-import { StepTypeEnum } from '@novu/shared';
 
+import { useEnvController, useGetPrimaryIntegration, useHasActiveIntegrations } from '../../../hooks';
+import { getFormattedStepErrors, getVariantErrors } from '../shared/errors';
+import { FloatingButton } from './FloatingButton';
+import { IForm } from './formTypes';
+import { useTemplateEditorForm } from './TemplateEditorFormProvider';
 import { VariantItemCard } from './VariantItemCard';
 import { VariantsListSidebar } from './VariantsListSidebar';
-import { IForm } from './formTypes';
-import { FloatingButton } from './FloatingButton';
-import { useEnvController } from '../../../hooks';
-import { useTemplateEditorForm } from './TemplateEditorFormProvider';
-import { getFormattedStepErrors, getVariantErrors } from '../shared/errors';
 
-import { ErrorIcon, colors, Text, ChevronPlainDown } from '@novu/design-system';
 import styled from '@emotion/styled';
+import { ChevronPlainDown, colors, ErrorIcon, Text } from '@novu/design-system';
 import { When } from '../../../components/utils/When';
 
 export function VariantsPage() {
@@ -64,8 +64,44 @@ export function VariantsPage() {
   };
 
   const variants = step?.variants ?? [];
+
+  const { hasActiveIntegration, isChannelStep, activeIntegrationsByEnv } = useHasActiveIntegrations({
+    filterByEnv: true,
+    channelType: channel as unknown as ChannelTypeEnum,
+  });
+  const { primaryIntegration, isPrimaryStep } = useGetPrimaryIntegration({
+    filterByEnv: true,
+    channelType: channel as unknown as ChannelTypeEnum,
+  });
+
+  const missingProviderError = useMemo(() => {
+    if (!hasActiveIntegration && channel) {
+      return `Provider is missing`;
+    }
+
+    if (isPrimaryStep && !primaryIntegration) {
+      return 'Select primary provider';
+    }
+
+    return null;
+  }, [hasActiveIntegration, channel, isPrimaryStep, primaryIntegration]);
+
   const { variantsErrors, variantErrorsCount, variantsErrorMap } = useMemo(() => {
-    const errorData = getVariantErrors(stepIndex, errors);
+    const rootVariantIndex = variants.length;
+    const errorData = missingProviderError ? [{ variantIndex: rootVariantIndex, errorMsg: missingProviderError }] : [];
+    const rootStepErrors = getFormattedStepErrors(stepIndex, errors);
+
+    if (rootStepErrors) {
+      errorData.push({
+        variantIndex: rootVariantIndex,
+        errorMsg: rootStepErrors,
+      });
+    }
+
+    const variantErrors = getVariantErrors(stepIndex, errors);
+    if (variantErrors && variantErrors.length > 0) {
+      errorData.push(...getVariantErrors(stepIndex, errors));
+    }
 
     const errorMap = errorData?.reduce<Record<string, string>>((acc, error) => {
       acc[`variant-${error.variantIndex}`] = error.errorMsg;
@@ -80,7 +116,7 @@ export function VariantsPage() {
       variantsErrorMap: errorMap,
       variantErrorsCount: errorsCount,
     };
-  }, [stepIndex, errors]);
+  }, [variants.length, missingProviderError, stepIndex, errors]);
 
   useEffect(() => {
     if (variantsErrors?.length > 0) {
@@ -115,7 +151,7 @@ export function VariantsPage() {
 
     setErrorState({
       variantIndex: nextVariantIndex,
-      errorMessage: variantsErrorMap?.[`variant-${nextVariantIndex}`],
+      errorMessage: variantsErrors[nextErrorIndex].errorMsg,
       currentErrorIndex: currentErrorIndex + (direction === 'up' ? -1 : 1),
       variantErrorsIndex: nextErrorIndex,
     });
@@ -151,7 +187,8 @@ export function VariantsPage() {
         onScrollPositionChange={setScrollPosition}
       >
         {variants?.map((variant, variantIndex) => {
-          const errorMessage = variantsErrorMap?.[`variant-${variantIndex}`];
+          const isActiveError = errorState?.variantIndex === variantIndex;
+          const errorMessage = isActiveError ? errorState.errorMessage : variantsErrorMap?.[`variant-${variantIndex}`];
 
           return (
             <VariantItemCard
@@ -164,7 +201,7 @@ export function VariantsPage() {
               nodeType="variant"
               data-test-id={`variant-item-card-${variantIndex}`}
               errorMessage={errorMessage}
-              isError={errorState?.variantIndex === variantIndex}
+              isActiveError={isActiveError}
             />
           );
         })}
@@ -175,6 +212,12 @@ export function VariantsPage() {
             variant={step}
             nodeType="variantRoot"
             data-test-id="variant-root-card"
+            errorMessage={
+              errorState?.variantIndex === variants.length
+                ? errorState.errorMessage
+                : missingProviderError ?? variantsErrorMap?.[`variant-${variants.length}`]
+            }
+            isActiveError={errorState?.variantIndex === variants.length}
           />
         )}
         {isScrollable && <FloatingButton isUp={scrollPosition.y > 0} onClick={scrollTo} />}

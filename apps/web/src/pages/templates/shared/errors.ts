@@ -79,9 +79,9 @@ export function getVariantErrors(
       if (variantErrors) {
         const keys = Object.keys(variantErrors);
 
-        const errorMsg = formatErrorMessage(keys.map((key) => variantErrors[key]?.message));
+        const errorMsg = keys.map((key) => variantErrors[key]?.message);
 
-        acc.push({ variantIndex, errorMsg });
+        acc.push(...errorMsg.map((msg) => ({ errorMsg: msg, variantIndex })));
       }
 
       return acc;
