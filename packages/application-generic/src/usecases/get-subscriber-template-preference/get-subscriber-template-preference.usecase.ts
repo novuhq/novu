@@ -211,7 +211,10 @@ function overridePreference(
 }
 
 export function overridePreferences(
-  preferenceSources: Record<PreferenceOverrideSourceEnum, IPreferenceChannels>,
+  preferenceSources: {
+    template: IPreferenceChannels;
+    subscriber: IPreferenceChannels;
+  },
   initialActiveChannels: IPreferenceChannels
 ) {
   let result: {

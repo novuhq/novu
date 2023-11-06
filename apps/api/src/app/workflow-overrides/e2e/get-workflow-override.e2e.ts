@@ -4,7 +4,7 @@ import { IWorkflowOverride } from '@novu/shared';
 import { TenantRepository } from '@novu/dal';
 import { WorkflowOverrideService } from '@novu/testing';
 
-describe('Get workflow override - /:workflowId/tenants/:tenantIdentifier/overrides (GET)', async () => {
+describe('Get workflow override - /workflow-overrides/workflows/:workflowId/tenants/:tenantIdentifier (GET)', async () => {
   let session: UserSession;
   const tenantRepository = new TenantRepository();
 
@@ -28,7 +28,7 @@ describe('Get workflow override - /:workflowId/tenants/:tenantIdentifier/overrid
     if (!tenant) throw new Error('Tenant not found');
 
     const res = await session.testAgent.get(
-      `/v1/workflows/${createdWorkflowOverride._workflowId}/tenants/${tenant.identifier}/overrides`
+      `/v1/workflow-overrides/workflows/${createdWorkflowOverride._workflowId}/tenants/${tenant.identifier}`
     );
 
     const foundWorkflowOverride: IWorkflowOverride = res.body.data;

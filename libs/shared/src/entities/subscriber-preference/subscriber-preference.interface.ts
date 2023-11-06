@@ -16,11 +16,13 @@ export interface IPreferenceOverride {
 
 export interface ISubscriberPreferenceResponse {
   template: ITemplateConfiguration;
-  preference: {
-    enabled: boolean;
-    channels: IPreferenceChannels;
-    overrides: IPreferenceOverride[];
-  };
+  preference: IPreferenceResponse;
+}
+
+export interface IPreferenceResponse {
+  enabled: boolean;
+  channels: IPreferenceChannels;
+  overrides: IPreferenceOverride[];
 }
 
 export interface ITemplateConfiguration {

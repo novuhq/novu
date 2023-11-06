@@ -35,23 +35,6 @@ import { Roles } from '../auth/framework/roles.decorator';
 import { ApiResponse } from '../shared/framework/response.decorator';
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 import { CreateWorkflowQuery } from './queries';
-import { CreateWorkflowOverrideRequestDto } from './dto/create-workflow-override-request.dto';
-import { CreateWorkflowOverrideResponseDto } from './dto/create-workflow-override-response.dto';
-import { CreateWorkflowOverride } from './usecases/create-workflow-override/create-workflow-override.usecase';
-import { CreateWorkflowOverrideCommand } from './usecases/create-workflow-override/create-workflow-override.command';
-import { UpdateWorkflowOverrideResponseDto } from './dto/update-workflow-override-response.dto';
-import { UpdateWorkflowOverrideRequestDto } from './dto/update-workflow-override-request.dto';
-import { UpdateWorkflowOverrideCommand } from './usecases/update-workflow-override/update-workflow-override.command';
-import { UpdateWorkflowOverride } from './usecases/update-workflow-override/update-workflow-override.usecase';
-import { GetWorkflowOverrideResponseDto } from './dto/get-workflow-override-response.dto';
-import { GetWorkflowOverride } from './usecases/get-workflow-override/get-workflow-override.usecase';
-import { GetWorkflowOverrideCommand } from './usecases/get-workflow-override/get-workflow-override.command';
-import { DeleteWorkflowOverride } from './usecases/delete-workflow-override/delete-workflow-override.usecase';
-import { DeleteWorkflowOverrideCommand } from './usecases/delete-workflow-override/delete-workflow-override.command';
-import { GetWorkflowOverridesResponseDto } from './dto/get-workflow-overrides-response.dto';
-import { GetWorkflowOverridesRequestDto } from './dto/get-workflow-overrides-request.dto';
-import { GetWorkflowOverridesCommand } from './usecases/get-workflow-overrides/get-workflow-overrides.command';
-import { GetWorkflowOverrides } from './usecases/get-workflow-overrides/get-workflow-overrides.usecase';
 
 @Controller('/workflows')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -64,12 +47,7 @@ export class WorkflowController {
     private getWorkflowUsecase: GetNotificationTemplate,
     private updateWorkflowByIdUsecase: UpdateNotificationTemplate,
     private deleteWorkflowByIdUsecase: DeleteNotificationTemplate,
-    private changeWorkflowActiveStatusUsecase: ChangeTemplateActiveStatus,
-    private createWorkflowOverrideUsecase: CreateWorkflowOverride,
-    private updateWorkflowOverrideUsecase: UpdateWorkflowOverride,
-    private getWorkflowOverrideUsecase: GetWorkflowOverride,
-    private deleteWorkflowOverrideUsecase: DeleteWorkflowOverride,
-    private getWorkflowOverridesUsecase: GetWorkflowOverrides
+    private changeWorkflowActiveStatusUsecase: ChangeTemplateActiveStatus
   ) {}
 
   @Get('')
@@ -223,131 +201,5 @@ export class WorkflowController {
         templateId: workflowId,
       })
     );
-  }
-
-  @Post('/overrides')
-  @UseGuards(RootEnvironmentGuard)
-  @ApiResponse(CreateWorkflowOverrideResponseDto)
-  @ApiOperation({
-    summary: 'Create workflow override',
-    description:
-      'In order to create workflow override please make sure to identify the workflow by triggerIdentifier or _workflowId, and tenant by tenantIdentifier',
-  })
-  @ExternalApiAccessible()
-  createWorkflowOverride(
-    @UserSession() user: IJwtPayload,
-    @Body() body: CreateWorkflowOverrideRequestDto
-  ): Promise<CreateWorkflowOverrideResponseDto> {
-    return this.createWorkflowOverrideUsecase.execute(
-      CreateWorkflowOverrideCommand.create({
-        organizationId: user.organizationId,
-        environmentId: user.environmentId,
-        userId: user._id,
-        active: body.active,
-        preferenceSettings: body.preferenceSettings,
-        triggerIdentifier: body.triggerIdentifier,
-        tenantIdentifier: body.tenantIdentifier,
-        _workflowId: body._workflowId,
-      })
-    );
-  }
-
-  @Put('/:workflowId/tenants/:tenantIdentifier/overrides')
-  @UseGuards(RootEnvironmentGuard)
-  @ApiResponse(UpdateWorkflowOverrideResponseDto)
-  @ApiOperation({
-    summary: 'Update workflow override',
-  })
-  @ExternalApiAccessible()
-  updateWorkflowOverride(
-    @UserSession() user: IJwtPayload,
-    @Body() body: UpdateWorkflowOverrideRequestDto,
-    @Param('workflowId') workflowId: string,
-    @Param('tenantIdentifier') tenantIdentifier: string
-  ): Promise<UpdateWorkflowOverrideResponseDto> {
-    return this.updateWorkflowOverrideUsecase.execute(
-      UpdateWorkflowOverrideCommand.create({
-        organizationId: user.organizationId,
-        environmentId: user.environmentId,
-        userId: user._id,
-        active: body.active,
-        preferenceSettings: body.preferenceSettings,
-        tenantIdentifier: tenantIdentifier,
-        _workflowId: workflowId,
-      })
-    );
-  }
-
-  @Get('/:workflowId/tenants/:tenantIdentifier/overrides')
-  @UseGuards(RootEnvironmentGuard)
-  @ApiResponse(GetWorkflowOverrideResponseDto)
-  @ApiOperation({
-    summary: 'Get workflow override',
-  })
-  @ExternalApiAccessible()
-  getWorkflowOverride(
-    @UserSession() user: IJwtPayload,
-    @Param('workflowId') workflowId: string,
-    @Param('tenantIdentifier') tenantIdentifier: string
-  ): Promise<GetWorkflowOverrideResponseDto> {
-    return this.getWorkflowOverrideUsecase.execute(
-      GetWorkflowOverrideCommand.create({
-        organizationId: user.organizationId,
-        environmentId: user.environmentId,
-        userId: user._id,
-        tenantIdentifier: tenantIdentifier,
-        _workflowId: workflowId,
-      })
-    );
-  }
-
-  @Delete('/overrides/:workflowOverrideId')
-  @UseGuards(RootEnvironmentGuard)
-  @Roles(MemberRoleEnum.ADMIN)
-  @ApiOkResponse({
-    type: DataBooleanDto,
-  })
-  @ApiOperation({
-    summary: 'Delete workflow override',
-  })
-  @ExternalApiAccessible()
-  deleteWorkflowOverride(
-    @UserSession() user: IJwtPayload,
-    @Param('workflowOverrideId') workflowOverrideId: string
-  ): Promise<boolean> {
-    return this.deleteWorkflowOverrideUsecase.execute(
-      DeleteWorkflowOverrideCommand.create({
-        organizationId: user.organizationId,
-        environmentId: user.environmentId,
-        userId: user._id,
-        _id: workflowOverrideId,
-      })
-    );
-  }
-
-  @Get('/:workflowId/overrides')
-  @UseGuards(RootEnvironmentGuard)
-  @ApiResponse(GetWorkflowOverridesResponseDto)
-  @ApiOperation({
-    summary: 'Get workflow overrides',
-  })
-  @ExternalApiAccessible()
-  getWorkflowOverrides(
-    @UserSession() user: IJwtPayload,
-    @Param('workflowId') workflowId: string,
-    @Query() query: GetWorkflowOverridesRequestDto
-  ): Promise<GetWorkflowOverridesResponseDto> {
-    const test = this.getWorkflowOverridesUsecase.execute(
-      GetWorkflowOverridesCommand.create({
-        organizationId: user.organizationId,
-        environmentId: user.environmentId,
-        userId: user._id,
-        page: query.page ? query.page : 0,
-        limit: query.limit ? query.limit : 10,
-        _workflowId: workflowId,
-      })
-    );
-
-    return test;
   }
 }

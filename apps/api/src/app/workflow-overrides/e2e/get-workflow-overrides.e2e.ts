@@ -3,7 +3,7 @@ import { UserSession } from '@novu/testing';
 import { WorkflowOverrideService } from '@novu/testing';
 import { NotificationGroupRepository, NotificationTemplateRepository } from '@novu/dal';
 
-describe('Get workflows overrides - /workflows/:workflowId/overrides (GET)', async () => {
+describe('Get workflows overrides - /workflow-overrides/workflows/:workflowId (GET)', async () => {
   let session: UserSession;
   const notificationTemplateRepository = new NotificationTemplateRepository();
   const notificationGroupRepository = new NotificationGroupRepository();
@@ -34,7 +34,7 @@ describe('Get workflows overrides - /workflows/:workflowId/overrides (GET)', asy
       triggers: [{ identifier: 'test-trigger-api' }],
     });
 
-    const noOverrides = (await session.testAgent.get(`/v1/workflows/${workflow._id}/overrides`)).body.data;
+    const noOverrides = (await session.testAgent.get(`/v1/workflow-overrides/workflows/${workflow._id}`)).body.data;
 
     expect(noOverrides.length).to.equal(0);
 
@@ -42,12 +42,13 @@ describe('Get workflows overrides - /workflows/:workflowId/overrides (GET)', asy
     await workflowOverrideService.createWorkflowOverride({ _workflowId: workflow._id });
     await workflowOverrideService.createWorkflowOverride({ _workflowId: workflow._id });
 
-    const data = (await session.testAgent.get(`/v1/workflows/${workflow._id}/overrides`)).body.data;
+    const data = (await session.testAgent.get(`/v1/workflow-overrides/workflows/${workflow._id}`)).body.data;
 
     expect(data.length).to.equal(3);
 
-    const paginatedData = (await session.testAgent.get(`/v1/workflows/${workflow._id}/overrides?page=1&limit=2`)).body
-      .data;
+    const paginatedData = (
+      await session.testAgent.get(`/v1/workflow-overrides/workflows/${workflow._id}?page=1&limit=2`)
+    ).body.data;
 
     expect(paginatedData.length).to.equal(1);
   });
@@ -77,12 +78,12 @@ describe('Get workflows overrides - /workflows/:workflowId/overrides (GET)', asy
     await workflowOverrideService.createWorkflowOverride({ _workflowId: workflow._id });
     await workflowOverrideService.createWorkflowOverride({ _workflowId: workflow._id });
 
-    const page1 = (await session.testAgent.get(`/v1/workflows/${workflow._id}/overrides?limit=2`)).body;
+    const page1 = (await session.testAgent.get(`/v1/workflow-overrides/workflows/${workflow._id}?limit=2`)).body;
 
     expect(page1.data.length).to.equal(2);
     expect(page1.hasMore).to.equal(true);
 
-    const page2 = (await session.testAgent.get(`/v1/workflows/${workflow._id}/overrides?page=1&limit=2`)).body;
+    const page2 = (await session.testAgent.get(`/v1/workflow-overrides/workflows/${workflow._id}?page=1&limit=2`)).body;
 
     expect(page2.data.length).to.equal(1);
     expect(page2.hasMore).to.equal(false);

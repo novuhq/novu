@@ -3,7 +3,7 @@ import { UserSession } from '@novu/testing';
 import { TenantRepository, WorkflowOverrideRepository } from '@novu/dal';
 import { WorkflowOverrideService } from '@novu/testing';
 
-describe('Delete workflow override - /overrides/:overrideId (Delete)', async () => {
+describe('Delete workflow override - /workflow-overrides/:overrideId (Delete)', async () => {
   let session: UserSession;
   const tenantRepository = new TenantRepository();
   const workflowOverrideRepository = new WorkflowOverrideRepository();
@@ -37,9 +37,7 @@ describe('Delete workflow override - /overrides/:overrideId (Delete)', async () 
 
     expect(validatedCreationWorkflowOverride._id).to.be.ok;
 
-    const deleteRes = await session.testAgent.delete(
-      `/v1/workflows/overrides/${validatedCreationWorkflowOverride._id}`
-    );
+    const deleteRes = await session.testAgent.delete(`/v1/workflow-overrides/${validatedCreationWorkflowOverride._id}`);
 
     const foundWorkflowOverride: boolean = deleteRes.body.data;
 
@@ -55,7 +53,7 @@ describe('Delete workflow override - /overrides/:overrideId (Delete)', async () 
 
   it('should fail to delete non-existing workflow override', async function () {
     const fakeWorkflowOverrideId = session.user._id;
-    const deleteRes = await session.testAgent.delete(`/v1/workflows/overrides/${fakeWorkflowOverrideId}`);
+    const deleteRes = await session.testAgent.delete(`/v1/workflow-overrides/${fakeWorkflowOverrideId}`);
 
     const foundWorkflowOverride = deleteRes.body;
 

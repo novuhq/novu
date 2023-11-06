@@ -4,7 +4,7 @@ import { UserSession } from '@novu/testing';
 import { ICreateWorkflowOverrideRequestDto } from '@novu/shared';
 import { NotificationTemplateRepository, TenantRepository } from '@novu/dal';
 
-describe('Create Integration - /workflow/override (POST)', function () {
+describe('Create Integration - /workflow-overrides (POST)', function () {
   let session: UserSession;
   const tenantRepository = new TenantRepository();
   const notificationTemplateRepository = new NotificationTemplateRepository();
@@ -41,7 +41,7 @@ describe('Create Integration - /workflow/override (POST)', function () {
       tenantIdentifier: tenant.identifier,
     };
 
-    const res = await session.testAgent.post('/v1/workflows/overrides').send(payload);
+    const res = await session.testAgent.post('/v1/workflow-overrides').send(payload);
 
     expect(res.status).to.equal(201);
 
@@ -85,7 +85,7 @@ describe('Create Integration - /workflow/override (POST)', function () {
       tenantIdentifier: tenant.identifier,
     };
 
-    const res = await session.testAgent.post('/v1/workflows/overrides').send(payload);
+    const res = await session.testAgent.post('/v1/workflow-overrides').send(payload);
 
     expect(res.status).to.equal(201);
 
@@ -117,7 +117,7 @@ describe('Create Integration - /workflow/override (POST)', function () {
       tenantIdentifier: tenant.identifier,
     };
 
-    const res = await session.testAgent.post('/v1/workflows/overrides').send(payload);
+    const res = await session.testAgent.post('/v1/workflow-overrides').send(payload);
 
     expect(res.body.statusCode).to.equal(400);
     expect(res.body.message).to.equal('Either triggerIdentifier or _workflowId must be provided');
@@ -142,7 +142,7 @@ describe('Create Integration - /workflow/override (POST)', function () {
       tenantIdentifier: 'fake-tenant-identifier',
     };
 
-    const res = await session.testAgent.post('/v1/workflows/overrides').send(payload);
+    const res = await session.testAgent.post('/v1/workflow-overrides').send(payload);
 
     expect(res.body.statusCode).to.equal(404);
     expect(res.body.message).to.equal('Tenant with identifier fake-tenant-identifier is not found');
