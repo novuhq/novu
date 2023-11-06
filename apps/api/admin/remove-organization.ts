@@ -7,6 +7,24 @@ import {
   SubscriberRepository,
   IntegrationRepository,
   NotificationTemplateRepository,
+  ChangeRepository,
+  ExecutionDetailsRepository,
+  BaseRepository,
+  EnvironmentId,
+  OrganizationId,
+  EnforceEnvOrOrgIds,
+  FeedRepository,
+  JobRepository,
+  LayoutRepository,
+  LogRepository,
+  MessageRepository,
+  MessageTemplateRepository,
+  NotificationGroupRepository,
+  NotificationRepository,
+  SubscriberPreferenceRepository,
+  TenantRepository,
+  TopicRepository,
+  TopicSubscribersRepository,
 } from '@novu/dal';
 
 import { connect } from './connect-to-dal';
@@ -16,64 +34,26 @@ const args = process.argv.slice(2);
 const ORG_ID = args[0];
 const folder = 'remove-organization';
 
-async function removeSubscribers(organizationId: string, environmentIds: string[]) {
-  const subscriberRepository = new SubscriberRepository();
-  const subscribers = await subscriberRepository.find({
+async function removeData<T extends BaseRepository<object, E, EnforceEnvOrOrgIds>, E extends { _id?: string }>(
+  repository: T,
+  model: string,
+  organizationId: OrganizationId,
+  environmentIds: EnvironmentId[]
+) {
+  const data = await repository.find({
     _organizationId: organizationId,
     _environmentId: {
       $in: environmentIds,
     },
   });
-  console.log(`Found ${subscribers.length} subscribers from all environments of the organization`);
+  console.log(`Found ${data.length} ${model} from all environments of the organization`);
 
-  if (subscribers.length > 0) {
-    console.log(`Removing ${subscribers.length} subscribers from all environments of the organization`);
-    await makeJsonBackup(folder, 'subscribers', subscribers);
-    await subscriberRepository._model.deleteMany({
+  if (data.length > 0) {
+    console.log(`Removing ${data.length} ${model} from all environments of the organization`);
+    await makeJsonBackup(folder, model, data);
+    await repository._model.deleteMany({
       _id: {
-        $in: subscribers.map((subscriber) => subscriber._id),
-      },
-    });
-  }
-}
-
-async function removeIntegrations(organizationId: string, environmentIds: string[]) {
-  const integrationRepository = new IntegrationRepository();
-  const integrations = await integrationRepository.find({
-    _organizationId: organizationId,
-    _environmentId: {
-      $in: environmentIds,
-    },
-  });
-  console.log(`Found ${integrations.length} integrations from all environments of the organization`);
-
-  if (integrations.length > 0) {
-    console.log(`Removing ${integrations.length} integrations from all environments of the organization`);
-    await makeJsonBackup(folder, 'integrations', integrations);
-    await integrationRepository._model.deleteMany({
-      _id: {
-        $in: integrations.map((integration) => integration._id),
-      },
-    });
-  }
-}
-
-async function removeWorkflows(organizationId: string, environmentIds: string[]) {
-  const workflowsRepository = new NotificationTemplateRepository();
-  const workflows = await workflowsRepository.find({
-    _organizationId: organizationId,
-    _environmentId: {
-      $in: environmentIds,
-    },
-  });
-  console.log(`Found ${workflows.length} workflows from all environments of the organization`);
-
-  if (workflows.length > 0) {
-    console.log(`Removing ${workflows.length} workflows from all environments of the organization`);
-    await makeJsonBackup(folder, 'workflows', workflows);
-    await workflowsRepository._model.deleteMany({
-      _id: {
-        $in: workflows.map((workflow) => workflow._id),
+        $in: data.map((change) => change._id),
       },
     });
   }
@@ -107,9 +87,23 @@ connect(async () => {
   const environmentsOfOrganization = await environmentRepository.findOrganizationEnvironments(organization._id);
   const envIds = environmentsOfOrganization.map((env) => env._id);
 
-  await removeSubscribers(organization._id, envIds);
-  await removeIntegrations(organization._id, envIds);
-  await removeWorkflows(organization._id, envIds);
+  await removeData(new ChangeRepository(), 'changes', organization._id, envIds);
+  // await removeData(new ExecutionDetailsRepository(), 'executiondetails', organization._id, envIds);
+  await removeData(new FeedRepository(), 'feeds', organization._id, envIds);
+  await removeData(new IntegrationRepository(), 'integrations', organization._id, envIds);
+  // await removeData(new JobRepository(), 'jobs', organization._id, envIds);
+  await removeData(new LayoutRepository(), 'layouts', organization._id, envIds);
+  await removeData(new LogRepository(), 'logs', organization._id, envIds);
+  await removeData(new MessageRepository(), 'messages', organization._id, envIds);
+  await removeData(new MessageTemplateRepository(), 'messagetemplates', organization._id, envIds);
+  await removeData(new NotificationGroupRepository(), 'notificationgroups', organization._id, envIds);
+  // await removeData(new NotificationRepository(), 'notifications', organization._id, envIds);
+  await removeData(new NotificationTemplateRepository(), 'workflows', organization._id, envIds);
+  await removeData(new SubscriberPreferenceRepository(), 'subscriberpreferences', organization._id, envIds);
+  await removeData(new SubscriberRepository(), 'subscribers', organization._id, envIds);
+  await removeData(new TenantRepository(), 'tenants', organization._id, envIds);
+  await removeData(new TopicRepository(), 'topics', organization._id, envIds);
+  await removeData(new TopicSubscribersRepository(), 'topicsubscribers', organization._id, envIds);
 
   if (environmentsOfOrganization.length > 0) {
     console.log(`Removing all environments of the organization ${organization.name}`);
