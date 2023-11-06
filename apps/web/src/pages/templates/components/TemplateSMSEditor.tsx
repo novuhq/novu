@@ -3,7 +3,7 @@ import { ChannelTypeEnum } from '@novu/shared';
 
 import { LackIntegrationAlert } from './LackIntegrationAlert';
 import type { IForm } from './formTypes';
-import { Textarea } from '../../../design-system';
+import { Textarea } from '@novu/design-system';
 import {
   useEnvController,
   useHasActiveIntegrations,

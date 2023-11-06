@@ -1,7 +1,12 @@
 const nr = require('newrelic');
 import { Injectable, Logger } from '@nestjs/common';
 
-import { INovuWorker, WebSocketsWorkerService } from '@novu/application-generic';
+import {
+  getWebSocketWorkerOptions,
+  INovuWorker,
+  WebSocketsWorkerService,
+  WorkerOptions,
+} from '@novu/application-generic';
 
 import { ExternalServicesRoute, ExternalServicesRouteCommand } from '../usecases/external-services-route';
 import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
@@ -21,6 +26,11 @@ export class WebSocketWorker extends WebSocketsWorkerService implements INovuWor
       return new Promise((resolve, reject) => {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const _this = this;
+
+        Logger.verbose(
+          `Job ${job.id} / ${job.data.event} is being processed in the MemoryDB instance WebSocketWorker`,
+          LOG_CONTEXT
+        );
 
         nr.startBackgroundTransaction(
           ObservabilityBackgroundTransactionEnum.WS_SOCKET_QUEUE,
@@ -56,10 +66,7 @@ export class WebSocketWorker extends WebSocketsWorkerService implements INovuWor
     };
   }
 
-  private getWorkerOpts() {
-    return {
-      lockDuration: 90000,
-      concurrency: 100,
-    };
+  private getWorkerOpts(): WorkerOptions {
+    return getWebSocketWorkerOptions();
   }
 }

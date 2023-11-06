@@ -12,20 +12,11 @@ import {
   WorkflowQueueService,
 } from '@novu/application-generic';
 import { NotificationTemplateRepository, NotificationTemplateEntity, TenantRepository } from '@novu/dal';
-import {
-  ISubscribersDefine,
-  ITenantDefine,
-  ReservedVariablesMap,
-  TriggerContextTypeEnum,
-  TriggerEventStatusEnum,
-  TriggerTenantContext,
-} from '@novu/shared';
+import { ReservedVariablesMap, TriggerContextTypeEnum, TriggerEventStatusEnum } from '@novu/shared';
 
-import { ParseEventRequestCommand } from './parse-event-request.command';
-
+import { ParseEventRequestCommand, ParseEventRequestMulticastCommand } from './parse-event-request.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { VerifyPayload, VerifyPayloadCommand } from '../verify-payload';
-import { MapTriggerRecipients, MapTriggerRecipientsCommand } from '../map-trigger-recipients';
 
 const LOG_CONTEXT = 'ParseEventRequest';
 
@@ -36,28 +27,12 @@ export class ParseEventRequest {
     private verifyPayload: VerifyPayload,
     private storageHelperService: StorageHelperService,
     private workflowQueueService: WorkflowQueueService,
-    private mapTriggerRecipients: MapTriggerRecipients,
     private tenantRepository: TenantRepository
   ) {}
 
   @InstrumentUsecase()
   async execute(command: ParseEventRequestCommand) {
     const transactionId = command.transactionId || uuidv4();
-
-    const mappedActor = command.actor ? this.mapTriggerRecipients.mapSubscriber(command.actor) : undefined;
-
-    const mappedRecipients = await this.mapTriggerRecipients.execute(
-      MapTriggerRecipientsCommand.create({
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        recipients: command.to,
-        transactionId,
-        userId: command.userId,
-        actor: mappedActor,
-      })
-    );
-
-    await this.validateSubscriberIdProperty(mappedRecipients);
 
     const template = await this.getNotificationTemplateByTriggerIdentifier({
       environmentId: command.environmentId,
@@ -94,7 +69,10 @@ export class ParseEventRequest {
 
     if (command.tenant) {
       try {
-        await this.validateTenant(typeof command.tenant === 'string' ? command.tenant : command.tenant.identifier);
+        await this.validateTenant({
+          identifier: typeof command.tenant === 'string' ? command.tenant : command.tenant.identifier,
+          _environmentId: command.environmentId,
+        });
       } catch (e) {
         return {
           acknowledged: true,
@@ -126,12 +104,17 @@ export class ParseEventRequest {
 
     command.payload = merge({}, defaultPayload, command.payload);
 
-    const jobData = {
+    let jobData = {
       ...command,
-      to: mappedRecipients,
-      actor: mappedActor,
+      actor: command.actor,
       transactionId,
-    };
+    } as ParseEventRequestCommand;
+
+    if ((command as ParseEventRequestMulticastCommand).to?.length > 0) {
+      jobData = jobData as ParseEventRequestMulticastCommand;
+      jobData.to = (command as ParseEventRequestMulticastCommand).to;
+    }
+
     await this.workflowQueueService.add(transactionId, jobData, command.organizationId);
 
     return {
@@ -159,28 +142,14 @@ export class ParseEventRequest {
     );
   }
 
-  private async validateTenant(identifier: string) {
+  private async validateTenant({ identifier, _environmentId }: { identifier: string; _environmentId: string }) {
     const found = await this.tenantRepository.findOne({
-      identifier,
+      _environmentId: _environmentId,
+      identifier: identifier,
     });
     if (!found) {
-      throw new ApiException(`Tenant with identifier ${identifier} cound not be found`);
+      throw new ApiException(`Tenant with identifier ${identifier} could not be found`);
     }
-  }
-
-  @Instrument()
-  private async validateSubscriberIdProperty(to: ISubscribersDefine[]): Promise<boolean> {
-    for (const subscriber of to) {
-      const subscriberIdExists = typeof subscriber === 'string' ? subscriber : subscriber.subscriberId;
-
-      if (!subscriberIdExists) {
-        throw new ApiException(
-          'subscriberId under property to is not configured, please make sure all subscribers contains subscriberId property'
-        );
-      }
-    }
-
-    return true;
   }
 
   @Instrument()
@@ -218,14 +187,6 @@ export class ParseEventRequest {
       file: Buffer.from(attachment.file, 'base64'),
       storagePath: `${command.organizationId}/${command.environmentId}/${hat()}/${attachment.name}`,
     }));
-  }
-
-  public mapTenant(tenant: TriggerTenantContext): ITenantDefine {
-    if (typeof tenant === 'string') {
-      return { identifier: tenant };
-    }
-
-    return tenant;
   }
 
   public getReservedVariablesTypes(template: NotificationTemplateEntity): TriggerContextTypeEnum[] {
