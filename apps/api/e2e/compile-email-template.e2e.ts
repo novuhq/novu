@@ -169,8 +169,8 @@ describe('Compile E-mail Template', function () {
     expect(senderName).to.equal(senderNameTest);
   });
 
-  describe('Backwards compatability', function () {
-    it('should compile e-mail template for custom html without layouts attached for backwards compatability', async function () {
+  describe('Backwards compatibility', function () {
+    it('should compile e-mail template for custom html without layouts attached for backwards compatibility', async function () {
       const { html, subject } = await useCase.execute(
         CompileEmailTemplateCommand.create({
           organizationId: session.organization._id,

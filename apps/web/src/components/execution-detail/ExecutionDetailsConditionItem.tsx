@@ -2,8 +2,7 @@ import React from 'react';
 import styled from '@emotion/styled';
 import { Group, Stack } from '@mantine/core';
 import { ICondition } from '@novu/shared';
-import { colors, Text, Tooltip } from '../../design-system';
-import { CheckCircle, ErrorIcon } from '../../design-system/icons';
+import { colors, Text, Tooltip, CheckCircle, ErrorIcon } from '@novu/design-system';
 
 export function ExecutionDetailsConditionItem({ condition }: { condition: ICondition }) {
   const isPassed = condition.passed;

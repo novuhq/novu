@@ -9,7 +9,7 @@ import {
 import { Model, Types, ProjectionType, FilterQuery, UpdateQuery, QueryOptions } from 'mongoose';
 import { DalException } from '../shared';
 
-export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
+export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
   public _model: Model<T_DBModel>;
 
   constructor(protected MongooseModel: Model<T_DBModel>, protected entity: ClassConstructor<T_MappedEntity>) {
@@ -36,13 +36,6 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
 
   async aggregate(query: any[], options: { readPreference?: 'secondaryPreferred' | 'primary' } = {}): Promise<any> {
     return await this.MongooseModel.aggregate(query).read(options.readPreference || 'primary');
-  }
-
-  async findById(id: string, select?: string): Promise<T_MappedEntity | null> {
-    const data = await this.MongooseModel.findById(id, select);
-    if (!data) return null;
-
-    return this.mapEntity(data.toObject());
   }
 
   async findOne(

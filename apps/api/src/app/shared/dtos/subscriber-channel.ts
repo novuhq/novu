@@ -15,6 +15,31 @@ export class ChannelCredentials {
     description: 'Contains an array of the subscriber device tokens for a given provider. Used on Push integrations',
   })
   deviceTokens?: string[];
+
+  @ApiPropertyOptional({
+    description: 'alert_uid for grafana on-call webhook payload',
+  })
+  alertUid?: string;
+
+  @ApiPropertyOptional({
+    description: 'title to be used with grafana on call webhook',
+  })
+  title?: string;
+
+  @ApiPropertyOptional({
+    description: 'image_url property fo grafana on call webhook',
+  })
+  imageUrl?: string;
+
+  @ApiPropertyOptional({
+    description: 'state property fo grafana on call webhook',
+  })
+  state?: string;
+
+  @ApiPropertyOptional({
+    description: 'link_to_upstream_details property fo grafana on call webhook',
+  })
+  externalUrl?: string;
 }
 
 export class SubscriberChannel {
