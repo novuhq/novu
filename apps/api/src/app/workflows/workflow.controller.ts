@@ -43,6 +43,9 @@ import { UpdateWorkflowOverrideResponseDto } from './dto/update-workflow-overrid
 import { UpdateWorkflowOverrideRequestDto } from './dto/update-workflow-override-request.dto';
 import { UpdateWorkflowOverrideCommand } from './usecases/update-workflow-override/update-workflow-override.command';
 import { UpdateWorkflowOverride } from './usecases/update-workflow-override/update-workflow-override.usecase';
+import { GetWorkflowOverrideResponseDto } from './dto/get-workflow-override-response.dto';
+import { GetWorkflowOverride } from './usecases/get-workflow-override/get-workflow-override.usecase';
+import { GetWorkflowOverrideCommand } from './usecases/get-workflow-override/get-workflow-override.command';
 
 @Controller('/workflows')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -57,7 +60,8 @@ export class WorkflowController {
     private deleteWorkflowByIdUsecase: DeleteNotificationTemplate,
     private changeWorkflowActiveStatusUsecase: ChangeTemplateActiveStatus,
     private createWorkflowOverrideUsecase: CreateWorkflowOverride,
-    private updateWorkflowOverrideUsecase: UpdateWorkflowOverride
+    private updateWorkflowOverrideUsecase: UpdateWorkflowOverride,
+    private getWorkflowOverrideUsecase: GetWorkflowOverride
   ) {}
 
   @Get('')
@@ -260,6 +264,29 @@ export class WorkflowController {
         userId: user._id,
         active: body.active,
         preferenceSettings: body.preferenceSettings,
+        tenantIdentifier: tenantIdentifier,
+        _workflowId: workflowId,
+      })
+    );
+  }
+
+  @Get('/:workflowId/tenants/:tenantIdentifier/overrides')
+  @UseGuards(RootEnvironmentGuard)
+  @ApiResponse(GetWorkflowOverrideResponseDto)
+  @ApiOperation({
+    summary: 'Get workflow override',
+  })
+  @ExternalApiAccessible()
+  getWorkflowOverride(
+    @UserSession() user: IJwtPayload,
+    @Param('workflowId') workflowId: string,
+    @Param('tenantIdentifier') tenantIdentifier: string
+  ): Promise<GetWorkflowOverrideResponseDto> {
+    return this.getWorkflowOverrideUsecase.execute(
+      GetWorkflowOverrideCommand.create({
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+        userId: user._id,
         tenantIdentifier: tenantIdentifier,
         _workflowId: workflowId,
       })
