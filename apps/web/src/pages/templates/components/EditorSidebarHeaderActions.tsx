@@ -116,7 +116,12 @@ export const EditorSidebarHeaderActions = () => {
     <>
       <Group noWrap spacing={12} ml={'auto'} sx={{ alignItems: 'flex-start' }}>
         <When truthy={isUnderTheStepPath || isUnderVariantsListPath}>
-          <ActionButton tooltip="Add variant" onClick={onAddVariant} Icon={VariantPlus} />
+          <ActionButton
+            tooltip="Add variant"
+            onClick={onAddVariant}
+            Icon={VariantPlus}
+            data-test-id="editor-sidebar-add-variant"
+          />
         </When>
         <When truthy={hasNoFilters}>
           <ActionButton

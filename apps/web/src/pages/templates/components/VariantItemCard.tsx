@@ -118,6 +118,7 @@ export const VariantItemCard = ({
   isFirst = false,
   nodeType,
   variant,
+  'data-test-id': dataTestId,
 }: {
   isReadonly?: boolean;
   stepIndex?: number;
@@ -125,6 +126,7 @@ export const VariantItemCard = ({
   isFirst?: boolean;
   variant: IFormStep | IVariantStep;
   nodeType: NodeType;
+  'data-test-id'?: string;
 }) => {
   const { setValue } = useFormContext<IForm>();
   const { channel, stepUuid = '' } = useParams<{
@@ -189,7 +191,7 @@ export const VariantItemCard = ({
   };
 
   return (
-    <VariantItemCardHolder>
+    <VariantItemCardHolder data-test-id={dataTestId}>
       {!isFirst ? (
         <NoSpan>No</NoSpan>
       ) : (

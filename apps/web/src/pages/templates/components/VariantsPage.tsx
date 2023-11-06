@@ -74,11 +74,18 @@ export function VariantsPage() {
               stepIndex={stepIndex}
               variantIndex={variantIndex}
               nodeType="variant"
+              data-test-id={`variant-item-card-${variantIndex}`}
             />
           );
         })}
         {step && variants.length > 0 && (
-          <VariantItemCard isReadonly={isReadonly} key={stepUuid} variant={step} nodeType="variantRoot" />
+          <VariantItemCard
+            isReadonly={isReadonly}
+            key={stepUuid}
+            variant={step}
+            nodeType="variantRoot"
+            data-test-id="variant-root-card"
+          />
         )}
         {isScrollable && <FloatingButton isUp={scrollPosition.y > 0} onClick={scrollTo} />}
       </ScrollArea>

@@ -17,7 +17,7 @@ import {
 import { NodeType } from './WorkflowNode';
 import { When } from '../../../../../components/utils/When';
 
-const ContainerButton = styled(Container)`
+const ButtonsContainer = styled(Container)`
   padding: 0;
   margin-left: auto;
   margin-right: 0;
@@ -78,7 +78,7 @@ export const WorkflowNodeActions = ({
 
   if (nodeType === 'variantRoot') {
     return (
-      <ContainerButton>
+      <ButtonsContainer data-test-id="variant-root-actions">
         <When truthy={!showMenu}>
           <ActionButton
             onClick={onAddConditions}
@@ -87,19 +87,27 @@ export const WorkflowNodeActions = ({
             }
             text="No"
             Icon={NoConditions}
+            data-test-id="conditions-action"
           />
         </When>
         <When truthy={showMenu}>
           <Group noWrap spacing={5}>
-            {onEdit && <ActionButton onClick={onEdit} tooltip={VARIANT_TYPE_TO_EDIT[nodeType]} Icon={PencilOutlined} />}
+            {onEdit && (
+              <ActionButton
+                onClick={onEdit}
+                tooltip={VARIANT_TYPE_TO_EDIT[nodeType]}
+                Icon={PencilOutlined}
+                data-test-id="edit-step-action"
+              />
+            )}
           </Group>
         </When>
-      </ContainerButton>
+      </ButtonsContainer>
     );
   }
 
   return (
-    <ContainerButton>
+    <ButtonsContainer data-test-id="step-actions">
       <When truthy={!showMenu && conditionsCount > 0}>
         <ActionButton
           onClick={onAddConditions}
@@ -108,11 +116,19 @@ export const WorkflowNodeActions = ({
           }
           text={`${conditionsCount > 0 ? conditionsCount : ''}`}
           Icon={conditionsCount > 0 ? ConditionsFile : ConditionPlus}
+          data-test-id="conditions-action"
         />
       </When>
       <When truthy={showMenu}>
         <Group noWrap spacing={5}>
-          {onEdit && <ActionButton onClick={onEdit} tooltip={VARIANT_TYPE_TO_EDIT[nodeType]} Icon={PencilOutlined} />}
+          {onEdit && (
+            <ActionButton
+              onClick={onEdit}
+              tooltip={VARIANT_TYPE_TO_EDIT[nodeType]}
+              Icon={PencilOutlined}
+              data-test-id="edit-action"
+            />
+          )}
           {onAddConditions && (
             <ActionButton
               onClick={onAddConditions}
@@ -123,6 +139,7 @@ export const WorkflowNodeActions = ({
               }
               text={`${conditionsCount > 0 ? conditionsCount : ''}`}
               Icon={conditionsCount > 0 ? ConditionsFile : ConditionPlus}
+              data-test-id="add-conditions-action"
             />
           )}
           <Dropdown
@@ -166,6 +183,6 @@ export const WorkflowNodeActions = ({
           </Dropdown>
         </Group>
       </When>
-    </ContainerButton>
+    </ButtonsContainer>
   );
 };
