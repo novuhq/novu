@@ -32,5 +32,13 @@ export interface ICredentials {
   authenticateByToken?: boolean;
   authenticationTokenKey?: string;
   accessKey?: string;
+  instanceId?: string;
   apiToken?: string;
+  apiURL?: string;
+  appID?: string;
+  alertUid?: string;
+  title?: string;
+  imageUrl?: string;
+  state?: string;
+  externalLink?: string;
 }

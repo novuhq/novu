@@ -475,6 +475,45 @@ export const slackConfig: IConfigCredentials[] = [
   },
 ];
 
+export const grafanaOnCallConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.alertUid,
+    displayName: 'Alert UID',
+    type: 'string',
+    description: 'a unique alert ID for grouping, maps to alert_uid of grafana webhook body content',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.title,
+    displayName: 'Title.',
+    type: 'string',
+    description: 'title for the alert',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.imageUrl,
+    displayName: 'Image URL',
+    type: 'string',
+    description: 'a URL for an image attached to alert, maps to image_url of grafana webhook body content',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.state,
+    displayName: 'Alert State',
+    type: 'string',
+    description: 'either "ok" or "alerting". Helpful for auto-resolving',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.externalLink,
+    displayName: 'External Link',
+    type: 'string',
+    description:
+      'link back to your monitoring system, maps to "link_to_upstream_details" of grafana webhook body content',
+    required: false,
+  },
+];
+
 export const fcmConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ServiceAccount,
@@ -647,6 +686,28 @@ export const infobipEmailConfig: IConfigCredentials[] = [
   ...mailConfigBase,
 ];
 
+export const brazeEmailConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ApiURL,
+    displayName: 'Base URL',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.AppID,
+    displayName: 'Base URL',
+    type: 'string',
+    required: true,
+  },
+  ...mailConfigBase,
+];
+
 export const fortySixElksConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.User,
@@ -803,6 +864,16 @@ export const clickSendConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
+export const simpleTextingConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'text',
+    required: true,
+  },
+  ...smsConfigBase,
+];
+
 export const bandwidthConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.User,
@@ -902,6 +973,35 @@ export const genericSmsConfig: IConfigCredentials[] = [
     description:
       'The name of the header attribute to use for the authentication token ex. (X-AUTH-TOKEN, auth-token, ...)',
     required: false,
+  },
+  ...smsConfigBase,
+];
+
+export const pusherBeamsConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.InstanceId,
+    displayName: 'Instance ID',
+    description: 'The unique identifier for your Beams instance',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Secret Key',
+    description: 'The secret key your server will use to access your Beams instance',
+    type: 'string',
+    required: true,
+  },
+  ...pushConfigBase,
+];
+
+export const azureSmsConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.AccessKey,
+    displayName: 'Connection string',
+    description: 'Your Azure account connection string',
+    type: 'text',
+    required: true,
   },
   ...smsConfigBase,
 ];

@@ -5,13 +5,7 @@ import {
   splitKey,
 } from './cache.service';
 
-import {
-  InMemoryProviderEnum,
-  InMemoryProviderService,
-} from '../in-memory-provider';
-
-const enableAutoPipelining =
-  process.env.REDIS_CACHE_ENABLE_AUTOPIPELINING === 'true';
+import { CacheInMemoryProviderService } from '../in-memory-provider';
 
 /**
  * TODO: Maybe create a Test single Redis instance to be able to run it in the
@@ -19,24 +13,20 @@ const enableAutoPipelining =
  */
 describe.skip('Cache Service - Redis Instance - Non Cluster Mode', () => {
   let cacheService: CacheService;
-  let inMemoryProviderService: InMemoryProviderService;
+  let cacheInMemoryProviderService: CacheInMemoryProviderService;
 
   beforeAll(async () => {
     process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
 
-    inMemoryProviderService = new InMemoryProviderService(
-      InMemoryProviderEnum.REDIS,
-      enableAutoPipelining
-    );
-    await inMemoryProviderService.delayUntilReadiness();
-    expect(inMemoryProviderService.isClusterMode()).toBe(false);
+    cacheInMemoryProviderService = new CacheInMemoryProviderService();
+    expect(cacheInMemoryProviderService.isCluster).toBe(false);
 
-    cacheService = new CacheService(inMemoryProviderService);
+    cacheService = new CacheService(cacheInMemoryProviderService);
     await cacheService.initialize();
   });
 
   afterAll(async () => {
-    await inMemoryProviderService.shutdown();
+    await cacheInMemoryProviderService.shutdown();
   });
 
   it('should be instantiated properly', async () => {
@@ -80,24 +70,20 @@ describe.skip('Cache Service - Redis Instance - Non Cluster Mode', () => {
 
 describe('Cache Service - Cluster Mode', () => {
   let cacheService: CacheService;
-  let inMemoryProviderService: InMemoryProviderService;
+  let cacheInMemoryProviderService: CacheInMemoryProviderService;
 
   beforeAll(async () => {
     process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
 
-    inMemoryProviderService = new InMemoryProviderService(
-      InMemoryProviderEnum.REDIS,
-      enableAutoPipelining
-    );
-    await inMemoryProviderService.delayUntilReadiness();
-    expect(inMemoryProviderService.isClusterMode()).toBe(true);
+    cacheInMemoryProviderService = new CacheInMemoryProviderService();
+    expect(cacheInMemoryProviderService.isCluster).toBe(true);
 
-    cacheService = new CacheService(inMemoryProviderService);
+    cacheService = new CacheService(cacheInMemoryProviderService);
     await cacheService.initialize();
   });
 
   afterAll(async () => {
-    await inMemoryProviderService.shutdown();
+    await cacheInMemoryProviderService.shutdown();
   });
 
   it('should be instantiated properly', async () => {
