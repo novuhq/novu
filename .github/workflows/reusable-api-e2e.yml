@@ -3,49 +3,70 @@ name: E2E API Tests
 # Controls when the action will run. Triggers the workflow on push or pull request
 on:
   workflow_call:
-
     inputs:
+      test-e2e-affected:
+        description: 'detect if we should run e2e tests'
+        required: false
+        default: true
+        type: boolean
+      test-e2e-ee-affected:
+        description: 'detect if we should run e2e-ee tests'
+        required: false
+        default: true
+        type: boolean
       ee:
         description: 'use the ee version of api'
         required: false
         default: false
         type: boolean
-      submodules:
-        description: 'The flag controlling whether we want submodules to checkout'
-        required: false
-        default: false
-        type: boolean
-      submodule_branch:
-        description: 'Submodule branch to checkout to'
-        required: false
-        default: 'main'
+      job-name:
+        description: 'job name [options: novu/api-ee, novu/api]'
+        required: true
         type: string
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
+  check_submodule_token:
+    name: Check if the secret exists or not.
+    runs-on: ubuntu-latest
+    outputs:
+      has_token: ${{ steps.secret-check.outputs.has_token }}
+    steps:
+      - name: Check if secret exists
+        id: secret-check
+        run: |
+          if [[ -n "${{ secrets.SUBMODULES_TOKEN }}" ]]; then
+            echo "::set-output name=has_token::true"
+          else
+            echo "::set-output name=has_token::false"
+          fi
+
   # This workflow contains a single job called "build"
   e2e_api:
+    name: Test E2E
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
     timeout-minutes: 80
-
     permissions:
       contents: read
       packages: write
       deployments: write
       id-token: write
-
+    needs: [check_submodule_token]
+    if:  |
+      ${{ contains (inputs.job-name,'-ee') && inputs.test-e2e-ee-affected == 'true' }} ||
+      ${{ !contains (inputs.job-name,'-ee') && inputs.test-e2e-affected == 'true' }}
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      - id: setup
-        run: |
-          if ! [[ -z "${{ secrets.SUBMODULES_TOKEN }}" ]]; then
-            echo "has_token=true" >> $GITHUB_OUTPUT
-          else
-            echo "has_token=false" >> $GITHUB_OUTPUT
-          fi
-      - uses: actions/checkout@v3
       # checkout with submodules if token is provided
+      - uses: actions/checkout@v3
+        if: ${{ needs.check_submodule_token.outputs.has_token == 'true' &&  contains (inputs.job-name,'-ee')  }}
+        with:
+          submodules: ${{ inputs.ee }}
+          token: ${{ secrets.SUBMODULES_TOKEN }}
+      # else checkout without submodules if the token is not provided
+      - uses: actions/checkout@v3
+        if: ${{ needs.check_submodule_token.outputs.has_token != 'true' }}
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/setup-redis-cluster
       - uses: mansagroup/nrwl-nx-action@v3
@@ -63,11 +84,27 @@ jobs:
       - name: Build API
         run: CI='' pnpm build:api
 
+      - name: Build Submodules
+        if: ${{ needs.check_submodule_token.outputs.has_token != 'true' }}
+        run: CI='' pnpm build:submodules
+
       - name: Run E2E tests
         env:
           LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
         run: |
           cd apps/api && pnpm test:e2e
+
+      - uses: mansagroup/nrwl-nx-action@v3
+        name: Run E2E EE tests
+        if: ${{ inputs.test-e2e-ee-affected == 'true' &&  contains (inputs.job-name,'-ee')  }}
+        env:
+          LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
+          GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
+          GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
+          CI_EE_TEST: true
+        with:
+          targets: test:e2e:ee
+          projects: ${{matrix.projectName}}
 
       - name: Kill port for worker 1342 for unit tests
         run: sudo kill -9 $(sudo lsof -t -i:1342)
@@ -76,4 +113,3 @@ jobs:
         run: |
           cd apps/api && pnpm test
           
-  

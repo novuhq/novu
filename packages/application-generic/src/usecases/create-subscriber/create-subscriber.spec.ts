@@ -7,30 +7,29 @@ import { CreateSubscriberCommand } from './create-subscriber.command';
 
 import {
   CacheService,
+  CacheInMemoryProviderService,
   InMemoryProviderEnum,
   InMemoryProviderService,
   InvalidateCacheService,
 } from '../../services';
 import { UpdateSubscriber } from '../update-subscriber';
 
-const inMemoryProviderService = {
-  provide: InMemoryProviderService,
-  useFactory: async (): Promise<InMemoryProviderService> => {
-    const inMemoryProvider = new InMemoryProviderService(
-      InMemoryProviderEnum.REDIS
-    );
+const cacheInMemoryProviderService = {
+  provide: CacheInMemoryProviderService,
+  useFactory: async (): Promise<CacheInMemoryProviderService> => {
+    const cacheInMemoryProvider = new CacheInMemoryProviderService();
 
-    return inMemoryProvider;
+    return cacheInMemoryProvider;
   },
 };
 
 const cacheService = {
   provide: CacheService,
   useFactory: async () => {
-    const factoryInMemoryProviderService =
-      await inMemoryProviderService.useFactory();
+    const factoryCacheInMemoryProviderService =
+      await cacheInMemoryProviderService.useFactory();
 
-    const service = new CacheService(factoryInMemoryProviderService);
+    const service = new CacheService(factoryCacheInMemoryProviderService);
     await service.initialize();
 
     return service;
@@ -44,7 +43,7 @@ describe('Create Subscriber', function () {
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
       imports: [SubscriberRepository, InvalidateCacheService],
-      providers: [UpdateSubscriber, inMemoryProviderService, cacheService],
+      providers: [UpdateSubscriber, cacheInMemoryProviderService, cacheService],
     }).compile();
 
     session = new UserSession();

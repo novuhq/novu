@@ -4,6 +4,9 @@ import { IntegrationEntity } from '@novu/dal';
 import { DiscordHandler } from './handlers/discord.handler';
 import { MSTeamsHandler } from './handlers/msteams.handler';
 import { MattermostHandler } from './handlers/mattermost.handler';
+import { GrafanaOnCallHandler } from './handlers/grafana-on-call.handler';
+import { RyverHandler } from './handlers/ryver.handler';
+import { ZulipHandler } from './handlers/zulip.handler';
 
 export class ChatFactory implements IChatFactory {
   handlers: IChatHandler[] = [
@@ -11,6 +14,9 @@ export class ChatFactory implements IChatFactory {
     new DiscordHandler(),
     new MSTeamsHandler(),
     new MattermostHandler(),
+    new RyverHandler(),
+    new ZulipHandler(),
+    new GrafanaOnCallHandler(),
   ];
 
   getHandler(integration: IntegrationEntity) {

@@ -149,7 +149,9 @@ export class MapTriggerRecipients {
 
   public mapSubscriber(
     subscriber: TriggerRecipientSubscriber
-  ): ISubscribersDefine {
+  ): ISubscribersDefine | null {
+    if (!subscriber) return null;
+
     if (typeof subscriber === 'string') {
       return { subscriberId: subscriber };
     }

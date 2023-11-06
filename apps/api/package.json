@@ -1,6 +1,6 @@
 {
   "name": "@novu/api",
-  "version": "0.20.0",
+  "version": "0.21.0",
   "description": "description",
   "author": "",
   "private": "true",
@@ -26,6 +26,7 @@
     "migration": "cross-env NODE_ENV=local MIGRATION=true ts-node --transpileOnly ./migrations/expire-at/expire-at.migration.ts",
     "migration:in-app": "cross-env NODE_ENV=local MIGRATION=true ts-node --transpileOnly ./migrations/integration-scheme-update/add-primary-priority-migration.ts",
     "migration:primary-provider": "cross-env NODE_ENV=local MIGRATION=true ts-node --transpileOnly ./migrations/integration-scheme-update/add-primary-priority-migration.ts",
+    "link:submodules": "pnpm link ../../enterprise/packages/auth",
     "admin:remove-user-account": "cross-env NODE_ENV=local MIGRATION=true ts-node --transpileOnly ./admin/remove-user-account.ts",
     "admin:remove-organization": "cross-env NODE_ENV=local MIGRATION=true ts-node --transpileOnly ./admin/remove-organization.ts"
   },
@@ -40,12 +41,12 @@
     "@nestjs/platform-express": "^10.2.2",
     "@nestjs/swagger": "^7.1.8",
     "@nestjs/terminus": "^10.0.1",
-    "@novu/application-generic": "^0.20.0",
-    "@novu/dal": "^0.20.0",
-    "@novu/node": "^0.20.0",
-    "@novu/shared": "^0.20.0",
-    "@novu/stateless": "^0.20.0",
-    "@novu/testing": "^0.20.0",
+    "@novu/application-generic": "^0.21.0",
+    "@novu/dal": "^0.21.0",
+    "@novu/node": "^0.21.0",
+    "@novu/shared": "^0.21.0",
+    "@novu/stateless": "^0.21.0",
+    "@novu/testing": "^0.21.0",
     "@sendgrid/mail": "^7.6.0",
     "@sentry/hub": "^7.40.0",
     "@sentry/node": "^7.40.0",
@@ -110,9 +111,6 @@
     "ts-node": "~10.9.1",
     "tsconfig-paths": "~4.1.0",
     "typescript": "4.9.5"
-  },
-  "optionalDependencies": {
-    "@novu/ee-auth": "^0.19.0"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
