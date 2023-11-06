@@ -53,6 +53,11 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       authenticateByToken: Schema.Types.Boolean,
       authenticationTokenKey: Schema.Types.String,
       instanceId: Schema.Types.String,
+      alertUid: Schema.Types.String,
+      title: Schema.Types.String,
+      imageUrl: Schema.Types.String,
+      state: Schema.Types.String,
+      externalLink: Schema.Types.String,
     },
     active: {
       type: Schema.Types.Boolean,

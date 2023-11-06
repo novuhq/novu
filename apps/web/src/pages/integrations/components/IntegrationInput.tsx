@@ -2,7 +2,7 @@ import { useMantineTheme } from '@mantine/core';
 import styled from '@emotion/styled';
 import { CredentialsKeyEnum, IConfigCredentials, secureCredentials } from '@novu/shared';
 
-import { Input, PasswordInput, Switch, Textarea, Text, Tooltip } from '@novu/design-system';
+import { Input, PasswordInput, Switch, Textarea, Text, Tooltip, Select } from '@novu/design-system';
 import { IntegrationSecretTextarea } from './IntegrationSecretTextarea';
 
 const SwitchWrapper = styled.div`
@@ -63,6 +63,23 @@ export function IntegrationInput({
         {...register?.(credential.key, {
           required: credential.required && `Please enter a ${credential.displayName.toLowerCase()}`,
         })}
+      />
+    );
+  }
+
+  if (credential.type === 'dropdown') {
+    return (
+      <Select
+        {...field}
+        label={credential.displayName}
+        required={credential.required}
+        description={credential.description}
+        data-test-id={credential.key}
+        error={errors[credential.key]?.message}
+        data={credential.dropdown?.map((item) => ({
+          label: item.name,
+          value: item.value,
+        }))}
       />
     );
   }
