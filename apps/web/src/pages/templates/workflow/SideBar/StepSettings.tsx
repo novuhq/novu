@@ -13,8 +13,6 @@ import { ShouldStopOnFailSwitch } from '../ShouldStopOnFailSwitch';
 import { ReplyCallback, ReplyCallbackSwitch } from '../ReplyCallback';
 import { When } from '../../../../components/utils/When';
 import { FilterModal } from '../../filter/FilterModal';
-import { FilterGradient } from '../../../../design-system/icons/gradient/FilterGradient';
-import { FilterOutlined } from '../../../../design-system/icons/gradient/FilterOutlined';
 
 export function StepSettings({ index }: { index: number }) {
   const { readonly } = useEnvController();
