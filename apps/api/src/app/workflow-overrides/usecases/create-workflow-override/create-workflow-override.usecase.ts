@@ -34,6 +34,10 @@ export class CreateWorkflowOverride {
   private async extractEntities(
     command: CreateWorkflowOverrideCommand
   ): Promise<{ tenant: TenantEntity; workflow: NotificationTemplateEntity }> {
+    if (!command.triggerIdentifier && !command._workflowId) {
+      throw new BadRequestException(`Either triggerIdentifier or _workflowId must be provided`);
+    }
+
     const tenant = await this.tenantRepository.findOne({
       _environmentId: command.environmentId,
       identifier: command.tenantIdentifier,
@@ -45,39 +49,22 @@ export class CreateWorkflowOverride {
 
     let workflow: NotificationTemplateEntity | null = null;
 
-    if (!command.triggerIdentifier && !command._workflowId) {
-      throw new BadRequestException(`Either triggerIdentifier or _workflowId must be provided`);
-    }
-
     if (command.triggerIdentifier) {
       workflow = await this.notificationTemplateRepository.findByTriggerIdentifier(
         command.environmentId,
         command.triggerIdentifier
       );
-
-      if (!workflow) {
-        throw new NotFoundException(`Workflow with identifier ${command.triggerIdentifier} is not found`);
-      }
-
-      return { tenant, workflow };
-    }
-
-    if (command._workflowId) {
+    } else if (command._workflowId) {
       workflow = await this.notificationTemplateRepository.findOne({
         _environmentId: command.environmentId,
         _id: command._workflowId,
       });
-
-      if (!workflow) {
-        throw new NotFoundException(`Workflow with _workflowId ${command._workflowId} is not found`);
-      }
     }
 
     if (!workflow) {
-      throw new Error(
-        `Unexpected error: workflow is not found` +
-          JSON.stringify({ triggerIdentifier: command.triggerIdentifier, _workflowId: command._workflowId })
-      );
+      const triggerIdentifier = command.triggerIdentifier ? ` trigger identifier ${command.triggerIdentifier}` : '';
+      const workflowId = command._workflowId ? ` trigger identifier ${command._workflowId}` : '';
+      throw new Error(`Unexpected error: workflow is not found` + triggerIdentifier + workflowId);
     }
 
     return { tenant, workflow };
