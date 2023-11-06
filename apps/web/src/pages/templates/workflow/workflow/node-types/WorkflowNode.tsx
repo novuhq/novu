@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import { Divider, useMantineColorScheme } from '@mantine/core';
+import { Divider, Group, useMantineColorScheme } from '@mantine/core';
 import { ChannelTypeEnum, providers, StepTypeEnum } from '@novu/shared';
 import React, { MouseEventHandler, useEffect, useState } from 'react';
 import { useViewport } from 'react-flow-renderer';
@@ -13,6 +13,7 @@ import {
   Text,
   useTemplateButtonStyles,
   VariantsFile,
+  ErrorIcon,
 } from '@novu/design-system';
 import { useSegment } from '../../../../../components/providers/SegmentProvider';
 import { When } from '../../../../../components/utils/When';
@@ -22,7 +23,7 @@ import { CHANNEL_TYPE_TO_STRING } from '../../../../../utils/channels';
 import { useSelectPrimaryIntegrationModal } from '../../../../integrations/components/multi-provider/useSelectPrimaryIntegrationModal';
 import { IntegrationsListModal } from '../../../../integrations/IntegrationsListModal';
 import { TemplateEditorAnalyticsEnum } from '../../../constants';
-import { getFormattedStepErrors } from '../../../shared/errors';
+import { getFormattedStepErrors, hasGroupError } from '../../../shared/errors';
 import { DisplayPrimaryProviderIcon } from '../../DisplayPrimaryProviderIcon';
 import { NodeErrorPopover } from '../../NodeErrorPopover';
 import { NODE_ERROR_TYPES } from './utils';
@@ -122,9 +123,10 @@ export function WorkflowNode({
   } = useFormContext();
 
   let stepErrorContent = initialErrors;
-
+  let showGroupError = false;
   if (typeof index === 'number') {
     stepErrorContent = getFormattedStepErrors(index, errors);
+    showGroupError = isStepRoot && hasGroupError(index, errors);
   }
 
   const showMenu = !readonlyEnv && !dragging && hover;
@@ -172,28 +174,52 @@ export function WorkflowNode({
       >
         <WorkflowNodeWrapper>
           <When truthy={isStepRoot}>
-            <ActionWrapper>
-              <IconText
-                color={colors.B60}
-                Icon={VariantsFile}
-                label={
-                  <>
-                    {variantsCount} <span style={{ fontSize: '12px' }}>variants</span>
-                  </>
-                }
-                data-test-id="variants-count"
-              />
-              <WorkflowNodeActions
-                nodeType={nodeType}
-                showMenu={showMenu}
-                menuPosition={menuPosition}
-                conditionsCount={conditionsCount}
-                onEdit={onEdit}
-                onAddConditions={onAddConditions}
-                onAddVariant={onAddVariant}
-                onDelete={onDelete}
-              />
-            </ActionWrapper>
+            <NodeErrorPopover
+              withinPortal
+              opened={popoverOpened && showGroupError}
+              transition="rotate-left"
+              transitionDuration={250}
+              offset={theme.spacing.xs}
+              positionDependencies={[dragging, viewport]}
+              clickOutsideEvents={MENU_CLICK_OUTSIDE_EVENTS}
+              target={
+                <ActionWrapper showGroupError={showGroupError}>
+                  {showGroupError ? (
+                    <Group spacing={4} position="left" noWrap>
+                      <ErrorIcon color={colors.error} width="16px" height="16px" />
+                      <Text color={colors.error} rows={1} weight="bold">
+                        Some variants contain errors
+                      </Text>
+                    </Group>
+                  ) : (
+                    <IconText
+                      color={colors.B60}
+                      Icon={VariantsFile}
+                      label={
+                        <>
+                          {variantsCount} <span style={{ fontSize: '12px' }}>variants</span>
+                        </>
+                      }
+                      data-test-id="variants-count"
+                    />
+                  )}
+                  <WorkflowNodeActions
+                    nodeType={nodeType}
+                    showMenu={showMenu}
+                    menuPosition={menuPosition}
+                    conditionsCount={conditionsCount}
+                    onEdit={onEdit}
+                    onAddConditions={onAddConditions}
+                    onAddVariant={onAddVariant}
+                    onDelete={onDelete}
+                  />
+                </ActionWrapper>
+              }
+              position="left"
+              title="The group contains error!"
+              content="Some variants contain errors that may cause notification failure."
+            />
+
             <Divider
               ml={-7}
               mr={-7}
@@ -403,10 +429,19 @@ const ErrorCircle = styled.div<{ dark: boolean; alignment: 'left' | 'right' }>`
   border: 3px solid ${({ dark }) => (dark ? colors.B15 : 'white')};
 `;
 
-const ActionWrapper = styled.div`
+const ActionWrapper = styled.div<{ showGroupError?: boolean }>`
   display: flex;
-  height: 28px;
-  margin: 4px 0 4px 4px;
+  align-items: center;
+  height: 40px;
+  padding: 4px 12px;
+  border-top-right-radius: 7px;
+  border-top-left-radius: 7px;
+  ${({ showGroupError }) =>
+    showGroupError
+      ? `
+      background: linear-gradient(0deg, rgba(229, 69, 69, 0.20) 0%, rgba(229, 69, 69, 0.20) 100%), #23232B;
+      color:${colors.error};`
+      : ''}
 `;
 
 const ActionTopWrapper = styled(ActionWrapper)`
@@ -417,8 +452,8 @@ const BodyWrapper = styled.div`
   display: flex;
   flex: 1 1 auto;
   gap: 16px;
-  height: 100%;
-  margin-left: 12px;
+  height: 80px;
+  padding: 20px;
   align-items: center;
 `;
 

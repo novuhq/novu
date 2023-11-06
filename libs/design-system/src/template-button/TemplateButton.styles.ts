@@ -22,8 +22,6 @@ export const useTemplateButtonStyles = createStyles((theme) => {
       height: '80px',
       width: '100%',
       margin: '0px',
-      padding: '0 8px',
-      paddingRight: '10px',
       backgroundColor: dark ? colors.B17 : colors.B98,
       borderRadius: '7px',
       fontWeight: 700,

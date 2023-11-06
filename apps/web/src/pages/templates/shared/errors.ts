@@ -107,3 +107,10 @@ export function formatErrorMessage(errorsArray: string[]): string {
 
   return uniqueErrors.join('');
 }
+
+export function hasGroupError(stepIndex: number, errors?: FieldErrors<IForm>): boolean {
+  const stepErrors = getStepErrors(stepIndex, errors);
+  const variantErrors = getVariantErrors(stepIndex, errors);
+
+  return stepErrors?.length > 0 || variantErrors?.length > 0;
+}

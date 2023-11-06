@@ -16,5 +16,4 @@ export enum NODE_ERROR_TYPES {
   MISSING_PROVIDER = 'missing_provider',
   MISSING_PRIMARY_PROVIDER = 'missing_primary_provider',
   TEMPLATE_ERROR = 'template_error',
-  NO_ERROR = 'no_error',
 }
