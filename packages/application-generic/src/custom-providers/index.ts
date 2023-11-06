@@ -1,14 +1,14 @@
 import {
   AnalyticsService,
   BullMqService,
+  CacheInMemoryProviderService,
   CacheService,
   DistributedLockService,
   FeatureFlagsService,
-  InMemoryProviderEnum,
-  InMemoryProviderService,
   ReadinessService,
   OldInstanceBullMqService,
   StandardQueueService,
+  SubscriberProcessQueueService,
   WebSocketsQueueService,
   WorkflowQueueService,
 } from '../services';
@@ -16,7 +16,6 @@ import {
   GetIsTopicNotificationEnabled,
   GetUseMergedDigestId,
 } from '../usecases';
-import { SubscriberProcessQueueService } from '../services/queues/subscriber-process-queue.service';
 
 export const featureFlagsService = {
   provide: FeatureFlagsService,
@@ -52,13 +51,10 @@ export const getIsTopicNotificationEnabled = {
   inject: [FeatureFlagsService],
 };
 
-export const inMemoryProviderService = {
-  provide: InMemoryProviderService,
-  useFactory: (
-    provider: InMemoryProviderEnum,
-    enableAutoPipelining?: boolean
-  ): InMemoryProviderService => {
-    return new InMemoryProviderService(provider, enableAutoPipelining);
+export const cacheInMemoryProviderService = {
+  provide: CacheInMemoryProviderService,
+  useFactory: (): CacheInMemoryProviderService => {
+    return new CacheInMemoryProviderService();
   },
 };
 
@@ -87,14 +83,10 @@ export const oldInstanceBullMqService = {
 export const cacheService = {
   provide: CacheService,
   useFactory: async (): Promise<CacheService> => {
-    const enableAutoPipelining =
-      process.env.REDIS_CACHE_ENABLE_AUTOPIPELINING === 'false';
-    const factoryInMemoryProviderService = inMemoryProviderService.useFactory(
-      InMemoryProviderEnum.ELASTICACHE,
-      enableAutoPipelining
-    );
+    const factoryCacheInMemoryProviderService =
+      cacheInMemoryProviderService.useFactory();
 
-    const service = new CacheService(factoryInMemoryProviderService);
+    const service = new CacheService(factoryCacheInMemoryProviderService);
 
     await service.initialize();
 
@@ -115,11 +107,12 @@ export const analyticsService = {
 export const distributedLockService = {
   provide: DistributedLockService,
   useFactory: async (): Promise<DistributedLockService> => {
-    const factoryInMemoryProviderService = inMemoryProviderService.useFactory(
-      InMemoryProviderEnum.ELASTICACHE
-    );
+    const factoryCacheInMemoryProviderService =
+      cacheInMemoryProviderService.useFactory();
 
-    const service = new DistributedLockService(factoryInMemoryProviderService);
+    const service = new DistributedLockService(
+      factoryCacheInMemoryProviderService
+    );
 
     await service.initialize();
 

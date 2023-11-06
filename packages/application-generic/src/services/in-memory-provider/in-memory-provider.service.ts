@@ -16,12 +16,9 @@ import {
   ScanStream,
 } from './types';
 
-import { GetIsInMemoryClusterModeEnabled } from '../../usecases';
-
 const LOG_CONTEXT = 'InMemoryProviderService';
 
 export class InMemoryProviderService {
-  private getIsInMemoryClusterModeEnabled: GetIsInMemoryClusterModeEnabled;
   public inMemoryProviderClient: InMemoryProviderClient;
   public inMemoryProviderConfig: InMemoryProviderConfig;
 
@@ -29,15 +26,13 @@ export class InMemoryProviderService {
 
   constructor(
     private provider: InMemoryProviderEnum,
+    private isCluster: boolean,
     private enableAutoPipelining?: boolean
   ) {
     Logger.log(
       this.descriptiveLogMessage('In-memory provider service initialized'),
       LOG_CONTEXT
     );
-
-    this.getIsInMemoryClusterModeEnabled =
-      new GetIsInMemoryClusterModeEnabled();
     this.inMemoryProviderClient = this.buildClient(provider);
   }
 
@@ -45,7 +40,7 @@ export class InMemoryProviderService {
     selected: InMemoryProviderEnum;
     configured: InMemoryProviderEnum;
   } {
-    const config = this.isClusterMode()
+    const config = this.isCluster
       ? getClientAndConfigForCluster(this.provider)
       : getClientAndConfig();
 
@@ -55,7 +50,7 @@ export class InMemoryProviderService {
     };
   }
 
-  private descriptiveLogMessage(message) {
+  protected descriptiveLogMessage(message) {
     return `[Provider: ${this.provider}] ${message}`;
   }
 
@@ -65,9 +60,7 @@ export class InMemoryProviderService {
       return this.oldInstanceInMemoryProviderSetup();
     }
 
-    const isClusterMode = this.isClusterMode();
-
-    return isClusterMode
+    return this.isCluster
       ? this.inMemoryClusterProviderSetup(provider)
       : this.inMemoryProviderSetup();
   }
@@ -114,24 +107,8 @@ export class InMemoryProviderService {
     return this.isProviderClientReady(this.getStatus());
   }
 
-  public isClusterMode(): boolean {
-    const isClusterModeEnabled = this.getIsInMemoryClusterModeEnabled.execute();
-
-    Logger.log(
-      this.descriptiveLogMessage(
-        `Cluster mode ${
-          isClusterModeEnabled ? 'is' : 'is not'
-        } enabled for InMemoryProviderService`
-      ),
-      LOG_CONTEXT
-    );
-
-    return isClusterModeEnabled;
-  }
-
   public getClusterOptions(): ClusterOptions | undefined {
-    const isClusterMode = this.isClusterMode();
-    if (this.inMemoryProviderClient && isClusterMode) {
+    if (this.inMemoryProviderClient && this.isCluster) {
       return this.inMemoryProviderClient.options;
     }
   }
@@ -140,7 +117,7 @@ export class InMemoryProviderService {
     if (this.inMemoryProviderClient) {
       if (
         this.provider === InMemoryProviderEnum.OLD_INSTANCE_REDIS ||
-        !this.isClusterMode()
+        !this.isCluster
       ) {
         const options: RedisOptions = this.inMemoryProviderClient.options;
 
@@ -404,7 +381,7 @@ export class InMemoryProviderService {
   }
 
   public inMemoryScan(pattern: string): ScanStream {
-    if (this.isClusterMode()) {
+    if (this.isCluster) {
       const client = this.inMemoryProviderClient as Cluster;
 
       return client.sscanStream(pattern);

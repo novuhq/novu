@@ -55,6 +55,7 @@
     "release:minor": "lerna version minor --no-push",
     "release:preminor": "lerna version preminor --no-push",
     "release:prerelease": "lerna version prerelease --no-push",
+    "release:submodules": "ts-node scripts/release-with-submodules.ts",
     "start:integration:api": "cd apps/api && pnpm run test",
     "start:e2e:api": "cd apps/api && pnpm run test:e2e",
     "g:module": "hygen module new --name=$npm_config_name",
@@ -64,7 +65,11 @@
     "get-packages-folder": "node scripts/get-packages-folder.mjs",
     "jarvis": "node scripts/jarvis.js",
     "dev-environment-setup": "sh ./scripts/dev-environment-setup.sh",
-    "get-affected": "node scripts/print-affected-array.mjs"
+    "get-affected": "node scripts/print-affected-array.mjs",
+    "install:with-submodules": "pnpm install && pnpm install:submodules && pnpm link:submodules",
+    "build:submodules": "nx run-many --target=ee-build --all",
+    "install:submodules": "cd enterprise && pnpm install",
+    "link:submodules": "nx run-many --target=link:submodules --all"
   },
   "devDependencies": {
     "@auto-it/npm": "^10.36.5",
@@ -83,7 +88,7 @@
     "@octokit/core": "^4.0.0",
     "@pnpm/filter-workspace-packages": "^7.0.6",
     "@pnpm/logger": "^5.0.0",
-    "@types/inquirer": "8.2.7",
+    "@types/inquirer": "8.2.9",
     "@types/jest": "29.5.2",
     "@types/node": "16.11.7",
     "@typescript-eslint/eslint-plugin": "^5.50.0",
@@ -145,6 +150,7 @@
       "libs/*",
       "packages/*",
       "enterprise/packages/*",
+      "enterprise/packages/*/*",
       "packages/notification-center-angular/projects/*",
       "providers/*"
     ]

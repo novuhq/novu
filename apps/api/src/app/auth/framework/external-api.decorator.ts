@@ -1,4 +1,3 @@
-import { SetMetadata } from '@nestjs/common';
+import { ExternalApiAccessible } from '@novu/application-generic';
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export const ExternalApiAccessible = () => SetMetadata('external_api_accessible', true);
+export { ExternalApiAccessible };

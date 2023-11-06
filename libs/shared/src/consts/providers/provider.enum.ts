@@ -34,7 +34,15 @@ export enum CredentialsKeyEnum {
   AuthenticateByToken = 'authenticateByToken',
   AuthenticationTokenKey = 'authenticationTokenKey',
   AccessKey = 'accessKey',
+  InstanceId = 'instanceId',
   ApiToken = 'apiToken',
+  ApiURL = 'apiURL',
+  AppID = 'appID',
+  alertUid = 'alertUid',
+  title = 'title',
+  imageUrl = 'imageUrl',
+  state = 'state',
+  externalLink = 'externalLink',
 }
 
 export enum EmailProviderIdEnum {
@@ -58,6 +66,7 @@ export enum EmailProviderIdEnum {
   Novu = 'novu-email',
   SparkPost = 'sparkpost',
   EmailWebhook = 'email-webhook',
+  Braze = 'braze',
 }
 
 export enum SmsProviderIdEnum {
@@ -86,7 +95,7 @@ export enum SmsProviderIdEnum {
   Bandwidth = 'bandwidth',
   MessageBird = 'messagebird',
   Simpletexting = 'simpletexting',
-  AzureSms = 'azureSms',
+  AzureSms = 'azure-sms',
 }
 
 export enum ChatProviderIdEnum {
@@ -96,6 +105,7 @@ export enum ChatProviderIdEnum {
   Mattermost = 'mattermost',
   Ryver = 'ryver',
   Zulip = 'zulip',
+  GrafanaOnCall = 'grafana-on-call',
 }
 
 export enum PushProviderIdEnum {
@@ -105,6 +115,7 @@ export enum PushProviderIdEnum {
   OneSignal = 'one-signal',
   Pushpad = 'pushpad',
   PushWebhook = 'push-webhook',
+  PusherBeams = 'pusher-beams',
 }
 
 export enum InAppProviderIdEnum {
