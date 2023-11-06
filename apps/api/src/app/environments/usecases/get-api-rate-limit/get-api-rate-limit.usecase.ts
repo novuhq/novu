@@ -15,7 +15,7 @@ export class GetApiRateLimit {
   ) {}
 
   async execute(command: GetApiRateLimitCommand): Promise<number> {
-    return await this.fetchApiRateLimit({
+    return await this.getApiRateLimit({
       apiRateLimitCategory: command.apiRateLimitCategory,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
@@ -29,7 +29,7 @@ export class GetApiRateLimit {
         apiRateLimitCategory: command.apiRateLimitCategory,
       }),
   })
-  private async fetchApiRateLimit({
+  private async getApiRateLimit({
     apiRateLimitCategory,
     _environmentId,
     _organizationId,
