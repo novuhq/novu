@@ -39,6 +39,10 @@ import {
   UpdateWorkflowOverrideRequestDto,
   UpdateWorkflowOverrideResponseDto,
 } from './dto';
+import { GetWorkflowOverrideById } from './usecases/get-workflow-override-by-id/get-workflow-override-by-id.usecase';
+import { GetWorkflowOverrideByIdCommand } from './usecases/get-workflow-override-by-id/get-workflow-override-by-id.command';
+import { UpdateWorkflowOverrideByIdCommand } from './usecases/update-workflow-override-by-id/update-workflow-override-by-id.command';
+import { UpdateWorkflowOverrideById } from './usecases/update-workflow-override-by-id/update-workflow-override-by-id.usecase';
 
 @Controller('/workflow-overrides')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -48,7 +52,9 @@ export class WorkflowOverridesController {
   constructor(
     private createWorkflowOverrideUsecase: CreateWorkflowOverride,
     private updateWorkflowOverrideUsecase: UpdateWorkflowOverride,
+    private updateWorkflowOverrideByIdUsecase: UpdateWorkflowOverrideById,
     private getWorkflowOverrideUsecase: GetWorkflowOverride,
+    private getWorkflowOverrideByIdUsecase: GetWorkflowOverrideById,
     private deleteWorkflowOverrideUsecase: DeleteWorkflowOverride,
     private getWorkflowOverridesUsecase: GetWorkflowOverrides
   ) {}
@@ -80,6 +86,30 @@ export class WorkflowOverridesController {
     );
   }
 
+  @Put('/:overrideId')
+  @UseGuards(RootEnvironmentGuard)
+  @ApiResponse(UpdateWorkflowOverrideResponseDto)
+  @ApiOperation({
+    summary: 'Update workflow override by id',
+  })
+  @ExternalApiAccessible()
+  updateWorkflowOverrideById(
+    @UserSession() user: IJwtPayload,
+    @Body() body: UpdateWorkflowOverrideRequestDto,
+    @Param('overrideId') overrideId: string
+  ): Promise<UpdateWorkflowOverrideResponseDto> {
+    return this.updateWorkflowOverrideByIdUsecase.execute(
+      UpdateWorkflowOverrideByIdCommand.create({
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+        userId: user._id,
+        active: body.active,
+        preferenceSettings: body.preferenceSettings,
+        overrideId: overrideId,
+      })
+    );
+  }
+
   @Put('/workflows/:workflowId/tenants/:tenantIdentifier')
   @UseGuards(RootEnvironmentGuard)
   @ApiResponse(UpdateWorkflowOverrideResponseDto)
@@ -102,6 +132,27 @@ export class WorkflowOverridesController {
         preferenceSettings: body.preferenceSettings,
         tenantIdentifier: tenantIdentifier,
         _workflowId: workflowId,
+      })
+    );
+  }
+
+  @Get('/:overrideId')
+  @UseGuards(RootEnvironmentGuard)
+  @ApiResponse(GetWorkflowOverrideResponseDto)
+  @ApiOperation({
+    summary: 'Get workflow override by id',
+  })
+  @ExternalApiAccessible()
+  getWorkflowOverrideById(
+    @UserSession() user: IJwtPayload,
+    @Param('overrideId') overrideId: string
+  ): Promise<GetWorkflowOverrideResponseDto> {
+    return this.getWorkflowOverrideByIdUsecase.execute(
+      GetWorkflowOverrideByIdCommand.create({
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+        userId: user._id,
+        overrideId: overrideId,
       })
     );
   }

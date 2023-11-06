@@ -168,6 +168,7 @@ describe('Update Workflow Override - /workflow-overrides/workflows/:workflowId/t
     };
 
     const overrides = (await session.testAgent.post('/v1/workflow-overrides').send(payload)).body.data;
+
     return { tenant, workflow, overrides };
   }
 });
