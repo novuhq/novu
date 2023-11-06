@@ -6,6 +6,7 @@ import { CreateNotificationTemplate } from './create-notification-template';
 import { GetNotificationTemplate } from './get-notification-template/get-notification-template.usecase';
 import { DeleteNotificationTemplate } from './delete-notification-template/delete-notification-template.usecase';
 import { CreateWorkflowOverride } from './create-workflow-override/create-workflow-override.usecase';
+import { UpdateWorkflowOverride } from './update-workflow-override/update-workflow-override.usecase';
 
 export const USE_CASES = [
   GetActiveIntegrationsStatus,
@@ -16,4 +17,5 @@ export const USE_CASES = [
   GetNotificationTemplate,
   DeleteNotificationTemplate,
   CreateWorkflowOverride,
+  UpdateWorkflowOverride,
 ];

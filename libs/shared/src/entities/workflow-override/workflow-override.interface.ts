@@ -28,7 +28,7 @@ export interface IWorkflowOverride {
 
   deletedBy?: string;
 
-  createdAt?: string;
+  createdAt: string;
 
   updatedAt?: string;
 }
