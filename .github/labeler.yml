@@ -8,12 +8,12 @@
   - apps/ws/**/*
 '@novu/inbound-mail':
   - apps/inbound-mail/**/*
-'documentation':
-  - docs/**/*
 '@novu/webhook':
   - apps/webhook/**/*
 '@novu/dal':
   - libs/dal/**/*
+'@novu/design-system':
+  - libs/design-system/**/*
 '@novu/shared':
   - libs/shared/**/*
 '@novu/notification-center':

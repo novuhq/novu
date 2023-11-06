@@ -1,8 +1,7 @@
 import { Group, Stack, useMantineColorScheme } from '@mantine/core';
 import { ChannelTypeEnum } from '@novu/shared';
 
-import { ErrorIcon } from '../../../../design-system/icons';
-import { colors, Text } from '../../../../design-system';
+import { ErrorIcon, colors, Text } from '@novu/design-system';
 import { LimitBar } from '../LimitBar';
 import { useIntegrationLimit } from '../../../../hooks';
 import type { IIntegratedProvider } from '../../types';

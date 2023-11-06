@@ -9,14 +9,20 @@ import {
   inAppProviders,
   chatProviders,
   InAppProviderIdEnum,
-  NOVU_SMS_EMAIL_PROVIDERS,
 } from '@novu/shared';
 
-import { colors, Sidebar } from '../../../../design-system';
-import { Button, Input, Title, Tooltip, Text } from '../../../../design-system';
-import { getGradient } from '../../../../design-system/config/helper';
-import { Search } from '../../../../design-system/icons';
-import useStyles from '../../../../design-system/tabs/Tabs.styles';
+import {
+  colors,
+  Sidebar,
+  Button,
+  Input,
+  Title,
+  Tooltip,
+  Text,
+  getGradient,
+  Search,
+  useTabsStyles,
+} from '@novu/design-system';
 import { useDebounce } from '../../../../hooks';
 import { ChannelTitle } from '../../../templates/components/ChannelTitle';
 import type { IIntegratedProvider } from '../../types';
@@ -27,19 +33,18 @@ import { sortProviders } from './sort-providers';
 import { When } from '../../../../components/utils/When';
 import { CONTEXT_PATH } from '../../../../config';
 import { useProviders } from '../../useProviders';
+import { HEADER_HEIGHT } from '../../../../components/layout/constants';
 
 const filterSearch = (list, search: string) =>
   list.filter((prov) => prov.displayName.toLowerCase().includes(search.toLowerCase()));
 
 const mapStructure = (listProv): IIntegratedProvider[] =>
-  listProv
-    .filter((providerItem) => !NOVU_SMS_EMAIL_PROVIDERS.includes(providerItem.id))
-    .map((providerItem) => ({
-      providerId: providerItem.id,
-      displayName: providerItem.displayName,
-      channel: providerItem.channel,
-      docReference: providerItem.docReference,
-    }));
+  listProv.map((providerItem) => ({
+    providerId: providerItem.id,
+    displayName: providerItem.displayName,
+    channel: providerItem.channel,
+    docReference: providerItem.docReference,
+  }));
 
 const initialProvidersList = {
   [ChannelTypeEnum.EMAIL]: mapStructure(emailProviders),
@@ -78,7 +83,7 @@ export function SelectProviderSidebar({
   }, [integrations]);
 
   const [selectedProvider, setSelectedProvider] = useState<IIntegratedProvider | null>(null);
-  const { classes: tabsClasses } = useStyles(false);
+  const { classes: tabsClasses } = useTabsStyles(false);
 
   const debouncedSearchChange = useDebounce((search: string) => {
     setProvidersList({
@@ -126,6 +131,7 @@ export function SelectProviderSidebar({
     <Sidebar
       isOpened={isOpened}
       isLoading={isIntegrationsLoading}
+      headerHeight={HEADER_HEIGHT}
       onClose={onSidebarClose}
       customHeader={
         <Stack spacing={8}>

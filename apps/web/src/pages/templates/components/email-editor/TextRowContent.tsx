@@ -3,7 +3,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { TextAlignEnum } from '@novu/shared';
 
-import { colors } from '../../../../design-system';
+import { colors } from '@novu/design-system';
 import { useEnvController } from '../../../../hooks';
 import type { IForm } from '../formTypes';
 
@@ -36,6 +36,7 @@ export function TextRowContent({ stepIndex, blockIndex }: { stepIndex: number; b
 
   useEffect(() => {
     checkPlaceholderVisibility();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [content, text]);
 
   return (

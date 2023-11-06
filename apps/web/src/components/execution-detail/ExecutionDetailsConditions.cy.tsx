@@ -1,4 +1,4 @@
-import { ICondition, TimeOperatorEnum } from '@novu/shared';
+import { FieldOperatorEnum, ICondition, TimeOperatorEnum } from '@novu/shared';
 
 import { TestWrapper } from '../../testing';
 import { ExecutionDetailsConditions } from './ExecutionDetailsConditions';
@@ -9,7 +9,7 @@ const conditions: ICondition[] = [
     field: 'test',
     expected: '1000',
     actual: '100000000',
-    operator: 'LARGER',
+    operator: FieldOperatorEnum.LARGER,
     passed: true,
   },
   {
@@ -17,7 +17,7 @@ const conditions: ICondition[] = [
     field: 'isOnline',
     expected: 'true',
     actual: 'true',
-    operator: 'EQUAL',
+    operator: FieldOperatorEnum.EQUAL,
     passed: true,
   },
   {
@@ -33,13 +33,13 @@ const conditions: ICondition[] = [
     field: 'test-key',
     expected: 'test-value',
     actual: 'wrong-value',
-    operator: 'EQUAL',
+    operator: FieldOperatorEnum.EQUAL,
     passed: false,
   },
 ];
 
 describe('Execution Details Condition Component', function () {
-  it('should render ExecutionDetailsCondtions properly', function () {
+  it('should render ExecutionDetailsConditions properly', function () {
     cy.mount(
       <TestWrapper>
         <ExecutionDetailsConditions conditions={conditions} />

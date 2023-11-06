@@ -1,10 +1,10 @@
-import { StepTypeEnum, IWorkflowStepMetadata, JobStatusEnum } from '@novu/shared';
+import { StepTypeEnum, IWorkflowStepMetadata, JobStatusEnum, ITenantDefine } from '@novu/shared';
 import { Types } from 'mongoose';
 
 import { NotificationStepEntity } from '../notification-template';
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
-import type { ChangePropsValueType } from '../../types/helpers';
+import type { ChangePropsValueType } from '../../types';
 
 export { JobStatusEnum };
 
@@ -16,10 +16,12 @@ export class JobEntity {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   overrides: Record<string, Record<string, unknown>>;
   step: NotificationStepEntity;
+  tenant?: ITenantDefine;
   transactionId: string;
   _notificationId: string;
   subscriberId: string;
   _subscriberId: string;
+  _mergedDigestId?: string;
   _environmentId: EnvironmentId;
   _organizationId: OrganizationId;
   providerId?: string;
@@ -38,6 +40,7 @@ export class JobEntity {
   };
   type?: StepTypeEnum;
   _actorId?: string;
+  actorId?: string;
 }
 
 export type JobDBModel = ChangePropsValueType<

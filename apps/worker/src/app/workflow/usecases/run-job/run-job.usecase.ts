@@ -1,3 +1,5 @@
+const nr = require('newrelic');
+
 import { Injectable, Logger } from '@nestjs/common';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
@@ -8,6 +10,8 @@ import { RunJobCommand } from './run-job.command';
 import { QueueNextJob, QueueNextJobCommand } from '../queue-next-job';
 import { SendMessage, SendMessageCommand } from '../send-message';
 import { PlatformException, EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER } from '../../../shared/utils';
+
+const LOG_CONTEXT = 'RunJob';
 
 @Injectable()
 export class RunJob {
@@ -27,24 +31,32 @@ export class RunJob {
       environmentId: command.environmentId,
     });
 
-    const job = await this.jobRepository.findById(command.jobId);
+    const job = await this.jobRepository.findOne({ _id: command.jobId, _environmentId: command.environmentId });
     if (!job) throw new PlatformException(`Job with id ${command.jobId} not found`);
 
     try {
-      this.logger?.assign({
+      const contextData = {
         transactionId: job.transactionId,
         environmentId: job._environmentId,
         organizationId: job._organizationId,
         jobId: job._id,
-      });
+        jobType: job.type,
+      };
+
+      nr.addCustomAttributes(contextData);
+
+      this.logger?.assign(contextData);
     } catch (e) {
-      Logger.error(e, 'RunJob');
+      Logger.error(e, 'RunJob', LOG_CONTEXT);
     }
 
     const canceled = await this.delayedEventIsCanceled(job);
     if (canceled) {
+      Logger.verbose({ canceled }, `Job ${job._id} that had been delayed has been cancelled`, LOG_CONTEXT);
+
       return;
     }
+
     let shouldQueueNextJob = true;
 
     try {
@@ -72,7 +84,10 @@ export class RunJob {
           job,
         })
       );
+
+      await this.jobRepository.updateStatus(job._environmentId, job._id, JobStatusEnum.COMPLETED);
     } catch (error: any) {
+      Logger.error({ error }, `Running job ${job._id} has thrown an error`, LOG_CONTEXT);
       if (job.step.shouldStopOnFail || this.shouldBackoff(error)) {
         shouldQueueNextJob = false;
       }

@@ -16,6 +16,7 @@ const providers: Record<ChannelTypeEnum, ProvidersIdEnum[]> = {
     ChatProviderIdEnum.MsTeams,
     ChatProviderIdEnum.Discord,
     ChatProviderIdEnum.Mattermost,
+    ChatProviderIdEnum.GrafanaOnCall,
   ],
   [ChannelTypeEnum.EMAIL]: [
     EmailProviderIdEnum.SendGrid,
@@ -46,6 +47,8 @@ const providers: Record<ChannelTypeEnum, ProvidersIdEnum[]> = {
     PushProviderIdEnum.APNS,
     PushProviderIdEnum.PushWebhook,
     PushProviderIdEnum.OneSignal,
+    PushProviderIdEnum.Pushpad,
+    PushProviderIdEnum.PusherBeams,
   ],
   [ChannelTypeEnum.SMS]: [
     SmsProviderIdEnum.Twilio,
@@ -67,6 +70,9 @@ const providers: Record<ChannelTypeEnum, ProvidersIdEnum[]> = {
       SmsProviderIdEnum.Termii,
       SmsProviderIdEnum.AfricasTalking,
       SmsProviderIdEnum.Novu,
+      SmsProviderIdEnum.AzureSms,
+      SmsProviderIdEnum.Bandwidth,
+      SmsProviderIdEnum.Simpletexting,
     ].sort(),
   ],
 };

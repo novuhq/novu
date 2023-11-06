@@ -3,14 +3,23 @@ import { ActionIcon, useMantineTheme } from '@mantine/core';
 import type { ILayoutEntity } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
 
 import { deleteLayoutById } from '../../../api/layouts';
 import { QueryKeys } from '../../../api/query.keys';
 import { When } from '../../../components/utils/When';
-import { colors, Text, Tooltip, PlusButton, withCellLoading } from '../../../design-system';
-import { Edit, Trash } from '../../../design-system/icons';
-import { IExtendedColumn, Table } from '../../../design-system/table/Table';
+import {
+  colors,
+  Text,
+  Tooltip,
+  PlusButton,
+  withCellLoading,
+  Edit,
+  Trash,
+  IExtendedColumn,
+  Table,
+} from '@novu/design-system';
 import { useEnvController, useLayouts } from '../../../hooks';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { DeleteConfirmModal } from '../../templates/components/DeleteConfirmModal';
@@ -21,11 +30,12 @@ const enum ActivePageEnum {
   EDIT_LAYOUT = 'edit_layout',
   CREATE_LAYOUT = 'create_layout',
 }
-type LayoutsListPageProps = {
+type LayoutsListPageContext = {
   handleLayoutAnalytics: (event: string, data?: Record<string, unknown>) => void;
 };
 
-export function LayoutsListPage({ handleLayoutAnalytics }: LayoutsListPageProps) {
+export function LayoutsListPage() {
+  const { handleLayoutAnalytics } = useOutletContext<LayoutsListPageContext>();
   const theme = useMantineTheme();
   const queryClient = useQueryClient();
   const { readonly } = useEnvController();
@@ -67,10 +77,10 @@ export function LayoutsListPage({ handleLayoutAnalytics }: LayoutsListPageProps)
     }
   };
 
-  const goBack = async () => {
+  const goBack = useCallback(() => {
     setEditId('');
     setActiveScreen(ActivePageEnum.LAYOUTS_LIST);
-  };
+  }, []);
 
   const editLayout = (id?: string) => {
     if (typeof id === 'undefined') return;

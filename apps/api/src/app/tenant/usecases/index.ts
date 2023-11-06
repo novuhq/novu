@@ -1,6 +1,4 @@
-import { CreateTenant } from './create-tenant/create-tenant.usecase';
-import { GetTenant } from './get-tenant/get-tenant.usecase';
-import { UpdateTenant } from './update-tenant/update-tenant.usecase';
+import { GetTenant, UpdateTenant, CreateTenant } from '@novu/application-generic';
 import { DeleteTenant } from './delete-tenant/delete-tenant.usecase';
 import { GetTenants } from './get-tenants/get-tenants.usecase';
 

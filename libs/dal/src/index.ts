@@ -21,3 +21,5 @@ export * from './repositories/topic';
 export * from './repositories/layout';
 export * from './repositories/tenant';
 export * from './shared';
+export * from './types';
+export * from './repositories/schema-default.options';

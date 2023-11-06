@@ -5,8 +5,8 @@ name: Test E2E WIDGET
 on:
   workflow_call:
     inputs:
-      submodules:
-        description: 'The flag controlling whether we want submodules to checkout'
+      ee:
+        description: 'use the ee version of worker'
         required: false
         default: false
         type: boolean
@@ -40,25 +40,26 @@ jobs:
       - id: setup
         run: |
           if ! [[ -z "${{ secrets.SUBMODULES_TOKEN }}" ]]; then
-            echo ::set-output has_token=true
+            echo "has_token=true" >> $GITHUB_OUTPUT
           else
-            echo ::set-output has_token=false
+            echo "has_token=false" >> $GITHUB_OUTPUT
           fi
       # checkout with submodules if token is provided
       - uses: actions/checkout@v3
         if: steps.setup.outputs.has_token == 'true'
         with:
-          submodules: ${{ inputs.submodules }}
+          submodules: ${{ inputs.ee }}
           token: ${{ secrets.SUBMODULES_TOKEN }}
-       # checkout without submodules
+      # else checkout without submodules if the token is not provided
       - uses: actions/checkout@v3
         if: steps.setup.outputs.has_token != 'true'
-
       - uses: ./.github/actions/setup-project
         id: setup-project
         with:
           cypress_version: 12.9.0
           cypress: true
+      - uses: ./.github/actions/setup-redis-cluster
+
       - uses: mansagroup/nrwl-nx-action@v3
         with:
           targets: lint
@@ -87,7 +88,7 @@ jobs:
           cp apps/ws/src/.env.test apps/ws/dist/src/.env.test
           cd apps/ws && pnpm start:prod &
 
-       - name: Wait on Widget and WS Services
+      - name: Wait on Widget and WS Services
         run: wait-on --timeout=180000 http://localhost:1340/v1/health-check http://localhost:3500
 
       - name: Cypress install
@@ -96,7 +97,7 @@ jobs:
         run: pnpm cypress install
 
       - name: Cypress run
-        uses: cypress-io/github-action@v2
+        uses: cypress-io/github-action@v6
         env:
           NODE_ENV: test
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

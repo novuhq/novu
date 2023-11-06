@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ActionIcon, Tooltip } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
 
-import { Check, Copy } from '../../../../../design-system/icons';
+import { Check, Copy } from '@novu/design-system';
 import { VarItem } from './VarItem';
 
 export const VarItemTooltip = ({ pathToCopy, name, type }: { pathToCopy: string; name: string; type: string }) => {

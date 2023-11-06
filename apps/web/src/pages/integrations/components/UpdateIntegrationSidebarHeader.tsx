@@ -1,42 +1,66 @@
 import { ReactNode, useMemo, useState } from 'react';
-import { Group } from '@mantine/core';
-import { Controller, useFormContext } from 'react-hook-form';
-import { CHANNELS_WITH_PRIMARY, NOVU_PROVIDERS } from '@novu/shared';
+import { Group, useMantineTheme } from '@mantine/core';
+import { Controller, useFormContext, useWatch } from 'react-hook-form';
+import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
 
-import { Button, colors, Dropdown, Modal, NameInput, Text, Title } from '../../../design-system';
+import {
+  Button,
+  colors,
+  Dropdown,
+  Modal,
+  NameInput,
+  Text,
+  Title,
+  DotsHorizontal,
+  StarEmpty,
+  Trash,
+} from '@novu/design-system';
 import { useFetchEnvironments } from '../../../hooks/useFetchEnvironments';
 import { ProviderImage } from './multi-provider/SelectProviderSidebar';
-import type { IIntegratedProvider } from '../types';
+import type { IIntegratedProvider, IntegrationEntity } from '../types';
 import { useProviders } from '../useProviders';
 import { useDeleteIntegration } from '../../../api/hooks';
 import { errorMessage, successMessage } from '../../../utils/notifications';
-import { DotsHorizontal, StarEmpty, Trash } from '../../../design-system/icons';
 import { ProviderInfo } from './multi-provider/ProviderInfo';
 import { useSelectPrimaryIntegrationModal } from './multi-provider/useSelectPrimaryIntegrationModal';
 import { useMakePrimaryIntegration } from '../../../api/hooks/useMakePrimaryIntegration';
+import { ConditionIconButton } from './ConditionIconButton';
+import { PrimaryIconButton } from './PrimaryIconButton';
 
 export const UpdateIntegrationSidebarHeader = ({
   provider,
   onSuccessDelete,
   children = null,
+  openConditions,
 }: {
   provider: IIntegratedProvider | null;
   onSuccessDelete: () => void;
   children?: ReactNode | null;
+  openConditions: () => void;
 }) => {
   const [isModalOpened, setModalIsOpened] = useState(false);
   const { control } = useFormContext();
   const { environments } = useFetchEnvironments();
+  const { colorScheme } = useMantineTheme();
   const { providers, isLoading } = useProviders();
   const canMarkAsPrimary = provider && !provider.primary && CHANNELS_WITH_PRIMARY.includes(provider.channel);
   const { openModal, SelectPrimaryIntegrationModal } = useSelectPrimaryIntegrationModal();
+
+  const watchedConditions = useWatch({ control, name: 'conditions' });
+  const numOfConditions: number = useMemo(() => {
+    if (watchedConditions && watchedConditions[0] && watchedConditions[0].children) {
+      return watchedConditions[0].children.length;
+    }
+
+    return 0;
+  }, [watchedConditions]);
 
   const shouldSetNewPrimary = useMemo(() => {
     if (!provider) return false;
 
     const { channel: selectedChannel, environmentId, integrationId, primary } = provider;
     const hasSameChannelActiveIntegration = !!providers
-      .filter((el) => !NOVU_PROVIDERS.includes(el.providerId) && el.integrationId !== integrationId)
+      .filter((el) => el.integrationId !== integrationId)
       .find((el) => el.active && el.channel === selectedChannel && el.environmentId === environmentId);
 
     return hasSameChannelActiveIntegration && primary;
@@ -59,11 +83,13 @@ export const UpdateIntegrationSidebarHeader = ({
       return;
     }
 
-    if (provider.primary) {
+    if (shouldSetNewPrimary) {
       openModal({
         environmentId: provider.environmentId,
         channelType: provider.channel,
-        exclude: [provider.integrationId],
+        exclude: (el: IntegrationEntity) => {
+          return el._id === provider.integrationId;
+        },
         onClose: () => {
           deleteIntegration({
             id: provider.integrationId,
@@ -105,6 +131,14 @@ export const UpdateIntegrationSidebarHeader = ({
         />
         <Group spacing={12} noWrap ml="auto">
           {children}
+          <PrimaryIconButton
+            primary={provider.primary}
+            onClick={() => {
+              makePrimaryIntegration({ id: provider.integrationId });
+            }}
+            conditions={numOfConditions}
+          />
+          <ConditionIconButton primary={provider.primary} onClick={openConditions} conditions={numOfConditions} />
           <div>
             <Dropdown
               withArrow={false}
@@ -122,7 +156,7 @@ export const UpdateIntegrationSidebarHeader = ({
                   onClick={() => {
                     makePrimaryIntegration({ id: provider.integrationId });
                   }}
-                  icon={<StarEmpty />}
+                  icon={<StarEmpty color={colorScheme === 'dark' ? colors.white : colors.B30} />}
                   disabled={isLoading || isMarkingPrimary}
                 >
                   Mark as primary
@@ -153,7 +187,9 @@ export const UpdateIntegrationSidebarHeader = ({
           {shouldSetNewPrimary
             ? 'Deleting the primary provider instance will cause to select another primary one. ' +
               'All workflows relying on its configuration will be linked to the selected primary provider instance.'
-            : 'Deleting a provider instance will fail workflows relying on its configuration, leading to undelivered notifications.'}
+            : `Deleting a ${
+                provider.primary ? 'primary ' : ''
+              }provider instance will fail workflows relying on its configuration, leading to undelivered notifications.`}
         </Text>
         <Group position="right">
           <Button variant="outline" onClick={() => setModalIsOpened(false)}>

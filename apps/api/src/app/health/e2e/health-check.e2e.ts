@@ -10,11 +10,10 @@ describe('Health-check', () => {
 
   describe('/health-check (GET)', () => {
     it('should correctly return a health check', async () => {
-      const {
-        body: { data },
-      } = await session.testAgent.get('/v1/health-check');
+      const result = await session.testAgent.get('/v1/health-check');
+      const { data } = result.body || {};
 
-      expect(data.status).to.equal('ok');
+      expect(data?.status).to.equal('ok');
     });
   });
 });

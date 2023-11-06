@@ -47,6 +47,21 @@ const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
             },
           },
         ],
+        reservedVariables: [
+          {
+            type: {
+              type: Schema.Types.String,
+            },
+            variables: [
+              {
+                name: Schema.Types.String,
+                type: {
+                  type: Schema.Types.String,
+                },
+              },
+            ],
+          },
+        ],
         subscriberVariables: [
           {
             name: Schema.Types.String,

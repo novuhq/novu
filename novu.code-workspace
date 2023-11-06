@@ -29,12 +29,12 @@
       "path": "apps/widget"
     },
     {
-      "name": "📜 @novu/docs",
-      "path": "docs"
-    },
-    {
       "name": "📦 @novu/dal",
       "path": "libs/dal"
+    },
+    {
+      "name": "📦 @novu/design-system",
+      "path": "libs/design-system"
     },
     {
       "name": "📦 @novu/embed",
@@ -179,6 +179,10 @@
     {
       "name": "🔔 @novu/maqsam",
       "path": "providers/maqsam"
+    },
+    {
+      "name": "🔔 @novu/generic-sms",
+      "path": "providers/generic-sms"
     }
   ],
   "settings": {
@@ -187,7 +191,11 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true,
     "editor.formatOnPaste": true,
-    "cSpell.words": ["Chainable", "usecases"]
+    "cSpell.words": [
+      "Chainable",
+      "usecases"
+    ],
+    "vsicons.presets.nestjs": true
   },
   "extensions": {
     "recommendations": [

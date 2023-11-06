@@ -1,16 +1,16 @@
 import { Module } from '@nestjs/common';
 import { TerminusModule } from '@nestjs/terminus';
+
 import {
+  CreateExecutionDetails,
   EventsDistributedLockService,
+  GetNovuProviderCredentials,
   StorageHelperService,
   SendTestEmail,
-  QueueService,
-  CalculateDelayService,
-  GetNovuProviderCredentials,
+  BaseApiQueuesModule,
 } from '@novu/application-generic';
 
 import { EventsController } from './events.controller';
-import { TriggerHandlerQueueService } from './services/workflow-queue/trigger-handler-queue.service';
 import { USE_CASES } from './usecases';
 
 import { SharedModule } from '../shared/shared.module';
@@ -23,6 +23,15 @@ import { IntegrationModule } from '../integrations/integrations.module';
 import { ExecutionDetailsModule } from '../execution-details/execution-details.module';
 import { TopicsModule } from '../topics/topics.module';
 import { LayoutsModule } from '../layouts/layouts.module';
+import { TenantModule } from '../tenant/tenant.module';
+
+const PROVIDERS = [
+  CreateExecutionDetails,
+  GetNovuProviderCredentials,
+  StorageHelperService,
+  EventsDistributedLockService,
+  SendTestEmail,
+];
 
 @Module({
   imports: [
@@ -37,20 +46,10 @@ import { LayoutsModule } from '../layouts/layouts.module';
     ExecutionDetailsModule,
     TopicsModule,
     LayoutsModule,
+    TenantModule,
+    BaseApiQueuesModule,
   ],
   controllers: [EventsController],
-  providers: [
-    ...USE_CASES,
-    {
-      provide: QueueService,
-      useClass: QueueService,
-    },
-    StorageHelperService,
-    TriggerHandlerQueueService,
-    EventsDistributedLockService,
-    SendTestEmail,
-    CalculateDelayService,
-    GetNovuProviderCredentials,
-  ],
+  providers: [...PROVIDERS, ...USE_CASES],
 })
 export class EventsModule {}

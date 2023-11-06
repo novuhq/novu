@@ -4,13 +4,13 @@ import styled from '@emotion/styled';
 import { DigestTypeEnum } from '@novu/shared';
 
 import { When } from '../../../components/utils/When';
-import { colors, Input, Select, Tooltip } from '../../../design-system';
-import { Bell, Digest, Timer } from '../../../design-system/icons';
+import { colors, Input, Select, Tooltip, Bell, Digest, Timer } from '@novu/design-system';
 import { TypeSegmented } from './digest/TypeSegment';
 import { WillBeSentHeader } from './digest/WillBeSentHeader';
 import { RegularInfo } from './digest/icons/RegularInfo';
 import { TimedDigestMetadata } from './TimedDigestMetadata';
 import { RegularDigestMetadata } from './RegularDigestMetadata';
+import { StepSettings } from './SideBar/StepSettings';
 
 const GroupStyled = styled(Group)`
   gap: 18px;
@@ -26,7 +26,8 @@ export const DigestMetadata = ({ index, readonly }: { index: number; readonly: b
 
   return (
     <div data-test-id="digest-step-settings-interval">
-      <Accordion styles={{ item: { '&:last-of-type': { marginBottom: 0 } } }}>
+      <StepSettings index={index} />
+      <Accordion mt={16} styles={{ item: { '&:last-of-type': { marginBottom: 0 } } }}>
         <Tooltip
           position="left"
           width={227}
