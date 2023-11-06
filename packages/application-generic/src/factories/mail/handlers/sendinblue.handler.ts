@@ -1,5 +1,5 @@
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
-import { SendinblueEmailProvider } from '@novu/sendinblue';
+import { BrevoEmailProvider } from '@novu/sendinblue';
 import { BaseHandler } from './base.handler';
 
 export class SendinblueHandler extends BaseHandler {
@@ -13,6 +13,6 @@ export class SendinblueHandler extends BaseHandler {
       senderName: credentials.senderName as string,
     };
 
-    this.provider = new SendinblueEmailProvider(config);
+    this.provider = new BrevoEmailProvider(config);
   }
 }

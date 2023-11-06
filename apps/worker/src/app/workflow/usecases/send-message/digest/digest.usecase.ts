@@ -76,9 +76,7 @@ export class Digest extends SendMessageType {
       },
       {
         $set: {
-          digest: {
-            events,
-          },
+          'digest.events': events,
         },
       }
     );

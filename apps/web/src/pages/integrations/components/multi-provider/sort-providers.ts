@@ -16,6 +16,7 @@ const providers: Record<ChannelTypeEnum, ProvidersIdEnum[]> = {
     ChatProviderIdEnum.MsTeams,
     ChatProviderIdEnum.Discord,
     ChatProviderIdEnum.Mattermost,
+    ChatProviderIdEnum.GrafanaOnCall,
   ],
   [ChannelTypeEnum.EMAIL]: [
     EmailProviderIdEnum.SendGrid,

@@ -171,4 +171,29 @@ export class CredentialsDto implements ICredentials {
   @IsString()
   @IsOptional()
   instanceId?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  alertUid?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  title?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  imageUrl?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  state?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  externalLink?: string;
 }
