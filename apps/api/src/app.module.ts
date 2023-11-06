@@ -31,6 +31,7 @@ import { TopicsModule } from './app/topics/topics.module';
 import { InboundParseModule } from './app/inbound-parse/inbound-parse.module';
 import { BlueprintModule } from './app/blueprint/blueprint.module';
 import { TenantModule } from './app/tenant/tenant.module';
+import { IdempotencyInterceptor } from './app/shared/framework/idempotency.interceptor';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
@@ -78,7 +79,12 @@ const enterpriseModules = enterpriseImports();
 
 const modules = baseModules.concat(enterpriseModules);
 
-const providers: Provider[] = [];
+const providers: Provider[] = [
+  {
+    provide: APP_INTERCEPTOR,
+    useClass: IdempotencyInterceptor,
+  },
+];
 
 if (process.env.SENTRY_DSN) {
   modules.push(RavenModule);
