@@ -21,6 +21,8 @@ import {
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { MessageTemplate } from '../../../shared/dtos/message-template';
+import { Type } from 'class-transformer';
+import { VariantWithFilter } from '@novu/application-generic';
 
 /**
  * DEPRECATED:
@@ -46,7 +48,8 @@ export class CreateNotificationTemplateCommand extends EnvironmentWithUserComman
 
   @IsDefined()
   @IsArray()
-  @ValidateNested()
+  @ValidateNested({ each: true })
+  @Type(() => NotificationStep)
   steps: NotificationStep[];
 
   @IsBoolean()
@@ -88,8 +91,8 @@ export class ChannelCTACommand {
 }
 
 export class NotificationStepVariant {
-  @IsString()
   @IsOptional()
+  @IsString()
   _templateId?: string;
 
   @ValidateNested()
@@ -97,15 +100,19 @@ export class NotificationStepVariant {
   template?: MessageTemplate;
 
   @IsOptional()
+  @IsString()
   uuid?: string;
 
   @IsOptional()
+  @IsBoolean()
   name?: string;
 
+  @IsOptional()
   @IsBoolean()
   active?: boolean;
 
   @IsBoolean()
+  @IsOptional()
   shouldStopOnFail?: boolean;
 
   @ValidateNested()
@@ -131,7 +138,9 @@ export class NotificationStepVariant {
 export class NotificationStep extends NotificationStepVariant {
   @IsOptional()
   @IsArray()
-  @ValidateNested()
+  @ValidateNested({ each: true })
+  @Type(() => NotificationStepVariant)
+  @VariantWithFilter()
   variants?: NotificationStepVariant[];
 }
 
