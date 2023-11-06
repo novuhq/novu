@@ -4,12 +4,12 @@ import {
   ApiRateLimitEnvVarFormat,
   ApiServiceLevelTypeEnum,
   DEFAULT_API_RATE_LIMITS,
-  IPlatformApiRateLimits,
+  IServiceApiRateLimits,
 } from '@novu/shared';
 
 @Injectable()
 export class GetDefaultApiRateLimits {
-  public defaultApiRateLimits: IPlatformApiRateLimits;
+  public defaultApiRateLimits: IServiceApiRateLimits;
 
   constructor() {
     this.loadApiRateLimits();
@@ -19,8 +19,8 @@ export class GetDefaultApiRateLimits {
     this.defaultApiRateLimits = this.createDefaultApiRateLimits();
   }
 
-  private createDefaultApiRateLimits(): IPlatformApiRateLimits {
-    const mergedApiRateLimits: IPlatformApiRateLimits = { ...DEFAULT_API_RATE_LIMITS };
+  private createDefaultApiRateLimits(): IServiceApiRateLimits {
+    const mergedApiRateLimits: IServiceApiRateLimits = { ...DEFAULT_API_RATE_LIMITS };
 
     // Read process environment only once for performance
     const processEnv = process.env;

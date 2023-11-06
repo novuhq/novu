@@ -1,4 +1,4 @@
-import { ApiServiceLevelTypeEnum, ApiRateLimitCategoryTypeEnum, IPlatformApiRateLimits } from '../../types';
+import { ApiServiceLevelTypeEnum, ApiRateLimitCategoryTypeEnum, IServiceApiRateLimits } from '../../types';
 
 /**
  * A decimal 0 > `x` <= 1 determining the proportion of default rate limit
@@ -29,4 +29,4 @@ export const DEFAULT_API_RATE_LIMITS = {
     [ApiRateLimitCategoryTypeEnum.CONFIGURATION]: 1500,
     [ApiRateLimitCategoryTypeEnum.GLOBAL]: 3000,
   },
-} satisfies IPlatformApiRateLimits;
+} satisfies IServiceApiRateLimits;

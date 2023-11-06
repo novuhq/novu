@@ -9,7 +9,7 @@ export enum ApiServiceLevelTypeEnum {
   UNLIMITED = 'unlimited',
 }
 
-export type IPlatformApiRateLimits = Record<ApiServiceLevelTypeEnum, IApiRateLimits>;
+export type IServiceApiRateLimits = Record<ApiServiceLevelTypeEnum, IApiRateLimits>;
 
 export type ApiRateLimitEnvVarFormat =
   Uppercase<`API_RATE_LIMIT_${ApiServiceLevelTypeEnum}_${ApiRateLimitCategoryTypeEnum}`>;
