@@ -10,8 +10,6 @@ import {
 import { GetApiRateLimitCommand } from './get-api-rate-limit.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
-const LOG_CONTEXT = 'GetApiRateLimit';
-
 @Injectable()
 export class GetApiRateLimit {
   constructor(
