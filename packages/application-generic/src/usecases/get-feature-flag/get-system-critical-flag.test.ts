@@ -40,6 +40,18 @@ describe('Get System Critical Flag', () => {
       const result = getIsInMemoryClusterModeEnabled.execute();
       expect(result).toEqual(true);
     });
+
+    it('should return new environment variable value when is set even if it is false', async () => {
+      // TODO: Temporary coexistence to replace env variable name
+      process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
+      process.env.IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
+
+      const getIsInMemoryClusterModeEnabled =
+        new GetIsInMemoryClusterModeEnabled();
+
+      const result = getIsInMemoryClusterModeEnabled.execute();
+      expect(result).toEqual(false);
+    });
   });
 
   describe('SystemCriticalFlagEnum.IS_REQUEST_RATE_LIMITING_ENABLED', () => {

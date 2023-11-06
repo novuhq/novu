@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { WebSocketsQueueService } from '../services';
+import { WebSocketsQueueService } from '../services/queues';
 import { QueueHealthIndicator } from './queue-health-indicator.service';
 
 const LOG_CONTEXT = 'WebSocketsQueueServiceHealthIndicator';
