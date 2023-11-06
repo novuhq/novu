@@ -453,7 +453,7 @@ const BodyWrapper = styled.div`
   flex: 1 1 auto;
   gap: 16px;
   height: 80px;
-  padding: 20px;
+  padding-left: 20px;
   align-items: center;
 `;
 
