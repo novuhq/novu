@@ -1,4 +1,5 @@
 import { ChannelTypeEnum, PreferenceOverrideSourceEnum } from '../../types';
+import { INotificationTrigger } from '../notification-template';
 
 export interface IPreferenceChannels {
   email?: boolean;
@@ -27,4 +28,10 @@ export interface ITemplateConfiguration {
   name: string;
   critical: boolean;
   tags?: string[];
+  triggers: INotificationTrigger[];
+}
+
+export enum PreferenceLevelEnum {
+  GLOBAL = 'global',
+  TEMPLATE = 'template',
 }

@@ -7,6 +7,7 @@ import {
   MessageEntity,
   IntegrationEntity,
   TenantRepository,
+  SubscriberEntity,
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import {
@@ -79,6 +80,13 @@ export class SendMessageSms extends SendMessageBase {
     const smsChannel: NotificationStepEntity = command.step;
     if (!smsChannel.template) throw new PlatformException(`Unexpected error: SMS template is missing`);
 
+    let actor: SubscriberEntity | null = null;
+    if (command.job.actorId) {
+      actor = await this.getSubscriberBySubscriberId({
+        subscriberId: command.job.actorId,
+        _environmentId: command.environmentId,
+      });
+    }
     const tenant = await this.handleTenantExecution(command.job);
 
     const payload = {
@@ -89,6 +97,7 @@ export class SendMessageSms extends SendMessageBase {
         total_count: command.events?.length,
       },
       ...(tenant && { tenant }),
+      ...(actor && { actor }),
       ...command.payload,
     };
 
@@ -137,7 +146,10 @@ export class SendMessageSms extends SendMessageBase {
 
     await this.sendSelectedIntegrationExecution(command.job, integration);
 
-    const overrides = command.overrides[integration?.providerId] || {};
+    const overrides = {
+      ...(command.overrides[integration?.channel] || {}),
+      ...(command.overrides[integration?.providerId] || {}),
+    };
 
     const messagePayload = Object.assign({}, command.payload);
     delete messagePayload.attachments;
@@ -262,7 +274,7 @@ export class SendMessageSms extends SendMessageBase {
     content: string,
     message: MessageEntity,
     command: SendMessageCommand,
-    overrides: object
+    overrides: Record<string, any> = {}
   ) {
     try {
       const smsFactory = new SmsFactory();
@@ -272,9 +284,9 @@ export class SendMessageSms extends SendMessageBase {
       }
 
       const result = await smsHandler.send({
-        to: phone,
-        from: integration.credentials.from,
-        content,
+        to: overrides.to || phone,
+        from: overrides.from || integration.credentials.from,
+        content: overrides.content || content,
         id: message._id,
       });
 

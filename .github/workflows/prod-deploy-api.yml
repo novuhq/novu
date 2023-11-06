@@ -30,10 +30,6 @@ jobs:
     steps:
       - run: echo ${{ matrix.projectName }}
       - uses: actions/checkout@v3
-      - uses: ./.github/actions/checkout-submodules
-        with:
-          submodule_token: ${{ secrets.SUBMODULES_TOKEN }}
-          submodule_branch: "next"
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/setup-redis-cluster
       - uses: mansagroup/nrwl-nx-action@v3
@@ -79,11 +75,6 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v3
-      - uses: ./.github/actions/checkout-submodules
-        with:
-          enabled: ${{ contains (matrix.name,'ee') }}
-          submodule_token: ${{ secrets.SUBMODULES_TOKEN }}
-          submodule_branch: "main"
       - uses: ./.github/actions/setup-project
 
       - name: build api
@@ -122,7 +113,7 @@ jobs:
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:prod
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
-          echo "::set-output name=IMAGE::ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
+          echo "IMAGE=ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
   deploy_prod_api_eu:
     needs: build_prod_image

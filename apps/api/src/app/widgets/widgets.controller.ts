@@ -16,7 +16,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeController, ApiNoContentResponse, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { AnalyticsService, GetSubscriberPreference, GetSubscriberPreferenceCommand } from '@novu/application-generic';
-import { MessageEntity, SubscriberEntity } from '@novu/dal';
+import { MessageEntity, PreferenceLevelEnum, SubscriberEntity } from '@novu/dal';
 import { MarkMessagesAsEnum, ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 
 import { SubscriberSession } from '../shared/framework/user.decorator';
@@ -54,6 +54,13 @@ import { LimitPipe } from './pipes/limit-pipe/limit-pipe';
 import { RemoveAllMessagesCommand } from './usecases/remove-messages/remove-all-messages.command';
 import { RemoveAllMessages } from './usecases/remove-messages/remove-all-messages.usecase';
 import { RemoveAllMessagesDto } from './dtos/remove-all-messages.dto';
+import {
+  UpdateSubscriberGlobalPreferences,
+  UpdateSubscriberGlobalPreferencesCommand,
+} from '../subscribers/usecases/update-subscriber-global-preferences';
+import { UpdateSubscriberGlobalPreferencesRequestDto } from '../subscribers/dtos/update-subscriber-global-preferences-request.dto';
+import { GetPreferencesByLevel } from '../subscribers/usecases/get-preferences-by-level/get-preferences-by-level.usecase';
+import { GetPreferencesByLevelCommand } from '../subscribers/usecases/get-preferences-by-level/get-preferences-by-level.command';
 
 @Controller('/widgets')
 @ApiExcludeController()
@@ -68,7 +75,9 @@ export class WidgetsController {
     private updateMessageActionsUsecase: UpdateMessageActions,
     private getOrganizationUsecase: GetOrganizationData,
     private getSubscriberPreferenceUsecase: GetSubscriberPreference,
+    private getSubscriberPreferenceByLevelUsecase: GetPreferencesByLevel,
     private updateSubscriberPreferenceUsecase: UpdateSubscriberPreference,
+    private updateSubscriberGlobalPreferenceUsecase: UpdateSubscriberGlobalPreferences,
     private markAllMessagesAsUsecase: MarkAllMessagesAs,
     private analyticsService: AnalyticsService
   ) {}
@@ -351,6 +360,22 @@ export class WidgetsController {
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
+  @Get('/preferences/:level')
+  async getSubscriberPreferenceByLevel(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Param('level') level: PreferenceLevelEnum
+  ) {
+    const command = GetPreferencesByLevelCommand.create({
+      organizationId: subscriberSession._organizationId,
+      subscriberId: subscriberSession.subscriberId,
+      environmentId: subscriberSession._environmentId,
+      level,
+    });
+
+    return await this.getSubscriberPreferenceByLevelUsecase.execute(command);
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
   @Patch('/preferences/:templateId')
   async updateSubscriberPreference(
     @SubscriberSession() subscriberSession: SubscriberEntity,
@@ -367,6 +392,23 @@ export class WidgetsController {
     });
 
     return await this.updateSubscriberPreferenceUsecase.execute(command);
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Patch('/preferences')
+  async updateSubscriberGlobalPreference(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Body() body: UpdateSubscriberGlobalPreferencesRequestDto
+  ) {
+    const command = UpdateSubscriberGlobalPreferencesCommand.create({
+      organizationId: subscriberSession._organizationId,
+      subscriberId: subscriberSession.subscriberId,
+      environmentId: subscriberSession._environmentId,
+      preferences: body.preferences,
+      enabled: body.enabled,
+    });
+
+    return await this.updateSubscriberGlobalPreferenceUsecase.execute(command);
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))

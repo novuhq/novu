@@ -28,7 +28,7 @@ export class CompletedJobsMetricService {
       this.completedJobsMetricWorkerService.createWorker(this.getWorkerProcessor(), this.getWorkerOptions());
 
       this.completedJobsMetricWorkerService.worker.on('completed', async (job) => {
-        await checkingForCronJob(process.env.ACTIVE_CRON_ID);
+        await checkingForCronJob(process.env.COMPLETED_CRON_ID);
         Logger.verbose('Metric Completed Job', job.id, LOG_CONTEXT);
       });
 
@@ -64,7 +64,7 @@ export class CompletedJobsMetricService {
             repeatJobKey: METRIC_JOB_ID,
             repeat: {
               immediately: true,
-              pattern: '* * * * * *',
+              pattern: '0 * * * * *',
             },
             removeOnFail: true,
             removeOnComplete: true,
@@ -98,7 +98,7 @@ export class CompletedJobsMetricService {
             const failNumber = metrics.failed.count;
 
             Logger.verbose('active length', process.env.NEW_RELIC_LICENSE_KEY.length);
-            Logger.log('Recording active, waiting, and delayed metrics');
+            Logger.verbose('Recording active, waiting, and delayed metrics');
 
             const nr = require('newrelic');
             nr.recordMetric(`Queue/${deploymentName}/${queueService.topic}/completed`, completeNumber);
@@ -110,7 +110,7 @@ export class CompletedJobsMetricService {
 
           return resolve();
         } catch (error) {
-          Logger.error({ error }, 'Error occured while processing metrics', LOG_CONTEXT);
+          Logger.error({ error }, 'Error occurred while processing metrics', LOG_CONTEXT);
 
           return reject(error);
         }
@@ -121,8 +121,12 @@ export class CompletedJobsMetricService {
   public async gracefulShutdown(): Promise<void> {
     Logger.log('Shutting the Completed Jobs Metric service down', LOG_CONTEXT);
 
-    await this.completedJobsMetricQueueService.gracefulShutdown();
-    await this.completedJobsMetricWorkerService.gracefulShutdown();
+    if (this.completedJobsMetricQueueService) {
+      await this.completedJobsMetricQueueService.gracefulShutdown();
+    }
+    if (this.completedJobsMetricWorkerService) {
+      await this.completedJobsMetricWorkerService.gracefulShutdown();
+    }
 
     Logger.log('Shutting down the Completed Jobs Metric service has finished', LOG_CONTEXT);
   }

@@ -47,7 +47,10 @@ export class MessageTemplateRepository extends BaseRepository<
       throw new DalException(`Could not find a message template with id ${query._id}`);
     }
 
-    await this.messageTemplate.delete({ _id: messageTemplate._id, _environmentId: messageTemplate._environmentId });
+    return await this.messageTemplate.delete({
+      _id: messageTemplate._id,
+      _environmentId: messageTemplate._environmentId,
+    });
   }
 
   async findDeleted(query: MessageTemplateQuery): Promise<MessageTemplateEntity> {

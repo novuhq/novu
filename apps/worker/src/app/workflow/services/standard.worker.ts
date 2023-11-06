@@ -7,6 +7,7 @@ import {
   ObservabilityBackgroundTransactionEnum,
 } from '@novu/shared';
 import {
+  getStandardWorkerOptions,
   INovuWorker,
   Job,
   PinoLogger,
@@ -44,10 +45,6 @@ export class StandardWorker extends StandardWorkerService implements INovuWorker
 
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOptions());
 
-    this.worker.on('completed', async (job: Job<IJobData, void, string>): Promise<void> => {
-      await this.jobHasCompleted(job);
-    });
-
     this.worker.on('failed', async (job: Job<IJobData, void, string>, error: Error): Promise<void> => {
       await this.jobHasFailed(job, error);
     });
@@ -55,8 +52,7 @@ export class StandardWorker extends StandardWorkerService implements INovuWorker
 
   private getWorkerOptions(): WorkerOptions {
     return {
-      lockDuration: 90000,
-      concurrency: 200,
+      ...getStandardWorkerOptions(),
       settings: {
         backoffStrategy: this.getBackoffStrategies(),
       },
@@ -93,6 +89,8 @@ export class StandardWorker extends StandardWorkerService implements INovuWorker
   private getWorkerProcessor() {
     return async ({ data }: { data: IJobData | any }) => {
       const minimalJobData = this.extractMinimalJobData(data);
+
+      Logger.verbose(`Job ${minimalJobData.jobId} is being processed in the new instance standard worker`, LOG_CONTEXT);
 
       return await new Promise(async (resolve, reject) => {
         // eslint-disable-next-line @typescript-eslint/no-this-alias

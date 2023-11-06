@@ -14,7 +14,6 @@ import {
 Cypress.on('window:before:load', (win) => {
   win._cypress = {
     ...win._cypress,
-    IS_MULTI_PROVIDER_CONFIGURATION_ENABLED: 'true',
   };
   win.isDarkTheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
 });
@@ -774,7 +773,7 @@ describe('Integrations List Modal', function () {
       'Select a framework to set up credentials to start sending notifications.'
     );
     cy.getByTestId('update-provider-sidebar')
-      .find('a[href="https://docs.novu.co/notification-center/getting-started"]')
+      .find('a[href="https://docs.novu.co/notification-center/introduction"]')
       .contains('Explore set-up guide');
     cy.getByTestId('is_active_id').should('have.value', 'true');
     cy.window().then((win) => {

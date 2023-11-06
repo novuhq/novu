@@ -9,7 +9,7 @@ import {
 import { Model, Types, ProjectionType, FilterQuery, UpdateQuery, QueryOptions } from 'mongoose';
 import { DalException } from '../shared';
 
-export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
+export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
   public _model: Model<T_DBModel>;
 
   constructor(protected MongooseModel: Model<T_DBModel>, protected entity: ClassConstructor<T_MappedEntity>) {
@@ -38,13 +38,6 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
     return await this.MongooseModel.aggregate(query).read(options.readPreference || 'primary');
   }
 
-  async findById(id: string, select?: string): Promise<T_MappedEntity | null> {
-    const data = await this.MongooseModel.findById(id, select);
-    if (!data) return null;
-
-    return this.mapEntity(data.toObject());
-  }
-
   async findOne(
     query: FilterQuery<T_DBModel> & T_Enforcement,
     select?: ProjectionType<T_MappedEntity>,
@@ -58,8 +51,13 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
     return this.mapEntity(data.toObject());
   }
 
-  async delete(query: FilterQuery<T_DBModel> & T_Enforcement): Promise<void> {
-    return await this.MongooseModel.remove(query);
+  async delete(query: FilterQuery<T_DBModel> & T_Enforcement): Promise<{
+    /** Indicates whether this writes result was acknowledged. If not, then all other members of this result will be undefined. */
+    acknowledged: boolean;
+    /** The number of documents that were deleted */
+    deletedCount: number;
+  }> {
+    return await this.MongooseModel.deleteMany(query);
   }
 
   async find(

@@ -34,7 +34,9 @@ describe('Job metrics Queue service', () => {
         ])
       );
       expect(completedJobsMetricQueueService.DEFAULT_ATTEMPTS).toEqual(3);
-      expect(completedJobsMetricQueueService.topic).toEqual('metric-completed-jobs');
+      expect(completedJobsMetricQueueService.topic).toEqual(
+        'metric-completed-jobs'
+      );
       expect(
         await completedJobsMetricQueueService.bullMqService.getStatus()
       ).toEqual({

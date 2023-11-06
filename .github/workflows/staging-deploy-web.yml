@@ -120,7 +120,7 @@ jobs:
             -t ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG \
             -t ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:dev \
             -f apps/web/Dockerfile .
-          echo "::set-output name=IMAGE::ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
+          echo "IMAGE=ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
       - uses: actions/upload-artifact@v3
         if: failure()

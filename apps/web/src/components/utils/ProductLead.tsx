@@ -4,8 +4,7 @@ import { CSSProperties, ReactNode, useEffect } from 'react';
 import styled from '@emotion/styled';
 
 import { IS_DOCKER_HOSTED } from '../../config';
-import { Button, colors, Text } from '../../design-system';
-import { Calendar, Close } from '../../design-system/icons';
+import { Button, colors, Text, Calendar, Close } from '@novu/design-system';
 import { useAuthContext } from '../providers/AuthProvider';
 import { useSegment } from '../providers/SegmentProvider';
 import { When } from './When';
@@ -52,7 +51,7 @@ export const ProductLead = ({
 
   useEffect(() => {
     segment.track('Banner seen - [Product lead]', {
-      id,
+      feature: id,
     });
   }, [segment, id]);
 
@@ -79,7 +78,7 @@ export const ProductLead = ({
                 {title}
               </Title>
             </Group>
-            <When truthy={closeable && variant === ProductLeadVariants.DEFAULT}>
+            <When truthy={closeable && variant === ProductLeadVariants.COLUMN}>
               <ActionIcon
                 variant={'transparent'}
                 sx={{ transform: 'translate(14px, -14px)' }}
@@ -116,7 +115,7 @@ export const ProductLead = ({
               <Calendar color={dark ? theme.white : colors.B60} /> Schedule a call
             </Group>
           </Button>
-          <When truthy={closeable && variant === ProductLeadVariants.COLUMN}>
+          <When truthy={closeable && variant === ProductLeadVariants.DEFAULT}>
             <ActionIcon
               variant={'transparent'}
               onClick={() => {

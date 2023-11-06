@@ -8,6 +8,7 @@ import {
   MessageEntity,
   LayoutRepository,
   TenantRepository,
+  SubscriberEntity,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -135,6 +136,14 @@ export class SendMessageEmail extends SendMessageBase {
       return;
     }
 
+    let actor: SubscriberEntity | null = null;
+    if (command.job.actorId) {
+      actor = await this.getSubscriberBySubscriberId({
+        subscriberId: command.job.actorId,
+        _environmentId: command.environmentId,
+      });
+    }
+
     const [tenant, overrideLayoutId] = await Promise.all([
       this.handleTenantExecution(command.job),
       this.getOverrideLayoutId(command),
@@ -150,8 +159,10 @@ export class SendMessageEmail extends SendMessageBase {
     let html;
     let subject = '';
     let content;
+    let senderName = overrides?.senderName || emailChannel.template.senderName;
 
     const payload = {
+      senderName: emailChannel.template.senderName || '',
       subject: emailChannel.template.subject || '',
       preheader: emailChannel.template.preheader,
       content: emailChannel.template.content,
@@ -165,6 +176,7 @@ export class SendMessageEmail extends SendMessageBase {
           total_count: command.events?.length,
         },
         ...(tenant && { tenant }),
+        ...(actor && { actor }),
         subscriber,
       },
     };
@@ -204,7 +216,7 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     try {
-      ({ html, content, subject } = await this.compileEmailTemplateUsecase.execute(
+      ({ html, content, subject, senderName } = await this.compileEmailTemplateUsecase.execute(
         CompileEmailTemplateCommand.create({
           environmentId: command.environmentId,
           organizationId: command.organizationId,
@@ -289,13 +301,7 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     if (email && integration) {
-      await this.sendMessage(
-        integration,
-        mailData,
-        message,
-        command,
-        overrides?.senderName || emailChannel.template.senderName
-      );
+      await this.sendMessage(integration, mailData, message, command, senderName);
 
       return;
     }

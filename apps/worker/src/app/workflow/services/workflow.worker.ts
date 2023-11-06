@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 const nr = require('newrelic');
 import {
+  getWorkflowWorkerOptions,
   INovuWorker,
   PinoLogger,
   storage,
@@ -24,10 +25,7 @@ export class WorkflowWorker extends WorkflowWorkerService implements INovuWorker
   }
 
   private getWorkerOptions(): WorkerOptions {
-    return {
-      lockDuration: 90000,
-      concurrency: 200,
-    };
+    return getWorkflowWorkerOptions();
   }
 
   private getWorkerProcessor(): WorkerProcessor {
@@ -35,6 +33,8 @@ export class WorkflowWorker extends WorkflowWorkerService implements INovuWorker
       return await new Promise(async (resolve, reject) => {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const _this = this;
+
+        Logger.verbose(`Job ${data.identifier} is being processed in the new instance workflow worker`, LOG_CONTEXT);
 
         nr.startBackgroundTransaction(
           ObservabilityBackgroundTransactionEnum.TRIGGER_HANDLER_QUEUE,

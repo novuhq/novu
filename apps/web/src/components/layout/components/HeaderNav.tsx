@@ -5,10 +5,22 @@ import { Link } from 'react-router-dom';
 import { useIntercom } from 'react-use-intercom';
 
 import LogRocket from 'logrocket';
-import { CONTEXT_PATH, INTERCOM_APP_ID, IS_DOCKER_HOSTED, LOGROCKET_ID } from '../../../config';
+import { CONTEXT_PATH, INTERCOM_APP_ID, IS_DOCKER_HOSTED, LOGROCKET_ID, REACT_APP_VERSION } from '../../../config';
 import { ROUTES } from '../../../constants/routes.enum';
-import { colors, Dropdown, shadows, Text, Tooltip } from '../../../design-system';
-import { Ellipse, Mail, Moon, Question, Sun, Trash } from '../../../design-system/icons';
+import {
+  colors,
+  Dropdown,
+  shadows,
+  Text,
+  Tooltip,
+  Ellipse,
+  Mail,
+  Moon,
+  Question,
+  Sun,
+  Logout,
+} from '@novu/design-system';
+
 import { useLocalThemePreference } from '../../../hooks';
 import { discordInviteUrl } from '../../../pages/quick-start/consts';
 import { useAuthContext } from '../../providers/AuthProvider';
@@ -111,7 +123,7 @@ export function HeaderNav({ isIntercomOpened }: Props) {
       {
         id: 'sign-out',
         title: 'Sign out',
-        icon: <Trash />,
+        icon: <Logout />,
         onTrigger: () => {
           logout();
         },
@@ -153,10 +165,23 @@ export function HeaderNav({ isIntercomOpened }: Props) {
         </Dropdown.Item>
       </Link>
     )),
-    <Dropdown.Item key="logout" icon={<Trash />} onClick={logout} data-test-id="logout-button">
-      Sign Out
+    <Dropdown.Item key="logout" icon={<Logout />} onClick={logout} data-test-id="logout-button">
+      Log Out
     </Dropdown.Item>,
   ];
+
+  isSelfHosted &&
+    profileMenuMantine.push(
+      <Dropdown.Item
+        style={{
+          padding: '10px 20px',
+        }}
+        disabled
+        key="version"
+      >
+        <Text color={colors.B40}>Version: {REACT_APP_VERSION}</Text>
+      </Dropdown.Item>
+    );
 
   return (
     <Header

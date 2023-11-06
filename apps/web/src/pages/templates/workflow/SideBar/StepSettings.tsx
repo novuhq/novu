@@ -5,7 +5,7 @@ import { useParams } from 'react-router-dom';
 
 import { StepTypeEnum } from '@novu/shared';
 
-import { Button } from '../../../../design-system';
+import { FilterGradient, Filter, FilterOutlined, Button } from '@novu/design-system';
 import type { IForm } from '../../components/formTypes';
 import { StepActiveSwitch } from '../StepActiveSwitch';
 import { useEnvController } from '../../../../hooks';
@@ -31,10 +31,12 @@ export function StepSettings({ index }: { index: number }) {
     <>
       <Group position="apart" spacing={8}>
         <Group spacing={12}>
-          <StepActiveSwitch index={index} control={control} />
-          <ShouldStopOnFailSwitch index={index} control={control} />
-          <When truthy={channel === StepTypeEnum.EMAIL}>
-            <ReplyCallbackSwitch index={index} control={control} />
+          <When truthy={channel !== StepTypeEnum.DIGEST && channel !== StepTypeEnum.DELAY}>
+            <StepActiveSwitch index={index} control={control} />
+            <ShouldStopOnFailSwitch index={index} control={control} />
+            <When truthy={channel === StepTypeEnum.EMAIL}>
+              <ReplyCallbackSwitch index={index} control={control} />
+            </When>
           </When>
         </Group>
         <Button
@@ -42,7 +44,7 @@ export function StepSettings({ index }: { index: number }) {
           onClick={() => {
             setFilterOpen(true);
           }}
-          disabled={readonly}
+          disabled={false}
           data-test-id="add-filter-btn"
           onMouseEnter={() => {
             setFilterHover(true);
@@ -90,6 +92,7 @@ export function StepSettings({ index }: { index: number }) {
         control={control}
         stepIndex={index}
         setValue={setValue}
+        readonly={readonly}
       />
     </>
   );
