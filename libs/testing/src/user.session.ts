@@ -4,7 +4,13 @@ import { SuperTest, Test } from 'supertest';
 import * as request from 'supertest';
 import * as defaults from 'superagent-defaults';
 import { v4 as uuid } from 'uuid';
-import { ChannelTypeEnum, EmailBlockTypeEnum, IEmailBlock, StepTypeEnum, TriggerRecipientsPayload } from '@novu/shared';
+import {
+  EmailBlockTypeEnum,
+  IEmailBlock,
+  JobTopicNameEnum,
+  StepTypeEnum,
+  TriggerRecipientsPayload,
+} from '@novu/shared';
 import {
   UserEntity,
   EnvironmentEntity,
@@ -290,10 +296,6 @@ export class UserSession {
     });
   }
 
-  public async awaitParsingEvents() {
-    await this.jobsService.awaitParsingEvents();
-  }
-
   public async awaitRunningJobs(
     templateId?: string | string[],
     delay?: boolean,
@@ -306,6 +308,10 @@ export class UserSession {
       delay,
       unfinishedJobs,
     });
+  }
+
+  public async queueGet(jobTopicName: JobTopicNameEnum, getter: 'getDelayed') {
+    return await this.jobsService.queueGet(jobTopicName, getter);
   }
 
   public async applyChanges(where: Partial<ChangeEntity> = {}) {

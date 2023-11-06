@@ -4,13 +4,12 @@ import {
   ChannelTypeEnum,
   ChatProviderIdEnum,
   EmailProviderIdEnum,
+  FieldOperatorEnum,
   InAppProviderIdEnum,
   PushProviderIdEnum,
   SmsProviderIdEnum,
 } from '@novu/shared';
 import { expect } from 'chai';
-
-const ORIGINAL_IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
 
 describe('Create Integration - /integration (POST)', function () {
   let session: UserSession;
@@ -20,11 +19,6 @@ describe('Create Integration - /integration (POST)', function () {
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
-    process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = 'true';
-  });
-
-  afterEach(async () => {
-    process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = ORIGINAL_IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
   });
 
   it('should get the email integration successfully', async function () {
@@ -102,6 +96,50 @@ describe('Create Integration - /integration (POST)', function () {
       expect(integration.credentials.secretKey).to.equal(payload.credentials.secretKey);
       expect(integration.active).to.equal(payload.active);
     }
+  });
+
+  it('should create integration with conditions', async function () {
+    const payload = {
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      identifier: 'identifier-conditions',
+      active: false,
+      check: false,
+      conditions: [
+        {
+          children: [{ field: 'identifier', value: 'test', operator: FieldOperatorEnum.EQUAL, on: 'tenant' }],
+        },
+      ],
+    };
+
+    const { body } = await session.testAgent.post('/v1/integrations').send(payload);
+
+    expect(body.data.conditions.length).to.equal(1);
+    expect(body.data.conditions[0].children.length).to.equal(1);
+    expect(body.data.conditions[0].children[0].on).to.equal('tenant');
+    expect(body.data.conditions[0].children[0].field).to.equal('identifier');
+    expect(body.data.conditions[0].children[0].value).to.equal('test');
+    expect(body.data.conditions[0].children[0].operator).to.equal('EQUAL');
+  });
+
+  it('should return error with malformed conditions', async function () {
+    const payload = {
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      identifier: 'identifier-conditions',
+      active: false,
+      check: false,
+      conditions: [
+        {
+          children: 'test',
+        },
+      ],
+    };
+
+    const { body } = await session.testAgent.post('/v1/integrations').send(payload);
+
+    expect(body.statusCode).to.equal(400);
+    expect(body.error).to.equal('Bad Request');
   });
 
   it('should not allow to create integration with same identifier', async function () {
@@ -268,7 +306,7 @@ describe('Create Integration - /integration (POST)', function () {
     expect(data.active).to.equal(true);
   });
 
-  it('should set the integration as primary when its active and there are no other active integrations', async function () {
+  it('should not set the integration as primary when its active and there are no other active integrations', async function () {
     await integrationRepository.deleteMany({
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
@@ -286,13 +324,13 @@ describe('Create Integration - /integration (POST)', function () {
     } = await session.testAgent.post('/v1/integrations').send(payload);
 
     expect(data.priority).to.equal(1);
-    expect(data.primary).to.equal(true);
+    expect(data.primary).to.equal(false);
     expect(data.active).to.equal(true);
   });
 
   it(
-    'should set the integration as primary when its active ' +
-      'and there are no other active integrations excluding Novu',
+    'should not set the integration as primary when its active ' +
+      'and there are no other active integrations other than Novu',
     async function () {
       await integrationRepository.deleteMany({
         _organizationId: session.organization._id,
@@ -305,7 +343,7 @@ describe('Create Integration - /integration (POST)', function () {
         providerId: EmailProviderIdEnum.Novu,
         channel: ChannelTypeEnum.EMAIL,
         active: true,
-        primary: false,
+        primary: true,
         priority: 1,
         _organizationId: session.organization._id,
         _environmentId: session.environment._id,
@@ -322,11 +360,11 @@ describe('Create Integration - /integration (POST)', function () {
         body: { data },
       } = await session.testAgent.post('/v1/integrations').send(payload);
 
-      expect(data.priority).to.equal(2);
-      expect(data.primary).to.equal(true);
+      expect(data.priority).to.equal(1);
+      expect(data.primary).to.equal(false);
       expect(data.active).to.equal(true);
 
-      const [first, second] = await await integrationRepository.find(
+      const [first, second] = await integrationRepository.find(
         {
           _organizationId: session.organization._id,
           _environmentId: session.environment._id,
@@ -336,14 +374,14 @@ describe('Create Integration - /integration (POST)', function () {
         { sort: { priority: -1 } }
       );
 
-      expect(first._id).to.equal(data._id);
+      expect(first._id).to.equal(novuEmail._id);
       expect(first.primary).to.equal(true);
       expect(first.active).to.equal(true);
       expect(first.priority).to.equal(2);
 
-      expect(second._id).to.equal(novuEmail._id);
+      expect(second._id).to.equal(data._id);
       expect(second.primary).to.equal(false);
-      expect(second.active).to.equal(false);
+      expect(second.active).to.equal(true);
       expect(second.priority).to.equal(1);
     }
   );
@@ -454,6 +492,100 @@ describe('Create Integration - /integration (POST)', function () {
     expect(second.primary).to.equal(false);
     expect(second.active).to.equal(true);
     expect(second.priority).to.equal(1);
+  });
+
+  it('should not disable the novu integration and clear the primary flag if the new integration is created', async function () {
+    await integrationRepository.deleteMany({
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+    });
+
+    const novuIntegration = await integrationRepository.create({
+      name: 'Novu Integration',
+      identifier: 'novuIntegration',
+      providerId: EmailProviderIdEnum.Novu,
+      channel: ChannelTypeEnum.EMAIL,
+      active: true,
+      primary: true,
+      priority: 1,
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+    });
+
+    const payload = {
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      active: true,
+      check: false,
+    };
+
+    const {
+      body: { data },
+    } = await session.testAgent.post('/v1/integrations').send(payload);
+
+    const [first, second] = await integrationRepository.find(
+      {
+        _organizationId: session.organization._id,
+        _environmentId: session.environment._id,
+        channel: ChannelTypeEnum.EMAIL,
+      },
+      undefined,
+      { sort: { priority: -1 } }
+    );
+
+    expect(first._id).to.equal(novuIntegration._id);
+    expect(first.primary).to.equal(true);
+    expect(first.active).to.equal(true);
+    expect(first.priority).to.equal(2);
+
+    expect(second._id).to.equal(data._id);
+    expect(second.primary).to.equal(false);
+    expect(second.active).to.equal(true);
+    expect(second.priority).to.equal(1);
+  });
+
+  it('should not allow creating the same novu provider on same environment twice', async function () {
+    const inAppPayload = {
+      name: InAppProviderIdEnum.Novu,
+      providerId: InAppProviderIdEnum.Novu,
+      channel: ChannelTypeEnum.IN_APP,
+      credentials: {},
+      active: true,
+      check: false,
+    };
+
+    const inAppResult = await session.testAgent.post('/v1/integrations').send(inAppPayload);
+
+    expect(inAppResult.body.statusCode).to.equal(400);
+    expect(inAppResult.body.message).to.equal('One environment can only have one In app provider');
+
+    const emailPayload = {
+      name: EmailProviderIdEnum.Novu,
+      providerId: EmailProviderIdEnum.Novu,
+      channel: ChannelTypeEnum.EMAIL,
+      credentials: {},
+      active: true,
+      check: false,
+    };
+
+    const emailResult = await session.testAgent.post('/v1/integrations').send(emailPayload);
+
+    expect(emailResult.body.statusCode).to.equal(409);
+    expect(emailResult.body.message).to.equal('Integration with novu provider for email channel already exists');
+
+    const smsPayload = {
+      name: SmsProviderIdEnum.Novu,
+      providerId: SmsProviderIdEnum.Novu,
+      channel: ChannelTypeEnum.SMS,
+      credentials: {},
+      active: true,
+      check: false,
+    };
+
+    const smsResult = await session.testAgent.post('/v1/integrations').send(smsPayload);
+
+    expect(smsResult.body.statusCode).to.equal(409);
+    expect(smsResult.body.message).to.equal('Integration with novu provider for sms channel already exists');
   });
 });
 

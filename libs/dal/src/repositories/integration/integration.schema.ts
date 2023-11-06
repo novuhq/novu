@@ -46,6 +46,18 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       redirectUrl: Schema.Types.String,
       hmac: Schema.Types.Boolean,
       ipPoolName: Schema.Types.String,
+      apiKeyRequestHeader: Schema.Types.String,
+      secretKeyRequestHeader: Schema.Types.String,
+      idPath: Schema.Types.String,
+      datePath: Schema.Types.String,
+      authenticateByToken: Schema.Types.Boolean,
+      authenticationTokenKey: Schema.Types.String,
+      instanceId: Schema.Types.String,
+      alertUid: Schema.Types.String,
+      title: Schema.Types.String,
+      imageUrl: Schema.Types.String,
+      state: Schema.Types.String,
+      externalLink: Schema.Types.String,
     },
     active: {
       type: Schema.Types.Boolean,
@@ -61,6 +73,23 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       type: Schema.Types.Boolean,
       default: false,
     },
+    conditions: [
+      {
+        isNegated: Schema.Types.Boolean,
+        type: {
+          type: Schema.Types.String,
+        },
+        value: Schema.Types.String,
+        children: [
+          {
+            field: Schema.Types.String,
+            value: Schema.Types.Mixed,
+            operator: Schema.Types.String,
+            on: Schema.Types.String,
+          },
+        ],
+      },
+    ],
   },
   schemaOptions
 );

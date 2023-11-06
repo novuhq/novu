@@ -6,11 +6,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { showNotification } from '@mantine/notifications';
 import { IFeedEntity } from '@novu/shared';
 
-import { Checkbox, colors, Input } from '../../../../design-system';
+import { Checkbox, colors, Input, PlusGradient } from '@novu/design-system';
 import { useEnvController } from '../../../../hooks';
 import { createFeed, getFeeds } from '../../../../api/feeds';
 import { QueryKeys } from '../../../../api/query.keys';
-import { PlusGradient } from '../../../../design-system/icons';
 import { FeedItems } from './FeedItems';
 import { EnableAvatarSwitch } from './EnableAvatarSwitch';
 
@@ -35,16 +34,12 @@ export const AvatarFeedFields = ({ index, control }) => {
   useEffect(() => {
     const feed = getValues(`steps.${index}.template.feedId`);
     if (feeds?.length && !feed) {
-      selectDefaultFeed();
+      setTimeout(() => {
+        setValue(`steps.${index}.template.feedId`, '');
+      }, 0);
       setShowFeed(false);
     }
-  }, [feeds]);
-
-  function selectDefaultFeed() {
-    setTimeout(() => {
-      setValue(`steps.${index}.template.feedId`, '');
-    }, 0);
-  }
+  }, [getValues, setValue, index, feeds]);
 
   async function addNewFeed() {
     if (newFeed) {

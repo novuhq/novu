@@ -9,8 +9,8 @@ import { useSegment } from '../../../components/providers/SegmentProvider';
 import { When } from '../../../components/utils/When';
 import { INTERCOM_APP_ID } from '../../../config';
 import { ROUTES } from '../../../constants/routes.enum';
-import { ArrowButton, colors, Text } from '../../../design-system';
-import { Discord } from '../../../design-system/icons';
+import { ArrowButton, colors, Text, Discord } from '@novu/design-system';
+import { useEffectOnce } from '../../../hooks';
 import { discordInviteUrl, notificationCenterDocsUrl, OnBoardingAnalyticsEnum } from '../consts';
 import { currentOnboardingStep } from './route/store';
 
@@ -42,18 +42,10 @@ export function QuickStartWrapper({
   const onlySecondary = !!secondaryTitle && !title && !description;
 
   useEffect(() => {
-    onRouteChangeUpdateNavigationStore();
+    currentOnboardingStep().set(location.pathname);
   }, [location.pathname]);
 
-  function onRouteChangeUpdateNavigationStore() {
-    currentOnboardingStep().set(location.pathname);
-  }
-
-  useEffect(() => {
-    onStepMountNavigateToCurrentStep();
-  }, []);
-
-  function onStepMountNavigateToCurrentStep() {
+  useEffectOnce(() => {
     const route = currentOnboardingStep().get();
 
     if (route) {
@@ -61,7 +53,7 @@ export function QuickStartWrapper({
     } else {
       navigate(ROUTES.GET_STARTED);
     }
-  }
+  }, true);
 
   function goBackHandler() {
     if (goBackPath) {

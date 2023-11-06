@@ -6,8 +6,8 @@ name: Test WEB
 on:
   workflow_call:
     inputs:
-      submodules:
-        description: 'The flag controlling whether we want submodules to checkout'
+      ee:
+        description: 'use the ee version of worker'
         required: false
         default: false
         type: boolean
@@ -24,9 +24,6 @@ jobs:
       # leaving the Dashboard hanging ...
       # https://github.com/cypress-io/github-action/issues/48
       fail-fast: false
-      matrix:
-        # run 3 copies of the current job in parallel
-        containers: [1, 2, 3, 4, 5, 6, 7]
 
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
@@ -43,17 +40,18 @@ jobs:
       - id: setup
         run: |
           if ! [[ -z "${{ secrets.SUBMODULES_TOKEN }}" ]]; then
-            echo ::set-output has_token=true
+            echo "has_token=true" >> $GITHUB_OUTPUT
           else
-            echo ::set-output has_token=false
+            echo "has_token=false" >> $GITHUB_OUTPUT
           fi
+
       # checkout with submodules if token is provided
       - uses: actions/checkout@v3
         if: steps.setup.outputs.has_token == 'true'
         with:
-          submodules: ${{ inputs.submodules }}
+          submodules: ${{ inputs.ee }}
           token: ${{ secrets.SUBMODULES_TOKEN }}
-       # checkout without submodules
+      # else checkout without submodules if the token is not provided
       - uses: actions/checkout@v3
         if: steps.setup.outputs.has_token != 'true'
       - uses: ./.github/actions/setup-project
@@ -67,6 +65,7 @@ jobs:
           projects: '@novu/web,@novu/api,@novu/worker'
 
       - uses: ./.github/actions/start-localstack
+      - uses: ./.github/actions/setup-redis-cluster
 
       - uses: ./.github/actions/run-backend
         with:
@@ -103,7 +102,7 @@ jobs:
           echo "BROWSER_PATH=$(which chrome)" >> $GITHUB_ENV
 
       - name: Cypress run e2e
-        uses: cypress-io/github-action@v5
+        uses: cypress-io/github-action@v6
         env:
           NODE_ENV: test
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -114,8 +113,8 @@ jobs:
         with:
           working-directory: apps/web
           browser: "${{ env.BROWSER_PATH }}"
-          record: true
-          parallel: true
+          record: false
+          parallel: false
           install: false
           config-file: cypress.config.ts
 
@@ -151,7 +150,7 @@ jobs:
         run: pnpm cypress install
 
       - name: Run Component tests 🧪
-        uses: cypress-io/github-action@v5
+        uses: cypress-io/github-action@v6
         env:
           NODE_ENV: test
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

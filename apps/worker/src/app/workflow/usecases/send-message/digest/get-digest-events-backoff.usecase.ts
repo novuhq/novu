@@ -1,36 +1,34 @@
 import { Injectable } from '@nestjs/common';
 import { JobStatusEnum } from '@novu/dal';
-import { IDigestRegularMetadata, StepTypeEnum } from '@novu/shared';
-import { DigestFilterSteps, InstrumentUsecase } from '@novu/application-generic';
+import { StepTypeEnum } from '@novu/shared';
+import { InstrumentUsecase } from '@novu/application-generic';
 
-import { SendMessageCommand } from '../send-message.command';
+import { DigestEventsCommand } from './digest-events.command';
 import { GetDigestEvents } from './get-digest-events.usecase';
-import { PlatformException } from '../../../../shared/utils';
 
 @Injectable()
 export class GetDigestEventsBackoff extends GetDigestEvents {
   @InstrumentUsecase()
-  public async execute(command: SendMessageCommand) {
-    const currentJob = await this.jobRepository.findOne({ _environmentId: command.environmentId, _id: command.jobId });
-    if (!currentJob) throw new PlatformException('Digest job is not found');
+  public async execute(command: DigestEventsCommand) {
+    const currentJob = command.currentJob;
 
-    const digestMeta = currentJob.digest as IDigestRegularMetadata | undefined;
-    const digestKey = digestMeta?.digestKey;
-    const digestValue = DigestFilterSteps.getNestedValue(currentJob.payload, digestKey);
+    const { digestKey, digestMeta, digestValue } = this.getJobDigest(currentJob);
 
-    const jobs = await this.jobRepository.find({
-      createdAt: {
-        $gte: currentJob.createdAt,
+    const jobs = await this.jobRepository.find(
+      {
+        createdAt: {
+          $gte: currentJob.createdAt,
+        },
+        _templateId: currentJob._templateId,
+        status: JobStatusEnum.COMPLETED,
+        type: StepTypeEnum.TRIGGER,
+        _environmentId: currentJob._environmentId,
+        ...(digestKey && { [`payload.${digestKey}`]: digestValue }),
+        _subscriberId: command._subscriberId,
       },
-      _templateId: currentJob._templateId,
-      status: JobStatusEnum.COMPLETED,
-      type: StepTypeEnum.TRIGGER,
-      _environmentId: command.environmentId,
-      ...(digestKey && { [`payload.${digestKey}`]: digestValue }),
-      // backward compatibility - ternary needed to be removed once the queue renewed
-      _subscriberId: command._subscriberId ? command._subscriberId : command.subscriberId,
-    });
+      'payload _id'
+    );
 
-    return this.filterJobs(currentJob, command.transactionId, jobs);
+    return this.filterJobs(currentJob, currentJob.transactionId, jobs);
   }
 }

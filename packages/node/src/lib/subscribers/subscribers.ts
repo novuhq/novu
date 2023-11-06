@@ -4,13 +4,14 @@ import {
   IChannelCredentials,
   ISubscribersDefine,
 } from '@novu/shared';
-import { MarkMessagesAsEnum } from '@novu/shared';
+import { MarkMessagesAsEnum, PreferenceLevelEnum } from '@novu/shared';
 import {
   IGetSubscriberNotificationFeedParams,
   IMarkFields,
   IMarkMessageActionFields,
   ISubscriberPayload,
   ISubscribers,
+  IUpdateSubscriberGlobalPreferencePayload,
   IUpdateSubscriberPreferencePayload,
 } from './subscriber.interface';
 import { WithHttp } from '../novu.interface';
@@ -91,6 +92,18 @@ export class Subscribers extends WithHttp implements ISubscribers {
     return await this.http.get(`/subscribers/${subscriberId}/preferences`);
   }
 
+  async getGlobalPreference(subscriberId: string) {
+    return await this.http.get(
+      `/subscribers/${subscriberId}/preferences/${PreferenceLevelEnum.GLOBAL}`
+    );
+  }
+
+  async getPreferenceByLevel(subscriberId: string, level: PreferenceLevelEnum) {
+    return await this.http.get(
+      `/subscribers/${subscriberId}/preferences/${level}`
+    );
+  }
+
   async updatePreference(
     subscriberId: string,
     templateId: string,
@@ -102,6 +115,15 @@ export class Subscribers extends WithHttp implements ISubscribers {
         ...data,
       }
     );
+  }
+
+  async updateGlobalPreference(
+    subscriberId: string,
+    data: IUpdateSubscriberGlobalPreferencePayload
+  ) {
+    return await this.http.patch(`/subscribers/${subscriberId}/preferences`, {
+      ...data,
+    });
   }
 
   async getNotificationsFeed(

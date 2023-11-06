@@ -2,28 +2,37 @@ import { Test } from '@nestjs/testing';
 import { UserSession } from '@novu/testing';
 import { SubscriberRepository } from '@novu/dal';
 
-import { CacheService, InvalidateCacheService } from '../../services/cache';
 import { CreateSubscriber } from './create-subscriber.usecase';
 import { CreateSubscriberCommand } from './create-subscriber.command';
+
+import {
+  CacheService,
+  CacheInMemoryProviderService,
+  InMemoryProviderEnum,
+  InMemoryProviderService,
+  InvalidateCacheService,
+} from '../../services';
 import { UpdateSubscriber } from '../update-subscriber';
-import { InMemoryProviderService } from '../../services';
 
-const inMemoryProviderService = {
-  provide: InMemoryProviderService,
-  useFactory: () => {
-    const service = new InMemoryProviderService();
-    service.initialize();
+const cacheInMemoryProviderService = {
+  provide: CacheInMemoryProviderService,
+  useFactory: async (): Promise<CacheInMemoryProviderService> => {
+    const cacheInMemoryProvider = new CacheInMemoryProviderService();
 
-    return service;
+    return cacheInMemoryProvider;
   },
 };
 
 const cacheService = {
   provide: CacheService,
-  useFactory: () => {
-    const factoryInMemoryProviderService = inMemoryProviderService.useFactory();
+  useFactory: async () => {
+    const factoryCacheInMemoryProviderService =
+      await cacheInMemoryProviderService.useFactory();
 
-    return new CacheService(factoryInMemoryProviderService);
+    const service = new CacheService(factoryCacheInMemoryProviderService);
+    await service.initialize();
+
+    return service;
   },
 };
 
@@ -34,7 +43,7 @@ describe('Create Subscriber', function () {
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
       imports: [SubscriberRepository, InvalidateCacheService],
-      providers: [UpdateSubscriber, inMemoryProviderService, cacheService],
+      providers: [UpdateSubscriber, cacheInMemoryProviderService, cacheService],
     }).compile();
 
     session = new UserSession();

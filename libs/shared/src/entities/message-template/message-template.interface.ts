@@ -6,6 +6,7 @@ import {
   StepTypeEnum,
   TemplateVariableTypeEnum,
 } from '../../types';
+import { TriggerContextTypeEnum } from '../notification-template';
 
 export type MessageTemplateContentType = 'editor' | 'customHtml';
 
@@ -37,11 +38,20 @@ export interface IMessageTemplate {
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export const TemplateSystemVariables = ['subscriber', 'step', 'branding', 'preheader'];
+export const TemplateSystemVariables = ['subscriber', 'step', 'branding', 'tenant', 'preheader', 'actor'];
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const SystemVariablesWithTypes = {
   subscriber: {
+    firstName: 'string',
+    lastName: 'string',
+    email: 'string',
+    phone: 'string',
+    avatar: 'string',
+    locale: 'string',
+    subscriberId: 'string',
+  },
+  actor: {
     firstName: 'string',
     lastName: 'string',
     email: 'string',
@@ -59,4 +69,17 @@ export const SystemVariablesWithTypes = {
     logo: 'string',
     color: 'string',
   },
+  tenant: {
+    name: 'string',
+    data: 'object',
+  },
+};
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export const TriggerReservedVariables = ['tenant', 'actor'];
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export const ReservedVariablesMap = {
+  [TriggerContextTypeEnum.TENANT]: [{ name: 'identifier', type: TemplateVariableTypeEnum.STRING }],
+  [TriggerContextTypeEnum.ACTOR]: [{ name: 'subscriberId', type: TemplateVariableTypeEnum.STRING }],
 };

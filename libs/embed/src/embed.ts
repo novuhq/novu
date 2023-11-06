@@ -48,6 +48,8 @@ class Novu {
 
   private listeners: { [key: string]: (data: any) => void } = {};
 
+  private showUserPreferences?: boolean;
+
   constructor(onloadFunc = function () {}) {
     this.debugMode = false;
     this.onloadFunc = onloadFunc;
@@ -79,6 +81,7 @@ class Novu {
       this.tabs = selectorOrOptions.tabs;
       this.stores = selectorOrOptions.stores;
       this.colorScheme = selectorOrOptions.colorScheme;
+      this.showUserPreferences = selectorOrOptions.showUserPreferences;
     }
 
     this.clientId = clientId;
@@ -141,9 +144,12 @@ class Novu {
         positionIframe();
 
         const elem = document.querySelector('.wrapper-novu-widget') as HTMLBodyElement;
+        const isWidgetHidden = elem && elem.style.display === 'none';
 
-        if (elem) {
+        if (isWidgetHidden) {
           elem.style.display = 'inline-block';
+        } else {
+          hideWidget();
         }
 
         _scope.iframe?.contentWindow?.postMessage(
@@ -245,6 +251,7 @@ class Novu {
                 tabs: this.tabs,
                 stores: this.stores,
                 colorScheme: this.colorScheme,
+                showUserPreferences: this.showUserPreferences,
               },
             },
             '*'
@@ -422,4 +429,5 @@ interface IOptions {
   tabs: ITab[];
   stores: IStore[];
   colorScheme?: ColorScheme;
+  showUserPreferences?: boolean;
 }

@@ -8,9 +8,9 @@ import {
   MemberRepository,
   FeedRepository,
 } from '@novu/dal';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, WebSocketEventEnum } from '@novu/shared';
 import {
-  WsQueueService,
+  WebSocketsQueueService,
   AnalyticsService,
   InvalidateCacheService,
   buildFeedKey,
@@ -26,7 +26,7 @@ export class RemoveAllMessages {
   constructor(
     private invalidateCache: InvalidateCacheService,
     private messageRepository: MessageRepository,
-    private wsQueueService: WsQueueService,
+    private webSocketsQueueService: WebSocketsQueueService,
     private analyticsService: AnalyticsService,
     private subscriberRepository: SubscriberRepository,
     private memberRepository: MemberRepository,
@@ -40,7 +40,7 @@ export class RemoveAllMessages {
     try {
       let feed;
       if (command.feedId) {
-        feed = await this.feedRepository.findById(command.feedId);
+        feed = await this.feedRepository.findOne({ _id: command.feedId, _organizationId: command.organizationId });
         if (!feed) {
           throw new NotFoundException(`Feed with ${command.feedId} not found`);
         }
@@ -98,16 +98,15 @@ export class RemoveAllMessages {
   }
 
   private updateSocketCount(subscriber: SubscriberEntity, mark: string) {
-    const eventMessage = mark === MarkEnum.READ ? `unread_count_changed` : 'unseen_count_changed';
+    const eventMessage = mark === MarkEnum.READ ? WebSocketEventEnum.UNREAD : WebSocketEventEnum.UNSEEN;
 
-    this.wsQueueService.bullMqService.add(
+    this.webSocketsQueueService.add(
       'sendMessage',
       {
         event: eventMessage,
         userId: subscriber._id,
         _environmentId: subscriber._environmentId,
       },
-      {},
       subscriber._organizationId
     );
   }

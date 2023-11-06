@@ -47,7 +47,7 @@ describe('SearchByExternalSubscriberIdsUseCase', () => {
     expect(res[1].subscriberId).to.eql(secondSubscriber.subscriberId);
   });
 
-  it('should seach and find the subscribers existing by the external subscriber ids', async () => {
+  it('should search and find the subscribers existing by the external subscriber ids', async () => {
     const externalSubscriberIds = [secondSubscriber.subscriberId, 'non-existing-external-subscriber-id'];
     const command = SearchByExternalSubscriberIdsCommand.create({
       environmentId: session.environment._id,

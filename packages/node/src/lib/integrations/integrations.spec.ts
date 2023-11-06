@@ -1,6 +1,6 @@
 import { Novu } from '../novu';
 import axios from 'axios';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, FieldLogicalOperatorEnum } from '@novu/shared';
 
 const mockConfig = {
   apiKey: '1234',
@@ -37,6 +37,14 @@ describe('test use of novus node package - Integrations class', () => {
       active: true,
       channel: ChannelTypeEnum.EMAIL,
       check: true,
+      conditions: [
+        {
+          isNegated: false,
+          type: 'GROUP',
+          value: FieldLogicalOperatorEnum.AND,
+          children: [],
+        },
+      ],
     });
 
     expect(mockedAxios.post).toHaveBeenCalled();
@@ -49,6 +57,14 @@ describe('test use of novus node package - Integrations class', () => {
       active: true,
       channel: ChannelTypeEnum.EMAIL,
       check: true,
+      conditions: [
+        {
+          isNegated: false,
+          type: 'GROUP',
+          value: FieldLogicalOperatorEnum.AND,
+          children: [],
+        },
+      ],
     });
   });
 
@@ -82,6 +98,14 @@ describe('test use of novus node package - Integrations class', () => {
         apiKey: 'newApiKey',
         secretKey: 'newApiSecret',
       },
+      conditions: [
+        {
+          isNegated: false,
+          type: 'GROUP',
+          value: FieldLogicalOperatorEnum.AND,
+          children: [],
+        },
+      ],
     });
 
     expect(mockedAxios.put).toHaveBeenCalled();
@@ -94,6 +118,14 @@ describe('test use of novus node package - Integrations class', () => {
           apiKey: 'newApiKey',
           secretKey: 'newApiSecret',
         },
+        conditions: [
+          {
+            isNegated: false,
+            type: 'GROUP',
+            value: FieldLogicalOperatorEnum.AND,
+            children: [],
+          },
+        ],
       }
     );
   });
@@ -107,5 +139,26 @@ describe('test use of novus node package - Integrations class', () => {
     expect(mockedAxios.delete).toHaveBeenCalledWith(
       '/integrations/INTEGRATION_ID'
     );
+  });
+
+  test('should set the integration as primary', async () => {
+    mockedAxios.post.mockResolvedValue({});
+
+    await novu.integrations.setIntegrationAsPrimary('INTEGRATION_ID');
+
+    expect(mockedAxios.post).toHaveBeenCalled();
+    expect(mockedAxios.post).toHaveBeenCalledWith(
+      '/integrations/INTEGRATION_ID/set-primary',
+      {}
+    );
+  });
+
+  test('should get the in-app status of the integration', async () => {
+    mockedAxios.post.mockResolvedValue({});
+
+    await novu.integrations.getInAppStatus();
+
+    expect(mockedAxios.get).toHaveBeenCalled();
+    expect(mockedAxios.get).toHaveBeenCalledWith('/integrations/in-app/status');
   });
 });

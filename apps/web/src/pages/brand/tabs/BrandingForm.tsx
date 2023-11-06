@@ -1,17 +1,18 @@
-import { Flex, Grid, Group, Input, LoadingOverlay, Stack, useMantineTheme } from '@mantine/core';
+import { Flex, Grid, Group, Input, LoadingOverlay, Stack, UnstyledButton, useMantineTheme } from '@mantine/core';
 import { Dropzone } from '@mantine/dropzone';
-import { IOrganizationEntity } from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
 import axios from 'axios';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import styled from '@emotion/styled';
+import { useOutletContext } from 'react-router-dom';
+import { IOrganizationEntity } from '@novu/shared';
 
 import { updateBrandingSettings } from '../../../api/organization';
 import { getSignedUrl } from '../../../api/storage';
 import Card from '../../../components/layout/components/Card';
-import { Button, ColorInput, colors, Select } from '../../../design-system';
-import { inputStyles } from '../../../design-system/config/inputs.styles';
-import { Upload } from '../../../design-system/icons';
+import { Button, ColorInput, colors, Select, inputStyles, Upload, Trash } from '@novu/design-system';
+
 import { successMessage } from '../../../utils/notifications';
 
 const mimeTypes = {
@@ -19,21 +20,24 @@ const mimeTypes = {
   'image/png': 'png',
 };
 
-export function BrandingForm({
-  isLoading,
-  organization,
-}: {
-  isLoading: boolean;
-  organization: IOrganizationEntity | undefined;
-}) {
-  const [image, setImage] = useState<string>();
-  const [file, setFile] = useState<File>();
-  const [imageLoading, setImageLoading] = useState<boolean>(false);
+export function BrandingForm() {
+  const { currentOrganization: organization } = useOutletContext<{
+    currentOrganization: IOrganizationEntity | undefined;
+  }>();
   const { mutateAsync: getSignedUrlAction } = useMutation<
     { signedUrl: string; path: string; additionalHeaders: object },
     { error: string; message: string; statusCode: number },
     string
   >(getSignedUrl);
+  const { setValue, handleSubmit, control } = useForm({
+    defaultValues: {
+      fontFamily: organization?.branding?.fontFamily || 'inherit',
+      color: organization?.branding?.color || '#f47373',
+      image: organization?.branding?.logo || '',
+      file: '',
+    },
+  });
+  const theme = useMantineTheme();
 
   const { mutateAsync: updateBrandingSettingsMutation, isLoading: isUpdateBrandingLoading } = useMutation<
     { logo: string; path: string },
@@ -43,36 +47,28 @@ export function BrandingForm({
 
   useEffect(() => {
     if (organization) {
-      if (organization.branding?.logo) {
-        setImage(organization.branding.logo);
-      }
-      if (organization.branding?.color) {
-        setValue('color', organization?.branding?.color);
-      }
-      if (organization.branding?.fontFamily) {
-        setValue('fontFamily', organization?.branding?.fontFamily);
-      }
+      organization?.branding?.logo ? setValue('image', organization.branding.logo) : setValue('image', '');
+      organization?.branding?.color ? setValue('color', organization?.branding?.color) : setValue('color', '#f47373');
+      organization?.branding?.fontFamily
+        ? setValue('fontFamily', organization?.branding?.fontFamily)
+        : setValue('fontFamily', 'inherit');
     }
-  }, [organization]);
+  }, [organization, setValue]);
 
-  function beforeUpload(files: File[]) {
-    setFile(files[0]);
+  function removeFile() {
+    setValue('file', '');
+    setValue('image', '');
   }
 
-  useEffect(() => {
-    if (file) {
-      handleUpload();
-    }
-  }, [file]);
-
-  async function handleUpload() {
+  async function handleUpload(files: File[]) {
+    const file = files[0];
     if (!file) return;
 
-    setImageLoading(true);
     const { signedUrl, path, additionalHeaders } = await getSignedUrlAction(mimeTypes[file.type]);
     const contentTypeHeaders = {
       'Content-Type': file.type,
     };
+
     const mergedHeaders = Object.assign({}, contentTypeHeaders, additionalHeaders || {});
     await axios.put(signedUrl, file, {
       headers: mergedHeaders,
@@ -88,14 +84,15 @@ export function BrandingForm({
       ],
     });
 
-    setImage(path);
-    setImageLoading(false);
+    setValue('image', path);
   }
 
-  async function saveBrandsForm({ color, fontFamily }) {
+  const dropzoneRef = useRef<() => void>(null);
+
+  async function saveBrandsForm({ color, fontFamily, image }) {
     const brandData = {
       color,
-      logo: image,
+      logo: image || null,
       fontFamily,
     };
 
@@ -104,19 +101,9 @@ export function BrandingForm({
     successMessage('Branding info updated successfully');
   }
 
-  const { setValue, handleSubmit, control } = useForm({
-    defaultValues: {
-      fontFamily: organization?.branding?.fontFamily || 'inherit',
-      color: organization?.branding?.color || '#f47373',
-      image: image || '',
-      file: file || '',
-    },
-  });
-  const theme = useMantineTheme();
-
   return (
     <Stack h="100%">
-      <LoadingOverlay visible={isLoading} />
+      <LoadingOverlay visible={!organization} />
       <form noValidate onSubmit={handleSubmit(saveBrandsForm)}>
         <Grid>
           <Grid.Col span={6}>
@@ -130,39 +117,62 @@ export function BrandingForm({
                         label="Your Logo"
                         description="Will be used on email templates and inbox"
                       >
-                        <Dropzone
-                          styles={{
-                            root: {
-                              borderRadius: '7px',
-                              border: ` 1px solid ${
-                                theme.colorScheme === 'dark' ? theme.colors.dark[5] : theme.colors.gray[5]
-                              }`,
-                              background: 'none',
-                            },
-                          }}
-                          accept={Object.keys(mimeTypes)}
-                          multiple={false}
-                          onDrop={beforeUpload}
-                          {...field}
-                          data-test-id="upload-image-button"
-                        >
-                          <Group
-                            position="center"
-                            spacing="xl"
-                            style={{ minHeight: 100, minWidth: 100, pointerEvents: 'none' }}
+                        <DropzoneWrapper>
+                          {field.value && (
+                            <DropzoneOverlay>
+                              <DropzoneButton type="button" onClick={() => dropzoneRef.current?.()}>
+                                <Upload style={{ width: 20, height: 20 }} />
+                                Update
+                              </DropzoneButton>
+
+                              <DropzoneButton type="button" onClick={removeFile}>
+                                <Trash style={{ width: 20, height: 20 }} />
+                                Remove
+                              </DropzoneButton>
+                            </DropzoneOverlay>
+                          )}
+                          <Dropzone
+                            styles={{
+                              root: {
+                                background: 'none',
+                                border: 'none',
+                              },
+                            }}
+                            openRef={dropzoneRef}
+                            accept={Object.keys(mimeTypes)}
+                            multiple={false}
+                            onDrop={handleUpload}
+                            data-test-id="upload-image-button"
                           >
-                            {!image ? (
-                              <Upload style={{ width: 80, height: 80, color: colors.B60 }} />
-                            ) : (
-                              <img
-                                data-test-id="logo-image-wrapper"
-                                src={image}
-                                style={{ width: 100, height: 100, objectFit: 'contain' }}
-                                alt="avatar"
-                              />
-                            )}
-                          </Group>
-                        </Dropzone>
+                            <Group
+                              position="center"
+                              spacing="xl"
+                              style={{ minHeight: 100, minWidth: 100, pointerEvents: 'none' }}
+                            >
+                              {!field.value ? (
+                                <div
+                                  style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    color: colors.B60,
+                                    gap: '4px',
+                                  }}
+                                >
+                                  <Upload style={{ width: 20, height: 20 }} />
+                                  Upload
+                                </div>
+                              ) : (
+                                <img
+                                  data-test-id="logo-image-wrapper"
+                                  src={field.value}
+                                  style={{ width: 100, height: 100, objectFit: 'contain' }}
+                                  alt="avatar"
+                                />
+                              )}
+                            </Group>
+                          </Dropzone>
+                        </DropzoneWrapper>
                       </Input.Wrapper>
                     )}
                     control={control}
@@ -232,3 +242,45 @@ export function BrandingForm({
     </Stack>
   );
 }
+
+const DropzoneButton: any = styled(UnstyledButton)`
+  color: ${colors.B70};
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+
+  &:hover {
+    color: ${colors.white};
+  }
+`;
+
+const DropzoneOverlay = styled('div')`
+  display: none;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  z-index: 20;
+  border-radius: 7px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-color: ${colors.BGDark + 'D6'};
+  backdrop-filter: blur(5px);
+  width: 100%;
+  height: 100%;
+`;
+
+const DropzoneWrapper = styled('div')`
+  position: relative;
+  border-radius: 7px;
+  border: 1px solid ${({ theme }) => (theme.colorScheme === 'dark' ? theme.colors.dark[5] : theme.colors.gray[5])};
+
+  &:hover {
+    cursor: pointer;
+
+    ${DropzoneOverlay} {
+      display: flex;
+    }
+  }
+`;

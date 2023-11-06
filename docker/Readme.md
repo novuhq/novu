@@ -1,6 +1,6 @@
 Docker is the easiest way to get started with self-hosted Novu,
 however if you want to set up the system on docker for local development look [here](local/Readme.md)
-or if you want to deploy Novu to Kubernetes check [here](kubernetes/Readme.md)
+or if you want to deploy Novu to Kubernetes using Helm check [here](kubernetes/helm/Readme.md) or using Kustomize check [here](kubernetes/helm/Readme.md).
 
 ## Before you begin
 
@@ -59,4 +59,4 @@ We strongly recommend that you decouple your database before deploying.
 
 ## Next steps
 
-- Got a question? [Ask here](https://github.com/novuhq/novu/discussions).
+- Got a question? [Ask here](https://discord.gg/novu).

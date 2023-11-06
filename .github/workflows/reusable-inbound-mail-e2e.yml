@@ -1,0 +1,58 @@
+name: E2E Inbound Mail Tests
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+on:
+  workflow_call:
+    inputs:
+      ee:
+        description: 'use the ee version of worker'
+        required: false
+        default: false
+        type: boolean
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  e2e_inbound_mail:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - id: setup
+        run: |
+          if ! [[ -z "${{ secrets.SUBMODULES_TOKEN }}" ]]; then
+             echo "has_token=true" >> $GITHUB_OUTPUT
+          else
+             echo "has_token=false" >> $GITHUB_OUTPUT
+          fi
+      # checkout with submodules if token is provided
+      - uses: actions/checkout@v3
+        if: steps.setup.outputs.has_token == 'true'
+        with:
+          submodules: ${{ inputs.ee }}
+          token: ${{ secrets.SUBMODULES_TOKEN }}
+      # else checkout without submodules if the token is not provided
+      - uses: actions/checkout@v3
+        if: steps.setup.outputs.has_token != 'true'
+      - uses: ./.github/actions/setup-project
+      - uses: ./.github/actions/setup-redis-cluster
+      - uses: mansagroup/nrwl-nx-action@v3
+        with:
+          targets: lint
+          projects: "@novu/inbound-mail"
+
+        # Runs a single command using the runners shell
+      - name: Build Inbound Mail
+        run: CI='' pnpm build:inbound-mail
+
+      - name: Run unit tests
+        run: |
+          cd apps/inbound-mail && pnpm test

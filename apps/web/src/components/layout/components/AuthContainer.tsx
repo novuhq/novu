@@ -1,5 +1,5 @@
 import React from 'react';
-import { colors, Text, Title, Container } from '../../../design-system';
+import { colors, Text, Title, Container } from '@novu/design-system';
 import PageMeta from './PageMeta';
 
 export default function AuthContainer({

@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import decode from 'jwt-decode';
 import { IJwtPayload } from '@novu/shared';
 
-import { Button, Input } from '../../../design-system';
+import { Button, Input } from '@novu/design-system';
 import { api } from '../../../api/api.client';
 import { useAuthContext } from '../../../components/providers/AuthProvider';
 import { useVercelIntegration, useVercelParams } from '../../../hooks';
@@ -55,7 +55,7 @@ export function CreateOrganization({}: Props) {
         navigate(ROUTES.HOME);
       }
     }
-  }, []);
+  }, [token, navigate, isFromVercel, startVercelSetup]);
 
   async function createEnvironment(name: string) {
     const environmentResponse = await mutateAsync({ name });

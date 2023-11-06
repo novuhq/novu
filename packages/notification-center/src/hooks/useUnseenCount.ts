@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useQuery, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
 import debounce from 'lodash.debounce';
+import { WebSocketEventEnum } from '@novu/shared';
 
 import type { ICountData } from '../shared/interfaces';
 import { useNovuContext } from './useNovuContext';
@@ -38,16 +39,13 @@ export const useUnseenCount = ({ onSuccess, ...restOptions }: UseQueryOptions<IC
     }
 
     socket.on(
-      'unseen_count_changed',
+      WebSocketEventEnum.UNSEEN,
       debounce((data?: { unseenCount: number }) => {
         if (Number.isInteger(data?.unseenCount)) {
           queryClient.setQueryData<{ count: number }>(unseenCountQueryKey, (oldData) => ({
             count: data?.unseenCount ?? oldData.count,
           }));
 
-          queryClient.refetchQueries(queryKeysRef.current.unseenCountQueryKey, {
-            exact: false,
-          });
           queryClient.refetchQueries(queryKeysRef.current.fetchNotificationsQueryKey, {
             exact: false,
           });
@@ -62,7 +60,7 @@ export const useUnseenCount = ({ onSuccess, ...restOptions }: UseQueryOptions<IC
     );
 
     return () => {
-      socket.off('unseen_count_changed');
+      socket.off(WebSocketEventEnum.UNSEEN);
     };
   }, [socket, queryClient, setQueryKey]);
 

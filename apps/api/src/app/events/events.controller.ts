@@ -1,7 +1,13 @@
 import { Body, Controller, Delete, Param, Post, Scope, UseGuards } from '@nestjs/common';
 import { ApiOkResponse, ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { v4 as uuidv4 } from 'uuid';
-import { IJwtPayload, ISubscribersDefine, TriggerRecipientSubscriber } from '@novu/shared';
+import {
+  IJwtPayload,
+  ISubscribersDefine,
+  ITenantDefine,
+  TriggerRecipientSubscriber,
+  TriggerTenantContext,
+} from '@novu/shared';
 import { SendTestEmail, SendTestEmailCommand } from '@novu/application-generic';
 
 import {
@@ -12,8 +18,7 @@ import {
   TriggerEventToAllRequestDto,
 } from './dtos';
 import { CancelDelayed, CancelDelayedCommand } from './usecases/cancel-delayed';
-import { MapTriggerRecipients } from './usecases/map-trigger-recipients';
-import { ParseEventRequest, ParseEventRequestCommand } from './usecases/parse-event-request';
+import { ParseEventRequest, ParseEventRequestMulticastCommand } from './usecases/parse-event-request';
 import { ProcessBulkTrigger, ProcessBulkTriggerCommand } from './usecases/process-bulk-trigger';
 import { TriggerEventToAll, TriggerEventToAllCommand } from './usecases/trigger-event-to-all';
 
@@ -22,6 +27,7 @@ import { ExternalApiAccessible } from '../auth/framework/external-api.decorator'
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ApiResponse } from '../shared/framework/response.decorator';
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
+
 @Controller({
   path: 'events',
   scope: Scope.REQUEST,
@@ -29,7 +35,6 @@ import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 @ApiTags('Events')
 export class EventsController {
   constructor(
-    private mapTriggerRecipients: MapTriggerRecipients,
     private cancelDelayedUsecase: CancelDelayed,
     private triggerEventToAll: TriggerEventToAll,
     private sendTestEmail: SendTestEmail,
@@ -54,7 +59,7 @@ export class EventsController {
     @Body() body: TriggerEventRequestDto
   ): Promise<TriggerEventResponseDto> {
     const result = await this.parseEventRequest.execute(
-      ParseEventRequestCommand.create({
+      ParseEventRequestMulticastCommand.create({
         userId: user._id,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
@@ -63,6 +68,7 @@ export class EventsController {
         overrides: body.overrides || {},
         to: body.to,
         actor: body.actor,
+        tenant: body.tenant,
         transactionId: body.transactionId,
       })
     );
@@ -109,7 +115,6 @@ export class EventsController {
     @Body() body: TriggerEventToAllRequestDto
   ): Promise<TriggerEventResponseDto> {
     const transactionId = body.transactionId || uuidv4();
-    const mappedActor = body.actor ? this.mapActor(body.actor) : null;
 
     return this.triggerEventToAll.execute(
       TriggerEventToAllCommand.create({
@@ -118,9 +123,10 @@ export class EventsController {
         organizationId: user.organizationId,
         identifier: body.name,
         payload: body.payload,
+        tenant: body.tenant,
         transactionId,
         overrides: body.overrides || {},
-        actor: mappedActor,
+        actor: body.actor,
       })
     );
   }
@@ -170,11 +176,5 @@ export class EventsController {
         transactionId,
       })
     );
-  }
-
-  private mapActor(actor?: TriggerRecipientSubscriber | null): ISubscribersDefine | null {
-    if (!actor) return null;
-
-    return this.mapTriggerRecipients.mapSubscriber(actor);
   }
 }

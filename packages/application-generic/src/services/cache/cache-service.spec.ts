@@ -5,13 +5,7 @@ import {
   splitKey,
 } from './cache.service';
 
-import { FeatureFlagsService } from '../feature-flags.service';
-import { InMemoryProviderService } from '../in-memory-provider';
-
-const enableAutoPipelining =
-  process.env.REDIS_CACHE_ENABLE_AUTOPIPELINING === 'true';
-
-const featureFlagsService = new FeatureFlagsService();
+import { CacheInMemoryProviderService } from '../in-memory-provider';
 
 /**
  * TODO: Maybe create a Test single Redis instance to be able to run it in the
@@ -19,17 +13,20 @@ const featureFlagsService = new FeatureFlagsService();
  */
 describe.skip('Cache Service - Redis Instance - Non Cluster Mode', () => {
   let cacheService: CacheService;
+  let cacheInMemoryProviderService: CacheInMemoryProviderService;
 
   beforeAll(async () => {
-    process.env.IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
-    const inMemoryProviderService = new InMemoryProviderService(
-      enableAutoPipelining
-    );
-    inMemoryProviderService.initialize();
-    await inMemoryProviderService.delayUntilReadiness();
-    expect(inMemoryProviderService.isClusterMode()).toBe(false);
+    process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
 
-    cacheService = new CacheService(inMemoryProviderService);
+    cacheInMemoryProviderService = new CacheInMemoryProviderService();
+    expect(cacheInMemoryProviderService.isCluster).toBe(false);
+
+    cacheService = new CacheService(cacheInMemoryProviderService);
+    await cacheService.initialize();
+  });
+
+  afterAll(async () => {
+    await cacheInMemoryProviderService.shutdown();
   });
 
   it('should be instantiated properly', async () => {
@@ -73,17 +70,20 @@ describe.skip('Cache Service - Redis Instance - Non Cluster Mode', () => {
 
 describe('Cache Service - Cluster Mode', () => {
   let cacheService: CacheService;
+  let cacheInMemoryProviderService: CacheInMemoryProviderService;
 
   beforeAll(async () => {
-    process.env.IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
-    const inMemoryProviderService = new InMemoryProviderService(
-      enableAutoPipelining
-    );
-    inMemoryProviderService.initialize();
-    await inMemoryProviderService.delayUntilReadiness();
-    expect(inMemoryProviderService.isClusterMode()).toBe(true);
+    process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
 
-    cacheService = new CacheService(inMemoryProviderService);
+    cacheInMemoryProviderService = new CacheInMemoryProviderService();
+    expect(cacheInMemoryProviderService.isCluster).toBe(true);
+
+    cacheService = new CacheService(cacheInMemoryProviderService);
+    await cacheService.initialize();
+  });
+
+  afterAll(async () => {
+    await cacheInMemoryProviderService.shutdown();
   });
 
   it('should be instantiated properly', async () => {
@@ -97,6 +97,16 @@ describe('Cache Service - Cluster Mode', () => {
     expect(result).toBe('OK');
     const value = await cacheService.get('key1');
     expect(value).toBe('value1');
+  });
+
+  it('should be able to add a key / value in the Redis Cluster if key not exist', async () => {
+    const result = await cacheService.setIfNotExist('key1-not-exist', 'value1');
+    expect(result).toBeDefined();
+    const result1 = await cacheService.setIfNotExist(
+      'key1-not-exist',
+      'value1'
+    );
+    expect(result1).toBeFalsy();
   });
 
   it('should be able to delete a key / value in the Redis Cluster', async () => {

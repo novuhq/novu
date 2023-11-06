@@ -2,8 +2,19 @@ import { memo } from 'react';
 import { ActionIcon, useMantineTheme } from '@mantine/core';
 import styled from '@emotion/styled';
 
-import { Digest, Mail, Mobile, PlusCircleOutlined, Chat, Sms, InApp, Timer } from '../../../../../design-system/icons';
-import { colors, Dropdown, Text } from '../../../../../design-system';
+import {
+  Digest,
+  Mail,
+  Mobile,
+  PlusCircleOutlined,
+  Chat,
+  Sms,
+  InApp,
+  Timer,
+  colors,
+  Dropdown,
+  Text,
+} from '@novu/design-system';
 import { StepTypeEnum } from '@novu/shared';
 
 interface NodeData {
@@ -48,7 +59,7 @@ export default memo(({ data }: { data: NodeData }) => {
             }}
             variant="transparent"
           >
-            <PlusCircleOutlined />
+            <PlusCircleOutlined fillColor={theme.colorScheme === 'dark' ? colors.B15 : 'transparent'} />
           </ActionIcon>
         }
       >
@@ -83,7 +94,11 @@ export default memo(({ data }: { data: NodeData }) => {
         >
           Digest
         </Dropdown.Item>
-        <Dropdown.Item data-test-id={`add-delay-node`} icon={<Timer />} onClick={() => addNewNode(StepTypeEnum.DELAY)}>
+        <Dropdown.Item
+          data-test-id={`add-delay-node`}
+          icon={<Timer width={20} height={20} />}
+          onClick={() => addNewNode(StepTypeEnum.DELAY)}
+        >
           Delay
         </Dropdown.Item>
       </Dropdown>
