@@ -1,1 +1,1 @@
-export type WorkflowOverrideId = string;
+export { WorkflowOverrideId } from '@novu/shared';

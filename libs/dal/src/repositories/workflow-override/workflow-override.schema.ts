@@ -69,11 +69,14 @@ workflowOverrideSchema.virtual('tenant', {
 
 workflowOverrideSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
 
-workflowOverrideSchema.index({
-  _tenantId: 1,
-  _workflowId: 1,
-  _environmentId: 1,
-});
+workflowOverrideSchema.index(
+  {
+    _tenantId: 1,
+    _workflowId: 1,
+    _environmentId: 1,
+  },
+  { unique: true }
+);
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const WorkflowOverride =
