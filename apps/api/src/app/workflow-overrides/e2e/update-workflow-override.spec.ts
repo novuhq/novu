@@ -4,7 +4,7 @@ import { UserSession } from '@novu/testing';
 import { ICreateWorkflowOverrideRequestDto, IUpdateWorkflowOverrideRequestDto } from '@novu/shared';
 import { NotificationTemplateRepository, TenantRepository } from '@novu/dal';
 
-describe('Update Workflow Override - /workflow/:workflowId/tenants/:tenantIdentifier/overrides (PUT)', function () {
+describe('Update Workflow Override - /workflow-overrides/workflows/:workflowId/tenants/:tenantIdentifier (PUT)', function () {
   let session: UserSession;
   const tenantRepository = new TenantRepository();
   const notificationTemplateRepository = new NotificationTemplateRepository();
@@ -33,7 +33,7 @@ describe('Update Workflow Override - /workflow/:workflowId/tenants/:tenantIdenti
 
     const updatedOverrides = (
       await session.testAgent
-        .put(`/v1/workflows/${workflow._id}/tenants/${tenant.identifier}/overrides`)
+        .put(`/v1/workflow-overrides/workflows/${workflow._id}/tenants/${tenant.identifier}`)
         .send(updatePayload)
     ).body.data;
 
@@ -67,7 +67,7 @@ describe('Update Workflow Override - /workflow/:workflowId/tenants/:tenantIdenti
     const invalidTenantIdentifier = 'invalid-tenant-identifier';
     const updatedOverrides = (
       await session.testAgent
-        .put(`/v1/workflows/${workflow._id}/tenants/${invalidTenantIdentifier}/overrides`)
+        .put(`/v1/workflow-overrides/workflows/${workflow._id}/tenants/${invalidTenantIdentifier}`)
         .send(updatePayload)
     ).body;
 
@@ -95,7 +95,7 @@ describe('Update Workflow Override - /workflow/:workflowId/tenants/:tenantIdenti
     const invalidWorkflowId = tenant._id;
     const updatedOverrides = (
       await session.testAgent
-        .put(`/v1/workflows/${invalidWorkflowId}/tenants/${tenant.identifier}/overrides`)
+        .put(`/v1/workflow-overrides/workflows/${invalidWorkflowId}/tenants/${tenant.identifier}`)
         .send(updatePayload)
     ).body;
 
@@ -130,7 +130,7 @@ describe('Update Workflow Override - /workflow/:workflowId/tenants/:tenantIdenti
 
     const updatedOverrides = (
       await session.testAgent
-        .put(`/v1/workflows/${workflow._id}/tenants/${tenant.identifier}/overrides`)
+        .put(`/v1/workflow-overrides/workflows/${workflow._id}/tenants/${tenant.identifier}`)
         .send(updatePayload)
     ).body;
 
@@ -167,7 +167,7 @@ describe('Update Workflow Override - /workflow/:workflowId/tenants/:tenantIdenti
       tenantIdentifier: tenant.identifier,
     };
 
-    const overrides = (await session.testAgent.post('/v1/workflows/overrides').send(payload)).body.data;
+    const overrides = (await session.testAgent.post('/v1/workflow-overrides').send(payload)).body.data;
     return { tenant, workflow, overrides };
   }
 });
