@@ -15,6 +15,7 @@ import { NodeType, WorkflowNode } from '../workflow/workflow/node-types/Workflow
 import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { IForm, IFormStep, IVariantStep } from './formTypes';
 import { useTemplateEditorForm } from './TemplateEditorFormProvider';
+import { NODE_ERROR_TYPES } from '../workflow/workflow/node-types/utils';
 
 const VariantItemCardHolder = styled.div`
   display: grid;
@@ -122,6 +123,7 @@ export const VariantItemCard = ({
   'data-test-id': dataTestId,
   errorMessage,
   isActiveError = false,
+  nodeErrorType,
 }: {
   isReadonly?: boolean;
   stepIndex?: number;
@@ -132,6 +134,7 @@ export const VariantItemCard = ({
   'data-test-id'?: string;
   errorMessage?: string;
   isActiveError?: boolean;
+  nodeErrorType?: NODE_ERROR_TYPES;
 }) => {
   const { setValue } = useFormContext<IForm>();
   const { channel, stepUuid = '' } = useParams<{
@@ -249,6 +252,7 @@ export const VariantItemCard = ({
         nodeType={nodeType}
         errors={errorMessage}
         isError={isActiveError}
+        nodeErrorType={nodeErrorType}
       />
       {areConditionsOpened && (
         <Conditions

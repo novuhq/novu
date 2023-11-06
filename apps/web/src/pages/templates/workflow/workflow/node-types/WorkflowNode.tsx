@@ -1,32 +1,32 @@
 import styled from '@emotion/styled';
-import { useMantineColorScheme, Divider } from '@mantine/core';
+import { Divider, useMantineColorScheme } from '@mantine/core';
 import { ChannelTypeEnum, providers, StepTypeEnum } from '@novu/shared';
 import React, { MouseEventHandler, useEffect, useState } from 'react';
 import { useViewport } from 'react-flow-renderer';
 import { useFormContext } from 'react-hook-form';
 
+import {
+  Button,
+  colors,
+  IDropdownProps,
+  ProviderMissing,
+  Text,
+  useTemplateButtonStyles,
+  VariantsFile,
+} from '@novu/design-system';
 import { useSegment } from '../../../../../components/providers/SegmentProvider';
 import { When } from '../../../../../components/utils/When';
 import { CONTEXT_PATH } from '../../../../../config';
-import {
-  Button,
-  IDropdownProps,
-  colors,
-  ProviderMissing,
-  VariantsFile,
-  Trash,
-  Text,
-  useTemplateButtonStyles,
-} from '@novu/design-system';
 import { useEnvController, useGetPrimaryIntegration, useHasActiveIntegrations } from '../../../../../hooks';
 import { CHANNEL_TYPE_TO_STRING } from '../../../../../utils/channels';
 import { useSelectPrimaryIntegrationModal } from '../../../../integrations/components/multi-provider/useSelectPrimaryIntegrationModal';
+import { IntegrationsListModal } from '../../../../integrations/IntegrationsListModal';
 import { TemplateEditorAnalyticsEnum } from '../../../constants';
 import { getFormattedStepErrors } from '../../../shared/errors';
 import { DisplayPrimaryProviderIcon } from '../../DisplayPrimaryProviderIcon';
 import { NodeErrorPopover } from '../../NodeErrorPopover';
+import { NODE_ERROR_TYPES } from './utils';
 import { WorkflowNodeActions } from './WorkflowNodeActions';
-import { IntegrationsListModal } from '../../../../integrations/IntegrationsListModal';
 
 export type NodeType = 'step' | 'stepRoot' | 'variant' | 'variantRoot';
 
@@ -53,6 +53,7 @@ interface IWorkflowNodeProps {
   className?: string;
   menuPosition?: IDropdownProps['position'];
   nodeType?: NodeType;
+  nodeErrorType?: NODE_ERROR_TYPES;
 }
 
 const MENU_CLICK_OUTSIDE_EVENTS = ['click', 'mousedown', 'touchstart'];
@@ -79,6 +80,7 @@ export function WorkflowNode({
   className,
   menuPosition,
   nodeType = 'step',
+  nodeErrorType,
 }: IWorkflowNodeProps) {
   const segment = useSegment();
 
@@ -244,8 +246,8 @@ export function WorkflowNode({
             </When>
           </BodyWrapper>
         </WorkflowNodeWrapper>
-
-        {!hasActiveIntegration && !isVariant && (
+        {((isVariantRoot && nodeErrorType === NODE_ERROR_TYPES.MISSING_PROVIDER) ||
+          (!hasActiveIntegration && !isVariant && !nodeErrorType)) && (
           <NodeErrorPopover
             opened={popoverOpened}
             withinPortal
@@ -280,7 +282,8 @@ export function WorkflowNode({
             }
           />
         )}
-        {hasActiveIntegration && !primaryIntegration && isPrimaryStep && !isVariant && (
+        {((isVariantRoot && nodeErrorType === NODE_ERROR_TYPES.MISSING_PRIMARY_PROVIDER) ||
+          (hasActiveIntegration && !primaryIntegration && isPrimaryStep && !isVariant)) && (
           <NodeErrorPopover
             opened={popoverOpened}
             withinPortal
@@ -320,31 +323,33 @@ export function WorkflowNode({
             }
           />
         )}
-        {(isVariant || hasActiveIntegration) && stepErrorContent && (
-          <NodeErrorPopover
-            withinPortal
-            opened={popoverOpened && Object.keys(stepErrorContent).length > 0}
-            transition="rotate-left"
-            transitionDuration={250}
-            offset={theme.spacing.xs}
-            positionDependencies={[dragging, viewport]}
-            clickOutsideEvents={MENU_CLICK_OUTSIDE_EVENTS}
-            target={
-              <ErrorCircle
-                data-test-id="error-circle"
-                dark={theme.colorScheme === 'dark'}
-                alignment={isVariant || isVariantRoot ? 'left' : 'right'}
-              />
-            }
-            position={isVariant || isVariantRoot ? 'left' : 'right'}
-            title={stepErrorContent || 'Something is missing here'}
-            content={
-              `Please specify a ${(stepErrorContent as string)
-                .replace(/(is|are) missing!/g, '')
-                .toLowerCase()} to prevent sending empty notifications.` || 'Something is missing here'
-            }
-          />
-        )}
+
+        {((isVariantRoot && nodeErrorType === NODE_ERROR_TYPES.TEMPLATE_ERROR) || isVariant || hasActiveIntegration) &&
+          stepErrorContent && (
+            <NodeErrorPopover
+              withinPortal
+              opened={popoverOpened && Object.keys(stepErrorContent).length > 0}
+              transition="rotate-left"
+              transitionDuration={250}
+              offset={theme.spacing.xs}
+              positionDependencies={[dragging, viewport]}
+              clickOutsideEvents={MENU_CLICK_OUTSIDE_EVENTS}
+              target={
+                <ErrorCircle
+                  data-test-id="error-circle"
+                  dark={theme.colorScheme === 'dark'}
+                  alignment={isVariant || isVariantRoot ? 'left' : 'right'}
+                />
+              }
+              position={isVariant || isVariantRoot ? 'left' : 'right'}
+              title={stepErrorContent || 'Something is missing here'}
+              content={
+                `Please specify a ${(stepErrorContent as string)
+                  .replace(/(is|are) missing!/g, '')
+                  .toLowerCase()} to prevent sending empty notifications.` || 'Something is missing here'
+              }
+            />
+          )}
       </WorkflowNodeButton>
       <IntegrationsListModal isOpen={isIntegrationsModalVisible} onClose={onIntegrationModalClose} scrollTo={tabKey} />
       <SelectPrimaryIntegrationModal />

@@ -5,7 +5,7 @@ import { useFormContext } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
 
 import { useEnvController, useGetPrimaryIntegration, useHasActiveIntegrations } from '../../../hooks';
-import { getFormattedStepErrors, getVariantErrors } from '../shared/errors';
+import { getStepErrors, getVariantErrors } from '../shared/errors';
 import { FloatingButton } from './FloatingButton';
 import { IForm } from './formTypes';
 import { useTemplateEditorForm } from './TemplateEditorFormProvider';
@@ -15,6 +15,7 @@ import { VariantsListSidebar } from './VariantsListSidebar';
 import styled from '@emotion/styled';
 import { ChevronPlainDown, colors, ErrorIcon, Text } from '@novu/design-system';
 import { When } from '../../../components/utils/When';
+import { NODE_ERROR_TYPES } from '../workflow/workflow/node-types/utils';
 
 export function VariantsPage() {
   const {
@@ -35,6 +36,7 @@ export function VariantsPage() {
     errorMessage: string;
     currentErrorIndex: number;
     variantErrorsIndex: number;
+    errorType: NODE_ERROR_TYPES;
   } | null>(null);
 
   const steps = watch('steps');
@@ -76,11 +78,11 @@ export function VariantsPage() {
 
   const missingProviderError = useMemo(() => {
     if (!hasActiveIntegration && channel) {
-      return `Provider is missing`;
+      return { errorMsg: `Provider is missing!`, errorType: NODE_ERROR_TYPES.MISSING_PROVIDER };
     }
 
     if (isPrimaryStep && !primaryIntegration) {
-      return 'Select primary provider';
+      return { errorMsg: `Primary provider is missing!`, errorType: NODE_ERROR_TYPES.MISSING_PRIMARY_PROVIDER };
     }
 
     return null;
@@ -88,19 +90,31 @@ export function VariantsPage() {
 
   const { variantsErrors, variantErrorsCount, variantsErrorMap } = useMemo(() => {
     const rootVariantIndex = variants.length;
-    const errorData = missingProviderError ? [{ variantIndex: rootVariantIndex, errorMsg: missingProviderError }] : [];
-    const rootStepErrors = getFormattedStepErrors(stepIndex, errors);
+    const errorData = missingProviderError
+      ? [
+          {
+            variantIndex: rootVariantIndex,
+            errorMsg: missingProviderError.errorMsg,
+            errorType: missingProviderError.errorType,
+          },
+        ]
+      : [];
+    const rootStepErrors = getStepErrors(stepIndex, errors).map((error) => ({
+      errorMsg: error,
+      errorType: NODE_ERROR_TYPES.TEMPLATE_ERROR,
+      variantIndex: rootVariantIndex,
+    }));
 
     if (rootStepErrors) {
-      errorData.push({
-        variantIndex: rootVariantIndex,
-        errorMsg: rootStepErrors,
-      });
+      errorData.push(...rootStepErrors);
     }
 
-    const variantErrors = getVariantErrors(stepIndex, errors);
+    const variantErrors = getVariantErrors(stepIndex, errors)?.map((error) => ({
+      ...error,
+      errorType: NODE_ERROR_TYPES.TEMPLATE_ERROR,
+    }));
     if (variantErrors && variantErrors.length > 0) {
-      errorData.push(...getVariantErrors(stepIndex, errors));
+      errorData.push(...variantErrors);
     }
 
     const errorMap = errorData?.reduce<Record<string, string>>((acc, error) => {
@@ -125,6 +139,7 @@ export function VariantsPage() {
         errorMessage: variantsErrors[0].errorMsg,
         currentErrorIndex: 1,
         variantErrorsIndex: 0,
+        errorType: variantsErrors[0].errorType,
       });
     } else {
       setErrorState(null);
@@ -154,6 +169,7 @@ export function VariantsPage() {
       errorMessage: variantsErrors[nextErrorIndex].errorMsg,
       currentErrorIndex: currentErrorIndex + (direction === 'up' ? -1 : 1),
       variantErrorsIndex: nextErrorIndex,
+      errorType: variantsErrors[nextErrorIndex].errorType,
     });
   };
 
@@ -215,9 +231,10 @@ export function VariantsPage() {
             errorMessage={
               errorState?.variantIndex === variants.length
                 ? errorState.errorMessage
-                : missingProviderError ?? variantsErrorMap?.[`variant-${variants.length}`]
+                : missingProviderError?.errorMsg ?? variantsErrorMap?.[`variant-${variants.length}`]
             }
             isActiveError={errorState?.variantIndex === variants.length}
+            nodeErrorType={errorState?.variantIndex === variants.length ? errorState.errorType : undefined}
           />
         )}
         {isScrollable && <FloatingButton isUp={scrollPosition.y > 0} onClick={scrollTo} />}
