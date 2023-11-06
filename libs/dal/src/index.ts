@@ -22,3 +22,5 @@ export * from './repositories/layout';
 export * from './repositories/tenant';
 export * from './repositories/workflow-override';
 export * from './shared';
+export * from './types';
+export * from './repositories/schema-default.options';

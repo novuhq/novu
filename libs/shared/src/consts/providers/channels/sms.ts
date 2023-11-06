@@ -20,8 +20,11 @@ import {
   sendchampConfig,
   genericSmsConfig,
   clickSendConfig,
+  simpleTextingConfig,
   bandwidthConfig,
   messagebirdConfig,
+  azureSmsConfig,
+  bulkSmsConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -126,6 +129,14 @@ export const smsProviders: IProviderConfig[] = [
     logoFileName: { light: 'burst-sms.svg', dark: 'burst-sms.svg' },
   },
   {
+    id: SmsProviderIdEnum.BulkSms,
+    displayName: 'BulkSMS',
+    channel: ChannelTypeEnum.SMS,
+    credentials: bulkSmsConfig,
+    docReference: 'https://www.bulksms.com/developer/json/v1/',
+    logoFileName: { light: 'bulk-sms.png', dark: 'bulk-sms.png' },
+  },
+  {
     id: SmsProviderIdEnum.Clickatell,
     displayName: 'clickatell',
     channel: ChannelTypeEnum.SMS,
@@ -208,6 +219,14 @@ export const smsProviders: IProviderConfig[] = [
     logoFileName: { light: 'clicksend.png', dark: 'clicksend.png' },
   },
   {
+    id: SmsProviderIdEnum.Simpletexting,
+    displayName: `SimpleTexting`,
+    channel: ChannelTypeEnum.SMS,
+    credentials: simpleTextingConfig,
+    docReference: 'https://simpletexting.com/api/docs/v2/',
+    logoFileName: { light: 'simpletexting.png', dark: 'simpletexting.png' },
+  },
+  {
     id: SmsProviderIdEnum.Bandwidth,
     displayName: `Bandwidth`,
     channel: ChannelTypeEnum.SMS,
@@ -215,5 +234,13 @@ export const smsProviders: IProviderConfig[] = [
     betaVersion: true,
     docReference: 'https://dev.bandwidth.com/docs/messaging/createMessage',
     logoFileName: { light: 'bandwidth.png', dark: 'bandwidth.png' },
+  },
+  {
+    id: SmsProviderIdEnum.AzureSms,
+    displayName: `Azure Sms`,
+    channel: ChannelTypeEnum.SMS,
+    credentials: azureSmsConfig,
+    docReference: 'https://learn.microsoft.com/en-us/azure/communication-services/quickstarts/sms/receive-sms',
+    logoFileName: { light: 'azure-sms.png', dark: 'azure-sms.png' },
   },
 ];
