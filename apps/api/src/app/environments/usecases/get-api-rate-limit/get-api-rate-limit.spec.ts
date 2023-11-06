@@ -1,6 +1,6 @@
 import { EnvironmentRepository, OrganizationRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
-import { ApiRateLimitCategoryTypeEnum, ApiServiceLevelTypeEnum, DEFAULT_API_RATE_LIMITS } from '@novu/shared';
+import { ApiRateLimitCategoryTypeEnum, ApiServiceLevelTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
 import { Test } from '@nestjs/testing';
@@ -9,15 +9,31 @@ import { GetApiRateLimit, GetApiRateLimitCommand } from './index';
 import { SharedModule } from '../../../shared/shared.module';
 import { EnvironmentsModule } from '../../environments.module';
 import { OrganizationModule } from '../../../organization/organization.module';
+import { GetDefaultApiRateLimits } from '../../../rate-limiting/usecases/get-default-api-rate-limits';
+
+const mockDefaultApiRateLimits = {
+  [ApiServiceLevelTypeEnum.FREE]: {
+    [ApiRateLimitCategoryTypeEnum.GLOBAL]: 60,
+    [ApiRateLimitCategoryTypeEnum.TRIGGER]: 60,
+    [ApiRateLimitCategoryTypeEnum.CONFIGURATION]: 60,
+  },
+  [ApiServiceLevelTypeEnum.UNLIMITED]: {
+    [ApiRateLimitCategoryTypeEnum.GLOBAL]: 600,
+    [ApiRateLimitCategoryTypeEnum.TRIGGER]: 600,
+    [ApiRateLimitCategoryTypeEnum.CONFIGURATION]: 600,
+  },
+};
 
 describe('GetApiRateLimit', async () => {
   let useCase: GetApiRateLimit;
   let session: UserSession;
   let organizationRepository: OrganizationRepository;
   let environmentRepository: EnvironmentRepository;
+  let getDefaultApiRateLimits: GetDefaultApiRateLimits;
 
   let findOneEnvironmentStub: sinon.SinonStub;
   let findOneOrganizationStub: sinon.SinonStub;
+  let defaultApiRateLimits: sinon.SinonStub;
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -34,9 +50,13 @@ describe('GetApiRateLimit', async () => {
     useCase = moduleRef.get<GetApiRateLimit>(GetApiRateLimit);
     organizationRepository = moduleRef.get<OrganizationRepository>(OrganizationRepository);
     environmentRepository = moduleRef.get<EnvironmentRepository>(EnvironmentRepository);
+    getDefaultApiRateLimits = moduleRef.get<GetDefaultApiRateLimits>(GetDefaultApiRateLimits);
 
     findOneEnvironmentStub = sinon.stub(environmentRepository, 'findOne' as any);
     findOneOrganizationStub = sinon.stub(organizationRepository, 'findOne' as any);
+    defaultApiRateLimits = sinon
+      .stub(getDefaultApiRateLimits, 'defaultApiRateLimits' as any)
+      .value(mockDefaultApiRateLimits);
   });
 
   afterEach(() => {
@@ -100,7 +120,7 @@ describe('GetApiRateLimit', async () => {
       findOneOrganizationStub.resolves({
         apiServiceLevel: mockApiServiceLevel,
       });
-      const defaultApiRateLimit = DEFAULT_API_RATE_LIMITS[mockApiServiceLevel][mockApiRateLimitCategory];
+      const defaultApiRateLimit = mockDefaultApiRateLimits[mockApiServiceLevel][mockApiRateLimitCategory];
 
       const rateLimit = await useCase.execute(
         GetApiRateLimitCommand.create({
@@ -117,7 +137,7 @@ describe('GetApiRateLimit', async () => {
       findOneOrganizationStub.resolves({
         apiServiceLevel: undefined,
       });
-      const defaultApiRateLimit = DEFAULT_API_RATE_LIMITS[ApiServiceLevelTypeEnum.UNLIMITED][mockApiRateLimitCategory];
+      const defaultApiRateLimit = mockDefaultApiRateLimits[ApiServiceLevelTypeEnum.UNLIMITED][mockApiRateLimitCategory];
 
       const rateLimit = await useCase.execute(
         GetApiRateLimitCommand.create({

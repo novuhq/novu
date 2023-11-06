@@ -1,20 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { EnvironmentRepository, OrganizationRepository } from '@novu/dal';
 import { buildApiRateLimitKey, CachedEntity } from '@novu/application-generic';
-import {
-  ApiRateLimitCategoryTypeEnum,
-  ApiServiceLevelTypeEnum,
-  DEFAULT_API_RATE_LIMITS,
-  IApiRateLimits,
-} from '@novu/shared';
+import { ApiRateLimitCategoryTypeEnum, ApiServiceLevelTypeEnum, IApiRateLimits } from '@novu/shared';
 import { GetApiRateLimitCommand } from './get-api-rate-limit.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { GetDefaultApiRateLimits } from '../../../rate-limiting/usecases/get-default-api-rate-limits';
 
 @Injectable()
 export class GetApiRateLimit {
   constructor(
     private environmentRepository: EnvironmentRepository,
-    private organizationRespository: OrganizationRepository
+    private organizationRespository: OrganizationRepository,
+    private getDefaultApiRateLimits: GetDefaultApiRateLimits
   ) {}
 
   async execute(command: GetApiRateLimitCommand): Promise<number> {
@@ -60,10 +57,10 @@ export class GetApiRateLimit {
       }
 
       if (organization.apiServiceLevel) {
-        environmentApiRateLimits = DEFAULT_API_RATE_LIMITS[organization.apiServiceLevel];
+        environmentApiRateLimits = this.getDefaultApiRateLimits.defaultApiRateLimits[organization.apiServiceLevel];
       } else {
         // TODO: NV-3067 - Remove this once all organizations have a service level
-        environmentApiRateLimits = DEFAULT_API_RATE_LIMITS[ApiServiceLevelTypeEnum.UNLIMITED];
+        environmentApiRateLimits = this.getDefaultApiRateLimits.defaultApiRateLimits[ApiServiceLevelTypeEnum.UNLIMITED];
       }
     }
 
