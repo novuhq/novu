@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ClassConstructor, plainToInstance } from 'class-transformer';
 import { addDays } from 'date-fns';
 import {
@@ -6,10 +5,24 @@ import {
   MESSAGE_IN_APP_RETENTION_DAYS,
   NOTIFICATION_RETENTION_DAYS,
 } from '@novu/shared';
-import { Model, Types, ProjectionType, FilterQuery, UpdateQuery, QueryOptions } from 'mongoose';
-import { DalException } from '../shared';
+import { Model, Types, ProjectionType, QueryOptions, FilterQuery, UpdateQuery } from 'mongoose';
+import { ObjectIdType } from '../types';
 
-export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
+/**
+ * The query type used for enforcing the type of the query data payload
+ */
+type QueryData<T_DBModel, T_Enforcement> = FilterQuery<T_DBModel> & T_Enforcement;
+
+/**
+ * The create type used for enforcing the type of the create data payload
+ */
+type CreateData<T_DBModel, T_Enforcement> = Omit<T_DBModel, '_id'> & T_Enforcement;
+
+export class BaseRepository<
+  T_DBModel extends { _id: Types.ObjectId | string },
+  T_MappedEntity,
+  T_Enforcement extends Partial<T_DBModel>
+> {
   public _model: Model<T_DBModel>;
 
   constructor(protected MongooseModel: Model<T_DBModel>, protected entity: ClassConstructor<T_MappedEntity>) {
@@ -28,7 +41,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     return new Types.ObjectId(value);
   }
 
-  async count(query: FilterQuery<T_DBModel> & T_Enforcement, limit?: number): Promise<number> {
+  async count(query: QueryData<T_DBModel, T_Enforcement>, limit?: number): Promise<number> {
     return this.MongooseModel.countDocuments(query, {
       limit,
     });
@@ -39,7 +52,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
   }
 
   async findOne(
-    query: FilterQuery<T_DBModel> & T_Enforcement,
+    query: QueryData<T_DBModel, T_Enforcement>,
     select?: ProjectionType<T_MappedEntity>,
     options: { readPreference?: 'secondaryPreferred' | 'primary'; query?: QueryOptions<T_DBModel> } = {}
   ): Promise<T_MappedEntity | null> {
@@ -51,7 +64,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     return this.mapEntity(data.toObject());
   }
 
-  async delete(query: FilterQuery<T_DBModel> & T_Enforcement): Promise<{
+  async delete(query: QueryData<T_DBModel, T_Enforcement>): Promise<{
     /** Indicates whether this writes result was acknowledged. If not, then all other members of this result will be undefined. */
     acknowledged: boolean;
     /** The number of documents that were deleted */
@@ -61,7 +74,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
   }
 
   async find(
-    query: FilterQuery<T_DBModel> & T_Enforcement,
+    query: QueryData<T_DBModel, T_Enforcement>,
     select: ProjectionType<T_MappedEntity> = '',
     options: { limit?: number; sort?: any; skip?: number } = {}
   ): Promise<T_MappedEntity[]> {
@@ -77,7 +90,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
   }
 
   async *findBatch(
-    query: FilterQuery<T_DBModel> & T_Enforcement,
+    query: QueryData<T_DBModel, T_Enforcement>,
     select = '',
     options: { limit?: number; sort?: any; skip?: number } = {},
     batchSize = 500
@@ -92,7 +105,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     }
   }
 
-  private calcExpireDate(modelName: string, data: FilterQuery<T_DBModel> & T_Enforcement) {
+  private calcExpireDate(modelName: string, data: QueryData<T_DBModel, T_Enforcement>) {
     let startDate: Date = new Date();
     if (data.expireAt) {
       startDate = new Date(data.expireAt);
@@ -112,11 +125,12 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     }
   }
 
-  async create(data: FilterQuery<T_DBModel> & T_Enforcement, options: IOptions = {}): Promise<T_MappedEntity> {
+  async create(data: CreateData<T_DBModel, T_Enforcement>, options: IOptions = {}): Promise<T_MappedEntity> {
     const expireAt = this.calcExpireDate(this.MongooseModel.modelName, data);
     if (expireAt) {
       data = { ...data, expireAt };
     }
+
     const newEntity = new this.MongooseModel(data);
 
     const saveOptions = options?.writeConcern ? { w: options?.writeConcern } : {};
@@ -127,15 +141,10 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
   }
 
   async insertMany(
-    data: FilterQuery<T_DBModel> & T_Enforcement[],
+    data: CreateData<T_DBModel, T_Enforcement>[],
     ordered = false
-  ): Promise<{ acknowledged: boolean; insertedCount: number; insertedIds: Types.ObjectId[] }> {
-    let result;
-    try {
-      result = await this.MongooseModel.insertMany(data, { ordered });
-    } catch (e) {
-      throw new DalException(e.message);
-    }
+  ): Promise<{ acknowledged: boolean; insertedCount: number; insertedIds: ObjectIdType[] }> {
+    const result = await this.MongooseModel.insertMany(data, { ordered });
 
     const insertedIds = result.map((inserted) => inserted._id);
 
@@ -147,7 +156,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
   }
 
   async update(
-    query: FilterQuery<T_DBModel> & T_Enforcement,
+    query: QueryData<T_DBModel, T_Enforcement>,
     updateBody: UpdateQuery<T_DBModel>
   ): Promise<{
     matched: number;
@@ -163,7 +172,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     };
   }
 
-  async upsertMany(data: (FilterQuery<T_DBModel> & T_Enforcement)[]) {
+  async upsertMany(data: QueryData<T_DBModel, T_Enforcement>[]) {
     const promises = data.map((entry) => this.MongooseModel.findOneAndUpdate(entry, entry, { upsert: true }));
 
     return await Promise.all(promises);

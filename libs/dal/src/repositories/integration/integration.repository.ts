@@ -66,7 +66,7 @@ export class IntegrationRepository extends BaseRepository<IntegrationDBModel, In
     });
   }
 
-  async create(data: IntegrationQuery): Promise<IntegrationEntity> {
+  async create(data: IntegrationDBModel): Promise<IntegrationEntity> {
     return await super.create(data);
   }
 

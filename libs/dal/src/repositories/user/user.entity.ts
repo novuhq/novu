@@ -2,6 +2,7 @@ import { AuthProviderEnum } from '@novu/shared';
 import { Exclude } from 'class-transformer';
 
 import { UserId } from './types';
+import type { TransformEntityToDbModel } from '../../types/helpers';
 
 export interface IUserToken {
   providerId: string;
@@ -53,4 +54,4 @@ export class UserEntity {
   servicesHashes?: { intercom?: string };
 }
 
-export type UserDBModel = UserEntity;
+export type UserDBModel = TransformEntityToDbModel<UserEntity>;
