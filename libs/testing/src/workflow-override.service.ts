@@ -2,6 +2,7 @@ import {
   NotificationGroupRepository,
   NotificationTemplateRepository,
   TenantRepository,
+  WorkflowOverrideEntity,
   WorkflowOverrideRepository,
 } from '@novu/dal';
 import { ICreateWorkflowOverrideRequestDto } from '@novu/shared';
@@ -30,12 +31,22 @@ export class WorkflowOverrideService {
 
     const workflowId = override._workflowId || (await this.createWorkflow(groups))._id;
 
-    return await this.workflowOverrideRepository.create({
+    const payload: Partial<WorkflowOverrideEntity> = {
       _organizationId: organizationId,
       _environmentId: environmentId,
       _workflowId: workflowId,
       _tenantId: tenant._id,
-    });
+    };
+
+    if (override.active != null) {
+      payload.active = override.active;
+    }
+
+    if (override.preferenceSettings != null) {
+      payload.preferenceSettings = override.preferenceSettings;
+    }
+
+    return await this.workflowOverrideRepository.create(payload as any);
   }
 
   private async createWorkflow(groups) {

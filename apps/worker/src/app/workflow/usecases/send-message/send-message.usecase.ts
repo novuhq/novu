@@ -5,13 +5,15 @@ import {
   ExecutionDetailsStatusEnum,
   IDigestRegularMetadata,
   IPreferenceChannels,
+  IPreferenceOverride,
+  IPreferenceResponse,
+  PreferenceOverrideSourceEnum,
   StepTypeEnum,
 } from '@novu/shared';
 import {
   InstrumentUsecase,
   AnalyticsService,
   buildNotificationTemplateKey,
-  buildSubscriberKey,
   CachedEntity,
   DetailEnum,
   CreateExecutionDetails,
@@ -24,10 +26,11 @@ import {
 } from '@novu/application-generic';
 import {
   JobEntity,
-  SubscriberRepository,
   NotificationTemplateRepository,
   JobRepository,
   JobStatusEnum,
+  TenantRepository,
+  WorkflowOverrideRepository,
 } from '@novu/dal';
 
 import { SendMessageCommand } from './send-message.command';
@@ -58,7 +61,9 @@ export class SendMessage {
     private jobRepository: JobRepository,
     private sendMessageDelay: SendMessageDelay,
     private matchMessage: MessageMatcher,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private tenantRepository: TenantRepository,
+    private workflowOverrideRepository: WorkflowOverrideRepository
   ) {}
 
   @InstrumentUsecase()
@@ -229,16 +234,19 @@ export class SendMessage {
       return false;
     }
 
-    const buildCommand = GetSubscriberTemplatePreferenceCommand.create({
-      organizationId: job._organizationId,
-      subscriberId: subscriber.subscriberId,
-      environmentId: job._environmentId,
-      template,
-      subscriber,
-    });
+    const { preference } = await this.getSubscriberTemplatePreferenceUsecase.execute(
+      GetSubscriberTemplatePreferenceCommand.create({
+        organizationId: job._organizationId,
+        subscriberId: subscriber.subscriberId,
+        environmentId: job._environmentId,
+        template,
+        subscriber,
+      })
+    );
 
-    const { preference } = await this.getSubscriberTemplatePreferenceUsecase.execute(buildCommand);
-    const result = this.stepPreferred(preference, job);
+    const workflowOverridePreference = await this.getWorkflowOverridePreference(job, template, preference);
+
+    const result = this.stepPreferred(workflowOverridePreference || preference, job);
 
     if (!result) {
       await this.createExecutionDetails.execute(
@@ -255,6 +263,56 @@ export class SendMessage {
     }
 
     return result;
+  }
+
+  private async getWorkflowOverridePreference(
+    job,
+    template,
+    preference: IPreferenceResponse
+  ): Promise<IPreferenceResponse | null> {
+    if (!job.tenant?.identifier) {
+      return null;
+    }
+
+    const tenant = await this.tenantRepository.findOne({
+      _environmentId: job._environmentId,
+      identifier: job.tenant.identifier,
+    });
+
+    if (!tenant) {
+      return null;
+    }
+
+    const workflowOverride = await this.workflowOverrideRepository.findOne({
+      _environmentId: job._environmentId,
+      _organizationId: job._organizationId,
+      _workflowId: template._id,
+      _tenantId: tenant._id,
+    });
+
+    if (!workflowOverride) {
+      return null;
+    }
+
+    const overrides = preference.overrides.map(
+      (override) =>
+        ({
+          source: PreferenceOverrideSourceEnum.WORKFLOW_OVERRIDE,
+          channel: override.channel,
+        } as IPreferenceOverride)
+    );
+
+    const workflowOverrideOnlyActiveChannels = Object.keys(preference.channels).reduce(
+      (acc, key) =>
+        key in workflowOverride.preferenceSettings ? { ...acc, [key]: workflowOverride.preferenceSettings[key] } : acc,
+      {} as IPreferenceChannels
+    );
+
+    return {
+      enabled: preference.enabled,
+      channels: workflowOverrideOnlyActiveChannels,
+      overrides,
+    };
   }
 
   @CachedEntity({
