@@ -272,110 +272,116 @@ export function WorkflowNode({
             </When>
           </BodyWrapper>
         </WorkflowNodeWrapper>
-        {((isVariantRoot && nodeErrorType === NODE_ERROR_TYPES.MISSING_PROVIDER) ||
-          (!hasActiveIntegration && !isVariant && !nodeErrorType)) && (
-          <NodeErrorPopover
-            opened={popoverOpened}
-            withinPortal
-            transition="rotate-left"
-            transitionDuration={250}
-            offset={theme.spacing.xs}
-            target={
-              <ErrorCircle
-                data-test-id="error-circle"
-                dark={theme.colorScheme === 'dark'}
-                alignment={isVariant || isVariantRoot ? 'left' : 'right'}
+        {!showGroupError && (
+          <>
+            {((isVariantRoot && nodeErrorType === NODE_ERROR_TYPES.MISSING_PROVIDER) ||
+              (!hasActiveIntegration && !isVariant && !nodeErrorType)) && (
+              <NodeErrorPopover
+                opened={popoverOpened}
+                withinPortal
+                transition="rotate-left"
+                transitionDuration={250}
+                offset={theme.spacing.xs}
+                target={
+                  <ErrorCircle
+                    data-test-id="error-circle"
+                    dark={theme.colorScheme === 'dark'}
+                    alignment={isVariant || isVariantRoot ? 'left' : 'right'}
+                  />
+                }
+                position={isVariant || isVariantRoot ? 'left' : 'right'}
+                titleIcon={<ProviderMissing />}
+                title={`${CHANNEL_TYPE_TO_STRING[channelKey]} provider is not connected`}
+                content={
+                  'Please configure or activate a provider instance for the ' +
+                  CHANNEL_TYPE_TO_STRING[channelKey] +
+                  ' channel to send notifications over this node'
+                }
+                actionItem={
+                  <Button
+                    onClick={() => {
+                      segment.track(TemplateEditorAnalyticsEnum.CONFIGURE_PROVIDER_POPOVER_CLICK);
+                      setIntegrationsModalVisible(true);
+                      setPopoverOpened(false);
+                    }}
+                  >
+                    Open integration store
+                  </Button>
+                }
               />
-            }
-            position={isVariant || isVariantRoot ? 'left' : 'right'}
-            titleIcon={<ProviderMissing />}
-            title={`${CHANNEL_TYPE_TO_STRING[channelKey]} provider is not connected`}
-            content={
-              'Please configure or activate a provider instance for the ' +
-              CHANNEL_TYPE_TO_STRING[channelKey] +
-              ' channel to send notifications over this node'
-            }
-            actionItem={
-              <Button
-                onClick={() => {
-                  segment.track(TemplateEditorAnalyticsEnum.CONFIGURE_PROVIDER_POPOVER_CLICK);
-                  setIntegrationsModalVisible(true);
-                  setPopoverOpened(false);
-                }}
-              >
-                Open integration store
-              </Button>
-            }
-          />
-        )}
-        {((isVariantRoot && nodeErrorType === NODE_ERROR_TYPES.MISSING_PRIMARY_PROVIDER) ||
-          (hasActiveIntegration && !primaryIntegration && isPrimaryStep && !isVariant)) && (
-          <NodeErrorPopover
-            opened={popoverOpened}
-            withinPortal
-            transition="rotate-left"
-            transitionDuration={250}
-            offset={theme.spacing.xs}
-            target={
-              <ErrorCircle
-                data-test-id="error-circle"
-                dark={theme.colorScheme === 'dark'}
-                alignment={isVariant || isVariantRoot ? 'left' : 'right'}
-              />
-            }
-            position={isVariant || isVariantRoot ? 'left' : 'right'}
-            titleIcon={<ProviderMissing />}
-            title="Select primary provider"
-            content={
-              'You have multiple provider instances for' +
-              CHANNEL_TYPE_TO_STRING[channelKey] +
-              `in the ${environment?.name} environment. Please select the primary instance.
+            )}
+            {((isVariantRoot && nodeErrorType === NODE_ERROR_TYPES.MISSING_PRIMARY_PROVIDER) ||
+              (hasActiveIntegration && !primaryIntegration && isPrimaryStep && !isVariant)) && (
+              <NodeErrorPopover
+                opened={popoverOpened}
+                withinPortal
+                transition="rotate-left"
+                transitionDuration={250}
+                offset={theme.spacing.xs}
+                target={
+                  <ErrorCircle
+                    data-test-id="error-circle"
+                    dark={theme.colorScheme === 'dark'}
+                    alignment={isVariant || isVariantRoot ? 'left' : 'right'}
+                  />
+                }
+                position={isVariant || isVariantRoot ? 'left' : 'right'}
+                titleIcon={<ProviderMissing />}
+                title="Select primary provider"
+                content={
+                  'You have multiple provider instances for' +
+                  CHANNEL_TYPE_TO_STRING[channelKey] +
+                  `in the ${environment?.name} environment. Please select the primary instance.
             `
-            }
-            actionItem={
-              <Button
-                onClick={() => {
-                  segment.track(TemplateEditorAnalyticsEnum.CONFIGURE_PROVIDER_POPOVER_CLICK);
-                  openSelectPrimaryIntegrationModal({
-                    environmentId: environment?._id,
-                    channelType: tabKey,
-                    onClose: () => {},
-                  });
-                  setPopoverOpened(false);
-                }}
-              >
-                Select primary provider
-              </Button>
-            }
-          />
-        )}
+                }
+                actionItem={
+                  <Button
+                    onClick={() => {
+                      segment.track(TemplateEditorAnalyticsEnum.CONFIGURE_PROVIDER_POPOVER_CLICK);
+                      openSelectPrimaryIntegrationModal({
+                        environmentId: environment?._id,
+                        channelType: tabKey,
+                        onClose: () => {},
+                      });
+                      setPopoverOpened(false);
+                    }}
+                  >
+                    Select primary provider
+                  </Button>
+                }
+              />
+            )}
 
-        {((isVariantRoot && nodeErrorType === NODE_ERROR_TYPES.TEMPLATE_ERROR) || isVariant || hasActiveIntegration) &&
-          stepErrorContent && (
-            <NodeErrorPopover
-              withinPortal
-              opened={popoverOpened && Object.keys(stepErrorContent).length > 0}
-              transition="rotate-left"
-              transitionDuration={250}
-              offset={theme.spacing.xs}
-              positionDependencies={[dragging, viewport]}
-              clickOutsideEvents={MENU_CLICK_OUTSIDE_EVENTS}
-              target={
-                <ErrorCircle
-                  data-test-id="error-circle"
-                  dark={theme.colorScheme === 'dark'}
-                  alignment={isVariant || isVariantRoot ? 'left' : 'right'}
+            {((isVariantRoot && nodeErrorType === NODE_ERROR_TYPES.TEMPLATE_ERROR) ||
+              isVariant ||
+              hasActiveIntegration) &&
+              stepErrorContent && (
+                <NodeErrorPopover
+                  withinPortal
+                  opened={popoverOpened && Object.keys(stepErrorContent).length > 0}
+                  transition="rotate-left"
+                  transitionDuration={250}
+                  offset={theme.spacing.xs}
+                  positionDependencies={[dragging, viewport]}
+                  clickOutsideEvents={MENU_CLICK_OUTSIDE_EVENTS}
+                  target={
+                    <ErrorCircle
+                      data-test-id="error-circle"
+                      dark={theme.colorScheme === 'dark'}
+                      alignment={isVariant || isVariantRoot ? 'left' : 'right'}
+                    />
+                  }
+                  position={isVariant || isVariantRoot ? 'left' : 'right'}
+                  title={stepErrorContent || 'Something is missing here'}
+                  content={
+                    `Please specify a ${(stepErrorContent as string)
+                      .replace(/(is|are) missing!/g, '')
+                      .toLowerCase()} to prevent sending empty notifications.` || 'Something is missing here'
+                  }
                 />
-              }
-              position={isVariant || isVariantRoot ? 'left' : 'right'}
-              title={stepErrorContent || 'Something is missing here'}
-              content={
-                `Please specify a ${(stepErrorContent as string)
-                  .replace(/(is|are) missing!/g, '')
-                  .toLowerCase()} to prevent sending empty notifications.` || 'Something is missing here'
-              }
-            />
-          )}
+              )}
+          </>
+        )}
       </WorkflowNodeButton>
       <IntegrationsListModal isOpen={isIntegrationsModalVisible} onClose={onIntegrationModalClose} scrollTo={tabKey} />
       <SelectPrimaryIntegrationModal />
@@ -465,6 +471,7 @@ const StyledContentWrapper = styled.div`
   justify-content: flex-start;
   width: 100%;
   flex: 1;
+  padding-right: 20px;
 `;
 
 const WorkflowNodeButton = styled.div`
