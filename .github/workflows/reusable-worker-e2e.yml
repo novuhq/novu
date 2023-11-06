@@ -3,15 +3,9 @@ name: E2E worker Tests
 # Controls when the action will run. Triggers the workflow on push or pull request
 on:
   workflow_call:
-
     inputs:
       ee:
         description: 'use the ee version of worker'
-        required: false
-        default: false
-        type: boolean
-      submodules:
-        description: 'The flag controlling whether we want submodules to checkout'
         required: false
         default: false
         type: boolean
@@ -35,20 +29,22 @@ jobs:
     - id: setup
       run: |
         if ! [[ -z "${{ secrets.SUBMODULES_TOKEN }}" ]]; then
-           echo ::set-output has_token=true
+           echo "has_token=true" >> $GITHUB_OUTPUT
         else
-           echo ::set-output has_token=false
+           echo "has_token=false" >> $GITHUB_OUTPUT
         fi
     # checkout with submodules if token is provided
     - uses: actions/checkout@v3
       if: steps.setup.outputs.has_token == 'true'
       with:
-        submodules: ${{ inputs.submodules }}
-        token: ${{ secrets.SUBMODULES_TOKEN }}
-      # checkout without submodules
+        submodules: ${{ inputs.ee }}
+        token: ${{ secrets.GH_PACKAGES }}
+      # else checkout without submodules if the token is not provided
     - uses: actions/checkout@v3
       if: steps.setup.outputs.has_token != 'true'
+
     - uses: ./.github/actions/setup-project
+
     - uses: ./.github/actions/setup-redis-cluster
     - uses: mansagroup/nrwl-nx-action@v3
       with:

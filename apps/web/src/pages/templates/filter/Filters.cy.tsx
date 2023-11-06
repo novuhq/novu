@@ -4,6 +4,7 @@ import {
   IOnlineInLastFilterPart,
   IWebhookFilterPart,
   IFieldFilterPart,
+  FieldOperatorEnum,
   FilterPartTypeEnum,
   TimeOperatorEnum,
 } from '@novu/shared';
@@ -105,7 +106,7 @@ describe('Filters Component', function () {
                       on: FilterPartTypeEnum.PAYLOAD,
                       field: 'name',
                       value: 'Novu',
-                      operator: 'EQUAL',
+                      operator: FieldOperatorEnum.EQUAL,
                     },
                   ],
                 },
@@ -121,14 +122,14 @@ describe('Filters Component', function () {
   });
 
   it('should print correct translation of operator', () => {
-    expect(translateOperator('EQUAL')).to.equal('equal');
-    expect(translateOperator('NOT_EQUAL')).to.equal('not equal');
-    expect(translateOperator('LARGER')).to.equal('larger');
-    expect(translateOperator('SMALLER')).to.equal('smaller');
-    expect(translateOperator('LARGER_EQUAL')).to.equal('larger or equal');
-    expect(translateOperator('SMALLER_EQUAL')).to.equal('smaller or equal');
-    expect(translateOperator('NOT_IN')).to.equal('do not include');
-    expect(translateOperator('IN')).to.equal('includes');
+    expect(translateOperator(FieldOperatorEnum.EQUAL)).to.equal('equal');
+    expect(translateOperator(FieldOperatorEnum.NOT_EQUAL)).to.equal('not equal');
+    expect(translateOperator(FieldOperatorEnum.LARGER)).to.equal('larger');
+    expect(translateOperator(FieldOperatorEnum.SMALLER)).to.equal('smaller');
+    expect(translateOperator(FieldOperatorEnum.LARGER_EQUAL)).to.equal('larger or equal');
+    expect(translateOperator(FieldOperatorEnum.SMALLER_EQUAL)).to.equal('smaller or equal');
+    expect(translateOperator(FieldOperatorEnum.NOT_IN)).to.equal('do not include');
+    expect(translateOperator(FieldOperatorEnum.IN)).to.equal('includes');
   });
 
   it('should print correct filter description value according to the filter type', () => {
@@ -141,14 +142,14 @@ describe('Filters Component', function () {
     const webhookFilter: IWebhookFilterPart = {
       field: 'test-field',
       on: FilterPartTypeEnum.WEBHOOK,
-      operator: 'EQUAL',
+      operator: FieldOperatorEnum.EQUAL,
       value: 'test',
       webhookUrl: 'test-url',
     };
     const fieldFilters: IFieldFilterPart = {
       field: 'test-field',
       on: FilterPartTypeEnum.PAYLOAD,
-      operator: 'IN',
+      operator: FieldOperatorEnum.IN,
       value: 'test-value',
     };
 

@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ICredentials } from '@novu/shared';
 import { IsBoolean, IsObject, IsOptional, IsString } from 'class-validator';
 import { TransformToBoolean } from '../../shared/transformers/to-boolean';
-import { ICredentials } from '@novu/shared';
 
 export class CredentialsDto implements ICredentials {
   @ApiPropertyOptional()
@@ -136,4 +136,64 @@ export class CredentialsDto implements ICredentials {
   @IsString()
   @IsOptional()
   ipPoolName?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  apiKeyRequestHeader?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  secretKeyRequestHeader?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  idPath?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  datePath?: string;
+
+  @ApiPropertyOptional()
+  @IsBoolean()
+  @IsOptional()
+  authenticateByToken?: boolean;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  authenticationTokenKey?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  instanceId?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  alertUid?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  title?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  imageUrl?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  state?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  externalLink?: string;
 }

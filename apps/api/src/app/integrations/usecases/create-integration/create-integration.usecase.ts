@@ -15,16 +15,12 @@ import {
   encryptCredentials,
   buildIntegrationKey,
   InvalidateCacheService,
-  GetFeatureFlag,
-  FeatureFlagCommand,
 } from '@novu/application-generic';
 
 import { CreateIntegrationCommand } from './create-integration.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/deactivate-integration.usecase';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
-import { DisableNovuIntegration } from '../disable-novu-integration/disable-novu-integration.usecase';
 
 @Injectable()
 export class CreateIntegration {
@@ -33,10 +29,7 @@ export class CreateIntegration {
   constructor(
     private invalidateCache: InvalidateCacheService,
     private integrationRepository: IntegrationRepository,
-    private deactivateSimilarChannelIntegrations: DeactivateSimilarChannelIntegrations,
-    private analyticsService: AnalyticsService,
-    private getFeatureFlag: GetFeatureFlag,
-    private disableNovuIntegration: DisableNovuIntegration
+    private analyticsService: AnalyticsService
   ) {}
 
   private async calculatePriorityAndPrimary(command: CreateIntegrationCommand) {
@@ -69,39 +62,15 @@ export class CreateIntegration {
       result.priority = highestPriorityIntegration ? highestPriorityIntegration.priority + 1 : 1;
     }
 
-    const activeIntegrationsCount = await this.integrationRepository.countActiveExcludingNovu({
-      _organizationId: command.organizationId,
-      _environmentId: command.environmentId,
-      channel: command.channel,
-    });
-
-    if (activeIntegrationsCount === 0) {
-      result.primary = true;
-    }
-
     return result;
   }
 
   async execute(command: CreateIntegrationCommand): Promise<IntegrationEntity> {
-    const isMultiProviderConfigurationEnabled = await this.getFeatureFlag.isMultiProviderConfigurationEnabled(
-      FeatureFlagCommand.create({
-        userId: command.userId,
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-      })
-    );
-
     const existingIntegration = await this.integrationRepository.findOne({
       _environmentId: command.environmentId,
       providerId: command.providerId,
       channel: command.channel,
     });
-
-    if (!isMultiProviderConfigurationEnabled && existingIntegration) {
-      throw new BadRequestException(
-        'Duplicate key - One environment may not have two providers of the same channel type'
-      );
-    }
 
     if (
       existingIntegration &&
@@ -114,7 +83,7 @@ export class CreateIntegration {
     if (command.providerId === SmsProviderIdEnum.Novu || command.providerId === EmailProviderIdEnum.Novu) {
       const count = await this.integrationRepository.count({
         _environmentId: command.environmentId,
-        providerId: EmailProviderIdEnum.Novu,
+        providerId: command.providerId,
         channel: command.channel,
       });
 
@@ -176,10 +145,12 @@ export class CreateIntegration {
         channel: command.channel,
         credentials: encryptCredentials(command.credentials ?? {}),
         active: command.active,
+        conditions: command.conditions,
       };
 
       const isActiveAndChannelSupportsPrimary = command.active && CHANNELS_WITH_PRIMARY.includes(command.channel);
-      if (isMultiProviderConfigurationEnabled && isActiveAndChannelSupportsPrimary) {
+
+      if (isActiveAndChannelSupportsPrimary) {
         const { primary, priority } = await this.calculatePriorityAndPrimary(command);
 
         query.primary = primary;
@@ -187,30 +158,6 @@ export class CreateIntegration {
       }
 
       const integrationEntity = await this.integrationRepository.create(query);
-
-      if (
-        !isMultiProviderConfigurationEnabled &&
-        command.active &&
-        ![ChannelTypeEnum.CHAT, ChannelTypeEnum.PUSH].includes(command.channel)
-      ) {
-        await this.deactivateSimilarChannelIntegrations.execute({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          integrationId: integrationEntity._id,
-          channel: command.channel,
-          userId: command.userId,
-        });
-      }
-
-      if (integrationEntity.active) {
-        await this.disableNovuIntegration.execute({
-          channel: command.channel,
-          providerId: command.providerId,
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          userId: command.userId,
-        });
-      }
 
       return integrationEntity;
     } catch (e) {

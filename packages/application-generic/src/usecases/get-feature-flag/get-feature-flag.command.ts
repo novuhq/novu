@@ -1,9 +1,17 @@
 import { IsDefined } from 'class-validator';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 import { EnvironmentWithUserCommand } from './../../commands';
-import { FeatureFlagsKeysEnum } from '../../services/types';
 
 export class FeatureFlagCommand extends EnvironmentWithUserCommand {}
+
+export class GetGlobalFeatureFlagCommand<T> {
+  @IsDefined()
+  key: FeatureFlagsKeysEnum;
+
+  @IsDefined()
+  defaultValue: T;
+}
 
 export class GetFeatureFlagCommand<T> extends FeatureFlagCommand {
   @IsDefined()

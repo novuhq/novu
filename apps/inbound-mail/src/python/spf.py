@@ -131,7 +131,7 @@ For news, bugfixes, etc. visit the home page for this implementation at
 # Start fixing python3 bytes issue - Now works, but fails the non-ASCII exp test.
 #
 # Revision 1.108.2.76  2012/02/05 05:50:39  kitterma
-# Fix a few stray print -> print() changes for python3 compatbility.
+# Fix a few stray print -> print() changes for python3 compatibility.
 #
 # See pyspf_changelog.txt for earlier CVS commits.
 
@@ -146,7 +146,7 @@ USAGE = """To check an incoming mail request:
 
 To test an SPF record:
     % python spf.py [-v] "v=spf1..." {ip} {sender} {helo}
-    % python spf.py "v=spf1 +mx +ip4:10.0.0.1 -all" 10.0.0.1 tway@foo.com a    
+    % python spf.py "v=spf1 +mx +ip4:10.0.0.1 -all" 10.0.0.1 tway@foo.com a
 
 To fetch an SPF record:
     % python spf.py {domain}
@@ -172,7 +172,7 @@ try:
 except ImportError:
     from email.Message import Message
 try:
-    # Python standard libarary as of python3.3
+    # Python standard library as of python3.3
     import ipaddress
 except ImportError:
     try:
@@ -404,7 +404,7 @@ class query(object):
     This is also, by design, the same variables used in SPF macro
     expansion.
 
-    Also keeps cache: DNS cache.  
+    Also keeps cache: DNS cache.
     """
     def __init__(self, i, s, h, local=None, receiver=None, strict=True,
                 timeout=MAX_PER_LOOKUP_TIME,verbose=False,querytime=0):
@@ -447,7 +447,7 @@ class query(object):
         # For IPv4, self.i = self.c, but not in IPv6
         # self.iplist = list of IPv4/6 addresses that would pass, collected
         #               when list or list6 is passed as 'i'
-        # self.addr = ipaddr/ipaddress object representing the connect IP 
+        # self.addr = ipaddr/ipaddress object representing the connect IP
         self.default_modifier = True
         self.verbose = verbose
         self.authserv = None # Only used in A-R header generation tests
@@ -543,7 +543,7 @@ class query(object):
 
     >>> q.check(spf='v=spf1 redirect=controlledmail.com exp=_exp.controlledmail.com')
     ('fail', 550, 'SPF fail - not authorized')
-    
+
     >>> q.check(spf='v=spf1 ip4:192.0.0.0/8 ?all moo')
     ('permerror', 550, 'SPF Permanent Error: Unknown mechanism found: moo')
 
@@ -587,12 +587,12 @@ class query(object):
 
     >>> q.check(spf='v=spf1 ip4:1.2.3.4 -all exp=_exp.controlledmail.com')
     ('fail', 550, 'Controlledmail.com does not send mail from itself.')
-    
+
     >>> q.check(spf='v=spf1 ip4:1.2.3.4 ?all exp=_exp.controlledmail.com')
     ('neutral', 250, 'access neither permitted nor denied')
         """
         self.mech = []        # unknown mechanisms
-        # If not strict, certain PermErrors (mispelled
+        # If not strict, certain PermErrors (misspelled
         # mechanisms, strict processing limits exceeded)
         # will continue processing.  However, the exception
         # that strict processing would raise is saved here
@@ -606,7 +606,7 @@ class query(object):
             if not spf:
                 spf = self.dns_spf(self.d)
                 if self.verbose: self.log("top",self.d,spf)
-            if self.libspf_local and spf: 
+            if self.libspf_local and spf:
                 spf = insert_libspf_local_policy(
                     spf, self.libspf_local)
             rc = self.check1(spf, self.d, 0)
@@ -615,7 +615,7 @@ class query(object):
                 self.perm_error.ext = rc
                 raise self.perm_error
             return rc
-                
+
         except TempError as x:
             self.prob = x.msg
             if x.mech:
@@ -693,14 +693,14 @@ class query(object):
 
     >>> q.validate_mechanism('A/24//64')
     ('A/24//64', 'a', 'email.example.com', 24, 'pass')
-    
+
     >>> q.validate_mechanism('?mx:%{d}/27')
     ('?mx:%{d}/27', 'mx', 'email.example.com', 27, 'neutral')
 
     >>> try: q.validate_mechanism('ip4:1.2.3.4/247')
     ... except PermError as x: print(x)
     Invalid IP4 CIDR length: ip4:1.2.3.4/247
-    
+
     >>> try: q.validate_mechanism('ip4:1.2.3.4/33')
     ... except PermError as x: print(x)
     Invalid IP4 CIDR length: ip4:1.2.3.4/33
@@ -708,15 +708,15 @@ class query(object):
     >>> try: q.validate_mechanism('a:example.com:8080')
     ... except PermError as x: print(x)
     Invalid domain found (use FQDN): example.com:8080
-    
+
     >>> try: q.validate_mechanism('ip4:1.2.3.444/24')
     ... except PermError as x: print(x)
     Invalid IP4 address: ip4:1.2.3.444/24
-    
+
     >>> try: q.validate_mechanism('ip4:1.2.03.4/24')
     ... except PermError as x: print(x)
     Invalid IP4 address: ip4:1.2.03.4/24
-    
+
     >>> try: q.validate_mechanism('-all:3030')
     ... except PermError as x: print(x)
     Invalid all mechanism format - only qualifier allowed with all: -all:3030
@@ -732,10 +732,10 @@ class query(object):
 
     >>> try: q.validate_mechanism('a:mail.example.com,')
     ... except PermError as x: print(x)
-    Do not separate mechnisms with commas: a:mail.example.com,
+    Do not separate mechanisms with commas: a:mail.example.com,
 
     >>> q = query(s='strong-bad@email.example.com',
-    ...           h='mx.example.org', i='2001:db8:1234::face:b007')    
+    ...           h='mx.example.org', i='2001:db8:1234::face:b007')
     >>> q.validate_mechanism('A//64')
     ('A//64', 'a', 'email.example.com', 64, 'pass')
 
@@ -747,7 +747,7 @@ class query(object):
 
     """
         if mech.endswith( "," ):
-            self.note_error('Do not separate mechnisms with commas', mech)
+            self.note_error('Do not separate mechanisms with commas', mech)
             mech = mech[:-1]
         # a mechanism
         m, arg, cidrlength, cidr6length = parse_mechanism(mech, self.d)
@@ -982,7 +982,7 @@ class query(object):
         else:
             # no matches
             if redirect:
-                #Catch redirect to a non-existant SPF record.
+                #Catch redirect to a non-existent SPF record.
                 redirect_record = self.dns_spf(redirect)
                 if not redirect_record:
                     raise PermError('redirect domain has no SPF record',
@@ -1060,7 +1060,7 @@ class query(object):
 
         >>> q.expand('%{dr}')
         'com.example.email'
-    
+
         >>> q.expand('%{d2r}')
         'example.email'
 
@@ -1150,7 +1150,7 @@ class query(object):
                 expansion = getattr(self, letter, self)
                 if expansion:
                     if expansion == self:
-                        raise PermError('Unknown Macro Encountered', macro) 
+                        raise PermError('Unknown Macro Encountered', macro)
                     e = expand_one(expansion, macro[3:-1], JOINERS.get(letter))
                     if letter != macro[2]:
                         e = urllibparse.quote(e)
@@ -1215,11 +1215,11 @@ class query(object):
     # We work around this by assuming any UnicodeErrors coming from py3dns
     # are from a non-ascii SPF record (incorrect in general).  Packages
     # should require py3dns != 3.0.2.
-    # 
+    #
     # We cannot check for non-ascii here, because we must ignore non-SPF
     # records - even when they are non-ascii.  So we return bytes.
     # The caller does the ascii check for SPF records and explanations.
-    # 
+    #
     def dns_txt(self, domainname, rr='TXT'):
         "Get a list of TXT records for a domain name."
         if domainname:
@@ -1307,7 +1307,7 @@ class query(object):
 
     # We have to be careful which additional DNS RRs we cache.  For
     # instance, PTR records are controlled by the connecting IP, and they
-    # could poison our local cache with bogus A and MX records.  
+    # could poison our local cache with bogus A and MX records.
 
     SAFE2CACHE = {
       ('MX','A'): None,
@@ -1432,7 +1432,7 @@ class query(object):
 
     def parse_header_ar(self, val):
         """Set SPF values from RFC 5451 Authentication Results header.
-        
+
         Useful when SPF has already been run on a trusted gateway machine.
 
         Expects the entire header as an input.
@@ -1465,7 +1465,7 @@ class query(object):
 
     def parse_header_spf(self, val):
         """Set SPF values from Received-SPF header.
-        
+
         Useful when SPF has already been run on a trusted gateway machine.
 
         Examples:
@@ -1512,7 +1512,7 @@ class query(object):
 
     def parse_header(self, val):
         """Set SPF values from Received-SPF or RFC 5451 Authentication Results header.
-        
+
         Useful when SPF has already been run on a trusted gateway machine. Auto
         detects the header type and parses it. Use parse_header_spf or parse_header_ar
         for each type if required.
@@ -1564,7 +1564,7 @@ class query(object):
         ('fail', 550, 'SPF fail - not authorized')
         >>> q.get_header('fail')
         'Fail (abuse@kitterman.com: domain of email.example.com does not designate 192.0.2.3 as permitted sender) client-ip=192.0.2.3; envelope-from="strong-bad@email.example.com"; helo=mx.example.org; receiver=abuse@kitterman.com; mechanism=-all; identity=mailfrom'
-    
+
         >>> q.check(spf='v=spf1 ip4:192.0.0.0/8 ?all moo')
         ('permerror', 550, 'SPF Permanent Error: Unknown mechanism found: moo')
         >>> q.get_header('permerror')
@@ -1711,7 +1711,7 @@ def quote_value(s):
     Examples:
     >>> quote_value('foo@bar.com')
     '"foo@bar.com"'
-    
+
     >>> quote_value('mail.example.com')
     'mail.example.com'
 
@@ -1869,7 +1869,7 @@ def split(str, delimiters, joiner=None):
 def insert_libspf_local_policy(spftxt, local=None):
     """Returns spftxt with local inserted just before last non-fail
     mechanism.  This is how the libspf{2} libraries handle "local-policy".
-    
+
     Examples:
     >>> insert_libspf_local_policy('v=spf1 -all')
     'v=spf1 -all'
@@ -1914,7 +1914,7 @@ def insert_libspf_local_policy(spftxt, local=None):
             return spftxt # No local policy adds for v=spf1 -all
     # Processing limits not applied to local policy.  Suggest
     # inserting 'local' mechanism to handle this properly
-    #MAX_LOOKUP = 100 
+    #MAX_LOOKUP = 100
     return 'v=spf1 '+local
 
 if sys.version_info[0] == 2:

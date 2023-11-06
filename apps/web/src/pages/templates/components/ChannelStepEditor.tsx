@@ -11,14 +11,16 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { SubPageWrapper } from './SubPageWrapper';
 import { DigestMetadata } from '../workflow/DigestMetadata';
 import { DelayMetadata } from '../workflow/DelayMetadata';
-import { colors } from '../../../design-system';
+import { colors } from '@novu/design-system';
 import { useEffect, useMemo } from 'react';
 import { useBasePath } from '../hooks/useBasePath';
 import { StepName } from './StepName';
 import { DeleteStepRow } from './DeleteStepRow';
+import { TranslateProductLead } from './TranslateProductLead';
 
 export const ChannelStepEditor = () => {
   const { readonly } = useEnvController();
+
   const { channel, stepUuid = '' } = useParams<{
     channel: StepTypeEnum | undefined;
     stepUuid: string;
@@ -44,7 +46,7 @@ export const ChannelStepEditor = () => {
       return;
     }
     navigate(basePath);
-  }, [index, steps]);
+  }, [navigate, basePath, index, steps]);
 
   if (index === -1 || channel === undefined) {
     return null;
@@ -82,10 +84,7 @@ export const ChannelStepEditor = () => {
           paddingBottom: 24,
         }}
       >
-        <EmailMessagesCards
-          index={index}
-          isIntegrationActive={!!integrations?.some((integration) => integration.channel === ChannelTypeEnum.EMAIL)}
-        />
+        <EmailMessagesCards index={index} />
         <DeleteStepRow />
       </SubPageWrapper>
     );
@@ -100,31 +99,22 @@ export const ChannelStepEditor = () => {
         style={{ paddingBottom: 24 }}
       >
         {channel === StepTypeEnum.SMS && (
-          <TemplateSMSEditor
-            key={index}
-            control={control}
-            index={index}
-            errors={errors}
-            isIntegrationActive={!!integrations?.some((integration) => integration.channel === ChannelTypeEnum.SMS)}
-          />
+          <>
+            <TemplateSMSEditor key={index} control={control} index={index} errors={errors} />
+            <TranslateProductLead id="translate-sms-editor" />
+          </>
         )}
         {channel === StepTypeEnum.PUSH && (
-          <TemplatePushEditor
-            key={index}
-            control={control}
-            index={index}
-            errors={errors}
-            isIntegrationActive={!!integrations?.some((integration) => integration.channel === ChannelTypeEnum.PUSH)}
-          />
+          <>
+            <TemplatePushEditor key={index} control={control} index={index} errors={errors} />
+            <TranslateProductLead id="translate-push-editor" />
+          </>
         )}
         {channel === StepTypeEnum.CHAT && (
-          <TemplateChatEditor
-            key={index}
-            errors={errors}
-            control={control}
-            index={index}
-            isIntegrationActive={!!integrations?.some((integration) => integration.channel === ChannelTypeEnum.CHAT)}
-          />
+          <>
+            <TemplateChatEditor key={index} errors={errors} control={control} index={index} />
+            <TranslateProductLead id="translate-chat-editor" />
+          </>
         )}
         {channel === StepTypeEnum.DIGEST && <DigestMetadata index={index} readonly={readonly} />}
         {channel === StepTypeEnum.DELAY && <DelayMetadata control={control} index={index} />}

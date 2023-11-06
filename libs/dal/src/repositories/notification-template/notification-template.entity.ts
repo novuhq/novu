@@ -5,8 +5,11 @@ import {
   BuilderGroupValues,
   IPreferenceChannels,
   IWorkflowStepMetadata,
-  TemplateVariableTypeEnum,
   NotificationTemplateCustomData,
+  INotificationTrigger,
+  TriggerTypeEnum,
+  INotificationTriggerVariable,
+  ITriggerReservedVariable,
 } from '@novu/shared';
 
 import { MessageTemplateEntity } from '../message-template';
@@ -72,19 +75,16 @@ export type NotificationTemplateDBModel = ChangePropsValueType<
   _parentId?: Types.ObjectId;
 };
 
-export class NotificationTriggerEntity {
-  type: 'event';
+export class NotificationTriggerEntity implements INotificationTrigger {
+  type: TriggerTypeEnum;
 
   identifier: string;
 
-  variables: {
-    name: string;
-    type: TemplateVariableTypeEnum;
-  }[];
+  variables: INotificationTriggerVariable[];
 
-  subscriberVariables?: {
-    name: string;
-  }[];
+  subscriberVariables?: Pick<INotificationTriggerVariable, 'name'>[];
+
+  reservedVariables?: ITriggerReservedVariable[];
 }
 
 export class NotificationStepEntity {

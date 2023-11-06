@@ -1,21 +1,27 @@
 import { Injectable } from '@nestjs/common';
-import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import {
+  IntegrationEntity,
+  IntegrationRepository,
+  TenantEntity,
+  TenantRepository,
+} from '@novu/dal';
 import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
 
 import { SelectIntegrationCommand } from './select-integration.command';
-import { buildIntegrationKey, CachedQuery } from '../../services';
-import { FeatureFlagCommand, GetFeatureFlag } from '../get-feature-flag';
-import {
-  GetDecryptedIntegrations,
-  GetDecryptedIntegrationsCommand,
-} from '../get-decrypted-integrations';
+import { ConditionsFilter } from '../conditions-filter/conditions-filter.usecase';
+import { buildIntegrationKey, CachedQuery } from '../../services/cache';
+import { GetDecryptedIntegrations } from '../get-decrypted-integrations';
+import { ConditionsFilterCommand } from '../conditions-filter';
+
+const LOG_CONTEXT = 'SelectIntegration';
 
 @Injectable()
 export class SelectIntegration {
   constructor(
     private integrationRepository: IntegrationRepository,
-    protected getFeatureFlag: GetFeatureFlag,
-    protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
+    protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations,
+    protected conditionsFilter: ConditionsFilter,
+    private tenantRepository: TenantRepository
   ) {}
 
   @CachedQuery({
@@ -28,36 +34,76 @@ export class SelectIntegration {
   async execute(
     command: SelectIntegrationCommand
   ): Promise<IntegrationEntity | undefined> {
-    const isMultiProviderConfigurationEnabled =
-      await this.getFeatureFlag.isMultiProviderConfigurationEnabled(
-        FeatureFlagCommand.create({
-          userId: command.userId,
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-        })
-      );
+    let integration: IntegrationEntity | null =
+      await this.getPrimaryIntegration(command);
 
-    if (!isMultiProviderConfigurationEnabled) {
-      const integrations = await this.getDecryptedIntegrationsUsecase.execute(
-        GetDecryptedIntegrationsCommand.create({
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          channelType: command.channelType,
-          findOne: true,
-          active: true,
-          userId: command.userId,
-        })
-      );
+    if (!command.identifier && command.filterData.tenant) {
+      const query: Partial<IntegrationEntity> & { _organizationId: string } = {
+        ...(command.id ? { id: command.id } : {}),
+        _organizationId: command.organizationId,
+        _environmentId: command.environmentId,
+        channel: command.channelType,
+        ...(command.providerId ? { providerId: command.providerId } : {}),
+        active: true,
+      };
 
-      return integrations[0];
+      let tenant: TenantEntity | null = null;
+      const commandTenantIdentifier =
+        typeof command.filterData.tenant === 'string'
+          ? command.filterData.tenant
+          : command.filterData.tenant.identifier;
+      if (commandTenantIdentifier) {
+        tenant = await this.tenantRepository.findOne({
+          _organizationId: command.organizationId,
+          _environmentId: command.environmentId,
+          identifier: commandTenantIdentifier,
+        });
+      }
+
+      const integrations = await this.integrationRepository.find(query);
+
+      for (const currentIntegration of integrations) {
+        if (
+          !currentIntegration.conditions ||
+          currentIntegration.conditions.length === 0
+        ) {
+          continue;
+        }
+
+        const { passed } = await this.conditionsFilter.filter(
+          ConditionsFilterCommand.create({
+            filters: currentIntegration.conditions,
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
+            userId: command.userId,
+          }),
+          {
+            tenant,
+          }
+        );
+        if (passed) {
+          integration = currentIntegration;
+          break;
+        }
+      }
     }
 
+    if (!integration) {
+      return;
+    }
+
+    return GetDecryptedIntegrations.getDecryptedCredentials(integration);
+  }
+
+  private async getPrimaryIntegration(
+    command: SelectIntegrationCommand
+  ): Promise<IntegrationEntity | null> {
     const isChannelSupportsPrimary = CHANNELS_WITH_PRIMARY.includes(
       command.channelType
     );
 
     let query: Partial<IntegrationEntity> & { _organizationId: string } = {
-      ...(command.id ? { id: command.id } : {}),
+      ...(command.id ? { _id: command.id } : {}),
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
       channel: command.channelType,
@@ -77,16 +123,8 @@ export class SelectIntegration {
       };
     }
 
-    const integration = await this.integrationRepository.findOne(
-      query,
-      undefined,
-      { query: { sort: { createdAt: -1 } } }
-    );
-
-    if (!integration) {
-      return;
-    }
-
-    return GetDecryptedIntegrations.getDecryptedCredentials(integration);
+    return await this.integrationRepository.findOne(query, undefined, {
+      query: { sort: { createdAt: -1 } },
+    });
   }
 }

@@ -19,7 +19,7 @@ import {
 import { GetSubscriberTemplatePreferenceCommand } from './get-subscriber-template-preference.command';
 
 import { ApiException } from '../../utils/exceptions';
-import { CachedEntity, buildSubscriberKey } from '../../services';
+import { CachedEntity, buildSubscriberKey } from '../../services/cache';
 
 const PRIORITY_ORDER = [
   PreferenceOverrideSourceEnum.TEMPLATE,
@@ -47,6 +47,7 @@ export class GetSubscriberTemplatePreference {
     if (!subscriber) {
       throw new ApiException(`Subscriber ${command.subscriberId} not found`);
     }
+
     const initialActiveChannels = await this.getActiveChannels(command);
     const subscriberPreference =
       await this.subscriberPreferenceRepository.findOne({
@@ -251,7 +252,9 @@ function mapTemplateConfiguration(
   return {
     _id: template._id,
     name: template.name,
+    tags: template?.tags || [],
     critical: template.critical != null ? template.critical : true,
+    triggers: template.triggers,
     ...(template.data ? { data: template.data } : {}),
   };
 }

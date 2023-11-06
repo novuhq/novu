@@ -8,8 +8,19 @@ import { useClipboard } from '@mantine/hooks';
 
 import { getTemplateVariables, ITemplateVariable, isReservedVariableName, LayoutId } from '@novu/shared';
 
-import { ArrowLeft, Check, Copy } from '../../../design-system/icons';
-import { Button, Checkbox, colors, Input, Text, LoadingOverlay, shadows, Tooltip } from '../../../design-system';
+import {
+  ArrowLeft,
+  Check,
+  Copy,
+  Button,
+  Checkbox,
+  colors,
+  Input,
+  Text,
+  LoadingOverlay,
+  shadows,
+  Tooltip,
+} from '@novu/design-system';
 import { useEnvController, useLayoutsEditor, usePrompt } from '../../../hooks';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { QueryKeys } from '../../../api/query.keys';
@@ -90,7 +101,7 @@ export function LayoutEditor({
         setValue('isDefault', layout?.isDefault);
       }
     }
-  }, [layout]);
+  }, [setValue, layout]);
 
   const layoutName = watch('name');
   const identifier = watch('identifier');
@@ -105,6 +116,7 @@ export function LayoutEditor({
       strict: true,
     });
     setValue('identifier', newIdentifier);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editMode, layoutName]);
 
   useEffect(() => {
@@ -117,7 +129,7 @@ export function LayoutEditor({
         }
       }
     }
-  }, [environment, layout]);
+  }, [goBack, environment, layout]);
 
   useMemo(() => {
     const variables = getTemplateVariables(ast.body).filter(
@@ -137,6 +149,7 @@ export function LayoutEditor({
     });
 
     variablesArray.replace(arrayFields.filter((field) => !!field));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ast]);
 
   useEffect(() => {

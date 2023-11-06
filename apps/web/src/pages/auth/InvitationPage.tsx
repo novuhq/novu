@@ -8,7 +8,7 @@ import { getInviteTokenData } from '../../api/invitation';
 import AuthLayout from '../../components/layout/components/AuthLayout';
 import AuthContainer from '../../components/layout/components/AuthContainer';
 import { SignUpForm } from './components/SignUpForm';
-import { colors, Text, Button } from '../../design-system';
+import { colors, Text, Button } from '@novu/design-system';
 import { useAuthContext } from '../../components/providers/AuthProvider';
 import { useAcceptInvite } from './components/useAcceptInvite';
 import { LoginForm } from './components/LoginForm';
@@ -47,13 +47,13 @@ export default function InvitationPage() {
     if (isLoggedInAsInvitedUser) {
       submitToken(tokensRef.current.token as string, tokensRef.current.invitationToken as string, true);
     }
-  }, [isLoggedInAsInvitedUser]);
+  }, [isLoggedInAsInvitedUser, submitToken]);
 
   useEffect(() => {
     return () => {
       queryClient.removeQueries(['getInviteTokenData']);
     };
-  }, []);
+  }, [queryClient]);
 
   return (
     <AuthLayout>

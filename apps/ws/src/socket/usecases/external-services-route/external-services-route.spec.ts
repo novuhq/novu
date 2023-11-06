@@ -1,242 +1,248 @@
 import * as sinon from 'sinon';
-import { MessageRepository } from '@novu/dal';
+import { EnvironmentRepository, MessageEntity, MessageRepository, UserRepository } from '@novu/dal';
+import { WebSocketEventEnum } from '@novu/shared';
+
 import { ExternalServicesRoute } from './external-services-route.usecase';
 import { ExternalServicesRouteCommand } from './external-services-route.command';
 import { WSGateway } from '../../ws.gateway';
 
+const environmentId = EnvironmentRepository.createObjectId();
+const messageId = 'message-id-1';
+const userId = UserRepository.createObjectId();
+
+const commandReceivedMessage = ExternalServicesRouteCommand.create({
+  event: WebSocketEventEnum.RECEIVED,
+  userId,
+  _environmentId: environmentId,
+  payload: {
+    message: {
+      _id: messageId,
+      _environmentId: environmentId,
+      // etc...
+    } as MessageEntity,
+  },
+});
+
+const createWsGatewayStub = (result) => {
+  return {
+    sendMessage: sinon.stub(),
+    server: {
+      sockets: {
+        in: sinon.stub().returns({
+          fetchSockets: sinon.stub().resolves(result),
+        }),
+      },
+    },
+  } as WSGateway;
+};
+
 describe('ExternalServicesRoute', () => {
   let externalServicesRoute: ExternalServicesRoute;
   let wsGatewayStub;
-  let messageRepository: MessageRepository;
+  let findOneStub: sinon.Stub;
+  let getCountStub: sinon.Stub;
+  const messageRepository = new MessageRepository();
 
   beforeEach(() => {
-    wsGatewayStub = {
-      sendMessage: sinon.stub(),
-      server: {
-        sockets: {
-          in: sinon.stub().returns({
-            fetchSockets: sinon.stub().resolves([{ id: 'socketId' }]),
-          }),
+    findOneStub = sinon.stub(MessageRepository.prototype, 'findOne');
+    getCountStub = sinon.stub(MessageRepository.prototype, 'getCount');
+  });
+
+  afterEach(() => {
+    findOneStub.restore();
+    getCountStub.restore();
+  });
+
+  describe('User is not online', () => {
+    beforeEach(() => {
+      wsGatewayStub = createWsGatewayStub([]);
+      externalServicesRoute = new ExternalServicesRoute(wsGatewayStub, messageRepository);
+    });
+
+    it('should not send any message to the web socket if user is not online', async () => {
+      getCountStub.resolves(Promise.resolve(5));
+
+      await externalServicesRoute.execute(commandReceivedMessage);
+
+      sinon.assert.calledOnceWithExactly(wsGatewayStub.server.sockets.in, userId);
+      sinon.assert.calledOnceWithExactly(wsGatewayStub.server.sockets.in(userId).fetchSockets);
+      sinon.assert.notCalled(wsGatewayStub.sendMessage);
+    });
+  });
+
+  describe('User is online', () => {
+    beforeEach(() => {
+      wsGatewayStub = createWsGatewayStub([{ id: 'socket-id' }]);
+      externalServicesRoute = new ExternalServicesRoute(wsGatewayStub, messageRepository);
+      findOneStub.resolves(Promise.resolve({ _id: messageId }));
+    });
+
+    it('should send message, unseen count and unread count change when event is received', async () => {
+      getCountStub.resolves(Promise.resolve(5));
+
+      await externalServicesRoute.execute(commandReceivedMessage);
+
+      sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(0), userId, WebSocketEventEnum.RECEIVED, {
+        message: {
+          _id: messageId,
         },
-      },
-    } as WSGateway;
-
-    messageRepository = new MessageRepository();
-
-    externalServicesRoute = new ExternalServicesRoute(wsGatewayStub, messageRepository);
-  });
-
-  it('should send unseen count change when event is "unseen_count_changed"', async () => {
-    const messageRepositoryStub = sinon.stub(MessageRepository.prototype, 'getCount').resolves(Promise.resolve(5));
-
-    await externalServicesRoute.execute(
-      ExternalServicesRouteCommand.create({
-        event: 'unseen_count_changed',
-        userId: 'userId',
-        _environmentId: 'envId',
-        payload: {},
-      })
-    );
-
-    sinon.assert.calledOnceWithExactly(wsGatewayStub.sendMessage, 'userId', 'unseen_count_changed', {
-      unseenCount: 5,
+      });
+      sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(1), userId, WebSocketEventEnum.UNSEEN, {
+        unseenCount: 5,
+        hasMore: false,
+      });
+      sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(2), userId, WebSocketEventEnum.UNREAD, {
+        unreadCount: 5,
+        hasMore: false,
+      });
     });
 
-    messageRepositoryStub.restore();
-  });
+    it('should skip getCount query if unseen count provided', async () => {
+      getCountStub.resolves(Promise.resolve(10));
 
-  it('should send unread count change when event is "unread_count_changed"', async () => {
-    const messageRepositoryStub = sinon.stub(MessageRepository.prototype, 'getCount').resolves(Promise.resolve(10));
+      let command: ExternalServicesRouteCommand = {
+        event: WebSocketEventEnum.UNSEEN,
+        userId,
+        _environmentId: environmentId,
+        payload: { unseenCount: 5 },
+      };
+      await externalServicesRoute.execute(command);
+      sinon.assert.calledOnceWithExactly(wsGatewayStub.sendMessage, userId, WebSocketEventEnum.UNSEEN, {
+        unseenCount: 5,
+        hasMore: false,
+      });
 
-    await externalServicesRoute.execute(
-      ExternalServicesRouteCommand.create({
-        event: 'unread_count_changed',
-        userId: 'userId',
-        _environmentId: 'envId',
-        payload: {},
-      })
-    );
+      command = {
+        event: WebSocketEventEnum.UNSEEN,
+        userId,
+        _environmentId: environmentId,
+        payload: { unseenCount: 4 },
+      };
+      await externalServicesRoute.execute(command);
+      sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(1), userId, WebSocketEventEnum.UNSEEN, {
+        unseenCount: 4,
+      });
 
-    sinon.assert.calledOnceWithExactly(wsGatewayStub.sendMessage, 'userId', 'unread_count_changed', {
-      unreadCount: 10,
+      getCountStub.resolves(Promise.resolve(20));
+      command = {
+        event: WebSocketEventEnum.UNSEEN,
+        userId,
+        _environmentId: environmentId,
+      };
+      await externalServicesRoute.execute(command);
+      sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(2), userId, WebSocketEventEnum.UNSEEN, {
+        unseenCount: 20,
+      });
+
+      getCountStub.resolves(Promise.resolve(21));
+      command = {
+        event: WebSocketEventEnum.UNSEEN,
+        userId,
+        _environmentId: environmentId,
+        payload: { unseenCount: undefined },
+      };
+      await externalServicesRoute.execute(command);
+      sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(3), userId, WebSocketEventEnum.UNSEEN, {
+        unseenCount: 21,
+      });
+
+      getCountStub.resolves(Promise.resolve(22));
+      command = {
+        event: WebSocketEventEnum.UNSEEN,
+        userId,
+        _environmentId: environmentId,
+        payload: { unseenCount: undefined },
+      };
+      await externalServicesRoute.execute(command);
+      sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(4), userId, WebSocketEventEnum.UNSEEN, {
+        unseenCount: 22,
+      });
+
+      getCountStub.resolves(Promise.resolve(23));
+      command = {
+        event: WebSocketEventEnum.UNSEEN,
+        userId,
+        _environmentId: environmentId,
+        payload: { unseenCount: 0 },
+      };
+      await externalServicesRoute.execute(command);
+      sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(5), userId, WebSocketEventEnum.UNSEEN, {
+        unseenCount: 0,
+      });
     });
 
-    messageRepositoryStub.restore();
-  });
+    it('should skip getCount query if unread count provided', async () => {
+      getCountStub.resolves(Promise.resolve(10));
 
-  it('should send general message when event is neither "unseen_count_changed" nor "unread_count_changed"', async () => {
-    const messageRepositoryStub = sinon.stub(MessageRepository.prototype, 'getCount').resolves(Promise.resolve(10));
+      let command: ExternalServicesRouteCommand = {
+        event: WebSocketEventEnum.UNREAD,
+        userId,
+        _environmentId: environmentId,
+        payload: { unreadCount: 5 },
+      };
+      await externalServicesRoute.execute(command);
+      sinon.assert.calledOnceWithExactly(wsGatewayStub.sendMessage, userId, WebSocketEventEnum.UNREAD, {
+        unreadCount: 5,
+        hasMore: false,
+      });
 
-    const command: ExternalServicesRouteCommand = {
-      event: 'notification_received',
-      userId: 'userId',
-      payload: { data: 'payloadData' },
-    };
+      command = {
+        event: WebSocketEventEnum.UNREAD,
+        userId,
+        _environmentId: environmentId,
+        payload: { unreadCount: 4 },
+      };
+      await externalServicesRoute.execute(command);
+      sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(1), userId, WebSocketEventEnum.UNREAD, {
+        unreadCount: 4,
+      });
 
-    await externalServicesRoute.execute(command);
+      getCountStub.resolves(Promise.resolve(20));
+      command = {
+        event: WebSocketEventEnum.UNREAD,
+        userId,
+        _environmentId: environmentId,
+      };
+      await externalServicesRoute.execute(command);
+      sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(2), userId, WebSocketEventEnum.UNREAD, {
+        unreadCount: 20,
+      });
 
-    sinon.assert.calledOnceWithExactly(wsGatewayStub.sendMessage, 'userId', 'notification_received', {
-      data: 'payloadData',
+      getCountStub.resolves(Promise.resolve(21));
+      command = {
+        event: WebSocketEventEnum.UNREAD,
+        userId,
+        _environmentId: environmentId,
+        payload: { unreadCount: undefined },
+      };
+      await externalServicesRoute.execute(command);
+      sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(3), userId, WebSocketEventEnum.UNREAD, {
+        unreadCount: 21,
+      });
+
+      getCountStub.resolves(Promise.resolve(22));
+      command = {
+        event: WebSocketEventEnum.UNREAD,
+        userId,
+        _environmentId: environmentId,
+        payload: { unreadCount: undefined },
+      };
+      await externalServicesRoute.execute(command);
+      sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(4), userId, WebSocketEventEnum.UNREAD, {
+        unreadCount: 22,
+      });
+
+      getCountStub.resolves(Promise.resolve(23));
+      command = {
+        event: WebSocketEventEnum.UNREAD,
+        userId,
+        _environmentId: environmentId,
+        payload: { unreadCount: 0 },
+      };
+      await externalServicesRoute.execute(command);
+      sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(5), userId, WebSocketEventEnum.UNREAD, {
+        unreadCount: 0,
+      });
     });
-
-    messageRepositoryStub.restore();
-  });
-
-  it('should skip getCount query if unseen count provided', async () => {
-    let messageRepositoryStub = sinon.stub(MessageRepository.prototype, 'getCount').resolves(Promise.resolve(10));
-    let command: ExternalServicesRouteCommand = {
-      event: 'unseen_count_changed',
-      userId: 'userId',
-      _environmentId: 'envId',
-      payload: { unseenCount: 5 },
-    };
-    await externalServicesRoute.execute(command);
-    sinon.assert.calledOnceWithExactly(wsGatewayStub.sendMessage, 'userId', 'unseen_count_changed', {
-      unseenCount: 5,
-    });
-    messageRepositoryStub.restore();
-
-    messageRepositoryStub = sinon.stub(MessageRepository.prototype, 'getCount').resolves(Promise.resolve(10));
-    command = {
-      event: 'unseen_count_changed',
-      userId: 'userId',
-      _environmentId: 'envId',
-      payload: { unseenCount: '4' },
-    };
-    await externalServicesRoute.execute(command);
-    sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(1), 'userId', 'unseen_count_changed', {
-      unseenCount: 4,
-    });
-    messageRepositoryStub.restore();
-
-    messageRepositoryStub = sinon.stub(MessageRepository.prototype, 'getCount').resolves(Promise.resolve(20));
-    command = {
-      event: 'unseen_count_changed',
-      userId: 'userId',
-      _environmentId: 'envId',
-    } as any;
-    await externalServicesRoute.execute(command);
-    sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(2), 'userId', 'unseen_count_changed', {
-      unseenCount: 20,
-    });
-    messageRepositoryStub.restore();
-
-    messageRepositoryStub = sinon.stub(MessageRepository.prototype, 'getCount').resolves(Promise.resolve(21));
-    command = {
-      event: 'unseen_count_changed',
-      userId: 'userId',
-      _environmentId: 'envId',
-      payload: { unseenCount: null },
-    };
-    await externalServicesRoute.execute(command);
-    sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(3), 'userId', 'unseen_count_changed', {
-      unseenCount: 21,
-    });
-    messageRepositoryStub.restore();
-
-    messageRepositoryStub = sinon.stub(MessageRepository.prototype, 'getCount').resolves(Promise.resolve(22));
-    command = {
-      event: 'unseen_count_changed',
-      userId: 'userId',
-      _environmentId: 'envId',
-      payload: { unseenCount: undefined },
-    };
-    await externalServicesRoute.execute(command);
-    sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(4), 'userId', 'unseen_count_changed', {
-      unseenCount: 22,
-    });
-    messageRepositoryStub.restore();
-
-    messageRepositoryStub = sinon.stub(MessageRepository.prototype, 'getCount').resolves(Promise.resolve(23));
-    command = {
-      event: 'unseen_count_changed',
-      userId: 'userId',
-      _environmentId: 'envId',
-      payload: { unseenCount: 0 },
-    };
-    await externalServicesRoute.execute(command);
-    sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(5), 'userId', 'unseen_count_changed', {
-      unseenCount: 0,
-    });
-    messageRepositoryStub.restore();
-  });
-
-  it('should skip getCount query if unread count provided', async () => {
-    let messageRepositoryStub = sinon.stub(MessageRepository.prototype, 'getCount').resolves(Promise.resolve(10));
-    let command: ExternalServicesRouteCommand = {
-      event: 'unread_count_changed',
-      userId: 'userId',
-      _environmentId: 'envId',
-      payload: { unreadCount: 5 },
-    };
-    await externalServicesRoute.execute(command);
-    sinon.assert.calledOnceWithExactly(wsGatewayStub.sendMessage, 'userId', 'unread_count_changed', {
-      unreadCount: 5,
-    });
-    messageRepositoryStub.restore();
-
-    messageRepositoryStub = sinon.stub(MessageRepository.prototype, 'getCount').resolves(Promise.resolve(10));
-    command = {
-      event: 'unread_count_changed',
-      userId: 'userId',
-      _environmentId: 'envId',
-      payload: { unreadCount: '4' },
-    };
-    await externalServicesRoute.execute(command);
-    sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(1), 'userId', 'unread_count_changed', {
-      unreadCount: 4,
-    });
-    messageRepositoryStub.restore();
-
-    messageRepositoryStub = sinon.stub(MessageRepository.prototype, 'getCount').resolves(Promise.resolve(20));
-    command = {
-      event: 'unread_count_changed',
-      userId: 'userId',
-      _environmentId: 'envId',
-    } as any;
-    await externalServicesRoute.execute(command);
-    sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(2), 'userId', 'unread_count_changed', {
-      unreadCount: 20,
-    });
-    messageRepositoryStub.restore();
-
-    messageRepositoryStub = sinon.stub(MessageRepository.prototype, 'getCount').resolves(Promise.resolve(21));
-    command = {
-      event: 'unread_count_changed',
-      userId: 'userId',
-      _environmentId: 'envId',
-      payload: { unreadCount: null },
-    };
-    await externalServicesRoute.execute(command);
-    sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(3), 'userId', 'unread_count_changed', {
-      unreadCount: 21,
-    });
-    messageRepositoryStub.restore();
-
-    messageRepositoryStub = sinon.stub(MessageRepository.prototype, 'getCount').resolves(Promise.resolve(22));
-    command = {
-      event: 'unread_count_changed',
-      userId: 'userId',
-      _environmentId: 'envId',
-      payload: { unreadCount: undefined },
-    };
-    await externalServicesRoute.execute(command);
-    sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(4), 'userId', 'unread_count_changed', {
-      unreadCount: 22,
-    });
-    messageRepositoryStub.restore();
-
-    messageRepositoryStub = sinon.stub(MessageRepository.prototype, 'getCount').resolves(Promise.resolve(23));
-    command = {
-      event: 'unread_count_changed',
-      userId: 'userId',
-      _environmentId: 'envId',
-      payload: { unreadCount: 0 },
-    };
-    await externalServicesRoute.execute(command);
-    sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(5), 'userId', 'unread_count_changed', {
-      unreadCount: 0,
-    });
-    messageRepositoryStub.restore();
   });
 });

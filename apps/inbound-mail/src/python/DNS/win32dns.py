@@ -23,7 +23,7 @@ import re
 import _winreg
 
 def binipdisplay(s):
-    "convert a binary array of ip adresses to a python list"
+    "convert a binary array of ip addresses to a python list"
     if len(s)%4!= 0:
         raise EnvironmentError # well ...
     ol=[]

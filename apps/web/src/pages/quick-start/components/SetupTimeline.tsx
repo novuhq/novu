@@ -1,11 +1,11 @@
 import styled from '@emotion/styled';
 import { Stack, Timeline, useMantineColorScheme } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
+
 import { getApiKeys } from '../../../api/environment';
-import { getInAppActivated } from '../../../api/integration';
 import { When } from '../../../components/utils/When';
 import { API_ROOT, ENV, IS_DOCKER_HOSTED, WS_URL } from '../../../config';
-import { colors, shadows, Text } from '../../../design-system';
+import { colors, shadows, Text } from '@novu/design-system';
 import { useEnvController } from '../../../hooks';
 import { PrismOnCopy } from '../../settings/tabs/components/Prism';
 import { SetupStatus } from './SetupStatus';

@@ -6,7 +6,7 @@ import { ChannelTypeEnum } from '@novu/shared';
 
 import PageContainer from '../../components/layout/components/PageContainer';
 import PageHeader from '../../components/layout/components/PageHeader';
-import { Table, Text, withCellLoading, IExtendedColumn } from '../../design-system';
+import { Table, Text, withCellLoading, IExtendedColumn } from '@novu/design-system';
 import { useIntegrations } from '../../hooks';
 import { IntegrationsListToolbar } from './components/IntegrationsListToolbar';
 import { useFetchEnvironments } from '../../hooks/useFetchEnvironments';
@@ -18,6 +18,7 @@ import { IntegrationStatusCell } from './components/IntegrationStatusCell';
 import { When } from '../../components/utils/When';
 import { IntegrationsListNoData } from './components/IntegrationsListNoData';
 import { mapToTableIntegration } from './utils';
+import { ConditionCell } from './components/ConditionCell';
 
 const columns: IExtendedColumn<ITableIntegration>[] = [
   {
@@ -48,6 +49,13 @@ const columns: IExtendedColumn<ITableIntegration>[] = [
     accessor: 'environment',
     Header: 'Environment',
     Cell: IntegrationEnvironmentCell,
+  },
+  {
+    accessor: 'conditions',
+    Header: 'Condition',
+    width: 100,
+    maxWidth: 100,
+    Cell: ConditionCell,
   },
   {
     accessor: 'active',

@@ -6,7 +6,7 @@ import { JobStatusEnum } from '@novu/shared';
 import { ExecutionDetailsAccordion } from './ExecutionDetailsAccordion';
 import { ExecutionDetailsFooter } from './ExecutionDetailsFooter';
 import { getNotification } from '../../api/activity';
-import { colors, shadows, Text, Title } from '../../design-system';
+import { colors, shadows, Text, Title } from '@novu/design-system';
 import { When } from '../utils/When';
 import { useNotificationStatus } from '../../pages/activities/hooks/useNotificationStatus';
 
@@ -35,7 +35,10 @@ export function ExecutionDetailsModal({
   const status = useNotificationStatus(response?.data);
 
   useEffect(() => {
-    if (status && [JobStatusEnum.FAILED, JobStatusEnum.COMPLETED, JobStatusEnum.CANCELED].includes(status)) {
+    if (
+      status &&
+      [JobStatusEnum.FAILED, JobStatusEnum.COMPLETED, JobStatusEnum.CANCELED, JobStatusEnum.MERGED].includes(status)
+    ) {
       setShouldRefetch(false);
     }
   }, [status]);

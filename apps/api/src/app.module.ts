@@ -31,8 +31,22 @@ import { TopicsModule } from './app/topics/topics.module';
 import { InboundParseModule } from './app/inbound-parse/inbound-parse.module';
 import { BlueprintModule } from './app/blueprint/blueprint.module';
 import { TenantModule } from './app/tenant/tenant.module';
+import { IdempotencyInterceptor } from './app/shared/framework/idempotency.interceptor';
 
-const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
+const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
+  const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
+  try {
+    if (process.env.NOVU_MANAGED_SERVICE === 'true' || process.env.CI_EE_TEST === 'true') {
+      modules.push(require('@novu/ee-auth')?.EEAuthModule);
+    }
+  } catch (e) {
+    Logger.error(e, `Unexpected error while importing enterprise modules`, 'EnterpriseImport');
+  }
+
+  return modules;
+};
+
+const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
   InboundParseModule,
   OrganizationModule,
   SharedModule,
@@ -61,7 +75,16 @@ const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardRefe
   TenantModule,
 ];
 
-const providers: Provider[] = [];
+const enterpriseModules = enterpriseImports();
+
+const modules = baseModules.concat(enterpriseModules);
+
+const providers: Provider[] = [
+  {
+    provide: APP_INTERCEPTOR,
+    useClass: IdempotencyInterceptor,
+  },
+];
 
 if (process.env.SENTRY_DSN) {
   modules.push(RavenModule);

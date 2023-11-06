@@ -2,28 +2,54 @@ import { Queue } from 'bullmq';
 import { JobRepository, JobStatusEnum } from '@novu/dal';
 import { JobTopicNameEnum, StepTypeEnum } from '@novu/shared';
 
-import { QueueService } from './queue.service';
+import { TestingQueueService } from './testing-queue.service';
+
+const LOG_CONTEXT = 'TestingJobsService';
 
 export class JobsService {
   private jobRepository = new JobRepository();
-  public queueService: QueueService;
-  public queue: Queue;
-  public jobQueue: QueueService;
 
-  constructor() {
-    this.queueService = new QueueService(JobTopicNameEnum.WORKFLOW);
-    this.queue = this.queueService.queue;
+  public standardQueue: Queue;
+  public workflowQueue: Queue;
+  public subscriberProcessQueue: Queue;
 
-    this.jobQueue = new QueueService(JobTopicNameEnum.STANDARD);
+  constructor(private isClusterMode?: boolean) {
+    this.workflowQueue = new TestingQueueService(JobTopicNameEnum.WORKFLOW).queue;
+    this.standardQueue = new TestingQueueService(JobTopicNameEnum.STANDARD).queue;
+    this.subscriberProcessQueue = new TestingQueueService(JobTopicNameEnum.PROCESS_SUBSCRIBER).queue;
+  }
+
+  public async queueGet(jobTopicName: JobTopicNameEnum, getter: 'getDelayed') {
+    let queue: Queue;
+
+    switch (jobTopicName) {
+      case JobTopicNameEnum.WORKFLOW:
+        queue = this.workflowQueue;
+        break;
+      case JobTopicNameEnum.STANDARD:
+        queue = this.standardQueue;
+        break;
+      case JobTopicNameEnum.PROCESS_SUBSCRIBER:
+        queue = this.subscriberProcessQueue;
+        break;
+      default:
+        throw new Error(`Invalid job topic name: ${jobTopicName}`);
+    }
+
+    switch (getter) {
+      case 'getDelayed':
+        return queue.getDelayed();
+      default:
+        throw new Error(`Invalid getter: ${getter}`);
+    }
   }
 
   public async awaitParsingEvents() {
-    let waitingCount = 0;
-    let parsedEvents = 0;
+    let totalCount = 0;
+
     do {
-      waitingCount = await this.queue.getWaitingCount();
-      parsedEvents = await this.queue.getActiveCount();
-    } while (parsedEvents > 0 || waitingCount > 0);
+      totalCount = (await this.getQueueMetric()).totalCount;
+    } while (totalCount > 0);
   }
 
   public async awaitRunningJobs({
@@ -38,19 +64,10 @@ export class JobsService {
     unfinishedJobs?: number;
   }) {
     let runningJobs = 0;
-    let waitingCount = 0;
-    let parsedEvents = 0;
-
-    let waitingCountJobs = 0;
-    let activeCountJobs = 0;
+    let totalCount = 0;
 
     do {
-      waitingCount = await this.queue.getWaitingCount();
-      parsedEvents = await this.queue.getActiveCount();
-
-      waitingCountJobs = await this.jobQueue.queue.getWaitingCount();
-      activeCountJobs = await this.jobQueue.queue.getActiveCount();
-
+      totalCount = (await this.getQueueMetric()).totalCount;
       runningJobs = await this.jobRepository.count({
         _organizationId: organizationId,
         type: {
@@ -61,12 +78,44 @@ export class JobsService {
           $in: [JobStatusEnum.PENDING, JobStatusEnum.QUEUED, JobStatusEnum.RUNNING],
         },
       });
-    } while (
-      waitingCountJobs > 0 ||
-      activeCountJobs > 0 ||
-      parsedEvents > 0 ||
-      waitingCount > 0 ||
-      runningJobs > unfinishedJobs
-    );
+    } while (totalCount > 0 || runningJobs > unfinishedJobs);
+  }
+
+  private async getQueueMetric() {
+    const [
+      parsedEvents,
+      waitingCount,
+      waitingStandardJobsCount,
+      activeStandardJobsCount,
+      subscriberProcessQueueWaitingCount,
+      subscriberProcessQueueActiveCount,
+    ] = await Promise.all([
+      this.workflowQueue.getActiveCount(),
+      this.workflowQueue.getWaitingCount(),
+
+      this.standardQueue.getWaitingCount(),
+      this.standardQueue.getActiveCount(),
+
+      this.subscriberProcessQueue.getWaitingCount(),
+      this.subscriberProcessQueue.getActiveCount(),
+    ]);
+
+    const totalCount =
+      parsedEvents +
+      waitingCount +
+      waitingStandardJobsCount +
+      activeStandardJobsCount +
+      subscriberProcessQueueWaitingCount +
+      subscriberProcessQueueActiveCount;
+
+    return {
+      totalCount,
+      parsedEvents,
+      waitingCount,
+      waitingStandardJobsCount,
+      activeStandardJobsCount,
+      subscriberProcessQueueWaitingCount,
+      subscriberProcessQueueActiveCount,
+    };
   }
 }

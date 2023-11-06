@@ -1,13 +1,13 @@
 import { useFormContext, useWatch } from 'react-hook-form';
-import { colors } from '../../../../design-system';
+import { colors, inputStyles } from '@novu/design-system';
 import { useEnvController, useProcessVariables } from '../../../../hooks';
 import { InAppEditorBlock } from './InAppEditorBlock';
 import { Grid, useMantineTheme, JsonInput, SegmentedControl } from '@mantine/core';
 import { VariablesManagement } from '../email-editor/variables-management/VariablesManagement';
-import { inputStyles } from '../../../../design-system/config/inputs.styles';
 import { useState, useEffect } from 'react';
 import { AvatarFeedFields } from './AvatarFeedFields';
 import { When } from '../../../../components/utils/When';
+import { TranslateProductLead } from '../TranslateProductLead';
 
 const EDITOR = 'Editor';
 const PREVIEW = 'Preview';
@@ -112,6 +112,12 @@ export function InAppContentCard({ index, openVariablesModal }: { index: number;
         <Grid mt={24} grow>
           <Grid.Col span={9}>
             <InAppEditorBlock control={control as any} index={index} readonly={readonly} />
+            <TranslateProductLead
+              id="translate-in-app-editor"
+              style={{
+                marginTop: 32,
+              }}
+            />
             <AvatarFeedFields control={control} index={index} />
           </Grid.Col>
           <Grid.Col

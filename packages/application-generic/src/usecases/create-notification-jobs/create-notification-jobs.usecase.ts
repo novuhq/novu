@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { addMilliseconds } from 'date-fns';
 import {
   JobEntity,
@@ -8,7 +8,6 @@ import {
   NotificationStepEntity,
 } from '@novu/dal';
 import {
-  ChannelTypeEnum,
   DigestTypeEnum,
   STEP_TYPE_TO_CHANNEL_TYPE,
   StepTypeEnum,
@@ -31,6 +30,7 @@ export class CreateNotificationJobs {
   constructor(
     private digestFilterSteps: DigestFilterSteps,
     private notificationRepository: NotificationRepository,
+    @Inject(forwardRef(() => CalculateDelayService))
     private calculateDelayService: CalculateDelayService
   ) {}
 
@@ -66,7 +66,7 @@ export class CreateNotificationJobs {
     if (!notification) {
       const message = 'Notification could not be created';
       const error = new PlatformException(message);
-      Logger.error(message, error, LOG_CONTEXT);
+      Logger.error(error, message, LOG_CONTEXT);
       throw error;
     }
 
@@ -75,8 +75,9 @@ export class CreateNotificationJobs {
     const steps = await this.createSteps(command, activeSteps, notification);
 
     for (const step of steps) {
-      if (!step.template)
+      if (!step.template) {
         throw new PlatformException('Step template was not found');
+      }
 
       const channel = STEP_TYPE_TO_CHANNEL_TYPE.get(step.template.type);
       const providerId = command.templateProviderIds[channel];
@@ -85,6 +86,7 @@ export class CreateNotificationJobs {
         identifier: command.identifier,
         payload: command.payload,
         overrides: command.overrides,
+        tenant: command.tenant,
         step,
         transactionId: command.transactionId,
         _notificationId: notification._id,
@@ -99,7 +101,10 @@ export class CreateNotificationJobs {
         type: step.template.type,
         providerId: providerId,
         expireAt: notification.expireAt,
-        ...(command.actor && { _actorId: command.actor?._id }),
+        ...(command.actor && {
+          _actorId: command.actor?._id,
+          actorId: command.actor?.subscriberId,
+        }),
       };
 
       jobs.push(job);

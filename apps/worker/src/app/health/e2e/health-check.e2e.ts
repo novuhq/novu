@@ -15,7 +15,7 @@ describe('Health-check', () => {
         body: { data },
       } = await testAgent.get('/v1/health-check');
 
-      expect(data.status).to.equal('ok');
+      expect(data?.status).to.equal('ok');
     });
   });
 });

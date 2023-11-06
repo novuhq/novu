@@ -10,20 +10,23 @@ import {
   ITriggerPayload,
   TriggerRecipientSubscriber,
   TriggerRecipientsPayload,
+  ITenantDefine,
+  SmsProviderIdEnum,
 } from '@novu/shared';
 
 export interface IBroadcastPayloadOptions {
   payload: ITriggerPayload;
   overrides?: ITriggerOverrides;
+  tenant?: ITriggerTenant;
+  transactionId?: string;
 }
 
 export interface ITriggerPayloadOptions extends IBroadcastPayloadOptions {
   to: TriggerRecipientsPayload;
   actor?: TriggerRecipientSubscriber;
-  transactionId?: string;
 }
 export interface IIntegrationOverride {
-  integrationIdentifier: string;
+  integrationIdentifier?: string;
 }
 export interface IEmailOverrides extends IIntegrationOverride {
   to?: string[];
@@ -33,7 +36,10 @@ export interface IEmailOverrides extends IIntegrationOverride {
   cc?: string[];
   bcc?: string[];
   senderName?: string;
+  customData?: Record<string, any>;
 }
+
+export type ITriggerTenant = string | ITenantDefine;
 
 export type ITriggerOverrides = {
   [key in
@@ -56,7 +62,9 @@ export type ITriggerOverrides = {
 } & {
   [key in 'email']?: IEmailOverrides;
 } & {
-  [key in 'sms']?: IIntegrationOverride;
+  [key in 'sms']?: ITriggerOverrideSMS;
+} & {
+  [key in SmsProviderIdEnum]?: ITriggerOverrideSMS;
 };
 
 export type ITriggerOverrideDelayAction = {
@@ -120,6 +128,12 @@ export type ITriggerOverrideAPNS = {
   mutableContent?: boolean;
   mdm?: string | Record<string, unknown>;
   urlArgs?: string[];
+};
+
+export type ITriggerOverrideSMS = {
+  to?: string;
+  content?: string;
+  from?: string;
 };
 
 export type ITriggerOverrideExpo = {

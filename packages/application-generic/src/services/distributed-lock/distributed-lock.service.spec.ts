@@ -2,11 +2,13 @@
 import Redlock from 'redlock';
 import { setTimeout } from 'timers/promises';
 
+import { DistributedLockService } from './distributed-lock.service';
+import { FeatureFlagsService } from '../feature-flags.service';
 import {
   InMemoryProviderClient,
-  InMemoryProviderService,
+  InMemoryProviderEnum,
+  CacheInMemoryProviderService,
 } from '../in-memory-provider';
-import { DistributedLockService } from './distributed-lock.service';
 
 const originalRedisCacheServiceHost = (process.env.REDIS_CACHE_SERVICE_HOST =
   process.env.REDIS_CACHE_SERVICE_HOST ?? 'localhost');
@@ -36,22 +38,24 @@ describe('Distributed Lock Service', () => {
   });
 
   describe('In-memory provider service set', () => {
-    let inMemoryProviderService: InMemoryProviderService;
+    let cacheInMemoryProviderService: CacheInMemoryProviderService;
     let distributedLockService: DistributedLockService;
 
     beforeEach(async () => {
-      inMemoryProviderService = new InMemoryProviderService();
-      inMemoryProviderService.initialize();
+      cacheInMemoryProviderService = new CacheInMemoryProviderService();
 
-      await inMemoryProviderService.delayUntilReadiness();
+      await cacheInMemoryProviderService.initialize();
 
-      expect(inMemoryProviderService.getStatus()).toEqual('ready');
+      expect(cacheInMemoryProviderService.getClientStatus()).toEqual('ready');
+
+      distributedLockService = new DistributedLockService(
+        cacheInMemoryProviderService
+      );
+      await distributedLockService.initialize();
     });
 
-    beforeEach(() => {
-      distributedLockService = new DistributedLockService(
-        inMemoryProviderService
-      );
+    afterAll(async () => {
+      await distributedLockService.shutdown();
     });
 
     describe('Set up', () => {
@@ -63,7 +67,7 @@ describe('Distributed Lock Service', () => {
         expect(await client!.ping()).toEqual('PONG');
         expect(client!.status).toEqual('ready');
         expect(client!.isCluster).toEqual(
-          process.env.IN_MEMORY_CLUSTER_MODE_ENABLED === 'true'
+          process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED === 'true'
         );
       });
 
@@ -284,21 +288,22 @@ describe('Distributed Lock Service', () => {
   });
 
   describe('Bypass - In-memory provider service not set', () => {
-    let inMemoryProviderService: InMemoryProviderService;
+    let cacheInMemoryProviderService: CacheInMemoryProviderService;
     let distributedLockService: DistributedLockService;
 
-    beforeEach(() => {
+    beforeEach(async () => {
       process.env.REDIS_CACHE_SERVICE_HOST = '';
       process.env.REDIS_CACHE_SERVICE_PORT = '0';
       process.env.REDIS_CLUSTER_SERVICE_HOST = '';
       process.env.REDIS_CLUSTER_SERVICE_PORTS = '';
 
-      inMemoryProviderService = new InMemoryProviderService();
-      inMemoryProviderService.initialize();
-      expect(inMemoryProviderService.inMemoryProviderConfig.host).toEqual('');
-      distributedLockService = new DistributedLockService(
-        inMemoryProviderService
-      );
+      cacheInMemoryProviderService = new CacheInMemoryProviderService();
+      expect(
+        cacheInMemoryProviderService.inMemoryProviderService
+          .inMemoryProviderConfig.host
+      ).toEqual('localhost');
+      distributedLockService = new DistributedLockService(undefined);
+      // If no initializing the service is like the client is not properly set
     });
 
     afterEach(() => {
@@ -307,6 +312,10 @@ describe('Distributed Lock Service', () => {
       process.env.REDIS_CLUSTER_SERVICE_HOST = originalRedisClusterServiceHost;
       process.env.REDIS_CLUSTER_SERVICE_PORTS =
         originalRedisClusterServicePorts;
+    });
+
+    afterAll(async () => {
+      await distributedLockService.shutdown();
     });
 
     describe('No in-memory instance', () => {

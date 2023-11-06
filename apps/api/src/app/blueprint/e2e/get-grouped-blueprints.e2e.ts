@@ -3,11 +3,18 @@ import * as sinon from 'sinon';
 
 import { UserSession } from '@novu/testing';
 import { NotificationTemplateRepository, EnvironmentRepository } from '@novu/dal';
-import { EmailBlockTypeEnum, FilterPartTypeEnum, INotificationTemplate, StepTypeEnum } from '@novu/shared';
+import {
+  EmailBlockTypeEnum,
+  FieldLogicalOperatorEnum,
+  FieldOperatorEnum,
+  FilterPartTypeEnum,
+  INotificationTemplate,
+  StepTypeEnum,
+} from '@novu/shared';
 import {
   buildGroupedBlueprintsKey,
+  CacheInMemoryProviderService,
   CacheService,
-  InMemoryProviderService,
   InvalidateCacheService,
 } from '@novu/application-generic';
 
@@ -21,14 +28,16 @@ describe('Get grouped notification template blueprints - /blueprints/group-by-ca
   const notificationTemplateRepository: NotificationTemplateRepository = new NotificationTemplateRepository();
   const environmentRepository: EnvironmentRepository = new EnvironmentRepository();
 
-  const inMemoryProviderService = new InMemoryProviderService();
-  inMemoryProviderService.initialize();
-  const invalidateCache = new InvalidateCacheService(new CacheService(inMemoryProviderService));
-
+  let invalidateCache: InvalidateCacheService;
   let getGroupedBlueprints: GetGroupedBlueprints;
   let indexModuleStub: sinon.SinonStub;
 
   before(async () => {
+    const cacheInMemoryProviderService = new CacheInMemoryProviderService();
+    const cacheService = new CacheService(cacheInMemoryProviderService);
+    await cacheService.initialize();
+    invalidateCache = new InvalidateCacheService(cacheService);
+
     session = new UserSession();
     await session.initialize();
 
@@ -174,13 +183,13 @@ export async function createTemplateFromBlueprint({
           {
             isNegated: false,
             type: 'GROUP',
-            value: 'AND',
+            value: FieldLogicalOperatorEnum.AND,
             children: [
               {
                 on: FilterPartTypeEnum.SUBSCRIBER,
                 field: 'firstName',
                 value: 'test value',
-                operator: 'EQUAL',
+                operator: FieldOperatorEnum.EQUAL,
               },
             ],
           },
