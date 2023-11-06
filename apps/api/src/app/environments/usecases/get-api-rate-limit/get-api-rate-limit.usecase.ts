@@ -12,7 +12,7 @@ const LOG_CONTEXT = 'GetApiRateLimit';
 export class GetApiRateLimit {
   constructor(
     private environmentRepository: EnvironmentRepository,
-    private organizationRespository: OrganizationRepository,
+    private organizationRepository: OrganizationRepository,
     private getDefaultApiRateLimits: GetDefaultApiRateLimits
   ) {}
 
@@ -54,7 +54,7 @@ export class GetApiRateLimit {
     if (apiRateLimits) {
       environmentApiRateLimits = apiRateLimits;
     } else {
-      const organization = await this.organizationRespository.findOne({ _id: _organizationId });
+      const organization = await this.organizationRepository.findOne({ _id: _organizationId });
 
       if (!organization) {
         const message = `Organization id: ${_organizationId} not found`;
