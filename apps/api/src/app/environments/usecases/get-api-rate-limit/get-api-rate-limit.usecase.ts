@@ -1,10 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { EnvironmentRepository, OrganizationRepository } from '@novu/dal';
 import { buildApiRateLimitKey, CachedEntity } from '@novu/application-generic';
 import { ApiRateLimitCategoryTypeEnum, ApiServiceLevelTypeEnum, IApiRateLimits } from '@novu/shared';
 import { GetApiRateLimitCommand } from './get-api-rate-limit.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { GetDefaultApiRateLimits } from '../../../rate-limiting/usecases/get-default-api-rate-limits';
+
+const LOG_CONTEXT = 'GetApiRateLimit';
 
 @Injectable()
 export class GetApiRateLimit {
@@ -41,7 +43,9 @@ export class GetApiRateLimit {
     const environment = await this.environmentRepository.findOne({ _id: _environmentId });
 
     if (!environment) {
-      throw new ApiException(`Environment id: ${_environmentId} not found`);
+      const message = `Environment id: ${_environmentId} not found`;
+      Logger.error(message, LOG_CONTEXT);
+      throw new InternalServerErrorException(message);
     }
 
     const { apiRateLimits } = environment;
@@ -53,7 +57,9 @@ export class GetApiRateLimit {
       const organization = await this.organizationRespository.findOne({ _id: _organizationId });
 
       if (!organization) {
-        throw new ApiException(`Organization id: ${_organizationId} not found`);
+        const message = `Organization id: ${_organizationId} not found`;
+        Logger.error(message, LOG_CONTEXT);
+        throw new InternalServerErrorException(message);
       }
 
       if (organization.apiServiceLevel) {
