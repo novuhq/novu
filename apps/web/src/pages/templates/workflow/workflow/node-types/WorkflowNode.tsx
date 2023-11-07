@@ -124,7 +124,7 @@ export function WorkflowNode({
     stepErrorContent = getFormattedStepErrors(index, errors);
   }
 
-  const showMenu = !readonlyEnv && !dragging && hover;
+  const showMenu = !dragging && hover;
 
   useEffect(() => {
     const subscription = watch((values) => {
@@ -183,6 +183,7 @@ export function WorkflowNode({
               <WorkflowNodeActions
                 nodeType={nodeType}
                 showMenu={showMenu}
+                isReadOnly={readonlyEnv}
                 menuPosition={menuPosition}
                 conditionsCount={conditionsCount}
                 channelType={channelType}
@@ -233,6 +234,7 @@ export function WorkflowNode({
                 <WorkflowNodeActions
                   nodeType={nodeType}
                   showMenu={showMenu}
+                  isReadOnly={readonlyEnv}
                   menuPosition={menuPosition}
                   conditionsCount={conditionsCount}
                   channelType={channelType}

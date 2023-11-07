@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { ReactFlowProvider } from 'react-flow-renderer';
 import { FieldErrors, useFormContext } from 'react-hook-form';
@@ -28,6 +28,7 @@ function BaseTemplateEditorPage() {
   const { templateId = '' } = useParams<{ templateId: string }>();
   const isTouring = tourStorage.getCurrentTour('digest', templateId) > -1;
   const basePath = useBasePath();
+  const [shouldRenderBlueprintModal, setShouldRenderBlueprintModal] = useState(false);
 
   const isCreateTemplatePage = location.pathname === ROUTES.WORKFLOWS_CREATE;
 
@@ -60,6 +61,11 @@ function BaseTemplateEditorPage() {
     }
   }, [navigate, environment, template]);
 
+  useEffect(() => {
+    const id = localStorage.getItem('blueprintId');
+    setShouldRenderBlueprintModal(!!id);
+  }, []);
+
   if (environment && environment?.name === 'Production' && isCreateTemplatePage) {
     navigate(ROUTES.WORKFLOWS);
   }
@@ -81,7 +87,7 @@ function BaseTemplateEditorPage() {
           </ReactFlowProvider>
         </form>
       </PageContainer>
-      <BlueprintModal />
+      {shouldRenderBlueprintModal && <BlueprintModal />}
       <NavigateValidatorModal
         isOpen={showNavigateValidatorModal}
         onConfirm={confirmNavigate}
