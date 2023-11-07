@@ -40,7 +40,7 @@ export class UserService {
       lastName: userEntity?.lastName ?? faker.name.lastName(),
       password: passwordHash,
       profilePicture: `https://randomuser.me/api/portraits/men/${Math.floor(Math.random() * 60) + 1}.jpg`,
-      tokens: [],
+      tokens: userEntity?.tokens ?? [],
       showOnBoardingTour: userEntity?.showOnBoardingTour ?? 2,
     });
 
