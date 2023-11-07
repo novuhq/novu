@@ -1,11 +1,9 @@
-import { Types } from 'mongoose';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
-import type { TransformEntityToDbModel } from '../../types/helpers';
-import { UserEntity } from '../user';
+import type { IEntity, TransformEntityToDbModel } from '../../types';
 
-export class ChangeEntity {
+export class ChangeEntity implements IEntity {
   _id: string;
 
   _creatorId: string;

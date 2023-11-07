@@ -6,9 +6,9 @@ import { SubscriberEntity } from '../subscriber';
 import { NotificationTemplateEntity } from '../notification-template';
 import type { OrganizationId } from '../organization';
 import type { EnvironmentId } from '../environment';
-import type { TransformEntityToDbModel, TransformValues } from '../../types/helpers';
+import type { IEntity, TransformEntityToDbModel } from '../../types';
 
-export class MessageEntity {
+export class MessageEntity implements IEntity {
   _id: string;
 
   _templateId: string;

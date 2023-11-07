@@ -1,7 +1,7 @@
 import { Types } from 'mongoose';
 
 import type { OrganizationId } from '../organization';
-import type { TransformEntityToDbModel, TransformValues } from '../../types/helpers';
+import type { IEntity, TransformEntityToDbModel, TransformValues } from '../../types';
 
 export interface IApiKey {
   key: string;
@@ -17,7 +17,7 @@ export interface IDnsSettings {
   inboundParseDomain: string;
 }
 
-export class EnvironmentEntity {
+export class EnvironmentEntity implements IEntity {
   _id: string;
 
   name: string;

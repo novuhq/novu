@@ -1,9 +1,7 @@
-import { Types } from 'mongoose';
-
 import { EnvironmentId, OrganizationId, TopicId, TopicKey, TopicName } from './types';
-import { TransformEntityToDbModel } from '../../types';
+import type { IEntity, TransformEntityToDbModel } from '../../types';
 
-export class TopicEntity {
+export class TopicEntity implements IEntity {
   _id: TopicId;
   _environmentId: EnvironmentId;
   _organizationId: OrganizationId;

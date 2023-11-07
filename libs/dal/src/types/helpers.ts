@@ -1,4 +1,5 @@
 import { Types } from 'mongoose';
+import { IEntity } from './base.entity';
 
 /**
  * The type of an ObjectKey identifier.
@@ -41,7 +42,11 @@ export type TransformValues<T, U, V> = Identity<
  * - Tranform values of T with keys in union of type `ObjectIdKey` to type `Types.ObjectId`
  * - Tranform values of T with keys in union of type `DateKey` to type `Date`
  */
-export type TransformEntityToDbModel<T> = TransformValues<TransformValues<T, ObjectIdKey, ObjectIdType>, DateKey, Date>;
+export type TransformEntityToDbModel<T extends IEntity> = TransformValues<
+  TransformValues<T, ObjectIdKey, ObjectIdType>,
+  DateKey,
+  Date
+>;
 
 /**
  * Types that should stop the recursion of the deep keys.

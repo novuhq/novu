@@ -2,9 +2,9 @@ import { IPreferenceChannels } from '@novu/shared';
 
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
-import type { TransformEntityToDbModel } from '../../types/helpers';
+import type { IEntity, TransformEntityToDbModel } from '../../types';
 
-export class SubscriberPreferenceEntity {
+export class SubscriberPreferenceEntity implements IEntity {
   _id: string;
 
   _organizationId: OrganizationId;

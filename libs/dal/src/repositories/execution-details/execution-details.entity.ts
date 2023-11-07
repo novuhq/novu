@@ -2,9 +2,9 @@ import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, StepTypeEnum } 
 
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
-import type { TransformEntityToDbModel } from '../../types/helpers';
+import type { IEntity, TransformEntityToDbModel } from '../../types';
 
-export class ExecutionDetailsEntity {
+export class ExecutionDetailsEntity implements IEntity {
   _id: string;
   _jobId: string;
   _environmentId: EnvironmentId;

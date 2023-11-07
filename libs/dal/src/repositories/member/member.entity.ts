@@ -1,11 +1,10 @@
-import { Types } from 'mongoose';
 import { IMemberInvite, MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 
 import { UserEntity } from '../user';
 import type { OrganizationId } from '../organization';
-import type { ObjectIdType, TransformEntityToDbModel, TransformValues } from '../../types/helpers';
+import type { IEntity, ObjectIdType, TransformEntityToDbModel, TransformValues } from '../../types';
 
-export class MemberEntity {
+export class MemberEntity implements IEntity {
   _id: string;
 
   _userId?: string;

@@ -1,4 +1,6 @@
-export class OrganizationEntity {
+import type { IEntity, TransformEntityToDbModel } from '../../types';
+
+export class OrganizationEntity implements IEntity {
   _id: string;
 
   name: string;
@@ -17,7 +19,7 @@ export class OrganizationEntity {
   partnerConfigurations?: IPartnerConfiguration[];
 }
 
-export type OrganizationDBModel = OrganizationEntity;
+export type OrganizationDBModel = TransformEntityToDbModel<OrganizationEntity>;
 
 export interface IPartnerConfiguration {
   accessToken: string;

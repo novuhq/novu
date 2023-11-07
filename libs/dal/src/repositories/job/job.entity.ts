@@ -1,14 +1,13 @@
 import { StepTypeEnum, IWorkflowStepMetadata, JobStatusEnum, ITenantDefine } from '@novu/shared';
-import { Types } from 'mongoose';
 
 import { NotificationStepEntity } from '../notification-template';
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
-import type { TransformEntityToDbModel } from '../../types';
+import type { IEntity, TransformEntityToDbModel } from '../../types';
 
 export { JobStatusEnum };
 
-export class JobEntity {
+export class JobEntity implements IEntity {
   _id: string;
   identifier: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

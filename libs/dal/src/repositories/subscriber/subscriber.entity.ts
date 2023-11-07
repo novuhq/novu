@@ -3,9 +3,9 @@ import { SubscriberCustomData, ChatProviderIdEnum, PushProviderIdEnum } from '@n
 import { ExternalSubscriberId } from './types';
 import type { OrganizationId } from '../organization';
 import type { EnvironmentId } from '../environment';
-import type { TransformEntityToDbModel } from '../../types/helpers';
+import type { IEntity, TransformEntityToDbModel } from '../../types';
 
-export class SubscriberEntity {
+export class SubscriberEntity implements IEntity {
   // TODO: Use SubscriberId. Means lot of changes across whole codebase. Cool down.
   _id: string;
 

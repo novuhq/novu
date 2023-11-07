@@ -9,9 +9,9 @@ import {
   OrganizationId,
   UserId,
 } from './types';
-import type { TransformEntityToDbModel } from '../../types/helpers';
+import type { IEntity, TransformEntityToDbModel } from '../../types';
 
-export class LayoutEntity {
+export class LayoutEntity implements IEntity {
   _id: LayoutId;
   _environmentId: EnvironmentId;
   _organizationId: OrganizationId;

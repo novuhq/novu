@@ -1,10 +1,10 @@
 import { TenantCustomData } from '@novu/shared';
 import { TenantId } from './types';
 import { EnvironmentId } from '../environment';
-import { TransformEntityToDbModel } from '../../types/helpers';
 import { OrganizationId } from '../organization';
+import type { IEntity, TransformEntityToDbModel } from '../../types';
 
-export class TenantEntity {
+export class TenantEntity implements IEntity {
   _id: TenantId;
 
   identifier: string;

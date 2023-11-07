@@ -1,11 +1,11 @@
-import { BuilderFieldType, BuilderGroupValues, ChannelTypeEnum, FilterParts, ICredentials } from '@novu/shared';
+import { ChannelTypeEnum, ICredentials } from '@novu/shared';
 
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
-import { TransformEntityToDbModel } from '../../types/helpers';
 import { StepFilter } from '../notification-template';
+import type { IEntity, TransformEntityToDbModel } from '../../types';
 
-export class IntegrationEntity {
+export class IntegrationEntity implements IEntity {
   _id: string;
 
   _environmentId: EnvironmentId;

@@ -1,4 +1,3 @@
-import type { TransformEntityToDbModel } from '../../types/helpers';
 import {
   EnvironmentId,
   ExternalSubscriberId,
@@ -8,8 +7,9 @@ import {
   TopicKey,
   TopicSubscriberId,
 } from './types';
+import type { IEntity, TransformEntityToDbModel } from '../../types';
 
-export class TopicSubscribersEntity {
+export class TopicSubscribersEntity implements IEntity {
   _id: TopicSubscriberId;
   _environmentId: EnvironmentId;
   _organizationId: OrganizationId;

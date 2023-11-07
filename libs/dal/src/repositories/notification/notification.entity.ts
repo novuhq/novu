@@ -3,9 +3,9 @@ import { StepTypeEnum } from '@novu/shared';
 import { NotificationTemplateEntity } from '../notification-template';
 import type { OrganizationId } from '../organization';
 import type { EnvironmentId } from '../environment';
-import type { TransformEntityToDbModel } from '../../types/helpers';
+import type { IEntity, TransformEntityToDbModel } from '../../types';
 
-export class NotificationEntity {
+export class NotificationEntity implements IEntity {
   _id: string;
 
   _templateId: string;

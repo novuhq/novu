@@ -2,7 +2,7 @@ import { AuthProviderEnum } from '@novu/shared';
 import { Exclude } from 'class-transformer';
 
 import { UserId } from './types';
-import type { TransformEntityToDbModel } from '../../types/helpers';
+import type { IEntity, TransformEntityToDbModel } from '../../types';
 
 export interface IUserToken {
   providerId: string;
@@ -18,7 +18,7 @@ export interface IUserResetTokenCount {
   reqInDay: number;
 }
 
-export class UserEntity {
+export class UserEntity implements IEntity {
   _id: UserId;
 
   resetToken?: string;
