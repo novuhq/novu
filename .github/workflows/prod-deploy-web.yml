@@ -12,8 +12,7 @@ jobs:
   test_web:
     uses: ./.github/workflows/reusable-web-e2e.yml
     with:
-      submodules: true
-      submodule_branch: 'main'
+      ee: true
     secrets: inherit
 
   deploy_web_eu:
