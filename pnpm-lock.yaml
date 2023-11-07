@@ -79,8 +79,8 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0
       '@types/inquirer':
-        specifier: 8.2.7
-        version: 8.2.7
+        specifier: 8.2.9
+        version: 8.2.9
       '@types/jest':
         specifier: 29.5.2
         version: 29.5.2
@@ -414,10 +414,6 @@ importers:
       uuid:
         specifier: ^8.3.2
         version: 8.3.2
-    optionalDependencies:
-      '@novu/ee-auth':
-        specifier: ^0.19.0
-        version: link:../../enterprise/packages/auth
     devDependencies:
       '@faker-js/faker':
         specifier: ^6.0.0
@@ -2086,6 +2082,9 @@ importers:
       '@nestjs/jwt':
         specifier: ^10.1.0
         version: 10.1.0(@nestjs/common@10.2.2)
+      '@nestjs/passport':
+        specifier: ^10.0.1
+        version: 10.0.1(@nestjs/common@10.2.2)(passport@0.6.0)
       '@nestjs/swagger':
         specifier: '>=6'
         version: 7.1.9(@nestjs/common@10.2.2)(@nestjs/core@10.2.2)(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)
@@ -2299,6 +2298,9 @@ importers:
       ioredis:
         specifier: ^5.2.4
         version: 5.3.1
+      jsonwebtoken:
+        specifier: 9.0.0
+        version: 9.0.0
       launchdarkly-node-server-sdk:
         specifier: ^7.0.1
         version: 7.0.1
@@ -23922,8 +23924,8 @@ packages:
       rxjs: 7.8.1
     dev: true
 
-  /@types/inquirer@8.2.7:
-    resolution: {integrity: sha512-uICJEaJOf6MsKyyAf8p58+QxTS6dwy91QVfXk1hnQ0rUT+u7KpkeFx5dxQ/oju0BaOKB284brEMBHLpNf4bZDQ==}
+  /@types/inquirer@8.2.9:
+    resolution: {integrity: sha512-5IEO2PwCy4NZDgj977dho4Qbdiw6dJZJzD4ZaB/9j7dfppf7z0xxFPKZz/FtTAUQbDjmWHJ6Jlz/gn0YzWHPsw==}
     dependencies:
       '@types/through': 0.0.30
       rxjs: 7.8.1
@@ -31565,7 +31567,7 @@ packages:
       damerau-levenshtein: 1.0.8
       emoji-regex: 9.2.2
       eslint: 8.51.0
-      has: 1.0.4
+      has: 1.0.3
       jsx-ast-utils: 3.3.3
       language-tags: 1.0.5
       minimatch: 3.1.2
@@ -35959,7 +35961,7 @@ packages:
       pretty-format: 27.5.1
       slash: 3.0.0
       strip-json-comments: 3.1.1
-      ts-node: 10.9.1(@types/node@14.18.42)(typescript@4.9.5)
+      ts-node: 10.9.1(@types/node@16.11.7)(typescript@4.9.5)
     transitivePeerDependencies:
       - bufferutil
       - canvas

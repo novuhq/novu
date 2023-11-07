@@ -32,6 +32,8 @@ import { ROUTES } from '../../../../constants/routes.enum';
 import { TemplateCreationSourceEnum } from '../../shared';
 import { useSegment } from '../../../../components/providers/SegmentProvider';
 import { IBlueprintTemplate } from '../../../../api/types';
+import { faFile } from '@fortawesome/free-regular-svg-icons';
+import { TemplateAnalyticsEnum } from '../../constants';
 
 const nodeTypes = {
   triggerNode: TriggerNode,
@@ -69,6 +71,11 @@ export const TemplatesStoreModal = ({ general, popular, isOpened, onClose }: ITe
     });
 
     setTemplate(template);
+  };
+
+  const handleRedirectToCreateBlankTemplate = (isFromHeader: boolean) => {
+    segment.track(TemplateAnalyticsEnum.CREATE_TEMPLATE_CLICK, { isFromHeader });
+    navigate(ROUTES.WORKFLOWS_CREATE);
   };
 
   const handleCreateTemplateClick = (blueprint: IBlueprintTemplate) => {
@@ -132,6 +139,22 @@ export const TemplatesStoreModal = ({ general, popular, isOpened, onClose }: ITe
               })}
             </TemplatesGroup>
           ))}
+          <TemplatesGroup key="blank-workflow">
+            <GroupName>Blank Workflow</GroupName>
+            <TemplateItem
+              key="temp-blank-workflow"
+              onClick={() => {
+                segment.track('[Template Store] Click Create Notification Template', {
+                  templateIdentifier: 'Blank Workflow',
+                  location: TemplateCreationSourceEnum.DROPDOWN,
+                });
+                handleRedirectToCreateBlankTemplate(false);
+              }}
+            >
+              <FontAwesomeIcon icon={faFile} />
+              <span>Blank Workflow</span>
+            </TemplateItem>
+          </TemplatesGroup>
         </TemplatesSidebarHolder>
         <TemplatesDetailsHolder>
           <TemplateHeader>
