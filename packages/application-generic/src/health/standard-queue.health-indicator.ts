@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { StandardQueueService } from '../services';
+import { StandardQueueService } from '../services/queues';
 import { QueueHealthIndicator } from './queue-health-indicator.service';
 
 const LOG_CONTEXT = 'StandardQueueServiceHealthIndicator';

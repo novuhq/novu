@@ -516,15 +516,19 @@
     "Myśliwiec",
     "nestframework",
     "ryver",
-    "idempotency", 
-    "IDEMPOTENCY", 
+    "idempotency",
+    "IDEMPOTENCY",
     "Idempotency",
     "messagebird",
     "Datetime",
+    "pubid",
     "simpletexting",
     "Simpletexting",
     "Zulip",
-    "zulip"
+    "zulip",
+    "tspan",
+    "maildata",
+    "brevo"
   ],
   "flagWords": [],
   "patterns": [
