@@ -81,7 +81,7 @@ describe('Create Integration - /workflow-overrides (POST)', function () {
     const payload: ICreateWorkflowOverrideRequestDto = {
       preferenceSettings: { email: false },
       active: false,
-      _workflowId: workflow._id,
+      workflowId: workflow._id,
       tenantIdentifier: tenant.identifier,
     };
 

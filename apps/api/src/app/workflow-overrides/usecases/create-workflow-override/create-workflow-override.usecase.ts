@@ -9,7 +9,7 @@ import {
 } from '@novu/dal';
 
 import { CreateWorkflowOverrideCommand } from './create-workflow-override.command';
-import { CreateWorkflowOverrideResponseDto } from '../../dto/create-workflow-override-response.dto';
+import { CreateWorkflowOverrideResponseDto } from '../../dto';
 
 @Injectable()
 export class CreateWorkflowOverride {

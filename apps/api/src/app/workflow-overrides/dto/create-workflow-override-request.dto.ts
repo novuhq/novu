@@ -15,7 +15,7 @@ export class CreateWorkflowOverrideRequestDto implements ICreateWorkflowOverride
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
-  _workflowId?: string;
+  workflowId?: string;
 
   @ApiProperty()
   @IsString()

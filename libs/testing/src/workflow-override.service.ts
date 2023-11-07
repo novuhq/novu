@@ -29,7 +29,7 @@ export class WorkflowOverrideService {
       _environmentId: environmentId,
     });
 
-    const workflowId = override._workflowId || (await this.createWorkflow(groups))._id;
+    const workflowId = override.workflowId || (await this.createWorkflow(groups))._id;
 
     const payload: Partial<WorkflowOverrideEntity> = {
       _organizationId: organizationId,

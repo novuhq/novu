@@ -1,3 +1,9 @@
 import { IWorkflowOverrideRequestDto } from './shared';
 
-export type ICreateWorkflowOverrideRequestDto = IWorkflowOverrideRequestDto;
+export interface ICreateWorkflowOverrideRequestDto extends IWorkflowOverrideRequestDto {
+  workflowId?: string;
+
+  triggerIdentifier?: string;
+
+  tenantIdentifier?: string;
+}

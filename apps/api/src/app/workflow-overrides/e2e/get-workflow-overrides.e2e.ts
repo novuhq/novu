@@ -38,9 +38,9 @@ describe('Get workflows overrides - /workflow-overrides/workflows/:workflowId (G
 
     expect(noOverrides.length).to.equal(0);
 
-    await workflowOverrideService.createWorkflowOverride({ _workflowId: workflow._id });
-    await workflowOverrideService.createWorkflowOverride({ _workflowId: workflow._id });
-    await workflowOverrideService.createWorkflowOverride({ _workflowId: workflow._id });
+    await workflowOverrideService.createWorkflowOverride({ workflowId: workflow._id });
+    await workflowOverrideService.createWorkflowOverride({ workflowId: workflow._id });
+    await workflowOverrideService.createWorkflowOverride({ workflowId: workflow._id });
 
     const data = (await session.testAgent.get(`/v1/workflow-overrides/workflows/${workflow._id}`)).body.data;
 
@@ -74,9 +74,9 @@ describe('Get workflows overrides - /workflow-overrides/workflows/:workflowId (G
       triggers: [{ identifier: 'test-trigger-api' }],
     });
 
-    await workflowOverrideService.createWorkflowOverride({ _workflowId: workflow._id });
-    await workflowOverrideService.createWorkflowOverride({ _workflowId: workflow._id });
-    await workflowOverrideService.createWorkflowOverride({ _workflowId: workflow._id });
+    await workflowOverrideService.createWorkflowOverride({ workflowId: workflow._id });
+    await workflowOverrideService.createWorkflowOverride({ workflowId: workflow._id });
+    await workflowOverrideService.createWorkflowOverride({ workflowId: workflow._id });
 
     const page1 = (await session.testAgent.get(`/v1/workflow-overrides/workflows/${workflow._id}?limit=2`)).body;
 

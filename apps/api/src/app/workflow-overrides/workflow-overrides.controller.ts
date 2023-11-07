@@ -81,7 +81,7 @@ export class WorkflowOverridesController {
         preferenceSettings: body.preferenceSettings,
         triggerIdentifier: body.triggerIdentifier,
         tenantIdentifier: body.tenantIdentifier,
-        _workflowId: body._workflowId,
+        _workflowId: body.workflowId,
       })
     );
   }

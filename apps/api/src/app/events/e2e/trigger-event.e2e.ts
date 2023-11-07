@@ -2595,7 +2595,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
         const workflow = await createTemplate(session, ChannelTypeEnum.IN_APP);
 
         // Create workflow override with active false
-        await workflowOverrideService.createWorkflowOverride({ _workflowId: workflow._id, active: false });
+        await workflowOverrideService.createWorkflowOverride({ workflowId: workflow._id, active: false });
 
         const triggerResponse = await axiosInstance.post(
           `${session.serverUrl}${eventTriggerPath}`,
@@ -2671,7 +2671,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
         const workflow = await createTemplate(session, ChannelTypeEnum.IN_APP);
 
         // Create active workflow override
-        await workflowOverrideService.createWorkflowOverride({ _workflowId: workflow._id, active: true });
+        await workflowOverrideService.createWorkflowOverride({ workflowId: workflow._id, active: true });
 
         const triggerResponse = await axiosInstance.post(
           `${session.serverUrl}${eventTriggerPath}`,
@@ -2748,7 +2748,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
 
         // Create a workflow with in app channel disabled
         await workflowOverrideService.createWorkflowOverride({
-          _workflowId: workflow._id,
+          workflowId: workflow._id,
           active: true,
           preferenceSettings: { in_app: false },
         });
@@ -2800,7 +2800,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
 
         // Create workflow override with in app channel enabled
         await workflowOverrideService.createWorkflowOverride({
-          _workflowId: workflow._id,
+          workflowId: workflow._id,
           active: true,
           preferenceSettings: { in_app: true },
         });
