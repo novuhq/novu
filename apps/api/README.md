@@ -42,7 +42,7 @@ Database migrations are included for features that have a hard dependency on spe
 
 ### How to Run
 
-The `npm run migration` script is present in the `package.json` to ensure script changes are DRY, consistent, and repeatable. This script is included in user-facing communications such as our documentation and release notes, and the script naming therefore MUST remain stable.
+The `npm run migration` script is available in the `package.json` to ensure script changes are DRY and consistent. This script is included in user-facing communications such as our documentation and release notes, and the script naming therefore MUST remain stable.
 
 The path to the migration to run is passed as a positional argument to the script. For example, to run the Add Integration Identifier script, we would enter the following:
 
