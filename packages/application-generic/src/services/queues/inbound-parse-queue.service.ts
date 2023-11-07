@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { JobTopicNameEnum } from '@novu/shared';
 
-import { QueueBaseService } from './index';
+import { QueueBaseService } from './queue-base.service';
 
 import { QueueOptions } from '../bull-mq';
 

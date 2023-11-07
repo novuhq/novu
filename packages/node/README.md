@@ -175,18 +175,18 @@ import { Novu } from '@novu/node';
 
 const novu = new Novu('<NOVU_API_KEY>');
 
-await novu.subscribers.identify("subscriberId",{
-  firstName: "Pawan";
-  lastName: "Jain";
-  email: "pawan.jain@domain.com";
-  phone: "+1234567890";
-  avatar: "https://gravatar.com/avatar/553b157d82ac2880237566d5a644e5fe?s=400&d=robohash&r=x";
-  locale: "en-US";
+await novu.subscribers.identify("subscriberId", {
+  firstName: "Pawan",
+  lastName: "Jain",
+  email: "pawan.jain@domain.com",
+  phone: "+1234567890",
+  avatar: "https://gravatar.com/avatar/553b157d82ac2880237566d5a644e5fe?s=400&d=robohash&r=x",
+  locale: "en-US",
   data: {
-    isDeveloper : true
+    isDeveloper: true,
     customKey: "customValue"
-  };
-})
+  }
+});
 ```
 
 

@@ -10,8 +10,7 @@ import {
   JobStatusEnum,
 } from '@novu/dal';
 import { UserSession, SubscribersService } from '@novu/testing';
-import { StepTypeEnum, DelayTypeEnum, DigestUnitEnum, DigestTypeEnum } from '@novu/shared';
-import { StandardQueueService } from '@novu/application-generic';
+import { StepTypeEnum, DelayTypeEnum, DigestUnitEnum, DigestTypeEnum, JobTopicNameEnum } from '@novu/shared';
 
 const axiosInstance = axios.create();
 
@@ -21,7 +20,6 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
   const jobRepository = new JobRepository();
-  let standardQueueService: StandardQueueService;
   const messageRepository = new MessageRepository();
 
   const triggerEvent = async (payload, transactionId?: string, overrides = {}, to = [subscriber.subscriberId]) => {
@@ -48,7 +46,6 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     template = await session.createTemplate();
     subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     subscriber = await subscriberService.createSubscriber();
-    standardQueueService = session?.testServer?.getService(StandardQueueService);
   });
 
   it('should delay event for time interval', async function () {
@@ -190,7 +187,8 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     const updatedAt = delayedJob?.updatedAt as string;
     const diff = differenceInMilliseconds(new Date(delayedJob.payload.sendAt), new Date(updatedAt));
 
-    const delay = await standardQueueService.queue.getDelayed();
+    const delay = await session.queueGet(JobTopicNameEnum.STANDARD, 'getDelayed');
+
     expect(delay[0].opts.delay).to.approximately(diff, 1000);
   });
 

@@ -7,6 +7,7 @@ import {
   ObservabilityBackgroundTransactionEnum,
 } from '@novu/shared';
 import {
+  getStandardWorkerOptions,
   INovuWorker,
   Job,
   PinoLogger,
@@ -51,8 +52,7 @@ export class StandardWorker extends StandardWorkerService implements INovuWorker
 
   private getWorkerOptions(): WorkerOptions {
     return {
-      lockDuration: 90000,
-      concurrency: 200,
+      ...getStandardWorkerOptions(),
       settings: {
         backoffStrategy: this.getBackoffStrategies(),
       },

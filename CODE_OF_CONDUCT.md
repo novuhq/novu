@@ -15,7 +15,7 @@ diverse, inclusive, and healthy community.
 ## Our Standards
 
 Examples of behavior that contributes to a positive environment for our
-community include:
+community includes:
 
 * Demonstrating empathy and kindness toward other people
 * Being respectful of differing opinions, viewpoints, and experiences
@@ -33,7 +33,7 @@ Examples of unacceptable behavior include:
 * Public or private harassment
 * Publishing others' private information, such as a physical or email
   address, without their explicit permission
-* Other conduct which could reasonably be considered inappropriate in a
+* Other conduct that could reasonably be considered inappropriate in a
   professional setting
 
 ## Enforcement Responsibilities
