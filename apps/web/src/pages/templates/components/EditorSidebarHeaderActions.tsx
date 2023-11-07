@@ -2,7 +2,7 @@ import { Group } from '@mantine/core';
 import { useEffect, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { FilterPartTypeEnum } from '@novu/shared';
+import { FilterPartTypeEnum, DELAYED_STEPS, StepTypeEnum } from '@novu/shared';
 import { ActionButton, Condition, ConditionPlus, ConditionsFile, Trash, VariantPlus } from '@novu/design-system';
 
 import { Conditions, IConditions } from '../../../components/conditions';
@@ -62,6 +62,8 @@ export const EditorSidebarHeaderActions = () => {
   const PlusIcon = isUnderVariantsListPath ? ConditionsFile : ConditionPlus;
   const ConditionsIcon = isUnderVariantsListPath ? ConditionsFile : Condition;
   const hasNoFilters = (filters && filters?.length === 0) || !filters || isNewVariantCreationUrl;
+  const isDelayedStep = DELAYED_STEPS.includes(channel as StepTypeEnum);
+  const isAddVariantActionAvailable = (isUnderTheStepPath || isUnderVariantsListPath) && !isDelayedStep;
 
   const onAddVariant = () => {
     const newPath = basePath + `/${channel}/${stepUuid}/variants/create`;
@@ -115,7 +117,7 @@ export const EditorSidebarHeaderActions = () => {
   return (
     <>
       <Group noWrap spacing={12} ml={'auto'} sx={{ alignItems: 'flex-start' }}>
-        <When truthy={isUnderTheStepPath || isUnderVariantsListPath}>
+        <When truthy={isAddVariantActionAvailable}>
           <ActionButton
             tooltip="Add variant"
             onClick={onAddVariant}

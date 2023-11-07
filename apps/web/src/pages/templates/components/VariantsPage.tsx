@@ -1,8 +1,8 @@
 import { useMemo, useRef, useState } from 'react';
 import { ScrollArea } from '@mantine/core';
 import { useFormContext } from 'react-hook-form';
-import { useParams } from 'react-router-dom';
-import { StepTypeEnum } from '@novu/shared';
+import { useNavigate, useParams } from 'react-router-dom';
+import { DELAYED_STEPS, StepTypeEnum } from '@novu/shared';
 
 import { VariantItemCard } from './VariantItemCard';
 import { VariantsListSidebar } from './VariantsListSidebar';
@@ -10,8 +10,11 @@ import { IForm } from './formTypes';
 import { FloatingButton } from './FloatingButton';
 import { useEnvController } from '../../../hooks';
 import { useTemplateEditorForm } from './TemplateEditorFormProvider';
+import { useBasePath } from '../hooks/useBasePath';
 
 export function VariantsPage() {
+  const navigate = useNavigate();
+  const basePath = useBasePath();
   const { watch } = useFormContext<IForm>();
   const { channel, stepUuid = '' } = useParams<{
     channel: StepTypeEnum | undefined;
@@ -30,6 +33,7 @@ export function VariantsPage() {
     [channel, stepUuid, steps]
   );
   const step = watch(`steps.${stepIndex}`);
+  const isDelayedStep = DELAYED_STEPS.includes(channel as StepTypeEnum);
 
   const setViewportRef = (ref: HTMLDivElement | null) => {
     if (!ref) {
@@ -51,6 +55,10 @@ export function VariantsPage() {
 
   if (!channel) {
     return null;
+  }
+
+  if (isDelayedStep) {
+    navigate(`${basePath}/${channel}/${stepUuid}`);
   }
 
   const variants = step?.variants ?? [];
