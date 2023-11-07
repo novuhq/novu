@@ -18,3 +18,4 @@ export * from './sparkpost.handler';
 export * from './email-webhook.handler';
 export * from './novu.handler';
 export * from './mailchain.handler';
+export * from './braze.handler';

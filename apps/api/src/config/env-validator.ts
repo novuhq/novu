@@ -1,5 +1,4 @@
-import { bool, json, makeValidator, port, str, num, url, ValidatorSpec } from 'envalid';
-import * as envalid from 'envalid';
+import { bool, cleanEnv, json, makeValidator, port, str, num, url, ValidatorSpec } from 'envalid';
 
 const str32 = makeValidator((variable) => {
   if (!(typeof variable === 'string') || variable.length != 32) {
@@ -73,6 +72,12 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   LAUNCH_DARKLY_SDK_KEY: str({
     default: '',
   }),
+  WORKER_DEFAULT_CONCURRENCY: num({
+    default: undefined,
+  }),
+  WORKER_DEFAULT_LOCK_DURATION: num({
+    default: undefined,
+  }),
 };
 
 if (process.env.STORAGE_SERVICE === 'AZURE') {
@@ -120,5 +125,5 @@ if (process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'test') {
 }
 
 export function validateEnv() {
-  envalid.cleanEnv(process.env, validators);
+  cleanEnv(process.env, validators);
 }

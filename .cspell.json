@@ -517,7 +517,20 @@
     "nestframework",
     "ryver",
     "Mailchain",
-    "mailchain"
+    "mailchain",
+    "idempotency",
+    "IDEMPOTENCY",
+    "Idempotency",
+    "messagebird",
+    "Datetime",
+    "pubid",
+    "simpletexting",
+    "Simpletexting",
+    "Zulip",
+    "zulip",
+    "tspan",
+    "maildata",
+    "brevo"
   ],
   "flagWords": [],
   "patterns": [
