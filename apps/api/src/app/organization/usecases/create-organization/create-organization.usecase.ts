@@ -1,6 +1,6 @@
 import { Inject, Injectable, Scope } from '@nestjs/common';
 import { OrganizationEntity, OrganizationRepository, UserRepository } from '@novu/dal';
-import { MemberRoleEnum } from '@novu/shared';
+import { ApiServiceLevelTypeEnum, MemberRoleEnum } from '@novu/shared';
 import { AnalyticsService } from '@novu/application-generic';
 
 import { CreateEnvironmentCommand } from '../../../environments/usecases/create-environment/create-environment.command';
@@ -30,15 +30,14 @@ export class CreateOrganization {
   ) {}
 
   async execute(command: CreateOrganizationCommand): Promise<OrganizationEntity> {
-    const organization = new OrganizationEntity();
-
-    organization.logo = command.logo;
-    organization.name = command.name;
-
     const user = await this.userRepository.findById(command.userId);
     if (!user) throw new ApiException('User not found');
 
-    const createdOrganization = await this.organizationRepository.create(organization);
+    const createdOrganization = await this.organizationRepository.create({
+      logo: command.logo,
+      name: command.name,
+      apiServiceLevel: ApiServiceLevelTypeEnum.FREE,
+    });
 
     await this.addMemberUsecase.execute(
       AddMemberCommand.create({

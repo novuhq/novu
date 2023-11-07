@@ -11,8 +11,7 @@ jobs:
   test_widget:
     uses: ./.github/workflows/reusable-widget-e2e.yml
     with:
-      submodules: true
-      submodule_branch: "main"
+      ee: true
     secrets: inherit
 
   deploy_widget_eu:

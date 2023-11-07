@@ -527,7 +527,8 @@
     "Zulip",
     "zulip",
     "tspan",
-    "maildata"
+    "maildata",
+    "brevo"
   ],
   "flagWords": [],
   "patterns": [

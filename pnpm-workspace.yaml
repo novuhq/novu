@@ -4,7 +4,6 @@ packages:
   - 'packages/*'
   # Angular projects - these are nested under the Angular workspace root, and need version bumps during release.
   - 'packages/notification-center-angular/projects/*'
-  - 'enterprise/packages/**'
   - 'apps/*'
   - 'libs/*'
   # exclude packages that are inside test directories

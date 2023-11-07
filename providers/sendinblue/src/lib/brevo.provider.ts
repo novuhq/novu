@@ -1,3 +1,5 @@
+import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+
 import {
   ChannelTypeEnum,
   CheckIntegrationResponseEnum,
@@ -8,17 +10,12 @@ import {
   IEmailProvider,
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
-import {
-  SendSmtpEmail,
-  SendSmtpEmailTo,
-  TransactionalEmailsApi,
-  TransactionalEmailsApiApiKeys,
-} from '@sendinblue/client';
 
-export class SendinblueEmailProvider implements IEmailProvider {
+export class BrevoEmailProvider implements IEmailProvider {
   id = 'sendinblue';
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
-  private transactionalEmailsApi: TransactionalEmailsApi;
+  private axiosInstance: AxiosInstance;
+  public readonly BASE_URL = ' https://api.brevo.com/v3';
 
   constructor(
     private config: {
@@ -27,17 +24,15 @@ export class SendinblueEmailProvider implements IEmailProvider {
       senderName: string;
     }
   ) {
-    this.transactionalEmailsApi = new TransactionalEmailsApi();
-    this.transactionalEmailsApi.setApiKey(
-      TransactionalEmailsApiApiKeys.apiKey,
-      this.config.apiKey
-    );
+    this.axiosInstance = axios.create({
+      baseURL: this.BASE_URL,
+    });
   }
 
   async sendMessage(
     options: IEmailOptions
   ): Promise<ISendMessageSuccessResponse> {
-    const email = new SendSmtpEmail();
+    const email: any = {};
     email.sender = {
       email: options.from || this.config.from,
       name: this.config.senderName,
@@ -49,7 +44,6 @@ export class SendinblueEmailProvider implements IEmailProvider {
     email.attachment = options.attachments?.map((attachment) => ({
       name: attachment?.name,
       content: attachment?.file.toString('base64'),
-      contentType: attachment.mime,
     }));
 
     if (options.cc?.length) {
@@ -61,15 +55,29 @@ export class SendinblueEmailProvider implements IEmailProvider {
     }
 
     if (options.replyTo) {
-      email.replyTo.email = options.replyTo;
+      email.replyTo = {
+        email: options.replyTo,
+      };
     }
 
-    const { response, body } =
-      await this.transactionalEmailsApi.sendTransacEmail(email);
+    const emailOptions: AxiosRequestConfig = {
+      url: '/smtp/email',
+      method: 'POST',
+      headers: {
+        'api-key': this.config.apiKey,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      data: JSON.stringify(email),
+    };
+
+    const response = await this.axiosInstance.request<{ messageId: string }>(
+      emailOptions
+    );
 
     return {
-      id: body?.messageId,
-      date: response?.headers?.date,
+      id: response?.data.messageId,
+      date: new Date().toISOString(),
     };
   }
 
@@ -142,7 +150,7 @@ export class SendinblueEmailProvider implements IEmailProvider {
   }
 }
 
-function getFormattedTo(to: string | string[]): SendSmtpEmailTo[] {
+function getFormattedTo(to: string | string[]): { email: string }[] {
   if (typeof to === 'string') {
     return [{ email: to }];
   }
