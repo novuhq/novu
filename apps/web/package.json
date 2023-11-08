@@ -21,7 +21,8 @@
     "storybook": "storybook dev -p 6006 -s public",
     "build-storybook": "storybook build -s public",
     "lint": "eslint src",
-    "lint:fix": "pnpm lint -- --fix"
+    "lint:fix": "pnpm lint -- --fix",
+    "link:submodules": "pnpm link ../../enterprise/packages/translation-web"
   },
   "dependencies": {
     "@ant-design/icons": "^4.6.2",
