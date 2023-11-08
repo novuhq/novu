@@ -7,6 +7,31 @@ on:
   pull_request:
 
 jobs:
+  validate-submodule-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Install Octokit
+        run: npm install @octokit/rest@19.0.11
+
+      - name: Run Validate Submodule Sync
+        id: validate
+        run: node .github/workflows/scripts/validate-submodule-sync.js ${{ github.ref }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check result
+        run: exit ${{ steps.validate.outputs.result }}
+
   dependency-review:
     name: Dependency review
     runs-on: ubuntu-latest
