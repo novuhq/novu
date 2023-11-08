@@ -227,7 +227,7 @@ export const invalidDateKeysObject: TestChangedObject = {
 };
 
 /**
- * DotPrefix tests
+ * Dot tests
  */
 // Valid dot join with single union
 export const validSingleUnionPrefix: Dot<'foo', 'bar'> = 'foo.bar';
