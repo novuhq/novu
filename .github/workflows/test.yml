@@ -21,8 +21,11 @@ jobs:
         with:
           node-version: 16
 
-      - name: Install Octokit
+      - name: Install @octokit/action
         run: npm --prefix .github/workflows/scripts install @octokit/action
+
+      - name: Install @actions/core
+        run: npm --prefix .github/workflows/scripts install @actions/core
 
       - name: Run Validate Submodule Sync
         id: validate
@@ -32,6 +35,11 @@ jobs:
 
       - name: Check result
         run: exit ${{ steps.validate.outputs.result }}
+
+      - name: Log output parameters
+        run: |
+          echo "Submodule Hash: ${{ steps.validate.outputs.submoduleHash }}"
+          echo "Last Commit Hash: ${{ steps.validate.outputs.lastCommitHash }}"
 
   dependency-review:
     name: Dependency review

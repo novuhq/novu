@@ -1,5 +1,6 @@
 const { Octokit } = require('@octokit/action');
 const { execSync } = require('child_process');
+const core = require('@actions/core');
 
 const octokitClient = new Octokit({ auth: process.env.GITHUB_TOKEN });
 
@@ -27,6 +28,10 @@ const octokitClient = new Octokit({ auth: process.env.GITHUB_TOKEN });
   const lastCommitHash = branchCommits[0].sha;
 
   const isValid = submoduleHash === lastCommitHash;
+
+  // Set the output parameters
+  core.setOutput('submoduleHash', submoduleHash);
+  core.setOutput('lastCommitHash', lastCommitHash);
 
   process.exit(isValid ? 0 : 1);
 })().catch((error) => {
