@@ -11,7 +11,9 @@ export class CancelDelayed {
       {
         _environmentId: command.environmentId,
         transactionId: command.transactionId,
-        status: JobStatusEnum.DELAYED,
+        status: {
+          $in: [JobStatusEnum.DELAYED, JobStatusEnum.MERGED],
+        },
       },
       '_id'
     );
