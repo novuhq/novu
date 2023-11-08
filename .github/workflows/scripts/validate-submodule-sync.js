@@ -12,7 +12,9 @@ const octokitClient = new Octokit({ auth: process.env.GITHUB_TOKEN });
   //   return true;
   // }
 
-  const branch = githubRef.replace('refs/heads/', '');
+  // const branch = githubRef.replace('refs/heads/', '');
+
+  const branch = 'next';
 
   const submodulePath = 'enterprise';
   const submoduleHash = execSync(`git ls-tree HEAD ${submodulePath} | cut -d" " -f3 | cut -f1`).toString().trim();
