@@ -6,7 +6,7 @@ import {
   NOTIFICATION_RETENTION_DAYS,
 } from '@novu/shared';
 import { Model, Types, ProjectionType, QueryOptions, FilterQuery, UpdateQuery } from 'mongoose';
-import { ObjectIdType } from '../types';
+import { ObjectIdKey, ObjectIdPrimaryKey, ObjectIdType, PickKeys } from '../types';
 import type { IDBModel } from '../types/base.schema';
 
 /**
@@ -17,9 +17,13 @@ type QueryData<T_DBModel, T_Enforcement> = FilterQuery<T_DBModel> & T_Enforcemen
 /**
  * The create type used for enforcing the type of the create data payload
  */
-type CreateData<T_DBModel, T_Enforcement> = Omit<T_DBModel, '_id'> & T_Enforcement;
+type CreateData<T_DBModel, T_Enforcement> = Omit<T_DBModel, ObjectIdPrimaryKey> & T_Enforcement;
 
-export class BaseRepository<T_DBModel extends IDBModel, T_MappedEntity, T_Enforcement extends Partial<T_DBModel>> {
+export class BaseRepository<
+  T_DBModel extends IDBModel,
+  T_MappedEntity,
+  T_Enforcement extends Partial<PickKeys<T_DBModel, ObjectIdKey>>
+> {
   public _model: Model<T_DBModel>;
 
   constructor(protected MongooseModel: Model<T_DBModel>, protected entity: ClassConstructor<T_MappedEntity>) {
