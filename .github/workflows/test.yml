@@ -22,7 +22,7 @@ jobs:
           node-version: 16
 
       - name: Install Octokit
-        run: npm install @octokit/rest@19.0.11
+        run: npm --prefix .github/workflows/scripts install @octokit/action
 
       - name: Run Validate Submodule Sync
         id: validate

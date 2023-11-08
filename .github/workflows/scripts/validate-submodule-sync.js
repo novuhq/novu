@@ -1,7 +1,7 @@
-const { Octokit: octokit } = require('@octokit/rest');
+const { Octokit } = require('@octokit/action');
 const { execSync } = require('child_process');
 
-const octokitClient = new octokit({ auth: process.env.GITHUB_TOKEN });
+const octokitClient = new Octokit({ auth: process.env.GITHUB_TOKEN });
 
 (async function validateSubmoduleSync() {
   const githubRef = process.argv[2];
