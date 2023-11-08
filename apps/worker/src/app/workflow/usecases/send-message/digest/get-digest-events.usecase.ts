@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { JobRepository, JobEntity } from '@novu/dal';
 import {
-  EnvironmentId,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   IDigestBaseMetadata,
@@ -11,9 +10,9 @@ import {
 import {
   DigestFilterSteps,
   DetailEnum,
-  CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   Instrument,
+  ExecutionLogQueueService,
 } from '@novu/application-generic';
 
 import { PlatformException } from '../../../../shared/utils';
@@ -22,7 +21,7 @@ const LOG_CONTEXT = 'GetDigestEvents';
 
 @Injectable()
 export abstract class GetDigestEvents {
-  constructor(protected jobRepository: JobRepository, private createExecutionDetails: CreateExecutionDetails) {}
+  constructor(protected jobRepository: JobRepository, private executionLogQueueService: ExecutionLogQueueService) {}
 
   protected getJobDigest(job: JobEntity): {
     digestMeta: IDigestBaseMetadata | undefined;
@@ -61,15 +60,19 @@ export abstract class GetDigestEvents {
     )) as Pick<JobEntity, '_id'>;
 
     if (!currentTrigger) {
-      this.createExecutionDetails.execute(
+      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+      await this.executionLogQueueService.add(
+        metadata._id,
         CreateExecutionDetailsCommand.create({
+          ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(currentJob),
           detail: DetailEnum.DIGEST_TRIGGERED_EVENTS,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-        })
+        }),
+        currentJob._organizationId
       );
       const message = `Trigger job for jobId ${currentJob._id} is not found`;
       Logger.error(message, LOG_CONTEXT);
