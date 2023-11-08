@@ -14,9 +14,19 @@ import { IEntity } from './base.entity';
 export type ObjectIdType = Types.ObjectId | string;
 
 /**
- * The type union of the PK identifier and the template literal type of an FK identifier
+ * The type of a PK ObjectKey identifier.
  */
-export type ObjectIdKey = '_id' | `_${string}Id`;
+export type ObjectIdPrimaryKey = '_id';
+
+/**
+ * The template literal type of an FK ObjectKey identifier
+ */
+export type ObjectIdForeignKey = `_${string}Id`;
+
+/**
+ * The type union of the Primary and Foreign Key ObjectKey identifiers
+ */
+export type ObjectIdKey = ObjectIdPrimaryKey | ObjectIdForeignKey;
 
 /**
  * The template literal type of a Date key
