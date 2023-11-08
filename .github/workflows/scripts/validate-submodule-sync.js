@@ -8,9 +8,9 @@ const octokitClient = new Octokit({ auth: process.env.GITHUB_TOKEN });
   const githubRef = process.argv[2];
 
   // return true - skip the test if new tag or pr was created
-  if (!githubRef.includes('refs/heads/')) {
-    return true;
-  }
+  // if (!githubRef.includes('refs/heads/')) {
+  //   return true;
+  // }
 
   const branch = githubRef.replace('refs/heads/', '');
 
