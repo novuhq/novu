@@ -39,11 +39,21 @@ export type DateKey = `${string}At`;
 export type Identity<T> = { [P in keyof T]: T[P] };
 
 /**
- * Transform the values of T with keys in union of type U to type V
+ * From T, pick a set of properties whose keys are type TKey
  */
-export type TransformValues<T, U, V> = Identity<
-  Omit<T, Extract<keyof T, U>> & {
-    [P in keyof Pick<T, Extract<keyof T, U>>]: V;
+export type PickKeys<TObject, TKey> = Pick<TObject, Extract<keyof TObject, TKey>>;
+
+/**
+ * From T, pick a set of properties whose keys are NOT type TKey
+ */
+export type OmitKeys<TObject, TKey> = Omit<TObject, Extract<keyof TObject, TKey>>;
+
+/**
+ * Transform the values of TObject with keys of type TKey to type TValue
+ */
+export type TransformValues<TObject, TKey, TValue> = Identity<
+  OmitKeys<TObject, TKey> & {
+    [P in keyof PickKeys<TObject, TKey>]: TValue;
   }
 >;
 

@@ -1,15 +1,129 @@
 /* spell-checker: disable */
 import { Types } from 'mongoose';
-import { ObjectIdKey, TransformValues, TransformEntityToDbModel, Dot, DeepKeys, ExtractDot } from './helpers';
+import {
+  ObjectIdPrimaryKey,
+  ObjectIdForeignKey,
+  ObjectIdKey,
+  TransformValues,
+  TransformEntityToDbModel,
+  Dot,
+  DeepKeys,
+  ExtractDot,
+  PickKeys,
+  OmitKeys,
+} from './helpers';
+
+/**
+ * ObjectIdPrimaryKey tests
+ */
+// Valid Key
+export const validObjectIdPrimaryKey: ObjectIdPrimaryKey = '_id';
+
+// @ts-expect-error - incorrect format (missing leading underscore)
+export const invalidObjectIdPrimaryKey: ObjectIdPrimaryKey = 'id';
+
+/**
+ * ObjectIdForeignKey tests
+ */
+// Valid Key
+export const validObjectIdForeignKey: ObjectIdForeignKey = '_somethingId';
+
+// @ts-expect-error - incorrect format
+export const invalidObjectIdForeignKey: ObjectIdForeignKey = 'somethingId';
 
 /**
  * ObjectIdKey tests
  */
-// Valid Key
-export const validObjectIdKey: ObjectIdKey = '_somethingId';
+// Valid Primary Key
+export const validPrimaryObjectIdKey: ObjectIdKey = '_id';
+
+// Valid Primary Key
+export const validForeignObjectIdKey: ObjectIdKey = '_somethingId';
 
 // @ts-expect-error - incorrect format
-export const invalidObjectIdKey: ObjectIdKey = 'someId';
+export const invalidObjectIdKey: ObjectIdKey = 'somethingId';
+
+/**
+ * PickKeys tests
+ */
+type TestPickObject = {
+  foo: string;
+  bar: number;
+  _id: string;
+  _fooId: string;
+};
+type TestPickedUnionTemplateLiteralObject = PickKeys<TestPickObject, '_id' | `_${string}Id`>;
+
+// Valid picked object
+export const validPickedObject: TestPickedUnionTemplateLiteralObject = {
+  _id: '12345',
+  _fooId: '12345',
+};
+
+// @ts-expect-error - missing _id
+export const missingPickedObject: TestPickedUnionTemplateLiteralObject = {
+  _fooId: '12345',
+};
+
+// @ts-expect-error - missing _fooId
+export const missingPickedObject2: TestPickedUnionTemplateLiteralObject = {
+  _id: '12345',
+};
+
+// @ts-expect-error - missing _id and _fooId
+export const missingPickedObject3: TestPickedUnionTemplateLiteralObject = {};
+
+// Valid picked object with string key
+export const validPickedStringObject: PickKeys<TestPickObject, string> = {
+  _id: '12345',
+  _fooId: '12345',
+  foo: 'something',
+  bar: 123,
+};
+
+// Valid picked object with number key
+export const validPickedNumberObject: PickKeys<TestPickObject, number> = {};
+
+/**
+ * OmitKeys tests
+ */
+type TestOmitObject = {
+  foo: string;
+  bar: number;
+  _id: string;
+  _fooId: string;
+};
+type TestOmittedObject = OmitKeys<TestOmitObject, '_id' | `_${string}Id`>;
+
+// Valid omitted object
+export const validOmittedObject: TestOmittedObject = {
+  foo: 'something',
+  bar: 123,
+};
+
+// @ts-expect-error - missing foo
+export const missingOmittedObject: TestOmittedObject = {
+  bar: 123,
+};
+
+// @ts-expect-error - missing bar
+export const missingOmittedObject2: TestOmittedObject = {
+  foo: 'something',
+};
+
+// @ts-expect-error - missing foo and bar
+export const missingOmittedObject3: TestOmittedObject = {};
+
+// Valid omitted object with string key
+export const validOmittedStringObject: OmitKeys<TestOmitObject, string> = {};
+
+// Valid omitted object with number key
+export const validOmittedNumberObject: OmitKeys<TestOmitObject, number> = {
+  _id: '12345',
+  _fooId: '12345',
+  foo: 'something',
+  bar: 123,
+};
 
 /**
  * TransformValues tests
