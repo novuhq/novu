@@ -38,12 +38,12 @@ export type TransformValues<T, U, V> = Identity<
 >;
 
 /**
- * Construct a type with the following transforms applied to type T:
- * - Tranform values of T with keys in union of type `ObjectIdKey` to type `Types.ObjectId`
- * - Tranform values of T with keys in union of type `DateKey` to type `Date`
+ * Construct a type with the following transforms applied to type TObject:
+ * - Tranform values of TObject with keys of type `ObjectIdKey` to type `Types.ObjectId`
+ * - Tranform values of TObject with keys of type `DateKey` to type `Date`
  */
-export type TransformEntityToDbModel<T extends IEntity> = TransformValues<
-  TransformValues<T, ObjectIdKey, ObjectIdType>,
+export type TransformEntityToDbModel<TObject extends IEntity> = TransformValues<
+  TransformValues<TObject, ObjectIdKey, ObjectIdType>,
   DateKey,
   Date
 >;
@@ -76,13 +76,24 @@ export type Dot<T extends string, U extends string> = '' extends U ? T : `${T}.$
  * type Test = FlattenedLeafKeys<TestNestedObject>;
  * // type Test = "name" | "address" | "address.suburb" | "phones" | "phones.mobile"
  */
-export type DeepKeys<T> = T extends StopTypes
-  ? never
-  : T extends readonly unknown[]
-  ? DeepKeys<T[number]>
-  : {
-      [K in keyof T & string]: T[K] extends StopTypes ? K : Dot<K, DeepKeys<T[K]>> | K;
-    }[keyof T & string];
+export type DeepKeys<T> =
+  // If type is a primitive, stop recursing
+  T extends StopTypes
+    ? // Fallback for types not in StopTypes. These will not be included in the union.
+      never
+    : // Check if the value of the key is an array
+    T extends readonly unknown[]
+    ? // If we have an array, recurse into the array type. This allows us to flatten the array
+      DeepKeys<T[number]>
+    : // Else, we don't have an array or StopTypes, so we recurse into the object type
+      {
+        // For each key in the object, check if the value is in StopTypes
+        [K in keyof T & string]: T[K] extends StopTypes
+          ? // If we have reached a stoptype, return the key
+            K
+          : // Else, recurse into the object type and return the union of the key and the result of the recursion
+            Dot<K, DeepKeys<T[K]>> | K;
+      }[keyof T & string];
 
 /**
  * Extract the type of TObject at TPath by dot notation
