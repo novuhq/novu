@@ -6,13 +6,22 @@ import {
   ICheckIntegrationResponse,
   CheckIntegrationResponseEnum,
 } from '@novu/stateless';
+import axios, { AxiosError } from 'axios';
 import { randomUUID } from 'crypto';
-import SparkPost from 'sparkpost';
+import { ISparkPostErrorResponse, SparkPostError } from './sparkpost.error';
+
+interface ISparkPostResponse {
+  results: {
+    total_rejected_recipients: number;
+    total_accepted_recipients: number;
+    id: string;
+  };
+}
 
 export class SparkPostEmailProvider implements IEmailProvider {
   readonly id = 'sparkpost';
-  readonly channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
-  private readonly client: SparkPost;
+  readonly channelType = ChannelTypeEnum.EMAIL;
+  private readonly endpoint: string;
 
   constructor(
     private config: {
@@ -22,10 +31,7 @@ export class SparkPostEmailProvider implements IEmailProvider {
       senderName: string;
     }
   ) {
-    const endpoint = this.getEndpoint(config.region);
-    this.client = new SparkPost(config.apiKey, {
-      endpoint,
-    });
+    this.endpoint = this.getEndpoint(config.region);
   }
 
   async sendMessage({
@@ -50,7 +56,7 @@ export class SparkPostEmailProvider implements IEmailProvider {
       });
     });
 
-    const sent = await this.client.transmissions.send({
+    const data = {
       recipients,
       content: {
         from: from || this.config.from,
@@ -59,12 +65,29 @@ export class SparkPostEmailProvider implements IEmailProvider {
         html,
         attachments: files,
       },
-    });
-
-    return {
-      id: sent.results.id,
-      date: new Date().toISOString(),
     };
+
+    try {
+      const sent = await axios.post<ISparkPostResponse>(
+        '/transmissions',
+        data,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: this.config.apiKey,
+          },
+          baseURL: this.endpoint,
+        }
+      );
+
+      return {
+        id: sent.data.results.id,
+        date: new Date().toISOString(),
+      };
+    } catch (err) {
+      this.createSparkPostError(err);
+      throw err;
+    }
   }
 
   async checkIntegration(
@@ -93,6 +116,16 @@ export class SparkPostEmailProvider implements IEmailProvider {
     }
   }
 
+  private createSparkPostError(err: unknown) {
+    if (axios.isAxiosError(err)) {
+      const response = (err as AxiosError<ISparkPostErrorResponse>).response;
+
+      if (response && response.data && response.data.errors) {
+        throw new SparkPostError(response.data, response.status);
+      }
+    }
+  }
+
   private transformLegacyRegion(region: string | boolean) {
     if (region === 'true' || region === true) return 'eu';
 
@@ -104,9 +137,9 @@ export class SparkPostEmailProvider implements IEmailProvider {
 
     switch (region) {
       case 'eu':
-        return 'https://api.eu.sparkpost.com:443';
+        return 'https://api.eu.sparkpost.com/api/v1';
       default:
-        return;
+        return 'https://api.sparkpost.com/api/v1';
     }
   }
 }
