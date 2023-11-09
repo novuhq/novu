@@ -3,6 +3,7 @@ import axiosRetry, { isNetworkError } from 'axios-retry';
 import { v4 as uuid } from 'uuid';
 import { INovuConfiguration } from './novu.interface';
 
+export const RETRYABLE_HTTP_CODES = [408, 422, 429];
 const NON_IDEMPOTENT_METHODS = ['post', 'patch'];
 const IDEMPOTENCY_KEY = 'Idempotency-Key'; // header key
 
@@ -69,8 +70,6 @@ export function makeRetryable(
     },
   });
 }
-
-const RETRYABLE_HTTP_CODES = [408, 429, 422];
 
 export function defaultRetryCondition(err: AxiosError): boolean {
   // retry on TCP/IP error codes like ECONNRESET

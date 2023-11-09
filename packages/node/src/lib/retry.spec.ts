@@ -1,5 +1,7 @@
+import { AxiosError } from 'axios';
 import nock from 'nock';
-import { Novu } from '../index';
+import { Novu, defaultRetryCondition } from '../index';
+import { RETRYABLE_HTTP_CODES } from './retry';
 
 const BACKEND_URL = 'http://example.com';
 const TOPICS_PATH = '/v1/topics';
@@ -7,11 +9,22 @@ const TRIGGER_PATH = '/v1/events/trigger';
 
 jest.setTimeout(15000);
 
-const allEqual = (arr: Array<string>) => arr.every((val) => val === arr[0]);
+const hasAllEqual = (arr: Array<string>) => arr.every((val) => val === arr[0]);
+const hasUniqueOnly = (arr: Array<string>) =>
+  Array.from(new Set(arr)).length === arr.length;
 
 class NetworkError extends Error {
   constructor(public code: string) {
     super('Network Error');
+  }
+}
+
+class HttpError extends Error {
+  readonly response: { status: number };
+
+  constructor(status: number) {
+    super('Http Error');
+    this.response = { status };
   }
 }
 
@@ -25,8 +38,8 @@ describe('Novu Node.js package - Retries and idempotency-key', () => {
     backendUrl: BACKEND_URL,
     retryConfig: {
       retryMax: 3,
-      waitMax: 1,
-      waitMin: 1,
+      waitMax: 0.5,
+      waitMin: 0.2,
     },
   });
 
@@ -52,7 +65,7 @@ describe('Novu Node.js package - Retries and idempotency-key', () => {
     });
 
     // all idempotency keys are supposed to be same.
-    expect(allEqual(idempotencyKeys)).toBeTruthy();
+    expect(hasAllEqual(idempotencyKeys)).toEqual(true);
     expect(result.status).toEqual(201);
     expect(result.request.headers['idempotency-key']).toBeDefined();
   });
@@ -78,7 +91,7 @@ describe('Novu Node.js package - Retries and idempotency-key', () => {
       idempotencyKeys.push(result.request?.headers['idempotency-key']);
     }
 
-    expect(allEqual(idempotencyKeys)).toEqual(false);
+    expect(hasUniqueOnly(idempotencyKeys)).toEqual(true);
   });
 
   it('should retry on status 422 and regenerate idempotency-key for every retry', async () => {
@@ -87,7 +100,7 @@ describe('Novu Node.js package - Retries and idempotency-key', () => {
     nock(BACKEND_URL)
       .post(TRIGGER_PATH)
       .times(3)
-      .reply(function (_url, _body) {
+      .reply(function () {
         idempotencyKeys.push(this.req.getHeader('idempotency-key') as string);
 
         return [422, { message: 'Unprocessable Content' }];
@@ -103,7 +116,7 @@ describe('Novu Node.js package - Retries and idempotency-key', () => {
     });
 
     // idempotency key should be regenerated for every retry for http status 422.
-    expect(allEqual(idempotencyKeys)).toBeFalsy();
+    expect(hasUniqueOnly(idempotencyKeys)).toEqual(true);
     expect(result.status).toEqual(201);
     expect(result.request.headers['idempotency-key']).toBeDefined();
   });
@@ -193,13 +206,70 @@ describe('Novu Node.js package - Retries and idempotency-key', () => {
       backendUrl: BACKEND_URL,
       retryConfig: {
         initialDelay: 0,
-        waitMin: 1,
-        waitMax: 1,
+        waitMin: 0.2,
+        waitMax: 0.5,
         retryMax: 7,
       },
     });
 
     const result = await novuClient.topics.list({});
     expect(result.status).toEqual(200);
+  });
+
+  describe('defaultRetryCondition function', () => {
+    test.each<[number, string]>(NON_RECOVERABLE_ERRORS)(
+      'should return false when HTTP status is %i',
+      (status) => {
+        const err = new HttpError(status);
+        expect(defaultRetryCondition(err as AxiosError)).toEqual(false);
+      }
+    );
+
+    test.each<number>(RETRYABLE_HTTP_CODES)(
+      'should return true when HTTP status is %i',
+      (status) => {
+        const err = new HttpError(status);
+        expect(defaultRetryCondition(err as AxiosError)).toEqual(true);
+      }
+    );
+
+    it('should return true when HTTP status is 500', () => {
+      const err = new HttpError(500);
+      expect(defaultRetryCondition(err as AxiosError)).toEqual(true);
+    });
+
+    it('should return true when network code is ECONNRESET', () => {
+      const err = new NetworkError('ECONNRESET');
+      expect(defaultRetryCondition(err as AxiosError)).toEqual(true);
+    });
+
+    it('shoud return false on unknown error', () => {
+      const err = new Error('Unexpected error');
+      expect(defaultRetryCondition(err as AxiosError)).toEqual(false);
+    });
+  });
+
+  describe('hasAllEqual helper function', () => {
+    it('should return true when all items are equal', () => {
+      const arr = ['a', 'a', 'a', 'a'];
+      expect(hasAllEqual(arr)).toEqual(true);
+    });
+
+    it('should return false when items are not equal', () => {
+      const arr = ['a', 'b', 'b', 'b'];
+      expect(hasAllEqual(arr)).toEqual(false);
+    });
+  });
+
+  describe('hasUniqueOnly helper function', () => {
+    it('should return true when all items are unique', () => {
+      const arr = ['a', 'b', 'c', 'd'];
+      expect(hasUniqueOnly(arr)).toEqual(true);
+    });
+
+    it('should return false when items are not unique', () => {
+      const arr = ['a', 'a', 'c', 'd'];
+      expect(hasUniqueOnly(arr)).toEqual(false);
+    });
   });
 });
