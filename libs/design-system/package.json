@@ -33,10 +33,10 @@
   "dependencies": {
     "@cypress/react": "^7.0.3",
     "@cypress/webpack-preprocessor": "^6.0.0",
-    "@emotion/css": "^11.10.5",
-    "@emotion/react": "^11.7.1",
-    "@emotion/styled": "^11.6.0",
-    "@mantine/core": "^5.7.1",
+    "@emotion/css": "11.11.2",
+    "@emotion/react": "11.11.1",
+    "@emotion/styled": "11.11.0",
+    "@mantine/core": "5.10.5",
     "@mantine/hooks": "^5.7.1",
     "@mantine/notifications": "^5.7.1",
     "@novu/client": "0.21.0",
@@ -67,7 +67,7 @@
     "eslint-plugin-storybook": "^0.6.13",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
-    "react-router-dom": "6.2.2",
+    "react-router-dom": "6.18.0",
     "rimraf": "^3.0.2",
     "storybook": "^7.4.2",
     "ts-loader": "~9.4.0",
@@ -76,10 +76,5 @@
     "url-loader": "^4.1.1",
     "vite": "^4.4.5",
     "vite-plugin-dts": "^3.6.0"
-  },
-  "peerDependencies": {
-    "react": ">=16.8.0",
-    "react-dom": ">=16.8.0",
-    "react-router-dom": "6.2.2"
   }
 }
