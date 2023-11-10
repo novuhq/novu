@@ -1,5 +1,3 @@
-import { ApiRateLimitCategoryTypeEnum, IApiRateLimits } from '../environment';
-
 export type OrganizationId = string;
 
 export enum ApiServiceLevelTypeEnum {
