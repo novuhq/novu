@@ -5706,9 +5706,9 @@ importers:
       '@novu/stateless':
         specifier: ^0.21.0
         version: link:../../packages/stateless
-      sparkpost:
-        specifier: ^2.1.4
-        version: 2.1.4
+      axios:
+        specifier: ^1.6.0
+        version: 1.6.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
         specifier: ^1.0.1
@@ -5751,7 +5751,7 @@ importers:
         version: 27.1.5(@babel/core@7.23.2)(@types/jest@29.5.1)(jest@27.5.1)(typescript@4.9.5)
       ts-node:
         specifier: ~10.9.1
-        version: 10.9.1(@types/node@14.18.42)(typescript@4.9.5)
+        version: 10.9.1(@types/node@20.5.1)(typescript@4.9.5)
       typedoc:
         specifier: ^0.24.0
         version: 0.24.6(typescript@4.9.5)
@@ -7901,7 +7901,7 @@ packages:
       '@babel/traverse': 7.23.2
       '@babel/types': 7.23.0
       convert-source-map: 2.0.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       gensync: 1.0.0-beta.2
       json5: 2.2.3
       semver: 6.3.1
@@ -11537,7 +11537,7 @@ packages:
       '@babel/helper-split-export-declaration': 7.22.6
       '@babel/parser': 7.23.0
       '@babel/types': 7.23.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       globals: 11.12.0
     transitivePeerDependencies:
       - supports-color
@@ -24141,7 +24141,6 @@ packages:
     resolution: {integrity: sha512-4tT2UrL5LBqDwoed9wZ6N3umC4Yhz3W3FloMmiiG4JwmUJWpie0c7lcnUNd4gtMKuDEO4wRVS8B6Xa0uMRsMKg==}
     requiresBuild: true
     dev: true
-    optional: true
 
   /@types/nodemailer@6.4.11:
     resolution: {integrity: sha512-Ld2c0frwpGT4VseuoeboCXQ7UJIkK3X7Lx/4YsZEiUHtHsthWAOCYtf6PAiLhMtfwV0cWJRabLBS3+LD8x6Nrw==}
@@ -25728,7 +25727,7 @@ packages:
     resolution: {integrity: sha512-RZNwNclF7+MS/8bDg70amg32dyeZGZxiDuQmZxKLAlQjr3jGyLx+4Kkk58UO7D2QdgFIQCovuSuZESne6RG6XQ==}
     engines: {node: '>= 6.0.0'}
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
     transitivePeerDependencies:
       - supports-color
 
@@ -30110,6 +30109,17 @@ packages:
       ms: 2.1.2
     dev: false
 
+  /debug@4.3.4:
+    resolution: {integrity: sha512-PRWFHuSU3eDtQJPvnNY7Jcket1j0t5OuOsFzPPzsekD52Zl8qUfFIPEiswXqIvHWGVHOgX+7G/vCNNhehwxfkQ==}
+    engines: {node: '>=6.0'}
+    peerDependencies:
+      supports-color: '*'
+    peerDependenciesMeta:
+      supports-color:
+        optional: true
+    dependencies:
+      ms: 2.1.2
+
   /debug@4.3.4(supports-color@8.1.1):
     resolution: {integrity: sha512-PRWFHuSU3eDtQJPvnNY7Jcket1j0t5OuOsFzPPzsekD52Zl8qUfFIPEiswXqIvHWGVHOgX+7G/vCNNhehwxfkQ==}
     engines: {node: '>=6.0'}
@@ -34436,7 +34446,7 @@ packages:
     dependencies:
       '@tootallnate/once': 1.1.2
       agent-base: 6.0.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -34553,7 +34563,7 @@ packages:
     engines: {node: '>= 6'}
     dependencies:
       agent-base: 6.0.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
     transitivePeerDependencies:
       - supports-color
 
@@ -35694,7 +35704,7 @@ packages:
     resolution: {integrity: sha512-n3s8EwkdFIJCG3BPKBYvskgXGoy88ARzvegkitk60NxRdwltLOTaH7CUiMRXvwYorl0Q712iEjcWB+fK/MrWVw==}
     engines: {node: '>=10'}
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       istanbul-lib-coverage: 3.2.0
       source-map: 0.6.1
     transitivePeerDependencies:
@@ -35943,7 +35953,7 @@ packages:
       pretty-format: 27.5.1
       slash: 3.0.0
       strip-json-comments: 3.1.1
-      ts-node: 10.9.1(@types/node@14.18.42)(typescript@4.9.5)
+      ts-node: 10.9.1(@types/node@20.5.1)(typescript@4.9.5)
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -46571,14 +46581,6 @@ packages:
     resolution: {integrity: sha512-wcFzz9cDfbuqe0FZzfi2or1sgyIrsDwmPwfZC4hiNidPdPINjeUwNfv5kldczoEAcjl9Y1L3SM7Uz2PUEQzxQw==}
     dev: false
 
-  /sparkpost@2.1.4:
-    resolution: {integrity: sha512-7yvpfLVCnCVaE1yexemHNDX2bLkG3Lel14aCwj1ZCAX8Aa4OjYCP7uWPOkSwwXLYfQZRUgdwxgzXwaIDiYVx7A==}
-    engines: {node: '>=4'}
-    dependencies:
-      lodash: 4.17.21
-      request: 2.88.2
-    dev: false
-
   /sparse-bitfield@3.0.3:
     resolution: {integrity: sha512-kvzhi7vqKTfkh0PZU+2D2PIllw2ymqJKujUcyPMd9Y75Nv4nPbGJZXNhxsgdQab2BmlDct1YnfQCguEvHr7VsQ==}
     requiresBuild: true
@@ -48518,7 +48520,6 @@ packages:
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
     dev: true
-    optional: true
 
   /ts-node@9.1.1(typescript@4.9.5):
     resolution: {integrity: sha512-hPlt7ZACERQGf03M253ytLY3dHbGNGrAq9qIHWUY9XHYl1z7wYngSr3OQ5xmui8o2AaxsONxIzjafLUiWBo1Fg==}
