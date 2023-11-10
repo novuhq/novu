@@ -1,4 +1,9 @@
-import { ApiServiceLevelTypeEnum, ApiRateLimitCategoryTypeEnum, IServiceApiRateLimits } from '../../types';
+import {
+  ApiServiceLevelTypeEnum,
+  ApiRateLimitCategoryTypeEnum,
+  IServiceApiRateLimits,
+  IApiRateLimitConfiguration,
+} from '../../types';
 
 /**
  * API Rate Limiting defaults applied to production environments.
@@ -20,4 +25,9 @@ export const DEFAULT_API_RATE_LIMITS: IServiceApiRateLimits = {
     [ApiRateLimitCategoryTypeEnum.CONFIGURATION]: 1500,
     [ApiRateLimitCategoryTypeEnum.GLOBAL]: 3000,
   },
+};
+
+export const DEFAULT_API_RATE_LIMIT_CONFIGURATION: IApiRateLimitConfiguration = {
+  burstAllowance: 0.1,
+  refillInterval: 1,
 };
