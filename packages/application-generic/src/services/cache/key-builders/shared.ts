@@ -33,7 +33,7 @@ export enum CacheKeyPrefixEnum {
   ENVIRONMENT_BY_API_KEY = 'environment_by_api_key',
   GROUPED_BLUEPRINTS = 'grouped-blueprints',
   AUTH_SERVICE = 'auth_service',
-  API_RATE_LIMIT = 'api_rate_limit',
+  MAXIMUM_API_RATE_LIMIT = 'maximum_api_rate_limit',
 }
 
 export enum CacheKeyTypeEnum {

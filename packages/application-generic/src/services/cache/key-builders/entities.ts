@@ -99,7 +99,7 @@ const buildAuthServiceKey = ({ apiKey }: { apiKey: string }): string =>
     identifierPrefix: IdentifierPrefixEnum.API_KEY,
   });
 
-const buildApiRateLimitKey = ({
+const buildMaximumApiRateLimitKey = ({
   apiRateLimitCategory,
   _environmentId,
 }: {
@@ -108,7 +108,7 @@ const buildApiRateLimitKey = ({
 }): string =>
   buildCommonKey({
     type: CacheKeyTypeEnum.ENTITY,
-    keyEntity: CacheKeyPrefixEnum.API_RATE_LIMIT,
+    keyEntity: CacheKeyPrefixEnum.MAXIMUM_API_RATE_LIMIT,
     environmentId: _environmentId,
     identifierPrefix: IdentifierPrefixEnum.API_RATE_LIMIT_CATEGORY,
     identifier: apiRateLimitCategory,
@@ -123,5 +123,5 @@ export {
   buildKeyById,
   buildGroupedBlueprintsKey,
   buildAuthServiceKey,
-  buildApiRateLimitKey,
+  buildMaximumApiRateLimitKey,
 };
