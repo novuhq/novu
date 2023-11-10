@@ -1,4 +1,4 @@
-import { ApiRateLimitCategoryTypeEnum, IApiRateLimits as IApiRateLimits } from '../environment';
+import { ApiRateLimitCategoryTypeEnum, IApiRateLimits } from '../environment';
 
 export type OrganizationId = string;
 
