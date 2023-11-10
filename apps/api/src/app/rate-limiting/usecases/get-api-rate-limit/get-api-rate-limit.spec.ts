@@ -7,8 +7,6 @@ import { Test } from '@nestjs/testing';
 import { CacheService, MockCacheService } from '@novu/application-generic';
 import { GetApiRateLimit, GetApiRateLimitCommand } from './index';
 import { SharedModule } from '../../../shared/shared.module';
-import { EnvironmentsModule } from '../../../environments/environments.module';
-import { OrganizationModule } from '../../../organization/organization.module';
 import { GetDefaultApiRateLimits } from '../get-default-api-rate-limits';
 import { RateLimitingModule } from '../../rate-limiting.module';
 
