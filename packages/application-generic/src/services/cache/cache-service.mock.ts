@@ -41,6 +41,18 @@ export const MockCacheService = {
       cacheEnabled() {
         return true;
       },
+      async sadd(key, ...members) {
+        data[key] = members;
+
+        return members.length;
+      },
+      async eval<TArgs extends (string | Buffer | number)[], TData = unknown>(
+        script: string,
+        keys: string[],
+        ...args: TArgs
+      ): Promise<TData> {
+        return 'OK' as TData;
+      },
     };
   },
 };
