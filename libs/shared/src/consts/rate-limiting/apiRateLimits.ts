@@ -4,7 +4,7 @@ import { ApiServiceLevelTypeEnum, ApiRateLimitCategoryTypeEnum, IServiceApiRateL
  * API Rate Limiting defaults applied to production environments.
  * Value units are requests per second.
  */
-export const DEFAULT_API_RATE_LIMITS = {
+export const DEFAULT_API_RATE_LIMITS: IServiceApiRateLimits = {
   [ApiServiceLevelTypeEnum.FREE]: {
     [ApiRateLimitCategoryTypeEnum.TRIGGER]: 60,
     [ApiRateLimitCategoryTypeEnum.CONFIGURATION]: 15,
@@ -20,4 +20,4 @@ export const DEFAULT_API_RATE_LIMITS = {
     [ApiRateLimitCategoryTypeEnum.CONFIGURATION]: 1500,
     [ApiRateLimitCategoryTypeEnum.GLOBAL]: 3000,
   },
-} satisfies IServiceApiRateLimits;
+};
