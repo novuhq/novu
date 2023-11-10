@@ -1,4 +1,5 @@
 export * from './commands/index';
+export * from './config';
 export * from './custom-providers';
 export * from './factories/index';
 export * from './health/index';
@@ -14,3 +15,5 @@ export * from './utils/filter-processing-details';
 export * from './resilience';
 export * from './utils/exceptions';
 export * from './utils/email-normalization';
+export * from './decorators/external-api.decorator';
+export * from './decorators/user-session.decorator';

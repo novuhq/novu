@@ -20,8 +20,7 @@ jobs:
   test_widget:
     uses: ./.github/workflows/reusable-widget-e2e.yml
     with:
-      submodules: true
-      submodule_branch: "next"
+      ee: true
     secrets: inherit
 
   # This workflow contains a single job called "build"

@@ -32,7 +32,6 @@ import {
   DalServiceHealthIndicator,
   distributedLockService,
   featureFlagsService,
-  getIsMultiProviderConfigurationEnabled,
   getIsTopicNotificationEnabled,
   InvalidateCacheService,
   LoggerModule,
@@ -85,7 +84,6 @@ const PROVIDERS = [
   DalServiceHealthIndicator,
   distributedLockService,
   featureFlagsService,
-  getIsMultiProviderConfigurationEnabled,
   getIsTopicNotificationEnabled,
   InvalidateCacheService,
   storageService,
@@ -100,9 +98,8 @@ const PROVIDERS = [
         version: packageJson.version,
       })
     ),
-    QueuesModule,
   ],
   providers: [...PROVIDERS],
-  exports: [...PROVIDERS, LoggerModule, QueuesModule],
+  exports: [...PROVIDERS, LoggerModule],
 })
 export class SharedModule {}

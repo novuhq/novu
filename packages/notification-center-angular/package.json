@@ -1,6 +1,6 @@
 {
-  "name": "@novu/notification-center-angular",
-  "version": "0.20.0-alpha.1",
+  "name": "@novu/angular-workspace",
+  "version": "0.21.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -9,52 +9,33 @@
     "test": "echo \"no tests\"",
     "lint": "echo \"No linting configured\""
   },
-  "module": "dist/notification-center-angular/fesm2015/novu-notification-center-angular.mjs",
-  "es2020": "dist/notification-center-angular/fesm2020/novu-notification-center-angular.mjs",
-  "esm2020": "dist/notification-center-angular/esm2020/novu-notification-center-angular.mjs",
-  "fesm2020": "dist/notification-center-angular/fesm2020/novu-notification-center-angular.mjs",
-  "fesm2015": "dist/notification-center-angular/fesm2015/novu-notification-center-angular.mjs",
-  "typings": "dist/notification-center-angular/index.d.ts",
-  "files": [
-    "dist/notification-center-angular"
-  ],
-  "exports": {
-    "./package.json": {
-      "default": "./package.json"
-    },
-    ".": {
-      "types": "./dist/notification-center-angular/index.d.ts",
-      "esm2020": "./dist/notification-center-angular/esm2020/novu-notification-center-angular.mjs",
-      "es2020": "./dist/notification-center-angular/fesm2020/novu-notification-center-angular.mjs",
-      "es2015": "./dist/notification-center-angular/fesm2015/novu-notification-center-angular.mjs",
-      "node": "./dist/notification-center-angular/fesm2015/novu-notification-center-angular.mjs",
-      "default": "./dist/notification-center-angular/fesm2020/novu-notification-center-angular.mjs"
-    }
-  },
+  "private": true,
   "dependencies": {
-    "@angular/common": "~15.2.0",
-    "@angular/compiler": "~15.2.0",
-    "@angular/core": "~15.2.0",
-    "@angular/platform-browser": "~15.2.0",
-    "@angular/platform-browser-dynamic": "~15.2.0",
-    "@novu/notification-center": "^0.20.0-alpha.1",
-    "react": "^17.0.1",
-    "react-dom": "^17.0.1",
+    "@angular/animations": "^16.2.0",
+    "@angular/common": "^16.2.0",
+    "@angular/compiler": "^16.2.0",
+    "@angular/core": "^16.2.0",
+    "@angular/forms": "^16.2.0",
+    "@angular/platform-browser": "^16.2.0",
+    "@angular/platform-browser-dynamic": "^16.2.0",
+    "@angular/router": "^16.2.0",
+    "@novu/notification-center": "^0.21.0",
+    "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
-    "zone.js": "~0.12.0"
+    "zone.js": "~0.13.0"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "~15.2.0",
-    "@angular/cli": "~15.2.0",
-    "@angular/compiler-cli": "~15.2.0",
+    "@angular-devkit/build-angular": "^16.2.5",
+    "@angular/cli": "^16.2.5",
+    "@angular/compiler-cli": "^16.2.0",
     "@types/jasmine": "~4.3.0",
     "jasmine-core": "~4.6.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
-    "karma-jasmine-html-reporter": "~2.0.0",
-    "ng-packagr": "~15.2.0",
+    "karma-jasmine-html-reporter": "~2.1.0",
+    "ng-packagr": "^16.2.0",
     "typescript": "4.9.5"
   }
 }

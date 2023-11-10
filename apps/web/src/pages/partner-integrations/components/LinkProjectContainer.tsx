@@ -12,7 +12,7 @@ import {
 import { useVercelParams, useAuthController } from '../../../hooks';
 import { LinkMoreProjectRow } from './LinkMoreProjectRow';
 import { ProjectRow } from './ProjectRow';
-import { Text, colors, Button } from '../../../design-system';
+import { Text, colors, Button } from '@novu/design-system';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import SetupLoader from '../../auth/components/SetupLoader';
 

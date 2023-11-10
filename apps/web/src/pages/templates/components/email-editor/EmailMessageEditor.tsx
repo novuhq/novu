@@ -5,8 +5,7 @@ import { Dropzone } from '@mantine/dropzone';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { EmailBlockTypeEnum, IEmailBlock } from '@novu/shared';
 
-import { Upload } from '../../../../design-system/icons';
-import { colors, Text } from '../../../../design-system';
+import { Upload, colors, Text } from '@novu/design-system';
 import { ContentRow } from './ContentRow';
 import { ControlBar } from './ControlBar';
 import { ButtonRowContent } from './ButtonRowContent';
@@ -182,4 +181,5 @@ const styledCard = (theme) => ({
   borderRadius: '7px',
   borderColor: theme.colorScheme === 'dark' ? colors.B30 : colors.B80,
   padding: '30px',
+  overflow: 'visible',
 });

@@ -28,9 +28,7 @@ jobs:
         name: ['novu/worker', 'novu/worker-ee']
     uses: ./.github/workflows/reusable-worker-e2e.yml
     with:
-      ee: ${{ contains (matrix.name,'ee') }}
-      submodules: ${{ contains (matrix.name,'ee') }}
-      submodule_branch: "next"
+      ee: ${{ contains (matrix.name,'-ee') }}
     secrets: inherit
 
   deploy_dev_worker:
@@ -50,6 +48,9 @@ jobs:
         name: ['novu/worker-ee', 'novu/worker']
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: ${{ contains (matrix.name,'-ee') }}
+          token: ${{ secrets.SUBMODULES_TOKEN }}
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/docker/build-worker
         id: docker_build
@@ -61,7 +62,7 @@ jobs:
           bullmq_secret: ${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}
 
       - name: Checkout cloud infra
-        if: ${{ contains (matrix.name,'ee') }}
+        if: ${{ contains (matrix.name,'-ee') }}
         uses: actions/checkout@master
         with:
           repository: novuhq/cloud-infra
@@ -69,7 +70,7 @@ jobs:
           path: cloud-infra
 
       - name: Configure AWS credentials
-        if: ${{ contains (matrix.name,'ee') }}
+        if: ${{ contains (matrix.name,'-ee') }}
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -78,20 +79,20 @@ jobs:
 
       - name: Terraform setup
         uses: hashicorp/setup-terraform@v1
-        if: ${{ contains (matrix.name,'ee') }}
+        if: ${{ contains (matrix.name,'-ee') }}
         with:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
           terraform_version: 1.5.5
           terraform_wrapper: false
 
       - name: Terraform Init
-        if: ${{ contains (matrix.name,'ee') }}
+        if: ${{ contains (matrix.name,'-ee') }}
         working-directory: cloud-infra/terraform/novu
         run: terraform init
 
       - name: Terraform get output
         working-directory: cloud-infra/terraform/novu
-        if: ${{ contains (matrix.name,'ee') }}
+        if: ${{ contains (matrix.name,'-ee') }}
         id: terraform
         run: |
           echo "worker_ecs_container_name=$(terraform output -json worker_ecs_container_name | jq -r .)" >> $GITHUB_ENV
@@ -100,13 +101,13 @@ jobs:
           echo "worker_task_name=$(terraform output -json worker_task_name | jq -r .)" >> $GITHUB_ENV
 
       - name: Download task definition
-        if: ${{ contains (matrix.name,'ee') }}
+        if: ${{ contains (matrix.name,'-ee') }}
         run: |
           aws ecs describe-task-definition --task-definition ${{ env.worker_task_name }} \
           --query taskDefinition > task-definition.json
 
       - name: Render Amazon ECS task definition
-        if: ${{ contains (matrix.name,'ee') }}
+        if: ${{ contains (matrix.name,'-ee') }}
         id: render-web-container
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
@@ -115,7 +116,7 @@ jobs:
           image: ${{ steps.docker_build.outputs.image }}
 
       - name: Deploy to Amazon ECS service
-        if: ${{ contains (matrix.name,'ee') }}
+        if: ${{ contains (matrix.name,'-ee') }}
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.render-web-container.outputs.task-definition }}
@@ -125,13 +126,13 @@ jobs:
 
       - name: get-npm-version
         id: package-version
-        if: ${{ contains (matrix.name,'ee') }}
+        if: ${{ contains (matrix.name,'-ee') }}
         uses: martinbeentjes/npm-get-version-action@main
         with:
           path: apps/worker
 
       - name: Create Sentry release
-        if: ${{ contains (matrix.name,'ee') }}
+        if: ${{ contains (matrix.name,'-ee') }}
         uses: getsentry/action-release@v1
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
