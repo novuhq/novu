@@ -5,16 +5,9 @@ import { EnvironmentsController } from './environments.controller';
 import { NotificationGroupsModule } from '../notification-groups/notification-groups.module';
 import { AuthModule } from '../auth/auth.module';
 import { LayoutsModule } from '../layouts/layouts.module';
-import { RateLimitingModule } from '../rate-limiting/rate-limiting.module';
 
 @Module({
-  imports: [
-    SharedModule,
-    NotificationGroupsModule,
-    forwardRef(() => AuthModule),
-    forwardRef(() => LayoutsModule),
-    RateLimitingModule,
-  ],
+  imports: [SharedModule, NotificationGroupsModule, forwardRef(() => AuthModule), forwardRef(() => LayoutsModule)],
   controllers: [EnvironmentsController],
   providers: [...USE_CASES],
   exports: [...USE_CASES],

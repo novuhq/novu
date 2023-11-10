@@ -3,7 +3,7 @@ import { EnvironmentRepository, OrganizationRepository } from '@novu/dal';
 import { buildMaximumApiRateLimitKey, CachedEntity } from '@novu/application-generic';
 import { ApiRateLimitCategoryTypeEnum, ApiServiceLevelTypeEnum, IApiRateLimits } from '@novu/shared';
 import { GetApiRateLimitCommand } from './get-api-rate-limit.command';
-import { GetDefaultApiRateLimits } from '../../../rate-limiting/usecases/get-default-api-rate-limits';
+import { GetDefaultApiRateLimits } from '../get-default-api-rate-limits';
 
 const LOG_CONTEXT = 'GetApiRateLimit';
 

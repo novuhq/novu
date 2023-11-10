@@ -7,9 +7,8 @@ import { Test } from '@nestjs/testing';
 import { CacheService, MockCacheService } from '@novu/application-generic';
 import { GetApiRateLimit, GetApiRateLimitCommand } from './index';
 import { SharedModule } from '../../../shared/shared.module';
-import { EnvironmentsModule } from '../../environments.module';
-import { OrganizationModule } from '../../../organization/organization.module';
-import { GetDefaultApiRateLimits } from '../../../rate-limiting/usecases/get-default-api-rate-limits';
+import { GetDefaultApiRateLimits } from '../get-default-api-rate-limits';
+import { RateLimitingModule } from '../../rate-limiting.module';
 
 const mockDefaultApiRateLimits = {
   [ApiServiceLevelTypeEnum.FREE]: {
@@ -37,7 +36,7 @@ describe('GetApiRateLimit', async () => {
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [SharedModule, EnvironmentsModule, OrganizationModule],
+      imports: [SharedModule, RateLimitingModule],
       providers: [],
     })
       .overrideProvider(CacheService)
