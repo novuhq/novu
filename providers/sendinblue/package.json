@@ -28,12 +28,9 @@
   "publishConfig": {
     "access": "public"
   },
-  "engines": {
-    "node": ">=10"
-  },
   "dependencies": {
     "@novu/stateless": "^0.21.0",
-    "@sendinblue/client": "^3.0.1"
+    "axios": "1.3.4"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",

@@ -20,9 +20,7 @@ jobs:
         name: ['novu/ws-ee', 'novu/ws']
     uses: ./.github/workflows/reusable-ws-e2e.yml
     with:
-      ee: ${{ contains (matrix.name,'ee') }}
-      submodules: ${{ contains (matrix.name,'ee') }}
-      submodule_branch: 'next'
+      ee: ${{ contains (matrix.name,'-ee') }}
     secrets: inherit
 
   # This workflow contains a single job called "build"

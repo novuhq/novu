@@ -181,4 +181,5 @@ const styledCard = (theme) => ({
   borderRadius: '7px',
   borderColor: theme.colorScheme === 'dark' ? colors.B30 : colors.B80,
   padding: '30px',
+  overflow: 'visible',
 });
