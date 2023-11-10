@@ -65,8 +65,8 @@
     "cypress": "^13.3.2",
     "eslint-plugin-cypress": "^2.12.1",
     "eslint-plugin-storybook": "^0.6.13",
-    "react": "^17.0.1",
-    "react-dom": "^17.0.1",
+    "react": "17.0.1",
+    "react-dom": "17.0.1",
     "react-router-dom": "6.2.2",
     "rimraf": "^3.0.2",
     "storybook": "^7.4.2",
@@ -78,8 +78,8 @@
     "vite-plugin-dts": "^3.6.0"
   },
   "peerDependencies": {
-    "react": ">=16.8.0",
-    "react-dom": ">=16.8.0",
+    "react": "17.0.1",
+    "react-dom": "17.0.1",
     "react-router-dom": "6.2.2"
   }
 }
