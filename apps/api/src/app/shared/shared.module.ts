@@ -98,9 +98,8 @@ const PROVIDERS = [
         version: packageJson.version,
       })
     ),
-    QueuesModule,
   ],
   providers: [...PROVIDERS],
-  exports: [...PROVIDERS, LoggerModule, QueuesModule],
+  exports: [...PROVIDERS, LoggerModule],
 })
 export class SharedModule {}

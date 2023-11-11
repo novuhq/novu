@@ -69,7 +69,7 @@ export function StepSettings({ index }: { index: number }) {
             {filters?.length} filter{filters && filters?.length < 2 ? '' : 's'}
           </When>
           <When truthy={filters && filters?.length === 0}>
-            <Filter
+            <FilterOutlined
               style={{
                 marginRight: '7px',
               }}

@@ -26,7 +26,6 @@ export enum DetailEnum {
   START_DIGESTING = 'Start digesting',
   PROCESSING_STEP_FILTER = 'Processing step filter',
   FILTER_STEPS = 'Step was filtered based on steps filters',
-  DIGESTED_EVENTS_PROVIDED = 'Steps to get digest events found',
   DIGEST_TRIGGERED_EVENTS = 'Digest triggered events',
   STEP_FILTERED_BY_PREFERENCES = 'Step filtered by subscriber preferences',
   STEP_FILTERED_BY_GLOBAL_PREFERENCES = 'Step filtered by subscriber global preferences',

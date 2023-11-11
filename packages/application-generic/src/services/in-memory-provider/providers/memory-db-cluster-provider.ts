@@ -4,6 +4,8 @@ import { Logger } from '@nestjs/common';
 
 export { Cluster, ClusterOptions };
 
+import { convertStringValues } from './variable-mappers';
+
 export const CLIENT_READY = 'ready';
 const DEFAULT_TTL_SECONDS = 60 * 60 * 2;
 const DEFAULT_CONNECT_TIMEOUT = 50000;
@@ -42,17 +44,31 @@ export interface IMemoryDbClusterProviderConfig {
 export const getMemoryDbClusterProviderConfig =
   (): IMemoryDbClusterProviderConfig => {
     const redisClusterConfig: IMemoryDbClusterConfig = {
-      host: process.env.MEMORY_DB_CLUSTER_SERVICE_HOST,
-      port: process.env.MEMORY_DB_CLUSTER_SERVICE_PORT,
-      ttl: process.env.MEMORY_DB_CLUSTER_SERVICE_TTL,
-      username: process.env.MEMORY_DB_CLUSTER_SERVICE_USERNAME,
-      password: process.env.MEMORY_DB_CLUSTER_SERVICE_PASSWORD,
-      connectTimeout: process.env.MEMORY_DB_CLUSTER_SERVICE_CONNECTION_TIMEOUT,
-      keepAlive: process.env.MEMORY_DB_CLUSTER_SERVICE_KEEP_ALIVE,
-      family: process.env.MEMORY_DB_CLUSTER_SERVICE_FAMILY,
-      keyPrefix: process.env.MEMORY_DB_CLUSTER_SERVICE_KEY_PREFIX,
+      host: convertStringValues(process.env.MEMORY_DB_CLUSTER_SERVICE_HOST),
+      port: convertStringValues(process.env.MEMORY_DB_CLUSTER_SERVICE_PORT),
+      ttl: convertStringValues(process.env.MEMORY_DB_CLUSTER_SERVICE_TTL),
+      username: convertStringValues(
+        process.env.MEMORY_DB_CLUSTER_SERVICE_USERNAME
+      ),
+      password: convertStringValues(
+        process.env.MEMORY_DB_CLUSTER_SERVICE_PASSWORD
+      ),
+      connectTimeout: convertStringValues(
+        process.env.MEMORY_DB_CLUSTER_SERVICE_CONNECTION_TIMEOUT
+      ),
+      keepAlive: convertStringValues(
+        process.env.MEMORY_DB_CLUSTER_SERVICE_KEEP_ALIVE
+      ),
+      family: convertStringValues(process.env.MEMORY_DB_CLUSTER_SERVICE_FAMILY),
+      keyPrefix: convertStringValues(
+        process.env.MEMORY_DB_CLUSTER_SERVICE_KEY_PREFIX
+      ),
       tls: (process.env.MEMORY_DB_CLUSTER_SERVICE_TLS as ConnectionOptions)
-        ? { servername: process.env.MEMORY_DB_CLUSTER_SERVICE_HOST }
+        ? {
+            servername: convertStringValues(
+              process.env.MEMORY_DB_CLUSTER_SERVICE_HOST
+            ),
+          }
         : {},
     };
 
