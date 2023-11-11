@@ -530,7 +530,8 @@
     "zulip",
     "tspan",
     "maildata",
-    "brevo"
+    "brevo",
+    "initialise"
   ],
   "flagWords": [],
   "patterns": [
