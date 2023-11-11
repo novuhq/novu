@@ -1152,7 +1152,7 @@ import { Novu } from '@novu/node';
 
 const novu = new Novu('<NOVU_API_KEY>');
 
-await novu.organizations.create({ name: 'New Organization });
+await novu.organizations.create({ name: 'New Organization' });
 ```
 
 - #### Rename organization
