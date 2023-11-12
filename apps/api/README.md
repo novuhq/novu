@@ -36,3 +36,29 @@ $ npm run test
 
 ### E2E tests
 See the docs for [Running on Local Machine - API Tests](https://docs.novu.co/community/run-in-local-machine#api).
+
+## Migrations
+Database migrations are included for features that have a hard dependency on specific data being available on database entities. These migrations are run by both Novu Cloud and Novu Self-Hosted users to support new feature releases.
+
+### How to Run
+
+The `npm run migration` script is available in the `package.json` to ensure script changes are DRY and consistent. This script is included in user-facing communications such as our documentation and release notes, and the script naming therefore MUST remain stable.
+
+The path to the migration to run is passed as a positional argument to the script. For example, to run the Add Integration Identifier script, we would enter the following:
+
+```bash
+npm run migration -- ./migrations/integration-scheme-update/add-integration-identifier-migration.ts
+```
+
+### Conventions
+
+These migrations live in the `./migrations` directory, and follow the naming convention of:
+`./migrations/<CHANGE_DESCRIPTION>/<CHANGE_ACTION>.ts`. Each `<CHANGE_DESCRIPTION>` may have 1 or more `<CHANGE_ACTION>.ts` scripts. For example:
+
+```
+.
+└── migrations/
+    └── integration-scheme-update/
+        ├── add-integration-identifier-migration.ts
+        └── add-primary-priority-migration.ts
+```

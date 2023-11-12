@@ -230,6 +230,136 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       expect(executionDetails.length).to.equal(1);
     });
 
+    it('should filter multiple digest steps', async function () {
+      const firstStepUuid = uuid();
+      template = await session.createTemplate({
+        steps: [
+          {
+            type: StepTypeEnum.EMAIL,
+            name: 'Message Name',
+            subject: 'Test email subject',
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
+            uuid: firstStepUuid,
+          },
+          {
+            type: StepTypeEnum.DIGEST,
+            content: '',
+            metadata: {
+              unit: DigestUnitEnum.SECONDS,
+              amount: 2,
+              type: DelayTypeEnum.REGULAR,
+            },
+            filters: [
+              {
+                isNegated: false,
+                type: 'GROUP',
+                value: FieldLogicalOperatorEnum.AND,
+                children: [
+                  {
+                    field: 'digest_type',
+                    value: '1',
+                    operator: FieldOperatorEnum.EQUAL,
+                    on: FilterPartTypeEnum.PAYLOAD,
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            type: StepTypeEnum.DIGEST,
+            content: '',
+            metadata: {
+              unit: DigestUnitEnum.SECONDS,
+              amount: 2,
+              type: DelayTypeEnum.REGULAR,
+            },
+            filters: [
+              {
+                isNegated: false,
+                type: 'GROUP',
+                value: FieldLogicalOperatorEnum.AND,
+                children: [
+                  {
+                    field: 'digest_type',
+                    value: '2',
+                    operator: FieldOperatorEnum.EQUAL,
+                    on: FilterPartTypeEnum.PAYLOAD,
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            type: StepTypeEnum.DIGEST,
+            content: '',
+            metadata: {
+              unit: DigestUnitEnum.SECONDS,
+              amount: 2,
+              type: DelayTypeEnum.REGULAR,
+            },
+            filters: [
+              {
+                isNegated: false,
+                type: 'GROUP',
+                value: FieldLogicalOperatorEnum.AND,
+                children: [
+                  {
+                    field: 'digest_type',
+                    value: '3',
+                    operator: FieldOperatorEnum.EQUAL,
+                    on: FilterPartTypeEnum.PAYLOAD,
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            type: StepTypeEnum.EMAIL,
+            name: 'Message Name',
+            subject: 'Test email subject',
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
+          },
+        ],
+      });
+
+      await axiosInstance.post(
+        `${session.serverUrl}${eventTriggerPath}`,
+        {
+          name: template.triggers[0].identifier,
+          to: [subscriber.subscriberId],
+          payload: {
+            customVar: 'Testing of User Name',
+            digest_type: '2',
+          },
+        },
+        {
+          headers: {
+            authorization: `ApiKey ${session.apiKey}`,
+          },
+        }
+      );
+
+      await session.awaitRunningJobs(template?._id, true, 0);
+
+      const messagesAfter = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _templateId: template?._id,
+        _subscriberId: subscriber._id,
+        channel: StepTypeEnum.EMAIL,
+      });
+
+      expect(messagesAfter.length).to.equal(2);
+
+      const executionDetails = await executionDetailsRepository.find({
+        _environmentId: session.environment._id,
+        _notificationTemplateId: template?._id,
+        channel: StepTypeEnum.DIGEST,
+        detail: DetailEnum.FILTER_STEPS,
+      });
+
+      expect(executionDetails.length).to.equal(2);
+    });
+
     it('should not filter digest step', async function () {
       const firstStepUuid = uuid();
       template = await session.createTemplate({
