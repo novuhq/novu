@@ -105,6 +105,31 @@ Handlebars.registerHelper(
   }
 );
 
+// based on: https://gist.github.com/DennyLoko/61882bc72176ca74a0f2
+Handlebars.registerHelper(
+  HandlebarHelpersEnum.NUMBERFORMAT,
+  function (number, options) {
+    if (isNaN(number)) {
+      return number;
+    }
+
+    const dl = options.hash.decimalLength || 2;
+    const ts = options.hash.thousandsSep || ',';
+    const ds = options.hash.decimalSep || '.';
+
+    const value = parseFloat(number);
+
+    const re = '\\d(?=(\\d{3})+' + (dl > 0 ? '\\D' : '$') + ')';
+
+    const num = value.toFixed(Math.max(0, ~~dl));
+
+    return (ds ? num.replace('.', ds) : num).replace(
+      new RegExp(re, 'g'),
+      '$&' + ts
+    );
+  }
+);
+
 @Injectable()
 export class CompileTemplate {
   async execute(command: CompileTemplateCommand): Promise<string> {
