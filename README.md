@@ -2,17 +2,19 @@
   <a href="https://novu.co?utm_source=github" target="_blank">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/2233092/213641039-220ac15f-f367-4d13-9eaf-56e79433b8c1.png">
-    ![Novu Logo]<img src="https://user-images.githubusercontent.com/2233092/213641043-3bbb3f21-3c53-4e67-afe5-755aeb222159.png" width="280"/>
+    <img alt="Novu Logo" src="https://user-images.githubusercontent.com/2233092/213641043-3bbb3f21-3c53-4e67-afe5-755aeb222159.png" width="280"/>
   </picture>
   </a>
-</div> <br/>
+</div>
+
+<br/>
 
 <p align="center">
-    <a href="https://www.npmjs.com/package/novu">
-    <img src="https://img.shields.io/npm/v/novu" alt="NPM">
+  <a href="https://www.npmjs.com/package/@novu/node">
+    <img src="https://img.shields.io/npm/v/@novu/node" alt="NPM">
   </a>
-    <a href="https://www.npmjs.com/package/novu">
-    <img src="https://img.shields.io/npm/dm/novu" alt="npm downloads">
+  <a href="https://www.npmjs.com/package/@novu/node">
+    <img src="https://img.shields.io/npm/dm/@novu/node" alt="npm downloads">
   </a>
   <img src="https://img.shields.io/github/license/novuhq/novu" alt="MIT">
 </p>
@@ -22,29 +24,6 @@
 <div align="center">
 The ultimate service for managing multi-channel notifications with a single API.
 </div>
-<br /><br />
-<h1 align="center">🎉 We're participating in Hacktoberfest 2023! 🎉</h1>
-
-Are you interested in participating in Hacktoberfest? We extend a warm invitation! You also get the opportunity to win some swag 😁
-
-> ⭐️ If you're new to Hacktoberfest, you can learn more and register to participate [here](https://hacktoberfest.com/participation/). Registration is from **September 26th - October 31st**.
-
-- Our Hacktoberfest kickoff event is happening on October 2, 2023. 🚀
-- Check out our website for [hacktoberfest instructions](https://novu.co/hacktoberfest/).
-- Join our [Discord and engage with our community](https://discord.com/invite/novu), get answers to your challenges, and stay updated on events, announcements, and prizes.
-
-In addition to this repository, here are the other Novu repositories you can contribute to for Hacktoberfest:
-- [Novu Docs](https://github.com/novuhq/docs/issues)
-- [Novu PHP SDK](https://github.com/novuhq/novu-php/issues)
-- [Novu Ruby SDK](https://github.com/novuhq/novu-ruby/issues)
-- [Novu Python SDK](https://github.com/novuhq/novu-python/issues)
-- [Novu Go SDK](https://github.com/novuhq/go-novu/issues)
-- [Novu Java SDK](https://github.com/novuhq/novu-java/issues)
-- [Novu Kotlin SDK](https://github.com/novuhq/novu-kotlin/issues)
-- [Novu Elixir SDK](https://github.com/novuhq/novu-elixir/issues)
-- [Novu Rust SDK](https://github.com/novuhq/novu-rust/issues)
-
-Your contribution, no matter its size, holds immense value. We eagerly await to see the impact you'll make in our community! 🚀
 
   <p align="center">
     <br />
