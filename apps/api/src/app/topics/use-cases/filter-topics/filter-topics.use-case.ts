@@ -21,15 +21,13 @@ export class FilterTopicsUseCase {
 
     const query = this.mapFromCommandToEntity(command);
 
-    const totalCount = await this.topicRepository.count(query);
-
     const skipTimes = page <= 0 ? 0 : page;
     const pagination = {
       limit: pageSize,
       skip: skipTimes * pageSize,
     };
 
-    const filteredTopics = await this.topicRepository.filterTopics(query, pagination);
+    const { data: filteredTopics, totalCount } = await this.topicRepository.filterTopics(query, pagination);
 
     return {
       page,
@@ -45,6 +43,7 @@ export class FilterTopicsUseCase {
     return {
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
+      ...(command.subscriberId && { subscriberId: command.subscriberId }),
       ...(command.key && { key: command.key }),
     } as Pick<TopicEntity, '_environmentId' | 'key' | '_organizationId'>;
   }
