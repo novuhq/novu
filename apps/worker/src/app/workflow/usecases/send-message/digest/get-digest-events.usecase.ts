@@ -81,18 +81,6 @@ export abstract class GetDigestEvents {
       ...filteredJobs.filter((job) => job._id !== currentTrigger._id).map((job) => job.payload),
     ];
 
-    this.createExecutionDetails.execute(
-      CreateExecutionDetailsCommand.create({
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(currentJob),
-        detail: DetailEnum.DIGEST_TRIGGERED_EVENTS,
-        source: ExecutionDetailsSourceEnum.INTERNAL,
-        status: ExecutionDetailsStatusEnum.PENDING,
-        isTest: false,
-        isRetry: false,
-        raw: JSON.stringify(events),
-      })
-    );
-
     return events;
   }
 }

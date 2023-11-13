@@ -22,7 +22,7 @@ describe('Create Environment - /environments (POST)', async () => {
     expect(body.data.name).to.eq(demoEnvironment.name);
     expect(body.data._organizationId).to.eq(session.organization._id);
     expect(body.data.identifier).to.be.ok;
-    const dbApp = await environmentRepository.findById(body.data._id);
+    const dbApp = await environmentRepository.findOne({ _id: body.data._id });
 
     expect(dbApp.apiKeys.length).to.equal(1);
     expect(dbApp.apiKeys[0].key).to.be.ok;
@@ -49,5 +49,15 @@ describe('Create Environment - /environments (POST)', async () => {
     expect(layouts.data.length).to.equal(1);
     expect(layouts.data[0].isDefault).to.equal(true);
     expect(layouts.data[0].content.length).to.be.greaterThan(20);
+  });
+
+  it('should not set apiRateLimits field on environment by default', async function () {
+    const demoEnvironment = {
+      name: 'Hello App',
+    };
+    const { body } = await session.testAgent.post('/v1/environments').send(demoEnvironment).expect(201);
+    const dbEnvironment = await environmentRepository.findOne({ _id: body.data._id });
+
+    expect(dbEnvironment?.apiRateLimits).to.be.undefined;
   });
 });

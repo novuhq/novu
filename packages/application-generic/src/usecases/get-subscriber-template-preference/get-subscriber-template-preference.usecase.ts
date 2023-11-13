@@ -5,7 +5,6 @@ import {
   SubscriberRepository,
   SubscriberEntity,
   MessageTemplateRepository,
-  PreferenceLevelEnum,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -48,13 +47,13 @@ export class GetSubscriberTemplatePreference {
     if (!subscriber) {
       throw new ApiException(`Subscriber ${command.subscriberId} not found`);
     }
+
     const initialActiveChannels = await this.getActiveChannels(command);
     const subscriberPreference =
       await this.subscriberPreferenceRepository.findOne({
         _environmentId: command.environmentId,
         _subscriberId: subscriber._id,
         _templateId: command.template._id,
-        level: PreferenceLevelEnum.TEMPLATE,
       });
 
     const subscriberChannelPreference = subscriberPreference?.channels;
@@ -255,6 +254,7 @@ function mapTemplateConfiguration(
     name: template.name,
     tags: template?.tags || [],
     critical: template.critical != null ? template.critical : true,
+    triggers: template.triggers,
     ...(template.data ? { data: template.data } : {}),
   };
 }

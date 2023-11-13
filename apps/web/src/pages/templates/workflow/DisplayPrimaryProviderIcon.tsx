@@ -1,7 +1,7 @@
 import styled from '@emotion/styled';
 import { Avatar, Indicator } from '@mantine/core';
 import { ProvidersIdEnum } from '@novu/shared';
-import { ProviderMissing } from '../../../design-system/icons';
+import { ProviderMissing } from '@novu/design-system';
 
 type DisplayPrimaryProviderIconProps = {
   isChannelStep: boolean;

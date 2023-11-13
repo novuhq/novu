@@ -6,7 +6,7 @@ ARG BULL_MQ_PRO_TOKEN
 ENV BULL_MQ_PRO_NPM_TOKEN=$BULL_MQ_PRO_TOKEN
 
 RUN npm i pm2 -g
-RUN npm --no-update-notifier --no-fund --global install pnpm@7.33.4
+RUN npm --no-update-notifier --no-fund --global install pnpm@8.9.0
 RUN pnpm --version
 
 WORKDIR /usr/src/app

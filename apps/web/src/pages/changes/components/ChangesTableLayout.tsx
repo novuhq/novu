@@ -6,8 +6,7 @@ import { ChangeEntityTypeEnum } from '@novu/shared';
 import { useEffect } from 'react';
 import { showNotification } from '@mantine/notifications';
 
-import { IExtendedColumn, Table } from '../../../design-system/table/Table';
-import { Button, colors, Text, withCellLoading } from '../../../design-system';
+import { IExtendedColumn, Table, Button, colors, Text, withCellLoading } from '@novu/design-system';
 import { promoteChange } from '../../../api/changes';
 import { QueryKeys } from '../../../api/query.keys';
 

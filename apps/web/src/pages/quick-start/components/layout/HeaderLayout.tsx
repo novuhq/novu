@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from '@emotion/styled';
 
-import { colors, Text, Title } from '../../../../design-system';
+import { colors, Text, Title } from '@novu/design-system';
 
 export function HeaderLayout({ children }: { children: React.ReactNode }) {
   return <StyledHeader>{children}</StyledHeader>;

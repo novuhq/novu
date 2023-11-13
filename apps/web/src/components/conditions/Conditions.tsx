@@ -3,12 +3,28 @@ import styled from '@emotion/styled';
 import { useMemo } from 'react';
 import { Control, Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 
-import { FILTER_TO_LABEL, FilterPartTypeEnum } from '@novu/shared';
+import { FILTER_TO_LABEL, FilterPartTypeEnum, FieldLogicalOperatorEnum, FieldOperatorEnum } from '@novu/shared';
 
-import { Button, colors, Dropdown, Input, Select, Sidebar, Text, Title, Tooltip } from '../../design-system';
-import { ConditionPlus, DotsHorizontal, Duplicate, Trash, Condition, ErrorIcon } from '../../design-system/icons';
-import { When } from '../utils/When';
+import {
+  Button,
+  colors,
+  Dropdown,
+  Input,
+  Select,
+  Sidebar,
+  Text,
+  Title,
+  Tooltip,
+  ConditionPlus,
+  DotsHorizontal,
+  Duplicate,
+  Trash,
+  Condition,
+  ErrorIcon,
+  When,
+} from '@novu/design-system';
 import { ConditionsContextEnum, ConditionsContextFields, IConditions } from './types';
+import { HEADER_HEIGHT } from '../layout/constants';
 
 interface IConditionsForm {
   conditions: IConditions[];
@@ -78,6 +94,7 @@ export function Conditions({
 
   return (
     <Sidebar
+      headerHeight={HEADER_HEIGHT}
       isOpened={isOpened}
       onClose={onClose}
       isExpanded
@@ -118,13 +135,13 @@ export function Conditions({
                     <Controller
                       control={control}
                       name={`conditions.0.value`}
-                      defaultValue="AND"
+                      defaultValue={FieldLogicalOperatorEnum.AND}
                       render={({ field }) => {
                         return (
                           <Select
                             data={[
-                              { value: 'AND', label: 'And' },
-                              { value: 'OR', label: 'Or' },
+                              { value: FieldLogicalOperatorEnum.AND, label: 'And' },
+                              { value: FieldLogicalOperatorEnum.OR, label: 'Or' },
                             ]}
                             {...field}
                             data-test-id="conditions-form-value-dropdown"
@@ -190,7 +207,7 @@ export function Conditions({
           variant="outline"
           onClick={() => {
             append({
-              operator: 'EQUAL',
+              operator: FieldOperatorEnum.EQUAL,
               on: FilterPartTypeEnum.TENANT,
               field: 'identifier',
               value: '',
@@ -238,17 +255,17 @@ function EqualityForm({ control, index }: { control: Control<IConditionsForm>; i
         <Controller
           control={control}
           name={`conditions.0.children.${index}.operator`}
-          defaultValue="EQUAL"
+          defaultValue={FieldOperatorEnum.EQUAL}
           render={({ field }) => {
             return (
               <Select
                 placeholder="Operator"
                 data={[
-                  { value: 'EQUAL', label: 'Equal' },
-                  { value: 'NOT_EQUAL', label: 'Does not equal' },
-                  { value: 'IN', label: 'Contains' },
-                  { value: 'NOT_IN', label: 'Does not contain' },
-                  { value: 'IS_DEFINED', label: 'Is defined' },
+                  { value: FieldOperatorEnum.EQUAL, label: 'Equal' },
+                  { value: FieldOperatorEnum.NOT_EQUAL, label: 'Does not equal' },
+                  { value: FieldOperatorEnum.IN, label: 'Contains' },
+                  { value: FieldOperatorEnum.NOT_IN, label: 'Does not contain' },
+                  { value: FieldOperatorEnum.IS_DEFINED, label: 'Is defined' },
                 ]}
                 {...field}
                 data-test-id="conditions-form-operator"
@@ -259,7 +276,7 @@ function EqualityForm({ control, index }: { control: Control<IConditionsForm>; i
       </Grid.Col>
 
       <Grid.Col span={6}>
-        {operator !== 'IS_DEFINED' && (
+        {operator !== FieldOperatorEnum.IS_DEFINED && (
           <Controller
             control={control}
             name={`conditions.0.children.${index}.value`}
