@@ -52,3 +52,4 @@ export enum SystemAvatarIconEnum {
 }
 
 export const CHANNELS_WITH_PRIMARY = [ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS];
+export const DELAYED_STEPS = [StepTypeEnum.DELAY, StepTypeEnum.DIGEST];

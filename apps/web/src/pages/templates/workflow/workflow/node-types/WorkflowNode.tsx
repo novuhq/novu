@@ -185,6 +185,7 @@ export function WorkflowNode({
                 showMenu={showMenu}
                 menuPosition={menuPosition}
                 conditionsCount={conditionsCount}
+                channelType={channelType}
                 onEdit={onEdit}
                 onAddConditions={onAddConditions}
                 onAddVariant={onAddVariant}
@@ -234,6 +235,7 @@ export function WorkflowNode({
                   showMenu={showMenu}
                   menuPosition={menuPosition}
                   conditionsCount={conditionsCount}
+                  channelType={channelType}
                   onEdit={onEdit}
                   onAddConditions={onAddConditions}
                   onAddVariant={onAddVariant}

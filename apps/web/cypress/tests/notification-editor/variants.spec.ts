@@ -1,4 +1,4 @@
-import { Channel, dragAndDrop, editChannel, fillBasicNotificationDetails, goBack } from '.';
+import { Channel, dragAndDrop, editChannel, goBack } from '.';
 
 const EDITOR_TEXT = 'Hello, world!';
 const VARIANT_EDITOR_TEXT = 'Hello, world from Variant!';
@@ -228,6 +228,40 @@ describe('Workflow Editor - Variants', function () {
       cy.wait('@getWorkflow');
 
       checkEditorContent('inApp', true);
+    });
+
+    it('should not allow creating variant for digest step', function () {
+      const channel = 'digest';
+      createWorkflow('Add variant not available');
+
+      dragAndDrop(channel);
+      showStepActions(channel);
+
+      cy.getByTestId(`node-${channel}Selector`)
+        .getByTestId('step-actions-menu')
+        .click()
+        .getByTestId('add-variant-action')
+        .should('not.exist');
+
+      editChannel(channel);
+      cy.getByTestId('editor-sidebar-add-variant').should('not.exist');
+    });
+
+    it('should not allow creating variant for delay step', function () {
+      const channel = 'delay';
+      createWorkflow('Add variant not available');
+
+      dragAndDrop(channel);
+      showStepActions(channel);
+
+      cy.getByTestId(`node-${channel}Selector`)
+        .getByTestId('step-actions-menu')
+        .click()
+        .getByTestId('add-variant-action')
+        .should('not.exist');
+
+      editChannel(channel);
+      cy.getByTestId('editor-sidebar-add-variant').should('not.exist');
     });
   });
 

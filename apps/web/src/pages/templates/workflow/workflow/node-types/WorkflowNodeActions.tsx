@@ -13,6 +13,7 @@ import {
   Trash,
   VariantPlus,
 } from '@novu/design-system';
+import { DELAYED_STEPS, StepTypeEnum } from '@novu/shared';
 
 import { NodeType } from './WorkflowNode';
 import { When } from '../../../../../components/utils/When';
@@ -56,6 +57,7 @@ interface IWorkflowNodeActionsProps {
   menuPosition: IDropdownProps['position'];
   showMenu: boolean;
   conditionsCount: number;
+  channelType: StepTypeEnum;
   onDelete?: () => void;
   onAddVariant?: () => void;
   onEdit?: MouseEventHandler<HTMLButtonElement>;
@@ -67,6 +69,7 @@ export const WorkflowNodeActions = ({
   menuPosition,
   conditionsCount,
   nodeType = 'step',
+  channelType,
   onEdit,
   onAddConditions,
   onAddVariant,
@@ -105,6 +108,8 @@ export const WorkflowNodeActions = ({
       </ButtonsContainer>
     );
   }
+
+  const isDelayedStep = DELAYED_STEPS.includes(channelType);
 
   return (
     <ButtonsContainer data-test-id="step-actions">
@@ -156,7 +161,7 @@ export const WorkflowNodeActions = ({
             }
             middlewares={{ flip: false, shift: false }}
           >
-            {onAddVariant && (
+            {onAddVariant && !isDelayedStep && (
               <Dropdown.Item
                 icon={<VariantPlus />}
                 onClick={(e) => {
