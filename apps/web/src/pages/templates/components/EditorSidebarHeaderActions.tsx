@@ -114,10 +114,12 @@ export const EditorSidebarHeaderActions = () => {
     setIsDeleteModalOpened(false);
   };
 
+  const conditionAction = isReadonly ? 'View' : hasNoFilters ? 'Add' : 'Edit';
+
   return (
     <>
       <Group noWrap spacing={12} ml={'auto'} sx={{ alignItems: 'flex-start' }}>
-        <When truthy={isAddVariantActionAvailable}>
+        <When truthy={isAddVariantActionAvailable && !isReadonly}>
           <ActionButton
             tooltip="Add variant"
             onClick={onAddVariant}
@@ -125,9 +127,9 @@ export const EditorSidebarHeaderActions = () => {
             data-test-id="editor-sidebar-add-variant"
           />
         </When>
-        <When truthy={hasNoFilters}>
+        <When truthy={hasNoFilters && !isReadonly}>
           <ActionButton
-            tooltip={`Add ${isUnderVariantsListPath ? 'group' : ''} conditions`}
+            tooltip={`${conditionAction} ${isUnderVariantsListPath ? 'group' : ''} conditions`}
             onClick={() => setConditionsOpened(true)}
             Icon={PlusIcon}
             data-test-id="editor-sidebar-add-conditions"
@@ -135,19 +137,21 @@ export const EditorSidebarHeaderActions = () => {
         </When>
         <When truthy={!hasNoFilters}>
           <ActionButton
-            tooltip={`Edit ${isUnderVariantsListPath ? 'group' : ''} conditions`}
+            tooltip={`${conditionAction} ${isUnderVariantsListPath ? 'group' : ''} conditions`}
             text={`${filters?.length ?? ''}`}
             onClick={() => setConditionsOpened(true)}
             Icon={ConditionsIcon}
             data-test-id="editor-sidebar-edit-conditions"
           />
         </When>
-        <ActionButton
-          tooltip={`Delete ${isUnderVariantPath ? 'variant' : 'step'}`}
-          onClick={openDeleteModal}
-          Icon={Trash}
-          data-test-id="editor-sidebar-delete"
-        />
+        <When truthy={!isReadonly}>
+          <ActionButton
+            tooltip={`Delete ${isUnderVariantPath ? 'variant' : 'step'}`}
+            onClick={openDeleteModal}
+            Icon={Trash}
+            data-test-id="editor-sidebar-delete"
+          />
+        </When>
       </Group>
       {areConditionsOpened && (
         <Conditions

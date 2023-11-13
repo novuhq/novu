@@ -45,6 +45,13 @@ const VARIANT_TYPE_TO_EDIT_CONDITIONS: Record<NodeType, string> = {
   variantRoot: 'Edit group conditions',
 };
 
+const VARIANT_TYPE_TO_VIEW_CONDITIONS: Record<NodeType, string> = {
+  step: 'View conditions',
+  stepRoot: 'View group conditions',
+  variant: 'View conditions',
+  variantRoot: 'View group conditions',
+};
+
 const VARIANT_TYPE_TO_DELETE: Record<NodeType, string> = {
   step: 'Delete step',
   stepRoot: 'Delete step',
@@ -56,6 +63,7 @@ interface IWorkflowNodeActionsProps {
   nodeType: NodeType;
   menuPosition: IDropdownProps['position'];
   showMenu: boolean;
+  isReadOnly: boolean;
   conditionsCount: number;
   channelType: StepTypeEnum;
   onDelete?: () => void;
@@ -66,6 +74,7 @@ interface IWorkflowNodeActionsProps {
 
 export const WorkflowNodeActions = ({
   showMenu,
+  isReadOnly,
   menuPosition,
   conditionsCount,
   nodeType = 'step',
@@ -110,17 +119,22 @@ export const WorkflowNodeActions = ({
   }
 
   const isDelayedStep = DELAYED_STEPS.includes(channelType);
+  const conditionsAction = isReadOnly
+    ? VARIANT_TYPE_TO_VIEW_CONDITIONS[nodeType]
+    : conditionsCount > 0
+    ? VARIANT_TYPE_TO_EDIT_CONDITIONS[nodeType]
+    : VARIANT_TYPE_TO_ADD_CONDITIONS[nodeType];
+  const conditionsIcon = isReadOnly || conditionsCount > 0 ? ConditionsFile : ConditionPlus;
+  const isShowConditions = onAddConditions && (!isReadOnly || (isReadOnly && conditionsCount > 0));
 
   return (
     <ButtonsContainer data-test-id="step-actions">
       <When truthy={!showMenu && conditionsCount > 0}>
         <ActionButton
           onClick={onAddConditions}
-          tooltip={
-            conditionsCount > 0 ? VARIANT_TYPE_TO_EDIT_CONDITIONS[nodeType] : VARIANT_TYPE_TO_ADD_CONDITIONS[nodeType]
-          }
+          tooltip={conditionsAction}
           text={`${conditionsCount > 0 ? conditionsCount : ''}`}
-          Icon={conditionsCount > 0 ? ConditionsFile : ConditionPlus}
+          Icon={conditionsIcon}
           data-test-id="conditions-action"
         />
       </When>
@@ -134,58 +148,56 @@ export const WorkflowNodeActions = ({
               data-test-id="edit-action"
             />
           )}
-          {onAddConditions && (
+          {isShowConditions && (
             <ActionButton
               onClick={onAddConditions}
-              tooltip={
-                conditionsCount > 0
-                  ? VARIANT_TYPE_TO_EDIT_CONDITIONS[nodeType]
-                  : VARIANT_TYPE_TO_ADD_CONDITIONS[nodeType]
-              }
+              tooltip={conditionsAction}
               text={`${conditionsCount > 0 ? conditionsCount : ''}`}
-              Icon={conditionsCount > 0 ? ConditionsFile : ConditionPlus}
+              Icon={conditionsIcon}
               data-test-id="add-conditions-action"
             />
           )}
-          <Dropdown
-            withinPortal
-            position={menuPosition}
-            withArrow={false}
-            offset={0}
-            control={
-              <ActionButton
-                onClick={(e) => e.stopPropagation()}
-                Icon={DotsHorizontal}
-                data-test-id="step-actions-menu"
-              />
-            }
-            middlewares={{ flip: false, shift: false }}
-          >
-            {onAddVariant && !isDelayedStep && (
-              <Dropdown.Item
-                icon={<VariantPlus />}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onAddVariant();
-                }}
-                data-test-id="add-variant-action"
-              >
-                Add variant
-              </Dropdown.Item>
-            )}
-            {onDelete && (
-              <Dropdown.Item
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete();
-                }}
-                icon={<Trash width="16px" height="16px" />}
-                data-test-id="delete-step-action"
-              >
-                {VARIANT_TYPE_TO_DELETE[nodeType]}
-              </Dropdown.Item>
-            )}
-          </Dropdown>
+          <When truthy={!isReadOnly}>
+            <Dropdown
+              withinPortal
+              position={menuPosition}
+              withArrow={false}
+              offset={0}
+              control={
+                <ActionButton
+                  onClick={(e) => e.stopPropagation()}
+                  Icon={DotsHorizontal}
+                  data-test-id="step-actions-menu"
+                />
+              }
+              middlewares={{ flip: false, shift: false }}
+            >
+              {onAddVariant && !isDelayedStep && (
+                <Dropdown.Item
+                  icon={<VariantPlus />}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAddVariant();
+                  }}
+                  data-test-id="add-variant-action"
+                >
+                  Add variant
+                </Dropdown.Item>
+              )}
+              {onDelete && (
+                <Dropdown.Item
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete();
+                  }}
+                  icon={<Trash width="16px" height="16px" />}
+                  data-test-id="delete-step-action"
+                >
+                  {VARIANT_TYPE_TO_DELETE[nodeType]}
+                </Dropdown.Item>
+              )}
+            </Dropdown>
+          </When>
         </Group>
       </When>
     </ButtonsContainer>
