@@ -31,7 +31,7 @@
   },
   "dependencies": {
     "@novu/stateless": "^0.21.0",
-    "onesignal-node": "^3.4.0"
+    "@onesignal/node-onesignal": "2.0.1-beta2"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "~1.0.1",
