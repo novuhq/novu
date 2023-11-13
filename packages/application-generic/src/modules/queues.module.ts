@@ -6,15 +6,17 @@ import {
   CompletedJobsMetricQueueServiceHealthIndicator,
   InboundParseQueueServiceHealthIndicator,
   StandardQueueServiceHealthIndicator,
+  SubscriberProcessQueueHealthIndicator,
   WebSocketsQueueServiceHealthIndicator,
   WorkflowQueueServiceHealthIndicator,
 } from '../health';
-import { OldInstanceBullMqService, ReadinessService } from '../services';
+import { ReadinessService } from '../services';
 import {
   ActiveJobsMetricQueueService,
   CompletedJobsMetricQueueService,
   InboundParseQueue,
   StandardQueueService,
+  SubscriberProcessQueueService,
   WebSocketsQueueService,
   WorkflowQueueService,
 } from '../services/queues';
@@ -23,15 +25,10 @@ import {
   CompletedJobsMetricWorkerService,
   InboundParseWorker,
   StandardWorkerService,
+  SubscriberProcessWorkerService,
   WebSocketsWorkerService,
   WorkflowWorkerService,
-  OldInstanceStandardWorkerService,
-  OldInstanceWorkflowWorkerService,
 } from '../services/workers';
-
-import { SubscriberProcessQueueService } from '../services/queues/subscriber-process-queue.service';
-import { SubscriberProcessWorkerService } from '../services/workers/subscriber-process-worker.service';
-import { SubscriberProcessQueueHealthIndicator } from '../health/subscriber-process-queue.health-indicator';
 
 const PROVIDERS: Provider[] = [
   ActiveJobsMetricQueueService,
@@ -54,9 +51,6 @@ const PROVIDERS: Provider[] = [
   WorkflowQueueService,
   WorkflowQueueServiceHealthIndicator,
   WorkflowWorkerService,
-  OldInstanceStandardWorkerService,
-  OldInstanceWorkflowWorkerService,
-  OldInstanceBullMqService,
   SubscriberProcessQueueService,
   SubscriberProcessWorkerService,
   SubscriberProcessQueueHealthIndicator,
@@ -67,3 +61,19 @@ const PROVIDERS: Provider[] = [
   exports: [...PROVIDERS],
 })
 export class QueuesModule {}
+
+const APP_PROVIDERS: Provider[] = [
+  InboundParseQueue,
+  InboundParseWorker,
+  InboundParseQueueServiceHealthIndicator,
+  WebSocketsQueueService,
+  WebSocketsQueueServiceHealthIndicator,
+  WorkflowQueueService,
+  WorkflowQueueServiceHealthIndicator,
+];
+
+@Module({
+  providers: [...APP_PROVIDERS],
+  exports: [...APP_PROVIDERS],
+})
+export class BaseApiQueuesModule {}

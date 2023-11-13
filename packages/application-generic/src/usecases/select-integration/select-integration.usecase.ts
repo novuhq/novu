@@ -44,12 +44,15 @@ export class SelectIntegration {
       const integrations = await this.integrationRepository.find(query);
 
       let tenant: TenantEntity | null = null;
-
-      if (command.filterData.tenant.identifier) {
+      const commandTenantIdentifier =
+        typeof command.filterData.tenant === 'string'
+          ? command.filterData.tenant
+          : command.filterData.tenant.identifier;
+      if (commandTenantIdentifier) {
         tenant = await this.tenantRepository.findOne({
           _organizationId: command.organizationId,
           _environmentId: command.environmentId,
-          identifier: command.filterData.tenant.identifier,
+          identifier: commandTenantIdentifier,
         });
       }
 

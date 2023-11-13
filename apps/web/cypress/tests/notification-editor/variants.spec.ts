@@ -1,4 +1,4 @@
-import { Channel, dragAndDrop, editChannel, fillBasicNotificationDetails, goBack } from '.';
+import { Channel, dragAndDrop, editChannel, goBack } from '.';
 
 const EDITOR_TEXT = 'Hello, world!';
 const VARIANT_EDITOR_TEXT = 'Hello, world from Variant!';
@@ -190,6 +190,24 @@ describe('Workflow Editor - Variants', function () {
     cy.getByTestId('editor-sidebar-delete').should('be.visible');
   };
 
+  const navigateAndPromoteAllChanges = () => {
+    cy.getByTestId('side-nav-changes-link').click();
+    cy.waitForNetworkIdle(500);
+    cy.awaitAttachedGetByTestId('promote-all-btn').click();
+  };
+
+  const navigateAndOpenFirstWorkflow = () => {
+    cy.getByTestId('side-nav-templates-link').click();
+    cy.waitForNetworkIdle(500);
+    cy.getByTestId('notifications-template').find('tbody tr').first().click();
+    cy.wait('@getWorkflow');
+  };
+
+  const switchEnvironment = (environment: 'Production' | 'Development') => {
+    cy.getByTestId('environment-switch').find(`input[value="${environment}"]`).click({ force: true });
+    cy.waitForNetworkIdle(500);
+  };
+
   describe('Add variant flow', function () {
     it('should allow creating the variants for the in-app channel', function () {
       addVariantForChannel('inApp', 'V1 In-App');
@@ -229,6 +247,40 @@ describe('Workflow Editor - Variants', function () {
 
       checkEditorContent('inApp', true);
     });
+
+    it('should not allow creating variant for digest step', function () {
+      const channel = 'digest';
+      createWorkflow('Add variant not available');
+
+      dragAndDrop(channel);
+      showStepActions(channel);
+
+      cy.getByTestId(`node-${channel}Selector`)
+        .getByTestId('step-actions-menu')
+        .click()
+        .getByTestId('add-variant-action')
+        .should('not.exist');
+
+      editChannel(channel);
+      cy.getByTestId('editor-sidebar-add-variant').should('not.exist');
+    });
+
+    it('should not allow creating variant for delay step', function () {
+      const channel = 'delay';
+      createWorkflow('Add variant not available');
+
+      dragAndDrop(channel);
+      showStepActions(channel);
+
+      cy.getByTestId(`node-${channel}Selector`)
+        .getByTestId('step-actions-menu')
+        .click()
+        .getByTestId('add-variant-action')
+        .should('not.exist');
+
+      editChannel(channel);
+      cy.getByTestId('editor-sidebar-add-variant').should('not.exist');
+    });
   });
 
   describe('Step actions', function () {
@@ -254,6 +306,58 @@ describe('Workflow Editor - Variants', function () {
       // show the root step actions and check available actions
       checkStepActions('inApp');
     });
+
+    it('in production should show only the edit step action', function () {
+      const channel = 'sms';
+      createWorkflow(`Production Test Step Actions`);
+
+      dragAndDrop(channel);
+      editChannel(channel);
+      fillEditorContent(channel);
+
+      cy.getByTestId('notification-template-submit-btn').click();
+      cy.wait('@updateWorkflow');
+
+      navigateAndPromoteAllChanges();
+
+      switchEnvironment('Production');
+
+      navigateAndOpenFirstWorkflow();
+
+      cy.getByTestId(`node-${channel}Selector`).getByTestId('conditions-action').should('not.exist');
+      showStepActions(channel);
+      cy.getByTestId(`node-${channel}Selector`).getByTestId('edit-action').should('be.visible');
+      cy.getByTestId(`node-${channel}Selector`).getByTestId('add-conditions-action').should('not.exist');
+      cy.getByTestId(`node-${channel}Selector`).getByTestId('step-actions-menu').should('not.exist');
+    });
+
+    it('in production should show the step actions: edit and conditions', function () {
+      const channel = 'sms';
+      createWorkflow(`Production Test Step Actions`);
+
+      dragAndDrop(channel);
+      editChannel(channel);
+      fillEditorContent(channel);
+      goBack();
+
+      showStepActions(channel);
+      cy.getByTestId('add-conditions-action').should('be.visible').click();
+      addConditions();
+      cy.getByTestId('notification-template-submit-btn').click();
+      cy.wait('@updateWorkflow');
+
+      navigateAndPromoteAllChanges();
+
+      switchEnvironment('Production');
+
+      navigateAndOpenFirstWorkflow();
+
+      cy.getByTestId(`node-${channel}Selector`).getByTestId('conditions-action').should('be.visible').contains('1');
+      showStepActions(channel);
+      cy.getByTestId(`node-${channel}Selector`).getByTestId('edit-action').should('be.visible');
+      cy.getByTestId(`node-${channel}Selector`).getByTestId('add-conditions-action').should('be.visible');
+      cy.getByTestId(`node-${channel}Selector`).getByTestId('step-actions-menu').should('not.exist');
+    });
   });
 
   describe('Editor actions', function () {
@@ -275,6 +379,58 @@ describe('Workflow Editor - Variants', function () {
       addConditions();
 
       checkEditorActions(true);
+    });
+
+    it('in production should show only the close action', function () {
+      const channel = 'sms';
+      createWorkflow(`Production Test Editor Actions`);
+
+      dragAndDrop(channel);
+      editChannel(channel);
+      fillEditorContent(channel);
+
+      cy.getByTestId('notification-template-submit-btn').click();
+      cy.wait('@updateWorkflow');
+
+      navigateAndPromoteAllChanges();
+
+      switchEnvironment('Production');
+
+      navigateAndOpenFirstWorkflow();
+
+      editChannel(channel);
+      cy.getByTestId('editor-sidebar-add-variant').should('not.exist');
+      cy.getByTestId('editor-sidebar-add-conditions').should('not.exist');
+      cy.getByTestId('editor-sidebar-edit-conditions').should('not.exist');
+      cy.getByTestId('editor-sidebar-delete').should('not.exist');
+    });
+
+    it('in production should only show the view conditions action', function () {
+      const channel = 'sms';
+      createWorkflow(`Production Test Editor Actions`);
+
+      dragAndDrop(channel);
+      editChannel(channel);
+      fillEditorContent(channel);
+      goBack();
+
+      showStepActions(channel);
+      cy.getByTestId('add-conditions-action').should('be.visible').click();
+      addConditions();
+      cy.getByTestId('notification-template-submit-btn').click();
+      cy.wait('@updateWorkflow');
+
+      navigateAndPromoteAllChanges();
+
+      switchEnvironment('Production');
+
+      navigateAndOpenFirstWorkflow();
+
+      editChannel(channel);
+      cy.getByTestId('editor-sidebar-add-variant').should('not.exist');
+      cy.getByTestId('editor-sidebar-add-conditions').should('not.exist');
+      cy.getByTestId('editor-sidebar-edit-conditions').should('be.visible');
+      cy.getByTestId('editor-sidebar-delete').should('not.exist');
     });
   });
 
@@ -381,6 +537,68 @@ describe('Workflow Editor - Variants', function () {
       cy.reload();
       cy.wait('@getWorkflow');
       cy.getByTestId('editor-sidebar-edit-conditions').contains('2');
+    });
+
+    it('in production should only allow edit and view conditions on variant list item', function () {
+      const channel = 'chat';
+      createWorkflow(`Production Variant Actions`);
+
+      dragAndDrop(channel);
+      editChannel(channel);
+      fillEditorContent(channel);
+      goBack();
+
+      showStepActions(channel);
+      addVariantActionClick(channel);
+      addConditions();
+
+      cy.getByTestId('notification-template-submit-btn').click();
+      cy.wait('@updateWorkflow');
+
+      navigateAndPromoteAllChanges();
+
+      switchEnvironment('Production');
+
+      navigateAndOpenFirstWorkflow();
+
+      editChannel(channel);
+
+      cy.getByTestId('variant-item-card-0').getByTestId('conditions-action').should('be.visible').contains('1');
+      cy.getByTestId('variant-item-card-0').trigger('mouseover');
+      cy.getByTestId('variant-item-card-0').getByTestId('edit-action').should('be.visible');
+      cy.getByTestId('variant-item-card-0').getByTestId('add-conditions-action').should('be.visible');
+      cy.getByTestId('variant-item-card-0').getByTestId('step-actions-menu').should('not.exist');
+    });
+
+    it('in production should only allow edit the variant root list item', function () {
+      const channel = 'chat';
+      createWorkflow(`Production Variant Actions`);
+
+      dragAndDrop(channel);
+      editChannel(channel);
+      fillEditorContent(channel);
+      goBack();
+
+      showStepActions(channel);
+      addVariantActionClick(channel);
+      addConditions();
+
+      cy.getByTestId('notification-template-submit-btn').click();
+      cy.wait('@updateWorkflow');
+
+      navigateAndPromoteAllChanges();
+
+      switchEnvironment('Production');
+
+      navigateAndOpenFirstWorkflow();
+
+      editChannel(channel);
+
+      cy.getByTestId('variant-root-card').getByTestId('conditions-action').should('be.visible').contains('No');
+      cy.getByTestId('variant-root-card').trigger('mouseover');
+      cy.getByTestId('variant-root-card').getByTestId('edit-step-action').should('be.visible');
+      cy.getByTestId('variant-root-card').getByTestId('add-conditions-action').should('not.exist');
+      cy.getByTestId('variant-root-card').getByTestId('step-actions-menu').should('not.exist');
     });
   });
 

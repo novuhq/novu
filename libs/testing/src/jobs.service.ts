@@ -19,6 +19,31 @@ export class JobsService {
     this.subscriberProcessQueue = new TestingQueueService(JobTopicNameEnum.PROCESS_SUBSCRIBER).queue;
   }
 
+  public async queueGet(jobTopicName: JobTopicNameEnum, getter: 'getDelayed') {
+    let queue: Queue;
+
+    switch (jobTopicName) {
+      case JobTopicNameEnum.WORKFLOW:
+        queue = this.workflowQueue;
+        break;
+      case JobTopicNameEnum.STANDARD:
+        queue = this.standardQueue;
+        break;
+      case JobTopicNameEnum.PROCESS_SUBSCRIBER:
+        queue = this.subscriberProcessQueue;
+        break;
+      default:
+        throw new Error(`Invalid job topic name: ${jobTopicName}`);
+    }
+
+    switch (getter) {
+      case 'getDelayed':
+        return queue.getDelayed();
+      default:
+        throw new Error(`Invalid getter: ${getter}`);
+    }
+  }
+
   public async awaitParsingEvents() {
     let totalCount = 0;
 

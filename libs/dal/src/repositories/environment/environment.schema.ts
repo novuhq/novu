@@ -1,5 +1,6 @@
 import * as mongoose from 'mongoose';
 import { Schema } from 'mongoose';
+import { IApiRateLimits, ApiRateLimitCategoryTypeEnum } from '@novu/shared';
 
 import { schemaOptions } from '../schema-default.options';
 import { EnvironmentDBModel } from './environment.entity';
@@ -28,6 +29,11 @@ const environmentSchema = new Schema<EnvironmentDBModel>(
         },
       },
     ],
+    apiRateLimits: {
+      [ApiRateLimitCategoryTypeEnum.TRIGGER]: Schema.Types.Number,
+      [ApiRateLimitCategoryTypeEnum.CONFIGURATION]: Schema.Types.Number,
+      [ApiRateLimitCategoryTypeEnum.GLOBAL]: Schema.Types.Number,
+    },
     widget: {
       notificationCenterEncryption: {
         type: Schema.Types.Boolean,

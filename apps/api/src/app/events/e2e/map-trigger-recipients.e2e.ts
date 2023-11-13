@@ -1,6 +1,11 @@
 import { Test } from '@nestjs/testing';
 import { SubscribersService, UserSession } from '@novu/testing';
-import { FeatureFlagsService, MapTriggerRecipients, MapTriggerRecipientsCommand } from '@novu/application-generic';
+import {
+  FeatureFlagsService,
+  GetTopicSubscribersUseCase,
+  MapTriggerRecipients,
+  MapTriggerRecipientsCommand,
+} from '@novu/application-generic';
 import {
   SubscriberEntity,
   SubscriberRepository,
@@ -42,7 +47,7 @@ describe('MapTriggerRecipientsUseCase', () => {
 
       const moduleRef = await Test.createTestingModule({
         imports: [SharedModule, EventsModule],
-        providers: [],
+        providers: [MapTriggerRecipients, GetTopicSubscribersUseCase],
       }).compile();
 
       session = new UserSession();
@@ -188,7 +193,7 @@ describe('MapTriggerRecipientsUseCase', () => {
 
       const moduleRef = await Test.createTestingModule({
         imports: [SharedModule, EventsModule],
-        providers: [],
+        providers: [MapTriggerRecipients, GetTopicSubscribersUseCase],
       }).compile();
 
       session = new UserSession();

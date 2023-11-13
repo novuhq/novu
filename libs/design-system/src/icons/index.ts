@@ -89,6 +89,7 @@ export { ConditionsFile } from './general/ConditionsFile';
 export { Variant } from './general/Variant';
 export { Conditions } from './general/Conditions';
 export { Logout } from './general/Logout';
+export { InviteMembers } from './general/InviteMembers';
 
 export { Copy } from './actions/Copy';
 export { Close } from './actions/Close';

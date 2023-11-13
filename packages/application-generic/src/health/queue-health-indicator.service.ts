@@ -5,7 +5,7 @@ import {
 } from '@nestjs/terminus';
 import { Injectable, Logger } from '@nestjs/common';
 
-import { QueueBaseService } from '../services';
+import { QueueBaseService } from '../services/queues/queue-base.service';
 import { IHealthIndicator } from './health-indicator.interface';
 
 @Injectable()

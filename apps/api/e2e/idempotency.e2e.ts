@@ -10,7 +10,7 @@ describe('Idempotency Test', async () => {
     IDEMPOTENCY_REPLAY: 'idempotency-replay',
     LINK: 'link',
   };
-  const DOCS_LINK = 'docs.novu.co/idempotency';
+  const DOCS_LINK = 'https://docs.novu.co/additional-resources/idempotency';
 
   let cacheService: CacheService | null = null;
 

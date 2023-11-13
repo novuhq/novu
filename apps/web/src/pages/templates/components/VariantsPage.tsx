@@ -1,8 +1,10 @@
 import { ActionIcon, Divider, Group, ScrollArea } from '@mantine/core';
-import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import styled from '@emotion/styled';
+import { ChannelTypeEnum, StepTypeEnum, DELAYED_STEPS } from '@novu/shared';
+import { ChevronPlainDown, colors, ErrorIcon, Text } from '@novu/design-system';
 
 import { useEnvController, useGetPrimaryIntegration, useHasActiveIntegrations } from '../../../hooks';
 import { getStepErrors, getVariantErrors } from '../shared/errors';
@@ -11,13 +13,13 @@ import { IForm } from './formTypes';
 import { useTemplateEditorForm } from './TemplateEditorFormProvider';
 import { VariantItemCard } from './VariantItemCard';
 import { VariantsListSidebar } from './VariantsListSidebar';
-
-import styled from '@emotion/styled';
-import { ChevronPlainDown, colors, ErrorIcon, Text } from '@novu/design-system';
 import { When } from '../../../components/utils/When';
 import { NODE_ERROR_TYPES } from '../workflow/workflow/node-types/utils';
+import { useBasePath } from '../hooks/useBasePath';
 
 export function VariantsPage() {
+  const navigate = useNavigate();
+  const basePath = useBasePath();
   const {
     watch,
     formState: { errors },
@@ -46,6 +48,7 @@ export function VariantsPage() {
     [channel, stepUuid, steps]
   );
   const step = watch(`steps.${stepIndex}`);
+  const isDelayedStep = DELAYED_STEPS.includes(channel as StepTypeEnum);
 
   const setViewportRef = (ref: HTMLDivElement | null) => {
     if (!ref) {
@@ -67,7 +70,7 @@ export function VariantsPage() {
 
   const variants = step?.variants ?? [];
 
-  const { hasActiveIntegration, isChannelStep, activeIntegrationsByEnv } = useHasActiveIntegrations({
+  const { hasActiveIntegration } = useHasActiveIntegrations({
     filterByEnv: true,
     channelType: channel as unknown as ChannelTypeEnum,
   });
@@ -148,6 +151,10 @@ export function VariantsPage() {
 
   if (!channel) {
     return null;
+  }
+
+  if (isDelayedStep) {
+    navigate(`${basePath}/${channel}/${stepUuid}`);
   }
 
   const handleErrorNavigation = (direction: 'up' | 'down') => {

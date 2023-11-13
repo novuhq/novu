@@ -129,7 +129,7 @@ export function WorkflowNode({
     showGroupError = isStepRoot && hasGroupError(index, errors);
   }
 
-  const showMenu = !readonlyEnv && !dragging && hover;
+  const showMenu = !dragging && hover;
 
   useEffect(() => {
     const subscription = watch((values) => {
@@ -206,8 +206,10 @@ export function WorkflowNode({
                   <WorkflowNodeActions
                     nodeType={nodeType}
                     showMenu={showMenu}
+                    isReadOnly={readonlyEnv}
                     menuPosition={menuPosition}
                     conditionsCount={conditionsCount}
+                    channelType={channelType}
                     onEdit={onEdit}
                     onAddConditions={onAddConditions}
                     onAddVariant={onAddVariant}
@@ -261,8 +263,10 @@ export function WorkflowNode({
                 <WorkflowNodeActions
                   nodeType={nodeType}
                   showMenu={showMenu}
+                  isReadOnly={readonlyEnv}
                   menuPosition={menuPosition}
                   conditionsCount={conditionsCount}
+                  channelType={channelType}
                   onEdit={onEdit}
                   onAddConditions={onAddConditions}
                   onAddVariant={onAddVariant}
