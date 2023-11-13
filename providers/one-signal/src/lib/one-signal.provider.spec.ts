@@ -3,7 +3,8 @@ import { OneSignalPushProvider } from './one-signal.provider';
 test('should trigger OneSignal library correctly', async () => {
   const provider = new OneSignalPushProvider({
     appId: 'test-app-id',
-    apiKey: 'test-key',
+    appKey: 'test-key',
+    userKey: 'test-user-key',
   });
 
   const spy = jest
@@ -12,7 +13,7 @@ test('should trigger OneSignal library correctly', async () => {
     .spyOn(provider.oneSignal, 'createNotification')
     .mockImplementation(async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { body: { id: 'result' } } as any;
+      return { id: 'result' };
     });
 
   await provider.sendMessage({
@@ -34,6 +35,7 @@ test('should trigger OneSignal library correctly', async () => {
   expect(provider.oneSignal).toBeDefined();
   expect(spy).toHaveBeenCalled();
   expect(spy).toHaveBeenCalledWith({
+    app_id: 'test-app-id',
     include_player_ids: ['tester'],
     headings: { en: 'Test' },
     contents: { en: 'Test push' },
@@ -41,8 +43,8 @@ test('should trigger OneSignal library correctly', async () => {
     data: {
       sound: 'test_sound',
     },
-    ios_badgeType: 'Increase',
-    ios_badgeCount: 1,
+    ios_badge_type: 'Increase',
+    ios_badge_count: 1,
     ios_sound: undefined,
     android_sound: undefined,
     mutable_content: undefined,
