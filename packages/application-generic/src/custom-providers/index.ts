@@ -6,7 +6,6 @@ import {
   DistributedLockService,
   FeatureFlagsService,
   ReadinessService,
-  OldInstanceBullMqService,
   StandardQueueService,
   SubscriberProcessQueueService,
   WebSocketsQueueService,
@@ -62,17 +61,6 @@ export const bullMqService = {
   provide: BullMqService,
   useFactory: async (): Promise<BullMqService> => {
     const service = new BullMqService();
-
-    await service.initialize();
-
-    return service;
-  },
-};
-
-export const oldInstanceBullMqService = {
-  provide: OldInstanceBullMqService,
-  useFactory: async (): Promise<OldInstanceBullMqService> => {
-    const service = new OldInstanceBullMqService();
 
     await service.initialize();
 
