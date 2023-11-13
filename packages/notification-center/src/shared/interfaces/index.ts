@@ -59,7 +59,7 @@ export interface INotificationCenterContext {
   onTabClick?: (tab: ITab) => void;
   preferenceFilter?: (userPreference: IUserPreferenceSettings) => boolean;
   isLoading: boolean;
-  header: ({ setScreen }: { setScreen: (screen: ScreensEnum) => void }) => JSX.Element;
+  header: ({ setScreen, screen }: { setScreen: (screen: ScreensEnum) => void; screen: ScreensEnum }) => JSX.Element;
   footer: () => JSX.Element;
   emptyState: JSX.Element;
   listItem: ListItem;

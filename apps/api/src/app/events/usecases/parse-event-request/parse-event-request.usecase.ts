@@ -12,17 +12,9 @@ import {
   WorkflowQueueService,
 } from '@novu/application-generic';
 import { NotificationTemplateRepository, NotificationTemplateEntity, TenantRepository } from '@novu/dal';
-import {
-  ISubscribersDefine,
-  ITenantDefine,
-  ReservedVariablesMap,
-  TriggerContextTypeEnum,
-  TriggerEventStatusEnum,
-  TriggerTenantContext,
-} from '@novu/shared';
+import { ReservedVariablesMap, TriggerContextTypeEnum, TriggerEventStatusEnum } from '@novu/shared';
 
-import { ParseEventRequestCommand } from './parse-event-request.command';
-
+import { ParseEventRequestCommand, ParseEventRequestMulticastCommand } from './parse-event-request.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { VerifyPayload, VerifyPayloadCommand } from '../verify-payload';
 
@@ -112,12 +104,17 @@ export class ParseEventRequest {
 
     command.payload = merge({}, defaultPayload, command.payload);
 
-    const jobData = {
+    let jobData = {
       ...command,
-      to: command.to,
       actor: command.actor,
       transactionId,
-    };
+    } as ParseEventRequestCommand;
+
+    if ((command as ParseEventRequestMulticastCommand).to?.length > 0) {
+      jobData = jobData as ParseEventRequestMulticastCommand;
+      jobData.to = (command as ParseEventRequestMulticastCommand).to;
+    }
+
     await this.workflowQueueService.add(transactionId, jobData, command.organizationId);
 
     return {
@@ -190,14 +187,6 @@ export class ParseEventRequest {
       file: Buffer.from(attachment.file, 'base64'),
       storagePath: `${command.organizationId}/${command.environmentId}/${hat()}/${attachment.name}`,
     }));
-  }
-
-  public mapTenant(tenant: TriggerTenantContext): ITenantDefine {
-    if (typeof tenant === 'string') {
-      return { identifier: tenant };
-    }
-
-    return tenant;
   }
 
   public getReservedVariablesTypes(template: NotificationTemplateEntity): TriggerContextTypeEnum[] {

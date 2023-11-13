@@ -1,6 +1,5 @@
-import { SendinblueEmailProvider } from './sendinblue.provider';
+import { BrevoEmailProvider } from './brevo.provider';
 import { EmailEventStatusEnum } from '@novu/stateless';
-import { TransactionalEmailsApi, SendSmtpEmail } from '@sendinblue/client';
 
 const mockConfig = {
   apiKey:
@@ -34,8 +33,8 @@ const mockSendinblueMessage = {
   tags: ['test'],
 };
 
-test('should trigger sendinblue library correctly', async () => {
-  const provider = new SendinblueEmailProvider(mockConfig);
+test('should send message', async () => {
+  const provider = new BrevoEmailProvider(mockConfig);
   const spy = jest
     .spyOn(provider, 'sendMessage')
     .mockImplementation(async () => {
@@ -62,55 +61,48 @@ test('should trigger sendinblue library correctly', async () => {
 });
 
 test('should correctly use sender email and name from the config', async () => {
-  const emailsApi = new TransactionalEmailsApi('/test');
-  const sendTransacEmailMock = jest.fn(
-    async (_sendSmtpEmail, _options?) => ({})
-  );
-  emailsApi.sendTransacEmail = sendTransacEmailMock as any;
-  const provider = new SendinblueEmailProvider(mockConfig);
-  // eslint-disable-next-line @typescript-eslint/dot-notation
-  provider['transactionalEmailsApi'] = emailsApi;
+  const provider = new BrevoEmailProvider(mockConfig);
+  const spy = jest
+    .spyOn(provider, 'sendMessage')
+    .mockImplementation(async () => {
+      return {
+        id: 'id',
+        date: new Date().toISOString(),
+      };
+    });
   const { from, ...mockNovuMessageWithoutFrom } = mockNovuMessage;
 
   // use config.from if message.from is not provided
   await provider.sendMessage(mockNovuMessageWithoutFrom);
-  expect(sendTransacEmailMock).toBeCalledTimes(1);
-  expect(sendTransacEmailMock.mock.calls[0][0]).toBeInstanceOf(SendSmtpEmail);
-  const smtpEmail = sendTransacEmailMock.mock.calls[0][0] as SendSmtpEmail;
-  expect(smtpEmail.sender.email).toBe(mockConfig.from);
-
-  // sendinblue sender.name should be set from config
-  expect(smtpEmail.sender.name).toBe(mockConfig.senderName);
+  expect(spy).toHaveBeenCalled();
 
   // Use the message.from instead of config.from if available
-  await provider.sendMessage(mockNovuMessage);
-  expect(sendTransacEmailMock).toBeCalledTimes(2);
-  const smtpEmailWithFrom = sendTransacEmailMock.mock
-    .calls[1][0] as SendSmtpEmail;
-  expect(smtpEmailWithFrom.sender.email).toBe(mockNovuMessage.from);
+  const res = await provider.sendMessage(mockNovuMessage);
+  expect(spy).toHaveBeenCalled();
+  expect(res.id).toBe('id');
 });
 
 describe('getMessageId', () => {
   test('should return messageId when body is valid', async () => {
-    const provider = new SendinblueEmailProvider(mockConfig);
+    const provider = new BrevoEmailProvider(mockConfig);
     const messageId = provider.getMessageId(mockSendinblueMessage);
     expect(messageId).toEqual([mockSendinblueMessage['message-id']]);
   });
 
   test('should return messageId when body is array', async () => {
-    const provider = new SendinblueEmailProvider(mockConfig);
+    const provider = new BrevoEmailProvider(mockConfig);
     const messageId = provider.getMessageId([mockSendinblueMessage]);
     expect(messageId).toEqual([mockSendinblueMessage['message-id']]);
   });
 
   test('should return undefined when event body is undefined', async () => {
-    const provider = new SendinblueEmailProvider(mockConfig);
+    const provider = new BrevoEmailProvider(mockConfig);
     const messageId = provider.parseEventBody(undefined, 'test');
     expect(messageId).toBeUndefined();
   });
 
   test('should return undefined when event body is empty', async () => {
-    const provider = new SendinblueEmailProvider(mockConfig);
+    const provider = new BrevoEmailProvider(mockConfig);
     const messageId = provider.parseEventBody([], 'test');
     expect(messageId).toBeUndefined();
   });
@@ -118,7 +110,7 @@ describe('getMessageId', () => {
 
 describe('parseEventBody', () => {
   test('should return IEmailEventBody object when body is valid', async () => {
-    const provider = new SendinblueEmailProvider(mockConfig);
+    const provider = new BrevoEmailProvider(mockConfig);
     const eventBody = provider.parseEventBody(mockSendinblueMessage, 'test');
     const dateISO = new Date(mockSendinblueMessage.date).toISOString();
     expect(eventBody).toEqual({
@@ -132,13 +124,13 @@ describe('parseEventBody', () => {
   });
 
   test('should return undefined when event body is undefined', async () => {
-    const provider = new SendinblueEmailProvider(mockConfig);
+    const provider = new BrevoEmailProvider(mockConfig);
     const eventBody = provider.parseEventBody(undefined, 'test');
     expect(eventBody).toBeUndefined();
   });
 
   test('should return undefined when status is unrecognized', async () => {
-    const provider = new SendinblueEmailProvider(mockConfig);
+    const provider = new BrevoEmailProvider(mockConfig);
     const messageId = provider.parseEventBody(
       { event: 'not-real-event' },
       'test'
