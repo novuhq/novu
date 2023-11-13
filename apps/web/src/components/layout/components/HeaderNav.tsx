@@ -19,8 +19,8 @@ import {
   Question,
   Sun,
   Logout,
+  InviteMembers,
 } from '@novu/design-system';
-
 import { useLocalThemePreference } from '../../../hooks';
 import { discordInviteUrl } from '../../../pages/quick-start/consts';
 import { useAuthContext } from '../../providers/AuthProvider';
@@ -32,7 +32,7 @@ type Props = { isIntercomOpened: boolean };
 const menuItem = [
   {
     title: 'Invite Members',
-    icon: <Mail />,
+    icon: <InviteMembers />,
     path: ROUTES.TEAM,
   },
 ];
