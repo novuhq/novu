@@ -41,4 +41,6 @@ export interface ICredentials {
   imageUrl?: string;
   state?: string;
   externalLink?: string;
+  userKey?: string;
+  appKey?: string;
 }
