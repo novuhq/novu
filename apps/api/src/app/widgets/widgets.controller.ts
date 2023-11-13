@@ -431,7 +431,7 @@ export class WidgetsController {
     let paramArray: string[] | undefined = undefined;
 
     if (param) {
-      paramArray = Array.isArray(param) ? param : param.split(',');
+      paramArray = Array.isArray(param) ? param : String(param).split(',');
     }
 
     return paramArray as string[];
