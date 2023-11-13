@@ -15,6 +15,7 @@ export class OrganizationEntity {
   };
 
   partnerConfigurations?: IPartnerConfiguration[];
+  defaultLocale?: string;
 }
 
 export type OrganizationDBModel = OrganizationEntity;
