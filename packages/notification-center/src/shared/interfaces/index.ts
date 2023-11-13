@@ -85,6 +85,9 @@ export interface IFetchingStrategy {
 export interface INovuProviderContext {
   backendUrl?: string;
   subscriberId?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
   applicationIdentifier?: string;
   isSessionInitialized: boolean;
   socketUrl?: string;

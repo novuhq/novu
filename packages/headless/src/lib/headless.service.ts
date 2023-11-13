@@ -73,7 +73,10 @@ export class HeadlessService {
       this.api.initializeSession(
         this.options.applicationIdentifier,
         this.options.subscriberId,
-        this.options.subscriberHash
+        this.options.subscriberHash,
+        this.options.firstName,
+        this.options.lastName,
+        this.options.email
       ),
   };
 

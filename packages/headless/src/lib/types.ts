@@ -37,6 +37,9 @@ export interface IHeadlessServiceOptions {
   applicationIdentifier: string;
   subscriberId?: string;
   subscriberHash?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
   config?: {
     retry?: number;
     retryDelay?: number;

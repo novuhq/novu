@@ -26,7 +26,13 @@ interface INotificationCenterWidgetProps {
 }
 
 export function NotificationCenterWidget(props: INotificationCenterWidgetProps) {
-  const [userDataPayload, setUserDataPayload] = useState<{ subscriberId: string; subscriberHash: string }>();
+  const [userDataPayload, setUserDataPayload] = useState<{
+    subscriberId: string;
+    subscriberHash: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  }>();
   const [backendUrl, setBackendUrl] = useState(API_URL);
   const [socketUrl, setSocketUrl] = useState(WS_URL);
   const [theme, setTheme] = useState<INovuThemeProvider>({});
@@ -39,7 +45,6 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
   const [colorScheme, setColorScheme] = useState<ColorScheme>('light');
   const [doLogout, setDoLogout] = useState(false);
   const [preferenceFilter, setPreferenceFilter] = useState<(userPreference: IUserPreferenceSettings) => boolean>();
-  const [showUserPreferences, setShowUserPreferences] = useState<boolean>(true);
 
   useEffect(() => {
     if (fontFamily !== DEFAULT_FONT_FAMILY) {
@@ -55,7 +60,6 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handler = ({ data }: any) => {
       if (!data) return;
-
       if (data.type === 'INIT_IFRAME') {
         setUserDataPayload(data.value.data);
 
@@ -95,10 +99,6 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
           setPreferenceFilter(() => data.value.preferenceFilter);
         }
 
-        if (data.value.showUserPreferences) {
-          setShowUserPreferences(data.value.showUserPreferences);
-        }
-
         setFrameInitialized(true);
       }
 
@@ -134,6 +134,9 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
           socketUrl={socketUrl}
           applicationIdentifier={props.applicationIdentifier as string}
           subscriberId={userDataPayload.subscriberId}
+          firstName={userDataPayload.firstName}
+          lastName={userDataPayload.lastName}
+          email={userDataPayload.email}
           onLoad={onLoad}
           subscriberHash={userDataPayload.subscriberHash}
           i18n={i18n}
@@ -150,7 +153,6 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
               preferenceFilter={preferenceFilter}
               theme={theme}
               tabs={tabs}
-              showUserPreferences={showUserPreferences}
             />
           </NovuNotificationCenterWrapper>
         </NovuProvider>

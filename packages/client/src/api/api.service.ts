@@ -106,19 +106,23 @@ export class ApiService {
       }
     );
   }
-
   async initializeSession(
     appId: string,
     subscriberId: string,
-    hmacHash = null
+    hmacHash = null,
+    firstName: string,
+    lastName: string,
+    email: string
   ) {
     return await this.httpClient.post(`/widgets/session/initialize`, {
       applicationIdentifier: appId,
       subscriberId: subscriberId,
+      firstName: firstName,
+      lastName: lastName,
+      email: email,
       hmacHash,
     });
   }
-
   async postUsageLog(
     name: string,
     payload: { [key: string]: string | boolean | undefined }
