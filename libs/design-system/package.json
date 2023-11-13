@@ -16,19 +16,21 @@
     "dist/types"
   ],
   "scripts": {
+    "start": "npm run build:watch",
     "prebuild": "rimraf dist",
+    "lint": "eslint --ext .ts,.tsx src",
     "build": "npm run build:cjs && npm run build:esm && npm run build:types",
-    "build-storybook": "storybook build",
     "build:cjs": "cross-env node_modules/.bin/tsc -p tsconfig.json",
+    "build:cjs:watch": "cross-env node_modules/.bin/tsc -w -p tsconfig.json",
+    "build:watch": "npm run build:esm:watch",
     "build:esm": "cross-env node_modules/.bin/tsc -p tsconfig.esm.json",
     "build:esm:watch": "cross-env node_modules/.bin/tsc -p tsconfig.esm.json -w --preserveWatchOutput",
     "build:types": "tsc --declaration --emitDeclarationOnly --declarationMap --declarationDir dist/types -p tsconfig.json",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build",
     "cypress:install": "cypress install",
     "cypress:open": "cross-env NODE_ENV=test cypress open",
-    "cypress:run": "cross-env NODE_OPTIONS=--max_old_space_size=4096 NODE_ENV=test cypress run --component",
-    "lint": "eslint --ext .ts,.tsx src",
-    "start": "npm run build:watch",
-    "storybook": "storybook dev -p 6006"
+    "cypress:run": "cross-env NODE_OPTIONS=--max_old_space_size=4096 NODE_ENV=test cypress run --component"
   },
   "dependencies": {
     "@cypress/react": "^7.0.3",

@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { MessageRepository, JobRepository, JobStatusEnum } from '@novu/dal';
+import { MessageRepository, JobRepository, JobStatusEnum, JobEntity } from '@novu/dal';
 import {
   StepTypeEnum,
   ExecutionDetailsSourceEnum,
@@ -42,6 +42,8 @@ export class Digest extends SendMessageType {
   }
 
   public async execute(command: SendMessageCommand) {
+    const currentJob = await this.getCurrentJob(command);
+
     const useMergedDigestId = await this.getUseMergedDigestId.execute(
       FeatureFlagCommand.create({
         environmentId: command.environmentId,
@@ -52,18 +54,18 @@ export class Digest extends SendMessageType {
 
     const getEvents = useMergedDigestId ? this.getEvents.bind(this) : this.backwardCompatibleGetEvents.bind(this);
 
-    const events = await getEvents(command);
+    const events = await getEvents(command, currentJob);
     const nextJobs = await this.getJobsToUpdate(command);
 
-    await this.createExecutionDetails.execute(
+    this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-        detail: DetailEnum.DIGESTED_EVENTS_PROVIDED,
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(currentJob),
+        detail: DetailEnum.DIGEST_TRIGGERED_EVENTS,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.SUCCESS,
         isTest: false,
         isRetry: false,
-        raw: JSON.stringify(nextJobs),
+        raw: JSON.stringify(events),
       })
     );
 
@@ -76,17 +78,13 @@ export class Digest extends SendMessageType {
       },
       {
         $set: {
-          digest: {
-            events,
-          },
+          'digest.events': events,
         },
       }
     );
   }
 
-  private async getEvents(command: SendMessageCommand) {
-    const currentJob = await this.getCurrentJob(command);
-
+  private async getEvents(command: SendMessageCommand, currentJob: JobEntity) {
     const jobs = await this.jobRepository.find(
       {
         _mergedDigestId: currentJob._id,
@@ -101,9 +99,7 @@ export class Digest extends SendMessageType {
     return [currentJob.payload, ...jobs.map((job) => job.payload)];
   }
 
-  private async backwardCompatibleGetEvents(command: SendMessageCommand) {
-    const currentJob = await this.getCurrentJob(command);
-
+  private async backwardCompatibleGetEvents(command: SendMessageCommand, currentJob: JobEntity) {
     const digestEventsCommand = DigestEventsCommand.create({
       currentJob,
       _subscriberId: command._subscriberId,

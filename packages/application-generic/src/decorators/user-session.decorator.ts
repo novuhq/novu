@@ -1,5 +1,5 @@
 import { createParamDecorator, UnauthorizedException } from '@nestjs/common';
-import * as jwt from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const UserSession = createParamDecorator((data, ctx) => {

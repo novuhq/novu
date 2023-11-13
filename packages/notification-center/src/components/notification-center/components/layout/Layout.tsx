@@ -23,10 +23,10 @@ export function Layout() {
 
   return (
     <div className={cx('nc-layout-wrapper', layoutWrapperCss(theme), css(layoutStyles))} data-test-id="layout-wrapper">
-      {screen === ScreensEnum.SETTINGS && (
+      {screen === ScreensEnum.SETTINGS ? (
         <>
           {header ? (
-            header({ setScreen })
+            header({ setScreen, screen })
           ) : (
             <UserPreferenceHeader onBackClick={() => setScreen(ScreensEnum.NOTIFICATIONS)} />
           )}
@@ -34,10 +34,9 @@ export function Layout() {
             <SubscriberPreference />
           </ContentWrapper>
         </>
-      )}
-      {screen === ScreensEnum.NOTIFICATIONS && (
+      ) : (
         <>
-          {header ? header({ setScreen }) : <Header onCogClick={() => setScreen(ScreensEnum.SETTINGS)} />}
+          {header ? header({ setScreen, screen }) : <Header onCogClick={() => setScreen(ScreensEnum.SETTINGS)} />}
           <ContentWrapper>
             {isSessionInitialized ? (
               <MainWrapper data-test-id="main-wrapper">

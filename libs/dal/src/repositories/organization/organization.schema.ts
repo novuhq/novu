@@ -1,5 +1,6 @@
 import * as mongoose from 'mongoose';
 import { Schema } from 'mongoose';
+import { ApiServiceLevelTypeEnum } from '@novu/shared';
 
 import { schemaOptions } from '../schema-default.options';
 import { OrganizationDBModel, PartnerTypeEnum } from './organization.entity';
@@ -8,6 +9,10 @@ const organizationSchema = new Schema<OrganizationDBModel>(
   {
     name: Schema.Types.String,
     logo: Schema.Types.String,
+    apiServiceLevel: {
+      type: Schema.Types.String,
+      enum: ApiServiceLevelTypeEnum,
+    },
     branding: {
       fontColor: Schema.Types.String,
       contentBackground: Schema.Types.String,

@@ -1,7 +1,6 @@
 import { format } from 'date-fns';
 
 import { ITenantEntity } from '@novu/shared';
-
 import { IExtendedColumn, Tooltip, withCellLoading, Text } from '@novu/design-system';
 
 const maxWidth = 60;
