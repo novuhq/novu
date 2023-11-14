@@ -10,7 +10,7 @@ export type ApiRateLimitEnvVarFormat =
 
 export enum ApiRateLimitConfigurationEnum {
   BURST_ALLOWANCE = 'burstAllowance',
-  REFILL_INTERVAL = 'refillInterval',
+  WINDOW_DURATION = 'windowDuration',
 }
 
 export class IApiRateLimitConfiguration implements Record<ApiRateLimitConfigurationEnum, unknown> {
@@ -21,11 +21,11 @@ export class IApiRateLimitConfiguration implements Record<ApiRateLimitConfigurat
    */
   [ApiRateLimitConfigurationEnum.BURST_ALLOWANCE]: number;
   /**
-   * The time in seconds at which the rate limit allowance is refilled.
+   * A number x >= 1 in seconds at which the rate limit allowance is refilled.
    *
-   * For example a `refillInterval` of 1 would refill the rate limit allowance every second.
+   * For example a `windowDuration` of 1 would refill the rate limit allowance every second.
    */
-  [ApiRateLimitConfigurationEnum.REFILL_INTERVAL]: number;
+  [ApiRateLimitConfigurationEnum.WINDOW_DURATION]: number;
 }
 
 export type ApiRateLimitConfigurationEnvVarFormat =
