@@ -1,5 +1,5 @@
 import { Test } from '@nestjs/testing';
-import { CacheService, ICacheService, MockCacheService } from '@novu/application-generic';
+import { CacheService, MockCacheService } from '@novu/application-generic';
 import { EvaluateApiRateLimit, EvaluateApiRateLimitCommand } from './index';
 import { UserSession } from '@novu/testing';
 import { ApiRateLimitCategoryTypeEnum, IApiRateLimitConfiguration } from '@novu/shared';
@@ -22,7 +22,7 @@ describe('EvaluateApiRateLimit', async () => {
   let session: UserSession;
   let getApiRateLimit: GetApiRateLimit;
   let getApiRateLimitConfiguration: GetApiRateLimitConfiguration;
-  let cacheService: ICacheService;
+  let cacheService: CacheService;
 
   let getApiRateLimitStub: sinon.SinonStub;
   let getApiRateLimitConfigurationStub: sinon.SinonStub;
@@ -43,7 +43,7 @@ describe('EvaluateApiRateLimit', async () => {
     useCase = moduleRef.get<EvaluateApiRateLimit>(EvaluateApiRateLimit);
     getApiRateLimit = moduleRef.get<GetApiRateLimit>(GetApiRateLimit);
     getApiRateLimitConfiguration = moduleRef.get<GetApiRateLimitConfiguration>(GetApiRateLimitConfiguration);
-    cacheService = moduleRef.get<ICacheService>(CacheService);
+    cacheService = moduleRef.get<CacheService>(CacheService);
 
     getApiRateLimitStub = sinon.stub(getApiRateLimit, 'execute').resolves(mockDefaultLimit);
     getApiRateLimitConfigurationStub = sinon
