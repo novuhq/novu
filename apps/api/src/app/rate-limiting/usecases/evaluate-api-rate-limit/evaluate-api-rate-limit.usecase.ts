@@ -69,10 +69,10 @@ export class EvaluateApiRateLimit {
         reset,
       };
     } catch (error) {
-      const message = 'Failed to evaluate rate limit';
-      Logger.error(message, LOG_CONTEXT);
-      Logger.error(error, LOG_CONTEXT);
-      throw new ServiceUnavailableException(message);
+      const apiMessage = 'Failed to evaluate rate limit';
+      const logMessage = `${apiMessage} for Organization: "${command.organizationId}". Error: "${error}"`;
+      Logger.error(logMessage, LOG_CONTEXT);
+      throw new ServiceUnavailableException(apiMessage);
     }
   }
 
