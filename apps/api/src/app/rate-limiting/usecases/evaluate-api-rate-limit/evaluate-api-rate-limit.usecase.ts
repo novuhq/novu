@@ -4,6 +4,7 @@ import { EvaluateApiRateLimitCommand } from './evaluate-api-rate-limit.command';
 import { GetApiRateLimit } from '../get-api-rate-limit';
 import { CacheService, buildEvaluateApiRateLimitKey } from '@novu/application-generic';
 import { GetApiRateLimitConfiguration } from '../get-api-rate-limit-configuration';
+import { EvaluateApiRateLimitResponse } from './evaluate-api-rate-limit.types';
 
 const LOG_CONTEXT = 'EvaluateApiRateLimit';
 
@@ -12,6 +13,7 @@ type UpstashRedisClient = ConstructorParameters<typeof Ratelimit>[0]['redis'];
 @Injectable()
 export class EvaluateApiRateLimit {
   private ephemeralCache = new Map<string, number>();
+  public readonly DEFAULT_WINDOW_DURATION = 60;
 
   constructor(
     private getApiRateLimit: GetApiRateLimit,
@@ -19,15 +21,7 @@ export class EvaluateApiRateLimit {
     private cacheService: CacheService
   ) {}
 
-  async execute(command: EvaluateApiRateLimitCommand): Promise<{
-    success: boolean;
-    limit: number;
-    remaining: number;
-    reset: number;
-    windowDuration: number;
-    burstLimit: number;
-    refillRate: number;
-  }> {
+  async execute(command: EvaluateApiRateLimitCommand): Promise<EvaluateApiRateLimitResponse> {
     const cacheClient = this.getCacheClient();
 
     if (!cacheClient) {
