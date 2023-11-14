@@ -24,6 +24,9 @@ export class EvaluateApiRateLimit {
     limit: number;
     remaining: number;
     reset: number;
+    windowDuration: number;
+    burstLimit: number;
+    refillRate: number;
   }> {
     const cacheClient = this.getCacheClient();
 
@@ -39,13 +42,13 @@ export class EvaluateApiRateLimit {
       organizationId: command.organizationId,
     });
 
-    const { burstAllowance, refillInterval } = this.getApiRateLimitConfiguration.defaultApiRateLimitConfiguration;
+    const { burstAllowance, windowDuration } = this.getApiRateLimitConfiguration.defaultApiRateLimitConfiguration;
     const burstLimit = this.getBurstLimit(maxLimit, burstAllowance);
-    const refillRate = this.getRefillRate(maxLimit, refillInterval);
+    const refillRate = this.getRefillRate(maxLimit, windowDuration);
 
     const ratelimit = new Ratelimit({
       redis: cacheClient,
-      limiter: Ratelimit.tokenBucket(refillRate, `${refillInterval} s`, burstLimit),
+      limiter: Ratelimit.tokenBucket(refillRate, `${windowDuration} s`, burstLimit),
       prefix: '', // Empty cache key prefix to give us full control over the key format
       ephemeralCache: this.ephemeralCache,
     });
@@ -67,6 +70,9 @@ export class EvaluateApiRateLimit {
         limit,
         remaining,
         reset,
+        windowDuration,
+        burstLimit,
+        refillRate,
       };
     } catch (error) {
       const apiMessage = 'Failed to evaluate rate limit';
@@ -92,7 +98,7 @@ export class EvaluateApiRateLimit {
     return Math.floor(limit * (1 + burstAllowance));
   }
 
-  private getRefillRate(limit: number, refillInterval: number): number {
-    return limit * refillInterval;
+  private getRefillRate(limit: number, windowDuration: number): number {
+    return limit * windowDuration;
   }
 }

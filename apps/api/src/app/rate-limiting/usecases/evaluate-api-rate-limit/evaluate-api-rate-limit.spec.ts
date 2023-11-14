@@ -1,9 +1,8 @@
 import { Test } from '@nestjs/testing';
-import { Ratelimit } from '@upstash/ratelimit';
 import { CacheService, ICacheService, MockCacheService } from '@novu/application-generic';
 import { EvaluateApiRateLimit, EvaluateApiRateLimitCommand } from './index';
 import { UserSession } from '@novu/testing';
-import { ApiRateLimitCategoryTypeEnum } from '@novu/shared';
+import { ApiRateLimitCategoryTypeEnum, IApiRateLimitConfiguration } from '@novu/shared';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
 import { GetApiRateLimit } from '../get-api-rate-limit';
@@ -11,7 +10,7 @@ import { GetApiRateLimitConfiguration } from '../get-api-rate-limit-configuratio
 import { SharedModule } from '../../../shared/shared.module';
 import { RateLimitingModule } from '../../rate-limiting.module';
 
-const mockApiRateLimitConfiguration = { burstAllowance: 0.2, refillInterval: 2 };
+const mockApiRateLimitConfiguration: IApiRateLimitConfiguration = { burstAllowance: 0.2, windowDuration: 2 };
 const mockDefaultLimit = 60;
 const mockBurstLimit = 72;
 const mockRemaining = mockBurstLimit - 1;
@@ -113,6 +112,44 @@ describe('EvaluateApiRateLimit', async () => {
 
       expect(result.reset).to.be.greaterThan(0);
     });
+
+    it('should return the correct refill rate', async () => {
+      const testRefillRate = mockDefaultLimit * mockApiRateLimitConfiguration.windowDuration;
+
+      const result = await useCase.execute(
+        EvaluateApiRateLimitCommand.create({
+          organizationId: session.organization._id,
+          environmentId: session.environment._id,
+          apiRateLimitCategory: mockApiRateLimitCategory,
+        })
+      );
+
+      expect(result.refillRate).to.equal(testRefillRate);
+    });
+
+    it('should return the correct refill interval', async () => {
+      const result = await useCase.execute(
+        EvaluateApiRateLimitCommand.create({
+          organizationId: session.organization._id,
+          environmentId: session.environment._id,
+          apiRateLimitCategory: mockApiRateLimitCategory,
+        })
+      );
+
+      expect(result.windowDuration).to.equal(mockApiRateLimitConfiguration.windowDuration);
+    });
+
+    it('should return the correct burst limit', async () => {
+      const result = await useCase.execute(
+        EvaluateApiRateLimitCommand.create({
+          organizationId: session.organization._id,
+          environmentId: session.environment._id,
+          apiRateLimitCategory: mockApiRateLimitCategory,
+        })
+      );
+
+      expect(result.burstLimit).to.equal(mockBurstLimit);
+    });
   });
 
   describe('Successful invocation of cache methods', () => {
@@ -174,51 +211,6 @@ describe('EvaluateApiRateLimit', async () => {
       } catch (e) {
         expect(e.message).to.equal('Rate limiting cache service is not available');
       }
-    });
-  });
-
-  describe('Rate limit algorithm parameters', () => {
-    it('should call the rate limit algorithm with the correct refill rate', async () => {
-      const rateLimitAlgorithmSpy = sinon.spy(Ratelimit, 'tokenBucket');
-      const testRefillRate = mockDefaultLimit * mockApiRateLimitConfiguration.refillInterval;
-
-      await useCase.execute(
-        EvaluateApiRateLimitCommand.create({
-          organizationId: session.organization._id,
-          environmentId: session.environment._id,
-          apiRateLimitCategory: mockApiRateLimitCategory,
-        })
-      );
-
-      expect(rateLimitAlgorithmSpy.getCall(0).args[0]).to.equal(testRefillRate);
-    });
-
-    it('should call the rate limit algorithm with the correct refill interval', async () => {
-      const rateLimitAlgorithmSpy = sinon.spy(Ratelimit, 'tokenBucket');
-
-      await useCase.execute(
-        EvaluateApiRateLimitCommand.create({
-          organizationId: session.organization._id,
-          environmentId: session.environment._id,
-          apiRateLimitCategory: mockApiRateLimitCategory,
-        })
-      );
-
-      expect(rateLimitAlgorithmSpy.getCall(0).args[1]).to.equal(`${mockApiRateLimitConfiguration.refillInterval} s`);
-    });
-
-    it('should call the rate limit algorithm with the correct burst limit', async () => {
-      const rateLimitAlgorithmSpy = sinon.spy(Ratelimit, 'tokenBucket');
-
-      await useCase.execute(
-        EvaluateApiRateLimitCommand.create({
-          organizationId: session.organization._id,
-          environmentId: session.environment._id,
-          apiRateLimitCategory: mockApiRateLimitCategory,
-        })
-      );
-
-      expect(rateLimitAlgorithmSpy.getCall(0).args[2]).to.equal(mockBurstLimit);
     });
   });
 });
