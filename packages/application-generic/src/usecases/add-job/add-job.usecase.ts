@@ -16,14 +16,12 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../usecases';
-import {
-  CalculateDelayService,
-  JobsOptions,
-  StandardQueueService,
-} from '../../services';
+import { CalculateDelayService, JobsOptions } from '../../services';
+import { StandardQueueService } from '../../services/queues';
 import { LogDecorator } from '../../logging';
 import { InstrumentUsecase } from '../../instrumentation';
 import { validateDigest } from './validation';
+import { IStandardDataDto } from '../../dtos/standard-job.dto';
 
 export enum BackoffStrategiesEnum {
   WEBHOOK_FILTER_BACKOFF = 'webhookFilterBackoff',
@@ -170,7 +168,7 @@ export class AddJob {
       options.attempts = this.standardQueueService.DEFAULT_ATTEMPTS;
     }
 
-    const jobData = {
+    const jobData: IStandardDataDto = {
       _environmentId: job._environmentId,
       _id: job._id,
       _organizationId: job._organizationId,
@@ -183,12 +181,12 @@ export class AddJob {
       LOG_CONTEXT
     );
 
-    await this.standardQueueService.addMinimalJob(
-      job._id,
-      jobData,
-      command.organizationId,
-      options
-    );
+    await this.standardQueueService.addMinimalJob({
+      name: job._id,
+      data: jobData,
+      groupId: command.organizationId,
+      options: options,
+    });
 
     if (delay) {
       const logMessage =

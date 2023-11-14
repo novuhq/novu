@@ -1,11 +1,8 @@
 import { ReadinessService } from './readiness.service';
 
 import { BullMqService } from '../bull-mq';
-import {
-  StandardQueueService,
-  SubscriberProcessQueueService,
-  WorkflowQueueService,
-} from '../queues';
+import { StandardQueueService, WorkflowQueueService } from '../queues';
+import { SubscriberProcessQueueService } from '../queues/subscriber-process/subscriber-process-queue.service';
 import { StandardWorkerService, WorkerBaseService } from '../workers';
 import {
   StandardQueueServiceHealthIndicator,

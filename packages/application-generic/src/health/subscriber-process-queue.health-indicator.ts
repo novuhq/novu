@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { SubscriberProcessQueueService } from '../services/queues';
+import { SubscriberProcessQueueService } from '../services/queues/subscriber-process/subscriber-process-queue.service';
 import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import { QueueHealthIndicator } from './queue-health-indicator.service';
 

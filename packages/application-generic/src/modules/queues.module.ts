@@ -16,9 +16,9 @@ import {
   CompletedJobsMetricQueueService,
   InboundParseQueue,
   StandardQueueService,
-  SubscriberProcessQueueService,
   WebSocketsQueueService,
   WorkflowQueueService,
+  SubscriberProcessQueueService,
 } from '../services/queues';
 import {
   ActiveJobsMetricWorkerService,

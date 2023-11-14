@@ -8,6 +8,8 @@ import { WebSocketWorker } from './web-socket.worker';
 
 import { SocketModule } from '../socket.module';
 import { ExternalServicesRoute } from '../usecases/external-services-route';
+import { IWebSocketDataDto } from '@novu/application-generic/build/main/dtos/web-sockets-job.dto';
+import { WebSocketEventEnum } from '@novu/shared';
 
 let webSocketsQueueService: WebSocketsQueueService;
 let webSocketWorker: WebSocketWorker;
@@ -57,15 +59,15 @@ describe('WebSocket Worker', () => {
     const _environmentId = 'web-socket-queue-environment-id';
     const _organizationId = 'web-socket-queue-organization-id';
     const _userId = 'web-socket-queue-user-id';
-    const jobData = {
-      _id: jobId,
-      test: 'web-socket-queue-job-data',
+    const jobData: IWebSocketDataDto = {
+      payload: { messageId: 'web-socket-queue-job-message-id' },
+      event: WebSocketEventEnum.RECEIVED,
       _environmentId,
       _organizationId,
-      _userId,
+      userId: _userId,
     };
 
-    await webSocketsQueueService.add(jobId, jobData, _organizationId);
+    await webSocketsQueueService.add({ name: jobId, data: jobData, groupId: _organizationId });
 
     expect(await webSocketsQueueService.queue.getActiveCount()).to.equal(1);
     expect(await webSocketsQueueService.queue.getWaitingCount()).to.equal(0);

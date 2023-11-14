@@ -1,9 +1,9 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { JobTopicNameEnum } from '@novu/shared';
+import { QueueOptions } from '../../bull-mq';
 
-import { QueueBaseService } from './queue-base.service';
-
-import { QueueOptions } from '../bull-mq';
+import { QueueBaseService } from '../queue-base.service';
+import { IInboundParseBulkJobDto, IInboundParseJobDto } from '../../../dtos';
 
 const LOG_CONTEXT = 'InboundParseQueueService';
 
@@ -15,6 +15,14 @@ export class InboundParseQueueService extends QueueBaseService {
     Logger.log(`Creating queue ${this.topic}`, LOG_CONTEXT);
 
     this.createQueue(this.getOverrideOptions());
+  }
+
+  public async add(data: IInboundParseJobDto) {
+    return await super.add(data);
+  }
+
+  public async addBulk(data: IInboundParseBulkJobDto[]) {
+    return await super.addBulk(data);
   }
 
   private getOverrideOptions(): QueueOptions {

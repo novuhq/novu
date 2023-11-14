@@ -39,7 +39,8 @@ import { ApiException } from '../../utils/exceptions';
 import { ProcessTenant, ProcessTenantCommand } from '../process-tenant';
 import { MapTriggerRecipients } from '../map-trigger-recipients/map-trigger-recipients.use-case';
 import { MapTriggerRecipientsCommand } from '../map-trigger-recipients/map-trigger-recipients.command';
-import { SubscriberProcessQueueService } from '../../services/queues/subscriber-process-queue.service';
+import { SubscriberProcessQueueService } from '../../services/queues/subscriber-process/subscriber-process-queue.service';
+import { IProcessSubscriberBulkJobDto } from '../../dtos/process-subscriber-job.dto';
 
 const LOG_CONTEXT = 'TriggerEventUseCase';
 const QUEUE_CHUNK_SIZE = 100;
@@ -329,11 +330,11 @@ export class TriggerEvent {
   }
 
   private mapSubscribersToJobs(
-    subscribers: { subscriberId: string }[],
+    subscribers: ISubscribersDefine[],
     command: TriggerEventCommand,
-    actorProcessed,
-    template
-  ) {
+    actorProcessed: SubscriberEntity,
+    template: NotificationTemplateEntity
+  ): IProcessSubscriberBulkJobDto[] {
     return subscribers.map((subscriber) => {
       return {
         name: command.transactionId + subscriber.subscriberId,
@@ -365,10 +366,13 @@ export class TriggerEvent {
     return tenant;
   }
 
-  private async subscriberProcessQueueAddBulk(jobs) {
+  private async subscriberProcessQueueAddBulk(
+    jobs: IProcessSubscriberBulkJobDto[]
+  ) {
     return await Promise.all(
-      _.chunk(jobs, QUEUE_CHUNK_SIZE).map((chunk) =>
-        this.subscriberProcessQueueService.addBulk(chunk)
+      _.chunk(jobs, QUEUE_CHUNK_SIZE).map(
+        (chunk: IProcessSubscriberBulkJobDto[]) =>
+          this.subscriberProcessQueueService.addBulk(chunk)
       )
     );
   }

@@ -1,6 +1,7 @@
 import { Test } from '@nestjs/testing';
 
 import { StandardQueueService } from './standard-queue.service';
+import { IStandardDataDto } from '../../../dtos/standard-job.dto';
 
 let standardQueueService: StandardQueueService;
 
@@ -58,14 +59,17 @@ describe('Standard Queue service', () => {
       const _environmentId = 'standard-environment-id';
       const _organizationId = 'standard-organization-id';
       const _userId = 'standard-user-id';
-      const jobData = {
-        _id: jobId,
-        test: 'standard-job-data',
+      const jobData: IStandardDataDto = {
+        _id: 'standard-job-data',
         _environmentId,
         _organizationId,
-        _userId,
+        _userId: _userId,
       };
-      await standardQueueService.add(jobId, jobData, _organizationId);
+      await standardQueueService.add({
+        name: jobId,
+        data: jobData,
+        groupId: _organizationId,
+      });
 
       expect(await standardQueueService.queue.getActiveCount()).toEqual(0);
       expect(await standardQueueService.queue.getWaitingCount()).toEqual(1);
@@ -88,14 +92,17 @@ describe('Standard Queue service', () => {
       const _environmentId = 'standard-environment-id';
       const _organizationId = 'standard-organization-id';
       const _userId = 'standard-user-id';
-      const jobData = {
+      const jobData: IStandardDataDto = {
         _id: jobId,
-        test: 'standard-job-data-2',
         _environmentId,
         _organizationId,
-        _userId,
+        _userId: _userId,
       };
-      await standardQueueService.addMinimalJob(jobId, jobData, _organizationId);
+      await standardQueueService.addMinimalJob({
+        name: jobId,
+        data: jobData,
+        groupId: _organizationId,
+      });
 
       expect(await standardQueueService.queue.getActiveCount()).toEqual(0);
       expect(await standardQueueService.queue.getWaitingCount()).toEqual(1);

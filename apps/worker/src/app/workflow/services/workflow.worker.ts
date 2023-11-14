@@ -7,10 +7,11 @@ import {
   storage,
   Store,
   TriggerEvent,
-  TriggerEventCommand,
   WorkflowWorkerService,
   WorkerOptions,
   WorkerProcessor,
+  IWorkflowDataDto,
+  TriggerEventCommand,
 } from '@novu/application-generic';
 import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 
@@ -29,7 +30,7 @@ export class WorkflowWorker extends WorkflowWorkerService implements INovuWorker
   }
 
   private getWorkerProcessor(): WorkerProcessor {
-    return async ({ data }: { data: TriggerEventCommand }) => {
+    return async ({ data }: { data: IWorkflowDataDto }) => {
       return await new Promise(async (resolve, reject) => {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const _this = this;
@@ -44,7 +45,7 @@ export class WorkflowWorker extends WorkflowWorkerService implements INovuWorker
 
             storage.run(new Store(PinoLogger.root), () => {
               _this.triggerEventUsecase
-                .execute(data)
+                .execute(data as TriggerEventCommand)
                 .then(resolve)
                 .catch(reject)
                 .finally(() => {

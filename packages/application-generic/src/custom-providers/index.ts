@@ -5,12 +5,13 @@ import {
   CacheService,
   DistributedLockService,
   FeatureFlagsService,
-  ReadinessService,
+} from '../services';
+import {
   StandardQueueService,
-  SubscriberProcessQueueService,
   WebSocketsQueueService,
   WorkflowQueueService,
-} from '../services';
+  SubscriberProcessQueueService,
+} from '../services/queues';
 import {
   GetIsTopicNotificationEnabled,
   GetUseMergedDigestId,

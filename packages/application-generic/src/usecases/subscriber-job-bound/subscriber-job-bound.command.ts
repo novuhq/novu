@@ -9,8 +9,12 @@ import { ISubscribersDefine, ITenantDefine } from '@novu/shared';
 import { SubscriberEntity } from '@novu/dal';
 
 import { EnvironmentWithUserCommand } from '../../commands';
+import { IProcessSubscriberDataDto } from '../../dtos';
 
-export class SubscriberJobBoundCommand extends EnvironmentWithUserCommand {
+export class SubscriberJobBoundCommand
+  extends EnvironmentWithUserCommand
+  implements IProcessSubscriberDataDto
+{
   @IsString()
   @IsDefined()
   transactionId: string;
@@ -31,9 +35,6 @@ export class SubscriberJobBoundCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   actor?: SubscriberEntity | undefined;
-
-  @IsDefined()
-  to: ISubscribersDefine[];
 
   @IsDefined()
   @IsMongoId()

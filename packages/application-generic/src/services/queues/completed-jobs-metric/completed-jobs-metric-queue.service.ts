@@ -1,7 +1,6 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { JobTopicNameEnum } from '@novu/shared';
-
-import { QueueBaseService } from './queue-base.service';
+import { QueueBaseService } from '../queue-base.service';
 
 const LOG_CONTEXT = 'CompletedJobsMetricQueueService';
 

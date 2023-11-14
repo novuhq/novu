@@ -59,16 +59,21 @@ export class CompletedJobsMetricService {
         if (!exists) {
           Logger.debug(`metricJob doesn't exist, creating it`, LOG_CONTEXT);
 
-          return await this.completedJobsMetricQueueService.add(METRIC_JOB_ID, undefined, '', {
-            jobId: METRIC_JOB_ID,
-            repeatJobKey: METRIC_JOB_ID,
-            repeat: {
-              immediately: true,
-              pattern: '0 * * * * *',
+          return await this.completedJobsMetricQueueService.add({
+            name: METRIC_JOB_ID,
+            data: undefined,
+            groupId: '',
+            options: {
+              jobId: METRIC_JOB_ID,
+              repeatJobKey: METRIC_JOB_ID,
+              repeat: {
+                immediately: true,
+                pattern: '0 * * * * *',
+              },
+              removeOnFail: true,
+              removeOnComplete: true,
+              attempts: 1,
             },
-            removeOnFail: true,
-            removeOnComplete: true,
-            attempts: 1,
           });
         }
 

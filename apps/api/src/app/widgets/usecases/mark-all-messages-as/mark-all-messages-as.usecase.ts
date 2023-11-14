@@ -56,24 +56,15 @@ export class MarkAllMessagesAs {
     const isUnreadCountChanged =
       command.markAs === MarkMessagesAsEnum.READ || command.markAs === MarkMessagesAsEnum.UNREAD;
 
-    const countQuery = isUnreadCountChanged ? { read: false } : { seen: false };
-
-    const count = await this.messageRepository.getCount(
-      command.environmentId,
-      subscriber._id,
-      ChannelTypeEnum.IN_APP,
-      countQuery
-    );
-
-    this.webSocketsQueueService.add(
-      'sendMessage',
-      {
+    this.webSocketsQueueService.add({
+      name: 'sendMessage',
+      data: {
         event: isUnreadCountChanged ? WebSocketEventEnum.UNREAD : WebSocketEventEnum.UNSEEN,
         userId: subscriber._id,
         _environmentId: command.environmentId,
       },
-      subscriber._organizationId
-    );
+      groupId: subscriber._organizationId,
+    });
 
     this.analyticsService.track(
       `Mark all messages as ${command.markAs}- [Notification Center]`,

@@ -364,7 +364,11 @@ class Mailin extends events.EventEmitter {
         const username: string = parts[0];
         const environmentId = username.split('-nv-e=').at(-1);
 
-        inboundMailService.inboundParseQueueService.add(finalizedMessage.messageId, finalizedMessage, environmentId);
+        inboundMailService.inboundParseQueueService.add({
+          name: finalizedMessage.messageId,
+          data: finalizedMessage,
+          groupId: environmentId,
+        });
 
         return resolve();
       });

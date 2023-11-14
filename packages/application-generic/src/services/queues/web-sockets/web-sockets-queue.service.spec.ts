@@ -1,6 +1,8 @@
 import { Test } from '@nestjs/testing';
 
 import { WebSocketsQueueService } from './web-sockets-queue.service';
+import { IWebSocketDataDto } from '../../../dtos/web-sockets-job.dto';
+import { WebSocketEventEnum } from '@novu/shared';
 
 let webSocketsQueueService: WebSocketsQueueService;
 
@@ -47,14 +49,19 @@ describe('WebSockets Queue service', () => {
       const _environmentId = 'web-sockets-queue-environment-id';
       const _organizationId = 'web-sockets-queue-organization-id';
       const _userId = 'web-sockets-queue-user-id';
-      const jobData = {
-        _id: jobId,
-        test: 'web-sockets-queue-job-data',
+      const jobData: IWebSocketDataDto = {
+        event: WebSocketEventEnum.RECEIVED,
+        payload: { messageId: 'web-sockets-queue-job-message-id' },
         _environmentId,
         _organizationId,
-        _userId,
+        userId: _userId,
       };
-      await webSocketsQueueService.add(jobId, jobData, _organizationId);
+
+      await webSocketsQueueService.add({
+        name: jobId,
+        data: jobData,
+        groupId: _organizationId,
+      });
 
       expect(await webSocketsQueueService.queue.getActiveCount()).toEqual(0);
       expect(await webSocketsQueueService.queue.getWaitingCount()).toEqual(1);
@@ -84,11 +91,11 @@ describe('WebSockets Queue service', () => {
         _organizationId,
         _userId,
       };
-      await webSocketsQueueService.addMinimalJob(
-        jobId,
-        jobData,
-        _organizationId
-      );
+      await webSocketsQueueService.addMinimalJob({
+        name: jobId,
+        data: jobData,
+        groupId: _organizationId,
+      });
 
       expect(await webSocketsQueueService.queue.getActiveCount()).toEqual(0);
       expect(await webSocketsQueueService.queue.getWaitingCount()).toEqual(1);

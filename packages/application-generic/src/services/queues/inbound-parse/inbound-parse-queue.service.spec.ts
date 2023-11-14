@@ -1,6 +1,7 @@
 import { Test } from '@nestjs/testing';
 
 import { InboundParseQueueService } from './inbound-parse-queue.service';
+import { IInboundParseDataDto } from '../../../dtos';
 
 let inboundParseQueueService: InboundParseQueueService;
 
@@ -65,7 +66,11 @@ describe('Inbound Parse Queue service', () => {
         _organizationId,
         _userId,
       };
-      await inboundParseQueueService.add(jobId, jobData, _organizationId);
+      await inboundParseQueueService.add({
+        name: jobId,
+        data: jobData as unknown as IInboundParseDataDto,
+        groupId: _organizationId,
+      });
 
       expect(await inboundParseQueueService.queue.getActiveCount()).toEqual(0);
       expect(await inboundParseQueueService.queue.getWaitingCount()).toEqual(1);
@@ -96,11 +101,11 @@ describe('Inbound Parse Queue service', () => {
         _organizationId,
         _userId,
       };
-      await inboundParseQueueService.addMinimalJob(
-        jobId,
-        jobData,
-        _organizationId
-      );
+      await inboundParseQueueService.addMinimalJob({
+        name: jobId,
+        data: jobData,
+        groupId: _organizationId,
+      });
 
       expect(await inboundParseQueueService.queue.getActiveCount()).toEqual(0);
       expect(await inboundParseQueueService.queue.getWaitingCount()).toEqual(1);

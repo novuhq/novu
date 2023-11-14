@@ -65,7 +65,12 @@ describe('Workflow Queue service', () => {
         _organizationId,
         _userId,
       };
-      await workflowQueueService.add(jobId, jobData, _organizationId);
+
+      await workflowQueueService.addMinimalJob({
+        name: jobId,
+        data: jobData,
+        groupId: _organizationId,
+      });
 
       expect(await workflowQueueService.queue.getActiveCount()).toEqual(0);
       expect(await workflowQueueService.queue.getWaitingCount()).toEqual(1);
@@ -95,7 +100,11 @@ describe('Workflow Queue service', () => {
         _organizationId,
         _userId,
       };
-      await workflowQueueService.addMinimalJob(jobId, jobData, _organizationId);
+      await workflowQueueService.addMinimalJob({
+        name: jobId,
+        data: jobData,
+        groupId: _organizationId,
+      });
 
       expect(await workflowQueueService.queue.getActiveCount()).toEqual(0);
       expect(await workflowQueueService.queue.getWaitingCount()).toEqual(1);

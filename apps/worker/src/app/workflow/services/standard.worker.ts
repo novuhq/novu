@@ -1,14 +1,10 @@
 const nr = require('newrelic');
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import {
-  ExecutionDetailsSourceEnum,
-  ExecutionDetailsStatusEnum,
-  IJobData,
-  ObservabilityBackgroundTransactionEnum,
-} from '@novu/shared';
+import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import {
   getStandardWorkerOptions,
   INovuWorker,
+  IStandardDataDto,
   Job,
   PinoLogger,
   StandardWorkerService,
@@ -45,7 +41,7 @@ export class StandardWorker extends StandardWorkerService implements INovuWorker
 
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOptions());
 
-    this.worker.on('failed', async (job: Job<IJobData, void, string>, error: Error): Promise<void> => {
+    this.worker.on('failed', async (job: Job<IStandardDataDto, void, string>, error: Error): Promise<void> => {
       await this.jobHasFailed(job, error);
     });
   }
@@ -59,22 +55,26 @@ export class StandardWorker extends StandardWorkerService implements INovuWorker
     };
   }
 
-  private extractMinimalJobData(job: any): {
+  private extractMinimalJobData(data: IStandardDataDto): {
     environmentId: string;
     organizationId: string;
     jobId: string;
     userId: string;
   } {
-    const { _environmentId: environmentId, _id: jobId, _organizationId: organizationId, _userId: userId } = job;
+    const { _environmentId: environmentId, _id: jobId, _organizationId: organizationId, _userId: userId } = data;
 
     if (!environmentId || !jobId || !organizationId || !userId) {
-      const message = job.payload.message;
+      const message = data.payload?.message;
+
+      if (!message) {
+        throw new Error('Job data is missing required fields' + JSON.stringify(data));
+      }
 
       return {
         environmentId: message._environmentId,
         jobId: message._jobId,
         organizationId: message._organizationId,
-        userId: job.userId,
+        userId: userId,
       };
     }
 
@@ -87,7 +87,7 @@ export class StandardWorker extends StandardWorkerService implements INovuWorker
   }
 
   private getWorkerProcessor() {
-    return async ({ data }: { data: IJobData | any }) => {
+    return async ({ data }: { data: IStandardDataDto }) => {
       const minimalJobData = this.extractMinimalJobData(data);
 
       Logger.verbose(`Job ${minimalJobData.jobId} is being processed in the new instance standard worker`, LOG_CONTEXT);
@@ -125,7 +125,7 @@ export class StandardWorker extends StandardWorkerService implements INovuWorker
     };
   }
 
-  private async jobHasCompleted(job: Job<IJobData, void, string>): Promise<void> {
+  private async jobHasCompleted(job: Job<IStandardDataDto, void, string>): Promise<void> {
     let jobId;
 
     try {
@@ -146,7 +146,7 @@ export class StandardWorker extends StandardWorkerService implements INovuWorker
     }
   }
 
-  private async jobHasFailed(job: Job<IJobData, void, string>, error: Error): Promise<void> {
+  private async jobHasFailed(job: Job<IStandardDataDto, void, string>, error: Error): Promise<void> {
     let jobId;
 
     try {

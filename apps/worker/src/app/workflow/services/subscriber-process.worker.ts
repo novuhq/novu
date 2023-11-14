@@ -6,10 +6,10 @@ import {
   SubscriberJobBound,
   SubscriberProcessWorkerService,
   PinoLogger,
-  SubscriberJobBoundCommand,
   storage,
   Store,
   WorkerOptions,
+  IProcessSubscriberDataDto,
 } from '@novu/application-generic';
 
 const LOG_CONTEXT = 'SubscriberProcessWorker';
@@ -22,7 +22,7 @@ export class SubscriberProcessWorker extends SubscriberProcessWorkerService {
   }
 
   public getWorkerProcessor() {
-    return async ({ data }: { data: SubscriberJobBoundCommand }) => {
+    return async ({ data }: { data: IProcessSubscriberDataDto }) => {
       return await new Promise(async (resolve, reject) => {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const _this = this;

@@ -104,18 +104,12 @@ export class ParseEventRequest {
 
     command.payload = merge({}, defaultPayload, command.payload);
 
-    let jobData = {
+    const jobData = {
       ...command,
-      actor: command.actor,
       transactionId,
     } as ParseEventRequestCommand;
 
-    if ((command as ParseEventRequestMulticastCommand).to?.length > 0) {
-      jobData = jobData as ParseEventRequestMulticastCommand;
-      jobData.to = (command as ParseEventRequestMulticastCommand).to;
-    }
-
-    await this.workflowQueueService.add(transactionId, jobData, command.organizationId);
+    await this.workflowQueueService.add({ name: transactionId, data: jobData, groupId: command.organizationId });
 
     return {
       acknowledged: true,

@@ -210,7 +210,7 @@ export class BullMqService {
     data: {
       name: string;
       data: BullMqJobData;
-      options: BulkJobOptions;
+      options?: BulkJobOptions;
       groupId?: string;
     }[]
   ) {

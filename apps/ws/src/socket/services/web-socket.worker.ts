@@ -1,3 +1,5 @@
+import { IWebSocketDataDto } from '@novu/application-generic/build/main/dtos/web-sockets-job.dto';
+
 const nr = require('newrelic');
 import { Injectable, Logger } from '@nestjs/common';
 
@@ -37,14 +39,16 @@ export class WebSocketWorker extends WebSocketsWorkerService implements INovuWor
           'WS Service',
           function () {
             const transaction = nr.getTransaction();
+            const { data: jobData } = job;
+            const data = jobData as IWebSocketDataDto;
 
             _this.externalServicesRoute
               .execute(
                 ExternalServicesRouteCommand.create({
-                  userId: job.data.userId,
-                  event: job.data.event,
-                  payload: job.data.payload,
-                  _environmentId: job.data._environmentId,
+                  userId: data.userId,
+                  event: data.event,
+                  payload: data.payload,
+                  _environmentId: data._environmentId,
                 })
               )
               .then(resolve)
