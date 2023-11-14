@@ -51,8 +51,8 @@ describe('EvaluateApiRateLimit', async () => {
       .stub(getApiRateLimitConfiguration, 'defaultApiRateLimitConfiguration')
       .value(mockApiRateLimitConfiguration);
     // This mock is slightly uncomfortable because it's dependent on the algorithm implementation,
-    // but it is required due to the algorithm having a hard dependency on running a Lua script which
-    // would require further mocking.
+    // but it is required due to the algorithm having a hard dependency on running a Lua script on
+    // Redis instance would require further mocking.
     // The first value is the remaining rate limit, the second value is the reset time.
     cacheServiceEvalStub = sinon.stub(cacheService, 'eval').resolves([mockRemaining, mockReset]);
     cacheServiceIsEnabledStub = sinon.stub(cacheService, 'cacheEnabled').returns(true);
