@@ -8,18 +8,13 @@ export class OneSignalHandler extends BasePushHandler {
   }
 
   buildProvider(credentials: ICredentials) {
-    if (
-      !credentials.userKey ||
-      !credentials.applicationId ||
-      !credentials.appKey
-    ) {
+    if (!credentials.apiKey || !credentials.applicationId) {
       throw Error('Config is not valid for OneSignal');
     }
 
     this.provider = new OneSignalPushProvider({
       appId: credentials.applicationId,
-      appKey: credentials.appKey,
-      userKey: credentials.userKey,
+      apiKey: credentials.apiKey,
     });
   }
 }
