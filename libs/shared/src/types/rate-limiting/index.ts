@@ -13,7 +13,7 @@ export enum ApiRateLimitConfigurationEnum {
   REFILL_INTERVAL = 'refillInterval',
 }
 
-export class IApiRateLimitConfiguration implements Record<ApiRateLimitConfigurationEnum, number> {
+export class IApiRateLimitConfiguration implements Record<ApiRateLimitConfigurationEnum, unknown> {
   /**
    * A decimal x >= 0 determining the proportion of base requests that are allowed in excess of the rate limit.
    *
