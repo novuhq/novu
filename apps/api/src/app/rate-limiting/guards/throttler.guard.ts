@@ -14,13 +14,14 @@ import { IJwtPayload } from '@novu/shared';
 import * as jwt from 'jsonwebtoken';
 import { ThrottleCategory } from './throttler.decorator';
 
-const HEADER_KEYS = {
-  RATE_LIMIT_REMAINING: 'RateLimit-Remaining',
-  RATE_LIMIT_LIMIT: 'RateLimit-Limit',
-  RATE_LIMIT_RESET: 'RateLimit-Reset',
-  RATE_LIMIT_POLICY: 'RateLimit-Policy',
-  RETRY_AFTER: 'Retry-After',
-};
+enum HeaderKeysEnum {
+  RATE_LIMIT_REMAINING = 'RateLimit-Remaining',
+  RATE_LIMIT_LIMIT = 'RateLimit-Limit',
+  RATE_LIMIT_RESET = 'RateLimit-Reset',
+  RATE_LIMIT_POLICY = 'RateLimit-Policy',
+  RETRY_AFTER = 'Retry-After',
+  USER_AGENT = 'User-Agent',
+}
 
 export const THROTTLED_EXCEPTION_MESSAGE = 'API rate limit exceeded';
 
@@ -59,7 +60,7 @@ export class ApiRateLimitGuard extends ThrottlerGuard {
     // Return early if the current user agent should be ignored.
     if (Array.isArray(ignoreUserAgents)) {
       for (const pattern of ignoreUserAgents) {
-        if (pattern.test(req.headers['user-agent'])) {
+        if (pattern.test(req.headers[HeaderKeysEnum.USER_AGENT.toLowerCase()])) {
           return true;
         }
       }
@@ -84,15 +85,15 @@ export class ApiRateLimitGuard extends ThrottlerGuard {
     );
     const secondsToReset = Math.max(Math.ceil((reset - Date.now()) / 1000), 0);
 
-    res.header(HEADER_KEYS.RATE_LIMIT_REMAINING, remaining);
-    res.header(HEADER_KEYS.RATE_LIMIT_LIMIT, limit);
-    res.header(HEADER_KEYS.RATE_LIMIT_RESET, secondsToReset);
-    res.header(HEADER_KEYS.RATE_LIMIT_POLICY, `${limit};w=${windowDuration};burst=${burstLimit};comment=""`);
+    res.header(HeaderKeysEnum.RATE_LIMIT_REMAINING, remaining);
+    res.header(HeaderKeysEnum.RATE_LIMIT_LIMIT, limit);
+    res.header(HeaderKeysEnum.RATE_LIMIT_RESET, secondsToReset);
+    res.header(HeaderKeysEnum.RATE_LIMIT_POLICY, `${limit};w=${windowDuration};burst=${burstLimit};comment=""`);
 
     if (success) {
       return true;
     } else {
-      res.header(HEADER_KEYS.RETRY_AFTER, secondsToReset);
+      res.header(HeaderKeysEnum.RETRY_AFTER, secondsToReset);
       throw new ThrottlerException(THROTTLED_EXCEPTION_MESSAGE);
     }
   }
