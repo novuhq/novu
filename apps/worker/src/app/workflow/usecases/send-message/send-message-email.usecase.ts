@@ -299,6 +299,7 @@ export class SendMessageEmail extends SendMessageBase {
     if (integration.providerId === EmailProviderIdEnum.EmailWebhook) {
       mailData.payloadDetails = payload;
     }
+    //check
 
     if (email && integration) {
       await this.sendMessage(integration, mailData, message, command, senderName);
