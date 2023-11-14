@@ -1,29 +1,27 @@
+import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
   IPushOptions,
   IPushProvider,
 } from '@novu/stateless';
-import * as OneSignal from '@onesignal/node-onesignal';
 
 export class OneSignalPushProvider implements IPushProvider {
   id = 'one-signal';
   channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
-  private configuration: OneSignal.Configuration;
+  private axiosInstance: AxiosInstance;
+  public readonly BASE_URL = 'https://onesignal.com/api/v1';
 
-  private oneSignal: OneSignal.DefaultApi;
   constructor(
     private config: {
       appId: string;
-      appKey: string;
-      userKey: string;
+      apiKey: string;
     }
   ) {
-    this.configuration = OneSignal.createConfiguration({
-      appKey: this.config.appKey,
-      userKey: this.config.userKey,
+    this.axiosInstance = axios.create({
+      baseURL: this.BASE_URL,
     });
-    this.oneSignal = new OneSignal.DefaultApi(this.configuration);
   }
 
   async sendMessage(
@@ -31,7 +29,7 @@ export class OneSignalPushProvider implements IPushProvider {
   ): Promise<ISendMessageSuccessResponse> {
     const { sound, badge, ...overrides } = options.overrides ?? {};
 
-    const notification: OneSignal.Notification = {
+    const notification = {
       include_player_ids: options.target,
       app_id: this.config.appId,
       headings: { en: options.title },
@@ -51,10 +49,22 @@ export class OneSignalPushProvider implements IPushProvider {
       ios_category: overrides.categoryId,
     };
 
-    const res = await this.oneSignal.createNotification(notification);
+    const notificationOptions: AxiosRequestConfig = {
+      url: '/notifications',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Basic ${this.config.apiKey}`,
+      },
+      data: JSON.stringify(notification),
+    };
+
+    const res = await this.axiosInstance.request<{ id: string }>(
+      notificationOptions
+    );
 
     return {
-      id: res.id,
+      id: res?.data.id,
       date: new Date().toISOString(),
     };
   }
