@@ -17,7 +17,7 @@ export enum StepTypeEnum {
   DELAY = 'delay',
 }
 
-export const STEP_TYPE_TO_CHANNEL_TYPE = new Map<StepTypeEnum, ChannelTypeEnum>([
+export const STEP_TYPE_TO_CHANNEL_TYPE = new Map<StepTypeEnum | string, ChannelTypeEnum>([
   [StepTypeEnum.IN_APP, ChannelTypeEnum.IN_APP],
   [StepTypeEnum.EMAIL, ChannelTypeEnum.EMAIL],
   [StepTypeEnum.SMS, ChannelTypeEnum.SMS],

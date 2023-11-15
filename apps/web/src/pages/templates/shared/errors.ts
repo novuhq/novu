@@ -10,6 +10,10 @@ export function getExplicitErrors(errors: FieldErrors<IForm>, mode: 'settings' |
     const errorIndexes = Object.keys(errors?.steps);
     errorIndexes.forEach((index) => {
       errorsArray.push(...getStepErrors(index, errors));
+      const variantErrors = getVariantErrors(index, errors)?.map((err) => err.errorMsg);
+      if (variantErrors?.length) {
+        errorsArray.push(...variantErrors);
+      }
     });
   }
 
@@ -72,7 +76,7 @@ export function getStepErrors(index: number | string, errors?: FieldErrors<IForm
 export function getVariantErrors(
   stepIndex: number | string,
   errors?: FieldErrors<IForm>
-): { errorMsg: string; variantIndex: number }[] {
+): undefined | { errorMsg: string; variantIndex: number }[] {
   if (errors?.steps) {
     const variantsErrors = errors.steps[stepIndex]?.variants?.reduce((acc, variant, variantIndex) => {
       const variantErrors = variant?.template;
@@ -87,7 +91,7 @@ export function getVariantErrors(
       return acc;
     }, []);
 
-    return variantsErrors?.sort((a, b) => a.variantIndex - b.variantIndex);
+    return variantsErrors;
   }
 
   return [];
@@ -112,5 +116,5 @@ export function hasGroupError(stepIndex: number, errors?: FieldErrors<IForm>): b
   const stepErrors = getStepErrors(stepIndex, errors);
   const variantErrors = getVariantErrors(stepIndex, errors);
 
-  return stepErrors?.length > 0 || variantErrors?.length > 0;
+  return stepErrors?.length > 0 || (!!variantErrors && variantErrors?.length > 0);
 }

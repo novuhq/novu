@@ -186,7 +186,7 @@ export function WorkflowNode({
                 <ActionWrapper showGroupError={showGroupError}>
                   {showGroupError ? (
                     <Group spacing={4} position="left" noWrap>
-                      <ErrorIcon color={colors.error} width="16px" height="16px" />
+                      <ErrorIcon color={colors.error} style={{ width: '16px', minWidth: '16px', height: '16px' }} />
                       <Text color={colors.error} rows={1} weight="bold">
                         Some variants contain errors
                       </Text>
@@ -449,7 +449,7 @@ const ActionWrapper = styled.div<{ showGroupError?: boolean }>`
   ${({ showGroupError }) =>
     showGroupError
       ? `
-      background: linear-gradient(0deg, rgba(229, 69, 69, 0.20) 0%, rgba(229, 69, 69, 0.20) 100%), #23232B;
+      background: ${colors.errorGradient}, ${colors.B17};
       color:${colors.error};`
       : ''}
 `;

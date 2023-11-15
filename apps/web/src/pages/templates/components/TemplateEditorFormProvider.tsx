@@ -1,6 +1,6 @@
 import { createContext, useEffect, useMemo, useCallback, useContext, useState } from 'react';
 import slugify from 'slugify';
-import { FormProvider, useForm, useFieldArray } from 'react-hook-form';
+import { FormProvider, useForm, useFieldArray, FieldErrors } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useParams } from 'react-router-dom';
 import * as cloneDeep from 'lodash.clonedeep';
@@ -23,6 +23,7 @@ import { v4 as uuid4 } from 'uuid';
 import { useEffectOnce, useNotificationGroup } from '../../../hooks';
 import { useCreate } from '../hooks/useCreate';
 import { stepNames } from '../constants';
+import { getExplicitErrors } from '../shared/errors';
 
 const defaultEmailBlocks: IEmailBlock[] = [
   {
@@ -122,6 +123,7 @@ interface ITemplateEditorFormContext {
   isDeleting: boolean;
   trigger?: INotificationTrigger;
   onSubmit: (data: IForm) => Promise<void>;
+  onInvalid: (errors: FieldErrors<IForm>) => void;
   addStep: (channelType: StepTypeEnum, id: string, stepIndex?: number) => void;
   deleteStep: (index: number) => void;
   addVariant: (uuid: string) => IFormStep | undefined;
@@ -135,6 +137,7 @@ const TemplateEditorFormContext = createContext<ITemplateEditorFormContext>({
   isDeleting: false,
   trigger: undefined,
   onSubmit: (() => {}) as any,
+  onInvalid: () => {},
   addStep: () => {},
   deleteStep: () => {},
   addVariant: () => undefined,
@@ -242,6 +245,10 @@ const TemplateEditorFormProvider = ({ children }) => {
     [templateId, updateNotificationTemplate, setTrigger, reset]
   );
 
+  const onInvalid = useCallback((errors: FieldErrors<IForm>) => {
+    errorMessage(getExplicitErrors(errors));
+  }, []);
+
   const addStep = useCallback(
     (channelType: StepTypeEnum, id: string, stepIndex?: number) => {
       const newStep: IFormStep = makeStep(channelType, id);
@@ -272,10 +279,11 @@ const TemplateEditorFormProvider = ({ children }) => {
       }
 
       const newVariant = makeVariantFromStep(stepToVariant);
-      const newVariants = [newVariant, ...(stepToVariant?.variants ?? [])];
+      const newVariants = [...(stepToVariant?.variants ?? []), newVariant];
 
       methods.setValue(`steps.${index}.variants`, newVariants, {
         shouldDirty: true,
+        shouldValidate: true,
       });
 
       return newVariant;
@@ -296,10 +304,12 @@ const TemplateEditorFormProvider = ({ children }) => {
 
       methods.setValue(`steps.${index}.variants`, newVariants, {
         shouldDirty: true,
+        shouldValidate: true,
       });
     },
     [methods]
   );
+
   const value = useMemo<ITemplateEditorFormContext>(
     () => ({
       template,
@@ -309,6 +319,7 @@ const TemplateEditorFormProvider = ({ children }) => {
       isDeleting,
       trigger: trigger,
       onSubmit,
+      onInvalid,
       addStep,
       deleteStep,
       addVariant,
@@ -322,6 +333,7 @@ const TemplateEditorFormProvider = ({ children }) => {
       isDeleting,
       trigger,
       onSubmit,
+      onInvalid,
       addStep,
       deleteStep,
       addVariant,

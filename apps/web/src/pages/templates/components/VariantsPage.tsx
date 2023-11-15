@@ -3,11 +3,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import styled from '@emotion/styled';
-import { ChannelTypeEnum, StepTypeEnum, DELAYED_STEPS } from '@novu/shared';
+import { StepTypeEnum, DELAYED_STEPS } from '@novu/shared';
 import { ChevronPlainDown, colors, ErrorIcon, Text } from '@novu/design-system';
 
-import { useEnvController, useGetPrimaryIntegration, useHasActiveIntegrations } from '../../../hooks';
-import { getStepErrors, getVariantErrors } from '../shared/errors';
+import { useEnvController } from '../../../hooks';
 import { FloatingButton } from './FloatingButton';
 import { IForm } from './formTypes';
 import { useTemplateEditorForm } from './TemplateEditorFormProvider';
@@ -16,16 +15,14 @@ import { VariantsListSidebar } from './VariantsListSidebar';
 import { When } from '../../../components/utils/When';
 import { NODE_ERROR_TYPES } from '../workflow/workflow/node-types/utils';
 import { useBasePath } from '../hooks/useBasePath';
+import { ItemTypeEnum, useVariantListErrors } from './useVariantListErrors';
 
 export function VariantsPage() {
   const navigate = useNavigate();
   const basePath = useBasePath();
-  const {
-    watch,
-    formState: { errors },
-  } = useFormContext<IForm>();
+  const { watch } = useFormContext<IForm>();
   const { channel, stepUuid = '' } = useParams<{
-    channel: StepTypeEnum | undefined;
+    channel: StepTypeEnum;
     stepUuid: string;
   }>();
   const { readonly: isReadonly } = useEnvController();
@@ -34,10 +31,10 @@ export function VariantsPage() {
   const [scrollPosition, setScrollPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isScrollable, setScrollable] = useState(false);
   const [errorState, setErrorState] = useState<{
-    variantIndex: number;
+    itemType: ItemTypeEnum;
+    variantIndex?: number;
     errorMessage: string;
-    currentErrorIndex: number;
-    variantErrorsIndex: number;
+    errorIndex: number;
     errorType: NODE_ERROR_TYPES;
   } | null>(null);
 
@@ -70,84 +67,19 @@ export function VariantsPage() {
 
   const variants = step?.variants ?? [];
 
-  const { hasActiveIntegration } = useHasActiveIntegrations({
-    filterByEnv: true,
-    channelType: channel as unknown as ChannelTypeEnum,
-  });
-  const { primaryIntegration, isPrimaryStep } = useGetPrimaryIntegration({
-    filterByEnv: true,
-    channelType: channel as unknown as ChannelTypeEnum,
-  });
-
-  const missingProviderError = useMemo(() => {
-    if (!hasActiveIntegration && channel) {
-      return { errorMsg: `Provider is missing!`, errorType: NODE_ERROR_TYPES.MISSING_PROVIDER };
-    }
-
-    if (isPrimaryStep && !primaryIntegration) {
-      return { errorMsg: `Primary provider is missing!`, errorType: NODE_ERROR_TYPES.MISSING_PRIMARY_PROVIDER };
-    }
-
-    return null;
-  }, [hasActiveIntegration, channel, isPrimaryStep, primaryIntegration]);
-
-  const { variantsErrors, variantErrorsCount, variantsErrorMap } = useMemo(() => {
-    const rootVariantIndex = variants.length;
-    const errorData = missingProviderError
-      ? [
-          {
-            variantIndex: rootVariantIndex,
-            errorMsg: missingProviderError.errorMsg,
-            errorType: missingProviderError.errorType,
-          },
-        ]
-      : [];
-    const rootStepErrors = getStepErrors(stepIndex, errors).map((error) => ({
-      errorMsg: error,
-      errorType: NODE_ERROR_TYPES.TEMPLATE_ERROR,
-      variantIndex: rootVariantIndex,
-    }));
-
-    if (rootStepErrors) {
-      errorData.push(...rootStepErrors);
-    }
-
-    const variantErrors = getVariantErrors(stepIndex, errors)?.map((error) => ({
-      ...error,
-      errorType: NODE_ERROR_TYPES.TEMPLATE_ERROR,
-    }));
-    if (variantErrors && variantErrors.length > 0) {
-      errorData.push(...variantErrors);
-    }
-
-    const errorMap = errorData?.reduce<Record<string, string>>((acc, error) => {
-      acc[`variant-${error.variantIndex}`] = error.errorMsg;
-
-      return acc;
-    }, {});
-
-    const errorsCount = Object.keys(errorData ?? {}).length;
-
-    return {
-      variantsErrors: errorData,
-      variantsErrorMap: errorMap,
-      variantErrorsCount: errorsCount,
-    };
-  }, [variants.length, missingProviderError, stepIndex, errors]);
+  const allErrors = useVariantListErrors();
 
   useEffect(() => {
-    if (variantsErrors?.length > 0) {
+    if (allErrors.errors.length > 0) {
+      const firstError = allErrors.errors[0];
       setErrorState({
-        variantIndex: variantsErrors[0].variantIndex,
-        errorMessage: variantsErrors[0].errorMsg,
-        currentErrorIndex: 1,
-        variantErrorsIndex: 0,
-        errorType: variantsErrors[0].errorType,
+        ...firstError,
+        errorIndex: 0,
       });
     } else {
       setErrorState(null);
     }
-  }, [variantsErrors]);
+  }, [allErrors]);
 
   if (!channel) {
     return null;
@@ -158,27 +90,30 @@ export function VariantsPage() {
   }
 
   const handleErrorNavigation = (direction: 'up' | 'down') => {
-    if (!errorState || !variantsErrors || !variantsErrorMap) {
+    const hasErrors = allErrors.errors.length > 0;
+    if (!errorState || !hasErrors) {
       return;
     }
 
-    const { currentErrorIndex, variantErrorsIndex } = errorState;
-    const nextErrorIndex = direction === 'up' ? variantErrorsIndex - 1 : variantErrorsIndex + 1;
+    const { errorIndex } = errorState;
+    const nextErrorIndex = direction === 'up' ? errorIndex - 1 : errorIndex + 1;
 
-    if (nextErrorIndex < 0 || nextErrorIndex >= variantErrorsCount) {
+    if (nextErrorIndex < 0 || nextErrorIndex >= allErrors.errors.length) {
       return;
     }
 
-    const nextVariantIndex = variantsErrors[nextErrorIndex].variantIndex;
+    const error = allErrors.errors[nextErrorIndex];
 
     setErrorState({
-      variantIndex: nextVariantIndex,
-      errorMessage: variantsErrors[nextErrorIndex].errorMsg,
-      currentErrorIndex: currentErrorIndex + (direction === 'up' ? -1 : 1),
-      variantErrorsIndex: nextErrorIndex,
-      errorType: variantsErrors[nextErrorIndex].errorType,
+      variantIndex: error.variantIndex,
+      errorMessage: error.errorMessage,
+      itemType: error.itemType,
+      errorIndex: nextErrorIndex,
+      errorType: error.errorType,
     });
   };
+
+  const isRootErrorActive = errorState?.itemType === ItemTypeEnum.ROOT;
 
   return (
     <VariantsListSidebar isLoading={isLoading}>
@@ -186,17 +121,31 @@ export function VariantsPage() {
         <Group position="apart" px={12}>
           <Group position="left" spacing={4}>
             <ErrorIcon color={colors.error} width="16px" height="16px" />
-            <Text color={colors.error}>{errorState?.errorMessage}</Text>
+            <Text color={colors.error} data-test-id="variants-list-current-error">
+              {errorState?.errorMessage}
+            </Text>
           </Group>
           <Group position="left" spacing={20}>
-            <Text color={colors.error}>
-              {errorState?.currentErrorIndex}/{variantErrorsCount}
+            <Text color={colors.error} data-test-id="variants-list-errors-count">
+              {(errorState?.errorIndex ?? 0) + 1}/{allErrors.errors.length}
             </Text>
             <Divider orientation="vertical" size="sm" color="#ffffff33" />
-            <ActionIcon color="gray" radius="xl" size="xs" onClick={() => handleErrorNavigation('up')}>
+            <ActionIcon
+              color="gray"
+              radius="xl"
+              size="xs"
+              onClick={() => handleErrorNavigation('up')}
+              data-test-id="variants-list-errors-up"
+            >
               <ChevronPlainUp color={colors.error} />
             </ActionIcon>
-            <ActionIcon color="gray" radius="xl" size="xs" onClick={() => handleErrorNavigation('down')}>
+            <ActionIcon
+              color="gray"
+              radius="xl"
+              size="xs"
+              onClick={() => handleErrorNavigation('down')}
+              data-test-id="variants-list-errors-down"
+            >
               <ChevronPlainDown color={colors.error} />
             </ActionIcon>
           </Group>
@@ -209,9 +158,10 @@ export function VariantsPage() {
         viewportRef={setViewportRef}
         onScrollPositionChange={setScrollPosition}
       >
-        {variants?.map((variant, variantIndex) => {
+        {[...variants].reverse().map((variant, idx) => {
+          const variantIndex = variants.length - idx - 1;
           const isActiveError = errorState?.variantIndex === variantIndex;
-          const errorMessage = isActiveError ? errorState.errorMessage : variantsErrorMap?.[`variant-${variantIndex}`];
+          const errorMessage = isActiveError ? errorState.errorMessage : allErrors.errorsMap[`variant-${variantIndex}`];
 
           return (
             <VariantItemCard
@@ -235,13 +185,9 @@ export function VariantsPage() {
             variant={step}
             nodeType="variantRoot"
             data-test-id="variant-root-card"
-            errorMessage={
-              errorState?.variantIndex === variants.length
-                ? errorState.errorMessage
-                : missingProviderError?.errorMsg ?? variantsErrorMap?.[`variant-${variants.length}`]
-            }
-            isActiveError={errorState?.variantIndex === variants.length}
-            nodeErrorType={errorState?.variantIndex === variants.length ? errorState.errorType : undefined}
+            errorMessage={isRootErrorActive ? errorState.errorMessage : allErrors.errorsMap.root}
+            isActiveError={isRootErrorActive}
+            nodeErrorType={isRootErrorActive ? errorState.errorType : undefined}
           />
         )}
         {isScrollable && <FloatingButton isUp={scrollPosition.y > 0} onClick={scrollTo} />}

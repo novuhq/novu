@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { ReactFlowProvider } from 'react-flow-renderer';
-import { FieldErrors, useFormContext } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 
 import PageContainer from '../../../components/layout/components/PageContainer';
 import type { IForm } from '../components/formTypes';
@@ -9,8 +9,6 @@ import WorkflowEditor from '../workflow/WorkflowEditor';
 import { useEnvController, usePrompt } from '../../../hooks';
 import { BlueprintModal } from '../components/BlueprintModal';
 import { TemplateEditorFormProvider, useTemplateEditorForm } from '../components/TemplateEditorFormProvider';
-import { errorMessage } from '../../../utils/notifications';
-import { getExplicitErrors } from '../shared/errors';
 import { ROUTES } from '../../../constants/routes.enum';
 import { TourProvider } from './TourProvider';
 import { NavigateValidatorModal } from '../components/NavigateValidatorModal';
@@ -21,7 +19,7 @@ function BaseTemplateEditorPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { environment } = useEnvController();
-  const { template, isCreating, onSubmit } = useTemplateEditorForm();
+  const { template, isCreating, onSubmit, onInvalid } = useTemplateEditorForm();
   const methods = useFormContext<IForm>();
   const { handleSubmit } = methods;
   const tourStorage = useTourStorage();
@@ -31,10 +29,6 @@ function BaseTemplateEditorPage() {
   const [shouldRenderBlueprintModal, setShouldRenderBlueprintModal] = useState(false);
 
   const isCreateTemplatePage = location.pathname === ROUTES.WORKFLOWS_CREATE;
-
-  const onInvalid = async (errors: FieldErrors<IForm>) => {
-    errorMessage(getExplicitErrors(errors));
-  };
 
   const [showNavigateValidatorModal, confirmNavigate, cancelNavigate] = usePrompt(
     !methods.formState.isValid && location.pathname !== ROUTES.WORKFLOWS_CREATE && !isTouring,
