@@ -1,18 +1,20 @@
 // throttler-behind-proxy.guard.ts
 import {
+  InjectThrottlerOptions,
+  InjectThrottlerStorage,
   ThrottlerException,
   ThrottlerGuard,
   ThrottlerModuleOptions,
   ThrottlerOptions,
   ThrottlerStorage,
 } from '@nestjs/throttler';
-import { ExecutionContext, Injectable } from '@nestjs/common';
+import { ExecutionContext, Injectable, Logger } from '@nestjs/common';
 import { EvaluateApiRateLimit, EvaluateApiRateLimitCommand } from '../usecases/evaluate-api-rate-limit';
 import { Reflector } from '@nestjs/core';
-import { GetIsRequestRateLimitingEnabled } from '@novu/application-generic';
-import { IJwtPayload } from '@novu/shared';
+import { FeatureFlagCommand, GetIsRequestRateLimitingEnabled } from '@novu/application-generic';
+import { ApiRateLimitCategoryTypeEnum, IJwtPayload } from '@novu/shared';
 import * as jwt from 'jsonwebtoken';
-import { ThrottleCategory } from './throttler.decorator';
+import { ThrottlerBulk, ThrottlerCategory } from './throttler.decorator';
 
 enum HeaderKeysEnum {
   RATE_LIMIT_REMAINING = 'RateLimit-Remaining',
