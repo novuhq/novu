@@ -27,7 +27,9 @@ export const useVariantListErrors = () => {
     stepUuid: string;
   }>();
   const {
-    formState: { errors: formErrors },
+    formState: {
+      errors: { steps },
+    },
   } = useFormContext<IForm>();
   const { stepIndex } = useStepIndex();
 
@@ -62,7 +64,7 @@ export const useVariantListErrors = () => {
     };
 
     // we have to reverse errors because the variants order in the list is reversed too
-    const variantErrors = getVariantErrors(stepIndex, formErrors)?.reverse();
+    const variantErrors = getVariantErrors(stepIndex, steps)?.reverse();
     if (variantErrors && variantErrors.length > 0) {
       variantErrors.forEach((error) => {
         result.errors.push({
@@ -86,7 +88,7 @@ export const useVariantListErrors = () => {
       result.errorsMap.root = missingProviderError.errorMessage;
     }
 
-    const rootStepErrors = getStepErrors(stepIndex, formErrors).reverse();
+    const rootStepErrors = getStepErrors(stepIndex, steps).reverse();
     if (rootStepErrors) {
       rootStepErrors.forEach((error) => {
         result.errors.push({
@@ -101,5 +103,5 @@ export const useVariantListErrors = () => {
     }
 
     return result;
-  }, [missingProviderError, stepIndex, formErrors]);
+  }, [missingProviderError, stepIndex, steps]);
 };

@@ -134,7 +134,7 @@ export function Conditions({
           </Tooltip>
         </Group>
       }
-      styles={{ body: { '.sidebar-body-holder': { height: '100%' } } }}
+      styles={{ body: { '.sidebar-body-holder': { height: '100%' } }, root: { zIndex: 300 } }}
     >
       <div>
         {fields.map((item, index) => {

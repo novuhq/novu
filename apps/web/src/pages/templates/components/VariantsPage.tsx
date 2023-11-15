@@ -178,7 +178,7 @@ export function VariantsPage() {
             />
           );
         })}
-        {step && variants.length > 0 && (
+        {step && (
           <VariantItemCard
             isReadonly={isReadonly}
             key={stepUuid}
