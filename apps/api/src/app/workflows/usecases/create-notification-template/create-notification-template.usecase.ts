@@ -35,7 +35,9 @@ export class CreateNotificationTemplate {
   ) {}
 
   async execute(usecaseCommand: CreateNotificationTemplateCommand) {
-    const blueprintCommand = await this.processBlueprint(usecaseCommand);
+    const parentChangeId: string = NotificationTemplateRepository.createObjectId();
+
+    const blueprintCommand = await this.processBlueprint(usecaseCommand, parentChangeId);
     const command = blueprintCommand ?? usecaseCommand;
 
     const contentService = new ContentService();
@@ -79,7 +81,6 @@ export class CreateNotificationTemplate {
       }),
     };
 
-    const parentChangeId: string = NotificationTemplateRepository.createObjectId();
     const templateSteps: INotificationTemplateStep[] = [];
     let parentStepId: string | null = null;
 
@@ -172,11 +173,11 @@ export class CreateNotificationTemplate {
     return item;
   }
 
-  private async processBlueprint(command: CreateNotificationTemplateCommand) {
+  private async processBlueprint(command: CreateNotificationTemplateCommand, parentChangeId: string) {
     if (!command.blueprintId) return null;
 
-    const group: NotificationGroupEntity = await this.handleGroup(command.notificationGroupId, command);
-    const steps: NotificationStepEntity[] = await this.handleFeeds(command.steps as any, command);
+    const group: NotificationGroupEntity = await this.handleGroup(command.notificationGroupId, command, parentChangeId);
+    const steps: NotificationStepEntity[] = await this.handleFeeds(command.steps as any, command, parentChangeId);
 
     return CreateNotificationTemplateCommand.create({
       organizationId: command.organizationId,
@@ -198,7 +199,8 @@ export class CreateNotificationTemplate {
 
   private async handleFeeds(
     steps: NotificationStepEntity[],
-    command: CreateNotificationTemplateCommand
+    command: CreateNotificationTemplateCommand,
+    parentChangeId: string
   ): Promise<NotificationStepEntity[]> {
     for (let i = 0; i < steps.length; i++) {
       const step = steps[i];
@@ -218,21 +220,33 @@ export class CreateNotificationTemplate {
         continue;
       }
 
-      let foundFeed = await this.feedRepository.findOne({
+      let feedItem = await this.feedRepository.findOne({
         _organizationId: command.organizationId,
         identifier: blueprintFeed.identifier,
       });
 
-      if (!foundFeed) {
-        foundFeed = await this.feedRepository.create({
+      if (!feedItem) {
+        feedItem = await this.feedRepository.create({
           name: blueprintFeed.name,
           identifier: blueprintFeed.identifier,
           _environmentId: command.environmentId,
           _organizationId: command.organizationId,
         });
+
+        await this.createChange.execute(
+          CreateChangeCommand.create({
+            item: feedItem,
+            type: ChangeEntityTypeEnum.FEED,
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
+            userId: command.userId,
+            parentChangeId: parentChangeId,
+            changeId: FeedRepository.createObjectId(),
+          })
+        );
       }
 
-      step.template._feedId = foundFeed._id;
+      step.template._feedId = feedItem._id;
       steps[i] = step;
     }
 
@@ -241,7 +255,8 @@ export class CreateNotificationTemplate {
 
   private async handleGroup(
     notificationGroupId: string,
-    command: CreateNotificationTemplateCommand
+    command: CreateNotificationTemplateCommand,
+    parentChangeId: string
   ): Promise<NotificationGroupEntity> {
     const blueprintNotificationGroup = await this.notificationGroupRepository.findOne({
       _id: notificationGroupId,
@@ -263,6 +278,18 @@ export class CreateNotificationTemplate {
         _organizationId: command.organizationId,
         name: blueprintNotificationGroup.name,
       });
+
+      await this.createChange.execute(
+        CreateChangeCommand.create({
+          item: group,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          userId: command.userId,
+          type: ChangeEntityTypeEnum.NOTIFICATION_GROUP,
+          parentChangeId: parentChangeId,
+          changeId: NotificationGroupRepository.createObjectId(),
+        })
+      );
     }
 
     return group;
