@@ -15,8 +15,7 @@ export const StepNameLabel = () => {
   }
 
   const variantArrayIndex = variantIndex ? variantIndex + 1 : 1;
-  const variantNumber = variantsCount - variantArrayIndex + 1;
-  const text = isUnderVariantPath ? `Variant ${variantNumber}` : `${variantsCount} variants`;
+  const text = isUnderVariantPath ? `Variant ${variantArrayIndex}` : `${variantsCount} variants`;
 
   return (
     <Center inline>

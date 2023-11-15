@@ -133,6 +133,28 @@ describe('Workflow Editor - Variants', function () {
     }
   };
 
+  const clearEditorContent = (channel: Channel) => {
+    switch (channel) {
+      case 'inApp':
+        cy.get('#codeEditor').first().clear();
+        break;
+      case 'email':
+        cy.getByTestId('emailSubject').clear();
+        cy.getByTestId('email-editor').clear();
+        break;
+      case 'sms':
+        cy.getByTestId('smsNotificationContent').clear();
+        break;
+      case 'chat':
+        cy.getByTestId('chatNotificationContent').clear();
+        break;
+      case 'push':
+        cy.getByTestId('pushNotificationTitle').clear();
+        cy.getByTestId('pushNotificationContent').clear();
+        break;
+    }
+  };
+
   const addVariantForChannel = (channel: Channel, variantName: string) => {
     createWorkflow(`Test Add Variant Flow for ${channel}`);
 
@@ -757,6 +779,183 @@ describe('Workflow Editor - Variants', function () {
       cy.reload();
       cy.wait('@getWorkflow');
       cy.getByTestId('variants-count').should('not.exist');
+    });
+  });
+
+  describe('Variants List Errors', function () {
+    const checkCurrentError = ({ message, count }: { message: string; count: string }) => {
+      cy.getByTestId('variants-list-current-error').contains(message);
+      cy.getByTestId('variants-list-errors-count').contains(count);
+    };
+
+    const checkVariantListCard = ({
+      selector,
+      message,
+      hasBorder = false,
+    }: {
+      message: string;
+      selector: string;
+      hasBorder?: boolean;
+    }) => {
+      cy.getByTestId(selector).contains(message);
+      if (hasBorder) {
+        cy.getByTestId(selector)
+          .find('div[role="button"]')
+          .first()
+          .should('have.css', 'border-style', 'solid')
+          .and('have.css', 'border-width', '1px');
+      }
+    };
+
+    it('should show the push variant errors', function () {
+      const channel = 'push';
+      const messageTitleMissing = 'Message title is missing!';
+      const messageContentMissing = 'Message content is missing!';
+      createWorkflow('Variants List Errors');
+
+      dragAndDrop(channel);
+      editChannel(channel);
+      fillEditorContent(channel);
+      goBack();
+
+      showStepActions(channel);
+      addVariantActionClick(channel);
+      addConditions();
+      clearEditorContent(channel);
+      goBack();
+
+      checkCurrentError({ message: messageTitleMissing, count: '1/2' });
+      checkVariantListCard({ selector: 'variant-item-card-0', message: messageTitleMissing, hasBorder: true });
+
+      cy.getByTestId('variants-list-errors-down').click();
+
+      checkCurrentError({ message: messageContentMissing, count: '2/2' });
+      checkVariantListCard({ selector: 'variant-item-card-0', message: messageContentMissing, hasBorder: true });
+
+      cy.getByTestId('variants-list-errors-up').click();
+
+      checkCurrentError({ message: messageTitleMissing, count: '1/2' });
+      checkVariantListCard({ selector: 'variant-item-card-0', message: messageTitleMissing, hasBorder: true });
+    });
+
+    it('should show the push variant errors and root errors', function () {
+      const channel = 'push';
+      const messageTitleMissing = 'Message title is missing!';
+      const messageContentMissing = 'Message content is missing!';
+      createWorkflow('Variants List Errors');
+
+      dragAndDrop(channel);
+      showStepActions(channel);
+      addVariantActionClick(channel);
+      addConditions();
+      goBack();
+
+      checkCurrentError({ message: messageTitleMissing, count: '1/4' });
+      checkVariantListCard({ selector: 'variant-item-card-0', message: messageTitleMissing, hasBorder: true });
+      checkVariantListCard({ selector: 'variant-root-card', message: messageTitleMissing });
+
+      cy.getByTestId('variants-list-errors-down').click();
+
+      checkCurrentError({ message: messageContentMissing, count: '2/4' });
+      checkVariantListCard({ selector: 'variant-item-card-0', message: messageContentMissing, hasBorder: true });
+      checkVariantListCard({ selector: 'variant-root-card', message: messageTitleMissing });
+
+      cy.getByTestId('variants-list-errors-down').click();
+
+      checkCurrentError({ message: messageTitleMissing, count: '3/4' });
+      checkVariantListCard({ selector: 'variant-item-card-0', message: messageTitleMissing });
+      checkVariantListCard({ selector: 'variant-root-card', message: messageTitleMissing, hasBorder: true });
+
+      cy.getByTestId('variants-list-errors-down').click();
+
+      checkCurrentError({ message: messageContentMissing, count: '4/4' });
+      checkVariantListCard({ selector: 'variant-item-card-0', message: messageTitleMissing });
+      checkVariantListCard({ selector: 'variant-root-card', message: messageContentMissing, hasBorder: true });
+    });
+
+    it('should show the email variant and root errors', function () {
+      const channel = 'email';
+      const messageSubjectMissing = 'Email subject is missing!';
+      createWorkflow('Variants List Errors');
+
+      dragAndDrop(channel);
+      showStepActions(channel);
+      addVariantActionClick(channel);
+      addConditions();
+      goBack();
+      goBack();
+
+      showStepActions(channel);
+      addVariantActionClick(channel);
+      addConditions();
+      fillEditorContent(channel, true);
+      goBack();
+      goBack();
+
+      showStepActions(channel);
+      addVariantActionClick(channel);
+      addConditions();
+      goBack();
+
+      checkCurrentError({ message: messageSubjectMissing, count: '1/3' });
+      checkVariantListCard({ selector: 'variant-item-card-2', message: messageSubjectMissing, hasBorder: true });
+      checkVariantListCard({ selector: 'variant-item-card-1', message: VARIANT_EDITOR_TEXT });
+      checkVariantListCard({ selector: 'variant-item-card-0', message: messageSubjectMissing });
+      checkVariantListCard({ selector: 'variant-root-card', message: messageSubjectMissing });
+
+      cy.getByTestId('variants-list-errors-down').click();
+
+      checkCurrentError({ message: messageSubjectMissing, count: '2/3' });
+      checkVariantListCard({ selector: 'variant-item-card-2', message: messageSubjectMissing });
+      checkVariantListCard({ selector: 'variant-item-card-1', message: VARIANT_EDITOR_TEXT });
+      checkVariantListCard({ selector: 'variant-item-card-0', message: messageSubjectMissing, hasBorder: true });
+      checkVariantListCard({ selector: 'variant-root-card', message: messageSubjectMissing });
+
+      cy.getByTestId('variants-list-errors-down').click();
+
+      checkCurrentError({ message: messageSubjectMissing, count: '3/3' });
+      checkVariantListCard({ selector: 'variant-item-card-2', message: messageSubjectMissing });
+      checkVariantListCard({ selector: 'variant-item-card-1', message: VARIANT_EDITOR_TEXT });
+      checkVariantListCard({ selector: 'variant-item-card-0', message: messageSubjectMissing });
+      checkVariantListCard({ selector: 'variant-root-card', message: messageSubjectMissing, hasBorder: true });
+    });
+
+    it('should show the provider missing error', function () {
+      cy.intercept('*/integrations', {
+        data: [],
+        delay: 0,
+      }).as('getIntegrations');
+      cy.intercept('*/integrations/active', {
+        data: [],
+        delay: 0,
+      }).as('getActiveIntegrations');
+
+      const channel = 'email';
+      const messageSubjectMissing = 'Email subject is missing!';
+      const messageProviderMissing = 'Provider is missing!';
+      createWorkflow('Variants List Errors');
+
+      dragAndDrop(channel);
+      showStepActions(channel);
+      addVariantActionClick(channel);
+      addConditions();
+      goBack();
+
+      checkCurrentError({ message: messageSubjectMissing, count: '1/3' });
+      checkVariantListCard({ selector: 'variant-item-card-0', message: messageSubjectMissing, hasBorder: true });
+      checkVariantListCard({ selector: 'variant-root-card', message: messageProviderMissing });
+
+      cy.getByTestId('variants-list-errors-down').click();
+
+      checkCurrentError({ message: messageProviderMissing, count: '2/3' });
+      checkVariantListCard({ selector: 'variant-item-card-0', message: messageSubjectMissing });
+      checkVariantListCard({ selector: 'variant-root-card', message: messageProviderMissing, hasBorder: true });
+
+      cy.getByTestId('variants-list-errors-down').click();
+
+      checkCurrentError({ message: messageSubjectMissing, count: '3/3' });
+      checkVariantListCard({ selector: 'variant-item-card-0', message: messageSubjectMissing });
+      checkVariantListCard({ selector: 'variant-root-card', message: messageSubjectMissing, hasBorder: true });
     });
   });
 });

@@ -1,6 +1,6 @@
 import styled from '@emotion/styled';
 import { FilterPartTypeEnum, StepTypeEnum, STEP_TYPE_TO_CHANNEL_TYPE } from '@novu/shared';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { colors, Check, Conditions as ConditionsIcon } from '@novu/design-system';
@@ -15,6 +15,7 @@ import { NodeType, WorkflowNode } from '../workflow/workflow/node-types/Workflow
 import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { IForm, IFormStep, IVariantStep } from './formTypes';
 import { useTemplateEditorForm } from './TemplateEditorFormProvider';
+import { NODE_ERROR_TYPES } from '../workflow/workflow/node-types/utils';
 
 const VariantItemCardHolder = styled.div`
   display: grid;
@@ -30,9 +31,10 @@ const FlexContainer = styled.span`
   align-items: center;
 `;
 
-const WorkflowNodeStyled = styled(WorkflowNode)`
+const WorkflowNodeStyled = styled(WorkflowNode)<{ isError: boolean }>`
   grid-column: 5 / -1;
   grid-row: 2 / -1;
+  ${({ isError }) => (isError ? `border: 1px solid ${colors.error}` : '')}
 `;
 
 const HorizontalLine = styled.span`
@@ -119,6 +121,9 @@ export const VariantItemCard = ({
   nodeType,
   variant,
   'data-test-id': dataTestId,
+  errorMessage,
+  isActiveError = false,
+  nodeErrorType,
 }: {
   isReadonly?: boolean;
   stepIndex?: number;
@@ -127,6 +132,9 @@ export const VariantItemCard = ({
   variant: IFormStep | IVariantStep;
   nodeType: NodeType;
   'data-test-id'?: string;
+  errorMessage?: string;
+  isActiveError?: boolean;
+  nodeErrorType?: NODE_ERROR_TYPES;
 }) => {
   const { setValue } = useFormContext<IForm>();
   const { channel, stepUuid = '' } = useParams<{
@@ -144,6 +152,7 @@ export const VariantItemCard = ({
   const filterPartsList = useFilterPartsList({ index: stepIndex });
   const { deleteVariant } = useTemplateEditorForm();
   const [isDeleteModalOpened, setIsDeleteModalOpened] = useState(false);
+  const variantItemCardHolderRef = useRef<HTMLDivElement | null>(null);
 
   const Icon = stepIcon[channel ?? ''];
   const variantsCount = ('variants' in variant ? variant.variants?.length : 0) ?? 0;
@@ -190,8 +199,14 @@ export const VariantItemCard = ({
     setValue(`steps.${stepIndex}.variants.${variantIndex}.filters`, newConditions, { shouldDirty: true });
   };
 
+  useEffect(() => {
+    if (isActiveError) {
+      variantItemCardHolderRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [isActiveError]);
+
   return (
-    <VariantItemCardHolder data-test-id={dataTestId}>
+    <VariantItemCardHolder ref={variantItemCardHolderRef} data-test-id={dataTestId}>
       {!isFirst ? (
         <NoSpan>No</NoSpan>
       ) : (
@@ -235,6 +250,9 @@ export const VariantItemCard = ({
         onAddConditions={onAddConditions}
         menuPosition="bottom-end"
         nodeType={nodeType}
+        errors={errorMessage}
+        isError={isActiveError}
+        nodeErrorType={nodeErrorType}
       />
       {areConditionsOpened && (
         <Conditions

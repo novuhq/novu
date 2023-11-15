@@ -88,7 +88,7 @@ export const EditorSidebarHeaderActions = () => {
     setConditionsOpened(false);
 
     if (isNewVariantCreationUrl && !proceedToNewVariant.current) {
-      const newPath = pathname.replace('/create', '');
+      const newPath = variantsCount > 0 ? pathname.replace('/create', '') : basePath;
       navigate(newPath);
     }
   };
