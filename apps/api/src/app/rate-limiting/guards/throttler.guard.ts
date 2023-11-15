@@ -27,6 +27,9 @@ enum HeaderKeysEnum {
 
 export const THROTTLED_EXCEPTION_MESSAGE = 'API rate limit exceeded';
 
+const defaultApiRateLimitCategory = ApiRateLimitCategoryTypeEnum.GLOBAL;
+const defaultIsBulk = false;
+
 @Injectable()
 export class ApiRateLimitGuard extends ThrottlerGuard {
   constructor(
@@ -83,8 +86,8 @@ export class ApiRateLimitGuard extends ThrottlerGuard {
     const handler = context.getHandler();
     const classRef = context.getClass();
     const apiRateLimitCategory =
-      this.reflector.getAllAndOverride(ThrottlerCategory, [handler, classRef]) || ApiRateLimitCategoryTypeEnum.GLOBAL;
-    const isBulk = this.reflector.getAllAndOverride(ThrottlerBulk, [handler, classRef]) || false;
+      this.reflector.getAllAndOverride(ThrottlerCategory, [handler, classRef]) || defaultApiRateLimitCategory;
+    const isBulk = this.reflector.getAllAndOverride(ThrottlerBulk, [handler, classRef]) || defaultIsBulk;
 
     const user = this.getReqUser(context);
     if (user === null) {
