@@ -28,8 +28,8 @@ export const THROTTLED_EXCEPTION_MESSAGE = 'API rate limit exceeded';
 @Injectable()
 export class ApiRateLimitGuard extends ThrottlerGuard {
   constructor(
-    options: ThrottlerModuleOptions,
-    storageService: ThrottlerStorage,
+    @InjectThrottlerOptions() protected readonly options: ThrottlerModuleOptions,
+    @InjectThrottlerStorage() protected readonly storageService: ThrottlerStorage,
     reflector: Reflector,
     private evaluateApiRateLimit: EvaluateApiRateLimit,
     private getIsRequestRateLimitingEnabled: GetIsRequestRateLimitingEnabled
@@ -38,9 +38,21 @@ export class ApiRateLimitGuard extends ThrottlerGuard {
   }
 
   protected async shouldSkip(_context: ExecutionContext): Promise<boolean> {
-    const isEnabled = this.getIsRequestRateLimitingEnabled.execute();
+    const user = this.getReqUser(_context);
+    if (user === null) {
+      return true;
+    }
+    const { organizationId, environmentId, _id } = user;
 
-    return isEnabled;
+    const isEnabled = await this.getIsRequestRateLimitingEnabled.execute(
+      FeatureFlagCommand.create({
+        environmentId,
+        organizationId,
+        userId: _id,
+      })
+    );
+
+    return !isEnabled;
   }
 
   /**
@@ -68,7 +80,9 @@ export class ApiRateLimitGuard extends ThrottlerGuard {
 
     const handler = context.getHandler();
     const classRef = context.getClass();
-    const apiRateLimitCategory = this.reflector.getAllAndOverride(ThrottleCategory, [handler, classRef]);
+    const apiRateLimitCategory =
+      this.reflector.getAllAndOverride(ThrottlerCategory, [handler, classRef]) || ApiRateLimitCategoryTypeEnum.GLOBAL;
+    const isBulk = this.reflector.getAllAndOverride(ThrottlerBulk, [handler, classRef]) || false;
 
     const user = this.getReqUser(context);
     if (user === null) {
@@ -76,19 +90,25 @@ export class ApiRateLimitGuard extends ThrottlerGuard {
     }
     const { organizationId, environmentId } = user;
 
-    const { success, limit, remaining, reset, windowDuration, burstLimit } = await this.evaluateApiRateLimit.execute(
-      EvaluateApiRateLimitCommand.create({
-        organizationId,
-        environmentId,
-        apiRateLimitCategory,
-      })
-    );
+    const { success, limit, remaining, reset, windowDuration, burstLimit, algorithm } =
+      await this.evaluateApiRateLimit.execute(
+        EvaluateApiRateLimitCommand.create({
+          organizationId,
+          environmentId,
+          apiRateLimitCategory,
+          isBulk,
+        })
+      );
+
     const secondsToReset = Math.max(Math.ceil((reset - Date.now()) / 1000), 0);
 
     res.header(HeaderKeysEnum.RATE_LIMIT_REMAINING, remaining);
     res.header(HeaderKeysEnum.RATE_LIMIT_LIMIT, limit);
     res.header(HeaderKeysEnum.RATE_LIMIT_RESET, secondsToReset);
-    res.header(HeaderKeysEnum.RATE_LIMIT_POLICY, `${limit};w=${windowDuration};burst=${burstLimit};comment=""`);
+    res.header(
+      HeaderKeysEnum.RATE_LIMIT_POLICY,
+      `${limit};w=${windowDuration};burst=${burstLimit};comment="${algorithm}";category="${apiRateLimitCategory}"`
+    );
 
     if (success) {
       return true;
@@ -100,12 +120,15 @@ export class ApiRateLimitGuard extends ThrottlerGuard {
 
   private getReqUser(context: ExecutionContext): IJwtPayload | null {
     const req = context.switchToHttp().getRequest();
-    if (req.user.organizationId) {
-      // Bearer token
-      return null;
+    Logger.log('User:' + req.user);
+    Logger.log('Authorization:' + req.headers?.authorization);
+
+    if (req?.user?.organizationId) {
+      // APIKey
+      return req.user;
     }
     if (req.headers?.authorization?.length) {
-      // APIKey
+      // Bearer token
       const token = req.headers.authorization.split(' ')[1];
       if (token) {
         return jwt.decode(token);
