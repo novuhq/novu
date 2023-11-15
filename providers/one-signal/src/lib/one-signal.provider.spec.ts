@@ -1,6 +1,6 @@
 import { OneSignalPushProvider } from './one-signal.provider';
 import axios from 'axios';
-import { IPushOptions } from 'packages/stateless/build/main';
+import { IPushOptions } from '@novu/stateless';
 
 jest.mock('axios');
 
