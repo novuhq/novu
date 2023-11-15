@@ -82,8 +82,18 @@ export class AuthService {
     origin?: SignUpOriginEnum
   ) {
     const email = normalizeEmail(profile.email);
-    let user = await this.userRepository.findByEmail(email);
+    let user = await this.userRepository.findByEmailOrLoginProvider(email, {
+      profileId: profile.id,
+      provider: authProvider,
+    });
+
     let newUser = false;
+    const userCredentials = {
+      username: profile.login,
+      provider: authProvider,
+      accessToken,
+      refreshToken,
+    };
 
     if (!user) {
       const firstName = profile.name
@@ -99,13 +109,7 @@ export class AuthService {
           email,
           firstName,
           lastName,
-          auth: {
-            username: profile.login,
-            profileId: profile.id,
-            provider: authProvider,
-            accessToken,
-            refreshToken,
-          },
+          auth: { ...userCredentials, profileId: profile.id },
         })
       );
       newUser = true;
@@ -124,6 +128,54 @@ export class AuthService {
         authProvider === AuthProviderEnum.GOOGLE
       ) {
         user = await this.updateUserUsername(user, profile, authProvider);
+
+        if (authProvider === AuthProviderEnum.GITHUB) {
+          const withoutUsername = user.tokens.find(
+            (i) => i.provider === AuthProviderEnum.GITHUB && !i.username && String(i.providerId) === String(profile.id)
+          );
+          // Checks if user's github primary email already exists but from a different authentication provider.
+          const withoutToken = user.tokens.findIndex((i) => i.provider === AuthProviderEnum.GITHUB) === -1;
+          const userUpdates: Promise<any>[] = [];
+
+          if (withoutUsername || email !== user.email) {
+            userUpdates.push(
+              this.userRepository.update(
+                {
+                  _id: user._id,
+                  'tokens.providerId': profile.id,
+                },
+                {
+                  $set: {
+                    ...(withoutUsername && { 'tokens.$.username': profile.login }),
+                    ...(email !== user.email && { email }),
+                  },
+                }
+              )
+            );
+          }
+          if (withoutToken) {
+            userUpdates.push(
+              this.userRepository.update(
+                { _id: user._id },
+                {
+                  $push: {
+                    tokens: {
+                      ...userCredentials,
+                      providerId: profile.id,
+                      valid: true,
+                    },
+                  },
+                }
+              )
+            );
+          }
+
+          if (userUpdates.length) {
+            await Promise.all(userUpdates);
+            user = await this.userRepository.findById(user._id);
+            if (!user) throw new ApiException('User not found');
+          }
+        }
       }
 
       this.analyticsService.track('[Authentication] - Login', user._id, {
