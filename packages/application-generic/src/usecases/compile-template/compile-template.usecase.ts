@@ -113,19 +113,19 @@ Handlebars.registerHelper(
       return number;
     }
 
-    const dl = options.hash.decimalLength || 2;
-    const ts = options.hash.thousandsSep || ',';
-    const ds = options.hash.decimalSep || '.';
+    const decimalLength = options.hash.decimalLength || 2;
+    const thousandsSep = options.hash.thousandsSep || ',';
+    const decimalSep = options.hash.decimalSep || '.';
 
     const value = parseFloat(number);
 
-    const re = '\\d(?=(\\d{3})+' + (dl > 0 ? '\\D' : '$') + ')';
+    const re = '\\d(?=(\\d{3})+' + (decimalLength > 0 ? '\\D' : '$') + ')';
 
-    const num = value.toFixed(Math.max(0, ~~dl));
+    const num = value.toFixed(Math.max(0, ~~decimalLength));
 
-    return (ds ? num.replace('.', ds) : num).replace(
+    return (decimalSep ? num.replace('.', decimalSep) : num).replace(
       new RegExp(re, 'g'),
-      '$&' + ts
+      '$&' + thousandsSep
     );
   }
 );
