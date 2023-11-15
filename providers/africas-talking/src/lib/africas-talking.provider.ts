@@ -28,7 +28,7 @@ export class AfricasTalkingSmsProvider implements ISmsProvider {
     options: ISmsOptions
   ): Promise<ISendMessageSuccessResponse> {
     const response = await this.africasTalkingClient.send({
-      from: this.config.from,
+      from: options.from || this.config.from,
       to: options.to,
       message: options.content,
     });
