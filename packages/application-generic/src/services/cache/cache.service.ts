@@ -30,7 +30,7 @@ export interface ICacheService {
   eval<TArgs extends (string | Buffer | number)[], TData = unknown>(
     script: string,
     keys: string[],
-    ...args: TArgs
+    args: TArgs
   ): Promise<TData>;
 }
 
@@ -236,10 +236,11 @@ export class CacheService implements ICacheService {
     return this.client?.sadd(key, ...members);
   }
 
-  public async eval<
-    TArgs extends (string | Buffer | number)[],
-    TData = unknown
-  >(script: string, keys: string[], ...args: TArgs): Promise<TData> {
+  public async eval<TData = unknown>(
+    script: string,
+    keys: string[],
+    args: (string | Buffer | number)[]
+  ): Promise<TData> {
     return this.client?.eval(
       script,
       keys.length,
