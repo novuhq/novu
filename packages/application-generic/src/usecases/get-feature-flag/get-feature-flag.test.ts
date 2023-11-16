@@ -1,4 +1,5 @@
 import {
+  GetIsRequestRateLimitingEnabled,
   GetIsTemplateStoreEnabled,
   GetIsTopicNotificationEnabled,
 } from './index';
@@ -73,6 +74,32 @@ describe('Get Feature Flag', () => {
             featureFlagCommand
           );
           expect(result).toEqual(false);
+        });
+      });
+
+      describe('IS_REQUEST_RATE_LIMITING_ENABLED', () => {
+        it('should return default hardcoded value when no SDK env is set and no feature flag is set', async () => {
+          process.env.IS_REQUEST_RATE_LIMITING_ENABLED = '';
+
+          const getIsRequestRateLimitingEnabled =
+            new GetIsRequestRateLimitingEnabled(new FeatureFlagsService());
+
+          const result = await getIsRequestRateLimitingEnabled.execute(
+            featureFlagCommand
+          );
+          expect(result).toEqual(false);
+        });
+
+        it('should return env variable value when no SDK env is set but the feature flag is set', async () => {
+          process.env.IS_REQUEST_RATE_LIMITING_ENABLED = 'true';
+
+          const getIsRequestRateLimitingEnabled =
+            new GetIsRequestRateLimitingEnabled(new FeatureFlagsService());
+
+          const result = await getIsRequestRateLimitingEnabled.execute(
+            featureFlagCommand
+          );
+          expect(result).toEqual(true);
         });
       });
     });

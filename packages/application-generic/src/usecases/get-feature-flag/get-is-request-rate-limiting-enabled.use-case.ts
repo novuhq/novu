@@ -1,21 +1,22 @@
 import { Injectable } from '@nestjs/common';
-import { SystemCriticalFlagsEnum } from '@novu/shared';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 
-import { GetSystemCriticalFlag } from './get-system-critical-flag.use-case';
+import { FeatureFlagCommand } from './get-feature-flag.command';
+import { GetFeatureFlag } from './get-feature-flag.use-case';
 
 @Injectable()
-export class GetIsRequestRateLimitingEnabled extends GetSystemCriticalFlag {
-  execute(): boolean {
+export class GetIsRequestRateLimitingEnabled extends GetFeatureFlag {
+  async execute(featureFlagCommand: FeatureFlagCommand): Promise<boolean> {
     const value = process.env.IS_REQUEST_RATE_LIMITING_ENABLED;
     const fallbackValue = false;
-    const defaultValue = this.prepareBooleanStringSystemCriticalFlag(
+    const defaultValue = this.prepareBooleanStringFeatureFlag(
       value,
       fallbackValue
     );
-    const key = SystemCriticalFlagsEnum.IS_REQUEST_RATE_LIMITING_ENABLED;
+    const key = FeatureFlagsKeysEnum.IS_REQUEST_RATE_LIMITING_ENABLED;
 
-    this.log<boolean>(key, defaultValue);
+    const command = this.buildCommand(key, defaultValue, featureFlagCommand);
 
-    return defaultValue;
+    return await this.featureFlagsService.getWithContext(command);
   }
 }
