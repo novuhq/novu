@@ -1,5 +1,5 @@
 import {
-  GetIsRequestRateLimitingEnabled,
+  GetIsApiRateLimitingEnabled,
   GetIsTemplateStoreEnabled,
   GetIsTopicNotificationEnabled,
 } from './index';
@@ -77,26 +77,28 @@ describe('Get Feature Flag', () => {
         });
       });
 
-      describe('IS_REQUEST_RATE_LIMITING_ENABLED', () => {
+      describe('IS_API_RATE_LIMITING_ENABLED', () => {
         it('should return default hardcoded value when no SDK env is set and no feature flag is set', async () => {
-          process.env.IS_REQUEST_RATE_LIMITING_ENABLED = '';
+          process.env.IS_API_RATE_LIMITING_ENABLED = '';
 
-          const getIsRequestRateLimitingEnabled =
-            new GetIsRequestRateLimitingEnabled(new FeatureFlagsService());
+          const getIsApiRateLimitingEnabled = new GetIsApiRateLimitingEnabled(
+            new FeatureFlagsService()
+          );
 
-          const result = await getIsRequestRateLimitingEnabled.execute(
+          const result = await getIsApiRateLimitingEnabled.execute(
             featureFlagCommand
           );
           expect(result).toEqual(false);
         });
 
         it('should return env variable value when no SDK env is set but the feature flag is set', async () => {
-          process.env.IS_REQUEST_RATE_LIMITING_ENABLED = 'true';
+          process.env.IS_API_RATE_LIMITING_ENABLED = 'true';
 
-          const getIsRequestRateLimitingEnabled =
-            new GetIsRequestRateLimitingEnabled(new FeatureFlagsService());
+          const getIsApiRateLimitingEnabled = new GetIsApiRateLimitingEnabled(
+            new FeatureFlagsService()
+          );
 
-          const result = await getIsRequestRateLimitingEnabled.execute(
+          const result = await getIsApiRateLimitingEnabled.execute(
             featureFlagCommand
           );
           expect(result).toEqual(true);
