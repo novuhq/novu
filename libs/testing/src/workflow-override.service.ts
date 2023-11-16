@@ -6,6 +6,7 @@ import {
   WorkflowOverrideRepository,
 } from '@novu/dal';
 import { ICreateWorkflowOverrideRequestDto } from '@novu/shared';
+import { faker } from '@faker-js/faker';
 
 export class WorkflowOverrideService {
   constructor(private config: { organizationId: string; environmentId: string }) {}
@@ -20,7 +21,7 @@ export class WorkflowOverrideService {
     const tenant = await this.tenantRepository.create({
       _organizationId: organizationId,
       _environmentId: environmentId,
-      identifier: 'identifier_123',
+      identifier: faker.datatype.uuid(),
       name: 'name_123',
       data: { test1: 'test value1', test2: 'test value2' },
     });

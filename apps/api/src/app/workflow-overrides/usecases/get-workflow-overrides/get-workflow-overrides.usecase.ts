@@ -11,11 +11,12 @@ export class GetWorkflowOverrides {
   async execute(command: GetWorkflowOverridesCommand): Promise<GetWorkflowOverridesResponseDto> {
     const { data } = await this.workflowOverrideRepository.getList(
       {
-        environmentId: command.environmentId,
         skip: command.page * command.limit,
         limit: command.limit,
       },
-      { _workflowId: command._workflowId }
+      {
+        environmentId: command.environmentId,
+      }
     );
 
     return {

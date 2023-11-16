@@ -1,9 +1,7 @@
 import { IWorkflowOverrideRequestDto } from './shared';
 
 export interface ICreateWorkflowOverrideRequestDto extends IWorkflowOverrideRequestDto {
-  workflowId?: string;
+  workflowId: string;
 
-  triggerIdentifier?: string;
-
-  tenantIdentifier?: string;
+  tenantId: string;
 }

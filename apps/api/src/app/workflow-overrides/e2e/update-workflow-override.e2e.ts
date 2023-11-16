@@ -33,7 +33,7 @@ describe('Update Workflow Override - /workflow-overrides/workflows/:workflowId/t
 
     const updatedOverrides = (
       await session.testAgent
-        .put(`/v1/workflow-overrides/workflows/${workflow._id}/tenants/${tenant.identifier}`)
+        .put(`/v1/workflow-overrides/workflows/${workflow._id}/tenants/${tenant._id}`)
         .send(updatePayload)
     ).body.data;
 
@@ -71,8 +71,8 @@ describe('Update Workflow Override - /workflow-overrides/workflows/:workflowId/t
         .send(updatePayload)
     ).body;
 
-    expect(updatedOverrides.message).to.equal('Tenant with identifier invalid-tenant-identifier is not found');
-    expect(updatedOverrides.statusCode).to.equal(404);
+    expect(updatedOverrides.statusCode).to.equal(400);
+    expect(updatedOverrides.message[0]).to.equal('_tenantId must be a mongodb id');
   });
 
   it('should fail update workflow override with invalid workflow id', async function () {
@@ -99,8 +99,8 @@ describe('Update Workflow Override - /workflow-overrides/workflows/:workflowId/t
         .send(updatePayload)
     ).body;
 
-    expect(updatedOverrides.message).to.equal(`Workflow with _workflowId ${invalidWorkflowId} is not found`);
-    expect(updatedOverrides.statusCode).to.equal(404);
+    expect(updatedOverrides.statusCode).to.equal(400);
+    expect(updatedOverrides.message[0]).to.equal(`_tenantId must be a mongodb id`);
   });
 
   it('should fail update workflow override with now existing workflow override', async function () {
@@ -134,10 +134,8 @@ describe('Update Workflow Override - /workflow-overrides/workflows/:workflowId/t
         .send(updatePayload)
     ).body;
 
-    expect(updatedOverrides.message).to.equal(
-      `Workflow override with workflow id ${workflow._id} and tenant identifier ${tenant.identifier} was not found`
-    );
-    expect(updatedOverrides.statusCode).to.equal(404);
+    expect(updatedOverrides.statusCode).to.equal(400);
+    expect(updatedOverrides.message[0]).to.equal(`_tenantId must be a mongodb id`);
   });
 
   async function initializeOverrides() {
@@ -163,8 +161,8 @@ describe('Update Workflow Override - /workflow-overrides/workflows/:workflowId/t
     const payload: ICreateWorkflowOverrideRequestDto = {
       preferenceSettings: { email: false },
       active: false,
-      triggerIdentifier: workflow.triggers[0].identifier,
-      tenantIdentifier: tenant.identifier,
+      workflowId: workflow._id,
+      tenantId: tenant._id,
     };
 
     const overrides = (await session.testAgent.post('/v1/workflow-overrides').send(payload)).body.data;

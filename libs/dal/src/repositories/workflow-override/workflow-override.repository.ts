@@ -19,15 +19,11 @@ export class WorkflowOverrideRepository extends BaseRepository<
     this.workflowOverride = WorkflowOverride;
   }
 
-  async getList(options: { environmentId: string; skip: number; limit: number }, query: { _workflowId: string }) {
+  async getList(options: { skip: number; limit: number }, query: { environmentId: string }) {
     {
       const requestQuery: Partial<IWorkflowOverride> = {
-        _environmentId: options.environmentId,
+        _environmentId: query.environmentId,
       };
-
-      if (query._workflowId != null) {
-        requestQuery._workflowId = query._workflowId;
-      }
 
       const response = await this.MongooseModel.find(requestQuery)
         .read('secondaryPreferred')

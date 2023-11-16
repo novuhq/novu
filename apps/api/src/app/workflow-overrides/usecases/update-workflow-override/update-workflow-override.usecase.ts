@@ -30,7 +30,7 @@ export class UpdateWorkflowOverride {
 
     if (!currentOverrideEntity) {
       throw new NotFoundException(
-        `Workflow override with workflow id ${command._workflowId} and tenant identifier ${command.tenantIdentifier} was not found`
+        `Workflow override with workflow id ${command._workflowId} and tenant id ${command._tenantId} was not found`
       );
     }
 
@@ -65,11 +65,11 @@ export class UpdateWorkflowOverride {
   ): Promise<{ tenant: TenantEntity; workflow: NotificationTemplateEntity }> {
     const tenant = await this.tenantRepository.findOne({
       _environmentId: command.environmentId,
-      identifier: command.tenantIdentifier,
+      _id: command._tenantId,
     });
 
     if (!tenant) {
-      throw new NotFoundException(`Tenant with identifier ${command.tenantIdentifier} is not found`);
+      throw new NotFoundException(`Tenant with id ${command._tenantId} is not found`);
     }
 
     const workflow = await this.notificationTemplateRepository.findOne({
@@ -78,7 +78,7 @@ export class UpdateWorkflowOverride {
     });
 
     if (!workflow) {
-      throw new NotFoundException(`Workflow with _workflowId ${command._workflowId} is not found`);
+      throw new NotFoundException(`Workflow with id ${command._workflowId} is not found`);
     }
 
     return { tenant, workflow };

@@ -1,21 +1,17 @@
 import { Type } from 'class-transformer';
-import { IsBoolean, IsDefined, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsBoolean, IsDefined, IsMongoId, IsOptional, ValidateNested } from 'class-validator';
 
 import { PreferenceChannels } from '../../../shared/dtos/preference-channels';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class CreateWorkflowOverrideCommand extends EnvironmentWithUserCommand {
-  @IsString()
-  @IsOptional()
-  triggerIdentifier?: string;
-
-  @IsString()
-  @IsOptional()
-  _workflowId?: string;
-
-  @IsString()
+  @IsMongoId()
   @IsDefined()
-  tenantIdentifier: string;
+  _workflowId: string;
+
+  @IsMongoId()
+  @IsDefined()
+  _tenantId: string;
 
   @IsBoolean()
   @IsOptional()

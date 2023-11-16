@@ -12,24 +12,15 @@ export class GetWorkflowOverride {
   ) {}
 
   async execute(command: GetWorkflowOverrideCommand): Promise<GetWorkflowOverrideResponseDto> {
-    const tenant = await this.tenantRepository.findOne({
-      _environmentId: command.environmentId,
-      identifier: command.tenantIdentifier,
-    });
-
-    if (!tenant) {
-      throw new NotFoundException(`Tenant with identifier ${command.tenantIdentifier} is not found`);
-    }
-
     const workflowOverride = await this.workflowOverrideRepository.findOne({
       _environmentId: command.environmentId,
       _workflowId: command._workflowId,
-      _tenantId: tenant._id,
+      _tenantId: command._tenantId,
     });
 
     if (!workflowOverride) {
       throw new NotFoundException(
-        `Workflow Override with workflow id ${command._workflowId}, tenant identifier ${command.tenantIdentifier} not found`
+        `Workflow Override with workflow id ${command._workflowId}, tenant id ${command._tenantId} not found`
       );
     }
 

@@ -34,37 +34,22 @@ export class CreateWorkflowOverride {
   private async extractEntities(
     command: CreateWorkflowOverrideCommand
   ): Promise<{ tenant: TenantEntity; workflow: NotificationTemplateEntity }> {
-    if (!command.triggerIdentifier && !command._workflowId) {
-      throw new BadRequestException(`Either triggerIdentifier or _workflowId must be provided`);
-    }
-
     const tenant = await this.tenantRepository.findOne({
       _environmentId: command.environmentId,
-      identifier: command.tenantIdentifier,
+      _id: command._tenantId,
     });
 
     if (!tenant) {
-      throw new NotFoundException(`Tenant with identifier ${command.tenantIdentifier} is not found`);
+      throw new NotFoundException(`Tenant with id ${command._tenantId} is not found`);
     }
 
-    let workflow: NotificationTemplateEntity | null = null;
-
-    if (command.triggerIdentifier) {
-      workflow = await this.notificationTemplateRepository.findByTriggerIdentifier(
-        command.environmentId,
-        command.triggerIdentifier
-      );
-    } else if (command._workflowId) {
-      workflow = await this.notificationTemplateRepository.findOne({
-        _environmentId: command.environmentId,
-        _id: command._workflowId,
-      });
-    }
+    const workflow = await this.notificationTemplateRepository.findOne({
+      _environmentId: command.environmentId,
+      _id: command._workflowId,
+    });
 
     if (!workflow) {
-      const triggerIdentifier = command.triggerIdentifier ? ` trigger identifier ${command.triggerIdentifier}` : '';
-      const workflowId = command._workflowId ? ` trigger identifier ${command._workflowId}` : '';
-      throw new Error(`Unexpected error: workflow is not found` + triggerIdentifier + workflowId);
+      throw new NotFoundException(`Workflow with id ${command._workflowId} is not found`);
     }
 
     return { tenant, workflow };

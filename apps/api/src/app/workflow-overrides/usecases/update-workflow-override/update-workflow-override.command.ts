@@ -9,9 +9,9 @@ export class UpdateWorkflowOverrideCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   _workflowId: string;
 
-  @IsString()
+  @IsMongoId()
   @IsDefined()
-  tenantIdentifier: string;
+  _tenantId: string;
 
   @IsBoolean()
   @IsOptional()

@@ -9,8 +9,4 @@ export class GetWorkflowOverridesCommand extends EnvironmentWithUserCommand {
   @IsNumber()
   @IsDefined()
   limit: number;
-
-  @IsMongoId()
-  @IsDefined()
-  _workflowId: string;
 }

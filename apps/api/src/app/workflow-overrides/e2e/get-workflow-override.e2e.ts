@@ -28,7 +28,7 @@ describe('Get workflow override - /workflow-overrides/workflows/:workflowId/tena
     if (!tenant) throw new Error('Tenant not found');
 
     const res = await session.testAgent.get(
-      `/v1/workflow-overrides/workflows/${createdWorkflowOverride._workflowId}/tenants/${tenant.identifier}`
+      `/v1/workflow-overrides/workflows/${createdWorkflowOverride._workflowId}/tenants/${tenant._id}`
     );
 
     const foundWorkflowOverride: IWorkflowOverride = res.body.data;

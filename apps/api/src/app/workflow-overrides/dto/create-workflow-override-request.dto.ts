@@ -7,20 +7,15 @@ import { ICreateWorkflowOverrideRequestDto } from '@novu/shared';
 import { PreferenceChannels } from '../../shared/dtos/preference-channels';
 
 export class CreateWorkflowOverrideRequestDto implements ICreateWorkflowOverrideRequestDto {
-  @ApiPropertyOptional()
+  @ApiProperty()
   @IsString()
-  @IsOptional()
-  triggerIdentifier?: string;
-
-  @ApiPropertyOptional()
-  @IsString()
-  @IsOptional()
-  workflowId?: string;
+  @IsDefined()
+  workflowId: string;
 
   @ApiProperty()
   @IsString()
   @IsDefined()
-  tenantIdentifier: string;
+  tenantId: string;
 
   @ApiPropertyOptional()
   @IsBoolean()
