@@ -4,6 +4,10 @@ import axios from 'axios';
 import { Duration, sub } from 'date-fns';
 import { ObjectId } from 'mongoose';
 import {
+  EnvironmentRepository,
+  ExecutionDetailsRepository,
+  JobRepository,
+  MessageRepository,
   MessageTemplateEntity,
   NotificationStepEntity,
   SubscriberEntity,
@@ -26,14 +30,24 @@ import {
   IFilterProperties,
 } from './filter-conditions.service';
 
-const filterConditionsService = new FilterConditionsService();
+const filterConditionsService = new FilterConditionsService(
+  new EnvironmentRepository(),
+  new ExecutionDetailsRepository(),
+  new JobRepository(),
+  new MessageRepository(),
+  new SubscriberRepository()
+);
 
 let findOneSubscriberStub;
 let getFilterDataStub;
 
 beforeEach(() => {
   findOneSubscriberStub = sinon.stub(SubscriberRepository.prototype, 'findOne');
-  getFilterDataStub = sinon.stub(filterConditionsService, 'getFilterData');
+  // Tests only!! TS Hack to be able to stub the private method :(
+  getFilterDataStub = sinon.stub(
+    FilterConditionsService.prototype,
+    <any>'getFilterData'
+  );
 });
 
 afterEach(() => {

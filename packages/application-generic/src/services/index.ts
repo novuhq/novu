@@ -5,7 +5,6 @@ export {
   FilterConditionsService,
   FilterProcessingDetails,
   IFilterConditionsResponse,
-  IFilterData,
   IFilterVariables,
   IUsedFilters,
 } from './filters';

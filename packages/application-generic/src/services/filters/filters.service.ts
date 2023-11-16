@@ -9,11 +9,6 @@ import {
   ITriggerPayload,
 } from '@novu/shared';
 
-export interface IFilterData {
-  subscriber?: SubscriberEntity;
-  payload?: any;
-}
-
 export interface IFilterVariables {
   payload?: ITriggerPayload;
   subscriber?: SubscriberEntity;

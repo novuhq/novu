@@ -1,8 +1,13 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 import {
+  EnvironmentRepository,
+  ExecutionDetailsRepository,
   IntegrationEntity,
   IntegrationRepository,
+  JobRepository,
+  MessageRepository,
+  SubscriberRepository,
   TenantRepository,
 } from '@novu/dal';
 
@@ -85,11 +90,19 @@ describe('select integration', function () {
   let integrationRepository: IntegrationRepository;
 
   beforeEach(async function () {
+    const filterConditionsService = new FilterConditionsService(
+      new EnvironmentRepository(),
+      new ExecutionDetailsRepository(),
+      new JobRepository(),
+      new MessageRepository(),
+      new SubscriberRepository()
+    );
+
     useCase = new SelectIntegration(
       new IntegrationRepository() as any,
       // @ts-ignore
       new GetDecryptedIntegrations(),
-      new FilterConditionsService(),
+      filterConditionsService,
       new TenantRepository()
     );
     jest.clearAllMocks();

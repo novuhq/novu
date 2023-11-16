@@ -22,7 +22,6 @@ import {
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
   IFilterConditionsResponse,
-  IFilterData,
   Instrument,
   InstrumentUsecase,
   PlatformException,

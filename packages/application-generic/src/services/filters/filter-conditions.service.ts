@@ -36,7 +36,6 @@ import { EmailEventStatusEnum } from '@novu/stateless';
 import {
   FilterProcessingDetails,
   FilterService,
-  IFilterData,
   IFilterVariables,
 } from './filters.service';
 
@@ -64,7 +63,7 @@ export type WebhookPartialPayload = Partial<{
 
 export interface IFilterConditionsResponse {
   passed: boolean;
-  data: IFilterData;
+  data: IFilterVariables;
   conditions: ICondition[];
   details: FilterProcessingDetails[];
   variables: IFilterVariables;
@@ -82,19 +81,14 @@ export interface IFilterProperties {
 
 @Injectable()
 export class FilterConditionsService extends FilterService {
-  private environmentRepository: EnvironmentRepository;
-  private executionDetailsRepository: ExecutionDetailsRepository;
-  private jobRepository: JobRepository;
-  private messageRepository: MessageRepository;
-  private subscriberRepository: SubscriberRepository;
-
-  constructor() {
+  constructor(
+    private environmentRepository: EnvironmentRepository,
+    private executionDetailsRepository: ExecutionDetailsRepository,
+    private jobRepository: JobRepository,
+    private messageRepository: MessageRepository,
+    private subscriberRepository: SubscriberRepository
+  ) {
     super();
-    this.environmentRepository = new EnvironmentRepository();
-    this.executionDetailsRepository = new ExecutionDetailsRepository();
-    this.jobRepository = new JobRepository();
-    this.messageRepository = new MessageRepository();
-    this.subscriberRepository = new SubscriberRepository();
   }
 
   public async filter(
@@ -177,11 +171,11 @@ export class FilterConditionsService extends FilterService {
   }
 
   @Instrument()
-  public async getFilterData(
+  private async getFilterData(
     filters: StepFilter[],
     payload: any,
     properties: IFilterProperties
-  ): Promise<IFilterData> {
+  ): Promise<IFilterVariables> {
     const { environmentId, subscriberId } = properties || {};
     if (!subscriberId && !environmentId) {
       return {
@@ -272,7 +266,7 @@ export class FilterConditionsService extends FilterService {
   private async handleGroupFilters(
     filter: StepFilter,
     filterProcessingDetails: FilterProcessingDetails,
-    filterData: IFilterData,
+    filterData: IFilterVariables,
     variables: IFilterVariables,
     properties: IFilterProperties
   ): Promise<boolean> {
@@ -308,7 +302,7 @@ export class FilterConditionsService extends FilterService {
   private async processFilter(
     filter: FilterParts,
     filterProcessingDetails: FilterProcessingDetails,
-    filterData: IFilterData,
+    filterData: IFilterVariables,
     variables: IFilterVariables,
     properties: IFilterProperties
   ): Promise<boolean> {
