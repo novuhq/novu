@@ -241,12 +241,11 @@ export class SendMessage {
         environmentId: job._environmentId,
         template,
         subscriber,
+        tenant: job.tenant,
       })
     );
 
-    const workflowOverridePreference = await this.getWorkflowOverridePreference(job, template, preference);
-
-    const result = this.stepPreferred(workflowOverridePreference || preference, job);
+    const result = this.stepPreferred(preference, job);
 
     if (!result) {
       await this.createExecutionDetails.execute(
@@ -263,56 +262,6 @@ export class SendMessage {
     }
 
     return result;
-  }
-
-  private async getWorkflowOverridePreference(
-    job,
-    template,
-    preference: IPreferenceResponse
-  ): Promise<IPreferenceResponse | null> {
-    if (!job.tenant?.identifier) {
-      return null;
-    }
-
-    const tenant = await this.tenantRepository.findOne({
-      _environmentId: job._environmentId,
-      identifier: job.tenant.identifier,
-    });
-
-    if (!tenant) {
-      return null;
-    }
-
-    const workflowOverride = await this.workflowOverrideRepository.findOne({
-      _environmentId: job._environmentId,
-      _organizationId: job._organizationId,
-      _workflowId: template._id,
-      _tenantId: tenant._id,
-    });
-
-    if (!workflowOverride) {
-      return null;
-    }
-
-    const overrides = preference.overrides.map(
-      (override) =>
-        ({
-          source: PreferenceOverrideSourceEnum.WORKFLOW_OVERRIDE,
-          channel: override.channel,
-        } as IPreferenceOverride)
-    );
-
-    const workflowOverrideOnlyActiveChannels = Object.keys(preference.channels).reduce(
-      (acc, key) =>
-        key in workflowOverride.preferenceSettings ? { ...acc, [key]: workflowOverride.preferenceSettings[key] } : acc,
-      {} as IPreferenceChannels
-    );
-
-    return {
-      enabled: preference.enabled,
-      channels: workflowOverrideOnlyActiveChannels,
-      overrides,
-    };
   }
 
   @CachedEntity({

@@ -2595,14 +2595,21 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
         const workflow = await createTemplate(session, ChannelTypeEnum.IN_APP);
 
         // Create workflow override with active false
-        await workflowOverrideService.createWorkflowOverride({ workflowId: workflow._id, active: false });
+        const { tenant } = await workflowOverrideService.createWorkflowOverride({
+          workflowId: workflow._id,
+          active: false,
+        });
+
+        if (!tenant) {
+          throw new Error('Tenant not found');
+        }
 
         const triggerResponse = await axiosInstance.post(
           `${session.serverUrl}${eventTriggerPath}`,
           {
             name: workflow.triggers[0].identifier,
             to: subscriberOverride,
-            tenant: 'identifier_123',
+            tenant: tenant.identifier,
             payload: {
               firstName: 'Testing of User Name',
               urlVariable: '/test/url/path',
@@ -2638,7 +2645,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
           {
             name: workflow.triggers[0].identifier,
             to: subscriberOverride,
-            tenant: 'identifier_123',
+            tenant: tenant.identifier,
             payload: {
               firstName: 'Testing of User Name',
               urlVariable: '/test/url/path',
@@ -2671,14 +2678,21 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
         const workflow = await createTemplate(session, ChannelTypeEnum.IN_APP);
 
         // Create active workflow override
-        await workflowOverrideService.createWorkflowOverride({ workflowId: workflow._id, active: true });
+        const { tenant } = await workflowOverrideService.createWorkflowOverride({
+          workflowId: workflow._id,
+          active: true,
+        });
+
+        if (!tenant) {
+          throw new Error('Tenant not found');
+        }
 
         const triggerResponse = await axiosInstance.post(
           `${session.serverUrl}${eventTriggerPath}`,
           {
             name: workflow.triggers[0].identifier,
             to: subscriberOverride,
-            tenant: 'identifier_123',
+            tenant: tenant.identifier,
             payload: {
               firstName: 'Testing of User Name',
               urlVariable: '/test/url/path',
@@ -2714,7 +2728,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
           {
             name: workflow.triggers[0].identifier,
             to: subscriberOverride,
-            tenant: 'identifier_123',
+            tenant: tenant.identifier,
             payload: {
               firstName: 'Testing of User Name',
               urlVariable: '/test/url/path',
@@ -2747,18 +2761,21 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
         const workflow = await createTemplate(session, ChannelTypeEnum.IN_APP);
 
         // Create a workflow with in app channel disabled
-        await workflowOverrideService.createWorkflowOverride({
+        const { tenant } = await workflowOverrideService.createWorkflowOverride({
           workflowId: workflow._id,
           active: true,
           preferenceSettings: { in_app: false },
         });
 
+        if (!tenant) {
+          throw new Error('Tenant not found');
+        }
         const triggerResponse = await axiosInstance.post(
           `${session.serverUrl}${eventTriggerPath}`,
           {
             name: workflow.triggers[0].identifier,
             to: subscriberOverride,
-            tenant: 'identifier_123',
+            tenant: tenant.identifier,
             payload: {
               firstName: 'Testing of User Name',
               urlVariable: '/test/url/path',
@@ -2799,18 +2816,22 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
         });
 
         // Create workflow override with in app channel enabled
-        await workflowOverrideService.createWorkflowOverride({
+        const { tenant } = await workflowOverrideService.createWorkflowOverride({
           workflowId: workflow._id,
           active: true,
           preferenceSettings: { in_app: true },
         });
+
+        if (!tenant) {
+          throw new Error('Tenant not found');
+        }
 
         const triggerResponse = await axiosInstance.post(
           `${session.serverUrl}${eventTriggerPath}`,
           {
             name: workflow.triggers[0].identifier,
             to: subscriberOverride,
-            tenant: 'identifier_123',
+            tenant: tenant.identifier,
             payload: {
               firstName: 'Testing of User Name',
               urlVariable: '/test/url/path',

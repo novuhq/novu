@@ -37,3 +37,9 @@ export enum PreferenceLevelEnum {
   GLOBAL = 'global',
   TEMPLATE = 'template',
 }
+
+export interface IOverridePreferencesSources {
+  [PreferenceOverrideSourceEnum.TEMPLATE]: IPreferenceChannels;
+  [PreferenceOverrideSourceEnum.SUBSCRIBER]: IPreferenceChannels;
+  [PreferenceOverrideSourceEnum.WORKFLOW_OVERRIDE]?: IPreferenceChannels;
+}
