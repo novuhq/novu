@@ -5,6 +5,7 @@ import { GetApiRateLimit } from '../get-api-rate-limit';
 import { CacheService, buildEvaluateApiRateLimitKey } from '@novu/application-generic';
 import { GetApiRateLimitConfiguration } from '../get-api-rate-limit-configuration';
 import { EvaluateApiRateLimitResponse } from './evaluate-api-rate-limit.types';
+import { createLimiter } from './evaluate-api-rate-limit.limiter';
 
 const LOG_CONTEXT = 'EvaluateApiRateLimit';
 
@@ -39,10 +40,11 @@ export class EvaluateApiRateLimit {
     const { burstAllowance, windowDuration } = this.getApiRateLimitConfiguration.defaultApiRateLimitConfiguration;
     const burstLimit = this.getBurstLimit(maxLimit, burstAllowance);
     const refillRate = this.getRefillRate(maxLimit, windowDuration);
+    const cost = this.getCost(command);
 
     const ratelimit = new Ratelimit({
       redis: cacheClient,
-      limiter: Ratelimit.tokenBucket(refillRate, `${windowDuration} s`, burstLimit),
+      limiter: createLimiter(refillRate, windowDuration, burstLimit, cost),
       prefix: '', // Empty cache key prefix to give us full control over the key format
       ephemeralCache: this.ephemeralCache,
     });
@@ -100,5 +102,13 @@ export class EvaluateApiRateLimit {
 
   private getRefillRate(limit: number, windowDuration: number): number {
     return limit * windowDuration;
+  }
+
+  private getCost(command: EvaluateApiRateLimitCommand): number {
+    if (command.isBulk) {
+      return this.getApiRateLimitConfiguration.defaultApiRateLimitConfiguration.bulkCost;
+    } else {
+      return 1;
+    }
   }
 }
