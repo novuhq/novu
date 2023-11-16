@@ -29,6 +29,8 @@ import {
   GetTopicSubscribersUseCase,
   getIsTopicNotificationEnabled,
   SubscriberJobBound,
+  TriggerBroadcast,
+  TriggerMulticast,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
@@ -105,6 +107,8 @@ const USE_CASES = [
   GetTopicSubscribersUseCase,
   getIsTopicNotificationEnabled,
   SubscriberJobBound,
+  TriggerBroadcast,
+  TriggerMulticast,
 ];
 
 const PROVIDERS: Provider[] = [
