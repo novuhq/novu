@@ -27,4 +27,8 @@ export type EvaluateApiRateLimitResponse = {
    * The number of requests that will be refilled per window.
    */
   refillRate: number;
+  /**
+   * The algorithm used to calculate the rate limit.
+   */
+  algorithm: string;
 };

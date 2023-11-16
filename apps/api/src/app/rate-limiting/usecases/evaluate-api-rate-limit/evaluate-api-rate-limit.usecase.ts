@@ -13,7 +13,7 @@ type UpstashRedisClient = ConstructorParameters<typeof Ratelimit>[0]['redis'];
 @Injectable()
 export class EvaluateApiRateLimit {
   private ephemeralCache = new Map<string, number>();
-  public readonly DEFAULT_WINDOW_DURATION = 60;
+  private algorithm = 'token bucket';
 
   constructor(
     private getApiRateLimit: GetApiRateLimit,
@@ -67,6 +67,7 @@ export class EvaluateApiRateLimit {
         windowDuration,
         burstLimit,
         refillRate,
+        algorithm: this.algorithm,
       };
     } catch (error) {
       const apiMessage = 'Failed to evaluate rate limit';
@@ -84,7 +85,12 @@ export class EvaluateApiRateLimit {
     // Adapter for the @upstash/redis client -> cache client
     return {
       sadd: async (key, ...members) => this.cacheService.sadd(key, ...members.map((member) => String(member))),
-      eval: async (script, keys, ...args) => this.cacheService.eval(script, keys, ...args.map((arg) => String(arg))),
+      eval: async (script, keys, args) =>
+        this.cacheService.eval(
+          script,
+          keys,
+          args.map((arg) => String(arg))
+        ),
     };
   }
 
