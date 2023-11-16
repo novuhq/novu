@@ -12,6 +12,7 @@ import {
   WorkflowQueueService,
 } from '../services';
 import {
+  GetIsRequestRateLimitingEnabled,
   GetIsTopicNotificationEnabled,
   GetUseMergedDigestId,
 } from '../usecases';
@@ -44,6 +45,20 @@ export const getIsTopicNotificationEnabled = {
     featureFlagsServiceItem: FeatureFlagsService
   ): Promise<GetIsTopicNotificationEnabled> => {
     const useCase = new GetIsTopicNotificationEnabled(featureFlagsServiceItem);
+
+    return useCase;
+  },
+  inject: [FeatureFlagsService],
+};
+
+export const getIsRequestRateLimitingEnabled = {
+  provide: GetIsRequestRateLimitingEnabled,
+  useFactory: async (
+    featureFlagsServiceItem: FeatureFlagsService
+  ): Promise<GetIsRequestRateLimitingEnabled> => {
+    const useCase = new GetIsRequestRateLimitingEnabled(
+      featureFlagsServiceItem
+    );
 
     return useCase;
   },
