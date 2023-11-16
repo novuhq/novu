@@ -139,16 +139,16 @@ export class TriggerEvent {
       }
 
       if (
-        (command as TriggerEventBroadcastCommand).addressingType ===
+        (mappedCommand as TriggerEventBroadcastCommand).addressingType ===
         AddressingTypeEnum.BROADCAST
       ) {
-        const broadcastCommand = command as TriggerEventBroadcastCommand;
+        const broadcastCommand = mappedCommand as TriggerEventBroadcastCommand;
         await this.triggerBroadcast(broadcastCommand, actorProcessed, template);
 
         return;
       }
 
-      const multicastCommand = command as TriggerEventMulticastCommand;
+      const multicastCommand = mappedCommand as TriggerEventMulticastCommand;
       await this.triggerMulticast(multicastCommand, actorProcessed, template);
     } catch (e) {
       Logger.error(

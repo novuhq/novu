@@ -5,13 +5,15 @@ import {
   ExecutionDetailsStatusEnum,
   IDigestRegularMetadata,
   IPreferenceChannels,
+  IPreferenceOverride,
+  IPreferenceResponse,
+  PreferenceOverrideSourceEnum,
   StepTypeEnum,
 } from '@novu/shared';
 import {
   InstrumentUsecase,
   AnalyticsService,
   buildNotificationTemplateKey,
-  buildSubscriberKey,
   CachedEntity,
   DetailEnum,
   CreateExecutionDetails,
@@ -24,10 +26,11 @@ import {
 } from '@novu/application-generic';
 import {
   JobEntity,
-  SubscriberRepository,
   NotificationTemplateRepository,
   JobRepository,
   JobStatusEnum,
+  TenantRepository,
+  WorkflowOverrideRepository,
 } from '@novu/dal';
 
 import { SendMessageCommand } from './send-message.command';
@@ -58,7 +61,9 @@ export class SendMessage {
     private jobRepository: JobRepository,
     private sendMessageDelay: SendMessageDelay,
     private matchMessage: MessageMatcher,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private tenantRepository: TenantRepository,
+    private workflowOverrideRepository: WorkflowOverrideRepository
   ) {}
 
   @InstrumentUsecase()
@@ -229,15 +234,17 @@ export class SendMessage {
       return false;
     }
 
-    const buildCommand = GetSubscriberTemplatePreferenceCommand.create({
-      organizationId: job._organizationId,
-      subscriberId: subscriber.subscriberId,
-      environmentId: job._environmentId,
-      template,
-      subscriber,
-    });
+    const { preference } = await this.getSubscriberTemplatePreferenceUsecase.execute(
+      GetSubscriberTemplatePreferenceCommand.create({
+        organizationId: job._organizationId,
+        subscriberId: subscriber.subscriberId,
+        environmentId: job._environmentId,
+        template,
+        subscriber,
+        tenant: job.tenant,
+      })
+    );
 
-    const { preference } = await this.getSubscriberTemplatePreferenceUsecase.execute(buildCommand);
     const result = this.stepPreferred(preference, job);
 
     if (!result) {
