@@ -10,7 +10,11 @@ import { GetApiRateLimitConfiguration } from '../get-api-rate-limit-configuratio
 import { SharedModule } from '../../../shared/shared.module';
 import { RateLimitingModule } from '../../rate-limiting.module';
 
-const mockApiRateLimitConfiguration: IApiRateLimitConfiguration = { burstAllowance: 0.2, windowDuration: 2 };
+const mockApiRateLimitConfiguration: IApiRateLimitConfiguration = {
+  burstAllowance: 0.2,
+  windowDuration: 2,
+  bulkCost: 50,
+};
 const mockDefaultLimit = 60;
 const mockBurstLimit = 72;
 const mockRemaining = mockBurstLimit - 1;
@@ -71,6 +75,7 @@ describe('EvaluateApiRateLimit', async () => {
           organizationId: session.organization._id,
           environmentId: session.environment._id,
           apiRateLimitCategory: mockApiRateLimitCategory,
+          isBulk: false,
         })
       );
 
@@ -83,6 +88,7 @@ describe('EvaluateApiRateLimit', async () => {
           organizationId: session.organization._id,
           environmentId: session.environment._id,
           apiRateLimitCategory: mockApiRateLimitCategory,
+          isBulk: false,
         })
       );
 
@@ -95,6 +101,7 @@ describe('EvaluateApiRateLimit', async () => {
           organizationId: session.organization._id,
           environmentId: session.environment._id,
           apiRateLimitCategory: mockApiRateLimitCategory,
+          isBulk: false,
         })
       );
 
@@ -107,6 +114,7 @@ describe('EvaluateApiRateLimit', async () => {
           organizationId: session.organization._id,
           environmentId: session.environment._id,
           apiRateLimitCategory: mockApiRateLimitCategory,
+          isBulk: false,
         })
       );
 
@@ -121,6 +129,7 @@ describe('EvaluateApiRateLimit', async () => {
           organizationId: session.organization._id,
           environmentId: session.environment._id,
           apiRateLimitCategory: mockApiRateLimitCategory,
+          isBulk: false,
         })
       );
 
@@ -133,6 +142,7 @@ describe('EvaluateApiRateLimit', async () => {
           organizationId: session.organization._id,
           environmentId: session.environment._id,
           apiRateLimitCategory: mockApiRateLimitCategory,
+          isBulk: false,
         })
       );
 
@@ -145,6 +155,7 @@ describe('EvaluateApiRateLimit', async () => {
           organizationId: session.organization._id,
           environmentId: session.environment._id,
           apiRateLimitCategory: mockApiRateLimitCategory,
+          isBulk: false,
         })
       );
 
@@ -159,6 +170,7 @@ describe('EvaluateApiRateLimit', async () => {
           organizationId: session.organization._id,
           environmentId: session.environment._id,
           apiRateLimitCategory: mockApiRateLimitCategory,
+          isBulk: false,
         })
       );
 
@@ -171,6 +183,7 @@ describe('EvaluateApiRateLimit', async () => {
           organizationId: session.organization._id,
           environmentId: session.environment._id,
           apiRateLimitCategory: mockApiRateLimitCategory,
+          isBulk: false,
         })
       );
 
@@ -188,6 +201,7 @@ describe('EvaluateApiRateLimit', async () => {
             organizationId: session.organization._id,
             environmentId: session.environment._id,
             apiRateLimitCategory: mockApiRateLimitCategory,
+            isBulk: false,
           })
         );
         throw new Error('Should not reach here');
@@ -205,6 +219,7 @@ describe('EvaluateApiRateLimit', async () => {
             organizationId: session.organization._id,
             environmentId: session.environment._id,
             apiRateLimitCategory: mockApiRateLimitCategory,
+            isBulk: false,
           })
         );
         throw new Error('Should not reach here');

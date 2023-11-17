@@ -30,4 +30,5 @@ export const DEFAULT_API_RATE_LIMITS: IServiceApiRateLimits = {
 export const DEFAULT_API_RATE_LIMIT_CONFIGURATION: IApiRateLimitConfiguration = {
   burstAllowance: 0.1,
   windowDuration: 1,
+  bulkCost: 100,
 };

@@ -11,6 +11,7 @@ export type ApiRateLimitEnvVarFormat =
 export enum ApiRateLimitConfigurationEnum {
   BURST_ALLOWANCE = 'burstAllowance',
   WINDOW_DURATION = 'windowDuration',
+  BULK_COST = 'bulkCost',
 }
 
 export class IApiRateLimitConfiguration implements Record<ApiRateLimitConfigurationEnum, unknown> {
@@ -26,6 +27,12 @@ export class IApiRateLimitConfiguration implements Record<ApiRateLimitConfigurat
    * For example a `windowDuration` of 1 would refill the rate limit allowance every second.
    */
   [ApiRateLimitConfigurationEnum.WINDOW_DURATION]: number;
+  /**
+   * A number x >= 1 determining the cost of a bulk request.
+   *
+   * For example a `bulkCost` of 100 would count as 100 requests against the rate limit.
+   */
+  [ApiRateLimitConfigurationEnum.BULK_COST]: number;
 }
 
 export type ApiRateLimitConfigurationEnvVarFormat =
