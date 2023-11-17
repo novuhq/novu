@@ -10,6 +10,8 @@ import {
   TriggerTypeEnum,
   INotificationTriggerVariable,
   ITriggerReservedVariable,
+  INotificationTemplate,
+  INotificationTemplateStep,
 } from '@novu/shared';
 
 import { MessageTemplateEntity } from '../message-template';
@@ -18,7 +20,7 @@ import type { OrganizationId } from '../organization';
 import type { EnvironmentId } from '../environment';
 import type { ChangePropsValueType } from '../../types';
 
-export class NotificationTemplateEntity {
+export class NotificationTemplateEntity implements INotificationTemplate {
   _id: string;
 
   name: string;
@@ -87,7 +89,7 @@ export class NotificationTriggerEntity implements INotificationTrigger {
   reservedVariables?: ITriggerReservedVariable[];
 }
 
-export class NotificationStepEntity {
+export class NotificationStepEntity implements INotificationTemplateStep {
   _id?: string;
 
   uuid?: string;

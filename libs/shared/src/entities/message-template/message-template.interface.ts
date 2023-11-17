@@ -27,7 +27,7 @@ export interface IMessageTemplate {
     action?: any;
   };
   _feedId?: string;
-  _layoutId?: string;
+  _layoutId?: string | null;
   active?: boolean;
   preheader?: string;
   senderName?: string;
