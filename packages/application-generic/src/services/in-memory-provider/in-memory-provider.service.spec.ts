@@ -1,15 +1,16 @@
 import { InMemoryProviderService } from './in-memory-provider.service';
+import { getClusterProvider, getSingleInstanceProvider } from './providers';
 import { InMemoryProviderEnum } from './types';
+
+const redis = getSingleInstanceProvider();
+const redisCluster = getClusterProvider(InMemoryProviderEnum.REDIS_CLUSTER);
 
 let inMemoryProviderService: InMemoryProviderService;
 
 describe('In-memory Provider Service', () => {
   describe('Non cluster mode', () => {
     beforeEach(async () => {
-      inMemoryProviderService = new InMemoryProviderService(
-        InMemoryProviderEnum.REDIS,
-        false
-      );
+      inMemoryProviderService = new InMemoryProviderService(redis, false);
 
       await inMemoryProviderService.delayUntilReadiness();
 
@@ -81,10 +82,7 @@ describe('In-memory Provider Service', () => {
 
   describe('Cluster mode', () => {
     beforeEach(async () => {
-      inMemoryProviderService = new InMemoryProviderService(
-        InMemoryProviderEnum.REDIS,
-        true
-      );
+      inMemoryProviderService = new InMemoryProviderService(redisCluster, true);
       await inMemoryProviderService.delayUntilReadiness();
 
       expect(inMemoryProviderService.getStatus()).toEqual('ready');
@@ -97,7 +95,7 @@ describe('In-memory Provider Service', () => {
     describe('TEMP: Check if enableAutoPipelining true is set properly in Cluster', () => {
       it('enableAutoPipelining is enabled', async () => {
         const clusterWithPipelining = new InMemoryProviderService(
-          InMemoryProviderEnum.REDIS,
+          redisCluster,
           true,
           true
         );
