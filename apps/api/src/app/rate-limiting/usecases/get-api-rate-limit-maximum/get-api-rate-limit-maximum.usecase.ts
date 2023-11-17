@@ -2,7 +2,7 @@ import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common
 import { EnvironmentRepository, OrganizationRepository } from '@novu/dal';
 import { buildMaximumApiRateLimitKey, CachedEntity } from '@novu/application-generic';
 import { ApiRateLimitCategoryEnum, ApiServiceLevelEnum, IApiRateLimitMaximum } from '@novu/shared';
-import { GetApiRateLimitCommand as GetApiRateLimitMaximumCommand } from './get-api-rate-limit-maximum.command';
+import { GetApiRateLimitMaximumCommand } from './get-api-rate-limit-maximum.command';
 import { GetApiRateLimitServiceMaximumConfig } from '../get-api-rate-limit-service-maximum-config';
 
 const LOG_CONTEXT = 'GetApiRateLimit';
