@@ -96,7 +96,7 @@ export class ApiRateLimitGuard extends ThrottlerGuard {
     }
     const { organizationId, environmentId } = user;
 
-    const { success, limit, remaining, reset, windowDuration, burstLimit, algorithm, refillRate } =
+    const { success, limit, remaining, reset, windowDuration, burstLimit, algorithm } =
       await this.evaluateApiRateLimit.execute(
         EvaluateApiRateLimitCommand.create({
           organizationId,
