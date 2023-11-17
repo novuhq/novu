@@ -1,12 +1,14 @@
+import { GetApiRateLimitMaximum } from './get-api-rate-limit-maximum';
+import { GetApiRateLimitServiceMaximumConfig } from './get-api-rate-limit-service-maximum-config';
 import { EvaluateApiRateLimit } from './evaluate-api-rate-limit';
-import { GetApiRateLimit } from './get-api-rate-limit';
-import { GetApiRateLimitConfiguration } from './get-api-rate-limit-configuration';
-import { GetDefaultApiRateLimits } from './get-default-api-rate-limits';
+import { GetApiRateLimitAlgorithmConfig } from './get-api-rate-limit-algorithm-config';
+import { GetApiRateLimitCostConfig } from './get-api-rate-limit-cost-config';
 
 export const USE_CASES = [
   //
-  GetDefaultApiRateLimits,
-  GetApiRateLimit,
-  GetApiRateLimitConfiguration,
+  GetApiRateLimitServiceMaximumConfig,
+  GetApiRateLimitMaximum,
+  GetApiRateLimitAlgorithmConfig,
+  GetApiRateLimitCostConfig,
   EvaluateApiRateLimit,
 ];
