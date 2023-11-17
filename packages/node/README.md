@@ -198,28 +198,28 @@ const novu = new Novu('<NOVU_API_KEY>');
 
 await novu.subscribers.identify([
   {
-    subscriberId: "1"
-    firstName: "Pawan";
-    lastName: "Jain";
-    email: "pawan.jain@domain.com";
-    phone: "+1234567890";
-    avatar: "https://gravatar.com/avatar/553b157d82ac2880237566d5a644e5fe?s=400&d=robohash&r=x";
-    locale: "en-US";
+    subscriberId: "1",
+    firstName: "Pawan",
+    lastName: "Jain",
+    email: "pawan.jain@domain.com",
+    phone: "+1234567890",
+    avatar: "https://gravatar.com/avatar/553b157d82ac2880237566d5a644e5fe?s=400&d=robohash&r=x",
+    locale: "en-US",
     data: {
-      isDeveloper : true
+      isDeveloper : true,
       customKey: "customValue"
     };
   },
   {
-    subscriberId: "2"
-    firstName: "John";
-    lastName: "Doe";
-    email: "john.doe@domain.com";
-    phone: "+1234567891";
-    avatar: "https://gravatar.com/avatar/553b157d82ac2880237566d5a644e5fe?s=400&d=robohash&r=x";
-    locale: "en-UK";
+    subscriberId: "2",
+    firstName: "John",
+    lastName: "Doe",
+    email: "john.doe@domain.com",
+    phone: "+1234567891",
+    avatar: "https://gravatar.com/avatar/553b157d82ac2880237566d5a644e5fe?s=400&d=robohash&r=x",
+    locale: "en-UK",
     data: {
-      isDeveloper : false
+      isDeveloper : false,
       customKey1: "customValue1"
     };
   }
@@ -245,15 +245,15 @@ import { Novu } from '@novu/node';
 const novu = new Novu('<NOVU_API_KEY>');
 
 await novu.subscribers.update("subscriberId",{
-  firstName: "Pawan";
-  lastName: "Jain";
-  email: "pawan.jain@domain.com";
-  phone: "+1234567890";
-  avatar: "https://gravatar.com/avatar/553b157d82ac2880237566d5a644e5fe?s=400&d=robohash&r=x";
-  locale: "en-US";
+  firstName: "Pawan",
+  lastName: "Jain",
+  email: "pawan.jain@domain.com",
+  phone: "+1234567890",
+  avatar: "https://gravatar.com/avatar/553b157d82ac2880237566d5a644e5fe?s=400&d=robohash&r=x",
+  locale: "en-US",
   data: {
-    isDeveloper : true
-    customKey: "customValue"
+    isDeveloper : true,
+    customKey: "customValue",
     customKey2: "customValue2"
   };
 })
