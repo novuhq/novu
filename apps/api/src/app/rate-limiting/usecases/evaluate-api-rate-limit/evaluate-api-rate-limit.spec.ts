@@ -2,30 +2,30 @@ import { Test } from '@nestjs/testing';
 import { CacheService, MockCacheService } from '@novu/application-generic';
 import { EvaluateApiRateLimit, EvaluateApiRateLimitCommand } from './index';
 import { UserSession } from '@novu/testing';
-import { ApiRateLimitCategoryTypeEnum, IApiRateLimitConfiguration } from '@novu/shared';
+import { ApiRateLimitCategoryEnum, ApiRateLimitCostEnum, IApiRateLimitAlgorithm } from '@novu/shared';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
-import { GetApiRateLimit } from '../get-api-rate-limit';
-import { GetApiRateLimitConfiguration } from '../get-api-rate-limit-configuration';
+import { GetApiRateLimitMaximum } from '../get-api-rate-limit-maximum';
+import { GetApiRateLimitAlgorithmConfig } from '../get-api-rate-limit-algorithm-config';
 import { SharedModule } from '../../../shared/shared.module';
 import { RateLimitingModule } from '../../rate-limiting.module';
 
-const mockApiRateLimitConfiguration: IApiRateLimitConfiguration = {
+const mockApiRateLimitConfiguration: IApiRateLimitAlgorithm = {
   burstAllowance: 0.2,
   windowDuration: 2,
-  bulkCost: 50,
 };
 const mockDefaultLimit = 60;
 const mockBurstLimit = 72;
 const mockRemaining = mockBurstLimit - 1;
 const mockReset = 1699954067112;
-const mockApiRateLimitCategory = ApiRateLimitCategoryTypeEnum.GLOBAL;
+const mockApiRateLimitCategory = ApiRateLimitCategoryEnum.GLOBAL;
+const mockApiRateLimitCost = ApiRateLimitCostEnum.SINGLE;
 
 describe('EvaluateApiRateLimit', async () => {
   let useCase: EvaluateApiRateLimit;
   let session: UserSession;
-  let getApiRateLimit: GetApiRateLimit;
-  let getApiRateLimitConfiguration: GetApiRateLimitConfiguration;
+  let getApiRateLimit: GetApiRateLimitMaximum;
+  let getApiRateLimitConfiguration: GetApiRateLimitAlgorithmConfig;
   let cacheService: CacheService;
 
   let getApiRateLimitStub: sinon.SinonStub;
@@ -45,13 +45,13 @@ describe('EvaluateApiRateLimit', async () => {
     await session.initialize();
 
     useCase = moduleRef.get<EvaluateApiRateLimit>(EvaluateApiRateLimit);
-    getApiRateLimit = moduleRef.get<GetApiRateLimit>(GetApiRateLimit);
-    getApiRateLimitConfiguration = moduleRef.get<GetApiRateLimitConfiguration>(GetApiRateLimitConfiguration);
+    getApiRateLimit = moduleRef.get<GetApiRateLimitMaximum>(GetApiRateLimitMaximum);
+    getApiRateLimitConfiguration = moduleRef.get<GetApiRateLimitAlgorithmConfig>(GetApiRateLimitAlgorithmConfig);
     cacheService = moduleRef.get<CacheService>(CacheService);
 
     getApiRateLimitStub = sinon.stub(getApiRateLimit, 'execute').resolves(mockDefaultLimit);
     getApiRateLimitConfigurationStub = sinon
-      .stub(getApiRateLimitConfiguration, 'defaultApiRateLimitConfiguration')
+      .stub(getApiRateLimitConfiguration, 'default')
       .value(mockApiRateLimitConfiguration);
     // This mock is uncomfortable because it's dependent on the algorithm implementation,
     // but is a viable workaround due to the `eval` method having a hard dependency on running
@@ -75,7 +75,7 @@ describe('EvaluateApiRateLimit', async () => {
           organizationId: session.organization._id,
           environmentId: session.environment._id,
           apiRateLimitCategory: mockApiRateLimitCategory,
-          isBulk: false,
+          apiRateLimitCost: mockApiRateLimitCost,
         })
       );
 
@@ -88,7 +88,7 @@ describe('EvaluateApiRateLimit', async () => {
           organizationId: session.organization._id,
           environmentId: session.environment._id,
           apiRateLimitCategory: mockApiRateLimitCategory,
-          isBulk: false,
+          apiRateLimitCost: mockApiRateLimitCost,
         })
       );
 
@@ -101,7 +101,7 @@ describe('EvaluateApiRateLimit', async () => {
           organizationId: session.organization._id,
           environmentId: session.environment._id,
           apiRateLimitCategory: mockApiRateLimitCategory,
-          isBulk: false,
+          apiRateLimitCost: mockApiRateLimitCost,
         })
       );
 
@@ -114,7 +114,7 @@ describe('EvaluateApiRateLimit', async () => {
           organizationId: session.organization._id,
           environmentId: session.environment._id,
           apiRateLimitCategory: mockApiRateLimitCategory,
-          isBulk: false,
+          apiRateLimitCost: mockApiRateLimitCost,
         })
       );
 
@@ -129,7 +129,7 @@ describe('EvaluateApiRateLimit', async () => {
           organizationId: session.organization._id,
           environmentId: session.environment._id,
           apiRateLimitCategory: mockApiRateLimitCategory,
-          isBulk: false,
+          apiRateLimitCost: mockApiRateLimitCost,
         })
       );
 
@@ -142,7 +142,7 @@ describe('EvaluateApiRateLimit', async () => {
           organizationId: session.organization._id,
           environmentId: session.environment._id,
           apiRateLimitCategory: mockApiRateLimitCategory,
-          isBulk: false,
+          apiRateLimitCost: mockApiRateLimitCost,
         })
       );
 
@@ -155,7 +155,7 @@ describe('EvaluateApiRateLimit', async () => {
           organizationId: session.organization._id,
           environmentId: session.environment._id,
           apiRateLimitCategory: mockApiRateLimitCategory,
-          isBulk: false,
+          apiRateLimitCost: mockApiRateLimitCost,
         })
       );
 
@@ -170,7 +170,7 @@ describe('EvaluateApiRateLimit', async () => {
           organizationId: session.organization._id,
           environmentId: session.environment._id,
           apiRateLimitCategory: mockApiRateLimitCategory,
-          isBulk: false,
+          apiRateLimitCost: mockApiRateLimitCost,
         })
       );
 
@@ -183,7 +183,7 @@ describe('EvaluateApiRateLimit', async () => {
           organizationId: session.organization._id,
           environmentId: session.environment._id,
           apiRateLimitCategory: mockApiRateLimitCategory,
-          isBulk: false,
+          apiRateLimitCost: mockApiRateLimitCost,
         })
       );
 
@@ -201,7 +201,7 @@ describe('EvaluateApiRateLimit', async () => {
             organizationId: session.organization._id,
             environmentId: session.environment._id,
             apiRateLimitCategory: mockApiRateLimitCategory,
-            isBulk: false,
+            apiRateLimitCost: mockApiRateLimitCost,
           })
         );
         throw new Error('Should not reach here');
@@ -219,7 +219,7 @@ describe('EvaluateApiRateLimit', async () => {
             organizationId: session.organization._id,
             environmentId: session.environment._id,
             apiRateLimitCategory: mockApiRateLimitCategory,
-            isBulk: false,
+            apiRateLimitCost: mockApiRateLimitCost,
           })
         );
         throw new Error('Should not reach here');
