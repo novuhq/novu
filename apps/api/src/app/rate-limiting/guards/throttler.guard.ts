@@ -11,10 +11,10 @@ import {
 import { ExecutionContext, Injectable, Logger } from '@nestjs/common';
 import { EvaluateApiRateLimit, EvaluateApiRateLimitCommand } from '../usecases/evaluate-api-rate-limit';
 import { Reflector } from '@nestjs/core';
-import { FeatureFlagCommand, GetIsRequestRateLimitingEnabled } from '@novu/application-generic';
-import { ApiRateLimitCategoryTypeEnum, IJwtPayload } from '@novu/shared';
+import { FeatureFlagCommand, GetIsApiRateLimitingEnabled } from '@novu/application-generic';
+import { ApiRateLimitCategoryEnum, ApiRateLimitCostEnum, IJwtPayload } from '@novu/shared';
 import * as jwt from 'jsonwebtoken';
-import { ThrottlerBulk, ThrottlerCategory } from './throttler.decorator';
+import { ThrottlerCost, ThrottlerCategory } from './throttler.decorator';
 
 enum HeaderKeysEnum {
   RATE_LIMIT_REMAINING = 'RateLimit-Remaining',
@@ -27,8 +27,8 @@ enum HeaderKeysEnum {
 
 export const THROTTLED_EXCEPTION_MESSAGE = 'API rate limit exceeded';
 
-const defaultApiRateLimitCategory = ApiRateLimitCategoryTypeEnum.GLOBAL;
-const defaultIsBulk = false;
+const defaultApiRateLimitCategory = ApiRateLimitCategoryEnum.GLOBAL;
+const defaultApiRateLimitCost = ApiRateLimitCostEnum.SINGLE;
 
 @Injectable()
 export class ApiRateLimitGuard extends ThrottlerGuard {
@@ -37,7 +37,7 @@ export class ApiRateLimitGuard extends ThrottlerGuard {
     @InjectThrottlerStorage() protected readonly storageService: ThrottlerStorage,
     reflector: Reflector,
     private evaluateApiRateLimit: EvaluateApiRateLimit,
-    private getIsRequestRateLimitingEnabled: GetIsRequestRateLimitingEnabled
+    private getIsApiRateLimitingEnabled: GetIsApiRateLimitingEnabled
   ) {
     super(options, storageService, reflector);
   }
@@ -49,7 +49,7 @@ export class ApiRateLimitGuard extends ThrottlerGuard {
     }
     const { organizationId, environmentId, _id } = user;
 
-    const isEnabled = await this.getIsRequestRateLimitingEnabled.execute(
+    const isEnabled = await this.getIsApiRateLimitingEnabled.execute(
       FeatureFlagCommand.create({
         environmentId,
         organizationId,
@@ -87,7 +87,8 @@ export class ApiRateLimitGuard extends ThrottlerGuard {
     const classRef = context.getClass();
     const apiRateLimitCategory =
       this.reflector.getAllAndOverride(ThrottlerCategory, [handler, classRef]) || defaultApiRateLimitCategory;
-    const isBulk = this.reflector.getAllAndOverride(ThrottlerBulk, [handler, classRef]) || defaultIsBulk;
+    const apiRateLimitCost =
+      this.reflector.getAllAndOverride(ThrottlerCost, [handler, classRef]) || defaultApiRateLimitCost;
 
     const user = this.getReqUser(context);
     if (user === null) {
@@ -95,13 +96,13 @@ export class ApiRateLimitGuard extends ThrottlerGuard {
     }
     const { organizationId, environmentId } = user;
 
-    const { success, limit, remaining, reset, windowDuration, burstLimit, algorithm } =
+    const { success, limit, remaining, reset, windowDuration, burstLimit, algorithm, refillRate } =
       await this.evaluateApiRateLimit.execute(
         EvaluateApiRateLimitCommand.create({
           organizationId,
           environmentId,
           apiRateLimitCategory,
-          isBulk,
+          apiRateLimitCost,
         })
       );
 
@@ -112,7 +113,7 @@ export class ApiRateLimitGuard extends ThrottlerGuard {
     res.header(HeaderKeysEnum.RATE_LIMIT_RESET, secondsToReset);
     res.header(
       HeaderKeysEnum.RATE_LIMIT_POLICY,
-      `${limit};w=${windowDuration};burst=${burstLimit};comment="${algorithm}";category="${apiRateLimitCategory}"`
+      this.createPolicyHeader(limit, windowDuration, burstLimit, algorithm, apiRateLimitCategory, apiRateLimitCost)
     );
 
     if (success) {
@@ -121,6 +122,28 @@ export class ApiRateLimitGuard extends ThrottlerGuard {
       res.header(HeaderKeysEnum.RETRY_AFTER, secondsToReset);
       throw new ThrottlerException(THROTTLED_EXCEPTION_MESSAGE);
     }
+  }
+
+  private createPolicyHeader(
+    limit: number,
+    windowDuration: number,
+    burstLimit: number,
+    algorithm: string,
+    apiRateLimitCategory: ApiRateLimitCategoryEnum,
+    apiRateLimitCost: ApiRateLimitCostEnum
+  ): string {
+    const policyMap = {
+      w: windowDuration,
+      burst: burstLimit,
+      comment: `"${algorithm}"`,
+      category: `"${apiRateLimitCategory}"`,
+      cost: `"${apiRateLimitCost}"`,
+    };
+    const policy = Object.entries(policyMap).reduce((acc, [key, value]) => {
+      return `${acc};${key}=${value}`;
+    }, `${limit}`);
+
+    return policy;
   }
 
   private getReqUser(context: ExecutionContext): IJwtPayload | null {

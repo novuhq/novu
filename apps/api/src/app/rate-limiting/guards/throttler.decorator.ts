@@ -1,8 +1,8 @@
 import { Reflector } from '@nestjs/core';
-import { ApiRateLimitCategoryTypeEnum } from '@novu/shared';
+import { ApiRateLimitCategoryEnum, ApiRateLimitCostEnum } from '@novu/shared';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export const ThrottlerCategory = Reflector.createDecorator<ApiRateLimitCategoryTypeEnum>();
+export const ThrottlerCategory = Reflector.createDecorator<ApiRateLimitCategoryEnum>();
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export const ThrottlerBulk = Reflector.createDecorator<boolean>();
+export const ThrottlerCost = Reflector.createDecorator<ApiRateLimitCostEnum>();
