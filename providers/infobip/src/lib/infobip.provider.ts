@@ -46,7 +46,7 @@ export class InfobipSmsProvider implements ISmsProvider {
               to: options.to,
             },
           ],
-          from: this.config.from || options.from,
+          from: options.from || this.config.from,
         },
       ],
     });

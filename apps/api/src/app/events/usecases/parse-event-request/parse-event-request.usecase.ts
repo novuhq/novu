@@ -11,8 +11,15 @@ import {
   StorageHelperService,
   WorkflowQueueService,
 } from '@novu/application-generic';
-import { NotificationTemplateRepository, NotificationTemplateEntity, TenantRepository } from '@novu/dal';
 import { ReservedVariablesMap, TriggerContextTypeEnum, TriggerEventStatusEnum } from '@novu/shared';
+import {
+  WorkflowOverrideRepository,
+  TenantEntity,
+  WorkflowOverrideEntity,
+  NotificationTemplateRepository,
+  NotificationTemplateEntity,
+  TenantRepository,
+} from '@novu/dal';
 
 import { ParseEventRequestCommand, ParseEventRequestMulticastCommand } from './parse-event-request.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -27,7 +34,8 @@ export class ParseEventRequest {
     private verifyPayload: VerifyPayload,
     private storageHelperService: StorageHelperService,
     private workflowQueueService: WorkflowQueueService,
-    private tenantRepository: TenantRepository
+    private tenantRepository: TenantRepository,
+    private workflowOverrideRepository: WorkflowOverrideRepository
   ) {}
 
   @InstrumentUsecase()
@@ -46,7 +54,38 @@ export class ParseEventRequest {
     const reservedVariablesTypes = this.getReservedVariablesTypes(template);
     this.validateTriggerContext(command, reservedVariablesTypes);
 
-    if (!template.active) {
+    let tenant: TenantEntity | null = null;
+    if (command.tenant) {
+      tenant = await this.tenantRepository.findOne({
+        _environmentId: command.environmentId,
+        identifier: typeof command.tenant === 'string' ? command.tenant : command.tenant.identifier,
+      });
+
+      if (!tenant) {
+        return {
+          acknowledged: true,
+          status: TriggerEventStatusEnum.TENANT_MISSING,
+        };
+      }
+    }
+
+    let workflowOverride: WorkflowOverrideEntity | null = null;
+    if (tenant) {
+      workflowOverride = await this.workflowOverrideRepository.findOne({
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        _workflowId: template._id,
+        _tenantId: tenant._id,
+      });
+    }
+
+    const inactiveWorkflow = !workflowOverride && !template.active;
+    const inactiveWorkflowOverride = workflowOverride && !workflowOverride.active;
+
+    if (inactiveWorkflowOverride || inactiveWorkflow) {
+      const message = workflowOverride ? 'Workflow is not active by workflow override' : 'Workflow is not active';
+      Logger.log(message, LOG_CONTEXT);
+
       return {
         acknowledged: true,
         status: TriggerEventStatusEnum.NOT_ACTIVE,
@@ -65,20 +104,6 @@ export class ParseEventRequest {
         acknowledged: true,
         status: TriggerEventStatusEnum.NO_WORKFLOW_ACTIVE_STEPS,
       };
-    }
-
-    if (command.tenant) {
-      try {
-        await this.validateTenant({
-          identifier: typeof command.tenant === 'string' ? command.tenant : command.tenant.identifier,
-          _environmentId: command.environmentId,
-        });
-      } catch (e) {
-        return {
-          acknowledged: true,
-          status: TriggerEventStatusEnum.TENANT_MISSING,
-        };
-      }
     }
 
     Sentry.addBreadcrumb({
@@ -140,16 +165,6 @@ export class ParseEventRequest {
       command.environmentId,
       command.triggerIdentifier
     );
-  }
-
-  private async validateTenant({ identifier, _environmentId }: { identifier: string; _environmentId: string }) {
-    const found = await this.tenantRepository.findOne({
-      _environmentId: _environmentId,
-      identifier: identifier,
-    });
-    if (!found) {
-      throw new ApiException(`Tenant with identifier ${identifier} could not be found`);
-    }
   }
 
   @Instrument()
