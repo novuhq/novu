@@ -792,7 +792,7 @@ importers:
         specifier: ^4.1.3
         version: 4.2.2
       react:
-        specifier: 17.0.1
+        specifier: ^17.0.1
         version: 17.0.1
       react-ace:
         specifier: ^9.4.3
@@ -810,7 +810,7 @@ importers:
         specifier: ^4.2.1
         version: 4.2.1(react-dom@17.0.1)(react@17.0.1)
       react-dom:
-        specifier: 17.0.1
+        specifier: ^17.0.1
         version: 17.0.1(react@17.0.1)
       react-editor-js:
         specifier: ^1.9.0
@@ -833,6 +833,9 @@ importers:
       react-is:
         specifier: ^18.2.0
         version: 18.2.0
+      react-joyride:
+        specifier: ^2.5.3
+        version: 2.5.3(react-dom@17.0.1)(react@17.0.1)
       react-password-strength-bar:
         specifier: ^0.4.1
         version: 0.4.1(react-dom@17.0.1)(react@17.0.1)
@@ -960,9 +963,6 @@ importers:
       react-error-overlay:
         specifier: 6.0.11
         version: 6.0.11
-      react-joyride:
-        specifier: 2.5.3
-        version: 2.5.3(react-dom@17.0.1)(react@17.0.1)
       react-scripts:
         specifier: ^5.0.1
         version: 5.0.1(@babel/plugin-syntax-flow@7.22.5)(@babel/plugin-transform-react-jsx@7.22.15)(@swc/core@1.3.49)(esbuild@0.18.20)(eslint-import-resolver-webpack@0.13.7)(eslint@8.51.0)(react@17.0.1)(ts-node@10.9.1)(typescript@4.9.5)
@@ -1163,10 +1163,10 @@ importers:
         specifier: ^4.1.2
         version: 4.2.2
       react:
-        specifier: 17.0.1
+        specifier: ^17.0.1
         version: 17.0.1
       react-dom:
-        specifier: 17.0.1
+        specifier: ^17.0.1
         version: 17.0.1(react@17.0.1)
       react-infinite-scroll-component:
         specifier: ^6.0.0
@@ -1822,10 +1822,10 @@ importers:
         specifier: ^0.6.13
         version: 0.6.13(eslint@8.51.0)(typescript@4.9.5)
       react:
-        specifier: 17.0.1
+        specifier: ^17.0.1
         version: 17.0.1
       react-dom:
-        specifier: 17.0.1
+        specifier: ^17.0.1
         version: 17.0.1(react@17.0.1)
       react-router-dom:
         specifier: 6.2.2
@@ -2799,10 +2799,10 @@ importers:
         specifier: ^2.0.0
         version: 2.0.0
       react:
-        specifier: 17.0.1
+        specifier: ^17.0.1
         version: 17.0.1
       react-dom:
-        specifier: 17.0.1
+        specifier: ^17.0.1
         version: 17.0.1(react@17.0.1)
       rimraf:
         specifier: ^3.0.2
@@ -2929,13 +2929,13 @@ importers:
         specifier: ^0.21.0
         version: link:../../../notification-center
       '@types/react':
-        specifier: 17.0.1
-        version: 17.0.1
+        specifier: ^17.0.1
+        version: 17.0.62
       react:
-        specifier: 17.0.1
+        specifier: ^17.0.1
         version: 17.0.1
       react-dom:
-        specifier: 17.0.1
+        specifier: ^17.0.1
         version: 17.0.1(react@17.0.1)
       tslib:
         specifier: ^2.3.0
@@ -2953,10 +2953,10 @@ importers:
         specifier: ^0.21.0
         version: link:../notification-center
       react:
-        specifier: 17.0.1
+        specifier: ^17.0.1
         version: 17.0.1
       react-dom:
-        specifier: 17.0.1
+        specifier: ^17.0.1
         version: 17.0.1(react@17.0.1)
     devDependencies:
       '@rushstack/eslint-patch':
@@ -13769,7 +13769,7 @@ packages:
 
   /@gilbarbara/deep-equal@0.1.2:
     resolution: {integrity: sha512-jk+qzItoEb0D0xSSmrKDDzf9sheQj/BAPxlgNxgmOaA3mxpUa6ndJLYGZKsJnIVEQSD8zcTbyILz7I0HcnBCRA==}
-    dev: true
+    dev: false
 
   /@godaddy/terminus@4.11.2:
     resolution: {integrity: sha512-e/kbOWpGKME42eltM/wXM3RxSUOrfureZxEd6Dt6NXyFoJ7E8lnmm7znXydJsL3B7ky4HRFZI+eHrep54NZbeQ==}
@@ -24429,13 +24429,6 @@ packages:
       '@types/react': 17.0.62
     dev: false
 
-  /@types/react@17.0.1:
-    resolution: {integrity: sha512-w8t9f53B2ei4jeOqf/gxtc2Sswnc3LBK5s0DyJcg5xd10tMHXts2N31cKjWfH9IC/JvEPa/YF1U4YeP1t4R6HQ==}
-    dependencies:
-      '@types/prop-types': 15.7.5
-      csstype: 3.1.2
-    dev: false
-
   /@types/react@17.0.53:
     resolution: {integrity: sha512-1yIpQR2zdYu1Z/dc1OxC+MA6GR240u3gcnP4l6mvj/PJiVaqHsQPmWttsvHsfnhfPbU2FuGmo0wSITPygjBmsw==}
     dependencies:
@@ -32297,7 +32290,7 @@ packages:
 
   /exenv@1.2.2:
     resolution: {integrity: sha512-Z+ktTxTwv9ILfgKCk32OX3n/doe+OcLTRtqK9pcL+JsP3J1/VW8Uvl4ZjLlKqeW4rzK4oesDOGMEMRIZqtP4Iw==}
-    dev: true
+    dev: false
 
   /exit@0.1.2:
     resolution: {integrity: sha512-Zk/eNKV2zbjpKzrsQ+n1G6poVbErQxJ0LBOJXaKZ1EViLzH+hrLu9cdXI4zw9dBQJslwBEpbQ2P1oS7nDxs6jQ==}
@@ -35477,11 +35470,11 @@ packages:
 
   /is-lite@0.8.2:
     resolution: {integrity: sha512-JZfH47qTsslwaAsqbMI3Q6HNNjUuq6Cmzzww50TdP5Esb6e1y2sK2UAaZZuzfAzpoI2AkxoPQapZdlDuP6Vlsw==}
-    dev: true
+    dev: false
 
   /is-lite@0.9.2:
     resolution: {integrity: sha512-qZuxbaEiKLOKhX4sbHLfhFN9iA3YciuZLb37/DfXCpWnz8p7qNL2lwkpxYMXfjlS8eEEjpULPZxAUI8N6FYvYQ==}
-    dev: true
+    dev: false
 
   /is-lower-case@1.1.3:
     resolution: {integrity: sha512-+5A1e/WJpLLXZEDlgz4G//WYSHyQBD32qa4Jd3Lw06qQlv3fJHnp3YIHjTQSGzHMgzmVKz2ZP3rBxTHkPw/lxA==}
@@ -42090,7 +42083,7 @@ packages:
   /popper.js@1.16.1:
     resolution: {integrity: sha512-Wb4p1J4zyFTbM+u6WuO4XstYx4Ky9Cewe4DWrel7B0w6VVICvPwdOpotjzcf6eD8TsckVnIMNONQyPIUFOUbCQ==}
     deprecated: You can find the new Popper v2 at @popperjs/core, this package is dedicated to the legacy v1
-    dev: true
+    dev: false
 
   /portfinder@1.0.32:
     resolution: {integrity: sha512-on2ZJVVDXRADWE6jnQaX0ioEylzgBpQk8r55NE4wjXW1ZxO+BgDlY6DXwj20i0V8eB4SenDQ00WEaxfiIQPcxg==}
@@ -44264,7 +44257,7 @@ packages:
       react-dom: 17.0.1(react@17.0.1)
       react-proptype-conditional-require: 1.0.4
       tree-changes: 0.9.3
-    dev: true
+    dev: false
 
   /react-flow-renderer@10.3.17(react-dom@17.0.1)(react@17.0.1):
     resolution: {integrity: sha512-bywiqVErlh5kCDqw3x0an5Ur3mT9j9CwJsDwmhmz4i1IgYM1a0SPqqEhClvjX+s5pU4nHjmVaGXWK96pwsiGcQ==}
@@ -44378,7 +44371,7 @@ packages:
       scroll: 3.0.1
       scrollparent: 2.0.1
       tree-changes: 0.9.3
-    dev: true
+    dev: false
 
   /react-password-strength-bar@0.4.1(react-dom@17.0.1)(react@17.0.1):
     resolution: {integrity: sha512-2NvYz4IUU8k7KDZgsXKoJWreKCZLKGaqF5QhIVhc09OsPBFXFMh0BeghNkBIRkaxLeI7/xjivknDCYfluBCXKA==}
@@ -44407,7 +44400,7 @@ packages:
 
   /react-proptype-conditional-require@1.0.4:
     resolution: {integrity: sha512-nopsRn7KnGgazBe2c3H2+Kf+Csp6PGDRLiBkYEDMKY8o/EIgft/WnIm/OnAKTawZiLnJXHAqhpFBddvs6NiXlw==}
-    dev: true
+    dev: false
 
   /react-refresh@0.11.0:
     resolution: {integrity: sha512-F27qZr8uUqwhWZboondsPx8tnC3Ct3SxZA3V5WyEvujRyyNv0VYPhoBg1gZ8/MV5tubQp76Trw8lTv9hzRBa+A==}
@@ -45705,11 +45698,11 @@ packages:
     peerDependencies:
       rollup: ^2.0.0
     dependencies:
-      '@babel/code-frame': 7.22.13
+      '@babel/code-frame': 7.21.4
       jest-worker: 26.6.2
       rollup: 2.79.1
       serialize-javascript: 4.0.0
-      terser: 5.22.0
+      terser: 5.16.9
     dev: true
 
   /rollup-plugin-terser@7.0.2(rollup@3.20.2):
@@ -46042,11 +46035,11 @@ packages:
 
   /scroll@3.0.1:
     resolution: {integrity: sha512-pz7y517OVls1maEzlirKO5nPYle9AXsFzTMNJrRGmT951mzpIBy7sNHOg5o/0MQd/NqliCiWnAi0kZneMPFLcg==}
-    dev: true
+    dev: false
 
   /scrollparent@2.0.1:
     resolution: {integrity: sha512-HSdN78VMvFCSGCkh0oYX/tY4R3P1DW61f8+TeZZ4j2VLgfwvw0bpRSOv4PCVKisktIwbzHCfZsx+rLbbDBqIBA==}
-    dev: true
+    dev: false
 
   /secure-compare@3.0.1:
     resolution: {integrity: sha512-AckIIV90rPDcBcglUwXPF3kg0P0qmPsPXAj6BBEENQE1p5yA1xfmDJzfi1Tappj37Pv2mVbKpL3Z1T+Nn7k1Qw==}
@@ -48295,7 +48288,7 @@ packages:
     dependencies:
       '@gilbarbara/deep-equal': 0.1.2
       is-lite: 0.8.2
-    dev: true
+    dev: false
 
   /tree-kill@1.2.2:
     resolution: {integrity: sha512-L0Orpi8qGpRG//Nd+H90vFB+3iHnue1zSSGmNOOCh1GLJ7rUKVwV2HvijphGQS2UmhUZewS9VgvxYIdgr+fG1A==}
