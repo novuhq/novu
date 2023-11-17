@@ -1,9 +1,9 @@
 import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { Ratelimit } from '@upstash/ratelimit';
 import { EvaluateApiRateLimitCommand } from './evaluate-api-rate-limit.command';
-import { GetApiRateLimit } from '../get-api-rate-limit';
+import { GetApiRateLimitMaximum } from '../get-api-rate-limit-maximum';
 import { CacheService, buildEvaluateApiRateLimitKey } from '@novu/application-generic';
-import { GetApiRateLimitConfiguration } from '../get-api-rate-limit-configuration';
+import { GetApiRateLimitAlgorithmConfig } from '../get-api-rate-limit-algorithm-config';
 import { EvaluateApiRateLimitResponse } from './evaluate-api-rate-limit.types';
 import { createLimiter } from './evaluate-api-rate-limit.limiter';
 
@@ -17,8 +17,9 @@ export class EvaluateApiRateLimit {
   private algorithm = 'token bucket';
 
   constructor(
-    private getApiRateLimit: GetApiRateLimit,
-    private getApiRateLimitConfiguration: GetApiRateLimitConfiguration,
+    private getApiRateLimitMaximum: GetApiRateLimitMaximum,
+    private getApiRateLimitAlgorithmConfig: GetApiRateLimitAlgorithmConfig,
+    private getApiRateLimitCostConfig: GetApiRateLimitAlgorithmConfig,
     private cacheService: CacheService
   ) {}
 
@@ -31,15 +32,16 @@ export class EvaluateApiRateLimit {
       throw new ServiceUnavailableException(message);
     }
 
-    const maxLimit = await this.getApiRateLimit.execute({
+    const maxLimit = await this.getApiRateLimitMaximum.execute({
       apiRateLimitCategory: command.apiRateLimitCategory,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
     });
 
-    const { burstAllowance, windowDuration } = this.getApiRateLimitConfiguration.defaultApiRateLimitConfiguration;
-    const burstLimit = this.getBurstLimit(maxLimit, burstAllowance);
+    const { burstAllowance } = this.getApiRateLimitAlgorithmConfig.default;
+    const windowDuration = 10;
     const refillRate = this.getRefillRate(maxLimit, windowDuration);
+    const burstLimit = this.getBurstLimit(refillRate, burstAllowance);
     const cost = this.getCost(command);
 
     const ratelimit = new Ratelimit({
@@ -96,19 +98,17 @@ export class EvaluateApiRateLimit {
     };
   }
 
-  private getBurstLimit(limit: number, burstAllowance: number): number {
-    return Math.floor(limit * (1 + burstAllowance));
-  }
-
   private getRefillRate(limit: number, windowDuration: number): number {
     return limit * windowDuration;
   }
 
+  private getBurstLimit(refillRate: number, burstAllowance: number): number {
+    return Math.floor(refillRate * (1 + burstAllowance));
+  }
+
   private getCost(command: EvaluateApiRateLimitCommand): number {
-    if (command.isBulk) {
-      return this.getApiRateLimitConfiguration.defaultApiRateLimitConfiguration.bulkCost;
-    } else {
-      return 1;
-    }
+    const cost = this.getApiRateLimitCostConfig.default[command.apiRateLimitCost];
+
+    return cost;
   }
 }

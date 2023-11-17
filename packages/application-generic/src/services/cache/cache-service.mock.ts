@@ -43,24 +43,23 @@ export const MockCacheService = {
         return true;
       },
       async sadd(key, ...members) {
-        let val = data[key];
-        if (val && !(val instanceof Set)) {
+        const dataVal = data[key];
+        if (dataVal && !Array.isArray(dataVal)) {
           throw new Error(
-            'WRONGTYPE Operation against a key holding the wrong kind of value'
+            'Wrong operation against a key holding the wrong kind of value'
           );
         }
-        if (!val) {
-          val = new Set();
-        }
+
+        const newVal = new Set(data[key]);
 
         let addCount = 0;
         members.forEach((member) => {
-          if (!val.has(member)) {
-            val.add(member);
+          if (!newVal.has(member)) {
+            newVal.add(member);
             addCount++;
           }
         });
-        data[key] = val;
+        data[key] = Array.from(newVal);
 
         return addCount;
       },
