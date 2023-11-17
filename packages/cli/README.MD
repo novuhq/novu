@@ -77,7 +77,7 @@ await novu.trigger('<TRIGGER_NAME>', {
     name: 'Hello World',
     organization: {
       logo: 'https://happycorp.com/logo.png',
-    },
+    }
   },
 });
 ```
