@@ -5,7 +5,7 @@ import { expect } from 'chai';
 import * as sinon from 'sinon';
 import { Test } from '@nestjs/testing';
 import { CacheService, MockCacheService } from '@novu/application-generic';
-import { GetApiRateLimitMaximum, GetApiRateLimitCommand } from './index';
+import { GetApiRateLimitMaximum, GetApiRateLimitMaximumCommand } from './index';
 import { SharedModule } from '../../../shared/shared.module';
 import { GetApiRateLimitServiceMaximumConfig } from '../get-api-rate-limit-service-maximum-config';
 import { RateLimitingModule } from '../../rate-limiting.module';
@@ -68,7 +68,7 @@ describe('GetApiRateLimitMaximum', async () => {
 
     try {
       await useCase.execute(
-        GetApiRateLimitCommand.create({
+        GetApiRateLimitMaximumCommand.create({
           organizationId: session.organization._id,
           environmentId: session.environment._id,
           apiRateLimitCategory: ApiRateLimitCategoryEnum.GLOBAL,
@@ -94,7 +94,7 @@ describe('GetApiRateLimitMaximum', async () => {
 
     it('should return api rate limit for the category set on environment', async () => {
       const rateLimit = await useCase.execute(
-        GetApiRateLimitCommand.create({
+        GetApiRateLimitMaximumCommand.create({
           organizationId: session.organization._id,
           environmentId: session.environment._id,
           apiRateLimitCategory: mockApiRateLimitCategory,
@@ -122,7 +122,7 @@ describe('GetApiRateLimitMaximum', async () => {
       const defaultApiRateLimit = mockDefaultApiRateLimits[mockApiServiceLevel][mockApiRateLimitCategory];
 
       const rateLimit = await useCase.execute(
-        GetApiRateLimitCommand.create({
+        GetApiRateLimitMaximumCommand.create({
           organizationId: session.organization._id,
           environmentId: session.environment._id,
           apiRateLimitCategory: mockApiRateLimitCategory,
@@ -139,7 +139,7 @@ describe('GetApiRateLimitMaximum', async () => {
       const defaultApiRateLimit = mockDefaultApiRateLimits[ApiServiceLevelEnum.UNLIMITED][mockApiRateLimitCategory];
 
       const rateLimit = await useCase.execute(
-        GetApiRateLimitCommand.create({
+        GetApiRateLimitMaximumCommand.create({
           organizationId: session.organization._id,
           environmentId: session.environment._id,
           apiRateLimitCategory: mockApiRateLimitCategory,
@@ -154,7 +154,7 @@ describe('GetApiRateLimitMaximum', async () => {
 
       try {
         await useCase.execute(
-          GetApiRateLimitCommand.create({
+          GetApiRateLimitMaximumCommand.create({
             organizationId: session.organization._id,
             environmentId: session.environment._id,
             apiRateLimitCategory: mockApiRateLimitCategory,
