@@ -10,7 +10,7 @@
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\"",
     "precommit": "lint-staged",
-    "docker:build": "pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | docker buildx build -t novu-api --build-arg PACKAGE_PATH=apps/api -",
+    "docker:build": "pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | docker buildx build --load -t novu-api --build-arg PACKAGE_PATH=apps/api -",
     "docker:build:depot": "pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | depot build --build-arg PACKAGE_PATH=apps/api - -t novu-api --load",
     "start": "pnpm start:dev",
     "start:dev": "cross-env TZ=UTC nest start --watch",
@@ -24,7 +24,9 @@
     "test:e2e": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --timeout 10000 --require ts-node/register --exit --file e2e/setup.ts src/**/*.e2e.ts",
     "test:e2e:ee": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --timeout 10000 --require ts-node/register --exit --file e2e/setup.ts src/**/*.e2e-ee.ts",
     "migration": "cross-env NODE_ENV=local MIGRATION=true ts-node --transpileOnly",
-    "link:submodules": "pnpm link ../../enterprise/packages/auth"
+    "link:submodules": "pnpm link ../../enterprise/packages/auth",
+    "admin:remove-user-account": "cross-env NODE_ENV=local MIGRATION=true ts-node --transpileOnly ./admin/remove-user-account.ts",
+    "admin:remove-organization": "cross-env NODE_ENV=local MIGRATION=true ts-node --transpileOnly ./admin/remove-organization.ts"
   },
   "dependencies": {
     "@godaddy/terminus": "^4.12.1",

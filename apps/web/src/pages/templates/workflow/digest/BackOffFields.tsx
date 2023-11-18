@@ -3,7 +3,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { Collapse } from '@mantine/core';
 import { DigestTypeEnum } from '@novu/shared';
 
-import { colors, Input, Switch, Tooltip, inputStyles } from '@novu/design-system';
+import { colors, Input, Switch, Tooltip, inputStyles, Text } from '@novu/design-system';
 import { IntervalSelect } from './IntervalSelect';
 import { BackOffTooltipIcon } from './icons/BackOffTooltipIcon';
 import { When } from '../../../../components/utils/When';
@@ -46,7 +46,9 @@ export const BackOffFields = ({ index, control, readonly }) => {
               return <Switch data-test-id="backoff-switch" checked={field.value === true} onChange={field.onChange} />;
             }}
           />
-          <div>Only frequent events</div>
+          <Text ml={10} sx={{ color: colors.B60 }}>
+            Only frequent events
+          </Text>
         </Group>
       </Tooltip>
       <Collapse in={backoff}>
