@@ -19,7 +19,7 @@ A web interface to browse the available endpoints is available at [api.novu.co/a
 
 ## Running the API
 
-See the docs for [Run in Local Machine](https://docs.novu.co/community/run-in-local-machin) to get setup. Then run:
+See the docs for [Run in Local Machine](https://docs.novu.co/community/run-in-local-machine) to get setup. Then run:
 
 ```bash
 # Run the API in watch mode
