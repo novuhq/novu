@@ -1,11 +1,11 @@
-import { StepTypeEnum, IMessageCTA, IActor } from '@novu/shared';
+import { StepTypeEnum, IMessageCTA, IActor, IMessageTemplate } from '@novu/shared';
 
 import { IEmailBlock, ITemplateVariable } from './types';
 import type { OrganizationId } from '../organization';
 import type { EnvironmentId } from '../environment';
 import type { ChangePropsValueType } from '../../types/helpers';
 
-export class MessageTemplateEntity {
+export class MessageTemplateEntity implements IMessageTemplate {
   _id?: string;
 
   _environmentId: EnvironmentId;
@@ -15,7 +15,7 @@ export class MessageTemplateEntity {
   _creatorId: string;
 
   // TODO: Due a circular dependency I can't import LayoutId from Layout.
-  _layoutId: string | null;
+  _layoutId?: string | null;
 
   type: StepTypeEnum;
 
