@@ -19,7 +19,7 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     return new Promise((resolve, reject) => {
       nr.startBackgroundTransaction(
-        ObservabilityBackgroundTransactionEnum.WS_HANDLE_SOCKET_DISCONNECT,
+        ObservabilityBackgroundTransactionEnum.WS_SOCKET_HANDLE_DISCONNECT,
         'WS Service',
         function () {
           const transaction = nr.getTransaction();
@@ -42,7 +42,7 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     return new Promise((resolve, reject) => {
       nr.startBackgroundTransaction(
-        ObservabilityBackgroundTransactionEnum.WS_HANDLE_SOCKET_CONNECTION,
+        ObservabilityBackgroundTransactionEnum.WS_SOCKET_SOCKET_CONNECTION,
         'WS Service',
         function () {
           const transaction = nr.getTransaction();

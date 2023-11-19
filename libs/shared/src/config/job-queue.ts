@@ -13,6 +13,6 @@ export enum ObservabilityBackgroundTransactionEnum {
   SUBSCRIBER_PROCESSING_QUEUE = 'subscriber-processing-queue',
   TRIGGER_HANDLER_QUEUE = 'trigger-handler-queue',
   WS_SOCKET_QUEUE = 'ws_socket_queue',
-  WS_HANDLE_SOCKET_CONNECTION = 'ws_handle_socket_connection',
-  WS_HANDLE_SOCKET_DISCONNECT = 'ws_handle_socket_disconnect',
+  WS_SOCKET_SOCKET_CONNECTION = 'ws_socket_handle_connection',
+  WS_SOCKET_HANDLE_DISCONNECT = 'ws_socket_handle_disconnect',
 }
