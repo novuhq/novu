@@ -38,7 +38,7 @@ const getWorkerConfig = (worker: WorkerEnum): IWorkerConfig => {
       lockDuration: getDefaultLockDuration() ?? 90000,
     },
     [WorkerEnum.WEB_SOCKET]: {
-      concurrency: getDefaultConcurrency() ?? 200,
+      concurrency: getDefaultConcurrency() ?? 400,
       lockDuration: getDefaultLockDuration() ?? 90000,
     },
     [WorkerEnum.WORKFLOW]: {
