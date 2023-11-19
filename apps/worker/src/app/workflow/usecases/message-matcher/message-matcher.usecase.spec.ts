@@ -18,12 +18,12 @@ import { MessageMatcher } from './message-matcher.usecase';
 import type { SendMessageCommand } from '../send-message/send-message.command';
 
 describe('Message filter matcher', function () {
-  const createExecutionDetails = {
-    execute: sinon.stub(),
+  const executionLogQueueService = {
+    add: sinon.stub(),
   };
   const messageMatcher = new MessageMatcher(
     undefined as any,
-    createExecutionDetails as any,
+    executionLogQueueService as any,
     undefined as any,
     undefined as any,
     undefined as any,
@@ -708,7 +708,7 @@ describe('Message filter matcher', function () {
       it('allows to process multiple filter parts', async () => {
         const matcher = new MessageMatcher(
           { findOne: () => Promise.resolve(getSubscriber()) } as any,
-          createExecutionDetails as any,
+          executionLogQueueService as any,
           undefined as any,
           undefined as any,
           undefined as any,
@@ -745,7 +745,7 @@ describe('Message filter matcher', function () {
                 lastName: 'Doe',
               }),
           } as any,
-          createExecutionDetails as any,
+          executionLogQueueService as any,
           undefined as any,
           undefined as any,
           undefined as any,
@@ -776,7 +776,7 @@ describe('Message filter matcher', function () {
                 lastName: 'Doe',
               }),
           } as any,
-          createExecutionDetails as any,
+          executionLogQueueService as any,
           undefined as any,
           undefined as any,
           undefined as any,
@@ -801,7 +801,7 @@ describe('Message filter matcher', function () {
       it('allows to process if the subscriber is online', async () => {
         const matcher = new MessageMatcher(
           { findOne: () => Promise.resolve(getSubscriber()) } as any,
-          createExecutionDetails as any,
+          executionLogQueueService as any,
           undefined as any,
           undefined as any,
           undefined as any,
@@ -826,7 +826,7 @@ describe('Message filter matcher', function () {
       it("doesn't allow to process if the subscriber is not online", async () => {
         const matcher = new MessageMatcher(
           { findOne: () => Promise.resolve(getSubscriber({ isOnline: false })) } as any,
-          createExecutionDetails as any,
+          executionLogQueueService as any,
           undefined as any,
           undefined as any,
           undefined as any,
@@ -855,7 +855,7 @@ describe('Message filter matcher', function () {
           {
             findOne: () => Promise.resolve(getSubscriber({ isOnline: true }, { subDuration: { minutes: 3 } })),
           } as any,
-          createExecutionDetails as any,
+          executionLogQueueService as any,
           undefined as any,
           undefined as any,
           undefined as any,
@@ -893,7 +893,7 @@ describe('Message filter matcher', function () {
                 lastName: 'Doe',
               }),
           } as any,
-          createExecutionDetails as any,
+          executionLogQueueService as any,
           undefined as any,
           undefined as any,
           undefined as any,
@@ -921,7 +921,7 @@ describe('Message filter matcher', function () {
           {
             findOne: () => Promise.resolve(getSubscriber({ isOnline: true }, { subDuration: { minutes: 10 } })),
           } as any,
-          createExecutionDetails as any,
+          executionLogQueueService as any,
           undefined as any,
           undefined as any,
           undefined as any,
@@ -949,7 +949,7 @@ describe('Message filter matcher', function () {
           {
             findOne: () => Promise.resolve(getSubscriber({ isOnline: false }, { subDuration: { minutes: 4 } })),
           } as any,
-          createExecutionDetails as any,
+          executionLogQueueService as any,
           undefined as any,
           undefined as any,
           undefined as any,
@@ -977,7 +977,7 @@ describe('Message filter matcher', function () {
           {
             findOne: () => Promise.resolve(getSubscriber({ isOnline: false }, { subDuration: { minutes: 6 } })),
           } as any,
-          createExecutionDetails as any,
+          executionLogQueueService as any,
           undefined as any,
           undefined as any,
           undefined as any,
@@ -1005,7 +1005,7 @@ describe('Message filter matcher', function () {
           {
             findOne: () => Promise.resolve(getSubscriber({ isOnline: false }, { subDuration: { minutes: 30 } })),
           } as any,
-          createExecutionDetails as any,
+          executionLogQueueService as any,
           undefined as any,
           undefined as any,
           undefined as any,
@@ -1033,7 +1033,7 @@ describe('Message filter matcher', function () {
           {
             findOne: () => Promise.resolve(getSubscriber({ isOnline: false }, { subDuration: { hours: 23 } })),
           } as any,
-          createExecutionDetails as any,
+          executionLogQueueService as any,
           undefined as any,
           undefined as any,
           undefined as any,

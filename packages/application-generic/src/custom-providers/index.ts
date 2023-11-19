@@ -10,6 +10,7 @@ import {
   SubscriberProcessQueueService,
   WebSocketsQueueService,
   WorkflowQueueService,
+  ExecutionLogQueueService,
 } from '../services';
 import {
   GetIsApiRateLimitingEnabled,
@@ -127,13 +128,15 @@ export const bullMqTokenList = {
     standardQueueService: StandardQueueService,
     webSocketsQueueService: WebSocketsQueueService,
     workflowQueueService: WorkflowQueueService,
-    subscriberProcessQueueService: SubscriberProcessQueueService
+    subscriberProcessQueueService: SubscriberProcessQueueService,
+    executionLogQueueService: ExecutionLogQueueService
   ) => {
     return [
       standardQueueService,
       webSocketsQueueService,
       workflowQueueService,
       subscriberProcessQueueService,
+      executionLogQueueService,
     ];
   },
   inject: [
@@ -141,5 +144,6 @@ export const bullMqTokenList = {
     WebSocketsQueueService,
     WorkflowQueueService,
     SubscriberProcessQueueService,
+    ExecutionLogQueueService,
   ],
 };
