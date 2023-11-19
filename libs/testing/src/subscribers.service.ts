@@ -3,10 +3,18 @@ import { IntegrationRepository, SubscriberEntity, SubscriberRepository } from '@
 import { ChatProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
 
 export class SubscribersService {
-  private subscriberRepository = new SubscriberRepository();
-  private integrationRepository = new IntegrationRepository();
+  private subscriberRepository: SubscriberRepository;
+  private integrationRepository: IntegrationRepository;
 
-  constructor(private _organizationId: string, private _environmentId: string) {}
+  constructor(
+    private _organizationId: string,
+    private _environmentId: string,
+    subscriberRepository: SubscriberRepository,
+    integrationRepository: IntegrationRepository
+  ) {
+    this.subscriberRepository = subscriberRepository;
+    this.integrationRepository = integrationRepository;
+  }
 
   async createSubscriber(fields: Partial<SubscriberEntity> = {}) {
     const integrations = await this.integrationRepository.find({
@@ -17,6 +25,7 @@ export class SubscribersService {
     const slackIntegration = integrations.find((integration) => integration.providerId === ChatProviderIdEnum.Slack);
     const fcmIntegration = integrations.find((integration) => integration.providerId === PushProviderIdEnum.FCM);
     const channels: SubscriberEntity['channels'] = [];
+
     if (slackIntegration) {
       channels.push({
         _integrationId: slackIntegration._id,
