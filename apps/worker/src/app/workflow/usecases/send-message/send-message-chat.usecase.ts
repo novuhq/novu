@@ -188,6 +188,9 @@ export class SendMessageChat extends SendMessageBase {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
+          raw: JSON.stringify({
+            reason: `webhookUrl for integrationId: ${subscriberChannel?._integrationId} is missing`,
+          }),
         })
       );
     }
@@ -216,6 +219,9 @@ export class SendMessageChat extends SendMessageBase {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
+          raw: JSON.stringify({
+            reason: `Integration with integrationId: ${subscriberChannel?._integrationId} is either deleted or not active`,
+          }),
         })
       );
 
@@ -247,7 +253,7 @@ export class SendMessageChat extends SendMessageBase {
   }
 
   private async sendErrors(
-    chatWebhookUrl,
+    chatWebhookUrl: string,
     integration: IntegrationEntity,
     message: MessageEntity,
     command: SendMessageCommand
@@ -266,11 +272,14 @@ export class SendMessageChat extends SendMessageBase {
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
+          detail: DetailEnum.CHAT_WEBHOOK_URL_MISSING,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
+          raw: JSON.stringify({
+            reason: `webhookUrl for integrationId: ${integration?.identifier} is missing`,
+          }),
         })
       );
 
@@ -294,6 +303,9 @@ export class SendMessageChat extends SendMessageBase {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
+          raw: JSON.stringify({
+            reason: 'Integration is either deleted or not active',
+          }),
         })
       );
 
