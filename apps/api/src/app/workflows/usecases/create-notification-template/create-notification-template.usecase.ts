@@ -35,9 +35,7 @@ export class CreateNotificationTemplate {
   ) {}
 
   async execute(usecaseCommand: CreateNotificationTemplateCommand) {
-    const parentChangeId: string = NotificationTemplateRepository.createObjectId();
-
-    const blueprintCommand = await this.processBlueprint(usecaseCommand, parentChangeId);
+    const blueprintCommand = await this.processBlueprint(usecaseCommand);
     const command = blueprintCommand ?? usecaseCommand;
 
     const contentService = new ContentService();
@@ -83,6 +81,7 @@ export class CreateNotificationTemplate {
 
     const templateSteps: INotificationTemplateStep[] = [];
     let parentStepId: string | null = null;
+    const parentChangeId: string = NotificationTemplateRepository.createObjectId();
 
     for (const message of command.steps) {
       if (!message.template) throw new ApiException(`Unexpected error: message template is missing`);
@@ -173,11 +172,11 @@ export class CreateNotificationTemplate {
     return item;
   }
 
-  private async processBlueprint(command: CreateNotificationTemplateCommand, parentChangeId: string) {
+  private async processBlueprint(command: CreateNotificationTemplateCommand) {
     if (!command.blueprintId) return null;
 
-    const group: NotificationGroupEntity = await this.handleGroup(command.notificationGroupId, command, parentChangeId);
-    const steps: NotificationStepEntity[] = await this.handleFeeds(command.steps as any, command, parentChangeId);
+    const group: NotificationGroupEntity = await this.handleGroup(command.notificationGroupId, command);
+    const steps: NotificationStepEntity[] = await this.handleFeeds(command.steps as any, command);
 
     return CreateNotificationTemplateCommand.create({
       organizationId: command.organizationId,
@@ -199,8 +198,7 @@ export class CreateNotificationTemplate {
 
   private async handleFeeds(
     steps: NotificationStepEntity[],
-    command: CreateNotificationTemplateCommand,
-    parentChangeId: string
+    command: CreateNotificationTemplateCommand
   ): Promise<NotificationStepEntity[]> {
     for (let i = 0; i < steps.length; i++) {
       const step = steps[i];
@@ -240,7 +238,6 @@ export class CreateNotificationTemplate {
             environmentId: command.environmentId,
             organizationId: command.organizationId,
             userId: command.userId,
-            parentChangeId: parentChangeId,
             changeId: FeedRepository.createObjectId(),
           })
         );
@@ -255,8 +252,7 @@ export class CreateNotificationTemplate {
 
   private async handleGroup(
     notificationGroupId: string,
-    command: CreateNotificationTemplateCommand,
-    parentChangeId: string
+    command: CreateNotificationTemplateCommand
   ): Promise<NotificationGroupEntity> {
     const blueprintNotificationGroup = await this.notificationGroupRepository.findOne({
       _id: notificationGroupId,
@@ -286,7 +282,6 @@ export class CreateNotificationTemplate {
           organizationId: command.organizationId,
           userId: command.userId,
           type: ChangeEntityTypeEnum.NOTIFICATION_GROUP,
-          parentChangeId: parentChangeId,
           changeId: NotificationGroupRepository.createObjectId(),
         })
       );
