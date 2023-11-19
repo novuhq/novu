@@ -1,9 +1,9 @@
 import styled from '@emotion/styled';
 import { ActionIcon, createStyles, Drawer, Loader, MantineTheme, Stack } from '@mantine/core';
 import { ReactNode } from 'react';
+import { useKeyDown } from '@novu/shared-web';
 
 import { When } from '../when';
-import { useKeyDown } from '../hooks';
 import { colors, shadows } from '../config';
 import { ArrowLeft, Close } from '../icons';
 

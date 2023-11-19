@@ -680,6 +680,9 @@ importers:
       '@novu/shared':
         specifier: ^0.21.0
         version: link:../../libs/shared
+      '@novu/shared-web':
+        specifier: ^0.21.0
+        version: link:../../libs/shared-web
       '@sentry/react':
         specifier: ^7.40.0
         version: 7.47.0(react@17.0.1)
@@ -1754,6 +1757,9 @@ importers:
       '@novu/shared':
         specifier: 0.21.0
         version: link:../shared
+      '@novu/shared-web':
+        specifier: 0.21.0
+        version: link:../shared-web
       '@segment/analytics-next':
         specifier: 1.59.0
         version: 1.59.0
@@ -1970,6 +1976,58 @@ importers:
       '@types/bluebird':
         specifier: ^3.5.24
         version: 3.5.38
+      rimraf:
+        specifier: ^3.0.2
+        version: 3.0.2
+      typescript:
+        specifier: 4.9.5
+        version: 4.9.5
+
+  libs/shared-web:
+    dependencies:
+      '@mantine/hooks':
+        specifier: ^5.7.1
+        version: 5.10.5(react@17.0.1)
+      '@novu/shared':
+        specifier: 0.21.0
+        version: link:../shared
+      '@segment/analytics-next':
+        specifier: 1.59.0
+        version: 1.59.0
+      '@sentry/react':
+        specifier: ^7.40.0
+        version: 7.47.0(react@17.0.1)
+      '@tanstack/react-query':
+        specifier: ^4.20.4
+        version: 4.29.1(react-dom@17.0.1)(react@17.0.1)
+      axios:
+        specifier: ^1.6.0
+        version: 1.6.0
+      jwt-decode:
+        specifier: ^3.1.2
+        version: 3.1.2
+      react-router-dom:
+        specifier: 6.2.2
+        version: 6.2.2(react-dom@17.0.1)(react@17.0.1)
+      tslib:
+        specifier: ^2.3.1
+        version: 2.6.2
+    devDependencies:
+      '@types/node':
+        specifier: ^18.11.12
+        version: 18.18.5
+      '@types/react':
+        specifier: ^17.0.0
+        version: 17.0.62
+      '@types/react-dom':
+        specifier: ^17.0.0
+        version: 17.0.20
+      react:
+        specifier: ^17.0.1
+        version: 17.0.1
+      react-dom:
+        specifier: ^17.0.1
+        version: 17.0.1(react@17.0.1)
       rimraf:
         specifier: ^3.0.2
         version: 3.0.2

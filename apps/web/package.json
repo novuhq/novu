@@ -53,6 +53,7 @@
     "@novu/design-system": "^0.21.0",
     "@novu/notification-center": "^0.21.0",
     "@novu/shared": "^0.21.0",
+    "@novu/shared-web": "^0.21.0",
     "@sentry/react": "^7.40.0",
     "@sentry/tracing": "^7.40.0",
     "@storybook/addon-docs": "^7.4.2",
