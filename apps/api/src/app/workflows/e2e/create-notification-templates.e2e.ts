@@ -12,6 +12,7 @@ import {
   IFieldFilterPart,
   FilterPartTypeEnum,
   EmailProviderIdEnum,
+  ChangeEntityTypeEnum,
 } from '@novu/shared';
 import {
   ChangeRepository,
@@ -19,6 +20,8 @@ import {
   MessageTemplateRepository,
   EnvironmentRepository,
   SubscriberEntity,
+  NotificationGroupRepository,
+  OrganizationRepository,
 } from '@novu/dal';
 import { isSameDay } from 'date-fns';
 import { CreateWorkflowRequestDto } from '../dto';
@@ -443,6 +446,8 @@ describe('Create Notification template from blueprint - /notification-templates 
   let session: UserSession;
   const notificationTemplateRepository: NotificationTemplateRepository = new NotificationTemplateRepository();
   const environmentRepository: EnvironmentRepository = new EnvironmentRepository();
+  const notificationGroupRepository: NotificationGroupRepository = new NotificationGroupRepository();
+  const organizationRepository: OrganizationRepository = new OrganizationRepository();
 
   before(async () => {
     session = new UserSession();
@@ -472,6 +477,30 @@ describe('Create Notification template from blueprint - /notification-templates 
     expect(response.body.statusCode).to.equal(404);
   });
 
+  it('should create notification group change from blueprint creation', async function () {
+    const prodEnv = await getProductionEnvironment();
+
+    const { blueprintId } = await buildBlueprint(session, prodEnv, notificationTemplateRepository);
+
+    const blueprint = (await session.testAgent.get(`/v1/blueprints/${blueprintId}`).send()).body.data;
+    const blueprintOrg = await organizationRepository.create({ name: 'Blueprint Org' });
+    process.env.BLUEPRINT_CREATOR = blueprintOrg._id;
+    const group = await notificationGroupRepository.create({
+      _organizationId: blueprintOrg._id,
+      name: 'Test name',
+    });
+    blueprint.notificationGroupId = group._id;
+    blueprint.blueprintId = blueprint._id;
+
+    const noChanges = (await session.testAgent.get(`/v1/changes?promoted=false`)).body.data;
+    expect(noChanges.length).to.equal(0);
+    await session.testAgent.post(`/v1/workflows`).send({ ...blueprint });
+    const newWorkflowChanges = (await session.testAgent.get(`/v1/changes?promoted=false`)).body.data;
+    expect(newWorkflowChanges.length).to.equal(2);
+    expect(newWorkflowChanges[0].type).to.equal(ChangeEntityTypeEnum.NOTIFICATION_GROUP);
+    expect(newWorkflowChanges[1].type).to.equal(ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE);
+  });
+
   async function getProductionEnvironment() {
     return await environmentRepository.findOne({
       _parentId: session.environment._id,
@@ -479,15 +508,7 @@ describe('Create Notification template from blueprint - /notification-templates 
   }
 });
 
-export async function createTemplateFromBlueprint({
-  session,
-  notificationTemplateRepository,
-  prodEnv,
-}: {
-  session: UserSession;
-  notificationTemplateRepository: NotificationTemplateRepository;
-  prodEnv;
-}) {
+async function buildBlueprint(session, prodEnv, notificationTemplateRepository) {
   const testTemplateRequestDto: Partial<CreateWorkflowRequestDto> = {
     name: 'test email template',
     description: 'This is a test description',
@@ -544,6 +565,26 @@ export async function createTemplateFromBlueprint({
   )?._id;
 
   if (!blueprintId) throw new Error('blueprintId was not found');
+
+  return { testTemplateRequestDto, testTemplate, blueprintId };
+}
+
+export async function createTemplateFromBlueprint({
+  session,
+  notificationTemplateRepository,
+  prodEnv,
+  overrides = {},
+}: {
+  session: UserSession;
+  notificationTemplateRepository: NotificationTemplateRepository;
+  prodEnv;
+  overrides?: Partial<CreateWorkflowRequestDto>;
+}) {
+  const { testTemplateRequestDto, testTemplate, blueprintId } = await buildBlueprint(
+    session,
+    prodEnv,
+    notificationTemplateRepository
+  );
 
   const blueprint = (await session.testAgent.get(`/v1/blueprints/${blueprintId}`).send()).body.data;
 
