@@ -17,7 +17,6 @@ export enum InMemoryProviderEnum {
   MEMORY_DB = 'MemoryDB',
   REDIS = 'Redis',
   REDIS_CLUSTER = 'RedisCluster',
-  OLD_INSTANCE_REDIS = 'OldInstanceRedis',
 }
 
 export type Pipeline = ChainableCommander;

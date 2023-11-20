@@ -4,6 +4,7 @@ enum WorkerEnum {
   STANDARD = 'StandardWorker',
   WEB_SOCKET = 'WebSocketWorker',
   WORKFLOW = 'WorkflowWorker',
+  EXECUTION_LOG = 'ExecutionLogWorker',
 }
 
 interface IWorkerConfig {
@@ -38,10 +39,14 @@ const getWorkerConfig = (worker: WorkerEnum): IWorkerConfig => {
       lockDuration: getDefaultLockDuration() ?? 90000,
     },
     [WorkerEnum.WEB_SOCKET]: {
-      concurrency: getDefaultConcurrency() ?? 200,
+      concurrency: getDefaultConcurrency() ?? 400,
       lockDuration: getDefaultLockDuration() ?? 90000,
     },
     [WorkerEnum.WORKFLOW]: {
+      concurrency: getDefaultConcurrency() ?? 200,
+      lockDuration: getDefaultLockDuration() ?? 90000,
+    },
+    [WorkerEnum.EXECUTION_LOG]: {
       concurrency: getDefaultConcurrency() ?? 200,
       lockDuration: getDefaultLockDuration() ?? 90000,
     },
@@ -64,3 +69,6 @@ export const getWebSocketWorkerOptions = () =>
 
 export const getWorkflowWorkerOptions = () =>
   getWorkerConfig(WorkerEnum.WORKFLOW);
+
+export const getExecutionLogWorkerOptions = () =>
+  getWorkerConfig(WorkerEnum.EXECUTION_LOG);
