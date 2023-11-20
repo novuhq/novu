@@ -15,4 +15,6 @@ export enum ObservabilityBackgroundTransactionEnum {
   TRIGGER_HANDLER_QUEUE = 'trigger-handler-queue',
   EXECUTION_LOG_QUEUE = 'execution-log-queue',
   WS_SOCKET_QUEUE = 'ws_socket_queue',
+  WS_SOCKET_SOCKET_CONNECTION = 'ws_socket_handle_connection',
+  WS_SOCKET_HANDLE_DISCONNECT = 'ws_socket_handle_disconnect',
 }
