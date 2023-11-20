@@ -22,24 +22,34 @@ describe('Get workflow override - /workflow-overrides/workflows/:workflowId/tena
 
     const tenant = await tenantRepository.findOne({
       _environmentId: session.environment._id,
-      _id: createdWorkflowOverride._tenantId,
+      _id: createdWorkflowOverride.tenant._id,
     });
 
     if (!tenant) throw new Error('Tenant not found');
 
     const res = await session.testAgent.get(
-      `/v1/workflow-overrides/workflows/${createdWorkflowOverride._workflowId}/tenants/${tenant._id}`
+      `/v1/workflow-overrides/workflows/${createdWorkflowOverride.workflowOverride._workflowId}/tenants/${tenant._id}`
     );
 
     const foundWorkflowOverride: IWorkflowOverride = res.body.data;
 
-    expect(foundWorkflowOverride._workflowId).to.equal(createdWorkflowOverride._workflowId);
-    expect(foundWorkflowOverride._tenantId).to.equal(createdWorkflowOverride._tenantId);
-    expect(foundWorkflowOverride.active).to.equal(createdWorkflowOverride.active);
-    expect(foundWorkflowOverride.preferenceSettings.chat).to.equal(createdWorkflowOverride.preferenceSettings.chat);
-    expect(foundWorkflowOverride.preferenceSettings.sms).to.equal(createdWorkflowOverride.preferenceSettings.sms);
-    expect(foundWorkflowOverride.preferenceSettings.in_app).to.equal(createdWorkflowOverride.preferenceSettings.in_app);
-    expect(foundWorkflowOverride.preferenceSettings.email).to.equal(createdWorkflowOverride.preferenceSettings.email);
-    expect(foundWorkflowOverride.preferenceSettings.push).to.equal(createdWorkflowOverride.preferenceSettings.push);
+    expect(foundWorkflowOverride._workflowId).to.equal(createdWorkflowOverride.workflowOverride._workflowId);
+    expect(foundWorkflowOverride._tenantId).to.equal(createdWorkflowOverride.tenant._id);
+    expect(foundWorkflowOverride.active).to.equal(createdWorkflowOverride.workflowOverride.active);
+    expect(foundWorkflowOverride.preferenceSettings.chat).to.equal(
+      createdWorkflowOverride.workflowOverride.preferenceSettings.chat
+    );
+    expect(foundWorkflowOverride.preferenceSettings.sms).to.equal(
+      createdWorkflowOverride.workflowOverride.preferenceSettings.sms
+    );
+    expect(foundWorkflowOverride.preferenceSettings.in_app).to.equal(
+      createdWorkflowOverride.workflowOverride.preferenceSettings.in_app
+    );
+    expect(foundWorkflowOverride.preferenceSettings.email).to.equal(
+      createdWorkflowOverride.workflowOverride.preferenceSettings.email
+    );
+    expect(foundWorkflowOverride.preferenceSettings.push).to.equal(
+      createdWorkflowOverride.workflowOverride.preferenceSettings.push
+    );
   });
 });

@@ -23,14 +23,14 @@ describe('Delete workflow override - /workflow-overrides/:overrideId (Delete)', 
 
     const tenant = await tenantRepository.findOne({
       _environmentId: session.environment._id,
-      _id: createdWorkflowOverride._tenantId,
+      _id: createdWorkflowOverride.tenant._id,
     });
 
     if (!tenant) throw new Error('Tenant not found');
 
     const validatedCreationWorkflowOverride = await workflowOverrideRepository.findOne({
       _environmentId: session.environment._id,
-      _id: createdWorkflowOverride._id,
+      _id: createdWorkflowOverride.workflowOverride._id,
     });
 
     if (!validatedCreationWorkflowOverride) throw new Error('WorkflowOverride not found');
@@ -45,7 +45,7 @@ describe('Delete workflow override - /workflow-overrides/:overrideId (Delete)', 
 
     const findDeleted = await workflowOverrideRepository.findOne({
       _environmentId: session.environment._id,
-      _id: createdWorkflowOverride._id,
+      _id: createdWorkflowOverride.workflowOverride._id,
     });
 
     expect(findDeleted).to.be.null;
