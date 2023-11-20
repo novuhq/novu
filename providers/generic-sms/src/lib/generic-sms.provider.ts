@@ -69,7 +69,7 @@ export class GenericSmsProvider implements ISmsProvider {
       method: 'POST',
       data: {
         ...options,
-        sender: this.config.from,
+        sender: options.from || this.config.from,
       },
     });
 

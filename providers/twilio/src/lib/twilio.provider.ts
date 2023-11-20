@@ -30,7 +30,7 @@ export class TwilioSmsProvider implements ISmsProvider {
     const twilioResponse = await this.twilioClient.messages.create({
       body: options.content,
       to: options.to,
-      from: this.config.from,
+      from: options.from || this.config.from,
     });
 
     return {
