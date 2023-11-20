@@ -11,7 +11,11 @@ import {
   MessageRepository,
   MemberRepository,
 } from '@novu/dal';
-import { AnalyticsService, DalServiceHealthIndicator } from '@novu/application-generic';
+import {
+  AnalyticsService,
+  DalServiceHealthIndicator,
+  WebSocketsInMemoryProviderService,
+} from '@novu/application-generic';
 
 import { SubscriberOnlineService } from './subscriber-online';
 
@@ -46,7 +50,14 @@ const analyticsService = {
   },
 };
 
-const PROVIDERS = [analyticsService, dalService, DalServiceHealthIndicator, SubscriberOnlineService, ...DAL_MODELS];
+const PROVIDERS = [
+  analyticsService,
+  dalService,
+  DalServiceHealthIndicator,
+  SubscriberOnlineService,
+  WebSocketsInMemoryProviderService,
+  ...DAL_MODELS,
+];
 
 @Module({
   imports: [
