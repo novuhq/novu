@@ -60,6 +60,7 @@ import { EmailSettings } from './pages/settings/tabs/EmailSettings';
 import { ProductLead } from './components/utils/ProductLead';
 import { SSO, UserAccess, Cloud } from '@novu/design-system';
 import { BrandingForm, LayoutsListPage } from './pages/brand/tabs';
+import { TranslationRoutes } from './pages/TranslationPages';
 
 library.add(far, fas);
 
@@ -271,6 +272,7 @@ function App() {
                     <Route path="" element={<BrandingForm />} />
                     <Route path="layouts" element={<LayoutsListPage />} />
                   </Route>
+                  <Route path="/translations" element={<TranslationRoutes />} />
                 </Route>
               </Routes>
             </AuthProvider>

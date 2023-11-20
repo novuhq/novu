@@ -23,4 +23,5 @@ export interface IOrganizationEntity {
     contentBackground: string;
     direction: 'ltr' | 'rtl';
   };
+  defaultLocale?: string;
 }
