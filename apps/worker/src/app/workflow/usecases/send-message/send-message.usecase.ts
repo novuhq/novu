@@ -23,6 +23,7 @@ import {
   Instrument,
   GetSubscriberGlobalPreference,
   GetSubscriberGlobalPreferenceCommand,
+  ExecutionLogQueueService,
 } from '@novu/application-generic';
 import {
   JobEntity,
@@ -54,7 +55,7 @@ export class SendMessage {
     private sendMessageChat: SendMessageChat,
     private sendMessagePush: SendMessagePush,
     private digest: Digest,
-    private createExecutionDetails: CreateExecutionDetails,
+    private executionLogQueueService: ExecutionLogQueueService,
     private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
     private getSubscriberGlobalPreferenceUsecase: GetSubscriberGlobalPreference,
     private notificationTemplateRepository: NotificationTemplateRepository,
@@ -121,15 +122,19 @@ export class SendMessage {
     }
 
     if (stepType !== StepTypeEnum.DELAY) {
-      await this.createExecutionDetails.execute(
+      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+      await this.executionLogQueueService.add(
+        metadata._id,
         CreateExecutionDetailsCommand.create({
+          ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: stepType === StepTypeEnum.DIGEST ? DetailEnum.START_DIGESTING : DetailEnum.START_SENDING,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.PENDING,
           isTest: false,
           isRetry: false,
-        })
+        }),
+        command.organizationId
       );
     }
 
@@ -169,8 +174,11 @@ export class SendMessage {
     const shouldRun = await this.matchMessage.filter(messageMatcherCommand, data);
 
     if (!shouldRun.passed) {
-      await this.createExecutionDetails.execute(
+      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+      await this.executionLogQueueService.add(
+        metadata._id,
         CreateExecutionDetailsCommand.create({
+          ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.FILTER_STEPS,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -181,7 +189,8 @@ export class SendMessage {
             payload: data,
             filters: command.step.filters,
           }),
-        })
+        }),
+        command.organizationId
       );
     }
 
@@ -219,8 +228,11 @@ export class SendMessage {
     const globalPreferenceResult = this.stepPreferred(globalPreference, job);
 
     if (!globalPreferenceResult) {
-      await this.createExecutionDetails.execute(
+      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+      await this.executionLogQueueService.add(
+        metadata._id,
         CreateExecutionDetailsCommand.create({
+          ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
           detail: DetailEnum.STEP_FILTERED_BY_GLOBAL_PREFERENCES,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -228,7 +240,8 @@ export class SendMessage {
           isTest: false,
           isRetry: false,
           raw: JSON.stringify(globalPreference),
-        })
+        }),
+        job._organizationId
       );
 
       return false;
@@ -248,8 +261,11 @@ export class SendMessage {
     const result = this.stepPreferred(preference, job);
 
     if (!result) {
-      await this.createExecutionDetails.execute(
+      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+      await this.executionLogQueueService.add(
+        metadata._id,
         CreateExecutionDetailsCommand.create({
+          ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
           detail: DetailEnum.STEP_FILTERED_BY_PREFERENCES,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -257,7 +273,8 @@ export class SendMessage {
           isTest: false,
           isRetry: false,
           raw: JSON.stringify(preference),
-        })
+        }),
+        job._organizationId
       );
     }
 
