@@ -15,11 +15,11 @@ import {
   UseRowSelectInstanceProps,
   UseRowSelectState,
 } from 'react-table';
+import { useDataRef } from '@novu/shared-web';
 
 import useStyles from './Table.styles';
 import { colors } from '../config';
 import { DefaultCell } from './DefaultCell';
-import { useDataRef } from '../hooks';
 import { ChevronLeft, ChevronRight } from '../icons';
 import { Radio } from '../radio/Radio';
 

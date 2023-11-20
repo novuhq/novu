@@ -1,3 +1,3 @@
-import { SegmentProvider, useSegment } from '@novu/design-system';
+import { SegmentProvider, useSegment } from '@novu/shared-web';
 
 export { SegmentProvider, useSegment };

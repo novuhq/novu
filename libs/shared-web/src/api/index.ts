@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { IParamObject } from '@novu/shared';
-import { API_ROOT } from '../config/vars';
+
+import { API_ROOT } from '../config';
 
 interface IOptions {
   absoluteUrl: boolean;

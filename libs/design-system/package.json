@@ -43,6 +43,7 @@
     "@mantine/notifications": "^5.7.1",
     "@novu/client": "0.21.0",
     "@novu/shared": "0.21.0",
+    "@novu/shared-web": "0.21.0",
     "@segment/analytics-next": "1.59.0",
     "@sentry/react": "^7.40.0",
     "@tanstack/react-query": "^4.20.4",
@@ -67,8 +68,8 @@
     "cypress": "^13.3.2",
     "eslint-plugin-cypress": "^2.12.1",
     "eslint-plugin-storybook": "^0.6.13",
-    "react": "17.0.1",
-    "react-dom": "17.0.1",
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1",
     "react-router-dom": "6.2.2",
     "rimraf": "^3.0.2",
     "storybook": "^7.4.2",
@@ -80,8 +81,7 @@
     "vite-plugin-dts": "^3.6.0"
   },
   "peerDependencies": {
-    "react": "17.0.1",
-    "react-dom": "17.0.1",
-    "react-router-dom": "6.2.2"
+    "react": "^16.8.0 || ^17.0.0",
+    "react-dom": "^16.8.0 || ^17.0.0"
   }
 }

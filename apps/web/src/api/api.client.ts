@@ -1,3 +1,3 @@
-import { api } from '@novu/design-system';
+import { api } from '@novu/shared-web';
 
 export { api };

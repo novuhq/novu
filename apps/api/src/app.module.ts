@@ -36,7 +36,7 @@ import { IdempotencyInterceptor } from './app/shared/framework/idempotency.inter
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
   try {
-    if (process.env.NOVU_MANAGED_SERVICE === 'true' || process.env.CI_EE_TEST === 'true') {
+    if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
       if (require('@novu/ee-auth')?.EEAuthModule) {
         modules.push(require('@novu/ee-auth')?.EEAuthModule);
       }

@@ -17,7 +17,7 @@ import {
   IS_TEMPLATE_STORE_ENABLED,
   IS_MULTI_TENANCY_ENABLED,
   IS_TRANSLATION_MANAGER_ENABLED,
-} from '@novu/design-system';
+} from '@novu/shared-web';
 
 export {
   API_ROOT,
