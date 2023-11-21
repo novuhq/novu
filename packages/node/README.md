@@ -274,6 +274,11 @@ await novu.subscribers.setCredentials("subscriberId", "fcm", {
 await novu.subscribers.setCredentials("subscriberId", "slack", {
   webhookUrl: ["webhookUrl"]
 })
+
+// update integrationIdentifier
+await novu.subscribers.setCredentials("integrationIdentifier", {
+  integrationIdentifier: ["integrationIdentifier"]
+})
 ```
 
 - #### Delete provider credentials
