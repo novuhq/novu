@@ -9,7 +9,7 @@ describe('get locales - /translations/locales (GET)', async () => {
     await session.initialize();
   });
 
-  it('should get translation group', async () => {
+  it('should get locales', async () => {
     const data = await session.testAgent.get(`/v1/translations/locales`).send();
     const locales: any[] = data.body.data;
 

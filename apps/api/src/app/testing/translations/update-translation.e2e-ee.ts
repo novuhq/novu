@@ -1,7 +1,7 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-describe('Update translation group - /translations/groups (PATCH)', async () => {
+describe('Update translation - /translations/groups (PATCH)', async () => {
   let session: UserSession;
 
   before(async () => {
@@ -12,7 +12,7 @@ describe('Update translation group - /translations/groups (PATCH)', async () => 
     });
   });
 
-  it('should update translation group', async () => {
+  it('should update translation', async () => {
     await session.testAgent.post(`/v1/translations/groups`).send({
       name: 'test',
       identifier: 'test',
