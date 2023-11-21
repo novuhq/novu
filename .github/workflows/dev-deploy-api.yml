@@ -49,6 +49,9 @@ jobs:
           submodules: ${{ contains (matrix.name,'-ee') }}
           token: ${{ secrets.SUBMODULES_TOKEN }}
       - uses: ./.github/actions/setup-project
+        with:
+          submodules: ${{ contains (matrix.name,'-ee') }}
+          slim: 'true'
       - uses: ./.github/actions/docker/build-api
         id: docker_build
         with:
@@ -142,7 +145,7 @@ jobs:
           sourcemaps: apps/api/dist
           ignore_empty: true
           ignore_missing: true
-          url_prefix: "~"
+          url_prefix: '~'
 
   newrelic:
     runs-on: ubuntu-latest
@@ -159,6 +162,6 @@ jobs:
         with:
           region: EU
           apiKey: ${{ secrets.NEW_RELIC_API_KEY }}
-          guid: "MzgxMjQwOHxBUE18QVBQTElDQVRJT058NDk3NjQzODIy"
-          version: "${{ env.RELEASE_VERSION }}"
-          user: "${{ github.actor }}"
+          guid: 'MzgxMjQwOHxBUE18QVBQTElDQVRJT058NDk3NjQzODIy'
+          version: '${{ env.RELEASE_VERSION }}'
+          user: '${{ github.actor }}'
