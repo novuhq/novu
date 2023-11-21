@@ -197,8 +197,8 @@ jobs:
     uses: ./.github/workflows/reusable-api-e2e.yml
     with:
       ee: ${{ contains (matrix.name,'-ee') }}
-      test-e2e-affected: ${{ fromJson(needs.get-affected.outputs.test-e2e)[0] }}
-      test-e2e-ee-affected: ${{ fromJson(needs.get-affected.outputs.test-e2e-ee)[0] }}
+      test-e2e-affected: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/api') }}
+      test-e2e-ee-affected: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e-ee), '@novu/api') }}
       job-name: ${{ matrix.name }}
     secrets: inherit
 
