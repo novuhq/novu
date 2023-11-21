@@ -189,8 +189,6 @@ jobs:
           projects: ${{join(fromJson(needs.get-affected.outputs.test-libs), ',')}}
 
   test_api:
-    name: E2E Test API
-    runs-on: ubuntu-latest
     needs: [get-affected]
     strategy:
       # The order is important for ee to be first, otherwise outputs not work correctly
