@@ -70,6 +70,8 @@ export class WorkflowOverridesController {
     @UserSession() user: IJwtPayload,
     @Body() body: CreateWorkflowOverrideRequestDto
   ): Promise<CreateWorkflowOverrideResponseDto> {
+    console.log('remove me');
+
     return this.createWorkflowOverrideUsecase.execute(
       CreateWorkflowOverrideCommand.create({
         organizationId: user.organizationId,
