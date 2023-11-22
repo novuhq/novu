@@ -1,4 +1,3 @@
-// throttler-behind-proxy.guard.ts
 import {
   InjectThrottlerOptions,
   InjectThrottlerStorage,
@@ -106,7 +105,7 @@ export class ApiRateLimitGuard extends ThrottlerGuard {
         })
       );
 
-    const secondsToReset = Math.max(Math.ceil((reset - Date.now()) / 1000), 0);
+    const secondsToReset = Math.max(Math.ceil((reset - Date.now()) / 1e3), 0);
 
     res.header(HeaderKeysEnum.RATE_LIMIT_REMAINING, remaining);
     res.header(HeaderKeysEnum.RATE_LIMIT_LIMIT, limit);
