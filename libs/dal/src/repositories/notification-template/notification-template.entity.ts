@@ -6,17 +6,17 @@ import {
   IPreferenceChannels,
   IWorkflowStepMetadata,
   NotificationTemplateCustomData,
-  INotificationTemplateStep,
   IStepVariant,
   IMessageFilter,
   INotificationTrigger,
-  INotificationTemplate,
   TriggerTypeEnum,
   INotificationTriggerVariable,
   ITriggerReservedVariable,
+  INotificationTemplate,
+  INotificationTemplateStep,
+  IMessageTemplate,
 } from '@novu/shared';
 
-import { MessageTemplateEntity } from '../message-template';
 import { NotificationGroupEntity } from '../notification-group';
 import type { OrganizationId } from '../organization';
 import type { EnvironmentId } from '../environment';
@@ -107,7 +107,7 @@ export class StepVariantEntity implements IStepVariant {
     url: string;
   };
 
-  template?: MessageTemplateEntity;
+  template?: IMessageTemplate;
 
   filters?: StepFilter[];
 

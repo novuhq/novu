@@ -20,7 +20,6 @@ import {
 import {
   InstrumentUsecase,
   DetailEnum,
-  CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   SelectIntegration,
   CompileTemplate,
@@ -29,6 +28,7 @@ import {
   PushFactory,
   GetNovuProviderCredentials,
   SelectVariant,
+  ExecutionLogQueueService,
 } from '@novu/application-generic';
 import type { IPushOptions } from '@novu/stateless';
 
@@ -48,7 +48,7 @@ export class SendMessagePush extends SendMessageBase {
     protected subscriberRepository: SubscriberRepository,
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
-    protected createExecutionDetails: CreateExecutionDetails,
+    protected executionLogQueueService: ExecutionLogQueueService,
     private compileTemplate: CompileTemplate,
     protected selectIntegration: SelectIntegration,
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
@@ -57,7 +57,7 @@ export class SendMessagePush extends SendMessageBase {
     super(
       messageRepository,
       createLogUsecase,
-      createExecutionDetails,
+      executionLogQueueService,
       subscriberRepository,
       selectIntegration,
       getNovuProviderCredentials,
@@ -207,15 +207,19 @@ export class SendMessagePush extends SendMessageBase {
   }
 
   private async sendNotificationError(job: JobEntity): Promise<void> {
-    await this.createExecutionDetails.execute(
+    const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+    await this.executionLogQueueService.add(
+      metadata._id,
       CreateExecutionDetailsCommand.create({
+        ...metadata,
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: DetailEnum.NOTIFICATION_ERROR,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.FAILED,
         isTest: false,
         isRetry: false,
-      })
+      }),
+      job._organizationId
     );
   }
 
@@ -250,9 +254,12 @@ export class SendMessagePush extends SendMessageBase {
   ): Promise<void> {
     // We avoid to throw the errors to be able to execute all actions in the loop
     try {
-      await this.createExecutionDetails.execute(
+      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+      await this.executionLogQueueService.add(
+        metadata._id,
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+          ...metadata,
           detail,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
@@ -261,7 +268,8 @@ export class SendMessagePush extends SendMessageBase {
           ...(contextData?.providerId && { providerId: contextData.providerId }),
           ...(contextData?.messageId && { messageId: contextData.messageId }),
           ...(contextData?.raw && { raw: contextData.raw }),
-        })
+        }),
+        job._organizationId
       );
     } catch (error) {}
   }
@@ -290,8 +298,11 @@ export class SendMessagePush extends SendMessageBase {
         step,
       });
 
-      await this.createExecutionDetails.execute(
+      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+      await this.executionLogQueueService.add(
+        metadata._id,
         CreateExecutionDetailsCommand.create({
+          ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
           detail: `${DetailEnum.MESSAGE_SENT}: ${integration.providerId}`,
@@ -300,7 +311,8 @@ export class SendMessagePush extends SendMessageBase {
           isTest: false,
           isRetry: false,
           raw: JSON.stringify({ result, deviceToken }),
-        })
+        }),
+        command.organizationId
       );
 
       return true;
@@ -349,8 +361,11 @@ export class SendMessagePush extends SendMessageBase {
       _jobId: command.jobId,
     });
 
-    await this.createExecutionDetails.execute(
+    const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+    await this.executionLogQueueService.add(
+      metadata._id,
       CreateExecutionDetailsCommand.create({
+        ...metadata,
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         detail: `${DetailEnum.MESSAGE_CREATED}: ${integration.providerId}`,
         source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -359,7 +374,8 @@ export class SendMessagePush extends SendMessageBase {
         isTest: false,
         isRetry: false,
         raw: this.storeContent() ? JSON.stringify(content) : null,
-      })
+      }),
+      command.organizationId
     );
 
     return message;

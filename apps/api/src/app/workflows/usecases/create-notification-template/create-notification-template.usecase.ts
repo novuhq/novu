@@ -353,21 +353,32 @@ export class CreateNotificationTemplate {
         continue;
       }
 
-      let foundFeed = await this.feedRepository.findOne({
+      let feedItem = await this.feedRepository.findOne({
         _organizationId: command.organizationId,
         identifier: blueprintFeed.identifier,
       });
 
-      if (!foundFeed) {
-        foundFeed = await this.feedRepository.create({
+      if (!feedItem) {
+        feedItem = await this.feedRepository.create({
           name: blueprintFeed.name,
           identifier: blueprintFeed.identifier,
           _environmentId: command.environmentId,
           _organizationId: command.organizationId,
         });
+
+        await this.createChange.execute(
+          CreateChangeCommand.create({
+            item: feedItem,
+            type: ChangeEntityTypeEnum.FEED,
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
+            userId: command.userId,
+            changeId: FeedRepository.createObjectId(),
+          })
+        );
       }
 
-      step.template._feedId = foundFeed._id;
+      step.template._feedId = feedItem._id;
       steps[i] = step;
     }
 
@@ -398,6 +409,17 @@ export class CreateNotificationTemplate {
         _organizationId: command.organizationId,
         name: blueprintNotificationGroup.name,
       });
+
+      await this.createChange.execute(
+        CreateChangeCommand.create({
+          item: group,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          userId: command.userId,
+          type: ChangeEntityTypeEnum.NOTIFICATION_GROUP,
+          changeId: NotificationGroupRepository.createObjectId(),
+        })
+      );
     }
 
     return group;

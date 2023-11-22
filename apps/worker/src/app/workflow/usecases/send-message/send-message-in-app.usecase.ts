@@ -21,7 +21,6 @@ import {
   InstrumentUsecase,
   InvalidateCacheService,
   DetailEnum,
-  CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   SelectIntegration,
   CompileTemplate,
@@ -31,6 +30,7 @@ import {
   buildMessageCountKey,
   GetNovuProviderCredentials,
   SelectVariant,
+  ExecutionLogQueueService,
 } from '@novu/application-generic';
 
 import { CreateLog } from '../../../shared/logs';
@@ -47,7 +47,7 @@ export class SendMessageInApp extends SendMessageBase {
     protected messageRepository: MessageRepository,
     private webSocketsQueueService: WebSocketsQueueService,
     protected createLogUsecase: CreateLog,
-    protected createExecutionDetails: CreateExecutionDetails,
+    protected executionLogQueueService: ExecutionLogQueueService,
     protected subscriberRepository: SubscriberRepository,
     private compileTemplate: CompileTemplate,
     private organizationRepository: OrganizationRepository,
@@ -58,7 +58,7 @@ export class SendMessageInApp extends SendMessageBase {
     super(
       messageRepository,
       createLogUsecase,
-      createExecutionDetails,
+      executionLogQueueService,
       subscriberRepository,
       selectIntegration,
       getNovuProviderCredentials,
@@ -85,15 +85,19 @@ export class SendMessageInApp extends SendMessageBase {
     });
 
     if (!integration) {
-      await this.createExecutionDetails.execute(
+      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+      await this.executionLogQueueService.add(
+        metadata._id,
         CreateExecutionDetailsCommand.create({
+          ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-        })
+        }),
+        command.organizationId
       );
 
       return;
@@ -216,9 +220,12 @@ export class SendMessageInApp extends SendMessageBase {
 
     if (!message) throw new PlatformException('Message not found');
 
-    await this.createExecutionDetails.execute(
+    const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+    await this.executionLogQueueService.add(
+      metadata._id,
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+        ...metadata,
         messageId: message._id,
         providerId: integration.providerId,
         detail: DetailEnum.MESSAGE_CREATED,
@@ -226,7 +233,8 @@ export class SendMessageInApp extends SendMessageBase {
         status: ExecutionDetailsStatusEnum.PENDING,
         isTest: false,
         isRetry: false,
-      })
+      }),
+      command.organizationId
     );
 
     await this.webSocketsQueueService.bullMqService.add(
@@ -246,8 +254,11 @@ export class SendMessageInApp extends SendMessageBase {
       command.organizationId
     );
 
-    await this.createExecutionDetails.execute(
+    const meta = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+    await this.executionLogQueueService.add(
+      meta._id,
       CreateExecutionDetailsCommand.create({
+        ...meta,
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         messageId: message._id,
         providerId: integration.providerId,
@@ -256,7 +267,8 @@ export class SendMessageInApp extends SendMessageBase {
         status: ExecutionDetailsStatusEnum.SUCCESS,
         isTest: false,
         isRetry: false,
-      })
+      }),
+      command.organizationId
     );
   }
 

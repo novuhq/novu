@@ -19,7 +19,7 @@ export interface IMessageTemplate {
   _organizationId?: OrganizationId;
   _creatorId?: string;
   _feedId?: string;
-  _layoutId?: string;
+  _layoutId?: string | null;
   _parentId?: string;
   subject?: string;
   name?: string;

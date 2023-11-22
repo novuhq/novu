@@ -16,8 +16,8 @@ import { JobEntity, MessageTemplateEntity, NotificationStepEntity } from '@novu/
 import { CompileTemplate, ConditionsFilter, ConditionsFilterCommand } from '@novu/application-generic';
 
 describe('Message filter matcher', function () {
-  const createExecutionDetails = {
-    execute: sinon.stub(),
+  const executionLogQueueService = {
+    add: sinon.stub(),
   };
   const conditionsFilter = new ConditionsFilter(
     undefined as any,
@@ -26,7 +26,7 @@ describe('Message filter matcher', function () {
     undefined as any,
     undefined as any,
     undefined as any,
-    createExecutionDetails as any,
+    executionLogQueueService as any,
     new CompileTemplate()
   );
 
@@ -732,7 +732,7 @@ describe('Message filter matcher', function () {
           undefined as any,
           undefined as any,
           undefined as any,
-          createExecutionDetails as any,
+          executionLogQueueService as any,
           new CompileTemplate()
         );
         const matchedMessage = await filter.filter(
@@ -770,7 +770,7 @@ describe('Message filter matcher', function () {
           undefined as any,
           undefined as any,
           undefined as any,
-          createExecutionDetails as any,
+          executionLogQueueService as any,
           new CompileTemplate()
         );
         const matchedMessage = await filter.filter(
@@ -802,7 +802,7 @@ describe('Message filter matcher', function () {
           undefined as any,
           undefined as any,
           undefined as any,
-          createExecutionDetails as any,
+          executionLogQueueService as any,
           new CompileTemplate()
         );
         const matchedMessage = await filter.filter(
@@ -828,7 +828,7 @@ describe('Message filter matcher', function () {
           undefined as any,
           undefined as any,
           undefined as any,
-          createExecutionDetails as any,
+          executionLogQueueService as any,
           new CompileTemplate()
         );
         const matchedMessage = await filter.filter(
@@ -854,7 +854,7 @@ describe('Message filter matcher', function () {
           undefined as any,
           undefined as any,
           undefined as any,
-          createExecutionDetails as any,
+          executionLogQueueService as any,
           new CompileTemplate()
         );
         const matchedMessage = await filter.filter(
@@ -884,7 +884,7 @@ describe('Message filter matcher', function () {
           undefined as any,
           undefined as any,
           undefined as any,
-          createExecutionDetails as any,
+          executionLogQueueService as any,
           new CompileTemplate()
         );
         const matchedMessage = await filter.filter(
@@ -923,7 +923,7 @@ describe('Message filter matcher', function () {
           undefined as any,
           undefined as any,
           undefined as any,
-          createExecutionDetails as any,
+          executionLogQueueService as any,
           new CompileTemplate()
         );
         const matchedMessage = await filter.filter(
@@ -952,7 +952,7 @@ describe('Message filter matcher', function () {
           undefined as any,
           undefined as any,
           undefined as any,
-          createExecutionDetails as any,
+          executionLogQueueService as any,
           new CompileTemplate()
         );
         const matchedMessage = await filter.filter(
@@ -981,7 +981,7 @@ describe('Message filter matcher', function () {
           undefined as any,
           undefined as any,
           undefined as any,
-          createExecutionDetails as any,
+          executionLogQueueService as any,
           new CompileTemplate()
         );
         const matchedMessage = await filter.filter(
@@ -1010,7 +1010,7 @@ describe('Message filter matcher', function () {
           undefined as any,
           undefined as any,
           undefined as any,
-          createExecutionDetails as any,
+          executionLogQueueService as any,
           new CompileTemplate()
         );
         const matchedMessage = await filter.filter(
@@ -1039,7 +1039,7 @@ describe('Message filter matcher', function () {
           undefined as any,
           undefined as any,
           undefined as any,
-          createExecutionDetails as any,
+          executionLogQueueService as any,
           new CompileTemplate()
         );
         const matchedMessage = await filter.filter(
@@ -1068,7 +1068,7 @@ describe('Message filter matcher', function () {
           undefined as any,
           undefined as any,
           undefined as any,
-          createExecutionDetails as any,
+          executionLogQueueService as any,
           new CompileTemplate()
         );
         const matchedMessage = await filter.filter(

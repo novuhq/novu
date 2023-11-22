@@ -2,6 +2,7 @@ import {
   StepTypeEnum,
   IMessageCTA,
   IActor,
+  IMessageTemplate,
   EnvironmentId,
   OrganizationId,
   MessageTemplateContentType,
@@ -10,7 +11,7 @@ import {
 import { IEmailBlock, ITemplateVariable } from './types';
 import type { ChangePropsValueType } from '../../types/helpers';
 
-export class MessageTemplateEntity {
+export class MessageTemplateEntity implements IMessageTemplate {
   _id?: string;
 
   _environmentId: EnvironmentId;
@@ -20,7 +21,7 @@ export class MessageTemplateEntity {
   _creatorId: string;
 
   // TODO: Due a circular dependency I can't import LayoutId from Layout.
-  _layoutId?: string;
+  _layoutId?: string | null;
 
   type: StepTypeEnum;
 

@@ -11,7 +11,6 @@ import { ChannelTypeEnum, LogCodeEnum, ExecutionDetailsSourceEnum, ExecutionDeta
 import {
   InstrumentUsecase,
   DetailEnum,
-  CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   SelectIntegration,
   CompileTemplate,
@@ -19,6 +18,7 @@ import {
   SmsFactory,
   GetNovuProviderCredentials,
   SelectVariant,
+  ExecutionLogQueueService,
 } from '@novu/application-generic';
 
 import { CreateLog } from '../../../shared/logs';
@@ -34,7 +34,7 @@ export class SendMessageSms extends SendMessageBase {
     protected subscriberRepository: SubscriberRepository,
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
-    protected createExecutionDetails: CreateExecutionDetails,
+    protected executionLogQueueService: ExecutionLogQueueService,
     private compileTemplate: CompileTemplate,
     protected selectIntegration: SelectIntegration,
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
@@ -43,7 +43,7 @@ export class SendMessageSms extends SendMessageBase {
     super(
       messageRepository,
       createLogUsecase,
-      createExecutionDetails,
+      executionLogQueueService,
       subscriberRepository,
       selectIntegration,
       getNovuProviderCredentials,
@@ -103,8 +103,11 @@ export class SendMessageSms extends SendMessageBase {
     const phone = command.payload.phone || subscriber.phone;
 
     if (!integration) {
-      await this.createExecutionDetails.execute(
+      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+      await this.executionLogQueueService.add(
+        metadata._id,
         CreateExecutionDetailsCommand.create({
+          ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -118,7 +121,8 @@ export class SendMessageSms extends SendMessageBase {
                 }),
               }
             : {}),
-        })
+        }),
+        command.organizationId
       );
 
       return;
@@ -152,8 +156,11 @@ export class SendMessageSms extends SendMessageBase {
       _jobId: command.jobId,
     });
 
-    await this.createExecutionDetails.execute(
+    const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+    await this.executionLogQueueService.add(
+      metadata._id,
       CreateExecutionDetailsCommand.create({
+        ...metadata,
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         detail: DetailEnum.MESSAGE_CREATED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -162,7 +169,8 @@ export class SendMessageSms extends SendMessageBase {
         isTest: false,
         isRetry: false,
         raw: this.storeContent() ? JSON.stringify(messagePayload) : null,
-      })
+      }),
+      command.organizationId
     );
 
     if (phone && integration) {
@@ -185,8 +193,11 @@ export class SendMessageSms extends SendMessageBase {
         'Subscriber does not have active phone'
       );
 
-      await this.createExecutionDetails.execute(
+      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+      await this.executionLogQueueService.add(
+        metadata._id,
         CreateExecutionDetailsCommand.create({
+          ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
           detail: DetailEnum.SUBSCRIBER_NO_CHANNEL_DETAILS,
@@ -194,7 +205,8 @@ export class SendMessageSms extends SendMessageBase {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-        })
+        }),
+        command.organizationId
       );
 
       return;
@@ -209,8 +221,11 @@ export class SendMessageSms extends SendMessageBase {
         LogCodeEnum.MISSING_SMS_INTEGRATION
       );
 
-      await this.createExecutionDetails.execute(
+      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+      await this.executionLogQueueService.add(
+        metadata._id,
         CreateExecutionDetailsCommand.create({
+          ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
           detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
@@ -218,7 +233,8 @@ export class SendMessageSms extends SendMessageBase {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-        })
+        }),
+        command.organizationId
       );
 
       return;
@@ -232,8 +248,11 @@ export class SendMessageSms extends SendMessageBase {
         command,
         LogCodeEnum.MISSING_SMS_PROVIDER
       );
-      await this.createExecutionDetails.execute(
+      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+      await this.executionLogQueueService.add(
+        metadata._id,
         CreateExecutionDetailsCommand.create({
+          ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
           detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
@@ -241,7 +260,8 @@ export class SendMessageSms extends SendMessageBase {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-        })
+        }),
+        command.organizationId
       );
 
       return;
@@ -270,8 +290,11 @@ export class SendMessageSms extends SendMessageBase {
         id: message._id,
       });
 
-      await this.createExecutionDetails.execute(
+      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+      await this.executionLogQueueService.add(
+        metadata._id,
         CreateExecutionDetailsCommand.create({
+          ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
           detail: DetailEnum.MESSAGE_SENT,
@@ -280,7 +303,8 @@ export class SendMessageSms extends SendMessageBase {
           isTest: false,
           isRetry: false,
           raw: JSON.stringify(result),
-        })
+        }),
+        command.organizationId
       );
 
       if (!result?.id) {
@@ -306,8 +330,11 @@ export class SendMessageSms extends SendMessageBase {
         e
       );
 
-      await this.createExecutionDetails.execute(
+      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+      await this.executionLogQueueService.add(
+        metadata._id,
         CreateExecutionDetailsCommand.create({
+          ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
           detail: DetailEnum.PROVIDER_ERROR,
@@ -316,7 +343,8 @@ export class SendMessageSms extends SendMessageBase {
           isTest: false,
           isRetry: false,
           raw: JSON.stringify(e),
-        })
+        }),
+        command.organizationId
       );
     }
   }

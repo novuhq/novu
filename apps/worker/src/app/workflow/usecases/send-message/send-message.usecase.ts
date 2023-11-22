@@ -11,10 +11,8 @@ import {
   InstrumentUsecase,
   AnalyticsService,
   buildNotificationTemplateKey,
-  buildSubscriberKey,
   CachedEntity,
   DetailEnum,
-  CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
@@ -22,10 +20,14 @@ import {
   ConditionsFilterCommand,
   ConditionsFilter,
   IFilterVariables,
+  GetSubscriberGlobalPreference,
+  GetSubscriberGlobalPreferenceCommand,
+  ExecutionLogQueueService,
+  buildSubscriberKey,
 } from '@novu/application-generic';
 import {
-  JobEntity,
   SubscriberRepository,
+  JobEntity,
   NotificationTemplateRepository,
   JobRepository,
   JobStatusEnum,
@@ -52,8 +54,9 @@ export class SendMessage {
     private sendMessageChat: SendMessageChat,
     private sendMessagePush: SendMessagePush,
     private digest: Digest,
-    private createExecutionDetails: CreateExecutionDetails,
+    private executionLogQueueService: ExecutionLogQueueService,
     private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
+    private getSubscriberGlobalPreferenceUsecase: GetSubscriberGlobalPreference,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private jobRepository: JobRepository,
     private sendMessageDelay: SendMessageDelay,
@@ -122,15 +125,19 @@ export class SendMessage {
     }
 
     if (stepType !== StepTypeEnum.DELAY) {
-      await this.createExecutionDetails.execute(
+      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+      await this.executionLogQueueService.add(
+        metadata._id,
         CreateExecutionDetailsCommand.create({
+          ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: stepType === StepTypeEnum.DIGEST ? DetailEnum.START_DIGESTING : DetailEnum.START_SENDING,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.PENDING,
           isTest: false,
           isRetry: false,
-        })
+        }),
+        command.organizationId
       );
     }
 
@@ -168,8 +175,11 @@ export class SendMessage {
     );
 
     if (!shouldRun.passed) {
-      await this.createExecutionDetails.execute(
+      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+      await this.executionLogQueueService.add(
+        metadata._id,
         CreateExecutionDetailsCommand.create({
+          ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.FILTER_STEPS,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -179,7 +189,8 @@ export class SendMessage {
           raw: JSON.stringify({
             conditions: shouldRun.conditions,
           }),
-        })
+        }),
+        command.organizationId
       );
     }
 
@@ -206,21 +217,55 @@ export class SendMessage {
     });
     if (!subscriber) throw new PlatformException('Subscriber not found with id ' + job._subscriberId);
 
-    const buildCommand = GetSubscriberTemplatePreferenceCommand.create({
-      organizationId: job._organizationId,
-      subscriberId: subscriber.subscriberId,
-      environmentId: job._environmentId,
-      template,
-      subscriber,
-    });
+    const { preference: globalPreference } = await this.getSubscriberGlobalPreferenceUsecase.execute(
+      GetSubscriberGlobalPreferenceCommand.create({
+        organizationId: job._organizationId,
+        environmentId: job._environmentId,
+        subscriberId: job.subscriberId,
+      })
+    );
 
-    const { preference } = await this.getSubscriberTemplatePreferenceUsecase.execute(buildCommand);
+    const globalPreferenceResult = this.stepPreferred(globalPreference, job);
+
+    if (!globalPreferenceResult) {
+      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+      await this.executionLogQueueService.add(
+        metadata._id,
+        CreateExecutionDetailsCommand.create({
+          ...metadata,
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+          detail: DetailEnum.STEP_FILTERED_BY_GLOBAL_PREFERENCES,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.SUCCESS,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify(globalPreference),
+        }),
+        job._organizationId
+      );
+
+      return false;
+    }
+
+    const { preference } = await this.getSubscriberTemplatePreferenceUsecase.execute(
+      GetSubscriberTemplatePreferenceCommand.create({
+        organizationId: job._organizationId,
+        subscriberId: subscriber.subscriberId,
+        environmentId: job._environmentId,
+        template,
+        subscriber,
+        tenant: job.tenant,
+      })
+    );
 
     const result = this.stepPreferred(preference, job);
 
     if (!result) {
-      await this.createExecutionDetails.execute(
+      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+      await this.executionLogQueueService.add(
+        metadata._id,
         CreateExecutionDetailsCommand.create({
+          ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
           detail: DetailEnum.STEP_FILTERED_BY_PREFERENCES,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -228,7 +273,8 @@ export class SendMessage {
           isTest: false,
           isRetry: false,
           raw: JSON.stringify(preference),
-        })
+        }),
+        job._organizationId
       );
     }
 
@@ -314,8 +360,11 @@ export class SendMessage {
   }
 
   protected async sendSelectedTenantExecution(job: JobEntity, tenant: TenantEntity) {
-    await this.createExecutionDetails.execute(
+    const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+    await this.executionLogQueueService.add(
+      metadata._id,
       CreateExecutionDetailsCommand.create({
+        ...metadata,
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: DetailEnum.TENANT_CONTEXT_SELECTED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -331,7 +380,8 @@ export class SendMessage {
           _environmentId: tenant?._environmentId,
           _id: tenant?._id,
         }),
-      })
+      }),
+      job._organizationId
     );
   }
 
@@ -345,8 +395,11 @@ export class SendMessage {
         identifier: tenantIdentifier,
       });
       if (!tenant) {
-        await this.createExecutionDetails.execute(
+        const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+        await this.executionLogQueueService.add(
+          metadata._id,
           CreateExecutionDetailsCommand.create({
+            ...metadata,
             ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
             detail: DetailEnum.TENANT_NOT_FOUND,
             source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -356,7 +409,8 @@ export class SendMessage {
             raw: JSON.stringify({
               tenantIdentifier: tenantIdentifier,
             }),
-          })
+          }),
+          job._organizationId
         );
 
         return null;

@@ -1,26 +1,21 @@
-import {
-  IntegrationEntity,
-  JobEntity,
-  MessageRepository,
-  SubscriberRepository,
-  MessageTemplateEntity,
-} from '@novu/dal';
+import { IntegrationEntity, JobEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
 import {
   ChannelTypeEnum,
   EmailProviderIdEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  IMessageTemplate,
   SmsProviderIdEnum,
 } from '@novu/shared';
 import {
   DetailEnum,
-  CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   SelectIntegration,
   SelectIntegrationCommand,
   GetNovuProviderCredentials,
   SelectVariantCommand,
   SelectVariant,
+  ExecutionLogQueueService,
 } from '@novu/application-generic';
 
 import { SendMessageType } from './send-message-type.usecase';
@@ -32,13 +27,13 @@ export abstract class SendMessageBase extends SendMessageType {
   protected constructor(
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
-    protected createExecutionDetails: CreateExecutionDetails,
+    protected executionLogQueueService: ExecutionLogQueueService,
     protected subscriberRepository: SubscriberRepository,
     protected selectIntegration: SelectIntegration,
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
     protected selectVariant: SelectVariant
   ) {
-    super(messageRepository, createLogUsecase, createExecutionDetails);
+    super(messageRepository, createLogUsecase, executionLogQueueService);
   }
 
   protected async getIntegration(
@@ -74,8 +69,11 @@ export abstract class SendMessageBase extends SendMessageType {
   }
 
   protected async sendErrorHandlebars(job: JobEntity, error: string) {
-    await this.createExecutionDetails.execute(
+    const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+    await this.executionLogQueueService.add(
+      metadata._id,
       CreateExecutionDetailsCommand.create({
+        ...metadata,
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -83,13 +81,17 @@ export abstract class SendMessageBase extends SendMessageType {
         isTest: false,
         isRetry: false,
         raw: JSON.stringify({ error }),
-      })
+      }),
+      job._organizationId
     );
   }
 
   protected async sendSelectedIntegrationExecution(job: JobEntity, integration: IntegrationEntity) {
-    await this.createExecutionDetails.execute(
+    const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+    await this.executionLogQueueService.add(
+      metadata._id,
       CreateExecutionDetailsCommand.create({
+        ...metadata,
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: DetailEnum.INTEGRATION_INSTANCE_SELECTED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -103,11 +105,12 @@ export abstract class SendMessageBase extends SendMessageType {
           _environmentId: integration?._environmentId,
           _id: integration?._id,
         }),
-      })
+      }),
+      job._organizationId
     );
   }
 
-  protected async processVariants(command: SendMessageCommand): Promise<MessageTemplateEntity> {
+  protected async processVariants(command: SendMessageCommand): Promise<IMessageTemplate> {
     const { messageTemplate, conditions } = await this.selectVariant.execute(
       SelectVariantCommand.create({
         organizationId: command.organizationId,
@@ -120,8 +123,11 @@ export abstract class SendMessageBase extends SendMessageType {
     );
 
     if (conditions) {
-      await this.createExecutionDetails.execute(
+      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+      await this.executionLogQueueService.add(
+        metadata._id,
         CreateExecutionDetailsCommand.create({
+          ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.VARIANT_CHOSEN,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -129,7 +135,8 @@ export abstract class SendMessageBase extends SendMessageType {
           isTest: false,
           isRetry: false,
           raw: JSON.stringify({ conditions }),
-        })
+        }),
+        command.job._organizationId
       );
     }
 

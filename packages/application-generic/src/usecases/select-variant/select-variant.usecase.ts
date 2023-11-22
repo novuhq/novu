@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import { MessageTemplateRepository, MessageTemplateEntity } from '@novu/dal';
-import { ICondition } from '@novu/shared';
+import { MessageTemplateRepository } from '@novu/dal';
+import { ICondition, IMessageTemplate } from '@novu/shared';
 
 import { SelectVariantCommand } from './select-variant.command';
 import { ConditionsFilter } from '../conditions-filter';
@@ -19,7 +19,7 @@ export class SelectVariant {
   ) {}
 
   async execute(command: SelectVariantCommand): Promise<{
-    messageTemplate: MessageTemplateEntity;
+    messageTemplate: IMessageTemplate;
     conditions?: ICondition[];
   }> {
     if (!command.step.variants?.length) {

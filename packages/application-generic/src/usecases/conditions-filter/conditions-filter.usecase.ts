@@ -50,10 +50,10 @@ import { CachedEntity } from '../../services/cache/interceptors/cached-entity.in
 import { buildSubscriberKey } from '../../services/cache/key-builders/entities';
 import { CompileTemplate, CompileTemplateCommand } from '../compile-template';
 import {
-  CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../create-execution-details';
+import { ExecutionLogQueueService } from '../../services';
 
 @Injectable()
 export class ConditionsFilter extends Filter {
@@ -64,7 +64,7 @@ export class ConditionsFilter extends Filter {
     private jobRepository: JobRepository,
     private tenantRepository: TenantRepository,
     private environmentRepository: EnvironmentRepository,
-    private createExecutionDetails: CreateExecutionDetails,
+    private executionLogQueueService: ExecutionLogQueueService,
     private compileTemplate: CompileTemplate
   ) {
     super();
@@ -425,7 +425,8 @@ export class ConditionsFilter extends Filter {
       child.value = await this.compileFilter(
         child.value,
         variables,
-        command.job
+        command.job,
+        command.organizationId
       );
       const res = await this.getWebhookResponse(child, variables, command);
       passed = this.processFilterEquality(
@@ -443,7 +444,8 @@ export class ConditionsFilter extends Filter {
       child.value = await this.compileFilter(
         child.value,
         variables,
-        command.job
+        command.job,
+        command.organizationId
       );
 
       passed = this.processFilterEquality(
@@ -634,7 +636,8 @@ export class ConditionsFilter extends Filter {
   private async compileFilter(
     value: string,
     variables: IFilterVariables,
-    job: IJob
+    job: IJob,
+    organizationId: string
   ): Promise<string | undefined> {
     try {
       return await this.compileTemplate.execute(
@@ -646,8 +649,11 @@ export class ConditionsFilter extends Filter {
         })
       );
     } catch (e: any) {
-      await this.createExecutionDetails.execute(
+      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+      await this.executionLogQueueService.add(
+        metadata._id,
         CreateExecutionDetailsCommand.create({
+          ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
           detail: DetailEnum.PROCESSING_STEP_FILTER_ERROR,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -655,7 +661,8 @@ export class ConditionsFilter extends Filter {
           isTest: false,
           isRetry: false,
           raw: JSON.stringify({ error: e?.message }),
-        })
+        }),
+        organizationId
       );
 
       return;
