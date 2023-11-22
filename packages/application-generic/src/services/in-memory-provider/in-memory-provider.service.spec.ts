@@ -10,7 +10,11 @@ let inMemoryProviderService: InMemoryProviderService;
 describe('In-memory Provider Service', () => {
   describe('Non cluster mode', () => {
     beforeEach(async () => {
-      inMemoryProviderService = new InMemoryProviderService(redis, false);
+      inMemoryProviderService = new InMemoryProviderService(
+        redis,
+        redis.getConfig({ showFriendlyErrorStack: false }),
+        false
+      );
 
       await inMemoryProviderService.delayUntilReadiness();
 
@@ -42,6 +46,9 @@ describe('In-memory Provider Service', () => {
         expect(inMemoryProviderConfig.password).toEqual(undefined);
         expect(inMemoryProviderConfig.ttl).toEqual(7_200);
         expect(inMemoryProviderConfig.tls).toEqual(undefined);
+        expect(inMemoryProviderConfig.options.showFriendlyErrorStack).toEqual(
+          false
+        );
       });
 
       it('should instantiate the provider properly', async () => {
@@ -82,7 +89,11 @@ describe('In-memory Provider Service', () => {
 
   describe('Cluster mode', () => {
     beforeEach(async () => {
-      inMemoryProviderService = new InMemoryProviderService(redisCluster, true);
+      inMemoryProviderService = new InMemoryProviderService(
+        redisCluster,
+        redisCluster.getConfig({ showFriendlyErrorStack: false }),
+        true
+      );
       await inMemoryProviderService.delayUntilReadiness();
 
       expect(inMemoryProviderService.getStatus()).toEqual('ready');
@@ -92,16 +103,23 @@ describe('In-memory Provider Service', () => {
       await inMemoryProviderService.shutdown();
     });
 
-    describe('TEMP: Check if enableAutoPipelining true is set properly in Cluster', () => {
+    describe('Check if enableAutoPipelining true is set properly in Cluster', () => {
       it('enableAutoPipelining is enabled', async () => {
         const clusterWithPipelining = new InMemoryProviderService(
           redisCluster,
-          true,
+          redisCluster.getConfig({
+            enableAutoPipelining: true,
+            showFriendlyErrorStack: false,
+          }),
           true
         );
         await clusterWithPipelining.delayUntilReadiness();
 
         expect(clusterWithPipelining.getStatus()).toEqual('ready');
+        expect(
+          clusterWithPipelining.inMemoryProviderConfig.options
+            .showFriendlyErrorStack
+        ).toEqual(false);
         expect(
           clusterWithPipelining.inMemoryProviderClient.options
             .enableAutoPipelining

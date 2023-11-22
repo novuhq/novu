@@ -20,22 +20,23 @@ const LOG_CONTEXT = 'InMemoryProviderService';
 
 export class InMemoryProviderService {
   public inMemoryProviderClient: InMemoryProviderClient;
-  public inMemoryProviderConfig: InMemoryProviderConfig;
-
   public isProviderClientReady: (string) => boolean;
 
   constructor(
-    private loadedProvider: IProviderRedis | IProviderCluster,
-    private isCluster: boolean,
-    private enableAutoPipelining?: boolean
+    private loadedProvider: IProviderCluster | IProviderRedis,
+    private config: InMemoryProviderConfig,
+    private isCluster: boolean
   ) {
     Logger.log(
       this.descriptiveLogMessage('In-memory provider service initialized'),
       LOG_CONTEXT
     );
     this.isProviderClientReady = loadedProvider.isClientReady;
-    this.inMemoryProviderConfig = loadedProvider.getConfig();
     this.inMemoryProviderClient = this.inMemoryProviderSetup();
+  }
+
+  public get inMemoryProviderConfig(): InMemoryProviderConfig {
+    return this.config;
   }
 
   protected descriptiveLogMessage(message) {
@@ -115,14 +116,10 @@ export class InMemoryProviderService {
 
     const { getClient } = this.loadedProvider;
 
-    const inMemoryProviderClient = getClient(
-      this.isCluster && this.enableAutoPipelining
-    );
-    if (this.inMemoryProviderConfig.host && inMemoryProviderClient) {
+    const inMemoryProviderClient = getClient(this.config);
+    if (this.config.host && inMemoryProviderClient) {
       Logger.log(
-        this.descriptiveLogMessage(
-          `Connecting at ${this.inMemoryProviderConfig.host}`
-        ),
+        this.descriptiveLogMessage(`Connecting at ${this.config.host}`),
         LOG_CONTEXT
       );
 

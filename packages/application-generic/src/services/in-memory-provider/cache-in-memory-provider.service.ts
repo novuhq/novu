@@ -10,6 +10,7 @@ import {
 import {
   InMemoryProviderEnum,
   InMemoryProviderClient,
+  IProviderClusterConfigOptions,
   ScanStream,
 } from './types';
 
@@ -30,14 +31,25 @@ export class CacheInMemoryProviderService {
 
     this.loadedProvider = this.selectProvider();
 
-    const enableAutoPipelining =
-      process.env.REDIS_CACHE_ENABLE_AUTOPIPELINING === 'true';
-
     this.inMemoryProviderService = new InMemoryProviderService(
       this.loadedProvider,
-      this.isCluster,
-      enableAutoPipelining
+      this.loadedProvider.getConfig(this.getCacheConfigOptions()),
+      this.isCluster
     );
+  }
+
+  private getCacheConfigOptions(): IProviderClusterConfigOptions {
+    const enableAutoPipelining =
+      process.env.REDIS_CACHE_ENABLE_AUTOPIPELINING === 'true';
+    /*
+     *  Disabled in Prod as affects performance
+     */
+    const showFriendlyErrorStack = process.env.NODE_ENV !== 'production';
+
+    return {
+      enableAutoPipelining,
+      showFriendlyErrorStack,
+    };
   }
 
   /**
@@ -51,17 +63,26 @@ export class CacheInMemoryProviderService {
    */
   private selectProvider(): IProviderCluster | IProviderRedis {
     if (this.isClusterMode()) {
-      const providers = [
+      const providerIds = [
         InMemoryProviderEnum.ELASTICACHE,
         InMemoryProviderEnum.REDIS_CLUSTER,
       ];
 
-      const selectedProvider = providers.find((provider) =>
-        getClusterProvider(provider)?.validate()
-      );
+      let selectedProvider = undefined;
+      for (const providerId of providerIds) {
+        const clusterProvider = getClusterProvider(providerId);
+        const clusterProviderConfig = clusterProvider.getConfig(
+          this.getCacheConfigOptions()
+        );
+
+        if (clusterProvider.validate(clusterProviderConfig)) {
+          selectedProvider = clusterProvider;
+          break;
+        }
+      }
 
       if (selectedProvider) {
-        return getClusterProvider(selectedProvider);
+        return selectedProvider;
       }
     }
 
