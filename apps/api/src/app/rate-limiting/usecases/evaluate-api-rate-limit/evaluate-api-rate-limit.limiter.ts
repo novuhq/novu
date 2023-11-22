@@ -55,8 +55,8 @@ export const tokenBucketLimiter: CostLimiter = (refillRate, interval, maxTokens,
 
     local bucket = redis.call("HMGET", key, "lastRefill", "tokens")
 
-    -- Using bucket with TTL to automatically clean up expired buckets
     if bucket[1] == false then
+      -- The bucket does not exist yet, so we create it and add a ttl.
       lastRefill = now
       remaining = maxTokens - cost
       resetMult = (remaining < cost) and (cost - remaining) or cost

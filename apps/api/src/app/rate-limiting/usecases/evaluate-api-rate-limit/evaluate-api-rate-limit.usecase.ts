@@ -40,8 +40,7 @@ export class EvaluateApiRateLimit {
       organizationId: command.organizationId,
     });
 
-    const { burstAllowance } = this.getApiRateLimitAlgorithmConfig.default;
-    const windowDuration = 10;
+    const { burstAllowance, windowDuration } = this.getApiRateLimitAlgorithmConfig.default;
     const refillRate = this.getRefillRate(maxLimit, windowDuration);
     const burstLimit = this.getBurstLimit(refillRate, burstAllowance);
     const cost = this.getCost(command);
