@@ -6,7 +6,5 @@ packages:
   - 'packages/notification-center-angular/projects/*'
   - 'apps/*'
   - 'libs/*'
-  # Enterprise packages
-  - 'enterprise/*'
   # exclude packages that are inside test directories
   - '!**/test/**'
