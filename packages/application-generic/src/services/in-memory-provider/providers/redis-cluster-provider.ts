@@ -1,15 +1,15 @@
-import Redis, {
-  ChainableCommander,
-  Cluster,
-  ClusterNode,
-  ClusterOptions,
-} from 'ioredis';
 import { ConnectionOptions } from 'tls';
 import { Logger } from '@nestjs/common';
 
-export { ChainableCommander, Cluster, ClusterOptions };
-
 import { convertStringValues } from './variable-mappers';
+
+import {
+  Cluster,
+  ClusterNode,
+  ClusterOptions,
+  IProviderClusterConfigOptions,
+  Redis,
+} from '../types';
 
 export const CLIENT_READY = 'ready';
 const DEFAULT_TTL_SECONDS = 60 * 60 * 2;
@@ -38,95 +38,96 @@ export interface IRedisClusterProviderConfig {
   instances?: ClusterNode[];
   keepAlive: number;
   keyPrefix: string;
+  options?: IProviderClusterConfigOptions;
   password?: string;
   ports?: number[];
   tls?: ConnectionOptions;
   ttl: number;
 }
 
-export const getRedisClusterProviderConfig =
-  (): IRedisClusterProviderConfig => {
-    const redisClusterConfig: IRedisClusterConfig = {
-      host: convertStringValues(process.env.REDIS_CLUSTER_SERVICE_HOST),
-      ports: convertStringValues(process.env.REDIS_CLUSTER_SERVICE_PORTS),
-      ttl: convertStringValues(process.env.REDIS_CLUSTER_TTL),
-      password: convertStringValues(process.env.REDIS_CLUSTER_PASSWORD),
-      connectTimeout: convertStringValues(
-        process.env.REDIS_CLUSTER_CONNECTION_TIMEOUT
-      ),
-      keepAlive: convertStringValues(process.env.REDIS_CLUSTER_KEEP_ALIVE),
-      family: convertStringValues(process.env.REDIS_CLUSTER_FAMILY),
-      keyPrefix: convertStringValues(process.env.REDIS_CLUSTER_KEY_PREFIX),
-      tls: process.env.REDIS_CLUSTER_TLS as ConnectionOptions,
-    };
-
-    const host = redisClusterConfig.host;
-    const ports = redisClusterConfig.ports
-      ? JSON.parse(redisClusterConfig.ports)
-      : [];
-    const password = redisClusterConfig.password;
-    const connectTimeout = redisClusterConfig.connectTimeout
-      ? Number(redisClusterConfig.connectTimeout)
-      : DEFAULT_CONNECT_TIMEOUT;
-    const family = redisClusterConfig.family
-      ? Number(redisClusterConfig.family)
-      : DEFAULT_FAMILY;
-    const keepAlive = redisClusterConfig.keepAlive
-      ? Number(redisClusterConfig.keepAlive)
-      : DEFAULT_KEEP_ALIVE;
-    const keyPrefix = redisClusterConfig.keyPrefix ?? DEFAULT_KEY_PREFIX;
-    const ttl = redisClusterConfig.ttl
-      ? Number(redisClusterConfig.ttl)
-      : DEFAULT_TTL_SECONDS;
-
-    const instances: ClusterNode[] = ports.map(
-      (port: number): ClusterNode => ({ host, port })
-    );
-
-    return {
-      host,
-      ports,
-      instances,
-      password,
-      connectTimeout,
-      family,
-      keepAlive,
-      keyPrefix,
-      ttl,
-    };
+export const getRedisClusterProviderConfig = (
+  options?: IProviderClusterConfigOptions
+): IRedisClusterProviderConfig => {
+  const redisClusterConfig: IRedisClusterConfig = {
+    host: convertStringValues(process.env.REDIS_CLUSTER_SERVICE_HOST),
+    ports: convertStringValues(process.env.REDIS_CLUSTER_SERVICE_PORTS),
+    ttl: convertStringValues(process.env.REDIS_CLUSTER_TTL),
+    password: convertStringValues(process.env.REDIS_CLUSTER_PASSWORD),
+    connectTimeout: convertStringValues(
+      process.env.REDIS_CLUSTER_CONNECTION_TIMEOUT
+    ),
+    keepAlive: convertStringValues(process.env.REDIS_CLUSTER_KEEP_ALIVE),
+    family: convertStringValues(process.env.REDIS_CLUSTER_FAMILY),
+    keyPrefix: convertStringValues(process.env.REDIS_CLUSTER_KEY_PREFIX),
+    tls: process.env.REDIS_CLUSTER_TLS as ConnectionOptions,
   };
 
-export const getRedisCluster = (
-  enableAutoPipelining?: boolean
-): Cluster | undefined => {
-  const { instances } = getRedisClusterProviderConfig();
+  const host = redisClusterConfig.host;
+  const ports = redisClusterConfig.ports
+    ? JSON.parse(redisClusterConfig.ports)
+    : [];
+  const password = redisClusterConfig.password;
+  const connectTimeout = redisClusterConfig.connectTimeout
+    ? Number(redisClusterConfig.connectTimeout)
+    : DEFAULT_CONNECT_TIMEOUT;
+  const family = redisClusterConfig.family
+    ? Number(redisClusterConfig.family)
+    : DEFAULT_FAMILY;
+  const keepAlive = redisClusterConfig.keepAlive
+    ? Number(redisClusterConfig.keepAlive)
+    : DEFAULT_KEEP_ALIVE;
+  const keyPrefix = redisClusterConfig.keyPrefix ?? DEFAULT_KEY_PREFIX;
+  const ttl = redisClusterConfig.ttl
+    ? Number(redisClusterConfig.ttl)
+    : DEFAULT_TTL_SECONDS;
 
-  const options: ClusterOptions = {
+  const instances: ClusterNode[] = ports.map(
+    (port: number): ClusterNode => ({ host, port })
+  );
+
+  return {
+    host,
+    ports,
+    instances,
+    password,
+    connectTimeout,
+    family,
+    keepAlive,
+    keyPrefix,
+    ttl,
+    ...(options && { options }),
+  };
+};
+
+export const getRedisCluster = (
+  config: IRedisClusterProviderConfig
+): Cluster | undefined => {
+  const { instances, options } = config || {};
+  const { enableAutoPipelining, showFriendlyErrorStack } = options || {};
+
+  const clusterOptions: ClusterOptions = {
     enableAutoPipelining: enableAutoPipelining ?? false,
     enableOfflineQueue: false,
     enableReadyCheck: true,
     scaleReads: 'slave',
-    /*
-     *  Disabled in Prod as affects performance
-     */
-    showFriendlyErrorStack: process.env.NODE_ENV !== 'production',
+    showFriendlyErrorStack,
     slotsRefreshTimeout: 2000,
   };
 
   Logger.log(
-    `Initializing Redis Cluster Provider with ${instances?.length} instances and auto-pipelining as ${options.enableAutoPipelining}`
+    `Initializing Redis Cluster Provider with ${instances?.length} instances and auto-pipelining as ${enableAutoPipelining}`
   );
 
   if (instances && instances.length > 0) {
-    return new Redis.Cluster(instances, options);
+    return new Redis.Cluster(instances, clusterOptions);
   }
 
   return undefined;
 };
 
-export const validateRedisClusterProviderConfig = (): boolean => {
-  const config = getRedisClusterProviderConfig();
-
+export const validateRedisClusterProviderConfig = (
+  config: IRedisClusterProviderConfig
+): boolean => {
   const validPorts =
     config.ports.length > 0 &&
     config.ports.every((port: number) => Number.isInteger(port));

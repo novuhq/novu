@@ -7,7 +7,11 @@ import {
   IProviderCluster,
   IProviderRedis,
 } from './providers';
-import { InMemoryProviderEnum, InMemoryProviderClient } from './types';
+import {
+  InMemoryProviderEnum,
+  InMemoryProviderClient,
+  IProviderClusterConfigOptions,
+} from './types';
 
 import { GetIsInMemoryClusterModeEnabled } from '../../usecases';
 const LOG_CONTEXT = 'WorkflowInMemoryProviderService';
@@ -27,9 +31,20 @@ export class WorkflowInMemoryProviderService {
 
     this.inMemoryProviderService = new InMemoryProviderService(
       this.loadedProvider,
-      this.isCluster,
-      false
+      this.loadedProvider.getConfig(this.getWorkflowConfigOptions()),
+      this.isCluster
     );
+  }
+
+  private getWorkflowConfigOptions(): IProviderClusterConfigOptions {
+    /*
+     *  Disabled in Prod as affects performance
+     */
+    const showFriendlyErrorStack = process.env.NODE_ENV !== 'production';
+
+    return {
+      showFriendlyErrorStack,
+    };
   }
 
   /**
@@ -43,17 +58,26 @@ export class WorkflowInMemoryProviderService {
    */
   private selectProvider(): IProviderCluster | IProviderRedis {
     if (this.isClusterMode()) {
-      const providers = [
+      const providerIds = [
         InMemoryProviderEnum.MEMORY_DB,
         InMemoryProviderEnum.REDIS_CLUSTER,
       ];
 
-      const selectedProvider = providers.find((provider) =>
-        getClusterProvider(provider)?.validate()
-      );
+      let selectedProvider = undefined;
+      for (const providerId of providerIds) {
+        const clusterProvider = getClusterProvider(providerId);
+        const clusterProviderConfig = clusterProvider.getConfig(
+          this.getWorkflowConfigOptions()
+        );
+
+        if (clusterProvider.validate(clusterProviderConfig)) {
+          selectedProvider = clusterProvider;
+          break;
+        }
+      }
 
       if (selectedProvider) {
-        return getClusterProvider(selectedProvider);
+        return selectedProvider;
       }
     }
 

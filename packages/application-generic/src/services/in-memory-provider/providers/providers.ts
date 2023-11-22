@@ -1,6 +1,13 @@
 import { Logger } from '@nestjs/common';
 
-import { InMemoryProviderEnum, Redis } from '../types';
+import {
+  Cluster,
+  ClusterOptions,
+  InMemoryProviderEnum,
+  IProviderClusterConfigOptions,
+  IRedisConfigOptions,
+  Redis,
+} from '../types';
 
 import { PlatformException } from '../../../utils/exceptions';
 
@@ -33,8 +40,6 @@ import {
   validateRedisProviderConfig,
 } from './redis-provider';
 import {
-  Cluster,
-  ClusterOptions,
   getRedisCluster,
   getRedisClusterProviderConfig,
   IRedisClusterProviderConfig,
@@ -52,17 +57,20 @@ export type InMemoryProviderConfig =
 interface IProviderInMemory {
   isClientReady: (string) => boolean;
   provider: InMemoryProviderEnum;
-  validate: () => boolean;
 }
 
 export interface IProviderRedis extends IProviderInMemory {
-  getClient: () => Redis | undefined;
-  getConfig: () => IRedisProviderConfig;
+  getClient: (config: IRedisProviderConfig) => Redis | undefined;
+  getConfig: (options?: IRedisConfigOptions) => IRedisProviderConfig;
+  validate: (config: IRedisProviderConfig) => boolean;
 }
 
 export interface IProviderCluster extends IProviderInMemory {
-  getClient: (enableAutoPipelining?: boolean) => Cluster | undefined;
-  getConfig: () => InMemoryProviderConfig;
+  getClient: (config: InMemoryProviderConfig) => Cluster | undefined;
+  getConfig: (
+    options?: IProviderClusterConfigOptions
+  ) => InMemoryProviderConfig;
+  validate: (config: InMemoryProviderConfig) => boolean;
 }
 
 const LOG_CONTEXT = 'InMemoryProviderService/Providers';
