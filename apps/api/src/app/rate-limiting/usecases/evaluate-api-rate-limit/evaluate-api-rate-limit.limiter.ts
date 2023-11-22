@@ -13,8 +13,8 @@ import { Ratelimit } from '@upstash/ratelimit';
  * - Allows to set a higher initial burst limit by setting `maxTokens` higher
  * than `refillRate`
  *
- * Adapted from the @upstash/ratelimit library tokenBucket algorithm to include a variable cost:
- * @see https://github.com/upstash/ratelimit/blob/de9d6f3decf4bb5b8dbbe7ae9058b383ab4d0692/src/single.ts#L292
+ * Adapted from the Krakend tokenBucket algorithm to include a variable cost:
+ * @see https://github.com/krakend/krakend-ratelimit/blob/369f0be9b51a4fb8ab7d43e4833d076b461a4374/rate.go#L85
  */
 type CostLimiter = (
   /**
@@ -39,86 +39,128 @@ type CostLimiter = (
   cost: number
 ) => ReturnType<typeof Ratelimit.tokenBucket>;
 
-export const createLimiter: CostLimiter = (refillRate, interval, maxTokens, cost) => {
+export const tokenBucketLimiter: CostLimiter = (refillRate, interval, maxTokens, cost) => {
   const script = /* Lua */ `
-    local key         = KEYS[1]           -- identifier including prefixes
-    local maxTokens   = tonumber(ARGV[1]) -- maximum number of tokens
-    local interval    = tonumber(ARGV[2]) -- size of the window in milliseconds
-    local refillRate  = tonumber(ARGV[3]) -- how many tokens are refilled after each interval
-    local now         = tonumber(ARGV[4]) -- current timestamp in milliseconds
-    local cost        = tonumber(ARGV[5]) -- cost of request
-    local remaining   = 0
+    redis.call("SET", "LOG:STA", "---------------------------------")
+    local key          = KEYS[1]           -- current interval identifier including prefixes
+    local maxTokens    = tonumber(ARGV[1]) -- maximum number of tokens
+    local interval     = tonumber(ARGV[2]) -- size of the window in milliseconds
+    local fillInterval = tonumber(ARGV[3]) -- time between refills in milliseconds
+    local now          = tonumber(ARGV[4]) -- current timestamp in milliseconds
+    local cost         = tonumber(ARGV[5]) -- cost of request
+    local remaining    = 0 -- remaining number of tokens
+    local reset        = 0 -- timestamp when next request of {cost} token(s) can be accepted
 
-    -- Helper function to compute a non-negative number of remaining tokens
-    local function clampTokens(tokens) return math.max(0, tokens) end
-    
-    local bucket = redis.call("HMGET", key, "updatedAt", "tokens")
-    
+    local bucket = redis.call("HMGET", key, "lastRefill", "tokens")
+
+    -- Using bucket with TTL to automatically clean up buckets
     if bucket[1] == false then
       -- The bucket does not exist yet, so we create it and add a ttl.
-      remaining = clampTokens(maxTokens - cost)
-      
-      redis.call("HMSET", key, "updatedAt", now, "tokens", remaining)
-      redis.call("PEXPIRE", key, interval)
+      redis.call("SET", "LOG:INF", "NEW bucket")
+      local lastRefill = now
+      remaining = maxTokens - cost
+      reset = lastRefill + cost * fillInterval
+      redis.call("HMSET", key, "lastRefill", lastRefill, "tokens", remaining)
+      -- Add a TTL of 2x interval to allow retrieval of bucket
+      redis.call("PEXPIRE", key, interval * 2)
+    else
+      -- The current bucket does exist
+      redis.call("SET", "LOG:INF", "EXS bucket")
+      local lastRefill = tonumber(bucket[1])
+      local tokens = tonumber(bucket[2])
+      redis.call("SET", "LOG:TOK", tokens)
 
-      return {remaining, now + interval}
-    end
-
-    -- The bucket does exist
-
-    local updatedAt = tonumber(bucket[1])
-    local tokens = tonumber(bucket[2])
-
-    if now >= updatedAt + interval then
-      if tokens <= 0 then 
-        -- No more tokens were left before the refill.
-        remaining = clampTokens(math.min(maxTokens, refillRate) - cost)
+      if tokens >= cost then
+        -- Delay refill until bucket is empty, and update the tokens
+        redis.call("SET", "LOG:INF", "HAS enough tokens")
+        remaining = tokens - cost
+        if remaining < cost then
+          reset = lastRefill + (cost - remaining) * fillInterval
+        else
+          reset = lastRefill + cost * fillInterval
+        end
+        redis.call("HMSET", key, "tokens", remaining)
       else
-        remaining = clampTokens(math.min(maxTokens, tokens + refillRate) - cost)
+        -- There are not enough tokens in the bucket. Refill the bucket.
+        redis.call("SET", "LOG:INF", "NOT enough remaining")
+        local elapsed = now - lastRefill
+        -- Pessimistically compute new tokens with math.floor
+        local tokensToAdd = math.floor(elapsed / fillInterval)
+        redis.call("SET", "LOG:ADD", tokensToAdd)
+        -- Normalise the number of tokens to a maximum of maxTokens
+        local newTokens = math.min(maxTokens, tokens + tokensToAdd)
+        redis.call("SET", "LOG:NEW", newTokens)
+        remaining = newTokens - cost
+
+        if remaining >= 0 then
+        -- There are enough tokens to cover the cost of the request. Update the tokens.
+          redis.call("SET", "LOG:INF", "HAS enough tokens after refill")
+          -- reset = lastRefill + cost * fillInterval
+          -- Update the time of the last refill depending on how many tokens we added
+          local newRefill = lastRefill + tokensToAdd * fillInterval
+          if remaining < cost then
+            reset = newRefill + (cost - remaining) * fillInterval
+          else
+            reset = newRefill + cost * fillInterval
+          end
+          redis.call("HMSET", key, "lastRefill", newRefill, "tokens", remaining)
+          redis.call("PEXPIRE", key, interval * 2)
+        else
+        -- There are not enough tokens to cover the cost of the request.
+          redis.call("SET", "LOG:INF", "NOT enough tokens after refill")
+          redis.call("SET", "LOG:MAF", cost - newTokens)
+          reset = lastRefill + (cost - tokens) * fillInterval
+        end
       end
-      redis.call("HMSET", key, "updatedAt", now, "tokens", remaining)
-      return {remaining, now + interval}
     end
     
-    remaining = clampTokens(tokens - cost)
-    redis.call("HSET", key, "tokens", remaining)
-    return {remaining, updatedAt + interval}
+    redis.call("SET", "LOG:REM", remaining)
+    redis.call("SET", "LOG:RES", math.ceil((reset - now) / 1000))
+    redis.call("SET", "LOG:END", "---------------------------------")
+    return {remaining, reset}
 `;
 
   const intervalDurationMs = interval * 1e3;
+  const fillInterval = intervalDurationMs / refillRate;
 
   return async function (ctx, identifier) {
-    if (ctx.cache) {
-      const { blocked, reset } = ctx.cache.isBlocked(identifier);
-      if (blocked) {
-        return {
-          success: false,
-          limit: maxTokens,
-          remaining: 0,
-          reset: reset,
-          pending: Promise.resolve(),
-        };
-      }
-    }
+    // Cost needs to be included in local cache identifier to ensure lower cost requests are not blocked
+    const localCacheIdentifier = `${identifier}:${cost}`;
+    /*
+     * if (ctx.cache) {
+     *   const { blocked, reset } = ctx.cache.isBlocked(localCacheIdentifier);
+     *   if (blocked) {
+     *     return {
+     *       success: false,
+     *       limit: refillRate,
+     *       remaining: 0,
+     *       reset: reset,
+     *       pending: Promise.resolve(),
+     *     };
+     *   }
+     * }
+     */
 
     const now = Date.now();
-    const key = [identifier, Math.floor(now / intervalDurationMs)].join(':');
 
     const [remaining, reset] = (await ctx.redis.eval(
       script,
-      [key],
-      [maxTokens, intervalDurationMs, refillRate, now, cost]
+      [identifier],
+      [maxTokens, intervalDurationMs, fillInterval, now, cost]
     )) as [number, number];
 
-    const success = remaining > 0;
-    if (ctx.cache && !success) {
-      ctx.cache.blockUntil(identifier, reset);
-    }
+    const success = remaining >= 0;
+    const nonNegRemaining = Math.max(0, remaining);
+    /*
+     * if (ctx.cache && !success) {
+     *   ctx.cache.blockUntil(localCacheIdentifier, reset);
+     * }
+     */
 
     return {
       success,
-      limit: maxTokens,
-      remaining,
+      limit: refillRate,
+      remaining: nonNegRemaining,
       reset,
       pending: Promise.resolve(),
     };

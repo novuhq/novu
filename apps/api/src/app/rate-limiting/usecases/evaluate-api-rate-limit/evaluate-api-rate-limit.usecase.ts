@@ -2,10 +2,11 @@ import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common'
 import { Ratelimit } from '@upstash/ratelimit';
 import { EvaluateApiRateLimitCommand } from './evaluate-api-rate-limit.command';
 import { GetApiRateLimitMaximum } from '../get-api-rate-limit-maximum';
-import { CacheService, buildEvaluateApiRateLimitKey } from '@novu/application-generic';
+import { CacheService, InstrumentUsecase, buildEvaluateApiRateLimitKey } from '@novu/application-generic';
 import { GetApiRateLimitAlgorithmConfig } from '../get-api-rate-limit-algorithm-config';
 import { EvaluateApiRateLimitResponse } from './evaluate-api-rate-limit.types';
-import { createLimiter } from './evaluate-api-rate-limit.limiter';
+import { tokenBucketLimiter } from './evaluate-api-rate-limit.limiter';
+import { GetApiRateLimitCostConfig } from '../get-api-rate-limit-cost-config';
 
 const LOG_CONTEXT = 'EvaluateApiRateLimit';
 
@@ -19,10 +20,11 @@ export class EvaluateApiRateLimit {
   constructor(
     private getApiRateLimitMaximum: GetApiRateLimitMaximum,
     private getApiRateLimitAlgorithmConfig: GetApiRateLimitAlgorithmConfig,
-    private getApiRateLimitCostConfig: GetApiRateLimitAlgorithmConfig,
+    private getApiRateLimitCostConfig: GetApiRateLimitCostConfig,
     private cacheService: CacheService
   ) {}
 
+  @InstrumentUsecase()
   async execute(command: EvaluateApiRateLimitCommand): Promise<EvaluateApiRateLimitResponse> {
     const cacheClient = this.getCacheClient();
 
@@ -46,7 +48,7 @@ export class EvaluateApiRateLimit {
 
     const ratelimit = new Ratelimit({
       redis: cacheClient,
-      limiter: createLimiter(refillRate, windowDuration, burstLimit, cost),
+      limiter: tokenBucketLimiter(refillRate, windowDuration, burstLimit, cost),
       prefix: '', // Empty cache key prefix to give us full control over the key format
       ephemeralCache: this.ephemeralCache,
     });
@@ -57,10 +59,6 @@ export class EvaluateApiRateLimit {
     });
 
     try {
-      /**
-       * For the algorithm and Lua script:
-       * @see https://github.com/upstash/ratelimit/blob/de9d6f3decf4bb5b8dbbe7ae9058b383ab4d0692/src/single.ts#L292
-       */
       const { success, limit, remaining, reset } = await ratelimit.limit(cacheKey);
 
       return {
