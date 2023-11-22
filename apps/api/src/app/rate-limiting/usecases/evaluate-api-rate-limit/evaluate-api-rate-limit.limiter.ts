@@ -50,72 +50,47 @@ export const tokenBucketLimiter: CostLimiter = (refillRate, interval, maxTokens,
     local cost         = tonumber(ARGV[5]) -- cost of request
     local remaining    = 0 -- remaining number of tokens
     local reset        = 0 -- timestamp when next request of {cost} token(s) can be accepted
+    local resetMult    = 0 -- multiplier for the next reset time
+    local lastRefill   = 0 -- timestamp of last refill
 
     local bucket = redis.call("HMGET", key, "lastRefill", "tokens")
 
-    -- Using bucket with TTL to automatically clean up buckets
+    -- Using bucket with TTL to automatically clean up expired buckets
     if bucket[1] == false then
-      -- The bucket does not exist yet, so we create it and add a ttl.
-      redis.call("SET", "LOG:INF", "NEW bucket")
-      local lastRefill = now
+      lastRefill = now
       remaining = maxTokens - cost
-      reset = lastRefill + cost * fillInterval
+      resetMult = (remaining < cost) and (cost - remaining) or cost
       redis.call("HMSET", key, "lastRefill", lastRefill, "tokens", remaining)
-      -- Add a TTL of 2x interval to allow retrieval of bucket
       redis.call("PEXPIRE", key, interval * 2)
     else
       -- The current bucket does exist
-      redis.call("SET", "LOG:INF", "EXS bucket")
-      local lastRefill = tonumber(bucket[1])
+      lastRefill = tonumber(bucket[1])
       local tokens = tonumber(bucket[2])
-      redis.call("SET", "LOG:TOK", tokens)
 
       if tokens >= cost then
-        -- Delay refill until bucket is empty, and update the tokens
-        redis.call("SET", "LOG:INF", "HAS enough tokens")
+        -- Delay refill until bucket is empty
         remaining = tokens - cost
-        if remaining < cost then
-          reset = lastRefill + (cost - remaining) * fillInterval
-        else
-          reset = lastRefill + cost * fillInterval
-        end
+        resetMult = (remaining < cost) and (cost - remaining) or cost
         redis.call("HMSET", key, "tokens", remaining)
       else
-        -- There are not enough tokens in the bucket. Refill the bucket.
-        redis.call("SET", "LOG:INF", "NOT enough remaining")
         local elapsed = now - lastRefill
-        -- Pessimistically compute new tokens with math.floor
         local tokensToAdd = math.floor(elapsed / fillInterval)
-        redis.call("SET", "LOG:ADD", tokensToAdd)
-        -- Normalise the number of tokens to a maximum of maxTokens
         local newTokens = math.min(maxTokens, tokens + tokensToAdd)
-        redis.call("SET", "LOG:NEW", newTokens)
         remaining = newTokens - cost
 
         if remaining >= 0 then
-        -- There are enough tokens to cover the cost of the request. Update the tokens.
-          redis.call("SET", "LOG:INF", "HAS enough tokens after refill")
-          -- reset = lastRefill + cost * fillInterval
           -- Update the time of the last refill depending on how many tokens we added
-          local newRefill = lastRefill + tokensToAdd * fillInterval
-          if remaining < cost then
-            reset = newRefill + (cost - remaining) * fillInterval
-          else
-            reset = newRefill + cost * fillInterval
-          end
-          redis.call("HMSET", key, "lastRefill", newRefill, "tokens", remaining)
+          lastRefill = lastRefill + tokensToAdd * fillInterval
+          resetMult = (remaining < cost) and (cost - remaining) or cost
+          redis.call("HMSET", key, "lastRefill", lastRefill, "tokens", remaining)
           redis.call("PEXPIRE", key, interval * 2)
         else
-        -- There are not enough tokens to cover the cost of the request.
-          redis.call("SET", "LOG:INF", "NOT enough tokens after refill")
-          redis.call("SET", "LOG:MAF", cost - newTokens)
-          reset = lastRefill + (cost - tokens) * fillInterval
+          resetMult = cost - tokens
         end
       end
     end
     
-    redis.call("SET", "LOG:REM", remaining)
-    redis.call("SET", "LOG:RES", math.ceil((reset - now) / 1000))
+    reset = lastRefill + resetMult * fillInterval
     redis.call("SET", "LOG:END", "---------------------------------")
     return {remaining, reset}
 `;
