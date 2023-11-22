@@ -28,7 +28,7 @@ export type EvaluateApiRateLimitResponse = {
    */
   refillRate: number;
   /**
-   * The algorithm used to calculate the rate limit.
+   * The name of the algorithm used to calculate the rate limit.
    */
   algorithm: string;
 };
