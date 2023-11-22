@@ -111,7 +111,10 @@
     "typescript": "4.9.5"
   },
   "optionalDependencies": {
-    "@novu/ee-auth": "^0.21.0"
+    "@novu/ee-auth": "workspace:*"
+  },
+  "nx": {
+    "implicitDependencies": ["@novu/ee-auth"]
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
