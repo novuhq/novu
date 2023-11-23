@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import axios from 'axios';
 import {
   EnvironmentRepository,
@@ -64,6 +64,7 @@ export class ConditionsFilter extends Filter {
     private jobRepository: JobRepository,
     private tenantRepository: TenantRepository,
     private environmentRepository: EnvironmentRepository,
+    @Inject(forwardRef(() => ExecutionLogQueueService))
     private executionLogQueueService: ExecutionLogQueueService,
     private compileTemplate: CompileTemplate
   ) {
