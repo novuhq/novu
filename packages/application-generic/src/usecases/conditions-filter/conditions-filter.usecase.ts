@@ -617,7 +617,10 @@ export class ConditionsFilter extends Filter {
       return command.variables.tenant;
     }
 
-    const tenantIdentifier = command.job?.tenant?.identifier;
+    const tenantIdentifier =
+      typeof command.job?.tenant === 'string'
+        ? command.job?.tenant
+        : command.job?.tenant?.identifier;
     const tenantFilterExist = filters?.find((filter) => {
       return filter?.children?.find((item) => item?.on === 'tenant');
     });
