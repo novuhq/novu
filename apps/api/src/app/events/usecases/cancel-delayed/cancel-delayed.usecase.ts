@@ -1,30 +1,25 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { JobStatusEnum, JobRepository, JobEntity } from '@novu/dal';
-import { DelayTypeEnum, DigestTypeEnum, StepTypeEnum } from '@novu/shared';
+import { StepTypeEnum } from '@novu/shared';
 import { CancelDelayedCommand } from './cancel-delayed.command';
-import { differenceInMilliseconds } from 'date-fns';
-import { AddJob, CalculateDelayService } from '@novu/application-generic';
+import { isMainDigest } from '@novu/application-generic/build/main/utils/digest';
 
+type PartialJob = Pick<JobEntity, '_id' | 'type' | 'status' | '_environmentId' | '_subscriberId'>;
 @Injectable()
 export class CancelDelayed {
-  constructor(
-    private jobRepository: JobRepository,
-    private addJob: AddJob,
-    @Inject(forwardRef(() => CalculateDelayService))
-    private calculateDelayService: CalculateDelayService
-  ) {}
+  constructor(private jobRepository: JobRepository) {}
 
   public async execute(command: CancelDelayedCommand): Promise<boolean> {
-    const jobs = await this.jobRepository.find(
+    const transactionJobs: PartialJob[] = await this.jobRepository.find(
       {
         _environmentId: command.environmentId,
         transactionId: command.transactionId,
-        status: [JobStatusEnum.DELAYED, JobStatusEnum.MERGED],
+        status: [JobStatusEnum.DELAYED, JobStatusEnum.MERGED, JobStatusEnum.PENDING],
       },
-      '_id'
+      '_id type status _environmentId _subscriberId'
     );
 
-    if (!jobs?.length) {
+    if (!transactionJobs?.length) {
       return false;
     }
 
@@ -32,7 +27,7 @@ export class CancelDelayed {
       {
         _environmentId: command.environmentId,
         _id: {
-          $in: jobs.map((job) => job._id),
+          $in: transactionJobs.map((job) => job._id),
         },
       },
       {
@@ -42,17 +37,17 @@ export class CancelDelayed {
       }
     );
 
-    const digestJob = jobs.find((job) => job.type === StepTypeEnum.DIGEST && job.status === JobStatusEnum.DELAYED);
+    const mainDigestJob = transactionJobs.find((job) => isMainDigest(job.type, job.status));
 
-    if (digestJob) {
-      return await this.scheduleNextDigestJob(digestJob);
+    if (!mainDigestJob) {
+      return true;
     }
 
-    return true;
+    return await this.scheduleNextDigestJob(mainDigestJob);
   }
 
-  private async scheduleNextDigestJob(job: JobEntity) {
-    const jobs = await this.jobRepository.find(
+  private async scheduleNextDigestJob(job: PartialJob) {
+    const mainFollowerDigestJob = await this.jobRepository.findOne(
       {
         _mergedDigestId: job._id,
         status: JobStatusEnum.MERGED,
@@ -62,56 +57,50 @@ export class CancelDelayed {
       },
       '',
       {
-        sort: { createdAt: 1 },
-        limit: 1,
+        query: { sort: { createdAt: 1 } },
       }
     );
-    const newJob = jobs[0];
 
-    if (!newJob) {
-      return false;
+    // meaning that only one trigger was send, and it was cancelled in the CancelDelayed.execute
+    if (!mainFollowerDigestJob) {
+      return true;
     }
 
-    let digestAmount = this.calculateDelayService.calculateDelay({
-      stepMetadata: job.digest,
-      payload: job.payload,
-      overrides: job.overrides,
-    });
-
+    // update new main follower from Merged to Delayed
     await this.jobRepository.update(
       {
         _environmentId: job._environmentId,
-        status: JobStatusEnum.DELAYED,
-        _mergedDigestId: job._id,
+        status: JobStatusEnum.MERGED,
+        _id: mainFollowerDigestJob._id,
       },
       {
         $set: {
           status: JobStatusEnum.DELAYED,
-          _mergedDigestId: newJob._id,
-        },
-      }
-    );
-
-    await this.jobRepository.update(
-      {
-        _environmentId: job._environmentId,
-        _id: job._id,
-      },
-      {
-        $set: {
-          status: JobStatusEnum.MERGED,
           _mergedDigestId: null,
         },
       }
     );
 
-    await this.jobRepository.updateAllChildJobStatus(newJob, JobStatusEnum.PENDING, newJob._id);
+    // update all main follower children jobs to pending status
+    await this.jobRepository.updateAllChildJobStatus(
+      mainFollowerDigestJob,
+      JobStatusEnum.PENDING,
+      mainFollowerDigestJob._id
+    );
 
-    if (![DelayTypeEnum.SCHEDULED, DigestTypeEnum.TIMED].includes(job.digest?.type as any)) {
-      digestAmount = digestAmount - differenceInMilliseconds(new Date(), new Date(job.updatedAt));
-    }
-
-    await this.addJob.queueJob(newJob, digestAmount);
+    // update all jobs that were merged into the old main digest job to point to the new follower
+    await this.jobRepository.update(
+      {
+        _environmentId: job._environmentId,
+        status: JobStatusEnum.MERGED,
+        _mergedDigestId: job._id,
+      },
+      {
+        $set: {
+          _mergedDigestId: mainFollowerDigestJob._id,
+        },
+      }
+    );
 
     return true;
   }
