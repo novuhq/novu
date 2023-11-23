@@ -431,7 +431,7 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE)', function (
 
     expect(cancelledDigestJobs.length).to.eql(2);
 
-    const inpAppjobs = await jobRepository.find(
+    const inpAppJobs = await jobRepository.find(
       {
         _environmentId: session.environment._id,
         _templateId: template._id,
@@ -441,24 +441,24 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE)', function (
       { sort: { createdAt: 1 } }
     );
 
-    const firstMainCanceledTrigger = inpAppjobs[0];
+    const firstMainCanceledTrigger = inpAppJobs[0];
     expect(firstMainCanceledTrigger.status).to.eql(JobStatusEnum.CANCELED);
     expect(firstMainCanceledTrigger.payload.customVar).to.eql('trigger_1_data');
     expect(firstMainCanceledTrigger.digest?.events?.length).to.eql(0);
 
-    const secondFollowerCanceledTrigger = inpAppjobs[1];
+    const secondFollowerCanceledTrigger = inpAppJobs[1];
     expect(secondFollowerCanceledTrigger.status).to.eql(JobStatusEnum.CANCELED);
     expect(secondFollowerCanceledTrigger.payload.customVar).to.eql('trigger_2_data');
     expect(secondFollowerCanceledTrigger.digest?.events?.length).to.eql(0);
 
-    const thirdTriggerLatestFollower = inpAppjobs[2];
+    const thirdTriggerLatestFollower = inpAppJobs[2];
     expect(thirdTriggerLatestFollower.payload.customVar).to.eql('trigger_3_data');
     expect(thirdTriggerLatestFollower.status).to.eql(JobStatusEnum.COMPLETED);
     expect(thirdTriggerLatestFollower.digest?.events?.length).to.eql(2);
     expect(thirdTriggerLatestFollower.digest?.events?.[0].customVar).to.eql('trigger_3_data');
     expect(thirdTriggerLatestFollower.digest?.events?.[1].customVar).to.eql('trigger_4_data');
 
-    const fourthMergedTrigger = inpAppjobs[3];
+    const fourthMergedTrigger = inpAppJobs[3];
     expect(fourthMergedTrigger.payload.customVar).to.eql('trigger_4_data');
     expect(fourthMergedTrigger.digest?.events?.length).to.eql(0);
     expect(fourthMergedTrigger.status).to.eql(JobStatusEnum.MERGED);
@@ -541,7 +541,7 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE)', function (
 
     expect(cancelledDigestJobs.length).to.eql(3);
 
-    const inpAppjobs = await jobRepository.find(
+    const inpAppJobs = await jobRepository.find(
       {
         _environmentId: session.environment._id,
         _templateId: template._id,
@@ -551,23 +551,23 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE)', function (
       { sort: { createdAt: 1 } }
     );
 
-    const firstMainCanceledTrigger = inpAppjobs[0];
+    const firstMainCanceledTrigger = inpAppJobs[0];
     expect(firstMainCanceledTrigger.status).to.eql(JobStatusEnum.CANCELED);
     expect(firstMainCanceledTrigger.payload.customVar).to.eql('trigger_1_data');
     expect(firstMainCanceledTrigger.digest?.events?.length).to.eql(0);
 
-    const secondFollowerCanceledTrigger = inpAppjobs[1];
+    const secondFollowerCanceledTrigger = inpAppJobs[1];
     expect(secondFollowerCanceledTrigger.status).to.eql(JobStatusEnum.CANCELED);
     expect(secondFollowerCanceledTrigger.payload.customVar).to.eql('trigger_2_data');
     expect(secondFollowerCanceledTrigger.digest?.events?.length).to.eql(0);
 
-    const thirdTriggerLatestFollower = inpAppjobs[2];
+    const thirdTriggerLatestFollower = inpAppJobs[2];
     expect(thirdTriggerLatestFollower.payload.customVar).to.eql('trigger_3_data');
     expect(thirdTriggerLatestFollower.status).to.eql(JobStatusEnum.COMPLETED);
     expect(thirdTriggerLatestFollower.digest?.events?.length).to.eql(1);
     expect(thirdTriggerLatestFollower.digest?.events?.[0].customVar).to.eql('trigger_3_data');
 
-    const fourthMergedTrigger = inpAppjobs[3];
+    const fourthMergedTrigger = inpAppJobs[3];
     expect(fourthMergedTrigger.payload.customVar).to.eql('trigger_4_data');
     expect(fourthMergedTrigger.digest?.events?.length).to.eql(0);
     expect(fourthMergedTrigger.status).to.eql(JobStatusEnum.CANCELED);
