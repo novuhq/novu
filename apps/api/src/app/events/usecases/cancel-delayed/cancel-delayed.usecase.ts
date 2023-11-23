@@ -1,26 +1,42 @@
 import { Injectable } from '@nestjs/common';
+
 import { JobStatusEnum, JobRepository, JobEntity } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
+import { isActionStepType, isMainDigest } from '@novu/application-generic';
+
 import { CancelDelayedCommand } from './cancel-delayed.command';
-import { isMainDigest } from '@novu/application-generic/build/main/utils/digest';
 
 type PartialJob = Pick<JobEntity, '_id' | 'type' | 'status' | '_environmentId' | '_subscriberId'>;
+
 @Injectable()
 export class CancelDelayed {
   constructor(private jobRepository: JobRepository) {}
 
   public async execute(command: CancelDelayedCommand): Promise<boolean> {
-    const transactionJobs: PartialJob[] = await this.jobRepository.find(
+    let transactionJobs: PartialJob[] = await this.jobRepository.find(
       {
         _environmentId: command.environmentId,
         transactionId: command.transactionId,
-        status: [JobStatusEnum.DELAYED, JobStatusEnum.MERGED, JobStatusEnum.PENDING],
+        status: [JobStatusEnum.DELAYED, JobStatusEnum.MERGED],
       },
       '_id type status _environmentId _subscriberId'
     );
 
     if (!transactionJobs?.length) {
       return false;
+    }
+
+    if (transactionJobs.find((job) => job.type && isActionStepType(job.type))) {
+      const possiblePendingJobs: PartialJob[] = await this.jobRepository.find(
+        {
+          _environmentId: command.environmentId,
+          transactionId: command.transactionId,
+          status: [JobStatusEnum.PENDING],
+        },
+        '_id type status _environmentId _subscriberId'
+      );
+
+      transactionJobs = [...transactionJobs, ...possiblePendingJobs];
     }
 
     await this.jobRepository.update(
@@ -43,10 +59,10 @@ export class CancelDelayed {
       return true;
     }
 
-    return await this.scheduleNextDigestJob(mainDigestJob);
+    return await this.assignNextDigestJob(mainDigestJob);
   }
 
-  private async scheduleNextDigestJob(job: PartialJob) {
+  private async assignNextDigestJob(job: PartialJob) {
     const mainFollowerDigestJob = await this.jobRepository.findOne(
       {
         _mergedDigestId: job._id,

@@ -15,3 +15,21 @@ export const isMainDigest = (
 ) => {
   return type === StepTypeEnum.DIGEST && status === JobStatusEnum.DELAYED;
 };
+
+export function isActionStepType(type: StepTypeEnum) {
+  const channels = [StepTypeEnum.DELAY, StepTypeEnum.DIGEST];
+
+  return channels.find((channel) => channel === type);
+}
+
+export function isChannelStepType(type: StepTypeEnum) {
+  const channels = [
+    StepTypeEnum.IN_APP,
+    StepTypeEnum.EMAIL,
+    StepTypeEnum.SMS,
+    StepTypeEnum.PUSH,
+    StepTypeEnum.CHAT,
+  ];
+
+  return channels.find((channel) => channel === type);
+}
