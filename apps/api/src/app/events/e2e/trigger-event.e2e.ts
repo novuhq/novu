@@ -2306,6 +2306,14 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
   });
 
   describe('filters logic', () => {
+    beforeEach(async () => {
+      process.env.LAUNCH_DARKLY_SDK_KEY = '';
+      session = new UserSession();
+      await session.initialize();
+      subscriberService = new SubscribersService(session.organization._id, session.environment._id);
+      subscriber = await subscriberService.createSubscriber();
+    });
+
     it('should filter a message with variables', async function () {
       template = await session.createTemplate({
         steps: [
@@ -2937,6 +2945,17 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
     });
 
     describe('workflow override', () => {
+      beforeEach(async () => {
+        process.env.LAUNCH_DARKLY_SDK_KEY = '';
+        session = new UserSession();
+        await session.initialize();
+
+        workflowOverrideService = new WorkflowOverrideService({
+          organizationId: session.organization._id,
+          environmentId: session.environment._id,
+        });
+      });
+
       it('should override - active false', async function () {
         const subscriberOverride = SubscriberRepository.createObjectId();
 
