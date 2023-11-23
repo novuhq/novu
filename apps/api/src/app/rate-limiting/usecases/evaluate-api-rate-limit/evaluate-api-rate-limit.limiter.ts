@@ -101,20 +101,19 @@ export const tokenBucketLimiter: CostLimiter = (refillRate, interval, maxTokens,
   return async function (ctx, identifier) {
     // Cost needs to be included in local cache identifier to ensure lower cost requests are not blocked
     const localCacheIdentifier = `${identifier}:${cost}`;
-    /*
-     * if (ctx.cache) {
-     *   const { blocked, reset } = ctx.cache.isBlocked(localCacheIdentifier);
-     *   if (blocked) {
-     *     return {
-     *       success: false,
-     *       limit: refillRate,
-     *       remaining: 0,
-     *       reset: reset,
-     *       pending: Promise.resolve(),
-     *     };
-     *   }
-     * }
-     */
+
+    if (ctx.cache) {
+      const { blocked, reset } = ctx.cache.isBlocked(localCacheIdentifier);
+      if (blocked) {
+        return {
+          success: false,
+          limit: refillRate,
+          remaining: 0,
+          reset: reset,
+          pending: Promise.resolve(),
+        };
+      }
+    }
 
     const now = Date.now();
 
@@ -126,11 +125,9 @@ export const tokenBucketLimiter: CostLimiter = (refillRate, interval, maxTokens,
 
     const success = remaining >= 0;
     const nonNegRemaining = Math.max(0, remaining);
-    /*
-     * if (ctx.cache && !success) {
-     *   ctx.cache.blockUntil(localCacheIdentifier, reset);
-     * }
-     */
+    if (ctx.cache && !success) {
+      ctx.cache.blockUntil(localCacheIdentifier, reset);
+    }
 
     return {
       success,
