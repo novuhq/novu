@@ -51,11 +51,9 @@ describe('GetApiRateLimitMaximum', async () => {
     environmentRepository = moduleRef.get<EnvironmentRepository>(EnvironmentRepository);
     getDefaultApiRateLimits = moduleRef.get<GetApiRateLimitServiceMaximumConfig>(GetApiRateLimitServiceMaximumConfig);
 
-    findOneEnvironmentStub = sinon.stub(environmentRepository, 'findOne' as any);
-    findOneOrganizationStub = sinon.stub(organizationRepository, 'findOne' as any);
-    defaultApiRateLimits = sinon
-      .stub(getDefaultApiRateLimits, 'defaultApiRateLimits' as any)
-      .value(mockDefaultApiRateLimits);
+    findOneEnvironmentStub = sinon.stub(environmentRepository, 'findOne');
+    findOneOrganizationStub = sinon.stub(organizationRepository, 'findOne');
+    defaultApiRateLimits = sinon.stub(getDefaultApiRateLimits, 'default').value(mockDefaultApiRateLimits);
   });
 
   afterEach(() => {
