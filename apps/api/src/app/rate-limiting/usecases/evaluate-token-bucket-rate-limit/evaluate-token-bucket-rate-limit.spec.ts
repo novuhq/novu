@@ -7,7 +7,7 @@ import { Test } from '@nestjs/testing';
 import * as sinon from 'sinon';
 import { EvaluateTokenBucketRateLimitCommand } from './evaluate-token-bucket-rate-limit.command';
 
-describe('Variable-Cost Token Bucket Algorithm', () => {
+describe('EvaluateTokenBucketRateLimit', () => {
   let useCase: EvaluateTokenBucketRateLimit;
   let cacheService: CacheService;
 
@@ -34,7 +34,7 @@ describe('Variable-Cost Token Bucket Algorithm', () => {
     });
   });
 
-  describe('Cache', () => {
+  describe('Cache invocation', () => {
     let cacheServiceEvalStub: sinon.SinonStub;
     let cacheServiceSaddStub: sinon.SinonStub;
     let cacheServiceIsEnabledStub: sinon.SinonStub;
