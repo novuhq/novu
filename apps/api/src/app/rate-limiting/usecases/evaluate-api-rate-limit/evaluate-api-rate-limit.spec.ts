@@ -156,7 +156,7 @@ describe('EvaluateApiRateLimit', async () => {
         })
       );
 
-      expect(result.windowDuration).to.equal(mockApiRateLimitAlgorithm.windowDuration);
+      expect(result.windowDuration).to.equal(mockApiRateLimitAlgorithm[ApiRateLimitAlgorithmEnum.WINDOW_DURATION]);
     });
   });
 
