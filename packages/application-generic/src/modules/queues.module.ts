@@ -10,10 +10,11 @@ import {
   WebSocketsQueueServiceHealthIndicator,
   WorkflowQueueServiceHealthIndicator,
 } from '../health';
-import { OldInstanceBullMqService, ReadinessService } from '../services';
+import { ReadinessService } from '../services';
 import {
   ActiveJobsMetricQueueService,
   CompletedJobsMetricQueueService,
+  ExecutionLogQueueService,
   InboundParseQueue,
   StandardQueueService,
   SubscriberProcessQueueService,
@@ -28,8 +29,6 @@ import {
   SubscriberProcessWorkerService,
   WebSocketsWorkerService,
   WorkflowWorkerService,
-  OldInstanceStandardWorkerService,
-  OldInstanceWorkflowWorkerService,
 } from '../services/workers';
 
 const PROVIDERS: Provider[] = [
@@ -51,11 +50,9 @@ const PROVIDERS: Provider[] = [
   WebSocketsQueueServiceHealthIndicator,
   WebSocketsWorkerService,
   WorkflowQueueService,
+  ExecutionLogQueueService,
   WorkflowQueueServiceHealthIndicator,
   WorkflowWorkerService,
-  OldInstanceStandardWorkerService,
-  OldInstanceWorkflowWorkerService,
-  OldInstanceBullMqService,
   SubscriberProcessQueueService,
   SubscriberProcessWorkerService,
   SubscriberProcessQueueHealthIndicator,
@@ -74,6 +71,7 @@ const APP_PROVIDERS: Provider[] = [
   WebSocketsQueueService,
   WebSocketsQueueServiceHealthIndicator,
   WorkflowQueueService,
+  ExecutionLogQueueService,
   WorkflowQueueServiceHealthIndicator,
 ];
 
