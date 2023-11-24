@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/node';
 import { MessageEntity, MessageRepository } from '@novu/dal';
 import { LogCodeEnum } from '@novu/shared';
-import { CreateExecutionDetails } from '@novu/application-generic';
+import { ExecutionLogQueueService } from '@novu/application-generic';
 
 import { CreateLog } from '../../../shared/logs';
 import { SendMessageCommand } from './send-message.command';
@@ -10,7 +10,7 @@ export abstract class SendMessageType {
   protected constructor(
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
-    protected createExecutionDetails: CreateExecutionDetails
+    protected executionLogQueueService: ExecutionLogQueueService
   ) {}
 
   public abstract execute(command: SendMessageCommand);

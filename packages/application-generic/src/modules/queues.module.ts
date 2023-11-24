@@ -14,6 +14,7 @@ import { ReadinessService } from '../services';
 import {
   ActiveJobsMetricQueueService,
   CompletedJobsMetricQueueService,
+  ExecutionLogQueueService,
   InboundParseQueue,
   StandardQueueService,
   SubscriberProcessQueueService,
@@ -49,6 +50,7 @@ const PROVIDERS: Provider[] = [
   WebSocketsQueueServiceHealthIndicator,
   WebSocketsWorkerService,
   WorkflowQueueService,
+  ExecutionLogQueueService,
   WorkflowQueueServiceHealthIndicator,
   WorkflowWorkerService,
   SubscriberProcessQueueService,
@@ -69,6 +71,7 @@ const APP_PROVIDERS: Provider[] = [
   WebSocketsQueueService,
   WebSocketsQueueServiceHealthIndicator,
   WorkflowQueueService,
+  ExecutionLogQueueService,
   WorkflowQueueServiceHealthIndicator,
 ];
 

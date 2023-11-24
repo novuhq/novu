@@ -1546,14 +1546,18 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
 
       await session.awaitRunningJobs(template._id);
 
-      messages = await messageRepository.find({
-        _environmentId: session.environment._id,
-        _subscriberId: createdSubscriber?._id,
-        channel: channelType,
-      });
+      messages = await messageRepository.find(
+        {
+          _environmentId: session.environment._id,
+          _subscriberId: createdSubscriber?._id,
+          channel: channelType,
+        },
+        '',
+        { sort: { createdAt: -1 } }
+      );
 
       expect(messages.length).to.be.equal(2);
-      expect(messages[1].providerId).to.be.equal(EmailProviderIdEnum.Mailgun);
+      expect(messages[0].providerId).to.be.equal(EmailProviderIdEnum.Mailgun);
     });
 
     it('should fail to trigger with missing variables', async function () {
@@ -2249,14 +2253,18 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
 
       await session.awaitRunningJobs(template._id);
 
-      messages = await messageRepository.find({
-        _environmentId: session.environment._id,
-        _subscriberId: createdSubscriber?._id,
-        channel: channelType,
-      });
+      messages = await messageRepository.find(
+        {
+          _environmentId: session.environment._id,
+          _subscriberId: createdSubscriber?._id,
+          channel: channelType,
+        },
+        '',
+        { sort: { createdAt: -1 } }
+      );
 
       expect(messages.length).to.be.equal(2);
-      expect(messages[1].providerId).to.be.equal(EmailProviderIdEnum.Mailgun);
+      expect(messages[0].providerId).to.be.equal(EmailProviderIdEnum.Mailgun);
     });
 
     describe('in-app avatar', () => {
