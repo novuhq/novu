@@ -1,74 +1,83 @@
 import { Test } from '@nestjs/testing';
-import { CacheService, MockCacheService } from '@novu/application-generic';
 import { EvaluateApiRateLimit, EvaluateApiRateLimitCommand } from './index';
 import { UserSession } from '@novu/testing';
-import { ApiRateLimitCategoryEnum, ApiRateLimitCostEnum, IApiRateLimitAlgorithm } from '@novu/shared';
+import {
+  ApiRateLimitCategoryEnum,
+  ApiRateLimitCostEnum,
+  IApiRateLimitAlgorithm,
+  IApiRateLimitCost,
+} from '@novu/shared';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
 import { GetApiRateLimitMaximum } from '../get-api-rate-limit-maximum';
 import { GetApiRateLimitAlgorithmConfig } from '../get-api-rate-limit-algorithm-config';
 import { SharedModule } from '../../../shared/shared.module';
 import { RateLimitingModule } from '../../rate-limiting.module';
+import { GetApiRateLimitCostConfig } from '../get-api-rate-limit-cost-config';
+import { EvaluateTokenBucketRateLimit } from '../evaluate-token-bucket-rate-limit';
 
-const mockApiRateLimitConfiguration: IApiRateLimitAlgorithm = {
+const mockApiRateLimitAlgorithm: IApiRateLimitAlgorithm = {
   burstAllowance: 0.2,
   windowDuration: 2,
 };
-const mockDefaultLimit = 60;
-const mockBurstLimit = 72;
-const mockRemaining = mockBurstLimit - 1;
-const mockReset = 1699954067112;
-const mockApiRateLimitCategory = ApiRateLimitCategoryEnum.GLOBAL;
 const mockApiRateLimitCost = ApiRateLimitCostEnum.SINGLE;
+const mockCost = 1;
+const mockApiRateLimitCostConfig: Partial<IApiRateLimitCost> = {
+  [mockApiRateLimitCost]: mockCost,
+};
+
+const mockMaxLimit = 10;
+const mockRemaining = 9;
+const mockReset = 1;
+const mockApiRateLimitCategory = ApiRateLimitCategoryEnum.GLOBAL;
 
 describe('EvaluateApiRateLimit', async () => {
   let useCase: EvaluateApiRateLimit;
   let session: UserSession;
-  let getApiRateLimit: GetApiRateLimitMaximum;
-  let getApiRateLimitConfiguration: GetApiRateLimitAlgorithmConfig;
-  let cacheService: CacheService;
+  let getApiRateLimitMaximum: GetApiRateLimitMaximum;
+  let getApiRateLimitAlgorithmConfig: GetApiRateLimitAlgorithmConfig;
+  let getApiRateLimitCostConfig: GetApiRateLimitCostConfig;
+  let evaluateTokenBucketRateLimit: EvaluateTokenBucketRateLimit;
 
-  let getApiRateLimitStub: sinon.SinonStub;
-  let getApiRateLimitConfigurationStub: sinon.SinonStub;
-  let cacheServiceEvalStub: sinon.SinonStub;
-  let cacheServiceIsEnabledStub: sinon.SinonStub;
+  let getApiRateLimitMaximumStub: sinon.SinonStub;
+  let getApiRateLimitAlgorithmConfigStub: sinon.SinonStub;
+  let getApiRateLimitCostConfigStub: sinon.SinonStub;
+  let evaluateTokenBucketRateLimitStub: sinon.SinonStub;
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
       imports: [SharedModule, RateLimitingModule],
-    })
-      .overrideProvider(CacheService)
-      .useValue(MockCacheService.createClient())
-      .compile();
+    }).compile();
 
     session = new UserSession();
     await session.initialize();
 
     useCase = moduleRef.get<EvaluateApiRateLimit>(EvaluateApiRateLimit);
-    getApiRateLimit = moduleRef.get<GetApiRateLimitMaximum>(GetApiRateLimitMaximum);
-    getApiRateLimitConfiguration = moduleRef.get<GetApiRateLimitAlgorithmConfig>(GetApiRateLimitAlgorithmConfig);
-    cacheService = moduleRef.get<CacheService>(CacheService);
+    getApiRateLimitMaximum = moduleRef.get<GetApiRateLimitMaximum>(GetApiRateLimitMaximum);
+    getApiRateLimitAlgorithmConfig = moduleRef.get<GetApiRateLimitAlgorithmConfig>(GetApiRateLimitAlgorithmConfig);
+    getApiRateLimitCostConfig = moduleRef.get<GetApiRateLimitCostConfig>(GetApiRateLimitCostConfig);
+    evaluateTokenBucketRateLimit = moduleRef.get<EvaluateTokenBucketRateLimit>(EvaluateTokenBucketRateLimit);
 
-    getApiRateLimitStub = sinon.stub(getApiRateLimit, 'execute').resolves(mockDefaultLimit);
-    getApiRateLimitConfigurationStub = sinon
-      .stub(getApiRateLimitConfiguration, 'default')
-      .value(mockApiRateLimitConfiguration);
-    // This mock is uncomfortable because it's dependent on the algorithm implementation,
-    // but is a viable workaround due to the `eval` method having a hard dependency on running
-    // a Lua script on a Redis instance, which would require further mocking.
-    // The first value is the remaining rate limit, the second value is the reset time.
-    cacheServiceEvalStub = sinon.stub(cacheService, 'eval').resolves([mockRemaining, mockReset]);
-    cacheServiceIsEnabledStub = sinon.stub(cacheService, 'cacheEnabled').returns(true);
+    getApiRateLimitMaximumStub = sinon.stub(getApiRateLimitMaximum, 'execute').resolves(mockMaxLimit);
+    getApiRateLimitAlgorithmConfigStub = sinon
+      .stub(getApiRateLimitAlgorithmConfig, 'default')
+      .value(mockApiRateLimitAlgorithm);
+    getApiRateLimitCostConfigStub = sinon.stub(getApiRateLimitCostConfig, 'default').value(mockApiRateLimitCostConfig);
+    evaluateTokenBucketRateLimitStub = sinon.stub(evaluateTokenBucketRateLimit, 'execute').resolves({
+      success: true,
+      limit: mockMaxLimit,
+      remaining: mockRemaining,
+      reset: mockReset,
+    });
   });
 
   afterEach(() => {
-    getApiRateLimitStub.restore();
-    getApiRateLimitConfigurationStub.restore();
-    cacheServiceEvalStub.restore();
-    cacheServiceIsEnabledStub.restore();
+    getApiRateLimitMaximumStub.restore();
+    getApiRateLimitAlgorithmConfigStub.restore();
+    getApiRateLimitCostConfigStub.restore();
   });
 
-  describe('Successful evaluation', () => {
+  describe('Evaluation Values', () => {
     it('should return a boolean success value', async () => {
       const result = await useCase.execute(
         EvaluateApiRateLimitCommand.create({
@@ -82,7 +91,7 @@ describe('EvaluateApiRateLimit', async () => {
       expect(typeof result.success).to.equal('boolean');
     });
 
-    it('should return a non-zero limit', async () => {
+    it('should return a positive limit', async () => {
       const result = await useCase.execute(
         EvaluateApiRateLimitCommand.create({
           organizationId: session.organization._id,
@@ -95,7 +104,7 @@ describe('EvaluateApiRateLimit', async () => {
       expect(result.limit).to.be.greaterThan(0);
     });
 
-    it('should return a non-zero remaining tokens ', async () => {
+    it('should return a positive remaining tokens ', async () => {
       const result = await useCase.execute(
         EvaluateApiRateLimitCommand.create({
           organizationId: session.organization._id,
@@ -108,7 +117,7 @@ describe('EvaluateApiRateLimit', async () => {
       expect(result.remaining).to.be.greaterThan(0);
     });
 
-    it('should return a reset greater than 0', async () => {
+    it('should return a positive reset', async () => {
       const result = await useCase.execute(
         EvaluateApiRateLimitCommand.create({
           organizationId: session.organization._id,
@@ -120,10 +129,10 @@ describe('EvaluateApiRateLimit', async () => {
 
       expect(result.reset).to.be.greaterThan(0);
     });
+  });
 
-    it('should return the correct refill rate', async () => {
-      const testRefillRate = mockDefaultLimit * mockApiRateLimitConfiguration.windowDuration;
-
+  describe('Static Values', () => {
+    it('should return a string type algorithm value', async () => {
       const result = await useCase.execute(
         EvaluateApiRateLimitCommand.create({
           organizationId: session.organization._id,
@@ -133,10 +142,10 @@ describe('EvaluateApiRateLimit', async () => {
         })
       );
 
-      expect(result.refillRate).to.equal(testRefillRate);
+      expect(typeof result.algorithm).to.equal('string');
     });
 
-    it('should return the correct refill interval', async () => {
+    it('should return the correct window duration', async () => {
       const result = await useCase.execute(
         EvaluateApiRateLimitCommand.create({
           organizationId: session.organization._id,
@@ -146,7 +155,35 @@ describe('EvaluateApiRateLimit', async () => {
         })
       );
 
-      expect(result.windowDuration).to.equal(mockApiRateLimitConfiguration.windowDuration);
+      expect(result.windowDuration).to.equal(mockApiRateLimitAlgorithm.windowDuration);
+    });
+  });
+
+  describe('Computed Values', () => {
+    it('should return the correct cost', async () => {
+      const result = await useCase.execute(
+        EvaluateApiRateLimitCommand.create({
+          organizationId: session.organization._id,
+          environmentId: session.environment._id,
+          apiRateLimitCategory: mockApiRateLimitCategory,
+          apiRateLimitCost: mockApiRateLimitCost,
+        })
+      );
+
+      expect(result.cost).to.equal(mockApiRateLimitCostConfig[mockApiRateLimitCost]);
+    });
+
+    it('should return the correct refill rate', async () => {
+      const result = await useCase.execute(
+        EvaluateApiRateLimitCommand.create({
+          organizationId: session.organization._id,
+          environmentId: session.environment._id,
+          apiRateLimitCategory: mockApiRateLimitCategory,
+          apiRateLimitCost: mockApiRateLimitCost,
+        })
+      );
+
+      expect(result.refillRate).to.equal(mockMaxLimit * mockApiRateLimitAlgorithm.windowDuration);
     });
 
     it('should return the correct burst limit', async () => {
@@ -159,73 +196,7 @@ describe('EvaluateApiRateLimit', async () => {
         })
       );
 
-      expect(result.burstLimit).to.equal(mockBurstLimit);
-    });
-  });
-
-  describe('Successful invocation of cache methods', () => {
-    it('should call the cache service eval method', async () => {
-      await useCase.execute(
-        EvaluateApiRateLimitCommand.create({
-          organizationId: session.organization._id,
-          environmentId: session.environment._id,
-          apiRateLimitCategory: mockApiRateLimitCategory,
-          apiRateLimitCost: mockApiRateLimitCost,
-        })
-      );
-
-      expect(cacheServiceEvalStub.calledOnce).to.be.true;
-    });
-
-    it('should call the cache service cacheEnabled method', async () => {
-      await useCase.execute(
-        EvaluateApiRateLimitCommand.create({
-          organizationId: session.organization._id,
-          environmentId: session.environment._id,
-          apiRateLimitCategory: mockApiRateLimitCategory,
-          apiRateLimitCost: mockApiRateLimitCost,
-        })
-      );
-
-      expect(cacheServiceIsEnabledStub.calledOnce).to.be.true;
-    });
-  });
-
-  describe('Cache errors', () => {
-    it('should throw error when a cache operation fails', async () => {
-      cacheServiceEvalStub.throws(new Error());
-
-      try {
-        await useCase.execute(
-          EvaluateApiRateLimitCommand.create({
-            organizationId: session.organization._id,
-            environmentId: session.environment._id,
-            apiRateLimitCategory: mockApiRateLimitCategory,
-            apiRateLimitCost: mockApiRateLimitCost,
-          })
-        );
-        throw new Error('Should not reach here');
-      } catch (e) {
-        expect(e.message).to.equal('Failed to evaluate rate limit');
-      }
-    });
-
-    it('should throw error when cache is not enabled', async () => {
-      cacheServiceIsEnabledStub.returns(false);
-
-      try {
-        await useCase.execute(
-          EvaluateApiRateLimitCommand.create({
-            organizationId: session.organization._id,
-            environmentId: session.environment._id,
-            apiRateLimitCategory: mockApiRateLimitCategory,
-            apiRateLimitCost: mockApiRateLimitCost,
-          })
-        );
-        throw new Error('Should not reach here');
-      } catch (e) {
-        expect(e.message).to.equal('Rate limiting cache service is not available');
-      }
+      expect(result.burstLimit).to.equal(mockMaxLimit * (1 + mockApiRateLimitAlgorithm.burstAllowance));
     });
   });
 });

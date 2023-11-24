@@ -1,4 +1,4 @@
-export type EvaluateApiRateLimitResponse = {
+export type EvaluateApiRateLimitResponseDto = {
   /**
    * Whether the request may pass(true) or exceeded the limit(false)
    */
@@ -31,4 +31,8 @@ export type EvaluateApiRateLimitResponse = {
    * The name of the algorithm used to calculate the rate limit.
    */
   algorithm: string;
+  /**
+   * The cost of the request.
+   */
+  cost: number;
 };

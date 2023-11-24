@@ -8,6 +8,6 @@ export class EvaluateApiRateLimitCommand extends EnvironmentCommand {
   apiRateLimitCategory: ApiRateLimitCategoryEnum;
 
   @IsDefined()
-  @IsEnum(ApiRateLimitCategoryEnum)
+  @IsEnum(ApiRateLimitCostEnum)
   apiRateLimitCost: ApiRateLimitCostEnum;
 }
