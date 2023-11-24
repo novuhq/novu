@@ -29,7 +29,7 @@ export class EvaluateTokenBucketRateLimit {
 
     const ratelimit = new Ratelimit({
       redis: cacheClient,
-      limiter: this.createLimiter(command),
+      limiter: this.createLimiter(command.refillRate, command.windowDuration, command.maxTokens),
       prefix: '', // Empty cache key prefix to give us full control over the key format
       ephemeralCache: this.ephemeralCache,
     });
@@ -63,9 +63,7 @@ export class EvaluateTokenBucketRateLimit {
     };
   }
 
-  public createLimiter(command: EvaluateTokenBucketRateLimitCommand): RegionLimiter {
-    const { windowDuration, maxTokens, refillRate } = command;
-
+  public createLimiter(refillRate: number, windowDuration: number, maxTokens: number): RegionLimiter {
     return Ratelimit.tokenBucket(refillRate, `${windowDuration} s`, maxTokens);
   }
 }
