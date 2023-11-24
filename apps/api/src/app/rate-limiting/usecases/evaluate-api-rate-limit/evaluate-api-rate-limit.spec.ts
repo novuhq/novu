@@ -2,6 +2,7 @@ import { Test } from '@nestjs/testing';
 import { EvaluateApiRateLimit, EvaluateApiRateLimitCommand } from './index';
 import { UserSession } from '@novu/testing';
 import {
+  ApiRateLimitAlgorithmEnum,
   ApiRateLimitCategoryEnum,
   ApiRateLimitCostEnum,
   IApiRateLimitAlgorithm,
@@ -17,8 +18,8 @@ import { GetApiRateLimitCostConfig } from '../get-api-rate-limit-cost-config';
 import { EvaluateTokenBucketRateLimit } from '../evaluate-token-bucket-rate-limit';
 
 const mockApiRateLimitAlgorithm: IApiRateLimitAlgorithm = {
-  burstAllowance: 0.2,
-  windowDuration: 2,
+  [ApiRateLimitAlgorithmEnum.BURST_ALLOWANCE]: 0.2,
+  [ApiRateLimitAlgorithmEnum.WINDOW_DURATION]: 2,
 };
 const mockApiRateLimitCost = ApiRateLimitCostEnum.SINGLE;
 const mockCost = 1;
@@ -183,7 +184,9 @@ describe('EvaluateApiRateLimit', async () => {
         })
       );
 
-      expect(result.refillRate).to.equal(mockMaxLimit * mockApiRateLimitAlgorithm.windowDuration);
+      expect(result.refillRate).to.equal(
+        mockMaxLimit * mockApiRateLimitAlgorithm[ApiRateLimitAlgorithmEnum.WINDOW_DURATION]
+      );
     });
 
     it('should return the correct burst limit', async () => {
@@ -196,7 +199,9 @@ describe('EvaluateApiRateLimit', async () => {
         })
       );
 
-      expect(result.burstLimit).to.equal(mockMaxLimit * (1 + mockApiRateLimitAlgorithm.burstAllowance));
+      expect(result.burstLimit).to.equal(
+        mockMaxLimit * (1 + mockApiRateLimitAlgorithm[ApiRateLimitAlgorithmEnum.BURST_ALLOWANCE])
+      );
     });
   });
 });

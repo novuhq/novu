@@ -34,40 +34,68 @@ describe('Variable-Cost Token Bucket Algorithm', () => {
     });
   });
 
-  describe('Cache errors', () => {
+  describe('Cache', () => {
     let cacheServiceEvalStub: sinon.SinonStub;
+    let cacheServiceSaddStub: sinon.SinonStub;
     let cacheServiceIsEnabledStub: sinon.SinonStub;
 
     beforeEach(async () => {
       cacheServiceEvalStub = sinon.stub(cacheService, 'eval');
+      cacheServiceSaddStub = sinon.stub(cacheService, 'sadd');
       cacheServiceIsEnabledStub = sinon.stub(cacheService, 'cacheEnabled').returns(true);
     });
 
     afterEach(() => {
       cacheServiceEvalStub.restore();
+      cacheServiceSaddStub.restore();
       cacheServiceIsEnabledStub.restore();
     });
 
-    it('should throw error when a cache operation fails', async () => {
-      cacheServiceEvalStub.resolves(new Error());
+    describe('Cache Errors', () => {
+      it('should throw error when a cache operation fails', async () => {
+        cacheServiceEvalStub.resolves(new Error());
 
-      try {
-        await useCase.execute(mockCommand);
-        throw new Error('Should not reach here');
-      } catch (e) {
-        expect(e.message).to.equal('Failed to evaluate rate limit');
-      }
+        try {
+          await useCase.execute(mockCommand);
+          throw new Error('Should not reach here');
+        } catch (e) {
+          expect(e.message).to.equal('Failed to evaluate rate limit');
+        }
+      });
+
+      it('should throw error when cache is not enabled', async () => {
+        cacheServiceIsEnabledStub.returns(false);
+
+        try {
+          await useCase.execute(mockCommand);
+          throw new Error('Should not reach here');
+        } catch (e) {
+          expect(e.message).to.equal('Rate limiting cache service is not available');
+        }
+      });
     });
 
-    it('should throw error when cache is not enabled', async () => {
-      cacheServiceIsEnabledStub.returns(false);
+    describe('Cache Service Adapter', () => {
+      it('should invoke the SADD method with members casted to string', async () => {
+        const cacheClient = EvaluateTokenBucketRateLimit.getCacheClient(cacheService);
+        const key = 'testKey';
+        const members = [1, 2];
 
-      try {
-        await useCase.execute(mockCommand);
-        throw new Error('Should not reach here');
-      } catch (e) {
-        expect(e.message).to.equal('Rate limiting cache service is not available');
-      }
+        await cacheClient.sadd(key, ...members);
+
+        expect(cacheServiceSaddStub.calledWith(key, ...['1', '2'])).to.equal(true);
+      });
+
+      it('should invoke the EVAL function with args casted to string', async () => {
+        const cacheClient = EvaluateTokenBucketRateLimit.getCacheClient(cacheService);
+        const script = 'return 1';
+        const keys = ['key1', 'key2'];
+        const args = [1, 2];
+
+        await cacheClient.eval(script, keys, args);
+
+        expect(cacheServiceEvalStub.calledWith(script, keys, ['1', '2'])).to.equal(true);
+      });
     });
   });
 });

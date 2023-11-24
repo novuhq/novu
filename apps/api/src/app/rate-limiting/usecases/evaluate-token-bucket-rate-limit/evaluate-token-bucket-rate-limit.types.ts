@@ -1,5 +1,7 @@
 import { Ratelimit } from '@upstash/ratelimit';
 
+export type UpstashRedisClient = ConstructorParameters<typeof Ratelimit>[0]['redis'];
+
 export type EvaluateTokenBucketRateLimitResponseDto = {
   /**
    * Whether the request may pass(true) or exceeded the limit(false)
