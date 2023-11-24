@@ -7,6 +7,7 @@ import { EvaluateApiRateLimitResponseDto } from './evaluate-api-rate-limit.types
 import { EvaluateTokenBucketRateLimit } from '../evaluate-token-bucket-rate-limit/evaluate-token-bucket-rate-limit.usecase';
 import { GetApiRateLimitCostConfig } from '../get-api-rate-limit-cost-config';
 import { EvaluateTokenBucketRateLimitCommand } from '../evaluate-token-bucket-rate-limit/evaluate-token-bucket-rate-limit.command';
+import { ApiRateLimitAlgorithmEnum } from 'libs/shared/dist/cjs';
 
 @Injectable()
 export class EvaluateApiRateLimit {
@@ -25,8 +26,10 @@ export class EvaluateApiRateLimit {
       organizationId: command.organizationId,
     });
 
-    const { burstAllowance, windowDuration } = this.getApiRateLimitAlgorithmConfig.default;
-    const cost = this.getCost(command);
+    const defaultCost = this.getApiRateLimitCostConfig.default[command.apiRateLimitCategory];
+    const windowDuration = this.getApiRateLimitAlgorithmConfig.default[ApiRateLimitAlgorithmEnum.WINDOW_DURATION];
+    const burstAllowance = this.getApiRateLimitAlgorithmConfig.default[ApiRateLimitAlgorithmEnum.BURST_ALLOWANCE];
+    const cost = this.getCost(command, defaultCost);
     const refillRate = this.getRefillRate(maxLimit, windowDuration);
     const burstLimit = this.getBurstLimit(maxLimit, burstAllowance);
 
@@ -58,8 +61,8 @@ export class EvaluateApiRateLimit {
     };
   }
 
-  private getCost(command: EvaluateApiRateLimitCommand): number {
-    return this.getApiRateLimitCostConfig.default[command.apiRateLimitCost];
+  private getCost(command: EvaluateApiRateLimitCommand, defaultCost: number): number {
+    return defaultCost;
   }
 
   private getRefillRate(maxLimit: number, windowDuration: number): number {

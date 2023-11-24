@@ -1,8 +1,8 @@
 import { ApiRateLimitConfigEnum, ApiRateLimitEnvVarNamespace } from './config.types';
 
 export enum ApiRateLimitAlgorithmEnum {
-  BURST_ALLOWANCE = 'burstAllowance',
-  WINDOW_DURATION = 'windowDuration',
+  BURST_ALLOWANCE = 'burst_allowance',
+  WINDOW_DURATION = 'window_duration',
 }
 
 /**
