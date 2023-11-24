@@ -3,6 +3,7 @@ import { Ratelimit } from '@upstash/ratelimit';
 import { EvaluateTokenBucketRateLimitCommand } from './evaluate-token-bucket-rate-limit.command';
 import { CacheService, InstrumentUsecase } from '@novu/application-generic';
 import { EvaluateTokenBucketRateLimitResponseDto, RegionLimiter } from './evaluate-token-bucket-rate-limit.types';
+import { tokenBucketLimiter } from './evaluate-token-bucket-rate-limit.limiter';
 
 const LOG_CONTEXT = 'EvaluateTokenBucketRateLimit';
 
@@ -66,8 +67,8 @@ export class EvaluateTokenBucketRateLimit {
   }
 
   public createLimiter(command: EvaluateTokenBucketRateLimitCommand): RegionLimiter {
-    const { windowDuration, maxLimit, refillRate } = command;
+    const { windowDuration, maxLimit, refillRate, cost } = command;
 
-    return Ratelimit.tokenBucket(refillRate, `${windowDuration} s`, maxLimit);
+    return tokenBucketLimiter(refillRate, windowDuration, maxLimit, cost);
   }
 }
