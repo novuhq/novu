@@ -35,7 +35,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     ldClient?.identify({
-      kind: 'Organization',
+      kind: 'organization',
       key: organization._id,
       name: organization.name,
     });
