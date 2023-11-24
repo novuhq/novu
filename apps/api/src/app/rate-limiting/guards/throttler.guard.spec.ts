@@ -106,8 +106,15 @@ describe('ApiRateLimitGuard', () => {
   describe('Allowed Request Rate Limit evaluation', () => {
     it('should return true when rate limit is not exceeded', async () => {
       const response = await session.testAgent.get('/noAuth').expect(200);
+      session;
       expect(response.text).to.equal('No Auth');
     });
+  });
+
+  describe('Allowed Authentication Security Schemes', () => {
+    it('should evaluate the rate limit when an ApiKey security schme is used to authenticate', () => {});
+
+    it('should exit early when a Bearer security scheme is used to authenticate', () => {});
   });
 
   describe('Throttled Request Rate Limit evaluation', () => {
