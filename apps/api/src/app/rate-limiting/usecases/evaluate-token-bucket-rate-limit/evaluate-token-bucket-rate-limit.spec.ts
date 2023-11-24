@@ -13,7 +13,7 @@ describe('EvaluateTokenBucketRateLimit', () => {
 
   const mockCommand = EvaluateTokenBucketRateLimitCommand.create({
     identifier: 'test',
-    maxLimit: 10,
+    maxTokens: 10,
     windowDuration: 1,
     cost: 1,
     refillRate: 1,

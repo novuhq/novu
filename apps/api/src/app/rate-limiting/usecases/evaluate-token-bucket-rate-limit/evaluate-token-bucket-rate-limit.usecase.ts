@@ -64,8 +64,8 @@ export class EvaluateTokenBucketRateLimit {
   }
 
   public createLimiter(command: EvaluateTokenBucketRateLimitCommand): RegionLimiter {
-    const { windowDuration, maxLimit, refillRate } = command;
+    const { windowDuration, maxTokens, refillRate } = command;
 
-    return Ratelimit.tokenBucket(refillRate, `${windowDuration} s`, maxLimit);
+    return Ratelimit.tokenBucket(refillRate, `${windowDuration} s`, maxTokens);
   }
 }

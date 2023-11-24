@@ -200,7 +200,9 @@ describe('EvaluateApiRateLimit', async () => {
       );
 
       expect(result.burstLimit).to.equal(
-        mockMaxLimit * (1 + mockApiRateLimitAlgorithm[ApiRateLimitAlgorithmEnum.BURST_ALLOWANCE])
+        mockMaxLimit *
+          mockApiRateLimitAlgorithm[ApiRateLimitAlgorithmEnum.WINDOW_DURATION] *
+          (1 + mockApiRateLimitAlgorithm[ApiRateLimitAlgorithmEnum.BURST_ALLOWANCE])
       );
     });
   });
