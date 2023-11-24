@@ -2,11 +2,13 @@ import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common'
 import { Ratelimit } from '@upstash/ratelimit';
 import { EvaluateTokenBucketRateLimitCommand } from './evaluate-token-bucket-rate-limit.command';
 import { CacheService, InstrumentUsecase } from '@novu/application-generic';
-import { EvaluateTokenBucketRateLimitResponseDto, RegionLimiter } from './evaluate-token-bucket-rate-limit.types';
+import {
+  EvaluateTokenBucketRateLimitResponseDto,
+  RegionLimiter,
+  UpstashRedisClient,
+} from './evaluate-token-bucket-rate-limit.types';
 
 const LOG_CONTEXT = 'EvaluateTokenBucketRateLimit';
-
-type UpstashRedisClient = ConstructorParameters<typeof Ratelimit>[0]['redis'];
 
 @Injectable()
 export class EvaluateTokenBucketRateLimit {
@@ -17,13 +19,13 @@ export class EvaluateTokenBucketRateLimit {
 
   @InstrumentUsecase()
   async execute(command: EvaluateTokenBucketRateLimitCommand): Promise<EvaluateTokenBucketRateLimitResponseDto> {
-    const cacheClient = this.getCacheClient();
-
-    if (!cacheClient) {
+    if (!this.cacheService.cacheEnabled()) {
       const message = 'Rate limiting cache service is not available';
       Logger.error(message, LOG_CONTEXT);
       throw new ServiceUnavailableException(message);
     }
+
+    const cacheClient = EvaluateTokenBucketRateLimit.getCacheClient(this.cacheService);
 
     const ratelimit = new Ratelimit({
       redis: cacheClient,
@@ -48,16 +50,12 @@ export class EvaluateTokenBucketRateLimit {
     }
   }
 
-  public getCacheClient(): UpstashRedisClient | null {
-    if (!this.cacheService.cacheEnabled()) {
-      return null;
-    }
-
+  public static getCacheClient(cacheService: CacheService): UpstashRedisClient {
     // Adapter for the @upstash/redis client -> cache client
     return {
-      sadd: async (key, ...members) => this.cacheService.sadd(key, ...members.map((member) => String(member))),
+      sadd: async (key, ...members) => cacheService.sadd(key, ...members.map((member) => String(member))),
       eval: async (script, keys, args) =>
-        this.cacheService.eval(
+        cacheService.eval(
           script,
           keys,
           args.map((arg) => String(arg))
