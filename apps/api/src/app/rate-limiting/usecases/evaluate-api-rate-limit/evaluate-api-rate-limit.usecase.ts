@@ -20,7 +20,7 @@ export class EvaluateApiRateLimit {
 
   @InstrumentUsecase()
   async execute(command: EvaluateApiRateLimitCommand): Promise<EvaluateApiRateLimitResponseDto> {
-    const maxLimit = await this.getApiRateLimitMaximum.execute({
+    const maxLimitPerSecond = await this.getApiRateLimitMaximum.execute({
       apiRateLimitCategory: command.apiRateLimitCategory,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
@@ -29,18 +29,19 @@ export class EvaluateApiRateLimit {
     const windowDuration = this.getApiRateLimitAlgorithmConfig.default[ApiRateLimitAlgorithmEnum.WINDOW_DURATION];
     const burstAllowance = this.getApiRateLimitAlgorithmConfig.default[ApiRateLimitAlgorithmEnum.BURST_ALLOWANCE];
     const cost = this.getApiRateLimitCostConfig.default[command.apiRateLimitCost];
-    const refillRate = this.getRefillRate(maxLimit, windowDuration);
-    const burstLimit = this.getBurstLimit(maxLimit, burstAllowance);
+    const maxTokensPerWindow = this.getMaxTokensPerWindow(maxLimitPerSecond, windowDuration);
+    const refillRate = this.getRefillRate(maxLimitPerSecond, windowDuration);
+    const burstLimit = this.getBurstLimit(maxTokensPerWindow, burstAllowance);
 
     const identifier = buildEvaluateApiRateLimitKey({
       _environmentId: command.environmentId,
       apiRateLimitCategory: command.apiRateLimitCategory,
     });
 
-    const { success, limit, remaining, reset } = await this.evaluateTokenBucketRateLimit.execute(
+    const { success, remaining, reset } = await this.evaluateTokenBucketRateLimit.execute(
       EvaluateTokenBucketRateLimitCommand.create({
         identifier,
-        maxLimit,
+        maxTokens: burstLimit,
         windowDuration,
         cost,
         refillRate,
@@ -49,7 +50,7 @@ export class EvaluateApiRateLimit {
 
     return {
       success,
-      limit,
+      limit: maxTokensPerWindow,
       remaining,
       reset,
       windowDuration,
@@ -60,11 +61,19 @@ export class EvaluateApiRateLimit {
     };
   }
 
-  private getRefillRate(maxLimit: number, windowDuration: number): number {
+  private getMaxTokensPerWindow(maxLimit: number, windowDuration: number): number {
     return maxLimit * windowDuration;
   }
 
-  private getBurstLimit(maxLimit: number, burstAllowance: number): number {
-    return Math.floor(maxLimit * (1 + burstAllowance));
+  private getRefillRate(maxLimit: number, windowDuration: number): number {
+    /*
+     * Refill rate is currently set to the max tokens per window.
+     * This can be changed to a different value to implement adaptive rate limiting.
+     */
+    return this.getMaxTokensPerWindow(maxLimit, windowDuration);
+  }
+
+  private getBurstLimit(maxTokensPerWindow: number, burstAllowance: number): number {
+    return Math.floor(maxTokensPerWindow * (1 + burstAllowance));
   }
 }

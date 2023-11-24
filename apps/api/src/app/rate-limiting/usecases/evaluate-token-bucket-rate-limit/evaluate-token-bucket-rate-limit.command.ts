@@ -8,7 +8,7 @@ export class EvaluateTokenBucketRateLimitCommand extends BaseCommand {
 
   @IsDefined()
   @IsNumber()
-  maxLimit: number;
+  maxTokens: number;
 
   @IsDefined()
   @IsNumber()
