@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ApiRateLimitAlgorithmEnum } from '@novu/shared';
 import { EvaluateApiRateLimitCommand } from './evaluate-api-rate-limit.command';
 import { GetApiRateLimitMaximum } from '../get-api-rate-limit-maximum';
 import { InstrumentUsecase, buildEvaluateApiRateLimitKey } from '@novu/application-generic';
@@ -7,7 +8,6 @@ import { EvaluateApiRateLimitResponseDto } from './evaluate-api-rate-limit.types
 import { EvaluateTokenBucketRateLimit } from '../evaluate-token-bucket-rate-limit/evaluate-token-bucket-rate-limit.usecase';
 import { GetApiRateLimitCostConfig } from '../get-api-rate-limit-cost-config';
 import { EvaluateTokenBucketRateLimitCommand } from '../evaluate-token-bucket-rate-limit/evaluate-token-bucket-rate-limit.command';
-import { ApiRateLimitAlgorithmEnum } from 'libs/shared/dist/cjs';
 
 @Injectable()
 export class EvaluateApiRateLimit {
