@@ -26,10 +26,9 @@ export class EvaluateApiRateLimit {
       organizationId: command.organizationId,
     });
 
-    const defaultCost = this.getApiRateLimitCostConfig.default[command.apiRateLimitCategory];
     const windowDuration = this.getApiRateLimitAlgorithmConfig.default[ApiRateLimitAlgorithmEnum.WINDOW_DURATION];
     const burstAllowance = this.getApiRateLimitAlgorithmConfig.default[ApiRateLimitAlgorithmEnum.BURST_ALLOWANCE];
-    const cost = this.getCost(command, defaultCost);
+    const cost = this.getApiRateLimitCostConfig.default[command.apiRateLimitCost];
     const refillRate = this.getRefillRate(maxLimit, windowDuration);
     const burstLimit = this.getBurstLimit(maxLimit, burstAllowance);
 
@@ -59,10 +58,6 @@ export class EvaluateApiRateLimit {
       algorithm: this.evaluateTokenBucketRateLimit.algorithm,
       cost,
     };
-  }
-
-  private getCost(command: EvaluateApiRateLimitCommand, defaultCost: number): number {
-    return defaultCost;
   }
 
   private getRefillRate(maxLimit: number, windowDuration: number): number {
