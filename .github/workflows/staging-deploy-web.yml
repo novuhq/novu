@@ -19,7 +19,7 @@ jobs:
   test_web:
     uses: ./.github/workflows/reusable-web-e2e.yml
     with:
-      submodules: true
+      ee: true
     secrets: inherit
 
   # This workflow contains a single job called "build"

@@ -15,10 +15,7 @@ import {
 import { Injectable, Logger } from '@nestjs/common';
 import { IEventJobData, IJobData, JobTopicNameEnum } from '@novu/shared';
 
-import {
-  InMemoryProviderEnum,
-  InMemoryProviderService,
-} from '../in-memory-provider';
+import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 
 interface IQueueMetrics {
   completed: Metrics;
@@ -46,35 +43,18 @@ export {
 export class BullMqService {
   private _queue: Queue;
   private _worker: Worker;
-  private inMemoryProviderService: InMemoryProviderService;
+  private workflowInMemoryProviderService: WorkflowInMemoryProviderService;
 
   public static readonly pro: boolean =
     process.env.NOVU_MANAGED_SERVICE !== undefined;
 
   constructor() {
-    this.inMemoryProviderService = new InMemoryProviderService(
-      this.selectProvider()
-    );
-  }
-
-  /**
-   * Rules for the provider selection:
-   * - For our self hosted users we assume all of them have a single node Redis
-   * instance.
-   * - For Novu we will use MemoryDB. We fallback to a Redis Cluster configuration
-   * if MemoryDB not configured properly. That's happening in the provider
-   * mapping in the /in-memory-provider/providers/index.ts
-   */
-  private selectProvider(): InMemoryProviderEnum {
-    if (process.env.IS_DOCKER_HOSTED) {
-      return InMemoryProviderEnum.REDIS;
-    }
-
-    return InMemoryProviderEnum.MEMORY_DB;
+    this.workflowInMemoryProviderService =
+      new WorkflowInMemoryProviderService();
   }
 
   public async initialize(): Promise<void> {
-    await this.inMemoryProviderService.delayUntilReadiness();
+    await this.workflowInMemoryProviderService.initialize();
   }
 
   public get worker(): Worker {
@@ -129,11 +109,7 @@ export class BullMqService {
    *
    */
   private generatePrefix(prefix: JobTopicNameEnum): string {
-    const isClusterMode = this.inMemoryProviderService.isClusterMode();
-    const providerConfigured =
-      this.inMemoryProviderService.getProvider.configured;
-
-    if (isClusterMode || providerConfigured !== InMemoryProviderEnum.REDIS) {
+    if (this.workflowInMemoryProviderService.providerInUseIsInClusterMode()) {
       return `{${prefix}}`;
     }
 
@@ -142,7 +118,7 @@ export class BullMqService {
 
   public createQueue(topic: JobTopicNameEnum, queueOptions: QueueOptions) {
     const config = {
-      connection: this.inMemoryProviderService.inMemoryProviderClient,
+      connection: this.workflowInMemoryProviderService.getClient(),
       ...(queueOptions?.defaultJobOptions && {
         defaultJobOptions: {
           ...queueOptions.defaultJobOptions,
@@ -184,7 +160,7 @@ export class BullMqService {
     const { concurrency, connection, lockDuration, settings } = workerOptions;
 
     const config = {
-      connection: this.inMemoryProviderService.inMemoryProviderClient,
+      connection: this.workflowInMemoryProviderService.getClient(),
       ...(concurrency && { concurrency }),
       ...(lockDuration && { lockDuration }),
       ...(settings && { settings }),
@@ -276,7 +252,7 @@ export class BullMqService {
       await this._worker.close();
     }
 
-    await this.inMemoryProviderService.shutdown();
+    await this.workflowInMemoryProviderService.shutdown();
 
     Logger.log('Shutting down the BullMQ service has finished', LOG_CONTEXT);
   }
@@ -304,7 +280,7 @@ export class BullMqService {
   }
 
   public isClientReady(): boolean {
-    return this.inMemoryProviderService.isClientReady();
+    return this.workflowInMemoryProviderService.isReady();
   }
 
   public async isQueuePaused(): Promise<boolean> {

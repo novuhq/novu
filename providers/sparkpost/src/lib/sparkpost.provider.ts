@@ -17,13 +17,14 @@ export class SparkPostEmailProvider implements IEmailProvider {
   constructor(
     private config: {
       apiKey: string;
-      eu: boolean;
+      region: string;
       from: string;
       senderName: string;
     }
   ) {
+    const endpoint = this.getEndpoint(config.region);
     this.client = new SparkPost(config.apiKey, {
-      endpoint: config.eu ? 'https://api.eu.sparkpost.com:443' : undefined,
+      endpoint,
     });
   }
 
@@ -41,7 +42,7 @@ export class SparkPostEmailProvider implements IEmailProvider {
 
     const files: Array<{ name: string; type: string; data: string }> = [];
 
-    attachments.forEach((attachment) => {
+    attachments?.forEach((attachment) => {
       files.push({
         name: attachment.name || randomUUID(),
         type: attachment.mime,
@@ -62,6 +63,7 @@ export class SparkPostEmailProvider implements IEmailProvider {
 
     return {
       id: sent.results.id,
+      date: new Date().toISOString(),
     };
   }
 
@@ -88,6 +90,23 @@ export class SparkPostEmailProvider implements IEmailProvider {
         message: error?.message,
         code: CheckIntegrationResponseEnum.FAILED,
       };
+    }
+  }
+
+  private transformLegacyRegion(region: string | boolean) {
+    if (region === 'true' || region === true) return 'eu';
+
+    return region;
+  }
+
+  private getEndpoint(_region: string) {
+    const region = this.transformLegacyRegion(_region);
+
+    switch (region) {
+      case 'eu':
+        return 'https://api.eu.sparkpost.com:443';
+      default:
+        return;
     }
   }
 }

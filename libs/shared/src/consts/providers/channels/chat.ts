@@ -1,5 +1,6 @@
 import { IConfigCredentials, IProviderConfig } from '../provider.interface';
-import { slackConfig, getstreamConfig } from '../credentials';
+import { grafanaOnCallConfig, slackConfig, getstreamConfig } from '../credentials';
+
 import { ChatProviderIdEnum } from '../provider.enum';
 
 import { ChannelTypeEnum } from '../../../types';
@@ -20,6 +21,14 @@ export const chatProviders: IProviderConfig[] = [
     credentials: [] as IConfigCredentials[],
     docReference: 'https://docs.novu.co/channels-and-providers/chat/discord',
     logoFileName: { light: 'discord.svg', dark: 'discord.svg' },
+  },
+  {
+    id: ChatProviderIdEnum.GrafanaOnCall,
+    displayName: 'Grafana On Call Webhook',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: grafanaOnCallConfig,
+    docReference: 'https://grafana.com/docs/oncall/latest/integrations/webhook/',
+    logoFileName: { light: 'grafana-on-call.png', dark: 'grafana-on-call.png' },
   },
   {
     id: ChatProviderIdEnum.MsTeams,
@@ -44,6 +53,14 @@ export const chatProviders: IProviderConfig[] = [
     credentials: [] as IConfigCredentials[],
     docReference: 'https://api.ryver.com/ryvrest_api_examples.html#create-chat-message',
     logoFileName: { light: 'ryver.png', dark: 'ryver.png' },
+  },
+  {
+    id: ChatProviderIdEnum.Zulip,
+    displayName: 'Zulip',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: [] as IConfigCredentials[],
+    docReference: 'https://docs.novu.co/channels-and-providers/chat/zulip',
+    logoFileName: { light: 'zulip.svg', dark: 'zulip.svg' },
   },
   {
     id: ChatProviderIdEnum.GetStream,
