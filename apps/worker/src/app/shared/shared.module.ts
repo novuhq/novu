@@ -47,6 +47,7 @@ import {
   InvalidateCacheService,
   LoggerModule,
   MetricsModule,
+  SchedulerModule,
   ProcessSubscriber,
   ProcessTenant,
   QueuesModule,
@@ -132,6 +133,7 @@ const PROVIDERS = [
 
 @Module({
   imports: [
+    SchedulerModule,
     MetricsModule,
     QueuesModule.forRoot(
       UNIQUE_WORKER_DEPENDENCIES.length

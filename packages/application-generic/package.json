@@ -129,6 +129,7 @@
     "pino-http": "^8.3.3",
     "pino-pretty": "^9.4.0",
     "redlock": "4.2.0",
+    "@hokify/agenda":"5.0.0",
     "reflect-metadata": "^0.1.13",
     "rrule": "^2.7.2"
   },

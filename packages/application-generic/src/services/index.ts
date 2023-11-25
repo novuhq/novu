@@ -25,3 +25,5 @@ export {
   WorkerOptions,
 } from './bull-mq';
 export * from './auth';
+export * from './scheduled-worker';
+export * from './schedulers';

@@ -1,3 +1,4 @@
 export { QueuesModule } from './queues.module';
 export { MetricsModule } from './metrics.module';
 export * from './interfaces';
+export { SchedulerModule } from './scheduler.module';
