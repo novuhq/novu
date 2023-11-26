@@ -20,12 +20,12 @@ describe('User Preferences - Custom Filtering', function () {
         cy.wait(500);
 
         cy.task('createNotifications', {
-          identifier: session.templates[0].triggers[0].identifier,
-          token: session.token,
-          subscriberId: session.subscriber.subscriberId,
+          identifier: session?.templates[0]?.triggers[0]?.identifier,
+          token: session?.token,
+          subscriberId: session?.subscriber?.subscriberId,
           count: 1,
-          organizationId: session.organization._id,
-          templateId: session.templates[0]._id,
+          organizationId: session?.organization?._id,
+          templateId: session?.templates[0]?._id,
         });
 
         cy.wait(1000);
@@ -55,12 +55,12 @@ describe('User Preferences - Custom Filtering', function () {
         cy.wait(500);
 
         cy.task('createNotifications', {
-          identifier: session.templates[0].triggers[0].identifier,
-          token: session.token,
-          subscriberId: session.subscriber.subscriberId,
+          identifier: session?.templates[0]?.triggers[0]?.identifier,
+          token: session?.token,
+          subscriberId: session?.subscriber?.subscriberId,
           count: 1,
-          organizationId: session.organization._id,
-          templateId: session.templates[0]._id,
+          organizationId: session?.organization?._id,
+          templateId: session?.templates[0]?._id,
         });
 
         cy.wait(1000);
