@@ -129,10 +129,10 @@ export class ParseEventRequest {
 
     command.payload = merge({}, defaultPayload, command.payload);
 
-    const jobData = {
+    const jobData: ParseEventRequestCommand = {
       ...command,
       transactionId,
-    } as ParseEventRequestCommand;
+    };
 
     await this.workflowQueueService.add({ name: transactionId, data: jobData, groupId: command.organizationId });
 

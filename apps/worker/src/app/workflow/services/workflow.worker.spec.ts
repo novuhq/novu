@@ -2,7 +2,7 @@ import { Test } from '@nestjs/testing';
 import { expect } from 'chai';
 import { setTimeout } from 'timers/promises';
 
-import { TriggerEvent, WorkflowQueueService } from '@novu/application-generic';
+import { IWorkflowDataDto, TriggerEvent, WorkflowQueueService } from '@novu/application-generic';
 
 import { WorkflowWorker } from './workflow.worker';
 
@@ -56,15 +56,17 @@ describe('Workflow Worker', () => {
     const _environmentId = 'trigger-processor-queue-environment-id';
     const _organizationId = 'trigger-processor-queue-organization-id';
     const _userId = 'trigger-processor-queue-user-id';
-    const jobData = {
-      _id: jobId,
-      test: 'trigger-processor-queue-job-data',
-      _environmentId,
-      _organizationId,
-      _userId,
+    const jobData: IWorkflowDataDto = {
+      environmentId: _environmentId,
+      organizationId: _organizationId,
+      userId: _userId,
+      payload: {},
+      overrides: {},
+      to: ['trigger-processor-queue-job-to'],
+      identifier: 'trigger-processor-queue-job-identifier',
     };
 
-    await workflowQueueService.add(jobId, jobData, _organizationId);
+    await workflowQueueService.add({ name: jobId, data: jobData, groupId: _organizationId });
 
     expect(await workflowQueueService.queue.getActiveCount()).to.equal(1);
     expect(await workflowQueueService.queue.getWaitingCount()).to.equal(0);
