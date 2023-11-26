@@ -102,9 +102,9 @@ export class MessageMatcher extends Filter {
           const result = await this.processFilter(variables, children[0], command, filterProcessingDetails);
           if (!prefiltering) {
             const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-            await this.executionLogQueueService.add(
-              metadata._id,
-              CreateExecutionDetailsCommand.create({
+            await this.executionLogQueueService.add({
+              name: metadata._id,
+              data: CreateExecutionDetailsCommand.create({
                 ...metadata,
                 ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
                 detail: DetailEnum.PROCESSING_STEP_FILTER,
@@ -114,8 +114,8 @@ export class MessageMatcher extends Filter {
                 isRetry: false,
                 raw: filterProcessingDetails.toString(),
               }),
-              command.organizationId
-            );
+              groupId: command.organizationId,
+            });
           }
 
           details.push(filterProcessingDetails);
@@ -126,9 +126,9 @@ export class MessageMatcher extends Filter {
         const result = await this.handleGroupFilters(filter, variables, command, filterProcessingDetails);
         if (!prefiltering) {
           const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-          await this.executionLogQueueService.add(
-            metadata._id,
-            CreateExecutionDetailsCommand.create({
+          await this.executionLogQueueService.add({
+            name: metadata._id,
+            data: CreateExecutionDetailsCommand.create({
               ...metadata,
               ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
               detail: DetailEnum.PROCESSING_STEP_FILTER,
@@ -138,8 +138,8 @@ export class MessageMatcher extends Filter {
               isRetry: false,
               raw: filterProcessingDetails.toString(),
             }),
-            command.organizationId
-          );
+            groupId: command.organizationId,
+          });
         }
 
         details.push(filterProcessingDetails);

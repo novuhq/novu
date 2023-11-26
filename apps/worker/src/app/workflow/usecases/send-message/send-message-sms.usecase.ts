@@ -125,9 +125,9 @@ export class SendMessageSms extends SendMessageBase {
 
     if (!integration) {
       const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
+      await this.executionLogQueueService.add({
+        name: metadata._id,
+        data: CreateExecutionDetailsCommand.create({
           ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
@@ -143,8 +143,8 @@ export class SendMessageSms extends SendMessageBase {
               }
             : {}),
         }),
-        command.organizationId
-      );
+        groupId: command.organizationId,
+      });
 
       return;
     }
@@ -178,9 +178,9 @@ export class SendMessageSms extends SendMessageBase {
     });
 
     const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-    await this.executionLogQueueService.add(
-      metadata._id,
-      CreateExecutionDetailsCommand.create({
+    await this.executionLogQueueService.add({
+      name: metadata._id,
+      data: CreateExecutionDetailsCommand.create({
         ...metadata,
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         detail: DetailEnum.MESSAGE_CREATED,
@@ -191,8 +191,8 @@ export class SendMessageSms extends SendMessageBase {
         isRetry: false,
         raw: this.storeContent() ? JSON.stringify(messagePayload) : null,
       }),
-      command.organizationId
-    );
+      groupId: command.organizationId,
+    });
 
     if (phone && integration) {
       await this.sendMessage(phone, integration, content, message, command, overrides);
@@ -215,9 +215,9 @@ export class SendMessageSms extends SendMessageBase {
       );
 
       const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
+      await this.executionLogQueueService.add({
+        name: metadata._id,
+        data: CreateExecutionDetailsCommand.create({
           ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
@@ -227,8 +227,8 @@ export class SendMessageSms extends SendMessageBase {
           isTest: false,
           isRetry: false,
         }),
-        command.organizationId
-      );
+        groupId: command.organizationId,
+      });
 
       return;
     }
@@ -243,9 +243,9 @@ export class SendMessageSms extends SendMessageBase {
       );
 
       const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
+      await this.executionLogQueueService.add({
+        name: metadata._id,
+        data: CreateExecutionDetailsCommand.create({
           ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
@@ -255,8 +255,8 @@ export class SendMessageSms extends SendMessageBase {
           isTest: false,
           isRetry: false,
         }),
-        command.organizationId
-      );
+        groupId: command.organizationId,
+      });
 
       return;
     }
@@ -270,9 +270,9 @@ export class SendMessageSms extends SendMessageBase {
         LogCodeEnum.MISSING_SMS_PROVIDER
       );
       const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
+      await this.executionLogQueueService.add({
+        name: metadata._id,
+        data: CreateExecutionDetailsCommand.create({
           ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
@@ -282,8 +282,8 @@ export class SendMessageSms extends SendMessageBase {
           isTest: false,
           isRetry: false,
         }),
-        command.organizationId
-      );
+        groupId: command.organizationId,
+      });
 
       return;
     }
@@ -312,9 +312,9 @@ export class SendMessageSms extends SendMessageBase {
       });
 
       const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
+      await this.executionLogQueueService.add({
+        name: metadata._id,
+        data: CreateExecutionDetailsCommand.create({
           ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
@@ -325,8 +325,8 @@ export class SendMessageSms extends SendMessageBase {
           isRetry: false,
           raw: JSON.stringify(result),
         }),
-        command.organizationId
-      );
+        groupId: command.organizationId,
+      });
 
       if (!result?.id) {
         return;
@@ -352,9 +352,9 @@ export class SendMessageSms extends SendMessageBase {
       );
 
       const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
+      await this.executionLogQueueService.add({
+        name: metadata._id,
+        data: CreateExecutionDetailsCommand.create({
           ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
@@ -365,8 +365,8 @@ export class SendMessageSms extends SendMessageBase {
           isRetry: false,
           raw: JSON.stringify(e),
         }),
-        command.organizationId
-      );
+        groupId: command.organizationId,
+      });
     }
   }
 

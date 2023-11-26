@@ -12,12 +12,11 @@ import { MergeOrCreateDigestCommand } from './merge-or-create-digest.command';
 import { MergeOrCreateDigest } from './merge-or-create-digest.usecase';
 import { AddJobCommand } from './add-job.command';
 import { CreateExecutionDetailsCommand, DetailEnum } from '../../usecases';
+import { CalculateDelayService, JobsOptions } from '../../services';
 import {
-  CalculateDelayService,
   ExecutionLogQueueService,
-  JobsOptions,
-} from '../../services';
-import { StandardQueueService } from '../../services/queues';
+  StandardQueueService,
+} from '../../services/queues';
 import { LogDecorator } from '../../logging';
 import { InstrumentUsecase } from '../../instrumentation';
 import { validateDigest } from './validation';
@@ -138,9 +137,9 @@ export class AddJob {
     }
 
     const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-    await this.executionLogQueueService.add(
-      metadata._id,
-      CreateExecutionDetailsCommand.create({
+    await this.executionLogQueueService.add({
+      name: metadata._id,
+      data: CreateExecutionDetailsCommand.create({
         ...metadata,
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: DetailEnum.STEP_QUEUED,
@@ -149,8 +148,8 @@ export class AddJob {
         isTest: false,
         isRetry: false,
       }),
-      job._organizationId
-    );
+      groupId: job._organizationId,
+    });
 
     const delay = command.filtered ? 0 : digestAmount ?? delayAmount;
 
@@ -203,9 +202,9 @@ export class AddJob {
 
       Logger.verbose(logMessage, LOG_CONTEXT);
       const meta = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        meta._id,
-        CreateExecutionDetailsCommand.create({
+      await this.executionLogQueueService.add({
+        name: meta._id,
+        data: CreateExecutionDetailsCommand.create({
           ...meta,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
           detail:
@@ -218,8 +217,8 @@ export class AddJob {
           isRetry: false,
           raw: JSON.stringify({ delay }),
         }),
-        job._organizationId
-      );
+        groupId: job._organizationId,
+      });
     }
   }
 

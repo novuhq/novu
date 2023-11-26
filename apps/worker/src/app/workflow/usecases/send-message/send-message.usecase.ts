@@ -123,9 +123,9 @@ export class SendMessage {
 
     if (stepType !== StepTypeEnum.DELAY) {
       const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
+      await this.executionLogQueueService.add({
+        name: metadata._id,
+        data: CreateExecutionDetailsCommand.create({
           ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: stepType === StepTypeEnum.DIGEST ? DetailEnum.START_DIGESTING : DetailEnum.START_SENDING,
@@ -134,8 +134,8 @@ export class SendMessage {
           isTest: false,
           isRetry: false,
         }),
-        command.organizationId
-      );
+        groupId: command.organizationId,
+      });
     }
 
     switch (stepType) {
@@ -175,9 +175,9 @@ export class SendMessage {
 
     if (!shouldRun.passed) {
       const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
+      await this.executionLogQueueService.add({
+        name: metadata._id,
+        data: CreateExecutionDetailsCommand.create({
           ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.FILTER_STEPS,
@@ -190,8 +190,8 @@ export class SendMessage {
             filters: command.step.filters,
           }),
         }),
-        command.organizationId
-      );
+        groupId: command.organizationId,
+      });
     }
 
     return shouldRun;
@@ -229,9 +229,9 @@ export class SendMessage {
 
     if (!globalPreferenceResult) {
       const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
+      await this.executionLogQueueService.add({
+        name: metadata._id,
+        data: CreateExecutionDetailsCommand.create({
           ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
           detail: DetailEnum.STEP_FILTERED_BY_GLOBAL_PREFERENCES,
@@ -241,8 +241,8 @@ export class SendMessage {
           isRetry: false,
           raw: JSON.stringify(globalPreference),
         }),
-        job._organizationId
-      );
+        groupId: job._organizationId,
+      });
 
       return false;
     }
@@ -262,9 +262,9 @@ export class SendMessage {
 
     if (!result) {
       const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
+      await this.executionLogQueueService.add({
+        name: metadata._id,
+        data: CreateExecutionDetailsCommand.create({
           ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
           detail: DetailEnum.STEP_FILTERED_BY_PREFERENCES,
@@ -274,8 +274,8 @@ export class SendMessage {
           isRetry: false,
           raw: JSON.stringify(preference),
         }),
-        job._organizationId
-      );
+        groupId: job._organizationId,
+      });
     }
 
     return result;

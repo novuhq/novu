@@ -90,9 +90,9 @@ export abstract class SendMessageBase extends SendMessageType {
 
   protected async sendErrorHandlebars(job: JobEntity, error: string) {
     const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-    await this.executionLogQueueService.add(
-      metadata._id,
-      CreateExecutionDetailsCommand.create({
+    await this.executionLogQueueService.add({
+      name: metadata._id,
+      data: CreateExecutionDetailsCommand.create({
         ...metadata,
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
@@ -102,15 +102,15 @@ export abstract class SendMessageBase extends SendMessageType {
         isRetry: false,
         raw: JSON.stringify({ error }),
       }),
-      job._organizationId
-    );
+      groupId: job._organizationId,
+    });
   }
 
   protected async sendSelectedIntegrationExecution(job: JobEntity, integration: IntegrationEntity) {
     const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-    await this.executionLogQueueService.add(
-      metadata._id,
-      CreateExecutionDetailsCommand.create({
+    await this.executionLogQueueService.add({
+      name: metadata._id,
+      data: CreateExecutionDetailsCommand.create({
         ...metadata,
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: DetailEnum.INTEGRATION_INSTANCE_SELECTED,
@@ -126,15 +126,15 @@ export abstract class SendMessageBase extends SendMessageType {
           _id: integration?._id,
         }),
       }),
-      job._organizationId
-    );
+      groupId: job._organizationId,
+    });
   }
 
   protected async sendSelectedTenantExecution(job: JobEntity, tenant: TenantEntity) {
     const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-    await this.executionLogQueueService.add(
-      metadata._id,
-      CreateExecutionDetailsCommand.create({
+    await this.executionLogQueueService.add({
+      name: metadata._id,
+      data: CreateExecutionDetailsCommand.create({
         ...metadata,
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: DetailEnum.TENANT_CONTEXT_SELECTED,
@@ -152,8 +152,8 @@ export abstract class SendMessageBase extends SendMessageType {
           _id: tenant?._id,
         }),
       }),
-      job._organizationId
-    );
+      groupId: job._organizationId,
+    });
   }
 
   protected async handleTenantExecution(job: JobEntity): Promise<TenantEntity | null> {
@@ -167,9 +167,9 @@ export abstract class SendMessageBase extends SendMessageType {
       });
       if (!tenant) {
         const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-        await this.executionLogQueueService.add(
-          metadata._id,
-          CreateExecutionDetailsCommand.create({
+        await this.executionLogQueueService.add({
+          name: metadata._id,
+          data: CreateExecutionDetailsCommand.create({
             ...metadata,
             ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
             detail: DetailEnum.TENANT_NOT_FOUND,
@@ -181,8 +181,8 @@ export abstract class SendMessageBase extends SendMessageType {
               tenantIdentifier: tenantIdentifier,
             }),
           }),
-          job._organizationId
-        );
+          groupId: job._organizationId,
+        });
 
         return null;
       }

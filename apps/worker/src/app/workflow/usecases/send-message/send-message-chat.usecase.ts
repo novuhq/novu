@@ -20,7 +20,6 @@ import {
 import {
   InstrumentUsecase,
   DetailEnum,
-  CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   CompileTemplate,
   CompileTemplateCommand,
@@ -118,9 +117,9 @@ export class SendMessageChat extends SendMessageBase {
 
     if (chatChannels.length === 0) {
       const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
+      await this.executionLogQueueService.add({
+        name: metadata._id,
+        data: CreateExecutionDetailsCommand.create({
           ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
@@ -129,8 +128,8 @@ export class SendMessageChat extends SendMessageBase {
           isTest: false,
           isRetry: false,
         }),
-        command.organizationId
-      );
+        groupId: command.organizationId,
+      });
 
       return;
     }
@@ -151,9 +150,9 @@ export class SendMessageChat extends SendMessageBase {
 
     if (allFailed) {
       const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
+      await this.executionLogQueueService.add({
+        name: metadata._id,
+        data: CreateExecutionDetailsCommand.create({
           ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.CHAT_ALL_CHANNELS_FAILED,
@@ -162,8 +161,8 @@ export class SendMessageChat extends SendMessageBase {
           isTest: false,
           isRetry: false,
         }),
-        command.organizationId
-      );
+        groupId: command.organizationId,
+      });
     }
   }
 
@@ -190,9 +189,9 @@ export class SendMessageChat extends SendMessageBase {
 
     if (!chatWebhookUrl) {
       const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
+      await this.executionLogQueueService.add({
+        name: metadata._id,
+        data: CreateExecutionDetailsCommand.create({
           ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.CHAT_WEBHOOK_URL_MISSING,
@@ -204,8 +203,8 @@ export class SendMessageChat extends SendMessageBase {
             reason: `webhookUrl for integrationId: ${subscriberChannel?._integrationId} is missing`,
           }),
         }),
-        command.organizationId
-      );
+        groupId: command.organizationId,
+      });
     }
 
     const message: MessageEntity = await this.messageRepository.create({
@@ -225,9 +224,9 @@ export class SendMessageChat extends SendMessageBase {
 
     if (!integration) {
       const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
+      await this.executionLogQueueService.add({
+        name: metadata._id,
+        data: CreateExecutionDetailsCommand.create({
           ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
@@ -239,8 +238,8 @@ export class SendMessageChat extends SendMessageBase {
             reason: `Integration with integrationId: ${subscriberChannel?._integrationId} is either deleted or not active`,
           }),
         }),
-        command.organizationId
-      );
+        groupId: command.organizationId,
+      });
 
       return;
     }
@@ -248,9 +247,9 @@ export class SendMessageChat extends SendMessageBase {
     await this.sendSelectedIntegrationExecution(command.job, integration);
 
     const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-    await this.executionLogQueueService.add(
-      metadata._id,
-      CreateExecutionDetailsCommand.create({
+    await this.executionLogQueueService.add({
+      name: metadata._id,
+      data: CreateExecutionDetailsCommand.create({
         ...metadata,
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         detail: DetailEnum.MESSAGE_CREATED,
@@ -261,8 +260,8 @@ export class SendMessageChat extends SendMessageBase {
         isRetry: false,
         raw: this.storeContent() ? JSON.stringify(content) : null,
       }),
-      command.organizationId
-    );
+      groupId: command.organizationId,
+    });
 
     if (chatWebhookUrl && integration) {
       await this.sendMessage(chatWebhookUrl, integration, content, message, command, channelSpecification);
@@ -290,9 +289,9 @@ export class SendMessageChat extends SendMessageBase {
       );
 
       const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
+      await this.executionLogQueueService.add({
+        name: metadata._id,
+        data: CreateExecutionDetailsCommand.create({
           ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
@@ -305,8 +304,8 @@ export class SendMessageChat extends SendMessageBase {
             reason: `webhookUrl for integrationId: ${integration?.identifier} is missing`,
           }),
         }),
-        command.organizationId
-      );
+        groupId: command.organizationId,
+      });
 
       return;
     }
@@ -320,9 +319,9 @@ export class SendMessageChat extends SendMessageBase {
         LogCodeEnum.MISSING_CHAT_INTEGRATION
       );
       const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
+      await this.executionLogQueueService.add({
+        name: metadata._id,
+        data: CreateExecutionDetailsCommand.create({
           ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
@@ -335,8 +334,8 @@ export class SendMessageChat extends SendMessageBase {
             reason: 'Integration is either deleted or not active',
           }),
         }),
-        command.organizationId
-      );
+        groupId: command.organizationId,
+      });
 
       return;
     }
@@ -364,9 +363,9 @@ export class SendMessageChat extends SendMessageBase {
       });
 
       const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
+      await this.executionLogQueueService.add({
+        name: metadata._id,
+        data: CreateExecutionDetailsCommand.create({
           ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
@@ -377,8 +376,8 @@ export class SendMessageChat extends SendMessageBase {
           isRetry: false,
           raw: JSON.stringify(result),
         }),
-        command.organizationId
-      );
+        groupId: command.organizationId,
+      });
     } catch (e) {
       await this.sendErrorStatus(
         message,
@@ -391,9 +390,9 @@ export class SendMessageChat extends SendMessageBase {
       );
 
       const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
+      await this.executionLogQueueService.add({
+        name: metadata._id,
+        data: CreateExecutionDetailsCommand.create({
           ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
@@ -404,8 +403,8 @@ export class SendMessageChat extends SendMessageBase {
           isRetry: false,
           raw: JSON.stringify(e),
         }),
-        command.organizationId
-      );
+        groupId: command.organizationId,
+      });
     }
   }
 }
