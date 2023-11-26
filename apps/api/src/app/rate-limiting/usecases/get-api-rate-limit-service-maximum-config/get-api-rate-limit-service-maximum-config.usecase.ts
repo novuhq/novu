@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import {
   ApiRateLimitCategoryEnum,
   ApiRateLimitServiceMaximumEnvVarFormat,
@@ -6,17 +6,53 @@ import {
   DEFAULT_API_RATE_LIMIT_SERVICE_MAXIMUM_CONFIG,
   IApiRateLimitServiceMaximum,
 } from '@novu/shared';
+import { createHash } from 'crypto';
+import {
+  buildMaximumApiRateLimitKey,
+  buildServiceConfigApiRateLimitMaximumKey,
+  CacheService,
+  InvalidateCacheService,
+} from '@novu/application-generic';
 
 @Injectable()
-export class GetApiRateLimitServiceMaximumConfig {
+export class GetApiRateLimitServiceMaximumConfig implements OnModuleInit {
   public default: IApiRateLimitServiceMaximum;
 
-  constructor() {
-    this.loadDefault();
+  constructor(private invalidateCache: InvalidateCacheService, private cacheService: CacheService) {}
+
+  async onModuleInit() {
+    await this.loadDefault();
   }
 
-  public loadDefault(): void {
-    this.default = this.createDefault();
+  public async loadDefault(): Promise<void> {
+    const newDefault = this.createDefault();
+    this.default = newDefault;
+
+    if (!this.cacheService.cacheEnabled()) {
+      return;
+    }
+
+    const cacheKey = buildServiceConfigApiRateLimitMaximumKey();
+    const previousHash = await this.cacheService.get(cacheKey);
+    const newHash = this.getConfigHash(newDefault);
+
+    if (previousHash !== newHash) {
+      await this.cacheService.set(cacheKey, newHash);
+
+      this.invalidateCache.invalidateQuery({
+        key: buildMaximumApiRateLimitKey({
+          _environmentId: '*',
+          apiRateLimitCategory: '*',
+        }),
+      });
+    }
+  }
+
+  private getConfigHash(config: IApiRateLimitServiceMaximum): string {
+    const hash = createHash('sha256');
+    hash.update(JSON.stringify(config));
+
+    return hash.digest('hex');
   }
 
   private createDefault(): IApiRateLimitServiceMaximum {
