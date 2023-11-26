@@ -65,7 +65,7 @@ describe('ExecutionLog Worker', () => {
       _userId,
     };
 
-    await executionLogQueueService.add(jobId, jobData, _organizationId);
+    await executionLogQueueService.add({ name: jobId, data: jobData, groupId: _organizationId });
 
     expect(await executionLogQueueService.queue.getActiveCount()).to.equal(1);
     expect(await executionLogQueueService.queue.getWaitingCount()).to.equal(0);
