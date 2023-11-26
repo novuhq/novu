@@ -7,7 +7,7 @@ A SparkPost email provider library for [@novu/node](https://github.com/novuhq/no
 ```javascript
 import { SparkPostEmailProvider } from '@novu/sparkpost';
 
-const sparkpostProvider = new SparkPostEmailProvider({
+const provider = new SparkPostEmailProvider({
   apiKey: process.env.SPARKPOST_API_KEY
 });
 ```
