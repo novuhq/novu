@@ -18,7 +18,7 @@ const LOG_CONTEXT = 'WorkflowWorker';
 
 @Injectable()
 export class WorkflowWorker extends WorkflowWorkerService implements INovuWorker {
-  constructor(private triggerEventUsecase: TriggerEvent, private logger: PinoLogger) {
+  constructor(private triggerEventUsecase: TriggerEvent) {
     super();
 
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOptions());
