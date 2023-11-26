@@ -16,5 +16,6 @@ export * from './utils/filter-processing-details';
 export * from './utils/exceptions';
 export * from './utils/email-normalization';
 export * from './utils/digest';
+export * from './utils/object';
 export * from './decorators/external-api.decorator';
 export * from './decorators/user-session.decorator';

@@ -4,7 +4,13 @@ import { Injectable, Logger } from '@nestjs/common';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
-import { Instrument, InstrumentUsecase, PinoLogger, StorageHelperService } from '@novu/application-generic';
+import {
+  getJobDigest,
+  Instrument,
+  InstrumentUsecase,
+  PinoLogger,
+  StorageHelperService,
+} from '@novu/application-generic';
 
 import { RunJobCommand } from './run-job.command';
 import { QueueNextJob, QueueNextJobCommand } from '../queue-next-job';
@@ -34,21 +40,7 @@ export class RunJob {
     let job = await this.jobRepository.findOne({ _id: command.jobId, _environmentId: command.environmentId });
     if (!job) throw new PlatformException(`Job with id ${command.jobId} not found`);
 
-    try {
-      const contextData = {
-        transactionId: job.transactionId,
-        environmentId: job._environmentId,
-        organizationId: job._organizationId,
-        jobId: job._id,
-        jobType: job.type,
-      };
-
-      nr.addCustomAttributes(contextData);
-
-      this.logger?.assign(contextData);
-    } catch (e) {
-      Logger.error(e, 'RunJob', LOG_CONTEXT);
-    }
+    this.assignLogger(job);
 
     const { canceled, activeDigestFollower } = await this.delayedEventIsCanceled(job);
 
@@ -60,7 +52,17 @@ export class RunJob {
 
     if (activeDigestFollower) {
       job = this.assignNewDigestExecutor(activeDigestFollower);
+
+      this.assignLogger(job);
     }
+
+    nr.addCustomAttributes({
+      transactionId: job.transactionId,
+      environmentId: job._environmentId,
+      organizationId: job._organizationId,
+      jobId: job._id,
+      jobType: job.type,
+    });
 
     let shouldQueueNextJob = true;
 
@@ -119,6 +121,20 @@ export class RunJob {
     }
   }
 
+  private assignLogger(job) {
+    try {
+      this.logger?.assign({
+        transactionId: job.transactionId,
+        environmentId: job._environmentId,
+        organizationId: job._organizationId,
+        jobId: job._id,
+        jobType: job.type,
+      });
+    } catch (e) {
+      Logger.error(e, 'RunJob', LOG_CONTEXT);
+    }
+  }
+
   /*
    * If the following condition is met,
    * - transactions were merged to the main delayed digest.
@@ -159,14 +175,23 @@ export class RunJob {
       return null;
     }
 
-    return await this.jobRepository.findOne({
+    const { digestKey, digestValue } = getJobDigest(job);
+
+    const jobQuery: Partial<JobEntity> & { _environmentId: string } = {
       _environmentId: job._environmentId,
+      _organizationId: job._organizationId,
       _mergedDigestId: null,
       status: JobStatusEnum.DELAYED,
       type: StepTypeEnum.DIGEST,
       _subscriberId: job._subscriberId,
       _templateId: job._templateId,
-    });
+    };
+
+    if (digestKey && digestValue) {
+      jobQuery[`payload.${digestKey}`] = digestValue;
+    }
+
+    return await this.jobRepository.findOne(jobQuery);
   }
 
   public shouldBackoff(error: Error): boolean {

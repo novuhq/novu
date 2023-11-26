@@ -319,8 +319,7 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE)', function (
       {
         _environmentId: session.environment._id,
         _templateId: template._id,
-        // status: JobStatusEnum.CANCELED,
-
+        status: JobStatusEnum.CANCELED,
         type: StepTypeEnum.DIGEST,
         transactionId: trigger1.transactionId,
       },
