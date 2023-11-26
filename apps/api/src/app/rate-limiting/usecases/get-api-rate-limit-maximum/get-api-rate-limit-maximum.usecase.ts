@@ -24,9 +24,9 @@ export class GetApiRateLimitMaximum {
   }
 
   @CachedEntity({
-    builder: (command: GetApiRateLimitMaximumCommand) =>
+    builder: (command: { apiRateLimitCategory: ApiRateLimitCategoryEnum; _environmentId: string }) =>
       buildMaximumApiRateLimitKey({
-        _environmentId: command.environmentId,
+        _environmentId: command._environmentId,
         apiRateLimitCategory: command.apiRateLimitCategory,
       }),
   })
