@@ -11,12 +11,12 @@ import { AddDelayJob } from './add-delay-job.usecase';
 import { MergeOrCreateDigestCommand } from './merge-or-create-digest.command';
 import { MergeOrCreateDigest } from './merge-or-create-digest.usecase';
 import { AddJobCommand } from './add-job.command';
+import { CreateExecutionDetailsCommand, DetailEnum } from '../../usecases';
 import {
-  CreateExecutionDetails,
-  CreateExecutionDetailsCommand,
-  DetailEnum,
-} from '../../usecases';
-import { CalculateDelayService, JobsOptions } from '../../services';
+  CalculateDelayService,
+  ExecutionLogQueueService,
+  JobsOptions,
+} from '../../services';
 import { StandardQueueService } from '../../services/queues';
 import { LogDecorator } from '../../logging';
 import { InstrumentUsecase } from '../../instrumentation';
@@ -35,7 +35,8 @@ export class AddJob {
     private jobRepository: JobRepository,
     @Inject(forwardRef(() => StandardQueueService))
     private standardQueueService: StandardQueueService,
-    private createExecutionDetails: CreateExecutionDetails,
+    @Inject(forwardRef(() => ExecutionLogQueueService))
+    private executionLogQueueService: ExecutionLogQueueService,
     private mergeOrCreateDigestUsecase: MergeOrCreateDigest,
     private addDelayJob: AddDelayJob,
     @Inject(forwardRef(() => CalculateDelayService))
@@ -136,15 +137,19 @@ export class AddJob {
       );
     }
 
-    this.createExecutionDetails.execute(
+    const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+    await this.executionLogQueueService.add(
+      metadata._id,
       CreateExecutionDetailsCommand.create({
+        ...metadata,
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: DetailEnum.STEP_QUEUED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.PENDING,
         isTest: false,
         isRetry: false,
-      })
+      }),
+      job._organizationId
     );
 
     const delay = command.filtered ? 0 : digestAmount ?? delayAmount;
@@ -197,8 +202,11 @@ export class AddJob {
           : 'Unexpected job type, Creating execution details';
 
       Logger.verbose(logMessage, LOG_CONTEXT);
-      this.createExecutionDetails.execute(
+      const meta = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+      await this.executionLogQueueService.add(
+        meta._id,
         CreateExecutionDetailsCommand.create({
+          ...meta,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
           detail:
             job.type === StepTypeEnum.DELAY
@@ -209,7 +217,8 @@ export class AddJob {
           isTest: false,
           isRetry: false,
           raw: JSON.stringify({ delay }),
-        })
+        }),
+        job._organizationId
       );
     }
   }

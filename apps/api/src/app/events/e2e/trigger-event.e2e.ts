@@ -14,8 +14,9 @@ import {
   IntegrationRepository,
   ExecutionDetailsRepository,
   EnvironmentRepository,
+  NotificationTemplateRepository,
 } from '@novu/dal';
-import { UserSession, SubscribersService } from '@novu/testing';
+import { UserSession, SubscribersService, WorkflowOverrideService } from '@novu/testing';
 import {
   ChannelTypeEnum,
   EmailBlockTypeEnum,
@@ -52,7 +53,9 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
+  let workflowOverrideService: WorkflowOverrideService;
   const notificationRepository = new NotificationRepository();
+  const notificationTemplateRepository = new NotificationTemplateRepository();
   const messageRepository = new MessageRepository();
   const subscriberRepository = new SubscriberRepository();
   const integrationRepository = new IntegrationRepository();
@@ -68,6 +71,10 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       template = await session.createTemplate();
       subscriberService = new SubscribersService(session.organization._id, session.environment._id);
       subscriber = await subscriberService.createSubscriber();
+      workflowOverrideService = new WorkflowOverrideService({
+        organizationId: session.organization._id,
+        environmentId: session.environment._id,
+      });
     });
 
     it('should filter delay step', async function () {
@@ -1539,14 +1546,18 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
 
       await session.awaitRunningJobs(template._id);
 
-      messages = await messageRepository.find({
-        _environmentId: session.environment._id,
-        _subscriberId: createdSubscriber?._id,
-        channel: channelType,
-      });
+      messages = await messageRepository.find(
+        {
+          _environmentId: session.environment._id,
+          _subscriberId: createdSubscriber?._id,
+          channel: channelType,
+        },
+        '',
+        { sort: { createdAt: -1 } }
+      );
 
       expect(messages.length).to.be.equal(2);
-      expect(messages[1].providerId).to.be.equal(EmailProviderIdEnum.Mailgun);
+      expect(messages[0].providerId).to.be.equal(EmailProviderIdEnum.Mailgun);
     });
 
     it('should fail to trigger with missing variables', async function () {
@@ -2193,6 +2204,69 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       // axiosPostStub.restore();
     });
 
+    it('should trigger message with override integration identifier', async function () {
+      const newSubscriberId = SubscriberRepository.createObjectId();
+      const channelType = ChannelTypeEnum.EMAIL;
+
+      template = await createTemplate(session, channelType);
+
+      await sendTrigger(session, template, newSubscriberId);
+
+      await session.awaitRunningJobs(template._id);
+
+      const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, newSubscriberId);
+
+      let messages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: createdSubscriber?._id,
+        channel: channelType,
+      });
+
+      expect(messages.length).to.be.equal(1);
+      expect(messages[0].providerId).to.be.equal(EmailProviderIdEnum.SendGrid);
+
+      const prodEnv = await environmentRepository.findOne({
+        name: 'Production',
+        _organizationId: session.organization._id,
+      });
+
+      const payload = {
+        providerId: EmailProviderIdEnum.Mailgun,
+        channel: 'email',
+        credentials: { apiKey: '123', secretKey: 'abc' },
+        _environmentId: prodEnv?._id,
+        active: true,
+        check: false,
+      };
+
+      const {
+        body: { data: newIntegration },
+      } = await session.testAgent.post('/v1/integrations').send(payload);
+
+      await sendTrigger(
+        session,
+        template,
+        newSubscriberId,
+        {},
+        { email: { integrationIdentifier: newIntegration.identifier } }
+      );
+
+      await session.awaitRunningJobs(template._id);
+
+      messages = await messageRepository.find(
+        {
+          _environmentId: session.environment._id,
+          _subscriberId: createdSubscriber?._id,
+          channel: channelType,
+        },
+        '',
+        { sort: { createdAt: -1 } }
+      );
+
+      expect(messages.length).to.be.equal(2);
+      expect(messages[0].providerId).to.be.equal(EmailProviderIdEnum.Mailgun);
+    });
+
     describe('in-app avatar', () => {
       it('should send the message with choosed system avatar', async () => {
         const firstStepUuid = uuid();
@@ -2521,63 +2595,275 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       });
     });
 
-    it('should trigger message with override integration identifier', async function () {
-      const newSubscriberId = SubscriberRepository.createObjectId();
-      const channelType = ChannelTypeEnum.EMAIL;
+    describe('workflow override', () => {
+      it('should override - active false', async function () {
+        const subscriberOverride = SubscriberRepository.createObjectId();
 
-      template = await createTemplate(session, channelType);
+        // Create active workflow
+        const workflow = await createTemplate(session, ChannelTypeEnum.IN_APP);
 
-      await sendTrigger(session, template, newSubscriberId);
+        // Create workflow override with active false
+        const { tenant } = await workflowOverrideService.createWorkflowOverride({
+          workflowId: workflow._id,
+          active: false,
+        });
 
-      await session.awaitRunningJobs(template._id);
+        if (!tenant) {
+          throw new Error('Tenant not found');
+        }
 
-      const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, newSubscriberId);
+        const triggerResponse = await axiosInstance.post(
+          `${session.serverUrl}${eventTriggerPath}`,
+          {
+            name: workflow.triggers[0].identifier,
+            to: subscriberOverride,
+            tenant: tenant.identifier,
+            payload: {
+              firstName: 'Testing of User Name',
+              urlVariable: '/test/url/path',
+            },
+          },
+          {
+            headers: {
+              authorization: `ApiKey ${session.apiKey}`,
+            },
+          }
+        );
 
-      let messages = await messageRepository.find({
-        _environmentId: session.environment._id,
-        _subscriberId: createdSubscriber?._id,
-        channel: channelType,
+        expect(triggerResponse.status).to.equal(201);
+        expect(triggerResponse.data.data.status).to.equal('trigger_not_active');
+
+        await session.awaitRunningJobs();
+
+        const messages = await messageRepository.find({
+          _environmentId: session.environment._id,
+          _templateId: workflow._id,
+        });
+
+        expect(messages.length).to.equal(0);
+
+        // Disable workflow - should not take effect, test for anomalies
+        await notificationTemplateRepository.update(
+          { _id: workflow._id, _environmentId: session.environment._id },
+          { $set: { active: false } }
+        );
+
+        const triggerResponse2 = await axiosInstance.post(
+          `${session.serverUrl}${eventTriggerPath}`,
+          {
+            name: workflow.triggers[0].identifier,
+            to: subscriberOverride,
+            tenant: tenant.identifier,
+            payload: {
+              firstName: 'Testing of User Name',
+              urlVariable: '/test/url/path',
+            },
+          },
+          {
+            headers: {
+              authorization: `ApiKey ${session.apiKey}`,
+            },
+          }
+        );
+
+        expect(triggerResponse2.status).to.equal(201);
+        expect(triggerResponse2.data.data.status).to.equal('trigger_not_active');
+
+        await session.awaitRunningJobs();
+
+        const messages2 = await messageRepository.find({
+          _environmentId: session.environment._id,
+          _templateId: workflow._id,
+        });
+
+        expect(messages2.length).to.equal(0);
       });
 
-      expect(messages.length).to.be.equal(1);
-      expect(messages[0].providerId).to.be.equal(EmailProviderIdEnum.SendGrid);
+      it('should override - active true', async function () {
+        const subscriberOverride = SubscriberRepository.createObjectId();
 
-      const prodEnv = await environmentRepository.findOne({
-        name: 'Production',
-        _organizationId: session.organization._id,
+        // Create active workflow
+        const workflow = await createTemplate(session, ChannelTypeEnum.IN_APP);
+
+        // Create active workflow override
+        const { tenant } = await workflowOverrideService.createWorkflowOverride({
+          workflowId: workflow._id,
+          active: true,
+        });
+
+        if (!tenant) {
+          throw new Error('Tenant not found');
+        }
+
+        const triggerResponse = await axiosInstance.post(
+          `${session.serverUrl}${eventTriggerPath}`,
+          {
+            name: workflow.triggers[0].identifier,
+            to: subscriberOverride,
+            tenant: tenant.identifier,
+            payload: {
+              firstName: 'Testing of User Name',
+              urlVariable: '/test/url/path',
+            },
+          },
+          {
+            headers: {
+              authorization: `ApiKey ${session.apiKey}`,
+            },
+          }
+        );
+
+        expect(triggerResponse.status).to.equal(201);
+        expect(triggerResponse.data.data.status).to.equal('processed');
+
+        await session.awaitRunningJobs();
+
+        const messages = await messageRepository.find({
+          _environmentId: session.environment._id,
+          _templateId: workflow._id,
+        });
+
+        expect(messages.length).to.equal(1);
+
+        // Disable workflow - should not take effect as override is active
+        await notificationTemplateRepository.update(
+          { _id: workflow._id, _environmentId: session.environment._id },
+          { $set: { active: false } }
+        );
+
+        const triggerResponse2 = await axiosInstance.post(
+          `${session.serverUrl}${eventTriggerPath}`,
+          {
+            name: workflow.triggers[0].identifier,
+            to: subscriberOverride,
+            tenant: tenant.identifier,
+            payload: {
+              firstName: 'Testing of User Name',
+              urlVariable: '/test/url/path',
+            },
+          },
+          {
+            headers: {
+              authorization: `ApiKey ${session.apiKey}`,
+            },
+          }
+        );
+
+        expect(triggerResponse2.status).to.equal(201);
+        expect(triggerResponse2.data.data.status).to.equal('processed');
+
+        await session.awaitRunningJobs();
+
+        const messages2 = await messageRepository.find({
+          _environmentId: session.environment._id,
+          _templateId: workflow._id,
+        });
+
+        expect(messages2.length).to.equal(2);
       });
 
-      const payload = {
-        providerId: EmailProviderIdEnum.Mailgun,
-        channel: 'email',
-        credentials: { apiKey: '123', secretKey: 'abc' },
-        _environmentId: prodEnv?._id,
-        active: true,
-        check: false,
-      };
+      it('should override - preference - should disable in app channel', async function () {
+        const subscriberOverride = SubscriberRepository.createObjectId();
 
-      const {
-        body: { data: newIntegration },
-      } = await session.testAgent.post('/v1/integrations').send(payload);
+        // Create a workflow with in app channel enabled
+        const workflow = await createTemplate(session, ChannelTypeEnum.IN_APP);
 
-      await sendTrigger(
-        session,
-        template,
-        newSubscriberId,
-        {},
-        { email: { integrationIdentifier: newIntegration.identifier } }
-      );
+        // Create a workflow with in app channel disabled
+        const { tenant } = await workflowOverrideService.createWorkflowOverride({
+          workflowId: workflow._id,
+          active: true,
+          preferenceSettings: { in_app: false },
+        });
 
-      await session.awaitRunningJobs(template._id);
+        if (!tenant) {
+          throw new Error('Tenant not found');
+        }
+        const triggerResponse = await axiosInstance.post(
+          `${session.serverUrl}${eventTriggerPath}`,
+          {
+            name: workflow.triggers[0].identifier,
+            to: subscriberOverride,
+            tenant: tenant.identifier,
+            payload: {
+              firstName: 'Testing of User Name',
+              urlVariable: '/test/url/path',
+            },
+          },
+          {
+            headers: {
+              authorization: `ApiKey ${session.apiKey}`,
+            },
+          }
+        );
 
-      messages = await messageRepository.find({
-        _environmentId: session.environment._id,
-        _subscriberId: createdSubscriber?._id,
-        channel: channelType,
+        expect(triggerResponse.status).to.equal(201);
+        expect(triggerResponse.data.data.status).to.equal('processed');
+
+        await session.awaitRunningJobs();
+
+        const messages = await messageRepository.find({
+          _environmentId: session.environment._id,
+          _templateId: workflow._id,
+        });
+
+        expect(messages.length).to.equal(0);
       });
 
-      expect(messages.length).to.be.equal(2);
-      expect(messages[1].providerId).to.be.equal(EmailProviderIdEnum.Mailgun);
+      it('should override - preference - should enable in app channel', async function () {
+        const subscriberOverride = SubscriberRepository.createObjectId();
+
+        // Create a workflow with in-app channel disabled
+        const workflow = await session.createTemplate({
+          steps: [
+            {
+              type: StepTypeEnum.IN_APP,
+              content: 'Hello' as string,
+            },
+          ],
+          preferenceSettingsOverride: { in_app: false },
+        });
+
+        // Create workflow override with in app channel enabled
+        const { tenant } = await workflowOverrideService.createWorkflowOverride({
+          workflowId: workflow._id,
+          active: true,
+          preferenceSettings: { in_app: true },
+        });
+
+        if (!tenant) {
+          throw new Error('Tenant not found');
+        }
+
+        const triggerResponse = await axiosInstance.post(
+          `${session.serverUrl}${eventTriggerPath}`,
+          {
+            name: workflow.triggers[0].identifier,
+            to: subscriberOverride,
+            tenant: tenant.identifier,
+            payload: {
+              firstName: 'Testing of User Name',
+              urlVariable: '/test/url/path',
+            },
+          },
+          {
+            headers: {
+              authorization: `ApiKey ${session.apiKey}`,
+            },
+          }
+        );
+
+        expect(triggerResponse.status).to.equal(201);
+        expect(triggerResponse.data.data.status).to.equal('processed');
+
+        await session.awaitRunningJobs();
+
+        const messages = await messageRepository.find({
+          _environmentId: session.environment._id,
+          _templateId: workflow._id,
+        });
+
+        expect(messages.length).to.equal(1);
+      });
     });
   });
 });

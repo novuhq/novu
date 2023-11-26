@@ -17,4 +17,5 @@ export * from './tenant';
 export * from './messages';
 export * from './notification-templates';
 export * from './web-sockets';
+export * from './workflow-override';
 export * from './rate-limiting';

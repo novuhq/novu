@@ -6,6 +6,7 @@ import { StandardQueueService } from './standard/standard-queue.service';
 import { WebSocketsQueueService } from './web-sockets/web-sockets-queue.service';
 import { WorkflowQueueService } from './workflow/workflow-queue.service';
 import { SubscriberProcessQueueService } from './subscriber-process/subscriber-process-queue.service';
+import { ExecutionLogQueueService } from './execution-log-queue.service';
 
 export {
   QueueBaseService,
@@ -16,4 +17,5 @@ export {
   WebSocketsQueueService,
   WorkflowQueueService,
   SubscriberProcessQueueService,
+  ExecutionLogQueueService,
 };
