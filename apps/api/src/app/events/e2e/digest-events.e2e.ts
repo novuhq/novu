@@ -513,8 +513,11 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     const completedInApp = generatedMessageJob.filter((elem) => elem.status === JobStatusEnum.COMPLETED);
     expect(completedInApp && completedInApp.length).to.equal(2);
 
-    expect(completedInApp && completedInApp.find((i) => i.digest?.events?.length === 6)).to.be.ok;
-    expect(completedInApp && completedInApp.find((i) => i.digest?.events?.length === 0)).to.be.ok;
+    const digestEventLength6 = completedInApp.find((i) => i.digest?.events?.length === 6);
+    expect(digestEventLength6).to.be.ok;
+
+    const digestEventLength0 = completedInApp.find((i) => i.digest?.events?.length === 0);
+    expect(digestEventLength0).to.be.ok;
   });
 
   it('should create multiple digest based on different digestKeys', async function () {
