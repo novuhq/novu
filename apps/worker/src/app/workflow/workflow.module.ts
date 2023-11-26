@@ -34,7 +34,13 @@ import {
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
-import { ActiveJobsMetricService, CompletedJobsMetricService, StandardWorker, WorkflowWorker } from './services';
+import {
+  ExecutionLogWorker,
+  ActiveJobsMetricService,
+  CompletedJobsMetricService,
+  StandardWorker,
+  WorkflowWorker,
+} from './services';
 
 import {
   MessageMatcher,
@@ -118,6 +124,7 @@ const PROVIDERS: Provider[] = [
   CompletedJobsMetricService,
   StandardWorker,
   WorkflowWorker,
+  ExecutionLogWorker,
   SubscriberProcessWorker,
 ];
 

@@ -22,6 +22,7 @@ import {
   SelectIntegration,
   SelectIntegrationCommand,
   GetNovuProviderCredentials,
+  ExecutionLogQueueService,
 } from '@novu/application-generic';
 
 import { SendMessageType } from './send-message-type.usecase';
@@ -32,13 +33,13 @@ export abstract class SendMessageBase extends SendMessageType {
   protected constructor(
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
-    protected createExecutionDetails: CreateExecutionDetails,
+    protected executionLogQueueService: ExecutionLogQueueService,
     protected subscriberRepository: SubscriberRepository,
     protected tenantRepository: TenantRepository,
     protected selectIntegration: SelectIntegration,
     protected getNovuProviderCredentials: GetNovuProviderCredentials
   ) {
-    super(messageRepository, createLogUsecase, createExecutionDetails);
+    super(messageRepository, createLogUsecase, executionLogQueueService);
   }
 
   @CachedEntity({
@@ -88,8 +89,11 @@ export abstract class SendMessageBase extends SendMessageType {
   }
 
   protected async sendErrorHandlebars(job: JobEntity, error: string) {
-    await this.createExecutionDetails.execute(
+    const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+    await this.executionLogQueueService.add(
+      metadata._id,
       CreateExecutionDetailsCommand.create({
+        ...metadata,
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -97,13 +101,17 @@ export abstract class SendMessageBase extends SendMessageType {
         isTest: false,
         isRetry: false,
         raw: JSON.stringify({ error }),
-      })
+      }),
+      job._organizationId
     );
   }
 
   protected async sendSelectedIntegrationExecution(job: JobEntity, integration: IntegrationEntity) {
-    await this.createExecutionDetails.execute(
+    const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+    await this.executionLogQueueService.add(
+      metadata._id,
       CreateExecutionDetailsCommand.create({
+        ...metadata,
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: DetailEnum.INTEGRATION_INSTANCE_SELECTED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -117,13 +125,17 @@ export abstract class SendMessageBase extends SendMessageType {
           _environmentId: integration?._environmentId,
           _id: integration?._id,
         }),
-      })
+      }),
+      job._organizationId
     );
   }
 
   protected async sendSelectedTenantExecution(job: JobEntity, tenant: TenantEntity) {
-    await this.createExecutionDetails.execute(
+    const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+    await this.executionLogQueueService.add(
+      metadata._id,
       CreateExecutionDetailsCommand.create({
+        ...metadata,
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: DetailEnum.TENANT_CONTEXT_SELECTED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -139,7 +151,8 @@ export abstract class SendMessageBase extends SendMessageType {
           _environmentId: tenant?._environmentId,
           _id: tenant?._id,
         }),
-      })
+      }),
+      job._organizationId
     );
   }
 
@@ -153,8 +166,11 @@ export abstract class SendMessageBase extends SendMessageType {
         identifier: tenantIdentifier,
       });
       if (!tenant) {
-        await this.createExecutionDetails.execute(
+        const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+        await this.executionLogQueueService.add(
+          metadata._id,
           CreateExecutionDetailsCommand.create({
+            ...metadata,
             ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
             detail: DetailEnum.TENANT_NOT_FOUND,
             source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -164,7 +180,8 @@ export abstract class SendMessageBase extends SendMessageType {
             raw: JSON.stringify({
               tenantIdentifier: tenantIdentifier,
             }),
-          })
+          }),
+          job._organizationId
         );
 
         return null;

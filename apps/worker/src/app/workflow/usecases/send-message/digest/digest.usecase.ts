@@ -9,10 +9,10 @@ import {
 } from '@novu/shared';
 import {
   DetailEnum,
-  CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   GetUseMergedDigestId,
   FeatureFlagCommand,
+  ExecutionLogQueueService,
 } from '@novu/application-generic';
 
 import { GetDigestEventsRegular } from './get-digest-events-regular.usecase';
@@ -32,13 +32,13 @@ export class Digest extends SendMessageType {
   constructor(
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
-    protected createExecutionDetails: CreateExecutionDetails,
+    protected executionLogQueueService: ExecutionLogQueueService,
     protected jobRepository: JobRepository,
     private getDigestEventsRegular: GetDigestEventsRegular,
     private getDigestEventsBackoff: GetDigestEventsBackoff,
     private getUseMergedDigestId: GetUseMergedDigestId
   ) {
-    super(messageRepository, createLogUsecase, createExecutionDetails);
+    super(messageRepository, createLogUsecase, executionLogQueueService);
   }
 
   public async execute(command: SendMessageCommand) {
@@ -56,9 +56,11 @@ export class Digest extends SendMessageType {
 
     const events = await getEvents(command, currentJob);
     const nextJobs = await this.getJobsToUpdate(command);
-
-    this.createExecutionDetails.execute(
+    const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+    await this.executionLogQueueService.add(
+      metadata._id,
       CreateExecutionDetailsCommand.create({
+        ...metadata,
         ...CreateExecutionDetailsCommand.getDetailsFromJob(currentJob),
         detail: DetailEnum.DIGEST_TRIGGERED_EVENTS,
         source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -66,7 +68,8 @@ export class Digest extends SendMessageType {
         isTest: false,
         isRetry: false,
         raw: JSON.stringify(events),
-      })
+      }),
+      currentJob._organizationId
     );
 
     await this.jobRepository.update(
