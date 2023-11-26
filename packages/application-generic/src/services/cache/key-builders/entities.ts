@@ -1,11 +1,13 @@
 import {
   BLUEPRINT_IDENTIFIER,
   buildCommonKey,
+  buildKeyById,
   CacheKeyPrefixEnum,
   CacheKeyTypeEnum,
   IdentifierPrefixEnum,
   OrgScopePrefixEnum,
   prefixWrapper,
+  ServiceConfigIdentifierEnum,
 } from './shared';
 
 const buildSubscriberKey = ({
@@ -68,19 +70,6 @@ const buildEnvironmentByApiKey = ({ apiKey }: { apiKey: string }): string =>
     identifierPrefix: IdentifierPrefixEnum.API_KEY,
   });
 
-const buildKeyById = ({
-  type,
-  keyEntity,
-  identifierPrefix = IdentifierPrefixEnum.ID,
-  identifier,
-}: {
-  type: CacheKeyTypeEnum;
-  keyEntity: CacheKeyPrefixEnum;
-  identifierPrefix?: IdentifierPrefixEnum;
-  identifier: string;
-}): string =>
-  prefixWrapper(`${type}:${keyEntity}:${identifierPrefix}=${identifier}`);
-
 const buildGroupedBlueprintsKey = (): string =>
   buildCommonKey({
     type: CacheKeyTypeEnum.ENTITY,
@@ -129,6 +118,21 @@ const buildEvaluateApiRateLimitKey = ({
     identifier: apiRateLimitCategory,
   });
 
+const buildServiceConfigKey = (
+  identifier: ServiceConfigIdentifierEnum
+): string =>
+  buildKeyById({
+    type: CacheKeyTypeEnum.ENTITY,
+    keyEntity: CacheKeyPrefixEnum.SERVICE_CONFIG,
+    identifierPrefix: IdentifierPrefixEnum.SERVICE_CONFIG,
+    identifier,
+  });
+
+const buildServiceConfigApiRateLimitMaximumKey = (): string =>
+  buildServiceConfigKey(
+    ServiceConfigIdentifierEnum.API_RATE_LIMIT_SERVICE_MAXIMUM
+  );
+
 export {
   buildUserKey,
   buildSubscriberKey,
@@ -140,4 +144,5 @@ export {
   buildAuthServiceKey,
   buildMaximumApiRateLimitKey,
   buildEvaluateApiRateLimitKey,
+  buildServiceConfigApiRateLimitMaximumKey,
 };

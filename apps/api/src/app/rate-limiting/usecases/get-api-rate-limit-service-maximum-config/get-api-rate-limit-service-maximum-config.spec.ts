@@ -1,4 +1,4 @@
-import { Test } from '@nestjs/testing';
+import { Test, TestingModule } from '@nestjs/testing';
 import { GetApiRateLimitServiceMaximumConfig } from './get-api-rate-limit-service-maximum-config.usecase';
 import {
   ApiRateLimitCategoryEnum,
@@ -7,37 +7,81 @@ import {
   DEFAULT_API_RATE_LIMIT_SERVICE_MAXIMUM_CONFIG,
 } from '@novu/shared';
 import { expect } from 'chai';
+import * as sinon from 'sinon';
+import { CacheService, InvalidateCacheService, cacheService as cacheServiceProvider } from '@novu/application-generic';
+
+const mockRateLimitServiceLevel = ApiServiceLevelEnum.FREE;
+const mockRateLimitCategory = ApiRateLimitCategoryEnum.GLOBAL;
+const mockEnvVarName: ApiRateLimitServiceMaximumEnvVarFormat = `API_RATE_LIMIT_MAXIMUM_${
+  mockRateLimitServiceLevel.toUpperCase() as Uppercase<ApiServiceLevelEnum>
+}_${mockRateLimitCategory.toUpperCase() as Uppercase<ApiRateLimitCategoryEnum>}`;
+const mockOverrideRateLimit = 65;
 
 describe('GetApiRateLimitServiceMaximumConfig', () => {
   let useCase: GetApiRateLimitServiceMaximumConfig;
+  let invalidateCacheService: InvalidateCacheService;
+  let cacheService: CacheService;
+
+  let invalidateQueryStub: sinon.SinonStub;
+  let cacheServiceIsEnabledStub: sinon.SinonStub;
+  let moduleRef: TestingModule;
 
   beforeEach(async () => {
-    const moduleRef = await Test.createTestingModule({
-      providers: [GetApiRateLimitServiceMaximumConfig],
+    moduleRef = await Test.createTestingModule({
+      providers: [cacheServiceProvider, InvalidateCacheService, GetApiRateLimitServiceMaximumConfig],
     }).compile();
 
-    useCase = moduleRef.get<GetApiRateLimitServiceMaximumConfig>(GetApiRateLimitServiceMaximumConfig);
+    useCase = moduleRef.get(GetApiRateLimitServiceMaximumConfig);
+    invalidateCacheService = moduleRef.get(InvalidateCacheService);
+    cacheService = moduleRef.get<CacheService>(CacheService);
+
+    invalidateQueryStub = sinon.stub(invalidateCacheService, 'invalidateQuery').resolves();
+    cacheServiceIsEnabledStub = sinon.stub(cacheService, 'cacheEnabled').returns(true);
+
+    await moduleRef.init();
   });
 
-  it('should use the default API rate limits when no environment variables are set', () => {
+  afterEach(() => {
+    invalidateQueryStub.reset();
+  });
+
+  it('should load the default API rate limits on module init', () => {
     expect(useCase.default).to.deep.equal(DEFAULT_API_RATE_LIMIT_SERVICE_MAXIMUM_CONFIG);
   });
 
-  it('should override default API rate limits with environment variables', () => {
-    const mockOverrideRateLimit = 65;
-    const mockRateLimitServiceLevel = ApiServiceLevelEnum.FREE;
-    const mockRateLimitCategory = ApiRateLimitCategoryEnum.GLOBAL;
-
-    const envVarName: ApiRateLimitServiceMaximumEnvVarFormat = `API_RATE_LIMIT_MAXIMUM_${
-      ApiServiceLevelEnum.FREE.toUpperCase() as Uppercase<ApiServiceLevelEnum>
-    }_${ApiRateLimitCategoryEnum.GLOBAL.toUpperCase() as Uppercase<ApiRateLimitCategoryEnum>}`;
-    process.env[envVarName] = mockOverrideRateLimit.toString();
-
+  it('should override default API rate limits with environment variables', async () => {
+    process.env[mockEnvVarName] = mockOverrideRateLimit.toString();
     // Re-initialize the defaults after setting the environment variable
-    useCase.loadDefault();
-    const result = useCase.default;
+    await useCase.loadDefault();
+    delete process.env[mockEnvVarName]; // cleanup
 
-    expect(result[mockRateLimitServiceLevel][mockRateLimitCategory]).to.equal(mockOverrideRateLimit);
-    delete process.env[envVarName]; // cleanup
+    expect(useCase.default[mockRateLimitServiceLevel][mockRateLimitCategory]).to.equal(mockOverrideRateLimit);
+  });
+
+  it('should NOT invalidate the cache when loading defaults and the cache IS disabled', async () => {
+    cacheServiceIsEnabledStub.returns(false);
+    await useCase.loadDefault();
+
+    expect(invalidateQueryStub.callCount).to.equal(0);
+  });
+
+  it('should NOT invalidate the cache when loading defaults and the config HAS NOT changed between loads', async () => {
+    cacheServiceIsEnabledStub.returns(true);
+    await useCase.loadDefault();
+    await useCase.loadDefault();
+
+    expect(invalidateQueryStub.callCount).to.equal(0);
+  });
+
+  it('should invalidate the cache when loading defaults and the config HAS changed between loads', async () => {
+    cacheServiceIsEnabledStub.returns(true);
+    await useCase.loadDefault();
+
+    process.env[mockEnvVarName] = Date.now().toString();
+    // Re-initialize the defaults after setting the environment variable
+    await useCase.loadDefault();
+    delete process.env[mockEnvVarName]; // cleanup
+
+    expect(invalidateQueryStub.callCount).to.equal(1);
   });
 });
