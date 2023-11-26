@@ -4,8 +4,8 @@ import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/sh
 import {
   InstrumentUsecase,
   DetailEnum,
-  CreateExecutionDetails,
   CreateExecutionDetailsCommand,
+  ExecutionLogQueueService,
 } from '@novu/application-generic';
 
 import { SendMessageType } from './send-message-type.usecase';
@@ -17,22 +17,26 @@ export class SendMessageDelay extends SendMessageType {
   constructor(
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
-    protected createExecutionDetails: CreateExecutionDetails
+    protected executionLogQueueService: ExecutionLogQueueService
   ) {
-    super(messageRepository, createLogUsecase, createExecutionDetails);
+    super(messageRepository, createLogUsecase, executionLogQueueService);
   }
 
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
-    await this.createExecutionDetails.execute(
+    const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+    await this.executionLogQueueService.add(
+      metadata._id,
       CreateExecutionDetailsCommand.create({
+        ...metadata,
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         detail: DetailEnum.DELAY_FINISHED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.SUCCESS,
         isTest: false,
         isRetry: false,
-      })
+      }),
+      command.organizationId
     );
   }
 }

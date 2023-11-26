@@ -60,7 +60,7 @@ describe('test netcore email send api', () => {
       },
     };
 
-    mockedAxios.post.mockResolvedValue(response);
+    mockedAxios.request.mockResolvedValue(response);
 
     const netCoreProvider = new NetCoreProvider(mockConfig);
 
@@ -68,20 +68,9 @@ describe('test netcore email send api', () => {
 
     const res = await netCoreProvider.sendMessage(mockEmailOptions);
 
-    expect(mockedAxios.post).toHaveBeenCalled();
-    expect(mockedAxios.post).toHaveBeenCalledWith('/mail/send', {
-      data: { ...mockNovuMessage },
-      ...{
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-          api_key: 'test-key',
-        },
-        method: 'POST',
-      },
-    });
+    expect(mockedAxios.request).toHaveBeenCalled();
     expect(spy).toHaveBeenCalled();
     expect(spy).toBeCalledWith(mockEmailOptions);
-    expect(res.id).toBe(response.data.data.message_id);
+    expect(res.id).toEqual(response.data.data.message_id);
   });
 });

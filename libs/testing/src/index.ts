@@ -9,3 +9,4 @@ export * from './organization.service';
 export * from './user.service';
 export * from './jobs.service';
 export * from './testing-queue.service';
+export * from './workflow-override.service';

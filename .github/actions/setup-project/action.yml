@@ -11,6 +11,10 @@ inputs:
     description: 'Should only install dependencies and checkout code'
     required: false
     default: 'false'
+  submodules:
+    description: 'Should link submodules'
+    required: false
+    default: 'false'
 outputs:
   cypress_cache_hit:
     description: 'Did cypress use binary cache'
@@ -61,6 +65,16 @@ runs:
       shell: bash
       run: pnpm install --frozen-lockfile
 
+    - name: 🛟 Install submodules dependencies
+      shell: bash
+      if: ${{ inputs.submodules == 'true' }}
+      run: cd enterprise && pnpm install --frozen-lockfile
+
+    - name: Link submodules
+      shell: bash
+      if: ${{ inputs.submodules == 'true' }}
+      run: pnpm link:submodules
+  
     - name: Install wait-on plugin
       shell: bash
       run: pnpm i -g wait-on

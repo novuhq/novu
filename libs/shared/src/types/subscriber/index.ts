@@ -22,4 +22,5 @@ export interface ISubscribersDefine extends ISubscriberPayload {
 export enum PreferenceOverrideSourceEnum {
   SUBSCRIBER = 'subscriber',
   TEMPLATE = 'template',
+  WORKFLOW_OVERRIDE = 'workflowOverride',
 }

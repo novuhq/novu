@@ -18,7 +18,6 @@ import {
   GetSubscriberGlobalPreference,
   GetSubscriberTemplatePreference,
   ProcessTenant,
-  OldInstanceBullMqService,
   QueuesModule,
   SelectIntegration,
   SendTestEmail,
@@ -34,12 +33,11 @@ import {
 import { JobRepository } from '@novu/dal';
 
 import {
+  ExecutionLogWorker,
   ActiveJobsMetricService,
   CompletedJobsMetricService,
   StandardWorker,
   WorkflowWorker,
-  OldInstanceWorkflowWorker,
-  OldInstanceStandardWorker,
 } from './services';
 
 import {
@@ -122,10 +120,8 @@ const PROVIDERS: Provider[] = [
   CompletedJobsMetricService,
   StandardWorker,
   WorkflowWorker,
+  ExecutionLogWorker,
   SubscriberProcessWorker,
-  OldInstanceBullMqService,
-  OldInstanceStandardWorker,
-  OldInstanceWorkflowWorker,
 ];
 
 @Module({
