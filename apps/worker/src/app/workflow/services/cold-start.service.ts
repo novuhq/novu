@@ -4,13 +4,15 @@ import { INovuWorker, ReadinessService } from '@novu/application-generic';
 import { StandardWorker } from './standard.worker';
 import { SubscriberProcessWorker } from './subscriber-process.worker';
 import { WorkflowWorker } from './workflow.worker';
+import { ExecutionLogWorker } from './execution-log.worker';
 
 const getWorkers = (app: INestApplication): INovuWorker[] => {
   const standardWorker = app.get(StandardWorker, { strict: false });
   const workflowWorker = app.get(WorkflowWorker, { strict: false });
   const subscriberProcessWorker = app.get(SubscriberProcessWorker, { strict: false });
+  const executionLogWorker = app.get(ExecutionLogWorker, { strict: false });
 
-  const workers: INovuWorker[] = [standardWorker, workflowWorker, subscriberProcessWorker];
+  const workers: INovuWorker[] = [standardWorker, workflowWorker, subscriberProcessWorker, executionLogWorker];
 
   return workers;
 };
