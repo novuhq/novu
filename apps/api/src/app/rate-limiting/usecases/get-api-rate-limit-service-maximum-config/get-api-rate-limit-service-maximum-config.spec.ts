@@ -50,7 +50,7 @@ describe('GetApiRateLimitServiceMaximumConfig', () => {
   });
 
   it('should override default API rate limits with environment variables', async () => {
-    process.env[mockEnvVarName] = mockOverrideRateLimit.toString();
+    process.env[mockEnvVarName] = `${mockOverrideRateLimit}`;
     // Re-initialize the defaults after setting the environment variable
     await useCase.loadDefault();
     delete process.env[mockEnvVarName]; // cleanup
@@ -77,7 +77,7 @@ describe('GetApiRateLimitServiceMaximumConfig', () => {
     cacheServiceIsEnabledStub.returns(true);
     await useCase.loadDefault();
 
-    process.env[mockEnvVarName] = Date.now().toString();
+    process.env[mockEnvVarName] = `${mockOverrideRateLimit + 1}`;
     // Re-initialize the defaults after setting the environment variable
     await useCase.loadDefault();
     delete process.env[mockEnvVarName]; // cleanup
