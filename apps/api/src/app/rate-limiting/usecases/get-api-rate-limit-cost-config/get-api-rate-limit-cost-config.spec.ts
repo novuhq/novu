@@ -25,7 +25,7 @@ describe('GetApiRateLimitCostConfig', () => {
     const envVarName: ApiRateLimitCostEnvVarFormat = `API_RATE_LIMIT_COST_${
       mockApiRateLimitConfigurationKey.toUpperCase() as Uppercase<ApiRateLimitCostEnum>
     }`;
-    process.env[envVarName] = mockOverrideBulkCost.toString();
+    process.env[envVarName] = `${mockOverrideBulkCost}`;
 
     // Re-initialize the defaultApiRateLimits after setting the environment variable
     useCase.loadDefault();

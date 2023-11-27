@@ -29,7 +29,7 @@ describe('GetApiRateLimitAlgorithmConfig', () => {
     const envVarName: ApiRateLimitAlgorithmEnvVarFormat = `API_RATE_LIMIT_ALGORITHM_${
       mockApiRateLimitConfigurationKey.toUpperCase() as Uppercase<ApiRateLimitAlgorithmEnum>
     }`;
-    process.env[envVarName] = mockOverrideBurstAllowance.toString();
+    process.env[envVarName] = `${mockOverrideBurstAllowance}`;
 
     // Re-initialize the defaultApiRateLimits after setting the environment variable
     useCase.loadDefault();
