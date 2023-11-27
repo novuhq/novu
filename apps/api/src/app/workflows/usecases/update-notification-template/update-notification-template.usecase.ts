@@ -14,6 +14,8 @@ import {
   CacheService,
   buildNotificationTemplateIdentifierKey,
   buildNotificationTemplateKey,
+  CreateChange,
+  CreateChangeCommand,
 } from '@novu/application-generic';
 
 import { UpdateNotificationTemplateCommand } from './update-notification-template.command';
@@ -24,7 +26,6 @@ import {
   UpdateMessageTemplateCommand,
   UpdateMessageTemplate,
 } from '../../../message-template/usecases';
-import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { NotificationStep } from '../create-notification-template';
 import { DeleteMessageTemplate } from '../../../message-template/usecases/delete-message-template/delete-message-template.usecase';
