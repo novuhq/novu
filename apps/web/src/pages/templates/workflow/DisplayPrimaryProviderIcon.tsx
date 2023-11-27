@@ -23,8 +23,7 @@ export function DisplayPrimaryProviderIcon({
       <Indicator
         label={
           <StyledBadge>
-            {' '}
-            <Icon width="16px" height="16px" {...disabledProp} />{' '}
+            <Icon width="16px" height="16px" {...disabledProp} />
           </StyledBadge>
         }
         position="bottom-end"
@@ -62,9 +61,9 @@ const AvatarWrapper = styled.div`
 `;
 
 const StyledBadge = styled.div`
-  color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.white : colors.B15)};
-  &:not(:hover) svg path {
-    stop-color: currentcolor !important;
-    fill: currentcolor !important;
+  color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.white : colors.B60)};
+  > svg path {
+    stop-color: currentcolor;
+    fill: currentcolor;
   }
 `;
