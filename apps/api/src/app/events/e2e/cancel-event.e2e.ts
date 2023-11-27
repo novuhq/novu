@@ -93,7 +93,7 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE)', function (
       type: StepTypeEnum.DIGEST,
     });
 
-    expect(delayedJobs.length).to.eql(1);
+    expect(delayedJobs && delayedJobs.length).to.eql(1);
 
     const pendingJobs = await jobRepository.count({
       _environmentId: session.environment._id,
@@ -112,7 +112,7 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE)', function (
       transactionId: id,
     });
 
-    expect(cancelledDigestJobs.length).to.eql(1);
+    expect(cancelledDigestJobs && cancelledDigestJobs.length).to.eql(1);
   });
 
   it('should be able to cancel delay', async function () {
