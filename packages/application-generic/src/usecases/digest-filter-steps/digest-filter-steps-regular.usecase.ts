@@ -8,7 +8,7 @@ import {
 import { IDigestRegularMetadata, StepTypeEnum } from '@novu/shared';
 
 import { DigestFilterStepsCommand } from './digest-filter-steps.command';
-import { DigestFilterSteps } from './digest-filter-steps.usecase';
+import { getNestedValue } from '../../utils/object';
 
 @Injectable()
 export class DigestFilterStepsRegular {
@@ -64,7 +64,7 @@ export class DigestFilterStepsRegular {
 
     const digestKey = metadata?.digestKey;
     if (digestKey) {
-      where['payload.' + digestKey] = DigestFilterSteps.getNestedValue(
+      where['payload.' + digestKey] = getNestedValue(
         command.payload,
         digestKey
       );

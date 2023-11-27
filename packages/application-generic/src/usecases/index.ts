@@ -33,3 +33,5 @@ export * from './map-trigger-recipients';
 export * from './get-topic-subscribers';
 export * from './subscriber-job-bound/subscriber-job-bound.usecase';
 export * from './subscriber-job-bound/subscriber-job-bound.command';
+export * from './trigger-broadcast';
+export * from './trigger-multicast';
