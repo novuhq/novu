@@ -1,6 +1,6 @@
 import { DynamicModule, HttpException, Module, Logger, Provider } from '@nestjs/common';
 import { RavenInterceptor, RavenModule } from 'nest-raven';
-import { APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { Type } from '@nestjs/common/interfaces/type.interface';
 import { ForwardReference } from '@nestjs/common/interfaces/modules/forward-reference.interface';
 
@@ -33,6 +33,8 @@ import { BlueprintModule } from './app/blueprint/blueprint.module';
 import { TenantModule } from './app/tenant/tenant.module';
 import { IdempotencyInterceptor } from './app/shared/framework/idempotency.interceptor';
 import { WorkflowOverridesModule } from './app/workflow-overrides/workflow-overrides.module';
+import { ApiRateLimitInterceptor } from './app/rate-limiting/guards';
+import { RateLimitingModule } from './app/rate-limiting/rate-limiting.module';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
@@ -75,6 +77,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   BlueprintModule,
   TenantModule,
   WorkflowOverridesModule,
+  RateLimitingModule,
 ];
 
 const enterpriseModules = enterpriseImports();
@@ -85,6 +88,10 @@ const providers: Provider[] = [
   {
     provide: APP_INTERCEPTOR,
     useClass: IdempotencyInterceptor,
+  },
+  {
+    provide: APP_INTERCEPTOR,
+    useClass: ApiRateLimitInterceptor,
   },
 ];
 

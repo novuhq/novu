@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { USE_CASES } from './usecases';
 import { SharedModule } from '../shared/shared.module';
 import { ThrottlerModule } from '@nestjs/throttler';
-import { ApiRateLimitGuard } from './guards';
+import { ApiRateLimitInterceptor } from './guards';
 
 @Module({
   imports: [
@@ -14,7 +14,7 @@ import { ApiRateLimitGuard } from './guards';
       },
     ]),
   ],
-  providers: [...USE_CASES, ApiRateLimitGuard],
-  exports: [...USE_CASES, ApiRateLimitGuard],
+  providers: [...USE_CASES, ApiRateLimitInterceptor],
+  exports: [...USE_CASES, ApiRateLimitInterceptor],
 })
 export class RateLimitingModule {}
