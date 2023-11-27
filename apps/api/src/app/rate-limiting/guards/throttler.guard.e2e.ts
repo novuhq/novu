@@ -198,7 +198,7 @@ describe('API Rate Limiting', () => {
         expectedThrottledRequests: 0,
       },
       {
-        name: 'allowed bulk global endpoint request',
+        name: 'throttled bulk global endpoint request',
         requests: [{ path: '/global-category-bulk-cost', count: 20 }],
         expectedStatus: 429,
         expectedLimit: mockMaximumUnlimitedGlobal,
@@ -272,70 +272,76 @@ describe('API Rate Limiting', () => {
       },
     ];
 
-    for (const {
-      name,
-      requests,
-      expectedStatus,
-      expectedLimit,
-      expectedCost,
-      expectedReset,
-      expectedRetryAfter,
-      expectedThrottledRequests: expectedThrottledResponses,
-      setupTest,
-    } of testCases) {
-      describe(name, () => {
-        let lastResponse: ReturnType<typeof UserSession.prototype.testAgent.get>;
-        let throttledResponses = 0;
-        const expectedWindowLimit = expectedLimit * mockWindowDuration;
-        const expectedBurstLimit = expectedWindowLimit * (1 + mockBurstAllowance);
-        const expectedRemaining = Math.max(0, expectedBurstLimit - expectedCost);
+    testCases
+      .map(
+        ({
+          name,
+          requests,
+          expectedStatus,
+          expectedLimit,
+          expectedCost,
+          expectedReset,
+          expectedRetryAfter,
+          expectedThrottledRequests,
+          setupTest,
+        }) => {
+          return () => {
+            describe(name, () => {
+              let lastResponse: ReturnType<typeof UserSession.prototype.testAgent.get>;
+              let throttledResponses = 0;
+              const expectedWindowLimit = expectedLimit * mockWindowDuration;
+              const expectedBurstLimit = expectedWindowLimit * (1 + mockBurstAllowance);
+              const expectedRemaining = Math.max(0, expectedBurstLimit - expectedCost);
 
-        before(async () => {
-          setupTest && (await setupTest(session));
-          for (const { path, count } of requests) {
-            for (let index = 0; index < count; index++) {
-              const response = await request(pathPrefix + path);
-              lastResponse = response;
+              before(async () => {
+                setupTest && (await setupTest(session));
+                for (const { path, count } of requests) {
+                  for (let index = 0; index < count; index++) {
+                    const response = await request(pathPrefix + path);
+                    lastResponse = response;
 
-              if (response.statusCode === 429) {
-                throttledResponses++;
-              }
-            }
-          }
-        });
+                    if (response.statusCode === 429) {
+                      throttledResponses++;
+                    }
+                  }
+                }
+              });
 
-        it(`should return a ${expectedStatus} status code`, async () => {
-          expect(lastResponse.statusCode).to.equal(expectedStatus);
-        });
+              it(`should return a ${expectedStatus} status code`, async () => {
+                expect(lastResponse.statusCode).to.equal(expectedStatus);
+              });
 
-        it(`should return a ${RateLimitHeaderKeysEnum.RATE_LIMIT_LIMIT} header of ${expectedWindowLimit}`, async () => {
-          expect(lastResponse.headers[RateLimitHeaderKeysEnum.RATE_LIMIT_LIMIT.toLowerCase()]).to.equal(
-            `${expectedWindowLimit}`
-          );
-        });
+              it(`should return a ${RateLimitHeaderKeysEnum.RATE_LIMIT_LIMIT} header of ${expectedWindowLimit}`, async () => {
+                expect(lastResponse.headers[RateLimitHeaderKeysEnum.RATE_LIMIT_LIMIT.toLowerCase()]).to.equal(
+                  `${expectedWindowLimit}`
+                );
+              });
 
-        it(`should return a ${RateLimitHeaderKeysEnum.RATE_LIMIT_REMAINING} header of ${expectedRemaining}`, async () => {
-          expect(lastResponse.headers[RateLimitHeaderKeysEnum.RATE_LIMIT_REMAINING.toLowerCase()]).to.equal(
-            `${expectedRemaining}`
-          );
-        });
+              it(`should return a ${RateLimitHeaderKeysEnum.RATE_LIMIT_REMAINING} header of ${expectedRemaining}`, async () => {
+                expect(lastResponse.headers[RateLimitHeaderKeysEnum.RATE_LIMIT_REMAINING.toLowerCase()]).to.equal(
+                  `${expectedRemaining}`
+                );
+              });
 
-        it(`should return a ${RateLimitHeaderKeysEnum.RATE_LIMIT_RESET} header of ${expectedReset}`, async () => {
-          expect(lastResponse.headers[RateLimitHeaderKeysEnum.RATE_LIMIT_RESET.toLowerCase()]).to.equal(
-            `${expectedReset}`
-          );
-        });
+              it(`should return a ${RateLimitHeaderKeysEnum.RATE_LIMIT_RESET} header of ${expectedReset}`, async () => {
+                expect(lastResponse.headers[RateLimitHeaderKeysEnum.RATE_LIMIT_RESET.toLowerCase()]).to.equal(
+                  `${expectedReset}`
+                );
+              });
 
-        it(`should return a ${RateLimitHeaderKeysEnum.RETRY_AFTER} header of ${expectedRetryAfter}`, async () => {
-          expect(lastResponse.headers[RateLimitHeaderKeysEnum.RETRY_AFTER.toLowerCase()]).to.equal(
-            expectedRetryAfter && `${expectedRetryAfter}`
-          );
-        });
+              it(`should return a ${RateLimitHeaderKeysEnum.RETRY_AFTER} header of ${expectedRetryAfter}`, async () => {
+                expect(lastResponse.headers[RateLimitHeaderKeysEnum.RETRY_AFTER.toLowerCase()]).to.equal(
+                  expectedRetryAfter && `${expectedRetryAfter}`
+                );
+              });
 
-        it(`should have ${expectedThrottledResponses} requests throttled`, async () => {
-          expect(throttledResponses).to.equal(expectedThrottledResponses);
-        });
-      });
-    }
+              it(`should have ${expectedThrottledRequests} requests throttled`, async () => {
+                expect(throttledResponses).to.equal(expectedThrottledRequests);
+              });
+            });
+          };
+        }
+      )
+      .forEach((testCase) => testCase());
   });
 });
