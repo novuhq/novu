@@ -7,7 +7,7 @@ import {
   ThrottlerOptions,
   ThrottlerStorage,
 } from '@nestjs/throttler';
-import { ExecutionContext, Injectable, Logger } from '@nestjs/common';
+import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
 import { EvaluateApiRateLimit, EvaluateApiRateLimitCommand } from '../usecases/evaluate-api-rate-limit';
 import { Reflector } from '@nestjs/core';
 import { FeatureFlagCommand, GetIsApiRateLimitingEnabled } from '@novu/application-generic';
@@ -15,22 +15,29 @@ import { ApiRateLimitCategoryEnum, ApiRateLimitCostEnum, IJwtPayload } from '@no
 import * as jwt from 'jsonwebtoken';
 import { ThrottlerCost, ThrottlerCategory } from './throttler.decorator';
 
-enum HeaderKeysEnum {
+export enum RateLimitHeaderKeysEnum {
   RATE_LIMIT_REMAINING = 'RateLimit-Remaining',
   RATE_LIMIT_LIMIT = 'RateLimit-Limit',
   RATE_LIMIT_RESET = 'RateLimit-Reset',
   RATE_LIMIT_POLICY = 'RateLimit-Policy',
   RETRY_AFTER = 'Retry-After',
   USER_AGENT = 'User-Agent',
+  AUTHORIZATION = 'Authorization',
 }
 
 export const THROTTLED_EXCEPTION_MESSAGE = 'API rate limit exceeded';
+export const ALLOWED_AUTH_SCHEMES = ['ApiKey'];
 
 const defaultApiRateLimitCategory = ApiRateLimitCategoryEnum.GLOBAL;
 const defaultApiRateLimitCost = ApiRateLimitCostEnum.SINGLE;
 
+/**
+ * An interceptor is used instead of a guard to ensure that Auth context is available.
+ * This is currently necessary because we do not currently have a global guard configured for Auth,
+ * therefore the Auth context is not guaranteed to be available in the guard.
+ */
 @Injectable()
-export class ApiRateLimitGuard extends ThrottlerGuard {
+export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInterceptor {
   constructor(
     @InjectThrottlerOptions() protected readonly options: ThrottlerModuleOptions,
     @InjectThrottlerStorage() protected readonly storageService: ThrottlerStorage,
@@ -41,11 +48,26 @@ export class ApiRateLimitGuard extends ThrottlerGuard {
     super(options, storageService, reflector);
   }
 
-  protected async shouldSkip(_context: ExecutionContext): Promise<boolean> {
-    const user = this.getReqUser(_context);
-    if (user === null) {
+  /**
+   * Thin wrapper around the ThrottlerGuard's canActivate method.
+   */
+  async intercept(context: ExecutionContext, next: CallHandler) {
+    try {
+      await this.canActivate(context);
+
+      return next.handle();
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  protected async shouldSkip(context: ExecutionContext): Promise<boolean> {
+    const isAllowedAuthScheme = this.isAllowedAuthScheme(context);
+    if (!isAllowedAuthScheme) {
       return true;
     }
+
+    const user = this.getReqUser(context);
     const { organizationId, environmentId, _id } = user;
 
     const isEnabled = await this.getIsApiRateLimitingEnabled.execute(
@@ -76,7 +98,7 @@ export class ApiRateLimitGuard extends ThrottlerGuard {
     // Return early if the current user agent should be ignored.
     if (Array.isArray(ignoreUserAgents)) {
       for (const pattern of ignoreUserAgents) {
-        if (pattern.test(req.headers[HeaderKeysEnum.USER_AGENT.toLowerCase()])) {
+        if (pattern.test(req.headers[RateLimitHeaderKeysEnum.USER_AGENT.toLowerCase()])) {
           return true;
         }
       }
@@ -89,11 +111,7 @@ export class ApiRateLimitGuard extends ThrottlerGuard {
     const apiRateLimitCost =
       this.reflector.getAllAndOverride(ThrottlerCost, [handler, classRef]) || defaultApiRateLimitCost;
 
-    const user = this.getReqUser(context);
-    if (user === null) {
-      return true;
-    }
-    const { organizationId, environmentId } = user;
+    const { organizationId, environmentId } = this.getReqUser(context);
 
     const { success, limit, remaining, reset, windowDuration, burstLimit, algorithm } =
       await this.evaluateApiRateLimit.execute(
@@ -107,18 +125,18 @@ export class ApiRateLimitGuard extends ThrottlerGuard {
 
     const secondsToReset = Math.max(Math.ceil((reset - Date.now()) / 1e3), 0);
 
-    res.header(HeaderKeysEnum.RATE_LIMIT_REMAINING, remaining);
-    res.header(HeaderKeysEnum.RATE_LIMIT_LIMIT, limit);
-    res.header(HeaderKeysEnum.RATE_LIMIT_RESET, secondsToReset);
+    res.header(RateLimitHeaderKeysEnum.RATE_LIMIT_REMAINING, remaining);
+    res.header(RateLimitHeaderKeysEnum.RATE_LIMIT_LIMIT, limit);
+    res.header(RateLimitHeaderKeysEnum.RATE_LIMIT_RESET, secondsToReset);
     res.header(
-      HeaderKeysEnum.RATE_LIMIT_POLICY,
+      RateLimitHeaderKeysEnum.RATE_LIMIT_POLICY,
       this.createPolicyHeader(limit, windowDuration, burstLimit, algorithm, apiRateLimitCategory, apiRateLimitCost)
     );
 
     if (success) {
       return true;
     } else {
-      res.header(HeaderKeysEnum.RETRY_AFTER, secondsToReset);
+      res.header(RateLimitHeaderKeysEnum.RETRY_AFTER, secondsToReset);
       throw new ThrottlerException(THROTTLED_EXCEPTION_MESSAGE);
     }
   }
@@ -145,23 +163,20 @@ export class ApiRateLimitGuard extends ThrottlerGuard {
     return policy;
   }
 
-  private getReqUser(context: ExecutionContext): IJwtPayload | null {
+  private isAllowedAuthScheme(context: ExecutionContext): boolean {
     const req = context.switchToHttp().getRequest();
-    Logger.log('User:' + req.user);
-    Logger.log('Authorization:' + req.headers?.authorization);
-
-    if (req?.user?.organizationId) {
-      // APIKey
-      return req.user;
-    }
-    if (req.headers?.authorization?.length) {
-      // Bearer token
-      const token = req.headers.authorization.split(' ')[1];
-      if (token) {
-        return jwt.decode(token);
-      }
+    const authorization = req.headers[RateLimitHeaderKeysEnum.AUTHORIZATION.toLowerCase()];
+    if (!authorization) {
+      return false;
     }
 
-    return null;
+    return ALLOWED_AUTH_SCHEMES.some((scheme) => req.authScheme === scheme);
+  }
+
+  private getReqUser(context: ExecutionContext): IJwtPayload {
+    const req = context.switchToHttp().getRequest();
+    const token = req.headers[RateLimitHeaderKeysEnum.AUTHORIZATION.toLowerCase()].split(' ')[1];
+
+    return jwt.decode(token);
   }
 }

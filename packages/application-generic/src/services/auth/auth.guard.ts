@@ -26,6 +26,11 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     const request = context.switchToHttp().getRequest();
     const authorizationHeader = request.headers.authorization;
 
+    if (authorizationHeader) {
+      const authScheme = authorizationHeader.split(' ')[0];
+      request.authScheme = authScheme;
+    }
+
     if (authorizationHeader && authorizationHeader.includes('ApiKey')) {
       const apiEnabled = this.reflector.get<boolean>(
         'external_api_accessible',
