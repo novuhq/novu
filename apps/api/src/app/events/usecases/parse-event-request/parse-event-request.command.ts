@@ -32,12 +32,14 @@ export class ParseEventRequestBaseCommand extends EnvironmentWithUserCommand {
 export class ParseEventRequestMulticastCommand extends ParseEventRequestBaseCommand {
   @IsDefined()
   to: TriggerRecipients;
+
+  @IsEnum(AddressingTypeEnum)
+  addressingType: AddressingTypeEnum.MULTICAST;
 }
 
 export class ParseEventRequestBroadcastCommand extends ParseEventRequestBaseCommand {
-  @IsDefined()
   @IsEnum(AddressingTypeEnum)
-  addressingType: AddressingTypeEnum;
+  addressingType: AddressingTypeEnum.BROADCAST;
 }
 
 export type ParseEventRequestCommand = ParseEventRequestMulticastCommand | ParseEventRequestBroadcastCommand;
