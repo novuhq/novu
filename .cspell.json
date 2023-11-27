@@ -528,7 +528,9 @@
     "zulip",
     "tspan",
     "maildata",
-    "brevo"
+    "brevo",
+    "Getstream",
+    "getstream"
   ],
   "flagWords": [],
   "patterns": [
