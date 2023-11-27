@@ -6,8 +6,6 @@ import {
   SubscriberRepository,
   MessageEntity,
   IntegrationEntity,
-  TenantRepository,
-  SubscriberEntity,
   JobEntity,
 } from '@novu/dal';
 import {
@@ -22,7 +20,6 @@ import {
 import {
   InstrumentUsecase,
   DetailEnum,
-  CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   SelectIntegration,
   CompileTemplate,
@@ -30,6 +27,7 @@ import {
   IPushHandler,
   PushFactory,
   GetNovuProviderCredentials,
+  SelectVariant,
   ExecutionLogQueueService,
 } from '@novu/application-generic';
 import type { IPushOptions } from '@novu/stateless';
@@ -49,74 +47,54 @@ export class SendMessagePush extends SendMessageBase {
   constructor(
     protected subscriberRepository: SubscriberRepository,
     protected messageRepository: MessageRepository,
-    protected tenantRepository: TenantRepository,
     protected createLogUsecase: CreateLog,
     protected executionLogQueueService: ExecutionLogQueueService,
     private compileTemplate: CompileTemplate,
     protected selectIntegration: SelectIntegration,
-    protected getNovuProviderCredentials: GetNovuProviderCredentials
+    protected getNovuProviderCredentials: GetNovuProviderCredentials,
+    protected selectVariant: SelectVariant
   ) {
     super(
       messageRepository,
       createLogUsecase,
       executionLogQueueService,
       subscriberRepository,
-      tenantRepository,
       selectIntegration,
-      getNovuProviderCredentials
+      getNovuProviderCredentials,
+      selectVariant
     );
   }
 
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
-    const subscriber = await this.getSubscriberBySubscriberId({
-      subscriberId: command.subscriberId,
-      _environmentId: command.environmentId,
-    });
-
-    if (!subscriber) throw new PlatformException(`Subscriber not found`);
-
     Sentry.addBreadcrumb({
       message: 'Sending Push',
     });
 
-    const pushChannel: NotificationStepEntity = command.step;
+    const step: NotificationStepEntity = command.step;
+    const { subscriber, step: stepData } = command.compileContext;
 
-    const stepData: IPushOptions['step'] = {
-      digest: !!command.events?.length,
-      events: command.events,
-      total_count: command.events?.length,
-    };
-    const tenant = await this.handleTenantExecution(command.job);
-    let actor: SubscriberEntity | null = null;
-    if (command.job.actorId) {
-      actor = await this.getSubscriberBySubscriberId({
-        subscriberId: command.job.actorId,
-        _environmentId: command.environmentId,
-      });
+    const template = await this.processVariants(command);
+
+    if (template) {
+      step.template = template;
     }
 
-    const data = {
-      subscriber: subscriber,
-      step: stepData,
-      ...(tenant && { tenant }),
-      ...(actor && { actor }),
-      ...command.payload,
-    };
+    const data = this.getCompilePayload(command.compileContext);
     let content = '';
     let title = '';
 
     try {
       content = await this.compileTemplate.execute(
         CompileTemplateCommand.create({
-          template: pushChannel.template?.content as string,
+          template: step.template?.content as string,
           data,
         })
       );
 
       title = await this.compileTemplate.execute(
         CompileTemplateCommand.create({
-          template: pushChannel.template?.title as string,
+          template: step.template?.title as string,
           data,
         })
       );

@@ -6,15 +6,17 @@ import {
   IPreferenceChannels,
   IWorkflowStepMetadata,
   NotificationTemplateCustomData,
+  IStepVariant,
+  IMessageFilter,
   INotificationTrigger,
   TriggerTypeEnum,
   INotificationTriggerVariable,
   ITriggerReservedVariable,
   INotificationTemplate,
   INotificationTemplateStep,
+  IMessageTemplate,
 } from '@novu/shared';
 
-import { MessageTemplateEntity } from '../message-template';
 import { NotificationGroupEntity } from '../notification-group';
 import type { OrganizationId } from '../organization';
 import type { EnvironmentId } from '../environment';
@@ -89,7 +91,7 @@ export class NotificationTriggerEntity implements INotificationTrigger {
   reservedVariables?: ITriggerReservedVariable[];
 }
 
-export class NotificationStepEntity implements INotificationTemplateStep {
+export class StepVariantEntity implements IStepVariant {
   _id?: string;
 
   uuid?: string;
@@ -105,7 +107,7 @@ export class NotificationStepEntity implements INotificationTemplateStep {
     url: string;
   };
 
-  template?: MessageTemplateEntity;
+  template?: IMessageTemplate;
 
   filters?: StepFilter[];
 
@@ -116,12 +118,13 @@ export class NotificationStepEntity implements INotificationTemplateStep {
   shouldStopOnFail?: boolean;
 }
 
-export class StepFilter {
-  isNegated: boolean;
+export class NotificationStepEntity extends StepVariantEntity implements INotificationTemplateStep {
+  variants?: StepVariantEntity[];
+}
 
-  type: BuilderFieldType;
-
+export class StepFilter implements IMessageFilter {
+  isNegated?: boolean;
+  type?: BuilderFieldType;
   value: BuilderGroupValues;
-
   children: FilterParts[];
 }

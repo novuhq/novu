@@ -2283,6 +2283,9 @@ importers:
       analytics-node:
         specifier: ^6.2.0
         version: 6.2.0
+      axios:
+        specifier: ^1.5.0
+        version: 1.6.0
       bullmq:
         specifier: ^3.10.2
         version: 3.10.4
@@ -2354,6 +2357,9 @@ importers:
       '@types/sinon':
         specifier: ^9.0.0
         version: 9.0.11
+      chai:
+        specifier: ^4.2.0
+        version: 4.3.7
       codecov:
         specifier: ^3.5.0
         version: 3.8.3

@@ -61,13 +61,13 @@ const useStyles = createStyles(() => ({
     color: colors.error,
     border: 'none',
     maxWidth: '300px',
-    background: 'linear-gradient(0deg, rgba(229, 69, 69, 0.20) 0%, rgba(229, 69, 69, 0.20) 100%), #23232B',
+    background: `${colors.errorGradient}, ${colors.B17}`,
   },
   arrow: {
     width: '7px',
     height: '7px',
     margin: '0px',
-    background: 'linear-gradient(0deg, rgba(229, 69, 69, 0.20) 0%, rgba(229, 69, 69, 0.20) 100%), #23232B',
+    background: `${colors.errorGradient}, ${colors.B17}`,
   },
 }));
 

@@ -9,10 +9,16 @@ import {
   FeedRepository,
   NotificationGroupRepository,
 } from '@novu/dal';
-import { ChangeEntityTypeEnum, INotificationTemplateStep, INotificationTrigger, TriggerTypeEnum } from '@novu/shared';
+import {
+  ChangeEntityTypeEnum,
+  INotificationTemplateStep,
+  INotificationTrigger,
+  IStepVariant,
+  TriggerTypeEnum,
+} from '@novu/shared';
 import { AnalyticsService } from '@novu/application-generic';
 
-import { CreateNotificationTemplateCommand } from './create-notification-template.command';
+import { CreateNotificationTemplateCommand, NotificationStepVariant } from './create-notification-template.command';
 import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateMessageTemplate, CreateMessageTemplateCommand } from '../../../message-template/usecases';
 import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
@@ -38,14 +44,43 @@ export class CreateNotificationTemplate {
     const blueprintCommand = await this.processBlueprint(usecaseCommand);
     const command = blueprintCommand ?? usecaseCommand;
 
-    const contentService = new ContentService();
-    const { variables, reservedVariables } = contentService.extractMessageVariables(command.steps);
-    const subscriberVariables = contentService.extractSubscriberMessageVariables(command.steps);
+    this.validatePayload(command);
 
     const triggerIdentifier = `${slugify(command.name, {
       lower: true,
       strict: true,
     })}`;
+    const parentChangeId: string = NotificationTemplateRepository.createObjectId();
+
+    const [templateSteps, trigger] = await Promise.all([
+      this.storeTemplateSteps(command, parentChangeId),
+      this.createNotificationTrigger(command, triggerIdentifier),
+    ]);
+
+    const storedWorkflow = await this.storeWorkflow(command, templateSteps, trigger, triggerIdentifier);
+
+    await this.createWorkflowChange(command, storedWorkflow, parentChangeId);
+
+    return storedWorkflow;
+  }
+
+  private validatePayload(command: CreateNotificationTemplateCommand) {
+    const variants = command.steps ? command.steps?.flatMap((step) => step.variants || []) : [];
+
+    for (const variant of variants) {
+      if (!variant.filters?.length) {
+        throw new ApiException(`Variant conditions are required, variant name ${variant.name} id ${variant._id}`);
+      }
+    }
+  }
+
+  private async createNotificationTrigger(
+    command: CreateNotificationTemplateCommand,
+    triggerIdentifier: string
+  ): Promise<INotificationTrigger> {
+    const contentService = new ContentService();
+    const { variables, reservedVariables } = contentService.extractMessageVariables(command.steps);
+    const subscriberVariables = contentService.extractSubscriberMessageVariables(command.steps);
 
     const templateCheckIdentifier = await this.notificationTemplateRepository.findByTriggerIdentifier(
       command.environmentId,
@@ -79,55 +114,41 @@ export class CreateNotificationTemplate {
       }),
     };
 
-    const templateSteps: INotificationTemplateStep[] = [];
-    let parentStepId: string | null = null;
-    const parentChangeId: string = NotificationTemplateRepository.createObjectId();
+    return trigger;
+  }
 
-    for (const message of command.steps) {
-      if (!message.template) throw new ApiException(`Unexpected error: message template is missing`);
-
-      const template = await this.createMessageTemplate.execute(
-        CreateMessageTemplateCommand.create({
-          type: message.template.type,
-          name: message.template.name,
-          content: message.template.content,
-          variables: message.template.variables,
-          contentType: message.template.contentType,
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          userId: command.userId,
-          cta: message.template.cta,
-          subject: message.template.subject,
-          title: message.template.title,
-          feedId: message.template.feedId,
-          layoutId: message.template.layoutId,
-          preheader: message.template.preheader,
-          senderName: message.template.senderName,
-          parentChangeId,
-          actor: message.template.actor,
-        })
-      );
-
-      const stepId = template._id;
-      templateSteps.push({
-        _id: stepId,
-        _templateId: template._id,
-        filters: message.filters,
-        _parentId: parentStepId,
-        metadata: message.metadata,
-        active: message.active,
-        shouldStopOnFail: message.shouldStopOnFail,
-        replyCallback: message.replyCallback,
-        uuid: message.uuid,
-        name: message.name,
+  private sendTemplateCreationEvent(command: CreateNotificationTemplateCommand, triggerIdentifier: string) {
+    if (command.name !== 'On-boarding notification' && !command.__source?.startsWith('onboarding_')) {
+      this.analyticsService.track('Create Notification Template - [Platform]', command.userId, {
+        _organization: command.organizationId,
+        steps: command.steps?.length,
+        channels: command.steps?.map((i) => i.template?.type),
+        __source: command.__source,
+        triggerIdentifier,
       });
-
-      if (stepId) {
-        parentStepId = stepId;
-      }
     }
+  }
 
-    const savedTemplate = await this.notificationTemplateRepository.create({
+  private async createWorkflowChange(command: CreateNotificationTemplateCommand, item, parentChangeId: string) {
+    await this.createChange.execute(
+      CreateChangeCommand.create({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        userId: command.userId,
+        type: ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
+        item,
+        changeId: parentChangeId,
+      })
+    );
+  }
+
+  private async storeWorkflow(
+    command: CreateNotificationTemplateCommand,
+    templateSteps: INotificationTemplateStep[],
+    trigger: INotificationTrigger,
+    triggerIdentifier: string
+  ) {
+    const savedWorkflow = await this.notificationTemplateRepository.create({
       _organizationId: command.organizationId,
       _creatorId: command.userId,
       _environmentId: command.environmentId,
@@ -145,31 +166,145 @@ export class CreateNotificationTemplate {
       ...(command.data ? { data: command.data } : {}),
     });
 
-    const item = await this.notificationTemplateRepository.findById(savedTemplate._id, command.environmentId);
-    if (!item) throw new NotFoundException(`Notification template ${savedTemplate._id} is not found`);
+    const item = await this.notificationTemplateRepository.findById(savedWorkflow._id, command.environmentId);
+    if (!item) throw new NotFoundException(`Workflow ${savedWorkflow._id} is not found`);
 
-    await this.createChange.execute(
-      CreateChangeCommand.create({
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        userId: command.userId,
-        type: ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
-        item,
-        changeId: parentChangeId,
-      })
-    );
-
-    if (command.name !== 'On-boarding notification' && !command.__source?.startsWith('onboarding_')) {
-      this.analyticsService.track('Create Notification Template - [Platform]', command.userId, {
-        _organization: command.organizationId,
-        steps: command.steps?.length,
-        channels: command.steps?.map((i) => i.template?.type),
-        __source: command.__source,
-        triggerIdentifier,
-      });
-    }
+    this.sendTemplateCreationEvent(command, triggerIdentifier);
 
     return item;
+  }
+
+  private async storeTemplateSteps(
+    command: CreateNotificationTemplateCommand,
+    parentChangeId: string
+  ): Promise<INotificationTemplateStep[]> {
+    let parentStepId: string | null = null;
+    const templateSteps: INotificationTemplateStep[] = [];
+
+    for (const message of command.steps) {
+      if (!message.template) throw new ApiException(`Unexpected error: message template is missing`);
+
+      const [template, storedVariants] = await Promise.all([
+        await this.createMessageTemplate.execute(
+          CreateMessageTemplateCommand.create({
+            organizationId: command.organizationId,
+            environmentId: command.environmentId,
+            userId: command.userId,
+            type: message.template.type,
+            name: message.template.name,
+            content: message.template.content,
+            variables: message.template.variables,
+            contentType: message.template.contentType,
+            cta: message.template.cta,
+            subject: message.template.subject,
+            title: message.template.title,
+            feedId: message.template.feedId,
+            layoutId: message.template.layoutId,
+            preheader: message.template.preheader,
+            senderName: message.template.senderName,
+            actor: message.template.actor,
+            parentChangeId,
+          })
+        ),
+        await this.storeVariantSteps({
+          variants: message.variants,
+          parentChangeId: parentChangeId,
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          userId: command.userId,
+        }),
+      ]);
+
+      const stepId = template._id;
+      const templateStep: Partial<INotificationTemplateStep> = {
+        _id: stepId,
+        _templateId: template._id,
+        filters: message.filters,
+        _parentId: parentStepId,
+        active: message.active,
+        shouldStopOnFail: message.shouldStopOnFail,
+        replyCallback: message.replyCallback,
+        uuid: message.uuid,
+        name: message.name,
+        metadata: message.metadata,
+      };
+
+      if (storedVariants.length) {
+        templateStep.variants = storedVariants;
+      }
+
+      templateSteps.push(templateStep);
+
+      if (stepId) {
+        parentStepId = stepId;
+      }
+    }
+
+    return templateSteps;
+  }
+
+  private async storeVariantSteps({
+    variants,
+    parentChangeId,
+    organizationId,
+    environmentId,
+    userId,
+  }: {
+    variants: NotificationStepVariant[] | undefined;
+    parentChangeId: string;
+    organizationId: string;
+    environmentId: string;
+    userId: string;
+  }): Promise<IStepVariant[]> {
+    if (!variants?.length) return [];
+
+    const variantsList: IStepVariant[] = [];
+    let parentVariantId: string | null = null;
+
+    for (const variant of variants) {
+      if (!variant.template) throw new ApiException(`Unexpected error: variants message template is missing`);
+
+      const variantTemplate = await this.createMessageTemplate.execute(
+        CreateMessageTemplateCommand.create({
+          organizationId: organizationId,
+          environmentId: environmentId,
+          userId: userId,
+          type: variant.template.type,
+          name: variant.template.name,
+          content: variant.template.content,
+          variables: variant.template.variables,
+          contentType: variant.template.contentType,
+          cta: variant.template.cta,
+          subject: variant.template.subject,
+          title: variant.template.title,
+          feedId: variant.template.feedId,
+          layoutId: variant.template.layoutId,
+          preheader: variant.template.preheader,
+          senderName: variant.template.senderName,
+          actor: variant.template.actor,
+          parentChangeId,
+        })
+      );
+
+      variantsList.push({
+        _id: variantTemplate._id,
+        _templateId: variantTemplate._id,
+        filters: variant.filters,
+        _parentId: parentVariantId,
+        active: variant.active,
+        shouldStopOnFail: variant.shouldStopOnFail,
+        replyCallback: variant.replyCallback,
+        uuid: variant.uuid,
+        name: variant.name,
+        metadata: variant.metadata,
+      });
+
+      if (variantTemplate._id) {
+        parentVariantId = variantTemplate._id;
+      }
+    }
+
+    return variantsList;
   }
 
   private async processBlueprint(command: CreateNotificationTemplateCommand) {
