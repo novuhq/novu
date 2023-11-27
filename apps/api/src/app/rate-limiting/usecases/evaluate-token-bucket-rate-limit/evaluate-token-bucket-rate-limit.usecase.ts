@@ -7,6 +7,7 @@ import {
   RegionLimiter,
   UpstashRedisClient,
 } from './evaluate-token-bucket-rate-limit.types';
+import { tokenBucketLimiter } from './evaluate-token-bucket-rate-limit.limiter';
 
 const LOG_CONTEXT = 'EvaluateTokenBucketRateLimit';
 
@@ -29,7 +30,7 @@ export class EvaluateTokenBucketRateLimit {
 
     const ratelimit = new Ratelimit({
       redis: cacheClient,
-      limiter: this.createLimiter(command.refillRate, command.windowDuration, command.maxTokens),
+      limiter: this.createLimiter(command.refillRate, command.windowDuration, command.maxTokens, command.cost),
       prefix: '', // Empty cache key prefix to give us full control over the key format
       ephemeralCache: this.ephemeralCache,
     });
@@ -63,7 +64,7 @@ export class EvaluateTokenBucketRateLimit {
     };
   }
 
-  public createLimiter(refillRate: number, windowDuration: number, maxTokens: number): RegionLimiter {
-    return Ratelimit.tokenBucket(refillRate, `${windowDuration} s`, maxTokens);
+  public createLimiter(refillRate: number, windowDuration: number, maxTokens: number, cost: number): RegionLimiter {
+    return tokenBucketLimiter(refillRate, windowDuration, maxTokens, cost);
   }
 }
