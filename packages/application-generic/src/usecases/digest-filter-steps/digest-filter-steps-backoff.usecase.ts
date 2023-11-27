@@ -9,7 +9,7 @@ import { IDigestRegularMetadata, StepTypeEnum } from '@novu/shared';
 import { sub } from 'date-fns';
 
 import { DigestFilterStepsCommand } from './digest-filter-steps.command';
-import { DigestFilterSteps } from './digest-filter-steps.usecase';
+import { getNestedValue } from '../../utils/object';
 
 @Injectable()
 export class DigestFilterStepsBackoff {
@@ -69,7 +69,7 @@ export class DigestFilterStepsBackoff {
 
     const digestKey = metadata?.digestKey;
     if (digestKey) {
-      query['payload.' + digestKey] = DigestFilterSteps.getNestedValue(
+      query['payload.' + digestKey] = getNestedValue(
         command.payload,
         digestKey
       );
