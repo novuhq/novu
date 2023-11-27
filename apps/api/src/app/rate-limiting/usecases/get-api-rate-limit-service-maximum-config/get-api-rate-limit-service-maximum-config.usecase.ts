@@ -16,7 +16,7 @@ import {
 
 @Injectable()
 export class GetApiRateLimitServiceMaximumConfig implements OnModuleInit {
-  public default: IApiRateLimitServiceMaximum;
+  public default: IApiRateLimitServiceMaximum = DEFAULT_API_RATE_LIMIT_SERVICE_MAXIMUM_CONFIG;
 
   constructor(private invalidateCache: InvalidateCacheService, private cacheService: CacheService) {}
 
