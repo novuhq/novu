@@ -36,7 +36,6 @@ import {
   getIsTopicNotificationEnabled,
   InvalidateCacheService,
   LoggerModule,
-  QueuesModule,
   storageService,
 } from '@novu/application-generic';
 
