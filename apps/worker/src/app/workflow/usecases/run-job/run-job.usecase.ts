@@ -4,7 +4,13 @@ import { Injectable, Logger } from '@nestjs/common';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
-import { Instrument, InstrumentUsecase, PinoLogger, StorageHelperService } from '@novu/application-generic';
+import {
+  getJobDigest,
+  Instrument,
+  InstrumentUsecase,
+  PinoLogger,
+  StorageHelperService,
+} from '@novu/application-generic';
 
 import { RunJobCommand } from './run-job.command';
 import { QueueNextJob, QueueNextJobCommand } from '../queue-next-job';
@@ -31,31 +37,32 @@ export class RunJob {
       environmentId: command.environmentId,
     });
 
-    const job = await this.jobRepository.findOne({ _id: command.jobId, _environmentId: command.environmentId });
+    let job = await this.jobRepository.findOne({ _id: command.jobId, _environmentId: command.environmentId });
     if (!job) throw new PlatformException(`Job with id ${command.jobId} not found`);
 
-    try {
-      const contextData = {
-        transactionId: job.transactionId,
-        environmentId: job._environmentId,
-        organizationId: job._organizationId,
-        jobId: job._id,
-        jobType: job.type,
-      };
+    this.assignLogger(job);
 
-      nr.addCustomAttributes(contextData);
+    const { canceled, activeDigestFollower } = await this.delayedEventIsCanceled(job);
 
-      this.logger?.assign(contextData);
-    } catch (e) {
-      Logger.error(e, 'RunJob', LOG_CONTEXT);
-    }
-
-    const canceled = await this.delayedEventIsCanceled(job);
-    if (canceled) {
+    if (canceled && !activeDigestFollower) {
       Logger.verbose({ canceled }, `Job ${job._id} that had been delayed has been cancelled`, LOG_CONTEXT);
 
       return;
     }
+
+    if (activeDigestFollower) {
+      job = this.assignNewDigestExecutor(activeDigestFollower);
+
+      this.assignLogger(job);
+    }
+
+    nr.addCustomAttributes({
+      transactionId: job.transactionId,
+      environmentId: job._environmentId,
+      organizationId: job._organizationId,
+      jobId: job._id,
+      jobType: job.type,
+    });
 
     let shouldQueueNextJob = true;
 
@@ -114,19 +121,77 @@ export class RunJob {
     }
   }
 
+  private assignLogger(job) {
+    try {
+      this.logger?.assign({
+        transactionId: job.transactionId,
+        environmentId: job._environmentId,
+        organizationId: job._organizationId,
+        jobId: job._id,
+        jobType: job.type,
+      });
+    } catch (e) {
+      Logger.error(e, 'RunJob', LOG_CONTEXT);
+    }
+  }
+
+  /*
+   * If the following condition is met,
+   * - transactions were merged to the main delayed digest.
+   * - the main delayed digest was canceled.
+   * that mean that we need to assign a new active digest follower job to replace it.
+   * so from now on we will continue the follower transaction as main digest job.
+   */
+  private assignNewDigestExecutor(activeDigestFollower: JobEntity): JobEntity {
+    return activeDigestFollower;
+  }
+
+  private isCanceledMainDigest(type: StepTypeEnum | undefined, status: JobStatusEnum) {
+    return type === StepTypeEnum.DIGEST && status === JobStatusEnum.CANCELED;
+  }
+
   @Instrument()
-  private async delayedEventIsCanceled(job: JobEntity): Promise<boolean> {
+  private async delayedEventIsCanceled(
+    job: JobEntity
+  ): Promise<{ canceled: boolean; activeDigestFollower: JobEntity | null }> {
+    let activeDigestFollower: JobEntity | null = null;
+
     if (job.type !== StepTypeEnum.DIGEST && job.type !== StepTypeEnum.DELAY) {
-      return false;
+      return { canceled: false, activeDigestFollower };
     }
 
-    const count = await this.jobRepository.count({
-      _environmentId: job._environmentId,
-      _id: job._id,
-      status: JobStatusEnum.CANCELED,
-    });
+    const canceled = job.status === JobStatusEnum.CANCELED;
 
-    return count > 0;
+    if (job.status === JobStatusEnum.CANCELED) {
+      activeDigestFollower = await this.activeDigestMainFollowerExist(job);
+    }
+
+    return { canceled, activeDigestFollower };
+  }
+
+  @Instrument()
+  private async activeDigestMainFollowerExist(job: JobEntity): Promise<JobEntity | null> {
+    if (job.type !== StepTypeEnum.DIGEST) {
+      return null;
+    }
+
+    const { digestKey, digestValue } = getJobDigest(job);
+
+    const jobQuery: Partial<JobEntity> & { _environmentId: string } = {
+      _environmentId: job._environmentId,
+      _organizationId: job._organizationId,
+      _mergedDigestId: null,
+      status: JobStatusEnum.DELAYED,
+      type: StepTypeEnum.DIGEST,
+      _subscriberId: job._subscriberId,
+      _templateId: job._templateId,
+    };
+
+    if (digestKey && digestValue) {
+      jobQuery[`payload.${digestKey}`] = digestValue;
+    }
+
+    return await this.jobRepository.findOne(jobQuery);
   }
 
   public shouldBackoff(error: Error): boolean {
