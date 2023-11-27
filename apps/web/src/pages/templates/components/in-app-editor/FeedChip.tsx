@@ -3,8 +3,7 @@ import styled from '@emotion/styled';
 import { ColorScheme, useMantineTheme } from '@mantine/core';
 import { IFeedEntity } from '@novu/shared';
 
-import { colors, shadows } from '../../../../design-system';
-import { DotsHorizontal } from '../../../../design-system/icons';
+import { colors, shadows, DotsHorizontal } from '@novu/design-system';
 import { useEnvController } from '../../../../hooks';
 
 interface IFeedItemProps {

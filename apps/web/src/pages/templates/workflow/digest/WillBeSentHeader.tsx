@@ -2,7 +2,7 @@ import { useFormContext } from 'react-hook-form';
 import { useMantineColorScheme } from '@mantine/core';
 import { DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
 
-import { colors } from '../../../../design-system';
+import { colors } from '@novu/design-system';
 import { pluralizeTime } from '../../../../utils';
 import { TimedDigestWillBeSentHeader } from './TimedDigestWillBeSentHeader';
 

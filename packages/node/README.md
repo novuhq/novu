@@ -27,7 +27,7 @@ The ultimate service for managing multi-channel notifications with a single API.
     ·
     <a href="https://github.com/orgs/novuhq/projects/10">Roadmap</a>
     ·
-    <a href="https://twitter.com/novuhq">Twitter</a>
+    <a href="https://twitter.com/novuhq">X</a>
     ·
     <a href="https://notifications.directory">Notifications Directory</a>.
     <a href="https://novu.co/blog">Read our blog</a>
@@ -175,18 +175,18 @@ import { Novu } from '@novu/node';
 
 const novu = new Novu('<NOVU_API_KEY>');
 
-await novu.subscribers.identify("subscriberId",{
-  firstName: "Pawan";
-  lastName: "Jain";
-  email: "pawan.jain@domain.com";
-  phone: "+1234567890";
-  avatar: "https://gravatar.com/avatar/553b157d82ac2880237566d5a644e5fe?s=400&d=robohash&r=x";
-  locale: "en-US";
+await novu.subscribers.identify("subscriberId", {
+  firstName: "Pawan",
+  lastName: "Jain",
+  email: "pawan.jain@domain.com",
+  phone: "+1234567890",
+  avatar: "https://gravatar.com/avatar/553b157d82ac2880237566d5a644e5fe?s=400&d=robohash&r=x",
+  locale: "en-US",
   data: {
-    isDeveloper : true
+    isDeveloper: true,
     customKey: "customValue"
-  };
-})
+  }
+});
 ```
 
 
@@ -198,28 +198,28 @@ const novu = new Novu('<NOVU_API_KEY>');
 
 await novu.subscribers.identify([
   {
-    subscriberId: "1"
-    firstName: "Pawan";
-    lastName: "Jain";
-    email: "pawan.jain@domain.com";
-    phone: "+1234567890";
-    avatar: "https://gravatar.com/avatar/553b157d82ac2880237566d5a644e5fe?s=400&d=robohash&r=x";
-    locale: "en-US";
+    subscriberId: "1",
+    firstName: "Pawan",
+    lastName: "Jain",
+    email: "pawan.jain@domain.com",
+    phone: "+1234567890",
+    avatar: "https://gravatar.com/avatar/553b157d82ac2880237566d5a644e5fe?s=400&d=robohash&r=x",
+    locale: "en-US",
     data: {
-      isDeveloper : true
+      isDeveloper : true,
       customKey: "customValue"
     };
   },
   {
-    subscriberId: "2"
-    firstName: "John";
-    lastName: "Doe";
-    email: "john.doe@domain.com";
-    phone: "+1234567891";
-    avatar: "https://gravatar.com/avatar/553b157d82ac2880237566d5a644e5fe?s=400&d=robohash&r=x";
-    locale: "en-UK";
+    subscriberId: "2",
+    firstName: "John",
+    lastName: "Doe",
+    email: "john.doe@domain.com",
+    phone: "+1234567891",
+    avatar: "https://gravatar.com/avatar/553b157d82ac2880237566d5a644e5fe?s=400&d=robohash&r=x",
+    locale: "en-UK",
     data: {
-      isDeveloper : false
+      isDeveloper : false,
       customKey1: "customValue1"
     };
   }
@@ -245,15 +245,15 @@ import { Novu } from '@novu/node';
 const novu = new Novu('<NOVU_API_KEY>');
 
 await novu.subscribers.update("subscriberId",{
-  firstName: "Pawan";
-  lastName: "Jain";
-  email: "pawan.jain@domain.com";
-  phone: "+1234567890";
-  avatar: "https://gravatar.com/avatar/553b157d82ac2880237566d5a644e5fe?s=400&d=robohash&r=x";
-  locale: "en-US";
+  firstName: "Pawan",
+  lastName: "Jain",
+  email: "pawan.jain@domain.com",
+  phone: "+1234567890",
+  avatar: "https://gravatar.com/avatar/553b157d82ac2880237566d5a644e5fe?s=400&d=robohash&r=x",
+  locale: "en-US",
   data: {
-    isDeveloper : true
-    customKey: "customValue"
+    isDeveloper : true,
+    customKey: "customValue",
     customKey2: "customValue2"
   };
 })
@@ -349,7 +349,7 @@ const novu = new Novu('<NOVU_API_KEY>');
 // enable in-app channel
 await novu.subscribers.updatePreference("subscriberId", "workflowId", {
   channel: {
-    type: "in_app"
+    type: "in_app",
     enabled: true
   }
 })
@@ -358,7 +358,7 @@ await novu.subscribers.updatePreference("subscriberId", "workflowId", {
 // disable email channel
 await novu.subscribers.updatePreference("subscriberId", "workflowId", {
   channel: {
-    type: "email"
+    type: "email",
     enabled: false
   }
 })
@@ -374,10 +374,10 @@ const novu = new Novu('<NOVU_API_KEY>');
 await novu.subscribers.updateGlobalPreference("subscriberId", {
   enabled: true,
   preferences: [{
-    type: "in_app"
+    type: "in_app",
     enabled: true
   }, {
-    type: "email"
+    type: "email",
     enabled: false
   }]
 })
@@ -391,15 +391,15 @@ import { Novu } from '@novu/node';
 const novu = new Novu('<NOVU_API_KEY>');
 
 const params = {
-  page: 0;
-  limit: 20;
+  page: 0,
+  limit: 20,
   // copy this value from in-app editor
-  feedIdentifier: "feedId";
-  seen: true
-  read: false
+  feedIdentifier: "feedId",
+  seen: true,
+  read: false,
   payload: {
     "customkey": "customValue"
-  }
+  };
 }
 
 await novu.subscribers.getNotificationsFeed("subscriberId", params);
@@ -497,28 +497,28 @@ await novu.subscribers.trigger("workflowIdentifier", {
     }
   },
   // actorId is subscriberId of actor
-  actor: "actorId"
+  actor: "actorId",
   tenant: "tenantIdentifier"
 });
 
 // create new subscriber inline with trigger
 await novu.subscribers.trigger("workflowIdentifier", {
   to: {
-    subscriberId: "1"
-    firstName: "Pawan";
-    lastName: "Jain";
-    email: "pawan.jain@domain.com";
-    phone: "+1234567890";
-    avatar: "https://gravatar.com/avatar/553b157d82ac2880237566d5a644e5fe?s=400&d=robohash&r=x";
-    locale: "en-US";
+    subscriberId: "1",
+    firstName: "Pawan",
+    lastName: "Jain",
+    email: "pawan.jain@domain.com",
+    phone: "+1234567890",
+    avatar: "https://gravatar.com/avatar/553b157d82ac2880237566d5a644e5fe?s=400&d=robohash&r=x",
+    locale: "en-US",
     data: {
-      isDeveloper : true
+      isDeveloper : true,
       customKey: "customValue"
     };
   },
   payload: {},
   overrides:{} ,
-  actor: "actorId"
+  actor: "actorId",
   tenant: "tenantIdentifier"
 });
 ```
@@ -534,7 +534,7 @@ await novu.subscribers.trigger("workflowIdentifier", {
   to: [ "subscriberId1" , "subscriberId2" ],
   payload: {},
   overrides:{} ,
-  actor: "actorId"
+  actor: "actorId",
   tenant: "tenantIdentifier"
 });
 
@@ -543,35 +543,35 @@ await novu.subscribers.trigger("workflowIdentifier", {
 await novu.subscribers.trigger("workflowIdentifier", {
   to: [
     {
-      subscriberId: "1"
-      firstName: "Pawan";
-      lastName: "Jain";
-      email: "pawan.jain@domain.com";
-      phone: "+1234567890";
-      avatar: "https://gravatar.com/avatar/553b157d82ac2880237566d5a644e5fe?s=400&d=robohash&r=x";
-      locale: "en-US";
+      subscriberId: "1",
+      firstName: "Pawan",
+      lastName: "Jain",
+      email: "pawan.jain@domain.com",
+      phone: "+1234567890",
+      avatar: "https://gravatar.com/avatar/553b157d82ac2880237566d5a644e5fe?s=400&d=robohash&r=x",
+      locale: "en-US",
       data: {
-        isDeveloper : true
+        isDeveloper : true,
         customKey: "customValue"
       };
     },
     {
-      subscriberId: "2"
-      firstName: "John";
-      lastName: "Doe";
-      email: "john.doe@domain.com";
-      phone: "+1234567891";
-      avatar: "https://gravatar.com/avatar/553b157d82ac2880237566d5a644e5fe?s=400&d=robohash&r=x";
-      locale: "en-UK";
+      subscriberId: "2",
+      firstName: "John",
+      lastName: "Doe",
+      email: "john.doe@domain.com",
+      phone: "+1234567891",
+      avatar: "https://gravatar.com/avatar/553b157d82ac2880237566d5a644e5fe?s=400&d=robohash&r=x",
+      locale: "en-UK",
       data: {
-        isDeveloper : false
+        isDeveloper : false,
         customKey1: "customValue1"
       };
     }
   ],
   payload: {},
   overrides:{} ,
-  actor: "actorId"
+  actor: "actorId",
   tenant: "tenantIdentifier"
 });
 ```
@@ -584,8 +584,8 @@ const novu = new Novu('<NOVU_API_KEY>');
 
 await novu.events.trigger("workflowIdentifier", {
   to: {
-    type: TriggerRecipientsTypeEnum.TOPIC;
-    topicKey: TopicKey;
+    type: TriggerRecipientsTypeEnum.TOPIC,
+    topicKey: TopicKey
   }
 })
 ```
@@ -615,7 +615,7 @@ await novu.subscribers.bulkTrigger([
       }
     },
     // actorId is subscriberId of actor
-    actor: "actorId"
+    actor: "actorId",
     tenant: "tenantIdentifier"
   },
   {
@@ -633,7 +633,7 @@ await novu.subscribers.bulkTrigger([
       }
     },
     // actorId is subscriberId of actor
-    actor: "actorId"
+    actor: "actorId",
     tenant: "tenantIdentifier"
   }
 ])
@@ -683,8 +683,8 @@ const novu = new Novu('<NOVU_API_KEY>');
 const params = {
   page: 0, // optional
   limit: 20, // optional
-  subscriberId: "subscriberId"  //optional
-  channel: ChannelTypeEnum.EMAIL //optional
+  subscriberId: "subscriberId",  //optional
+  channel: ChannelTypeEnum.EMAIL, //optional
   transactionIds : ["txnId1","txnId2"] //optional
 }
 
@@ -712,14 +712,14 @@ const novu = new Novu('<NOVU_API_KEY>');
 
 const payload = {
   content: "<h1>Layout Start</h1>{{{body}}}<h1>Layout End</h1>",
-  description: "Organisation's first layout",
+  description: "Organization's first layout",
   name: "First Layout",
   identifier: "firstlayout",
   variables: [
     {
       type: "String",
-      name: "body"
-      required: true
+      name: "body",
+      required: true,
       defValue: ""
     }
   ]
@@ -737,14 +737,14 @@ const novu = new Novu('<NOVU_API_KEY>');
 
 const payloadToUpdate = {
   content: "<h1>Layout Start</h1>{{{body}}}<h1>Layout End</h1>",
-  description: "Organisation's first layout",
+  description: "Organization's first layout",
   name: "First Layout",
   identifier: "firstlayout",
   variables: [
     {
       type: "String",
-      name: "body"
-      required: true
+      name: "body",
+      required: true,
       defValue: ""
     }
   ]
@@ -793,7 +793,7 @@ const novu = new Novu('<NOVU_API_KEY>');
 const params = {
   page: 0, // optional
   pageSize: 20, // optional
-  sortBy: "_id"
+  sortBy: "_id",
   orderBy: -1 //optional
 }
 
@@ -810,13 +810,13 @@ const novu = new Novu('<NOVU_API_KEY>');
 // create a new notification group
 await novu.notificationGroups.create("Product Updates")
 
-// update an exisiting notification group
+// update an existing notification group
 await novu.notificationGroups.update("notificationGroupId", { name: "Changelog Updates"})
 
 // list all notification groups
 await novu.notificationGroups.get()
 
-// get one exisiting notification group
+// get one existing notification group
 await novu.notificationGroups.getOne("notificationGroupId")
 
 // delete an existing notification group
@@ -964,12 +964,12 @@ import { Novu } from '@novu/node';
 
 const novu = new Novu('<NOVU_API_KEY>');
 
-// get current environmet
+// get current environment
 await novu.environments.getCurrent()
 
 // create new environment
 await novu.environments.create({
-  name: "Stagging"
+  name: "Stagging",
   parentId: "parentEnvironmentId"
 })
 
@@ -978,12 +978,12 @@ await novu.environments.getAll()
 
 // update one environment
 await novu.environments.updateOne("environmentId", {
-  name: "Stagging" // optional
+  name: "Stagging", // optional
   parentId: "parentEnvironmentId", // optional
   identifier: "environmentIdentifier" // optional
 })
 
-// get api keys of environmet
+// get api keys of environment
 await novu.environments.getApiKeys()
 
 // regenrate api keys
@@ -1071,7 +1071,7 @@ await novu.notificationTemplates.create({
               value: 'flag',
               operator: 'NOT_IN',
               // 'payload'
-              on: FilterPartTypeEnum.PAYLOAD,
+              on: FilterPartTypeEnum.PAYLOAD
             },
           ],
         },
@@ -1086,7 +1086,7 @@ await novu.notificationTemplates.create({
             name: 'chatContent',
             // 'String'
             type: TemplateVariableTypeEnum.STRING,
-            required: true,
+            required: true
           },
         ],
         content: '{{chatContent}}',
@@ -1097,7 +1097,7 @@ await novu.notificationTemplates.create({
   description: 'Onboarding workflow to trigger after user sign up',
   active: true,
   draft: false,
-  critical: false,
+  critical: false
 });
 ```
 

@@ -3,12 +3,12 @@ import { expect } from 'chai';
 import { v4 as uuid } from 'uuid';
 
 import { SubscribersService, UserSession } from '@novu/testing';
-import { SubscriberRepository, NotificationTemplateEntity } from '@novu/dal';
-import { TriggerRecipients } from '@novu/shared';
+import { NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
+import { AddressingTypeEnum, TriggerRecipients } from '@novu/shared';
 
 import { SharedModule } from '../../../shared/shared.module';
 import { EventsModule } from '../../events.module';
-import { ParseEventRequestCommand } from './parse-event-request.command';
+import { ParseEventRequestCommand, ParseEventRequestMulticastCommand } from './parse-event-request.command';
 import { ParseEventRequest } from './parse-event-request.usecase';
 
 describe('ParseEventRequest Usecase', () => {
@@ -58,7 +58,7 @@ const buildCommand = (
   to: TriggerRecipients,
   identifier: string
 ): ParseEventRequestCommand => {
-  return ParseEventRequestCommand.create({
+  return ParseEventRequestMulticastCommand.create({
     organizationId: session.organization._id,
     environmentId: session.environment._id,
     to,
@@ -67,5 +67,6 @@ const buildCommand = (
     identifier,
     payload: {},
     overrides: {},
+    addressingType: AddressingTypeEnum.MULTICAST,
   });
 };

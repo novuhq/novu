@@ -1,7 +1,7 @@
 import { Module, Provider } from '@nestjs/common';
 import {
   AddDelayJob,
-  AddDigestJob,
+  MergeOrCreateDigest,
   AddJob,
   BullMqService,
   bullMqTokenList,
@@ -18,7 +18,6 @@ import {
   GetSubscriberGlobalPreference,
   GetSubscriberTemplatePreference,
   ProcessTenant,
-  OldInstanceBullMqService,
   QueuesModule,
   SelectIntegration,
   SendTestEmail,
@@ -26,16 +25,21 @@ import {
   StoreSubscriberJobs,
   ConditionsFilter,
   TriggerEvent,
+  MapTriggerRecipients,
+  GetTopicSubscribersUseCase,
+  getIsTopicNotificationEnabled,
+  SubscriberJobBound,
+  TriggerBroadcast,
+  TriggerMulticast,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
 import {
+  ExecutionLogWorker,
   ActiveJobsMetricService,
   CompletedJobsMetricService,
   StandardWorker,
   WorkflowWorker,
-  OldInstanceWorkflowWorker,
-  OldInstanceStandardWorker,
 } from './services';
 
 import {
@@ -60,12 +64,13 @@ import {
 } from './usecases';
 
 import { SharedModule } from '../shared/shared.module';
+import { SubscriberProcessWorker } from './services/subscriber-process.worker';
 
 const REPOSITORIES = [JobRepository];
 
 const USE_CASES = [
   AddDelayJob,
-  AddDigestJob,
+  MergeOrCreateDigest,
   AddJob,
   CalculateLimitNovuIntegration,
   CompileEmailTemplate,
@@ -104,6 +109,12 @@ const USE_CASES = [
   TriggerEvent,
   UpdateJobStatus,
   WebhookFilterBackoffStrategy,
+  MapTriggerRecipients,
+  GetTopicSubscribersUseCase,
+  getIsTopicNotificationEnabled,
+  SubscriberJobBound,
+  TriggerBroadcast,
+  TriggerMulticast,
 ];
 
 const PROVIDERS: Provider[] = [
@@ -113,9 +124,8 @@ const PROVIDERS: Provider[] = [
   CompletedJobsMetricService,
   StandardWorker,
   WorkflowWorker,
-  OldInstanceBullMqService,
-  OldInstanceStandardWorker,
-  OldInstanceWorkflowWorker,
+  ExecutionLogWorker,
+  SubscriberProcessWorker,
 ];
 
 @Module({

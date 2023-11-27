@@ -33,6 +33,7 @@ import {
   buildFeedKey,
   buildMessageCountKey,
   GetNovuProviderCredentials,
+  ExecutionLogQueueService,
 } from '@novu/application-generic';
 
 import { CreateLog } from '../../../shared/logs';
@@ -49,7 +50,7 @@ export class SendMessageInApp extends SendMessageBase {
     protected messageRepository: MessageRepository,
     private webSocketsQueueService: WebSocketsQueueService,
     protected createLogUsecase: CreateLog,
-    protected createExecutionDetails: CreateExecutionDetails,
+    protected executionLogQueueService: ExecutionLogQueueService,
     protected subscriberRepository: SubscriberRepository,
     protected tenantRepository: TenantRepository,
     private compileTemplate: CompileTemplate,
@@ -60,7 +61,7 @@ export class SendMessageInApp extends SendMessageBase {
     super(
       messageRepository,
       createLogUsecase,
-      createExecutionDetails,
+      executionLogQueueService,
       subscriberRepository,
       tenantRepository,
       selectIntegration,
@@ -92,15 +93,19 @@ export class SendMessageInApp extends SendMessageBase {
     });
 
     if (!integration) {
-      await this.createExecutionDetails.execute(
+      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+      await this.executionLogQueueService.add(
+        metadata._id,
         CreateExecutionDetailsCommand.create({
+          ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-        })
+        }),
+        command.organizationId
       );
 
       return;
@@ -113,9 +118,17 @@ export class SendMessageInApp extends SendMessageBase {
 
     const { actor } = command.step.template;
 
+    let actorSubscriber: SubscriberEntity | null = null;
+    if (command.job.actorId) {
+      actorSubscriber = await this.getSubscriberBySubscriberId({
+        subscriberId: command.job.actorId,
+        _environmentId: command.environmentId,
+      });
+    }
+
     const [tenant, organization] = await Promise.all([
       this.handleTenantExecution(command.job),
-      this.organizationRepository.findById(command.organizationId, 'branding'),
+      this.organizationRepository.findOne({ _id: command.organizationId }, 'branding'),
     ]);
 
     try {
@@ -125,7 +138,8 @@ export class SendMessageInApp extends SendMessageBase {
         subscriber,
         command,
         organization,
-        tenant
+        tenant,
+        actorSubscriber
       );
 
       if (inAppChannel.template.cta?.data?.url) {
@@ -135,7 +149,8 @@ export class SendMessageInApp extends SendMessageBase {
           subscriber,
           command,
           organization,
-          tenant
+          tenant,
+          actorSubscriber
         );
       }
 
@@ -149,7 +164,8 @@ export class SendMessageInApp extends SendMessageBase {
             subscriber,
             command,
             organization,
-            tenant
+            tenant,
+            actorSubscriber
           );
           ctaButtons.push({ type: action.type, content: buttonContent });
         }
@@ -231,14 +247,17 @@ export class SendMessageInApp extends SendMessageBase {
           },
         }
       );
-      message = await this.messageRepository.findById(oldMessage._id);
+      message = await this.messageRepository.findOne({ _id: oldMessage._id, _environmentId: command.environmentId });
     }
 
     if (!message) throw new PlatformException('Message not found');
 
-    await this.createExecutionDetails.execute(
+    const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+    await this.executionLogQueueService.add(
+      metadata._id,
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+        ...metadata,
         messageId: message._id,
         providerId: integration.providerId,
         detail: DetailEnum.MESSAGE_CREATED,
@@ -246,11 +265,12 @@ export class SendMessageInApp extends SendMessageBase {
         status: ExecutionDetailsStatusEnum.PENDING,
         isTest: false,
         isRetry: false,
-      })
+      }),
+      command.organizationId
     );
 
     await this.webSocketsQueueService.bullMqService.add(
-      message._id,
+      'sendMessage',
       {
         event: WebSocketEventEnum.RECEIVED,
         userId: command._subscriberId,
@@ -259,12 +279,18 @@ export class SendMessageInApp extends SendMessageBase {
           messageId: message._id,
         },
       },
-      {},
+      {
+        removeOnComplete: true,
+        removeOnFail: true,
+      },
       command.organizationId
     );
 
-    await this.createExecutionDetails.execute(
+    const meta = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+    await this.executionLogQueueService.add(
+      meta._id,
       CreateExecutionDetailsCommand.create({
+        ...meta,
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         messageId: message._id,
         providerId: integration.providerId,
@@ -273,7 +299,8 @@ export class SendMessageInApp extends SendMessageBase {
         status: ExecutionDetailsStatusEnum.SUCCESS,
         isTest: false,
         isRetry: false,
-      })
+      }),
+      command.organizationId
     );
   }
 
@@ -283,7 +310,8 @@ export class SendMessageInApp extends SendMessageBase {
     subscriber: SubscriberEntity,
     command: SendMessageCommand,
     organization: OrganizationEntity | null,
-    tenant: TenantEntity | null
+    tenant: TenantEntity | null,
+    actor: SubscriberEntity | null
   ): Promise<string> {
     return await this.compileTemplate.execute(
       CompileTemplateCommand.create({
@@ -300,6 +328,7 @@ export class SendMessageInApp extends SendMessageBase {
             color: organization?.branding?.color || '#f47373',
           },
           ...(tenant && { tenant }),
+          ...(actor && { actor }),
           ...payload,
         },
       })

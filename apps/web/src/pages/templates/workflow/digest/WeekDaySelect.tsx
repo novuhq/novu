@@ -1,6 +1,6 @@
 import { DaysEnum } from '@novu/shared';
 import { createStyles, Group, MantineTheme, UnstyledButton } from '@mantine/core';
-import { colors } from '../../../../design-system';
+import { colors } from '@novu/design-system';
 
 const useStyles = createStyles<string, { active: boolean; disabled: boolean; last: boolean }>(
   (theme: MantineTheme, _params) => {

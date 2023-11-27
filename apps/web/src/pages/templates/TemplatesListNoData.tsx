@@ -5,7 +5,7 @@ import { faFile } from '@fortawesome/free-regular-svg-icons';
 import { Skeleton } from '@mantine/core';
 import { useSegment } from '../../components/providers/SegmentProvider';
 
-import { CardTile, colors, Popover, shadows } from '../../design-system';
+import { CardTile, colors, Popover } from '@novu/design-system';
 import { IBlueprintTemplate } from '../../api/types';
 import { TemplateCreationSourceEnum } from './shared';
 import { useHoverOverItem } from '../../hooks';

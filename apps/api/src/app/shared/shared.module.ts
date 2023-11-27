@@ -22,6 +22,7 @@ import {
   TopicRepository,
   TopicSubscribersRepository,
   TenantRepository,
+  WorkflowOverrideRepository,
 } from '@novu/dal';
 import {
   analyticsService,
@@ -32,7 +33,6 @@ import {
   DalServiceHealthIndicator,
   distributedLockService,
   featureFlagsService,
-  getIsMultiProviderConfigurationEnabled,
   getIsTopicNotificationEnabled,
   InvalidateCacheService,
   LoggerModule,
@@ -64,6 +64,7 @@ const DAL_MODELS = [
   TopicRepository,
   TopicSubscribersRepository,
   TenantRepository,
+  WorkflowOverrideRepository,
 ];
 
 const dalService = {
@@ -85,7 +86,6 @@ const PROVIDERS = [
   DalServiceHealthIndicator,
   distributedLockService,
   featureFlagsService,
-  getIsMultiProviderConfigurationEnabled,
   getIsTopicNotificationEnabled,
   InvalidateCacheService,
   storageService,
@@ -100,9 +100,8 @@ const PROVIDERS = [
         version: packageJson.version,
       })
     ),
-    QueuesModule,
   ],
   providers: [...PROVIDERS],
-  exports: [...PROVIDERS, LoggerModule, QueuesModule],
+  exports: [...PROVIDERS, LoggerModule],
 })
 export class SharedModule {}

@@ -1,5 +1,5 @@
 import {
-  GetIsMultiProviderConfigurationEnabled,
+  GetIsApiRateLimitingEnabled,
   GetIsTemplateStoreEnabled,
   GetIsTopicNotificationEnabled,
 } from './index';
@@ -51,36 +51,6 @@ describe('Get Feature Flag', () => {
         });
       });
 
-      describe('IS_MULTI_PROVIDER_CONFIGURATION_ENABLED', () => {
-        it('should return default hardcoded value when no SDK env is set and no feature flag is set', async () => {
-          process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = '';
-
-          const getIsMultiProviderConfigurationEnabled =
-            new GetIsMultiProviderConfigurationEnabled(
-              new FeatureFlagsService()
-            );
-
-          const result = await getIsMultiProviderConfigurationEnabled.execute(
-            featureFlagCommand
-          );
-          expect(result).toEqual(false);
-        });
-
-        it('should return env variable value when no SDK env is set but the feature flag is set', async () => {
-          process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = 'true';
-
-          const getIsMultiProviderConfigurationEnabled =
-            new GetIsMultiProviderConfigurationEnabled(
-              new FeatureFlagsService()
-            );
-
-          const result = await getIsMultiProviderConfigurationEnabled.execute(
-            featureFlagCommand
-          );
-          expect(result).toEqual(true);
-        });
-      });
-
       describe('IS_TOPIC_NOTIFICATION_ENABLED', () => {
         it('should return default hardcoded value when no SDK env is set and no feature flag is set', async () => {
           process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = '';
@@ -106,6 +76,34 @@ describe('Get Feature Flag', () => {
           expect(result).toEqual(false);
         });
       });
+
+      describe('IS_API_RATE_LIMITING_ENABLED', () => {
+        it('should return default hardcoded value when no SDK env is set and no feature flag is set', async () => {
+          process.env.IS_API_RATE_LIMITING_ENABLED = '';
+
+          const getIsApiRateLimitingEnabled = new GetIsApiRateLimitingEnabled(
+            new FeatureFlagsService()
+          );
+
+          const result = await getIsApiRateLimitingEnabled.execute(
+            featureFlagCommand
+          );
+          expect(result).toEqual(false);
+        });
+
+        it('should return env variable value when no SDK env is set but the feature flag is set', async () => {
+          process.env.IS_API_RATE_LIMITING_ENABLED = 'true';
+
+          const getIsApiRateLimitingEnabled = new GetIsApiRateLimitingEnabled(
+            new FeatureFlagsService()
+          );
+
+          const result = await getIsApiRateLimitingEnabled.execute(
+            featureFlagCommand
+          );
+          expect(result).toEqual(true);
+        });
+      });
     });
 
     describe('SDK key environment variable is set', () => {
@@ -129,23 +127,6 @@ describe('Get Feature Flag', () => {
           );
 
           const result = await getIsTemplateStoreEnabled.execute(
-            featureFlagCommand
-          );
-          expect(result).toEqual(true);
-        });
-      });
-
-      describe('IS_MULTI_PROVIDER_CONFIGURATION_ENABLED', () => {
-        it(`should get the feature flag value stored in Launch Darkly (enabled)
-           when the SDK key env variable is set regardless of the feature flag set`, async () => {
-          process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = 'false';
-
-          const getIsMultiProviderConfigurationEnabled =
-            new GetIsMultiProviderConfigurationEnabled(
-              new FeatureFlagsService()
-            );
-
-          const result = await getIsMultiProviderConfigurationEnabled.execute(
             featureFlagCommand
           );
           expect(result).toEqual(true);

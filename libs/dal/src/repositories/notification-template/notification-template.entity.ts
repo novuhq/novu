@@ -5,9 +5,13 @@ import {
   BuilderGroupValues,
   IPreferenceChannels,
   IWorkflowStepMetadata,
-  TemplateVariableTypeEnum,
   NotificationTemplateCustomData,
-  TriggerContextTypeEnum,
+  INotificationTrigger,
+  TriggerTypeEnum,
+  INotificationTriggerVariable,
+  ITriggerReservedVariable,
+  INotificationTemplate,
+  INotificationTemplateStep,
 } from '@novu/shared';
 
 import { MessageTemplateEntity } from '../message-template';
@@ -16,7 +20,7 @@ import type { OrganizationId } from '../organization';
 import type { EnvironmentId } from '../environment';
 import type { ChangePropsValueType } from '../../types';
 
-export class NotificationTemplateEntity {
+export class NotificationTemplateEntity implements INotificationTemplate {
   _id: string;
 
   name: string;
@@ -73,19 +77,19 @@ export type NotificationTemplateDBModel = ChangePropsValueType<
   _parentId?: Types.ObjectId;
 };
 
-export class NotificationTriggerEntity {
-  type: 'event';
+export class NotificationTriggerEntity implements INotificationTrigger {
+  type: TriggerTypeEnum;
 
   identifier: string;
 
-  variables: ITriggerVariable[];
+  variables: INotificationTriggerVariable[];
 
-  subscriberVariables?: Pick<ITriggerVariable, 'name'>[];
+  subscriberVariables?: Pick<INotificationTriggerVariable, 'name'>[];
 
   reservedVariables?: ITriggerReservedVariable[];
 }
 
-export class NotificationStepEntity {
+export class NotificationStepEntity implements INotificationTemplateStep {
   _id?: string;
 
   uuid?: string;
@@ -120,14 +124,4 @@ export class StepFilter {
   value: BuilderGroupValues;
 
   children: FilterParts[];
-}
-
-export interface ITriggerVariable {
-  name: string;
-  type: TemplateVariableTypeEnum;
-}
-
-export interface ITriggerReservedVariable {
-  type: TriggerContextTypeEnum;
-  variables: ITriggerVariable[];
 }

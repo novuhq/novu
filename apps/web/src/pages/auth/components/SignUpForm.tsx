@@ -9,8 +9,7 @@ import { passwordConstraints } from '@novu/shared';
 
 import { useAuthContext } from '../../../components/providers/AuthProvider';
 import { api } from '../../../api/api.client';
-import { PasswordInput, Button, colors, Input, Text, Checkbox } from '../../../design-system';
-import { GitHub } from '../../../design-system/icons';
+import { PasswordInput, Button, colors, Input, Text, Checkbox, GitHub } from '@novu/design-system';
 import { IS_DOCKER_HOSTED } from '../../../config';
 import { applyToken, useVercelParams } from '../../../hooks';
 import { useAcceptInvite } from './useAcceptInvite';

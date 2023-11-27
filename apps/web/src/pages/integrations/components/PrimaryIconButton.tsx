@@ -2,8 +2,7 @@ import styled from '@emotion/styled';
 import { Group, ActionIcon, Text } from '@mantine/core';
 import { useState } from 'react';
 import { When } from '../../../components/utils/When';
-import { Tooltip, Button, colors, Modal, Title } from '../../../design-system';
-import { RemoveCondition, StarEmpty, Warning } from '../../../design-system/icons';
+import { Tooltip, Button, colors, Modal, Title, RemoveCondition, StarEmpty, Warning } from '@novu/design-system';
 
 const IconButton = styled(Group)`
   text-align: center;

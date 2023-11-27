@@ -7,6 +7,7 @@ import {
   IWebhookFilterPart,
   IRealtimeOnlineFilterPart,
   IOnlineInLastFilterPart,
+  FieldLogicalOperatorEnum,
   FILTER_TO_LABEL,
   FilterPartTypeEnum,
   ICondition,
@@ -16,6 +17,7 @@ import {
   PreviousStepTypeEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  FieldOperatorEnum,
 } from '@novu/shared';
 import {
   SubscriberEntity,
@@ -28,7 +30,6 @@ import {
 } from '@novu/dal';
 import {
   DetailEnum,
-  CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   buildSubscriberKey,
   CachedEntity,
@@ -36,6 +37,7 @@ import {
   Filter,
   FilterProcessingDetails,
   IFilterVariables,
+  ExecutionLogQueueService,
 } from '@novu/application-generic';
 import { EmailEventStatusEnum } from '@novu/stateless';
 
@@ -58,7 +60,7 @@ const differenceIn = (currentDate: Date, lastDate: Date, timeOperator: TimeOpera
 export class MessageMatcher extends Filter {
   constructor(
     private subscriberRepository: SubscriberRepository,
-    private createExecutionDetails: CreateExecutionDetails,
+    private executionLogQueueService: ExecutionLogQueueService,
     private environmentRepository: EnvironmentRepository,
     private executionDetailsRepository: ExecutionDetailsRepository,
     private messageRepository: MessageRepository,
@@ -99,8 +101,11 @@ export class MessageMatcher extends Filter {
         if (singleRule) {
           const result = await this.processFilter(variables, children[0], command, filterProcessingDetails);
           if (!prefiltering) {
-            await this.createExecutionDetails.execute(
+            const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+            await this.executionLogQueueService.add(
+              metadata._id,
               CreateExecutionDetailsCommand.create({
+                ...metadata,
                 ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
                 detail: DetailEnum.PROCESSING_STEP_FILTER,
                 source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -108,7 +113,8 @@ export class MessageMatcher extends Filter {
                 isTest: false,
                 isRetry: false,
                 raw: filterProcessingDetails.toString(),
-              })
+              }),
+              command.organizationId
             );
           }
 
@@ -119,8 +125,11 @@ export class MessageMatcher extends Filter {
 
         const result = await this.handleGroupFilters(filter, variables, command, filterProcessingDetails);
         if (!prefiltering) {
-          await this.createExecutionDetails.execute(
+          const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+          await this.executionLogQueueService.add(
+            metadata._id,
             CreateExecutionDetailsCommand.create({
+              ...metadata,
               ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
               detail: DetailEnum.PROCESSING_STEP_FILTER,
               source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -128,7 +137,8 @@ export class MessageMatcher extends Filter {
               isTest: false,
               isRetry: false,
               raw: filterProcessingDetails.toString(),
-            })
+            }),
+            command.organizationId
           );
         }
 
@@ -176,7 +186,7 @@ export class MessageMatcher extends Filter {
     command: MessageMatcherCommand,
     filterProcessingDetails: FilterProcessingDetails
   ): Promise<boolean> {
-    if (filter.value === 'OR') {
+    if (filter.value === FieldLogicalOperatorEnum.OR) {
       return await this.handleOrFilters(filter, variables, command, filterProcessingDetails);
     }
 
@@ -270,7 +280,7 @@ export class MessageMatcher extends Filter {
     const label = FILTER_TO_LABEL[filter.on];
     const field = filter.stepType;
     const expected = 'true';
-    const operator = 'EQUAL';
+    const operator = FieldOperatorEnum.EQUAL;
 
     if (message?.channel === ChannelTypeEnum.EMAIL) {
       const count = await this.executionDetailsRepository.count({
@@ -321,7 +331,7 @@ export class MessageMatcher extends Filter {
     filterProcessingDetails: FilterProcessingDetails
   ): Promise<boolean> {
     const subscriber = await this.subscriberRepository.findOne({
-      _id: command.subscriberId,
+      _id: command._subscriberId,
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
     });
@@ -337,7 +347,7 @@ export class MessageMatcher extends Filter {
         field: 'isOnline',
         expected: `${filter.value}`,
         actual: `${filter.on === FilterPartTypeEnum.IS_ONLINE ? isOnlineString : lastOnlineAtString}`,
-        operator: filter.on === FilterPartTypeEnum.IS_ONLINE ? 'EQUAL' : filter.timeOperator,
+        operator: filter.on === FilterPartTypeEnum.IS_ONLINE ? FieldOperatorEnum.EQUAL : filter.timeOperator,
         passed: false,
       });
 
@@ -351,7 +361,7 @@ export class MessageMatcher extends Filter {
         field: 'isOnline',
         expected: `${filter.value}`,
         actual: isOnlineString,
-        operator: 'EQUAL',
+        operator: FieldOperatorEnum.EQUAL,
         passed: isOnlineMatch,
       });
 
