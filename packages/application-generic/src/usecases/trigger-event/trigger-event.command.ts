@@ -43,12 +43,14 @@ export class TriggerEventBaseCommand extends EnvironmentWithUserCommand {
 export class TriggerEventMulticastCommand extends TriggerEventBaseCommand {
   @IsDefined()
   to: ISubscribersDefine[];
+
+  @IsEnum(AddressingTypeEnum)
+  addressingType: AddressingTypeEnum.MULTICAST;
 }
 
 export class TriggerEventBroadcastCommand extends TriggerEventBaseCommand {
-  @IsDefined()
   @IsEnum(AddressingTypeEnum)
-  addressingType: AddressingTypeEnum;
+  addressingType: AddressingTypeEnum.BROADCAST;
 }
 
 export type TriggerEventCommand =
