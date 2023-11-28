@@ -294,8 +294,6 @@ describe('EvaluateTokenBucketRateLimit', () => {
 
       const testThrottledCountErrorTolerance = 0.2;
       const testPercentile = 0.95;
-      const windowsBetweenTests = 3;
-      const betweenTestsMs = mockWindowDurationMs * windowsBetweenTests;
 
       function printHistogram(results) {
         // Define the number of bins for the histogram
@@ -358,9 +356,6 @@ describe('EvaluateTokenBucketRateLimit', () => {
                 const refillPerWindow = (maxTokens * mockProportionRefill) / mockWindowDuration;
 
                 before(async () => {
-                  // Wait some time between tests to allow the cache to resume normal operation
-                  // await new Promise((resolve) => setTimeout(resolve, betweenTestsMs));
-
                   const cacheService = await inMemoryCacheService.useFactory();
                   testContext = {
                     redis: EvaluateTokenBucketRateLimit.getCacheClient(cacheService),
