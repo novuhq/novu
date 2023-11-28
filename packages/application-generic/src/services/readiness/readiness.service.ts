@@ -1,14 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { HealthIndicatorResult, HealthIndicatorStatus } from '@nestjs/terminus';
+import { setTimeout } from 'timers/promises';
 
 import { Worker } from '../bull-mq';
 
-import {
-  StandardQueueServiceHealthIndicator,
-  SubscriberProcessQueueHealthIndicator,
-  WebSocketsQueueServiceHealthIndicator,
-  WorkflowQueueServiceHealthIndicator,
-} from '../../health';
-import { setTimeout } from 'timers/promises';
+import { IHealthIndicator } from '../../health';
+
 export interface INovuWorker {
   readonly DEFAULT_ATTEMPTS: number;
   gracefulShutdown: () => Promise<void>;
@@ -24,9 +21,7 @@ const LOG_CONTEXT = 'ReadinessService';
 @Injectable()
 export class ReadinessService {
   constructor(
-    private standardQueueServiceHealthIndicator: StandardQueueServiceHealthIndicator,
-    private workflowQueueServiceHealthIndicator: WorkflowQueueServiceHealthIndicator,
-    private subscriberProcessQueueHealthIndicator: SubscriberProcessQueueHealthIndicator
+    @Inject('INDICATOR_LIST') private indicators: IHealthIndicator[]
   ) {}
 
   async areQueuesEnabled(): Promise<boolean> {
@@ -43,10 +38,7 @@ export class ReadinessService {
       }
 
       Logger.warn(
-        {
-          attempt: i,
-          message: `Some health indicator returned false when checking if queues are enabled ${i}/${retries}`,
-        },
+        `Some health indicator returned false when checking if queues are enabled ${i}/${retries}`,
         LOG_CONTEXT
       );
 
@@ -58,13 +50,15 @@ export class ReadinessService {
 
   private async checkServicesHealth() {
     try {
-      const healths = await Promise.all([
-        this.standardQueueServiceHealthIndicator.isHealthy(),
-        this.workflowQueueServiceHealthIndicator.isHealthy(),
-        this.subscriberProcessQueueHealthIndicator.isHealthy(),
-      ]);
+      const healths = await Promise.all(
+        this.indicators.map((indicator) => indicator.isHealthy())
+      );
 
-      return healths.every((health) => !!health === true);
+      const statuses = healths.map(
+        (health: HealthIndicatorResult) => Object.values(health)[0].status
+      );
+
+      return statuses.every((status: HealthIndicatorStatus) => status === 'up');
     } catch (error) {
       Logger.error(
         error,

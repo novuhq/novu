@@ -31,7 +31,27 @@ import {
   WorkflowWorkerService,
 } from '../services/workers';
 
-const PROVIDERS: Provider[] = [
+export const workerIndicatorList = {
+  provide: 'INDICATOR_LIST',
+  useFactory: (
+    standardQueueServiceHealthIndicator: StandardQueueServiceHealthIndicator,
+    workflowQueueServiceHealthIndicator: WorkflowQueueServiceHealthIndicator,
+    subscriberProcessQueueHealthIndicator: SubscriberProcessQueueHealthIndicator
+  ) => {
+    return [
+      standardQueueServiceHealthIndicator,
+      workflowQueueServiceHealthIndicator,
+      subscriberProcessQueueHealthIndicator,
+    ];
+  },
+  inject: [
+    StandardQueueServiceHealthIndicator,
+    WorkflowQueueServiceHealthIndicator,
+    SubscriberProcessQueueHealthIndicator,
+  ],
+};
+
+const WORKER_PROVIDERS: Provider[] = [
   ActiveJobsMetricQueueService,
   ActiveJobsMetricQueueServiceHealthIndicator,
   ActiveJobsMetricWorkerService,
@@ -42,12 +62,14 @@ const PROVIDERS: Provider[] = [
   InboundParseQueue,
   InboundParseWorker,
   InboundParseQueueServiceHealthIndicator,
+  workerIndicatorList,
+  StandardQueueServiceHealthIndicator,
+  WebSocketsQueueServiceHealthIndicator,
+  SubscriberProcessQueueHealthIndicator,
   ReadinessService,
   StandardQueueService,
-  StandardQueueServiceHealthIndicator,
   StandardWorkerService,
   WebSocketsQueueService,
-  WebSocketsQueueServiceHealthIndicator,
   WebSocketsWorkerService,
   WorkflowQueueService,
   ExecutionLogQueueService,
@@ -55,16 +77,15 @@ const PROVIDERS: Provider[] = [
   WorkflowWorkerService,
   SubscriberProcessQueueService,
   SubscriberProcessWorkerService,
-  SubscriberProcessQueueHealthIndicator,
 ];
 
 @Module({
-  providers: [...PROVIDERS],
-  exports: [...PROVIDERS],
+  providers: [...WORKER_PROVIDERS],
+  exports: [...WORKER_PROVIDERS],
 })
 export class QueuesModule {}
 
-const APP_PROVIDERS: Provider[] = [
+const API_PROVIDERS: Provider[] = [
   InboundParseQueue,
   InboundParseWorker,
   InboundParseQueueServiceHealthIndicator,
@@ -76,7 +97,7 @@ const APP_PROVIDERS: Provider[] = [
 ];
 
 @Module({
-  providers: [...APP_PROVIDERS],
-  exports: [...APP_PROVIDERS],
+  providers: [...API_PROVIDERS],
+  exports: [...API_PROVIDERS],
 })
 export class BaseApiQueuesModule {}
