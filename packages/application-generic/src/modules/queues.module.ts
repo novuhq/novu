@@ -4,6 +4,7 @@ import { bullMqTokenList } from '../custom-providers';
 import {
   ActiveJobsMetricQueueServiceHealthIndicator,
   CompletedJobsMetricQueueServiceHealthIndicator,
+  IHealthIndicator,
   InboundParseQueueServiceHealthIndicator,
   StandardQueueServiceHealthIndicator,
   SubscriberProcessQueueHealthIndicator,
@@ -38,11 +39,13 @@ export const workerIndicatorList = {
     workflowQueueServiceHealthIndicator: WorkflowQueueServiceHealthIndicator,
     subscriberProcessQueueHealthIndicator: SubscriberProcessQueueHealthIndicator
   ) => {
-    return [
+    const indicatorList: IHealthIndicator[] = [
       standardQueueServiceHealthIndicator,
       workflowQueueServiceHealthIndicator,
       subscriberProcessQueueHealthIndicator,
     ];
+
+    return indicatorList;
   },
   inject: [
     StandardQueueServiceHealthIndicator,

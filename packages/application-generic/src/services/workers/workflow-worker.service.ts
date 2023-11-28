@@ -9,6 +9,5 @@ const LOG_CONTEXT = 'WorkflowWorkerService';
 export class WorkflowWorkerService extends WorkerBaseService {
   constructor() {
     super(JobTopicNameEnum.WORKFLOW);
-    Logger.log(`Worker ${this.topic} instantiated`, LOG_CONTEXT);
   }
 }

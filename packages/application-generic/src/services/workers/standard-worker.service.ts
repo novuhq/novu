@@ -9,6 +9,5 @@ const LOG_CONTEXT = 'StandardWorkerService';
 export class StandardWorkerService extends WorkerBaseService {
   constructor() {
     super(JobTopicNameEnum.STANDARD);
-    Logger.log(`Worker ${this.topic} instantiated`, LOG_CONTEXT);
   }
 }

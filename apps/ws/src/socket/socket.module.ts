@@ -1,6 +1,4 @@
-import { Inject, Module, OnModuleInit, Provider } from '@nestjs/common';
-import { JobTopicNameEnum } from '@novu/shared';
-import { WebSocketsWorkerService } from '@novu/application-generic';
+import { Module, Provider } from '@nestjs/common';
 
 import { WSGateway } from './ws.gateway';
 import { SharedModule } from '../shared/shared.module';
@@ -10,7 +8,7 @@ import { WebSocketWorker } from './services';
 
 const USE_CASES: Provider[] = [ExternalServicesRoute];
 
-const PROVIDERS: Provider[] = [WSGateway, WebSocketsWorkerService, WebSocketWorker];
+const PROVIDERS: Provider[] = [WSGateway, WebSocketWorker];
 
 @Module({
   imports: [SharedModule],

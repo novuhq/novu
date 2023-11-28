@@ -9,6 +9,5 @@ const LOG_CONTEXT = 'InboundParseWorkerService';
 export class InboundParseWorkerService extends WorkerBaseService {
   constructor() {
     super(JobTopicNameEnum.INBOUND_PARSE_MAIL);
-    Logger.log(`Worker ${this.topic} instantiated`, LOG_CONTEXT);
   }
 }

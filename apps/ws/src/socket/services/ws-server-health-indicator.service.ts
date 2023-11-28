@@ -6,8 +6,8 @@ import { IHealthIndicator } from '@novu/application-generic';
 import { WSGateway } from '../ws.gateway';
 
 @Injectable()
-export class WSHealthIndicator extends HealthIndicator implements IHealthIndicator {
-  private INDICATOR_KEY = 'ws';
+export class WSServerHealthIndicator extends HealthIndicator implements IHealthIndicator {
+  private INDICATOR_KEY = 'ws-server';
 
   constructor(private wsGateway: WSGateway) {
     super();

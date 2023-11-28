@@ -9,6 +9,5 @@ const LOG_CONTEXT = 'ActiveJobsMetricWorkerService';
 export class ActiveJobsMetricWorkerService extends WorkerBaseService {
   constructor() {
     super(JobTopicNameEnum.ACTIVE_JOBS_METRIC);
-    Logger.log(`Worker ${this.topic} instantiated`, LOG_CONTEXT);
   }
 }
