@@ -53,6 +53,7 @@ export class PlunkEmailProvider implements IEmailProvider {
   ): Promise<ISendMessageSuccessResponse> {
     const response: IPlunkResponse = await this.plunk.emails.send({
       from: options.from,
+      ...(options.senderName && { name: options.senderName }),
       to: options.to,
       subject: options.subject,
       body: options.html || options.text,

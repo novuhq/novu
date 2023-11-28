@@ -168,10 +168,10 @@ export class SendMessageEmail extends SendMessageBase {
     let html;
     let subject = '';
     let content;
-    let senderName = overrides?.senderName || emailChannel.template.senderName;
+    let senderName;
 
     const payload = {
-      senderName: emailChannel.template.senderName || '',
+      senderName: emailChannel.template.senderName,
       subject: emailChannel.template.subject || '',
       preheader: emailChannel.template.preheader,
       content: emailChannel.template.content,
@@ -294,6 +294,7 @@ export class SendMessageEmail extends SendMessageBase {
         html,
         from: integration?.credentials.from || 'no-reply@novu.co',
         attachments,
+        senderName,
         id: message._id,
         replyTo: replyToAddress,
         notificationDetails: {
@@ -314,7 +315,7 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     if (email && integration) {
-      await this.sendMessage(integration, mailData, message, command, senderName);
+      await this.sendMessage(integration, mailData, message, command);
 
       return;
     }
@@ -449,11 +450,10 @@ export class SendMessageEmail extends SendMessageBase {
     integration: IntegrationEntity,
     mailData: IEmailOptions,
     message: MessageEntity,
-    command: SendMessageCommand,
-    senderName?: string
+    command: SendMessageCommand
   ) {
     const mailFactory = new MailFactory();
-    const mailHandler = mailFactory.getHandler(this.buildFactoryIntegration(integration, senderName), mailData.from);
+    const mailHandler = mailFactory.getHandler(this.buildFactoryIntegration(integration), mailData.from);
 
     try {
       const result = await mailHandler.send(mailData);
@@ -563,7 +563,6 @@ export class SendMessageEmail extends SendMessageBase {
       ...integration,
       credentials: {
         ...integration.credentials,
-        senderName: senderName && senderName.length > 0 ? senderName : integration.credentials.senderName,
       },
       providerId: integration.providerId,
     };
@@ -586,6 +585,8 @@ export const createMailData = (options: IEmailOptions, overrides: Record<string,
     cc: overrides?.cc || [],
     bcc: overrides?.bcc || [],
     ...ipPoolName,
+    senderName: overrides?.senderName || options.senderName,
+    subject: overrides?.subject || options.subject,
     customData: overrides?.customData || {},
   };
 };

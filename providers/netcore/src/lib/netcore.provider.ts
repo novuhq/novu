@@ -43,7 +43,10 @@ export class NetCoreProvider implements IEmailProvider {
     options: IEmailOptions
   ): Promise<ISendMessageSuccessResponse> {
     const data: IEmailBody = {
-      from: { email: options.from || this.config.from },
+      from: {
+        email: options.from || this.config.from,
+        ...(options.senderName && { name: options.senderName }),
+      },
       subject: options.subject,
       content: [
         {
