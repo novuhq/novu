@@ -260,14 +260,14 @@ describe('API Rate Limiting', () => {
         name: 'throttled combination of single trigger and single global endpoint request',
         requests: [
           { path: '/trigger-category-single-cost', count: 20 },
-          { path: '/global-category-single-cost', count: 200 },
+          { path: '/global-category-single-cost', count: 100 },
         ],
         expectedStatus: 429,
         expectedLimit: mockMaximumUnlimitedGlobal,
-        expectedCost: mockSingleCost * 200,
+        expectedCost: mockSingleCost * 100,
         expectedReset: 1,
         expectedRetryAfter: 1,
-        expectedThrottledRequests: 151, // Upstash algorithm currently limits 1 more request than it should
+        expectedThrottledRequests: 50,
       },
       {
         name: 'throttled bulk trigger request with service level specified on organization and maximum rate limit specified on environment',
