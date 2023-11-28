@@ -272,7 +272,7 @@ function App() {
                     <Route path="" element={<BrandingForm />} />
                     <Route path="layouts" element={<LayoutsListPage />} />
                   </Route>
-                  <Route path="/translations" element={<TranslationRoutes />} />
+                  <Route path="/translations/*" element={<TranslationRoutes />} />
                 </Route>
               </Routes>
             </AuthProvider>
