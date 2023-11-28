@@ -212,6 +212,19 @@ describe('API Rate Limiting', () => {
           await userSession.updateEnvironmentApiRateLimits({ [ApiRateLimitCategoryEnum.TRIGGER]: 60 });
         },
       },
+      {
+        name: 'throttled combination of single trigger and single global endpoint request',
+        requests: [
+          { path: '/trigger-category-single-cost', count: 20 },
+          { path: '/global-category-single-cost', count: 200 },
+        ],
+        expectedStatus: 429,
+        expectedLimit: mockMaximumUnlimitedGlobal,
+        expectedCost: mockSingleCost * 200,
+        expectedReset: 5,
+        expectedRetryAfter: 5,
+        expectedThrottledRequests: 151, // Upstash algorithm currently limits 1 more request than it should
+      },
     ];
 
     testCases
