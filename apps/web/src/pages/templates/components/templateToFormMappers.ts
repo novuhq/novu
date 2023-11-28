@@ -3,24 +3,28 @@ import {
   ICreateNotificationTemplateDto,
   DigestTypeEnum,
   INotificationTemplateStep,
-  NotificationStepDto,
   DelayTypeEnum,
   DigestUnitEnum,
   IWorkflowStepMetadata,
   MonthlyTypeEnum,
+  IStepVariant,
+  NotificationStepDto,
 } from '@novu/shared';
 import { StepTypeEnum, ActorTypeEnum, ChannelCTATypeEnum } from '@novu/shared';
 import { v4 as uuid4 } from 'uuid';
 
 import type { IForm, IFormStep } from './formTypes';
 
-const mapToEmailFormStep = (item: INotificationTemplateStep): IFormStep => ({
+const mapToEmailFormStep = (item: INotificationTemplateStep | IStepVariant): IFormStep => ({
   ...item,
   ...(!item.replyCallback && {
     replyCallback: {
       active: false,
       url: '',
     },
+  }),
+  ...(!!('variants' in item) && {
+    variants: item.variants?.map((variant) => mapToEmailFormStep(variant)) ?? ([] as any),
   }),
   template: {
     ...item.template,
@@ -36,8 +40,11 @@ const mapToEmailFormStep = (item: INotificationTemplateStep): IFormStep => ({
   },
 });
 
-const mapToInAppFormStep = (item: INotificationTemplateStep): IFormStep => ({
+const mapToInAppFormStep = (item: INotificationTemplateStep | IStepVariant): IFormStep => ({
   ...item,
+  ...(!!('variants' in item) && {
+    variants: item.variants?.map((variant) => mapToInAppFormStep(variant)) ?? ([] as any),
+  }),
   template: {
     ...item.template,
     type: item?.template?.type ?? StepTypeEnum.IN_APP,
@@ -53,16 +60,19 @@ const mapToInAppFormStep = (item: INotificationTemplateStep): IFormStep => ({
     cta: {
       data: item?.template?.cta?.data ?? { url: '' },
       type: ChannelCTATypeEnum.REDIRECT,
-      action: item?.template?.cta?.action ?? '',
+      ...(item?.template?.cta?.action ? { action: item?.template?.cta?.action } : {}),
     },
   },
 });
 
-const mapToDigestFormStep = (item: INotificationTemplateStep): IFormStep => {
+const mapToDigestFormStep = (item: INotificationTemplateStep | IStepVariant): IFormStep => {
   const { metadata, template, ...rest } = item;
+  const variants = !!('variants' in item) ? item.variants?.map((variant) => mapToDigestFormStep(variant)) : undefined;
+
   if (!metadata) {
     return {
       ...rest,
+      variants,
       template: template as any,
     };
   }
@@ -70,6 +80,7 @@ const mapToDigestFormStep = (item: INotificationTemplateStep): IFormStep => {
   if (metadata.type === DigestTypeEnum.BACKOFF || metadata.type === DigestTypeEnum.REGULAR) {
     return {
       ...rest,
+      variants,
       template: template as any,
       digestMetadata: {
         type: metadata.type,
@@ -88,6 +99,7 @@ const mapToDigestFormStep = (item: INotificationTemplateStep): IFormStep => {
   if (metadata.type === DigestTypeEnum.TIMED) {
     return {
       ...rest,
+      variants,
       template: template as any,
       digestMetadata: {
         type: metadata.type,
@@ -123,15 +135,19 @@ const mapToDigestFormStep = (item: INotificationTemplateStep): IFormStep => {
 
   return {
     ...rest,
+    variants,
     template: template as any,
   };
 };
 
-const mapToDelayFormStep = (item: INotificationTemplateStep): IFormStep => {
+const mapToDelayFormStep = (item: INotificationTemplateStep | IStepVariant): IFormStep => {
   const { metadata, template, ...rest } = item;
+  const variants = !!('variants' in item) ? item.variants?.map((variant) => mapToDelayFormStep(variant)) : undefined;
+
   if (!metadata) {
     return {
       ...rest,
+      variants,
       template: template as any,
     };
   }
@@ -139,6 +155,7 @@ const mapToDelayFormStep = (item: INotificationTemplateStep): IFormStep => {
   if (metadata.type === DelayTypeEnum.REGULAR) {
     return {
       ...rest,
+      variants,
       template: template as any,
       delayMetadata: {
         type: metadata.type,
@@ -153,6 +170,7 @@ const mapToDelayFormStep = (item: INotificationTemplateStep): IFormStep => {
   if (metadata.type === DelayTypeEnum.SCHEDULED) {
     return {
       ...rest,
+      variants,
       template: template as any,
       delayMetadata: {
         type: metadata.type,
@@ -165,6 +183,7 @@ const mapToDelayFormStep = (item: INotificationTemplateStep): IFormStep => {
 
   return {
     ...rest,
+    variants,
     template: template as any,
   };
 };
@@ -205,47 +224,53 @@ export const mapNotificationTemplateToForm = (template: INotificationTemplate): 
   return form;
 };
 
-export const mapFormToCreateNotificationTemplate = (form: IForm): ICreateNotificationTemplateDto => {
-  const steps = form.steps.map((formStep: IFormStep) => {
-    const { digestMetadata, delayMetadata, template, ...rest } = formStep;
-    const step: NotificationStepDto = { ...rest };
+const mapFormStepToDto = (formStep: IFormStep): NotificationStepDto => {
+  const { digestMetadata, delayMetadata, template, ...rest } = formStep;
+  const step: Omit<IFormStep, 'digestMetadata' | 'delayMetadata' | 'template'> = { ...rest };
 
-    if (template.type === StepTypeEnum.EMAIL && template.contentType === 'customHtml') {
-      template.content = template.htmlContent as string;
-    }
+  if (template.type === StepTypeEnum.EMAIL && template.contentType === 'customHtml') {
+    template.content = template.htmlContent as string;
+    delete template.htmlContent;
+  }
 
-    if (template.type === StepTypeEnum.IN_APP) {
-      if (!template.enableAvatar) {
-        template.actor = {
-          type: ActorTypeEnum.NONE,
-          data: null,
-        };
-      }
-
-      delete template.enableAvatar;
-    }
-
-    if (template.type === StepTypeEnum.DIGEST) {
-      return {
-        ...step,
-        template,
-        metadata: mapFormStepDigestMetadata(formStep),
+  if (template.type === StepTypeEnum.IN_APP) {
+    if (!template.enableAvatar) {
+      template.actor = {
+        type: ActorTypeEnum.NONE,
+        data: null,
       };
     }
 
-    if (template.type === StepTypeEnum.DELAY) {
-      return {
-        ...step,
-        template,
-        metadata: mapFormStepDelayMetadata(formStep),
-      };
-    }
+    delete template.enableAvatar;
+  }
 
+  if (template.type === StepTypeEnum.DIGEST) {
     return {
       ...step,
       template,
+      metadata: mapFormStepDigestMetadata(formStep),
     };
-  });
+  }
+
+  if (template.type === StepTypeEnum.DELAY) {
+    return {
+      ...step,
+      template,
+      metadata: mapFormStepDelayMetadata(formStep),
+    };
+  }
+
+  return {
+    ...step,
+    ...(!!('variants' in step) && {
+      variants: step.variants?.map((variant) => mapFormStepToDto(variant)) ?? ([] as any),
+    }),
+    template,
+  };
+};
+
+export const mapFormToCreateNotificationTemplate = (form: IForm): ICreateNotificationTemplateDto => {
+  const steps = form.steps.map(mapFormStepToDto);
 
   return {
     name: form.name,

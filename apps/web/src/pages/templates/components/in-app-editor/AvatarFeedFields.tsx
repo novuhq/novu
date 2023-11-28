@@ -12,12 +12,16 @@ import { createFeed, getFeeds } from '../../../../api/feeds';
 import { QueryKeys } from '../../../../api/query.keys';
 import { FeedItems } from './FeedItems';
 import { EnableAvatarSwitch } from './EnableAvatarSwitch';
+import type { IForm } from '../formTypes';
+import { useStepFormPath } from '../../hooks/useStepFormPath';
 
-export const AvatarFeedFields = ({ index, control }) => {
+export const AvatarFeedFields = () => {
   const queryClient = useQueryClient();
   const { readonly } = useEnvController();
   const [newFeed, setNewFeed] = useInputState('');
-  const { setValue, getValues } = useFormContext();
+  const { control, setValue, getValues } = useFormContext<IForm>();
+  const path = useStepFormPath();
+
   const { data: feeds } = useQuery([QueryKeys.getFeeds], getFeeds);
   const { mutateAsync: createNewFeed } = useMutation<
     IFeedEntity,
@@ -32,14 +36,14 @@ export const AvatarFeedFields = ({ index, control }) => {
   const [showFeed, setShowFeed] = useState(true);
 
   useEffect(() => {
-    const feed = getValues(`steps.${index}.template.feedId`);
+    const feed = getValues(`${path}.template.feedId`);
     if (feeds?.length && !feed) {
       setTimeout(() => {
-        setValue(`steps.${index}.template.feedId`, '');
+        setValue(`${path}.template.feedId`, '');
       }, 0);
       setShowFeed(false);
     }
-  }, [getValues, setValue, index, feeds]);
+  }, [getValues, setValue, path, feeds]);
 
   async function addNewFeed() {
     if (newFeed) {
@@ -59,7 +63,7 @@ export const AvatarFeedFields = ({ index, control }) => {
       setNewFeed('');
 
       setTimeout(() => {
-        setValue(`steps.${index}.template.feedId`, response._id, { shouldDirty: true });
+        setValue(`${path}.template.feedId`, response._id, { shouldDirty: true });
       }, 0);
       setShowFeed(true);
     }
@@ -67,10 +71,10 @@ export const AvatarFeedFields = ({ index, control }) => {
 
   return (
     <>
-      <EnableAvatarSwitch name={`steps.${index}.template.enableAvatar`} control={control} readonly={readonly} />
+      <EnableAvatarSwitch name={`${path}.template.enableAvatar`} control={control} readonly={readonly} />
       <Divider sx={{ borderTopColor: colors.B40 }} mb={20} />
       <Controller
-        name={`steps.${index}.template.feedId` as any}
+        name={`${path}.template.feedId` as any}
         defaultValue=""
         control={control}
         render={({ field }) => {
@@ -88,7 +92,7 @@ export const AvatarFeedFields = ({ index, control }) => {
                   onChange={() => {
                     setShowFeed(!showFeed);
                     if (showFeed) {
-                      setValue(`steps.${index}.template.feedId`, '', { shouldDirty: true });
+                      setValue(`${path}.template.feedId`, '', { shouldDirty: true });
                     }
                   }}
                   sx={{
@@ -122,7 +126,7 @@ export const AvatarFeedFields = ({ index, control }) => {
                   }
                 />
               </div>
-              <FeedItems field={field} index={index} showFeed={showFeed} setValue={setValue} />
+              <FeedItems field={field} showFeed={showFeed} setValue={setValue} />
             </>
           );
         }}

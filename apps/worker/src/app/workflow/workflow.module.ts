@@ -25,6 +25,7 @@ import {
   StoreSubscriberJobs,
   ConditionsFilter,
   TriggerEvent,
+  SelectVariant,
   MapTriggerRecipients,
   GetTopicSubscribersUseCase,
   getIsTopicNotificationEnabled,
@@ -43,7 +44,6 @@ import {
 } from './services';
 
 import {
-  MessageMatcher,
   SendMessage,
   SendMessageChat,
   SendMessageDelay,
@@ -86,11 +86,11 @@ const USE_CASES = [
   GetNovuLayout,
   GetNovuProviderCredentials,
   SelectIntegration,
+  SelectVariant,
   GetSubscriberPreference,
   GetSubscriberGlobalPreference,
   GetSubscriberTemplatePreference,
   HandleLastFailedJob,
-  MessageMatcher,
   ProcessTenant,
   QueueNextJob,
   RunJob,
