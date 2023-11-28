@@ -47,11 +47,9 @@ export class GetApiRateLimitMaximum {
       throw new InternalServerErrorException(message);
     }
 
-    const { apiRateLimits } = environment;
-
-    let environmentApiRateLimits: IApiRateLimitMaximum;
-    if (apiRateLimits) {
-      environmentApiRateLimits = apiRateLimits;
+    let apiRateLimits: IApiRateLimitMaximum;
+    if (environment.apiRateLimits) {
+      apiRateLimits = environment.apiRateLimits;
     } else {
       const organization = await this.organizationRepository.findOne({ _id: _organizationId });
 
@@ -62,14 +60,14 @@ export class GetApiRateLimitMaximum {
       }
 
       if (organization.apiServiceLevel) {
-        environmentApiRateLimits = this.getDefaultApiRateLimits.default[organization.apiServiceLevel];
+        apiRateLimits = this.getDefaultApiRateLimits.default[organization.apiServiceLevel];
       } else {
         // TODO: NV-3067 - Remove this once all organizations have a service level
-        environmentApiRateLimits = this.getDefaultApiRateLimits.default[ApiServiceLevelEnum.UNLIMITED];
+        apiRateLimits = this.getDefaultApiRateLimits.default[ApiServiceLevelEnum.UNLIMITED];
       }
     }
 
-    const apiRateLimit = environmentApiRateLimits[apiRateLimitCategory];
+    const apiRateLimit = apiRateLimits[apiRateLimitCategory];
 
     return apiRateLimit;
   }
