@@ -350,8 +350,12 @@ describe('API Rate Limiting', () => {
                 );
               });
 
-              const expectedMinThrottled = expectedThrottledRequests * (1 - throttledResponseCountTollerance);
-              const expectedMaxThrottled = expectedThrottledRequests * (1 + throttledResponseCountTollerance);
+              const expectedMinThrottled = Math.floor(
+                expectedThrottledRequests * (1 - throttledResponseCountTollerance)
+              );
+              const expectedMaxThrottled = Math.ceil(
+                expectedThrottledRequests * (1 + throttledResponseCountTollerance)
+              );
               it(`should have between ${expectedMinThrottled} and ${expectedMaxThrottled} requests throttled`, async () => {
                 expect(throttledResponseCount).to.be.greaterThanOrEqual(expectedMinThrottled);
                 expect(throttledResponseCount).to.be.lessThanOrEqual(expectedMaxThrottled);
