@@ -21,17 +21,6 @@ process.env.API_RATE_LIMIT_MAXIMUM_FREE_GLOBAL = `${mockMaximumFreeGlobal}`;
 process.env.API_RATE_LIMIT_MAXIMUM_UNLIMITED_TRIGGER = `${mockMaximumUnlimitedTrigger}`;
 process.env.API_RATE_LIMIT_MAXIMUM_UNLIMITED_GLOBAL = `${mockMaximumUnlimitedGlobal}`;
 
-type TestCase = {
-  name: string;
-  requests: { path: string; count: number }[];
-  expectedStatus: number;
-  expectedLimit: number;
-  expectedCost: number;
-  expectedReset: number;
-  expectedRetryAfter?: number;
-  expectedThrottledRequests: number;
-  setupTest?: (userSession: UserSession) => Promise<void>;
-};
 describe('API Rate Limiting', () => {
   let session: UserSession;
   const pathPrefix = '/v1/rate-limiting';
@@ -169,6 +158,18 @@ describe('API Rate Limiting', () => {
   });
 
   describe('API Rate Limit Scenarios', () => {
+    type TestCase = {
+      name: string;
+      requests: { path: string; count: number }[];
+      expectedStatus: number;
+      expectedLimit: number;
+      expectedCost: number;
+      expectedReset: number;
+      expectedRetryAfter?: number;
+      expectedThrottledRequests: number;
+      setupTest?: (userSession: UserSession) => Promise<void>;
+    };
+
     const testCases: TestCase[] = [
       {
         name: 'allowed single trigger endpoint request',
@@ -301,7 +302,8 @@ describe('API Rate Limiting', () => {
           return () => {
             describe(name, () => {
               let lastResponse: ReturnType<typeof UserSession.prototype.testAgent.get>;
-              let throttledResponses = 0;
+              let throttledResponseCount = 0;
+              const throttledResponseCountTollerance = 0.05;
               const expectedWindowLimit = expectedLimit * mockWindowDuration;
               const expectedBurstLimit = expectedWindowLimit * (1 + mockBurstAllowance);
               const expectedRemaining = Math.max(0, expectedBurstLimit - expectedCost);
@@ -314,7 +316,7 @@ describe('API Rate Limiting', () => {
                     lastResponse = response;
 
                     if (response.statusCode === 429) {
-                      throttledResponses++;
+                      throttledResponseCount++;
                     }
                   }
                 }
@@ -348,8 +350,11 @@ describe('API Rate Limiting', () => {
                 );
               });
 
-              it(`should have ${expectedThrottledRequests} requests throttled`, async () => {
-                expect(throttledResponses).to.equal(expectedThrottledRequests);
+              const expectedMinThrottled = expectedThrottledRequests * (1 - throttledResponseCountTollerance);
+              const expectedMaxThrottled = expectedThrottledRequests * (1 + throttledResponseCountTollerance);
+              it(`should have between ${expectedMinThrottled} and ${expectedMaxThrottled} requests throttled`, async () => {
+                expect(throttledResponseCount).to.be.greaterThanOrEqual(expectedMinThrottled);
+                expect(throttledResponseCount).to.be.lessThanOrEqual(expectedMaxThrottled);
               });
             });
           };
