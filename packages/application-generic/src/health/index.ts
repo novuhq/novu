@@ -7,3 +7,4 @@ export * from './standard-queue.health-indicator';
 export * from './web-sockets-queue.health-indicator';
 export * from './workflow-queue.health-indicator';
 export * from './subscriber-process-queue.health-indicator';
+export * from './health-indicator.interface';
