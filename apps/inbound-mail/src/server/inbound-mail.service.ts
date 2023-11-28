@@ -1,14 +1,10 @@
-import { BullMqService, InboundParseQueue, QueueBaseOptions } from '@novu/application-generic';
+import { BullMqService, InboundParseQueueService, QueueBaseOptions } from '@novu/application-generic';
 import { JobTopicNameEnum } from '@novu/shared';
 
 export class InboundMailService {
-  private inboundParseQueue: InboundParseQueue;
+  public inboundParseQueueService: InboundParseQueueService;
 
   constructor() {
-    this.inboundParseQueue = new InboundParseQueue();
-  }
-
-  public get inboundParseQueueService() {
-    return this.inboundParseQueue;
+    this.inboundParseQueueService = new InboundParseQueueService();
   }
 }

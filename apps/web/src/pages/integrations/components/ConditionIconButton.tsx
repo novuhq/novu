@@ -1,21 +1,18 @@
 import { useState } from 'react';
 import styled from '@emotion/styled';
-import { Group, ActionIcon, Center } from '@mantine/core';
-import { When } from '../../../components/utils/When';
-import { colors, Tooltip, Text, Modal, Button, Title, Condition, ConditionPlus, Warning } from '@novu/design-system';
-
-const IconButton = styled(Group)`
-  text-align: center;
-  border-radius: 8px;
-  width: 32px;
-  height: 32px;
-  color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B60 : colors.B30)};
-
-  &:hover {
-    background: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B30 : colors.B85)};
-    color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.white : colors.B30)};
-  }
-`;
+import { Group } from '@mantine/core';
+import {
+  colors,
+  When,
+  Text,
+  Modal,
+  Button,
+  Title,
+  ActionButton,
+  Condition,
+  ConditionPlus,
+  Warning,
+} from '@novu/design-system';
 
 const RemovesPrimary = () => {
   return (
@@ -40,8 +37,8 @@ export const ConditionIconButton = ({
 
   return (
     <>
-      <Tooltip
-        label={
+      <ActionButton
+        tooltip={
           <>
             {conditions > 0 ? 'Edit' : 'Add'} Conditions
             <When truthy={primary}>
@@ -49,33 +46,19 @@ export const ConditionIconButton = ({
             </When>
           </>
         }
-        position="bottom"
-      >
-        <ActionIcon
-          data-test-id="header-add-conditions-btn"
-          onClick={() => {
-            if (primary && conditions === 0) {
-              setModalOpen(true);
+        tooltipPosition="bottom"
+        Icon={conditions === 0 ? ConditionPlus : Condition}
+        text={conditions > 0 ? `${conditions}` : undefined}
+        onClick={() => {
+          if (primary && conditions === 0) {
+            setModalOpen(true);
 
-              return;
-            }
-            onClick();
-          }}
-          variant="transparent"
-        >
-          <IconButton position="center" spacing={4}>
-            <When truthy={conditions === 0}>
-              <ConditionPlus />
-            </When>
-            <When truthy={conditions > 0}>
-              <Center inline>
-                <Condition />
-                <div>{conditions}</div>
-              </Center>
-            </When>
-          </IconButton>
-        </ActionIcon>
-      </Tooltip>
+            return;
+          }
+          onClick();
+        }}
+        data-test-id="header-add-conditions-btn"
+      />
       <Modal
         opened={modalOpen}
         data-test-id="remove-primary-flag-modal"

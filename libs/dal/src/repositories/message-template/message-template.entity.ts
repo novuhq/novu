@@ -1,8 +1,14 @@
-import { StepTypeEnum, IMessageCTA, IActor, IMessageTemplate } from '@novu/shared';
+import {
+  StepTypeEnum,
+  IMessageCTA,
+  IActor,
+  IMessageTemplate,
+  EnvironmentId,
+  OrganizationId,
+  MessageTemplateContentType,
+} from '@novu/shared';
 
 import { IEmailBlock, ITemplateVariable } from './types';
-import type { OrganizationId } from '../organization';
-import type { EnvironmentId } from '../environment';
 import type { ChangePropsValueType } from '../../types/helpers';
 
 export class MessageTemplateEntity implements IMessageTemplate {
@@ -23,7 +29,7 @@ export class MessageTemplateEntity implements IMessageTemplate {
 
   content: string | IEmailBlock[];
 
-  contentType?: 'editor' | 'customHtml';
+  contentType?: MessageTemplateContentType;
 
   active?: boolean;
 

@@ -1,6 +1,6 @@
 import {
   getInboundParseMailWorkerOptions,
-  InboundParseQueue,
+  InboundParseQueueService as InboundParseQueue,
   InboundParseWorker,
   Queue,
   QueueOptions,
