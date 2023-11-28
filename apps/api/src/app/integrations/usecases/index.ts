@@ -10,14 +10,12 @@ import { CreateIntegration } from './create-integration/create-integration.useca
 import { GetIntegrations } from './get-integrations/get-integrations.usecase';
 import { UpdateIntegration } from './update-integration/update-integration.usecase';
 import { RemoveIntegration } from './remove-integration/remove-integration.usecase';
-import { DeactivateSimilarChannelIntegrations } from './deactivate-integration/deactivate-integration.usecase';
 import { GetActiveIntegrations } from './get-active-integration/get-active-integration.usecase';
 import { CheckIntegration } from './check-integration/check-integration.usecase';
 import { CheckIntegrationEMail } from './check-integration/check-integration-email.usecase';
 import { GetInAppActivated } from './get-in-app-activated/get-in-app-activated.usecase';
 import { SetIntegrationAsPrimary } from './set-integration-as-primary/set-integration-as-primary.usecase';
 import { CreateNovuIntegrations } from './create-novu-integrations/create-novu-integrations.usecase';
-import { DisableNovuIntegration } from './disable-novu-integration/disable-novu-integration.usecase';
 
 export const USE_CASES = [
   GetInAppActivated,
@@ -30,11 +28,9 @@ export const USE_CASES = [
   GetDecryptedIntegrations,
   UpdateIntegration,
   RemoveIntegration,
-  DeactivateSimilarChannelIntegrations,
   CheckIntegration,
   CheckIntegrationEMail,
   CalculateLimitNovuIntegration,
   SetIntegrationAsPrimary,
   CreateNovuIntegrations,
-  DisableNovuIntegration,
 ];

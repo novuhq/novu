@@ -24,48 +24,9 @@ jobs:
         name: ['novu/api-ee', 'novu/api']
     uses: ./.github/workflows/reusable-api-e2e.yml
     with:
-      ee: ${{ contains (matrix.name,'ee') }}
-      submodules: ${{ contains (matrix.name,'ee') }}
-      submodule_branch: "next"
+      ee: ${{ contains (matrix.name,'-ee') }}
+      job-name: ${{ matrix.name }}
     secrets: inherit
-
-  test_e2e_ee:
-    name: Test E2E EE
-    runs-on: ubuntu-latest
-    timeout-minutes: 80
-    permissions:
-      contents: read
-      packages: write
-      deployments: write
-      id-token: write
-    steps:
-      - run: echo ${{ matrix.projectName }}
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/setup-project
-      - uses: ./.github/actions/setup-redis-cluster
-      - uses: mansagroup/nrwl-nx-action@v3
-        name: Lint and build
-        with:
-          targets: lint,build
-          projects: ${{matrix.projectName}}
-
-      - uses: ./.github/actions/start-localstack
-
-      - uses: ./.github/actions/run-worker
-        if: ${{matrix.projectName == '@novu/api' }}
-        with:
-          launch_darkly_sdk_key: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
-
-      - uses: mansagroup/nrwl-nx-action@v3
-        name: Running the E2E tests
-        env:
-          LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
-          GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
-          GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
-          CI_EE_TEST: true
-        with:
-          targets: test:e2e:ee
-          projects: ${{matrix.projectName}}
 
   deploy_dev_api:
     if: "!contains(github.event.head_commit.message, 'ci skip')"
@@ -84,6 +45,9 @@ jobs:
         name: ['novu/api-ee', 'novu/api']
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: ${{ contains (matrix.name,'-ee') }}
+          token: ${{ secrets.SUBMODULES_TOKEN }}
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/docker/build-api
         id: docker_build
@@ -95,7 +59,7 @@ jobs:
           bullmq_secret: ${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}
 
       - name: Checkout cloud infra
-        if: ${{ contains (matrix.name,'ee') }}
+        if: ${{ contains (matrix.name,'-ee') }}
         uses: actions/checkout@master
         with:
           repository: novuhq/cloud-infra
@@ -103,7 +67,7 @@ jobs:
           path: cloud-infra
 
       - name: Configure AWS credentials
-        if: ${{ contains (matrix.name,'ee') }}
+        if: ${{ contains (matrix.name,'-ee') }}
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -111,7 +75,7 @@ jobs:
           aws-region: eu-west-2
 
       - name: Terraform setup
-        if: ${{ contains (matrix.name,'ee') }}
+        if: ${{ contains (matrix.name,'-ee') }}
         uses: hashicorp/setup-terraform@v1
         with:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
@@ -119,12 +83,12 @@ jobs:
           terraform_wrapper: false
 
       - name: Terraform Init
-        if: ${{ contains (matrix.name,'ee') }}
+        if: ${{ contains (matrix.name,'-ee') }}
         working-directory: cloud-infra/terraform/novu
         run: terraform init
 
       - name: Terraform get output
-        if: ${{ contains (matrix.name,'ee') }}
+        if: ${{ contains (matrix.name,'-ee') }}
         working-directory: cloud-infra/terraform/novu
         id: terraform
         run: |
@@ -134,13 +98,13 @@ jobs:
           echo "api_task_name=$(terraform output -json api_task_name | jq -r .)" >> $GITHUB_ENV
 
       - name: Download task definition
-        if: ${{ contains (matrix.name,'ee') }}
+        if: ${{ contains (matrix.name,'-ee') }}
         run: |
           aws ecs describe-task-definition --task-definition ${{ env.api_task_name }} \
           --query taskDefinition > task-definition.json
 
       - name: Render Amazon ECS task definition
-        if: ${{ contains (matrix.name,'ee') }}
+        if: ${{ contains (matrix.name,'-ee') }}
         id: render-web-container
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
@@ -149,7 +113,7 @@ jobs:
           image: ${{ steps.docker_build.outputs.image }}
 
       - name: Deploy to Amazon ECS service
-        if: ${{ contains (matrix.name,'ee') }}
+        if: ${{ contains (matrix.name,'-ee') }}
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.render-web-container.outputs.task-definition }}
@@ -158,14 +122,14 @@ jobs:
           wait-for-service-stability: true
 
       - name: get-npm-version
-        if: ${{ contains (matrix.name,'ee') }}
+        if: ${{ contains (matrix.name,'-ee') }}
         id: package-version
         uses: martinbeentjes/npm-get-version-action@main
         with:
           path: apps/api
 
       - name: Create Sentry release
-        if: ${{ contains (matrix.name,'ee') }}
+        if: ${{ contains (matrix.name,'-ee') }}
         uses: getsentry/action-release@v1
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}

@@ -22,6 +22,7 @@ import {
   TopicRepository,
   TopicSubscribersRepository,
   TenantRepository,
+  WorkflowOverrideRepository,
 } from '@novu/dal';
 import {
   analyticsService,
@@ -39,8 +40,7 @@ import {
   DigestFilterStepsTimed,
   distributedLockService,
   EventsDistributedLockService,
-  FeatureFlagsService,
-  getIsMultiProviderConfigurationEnabled,
+  featureFlagsService,
   InvalidateCacheService,
   LoggerModule,
   ProcessSubscriber,
@@ -51,6 +51,7 @@ import {
   GetTenant,
   CreateTenant,
   ProcessTenant,
+  getUseMergedDigestId,
 } from '@novu/application-generic';
 
 import * as packageJson from '../../../package.json';
@@ -78,6 +79,7 @@ const DAL_MODELS = [
   TopicRepository,
   TopicSubscribersRepository,
   TenantRepository,
+  WorkflowOverrideRepository,
 ];
 
 const dalService = {
@@ -108,8 +110,8 @@ const PROVIDERS = [
   DigestFilterStepsTimed,
   distributedLockService,
   EventsDistributedLockService,
-  FeatureFlagsService,
-  getIsMultiProviderConfigurationEnabled,
+  featureFlagsService,
+  getUseMergedDigestId,
   InvalidateCacheService,
   ProcessSubscriber,
   StorageHelperService,

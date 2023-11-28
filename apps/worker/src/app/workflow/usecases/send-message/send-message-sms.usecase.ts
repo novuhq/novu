@@ -6,19 +6,19 @@ import {
   SubscriberRepository,
   MessageEntity,
   IntegrationEntity,
-  TenantRepository,
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import {
   InstrumentUsecase,
   DetailEnum,
-  CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   SelectIntegration,
   CompileTemplate,
   CompileTemplateCommand,
   SmsFactory,
   GetNovuProviderCredentials,
+  SelectVariant,
+  ExecutionLogQueueService,
 } from '@novu/application-generic';
 
 import { CreateLog } from '../../../shared/logs';
@@ -33,32 +33,26 @@ export class SendMessageSms extends SendMessageBase {
   constructor(
     protected subscriberRepository: SubscriberRepository,
     protected messageRepository: MessageRepository,
-    protected tenantRepository: TenantRepository,
     protected createLogUsecase: CreateLog,
-    protected createExecutionDetails: CreateExecutionDetails,
+    protected executionLogQueueService: ExecutionLogQueueService,
     private compileTemplate: CompileTemplate,
     protected selectIntegration: SelectIntegration,
-    protected getNovuProviderCredentials: GetNovuProviderCredentials
+    protected getNovuProviderCredentials: GetNovuProviderCredentials,
+    protected selectVariant: SelectVariant
   ) {
     super(
       messageRepository,
       createLogUsecase,
-      createExecutionDetails,
+      executionLogQueueService,
       subscriberRepository,
-      tenantRepository,
       selectIntegration,
-      getNovuProviderCredentials
+      getNovuProviderCredentials,
+      selectVariant
     );
   }
 
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
-    const subscriber = await this.getSubscriberBySubscriberId({
-      subscriberId: command.subscriberId,
-      _environmentId: command.environmentId,
-    });
-    if (!subscriber) throw new PlatformException('Subscriber not found');
-
     const overrideSelectedIntegration = command.overrides?.sms?.integrationIdentifier;
 
     const integration = await this.getIntegration({
@@ -76,29 +70,24 @@ export class SendMessageSms extends SendMessageBase {
       message: 'Sending SMS',
     });
 
-    const smsChannel: NotificationStepEntity = command.step;
-    if (!smsChannel.template) throw new PlatformException(`Unexpected error: SMS template is missing`);
+    const step: NotificationStepEntity = command.step;
 
-    const tenant = await this.handleTenantExecution(command.job);
+    if (!step.template) throw new PlatformException(`Unexpected error: SMS template is missing`);
 
-    const payload = {
-      subscriber: subscriber,
-      step: {
-        digest: !!command.events?.length,
-        events: command.events,
-        total_count: command.events?.length,
-      },
-      ...(tenant && { tenant }),
-      ...command.payload,
-    };
+    const { subscriber } = command.compileContext;
+    const template = await this.processVariants(command);
+
+    if (template) {
+      step.template = template;
+    }
 
     let content: string | null = '';
 
     try {
       content = await this.compileTemplate.execute(
         CompileTemplateCommand.create({
-          template: smsChannel.template.content as string,
-          data: payload,
+          template: step.template.content as string,
+          data: this.getCompilePayload(command.compileContext),
         })
       );
     } catch (e) {
@@ -114,8 +103,11 @@ export class SendMessageSms extends SendMessageBase {
     const phone = command.payload.phone || subscriber.phone;
 
     if (!integration) {
-      await this.createExecutionDetails.execute(
+      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+      await this.executionLogQueueService.add(
+        metadata._id,
         CreateExecutionDetailsCommand.create({
+          ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -129,7 +121,8 @@ export class SendMessageSms extends SendMessageBase {
                 }),
               }
             : {}),
-        })
+        }),
+        command.organizationId
       );
 
       return;
@@ -151,7 +144,7 @@ export class SendMessageSms extends SendMessageBase {
       _organizationId: command.organizationId,
       _subscriberId: command._subscriberId,
       _templateId: command._templateId,
-      _messageTemplateId: smsChannel.template._id,
+      _messageTemplateId: step.template._id,
       channel: ChannelTypeEnum.SMS,
       transactionId: command.transactionId,
       phone,
@@ -163,8 +156,11 @@ export class SendMessageSms extends SendMessageBase {
       _jobId: command.jobId,
     });
 
-    await this.createExecutionDetails.execute(
+    const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+    await this.executionLogQueueService.add(
+      metadata._id,
       CreateExecutionDetailsCommand.create({
+        ...metadata,
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         detail: DetailEnum.MESSAGE_CREATED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -173,7 +169,8 @@ export class SendMessageSms extends SendMessageBase {
         isTest: false,
         isRetry: false,
         raw: this.storeContent() ? JSON.stringify(messagePayload) : null,
-      })
+      }),
+      command.organizationId
     );
 
     if (phone && integration) {
@@ -196,8 +193,11 @@ export class SendMessageSms extends SendMessageBase {
         'Subscriber does not have active phone'
       );
 
-      await this.createExecutionDetails.execute(
+      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+      await this.executionLogQueueService.add(
+        metadata._id,
         CreateExecutionDetailsCommand.create({
+          ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
           detail: DetailEnum.SUBSCRIBER_NO_CHANNEL_DETAILS,
@@ -205,7 +205,8 @@ export class SendMessageSms extends SendMessageBase {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-        })
+        }),
+        command.organizationId
       );
 
       return;
@@ -220,8 +221,11 @@ export class SendMessageSms extends SendMessageBase {
         LogCodeEnum.MISSING_SMS_INTEGRATION
       );
 
-      await this.createExecutionDetails.execute(
+      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+      await this.executionLogQueueService.add(
+        metadata._id,
         CreateExecutionDetailsCommand.create({
+          ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
           detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
@@ -229,7 +233,8 @@ export class SendMessageSms extends SendMessageBase {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-        })
+        }),
+        command.organizationId
       );
 
       return;
@@ -243,8 +248,11 @@ export class SendMessageSms extends SendMessageBase {
         command,
         LogCodeEnum.MISSING_SMS_PROVIDER
       );
-      await this.createExecutionDetails.execute(
+      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+      await this.executionLogQueueService.add(
+        metadata._id,
         CreateExecutionDetailsCommand.create({
+          ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
           detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
@@ -252,7 +260,8 @@ export class SendMessageSms extends SendMessageBase {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-        })
+        }),
+        command.organizationId
       );
 
       return;
@@ -281,8 +290,11 @@ export class SendMessageSms extends SendMessageBase {
         id: message._id,
       });
 
-      await this.createExecutionDetails.execute(
+      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+      await this.executionLogQueueService.add(
+        metadata._id,
         CreateExecutionDetailsCommand.create({
+          ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
           detail: DetailEnum.MESSAGE_SENT,
@@ -291,7 +303,8 @@ export class SendMessageSms extends SendMessageBase {
           isTest: false,
           isRetry: false,
           raw: JSON.stringify(result),
-        })
+        }),
+        command.organizationId
       );
 
       if (!result?.id) {
@@ -317,8 +330,11 @@ export class SendMessageSms extends SendMessageBase {
         e
       );
 
-      await this.createExecutionDetails.execute(
+      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+      await this.executionLogQueueService.add(
+        metadata._id,
         CreateExecutionDetailsCommand.create({
+          ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
           detail: DetailEnum.PROVIDER_ERROR,
@@ -327,7 +343,8 @@ export class SendMessageSms extends SendMessageBase {
           isTest: false,
           isRetry: false,
           raw: JSON.stringify(e),
-        })
+        }),
+        command.organizationId
       );
     }
   }

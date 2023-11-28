@@ -5,12 +5,11 @@ import {
   ChannelTypeEnum,
   ChatProviderIdEnum,
   EmailProviderIdEnum,
+  FieldOperatorEnum,
   InAppProviderIdEnum,
   ITenantFilterPart,
   PushProviderIdEnum,
 } from '@novu/shared';
-
-const ORIGINAL_IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
 
 describe('Update Integration - /integrations/:integrationId (PUT)', function () {
   let session: UserSession;
@@ -20,11 +19,6 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
-    process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = 'true';
-  });
-
-  afterEach(async () => {
-    process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = ORIGINAL_IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
   });
 
   it('should throw not found exception when integration is not found', async function () {
@@ -76,7 +70,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
       check: false,
       conditions: [
         {
-          children: [{ field: 'identifier', value: 'test', operator: 'EQUAL', on: 'tenant' }],
+          children: [{ field: 'identifier', value: 'test', operator: FieldOperatorEnum.EQUAL, on: 'tenant' }],
         },
       ],
     };

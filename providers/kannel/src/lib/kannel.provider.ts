@@ -30,7 +30,7 @@ export class KannelSmsProvider implements ISmsProvider {
     const queryParameters = {
       username: this.config.username,
       password: this.config.password,
-      from: this.config.from,
+      from: options.from || this.config.from,
       to: options.to,
       text: options.content,
     };

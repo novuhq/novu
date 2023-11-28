@@ -1,31 +1,42 @@
 import { useEffect, useState } from 'react';
-import { JsonInput, MultiSelect, Group, ActionIcon } from '@mantine/core';
+import { JsonInput, MultiSelect, ActionIcon } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useFormContext, useWatch } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { ChannelTypeEnum, MemberStatusEnum } from '@novu/shared';
 
-import { Button, Text, colors, Tooltip } from '../../../../design-system';
 import { errorMessage, successMessage } from '../../../../utils/notifications';
 import { useAuthContext } from '../../../../components/providers/AuthProvider';
-import { ArrowDown, Check, Copy, Invite } from '../../../../design-system/icons';
-import { inputStyles } from '../../../../design-system/config/inputs.styles';
-import useStyles from '../../../../design-system/select/Select.styles';
+import {
+  Button,
+  Text,
+  colors,
+  Tooltip,
+  ArrowDown,
+  Check,
+  Copy,
+  Invite,
+  inputStyles,
+  useSelectStyles,
+} from '@novu/design-system';
 import { getOrganizationMembers } from '../../../../api/organization';
 import { useProcessVariables, useIntegrationLimit } from '../../../../hooks';
 import { testSendEmailMessage } from '../../../../api/notification-templates';
+import { useStepFormPath } from '../../hooks/useStepFormPath';
+import type { IForm } from '../formTypes';
 
-export function TestSendEmail({ index, isIntegrationActive }: { index: number; isIntegrationActive: boolean }) {
+export function TestSendEmail({ isIntegrationActive }: { isIntegrationActive: boolean }) {
   const { currentUser } = useAuthContext();
-  const { control } = useFormContext();
+  const { control } = useFormContext<IForm>();
+  const path = useStepFormPath();
 
   const clipboardJson = useClipboard({ timeout: 1000 });
-  const { classes } = useStyles();
+  const { classes } = useSelectStyles();
 
   const { mutateAsync: testSendEmailEvent, isLoading } = useMutation(testSendEmailMessage);
   const template = useWatch({
-    name: `steps.${index}.template`,
+    name: `${path}.template`,
     control,
   });
 

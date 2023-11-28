@@ -12,9 +12,7 @@ jobs:
         name: [ 'novu/inbound-mail-ee', 'novu/inbound-mail' ]
     uses: ./.github/workflows/reusable-inbound-mail-e2e.yml
     with:
-      ee: ${{ contains (matrix.name,'ee') }}
-      submodules: ${{ contains (matrix.name,'ee') }}
-      submodule_branch: "main"
+      ee: ${{ contains (matrix.name,'-ee') }}
     secrets: inherit
 
   build_prod_image:

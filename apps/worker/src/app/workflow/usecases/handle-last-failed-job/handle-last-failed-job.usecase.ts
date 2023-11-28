@@ -1,18 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { JobRepository } from '@novu/dal';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
-import * as Sentry from '@sentry/node';
 import {
-  CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   DetailEnum,
+  ExecutionLogQueueService,
   InstrumentUsecase,
 } from '@novu/application-generic';
 
 import { HandleLastFailedJobCommand } from './handle-last-failed-job.command';
 
 import { QueueNextJob, QueueNextJobCommand } from '../queue-next-job';
-import { SendMessage, SendMessageCommand } from '../send-message';
 import { PlatformException } from '../../../shared/utils';
 import { NotFoundError } from 'rxjs';
 
@@ -21,7 +19,7 @@ const LOG_CONTEXT = 'HandleLastFailedJob';
 @Injectable()
 export class HandleLastFailedJob {
   constructor(
-    private createExecutionDetails: CreateExecutionDetails,
+    private executionLogQueueService: ExecutionLogQueueService,
     private queueNextJob: QueueNextJob,
     private jobRepository: JobRepository
   ) {}
@@ -36,15 +34,17 @@ export class HandleLastFailedJob {
   public async execute(command: HandleLastFailedJobCommand): Promise<void> {
     const { jobId, error } = command;
 
-    const job = await this.jobRepository.findById(jobId);
+    const job = await this.jobRepository.findOne({ _id: jobId, _environmentId: command.environmentId });
     if (!job) {
       const message = `Job ${jobId} not found when handling the failure of the latest attempt for a backed off job`;
       Logger.error(message, new NotFoundError(message), LOG_CONTEXT);
       throw new PlatformException(message);
     }
-
-    await this.createExecutionDetails.execute(
+    const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+    await this.executionLogQueueService.add(
+      metadata._id,
       CreateExecutionDetailsCommand.create({
+        ...metadata,
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: DetailEnum.WEBHOOK_FILTER_FAILED_LAST_RETRY,
         source: ExecutionDetailsSourceEnum.WEBHOOK,
@@ -52,7 +52,8 @@ export class HandleLastFailedJob {
         isTest: false,
         isRetry: true,
         raw: JSON.stringify({ message: JSON.parse(error.message).message }),
-      })
+      }),
+      job._organizationId
     );
 
     if (!job?.step?.shouldStopOnFail) {

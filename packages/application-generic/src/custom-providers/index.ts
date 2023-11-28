@@ -1,20 +1,21 @@
 import {
   AnalyticsService,
   BullMqService,
+  CacheInMemoryProviderService,
   CacheService,
   DistributedLockService,
   FeatureFlagsService,
-  InMemoryProviderEnum,
-  InMemoryProviderService,
   ReadinessService,
-  OldInstanceBullMqService,
   StandardQueueService,
+  SubscriberProcessQueueService,
   WebSocketsQueueService,
   WorkflowQueueService,
+  ExecutionLogQueueService,
 } from '../services';
 import {
-  GetIsMultiProviderConfigurationEnabled,
+  GetIsApiRateLimitingEnabled,
   GetIsTopicNotificationEnabled,
+  GetUseMergedDigestId,
 } from '../usecases';
 
 export const featureFlagsService = {
@@ -27,14 +28,12 @@ export const featureFlagsService = {
   },
 };
 
-export const getIsMultiProviderConfigurationEnabled = {
-  provide: GetIsMultiProviderConfigurationEnabled,
+export const getUseMergedDigestId = {
+  provide: GetUseMergedDigestId,
   useFactory: async (
     featureFlagServiceItem: FeatureFlagsService
-  ): Promise<GetIsMultiProviderConfigurationEnabled> => {
-    const useCase = new GetIsMultiProviderConfigurationEnabled(
-      featureFlagServiceItem
-    );
+  ): Promise<GetUseMergedDigestId> => {
+    const useCase = new GetUseMergedDigestId(featureFlagServiceItem);
 
     return useCase;
   },
@@ -53,13 +52,22 @@ export const getIsTopicNotificationEnabled = {
   inject: [FeatureFlagsService],
 };
 
-export const inMemoryProviderService = {
-  provide: InMemoryProviderService,
-  useFactory: (
-    provider: InMemoryProviderEnum,
-    enableAutoPipelining?: boolean
-  ): InMemoryProviderService => {
-    return new InMemoryProviderService(provider, enableAutoPipelining);
+export const getIsApiRateLimitingEnabled = {
+  provide: GetIsApiRateLimitingEnabled,
+  useFactory: async (
+    featureFlagsServiceItem: FeatureFlagsService
+  ): Promise<GetIsApiRateLimitingEnabled> => {
+    const useCase = new GetIsApiRateLimitingEnabled(featureFlagsServiceItem);
+
+    return useCase;
+  },
+  inject: [FeatureFlagsService],
+};
+
+export const cacheInMemoryProviderService = {
+  provide: CacheInMemoryProviderService,
+  useFactory: (): CacheInMemoryProviderService => {
+    return new CacheInMemoryProviderService();
   },
 };
 
@@ -74,28 +82,13 @@ export const bullMqService = {
   },
 };
 
-export const oldInstanceBullMqService = {
-  provide: OldInstanceBullMqService,
-  useFactory: async (): Promise<OldInstanceBullMqService> => {
-    const service = new OldInstanceBullMqService();
-
-    await service.initialize();
-
-    return service;
-  },
-};
-
 export const cacheService = {
   provide: CacheService,
   useFactory: async (): Promise<CacheService> => {
-    const enableAutoPipelining =
-      process.env.REDIS_CACHE_ENABLE_AUTOPIPELINING === 'false';
-    const factoryInMemoryProviderService = inMemoryProviderService.useFactory(
-      InMemoryProviderEnum.ELASTICACHE,
-      enableAutoPipelining
-    );
+    const factoryCacheInMemoryProviderService =
+      cacheInMemoryProviderService.useFactory();
 
-    const service = new CacheService(factoryInMemoryProviderService);
+    const service = new CacheService(factoryCacheInMemoryProviderService);
 
     await service.initialize();
 
@@ -116,11 +109,12 @@ export const analyticsService = {
 export const distributedLockService = {
   provide: DistributedLockService,
   useFactory: async (): Promise<DistributedLockService> => {
-    const factoryInMemoryProviderService = inMemoryProviderService.useFactory(
-      InMemoryProviderEnum.ELASTICACHE
-    );
+    const factoryCacheInMemoryProviderService =
+      cacheInMemoryProviderService.useFactory();
 
-    const service = new DistributedLockService(factoryInMemoryProviderService);
+    const service = new DistributedLockService(
+      factoryCacheInMemoryProviderService
+    );
 
     await service.initialize();
 
@@ -133,9 +127,23 @@ export const bullMqTokenList = {
   useFactory: (
     standardQueueService: StandardQueueService,
     webSocketsQueueService: WebSocketsQueueService,
-    workflowQueueService: WorkflowQueueService
+    workflowQueueService: WorkflowQueueService,
+    subscriberProcessQueueService: SubscriberProcessQueueService,
+    executionLogQueueService: ExecutionLogQueueService
   ) => {
-    return [standardQueueService, webSocketsQueueService, workflowQueueService];
+    return [
+      standardQueueService,
+      webSocketsQueueService,
+      workflowQueueService,
+      subscriberProcessQueueService,
+      executionLogQueueService,
+    ];
   },
-  inject: [StandardQueueService, WebSocketsQueueService, WorkflowQueueService],
+  inject: [
+    StandardQueueService,
+    WebSocketsQueueService,
+    WorkflowQueueService,
+    SubscriberProcessQueueService,
+    ExecutionLogQueueService,
+  ],
 };
