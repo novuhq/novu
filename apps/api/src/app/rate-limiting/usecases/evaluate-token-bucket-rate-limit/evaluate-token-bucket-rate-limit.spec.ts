@@ -123,7 +123,7 @@ describe('EvaluateTokenBucketRateLimit', () => {
         proportionHighCost: number;
         /**
          * The proportion of the window duration to jitter the request duration by.
-         * Low value to simulate bursty request patterns.
+         * Low value to simulate burst request patterns.
          * High value to simulate sustained request patterns.
          */
         proportionJitter: number;

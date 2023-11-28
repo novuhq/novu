@@ -536,6 +536,8 @@
     "Krakend",
     "ratelimit",
     "Ratelimit",
+    "stdev",
+    "Stdev",
   ],
   "flagWords": [],
   "patterns": [

@@ -83,7 +83,7 @@ export class EvaluateTokenBucketRateLimit {
     local cost         = tonumber(ARGV[5]) -- cost of request
     local remaining    = 0 -- remaining number of tokens
     local reset        = 0 -- timestamp when next request of {cost} token(s) can be accepted
-    local resetMult    = 0 -- multiplier for the next reset time
+    local resetCost    = 0 -- multiplier for the next reset time
     local lastRefill   = 0 -- timestamp of last refill
 
     local bucket = redis.call("HMGET", key, "lastRefill", "tokens")
@@ -92,7 +92,7 @@ export class EvaluateTokenBucketRateLimit {
       -- The bucket does not exist yet, so we create it and add a ttl.
       lastRefill = now
       remaining = maxTokens - cost
-      resetMult = (remaining < cost) and (cost - remaining) or cost
+      resetCost = (remaining < cost) and (cost - remaining) or cost
       redis.call("HMSET", key, "lastRefill", lastRefill, "tokens", remaining)
       redis.call("PEXPIRE", key, interval * 2)
     else
@@ -103,7 +103,7 @@ export class EvaluateTokenBucketRateLimit {
       if tokens >= cost then
         -- Delay refill until bucket is empty
         remaining = tokens - cost
-        resetMult = (remaining < cost) and (cost - remaining) or cost
+        resetCost = (remaining < cost) and (cost - remaining) or cost
         redis.call("HMSET", key, "tokens", remaining)
       else
         local elapsed = now - lastRefill
@@ -114,16 +114,16 @@ export class EvaluateTokenBucketRateLimit {
         if remaining >= 0 then
           -- Update the time of the last refill depending on how many tokens we added
           lastRefill = lastRefill + tokensToAdd * fillInterval
-          resetMult = (remaining < cost) and (cost - remaining) or cost
+          resetCost = (remaining < cost) and (cost - remaining) or cost
           redis.call("HMSET", key, "lastRefill", lastRefill, "tokens", remaining)
           redis.call("PEXPIRE", key, interval * 2)
         else
-          resetMult = cost - tokens
+          resetCost = cost - tokens
         end
       end
     end
     
-    reset = lastRefill + resetMult * fillInterval
+    reset = lastRefill + resetCost * fillInterval
     return {remaining, reset}
 `;
 
