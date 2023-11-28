@@ -20,6 +20,7 @@ export class PlunkEmailProvider implements IEmailProvider {
   constructor(
     private config: {
       apiKey: string;
+      senderName: string;
     }
   ) {
     this.plunk = new Plunk(this.config.apiKey);
@@ -53,7 +54,7 @@ export class PlunkEmailProvider implements IEmailProvider {
   ): Promise<ISendMessageSuccessResponse> {
     const response: IPlunkResponse = await this.plunk.emails.send({
       from: options.from,
-      ...(options.senderName && { name: options.senderName }),
+      name: options.senderName || this.config.senderName,
       to: options.to,
       subject: options.subject,
       body: options.html || options.text,
