@@ -29,7 +29,12 @@ export class EvaluateTokenBucketRateLimit {
 
     const ratelimit = new Ratelimit({
       redis: cacheClient,
-      limiter: this.createLimiter(command.refillRate, command.windowDuration, command.maxTokens, command.cost),
+      limiter: EvaluateTokenBucketRateLimit.tokenBucketLimiter(
+        command.refillRate,
+        command.windowDuration,
+        command.maxTokens,
+        command.cost
+      ),
       prefix: '', // Empty cache key prefix to give us full control over the key format
       ephemeralCache: this.ephemeralCache,
     });
@@ -63,9 +68,13 @@ export class EvaluateTokenBucketRateLimit {
     };
   }
 
-  public createLimiter(refillRate: number, interval: number, maxTokens: number, cost: number): RegionLimiter {
+  public static tokenBucketLimiter(
+    refillRate: number,
+    interval: number,
+    maxTokens: number,
+    cost: number
+  ): RegionLimiter {
     const script = /* Lua */ `
-    redis.call("SET", "LOG:STA", "---------------------------------")
     local key          = KEYS[1]           -- current interval identifier including prefixes
     local maxTokens    = tonumber(ARGV[1]) -- maximum number of tokens
     local interval     = tonumber(ARGV[2]) -- size of the window in milliseconds
@@ -115,7 +124,6 @@ export class EvaluateTokenBucketRateLimit {
     end
     
     reset = lastRefill + resetMult * fillInterval
-    redis.call("SET", "LOG:END", "---------------------------------")
     return {remaining, reset}
 `;
 
