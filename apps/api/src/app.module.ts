@@ -87,11 +87,11 @@ const modules = baseModules.concat(enterpriseModules);
 const providers: Provider[] = [
   {
     provide: APP_INTERCEPTOR,
-    useClass: IdempotencyInterceptor,
+    useClass: ApiRateLimitInterceptor,
   },
   {
     provide: APP_INTERCEPTOR,
-    useClass: ApiRateLimitInterceptor,
+    useClass: IdempotencyInterceptor,
   },
 ];
 
