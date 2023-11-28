@@ -72,7 +72,9 @@ export class PromoteChangeToEnvironment {
         if (!require('@novu/ee-translation')?.PromoteTranslationGroupChange) {
           throw new BadRequestException('Translation module is not loaded');
         }
-        const usecase = this.moduleRef.get(require('@novu/ee-translation')?.PromoteTranslationGroupChange);
+        const usecase = this.moduleRef.get(require('@novu/ee-translation')?.PromoteTranslationGroupChange, {
+          strict: false,
+        });
         await usecase.execute(typeCommand);
         break;
       default:

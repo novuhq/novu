@@ -18,7 +18,9 @@ export class PromoteTranslationChange {
     if (!require('@novu/ee-translation')?.PromoteTranslationChange) {
       throw new BadRequestException('Translation module is not loaded');
     }
-    const usecase = this.moduleRef.get(require('@novu/ee-translation')?.PromoteTranslationChange);
+    const usecase = this.moduleRef.get(require('@novu/ee-translation')?.PromoteTranslationChange, {
+      strict: false,
+    });
     await usecase.execute(command, this.applyGroupChange.bind(this));
   }
 
