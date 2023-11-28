@@ -34,3 +34,4 @@ export * from './get-topic-subscribers';
 export * from './subscriber-job-bound/subscriber-job-bound.usecase';
 export * from './subscriber-job-bound/subscriber-job-bound.command';
 export * from './create-change';
+export * from './promote-type-change.command';
