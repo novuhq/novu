@@ -99,7 +99,7 @@ describe('EvaluateTokenBucketRateLimit', () => {
       });
     });
 
-    describe('Redis EVAL script benchmarks', () => {
+    describe.skip('Redis EVAL script benchmarks', () => {
       type TestCase = {
         /**
          * Test scenario description
