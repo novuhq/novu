@@ -245,7 +245,7 @@ describe('API Rate Limiting', () => {
             describe(name, () => {
               let lastResponse: ReturnType<typeof UserSession.prototype.testAgent.get>;
               let throttledResponseCount = 0;
-              const throttledResponseCountTollerance = 0.05;
+              const throttledResponseCountTolerance = 0.05;
               const expectedWindowLimit = expectedLimit * mockWindowDuration;
               const expectedBurstLimit = expectedWindowLimit * (1 + mockBurstAllowance);
               const expectedRemaining = Math.max(0, expectedBurstLimit - expectedCost);
@@ -293,11 +293,9 @@ describe('API Rate Limiting', () => {
               });
 
               const expectedMinThrottled = Math.floor(
-                expectedThrottledRequests * (1 - throttledResponseCountTollerance)
+                expectedThrottledRequests * (1 - throttledResponseCountTolerance)
               );
-              const expectedMaxThrottled = Math.ceil(
-                expectedThrottledRequests * (1 + throttledResponseCountTollerance)
-              );
+              const expectedMaxThrottled = Math.ceil(expectedThrottledRequests * (1 + throttledResponseCountTolerance));
               it(`should have between ${expectedMinThrottled} and ${expectedMaxThrottled} requests throttled`, async () => {
                 expect(throttledResponseCount).to.be.greaterThanOrEqual(expectedMinThrottled);
                 expect(throttledResponseCount).to.be.lessThanOrEqual(expectedMaxThrottled);
