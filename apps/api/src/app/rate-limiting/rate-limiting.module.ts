@@ -8,6 +8,7 @@ import { ApiRateLimitInterceptor } from './guards';
   imports: [
     SharedModule,
     ThrottlerModule.forRoot([
+      // The following configuration is required for the NestJS ThrottlerModule to work. It has no effect.
       {
         ttl: 60000,
         limit: 10,
