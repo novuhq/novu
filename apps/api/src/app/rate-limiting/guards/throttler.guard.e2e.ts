@@ -1,7 +1,7 @@
 import { UserSession } from '@novu/testing';
 import { RateLimitHeaderKeysEnum } from './throttler.guard';
 import { expect } from 'chai';
-import { ApiRateLimitCategoryEnum, ApiRateLimitCostEnum, ApiServiceLevelEnum } from '@novu/shared';
+import { ApiRateLimitCategoryEnum, ApiRateLimitCostEnum } from '@novu/shared';
 
 const mockSingleCost = 1;
 const mockBulkCost = 5;
@@ -21,17 +21,6 @@ process.env.API_RATE_LIMIT_MAXIMUM_FREE_GLOBAL = `${mockMaximumFreeGlobal}`;
 process.env.API_RATE_LIMIT_MAXIMUM_UNLIMITED_TRIGGER = `${mockMaximumUnlimitedTrigger}`;
 process.env.API_RATE_LIMIT_MAXIMUM_UNLIMITED_GLOBAL = `${mockMaximumUnlimitedGlobal}`;
 
-type TestCase = {
-  name: string;
-  requests: { path: string; count: number }[];
-  expectedStatus: number;
-  expectedLimit: number;
-  expectedCost: number;
-  expectedReset: number;
-  expectedRetryAfter?: number;
-  expectedThrottledRequests: number;
-  setupTest?: (userSession: UserSession) => Promise<void>;
-};
 describe('API Rate Limiting', () => {
   let session: UserSession;
   const pathPrefix = '/v1/rate-limiting';
