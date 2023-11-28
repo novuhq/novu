@@ -45,7 +45,7 @@ export class MailersendEmailProvider implements IEmailProvider {
 
     const emailParams = new EmailParams()
       .setFrom(options.from ?? this.config.from)
-      .setFromName(this.config.senderName)
+      .setFromName(options.senderName || this.config.senderName || '')
       .setRecipients(recipients)
       .setSubject(options.subject)
       .setHtml(options.html)

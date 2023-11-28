@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ApiRateLimitAlgorithmEnum } from '@novu/shared';
 import { EvaluateApiRateLimitCommand } from './evaluate-api-rate-limit.command';
-import { GetApiRateLimitMaximum } from '../get-api-rate-limit-maximum';
+import { GetApiRateLimitMaximum, GetApiRateLimitMaximumCommand } from '../get-api-rate-limit-maximum';
 import { InstrumentUsecase, buildEvaluateApiRateLimitKey } from '@novu/application-generic';
 import { GetApiRateLimitAlgorithmConfig } from '../get-api-rate-limit-algorithm-config';
 import { EvaluateApiRateLimitResponseDto } from './evaluate-api-rate-limit.types';
@@ -20,11 +20,13 @@ export class EvaluateApiRateLimit {
 
   @InstrumentUsecase()
   async execute(command: EvaluateApiRateLimitCommand): Promise<EvaluateApiRateLimitResponseDto> {
-    const maxLimitPerSecond = await this.getApiRateLimitMaximum.execute({
-      apiRateLimitCategory: command.apiRateLimitCategory,
-      environmentId: command.environmentId,
-      organizationId: command.organizationId,
-    });
+    const maxLimitPerSecond = await this.getApiRateLimitMaximum.execute(
+      GetApiRateLimitMaximumCommand.create({
+        apiRateLimitCategory: command.apiRateLimitCategory,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+      })
+    );
 
     const windowDuration = this.getApiRateLimitAlgorithmConfig.default[ApiRateLimitAlgorithmEnum.WINDOW_DURATION];
     const burstAllowance = this.getApiRateLimitAlgorithmConfig.default[ApiRateLimitAlgorithmEnum.BURST_ALLOWANCE];

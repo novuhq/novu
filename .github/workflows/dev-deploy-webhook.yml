@@ -79,11 +79,11 @@ jobs:
           terraform_wrapper: false
 
       - name: Terraform Init
-        working-directory: cloud-infra/terraform/novu
+        working-directory: cloud-infra/terraform/novu/aws
         run: terraform init
 
       - name: Terraform get output
-        working-directory: cloud-infra/terraform/novu
+        working-directory: cloud-infra/terraform/novu/aws
         id: terraform
         run: |
           echo "webhook_ecs_container_name=$(terraform output -json webhook_ecs_container_name | jq -r .)" >> $GITHUB_ENV

@@ -15,7 +15,7 @@ import {
   ActiveJobsMetricQueueService,
   CompletedJobsMetricQueueService,
   ExecutionLogQueueService,
-  InboundParseQueue,
+  InboundParseQueueService,
   StandardQueueService,
   SubscriberProcessQueueService,
   WebSocketsQueueService,
@@ -39,7 +39,7 @@ const PROVIDERS: Provider[] = [
   CompletedJobsMetricQueueService,
   CompletedJobsMetricQueueServiceHealthIndicator,
   CompletedJobsMetricWorkerService,
-  InboundParseQueue,
+  InboundParseQueueService,
   InboundParseWorker,
   InboundParseQueueServiceHealthIndicator,
   ReadinessService,
@@ -65,7 +65,7 @@ const PROVIDERS: Provider[] = [
 export class QueuesModule {}
 
 const APP_PROVIDERS: Provider[] = [
-  InboundParseQueue,
+  InboundParseQueueService,
   InboundParseWorker,
   InboundParseQueueServiceHealthIndicator,
   WebSocketsQueueService,

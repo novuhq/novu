@@ -37,7 +37,6 @@ import {
   getIsApiRateLimitingEnabled,
   InvalidateCacheService,
   LoggerModule,
-  QueuesModule,
   storageService,
 } from '@novu/application-generic';
 
