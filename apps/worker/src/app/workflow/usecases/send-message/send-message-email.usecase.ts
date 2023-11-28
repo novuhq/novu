@@ -205,7 +205,7 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     try {
-      ({ html, content, subject } = await this.compileEmailTemplateUsecase.execute(
+      ({ html, content, subject, senderName } = await this.compileEmailTemplateUsecase.execute(
         CompileEmailTemplateCommand.create({
           environmentId: command.environmentId,
           organizationId: command.organizationId,
