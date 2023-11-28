@@ -74,6 +74,7 @@ export class EvaluateTokenBucketRateLimit {
     maxTokens: number,
     cost: number
   ): RegionLimiter {
+    // Adapted from https://github.com/upstash/ratelimit/blob/3a8cfb00e827188734ac347965cb743a75fcb98a/src/single.ts#L292
     const script = /* Lua */ `
     local key          = KEYS[1]           -- current interval identifier including prefixes
     local maxTokens    = tonumber(ARGV[1]) -- maximum number of tokens
