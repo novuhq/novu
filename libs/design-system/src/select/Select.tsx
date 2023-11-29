@@ -26,6 +26,7 @@ interface ISelectProps extends SpacingProps {
   label?: React.ReactNode;
   error?: React.ReactNode;
   itemComponent?: FC<any>;
+  valueComponent?: FC<any>;
   placeholder?: string;
   description?: string;
   getCreateLabel?: (query: string) => React.ReactNode;

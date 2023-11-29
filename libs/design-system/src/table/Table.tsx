@@ -41,6 +41,8 @@ export type IExtendedColumn<T extends object = {}> = Column<T> & {
   Cell?: (props: IExtendedCellProps<T>) => React.ReactNode;
 };
 
+export type IRow<T extends object = {}> = Row<T>;
+
 const defaultColumn: Partial<IExtendedColumn> = {
   Cell: DefaultCell,
 };
