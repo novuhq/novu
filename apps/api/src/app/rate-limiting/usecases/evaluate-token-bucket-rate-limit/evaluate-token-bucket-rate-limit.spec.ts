@@ -364,8 +364,10 @@ describe('EvaluateTokenBucketRateLimit', () => {
                   const proms = Array.from({ length: totalRequests }).map(async (_val, index) => {
                     const cost = Math.random() < proportionHighCost ? mockHighCost : mockLowCost;
                     /**
-                     * Distribute unique ids with request allocation skewed left,
-                     * matching an expected distribution of requests per unique API client.
+                     * Distribute unique ids with request allocation skewed left.
+                     * matching an expected distribution of requests per unique API client, where:
+                     * - the majority of clients make a small number of requests
+                     * - a small number of clients make a large number of requests
                      *
                      * Number of Requests per Unique Id
                      * ID Requests
