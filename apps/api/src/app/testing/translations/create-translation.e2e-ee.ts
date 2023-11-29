@@ -25,14 +25,25 @@ describe('Create translation group - /translations/groups (POST)', async () => {
     expect(group.name).to.eq('test');
     expect(group.identifier).to.eq('test');
 
-    const data = await session.testAgent.get(`/v1/translations/groups/test`).send();
+    let data = await session.testAgent.get(`/v1/translations/groups/test`).send();
     group = data.body.data;
-    const locales = group.translations.map((t) => t.isoLanguage);
+    let locales = group.translations.map((t) => t.isoLanguage);
 
     expect(group.name).to.eq('test');
     expect(group.identifier).to.eq('test');
     expect(locales).to.deep.eq(['en_US']);
     expect(id).to.equal(group.id);
+    await session.applyChanges({
+      enabled: false,
+    });
+    await session.switchToProdEnvironment();
+
+    data = await session.testAgent.get(`/v1/translations/groups/test`).send();
+    group = data.body.data;
+    locales = group.translations.map((t) => t.isoLanguage);
+    expect(group.name).to.eq('test');
+    expect(group.identifier).to.eq('test');
+    expect(locales).to.deep.eq(['en_US']);
   });
 
   it('should check that default locale is included in group', async () => {
