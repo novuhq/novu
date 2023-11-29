@@ -29,6 +29,10 @@ describe('API Rate Limiting', () => {
     authHeader?: string
   ) => Promise<Awaited<ReturnType<typeof UserSession.prototype.testAgent.get>>>;
 
+  before(() => {
+    process.env.LAUNCH_DARKLY_SDK_KEY = ''; // disable Launch Darkly to allow test to define FF state
+  });
+
   describe('Guard logic', () => {
     beforeEach(async () => {
       process.env.IS_API_RATE_LIMITING_ENABLED = 'true';
