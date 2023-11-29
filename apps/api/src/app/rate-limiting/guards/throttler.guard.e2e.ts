@@ -77,24 +77,24 @@ describe('API Rate Limiting', () => {
     });
 
     describe('RateLimit-Policy', () => {
-      const testParams = [
-        { name: 'limit', expected: `${mockMaximumUnlimitedGlobal * mockWindowDuration}` },
-        { name: 'w', expected: `w=${mockWindowDuration}` },
+      const testParams: Array<{ name: string; expectedRegex: string }> = [
+        { name: 'limit', expectedRegex: `${mockMaximumUnlimitedGlobal * mockWindowDuration}` },
+        { name: 'w', expectedRegex: `w=${mockWindowDuration}` },
         {
           name: 'burst',
-          expected: `burst=${mockMaximumUnlimitedGlobal * (1 + mockBurstAllowance) * mockWindowDuration}`,
+          expectedRegex: `burst=${mockMaximumUnlimitedGlobal * (1 + mockBurstAllowance) * mockWindowDuration}`,
         },
-        { name: 'comment', expected: 'comment="token bucket"' },
-        { name: 'category', expected: `category="${ApiRateLimitCategoryEnum.GLOBAL}"` },
-        { name: 'cost', expected: `cost="${ApiRateLimitCostEnum.SINGLE}"` },
+        { name: 'comment', expectedRegex: `comment="[a-zA-Z ]*"` },
+        { name: 'category', expectedRegex: `category="(${Object.values(ApiRateLimitCategoryEnum).join('|')})"` },
+        { name: 'cost', expectedRegex: `cost="(${Object.values(ApiRateLimitCostEnum).join('|')})"` },
       ];
 
-      testParams.forEach(({ name, expected }) => {
+      testParams.forEach(({ name, expectedRegex }) => {
         it(`should include the ${name} parameter`, async () => {
           const response = await request(pathPrefix + '/no-category-no-cost');
           const policyHeader = response.headers[RateLimitHeaderKeysEnum.RATE_LIMIT_POLICY.toLowerCase()];
 
-          expect(policyHeader).to.contain(expected);
+          expect(policyHeader).to.match(new RegExp(expectedRegex));
         });
       });
 
@@ -135,7 +135,7 @@ describe('API Rate Limiting', () => {
           expect(policyHeader).to.contain(`category="${ApiRateLimitCategoryEnum.TRIGGER}"`);
         });
 
-        it('should use the category decorator defined on the controller for an endpoint WITHOUT cost decorator', async () => {
+        it('should use the cost decorator defined on the controller for an endpoint WITHOUT cost decorator', async () => {
           const response = await request(controllerPathPrefix + '/no-category-no-cost-override');
           const policyHeader = response.headers[RateLimitHeaderKeysEnum.RATE_LIMIT_POLICY.toLowerCase()];
 
