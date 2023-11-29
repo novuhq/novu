@@ -161,7 +161,7 @@ export class EvaluateTokenBucketRateLimit {
       )) as [number, number];
 
       const success = remaining >= 0;
-      const nonNegRemaining = Math.max(0, remaining);
+      const nonNegativeRemaining = Math.max(0, remaining);
       if (ctx.cache && !success) {
         ctx.cache.blockUntil(localCacheIdentifier, reset);
       }
@@ -169,7 +169,7 @@ export class EvaluateTokenBucketRateLimit {
       return {
         success,
         limit: refillRate,
-        remaining: nonNegRemaining,
+        remaining: nonNegativeRemaining,
         reset,
         pending: Promise.resolve(),
       };
