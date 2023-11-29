@@ -77,7 +77,7 @@ export class SendgridEmailProvider implements IEmailProvider {
     const mailData: Partial<MailDataRequired> = {
       from: {
         email: options.from || this.config.from,
-        name: this.config.senderName,
+        name: options.senderName || this.config.senderName,
       },
       ...this.getIpPoolObject(options),
       to: options.to.map((email) => ({ email })),

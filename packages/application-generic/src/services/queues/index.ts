@@ -13,7 +13,7 @@ export {
   QueueBaseService,
   ActiveJobsMetricQueueService,
   CompletedJobsMetricQueueService,
-  InboundParseQueueService as InboundParseQueue,
+  InboundParseQueueService,
   StandardQueueService,
   WebSocketsQueueService,
   WorkflowQueueService,
