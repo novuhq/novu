@@ -90,7 +90,7 @@ export class EnvironmentRepository extends BaseRepository<EnvironmentDBModel, En
   }
 
   async updateApiRateLimits(environmentId: string, apiRateLimits: Partial<IApiRateLimitMaximum>) {
-    await this.update(
+    return await this.update(
       {
         _id: environmentId,
       },
@@ -104,7 +104,5 @@ export class EnvironmentRepository extends BaseRepository<EnvironmentDBModel, En
         },
       ]
     );
-
-    return await this.getApiKeys(environmentId);
   }
 }

@@ -172,7 +172,7 @@ describe('API Rate Limiting', () => {
 
     const testCases: TestCase[] = [
       {
-        name: 'allowed single trigger endpoint request',
+        name: 'single trigger endpoint request',
         requests: [{ path: '/trigger-category-single-cost', count: 1 }],
         expectedStatus: 200,
         expectedLimit: mockMaximumUnlimitedTrigger,
@@ -181,7 +181,7 @@ describe('API Rate Limiting', () => {
         expectedThrottledRequests: 0,
       },
       {
-        name: 'allowed no category no cost endpoint request',
+        name: 'no category no cost endpoint request',
         requests: [{ path: '/no-category-no-cost', count: 1 }],
         expectedStatus: 200,
         expectedLimit: mockMaximumUnlimitedGlobal,
@@ -190,51 +190,7 @@ describe('API Rate Limiting', () => {
         expectedThrottledRequests: 0,
       },
       {
-        name: 'allowed bulk trigger endpoint request',
-        requests: [{ path: '/trigger-category-bulk-cost', count: 1 }],
-        expectedStatus: 200,
-        expectedLimit: mockMaximumUnlimitedTrigger,
-        expectedCost: mockBulkCost * 1,
-        expectedReset: 1,
-        expectedThrottledRequests: 0,
-      },
-      {
-        name: 'throttled bulk global endpoint request',
-        requests: [{ path: '/global-category-bulk-cost', count: 20 }],
-        expectedStatus: 429,
-        expectedLimit: mockMaximumUnlimitedGlobal,
-        expectedCost: mockBulkCost * 20,
-        expectedReset: 1,
-        expectedRetryAfter: 1,
-        expectedThrottledRequests: 10,
-      },
-      {
-        name: 'allowed combination of single trigger and bulk trigger endpoint request',
-        requests: [
-          { path: '/trigger-category-single-cost', count: 2 },
-          { path: '/trigger-category-bulk-cost', count: 1 },
-        ],
-        expectedStatus: 200,
-        expectedLimit: mockMaximumUnlimitedTrigger,
-        expectedCost: mockSingleCost * 2 + mockBulkCost * 1,
-        expectedReset: 1,
-        expectedThrottledRequests: 0,
-      },
-      {
-        name: 'throttled combination of bulk trigger and bulk global endpoint request',
-        requests: [
-          { path: '/trigger-category-bulk-cost', count: 40 },
-          { path: '/global-category-bulk-cost', count: 40 },
-        ],
-        expectedStatus: 429,
-        expectedLimit: mockMaximumUnlimitedGlobal,
-        expectedCost: mockBulkCost * 40,
-        expectedReset: 1,
-        expectedRetryAfter: 1,
-        expectedThrottledRequests: 50,
-      },
-      {
-        name: 'allowed single trigger request with service level specified on organization ',
+        name: 'single trigger request with service level specified on organization ',
         requests: [{ path: '/trigger-category-single-cost', count: 1 }],
         expectedStatus: 200,
         expectedLimit: mockMaximumFreeTrigger,
@@ -246,7 +202,7 @@ describe('API Rate Limiting', () => {
         },
       },
       {
-        name: 'allowed single trigger request with maximum rate limit specified on environment',
+        name: 'single trigger request with maximum rate limit specified on environment',
         requests: [{ path: '/trigger-category-single-cost', count: 1 }],
         expectedStatus: 200,
         expectedLimit: 60,
@@ -258,7 +214,7 @@ describe('API Rate Limiting', () => {
         },
       },
       {
-        name: 'throttled combination of single trigger and single global endpoint request',
+        name: 'combination of single trigger and single global endpoint request',
         requests: [
           { path: '/trigger-category-single-cost', count: 20 },
           { path: '/global-category-single-cost', count: 100 },
@@ -271,7 +227,51 @@ describe('API Rate Limiting', () => {
         expectedThrottledRequests: 50,
       },
       {
-        name: 'throttled bulk trigger request with service level specified on organization and maximum rate limit specified on environment',
+        name: 'bulk trigger endpoint request',
+        requests: [{ path: '/trigger-category-bulk-cost', count: 1 }],
+        expectedStatus: 200,
+        expectedLimit: mockMaximumUnlimitedTrigger,
+        expectedCost: mockBulkCost * 1,
+        expectedReset: 1,
+        expectedThrottledRequests: 0,
+      },
+      {
+        name: 'bulk global endpoint request',
+        requests: [{ path: '/global-category-bulk-cost', count: 20 }],
+        expectedStatus: 429,
+        expectedLimit: mockMaximumUnlimitedGlobal,
+        expectedCost: mockBulkCost * 20,
+        expectedReset: 1,
+        expectedRetryAfter: 1,
+        expectedThrottledRequests: 10,
+      },
+      {
+        name: 'combination of single trigger and bulk trigger endpoint request',
+        requests: [
+          { path: '/trigger-category-single-cost', count: 2 },
+          { path: '/trigger-category-bulk-cost', count: 1 },
+        ],
+        expectedStatus: 200,
+        expectedLimit: mockMaximumUnlimitedTrigger,
+        expectedCost: mockSingleCost * 2 + mockBulkCost * 1,
+        expectedReset: 1,
+        expectedThrottledRequests: 0,
+      },
+      {
+        name: 'combination of bulk trigger and bulk global endpoint request',
+        requests: [
+          { path: '/trigger-category-bulk-cost', count: 40 },
+          { path: '/global-category-bulk-cost', count: 40 },
+        ],
+        expectedStatus: 429,
+        expectedLimit: mockMaximumUnlimitedGlobal,
+        expectedCost: mockBulkCost * 40,
+        expectedReset: 1,
+        expectedRetryAfter: 1,
+        expectedThrottledRequests: 50,
+      },
+      {
+        name: 'bulk trigger request with service level specified on organization and maximum rate limit specified on environment',
         requests: [{ path: '/trigger-category-bulk-cost', count: 5 }],
         expectedStatus: 429,
         expectedLimit: 1,
@@ -300,7 +300,7 @@ describe('API Rate Limiting', () => {
           setupTest,
         }) => {
           return () => {
-            describe(name, () => {
+            describe(`${expectedStatus === 429 ? 'Throttled' : 'Allowed'} ${name}`, () => {
               let lastResponse: ReturnType<typeof UserSession.prototype.testAgent.get>;
               let throttledResponseCount = 0;
               const throttledResponseCountTolerance = 0.05;
