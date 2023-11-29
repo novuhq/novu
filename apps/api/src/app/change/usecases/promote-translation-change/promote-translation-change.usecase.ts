@@ -1,4 +1,4 @@
-import { BadRequestException, forwardRef, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { ChangeRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 
@@ -15,14 +15,18 @@ export class PromoteTranslationChange {
   ) {}
 
   async execute(command: PromoteTypeChangeCommand) {
-    if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
-      if (!require('@novu/ee-translation')?.PromoteTranslationChange) {
-        throw new BadRequestException('Translation module is not loaded');
+    try {
+      if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+        if (!require('@novu/ee-translation')?.PromoteTranslationChange) {
+          throw new BadRequestException('Translation module is not loaded');
+        }
+        const usecase = this.moduleRef.get(require('@novu/ee-translation')?.PromoteTranslationChange, {
+          strict: false,
+        });
+        await usecase.execute(command, this.applyGroupChange.bind(this));
       }
-      const usecase = this.moduleRef.get(require('@novu/ee-translation')?.PromoteTranslationChange, {
-        strict: false,
-      });
-      await usecase.execute(command, this.applyGroupChange.bind(this));
+    } catch (e) {
+      Logger.error(e, `Unexpected error while importing enterprise modules`, 'PromoteTranslationChange');
     }
   }
 

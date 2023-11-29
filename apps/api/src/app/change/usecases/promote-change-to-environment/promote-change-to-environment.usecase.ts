@@ -69,14 +69,18 @@ export class PromoteChangeToEnvironment {
         await this.promoteTranslationChange.execute(typeCommand);
         break;
       case ChangeEntityTypeEnum.TRANSLATION_GROUP:
-        if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
-          if (!require('@novu/ee-translation')?.PromoteTranslationGroupChange) {
-            throw new BadRequestException('Translation module is not loaded');
+        try {
+          if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+            if (!require('@novu/ee-translation')?.PromoteTranslationGroupChange) {
+              throw new BadRequestException('Translation module is not loaded');
+            }
+            const usecase = this.moduleRef.get(require('@novu/ee-translation')?.PromoteTranslationGroupChange, {
+              strict: false,
+            });
+            await usecase.execute(typeCommand);
           }
-          const usecase = this.moduleRef.get(require('@novu/ee-translation')?.PromoteTranslationGroupChange, {
-            strict: false,
-          });
-          await usecase.execute(typeCommand);
+        } catch (e) {
+          Logger.error(e, `Unexpected error while importing enterprise modules`, 'PromoteChangeToEnvironment');
         }
         break;
       default:
