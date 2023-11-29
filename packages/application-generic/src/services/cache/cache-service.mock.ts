@@ -1,8 +1,9 @@
+import { Redis } from 'ioredis';
 import { CachingConfig, ICacheService } from './cache.service';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const MockCacheService = {
-  createClient(): ICacheService {
+  createClient(mockClient?: Partial<Redis>): ICacheService {
     const data = {};
 
     return {
@@ -40,6 +41,34 @@ export const MockCacheService = {
       },
       cacheEnabled() {
         return true;
+      },
+      async sadd(key, ...members) {
+        const dataVal = data[key];
+        if (dataVal && !Array.isArray(dataVal)) {
+          throw new Error(
+            'Wrong operation against a key holding the wrong kind of value'
+          );
+        }
+
+        const newVal = new Set(data[key]);
+
+        let addCount = 0;
+        members.forEach((member) => {
+          if (!newVal.has(member)) {
+            newVal.add(member);
+            addCount++;
+          }
+        });
+        data[key] = Array.from(newVal);
+
+        return addCount;
+      },
+      async eval<TData = unknown>(
+        script: string,
+        keys: string[],
+        args: (string | Buffer | number)[]
+      ): Promise<TData> {
+        return mockClient.eval(script, keys.length, ...keys, ...args) as TData;
       },
     };
   },

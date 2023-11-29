@@ -110,7 +110,7 @@ export class InfobipEmailProvider implements IEmailProvider {
   ): Promise<ISendMessageSuccessResponse> {
     const infobipResponse = await this.infobipClient.channels.email.send({
       to: options.to,
-      from: this.config.from || options.from,
+      from: options.from || this.config.from,
       subject: options.subject,
       text: options.text,
       html: options.html,
