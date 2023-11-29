@@ -172,7 +172,7 @@ describe('API Rate Limiting', () => {
 
     const testCases: TestCase[] = [
       {
-        name: 'allowed single trigger endpoint request',
+        name: 'single trigger endpoint request',
         requests: [{ path: '/trigger-category-single-cost', count: 1 }],
         expectedStatus: 200,
         expectedLimit: mockMaximumUnlimitedTrigger,
@@ -181,7 +181,7 @@ describe('API Rate Limiting', () => {
         expectedThrottledRequests: 0,
       },
       {
-        name: 'allowed no category no cost endpoint request',
+        name: 'no category no cost endpoint request',
         requests: [{ path: '/no-category-no-cost', count: 1 }],
         expectedStatus: 200,
         expectedLimit: mockMaximumUnlimitedGlobal,
@@ -190,7 +190,7 @@ describe('API Rate Limiting', () => {
         expectedThrottledRequests: 0,
       },
       {
-        name: 'allowed single trigger request with service level specified on organization ',
+        name: 'single trigger request with service level specified on organization ',
         requests: [{ path: '/trigger-category-single-cost', count: 1 }],
         expectedStatus: 200,
         expectedLimit: mockMaximumFreeTrigger,
@@ -202,7 +202,7 @@ describe('API Rate Limiting', () => {
         },
       },
       {
-        name: 'allowed single trigger request with maximum rate limit specified on environment',
+        name: 'single trigger request with maximum rate limit specified on environment',
         requests: [{ path: '/trigger-category-single-cost', count: 1 }],
         expectedStatus: 200,
         expectedLimit: 60,
@@ -214,7 +214,7 @@ describe('API Rate Limiting', () => {
         },
       },
       {
-        name: 'throttled combination of single trigger and single global endpoint request',
+        name: 'combination of single trigger and single global endpoint request',
         requests: [
           { path: '/trigger-category-single-cost', count: 20 },
           { path: '/global-category-single-cost', count: 100 },
@@ -242,7 +242,7 @@ describe('API Rate Limiting', () => {
           setupTest,
         }) => {
           return () => {
-            describe(name, () => {
+            describe(`${expectedStatus === 429 ? 'Throttled' : 'Allowed'} ${name}`, () => {
               let lastResponse: ReturnType<typeof UserSession.prototype.testAgent.get>;
               let throttledResponseCount = 0;
               const throttledResponseCountTolerance = 0.05;
