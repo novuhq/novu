@@ -7,6 +7,7 @@ import {
   Cluster,
   ClusterNode,
   ClusterOptions,
+  IEnvironmentConfigOptions,
   IProviderClusterConfigOptions,
   Redis,
 } from '../types';
@@ -29,6 +30,7 @@ interface IRedisClusterConfig {
   ports?: string;
   tls?: ConnectionOptions;
   ttl?: string;
+  username?: string;
 }
 
 export interface IRedisClusterProviderConfig {
@@ -43,16 +45,34 @@ export interface IRedisClusterProviderConfig {
   ports?: number[];
   tls?: ConnectionOptions;
   ttl: number;
+  username?: string;
 }
 
 export const getRedisClusterProviderConfig = (
+  envOptions?: IEnvironmentConfigOptions,
   options?: IProviderClusterConfigOptions
 ): IRedisClusterProviderConfig => {
-  const redisClusterConfig: IRedisClusterConfig = {
-    host: convertStringValues(process.env.REDIS_CLUSTER_SERVICE_HOST),
-    ports: convertStringValues(process.env.REDIS_CLUSTER_SERVICE_PORTS),
+  let redisClusterConfig: Partial<IRedisClusterConfig>;
+
+  if (envOptions) {
+    redisClusterConfig = {
+      host: convertStringValues(envOptions.host),
+      password: convertStringValues(envOptions.password),
+      ports: convertStringValues(envOptions.ports),
+      username: convertStringValues(envOptions.username),
+    };
+  } else {
+    redisClusterConfig = {
+      host: convertStringValues(process.env.REDIS_CLUSTER_SERVICE_HOST),
+      password: convertStringValues(process.env.REDIS_CLUSTER_PASSWORD),
+      ports: convertStringValues(process.env.REDIS_CLUSTER_SERVICE_PORTS),
+      username: convertStringValues(process.env.REDIS_CLUSTER_USERNAME),
+    };
+  }
+
+  redisClusterConfig = {
+    ...redisClusterConfig,
     ttl: convertStringValues(process.env.REDIS_CLUSTER_TTL),
-    password: convertStringValues(process.env.REDIS_CLUSTER_PASSWORD),
     connectTimeout: convertStringValues(
       process.env.REDIS_CLUSTER_CONNECTION_TIMEOUT
     ),
@@ -67,6 +87,7 @@ export const getRedisClusterProviderConfig = (
     ? JSON.parse(redisClusterConfig.ports)
     : [];
   const password = redisClusterConfig.password;
+  const username = redisClusterConfig.username;
   const connectTimeout = redisClusterConfig.connectTimeout
     ? Number(redisClusterConfig.connectTimeout)
     : DEFAULT_CONNECT_TIMEOUT;
@@ -90,6 +111,7 @@ export const getRedisClusterProviderConfig = (
     ports,
     instances,
     password,
+    username,
     connectTimeout,
     family,
     keepAlive,

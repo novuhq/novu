@@ -2,18 +2,23 @@ import { InMemoryProviderService } from './in-memory-provider.service';
 import { getClusterProvider, getSingleInstanceProvider } from './providers';
 import { InMemoryProviderEnum } from './types';
 
-const redis = getSingleInstanceProvider();
-const redisCluster = getClusterProvider(InMemoryProviderEnum.REDIS_CLUSTER);
-
 let inMemoryProviderService: InMemoryProviderService;
 
 describe('In-memory Provider Service', () => {
   describe('Non cluster mode', () => {
+    const redis = getSingleInstanceProvider();
+
     beforeEach(async () => {
+      const provider = redis;
+      const config = redis.getConfig(undefined, {
+        showFriendlyErrorStack: false,
+      });
+      const isCluster = provider.isCluster;
+
       inMemoryProviderService = new InMemoryProviderService(
-        redis,
-        redis.getConfig({ showFriendlyErrorStack: false }),
-        false
+        provider,
+        config,
+        isCluster
       );
 
       await inMemoryProviderService.delayUntilReadiness();
@@ -88,11 +93,19 @@ describe('In-memory Provider Service', () => {
   });
 
   describe('Cluster mode', () => {
+    const redisCluster = getClusterProvider(InMemoryProviderEnum.REDIS_CLUSTER);
+
     beforeEach(async () => {
+      const provider = redisCluster;
+      const config = redisCluster.getConfig(undefined, {
+        showFriendlyErrorStack: false,
+      });
+      const isCluster = provider.isCluster;
+
       inMemoryProviderService = new InMemoryProviderService(
-        redisCluster,
-        redisCluster.getConfig({ showFriendlyErrorStack: false }),
-        true
+        provider,
+        config,
+        isCluster
       );
       await inMemoryProviderService.delayUntilReadiness();
 
@@ -107,7 +120,7 @@ describe('In-memory Provider Service', () => {
       it('enableAutoPipelining is enabled', async () => {
         const clusterWithPipelining = new InMemoryProviderService(
           redisCluster,
-          redisCluster.getConfig({
+          redisCluster.getConfig(undefined, {
             enableAutoPipelining: true,
             showFriendlyErrorStack: false,
           }),
