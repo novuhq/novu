@@ -21,6 +21,8 @@ process.env.API_RATE_LIMIT_MAXIMUM_FREE_GLOBAL = `${mockMaximumFreeGlobal}`;
 process.env.API_RATE_LIMIT_MAXIMUM_UNLIMITED_TRIGGER = `${mockMaximumUnlimitedTrigger}`;
 process.env.API_RATE_LIMIT_MAXIMUM_UNLIMITED_GLOBAL = `${mockMaximumUnlimitedGlobal}`;
 
+process.env.LAUNCH_DARKLY_SDK_KEY = ''; // disable Launch Darkly to allow test to define FF state
+
 describe('API Rate Limiting', () => {
   let session: UserSession;
   const pathPrefix = '/v1/rate-limiting';
@@ -28,10 +30,6 @@ describe('API Rate Limiting', () => {
     path: string,
     authHeader?: string
   ) => Promise<Awaited<ReturnType<typeof UserSession.prototype.testAgent.get>>>;
-
-  before(() => {
-    process.env.LAUNCH_DARKLY_SDK_KEY = ''; // disable Launch Darkly to allow test to define FF state
-  });
 
   describe('Guard logic', () => {
     beforeEach(async () => {
