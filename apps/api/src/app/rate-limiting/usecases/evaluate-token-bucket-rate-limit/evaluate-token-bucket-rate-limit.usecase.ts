@@ -69,9 +69,11 @@ export class EvaluateTokenBucketRateLimit {
   }
 
   /**
-   * Token Bucket algorithm with variable cost. Adapted from @upstash/ratelimit
+   * Token Bucket algorithm with variable cost. Adapted from @upstash/ratelimit and modified to support variable cost.
+   * Also influenced by Krakend's token bucket implementation to delay refills until bucket is empty.
    *
    * @see https://github.com/upstash/ratelimit/blob/3a8cfb00e827188734ac347965cb743a75fcb98a/src/single.ts#L292
+   * @see https://github.com/krakend/krakend-ratelimit/blob/369f0be9b51a4fb8ab7d43e4833d076b461a4374/rate.go#L85
    */
   public static tokenBucketLimiter(
     refillRate: number,
