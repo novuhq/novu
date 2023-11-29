@@ -332,7 +332,7 @@ describe('EvaluateTokenBucketRateLimit', () => {
             proportionHighCost,
             proportionJitter,
             expectedAverageTimeMs,
-            expectedNthPercentileTimeMs: expectedPercentileTimeMs,
+            expectedNthPercentileTimeMs,
             expectedTotalTimeMs,
           }) => {
             return () => {
@@ -447,8 +447,8 @@ describe('EvaluateTokenBucketRateLimit', () => {
 
                   it(`should have ${
                     testPercentile * 100
-                  }th percentile evaluation duration less than ${expectedPercentileTimeMs}ms`, async () => {
-                    expect(_99Percentile).to.be.lessThan(expectedPercentileTimeMs);
+                  }th percentile evaluation duration less than ${expectedNthPercentileTimeMs}ms`, async () => {
+                    expect(_99Percentile).to.be.lessThan(expectedNthPercentileTimeMs);
                   });
                 });
 
