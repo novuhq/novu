@@ -345,7 +345,7 @@ describe('EvaluateTokenBucketRateLimit', () => {
                 let throttledCount: number;
                 let variance: number;
                 let stdev: number;
-                let _99Percentile: number;
+                let nthPercentile: number;
 
                 const maxTokens = Math.ceil(totalRequests * (1 - proportionThrottled));
                 const uniqueIdRequests = Math.max(1, Math.floor(totalRequests * proportionUniqueIds));
@@ -415,7 +415,7 @@ describe('EvaluateTokenBucketRateLimit', () => {
                   variance =
                     results.reduce((acc, val) => acc + Math.pow(val.duration - averageTime, 2), 0) / results.length;
                   stdev = Math.sqrt(variance);
-                  _99Percentile = results.sort((a, b) => a.duration - b.duration)[
+                  nthPercentile = results.sort((a, b) => a.duration - b.duration)[
                     Math.floor(results.length * testPercentile)
                   ].duration;
                   successCount = results.filter(({ success }) => success).length;
@@ -431,7 +431,7 @@ describe('EvaluateTokenBucketRateLimit', () => {
                       1
                     )}ms\tStdev: ${stdev.toFixed(1)}\tp(${
                       testPercentile * 100
-                    }): ${_99Percentile}\tThrottled: ${throttledCount.toLocaleString()}`
+                    }): ${nthPercentile}\tThrottled: ${throttledCount.toLocaleString()}`
                   );
                   printHistogram(results);
                 });
@@ -448,7 +448,7 @@ describe('EvaluateTokenBucketRateLimit', () => {
                   it(`should have ${
                     testPercentile * 100
                   }th percentile evaluation duration less than ${expectedNthPercentileTimeMs}ms`, async () => {
-                    expect(_99Percentile).to.be.lessThan(expectedNthPercentileTimeMs);
+                    expect(nthPercentile).to.be.lessThan(expectedNthPercentileTimeMs);
                   });
                 });
 
