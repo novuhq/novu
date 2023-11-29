@@ -533,7 +533,12 @@
     "maildata",
     "brevo",
     "Getstream",
-    "getstream"
+    "getstream",
+    "upstash",
+    "Upstash",
+    "Krakend",
+    "ratelimit",
+    "Ratelimit",
   ],
   "flagWords": [],
   "patterns": [
