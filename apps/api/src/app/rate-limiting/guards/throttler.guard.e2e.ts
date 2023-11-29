@@ -141,7 +141,7 @@ describe('API Rate Limiting', () => {
         expect(policyHeader).to.contain(`cost="${ApiRateLimitCostEnum.BULK}"`);
       });
 
-      it('should override the category decorator defined on the controller for an endpoint WITH cost decorator', async () => {
+      it('should override the cost decorator defined on the controller for an endpoint WITH cost decorator', async () => {
         const response = await request(controllerPathPrefix + '/no-category-single-cost-override');
         const policyHeader = response.headers[RateLimitHeaderKeysEnum.RATE_LIMIT_POLICY.toLowerCase()];
 
