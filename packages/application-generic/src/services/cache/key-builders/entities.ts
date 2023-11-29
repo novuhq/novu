@@ -1,11 +1,13 @@
 import {
   BLUEPRINT_IDENTIFIER,
   buildCommonKey,
+  buildKeyById,
   CacheKeyPrefixEnum,
   CacheKeyTypeEnum,
   IdentifierPrefixEnum,
   OrgScopePrefixEnum,
   prefixWrapper,
+  ServiceConfigIdentifierEnum,
 } from './shared';
 
 const buildSubscriberKey = ({
@@ -68,19 +70,6 @@ const buildEnvironmentByApiKey = ({ apiKey }: { apiKey: string }): string =>
     identifierPrefix: IdentifierPrefixEnum.API_KEY,
   });
 
-const buildKeyById = ({
-  type,
-  keyEntity,
-  identifierPrefix = IdentifierPrefixEnum.ID,
-  identifier,
-}: {
-  type: CacheKeyTypeEnum;
-  keyEntity: CacheKeyPrefixEnum;
-  identifierPrefix?: IdentifierPrefixEnum;
-  identifier: string;
-}): string =>
-  prefixWrapper(`${type}:${keyEntity}:${identifierPrefix}=${identifier}`);
-
 const buildGroupedBlueprintsKey = (): string =>
   buildCommonKey({
     type: CacheKeyTypeEnum.ENTITY,
@@ -114,6 +103,36 @@ const buildMaximumApiRateLimitKey = ({
     identifier: apiRateLimitCategory,
   });
 
+const buildEvaluateApiRateLimitKey = ({
+  apiRateLimitCategory,
+  _environmentId,
+}: {
+  apiRateLimitCategory: string;
+  _environmentId: string;
+}): string =>
+  buildCommonKey({
+    type: CacheKeyTypeEnum.ENTITY,
+    keyEntity: CacheKeyPrefixEnum.EVALUATE_API_RATE_LIMIT,
+    environmentId: _environmentId,
+    identifierPrefix: IdentifierPrefixEnum.API_RATE_LIMIT_CATEGORY,
+    identifier: apiRateLimitCategory,
+  });
+
+const buildServiceConfigKey = (
+  identifier: ServiceConfigIdentifierEnum
+): string =>
+  buildKeyById({
+    type: CacheKeyTypeEnum.ENTITY,
+    keyEntity: CacheKeyPrefixEnum.SERVICE_CONFIG,
+    identifierPrefix: IdentifierPrefixEnum.SERVICE_CONFIG,
+    identifier,
+  });
+
+const buildServiceConfigApiRateLimitMaximumKey = (): string =>
+  buildServiceConfigKey(
+    ServiceConfigIdentifierEnum.API_RATE_LIMIT_SERVICE_MAXIMUM
+  );
+
 export {
   buildUserKey,
   buildSubscriberKey,
@@ -124,4 +143,6 @@ export {
   buildGroupedBlueprintsKey,
   buildAuthServiceKey,
   buildMaximumApiRateLimitKey,
+  buildEvaluateApiRateLimitKey,
+  buildServiceConfigApiRateLimitMaximumKey,
 };
