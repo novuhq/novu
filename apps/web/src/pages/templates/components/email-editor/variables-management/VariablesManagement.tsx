@@ -10,18 +10,16 @@ import { VarItemTooltip } from './VarItemTooltip';
 import { When } from '../../../../../components/utils/When';
 
 export const VariablesManagement = ({
-  index,
   openVariablesModal,
   control,
   path,
 }: {
-  index: number;
   openVariablesModal?: () => void;
   control?: any;
-  path?: string;
+  path: string;
 }) => {
   const variableArray = useWatch({
-    name: path ?? `steps.${index}.template.variables`,
+    name: path,
     control,
   });
   const processedVariables = useProcessVariables(variableArray, false);

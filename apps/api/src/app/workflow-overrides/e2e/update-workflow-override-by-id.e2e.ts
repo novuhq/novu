@@ -17,7 +17,7 @@ describe('Update Workflow Override By ID - /workflow-overrides/:overrideId (PUT)
       environmentId: session.environment._id,
     });
 
-    const overrides = await workflowOverrideService.createWorkflowOverride({
+    const { workflowOverride } = await workflowOverrideService.createWorkflowOverride({
       preferenceSettings: {
         email: false,
         sms: true,
@@ -27,14 +27,14 @@ describe('Update Workflow Override By ID - /workflow-overrides/:overrideId (PUT)
       },
     });
 
-    expect(overrides.workflowOverride.preferenceSettings).to.deep.equal({
+    expect(workflowOverride.preferenceSettings).to.deep.equal({
       email: false,
       sms: true,
       in_app: true,
       chat: true,
       push: true,
     });
-    expect(overrides.workflowOverride.active).to.equal(false);
+    expect(workflowOverride.active).to.equal(false);
 
     const updatePayload: IUpdateWorkflowOverrideRequestDto = {
       preferenceSettings: { email: true, sms: false },
@@ -42,7 +42,7 @@ describe('Update Workflow Override By ID - /workflow-overrides/:overrideId (PUT)
     };
 
     const updatedOverrides = (
-      await session.testAgent.put(`/v1/workflow-overrides/${overrides.workflowOverride._id}`).send(updatePayload)
+      await session.testAgent.put(`/v1/workflow-overrides/${workflowOverride._id}`).send(updatePayload)
     ).body.data;
 
     expect(updatedOverrides.preferenceSettings).to.deep.equal({

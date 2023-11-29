@@ -21,7 +21,7 @@ import {
   TenantRepository,
 } from '@novu/dal';
 
-import { ParseEventRequestCommand, ParseEventRequestMulticastCommand } from './parse-event-request.command';
+import { ParseEventRequestCommand } from './parse-event-request.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { VerifyPayload, VerifyPayloadCommand } from '../verify-payload';
 
@@ -129,16 +129,11 @@ export class ParseEventRequest {
 
     command.payload = merge({}, defaultPayload, command.payload);
 
-    let jobData = {
+    const jobData: ParseEventRequestCommand = {
       ...command,
       actor: command.actor,
       transactionId,
-    } as ParseEventRequestCommand;
-
-    if ((command as ParseEventRequestMulticastCommand).to?.length > 0) {
-      jobData = jobData as ParseEventRequestMulticastCommand;
-      jobData.to = (command as ParseEventRequestMulticastCommand).to;
-    }
+    };
 
     await this.workflowQueueService.add(transactionId, jobData, command.organizationId);
 

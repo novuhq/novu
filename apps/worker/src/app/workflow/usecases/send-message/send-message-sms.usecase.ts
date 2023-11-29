@@ -6,20 +6,18 @@ import {
   SubscriberRepository,
   MessageEntity,
   IntegrationEntity,
-  TenantRepository,
-  SubscriberEntity,
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import {
   InstrumentUsecase,
   DetailEnum,
-  CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   SelectIntegration,
   CompileTemplate,
   CompileTemplateCommand,
   SmsFactory,
   GetNovuProviderCredentials,
+  SelectVariant,
   ExecutionLogQueueService,
 } from '@novu/application-generic';
 
@@ -35,32 +33,26 @@ export class SendMessageSms extends SendMessageBase {
   constructor(
     protected subscriberRepository: SubscriberRepository,
     protected messageRepository: MessageRepository,
-    protected tenantRepository: TenantRepository,
     protected createLogUsecase: CreateLog,
     protected executionLogQueueService: ExecutionLogQueueService,
     private compileTemplate: CompileTemplate,
     protected selectIntegration: SelectIntegration,
-    protected getNovuProviderCredentials: GetNovuProviderCredentials
+    protected getNovuProviderCredentials: GetNovuProviderCredentials,
+    protected selectVariant: SelectVariant
   ) {
     super(
       messageRepository,
       createLogUsecase,
       executionLogQueueService,
       subscriberRepository,
-      tenantRepository,
       selectIntegration,
-      getNovuProviderCredentials
+      getNovuProviderCredentials,
+      selectVariant
     );
   }
 
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
-    const subscriber = await this.getSubscriberBySubscriberId({
-      subscriberId: command.subscriberId,
-      _environmentId: command.environmentId,
-    });
-    if (!subscriber) throw new PlatformException('Subscriber not found');
-
     const overrideSelectedIntegration = command.overrides?.sms?.integrationIdentifier;
 
     const integration = await this.getIntegration({
@@ -78,37 +70,24 @@ export class SendMessageSms extends SendMessageBase {
       message: 'Sending SMS',
     });
 
-    const smsChannel: NotificationStepEntity = command.step;
-    if (!smsChannel.template) throw new PlatformException(`Unexpected error: SMS template is missing`);
+    const step: NotificationStepEntity = command.step;
 
-    let actor: SubscriberEntity | null = null;
-    if (command.job.actorId) {
-      actor = await this.getSubscriberBySubscriberId({
-        subscriberId: command.job.actorId,
-        _environmentId: command.environmentId,
-      });
+    if (!step.template) throw new PlatformException(`Unexpected error: SMS template is missing`);
+
+    const { subscriber } = command.compileContext;
+    const template = await this.processVariants(command);
+
+    if (template) {
+      step.template = template;
     }
-    const tenant = await this.handleTenantExecution(command.job);
-
-    const payload = {
-      subscriber: subscriber,
-      step: {
-        digest: !!command.events?.length,
-        events: command.events,
-        total_count: command.events?.length,
-      },
-      ...(tenant && { tenant }),
-      ...(actor && { actor }),
-      ...command.payload,
-    };
 
     let content: string | null = '';
 
     try {
       content = await this.compileTemplate.execute(
         CompileTemplateCommand.create({
-          template: smsChannel.template.content as string,
-          data: payload,
+          template: step.template.content as string,
+          data: this.getCompilePayload(command.compileContext),
         })
       );
     } catch (e) {
@@ -165,7 +144,7 @@ export class SendMessageSms extends SendMessageBase {
       _organizationId: command.organizationId,
       _subscriberId: command._subscriberId,
       _templateId: command._templateId,
-      _messageTemplateId: smsChannel.template._id,
+      _messageTemplateId: step.template._id,
       channel: ChannelTypeEnum.SMS,
       transactionId: command.transactionId,
       phone,

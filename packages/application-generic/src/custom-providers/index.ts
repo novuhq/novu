@@ -4,13 +4,14 @@ import {
   CacheInMemoryProviderService,
   CacheService,
   DistributedLockService,
+  ExecutionLogQueueService,
   FeatureFlagsService,
+  InboundParseQueueService,
   ReadinessService,
   StandardQueueService,
   SubscriberProcessQueueService,
   WebSocketsQueueService,
   WorkflowQueueService,
-  ExecutionLogQueueService,
 } from '../services';
 import {
   GetIsApiRateLimitingEnabled,
@@ -129,7 +130,8 @@ export const bullMqTokenList = {
     webSocketsQueueService: WebSocketsQueueService,
     workflowQueueService: WorkflowQueueService,
     subscriberProcessQueueService: SubscriberProcessQueueService,
-    executionLogQueueService: ExecutionLogQueueService
+    executionLogQueueService: ExecutionLogQueueService,
+    inboundParseQueueService: InboundParseQueueService
   ) => {
     return [
       standardQueueService,
@@ -137,6 +139,7 @@ export const bullMqTokenList = {
       workflowQueueService,
       subscriberProcessQueueService,
       executionLogQueueService,
+      inboundParseQueueService,
     ];
   },
   inject: [
@@ -145,5 +148,6 @@ export const bullMqTokenList = {
     WorkflowQueueService,
     SubscriberProcessQueueService,
     ExecutionLogQueueService,
+    InboundParseQueueService,
   ],
 };

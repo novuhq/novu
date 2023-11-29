@@ -78,7 +78,7 @@ export class MailjetEmailProvider implements IEmailProvider {
     const message: Mailjet.SendEmailV3_1.Message = {
       From: {
         Email: options.from || this.config.from,
-        Name: this.config.senderName,
+        Name: options.senderName || this.config.senderName,
       },
       To: options.to.map((email) => ({
         Email: email,
