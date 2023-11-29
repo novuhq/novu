@@ -69,13 +69,15 @@ export class PromoteChangeToEnvironment {
         await this.promoteTranslationChange.execute(typeCommand);
         break;
       case ChangeEntityTypeEnum.TRANSLATION_GROUP:
-        if (!require('@novu/ee-translation')?.PromoteTranslationGroupChange) {
-          throw new BadRequestException('Translation module is not loaded');
+        if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+          if (!require('@novu/ee-translation')?.PromoteTranslationGroupChange) {
+            throw new BadRequestException('Translation module is not loaded');
+          }
+          const usecase = this.moduleRef.get(require('@novu/ee-translation')?.PromoteTranslationGroupChange, {
+            strict: false,
+          });
+          await usecase.execute(typeCommand);
         }
-        const usecase = this.moduleRef.get(require('@novu/ee-translation')?.PromoteTranslationGroupChange, {
-          strict: false,
-        });
-        await usecase.execute(typeCommand);
         break;
       default:
         Logger.error(`Change with type ${command.type} could not be enabled from environment ${command.environmentId}`);

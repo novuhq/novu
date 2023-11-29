@@ -15,13 +15,15 @@ export class PromoteTranslationChange {
   ) {}
 
   async execute(command: PromoteTypeChangeCommand) {
-    if (!require('@novu/ee-translation')?.PromoteTranslationChange) {
-      throw new BadRequestException('Translation module is not loaded');
+    if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+      if (!require('@novu/ee-translation')?.PromoteTranslationChange) {
+        throw new BadRequestException('Translation module is not loaded');
+      }
+      const usecase = this.moduleRef.get(require('@novu/ee-translation')?.PromoteTranslationChange, {
+        strict: false,
+      });
+      await usecase.execute(command, this.applyGroupChange.bind(this));
     }
-    const usecase = this.moduleRef.get(require('@novu/ee-translation')?.PromoteTranslationChange, {
-      strict: false,
-    });
-    await usecase.execute(command, this.applyGroupChange.bind(this));
   }
 
   private async applyGroupChange(command: PromoteTypeChangeCommand) {
