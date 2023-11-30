@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
+import { ModuleRef } from '@nestjs/core';
+
 import {
   MessageRepository,
   NotificationStepEntity,
@@ -55,7 +57,8 @@ export class SendMessageInApp extends SendMessageBase {
     private compileTemplate: CompileTemplate,
     private organizationRepository: OrganizationRepository,
     protected selectIntegration: SelectIntegration,
-    protected getNovuProviderCredentials: GetNovuProviderCredentials
+    protected getNovuProviderCredentials: GetNovuProviderCredentials,
+    protected moduleRef: ModuleRef
   ) {
     super(
       messageRepository,
@@ -64,7 +67,8 @@ export class SendMessageInApp extends SendMessageBase {
       subscriberRepository,
       tenantRepository,
       selectIntegration,
-      getNovuProviderCredentials
+      getNovuProviderCredentials,
+      moduleRef
     );
   }
 
@@ -124,6 +128,7 @@ export class SendMessageInApp extends SendMessageBase {
     const [tenant, organization] = await Promise.all([
       this.handleTenantExecution(command.job),
       this.organizationRepository.findOne({ _id: command.organizationId }, 'branding'),
+      this.initiateTranslations(command.environmentId, command.organizationId, subscriber.locale),
     ]);
 
     try {

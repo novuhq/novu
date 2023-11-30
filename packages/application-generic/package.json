@@ -128,7 +128,8 @@
     "reflect-metadata": "^0.1.13",
     "rrule": "^2.7.2",
     "@nestjs/passport": "^10.0.1",
-    "jsonwebtoken": "9.0.0"
+    "jsonwebtoken": "9.0.0",
+    "i18next": "^23.7.6"
   },
   "optionalDependencies": {
     "@taskforcesh/bullmq-pro": "5.1.14"

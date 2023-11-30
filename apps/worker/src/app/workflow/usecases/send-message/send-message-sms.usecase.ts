@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
+import { ModuleRef } from '@nestjs/core';
+
 import {
   MessageRepository,
   NotificationStepEntity,
@@ -39,7 +41,8 @@ export class SendMessageSms extends SendMessageBase {
     protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
     protected selectIntegration: SelectIntegration,
-    protected getNovuProviderCredentials: GetNovuProviderCredentials
+    protected getNovuProviderCredentials: GetNovuProviderCredentials,
+    protected moduleRef: ModuleRef
   ) {
     super(
       messageRepository,
@@ -48,7 +51,8 @@ export class SendMessageSms extends SendMessageBase {
       subscriberRepository,
       tenantRepository,
       selectIntegration,
-      getNovuProviderCredentials
+      getNovuProviderCredentials,
+      moduleRef
     );
   }
 
@@ -88,6 +92,7 @@ export class SendMessageSms extends SendMessageBase {
       });
     }
     const tenant = await this.handleTenantExecution(command.job);
+    await this.initiateTranslations(command.environmentId, command.organizationId, subscriber.locale);
 
     const payload = {
       subscriber: subscriber,

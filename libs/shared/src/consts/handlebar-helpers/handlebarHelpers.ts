@@ -8,6 +8,7 @@ export enum HandlebarHelpersEnum {
   UNIQUE = 'unique',
   GROUP_BY = 'groupBy',
   SORT_BY = 'sortBy',
+  I18N = 'i18n',
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -21,4 +22,5 @@ export const HandlebarHelpers = {
   [HandlebarHelpersEnum.UNIQUE]: { description: 'filter unique values in an array' },
   [HandlebarHelpersEnum.GROUP_BY]: { description: 'group by a property' },
   [HandlebarHelpersEnum.SORT_BY]: { description: 'sort an array of objects by a property' },
+  [HandlebarHelpersEnum.I18N]: { description: 'translate' },
 };
