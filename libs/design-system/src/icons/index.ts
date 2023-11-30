@@ -86,6 +86,7 @@ export { RemoveCondition } from './general/RemoveCondition';
 export { Warning } from './general/Warning';
 export { Logout } from './general/Logout';
 export { InviteMembers } from './general/InviteMembers';
+export { Translation } from './general/Translation';
 
 export { Copy } from './actions/Copy';
 export { Close } from './actions/Close';
