@@ -94,8 +94,7 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
 
-    const activeConnections = await this.getActiveConnections(connection, subscriber._id);
-    await this.subscriberOnlineService.handleDisconnection(subscriber, activeConnections);
+    await this.subscriberOnlineService.handleDisconnection(subscriber);
   }
 
   private async processConnectionRequest(connection: Socket) {
@@ -127,11 +126,5 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private disconnect(socket: Socket) {
     socket.disconnect();
-  }
-
-  private async getActiveConnections(socket: Socket, subscriberId: string) {
-    const activeSockets = await socket.in(subscriberId).fetchSockets();
-
-    return activeSockets.length;
   }
 }
