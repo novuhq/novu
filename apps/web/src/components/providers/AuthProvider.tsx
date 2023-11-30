@@ -1,7 +1,6 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext } from 'react';
 import { IOrganizationEntity, IUserEntity, IJwtPayload } from '@novu/shared';
-import { useAuthController } from '../../hooks';
-import { useLDClient } from 'launchdarkly-react-client-sdk';
+import { useAuthController, useFeatureFlags } from '../../hooks';
 
 type UserContext = {
   token: string | null;
@@ -27,19 +26,7 @@ export const useAuthContext = (): UserContext => useContext(AuthContext);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { token, setToken, user, organization, logout, jwtPayload, organizations } = useAuthController();
-  const ldClient = useLDClient();
-
-  useEffect(() => {
-    if (!organization?._id) {
-      return;
-    }
-
-    ldClient?.identify({
-      kind: 'organization',
-      key: organization._id,
-      name: organization.name,
-    });
-  }, [organization?._id, ldClient, organization?.name]);
+  useFeatureFlags(organization);
 
   return (
     <AuthContext.Provider
