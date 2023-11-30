@@ -30,7 +30,7 @@ export class NexmoSmsProvider implements ISmsProvider {
   ): Promise<ISendMessageSuccessResponse> {
     const vonageResponseId: string = await new Promise((resolve, reject) => {
       this.vonageClient.message.sendSms(
-        this.config.from,
+        options.from || this.config.from,
         options.to,
         options.content,
         {},

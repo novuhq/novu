@@ -49,6 +49,7 @@ export function ChannelPreference() {
                     borderRadius: 8,
                   }}
                   position="apart"
+                  key={key}
                 >
                   <Text>{<ChannelTitle channel={key as ChannelTypeEnum} />}</Text>
                   <div>
@@ -76,7 +77,7 @@ export function CriticalPreference() {
   return (
     <Controller
       name="critical"
-      defaultValue={false}
+      defaultValue={true}
       control={control}
       render={({ field }) => {
         return (

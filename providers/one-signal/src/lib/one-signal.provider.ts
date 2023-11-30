@@ -1,26 +1,27 @@
+import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
   IPushOptions,
   IPushProvider,
 } from '@novu/stateless';
-import * as OneSignal from 'onesignal-node';
 
 export class OneSignalPushProvider implements IPushProvider {
   id = 'one-signal';
   channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
+  private axiosInstance: AxiosInstance;
+  public readonly BASE_URL = 'https://onesignal.com/api/v1';
 
-  private oneSignal: OneSignal.Client;
   constructor(
     private config: {
       appId: string;
       apiKey: string;
     }
   ) {
-    this.oneSignal = new OneSignal.Client(
-      this.config.appId,
-      this.config.apiKey
-    );
+    this.axiosInstance = axios.create({
+      baseURL: this.BASE_URL,
+    });
   }
 
   async sendMessage(
@@ -28,14 +29,15 @@ export class OneSignalPushProvider implements IPushProvider {
   ): Promise<ISendMessageSuccessResponse> {
     const { sound, badge, ...overrides } = options.overrides ?? {};
 
-    const res = await this.oneSignal.createNotification({
+    const notification = {
       include_player_ids: options.target,
+      app_id: this.config.appId,
       headings: { en: options.title },
       contents: { en: options.content },
       subtitle: { en: overrides.subtitle },
       data: options.payload,
-      ios_badgeType: 'Increase',
-      ios_badgeCount: 1,
+      ios_badge_type: 'Increase',
+      ios_badge_count: 1,
       ios_sound: sound,
       android_sound: sound,
       mutable_content: overrides.mutableContent,
@@ -45,10 +47,24 @@ export class OneSignalPushProvider implements IPushProvider {
       chrome_icon: overrides.icon,
       firefox_icon: overrides.icon,
       ios_category: overrides.categoryId,
-    });
+    };
+
+    const notificationOptions: AxiosRequestConfig = {
+      url: '/notifications',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Basic ${this.config.apiKey}`,
+      },
+      data: JSON.stringify(notification),
+    };
+
+    const res = await this.axiosInstance.request<{ id: string }>(
+      notificationOptions
+    );
 
     return {
-      id: res.body.id,
+      id: res?.data.id,
       date: new Date().toISOString(),
     };
   }

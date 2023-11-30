@@ -60,6 +60,7 @@ import { EmailSettings } from './pages/settings/tabs/EmailSettings';
 import { ProductLead } from './components/utils/ProductLead';
 import { SSO, UserAccess, Cloud } from '@novu/design-system';
 import { BrandingForm, LayoutsListPage } from './pages/brand/tabs';
+import { VariantsPage } from './pages/templates/components/VariantsPage';
 
 library.add(far, fas);
 
@@ -206,6 +207,9 @@ function App() {
                     <Route path="snippet" element={<SnippetPage />} />
                     <Route path="providers" element={<ProvidersPage />} />
                     <Route path=":channel/:stepUuid" element={<ChannelStepEditor />} />
+                    <Route path=":channel/:stepUuid/variants" element={<VariantsPage />} />
+                    <Route path=":channel/:stepUuid/variants/:variantUuid" element={<ChannelStepEditor />} />
+                    <Route path=":channel/:stepUuid/variants/create" element={<VariantsPage />} />
                   </Route>
                   <Route path={ROUTES.WORKFLOWS} element={<WorkflowListPage />} />
                   <Route path={ROUTES.TENANTS} element={<TenantsPage />}>
