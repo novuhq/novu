@@ -22,6 +22,7 @@ import {
   TopicRepository,
   TopicSubscribersRepository,
   TenantRepository,
+  WorkflowOverrideRepository,
 } from '@novu/dal';
 import {
   analyticsService,
@@ -35,7 +36,6 @@ import {
   getIsTopicNotificationEnabled,
   InvalidateCacheService,
   LoggerModule,
-  QueuesModule,
   storageService,
 } from '@novu/application-generic';
 
@@ -63,6 +63,7 @@ const DAL_MODELS = [
   TopicRepository,
   TopicSubscribersRepository,
   TenantRepository,
+  WorkflowOverrideRepository,
 ];
 
 const dalService = {

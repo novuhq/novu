@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { TriggerEventStatusEnum } from '@novu/shared';
+import { AddressingTypeEnum, TriggerEventStatusEnum } from '@novu/shared';
 
 import { ProcessBulkTriggerCommand } from './process-bulk-trigger.command';
 
@@ -30,6 +30,7 @@ export class ProcessBulkTrigger {
             actor: event.actor,
             tenant: event.tenant,
             transactionId: event.transactionId,
+            addressingType: AddressingTypeEnum.MULTICAST,
           })
         )) as unknown as TriggerEventResponseDto;
       } catch (e) {

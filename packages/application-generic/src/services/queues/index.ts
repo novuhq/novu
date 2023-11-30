@@ -7,14 +7,16 @@ import { StandardQueueService } from './standard-queue.service';
 import { WebSocketsQueueService } from './web-sockets-queue.service';
 import { WorkflowQueueService } from './workflow-queue.service';
 import { SubscriberProcessQueueService } from './subscriber-process-queue.service';
+import { ExecutionLogQueueService } from './execution-log-queue.service';
 
 export {
   QueueBaseService,
   ActiveJobsMetricQueueService,
   CompletedJobsMetricQueueService,
-  InboundParseQueueService as InboundParseQueue,
+  InboundParseQueueService,
   StandardQueueService,
   WebSocketsQueueService,
   WorkflowQueueService,
   SubscriberProcessQueueService,
+  ExecutionLogQueueService,
 };

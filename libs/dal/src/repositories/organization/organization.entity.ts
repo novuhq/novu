@@ -1,4 +1,4 @@
-import { ApiServiceLevelTypeEnum } from '@novu/shared';
+import { ApiServiceLevelEnum } from '@novu/shared';
 
 export class OrganizationEntity {
   _id: string;
@@ -8,7 +8,7 @@ export class OrganizationEntity {
   logo?: string;
 
   // TODO: NV-3067 - Remove optional once all organizations have a service level
-  apiServiceLevel?: ApiServiceLevelTypeEnum;
+  apiServiceLevel?: ApiServiceLevelEnum;
 
   branding: {
     fontFamily?: string;

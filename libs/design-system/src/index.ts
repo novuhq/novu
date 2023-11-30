@@ -1,4 +1,5 @@
 export { Button } from './button/Button';
+export { ActionButton } from './button/ActionButton';
 export { PlusButton } from './button/PlusButton';
 export type { IButtonProps } from './button/Button';
 export type { Size } from './button/Button';
@@ -14,6 +15,7 @@ export { Tag } from './tag/Tag';
 export { Title } from './typography/title/Title';
 export { Text } from './typography/text/Text';
 export { Container } from './container/Container';
+export type { IDropdownProps } from './dropdown/Dropdown';
 export { Dropdown } from './dropdown/Dropdown';
 export { NavMenu } from './navigation/NavMenu';
 export { Tabs } from './tabs/Tabs';

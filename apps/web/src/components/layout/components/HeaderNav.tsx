@@ -1,4 +1,4 @@
-import { ActionIcon, Avatar, Container, Group, Header, useMantineColorScheme } from '@mantine/core';
+import { ActionIcon, Avatar, ColorScheme, Container, Group, Header, useMantineColorScheme } from '@mantine/core';
 import * as capitalize from 'lodash.capitalize';
 import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
@@ -14,19 +14,19 @@ import {
   Text,
   Tooltip,
   Ellipse,
-  Mail,
   Moon,
   Question,
   Sun,
   Logout,
   InviteMembers,
 } from '@novu/design-system';
-import { useLocalThemePreference } from '../../../hooks';
+import { useLocalThemePreference, useDebounce } from '../../../hooks';
 import { discordInviteUrl } from '../../../pages/quick-start/consts';
 import { useAuthContext } from '../../providers/AuthProvider';
 import { useSpotlightContext } from '../../providers/SpotlightProvider';
 import { HEADER_HEIGHT } from '../constants';
 import { NotificationCenterWidget } from './NotificationCenterWidget';
+import { useSegment } from '../../providers/SegmentProvider';
 
 type Props = { isIntercomOpened: boolean };
 const menuItem = [
@@ -55,10 +55,18 @@ export function HeaderNav({ isIntercomOpened }: Props) {
   const { currentOrganization, currentUser, logout } = useAuthContext();
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const { themeStatus } = useLocalThemePreference();
-  const dark = colorScheme === 'dark';
   const { addItem, removeItems } = useSpotlightContext();
   const { boot } = useIntercom();
+  const segment = useSegment();
   const isSelfHosted = IS_DOCKER_HOSTED;
+
+  const debounceThemeChange = useDebounce((args: { colorScheme: ColorScheme; themeStatus: string }) => {
+    segment.track('Theme is set - [Theme]', args);
+  }, 500);
+
+  useEffect(() => {
+    debounceThemeChange({ colorScheme, themeStatus });
+  }, [colorScheme, themeStatus, debounceThemeChange]);
 
   useEffect(() => {
     const shouldBootIntercom = !!INTERCOM_APP_ID && currentUser && currentOrganization;
