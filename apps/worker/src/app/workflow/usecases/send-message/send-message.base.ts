@@ -194,10 +194,9 @@ export abstract class SendMessageBase extends SendMessageType {
           ns: namespaces,
           defaultNS: false,
           nsSeparator: '.',
-          lng: 'en',
+          lng: locale || 'en',
           compatibilityJSON: 'v2',
         });
-        await i18next.changeLanguage(locale || 'en');
       }
     } catch (e) {
       Logger.error(e, `Unexpected error while importing enterprise modules`, 'TranslationsService');
