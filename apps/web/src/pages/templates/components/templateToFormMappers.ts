@@ -188,6 +188,19 @@ const mapToDelayFormStep = (item: INotificationTemplateStep | IStepVariant): IFo
   };
 };
 
+const mapToChatFormStep = (item: INotificationTemplateStep | IStepVariant): IFormStep => ({
+  ...item,
+  ...(!!('variants' in item) && {
+    variants: item.variants?.map((variant) => mapToChatFormStep(variant)) ?? ([] as any),
+  }),
+  template: {
+    ...item.template,
+    contentType: 'customHtml',
+    type: item?.template?.type ?? StepTypeEnum.CHAT,
+    content: item?.template?.content ?? '',
+  },
+});
+
 export const mapNotificationTemplateToForm = (template: INotificationTemplate): IForm => {
   const form: IForm = {
     notificationGroupId: template._notificationGroupId,
@@ -205,6 +218,9 @@ export const mapNotificationTemplateToForm = (template: INotificationTemplate): 
       item.uuid = uuid4();
     }
 
+    if (item?.template?.type === StepTypeEnum.CHAT) {
+      return mapToChatFormStep(item);
+    }
     if (item?.template?.type === StepTypeEnum.EMAIL) {
       return mapToEmailFormStep(item);
     }
