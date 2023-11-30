@@ -4,8 +4,11 @@ name: Build, tag and push Web Docker image to ghcr.io
 on:
   workflow_call:
     inputs:
-      # supported environments: dev, stg, prod
       environment:
+        required: true
+        type: string
+      # supported tags: dev, stg, prod
+      env_tag:
         required: false
         type: string
 
@@ -14,6 +17,7 @@ jobs:
   reusable_web_docker:
     runs-on: ubuntu-latest
     timeout-minutes: 80
+    environment: ${{ inputs.environment }}
     permissions:
       contents: read
       packages: write
@@ -29,12 +33,12 @@ jobs:
 
       - name: Build, tag, and push image to ghcr.io
         id: build-image
-        if: ${{ inputs.environment == 'dev' || inputs.environment == 'stg' }}
+        if: ${{ inputs.env_tag == 'dev' || inputs.env_tag == 'stg' }}
         env:
           REGISTRY_OWNER: novuhq
           DOCKER_NAME: novu/web
           IMAGE_TAG: ${{ github.sha }}
-          ENV_TAG: ${{ inputs.environment }}
+          ENV_TAG: ${{ inputs.env_tag }}
           GH_ACTOR: ${{ github.actor }}
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
           DEPOT_PROJECT_ID: f88777ff6m
@@ -48,12 +52,12 @@ jobs:
 
       - name: Production build, tag, and push image to ghcr.io
         id: build-prod-image
-        if: ${{ inputs.environment == 'prod' }}
+        if: ${{ inputs.env_tag == 'prod' }}
         env:
           REGISTRY_OWNER: novuhq
           DOCKER_NAME: novu/web
           IMAGE_TAG: ${{ github.sha }}
-          ENV_TAG: ${{ inputs.environment }}
+          ENV_TAG: ${{ inputs.env_tag }}
           GH_ACTOR: ${{ github.actor }}
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
           DEPOT_PROJECT_ID: f88777ff6m

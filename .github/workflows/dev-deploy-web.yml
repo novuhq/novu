@@ -25,19 +25,10 @@ jobs:
   # This workflow contains a single job called "build"
   deploy_web:
     needs: test_web
-    environment: Development
     if: "!contains(github.event.head_commit.message, 'ci skip')"
-    # The type of runner that the job will run on
-    runs-on: ubuntu-latest
-    timeout-minutes: 80
-    permissions:
-      contents: read
-      packages: write
-      deployments: write
-      id-token: write
     uses: ./.github/workflows/reusable-web-deploy.yml
-    secrets: inherit
     with:
+      environment: Development
       react_app_api_url: https://dev.api.novu.co
       react_app_ws_url: https://dev.ws.novu.co
       react_app_webhook_url: https://dev.webhook.novu.co
@@ -49,20 +40,13 @@ jobs:
       netlify_alias: dev
       netlify_gh_env: development
       netlify_site_id: 45396446-dc86-4ad6-81e4-86d3eb78d06f
+    secrets: inherit
 
   publish_docker_image_web:
     needs: test_web
-    environment: Development
     if: "!contains(github.event.head_commit.message, 'ci skip')"
-    # The type of runner that the job will run on
-    runs-on: ubuntu-latest
-    timeout-minutes: 80
-    permissions:
-      contents: read
-      packages: write
-      deployments: write
-      id-token: write
     uses: ./.github/workflows/reusable-web-docker.yml
-    secrets: inherit
     with:
-      environment: dev
+      environment: Development
+      env_tag: dev
+    secrets: inherit

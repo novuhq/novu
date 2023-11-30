@@ -4,6 +4,9 @@ name: Deploy Web to Netlify
 on:
   workflow_call:
     inputs:
+      environment:
+        required: true
+        type: string
       react_app_api_url:
         required: true
         type: string
@@ -45,6 +48,7 @@ jobs:
   reusable_web_build:
     runs-on: ubuntu-latest
     timeout-minutes: 80
+    environment: ${{ inputs.environment }}
     permissions:
       contents: read
       packages: write
