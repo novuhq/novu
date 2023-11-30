@@ -8,6 +8,7 @@ import {
   Worker,
   WorkerOptions,
 } from '../bull-mq';
+import { INovuWorker } from '../readiness';
 
 const LOG_CONTEXT = 'WorkerService';
 
@@ -18,7 +19,7 @@ export type WorkerProcessor =
 
 export { WorkerOptions };
 
-export class WorkerBaseService {
+export class WorkerBaseService implements INovuWorker {
   private instance: BullMqService;
 
   public readonly DEFAULT_ATTEMPTS = 3;

@@ -45,6 +45,8 @@ export async function bootstrap() {
 
   app.useWebSocketAdapter(redisIoAdapter);
 
+  app.enableShutdownHooks();
+
   await app.init();
 
   await startAppInfra(app);

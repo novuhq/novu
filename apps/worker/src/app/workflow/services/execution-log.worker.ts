@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 const nr = require('newrelic');
 import {
   getExecutionLogWorkerOptions,
-  INovuWorker,
   PinoLogger,
   storage,
   Store,
@@ -16,7 +15,7 @@ import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 const LOG_CONTEXT = 'ExecutionLogWorker';
 
 @Injectable()
-export class ExecutionLogWorker extends ExecutionLogWorkerService implements INovuWorker {
+export class ExecutionLogWorker extends ExecutionLogWorkerService {
   constructor(private createExecutionDetails: CreateExecutionDetails) {
     super();
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOptions());

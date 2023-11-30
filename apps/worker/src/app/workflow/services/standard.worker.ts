@@ -1,14 +1,8 @@
 const nr = require('newrelic');
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import {
-  ExecutionDetailsSourceEnum,
-  ExecutionDetailsStatusEnum,
-  IJobData,
-  ObservabilityBackgroundTransactionEnum,
-} from '@novu/shared';
+import { IJobData, ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import {
   getStandardWorkerOptions,
-  INovuWorker,
   Job,
   PinoLogger,
   StandardWorkerService,
@@ -32,7 +26,7 @@ import {
 const LOG_CONTEXT = 'StandardWorker';
 
 @Injectable()
-export class StandardWorker extends StandardWorkerService implements INovuWorker {
+export class StandardWorker extends StandardWorkerService {
   constructor(
     private handleLastFailedJob: HandleLastFailedJob,
     private runJob: RunJob,

@@ -1,17 +1,18 @@
 const nr = require('newrelic');
+import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
 import { OnGatewayConnection, OnGatewayDisconnect, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Logger } from '@nestjs/common';
-import { Server, Socket } from 'socket.io';
 
 import { ISubscriberJwt, ObservabilityBackgroundTransactionEnum } from '@novu/shared';
+import { IDestroy } from '@novu/application-generic';
 
 import { SubscriberOnlineService } from '../shared/subscriber-online';
 
 const LOG_CONTEXT = 'WSGateway';
 
 @WebSocketGateway()
-export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDestroy {
   constructor(private jwtService: JwtService, private subscriberOnlineService: SubscriberOnlineService) {}
 
   @WebSocketServer()
@@ -126,5 +127,30 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private disconnect(socket: Socket) {
     socket.disconnect();
+  }
+
+  async gracefulShutdown(): Promise<void> {
+    try {
+      if (!this.server) {
+        Logger.error('WS server was not initialized while executing shutdown', LOG_CONTEXT);
+
+        return;
+      }
+
+      Logger.log('Closing WS server for incoming new connections', LOG_CONTEXT);
+      this.server.close();
+
+      Logger.log('Disconnecting active sockets connections', LOG_CONTEXT);
+      this.server.sockets.disconnectSockets();
+    } catch (e) {
+      Logger.error(e, 'Unexpected exception was thrown while graceful shut down was executed', LOG_CONTEXT);
+      throw e;
+    } finally {
+      Logger.error(`Graceful shutdown down has finished`, LOG_CONTEXT);
+    }
+  }
+
+  async onModuleDestroy(): Promise<void> {
+    await this.gracefulShutdown();
   }
 }
