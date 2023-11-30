@@ -1,7 +1,27 @@
-import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { FeatureFlagsKeysEnum, IOrganizationEntity } from '@novu/shared';
 import { useFlags } from 'launchdarkly-react-client-sdk';
+import { useLDClient } from 'launchdarkly-react-client-sdk';
+import { useEffect } from 'react';
 
 import { IS_TEMPLATE_STORE_ENABLED, IS_MULTI_TENANCY_ENABLED, IS_TRANSLATION_MANAGER_ENABLED } from '../config';
+
+export const useFeatureFlags = (organization: IOrganizationEntity) => {
+  const ldClient = useLDClient();
+
+  useEffect(() => {
+    if (!organization?._id) {
+      return;
+    }
+
+    ldClient?.identify({
+      kind: 'organization',
+      key: organization._id,
+      name: organization.name,
+    });
+  }, [organization?._id, ldClient, organization?.name]);
+
+  return ldClient;
+};
 
 const prepareBooleanStringFeatureFlag = (value: string | undefined, defaultValue: boolean): boolean => {
   const preparedValue = value === 'true';
