@@ -113,11 +113,12 @@ export class SendMessageInApp extends SendMessageBase {
     let content = '';
 
     const { actor } = command.step.template;
+    const { subscriber } = command.compileContext;
 
     const [template, organization] = await Promise.all([
       this.processVariants(command),
       this.organizationRepository.findOne({ _id: command.organizationId }, 'branding'),
-      this.initiateTranslations(command.environmentId, command.organizationId, ''),
+      this.initiateTranslations(command.environmentId, command.organizationId, subscriber.locale),
     ]);
 
     if (template) {
