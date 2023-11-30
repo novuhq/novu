@@ -1367,6 +1367,9 @@ importers:
       helmet:
         specifier: ^6.0.1
         version: 6.1.4
+      i18next:
+        specifier: ^23.7.6
+        version: 23.7.6
       inline-css:
         specifier: ^4.0.2
         version: 4.0.2
@@ -2368,6 +2371,9 @@ importers:
       handlebars:
         specifier: ^4.7.7
         version: 4.7.7
+      i18next:
+        specifier: ^23.7.6
+        version: 23.7.6
       ioredis:
         specifier: ^5.2.4
         version: 5.3.1
@@ -34853,6 +34859,12 @@ packages:
     transitivePeerDependencies:
       - supports-color
     dev: true
+
+  /i18next@23.7.6:
+    resolution: {integrity: sha512-O66BhXBw0fH4bEJMA0/klQKPEbcwAp5wjXEL803pdAynNbg2f4qhLIYlNHJyE7icrL6XmSZKPYaaXwy11kJ6YQ==}
+    dependencies:
+      '@babel/runtime': 7.23.2
+    dev: false
 
   /iconv-lite@0.4.24:
     resolution: {integrity: sha512-v3MXnZAcvnywkTUEZomIActle7RXXeedOR31wwl7VlyoXO4Qi9arvSenNQWne1TcRwhCL1HwLI21bEqdpj8/rA==}

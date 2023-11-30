@@ -1,4 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
+
 import {
   MessageRepository,
   NotificationStepEntity,
@@ -53,7 +55,8 @@ export class SendMessageEmail extends SendMessageBase {
     protected createExecutionDetails: CreateExecutionDetails,
     private compileEmailTemplateUsecase: CompileEmailTemplate,
     protected selectIntegration: SelectIntegration,
-    protected getNovuProviderCredentials: GetNovuProviderCredentials
+    protected getNovuProviderCredentials: GetNovuProviderCredentials,
+    protected moduleRef: ModuleRef
   ) {
     super(
       messageRepository,
@@ -62,7 +65,8 @@ export class SendMessageEmail extends SendMessageBase {
       subscriberRepository,
       tenantRepository,
       selectIntegration,
-      getNovuProviderCredentials
+      getNovuProviderCredentials,
+      moduleRef
     );
   }
 
@@ -148,6 +152,7 @@ export class SendMessageEmail extends SendMessageBase {
       this.handleTenantExecution(command.job),
       this.getOverrideLayoutId(command),
       this.sendSelectedIntegrationExecution(command.job, integration),
+      this.initiateTranslations(command.environmentId, command.organizationId, subscriber.locale),
     ]);
 
     const overrides: Record<string, any> = Object.assign(

@@ -1,4 +1,4 @@
-import { Module, Provider } from '@nestjs/common';
+import { DynamicModule, Logger, Module, Provider } from '@nestjs/common';
 import {
   AddDelayJob,
   MergeOrCreateDigest,
@@ -57,7 +57,23 @@ import {
 
 import { SharedModule } from '../shared/shared.module';
 import { SubscriberProcessWorker } from './services/subscriber-process.worker';
+import { Type } from '@nestjs/common/interfaces/type.interface';
+import { ForwardReference } from '@nestjs/common/interfaces/modules/forward-reference.interface';
 
+const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
+  const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
+  try {
+    if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+      if (require('@novu/ee-translation')?.EnterpriseTranslationModule) {
+        modules.push(require('@novu/ee-translation')?.EnterpriseTranslationModule);
+      }
+    }
+  } catch (e) {
+    Logger.error(e, `Unexpected error while importing enterprise modules`, 'EnterpriseImport');
+  }
+
+  return modules;
+};
 const REPOSITORIES = [JobRepository];
 
 const USE_CASES = [
@@ -118,7 +134,7 @@ const PROVIDERS: Provider[] = [
 ];
 
 @Module({
-  imports: [SharedModule, QueuesModule],
+  imports: [SharedModule, QueuesModule, ...enterpriseImports()],
   controllers: [],
   providers: [...PROVIDERS, ...USE_CASES, ...REPOSITORIES],
 })

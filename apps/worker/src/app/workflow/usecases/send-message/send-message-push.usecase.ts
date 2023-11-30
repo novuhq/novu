@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
+import { ModuleRef } from '@nestjs/core';
+
 import {
   MessageRepository,
   NotificationStepEntity,
@@ -53,7 +55,8 @@ export class SendMessagePush extends SendMessageBase {
     protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
     protected selectIntegration: SelectIntegration,
-    protected getNovuProviderCredentials: GetNovuProviderCredentials
+    protected getNovuProviderCredentials: GetNovuProviderCredentials,
+    protected moduleRef: ModuleRef
   ) {
     super(
       messageRepository,
@@ -62,7 +65,8 @@ export class SendMessagePush extends SendMessageBase {
       subscriberRepository,
       tenantRepository,
       selectIntegration,
-      getNovuProviderCredentials
+      getNovuProviderCredentials,
+      moduleRef
     );
   }
 
@@ -87,6 +91,7 @@ export class SendMessagePush extends SendMessageBase {
       total_count: command.events?.length,
     };
     const tenant = await this.handleTenantExecution(command.job);
+    await this.initiateTranslations(command.environmentId, command.organizationId, subscriber.locale);
     let actor: SubscriberEntity | null = null;
     if (command.job.actorId) {
       actor = await this.getSubscriberBySubscriberId({
