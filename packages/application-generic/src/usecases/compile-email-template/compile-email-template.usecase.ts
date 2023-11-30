@@ -62,7 +62,7 @@ export class CompileEmailTemplate {
     }
 
     let subject = '';
-    let senderName = '';
+    let senderName;
     const content: string | IEmailBlock[] = command.content;
     let preheader = command.preheader;
 

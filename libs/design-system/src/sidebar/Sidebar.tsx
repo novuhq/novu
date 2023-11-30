@@ -1,11 +1,14 @@
+import { css } from '@emotion/react';
 import styled from '@emotion/styled';
-import { ActionIcon, createStyles, Drawer, Loader, MantineTheme, Stack } from '@mantine/core';
+import { createStyles, CSSObject, Drawer, DrawerStylesNames, Loader, MantineTheme, Stack, Styles } from '@mantine/core';
 import { ReactNode } from 'react';
 
+import { ActionButton } from '../button/ActionButton';
 import { When } from '../when';
 import { useKeyDown } from '../hooks';
 import { colors, shadows } from '../config';
-import { ArrowLeft, Close } from '../icons';
+import { ArrowLeft } from '../icons';
+import { Close } from './Close';
 
 const HeaderHolder = styled.div`
   display: flex;
@@ -15,16 +18,19 @@ const HeaderHolder = styled.div`
   margin-bottom: 0;
 `;
 
-const BodyHolder = styled.div`
-  display: flex;
-  flex-direction: column;
+const scrollable = css`
   overflow-x: hidden;
   overflow-y: auto;
+`;
+
+const BodyHolder = styled.div<{ isParentScrollable: boolean }>`
+  display: flex;
+  flex-direction: column;
+  ${(props) => !props.isParentScrollable && scrollable};
   margin: 0 24px;
   gap: 24px;
   padding-right: 5px;
   margin-right: 19px;
-  height: 100%;
 `;
 
 const FooterHolder = styled.div`
@@ -38,17 +44,15 @@ const FooterHolder = styled.div`
 
 const COLLAPSED_WIDTH = 480;
 const NAVIGATION_WIDTH = 300;
-const PAGE_MARGIN = 30;
 
-const useDrawerStyles = createStyles((theme: MantineTheme, { headerHeight }: { headerHeight: number }) => {
+const useDrawerStyles = createStyles((theme: MantineTheme) => {
   return {
     root: {
       position: 'absolute',
-      zIndex: 1,
     },
     drawer: {
       position: 'fixed',
-      top: `${headerHeight}px`,
+      top: 40,
       right: 0,
       bottom: 0,
       backgroundColor: theme.colorScheme === 'dark' ? colors.B17 : colors.white,
@@ -62,12 +66,13 @@ const useDrawerStyles = createStyles((theme: MantineTheme, { headerHeight }: { h
   };
 });
 
-const Form = styled.form`
+const Form = styled.form<{ isParentScrollable: boolean }>`
   height: 100%;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 24px;
+  ${(props) => props.isParentScrollable && scrollable};
 `;
 
 export const Sidebar = ({
@@ -77,11 +82,12 @@ export const Sidebar = ({
   isOpened,
   isExpanded = false,
   isLoading = false,
+  isParentScrollable = false,
+  styles,
   'data-test-id': dataTestId,
   onClose,
   onBack,
   onSubmit,
-  headerHeight,
 }: {
   customHeader?: ReactNode;
   customFooter?: ReactNode;
@@ -89,13 +95,14 @@ export const Sidebar = ({
   isOpened: boolean;
   isExpanded?: boolean;
   isLoading?: boolean;
+  isParentScrollable?: boolean;
+  styles?: Styles<DrawerStylesNames, Record<string, any>>;
   onClose: () => void;
   onBack?: () => void;
   onSubmit?: React.FormEventHandler<HTMLFormElement>;
   'data-test-id'?: string;
-  headerHeight: number;
 }) => {
-  const { classes: drawerClasses } = useDrawerStyles({ headerHeight });
+  const { classes: drawerClasses } = useDrawerStyles();
   const onCloseCallback = () => {
     onClose();
   };
@@ -107,12 +114,14 @@ export const Sidebar = ({
       opened={isOpened}
       position="right"
       styles={{
+        ...styles,
         drawer: {
           width: isExpanded ? `calc(100% - ${NAVIGATION_WIDTH}px)` : COLLAPSED_WIDTH,
           transition: 'all 300ms ease !important',
           '@media screen and (max-width: 768px)': {
             width: isExpanded ? `100%` : COLLAPSED_WIDTH,
           },
+          ...((styles && ((styles as any).drawer as CSSObject)) ?? {}),
         },
       }}
       classNames={drawerClasses}
@@ -120,28 +129,49 @@ export const Sidebar = ({
       withOverlay={false}
       withCloseButton={false}
       closeOnEscape={false}
-      withinPortal={false}
+      withinPortal={true}
       trapFocus={false}
       data-expanded={isExpanded}
     >
-      <Form name="form-name" noValidate onSubmit={onSubmit} data-test-id={dataTestId}>
-        <HeaderHolder>
+      <Form
+        name="form-name"
+        noValidate
+        onSubmit={onSubmit}
+        data-test-id={dataTestId}
+        isParentScrollable={isParentScrollable}
+        onClick={(e) => {
+          e.stopPropagation();
+        }}
+      >
+        <HeaderHolder className="sidebar-header-holder">
           {isExpanded && onBack && (
-            <ActionIcon variant="transparent" onClick={onBack} data-test-id="sidebar-back">
-              <ArrowLeft color={colors.B40} />
-            </ActionIcon>
+            <ActionButton
+              onClick={onBack}
+              Icon={ArrowLeft}
+              data-test-id="sidebar-back"
+              sx={{
+                '> svg': {
+                  width: 16,
+                  height: 16,
+                },
+              }}
+            />
           )}
           {customHeader}
-          <ActionIcon
-            variant="transparent"
+          <ActionButton
             onClick={onCloseCallback}
-            style={{ marginLeft: 'auto' }}
+            Icon={Close}
+            sx={{
+              marginLeft: 'auto',
+              '> svg': {
+                width: 14,
+                height: 14,
+              },
+            }}
             data-test-id="sidebar-close"
-          >
-            <Close color={colors.B40} />
-          </ActionIcon>
+          />
         </HeaderHolder>
-        <BodyHolder>
+        <BodyHolder isParentScrollable={isParentScrollable} className="sidebar-body-holder">
           <When truthy={isLoading}>
             <Stack
               align="center"
@@ -155,7 +185,7 @@ export const Sidebar = ({
           </When>
           <When truthy={!isLoading}>{children}</When>
         </BodyHolder>
-        {customFooter && <FooterHolder>{customFooter}</FooterHolder>}
+        {customFooter && <FooterHolder className="sidebar-footer-holder">{customFooter}</FooterHolder>}
       </Form>
     </Drawer>
   );

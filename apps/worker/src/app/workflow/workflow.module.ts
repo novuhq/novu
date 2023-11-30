@@ -25,17 +25,25 @@ import {
   StoreSubscriberJobs,
   ConditionsFilter,
   TriggerEvent,
+  SelectVariant,
   MapTriggerRecipients,
   GetTopicSubscribersUseCase,
   getIsTopicNotificationEnabled,
   SubscriberJobBound,
+  TriggerBroadcast,
+  TriggerMulticast,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
-import { ActiveJobsMetricService, CompletedJobsMetricService, StandardWorker, WorkflowWorker } from './services';
+import {
+  ExecutionLogWorker,
+  ActiveJobsMetricService,
+  CompletedJobsMetricService,
+  StandardWorker,
+  WorkflowWorker,
+} from './services';
 
 import {
-  MessageMatcher,
   SendMessage,
   SendMessageChat,
   SendMessageDelay,
@@ -78,11 +86,11 @@ const USE_CASES = [
   GetNovuLayout,
   GetNovuProviderCredentials,
   SelectIntegration,
+  SelectVariant,
   GetSubscriberPreference,
   GetSubscriberGlobalPreference,
   GetSubscriberTemplatePreference,
   HandleLastFailedJob,
-  MessageMatcher,
   ProcessTenant,
   QueueNextJob,
   RunJob,
@@ -105,6 +113,8 @@ const USE_CASES = [
   GetTopicSubscribersUseCase,
   getIsTopicNotificationEnabled,
   SubscriberJobBound,
+  TriggerBroadcast,
+  TriggerMulticast,
 ];
 
 const PROVIDERS: Provider[] = [
@@ -114,6 +124,7 @@ const PROVIDERS: Provider[] = [
   CompletedJobsMetricService,
   StandardWorker,
   WorkflowWorker,
+  ExecutionLogWorker,
   SubscriberProcessWorker,
 ];
 

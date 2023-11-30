@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { JobStatusEnum } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
-import { InstrumentUsecase } from '@novu/application-generic';
+import { getJobDigest, InstrumentUsecase } from '@novu/application-generic';
 
 import { DigestEventsCommand } from './digest-events.command';
 import { GetDigestEvents } from './get-digest-events.usecase';
@@ -12,7 +12,7 @@ export class GetDigestEventsBackoff extends GetDigestEvents {
   public async execute(command: DigestEventsCommand) {
     const currentJob = command.currentJob;
 
-    const { digestKey, digestMeta, digestValue } = this.getJobDigest(currentJob);
+    const { digestKey, digestMeta, digestValue } = getJobDigest(currentJob);
 
     const jobs = await this.jobRepository.find(
       {

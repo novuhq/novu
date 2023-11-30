@@ -47,7 +47,7 @@ export class UpdateNotificationTemplateCommand extends EnvironmentWithUserComman
   @IsArray()
   @ValidateNested()
   @IsOptional()
-  steps?: Array<NotificationStep & { _templateId?: string }>;
+  steps?: NotificationStep[];
 
   @ValidateNested()
   @IsOptional()

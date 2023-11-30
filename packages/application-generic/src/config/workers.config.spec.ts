@@ -76,7 +76,7 @@ describe('Workers Config', () => {
   describe('Web Socket Worker', () => {
     it('should have the default values when no environment variable set', () => {
       expect(getWebSocketWorkerOptions()).toEqual({
-        concurrency: 200,
+        concurrency: 400,
         lockDuration: 90000,
       });
     });

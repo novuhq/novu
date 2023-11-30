@@ -50,8 +50,8 @@ export class WebSocketWorker extends WebSocketsWorkerService implements INovuWor
               .then(resolve)
               .catch((error) => {
                 Logger.error(
-                  'Unexpected exception occurred while handling external services route ',
                   error,
+                  'Unexpected exception occurred while handling external services route ',
                   LOG_CONTEXT
                 );
 

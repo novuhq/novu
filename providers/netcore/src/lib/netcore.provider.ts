@@ -32,6 +32,7 @@ export class NetCoreProvider implements IEmailProvider {
     private config: {
       apiKey: string;
       from: string;
+      senderName: string;
     }
   ) {
     this.axiosInstance = axios.create({
@@ -43,7 +44,10 @@ export class NetCoreProvider implements IEmailProvider {
     options: IEmailOptions
   ): Promise<ISendMessageSuccessResponse> {
     const data: IEmailBody = {
-      from: { email: options.from || this.config.from },
+      from: {
+        email: options.from || this.config.from,
+        name: options.senderName || this.config.senderName,
+      },
       subject: options.subject,
       content: [
         {

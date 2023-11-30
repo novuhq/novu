@@ -4,7 +4,9 @@ import {
   CacheInMemoryProviderService,
   CacheService,
   DistributedLockService,
+  ExecutionLogQueueService,
   FeatureFlagsService,
+  InboundParseQueueService,
   ReadinessService,
   StandardQueueService,
   SubscriberProcessQueueService,
@@ -12,6 +14,7 @@ import {
   WorkflowQueueService,
 } from '../services';
 import {
+  GetIsApiRateLimitingEnabled,
   GetIsTopicNotificationEnabled,
   GetUseMergedDigestId,
 } from '../usecases';
@@ -44,6 +47,18 @@ export const getIsTopicNotificationEnabled = {
     featureFlagsServiceItem: FeatureFlagsService
   ): Promise<GetIsTopicNotificationEnabled> => {
     const useCase = new GetIsTopicNotificationEnabled(featureFlagsServiceItem);
+
+    return useCase;
+  },
+  inject: [FeatureFlagsService],
+};
+
+export const getIsApiRateLimitingEnabled = {
+  provide: GetIsApiRateLimitingEnabled,
+  useFactory: async (
+    featureFlagsServiceItem: FeatureFlagsService
+  ): Promise<GetIsApiRateLimitingEnabled> => {
+    const useCase = new GetIsApiRateLimitingEnabled(featureFlagsServiceItem);
 
     return useCase;
   },
@@ -114,13 +129,17 @@ export const bullMqTokenList = {
     standardQueueService: StandardQueueService,
     webSocketsQueueService: WebSocketsQueueService,
     workflowQueueService: WorkflowQueueService,
-    subscriberProcessQueueService: SubscriberProcessQueueService
+    subscriberProcessQueueService: SubscriberProcessQueueService,
+    executionLogQueueService: ExecutionLogQueueService,
+    inboundParseQueueService: InboundParseQueueService
   ) => {
     return [
       standardQueueService,
       webSocketsQueueService,
       workflowQueueService,
       subscriberProcessQueueService,
+      executionLogQueueService,
+      inboundParseQueueService,
     ];
   },
   inject: [
@@ -128,5 +147,7 @@ export const bullMqTokenList = {
     WebSocketsQueueService,
     WorkflowQueueService,
     SubscriberProcessQueueService,
+    ExecutionLogQueueService,
+    InboundParseQueueService,
   ],
 };
