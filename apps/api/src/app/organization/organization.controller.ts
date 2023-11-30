@@ -40,13 +40,16 @@ import { RenameOrganizationDto } from './dtos/rename-organization.dto';
 import { UpdateBrandingDetailsDto } from './dtos/update-branding-details.dto';
 import { UpdateMemberRolesDto } from './dtos/update-member-roles.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { ApiResponse } from '../shared/framework/response.decorator';
+import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { OrganizationBrandingResponseDto, OrganizationResponseDto } from './dtos/organization-response.dto';
 import { MemberResponseDto } from './dtos/member-response.dto';
+
+@ApiCommonResponses()
 @Controller('/organizations')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
 @ApiTags('Organizations')
+@ApiCommonResponses()
 export class OrganizationController {
   constructor(
     private createOrganizationUsecase: CreateOrganization,

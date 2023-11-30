@@ -15,10 +15,10 @@ import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { RootEnvironmentGuard } from '../auth/framework/root-environment-guard.service';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { Roles } from '../auth/framework/roles.decorator';
-import { ApiResponse } from '../shared/framework/response.decorator';
+import { ApiCommonResponses, ApiResponse, ApiOkResponse } from '../shared/framework/response.decorator';
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 import { CreateWorkflowOverride } from './usecases/create-workflow-override/create-workflow-override.usecase';
 import { CreateWorkflowOverrideCommand } from './usecases/create-workflow-override/create-workflow-override.command';
@@ -44,6 +44,7 @@ import { GetWorkflowOverrideByIdCommand } from './usecases/get-workflow-override
 import { UpdateWorkflowOverrideByIdCommand } from './usecases/update-workflow-override-by-id/update-workflow-override-by-id.command';
 import { UpdateWorkflowOverrideById } from './usecases/update-workflow-override-by-id/update-workflow-override-by-id.usecase';
 
+@ApiCommonResponses()
 @Controller('/workflow-overrides')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)

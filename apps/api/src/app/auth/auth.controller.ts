@@ -43,7 +43,9 @@ import {
   SwitchOrganization,
   SwitchOrganizationCommand,
 } from '@novu/application-generic';
+import { ApiCommonResponses } from '../shared/framework/response.decorator';
 
+@ApiCommonResponses()
 @Controller('/auth')
 @UseInterceptors(ClassSerializerInterceptor)
 @ApiTags('Auth')
