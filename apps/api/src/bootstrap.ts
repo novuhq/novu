@@ -20,6 +20,7 @@ import { SubscriberRouteGuard } from './app/auth/framework/subscriber-route.guar
 import { validateEnv } from './config/env-validator';
 
 import * as packageJson from '../package.json';
+import { injectDocumentComponents } from './app/shared/framework/swagger';
 
 const extendedBodySizeRoutes = ['/v1/events', '/v1/notification-templates', '/v1/workflows', '/v1/layouts'];
 
@@ -96,6 +97,17 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
     .setTitle('Novu API')
     .setDescription('Open API Specification for Novu API')
     .setVersion('1.0')
+    .setContact('Novu Support', 'https://discord.gg/novu', 'support@novu.co')
+    .setExternalDoc('Novu Docs', 'https://docs.novu.co')
+    .setTermsOfService('https://novu.co/terms')
+    .setLicense('MIT', 'https://opensource.org/license/mit')
+    .addServer(process.env.API_ROOT_URL)
+    .addApiKey({
+      type: 'apiKey',
+      name: 'Authorization',
+      in: 'header',
+      description: 'The API key to use for authentication',
+    })
     .addTag('Events')
     .addTag('Subscribers')
     .addTag('Topics')
@@ -114,9 +126,20 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
     .addTag('Organizations')
     .addTag('Execution Details')
     .build();
-  const document = SwaggerModule.createDocument(app, options);
+  const document = injectDocumentComponents(SwaggerModule.createDocument(app, options));
 
-  SwaggerModule.setup('api', app, document);
+  SwaggerModule.setup('api', app, {
+    ...document,
+    info: {
+      ...document.info,
+      title: `DEPRECATED: ${document.info.title}. Use /openapi.{json,yaml} instead.`,
+    },
+  });
+  SwaggerModule.setup('openapi', app, document, {
+    jsonDocumentUrl: 'openapi.json',
+    yamlDocumentUrl: 'openapi.yaml',
+    explorer: process.env.NODE_ENV !== 'production',
+  });
 
   Logger.log('BOOTSTRAPPED SUCCESSFULLY');
 
