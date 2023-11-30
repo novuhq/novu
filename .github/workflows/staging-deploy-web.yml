@@ -118,7 +118,7 @@ jobs:
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
           depot build --push \
             -t ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG \
-            -t ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:dev \
+            -t ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:stg \
             -f apps/web/Dockerfile .
           echo "IMAGE=ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG" >> $GITHUB_OUTPUT
 

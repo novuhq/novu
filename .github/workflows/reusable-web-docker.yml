@@ -1,0 +1,67 @@
+name: Build, tag and push Web Docker image to ghcr.io
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+on:
+  workflow_call:
+    inputs:
+      # supported environments: dev, stg, prod
+      environment:
+        required: false
+        type: string
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  reusable_web_docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Depot
+        uses: depot/setup-action@v1
+        with:
+          oidc: true
+
+      - name: Build, tag, and push image to ghcr.io
+        id: build-image
+        if: ${{ inputs.environment == 'dev' || inputs.environment == 'stg' }}
+        env:
+          REGISTRY_OWNER: novuhq
+          DOCKER_NAME: novu/web
+          IMAGE_TAG: ${{ github.sha }}
+          ENV_TAG: ${{ inputs.environment }}
+          GH_ACTOR: ${{ github.actor }}
+          GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
+          DEPOT_PROJECT_ID: f88777ff6m
+        run: |
+          echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
+          depot build --push \
+            -t ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG \
+            -t ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$ENV_TAG \
+            -f apps/web/Dockerfile .
+          echo "IMAGE=ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Production build, tag, and push image to ghcr.io
+        id: build-prod-image
+        if: ${{ inputs.environment == 'prod' }}
+        env:
+          REGISTRY_OWNER: novuhq
+          DOCKER_NAME: novu/web
+          IMAGE_TAG: ${{ github.sha }}
+          ENV_TAG: ${{ inputs.environment }}
+          GH_ACTOR: ${{ github.actor }}
+          GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
+          DEPOT_PROJECT_ID: f88777ff6m
+        run: |
+          echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
+          depot build --push \
+            -t ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG \
+            -t ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$ENV_TAG \
+            -t ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest \
+            -f apps/web/Dockerfile .
+          echo "IMAGE=ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG" >> $GITHUB_OUTPUT
