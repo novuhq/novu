@@ -126,6 +126,7 @@
     "node-fetch": "^3.2.10",
     "pino-http": "^8.3.3",
     "pino-pretty": "^9.4.0",
+    "recursive-diff": "^1.0.8",
     "redlock": "4.2.0",
     "reflect-metadata": "^0.1.13",
     "rrule": "^2.7.2",

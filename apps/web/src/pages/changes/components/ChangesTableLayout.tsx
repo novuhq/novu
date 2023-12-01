@@ -76,6 +76,12 @@ export const ChangesTable = ({
             {type === ChangeEntityTypeEnum.DEFAULT_LAYOUT && (
               <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Default Layout Change</Text>
             )}
+            {type === ChangeEntityTypeEnum.TRANSLATION_GROUP && (
+              <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Translation Group Change</Text>
+            )}
+            {type === ChangeEntityTypeEnum.TRANSLATION && (
+              <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Translation Change</Text>
+            )}
             {previousDefaultLayout && (
               <Text data-test-id="previous-default-layout-content" rows={1} mt={5}>
                 Previous Default Layout: {previousDefaultLayout}
