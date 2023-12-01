@@ -77,7 +77,7 @@ export const ChangesTable = ({
               <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Default Layout Change</Text>
             )}
             {type === ChangeEntityTypeEnum.TRANSLATION_GROUP && (
-              <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Translation Group</Text>
+              <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Translation Group Change</Text>
             )}
             {type === ChangeEntityTypeEnum.TRANSLATION && (
               <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Translation</Text>
