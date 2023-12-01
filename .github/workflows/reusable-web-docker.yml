@@ -23,6 +23,9 @@ jobs:
       packages: write
       deployments: write
       id-token: write
+    strategy:
+      matrix:
+        name: [ 'novu/web-ee', 'novu/web' ]
     steps:
       - uses: actions/checkout@v3
 
@@ -36,7 +39,7 @@ jobs:
         if: ${{ inputs.env_tag == 'dev' || inputs.env_tag == 'stg' }}
         env:
           REGISTRY_OWNER: novuhq
-          DOCKER_NAME: novu/web
+          DOCKER_NAME: ${{ matrix.name }}
           IMAGE_TAG: ${{ github.sha }}
           ENV_TAG: ${{ inputs.env_tag }}
           GH_ACTOR: ${{ github.actor }}
@@ -55,7 +58,7 @@ jobs:
         if: ${{ inputs.env_tag == 'prod' }}
         env:
           REGISTRY_OWNER: novuhq
-          DOCKER_NAME: novu/web
+          DOCKER_NAME: ${{ matrix.name }}
           IMAGE_TAG: ${{ github.sha }}
           ENV_TAG: ${{ inputs.env_tag }}
           GH_ACTOR: ${{ github.actor }}
