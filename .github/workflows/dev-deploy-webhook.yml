@@ -41,4 +41,4 @@ jobs:
       environment: Development
       service_name: webhook
       terraform_workspace: novu-dev
-      docker_image: ${{ needs.publish_docker_image_webhook.outputs.docker_image }}
+      docker_image: ${{ needs.publish_docker_image_webhook.outputs.docker_image_ee }}
