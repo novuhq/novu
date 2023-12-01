@@ -78,7 +78,6 @@ jobs:
           echo REACT_APP_ENVIRONMENT=${{ inputs.react_app_environment }} >> .env
           echo REACT_APP_MAIL_SERVER_DOMAIN=${{ inputs.react_app_mail_server_domain }} >> .env
           echo REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID=${{ inputs.react_app_launch_darkly_client_side_id }} >> .env
-          echo REACT_APP_LOGROCKET_ID=${{ secrets.LOGROCKET_ID }} >> .env
 
       - name: Envsetup
         working-directory: apps/web
