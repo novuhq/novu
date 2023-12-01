@@ -1,6 +1,6 @@
 import { HeaderObject, ResponseHeaderKeysEnum } from '../types/headers.types';
 
-export const COMMON_RESPONSE_HEADERS = [
+export const COMMON_RESPONSE_HEADERS: Array<ResponseHeaderKeysEnum> = [
   ResponseHeaderKeysEnum.CONTENT_TYPE,
   ResponseHeaderKeysEnum.RATE_LIMIT_LIMIT,
   ResponseHeaderKeysEnum.RATE_LIMIT_REMAINING,
@@ -8,7 +8,7 @@ export const COMMON_RESPONSE_HEADERS = [
   ResponseHeaderKeysEnum.RATE_LIMIT_POLICY,
   ResponseHeaderKeysEnum.IDEMPOTENCY_KEY,
   ResponseHeaderKeysEnum.IDEMPOTENCY_REPLAY,
-] satisfies Array<ResponseHeaderKeysEnum>;
+];
 
 export const RESPONSE_HEADER_CONFIG: Record<ResponseHeaderKeysEnum, HeaderObject> = {
   [ResponseHeaderKeysEnum.CONTENT_TYPE]: {
