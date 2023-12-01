@@ -11,14 +11,16 @@ import {
 
 import { MergeOrCreateDigestCommand } from './merge-or-create-digest.command';
 import { ApiException } from '../../utils/exceptions';
-import { EventsDistributedLockService } from '../../services';
-import { DigestFilterSteps } from '../digest-filter-steps';
+import {
+  EventsDistributedLockService,
+  ExecutionLogQueueService,
+} from '../../services';
 import {
   DetailEnum,
   CreateExecutionDetailsCommand,
-  CreateExecutionDetails,
 } from '../create-execution-details';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
+import { getNestedValue } from '../../utils/object';
 
 interface IFindAndUpdateResponse {
   matched: number;
@@ -34,7 +36,8 @@ export class MergeOrCreateDigest {
     @Inject(forwardRef(() => EventsDistributedLockService))
     private eventsDistributedLockService: EventsDistributedLockService,
     private jobRepository: JobRepository,
-    protected createExecutionDetails: CreateExecutionDetails
+    @Inject(forwardRef(() => ExecutionLogQueueService))
+    private executionLogQueueService: ExecutionLogQueueService
   ) {}
 
   @InstrumentUsecase()
@@ -45,10 +48,7 @@ export class MergeOrCreateDigest {
 
     const digestMeta = job.digest as IDigestBaseMetadata | undefined;
     const digestKey = digestMeta?.digestKey;
-    const digestValue = DigestFilterSteps.getNestedValue(
-      job.payload,
-      digestKey
-    );
+    const digestValue = getNestedValue(job.payload, digestKey);
 
     const digestAction = await this.shouldDelayDigestOrMergeWithLock(
       job,
@@ -175,15 +175,19 @@ export class MergeOrCreateDigest {
   }
 
   private async digestMergedExecutionDetails(job: JobEntity): Promise<void> {
-    await this.createExecutionDetails.execute(
+    const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+    await this.executionLogQueueService.add(
+      metadata._id,
       CreateExecutionDetailsCommand.create({
+        ...metadata,
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: DetailEnum.DIGEST_MERGED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.SUCCESS,
         isTest: false,
         isRetry: false,
-      })
+      }),
+      job._organizationId
     );
   }
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { MantineProvider, Global, ColorSchemeProvider, ColorScheme, MantineTheme } from '@mantine/core';
 import { NotificationsProvider } from '@mantine/notifications';
 import { useColorScheme } from '@mantine/hooks';
@@ -61,7 +61,7 @@ declare module '@mantine/core' {
   export type MantineColor = MantineColor | 'gradient';
 }
 
-export function ThemeProvider({ children }: { children: JSX.Element; dark?: Boolean }) {
+export function ThemeProvider({ children }: { children: ReactNode | ReactNode[]; dark?: Boolean }) {
   const preferredColorScheme = useColorScheme();
   const [colorScheme, setColorScheme] = useState<ColorScheme>(preferredColorScheme);
   const { themeStatus, setThemeStatus } = useLocalThemePreference();
