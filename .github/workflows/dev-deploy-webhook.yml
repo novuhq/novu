@@ -25,10 +25,10 @@ jobs:
     uses: ./.github/workflows/reusable-docker.yml
     with:
       environment: Development
-      project: webhook
       project_path: apps/webhook
       test_port: 1341
       health_check: true
+      local_tag: novu-webhook
       env_tag: dev
     secrets: inherit
 

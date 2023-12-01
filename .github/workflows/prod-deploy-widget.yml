@@ -55,7 +55,7 @@ jobs:
     uses: ./.github/workflows/reusable-docker.yml
     with:
       environment: Production
-      project: widget
       project_path: apps/widget
+      local_tag: novu-widget
       env_tag: prod
     secrets: inherit

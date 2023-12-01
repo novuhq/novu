@@ -60,7 +60,7 @@ jobs:
     uses: ./.github/workflows/reusable-docker.yml
     with:
       environment: Production
-      project: web
       project_path: apps/web
+      local_tag: novu-web
       env_tag: prod
     secrets: inherit

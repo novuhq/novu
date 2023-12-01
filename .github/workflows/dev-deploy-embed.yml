@@ -34,7 +34,7 @@ jobs:
     uses: ./.github/workflows/reusable-docker.yml
     with:
       environment: Development
-      project: embed
       project_path: libs/embed
+      local_tag: novu-embed
       env_tag: dev
     secrets: inherit
