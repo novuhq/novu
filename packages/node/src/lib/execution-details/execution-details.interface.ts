@@ -1,3 +1,8 @@
 export interface IExecutionDetails {
-  get();
+  get(data: IExecutionDetailsPayload);
+}
+
+export interface IExecutionDetailsPayload {
+  notificationId: string;
+  subscriberId: string;
 }
