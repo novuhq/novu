@@ -125,7 +125,7 @@ export const getMemoryDbCluster = (
       ...(password && { password }),
       ...(username && { username }),
     },
-    scaleReads: 'slave',
+    scaleReads: 'master',
     /*
      *  Disabled in Prod as affects performance
      */
