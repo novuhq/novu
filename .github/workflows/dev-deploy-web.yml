@@ -35,7 +35,6 @@ jobs:
       react_app_sentry_dsn: https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907
       react_app_environment: dev
       react_app_mail_server_domain: dev.inbound-mail.novu.co
-      react_app_launch_darkly_client_side_id: ${{ secrets.DEV_LAUNCH_DARKLY_CLIENT_SIDE_ID }}
       netlify_deploy_message: Dev deployment
       netlify_alias: dev
       netlify_gh_env: development
