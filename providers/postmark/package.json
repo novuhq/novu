@@ -46,7 +46,7 @@
   },
   "dependencies": {
     "@novu/stateless": "^0.21.0",
-    "axios": "^1.3.6",
+    "axios": "^1.6.2",
     "postmark": "^2.7.8"
   },
   "devDependencies": {
