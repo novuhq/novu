@@ -35,8 +35,10 @@ jobs:
     needs:
       - deploy_embed_us
       - deploy_embed_eu
-    uses: ./.github/workflows/reusable-embed-docker.yml
+    uses: ./.github/workflows/reusable-docker.yml
     with:
       environment: Production
+      project: embed
+      project_path: libs/embed
       env_tag: prod
     secrets: inherit

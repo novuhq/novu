@@ -22,9 +22,13 @@ jobs:
   publish_docker_image_webhook:
     if: "!contains(github.event.head_commit.message, 'ci skip')"
     needs: test_webhook
-    uses: ./.github/workflows/reusable-webhook-docker.yml
+    uses: ./.github/workflows/reusable-docker.yml
     with:
       environment: Development
+      project: webhook
+      project_path: apps/webhook
+      test_port: 1341
+      health_check: true
       env_tag: dev
     secrets: inherit
 

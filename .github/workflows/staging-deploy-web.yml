@@ -45,8 +45,10 @@ jobs:
   publish_docker_image_web:
     needs: test_web
     if: "!contains(github.event.head_commit.message, 'ci skip')"
-    uses: ./.github/workflows/reusable-web-docker.yml
+    uses: ./.github/workflows/reusable-docker.yml
     with:
       environment: Development
+      project: web
+      project_path: apps/web
       env_tag: dev
     secrets: inherit
