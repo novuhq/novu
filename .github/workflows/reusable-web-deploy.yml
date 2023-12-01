@@ -28,6 +28,9 @@ on:
       react_app_mail_server_domain:
         required: true
         type: string
+      react_app_launch_darkly_client_side_id:
+        required: true
+        type: string
       # Netlify inputs
       netlify_deploy_message:
         required: true
@@ -74,7 +77,8 @@ jobs:
           echo REACT_APP_SENTRY_DSN=${{ inputs.react_app_sentry_dsn }} >> .env
           echo REACT_APP_ENVIRONMENT=${{ inputs.react_app_environment }} >> .env
           echo REACT_APP_MAIL_SERVER_DOMAIN=${{ inputs.react_app_mail_server_domain }} >> .env
-          echo REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID=${{ secrets.DEV_LAUNCH_DARKLY_CLIENT_SIDE_ID }} >> .env
+          echo REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID=${{ inputs.react_app_launch_darkly_client_side_id }} >> .env
+          echo REACT_APP_LOGROCKET_ID=${{ secrets.LOGROCKET_ID }} >> .env
 
       - name: Envsetup
         working-directory: apps/web
