@@ -4,8 +4,7 @@ import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useIntercom } from 'react-use-intercom';
 
-import LogRocket from 'logrocket';
-import { CONTEXT_PATH, INTERCOM_APP_ID, IS_DOCKER_HOSTED, LOGROCKET_ID, REACT_APP_VERSION } from '../../../config';
+import { CONTEXT_PATH, INTERCOM_APP_ID, IS_DOCKER_HOSTED, REACT_APP_VERSION } from '../../../config';
 import { ROUTES } from '../../../constants/routes.enum';
 import {
   colors,
@@ -86,30 +85,6 @@ export function HeaderNav({ isIntercomOpened }: Props) {
       });
     }
   }, [boot, currentUser, currentOrganization]);
-
-  useEffect(() => {
-    if (!LOGROCKET_ID) return;
-    if (currentUser && currentOrganization) {
-      let logrocketTraits;
-
-      if (currentUser?.email !== undefined) {
-        logrocketTraits = {
-          name: currentUser?.firstName + ' ' + currentUser?.lastName,
-          organizationId: currentOrganization._id,
-          organization: currentOrganization.name,
-          email: currentUser?.email ? currentUser?.email : ' ',
-        };
-      } else {
-        logrocketTraits = {
-          name: currentUser?.firstName + ' ' + currentUser?.lastName,
-          organizationId: currentOrganization._id,
-          organization: currentOrganization.name,
-        };
-      }
-
-      LogRocket.identify(currentUser?._id, logrocketTraits);
-    }
-  }, [currentUser, currentOrganization]);
 
   let themeTitle = 'Match System Appearance';
   if (themeStatus === 'dark') {
