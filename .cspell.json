@@ -536,6 +536,7 @@
     "Krakend",
     "ratelimit",
     "Ratelimit",
+    "openapi",
   ],
   "flagWords": [],
   "patterns": [

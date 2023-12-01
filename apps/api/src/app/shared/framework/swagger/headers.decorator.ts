@@ -1,5 +1,4 @@
 import { HeaderObjects, ResponseHeaderKeysEnum } from '../types';
-import {} from '../constants/headers.schema';
 import { RESPONSE_HEADER_CONFIG } from '../constants/headers.schema';
 import { OpenAPIObject } from '@nestjs/swagger';
 
