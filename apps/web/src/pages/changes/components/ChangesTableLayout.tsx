@@ -80,7 +80,7 @@ export const ChangesTable = ({
               <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Translation Group Change</Text>
             )}
             {type === ChangeEntityTypeEnum.TRANSLATION && (
-              <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Translation</Text>
+              <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Translation Change</Text>
             )}
             {previousDefaultLayout && (
               <Text data-test-id="previous-default-layout-content" rows={1} mt={5}>
