@@ -15,6 +15,7 @@ import { Messages } from './messages/messages';
 import { Tenants } from './tenants/tenants';
 import { ExecutionDetails } from './execution-details/execution-details';
 import { InboundParse } from './inbound-parse/inbound-parse';
+import { makeRetryable } from './retry';
 
 export class Novu extends EventEmitter {
   private readonly apiKey?: string;
@@ -37,13 +38,18 @@ export class Novu extends EventEmitter {
   constructor(apiKey: string, config?: INovuConfiguration) {
     super();
     this.apiKey = apiKey;
-
-    this.http = axios.create({
+    const axiosInstance = axios.create({
       baseURL: this.buildBackendUrl(config),
       headers: {
         Authorization: `ApiKey ${this.apiKey}`,
       },
     });
+
+    if (config?.retryConfig) {
+      makeRetryable(axiosInstance, config);
+    }
+
+    this.http = axiosInstance;
 
     this.subscribers = new Subscribers(this.http);
     this.environments = new Environments(this.http);

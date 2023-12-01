@@ -9,6 +9,7 @@ jest.mock('axios');
 const mockConfig = {
   apiKey: 'test-key',
   from: 'netcore',
+  senderName: "Novu's Team",
 };
 
 const mockEmailOptions: IEmailOptions = {

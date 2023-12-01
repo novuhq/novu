@@ -16,11 +16,13 @@ export interface IPreferenceOverride {
 
 export interface ISubscriberPreferenceResponse {
   template: ITemplateConfiguration;
-  preference: {
-    enabled: boolean;
-    channels: IPreferenceChannels;
-    overrides: IPreferenceOverride[];
-  };
+  preference: IPreferenceResponse;
+}
+
+export interface IPreferenceResponse {
+  enabled: boolean;
+  channels: IPreferenceChannels;
+  overrides: IPreferenceOverride[];
 }
 
 export interface ITemplateConfiguration {
@@ -34,4 +36,10 @@ export interface ITemplateConfiguration {
 export enum PreferenceLevelEnum {
   GLOBAL = 'global',
   TEMPLATE = 'template',
+}
+
+export interface IOverridePreferencesSources {
+  [PreferenceOverrideSourceEnum.TEMPLATE]: IPreferenceChannels;
+  [PreferenceOverrideSourceEnum.SUBSCRIBER]: IPreferenceChannels;
+  [PreferenceOverrideSourceEnum.WORKFLOW_OVERRIDE]?: IPreferenceChannels;
 }
