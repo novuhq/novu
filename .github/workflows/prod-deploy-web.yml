@@ -60,6 +60,7 @@ jobs:
     uses: ./.github/workflows/reusable-docker.yml
     with:
       environment: Production
+      package_name: novu/web
       project_path: apps/web
       local_tag: novu-web
       env_tag: prod

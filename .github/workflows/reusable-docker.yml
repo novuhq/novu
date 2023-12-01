@@ -7,6 +7,9 @@ on:
       environment:
         required: true
         type: string
+      package_name:
+        required: true
+        type: string
       project_path:
         required: true
         type: string
@@ -43,7 +46,7 @@ jobs:
       id-token: write
     strategy:
       matrix:
-        name: [ 'novu/${{ inputs.project }}-ee', 'novu/${{ inputs.project }}' ]
+        name: [ '${{ inputs.package_name }}-ee', '${{ inputs.package_name }}' ]
     steps:
       - uses: actions/checkout@v3
 

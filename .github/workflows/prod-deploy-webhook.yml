@@ -14,6 +14,7 @@ jobs:
     uses: ./.github/workflows/reusable-docker.yml
     with:
       environment: Production
+      package_name: novu/webhook
       project_path: apps/webhook
       test_port: 1341
       health_check: true

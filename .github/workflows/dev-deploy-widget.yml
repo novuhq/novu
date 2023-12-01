@@ -46,6 +46,7 @@ jobs:
     uses: ./.github/workflows/reusable-docker.yml
     with:
       environment: Development
+      package_name: novu/widget
       project_path: apps/widget
       local_tag: novu-widget
       env_tag: dev

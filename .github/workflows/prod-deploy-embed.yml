@@ -38,6 +38,7 @@ jobs:
     uses: ./.github/workflows/reusable-docker.yml
     with:
       environment: Production
+      package_name: novu/embed
       project_path: libs/embed
       local_tag: novu-embed
       env_tag: prod
