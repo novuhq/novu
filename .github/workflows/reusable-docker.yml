@@ -94,8 +94,7 @@ jobs:
 
       - name: Health check test
         id: health-check
-        needs: [build-image, build-prod-image]
-        if: ${{ inputs.health_check == 'true' }}
+        if: ${{ inputs.health_check == 'true' && (steps.build-image.outcome == 'success' || steps.build-prod-image.outcome == 'success') }}
         env:
           REGISTRY_OWNER: novuhq
           DOCKER_NAME: ${{ matrix.name }}
