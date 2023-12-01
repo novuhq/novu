@@ -53,6 +53,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - uses: ./.github/actions/setup-project
+        with:
+          slim: 'true'
+
       - name: Setup Depot
         uses: depot/setup-action@v1
         with:
