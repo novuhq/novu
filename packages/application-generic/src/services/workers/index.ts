@@ -5,7 +5,6 @@ import {
 } from './worker-base.service';
 
 import { ActiveJobsMetricWorkerService } from './active-jobs-metric-worker.service';
-import { InboundParseWorkerService } from './inbound-parse-worker.service';
 import { StandardWorkerService } from './standard-worker.service';
 import { SubscriberProcessWorkerService } from './subscriber-process-worker.service';
 import { WebSocketsWorkerService } from './web-sockets-worker.service';
@@ -14,7 +13,6 @@ import { ExecutionLogWorkerService } from './execution-log-worker.service';
 
 export {
   ActiveJobsMetricWorkerService,
-  InboundParseWorkerService as InboundParseWorker,
   StandardWorkerService,
   SubscriberProcessWorkerService,
   WebSocketsWorkerService,

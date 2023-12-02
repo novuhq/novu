@@ -3,7 +3,6 @@ import { JobTopicNameEnum } from '@novu/shared';
 
 import { WorkerBaseService } from './index';
 import { BullMqService } from '../bull-mq';
-import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 
 const LOG_CONTEXT = 'WebSocketsWorkerService';
 

@@ -235,8 +235,6 @@ export class BullMqService {
       await this._worker.close();
     }
 
-    await this.workflowInMemoryProviderService.shutdown();
-
     Logger.log('Shutting down the BullMQ service has finished', LOG_CONTEXT);
   }
 
