@@ -2,7 +2,7 @@ import { Test } from '@nestjs/testing';
 import { expect } from 'chai';
 import { setTimeout } from 'timers/promises';
 
-import { WebSocketsQueueService } from '@novu/application-generic';
+import { WebSocketsQueueService, WorkflowInMemoryProviderService } from '@novu/application-generic';
 
 import { WebSocketWorker } from './web-socket.worker';
 
@@ -22,9 +22,13 @@ describe('WebSocket Worker', () => {
     }).compile();
 
     const externalServicesRoute = moduleRef.get<ExternalServicesRoute>(ExternalServicesRoute);
-    webSocketWorker = new WebSocketWorker(externalServicesRoute);
+    const workflowInMemoryProviderService = moduleRef.get<WorkflowInMemoryProviderService>(
+      WorkflowInMemoryProviderService
+    );
 
-    webSocketsQueueService = new WebSocketsQueueService();
+    webSocketWorker = new WebSocketWorker(externalServicesRoute, workflowInMemoryProviderService);
+
+    webSocketsQueueService = new WebSocketsQueueService(workflowInMemoryProviderService);
     await webSocketsQueueService.queue.obliterate();
   });
 
