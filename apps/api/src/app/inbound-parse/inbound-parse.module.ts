@@ -12,7 +12,7 @@ import { JobTopicNameEnum } from '@novu/shared';
 const PROVIDERS = [GetMxRecord, CompileTemplate];
 
 @Module({
-  imports: [SharedModule, AuthModule, QueuesModule.forRoot([JobTopicNameEnum.INBOUND_PARSE_MAIL])],
+  imports: [SharedModule, AuthModule],
   controllers: [InboundParseController],
   providers: [...PROVIDERS, ...USE_CASES],
   exports: [...USE_CASES],

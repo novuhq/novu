@@ -7,7 +7,6 @@ import {
   GetNovuProviderCredentials,
   StorageHelperService,
   SendTestEmail,
-  QueuesModule,
 } from '@novu/application-generic';
 
 import { EventsController } from './events.controller';

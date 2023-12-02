@@ -24,6 +24,8 @@ export class WorkflowInMemoryProviderService {
       this.isCluster,
       false
     );
+
+    console.log('INIT WORKKK');
   }
 
   /**

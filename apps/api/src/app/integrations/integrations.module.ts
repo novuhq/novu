@@ -8,11 +8,7 @@ import { CompileTemplate, CreateExecutionDetails, QueuesModule } from '@novu/app
 import { JobTopicNameEnum } from '@novu/shared';
 
 @Module({
-  imports: [
-    SharedModule,
-    QueuesModule.forRoot([JobTopicNameEnum.EXECUTION_LOG, JobTopicNameEnum.WORKFLOW]),
-    forwardRef(() => AuthModule),
-  ],
+  imports: [SharedModule, forwardRef(() => AuthModule)],
   controllers: [IntegrationsController],
   providers: [...USE_CASES, CompileTemplate, CreateExecutionDetails],
   exports: [...USE_CASES],
