@@ -32,6 +32,7 @@ import {
   SubscriberJobBound,
   TriggerBroadcast,
   TriggerMulticast,
+  MetricsModule,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
@@ -129,7 +130,7 @@ const PROVIDERS: Provider[] = [
 ];
 
 @Module({
-  imports: [SharedModule, QueuesModule],
+  imports: [SharedModule, QueuesModule, MetricsModule],
   controllers: [],
   providers: [...PROVIDERS, ...USE_CASES, ...REPOSITORIES],
 })
