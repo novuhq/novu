@@ -56,6 +56,7 @@
     "@novu/bulk-sms": "^0.21.0",
     "@novu/clickatell": "^0.21.0",
     "@novu/clicksend": "^0.21.0",
+    "@novu/d7": "^0.16.3",
     "@novu/dal": "^0.21.0",
     "@novu/discord": "^0.21.0",
     "@novu/email-webhook": "^0.21.0",

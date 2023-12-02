@@ -90,6 +90,7 @@ export enum SmsProviderIdEnum {
   AfricasTalking = 'africas-talking',
   Novu = 'novu-sms',
   Sendchamp = 'sendchamp',
+  D7 = 'd7',
   GenericSms = 'generic-sms',
   Clicksend = 'clicksend',
   Bandwidth = 'bandwidth',

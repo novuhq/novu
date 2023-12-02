@@ -15,6 +15,7 @@ export * from './kannel.handler';
 export * from './sms-central.handler';
 export * from './africas-talking.handler';
 export * from './sendchamp.handler';
+export * from './d7.handler';
 export * from './clicksend.handler';
 export * from './simpletexting.handler';
 export * from './bandwidth.handler';
