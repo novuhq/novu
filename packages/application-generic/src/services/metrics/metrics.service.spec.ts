@@ -108,7 +108,8 @@ describe('MetricsService', () => {
       delete process.env.NEW_RELIC_LICENSE_KEY;
     });
 
-    it('should contain AwsMetricsService if AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are set', async () => {
+    it('should contain AwsMetricsService if METRICS_SERVICE is not set and AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are set', async () => {
+      process.env.METRICS_SERVICE = undefined;
       process.env.AWS_ACCESS_KEY_ID = 'test';
       process.env.AWS_SECRET_ACCESS_KEY = 'test';
       const metricsServices = await createServices();
@@ -118,6 +119,23 @@ describe('MetricsService', () => {
           (metricsService) => metricsService instanceof AwsMetricsService
         )
       ).toBe(true);
+      delete process.env.METRICS_SERVICE;
+      delete process.env.AWS_ACCESS_KEY_ID;
+      delete process.env.AWS_SECRET_ACCESS_KEY;
+    });
+
+    it('should contain AwsMetricsService if METRICS_SERVICE is set to AWS and AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are set', async () => {
+      process.env.METRICS_SERVICE = 'AWS';
+      process.env.AWS_ACCESS_KEY_ID = 'test';
+      process.env.AWS_SECRET_ACCESS_KEY = 'test';
+      const metricsServices = await createServices();
+
+      expect(
+        metricsServices.some(
+          (metricsService) => metricsService instanceof AwsMetricsService
+        )
+      ).toBe(true);
+      delete process.env.METRICS_SERVICE;
       delete process.env.AWS_ACCESS_KEY_ID;
       delete process.env.AWS_SECRET_ACCESS_KEY;
     });

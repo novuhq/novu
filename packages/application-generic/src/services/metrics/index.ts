@@ -27,6 +27,7 @@ export const metricsServiceList = {
       case 'AZURE':
         metricsServices.push(azureMetricsService);
         break;
+      case 'AWS':
       default:
         if (
           process.env.AWS_ACCESS_KEY_ID &&

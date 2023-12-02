@@ -1,9 +1,9 @@
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
   CloudWatchClient,
   PutMetricDataCommand,
 } from '@aws-sdk/client-cloudwatch';
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import * as nr from 'newrelic';
+const nr = require('newrelic');
 import { IMetricsService } from './metrics.interface';
 
 const NAMESPACE = 'novu';
@@ -16,22 +16,16 @@ export class MetricsService {
   recordMetric(name: string, value: number): void {
     Logger.verbose(`Recording metric ${name} with value ${value}`, LOG_CONTEXT);
     const proms = this.services.map((service) => {
-      try {
-        return service.recordMetric(name, value);
-      } catch (e) {
-        Logger.error(
+      return service.recordMetric(name, value).catch((e) => {
+        Logger.verbose(
           `Failed to record metric ${name} with value ${value} for service ${service.constructor.name}`,
           e,
           LOG_CONTEXT
         );
-
-        return Promise.resolve();
-      }
+      });
     });
 
-    Promise.all(proms).catch((e) =>
-      Logger.error('Error recording metrics', e, LOG_CONTEXT)
-    );
+    Promise.all(proms);
   }
 }
 
