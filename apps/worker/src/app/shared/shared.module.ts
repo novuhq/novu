@@ -43,7 +43,6 @@ import {
   featureFlagsService,
   InvalidateCacheService,
   LoggerModule,
-  MetricsModule,
   ProcessSubscriber,
   StorageHelperService,
   storageService,
@@ -133,7 +132,6 @@ const PROVIDERS = [
         version: packageJson.version,
       })
     ),
-    MetricsModule,
   ],
   providers: [...PROVIDERS],
   exports: [...PROVIDERS, LoggerModule],
