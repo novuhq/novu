@@ -6,7 +6,7 @@ import { HealthController } from './health.controller';
 import { SharedModule } from '../shared/shared.module';
 
 @Module({
-  imports: [TerminusModule, SharedModule, QueuesModule],
+  imports: [TerminusModule, SharedModule],
   controllers: [HealthController],
 })
 export class HealthModule {}

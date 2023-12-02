@@ -9,18 +9,7 @@ import { WebSocketWorker } from './services';
 
 const USE_CASES: Provider[] = [ExternalServicesRoute];
 
-const memoryQueueService = {
-  provide: WorkflowInMemoryProviderService,
-  useFactory: async () => {
-    const memoryService = new WorkflowInMemoryProviderService();
-
-    await memoryService.initialize();
-
-    return memoryService;
-  },
-};
-
-const PROVIDERS: Provider[] = [memoryQueueService, WSGateway, WebSocketsWorkerService, WebSocketWorker];
+const PROVIDERS: Provider[] = [WSGateway, WebSocketsWorkerService, WebSocketWorker];
 
 @Module({
   imports: [SharedModule],

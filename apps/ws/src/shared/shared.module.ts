@@ -11,7 +11,7 @@ import {
   MessageRepository,
   MemberRepository,
 } from '@novu/dal';
-import { AnalyticsService, DalServiceHealthIndicator } from '@novu/application-generic';
+import { AnalyticsService, DalServiceHealthIndicator, QueuesModule } from '@novu/application-generic';
 
 import { SubscriberOnlineService } from './subscriber-online';
 
@@ -50,6 +50,7 @@ const PROVIDERS = [analyticsService, dalService, DalServiceHealthIndicator, Subs
 
 @Module({
   imports: [
+    QueuesModule,
     JwtModule.register({
       secretOrKeyProvider: () => process.env.JWT_SECRET as string,
       signOptions: {
@@ -58,6 +59,6 @@ const PROVIDERS = [analyticsService, dalService, DalServiceHealthIndicator, Subs
     }),
   ],
   providers: [...PROVIDERS],
-  exports: [...PROVIDERS, JwtModule],
+  exports: [...PROVIDERS, JwtModule, QueuesModule],
 })
 export class SharedModule {}
