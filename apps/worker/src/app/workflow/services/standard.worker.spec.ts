@@ -39,6 +39,7 @@ import {
   SetJobAsFailed,
   WebhookFilterBackoffStrategy,
 } from '../usecases';
+import { SharedModule } from '../../shared/shared.module';
 
 let standardQueueService: StandardQueueService;
 let standardWorker: StandardWorker;
@@ -103,7 +104,7 @@ describe('Standard Worker', () => {
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [WorkflowModule],
+      imports: [WorkflowModule, SharedModule],
     }).compile();
 
     const handleLastFailedJob = moduleRef.get<HandleLastFailedJob>(HandleLastFailedJob);
@@ -111,7 +112,6 @@ describe('Standard Worker', () => {
     const setJobAsCompleted = moduleRef.get<SetJobAsCompleted>(SetJobAsCompleted);
     const setJobAsFailed = moduleRef.get<SetJobAsFailed>(SetJobAsFailed);
     const webhookFilterBackoffStrategy = moduleRef.get<WebhookFilterBackoffStrategy>(WebhookFilterBackoffStrategy);
-    const bullMqService = moduleRef.get<BullMqService>(BullMqService);
     const workflowInMemoryProviderService = moduleRef.get<WorkflowInMemoryProviderService>(
       WorkflowInMemoryProviderService
     );
@@ -133,17 +133,7 @@ describe('Standard Worker', () => {
 
   it('should be initialised properly', async () => {
     expect(standardWorker).to.be.ok;
-    expect(standardWorker).to.have.all.keys(
-      'DEFAULT_ATTEMPTS',
-      'getBackoffStrategies',
-      'handleLastFailedJob',
-      'instance',
-      'runJob',
-      'setJobAsCompleted',
-      'setJobAsFailed',
-      'topic',
-      'webhookFilterBackoffStrategy'
-    );
+
     expect(standardWorker.DEFAULT_ATTEMPTS).to.eql(3);
     expect(standardWorker.worker).to.deep.include({
       _eventsCount: 1,

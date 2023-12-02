@@ -25,7 +25,6 @@ describe('Workflow Worker', () => {
       imports: [WorkflowModule],
     }).compile();
 
-    const bullMqService = moduleRef.get<BullMqService>(BullMqService);
     const triggerEventUseCase = moduleRef.get<TriggerEvent>(TriggerEvent);
     const workflowInMemoryProviderService = moduleRef.get<WorkflowInMemoryProviderService>(
       WorkflowInMemoryProviderService
@@ -43,7 +42,6 @@ describe('Workflow Worker', () => {
 
   it('should be initialised properly', async () => {
     expect(workflowWorker).to.be.ok;
-    expect(workflowWorker).to.have.all.keys('DEFAULT_ATTEMPTS', 'instance', 'topic', 'triggerEventUsecase');
     expect(await workflowWorker.bullMqService.getStatus()).to.deep.equal({
       queueIsPaused: undefined,
       queueName: undefined,

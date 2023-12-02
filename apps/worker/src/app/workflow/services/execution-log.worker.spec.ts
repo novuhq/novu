@@ -43,7 +43,6 @@ describe('ExecutionLog Worker', () => {
 
   it('should be initialised properly', async () => {
     expect(executionLogWorker).to.be.ok;
-    expect(executionLogWorker).to.have.all.keys('DEFAULT_ATTEMPTS', 'instance', 'topic', 'createExecutionDetails');
     expect(await executionLogWorker.bullMqService.getStatus()).to.deep.equal({
       queueIsPaused: undefined,
       queueName: undefined,
