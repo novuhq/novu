@@ -20,15 +20,25 @@ export const metricsServiceList = {
       metricsServices.push(newRelicMetricsService);
     }
 
-    switch (String(process.env.METRICS_SERVICE)) {
-      case 'GCS':
+    switch (process.env.METRICS_SERVICE) {
+      case 'GCP':
         metricsServices.push(gcsMetricsService);
         break;
       case 'AZURE':
         metricsServices.push(azureMetricsService);
         break;
       case 'AWS':
-      default:
+        if (
+          process.env.AWS_ACCESS_KEY_ID &&
+          process.env.AWS_SECRET_ACCESS_KEY
+        ) {
+          metricsServices.push(awsMetricsService);
+        } else {
+          throw new Error(
+            'AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY must be set when using AWS as metrics service'
+          );
+        }
+      case undefined:
         if (
           process.env.AWS_ACCESS_KEY_ID &&
           process.env.AWS_SECRET_ACCESS_KEY
@@ -36,6 +46,10 @@ export const metricsServiceList = {
           metricsServices.push(awsMetricsService);
         }
         break;
+      default:
+        throw new Error(
+          `Invalid value for METRICS_SERVICE: ${process.env.METRICS_SERVICE}`
+        );
     }
 
     return metricsServices;
