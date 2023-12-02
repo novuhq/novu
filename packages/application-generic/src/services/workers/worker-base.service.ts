@@ -26,7 +26,7 @@ export class WorkerBaseService {
 
   constructor(
     public readonly topic: JobTopicNameEnum,
-    bullMqServiceInstance: BullMqService
+    public bullMqServiceInstance: BullMqService
   ) {
     this.instance = bullMqServiceInstance;
   }

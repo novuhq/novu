@@ -8,7 +8,7 @@ import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 const LOG_CONTEXT = 'ActiveJobsMetricWorkerService';
 
 export class ActiveJobsMetricWorkerService extends WorkerBaseService {
-  constructor(private bullMqService: BullMqService) {
+  constructor(public bullMqService: BullMqService) {
     super(JobTopicNameEnum.ACTIVE_JOBS_METRIC, bullMqService);
     Logger.log(`Worker ${this.topic} instantiated`, LOG_CONTEXT);
   }

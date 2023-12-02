@@ -32,11 +32,7 @@ describe('Active Jobs Metric Service', () => {
     webSocketsQueueService = moduleRef.get<WebSocketsQueueService>(WebSocketsQueueService);
     workflowQueueService = moduleRef.get<WorkflowQueueService>(WorkflowQueueService);
     metricsService = moduleRef.get<MetricsService>(MetricsService);
-
-    activeJobsMetricService = new ActiveJobsMetricService(
-      [standardService, webSocketsQueueService, workflowQueueService],
-      metricsService
-    );
+    activeJobsMetricService = moduleRef.get<ActiveJobsMetricService>(ActiveJobsMetricService);
   });
 
   describe('Environment variables not set', () => {
@@ -44,10 +40,7 @@ describe('Active Jobs Metric Service', () => {
       process.env.NOVU_MANAGED_SERVICE = 'false';
       process.env.NEW_RELIC_LICENSE_KEY = '';
 
-      activeJobsMetricService = new ActiveJobsMetricService(
-        [standardService, webSocketsQueueService, workflowQueueService],
-        metricsService
-      );
+      activeJobsMetricService = moduleRef.get<ActiveJobsMetricService>(ActiveJobsMetricService);
     });
 
     it('should not initialize neither the queue or the worker if the environment conditions are not met', async () => {
@@ -63,10 +56,7 @@ describe('Active Jobs Metric Service', () => {
       process.env.NOVU_MANAGED_SERVICE = 'true';
       process.env.NEW_RELIC_LICENSE_KEY = 'license';
 
-      activeJobsMetricService = new ActiveJobsMetricService(
-        [standardService, webSocketsQueueService, workflowQueueService],
-        metricsService
-      );
+      activeJobsMetricService = moduleRef.get<ActiveJobsMetricService>(ActiveJobsMetricService);
     });
 
     after(async () => {

@@ -2,7 +2,12 @@ import { Test } from '@nestjs/testing';
 import { expect } from 'chai';
 import { setTimeout } from 'timers/promises';
 
-import { TriggerEvent, ExecutionLogQueueService, CreateExecutionDetails } from '@novu/application-generic';
+import {
+  TriggerEvent,
+  ExecutionLogQueueService,
+  CreateExecutionDetails,
+  WorkflowInMemoryProviderService,
+} from '@novu/application-generic';
 
 import { ExecutionLogWorker } from './execution-log.worker';
 
@@ -21,10 +26,13 @@ describe('ExecutionLog Worker', () => {
     }).compile();
 
     const createExecutionDetails = moduleRef.get<CreateExecutionDetails>(CreateExecutionDetails);
+    const workflowInMemoryProviderService = moduleRef.get<WorkflowInMemoryProviderService>(
+      WorkflowInMemoryProviderService
+    );
 
-    executionLogWorker = new ExecutionLogWorker(createExecutionDetails);
+    executionLogWorker = new ExecutionLogWorker(createExecutionDetails, workflowInMemoryProviderService);
 
-    executionLogQueueService = new ExecutionLogQueueService();
+    executionLogQueueService = new ExecutionLogQueueService(workflowInMemoryProviderService);
     await executionLogQueueService.queue.obliterate();
   });
 
