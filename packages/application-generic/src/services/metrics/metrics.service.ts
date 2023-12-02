@@ -18,7 +18,6 @@ export class MetricsService {
         .join(', ')}]`,
       LOG_CONTEXT
     );
-    this.recordMetric('Test/Service/Started', 1);
   }
 
   recordMetric(name: string, value: number): void {
@@ -54,7 +53,7 @@ export class AwsMetricsService implements IMetricsService {
   async recordMetric(name: string, value: number): Promise<void> {
     const command = new PutMetricDataCommand({
       Namespace: NAMESPACE,
-      MetricData: [{ MetricName: name, Value: value }],
+      MetricData: [{ MetricName: name, Value: value, StorageResolution: 1 }],
     });
     await this.client.send(command);
   }
