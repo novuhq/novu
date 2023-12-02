@@ -1,4 +1,4 @@
-import { Module, OnModuleDestroy, Provider } from '@nestjs/common';
+import { Module, Provider } from '@nestjs/common';
 import {
   AddDelayJob,
   MergeOrCreateDigest,
@@ -52,7 +52,8 @@ import {
   WebhookFilterBackoffStrategy,
 } from './usecases';
 
-import { ACTIVE_WORKERS, SharedModule } from '../shared/shared.module';
+import { SharedModule } from '../shared/shared.module';
+import { ACTIVE_WORKERS } from '../../config/worker-init.config';
 
 const REPOSITORIES = [JobRepository];
 
