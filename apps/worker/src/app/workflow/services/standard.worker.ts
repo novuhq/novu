@@ -1,11 +1,6 @@
 const nr = require('newrelic');
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import {
-  ExecutionDetailsSourceEnum,
-  ExecutionDetailsStatusEnum,
-  IJobData,
-  ObservabilityBackgroundTransactionEnum,
-} from '@novu/shared';
+import { IJobData, ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import {
   BullMqService,
   getStandardWorkerOptions,
@@ -42,6 +37,7 @@ export class StandardWorker extends StandardWorkerService implements INovuWorker
     @Inject(forwardRef(() => SetJobAsFailed)) private setJobAsFailed: SetJobAsFailed,
     @Inject(forwardRef(() => WebhookFilterBackoffStrategy))
     private webhookFilterBackoffStrategy: WebhookFilterBackoffStrategy,
+    @Inject(forwardRef(() => WorkflowInMemoryProviderService))
     public workflowInMemoryProviderService: WorkflowInMemoryProviderService
   ) {
     super(new BullMqService(workflowInMemoryProviderService));

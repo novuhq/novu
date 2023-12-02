@@ -3,7 +3,6 @@ import {
   AddDelayJob,
   MergeOrCreateDigest,
   AddJob,
-  bullMqTokenList,
   BulkCreateExecutionDetails,
   CalculateLimitNovuIntegration,
   CompileEmailTemplate,
@@ -30,11 +29,8 @@ import {
   SubscriberJobBound,
   TriggerBroadcast,
   TriggerMulticast,
-  MetricsModule,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
-
-import { ExecutionLogWorker, ActiveJobsMetricService, StandardWorker, WorkflowWorker } from './services';
 
 import {
   SendMessage,
@@ -56,9 +52,7 @@ import {
   WebhookFilterBackoffStrategy,
 } from './usecases';
 
-import { SharedModule } from '../shared/shared.module';
-import { SubscriberProcessWorker } from './services/subscriber-process.worker';
-import { JobTopicNameEnum } from '@novu/shared';
+import { ACTIVE_WORKERS, SharedModule } from '../shared/shared.module';
 
 const REPOSITORIES = [JobRepository];
 
@@ -111,47 +105,19 @@ const USE_CASES = [
   TriggerMulticast,
 ];
 
-const PROVIDERS: Provider[] = [ActiveJobsMetricService, bullMqTokenList];
-
-const validQueueEntries = Object.keys(JobTopicNameEnum).map((key) => JobTopicNameEnum[key]);
-const queuesToProcess =
-  process.env.WORKER_QUEUES?.split(',').map((queue) => {
-    const queueName = queue.trim();
-    if (!validQueueEntries.includes(queueName)) {
-      throw new Error(`Invalid queue name ${queueName}`);
-    }
-
-    return queueName;
-  }) || [];
-
-if (queuesToProcess?.includes(JobTopicNameEnum.STANDARD)) {
-  PROVIDERS.push(StandardWorker);
-}
-
-if (!queuesToProcess.length) {
-  PROVIDERS.push(StandardWorker, WorkflowWorker, ExecutionLogWorker, SubscriberProcessWorker);
-} else {
-  queuesToProcess.forEach((queue) => {
-    switch (queue) {
-      case JobTopicNameEnum.STANDARD:
-        PROVIDERS.push(StandardWorker);
-        break;
-      case JobTopicNameEnum.WORKFLOW:
-        PROVIDERS.push(WorkflowWorker);
-        break;
-      case JobTopicNameEnum.EXECUTION_LOG:
-        PROVIDERS.push(ExecutionLogWorker);
-        break;
-      case JobTopicNameEnum.PROCESS_SUBSCRIBER:
-        PROVIDERS.push(SubscriberProcessWorker);
-        break;
-    }
-  });
-}
+const PROVIDERS: Provider[] = [];
+const activeWorkersToken: any = {
+  provide: 'ACTIVE_WORKERS',
+  useFactory: (...args: any[]) => {
+    return args;
+  },
+  inject: ACTIVE_WORKERS,
+};
 
 @Module({
-  imports: [SharedModule, MetricsModule],
+  imports: [SharedModule],
   controllers: [],
-  providers: [...PROVIDERS, ...USE_CASES, ...REPOSITORIES],
+  providers: [...ACTIVE_WORKERS, ...PROVIDERS, ...USE_CASES, ...REPOSITORIES, activeWorkersToken],
+  exports: [...PROVIDERS, ...USE_CASES, ...REPOSITORIES, activeWorkersToken],
 })
 export class WorkflowModule {}

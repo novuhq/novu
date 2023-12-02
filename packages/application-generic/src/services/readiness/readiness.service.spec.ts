@@ -48,11 +48,11 @@ describe('Readiness Service', () => {
     const subscriberProcessQueueHealthIndicator =
       new SubscriberProcessQueueHealthIndicator(subscriberProcessQueueService);
 
-    readinessService = new ReadinessService(
+    readinessService = new ReadinessService([
       standardQueueServiceHealthIndicator,
       workflowQueueServiceHealthIndicator,
-      subscriberProcessQueueHealthIndicator
-    );
+      subscriberProcessQueueHealthIndicator,
+    ]);
   });
 
   afterAll(async () => {

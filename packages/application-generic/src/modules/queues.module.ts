@@ -1,6 +1,5 @@
-import { Module, Provider } from '@nestjs/common';
+import { DynamicModule, Module, Provider } from '@nestjs/common';
 
-import { bullMqTokenList } from '../custom-providers';
 import {
   ActiveJobsMetricQueueServiceHealthIndicator,
   InboundParseQueueServiceHealthIndicator,
@@ -27,6 +26,7 @@ import {
   WebSocketsWorkerService,
   WorkflowWorkerService,
 } from '../services/workers';
+import { JobTopicNameEnum } from '@novu/shared';
 
 const memoryQueueService = {
   provide: WorkflowInMemoryProviderService,
@@ -39,36 +39,107 @@ const memoryQueueService = {
   },
 };
 
-const PROVIDERS: Provider[] = [
-  memoryQueueService,
-  ActiveJobsMetricQueueService,
-  ActiveJobsMetricQueueServiceHealthIndicator,
-  ActiveJobsMetricWorkerService,
-  bullMqTokenList,
-  InboundParseQueueService,
-  InboundParseWorker,
-  InboundParseQueueServiceHealthIndicator,
-  ReadinessService,
-  StandardQueueService,
-  StandardQueueServiceHealthIndicator,
-  StandardWorkerService,
-  WebSocketsQueueService,
-  WebSocketsQueueServiceHealthIndicator,
-  WebSocketsWorkerService,
-  WorkflowQueueService,
-  ExecutionLogQueueService,
-  WorkflowQueueServiceHealthIndicator,
-  WorkflowWorkerService,
-  SubscriberProcessQueueService,
-  SubscriberProcessWorkerService,
-  SubscriberProcessQueueHealthIndicator,
-];
+const BASE_PROVIDERS: Provider[] = [memoryQueueService, ReadinessService];
 
 @Module({
-  providers: [...PROVIDERS],
-  exports: [...PROVIDERS],
+  providers: [],
+  exports: [],
 })
-export class QueuesModule {}
+export class QueuesModule {
+  static forRoot(entities: JobTopicNameEnum[] = []): DynamicModule {
+    if (!entities.length) {
+      entities = Object.values(JobTopicNameEnum);
+    }
+
+    const healthIndicators = [];
+    const tokenList = [];
+    const DYNAMIC_PROVIDERS = [...BASE_PROVIDERS];
+
+    for (const entity of entities) {
+      switch (entity) {
+        case JobTopicNameEnum.INBOUND_PARSE_MAIL:
+          healthIndicators.push(InboundParseQueueServiceHealthIndicator);
+          tokenList.push(InboundParseQueueService);
+          DYNAMIC_PROVIDERS.push(
+            InboundParseQueueService,
+            InboundParseWorker,
+            InboundParseQueueServiceHealthIndicator
+          );
+          break;
+        case JobTopicNameEnum.WORKFLOW:
+          healthIndicators.push(WorkflowQueueServiceHealthIndicator);
+          tokenList.push(WorkflowQueueService);
+          DYNAMIC_PROVIDERS.push(
+            WorkflowQueueService,
+            WorkflowQueueServiceHealthIndicator,
+            WorkflowWorkerService
+          );
+          break;
+        case JobTopicNameEnum.WEB_SOCKETS:
+          healthIndicators.push(WebSocketsQueueServiceHealthIndicator);
+          tokenList.push(WebSocketsQueueService);
+          DYNAMIC_PROVIDERS.push(
+            WebSocketsQueueService,
+            WebSocketsQueueServiceHealthIndicator,
+            WebSocketsWorkerService
+          );
+          break;
+        case JobTopicNameEnum.STANDARD:
+          tokenList.push(StandardQueueService);
+          DYNAMIC_PROVIDERS.push(
+            StandardQueueService,
+            StandardQueueServiceHealthIndicator,
+            StandardWorkerService
+          );
+          break;
+        case JobTopicNameEnum.PROCESS_SUBSCRIBER:
+          healthIndicators.push(SubscriberProcessQueueHealthIndicator);
+          tokenList.push(SubscriberProcessQueueService);
+          DYNAMIC_PROVIDERS.push(
+            SubscriberProcessQueueService,
+            SubscriberProcessWorkerService,
+            SubscriberProcessQueueHealthIndicator
+          );
+          break;
+        case JobTopicNameEnum.EXECUTION_LOG:
+          tokenList.push(ExecutionLogQueueService);
+          DYNAMIC_PROVIDERS.push(ExecutionLogQueueService);
+          break;
+        case JobTopicNameEnum.ACTIVE_JOBS_METRIC:
+          healthIndicators.push(ActiveJobsMetricQueueServiceHealthIndicator);
+          tokenList.push(ActiveJobsMetricQueueService);
+          DYNAMIC_PROVIDERS.push(
+            ActiveJobsMetricQueueService,
+            ActiveJobsMetricQueueServiceHealthIndicator,
+            ActiveJobsMetricWorkerService
+          );
+          break;
+      }
+    }
+
+    DYNAMIC_PROVIDERS.push({
+      provide: 'BULLMQ_LIST',
+      useFactory: (...args: any[]) => {
+        return args;
+      },
+      inject: tokenList,
+    });
+
+    DYNAMIC_PROVIDERS.push({
+      provide: 'QUEUE_HEALTH_INDICATORS',
+      useFactory: (...args: any[]) => {
+        return args;
+      },
+      inject: healthIndicators,
+    });
+
+    return {
+      module: QueuesModule,
+      providers: [...DYNAMIC_PROVIDERS],
+      exports: [...DYNAMIC_PROVIDERS],
+    };
+  }
+}
 
 const APP_PROVIDERS: Provider[] = [
   memoryQueueService,

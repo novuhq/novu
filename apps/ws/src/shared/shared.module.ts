@@ -14,6 +14,7 @@ import {
 import { AnalyticsService, DalServiceHealthIndicator, QueuesModule } from '@novu/application-generic';
 
 import { SubscriberOnlineService } from './subscriber-online';
+import { JobTopicNameEnum } from '@novu/shared';
 
 const DAL_MODELS = [
   UserRepository,
@@ -50,7 +51,7 @@ const PROVIDERS = [analyticsService, dalService, DalServiceHealthIndicator, Subs
 
 @Module({
   imports: [
-    QueuesModule,
+    QueuesModule.forRoot([JobTopicNameEnum.WEB_SOCKETS]),
     JwtModule.register({
       secretOrKeyProvider: () => process.env.JWT_SECRET as string,
       signOptions: {

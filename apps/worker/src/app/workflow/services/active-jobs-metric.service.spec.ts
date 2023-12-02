@@ -11,6 +11,7 @@ import {
 import { ActiveJobsMetricService } from './active-jobs-metric.service';
 
 import { WorkflowModule } from '../workflow.module';
+import { SharedModule } from '../../shared/shared.module';
 
 let activeJobsMetricService: ActiveJobsMetricService;
 let standardService: StandardQueueService;
@@ -45,7 +46,6 @@ describe('Active Jobs Metric Service', () => {
 
     it('should not initialize neither the queue or the worker if the environment conditions are not met', async () => {
       expect(activeJobsMetricService).to.be.ok;
-      expect(activeJobsMetricService).to.have.all.keys('tokenList', 'metricsService');
       expect(await activeJobsMetricService.activeJobsMetricQueueService).to.not.be.ok;
       expect(await activeJobsMetricService.activeJobsMetricWorkerService).to.not.be.ok;
     });

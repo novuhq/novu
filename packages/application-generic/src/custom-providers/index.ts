@@ -112,32 +112,3 @@ export const distributedLockService = {
     return service;
   },
 };
-
-export const bullMqTokenList = {
-  provide: 'BULLMQ_LIST',
-  useFactory: (
-    standardQueueService: StandardQueueService,
-    webSocketsQueueService: WebSocketsQueueService,
-    workflowQueueService: WorkflowQueueService,
-    subscriberProcessQueueService: SubscriberProcessQueueService,
-    executionLogQueueService: ExecutionLogQueueService,
-    inboundParseQueueService: InboundParseQueueService
-  ) => {
-    return [
-      standardQueueService,
-      webSocketsQueueService,
-      workflowQueueService,
-      subscriberProcessQueueService,
-      executionLogQueueService,
-      inboundParseQueueService,
-    ];
-  },
-  inject: [
-    StandardQueueService,
-    WebSocketsQueueService,
-    WorkflowQueueService,
-    SubscriberProcessQueueService,
-    ExecutionLogQueueService,
-    InboundParseQueueService,
-  ],
-};

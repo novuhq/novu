@@ -1,27 +1,27 @@
-import { Module } from '@nestjs/common';
+import { Module, Provider } from '@nestjs/common';
 import {
+  ChangeRepository,
   DalService,
-  UserRepository,
-  OrganizationRepository,
   EnvironmentRepository,
   ExecutionDetailsRepository,
-  NotificationTemplateRepository,
-  SubscriberRepository,
-  NotificationRepository,
-  MessageRepository,
-  NotificationGroupRepository,
-  MessageTemplateRepository,
-  MemberRepository,
+  FeedRepository,
+  IntegrationRepository,
+  JobRepository,
   LayoutRepository,
   LogRepository,
-  IntegrationRepository,
-  ChangeRepository,
-  JobRepository,
-  FeedRepository,
+  MemberRepository,
+  MessageRepository,
+  MessageTemplateRepository,
+  NotificationGroupRepository,
+  NotificationRepository,
+  NotificationTemplateRepository,
+  OrganizationRepository,
   SubscriberPreferenceRepository,
+  SubscriberRepository,
+  TenantRepository,
   TopicRepository,
   TopicSubscribersRepository,
-  TenantRepository,
+  UserRepository,
   WorkflowOverrideRepository,
 } from '@novu/dal';
 import {
@@ -33,6 +33,7 @@ import {
   createNestLoggingModuleOptions,
   CreateNotificationJobs,
   CreateSubscriber,
+  CreateTenant,
   DalServiceHealthIndicator,
   DigestFilterSteps,
   DigestFilterStepsBackoff,
@@ -41,23 +42,26 @@ import {
   distributedLockService,
   EventsDistributedLockService,
   featureFlagsService,
+  GetTenant,
+  getUseMergedDigestId,
   InvalidateCacheService,
   LoggerModule,
+  MetricsModule,
   ProcessSubscriber,
+  ProcessTenant,
+  QueuesModule,
   StorageHelperService,
   storageService,
   UpdateSubscriber,
   UpdateTenant,
-  GetTenant,
-  CreateTenant,
-  ProcessTenant,
-  getUseMergedDigestId,
-  QueuesModule,
-  WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
 
 import * as packageJson from '../../../package.json';
 import { CreateLog } from './logs';
+import { JobTopicNameEnum } from '@novu/shared';
+import { ActiveJobsMetricService, ExecutionLogWorker, StandardWorker, WorkflowWorker } from '../workflow/services';
+import { SubscriberProcessWorker } from '../workflow/services/subscriber-process.worker';
+import { WorkflowModule } from '../workflow/workflow.module';
 
 const DAL_MODELS = [
   UserRepository,
@@ -124,11 +128,63 @@ const PROVIDERS = [
   CreateTenant,
   ProcessTenant,
   ...DAL_MODELS,
+  ActiveJobsMetricService,
 ];
+
+const validQueueEntries = Object.keys(JobTopicNameEnum).map((key) => JobTopicNameEnum[key]);
+const queuesToProcess =
+  process.env.WORKER_QUEUES?.split(',').map((queue) => {
+    const queueName = queue.trim();
+    if (!validQueueEntries.includes(queueName)) {
+      throw new Error(`Invalid queue name ${queueName}`);
+    }
+
+    return queueName;
+  }) || [];
+
+export const ACTIVE_WORKERS: Provider[] | any[] = [];
+
+const WORKER_MAPPING = {
+  [JobTopicNameEnum.STANDARD]: {
+    workerClass: StandardWorker,
+    queueDependencies: [JobTopicNameEnum.EXECUTION_LOG, JobTopicNameEnum.WEB_SOCKETS, JobTopicNameEnum.STANDARD],
+  },
+  [JobTopicNameEnum.WORKFLOW]: {
+    workerClass: WorkflowWorker,
+    queueDependencies: [JobTopicNameEnum.EXECUTION_LOG, JobTopicNameEnum.PROCESS_SUBSCRIBER],
+  },
+  [JobTopicNameEnum.EXECUTION_LOG]: {
+    workerClass: ExecutionLogWorker,
+    queueDependencies: [],
+  },
+  [JobTopicNameEnum.PROCESS_SUBSCRIBER]: {
+    workerClass: SubscriberProcessWorker,
+    queueDependencies: [JobTopicNameEnum.EXECUTION_LOG],
+  },
+};
+
+const QUEUE_DEPENDENCIES = queuesToProcess.reduce((history, queue) => {
+  const queueDependencies = WORKER_MAPPING[queue]?.queueDependencies || [];
+
+  return [...history, ...queueDependencies];
+}, []);
+
+const UNIQUE_QUEUE_DEPENDENCIES = [...new Set(QUEUE_DEPENDENCIES)];
+
+if (!queuesToProcess.length) {
+  ACTIVE_WORKERS.push(StandardWorker, WorkflowWorker, ExecutionLogWorker, SubscriberProcessWorker);
+} else {
+  queuesToProcess.forEach((queue) => {
+    ACTIVE_WORKERS.push(WORKER_MAPPING[queue].workerClass);
+  });
+}
 
 @Module({
   imports: [
-    QueuesModule,
+    MetricsModule,
+    QueuesModule.forRoot(
+      queuesToProcess?.length ? [JobTopicNameEnum.ACTIVE_JOBS_METRIC, ...UNIQUE_QUEUE_DEPENDENCIES] : undefined
+    ),
     LoggerModule.forRoot(
       createNestLoggingModuleOptions({
         serviceName: packageJson.name,
