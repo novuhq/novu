@@ -1,8 +1,7 @@
-const nr = require('newrelic');
-
 import {
   ActiveJobsMetricQueueService,
   ActiveJobsMetricWorkerService,
+  MetricsService,
   QueueBaseService,
   WorkerOptions,
 } from '@novu/application-generic';
@@ -18,7 +17,7 @@ export class ActiveJobsMetricService {
   public readonly activeJobsMetricQueueService: ActiveJobsMetricQueueService;
   public readonly activeJobsMetricWorkerService: ActiveJobsMetricWorkerService;
 
-  constructor(@Inject('BULLMQ_LIST') private tokenList: QueueBaseService[]) {
+  constructor(@Inject('BULLMQ_LIST') private tokenList: QueueBaseService[], private metricsService: MetricsService) {
     if (process.env.NOVU_MANAGED_SERVICE === 'true' && process.env.NEW_RELIC_LICENSE_KEY) {
       this.activeJobsMetricQueueService = new ActiveJobsMetricQueueService();
       this.activeJobsMetricWorkerService = new ActiveJobsMetricWorkerService();
@@ -100,11 +99,9 @@ export class ActiveJobsMetricService {
 
             Logger.verbose('Recording active, waiting, and delayed metrics');
 
-            nr.recordMetric(`Queue/${deploymentName}/${queueService.topic}/waiting`, waitCount);
-            nr.recordMetric(`Queue/${deploymentName}/${queueService.topic}/delayed`, delayedCount);
-            nr.recordMetric(`Queue/${deploymentName}/${queueService.topic}/active`, activeCount);
-
-            Logger.verbose(`Queue/${deploymentName}/${queueService.topic}`, { waitCount, delayedCount, activeCount });
+            this.metricsService.recordMetric(`Queue/${deploymentName}/${queueService.topic}/waiting`, waitCount);
+            this.metricsService.recordMetric(`Queue/${deploymentName}/${queueService.topic}/delayed`, delayedCount);
+            this.metricsService.recordMetric(`Queue/${deploymentName}/${queueService.topic}/active`, activeCount);
           }
 
           return resolve();
