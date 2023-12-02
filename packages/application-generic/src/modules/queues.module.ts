@@ -1,6 +1,7 @@
 import {
   DynamicModule,
   Module,
+  OnApplicationShutdown,
   OnModuleDestroy,
   Provider,
 } from '@nestjs/common';
@@ -43,7 +44,7 @@ const BASE_PROVIDERS: Provider[] = [memoryQueueService, ReadinessService];
   providers: [],
   exports: [],
 })
-export class QueuesModule implements OnModuleDestroy {
+export class QueuesModule implements OnApplicationShutdown {
   static forRoot(entities: JobTopicNameEnum[] = []): DynamicModule {
     if (!entities.length) {
       entities = Object.values(JobTopicNameEnum);
@@ -137,7 +138,7 @@ export class QueuesModule implements OnModuleDestroy {
     private workflowInMemoryProviderService: WorkflowInMemoryProviderService
   ) {}
 
-  async onModuleDestroy() {
+  async onApplicationShutdown() {
     await this.workflowInMemoryProviderService.shutdown();
   }
 }
