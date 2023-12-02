@@ -2,8 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { expect } from 'chai';
 
 import {
-  ActiveJobsMetricQueueService,
-  ActiveJobsMetricWorkerService,
+  MetricsService,
   StandardQueueService,
   WebSocketsQueueService,
   WorkflowQueueService,
@@ -17,20 +16,8 @@ let activeJobsMetricService: ActiveJobsMetricService;
 let standardService: StandardQueueService;
 let webSocketsQueueService: WebSocketsQueueService;
 let workflowQueueService: WorkflowQueueService;
+let metricsService: MetricsService;
 let moduleRef: TestingModule;
-
-before(async () => {
-  process.env.IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
-  process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
-
-  moduleRef = await Test.createTestingModule({
-    imports: [WorkflowModule],
-  }).compile();
-
-  standardService = moduleRef.get<StandardQueueService>(StandardQueueService);
-  webSocketsQueueService = moduleRef.get<WebSocketsQueueService>(WebSocketsQueueService);
-  workflowQueueService = moduleRef.get<WorkflowQueueService>(WorkflowQueueService);
-});
 
 describe('Active Jobs Metric Service', () => {
   before(async () => {
@@ -44,15 +31,12 @@ describe('Active Jobs Metric Service', () => {
     standardService = moduleRef.get<StandardQueueService>(StandardQueueService);
     webSocketsQueueService = moduleRef.get<WebSocketsQueueService>(WebSocketsQueueService);
     workflowQueueService = moduleRef.get<WorkflowQueueService>(WorkflowQueueService);
+    metricsService = moduleRef.get<MetricsService>(MetricsService);
 
-    const activeJobsMetricQueueService = new ActiveJobsMetricQueueService();
-    const activeJobsMetricWorkerService = new ActiveJobsMetricWorkerService();
-
-    activeJobsMetricService = new ActiveJobsMetricService([
-      standardService,
-      webSocketsQueueService,
-      workflowQueueService,
-    ]);
+    activeJobsMetricService = new ActiveJobsMetricService(
+      [standardService, webSocketsQueueService, workflowQueueService],
+      metricsService
+    );
   });
 
   describe('Environment variables not set', () => {
@@ -60,16 +44,15 @@ describe('Active Jobs Metric Service', () => {
       process.env.NOVU_MANAGED_SERVICE = 'false';
       process.env.NEW_RELIC_LICENSE_KEY = '';
 
-      activeJobsMetricService = new ActiveJobsMetricService([
-        standardService,
-        webSocketsQueueService,
-        workflowQueueService,
-      ]);
+      activeJobsMetricService = new ActiveJobsMetricService(
+        [standardService, webSocketsQueueService, workflowQueueService],
+        metricsService
+      );
     });
 
     it('should not initialize neither the queue or the worker if the environment conditions are not met', async () => {
       expect(activeJobsMetricService).to.be.ok;
-      expect(activeJobsMetricService).to.have.all.keys('tokenList');
+      expect(activeJobsMetricService).to.have.all.keys('tokenList', 'metricsService');
       expect(await activeJobsMetricService.activeJobsMetricQueueService).to.not.be.ok;
       expect(await activeJobsMetricService.activeJobsMetricWorkerService).to.not.be.ok;
     });
@@ -80,11 +63,10 @@ describe('Active Jobs Metric Service', () => {
       process.env.NOVU_MANAGED_SERVICE = 'true';
       process.env.NEW_RELIC_LICENSE_KEY = 'license';
 
-      activeJobsMetricService = new ActiveJobsMetricService([
-        standardService,
-        webSocketsQueueService,
-        workflowQueueService,
-      ]);
+      activeJobsMetricService = new ActiveJobsMetricService(
+        [standardService, webSocketsQueueService, workflowQueueService],
+        metricsService
+      );
     });
 
     after(async () => {
@@ -97,6 +79,7 @@ describe('Active Jobs Metric Service', () => {
       expect(activeJobsMetricService).to.have.all.keys(
         'activeJobsMetricQueueService',
         'activeJobsMetricWorkerService',
+        'metricsService',
         'tokenList'
       );
       expect(await activeJobsMetricService.activeJobsMetricQueueService.bullMqService.getStatus()).to.deep.equal({
