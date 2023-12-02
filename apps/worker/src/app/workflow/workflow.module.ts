@@ -29,6 +29,7 @@ import {
   SubscriberJobBound,
   TriggerBroadcast,
   TriggerMulticast,
+  WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
@@ -115,10 +116,21 @@ const activeWorkersToken: any = {
   inject: ACTIVE_WORKERS,
 };
 
+const memoryQueueService = {
+  provide: WorkflowInMemoryProviderService,
+  useFactory: async () => {
+    const memoryService = new WorkflowInMemoryProviderService();
+
+    await memoryService.initialize();
+
+    return memoryService;
+  },
+};
+
 @Module({
   imports: [SharedModule],
   controllers: [],
-  providers: [...ACTIVE_WORKERS, ...PROVIDERS, ...USE_CASES, ...REPOSITORIES, activeWorkersToken],
+  providers: [memoryQueueService, ...ACTIVE_WORKERS, ...PROVIDERS, ...USE_CASES, ...REPOSITORIES, activeWorkersToken],
   exports: [...PROVIDERS, ...USE_CASES, ...REPOSITORIES, activeWorkersToken],
 })
 export class WorkflowModule {}
