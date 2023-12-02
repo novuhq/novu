@@ -140,21 +140,3 @@ export class QueuesModule {
     };
   }
 }
-
-const APP_PROVIDERS: Provider[] = [
-  memoryQueueService,
-  InboundParseQueueService,
-  InboundParseWorker,
-  InboundParseQueueServiceHealthIndicator,
-  WebSocketsQueueService,
-  WebSocketsQueueServiceHealthIndicator,
-  WorkflowQueueService,
-  ExecutionLogQueueService,
-  WorkflowQueueServiceHealthIndicator,
-];
-
-@Module({
-  providers: [...APP_PROVIDERS],
-  exports: [...APP_PROVIDERS],
-})
-export class BaseApiQueuesModule {}
