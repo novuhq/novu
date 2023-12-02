@@ -7,7 +7,7 @@ import { HealthController } from './health.controller';
 import { SharedModule } from '../shared/shared.module';
 
 @Module({
-  imports: [SharedModule, TerminusModule, QueuesModule],
+  imports: [SharedModule, TerminusModule],
   controllers: [HealthController],
   providers: [],
 })

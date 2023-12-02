@@ -27,7 +27,7 @@ import {
   UserService,
   JobsService,
 } from '@novu/testing';
-import { StandardQueueService } from '@novu/application-generic';
+import { BullMqService, StandardQueueService } from '@novu/application-generic';
 
 import { StandardWorker } from './standard.worker';
 
@@ -54,6 +54,9 @@ describe('Standard Worker', () => {
   let jobsService: JobsService;
 
   before(async () => {
+    const moduleRef = await Test.createTestingModule({
+      imports: [WorkflowModule],
+    }).compile();
     process.env.IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
     process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
 
@@ -90,8 +93,9 @@ describe('Standard Worker', () => {
 
     const templateService = new NotificationTemplateService(user._id, organization._id, environment._id);
     template = await templateService.createTemplate({ noFeedId: true, noLayoutId: true, noGroupId: true });
+    const bullMqService = moduleRef.get<BullMqService>(BullMqService);
 
-    standardQueueService = new StandardQueueService();
+    standardQueueService = new StandardQueueService(bullMqService);
     await standardQueueService.queue.obliterate();
   });
 
@@ -105,13 +109,15 @@ describe('Standard Worker', () => {
     const setJobAsCompleted = moduleRef.get<SetJobAsCompleted>(SetJobAsCompleted);
     const setJobAsFailed = moduleRef.get<SetJobAsFailed>(SetJobAsFailed);
     const webhookFilterBackoffStrategy = moduleRef.get<WebhookFilterBackoffStrategy>(WebhookFilterBackoffStrategy);
+    const bullMqService = moduleRef.get<BullMqService>(BullMqService);
 
     standardWorker = new StandardWorker(
       handleLastFailedJob,
       runJob,
       setJobAsCompleted,
       setJobAsFailed,
-      webhookFilterBackoffStrategy
+      webhookFilterBackoffStrategy,
+      bullMqService
     );
   });
 

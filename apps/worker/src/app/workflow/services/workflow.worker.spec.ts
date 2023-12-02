@@ -2,7 +2,7 @@ import { Test } from '@nestjs/testing';
 import { expect } from 'chai';
 import { setTimeout } from 'timers/promises';
 
-import { TriggerEvent, WorkflowQueueService } from '@novu/application-generic';
+import { BullMqService, TriggerEvent, WorkflowQueueService } from '@novu/application-generic';
 
 import { WorkflowWorker } from './workflow.worker';
 
@@ -20,10 +20,11 @@ describe('Workflow Worker', () => {
       imports: [WorkflowModule],
     }).compile();
 
+    const bullMqService = moduleRef.get<BullMqService>(BullMqService);
     const triggerEventUseCase = moduleRef.get<TriggerEvent>(TriggerEvent);
-    workflowWorker = new WorkflowWorker(triggerEventUseCase);
+    workflowWorker = new WorkflowWorker(triggerEventUseCase, bullMqService);
 
-    workflowQueueService = new WorkflowQueueService();
+    workflowQueueService = new WorkflowQueueService(bullMqService);
     await workflowQueueService.queue.obliterate();
   });
 

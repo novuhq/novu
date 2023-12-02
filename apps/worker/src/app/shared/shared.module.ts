@@ -52,6 +52,8 @@ import {
   CreateTenant,
   ProcessTenant,
   getUseMergedDigestId,
+  QueuesModule,
+  WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
 
 import * as packageJson from '../../../package.json';
@@ -126,6 +128,7 @@ const PROVIDERS = [
 
 @Module({
   imports: [
+    QueuesModule,
     LoggerModule.forRoot(
       createNestLoggingModuleOptions({
         serviceName: packageJson.name,
@@ -134,6 +137,6 @@ const PROVIDERS = [
     ),
   ],
   providers: [...PROVIDERS],
-  exports: [...PROVIDERS, LoggerModule],
+  exports: [...PROVIDERS, LoggerModule, QueuesModule],
 })
 export class SharedModule {}

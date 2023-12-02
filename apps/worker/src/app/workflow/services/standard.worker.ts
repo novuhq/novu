@@ -7,6 +7,7 @@ import {
   ObservabilityBackgroundTransactionEnum,
 } from '@novu/shared';
 import {
+  BullMqService,
   getStandardWorkerOptions,
   INovuWorker,
   Job,
@@ -15,6 +16,7 @@ import {
   storage,
   Store,
   WorkerOptions,
+  WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
 
 import {
@@ -39,9 +41,10 @@ export class StandardWorker extends StandardWorkerService implements INovuWorker
     @Inject(forwardRef(() => SetJobAsCompleted)) private setJobAsCompleted: SetJobAsCompleted,
     @Inject(forwardRef(() => SetJobAsFailed)) private setJobAsFailed: SetJobAsFailed,
     @Inject(forwardRef(() => WebhookFilterBackoffStrategy))
-    private webhookFilterBackoffStrategy: WebhookFilterBackoffStrategy
+    private webhookFilterBackoffStrategy: WebhookFilterBackoffStrategy,
+    public workflowInMemoryProviderService: WorkflowInMemoryProviderService
   ) {
-    super();
+    super(new BullMqService(workflowInMemoryProviderService));
 
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOptions());
 

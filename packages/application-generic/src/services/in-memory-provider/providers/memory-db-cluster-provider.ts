@@ -120,6 +120,7 @@ export const getMemoryDbCluster = (
     enableAutoPipelining: enableAutoPipelining ?? false,
     enableOfflineQueue: false,
     redisOptions: {
+      maxRetriesPerRequest: null,
       tls,
       connectTimeout: 10000,
       ...(password && { password }),

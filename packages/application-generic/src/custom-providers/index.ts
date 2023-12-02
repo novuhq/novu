@@ -4,7 +4,6 @@ import {
   CacheInMemoryProviderService,
   CacheService,
   DistributedLockService,
-  ExecutionLogQueueService,
   FeatureFlagsService,
   InboundParseQueueService,
   ReadinessService,
@@ -12,6 +11,8 @@ import {
   SubscriberProcessQueueService,
   WebSocketsQueueService,
   WorkflowQueueService,
+  ExecutionLogQueueService,
+  WorkflowInMemoryProviderService,
 } from '../services';
 import {
   GetIsApiRateLimitingEnabled,
@@ -69,17 +70,6 @@ export const cacheInMemoryProviderService = {
   provide: CacheInMemoryProviderService,
   useFactory: (): CacheInMemoryProviderService => {
     return new CacheInMemoryProviderService();
-  },
-};
-
-export const bullMqService = {
-  provide: BullMqService,
-  useFactory: async (): Promise<BullMqService> => {
-    const service = new BullMqService();
-
-    await service.initialize();
-
-    return service;
   },
 };
 

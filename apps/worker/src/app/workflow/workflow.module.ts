@@ -1,9 +1,8 @@
-import { Module, Provider } from '@nestjs/common';
+import { Module, OnModuleDestroy, Provider } from '@nestjs/common';
 import {
   AddDelayJob,
   MergeOrCreateDigest,
   AddJob,
-  BullMqService,
   bullMqTokenList,
   BulkCreateExecutionDetails,
   CalculateLimitNovuIntegration,
@@ -18,7 +17,6 @@ import {
   GetSubscriberGlobalPreference,
   GetSubscriberTemplatePreference,
   ProcessTenant,
-  QueuesModule,
   SelectIntegration,
   SendTestEmail,
   SendTestEmailCommand,
@@ -36,13 +34,7 @@ import {
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
-import {
-  ExecutionLogWorker,
-  ActiveJobsMetricService,
-  CompletedJobsMetricService,
-  StandardWorker,
-  WorkflowWorker,
-} from './services';
+import { ExecutionLogWorker, ActiveJobsMetricService, StandardWorker, WorkflowWorker } from './services';
 
 import {
   SendMessage,
@@ -66,6 +58,7 @@ import {
 
 import { SharedModule } from '../shared/shared.module';
 import { SubscriberProcessWorker } from './services/subscriber-process.worker';
+import { JobTopicNameEnum } from '@novu/shared';
 
 const REPOSITORIES = [JobRepository];
 
@@ -118,19 +111,46 @@ const USE_CASES = [
   TriggerMulticast,
 ];
 
-const PROVIDERS: Provider[] = [
-  ActiveJobsMetricService,
-  BullMqService,
-  bullMqTokenList,
-  CompletedJobsMetricService,
-  StandardWorker,
-  WorkflowWorker,
-  ExecutionLogWorker,
-  SubscriberProcessWorker,
-];
+const PROVIDERS: Provider[] = [ActiveJobsMetricService, bullMqTokenList];
+
+const validQueueEntries = Object.keys(JobTopicNameEnum).map((key) => JobTopicNameEnum[key]);
+const queuesToProcess =
+  process.env.WORKER_QUEUES?.split(',').map((queue) => {
+    const queueName = queue.trim();
+    if (!validQueueEntries.includes(queueName)) {
+      throw new Error(`Invalid queue name ${queueName}`);
+    }
+
+    return queueName;
+  }) || [];
+
+if (queuesToProcess?.includes(JobTopicNameEnum.STANDARD)) {
+  PROVIDERS.push(StandardWorker);
+}
+
+if (!queuesToProcess.length) {
+  PROVIDERS.push(StandardWorker, WorkflowWorker, ExecutionLogWorker, SubscriberProcessWorker);
+} else {
+  queuesToProcess.forEach((queue) => {
+    switch (queue) {
+      case JobTopicNameEnum.STANDARD:
+        PROVIDERS.push(StandardWorker);
+        break;
+      case JobTopicNameEnum.WORKFLOW:
+        PROVIDERS.push(WorkflowWorker);
+        break;
+      case JobTopicNameEnum.EXECUTION_LOG:
+        PROVIDERS.push(ExecutionLogWorker);
+        break;
+      case JobTopicNameEnum.PROCESS_SUBSCRIBER:
+        PROVIDERS.push(SubscriberProcessWorker);
+        break;
+    }
+  });
+}
 
 @Module({
-  imports: [SharedModule, QueuesModule, MetricsModule],
+  imports: [SharedModule, MetricsModule],
   controllers: [],
   providers: [...PROVIDERS, ...USE_CASES, ...REPOSITORIES],
 })

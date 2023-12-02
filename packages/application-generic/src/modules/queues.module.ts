@@ -3,17 +3,15 @@ import { Module, Provider } from '@nestjs/common';
 import { bullMqTokenList } from '../custom-providers';
 import {
   ActiveJobsMetricQueueServiceHealthIndicator,
-  CompletedJobsMetricQueueServiceHealthIndicator,
   InboundParseQueueServiceHealthIndicator,
   StandardQueueServiceHealthIndicator,
   SubscriberProcessQueueHealthIndicator,
   WebSocketsQueueServiceHealthIndicator,
   WorkflowQueueServiceHealthIndicator,
 } from '../health';
-import { ReadinessService } from '../services';
+import { ReadinessService, WorkflowInMemoryProviderService } from '../services';
 import {
   ActiveJobsMetricQueueService,
-  CompletedJobsMetricQueueService,
   ExecutionLogQueueService,
   InboundParseQueueService,
   StandardQueueService,
@@ -23,7 +21,6 @@ import {
 } from '../services/queues';
 import {
   ActiveJobsMetricWorkerService,
-  CompletedJobsMetricWorkerService,
   InboundParseWorker,
   StandardWorkerService,
   SubscriberProcessWorkerService,
@@ -31,14 +28,23 @@ import {
   WorkflowWorkerService,
 } from '../services/workers';
 
+const memoryQueueService = {
+  provide: WorkflowInMemoryProviderService,
+  useFactory: async () => {
+    const memoryService = new WorkflowInMemoryProviderService();
+
+    await memoryService.initialize();
+
+    return memoryService;
+  },
+};
+
 const PROVIDERS: Provider[] = [
+  memoryQueueService,
   ActiveJobsMetricQueueService,
   ActiveJobsMetricQueueServiceHealthIndicator,
   ActiveJobsMetricWorkerService,
   bullMqTokenList,
-  CompletedJobsMetricQueueService,
-  CompletedJobsMetricQueueServiceHealthIndicator,
-  CompletedJobsMetricWorkerService,
   InboundParseQueueService,
   InboundParseWorker,
   InboundParseQueueServiceHealthIndicator,
@@ -65,6 +71,7 @@ const PROVIDERS: Provider[] = [
 export class QueuesModule {}
 
 const APP_PROVIDERS: Provider[] = [
+  memoryQueueService,
   InboundParseQueueService,
   InboundParseWorker,
   InboundParseQueueServiceHealthIndicator,

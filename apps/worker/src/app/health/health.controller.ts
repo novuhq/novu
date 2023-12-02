@@ -6,7 +6,6 @@ import {
   StandardQueueServiceHealthIndicator,
   WorkflowQueueServiceHealthIndicator,
   ActiveJobsMetricQueueServiceHealthIndicator,
-  CompletedJobsMetricQueueServiceHealthIndicator,
   SubscriberProcessQueueHealthIndicator,
 } from '@novu/application-generic';
 
@@ -21,7 +20,6 @@ export class HealthController {
     private standardQueueHealthIndicator: StandardQueueServiceHealthIndicator,
     private workflowQueueHealthIndicator: WorkflowQueueServiceHealthIndicator,
     private activeJobsMetricQueueServiceHealthIndicator: ActiveJobsMetricQueueServiceHealthIndicator,
-    private completedJobsMetricQueueServiceHealthIndicator: CompletedJobsMetricQueueServiceHealthIndicator,
     private subscriberProcessQueueHealthIndicator: SubscriberProcessQueueHealthIndicator
   ) {}
 
@@ -33,7 +31,6 @@ export class HealthController {
       async () => this.standardQueueHealthIndicator.isActive(),
       async () => this.workflowQueueHealthIndicator.isActive(),
       async () => this.activeJobsMetricQueueServiceHealthIndicator.isActive(),
-      async () => this.completedJobsMetricQueueServiceHealthIndicator.isActive(),
       async () => this.subscriberProcessQueueHealthIndicator.isActive(),
       async () => {
         return {
