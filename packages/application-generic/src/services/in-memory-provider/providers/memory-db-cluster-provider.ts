@@ -123,8 +123,12 @@ export const getMemoryDbCluster = (
       maxRetriesPerRequest: null,
       tls,
       connectTimeout: 10000,
+
       ...(password && { password }),
       ...(username && { username }),
+    },
+    clusterRetryStrategy: (times) => {
+      return Math.max(Math.min(Math.exp(times), 20000), 1000);
     },
     scaleReads: 'slave',
     /*
