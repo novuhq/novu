@@ -11,7 +11,15 @@ const LOG_CONTEXT = 'MetricsService';
 
 @Injectable()
 export class MetricsService {
-  constructor(@Inject('MetricsServices') private services: IMetricsService[]) {}
+  constructor(@Inject('MetricsServices') private services: IMetricsService[]) {
+    Logger.log(
+      `MetricsService running with: [${this.services
+        .map((metricService) => metricService.constructor.name)
+        .join(', ')}]`,
+      LOG_CONTEXT
+    );
+    this.recordMetric('Test/Service/Started', 1);
+  }
 
   recordMetric(name: string, value: number): void {
     Logger.verbose(`Recording metric ${name} with value ${value}`, LOG_CONTEXT);
