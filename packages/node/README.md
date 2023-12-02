@@ -170,6 +170,7 @@ await novu.subscribers.list(page,limit)
 ```
 
 - #### Identify (create) a new subscriber
+
 ```ts
 import { Novu } from '@novu/node';
 
@@ -191,6 +192,7 @@ await novu.subscribers.identify("subscriberId", {
 
 
 - #### Bulk create subscribers
+
 ```ts
 import { Novu } from '@novu/node';
 
@@ -229,6 +231,7 @@ await novu.subscribers.identify([
 
 
 - #### Get a single subscriber
+
 ```ts
 import { Novu } from '@novu/node';
 
@@ -260,6 +263,7 @@ await novu.subscribers.update("subscriberId",{
 ```
 
 - #### Update provider credentials
+
 ```ts
 import { Novu } from '@novu/node';
 
@@ -277,6 +281,7 @@ await novu.subscribers.setCredentials("subscriberId", "slack", {
 ```
 
 - #### Delete provider credentials
+
 ```ts
 import { Novu } from '@novu/node';
 
@@ -311,6 +316,7 @@ await novu.subscribers.updateOnlineStatus("subscriberId", false)
 ```
 
 - #### Get subscriber preference for all workflows
+
 ```ts
 import { Novu } from '@novu/node';
 
@@ -320,6 +326,7 @@ await novu.subscribers.getPreference("subscriberId")
 ```
 
 - #### Get subscriber global preference
+
 ```ts
 import { Novu } from '@novu/node';
 
@@ -330,6 +337,7 @@ await novu.subscribers.getGlobalPreference("subscriberId" )
 
 
 - #### Get subscriber preference by level
+
 ```ts
 import { Novu, PreferenceLevelEnum } from '@novu/node';
 
@@ -340,7 +348,9 @@ await novu.subscribers.getPreferenceByLevel("subscriberId", PreferenceLevelEnum.
 // Get template level preference
 await novu.subscribers.getPreferenceByLevel("subscriberId", PreferenceLevelEnum.TEMPLATE)
 ```
+
 - #### Update subscriber preference for a workflow
+
 ```ts
 import { Novu } from '@novu/node';
 
@@ -365,6 +375,7 @@ await novu.subscribers.updatePreference("subscriberId", "workflowId", {
 ```
 
 - #### Update subscriber preference globally
+
 ```ts
 import { Novu } from '@novu/node';
 
@@ -406,6 +417,7 @@ await novu.subscribers.getNotificationsFeed("subscriberId", params);
 ```
 
 - #### Get seen/unseen in-app messages (notifications) count
+
 ```ts
 import { Novu } from '@novu/node';
 
@@ -577,6 +589,7 @@ await novu.subscribers.trigger("workflowIdentifier", {
 ```
 
 - #### Trigger to a topic
+
 ```ts
 import { Novu, TriggerRecipientsTypeEnum } from '@novu/node';
 
@@ -671,6 +684,7 @@ const novu = new Novu('<NOVU_API_KEY>');
 
 await novu.subscribers.cancel("transactionId");
 ```
+
 ### Messages
 
 - #### List all messages 
@@ -944,8 +958,14 @@ import { Novu } from '@novu/node';
 
 const novu = new Novu('<NOVU_API_KEY>');
 
+const changesParams = {
+  page: 1, //optional
+  limit: 20, // optional
+  promoted: false // required
+}
+
 // get all changes
-await novu.changes.get()
+await novu.changes.get(changesParams)
 
 // get changes count
 await novu.changes.getCount()
