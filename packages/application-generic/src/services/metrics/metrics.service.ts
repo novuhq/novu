@@ -6,7 +6,7 @@ import {
 const nr = require('newrelic');
 import { IMetricsService } from './metrics.interface';
 
-const NAMESPACE = 'novu';
+const NAMESPACE = 'Novu';
 const LOG_CONTEXT = 'MetricsService';
 
 @Injectable()
@@ -22,7 +22,7 @@ export class MetricsService {
   }
 
   recordMetric(name: string, value: number): void {
-    Logger.log(`Recording metric ${name} with value ${value}`, LOG_CONTEXT);
+    Logger.verbose(`Recording metric ${name} with value ${value}`, LOG_CONTEXT);
     const proms = this.services.map((service) => {
       return service.recordMetric(name, value).catch((e) => {
         Logger.error(
