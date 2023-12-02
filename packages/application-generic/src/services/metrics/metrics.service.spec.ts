@@ -104,37 +104,12 @@ describe('MetricsService', () => {
       });
     });
 
-    describe('Invalid METRICS_SERVICE', () => {
-      it('should throw an error if METRICS_SERVICE is set to invalid value', async () => {
-        process.env.METRICS_SERVICE = 'invalid';
-        await expect(createServices()).rejects.toThrow(
-          'Invalid value for METRICS_SERVICE: invalid'
-        );
-        delete process.env.METRICS_SERVICE;
-      });
-    });
-
     describe('AWS', () => {
-      it('should contain AwsMetricsService if METRICS_SERVICE is not set and AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are set', async () => {
-        delete process.env.METRICS_SERVICE;
-        process.env.AWS_ACCESS_KEY_ID = 'test';
-        process.env.AWS_SECRET_ACCESS_KEY = 'test';
-        const metricsServices = await createServices();
-
-        expect(metricsServices.length).toBe(1);
-        expect(
-          metricsServices.some(
-            (metricsService) => metricsService instanceof AwsMetricsService
-          )
-        ).toBe(true);
-        delete process.env.AWS_ACCESS_KEY_ID;
-        delete process.env.AWS_SECRET_ACCESS_KEY;
-      });
-
-      it('should contain AwsMetricsService if METRICS_SERVICE is set to AWS and AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are set', async () => {
+      it('should contain AwsMetricsService if METRICS_SERVICE is set to AWS and Credentials and Region are set', async () => {
         process.env.METRICS_SERVICE = 'AWS';
         process.env.AWS_ACCESS_KEY_ID = 'test';
         process.env.AWS_SECRET_ACCESS_KEY = 'test';
+        process.env.AWS_REGION = 'test';
         const metricsServices = await createServices();
 
         expect(
@@ -145,14 +120,16 @@ describe('MetricsService', () => {
         delete process.env.METRICS_SERVICE;
         delete process.env.AWS_ACCESS_KEY_ID;
         delete process.env.AWS_SECRET_ACCESS_KEY;
+        delete process.env.AWS_REGION;
       });
 
-      it('should throw an error if METRICS_SERVICE is set to AWS and AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are not set', async () => {
+      it('should throw an error if METRICS_SERVICE is set to AWS and Credentials or Region are not set', async () => {
         process.env.METRICS_SERVICE = 'AWS';
         delete process.env.AWS_ACCESS_KEY_ID;
         delete process.env.AWS_SECRET_ACCESS_KEY;
+        delete process.env.AWS_REGION;
         await expect(createServices()).rejects.toThrow(
-          'AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY must be set when using AWS as metrics service'
+          'Missing AWS credentials'
         );
         delete process.env.METRICS_SERVICE;
       });
