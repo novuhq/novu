@@ -2,8 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { expect } from 'chai';
 
 import {
-  CompletedJobsMetricQueueService,
-  CompletedJobsMetricWorkerService,
+  MetricsService,
   StandardQueueService,
   WebSocketsQueueService,
   WorkflowQueueService,
@@ -17,6 +16,7 @@ let completedJobsMetricService: CompletedJobsMetricService;
 let standardService: StandardQueueService;
 let webSocketsQueueService: WebSocketsQueueService;
 let workflowQueueService: WorkflowQueueService;
+let metricsService: MetricsService;
 let moduleRef: TestingModule;
 
 before(async () => {
@@ -30,6 +30,7 @@ before(async () => {
   standardService = moduleRef.get<StandardQueueService>(StandardQueueService);
   webSocketsQueueService = moduleRef.get<WebSocketsQueueService>(WebSocketsQueueService);
   workflowQueueService = moduleRef.get<WorkflowQueueService>(WorkflowQueueService);
+  metricsService = moduleRef.get<MetricsService>(MetricsService);
 });
 
 describe('Completed Jobs Metric Service', () => {
@@ -38,16 +39,15 @@ describe('Completed Jobs Metric Service', () => {
       process.env.NOVU_MANAGED_SERVICE = 'false';
       process.env.NEW_RELIC_LICENSE_KEY = '';
 
-      completedJobsMetricService = new CompletedJobsMetricService([
-        standardService,
-        webSocketsQueueService,
-        workflowQueueService,
-      ]);
+      completedJobsMetricService = new CompletedJobsMetricService(
+        [standardService, webSocketsQueueService, workflowQueueService],
+        metricsService
+      );
     });
 
     it('should not initialize neither the queue or the worker if the environment conditions are not met', async () => {
       expect(completedJobsMetricService).to.be.ok;
-      expect(completedJobsMetricService).to.have.all.keys('tokenList');
+      expect(completedJobsMetricService).to.have.all.keys('tokenList', 'metricsService');
       expect(await completedJobsMetricService.completedJobsMetricQueueService).to.not.be.ok;
       expect(await completedJobsMetricService.completedJobsMetricWorkerService).to.not.be.ok;
     });
@@ -58,11 +58,10 @@ describe('Completed Jobs Metric Service', () => {
       process.env.NOVU_MANAGED_SERVICE = 'true';
       process.env.NEW_RELIC_LICENSE_KEY = 'license';
 
-      completedJobsMetricService = new CompletedJobsMetricService([
-        standardService,
-        webSocketsQueueService,
-        workflowQueueService,
-      ]);
+      completedJobsMetricService = new CompletedJobsMetricService(
+        [standardService, webSocketsQueueService, workflowQueueService],
+        metricsService
+      );
     });
 
     after(async () => {
@@ -75,6 +74,7 @@ describe('Completed Jobs Metric Service', () => {
       expect(completedJobsMetricService).to.have.all.keys(
         'completedJobsMetricQueueService',
         'completedJobsMetricWorkerService',
+        'metricsService',
         'tokenList'
       );
       expect(await completedJobsMetricService.completedJobsMetricQueueService.bullMqService.getStatus()).to.deep.equal({

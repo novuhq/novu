@@ -1,6 +1,7 @@
 import {
   CompletedJobsMetricQueueService,
   CompletedJobsMetricWorkerService,
+  MetricsService,
   QueueBaseService,
   WorkerOptions,
 } from '@novu/application-generic';
@@ -19,7 +20,7 @@ export class CompletedJobsMetricService {
   public readonly completedJobsMetricQueueService: CompletedJobsMetricQueueService;
   public readonly completedJobsMetricWorkerService: CompletedJobsMetricWorkerService;
 
-  constructor(@Inject('BULLMQ_LIST') private tokenList: QueueBaseService[]) {
+  constructor(@Inject('BULLMQ_LIST') private tokenList: QueueBaseService[], private metricsService: MetricsService) {
     if (process.env.NOVU_MANAGED_SERVICE === 'true' && process.env.NEW_RELIC_LICENSE_KEY) {
       this.completedJobsMetricQueueService = new CompletedJobsMetricQueueService();
       this.completedJobsMetricWorkerService = new CompletedJobsMetricWorkerService();
@@ -100,12 +101,8 @@ export class CompletedJobsMetricService {
             Logger.verbose('active length', process.env.NEW_RELIC_LICENSE_KEY.length);
             Logger.verbose('Recording active, waiting, and delayed metrics');
 
-            const nr = require('newrelic');
-            nr.recordMetric(`Queue/${deploymentName}/${queueService.topic}/completed`, completeNumber);
-            nr.recordMetric(`Queue/${deploymentName}/${queueService.topic}/failed`, failNumber);
-
-            Logger.verbose(`Queue/${deploymentName}/${queueService.topic}/completed`, completeNumber);
-            Logger.verbose(`Queue/${deploymentName}/${queueService.topic}/failed`, failNumber);
+            this.metricsService.recordMetric(`Queue/${deploymentName}/${queueService.topic}/completed`, completeNumber);
+            this.metricsService.recordMetric(`Queue/${deploymentName}/${queueService.topic}/failed`, failNumber);
           }
 
           return resolve();

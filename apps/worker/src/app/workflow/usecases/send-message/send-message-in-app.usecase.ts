@@ -4,12 +4,9 @@ import {
   MessageRepository,
   NotificationStepEntity,
   SubscriberRepository,
-  SubscriberEntity,
   MessageEntity,
   OrganizationRepository,
   OrganizationEntity,
-  TenantRepository,
-  TenantEntity,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -24,7 +21,6 @@ import {
   InstrumentUsecase,
   InvalidateCacheService,
   DetailEnum,
-  CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   SelectIntegration,
   CompileTemplate,
@@ -33,6 +29,7 @@ import {
   buildFeedKey,
   buildMessageCountKey,
   GetNovuProviderCredentials,
+  SelectVariant,
   ExecutionLogQueueService,
 } from '@novu/application-generic';
 
@@ -52,30 +49,25 @@ export class SendMessageInApp extends SendMessageBase {
     protected createLogUsecase: CreateLog,
     protected executionLogQueueService: ExecutionLogQueueService,
     protected subscriberRepository: SubscriberRepository,
-    protected tenantRepository: TenantRepository,
     private compileTemplate: CompileTemplate,
     private organizationRepository: OrganizationRepository,
     protected selectIntegration: SelectIntegration,
-    protected getNovuProviderCredentials: GetNovuProviderCredentials
+    protected getNovuProviderCredentials: GetNovuProviderCredentials,
+    protected selectVariant: SelectVariant
   ) {
     super(
       messageRepository,
       createLogUsecase,
       executionLogQueueService,
       subscriberRepository,
-      tenantRepository,
       selectIntegration,
-      getNovuProviderCredentials
+      getNovuProviderCredentials,
+      selectVariant
     );
   }
 
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
-    const subscriber = await this.getSubscriberBySubscriberId({
-      subscriberId: command.subscriberId,
-      _environmentId: command.environmentId,
-    });
-    if (!subscriber) throw new PlatformException('Subscriber not found');
     if (!command.step.template) throw new PlatformException('Template not found');
 
     Sentry.addBreadcrumb({
@@ -111,66 +103,42 @@ export class SendMessageInApp extends SendMessageBase {
       return;
     }
 
-    const inAppChannel: NotificationStepEntity = command.step;
-    if (!inAppChannel.template) throw new PlatformException('Template not found');
+    const step: NotificationStepEntity = command.step;
+    if (!step.template) throw new PlatformException('Template not found');
 
     let content = '';
 
     const { actor } = command.step.template;
 
-    let actorSubscriber: SubscriberEntity | null = null;
-    if (command.job.actorId) {
-      actorSubscriber = await this.getSubscriberBySubscriberId({
-        subscriberId: command.job.actorId,
-        _environmentId: command.environmentId,
-      });
-    }
-
-    const [tenant, organization] = await Promise.all([
-      this.handleTenantExecution(command.job),
+    const [template, organization] = await Promise.all([
+      this.processVariants(command),
       this.organizationRepository.findOne({ _id: command.organizationId }, 'branding'),
     ]);
 
-    try {
-      content = await this.compileInAppTemplate(
-        inAppChannel.template.content,
-        command.payload,
-        subscriber,
-        command,
-        organization,
-        tenant,
-        actorSubscriber
-      );
+    if (template) {
+      step.template = template;
+    }
 
-      if (inAppChannel.template.cta?.data?.url) {
-        inAppChannel.template.cta.data.url = await this.compileInAppTemplate(
-          inAppChannel.template.cta?.data?.url,
-          command.payload,
-          subscriber,
-          command,
-          organization,
-          tenant,
-          actorSubscriber
+    try {
+      content = await this.compileInAppTemplate(step.template.content, command.compileContext, organization);
+
+      if (step.template.cta?.data?.url) {
+        step.template.cta.data.url = await this.compileInAppTemplate(
+          step.template.cta?.data?.url,
+          command.compileContext,
+          organization
         );
       }
 
-      if (inAppChannel.template.cta?.action?.buttons) {
+      if (step.template.cta?.action?.buttons) {
         const ctaButtons: IMessageButton[] = [];
 
-        for (const action of inAppChannel.template.cta.action.buttons) {
-          const buttonContent = await this.compileInAppTemplate(
-            action.content,
-            command.payload,
-            subscriber,
-            command,
-            organization,
-            tenant,
-            actorSubscriber
-          );
+        for (const action of step.template.cta.action.buttons) {
+          const buttonContent = await this.compileInAppTemplate(action.content, command.compileContext, organization);
           ctaButtons.push({ type: action.type, content: buttonContent });
         }
 
-        inAppChannel.template.cta.action.buttons = ctaButtons;
+        step.template.cta.action.buttons = ctaButtons;
       }
     } catch (e) {
       await this.sendErrorHandlebars(command.job, e.message);
@@ -186,25 +154,25 @@ export class SendMessageInApp extends SendMessageBase {
       _environmentId: command.environmentId,
       _subscriberId: command._subscriberId,
       _templateId: command._templateId,
-      _messageTemplateId: inAppChannel.template._id,
+      _messageTemplateId: step.template._id,
       channel: ChannelTypeEnum.IN_APP,
       transactionId: command.transactionId,
       providerId: integration.providerId,
-      _feedId: inAppChannel.template._feedId,
+      _feedId: step.template._feedId,
     });
 
     let message: MessageEntity | null = null;
 
     await this.invalidateCache.invalidateQuery({
       key: buildFeedKey().invalidate({
-        subscriberId: subscriber.subscriberId,
+        subscriberId: command.subscriberId,
         _environmentId: command.environmentId,
       }),
     });
 
     await this.invalidateCache.invalidateQuery({
       key: buildMessageCountKey().invalidate({
-        subscriberId: subscriber.subscriberId,
+        subscriberId: command.subscriberId,
         _environmentId: command.environmentId,
       }),
     });
@@ -216,10 +184,10 @@ export class SendMessageInApp extends SendMessageBase {
         _organizationId: command.organizationId,
         _subscriberId: command._subscriberId,
         _templateId: command._templateId,
-        _messageTemplateId: inAppChannel.template._id,
+        _messageTemplateId: step.template._id,
         channel: ChannelTypeEnum.IN_APP,
-        cta: inAppChannel.template.cta,
-        _feedId: inAppChannel.template._feedId,
+        cta: step.template.cta,
+        _feedId: step.template._feedId,
         transactionId: command.transactionId,
         content: this.storeContent() ? content : null,
         payload: messagePayload,
@@ -240,7 +208,7 @@ export class SendMessageInApp extends SendMessageBase {
         {
           $set: {
             seen: false,
-            cta: inAppChannel.template.cta,
+            cta: step.template.cta,
             content,
             payload: messagePayload,
             createdAt: new Date(),
@@ -307,29 +275,14 @@ export class SendMessageInApp extends SendMessageBase {
   private async compileInAppTemplate(
     content: string | IEmailBlock[],
     payload: any,
-    subscriber: SubscriberEntity,
-    command: SendMessageCommand,
-    organization: OrganizationEntity | null,
-    tenant: TenantEntity | null,
-    actor: SubscriberEntity | null
+    organization: OrganizationEntity | null
   ): Promise<string> {
     return await this.compileTemplate.execute(
       CompileTemplateCommand.create({
         template: content as string,
         data: {
-          subscriber,
-          step: {
-            digest: !!command.events?.length,
-            events: command.events,
-            total_count: command.events?.length,
-          },
-          branding: {
-            logo: organization?.branding?.logo,
-            color: organization?.branding?.color || '#f47373',
-          },
-          ...(tenant && { tenant }),
-          ...(actor && { actor }),
-          ...payload,
+          ...this.getCompilePayload(payload),
+          branding: { logo: organization?.branding?.logo, color: organization?.branding?.color || '#f47373' },
         },
       })
     );

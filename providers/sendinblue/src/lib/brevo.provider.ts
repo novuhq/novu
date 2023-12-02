@@ -15,7 +15,7 @@ export class BrevoEmailProvider implements IEmailProvider {
   id = 'sendinblue';
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private axiosInstance: AxiosInstance;
-  public readonly BASE_URL = ' https://api.brevo.com/v3';
+  public readonly BASE_URL = 'https://api.brevo.com/v3';
 
   constructor(
     private config: {
@@ -35,7 +35,7 @@ export class BrevoEmailProvider implements IEmailProvider {
     const email: any = {};
     email.sender = {
       email: options.from || this.config.from,
-      name: this.config.senderName,
+      name: options.senderName || this.config.senderName,
     };
     email.to = getFormattedTo(options.to);
     email.subject = options.subject;
