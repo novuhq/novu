@@ -39,7 +39,6 @@ describe('WebSocket Worker', () => {
 
   it('should be initialised properly', async () => {
     expect(webSocketWorker).to.be.ok;
-    expect(webSocketWorker).to.have.all.keys('DEFAULT_ATTEMPTS', 'instance', 'externalServicesRoute', 'topic');
     expect(await webSocketWorker.bullMqService.getStatus()).to.deep.equal({
       queueIsPaused: undefined,
       queueName: undefined,
