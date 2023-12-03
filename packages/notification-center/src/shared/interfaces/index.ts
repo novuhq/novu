@@ -88,6 +88,9 @@ export interface INovuProviderContext {
   firstName?: string;
   lastName?: string;
   email?: string;
+  phone?: string;
+  locale?: string;
+  data?: Record<string, any>;
   applicationIdentifier?: string;
   isSessionInitialized: boolean;
   socketUrl?: string;

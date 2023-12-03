@@ -40,6 +40,9 @@ export interface IHeadlessServiceOptions {
   firstName?: string;
   lastName?: string;
   email?: string;
+  phone?: string;
+  locale?: string;
+  data?: Record<string, any>;
   config?: {
     retry?: number;
     retryDelay?: number;

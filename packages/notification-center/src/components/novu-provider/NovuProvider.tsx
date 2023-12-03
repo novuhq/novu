@@ -41,6 +41,9 @@ export interface INovuProviderProps {
   firstName?: string;
   lastName?: string;
   email?: string;
+  phone?: string;
+  locale?: string;
+  data?: Record<string, any>;
   applicationIdentifier: string;
   socketUrl?: string;
   onLoad?: (data: { organization: IOrganizationEntity }) => void;
@@ -55,9 +58,12 @@ export function NovuProvider({
   socketUrl: initialSocketUrl,
   applicationIdentifier,
   subscriberId,
-  firstName, // Added firstName prop
+  firstName,
   lastName,
   email,
+  phone,
+  locale,
+  data,
   subscriberHash,
   stores: initialStores,
   i18n,
@@ -80,6 +86,9 @@ export function NovuProvider({
     firstName,
     lastName,
     email,
+    phone,
+    locale,
+    data,
     subscriberHash,
   });
 
@@ -123,6 +132,9 @@ export function NovuProvider({
       firstName: sessionInfo.firstName,
       lastName: sessionInfo.lastName,
       email: sessionInfo.email,
+      phone: sessionInfo.phone,
+      locale: sessionInfo.locale,
+      data: sessionInfo.data,
       isSessionInitialized: sessionInfo.isSessionInitialized,
       apiService,
       socket,

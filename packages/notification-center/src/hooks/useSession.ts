@@ -5,12 +5,33 @@ import type { ISession } from '../shared/interfaces';
 import { useNovuContext } from './useNovuContext';
 
 export const useSession = ({ onSuccess }: { onSuccess?: (session: ISession) => void }) => {
-  const { apiService, applicationIdentifier, subscriberId, subscriberHash, firstName, lastName, email } =
-    useNovuContext();
+  const {
+    apiService,
+    applicationIdentifier,
+    subscriberId,
+    subscriberHash,
+    firstName,
+    lastName,
+    email,
+    phone,
+    locale,
+    data,
+  } = useNovuContext();
 
   const result = useQuery<ISession, Error, ISession>(
-    [...SESSION_QUERY_KEY, applicationIdentifier, subscriberId, subscriberHash, firstName],
-    () => apiService.initializeSession(applicationIdentifier, subscriberId, subscriberHash, firstName, lastName, email),
+    [...SESSION_QUERY_KEY, applicationIdentifier, subscriberId, subscriberHash],
+    () =>
+      apiService.initializeSession(
+        applicationIdentifier,
+        subscriberId,
+        subscriberHash,
+        firstName,
+        lastName,
+        email,
+        phone,
+        locale,
+        data
+      ),
     {
       enabled: !!applicationIdentifier && !!subscriberId,
       cacheTime: Infinity,

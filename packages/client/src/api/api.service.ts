@@ -112,7 +112,10 @@ export class ApiService {
     hmacHash = null,
     firstName: string,
     lastName: string,
-    email: string
+    email: string,
+    phone: string,
+    locale: string,
+    data: Record<string, any>
   ) {
     return await this.httpClient.post(`/widgets/session/initialize`, {
       applicationIdentifier: appId,
@@ -120,7 +123,9 @@ export class ApiService {
       firstName: firstName,
       lastName: lastName,
       email: email,
-      hmacHash,
+      phone: phone,
+      locale: locale,
+      data: data,
     });
   }
   async postUsageLog(

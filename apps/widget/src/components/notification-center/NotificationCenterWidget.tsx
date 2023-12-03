@@ -32,6 +32,9 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
     firstName: string;
     lastName: string;
     email: string;
+    phone: string;
+    locale: string;
+    data: Record<string, any>;
   }>();
   const [backendUrl, setBackendUrl] = useState(API_URL);
   const [socketUrl, setSocketUrl] = useState(WS_URL);
@@ -142,6 +145,9 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
           firstName={userDataPayload.firstName}
           lastName={userDataPayload.lastName}
           email={userDataPayload.email}
+          phone={userDataPayload.phone}
+          locale={userDataPayload.locale}
+          data={userDataPayload.data}
           onLoad={onLoad}
           subscriberHash={userDataPayload.subscriberHash}
           i18n={i18n}

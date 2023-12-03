@@ -76,7 +76,10 @@ export class HeadlessService {
         this.options.subscriberHash,
         this.options.firstName,
         this.options.lastName,
-        this.options.email
+        this.options.email,
+        this.options.phone,
+        this.options.locale,
+        this.options.data
       ),
   };
 
