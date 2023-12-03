@@ -21,6 +21,8 @@ export class ActiveJobsMetricService {
     private metricsService: MetricsService
   ) {
     if (process.env.NOVU_MANAGED_SERVICE === 'true' && process.env.NEW_RELIC_LICENSE_KEY) {
+      this.activeJobsMetricWorkerService.createWorker(this.getWorkerProcessor(), this.getWorkerOptions());
+
       this.activeJobsMetricWorkerService.worker.on('completed', async (job) => {
         await checkingForCronJob(process.env.ACTIVE_CRON_ID);
         Logger.verbose({ jobId: job.id }, 'Metric Completed Job', LOG_CONTEXT);
