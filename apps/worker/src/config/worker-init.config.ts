@@ -39,7 +39,7 @@ export const WORKER_MAPPING = {
 
 const validQueueEntries = Object.keys(JobTopicNameEnum).map((key) => JobTopicNameEnum[key]);
 export const queuesToProcess =
-  process.env.WORKER_QUEUES?.split(',').map((queue) => {
+  process.env.ACTIVE_WORKERS?.split(',').map((queue) => {
     const queueName = queue.trim();
     if (!validQueueEntries.includes(queueName)) {
       throw new Error(`Invalid queue name ${queueName}`);
