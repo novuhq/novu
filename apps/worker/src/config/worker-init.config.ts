@@ -45,7 +45,12 @@ export const WORKER_MAPPING: WorkerDepTree = {
   },
   [JobTopicNameEnum.PROCESS_SUBSCRIBER]: {
     workerClass: SubscriberProcessWorker,
-    queueDependencies: [JobTopicNameEnum.EXECUTION_LOG],
+    queueDependencies: [
+      JobTopicNameEnum.EXECUTION_LOG,
+      JobTopicNameEnum.STANDARD,
+      JobTopicNameEnum.WEB_SOCKETS,
+      JobTopicNameEnum.PROCESS_SUBSCRIBER,
+    ],
   },
 };
 
