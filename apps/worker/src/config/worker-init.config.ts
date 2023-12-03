@@ -1,9 +1,21 @@
-import { JobTopicNameEnum } from '@novu/shared';
-import { ExecutionLogWorker, StandardWorker, WorkflowWorker } from '../app/workflow/services';
-import { SubscriberProcessWorker } from '../app/workflow/services/subscriber-process.worker';
 import { Provider } from '@nestjs/common';
 
-export const WORKER_MAPPING = {
+import { JobTopicNameEnum } from '@novu/shared';
+
+import { ExecutionLogWorker, StandardWorker, WorkflowWorker } from '../app/workflow/services';
+import { SubscriberProcessWorker } from '../app/workflow/services/subscriber-process.worker';
+
+type WorkerClass =
+  | typeof StandardWorker
+  | typeof WorkflowWorker
+  | typeof ExecutionLogWorker
+  | typeof SubscriberProcessWorker;
+
+type WorkerModuleTree = { workerClass: WorkerClass; queueDependencies: JobTopicNameEnum[] };
+
+type WorkerDepTree = Partial<Record<JobTopicNameEnum, WorkerModuleTree>>;
+
+export const WORKER_MAPPING: WorkerDepTree = {
   [JobTopicNameEnum.STANDARD]: {
     workerClass: StandardWorker,
     queueDependencies: [
@@ -38,30 +50,37 @@ export const WORKER_MAPPING = {
 };
 
 const validQueueEntries = Object.keys(JobTopicNameEnum).map((key) => JobTopicNameEnum[key]);
-export const queuesToProcess =
+const isQueueEntry = (queueName: string): queueName is JobTopicNameEnum => {
+  return validQueueEntries.includes(queueName);
+};
+
+export const workersToProcess =
   process.env.ACTIVE_WORKERS?.split(',').map((queue) => {
     const queueName = queue.trim();
-    if (!validQueueEntries.includes(queueName)) {
+    if (!isQueueEntry(queueName)) {
       throw new Error(`Invalid queue name ${queueName}`);
     }
 
     return queueName;
   }) || [];
 
-const QUEUE_DEPENDENCIES = queuesToProcess.reduce((history, queue) => {
-  const queueDependencies = WORKER_MAPPING[queue]?.queueDependencies || [];
+const WORKER_DEPENDENCIES: JobTopicNameEnum[] = workersToProcess.reduce((history, worker) => {
+  const workerDependencies: JobTopicNameEnum[] = WORKER_MAPPING[worker]?.queueDependencies || [];
 
-  return [...history, ...queueDependencies];
+  return [...history, ...workerDependencies];
 }, []);
 
-export const UNIQUE_QUEUE_DEPENDENCIES = [...new Set(QUEUE_DEPENDENCIES)];
+export const UNIQUE_WORKER_DEPENDENCIES = [...new Set(WORKER_DEPENDENCIES)];
 
 export const ACTIVE_WORKERS: Provider[] | any[] = [];
 
-if (!queuesToProcess.length) {
+if (!workersToProcess.length) {
   ACTIVE_WORKERS.push(StandardWorker, WorkflowWorker, ExecutionLogWorker, SubscriberProcessWorker);
 } else {
-  queuesToProcess.forEach((queue) => {
-    ACTIVE_WORKERS.push(WORKER_MAPPING[queue].workerClass);
+  workersToProcess.forEach((queue) => {
+    const workerClass = WORKER_MAPPING[queue]?.workerClass;
+    if (workerClass) {
+      ACTIVE_WORKERS.push(workerClass);
+    }
   });
 }

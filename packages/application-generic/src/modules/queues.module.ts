@@ -2,7 +2,6 @@ import {
   DynamicModule,
   Module,
   OnApplicationShutdown,
-  OnModuleDestroy,
   Provider,
 } from '@nestjs/common';
 
