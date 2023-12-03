@@ -127,10 +127,10 @@ export const getMemoryDbCluster = (
       ...(password && { password }),
       ...(username && { username }),
     },
-    clusterRetryStrategy: (times) => {
+    clusterRetryStrategy: (times: number) => {
       return Math.max(Math.min(Math.exp(times), 20000), 1000);
     },
-    scaleReads: 'slave',
+    scaleReads: 'master',
     /*
      *  Disabled in Prod as affects performance
      */
