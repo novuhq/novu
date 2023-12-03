@@ -94,6 +94,7 @@
     "@novu/ryver": "^0.22.0",
     "@novu/sendchamp": "^0.22.0",
     "@novu/sendgrid": "^0.22.0",
+    "@novu/getstream": "^0.22.0",
     "@novu/sendinblue": "^0.22.0",
     "@novu/ses": "^0.22.0",
     "@novu/shared": "^0.22.0",
