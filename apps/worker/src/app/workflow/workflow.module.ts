@@ -1,4 +1,4 @@
-import { Module, Provider } from '@nestjs/common';
+import { Module, OnApplicationShutdown, Provider } from '@nestjs/common';
 import {
   AddDelayJob,
   MergeOrCreateDigest,
@@ -133,4 +133,10 @@ const memoryQueueService = {
   providers: [memoryQueueService, ...ACTIVE_WORKERS, ...PROVIDERS, ...USE_CASES, ...REPOSITORIES, activeWorkersToken],
   exports: [...PROVIDERS, ...USE_CASES, ...REPOSITORIES, activeWorkersToken],
 })
-export class WorkflowModule {}
+export class WorkflowModule implements OnApplicationShutdown {
+  constructor(private workflowInMemoryProviderService: WorkflowInMemoryProviderService) {}
+
+  async onApplicationShutdown() {
+    await this.workflowInMemoryProviderService.shutdown();
+  }
+}

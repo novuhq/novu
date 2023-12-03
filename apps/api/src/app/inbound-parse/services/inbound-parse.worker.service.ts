@@ -14,12 +14,13 @@ import { InboundEmailParseCommand } from '../usecases/inbound-email-parse/inboun
 const LOG_CONTEXT = 'InboundParseQueueService';
 
 @Injectable()
-export class InboundParseQueueService extends WorkerBaseService {
+export class InboundParseWorkerService extends WorkerBaseService {
   constructor(
     private emailParseUsecase: InboundEmailParse,
     public workflowInMemoryProviderService: WorkflowInMemoryProviderService
   ) {
     super(JobTopicNameEnum.INBOUND_PARSE_MAIL, new BullMqService(workflowInMemoryProviderService));
+
     this.createWorker(this.getWorkerProcessor(), this.getWorkerOptions());
   }
 

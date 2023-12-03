@@ -38,7 +38,8 @@ const memoryQueueService = {
   },
 };
 
-const BASE_PROVIDERS: Provider[] = [memoryQueueService, ReadinessService];
+const INTERNAL_MODULE_PROVIDERS = [memoryQueueService];
+const BASE_PROVIDERS: Provider[] = [ReadinessService];
 
 @Module({
   providers: [],
@@ -129,7 +130,7 @@ export class QueuesModule implements OnApplicationShutdown {
 
     return {
       module: QueuesModule,
-      providers: [...DYNAMIC_PROVIDERS],
+      providers: [...DYNAMIC_PROVIDERS, ...INTERNAL_MODULE_PROVIDERS],
       exports: [...DYNAMIC_PROVIDERS],
     };
   }

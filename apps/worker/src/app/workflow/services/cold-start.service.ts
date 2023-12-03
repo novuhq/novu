@@ -1,11 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import { INovuWorker, ReadinessService } from '@novu/application-generic';
 
-import { StandardWorker } from './standard.worker';
-import { SubscriberProcessWorker } from './subscriber-process.worker';
-import { WorkflowWorker } from './workflow.worker';
-import { ExecutionLogWorker } from './execution-log.worker';
-
 const getWorkers = (app: INestApplication): INovuWorker[] => {
   const workers = app.get('ACTIVE_WORKERS');
 
