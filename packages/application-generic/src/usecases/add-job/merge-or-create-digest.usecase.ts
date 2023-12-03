@@ -15,7 +15,6 @@ import {
   EventsDistributedLockService,
   ExecutionLogQueueService,
 } from '../../services';
-import { DigestFilterSteps } from '../digest-filter-steps';
 import {
   DetailEnum,
   CreateExecutionDetailsCommand,

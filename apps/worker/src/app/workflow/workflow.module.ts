@@ -1,10 +1,8 @@
-import { Module, Provider } from '@nestjs/common';
+import { Module, OnApplicationShutdown, Provider } from '@nestjs/common';
 import {
   AddDelayJob,
   MergeOrCreateDigest,
   AddJob,
-  BullMqService,
-  bullMqTokenList,
   BulkCreateExecutionDetails,
   CalculateLimitNovuIntegration,
   CompileEmailTemplate,
@@ -18,30 +16,24 @@ import {
   GetSubscriberGlobalPreference,
   GetSubscriberTemplatePreference,
   ProcessTenant,
-  QueuesModule,
   SelectIntegration,
   SendTestEmail,
   SendTestEmailCommand,
   StoreSubscriberJobs,
   ConditionsFilter,
   TriggerEvent,
+  SelectVariant,
   MapTriggerRecipients,
   GetTopicSubscribersUseCase,
   getIsTopicNotificationEnabled,
   SubscriberJobBound,
+  TriggerBroadcast,
+  TriggerMulticast,
+  WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
 import {
-  ExecutionLogWorker,
-  ActiveJobsMetricService,
-  CompletedJobsMetricService,
-  StandardWorker,
-  WorkflowWorker,
-} from './services';
-
-import {
-  MessageMatcher,
   SendMessage,
   SendMessageChat,
   SendMessageDelay,
@@ -62,7 +54,7 @@ import {
 } from './usecases';
 
 import { SharedModule } from '../shared/shared.module';
-import { SubscriberProcessWorker } from './services/subscriber-process.worker';
+import { ACTIVE_WORKERS } from '../../config/worker-init.config';
 
 const REPOSITORIES = [JobRepository];
 
@@ -84,11 +76,11 @@ const USE_CASES = [
   GetNovuLayout,
   GetNovuProviderCredentials,
   SelectIntegration,
+  SelectVariant,
   GetSubscriberPreference,
   GetSubscriberGlobalPreference,
   GetSubscriberTemplatePreference,
   HandleLastFailedJob,
-  MessageMatcher,
   ProcessTenant,
   QueueNextJob,
   RunJob,
@@ -111,22 +103,40 @@ const USE_CASES = [
   GetTopicSubscribersUseCase,
   getIsTopicNotificationEnabled,
   SubscriberJobBound,
+  TriggerBroadcast,
+  TriggerMulticast,
 ];
 
-const PROVIDERS: Provider[] = [
-  ActiveJobsMetricService,
-  BullMqService,
-  bullMqTokenList,
-  CompletedJobsMetricService,
-  StandardWorker,
-  WorkflowWorker,
-  ExecutionLogWorker,
-  SubscriberProcessWorker,
-];
+const PROVIDERS: Provider[] = [];
+const activeWorkersToken: any = {
+  provide: 'ACTIVE_WORKERS',
+  useFactory: (...args: any[]) => {
+    return args;
+  },
+  inject: ACTIVE_WORKERS,
+};
+
+const memoryQueueService = {
+  provide: WorkflowInMemoryProviderService,
+  useFactory: async () => {
+    const memoryService = new WorkflowInMemoryProviderService();
+
+    await memoryService.initialize();
+
+    return memoryService;
+  },
+};
 
 @Module({
-  imports: [SharedModule, QueuesModule],
+  imports: [SharedModule],
   controllers: [],
-  providers: [...PROVIDERS, ...USE_CASES, ...REPOSITORIES],
+  providers: [memoryQueueService, ...ACTIVE_WORKERS, ...PROVIDERS, ...USE_CASES, ...REPOSITORIES, activeWorkersToken],
+  exports: [...PROVIDERS, ...USE_CASES, ...REPOSITORIES, activeWorkersToken],
 })
-export class WorkflowModule {}
+export class WorkflowModule implements OnApplicationShutdown {
+  constructor(private workflowInMemoryProviderService: WorkflowInMemoryProviderService) {}
+
+  async onApplicationShutdown() {
+    await this.workflowInMemoryProviderService.shutdown();
+  }
+}

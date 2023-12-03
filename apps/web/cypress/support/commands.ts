@@ -23,6 +23,7 @@ Cypress.Commands.add('waitLoadEnv', (beforeWait: () => void): void => {
 
 Cypress.Commands.add('waitLoadTemplatePage', (beforeWait: () => void): void => {
   cy.intercept('GET', 'http://localhost:1336/v1/environments').as('environments');
+  cy.intercept('GET', 'http://localhost:1336/v1/organizations').as('organizations');
   cy.intercept('GET', 'http://localhost:1336/v1/environments/me').as('environments-me');
   cy.intercept('GET', 'http://localhost:1336/v1/notification-groups').as('notification-groups');
   cy.intercept('GET', 'http://localhost:1336/v1/changes/count').as('changes-count');
@@ -33,6 +34,7 @@ Cypress.Commands.add('waitLoadTemplatePage', (beforeWait: () => void): void => {
 
   cy.wait([
     '@environments',
+    '@organizations',
     '@environments-me',
     '@notification-groups',
     '@changes-count',

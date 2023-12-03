@@ -1,15 +1,19 @@
 import styled from '@emotion/styled';
-import { Controller } from 'react-hook-form';
+import { Controller, useFormContext } from 'react-hook-form';
 import { Switch } from '@novu/design-system';
-import { useEnvController } from '../../../hooks';
 
-export const StepActiveSwitch = ({ control, index }) => {
+import { useEnvController } from '../../../hooks';
+import { useStepFormPath } from '../hooks/useStepFormPath';
+
+export const StepActiveSwitch = () => {
+  const { control } = useFormContext();
   const { readonly } = useEnvController();
+  const path = useStepFormPath();
 
   return (
     <Controller
       control={control}
-      name={`steps.${index}.active`}
+      name={`${path}.active`}
       defaultValue={true}
       render={({ field: { value, ...field } }) => {
         return (

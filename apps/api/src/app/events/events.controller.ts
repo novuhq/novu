@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Param, Post, Scope, UseGuards } from '@nestjs/common';
 import { ApiOkResponse, ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { v4 as uuidv4 } from 'uuid';
-import { IJwtPayload } from '@novu/shared';
+import { AddressingTypeEnum, IJwtPayload } from '@novu/shared';
 import { SendTestEmail, SendTestEmailCommand } from '@novu/application-generic';
 
 import {
@@ -64,6 +64,7 @@ export class EventsController {
         actor: body.actor,
         tenant: body.tenant,
         transactionId: body.transactionId,
+        addressingType: AddressingTypeEnum.MULTICAST,
       })
     );
 

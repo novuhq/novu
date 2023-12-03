@@ -12,11 +12,12 @@ export class JobsService {
   public standardQueue: Queue;
   public workflowQueue: Queue;
   public subscriberProcessQueue: Queue;
-
+  public executionLogQueue: Queue;
   constructor(private isClusterMode?: boolean) {
     this.workflowQueue = new TestingQueueService(JobTopicNameEnum.WORKFLOW).queue;
     this.standardQueue = new TestingQueueService(JobTopicNameEnum.STANDARD).queue;
     this.subscriberProcessQueue = new TestingQueueService(JobTopicNameEnum.PROCESS_SUBSCRIBER).queue;
+    this.executionLogQueue = new TestingQueueService(JobTopicNameEnum.EXECUTION_LOG).queue;
   }
 
   public async queueGet(jobTopicName: JobTopicNameEnum, getter: 'getDelayed') {
@@ -89,6 +90,8 @@ export class JobsService {
       activeStandardJobsCount,
       subscriberProcessQueueWaitingCount,
       subscriberProcessQueueActiveCount,
+      executionLogQueueWaitingCount,
+      executionLogQueueActiveCount,
     ] = await Promise.all([
       this.workflowQueue.getActiveCount(),
       this.workflowQueue.getWaitingCount(),
@@ -98,6 +101,9 @@ export class JobsService {
 
       this.subscriberProcessQueue.getWaitingCount(),
       this.subscriberProcessQueue.getActiveCount(),
+
+      this.executionLogQueue.getWaitingCount(),
+      this.executionLogQueue.getActiveCount(),
     ]);
 
     const totalCount =
@@ -106,7 +112,9 @@ export class JobsService {
       waitingStandardJobsCount +
       activeStandardJobsCount +
       subscriberProcessQueueWaitingCount +
-      subscriberProcessQueueActiveCount;
+      subscriberProcessQueueActiveCount +
+      executionLogQueueWaitingCount +
+      executionLogQueueActiveCount;
 
     return {
       totalCount,
@@ -116,6 +124,8 @@ export class JobsService {
       activeStandardJobsCount,
       subscriberProcessQueueWaitingCount,
       subscriberProcessQueueActiveCount,
+      executionLogQueueWaitingCount,
+      executionLogQueueActiveCount,
     };
   }
 }

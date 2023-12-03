@@ -9,6 +9,7 @@ import { When } from '../../../../../components/utils/When';
 import { colors, Tooltip, BoltOutlinedGradient, Check } from '@novu/design-system';
 import { IForm } from '../../../components/formTypes';
 import { WorkflowNode } from './WorkflowNode';
+import { INode } from '../../../../../components/workflow/types';
 
 const useStyles = createStyles(
   (
@@ -50,7 +51,7 @@ const useStyles = createStyles(
   })
 );
 
-export default memo(({ selected }: { selected: boolean }) => {
+export default memo(({ selected }: INode) => {
   const { getNodes } = useReactFlow();
   const isParent = getNodes().length > 1;
   const noChildStyle = isParent ? {} : { border: 'none', background: 'transparent' };
@@ -85,7 +86,6 @@ export default memo(({ selected }: { selected: boolean }) => {
         </Tooltip>
       </When>
       <WorkflowNode
-        showDelete={false}
         Icon={BoltOutlinedGradient}
         label="Workflow trigger"
         active={selected}
