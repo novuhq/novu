@@ -8,12 +8,10 @@ import { AppService } from './app.service';
 import { SharedModule } from './shared/shared.module';
 import { HealthModule } from './health/health.module';
 import { SocketModule } from './socket/socket.module';
-import { ReadinessModule } from './readiness/readiness.module';
 
 const packageJson = require('../package.json');
 
 const modules = [
-  ReadinessModule,
   SharedModule,
   HealthModule,
   SocketModule,

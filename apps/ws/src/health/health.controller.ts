@@ -8,7 +8,7 @@ import { version } from '../../package.json';
 export class HealthController {
   constructor(
     private healthCheckService: HealthCheckService,
-    @Inject('INDICATOR_LIST') private indicators: IHealthIndicator[]
+    @Inject('QUEUE_HEALTH_INDICATORS') private indicators: IHealthIndicator[]
   ) {}
 
   @Get()
