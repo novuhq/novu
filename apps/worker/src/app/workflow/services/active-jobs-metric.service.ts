@@ -1,8 +1,7 @@
-const nr = require('newrelic');
-
 import {
   ActiveJobsMetricQueueService,
   ActiveJobsMetricWorkerService,
+  MetricsService,
   QueueBaseService,
   WorkerOptions,
 } from '@novu/application-generic';
@@ -15,15 +14,13 @@ const METRIC_JOB_ID = 'metric-job';
 
 @Injectable()
 export class ActiveJobsMetricService {
-  public readonly activeJobsMetricQueueService: ActiveJobsMetricQueueService;
-  public readonly activeJobsMetricWorkerService: ActiveJobsMetricWorkerService;
-
-  constructor(@Inject('BULLMQ_LIST') private tokenList: QueueBaseService[]) {
+  constructor(
+    @Inject('BULLMQ_LIST') private tokenList: QueueBaseService[],
+    public readonly activeJobsMetricQueueService: ActiveJobsMetricQueueService,
+    public readonly activeJobsMetricWorkerService: ActiveJobsMetricWorkerService,
+    private metricsService: MetricsService
+  ) {
     if (process.env.NOVU_MANAGED_SERVICE === 'true' && process.env.NEW_RELIC_LICENSE_KEY) {
-      this.activeJobsMetricQueueService = new ActiveJobsMetricQueueService();
-      this.activeJobsMetricWorkerService = new ActiveJobsMetricWorkerService();
-
-      this.activeJobsMetricQueueService.createQueue();
       this.activeJobsMetricWorkerService.createWorker(this.getWorkerProcessor(), this.getWorkerOptions());
 
       this.activeJobsMetricWorkerService.worker.on('completed', async (job) => {
@@ -92,19 +89,17 @@ export class ActiveJobsMetricService {
 
         try {
           for (const queueService of this.tokenList) {
-            const waitCount = (queueService.bullMqService.queue as any).getGroupsJobsCount
-              ? await (queueService.bullMqService.queue as any).getGroupsJobsCount()
-              : await queueService.bullMqService.queue.getWaitingCount();
-            const delayedCount = await queueService.bullMqService.queue.getDelayedCount();
-            const activeCount = await queueService.bullMqService.queue.getActiveCount();
+            const waitCount = (queueService.instance.queue as any).getGroupsJobsCount
+              ? await (queueService.instance.queue as any).getGroupsJobsCount()
+              : await queueService.instance.queue.getWaitingCount();
+            const delayedCount = await queueService.instance.queue.getDelayedCount();
+            const activeCount = await queueService.instance.queue.getActiveCount();
 
             Logger.verbose('Recording active, waiting, and delayed metrics');
 
-            nr.recordMetric(`Queue/${deploymentName}/${queueService.topic}/waiting`, waitCount);
-            nr.recordMetric(`Queue/${deploymentName}/${queueService.topic}/delayed`, delayedCount);
-            nr.recordMetric(`Queue/${deploymentName}/${queueService.topic}/active`, activeCount);
-
-            Logger.verbose(`Queue/${deploymentName}/${queueService.topic}`, { waitCount, delayedCount, activeCount });
+            this.metricsService.recordMetric(`Queue/${deploymentName}/${queueService.topic}/waiting`, waitCount);
+            this.metricsService.recordMetric(`Queue/${deploymentName}/${queueService.topic}/delayed`, delayedCount);
+            this.metricsService.recordMetric(`Queue/${deploymentName}/${queueService.topic}/active`, activeCount);
           }
 
           return resolve();
@@ -128,9 +123,5 @@ export class ActiveJobsMetricService {
     }
 
     Logger.log('Shutting down the Active Jobs Metric service has finished', LOG_CONTEXT);
-  }
-
-  async onModuleDestroy(): Promise<void> {
-    await this.gracefulShutdown();
   }
 }
