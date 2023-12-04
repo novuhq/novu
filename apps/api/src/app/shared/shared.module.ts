@@ -97,7 +97,6 @@ const PROVIDERS = [
   imports: [
     QueuesModule.forRoot([
       JobTopicNameEnum.EXECUTION_LOG,
-      JobTopicNameEnum.WORKFLOW,
       JobTopicNameEnum.WEB_SOCKETS,
       JobTopicNameEnum.WORKFLOW,
       JobTopicNameEnum.INBOUND_PARSE_MAIL,
