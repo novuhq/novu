@@ -8,6 +8,7 @@ import {
   Worker,
   WorkerOptions,
 } from '../bull-mq';
+import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 
 const LOG_CONTEXT = 'WorkerService';
 
@@ -23,12 +24,11 @@ export class WorkerBaseService {
 
   public readonly DEFAULT_ATTEMPTS = 3;
 
-  constructor(public readonly topic: JobTopicNameEnum) {
-    this.instance = new BullMqService();
-  }
-
-  public get bullMqService(): BullMqService {
-    return this.instance;
+  constructor(
+    public readonly topic: JobTopicNameEnum,
+    public bullMqServiceInstance: BullMqService
+  ) {
+    this.instance = bullMqServiceInstance;
   }
 
   public get worker(): Worker {
