@@ -1,13 +1,17 @@
 import { Test } from '@nestjs/testing';
 
 import { InboundParseQueueService } from './inbound-parse-queue.service';
+import { BullMqService } from '../bull-mq';
+import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 
 let inboundParseQueueService: InboundParseQueueService;
 
 describe('Inbound Parse Queue service', () => {
   describe('General', () => {
     beforeAll(async () => {
-      inboundParseQueueService = new InboundParseQueueService();
+      inboundParseQueueService = new InboundParseQueueService(
+        new WorkflowInMemoryProviderService()
+      );
       await inboundParseQueueService.queue.obliterate();
     });
 
@@ -129,7 +133,9 @@ describe('Inbound Parse Queue service', () => {
     beforeAll(async () => {
       process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
 
-      inboundParseQueueService = new InboundParseQueueService();
+      inboundParseQueueService = new InboundParseQueueService(
+        new WorkflowInMemoryProviderService()
+      );
       await inboundParseQueueService.queue.obliterate();
     });
 

@@ -72,7 +72,11 @@ export async function bootstrap(): Promise<INestApplication> {
 
   await app.init();
 
-  await startAppInfra(app);
+  try {
+    await startAppInfra(app);
+  } catch (e) {
+    process.exit(1);
+  }
 
   await app.listen(process.env.PORT);
 
