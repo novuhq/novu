@@ -1,6 +1,6 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
-import { IEmailBlock, IJwtPayload, MessageTemplateContentType } from '@novu/shared';
+import { IEmailBlock, IJwtPayload, IMessageCTA, MessageTemplateContentType } from '@novu/shared';
 import {
   CompileEmailTemplate,
   CompileEmailTemplateCommand,
@@ -48,7 +48,7 @@ export class ContentTemplatesController {
     @UserSession() user: IJwtPayload,
     @Body('content') content: string,
     @Body('payload') payload: any,
-    @Body('cta') cta: any
+    @Body('cta') cta: IMessageCTA
   ) {
     return this.compileInAppTemplate.execute(
       CompileInAppTemplateCommand.create({

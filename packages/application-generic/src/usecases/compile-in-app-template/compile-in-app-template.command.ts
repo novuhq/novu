@@ -1,4 +1,4 @@
-import { IsDefined } from 'class-validator';
+import { IsDefined, IsOptional } from 'class-validator';
 import { IMessageCTA } from '@novu/shared';
 
 import { EnvironmentWithUserCommand } from '../../commands/project.command';
@@ -10,6 +10,6 @@ export class CompileInAppTemplateCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-  @IsDefined()
-  cta: IMessageCTA;
+  @IsOptional()
+  cta?: IMessageCTA;
 }

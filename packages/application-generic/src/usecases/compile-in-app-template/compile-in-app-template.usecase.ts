@@ -30,6 +30,7 @@ export class CompileInAppTemplate {
 
     let content = '';
     const ctaButtons: IMessageButton[] = [];
+    let url;
 
     try {
       content = await this.compileInAppTemplate(
@@ -37,6 +38,14 @@ export class CompileInAppTemplate {
         payload,
         organization
       );
+
+      if (command.cta?.data?.url) {
+        url = await this.compileInAppTemplate(
+          command.cta?.data?.url,
+          payload,
+          organization
+        );
+      }
 
       if (command.cta?.action?.buttons) {
         for (const action of command.cta.action.buttons) {
@@ -54,7 +63,7 @@ export class CompileInAppTemplate {
       );
     }
 
-    return { content, ctaButtons };
+    return { content, ctaButtons, url };
   }
 
   private async compileInAppTemplate(
