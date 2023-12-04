@@ -1,4 +1,4 @@
-/* cSpell:ignore DOUBLEWORD */
+/* cSpell:enableCompoundWords */
 import { WithRequired, ConvertToConstantCase, testHttpHeaderEnumValidity, ValidateHttpHeaderCase } from './utils.types';
 
 /**

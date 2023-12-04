@@ -1,4 +1,4 @@
-/* cSpell:ignore DOUBLEWORD */
+/* cSpell:enableCompoundWords */
 /**
  * Make properties K in T required.
  */
