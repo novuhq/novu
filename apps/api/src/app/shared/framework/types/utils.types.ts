@@ -1,3 +1,4 @@
+/* cSpell:ignore DOUBLEWORD */
 /**
  * Make properties K in T required.
  */
@@ -42,7 +43,7 @@ export type ValidateHttpHeaderCase<S extends string> = S extends `${infer U}-${i
  * // Incorrect format:
  * enum TestEnum {
  *   Single = 'Single', // incorrect key case (Single should be SINGLE)
- *   SINGLE = 'single', // incorect value case ('single' should be 'Single')
+ *   SINGLE = 'single', // incorrect value case ('single' should be 'Single')
  *   // extra underscore in key (DOUBLE_WORD_HEADER should be DOUBLEWORD_HEADER)
  *   DOUBLE_WORD_HEADER = 'DoubleWord-Header',
  * }

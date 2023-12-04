@@ -1,3 +1,4 @@
+/* cSpell:ignore DOUBLEWORD */
 import { WithRequired, ConvertToConstantCase, testHttpHeaderEnumValidity, ValidateHttpHeaderCase } from './utils.types';
 
 /**
@@ -25,7 +26,7 @@ export const invalidTestType: WithRequired<TestWithRequired, 'optional'> = {
 // Valid
 export const validConstantSingleString: ConvertToConstantCase<'Single'> = 'SINGLE';
 export const validConstantSingleSingleString: ConvertToConstantCase<'Double-String'> = 'DOUBLE_STRING';
-export const validConstantDoubleSingleString: ConvertToConstantCase<'DoubleDouble-String'> = 'DOUBLEDOUBLE_STRING';
+export const validConstantDoubleSingleString: ConvertToConstantCase<'DoubleWord-String'> = 'DOUBLEWORD_STRING';
 
 // @ts-expect-error - Incorrect case - should be 'SINGLE'
 export const invalidConstantSingleString: ConvertToConstantCase<'Single'> = 'single';
@@ -36,20 +37,20 @@ export const invalidConstantSingleString: ConvertToConstantCase<'Single'> = 'sin
 // Valid
 export const validHttpHeaderSingleString: ValidateHttpHeaderCase<'Single'> = 'Single';
 export const validHttpHeaderSingleSingleString: ValidateHttpHeaderCase<'Double-String'> = 'Double-String';
-export const validHttpHeaderDoubleSingleString: ValidateHttpHeaderCase<'DoubleDouble-String'> = 'DoubleDouble-String';
+export const validHttpHeaderDoubleSingleString: ValidateHttpHeaderCase<'DoubleWord-String'> = 'DoubleWord-String';
 export const validHttpHeaderUnion1String: ValidateHttpHeaderCase<'First-String' | 'Second-String'> = 'First-String';
 export const validHttpHeaderUnion2String: ValidateHttpHeaderCase<'First-String' | 'Second-String'> = 'Second-String';
 enum TestCapitalHeaderEnum {
   SINGLE = 'Single',
   INVALID = 'invalid-string',
   DOUBLE_STRING = 'Double-String',
-  DOUBLEDOUBLE_STRING = 'DoubleDouble-String',
+  DOUBLEWORD_STRING = 'DoubleWord-String',
 }
 export const validHttpHeaderSingleEnum: ValidateHttpHeaderCase<TestCapitalHeaderEnum.SINGLE> = 'Single';
 export const validHttpHeaderSingleSingleEnum: ValidateHttpHeaderCase<TestCapitalHeaderEnum.DOUBLE_STRING> =
   'Double-String';
-export const validHttpHeaderDoubleSingleEnum: ValidateHttpHeaderCase<TestCapitalHeaderEnum.DOUBLEDOUBLE_STRING> =
-  'DoubleDouble-String';
+export const validHttpHeaderDoubleSingleEnum: ValidateHttpHeaderCase<TestCapitalHeaderEnum.DOUBLEWORD_STRING> =
+  'DoubleWord-String';
 
 // Invalid
 // @ts-expect-error - Incorrect case - 'invalid-string' literal type is not Capital-Case
@@ -66,7 +67,7 @@ export const invalidHttpHeaderEnumString: ValidateHttpHeaderCase<TestCapitalHead
 enum ValidHeaderEnum {
   SINGLE = 'Single',
   DOUBLE_STRING = 'Double-String',
-  DOUBLEDOUBLE_STRING = 'DoubleDouble-String',
+  DOUBLEWORD_STRING = 'DoubleWord-String',
 }
 testHttpHeaderEnumValidity(ValidHeaderEnum);
 
