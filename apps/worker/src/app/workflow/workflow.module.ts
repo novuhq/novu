@@ -32,6 +32,7 @@ import {
   SubscriberJobBound,
   TriggerBroadcast,
   TriggerMulticast,
+  CompileInAppTemplate,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
@@ -131,6 +132,7 @@ const USE_CASES = [
   SubscriberJobBound,
   TriggerBroadcast,
   TriggerMulticast,
+  CompileInAppTemplate,
 ];
 
 const PROVIDERS: Provider[] = [

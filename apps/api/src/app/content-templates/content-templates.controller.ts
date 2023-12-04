@@ -1,7 +1,13 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
-import { IEmailBlock, IJwtPayload, MessageTemplateContentType } from '@novu/shared';
-import { CompileEmailTemplate, CompileEmailTemplateCommand, JwtAuthGuard } from '@novu/application-generic';
+import { IEmailBlock, IJwtPayload, IMessageCTA, MessageTemplateContentType } from '@novu/shared';
+import {
+  CompileEmailTemplate,
+  CompileEmailTemplateCommand,
+  CompileInAppTemplate,
+  CompileInAppTemplateCommand,
+  JwtAuthGuard,
+} from '@novu/application-generic';
 
 import { UserSession } from '../shared/framework/user.decorator';
 
@@ -9,7 +15,10 @@ import { UserSession } from '../shared/framework/user.decorator';
 @UseGuards(JwtAuthGuard)
 @ApiExcludeController()
 export class ContentTemplatesController {
-  constructor(private compileEmailTemplateUsecase: CompileEmailTemplate) {}
+  constructor(
+    private compileEmailTemplateUsecase: CompileEmailTemplate,
+    private compileInAppTemplate: CompileInAppTemplate
+  ) {}
 
   @Post('/preview/email')
   public previewEmail(
@@ -30,6 +39,25 @@ export class ContentTemplatesController {
         payload,
         subject,
         layoutId,
+      })
+    );
+  }
+
+  @Post('/preview/in-app')
+  public previewInApp(
+    @UserSession() user: IJwtPayload,
+    @Body('content') content: string,
+    @Body('payload') payload: any,
+    @Body('cta') cta: IMessageCTA
+  ) {
+    return this.compileInAppTemplate.execute(
+      CompileInAppTemplateCommand.create({
+        userId: user._id,
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+        content,
+        payload,
+        cta,
       })
     );
   }
