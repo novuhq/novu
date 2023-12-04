@@ -1,11 +1,9 @@
 import {
+  BullMqService,
   getInboundParseMailWorkerOptions,
-  InboundParseQueueService as InboundParseQueue,
-  InboundParseWorker,
-  Queue,
-  QueueOptions,
-  Worker,
+  WorkerBaseService,
   WorkerOptions,
+  WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
 import { JobTopicNameEnum } from '@novu/shared';
 import { Injectable, Logger } from '@nestjs/common';
@@ -16,17 +14,14 @@ import { InboundEmailParseCommand } from '../usecases/inbound-email-parse/inboun
 const LOG_CONTEXT = 'InboundParseQueueService';
 
 @Injectable()
-export class InboundParseQueueService {
-  public readonly queue: Queue;
-  public readonly worker: Worker;
-
+export class InboundParseWorkerService extends WorkerBaseService {
   constructor(
     private emailParseUsecase: InboundEmailParse,
-    public readonly inboundParseQueue: InboundParseQueue,
-    public readonly inboundParseWorker: InboundParseWorker
+    public workflowInMemoryProviderService: WorkflowInMemoryProviderService
   ) {
-    this.inboundParseQueue.createQueue();
-    this.inboundParseWorker.createWorker(this.getWorkerProcessor(), this.getWorkerOptions());
+    super(JobTopicNameEnum.INBOUND_PARSE_MAIL, new BullMqService(workflowInMemoryProviderService));
+
+    this.createWorker(this.getWorkerProcessor(), this.getWorkerOptions());
   }
 
   private getWorkerOptions(): WorkerOptions {

@@ -150,7 +150,7 @@ const defaultValues: IForm = {
   description: '',
   identifier: '',
   tags: [],
-  critical: false,
+  critical: true,
   steps: [],
   preferenceSettings: {
     email: true,
