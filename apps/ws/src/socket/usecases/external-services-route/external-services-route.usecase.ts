@@ -15,18 +15,21 @@ export class ExternalServicesRoute {
 
   public async execute(command: ExternalServicesRouteCommand) {
     const isOnline = await this.connectionExist(command);
-    if (isOnline) {
-      if (command.event === WebSocketEventEnum.RECEIVED) {
-        await this.processReceivedEvent(command);
-      }
 
-      if (command.event === WebSocketEventEnum.UNSEEN) {
-        await this.sendUnseenCountChange(command);
-      }
+    if (!isOnline) {
+      return;
+    }
 
-      if (command.event === WebSocketEventEnum.UNREAD) {
-        await this.sendUnreadCountChange(command);
-      }
+    if (command.event === WebSocketEventEnum.RECEIVED) {
+      await this.processReceivedEvent(command);
+    }
+
+    if (command.event === WebSocketEventEnum.UNSEEN) {
+      await this.sendUnseenCountChange(command);
+    }
+
+    if (command.event === WebSocketEventEnum.UNREAD) {
+      await this.sendUnreadCountChange(command);
     }
   }
 
@@ -127,7 +130,13 @@ export class ExternalServicesRoute {
     }
   }
 
-  private async connectionExist(command: ExternalServicesRouteCommand) {
+  private async connectionExist(command: ExternalServicesRouteCommand): Promise<boolean | undefined> {
+    if (!this.wsGateway.server) {
+      Logger.error('No sw server found, unable to check if connection exists', LOG_CONTEXT);
+
+      return;
+    }
+
     return !!(await this.wsGateway.server.sockets.in(command.userId).fetchSockets()).length;
   }
 }
