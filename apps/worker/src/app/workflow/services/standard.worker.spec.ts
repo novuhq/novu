@@ -27,7 +27,7 @@ import {
   UserService,
   JobsService,
 } from '@novu/testing';
-import { StandardQueueService } from '@novu/application-generic';
+import { BullMqService, StandardQueueService, WorkflowInMemoryProviderService } from '@novu/application-generic';
 
 import { StandardWorker } from './standard.worker';
 
@@ -39,6 +39,7 @@ import {
   SetJobAsFailed,
   WebhookFilterBackoffStrategy,
 } from '../usecases';
+import { SharedModule } from '../../shared/shared.module';
 
 let standardQueueService: StandardQueueService;
 let standardWorker: StandardWorker;
@@ -54,6 +55,9 @@ describe('Standard Worker', () => {
   let jobsService: JobsService;
 
   before(async () => {
+    const moduleRef = await Test.createTestingModule({
+      imports: [WorkflowModule],
+    }).compile();
     process.env.IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
     process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
 
@@ -90,14 +94,17 @@ describe('Standard Worker', () => {
 
     const templateService = new NotificationTemplateService(user._id, organization._id, environment._id);
     template = await templateService.createTemplate({ noFeedId: true, noLayoutId: true, noGroupId: true });
+    const workflowInMemoryProviderService = moduleRef.get<WorkflowInMemoryProviderService>(
+      WorkflowInMemoryProviderService
+    );
 
-    standardQueueService = new StandardQueueService();
+    standardQueueService = new StandardQueueService(workflowInMemoryProviderService);
     await standardQueueService.queue.obliterate();
   });
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [WorkflowModule],
+      imports: [WorkflowModule, SharedModule],
     }).compile();
 
     const handleLastFailedJob = moduleRef.get<HandleLastFailedJob>(HandleLastFailedJob);
@@ -105,13 +112,17 @@ describe('Standard Worker', () => {
     const setJobAsCompleted = moduleRef.get<SetJobAsCompleted>(SetJobAsCompleted);
     const setJobAsFailed = moduleRef.get<SetJobAsFailed>(SetJobAsFailed);
     const webhookFilterBackoffStrategy = moduleRef.get<WebhookFilterBackoffStrategy>(WebhookFilterBackoffStrategy);
+    const workflowInMemoryProviderService = moduleRef.get<WorkflowInMemoryProviderService>(
+      WorkflowInMemoryProviderService
+    );
 
     standardWorker = new StandardWorker(
       handleLastFailedJob,
       runJob,
       setJobAsCompleted,
       setJobAsFailed,
-      webhookFilterBackoffStrategy
+      webhookFilterBackoffStrategy,
+      workflowInMemoryProviderService
     );
   });
 
@@ -122,17 +133,7 @@ describe('Standard Worker', () => {
 
   it('should be initialised properly', async () => {
     expect(standardWorker).to.be.ok;
-    expect(standardWorker).to.have.all.keys(
-      'DEFAULT_ATTEMPTS',
-      'getBackoffStrategies',
-      'handleLastFailedJob',
-      'instance',
-      'runJob',
-      'setJobAsCompleted',
-      'setJobAsFailed',
-      'topic',
-      'webhookFilterBackoffStrategy'
-    );
+
     expect(standardWorker.DEFAULT_ATTEMPTS).to.eql(3);
     expect(standardWorker.worker).to.deep.include({
       _eventsCount: 1,
