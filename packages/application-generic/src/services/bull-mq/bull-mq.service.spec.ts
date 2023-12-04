@@ -5,6 +5,7 @@ import {
   QueueBaseOptions,
   WorkerOptions,
 } from './bull-mq.service';
+import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 
 let bullMqService: BullMqService;
 
@@ -14,7 +15,7 @@ describe('BullMQ Service', () => {
       process.env.IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
       process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
 
-      bullMqService = new BullMqService();
+      bullMqService = new BullMqService(new WorkflowInMemoryProviderService());
     });
 
     afterEach(async () => {
@@ -65,7 +66,7 @@ describe('BullMQ Service', () => {
       process.env.MEMORY_DB_CLUSTER_SERVICE_HOST = 'localhost';
       process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
 
-      bullMqService = new BullMqService();
+      bullMqService = new BullMqService(new WorkflowInMemoryProviderService());
       const queue = bullMqService.createQueue(
         JobTopicNameEnum.ACTIVE_JOBS_METRIC,
         {}
@@ -77,7 +78,7 @@ describe('BullMQ Service', () => {
       process.env.MEMORY_DB_CLUSTER_SERVICE_HOST = '';
       process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
 
-      bullMqService = new BullMqService();
+      bullMqService = new BullMqService(new WorkflowInMemoryProviderService());
       const queue = bullMqService.createQueue(
         JobTopicNameEnum.ACTIVE_JOBS_METRIC,
         {}
@@ -89,7 +90,7 @@ describe('BullMQ Service', () => {
       process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
       process.env.MEMORY_DB_CLUSTER_SERVICE_HOST = '';
 
-      bullMqService = new BullMqService();
+      bullMqService = new BullMqService(new WorkflowInMemoryProviderService());
       const queue = bullMqService.createQueue(
         JobTopicNameEnum.ACTIVE_JOBS_METRIC,
         {}

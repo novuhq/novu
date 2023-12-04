@@ -3,13 +3,15 @@ import { HealthCheck, HealthCheckResult, HealthCheckService, HttpHealthIndicator
 import { DalServiceHealthIndicator, WebSocketsQueueServiceHealthIndicator } from '@novu/application-generic';
 
 import { version } from '../../package.json';
+import { WSHealthIndicator } from '../socket/services';
 
 @Controller('v1/health-check')
 export class HealthController {
   constructor(
     private healthCheckService: HealthCheckService,
     private dalHealthIndicator: DalServiceHealthIndicator,
-    private webSocketsQueueHealthIndicator: WebSocketsQueueServiceHealthIndicator
+    private webSocketsQueueHealthIndicator: WebSocketsQueueServiceHealthIndicator,
+    private wsHealthIndicator: WSHealthIndicator
   ) {}
 
   @Get()
@@ -18,6 +20,7 @@ export class HealthController {
     const result = await this.healthCheckService.check([
       async () => this.dalHealthIndicator.isHealthy(),
       async () => this.webSocketsQueueHealthIndicator.isHealthy(),
+      async () => this.wsHealthIndicator.isHealthy(),
       async () => {
         return {
           apiVersion: {
