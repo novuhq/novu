@@ -47,13 +47,11 @@ export class TriggerEvent {
   constructor(
     private processSubscriber: ProcessSubscriber,
     private integrationRepository: IntegrationRepository,
-    private subscriberRepository: SubscriberRepository,
     private jobRepository: JobRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private processTenant: ProcessTenant,
     private logger: PinoLogger,
     private mapTriggerRecipients: MapTriggerRecipients,
-    private subscriberProcessQueueService: SubscriberProcessQueueService,
     private triggerBroadcast: TriggerBroadcast,
     private triggerMulticast: TriggerMulticast
   ) {}

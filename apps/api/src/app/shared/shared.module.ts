@@ -1,27 +1,27 @@
 import { Module } from '@nestjs/common';
 import {
+  ChangeRepository,
   DalService,
-  UserRepository,
-  OrganizationRepository,
   EnvironmentRepository,
   ExecutionDetailsRepository,
-  NotificationTemplateRepository,
-  SubscriberRepository,
-  NotificationRepository,
-  MessageRepository,
-  NotificationGroupRepository,
-  MessageTemplateRepository,
-  MemberRepository,
+  FeedRepository,
+  IntegrationRepository,
+  JobRepository,
   LayoutRepository,
   LogRepository,
-  IntegrationRepository,
-  ChangeRepository,
-  JobRepository,
-  FeedRepository,
+  MemberRepository,
+  MessageRepository,
+  MessageTemplateRepository,
+  NotificationGroupRepository,
+  NotificationRepository,
+  NotificationTemplateRepository,
+  OrganizationRepository,
   SubscriberPreferenceRepository,
+  SubscriberRepository,
+  TenantRepository,
   TopicRepository,
   TopicSubscribersRepository,
-  TenantRepository,
+  UserRepository,
   WorkflowOverrideRepository,
 } from '@novu/dal';
 import {
@@ -37,10 +37,12 @@ import {
   getIsApiRateLimitingEnabled,
   InvalidateCacheService,
   LoggerModule,
+  QueuesModule,
   storageService,
 } from '@novu/application-generic';
 
 import * as packageJson from '../../../package.json';
+import { JobTopicNameEnum } from '@novu/shared';
 
 const DAL_MODELS = [
   UserRepository,
@@ -95,6 +97,13 @@ const PROVIDERS = [
 
 @Module({
   imports: [
+    QueuesModule.forRoot([
+      JobTopicNameEnum.EXECUTION_LOG,
+      JobTopicNameEnum.WORKFLOW,
+      JobTopicNameEnum.WEB_SOCKETS,
+      JobTopicNameEnum.WORKFLOW,
+      JobTopicNameEnum.INBOUND_PARSE_MAIL,
+    ]),
     LoggerModule.forRoot(
       createNestLoggingModuleOptions({
         serviceName: packageJson.name,
@@ -103,6 +112,6 @@ const PROVIDERS = [
     ),
   ],
   providers: [...PROVIDERS],
-  exports: [...PROVIDERS, LoggerModule],
+  exports: [...PROVIDERS, LoggerModule, QueuesModule],
 })
 export class SharedModule {}

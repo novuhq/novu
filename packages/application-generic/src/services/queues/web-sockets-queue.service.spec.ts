@@ -1,13 +1,17 @@
 import { Test } from '@nestjs/testing';
 
 import { WebSocketsQueueService } from './web-sockets-queue.service';
+import { BullMqService } from '../bull-mq';
+import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 
 let webSocketsQueueService: WebSocketsQueueService;
 
 describe('WebSockets Queue service', () => {
   describe('General', () => {
     beforeAll(async () => {
-      webSocketsQueueService = new WebSocketsQueueService();
+      webSocketsQueueService = new WebSocketsQueueService(
+        new WorkflowInMemoryProviderService()
+      );
       await webSocketsQueueService.queue.obliterate();
     });
 
@@ -116,7 +120,9 @@ describe('WebSockets Queue service', () => {
     beforeAll(async () => {
       process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
 
-      webSocketsQueueService = new WebSocketsQueueService();
+      webSocketsQueueService = new WebSocketsQueueService(
+        new WorkflowInMemoryProviderService()
+      );
       await webSocketsQueueService.queue.obliterate();
     });
 
