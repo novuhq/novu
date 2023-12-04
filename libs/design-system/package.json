@@ -1,6 +1,6 @@
 {
   "name": "@novu/design-system",
-  "version": "0.21.0",
+  "version": "0.22.0",
   "repository": "https://github.com/novuhq/novu",
   "description": "",
   "private": true,
@@ -71,8 +71,8 @@
     "@mantine/core": "^5.7.1",
     "@mantine/hooks": "^5.7.1",
     "@mantine/notifications": "^5.7.1",
-    "@novu/client": "^0.21.0",
-    "@novu/shared": "^0.21.0",
+    "@novu/client": "^0.22.0",
+    "@novu/shared": "^0.22.0",
     "react-hook-form": "7.43.9",
     "react-table": "^7.8.0",
     "tslib": "^2.3.1"
