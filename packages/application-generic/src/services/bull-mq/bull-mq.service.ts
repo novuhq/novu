@@ -39,23 +39,16 @@ export {
   BulkJobOptions,
 };
 
-@Injectable()
 export class BullMqService {
   private _queue: Queue;
   private _worker: Worker;
-  private workflowInMemoryProviderService: WorkflowInMemoryProviderService;
 
   public static readonly pro: boolean =
     process.env.NOVU_MANAGED_SERVICE !== undefined;
 
-  constructor() {
-    this.workflowInMemoryProviderService =
-      new WorkflowInMemoryProviderService();
-  }
-
-  public async initialize(): Promise<void> {
-    await this.workflowInMemoryProviderService.initialize();
-  }
+  constructor(
+    private workflowInMemoryProviderService: WorkflowInMemoryProviderService
+  ) {}
 
   public get worker(): Worker {
     return this._worker;
@@ -85,16 +78,6 @@ export class BullMqService {
 
   private runningWithProQueue(): boolean {
     return BullMqService.pro && BullMqService.haveProInstalled();
-  }
-
-  public async getQueueMetrics(
-    start?: number,
-    end?: number
-  ): Promise<IQueueMetrics> {
-    return {
-      completed: await this._queue.getMetrics('completed', start, end),
-      failed: await this._queue.getMetrics('failed', start, end),
-    };
   }
 
   /**
@@ -251,8 +234,6 @@ export class BullMqService {
     if (this._worker) {
       await this._worker.close();
     }
-
-    await this.workflowInMemoryProviderService.shutdown();
 
     Logger.log('Shutting down the BullMQ service has finished', LOG_CONTEXT);
   }
