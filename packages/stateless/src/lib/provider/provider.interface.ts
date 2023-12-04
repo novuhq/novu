@@ -24,6 +24,7 @@ export interface IEmailOptions {
   notificationDetails?: any;
   ipPoolName?: string;
   customData?: Record<string, any>;
+  senderName?: string;
 }
 
 export interface ISmsOptions {

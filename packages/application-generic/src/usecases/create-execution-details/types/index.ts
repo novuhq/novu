@@ -25,6 +25,7 @@ export enum DetailEnum {
   START_SENDING = 'Start sending message',
   START_DIGESTING = 'Start digesting',
   PROCESSING_STEP_FILTER = 'Processing step filter',
+  PROCESSING_STEP_FILTER_ERROR = 'Processing step filter failed',
   FILTER_STEPS = 'Step was filtered based on steps filters',
   DIGEST_TRIGGERED_EVENTS = 'Digest triggered events',
   STEP_FILTERED_BY_PREFERENCES = 'Step filtered by subscriber preferences',
@@ -34,5 +35,6 @@ export enum DetailEnum {
   DIGEST_MERGED = 'Digest was merged with other digest',
   DELAY_FINISHED = 'Delay is finished',
   PUSH_MISSING_DEVICE_TOKENS = 'Subscriber credentials is missing the tokens for sending a push notification message',
+  VARIANT_CHOSEN = 'Variant was chosen by the provided condition criteria',
   NOTIFICATION_ERROR = 'There was one or more errors when trying to execute the notification',
 }

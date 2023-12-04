@@ -7,8 +7,6 @@ import {
   MessageEntity,
   IntegrationEntity,
   IChannelSettings,
-  TenantRepository,
-  SubscriberEntity,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -20,13 +18,14 @@ import {
 import {
   InstrumentUsecase,
   DetailEnum,
-  CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   CompileTemplate,
   CompileTemplateCommand,
   ChatFactory,
   SelectIntegration,
   GetNovuProviderCredentials,
+  SelectVariant,
+  ExecutionLogQueueService,
 } from '@novu/application-generic';
 
 import { CreateLog } from '../../../shared/logs';
@@ -43,65 +42,47 @@ export class SendMessageChat extends SendMessageBase {
   constructor(
     protected subscriberRepository: SubscriberRepository,
     protected messageRepository: MessageRepository,
-    protected tenantRepository: TenantRepository,
     protected createLogUsecase: CreateLog,
-    protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
     protected selectIntegration: SelectIntegration,
-    protected getNovuProviderCredentials: GetNovuProviderCredentials
+    protected getNovuProviderCredentials: GetNovuProviderCredentials,
+    protected selectVariant: SelectVariant,
+    protected executionLogQueueService: ExecutionLogQueueService
   ) {
     super(
       messageRepository,
       createLogUsecase,
-      createExecutionDetails,
+      executionLogQueueService,
       subscriberRepository,
-      tenantRepository,
       selectIntegration,
-      getNovuProviderCredentials
+      getNovuProviderCredentials,
+      selectVariant
     );
   }
 
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
-    const subscriber = await this.getSubscriberBySubscriberId({
-      subscriberId: command.subscriberId,
-      _environmentId: command.environmentId,
-    });
-    if (!subscriber) throw new PlatformException('Subscriber not found');
-
     Sentry.addBreadcrumb({
       message: 'Sending Chat',
     });
-    const chatChannel: NotificationStepEntity = command.step;
-    if (!chatChannel?.template) throw new PlatformException('Chat channel template not found');
+    const step: NotificationStepEntity = command.step;
+    if (!step?.template) throw new PlatformException('Chat channel template not found');
 
-    const tenant = await this.handleTenantExecution(command.job);
-    let actor: SubscriberEntity | null = null;
-    if (command.job.actorId) {
-      actor = await this.getSubscriberBySubscriberId({
-        subscriberId: command.job.actorId,
-        _environmentId: command.environmentId,
-      });
+    const { subscriber } = command.compileContext;
+
+    const template = await this.processVariants(command);
+
+    if (template) {
+      step.template = template;
     }
 
     let content = '';
-    const data = {
-      subscriber: subscriber,
-      step: {
-        digest: !!command.events?.length,
-        events: command.events,
-        total_count: command.events?.length,
-      },
-      ...(tenant && { tenant }),
-      ...(actor && { actor }),
-      ...command.payload,
-    };
 
     try {
       content = await this.compileTemplate.execute(
         CompileTemplateCommand.create({
-          template: chatChannel.template.content as string,
-          data,
+          template: step.template.content as string,
+          data: this.getCompilePayload(command.compileContext),
         })
       );
     } catch (e) {
@@ -116,15 +97,19 @@ export class SendMessageChat extends SendMessageBase {
       ) || [];
 
     if (chatChannels.length === 0) {
-      await this.createExecutionDetails.execute(
+      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+      await this.executionLogQueueService.add(
+        metadata._id,
         CreateExecutionDetailsCommand.create({
+          ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-        })
+        }),
+        command.organizationId
       );
 
       return;
@@ -133,7 +118,7 @@ export class SendMessageChat extends SendMessageBase {
     let allFailed = true;
     for (const channel of chatChannels) {
       try {
-        await this.sendChannelMessage(command, channel, chatChannel, content);
+        await this.sendChannelMessage(command, channel, step, content);
         allFailed = false;
       } catch (e) {
         /*
@@ -145,15 +130,19 @@ export class SendMessageChat extends SendMessageBase {
     }
 
     if (allFailed) {
-      await this.createExecutionDetails.execute(
+      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+      await this.executionLogQueueService.add(
+        metadata._id,
         CreateExecutionDetailsCommand.create({
+          ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.CHAT_ALL_CHANNELS_FAILED,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-        })
+        }),
+        command.organizationId
       );
     }
   }
@@ -180,15 +169,22 @@ export class SendMessageChat extends SendMessageBase {
     const channelSpecification = subscriberChannel.credentials?.channel;
 
     if (!chatWebhookUrl) {
-      await this.createExecutionDetails.execute(
+      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+      await this.executionLogQueueService.add(
+        metadata._id,
         CreateExecutionDetailsCommand.create({
+          ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.CHAT_WEBHOOK_URL_MISSING,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-        })
+          raw: JSON.stringify({
+            reason: `webhookUrl for integrationId: ${subscriberChannel?._integrationId} is missing`,
+          }),
+        }),
+        command.organizationId
       );
     }
 
@@ -208,15 +204,22 @@ export class SendMessageChat extends SendMessageBase {
     });
 
     if (!integration) {
-      await this.createExecutionDetails.execute(
+      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+      await this.executionLogQueueService.add(
+        metadata._id,
         CreateExecutionDetailsCommand.create({
+          ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-        })
+          raw: JSON.stringify({
+            reason: `Integration with integrationId: ${subscriberChannel?._integrationId} is either deleted or not active`,
+          }),
+        }),
+        command.organizationId
       );
 
       return;
@@ -224,8 +227,11 @@ export class SendMessageChat extends SendMessageBase {
 
     await this.sendSelectedIntegrationExecution(command.job, integration);
 
-    await this.createExecutionDetails.execute(
+    const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+    await this.executionLogQueueService.add(
+      metadata._id,
       CreateExecutionDetailsCommand.create({
+        ...metadata,
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         detail: DetailEnum.MESSAGE_CREATED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -234,7 +240,8 @@ export class SendMessageChat extends SendMessageBase {
         isTest: false,
         isRetry: false,
         raw: this.storeContent() ? JSON.stringify(content) : null,
-      })
+      }),
+      command.organizationId
     );
 
     if (chatWebhookUrl && integration) {
@@ -247,7 +254,7 @@ export class SendMessageChat extends SendMessageBase {
   }
 
   private async sendErrors(
-    chatWebhookUrl,
+    chatWebhookUrl: string,
     integration: IntegrationEntity,
     message: MessageEntity,
     command: SendMessageCommand
@@ -262,16 +269,23 @@ export class SendMessageChat extends SendMessageBase {
         'Subscriber does not have active chat channel id'
       );
 
-      await this.createExecutionDetails.execute(
+      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+      await this.executionLogQueueService.add(
+        metadata._id,
         CreateExecutionDetailsCommand.create({
+          ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
+          detail: DetailEnum.CHAT_WEBHOOK_URL_MISSING,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-        })
+          raw: JSON.stringify({
+            reason: `webhookUrl for integrationId: ${integration?.identifier} is missing`,
+          }),
+        }),
+        command.organizationId
       );
 
       return;
@@ -285,8 +299,11 @@ export class SendMessageChat extends SendMessageBase {
         command,
         LogCodeEnum.MISSING_CHAT_INTEGRATION
       );
-      await this.createExecutionDetails.execute(
+      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+      await this.executionLogQueueService.add(
+        metadata._id,
         CreateExecutionDetailsCommand.create({
+          ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
           detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
@@ -294,7 +311,11 @@ export class SendMessageChat extends SendMessageBase {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-        })
+          raw: JSON.stringify({
+            reason: 'Integration is either deleted or not active',
+          }),
+        }),
+        command.organizationId
       );
 
       return;
@@ -322,8 +343,11 @@ export class SendMessageChat extends SendMessageBase {
         content,
       });
 
-      await this.createExecutionDetails.execute(
+      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+      await this.executionLogQueueService.add(
+        metadata._id,
         CreateExecutionDetailsCommand.create({
+          ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
           detail: DetailEnum.MESSAGE_SENT,
@@ -332,7 +356,8 @@ export class SendMessageChat extends SendMessageBase {
           isTest: false,
           isRetry: false,
           raw: JSON.stringify(result),
-        })
+        }),
+        command.organizationId
       );
     } catch (e) {
       await this.sendErrorStatus(
@@ -345,8 +370,11 @@ export class SendMessageChat extends SendMessageBase {
         e
       );
 
-      await this.createExecutionDetails.execute(
+      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+      await this.executionLogQueueService.add(
+        metadata._id,
         CreateExecutionDetailsCommand.create({
+          ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
           detail: DetailEnum.PROVIDER_ERROR,
@@ -355,7 +383,8 @@ export class SendMessageChat extends SendMessageBase {
           isTest: false,
           isRetry: false,
           raw: JSON.stringify(e),
-        })
+        }),
+        command.organizationId
       );
     }
   }

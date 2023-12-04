@@ -5,14 +5,17 @@ import {
   CacheService,
   DistributedLockService,
   FeatureFlagsService,
+  InboundParseQueueService,
   ReadinessService,
-  OldInstanceBullMqService,
   StandardQueueService,
   SubscriberProcessQueueService,
   WebSocketsQueueService,
   WorkflowQueueService,
+  ExecutionLogQueueService,
+  WorkflowInMemoryProviderService,
 } from '../services';
 import {
+  GetIsApiRateLimitingEnabled,
   GetIsTopicNotificationEnabled,
   GetUseMergedDigestId,
 } from '../usecases';
@@ -51,32 +54,22 @@ export const getIsTopicNotificationEnabled = {
   inject: [FeatureFlagsService],
 };
 
+export const getIsApiRateLimitingEnabled = {
+  provide: GetIsApiRateLimitingEnabled,
+  useFactory: async (
+    featureFlagsServiceItem: FeatureFlagsService
+  ): Promise<GetIsApiRateLimitingEnabled> => {
+    const useCase = new GetIsApiRateLimitingEnabled(featureFlagsServiceItem);
+
+    return useCase;
+  },
+  inject: [FeatureFlagsService],
+};
+
 export const cacheInMemoryProviderService = {
   provide: CacheInMemoryProviderService,
   useFactory: (): CacheInMemoryProviderService => {
     return new CacheInMemoryProviderService();
-  },
-};
-
-export const bullMqService = {
-  provide: BullMqService,
-  useFactory: async (): Promise<BullMqService> => {
-    const service = new BullMqService();
-
-    await service.initialize();
-
-    return service;
-  },
-};
-
-export const oldInstanceBullMqService = {
-  provide: OldInstanceBullMqService,
-  useFactory: async (): Promise<OldInstanceBullMqService> => {
-    const service = new OldInstanceBullMqService();
-
-    await service.initialize();
-
-    return service;
   },
 };
 
@@ -118,27 +111,4 @@ export const distributedLockService = {
 
     return service;
   },
-};
-
-export const bullMqTokenList = {
-  provide: 'BULLMQ_LIST',
-  useFactory: (
-    standardQueueService: StandardQueueService,
-    webSocketsQueueService: WebSocketsQueueService,
-    workflowQueueService: WorkflowQueueService,
-    subscriberProcessQueueService: SubscriberProcessQueueService
-  ) => {
-    return [
-      standardQueueService,
-      webSocketsQueueService,
-      workflowQueueService,
-      subscriberProcessQueueService,
-    ];
-  },
-  inject: [
-    StandardQueueService,
-    WebSocketsQueueService,
-    WorkflowQueueService,
-    SubscriberProcessQueueService,
-  ],
 };

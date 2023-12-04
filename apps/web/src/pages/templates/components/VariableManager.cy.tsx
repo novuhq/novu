@@ -1,6 +1,9 @@
-import { useLayoutEffect } from 'react';
+import { ReactNode, useLayoutEffect } from 'react';
 import { mount } from 'cypress/react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
+import { Route, Routes } from 'react-router-dom';
+import { StepTypeEnum } from '@novu/shared';
+
 import { TestWrapper } from '../../../testing';
 import { VariableManager } from './VariableManager';
 import { TemplateEditorFormProvider } from './TemplateEditorFormProvider';
@@ -8,12 +11,9 @@ import { useVariablesManager } from '../../../hooks';
 
 it('should show available variables - string', function () {
   mount(
-    <TestWrapper>
-      <TemplateEditorFormProvider>
-        <FormTester content={'Hello, {{ name }}'} />
-        <VariableManagerTester />
-      </TemplateEditorFormProvider>
-    </TestWrapper>
+    <ParentWrapper content={'Hello, {{ name }}'}>
+      <VariableManagerTester />
+    </ParentWrapper>
   );
 
   cy.getByTestId('template-variable-row').should('have.length', 1);
@@ -23,12 +23,9 @@ it('should show available variables - string', function () {
 
 it('should show available variables - array', function () {
   mount(
-    <TestWrapper>
-      <TemplateEditorFormProvider>
-        <VariableManagerTester />
-        <FormTester content={'Hello, {{#each name}} {{/each}}'} />
-      </TemplateEditorFormProvider>
-    </TestWrapper>
+    <ParentWrapper content={'Hello, {{#each name}} {{/each}}'}>
+      <VariableManagerTester />
+    </ParentWrapper>
   );
 
   cy.getByTestId('template-variable-row').should('have.length', 1);
@@ -38,12 +35,9 @@ it('should show available variables - array', function () {
 
 it('should show available variables including nested - array', function () {
   mount(
-    <TestWrapper>
-      <TemplateEditorFormProvider>
-        <VariableManagerTester />
-        <FormTester content={'Hello, {{#each name}} {{nested_variable}} {{/each}}'} />
-      </TemplateEditorFormProvider>
-    </TestWrapper>
+    <ParentWrapper content={'Hello, {{#each name}} {{nested_variable}} {{/each}}'}>
+      <VariableManagerTester />
+    </ParentWrapper>
   );
 
   cy.getByTestId('template-variable-row').should('have.length', 2);
@@ -55,12 +49,9 @@ it('should show available variables including nested - array', function () {
 
 it('should show available variables - boolean', function () {
   mount(
-    <TestWrapper>
-      <TemplateEditorFormProvider>
-        <VariableManagerTester />
-        <FormTester content={'Hello, {{#if name}} {{/if}}'} />
-      </TemplateEditorFormProvider>
-    </TestWrapper>
+    <ParentWrapper content={'Hello, {{#if name}} {{/if}}'}>
+      <VariableManagerTester />
+    </ParentWrapper>
   );
 
   cy.getByTestId('template-variable-row').should('have.length', 1);
@@ -70,12 +61,9 @@ it('should show available variables - boolean', function () {
 
 it('should show available variables including nested - boolean', function () {
   mount(
-    <TestWrapper>
-      <TemplateEditorFormProvider>
-        <VariableManagerTester />
-        <FormTester content={'Hello, {{#if name}} {{nested_variable}} {{/if}}'} />
-      </TemplateEditorFormProvider>
-    </TestWrapper>
+    <ParentWrapper content={'Hello, {{#if name}} {{nested_variable}} {{/if}}'}>
+      <VariableManagerTester />
+    </ParentWrapper>
   );
 
   cy.getByTestId('template-variable-row').should('have.length', 2);
@@ -87,16 +75,13 @@ it('should show available variables including nested - boolean', function () {
 
 it('should show available variables including deeply nested', function () {
   mount(
-    <TestWrapper>
-      <TemplateEditorFormProvider>
-        <VariableManagerTester />
-        <FormTester
-          content={
-            'Hello, {{#if name}} {{nested_variable}} {{#each nested_name}} {{deeply_nested_variable}} {{/each}} {{/if}}'
-          }
-        />
-      </TemplateEditorFormProvider>
-    </TestWrapper>
+    <ParentWrapper
+      content={
+        'Hello, {{#if name}} {{nested_variable}} {{#each nested_name}} {{deeply_nested_variable}} {{/each}} {{/if}}'
+      }
+    >
+      <VariableManagerTester />
+    </ParentWrapper>
   );
 
   cy.getByTestId('template-variable-row').should('have.length', 4);
@@ -112,12 +97,9 @@ it('should show available variables including deeply nested', function () {
 
 it('should show reserved variables', function () {
   mount(
-    <TestWrapper>
-      <TemplateEditorFormProvider>
-        <VariableManagerTester />
-        <FormTester content={'Hello, {{ subscriber }}'} />
-      </TemplateEditorFormProvider>
-    </TestWrapper>
+    <ParentWrapper content={'Hello, {{ subscriber }}'}>
+      <VariableManagerTester />
+    </ParentWrapper>
   );
 
   cy.getByTestId('template-variable-row').should('have.length', 1);
@@ -132,7 +114,16 @@ function FormTester({ content }: { content: string }) {
   });
 
   useLayoutEffect(() => {
-    steps.append({ template: { content } });
+    steps.append({
+      uuid: '123',
+      template: {
+        type: StepTypeEnum.EMAIL,
+        subject: '',
+        content,
+        contentType: 'editor',
+        variables: [],
+      },
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -141,8 +132,26 @@ function FormTester({ content }: { content: string }) {
 
 const templateFields = ['content'];
 
-function VariableManagerTester() {
-  const variablesArray = useVariablesManager(0, templateFields);
+function ParentWrapper({ content, children }: { content: string; children: ReactNode }) {
+  return (
+    <TestWrapper initialEntries={[{ pathname: '/workflows/edit/asd/email/123' }]}>
+      <Routes>
+        <Route
+          path="/workflows/edit/:workflowId/:channel/:stepUuid"
+          element={
+            <TemplateEditorFormProvider>
+              {children}
+              <FormTester content={content} />
+            </TemplateEditorFormProvider>
+          }
+        />
+      </Routes>
+    </TestWrapper>
+  );
+}
 
-  return <VariableManager index={0} variablesArray={variablesArray} />;
+function VariableManagerTester() {
+  const variablesArray = useVariablesManager(templateFields);
+
+  return <VariableManager variablesArray={variablesArray} path="steps.0.template" />;
 }

@@ -87,11 +87,11 @@ jobs:
 
       - name: Terraform Init
         if: ${{ contains (matrix.name,'-ee') }}
-        working-directory: cloud-infra/terraform/novu
+        working-directory: cloud-infra/terraform/novu/aws
         run: terraform init
 
       - name: Terraform get output
-        working-directory: cloud-infra/terraform/novu
+        working-directory: cloud-infra/terraform/novu/aws
         if: ${{ contains (matrix.name,'-ee') }}
         id: terraform
         run: |

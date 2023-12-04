@@ -18,16 +18,14 @@ export function InAppWidgetPreview({
   children,
   value,
   onChange,
-  index,
   enableAvatar,
   preview = false,
 }: {
   readonly: boolean;
   preview?: boolean;
   children: JSX.Element;
-  value: IMessageAction;
+  value: IMessageAction | undefined;
   onChange: (data: any) => void;
-  index: number;
   enableAvatar: boolean;
 }) {
   const theme = useMantineTheme();
@@ -90,7 +88,6 @@ export function InAppWidgetPreview({
             <Group position="left" spacing={10} noWrap>
               {enableAvatar && (
                 <AvatarContainer
-                  index={index}
                   opened={avatarContainerOpened}
                   setOpened={setAvatarContainerOpened}
                   readonly={readonly}

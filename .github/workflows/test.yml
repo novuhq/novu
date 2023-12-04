@@ -92,14 +92,14 @@ jobs:
 
   test_web:
     name: Test Web Cypress
-    needs: [ get-affected ]
+    needs: [get-affected]
     if: ${{ contains(fromJson(needs.get-affected.outputs.test-cypress), '@novu/web') }}
     uses: ./.github/workflows/reusable-web-e2e.yml
     secrets: inherit
 
   test_widget:
     name: Test Widget Cypress
-    needs: [ get-affected ]
+    needs: [get-affected]
     uses: ./.github/workflows/reusable-widget-e2e.yml
     with:
       ee: true
@@ -110,7 +110,7 @@ jobs:
     name: Build Docker API
     runs-on: ubuntu-latest
     timeout-minutes: 80
-    needs: [ get-affected ]
+    needs: [get-affected]
     if: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/api') }}
     permissions:
       contents: read
@@ -119,7 +119,7 @@ jobs:
       id-token: write
     strategy:
       matrix:
-        name: [ 'novu/api', 'novu/api-ee' ]
+        name: ['novu/api', 'novu/api-ee']
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-project
@@ -189,19 +189,18 @@ jobs:
           projects: ${{join(fromJson(needs.get-affected.outputs.test-libs), ',')}}
 
   test_api:
-    needs: [ get-affected ]
+    needs: [get-affected]
     strategy:
       # The order is important for ee to be first, otherwise outputs not work correctly
       matrix:
-        name: [ 'novu/api-ee', 'novu/api' ]
+        name: ['novu/api-ee', 'novu/api']
     uses: ./.github/workflows/reusable-api-e2e.yml
     with:
       ee: ${{ contains (matrix.name,'-ee') }}
-      test-e2e-affected: ${{ fromJson(needs.get-affected.outputs.test-e2e)[0] }}
-      test-e2e-ee-affected: ${{ fromJson(needs.get-affected.outputs.test-e2e-ee)[0] }}
+      test-e2e-affected: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/api') }}
+      test-e2e-ee-affected: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e-ee), '@novu/api') }}
       job-name: ${{ matrix.name }}
     secrets: inherit
-
 
   test_unit:
     name: Unit Test
