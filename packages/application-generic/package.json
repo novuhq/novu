@@ -110,6 +110,7 @@
     "@novu/testing": "^0.22.0",
     "@novu/twilio": "^0.22.0",
     "@novu/zulip": "^0.22.0",
+    "@novu/nexmo": "^0.22.0",
     "@sentry/node": "^7.12.1",
     "analytics-node": "^6.2.0",
     "axios": "^1.5.0",
