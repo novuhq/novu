@@ -3,14 +3,20 @@ import { JobTopicNameEnum } from '@novu/shared';
 
 import { QueueBaseService } from './queue-base.service';
 
-import { QueueOptions } from '../bull-mq';
+import { BullMqService, QueueOptions } from '../bull-mq';
+import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 
 const LOG_CONTEXT = 'InboundParseQueueService';
 
 @Injectable()
 export class InboundParseQueueService extends QueueBaseService {
-  constructor() {
-    super(JobTopicNameEnum.INBOUND_PARSE_MAIL);
+  constructor(
+    public workflowInMemoryProviderService: WorkflowInMemoryProviderService
+  ) {
+    super(
+      JobTopicNameEnum.INBOUND_PARSE_MAIL,
+      new BullMqService(workflowInMemoryProviderService)
+    );
 
     Logger.log(`Creating queue ${this.topic}`, LOG_CONTEXT);
 

@@ -1,14 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { Worker } from '../bull-mq';
 
-import {
-  StandardQueueServiceHealthIndicator,
-  SubscriberProcessQueueHealthIndicator,
-  WebSocketsQueueServiceHealthIndicator,
-  WorkflowQueueServiceHealthIndicator,
-} from '../../health';
 import { setTimeout } from 'timers/promises';
+import { QueueHealthIndicator } from '../../health/queue-health-indicator.service';
 export interface INovuWorker {
   readonly DEFAULT_ATTEMPTS: number;
   gracefulShutdown: () => Promise<void>;
@@ -24,9 +19,8 @@ const LOG_CONTEXT = 'ReadinessService';
 @Injectable()
 export class ReadinessService {
   constructor(
-    private standardQueueServiceHealthIndicator: StandardQueueServiceHealthIndicator,
-    private workflowQueueServiceHealthIndicator: WorkflowQueueServiceHealthIndicator,
-    private subscriberProcessQueueHealthIndicator: SubscriberProcessQueueHealthIndicator
+    @Inject('QUEUE_HEALTH_INDICATORS')
+    private healthIndicators: QueueHealthIndicator[]
   ) {}
 
   async areQueuesEnabled(): Promise<boolean> {
@@ -58,11 +52,9 @@ export class ReadinessService {
 
   private async checkServicesHealth() {
     try {
-      const healths = await Promise.all([
-        this.standardQueueServiceHealthIndicator.isHealthy(),
-        this.workflowQueueServiceHealthIndicator.isHealthy(),
-        this.subscriberProcessQueueHealthIndicator.isHealthy(),
-      ]);
+      const healths = await Promise.all(
+        this.healthIndicators.map((health) => health.isHealthy())
+      );
 
       return healths.every((health) => !!health === true);
     } catch (error) {

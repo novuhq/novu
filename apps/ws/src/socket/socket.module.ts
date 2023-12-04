@@ -1,6 +1,5 @@
-import { Inject, Module, OnModuleInit, Provider } from '@nestjs/common';
-import { JobTopicNameEnum } from '@novu/shared';
-import { WebSocketsWorkerService } from '@novu/application-generic';
+import { Inject, Module, OnApplicationShutdown, OnModuleInit, Provider } from '@nestjs/common';
+import { WebSocketsWorkerService, WorkflowInMemoryProviderService } from '@novu/application-generic';
 
 import { WSGateway } from './ws.gateway';
 import { SharedModule } from '../shared/shared.module';
@@ -12,9 +11,26 @@ const USE_CASES: Provider[] = [ExternalServicesRoute];
 
 const PROVIDERS: Provider[] = [WSGateway, WebSocketsWorkerService, WebSocketWorker];
 
+const memoryQueueService = {
+  provide: WorkflowInMemoryProviderService,
+  useFactory: async () => {
+    const memoryService = new WorkflowInMemoryProviderService();
+
+    await memoryService.initialize();
+
+    return memoryService;
+  },
+};
+
 @Module({
   imports: [SharedModule],
-  providers: [...PROVIDERS, ...USE_CASES],
+  providers: [...PROVIDERS, ...USE_CASES, memoryQueueService],
   exports: [WSGateway],
 })
-export class SocketModule {}
+export class SocketModule implements OnApplicationShutdown {
+  constructor(private workflowInMemoryProviderService: WorkflowInMemoryProviderService) {}
+
+  async onApplicationShutdown() {
+    await this.workflowInMemoryProviderService.shutdown();
+  }
+}

@@ -1,13 +1,17 @@
 import { Test } from '@nestjs/testing';
 
 import { ActiveJobsMetricQueueService } from './active-jobs-metric-queue.service';
+import { BullMqService } from '../bull-mq';
+import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 
 let activeJobsMetricQueueService: ActiveJobsMetricQueueService;
 
 describe('Job metrics Queue service', () => {
   describe('General', () => {
     beforeAll(async () => {
-      activeJobsMetricQueueService = new ActiveJobsMetricQueueService();
+      activeJobsMetricQueueService = new ActiveJobsMetricQueueService(
+        new WorkflowInMemoryProviderService()
+      );
       await activeJobsMetricQueueService.queue.drain();
     });
 
@@ -64,7 +68,9 @@ describe('Job metrics Queue service', () => {
     beforeAll(async () => {
       process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
 
-      activeJobsMetricQueueService = new ActiveJobsMetricQueueService();
+      activeJobsMetricQueueService = new ActiveJobsMetricQueueService(
+        new WorkflowInMemoryProviderService()
+      );
       await activeJobsMetricQueueService.queue.obliterate();
     });
 
