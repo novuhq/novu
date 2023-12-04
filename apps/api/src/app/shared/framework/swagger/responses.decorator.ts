@@ -6,7 +6,7 @@ import * as nestSwagger from '@nestjs/swagger';
 import { ApiResponseOptions } from '@nestjs/swagger';
 import { COMMON_RESPONSE_HEADERS, COMMON_RESPONSES } from '../constants';
 import { ApiResponseDecoratorName } from '../types';
-import { createResponseHeaders } from './headers.decorator';
+import { createReusableHeaders } from './headers.decorator';
 
 const createCustomResponseDecorator = (decoratorName: ApiResponseDecoratorName) => {
   return (options?: ApiResponseOptions) => {
@@ -15,7 +15,7 @@ const createCustomResponseDecorator = (decoratorName: ApiResponseDecoratorName) 
         ...COMMON_RESPONSES[decoratorName],
         ...options,
         headers: {
-          ...createResponseHeaders(COMMON_RESPONSE_HEADERS),
+          ...createReusableHeaders(COMMON_RESPONSE_HEADERS),
           ...options?.headers,
         },
       })

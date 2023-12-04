@@ -1,53 +1,86 @@
-import { WithRequired, ConvertToConstantCase, testHeaderEnumValidity } from './utils.types';
+import { WithRequired, ConvertToConstantCase, testHttpHeaderEnumValidity, ValidateHttpHeaderCase } from './utils.types';
 
 /**
  * WithRequired tests
  */
-type TestType = {
+type TestWithRequired = {
   optional?: string;
   required: number;
 };
-
 // Valid
-export const validTestType: WithRequired<TestType, 'optional'> = {
+export const validTestType: WithRequired<TestWithRequired, 'optional'> = {
   optional: 'test',
   required: 1,
 };
 
+// Invalid
 // @ts-expect-error - Missing 'optional' property
-export const invalidTestType: WithRequired<TestType, 'optional'> = {
+export const invalidTestType: WithRequired<TestWithRequired, 'optional'> = {
   required: 1,
 };
 
 /**
  * ConvertToConstantCase tests
  */
-type ValidString = ConvertToConstantCase<'test-string'>;
 // Valid
-export const validString: ValidString = 'TEST_STRING';
+export const validConstantSingleString: ConvertToConstantCase<'Single'> = 'SINGLE';
+export const validConstantSingleSingleString: ConvertToConstantCase<'Double-String'> = 'DOUBLE_STRING';
+export const validConstantDoubleSingleString: ConvertToConstantCase<'DoubleDouble-String'> = 'DOUBLEDOUBLE_STRING';
 
-// @ts-expect-error - Incorrect case
-export const invalidString: ValidString = 'test_string';
+// @ts-expect-error - Incorrect case - should be 'SINGLE'
+export const invalidConstantSingleString: ConvertToConstantCase<'Single'> = 'single';
+
+/**
+ * ValidateHttpHeaderCase tests
+ */
+// Valid
+export const validHttpHeaderSingleString: ValidateHttpHeaderCase<'Single'> = 'Single';
+export const validHttpHeaderSingleSingleString: ValidateHttpHeaderCase<'Double-String'> = 'Double-String';
+export const validHttpHeaderDoubleSingleString: ValidateHttpHeaderCase<'DoubleDouble-String'> = 'DoubleDouble-String';
+export const validHttpHeaderUnion1String: ValidateHttpHeaderCase<'First-String' | 'Second-String'> = 'First-String';
+export const validHttpHeaderUnion2String: ValidateHttpHeaderCase<'First-String' | 'Second-String'> = 'Second-String';
+enum TestCapitalHeaderEnum {
+  SINGLE = 'Single',
+  INVALID = 'invalid-string',
+  DOUBLE_STRING = 'Double-String',
+  DOUBLEDOUBLE_STRING = 'DoubleDouble-String',
+}
+export const validHttpHeaderSingleEnum: ValidateHttpHeaderCase<TestCapitalHeaderEnum.SINGLE> = 'Single';
+export const validHttpHeaderSingleSingleEnum: ValidateHttpHeaderCase<TestCapitalHeaderEnum.DOUBLE_STRING> =
+  'Double-String';
+export const validHttpHeaderDoubleSingleEnum: ValidateHttpHeaderCase<TestCapitalHeaderEnum.DOUBLEDOUBLE_STRING> =
+  'DoubleDouble-String';
+
+// Invalid
+// @ts-expect-error - Incorrect case - 'invalid-string' literal type is not Capital-Case
+export const invalidHttpHeaderSingleString: ValidateHttpHeaderCase<'invalid-string'> = 'Invalid';
+// @ts-expect-error - Incorrect case - 'invalid-string' union type is not Capital-Case
+export const invalidHttpHeaderUnionString: ValidateHttpHeaderCase<'First-String' | 'invalid-string'> = 'invalid-string';
+// @ts-expect-error - Incorrect case - 'invalid-string' enum is not Capital-Case
+export const invalidHttpHeaderEnumString: ValidateHttpHeaderCase<TestCapitalHeaderEnum.INVALID> = 'invalid';
 
 /**
  * testHeaderEnumValidity Tests
  */
+// Valid
 enum ValidHeaderEnum {
-  TEST_HEADER = 'Test-Header',
-  ANOTHER_TEST_HEADER = 'Another-Test-Header',
+  SINGLE = 'Single',
+  DOUBLE_STRING = 'Double-String',
+  DOUBLEDOUBLE_STRING = 'DoubleDouble-String',
 }
-testHeaderEnumValidity(ValidHeaderEnum);
+testHttpHeaderEnumValidity(ValidHeaderEnum);
 
+// Invalid
 enum InvalidKeyHeaderEnum {
-  TEST_HEADER = 'Test-Header',
-  Invalid_Header = 'Invalid-Header',
+  SINGLE = 'Single',
+  Invalid_Key = 'Invalid-Key',
 }
-// @ts-expect-error - Invalid key - Invalid_Header
-testHeaderEnumValidity(InvalidKeyHeaderEnum);
+// @ts-expect-error - Invalid key - Invalid_Key should be 'INVALID_KEY'
+testHttpHeaderEnumValidity(InvalidKeyHeaderEnum);
 
 enum InvalidValueHeaderEnum {
-  TEST_HEADER = 'Test-Header',
-  ANOTHER_TEST_HEADER = 'another-test-header',
+  SINGLE = 'Single',
+  INVALID_VALUE = 'invalid-key',
 }
-// @ts-expect-error - Invalid value on ANOTHER_TEST_HEADER: 'another-test-header'
-testHeaderEnumValidity(InvalidValueHeaderEnum);
+// @ts-expect-error - Invalid value - 'another-test-header' should be 'Another-Test-Header'
+testHttpHeaderEnumValidity(InvalidValueHeaderEnum);

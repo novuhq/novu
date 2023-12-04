@@ -11,35 +11,48 @@ export type ConvertToConstantCase<S extends string> = S extends `${infer T}-${in
   : Uppercase<S>;
 
 /**
+ * Validate that S is in Http-Header-Case, and return S if valid, otherwise never.
+ */
+export type ValidateHttpHeaderCase<S extends string> = S extends `${infer U}-${infer V}`
+  ? U extends Capitalize<U>
+    ? `${U}-${ValidateHttpHeaderCase<V>}`
+    : never
+  : S extends Capitalize<S>
+  ? `${S}` // necessary to cast to string literal type for non-hyphenated enum validation
+  : never;
+
+/**
  * Helper function to test that Header enum keys and values match correct format.
  *
  * - The enum keys must be in CONSTANT_CASE
- * - The enum values must be in Capital-Case.
- * - The enum values must be the CONSTANT_CASED version of the Capital-Cased value.
+ * - The enum values must be in Http-Header-Case.
+ * - The enum values must be the CONSTANT_CASED version of the Http-Header-Cased value.
+ *
+ * If the test fails, you should review your `enum` to verify that the conditions above are met.
  *
  * @example
  * // Correct format:
  * enum TestEnum {
- *   CAPITAL_CASE = 'Capital-Case',
- *   SINGLE = 'Single',
- *   DOUBLEWORD_HEADER = 'DoubleWord-Header',
+ *   HEADER = 'Header',
+ *   HYPHENATED_HEADER = 'Hyphenated-Header',
+ *   DOUBLEWORD_Header = 'DoubleWord-Header',
  * }
  *
  * @example
  * // Incorrect format:
  * enum TestEnum {
- *   Single = 'Single', // incorrect key case (should be CONSTANT_CASE)
- *   SINGLE = 'single', // incorect value case (should be Capital-Case)
- *   // extra underscore in key (should be DOUBLEWORD_HEADER)
+ *   Single = 'Single', // incorrect key case (Single should be SINGLE)
+ *   SINGLE = 'single', // incorect value case ('single' should be 'Single')
+ *   // extra underscore in key (DOUBLE_WORD_HEADER should be DOUBLEWORD_HEADER)
  *   DOUBLE_WORD_HEADER = 'DoubleWord-Header',
  * }
  *
  * @param testEnum - the Enum to type check
  */
-export declare function testHeaderEnumValidity<
+export declare function testHttpHeaderEnumValidity<
   TEnum extends IConstants,
   TValue extends TEnum[keyof TEnum] & string,
-  IConstants = Record<ConvertToConstantCase<TValue>, TValue>
+  IConstants = Record<ConvertToConstantCase<TValue>, ValidateHttpHeaderCase<TValue>>
 >(
   testEnum: TEnum &
     Record<
@@ -47,15 +60,3 @@ export declare function testHeaderEnumValidity<
       ['Key must be the CONSTANT_CASED version of the Capital-Cased value']
     >
 ): true;
-
-type IsCapitalCase<S extends string> = S extends `${infer T}${infer U}`
-  ? `${Uppercase<T>}${U extends '-' ? `${IsCapitalCase<Exclude<U, '-'>>}` : Uppercase<U>}` extends S
-    ? S
-    : never
-  : never;
-
-// Usage
-type Test1 = IsCapitalCase<'Test-Case'>; // 'Test-Case'
-type Test2 = IsCapitalCase<'test-case'>; // never
-type Test3 = IsCapitalCase<'Test'>; // 'Test'
-type Test4 = IsCapitalCase<'test'>; // never

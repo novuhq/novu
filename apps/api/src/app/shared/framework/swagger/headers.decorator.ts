@@ -1,8 +1,8 @@
-import { HeaderObjects, ResponseHeaderKeysEnum } from '../types';
+import { HeaderObjects, HttpResponseHeaderKeysEnum } from '../types';
 import { RESPONSE_HEADER_CONFIG } from '../constants/headers.schema';
 import { OpenAPIObject } from '@nestjs/swagger';
 
-export const injectResponseHeaders = (document: OpenAPIObject): OpenAPIObject => {
+export const injectReusableHeaders = (document: OpenAPIObject): OpenAPIObject => {
   const newDocument = { ...document };
   newDocument.components = {
     ...document.components,
@@ -17,7 +17,7 @@ export const injectResponseHeaders = (document: OpenAPIObject): OpenAPIObject =>
   return newDocument;
 };
 
-export const createResponseHeaders = (headers: Array<ResponseHeaderKeysEnum> = []) => {
+export const createReusableHeaders = (headers: Array<HttpResponseHeaderKeysEnum>) => {
   return headers.reduce((acc, header) => {
     return {
       ...acc,

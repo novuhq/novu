@@ -1,13 +1,13 @@
 import { ApiHeaderOptions } from '@nestjs/swagger';
-import { WithRequired, testHeaderEnumValidity } from './utils.types';
+import { WithRequired, testHttpHeaderEnumValidity } from './utils.types';
 
-export enum RequestHeaderKeysEnum {
+export enum HttpRequestHeaderKeysEnum {
   AUTHORIZATION = 'Authorization',
   USER_AGENT = 'User-Agent',
-  GARBAGE = 'Garbage',
 }
+testHttpHeaderEnumValidity(HttpRequestHeaderKeysEnum);
 
-export enum ResponseHeaderKeysEnum {
+export enum HttpResponseHeaderKeysEnum {
   CONTENT_TYPE = 'Content-Type',
   RATELIMIT_REMAINING = 'RateLimit-Remaining',
   RATELIMIT_LIMIT = 'RateLimit-Limit',
@@ -18,12 +18,10 @@ export enum ResponseHeaderKeysEnum {
   IDEMPOTENCY_REPLAY = 'Idempotency-Replay',
   LINK = 'Link',
 }
+testHttpHeaderEnumValidity(HttpResponseHeaderKeysEnum);
 
 export type HeaderObject = WithRequired<
   Omit<ApiHeaderOptions, 'name'>,
   'required' | 'description' | 'schema' | 'example'
 >;
-export type HeaderObjects = Record<ResponseHeaderKeysEnum, HeaderObject>;
-
-testHeaderEnumValidity(RequestHeaderKeysEnum);
-testHeaderEnumValidity(ResponseHeaderKeysEnum);
+export type HeaderObjects = Record<HttpResponseHeaderKeysEnum, HeaderObject>;
