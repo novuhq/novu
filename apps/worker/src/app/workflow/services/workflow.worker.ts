@@ -10,6 +10,8 @@ import {
   WorkflowWorkerService,
   WorkerOptions,
   WorkerProcessor,
+  BullMqService,
+  WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
 import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 
@@ -17,8 +19,11 @@ const LOG_CONTEXT = 'WorkflowWorker';
 
 @Injectable()
 export class WorkflowWorker extends WorkflowWorkerService {
-  constructor(private triggerEventUsecase: TriggerEvent) {
-    super();
+  constructor(
+    private triggerEventUsecase: TriggerEvent,
+    public workflowInMemoryProviderService: WorkflowInMemoryProviderService
+  ) {
+    super(new BullMqService(workflowInMemoryProviderService));
 
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOptions());
   }

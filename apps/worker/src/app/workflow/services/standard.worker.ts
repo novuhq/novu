@@ -2,6 +2,7 @@ const nr = require('newrelic');
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { IJobData, ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import {
+  BullMqService,
   getStandardWorkerOptions,
   Job,
   PinoLogger,
@@ -9,6 +10,7 @@ import {
   storage,
   Store,
   WorkerOptions,
+  WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
 
 import {
@@ -33,9 +35,11 @@ export class StandardWorker extends StandardWorkerService {
     @Inject(forwardRef(() => SetJobAsCompleted)) private setJobAsCompleted: SetJobAsCompleted,
     @Inject(forwardRef(() => SetJobAsFailed)) private setJobAsFailed: SetJobAsFailed,
     @Inject(forwardRef(() => WebhookFilterBackoffStrategy))
-    private webhookFilterBackoffStrategy: WebhookFilterBackoffStrategy
+    private webhookFilterBackoffStrategy: WebhookFilterBackoffStrategy,
+    @Inject(forwardRef(() => WorkflowInMemoryProviderService))
+    public workflowInMemoryProviderService: WorkflowInMemoryProviderService
   ) {
-    super();
+    super(new BullMqService(workflowInMemoryProviderService));
 
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOptions());
 

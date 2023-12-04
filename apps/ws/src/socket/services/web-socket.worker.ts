@@ -1,7 +1,13 @@
 const nr = require('newrelic');
 import { Injectable, Logger } from '@nestjs/common';
 
-import { getWebSocketWorkerOptions, WebSocketsWorkerService, WorkerOptions } from '@novu/application-generic';
+import {
+  BullMqService,
+  getWebSocketWorkerOptions,
+  WebSocketsWorkerService,
+  WorkerOptions,
+  WorkflowInMemoryProviderService,
+} from '@novu/application-generic';
 
 import { ExternalServicesRoute, ExternalServicesRouteCommand } from '../usecases/external-services-route';
 import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
@@ -10,8 +16,11 @@ const LOG_CONTEXT = 'WebSocketWorker';
 
 @Injectable()
 export class WebSocketWorker extends WebSocketsWorkerService {
-  constructor(private externalServicesRoute: ExternalServicesRoute) {
-    super();
+  constructor(
+    private externalServicesRoute: ExternalServicesRoute,
+    private workflowInMemoryProviderService: WorkflowInMemoryProviderService
+  ) {
+    super(new BullMqService(workflowInMemoryProviderService));
 
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOpts());
   }
