@@ -9,11 +9,11 @@ runs:
     - name: Get swagger json as file
       shell: bash
       run: |
-        curl -o swagger.json http://localhost:1336/openapi.json
+        curl -o openapi.json http://localhost:1336/openapi.json
 
     - uses: char0n/swagger-editor-validate@v1
       with:
-        definition-file: swagger.json
+        definition-file: openapi.json
 
     - name: Kill port for api 1336 for unit tests
       shell: bash
