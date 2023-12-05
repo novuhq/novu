@@ -1,17 +1,21 @@
 const nr = require('newrelic');
-
-import { OnGatewayConnection, OnGatewayDisconnect, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
-import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
+import { OnGatewayConnection, OnGatewayDisconnect, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
+import { Logger } from '@nestjs/common';
+import { Server, Socket } from 'socket.io';
+
 import { ISubscriberJwt, ObservabilityBackgroundTransactionEnum } from '@novu/shared';
+
 import { SubscriberOnlineService } from '../shared/subscriber-online';
+
+const LOG_CONTEXT = 'WSGateway';
 
 @WebSocketGateway()
 export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(private jwtService: JwtService, private subscriberOnlineService: SubscriberOnlineService) {}
 
   @WebSocketServer()
-  server: Server;
+  server: Server | null;
 
   async handleDisconnect(connection: Socket) {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
@@ -112,6 +116,12 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async sendMessage(userId: string, event: string, data: any) {
+    if (!this.server) {
+      Logger.error('No sw server available to send message', LOG_CONTEXT);
+
+      return;
+    }
+
     this.server.to(userId).emit(event, data);
   }
 

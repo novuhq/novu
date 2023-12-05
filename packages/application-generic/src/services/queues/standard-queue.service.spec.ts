@@ -1,13 +1,17 @@
 import { Test } from '@nestjs/testing';
 
 import { StandardQueueService } from './standard-queue.service';
+import { BullMqService } from '../bull-mq';
+import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 
 let standardQueueService: StandardQueueService;
 
 describe('Standard Queue service', () => {
   describe('General', () => {
     beforeAll(async () => {
-      standardQueueService = new StandardQueueService();
+      standardQueueService = new StandardQueueService(
+        new WorkflowInMemoryProviderService()
+      );
       await standardQueueService.queue.obliterate();
     });
 
@@ -123,7 +127,9 @@ describe('Standard Queue service', () => {
     beforeAll(async () => {
       process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
 
-      standardQueueService = new StandardQueueService();
+      standardQueueService = new StandardQueueService(
+        new WorkflowInMemoryProviderService()
+      );
       await standardQueueService.queue.obliterate();
     });
 
