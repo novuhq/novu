@@ -222,6 +222,7 @@ export class SendMessage {
         organizationId: job._organizationId,
         environmentId: job._environmentId,
         subscriberId: job.subscriberId,
+        subscriber: subscriber,
       })
     );
 
