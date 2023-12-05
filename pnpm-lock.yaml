@@ -254,7 +254,7 @@ importers:
         version: 6.9.5
       '@nestjs/axios':
         specifier: ~2.0.0
-        version: 2.0.0(@nestjs/common@10.2.2)(axios@1.3.5)(reflect-metadata@0.1.13)(rxjs@7.8.1)
+        version: 2.0.0(@nestjs/common@10.2.2)(axios@1.6.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@nestjs/common':
         specifier: ^10.2.2
         version: 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
@@ -313,8 +313,8 @@ importers:
         specifier: ^0.4.4
         version: 0.4.4
       axios:
-        specifier: ^1.3.3
-        version: 1.3.5
+        specifier: ^1.6.2
+        version: 1.6.2
       bcrypt:
         specifier: ^5.0.0
         version: 5.0.1
@@ -735,8 +735,8 @@ importers:
         specifier: ^9.8.6
         version: 9.8.8
       axios:
-        specifier: ^1.3.3
-        version: 1.3.5
+        specifier: ^1.6.2
+        version: 1.6.2
       babel-plugin-import:
         specifier: ^1.13.3
         version: 1.13.6
@@ -980,7 +980,7 @@ importers:
     dependencies:
       '@nestjs/axios':
         specifier: ~2.0.0
-        version: 2.0.0(@nestjs/common@10.2.2)(axios@1.3.5)(reflect-metadata@0.1.13)(rxjs@7.8.1)
+        version: 2.0.0(@nestjs/common@10.2.2)(axios@1.6.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@nestjs/common':
         specifier: ^10.2.2
         version: 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
@@ -1012,8 +1012,8 @@ importers:
         specifier: ^7.66.0
         version: 7.66.0
       axios:
-        specifier: ^1.3.3
-        version: 1.3.5
+        specifier: ^1.6.2
+        version: 1.6.2
       class-transformer:
         specifier: ^0.5.1
         version: 0.5.1
@@ -1297,7 +1297,7 @@ importers:
     dependencies:
       '@nestjs/axios':
         specifier: ~2.0.0
-        version: 2.0.0(@nestjs/common@10.2.2)(axios@1.3.5)(reflect-metadata@0.1.13)(rxjs@7.8.1)
+        version: 2.0.0(@nestjs/common@10.2.2)(axios@1.6.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@nestjs/common':
         specifier: ^10.2.2
         version: 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
@@ -1338,8 +1338,8 @@ importers:
         specifier: ^9.13.0
         version: 9.13.0
       axios:
-        specifier: ^1.3.3
-        version: 1.3.5
+        specifier: ^1.6.2
+        version: 1.6.2
       body-parser:
         specifier: ^1.20.0
         version: 1.20.2
@@ -1940,8 +1940,8 @@ importers:
   libs/shared:
     dependencies:
       axios:
-        specifier: ^1.4.0
-        version: 1.4.0
+        specifier: ^1.6.2
+        version: 1.6.2
       class-transformer:
         specifier: 0.5.1
         version: 0.5.1
@@ -1977,8 +1977,8 @@ importers:
         specifier: ^3.2.0
         version: 3.2.4
       axios:
-        specifier: ^1.3.3
-        version: 1.3.5
+        specifier: ^1.6.2
+        version: 1.6.2
       bcrypt:
         specifier: ~5.0.0
         version: 5.0.1
@@ -2193,6 +2193,9 @@ importers:
       '@novu/netcore':
         specifier: ^0.22.0
         version: link:../../providers/netcore
+      '@novu/nexmo':
+        specifier: ^0.22.0
+        version: link:../../providers/nexmo
       '@novu/nodemailer':
         specifier: ^0.22.0
         version: link:../../providers/nodemailer
@@ -2284,8 +2287,8 @@ importers:
         specifier: ^6.2.0
         version: 6.2.0
       axios:
-        specifier: ^1.5.0
-        version: 1.6.0
+        specifier: ^1.6.2
+        version: 1.6.2
       bullmq:
         specifier: ^3.10.2
         version: 3.10.4
@@ -2409,8 +2412,8 @@ importers:
         specifier: ^6.2.0
         version: 6.2.0
       axios:
-        specifier: ^1.3.3
-        version: 1.3.5
+        specifier: ^1.6.2
+        version: 1.6.2
       chalk:
         specifier: 4.1.2
         version: 4.1.2
@@ -2642,8 +2645,8 @@ importers:
         specifier: ^8.3.4
         version: 8.3.4
       axios:
-        specifier: ^1.4.0
-        version: 1.4.0
+        specifier: ^1.6.2
+        version: 1.6.2
       codecov:
         specifier: ^3.5.0
         version: 3.8.3
@@ -2705,8 +2708,8 @@ importers:
         specifier: ^5.3.2
         version: 5.3.2(acorn@8.8.2)
       axios:
-        specifier: ^1.4.0
-        version: 1.4.0
+        specifier: ^1.6.2
+        version: 1.6.2
       lodash.clonedeep:
         specifier: ^4.5.0
         version: 4.5.0
@@ -3342,8 +3345,8 @@ importers:
         specifier: ^0.22.0
         version: link:../../packages/stateless
       axios:
-        specifier: ^1.3.3
-        version: 1.3.5
+        specifier: ^1.6.2
+        version: 1.6.2
       qs:
         specifier: ^6.11.0
         version: 6.11.1
@@ -3403,8 +3406,8 @@ importers:
         specifier: ^0.22.0
         version: link:../../packages/stateless
       axios:
-        specifier: ^1.3.3
-        version: 1.3.5
+        specifier: ^1.6.2
+        version: 1.6.2
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
         specifier: ^1.0.1
@@ -3498,8 +3501,8 @@ importers:
         specifier: ^0.22.0
         version: link:../../packages/stateless
       axios:
-        specifier: ^1.3.3
-        version: 1.3.5
+        specifier: ^1.6.2
+        version: 1.6.2
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
         specifier: ^1.0.1
@@ -3553,8 +3556,8 @@ importers:
         specifier: ^0.15.0
         version: 0.15.0
       axios:
-        specifier: ^1.3.5
-        version: 1.3.5
+        specifier: ^1.6.2
+        version: 1.6.2
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
         specifier: ~1.0.1
@@ -3834,8 +3837,8 @@ importers:
         specifier: ^0.22.0
         version: link:../../packages/stateless
       axios:
-        specifier: ^1.3.4
-        version: 1.3.5
+        specifier: ^1.6.2
+        version: 1.6.2
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
         specifier: ~1.0.1
@@ -3877,8 +3880,8 @@ importers:
         specifier: 0.16.3
         version: 0.16.3
       axios:
-        specifier: ^1.5.0
-        version: 1.6.0
+        specifier: ^1.6.2
+        version: 1.6.2
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
         specifier: ~1.0.1
@@ -3920,8 +3923,8 @@ importers:
         specifier: 0.16.3
         version: 0.16.3
       axios:
-        specifier: ^1.3.3
-        version: 1.6.0
+        specifier: ^1.6.2
+        version: 1.6.2
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
         specifier: ~1.0.1
@@ -3963,8 +3966,8 @@ importers:
         specifier: 0.16.3
         version: 0.16.3
       axios:
-        specifier: ^1.3.3
-        version: 1.6.0
+        specifier: ^1.6.2
+        version: 1.6.2
       uuid:
         specifier: ^9.0.0
         version: 9.0.0
@@ -4455,8 +4458,8 @@ importers:
         specifier: ^0.22.0
         version: link:../../packages/stateless
       axios:
-        specifier: ^1.3.4
-        version: 1.3.5
+        specifier: ^1.6.2
+        version: 1.6.2
       date-fns:
         specifier: 2.29.3
         version: 2.29.3
@@ -4504,8 +4507,8 @@ importers:
         specifier: ^0.22.0
         version: link:../../packages/stateless
       axios:
-        specifier: ^1.3.3
-        version: 1.3.5
+        specifier: ^1.6.2
+        version: 1.6.2
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
         specifier: ~1.0.1
@@ -4590,8 +4593,8 @@ importers:
         specifier: ^0.7.2
         version: 0.7.2
       axios:
-        specifier: ^1.3.3
-        version: 1.3.5
+        specifier: ^1.6.2
+        version: 1.6.2
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
         specifier: ^1.0.1
@@ -4648,8 +4651,8 @@ importers:
         specifier: ^0.22.0
         version: link:../../packages/stateless
       axios:
-        specifier: ^1.3.4
-        version: 1.4.0
+        specifier: ^1.6.2
+        version: 1.6.2
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
         specifier: 1.0.2
@@ -4702,9 +4705,12 @@ importers:
       '@novu/stateless':
         specifier: ^0.22.0
         version: link:../../packages/stateless
+      '@vonage/auth':
+        specifier: ^1.7.0
+        version: 1.7.0
       '@vonage/server-sdk':
-        specifier: ^2.10.10
-        version: 2.11.3
+        specifier: ^3.10.0
+        version: 3.10.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
         specifier: ^1.0.1
@@ -5015,8 +5021,8 @@ importers:
         specifier: ^0.22.0
         version: link:../../packages/stateless
       axios:
-        specifier: ^1.3.6
-        version: 1.4.0
+        specifier: ^1.6.2
+        version: 1.6.2
       postmark:
         specifier: ^2.7.8
         version: 2.9.5
@@ -5073,8 +5079,8 @@ importers:
         specifier: ^0.22.0
         version: link:../../packages/stateless
       axios:
-        specifier: ^1.3.5
-        version: 1.3.5
+        specifier: ^1.6.2
+        version: 1.6.2
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
         specifier: ~1.0.1
@@ -5257,8 +5263,8 @@ importers:
         specifier: ^0.22.0
         version: link:../../packages/stateless
       axios:
-        specifier: ^1.3.3
-        version: 1.6.0
+        specifier: ^1.6.2
+        version: 1.6.2
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
         specifier: ~1.0.1
@@ -5300,8 +5306,8 @@ importers:
         specifier: ^0.22.0
         version: link:../../packages/stateless
       axios:
-        specifier: ^1.4.0
-        version: 1.4.0
+        specifier: ^1.6.2
+        version: 1.6.2
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
         specifier: ~1.0.1
@@ -5398,8 +5404,8 @@ importers:
         specifier: ^0.22.0
         version: link:../../packages/stateless
       axios:
-        specifier: ^1.6.0
-        version: 1.6.0
+        specifier: ^1.6.2
+        version: 1.6.2
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
         specifier: ^1.0.1
@@ -5511,8 +5517,8 @@ importers:
         specifier: ^0.22.0
         version: link:../../packages/stateless
       axios:
-        specifier: ^1.5.1
-        version: 1.6.0
+        specifier: ^1.6.2
+        version: 1.6.2
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
         specifier: ~1.0.1
@@ -5554,8 +5560,8 @@ importers:
         specifier: ^0.22.0
         version: link:../../packages/stateless
       axios:
-        specifier: ^1.3.3
-        version: 1.3.5
+        specifier: ^1.6.2
+        version: 1.6.2
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
         specifier: ^1.0.1
@@ -5609,8 +5615,8 @@ importers:
         specifier: ^0.12.0
         version: 0.12.0
       axios:
-        specifier: ^1.3.3
-        version: 1.3.5
+        specifier: ^1.6.2
+        version: 1.6.2
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
         specifier: ~1.0.1
@@ -5768,8 +5774,8 @@ importers:
         specifier: ^0.22.0
         version: link:../../packages/stateless
       axios:
-        specifier: ^1.6.0
-        version: 1.6.0
+        specifier: ^1.6.2
+        version: 1.6.2
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
         specifier: ^1.0.1
@@ -5994,8 +6000,8 @@ importers:
         specifier: 0.16.3
         version: 0.16.3
       axios:
-        specifier: ^1.5.1
-        version: 1.6.0
+        specifier: ^1.6.2
+        version: 1.6.2
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
         specifier: ~1.0.1
@@ -16147,7 +16153,7 @@ packages:
       tar-fs: 2.1.1
     dev: true
 
-  /@nestjs/axios@2.0.0(@nestjs/common@10.2.2)(axios@1.3.5)(reflect-metadata@0.1.13)(rxjs@7.8.1):
+  /@nestjs/axios@2.0.0(@nestjs/common@10.2.2)(axios@1.6.2)(reflect-metadata@0.1.13)(rxjs@7.8.1):
     resolution: {integrity: sha512-F6oceoQLEn031uun8NiommeMkRIojQqVryxQy/mK7fx0CI0KbgkJL3SloCQcsOD+agoEnqKJKXZpEvL6FNswJg==}
     peerDependencies:
       '@nestjs/common': ^7.0.0 || ^8.0.0 || ^9.0.0
@@ -16156,7 +16162,7 @@ packages:
       rxjs: ^6.0.0 || ^7.0.0
     dependencies:
       '@nestjs/common': 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
-      axios: 1.3.5
+      axios: 1.6.2
       reflect-metadata: 0.1.13
       rxjs: 7.8.1
     dev: false
@@ -16508,7 +16514,7 @@ packages:
       typeorm:
         optional: true
     dependencies:
-      '@nestjs/axios': 2.0.0(@nestjs/common@10.2.2)(axios@1.3.5)(reflect-metadata@0.1.13)(rxjs@7.8.1)
+      '@nestjs/axios': 2.0.0(@nestjs/common@10.2.2)(axios@1.6.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@nestjs/common': 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@nestjs/core': 10.2.2(@nestjs/common@10.2.2)(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       boxen: 5.1.2
@@ -24462,6 +24468,12 @@ packages:
       '@types/d3-zoom': 3.0.2
     dev: false
 
+  /@types/debug@4.1.12:
+    resolution: {integrity: sha512-vIChWdVG3LG1SMxEvI/AK+FWJthlrqlTu7fbrlywTkkaONwk/UAGaULXRlf8vkzFBLVm0zkMdCquhL5aOjhXPQ==}
+    dependencies:
+      '@types/ms': 0.7.31
+    dev: false
+
   /@types/debug@4.1.8:
     resolution: {integrity: sha512-/vPO1EPOs306Cvhwv7KfVfYvOJqA/S/AXjaHQiJboCZzcNDb+TIJFN9/2C9DZ//ijSKWioNyUxD792QmDJ+HKQ==}
     dependencies:
@@ -24757,7 +24769,6 @@ packages:
 
   /@types/ms@0.7.31:
     resolution: {integrity: sha512-iiUgKzV9AuaEkZqkOLDIvlQiL6ltuZd9tGcW3gwpnX8JbuiuhFlEGmmFXEXkN50Cvq7Os88IY2v0dkDqXYWVgA==}
-    dev: true
 
   /@types/newrelic@9.13.0:
     resolution: {integrity: sha512-Dj2fh+1SvR9KIZmk/ZcrzHmfF1f/2vSsIlYvKD49KtPcxRBKOWFRP9wyHtq+B6YCqIv+fHN97NtgJiq7OJaRzw==}
@@ -25748,13 +25759,201 @@ packages:
       '@volar/vue-language-core': 1.2.0
     dev: true
 
-  /@vonage/server-sdk@2.11.3:
-    resolution: {integrity: sha512-0kZNREJGMFRaJtGV0NG5CTRQCvB6h8OI62qK1uiNJhfu4HJtzxM2iIBpT/OXwD3kmsRQhY98T09Mgf5xkfJUvA==}
+  /@vonage/accounts@1.9.0:
+    resolution: {integrity: sha512-4cW/tfYpL53uHR3YjTbLL/kn23/RllPmFkFf3LAhdvratwtnDSYiOy/nZooATjmon3fzdOYLW0kYGAvoeWlHUg==}
     dependencies:
-      jsonwebtoken: 9.0.0
-      query-string: 7.1.3
-      request: 2.88.2
-      uuid: 8.3.2
+      '@vonage/server-client': 1.9.0
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+    dev: false
+
+  /@vonage/applications@1.9.0:
+    resolution: {integrity: sha512-Is+toDvaIlljJCvXwbrVEGQPi5EdDz7N5wwiwKYBB/X8J1CEz31byOYMs3GiSgtr1dlpZCY+IoBZG+1BcDSSkQ==}
+    dependencies:
+      '@vonage/auth': 1.7.0
+      '@vonage/server-client': 1.9.0
+      '@vonage/vetch': 1.6.0
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+    dev: false
+
+  /@vonage/auth@1.7.0:
+    resolution: {integrity: sha512-voHo7iFQxyGHrx4wxK/vcxyM7sUtaLluHK595ftjIDoJyRwjvm137k+XgR1v17t9lJShaIPCxqdEUTQebXBBWA==}
+    dependencies:
+      '@vonage/jwt': 1.7.0
+      debug: 4.3.4(supports-color@8.1.1)
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
+  /@vonage/jwt@1.7.0:
+    resolution: {integrity: sha512-28mE2r1tCHqRuA0PW7rBFqWCaaxuP1wL/3Fp9XTrdB6Gv8Is1c4VoqLta64IUF5xLK0gUW+mTKrXnemSM0MHaw==}
+    dependencies:
+      debug: 4.3.4(supports-color@8.1.1)
+      jsonwebtoken: 9.0.2
+      uuid: 9.0.1
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
+  /@vonage/messages@1.10.0:
+    resolution: {integrity: sha512-e+K9NecTrBiFaZynKsSBRDjYdX3bm/RWTqVPtmTI4w5pcJxjp3tS4x0Y4LnzCqgN47c817tYAuwxltur6MCrGQ==}
+    dependencies:
+      '@vonage/auth': 1.7.0
+      '@vonage/server-client': 1.9.0
+      '@vonage/vetch': 1.6.0
+      debug: 4.3.4(supports-color@8.1.1)
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+    dev: false
+
+  /@vonage/number-insights@1.9.0:
+    resolution: {integrity: sha512-Z2ec38m47sRuwV4xv73hP5eaRw+2NmZv+HrwbCKB4waIwUlzdHVs7YS9OV6S3nCrqei8VIxJ71ZRiUPSABYmHw==}
+    dependencies:
+      '@vonage/auth': 1.7.0
+      '@vonage/server-client': 1.9.0
+      '@vonage/vetch': 1.6.0
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+    dev: false
+
+  /@vonage/numbers@1.9.0:
+    resolution: {integrity: sha512-I14WGnEXLe/I1fmdAhwe6SrdqVvULhLopXBQMzwja88/HTfZ3Ey4eSfvD4Fv07OH1trJi0FPVSJcXKML7DALFA==}
+    dependencies:
+      '@vonage/auth': 1.7.0
+      '@vonage/server-client': 1.9.0
+      '@vonage/vetch': 1.6.0
+      lodash.omit: 4.5.0
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+    dev: false
+
+  /@vonage/pricing@1.9.0:
+    resolution: {integrity: sha512-KSUq3aOg6kwpRa6b9tnMsVvu9tP0a+15Sudfa9tcYN8GNKGXyW+jdNJG4XIFRp6Pl3XhRi/7vVyiCkyXgFLmNQ==}
+    dependencies:
+      '@vonage/auth': 1.7.0
+      '@vonage/server-client': 1.9.0
+      '@vonage/vetch': 1.6.0
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+    dev: false
+
+  /@vonage/redact@1.8.0:
+    resolution: {integrity: sha512-XaB4idh3hc/nTEXYU30SepfCg0W1bOdlEdkjXuU06dnIT1VokYf8uMvOpsVXhtra8zORRGmfPAMzVX96IEAe0w==}
+    dependencies:
+      '@vonage/server-client': 1.9.0
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+    dev: false
+
+  /@vonage/server-client@1.9.0:
+    resolution: {integrity: sha512-15n7lpPPn/EeekziUqVM7+FQ7FyuOif5io8X28CDXGQOlWW0S/ULhu5esQj7d4purC04xsMO4U1OMQttT9msEg==}
+    dependencies:
+      '@vonage/auth': 1.7.0
+      '@vonage/vetch': 1.6.0
+      debug: 4.3.4(supports-color@8.1.1)
+      lodash.camelcase: 4.3.0
+      lodash.isobject: 3.0.2
+      lodash.kebabcase: 4.1.1
+      lodash.partial: 4.2.1
+      lodash.snakecase: 4.1.1
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+    dev: false
+
+  /@vonage/server-sdk@3.10.0:
+    resolution: {integrity: sha512-HzSMKSGj4XD91YWY+pRDSGtIU/dVyubp5RRpmVfxFcCIxZAjX8/PVvNNSAG/LbmVFsznrBoYsHaM+/XTo1/9Ig==}
+    dependencies:
+      '@vonage/accounts': 1.9.0
+      '@vonage/applications': 1.9.0
+      '@vonage/auth': 1.7.0
+      '@vonage/messages': 1.10.0
+      '@vonage/number-insights': 1.9.0
+      '@vonage/numbers': 1.9.0
+      '@vonage/pricing': 1.9.0
+      '@vonage/redact': 1.8.0
+      '@vonage/server-client': 1.9.0
+      '@vonage/sms': 1.9.0
+      '@vonage/users': 1.3.0
+      '@vonage/verify': 1.9.0
+      '@vonage/verify2': 1.8.0
+      '@vonage/voice': 1.9.0
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+    dev: false
+
+  /@vonage/sms@1.9.0:
+    resolution: {integrity: sha512-8oPQ2Omix1xw/mv/lAmCwLAghQipnRk2pyC+ipyxmJE+RQOio9CIMvQBgRhYl7ATpry0xcgJi/E52s9YbE8E/A==}
+    dependencies:
+      '@vonage/server-client': 1.9.0
+      debug: 4.3.4(supports-color@8.1.1)
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+    dev: false
+
+  /@vonage/users@1.3.0:
+    resolution: {integrity: sha512-TyYr88Z6PvIj+otgzTBiuV+dxwOQto7BfTCeQYkW791tPgExpWBB/pAV4uhKFqKr9u+ZoW5cuDnb9BoFV8u9Ug==}
+    dependencies:
+      '@vonage/server-client': 1.9.0
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+    dev: false
+
+  /@vonage/verify2@1.8.0:
+    resolution: {integrity: sha512-Ex2ziTwkUW/TTcA9FW6amw1bcFAXtmwG7wXmjBXeB26VwZTXX73MFgCGV/TYhgSox8GLUBWneD0HVL58VUyZlw==}
+    dependencies:
+      '@vonage/server-client': 1.9.0
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+    dev: false
+
+  /@vonage/verify@1.9.0:
+    resolution: {integrity: sha512-fguxfPqeu94nmueQraALsDxk8E1wWbVefPPUXwgEw/m6GNAKCS71H+T8+JMvdC7c03WTfAjDdetfUMAGtJapMA==}
+    dependencies:
+      '@vonage/auth': 1.7.0
+      '@vonage/server-client': 1.9.0
+      '@vonage/vetch': 1.6.0
+      lodash.omit: 4.5.0
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+    dev: false
+
+  /@vonage/vetch@1.6.0:
+    resolution: {integrity: sha512-VzOm3IJC8Xz8hlMLGvjaLZ9yPPEejXAlO0M+lK5gTtWJwIe3h3jZDpr9Oy6EpMphWOewlK3uEFOn1pRPfIfh6A==}
+    dependencies:
+      debug: 4.3.4(supports-color@8.1.1)
+      lodash.merge: 4.6.2
+      node-fetch: 2.7.0
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+    dev: false
+
+  /@vonage/voice@1.9.0:
+    resolution: {integrity: sha512-XTKuWDKb2irEW38xZaP6k8ns6jP6fkazRMeVOedx5PmqahXCpqbM0ywTj21VMUd/pskInw/ug9xWBXXiR/3Gcw==}
+    dependencies:
+      '@types/debug': 4.1.12
+      '@vonage/auth': 1.7.0
+      '@vonage/server-client': 1.9.0
+      '@vonage/vetch': 1.6.0
+      debug: 4.3.4(supports-color@8.1.1)
+      ts-xor: 1.3.0
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
     dev: false
 
   /@vue/babel-helper-vue-transform-on@1.0.2:
@@ -26384,7 +26583,7 @@ packages:
     engines: {node: '>=6'}
     dependencies:
       '@hapi/joi': 16.1.8
-      axios: 1.6.0
+      axios: 1.6.2
       body-parser: 1.20.2
       lodash: 4.17.21
       phone: 3.1.37
@@ -27373,8 +27572,8 @@ packages:
       - debug
     dev: true
 
-  /axios@1.3.5:
-    resolution: {integrity: sha512-glL/PvG/E+xCWwV8S6nCHcrfg1exGx7vxyUIivIA1iL7BIh6bePylCfVHwp6k13ao7SATxB6imau2kqY+I67kw==}
+  /axios@1.6.0:
+    resolution: {integrity: sha512-EZ1DYihju9pwVB+jg67ogm+Tmqc6JmhamRN6I4Zt8DfZu5lbcQGw3ozH9lFejSJgs/ibaef3A9PMXPLeefFGJg==}
     dependencies:
       follow-redirects: 1.15.2
       form-data: 4.0.0
@@ -27383,17 +27582,8 @@ packages:
       - debug
     dev: false
 
-  /axios@1.4.0:
-    resolution: {integrity: sha512-S4XCWMEmzvo64T9GfvQDOXgYRDJ/wsSZc7Jvdgx5u1sd0JwsuPLqb3SYmusag+edF6ziyMensPVqLTSc1PiSEA==}
-    dependencies:
-      follow-redirects: 1.15.2
-      form-data: 4.0.0
-      proxy-from-env: 1.1.0
-    transitivePeerDependencies:
-      - debug
-
-  /axios@1.6.0:
-    resolution: {integrity: sha512-EZ1DYihju9pwVB+jg67ogm+Tmqc6JmhamRN6I4Zt8DfZu5lbcQGw3ozH9lFejSJgs/ibaef3A9PMXPLeefFGJg==}
+  /axios@1.6.2:
+    resolution: {integrity: sha512-7i24Ri4pmDRfJTR7LDBhsOTtcm+9kjX5WiY1X3wIisx6G9So3pfMkEiU7emUBe46oceVImccTEM3k6C5dbVW8A==}
     dependencies:
       follow-redirects: 1.15.2
       form-data: 4.0.0
@@ -30814,6 +31004,7 @@ packages:
   /decode-uri-component@0.2.2:
     resolution: {integrity: sha512-FqUYQ+8o158GyGTrMFJms9qh3CqTKvAqgqsTnkLI8sKu0028orqBhxNMFkFen0zGyg6epACD32pjVk58ngIErQ==}
     engines: {node: '>=0.10'}
+    dev: true
 
   /dedent@0.7.0:
     resolution: {integrity: sha512-Q6fKUPqnAHAyhiUgFU7BUzLiv0kd8saH9al7tnu5Q/okj6dnupxyTgFIBjVzJATdfIAm9NAsvXNzjaKa+bxVyA==}
@@ -33265,11 +33456,6 @@ packages:
     dependencies:
       to-regex-range: 5.0.1
 
-  /filter-obj@1.1.0:
-    resolution: {integrity: sha512-8rXg1ZnX7xzy2NGDVkBVaAy+lSlPNwad13BtgSlLuxfIslyt5Vg64U7tFcCt4WS1R0hvtnQybT/IyCkGZ3DpXQ==}
-    engines: {node: '>=0.10.0'}
-    dev: false
-
   /finalhandler@1.1.2:
     resolution: {integrity: sha512-aAWcW57uxVNrQZqFXjITpW3sIUQmHGG3qSb9mUah9MgMC4NeWhNOlNjXEYq3HjRAvL6arUviZGGJsBg6z0zsWA==}
     engines: {node: '>= 0.8'}
@@ -34665,20 +34851,6 @@ packages:
     optionalDependencies:
       uglify-js: 3.17.4
 
-  /har-schema@2.0.0:
-    resolution: {integrity: sha512-Oqluz6zhGX8cyRaTQlFMPw80bSJVG2x/cFb8ZPhUILGgHka9SsokCCOQgpveePerqidZOrT14ipqfJb7ILcW5Q==}
-    engines: {node: '>=4'}
-    dev: false
-
-  /har-validator@5.1.5:
-    resolution: {integrity: sha512-nmT2T0lljbxdQZfspsno9hgrG3Uir6Ks5afism62poxqBM6sDnMEuPmzTq8XN0OEwqKLLdh1jQI3qyE66Nzb3w==}
-    engines: {node: '>=6'}
-    deprecated: this library is no longer supported
-    dependencies:
-      ajv: 6.12.6
-      har-schema: 2.0.0
-    dev: false
-
   /hard-rejection@2.1.0:
     resolution: {integrity: sha512-VIZB+ibDhx7ObhAe7OVtoEbuP4h/MuOTHJ+J8h/eBXotJYl0fBgR72xDFCKgIh22OJZIOVNxBMWuhAr10r8HdA==}
     engines: {node: '>=6'}
@@ -35162,15 +35334,6 @@ packages:
       - debug
       - supports-color
     dev: true
-
-  /http-signature@1.2.0:
-    resolution: {integrity: sha512-CAbnr6Rz4CYQkLYUtSNXxQPUH2gK8f3iWexVlsnMeD+GjlsQ0Xsy1cOX+mN3dtxYomRy21CiOzU8Uhw6OwncEQ==}
-    engines: {node: '>=0.8', npm: '>=1.3.7'}
-    dependencies:
-      assert-plus: 1.0.0
-      jsprim: 1.4.2
-      sshpk: 1.17.0
-    dev: false
 
   /http-signature@1.3.6:
     resolution: {integrity: sha512-3adrsD6zqo4GsTqtO7FyrejHNv+NgiIfAfv68+jVlFmSr9OGy7zrxONceFRLKvnnZA5jbxQBX1u9PpB6Wi32Gw==}
@@ -37870,14 +38033,20 @@ packages:
       semver: 7.5.4
     dev: false
 
-  /jsprim@1.4.2:
-    resolution: {integrity: sha512-P2bSOMAc/ciLz6DzgjVlGJP9+BrJWu5UDGK70C2iweC5QBIeFf0ZXRvGjEj2uYgrY2MkAAhsSWHDWlFtEroZWw==}
-    engines: {node: '>=0.6.0'}
+  /jsonwebtoken@9.0.2:
+    resolution: {integrity: sha512-PRp66vJ865SSqOlgqS8hujT5U4AOgMfhrwYIuIhfKaoSCZcirrmASQr8CX7cUg+RMih+hgznrjp99o+W4pJLHQ==}
+    engines: {node: '>=12', npm: '>=6'}
     dependencies:
-      assert-plus: 1.0.0
-      extsprintf: 1.3.0
-      json-schema: 0.4.0
-      verror: 1.10.0
+      jws: 3.2.2
+      lodash.includes: 4.3.0
+      lodash.isboolean: 3.0.3
+      lodash.isinteger: 4.0.4
+      lodash.isnumber: 3.0.3
+      lodash.isplainobject: 4.0.6
+      lodash.isstring: 4.0.1
+      lodash.once: 4.1.1
+      ms: 2.1.3
+      semver: 7.5.4
     dev: false
 
   /jsprim@2.0.2:
@@ -38628,8 +38797,16 @@ packages:
   /lodash.get@4.4.2:
     resolution: {integrity: sha512-z+Uw/vLuy6gQe8cfaFWD7p0wVv8fJl3mbzXh33RS+0oW2wvUqiRXiQ69gLWSLpgB5/6sU+r6BlQR0MBILadqTQ==}
 
+  /lodash.includes@4.3.0:
+    resolution: {integrity: sha512-W3Bx6mdkRTGtlJISOvVD/lbqjTlPPUDTMnlXZFnVwi9NKJ6tiAk6LVdlhZMm17VZisqhKcgzpO5Wz91PCt5b0w==}
+    dev: false
+
   /lodash.isarguments@3.1.0:
     resolution: {integrity: sha512-chi4NHZlZqZD18a0imDHnZPrDeBbTtVN7GXMwuGdRH9qotxAjYs3aVLKc7zNOG9eddR5Ksd8rvFEBc9SsggPpg==}
+
+  /lodash.isboolean@3.0.3:
+    resolution: {integrity: sha512-Bz5mupy2SVbPHURB98VAcw+aHh4vRV5IPNhILUCsOzRmsTmSQ17jIuqopAentWoehktxGd9e/hbIXq980/1QJg==}
+    dev: false
 
   /lodash.isequal@4.5.0:
     resolution: {integrity: sha512-pDo3lu8Jhfjqls6GkMgpahsF9kCyayhgykjyLMNFTKWrpVdAQtYyB4muAMWozBB4ig/dtWAmsMxLEI8wuz+DYQ==}
@@ -38638,9 +38815,21 @@ packages:
     resolution: {integrity: sha512-AirXNj15uRIMMPihnkInB4i3NHeb4iBtNg9WRWuK2o31S+ePwwNmDPaTL3o7dTJ+VXNZim7rFs4rxN4YU1oUJw==}
     dev: true
 
+  /lodash.isinteger@4.0.4:
+    resolution: {integrity: sha512-DBwtEWN2caHQ9/imiNeEA5ys1JoRtRfY3d7V9wkqtbycnAmTvRRmbHKDV4a0EYc678/dia0jrte4tjYwVBaZUA==}
+    dev: false
+
   /lodash.ismatch@4.4.0:
     resolution: {integrity: sha512-fPMfXjGQEV9Xsq/8MTSgUf255gawYRbjwMyDbcvDhXgV7enSZA0hynz6vMPnpAb5iONEzBHBPsT+0zes5Z301g==}
     dev: true
+
+  /lodash.isnumber@3.0.3:
+    resolution: {integrity: sha512-QYqzpfwO3/CWf3XP+Z+tkQsfaLL/EnUlXWVkIk5FUPc4sBdTehEqZONuyRt2P67PXAk+NXmTBcc97zw9t1FQrw==}
+    dev: false
+
+  /lodash.isobject@3.0.2:
+    resolution: {integrity: sha512-3/Qptq2vr7WeJbB4KHUSKlq8Pl7ASXi3UG6CMbBm8WRtXi8+GHm7mKaU3urfpSEzWe2wCIChs6/sdocUsTKJiA==}
+    dev: false
 
   /lodash.isplainobject@4.0.6:
     resolution: {integrity: sha512-oSXzaWypCMHkPC3NvBEaPHf0KsA5mvPrOPgQWDsbg8n7orZ290M0BmC/jgRZ4vcJ6DTAhjrsSYgdsW/F+MFOBA==}
@@ -38650,7 +38839,6 @@ packages:
 
   /lodash.kebabcase@4.1.1:
     resolution: {integrity: sha512-N8XRTIMMqqDgSy4VLKPnJ/+hpGZN+PHQiJnSenYqPaVV/NCqEogTnAdZLQiGKhxX+JCs8waWq2t1XHWKOmlY8g==}
-    dev: true
 
   /lodash.map@4.6.0:
     resolution: {integrity: sha512-worNHGKLDetmcEYDvh2stPCrrQRkP20E4l0iIS7F8EvzMqBBi7ltvFN5m1HvTf1P7Jk1txKhvFcmYsCr8O2F1Q==}
@@ -38667,8 +38855,16 @@ packages:
     resolution: {integrity: sha512-GK3g5RPZWTRSeLSpgP8Xhra+pnjBC56q9FZYe1d5RN3TJ35dbkGy3YqBSMbyCrlbi+CM9Z3Jk5yTL7RCsqboyQ==}
     dev: true
 
+  /lodash.omit@4.5.0:
+    resolution: {integrity: sha512-XeqSp49hNGmlkj2EJlfrQFIzQ6lXdNro9sddtQzcJY8QaoC2GO0DT7xaIokHeyM+mIT0mPMlPvkYzg2xCuHdZg==}
+    dev: false
+
   /lodash.once@4.1.1:
     resolution: {integrity: sha512-Sb487aTOCr9drQVL8pIxOzVhafOjZN9UU54hiN8PU3uAiSV7lx1yYNpbNmex2PK6dSJoNTSJUUswT651yww3Mg==}
+
+  /lodash.partial@4.2.1:
+    resolution: {integrity: sha512-qsiGr0kiA31O7chhmKSUiEGtxXnYtwmaJF00TPAUW79C5PCfaVeLTUN3sLT+rEPcqZooPtiFcGhnphQzFhkqmg==}
+    dev: false
 
   /lodash.set@4.3.2:
     resolution: {integrity: sha512-4hNPN5jlm/N/HLMCO43v8BXKq9Z7QdAGc/VGrRD61w8gN9g/6jF9A4L1pbUgBLCffi0w9VsXfTOij5x8iTyFvg==}
@@ -38676,7 +38872,6 @@ packages:
 
   /lodash.snakecase@4.1.1:
     resolution: {integrity: sha512-QZ1d4xoBHYUeuouhEq3lk3Uq7ldgyFXGBhg04+oRLnIz8o9T65Eh+8YdroUwn846zchkA9yDsDl5CVVaV2nqYw==}
-    dev: true
 
   /lodash.sortby@4.7.0:
     resolution: {integrity: sha512-HDWXG8isMntAyRF5vZ7xKuEvOhT4AhlRt/3czTSjvGUxjYCBVRQY48ViDHyfYz9VIoBkW4TMGQNapx+l3RUwdA==}
@@ -38922,7 +39117,7 @@ packages:
   /mailgun.js@8.2.1:
     resolution: {integrity: sha512-iKHCMehdUcWzBAp8KU2idLP7AbsTxQ8DjJev4Gvm430Dujul+ZkzKPgn40uYpb9BXGL5l8/w5jpf2pvw51df/w==}
     dependencies:
-      axios: 1.6.0
+      axios: 1.6.2
       base-64: 1.0.0
       url-join: 4.0.1
     transitivePeerDependencies:
@@ -38951,7 +39146,7 @@ packages:
       nodemailer:
         optional: true
     dependencies:
-      axios: 1.6.0
+      axios: 1.6.2
     transitivePeerDependencies:
       - debug
     dev: false
@@ -41168,7 +41363,7 @@ packages:
       '@yarnpkg/lockfile': 1.1.0
       '@yarnpkg/parsers': 3.0.0-rc.46
       '@zkochan/js-yaml': 0.0.6
-      axios: 1.6.0
+      axios: 1.6.2
       chalk: 4.1.2
       cli-cursor: 3.1.0
       cli-spinners: 2.6.1
@@ -41230,7 +41425,7 @@ packages:
       '@yarnpkg/lockfile': 1.1.0
       '@yarnpkg/parsers': 3.0.0-rc.42
       '@zkochan/js-yaml': 0.0.6
-      axios: 1.6.0
+      axios: 1.6.2
       chalk: 4.1.2
       cli-cursor: 3.1.0
       cli-spinners: 2.6.1
@@ -41291,7 +41486,7 @@ packages:
       '@yarnpkg/lockfile': 1.1.0
       '@yarnpkg/parsers': 3.0.0-rc.46
       '@zkochan/js-yaml': 0.0.6
-      axios: 1.6.0
+      axios: 1.6.2
       chalk: 4.1.2
       cli-cursor: 3.1.0
       cli-spinners: 2.6.1
@@ -41371,10 +41566,6 @@ packages:
     transitivePeerDependencies:
       - supports-color
     dev: true
-
-  /oauth-sign@0.9.0:
-    resolution: {integrity: sha512-fexhUFFPTGV8ybAtSIGbV6gOkSv8UtRbDBnAyLQw4QPKkgNlsH2ByPGtMUqdWkos6YCRmAqViwgZrJc/mRDzZQ==}
-    dev: false
 
   /oauth@0.9.15:
     resolution: {integrity: sha512-a5ERWK1kh38ExDEfoO6qUHJb32rd7aYmPHuyCu3Fta/cnICvYmgd2uhuKXvPD+PXB+gCEYYEaQdIRAjCOwAKNA==}
@@ -43854,21 +44045,6 @@ packages:
     dependencies:
       side-channel: 1.0.4
 
-  /qs@6.5.3:
-    resolution: {integrity: sha512-qxXIEh4pCGfHICj1mAJQ2/2XVZkjCDTcEgfoSQxc/fYivUZxTkk7L3bDBJSoNrEzXI17oUO5Dp07ktqE5KzczA==}
-    engines: {node: '>=0.6'}
-    dev: false
-
-  /query-string@7.1.3:
-    resolution: {integrity: sha512-hh2WYhq4fi8+b+/2Kg9CEge4fDPvHS534aOOvOZeQ3+Vf2mCFsaFBYj0i+iXcAq6I9Vzp5fjMFBlONvayDC1qg==}
-    engines: {node: '>=6'}
-    dependencies:
-      decode-uri-component: 0.2.2
-      filter-obj: 1.1.0
-      split-on-first: 1.1.0
-      strict-uri-encode: 2.0.0
-    dev: false
-
   /querystring@0.2.0:
     resolution: {integrity: sha512-X/xY82scca2tau62i9mDyU9K+I+djTMUsvwf7xnUX5GLvVzgJybOJf4Y6o9Zx3oJK/LSXg5tTZBjwzqVPaPO2g==}
     engines: {node: '>=0.4.x'}
@@ -45825,33 +46001,6 @@ packages:
     dependencies:
       throttleit: 1.0.0
 
-  /request@2.88.2:
-    resolution: {integrity: sha512-MsvtOrfG9ZcrOwAW+Qi+F6HbD0CWXEh9ou77uOb7FM2WPhwT7smM833PzanhJLsgXjN89Ir6V2PczXNnMpwKhw==}
-    engines: {node: '>= 6'}
-    deprecated: request has been deprecated, see https://github.com/request/request/issues/3142
-    dependencies:
-      aws-sign2: 0.7.0
-      aws4: 1.12.0
-      caseless: 0.12.0
-      combined-stream: 1.0.8
-      extend: 3.0.2
-      forever-agent: 0.6.1
-      form-data: 2.3.3
-      har-validator: 5.1.5
-      http-signature: 1.2.0
-      is-typedarray: 1.0.0
-      isstream: 0.1.2
-      json-stringify-safe: 5.0.1
-      mime-types: 2.1.35
-      oauth-sign: 0.9.0
-      performance-now: 2.1.0
-      qs: 6.5.3
-      safe-buffer: 5.2.1
-      tough-cookie: 4.1.3
-      tunnel-agent: 0.6.0
-      uuid: 3.4.0
-    dev: false
-
   /require-directory@2.1.1:
     resolution: {integrity: sha512-fGxEI7+wsG9xrvdjsrlmL22OMTTiHRwAMroiEeMgq8gzoLC/PQr7RsRDSTLUg/bZAZtF+TVIkHc6/4RIKrui+Q==}
     engines: {node: '>=0.10.0'}
@@ -47262,11 +47411,6 @@ packages:
       webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
     dev: false
 
-  /split-on-first@1.1.0:
-    resolution: {integrity: sha512-43ZssAJaMusuKWL8sKUBQXHWOpq8d6CfN/u1p4gUzfJkM05C8rxTmYrkIPTXapZpORA6LkkzcUulJ8FqA7Uudw==}
-    engines: {node: '>=6'}
-    dev: false
-
   /split-string@3.1.0:
     resolution: {integrity: sha512-NzNVhJDYpwceVVii8/Hu6DKfD2G+NrQHlS/V/qgv763EYudVwEcMQNxd2lh+0VrUByXN/oJkl5grOhYWvQUYiw==}
     engines: {node: '>=0.10.0'}
@@ -47479,11 +47623,6 @@ packages:
   /streamsearch@1.1.0:
     resolution: {integrity: sha512-Mcc5wHehp9aXz1ax6bZUyY5afg9u2rv5cqQI3mRrYkGC8rW2hM02jWuwjtL++LS5qinSyhj2QfLyNsuc+VsExg==}
     engines: {node: '>=10.0.0'}
-
-  /strict-uri-encode@2.0.0:
-    resolution: {integrity: sha512-QwiXZgpRcKkhTj2Scnn++4PKtWsH0kpzZ62L2R6c/LUVYv7hVnZqcg2+sMuT6R7Jusu1vviK/MFsu6kNJfWlEQ==}
-    engines: {node: '>=4'}
-    dev: false
 
   /string-argv@0.3.1:
     resolution: {integrity: sha512-a1uQGz7IyVy9YwhqjZIZu1c8JO8dNIe20xBmSS6qu9kv++k3JGzCVmprbNN5Kn+BgzD5E7YYwg1CcjuJMRNsvg==}
@@ -49135,6 +49274,10 @@ packages:
     dependencies:
       typescript: 4.9.5
     dev: true
+
+  /ts-xor@1.3.0:
+    resolution: {integrity: sha512-RLXVjliCzc1gfKQFLRpfeD0rrWmjnSTgj7+RFhoq3KRkUYa8LE/TIidYOzM5h+IdFBDSjjSgk9Lto9sdMfDFEA==}
+    dev: false
 
   /tsconfig-paths-webpack-plugin@4.1.0:
     resolution: {integrity: sha512-xWFISjviPydmtmgeUAuXp4N1fky+VCtfhOkDUFIv5ea7p4wuTomI4QTrXvFBX2S4jZsmyTSrStQl+E+4w+RzxA==}

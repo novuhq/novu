@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "@novu/stateless": "^0.22.0",
-    "axios": "^1.6.0"
+    "axios": "^1.6.2"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
