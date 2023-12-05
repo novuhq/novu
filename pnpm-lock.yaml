@@ -1633,9 +1633,6 @@ importers:
       '@novu/shared':
         specifier: ^0.22.0
         version: link:../shared
-      '@sendgrid/mail':
-        specifier: ^7.4.2
-        version: 7.7.0
       JSONStream:
         specifier: ^1.3.5
         version: 1.3.5
@@ -2629,9 +2626,6 @@ importers:
         specifier: ^9.0.1
         version: 9.0.1
     devDependencies:
-      '@sendgrid/mail':
-        specifier: ^7.4.6
-        version: 7.7.0
       '@types/jest':
         specifier: 29.5.2
         version: 29.5.2
@@ -3032,9 +3026,6 @@ importers:
         specifier: ^4.6.2
         version: 4.6.2
     devDependencies:
-      '@sendgrid/mail':
-        specifier: ^7.4.6
-        version: 7.7.0
       '@types/jest':
         specifier: 29.5.2
         version: 29.5.2
@@ -4128,8 +4119,8 @@ importers:
         specifier: ^0.22.0
         version: link:../../packages/stateless
       axios:
-        specifier: ^0.27.2
-        version: 0.27.2
+        specifier: ^1.6.2
+        version: 1.6.2
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
         specifier: ^1.0.1
@@ -5352,7 +5343,7 @@ importers:
         specifier: ^0.22.0
         version: link:../../packages/stateless
       '@sendgrid/mail':
-        specifier: ^7.4.6
+        specifier: ^7.7.0
         version: 7.7.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
@@ -5948,8 +5939,8 @@ importers:
         specifier: ^0.22.0
         version: link:../../packages/stateless
       twilio:
-        specifier: ^4.14.1
-        version: 4.15.0
+        specifier: ^4.19.3
+        version: 4.19.3
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
         specifier: 1.0.2
@@ -20134,12 +20125,14 @@ packages:
       axios: 0.26.1
     transitivePeerDependencies:
       - debug
+    dev: false
 
   /@sendgrid/helpers@7.7.0:
     resolution: {integrity: sha512-3AsAxfN3GDBcXoZ/y1mzAAbKzTtUZ5+ZrHOmWQ279AuaFXUNCh9bPnRpN504bgveTqoW+11IzPg3I0WVgDINpw==}
     engines: {node: '>= 6.0.0'}
     dependencies:
       deepmerge: 4.3.1
+    dev: false
 
   /@sendgrid/mail@7.7.0:
     resolution: {integrity: sha512-5+nApPE9wINBvHSUxwOxkkQqM/IAAaBYoP9hw7WwgDNQPxraruVqHizeTitVtKGiqWCKm2mnjh4XGN3fvFLqaw==}
@@ -20149,6 +20142,7 @@ packages:
       '@sendgrid/helpers': 7.7.0
     transitivePeerDependencies:
       - debug
+    dev: false
 
   /@sentry-internal/tracing@7.47.0:
     resolution: {integrity: sha512-udpHnCzF8DQsWf0gQwd0XFGp6Y8MOiwnl8vGt2ohqZGS3m1+IxoRLXsSkD8qmvN6KKDnwbaAvYnK0z0L+AW95g==}
@@ -23628,7 +23622,7 @@ packages:
     dependencies:
       '@storybook/client-logger': 7.4.2
       memoizerific: 1.11.3
-      qs: 6.11.1
+      qs: 6.11.2
       react: 17.0.2
       react-dom: 17.0.2(react@17.0.2)
 
@@ -27538,6 +27532,7 @@ packages:
       follow-redirects: 1.15.2
     transitivePeerDependencies:
       - debug
+    dev: false
 
   /axios@0.27.2:
     resolution: {integrity: sha512-t+yRIyySRTp/wua5xEr+z1q60QmLq8ABsS5O9Me1AsE5dfKqgnCFzwiCZZ/cGNd1lq4/7akDWMxdhVlucjmnOQ==}
@@ -32306,7 +32301,7 @@ packages:
       eslint: 8.51.0
       eslint-import-resolver-node: 0.3.7
       eslint-module-utils: 2.8.0(@typescript-eslint/parser@5.58.0)(eslint-import-resolver-node@0.3.7)(eslint-import-resolver-webpack@0.13.7)(eslint@8.51.0)
-      has: 1.0.3
+      has: 1.0.4
       is-core-module: 2.13.0
       is-glob: 4.0.3
       minimatch: 3.1.2
@@ -49358,6 +49353,23 @@ packages:
       https-proxy-agent: 5.0.1
       jsonwebtoken: 9.0.0
       qs: 6.11.1
+      scmp: 2.1.0
+      url-parse: 1.5.10
+      xmlbuilder: 13.0.2
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+    dev: false
+
+  /twilio@4.19.3:
+    resolution: {integrity: sha512-3X5Czl9Vg4QFl+2pnfMQ+H8YfEDQ4WeuAmqjUpbK65x0DfmxTCHuPEFWUKVZCJZew6iltJB/1whhVvIKETe54A==}
+    engines: {node: '>=14.0'}
+    dependencies:
+      axios: 1.6.2
+      dayjs: 1.11.9
+      https-proxy-agent: 5.0.1
+      jsonwebtoken: 9.0.0
+      qs: 6.11.2
       scmp: 2.1.0
       url-parse: 1.5.10
       xmlbuilder: 13.0.2
