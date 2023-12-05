@@ -5211,8 +5211,8 @@ importers:
         specifier: ^0.22.0
         version: link:../../packages/stateless
       resend:
-        specifier: ^0.11.0
-        version: 0.11.1
+        specifier: ^2.0.0
+        version: 2.0.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
         specifier: ^1.0.1
@@ -19729,11 +19729,11 @@ packages:
       react-dom: 17.0.2(react@17.0.2)
     dev: false
 
-  /@react-email/render@0.0.5:
-    resolution: {integrity: sha512-EE9mCvR3lXeZEJaldCEaEc4msCwPQwZfXbhuPVl3SpRsiHiMK0wNm2X39vVpqzCzxrm0wljCoLruT7Klp9DZAw==}
-    engines: {node: '>=16.0.0'}
+  /@react-email/render@0.0.9:
+    resolution: {integrity: sha512-nrim7wiACnaXsGtL7GF6jp3Qmml8J6vAjAH88jkC8lIbfNZaCyuPQHANjyYIXlvQeAbsWADQJFZgOHUqFqjh/A==}
+    engines: {node: '>=18.0.0'}
     dependencies:
-      html-to-text: 9.0.3
+      html-to-text: 9.0.5
       pretty: 2.0.0
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
@@ -20052,13 +20052,6 @@ packages:
       tiny-hashes: 1.0.1
     transitivePeerDependencies:
       - supports-color
-    dev: false
-
-  /@selderee/plugin-htmlparser2@0.10.0:
-    resolution: {integrity: sha512-gW69MEamZ4wk1OsOq1nG1jcyhXIQcnrsX5JwixVw/9xaiav8TCyjESAruu1Rz9yyInhgBXxkNwMeygKnN2uxNA==}
-    dependencies:
-      domhandler: 5.0.3
-      selderee: 0.10.0
     dev: false
 
   /@selderee/plugin-htmlparser2@0.11.0:
@@ -35172,17 +35165,6 @@ packages:
     engines: {node: '>=8'}
     dev: true
 
-  /html-to-text@9.0.3:
-    resolution: {integrity: sha512-hxDF1kVCF2uw4VUJ3vr2doc91pXf2D5ngKcNviSitNkhP9OMOaJkDrFIFL6RMvko7NisWTEiqGpQ9LAxcVok1w==}
-    engines: {node: '>=14'}
-    dependencies:
-      '@selderee/plugin-htmlparser2': 0.10.0
-      deepmerge: 4.3.1
-      dom-serializer: 2.0.0
-      htmlparser2: 8.0.2
-      selderee: 0.10.0
-    dev: false
-
   /html-to-text@9.0.5:
     resolution: {integrity: sha512-qY60FjREgVZL03vJU6IfMV4GDjGBIoOyvuFdpBDIX9yTlDw0TjxVBQp+P8NvpdIXNJvfWBTNul7fsAQJq2FNpg==}
     engines: {node: '>=14'}
@@ -42303,13 +42285,6 @@ packages:
     dependencies:
       entities: 4.5.0
 
-  /parseley@0.11.0:
-    resolution: {integrity: sha512-VfcwXlBWgTF+unPcr7yu3HSSA6QUdDaDnrHcytVfj5Z8azAyKBDrYnSIfeSxlrEayndNcLmrXzg+Vxbo6DWRXQ==}
-    dependencies:
-      leac: 0.6.0
-      peberminta: 0.8.0
-    dev: false
-
   /parseley@0.12.1:
     resolution: {integrity: sha512-e6qHKe3a9HWr0oMRVDTRhKce+bRO8VGQR3NyVwcjwrbhMmFCX9KszEV35+rn4AdilFAq9VPxP/Fe1wC9Qjd2lw==}
     dependencies:
@@ -42495,10 +42470,6 @@ packages:
 
   /pause@0.0.1:
     resolution: {integrity: sha512-KG8UEiEVkR3wGEb4m5yZkVCzigAD+cVEJck2CzYZO37ZGJfctvVptVO192MwrtPhzONn6go8ylnOdMhKqi4nfg==}
-    dev: false
-
-  /peberminta@0.8.0:
-    resolution: {integrity: sha512-YYEs+eauIjDH5nUEGi18EohWE0nV2QbGTqmxQcqgZ/0g+laPCQmuIqq7EBLVi9uim9zMgfJv0QBZEnQ3uHw/Tw==}
     dev: false
 
   /peberminta@0.9.0:
@@ -46054,13 +46025,11 @@ packages:
     dev: false
     optional: true
 
-  /resend@0.11.1:
-    resolution: {integrity: sha512-HntGZRVZ6dW5ngAC/fv+StNhMHuJjBT7ZBsmw0iZWN4t4cN5JS8w2Nrt7NtgnDbOfWSdxFm+maCS+f4OGLQyZA==}
+  /resend@2.0.0:
+    resolution: {integrity: sha512-jAh0DN84ZjjmzGM2vMjJ1hphPBg1mG98dzopF7kJzmin62v8ESg4og2iCKWdkAboGOT2SeO5exbr/8Xh8gLddw==}
+    engines: {node: '>=18'}
     dependencies:
-      '@react-email/render': 0.0.5
-      axios: 0.27.2
-    transitivePeerDependencies:
-      - debug
+      '@react-email/render': 0.0.9
     dev: false
 
   /resize-observer-polyfill@1.5.1:
@@ -46655,12 +46624,6 @@ packages:
 
   /secure-json-parse@2.7.0:
     resolution: {integrity: sha512-6aU+Rwsezw7VR8/nyvKTx8QpWH9FrcYiXXlqC4z5d5XQBDRqtbfsRjnwGyqbi3gddNtWHuEk9OANUotL26qKUw==}
-    dev: false
-
-  /selderee@0.10.0:
-    resolution: {integrity: sha512-DEL/RW/f4qLw/NrVg97xKaEBC8IpzIG2fvxnzCp3Z4yk4jQ3MXom+Imav9wApjxX2dfS3eW7x0DXafJr85i39A==}
-    dependencies:
-      parseley: 0.11.0
     dev: false
 
   /selderee@0.11.0:
