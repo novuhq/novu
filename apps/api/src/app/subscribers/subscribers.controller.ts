@@ -22,7 +22,13 @@ import {
   UpdateSubscriberCommand,
 } from '@novu/application-generic';
 import { ApiOperation, ApiTags, ApiNoContentResponse, ApiParam } from '@nestjs/swagger';
-import { ButtonTypeEnum, ChatProviderIdEnum, IJwtPayload } from '@novu/shared';
+import {
+  ApiRateLimitCategoryEnum,
+  ApiRateLimitCostEnum,
+  ButtonTypeEnum,
+  ChatProviderIdEnum,
+  IJwtPayload,
+} from '@novu/shared';
 import { MessageEntity, PreferenceLevelEnum } from '@novu/dal';
 
 import { RemoveSubscriber, RemoveSubscriberCommand } from './usecases/remove-subscriber';
@@ -90,7 +96,9 @@ import {
   UpdateSubscriberGlobalPreferencesCommand,
 } from './usecases/update-subscriber-global-preferences';
 import { GetSubscriberPreferencesByLevelParams } from './params';
+import { ThrottlerCategory, ThrottlerCost } from '../rate-limiting/guards';
 
+@ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @Controller('/subscribers')
 @ApiTags('Subscribers')
 export class SubscribersController {
@@ -190,6 +198,7 @@ export class SubscribersController {
     );
   }
 
+  @ThrottlerCost(ApiRateLimitCostEnum.BULK)
   @Post('/bulk')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
