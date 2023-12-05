@@ -245,6 +245,20 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     };
   }
 
+  async findAndUpdateJob(jobId: string, environmentId: string, status: JobStatusEnum): Promise<JobEntity | null> {
+    return this._model.findOneAndUpdate(
+      {
+        _id: jobId,
+        _environmentId: environmentId,
+      },
+      {
+        $set: {
+          status,
+        },
+      }
+    );
+  }
+
   private getBackoffDate(metadata: IDigestRegularMetadata | undefined) {
     return sub(new Date(), {
       [metadata?.backoffUnit as string]: metadata?.backoffAmount,

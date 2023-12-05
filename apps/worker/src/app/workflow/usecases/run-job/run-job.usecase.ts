@@ -37,7 +37,7 @@ export class RunJob {
       environmentId: command.environmentId,
     });
 
-    let job = await this.jobRepository.findOne({ _id: command.jobId, _environmentId: command.environmentId });
+    let job = await this.jobRepository.findAndUpdateJob(command.jobId, command.environmentId, JobStatusEnum.RUNNING);
     if (!job) throw new PlatformException(`Job with id ${command.jobId} not found`);
 
     this.assignLogger(job);
@@ -67,8 +67,6 @@ export class RunJob {
     let shouldQueueNextJob = true;
 
     try {
-      await this.jobRepository.updateStatus(job._environmentId, job._id, JobStatusEnum.RUNNING);
-
       await this.storageHelperService.getAttachments(job.payload?.attachments);
 
       await this.sendMessage.execute(
