@@ -33,7 +33,8 @@
   },
   "dependencies": {
     "@novu/stateless": "^0.22.0",
-    "@vonage/server-sdk": "^2.10.10"
+    "@vonage/auth": "^1.7.0",
+    "@vonage/server-sdk": "^3.10.0"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",

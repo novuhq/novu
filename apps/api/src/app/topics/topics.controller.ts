@@ -20,7 +20,7 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
-import { ExternalSubscriberId, IJwtPayload, TopicKey } from '@novu/shared';
+import { ApiRateLimitCategoryEnum, ExternalSubscriberId, IJwtPayload, TopicKey } from '@novu/shared';
 
 import {
   AddSubscribersRequestDto,
@@ -56,7 +56,9 @@ import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import { ApiResponse } from '../shared/framework/response.decorator';
+import { ThrottlerCategory } from '../rate-limiting/guards';
 
+@ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @Controller('/topics')
 @ApiTags('Topics')
 @UseGuards(JwtAuthGuard)

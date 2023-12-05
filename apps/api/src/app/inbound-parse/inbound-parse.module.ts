@@ -21,7 +21,6 @@ const memoryQueueService = {
     return memoryService;
   },
 };
-
 @Module({
   imports: [SharedModule, AuthModule],
   controllers: [InboundParseController],

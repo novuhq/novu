@@ -39,7 +39,7 @@ export class GetApiRateLimitServiceMaximumConfig implements OnModuleInit {
     if (previousHash !== newHash) {
       await this.cacheService.set(cacheKey, newHash);
 
-      this.invalidateCache.invalidateQuery({
+      this.invalidateCache.invalidateByKey({
         key: buildMaximumApiRateLimitKey({
           _environmentId: '*',
           apiRateLimitCategory: '*',
