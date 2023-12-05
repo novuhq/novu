@@ -2,10 +2,10 @@ import { HeaderObject, HttpResponseHeaderKeysEnum } from '../types/headers.types
 
 export const COMMON_RESPONSE_HEADERS: Array<HttpResponseHeaderKeysEnum> = [
   HttpResponseHeaderKeysEnum.CONTENT_TYPE,
-  HttpResponseHeaderKeysEnum.RATE_LIMIT_LIMIT,
-  HttpResponseHeaderKeysEnum.RATE_LIMIT_REMAINING,
-  HttpResponseHeaderKeysEnum.RATE_LIMIT_RESET,
-  HttpResponseHeaderKeysEnum.RATE_LIMIT_POLICY,
+  HttpResponseHeaderKeysEnum.RATELIMIT_LIMIT,
+  HttpResponseHeaderKeysEnum.RATELIMIT_REMAINING,
+  HttpResponseHeaderKeysEnum.RATELIMIT_RESET,
+  HttpResponseHeaderKeysEnum.RATELIMIT_POLICY,
   HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY,
   HttpResponseHeaderKeysEnum.IDEMPOTENCY_REPLAY,
 ];
@@ -17,26 +17,26 @@ export const RESPONSE_HEADER_CONFIG: Record<HttpResponseHeaderKeysEnum, HeaderOb
     schema: { type: 'string' },
     example: 'application/json',
   },
-  [HttpResponseHeaderKeysEnum.RATE_LIMIT_LIMIT]: {
+  [HttpResponseHeaderKeysEnum.RATELIMIT_LIMIT]: {
     required: false,
     description:
       'The number of requests that the client is permitted to make per second. The actual maximum may differ when burst is enabled.',
     schema: { type: 'string' },
     example: '100',
   },
-  [HttpResponseHeaderKeysEnum.RATE_LIMIT_REMAINING]: {
+  [HttpResponseHeaderKeysEnum.RATELIMIT_REMAINING]: {
     required: false,
     description: 'The number of requests remaining until the next window.',
     schema: { type: 'string' },
     example: '93',
   },
-  [HttpResponseHeaderKeysEnum.RATE_LIMIT_RESET]: {
+  [HttpResponseHeaderKeysEnum.RATELIMIT_RESET]: {
     required: false,
     description: 'The remaining seconds until a request of the same cost will be refreshed.',
     schema: { type: 'string' },
     example: '8',
   },
-  [HttpResponseHeaderKeysEnum.RATE_LIMIT_POLICY]: {
+  [HttpResponseHeaderKeysEnum.RATELIMIT_POLICY]: {
     required: false,
     description: 'The rate limit policy that was used to evaluate the request.',
     schema: { type: 'string' },
