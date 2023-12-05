@@ -50,7 +50,7 @@ export type ValidateHttpHeaderCase<S extends string> = S extends `${infer U}-${i
  *
  * @param testEnum - the Enum to type check
  */
-export declare function testHttpHeaderEnumValidity<
+export function testHttpHeaderEnumValidity<
   TEnum extends IConstants,
   TValue extends TEnum[keyof TEnum] & string,
   IConstants = Record<ConvertToConstantCase<TValue>, ValidateHttpHeaderCase<TValue>>
@@ -60,4 +60,4 @@ export declare function testHttpHeaderEnumValidity<
       Exclude<keyof TEnum, keyof IConstants>,
       ['Key must be the CONSTANT_CASED version of the Capital-Cased value']
     >
-): true;
+) {}
