@@ -5,12 +5,11 @@ import { setTimeout } from 'timers/promises';
 import { Worker } from '../bull-mq';
 
 import { IHealthIndicator } from '../../health';
+import { IDestroy } from '../../modules';
 
-export interface INovuWorker {
+export interface INovuWorker extends IDestroy {
   readonly DEFAULT_ATTEMPTS: number;
-  gracefulShutdown: () => Promise<void>;
   readonly topic: string;
-  onModuleDestroy: () => Promise<void>;
   pause: () => Promise<void>;
   resume: () => Promise<void>;
   worker: Worker;

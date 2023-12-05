@@ -4,12 +4,12 @@ import { TerminusModule } from '@nestjs/terminus';
 import { HealthController } from './health.controller';
 import { SharedModule } from '../shared/shared.module';
 import { WSServerHealthIndicator } from '../socket/services';
-import { WSGateway } from '../socket/ws.gateway';
+import { SocketModule } from '../socket/socket.module';
 
-const PROVIDERS = [WSServerHealthIndicator, WSGateway];
+const PROVIDERS = [WSServerHealthIndicator];
 
 @Module({
-  imports: [TerminusModule, SharedModule],
+  imports: [TerminusModule, SharedModule, SocketModule],
   providers: PROVIDERS,
   controllers: [HealthController],
 })
