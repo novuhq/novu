@@ -100,7 +100,10 @@ const makeTemplateCopy = ({
   ...rest,
 });
 
-export const makeVariantFromStep = (stepToVariant: IFormStep): IFormStep => {
+export const makeVariantFromStep = (
+  stepToVariant: IFormStep,
+  { conditions }: { conditions: IFormStep['filters'] }
+): IFormStep => {
   const { id: _, variants, template, _templateId, ...rest } = stepToVariant;
   const variantsCount = variants?.length ?? 0;
   const variantName = `V${variantsCount + 1} ${stepToVariant?.name}`;
@@ -110,7 +113,7 @@ export const makeVariantFromStep = (stepToVariant: IFormStep): IFormStep => {
     _id: uuid4(),
     uuid: uuid4(),
     name: variantName,
-    filters: [],
+    filters: conditions,
     template: cloneDeep(makeTemplateCopy(template)),
   };
 };
@@ -131,7 +134,6 @@ interface ITemplateEditorFormContext {
   onInvalid: (errors: FieldErrors<IForm>) => void;
   addStep: (channelType: StepTypeEnum, id: string, stepIndex?: number) => void;
   deleteStep: (index: number) => void;
-  addVariant: (uuid: string) => AddVariantResult | undefined;
   deleteVariant: (stepUuid: string, variantUuid: string) => void;
 }
 
@@ -145,7 +147,6 @@ const TemplateEditorFormContext = createContext<ITemplateEditorFormContext>({
   onInvalid: () => {},
   addStep: () => {},
   deleteStep: () => {},
-  addVariant: () => undefined,
   deleteVariant: () => {},
 });
 
@@ -274,28 +275,6 @@ const TemplateEditorFormProvider = ({ children }) => {
     [steps]
   );
 
-  const addVariant = useCallback<ITemplateEditorFormContext['addVariant']>(
-    (uuid) => {
-      const workflowSteps = methods.getValues('steps');
-      const stepToVariant = workflowSteps.find((step) => step.uuid === uuid);
-      const index = workflowSteps.findIndex((item) => item.uuid === uuid);
-      if (!stepToVariant) {
-        return;
-      }
-
-      const newVariant = makeVariantFromStep(stepToVariant);
-      const newVariants = [...(stepToVariant?.variants ?? []), newVariant];
-
-      methods.setValue(`steps.${index}.variants`, newVariants, {
-        shouldDirty: true,
-        shouldValidate: true,
-      });
-
-      return { variant: newVariant, variantIndex: newVariants.length - 1 };
-    },
-    [methods]
-  );
-
   const deleteVariant = useCallback(
     (stepUuid: string, variantUuid: string) => {
       const workflowSteps = methods.getValues('steps');
@@ -327,7 +306,6 @@ const TemplateEditorFormProvider = ({ children }) => {
       onInvalid,
       addStep,
       deleteStep,
-      addVariant,
       deleteVariant,
     }),
     [
@@ -341,7 +319,6 @@ const TemplateEditorFormProvider = ({ children }) => {
       onInvalid,
       addStep,
       deleteStep,
-      addVariant,
       loadingGroups,
       deleteVariant,
     ]
