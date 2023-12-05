@@ -12,7 +12,7 @@ export function ConditionPlus(props: React.ComponentPropsWithoutRef<'svg'>) {
         width="16"
         height="16"
       >
-        <rect width="16" height="16" fill="#D9D9D9" />
+        <rect width="16" height="16" fill="currentColor" />
       </mask>
       <g mask="url(#mask0_3918_57495)">
         <path

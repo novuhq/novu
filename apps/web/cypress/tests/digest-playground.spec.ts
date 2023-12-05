@@ -73,8 +73,8 @@ describe('Digest Playground Workflow Page', function () {
     // check if has digest step
     cy.getByTestId('node-digestSelector').should('be.visible');
     // check if digest step settings opened
-    cy.getByTestId('step-page-wrapper').should('be.visible');
-    cy.getByTestId('step-page-wrapper').contains('All events');
+    cy.getByTestId('step-editor-sidebar').should('exist');
+    cy.getByTestId('step-editor-sidebar').contains('All events');
 
     // click next on hint
     cy.getByTestId('digest-workflow-tooltip-primary-button').contains('Next').click();
@@ -89,8 +89,8 @@ describe('Digest Playground Workflow Page', function () {
     cy.getByTestId('digest-workflow-tooltip-dots-navigation').should('be.visible');
 
     // check if email step settings opened
-    cy.getByTestId('step-page-wrapper').should('be.visible');
-    cy.getByTestId('step-page-wrapper').contains('Email');
+    cy.getByTestId('step-editor-sidebar').should('exist');
+    cy.getByTestId('step-editor-sidebar').contains('Email');
 
     // click next on hint
     cy.getByTestId('digest-workflow-tooltip-primary-button').contains('Next').click();
@@ -105,8 +105,8 @@ describe('Digest Playground Workflow Page', function () {
     cy.getByTestId('digest-workflow-tooltip-dots-navigation').should('be.visible');
 
     // the step settings should be hidden
-    cy.getByTestId('step-page-wrapper').should('be.visible');
-    cy.getByTestId('step-page-wrapper').contains('Trigger');
+    cy.getByTestId('workflow-sidebar').should('exist');
+    cy.getByTestId('workflow-sidebar').contains('Trigger');
 
     // click got it should hide the hint
     cy.getByTestId('digest-workflow-tooltip-primary-button').contains('Got it').click();

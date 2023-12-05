@@ -12,7 +12,7 @@ import {
 } from '@novu/shared';
 
 import { DigestFilterStepsCommand } from './digest-filter-steps.command';
-import { DigestFilterSteps } from './digest-filter-steps.usecase';
+import { getNestedValue } from '../../utils/object';
 
 @Injectable()
 export class DigestFilterStepsTimed {
@@ -62,7 +62,7 @@ export class DigestFilterStepsTimed {
 
     const digestKey = metadata?.digestKey;
     if (digestKey) {
-      where['payload.' + digestKey] = DigestFilterSteps.getNestedValue(
+      where['payload.' + digestKey] = getNestedValue(
         command.payload,
         digestKey
       );

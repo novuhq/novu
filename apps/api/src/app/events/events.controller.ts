@@ -1,13 +1,7 @@
 import { Body, Controller, Delete, Param, Post, Scope, UseGuards } from '@nestjs/common';
 import { ApiOkResponse, ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { v4 as uuidv4 } from 'uuid';
-import {
-  IJwtPayload,
-  ISubscribersDefine,
-  ITenantDefine,
-  TriggerRecipientSubscriber,
-  TriggerTenantContext,
-} from '@novu/shared';
+import { AddressingTypeEnum, ApiRateLimitCategoryEnum, ApiRateLimitCostEnum, IJwtPayload } from '@novu/shared';
 import { SendTestEmail, SendTestEmailCommand } from '@novu/application-generic';
 
 import {
@@ -27,7 +21,9 @@ import { ExternalApiAccessible } from '../auth/framework/external-api.decorator'
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ApiResponse } from '../shared/framework/response.decorator';
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
+import { ThrottlerCategory, ThrottlerCost } from '../rate-limiting/guards';
 
+@ThrottlerCategory(ApiRateLimitCategoryEnum.TRIGGER)
 @Controller({
   path: 'events',
   scope: Scope.REQUEST,
@@ -70,6 +66,7 @@ export class EventsController {
         actor: body.actor,
         tenant: body.tenant,
         transactionId: body.transactionId,
+        addressingType: AddressingTypeEnum.MULTICAST,
       })
     );
 
@@ -78,6 +75,7 @@ export class EventsController {
 
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
+  @ThrottlerCost(ApiRateLimitCostEnum.BULK)
   @Post('/trigger/bulk')
   @ApiResponse(TriggerEventResponseDto, 201, true)
   @ApiOperation({
@@ -103,6 +101,7 @@ export class EventsController {
 
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
+  @ThrottlerCost(ApiRateLimitCostEnum.BULK)
   @Post('/trigger/broadcast')
   @ApiResponse(TriggerEventResponseDto)
   @ApiOperation({

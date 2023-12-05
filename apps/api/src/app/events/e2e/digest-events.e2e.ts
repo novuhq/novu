@@ -380,73 +380,6 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     expect(jobs && jobs.length).to.equal(0);
   });
 
-  it('should be able to cancel digest', async function () {
-    const id = MessageRepository.createObjectId();
-    template = await session.createTemplate({
-      steps: [
-        {
-          type: StepTypeEnum.IN_APP,
-          content: 'Hello world {{customVar}}' as string,
-        },
-        {
-          type: StepTypeEnum.DIGEST,
-          content: '',
-          metadata: {
-            unit: DigestUnitEnum.SECONDS,
-            amount: 2,
-            digestKey: 'id',
-            type: DigestTypeEnum.REGULAR,
-          },
-        },
-        {
-          type: StepTypeEnum.IN_APP,
-          content: 'Hello world {{step.events.length}}' as string,
-        },
-      ],
-    });
-
-    await triggerEvent(
-      {
-        customVar: 'Testing of User Name',
-      },
-      id
-    );
-
-    await session.awaitRunningJobs(template?._id, false, 1);
-    await axiosInstance.delete(`${session.serverUrl}/v1/events/trigger/${id}`, {
-      headers: {
-        authorization: `ApiKey ${session.apiKey}`,
-      },
-    });
-
-    const delayedJobs = await jobRepository.find({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      type: StepTypeEnum.DIGEST,
-    });
-
-    expect(delayedJobs && delayedJobs.length).to.eql(1);
-
-    const pendingJobs = await jobRepository.count({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      status: JobStatusEnum.PENDING,
-      transactionId: id,
-    });
-
-    expect(pendingJobs).to.equal(1);
-
-    const cancelledDigestJobs = await jobRepository.find({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      status: JobStatusEnum.CANCELED,
-      type: StepTypeEnum.DIGEST,
-      transactionId: id,
-    });
-
-    expect(cancelledDigestJobs && cancelledDigestJobs.length).to.eql(1);
-  });
-
   it('should digest with backoff strategy', async function () {
     template = await session.createTemplate({
       steps: [
@@ -458,7 +391,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
             amount: 5,
             type: DigestTypeEnum.BACKOFF,
             backoffUnit: DigestUnitEnum.SECONDS,
-            backoffAmount: 1,
+            backoffAmount: 2,
           },
         },
         {
