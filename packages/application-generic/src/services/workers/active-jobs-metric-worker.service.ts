@@ -16,6 +16,5 @@ export class ActiveJobsMetricWorkerService extends WorkerBaseService {
       JobTopicNameEnum.ACTIVE_JOBS_METRIC,
       new BullMqService(workflowInMemoryProvider)
     );
-    Logger.log(`Worker ${this.topic} instantiated`, LOG_CONTEXT);
   }
 }

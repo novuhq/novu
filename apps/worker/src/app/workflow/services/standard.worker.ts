@@ -4,7 +4,6 @@ import { IJobData, ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import {
   BullMqService,
   getStandardWorkerOptions,
-  INovuWorker,
   Job,
   PinoLogger,
   StandardWorkerService,
@@ -29,7 +28,7 @@ import {
 const LOG_CONTEXT = 'StandardWorker';
 
 @Injectable()
-export class StandardWorker extends StandardWorkerService implements INovuWorker {
+export class StandardWorker extends StandardWorkerService {
   constructor(
     private handleLastFailedJob: HandleLastFailedJob,
     private runJob: RunJob,
