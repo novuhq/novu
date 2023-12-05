@@ -65,8 +65,8 @@ export class EnvironmentsController {
   @ApiOperation({
     summary: 'Create environment',
   })
+  @ApiExcludeEndpoint()
   @ApiResponse(EnvironmentResponseDto, 201)
-  @ExternalApiAccessible()
   async createEnvironment(
     @UserSession() user: IJwtPayload,
     @Body() body: CreateEnvironmentRequestDto
