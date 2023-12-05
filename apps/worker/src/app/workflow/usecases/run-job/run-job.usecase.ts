@@ -44,6 +44,14 @@ export class RunJob {
 
     const { canceled, activeDigestFollower } = await this.delayedEventIsCanceled(job);
 
+    /**
+     * In most cases, the job is not canceled so for performance reasons we find and update
+     * Mongo will return the original document, if it's canceled, we update the status back to canceled.
+     */
+    if (canceled) {
+      await this.jobRepository.updateStatus(job._environmentId, job._id, JobStatusEnum.CANCELED);
+    }
+
     if (canceled && !activeDigestFollower) {
       Logger.verbose({ canceled }, `Job ${job._id} that had been delayed has been cancelled`, LOG_CONTEXT);
 

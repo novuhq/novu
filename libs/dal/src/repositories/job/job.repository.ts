@@ -255,6 +255,9 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
         $set: {
           status,
         },
+      },
+      {
+        returnOriginal: true,
       }
     );
   }
