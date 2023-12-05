@@ -32,7 +32,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@novu/stateless": "0.16.3",
+    "@novu/stateless": "^0.22.0",
     "axios": "^1.6.2"
   },
   "devDependencies": {

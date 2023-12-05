@@ -45,7 +45,7 @@
   },
   "dependencies": {
     "@novu/stateless": "^0.22.0",
-    "plivo": "^4.22.4"
+    "plivo": "^4.60.1"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "1.0.2",

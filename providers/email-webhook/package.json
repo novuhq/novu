@@ -38,7 +38,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@novu/stateless": "^0.15.0",
+    "@novu/stateless": "^0.22.0",
     "axios": "^1.6.2"
   },
   "devDependencies": {

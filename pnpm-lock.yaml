@@ -3259,8 +3259,8 @@ importers:
   providers/braze:
     dependencies:
       '@novu/stateless':
-        specifier: 0.16.3
-        version: 0.16.3
+        specifier: ^0.22.0
+        version: link:../../packages/stateless
       braze-api:
         specifier: ^2.5.6
         version: 2.5.6
@@ -3302,8 +3302,8 @@ importers:
   providers/bulk-sms:
     dependencies:
       '@novu/stateless':
-        specifier: 0.16.3
-        version: 0.16.3
+        specifier: ^0.22.0
+        version: link:../../packages/stateless
       axios:
         specifier: ^1.6.0
         version: 1.6.0
@@ -3556,8 +3556,8 @@ importers:
   providers/email-webhook:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.15.0
-        version: 0.15.0
+        specifier: ^0.22.0
+        version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
         version: 1.6.2
@@ -3880,8 +3880,8 @@ importers:
   providers/generic-sms:
     dependencies:
       '@novu/stateless':
-        specifier: 0.16.3
-        version: 0.16.3
+        specifier: ^0.22.0
+        version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
         version: 1.6.2
@@ -3923,8 +3923,8 @@ importers:
   providers/getstream:
     dependencies:
       '@novu/stateless':
-        specifier: 0.16.3
-        version: 0.16.3
+        specifier: ^0.22.0
+        version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
         version: 1.6.2
@@ -3966,8 +3966,8 @@ importers:
   providers/grafana-on-call:
     dependencies:
       '@novu/stateless':
-        specifier: 0.16.3
-        version: 0.16.3
+        specifier: ^0.22.0
+        version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
         version: 1.6.2
@@ -4299,8 +4299,8 @@ importers:
         specifier: ^0.22.0
         version: link:../../packages/stateless
       node-mailjet:
-        specifier: ^6.0.4
-        version: 6.0.4
+        specifier: ^6.0.5
+        version: 6.0.5
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
         specifier: ^1.0.1
@@ -4550,8 +4550,8 @@ importers:
   providers/messagebird:
     dependencies:
       '@novu/stateless':
-        specifier: 0.16.3
-        version: 0.16.3
+        specifier: ^0.22.0
+        version: link:../../packages/stateless
       messagebird:
         specifier: ^4.0.1
         version: 4.0.1
@@ -4593,8 +4593,8 @@ importers:
   providers/ms-teams:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.7.2
-        version: 0.7.2
+        specifier: ^0.22.0
+        version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
         version: 1.6.2
@@ -4926,8 +4926,8 @@ importers:
         specifier: ^0.22.0
         version: link:../../packages/stateless
       plivo:
-        specifier: ^4.22.4
-        version: 4.44.0
+        specifier: ^4.60.1
+        version: 4.60.1
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
         specifier: 1.0.2
@@ -5615,8 +5615,8 @@ importers:
   providers/sms-central:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.12.0
-        version: 0.12.0
+        specifier: ^0.22.0
+        version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
         version: 1.6.2
@@ -6000,8 +6000,8 @@ importers:
   providers/zulip:
     dependencies:
       '@novu/stateless':
-        specifier: 0.16.3
-        version: 0.16.3
+        specifier: ^0.22.0
+        version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
         version: 1.6.2
@@ -14410,6 +14410,10 @@ packages:
     deprecated: This version has been deprecated and is no longer supported or maintained
     dev: false
 
+  /@hapi/hoek@9.3.0:
+    resolution: {integrity: sha512-/c6rf4UJlmHlC9b5BaNvzAcFv7HZ2QHaV0D4/HNlBdvFnvQq8RI4kYdhyPCl7Xj+oWvTWQ8ujhqS53LIgAe6KQ==}
+    dev: false
+
   /@hapi/joi@16.1.8:
     resolution: {integrity: sha512-wAsVvTPe+FwSrsAurNt5vkg3zo+TblvC5Bb1zMVK6SJzZqw9UrJnexxR+76cpePmtUZKHAPxcQ2Bf7oVHyahhg==}
     deprecated: Switch to 'npm install joi'
@@ -14431,6 +14435,12 @@ packages:
     deprecated: This version has been deprecated and is no longer supported or maintained
     dependencies:
       '@hapi/hoek': 8.5.1
+    dev: false
+
+  /@hapi/topo@5.1.0:
+    resolution: {integrity: sha512-foQZKJig7Ob0BMAYBfcJk8d77QtOe7Wo4ox7ff1lQYoNNAb6jwcY1ncdoy2e9wQZzvNy7ODZCYJkK8kzmcAnAg==}
+    dependencies:
+      '@hapi/hoek': 9.3.0
     dev: false
 
   /@hookform/devtools@4.3.1(@types/react@17.0.53)(react-dom@17.0.2)(react@17.0.2):
@@ -16659,45 +16669,6 @@ packages:
       '@floating-ui/dom': 0.1.10
       vue: 3.2.47
       vue-resize: 2.0.0-alpha.1(vue@3.2.47)
-    dev: false
-
-  /@novu/stateless@0.12.0:
-    resolution: {integrity: sha512-2GVX07XtR3owk8Dg/66l+kyUvgYR5+uKMheiFCVRuTCqiDfVFww1G3ixIEs2FGIajtLfDdNyuH+PV25EoqmKVg==}
-    engines: {node: '>=10'}
-    dependencies:
-      handlebars: 4.7.7
-      lodash.get: 4.4.2
-      lodash.merge: 4.6.2
-    dev: false
-
-  /@novu/stateless@0.15.0:
-    resolution: {integrity: sha512-NS7n34dlEB48EthLek0NWZXh+nJtbOUVkWdyprGF2f/WCCG/wT+yUtYLOauMffrySpnXEjY9zimyGgIWJQRl0g==}
-    engines: {node: '>=10'}
-    dependencies:
-      handlebars: 4.7.7
-      lodash.get: 4.4.2
-      lodash.merge: 4.6.2
-    dev: false
-
-  /@novu/stateless@0.16.3:
-    resolution: {integrity: sha512-9wrqUluSaR9rCdDp4oUWFBwsk6OSM4P+yMaEtFGHrGmSPMcspnvXQaQoARKakuUpCXFvQlPPJq5+yaicv4o/hA==}
-    engines: {node: '>=10'}
-    dependencies:
-      handlebars: 4.7.7
-      lodash.get: 4.4.2
-      lodash.merge: 4.6.2
-    dev: false
-
-  /@novu/stateless@0.7.2:
-    resolution: {integrity: sha512-hZPVjtdckROXF4WpcpUJGigA+7Nfz1mM5dIHwuDfh6MZ6cRGOgjQVq2TKhiOjHcu2umcKORem4cuyz47KoSA5w==}
-    engines: {node: '>=10'}
-    dependencies:
-      axios: 0.26.1
-      handlebars: 4.7.7
-      lodash.get: 4.4.2
-      lodash.merge: 4.6.2
-    transitivePeerDependencies:
-      - debug
     dev: false
 
   /@npmcli/arborist@5.3.0:
@@ -20325,6 +20296,20 @@ packages:
     dependencies:
       '@sentry/types': 7.66.0
       tslib: 2.6.2
+    dev: false
+
+  /@sideway/address@4.1.4:
+    resolution: {integrity: sha512-7vwq+rOHVWjyXxVlR76Agnvhy8I9rpzjosTESvmhNeXOXdZZB15Fl+TI9x1SiHZH5Jv2wTGduSxFDIaq0m3DUw==}
+    dependencies:
+      '@hapi/hoek': 9.3.0
+    dev: false
+
+  /@sideway/formula@3.0.1:
+    resolution: {integrity: sha512-/poHZJJVjx3L+zVD6g9KgHfYnb443oi7wLu/XKojDviHy6HOEOA6z1Trk5aR1dGcmPenJEgb2sK2I80LeS3MIg==}
+    dev: false
+
+  /@sideway/pinpoint@2.0.0:
+    resolution: {integrity: sha512-RNiOoTPkptFtSVzQevY/yWtZwf/RxyVnPy/OcA9HBM3MlGDnBEYL5B41H0MTn0Uec8Hi+2qUtTfG2WWZBmMejQ==}
     dev: false
 
   /@sigstore/bundle@1.1.0:
@@ -32321,7 +32306,7 @@ packages:
       eslint: 8.51.0
       eslint-import-resolver-node: 0.3.7
       eslint-module-utils: 2.8.0(@typescript-eslint/parser@5.58.0)(eslint-import-resolver-node@0.3.7)(eslint-import-resolver-webpack@0.13.7)(eslint@8.51.0)
-      has: 1.0.4
+      has: 1.0.3
       is-core-module: 2.13.0
       is-glob: 4.0.3
       minimatch: 3.1.2
@@ -37717,6 +37702,16 @@ packages:
     engines: {node: '>= 0.6.0'}
     dev: false
 
+  /joi@17.11.0:
+    resolution: {integrity: sha512-NgB+lZLNoqISVy1rZocE9PZI36bL/77ie924Ri43yEvi9GUUMPeyVIr8KdFTMUlby1p0PBYMk9spIxEUQYqrJQ==}
+    dependencies:
+      '@hapi/hoek': 9.3.0
+      '@hapi/topo': 5.1.0
+      '@sideway/address': 4.1.4
+      '@sideway/formula': 3.0.1
+      '@sideway/pinpoint': 2.0.0
+    dev: false
+
   /join-component@1.1.0:
     resolution: {integrity: sha512-bF7vcQxbODoGK1imE2P9GS9aw4zD0Sd+Hni68IMZLj7zRnquH7dXUmMw9hDI5S/Jzt7q+IyTXN0rSg2GI0IKhQ==}
     dev: false
@@ -40865,11 +40860,11 @@ packages:
   /node-machine-id@1.1.12:
     resolution: {integrity: sha512-QNABxbrPa3qEIfrE6GOJ7BYIuignnJw7iQ2YPbc3Nla1HzRJjXzZOiikfF8m7eAMfichLt3M4VgLOetqgDmgGQ==}
 
-  /node-mailjet@6.0.4:
-    resolution: {integrity: sha512-gNWfbVnsH+KxkhfDLPA8OrQ2Q25OgyKp19C7DSJYmN2zNfqTKIXzhB9BZwgxZtErmPxz2Fp1NR18WPCmrJDuwg==}
+  /node-mailjet@6.0.5:
+    resolution: {integrity: sha512-upufsTkMyrDF7Z6OiJ4M4Yw4L6MkB0vOQB27W1V9q0CxxSA6e2xOJif3koPwwwgDELpbJNG7asZjKFdghtxUCw==}
     engines: {node: '>= 12.0.0', npm: '>= 6.9.0'}
     dependencies:
-      axios: 0.27.2
+      axios: 1.6.2
       json-bigint: 1.0.0
       url-join: 4.0.1
     transitivePeerDependencies:
@@ -42673,8 +42668,8 @@ packages:
       semver-compare: 1.0.0
     dev: true
 
-  /plivo@4.44.0:
-    resolution: {integrity: sha512-724oFGUime4jUlmFFHzYm4FCCoqxLTt4QMJkj9fwQ17FRdLs3TRRW7sjMYJMHuHI6TLiQw+cTkDTm/MmDs05Ng==}
+  /plivo@4.60.1:
+    resolution: {integrity: sha512-GkrgJ0lwJ7jjPcexGLEGey2vLf0dCZBPY7Es9kGVSQqqG5kiXSY4hrqwblqXyEanDip/j5vk+jMWvNd/uL0BUw==}
     dependencies:
       '@types/node': 14.18.42
       axios: 0.21.4
@@ -42682,6 +42677,7 @@ packages:
       build-url: 1.3.3
       form-data: 4.0.0
       https-proxy-agent: 5.0.1
+      joi: 17.11.0
       jsonwebtoken: 9.0.0
       lodash: 4.17.21
       querystring: 0.2.1
