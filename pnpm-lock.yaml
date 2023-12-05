@@ -4061,8 +4061,8 @@ importers:
   providers/infobip:
     dependencies:
       '@infobip-api/sdk':
-        specifier: ^0.2.0
-        version: 0.2.0
+        specifier: ^0.3.2
+        version: 0.3.2
       '@novu/stateless':
         specifier: ^0.22.0
         version: link:../../packages/stateless
@@ -14514,12 +14514,12 @@ packages:
       react: 17.0.2
     dev: false
 
-  /@infobip-api/sdk@0.2.0:
-    resolution: {integrity: sha512-I9C+MIMxoW/PProBSt6UIMqDE5cgVODno5o5JOlcjMbbFS2ou490e5zS0V44sH2z5W6BDhOGyT50FQetF8BeUQ==}
+  /@infobip-api/sdk@0.3.2:
+    resolution: {integrity: sha512-Jj/FSBWLvt7KLVsx1fZOfIoO68AtTvi/sEv0HEOMUehssuM7/AJSLeRerQNHtBMULBKrgYIRRAU4Y3QiwUbyOg==}
     engines: {node: '>=10'}
     dependencies:
-      axios: 0.26.1
-      form-data: 2.5.1
+      axios: 1.6.2
+      form-data: 4.0.0
     transitivePeerDependencies:
       - debug
     dev: false
@@ -33756,6 +33756,7 @@ packages:
       asynckit: 0.4.0
       combined-stream: 1.0.8
       mime-types: 2.1.35
+    dev: true
 
   /form-data@3.0.1:
     resolution: {integrity: sha512-RHkBKtLWUVwd7SqRIvCZMEvAMoGUp0XU+seQiZejj0COz3RI3hWP4sCv3gZWWLjJTd7rGwcsF5eKZGii0r/hbg==}
