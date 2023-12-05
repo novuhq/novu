@@ -1,30 +1,34 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { OrganizationEntity, OrganizationRepository } from '@novu/dal';
+import { IMessageButton } from '@novu/shared';
+import { ModuleRef } from '@nestjs/core';
 
-import { CompileTemplate } from '../compile-template/compile-template.usecase';
-import { CompileTemplateCommand } from '../compile-template/compile-template.command';
+import {
+  CompileTemplate,
+  CompileTemplateCommand,
+  CompileTemplateBase,
+} from '../compile-template';
 import { ApiException } from '../../utils/exceptions';
 import { CompileInAppTemplateCommand } from './compile-in-app-template.command';
-import { IMessageButton } from '@novu/shared';
 
 @Injectable()
-export class CompileInAppTemplate {
+export class CompileInAppTemplate extends CompileTemplateBase {
   constructor(
     private compileTemplate: CompileTemplate,
-    private organizationRepository: OrganizationRepository
-  ) {}
+    protected organizationRepository: OrganizationRepository,
+    protected moduleRef: ModuleRef
+  ) {
+    super(organizationRepository, moduleRef);
+  }
 
   public async execute(command: CompileInAppTemplateCommand) {
-    const organization = await this.organizationRepository.findById(
-      command.organizationId,
-      'branding'
-    );
+    const organization = await this.getOrganization(command.organizationId);
 
-    if (!organization) {
-      throw new NotFoundException(
-        `Organization ${command.organizationId} not found`
-      );
-    }
+    await this.initiateTranslations(
+      command.environmentId,
+      command.organizationId,
+      command.payload.subscriber?.locale || organization.defaultLocale
+    );
 
     const payload = command.payload || {};
 

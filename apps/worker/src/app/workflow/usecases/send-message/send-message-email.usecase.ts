@@ -147,7 +147,6 @@ export class SendMessageEmail extends SendMessageBase {
       this.processVariants(command),
       this.getOverrideLayoutId(command),
       this.sendSelectedIntegrationExecution(command.job, integration),
-      this.initiateTranslations(command.environmentId, command.organizationId, subscriber.locale),
     ]);
 
     if (template) {
