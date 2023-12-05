@@ -115,6 +115,11 @@ export const makeVariantFromStep = (stepToVariant: IFormStep): IFormStep => {
   };
 };
 
+interface AddVariantResult {
+  variant: IFormStep;
+  variantIndex: number;
+}
+
 interface ITemplateEditorFormContext {
   template?: INotificationTemplate;
   isLoading: boolean;
@@ -126,7 +131,7 @@ interface ITemplateEditorFormContext {
   onInvalid: (errors: FieldErrors<IForm>) => void;
   addStep: (channelType: StepTypeEnum, id: string, stepIndex?: number) => void;
   deleteStep: (index: number) => void;
-  addVariant: (uuid: string) => IFormStep | undefined;
+  addVariant: (uuid: string) => AddVariantResult | undefined;
   deleteVariant: (stepUuid: string, variantUuid: string) => void;
 }
 
@@ -269,8 +274,8 @@ const TemplateEditorFormProvider = ({ children }) => {
     [steps]
   );
 
-  const addVariant = useCallback(
-    (uuid: string) => {
+  const addVariant = useCallback<ITemplateEditorFormContext['addVariant']>(
+    (uuid) => {
       const workflowSteps = methods.getValues('steps');
       const stepToVariant = workflowSteps.find((step) => step.uuid === uuid);
       const index = workflowSteps.findIndex((item) => item.uuid === uuid);
@@ -286,7 +291,7 @@ const TemplateEditorFormProvider = ({ children }) => {
         shouldValidate: true,
       });
 
-      return newVariant;
+      return { variant: newVariant, variantIndex: newVariants.length - 1 };
     },
     [methods]
   );

@@ -73,9 +73,9 @@ export const EditorSidebarHeaderActions = () => {
   const updateConditions = (newConditions: IConditions[]) => {
     if (isNewVariantCreationUrl) {
       proceedToNewVariant.current = true;
-      const variant = addVariant(stepUuid);
-      if (variant) {
-        const variantIndex = 0; // we add the variant at the beginning of the array
+      const result = addVariant(stepUuid);
+      if (result) {
+        const { variant, variantIndex } = result;
         setValue(`steps.${stepIndex}.variants.${variantIndex}.filters`, newConditions, { shouldDirty: true });
         navigate(basePath + `/${variant.template.type}/${stepUuid}/variants/${variant.uuid}`);
       }
