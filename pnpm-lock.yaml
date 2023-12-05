@@ -4397,7 +4397,7 @@ importers:
   providers/mandrill:
     dependencies:
       '@mailchimp/mailchimp_transactional':
-        specifier: ^1.0.46
+        specifier: ^1.0.50
         version: 1.0.50
       '@novu/stateless':
         specifier: ^0.22.0
