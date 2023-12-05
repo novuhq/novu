@@ -53,26 +53,26 @@ jobs:
       deployments: write
       id-token: write
     needs: [check_submodule_token]
-    if:  |
+    if: |
       ${{ contains (inputs.job-name,'-ee') && inputs.test-e2e-ee-affected == 'true' }} ||
       ${{ !contains (inputs.job-name,'-ee') && inputs.test-e2e-affected == 'true' }}
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # checkout with submodules if token is provided
       - uses: actions/checkout@v3
-        if: ${{ needs.check_submodule_token.outputs.has_token == 'true' &&  contains (inputs.job-name,'-ee')  }}
+        if: ${{ needs.check_submodule_token.outputs.has_token == 'true' && contains (inputs.job-name,'-ee') }}
         with:
           submodules: ${{ inputs.ee }}
           token: ${{ secrets.SUBMODULES_TOKEN }}
       # else checkout without submodules if the token is not provided
       - uses: actions/checkout@v3
-        if: ${{ needs.check_submodule_token.outputs.has_token != 'true' }}
+        if: ${{ needs.check_submodule_token.outputs.has_token != 'true' || !contains (inputs.job-name,'-ee') }}
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/setup-redis-cluster
       - uses: mansagroup/nrwl-nx-action@v3
         with:
           targets: lint
-          projects: "@novu/api"
+          projects: '@novu/api'
 
       - uses: ./.github/actions/start-localstack
 
@@ -112,4 +112,3 @@ jobs:
       - name: Run unit tests
         run: |
           cd apps/api && pnpm test
-          

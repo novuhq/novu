@@ -53,10 +53,12 @@ describe('Changes Screen', function () {
     cy.waitForNetworkIdle(500);
 
     cy.getByTestId('title').first().clear().type('Updated Title');
+    cy.getByTestId('sidebar-close').click();
     cy.getByTestId('notification-template-submit-btn').click();
 
     cy.getByTestId('side-nav-changes-count').contains('1');
 
+    cy.getByTestId('settings-page').click();
     cy.getByTestId('active-toggle-switch').click({ force: true });
     cy.getByTestId('side-nav-changes-count').contains('1');
 

@@ -19,15 +19,19 @@ describe('Update translation - /translations/groups (PATCH)', async () => {
       locales: ['en_US', 'sv_SE'],
     });
 
+    await session.applyChanges({
+      enabled: false,
+    });
+
     let result = await session.testAgent.patch(`/v1/translations/groups/test`).send({
       name: 'test1',
       identifier: 'test1',
       locales: ['en_US', 'en_GB'],
     });
 
-    const group = result.body.data;
+    let group = result.body.data;
 
-    const locales = group.translations.map((t) => t.isoLanguage);
+    let locales = group.translations.map((t) => t.isoLanguage);
 
     expect(group.identifier).to.equal('test1');
     expect(group.name).to.equal('test1');
@@ -38,5 +42,17 @@ describe('Update translation - /translations/groups (PATCH)', async () => {
     expect(result.body.message).to.equal('Translation could not be found');
     expect(result.body.error).to.equal('Not Found');
     expect(result.body.statusCode).to.equal(404);
+
+    await session.applyChanges({
+      enabled: false,
+    });
+    await session.switchToProdEnvironment();
+
+    const data = await session.testAgent.get(`/v1/translations/groups/test1`).send();
+    group = data.body.data;
+    locales = group.translations.map((t) => t.isoLanguage);
+    expect(group.identifier).to.equal('test1');
+    expect(group.name).to.equal('test1');
+    expect(locales).to.deep.equal(['en_US', 'en_GB']);
   });
 });
