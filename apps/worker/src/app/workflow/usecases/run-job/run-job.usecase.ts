@@ -162,11 +162,11 @@ export class RunJob {
   ): Promise<{ canceled: boolean; activeDigestFollower: JobEntity | null }> {
     let activeDigestFollower: JobEntity | null = null;
 
-    if (job.type !== StepTypeEnum.DIGEST && job.type !== StepTypeEnum.DELAY) {
-      return { canceled: false, activeDigestFollower };
-    }
-
     const canceled = job.status === JobStatusEnum.CANCELED;
+
+    if (job.type !== StepTypeEnum.DIGEST && job.type !== StepTypeEnum.DELAY) {
+      return { canceled, activeDigestFollower };
+    }
 
     if (job.status === JobStatusEnum.CANCELED) {
       activeDigestFollower = await this.activeDigestMainFollowerExist(job);
