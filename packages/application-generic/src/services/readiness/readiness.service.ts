@@ -1,9 +1,11 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { HealthIndicatorResult, HealthIndicatorStatus } from '@nestjs/terminus';
+import { setTimeout } from 'timers/promises';
 
 import { Worker } from '../bull-mq';
 
-import { setTimeout } from 'timers/promises';
-import { QueueHealthIndicator } from '../../health/queue-health-indicator.service';
+import { IHealthIndicator } from '../../health';
+
 export interface INovuWorker {
   readonly DEFAULT_ATTEMPTS: number;
   gracefulShutdown: () => Promise<void>;
@@ -20,7 +22,7 @@ const LOG_CONTEXT = 'ReadinessService';
 export class ReadinessService {
   constructor(
     @Inject('QUEUE_HEALTH_INDICATORS')
-    private healthIndicators: QueueHealthIndicator[]
+    private healthIndicators: IHealthIndicator[]
   ) {}
 
   async areQueuesEnabled(): Promise<boolean> {
@@ -37,10 +39,7 @@ export class ReadinessService {
       }
 
       Logger.warn(
-        {
-          attempt: i,
-          message: `Some health indicator returned false when checking if queues are enabled ${i}/${retries}`,
-        },
+        `Some health indicator returned false when checking if queues are enabled ${i}/${retries}`,
         LOG_CONTEXT
       );
 
@@ -56,7 +55,11 @@ export class ReadinessService {
         this.healthIndicators.map((health) => health.isHealthy())
       );
 
-      return healths.every((health) => !!health === true);
+      const statuses = healths.map(
+        (health: HealthIndicatorResult) => Object.values(health)[0].status
+      );
+
+      return statuses.every((status: HealthIndicatorStatus) => status === 'up');
     } catch (error) {
       Logger.error(
         error,
