@@ -13,6 +13,8 @@ const LOG_CONTEXT = 'WSGateway';
 
 @WebSocketGateway()
 export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDestroy {
+  private isShutdown = false;
+
   constructor(private jwtService: JwtService, private subscriberOnlineService: SubscriberOnlineService) {}
 
   @WebSocketServer()
@@ -83,7 +85,18 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
     }
   }
 
+  /*
+   * This method is called when a client disconnects from the server.
+   * * When a shutdown is in progress, we opt out of updating the subscriber status,
+   * assuming that when the current instance goes down, another instance will take its place and handle the subscriber status update.
+   */
   private async processDisconnectionRequest(connection: Socket) {
+    if (!this.isShutdown) {
+      await this.handlerSubscriberDisconnection(connection);
+    }
+  }
+
+  private async handlerSubscriberDisconnection(connection: Socket) {
     const token = this.extractToken(connection);
 
     if (!token || token === 'null') {
@@ -95,7 +108,14 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
       return;
     }
 
-    await this.subscriberOnlineService.handleDisconnection(subscriber);
+    const activeConnections = await this.getActiveConnections(connection, subscriber._id);
+    await this.subscriberOnlineService.handleDisconnection(subscriber, activeConnections);
+  }
+
+  private async getActiveConnections(socket: Socket, subscriberId: string) {
+    const activeSockets = await socket.in(subscriberId).fetchSockets();
+
+    return activeSockets.length;
   }
 
   private async processConnectionRequest(connection: Socket) {
@@ -146,11 +166,12 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
       Logger.error(e, 'Unexpected exception was thrown while graceful shut down was executed', LOG_CONTEXT);
       throw e;
     } finally {
-      Logger.error(`Graceful shutdown down has finished`, LOG_CONTEXT);
+      Logger.log(`Graceful shutdown down has finished`, LOG_CONTEXT);
     }
   }
 
   async onModuleDestroy(): Promise<void> {
+    this.isShutdown = true;
     await this.gracefulShutdown();
   }
 }
