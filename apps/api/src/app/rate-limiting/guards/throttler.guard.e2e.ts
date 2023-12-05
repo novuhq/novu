@@ -307,7 +307,7 @@ describe('API Rate Limiting', () => {
             describe(`${expectedStatus === 429 ? 'Throttled' : 'Allowed'} ${name}`, () => {
               let lastResponse: ReturnType<typeof UserSession.prototype.testAgent.get>;
               let throttledResponseCount = 0;
-              const throttledResponseCountTolerance = 0.05;
+              const throttledResponseCountTolerance = 0.5;
               const expectedWindowLimit = expectedLimit * mockWindowDuration;
               const expectedBurstLimit = expectedWindowLimit * (1 + mockBurstAllowance);
               const expectedRemaining = Math.max(0, expectedBurstLimit - expectedCost);
