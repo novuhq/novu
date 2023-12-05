@@ -1,3 +1,4 @@
+import { IApiRateLimitMaximum } from '@novu/shared';
 import { BaseRepository } from '../base-repository';
 import { IApiKey, EnvironmentEntity, EnvironmentDBModel } from './environment.entity';
 import { Environment } from './environment.schema';
@@ -86,5 +87,22 @@ export class EnvironmentRepository extends BaseRepository<EnvironmentDBModel, En
     );
 
     return await this.getApiKeys(environmentId);
+  }
+
+  async updateApiRateLimits(environmentId: string, apiRateLimits: Partial<IApiRateLimitMaximum>) {
+    return await this.update(
+      {
+        _id: environmentId,
+      },
+      [
+        {
+          $set: {
+            apiRateLimits: {
+              $mergeObjects: ['$apiRateLimits', apiRateLimits],
+            },
+          },
+        },
+      ]
+    );
   }
 }

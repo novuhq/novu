@@ -33,6 +33,8 @@ import { BlueprintModule } from './app/blueprint/blueprint.module';
 import { TenantModule } from './app/tenant/tenant.module';
 import { IdempotencyInterceptor } from './app/shared/framework/idempotency.interceptor';
 import { WorkflowOverridesModule } from './app/workflow-overrides/workflow-overrides.module';
+import { ApiRateLimitInterceptor } from './app/rate-limiting/guards';
+import { RateLimitingModule } from './app/rate-limiting/rate-limiting.module';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
@@ -75,6 +77,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   BlueprintModule,
   TenantModule,
   WorkflowOverridesModule,
+  RateLimitingModule,
 ];
 
 const enterpriseModules = enterpriseImports();
@@ -82,6 +85,10 @@ const enterpriseModules = enterpriseImports();
 const modules = baseModules.concat(enterpriseModules);
 
 const providers: Provider[] = [
+  {
+    provide: APP_INTERCEPTOR,
+    useClass: ApiRateLimitInterceptor,
+  },
   {
     provide: APP_INTERCEPTOR,
     useClass: IdempotencyInterceptor,
