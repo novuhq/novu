@@ -39,3 +39,5 @@ export {
   IS_MULTI_TENANCY_ENABLED,
   IS_TRANSLATION_MANAGER_ENABLED,
 };
+
+export const IS_EU_ENV = (ENV === 'production' || ENV === 'prod') && API_ROOT.includes('eu.api.novu.co');
