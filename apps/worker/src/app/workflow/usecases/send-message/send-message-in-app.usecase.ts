@@ -2,13 +2,7 @@ import { Injectable } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 import { ModuleRef } from '@nestjs/core';
 
-import {
-  MessageRepository,
-  NotificationStepEntity,
-  SubscriberRepository,
-  MessageEntity,
-  OrganizationRepository,
-} from '@novu/dal';
+import { MessageRepository, NotificationStepEntity, SubscriberRepository, MessageEntity } from '@novu/dal';
 import {
   ChannelTypeEnum,
   ExecutionDetailsSourceEnum,
@@ -48,7 +42,6 @@ export class SendMessageInApp extends SendMessageBase {
     protected createLogUsecase: CreateLog,
     protected executionLogQueueService: ExecutionLogQueueService,
     protected subscriberRepository: SubscriberRepository,
-    private organizationRepository: OrganizationRepository,
     protected selectIntegration: SelectIntegration,
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
     protected selectVariant: SelectVariant,
@@ -110,13 +103,8 @@ export class SendMessageInApp extends SendMessageBase {
     let content = '';
 
     const { actor } = command.step.template;
-    const { subscriber } = command.compileContext;
 
-    const [template, organization] = await Promise.all([
-      this.processVariants(command),
-      this.organizationRepository.findOne({ _id: command.organizationId }, 'branding'),
-      this.initiateTranslations(command.environmentId, command.organizationId, subscriber.locale),
-    ]);
+    const template = await this.processVariants(command);
 
     if (template) {
       step.template = template;
