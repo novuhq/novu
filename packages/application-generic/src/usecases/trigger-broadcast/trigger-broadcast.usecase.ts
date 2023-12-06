@@ -13,6 +13,7 @@ import {
   ChannelTypeEnum,
   ISubscribersDefine,
   ProvidersIdEnum,
+  SubscriberSourceEnum,
 } from '@novu/shared';
 
 import { ProcessSubscriber } from '../process-subscriber';
@@ -179,6 +180,7 @@ export class TriggerBroadcast {
           ...(command.actor && { actor: command.actor }),
           subscriber,
           templateId: command.template._id,
+          _subscriberSource: SubscriberSourceEnum.BROADCAST,
         },
         groupId: command.organizationId,
       };

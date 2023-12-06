@@ -11,6 +11,7 @@ import {
 import {
   ChannelTypeEnum,
   ISubscribersDefine,
+  ISubscribersSource,
   ProvidersIdEnum,
 } from '@novu/shared';
 
@@ -106,7 +107,7 @@ export class TriggerMulticast {
 
   @Instrument()
   private async validateSubscriberIdProperty(
-    to: ISubscribersDefine[]
+    to: ISubscribersSource[]
   ): Promise<boolean> {
     for (const subscriber of to) {
       const subscriberIdExists =
@@ -145,17 +146,8 @@ export class TriggerMulticast {
     return integration?.providerId as ProvidersIdEnum;
   }
 
-  private async sendToProcessSubscriberService(
-    command: TriggerMulticastCommand,
-    subscribers: { subscriberId: string }[]
-  ) {
-    const jobs = this.mapSubscribersToJobs(subscribers, command);
-
-    return await this.subscriberProcessQueueAddBulk(jobs);
-  }
-
   private mapSubscribersToJobs(
-    subscribers: { subscriberId: string }[],
+    subscribers: ISubscribersSource[],
     command: TriggerMulticastCommand
   ) {
     return subscribers.map((subscriber) => {
@@ -171,8 +163,11 @@ export class TriggerMulticast {
           overrides: command.overrides,
           tenant: command.tenant,
           ...(command.actor && { actor: command.actor }),
-          subscriber,
+          subscriber: {
+            subscriberId: subscriber.subscriberId,
+          } as ISubscribersDefine,
           templateId: command.template._id,
+          _subscriberSource: subscriber._subscriberSource,
         },
         groupId: command.organizationId,
       };
