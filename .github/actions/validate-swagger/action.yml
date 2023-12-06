@@ -6,7 +6,7 @@ runs:
   using: composite
 
   steps:
-    - name: Get swagger json as file
+    - name: Get OpenAPI json as file
       shell: bash
       run: |
         curl -o openapi.json http://localhost:1336/openapi.json
