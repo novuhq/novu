@@ -41,7 +41,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@mailchimp/mailchimp_transactional": "^1.0.46",
+    "@mailchimp/mailchimp_transactional": "^1.0.50",
     "@novu/stateless": "^0.22.0"
   },
   "devDependencies": {
