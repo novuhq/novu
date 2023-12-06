@@ -6,16 +6,11 @@ runs:
   using: composite
 
   steps:
-    - name: Get OpenAPI YAML as file
-      shell: bash
-      run: |
-        curl -o openapi.yaml http://localhost:1336/openapi.yaml
-
-    # Run Spectral
-    - uses: stoplightio/spectral-action@latest
+    - uses: mansagroup/nrwl-nx-action@v3
       with:
-        file_glob: 'openapi.yaml'
-
+        targets: lint:openapi
+        projects: '@novu/api'
+        
     - name: Kill port for api 1336 for unit tests
       shell: bash
       run: sudo kill -9 $(sudo lsof -t -i:1336)
