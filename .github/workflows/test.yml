@@ -43,7 +43,7 @@ jobs:
       # Get current branch name
       - name: Get branch name
         id: branch-name
-        uses: tj-actions/branch-names@v5.2
+        uses: tj-actions/branch-names@v7.0.7
       # Get base branch name to compare with. Base branch on a PR, "main" branch on pushing.
       - name: Get base branch name
         id: get-base-branch-name
