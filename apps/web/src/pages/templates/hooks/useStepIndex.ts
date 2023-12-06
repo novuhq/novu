@@ -19,21 +19,26 @@ export const useStepIndex = () => {
   const { watch } = useFormContext<IForm>();
   const steps = watch('steps');
 
+  const step = useMemo(
+    () => steps.find((message) => message.template.type === channel && message.uuid === stepUuid),
+    [channel, stepUuid, steps]
+  );
+
   const stepIndex = useMemo(
     () => steps.findIndex((message) => message.template.type === channel && message.uuid === stepUuid),
     [channel, stepUuid, steps]
   );
 
   const variantIndex = useMemo(() => {
-    const step = steps[stepIndex];
     if (!step) {
       return undefined;
     }
 
     return step.variants?.findIndex((message) => message.uuid === variantUuid);
-  }, [stepIndex, variantUuid, steps]);
+  }, [step, variantUuid]);
 
   return {
+    step,
     stepIndex,
     variantIndex,
   };

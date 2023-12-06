@@ -230,6 +230,29 @@ describe('Workflow Editor - Variants', function () {
     cy.waitForNetworkIdle(500);
   };
 
+  const checkVariantListCard = ({
+    selector,
+    message,
+    hasBorder = false,
+  }: {
+    message: string;
+    selector: string;
+    hasBorder?: boolean;
+  }) => {
+    cy.getByTestId(selector).contains(message);
+    if (hasBorder) {
+      cy.getByTestId(selector)
+        .find('div[role="button"]')
+        .first()
+        .should('have.css', 'border-style', 'solid')
+        .and('have.css', 'border-width', '1px');
+    }
+  };
+
+  const checkVariantConditions = ({ selector, contains }: { selector: string; contains: string }) => {
+    cy.getByTestId(selector).getByTestId('conditions-action').should('be.visible').contains(contains);
+  };
+
   describe('Add variant flow', function () {
     it('should allow creating the variants for the in-app channel', function () {
       addVariantForChannel('inApp', 'V1 In-App');
@@ -268,6 +291,44 @@ describe('Workflow Editor - Variants', function () {
       cy.wait('@getWorkflow');
 
       checkEditorContent('inApp', true);
+    });
+
+    it('should allow creating multiple variants', function () {
+      const channel = 'inApp';
+      createWorkflow('Add multiple variants');
+
+      dragAndDrop(channel);
+      editChannel(channel);
+      fillEditorContent(channel);
+
+      cy.getByTestId('editor-sidebar-add-variant').should('be.visible').click();
+      addConditions();
+      fillEditorContent(channel, true);
+      goBack();
+
+      cy.getByTestId('editor-sidebar-add-variant').should('be.visible').click();
+      addConditions();
+      fillEditorContent(channel, true);
+      goBack();
+      goBack();
+
+      cy.getByTestId('notification-template-submit-btn').click();
+      cy.wait('@updateWorkflow');
+
+      cy.reload();
+      cy.wait('@getWorkflow');
+
+      cy.getByTestId(`node-${channel}Selector`).getByTestId('variants-count').contains('2 variants');
+      editChannel(channel);
+
+      checkVariantListCard({ selector: 'variant-item-card-1', message: VARIANT_EDITOR_TEXT });
+      checkVariantConditions({ selector: 'variant-item-card-1', contains: '1' });
+
+      checkVariantListCard({ selector: 'variant-item-card-0', message: VARIANT_EDITOR_TEXT });
+      checkVariantConditions({ selector: 'variant-item-card-0', contains: '1' });
+
+      checkVariantListCard({ selector: 'variant-root-card', message: EDITOR_TEXT });
+      checkVariantConditions({ selector: 'variant-item-card-0', contains: 'No' });
     });
 
     it('should not allow creating variant for digest step', function () {
@@ -786,25 +847,6 @@ describe('Workflow Editor - Variants', function () {
     const checkCurrentError = ({ message, count }: { message: string; count: string }) => {
       cy.getByTestId('variants-list-current-error').contains(message);
       cy.getByTestId('variants-list-errors-count').contains(count);
-    };
-
-    const checkVariantListCard = ({
-      selector,
-      message,
-      hasBorder = false,
-    }: {
-      message: string;
-      selector: string;
-      hasBorder?: boolean;
-    }) => {
-      cy.getByTestId(selector).contains(message);
-      if (hasBorder) {
-        cy.getByTestId(selector)
-          .find('div[role="button"]')
-          .first()
-          .should('have.css', 'border-style', 'solid')
-          .and('have.css', 'border-width', '1px');
-      }
     };
 
     it('should show the push variant errors', function () {

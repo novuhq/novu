@@ -37,7 +37,7 @@ const nodeTypes: Record<string, ComponentType<NodeProps>> = {
 const edgeTypes = { special: AddNodeEdge };
 
 const WorkflowEditor = () => {
-  const { addStep, deleteStep, addVariant } = useTemplateEditorForm();
+  const { addStep, deleteStep } = useTemplateEditorForm();
   const { channel } = useParams<{
     channel: StepTypeEnum | undefined;
   }>();
