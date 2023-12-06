@@ -6,14 +6,15 @@ runs:
   using: composite
 
   steps:
-    - name: Get OpenAPI json as file
+    - name: Get OpenAPI YAML as file
       shell: bash
       run: |
-        curl -o openapi.json http://localhost:1336/openapi.json
+        curl -o openapi.yaml http://localhost:1336/openapi.yaml
 
-    - uses: char0n/swagger-editor-validate@v1
+    # Run Spectral
+    - uses: stoplightio/spectral-action@latest
       with:
-        definition-file: openapi.json
+        file_glob: 'openapi.yaml'
 
     - name: Kill port for api 1336 for unit tests
       shell: bash
