@@ -1,15 +1,15 @@
 import { IS_DOCKER_HOSTED } from '../config';
 
 export const TranslationRoutes = () => {
+  let Routes = () => null;
   if (IS_DOCKER_HOSTED) {
-    return null;
+    return <Routes />;
   }
+
   try {
     const module = require('@novu/ee-translation-web');
-    const Routes = module.Routes;
-
-    return <Routes />;
+    Routes = module.Routes;
   } catch (e) {}
 
-  return null;
+  return <Routes />;
 };
