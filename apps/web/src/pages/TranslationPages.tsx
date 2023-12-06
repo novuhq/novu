@@ -5,8 +5,12 @@ export const TranslationRoutes = () => {
     return null;
   }
 
-  const module = require('@novu/ee-translation-web');
-  const Routes = module.Routes;
+  try {
+    const module = require('@novu/ee-translation-web');
+    const Routes = module.Routes;
 
-  return <Routes />;
+    return <Routes />;
+  } catch (e) {}
+
+  return null;
 };
