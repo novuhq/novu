@@ -1,5 +1,5 @@
-import { Inject, Module, OnApplicationShutdown, OnModuleInit, Provider } from '@nestjs/common';
-import { WebSocketsWorkerService, WorkflowInMemoryProviderService } from '@novu/application-generic';
+import { Module, OnApplicationShutdown, Provider } from '@nestjs/common';
+import { WorkflowInMemoryProviderService } from '@novu/application-generic';
 
 import { WSGateway } from './ws.gateway';
 import { SharedModule } from '../shared/shared.module';
@@ -9,7 +9,7 @@ import { WebSocketWorker } from './services';
 
 const USE_CASES: Provider[] = [ExternalServicesRoute];
 
-const PROVIDERS: Provider[] = [WSGateway, WebSocketsWorkerService, WebSocketWorker];
+const PROVIDERS: Provider[] = [WSGateway, WebSocketWorker];
 
 const memoryQueueService = {
   provide: WorkflowInMemoryProviderService,

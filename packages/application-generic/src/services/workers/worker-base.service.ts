@@ -1,14 +1,8 @@
-import { IJobData, JobTopicNameEnum } from '@novu/shared';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { JobTopicNameEnum } from '@novu/shared';
+import { Logger } from '@nestjs/common';
 
-import {
-  BullMqService,
-  JobsOptions,
-  Processor,
-  Worker,
-  WorkerOptions,
-} from '../bull-mq';
-import { WorkflowInMemoryProviderService } from '../in-memory-provider';
+import { BullMqService, Processor, Worker, WorkerOptions } from '../bull-mq';
+import { INovuWorker } from '../readiness';
 
 const LOG_CONTEXT = 'WorkerService';
 
@@ -19,7 +13,7 @@ export type WorkerProcessor =
 
 export { WorkerOptions };
 
-export class WorkerBaseService {
+export class WorkerBaseService implements INovuWorker {
   private instance: BullMqService;
 
   public readonly DEFAULT_ATTEMPTS = 3;

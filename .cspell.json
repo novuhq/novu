@@ -538,6 +538,8 @@
     "Krakend",
     "ratelimit",
     "Ratelimit",
+    "stdev",
+    "Stdev",
     "openapi",
   ],
   "flagWords": [],

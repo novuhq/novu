@@ -29,7 +29,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@bandwidth/messaging": "^4.1.1",
+    "@bandwidth/messaging": "^4.1.3",
     "@novu/stateless": "^0.22.0"
   },
   "devDependencies": {
