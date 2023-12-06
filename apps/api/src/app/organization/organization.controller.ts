@@ -44,7 +44,6 @@ import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.de
 import { OrganizationBrandingResponseDto, OrganizationResponseDto } from './dtos/organization-response.dto';
 import { MemberResponseDto } from './dtos/member-response.dto';
 
-@ApiCommonResponses()
 @Controller('/organizations')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
