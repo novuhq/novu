@@ -35,9 +35,6 @@ export type RegionLimiter = ReturnType<typeof Ratelimit.tokenBucket>;
  * rate.
  * - Allows to set a higher initial burst limit by setting `maxTokens` higher
  * than `refillRate`
- *
- * Adapted from the Krakend tokenBucket algorithm to include a variable cost:
- * @see https://github.com/krakend/krakend-ratelimit/blob/369f0be9b51a4fb8ab7d43e4833d076b461a4374/rate.go#L85
  */
 export type CostLimiter = (
   /**
