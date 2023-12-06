@@ -106,7 +106,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
       type: 'apiKey',
       name: 'Authorization',
       in: 'header',
-      description: 'The API key to use for authentication',
+      description: 'The API key to use for authentication. Takes the format of "ApiKey <key>".',
     })
     .addTag('Events')
     .addTag('Subscribers')
