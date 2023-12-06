@@ -1,6 +1,6 @@
-name: Validate Swagger
+name: Validate OpenAPI
 
-description: Validates the swagger from the API
+description: Validates the OpenAPI from the API
 
 runs:
   using: composite
