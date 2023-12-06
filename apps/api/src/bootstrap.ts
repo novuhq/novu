@@ -98,7 +98,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
     .setDescription('Novu REST API. Please see https://docs.novu.co/api-reference for more details.')
     .setVersion('1.0')
     .setContact('Novu Support', 'https://discord.gg/novu', 'support@novu.co')
-    .setExternalDoc('Novu Docs', 'https://docs.novu.co')
+    .setExternalDoc('Novu Documentation', 'https://docs.novu.co')
     .setTermsOfService('https://novu.co/terms')
     .setLicense('MIT', 'https://opensource.org/license/mit')
     .addServer(process.env.API_ROOT_URL)
