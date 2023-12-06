@@ -19,8 +19,8 @@ export interface ITopics {
 }
 
 export interface ITopicPayload {
-  key?: TopicKey;
-  name?: TopicName;
+  key: TopicKey;
+  name: TopicName;
 }
 
 export interface ITopicPaginationPayload {

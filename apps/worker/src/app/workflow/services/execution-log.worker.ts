@@ -1,8 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 const nr = require('newrelic');
 import {
   getExecutionLogWorkerOptions,
-  INovuWorker,
   PinoLogger,
   storage,
   Store,
@@ -11,20 +10,21 @@ import {
   WorkerProcessor,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
+  BullMqService,
+  WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
 import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 const LOG_CONTEXT = 'ExecutionLogWorker';
 
 @Injectable()
-export class ExecutionLogWorker extends ExecutionLogWorkerService implements INovuWorker {
-  constructor(private createExecutionDetails: CreateExecutionDetails) {
-    super();
+export class ExecutionLogWorker extends ExecutionLogWorkerService {
+  constructor(
+    private createExecutionDetails: CreateExecutionDetails,
+    public workflowInMemoryProviderService: WorkflowInMemoryProviderService
+  ) {
+    super(new BullMqService(workflowInMemoryProviderService));
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOptions());
   }
-  gracefulShutdown: () => Promise<void>;
-  onModuleDestroy: () => Promise<void>;
-  pause: () => Promise<void>;
-  resume: () => Promise<void>;
 
   private getWorkerOptions(): WorkerOptions {
     return getExecutionLogWorkerOptions();
