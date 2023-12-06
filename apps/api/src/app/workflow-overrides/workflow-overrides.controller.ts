@@ -178,7 +178,7 @@ export class WorkflowOverridesController {
     );
   }
 
-  @Delete('/:workflowOverrideId')
+  @Delete('/:overrideId')
   @UseGuards(RootEnvironmentGuard)
   @Roles(MemberRoleEnum.ADMIN)
   @ApiOkResponse({
@@ -188,16 +188,13 @@ export class WorkflowOverridesController {
     summary: 'Delete workflow override',
   })
   @ExternalApiAccessible()
-  deleteWorkflowOverride(
-    @UserSession() user: IJwtPayload,
-    @Param('workflowOverrideId') workflowOverrideId: string
-  ): Promise<boolean> {
+  deleteWorkflowOverride(@UserSession() user: IJwtPayload, @Param('overrideId') overrideId: string): Promise<boolean> {
     return this.deleteWorkflowOverrideUsecase.execute(
       DeleteWorkflowOverrideCommand.create({
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         userId: user._id,
-        _id: workflowOverrideId,
+        _id: overrideId,
       })
     );
   }
