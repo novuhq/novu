@@ -4,6 +4,10 @@ module.exports = {
     'func-names': 'off',
     "no-restricted-imports": ["error", {
       "patterns": [{
+        /**
+         * This rule ensures that the overidden Swagger decorators are used,
+         * which apply common responses to all API endpoints.
+         */
         "group": ["@nestjs/swagger"],
         "importNames": [
           'ApiOkResponse',
