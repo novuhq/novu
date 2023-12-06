@@ -7,6 +7,8 @@ runs:
 
   steps:
     - uses: mansagroup/nrwl-nx-action@v3
+      env:
+        PORT: '1336'
       with:
         targets: lint:openapi
         projects: '@novu/api'
