@@ -37,7 +37,7 @@ export class InMemoryProviderService {
   }
 
   public get getProvider(): {
-    selected: InMemoryProviderEnum;
+    selectsueed: InMemoryProviderEnum;
     configured: InMemoryProviderEnum;
   } {
     const config = this.isCluster
