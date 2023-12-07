@@ -67,7 +67,7 @@ runs:
 
     - name: 🛟 Install submodules dependencies
       shell: bash
-      run: cd enterprise && pnpm install --frozen-lockfile
+      run: cd enterprise && pnpm install
 
     - name: Link submodules
       shell: bash
