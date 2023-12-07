@@ -8,6 +8,10 @@ export enum JobTopicNameEnum {
   PROCESS_SUBSCRIBER = 'process-subscriber',
 }
 
+/*
+ * Name need to be in sync with the enum above as
+ * the name should be `EnumString-queue` for any queue name enums
+ */
 export enum ObservabilityBackgroundTransactionEnum {
   JOB_PROCESSING_QUEUE = 'job-processing-queue',
   SUBSCRIBER_PROCESSING_QUEUE = 'subscriber-processing-queue',
