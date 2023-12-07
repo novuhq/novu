@@ -5,10 +5,12 @@ export const TranslationRoutes = () => {
     return null;
   }
 
-  console.log('TranslationRoutes');
-
   const module = require('@novu/ee-translation-web');
   const Routes = module.Routes;
 
-  return <Routes />;
+  return (
+    <>
+      <Routes />
+    </>
+  );
 };
