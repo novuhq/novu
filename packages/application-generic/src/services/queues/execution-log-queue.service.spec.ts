@@ -38,10 +38,10 @@ describe('Execution Log Queue service', () => {
         ])
       );
       expect(executionLogQueueService.DEFAULT_ATTEMPTS).toEqual(3);
-      expect(executionLogQueueService.topic).toEqual('execution-logs');
+      expect(executionLogQueueService.topic).toEqual('execution-log');
       expect(await executionLogQueueService.bullMqService.getStatus()).toEqual({
         queueIsPaused: false,
-        queueName: 'execution-logs',
+        queueName: 'execution-log',
         workerName: undefined,
         workerIsPaused: undefined,
         workerIsRunning: undefined,
@@ -52,7 +52,7 @@ describe('Execution Log Queue service', () => {
           _events: {},
           _eventsCount: 0,
           _maxListeners: undefined,
-          name: 'execution-logs',
+          name: 'execution-log',
           jobsOpts: {
             removeOnComplete: true,
           },
@@ -79,7 +79,7 @@ describe('Execution Log Queue service', () => {
 
     it('should have prefix in cluster mode', async () => {
       expect(executionLogQueueService.queue.opts.prefix).toEqual(
-        '{execution-logs}'
+        '{execution-log}'
       );
     });
   });
