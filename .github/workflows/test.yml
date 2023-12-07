@@ -57,6 +57,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: true
+          token: ${{ secrets.SUBMODULES_TOKEN }}
       - uses: ./.github/actions/setup-project
         with:
           slim: 'true'
