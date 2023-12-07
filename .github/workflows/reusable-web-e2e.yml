@@ -62,7 +62,7 @@ jobs:
       - uses: mansagroup/nrwl-nx-action@v3
         with:
           targets: lint,build
-          projects: '@novu/web,@novu/api,@novu/worker,@novu/ee-translation-web'
+          projects: '@novu/ee-translation-web,@novu/web,@novu/api,@novu/worker'
 
       - uses: ./.github/actions/start-localstack
       - uses: ./.github/actions/setup-redis-cluster
