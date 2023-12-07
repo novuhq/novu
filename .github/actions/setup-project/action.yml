@@ -67,12 +67,10 @@ runs:
 
     - name: 🛟 Install submodules dependencies
       shell: bash
-      if: true
       run: cd enterprise && pnpm install --frozen-lockfile
 
     - name: Link submodules
       shell: bash
-      if: true
       run: pnpm link:submodules
   
     - name: Install wait-on plugin
