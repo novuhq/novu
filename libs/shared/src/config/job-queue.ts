@@ -1,5 +1,5 @@
 export enum JobTopicNameEnum {
-  EXECUTION_LOG = 'execution-logs',
+  EXECUTION_LOG = 'execution-log',
   ACTIVE_JOBS_METRIC = 'metric-active-jobs',
   INBOUND_PARSE_MAIL = 'inbound-parse-mail',
   STANDARD = 'standard',
