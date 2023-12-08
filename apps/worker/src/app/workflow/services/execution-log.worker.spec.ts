@@ -46,7 +46,7 @@ describe('ExecutionLog Worker', () => {
     expect(await executionLogWorker.bullMqService.getStatus()).to.deep.equal({
       queueIsPaused: undefined,
       queueName: undefined,
-      workerName: 'execution-log',
+      workerName: 'execution-logs',
       workerIsPaused: false,
       workerIsRunning: true,
     });
@@ -60,13 +60,13 @@ describe('ExecutionLog Worker', () => {
     const existingJobs = await executionLogQueueService.queue.getJobs();
     expect(existingJobs.length).to.equal(0);
 
-    const jobId = 'execution-log-queue-job-id';
-    const _environmentId = 'execution-log-queue-environment-id';
-    const _organizationId = 'execution-log-queue-organization-id';
-    const _userId = 'execution-log-queue-user-id';
+    const jobId = 'execution-logs-queue-job-id';
+    const _environmentId = 'execution-logs-queue-environment-id';
+    const _organizationId = 'execution-logs-queue-organization-id';
+    const _userId = 'execution-logs-queue-user-id';
     const jobData = {
       _id: jobId,
-      test: 'execution-log-queue-job-data',
+      test: 'execution-logs-queue-job-data',
       _environmentId,
       _organizationId,
       _userId,
@@ -96,7 +96,7 @@ describe('ExecutionLog Worker', () => {
     expect(runningStatus).to.deep.equal({
       queueIsPaused: undefined,
       queueName: undefined,
-      workerName: 'execution-log',
+      workerName: 'execution-logs',
       workerIsPaused: false,
       workerIsRunning: true,
     });
@@ -110,7 +110,7 @@ describe('ExecutionLog Worker', () => {
     expect(runningStatusChanged).to.deep.equal({
       queueIsPaused: undefined,
       queueName: undefined,
-      workerName: 'execution-log',
+      workerName: 'execution-logs',
       workerIsPaused: true,
       workerIsRunning: true,
     });
@@ -126,7 +126,7 @@ describe('ExecutionLog Worker', () => {
     expect(runningStatus).to.deep.equal({
       queueIsPaused: undefined,
       queueName: undefined,
-      workerName: 'execution-log',
+      workerName: 'execution-logs',
       workerIsPaused: true,
       workerIsRunning: true,
     });
@@ -140,7 +140,7 @@ describe('ExecutionLog Worker', () => {
     expect(runningStatusChanged).to.deep.equal({
       queueIsPaused: undefined,
       queueName: undefined,
-      workerName: 'execution-log',
+      workerName: 'execution-logs',
       workerIsPaused: false,
       workerIsRunning: true,
     });
