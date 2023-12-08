@@ -6,11 +6,14 @@ import { TextAlignEnum } from '@novu/shared';
 import { colors } from '@novu/design-system';
 import { useEnvController } from '../../../../hooks';
 import type { IForm } from '../formTypes';
+import { useStepFormPath } from '../../hooks/useStepFormPath';
 
-export function TextRowContent({ stepIndex, blockIndex }: { stepIndex: number; blockIndex: number }) {
+export function TextRowContent({ blockIndex }: { blockIndex: number }) {
   const methods = useFormContext<IForm>();
-  const content = methods.watch(`steps.${stepIndex}.template.content.${blockIndex}.content`);
-  const textAlign = methods.watch(`steps.${stepIndex}.template.content.${blockIndex}.styles.textAlign`);
+  const stepFormPath = useStepFormPath();
+
+  const content = methods.watch(`${stepFormPath}.template.content.${blockIndex}.content`);
+  const textAlign = methods.watch(`${stepFormPath}.template.content.${blockIndex}.styles.textAlign`);
   const { readonly } = useEnvController();
   const ref = useRef<HTMLDivElement>(null);
   const [text, setText] = useState<string>(content);
@@ -42,7 +45,7 @@ export function TextRowContent({ stepIndex, blockIndex }: { stepIndex: number; b
   return (
     <div style={{ position: 'relative' }}>
       <Controller
-        name={`steps.${stepIndex}.template.content.${blockIndex}.content`}
+        name={`${stepFormPath}.template.content.${blockIndex}.content`}
         defaultValue=""
         control={methods.control}
         render={({ field }) => {

@@ -25,7 +25,7 @@ describe('Get workflow by id - /workflows/:workflowId (GET)', async () => {
     expect(foundTemplate.name).to.equal(template.name);
     expect(foundTemplate.steps.length).to.equal(template.steps.length);
     expect(foundTemplate.steps[0].template).to.be.ok;
-    expect(foundTemplate.steps[0].template.content).to.equal(template.steps[0].template.content);
+    expect(foundTemplate.steps[0].template?.content).to.equal(template.steps[0].template?.content);
     expect(foundTemplate.steps[0]._templateId).to.be.ok;
     expect(foundTemplate.triggers.length).to.equal(template.triggers.length);
   });

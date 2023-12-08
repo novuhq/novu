@@ -34,6 +34,7 @@ export interface IEmailOptions {
   notificationDetails?: any;
   ipPoolName?: string;
   customData?: Record<string, any>;
+  senderName?: string;
 }
 
 export interface ITriggerPayload {
@@ -60,3 +61,8 @@ export interface ITopic {
 }
 
 export type TriggerRecipientTopics = ITopic[];
+
+export enum AddressingTypeEnum {
+  BROADCAST = 'broadcast',
+  MULTICAST = 'multicast',
+}

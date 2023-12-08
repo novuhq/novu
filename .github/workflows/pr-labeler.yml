@@ -1,20 +1,25 @@
-name: "Pull Request Labeller"
+name: "Pull Request Labeler"
+
 on:
   - pull_request_target
 
 jobs:
-  triage:
+  on_pr:
     permissions:
       contents: read
       pull-requests: write
+      statuses: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/labeler@v4
-        with:
-          repo-token: "${{ secrets.GITHUB_TOKEN }}"
+      - uses: actions/checkout@v4
 
-      - uses: microsoft/PR-Metrics@v1.5.7
-        name: PR Metrics
+      - name: PR Labels
+        uses: actions/labeler@v4
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: PR Metrics
+        uses: microsoft/PR-Metrics@v1.5.7
         env:
           PR_METRICS_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:

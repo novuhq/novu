@@ -16,12 +16,9 @@ import {
   ScanStream,
 } from './types';
 
-import { GetIsInMemoryClusterModeEnabled } from '../../usecases';
-
 const LOG_CONTEXT = 'InMemoryProviderService';
 
 export class InMemoryProviderService {
-  private getIsInMemoryClusterModeEnabled: GetIsInMemoryClusterModeEnabled;
   public inMemoryProviderClient: InMemoryProviderClient;
   public inMemoryProviderConfig: InMemoryProviderConfig;
 
@@ -29,15 +26,13 @@ export class InMemoryProviderService {
 
   constructor(
     private provider: InMemoryProviderEnum,
+    private isCluster: boolean,
     private enableAutoPipelining?: boolean
   ) {
     Logger.log(
       this.descriptiveLogMessage('In-memory provider service initialized'),
       LOG_CONTEXT
     );
-
-    this.getIsInMemoryClusterModeEnabled =
-      new GetIsInMemoryClusterModeEnabled();
     this.inMemoryProviderClient = this.buildClient(provider);
   }
 
@@ -45,7 +40,7 @@ export class InMemoryProviderService {
     selected: InMemoryProviderEnum;
     configured: InMemoryProviderEnum;
   } {
-    const config = this.isClusterMode()
+    const config = this.isCluster
       ? getClientAndConfigForCluster(this.provider)
       : getClientAndConfig();
 
@@ -55,19 +50,12 @@ export class InMemoryProviderService {
     };
   }
 
-  private descriptiveLogMessage(message) {
+  protected descriptiveLogMessage(message) {
     return `[Provider: ${this.provider}] ${message}`;
   }
 
   private buildClient(provider: InMemoryProviderEnum): InMemoryProviderClient {
-    // TODO: Temporary while migrating to MemoryDB
-    if (provider === InMemoryProviderEnum.OLD_INSTANCE_REDIS) {
-      return this.oldInstanceInMemoryProviderSetup();
-    }
-
-    const isClusterMode = this.isClusterMode();
-
-    return isClusterMode
+    return this.isCluster
       ? this.inMemoryClusterProviderSetup(provider)
       : this.inMemoryProviderSetup();
   }
@@ -114,34 +102,15 @@ export class InMemoryProviderService {
     return this.isProviderClientReady(this.getStatus());
   }
 
-  public isClusterMode(): boolean {
-    const isClusterModeEnabled = this.getIsInMemoryClusterModeEnabled.execute();
-
-    Logger.log(
-      this.descriptiveLogMessage(
-        `Cluster mode ${
-          isClusterModeEnabled ? 'is' : 'is not'
-        } enabled for InMemoryProviderService`
-      ),
-      LOG_CONTEXT
-    );
-
-    return isClusterModeEnabled;
-  }
-
   public getClusterOptions(): ClusterOptions | undefined {
-    const isClusterMode = this.isClusterMode();
-    if (this.inMemoryProviderClient && isClusterMode) {
+    if (this.inMemoryProviderClient && this.isCluster) {
       return this.inMemoryProviderClient.options;
     }
   }
 
   public getOptions(): RedisOptions | undefined {
     if (this.inMemoryProviderClient) {
-      if (
-        this.provider === InMemoryProviderEnum.OLD_INSTANCE_REDIS ||
-        !this.isClusterMode()
-      ) {
+      if (!this.isCluster) {
         const options: RedisOptions = this.inMemoryProviderClient.options;
 
         return options;
@@ -314,97 +283,8 @@ export class InMemoryProviderService {
     }
   }
 
-  /**
-   * TODO: Temporary while we migrate to MemoryDB
-   */
-  private oldInstanceInMemoryProviderSetup(): Redis | undefined {
-    Logger.verbose(
-      this.descriptiveLogMessage('In-memory old instance service set up'),
-      LOG_CONTEXT
-    );
-
-    const { getClient, getConfig, isClientReady } = getClientAndConfig();
-
-    this.isProviderClientReady = isClientReady;
-    this.inMemoryProviderConfig = getConfig();
-    const { host, port, ttl } = getConfig();
-
-    if (!host) {
-      Logger.warn(
-        this.descriptiveLogMessage(
-          'Missing host for in-memory provider old instance'
-        ),
-        LOG_CONTEXT
-      );
-    }
-
-    const inMemoryProviderClient = getClient();
-    if (host && inMemoryProviderClient) {
-      Logger.log(
-        this.descriptiveLogMessage(
-          `Connecting to old instance to ${host}:${port}`
-        ),
-        LOG_CONTEXT
-      );
-
-      inMemoryProviderClient.on('connect', () => {
-        Logger.log(
-          this.descriptiveLogMessage('REDIS CONNECTED to old instance'),
-          LOG_CONTEXT
-        );
-      });
-
-      inMemoryProviderClient.on('reconnecting', () => {
-        Logger.verbose(
-          this.descriptiveLogMessage('Redis reconnecting to old instance'),
-          LOG_CONTEXT
-        );
-      });
-
-      inMemoryProviderClient.on('close', () => {
-        Logger.verbose(
-          this.descriptiveLogMessage('Redis close old instance'),
-          LOG_CONTEXT
-        );
-      });
-
-      inMemoryProviderClient.on('end', () => {
-        Logger.verbose(
-          this.descriptiveLogMessage('Redis end old instance'),
-          LOG_CONTEXT
-        );
-      });
-
-      inMemoryProviderClient.on('error', (error) => {
-        Logger.error(
-          error,
-          this.descriptiveLogMessage(
-            'There has been an error in the InMemory provider client for the old instance'
-          ),
-          LOG_CONTEXT
-        );
-      });
-
-      inMemoryProviderClient.on('ready', () => {
-        Logger.log(
-          this.descriptiveLogMessage('Redis ready for old instance'),
-          LOG_CONTEXT
-        );
-      });
-
-      inMemoryProviderClient.on('wait', () => {
-        Logger.verbose(
-          this.descriptiveLogMessage('Redis wait for old instance'),
-          LOG_CONTEXT
-        );
-      });
-
-      return inMemoryProviderClient;
-    }
-  }
-
   public inMemoryScan(pattern: string): ScanStream {
-    if (this.isClusterMode()) {
+    if (this.isCluster) {
       const client = this.inMemoryProviderClient as Cluster;
 
       return client.sscanStream(pattern);

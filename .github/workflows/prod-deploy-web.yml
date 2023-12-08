@@ -12,8 +12,7 @@ jobs:
   test_web:
     uses: ./.github/workflows/reusable-web-e2e.yml
     with:
-      submodules: true
-      submodule_branch: 'main'
+      ee: true
     secrets: inherit
 
   deploy_web_eu:
@@ -49,7 +48,6 @@ jobs:
           echo REACT_APP_SENTRY_DSN="https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907" >> .env
           echo REACT_APP_ENVIRONMENT=production >> .env
           echo REACT_APP_SEGMENT_KEY=${{ secrets.WEB_SEGMENT_KEY }} >> .env
-          echo REACT_APP_LOGROCKET_ID=${{ secrets.LOGROCKET_ID }} >> .env
           echo REACT_APP_MAIL_SERVER_DOMAIN="eu.inbound-mail.novu.co" >> .env
           echo REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID=${{ secrets.PROD_LAUNCH_DARKLY_CLIENT_SIDE_ID }} >> .env
 
@@ -66,7 +64,6 @@ jobs:
           REACT_APP_WEBHOOK_URL: https://eu.webhook.novu.co
           REACT_APP_WIDGET_EMBED_PATH: https://eu.embed.novu.co/embed.umd.min.js
           REACT_APP_NOVU_APP_ID: ${{ secrets.NOVU_APP_ID }}
-          REACT_APP_LOGROCKET_ID: ${{ secrets.LOGROCKET_ID }}
           REACT_APP_SENTRY_DSN: https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907
           REACT_APP_ENVIRONMENT: production
           REACT_APP_MAIL_SERVER_DOMAIN: eu.inbound-mail.novu.co
@@ -129,7 +126,6 @@ jobs:
           echo REACT_APP_SENTRY_DSN="https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907" >> .env
           echo REACT_APP_ENVIRONMENT=production >> .env
           echo REACT_APP_SEGMENT_KEY=${{ secrets.WEB_SEGMENT_KEY }} >> .env
-          echo REACT_APP_LOGROCKET_ID=${{ secrets.LOGROCKET_ID }} >> .env
           echo REACT_APP_MAIL_SERVER_DOMAIN="inbound-mail.novu.co" >> .env
           echo REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID=${{ secrets.PROD_LAUNCH_DARKLY_CLIENT_SIDE_ID }} >> .env
 
@@ -146,7 +142,6 @@ jobs:
           REACT_APP_WEBHOOK_URL: https://webhook.novu.co
           REACT_APP_WIDGET_EMBED_PATH: https://embed.novu.co/embed.umd.min.js
           REACT_APP_NOVU_APP_ID: ${{ secrets.NOVU_APP_ID }}
-          REACT_APP_LOGROCKET_ID: ${{ secrets.LOGROCKET_ID }}
           REACT_APP_SENTRY_DSN: https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907
           REACT_APP_ENVIRONMENT: production
           REACT_APP_MAIL_SERVER_DOMAIN: inbound-mail.novu.co

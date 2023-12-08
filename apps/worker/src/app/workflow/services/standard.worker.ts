@@ -1,19 +1,16 @@
 const nr = require('newrelic');
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { IJobData, ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import {
-  ExecutionDetailsSourceEnum,
-  ExecutionDetailsStatusEnum,
-  IJobData,
-  ObservabilityBackgroundTransactionEnum,
-} from '@novu/shared';
-import {
-  INovuWorker,
+  BullMqService,
+  getStandardWorkerOptions,
   Job,
   PinoLogger,
   StandardWorkerService,
   storage,
   Store,
   WorkerOptions,
+  WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
 
 import {
@@ -31,16 +28,18 @@ import {
 const LOG_CONTEXT = 'StandardWorker';
 
 @Injectable()
-export class StandardWorker extends StandardWorkerService implements INovuWorker {
+export class StandardWorker extends StandardWorkerService {
   constructor(
     private handleLastFailedJob: HandleLastFailedJob,
     private runJob: RunJob,
     @Inject(forwardRef(() => SetJobAsCompleted)) private setJobAsCompleted: SetJobAsCompleted,
     @Inject(forwardRef(() => SetJobAsFailed)) private setJobAsFailed: SetJobAsFailed,
     @Inject(forwardRef(() => WebhookFilterBackoffStrategy))
-    private webhookFilterBackoffStrategy: WebhookFilterBackoffStrategy
+    private webhookFilterBackoffStrategy: WebhookFilterBackoffStrategy,
+    @Inject(forwardRef(() => WorkflowInMemoryProviderService))
+    public workflowInMemoryProviderService: WorkflowInMemoryProviderService
   ) {
-    super();
+    super(new BullMqService(workflowInMemoryProviderService));
 
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOptions());
 
@@ -51,8 +50,7 @@ export class StandardWorker extends StandardWorkerService implements INovuWorker
 
   private getWorkerOptions(): WorkerOptions {
     return {
-      lockDuration: 90000,
-      concurrency: 200,
+      ...getStandardWorkerOptions(),
       settings: {
         backoffStrategy: this.getBackoffStrategies(),
       },

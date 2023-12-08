@@ -7,6 +7,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Logger,
   Param,
   Patch,
   Post,
@@ -62,6 +63,8 @@ import { UpdateSubscriberGlobalPreferencesRequestDto } from '../subscribers/dtos
 import { GetPreferencesByLevel } from '../subscribers/usecases/get-preferences-by-level/get-preferences-by-level.usecase';
 import { GetPreferencesByLevelCommand } from '../subscribers/usecases/get-preferences-by-level/get-preferences-by-level.command';
 
+const LOG_CONTEXT = 'WidgetsController';
+
 @Controller('/widgets')
 @ApiExcludeController()
 export class WidgetsController {
@@ -84,6 +87,8 @@ export class WidgetsController {
 
   @Post('/session/initialize')
   async sessionInitialize(@Body() body: SessionInitializeRequestDto): Promise<SessionInitializeResponseDto> {
+    Logger.log('WidgetsController:sessionInitialize ' + JSON.stringify(body), LOG_CONTEXT);
+
     return await this.initializeSessionUsecase.execute(
       InitializeSessionCommand.create({
         subscriberId: body.subscriberId,
@@ -431,7 +436,7 @@ export class WidgetsController {
     let paramArray: string[] | undefined = undefined;
 
     if (param) {
-      paramArray = Array.isArray(param) ? param : param.split(',');
+      paramArray = Array.isArray(param) ? param : String(param).split(',');
     }
 
     return paramArray as string[];
