@@ -41,12 +41,13 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
       if (require('@novu/ee-auth')?.EEAuthModule) {
         modules.push(require('@novu/ee-auth')?.EEAuthModule);
       }
-      if (require('@novu/ee-translation')?.EnterpriseTranslationModule) {
-        modules.push(require('@novu/ee-translation')?.EnterpriseTranslationModule);
-      }
     }
   } catch (e) {
     Logger.error(e, `Unexpected error while importing enterprise modules`, 'EnterpriseImport');
+  }
+
+  if (require('@novu/ee-translation')?.EnterpriseTranslationModule) {
+    modules.push(require('@novu/ee-translation')?.EnterpriseTranslationModule);
   }
 
   return modules;
